@@ -1,0 +1,42 @@
+[
+  {
+    "name": "World actions disabled before selection",
+    "pass": true
+  },
+  {
+    "name": "World selection enables actions",
+    "pass": true
+  },
+  {
+    "name": "Pack reorder arrows present",
+    "pass": true
+  },
+  {
+    "name": "Pack setting shared with Accessibility",
+    "pass": true
+  },
+  {
+    "name": "Shared blur value appears in Video",
+    "pass": true
+  },
+  {
+    "name": "Window viewport unchanged by settings",
+    "pass": true
+  },
+  {
+    "name": "Engine GameUserSettings file unchanged",
+    "pass": true,
+    "detail": {
+      "before": "37580c7582f335e49e857569170a1bf23af2a47a88e9ff09c64ddba59df71f8f",
+      "after": "37580c7582f335e49e857569170a1bf23af2a47a88e9ff09c64ddba59df71f8f"
+    }
+  },
+  {
+    "name": "Resource images intact",
+    "pass": true
+  },
+  {
+    "name": "Real panorama animation moves",
+    "pass": true
+  }
+]

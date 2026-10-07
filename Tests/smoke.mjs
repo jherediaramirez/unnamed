@@ -9,6 +9,7 @@ const port=Number(args.find(x=>x.startsWith('--port='))?.split('=')[1]||18888);
 const mode=args.find(x=>x.startsWith('--mode='))?.split('=')[1]||'packaged';
 const profile=args.find(x=>x.startsWith('--profile='))?.split('=')[1]||'1920x1080';
 const slice=args.includes('--slice');
+const skipActions=args.includes('--skip-actions');
 const [width,height]=profile.split('x').map(Number);
 const out=path.join(root,'Tests/Captures',mode+'-'+profile+(slice?'-slice':''));
 fs.mkdirSync(out,{recursive:true});
@@ -21,6 +22,7 @@ try{
   page.on('console',m=>result.console.push({type:m.type(),text:m.text()}));
   page.on('pageerror',e=>result.console.push({type:'error',text:String(e)}));
   page.on('request',r=>result.requests.push(r.url()));
+  await page.reload();
   await page.waitForFunction(()=>window.MenuPrototype?.getState().assets.panoramaLoaded||window.MenuPrototype?.getState().assets.panoramaFallback,null,{timeout:30000});
   await page.evaluate(()=>MenuPrototype.freezeFrame(0,0));
   const state=()=>page.evaluate(()=>MenuPrototype.getState());
@@ -32,6 +34,8 @@ try{
   check('Actual rendered viewport',boot.gui.viewportWidth===width&&boot.gui.viewportHeight===height,boot.gui);
   check('Integer Auto scaling',boot.gui.scale===(width===1920?4:3)&&boot.gui.width===(width===1920?480:427)&&boot.gui.height===(height===1080?270:240),boot.gui);
   check('Real cubemap (not fallback)',boot.assets.panoramaLoaded&&!boot.assets.panoramaFallback,boot.assets);
+  await page.evaluate(()=>document.fonts.ready);
+  check('Bitmap font loaded',await page.evaluate(()=>[...document.fonts].some(f=>f.family==='MC'&&f.status==='loaded')));
   for(const name of ['main','options','video']){
     await prepare(name);
     await page.mouse.move(width-2,height-2);
@@ -71,7 +75,7 @@ try{
         let controls=await page.evaluate(()=>MenuPrototype.controls());
         result.controls.push(...controls);
         const indices=await page.locator('#screen button:not(:disabled)').count();
-        for(let i=0;i<indices;i++){
+        for(let i=0;i<(skipActions?0:indices);i++){
           await prepare(route,variant);
           const buttons=page.locator('#screen button:not(:disabled)');
           if(i>=await buttons.count())continue;
@@ -102,18 +106,25 @@ try{
     await prepare('create','game');
     await page.locator('[data-local="draft.gameMode"]').click();
     check('Hardcore constraints',await page.locator('[data-local="draft.difficulty"]').isDisabled()&&await page.locator('[data-local="draft.commands"]').isDisabled()&&(await state()).draft.difficulty==='Hard'&&!(await state()).draft.commands);
-    await prepare('options');await mouseButton('Resource Packs...');
+    await prepare('options');const originalPacks=(await state()).packs;await mouseButton('Resource Packs...');
     await page.getByRole('option').first().click();await page.keyboard.press('Escape');
-    check('Pack selection Escape discards',(await state()).packs.length===0);
+    check('Pack selection Escape discards',JSON.stringify((await state()).packs)===JSON.stringify(originalPacks));
     await mouseButton('Resource Packs...');await page.getByRole('option').first().click();await mouseButton('Done');
-    check('Pack selection Done commits',(await state()).packs.length===1);
+    check('Pack selection Done commits',JSON.stringify((await state()).packs)!==JSON.stringify(originalPacks));
     await prepare('language');await page.locator('[data-language="fr_fr"]').click();await mouseButton('Done');
     check('Language commits mock only',(await state()).language==='fr_fr'&&await page.evaluate(()=>document.documentElement.lang==='en-US'));
     await prepare('video');await set('textureFiltering','None');check('Anisotropy disabled dependency',await page.locator('[data-setting="maxAnisotropyBit"] input').isDisabled());await set('textureFiltering','Anisotropic');check('Anisotropy enabled dependency',await page.locator('[data-setting="maxAnisotropyBit"] input').isEnabled());
     await prepare('online');await set('friendsList',false);check('Friends dependency',await page.locator('[data-setting="allowFriendRequests"]').isDisabled());
     await prepare('keybinds');const binding=page.locator('[data-binding]').first();const bindID=await binding.getAttribute('data-binding');await binding.click();await page.keyboard.press('K');check('Mock key capture',(await state()).bindings[bindID]==='K');
+    await prepare('video');const scroll=page.locator('.scroll').first();await scroll.hover();await page.mouse.wheel(0,500);await page.waitForTimeout(150);check('Wheel scrolls settings',await scroll.evaluate(n=>n.scrollTop)>0);
+    const scaleBefore=(await state()).gui;await page.keyboard.down('Control');await page.mouse.wheel(0,-100);await page.keyboard.up('Control');check('Ctrl-wheel changes mock, not viewport scale',(await state()).gui.scale===scaleBefore.scale);
+    await prepare('create','more');await mouseButton('Game Rules');const numeric=page.locator('#rule-list input').first();await numeric.fill('bad');check('Invalid rule blocks Done',await page.locator('#rules-done').isDisabled());await page.keyboard.press('Escape');await mouseButton('Game Rules');check('Canceled invalid rule clears error',await page.locator('#rules-done').isEnabled());await page.keyboard.press('Escape');
+    await prepare('create','world');await page.locator('[data-local="draft.type"]').click();await mouseButton('Customize');check('Superflat expected route',(await state()).screen==='flat');const layers=(await state()).draft.flat.length;await mouseButton('Remove Layer');await mouseButton('Cancel');check('Superflat Cancel discards',(await state()).draft.flat.length===layers);await mouseButton('Customize');await mouseButton('Remove Layer');await mouseButton('Done');check('Superflat Done commits',(await state()).draft.flat.length===layers-1);
+    await prepare('multiplayer');await mouseButton('Direct Connection');const address=page.locator('input').first();await address.fill('not valid/address');check('Invalid server address blocks Join',await page.locator('#direct-connect').isDisabled());await address.fill('play.example.invalid:25565');await mouseButton('Join Server');check('Server connection stops at mock endpoint',(await state()).screen==='message');await page.keyboard.press('Escape');await mouseButton('Cancel');
+    await prepare('editworld');const worldName=(await state()).worlds[0].name;await page.locator('input').first().fill('Session Edit');await mouseButton('Cancel');check('World name Cancel discards',(await state()).worlds[0].name===worldName);await prepare('editworld');await page.locator('input').first().fill('Session Edit');await mouseButton('Save');check('World name Save is session-only',(await state()).worlds[0].name==='Session Edit');
+    await prepare('language');await page.locator('input').first().fill('English');check('Language search filters sample list',await page.locator('[data-language]').count()<143&&await page.locator('[data-language]').count()>0);
     await prepare('quit');await mouseButton('Return to Title');check('Quit returns, process remains alive',(await state()).screen==='main');
-    await prepare('linkconfirm');await mouseButton('Open Link');check('External action is reversible endpoint',(await state()).screen==='message'&&browser.contexts().flatMap(c=>c.pages()).length===1);
+    await prepare('linkconfirm');await mouseButton('Open in Browser');check('External action is reversible endpoint',(await state()).screen==='message'&&browser.contexts().flatMap(c=>c.pages()).length===1);
     await prepare('creditstext');await page.waitForTimeout(200);check('Credits bundled and loaded offline',await page.locator('#credits-content .text').count()>100);
     const errors=(await state()).errors;check('No uncaught errors in all route actions',errors.length===0,errors);
     check('No remote resource requests',result.requests.every(url=>url.startsWith('file:')||url.startsWith('data:')),result.requests.filter(url=>!url.startsWith('file:')&&!url.startsWith('data:')));
