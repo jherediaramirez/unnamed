@@ -13,8 +13,10 @@ for(const a of assets){
   if(b.length!==a.bytes||crypto.createHash('sha1').update(b).digest('hex')!==a.sha1||!b.equals(c))throw Error(`Asset mismatch: ${a.path}`);
   checked++;
 }
-const source=fs.readFileSync(path.join(ref,'index.html'));
-if(crypto.createHash('sha256').update(source).digest('hex')!==JSON.parse(fs.readFileSync(path.join(root,'Reference/OriginalHashes.json'))).index)throw Error('Reference hash changed');
+const hashes=JSON.parse(fs.readFileSync(path.join(root,'Reference/OriginalHashes.json')));
+const sha256=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+if(sha256(path.join(ref,'index.html'))!==hashes.index)throw Error('Reference hash changed');
+if(sha256(path.join(root,'Docs/Unreal_Menu_Interface_Prompt.txt'))!==hashes.handoff)throw Error('Supplied menu prompt changed');
 const html=fs.readFileSync(path.join(root,'Content/Menu/Web/index.html'),'utf8');
 new vm.Script(html.match(/<script>([\s\S]*?)<\/script>/)[1]);
 console.log(`PASS: ${checked} original assets and working copies, unchanged reference hash, adapted JavaScript syntax.`);
