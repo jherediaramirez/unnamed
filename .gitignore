@@ -1,0 +1,11 @@
+Binaries/
+Intermediate/
+DerivedDataCache/
+Saved/
+Packages/
+.vs/
+*.sln
+*.suo
+Tests/node_modules/
+*.log
+*.pdb

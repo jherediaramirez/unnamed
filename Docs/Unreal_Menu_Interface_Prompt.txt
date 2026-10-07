@@ -1,0 +1,207 @@
+TASK: BUILD THE EXISTING MINECRAFT MENU INTERFACE IN UNREAL ENGINE
+Project folder: Unnamed Project
+Phase: Interface implementation and documentation only
+
+You are the development agent operating on my Windows computer. Create a new Unreal Engine project inside my existing development folder, in a new child folder named exactly "Unnamed Project". Implement the supplied Minecraft Java Edition 26.3 menu interface in Unreal. Complete the implementation, compile it, run it, inspect it, and document it. Do not stop after a plan or a single-screen mockup.
+
+We are working backward from a completed interface. First establish what every screen and control looks like and what each control is supposed to do. Actual game/engine functionality will be added later, one explicitly requested feature at a time, such as "implement Fullscreen." This task does not authorize those later features.
+
+1. RESOLVE THE LOCAL INPUTS
+
+DEV_ROOT = the existing development folder identified in this computer's current workspace/context.
+SOURCE_ROOT = the local Reference/minecraft-menu folder from the supplied Unnamed_Project_AI_Handoff.zip, or the extracted minecraft-java-menu-263.zip.
+
+Resolve and record both as absolute Windows paths. If either cannot be identified reliably, ask one focused question for the missing path. Do not guess a drive, create a replacement development root, or research/rebuild the source interface from scratch. Read any applicable AGENTS.md instructions in the authorized workspace.
+
+The source package contains:
+- index.html: complete embedded HTML, CSS, JavaScript, screen renderers, settings definitions, and navigation.
+- assets/: authentic distribution assets, converted browser fonts, translations, sprites, panorama, and audio.
+- README.md: run instructions, source links, and known differences.
+- reference-inventory.md: screen inventory, geometry, settings ranges and source evidence.
+- qa-report.md and qa-results.json: prior browser verification and its limits.
+- minecraft-main/options/video-1920.jpg and corresponding 1280 captures: comparison targets.
+- assets/asset-provenance.json: effective asset paths and hashes.
+
+Treat this local source package as the implementation reference. The published preview is supplemental: https://minecraft-java-menu-263.jrherediaramirez.chatgpt.site . It may require owner authentication; the task must not depend on accessing it.
+
+Our source uses plain HTML/CSS/JavaScript. There is no Tailwind dependency to translate. Do not introduce Tailwind, React, a Node build, a backend, or a new styling system just to host this existing interface.
+
+Native Windows screenshot parity with Minecraft has not been verified. The source was built using exact 26.3 assets, strings and inspected layout code. Preserve its verified structure and disclose its existing visual gaps; do not claim an independently proven pixel-perfect Minecraft replica.
+
+2. HARD SCOPE: PRESENTATION AND MOCK UI STATE
+
+Allowed:
+- Navigate between existing menu screens; implement Back, Done, Cancel, Escape and focus behavior.
+- Move sliders and update their displayed numbers/labels.
+- Cycle displayed settings; toggle checkboxes; edit text; switch tabs.
+- Scroll, search/filter and select entries; capture a key for display without rebinding engine input.
+- Maintain one shared in-memory mock state so the same setting remains consistent across screens.
+- Stage dialog changes; Done commits only to mock state and Cancel/Escape restores the previous mock state.
+- Reproduce native disabled states and purely UI dependencies, such as Hardcore's displayed difficulty/cheats constraints and graphics preset values.
+- Retain baseline panorama/splash animations and visual treatment as presentation.
+- Show reversible Minecraft-styled explanations for actions beyond this phase.
+
+Keep an immutable presentation-baseline configuration separate from MockSettings. Rendering must not accidentally consume changed mock graphics/audio/font values through an existing global refresh handler. Tests should distinguish a changed control label from an actual changed renderer/window/device setting.
+
+Do not connect menu controls to real functions. Specifically, do not:
+- Apply FOV to a camera or create a gameplay camera.
+- Change window/fullscreen mode, monitor resolution, display refresh rate, engine framerate, VSync, RHI, graphics quality, brightness, or render distance.
+- Apply volume/device settings, invoke narrator speech, or add real menu audio playback in this phase. Keep the audio assets and document future hooks.
+- Apply GUI Scale, blur, language, font or resource-pack settings from user controls to actual rendering in this phase; those controls show mock values. Automatic viewport-driven baseline layout scaling remains necessary for visual comparison.
+- Write user settings to disk/localStorage/SaveGame/config, modify game input mappings, open folders/URLs, or access the clipboard from menu controls.
+- Authenticate, subscribe, send telemetry, access accounts, ping/contact servers, connect multiplayer, or create/load/delete/optimize/backup real worlds.
+- Implement blocks, items, crafting, inventory gameplay, character systems, terrain, combat, networking, or a Minecraft engine.
+- Exit Unreal/the application when Quit Game is clicked. Use the supplied simulated exit screen and Return to Title.
+
+For example: FOV may display "Normal," "90," or "Quake Pro," but must have no camera effect. Fullscreen may display ON/OFF, but the application window must remain unchanged. Add Server can accept a draft and show a reversible endpoint or update an explicitly fictional in-memory list; it must never contact the entered address.
+
+Audit the existing JavaScript before reusing it. The browser prototype already contains real browser fullscreen, speech, audio, localStorage, external-link/clipboard and appearance handlers. In a WORKING COPY, remove or replace those effects with mock-only handlers. Do not simply embed the unmodified source and assume it meets this narrower phase. Preserve the supplied Reference copy unchanged.
+
+Normal editor asset creation, builds, packaging, test-launch window sizes and diagnostic log files are development work and are permitted. The restriction concerns functionality attached to user-facing menu controls. Do not add developer banners, debug counters or documentation text to the main menu.
+
+3. CREATE THE PROJECT AND VERIFY THE ENVIRONMENT
+
+Create DEV_ROOT/Unnamed Project without overwriting an existing project. If that exact folder already exists, inspect its identity and contents before continuing; preserve existing work and clarify a conflicting project identity.
+
+Use a valid identifier such as UnnamedProject for the .uproject, C++ module and build targets; the enclosing folder remains "Unnamed Project." Document the identifiers and dependencies that would need updating when we choose a final project name. Do not implement a rename now.
+
+Inspect the installed Unreal version/build, engine path, Windows SDK, compiler and available plugins. Prefer a suitable existing stable engine installation. Verify the toolchain against that exact engine's documentation and local UnrealBuildTool diagnostics. Do not upgrade the engine or hard-code a guessed latest version.
+
+Create a minimal desktop Windows C++ project with no Starter Content and an empty menu-host map. It should boot directly into the menu, with UI input and visible cursor, no playable pawn or template level. Create a local Git repository/checkpoint unless an existing repository already owns this new folder.
+
+If prerequisites are missing, identify the exact dependency. Use official installation sources within the computer agent's authorized permissions. Account sign-in/license acceptance or unavailable installation permissions are explicit blockers; do useful source preparation/documentation while awaiting the required user action. Never claim an editor launch or build you could not run.
+
+4. ENABLE USEFUL EDITOR AUTOMATION TOOLS
+
+Verify actual plugin identifiers in this installed engine before editing the .uproject. Enable only the tools the chosen approach needs:
+- Python Editor Script Plugin (typically PythonScriptPlugin): editor imports, asset setup and validation scripts.
+- Editor Scripting Utilities (typically EditorScriptingUtilities): supported editor asset operations.
+- Web Browser widget plugin (typically WebBrowserWidget): required if using the HTML approach.
+- Microsoft's Visual Studio Tools for Unreal Engine, Blueprint debugger tools/Test Adapter and the Unreal-side integration when available and useful.
+
+Python is an editor automation tool, not the packaged application's runtime logic. Do not assume every Blueprint/widget graph operation is exposed to Python; inspect the installed APIs and use a supported C++/editor approach when needed. Write rerunnable setup scripts that update existing assets rather than create duplicates.
+
+Remote Control API is optional only if the computer agent benefits from HTTP-based editor access. Keep it on localhost (127.0.0.1), activate it explicitly for development, and stop it when finished. It is not a runtime menu backend. Do not expose it to the LAN/Internet or enable automatic server startup unnecessarily.
+
+Widget Reflector is already built into the editor; it is not an AI plugin that needs installing. Enable Slate Insights only if native UI performance investigations justify it. Do not spend time installing arbitrary third-party "AI Unreal" or MCP plugins when official scripting and the available local tools can do the work. Record enabled tools, their purpose and successful capability checks.
+
+5. CHOOSE THE LOWEST-REWORK IMPLEMENTATION
+
+Preferred first approach: embed the adapted local HTML interface in a full-viewport Unreal Web Browser widget. Reuse its DOM controls, layouts, CSS, assets, animation and mock JavaScript navigation. Use a thin C++/UMG host for launching the view and collecting diagnostics. No engine settings/gameplay bridge is active in Phase 1.
+
+Before committing to this route, make a SMALL vertical slice: Main Menu -> Options -> Video Settings -> Back. Build and run this slice in both the editor and a packaged Win64 Development application EARLY. Probe local resource loading, fonts, CSS textures/blur, WebGL panorama, keyboard/mouse focus and JavaScript APIs used by the source, including gzip translation decoding if retained. A desktop browser pass does not prove the embedded runtime supports every feature.
+
+Bundle assets offline and configure proper cooked/staged resource access. Do not rely on the private website, a development HTTP server, absolute source-computer paths, or an Internet connection in the delivered application. If local fetch/file-origin restrictions occur, use a documented resource-loading strategy or adapt the working copy's data packaging. Do not casually weaken browser security. Keep an asset-path manifest and verify packaged assets, including on launch from a different working directory/path containing spaces.
+
+If a feature fails, reproduce it in a minimal probe and make a targeted compatibility change. If a confirmed blocker cannot be resolved with a small documented adaptation, record the evidence and move to native Unreal UI. Do not spend hours repeatedly guessing browser flags or installing alternative browser plugins.
+
+Native fallback: rebuild the controls with UMG plus C++, or Slate wrapped for the viewport where that gives reliable code-driven layouts. Reuse the source's assets, settings data, screen IDs, dimensions and navigation; do not redesign or recreate categories from memory. Convert browser fonts to an Unreal-supported font/bitmap rendering approach while preserving glyph metrics. Create reusable button, slider, list, tooltip and screen components before duplicating them across screens. Do not hand-edit binary .uasset files.
+
+Document the chosen route and the measured reasons. A hybrid is acceptable only if a narrowly scoped native presentation component resolves a confirmed issue without creating two competing navigation/state systems.
+
+6. PRESERVE THE INTERFACE
+
+Use the complete screen inventory and actual renderers in the supplied source. Cover every existing main-menu route, Options category, nested settings screen, Singleplayer/Create New World interface, Multiplayer/Add/Edit/Direct interface, Realms entry, Friends explanation, credits and reversible endpoints. These remain menu interfaces; no worlds or accounts are implemented.
+
+Do not replace distinct screens with a generic settings panel. Preserve labels, defaults, ranges/steps, section order, dimensions, spacing, sprites, states, titles, shadows, tooltips, scrollbars, footer text and sample-data styling.
+
+Comparison profiles, using the ACTUAL rendered client viewport rather than outer window dimensions:
+- 1920 x 1080: baseline Auto GUI scale 4, logical 480 x 270.
+- 1280 x 720: baseline Auto GUI scale 3, logical 427 x 240.
+
+Follow the source's integer scaling calculation. Avoid double scaling from UMG/Slate DPI and CSS; document the resulting browser render resolution or native widget scale. Keep GUI pixel art crisp while retaining the source's intended panorama filtering. Match the source's baseline English (US) appearance. User-facing GUI/font/blur settings remain mock values until separately implemented.
+
+The panorama and splash animation may run as presentation. For screenshot comparisons, use a developer-only deterministic panorama angle/splash phase or document masked moving regions. Do not ship a menu screenshot as a single background image with fake overlaid hit regions.
+
+7. KEEP FUTURE FUNCTIONALITY SEPARATE
+
+Maintain a data-driven control registry with stable screen/control IDs. Separate menu navigation, mock state and presentation from future engine services. Do not create a large game framework or implement real services preemptively.
+
+For EVERY visible control, document:
+- Screen, stable ID, exact label and widget type.
+- Default, range/step/choices, dependencies and disabled conditions.
+- Current mock interaction and Done/Cancel/Escape behavior.
+- What the Minecraft control is intended to do, grounded in the supplied source evidence.
+- Proposed Unreal integration point, or explicitly TBD when a Minecraft concept has no existing Unreal equivalent.
+- Later implementation scope, acceptance checks and unresolved questions.
+- Status: UI_ONLY, INTENTIONALLY_DISABLED, or DEFERRED. No real feature should be marked implemented.
+
+Keep the Minecraft meaning and a proposed Unreal implementation in separate fields. Do not assume chunk rendering, biome blend or graphics API settings already have matching Unreal functionality. FOV projection conventions also require investigation before real integration.
+
+Include an implementation backlog organized one control/feature at a time. The first illustrative future task is Fullscreen: preserve the visual control; later implement supported window modes through Unreal's user-settings/window APIs, verify actual resulting mode, document exclusive versus borderless behavior, and test failure/revert behavior. Do not execute that backlog in this phase.
+
+8. DEBUG WITH EVIDENCE AND SMALL LOOPS
+
+Use this sequence: reproduce -> collect the relevant evidence -> isolate the layer -> fix one cause -> run the targeted check -> repeat affected visual/navigation checks. Keep a short issue log with symptom, evidence, root cause, fix and verification. After two unsuccessful guesses, build a minimal reproducer and inspect the installed source/API instead of guessing again.
+
+Build with UnrealBuildTool and inspect UnrealHeaderTool/build output; a standalone C++ syntax check does not validate an Unreal module. Fix the first causal compiler error before cascading errors. Use a clean editor restart/full build for reflected-header/module changes when needed; do not rely on stale Hot Reload classes. Do not wipe all project caches/build outputs as the first troubleshooting step.
+
+For embedded HTML:
+- Check source JavaScript syntax, resource manifests and required local files before launching Unreal.
+- Collect browser load errors and UWebBrowser OnConsoleMessage output, with URL/line where available, into a dedicated development log category.
+- Distinguish browser compatibility/resource-origin problems from Unreal host/focus/packaging problems.
+- Add developer-only diagnostics for current screen, mock values, render size and missing assets; keep them outside the delivered menu appearance.
+- Widget Reflector can inspect the outer Unreal browser widget, not its internal DOM. Inspect the DOM with supported browser diagnostics rather than searching Slate for an HTML button.
+
+For native UI:
+- Use Widget Reflector to inspect widget hierarchy, focus, hit testing, clipping and scale.
+- Use breakpoints and structured logs for transitions/value updates; log on events rather than flooding every Tick.
+- Use Unreal Insights/Slate Insights only when a reproduced performance issue needs measurement.
+
+Use fast data/route tests for screen IDs, shared settings, staged edits and endpoint restrictions. Use Unreal-aware tests or repeatable UI smoke scripts where supported. Run headless checks for data/import/build tasks, then use an actual rendered application for visual/input verification. Do not treat -NullRHI or a successful compile as proof that the interface renders correctly.
+
+Editor Python commandlets do not automatically load a level; load required assets/maps explicitly. For scripts that require a fully loaded default level, use the documented full-editor ExecutePythonScript path. Record real command lines for this engine version rather than copying guessed ones.
+
+9. IMPLEMENT IN VERIFIED MILESTONES
+
+A. Inspect source and environment; create the blank project; compile and launch it.
+B. Adapt a working source copy to mock-only behavior; prove the three-screen vertical slice in a packaged application.
+C. Establish reusable styles, fonts/assets, scaling, mock state and screen navigation.
+D. Complete all remaining screens in the source inventory, in small route groups.
+E. Generate the complete control registry and future-feature backlog from actual implemented controls.
+F. Verify the two viewport profiles, all navigation, control states and absence of engine side effects; fix major differences.
+
+Commit/checkpoint after each working milestone. Continue through all milestones unless blocked by a specific missing prerequisite/reference. Give concise progress updates that identify what works, what is uncertain, and the next check. Do not add unrelated polish or gameplay.
+
+10. ACCEPTANCE AND DELIVERY
+
+Before calling the phase complete:
+- The new Unnamed Project exists under the verified DEV_ROOT and opens with the recorded engine.
+- A Win64 Development build succeeds and boots directly into the menu.
+- Every source screen is reachable through its expected route and returns correctly.
+- Buttons, slider labels, cycles, fields, selections, tabs, scrolling and disabled states behave as mock UI.
+- Shared values stay consistent; canceling staged dialogs discards changes.
+- FOV, Fullscreen, audio, graphics and other settings have no real effect; no user settings are persisted; no world/server/account actions occur; Quit never terminates the application.
+- Assets load offline in the packaged build; there are no uncaught JavaScript errors, Blueprint runtime errors or unresolved menu-module errors.
+- Capture Main Menu, Options and Video Settings at BOTH comparison profiles; compare with the supplied captures and record remaining differences. Use additional screen captures for any problem routes.
+- Record which checks actually ran, which passed/failed, and any blocked checks. Never invent screenshots, package success or tool access.
+
+Deliver the .uproject, complete source and assets, adapted UI files if embedded, rerunnable setup/build/package/smoke-test scripts, and the tested Development package when the environment permits it. Provide a short launch/build README and these documents under the project:
+Docs/Environment.md
+Docs/Architecture.md
+Docs/ScreenInventory.md
+Docs/ControlRegistry.md (or machine-readable JSON plus a readable report)
+Docs/FunctionalBacklog.md
+Docs/Verification.md
+Docs/KnownDifferences.md
+Docs/ProjectRenameNotes.md
+Tests/Captures/
+
+Keep the unchanged reference package under Reference/minecraft-menu/ inside the project, with the original source hashes recorded. Exclude generated caches, credentials and unrelated files from source control.
+
+Finish by reporting the exact project/package locations, chosen approach, engine/toolchain/plugin versions, completed routes, checks performed, remaining gaps and the next single feature that could be implemented. Stop at the completed interface phase. Wait for a new explicit instruction before enabling any real function.
+
+OFFICIAL TECHNICAL REFERENCES
+
+Use documentation matching the installed Unreal version and inspect local engine headers/API when an interface differs. These are starting references, not evidence of successful execution on this computer:
+- UMG and Slate: https://dev.epicgames.com/documentation/unreal-engine/creating-user-interfaces-with-umg-and-slate-in-unreal-engine
+- Web Browser widget/API: https://dev.epicgames.com/documentation/unreal-engine/API/Plugins/WebBrowserWidget/UWebBrowser
+- Browser object bindings (future integration only): https://dev.epicgames.com/documentation/unreal-engine/API/Runtime/WebBrowser/IWebBrowserWindow/BindUObject
+- Python editor scripting: https://dev.epicgames.com/documentation/en-us/unreal-engine/scripting-the-unreal-editor-using-python
+- Editor automation: https://dev.epicgames.com/documentation/en-us/unreal-engine/scripting-and-automating-the-unreal-editor
+- Remote Control: https://dev.epicgames.com/documentation/en-us/unreal-engine/remote-control-quick-start-for-unreal-engine
+- Widget Reflector: https://dev.epicgames.com/documentation/en-us/unreal-engine/using-the-slate-widget-reflector-in-unreal-engine
+- Slate Insights: https://dev.epicgames.com/documentation/en-us/unreal-engine/slate-insights-in-unreal-engine
+- C++ development environment: https://dev.epicgames.com/documentation/unreal-engine/setting-up-your-development-environment-for-cplusplus-in-unreal-engine
+- Visual Studio Unreal tools: https://learn.microsoft.com/en-us/visualstudio/gamedev/unreal/get-started/vs-tools-unreal-install
+- User settings API (future functionality only): https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Engine/UGameUserSettings
