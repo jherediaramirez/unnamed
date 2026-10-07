@@ -1,0 +1,9 @@
+Reference/** -text
+Docs/Unnamed_Project_AI_Handoff/Reference/** -text
+Content/Menu/Web/assets/** -text
+*.ps1 text eol=crlf
+*.cpp text eol=lf
+*.h text eol=lf
+*.cs text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf

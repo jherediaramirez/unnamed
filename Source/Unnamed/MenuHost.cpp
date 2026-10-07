@@ -41,11 +41,17 @@ void AMenuPlayerController::BeginPlay()
         .OnConsoleMessage_Lambda([](const FString& Message, const FString& Source, int32 Line, EWebBrowserConsoleLogSeverity Severity)
         {
             if (Severity == EWebBrowserConsoleLogSeverity::Error || Severity == EWebBrowserConsoleLogSeverity::Fatal)
+            {
                 UE_LOG(LogUnnamedMenu, Error, TEXT("%s:%d %s"), *Source, Line, *Message);
+            }
             else if (Severity == EWebBrowserConsoleLogSeverity::Warning)
+            {
                 UE_LOG(LogUnnamedMenu, Warning, TEXT("%s:%d %s"), *Source, Line, *Message);
+            }
             else
+            {
                 UE_LOG(LogUnnamedMenu, Log, TEXT("%s:%d %s"), *Source, Line, *Message);
+            }
         })
         .OnLoadError_Lambda([] { UE_LOG(LogUnnamedMenu, Error, TEXT("Offline menu document failed to load")); });
     GEngine->GameViewport->AddViewportWidgetContent(Browser.ToSharedRef(), 100);

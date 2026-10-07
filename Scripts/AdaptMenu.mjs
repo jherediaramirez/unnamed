@@ -45,6 +45,7 @@ replace('dt*2*state.settings.panoramaSpeed', 'dt*2*presentationBaseline.panorama
 replace('Math.min(30,state.settings.framerateLimit===260?60:state.settings.framerateLimit)', 'presentationBaseline.panoramaFPS');
 replace("if(current.name!=='quit'&&!document.hidden)spin=", "if(frozenFrame!==null){spin=frozenFrame.angle;t=frozenFrame.phase;lastDraw=-1000}if(frozenFrame===null&&current.name!=='quit'&&!document.hidden)spin=");
 replace("fetch('assets/minecraft/texts/credits.json').then(r=>{if(!r.ok)throw Error('Credits unavailable');return r.json()})", 'Promise.resolve(BUNDLED_CREDITS)');
+replace("im.src=A+'title/background/panorama_'+i+'.png'", 'im.src=PANORAMA_FACES[i]');
 replace("draft.experiments=clone(experimentsEdit);back()", "draft.experiments=clone(experimentsEdit);commitStage();back()");
 replace("draft.rules=clone(rulesEdit);back()", "draft.rules=clone(rulesEdit);commitStage();back()");
 replace("draft.flatBiome=flatBiomeEdit;back()", "draft.flatBiome=flatBiomeEdit;commitStage();back()");
@@ -61,7 +62,8 @@ replace("<audio id=\"menu-music\" preload=\"none\" aria-hidden=\"true\"></audio>
 replace('<meta charset="UTF-8">', `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data:; font-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; media-src 'none'; form-action 'none'; frame-src 'none'; base-uri 'none'"><meta charset="UTF-8">`);
 const runtime = fs.readFileSync(path.join(root, 'Scripts/MenuMockRuntime.js'), 'utf8');
 const credits = JSON.parse(fs.readFileSync(path.join(reference, 'assets/minecraft/texts/credits.json'), 'utf8'));
-change('window.MenuPrototype=', `const BUNDLED_CREDITS=${JSON.stringify(credits)};\n${runtime}`);
+const panorama = Array.from({length:6},(_,i)=>'data:image/png;base64,'+fs.readFileSync(path.join(reference,`assets/minecraft/textures/gui/title/background/panorama_${i}.png`)).toString('base64'));
+change('window.MenuPrototype=', `const BUNDLED_CREDITS=${JSON.stringify(credits)};\nconst PANORAMA_FACES=${JSON.stringify(panorama)};\n${runtime}`);
 change('resize();loadPanorama();', 'resize();loadPanorama();requestAnimationFrame(animate);');
 const output = lines.join('\n');
 new vm.Script(output.match(/<script>([\s\S]*?)<\/script>/)[1], {filename:'adapted-menu.js'});

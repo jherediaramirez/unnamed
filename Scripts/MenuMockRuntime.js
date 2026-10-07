@@ -34,7 +34,7 @@ function annotateControls(){
     const parentRow=node.closest('[role=option]');
     let key=settingID||node.dataset.binding||node.dataset.local||node.dataset.language||node.dataset.world||node.dataset.server||node.dataset.preset||node.id||rule?.id;
     if(!key&&node.getAttribute('role')==='option')key=node.textContent.trim().split('\n')[0];
-    if(!key)key=(parentRow?.textContent.trim().split('\n')[0]||'')+'.'+(node.getAttribute('aria-label')||node.textContent.trim()||node.type||'control')+'.'+ordinal;
+    if(!key)key=(parentRow?.textContent.trim().split('\n')[0]||'')+'.'+(node.getAttribute('aria-label')||node.textContent.trim()||node.type||'control');
     key=String(key).replace(/[^a-zA-Z0-9_.-]/g,'_');
     const repeated=counts.get(key)||0;counts.set(key,repeated+1);
     node.dataset.controlId=[current.name,variant,key,repeated||''].filter(Boolean).join('.');
