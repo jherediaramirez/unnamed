@@ -14,7 +14,7 @@ The four original commits contained an unused Android File Server debugging toke
 The unused Android file server and network access are disabled in current config, with an explicit empty token. Unreal only auto-generates that token for `[AUTO]`, so an empty value does not regenerate it. Windows menu behavior is unchanged. Enabling Android development later requires a separate credential/setup decision.
 
 Recovery backup: `C:\dev\backups\Unnamed\github-setup-20261007-112245`.
-It contains the original `.git`, `OriginalLocalHistory.bundle`, a hash-verified file snapshot, and `PreservationManifest.json`. It deliberately retains private historical data: keep it local and never upload it. Builds/packages remain in their existing local locations and are not copied to GitHub.
+It contains the original `.git`, `OriginalLocalHistory.bundle`, a hash-verified file snapshot, and `PreservationManifest.json`. `PreSanitizationCheckpoint.bundle` additionally preserves today's complete checkpoint before history cleanup; `SanitizedCommitMap.txt` maps the old and new commit IDs. It deliberately retains private historical data: keep it local and never upload it. Builds/packages remain in their existing local locations and are not copied to GitHub.
 
 ## Future Checkpoints
 
@@ -47,6 +47,14 @@ The file-byte policy disables automatic line-ending conversion so the accepted s
 
 The credential check catches the Android token and common GitHub/OpenAI/AWS/Google/private-key patterns. It is a focused safeguard, not an exhaustive security audit; compressed/encrypted archives need separate inspection. Hooks are local configuration and do not install themselves on another clone. Saves and packaged executables need a separate backup if desired.
 
-Setup acceptance is recorded below after remote readback verification.
+## Completed Checks
+
+- GitHub authentication completed as `jherediaramirez`. Repository is private, default branch is `main`, and the local branch tracks `origin/main`.
+- First uploaded sanitized checkpoint: `b4fdae5ac71df96a926aa97d1c713d67f0492310`. The latest tree was identical before and after history cleanup. Only sanitized `main` was uploaded; no force-push or working-file reset was used.
+- Fresh authenticated clone at `C:\dev\backups\Unnamed\github-setup-20261007-112245\GitHubReadback`: all 3,157 tracked files restored byte-for-byte, including the LFS map. Generated builds, personal saves, and dependencies were absent.
+- Six repository-safety tests, all 25 existing menu unit tests, and the 938-asset/reference/syntax check passed. Commit and push hooks executed successfully. Reachable-history scan passed with zero findings; an exact-value check also found no original credential across all 1,245 reachable objects. The preserved review ZIP's 111 entries were separately checked for the original token.
+- Preservation comparison: 3,147 existing project files unchanged, with five approved existing-file edits for config/repository policy/documentation. One live editor `Saved` configuration changed while Unreal was open; it was retained, not restored over. Original settings remain in the recovery snapshot.
+
+Machine-readable restore and preservation evidence remains local in `GitHubRestoreVerification.json` and `SetupPreservationResults.json` inside the recovery folder. This is repository/restore acceptance, not a new native build, Shipping test, or gameplay acceptance run. The earlier menu runtime evidence and its known gaps are unchanged.
 
 References: [GitHub sensitive-data guidance](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository), [git-filter-repo](https://github.com/newren/git-filter-repo).
