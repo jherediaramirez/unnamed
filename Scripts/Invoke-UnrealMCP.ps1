@@ -65,7 +65,12 @@ try {
 finally {
     if ($sessionId) {
         # MCP servers may decline explicit session termination.
-        $null = Invoke-WebRequest -Uri $Endpoint -Method Delete -Headers $headers `
-            -TimeoutSec $TimeoutSeconds -SkipHttpErrorCheck
+        try {
+            $null = Invoke-WebRequest -Uri $Endpoint -Method Delete -Headers $headers `
+                -TimeoutSec $TimeoutSeconds -SkipHttpErrorCheck
+        }
+        catch {
+            # Closing an editor can also close the transport before session cleanup.
+        }
     }
 }

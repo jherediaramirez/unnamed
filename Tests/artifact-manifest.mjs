@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const packageRoot=path.join(root,'Packages/MenuDevelopment/Windows');
+const digest=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?(e.name==='Saved'?[]:walk(path.join(dir,e.name))):[path.join(dir,e.name)]);
+const files=walk(packageRoot).map(p=>({path:path.relative(packageRoot,p).replaceAll('\\','/'),bytes:fs.statSync(p).size,sha256:digest(p)}));
+const working=path.join(root,'Content/Menu/Web/index.html');
+if(digest(working)!==digest(path.join(packageRoot,'Unnamed/Content/Menu/Web/index.html')))throw Error('Staged HTML differs from working source');
+const log=fs.readFileSync(path.join(root,'Saved/MenuBuild-Final.log'),'utf8');
+if(!log.includes('BUILD SUCCESSFUL')||!log.includes('ExitCode=0 (Success)'))throw Error('No successful final packaging evidence');
+const runs=fs.readdirSync(path.join(root,'Tests/Captures'),{withFileTypes:true}).filter(e=>e.isDirectory()).flatMap(e=>{
+  const p=path.join(root,'Tests/Captures',e.name,'results.json');if(!fs.existsSync(p))return [];
+  const r=JSON.parse(fs.readFileSync(p));return [{run:e.name,passed:r.checks.filter(c=>c.pass).length,total:r.checks.length,finished:r.finished||null}];
+});
+const report={generated:new Date().toISOString(),engine:'5.8.3 CL 58210709',configuration:'Win64 Development',packageRoot,uiSHA256:digest(working),buildLogSHA256:digest(path.join(root,'Saved/MenuBuild-Final.log')),runs,files};
+fs.writeFileSync(path.join(root,'Tests/ArtifactManifest.json'),JSON.stringify(report,null,2)+'\n');
+console.log(`Verified ${files.length} package files; ${files.reduce((n,f)=>n+f.bytes,0)} bytes. HTML matches source; final UAT succeeded.`);

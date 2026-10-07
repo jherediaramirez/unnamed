@@ -2,7 +2,7 @@
 
 Generated from rendered controls in the packaged browser, plus the supplied structured definitions. No real feature is marked implemented. `ControlRegistry.json` contains defaults, ranges, dependencies, transactions, source meaning, proposed integration, later acceptance and unresolved questions for every entry.
 
-Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic selected-pack controls are included in the supplemental observations.
+Observed 706 distinct controls across 36 source routes and Create tabs. Dynamic selected-pack controls are included in the supplemental observations.
 
 | Screen | Stable ID | Exact observed label | Widget | Default | Status |
 |---|---|---|---|---|---|
@@ -59,7 +59,7 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | video | video.vignette | Show Vignette: ON | button | true | UI_ONLY |
 | video | video.attackIndicator | Attack Indicator: Crosshair | button | "Crosshair" | UI_ONLY |
 | video | video.chunkSectionFadeInTime | Chunk Fade Time | range | 0.75 | UI_ONLY |
-| video | video..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| video | video..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | video | video..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | sounds | sounds.sound_master | Master Volume | range | 1 | UI_ONLY |
 | sounds | sounds.sound_music | Music | range | 1 | UI_ONLY |
@@ -77,7 +77,7 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | sounds | sounds.directionalAudio | Directional Audio: OFF | button | false | UI_ONLY |
 | sounds | sounds.musicFrequency | Music Frequency: Default | button | "Default" | UI_ONLY |
 | sounds | sounds.musicToast | Music Toast: Never | button | "Never" | UI_ONLY |
-| sounds | sounds..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| sounds | sounds..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | sounds | sounds..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | controls | controls..Mouse_Settings... | Mouse Settings... | button | "Not applicable (command)" | UI_ONLY |
 | controls | controls..Key_Binds... | Key Binds... | button | "Not applicable (command)" | UI_ONLY |
@@ -89,7 +89,7 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | controls | controls.sprintWindow | Sprint Window | range | 7 | UI_ONLY |
 | controls | controls.quitShortcuts | Quit Shortcuts: ON | button | true | UI_ONLY |
 | controls | controls.operatorItemsTab | Operator Items Tab: OFF | button | false | UI_ONLY |
-| controls | controls..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| controls | controls..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | controls | controls..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | accessibility | accessibility.narrator | Narrator: OFF | button | "OFF" | UI_ONLY |
 | accessibility | accessibility..Controls... | Controls... | button | "Not applicable (command)" | UI_ONLY |
@@ -116,7 +116,7 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | accessibility | accessibility.narratorHotkey | Narrator Hotkey: ON | button | true | UI_ONLY |
 | accessibility | accessibility.rotateWithMinecart | Rotate with Minecarts: OFF | button | false | INTENTIONALLY_DISABLED |
 | accessibility | accessibility.highContrastBlockOutline | High Contrast Block Outlines: OFF | button | false | UI_ONLY |
-| accessibility | accessibility..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| accessibility | accessibility..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | accessibility | accessibility..Accessibility_Guide | Accessibility Guide | button | "Not applicable (command)" | UI_ONLY |
 | accessibility | accessibility..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | online | online.friendsList | Friends List: OFF | button | false | UI_ONLY |
@@ -126,7 +126,7 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | online | online..Xbox_Settings... | Xbox Settings... | button | "Not applicable (command)" | UI_ONLY |
 | online | online.allowServerListing | Allow Server Listings: ON | button | true | UI_ONLY |
 | online | online.realmsNotifications | News & Invites: ON | button | true | UI_ONLY |
-| online | online..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| online | online..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | online | online..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | language | language..Language | Language | text | "" | UI_ONLY |
 | language | language.af_za | Afrikaans (Suid-Afrika) | option | "false" | UI_ONLY |
@@ -272,7 +272,7 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | language | language.zh_hk | 繁體中文 (香港特別行政區) | option | "false" | UI_ONLY |
 | language | language.zh_tw | 繁體中文 (台灣) | option | "false" | UI_ONLY |
 | language | language.zlm_arab | بهاس ملايو (مليسيا) | option | "false" | UI_ONLY |
-| language | language..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| language | language..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | language | language..Font_Settings... | Font Settings... | button | "Not applicable (command)" | UI_ONLY |
 | language | language..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | keybinds | keybinds.key.jump | Space | button | "Space" | UI_ONLY |
@@ -399,13 +399,13 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | keybinds | keybinds..Reset.60 | Reset | button | "Not applicable (command)" | UI_ONLY |
 | keybinds | keybinds.key.debug.lightmapTexture | 4 | button | "4" | UI_ONLY |
 | keybinds | keybinds..Reset.61 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| keybinds | keybinds..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | keybinds | keybinds..Reset_Keys | Reset Keys | button | "Not applicable (command)" | UI_ONLY |
 | keybinds | keybinds..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | worlds | worlds..search_for_worlds | search for worlds | text | "" | UI_ONLY |
-| worlds | worlds.fictional-forest | Fictional Forest Camp | option | "false" | UI_ONLY |
-| worlds | worlds.fictional-build | Fictional Creative Workshop | option | "false" | UI_ONLY |
-| worlds | worlds..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| worlds | worlds.fictional-forest | Fictional Forest Camp | option | false | UI_ONLY |
+| worlds | worlds.fictional-build | Fictional Creative Workshop | option | false | UI_ONLY |
+| worlds | worlds..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | worlds | worlds..Play_Selected_World | Play Selected World | button | "Not applicable (command)" | UI_ONLY |
 | worlds | worlds..Create_New_World | Create New World | button | "Not applicable (command)" | UI_ONLY |
 | worlds | worlds..Edit | Edit | button | "Not applicable (command)" | UI_ONLY |
@@ -450,8 +450,8 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | safety | safety..Do_not_show_this_screen_again | Do not show this screen again | checkbox | false | UI_ONLY |
 | safety | safety..Proceed | Proceed | button | "Not applicable (command)" | UI_ONLY |
 | safety | safety..Back | Back | button | "Not applicable (command)" | UI_ONLY |
-| multiplayer | multiplayer.fictional-example | Fictional Example Server | option | "true" | UI_ONLY |
-| multiplayer | multiplayer..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| multiplayer | multiplayer.fictional-example | Fictional Example Server | option | false | UI_ONLY |
+| multiplayer | multiplayer..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | multiplayer | multiplayer..Join_Server | Join Server | button | "Not applicable (command)" | UI_ONLY |
 | multiplayer | multiplayer..Direct_Connection | Direct Connection | button | "Not applicable (command)" | UI_ONLY |
 | multiplayer | multiplayer..Add_Server | Add Server | button | "Not applicable (command)" | UI_ONLY |
@@ -470,15 +470,15 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | realms | realms..Join_Realm | Join Realm | button | "Not applicable (command)" | UI_ONLY |
 | realms | realms..Pending_Invites | Pending Invites | button | "Not applicable (command)" | UI_ONLY |
 | realms | realms..Realms_news | Realms news | button | "Not applicable (command)" | UI_ONLY |
-| realms | realms..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| realms | realms..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | realms | realms..Add_Realm | Add Realm | button | "Not applicable (command)" | UI_ONLY |
 | realms | realms..Back | Back | button | "Not applicable (command)" | UI_ONLY |
 | realmjoin | realmjoin..Join_Code | Join Code | text | "" | UI_ONLY |
 | realmjoin | realmjoin.realm-join | Join Realm | button | "Not applicable (command)" | UI_ONLY |
 | realmjoin | realmjoin..Back | Back | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft | Programmer ArtThe classic look of Minecraft | option | null | UI_ONLY |
+| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft | Programmer ArtThe classic look of Minecraft | option | false | UI_ONLY |
 | packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Select_Programmer_Art | Select Programmer Art | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft | High ContrastEnhances the UI contrast of Minecraft | option | null | UI_ONLY |
+| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft | High ContrastEnhances the UI contrast of Minecraft | option | false | UI_ONLY |
 | packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_to_Available | Move High Contrast to Available | button | "Not applicable (command)" | UI_ONLY |
 | packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_up | Move High Contrast up | button | "Not applicable (command)" | UI_ONLY |
 | packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_down | Move High Contrast down | button | "Not applicable (command)" | UI_ONLY |
@@ -489,7 +489,7 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | experiments | experiments.switch.Minecart_Improvements | OFF | button | "Not applicable (command)" | UI_ONLY |
 | experiments | experiments.switch.Redstone_Experiments | OFF | button | "Not applicable (command)" | UI_ONLY |
 | experiments | experiments.switch.Villager_Trade_Rebalance | OFF | button | "Not applicable (command)" | UI_ONLY |
-| experiments | experiments..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| experiments | experiments..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | experiments | experiments..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | rules | rules..Search... | Search... | text | "" | UI_ONLY |
 | rules | rules.rule.command_block_output | ON | button | true | UI_ONLY |
@@ -551,28 +551,28 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | rules | rules.random_tick_speed | Random tick speed rate | text | 3 | UI_ONLY |
 | rules | rules.rule.spread_vines | ON | button | true | UI_ONLY |
 | rules | rules.rule.water_source_conversion | ON | button | true | UI_ONLY |
-| rules | rules..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| rules | rules..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | rules | rules.rules-done | Done | button | "Not applicable (command)" | UI_ONLY |
 | rules | rules..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
 | flat | flat.Grass_Block1 | Grass Block1 | option | null | UI_ONLY |
 | flat | flat.Dirt2 | Dirt2 | option | null | UI_ONLY |
 | flat | flat.Bedrock1 | Bedrock1 | option | null | UI_ONLY |
-| flat | flat..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| flat | flat..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | flat | flat..Remove_Layer | Remove Layer | button | "Not applicable (command)" | UI_ONLY |
 | flat | flat..Presets | Presets | button | "Not applicable (command)" | UI_ONLY |
 | flat | flat..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | flat | flat..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
 | presets | presets..Want_to_share_your_preset_with_someone__Use_the_box_below_ | Want to share your preset with someone? Use the box below! | text | "minecraft:bedrock,2*minecraft:dirt,minecraft:grass_block;minecraft:plains" | UI_ONLY |
-| presets | presets.classic_flat | Classic Flat | option | "false" | UI_ONLY |
-| presets | presets.tunnelers_dream | Tunnelers' Dream | option | "false" | UI_ONLY |
-| presets | presets.water_world | Water World | option | "false" | UI_ONLY |
-| presets | presets.overworld | Overworld | option | "false" | UI_ONLY |
-| presets | presets.snowy_kingdom | Snowy Kingdom | option | "false" | UI_ONLY |
-| presets | presets.bottomless_pit | Bottomless Pit | option | "false" | UI_ONLY |
-| presets | presets.desert | Desert | option | "false" | UI_ONLY |
-| presets | presets.redstone_ready | Redstone Ready | option | "false" | UI_ONLY |
-| presets | presets.the_void | The Void | option | "false" | UI_ONLY |
-| presets | presets..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| presets | presets.classic_flat | Classic Flat | option | false | UI_ONLY |
+| presets | presets.tunnelers_dream | Tunnelers' Dream | option | false | UI_ONLY |
+| presets | presets.water_world | Water World | option | false | UI_ONLY |
+| presets | presets.overworld | Overworld | option | false | UI_ONLY |
+| presets | presets.snowy_kingdom | Snowy Kingdom | option | false | UI_ONLY |
+| presets | presets.bottomless_pit | Bottomless Pit | option | false | UI_ONLY |
+| presets | presets.desert | Desert | option | false | UI_ONLY |
+| presets | presets.redstone_ready | Redstone Ready | option | false | UI_ONLY |
+| presets | presets.the_void | The Void | option | false | UI_ONLY |
+| presets | presets..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | presets | presets..Use_Preset | Use Preset | button | "Not applicable (command)" | UI_ONLY |
 | presets | presets..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
 | biomes | biomes..Search... | Search... | text | "" | UI_ONLY |
@@ -643,7 +643,7 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | biomes | biomes.Windswept_Hills | Windswept Hills | option | "false" | UI_ONLY |
 | biomes | biomes.Windswept_Savanna | Windswept Savanna | option | "false" | UI_ONLY |
 | biomes | biomes.Wooded_Badlands | Wooded Badlands | option | "false" | UI_ONLY |
-| biomes | biomes..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| biomes | biomes..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | biomes | biomes..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | biomes | biomes..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
 | credits | credits..Credits | Credits | button | "Not applicable (command)" | UI_ONLY |
@@ -652,7 +652,7 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | credits | credits..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | telemetry | telemetry..Privacy_Statement | Privacy Statement | button | "Not applicable (command)" | UI_ONLY |
 | telemetry | telemetry..Give_Feedback | Give Feedback | button | "Not applicable (command)" | UI_ONLY |
-| telemetry | telemetry..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| telemetry | telemetry..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | telemetry | telemetry..I_consent_to_sending_optional_telemetry_data | I consent to sending optional telemetry data | checkbox | false | UI_ONLY |
 | telemetry | telemetry..View_My_Data | View My Data | button | "Not applicable (command)" | UI_ONLY |
 | telemetry | telemetry..Done | Done | button | "Not applicable (command)" | UI_ONLY |
@@ -671,7 +671,7 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | skin | skin.skin_right_pants_leg | Right Pant Leg: ON | button | true | UI_ONLY |
 | skin | skin.skin_hat | Hat: ON | button | true | UI_ONLY |
 | skin | skin.mainHand | Main Hand: Right | button | "Right" | UI_ONLY |
-| skin | skin..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| skin | skin..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | skin | skin..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | chat | chat.chatVisibility | Chat: Shown | button | "Shown" | UI_ONLY |
 | chat | chat.chatColors | Colors: ON | button | true | UI_ONLY |
@@ -691,7 +691,7 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | chat | chat.reducedDebugInfo | Reduced Debug Info: OFF | button | false | UI_ONLY |
 | chat | chat.onlyShowSecureChat | Only Show Secure Chat: OFF | button | false | UI_ONLY |
 | chat | chat.saveChatDrafts | Save Unsent Chats: OFF | button | false | UI_ONLY |
-| chat | chat..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| chat | chat..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | chat | chat..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | mouse | mouse.sensitivity | Sensitivity | range | 0.5 | UI_ONLY |
 | mouse | mouse.mouseWheelSensitivity | Scroll Sensitivity | range | 0 | UI_ONLY |
@@ -699,12 +699,16 @@ Observed 702 distinct controls across 36 source routes and Create tabs. Dynamic 
 | mouse | mouse.invertXMouse | Invert Mouse X: OFF | button | false | UI_ONLY |
 | mouse | mouse.invertYMouse | Invert Mouse Y: OFF | button | false | UI_ONLY |
 | mouse | mouse.allowCursorChanges | Allow Cursor Changes: ON | button | true | UI_ONLY |
-| mouse | mouse..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| mouse | mouse..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | mouse | mouse..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | font | font.forceUnicodeFont | Force Unicode Font: OFF | button | false | UI_ONLY |
 | font | font.japaneseGlyphVariants | Japanese Glyph Variants: OFF | button | false | UI_ONLY |
-| font | font..Scroll | Scroll | scrollbar | "Not applicable (command)" | UI_ONLY |
+| font | font..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | font | font..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| confirm | confirm..Delete | Delete | button | "Not applicable (command)" | UI_ONLY |
+| message | message..Restore_Entry | Restore Entry | button | "Not applicable (command)" | UI_ONLY |
+| confirm | confirm..Turn_ON | Turn ON | button | "Not applicable (command)" | UI_ONLY |
+| confirm | confirm..Turn_OFF | Turn OFF | button | "Not applicable (command)" | UI_ONLY |
 | packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_to_Available | Move Programmer Art to Available | button | "Not applicable (command)" | UI_ONLY |
 | packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_up | Move Programmer Art up | button | "Not applicable (command)" | UI_ONLY |
 | packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_down | Move Programmer Art down | button | "Not applicable (command)" | UI_ONLY |

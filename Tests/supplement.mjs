@@ -18,6 +18,25 @@ try{
   check('World actions disabled before selection',await page.getByRole('button',{name:'Play Selected World',exact:true}).isDisabled());
   controls.push(...await page.evaluate(()=>MenuPrototype.controls()));
   await page.getByRole('option').first().click();check('World selection enables actions',await page.getByRole('button',{name:'Play Selected World',exact:true}).isEnabled());
+  await page.getByRole('button',{name:'Delete',exact:true}).click();
+  controls.push(...await page.evaluate(()=>MenuPrototype.controls().map(c=>({...c,context:'World deletion confirmation'}))));
+  await page.getByRole('button',{name:'Delete',exact:true}).click();
+  controls.push(...await page.evaluate(()=>MenuPrototype.controls().map(c=>({...c,context:'World sample removal and restore endpoint'}))));
+  check('Sample deletion is memory only',await page.evaluate(()=>MenuPrototype.getState().worlds.length===1));
+  await page.getByRole('button',{name:'Restore Entry',exact:true}).click();
+  check('Sample world restore reverses deletion',await page.evaluate(()=>MenuPrototype.getState().worlds.length===2));
+  await page.evaluate(()=>MenuPrototype.prepare('multiplayer'));
+  await page.getByRole('button',{name:'Delete',exact:true}).click();
+  controls.push(...await page.evaluate(()=>MenuPrototype.controls().map(c=>({...c,context:'Server deletion confirmation'}))));
+  await page.getByRole('button',{name:'Delete',exact:true}).click();
+  controls.push(...await page.evaluate(()=>MenuPrototype.controls().map(c=>({...c,context:'Server sample removal and restore endpoint'}))));
+  check('Sample server delete is memory only',await page.evaluate(()=>MenuPrototype.getState().servers.length===0));
+  await page.getByRole('button',{name:'Restore Entry',exact:true}).click();
+  check('Sample server restore reverses deletion',await page.evaluate(()=>MenuPrototype.getState().servers.length===1));
+  await page.evaluate(()=>MenuPrototype.prepare('online'));await page.locator('[data-setting=friendsList]').click();
+  controls.push(...await page.evaluate(()=>MenuPrototype.controls().map(c=>({...c,context:'Friends enablement confirmation'}))));
+  await page.getByRole('button').last().click();
+  check('Friends confirmation Cancel leaves mock off',await page.evaluate(()=>!MenuPrototype.getState().settings.friendsList));
   await page.evaluate(()=>MenuPrototype.prepare('packs'));
   await page.getByRole('option').first().click();await page.getByRole('option').first().click();
   controls.push(...await page.evaluate(()=>MenuPrototype.controls()));
@@ -28,9 +47,23 @@ try{
   await page.evaluate(()=>MenuPrototype.setSetting('menuBackgroundBlurriness',0));
   await page.evaluate(()=>MenuPrototype.prepare('video'));
   check('Shared blur value appears in Video',await page.locator('[data-setting=menuBackgroundBlurriness] input').inputValue()==='0');
+  await page.evaluate(()=>MenuPrototype.prepare('create','world'));
+  for(let i=0;i<4;i++)await page.locator('[data-local="draft.type"]').click();
+  await page.getByRole('button',{name:'Customize',exact:true}).click();
+  check('Single Biome expected route',await page.evaluate(()=>MenuPrototype.getState().screen==='biomes'));
+  await page.getByRole('option').nth(2).click();await page.getByRole('button',{name:'Done',exact:true}).click();
+  check('Biome Done commits mock',await page.evaluate(()=>MenuPrototype.getState().draft.biome!=='minecraft:plains'));
+  await page.evaluate(()=>MenuPrototype.prepare('realmjoin'));await page.locator('input').fill('fictional-only');
+  await page.locator('#realm-join').click();check('Realm join stops before any account action',await page.evaluate(()=>MenuPrototype.getState().screen==='message'));
   const dimensions=await page.evaluate(()=>[innerWidth,innerHeight]);
   await page.keyboard.press('F11');await page.evaluate(()=>MenuPrototype.setSetting('enableVsync',false));await page.evaluate(()=>MenuPrototype.setSetting('framerateLimit',10));await page.evaluate(()=>MenuPrototype.setSetting('fov',110));
   check('Window viewport unchanged by settings',JSON.stringify(dimensions)===JSON.stringify(await page.evaluate(()=>[innerWidth,innerHeight])));
+  const dynamicScale=await page.evaluate(()=>{
+    const w=Object.getOwnPropertyDescriptor(window,'innerWidth'),h=Object.getOwnPropertyDescriptor(window,'innerHeight');
+    try{Object.defineProperty(window,'innerWidth',{value:3840,configurable:true});Object.defineProperty(window,'innerHeight',{value:2160,configurable:true});MenuPrototype.setSetting('guiScale',6);return MenuPrototype.getState().settings.guiScale===6}
+    finally{Object.defineProperty(window,'innerWidth',w);Object.defineProperty(window,'innerHeight',h)}
+  });
+  check('GUI mock range follows computed maximum (synthetic dimension unit check)',dynamicScale);
   await page.reload();await page.waitForFunction(()=>window.MenuPrototype?.getState().assets.panoramaLoaded);
   check('Engine GameUserSettings file unchanged',before===hash(),{before,after:hash()});
   check('Resource images intact',await page.evaluate(()=>[...document.images].every(i=>i.complete&&i.naturalWidth>0)));

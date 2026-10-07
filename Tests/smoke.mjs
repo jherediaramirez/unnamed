@@ -11,11 +11,15 @@ const profile=args.find(x=>x.startsWith('--profile='))?.split('=')[1]||'1920x108
 const slice=args.includes('--slice');
 const skipActions=args.includes('--skip-actions');
 const [width,height]=profile.split('x').map(Number);
-const out=path.join(root,'Tests/Captures',mode+'-'+profile+(slice?'-slice':''));
+const out=path.join(root,'Tests/Captures',mode+'-'+profile+(slice?'-slice':skipActions?'-targeted':''));
 fs.mkdirSync(out,{recursive:true});
 const result={mode,profile,started:new Date().toISOString(),checks:[],console:[],requests:[],routes:[],controls:[],edges:[]};
 const check=(name,actual,detail)=>{result.checks.push({name,pass:!!actual,detail});if(!actual)console.error('FAIL '+name,detail);else console.log('PASS '+name)};
-const browser=await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
+async function connect(){
+  const until=Date.now()+30000;
+  for(;;){try{return await chromium.connectOverCDP(`http://127.0.0.1:${port}`)}catch(e){if(Date.now()>until)throw e;await new Promise(resolve=>setTimeout(resolve,1000))}}
+}
+const browser=await connect();
 try{
   const page=browser.contexts().flatMap(c=>c.pages()).find(p=>p.url().includes('/Menu/Web/index.html'));
   if(!page)throw Error('No Unreal menu browser target');
