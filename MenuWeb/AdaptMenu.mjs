@@ -174,7 +174,7 @@ replace("else void MenuPreferences.commit({packs:clone(packDraft)},()=>{applyApp
 replace("text(tr('options.languageAccuracyWarning'),", "text('Language choice is remembered; translations are planned.',");
 replace("text(tr('pack.dropInfo'),", "text(data?tr('pack.dropInfo'):'Pack order is remembered; appearance changes are planned.',");
 const runtime = 'const PREFERENCE_SCHEMA=' + JSON.stringify(preferences) + ';\n' +
-  ['MenuBridgeRuntime.js', 'MenuMockRuntime.js', 'MenuDialogRuntime.js', 'MenuVideoRuntime.js', 'MenuInputRuntime.js', 'MenuPreferencesRuntime.js', 'MenuWorldsRuntime.js', 'MenuApplicationRuntime.js', 'FoundationMenuRuntime.js'].map(file => fs.readFileSync(path.join(root, 'Scripts', file), 'utf8')).join('\n');
+  ['MenuBridgeRuntime.js', 'MenuMockRuntime.js', 'MenuDialogRuntime.js', 'MenuVideoRuntime.js', 'MenuInputRuntime.js', 'MenuPreferencesRuntime.js', 'MenuWorldsRuntime.js', 'MenuApplicationRuntime.js', 'FoundationMenuRuntime.js'].map(file => fs.readFileSync(path.join(root, 'MenuWeb/Runtime', file), 'utf8')).join('\n');
 const credits = JSON.parse(fs.readFileSync(path.join(reference, 'assets/minecraft/texts/credits.json'), 'utf8'));
 const panorama = Array.from({length:6},(_,i)=>'data:image/png;base64,'+fs.readFileSync(path.join(reference,`assets/minecraft/textures/gui/title/background/panorama_${i}.png`)).toString('base64'));
 change('window.MenuPrototype=', `const BUNDLED_CREDITS=${JSON.stringify(credits)};\nconst PANORAMA_FACES=${JSON.stringify(panorama)};\n${runtime}`);

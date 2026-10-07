@@ -6,8 +6,8 @@ Minecraft's original bindings remain in the sourced reference matrix. The struct
 
 ## Changed
 
-- `Scripts/CreateInputAssets.py` authors Left Shift sprint and C crouch for missing assets.
-- `Scripts/SetupFoundation.py` restores only the known accidental Ctrl/Shift factory mappings; other authored keys are preserved.
+- `Scripts/Editor/CreateInputAssets.py` authors Left Shift sprint and C crouch for missing assets.
+- `Scripts/Editor/SetupFoundation.py` restores only the known accidental Ctrl/Shift factory mappings; other authored keys are preserved.
 - The installed Unreal editor regenerates `Content/Input/MappingContexts/IMC_OnFoot.uasset`. No binary asset was fabricated.
 - Native input and rendered runtime regression checks now exercise the personal layout, including C versus F3+C.
 - The launch/test scripts and current launch documentation select the new r3 candidate. The research and historical r2 evidence remain available.

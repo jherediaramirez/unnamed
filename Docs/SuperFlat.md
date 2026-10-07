@@ -28,7 +28,7 @@ In Unreal, open the compiled project, press Play in `L_Menu`, then select Super 
 ## Verification - October 7, 2026
 
 - Editor and Development package build: passed (`Tests/Runtime/SuperFlat-Package.log`). Packaging includes both the menu and Super Flat; setup preserves existing map/material edits.
-- Asset verification: passed (`Scripts/VerifySuperFlatMap.py`, `Tests/Runtime/SuperFlat-VerifyMap-2.log`). Checks dimensions, ground height, collision profile/enabled state, mesh, material, spawn, and GameMode.
+- Asset verification: passed (`Scripts/Editor/VerifySuperFlatMap.py`, `Tests/Runtime/SuperFlat-VerifyMap-2.log`). Checks dimensions, ground height, collision profile/enabled state, mesh, material, spawn, and GameMode.
 - Native routing/isolation suite: passed (`Tests/SuperFlat-NativeAutomation/index.json`). Rejects the two references and arbitrary package/command strings; checks separate menu and world classes.
 - Browser logic: 44/44 tests passed, including settings drain, rejected/duplicate world requests, PIE capability policy, timeout recovery, and stale poll protection.
 - Packaged integration: 32/32 passed in `Tests/Captures/super-flat-2026-10-07T18-36-54-558Z/results.json`. Three actual round trips using Play, double-click, and Enter; nine ground traces and a clear standing spawn per trip; preferences/bindings retained; one restored browser; normal Quit. The first harness run missed CEF's replacement browser after a successful return; the final harness reconnects after native map travel.

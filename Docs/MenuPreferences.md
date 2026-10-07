@@ -24,7 +24,7 @@ Graphics presets commit their quality group together and leave functional menu b
 
 The native service owns Saved/Config/MenuPreferences.json relative to the project's runtime save directory. Schema version 1 stores only settings, language, packs, skipWarning and telemetryOptInExtra. Browser callers cannot select a file path or issue console commands. A trusted diagnostic launch can override the location with -MenuPreferencesFile.
 
-Scripts/MenuPreferenceSchema.mjs generates the browser and native validation contract from the reference-derived catalog. Content/Menu/Web/preferences-schema.menuprefs ships as a physical NonUFS dependency beside the HTML. Its contents are JSON, but its custom extension prevents Unreal's Content watcher from attempting a DataTable import. Native validation rejects unknown fields, wrong types, invalid enums, ranges and slider steps. Explicit false, zero and empty lists survive; missing fields get defaults. The exact unfocused-chat-height default is accepted despite its older non-grid value.
+MenuWeb/MenuPreferenceSchema.mjs generates the browser and native validation contract from the reference-derived catalog. Content/Menu/Web/preferences-schema.menuprefs ships as a physical NonUFS dependency beside the HTML. Its contents are JSON, but its custom extension prevents Unreal's Content watcher from attempting a DataTable import. Native validation rejects unknown fields, wrong types, invalid enums, ranges and slider steps. Explicit false, zero and empty lists survive; missing fields get defaults. The exact unfocused-chat-height default is accepted despite its older non-grid value.
 
 Saving writes a temporary document, backs up the previous document to .bak, and checks replacement success before acknowledging the new state. The backup can recover a missing primary file after interrupted replacement. Invalid or future-version primary files are protected from automatic overwriting. Confirmed Hard Reset first preserves such a document in a unique .protected-* file. This is recoverable file replacement, not a claim of power-loss durability on every filesystem.
 
@@ -32,7 +32,7 @@ The service belongs to GameInstance, so document reload or controller recreation
 
 ## Routing and failures
 
-Scripts/MenuPreferencesRuntime.js provides an ordered, coalescing browser queue with bounded bridge waits and revision checks. New queued choices remain visible when an earlier save fails. Failed requests read back canonical native state, restore accepted values and show an error. Done locks a staged dialog until the save resolves.
+MenuWeb/Runtime/MenuPreferencesRuntime.js provides an ordered, coalescing browser queue with bounded bridge waits and revision checks. New queued choices remain visible when an earlier save fails. Failed requests read back canonical native state, restore accepted values and show an error. Done locks a staged dialog until the save resolves.
 
 Quit drains video, input and ordinary preference changes, then the native application service flushes all stores before normal shutdown. A write failure prevents exit. An invalid protected file that has never been edited can still exit without changing that file.
 

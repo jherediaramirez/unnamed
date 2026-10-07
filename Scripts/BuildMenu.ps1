@@ -8,7 +8,7 @@ if($Package -and (Test-Path -LiteralPath (Join-Path $root "Packages\$PackageName
     throw "Package $PackageName already exists. Choose a fresh -PackageName to preserve prior builds."
 }
 $project=Join-Path $root 'Unnamed.uproject'
-$adapterArgs=@(Join-Path $PSScriptRoot 'AdaptMenu.mjs')
+$adapterArgs=@(Join-Path $root 'MenuWeb\AdaptMenu.mjs')
 if($ExcludeDebugTools){$adapterArgs+='--without-debug-tools'}
 & node @adapterArgs
 if($LASTEXITCODE){throw 'Menu adaptation failed'}
@@ -16,14 +16,14 @@ $taskBuildArguments=@('UnnamedEditor','Win64','Development',"-Project=$project",
 if($EditorModuleSuffix){$taskBuildArguments+="-ModuleWithSuffix=Unnamed,$EditorModuleSuffix"}
 & "$EngineRoot\Engine\Build\BatchFiles\Build.bat" @taskBuildArguments
 if($LASTEXITCODE){throw 'Editor build failed'}
-& "$EngineRoot\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" $project -run=pythonscript "-script=$PSScriptRoot\CreateInputAssets.py" -unattended -nop4 -NullRHI
+& "$EngineRoot\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" $project -run=pythonscript "-script=$PSScriptRoot\Editor\CreateInputAssets.py" -unattended -nop4 -NullRHI
 if($LASTEXITCODE){throw 'Input asset setup failed'}
 if($CreateMap){
-    & "$EngineRoot\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" $project -run=pythonscript "-script=$PSScriptRoot\CreateMenuMap.py" -unattended -nop4 -NullRHI
+    & "$EngineRoot\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" $project -run=pythonscript "-script=$PSScriptRoot\Editor\CreateMenuMap.py" -unattended -nop4 -NullRHI
     if($LASTEXITCODE){throw 'Menu map setup failed'}
 }
 # Both entry maps are part of the product. Setup preserves an already-authored level.
-& "$EngineRoot\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" $project -run=pythonscript "-script=$PSScriptRoot\CreateSuperFlatMap.py" -unattended -nop4 -NullRHI
+& "$EngineRoot\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" $project -run=pythonscript "-script=$PSScriptRoot\Editor\CreateSuperFlatMap.py" -unattended -nop4 -NullRHI
 if($LASTEXITCODE){throw 'Super Flat map setup failed'}
 if($Package){
     # The editor was built above, including a unique module suffix when needed.

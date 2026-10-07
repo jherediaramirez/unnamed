@@ -4,8 +4,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const schema = JSON.parse(fs.readFileSync(new URL('../Content/Menu/Web/preferences-schema.menuprefs',import.meta.url)));
-const script = fs.readFileSync(new URL('../Scripts/MenuPreferencesRuntime.js',import.meta.url),'utf8');
-const bridgeScript = fs.readFileSync(new URL('../Scripts/MenuBridgeRuntime.js',import.meta.url),'utf8');
+const script = fs.readFileSync(new URL('../MenuWeb/Runtime/MenuPreferencesRuntime.js',import.meta.url),'utf8');
+const bridgeScript = fs.readFileSync(new URL('../MenuWeb/Runtime/MenuBridgeRuntime.js',import.meta.url),'utf8');
 function fixture() {
   const defaults = () => ({settings:Object.fromEntries(Object.entries(schema.settings).map(([id,d])=>[id,d.default])),
     language:'en_us',packs:[],skipWarning:false,telemetryOptInExtra:false});

@@ -8,8 +8,8 @@ Scope: all 33 routes reachable from the main menu, including Options, world crea
 
 ## Findings
 
-1. This is an HTML/JavaScript menu hosted in Unreal SWebBrowser, not UMG widgets. Changes belong in Scripts/AdaptMenu.mjs and the runtime modules. Content/Menu/Web/index.html is generated. [Host](../Source/Unnamed/Menu/MenuPlayerController.cpp), [adapter](../Scripts/AdaptMenu.mjs).
-2. state.settings already owns most requested variables, but persist() is deliberately empty and saved is empty at startup. Reload discards these choices. Another JavaScript variable alone will not solve it. [Mock transactions](../Scripts/MenuMockRuntime.js).
+1. This is an HTML/JavaScript menu hosted in Unreal SWebBrowser, not UMG widgets. Changes belong in MenuWeb/AdaptMenu.mjs and the runtime modules. Content/Menu/Web/index.html is generated. [Host](../Source/Unnamed/Menu/MenuPlayerController.cpp), [adapter](../MenuWeb/AdaptMenu.mjs).
+2. state.settings already owns most requested variables, but persist() is deliberately empty and saved is empty at startup. Reload discards these choices. Another JavaScript variable alone will not solve it. [Mock transactions](../MenuWeb/Runtime/MenuMockRuntime.js).
 3. Five video settings, seven movement bindings, and two Hold/Toggle policies have native saving. Preserve those owners and existing values. [Video service](../Source/Unnamed/Menu/MenuVideoSettings.cpp), [input bridge](../Source/Unnamed/Menu/MenuInputBridge.cpp), [input save](../Source/Unnamed/Input/UnnamedInputSettings.cpp).
 4. There are 111 distinct catalog setting IDs: seven already persist and 104 remain. Graphics API and Sound Device are fixed-choice placeholders among those 104. Language, packs, the multiplayer warning checkbox and telemetry choice sit outside that catalog. Repeated controls on multiple screens are one value.
 5. All 55 remaining bindings are disabled. Recommend a separate dormant-binding path for 31 ordinary actions; defer the 23 Minecraft debug rows and fixed fullscreen remapping. No gameplay action needs to be activated to save a planned binding.

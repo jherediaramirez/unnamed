@@ -22,7 +22,7 @@ Current review fixes: `MenuBridgeRuntime.js` bounds each browser/native wait to 
 
 `Source/Unnamed/MenuVideoSettings.*` owns validation, engine changes, native readback, window-transition completion, persistence and reset. It exposes GetState, ApplySetting and HardReset through one browser-bound UObject. No console-command execution, arbitrary variable setter, filesystem path setter, gameplay service or world deletion API is exposed.
 
-`Scripts/MenuVideoRuntime.js` owns asynchronous request serialization, coalescing of pending edits, synchronization, presentation and error display. Native state is rehydrated on document reload. A window transition must finish before the next request is applied. A failed change restores the displayed actual state and reports the failure.
+`MenuWeb/Runtime/MenuVideoRuntime.js` owns asynchronous request serialization, coalescing of pending edits, synchronization, presentation and error display. Native state is rehydrated on document reload. A window transition must finish before the next request is applied. A failed change restores the displayed actual state and reports the failure.
 
 The controller waits for the actual standalone Slate window to exist before enabling native settings. Engine/window mutations are unavailable in Play-in-Editor so a menu setting cannot alter the editor's global frame cap or VSync. GUI and blur remain available in PIE. F11 and Alt+Enter use the same native request path; automatic Unreal shortcut handling remains disabled to prevent double toggles.
 

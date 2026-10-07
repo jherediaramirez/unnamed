@@ -29,13 +29,13 @@ These are requests, not claims about an actual character. The future character c
 
 `Content/Input/Actions` contains five real editable Unreal assets. `Content/Input/MappingContexts/IMC_OnFoot` contains seven player-mappable movement rows plus two mouse mappings. Move uses cumulative aggregation with negate/swizzle modifiers. Stable mapping names retain the existing menu IDs, including `key.sneak` for the user-facing Crouch action. Display text and physical key names do not become gameplay identity.
 
-`UUnnamedInputSettings` extends Epic's Enhanced Input user settings and stores the two Hold/Toggle policies alongside the native key profile. Defaults come from the authored mapping context. `Scripts/CreateInputAssets.py` creates missing assets once and preserves an existing authored context. Asset changes belong in Unreal's input asset editors; never alter an authored mapping context to perform a player's rebind.
+`UUnnamedInputSettings` extends Epic's Enhanced Input user settings and stores the two Hold/Toggle policies alongside the native key profile. Defaults come from the authored mapping context. `Scripts/Editor/CreateInputAssets.py` creates missing assets once and preserves an existing authored context. Asset changes belong in Unreal's input asset editors; never alter an authored mapping context to perform a player's rebind.
 
 `UUnnamedInputSubsystem` owns registration, gameplay context activation, action bindings and the intent model for the local player. Registering settings makes them available in the menu without activating on-foot input. Menu entry explicitly removes the on-foot context and clears intent. Only this owned context is removed; unrelated contexts are preserved. Completed/Canceled events release actions, and application deactivation clears held/toggled intent. Unreal's pressed-key flush and ignore-held-keys options prevent a held key from acting as a fresh press during context transitions.
 
 The future gameplay controller should call `BindGameplayInput` with its `UEnhancedInputComponent`, enable the on-foot context when gameplay has focus, and disable it before opening a blocking menu, unpossessing or disabling gameplay. Consume intent once per simulation update. `ConsumeIntent` clears only the jump press edge and look delta; continuous movement and held requests remain available. The subsystem does not move a pawn or rotate a camera.
 
-`UMenuInputSettings` exposes only seven movement bindings, their resets and two policies to CEF. `Scripts/MenuInputRuntime.js` renders authoritative replies, rejects unsupported captures and waits for pending edits before Quit. This preserves the existing menu layout and keeps gameplay authority outside browser JavaScript.
+`UMenuInputSettings` exposes only seven movement bindings, their resets and two policies to CEF. `MenuWeb/Runtime/MenuInputRuntime.js` renders authoritative replies, rejects unsupported captures and waits for pending edits before Quit. This preserves the existing menu layout and keeps gameplay authority outside browser JavaScript.
 
 ## Remapping and persistence
 

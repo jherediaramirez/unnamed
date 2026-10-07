@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const read = file => fs.readFileSync(new URL('../Scripts/' + file, import.meta.url), 'utf8');
+const read = file => fs.readFileSync(new URL('../MenuWeb/Runtime/' + file, import.meta.url), 'utf8');
 function fixture({canQuit = true, saveFailure = false} = {}) {
   const calls = [], notices = [], intervals = [];
   let requested = false;

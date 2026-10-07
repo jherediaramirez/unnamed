@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const script = fs.readFileSync(new URL('../Scripts/MenuVideoRuntime.js', import.meta.url), 'utf8');
-const bridgeScript = fs.readFileSync(new URL('../Scripts/MenuBridgeRuntime.js', import.meta.url), 'utf8');
+const script = fs.readFileSync(new URL('../MenuWeb/Runtime/MenuVideoRuntime.js', import.meta.url), 'utf8');
+const bridgeScript = fs.readFileSync(new URL('../MenuWeb/Runtime/MenuBridgeRuntime.js', import.meta.url), 'utf8');
 function fixture({native = true} = {}) {
   const calls = [], notices = [], intervals = [];
   const saved = {fullscreen:false, framerateLimit:120, enableVsync:true, guiScale:0, menuBackgroundBlurriness:5};

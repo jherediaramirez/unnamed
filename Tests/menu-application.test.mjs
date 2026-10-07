@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const script = fs.readFileSync(new URL('../Scripts/MenuApplicationRuntime.js', import.meta.url), 'utf8');
-const bridgeScript = fs.readFileSync(new URL('../Scripts/MenuBridgeRuntime.js', import.meta.url), 'utf8');
+const script = fs.readFileSync(new URL('../MenuWeb/Runtime/MenuApplicationRuntime.js', import.meta.url), 'utf8');
+const bridgeScript = fs.readFileSync(new URL('../MenuWeb/Runtime/MenuBridgeRuntime.js', import.meta.url), 'utf8');
 function fixture({canQuit=true, reject=false, saveFailure=false}={}) {
   const calls=[], notices=[], intervals=[], button={disabled:true};
   let requested=false;

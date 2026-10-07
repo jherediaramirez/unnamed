@@ -6,7 +6,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import {readCaptureEvidence} from './capture-evidence.mjs';
 
-const dialogScript=fs.readFileSync(new URL('../Scripts/MenuDialogRuntime.js',import.meta.url),'utf8');
+const dialogScript=fs.readFileSync(new URL('../MenuWeb/Runtime/MenuDialogRuntime.js',import.meta.url),'utf8');
 test('numeric validation preserves invalid raw drafts including hidden rules',()=>{
   const rule={id:'limit',type:'Integer',min:0,max:100};
   const context=vm.createContext({DATA:{rules:[rule]},current:{data:{ruleText:{limit:'bad'}}},rulesEdit:{limit:10}});

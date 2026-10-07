@@ -6,14 +6,14 @@ $ErrorActionPreference='Stop'
 $taskRoot=Split-Path $PSScriptRoot -Parent
 $taskProject=Join-Path $taskRoot 'Unnamed.uproject'
 if($Package -and (Test-Path -LiteralPath (Join-Path $taskRoot "Packages/$PackageName"))){throw 'Use a fresh package name; existing candidates are preserved.'}
-& node (Join-Path $PSScriptRoot 'AdaptMenu.mjs')
+& node (Join-Path $taskRoot 'MenuWeb/AdaptMenu.mjs')
 if($LASTEXITCODE){throw 'Menu generation failed'}
 $buildArgs=@('UnnamedEditor','Win64','Development',"-Project=$taskProject",'-WaitMutex','-NoHotReloadFromIDE')
 if($EditorModuleSuffix){$buildArgs+="-ModuleWithSuffix=Unnamed,$EditorModuleSuffix"}
 & "$EngineRoot/Engine/Build/BatchFiles/Build.bat" @buildArgs
 if($LASTEXITCODE){throw 'Editor build failed'}
 foreach($script in @('CreateInputAssets.py','SetupFoundation.py')){
-    & "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" $taskProject -run=pythonscript "-script=$PSScriptRoot/$script" -unattended -nop4 -NullRHI
+    & "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" $taskProject -run=pythonscript "-script=$PSScriptRoot/Editor/$script" -unattended -nop4 -NullRHI
     if($LASTEXITCODE){throw "Asset setup failed: $script"}
 }
 if($Package){
