@@ -14,6 +14,7 @@ class UFoundationDiagnostics;
 class UFoundationMenuBridge;
 
 UCLASS()
+
 class UNNAMED_API AMenuPlayerController : public APlayerController
 {
     GENERATED_BODY()
@@ -22,12 +23,16 @@ public:
     void ShowMenu();
     void HideMenu();
     UMenuVideoSettings* EnsureVideoSettings();
+
     bool IsMenuOpen() const { return Browser.IsValid(); }
-    UPROPERTY(VisibleAnywhere) TObjectPtr<UFoundationDiagnostics> Diagnostics;
+    UPROPERTY(VisibleAnywhere)
+    TObjectPtr<UFoundationDiagnostics> Diagnostics;
+
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void Tick(float DeltaSeconds) override;
+
 private:
     TSharedPtr<SWebBrowser> Browser;
     UPROPERTY(Transient)
@@ -38,10 +43,12 @@ private:
     TObjectPtr<UMenuInputSettings> InputSettings;
     UPROPERTY(Transient)
     TObjectPtr<UMenuPreferences> Preferences;
-    UPROPERTY(Transient) TObjectPtr<UFoundationMenuBridge> FoundationBridge;
+    UPROPERTY(Transient)
+    TObjectPtr<UFoundationMenuBridge> FoundationBridge;
 };
 
 UCLASS()
+
 class UNNAMED_API AMenuGameMode : public AGameModeBase
 {
     GENERATED_BODY()

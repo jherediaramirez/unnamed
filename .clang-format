@@ -1,0 +1,54 @@
+---
+# Matches the hand-written menu sources: Allman braces, four-space indents,
+# Unreal reflection macros on their own lines. Run clang-format 19+ (ships
+# with Visual Studio 2022) over Source/**/*.h and Source/**/*.cpp.
+Language: Cpp
+BasedOnStyle: Microsoft
+ColumnLimit: 120
+IndentWidth: 4
+ContinuationIndentWidth: 4
+UseTab: Never
+LineEnding: LF
+InsertNewlineAtEOF: true
+BreakBeforeBraces: Allman
+SeparateDefinitionBlocks: Always
+AccessModifierOffset: -4
+NamespaceIndentation: All
+FixNamespaceComments: false
+PointerAlignment: Left
+DerivePointerAlignment: false
+AlignAfterOpenBracket: DontAlign
+AlignOperands: DontAlign
+AlignTrailingComments:
+  Kind: Never
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortLambdasOnASingleLine: All
+AllowShortBlocksOnASingleLine: Empty
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: true
+BreakBeforeBinaryOperators: None
+BreakConstructorInitializers: BeforeColon
+PackConstructorInitializers: NextLine
+Cpp11BracedListStyle: true
+SpaceBeforeParens: ControlStatements
+# Include order is significant for *.generated.h; never reorder.
+SortIncludes: Never
+IncludeBlocks: Preserve
+StatementAttributeLikeMacros: [UE_DEPRECATED]
+StatementMacros:
+  - UCLASS
+  - USTRUCT
+  - UENUM
+  - UINTERFACE
+  - UPROPERTY
+  - UFUNCTION
+  - GENERATED_BODY
+  - GENERATED_UCLASS_BODY
+  - GENERATED_USTRUCT_BODY
+  - IMPLEMENT_MODULE
+  - IMPLEMENT_PRIMARY_GAME_MODULE
+  - DEFINE_LOG_CATEGORY_STATIC
+  - DECLARE_LOG_CATEGORY_EXTERN
+  - DEFINE_LOG_CATEGORY

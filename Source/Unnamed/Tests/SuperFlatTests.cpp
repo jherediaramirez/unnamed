@@ -15,7 +15,7 @@ bool FSuperFlatRoutingTest::RunTest(const FString& Parameters)
     UMenuApplication* Service = NewObject<UMenuApplication>();
     Service->Initialize(nullptr, nullptr);
     for (const FString Id : {TEXT("fictional-forest"), TEXT("fictional-build"), TEXT("/Game/Maps/L_SuperFlat"),
-        TEXT("super-flat?listen"), TEXT("open /Game/Menu/L_Menu"), TEXT(""), TEXT("super-flat")})
+             TEXT("super-flat?listen"), TEXT("open /Game/Menu/L_Menu"), TEXT(""), TEXT("super-flat")})
     {
         TSharedPtr<FJsonObject> Reply;
         FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Service->RequestOpenWorld(Id)), Reply);
@@ -29,9 +29,12 @@ bool FSuperFlatRoutingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Super Flat asset exists"), FPackageName::DoesPackageExist(UMenuApplication::SuperFlatMap()));
     TestTrue(TEXT("Menu asset retained"), FPackageName::DoesPackageExist(UMenuApplication::MenuMap()));
     const ASuperFlatGameMode* WorldMode = GetDefault<ASuperFlatGameMode>();
-    TestTrue(TEXT("Temporary stock camera; no new FPS character"), WorldMode->DefaultPawnClass == ASpectatorPawn::StaticClass());
-    TestTrue(TEXT("World uses its own controller, not the menu browser"), WorldMode->PlayerControllerClass == ASuperFlatPreviewController::StaticClass());
-    TestTrue(TEXT("Existing menu keeps its controller"), GetDefault<AMenuGameMode>()->PlayerControllerClass == AMenuPlayerController::StaticClass());
+    TestTrue(TEXT("Temporary stock camera; no new FPS character"),
+        WorldMode->DefaultPawnClass == ASpectatorPawn::StaticClass());
+    TestTrue(TEXT("World uses its own controller, not the menu browser"),
+        WorldMode->PlayerControllerClass == ASuperFlatPreviewController::StaticClass());
+    TestTrue(TEXT("Existing menu keeps its controller"),
+        GetDefault<AMenuGameMode>()->PlayerControllerClass == AMenuPlayerController::StaticClass());
     return true;
 }
 #endif

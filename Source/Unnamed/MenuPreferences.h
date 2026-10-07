@@ -10,14 +10,18 @@ class FJsonValue;
 // Desired client preferences survive menu/controller changes. Feature effects have
 // their own owners; this subsystem never changes engine, input or world state.
 UCLASS()
+
 class UNNAMED_API UMenuPreferences : public UGameInstanceSubsystem
 {
     GENERATED_BODY()
 public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-    UFUNCTION() FString GetState();
-    UFUNCTION() FString ApplyChanges(const FString& ChangesJson);
-    UFUNCTION() FString ResetPreferences();
+    UFUNCTION()
+    FString GetState();
+    UFUNCTION()
+    FString ApplyChanges(const FString& ChangesJson);
+    UFUNCTION()
+    FString ResetPreferences();
     bool FlushForExit(FString& OutError);
 
     // Native feature adapters can read their desired value when implemented.

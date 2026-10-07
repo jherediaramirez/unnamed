@@ -8,13 +8,16 @@ class SWindow;
 
 // Restricted video-setting binding. No console or arbitrary settings API.
 UCLASS()
+
 class UNNAMED_API UMenuVideoSettings : public UObject
 {
     GENERATED_BODY()
 public:
     void Initialize(bool bAllowNativeChanges);
     void Tick();
+
     bool IsReadyForExit() const { return !bWaitingForWindow && !bTransitionPending; }
+
     bool FlushForExit(FString& OutError);
 
     UFUNCTION()

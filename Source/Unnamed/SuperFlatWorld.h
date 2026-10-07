@@ -8,6 +8,7 @@
 
 // Inspection only. Replace the stock spectator pawn when the FPS character is ready.
 UCLASS()
+
 class UNNAMED_API ASuperFlatGameMode : public AGameModeBase
 {
     GENERATED_BODY()
@@ -16,14 +17,17 @@ public:
 };
 
 UCLASS()
+
 class UNNAMED_API ASuperFlatPreviewController : public APlayerController
 {
     GENERATED_BODY()
 public:
     void ReturnToMenu();
+
 protected:
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
+
 private:
     bool bReturningToMenu = false;
 #if WITH_DEV_AUTOMATION_TESTS
@@ -32,6 +36,7 @@ private:
 };
 
 UCLASS()
+
 class UNNAMED_API ASuperFlatPreviewHUD : public AHUD
 {
     GENERATED_BODY()

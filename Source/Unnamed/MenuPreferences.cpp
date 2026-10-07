@@ -17,12 +17,14 @@ namespace
         FJsonSerializer::Serialize(Object.ToSharedRef(), TJsonWriterFactory<>::Create(&Json));
         return Json;
     }
+
     TSharedPtr<FJsonObject> Copy(const TSharedPtr<FJsonObject>& Object)
     {
         TSharedPtr<FJsonObject> Result;
         FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Encode(Object)), Result);
         return Result;
     }
+
     bool Equal(const TSharedPtr<FJsonValue>& A, const TSharedPtr<FJsonValue>& B)
     {
         if (!A || !B || A->Type != B->Type) return false;
@@ -44,7 +46,10 @@ void UMenuPreferences::Initialize(FSubsystemCollectionBase& Collection)
 }
 
 #if WITH_DEV_AUTOMATION_TESTS
-void UMenuPreferences::InitializeForTesting(const FString& Path, bool bSave) { Load(Path, bSave); }
+void UMenuPreferences::InitializeForTesting(const FString& Path, bool bSave)
+{
+    Load(Path, bSave);
+}
 #endif
 
 TSharedPtr<FJsonObject> UMenuPreferences::Defaults() const
@@ -69,7 +74,8 @@ void UMenuPreferences::Load(const FString& Path, bool bSave)
     Revision = 0;
     LastError.Empty();
     FString Json;
-    if (!FFileHelper::LoadFileToString(Json, *(FPaths::ProjectContentDir() / TEXT("Menu/Web/preferences-schema.menuprefs"))) ||
+    if (!FFileHelper::LoadFileToString(
+            Json, *(FPaths::ProjectContentDir() / TEXT("Menu/Web/preferences-schema.menuprefs"))) ||
         !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json), Schema) || !Schema ||
         !Schema->HasTypedField<EJson::Object>(TEXT("settings")) ||
         !Schema->HasTypedField<EJson::Number>(TEXT("version")) || Schema->GetNumberField(TEXT("version")) != 1)
@@ -85,13 +91,13 @@ void UMenuPreferences::Load(const FString& Path, bool bSave)
     const FString ReadPath = IFileManager::Get().FileExists(*Filename) ? Filename : Filename + TEXT(".bak");
     if (!IFileManager::Get().FileExists(*ReadPath)) return;
     TSharedPtr<FJsonObject> Saved;
-    if (IFileManager::Get().FileSize(*ReadPath) > 262144 ||
-        !FFileHelper::LoadFileToString(Json, *ReadPath) ||
+    if (IFileManager::Get().FileSize(*ReadPath) > 262144 || !FFileHelper::LoadFileToString(Json, *ReadPath) ||
         !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json), Saved) || !Saved ||
         !Saved->HasTypedField<EJson::Number>(TEXT("version")) || Saved->GetNumberField(TEXT("version")) != 1)
     {
         bProtectedFile = true;
-        LastError = TEXT("Saved preferences are unreadable or from a newer version. The original file is protected; Hard Reset can restore defaults.");
+        LastError = TEXT("Saved preferences are unreadable or from a newer version. The original file is protected; "
+                         "Hard Reset can restore defaults.");
         return;
     }
     Saved->RemoveField(TEXT("version"));
@@ -99,7 +105,8 @@ void UMenuPreferences::Load(const FString& Path, bool bSave)
     if (!ApplyPatch(Saved, Candidate, true))
     {
         bProtectedFile = true;
-        LastError = TEXT("Saved preferences contain unsupported values. The original file is protected; Hard Reset can restore defaults.");
+        LastError = TEXT("Saved preferences contain unsupported values. The original file is protected; Hard Reset can "
+                         "restore defaults.");
         return;
     }
     State = Candidate;
@@ -116,7 +123,8 @@ bool UMenuPreferences::ValidateSetting(const FString& Id, const TSharedPtr<FJson
         return Choices->ContainsByPredicate([&](const auto& Choice) { return Equal(Value, Choice); });
     if (Value->Type != EJson::Number) return false;
     const double Number = Value->AsNumber();
-    if (!FMath::IsFinite(Number) || Number < D->GetNumberField(TEXT("min")) || Number > D->GetNumberField(TEXT("max"))) return false;
+    if (!FMath::IsFinite(Number) || Number < D->GetNumberField(TEXT("min")) || Number > D->GetNumberField(TEXT("max")))
+        return false;
     // Reference defaults can predate the slider grid (unfocused chat height).
     if (Equal(Value, D->Values[TEXT("default")])) return true;
     const double Step = D->GetNumberField(TEXT("step"));
@@ -126,8 +134,10 @@ bool UMenuPreferences::ValidateSetting(const FString& Id, const TSharedPtr<FJson
 
 bool UMenuPreferences::ApplyPatch(const TSharedPtr<FJsonObject>& Patch, TSharedPtr<FJsonObject>& Target, bool bLoading)
 {
-    const TSet<FString> Fields = { TEXT("settings"), TEXT("language"), TEXT("packs"), TEXT("skipWarning"), TEXT("telemetryOptInExtra") };
-    for (const auto& Field : Patch->Values) if (!Fields.Contains(FString(*Field.Key))) return false;
+    const TSet<FString> Fields = {
+        TEXT("settings"), TEXT("language"), TEXT("packs"), TEXT("skipWarning"), TEXT("telemetryOptInExtra")};
+    for (const auto& Field : Patch->Values)
+        if (!Fields.Contains(FString(*Field.Key))) return false;
     const auto Settings = Target->GetObjectField(TEXT("settings"));
     const TSharedPtr<FJsonObject>* Changes = nullptr;
     if (Patch->HasField(TEXT("settings")))
@@ -145,23 +155,31 @@ bool UMenuPreferences::ApplyPatch(const TSharedPtr<FJsonObject>& Patch, TSharedP
             {
                 const TSharedPtr<FJsonObject>* Values;
                 if (Schema->GetObjectField(TEXT("presets"))->TryGetObjectField(Preset, Values))
-                    for (const auto& Entry : (*Values)->Values) Settings->SetField(Entry.Key, Entry.Value);
+                    for (const auto& Entry : (*Values)->Values)
+                        Settings->SetField(Entry.Key, Entry.Value);
             }
             else
             {
                 for (const auto& Id : Schema->GetArrayField(TEXT("quality")))
-                    if ((*Changes)->HasField(Id->AsString())) { Settings->SetStringField(TEXT("graphicsPreset"), TEXT("Custom")); break; }
+                    if ((*Changes)->HasField(Id->AsString()))
+                    {
+                        Settings->SetStringField(TEXT("graphicsPreset"), TEXT("Custom"));
+                        break;
+                    }
             }
         }
     }
     if (Patch->HasField(TEXT("language")))
     {
         FString Language;
-        if (!Patch->HasTypedField<EJson::String>(TEXT("language")) || !Patch->TryGetStringField(TEXT("language"), Language) ||
-            !Schema->GetArrayField(TEXT("languages")).ContainsByPredicate([&](const auto& Value) { return Value->AsString() == Language; })) return false;
+        if (!Patch->HasTypedField<EJson::String>(TEXT("language")) ||
+            !Patch->TryGetStringField(TEXT("language"), Language) ||
+            !Schema->GetArrayField(TEXT("languages"))
+                .ContainsByPredicate([&](const auto& Value) { return Value->AsString() == Language; }))
+            return false;
         Target->SetStringField(TEXT("language"), Language);
     }
-    for (const TCHAR* Flag : { TEXT("skipWarning"), TEXT("telemetryOptInExtra") })
+    for (const TCHAR* Flag : {TEXT("skipWarning"), TEXT("telemetryOptInExtra")})
     {
         bool Value;
         if (Patch->HasField(Flag))
@@ -177,11 +195,16 @@ bool UMenuPreferences::ApplyPatch(const TSharedPtr<FJsonObject>& Patch, TSharedP
         TSet<FString> Unique;
         for (const auto& Pack : *Packs)
         {
-            if (Pack->Type != EJson::String || (Pack->AsString() != TEXT("high_contrast") && Pack->AsString() != TEXT("programmer_art")) || Unique.Contains(Pack->AsString())) return false;
+            if (Pack->Type != EJson::String ||
+                (Pack->AsString() != TEXT("high_contrast") && Pack->AsString() != TEXT("programmer_art")) ||
+                Unique.Contains(Pack->AsString()))
+                return false;
             Unique.Add(Pack->AsString());
         }
         const bool HighContrast = Unique.Contains(TEXT("high_contrast"));
-        if (Changes && (*Changes)->HasField(TEXT("highContrast")) && Settings->GetBoolField(TEXT("highContrast")) != HighContrast) return false;
+        if (Changes && (*Changes)->HasField(TEXT("highContrast")) &&
+            Settings->GetBoolField(TEXT("highContrast")) != HighContrast)
+            return false;
         Target->SetArrayField(TEXT("packs"), *Packs);
         Settings->SetBoolField(TEXT("highContrast"), HighContrast);
     }
@@ -189,7 +212,8 @@ bool UMenuPreferences::ApplyPatch(const TSharedPtr<FJsonObject>& Patch, TSharedP
     {
         auto Packs = Target->GetArrayField(TEXT("packs"));
         Packs.RemoveAll([](const auto& Value) { return Value->AsString() == TEXT("high_contrast"); });
-        if (Settings->GetBoolField(TEXT("highContrast"))) Packs.Add(MakeShared<FJsonValueString>(TEXT("high_contrast")));
+        if (Settings->GetBoolField(TEXT("highContrast")))
+            Packs.Add(MakeShared<FJsonValueString>(TEXT("high_contrast")));
         Target->SetArrayField(TEXT("packs"), Packs);
     }
     return true;
@@ -198,17 +222,23 @@ bool UMenuPreferences::ApplyPatch(const TSharedPtr<FJsonObject>& Patch, TSharedP
 bool UMenuPreferences::Save(const TSharedPtr<FJsonObject>& Value)
 {
     if (!bPersistent) return true;
-    if (bProtectedFile) { LastError = TEXT("The existing preference file is protected. Use the confirmed Hard Reset to replace it."); return false; }
+    if (bProtectedFile)
+    {
+        LastError = TEXT("The existing preference file is protected. Use the confirmed Hard Reset to replace it.");
+        return false;
+    }
     const auto Document = Copy(Value);
     Document->SetNumberField(TEXT("version"), 1);
     const FString Temporary = Filename + TEXT(".tmp");
     IFileManager::Get().MakeDirectory(*FPaths::GetPath(Filename), true);
-    if (!FFileHelper::SaveStringToFile(Encode(Document), *Temporary, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+    if (!FFileHelper::SaveStringToFile(
+            Encode(Document), *Temporary, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
     {
         LastError = TEXT("Preferences could not be saved. Your previous saved choices are unchanged.");
         return false;
     }
-    if (IFileManager::Get().FileExists(*Filename) && IFileManager::Get().Copy(*(Filename + TEXT(".bak")), *Filename) != COPY_OK)
+    if (IFileManager::Get().FileExists(*Filename) &&
+        IFileManager::Get().Copy(*(Filename + TEXT(".bak")), *Filename) != COPY_OK)
     {
         LastError = TEXT("The previous preferences could not be backed up. Please try again.");
         return false;
@@ -234,14 +264,18 @@ FString UMenuPreferences::Snapshot(bool bSuccess) const
     return Encode(Result);
 }
 
-FString UMenuPreferences::GetState() { return Snapshot(); }
+FString UMenuPreferences::GetState()
+{
+    return Snapshot();
+}
 
 FString UMenuPreferences::ApplyChanges(const FString& ChangesJson)
 {
     if (!bReady || bProtectedFile) return Snapshot(false);
     LastError.Empty();
     TSharedPtr<FJsonObject> Patch;
-    if (ChangesJson.Len() > 32768 || !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(ChangesJson), Patch) || !Patch)
+    if (ChangesJson.Len() > 32768 || !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(ChangesJson), Patch) ||
+        !Patch)
     {
         LastError = TEXT("Invalid preference request.");
         return Snapshot(false);
@@ -275,7 +309,11 @@ FString UMenuPreferences::ResetPreferences()
     const bool WasProtected = bProtectedFile;
     bProtectedFile = false;
     auto Candidate = Defaults();
-    if (!Save(Candidate)) { bProtectedFile = WasProtected; return Snapshot(false); }
+    if (!Save(Candidate))
+    {
+        bProtectedFile = WasProtected;
+        return Snapshot(false);
+    }
     State = Candidate;
     ++Revision;
     return Snapshot();

@@ -20,11 +20,17 @@ DEFINE_LOG_CATEGORY_STATIC(LogMenuVideoSettings, Log, All);
 namespace
 {
     constexpr const TCHAR* Section = TEXT("MenuVideoSettings");
-    bool ValidFrameLimit(int32 Value) { return Value >= 10 && Value <= 260 && Value % 10 == 0; }
+
+    bool ValidFrameLimit(int32 Value)
+    {
+        return Value >= 10 && Value <= 260 && Value % 10 == 0;
+    }
+
     FString ModeName(EWindowMode::Type Mode)
     {
-        return Mode == EWindowMode::Windowed ? TEXT("Windowed") :
-            Mode == EWindowMode::WindowedFullscreen ? TEXT("Borderless") : TEXT("Exclusive");
+        return Mode == EWindowMode::Windowed          ? TEXT("Windowed")
+            : Mode == EWindowMode::WindowedFullscreen ? TEXT("Borderless")
+                                                      : TEXT("Exclusive");
     }
 }
 
@@ -57,11 +63,13 @@ void UMenuVideoSettings::Initialize(bool bAllowNativeChanges)
         SetVSync(bVSync);
         const FIntPoint RestoredWindowedSize = WindowedSize;
         SetFullscreen(bSavedFullscreen);
-        if (bPersistenceEnabled && bSavedFullscreen) WindowedSize = RestoredWindowedSize;
+        if (bPersistenceEnabled && bSavedFullscreen)
+            WindowedSize = RestoredWindowedSize;
         else if (bLoadedSettings && !bSavedFullscreen)
             GetWindow()->ReshapeWindow(WindowedPosition, FVector2D(RestoredWindowedSize));
     }
-    UE_LOG(LogMenuVideoSettings, Display, TEXT("Five-setting adapter initialized; native=%d persistence=%d"), bNativeAllowed, bPersistenceEnabled);
+    UE_LOG(LogMenuVideoSettings, Display, TEXT("Five-setting adapter initialized; native=%d persistence=%d"),
+        bNativeAllowed, bPersistenceEnabled);
 }
 
 bool UMenuVideoSettings::SetFrameLimit(int32 Value)
@@ -188,7 +196,8 @@ FString UMenuVideoSettings::ApplySetting(const FString& Name, const FString& Val
 {
     LastError.Empty();
     const bool bBoolean = Name == TEXT("fullscreen") || Name == TEXT("enableVsync");
-    const bool bNumeric = Name == TEXT("framerateLimit") || Name == TEXT("guiScale") || Name == TEXT("menuBackgroundBlurriness");
+    const bool bNumeric =
+        Name == TEXT("framerateLimit") || Name == TEXT("guiScale") || Name == TEXT("menuBackgroundBlurriness");
     TSharedPtr<FJsonObject> Input;
     if ((!bBoolean && !bNumeric) || ValueJson.Len() > 128 ||
         !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(ValueJson), Input) || !Input ||
@@ -202,15 +211,16 @@ FString UMenuVideoSettings::ApplySetting(const FString& Name, const FString& Val
     const TSharedPtr<FJsonValue> Field = Input->Values[TEXT("value")];
     if (Field->Type != (bBoolean ? EJson::Boolean : EJson::Number) ||
         (bBoolean && !Input->TryGetBoolField(TEXT("value"), Flag)) ||
-        (bNumeric && (!Input->TryGetNumberField(TEXT("value"), Number) || !FMath::IsFinite(Number) ||
-        Number < 0 || Number > 260 || FMath::FloorToDouble(Number) != Number)))
+        (bNumeric &&
+            (!Input->TryGetNumberField(TEXT("value"), Number) || !FMath::IsFinite(Number) || Number < 0 ||
+                Number > 260 || FMath::FloorToDouble(Number) != Number)))
     {
         LastError = TEXT("Invalid setting value.");
         return Snapshot(false);
     }
     const int32 Value = static_cast<int32>(Number);
-    if ((Name == TEXT("framerateLimit") && !ValidFrameLimit(Value)) ||
-        (Name == TEXT("guiScale") && Value > 32) || (Name == TEXT("menuBackgroundBlurriness") && Value > 10))
+    if ((Name == TEXT("framerateLimit") && !ValidFrameLimit(Value)) || (Name == TEXT("guiScale") && Value > 32) ||
+        (Name == TEXT("menuBackgroundBlurriness") && Value > 10))
     {
         LastError = TEXT("Setting value is outside its supported range.");
         return Snapshot(false);
@@ -222,11 +232,16 @@ FString UMenuVideoSettings::ApplySetting(const FString& Name, const FString& Val
         return Snapshot(false);
     }
     bool bSuccess = true;
-    if (Name == TEXT("fullscreen")) bSuccess = SetFullscreen(Flag);
-    else if (Name == TEXT("enableVsync")) bSuccess = SetVSync(Flag);
-    else if (Name == TEXT("framerateLimit")) bSuccess = SetFrameLimit(Value);
-    else if (Name == TEXT("guiScale")) GuiScale = Value;
-    else BackgroundBlur = Value;
+    if (Name == TEXT("fullscreen"))
+        bSuccess = SetFullscreen(Flag);
+    else if (Name == TEXT("enableVsync"))
+        bSuccess = SetVSync(Flag);
+    else if (Name == TEXT("framerateLimit"))
+        bSuccess = SetFrameLimit(Value);
+    else if (Name == TEXT("guiScale"))
+        GuiScale = Value;
+    else
+        BackgroundBlur = Value;
     if (bSuccess && !bTransitionPending) Save();
     return Snapshot(bSuccess);
 }
@@ -268,18 +283,23 @@ FString UMenuVideoSettings::Snapshot(bool bSuccess) const
     Settings->SetNumberField(TEXT("guiScale"), GuiScale);
     Settings->SetNumberField(TEXT("menuBackgroundBlurriness"), BackgroundBlur);
     const auto Capabilities = MakeShared<FJsonObject>();
-    for (const TCHAR* Key : { TEXT("fullscreen"), TEXT("framerateLimit"), TEXT("enableVsync") })
+    for (const TCHAR* Key : {TEXT("fullscreen"), TEXT("framerateLimit"), TEXT("enableVsync")})
         Capabilities->SetBoolField(Key, bNativeAllowed);
     Capabilities->SetBoolField(TEXT("guiScale"), !bWaitingForWindow);
     Capabilities->SetBoolField(TEXT("menuBackgroundBlurriness"), !bWaitingForWindow);
     const auto Observed = MakeShared<FJsonObject>();
     FString DefaultRHI;
-    GConfig->GetString(TEXT("/Script/WindowsTargetPlatform.WindowsTargetSettings"), TEXT("DefaultGraphicsRHI"), DefaultRHI, GEngineIni);
-    Observed->SetStringField(TEXT("defaultGraphicsAPI"), DefaultRHI == TEXT("DefaultGraphicsRHI_DX12") ? TEXT("DirectX 12") :
-        DefaultRHI == TEXT("DefaultGraphicsRHI_DX11") ? TEXT("DirectX 11") : DefaultRHI);
+    GConfig->GetString(TEXT("/Script/WindowsTargetPlatform.WindowsTargetSettings"), TEXT("DefaultGraphicsRHI"),
+        DefaultRHI, GEngineIni);
+    Observed->SetStringField(TEXT("defaultGraphicsAPI"),
+        DefaultRHI == TEXT("DefaultGraphicsRHI_DX12")       ? TEXT("DirectX 12")
+            : DefaultRHI == TEXT("DefaultGraphicsRHI_DX11") ? TEXT("DirectX 11")
+                                                            : DefaultRHI);
     const FString ActiveRHI = GDynamicRHI ? GDynamicRHI->GetName() : TEXT("Unavailable");
-    Observed->SetStringField(TEXT("graphicsAPI"), ActiveRHI == TEXT("D3D12") ? TEXT("DirectX 12") :
-        ActiveRHI == TEXT("D3D11") ? TEXT("DirectX 11") : ActiveRHI);
+    Observed->SetStringField(TEXT("graphicsAPI"),
+        ActiveRHI == TEXT("D3D12")       ? TEXT("DirectX 12")
+            : ActiveRHI == TEXT("D3D11") ? TEXT("DirectX 11")
+                                         : ActiveRHI);
     Observed->SetStringField(TEXT("windowMode"), ModeName(Mode));
     Observed->SetNumberField(TEXT("clientWidth"), Size.X);
     Observed->SetNumberField(TEXT("clientHeight"), Size.Y);

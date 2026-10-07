@@ -11,11 +11,13 @@ class UMenuPreferences;
 
 // Restricted application lifecycle binding, separate from video-setting mutation.
 UCLASS()
+
 class UNNAMED_API UMenuApplication : public UObject
 {
     GENERATED_BODY()
 public:
-    void Initialize(APlayerController* InController, UMenuVideoSettings* InVideoSettings, UMenuInputSettings* InInputSettings = nullptr, UMenuPreferences* InPreferences = nullptr);
+    void Initialize(APlayerController* InController, UMenuVideoSettings* InVideoSettings,
+        UMenuInputSettings* InInputSettings = nullptr, UMenuPreferences* InPreferences = nullptr);
     void Tick();
 
     UFUNCTION()
@@ -29,6 +31,7 @@ public:
     FString RequestOpenWorld(const FString& WorldId);
 
     static const TCHAR* SuperFlatMap() { return TEXT("/Game/Maps/L_SuperFlat"); }
+
     static const TCHAR* MenuMap() { return TEXT("/Game/Menu/L_Menu"); }
 
 private:

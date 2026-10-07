@@ -12,7 +12,8 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogMenuApplication, Log, All);
 
-void UMenuApplication::Initialize(APlayerController* InController, UMenuVideoSettings* InVideoSettings, UMenuInputSettings* InInputSettings, UMenuPreferences* InPreferences)
+void UMenuApplication::Initialize(APlayerController* InController, UMenuVideoSettings* InVideoSettings,
+    UMenuInputSettings* InInputSettings, UMenuPreferences* InPreferences)
 {
     Controller = InController;
     VideoSettings = InVideoSettings;
@@ -83,7 +84,7 @@ FString UMenuApplication::RequestQuit()
 FString UMenuApplication::RequestOpenWorld(const FString& WorldId)
 {
     LastError.Empty();
-    const FString RequestedMap=WorldId==TEXT("foundation")?TEXT("/Game/Maps/L_Foundation"):SuperFlatMap();
+    const FString RequestedMap = WorldId == TEXT("foundation") ? TEXT("/Game/Maps/L_Foundation") : SuperFlatMap();
     if (WorldId != TEXT("super-flat") && WorldId != TEXT("foundation"))
         LastError = TEXT("Player Foundation and Super Flat are playable. The other entries are design references.");
     else if (!CanOpenWorld())
@@ -93,9 +94,9 @@ FString UMenuApplication::RequestOpenWorld(const FString& WorldId)
     else if (!bWorldPending && !bTravelIssued)
     {
         bWorldPending = true;
-        PendingMap=RequestedMap;
+        PendingMap = RequestedMap;
         WorldDeadline = FPlatformTime::Seconds() + 8.0;
-        UE_LOG(LogMenuApplication, Display, TEXT("%s requested; waiting for completed settings changes"),*WorldId);
+        UE_LOG(LogMenuApplication, Display, TEXT("%s requested; waiting for completed settings changes"), *WorldId);
     }
     return GetState();
 }
