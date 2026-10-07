@@ -103,7 +103,7 @@ void UMenuBrowserHost::Show()
     Browser->BindUObject(TEXT("menupreferences"), Preferences, true);
     Application = NewObject<UMenuApplication>(this);
     Application->Initialize(Player, VideoSettings, InputBridge, Preferences);
-    Browser->BindUObject(TEXT("menuapp"), Application, true);
+    Browser->BindUObject(TEXT("menuapplication"), Application, true);
     for (const auto& [Name, Bridge] : ExtraBridges)
         Browser->BindUObject(Name, Bridge, true);
 
@@ -122,7 +122,7 @@ void UMenuBrowserHost::Hide()
     if (!Browser.IsValid()) return;
     if (GEngine && GEngine->GameViewport) GEngine->GameViewport->RemoveViewportWidgetContent(Browser.ToSharedRef());
     if (VideoSettings) Browser->UnbindUObject(TEXT("menuvideo"), VideoSettings, true);
-    if (Application) Browser->UnbindUObject(TEXT("menuapp"), Application, true);
+    if (Application) Browser->UnbindUObject(TEXT("menuapplication"), Application, true);
     if (InputBridge) Browser->UnbindUObject(TEXT("menuinput"), InputBridge, true);
     if (Preferences) Browser->UnbindUObject(TEXT("menupreferences"), Preferences, true);
     for (const auto& [Name, Bridge] : ExtraBridges)

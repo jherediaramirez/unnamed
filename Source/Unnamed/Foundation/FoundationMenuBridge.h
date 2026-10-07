@@ -6,7 +6,7 @@
 
 class AFoundationController;
 
-// Browser binding "foundation" (JS FoundationMenu): lets the shared menu act as the
+// Browser binding "foundationmenu" (JS FoundationMenu): lets the shared menu act as the
 // Foundation pause menu and tell the input router when a key binding is being captured.
 UCLASS()
 class UNNAMED_API UFoundationMenuBridge : public UObject

@@ -3,10 +3,6 @@
 #include "Input/UnnamedInputSettings.h"
 #include "Input/UnnamedInputSubsystem.h"
 #include "Menu/MenuInputBridge.h"
-#include "Foundation/FoundationActions.h"
-#include "Foundation/FoundationLab.h"
-#include "Foundation/FoundationPawn.h"
-#include "Foundation/FoundationProfile.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedPlayerInput.h"
@@ -163,13 +159,14 @@ bool FInputBindingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Custom crouch binding accepted"),
         Read(F.Bridge->ApplyBinding(TEXT("key.sneak"), TEXT("RightShift")))->GetBoolField(TEXT("ok")));
     TArray<uint8> Bytes;
-    TestTrue(TEXT("Serialize using Unreal SaveGame"), UGameplayStatics::SaveGameToMemory(F.Input->Settings(), Bytes));
+    TestTrue(
+        TEXT("Serialize using Unreal SaveGame"), UGameplayStatics::SaveGameToMemory(F.Input->GetSettings(), Bytes));
     auto* Restored = Cast<UUnnamedInputSettings>(UGameplayStatics::LoadGameFromMemory(Bytes));
     TestNotNull(TEXT("Settings class restores"), Restored);
     if (Restored)
     {
         Restored->Initialize(F.Player);
-        Restored->RegisterInputMappingContext(F.Input->Context());
+        Restored->RegisterInputMappingContext(F.Input->GetOnFootContext());
         FMapPlayerKeyArgs Query;
         Query.MappingName = TEXT("key.forward");
         Query.Slot = EPlayerMappableKeySlot::First;
@@ -195,7 +192,7 @@ bool FInputBindingTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Reset one restores Left Shift sprint"),
         State->GetObjectField(TEXT("nativeKeys"))->GetStringField(TEXT("key.sprint")), FString(TEXT("LeftShift")));
     TestTrue(TEXT("Reset all movement and policies"), Read(F.Bridge->ResetBindings(true))->GetBoolField(TEXT("ok")));
-    TestFalse(TEXT("Reset returns sprint policy to Hold"), F.Input->Settings()->bToggleSprint);
+    TestFalse(TEXT("Reset returns sprint policy to Hold"), F.Input->GetSettings()->bToggleSprint);
     return true;
 }
 
@@ -252,90 +249,4 @@ bool FInputPipelineTest::RunTest(const FString& Parameters)
     return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationActionsTest, "Unnamed.Foundation.ActionContracts",
-    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-
-bool FFoundationActionsTest::RunTest(const FString&)
-{
-    FInputFixture F;
-    auto* Lab = F.World->SpawnActor<AFoundationLab>();
-    const auto& P = *GetDefault<UFoundationProfile>();
-    Lab->Primitives = {
-        {FBox(FVector(449, -50, 0), FVector(549, 50, 200)), TEXT("block"), EFoundationTargetKind::Block, true}};
-    auto Target = Lab->Target({0, 0, 162}, {1, 0, 0}, P);
-    TestTrue(TEXT("block 4.49m reachable"), Target.bInRange);
-    Target = Lab->Target({-1, 0, 162}, {1, 0, 0}, P);
-    TestFalse(TEXT("block exact4.5m rejected"), Target.bInRange);
-    Lab->Primitives[0].Kind = EFoundationTargetKind::Entity;
-    TestFalse(TEXT("entity same4.49m rejected"), Lab->Target({0, 0, 162}, {1, 0, 0}, P).bInRange);
-    Target = Lab->Target({150, 0, 162}, {1, 0, 0}, P);
-    TestTrue(TEXT("entity2.99m reachable"), Target.bInRange);
-    Lab->Primitives.Add(
-        {FBox(FVector(300, -50, 0), FVector(350, 50, 200)), TEXT("occluder"), EFoundationTargetKind::Block, false});
-    TestEqual(
-        TEXT("solid block occludes entity"), Lab->Target({150, 0, 162}, {1, 0, 0}, P).Name, FString(TEXT("occluder")));
-    FFoundationActions A;
-    FFoundationActionRequest R;
-    R.Target = Target;
-    TestTrue(TEXT("entity attack press accepted"), A.Dispatch(R).bAccepted);
-    TestFalse(TEXT("entity attack does not mine"), A.bBreaking);
-    R.Phase = EFoundationPhase::Hold;
-    TestFalse(TEXT("held entity attack is not extra clicks"), A.Dispatch(R).bAccepted);
-    R.Phase = EFoundationPhase::Press;
-    R.Target.Kind = EFoundationTargetKind::Block;
-    A.Dispatch(R);
-    TestTrue(TEXT("block break fixture active"), A.bBreaking);
-    R.Action = EFoundationAction::Use;
-    TestFalse(TEXT("active break prevents use"), A.Dispatch(R).bAccepted);
-    R.Action = EFoundationAction::Attack;
-    R.Phase = EFoundationPhase::Release;
-    A.Dispatch(R);
-    TestFalse(TEXT("release cancels break"), A.bBreaking);
-    R.Action = EFoundationAction::Use;
-    R.Phase = EFoundationPhase::Press;
-    TestTrue(TEXT("interactive target accepted before item"), A.Dispatch(R).bAccepted);
-    TestFalse(TEXT("interaction is not ongoing item use"), A.bUsing);
-    R.Target.bRejectInteraction = true;
-    TestFalse(TEXT("block failure prevents item/offhand fallback"), A.Dispatch(R).bAccepted);
-    TestFalse(TEXT("failed target did not begin item use"), A.bUsing);
-    R.Target.bRejectInteraction = false;
-    R.Target.Kind = EFoundationTargetKind::Entity;
-    R.bCrouch = true;
-    A.Dispatch(R);
-    TestFalse(TEXT("crouching does not generically bypass entity interaction"), A.bUsing);
-    R.Target.Kind = EFoundationTargetKind::Block;
-    R.bCrouch = true;
-    A.Dispatch(R);
-    TestTrue(TEXT("crouch with a held item bypasses the target to the item"), A.bUsing);
-    R.Action = EFoundationAction::Attack;
-    TestFalse(TEXT("using item consumes attack"), A.Dispatch(R).bAccepted);
-    R.Action = EFoundationAction::Pick;
-    TestFalse(TEXT("using item consumes pick"), A.Dispatch(R).bAccepted);
-    A.Cancel();
-    A.Select(8);
-    R.Action = EFoundationAction::Use;
-    auto Used = A.Dispatch(R);
-    TestEqual(TEXT("main empty tries offhand"), Used.Hand, EFoundationHand::Off);
-    A.Cancel();
-    A.Offhand = 0;
-    R.Target.bInteractive = false;
-    TestFalse(TEXT("empty hands pass"), A.Dispatch(R).bAccepted);
-    A.Scroll(-1);
-    TestEqual(TEXT("wheel wraps slot9 to1"), A.Slot, 0);
-    R.Action = EFoundationAction::Drop;
-    R.bControl = false;
-    A.Dispatch(R);
-    TestEqual(TEXT("drop one"), A.Slots[0], 63);
-    R.bControl = true;
-    A.Dispatch(R);
-    TestEqual(TEXT("fixed control drops stack"), A.Slots[0], 0);
-    A.Offhand = 7;
-    R.Action = EFoundationAction::Swap;
-    A.Dispatch(R);
-    TestEqual(TEXT("offhand swaps tokens"), A.Slots[0], 7);
-    R.Action = EFoundationAction::Inventory;
-    A.Dispatch(R);
-    TestFalse(TEXT("inventory cancels actions"), A.bUsing || A.bBreaking);
-    return true;
-}
 #endif

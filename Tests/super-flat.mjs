@@ -40,7 +40,7 @@ try {
   await waitUntil(async () => {try {browser = await chromium.connectOverCDP('http://127.0.0.1:18928'); return true;} catch {return false;}});
   page = await findMenu();
   for (const id of ['fictional-forest', 'fictional-build', '/Game/Maps/L_SuperFlat', 'super-flat?listen']) {
-    const reply = await page.evaluate(async id => JSON.parse(await window.ue.menuapp.requestopenworld(id)), id);
+    const reply = await page.evaluate(async id => JSON.parse(await window.ue.menuapplication.requestopenworld(id)), id);
     check('Native rejects noncatalog travel: ' + id, !reply.ok && !reply.pendingWorld && !reply.travelIssued, reply);
   }
   await page.getByRole('button', {name: 'Singleplayer', exact: true}).click();

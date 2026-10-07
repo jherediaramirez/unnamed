@@ -88,7 +88,7 @@ void UFoundationPanels::OpenDebugOptions()
     }
     AFoundationController* Controller = GetFoundationController();
     UUnnamedInputSubsystem* InputSubsystem = Controller->GetInputSubsystem();
-    UUnnamedInputSettings* Settings = InputSubsystem ? InputSubsystem->Settings() : nullptr;
+    UUnnamedInputSettings* Settings = InputSubsystem ? InputSubsystem->GetSettings() : nullptr;
     if (!Settings) return;
     const TWeakObjectPtr<UUnnamedInputSettings> WeakSettings = Settings;
     const TWeakObjectPtr<UFoundationPanels> WeakThis = this;

@@ -17,7 +17,7 @@ bool UUnnamedInputSubsystem::EnsureReady(FString& OutError)
 {
     OutError.Empty();
     auto* Enhanced = GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-    if (!Enhanced || !Settings())
+    if (!Enhanced || !GetSettings())
     {
         OutError = TEXT("Enhanced Input settings are unavailable. Restart after building the project.");
         return false;
@@ -31,7 +31,7 @@ bool UUnnamedInputSubsystem::EnsureReady(FString& OutError)
             OutError = TEXT("The on-foot input assets are missing. Run CreateInputAssets.py.");
             return false;
         }
-        if (!Settings()->RegisterInputMappingContext(OnFootContext))
+        if (!GetSettings()->RegisterInputMappingContext(OnFootContext))
         {
             OnFootContext = nullptr;
             OutError = TEXT("The on-foot bindings could not be registered.");
@@ -40,7 +40,7 @@ bool UUnnamedInputSubsystem::EnsureReady(FString& OutError)
         FoundationContext = Project.FoundationActionsContext.LoadSynchronous();
         if (FoundationContext)
         {
-            Settings()->RegisterInputMappingContext(FoundationContext);
+            GetSettings()->RegisterInputMappingContext(FoundationContext);
             // Debug mappings remain registered for settings, but only the chord
             // router can activate them. Bare D/C/B must still reach gameplay.
             RuntimeActionContext = NewObject<UInputMappingContext>(this, TEXT("FoundationActions"));
@@ -51,7 +51,7 @@ bool UUnnamedInputSubsystem::EnsureReady(FString& OutError)
         RefreshPolicies();
         // Enhanced Input migrates registered default rows and restores customized
         // keys by stable mapping name. Never rewrite existing custom bindings.
-        Settings()->FoundationSchemaVersion = 1;
+        GetSettings()->FoundationSchemaVersion = 1;
         if (FSlateApplication::IsInitialized())
             ActivationHandle = FSlateApplication::Get().OnApplicationActivationStateChanged().AddUObject(
                 this, &ThisClass::OnApplicationActivationChanged);
@@ -59,7 +59,7 @@ bool UUnnamedInputSubsystem::EnsureReady(FString& OutError)
     return true;
 }
 
-UUnnamedInputSettings* UUnnamedInputSubsystem::Settings() const
+UUnnamedInputSettings* UUnnamedInputSubsystem::GetSettings() const
 {
     auto* Enhanced = GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
     return Enhanced ? Enhanced->GetUserSettings<UUnnamedInputSettings>() : nullptr;
@@ -68,7 +68,7 @@ UUnnamedInputSettings* UUnnamedInputSubsystem::Settings() const
 void UUnnamedInputSubsystem::RefreshPolicies()
 {
     ClearIntent();
-    if (auto* UserSettings = Settings()) Model.SetPolicies(UserSettings->bToggleSprint, UserSettings->bToggleCrouch);
+    if (auto* UserSettings = GetSettings()) Model.SetPolicies(UserSettings->bToggleSprint, UserSettings->bToggleCrouch);
 }
 
 bool UUnnamedInputSubsystem::BindGameplayInput(UEnhancedInputComponent* Component)
@@ -143,7 +143,7 @@ void UUnnamedInputSubsystem::SetGameplayInputEnabled(bool bEnabled)
 void UUnnamedInputSubsystem::ClearIntent()
 {
     Model.Reset();
-    ResetSignal.Broadcast();
+    OnIntentReset.Broadcast();
     auto* Enhanced = GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
     if (Enhanced && Enhanced->GetPlayerInput()) Enhanced->GetPlayerInput()->FlushPressedKeys();
 }
@@ -166,7 +166,7 @@ void UUnnamedInputSubsystem::OnMove(const FInputActionValue& Value)
     const bool Before[] = {Old.Y > 0, Old.Y < 0, Old.X < 0, Old.X > 0},
                After[] = {Next.Y > 0, Next.Y < 0, Next.X < 0, Next.X > 0};
     for (int32 I = 0; I < 4; ++I)
-        if (Before[I] != After[I]) ActionSignal.Broadcast(Names[I], After[I]);
+        if (Before[I] != After[I]) OnAction.Broadcast(Names[I], After[I]);
 }
 
 void UUnnamedInputSubsystem::OnLook(const FInputActionValue& Value)
@@ -179,14 +179,14 @@ void UUnnamedInputSubsystem::SprintStart()
     if (bGameplayEnabled)
     {
         Model.Sprint(true);
-        ActionSignal.Broadcast(TEXT("key.sprint"), true);
+        OnAction.Broadcast(TEXT("key.sprint"), true);
     }
 }
 
 void UUnnamedInputSubsystem::SprintEnd()
 {
     Model.Sprint(false);
-    ActionSignal.Broadcast(TEXT("key.sprint"), false);
+    OnAction.Broadcast(TEXT("key.sprint"), false);
 }
 
 void UUnnamedInputSubsystem::CrouchStart()
@@ -194,14 +194,14 @@ void UUnnamedInputSubsystem::CrouchStart()
     if (bGameplayEnabled)
     {
         Model.Crouch(true);
-        ActionSignal.Broadcast(TEXT("key.sneak"), true);
+        OnAction.Broadcast(TEXT("key.sneak"), true);
     }
 }
 
 void UUnnamedInputSubsystem::CrouchEnd()
 {
     Model.Crouch(false);
-    ActionSignal.Broadcast(TEXT("key.sneak"), false);
+    OnAction.Broadcast(TEXT("key.sneak"), false);
 }
 
 void UUnnamedInputSubsystem::JumpStart()
@@ -209,14 +209,14 @@ void UUnnamedInputSubsystem::JumpStart()
     if (bGameplayEnabled)
     {
         Model.Jump(true);
-        ActionSignal.Broadcast(TEXT("key.jump"), true);
+        OnAction.Broadcast(TEXT("key.jump"), true);
     }
 }
 
 void UUnnamedInputSubsystem::JumpEnd()
 {
     Model.Jump(false);
-    ActionSignal.Broadcast(TEXT("key.jump"), false);
+    OnAction.Broadcast(TEXT("key.jump"), false);
 }
 
 void UUnnamedInputSubsystem::OnApplicationActivationChanged(bool bActive)
@@ -235,7 +235,7 @@ void UUnnamedInputSubsystem::Deinitialize()
     Super::Deinitialize();
 }
 
-TArray<FName> UUnnamedInputSubsystem::SupportedIds() const
+TArray<FName> UUnnamedInputSubsystem::GetSupportedIds() const
 {
     TArray<FName> Result;
     for (const auto* C : {OnFootContext.Get(), FoundationContext.Get()})
@@ -245,7 +245,7 @@ TArray<FName> UUnnamedInputSubsystem::SupportedIds() const
     return Result;
 }
 
-FString UUnnamedInputSubsystem::AppliedContexts() const
+FString UUnnamedInputSubsystem::DescribeAppliedContexts() const
 {
     auto* Enhanced = GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
     FString Result;
@@ -258,9 +258,9 @@ FString UUnnamedInputSubsystem::AppliedContexts() const
     return Result.IsEmpty() ? TEXT("none") : Result;
 }
 
-FKey UUnnamedInputSubsystem::CurrentKey(FName Id) const
+FKey UUnnamedInputSubsystem::GetCurrentKey(FName Id) const
 {
-    auto* S = Settings();
+    auto* S = GetSettings();
     auto* Profile = S ? S->GetActiveKeyProfile() : nullptr;
     FMapPlayerKeyArgs Args;
     Args.MappingName = Id;
@@ -269,7 +269,7 @@ FKey UUnnamedInputSubsystem::CurrentKey(FName Id) const
     return Mapping ? Mapping->GetCurrentKey() : EKeys::Invalid;
 }
 
-FKey UUnnamedInputSubsystem::DefaultKey(FName Id) const
+FKey UUnnamedInputSubsystem::GetDefaultKey(FName Id) const
 {
     for (const auto* C : {OnFootContext.Get(), FoundationContext.Get()})
         if (C)
@@ -278,7 +278,7 @@ FKey UUnnamedInputSubsystem::DefaultKey(FName Id) const
     return EKeys::Invalid;
 }
 
-FKey UUnnamedInputSubsystem::PhysicalKey(FKey Key)
+FKey UUnnamedInputSubsystem::ToPhysicalKey(FKey Key)
 {
 #if PLATFORM_WINDOWS
     if (Key.IsMouseButton() || Key.IsAnalog()) return Key;
@@ -304,7 +304,7 @@ void UUnnamedInputSubsystem::ActionStart(const FInputActionInstance& Instance)
         for (const auto& M : FoundationContext->GetMappings())
             if (M.Action == Instance.GetSourceAction())
             {
-                ActionSignal.Broadcast(M.GetMappingName(), true);
+                OnAction.Broadcast(M.GetMappingName(), true);
                 break;
             }
 }
@@ -315,7 +315,7 @@ void UUnnamedInputSubsystem::ActionEnd(const FInputActionInstance& Instance)
         for (const auto& M : FoundationContext->GetMappings())
             if (M.Action == Instance.GetSourceAction())
             {
-                ActionSignal.Broadcast(M.GetMappingName(), false);
+                OnAction.Broadcast(M.GetMappingName(), false);
                 break;
             }
 }

@@ -22,9 +22,9 @@ public:
     FFoundationSimulation Simulation;
     FFoundationIntent LastIntent;
     FFoundationEligibility Eligibility;
-    FVector EyePosition() const;
-    FFoundationTarget Target() const;
-    void SetSimulationEnabled(bool Enabled);
+    FVector GetEyePosition() const;
+    FFoundationTarget TraceTarget() const;
+    void SetSimulationEnabled(bool bEnabled);
 
     void SetPerspective(int32 Value) { Perspective = Value; }
 

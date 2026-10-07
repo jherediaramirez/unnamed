@@ -12,7 +12,7 @@ function fixture({canQuit = true, saveFailure = false} = {}) {
     worlds: [{id: 'foundation', name: 'Player Foundation', summary: 'Lab', status: 'Playable'},
       {id: 'super-flat', name: 'Super Flat', summary: 'Flat', status: 'Playable'}]});
   const context = vm.createContext({
-    window: {ue: {menuapp: {getstate: async () => reply(), requestopenworld: async id => {calls.push('open:' + id); requested = true; return reply();}}}},
+    window: {ue: {menuapplication: {getstate: async () => reply(), requestopenworld: async id => {calls.push('open:' + id); requested = true; return reply();}}}},
     screen: {querySelectorAll: () => []}, clone: structuredClone, console, Date, clearTimeout,
     state: {worlds: [{id: 'fictional-forest', name: 'Forest'}, {id: 'fictional-build', name: 'Build'}]},
     current: {name: 'main'}, drawWorlds: () => calls.push('draw'),
@@ -67,7 +67,7 @@ test('unanswered settings drain never launches late after its deadline', async (
 
 test('late pre-travel poll cannot overwrite the accepted travel', async () => {
   const f = fixture(); await f.api.initialize(); const before = f.api.getState(); let finish;
-  f.context.window.ue.menuapp.getstate = () => new Promise(resolve => finish = resolve);
+  f.context.window.ue.menuapplication.getstate = () => new Promise(resolve => finish = resolve);
   const poll = f.intervals[0](); await Promise.resolve();
   await f.api.openWorld('super-flat'); finish(before); await poll;
   assert.equal(f.api.getState().travelIssued, true);

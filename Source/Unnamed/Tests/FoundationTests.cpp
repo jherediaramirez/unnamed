@@ -1,9 +1,30 @@
 #include "Misc/AutomationTest.h"
+#include "Foundation/FoundationActions.h"
 #include "Foundation/FoundationCoordinates.h"
+#include "Foundation/FoundationLab.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationSimulation.h"
+#include "Engine/Engine.h"
+#include "Engine/World.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
+namespace
+{
+    // A throwaway game world for actors that only need to exist (no game instance or player).
+    struct FScopedTestWorld
+    {
+        UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+
+        FScopedTestWorld() { GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World); }
+
+        ~FScopedTestWorld()
+        {
+            GEngine->DestroyWorldContext(World);
+            World->DestroyWorld(false);
+        }
+    };
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationCoordinatesTest, "Unnamed.Foundation.Coordinates",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -211,6 +232,92 @@ bool FFoundationCollisionTest::RunTest(const FString&)
         }
         TestEqual(TEXT("auto jump 1m obstacle fixture"), Peak > 100, Enabled);
     }
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationActionsTest, "Unnamed.Foundation.ActionContracts",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationActionsTest::RunTest(const FString&)
+{
+    FScopedTestWorld TestWorld;
+    auto* Lab = TestWorld.World->SpawnActor<AFoundationLab>();
+    const auto& P = *GetDefault<UFoundationProfile>();
+    Lab->Primitives = {
+        {FBox(FVector(449, -50, 0), FVector(549, 50, 200)), TEXT("block"), EFoundationTargetKind::Block, true}};
+    auto Target = Lab->TraceTarget({0, 0, 162}, {1, 0, 0}, P);
+    TestTrue(TEXT("block 4.49m reachable"), Target.bInRange);
+    Target = Lab->TraceTarget({-1, 0, 162}, {1, 0, 0}, P);
+    TestFalse(TEXT("block exact4.5m rejected"), Target.bInRange);
+    Lab->Primitives[0].Kind = EFoundationTargetKind::Entity;
+    TestFalse(TEXT("entity same4.49m rejected"), Lab->TraceTarget({0, 0, 162}, {1, 0, 0}, P).bInRange);
+    Target = Lab->TraceTarget({150, 0, 162}, {1, 0, 0}, P);
+    TestTrue(TEXT("entity2.99m reachable"), Target.bInRange);
+    Lab->Primitives.Add(
+        {FBox(FVector(300, -50, 0), FVector(350, 50, 200)), TEXT("occluder"), EFoundationTargetKind::Block, false});
+    TestEqual(TEXT("solid block occludes entity"), Lab->TraceTarget({150, 0, 162}, {1, 0, 0}, P).Name,
+        FString(TEXT("occluder")));
+    FFoundationActions A;
+    FFoundationActionRequest R;
+    R.Target = Target;
+    TestTrue(TEXT("entity attack press accepted"), A.Dispatch(R).bAccepted);
+    TestFalse(TEXT("entity attack does not mine"), A.bBreaking);
+    R.Phase = EFoundationPhase::Hold;
+    TestFalse(TEXT("held entity attack is not extra clicks"), A.Dispatch(R).bAccepted);
+    R.Phase = EFoundationPhase::Press;
+    R.Target.Kind = EFoundationTargetKind::Block;
+    A.Dispatch(R);
+    TestTrue(TEXT("block break fixture active"), A.bBreaking);
+    R.Action = EFoundationAction::Use;
+    TestFalse(TEXT("active break prevents use"), A.Dispatch(R).bAccepted);
+    R.Action = EFoundationAction::Attack;
+    R.Phase = EFoundationPhase::Release;
+    A.Dispatch(R);
+    TestFalse(TEXT("release cancels break"), A.bBreaking);
+    R.Action = EFoundationAction::Use;
+    R.Phase = EFoundationPhase::Press;
+    TestTrue(TEXT("interactive target accepted before item"), A.Dispatch(R).bAccepted);
+    TestFalse(TEXT("interaction is not ongoing item use"), A.bUsing);
+    R.Target.bRejectInteraction = true;
+    TestFalse(TEXT("block failure prevents item/offhand fallback"), A.Dispatch(R).bAccepted);
+    TestFalse(TEXT("failed target did not begin item use"), A.bUsing);
+    R.Target.bRejectInteraction = false;
+    R.Target.Kind = EFoundationTargetKind::Entity;
+    R.bCrouch = true;
+    A.Dispatch(R);
+    TestFalse(TEXT("crouching does not generically bypass entity interaction"), A.bUsing);
+    R.Target.Kind = EFoundationTargetKind::Block;
+    R.bCrouch = true;
+    A.Dispatch(R);
+    TestTrue(TEXT("crouch with a held item bypasses the target to the item"), A.bUsing);
+    R.Action = EFoundationAction::Attack;
+    TestFalse(TEXT("using item consumes attack"), A.Dispatch(R).bAccepted);
+    R.Action = EFoundationAction::Pick;
+    TestFalse(TEXT("using item consumes pick"), A.Dispatch(R).bAccepted);
+    A.Cancel();
+    A.Select(8);
+    R.Action = EFoundationAction::Use;
+    auto Used = A.Dispatch(R);
+    TestEqual(TEXT("main empty tries offhand"), Used.Hand, EFoundationHand::Off);
+    A.Cancel();
+    A.Offhand = 0;
+    R.Target.bInteractive = false;
+    TestFalse(TEXT("empty hands pass"), A.Dispatch(R).bAccepted);
+    A.Scroll(-1);
+    TestEqual(TEXT("wheel wraps slot9 to1"), A.Slot, 0);
+    R.Action = EFoundationAction::Drop;
+    R.bControl = false;
+    A.Dispatch(R);
+    TestEqual(TEXT("drop one"), A.Slots[0], 63);
+    R.bControl = true;
+    A.Dispatch(R);
+    TestEqual(TEXT("fixed control drops stack"), A.Slots[0], 0);
+    A.Offhand = 7;
+    R.Action = EFoundationAction::Swap;
+    A.Dispatch(R);
+    TestEqual(TEXT("offhand swaps tokens"), A.Slots[0], 7);
+    R.Action = EFoundationAction::Inventory;
+    A.Dispatch(R);
+    TestFalse(TEXT("inventory cancels actions"), A.bUsing || A.bBreaking);
     return true;
 }
 #endif

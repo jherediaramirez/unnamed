@@ -144,7 +144,7 @@ void UFoundationHud::Refresh()
     {
         DebugText->SetText(FText::FromString(BuildSnapshot()));
         const UUnnamedInputSubsystem* InputSubsystem = Controller->GetInputSubsystem();
-        if (const UUnnamedInputSettings* Settings = InputSubsystem ? InputSubsystem->Settings() : nullptr)
+        if (const UUnnamedInputSettings* Settings = InputSubsystem ? InputSubsystem->GetSettings() : nullptr)
             DebugText->SetFont(
                 FCoreStyle::GetDefaultFontStyle("Mono", FMath::RoundToInt(11 * Settings->DebugTextScale)));
     }
@@ -166,7 +166,7 @@ FString UFoundationHud::BuildSnapshot() const
     const AFoundationController* Controller = GetFoundationController();
     const AFoundationPawn* Pawn = Controller ? Controller->GetFoundationPawn() : nullptr;
     UUnnamedInputSubsystem* InputSubsystem = Controller ? Controller->GetInputSubsystem() : nullptr;
-    const UUnnamedInputSettings* Settings = InputSubsystem ? InputSubsystem->Settings() : nullptr;
+    const UUnnamedInputSettings* Settings = InputSubsystem ? InputSubsystem->GetSettings() : nullptr;
     const int32 Sections = Settings ? Settings->DebugSections : AllSections;
     FString Out = TEXT("FOUNDATION | Java 26.3 / UE 5.8.3 | 1 block = 100 cm\n");
     if (!Pawn) Out += TEXT("PLAYER: no player possessed (menu)\n");
@@ -206,7 +206,7 @@ FString UFoundationHud::BuildSnapshot() const
         if (Sections & ActionSection)
         {
             const FFoundationActions& Actions = Controller->Actions;
-            const FFoundationTarget Target = Pawn->Target();
+            const FFoundationTarget Target = Pawn->TraceTarget();
             Out += FString::Printf(TEXT("Hotbar %d | main=%d off=%d | hand=%s | break=%d use=%d\nTarget %s | distance "
                                         "%.3f reach %.2f blocks | allowed=%d\nHit cm %s normal %s\nResult: %s\n"),
                 Actions.Slot + 1, Actions.Slots[Actions.Slot], Actions.Offhand, *Actions.LastHand, Actions.bBreaking,
@@ -217,7 +217,8 @@ FString UFoundationHud::BuildSnapshot() const
     if (Sections & InputSection)
     {
         const UFoundationPanels* Panels = Controller ? Controller->GetPanels() : nullptr;
-        const FString Contexts = InputSubsystem ? InputSubsystem->AppliedContexts() : TEXT("no input subsystem");
+        const FString Contexts =
+            InputSubsystem ? InputSubsystem->DescribeAppliedContexts() : TEXT("no input subsystem");
         Out += FString::Printf(TEXT("Contexts: %s + diagnostics preprocessor | capture=%d text=%d panel=%d | "
                                     "cursor=%s\nPhysical %s -> logical %s\n"),
             *Contexts, Controller && Controller->GetInputRouter()->IsCapturing(), Panels && Panels->IsTextOpen(),
@@ -238,10 +239,10 @@ FString UFoundationHud::BuildSnapshot() const
         if (InputSubsystem)
         {
             int32 Count = 0;
-            for (FName Id : InputSubsystem->SupportedIds())
+            for (FName Id : InputSubsystem->GetSupportedIds())
             {
                 Out += Id.ToString().Replace(TEXT("key."), TEXT("")) + TEXT("=") +
-                    InputSubsystem->CurrentKey(Id).ToString() + TEXT("  ");
+                    InputSubsystem->GetCurrentKey(Id).ToString() + TEXT("  ");
                 if (++Count % 5 == 0) Out += TEXT("\n");
             }
             Out += TEXT("\n");

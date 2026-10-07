@@ -49,13 +49,13 @@ void AFoundationController::BeginPlay()
     Super::BeginPlay();
     if (UUnnamedInputSubsystem* InputSubsystem = GetInputSubsystem())
     {
-        InputSubsystem->ActionSignal.AddUObject(this, &ThisClass::HandleAction);
-        InputSubsystem->ResetSignal.AddUObject(this, &ThisClass::CancelActions);
+        InputSubsystem->OnAction.AddUObject(this, &ThisClass::HandleAction);
+        InputSubsystem->OnIntentReset.AddUObject(this, &ThisClass::CancelActions);
     }
     // The pause menu is the same offline menu plus this world's bridge.
     MenuBridge = NewObject<UFoundationMenuBridge>(this);
     MenuBridge->Initialize(this);
-    MenuHost->AddBridge(TEXT("foundation"), MenuBridge);
+    MenuHost->AddBridge(TEXT("foundationmenu"), MenuBridge);
     MenuHost->GetVideoSettings();
     ResumeFoundation();
 }
@@ -64,8 +64,8 @@ void AFoundationController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     if (UUnnamedInputSubsystem* InputSubsystem = GetInputSubsystem())
     {
-        InputSubsystem->ActionSignal.RemoveAll(this);
-        InputSubsystem->ResetSignal.RemoveAll(this);
+        InputSubsystem->OnAction.RemoveAll(this);
+        InputSubsystem->OnIntentReset.RemoveAll(this);
     }
     Super::EndPlay(EndPlayReason);
 }
@@ -172,7 +172,7 @@ void AFoundationController::HandleAction(FName Id, bool bDown)
     AFoundationPawn* FoundationPawn = GetFoundationPawn();
     if (!FoundationPawn) return;
     FFoundationActionRequest Request;
-    Request.Target = FoundationPawn->Target();
+    Request.Target = FoundationPawn->TraceTarget();
     Request.Phase = bDown ? EFoundationPhase::Press : EFoundationPhase::Release;
     Request.bCrouch = FoundationPawn->LastIntent.bCrouch;
     Request.bControl = InputRouter->IsKeyDown(EKeys::LeftControl) || InputRouter->IsKeyDown(EKeys::RightControl);
@@ -200,7 +200,7 @@ void AFoundationController::UpdateHeldActions(const AFoundationPawn& FoundationP
     const int64 Step = FoundationPawn.Simulation.Steps;
     if (!IsGameplay() || Step == LastActionStep) return;
     LastActionStep = Step;
-    const FFoundationTarget Target = FoundationPawn.Target();
+    const FFoundationTarget Target = FoundationPawn.TraceTarget();
     if (Actions.bBreaking && Target.Name != Actions.ActiveTarget)
     {
         Actions.Cancel();

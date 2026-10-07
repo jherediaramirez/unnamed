@@ -32,48 +32,48 @@ UFoundationRuntimeProbe::UFoundationRuntimeProbe()
     PrimaryComponentTick.TickGroup = TG_PostUpdateWork;
 }
 
-void UFoundationRuntimeProbe::Key(FKey K, bool Down)
+void UFoundationRuntimeProbe::PressKey(FKey K, bool bDown)
 {
     if (Frames < DeferKeysUntilFrame)
     {
-        QueuedKeys.Add({K, Down});
+        QueuedKeys.Add({K, bDown});
         return;
     }
-    if (Down)
+    if (bDown)
         DownKeys.AddUnique(K);
     else
         DownKeys.Remove(K);
-    PC->GetInputRouter()->RouteKey(K, Down);
+    Controller->GetInputRouter()->RouteKey(K, bDown);
 }
 
-void UFoundationRuntimeProbe::Reset(FVector P)
+void UFoundationRuntimeProbe::ResetPlayer(FVector Position)
 {
     DeferKeysUntilFrame = 0;
     QueuedKeys.Reset();
     auto Keys = DownKeys;
     for (FKey K : Keys)
-        Key(K, false);
-    PC->GetInputSubsystem()->ClearIntent();
-    Pawn->Simulation.Reset(P, *GetDefault<UFoundationProfile>());
+        PressKey(K, false);
+    Controller->GetInputSubsystem()->ClearIntent();
+    Pawn->Simulation.Reset(Position, *GetDefault<UFoundationProfile>());
     Pawn->Simulation.bGrounded = true;
-    Pawn->SetActorLocation(P);
-    PC->SetControlRotation(FRotator::ZeroRotator);
+    Pawn->SetActorLocation(Position);
+    Controller->SetControlRotation(FRotator::ZeroRotator);
     DeferKeysUntilFrame = Frames + 2;
 }
 
-void UFoundationRuntimeProbe::Record(FString Name, bool Pass, FString Detail)
+void UFoundationRuntimeProbe::Record(FString Name, bool bPassed, FString Detail)
 {
-    auto R = MakeShared<FJsonObject>();
-    R->SetStringField(TEXT("scenario"), Name);
-    R->SetBoolField(TEXT("pass"), Pass);
-    R->SetStringField(TEXT("detail"), Detail);
-    Results.Add(MakeShared<FJsonValueObject>(R));
-    if (!Pass)
+    auto Report = MakeShared<FJsonObject>();
+    Report->SetStringField(TEXT("scenario"), Name);
+    Report->SetBoolField(TEXT("pass"), bPassed);
+    Report->SetStringField(TEXT("detail"), Detail);
+    Results.Add(MakeShared<FJsonValueObject>(Report));
+    if (!bPassed)
     {
         ++Failures;
-        R->SetStringField(TEXT("runtime_snapshot"), PC->GetHud()->BuildSnapshot());
+        Report->SetStringField(TEXT("runtime_snapshot"), Controller->GetHud()->BuildSnapshot());
     }
-    UE_LOG(LogUnnamedFoundation, Display, TEXT("FOUNDATION CHECK %s: %s | %s"), Pass ? TEXT("PASS") : TEXT("FAIL"),
+    UE_LOG(LogUnnamedFoundation, Display, TEXT("FOUNDATION CHECK %s: %s | %s"), bPassed ? TEXT("PASS") : TEXT("FAIL"),
         *Name, *Detail);
 }
 
@@ -83,7 +83,7 @@ void UFoundationRuntimeProbe::Measure(FString Name, double Actual, double Expect
         FString::Printf(TEXT("actual=%.8f expected=%.8f tolerance=%.8f"), Actual, Expected, Tolerance));
 }
 
-void UFoundationRuntimeProbe::Add(FString Name, double Duration, TFunction<void()> Start, TFunction<void()> End)
+void UFoundationRuntimeProbe::AddCase(FString Name, double Duration, TFunction<void()> Start, TFunction<void()> End)
 {
     Cases.Add({MoveTemp(Name), Duration, MoveTemp(Start), MoveTemp(End)});
 }
@@ -93,8 +93,8 @@ void UFoundationRuntimeProbe::BeginPlay()
     Super::BeginPlay();
 #if WITH_DEV_AUTOMATION_TESTS
     Pawn = Cast<AFoundationPawn>(GetOwner());
-    PC = Pawn ? Cast<AFoundationController>(Pawn->GetController()) : nullptr;
-    if (!Pawn || !PC || !FParse::Value(FCommandLine::Get(), TEXT("FoundationProbe="), Output))
+    Controller = Pawn ? Cast<AFoundationController>(Pawn->GetController()) : nullptr;
+    if (!Pawn || !Controller || !FParse::Value(FCommandLine::Get(), TEXT("FoundationProbe="), Output))
     {
         SetComponentTickEnabled(false);
         return;
@@ -102,32 +102,32 @@ void UFoundationRuntimeProbe::BeginPlay()
     FParse::Value(FCommandLine::Get(), TEXT("FoundationFPS="), RequestedFPS);
     IConsoleManager::Get().FindConsoleVariable(TEXT("r.VSync"))->Set(0, ECVF_SetByCode);
     IConsoleManager::Get().FindConsoleVariable(TEXT("t.MaxFPS"))->Set(RequestedFPS, ECVF_SetByCode);
-    Bridge = NewObject<UMenuInputBridge>(this);
-    Bridge->Initialize(PC->GetInputSubsystem());
+    InputBridge = NewObject<UMenuInputBridge>(this);
+    InputBridge->Initialize(Controller->GetInputSubsystem());
     if (FParse::Param(FCommandLine::Get(), TEXT("FoundationMenuCycle")))
     {
         static int32 Sequence = 0;
         Output = FPaths::ChangeExtension(Output, FString::Printf(TEXT("%d.json"), ++Sequence));
-        Add(
+        AddCase(
             TEXT("menu possession"), .5, [] {},
             [this]
             {
                 Record(TEXT("menu selected Foundation map and pawn"),
-                    PC->GetPawn() == Pawn && Pawn->GetLab() != nullptr, GetWorld()->GetMapName());
+                    Controller->GetPawn() == Pawn && Pawn->GetLab() != nullptr, GetWorld()->GetMapName());
             });
-        Add(
+        AddCase(
             TEXT("menu-bound movement"), .3,
-            [this] { Key(PC->GetInputSubsystem()->CurrentKey(TEXT("key.forward")), true); },
+            [this] { PressKey(Controller->GetInputSubsystem()->GetCurrentKey(TEXT("key.forward")), true); },
             [this]
             {
                 Record(TEXT("menu binding drives actual pawn"), Pawn->Simulation.Feet.X > 20,
-                    PC->GetHud()->BuildSnapshot());
-                Key(PC->GetInputSubsystem()->CurrentKey(TEXT("key.forward")), false);
+                    Controller->GetHud()->BuildSnapshot());
+                PressKey(Controller->GetInputSubsystem()->GetCurrentKey(TEXT("key.forward")), false);
             });
-        Add(
+        AddCase(
             TEXT("menu screenshot"), .5, [] {}, [this]
             { FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(Output, TEXT("png")), true, false); });
-        Add(TEXT("menu screenshot flush"), .3, [] {}, [] {});
+        AddCase(TEXT("menu screenshot flush"), .3, [] {}, [] {});
         TotalStarted = Started = FPlatformTime::Seconds();
         return;
     }
@@ -135,20 +135,20 @@ void UFoundationRuntimeProbe::BeginPlay()
     FParse::Value(FCommandLine::Get(), TEXT("FoundationPersistence="), Persistence);
     if (!Persistence.IsEmpty())
     {
-        Add(
+        AddCase(
             TEXT("persistence"), 1,
             [this, Persistence]
             {
                 if (Persistence == TEXT("write"))
                 {
-                    Bridge->ResetBindings(true);
-                    Bridge->ApplyBinding(TEXT("key.forward"), TEXT("K"));
-                    Bridge->ApplyBinding(TEXT("key.jump"), TEXT("Enter"));
-                    Bridge->ApplyBinding(TEXT("key.sprint"), TEXT("RightControl"));
-                    Bridge->ApplyBinding(TEXT("key.sneak"), TEXT("RightShift"));
-                    Bridge->ApplyBinding(TEXT("key.attack"), TEXT("ThumbMouseButton"));
-                    Bridge->ApplyPolicy(TEXT("toggleCrouch"), true);
-                    auto* S = PC->GetInputSubsystem()->Settings();
+                    InputBridge->ResetBindings(true);
+                    InputBridge->ApplyBinding(TEXT("key.forward"), TEXT("K"));
+                    InputBridge->ApplyBinding(TEXT("key.jump"), TEXT("Enter"));
+                    InputBridge->ApplyBinding(TEXT("key.sprint"), TEXT("RightControl"));
+                    InputBridge->ApplyBinding(TEXT("key.sneak"), TEXT("RightShift"));
+                    InputBridge->ApplyBinding(TEXT("key.attack"), TEXT("ThumbMouseButton"));
+                    InputBridge->ApplyPolicy(TEXT("toggleCrouch"), true);
+                    auto* S = Controller->GetInputSubsystem()->GetSettings();
                     S->DebugTextScale = 1.4f;
                     FString E;
                     Record(TEXT("native SaveGame write"), S->SaveChecked(E), E);
@@ -156,50 +156,51 @@ void UFoundationRuntimeProbe::BeginPlay()
             },
             [this]
             {
-                auto* I = PC->GetInputSubsystem();
+                auto* I = Controller->GetInputSubsystem();
                 Record(TEXT("five bindings persisted"),
-                    I->CurrentKey(TEXT("key.forward")) == EKeys::K && I->CurrentKey(TEXT("key.jump")) == EKeys::Enter &&
-                        I->CurrentKey(TEXT("key.sprint")) == EKeys::RightControl &&
-                        I->CurrentKey(TEXT("key.sneak")) == EKeys::RightShift &&
-                        I->CurrentKey(TEXT("key.attack")) == EKeys::ThumbMouseButton,
-                    Bridge->GetState());
+                    I->GetCurrentKey(TEXT("key.forward")) == EKeys::K &&
+                        I->GetCurrentKey(TEXT("key.jump")) == EKeys::Enter &&
+                        I->GetCurrentKey(TEXT("key.sprint")) == EKeys::RightControl &&
+                        I->GetCurrentKey(TEXT("key.sneak")) == EKeys::RightShift &&
+                        I->GetCurrentKey(TEXT("key.attack")) == EKeys::ThumbMouseButton,
+                    InputBridge->GetState());
                 Record(TEXT("policy and debug scale persisted"),
-                    I->Settings()->bToggleCrouch && FMath::IsNearlyEqual(I->Settings()->DebugTextScale, 1.4f),
+                    I->GetSettings()->bToggleCrouch && FMath::IsNearlyEqual(I->GetSettings()->DebugTextScale, 1.4f),
                     TEXT("native SaveGame profile readback"));
             });
         TotalStarted = Started = FPlatformTime::Seconds();
         return;
     }
-    Bridge->ResetBindings(true);
-    Add(
+    InputBridge->ResetBindings(true);
+    AddCase(
         TEXT("startup"), 1, [] {},
         [this]
         {
             Record(TEXT("possession and geometry"),
-                PC->GetPawn() == Pawn && Pawn->GetLab() && Pawn->GetLab()->CollisionBoxes.Num() > 20,
+                Controller->GetPawn() == Pawn && Pawn->GetLab() && Pawn->GetLab()->CollisionBoxes.Num() > 20,
                 TEXT("real game world, controller, pawn and native primitives"));
             Measure(TEXT("standing height cm"), Pawn->Simulation.HeightCm, 180, .1);
-            Measure(TEXT("standing eyes cm"), Pawn->EyePosition().Z - Pawn->Simulation.Feet.Z, 162, .1);
+            Measure(TEXT("standing eyes cm"), Pawn->GetEyePosition().Z - Pawn->Simulation.Feet.Z, 162, .1);
         });
-    Add(
+    AddCase(
         TEXT("walk"), 2,
         [this]
         {
-            Reset();
-            Key(EKeys::W, true);
+            ResetPlayer();
+            PressKey(EKeys::W, true);
         },
         [this]
         { Measure(TEXT("walk blocks/s"), Pawn->Simulation.LastDisplacement.Size2D() / 5., 4.3171806, .0431718); });
-    Add(
-        TEXT("stop"), 1, [this] { Key(EKeys::W, false); },
+    AddCase(
+        TEXT("stop"), 1, [this] { PressKey(EKeys::W, false); },
         [this] { Measure(TEXT("stopped speed"), Pawn->Simulation.LastDisplacement.Size2D(), 0, .001); });
-    Add(
+    AddCase(
         TEXT("sprint"), 2,
         [this]
         {
-            Reset();
-            Key(EKeys::W, true);
-            Key(EKeys::LeftShift, true);
+            ResetPlayer();
+            PressKey(EKeys::W, true);
+            PressKey(EKeys::LeftShift, true);
         },
         [this]
         {
@@ -207,20 +208,20 @@ void UFoundationRuntimeProbe::BeginPlay()
             Record(TEXT("Shift sprints without crouching"), Pawn->Simulation.bSprinting && !Pawn->Simulation.bCrouched,
                 TEXT("project personal default LeftShift"));
         });
-    Add(
-        TEXT("sprint release"), .2, [this] { Key(EKeys::LeftShift, false); },
+    AddCase(
+        TEXT("sprint release"), .2, [this] { PressKey(EKeys::LeftShift, false); },
         [this]
         {
             Record(TEXT("sprint release latch"), Pawn->Simulation.bSprinting,
                 TEXT("continues until forward/eligibility/collision ends it"));
         });
-    Add(
+    AddCase(
         TEXT("crouch"), 2,
         [this]
         {
-            Reset();
-            Key(EKeys::W, true);
-            Key(EKeys::C, true);
+            ResetPlayer();
+            PressKey(EKeys::W, true);
+            PressKey(EKeys::C, true);
         },
         [this]
         {
@@ -230,320 +231,323 @@ void UFoundationRuntimeProbe::BeginPlay()
             Record(TEXT("C requests crouch"), Pawn->LastIntent.bCrouch && Pawn->Simulation.bCrouched,
                 TEXT("project personal default C"));
         });
-    Add(
+    AddCase(
         TEXT("old sprint key"), .3,
         [this]
         {
-            Reset();
-            Key(EKeys::W, true);
-            Key(EKeys::LeftControl, true);
+            ResetPlayer();
+            PressKey(EKeys::W, true);
+            PressKey(EKeys::LeftControl, true);
         },
         [this]
         {
             Record(TEXT("Ctrl no longer requests sprint"), !Pawn->LastIntent.bSprint && !Pawn->Simulation.bSprinting,
                 TEXT("fixed Ctrl stack-drop modifier is unchanged"));
         });
-    Add(
+    AddCase(
         TEXT("jump"), .8,
         [this]
         {
-            Reset();
+            ResetPlayer();
             Apex = 0;
             LaunchTick = LandTick = -1;
-            Key(EKeys::SpaceBar, true);
+            PressKey(EKeys::SpaceBar, true);
         },
         [this]
         {
             Measure(TEXT("jump apex blocks"), Apex / 100., 1.25220334, .02);
             Measure(TEXT("jump airtime ticks"), double(LandTick - LaunchTick + 1), 12, 1);
         });
-    Add(
+    AddCase(
         TEXT("diagonal"), 2,
         [this]
         {
-            Reset({-1800, 100, 0});
-            Key(EKeys::W, true);
-            Key(EKeys::D, true);
+            ResetPlayer({-1800, 100, 0});
+            PressKey(EKeys::W, true);
+            PressKey(EKeys::D, true);
         },
         [this]
         { Measure(TEXT("diagonal blocks/s"), Pawn->Simulation.LastDisplacement.Size2D() / 5., 4.40528634, .0440529); });
-    Add(
+    AddCase(
         TEXT("opposing"), .3,
         [this]
         {
-            Reset();
-            Key(EKeys::W, true);
-            Key(EKeys::S, true);
+            ResetPlayer();
+            PressKey(EKeys::W, true);
+            PressKey(EKeys::S, true);
         },
         [this] { Measure(TEXT("opposing keys displacement"), Pawn->Simulation.Feet.Size(), 0, .001); });
-    Add(
+    AddCase(
         TEXT("rebind old"), .3,
         [this]
         {
-            Reset();
-            Bridge->ApplyBinding(TEXT("key.forward"), TEXT("K"));
-            Key(EKeys::W, true);
+            ResetPlayer();
+            InputBridge->ApplyBinding(TEXT("key.forward"), TEXT("K"));
+            PressKey(EKeys::W, true);
         },
         [this] { Measure(TEXT("removed W binding"), Pawn->Simulation.Feet.Size(), 0, .001); });
-    Add(
+    AddCase(
         TEXT("rebind new"), .15,
         [this]
         {
-            Key(EKeys::W, false);
-            Key(EKeys::K, true);
+            PressKey(EKeys::W, false);
+            PressKey(EKeys::K, true);
         },
         [this]
         { Record(TEXT("new K binding moves"), Pawn->Simulation.Feet.X > 10, TEXT("native profile forward=K")); });
-    Add(TEXT("forward tap gap"), .1, [this] { Key(EKeys::K, false); }, [] {});
-    Add(
-        TEXT("forward double tap"), .15, [this] { Key(EKeys::K, true); },
+    AddCase(TEXT("forward tap gap"), .1, [this] { PressKey(EKeys::K, false); }, [] {});
+    AddCase(
+        TEXT("forward double tap"), .15, [this] { PressKey(EKeys::K, true); },
         [this]
         {
             Record(TEXT("double tap follows remapped forward"), Pawn->Simulation.bSprinting,
                 TEXT("K tap-release-K inside7 reference ticks"));
         });
-    Add(
+    AddCase(
         TEXT("blocked stand"), .3,
         [this]
         {
-            Reset({400, 400, 0});
-            Key(EKeys::C, true);
+            ResetPlayer({400, 400, 0});
+            PressKey(EKeys::C, true);
         },
         [this]
         {
             Record(TEXT("low ceiling crouch"), Pawn->Simulation.bCrouched && !Pawn->Simulation.bHeadroom,
                 TEXT("155cm ceiling"));
         });
-    Add(
-        TEXT("blocked uncrouch"), .2, [this] { Key(EKeys::C, false); },
+    AddCase(
+        TEXT("blocked uncrouch"), .2, [this] { PressKey(EKeys::C, false); },
         [this]
         {
             Record(TEXT("release cannot stand through ceiling"),
                 Pawn->Simulation.bCrouched && !Pawn->Simulation.bHeadroom,
                 TEXT("resolved pose survives released intent"));
         });
-    Add(
+    AddCase(
         TEXT("mouse"), .15,
         [this]
         {
-            Reset();
-            PC->InputKey(FInputKeyEventArgs(nullptr, FInputDeviceId::CreateFromInternalId(0), EKeys::MouseX, 100.f,
-                1.f / RequestedFPS, 1, FPlatformTime::Cycles64()));
+            ResetPlayer();
+            Controller->InputKey(FInputKeyEventArgs(nullptr, FInputDeviceId::CreateFromInternalId(0), EKeys::MouseX,
+                100.f, 1.f / RequestedFPS, 1, FPlatformTime::Cycles64()));
         },
-        [this] { Measure(TEXT("100 mouse counts yaw degrees"), PC->GetControlRotation().Yaw, 15, .05); });
-    Add(
+        [this] { Measure(TEXT("100 mouse counts yaw degrees"), Controller->GetControlRotation().Yaw, 15, .05); });
+    AddCase(
         TEXT("pause held"), .25,
         [this]
         {
-            Reset();
-            Key(EKeys::K, true);
-            Key(EKeys::Escape, true);
-            Key(EKeys::Escape, false);
+            ResetPlayer();
+            PressKey(EKeys::K, true);
+            PressKey(EKeys::Escape, true);
+            PressKey(EKeys::Escape, false);
         },
         [this]
         {
             Record(TEXT("pause removes contexts"),
-                !PC->GetInputSubsystem()->IsGameplayEnabled() && PC->GetMenuHost()->IsOpen(),
+                !Controller->GetInputSubsystem()->IsGameplayEnabled() && Controller->GetMenuHost()->IsOpen(),
                 TEXT("existing CEF menu opened; no sim movement"));
         });
-    Add(
+    AddCase(
         TEXT("release while paused"), .15,
         [this]
         {
-            Key(EKeys::K, false);
-            PC->ResumeFoundation();
+            PressKey(EKeys::K, false);
+            Controller->ResumeFoundation();
         },
         [this]
         {
             Record(TEXT("resume clears stale movement"), Pawn->LastIntent.Move.IsNearlyZero(),
                 TEXT("release happened in UIOnly context"));
         });
-    Add(
+    AddCase(
         TEXT("text"), .15,
         [this]
         {
-            PC->GetPanels()->OpenText(false);
-            Key(EKeys::K, true);
+            Controller->GetPanels()->OpenText(false);
+            PressKey(EKeys::K, true);
         },
         [this]
         {
-            Record(TEXT("text does not move"), !PC->IsGameplay() && Pawn->LastIntent.Move.IsNearlyZero(),
+            Record(TEXT("text does not move"), !Controller->IsGameplay() && Pawn->LastIntent.Move.IsNearlyZero(),
                 TEXT("native editable text focus; no chat backend"));
-            Key(EKeys::K, false);
-            PC->GetPanels()->Close();
+            PressKey(EKeys::K, false);
+            Controller->GetPanels()->Close();
         });
-    Add(
+    AddCase(
         TEXT("debug chord"), .15,
         [this]
         {
-            Bridge->ApplyBinding(TEXT("key.togglePerspective"), TEXT("F6"));
-            PC->GetHud()->bOverlay = false;
-            Key(EKeys::F3, true);
-            Key(EKeys::F6, true);
-            Key(EKeys::F6, false);
-            Key(EKeys::F3, false);
+            InputBridge->ApplyBinding(TEXT("key.togglePerspective"), TEXT("F6"));
+            Controller->GetHud()->bOverlay = false;
+            PressKey(EKeys::F3, true);
+            PressKey(EKeys::F6, true);
+            PressKey(EKeys::F6, false);
+            PressKey(EKeys::F3, false);
         },
         [this]
         {
             Record(TEXT("F3+F6 options and no perspective"),
-                PC->GetPanels()->IsOpen() && PC->GetHud()->bOverlay && Pawn->GetPerspective() == 0,
+                Controller->GetPanels()->IsOpen() && Controller->GetHud()->bOverlay && Pawn->GetPerspective() == 0,
                 TEXT("perspective rebound to F6; chord consumes it"));
-            PC->GetPanels()->Close();
+            Controller->GetPanels()->Close();
         });
-    Add(
+    AddCase(
         TEXT("F3 alone"), .15,
         [this]
         {
-            Key(EKeys::F3, true);
-            Key(EKeys::F3, false);
+            PressKey(EKeys::F3, true);
+            PressKey(EKeys::F3, false);
         },
-        [this] { Record(TEXT("F3 alone toggles"), !PC->GetHud()->bOverlay, TEXT("toggle on release")); });
-    Add(
+        [this] { Record(TEXT("F3 alone toggles"), !Controller->GetHud()->bOverlay, TEXT("toggle on release")); });
+    AddCase(
         TEXT("F3 C sharing"), .15,
         [this]
         {
-            Reset();
-            Key(EKeys::F3, true);
-            Key(EKeys::C, true);
+            ResetPlayer();
+            PressKey(EKeys::F3, true);
+            PressKey(EKeys::C, true);
         },
         [this]
         {
             Record(TEXT("F3+C does not also crouch"), !Pawn->LastIntent.bCrouch && !Pawn->Simulation.bCrouched,
                 TEXT("debug chord consumes shared C binding"));
-            Key(EKeys::C, false);
-            Key(EKeys::F3, false);
+            PressKey(EKeys::C, false);
+            PressKey(EKeys::F3, false);
         });
-    Add(
-        TEXT("HUD"), .15, [this] { Key(EKeys::F1, true); },
+    AddCase(
+        TEXT("HUD"), .15, [this] { PressKey(EKeys::F1, true); },
         [this]
         {
-            Record(TEXT("HUD hides via action"), PC->GetHud()->bHideHud, TEXT("Enhanced Input F1 action"));
-            Key(EKeys::F1, false);
-            PC->GetHud()->bHideHud = false;
+            Record(TEXT("HUD hides via action"), Controller->GetHud()->bHideHud, TEXT("Enhanced Input F1 action"));
+            PressKey(EKeys::F1, false);
+            Controller->GetHud()->bHideHud = false;
         });
-    Add(
+    AddCase(
         TEXT("capture"), .15,
         [this]
         {
-            PC->GetInputRouter()->SetCapture(true);
-            Key(EKeys::K, true);
+            Controller->GetInputRouter()->SetCapture(true);
+            PressKey(EKeys::K, true);
         },
         [this]
         {
             Record(TEXT("capture consumes gameplay intent"), Pawn->LastIntent.Move.IsNearlyZero(),
                 TEXT("capture input never reaches Enhanced Input"));
-            PC->GetInputRouter()->SetCapture(false);
-            Key(EKeys::K, false);
+            Controller->GetInputRouter()->SetCapture(false);
+            PressKey(EKeys::K, false);
         });
-    Add(
+    AddCase(
         TEXT("capture F3"), .15,
         [this]
         {
-            PC->GetHud()->bOverlay = false;
-            PC->GetInputRouter()->SetCapture(true);
-            Key(EKeys::F3, true);
-            PC->GetInputRouter()->SetCapture(false);
-            Key(EKeys::F3, false);
+            Controller->GetHud()->bOverlay = false;
+            Controller->GetInputRouter()->SetCapture(true);
+            PressKey(EKeys::F3, true);
+            Controller->GetInputRouter()->SetCapture(false);
+            PressKey(EKeys::F3, false);
         },
         [this]
         {
-            Record(TEXT("capture F3 release cannot toggle overlay"), !PC->GetHud()->bOverlay,
+            Record(TEXT("capture F3 release cannot toggle overlay"), !Controller->GetHud()->bOverlay,
                 TEXT("captured press has no standalone release action"));
         });
-    Add(
+    AddCase(
         TEXT("inventory close"), .15,
         [this]
         {
-            PC->GetPanels()->OpenInventory();
-            Key(EKeys::E, true);
-            Key(EKeys::E, false);
+            Controller->GetPanels()->OpenInventory();
+            PressKey(EKeys::E, true);
+            PressKey(EKeys::E, false);
         },
         [this]
         {
-            Record(TEXT("logical inventory binding closes fixture"), !PC->GetPanels()->IsOpen() && PC->IsGameplay(),
+            Record(TEXT("logical inventory binding closes fixture"),
+                !Controller->GetPanels()->IsOpen() && Controller->IsGameplay(),
                 TEXT("same configurable E binding in inventory context"));
         });
-    Add(
+    AddCase(
         TEXT("focus"), .15,
         [this]
         {
-            Key(EKeys::K, true);
-            PC->HandleFocusChanged(false);
-            Key(EKeys::K, false);
+            PressKey(EKeys::K, true);
+            Controller->HandleFocusChanged(false);
+            PressKey(EKeys::K, false);
         },
         [this]
         {
-            Record(TEXT("focus loss cancels"), PC->GetMenuHost()->IsOpen() && Pawn->LastIntent.Move.IsNearlyZero(),
+            Record(TEXT("focus loss cancels"),
+                Controller->GetMenuHost()->IsOpen() && Pawn->LastIntent.Move.IsNearlyZero(),
                 TEXT("application activation handler invoked, not physical OS focus test"));
-            PC->HandleFocusChanged(true);
-            PC->ResumeFoundation();
+            Controller->HandleFocusChanged(true);
+            Controller->ResumeFoundation();
         });
-    Add(
+    AddCase(
         TEXT("wheel binding"), .25,
         [this]
         {
-            Reset();
-            Bridge->ApplyBinding(TEXT("key.jump"), TEXT("MouseScrollUp"));
-            PC->GetInputRouter()->RouteWheel(1);
+            ResetPlayer();
+            InputBridge->ApplyBinding(TEXT("key.jump"), TEXT("MouseScrollUp"));
+            Controller->GetInputRouter()->RouteWheel(1);
         },
         [this]
         {
             Record(TEXT("wheel pulse reaches rebound jump"), Pawn->Simulation.Feet.Z > 30,
                 TEXT("Enhanced Input pulse survives one reference step"));
         });
-    Add(
+    AddCase(
         TEXT("action target"), .15,
         [this]
         {
-            Reset({250, 1050, 0});
-            Key(EKeys::LeftMouseButton, true);
+            ResetPlayer({250, 1050, 0});
+            PressKey(EKeys::LeftMouseButton, true);
         },
         [this]
         {
-            Record(TEXT("native attack reaches fixture"), PC->Actions.bBreaking, TEXT("eye ray at block fixture2.5m"));
+            Record(TEXT("native attack reaches fixture"), Controller->Actions.bBreaking,
+                TEXT("eye ray at block fixture2.5m"));
         });
-    Add(
+    AddCase(
         TEXT("action cancel"), .15,
         [this]
         {
-            Key(EKeys::Escape, true);
-            Key(EKeys::Escape, false);
-            Key(EKeys::LeftMouseButton, false);
+            PressKey(EKeys::Escape, true);
+            PressKey(EKeys::Escape, false);
+            PressKey(EKeys::LeftMouseButton, false);
         },
         [this]
         {
-            Record(TEXT("pause cancels attack/use"), !PC->Actions.bBreaking && !PC->Actions.bUsing,
+            Record(TEXT("pause cancels attack/use"), !Controller->Actions.bBreaking && !Controller->Actions.bUsing,
                 TEXT("context removal"));
-            PC->ResumeFoundation();
+            Controller->ResumeFoundation();
         });
-    Add(
+    AddCase(
         TEXT("menu cycles"), .15,
         [this]
         {
             for (int32 I = 0; I < 4; ++I)
             {
-                PC->PauseFoundation();
-                PC->ResumeFoundation();
+                Controller->PauseFoundation();
+                Controller->ResumeFoundation();
             }
-            Bridge->ResetBindings(true);
+            InputBridge->ResetBindings(true);
         },
         [this]
         {
             Record(TEXT("repeated pause/resume stays playable"),
-                PC->IsGameplay() && PC->GetInputSubsystem()->IsGameplayEnabled(),
+                Controller->IsGameplay() && Controller->GetInputSubsystem()->IsGameplayEnabled(),
                 TEXT("4 native browser/context trips"));
         });
-    Add(
+    AddCase(
         TEXT("screenshot"), 1,
         [this]
         {
-            Reset({-100, -850, 0});
-            PC->SetControlRotation(FRotator(-10, 35, 0));
-            PC->GetHud()->bOverlay = true;
-            PC->GetHud()->bShowCollision = true;
+            ResetPlayer({-100, -850, 0});
+            Controller->SetControlRotation(FRotator(-10, 35, 0));
+            Controller->GetHud()->bOverlay = true;
+            Controller->GetHud()->bShowCollision = true;
         },
         [this] { FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(Output, TEXT("png")), true, false); });
-    Add(TEXT("capture flush"), 1, [] {}, [] {});
+    AddCase(TEXT("capture flush"), 1, [] {}, [] {});
     TotalStarted = Started = FPlatformTime::Seconds();
 #else
     SetComponentTickEnabled(false);
@@ -561,7 +565,7 @@ void UFoundationRuntimeProbe::TickComponent(float Delta, ELevelTick Type, FActor
         auto Pending = MoveTemp(QueuedKeys);
         QueuedKeys.Reset();
         for (const auto& Pair : Pending)
-            Key(Pair.Key, Pair.Value);
+            PressKey(Pair.Key, Pair.Value);
     }
     if (Phase >= 0 && Cases[Phase].Name == TEXT("jump"))
     {
@@ -570,7 +574,7 @@ void UFoundationRuntimeProbe::TickComponent(float Delta, ELevelTick Type, FActor
         if (LaunchTick >= 0 && LandTick < 0 && Pawn->Simulation.bGrounded)
         {
             LandTick = Pawn->Simulation.Steps;
-            Key(EKeys::SpaceBar, false);
+            PressKey(EKeys::SpaceBar, false);
         }
     }
     if (Phase >= 0 && Now - PhaseStarted < Cases[Phase].Duration) return;
@@ -610,7 +614,7 @@ void UFoundationRuntimeProbe::Finish()
     FFileHelper::SaveStringToFile(Json, *Output);
     if (FParse::Param(FCommandLine::Get(), TEXT("FoundationMenuCycle")))
     {
-        PC->ReturnToMenu();
+        Controller->ReturnToMenu();
         return;
     }
     FPlatformMisc::RequestExitWithStatus(false, Failures ? 1 : 0);

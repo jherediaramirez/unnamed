@@ -31,12 +31,12 @@ namespace
         virtual bool HandleKeyDownEvent(FSlateApplication&, const FKeyEvent& Event) override
         {
             return Router.IsValid() &&
-                Router->RouteKey(UUnnamedInputSubsystem::PhysicalKey(Event.GetKey()), true, Event.IsRepeat());
+                Router->RouteKey(UUnnamedInputSubsystem::ToPhysicalKey(Event.GetKey()), true, Event.IsRepeat());
         }
 
         virtual bool HandleKeyUpEvent(FSlateApplication&, const FKeyEvent& Event) override
         {
-            return Router.IsValid() && Router->RouteKey(UUnnamedInputSubsystem::PhysicalKey(Event.GetKey()), false);
+            return Router.IsValid() && Router->RouteKey(UUnnamedInputSubsystem::ToPhysicalKey(Event.GetKey()), false);
         }
 
         virtual bool HandleMouseButtonDownEvent(FSlateApplication&, const FPointerEvent& Event) override
@@ -133,8 +133,8 @@ bool UFoundationInputRouter::RouteKey(FKey Key, bool bDown, bool bRepeat)
     if (bDown && (bRepeat || Blocked.Contains(Key))) return Controller->IsGameplay();
 
     // F3 alone toggles the overlay on release; F3 + another debug key runs that chord instead.
-    const FKey Modifier = InputSubsystem->CurrentKey(TEXT("key.debug.modifier"));
-    const FKey Overlay = InputSubsystem->CurrentKey(TEXT("key.debug.overlay"));
+    const FKey Modifier = InputSubsystem->GetCurrentKey(TEXT("key.debug.modifier"));
+    const FKey Overlay = InputSubsystem->GetCurrentKey(TEXT("key.debug.overlay"));
     if (!bDown && ChordKeys.Remove(Key) > 0) return true;
     if (Key == Modifier)
     {
@@ -158,8 +158,8 @@ bool UFoundationInputRouter::RouteKey(FKey Key, bool bDown, bool bRepeat)
     }
     if (bDown && bDebugModifierDown)
     {
-        for (FName Id : InputSubsystem->SupportedIds())
-            if (IsDebugAction(Id) && InputSubsystem->CurrentKey(Id) == Key)
+        for (FName Id : InputSubsystem->GetSupportedIds())
+            if (IsDebugAction(Id) && InputSubsystem->GetCurrentKey(Id) == Key)
             {
                 bDebugModifierUsed = true;
                 ChordKeys.Add(Key);
@@ -182,7 +182,7 @@ bool UFoundationInputRouter::RouteKey(FKey Key, bool bDown, bool bRepeat)
             return true;
         }
     }
-    if (Panels->IsInventoryOpen() && bDown && Key == InputSubsystem->CurrentKey(TEXT("key.inventory")))
+    if (Panels->IsInventoryOpen() && bDown && Key == InputSubsystem->GetCurrentKey(TEXT("key.inventory")))
     {
         Panels->Close();
         return true;
@@ -190,7 +190,7 @@ bool UFoundationInputRouter::RouteKey(FKey Key, bool bDown, bool bRepeat)
     // Screenshot and fullscreen work everywhere except while typing.
     if (!Panels->IsTextOpen() && bDown)
         for (FName Id : {FName(TEXT("key.screenshot")), FName(TEXT("key.fullscreen"))})
-            if (InputSubsystem->CurrentKey(Id) == Key)
+            if (InputSubsystem->GetCurrentKey(Id) == Key)
             {
                 Controller->HandleAction(Id, true);
                 return true;
@@ -211,8 +211,8 @@ bool UFoundationInputRouter::RouteWheel(float Delta)
     UUnnamedInputSubsystem* InputSubsystem = Controller->GetInputSubsystem();
     const FKey Key = Delta > 0 ? EKeys::MouseScrollUp : EKeys::MouseScrollDown;
     bool bMapped = false;
-    for (FName Id : InputSubsystem->SupportedIds())
-        if (InputSubsystem->CurrentKey(Id) == Key && (!IsDebugAction(Id) || bDebugModifierDown))
+    for (FName Id : InputSubsystem->GetSupportedIds())
+        if (InputSubsystem->GetCurrentKey(Id) == Key && (!IsDebugAction(Id) || bDebugModifierDown))
         {
             bMapped = true;
             break;

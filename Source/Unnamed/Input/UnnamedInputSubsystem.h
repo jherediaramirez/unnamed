@@ -11,8 +11,8 @@ class UEnhancedInputComponent;
 class UUnnamedInputSettings;
 struct FInputActionValue;
 struct FInputActionInstance;
-DECLARE_MULTICAST_DELEGATE_TwoParams(FFoundationActionSignal, FName, bool);
-DECLARE_MULTICAST_DELEGATE(FFoundationInputReset);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnUnnamedInputAction, FName, bool);
+DECLARE_MULTICAST_DELEGATE(FOnUnnamedInputReset);
 
 UCLASS()
 class UNNAMED_API UUnnamedInputSubsystem : public ULocalPlayerSubsystem
@@ -21,22 +21,23 @@ class UNNAMED_API UUnnamedInputSubsystem : public ULocalPlayerSubsystem
 public:
     virtual void Deinitialize() override;
     bool EnsureReady(FString& OutError);
-    UUnnamedInputSettings* Settings() const;
+    UUnnamedInputSettings* GetSettings() const;
 
-    UInputMappingContext* Context() const { return OnFootContext; }
+    UInputMappingContext* GetOnFootContext() const { return OnFootContext; }
 
-    UInputMappingContext* ActionContext() const { return FoundationContext; }
+    UInputMappingContext* GetActionContext() const { return FoundationContext; }
 
-    TArray<FName> SupportedIds() const;
-    FKey CurrentKey(FName Id) const;
-    FKey DefaultKey(FName Id) const;
-    FString AppliedContexts() const;
-    static FKey PhysicalKey(FKey LayoutKey);
+    TArray<FName> GetSupportedIds() const;
+    FKey GetCurrentKey(FName Id) const;
+    FKey GetDefaultKey(FName Id) const;
+    FString DescribeAppliedContexts() const;
+    // US-layout physical key for a layout key, so bindings follow key position.
+    static FKey ToPhysicalKey(FKey LayoutKey);
 
     bool IsGameplayEnabled() const { return bGameplayEnabled; }
 
-    FFoundationActionSignal ActionSignal;
-    FFoundationInputReset ResetSignal;
+    FOnUnnamedInputAction OnAction;
+    FOnUnnamedInputReset OnIntentReset;
     // Called by the future local gameplay controller after its input component exists.
     bool BindGameplayInput(UEnhancedInputComponent* Component);
     UFUNCTION(BlueprintCallable, Category = "Input")

@@ -14,7 +14,7 @@ function fixture({inLab = true, bound = true} = {}) {
     returntomenu: async () => { calls.push('menu'); }
   };
   const context = vm.createContext({
-    window: {ue: bound ? {foundation: native} : {}}, console, clearTimeout,
+    window: {ue: bound ? {foundationmenu: native} : {}}, console, clearTimeout,
     setTimeout: (fn, ms) => setTimeout(fn, ms === 100 ? 0 : ms),
     document: {addEventListener: (type, fn) => listeners[type] = fn},
     renderers: {}, current: {name: 'main', data: {}}, stack: [{name: 'main'}], bindingCapture: null, C: 200,

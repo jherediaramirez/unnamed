@@ -12,7 +12,7 @@ try{
   await page.waitForFunction(()=>window.MenuApplication?.getState());
   check('Editor Play has no quit capability',!(await page.evaluate(()=>MenuApplication.getState())).canQuit);
   check('Editor Play Quit Game is disabled',await page.getByRole('button',{name:'Quit Game',exact:true}).isDisabled());
-  const reply=await page.evaluate(async()=>JSON.parse(await window.ue.menuapp.requestquit()));
+  const reply=await page.evaluate(async()=>JSON.parse(await window.ue.menuapplication.requestquit()));
   check('Direct native quit request is rejected in editor Play',!reply.ok&&!reply.pendingQuit&&!reply.quitIssued,reply);
   await page.waitForTimeout(1000);
   check('Editor Play remains responsive after rejected quit',await page.evaluate(()=>MenuPrototype.getState().screen==='main'));

@@ -1,7 +1,7 @@
-// Quit Game and world travel through the native menuapp service. Both drain every settings
+// Quit Game and world travel through the native menuapplication service. Both drain every settings
 // store first, send one request, then follow native state until Unreal confirms.
 const MenuApplication = (() => {
-  const client = MenuBridge.client('menuapp', {service: 'game application', unavailable: 'Game shutdown is unavailable.',
+  const client = MenuBridge.client('menuapplication', {service: 'game application', unavailable: 'Game shutdown is unavailable.',
     validate: reply => !!reply && typeof reply.ok === 'boolean' && typeof reply.canQuit === 'boolean' &&
       typeof reply.pendingQuit === 'boolean' && typeof reply.quitIssued === 'boolean'});
   let snapshot = null, leaving = null, polling = false, retryAllowed = false, revision = 0; // leaving: 'quit' | 'world'

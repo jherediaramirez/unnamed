@@ -9,7 +9,7 @@ function fixture({canQuit=true, reject=false, saveFailure=false}={}) {
   const calls=[], notices=[], intervals=[], button={disabled:true};
   let requested=false;
   const context=vm.createContext({
-    window:{ue:{menuapp:{
+    window:{ue:{menuapplication:{
       getstate:async()=>JSON.stringify({ok:!requested||!saveFailure,canQuit,pendingQuit:false,
         quitIssued:requested&&!saveFailure,error:requested&&saveFailure?'Settings could not be saved.':''}),
       requestquit:async()=>{calls.push('quit');requested=!reject;return JSON.stringify({
@@ -46,12 +46,12 @@ test('overall quit deadline includes an unanswered settings drain',async()=>{
 });
 test('unanswered quit request unlocks and ignores its late reply after retry',async()=>{
   const f=fixture();await f.api.initialize();let finishRequest;
-  const request=f.context.window.ue.menuapp.requestquit;
-  f.context.window.ue.menuapp.requestquit=()=>new Promise(resolve=>finishRequest=resolve);
+  const request=f.context.window.ue.menuapplication.requestquit;
+  f.context.window.ue.menuapplication.requestquit=()=>new Promise(resolve=>finishRequest=resolve);
   await f.api.quit();
   assert.match(f.notices.at(-1)[1],/did not respond/);
   assert.equal(f.button.disabled,false);
-  f.context.window.ue.menuapp.requestquit=request;
+  f.context.window.ue.menuapplication.requestquit=request;
   await f.api.quit();
   assert.equal(f.api.getState().quitIssued,true);
   finishRequest(JSON.stringify({ok:true,canQuit:true,pendingQuit:false,quitIssued:false}));
@@ -61,21 +61,21 @@ test('unanswered quit request unlocks and ignores its late reply after retry',as
 });
 test('late pre-quit poll cannot replace the newer shutdown state',async()=>{
   const f=fixture();await f.api.initialize();const old=f.api.getState();let finishPoll;
-  f.context.window.ue.menuapp.getstate=()=>new Promise(resolve=>finishPoll=resolve);
+  f.context.window.ue.menuapplication.getstate=()=>new Promise(resolve=>finishPoll=resolve);
   const polling=f.intervals[0]();await Promise.resolve();
   await f.api.quit();finishPoll(JSON.stringify(old));await polling;
   assert.equal(f.api.getState().quitIssued,true);
 });
 test('accepted but unanswered shutdown completion still permits an explicit retry',async()=>{
   const f=fixture();await f.api.initialize();
-  f.context.window.ue.menuapp.requestquit=async()=>JSON.stringify({ok:true,canQuit:true,pendingQuit:true,quitIssued:false});
-  f.context.window.ue.menuapp.getstate=()=>new Promise(()=>{});
+  f.context.window.ue.menuapplication.requestquit=async()=>JSON.stringify({ok:true,canQuit:true,pendingQuit:true,quitIssued:false});
+  f.context.window.ue.menuapplication.getstate=()=>new Promise(()=>{});
   await f.api.quit();
   assert.match(f.notices.at(-1)[1],/did not respond/);
   assert.equal(f.api.getState().pendingQuit,true);
   assert.equal(f.button.disabled,false);
   assert.equal(f.calls.at(-1),'unlock');
-  f.context.window.ue.menuapp.requestquit=async()=>JSON.stringify({ok:true,canQuit:true,pendingQuit:false,quitIssued:true});
+  f.context.window.ue.menuapplication.requestquit=async()=>JSON.stringify({ok:true,canQuit:true,pendingQuit:false,quitIssued:true});
   await f.api.quit();
   assert.equal(f.api.getState().quitIssued,true);
   assert.equal(f.button.disabled,true);

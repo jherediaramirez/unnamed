@@ -21,7 +21,7 @@ import * as Dialogs from './Patches/Dialogs.mjs';
 
 const patches = [Core, Realms, Application, Video, Input, Preferences, SettingsRouting, Worlds, Dialogs];
 // Concatenated in this order into the page's single script.
-const runtimeFiles = ['MenuBridgeRuntime.js', 'MenuMockRuntime.js', 'MenuDialogRuntime.js', 'MenuVideoRuntime.js',
+const runtimeFiles = ['MenuBridgeRuntime.js', 'MenuPrototypeRuntime.js', 'MenuDialogRuntime.js', 'MenuVideoRuntime.js',
   'MenuInputRuntime.js', 'MenuPreferencesRuntime.js', 'MenuWorldsRuntime.js', 'MenuApplicationRuntime.js',
   'FoundationMenuRuntime.js'];
 

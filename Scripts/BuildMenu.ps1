@@ -12,8 +12,8 @@ $adapterArgs=@(Join-Path $root 'MenuWeb\AdaptMenu.mjs')
 if($ExcludeDebugTools){$adapterArgs+='--without-debug-tools'}
 & node @adapterArgs
 if($LASTEXITCODE){throw 'Menu adaptation failed'}
-$taskBuildArguments=@('UnnamedEditor','Win64','Development',"-Project=$project",'-WaitMutex','-NoHotReloadFromIDE')
-if($EditorModuleSuffix){$taskBuildArguments+="-ModuleWithSuffix=Unnamed,$EditorModuleSuffix"}
+$buildArguments=@('UnnamedEditor','Win64','Development',"-Project=$project",'-WaitMutex','-NoHotReloadFromIDE')
+if($EditorModuleSuffix){$buildArguments+="-ModuleWithSuffix=Unnamed,$EditorModuleSuffix"}
 & "$EngineRoot\Engine\Build\BatchFiles\Build.bat" @taskBuildArguments
 if($LASTEXITCODE){throw 'Editor build failed'}
 & "$EngineRoot\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" $project -run=pythonscript "-script=$PSScriptRoot\Editor\CreateInputAssets.py" -unattended -nop4 -NullRHI

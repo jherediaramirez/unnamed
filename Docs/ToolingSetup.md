@@ -46,13 +46,13 @@ confirmed that the entry is enabled and points at the correct endpoint.
 The current chat's tool list does not yet include the new connection; Codex
 must refresh its MCP connections to expose it as native chat tools.
 
-`Scripts/Invoke-UnrealMCP.ps1` also provides access in the current session.
+`Scripts/InvokeUnrealMCP.ps1` also provides access in the current session.
 It initializes the MCP protocol, sends the initialized notification, and makes
 one request at a time. Example, run from the project directory:
 
 ```powershell
-& .\Scripts\Invoke-UnrealMCP.ps1
-& .\Scripts\Invoke-UnrealMCP.ps1 -Method 'tools/call' -Parameters @{
+& .\Scripts\InvokeUnrealMCP.ps1
+& .\Scripts\InvokeUnrealMCP.ps1 -Method 'tools/call' -Parameters @{
     name = 'list_toolsets'
     arguments = @{}
 }

@@ -21,9 +21,9 @@ public:
 
 private:
     AFoundationPawn* Pawn = nullptr;
-    AFoundationController* PC = nullptr;
+    AFoundationController* Controller = nullptr;
     UPROPERTY()
-    TObjectPtr<UMenuInputBridge> Bridge;
+    TObjectPtr<UMenuInputBridge> InputBridge;
 
     struct FCase
     {
@@ -43,10 +43,10 @@ private:
     double Started = 0, TotalStarted = 0, PhaseStarted = 0, Apex = 0, LastZ = 0;
     int64 LaunchTick = -1, LandTick = -1;
     bool bDone = false;
-    void Key(FKey Key, bool Down);
-    void Reset(FVector Position = FVector(0, 0, 0));
-    void Record(FString Name, bool Pass, FString Detail);
+    void PressKey(FKey Key, bool bDown);
+    void ResetPlayer(FVector Position = FVector(0, 0, 0));
+    void Record(FString Name, bool bPassed, FString Detail);
     void Measure(FString Name, double Actual, double Expected, double Tolerance);
-    void Add(FString Name, double Duration, TFunction<void()> Start, TFunction<void()> End);
+    void AddCase(FString Name, double Duration, TFunction<void()> Start, TFunction<void()> End);
     void Finish();
 };

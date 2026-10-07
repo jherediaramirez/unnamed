@@ -25,11 +25,12 @@ public:
     virtual void BeginPlay() override;
     TArray<FBox> CollisionBoxes;
     TArray<FFoundationPrimitive> Primitives;
-    FFoundationTarget Target(FVector Eye, FVector Direction, const UFoundationProfile& Profile) const;
+    // Nearest primitive along the view ray, with reach checked against the profile.
+    FFoundationTarget TraceTarget(FVector Eye, FVector Direction, const UFoundationProfile& Profile) const;
 
 private:
-    void Add(FString Label, FVector Minimum, FVector Maximum, EFoundationTargetKind Kind = EFoundationTargetKind::Block,
-        bool Interactive = false);
+    void AddPrimitive(FString Label, FVector Minimum, FVector Maximum,
+        EFoundationTargetKind Kind = EFoundationTargetKind::Block, bool bInteractive = false);
     UPROPERTY()
     TObjectPtr<UStaticMesh> Cube;
     UPROPERTY()

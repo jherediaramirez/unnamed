@@ -1,31 +1,31 @@
 #include "Foundation/FoundationActions.h"
 
-FFoundationActionResult FFoundationActions::Dispatch(const FFoundationActionRequest& R)
+FFoundationActionResult FFoundationActions::Dispatch(const FFoundationActionRequest& Request)
 {
     FFoundationActionResult Result;
-    if (R.Phase == EFoundationPhase::Cancel || R.Phase == EFoundationPhase::Release)
+    if (Request.Phase == EFoundationPhase::Cancel || Request.Phase == EFoundationPhase::Release)
     {
-        if (R.Action == EFoundationAction::Attack) bBreaking = false;
-        if (R.Action == EFoundationAction::Use) bUsing = false;
-        Result = {true, R.Phase == EFoundationPhase::Cancel ? TEXT("cancelled") : TEXT("released")};
+        if (Request.Action == EFoundationAction::Attack) bBreaking = false;
+        if (Request.Action == EFoundationAction::Use) bUsing = false;
+        Result = {true, Request.Phase == EFoundationPhase::Cancel ? TEXT("cancelled") : TEXT("released")};
     }
     else
-        switch (R.Action)
+        switch (Request.Action)
         {
         case EFoundationAction::Attack:
             if (bUsing)
                 Result.Reason = TEXT("attack rejected: active item use");
-            else if (!R.Target.bInRange)
+            else if (!Request.Target.bInRange)
             {
                 bBreaking = false;
                 Result.Reason = TEXT("attack rejected: no visible target in reach");
             }
-            else if (R.Target.Kind == EFoundationTargetKind::Entity && R.Phase == EFoundationPhase::Hold)
+            else if (Request.Target.Kind == EFoundationTargetKind::Entity && Request.Phase == EFoundationPhase::Hold)
                 Result.Reason = TEXT("entity attack requires press");
             else
             {
-                bBreaking = R.Target.Kind == EFoundationTargetKind::Block;
-                ActiveTarget = R.Target.Name;
+                bBreaking = Request.Target.Kind == EFoundationTargetKind::Block;
+                ActiveTarget = Request.Target.Name;
                 Result = {true,
                     bBreaking ? TEXT("break fixture active (no mining)") : TEXT("entity attack fixture (no damage)")};
             }
@@ -33,11 +33,12 @@ FFoundationActionResult FFoundationActions::Dispatch(const FFoundationActionRequ
         case EFoundationAction::Use:
             if (bBreaking)
                 Result.Reason = TEXT("use rejected: block break active");
-            else if (R.Target.bInRange && R.Target.Kind == EFoundationTargetKind::Block &&
-                R.Target.bRejectInteraction && !(R.bCrouch && (Slots[Slot] > 0 || Offhand > 0)))
+            else if (Request.Target.bInRange && Request.Target.Kind == EFoundationTargetKind::Block &&
+                Request.Target.bRejectInteraction && !(Request.bCrouch && (Slots[Slot] > 0 || Offhand > 0)))
                 Result.Reason = TEXT("block interaction failed; item/offhand fallback rejected");
-            else if (R.Target.bInRange && R.Target.bInteractive &&
-                !(R.Target.Kind == EFoundationTargetKind::Block && R.bCrouch && (Slots[Slot] > 0 || Offhand > 0)))
+            else if (Request.Target.bInRange && Request.Target.bInteractive &&
+                !(Request.Target.Kind == EFoundationTargetKind::Block && Request.bCrouch &&
+                    (Slots[Slot] > 0 || Offhand > 0)))
                 Result = {true, TEXT("target interaction fixture accepted")};
             else if (Slots[Slot] > 0)
             {
@@ -55,11 +56,11 @@ FFoundationActionResult FFoundationActions::Dispatch(const FFoundationActionRequ
         case EFoundationAction::Pick:
             if (bUsing)
                 Result.Reason = TEXT("pick rejected: active use");
-            else if (!R.Target.bInRange)
+            else if (!Request.Target.bInRange)
                 Result.Reason = TEXT("pick rejected: no target in reach");
             else
             {
-                Select(R.Target.Kind == EFoundationTargetKind::Block ? 0 : 1);
+                Select(Request.Target.Kind == EFoundationTargetKind::Block ? 0 : 1);
                 Result = {true, TEXT("picked matching diagnostic token slot")};
             }
             break;
@@ -68,8 +69,8 @@ FFoundationActionResult FFoundationActions::Dispatch(const FFoundationActionRequ
                 Result.Reason = TEXT("drop rejected: empty fixture slot");
             else
             {
-                Slots[Slot] = R.bControl ? 0 : Slots[Slot] - 1;
-                Result = {true, R.bControl ? TEXT("dropped fixture stack") : TEXT("dropped one fixture token")};
+                Slots[Slot] = Request.bControl ? 0 : Slots[Slot] - 1;
+                Result = {true, Request.bControl ? TEXT("dropped fixture stack") : TEXT("dropped one fixture token")};
             }
             break;
         case EFoundationAction::Swap:

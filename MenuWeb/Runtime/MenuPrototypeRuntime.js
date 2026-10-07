@@ -42,7 +42,7 @@ function annotateControls(){
   }
 }
 new MutationObserver(annotateControls).observe(screen,{childList:true,subtree:true});
-const MenuDiagnostics={
+const MenuPrototype={
   getState:()=>({screen:current.name,variant:current.data.tab||'',settings:clone(state.settings),language:state.language,bindings:clone(state.bindings),packs:clone(state.packs),gui:{width:W,height:H,scale:S,viewportWidth:innerWidth,viewportHeight:innerHeight},assets:{panoramaLoaded,panoramaFallback},worlds:clone(state.worlds),servers:clone(state.servers),draft:clone(draft),routes:Object.keys(renderers),presentation:clone(presentationBaseline),errors:clone(failures),depth:stack.length}),
   freezeFrame:(angle=0,phase=0)=>{frozenFrame={angle,phase};spin=angle;lastDraw=-1000},
   unfreeze:()=>{frozenFrame=null;lastFrame=performance.now()},
@@ -69,5 +69,5 @@ const MenuDiagnostics={
     });
   }
 };
-window.MenuPrototype=MenuDiagnostics;
+window.MenuPrototype=MenuPrototype;
 console.info('UnnamedMenu: offline menu ready; five video controls use the native settings adapter');

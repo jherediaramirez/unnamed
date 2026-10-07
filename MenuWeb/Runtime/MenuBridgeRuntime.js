@@ -1,6 +1,6 @@
-// Shared plumbing for the native services Unreal binds into window.ue (menuvideo, menuinput,
-// menupreferences, menuapp, foundation): waiting for a binding, method lookup (CEF lowercases
-// method names), bounded waits and JSON replies.
+// Shared plumbing for the native services Unreal binds into window.ue: waiting for a binding,
+// method lookup (CEF lowercases method names), bounded waits and JSON replies. Each binding name
+// is its JS global lowercased: MenuApplication -> menuapplication, FoundationMenu -> foundationmenu.
 const MenuBridge = Object.freeze({
   requestTimeout: 5000,
   exitTimeout: 20000,

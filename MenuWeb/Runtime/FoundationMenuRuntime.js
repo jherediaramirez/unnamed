@@ -1,7 +1,7 @@
 // In the Foundation lab the same menu is the pause menu: no second Controls screen or store.
-// The native "foundation" bridge exists only there; on the menu map this module stays idle.
+// The native "foundationmenu" bridge exists only there; on the menu map this module stays idle.
 const FoundationMenu = (() => {
-  const client = MenuBridge.client('foundation', {service: 'Foundation', unavailable: 'The Foundation lab is not running.'});
+  const client = MenuBridge.client('foundationmenu', {service: 'Foundation', unavailable: 'The Foundation lab is not running.'});
   let inLab = false;
   // Fire-and-forget notifications must never surface as uncaught errors.
   const send = (method, ...args) => client.connected

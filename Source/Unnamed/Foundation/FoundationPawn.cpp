@@ -62,9 +62,9 @@ void AFoundationPawn::BeginPlay()
     if (!Lab.IsValid()) Lab = GetWorld()->SpawnActor<AFoundationLab>();
 }
 
-void AFoundationPawn::SetSimulationEnabled(bool Enabled)
+void AFoundationPawn::SetSimulationEnabled(bool bEnabled)
 {
-    bSimulate = Enabled;
+    bSimulate = bEnabled;
     Simulation.Accumulator = 0;
     Simulation.PreviousFeet = Simulation.Feet;
     Simulation.bSprinting = false;
@@ -73,37 +73,38 @@ void AFoundationPawn::SetSimulationEnabled(bool Enabled)
     LastIntent = {};
 }
 
-FVector AFoundationPawn::EyePosition() const
+FVector AFoundationPawn::GetEyePosition() const
 {
     const auto* P = GetDefault<UFoundationProfile>();
     return Simulation.Feet + FVector(0, 0, Simulation.bCrouched ? P->CrouchingEyesCm : P->StandingEyesCm);
 }
 
-FFoundationTarget AFoundationPawn::Target() const
+FFoundationTarget AFoundationPawn::TraceTarget() const
 {
-    return Lab.IsValid() ? Lab->Target(EyePosition(), GetControlRotation().Vector(), *GetDefault<UFoundationProfile>())
-                         : FFoundationTarget{};
+    return Lab.IsValid()
+        ? Lab->TraceTarget(GetEyePosition(), GetControlRotation().Vector(), *GetDefault<UFoundationProfile>())
+        : FFoundationTarget{};
 }
 
-void AFoundationPawn::ApplyWorldOffset(const FVector& Offset, bool WorldShift)
+void AFoundationPawn::ApplyWorldOffset(const FVector& Offset, bool bWorldShift)
 {
-    Super::ApplyWorldOffset(Offset, WorldShift);
+    Super::ApplyWorldOffset(Offset, bWorldShift);
     Simulation.Feet += Offset;
     Simulation.PreviousFeet += Offset;
     if (Lab.IsValid())
     {
-        for (auto& B : Lab->CollisionBoxes)
-            B = B.ShiftBy(Offset);
+        for (FBox& Box : Lab->CollisionBoxes)
+            Box = Box.ShiftBy(Offset);
         for (auto& Item : Lab->Primitives)
             Item.Box = Item.Box.ShiftBy(Offset);
     }
 }
 
-void AFoundationPawn::Tick(float Dt)
+void AFoundationPawn::Tick(float DeltaSeconds)
 {
-    Super::Tick(Dt);
-    auto* PC = Cast<APlayerController>(GetController());
-    if (!PC || !PC->GetLocalPlayer() || !Lab.IsValid()) return;
+    Super::Tick(DeltaSeconds);
+    auto* PlayerController = Cast<APlayerController>(GetController());
+    if (!PlayerController || !PlayerController->GetLocalPlayer() || !Lab.IsValid()) return;
 #if WITH_DEV_AUTOMATION_TESTS
     // Opt-in runtime verification (-FoundationProbe=report.json); never part of Shipping.
     if (!bProbeCreated)
@@ -118,51 +119,54 @@ void AFoundationPawn::Tick(float Dt)
         }
     }
 #endif
-    const auto& P = *GetDefault<UFoundationProfile>();
-    auto* Prefs = GetGameInstance()->GetSubsystem<UMenuPreferences>();
-    auto Number = [&](const TCHAR* Id, double Default)
+    const UFoundationProfile& Profile = *GetDefault<UFoundationProfile>();
+    const auto* Preferences = GetGameInstance()->GetSubsystem<UMenuPreferences>();
+    auto ReadNumber = [Preferences](const TCHAR* Id, double Default)
     {
-        auto V = Prefs->FindPreference(Id);
-        return V.IsValid() && V->Type == EJson::Number ? V->AsNumber() : Default;
+        const auto Value = Preferences->FindPreference(Id);
+        return Value.IsValid() && Value->Type == EJson::Number ? Value->AsNumber() : Default;
     };
-    auto Boolean = [&](const TCHAR* Id, bool Default)
+    auto ReadBool = [Preferences](const TCHAR* Id, bool Default)
     {
-        auto V = Prefs->FindPreference(Id);
-        return V.IsValid() && V->Type == EJson::Boolean ? V->AsBool() : Default;
+        const auto Value = Preferences->FindPreference(Id);
+        return Value.IsValid() && Value->Type == EJson::Boolean ? Value->AsBool() : Default;
     };
     if (bSimulate)
     {
-        const auto Request = PC->GetLocalPlayer()->GetSubsystem<UUnnamedInputSubsystem>()->ConsumeIntent();
-        FRotator View = PC->GetControlRotation();
-        const double Gain = 8. * FMath::Pow(Number(TEXT("sensitivity"), .5) * .6 + .2, 3) * .15;
-        View.Yaw += Request.Look.X * Gain * (Boolean(TEXT("invertXMouse"), false) ? -1 : 1);
+        const FUnnamedInputIntent Request =
+            PlayerController->GetLocalPlayer()->GetSubsystem<UUnnamedInputSubsystem>()->ConsumeIntent();
+        // Mouse look uses the reference sensitivity curve and invert preferences.
+        FRotator View = PlayerController->GetControlRotation();
+        const double Gain = 8. * FMath::Pow(ReadNumber(TEXT("sensitivity"), .5) * .6 + .2, 3) * .15;
+        View.Yaw += Request.Look.X * Gain * (ReadBool(TEXT("invertXMouse"), false) ? -1 : 1);
         View.Pitch = FMath::Clamp(
-            View.Pitch - Request.Look.Y * Gain * (Boolean(TEXT("invertYMouse"), false) ? -1 : 1), -90., 90.);
+            View.Pitch - Request.Look.Y * Gain * (ReadBool(TEXT("invertYMouse"), false) ? -1 : 1), -90., 90.);
         View.Roll = 0;
-        PC->SetControlRotation(View);
-        LastIntent = MakeSimulationIntent(Request, Boolean(TEXT("autoJump"), false),
-            FMath::Clamp(int32(Number(TEXT("sprintWindow"), P.SprintWindowTicks)), 0, 10));
-        Simulation.Advance(Dt, LastIntent, View.Yaw, P, Lab->CollisionBoxes, Eligibility);
+        PlayerController->SetControlRotation(View);
+        LastIntent = MakeSimulationIntent(Request, ReadBool(TEXT("autoJump"), false),
+            FMath::Clamp(int32(ReadNumber(TEXT("sprintWindow"), Profile.SprintWindowTicks)), 0, 10));
+        Simulation.Advance(DeltaSeconds, LastIntent, View.Yaw, Profile, Lab->CollisionBoxes, Eligibility);
         SetActorLocation(Simulation.Feet);
         SetActorRotation(FRotator::ZeroRotator);
+        // Falling out of the lab respawns at the origin.
         if (Simulation.Feet.Z < -1000)
         {
-            Simulation.Reset({0, 0, 0}, P);
+            Simulation.Reset({0, 0, 0}, Profile);
             SetActorLocation(Simulation.Feet);
         }
     }
-    Collision->SetBoxExtent({P.WidthCm * .5, P.WidthCm * .5, Simulation.HeightCm * .5});
+    Collision->SetBoxExtent({Profile.WidthCm * .5, Profile.WidthCm * .5, Simulation.HeightCm * .5});
     Collision->SetRelativeLocation({0, 0, Simulation.HeightCm * .5});
-    const double Alpha = bSimulate ? FMath::Clamp(Simulation.Accumulator / P.TickSeconds, 0., 1.) : 1.;
+    // Render between the last two reference ticks.
+    const double Alpha = bSimulate ? FMath::Clamp(Simulation.Accumulator / Profile.TickSeconds, 0., 1.) : 1.;
     FVector Eye = FMath::Lerp(Simulation.PreviousFeet, Simulation.Feet, Alpha) +
         FVector(0, 0, FMath::Lerp(Simulation.PreviousEyeCm, Simulation.EyeCm, Alpha));
-    FRotator View = PC->GetControlRotation();
+    FRotator View = PlayerController->GetControlRotation();
     if (Perspective)
     {
+        // Third person: back (1) or front (2), pulled in by collision like the reference camera.
         const FVector Offset = View.Vector() * (Perspective == 1 ? -400 : 400);
-        const FVector Travel =
-            FFoundationSimulation::Clip(FBox(Eye - FVector(5), Eye + FVector(5)), Offset, Lab->CollisionBoxes);
-        Eye += Travel;
+        Eye += FFoundationSimulation::Clip(FBox(Eye - FVector(5), Eye + FVector(5)), Offset, Lab->CollisionBoxes);
         if (Perspective == 2)
         {
             View.Yaw += 180;
@@ -170,10 +174,11 @@ void AFoundationPawn::Tick(float Dt)
         }
     }
     Camera->SetWorldLocationAndRotation(Eye, View);
-    int32 W = 0, H = 0;
-    PC->GetViewportSize(W, H);
-    const double Effect = Number(TEXT("fovEffectScale"), 1);
-    const double V = Number(TEXT("fov"), 70) *
-        (1. + (FMath::Lerp(Simulation.PreviousFovMultiplier, Simulation.FovMultiplier, Alpha) - 1.) * Effect);
-    Camera->SetFieldOfView(FoundationCoordinates::HorizontalFov(V, H > 0 ? double(W) / H : 16. / 9.));
+    int32 ViewportWidth = 0, ViewportHeight = 0;
+    PlayerController->GetViewportSize(ViewportWidth, ViewportHeight);
+    const double FovEffect = ReadNumber(TEXT("fovEffectScale"), 1);
+    const double VerticalFov = ReadNumber(TEXT("fov"), 70) *
+        (1. + (FMath::Lerp(Simulation.PreviousFovMultiplier, Simulation.FovMultiplier, Alpha) - 1.) * FovEffect);
+    Camera->SetFieldOfView(FoundationCoordinates::HorizontalFov(
+        VerticalFov, ViewportHeight > 0 ? double(ViewportWidth) / ViewportHeight : 16. / 9.));
 }

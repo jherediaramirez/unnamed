@@ -12,7 +12,7 @@ class UMenuPreferences;
 class UMenuVideoSettings;
 
 // Shows the offline CEF menu in its owning player controller's viewport and binds the
-// native menu services to the page: menuvideo, menuinput, menupreferences and menuapp,
+// native menu services to the page: menuvideo, menuinput, menupreferences and menuapplication,
 // plus any bridges the owner adds. Any controller that needs the menu adds this component.
 UCLASS(ClassGroup = Menu)
 class UNNAMED_API UMenuBrowserHost : public UActorComponent

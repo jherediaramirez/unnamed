@@ -8,17 +8,18 @@
 AFoundationLab::AFoundationLab()
 {
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> Mesh(TEXT("/Engine/BasicShapes/Cube.Cube"));
-    Cube = Mesh.Object;
-    static ConstructorHelpers::FObjectFinder<UMaterialInterface> Mat(
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("/Engine/BasicShapes/Cube.Cube"));
+    Cube = CubeMesh.Object;
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> BasicMaterial(
         TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
-    Material = Mat.Object;
+    Material = BasicMaterial.Object;
 }
 
-void AFoundationLab::Add(FString Label, FVector Min, FVector Max, EFoundationTargetKind Kind, bool Interactive)
+void AFoundationLab::AddPrimitive(
+    FString Label, FVector Minimum, FVector Maximum, EFoundationTargetKind Kind, bool bInteractive)
 {
-    const FBox Box(Min, Max);
-    Primitives.Add({Box, Label, Kind, Interactive});
+    const FBox Box(Minimum, Maximum);
+    Primitives.Add({Box, Label, Kind, bInteractive});
     CollisionBoxes.Add(Box);
     auto* Mesh = NewObject<UStaticMeshComponent>(this);
     Mesh->SetStaticMesh(Cube);
@@ -34,7 +35,7 @@ void AFoundationLab::Add(FString Label, FVector Min, FVector Max, EFoundationTar
         auto* Dynamic = UMaterialInstanceDynamic::Create(Material, this);
         Dynamic->SetVectorParameterValue(TEXT("Color"),
             Kind == EFoundationTargetKind::Entity ? FLinearColor(.9f, .35f, .15f)
-                : Interactive                     ? FLinearColor(.2f, .6f, .8f)
+                : bInteractive                    ? FLinearColor(.2f, .6f, .8f)
                                                   : FLinearColor(.5f, .6f, .55f));
         Mesh->SetMaterial(0, Dynamic);
     }
@@ -51,34 +52,36 @@ void AFoundationLab::Add(FString Label, FVector Min, FVector Max, EFoundationTar
 void AFoundationLab::BeginPlay()
 {
     Super::BeginPlay();
-    Add(TEXT("100 cm = 1 block | +X east, +Y south"), {-3000, -3000, -100}, {3000, 3000, 0});
-    Add(TEXT("50 cm step"), {300, -250, 0}, {500, -50, 50});
-    Add(TEXT("60 cm step"), {600, -250, 0}, {800, -50, 60});
-    Add(TEXT("61 cm blocked"), {900, -250, 0}, {1100, -50, 61});
-    Add(TEXT("100 cm jump"), {1200, -250, 0}, {1400, -50, 100});
-    Add(TEXT("155 cm ceiling: crouch"), {300, 300, 155}, {800, 700, 210});
-    Add(TEXT("gap 59 cm BLOCKED"), {-700, 300, 0}, {-600, 900, 220});
-    Add(TEXT("gap wall"), {-541, 300, 0}, {-441, 900, 220});
-    Add(TEXT("gap 61 cm CLEAR"), {-380, 300, 0}, {-280, 900, 220});
-    Add(TEXT("raised ledge +2 blocks"), {-1500, -1000, 0}, {-1000, -500, 200});
-    Add(TEXT("ledge access 50"), {-1800, -800, 0}, {-1700, -600, 50});
-    Add(TEXT("ledge access100"), {-1700, -800, 0}, {-1600, -600, 100});
-    Add(TEXT("ledge access150"), {-1600, -800, 0}, {-1500, -600, 150});
-    Add(TEXT("block fixture: 4.5 block reach"), {500, 1000, 0}, {600, 1100, 200}, EFoundationTargetKind::Block, true);
-    Add(TEXT("entity fixture: 3 block reach"), {-200, 1000, 0}, {-140, 1060, 180}, EFoundationTargetKind::Entity, true);
-    Add(TEXT("occluder"), {-200, 1300, 0}, {0, 1350, 230});
-    Add(TEXT("hidden entity"), {-160, 1400, 0}, {-100, 1460, 180}, EFoundationTargetKind::Entity, true);
-    Add(TEXT("corner comparison"), {-600, -600, 0}, {-500, -500, 200});
+    AddPrimitive(TEXT("100 cm = 1 block | +X east, +Y south"), {-3000, -3000, -100}, {3000, 3000, 0});
+    AddPrimitive(TEXT("50 cm step"), {300, -250, 0}, {500, -50, 50});
+    AddPrimitive(TEXT("60 cm step"), {600, -250, 0}, {800, -50, 60});
+    AddPrimitive(TEXT("61 cm blocked"), {900, -250, 0}, {1100, -50, 61});
+    AddPrimitive(TEXT("100 cm jump"), {1200, -250, 0}, {1400, -50, 100});
+    AddPrimitive(TEXT("155 cm ceiling: crouch"), {300, 300, 155}, {800, 700, 210});
+    AddPrimitive(TEXT("gap 59 cm BLOCKED"), {-700, 300, 0}, {-600, 900, 220});
+    AddPrimitive(TEXT("gap wall"), {-541, 300, 0}, {-441, 900, 220});
+    AddPrimitive(TEXT("gap 61 cm CLEAR"), {-380, 300, 0}, {-280, 900, 220});
+    AddPrimitive(TEXT("raised ledge +2 blocks"), {-1500, -1000, 0}, {-1000, -500, 200});
+    AddPrimitive(TEXT("ledge access 50"), {-1800, -800, 0}, {-1700, -600, 50});
+    AddPrimitive(TEXT("ledge access100"), {-1700, -800, 0}, {-1600, -600, 100});
+    AddPrimitive(TEXT("ledge access150"), {-1600, -800, 0}, {-1500, -600, 150});
+    AddPrimitive(
+        TEXT("block fixture: 4.5 block reach"), {500, 1000, 0}, {600, 1100, 200}, EFoundationTargetKind::Block, true);
+    AddPrimitive(
+        TEXT("entity fixture: 3 block reach"), {-200, 1000, 0}, {-140, 1060, 180}, EFoundationTargetKind::Entity, true);
+    AddPrimitive(TEXT("occluder"), {-200, 1300, 0}, {0, 1350, 230});
+    AddPrimitive(TEXT("hidden entity"), {-160, 1400, 0}, {-100, 1460, 180}, EFoundationTargetKind::Entity, true);
+    AddPrimitive(TEXT("corner comparison"), {-600, -600, 0}, {-500, -500, 200});
     for (int32 I = -10; I <= 10; ++I)
     {
-        Add(FString::Printf(TEXT("%d m"), I), {double(I * 100), -1500, -.2}, {double(I * 100 + 1), -1300, 0});
+        AddPrimitive(FString::Printf(TEXT("%d m"), I), {double(I * 100), -1500, -.2}, {double(I * 100 + 1), -1300, 0});
     }
 }
 
-FFoundationTarget AFoundationLab::Target(FVector Eye, FVector Direction, const UFoundationProfile& P) const
+FFoundationTarget AFoundationLab::TraceTarget(FVector Eye, FVector Direction, const UFoundationProfile& Profile) const
 {
     FFoundationTarget Best;
-    double BestDistance = FMath::Max(P.BlockReachCm, P.EntityReachCm) + 100;
+    double BestDistance = FMath::Max(Profile.BlockReachCm, Profile.EntityReachCm) + 100;
     for (const auto& Item : Primitives)
     {
         const FVector End = Eye + Direction * BestDistance;
@@ -95,7 +98,8 @@ FFoundationTarget AFoundationLab::Target(FVector Eye, FVector Direction, const U
                 Best.Hit = Hit;
                 Best.Normal = Normal;
                 Best.DistanceCm = Distance;
-                Best.ReachCm = Item.Kind == EFoundationTargetKind::Entity ? P.EntityReachCm : P.BlockReachCm;
+                Best.ReachCm =
+                    Item.Kind == EFoundationTargetKind::Entity ? Profile.EntityReachCm : Profile.BlockReachCm;
                 Best.bInRange = Distance < Best.ReachCm - .0001;
                 Best.bInteractive = Item.bInteractive;
             }

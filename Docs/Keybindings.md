@@ -62,7 +62,7 @@ All 55 non-movement binding rows are labeled Planned. Controller bindings, alter
 
 ## Verification and rebuild
 
-Run `Scripts/TestInputFoundation.ps1` for three native suites: intent rules, native profile validation/serialization, and actual Enhanced PlayerInput key processing. Run `npm test` in Tests for browser request/recovery checks. `node Tests/input-settings.mjs` owns isolated packaged sessions and verifies capture, conflict rejection, modifier sides, unbinding, resets, reload/relaunch persistence, progress preservation and normal Quit at both viewport profiles.
+Run `Scripts/TestInput.ps1` for three native suites: intent rules, native profile validation/serialization, and actual Enhanced PlayerInput key processing. Run `npm test` in Tests for browser request/recovery checks. `node Tests/input-settings.mjs` owns isolated packaged sessions and verifies capture, conflict rejection, modifier sides, unbinding, resets, reload/relaunch persistence, progress preservation and normal Quit at both viewport profiles.
 
 `Scripts/BuildMenu.ps1 -Package -PackageName MenuInputCrouchCDevelopment` builds the editor, preserves/creates the input assets and packages the menu. Close Unreal Editor for a conventional unsuffixed rebuild. `-EditorModuleSuffix <unused number>` allows a separate editor DLL build while the existing editor remains open; the already-open editor still runs its previously loaded module until restarted. A clean isolated copy under `C:\dev\sandbox\Unnamed-InputBuild-20261007` is used for packaging while preserving the open editor and earlier packages.
 
