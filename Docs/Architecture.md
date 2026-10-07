@@ -1,41 +1,68 @@
 # Architecture
 
-## Super Flat world path
+How the project fits together. Foundation-specific movement, input and diagnostics details are in [Foundation architecture](Foundation/Architecture.md); naming rules are in [Naming conventions](NamingConventions.md).
 
-The public Singleplayer catalog contains Player Foundation, Super Flat and the two original fictional reference entries. Only `foundation` and `super-flat` load from that list. `UMenuApplication::RequestOpenWorld` accepts fixed native catalog IDs; browser strings cannot become arbitrary paths or console commands. Pending settings drain and flush before travel. `/Game/Maps/L_SuperFlat` uses its own GameMode, preview controller, stock spectator pawn and small instruction HUD. Menu teardown removes the browser; returning loads the existing `/Game/Menu/L_Menu`. `/Game/Maps/L_Foundation` hosts the first-person Player Foundation; see [Foundation architecture](Foundation/ARCHITECTURE.md). See [SuperFlat.md](SuperFlat.md) for the current verified world scope and integration handoff; the menu-only descriptions below reflect the earlier settings baseline.
+## Layout
 
-## Chosen Route
+| Folder | Contents |
+|---|---|
+| `Source/Unnamed/` | The one game module. Project-wide pieces at the root: `UnnamedProjectSettings` (maps, world catalog, input assets), `UnnamedSession` (may this run save settings?), `UnnamedFiles` (crash-safe saves), `UnnamedLog` (log categories). |
+| `Source/Unnamed/Menu/` | The offline menu: `UMenuBrowserHost`, the menu services it binds, and the menu map's game mode/controller. |
+| `Source/Unnamed/Input/` | Enhanced Input layer: `UUnnamedInputSubsystem`, the saved `UUnnamedInputSettings`, `FUnnamedInputIntent`. |
+| `Source/Unnamed/Foundation/` | The first-person Player Foundation lab: controller parts, pawn, pure simulation, lab geometry, runtime probe. |
+| `Source/Unnamed/SuperFlat/` | The 2 km Super Flat preview world. |
+| `Source/Unnamed/Tests/` | Native automation tests, one file per area (`Unnamed.<Area>.*`). |
+| `MenuWeb/` | Menu generator (`AdaptMenu.mjs` + `Patches/`) and the JavaScript shipped inside the page (`Runtime/`). |
+| `Content/Menu/Web/` | Generated `index.html`, preference schema and mirrored reference assets, staged as loose files. |
+| `Reference/minecraft-menu/` | The unchanged, hash-checked reference menu. |
+| `Scripts/` | PowerShell build/launch/test entry points; `Scripts/Editor/` holds Unreal editor Python. |
+| `Tests/` | Node unit tests (`*.test.mjs`) and CEF integration suites; recorded evidence in `Tests/Evidence/<date>/`. |
+| `Docs/` | Living docs; dated work records in `Docs/Records/`; preserved inputs in `Docs/Archive/`. |
 
-An empty menu map uses `AMenuGameMode` and `AMenuPlayerController`. The controller adds one full-viewport Slate `SWebBrowser`, sets UI-only input and a visible cursor, and disables movement/look input. There is no pawn or HUD. The browser has no address bar, controls or thumb-button navigation. Restricted `UMenuVideoSettings`, `UMenuInputSettings` and `UMenuApplication` bindings own video preferences, movement binding settings and normal shutdown. They expose no arbitrary commands or files. `UUnnamedInputSubsystem` registers native Enhanced Input settings without activating gameplay in the menu. See Keybindings.md, VideoSettings.md and QuitGame.md for the contracts.
+## Maps and controllers
 
-This route reused the supplied HTML/CSS/JS, fonts, sprites and structured data. The original 36 renderers are preserved in the immutable reference; the working interface retains 33 after removing the mock Game closed route, Realms and Join Realm. Native UMG reconstruction was not needed: both editor-hosted and packaged Chromium rendered the interface correctly. The host and packaging use the installed 5.8 headers (`SWebBrowser.h`, `SWebBrowserView.h`, `IWebBrowserWindow.h`), delegates and BuildSettingsVersion.V7 template conventions.
+`/Game/Menu/L_Menu` uses `AMenuGameMode` and `AMenuPlayerController`: no pawn or HUD, just the menu. `/Game/Maps/L_Foundation` uses `AFoundationGameMode` and `AFoundationController`. `/Game/Maps/L_SuperFlat` uses `ASuperFlatGameMode`, `ASuperFlatPreviewController`, the stock spectator pawn and `ASuperFlatPreviewHUD`.
 
-## Data And Presentation
+Neither gameplay controller inherits from the menu controller. Any controller that needs the menu adds a `UMenuBrowserHost` component: the menu controller shows it on BeginPlay; the Foundation controller shows it as the pause menu and adds its own `foundationmenu` bridge. Only the Foundation controller adds diagnostics (input router, HUD, panels), so the plain menu map has no F3 overlay or input preprocessor.
 
-`Reference/minecraft-menu` is unchanged. `MenuWeb/AdaptMenu.mjs` checks its hash and regenerates the working `Content/Menu/Web/index.html`. Adaptation is fail-fast on missing source anchors. The source structured JSON definitions are retained rather than recreated from memory, except the deliberately removed Realms news/invites preference. `MenuMockRuntime.js` supplies transaction snapshots, stable control IDs and diagnostics, embedded into the working file. Edit the adapter/runtime modules, not the generated HTML. `Tests/registry.mjs` regenerates the registry, inventory and deferred backlog from a current rendered capture.
+## Menu host and native services
 
-Realms removal is implemented in the adapter: no main entry, Realms renderer, Join Realm renderer, invite/news/purchase endpoint, join form, feature CSS, Online Settings section or associated preference remains in the active interface. The main menu closes the removed row. Unused translations and source asset copies remain for immutable provenance and historical candidate verification; they do not make Realms reachable. `Tests/realms-removal.test.mjs` and current rendered smoke checks enforce the boundary.
+`UMenuBrowserHost` adds one full-viewport Slate `SWebBrowser` with no address bar, controls or thumb-button navigation, gives its owner UI-only input with a cursor, and binds the native services below. Each binding name is its JavaScript global lowercased, and each service exposes no arbitrary commands, paths or files.
 
-The five implemented video values persist through the native settings service. Seven movement bindings and Hold/Toggle sprint/crouch policies persist through native Enhanced Input user settings and its SaveGame serializer. The Graphics API row is read-only and reports the configured default plus the active native RHI. UMenuPreferences, a GameInstance subsystem, saves 101 other scalar settings, language, resource-pack order, warning dismissal and the extra telemetry choice. Language and packs commit on Done; Cancel/Escape discards their draft. Other settings save immediately through an ordered bridge queue. No localStorage or cookies are used. Reload rehydrates all three native stores. World/server samples and generation drafts remain transient; the other 55 binding rows remain Planned and disabled. See MenuPreferences.md for schema validation, recovery, reset and future native consumers.
+| JS global | Binding | Native owner | Owns |
+|---|---|---|---|
+| `MenuVideo` | `menuvideo` | `UMenuVideoSettings` | Fullscreen, frame limit, VSync, GUI scale, menu blur; saved to `Saved/Config/MenuVideoSettings.ini`. |
+| `MenuInput` | `menuinput` | `UMenuInputBridge` -> `UUnnamedInputSubsystem` | Player-mappable bindings and Hold/Toggle sprint/crouch; saved in the Enhanced Input SaveGame slot. |
+| `MenuPreferences` | `menupreferences` | `UMenuPreferences` (GameInstance subsystem) | 101 further options, language, pack order, two flags; saved to `Saved/Config/MenuPreferences.json`. |
+| `MenuApplication` | `menuapplication` | `UMenuApplication` | Quit Game and world travel. |
+| `FoundationMenu` | `foundationmenu` | `UFoundationMenuBridge` | Foundation pause menu and binding-capture handoff (Foundation map only). |
 
-The reference presentation baseline remains English (US), Auto integer scaling, ordinary bitmap font/resources, baseline blur and panorama speed. GUI scale and blur affect the live presentation; engine FPS/VSync/fullscreen affect their native systems. Font/contrast/language/audio choices are saved while their effects remain pending. Graphics presets commit desired quality values together and cannot overwrite functional blur. Audio playback and speech synthesis remain removed. External links, clipboard, folders, purchase, worlds, servers and accounts terminate at reversible mock screens. Quit Game drains all pending preference changes, locks further edits, flushes all three native stores, and calls Unreal's normal QuitGame API on a later controller tick. Editor Play requests are rejected; no forced termination is exposed.
+Quit and world travel drain every settings store, lock further edits, flush all three native stores, then call Unreal's normal QuitGame or OpenLevel on a later tick. Editor Play cannot quit. Saving is crash-safe: `UnnamedFiles::SaveTextAtomically` writes a temporary file, backs up the previous file and moves the new one into place; loads fall back to the backup. `UnnamedSession::CanSaveSettings()` is the single rule that keeps editor and `-MenuSettingsSessionOnly` runs from saving.
 
-## Browser Recovery
+## Project settings and world catalog
 
-The review-fix checkpoint separates browser deadlines into `MenuBridgeRuntime.js` (five seconds per request; twenty seconds for the entire Quit workflow). `MenuVideoRuntime.js` retains later queued edits after failure and revision-checks polls. `MenuApplicationRuntime.js` starts its deadline before draining preferences and ignores late/stale replies. An unanswered completion allows explicit retry even when the last snapshot says pending; native duplicate-request protection remains intact, and fresh readback replaces that allowance. Browser timeouts do not cancel native operations already dispatched.
+`UUnnamedProjectSettings` (Project Settings > Game > Unnamed; C++ defaults, overridable in `DefaultGame.ini`) is the one place for the menu map, the input mapping contexts and actions, and the Singleplayer world catalog (ID, map, name, summary, status). `UMenuApplication::RequestOpenWorld` accepts only an exact, case-sensitive catalog ID and sends the catalog to the page in `GetState`; the page lists those worlds first, marks them built-in and keeps no list of its own. Editor Python reads the same paths through `Scripts/Editor/ProjectPaths.py`. Cooked maps come from `MapsToCook` in `DefaultGame.ini`.
 
-`MenuDialogRuntime.js` owns raw rule text and shared validation helpers. World-name and preset text live in their owning dialog's `current.data`, surviving resize/fullscreen redraw and child returns. Invalid raw rule drafts stay invalid even when filtered out; Done validates the whole staged rule set. Server Save requires both a trimmed name and valid address.
+## Menu web layer
 
-`Tests/capture-evidence.mjs` loads only explicitly selected, passing smoke/video capture folders with matching HTML hashes and viewport profiles. Contextual controls belong to the smoke run; reset confirmation observations belong to the selected video run. Historical root supplemental files are preserved but not consumed by current registry generation. [Documented Actions](<Documented Actions/README.md>) indexes the dated work and known gaps.
+`MenuWeb/AdaptMenu.mjs` checks the reference hash (from `Reference/OriginalHashes.json`) and regenerates `Content/Menu/Web/index.html` and `preferences-schema.menuprefs`. Each file in `MenuWeb/Patches/` adapts one feature (Core, Realms, Application, Video, Input, Preferences, SettingsRouting, Worlds, Dialogs) by editing original reference text only; `ReferencePatcher` rejects overlapping edits, so no patch depends on another patch's output, and every edit fails fast if its anchor moves. The structured reference data is kept, except the removed Realms preference. Edit the patches and `MenuWeb/Runtime/`, never the generated HTML.
 
-## Resource Origin And Packaging
+The runtime modules are concatenated into the page in this order: `MenuBridgeRuntime` (shared `MenuBridge` client and `MenuStores` registry), `MenuPrototypeRuntime` (transaction snapshots, stable control IDs, diagnostics as `window.MenuPrototype`), `MenuDialogRuntime`, `MenuVideoRuntime`, `MenuInputRuntime`, `MenuPreferencesRuntime`, `MenuWorldsRuntime`, `MenuApplicationRuntime`, `FoundationMenuRuntime`. `MenuBridge.client` waits for a binding, looks up CEF's lowercased method names, bounds each request (five seconds; twenty for a whole quit or travel), parses JSON and validates replies. Late replies settle only their abandoned wait. The three settings stores register with `MenuStores`, so quit, travel and the pause menu drain or release them together. `MenuInput.setCaptureHooks` lets the Foundation pause menu tell the native input router when a binding capture starts and ends.
 
-The host builds an encoded `file:///` URL from ProjectContentDir, independent of current working directory. Browser navigation is limited to that document and initial about:blank; popup requests are rejected. A content-security policy rejects network connections, media, frames and forms. All actual images/fonts/styles are local; credit data is embedded, so no file-origin fetch is required.
+Realms is removed: no main entry, renderer, invite/news/purchase endpoint, join form, styles, Online Settings section or preference; `Patches/Realms.mjs` verifies it. Dialog drafts (world name, preset, rules, server) live in their dialog's `current.data`, survive redraws and child screens, and Done validates the whole draft.
 
-Chromium's ordinary file-origin rules prevented WebGL texture upload of local panorama images. The working HTML now embeds the six unchanged PNG byte streams as data URLs. This avoids relaxing web security and was verified with a real cubemap rather than the fallback. Physical asset copies and HTML are staged NonUFS by the module's RuntimeDependencies. No developer HTTP server is required.
+The presentation baseline is the reference: English (US), Auto integer scaling, ordinary font and resources, baseline blur and panorama speed. GUI scale and blur change the live page; frame limit, VSync and fullscreen change the engine. Font, contrast, language and audio choices are saved while their effects remain pending. External links, clipboard, folders, purchases, servers and accounts end at reversible mock screens.
 
-CSS alone applies integer scaling. No UMG DPI wrapper applies a second scale. Verified actual browser viewports are 1920x1080 -> 480x270 at scale 4 and 1280x720 -> 427x240 at scale 3. The developer-only freezeFrame fixes panorama angle and splash phase for captures; ordinary launch animates normally. It adds no visible menu decoration.
+## Resource origin and packaging
 
-## Diagnostics
+The host builds an encoded `file:///` URL from ProjectContentDir. Navigation is limited to that document and `about:blank`; popups are rejected. A content-security policy rejects network connections, media, frames and forms. Credits are embedded, and the six panorama PNGs are embedded as data URLs because Chromium's file-origin rules block WebGL uploads of local images. HTML and assets are staged as loose NonUFS files by the module's RuntimeDependencies; no HTTP server is involved.
 
-The dedicated `LogUnnamedMenu` category records browser console source, line and severity plus document load failures. MenuPrototype exposes screen state, dimensions, assets, errors, controls and definitions. MenuVideo exposes the native five-setting snapshot and synchronization completion; observed values distinguish actual window mode/client dimensions, engine FPS cap, measured cadence and VSync from labels. Playwright connects to Unreal's CEF over the optional `-cefdebug` port, not a separate substitute browser. Screenshot pixel checks verify nonblank frames. Slate tools can capture/inspect the outer native window, not HTML buttons.
+CSS alone applies integer scaling; no UMG DPI wrapper scales a second time. Verified browser viewports: 1920x1080 -> 480x270 at scale 4, 1280x720 -> 427x240 at scale 3.
+
+## Diagnostics and logging
+
+`UnnamedLog.h` defines `LogUnnamedMenu` (host, application, video, preferences, browser console), `LogUnnamedWorlds` (Super Flat) and `LogUnnamedFoundation` (lab and probe). `window.MenuPrototype` exposes screen state, dimensions, controls and definitions for CEF tests. Playwright connects to Unreal's own CEF through the optional `-cefdebug` port. Slate tools can inspect the native window, not HTML buttons. The Foundation runtime probe (`-FoundationProbe=report.json`) exists only in builds with dev automation tests.
+
+## Verification
+
+`Tests/` holds the Node unit tests (`npm test`), CEF integration suites and source checks; `Scripts/Test*.ps1` run the native automation and the Foundation probe. Results and their evidence are recorded in [Verification](Verification.md) and `Tests/Evidence/<date>/`.

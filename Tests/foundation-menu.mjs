@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 // CEF + native bridge integration. This does not replace hardware/OS input tests.
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const argument=(name,fallback)=>process.argv.find(a=>a.startsWith(name+'='))?.slice(name.length+1)||fallback;
-const packageName=argument('--package','FoundationDevelopment20261007-r3');
+const packageName=argument('--package','CodeReviewDevelopment20261007');
 const output=path.resolve(argument('--output',evidencePath('Foundation','Menu-'+Date.now())));
 const editor=process.argv.includes('--editor');
 const exe=editor?'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe':path.join(root,`Packages/${packageName}/Windows/Unnamed/Binaries/Win64/Unnamed.exe`);

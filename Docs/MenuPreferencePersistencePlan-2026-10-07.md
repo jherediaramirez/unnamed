@@ -1,6 +1,6 @@
 # Unnamed menu preference persistence review and plan
 
-Implementation update: the recommended first batch is now implemented. See [Menu Preferences](MenuPreferences.md) and [the dated work record](<Documented Actions/2026-10-07-Menu-Preferences.md>). The review findings and proposed later batches below remain the original planning snapshot.
+Implementation update: the recommended first batch is now implemented. See [Menu Preferences](MenuPreferences.md) and [the dated work record](Records/2026-10-07-Menu-Preferences.md). The review findings and proposed later batches below remain the original planning snapshot.
 
 Yes. The menu can remember a player's choice before the feature that consumes it exists. Most variables already exist; native persistence, ownership and an honest indication of whether the effect is available are the missing parts.
 

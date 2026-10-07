@@ -11,7 +11,7 @@ const stamp=new Date().toISOString().replaceAll(/[:.]/g,'-');
 const runtime=path.join(root,'Tests/Runtime/preferences-'+stamp);
 const output=evidencePath('Captures','preferences-'+stamp);
 fs.mkdirSync(runtime,{recursive:true});fs.mkdirSync(output,{recursive:true});
-const packageName=process.argv.find(a=>a.startsWith('--package='))?.slice(10)||'MenuPreferencesV2Development';
+const packageName=process.argv.find(a=>a.startsWith('--package='))?.slice(10)||'CodeReviewDevelopment20261007';
 if(!/^[A-Za-z0-9_-]+$/.test(packageName))throw Error('Invalid package name');
 const packageRoot=path.join(root,'Packages',packageName,'Windows/Unnamed');
 const exe=path.join(packageRoot,'Binaries/Win64/Unnamed.exe');

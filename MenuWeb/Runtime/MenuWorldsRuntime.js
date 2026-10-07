@@ -6,7 +6,7 @@ function refreshWorldActions() {
   for (const button of screen.querySelectorAll('[data-world-action]')) {
     const play = button.dataset.worldAction === 'play';
     button.disabled = loading || (play ? !window.MenuApplication?.worldEnabled(world?.id) : !world || !!world.builtIn);
-    if (play) button.textContent = loading ? 'Opening level...' : tr('selectWorld.select');
+    if (play) button.textContent = loading ? 'Opening world...' : tr('selectWorld.select');
   }
 }
 

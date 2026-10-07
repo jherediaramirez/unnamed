@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const arg=(key,fallback)=>process.argv.find(a=>a.startsWith(`--${key}=`))?.slice(key.length+3)||fallback;
-const packageName=arg('package','MenuReviewFixesDevelopment');
+const packageName=arg('package','CodeReviewDevelopment20261007');
 const profile=arg('profile','1280x720');
 const capture=arg('capture','review-regression-'+profile);
 if(!/^[A-Za-z0-9_-]+$/.test(packageName)||!/^[A-Za-z0-9_-]+$/.test(capture)||!/^\d+x\d+$/.test(profile))throw Error('Invalid suite arguments');

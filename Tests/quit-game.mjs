@@ -10,7 +10,7 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const directory=path.join(root,'Tests/Runtime/quit-game-'+Date.now());
 fs.mkdirSync(directory,{recursive:true});
 const argument=(key,fallback)=>process.argv.find(x=>x.startsWith(`--${key}=`))?.slice(key.length+3)||fallback;
-const packageName=argument('package','MenuReviewFixesDevelopment');
+const packageName=argument('package','CodeReviewDevelopment20261007');
 const reportName=argument('report','ReviewFixesFinalQuitResults.json');
 if(!/^[A-Za-z0-9_-]+$/.test(packageName)||!/^[A-Za-z0-9_-]+\.json$/.test(reportName))throw Error('Invalid package or report name');
 if(fs.existsSync(evidencePath(reportName)))throw Error('Report exists; choose a fresh name to preserve evidence.');

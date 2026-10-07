@@ -1,7 +1,0 @@
-1. Extract this package on your Windows development computer.
-2. Give your computer coding agent Unreal_Menu_Interface_Prompt.txt.
-3. Tell it the absolute path to your existing dev folder (DEV_ROOT) and the extracted Reference/minecraft-menu folder (SOURCE_ROOT).
-4. The agent will create dev/Unnamed Project and implement the interface-only Unreal project.
-5. Real engine/game functions are deferred. The reference HTML is unchanged; the prompt requires a mock-only working copy.
-
-This package contains the original runnable web prototype and the new task prompt. It does not yet contain an Unreal project.

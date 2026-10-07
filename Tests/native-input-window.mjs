@@ -16,7 +16,7 @@ fs.mkdirSync(output,{recursive:true});fs.mkdirSync(runtime,{recursive:true});
 const checks=[],events=[],delay=ms=>new Promise(r=>setTimeout(r,ms));
 function check(name,pass,detail){checks.push({name,pass:!!pass,detail});console.log((pass?'PASS ':'FAIL ')+name);if(!pass)throw Error(name);}
 const exe=editor?'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe':
-  path.join(root,'Packages/MenuInputCrouchCDevelopment/Windows/Unnamed/Binaries/Win64/Unnamed.exe');
+  path.join(root,'Packages/CodeReviewDevelopment20261007/Windows/Unnamed/Binaries/Win64/Unnamed.exe');
 let game,browser,page,exit;
 async function launch(){
   game=spawn(exe,[...(editor?[path.join(root,'Unnamed.uproject'),'-game']:[]),'-windowed','-ResX=1280','-ResY=720',

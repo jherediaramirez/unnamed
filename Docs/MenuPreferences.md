@@ -40,7 +40,7 @@ Hard Reset explicitly resets this store, existing input preferences and video pr
 
 ## Editor use
 
-If Unreal shows a DataTable Options dialog for preferences-schema, cancel it and restart with the corrected build. The raw schema now uses .menuprefs so the Content watcher ignores it. See [the import fix](<Documented Actions/2026-10-07-Schema-Import-Fix.md>).
+If Unreal shows a DataTable Options dialog for preferences-schema, cancel it and restart with the corrected build. The raw schema now uses .menuprefs so the Content watcher ignores it. See [the import fix](Records/2026-10-07-Schema-Import-Fix.md).
 
 Restart Unreal Editor after a C++ rebuild to load its new module, then open L_Menu and press Play. An editor already running can retain its previously loaded DLL. HTML changes reload with the browser, but a new native binding requires the rebuilt module. The current editor build selects UnrealEditor-Unnamed-1015.dll.
 
@@ -53,7 +53,7 @@ PIE can exercise the menu and temporary preference values. Saving across applica
 - All 938 original assets and working copies passed source/hash/syntax verification.
 - Tests/Evidence/2026-10-07/MenuPreferences-Preservation.json confirms 9,556 prior package/reference/input/map files and all 3,157 staged index entries are unchanged. The index byte hash changed later in the session; its original bytes remain in the preservation snapshot.
 - Packaged preference checks passed 126/126; existing input/API checks passed 50/50. The complete menu sweep passed 369/369 and video regression passed 37/37 at both 1280x720 and 1920x1080.
-- The accepted candidate is Packages/MenuPreferencesV2Development/Windows/Unnamed.exe. Exact paths, hashes and captures are in [the dated work record](<Documented Actions/2026-10-07-Menu-Preferences.md>).
+- The accepted candidate is Packages/MenuPreferencesV2Development/Windows/Unnamed.exe. Exact paths, hashes and captures are in [the dated work record](Records/2026-10-07-Menu-Preferences.md).
 
 Relevant reruns:
 

@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param([switch]$Editor,[switch]$DirectLevel,[string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',
-    [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$PackageName='FoundationDevelopment20261007-r3',
+    [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$PackageName='CodeReviewDevelopment20261007',
     [ValidateRange(640,7680)][int]$Width=1280,[ValidateRange(360,4320)][int]$Height=720)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent

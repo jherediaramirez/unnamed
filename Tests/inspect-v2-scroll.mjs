@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 const root=path.resolve(import.meta.dirname,'..');
 const runtime=path.join(root,'Tests/Runtime','v2-scroll-'+Date.now());fs.mkdirSync(runtime,{recursive:true});
-const game=spawn(path.join(root,'Packages/MenuInputCrouchCDevelopment/Windows/Unnamed/Binaries/Win64/Unnamed.exe'),
+const game=spawn(path.join(root,'Packages/CodeReviewDevelopment20261007/Windows/Unnamed/Binaries/Win64/Unnamed.exe'),
   ['-windowed','-ResX=1920','-ResY=1080','-NoSplash','-cefdebug=18926','-MenuSettingsSessionOnly',`-UserDir=${runtime}/`],
   {cwd:root,windowsHide:true,stdio:'ignore'});
 const exit=new Promise(resolve=>game.once('exit',resolve));let b,p;

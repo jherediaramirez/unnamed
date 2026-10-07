@@ -1,0 +1,336 @@
+{
+	"evidence": "real Unreal game world and Enhanced Input; simulated application input, not native hardware input; expected values source-derived from exact Java26.3",
+	"requested_fps": 120,
+	"observed_mean_fps": 117.13995476570449,
+	"failures": 0,
+	"checks": [
+		{
+			"scenario": "possession and geometry",
+			"pass": true,
+			"detail": "real game world, controller, pawn and native primitives"
+		},
+		{
+			"scenario": "standing height cm",
+			"pass": true,
+			"detail": "actual=180.00000000 expected=180.00000000 tolerance=0.10000000"
+		},
+		{
+			"scenario": "standing eyes cm",
+			"pass": true,
+			"detail": "actual=162.00000000 expected=162.00000000 tolerance=0.10000000"
+		},
+		{
+			"scenario": "walk blocks/s",
+			"pass": true,
+			"detail": "actual=4.31718062 expected=4.31718060 tolerance=0.04317180"
+		},
+		{
+			"scenario": "stopped speed",
+			"pass": true,
+			"detail": "actual=0.00000000 expected=0.00000000 tolerance=0.00100000"
+		},
+		{
+			"scenario": "sprint blocks/s",
+			"pass": true,
+			"detail": "actual=5.61233480 expected=5.61233480 tolerance=0.05612330"
+		},
+		{
+			"scenario": "Shift sprints without crouching",
+			"pass": true,
+			"detail": "project personal default LeftShift"
+		},
+		{
+			"scenario": "sprint release latch",
+			"pass": true,
+			"detail": "continues until forward/eligibility/collision ends it"
+		},
+		{
+			"scenario": "crouch blocks/s",
+			"pass": true,
+			"detail": "actual=1.29515418 expected=1.29515420 tolerance=0.01295150"
+		},
+		{
+			"scenario": "crouch height cm",
+			"pass": true,
+			"detail": "actual=150.00000000 expected=150.00000000 tolerance=0.10000000"
+		},
+		{
+			"scenario": "crouch eye cm",
+			"pass": true,
+			"detail": "actual=127.00000000 expected=127.00000000 tolerance=0.10000000"
+		},
+		{
+			"scenario": "C requests crouch",
+			"pass": true,
+			"detail": "project personal default C"
+		},
+		{
+			"scenario": "Ctrl no longer requests sprint",
+			"pass": true,
+			"detail": "fixed Ctrl stack-drop modifier is unchanged"
+		},
+		{
+			"scenario": "jump apex blocks",
+			"pass": true,
+			"detail": "actual=1.25220335 expected=1.25220334 tolerance=0.02000000"
+		},
+		{
+			"scenario": "jump airtime ticks",
+			"pass": true,
+			"detail": "actual=12.00000000 expected=12.00000000 tolerance=1.00000000"
+		},
+		{
+			"scenario": "diagonal blocks/s",
+			"pass": true,
+			"detail": "actual=4.40528634 expected=4.40528634 tolerance=0.04405290"
+		},
+		{
+			"scenario": "opposing keys displacement",
+			"pass": true,
+			"detail": "actual=0.00000000 expected=0.00000000 tolerance=0.00100000"
+		},
+		{
+			"scenario": "removed W binding",
+			"pass": true,
+			"detail": "actual=0.00000000 expected=0.00000000 tolerance=0.00100000"
+		},
+		{
+			"scenario": "new K binding moves",
+			"pass": true,
+			"detail": "native profile forward=K"
+		},
+		{
+			"scenario": "double tap follows remapped forward",
+			"pass": true,
+			"detail": "K tap-release-K inside7 reference ticks"
+		},
+		{
+			"scenario": "low ceiling crouch",
+			"pass": true,
+			"detail": "155cm ceiling"
+		},
+		{
+			"scenario": "release cannot stand through ceiling",
+			"pass": true,
+			"detail": "resolved pose survives released intent"
+		},
+		{
+			"scenario": "100 mouse counts yaw degrees",
+			"pass": true,
+			"detail": "actual=15.00000000 expected=15.00000000 tolerance=0.05000000"
+		},
+		{
+			"scenario": "pause removes contexts",
+			"pass": true,
+			"detail": "existing CEF menu opened; no sim movement"
+		},
+		{
+			"scenario": "resume clears stale movement",
+			"pass": true,
+			"detail": "release happened in UIOnly context"
+		},
+		{
+			"scenario": "text does not move",
+			"pass": true,
+			"detail": "native editable text focus; no chat backend"
+		},
+		{
+			"scenario": "F3+F6 options and no perspective",
+			"pass": true,
+			"detail": "perspective rebound to F6; chord consumes it"
+		},
+		{
+			"scenario": "F3 alone toggles",
+			"pass": true,
+			"detail": "toggle on release"
+		},
+		{
+			"scenario": "F3+C does not also crouch",
+			"pass": true,
+			"detail": "debug chord consumes shared C binding"
+		},
+		{
+			"scenario": "HUD hides via action",
+			"pass": true,
+			"detail": "Enhanced Input F1 action"
+		},
+		{
+			"scenario": "capture consumes gameplay intent",
+			"pass": true,
+			"detail": "capture input never reaches Enhanced Input"
+		},
+		{
+			"scenario": "capture F3 release cannot toggle overlay",
+			"pass": true,
+			"detail": "captured press has no standalone release action"
+		},
+		{
+			"scenario": "logical inventory binding closes fixture",
+			"pass": true,
+			"detail": "same configurable E binding in inventory context"
+		},
+		{
+			"scenario": "focus loss cancels",
+			"pass": true,
+			"detail": "application activation handler invoked, not physical OS focus test"
+		},
+		{
+			"scenario": "wheel pulse reaches rebound jump",
+			"pass": true,
+			"detail": "Enhanced Input pulse survives one reference step"
+		},
+		{
+			"scenario": "native attack reaches fixture",
+			"pass": true,
+			"detail": "eye ray at block fixture2.5m"
+		},
+		{
+			"scenario": "pause cancels attack/use",
+			"pass": true,
+			"detail": "context removal"
+		},
+		{
+			"scenario": "repeated pause/resume stays playable",
+			"pass": true,
+			"detail": "4 native browser/context trips"
+		}
+	],
+	"phase_frame_rates": [
+		{
+			"phase": "startup",
+			"fps": 119.21390325408601
+		},
+		{
+			"phase": "walk",
+			"fps": 119.99342447789732
+		},
+		{
+			"phase": "stop",
+			"fps": 119.99966383074522
+		},
+		{
+			"phase": "sprint",
+			"fps": 119.99501420411868
+		},
+		{
+			"phase": "sprint release",
+			"fps": 119.96664974365208
+		},
+		{
+			"phase": "crouch",
+			"fps": 119.99138469266566
+		},
+		{
+			"phase": "old sprint key",
+			"fps": 119.99748302919191
+		},
+		{
+			"phase": "jump",
+			"fps": 119.99850010511474
+		},
+		{
+			"phase": "diagonal",
+			"fps": 119.99807398132329
+		},
+		{
+			"phase": "opposing",
+			"fps": 120.02161660191067
+		},
+		{
+			"phase": "rebind old",
+			"fps": 119.99116098427287
+		},
+		{
+			"phase": "rebind new",
+			"fps": 119.92900044865671
+		},
+		{
+			"phase": "forward tap gap",
+			"fps": 120.12678248977549
+		},
+		{
+			"phase": "forward double tap",
+			"fps": 119.97384641482704
+		},
+		{
+			"phase": "blocked stand",
+			"fps": 119.99323942604259
+		},
+		{
+			"phase": "blocked uncrouch",
+			"fps": 119.93991107120924
+		},
+		{
+			"phase": "mouse",
+			"fps": 120.05408791423382
+		},
+		{
+			"phase": "pause held",
+			"fps": 98.760671660461213
+		},
+		{
+			"phase": "release while paused",
+			"fps": 96.401958295786784
+		},
+		{
+			"phase": "text",
+			"fps": 119.99359999459614
+		},
+		{
+			"phase": "debug chord",
+			"fps": 119.71706797632406
+		},
+		{
+			"phase": "F3 alone",
+			"fps": 119.99495885093033
+		},
+		{
+			"phase": "F3 C sharing",
+			"fps": 119.973608100635
+		},
+		{
+			"phase": "HUD",
+			"fps": 119.93203676635723
+		},
+		{
+			"phase": "capture",
+			"fps": 119.78582232287015
+		},
+		{
+			"phase": "capture F3",
+			"fps": 120.17011084391058
+		},
+		{
+			"phase": "inventory close",
+			"fps": 120.09999846468632
+		},
+		{
+			"phase": "focus",
+			"fps": 98.556929902357084
+		},
+		{
+			"phase": "wheel binding",
+			"fps": 117.46616073619676
+		},
+		{
+			"phase": "action target",
+			"fps": 119.94698543049613
+		},
+		{
+			"phase": "action cancel",
+			"fps": 98.073443604537971
+		},
+		{
+			"phase": "menu cycles",
+			"fps": 6.1171470814796409
+		},
+		{
+			"phase": "screenshot",
+			"fps": 119.84460966316203
+		},
+		{
+			"phase": "capture flush",
+			"fps": 104.99533802481771
+		}
+	]
+}

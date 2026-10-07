@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 
 const tests=path.dirname(fileURLToPath(import.meta.url)),root=path.dirname(tests);
 const prefix=process.argv.find(a=>a.startsWith('--prefix='))?.slice(9)||'review-accepted';
-const packageName=process.argv.find(a=>a.startsWith('--package='))?.slice(10)||'MenuPreferencesV2Development';
+const packageName=process.argv.find(a=>a.startsWith('--package='))?.slice(10)||'CodeReviewDevelopment20261007';
 if(!/^[A-Za-z0-9_-]+$/.test(packageName))throw Error('Invalid package name');
 if(!/^[A-Za-z0-9_-]+$/.test(prefix))throw Error('Invalid capture prefix');
 const report=path.join(tests,prefix+'-ValidationResults.json');

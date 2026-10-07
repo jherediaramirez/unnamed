@@ -4,7 +4,7 @@ This is the first-person foundation inside `C:\dev\projects\Unnamed\Unnamed.upro
 
 ## Play
 
-Development candidate: `C:\dev\projects\Unnamed\Packages\FoundationDevelopment20261007-r3\Windows\Unnamed.exe`.
+Development candidate: `C:\dev\projects\Unnamed\Packages\CodeReviewDevelopment20261007\Windows\Unnamed.exe` (code-review cleanup; the r3 package `FoundationDevelopment20261007-r3` is the preserved previous checkpoint).
 
 From PowerShell 7:
 
@@ -47,13 +47,13 @@ The primitive course includes 50/60/61/100 cm steps east of spawn; a 155 cm ceil
 
 ## Evidence and design
 
-- [Audit and implementation order](AUDIT.md)
-- [Pinned reference and source symbols](REFERENCE.md)
-- [Complete controls matrix](CONTROLS.md) and [structured matrix](controls.json)
-- [Scale, movement and action contracts](BEHAVIOR.md)
-- [Architecture and extension points](ARCHITECTURE.md)
-- [Measured verification and remaining acceptance gaps](VERIFICATION.md)
-- [Personal controls correction and new candidate verification](../Documented%20Actions/2026-10-07-Personal-Controls.md)
+- [Audit and implementation order](Audit.md)
+- [Pinned reference and source symbols](Reference.md)
+- [Complete controls matrix](Controls.md) and [structured matrix](controls.json)
+- [Scale, movement and action contracts](Behavior.md)
+- [Architecture and extension points](Architecture.md)
+- [Measured verification and remaining acceptance gaps](Verification.md)
+- [Personal controls correction and new candidate verification](../Records/2026-10-07-Personal-Controls.md)
 - [Durable test evidence](../../Tests/Evidence/2026-10-07/Foundation/FinalResults.json)
 
 The numeric Minecraft comparison is derived from the inspected hash-pinned client implementation. It is not a claim that a played vanilla client was instrumented. Exact auto-jump fidelity outside the primitive fixture, arbitrary mesh collision, alternate keyboard layouts, OS focus/capture and subjective mouse feel retain the limits listed in the report.

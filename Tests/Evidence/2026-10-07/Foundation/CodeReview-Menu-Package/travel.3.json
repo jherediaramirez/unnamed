@@ -1,0 +1,36 @@
+{
+	"evidence": "real Unreal game world and Enhanced Input; simulated application input, not native hardware input; expected values source-derived from exact Java26.3",
+	"requested_fps": 60,
+	"observed_mean_fps": 53.851892877109179,
+	"failures": 0,
+	"checks": [
+		{
+			"scenario": "menu selected Foundation map and pawn",
+			"pass": true,
+			"detail": "L_Foundation"
+		},
+		{
+			"scenario": "menu binding drives actual pawn",
+			"pass": true,
+			"detail": "FOUNDATION | Java 26.3 / UE 5.8.3 | 1 block = 100 cm\nFeet XYZ blocks: 1.042 / 0.000 / 0.000 | block: 1 / 0 / 0\nFacing east (+X) | MC yaw -90.00 pitch -0.00 | view 0\nPose standing | box 60.0 x 60.0 x 180.0 cm | eyes 162.00 cm (smoothed 162.00)\ngrounded | sprint intent=0 resolved=0 | crouch intent=0 pose=0 | headroom=1\nVelocity post-drag cm/ref.tick V(X=11.47, Z=-7.84) | measured H 4.2028 blocks/s V 0.0000 blocks/s\nDisplacement 0.21014 blocks/reference tick (20 Hz) | step 17 | dropped 0.000s\nEligibility: eligible: unhindered fixture\nHotbar 1 | main=64 off=2 | hand=main | break=0 use=0\nTarget none | distance 0.000 reach 0.00 blocks | allowed=0\nHit cm V(0) normal V(0)\nResult: no action\nContexts: IMC_OnFoot:0 FoundationActions:10  + diagnostics preprocessor | capture=0 text=0 panel=0 | cursor=game capture requested\nPhysical W down -> logical key.forward press\nViewport actual mouse capture=1 focus=1\nProfile: InputUserSettings.Profiles.Default | focus active\nforward=W  back=S  left=A  right=D  sprint=LeftShift  \nsneak=C  jump=SpaceBar  inventory=E  swapOffhand=F  drop=Q  \nuse=RightMouseButton  attack=LeftMouseButton  pickItem=MiddleMouseButton  chat=T  command=Slash  \nscreenshot=F2  togglePerspective=F5  fullscreen=F11  toggleGui=F1  hotbar.1=One  \nhotbar.2=Two  hotbar.3=Three  hotbar.4=Four  hotbar.5=Five  hotbar.6=Six  \nhotbar.7=Seven  hotbar.8=Eight  hotbar.9=Nine  debug.overlay=F3  debug.modifier=F3  \ndebug.showHitboxes=B  debug.clearChat=D  debug.debugOptions=F6  debug.copyLocation=C  debug.dumpVersion=V  \n\nFrame 16.60 ms | 60.3 FPS | GPU 2.565 ms\nEngine CPU game 1.236 ms / render 4.508 ms (excludes idle)\n0.00 input cancelled; release held keys to resume\n0.00 gameplay resumed: release held keys before new actions\n0.02 ground=0 crouch=0 sprint=0 headroom=1\n0.12 ground=1 crouch=0 sprint=0 headroom=1\n0.12 no action\n0.57 key.forward press\n"
+		}
+	],
+	"phase_frame_rates": [
+		{
+			"phase": "menu possession",
+			"fps": 54.70786572809709
+		},
+		{
+			"phase": "menu-bound movement",
+			"fps": 59.995314311526009
+		},
+		{
+			"phase": "menu screenshot",
+			"fps": 59.995327811542019
+		},
+		{
+			"phase": "menu screenshot flush",
+			"fps": 32.540209398167704
+		}
+	]
+}

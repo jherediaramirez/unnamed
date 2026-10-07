@@ -5,14 +5,14 @@ param(
 )
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
-$output=Join-Path $root "Docs\$OutputName"
-$manifestPath=Join-Path $root "Docs\$ManifestName"
+$output=Join-Path $root "Docs\Archive\$OutputName"
+$manifestPath=Join-Path $root "Docs\Archive\$ManifestName"
 if((Test-Path -LiteralPath $output) -or (Test-Path -LiteralPath $manifestPath)){
     throw 'Review snapshot already exists. Choose new output/manifest names to preserve it.'
 }
 
 $files=@('README.md','Unnamed.uproject','.gitignore','Content\Menu\Web\index.html')
-foreach($folder in @('Source','Scripts','Config')){
+foreach($folder in @('Source','Scripts','MenuWeb','Config')){
     $files+=Get-ChildItem -LiteralPath (Join-Path $root $folder) -File -Recurse |
         ForEach-Object {[IO.Path]::GetRelativePath($root,$_.FullName)}
 }
@@ -20,8 +20,8 @@ $files+=@(
     'Docs\Architecture.md','Docs\VideoSettings.md','Docs\QuitGame.md',
     'Docs\Verification.md','Docs\KnownDifferences.md','Docs\ControlRegistry.json',
     'Docs\ControlRegistry.md','Docs\FunctionalBacklog.md','Docs\ScreenInventory.md',
-    'Docs\Independent_Menu_Review_Prompt.txt',
-    'Docs\Unnamed_Project_AI_Handoff\Unreal_Menu_Interface_Prompt.txt',
+    'Docs\Archive\Independent_Menu_Review_Prompt.txt',
+    'Docs\Unreal_Menu_Interface_Prompt.txt',
     'Reference\OriginalHashes.json','Reference\minecraft-menu\index.html',
     'Reference\minecraft-menu\README.md','Reference\minecraft-menu\reference-inventory.md',
     'Reference\minecraft-menu\qa-report.md','Reference\minecraft-menu\qa-results.json',

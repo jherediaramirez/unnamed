@@ -4,7 +4,7 @@ Quit Game on the main menu now requests a normal standalone-game shutdown direct
 
 ## Ownership And Safeguards
 
-- `UMenuApplication`, bound as `window.ue.menuapp`, exposes only GetState and RequestQuit. It retains weak references to the local controller, video service and input service. The controller owns and unbinds all three browser services.
+- `UMenuApplication`, bound as `window.ue.menuapplication`, exposes only GetState, RequestQuit and RequestOpenWorld (catalog IDs). It retains weak references to the local controller and the video, input and preference services. `UMenuBrowserHost` owns and unbinds every browser service.
 - `MenuApplicationRuntime.js` serializes a quit request, disables repeated submission and asks both `MenuVideo.prepareForExit()` and `MenuInput.prepareForExit()` to lock further edits and finish queued changes.
 - The next controller tick waits for a settled native window, flushes the video preferences and native input profile, then calls `UKismetSystemLibrary::QuitGame` with Quit preference and platform restrictions respected. It does not kill a process, delete files, reset preferences, run a supplied command, or assume a world-saving system exists.
 - Editor execution and invalid/nonlocal game owners are rejected natively; the editor Play button is disabled. A missing binding also leaves the button disabled.
@@ -14,9 +14,9 @@ The runtime implementation follows the installed UE 5.8.3 source and Epic's [Qui
 
 ## Build And Verification
 
-The current input-foundation package is `Packages\MenuInputFoundationDevelopment\Windows\Unnamed.exe`. It adds input-profile draining and final-save checks to this lifecycle. See [Keybindings](Keybindings.md) and [the dated record](<Documented Actions/2026-10-07-Keybindings.md>) for its current evidence. The checkpoint details below remain historical.
+The current input-foundation package is `Packages\MenuInputFoundationDevelopment\Windows\Unnamed.exe`. It adds input-profile draining and final-save checks to this lifecycle. See [Keybindings](Keybindings.md) and [the dated record](Records/2026-10-07-Keybindings.md) for its current evidence. The checkpoint details below remain historical.
 
-The native Quit checkpoint is `C:\dev\projects\Unnamed\Packages\MenuQuitDevelopment\Windows\Unnamed.exe`. The current review-fix candidate is `C:\dev\projects\Unnamed\Packages\MenuReviewFixesDevelopment\Windows\Unnamed.exe`, with identical native source/binaries and refreshed physical HTML. The previous Realms-removal, menu/video/debug-reset/Quit candidates remain at their original paths. Native Quit preservation is at `C:\dev\backups\Unnamed\quit-game-20261007-091347`; the review-fix snapshot is at `C:\dev\backups\Unnamed\review-fixes-20261007-104750`. See [Documented Actions](<Documented Actions/README.md>) and Verification.md for current results.
+The native Quit checkpoint is `C:\dev\projects\Unnamed\Packages\MenuQuitDevelopment\Windows\Unnamed.exe`. The current review-fix candidate is `C:\dev\projects\Unnamed\Packages\MenuReviewFixesDevelopment\Windows\Unnamed.exe`, with identical native source/binaries and refreshed physical HTML. The previous Realms-removal, menu/video/debug-reset/Quit candidates remain at their original paths. Native Quit preservation is at `C:\dev\backups\Unnamed\quit-game-20261007-091347`; the review-fix snapshot is at `C:\dev\backups\Unnamed\review-fixes-20261007-104750`. See [Records](Records/README.md) and Verification.md for current results.
 
 ```powershell
 & 'C:\dev\projects\Unnamed\Scripts\BuildMenu.ps1' -Package

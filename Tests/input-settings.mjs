@@ -12,7 +12,7 @@ const runtime=path.join(tests,'Runtime','input-foundation-'+stamp);
 const output=evidencePath('Captures','input-foundation-'+stamp);
 fs.mkdirSync(runtime,{recursive:true});fs.mkdirSync(output,{recursive:true});
 const checks=[],delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-const packageName=process.argv.find(a=>a.startsWith('--package='))?.slice(10)||'MenuPreferencesV2Development';
+const packageName=process.argv.find(a=>a.startsWith('--package='))?.slice(10)||'CodeReviewDevelopment20261007';
 if(!/^[A-Za-z0-9_-]+$/.test(packageName))throw Error('Invalid package name');
 const exe=path.join(root,'Packages',packageName,'Windows/Unnamed/Binaries/Win64/Unnamed.exe');
 const htmlSHA256=crypto.createHash('sha256').update(fs.readFileSync(path.join(root,'Content/Menu/Web/index.html'))).digest('hex');

@@ -35,7 +35,7 @@ These are requests, not claims about an actual character. The future character c
 
 The future gameplay controller should call `BindGameplayInput` with its `UEnhancedInputComponent`, enable the on-foot context when gameplay has focus, and disable it before opening a blocking menu, unpossessing or disabling gameplay. Consume intent once per simulation update. `ConsumeIntent` clears only the jump press edge and look delta; continuous movement and held requests remain available. The subsystem does not move a pawn or rotate a camera.
 
-`UMenuInputSettings` exposes only seven movement bindings, their resets and two policies to CEF. `MenuWeb/Runtime/MenuInputRuntime.js` renders authoritative replies, rejects unsupported captures and waits for pending edits before Quit. This preserves the existing menu layout and keeps gameplay authority outside browser JavaScript.
+`UMenuInputBridge` (binding `menuinput`) exposes only the player-mappable bindings, their resets and the two Hold/Toggle policies to CEF. `MenuWeb/Runtime/MenuInputRuntime.js` renders authoritative replies, rejects unsupported captures and waits for pending edits before Quit. This preserves the existing menu layout and keeps gameplay authority outside browser JavaScript.
 
 ## Remapping and persistence
 
@@ -76,6 +76,6 @@ The Windows Unreal CEF adapter omits the native scan code, leaving DOM `event.co
 
 Video Settings shows Graphics API: DirectX 12. Hover reports the configured default and the native RHI actually running. API switching is disabled until an appropriate startup/restart path is implemented.
 
-Current evidence and package identity are recorded in [the dated work record](<Documented Actions/2026-10-07-Keybindings.md>).
+Current evidence and package identity are recorded in [the dated work record](Records/2026-10-07-Keybindings.md).
 
 Epic references: [Enhanced Input](https://dev.epicgames.com/documentation/unreal-engine/enhanced-input-in-unreal-engine), [Enhanced Input user settings](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Plugins/EnhancedInput/UEnhancedInputUserSettings). Installed UE 5.8 headers and source were also checked for the mapping, key-profile, SaveGame and flush APIs.

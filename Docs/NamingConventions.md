@@ -1,0 +1,65 @@
+# Naming conventions
+
+One rule per kind of thing, so a name tells you where it lives and what it is. When something does not fit, add the exception here with its reason.
+
+## Areas
+
+The project is split into a few areas. The area name is used everywhere: folder, class prefix, test path, log category and JS global.
+
+| Area | C++ folder | Class prefix | Native tests | Log category |
+|---|---|---|---|---|
+| Menu | `Source/Unnamed/Menu/` | `Menu` (`UMenuBrowserHost`) | `Unnamed.Menu.*` | `LogUnnamedMenu` |
+| Input | `Source/Unnamed/Input/` | `UnnamedInput` (`UUnnamedInputSubsystem`) | `Unnamed.Input.*` | - |
+| Foundation | `Source/Unnamed/Foundation/` | `Foundation` (`AFoundationController`) | `Unnamed.Foundation.*` | `LogUnnamedFoundation` |
+| Worlds | `Source/Unnamed/SuperFlat/` | `SuperFlat` (`ASuperFlatGameMode`) | `Unnamed.Worlds.*` | `LogUnnamedWorlds` |
+| Project-wide | `Source/Unnamed/` | `Unnamed` (`UUnnamedProjectSettings`) | `Unnamed.Project.*` | - |
+
+Exceptions, with reasons:
+
+- Input uses `UnnamedInput` rather than `Input`: bare `Input*` collides with engine names such as `UInputSettings`, and `UUnnamedInputSettings` is stored by class path in players' saved settings, so renaming it would lose their bindings.
+- Log categories always carry the `LogUnnamed` prefix; they are global symbols and must not clash with engine categories.
+- Saved IDs never change once shipped: binding IDs such as `key.sneak` (labelled Crouch), world IDs such as `super-flat`, the input save slot `UnnamedInputSettings`. Rename the label, not the ID.
+- "Unnamed" is the placeholder project name. Renaming the project is a separate task ([Project rename notes](ProjectRenameNotes.md)).
+
+## C++ (Unreal style)
+
+- Standard Unreal prefixes: `U` objects/components, `A` actors, `F` structs, `E` enums, `I` interfaces, `S` Slate widgets, `T` templates, `b` booleans (including parameters).
+- One `UCLASS` per file; the file is the class name without its prefix (`UMenuBrowserHost` -> `Menu/MenuBrowserHost.h`). Plain helper structs may share their main type's header (`FoundationActions.h`).
+- Include project headers by their path from `Source/Unnamed/`: `#include "Menu/MenuApplication.h"`. Never `../`.
+- Functions are verbs (`ApplySetting`, `TraceTarget`, `HandleAction`); getters start with `Get` (`GetMenuHost`); predicates start with `Is`/`Can`/`Has` (`IsGameplay`, `CanSaveSettings`).
+- Delegates: member `OnSomething`, type `FOnSomething`.
+- Descriptive names. Single letters only for loop indices and the profile `P` in formula-heavy simulation code.
+- A browser-facing object that only forwards to another system is a `...Bridge` (`UMenuInputBridge`, `UFoundationMenuBridge`); an object that owns state is named for that state (`UMenuVideoSettings`, `UMenuPreferences`).
+- Format with the repository `.clang-format` (clang-format 19 ships with Visual Studio 2022).
+
+## One word per concept
+
+| Use | Not | Where |
+|---|---|---|
+| crouch | sneak | Code, UI and tests. Only the saved ID `key.sneak` keeps the old word. |
+| world | level | Menu catalog entries and their messages. |
+| map | level | Unreal assets (`/Game/Maps/L_*`, `MenuMap`). |
+| settings | - | Native-owned live values (video, input). |
+| preferences | options | The `UMenuPreferences` store of saved choices. |
+| bindings | keybinds | Player-mappable key mappings. |
+
+## JavaScript (menu web layer)
+
+- A runtime module is one global object in `MenuWeb/Runtime/<Global>Runtime.js` (`MenuVideo` -> `MenuVideoRuntime.js`). Files that only add helper functions are named for their area (`MenuDialogRuntime.js`).
+- A native binding name is its JS global lowercased: `MenuApplication` -> `menuapplication`, `FoundationMenu` -> `foundationmenu`.
+- Feature patches are `MenuWeb/Patches/<Feature>.mjs` and export `name`, `apply` and optionally `verify`.
+
+## Scripts, tests and evidence
+
+- PowerShell and editor Python scripts: `VerbNoun` (`BuildFoundation.ps1`, `TestInput.ps1`, `CreateSuperFlatMap.py`); editor Python lives in `Scripts/Editor/`.
+- `Scripts/Test<Area>.ps1` runs the native suite `Unnamed.<Area>`.
+- Node unit tests: `Tests/<topic>.test.mjs` (run by `npm test`); CEF integration suites: `Tests/<topic>.mjs`.
+- Native test files: `Source/Unnamed/Tests/<Area>Tests.cpp` or `<Area><Topic>Tests.cpp`, with test paths `Unnamed.<Area>.<Topic>`.
+- Evidence: `Tests/Evidence/<yyyy-mm-dd>/<suite>-<detail>/`; never overwrite an existing folder.
+- Packages: `Packages/<Feature>Development<yyyyMMdd>[-rN]`.
+
+## Docs
+
+- Living docs: `Docs/PascalCase.md`; a folder's entry point is `README.md`.
+- Dated work records: `Docs/Records/YYYY-MM-DD-Topic.md`, indexed in [Records](Records/README.md).
+- Preserved inputs and snapshots: `Docs/Archive/`.

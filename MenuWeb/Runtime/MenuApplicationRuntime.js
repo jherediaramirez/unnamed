@@ -32,10 +32,10 @@ const MenuApplication = (() => {
       stillPending: () => true, failed: 'The game could not close.',
       drain: 'Settings did not finish changing. Please try quitting again.',
       timedOut: 'The game did not finish closing. Please try again.'},
-    world: {title: 'Open Level', request: 'RequestOpenWorld', done: reply => reply.travelIssued,
-      stillPending: reply => reply.pendingWorld, failed: 'The selected level could not open.',
-      drain: 'Settings did not finish changing. Please try opening the level again.',
-      timedOut: 'The selected level did not finish opening. Please try again.'}
+    world: {title: 'Open World', request: 'RequestOpenWorld', done: reply => reply.travelIssued,
+      stillPending: reply => reply.pendingWorld, failed: 'The selected world could not open.',
+      drain: 'Settings did not finish changing. Please try opening the world again.',
+      timedOut: 'The selected world did not finish opening. Please try again.'}
   };
   async function leave(kind, ...args) {
     const exit = exits[kind];
