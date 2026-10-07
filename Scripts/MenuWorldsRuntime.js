@@ -14,5 +14,5 @@ function loadWorld() {
   const world = state.worlds.find(w => w.id === chosenWorld);
   if (!world || window.MenuApplication?.isLoading()) return;
   if (['super-flat','foundation'].includes(world.id)) { void MenuApplication.openWorld(world.id); return; }
-  message(world.name, 'Design reference only. Select Super Flat to open the playable test map.', tr('gui.back'));
+  message(world.name, 'Design reference only. Choose a world marked Playable.', tr('gui.back'));
 }

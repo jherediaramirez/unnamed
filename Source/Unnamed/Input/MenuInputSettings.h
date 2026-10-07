@@ -6,7 +6,7 @@
 
 class UUnnamedInputSubsystem;
 
-// Narrow browser bridge: movement bindings and two accessibility policies only.
+// Narrow browser bridge: player-mappable key bindings and the Hold/Toggle sprint and crouch policies only.
 UCLASS()
 
 class UNNAMED_API UMenuInputSettings : public UObject

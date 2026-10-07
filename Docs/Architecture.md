@@ -2,7 +2,7 @@
 
 ## Super Flat world path
 
-The public Singleplayer catalog contains Super Flat and the two original fictional reference entries. Only `super-flat` loads from that list. `UMenuApplication::RequestOpenWorld` accepts fixed native catalog IDs; browser strings cannot become arbitrary paths or console commands. Pending settings drain and flush before travel. `/Game/Maps/L_SuperFlat` uses its own GameMode, preview controller, stock spectator pawn and small instruction HUD. Menu teardown removes the browser; returning loads the existing `/Game/Menu/L_Menu`. The separate FPS development lab is outside the public catalog. See [SuperFlat.md](SuperFlat.md) for the current verified world scope and integration handoff; the menu-only descriptions below reflect the earlier settings baseline.
+The public Singleplayer catalog contains Player Foundation, Super Flat and the two original fictional reference entries. Only `foundation` and `super-flat` load from that list. `UMenuApplication::RequestOpenWorld` accepts fixed native catalog IDs; browser strings cannot become arbitrary paths or console commands. Pending settings drain and flush before travel. `/Game/Maps/L_SuperFlat` uses its own GameMode, preview controller, stock spectator pawn and small instruction HUD. Menu teardown removes the browser; returning loads the existing `/Game/Menu/L_Menu`. `/Game/Maps/L_Foundation` hosts the first-person Player Foundation; see [Foundation architecture](Foundation/ARCHITECTURE.md). See [SuperFlat.md](SuperFlat.md) for the current verified world scope and integration handoff; the menu-only descriptions below reflect the earlier settings baseline.
 
 ## Chosen Route
 

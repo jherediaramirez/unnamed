@@ -64,7 +64,7 @@ FString UMenuApplication::RequestQuit()
     LastError.Empty();
     if (bWorldPending || bTravelIssued)
     {
-        LastError = TEXT("Please wait for Super Flat to open.");
+        LastError = TEXT("Please wait for the selected world to open.");
         return GetState();
     }
     if (!CanQuit())
@@ -90,7 +90,7 @@ FString UMenuApplication::RequestOpenWorld(const FString& WorldId)
     else if (!CanOpenWorld())
         LastError = TEXT("Opening a world requires a running game or Play in Editor session.");
     else if (!FPackageName::DoesPackageExist(RequestedMap))
-        LastError = TEXT("The selected test level is missing from this build.");
+        LastError = TEXT("The selected world is missing from this build.");
     else if (!bWorldPending && !bTravelIssued)
     {
         bWorldPending = true;
@@ -111,7 +111,7 @@ void UMenuApplication::Tick()
         else if (!VideoSettings->IsReadyForExit())
         {
             if (FPlatformTime::Seconds() < WorldDeadline) return;
-            LastError = TEXT("Settings did not finish changing. Please try opening Super Flat again.");
+            LastError = TEXT("Settings did not finish changing. Please try opening the world again.");
         }
         else if (FlushSettings())
         {

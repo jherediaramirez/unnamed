@@ -64,13 +64,13 @@ FString UMenuInputSettings::ApplyBinding(const FString& Id, const FString& KeyNa
     if (!Input.IsValid() || !Input->EnsureReady(LastError)) return Snapshot(false);
     const FName MappingId(*Id);
     const FKey Key = KeyName == TEXT("None") ? EKeys::Invalid : FKey(*KeyName);
-    const auto MovementIds = Input->SupportedIds();
-    if (Id.Len() > 64 || KeyName.Len() > 64 || !MovementIds.Contains(MappingId) ||
+    const auto SupportedIds = Input->SupportedIds();
+    if (Id.Len() > 64 || KeyName.Len() > 64 || !SupportedIds.Contains(MappingId) ||
         (KeyName != TEXT("None") &&
             (!Key.IsValid() || Key.IsAnalog() || Key.IsGamepadKey() || Key.IsTouch() ||
                 (!Key.IsMouseButton() && !Key.IsBindableInBlueprints()))))
     {
-        LastError = TEXT("Choose a supported keyboard key or mouse button for a movement binding.");
+        LastError = TEXT("Choose a supported keyboard key or mouse button for this binding.");
         return Snapshot(false);
     }
     if (Key == EKeys::Escape || Key == EKeys::Tilde)
@@ -79,7 +79,7 @@ FString UMenuInputSettings::ApplyBinding(const FString& Id, const FString& KeyNa
         return Snapshot(false);
     }
     if (Key.IsValid())
-        for (FName Other : MovementIds)
+        for (FName Other : SupportedIds)
             if (Other != MappingId && CurrentKey(Input.Get(), Other) == Key)
             {
                 const auto IsChord = [](FName Name)
@@ -132,7 +132,7 @@ FString UMenuInputSettings::ResetBindings(bool bResetPolicies)
         Input->Settings()->ResetAllPlayerKeysInRow(Args(Id), Failures);
         if (!Failures.IsEmpty())
         {
-            LastError = TEXT("Unreal could not reset the movement bindings.");
+            LastError = TEXT("Unreal could not reset the key bindings.");
             return Snapshot(false);
         }
     }

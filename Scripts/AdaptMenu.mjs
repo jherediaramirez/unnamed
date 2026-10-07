@@ -19,8 +19,8 @@ const change = (prefix, replacement) => {
   lines[hits[0]] = replacement;
 };
 change('let saved=', `const debugMenuToolsEnabled=${debugToolsEnabled};const saved={};`);
-// Public Singleplayer scope: Super Flat is the only loadable entry. Separate
-// development labs remain available through their own launchers/editor maps.
+// Public Singleplayer scope: Player Foundation and Super Flat load; the two
+// fictional entries remain menu design references.
 change('const state=', "const singleplayerWorldIds=new Set(['foundation','super-flat','fictional-forest','fictional-build']);const state={settings:{...defaults},worlds:clone(defaultWorlds).filter(w=>singleplayerWorldIds.has(w.id)),servers:clone(defaultServers),bindings:{},language:'en_us',lastAddress:'',packs:[]};");
 const worldDefaults = lines.find(line => line.startsWith('const defaultWorlds='));
 change('const defaultWorlds=', worldDefaults.replace('const defaultWorlds=[', "const defaultWorlds=[{id:'foundation',name:'Player Foundation',folder:'Foundation',date:'Java 26.3 baseline lab',mode:'Test',version:'Unreal'},{id:'super-flat',name:'Super Flat',folder:'Super_Flat',date:'Built-in test map',mode:'Test',version:'Unreal'},"));
@@ -49,8 +49,8 @@ change('realmjoin(){', '');
 const dataLine = lines.find(line => line.startsWith('const DATA = '));
 const data = JSON.parse(dataLine.slice('const DATA = '.length).replace(/;$/, ''));
 // The native assets own the live defaults; these are the matching pre-bridge labels.
-data.bindings.find(row => row.id === 'key.sprint').default = 'Left Control';
-data.bindings.find(row => row.id === 'key.sneak').default = 'Left Shift';
+data.bindings.find(row => row.id === 'key.sprint').default = 'Left Shift';
+data.bindings.find(row => row.id === 'key.sneak').default = 'C';
 data.bindings.find(row => row.id === 'key.sneak').label = 'Crouch';
 data.labels['key.sneak'] = 'Crouch';
 data.definitions.toggleCrouch.label = 'Crouch';

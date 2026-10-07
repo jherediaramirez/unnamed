@@ -2,7 +2,7 @@
 
 ## Intentional Mocks, Not Bugs
 
-- Only five settings persist: fullscreen, frame limit, VSync, GUI scale, and menu blur. Other options, bindings, language, packs, rules, and sample lists reset when the document/game reloads.
+- Video settings, player-mappable key bindings with their Hold/Toggle policies, and 101 additional preferences (plus language and pack order) persist. Most of those additional preferences are saved without an effect yet; see [Menu Preferences](../MenuPreferences.md). World/server samples, generation drafts and rules still reset when the document or game reloads.
 - Worlds, servers, accounts, Friends services, generation, backups, folders, clipboard, telemetry, audio, and other graphics options are not connected to real services. Their buttons may navigate, validate, or edit fictional session data.
 - Exclusive fullscreen/video-mode selection and other unavailable capabilities remain disabled. See `Docs/ControlRegistry.json` for individual IMPLEMENTED, UI_ONLY, and INTENTIONALLY_DISABLED statuses.
 - The actual renderer is DirectX 12/D3D12. Graphics API still shows source mock choices; a locked DirectX 12 display is recommended but not implemented in this fix batch.
@@ -18,4 +18,4 @@
 
 No new native build or editor-safety run was required for the JavaScript-only fixes. Prior native build, automation, and editor protection evidence is inherited only because native source/binaries are hash-identical. Current packaged UI, persistence, and normal-exit tests are rerun separately.
 
-Start future work from `Packages/MenuReviewFixesDevelopment` and the editable sources, not an older candidate or the pre-fix review ZIP. Use fresh package/capture/report names to preserve evidence.
+Start future work from the editable sources and the current candidates named in the [README](../../README.md) (`Packages/FoundationDevelopment20261007-r3`, with `Packages/SuperFlatDevelopment` for the Super Flat preview), not an older candidate or the archived pre-fix review ZIP. Use fresh package/capture/report names to preserve evidence.

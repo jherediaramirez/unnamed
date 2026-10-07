@@ -11,7 +11,7 @@ Add a 2,000 m by 2,000 m level at `/Game/Maps/L_SuperFlat`, with a flat collisio
 
 The original Create New World screens remain design prototypes. They do not generate playable worlds.
 
-The concurrent FPS foundation work may keep `/Game/Maps/L_Foundation` for direct development checks. Per the requested menu scope, it is excluded from the public Singleplayer catalog: that list contains only Super Flat and the two original design references. The FPS implementation can later replace Super Flat's preview game mode once its collision provider supports this surface. This task does not alter the separate foundation classes or remove its lab.
+The Player Foundation (`/Game/Maps/L_Foundation`) now sits beside Super Flat in the Singleplayer catalog; the two original entries remain design references. The FPS implementation can later replace Super Flat's preview game mode once its collision provider supports this surface. This task does not alter the separate foundation classes or remove its lab.
 
 ## Preservation
 
