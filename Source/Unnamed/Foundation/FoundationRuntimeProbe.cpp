@@ -1,4 +1,7 @@
 #include "Foundation/FoundationRuntimeProbe.h"
+#include "Foundation/FoundationHud.h"
+#include "Foundation/FoundationInputRouter.h"
+#include "Foundation/FoundationPanels.h"
 #include "Menu/MenuBrowserHost.h"
 #include "Foundation/FoundationLab.h"
 #include "Foundation/FoundationPawn.h"
@@ -38,7 +41,7 @@ void UFoundationRuntimeProbe::Key(FKey K, bool Down)
         DownKeys.AddUnique(K);
     else
         DownKeys.Remove(K);
-    PC->Diagnostics->RouteKey(K, Down);
+    PC->GetInputRouter()->RouteKey(K, Down);
 }
 
 void UFoundationRuntimeProbe::Reset(FVector P)
@@ -48,7 +51,7 @@ void UFoundationRuntimeProbe::Reset(FVector P)
     auto Keys = DownKeys;
     for (FKey K : Keys)
         Key(K, false);
-    PC->Diagnostics->Input()->ClearIntent();
+    PC->GetInputSubsystem()->ClearIntent();
     Pawn->Simulation.Reset(P);
     Pawn->Simulation.bGrounded = true;
     Pawn->SetActorLocation(P);
@@ -66,7 +69,7 @@ void UFoundationRuntimeProbe::Record(FString Name, bool Pass, FString Detail)
     if (!Pass)
     {
         ++Failures;
-        R->SetStringField(TEXT("runtime_snapshot"), PC->Diagnostics->Snapshot());
+        R->SetStringField(TEXT("runtime_snapshot"), PC->GetHud()->BuildSnapshot());
     }
     UE_LOG(LogTemp, Display, TEXT("FOUNDATION CHECK %s: %s | %s"), Pass ? TEXT("PASS") : TEXT("FAIL"), *Name, *Detail);
 }
@@ -96,7 +99,7 @@ void UFoundationRuntimeProbe::BeginPlay()
     IConsoleManager::Get().FindConsoleVariable(TEXT("r.VSync"))->Set(0, ECVF_SetByCode);
     IConsoleManager::Get().FindConsoleVariable(TEXT("t.MaxFPS"))->Set(RequestedFPS, ECVF_SetByCode);
     Bridge = NewObject<UMenuInputBridge>(this);
-    Bridge->Initialize(PC->Diagnostics->Input());
+    Bridge->Initialize(PC->GetInputSubsystem());
     if (FParse::Param(FCommandLine::Get(), TEXT("FoundationMenuCycle")))
     {
         static int32 Sequence = 0;
@@ -110,12 +113,12 @@ void UFoundationRuntimeProbe::BeginPlay()
             });
         Add(
             TEXT("menu-bound movement"), .3,
-            [this] { Key(PC->Diagnostics->Input()->CurrentKey(TEXT("key.forward")), true); },
+            [this] { Key(PC->GetInputSubsystem()->CurrentKey(TEXT("key.forward")), true); },
             [this]
             {
-                Record(
-                    TEXT("menu binding drives actual pawn"), Pawn->Simulation.Feet.X > 20, PC->Diagnostics->Snapshot());
-                Key(PC->Diagnostics->Input()->CurrentKey(TEXT("key.forward")), false);
+                Record(TEXT("menu binding drives actual pawn"), Pawn->Simulation.Feet.X > 20,
+                    PC->GetHud()->BuildSnapshot());
+                Key(PC->GetInputSubsystem()->CurrentKey(TEXT("key.forward")), false);
             });
         Add(
             TEXT("menu screenshot"), .5, [] {}, [this]
@@ -141,7 +144,7 @@ void UFoundationRuntimeProbe::BeginPlay()
                     Bridge->ApplyBinding(TEXT("key.sneak"), TEXT("RightShift"));
                     Bridge->ApplyBinding(TEXT("key.attack"), TEXT("ThumbMouseButton"));
                     Bridge->ApplyPolicy(TEXT("toggleCrouch"), true);
-                    auto* S = PC->Diagnostics->Input()->Settings();
+                    auto* S = PC->GetInputSubsystem()->Settings();
                     S->DebugTextScale = 1.4f;
                     FString E;
                     Record(TEXT("native SaveGame write"), S->SaveChecked(E), E);
@@ -149,7 +152,7 @@ void UFoundationRuntimeProbe::BeginPlay()
             },
             [this]
             {
-                auto* I = PC->Diagnostics->Input();
+                auto* I = PC->GetInputSubsystem();
                 Record(TEXT("five bindings persisted"),
                     I->CurrentKey(TEXT("key.forward")) == EKeys::K && I->CurrentKey(TEXT("key.jump")) == EKeys::Enter &&
                         I->CurrentKey(TEXT("key.sprint")) == EKeys::RightControl &&
@@ -336,7 +339,7 @@ void UFoundationRuntimeProbe::BeginPlay()
         [this]
         {
             Record(TEXT("pause removes contexts"),
-                !PC->Diagnostics->Input()->IsGameplayEnabled() && PC->GetMenuHost()->IsOpen(),
+                !PC->GetInputSubsystem()->IsGameplayEnabled() && PC->GetMenuHost()->IsOpen(),
                 TEXT("existing CEF menu opened; no sim movement"));
         });
     Add(
@@ -355,22 +358,22 @@ void UFoundationRuntimeProbe::BeginPlay()
         TEXT("text"), .15,
         [this]
         {
-            PC->Diagnostics->OpenText(false);
+            PC->GetPanels()->OpenText(false);
             Key(EKeys::K, true);
         },
         [this]
         {
-            Record(TEXT("text does not move"), !PC->Diagnostics->IsGameplay() && Pawn->LastIntent.Move.IsNearlyZero(),
+            Record(TEXT("text does not move"), !PC->IsGameplay() && Pawn->LastIntent.Move.IsNearlyZero(),
                 TEXT("native editable text focus; no chat backend"));
             Key(EKeys::K, false);
-            PC->Diagnostics->ClosePanel();
+            PC->GetPanels()->Close();
         });
     Add(
         TEXT("debug chord"), .15,
         [this]
         {
             Bridge->ApplyBinding(TEXT("key.togglePerspective"), TEXT("F6"));
-            PC->Diagnostics->bOverlay = false;
+            PC->GetHud()->bOverlay = false;
             Key(EKeys::F3, true);
             Key(EKeys::F6, true);
             Key(EKeys::F6, false);
@@ -379,9 +382,9 @@ void UFoundationRuntimeProbe::BeginPlay()
         [this]
         {
             Record(TEXT("F3+F6 options and no perspective"),
-                PC->Diagnostics->bPanel && PC->Diagnostics->bOverlay && Pawn->GetPerspective() == 0,
+                PC->GetPanels()->IsOpen() && PC->GetHud()->bOverlay && Pawn->GetPerspective() == 0,
                 TEXT("perspective rebound to F6; chord consumes it"));
-            PC->Diagnostics->ClosePanel();
+            PC->GetPanels()->Close();
         });
     Add(
         TEXT("F3 alone"), .15,
@@ -390,7 +393,7 @@ void UFoundationRuntimeProbe::BeginPlay()
             Key(EKeys::F3, true);
             Key(EKeys::F3, false);
         },
-        [this] { Record(TEXT("F3 alone toggles"), !PC->Diagnostics->bOverlay, TEXT("toggle on release")); });
+        [this] { Record(TEXT("F3 alone toggles"), !PC->GetHud()->bOverlay, TEXT("toggle on release")); });
     Add(
         TEXT("F3 C sharing"), .15,
         [this]
@@ -410,51 +413,50 @@ void UFoundationRuntimeProbe::BeginPlay()
         TEXT("HUD"), .15, [this] { Key(EKeys::F1, true); },
         [this]
         {
-            Record(TEXT("HUD hides via action"), PC->Diagnostics->bHideHud, TEXT("Enhanced Input F1 action"));
+            Record(TEXT("HUD hides via action"), PC->GetHud()->bHideHud, TEXT("Enhanced Input F1 action"));
             Key(EKeys::F1, false);
-            PC->Diagnostics->bHideHud = false;
+            PC->GetHud()->bHideHud = false;
         });
     Add(
         TEXT("capture"), .15,
         [this]
         {
-            PC->Diagnostics->SetCapture(true);
+            PC->GetInputRouter()->SetCapture(true);
             Key(EKeys::K, true);
         },
         [this]
         {
             Record(TEXT("capture consumes gameplay intent"), Pawn->LastIntent.Move.IsNearlyZero(),
                 TEXT("capture input never reaches Enhanced Input"));
-            PC->Diagnostics->SetCapture(false);
+            PC->GetInputRouter()->SetCapture(false);
             Key(EKeys::K, false);
         });
     Add(
         TEXT("capture F3"), .15,
         [this]
         {
-            PC->Diagnostics->bOverlay = false;
-            PC->Diagnostics->SetCapture(true);
+            PC->GetHud()->bOverlay = false;
+            PC->GetInputRouter()->SetCapture(true);
             Key(EKeys::F3, true);
-            PC->Diagnostics->SetCapture(false);
+            PC->GetInputRouter()->SetCapture(false);
             Key(EKeys::F3, false);
         },
         [this]
         {
-            Record(TEXT("capture F3 release cannot toggle overlay"), !PC->Diagnostics->bOverlay,
+            Record(TEXT("capture F3 release cannot toggle overlay"), !PC->GetHud()->bOverlay,
                 TEXT("captured press has no standalone release action"));
         });
     Add(
         TEXT("inventory close"), .15,
         [this]
         {
-            PC->Diagnostics->OpenInventory();
+            PC->GetPanels()->OpenInventory();
             Key(EKeys::E, true);
             Key(EKeys::E, false);
         },
         [this]
         {
-            Record(TEXT("logical inventory binding closes fixture"),
-                !PC->Diagnostics->bPanel && PC->Diagnostics->IsGameplay(),
+            Record(TEXT("logical inventory binding closes fixture"), !PC->GetPanels()->IsOpen() && PC->IsGameplay(),
                 TEXT("same configurable E binding in inventory context"));
         });
     Add(
@@ -462,14 +464,14 @@ void UFoundationRuntimeProbe::BeginPlay()
         [this]
         {
             Key(EKeys::K, true);
-            PC->Diagnostics->FocusChanged(false);
+            PC->HandleFocusChanged(false);
             Key(EKeys::K, false);
         },
         [this]
         {
             Record(TEXT("focus loss cancels"), PC->GetMenuHost()->IsOpen() && Pawn->LastIntent.Move.IsNearlyZero(),
                 TEXT("application activation handler invoked, not physical OS focus test"));
-            PC->Diagnostics->FocusChanged(true);
+            PC->HandleFocusChanged(true);
             PC->ResumeFoundation();
         });
     Add(
@@ -478,7 +480,7 @@ void UFoundationRuntimeProbe::BeginPlay()
         {
             Reset();
             Bridge->ApplyBinding(TEXT("key.jump"), TEXT("MouseScrollUp"));
-            PC->Diagnostics->RouteWheel(1);
+            PC->GetInputRouter()->RouteWheel(1);
         },
         [this]
         {
@@ -494,8 +496,7 @@ void UFoundationRuntimeProbe::BeginPlay()
         },
         [this]
         {
-            Record(TEXT("native attack reaches fixture"), PC->Diagnostics->Actions.bBreaking,
-                TEXT("eye ray at block fixture2.5m"));
+            Record(TEXT("native attack reaches fixture"), PC->Actions.bBreaking, TEXT("eye ray at block fixture2.5m"));
         });
     Add(
         TEXT("action cancel"), .15,
@@ -507,8 +508,8 @@ void UFoundationRuntimeProbe::BeginPlay()
         },
         [this]
         {
-            Record(TEXT("pause cancels attack/use"),
-                !PC->Diagnostics->Actions.bBreaking && !PC->Diagnostics->Actions.bUsing, TEXT("context removal"));
+            Record(TEXT("pause cancels attack/use"), !PC->Actions.bBreaking && !PC->Actions.bUsing,
+                TEXT("context removal"));
             PC->ResumeFoundation();
         });
     Add(
@@ -525,7 +526,7 @@ void UFoundationRuntimeProbe::BeginPlay()
         [this]
         {
             Record(TEXT("repeated pause/resume stays playable"),
-                PC->Diagnostics->IsGameplay() && PC->Diagnostics->Input()->IsGameplayEnabled(),
+                PC->IsGameplay() && PC->GetInputSubsystem()->IsGameplayEnabled(),
                 TEXT("4 native browser/context trips"));
         });
     Add(
@@ -534,8 +535,8 @@ void UFoundationRuntimeProbe::BeginPlay()
         {
             Reset({-100, -850, 0});
             PC->SetControlRotation(FRotator(-10, 35, 0));
-            PC->Diagnostics->bOverlay = true;
-            PC->Diagnostics->bShowCollision = true;
+            PC->GetHud()->bOverlay = true;
+            PC->GetHud()->bShowCollision = true;
         },
         [this] { FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(Output, TEXT("png")), true, false); });
     Add(TEXT("capture flush"), 1, [] {}, [] {});
@@ -602,7 +603,7 @@ void UFoundationRuntimeProbe::Finish()
     FFileHelper::SaveStringToFile(Json, *Output);
     if (FParse::Param(FCommandLine::Get(), TEXT("FoundationMenuCycle")))
     {
-        PC->Diagnostics->ReturnToMenu();
+        PC->ReturnToMenu();
         return;
     }
     FPlatformMisc::RequestExitWithStatus(false, Failures ? 1 : 0);
