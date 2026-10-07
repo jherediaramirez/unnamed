@@ -1,6 +1,6 @@
-#include "MenuInputSettings.h"
-#include "UnnamedInputSettings.h"
-#include "UnnamedInputSubsystem.h"
+#include "Menu/MenuInputBridge.h"
+#include "Input/UnnamedInputSettings.h"
+#include "Input/UnnamedInputSubsystem.h"
 #include "InputMappingContext.h"
 #include "InputCoreTypes.h"
 #include "Misc/CommandLine.h"
@@ -42,23 +42,23 @@ namespace
     }
 }
 
-void UMenuInputSettings::Initialize(UUnnamedInputSubsystem* InInput)
+void UMenuInputBridge::Initialize(UUnnamedInputSubsystem* InInput)
 {
     Input = InInput;
     if (Input.IsValid()) Input->EnsureReady(LastError);
 }
 
-FString UMenuInputSettings::GetState()
+FString UMenuInputBridge::GetState()
 {
     return Snapshot();
 }
 
-FString UMenuInputSettings::ApplyCapturedKey(const FString& Id, const FString& LayoutKeyName)
+FString UMenuInputBridge::ApplyCapturedKey(const FString& Id, const FString& LayoutKeyName)
 {
     return ApplyBinding(Id, UUnnamedInputSubsystem::PhysicalKey(FKey(*LayoutKeyName)).GetFName().ToString());
 }
 
-FString UMenuInputSettings::ApplyBinding(const FString& Id, const FString& KeyName)
+FString UMenuInputBridge::ApplyBinding(const FString& Id, const FString& KeyName)
 {
     LastError.Empty();
     if (!Input.IsValid() || !Input->EnsureReady(LastError)) return Snapshot(false);
@@ -110,7 +110,7 @@ FString UMenuInputSettings::ApplyBinding(const FString& Id, const FString& KeyNa
     return Snapshot(Input->Settings()->SaveChecked(LastError));
 }
 
-FString UMenuInputSettings::ResetBinding(const FString& Id)
+FString UMenuInputBridge::ResetBinding(const FString& Id)
 {
     LastError.Empty();
     if (!Input.IsValid() || !Input->EnsureReady(LastError)) return Snapshot(false);
@@ -122,7 +122,7 @@ FString UMenuInputSettings::ResetBinding(const FString& Id)
     return ApplyBinding(Id, DefaultKey(Input.Get(), FName(*Id)).GetFName().ToString());
 }
 
-FString UMenuInputSettings::ResetBindings(bool bResetPolicies)
+FString UMenuInputBridge::ResetBindings(bool bResetPolicies)
 {
     LastError.Empty();
     if (!Input.IsValid() || !Input->EnsureReady(LastError)) return Snapshot(false);
@@ -142,7 +142,7 @@ FString UMenuInputSettings::ResetBindings(bool bResetPolicies)
     return Snapshot(Input->Settings()->SaveChecked(LastError));
 }
 
-FString UMenuInputSettings::ApplyPolicy(const FString& Id, bool bToggle)
+FString UMenuInputBridge::ApplyPolicy(const FString& Id, bool bToggle)
 {
     LastError.Empty();
     if (!Input.IsValid() || !Input->EnsureReady(LastError)) return Snapshot(false);
@@ -159,12 +159,12 @@ FString UMenuInputSettings::ApplyPolicy(const FString& Id, bool bToggle)
     return Snapshot(Input->Settings()->SaveChecked(LastError));
 }
 
-bool UMenuInputSettings::FlushForExit(FString& OutError)
+bool UMenuInputBridge::FlushForExit(FString& OutError)
 {
     return Input.IsValid() && Input->EnsureReady(OutError) && Input->Settings()->SaveChecked(OutError);
 }
 
-FString UMenuInputSettings::Snapshot(bool bSuccess)
+FString UMenuInputBridge::Snapshot(bool bSuccess)
 {
     const auto Result = MakeShared<FJsonObject>();
     const auto Bindings = MakeShared<FJsonObject>();

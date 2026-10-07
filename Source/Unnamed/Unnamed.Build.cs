@@ -6,6 +6,8 @@ public class Unnamed : ModuleRules
     public Unnamed(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+        // Project headers are included by their path from this folder, e.g. "Menu/MenuApplication.h".
+        PublicIncludePaths.Add(ModuleDirectory);
         PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "EnhancedInput", "InputCore", "GameplayTags" });
         PrivateDependencyModuleNames.AddRange(new[] { "InputCore", "Slate", "SlateCore", "WebBrowser", "HTTP", "Json", "ApplicationCore", "RHI", "RenderCore" });
         string WebRoot = Path.Combine(ModuleDirectory, "../../Content/Menu/Web");

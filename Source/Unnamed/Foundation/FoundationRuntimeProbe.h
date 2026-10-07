@@ -5,13 +5,12 @@
 
 class AFoundationPawn;
 class AFoundationController;
-class UMenuInputSettings;
+class UMenuInputBridge;
 class FJsonValue;
 
 // Opt-in application-level verification. Uses the real controller/action pipeline,
 // never OS event injection. Reports this distinction in its output.
 UCLASS()
-
 class UFoundationRuntimeProbe : public UActorComponent
 {
     GENERATED_BODY()
@@ -24,7 +23,7 @@ private:
     AFoundationPawn* Pawn = nullptr;
     AFoundationController* PC = nullptr;
     UPROPERTY()
-    TObjectPtr<UMenuInputSettings> Bridge;
+    TObjectPtr<UMenuInputBridge> Bridge;
 
     struct FCase
     {

@@ -1,10 +1,10 @@
-#include "MenuHost.h"
+#include "Menu/MenuPlayerController.h"
 #include "Foundation/FoundationController.h"
-#include "MenuVideoSettings.h"
-#include "MenuApplication.h"
-#include "MenuPreferences.h"
+#include "Menu/MenuVideoSettings.h"
+#include "Menu/MenuApplication.h"
+#include "Menu/MenuPreferences.h"
 #include "Engine/GameInstance.h"
-#include "Input/MenuInputSettings.h"
+#include "Menu/MenuInputBridge.h"
 #include "Input/UnnamedInputSubsystem.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/Engine.h"
@@ -24,13 +24,6 @@ AMenuPlayerController::AMenuPlayerController()
     Diagnostics = CreateDefaultSubobject<UFoundationDiagnostics>(TEXT("FoundationDiagnostics"));
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bTickEvenWhenPaused = true;
-}
-
-AMenuGameMode::AMenuGameMode()
-{
-    PlayerControllerClass = AMenuPlayerController::StaticClass();
-    DefaultPawnClass = nullptr;
-    HUDClass = nullptr;
 }
 
 void AMenuPlayerController::BeginPlay()
@@ -84,7 +77,7 @@ void AMenuPlayerController::ShowMenu()
         FSlateApplication::Get().FindWidgetWindow(GEngine->GameViewport->GetGameViewportWidget().ToSharedRef()));
     EnsureVideoSettings();
     Browser->BindUObject(TEXT("menuvideo"), VideoSettings, true);
-    InputSettings = NewObject<UMenuInputSettings>(this);
+    InputSettings = NewObject<UMenuInputBridge>(this);
     auto* LocalInput = GetLocalPlayer()->GetSubsystem<UUnnamedInputSubsystem>();
     InputSettings->Initialize(LocalInput);
     LocalInput->SetGameplayInputEnabled(false);

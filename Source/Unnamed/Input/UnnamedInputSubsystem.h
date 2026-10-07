@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
-#include "UnnamedInputIntent.h"
+#include "Input/UnnamedInputIntent.h"
 #include "UnnamedInputSubsystem.generated.h"
 
 class UInputMappingContext;
@@ -15,7 +15,6 @@ DECLARE_MULTICAST_DELEGATE_TwoParams(FFoundationActionSignal, FName, bool);
 DECLARE_MULTICAST_DELEGATE(FFoundationInputReset);
 
 UCLASS()
-
 class UNNAMED_API UUnnamedInputSubsystem : public ULocalPlayerSubsystem
 {
     GENERATED_BODY()

@@ -5,7 +5,6 @@
 #include "UnnamedInputSettings.generated.h"
 
 UCLASS()
-
 class UNNAMED_API UUnnamedInputSettings : public UEnhancedInputUserSettings
 {
     GENERATED_BODY()

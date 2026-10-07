@@ -1,7 +1,9 @@
 #if WITH_DEV_AUTOMATION_TESTS
-#include "../MenuApplication.h"
-#include "../MenuHost.h"
-#include "../SuperFlatWorld.h"
+#include "Menu/MenuApplication.h"
+#include "Menu/MenuGameMode.h"
+#include "Menu/MenuPlayerController.h"
+#include "SuperFlat/SuperFlatGameMode.h"
+#include "SuperFlat/SuperFlatPreviewController.h"
 #include "GameFramework/SpectatorPawn.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/PackageName.h"

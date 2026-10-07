@@ -1,9 +1,10 @@
-#include "FoundationRuntimeProbe.h"
-#include "FoundationWorld.h"
-#include "FoundationController.h"
-#include "../Input/MenuInputSettings.h"
-#include "../Input/UnnamedInputSubsystem.h"
-#include "../Input/UnnamedInputSettings.h"
+#include "Foundation/FoundationRuntimeProbe.h"
+#include "Foundation/FoundationLab.h"
+#include "Foundation/FoundationPawn.h"
+#include "Foundation/FoundationController.h"
+#include "Menu/MenuInputBridge.h"
+#include "Input/UnnamedInputSubsystem.h"
+#include "Input/UnnamedInputSettings.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "Camera/CameraComponent.h"
@@ -93,7 +94,7 @@ void UFoundationRuntimeProbe::BeginPlay()
     FParse::Value(FCommandLine::Get(), TEXT("FoundationFPS="), RequestedFPS);
     IConsoleManager::Get().FindConsoleVariable(TEXT("r.VSync"))->Set(0, ECVF_SetByCode);
     IConsoleManager::Get().FindConsoleVariable(TEXT("t.MaxFPS"))->Set(RequestedFPS, ECVF_SetByCode);
-    Bridge = NewObject<UMenuInputSettings>(this);
+    Bridge = NewObject<UMenuInputBridge>(this);
     Bridge->Initialize(PC->Diagnostics->Input());
     if (FParse::Param(FCommandLine::Get(), TEXT("FoundationMenuCycle")))
     {

@@ -1,4 +1,4 @@
-#include "MenuVideoSettings.h"
+#include "Menu/MenuVideoSettings.h"
 
 #include "Engine/Engine.h"
 #include "DynamicRHI.h"

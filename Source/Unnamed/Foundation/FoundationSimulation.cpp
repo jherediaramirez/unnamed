@@ -1,4 +1,5 @@
-#include "FoundationSimulation.h"
+#include "Foundation/FoundationSimulation.h"
+#include "Foundation/FoundationProfile.h"
 
 namespace
 {

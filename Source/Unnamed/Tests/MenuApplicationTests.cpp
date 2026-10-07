@@ -1,5 +1,5 @@
 #if WITH_DEV_AUTOMATION_TESTS
-#include "../MenuApplication.h"
+#include "Menu/MenuApplication.h"
 #include "Misc/AutomationTest.h"
 #include "Serialization/JsonSerializer.h"
 

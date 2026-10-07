@@ -1,5 +1,5 @@
 #if WITH_DEV_AUTOMATION_TESTS
-#include "../MenuPreferences.h"
+#include "Menu/MenuPreferences.h"
 #include "Dom/JsonObject.h"
 #include "Engine/GameInstance.h"
 #include "HAL/FileManager.h"

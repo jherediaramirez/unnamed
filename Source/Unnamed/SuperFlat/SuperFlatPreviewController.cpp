@@ -1,10 +1,8 @@
-#include "SuperFlatWorld.h"
-
-#include "MenuApplication.h"
+#include "SuperFlat/SuperFlatPreviewController.h"
+#include "SuperFlat/SuperFlatGameMode.h"
+#include "Menu/MenuApplication.h"
 #include "Input/UnnamedInputSubsystem.h"
 #include "Components/InputComponent.h"
-#include "Engine/Canvas.h"
-#include "Engine/Engine.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "Framework/Application/SlateApplication.h"
@@ -22,13 +20,6 @@
 #endif
 
 DEFINE_LOG_CATEGORY_STATIC(LogSuperFlat, Log, All);
-
-ASuperFlatGameMode::ASuperFlatGameMode()
-{
-    PlayerControllerClass = ASuperFlatPreviewController::StaticClass();
-    DefaultPawnClass = ASpectatorPawn::StaticClass();
-    HUDClass = ASuperFlatPreviewHUD::StaticClass();
-}
 
 void ASuperFlatPreviewController::BeginPlay()
 {
@@ -65,17 +56,6 @@ void ASuperFlatPreviewController::ReturnToMenu()
     bReturningToMenu = true;
     UE_LOG(LogSuperFlat, Display, TEXT("Returning to main menu"));
     UGameplayStatics::OpenLevel(this, FName(UMenuApplication::MenuMap()));
-}
-
-void ASuperFlatPreviewHUD::DrawHUD()
-{
-    Super::DrawHUD();
-    if (!Canvas || !GEngine) return;
-    DrawRect(FLinearColor(0.015f, 0.022f, 0.028f, 0.8f), 16, 16, 550, 64);
-    DrawText(
-        TEXT("SUPER FLAT  |  2 km x 2 km  |  Grid: 1 m / 10 m"), FLinearColor::White, 28, 24, GEngine->GetSmallFont());
-    DrawText(TEXT("Preview camera: WASD + mouse, E/Q up/down  |  Esc: Menu"), FLinearColor(0.75f, 0.85f, 0.9f), 28, 47,
-        GEngine->GetSmallFont());
 }
 
 #if WITH_DEV_AUTOMATION_TESTS

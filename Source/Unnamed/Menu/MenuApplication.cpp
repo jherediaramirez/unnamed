@@ -1,8 +1,8 @@
-#include "MenuApplication.h"
+#include "Menu/MenuApplication.h"
 
-#include "MenuVideoSettings.h"
-#include "MenuPreferences.h"
-#include "Input/MenuInputSettings.h"
+#include "Menu/MenuVideoSettings.h"
+#include "Menu/MenuPreferences.h"
+#include "Menu/MenuInputBridge.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -13,7 +13,7 @@
 DEFINE_LOG_CATEGORY_STATIC(LogMenuApplication, Log, All);
 
 void UMenuApplication::Initialize(APlayerController* InController, UMenuVideoSettings* InVideoSettings,
-    UMenuInputSettings* InInputSettings, UMenuPreferences* InPreferences)
+    UMenuInputBridge* InInputSettings, UMenuPreferences* InPreferences)
 {
     Controller = InController;
     VideoSettings = InVideoSettings;

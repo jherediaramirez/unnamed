@@ -10,7 +10,6 @@ class FJsonValue;
 // Desired client preferences survive menu/controller changes. Feature effects have
 // their own owners; this subsystem never changes engine, input or world state.
 UCLASS()
-
 class UNNAMED_API UMenuPreferences : public UGameInstanceSubsystem
 {
     GENERATED_BODY()

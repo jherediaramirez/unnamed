@@ -14,7 +14,6 @@ enum class EUnnamedRequestedGait : uint8
 };
 
 USTRUCT(BlueprintType)
-
 struct FUnnamedInputIntent
 {
     GENERATED_BODY()

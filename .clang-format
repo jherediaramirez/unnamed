@@ -11,7 +11,7 @@ UseTab: Never
 LineEnding: LF
 InsertNewlineAtEOF: true
 BreakBeforeBraces: Allman
-SeparateDefinitionBlocks: Always
+SeparateDefinitionBlocks: Leave
 AccessModifierOffset: -4
 NamespaceIndentation: All
 FixNamespaceComments: false

@@ -6,18 +6,17 @@
 
 class APlayerController;
 class UMenuVideoSettings;
-class UMenuInputSettings;
+class UMenuInputBridge;
 class UMenuPreferences;
 
 // Restricted application lifecycle binding, separate from video-setting mutation.
 UCLASS()
-
 class UNNAMED_API UMenuApplication : public UObject
 {
     GENERATED_BODY()
 public:
     void Initialize(APlayerController* InController, UMenuVideoSettings* InVideoSettings,
-        UMenuInputSettings* InInputSettings = nullptr, UMenuPreferences* InPreferences = nullptr);
+        UMenuInputBridge* InInputSettings = nullptr, UMenuPreferences* InPreferences = nullptr);
     void Tick();
 
     UFUNCTION()
@@ -40,7 +39,7 @@ private:
     bool FlushSettings();
     TWeakObjectPtr<APlayerController> Controller;
     TWeakObjectPtr<UMenuVideoSettings> VideoSettings;
-    TWeakObjectPtr<UMenuInputSettings> InputSettings;
+    TWeakObjectPtr<UMenuInputBridge> InputSettings;
     TWeakObjectPtr<UMenuPreferences> Preferences;
     bool bQuitPending = false;
     bool bQuitIssued = false;

@@ -2,14 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-#include "MenuInputSettings.generated.h"
+#include "MenuInputBridge.generated.h"
 
 class UUnnamedInputSubsystem;
 
 // Narrow browser bridge: player-mappable key bindings and the Hold/Toggle sprint and crouch policies only.
 UCLASS()
-
-class UNNAMED_API UMenuInputSettings : public UObject
+class UNNAMED_API UMenuInputBridge : public UObject
 {
     GENERATED_BODY()
 public:

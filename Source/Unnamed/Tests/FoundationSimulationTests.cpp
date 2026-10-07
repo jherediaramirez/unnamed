@@ -1,5 +1,7 @@
 #include "Misc/AutomationTest.h"
-#include "../Foundation/FoundationSimulation.h"
+#include "Foundation/FoundationCoordinates.h"
+#include "Foundation/FoundationProfile.h"
+#include "Foundation/FoundationSimulation.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationCoordinatesTest, "Unnamed.Foundation.Coordinates",

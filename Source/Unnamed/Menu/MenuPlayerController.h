@@ -1,20 +1,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
 #include "GameFramework/PlayerController.h"
-#include "MenuHost.generated.h"
+#include "MenuPlayerController.generated.h"
 
 class SWebBrowser;
 class UMenuVideoSettings;
 class UMenuApplication;
-class UMenuInputSettings;
+class UMenuInputBridge;
 class UMenuPreferences;
 class UFoundationDiagnostics;
 class UFoundationMenuBridge;
 
 UCLASS()
-
 class UNNAMED_API AMenuPlayerController : public APlayerController
 {
     GENERATED_BODY()
@@ -40,18 +38,9 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UMenuApplication> Application;
     UPROPERTY(Transient)
-    TObjectPtr<UMenuInputSettings> InputSettings;
+    TObjectPtr<UMenuInputBridge> InputSettings;
     UPROPERTY(Transient)
     TObjectPtr<UMenuPreferences> Preferences;
     UPROPERTY(Transient)
     TObjectPtr<UFoundationMenuBridge> FoundationBridge;
-};
-
-UCLASS()
-
-class UNNAMED_API AMenuGameMode : public AGameModeBase
-{
-    GENERATED_BODY()
-public:
-    AMenuGameMode();
 };

@@ -1,9 +1,12 @@
 #if WITH_DEV_AUTOMATION_TESTS
-#include "../Input/UnnamedInputIntent.h"
-#include "../Input/UnnamedInputSettings.h"
-#include "../Input/UnnamedInputSubsystem.h"
-#include "../Input/MenuInputSettings.h"
-#include "../Foundation/FoundationWorld.h"
+#include "Input/UnnamedInputIntent.h"
+#include "Input/UnnamedInputSettings.h"
+#include "Input/UnnamedInputSubsystem.h"
+#include "Menu/MenuInputBridge.h"
+#include "Foundation/FoundationActions.h"
+#include "Foundation/FoundationLab.h"
+#include "Foundation/FoundationPawn.h"
+#include "Foundation/FoundationProfile.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedPlayerInput.h"
@@ -30,7 +33,7 @@ namespace
         UUnnamedInputSubsystem* Input;
         UEnhancedPlayerInput* PlayerInput;
         UEnhancedInputComponent* Component;
-        UMenuInputSettings* Bridge;
+        UMenuInputBridge* Bridge;
 
         FInputFixture()
         {
@@ -48,7 +51,7 @@ namespace
             Controller->InputComponent = Component;
             Controller->SetPlayer(Player);
             Input = Player->GetSubsystem<UUnnamedInputSubsystem>();
-            Bridge = NewObject<UMenuInputSettings>(Controller);
+            Bridge = NewObject<UMenuInputBridge>(Controller);
             Bridge->Initialize(Input);
         }
 

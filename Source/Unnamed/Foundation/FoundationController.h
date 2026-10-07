@@ -1,8 +1,8 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "../MenuHost.h"
+#include "Menu/MenuPlayerController.h"
 #include "Components/ActorComponent.h"
-#include "FoundationWorld.h"
+#include "Foundation/FoundationPawn.h"
 #include "FoundationController.generated.h"
 class SWidget;
 class STextBlock;
@@ -10,7 +10,6 @@ class IInputProcessor;
 class UUnnamedInputSubsystem;
 
 UCLASS()
-
 class UNNAMED_API UFoundationDiagnostics : public UActorComponent
 {
     GENERATED_BODY()
@@ -62,7 +61,6 @@ private:
 };
 
 UCLASS()
-
 class UNNAMED_API UFoundationMenuBridge : public UObject
 {
     GENERATED_BODY()
@@ -82,7 +80,6 @@ private:
 };
 
 UCLASS()
-
 class UNNAMED_API AFoundationController : public AMenuPlayerController
 {
     GENERATED_BODY()
