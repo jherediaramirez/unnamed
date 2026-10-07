@@ -32,18 +32,23 @@ try{
   page.on('request',r=>result.requests.push(r.url()));
   await page.reload();
   await page.waitForFunction(()=>window.MenuPrototype?.getState().assets.panoramaLoaded||window.MenuPrototype?.getState().assets.panoramaFallback,null,{timeout:30000});
-  await page.waitForFunction(()=>window.MenuVideo?.getState(),null,{timeout:15000});
+  await page.waitForFunction(()=>window.MenuVideo?.getState()&&window.MenuPreferences?.getState()?.ready&&window.MenuInput?.getState()?.ready,null,{timeout:15000});
   const functionalQuit=await page.evaluate(()=>!!window.MenuApplication);
+  const functionalWorld=await page.evaluate(()=>typeof window.MenuApplication?.worldEnabled==='function');
   if(functionalQuit)await page.waitForFunction(()=>window.MenuApplication?.enabled(),null,{timeout:15000});
   if(functionalQuit){
     if(await page.evaluate(()=>MenuVideo.getState().persistent))throw Error('Use a -SessionOnly diagnostic launch for menu regression tests.');
     await page.evaluate(()=>MenuVideo.hardReset()).catch(error=>{if(!/context.*destroyed/i.test(String(error)))throw error;});
-    await page.waitForFunction(()=>MenuApplication?.enabled()&&MenuVideo?.getState()?.settings.guiScale===0&&MenuPrototype.getState().screen==='main');
+    await page.waitForFunction(()=>MenuApplication?.enabled()&&MenuVideo?.getState()?.settings.guiScale===0&&MenuPreferences?.getState()?.ready&&MenuInput?.getState()?.ready&&MenuPrototype.getState().screen==='main');
   }
   await page.evaluate(()=>MenuPrototype.freezeFrame(0,0));
   const state=()=>page.evaluate(()=>MenuPrototype.getState());
   const prepare=(name,variant='')=>page.evaluate(([n,v])=>MenuPrototype.prepare(n,v),[name,variant]);
-  const mouseButton=async(label)=>page.getByRole('button',{name:label,exact:true}).click();
+  const settle=async()=>{
+    await page.evaluate(()=>Promise.all([MenuPreferences.settled(),MenuVideo.settled(),MenuInput.settled()]));
+    await page.waitForFunction(()=>!MenuPreferences.isCommitting());
+  };
+  const mouseButton=async(label)=>{await page.getByRole('button',{name:label,exact:true}).click();await settle();};
   const value=async(id)=>page.evaluate(id=>MenuPrototype.getState().settings[id],id);
   const set=async(id,v)=>page.evaluate(([id,v])=>MenuPrototype.setSetting(id,v),[id,v]);
   const boot=await state();
@@ -81,12 +86,13 @@ try{
   await page.keyboard.press('F11');await page.evaluate(()=>MenuVideo.settled());check('F11 restores native window',await value('fullscreen')===defaultSettings.fullscreen);
   await prepare('options');
   const slider=page.locator('[data-setting="fov"] input');await slider.focus();await page.keyboard.press('End');
-  check('Keyboard slider changes FOV mock',await value('fov')===110);
+  await settle();check('Keyboard slider saves desired FOV',await value('fov')===110);
   await set('guiScale',1);await set('forceUnicodeFont',true);await set('highContrast',true);await set('menuBackgroundBlurriness',0);await set('panoramaSpeed',0);await set('framerateLimit',10);await set('sound_master',0);await set('narrator','Narrates All');
   check('Presentation baseline is immutable',JSON.stringify((await state()).presentation)===JSON.stringify(baseline));
   check('GUI scale functional; mock font/contrast/locale unchanged',await page.evaluate(()=>!document.querySelector('#gui').classList.contains('uniform-font')&&!document.querySelector('#gui').classList.contains('high-contrast')&&document.documentElement.lang==='en-US')&&(await state()).gui.scale===1);
   if(!slice){
-    for(const [id,v] of Object.entries(defaultSettings)){if(id in (await page.evaluate(()=>MenuPrototype.definitions().settings)))await set(id,v)}
+    const owned=await page.evaluate(()=>[...Object.keys(MenuPreferences.getState().settings),...Object.keys(MenuVideo.getState().settings),...Object.keys(MenuInput.getState().policies)]);
+    for(const [id,v] of Object.entries(defaultSettings)){if(owned.includes(id))await set(id,v)}
     const routes=(await state()).routes;result.routes=routes;
     const definitions=await page.evaluate(()=>MenuPrototype.definitions());
     fs.writeFileSync(path.join(out,'definitions.json'),JSON.stringify(definitions,null,2));
@@ -102,12 +108,16 @@ try{
           const buttons=page.locator('#screen button:not(:disabled)');
           if(i>=await buttons.count())continue;
           const control=await buttons.nth(i).evaluate(n=>({id:n.dataset.controlId,label:n.textContent||n.getAttribute('aria-label')}));
-          if(functionalQuit&&route==='main'&&control.label==='Quit Game'){
+          if(functionalQuit&&control.label==='Quit Game'){
             check('Quit is a real application action (verified separately)',await page.evaluate(()=>MenuApplication.enabled()&&!MenuPrototype.getState().routes.includes('quit')));
             continue;
           }
+          if(functionalWorld&&route==='worlds'&&control.label==='Play Selected World'){
+            check('Super Flat is a real map action (verified separately)',await page.evaluate(()=>MenuApplication.worldEnabled('super-flat')));
+            continue;
+          }
           await buttons.nth(i).evaluate(n=>n.click());
-          await page.waitForTimeout(15);
+          await settle();
           const next=await state();
           result.controls.push(...await page.evaluate(context=>MenuPrototype.controls().map(c=>({...c,context})),route+' action '+control.label));
           if(next.screen!==route)result.edges.push({from:route,variant,control:control.id,label:control.label,to:next.screen});
@@ -128,7 +138,7 @@ try{
     check('Friends declined enablement keeps OFF',await value('friendsList')===false);
     await page.locator('[data-setting=friendsList]').click();await mouseButton('Turn ON');
     const friendsEnabled=await value('friendsList');
-    await page.locator('[data-setting=friendsList]').click();
+    await page.locator('[data-setting=friendsList]').click();await settle();
     check('Friends enable then disable returns OFF',friendsEnabled&&await value('friendsList')===false);
     await set('friendsList',friendsBefore);
     for(const [route,collection] of [['worlds','worlds'],['multiplayer','servers']]){
@@ -165,16 +175,16 @@ try{
     await mouseButton('Done');
     check('Pack selection Done commits',JSON.stringify((await state()).packs)!==JSON.stringify(originalPacks));
     await prepare('language');await page.locator('[data-language="fr_fr"]').click();await mouseButton('Done');
-    check('Language commits mock only',(await state()).language==='fr_fr'&&await page.evaluate(()=>document.documentElement.lang==='en-US'));
+    check('Language choice saves without applying translation',(await state()).language==='fr_fr'&&await page.evaluate(()=>document.documentElement.lang==='en-US'));
     await prepare('video');await set('textureFiltering','None');check('Anisotropy disabled dependency',await page.locator('[data-setting="maxAnisotropyBit"] input').isDisabled());await set('textureFiltering','Anisotropic');check('Anisotropy enabled dependency',await page.locator('[data-setting="maxAnisotropyBit"] input').isEnabled());
     await prepare('online');await set('friendsList',false);check('Friends dependency',await page.locator('[data-setting="allowFriendRequests"]').isDisabled());
-    await prepare('keybinds');const binding=page.locator('[data-binding]').first();const bindID=await binding.getAttribute('data-binding');await binding.click();await page.keyboard.press('K');check('Mock key capture',(await state()).bindings[bindID]==='K');
-    await set('guiScale',0);await prepare('video');const scroll=page.locator('.scroll').first();await scroll.hover();await page.mouse.wheel(0,500);await page.waitForTimeout(150);check('Wheel scrolls settings',await scroll.evaluate(n=>n.scrollTop)>0);
+    await prepare('keybinds');const binding=page.locator('[data-binding]').first();const bindID=await binding.getAttribute('data-binding');await binding.click();await page.keyboard.press('K');await page.evaluate(()=>MenuInput.settled());check('Native key capture',(await state()).bindings[bindID]==='K');await page.evaluate(()=>MenuInput.resetAll());
+    await set('guiScale',0);await page.evaluate(()=>MenuVideo.settled());await prepare('video');const scroll=page.locator('.scroll').first();const scrollPoint=await scroll.evaluate(n=>{const r=n.getBoundingClientRect();return {x:r.x+20,y:r.y+20}});await page.mouse.move(scrollPoint.x,scrollPoint.y);await page.mouse.wheel(0,500);await page.waitForTimeout(150);check('Wheel scrolls settings',await scroll.evaluate(n=>n.scrollTop)>0);
     const scaleBefore=(await state()).gui;await page.keyboard.down('Control');await page.mouse.wheel(0,-100);await page.keyboard.up('Control');await page.evaluate(()=>MenuVideo.settled());check('Ctrl-wheel changes actual GUI scale without changing window dimensions',(await state()).gui.scale===Math.min(scaleBefore.scale+1,Math.floor(scaleBefore.viewportHeight/240))&&(await state()).gui.viewportWidth===scaleBefore.viewportWidth);
     await prepare('create','more');await mouseButton('Game Rules');const numeric=page.locator('#rule-list input').first();await numeric.fill('bad');check('Invalid rule blocks Done',await page.locator('#rules-done').isDisabled());await page.keyboard.press('Escape');await mouseButton('Game Rules');check('Canceled invalid rule clears error',await page.locator('#rules-done').isEnabled());await page.keyboard.press('Escape');
     await prepare('create','world');await page.locator('[data-local="draft.type"]').click();await mouseButton('Customize');check('Superflat expected route',(await state()).screen==='flat');const layers=(await state()).draft.flat.length;await mouseButton('Remove Layer');await mouseButton('Cancel');check('Superflat Cancel discards',(await state()).draft.flat.length===layers);await mouseButton('Customize');await mouseButton('Remove Layer');await mouseButton('Done');check('Superflat Done commits',(await state()).draft.flat.length===layers-1);
     await prepare('multiplayer');await mouseButton('Direct Connection');const address=page.locator('input').first();await address.fill('not valid/address');check('Invalid server address blocks Join',await page.locator('#direct-connect').isDisabled());await address.fill('play.example.invalid:25565');await mouseButton('Join Server');check('Server connection stops at mock endpoint',(await state()).screen==='message');await page.keyboard.press('Escape');await mouseButton('Cancel');
-    await prepare('editworld');const worldName=(await state()).worlds[0].name;await page.locator('input').first().fill('Session Edit');await mouseButton('Cancel');check('World name Cancel discards',(await state()).worlds[0].name===worldName);await prepare('editworld');await page.locator('input').first().fill('Session Edit');await mouseButton('Save');check('World name Save is session-only',(await state()).worlds[0].name==='Session Edit');
+    await prepare('editworld');const referenceWorld=()=>state().then(s=>s.worlds.find(w=>w.id==='fictional-forest'));const worldName=(await referenceWorld()).name;await page.locator('input').first().fill('Session Edit');await mouseButton('Cancel');check('World name Cancel discards',(await referenceWorld()).name===worldName);await prepare('editworld');await page.locator('input').first().fill('Session Edit');await mouseButton('Save');check('World name Save is session-only',(await referenceWorld()).name==='Session Edit');
     await prepare('language');await page.locator('input').first().fill('English');check('Language search filters sample list',await page.locator('[data-language]').count()<143&&await page.locator('[data-language]').count()>0);
     if(functionalQuit)check('Mock quit route replaced by normal shutdown',!(await state()).routes.includes('quit'));
     else{await prepare('quit');await mouseButton('Return to Title');check('Quit returns, process remains alive',(await state()).screen==='main');}
@@ -184,12 +194,17 @@ try{
     check('No remote resource requests',result.requests.every(url=>url.startsWith('file:')||url.startsWith('data:')),result.requests.filter(url=>!url.startsWith('file:')&&!url.startsWith('data:')));
   }
   const nativeBeforeReload=await page.evaluate(()=>MenuVideo.getState().settings);
-  await page.reload();await page.waitForFunction(()=>window.MenuPrototype?.getState().assets.panoramaLoaded&&window.MenuVideo?.getState(),null,{timeout:30000});
+  const inputBeforeReload=await page.evaluate(()=>MenuInput.getState().policies);
+  await settle();
+  const preferencesBeforeReload=await page.evaluate(()=>MenuPreferences.getState());
+  await page.reload();await page.waitForFunction(()=>window.MenuPrototype?.getState().assets.panoramaLoaded&&window.MenuVideo?.getState()&&window.MenuInput?.getState()?.ready&&window.MenuPreferences?.getState()?.ready,null,{timeout:30000});
   const reset=await state();
-  const liveIDs=Object.keys(nativeBeforeReload);
-  check('Reload discards all unfinished mock settings',Object.keys(defaultSettings).filter(id=>!liveIDs.includes(id)).every(id=>reset.settings[id]===defaultSettings[id]));
-  check('Reload preserves the five functional settings',liveIDs.every(id=>reset.settings[id]===nativeBeforeReload[id]));
-  check('Reload resets locale/sample state',reset.language==='en_us'&&reset.packs.length===0&&reset.worlds.length===2&&reset.servers.length===1);
+  check('Reload preserves all desired preferences',Object.entries(preferencesBeforeReload.settings).every(([id,value])=>reset.settings[id]===value));
+  check('Reload preserves the five functional settings',Object.keys(nativeBeforeReload).every(id=>reset.settings[id]===nativeBeforeReload[id]));
+  check('Reload preserves native Hold/Toggle input policies',Object.keys(inputBeforeReload).every(id=>reset.settings[id]===inputBeforeReload[id]));
+  check('Reload preserves locale and pack preferences',reset.language===preferencesBeforeReload.language&&JSON.stringify(reset.packs)===JSON.stringify(preferencesBeforeReload.packs));
+  check('Reload retains warning and telemetry choices',reset.settings.skipWarning===preferencesBeforeReload.skipWarning&&reset.settings.telemetryOptInExtra===preferencesBeforeReload.telemetryOptInExtra);
+  check('Reload restores the built-in world catalog and transient reference entries',reset.worlds.length===(functionalWorld?3:2)&&(!functionalWorld||reset.worlds[0].id==='super-flat'&&reset.worlds[0].name==='Super Flat')&&reset.servers.length===1);
   result.final=reset;result.finished=new Date().toISOString();
 }catch(e){check('Harness completed',false,String(e));result.failure=String(e);}
 finally{

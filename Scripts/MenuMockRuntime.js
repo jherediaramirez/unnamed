@@ -49,7 +49,7 @@ const MenuDiagnostics={
   go,back,setSetting,
   prepare:(name,variant='')=>{
     stack=[{name:'main',data:{}}];
-    chosenWorld=state.worlds[0]?.id;chosenServer=state.servers[0]?.id;chosenLanguage=state.language;
+    chosenWorld=(name==='editworld'?state.worlds.find(w=>!['super-flat','foundation'].includes(w.id)):state.worlds[0])?.id;chosenServer=state.servers[0]?.id;chosenLanguage=state.language;
     if(name==='create')draft=newDraft();
     if(['packs','datapacks'].includes(name))packDraft=name==='packs'?clone(state.packs):[];
     if(name==='rules')rulesEdit=clone(draft.rules);
@@ -65,7 +65,7 @@ const MenuDiagnostics={
     annotateControls();
     return [...screen.querySelectorAll('[data-control-id]')].map(n=>{
       const id=n.dataset.setting||n.closest('[data-setting]')?.dataset.setting;
-      return {screen:current.name,variant:current.data.tab||'',id:n.dataset.controlId,label:n.getAttribute('aria-label')||n.getAttribute('aria-valuetext')||n.textContent.trim(),type:n.getAttribute('role')||n.type||'button',setting:id||null,binding:n.dataset.binding||null,local:n.dataset.local||null,value:n.value??n.getAttribute('aria-checked')??n.getAttribute('aria-selected')??null,disabled:!!n.disabled,default:id?D[id].default:null,range:id?{min:D[id].min,max:D[id].max,step:D[id].step,choices:D[id].values}:null,tooltip:n.dataset.tooltip||n.closest('[data-tooltip]')?.dataset.tooltip||null};
+      return {screen:current.name,variant:current.data.tab||'',id:n.dataset.controlId,label:n.getAttribute('aria-label')||n.getAttribute('aria-valuetext')||n.textContent.trim(),type:n.getAttribute('role')||n.type||'button',setting:id||null,binding:n.dataset.binding||n.dataset.bindingReset||null,local:n.dataset.local||null,value:n.value??n.getAttribute('aria-checked')??n.getAttribute('aria-selected')??null,disabled:!!n.disabled,default:id?D[id].default:null,range:id?{min:D[id].min,max:D[id].max,step:D[id].step,choices:D[id].values}:null,tooltip:n.dataset.tooltip||n.closest('[data-tooltip]')?.dataset.tooltip||null};
     });
   }
 };

@@ -1,0 +1,1128 @@
+{
+  "finished": "2026-10-07T17:23:08.944Z",
+  "exe": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesV1Development\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+  "exeSHA256": "7fe2fedd67dffb5036ea6ceec023bcf3667ec3345fd757c6a7515691c3eb1be6",
+  "htmlSHA256": "4922f18af17b35cd0cb06dbead826af018ba9ae0afe686e52c79f90129074fe9",
+  "runtime": "C:\\dev\\projects\\Unnamed\\Tests\\Runtime\\preferences-2026-10-07T17-22-50-913Z",
+  "checks": [
+    {
+      "name": "1280x720 persistent native service ready",
+      "pass": true
+    },
+    {
+      "name": "Native/browser round trip darkMojangStudiosBackground",
+      "pass": true,
+      "detail": {
+        "id": "darkMojangStudiosBackground",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip hideLightningFlash",
+      "pass": true,
+      "detail": {
+        "id": "hideLightningFlash",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip hideSplashTexts",
+      "pass": true,
+      "detail": {
+        "id": "hideSplashTexts",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip sensitivity",
+      "pass": true,
+      "detail": {
+        "id": "sensitivity",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip entityDistanceScaling",
+      "pass": true,
+      "detail": {
+        "id": "entityDistanceScaling",
+        "value": 0.5,
+        "native": 0.5,
+        "display": 0.5
+      }
+    },
+    {
+      "name": "Native/browser round trip cloudRange",
+      "pass": true,
+      "detail": {
+        "id": "cloudRange",
+        "value": 2,
+        "native": 2,
+        "display": 2
+      }
+    },
+    {
+      "name": "Native/browser round trip weatherRadius",
+      "pass": true,
+      "detail": {
+        "id": "weatherRadius",
+        "value": 3,
+        "native": 3,
+        "display": 3
+      }
+    },
+    {
+      "name": "Native/browser round trip cutoutLeaves",
+      "pass": true,
+      "detail": {
+        "id": "cutoutLeaves",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip vignette",
+      "pass": true,
+      "detail": {
+        "id": "vignette",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip improvedTransparency",
+      "pass": true,
+      "detail": {
+        "id": "improvedTransparency",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip ambientOcclusion",
+      "pass": true,
+      "detail": {
+        "id": "ambientOcclusion",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip chunkSectionFadeInTime",
+      "pass": true,
+      "detail": {
+        "id": "chunkSectionFadeInTime",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip chatOpacity",
+      "pass": true,
+      "detail": {
+        "id": "chatOpacity",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip chatLineSpacing",
+      "pass": true,
+      "detail": {
+        "id": "chatLineSpacing",
+        "value": 1,
+        "native": 1,
+        "display": 1
+      }
+    },
+    {
+      "name": "Native/browser round trip textBackgroundOpacity",
+      "pass": true,
+      "detail": {
+        "id": "textBackgroundOpacity",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip panoramaSpeed",
+      "pass": true,
+      "detail": {
+        "id": "panoramaSpeed",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip highContrast",
+      "pass": true,
+      "detail": {
+        "id": "highContrast",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip highContrastBlockOutline",
+      "pass": true,
+      "detail": {
+        "id": "highContrastBlockOutline",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip narratorHotkey",
+      "pass": true,
+      "detail": {
+        "id": "narratorHotkey",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip chatScale",
+      "pass": true,
+      "detail": {
+        "id": "chatScale",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip chatWidth",
+      "pass": true,
+      "detail": {
+        "id": "chatWidth",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip chatHeightUnfocused",
+      "pass": true,
+      "detail": {
+        "id": "chatHeightUnfocused",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip chatHeightFocused",
+      "pass": true,
+      "detail": {
+        "id": "chatHeightFocused",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip chatDelay",
+      "pass": true,
+      "detail": {
+        "id": "chatDelay",
+        "value": 6,
+        "native": 6,
+        "display": 6
+      }
+    },
+    {
+      "name": "Native/browser round trip notificationDisplayTime",
+      "pass": true,
+      "detail": {
+        "id": "notificationDisplayTime",
+        "value": 0.5,
+        "native": 0.5,
+        "display": 0.5
+      }
+    },
+    {
+      "name": "Native/browser round trip mipmapLevels",
+      "pass": true,
+      "detail": {
+        "id": "mipmapLevels",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip maxAnisotropyBit",
+      "pass": true,
+      "detail": {
+        "id": "maxAnisotropyBit",
+        "value": 1,
+        "native": 1,
+        "display": 1
+      }
+    },
+    {
+      "name": "Native/browser round trip biomeBlendRadius",
+      "pass": true,
+      "detail": {
+        "id": "biomeBlendRadius",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip mouseWheelSensitivity",
+      "pass": true,
+      "detail": {
+        "id": "mouseWheelSensitivity",
+        "value": -200,
+        "native": -200,
+        "display": -200
+      }
+    },
+    {
+      "name": "Native/browser round trip allowCursorChanges",
+      "pass": true,
+      "detail": {
+        "id": "allowCursorChanges",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip quitShortcuts",
+      "pass": true,
+      "detail": {
+        "id": "quitShortcuts",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip autoJump",
+      "pass": true,
+      "detail": {
+        "id": "autoJump",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip operatorItemsTab",
+      "pass": true,
+      "detail": {
+        "id": "operatorItemsTab",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip autoSuggestions",
+      "pass": true,
+      "detail": {
+        "id": "autoSuggestions",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip chatColors",
+      "pass": true,
+      "detail": {
+        "id": "chatColors",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip chatLinks",
+      "pass": true,
+      "detail": {
+        "id": "chatLinks",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip chatLinksPrompt",
+      "pass": true,
+      "detail": {
+        "id": "chatLinksPrompt",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip entityShadows",
+      "pass": true,
+      "detail": {
+        "id": "entityShadows",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip forceUnicodeFont",
+      "pass": true,
+      "detail": {
+        "id": "forceUnicodeFont",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip japaneseGlyphVariants",
+      "pass": true,
+      "detail": {
+        "id": "japaneseGlyphVariants",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip invertXMouse",
+      "pass": true,
+      "detail": {
+        "id": "invertXMouse",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip invertYMouse",
+      "pass": true,
+      "detail": {
+        "id": "invertYMouse",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip discreteMouseScroll",
+      "pass": true,
+      "detail": {
+        "id": "discreteMouseScroll",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip allowServerListing",
+      "pass": true,
+      "detail": {
+        "id": "allowServerListing",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip reducedDebugInfo",
+      "pass": true,
+      "detail": {
+        "id": "reducedDebugInfo",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip inGameNotification",
+      "pass": true,
+      "detail": {
+        "id": "inGameNotification",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip showSubtitles",
+      "pass": true,
+      "detail": {
+        "id": "showSubtitles",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip directionalAudio",
+      "pass": true,
+      "detail": {
+        "id": "directionalAudio",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip backgroundForChatOnly",
+      "pass": true,
+      "detail": {
+        "id": "backgroundForChatOnly",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip exclusiveFullscreen",
+      "pass": true,
+      "detail": {
+        "id": "exclusiveFullscreen",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip bobView",
+      "pass": true,
+      "detail": {
+        "id": "bobView",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip toggleAttack",
+      "pass": true,
+      "detail": {
+        "id": "toggleAttack",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip toggleUse",
+      "pass": true,
+      "detail": {
+        "id": "toggleUse",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip sprintWindow",
+      "pass": true,
+      "detail": {
+        "id": "sprintWindow",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip hideMatchedNames",
+      "pass": true,
+      "detail": {
+        "id": "hideMatchedNames",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip showAutosaveIndicator",
+      "pass": true,
+      "detail": {
+        "id": "showAutosaveIndicator",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip onlyShowSecureChat",
+      "pass": true,
+      "detail": {
+        "id": "onlyShowSecureChat",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip saveChatDrafts",
+      "pass": true,
+      "detail": {
+        "id": "saveChatDrafts",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip fov",
+      "pass": true,
+      "detail": {
+        "id": "fov",
+        "value": 30,
+        "native": 30,
+        "display": 30
+      }
+    },
+    {
+      "name": "Native/browser round trip screenEffectScale",
+      "pass": true,
+      "detail": {
+        "id": "screenEffectScale",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip fovEffectScale",
+      "pass": true,
+      "detail": {
+        "id": "fovEffectScale",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip darknessEffectScale",
+      "pass": true,
+      "detail": {
+        "id": "darknessEffectScale",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip glintSpeed",
+      "pass": true,
+      "detail": {
+        "id": "glintSpeed",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip glintStrength",
+      "pass": true,
+      "detail": {
+        "id": "glintStrength",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip damageTiltStrength",
+      "pass": true,
+      "detail": {
+        "id": "damageTiltStrength",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip gamma",
+      "pass": true,
+      "detail": {
+        "id": "gamma",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip graphicsPreset",
+      "pass": true,
+      "detail": {
+        "id": "graphicsPreset",
+        "value": "Fast",
+        "native": "Fast",
+        "display": "Fast"
+      }
+    },
+    {
+      "name": "Native/browser round trip inactivityFpsLimit",
+      "pass": true,
+      "detail": {
+        "id": "inactivityFpsLimit",
+        "value": "Minimized",
+        "native": "Minimized",
+        "display": "Minimized"
+      }
+    },
+    {
+      "name": "Native/browser round trip cloudStatus",
+      "pass": true,
+      "detail": {
+        "id": "cloudStatus",
+        "value": "OFF",
+        "native": "OFF",
+        "display": "OFF"
+      }
+    },
+    {
+      "name": "Native/browser round trip prioritizeChunkUpdates",
+      "pass": true,
+      "detail": {
+        "id": "prioritizeChunkUpdates",
+        "value": "Semi Blocking",
+        "native": "Semi Blocking",
+        "display": "Semi Blocking"
+      }
+    },
+    {
+      "name": "Native/browser round trip chatVisibility",
+      "pass": true,
+      "detail": {
+        "id": "chatVisibility",
+        "value": "Commands Only",
+        "native": "Commands Only",
+        "display": "Commands Only"
+      }
+    },
+    {
+      "name": "Native/browser round trip mainHand",
+      "pass": true,
+      "detail": {
+        "id": "mainHand",
+        "value": "Left",
+        "native": "Left",
+        "display": "Left"
+      }
+    },
+    {
+      "name": "Native/browser round trip textureFiltering",
+      "pass": true,
+      "detail": {
+        "id": "textureFiltering",
+        "value": "RGSS",
+        "native": "RGSS",
+        "display": "RGSS"
+      }
+    },
+    {
+      "name": "Native/browser round trip attackIndicator",
+      "pass": true,
+      "detail": {
+        "id": "attackIndicator",
+        "value": "OFF",
+        "native": "OFF",
+        "display": "OFF"
+      }
+    },
+    {
+      "name": "Native/browser round trip particles",
+      "pass": true,
+      "detail": {
+        "id": "particles",
+        "value": "Decreased",
+        "native": "Decreased",
+        "display": "Decreased"
+      }
+    },
+    {
+      "name": "Native/browser round trip narrator",
+      "pass": true,
+      "detail": {
+        "id": "narrator",
+        "value": "Narrates All",
+        "native": "Narrates All",
+        "display": "Narrates All"
+      }
+    },
+    {
+      "name": "Native/browser round trip musicFrequency",
+      "pass": true,
+      "detail": {
+        "id": "musicFrequency",
+        "value": "Frequent",
+        "native": "Frequent",
+        "display": "Frequent"
+      }
+    },
+    {
+      "name": "Native/browser round trip musicToast",
+      "pass": true,
+      "detail": {
+        "id": "musicToast",
+        "value": "Pause Menu",
+        "native": "Pause Menu",
+        "display": "Pause Menu"
+      }
+    },
+    {
+      "name": "Native/browser round trip sharePresence",
+      "pass": true,
+      "detail": {
+        "id": "sharePresence",
+        "value": "Limited",
+        "native": "Limited",
+        "display": "Limited"
+      }
+    },
+    {
+      "name": "Native/browser round trip friendsList",
+      "pass": true,
+      "detail": {
+        "id": "friendsList",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip allowFriendRequests",
+      "pass": true,
+      "detail": {
+        "id": "allowFriendRequests",
+        "value": true,
+        "native": true,
+        "display": true
+      }
+    },
+    {
+      "name": "Native/browser round trip renderDistance",
+      "pass": true,
+      "detail": {
+        "id": "renderDistance",
+        "value": 2,
+        "native": 2,
+        "display": 2
+      }
+    },
+    {
+      "name": "Native/browser round trip simulationDistance",
+      "pass": true,
+      "detail": {
+        "id": "simulationDistance",
+        "value": 5,
+        "native": 5,
+        "display": 5
+      }
+    },
+    {
+      "name": "Native/browser round trip sound_master",
+      "pass": true,
+      "detail": {
+        "id": "sound_master",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip sound_music",
+      "pass": true,
+      "detail": {
+        "id": "sound_music",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip sound_record",
+      "pass": true,
+      "detail": {
+        "id": "sound_record",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip sound_weather",
+      "pass": true,
+      "detail": {
+        "id": "sound_weather",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip sound_block",
+      "pass": true,
+      "detail": {
+        "id": "sound_block",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip sound_hostile",
+      "pass": true,
+      "detail": {
+        "id": "sound_hostile",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip sound_neutral",
+      "pass": true,
+      "detail": {
+        "id": "sound_neutral",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip sound_player",
+      "pass": true,
+      "detail": {
+        "id": "sound_player",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip sound_ambient",
+      "pass": true,
+      "detail": {
+        "id": "sound_ambient",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip sound_voice",
+      "pass": true,
+      "detail": {
+        "id": "sound_voice",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip sound_ui",
+      "pass": true,
+      "detail": {
+        "id": "sound_ui",
+        "value": 0,
+        "native": 0,
+        "display": 0
+      }
+    },
+    {
+      "name": "Native/browser round trip skin_cape",
+      "pass": true,
+      "detail": {
+        "id": "skin_cape",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip skin_jacket",
+      "pass": true,
+      "detail": {
+        "id": "skin_jacket",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip skin_left_sleeve",
+      "pass": true,
+      "detail": {
+        "id": "skin_left_sleeve",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip skin_right_sleeve",
+      "pass": true,
+      "detail": {
+        "id": "skin_right_sleeve",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip skin_left_pants_leg",
+      "pass": true,
+      "detail": {
+        "id": "skin_left_pants_leg",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip skin_right_pants_leg",
+      "pass": true,
+      "detail": {
+        "id": "skin_right_pants_leg",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "Native/browser round trip skin_hat",
+      "pass": true,
+      "detail": {
+        "id": "skin_hat",
+        "value": false,
+        "native": false,
+        "display": false
+      }
+    },
+    {
+      "name": "101 preferences leave live video unchanged",
+      "pass": true
+    },
+    {
+      "name": "101 preferences leave movement keys unchanged",
+      "pass": true
+    },
+    {
+      "name": "Saved-only tooltip is visible in control metadata",
+      "pass": true
+    },
+    {
+      "name": "Repeated Closed Captions control uses shared value",
+      "pass": true
+    },
+    {
+      "name": "Language Escape discards the draft",
+      "pass": true
+    },
+    {
+      "name": "Language Done saves only the chosen locale",
+      "pass": true
+    },
+    {
+      "name": "Resource Pack Escape discards draft",
+      "pass": true
+    },
+    {
+      "name": "Pack order and shared High Contrast save together",
+      "pass": true
+    },
+    {
+      "name": "Warning and telemetry choices persist",
+      "pass": true
+    },
+    {
+      "name": "Saving appearance choices leaves current presentation stable",
+      "pass": true
+    },
+    {
+      "name": "Document reload restores all preferences",
+      "pass": true
+    },
+    {
+      "name": "1280x720 normal Quit flushes and exits",
+      "pass": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "1920x1080 persistent native service ready",
+      "pass": true
+    },
+    {
+      "name": "New process restores all 101 scalar choices",
+      "pass": true
+    },
+    {
+      "name": "New process restores locale, ordered packs and flags",
+      "pass": true
+    },
+    {
+      "name": "Versioned native document matches accepted choices",
+      "pass": true
+    },
+    {
+      "name": "Native document contains no world, keybinding or live-video fields",
+      "pass": true
+    },
+    {
+      "name": "Hard Reset Cancel preserves saved choices",
+      "pass": true
+    },
+    {
+      "name": "Confirmed Reset restores all 101 defaults",
+      "pass": true
+    },
+    {
+      "name": "Confirmed Reset restores locale, packs and flags",
+      "pass": true
+    },
+    {
+      "name": "Reset persists defaults",
+      "pass": true
+    },
+    {
+      "name": "Reset preserves unrelated progress",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 normal Quit flushes and exits",
+      "pass": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "No uncaught browser errors",
+      "pass": true,
+      "detail": []
+    }
+  ]
+}

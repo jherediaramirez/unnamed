@@ -1,0 +1,290 @@
+{
+  "factories": {
+    "/Script/AlembicImporter.AlembicImportFactory": [
+      "abc;Alembic"
+    ],
+    "/Script/AndroidMediaEditor.AndroidFileMediaSourceFactory": [
+      "3gpp;3GPP Multimedia File",
+      "aac;MPEG-2 Advanced Audio Coding File",
+      "mp4;MPEG-4 Movie",
+      "webm;WEBM Movie"
+    ],
+    "/Script/AvfMediaEditor.AvfFileMediaSourceFactory": [
+      "3g2;3G2 Multimedia Stream",
+      "3gp;3GP Video Stream",
+      "3gp2;3GPP2 Multimedia File",
+      "3gpp;3GPP Multimedia File",
+      "ac3;AC-3 Audio File",
+      "amr;Adaptive Multi-Rate Audio",
+      "au;Audio File",
+      "bwf;Broadcast Wave Audio",
+      "caf;Core Audio",
+      "cdda;Compact Disc Digital Audio",
+      "m4a;Apple MPEG-4 Audio",
+      "m4v;Apple MPEG-4 Video",
+      "mov;Apple QuickTime Movie",
+      "mp4;MPEG-4 Movie",
+      "sdv;Samsung Digital Video",
+      "snd;Sound File"
+    ],
+    "/Script/OverlayEditor.BasicOverlaysFactory": [
+      "srt;SubRip Subtitles"
+    ],
+    "/Script/UnrealEd.CSVImportFactory": [
+      "csv;Comma-separated values"
+    ],
+    "/Script/UnrealEd.CurveImportFactory": [
+      "as;Audio amplitude curve"
+    ],
+    "/Script/RigLogicEditor.DNAAssetImportFactory": [
+      "dna;Character DNA file"
+    ],
+    "/Script/UnrealEd.FbxFactory": [
+      "fbx;FBX meshes and animations",
+      "obj;OBJ Static meshes"
+    ],
+    "/Script/UnrealEd.FbxSceneImportFactory": [
+      "fbx;Fbx Scene",
+      "obj;OBJ Scene"
+    ],
+    "/Script/UnrealEd.FontFileImportFactory": [
+      "ttf;TrueType Font",
+      "ttc;TrueType Font",
+      "otf;OpenType Font",
+      "otc;OpenType Font"
+    ],
+    "/Script/HairStrandsEditor.GroomBindingFactory": [],
+    "/Script/HairStrandsEditor.GroomFactory": [],
+    "/Script/HairStrandsEditor.HairStrandsFactory": [],
+    "/Script/ImgMediaEditor.ImgMediaSourceFactory": [
+      "exr;EXR ImgMedia Image Sequence"
+    ],
+    "/Script/MetaHumanSDKEditor.MetaHumanPackageFactory": [
+      "mhpkg;MetaHuman Package file"
+    ],
+    "/Script/NNEEditor.NNEModelDataFactory": [
+      "onnx;Open Neural Network Exchange Format"
+    ],
+    "/Script/UnrealEd.PackFactory": [
+      "upack;Asset Pack",
+      "upack;Feature Pack"
+    ],
+    "/Script/PaperSpriteSheetImporter.PaperSpriteSheetImportFactory": [
+      "json;Spritesheet JSON file",
+      "paper2dsprites;Spritesheet JSON file"
+    ],
+    "/Script/PaperSpriteSheetImporter.PaperSpriteSheetReimportFactory": [
+      "json;Spritesheet JSON file",
+      "paper2dsprites;Spritesheet JSON file"
+    ],
+    "/Script/PaperTiledImporter.PaperTiledImporterFactory": [
+      "json;Tiled JSON file"
+    ],
+    "/Script/UnrealEd.PhysicalMaterialMaskFactory": [],
+    "/Script/OverlayEditor.ReimportBasicOverlaysFactory": [
+      "srt;SubRip Subtitles"
+    ],
+    "/Script/UnrealEd.ReimportCurveFactory": [
+      "csv;Comma-separated values"
+    ],
+    "/Script/UnrealEd.ReimportCurveTableFactory": [
+      "csv;Comma-separated values",
+      "json;JavaScript Object Notation"
+    ],
+    "/Script/UnrealEd.ReimportDataTableFactory": [
+      "csv;Comma-separated values",
+      "json;JavaScript Object Notation"
+    ],
+    "/Script/UnrealEd.ReimportFbxAnimSequenceFactory": [
+      "fbx;FBX animation"
+    ],
+    "/Script/UnrealEd.ReimportFbxSceneFactory": [
+      "fbx;Fbx Scene",
+      "obj;OBJ Scene"
+    ],
+    "/Script/UnrealEd.ReimportFbxSkeletalMeshFactory": [
+      "fbx;FBX meshes and animations",
+      "obj;OBJ Static meshes",
+      "fbx;FBX skeletal meshes"
+    ],
+    "/Script/UnrealEd.ReimportFbxStaticMeshFactory": [
+      "fbx;FBX meshes and animations",
+      "obj;OBJ Static meshes",
+      "fbx;FBX static meshes"
+    ],
+    "/Script/HairStrandsEditor.ReimportHairStrandsFactory": [],
+    "/Script/AudioEditor.ReimportSoundFactory": [
+      "wav;Wave Audio File",
+      "aif;Audio Interchange File",
+      "aiff;Audio Interchange File Format",
+      "ogg;OGG Vorbis bitstream format ",
+      "flac;Free Lossless Audio Codec",
+      "opus;OGG OPUS bitstream format",
+      "mp3;MPEG Layer 3 Audio",
+      "wav;Wave audio file",
+      "aif;Audio Interchange File",
+      "aiff;Audio Interchange File Format",
+      "ogg;OGG Vorbis bitstream format",
+      "flac;Free Lossless Audio Codec",
+      "opus;OGG OPUS bitstream format",
+      "mp3;MPEG Layer 3 Audio"
+    ],
+    "/Script/SpeedTreeImporter.ReimportSpeedTreeFactory": [
+      "srt;SpeedTree",
+      "st;SpeedTree v8",
+      "st9;SpeedTree v9",
+      "srt;SpeedTree",
+      "st;SpeedTree v8",
+      "st9;SpeedTree v9"
+    ],
+    "/Script/UnrealEd.ReimportTextureFactory": [
+      "bmp;Texture",
+      "pcx;Texture",
+      "tga;Texture",
+      "psd;Texture",
+      "dds;Texture (Cubemap or 2D)",
+      "hdr;Texture (HDR) (LongLat unwrap or 2D)",
+      "ies;IES Texture (Standard light profiles)",
+      "png;Texture",
+      "jpg;Texture",
+      "jpeg;Texture",
+      "exr;EXR image HDR Texture2d",
+      "tif;Texture (TIFF)",
+      "tiff;Texture (TIFF)"
+    ],
+    "/Script/UnrealEd.ReimportVectorFieldStaticFactory": [
+      "fga;FluidGridAscii"
+    ],
+    "/Script/AudioEditor.SoundFactory": [
+      "wav;Wave Audio File",
+      "aif;Audio Interchange File",
+      "aiff;Audio Interchange File Format",
+      "ogg;OGG Vorbis bitstream format ",
+      "flac;Free Lossless Audio Codec",
+      "opus;OGG OPUS bitstream format",
+      "mp3;MPEG Layer 3 Audio"
+    ],
+    "/Script/SparseVolumeTexture.SparseVolumeTextureFactory": [
+      "vdb;OpenVDB Format"
+    ],
+    "/Script/SpeedTreeImporter.SpeedTreeImportFactory": [
+      "srt;SpeedTree",
+      "st;SpeedTree v8",
+      "st9;SpeedTree v9"
+    ],
+    "/Script/UnrealEd.TextureFactory": [
+      "bmp;Texture",
+      "pcx;Texture",
+      "tga;Texture",
+      "psd;Texture",
+      "dds;Texture (Cubemap or 2D)",
+      "hdr;Texture (HDR) (LongLat unwrap or 2D)",
+      "ies;IES Texture (Standard light profiles)",
+      "png;Texture",
+      "jpg;Texture",
+      "jpeg;Texture",
+      "exr;EXR image HDR Texture2d",
+      "tif;Texture (TIFF)",
+      "tiff;Texture (TIFF)"
+    ],
+    "/Script/ImgMediaEditor.TmvFileMediaSourceFactory": [
+      "tmv;Tiled-Mipmap Video"
+    ],
+    "/Script/UnrealEd.VectorFieldStaticFactory": [
+      "fga;FluidGridAscii"
+    ],
+    "/Script/WebMMediaEditor.WebMPlatFileMediaSourceFactory": [
+      "webm;WebM Multimedia File"
+    ],
+    "/Script/WmfMediaEditor.WmfFileMediaSourceFactory": [
+      "3g2;3G2 Multimedia Stream",
+      "3gp;3GP Video Stream",
+      "3gp2;3GPP2 Multimedia File",
+      "3gpp;3GPP Multimedia File",
+      "aac;MPEG-2 Advanced Audio Coding File",
+      "adts;Audio Data Transport Stream",
+      "asf;ASF Media File",
+      "avi;Audio Video Interleave File",
+      "m4a;Apple MPEG-4 Audio",
+      "m4v;Apple MPEG-4 Video",
+      "mov;Apple QuickTime Movie",
+      "mp4;MPEG-4 Movie",
+      "sami;Synchronized Accessible Media Interchange (SAMI) File",
+      "smi;Synchronized Multimedia Integration (SMIL) File",
+      "wav;Wave Audio File",
+      "wma;Windows Media Audio",
+      "wmv;Windows Media Video"
+    ]
+  },
+  "extensions": [
+    "3g2",
+    "3gp",
+    "3gp2",
+    "3gpp",
+    "aac",
+    "abc",
+    "ac3",
+    "adts",
+    "aif",
+    "aiff",
+    "amr",
+    "as",
+    "asf",
+    "au",
+    "avi",
+    "bmp",
+    "bwf",
+    "caf",
+    "cdda",
+    "csv",
+    "dds",
+    "dna",
+    "exr",
+    "fbx",
+    "fga",
+    "flac",
+    "hdr",
+    "ies",
+    "jpeg",
+    "jpg",
+    "json",
+    "m4a",
+    "m4v",
+    "mhpkg",
+    "mov",
+    "mp3",
+    "mp4",
+    "obj",
+    "ogg",
+    "onnx",
+    "opus",
+    "otc",
+    "otf",
+    "paper2dsprites",
+    "pcx",
+    "png",
+    "psd",
+    "sami",
+    "sdv",
+    "smi",
+    "snd",
+    "srt",
+    "st",
+    "st9",
+    "tga",
+    "tif",
+    "tiff",
+    "tmv",
+    "ttc",
+    "ttf",
+    "upack",
+    "vdb",
+    "wav",
+    "webm",
+    "wma",
+    "wmv"
+  ],
+  "failures": [],
+  "jsonImportable": true,
+  "menuPreferencesImportable": false
+}

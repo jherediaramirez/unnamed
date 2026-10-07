@@ -1,0 +1,10 @@
+{
+  "Checked": 9556,
+  "Changed": [],
+  "IndexSHA256": "F8661E5FED533D08D4FE0DD89659458E5DDFFB605AFE039D61072901FD08FC66",
+  "BaselineIndexSHA256": "F8661E5FED533D08D4FE0DD89659458E5DDFFB605AFE039D61072901FD08FC66",
+  "Backup": "C:\\dev\\backups\\Unnamed\\menu-preferences-20261007-130053",
+  "FinalIndexSHA256": "2CD9500D5ABD5E7EAA1EA808C554DD3313D1B2DFD45A8426957EB9BE315DC65C",
+  "StagedEntriesUnchanged": true,
+  "IndexNote": "Index byte hash changed later in the session; all staged entry modes, object IDs and paths still match the baseline. The original index is retained in the snapshot."
+}

@@ -1,0 +1,294 @@
+{
+  "status": "personal_defaults_restored_automated_verification_passed_manual_input_pending",
+  "projectDefaults": {
+    "Sprint": "LeftShift",
+    "Crouch": "C"
+  },
+  "referenceDefaults": {
+    "Sprint": "LeftControl",
+    "Sneak": "LeftShift"
+  },
+  "package": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Unnamed.exe",
+  "buildPassed": true,
+  "nativeSuitesPassed": 13,
+  "nativeFailed": 0,
+  "javaScriptPassed": 44,
+  "cefChecksPassed": 30,
+  "runtimeChecksPassed": 38,
+  "runtimeFailures": 0,
+  "runtimeRequestedCap": 60,
+  "runtimeMeanFPS": 46.86710242312614,
+  "migrationPassed": true,
+  "migrationDefaultSprint": "Left Shift",
+  "migrationDefaultCrouch": "C",
+  "preservationPassed": true,
+  "physicsUnchanged": true,
+  "engineModuleSuffix": 2047,
+  "packageHashes": [
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Unnamed.exe",
+      "Hash": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\chrome_100_percent.pak",
+      "Hash": "3F665B02BBE58D6423C2E86211BD8F074D8A36726438E639541AD695F8430B9B"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\chrome_200_percent.pak",
+      "Hash": "8152796C92C3481A546564BE8F0B2CA90BF50D1BF4A141DB166C90377239794D"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\resources.pak",
+      "Hash": "AA8D203D593ED170696EEC09137E2421882F46273337A00D16C6B23E91DE675E"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\af.pak",
+      "Hash": "C514FE813E56C4767E9B190ACCA7A44D6F0F6D7C03DEC6C4AFB6586F0C89EBB7"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\am.pak",
+      "Hash": "FD641FB8513EA2B93A5F34F45A9A8AF3596E73DD738207BCC07ECFBD398F4285"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\ar.pak",
+      "Hash": "1D11E3B7CAE4762D0C35DC83C331813F49A7F9BC492EB63CADA01954AF8A7D2A"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\bg.pak",
+      "Hash": "D2FA3F3E66113FBD7EFE891EEF6F66915E04DFA8AEDBB162CEBE27EE7DB4D248"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\bn.pak",
+      "Hash": "A3F81CF087EB69C505243DB32D36FCE0F4266D074F22DD6E1742A1311CC8D5C5"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\ca.pak",
+      "Hash": "BC32492CBAA82D9DE625548C79F03173EC4DB4D3E25D2E5D3099A7D7231F8FF1"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\cs.pak",
+      "Hash": "3223737E45B3F06ACD90D2EA6B923C99EF3A988F072234328F5CD337D428A219"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\da.pak",
+      "Hash": "A2960A7B635FC8A100E325B5EBE0BD696CCCAA0AF5D77EC1EA2EF3A7AD77471C"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\de.pak",
+      "Hash": "D7A8385E3E1BEDD61D102BE6B19D5E8CF09C814528CFD782C1D3BF62812690B8"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\el.pak",
+      "Hash": "889501DE74431BC33CA326DF8711C46E3DEF70CD82B1124A44524EE2829167C2"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\en-GB.pak",
+      "Hash": "86C1766BA2E7B86F111445A1F57C5120E1BE78A4B6E7B2E124DCD31116C7CCDB"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\en-US.pak",
+      "Hash": "FC44BADC0F1EE3DAA57D905A9E39AE3EE6DBD38049CBD944905630409038FF2B"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\es-419.pak",
+      "Hash": "D7088CD07D220AF16275BEFC09C56C2524D4B63A424876CE2F7F5442F56DCAA3"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\es.pak",
+      "Hash": "270147CC81547477F181B5C6B75DD8CF46EB124DE802DE8EB2BC6855D2EF8FE8"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\et.pak",
+      "Hash": "21046DED9F9AAB82BBC7FF1579FBC80B94BD6DA09A3E4817188391D4AF1C24BE"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\fa.pak",
+      "Hash": "AF1DD21B0AA302CBEBC56D39ABD8BCFDA981734E04C7AB8040E905CBBBAA193C"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\fi.pak",
+      "Hash": "48A5E49251723E3E191C8502FF1B6DEDF39E168AC252FCF535B36AD52E9EA8FD"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\fil.pak",
+      "Hash": "7117986303E4954AC39BB144AC76BACB450F7BE68AE1FDE970EE639AD39BD9D8"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\fr.pak",
+      "Hash": "4DEE926B878D106A3599C1C884BB84DCDD7785836032384420F5FD0C76CEA640"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\gu.pak",
+      "Hash": "9AF5364F7CBE7EF972C0FB9B62BF2C13CB1A9FF4DDE1D6FD2FFCACD088ADB987"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\he.pak",
+      "Hash": "AD956CF0F663B25C19907BB8737B2342704223AC79F8A85B7A3038D52E9AFA7A"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\hi.pak",
+      "Hash": "6B2629CCDC38A3C14EE5DE4EBA558527BBC4C590C87CC9393F9B7E337B8E5EFA"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\hr.pak",
+      "Hash": "D2D55568886EF5BB2A073E619F8DBF98A3FF341CE5BA6F3F362224081CC0CDC8"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\hu.pak",
+      "Hash": "D3F6A1560E893042B92F40A56B5761790E94A78EFDA73A26A640DD21997443AE"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\id.pak",
+      "Hash": "8F84AC460C88E44518E2C5165D0758E8D0F2C6223CFB5CA6AD5507AAE79F67BD"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\it.pak",
+      "Hash": "FD236C934EDFAE7FE10176F9D7A2293838D2CD59F54BEB7AF689CD61014A51C9"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\ja.pak",
+      "Hash": "539E2195C7E7BBF7B2976E9B3B4950BC4A6616A590CF85678BD264387382DE1C"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\kn.pak",
+      "Hash": "70D9698AD1CB9D78E1EAB70E7E1161CA4216399969991922ABD0EDEAE0ECBB01"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\ko.pak",
+      "Hash": "A21B8CB55ED43ABD51FB2F97D40208BE637B3CB2DAE2F55B3ABD210722E67951"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\lt.pak",
+      "Hash": "160B2DA4626A0CE7570460ED48326352F25624753DCC6A6AA90C6906ECA15EB5"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\lv.pak",
+      "Hash": "70E1736C8D1406513CCF47AD85EEC64F46F2ADA1A7AAB1DDDDEB049170152F14"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\ml.pak",
+      "Hash": "7F42EC438FF13B97B775146033FCE3EE33A73D0806E89B61F6F284A80E1C350B"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\mr.pak",
+      "Hash": "7277F688E1773D68088CE48EFABF2DDE4386C7CC5CFC579A8E16806EB0E37989"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\ms.pak",
+      "Hash": "95D27FC7023E763C546BF19D9D214B1D1EAEF1EA01DAB23391FE5FBA7361A674"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\nb.pak",
+      "Hash": "C135A7F5F35A3533A2DA5666768CB78402580ECB41E1309EEE580816A8A0AC28"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\nl.pak",
+      "Hash": "39BBE7E945C5CEDF6A53F88FBC5C298A65E48192FE46C4E6A66C289B0869DE1C"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\pl.pak",
+      "Hash": "9AD6F0C5B4C3F335B155251B07261F5241A29892667FA607817E48ABEAE19462"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\pt-BR.pak",
+      "Hash": "8E5466E2ACBE6E350DC3B0752495DFA44EAF1DA8E6054FFBA9C320C4277C96D1"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\pt-PT.pak",
+      "Hash": "F193C222CFD9CD723DBD7839CF45C14B7749CDE5527B552160DF819C72B442C1"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\ro.pak",
+      "Hash": "31C2568BA713CE7D9B2A784B8BCE09B116408A5943171B2BAF84B83A2CDD2801"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\ru.pak",
+      "Hash": "8BADBAFF9761B5CFA26A409524C2C85F252EC2166449EDB32246A2BEE5F914B0"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\sk.pak",
+      "Hash": "6491C4F1C9E8AD0A498CF2A5FE11467FD419FA105622977105915639341F1C27"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\sl.pak",
+      "Hash": "97B5AB48CC42512A693FA7887ACC7D4F3EA5CDD9E6BBF334FA2940C922E121AF"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\sr.pak",
+      "Hash": "D53039029B8B60FFCA583896ABE66E860016BF8B250DF689BECE5E17C2D86ABC"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\sv.pak",
+      "Hash": "669FBCC98CCB78259F497E965EFBF2BA38E5C0E5AD6D50C588F013C018E03D7A"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\sw.pak",
+      "Hash": "C8A7FE1AF281B73985DA58B66570150C4DF27B0425F81068DF6949799ADA2769"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\ta.pak",
+      "Hash": "4019BCFD216E224924E34CB879B8CEC6D91FDE49D4A362AEDE9120BC9355543E"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\te.pak",
+      "Hash": "CD3A666D5F0091AC4C6F065B45AB21A30A9FE2A1073F8C6BF6192F123AD8156C"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\th.pak",
+      "Hash": "114D7A817A0C73F2D0BFF438EB6A076AD76A8BFB2C561E542AEB699CBF1298EF"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\tr.pak",
+      "Hash": "982728B531ABDB1C2E33FC65203BB20E3ABAC226674B4611D8D609A82A483CB2"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\uk.pak",
+      "Hash": "54E5C7D4CB654C880C54051B35EC108DFF28621AFCC896A7D227D3B01A98C60B"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\ur.pak",
+      "Hash": "04A50BCBEDD0760BB9C6E0628D8E520D58E8F9E9655C76349BCEEA5A891783D5"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\vi.pak",
+      "Hash": "F87B6A8530FFA5760367C62260B6BCEAEB9148F58AD4041222DBD9592488299E"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\zh-CN.pak",
+      "Hash": "DC5703F8267B4343A9D8E6ACF5B82A4A52559F494C4555ADED02F29CF20ED631"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Engine\\Binaries\\ThirdParty\\CEF3\\Win64\\128.4.13+ge76af7e+chromium-128.0.6613.138+v2\\Resources\\locales\\zh-TW.pak",
+      "Hash": "CCAF09EF99E6FEDA260AEE9CD073BD7513223F770422D799D7490A6F16F44FC5"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Hash": "07D89D1FDDAFBCD7524DD80A7BDA2253DD72E12999D0FA4F17074FF4B4DDCF14"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Unnamed\\Content\\Paks\\global.ucas",
+      "Hash": "3179E73D5F1BB109CA869FF2E733E1C674BD63B294D406AE897E686AC8E21B7A"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Unnamed\\Content\\Paks\\global.utoc",
+      "Hash": "1560F41494D5FD8E0F03ADE9B828B132F502B0EB982F06A72CECCA22513E2F90"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Unnamed\\Content\\Paks\\Unnamed-Windows.pak",
+      "Hash": "C9AD9CF3C1BBE3C67CAC39FEABDFB9E480F796B31890C9BE4F6F2B40BB671E68"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Unnamed\\Content\\Paks\\Unnamed-Windows.ucas",
+      "Hash": "993519011C71A12943718568FB06F8D019F44390B57996EFB24776EDCAB213C0"
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r3\\Windows\\Unnamed\\Content\\Paks\\Unnamed-Windows.utoc",
+      "Hash": "D2B4110144643786B5D07B5CFD850766EB45C4C68970ED8F0A66561CCB99340D"
+    }
+  ],
+  "limits": [
+    "Application and CEF input injected; OS hardware and alternative-layout acceptance remains manual.",
+    "Movement physics unchanged; prior reference and 30/60/120 cadence report retains its stated limits.",
+    "Saved custom bindings retained; row resets adopt the personal layout when an older profile saved other keys."
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "finished": "2026-10-07T15:59:14.980Z",
+  "htmlSHA256": "9182c3021bd2307f3efa135be2bfbdfc37220923d79732733c43904e4c0411c9",
+  "runtime": "C:\\dev\\projects\\Unnamed\\Tests\\Runtime\\input-foundation-2026-10-07T15-58-51-187Z",
+  "exe": "C:\\dev\\projects\\Unnamed\\Packages\\MenuInputFoundationDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+  "checks": [
+    {
+      "name": "1280x720 seven native movement rows",
+      "pass": true
+    },
+    {
+      "name": "1280x720 saved/default forward binding",
+      "pass": true,
+      "detail": {
+        "key.forward": "W",
+        "key.back": "S",
+        "key.left": "A",
+        "key.right": "D",
+        "key.sprint": "LeftShift",
+        "key.sneak": "LeftControl",
+        "key.jump": "SpaceBar"
+      }
+    },
+    {
+      "name": "1280x720 saved/default Hold policy",
+      "pass": true,
+      "detail": {
+        "toggleSprint": false,
+        "toggleCrouch": false
+      }
+    },
+    {
+      "name": "1280x720 Shift sprint and Ctrl crouch defaults",
+      "pass": true
+    },
+    {
+      "name": "1280x720 deferred bindings disabled",
+      "pass": true
+    },
+    {
+      "name": "1280x720 Escape cancels capture",
+      "pass": true
+    },
+    {
+      "name": "1280x720 real remap stores Unreal key",
+      "pass": true
+    },
+    {
+      "name": "1280x720 conflicting key rejected",
+      "pass": true
+    },
+    {
+      "name": "1280x720 reserved F11 does not toggle window",
+      "pass": true
+    },
+    {
+      "name": "1280x720 right modifier side preserved",
+      "pass": true
+    },
+    {
+      "name": "1280x720 explicit unbind",
+      "pass": true
+    },
+    {
+      "name": "1280x720 native mouse button capture",
+      "pass": true
+    },
+    {
+      "name": "1280x720 exact browser viewport",
+      "pass": true
+    },
+    {
+      "name": "1280x720 Toggle policy updates native profile",
+      "pass": true
+    },
+    {
+      "name": "1280x720 page reload rehydrates native input",
+      "pass": true
+    },
+    {
+      "name": "1280x720 no uncaught browser errors",
+      "pass": true
+    },
+    {
+      "name": "1280x720 normal owned-process quit",
+      "pass": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "1920x1080 seven native movement rows",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 saved/default forward binding",
+      "pass": true,
+      "detail": {
+        "key.forward": "Up",
+        "key.back": "S",
+        "key.left": "A",
+        "key.right": "D",
+        "key.sprint": "LeftShift",
+        "key.sneak": "LeftControl",
+        "key.jump": "SpaceBar"
+      }
+    },
+    {
+      "name": "1920x1080 saved/default Hold policy",
+      "pass": true,
+      "detail": {
+        "toggleSprint": true,
+        "toggleCrouch": false
+      }
+    },
+    {
+      "name": "1920x1080 Shift sprint and Ctrl crouch defaults",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 deferred bindings disabled",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 Escape cancels capture",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 real remap stores Unreal key",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 conflicting key rejected",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 reserved F11 does not toggle window",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 right modifier side preserved",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 explicit unbind",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 native mouse button capture",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 exact browser viewport",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 Toggle policy updates native profile",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 page reload rehydrates native input",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 Reset Keys restores bindings and preserves policies",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 reset confirmation Cancel preserves input",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 confirmed reset restores input and Hold policies",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 unrelated progress survives reset",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 no uncaught browser errors",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 normal owned-process quit",
+      "pass": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  ]
+}

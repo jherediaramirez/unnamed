@@ -1,5 +1,25 @@
 # Verification
 
+## Super Flat - October 7, 2026
+
+`Packages/SuperFlatDevelopment/Windows/Unnamed.exe` passed editor/package builds, authored-level validation, the native routing/isolation suite, 44 browser unit tests and 32 packaged integration checks. Play, double-click and Enter each loaded the actual level, passed nine ground traces and a spawn-clearance check, and returned to a working menu with retained settings. Native rendering was captured and visually inspected. Physical input and embedded PIE were not verified in this pass. This fixed package does not certify the concurrent FPS task's continuing changes. See [Super Flat](SuperFlat.md) and [the dated record](<Documented Actions/2026-10-07-Super-Flat.md>).
+
+## Schema import fix - October 7, 2026
+
+Current candidate: Packages/MenuPreferencesV2Development/Windows/Unnamed.exe. The raw schema now uses a non-importable extension. The editor/game were rebuilt; eight native suites, 39 JavaScript tests and 126 packaged preference checks passed. A native factory probe confirms that none of its 42 import factories register the new extension. HTML and schema contents are unchanged. [The fix record](<Documented Actions/2026-10-07-Schema-Import-Fix.md>) explains the import prompt, current hashes and preserved earlier evidence.
+
+## Menu preference persistence - October 7, 2026
+
+Current candidate: Packages/MenuPreferencesV1Development/Windows/Unnamed.exe. Eight native suites, 39 JavaScript unit tests, 126 packaged preference checks and 50 existing input/API regression checks passed. At each of 1280x720 and 1920x1080, all 369 menu checks and 37 video checks passed. The new 101 scalar preferences and four additional domains restore across document reload and separate process launches. Existing video/input stores are preserved. [The dated record](<Documented Actions/2026-10-07-Menu-Preferences.md>) contains hashes, reports, preservation and remaining acceptance limits. The older candidates below remain historical evidence.
+
+## Input v2 capture fix — October 7, 2026
+
+The current candidate is `Packages/MenuInputCrouchCDevelopment/Windows/Unnamed.exe`. Three native input suites, 31 browser unit tests and 50 packaged input/API/persistence checks passed. Defaults are C crouch and Left Shift sprint. The Windows capture failure was reproduced in the user's old preview and fixed by handling Unreal CEF events without native scan codes. The final Windows input retest awaits a user-dismissed Firewall dialog; this is not counted as a pass. [The follow-up record](<Documented Actions/2026-10-07-Input-v2.md>) contains current instructions, hashes, evidence and remaining acceptance gates. Earlier checkpoints below describe earlier preserved packages.
+
+## Current keybindings foundation — October 7, 2026
+
+The current candidate is `Packages/MenuInputFoundationDevelopment/Windows/Unnamed.exe`. Five native suites, 30 browser unit tests, 38 packaged input/persistence checks, 369 complete menu checks per viewport and 37 video checks per viewport passed. The tested viewports are 1280x720 and 1920x1080. Native input events prove action/intent routing without a character; FPS gameplay and physical OS input remain future gates. [Keybindings](Keybindings.md) and [the dated record](<Documented Actions/2026-10-07-Keybindings.md>) provide exact report paths, hashes, preservation and integration instructions. Earlier sections below are historical checkpoints.
+
 ## Current Review Fixes
 
 The five independent-review findings are fixed: dialog draft loss/display-submit mismatch, lost queued edits after failure, unbounded bridge waits, blank server-name acceptance, and shared/mixed capture evidence. Timeout recovery also covers an accepted Quit whose completion never replies. [Documented Actions](<Documented Actions/README.md>) contains the concise work record, fixes, file ownership, and known gaps.

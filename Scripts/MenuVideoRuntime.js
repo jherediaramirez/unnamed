@@ -98,13 +98,15 @@ const MenuVideo = (() => {
     refreshSettings();
     try {
       while (running || pending.size) await (running || startDrain());
+      if (window.MenuPreferences) await window.MenuPreferences.reset();
+      if (window.MenuInput) await window.MenuInput.resetAll(true);
       let reply = await call('HardReset');
       reply = await waitForWindow(reply);
       absorb(reply);
       if (!reply.ok || reply.error) throw Error(reply.error || 'Settings could not be reset.');
-      // Reload recreates every mock preference/draft from the original first-run defaults.
+      // Native preferences were reset explicitly; reload recreates transient drafts.
       window.location.reload();
-    } catch (error) { resetting = false; refreshSettings(); report(error.message); }
+    } catch (error) { resetting = false; window.MenuPreferences?.cancelExit(); refreshSettings(); report(error.message + '\nReset did not finish. Some preference groups may already have reset; retry to finish.'); }
   }
   setInterval(async () => {
     if (!bridge || running || polling || resetting) return;

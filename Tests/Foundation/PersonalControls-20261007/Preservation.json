@@ -1,0 +1,183 @@
+{
+  "snapshot": "C:\\dev\\backups\\Unnamed\\personal-controls-20261007-154411",
+  "protectedFiles": [
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007\\Windows\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r2\\Windows\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r2\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuDevelopment\\Windows\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuInputCrouchCDevelopment\\Windows\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuInputCrouchCDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuInputFoundationDevelopment\\Windows\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuInputFoundationDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuNoRealmsDevelopment\\Windows\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuNoRealmsDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesDevelopment\\Windows\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesV1Development\\Windows\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesV1Development\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesV2Development\\Windows\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesV2Development\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuQuitDevelopment\\Windows\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuQuitDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuReviewFixesDevelopment\\Windows\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuReviewFixesDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\SuperFlatDevelopment\\Windows\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\SuperFlatDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\VideoSettingsDebugDevelopment\\Windows\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\VideoSettingsDebugDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\VideoSettingsDevelopment\\Windows\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\VideoSettingsDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Content\\Maps\\L_Foundation.umap",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Content\\Maps\\L_SuperFlat.umap",
+      "Present": true,
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Content\\Menu\\L_Menu.umap",
+      "Present": true,
+      "Unchanged": true
+    }
+  ],
+  "allProtectedUnchanged": true,
+  "stagedEntriesUnchanged": true,
+  "changedSnapshotFiles": [
+    "Source\\Unnamed\\Foundation\\FoundationRuntimeProbe.cpp",
+    "Source\\Unnamed\\Tests\\InputFoundationTests.cpp",
+    "Content\\Input\\MappingContexts\\IMC_OnFoot.uasset",
+    "Scripts\\CreateInputAssets.py",
+    "Scripts\\LaunchFoundation.ps1",
+    "Scripts\\SetupFoundation.py",
+    "Scripts\\TestFoundationRuntime.ps1",
+    "Docs\\Foundation\\ARCHITECTURE.md",
+    "Docs\\Foundation\\AUDIT.md",
+    "Docs\\Foundation\\BEHAVIOR.md",
+    "Docs\\Foundation\\controls.json",
+    "Docs\\Foundation\\CONTROLS.md",
+    "Docs\\Foundation\\README.md",
+    "Docs\\Foundation\\VERIFICATION.md",
+    "README.md",
+    "Tests\\foundation-menu.mjs",
+    "Docs\\Documented Actions\\README.md",
+    "Docs\\Documented Actions\\2026-10-07-Player-Foundation.md"
+  ],
+  "addedDocumentation": "Docs\\Documented Actions\\2026-10-07-Personal-Controls.md"
+}

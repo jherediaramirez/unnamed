@@ -1,0 +1,297 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "JRHEREDIARAMIRE",
+			"instance": "895BEED240D6709B8DD1E7A3EEF7F5AE",
+			"instanceName": "JRHEREDIARAMIRE-17516",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (25H2) [10.0.26200.9550] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 4070 Ti SUPER",
+			"cPUModel": "Intel(R) Core(TM) i9-14900KF",
+			"rAMInGB": 64,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.07-19.01.35",
+	"succeeded": 13,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.26131901144981384,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "ActionContracts",
+			"fullTestPath": "Unnamed.Foundation.ActionContracts",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"895BEED240D6709B8DD1E7A3EEF7F5AE"
+			],
+			"duration": 0.023801200091838837,
+			"dateTime": "2026.10.07-19.01.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Collision",
+			"fullTestPath": "Unnamed.Foundation.Collision",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"895BEED240D6709B8DD1E7A3EEF7F5AE"
+			],
+			"duration": 0.0012369006872177124,
+			"dateTime": "2026.10.07-19.01.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Coordinates",
+			"fullTestPath": "Unnamed.Foundation.Coordinates",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"895BEED240D6709B8DD1E7A3EEF7F5AE"
+			],
+			"duration": 0.008210599422454834,
+			"dateTime": "2026.10.07-19.01.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Movement",
+			"fullTestPath": "Unnamed.Foundation.Movement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"895BEED240D6709B8DD1E7A3EEF7F5AE"
+			],
+			"duration": 0.0083671025931835175,
+			"dateTime": "2026.10.07-19.01.34",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "fps=30 apex=1.25220335 blocks airtime=12 reference ticks",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-19.01.34"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "fps=60 apex=1.25220335 blocks airtime=12 reference ticks",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-19.01.34"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "fps=120 apex=1.25220335 blocks airtime=12 reference ticks",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-19.01.34"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "walk release distance=0.2558459955 blocks firstZeroTick=8",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-19.01.34"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "sneak diagonal=1.8316246138 blocks/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-19.01.34"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "sprint jump boost=20.000000 cm/ref.tick air acceleration=2.548000 cm/ref.tick^2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-19.01.34"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BindingsAndSerialization",
+			"fullTestPath": "Unnamed.Input.BindingsAndSerialization",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"895BEED240D6709B8DD1E7A3EEF7F5AE"
+			],
+			"duration": 0.014392498880624771,
+			"dateTime": "2026.10.07-19.01.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "IntentRules",
+			"fullTestPath": "Unnamed.Input.IntentRules",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"895BEED240D6709B8DD1E7A3EEF7F5AE"
+			],
+			"duration": 0.0016712993383407593,
+			"dateTime": "2026.10.07-19.01.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NativeKeyPipeline",
+			"fullTestPath": "Unnamed.Input.NativeKeyPipeline",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"895BEED240D6709B8DD1E7A3EEF7F5AE"
+			],
+			"duration": 0.011433500796556473,
+			"dateTime": "2026.10.07-19.01.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "QuitSafety",
+			"fullTestPath": "Unnamed.Menu.Application.QuitSafety",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"895BEED240D6709B8DD1E7A3EEF7F5AE"
+			],
+			"duration": 0.0046523995697498322,
+			"dateTime": "2026.10.07-19.01.35",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Contract",
+			"fullTestPath": "Unnamed.Menu.Preferences.Contract",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"895BEED240D6709B8DD1E7A3EEF7F5AE"
+			],
+			"duration": 0.12923340499401093,
+			"dateTime": "2026.10.07-19.01.35",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FailureRecovery",
+			"fullTestPath": "Unnamed.Menu.Preferences.FailureRecovery",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"895BEED240D6709B8DD1E7A3EEF7F5AE"
+			],
+			"duration": 0.021730098873376846,
+			"dateTime": "2026.10.07-19.01.35",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Persistence",
+			"fullTestPath": "Unnamed.Menu.Preferences.Persistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"895BEED240D6709B8DD1E7A3EEF7F5AE"
+			],
+			"duration": 0.020313400775194168,
+			"dateTime": "2026.10.07-19.01.35",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Validation",
+			"fullTestPath": "Unnamed.Menu.VideoSettings.Validation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"895BEED240D6709B8DD1E7A3EEF7F5AE"
+			],
+			"duration": 0.0079197995364665985,
+			"dateTime": "2026.10.07-19.01.35",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RoutingAndIsolation",
+			"fullTestPath": "Unnamed.Worlds.SuperFlat.RoutingAndIsolation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"895BEED240D6709B8DD1E7A3EEF7F5AE"
+			],
+			"duration": 0.0083567984402179718,
+			"dateTime": "2026.10.07-19.01.35",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

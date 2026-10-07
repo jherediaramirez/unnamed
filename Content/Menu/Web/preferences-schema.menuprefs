@@ -1,0 +1,906 @@
+{
+  "version": 1,
+  "settings": {
+    "darkMojangStudiosBackground": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "hideLightningFlash": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "hideSplashTexts": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "sensitivity": {
+      "default": 0.5,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "entityDistanceScaling": {
+      "default": 1,
+      "min": 0.5,
+      "max": 5,
+      "step": 0.25
+    },
+    "cloudRange": {
+      "default": 128,
+      "min": 2,
+      "max": 128,
+      "step": 1
+    },
+    "weatherRadius": {
+      "default": 10,
+      "min": 3,
+      "max": 10,
+      "step": 1
+    },
+    "cutoutLeaves": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "vignette": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "improvedTransparency": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "ambientOcclusion": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "chunkSectionFadeInTime": {
+      "default": 0.75,
+      "min": 0,
+      "max": 2,
+      "step": 0.05
+    },
+    "chatOpacity": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "chatLineSpacing": {
+      "default": 0,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "textBackgroundOpacity": {
+      "default": 0.5,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "panoramaSpeed": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "highContrast": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "highContrastBlockOutline": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "narratorHotkey": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "chatScale": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "chatWidth": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "chatHeightUnfocused": {
+      "default": 0.44366197,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "chatHeightFocused": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "chatDelay": {
+      "default": 0,
+      "min": 0,
+      "max": 6,
+      "step": 0.1
+    },
+    "notificationDisplayTime": {
+      "default": 1,
+      "min": 0.5,
+      "max": 10,
+      "step": 0.1
+    },
+    "mipmapLevels": {
+      "default": 4,
+      "min": 0,
+      "max": 4,
+      "step": 1
+    },
+    "maxAnisotropyBit": {
+      "default": 2,
+      "min": 1,
+      "max": 3,
+      "step": 1
+    },
+    "biomeBlendRadius": {
+      "default": 2,
+      "min": 0,
+      "max": 7,
+      "step": 1
+    },
+    "mouseWheelSensitivity": {
+      "default": 0,
+      "min": -200,
+      "max": 100,
+      "step": 1
+    },
+    "allowCursorChanges": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "quitShortcuts": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "autoJump": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "operatorItemsTab": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "autoSuggestions": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "chatColors": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "chatLinks": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "chatLinksPrompt": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "entityShadows": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "forceUnicodeFont": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "japaneseGlyphVariants": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "invertXMouse": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "invertYMouse": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "discreteMouseScroll": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "allowServerListing": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "reducedDebugInfo": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "inGameNotification": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "showSubtitles": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "directionalAudio": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "backgroundForChatOnly": {
+      "default": true,
+      "values": [
+        true,
+        false
+      ]
+    },
+    "exclusiveFullscreen": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "bobView": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "toggleAttack": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "toggleUse": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "sprintWindow": {
+      "default": 7,
+      "min": 0,
+      "max": 10,
+      "step": 1
+    },
+    "hideMatchedNames": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "showAutosaveIndicator": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "onlyShowSecureChat": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "saveChatDrafts": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "fov": {
+      "default": 70,
+      "min": 30,
+      "max": 110,
+      "step": 1
+    },
+    "screenEffectScale": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "fovEffectScale": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "darknessEffectScale": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "glintSpeed": {
+      "default": 0.5,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "glintStrength": {
+      "default": 0.75,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "damageTiltStrength": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "gamma": {
+      "default": 0.5,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "graphicsPreset": {
+      "default": "Fancy",
+      "values": [
+        "Fast",
+        "Fancy",
+        "Fabulous!",
+        "Custom"
+      ],
+      "min": 0,
+      "max": 3,
+      "step": 1
+    },
+    "inactivityFpsLimit": {
+      "default": "AFK",
+      "values": [
+        "Minimized",
+        "AFK"
+      ]
+    },
+    "cloudStatus": {
+      "default": "Fancy",
+      "values": [
+        "OFF",
+        "Fast",
+        "Fancy"
+      ]
+    },
+    "prioritizeChunkUpdates": {
+      "default": "Threaded",
+      "values": [
+        "Threaded",
+        "Semi Blocking",
+        "Fully Blocking"
+      ]
+    },
+    "chatVisibility": {
+      "default": "Shown",
+      "values": [
+        "Shown",
+        "Commands Only",
+        "Hidden"
+      ]
+    },
+    "mainHand": {
+      "default": "Right",
+      "values": [
+        "Left",
+        "Right"
+      ]
+    },
+    "textureFiltering": {
+      "default": "None",
+      "values": [
+        "None",
+        "RGSS",
+        "Anisotropic"
+      ]
+    },
+    "attackIndicator": {
+      "default": "Crosshair",
+      "values": [
+        "OFF",
+        "Crosshair",
+        "Hotbar"
+      ]
+    },
+    "particles": {
+      "default": "All",
+      "values": [
+        "All",
+        "Decreased",
+        "Minimal"
+      ]
+    },
+    "narrator": {
+      "default": "OFF",
+      "values": [
+        "OFF",
+        "Narrates All",
+        "Narrates Chat",
+        "Narrates System"
+      ]
+    },
+    "musicFrequency": {
+      "default": "Default",
+      "values": [
+        "Default",
+        "Frequent",
+        "Constant"
+      ]
+    },
+    "musicToast": {
+      "default": "Never",
+      "values": [
+        "Never",
+        "Pause Menu",
+        "Pause Menu and Toast"
+      ]
+    },
+    "sharePresence": {
+      "default": "Full",
+      "values": [
+        "Full",
+        "Limited",
+        "Hidden"
+      ]
+    },
+    "friendsList": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "allowFriendRequests": {
+      "default": false,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "renderDistance": {
+      "default": 12,
+      "min": 2,
+      "max": 32,
+      "step": 1
+    },
+    "simulationDistance": {
+      "default": 12,
+      "min": 5,
+      "max": 32,
+      "step": 1
+    },
+    "sound_master": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "sound_music": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "sound_record": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "sound_weather": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "sound_block": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "sound_hostile": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "sound_neutral": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "sound_player": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "sound_ambient": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "sound_voice": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "sound_ui": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
+    "skin_cape": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "skin_jacket": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "skin_left_sleeve": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "skin_right_sleeve": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "skin_left_pants_leg": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "skin_right_pants_leg": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    },
+    "skin_hat": {
+      "default": true,
+      "values": [
+        false,
+        true
+      ]
+    }
+  },
+  "presets": {
+    "Fast": {
+      "biomeBlendRadius": 1,
+      "renderDistance": 8,
+      "prioritizeChunkUpdates": "Threaded",
+      "simulationDistance": 6,
+      "ambientOcclusion": false,
+      "cloudStatus": "Fast",
+      "particles": "Decreased",
+      "mipmapLevels": 2,
+      "entityShadows": false,
+      "entityDistanceScaling": 0.75,
+      "cloudRange": 32,
+      "cutoutLeaves": false,
+      "improvedTransparency": false,
+      "weatherRadius": 5,
+      "maxAnisotropyBit": 1,
+      "textureFiltering": "None"
+    },
+    "Fancy": {
+      "biomeBlendRadius": 2,
+      "renderDistance": 16,
+      "prioritizeChunkUpdates": "Semi Blocking",
+      "simulationDistance": 12,
+      "ambientOcclusion": true,
+      "cloudStatus": "Fancy",
+      "particles": "All",
+      "mipmapLevels": 4,
+      "entityShadows": true,
+      "entityDistanceScaling": 1,
+      "cloudRange": 64,
+      "cutoutLeaves": true,
+      "improvedTransparency": false,
+      "weatherRadius": 10,
+      "maxAnisotropyBit": 1,
+      "textureFiltering": "RGSS"
+    },
+    "Fabulous!": {
+      "biomeBlendRadius": 2,
+      "renderDistance": 32,
+      "prioritizeChunkUpdates": "Semi Blocking",
+      "simulationDistance": 12,
+      "ambientOcclusion": true,
+      "cloudStatus": "Fancy",
+      "particles": "All",
+      "mipmapLevels": 4,
+      "entityShadows": true,
+      "entityDistanceScaling": 1.25,
+      "cloudRange": 128,
+      "cutoutLeaves": true,
+      "improvedTransparency": true,
+      "weatherRadius": 10,
+      "maxAnisotropyBit": 2,
+      "textureFiltering": "Anisotropic"
+    }
+  },
+  "quality": [
+    "biomeBlendRadius",
+    "renderDistance",
+    "prioritizeChunkUpdates",
+    "simulationDistance",
+    "ambientOcclusion",
+    "cloudStatus",
+    "particles",
+    "mipmapLevels",
+    "entityShadows",
+    "entityDistanceScaling",
+    "cloudRange",
+    "cutoutLeaves",
+    "improvedTransparency",
+    "textureFiltering",
+    "maxAnisotropyBit",
+    "weatherRadius"
+  ],
+  "languages": [
+    "en_us",
+    "af_za",
+    "esan",
+    "enp",
+    "ast_es",
+    "az_az",
+    "id_id",
+    "ms_my",
+    "tzo_mx",
+    "qid",
+    "be_latn",
+    "bar",
+    "bs_ba",
+    "brb",
+    "br_fr",
+    "ca_es",
+    "val_es",
+    "cy_gb",
+    "qcb_es",
+    "da_dk",
+    "se_no",
+    "de_at",
+    "de_de",
+    "et_ee",
+    "en_au",
+    "en_ca",
+    "en_nz",
+    "en_gb",
+    "es_ar",
+    "es_cl",
+    "es_ec",
+    "es_es",
+    "es_mx",
+    "es_uy",
+    "es_ve",
+    "eo_uy",
+    "eu_es",
+    "fil_ph",
+    "fr_ca",
+    "fr_fr",
+    "fr_ch",
+    "fy_nl",
+    "fra_de",
+    "fur_it",
+    "fo_fo",
+    "ga_ie",
+    "gl_es",
+    "go_fr",
+    "gd_gb",
+    "hr_hr",
+    "hn_no",
+    "io_en",
+    "ig_ng",
+    "it_it",
+    "kw_gb",
+    "ksh",
+    "lol_us",
+    "la_la",
+    "lv_lv",
+    "lt_lt",
+    "li_li",
+    "lmo",
+    "lb_lu",
+    "hu_hu",
+    "mt_mt",
+    "isv",
+    "nah",
+    "nl_nl",
+    "pls",
+    "no_no",
+    "nn_no",
+    "uz_uz",
+    "oc_fr",
+    "en_pt",
+    "nds_de",
+    "pl_pl",
+    "pt_br",
+    "pt_pt",
+    "qya_aa",
+    "ro_ro",
+    "de_ch",
+    "enws",
+    "sq_al",
+    "sk_sk",
+    "sl_si",
+    "so_so",
+    "sr_cs",
+    "fi_fi",
+    "sv_se",
+    "sxu",
+    "tl_ph",
+    "vi_vn",
+    "tr_tr",
+    "vp_vl",
+    "nl_be",
+    "vec_it",
+    "vro",
+    "yo_ng",
+    "jbo_en",
+    "tlh_aa",
+    "tok",
+    "is_is",
+    "ovd",
+    "cs_cz",
+    "szl",
+    "en_ud",
+    "haw_us",
+    "el_gr",
+    "ba_ru",
+    "be_by",
+    "bg_bg",
+    "hal_ua",
+    "ky_kg",
+    "mk_mk",
+    "mn_mn",
+    "ry_ua",
+    "ru_ru",
+    "rpr",
+    "sah_sah",
+    "sr_sp",
+    "tt_ru",
+    "uk_ua",
+    "cv_cu",
+    "kk_kz",
+    "hy_am",
+    "yi_de",
+    "he_il",
+    "ar_sa",
+    "zlm_arab",
+    "fa_ir",
+    "hi_in",
+    "ta_in",
+    "kn_in",
+    "th_th",
+    "lo_la",
+    "ka_ge",
+    "lzh",
+    "ja_jp",
+    "zh_cn",
+    "zh_tw",
+    "zh_hk",
+    "ko_kr",
+    "got_de"
+  ]
+}

@@ -1,0 +1,149 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "JRHEREDIARAMIRE",
+			"instance": "8AB8FB08484905537B84319C0763462C",
+			"instanceName": "JRHEREDIARAMIRE-27248",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (25H2) [10.0.26200.9550] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 4070 Ti SUPER",
+			"cPUModel": "Intel(R) Core(TM) i9-14900KF",
+			"rAMInGB": 64,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.07-17.39.09",
+	"succeeded": 8,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.25228601694107056,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "BindingsAndSerialization",
+			"fullTestPath": "Unnamed.Input.BindingsAndSerialization",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8AB8FB08484905537B84319C0763462C"
+			],
+			"duration": 0.015696100890636444,
+			"dateTime": "2026.10.07-17.39.09",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "IntentRules",
+			"fullTestPath": "Unnamed.Input.IntentRules",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8AB8FB08484905537B84319C0763462C"
+			],
+			"duration": 0.0018077008426189423,
+			"dateTime": "2026.10.07-17.39.09",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NativeKeyPipeline",
+			"fullTestPath": "Unnamed.Input.NativeKeyPipeline",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8AB8FB08484905537B84319C0763462C"
+			],
+			"duration": 0.01207980141043663,
+			"dateTime": "2026.10.07-17.39.09",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "QuitSafety",
+			"fullTestPath": "Unnamed.Menu.Application.QuitSafety",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8AB8FB08484905537B84319C0763462C"
+			],
+			"duration": 0.007998298853635788,
+			"dateTime": "2026.10.07-17.39.09",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Contract",
+			"fullTestPath": "Unnamed.Menu.Preferences.Contract",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8AB8FB08484905537B84319C0763462C"
+			],
+			"duration": 0.13408499956130981,
+			"dateTime": "2026.10.07-17.39.09",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FailureRecovery",
+			"fullTestPath": "Unnamed.Menu.Preferences.FailureRecovery",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8AB8FB08484905537B84319C0763462C"
+			],
+			"duration": 0.036451101303100586,
+			"dateTime": "2026.10.07-17.39.09",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Persistence",
+			"fullTestPath": "Unnamed.Menu.Preferences.Persistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8AB8FB08484905537B84319C0763462C"
+			],
+			"duration": 0.035936202853918076,
+			"dateTime": "2026.10.07-17.39.09",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Validation",
+			"fullTestPath": "Unnamed.Menu.VideoSettings.Validation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8AB8FB08484905537B84319C0763462C"
+			],
+			"duration": 0.0082318000495433807,
+			"dateTime": "2026.10.07-17.39.09",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

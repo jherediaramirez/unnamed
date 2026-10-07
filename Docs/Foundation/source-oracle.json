@@ -1,0 +1,49 @@
+{
+  "label": "source-derived recurrence, not played-client observation",
+  "speeds": [
+    {
+      "kind": "walk",
+      "blocksPerSecond": 4.317180616740089
+    },
+    {
+      "kind": "sprint",
+      "blocksPerSecond": 5.612334801762115
+    },
+    {
+      "kind": "sneak",
+      "blocksPerSecond": 1.2951541850220267
+    },
+    {
+      "kind": "diagonal",
+      "blocksPerSecond": 4.405286343612335
+    },
+    {
+      "kind": "sneak-diagonal",
+      "blocksPerSecond": 1.8316246138224233
+    }
+  ],
+  "jump": {
+    "apexBlocks": 1.2522033402537238,
+    "landingTick": 12,
+    "airtimeSeconds": 0.6
+  },
+  "collisionComparison": {
+    "cornerCenterCm": [
+      -22,
+      -22
+    ],
+    "capsuleRadiusCm": 30,
+    "capsuleClear": true,
+    "boxClear": false,
+    "gap59": "blocked",
+    "gap61": "clear"
+  },
+  "stopping": {
+    "FirstZeroDisplacementTick": 8,
+    "WalkReleaseBlocks": 0.25584599547810766
+  },
+  "sprintJump": {
+    "FacingImpulseBlocksPerTick": 0.2,
+    "CardinalAirAccelerationBlocksPerTickSquared": 0.02548
+  }
+}

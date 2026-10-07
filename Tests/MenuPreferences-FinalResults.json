@@ -1,0 +1,57 @@
+{
+  "status": "completed_first_preference_batch",
+  "finished": "2026-10-07T17:30:24.992Z",
+  "package": "C:/dev/projects/Unnamed/Packages/MenuPreferencesV1Development/Windows/Unnamed.exe",
+  "editorModule": "UnrealEditor-Unnamed-1014.dll",
+  "openEditorStillUses": "UnrealEditor-Unnamed-1011.dll",
+  "htmlSHA256": "4922f18af17b35cd0cb06dbead826af018ba9ae0afe686e52c79f90129074fe9",
+  "gameSHA256": "7FE2FEDD67DFFB5036EA6CEEC023BCF3667EC3345FD757C6A7515691C3EB1BE6",
+  "nativeAutomation": "Tests/MenuPreferencesAutomation-20261007-131834/index.json",
+  "nativeSuites": 8,
+  "javascriptUnitTests": 39,
+  "registryControls": 697,
+  "preserved": {
+    "Checked": 9556,
+    "Changed": [],
+    "IndexSHA256": "F8661E5FED533D08D4FE0DD89659458E5DDFFB605AFE039D61072901FD08FC66",
+    "BaselineIndexSHA256": "F8661E5FED533D08D4FE0DD89659458E5DDFFB605AFE039D61072901FD08FC66",
+    "Backup": "C:\\dev\\backups\\Unnamed\\menu-preferences-20261007-130053",
+    "FinalIndexSHA256": "2CD9500D5ABD5E7EAA1EA808C554DD3313D1B2DFD45A8426957EB9BE315DC65C",
+    "StagedEntriesUnchanged": true,
+    "IndexNote": "Index byte hash changed later in the session; all staged entry modes, object IDs and paths still match the baseline. The original index is retained in the snapshot."
+  },
+  "runtimeResults": {
+    "preferences": {
+      "report": "Tests/Captures/preferences-2026-10-07T17-22-50-913Z/results.json",
+      "passed": 126
+    },
+    "input": {
+      "report": "Tests/Captures/input-foundation-2026-10-07T17-23-22-613Z/results.json",
+      "passed": 50
+    },
+    "menu720": {
+      "report": "Tests/Captures/review-preferences-v1-packaged-1280x720/results.json",
+      "passed": 369
+    },
+    "menu1080": {
+      "report": "Tests/Captures/review-preferences-v1-packaged-1920x1080/results.json",
+      "passed": 369
+    },
+    "video720": {
+      "report": "Tests/Captures/review-preferences-v1-video-1280x720/results.json",
+      "passed": 37
+    },
+    "video1080": {
+      "report": "Tests/Captures/review-preferences-v1-video-1920x1080/results.json",
+      "passed": 37
+    }
+  },
+  "remaining": [
+    "Feature effects behind saved preferences",
+    "Dormant bindings, server favorites and durable world drafts",
+    "Interactive PIE after editor restart",
+    "Physical OS input/focus and Shipping/other-platform acceptance"
+  ],
+  "capturedScalarIDs": 101,
+  "missingScalarIDs": []
+}

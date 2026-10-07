@@ -1,6 +1,7 @@
 #include "MenuVideoSettings.h"
 
 #include "Engine/Engine.h"
+#include "DynamicRHI.h"
 #include "Engine/GameViewportClient.h"
 #include "GameFramework/GameUserSettings.h"
 #include "GenericPlatform/GenericApplication.h"
@@ -272,6 +273,13 @@ FString UMenuVideoSettings::Snapshot(bool bSuccess) const
     Capabilities->SetBoolField(TEXT("guiScale"), !bWaitingForWindow);
     Capabilities->SetBoolField(TEXT("menuBackgroundBlurriness"), !bWaitingForWindow);
     const auto Observed = MakeShared<FJsonObject>();
+    FString DefaultRHI;
+    GConfig->GetString(TEXT("/Script/WindowsTargetPlatform.WindowsTargetSettings"), TEXT("DefaultGraphicsRHI"), DefaultRHI, GEngineIni);
+    Observed->SetStringField(TEXT("defaultGraphicsAPI"), DefaultRHI == TEXT("DefaultGraphicsRHI_DX12") ? TEXT("DirectX 12") :
+        DefaultRHI == TEXT("DefaultGraphicsRHI_DX11") ? TEXT("DirectX 11") : DefaultRHI);
+    const FString ActiveRHI = GDynamicRHI ? GDynamicRHI->GetName() : TEXT("Unavailable");
+    Observed->SetStringField(TEXT("graphicsAPI"), ActiveRHI == TEXT("D3D12") ? TEXT("DirectX 12") :
+        ActiveRHI == TEXT("D3D11") ? TEXT("DirectX 11") : ActiveRHI);
     Observed->SetStringField(TEXT("windowMode"), ModeName(Mode));
     Observed->SetNumberField(TEXT("clientWidth"), Size.X);
     Observed->SetNumberField(TEXT("clientHeight"), Size.Y);

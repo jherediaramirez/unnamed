@@ -1,0 +1,37 @@
+[
+  {
+    "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r2\\Windows\\Unnamed.exe",
+    "Bytes": 171520,
+    "SHA256": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F"
+  },
+  {
+    "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r2\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+    "Bytes": 333185024,
+    "SHA256": "88E7A5DDDE666F8D6A8C7B96EC7F0B598C384CED04DA6B8FA38937E4896759ED"
+  },
+  {
+    "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r2\\Windows\\Unnamed\\Content\\Paks\\global.ucas",
+    "Bytes": 3235776,
+    "SHA256": "3179E73D5F1BB109CA869FF2E733E1C674BD63B294D406AE897E686AC8E21B7A"
+  },
+  {
+    "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r2\\Windows\\Unnamed\\Content\\Paks\\global.utoc",
+    "Bytes": 794,
+    "SHA256": "1560F41494D5FD8E0F03ADE9B828B132F502B0EB982F06A72CECCA22513E2F90"
+  },
+  {
+    "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r2\\Windows\\Unnamed\\Content\\Paks\\Unnamed-Windows.pak",
+    "Bytes": 11447258,
+    "SHA256": "C9AD9CF3C1BBE3C67CAC39FEABDFB9E480F796B31890C9BE4F6F2B40BB671E68"
+  },
+  {
+    "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r2\\Windows\\Unnamed\\Content\\Paks\\Unnamed-Windows.ucas",
+    "Bytes": 240005600,
+    "SHA256": "C5909A9A71A0E1CEE59EC224833546E41F50BE760CFDB3781752B151DD422440"
+  },
+  {
+    "Path": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r2\\Windows\\Unnamed\\Content\\Paks\\Unnamed-Windows.utoc",
+    "Bytes": 208924,
+    "SHA256": "14469110BF05F3A895687446EAEE2F19455E9C38247A2E11A8251F2CA8AD51B5"
+  }
+]

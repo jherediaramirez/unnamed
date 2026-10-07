@@ -1,0 +1,163 @@
+{
+  "finished": "2026-10-07T15:56:11.213Z",
+  "htmlSHA256": "1c42170fde03049e145e9b1c8a12e68d51847e42a715fe0fe5f543e8fe158052",
+  "runtime": "C:\\dev\\projects\\Unnamed\\Tests\\Runtime\\input-foundation-2026-10-07T15-55-52-429Z",
+  "exe": "C:\\dev\\projects\\Unnamed\\Packages\\MenuInputFoundationDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+  "checks": [
+    {
+      "name": "1280x720 seven native movement rows",
+      "pass": true
+    },
+    {
+      "name": "1280x720 saved/default forward binding",
+      "pass": true,
+      "detail": {
+        "key.forward": "W",
+        "key.back": "S",
+        "key.left": "A",
+        "key.right": "D",
+        "key.sprint": "LeftShift",
+        "key.sneak": "LeftControl",
+        "key.jump": "SpaceBar"
+      }
+    },
+    {
+      "name": "1280x720 saved/default Hold policy",
+      "pass": true,
+      "detail": {
+        "toggleSprint": false,
+        "toggleCrouch": false
+      }
+    },
+    {
+      "name": "1280x720 Shift sprint and Ctrl crouch defaults",
+      "pass": true
+    },
+    {
+      "name": "1280x720 deferred bindings disabled",
+      "pass": true
+    },
+    {
+      "name": "1280x720 Escape cancels capture",
+      "pass": true
+    },
+    {
+      "name": "1280x720 real remap stores Unreal key",
+      "pass": true
+    },
+    {
+      "name": "1280x720 conflicting key rejected",
+      "pass": true
+    },
+    {
+      "name": "1280x720 reserved F11 does not toggle window",
+      "pass": true
+    },
+    {
+      "name": "1280x720 right modifier side preserved",
+      "pass": true
+    },
+    {
+      "name": "1280x720 explicit unbind",
+      "pass": true
+    },
+    {
+      "name": "1280x720 native mouse button capture",
+      "pass": true
+    },
+    {
+      "name": "1280x720 exact browser viewport",
+      "pass": true
+    },
+    {
+      "name": "1280x720 Toggle policy updates native profile",
+      "pass": true
+    },
+    {
+      "name": "1280x720 page reload rehydrates native input",
+      "pass": true
+    },
+    {
+      "name": "1280x720 no uncaught browser errors",
+      "pass": true
+    },
+    {
+      "name": "1280x720 normal owned-process quit",
+      "pass": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "1920x1080 seven native movement rows",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 saved/default forward binding",
+      "pass": true,
+      "detail": {
+        "key.forward": "Up",
+        "key.back": "S",
+        "key.left": "A",
+        "key.right": "D",
+        "key.sprint": "LeftShift",
+        "key.sneak": "LeftControl",
+        "key.jump": "SpaceBar"
+      }
+    },
+    {
+      "name": "1920x1080 saved/default Hold policy",
+      "pass": true,
+      "detail": {
+        "toggleSprint": true,
+        "toggleCrouch": false
+      }
+    },
+    {
+      "name": "1920x1080 Shift sprint and Ctrl crouch defaults",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 deferred bindings disabled",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 Escape cancels capture",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 real remap stores Unreal key",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 conflicting key rejected",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 reserved F11 does not toggle window",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 right modifier side preserved",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 explicit unbind",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 native mouse button capture",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 exact browser viewport",
+      "pass": false
+    },
+    {
+      "name": "1920x1080 runtime suite",
+      "pass": false,
+      "detail": "Error: 1920x1080 exact browser viewport"
+    }
+  ]
+}

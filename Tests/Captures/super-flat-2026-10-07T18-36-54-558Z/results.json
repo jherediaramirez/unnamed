@@ -1,0 +1,184 @@
+{
+  "finished": "2026-10-07T18:37:31.641Z",
+  "packageName": "SuperFlatDevelopment",
+  "exeSHA256": "6a5f2fce88fae28669d110ab708eaa84ee69aad150b5718d8f7ecaf3aab4fef6",
+  "checks": [
+    {
+      "name": "Native rejects noncatalog travel: fictional-forest",
+      "pass": true,
+      "detail": {
+        "ok": false,
+        "canQuit": true,
+        "pendingQuit": false,
+        "quitIssued": false,
+        "canOpenWorld": true,
+        "pendingWorld": false,
+        "travelIssued": false,
+        "error": "Only Super Flat is playable. The other entries are design references."
+      }
+    },
+    {
+      "name": "Native rejects noncatalog travel: fictional-build",
+      "pass": true,
+      "detail": {
+        "ok": false,
+        "canQuit": true,
+        "pendingQuit": false,
+        "quitIssued": false,
+        "canOpenWorld": true,
+        "pendingWorld": false,
+        "travelIssued": false,
+        "error": "Only Super Flat is playable. The other entries are design references."
+      }
+    },
+    {
+      "name": "Native rejects noncatalog travel: /Game/Maps/L_SuperFlat",
+      "pass": true,
+      "detail": {
+        "ok": false,
+        "canQuit": true,
+        "pendingQuit": false,
+        "quitIssued": false,
+        "canOpenWorld": true,
+        "pendingWorld": false,
+        "travelIssued": false,
+        "error": "Only Super Flat is playable. The other entries are design references."
+      }
+    },
+    {
+      "name": "Native rejects noncatalog travel: super-flat?listen",
+      "pass": true,
+      "detail": {
+        "ok": false,
+        "canQuit": true,
+        "pendingQuit": false,
+        "quitIssued": false,
+        "canOpenWorld": true,
+        "pendingWorld": false,
+        "travelIssued": false,
+        "error": "Only Super Flat is playable. The other entries are design references."
+      }
+    },
+    {
+      "name": "Singleplayer keeps exactly Super Flat and two design references",
+      "pass": true
+    },
+    {
+      "name": "Super Flat selected with Play available",
+      "pass": true
+    },
+    {
+      "name": "Built-in map protected from mock Edit",
+      "pass": true
+    },
+    {
+      "name": "Built-in map protected from mock Delete",
+      "pass": true
+    },
+    {
+      "name": "Built-in map protected from mock Re-Create",
+      "pass": true
+    },
+    {
+      "name": "fictional-forest labeled as reference with Play disabled",
+      "pass": true
+    },
+    {
+      "name": "fictional-forest double click remains a reference explanation",
+      "pass": true
+    },
+    {
+      "name": "fictional-build labeled as reference with Play disabled",
+      "pass": true
+    },
+    {
+      "name": "fictional-build double click remains a reference explanation",
+      "pass": true
+    },
+    {
+      "name": "Play button loads the native level with ground collision and clear spawn",
+      "pass": true
+    },
+    {
+      "name": "Play button returns to a usable main menu",
+      "pass": true
+    },
+    {
+      "name": "Play button drains and retains pending preference changes",
+      "pass": true
+    },
+    {
+      "name": "Play button retains native bindings",
+      "pass": true
+    },
+    {
+      "name": "Play button restored only one browser document",
+      "pass": true
+    },
+    {
+      "name": "double click loads the native level with ground collision and clear spawn",
+      "pass": true
+    },
+    {
+      "name": "double click returns to a usable main menu",
+      "pass": true
+    },
+    {
+      "name": "double click drains and retains pending preference changes",
+      "pass": true
+    },
+    {
+      "name": "double click retains native bindings",
+      "pass": true
+    },
+    {
+      "name": "double click restored only one browser document",
+      "pass": true
+    },
+    {
+      "name": "Enter key loads the native level with ground collision and clear spawn",
+      "pass": true
+    },
+    {
+      "name": "Enter key returns to a usable main menu",
+      "pass": true
+    },
+    {
+      "name": "Enter key drains and retains pending preference changes",
+      "pass": true
+    },
+    {
+      "name": "Enter key retains native bindings",
+      "pass": true
+    },
+    {
+      "name": "Enter key restored only one browser document",
+      "pass": true
+    },
+    {
+      "name": "No JavaScript errors during map transitions",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "No native map load, material compilation, or runtime errors",
+      "pass": true
+    },
+    {
+      "name": "Normal exit after repeated world transitions",
+      "pass": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "Native rendered world screenshot saved",
+      "pass": true,
+      "detail": [
+        "Saved\\Screenshots\\SuperFlat.png"
+      ]
+    }
+  ],
+  "runtime": "C:\\dev\\projects\\Unnamed\\Tests\\Runtime\\super-flat-2026-10-07T18-36-54-558Z"
+}

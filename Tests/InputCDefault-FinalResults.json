@@ -1,0 +1,16 @@
+{
+  "Stage": "implemented_pending_windows_input_retest",
+  "Package": "C:\\dev\\projects\\Unnamed\\Packages\\MenuInputCrouchCDevelopment\\Windows\\Unnamed.exe",
+  "ExeSHA256": "EA523A17B1A231CD20D940C5E2BA3F844B8946695B0AEBC137DA9F794C8AC231",
+  "HtmlSHA256": "7A3B51B83AD3F8B69BAD6CE7E15788ED69DDE4B46595E713587B4D970533180E",
+  "NativeSuites": 3,
+  "NativeFailures": 0,
+  "BrowserUnitTests": 31,
+  "RuntimeChecks": 50,
+  "RuntimeFailures": 0,
+  "RuntimeReport": "Tests/Captures/input-foundation-2026-10-07T16-53-13-592Z/results.json",
+  "ExistingArtifactsUnchanged": true,
+  "StagedEntriesPreserved": true,
+  "WindowsRetest": "Pending user-dismissed Windows Firewall dialog",
+  "Gameplay": "No FPS character; actual movement acceptance deferred"
+}

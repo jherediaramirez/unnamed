@@ -1,0 +1,74 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "JRHEREDIARAMIRE",
+			"instance": "74E88C9F4B7D0D7CFBEFB8B24501A43F",
+			"instanceName": "JRHEREDIARAMIRE-7400",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (25H2) [10.0.26200.9550] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 4070 Ti SUPER",
+			"cPUModel": "Intel(R) Core(TM) i9-14900KF",
+			"rAMInGB": 64,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.07-15.52.13",
+	"succeeded": 3,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.037353299558162689,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "BindingsAndSerialization",
+			"fullTestPath": "Unnamed.Input.BindingsAndSerialization",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"74E88C9F4B7D0D7CFBEFB8B24501A43F"
+			],
+			"duration": 0.016340099275112152,
+			"dateTime": "2026.10.07-15.52.13",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "IntentRules",
+			"fullTestPath": "Unnamed.Input.IntentRules",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"74E88C9F4B7D0D7CFBEFB8B24501A43F"
+			],
+			"duration": 0.0083572007715702057,
+			"dateTime": "2026.10.07-15.52.13",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NativeKeyPipeline",
+			"fullTestPath": "Unnamed.Input.NativeKeyPipeline",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"74E88C9F4B7D0D7CFBEFB8B24501A43F"
+			],
+			"duration": 0.012655999511480331,
+			"dateTime": "2026.10.07-15.52.13",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

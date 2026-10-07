@@ -1,0 +1,29 @@
+{
+  "finished": "2026-10-07T16:53:34.170Z",
+  "checks": [
+    {
+      "name": "1920x1080 video-settings.mjs",
+      "pass": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "1920x1080 smoke.mjs",
+      "pass": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "1920x1080 diagnostic normal exit",
+      "pass": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  ]
+}

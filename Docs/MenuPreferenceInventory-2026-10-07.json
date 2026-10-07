@@ -1,0 +1,3824 @@
+{
+  "reviewedAt": "2026-10-07T16:40:24.102Z",
+  "project": "C:/dev/projects/Unnamed/Unnamed.uproject",
+  "scope": "Review and proposed persistence only; no implementation.",
+  "sourceHashes": {
+    "Content/Menu/Web/index.html": "2024d23c87f23eb1f651c076a317925ee00f47de8d23d1d1b7587068e8943130",
+    "Scripts/AdaptMenu.mjs": "f3a733e18c65cea8e2e43c9b465ad4057ac6fb910f80bfa2d334c6600dae4ad8",
+    "Scripts/MenuMockRuntime.js": "91571cde21e9afa2d8d651216e702d88c2ca2d84d197752500d9674e642fadf0",
+    "Scripts/MenuDialogRuntime.js": "0c6a5868525d4764ddbf878310311f56eec4ca36e4b371604d734e6dbce392c0",
+    "Scripts/MenuVideoRuntime.js": "9837bb66b2733e97db73127fb2c72e90f4a9bda556cae8d69e6d004d6d50654e",
+    "Scripts/MenuInputRuntime.js": "5be8ab4e4d2552d8cf5d52ef651f93dfc1e5f4f4842b9706117fd5dad42fbfa0",
+    "Scripts/MenuApplicationRuntime.js": "b416609f1c8bf2fc23925509043a92a4a61551e6feff603ac7d18058e10c37ff",
+    "Source/Unnamed/MenuHost.cpp": "55a528c0c2c5790224c6f5c66b7236cd9267435ab87197b89e7a0e639563e038",
+    "Source/Unnamed/MenuVideoSettings.cpp": "9d19ceb411fc982edf6ba7a646b08a26086d09797d6e90ef2e52bad1da4bd6ed",
+    "Source/Unnamed/MenuApplication.cpp": "4b1cb591eda31e3d92d4e06bc1264af34e5b6e5f0d95c8c4f70266682ce1b89b",
+    "Source/Unnamed/Input/MenuInputSettings.cpp": "332dd85a4d729a65f6275a6a7e68c54799a01049a71aef12c97cf50cbcf93364",
+    "Source/Unnamed/Input/UnnamedInputSettings.h": "021eb6ebe22d2f1b62ed2b9a436ec27c0a130009e97ea10b34d694bd3a8480eb",
+    "Source/Unnamed/Input/UnnamedInputSettings.cpp": "4ef8eab3e0415a5b4526626d8da3bc0fc6bae8749f0f8dbb380dc1240a23b38e",
+    "Source/Unnamed/Input/UnnamedInputSubsystem.cpp": "e1183fdf16d08a4607e29bd4188af0c1e351631155139380bc4209128a2526d6",
+    "Content/Input/MappingContexts/IMC_OnFoot.uasset": "7ea6719acc442eb1c9cec515a6e963d55d1cc5f38f9a8fddc0f419808908cde7",
+    "Docs/ControlRegistry.json": "7ba95660fd6d7b4570626182fa23fc57f1ca4bcea57e17912c6dd6532e788157"
+  },
+  "historicalRegistry": {
+    "controls": 697,
+    "htmlSHA256": "9182c3021bd2307f3efa135be2bfbdfc37220923d79732733c43904e4c0411c9",
+    "matchesCurrentHTML": false
+  },
+  "counts": {
+    "catalogSettings": 111,
+    "alreadyPersistentCatalogSettings": 7,
+    "remainingCatalogSettings": 104,
+    "movementBindings": 7,
+    "remainingBindings": 55,
+    "recommendedDormantBindings": 31,
+    "deferredDebugBindings": 23,
+    "fixedFullscreenBinding": 1,
+    "rules": 59,
+    "languages": 143,
+    "flatPresets": 9
+  },
+  "groups": {
+    "General": [
+      "fov"
+    ],
+    "Video": [
+      "framerateLimit",
+      "enableVsync",
+      "inactivityFpsLimit",
+      "guiScale",
+      "fullscreen",
+      "exclusiveFullscreen",
+      "gamma",
+      "preferredGraphicsBackend",
+      "graphicsPreset",
+      "biomeBlendRadius",
+      "renderDistance",
+      "prioritizeChunkUpdates",
+      "simulationDistance",
+      "ambientOcclusion",
+      "cloudStatus",
+      "particles",
+      "mipmapLevels",
+      "entityShadows",
+      "entityDistanceScaling",
+      "menuBackgroundBlurriness",
+      "cloudRange",
+      "cutoutLeaves",
+      "improvedTransparency",
+      "textureFiltering",
+      "maxAnisotropyBit",
+      "weatherRadius",
+      "showAutosaveIndicator",
+      "vignette",
+      "attackIndicator",
+      "chunkSectionFadeInTime"
+    ],
+    "Music and sounds": [
+      "sound_master",
+      "sound_music",
+      "sound_record",
+      "sound_weather",
+      "sound_block",
+      "sound_hostile",
+      "sound_neutral",
+      "sound_player",
+      "sound_ambient",
+      "sound_voice",
+      "sound_ui",
+      "soundDevice",
+      "showSubtitles",
+      "directionalAudio",
+      "musicFrequency",
+      "musicToast"
+    ],
+    "Controls": [
+      "toggleCrouch",
+      "toggleSprint",
+      "toggleAttack",
+      "toggleUse",
+      "autoJump",
+      "sprintWindow",
+      "quitShortcuts",
+      "operatorItemsTab"
+    ],
+    "Mouse": [
+      "sensitivity",
+      "mouseWheelSensitivity",
+      "discreteMouseScroll",
+      "invertXMouse",
+      "invertYMouse",
+      "allowCursorChanges"
+    ],
+    "Chat": [
+      "chatVisibility",
+      "chatColors",
+      "chatLinks",
+      "chatLinksPrompt",
+      "chatOpacity",
+      "textBackgroundOpacity",
+      "chatScale",
+      "chatLineSpacing",
+      "chatDelay",
+      "chatWidth",
+      "chatHeightFocused",
+      "chatHeightUnfocused",
+      "narrator",
+      "autoSuggestions",
+      "hideMatchedNames",
+      "reducedDebugInfo",
+      "onlyShowSecureChat",
+      "saveChatDrafts"
+    ],
+    "Accessibility": [
+      "narrator",
+      "showSubtitles",
+      "highContrast",
+      "menuBackgroundBlurriness",
+      "textBackgroundOpacity",
+      "backgroundForChatOnly",
+      "chatOpacity",
+      "chatLineSpacing",
+      "chatDelay",
+      "notificationDisplayTime",
+      "bobView",
+      "screenEffectScale",
+      "fovEffectScale",
+      "darknessEffectScale",
+      "damageTiltStrength",
+      "glintSpeed",
+      "glintStrength",
+      "hideLightningFlash",
+      "darkMojangStudiosBackground",
+      "panoramaSpeed",
+      "hideSplashTexts",
+      "narratorHotkey",
+      "rotateWithMinecart",
+      "highContrastBlockOutline"
+    ],
+    "Skin customization": [
+      "skin_cape",
+      "skin_jacket",
+      "skin_left_sleeve",
+      "skin_right_sleeve",
+      "skin_left_pants_leg",
+      "skin_right_pants_leg",
+      "skin_hat",
+      "mainHand"
+    ],
+    "Font": [
+      "forceUnicodeFont",
+      "japaneseGlyphVariants"
+    ],
+    "Online": [
+      "friendsList",
+      "allowFriendRequests",
+      "inGameNotification",
+      "sharePresence",
+      "allowServerListing"
+    ]
+  },
+  "settings": [
+    {
+      "id": "darkMojangStudiosBackground",
+      "label": "Monochrome Logo",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Conditional. Retain only if an equivalent loading-logo option is intended."
+    },
+    {
+      "id": "hideLightningFlash",
+      "label": "Hide Sky Flashes",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "hideSplashTexts",
+      "label": "Hide Splash Texts",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save desired visibility; presentation currently uses the fixed baseline."
+    },
+    {
+      "id": "sensitivity",
+      "label": "Sensitivity",
+      "menus": [
+        "Mouse"
+      ],
+      "type": "number",
+      "default": 0.5,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save raw 0..1; 0.5 displays as 100 percent. Native look scaling is pending."
+    },
+    {
+      "id": "entityDistanceScaling",
+      "label": "Entity Distance",
+      "menus": [
+        "Video"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0.5,
+      "max": 5,
+      "step": 0.25,
+      "format": "percent",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "framerateLimit",
+      "label": "Max Framerate",
+      "menus": [
+        "Video"
+      ],
+      "type": "number",
+      "default": 120,
+      "min": 10,
+      "max": 260,
+      "step": 10,
+      "format": "fps",
+      "currentPersistence": "native",
+      "proposal": "PRESERVE_EXISTING",
+      "note": "Keep existing native owner."
+    },
+    {
+      "id": "cloudRange",
+      "label": "Cloud Distance",
+      "menus": [
+        "Video"
+      ],
+      "type": "number",
+      "default": 128,
+      "min": 2,
+      "max": 128,
+      "step": 1,
+      "format": "chunks",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "weatherRadius",
+      "label": "Weather Effect Radius",
+      "menus": [
+        "Video"
+      ],
+      "type": "number",
+      "default": 10,
+      "min": 3,
+      "max": 10,
+      "step": 1,
+      "format": "blocks",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "cutoutLeaves",
+      "label": "See-Through Leaves",
+      "menus": [
+        "Video"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "vignette",
+      "label": "Show Vignette",
+      "menus": [
+        "Video"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "improvedTransparency",
+      "label": "Improved Transparency",
+      "menus": [
+        "Video"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Conditional. Saving intent does not provide the reference transparency algorithm."
+    },
+    {
+      "id": "ambientOcclusion",
+      "label": "Smooth Lighting",
+      "menus": [
+        "Video"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save intent; Smooth Lighting has no confirmed one-to-one Unreal mapping."
+    },
+    {
+      "id": "chunkSectionFadeInTime",
+      "label": "Chunk Fade Time",
+      "menus": [
+        "Video"
+      ],
+      "type": "number",
+      "default": 0.75,
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "format": "fade",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save seconds; no chunk fade implementation implied."
+    },
+    {
+      "id": "chatOpacity",
+      "label": "Chat Text Opacity",
+      "menus": [
+        "Chat",
+        "Accessibility"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "chatLineSpacing",
+      "label": "Line Spacing",
+      "menus": [
+        "Chat",
+        "Accessibility"
+      ],
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "menuBackgroundBlurriness",
+      "label": "Menu Background Blur",
+      "menus": [
+        "Video",
+        "Accessibility"
+      ],
+      "type": "number",
+      "default": 5,
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "format": "off",
+      "currentPersistence": "native",
+      "proposal": "PRESERVE_EXISTING",
+      "note": "Keep existing native owner."
+    },
+    {
+      "id": "textBackgroundOpacity",
+      "label": "Text Background Opacity",
+      "menus": [
+        "Chat",
+        "Accessibility"
+      ],
+      "type": "number",
+      "default": 0.5,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "panoramaSpeed",
+      "label": "Panorama Scroll Speed",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save desired speed; animation currently uses the fixed presentation baseline."
+    },
+    {
+      "id": "highContrast",
+      "label": "High Contrast",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Commit together with High Contrast pack membership; appearance currently uses the baseline."
+    },
+    {
+      "id": "highContrastBlockOutline",
+      "label": "High Contrast Block Outlines",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "narratorHotkey",
+      "label": "Narrator Hotkey",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save intent; Ctrl+B has no speech consumer yet."
+    },
+    {
+      "id": "chatScale",
+      "label": "Chat Text Size",
+      "menus": [
+        "Chat"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "chatWidth",
+      "label": "Width",
+      "menus": [
+        "Chat"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "format": "chatWidth",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "chatHeightUnfocused",
+      "label": "Unfocused Height",
+      "menus": [
+        "Chat"
+      ],
+      "type": "number",
+      "default": 0.44366197,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "format": "chatHeight",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Preserve exact default 0.44366197 despite 0.01 slider steps."
+    },
+    {
+      "id": "chatHeightFocused",
+      "label": "Focused Height",
+      "menus": [
+        "Chat"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "format": "chatHeight",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "chatDelay",
+      "label": "Chat Delay",
+      "menus": [
+        "Chat",
+        "Accessibility"
+      ],
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 6,
+      "step": 0.1,
+      "format": "delay",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Shared with Accessibility. Definition label is a translation key; default means No Delay."
+    },
+    {
+      "id": "notificationDisplayTime",
+      "label": "Notification Time",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0.5,
+      "max": 10,
+      "step": 0.1,
+      "format": "multiplier",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "mipmapLevels",
+      "label": "Mipmap Levels",
+      "menus": [
+        "Video"
+      ],
+      "type": "number",
+      "default": 4,
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "format": "off",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "maxAnisotropyBit",
+      "label": "Anisotropic Filtering",
+      "menus": [
+        "Video"
+      ],
+      "type": "number",
+      "default": 2,
+      "min": 1,
+      "max": 3,
+      "step": 1,
+      "format": "aniso",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save exponent 1..3 = 2x/4x/8x. Retain it when filtering disables the control."
+    },
+    {
+      "id": "biomeBlendRadius",
+      "label": "Biome Blend",
+      "menus": [
+        "Video"
+      ],
+      "type": "number",
+      "default": 2,
+      "min": 0,
+      "max": 7,
+      "step": 1,
+      "format": "blend",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "mouseWheelSensitivity",
+      "label": "Scroll Sensitivity",
+      "menus": [
+        "Mouse"
+      ],
+      "type": "number",
+      "default": 0,
+      "min": -200,
+      "max": 100,
+      "step": 1,
+      "format": "mouse",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save raw -200..100; displayed multiplier is 10^(value/100), default 1x."
+    },
+    {
+      "id": "allowCursorChanges",
+      "label": "Allow Cursor Changes",
+      "menus": [
+        "Mouse"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "quitShortcuts",
+      "label": "Quit Shortcuts",
+      "menus": [
+        "Controls"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save intent with an inactive label; currently does not control Alt+F4."
+    },
+    {
+      "id": "autoJump",
+      "label": "Auto-Jump",
+      "menus": [
+        "Controls"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "rotateWithMinecart",
+      "label": "Rotate with Minecarts",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Conditional on retaining minecarts and that experiment. Currently disabled; reserve an inert value."
+    },
+    {
+      "id": "operatorItemsTab",
+      "label": "Operator Items Tab",
+      "menus": [
+        "Controls"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save visibility preference; cannot grant operator permissions."
+    },
+    {
+      "id": "autoSuggestions",
+      "label": "Command Suggestions",
+      "menus": [
+        "Chat"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "chatColors",
+      "label": "Colors",
+      "menus": [
+        "Chat"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "chatLinks",
+      "label": "Web Links",
+      "menus": [
+        "Chat"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "chatLinksPrompt",
+      "label": "Prompt on Links",
+      "menus": [
+        "Chat"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "enableVsync",
+      "label": "VSync",
+      "menus": [
+        "Video"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "native",
+      "proposal": "PRESERVE_EXISTING",
+      "note": "Keep existing native owner."
+    },
+    {
+      "id": "entityShadows",
+      "label": "Entity Shadows",
+      "menus": [
+        "Video"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "forceUnicodeFont",
+      "label": "Force Unicode Font",
+      "menus": [
+        "Font"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save desired font; rendering currently uses the baseline."
+    },
+    {
+      "id": "japaneseGlyphVariants",
+      "label": "Japanese Glyph Variants",
+      "menus": [
+        "Font"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save desired glyph variant; switching is pending."
+    },
+    {
+      "id": "invertXMouse",
+      "label": "Invert Mouse X",
+      "menus": [
+        "Mouse"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "invertYMouse",
+      "label": "Invert Mouse Y",
+      "menus": [
+        "Mouse"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "discreteMouseScroll",
+      "label": "Discrete Scrolling",
+      "menus": [
+        "Mouse"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "allowServerListing",
+      "label": "Allow Server Listings",
+      "menus": [
+        "Online"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save desired privacy choice; no protocol consumes it yet."
+    },
+    {
+      "id": "reducedDebugInfo",
+      "label": "Reduced Debug Info",
+      "menus": [
+        "Chat"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "inGameNotification",
+      "label": "In-Game Notification",
+      "menus": [
+        "Online"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save child preference; friend notification service is pending."
+    },
+    {
+      "id": "showSubtitles",
+      "label": "Closed Captions",
+      "menus": [
+        "Music and sounds",
+        "Accessibility"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "One boolean shared with Accessibility; caption generation is pending."
+    },
+    {
+      "id": "directionalAudio",
+      "label": "Directional Audio",
+      "menus": [
+        "Music and sounds"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "backgroundForChatOnly",
+      "label": "Text Background",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        true,
+        false
+      ],
+      "displayValues": [
+        "Chat",
+        "Everywhere"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "true means Chat; false means Everywhere."
+    },
+    {
+      "id": "fullscreen",
+      "label": "Fullscreen",
+      "menus": [
+        "Video"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "native",
+      "proposal": "PRESERVE_EXISTING",
+      "note": "Keep existing native owner."
+    },
+    {
+      "id": "exclusiveFullscreen",
+      "label": "Exclusive Fullscreen",
+      "menus": [
+        "Video"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save requested mode only. Actual fullscreen remains windowed/borderless."
+    },
+    {
+      "id": "bobView",
+      "label": "View Bobbing",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "toggleCrouch",
+      "label": "Crouch",
+      "menus": [
+        "Controls"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "displayValues": [
+        "Hold",
+        "Toggle"
+      ],
+      "currentPersistence": "native",
+      "proposal": "PRESERVE_EXISTING",
+      "note": "Keep existing native owner."
+    },
+    {
+      "id": "toggleSprint",
+      "label": "Sprint",
+      "menus": [
+        "Controls"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "displayValues": [
+        "Hold",
+        "Toggle"
+      ],
+      "currentPersistence": "native",
+      "proposal": "PRESERVE_EXISTING",
+      "note": "Keep existing native owner."
+    },
+    {
+      "id": "toggleAttack",
+      "label": "Attack/Destroy",
+      "menus": [
+        "Controls"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "displayValues": [
+        "Hold",
+        "Toggle"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save Hold/Toggle policy for a later attack consumer."
+    },
+    {
+      "id": "toggleUse",
+      "label": "Use Item/Place Block",
+      "menus": [
+        "Controls"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "displayValues": [
+        "Hold",
+        "Toggle"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save Hold/Toggle policy for a later use/place consumer."
+    },
+    {
+      "id": "sprintWindow",
+      "label": "Sprint Window",
+      "menus": [
+        "Controls"
+      ],
+      "type": "number",
+      "default": 7,
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "format": "ticks",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save reference ticks; define real time units before implementing double-tap sprint."
+    },
+    {
+      "id": "hideMatchedNames",
+      "label": "Hide Matched Names",
+      "menus": [
+        "Chat"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Conditional on future identity/moderation design; no filtering promise now."
+    },
+    {
+      "id": "showAutosaveIndicator",
+      "label": "Autosave Indicator",
+      "menus": [
+        "Video"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save indicator visibility; does not enable or schedule autosaving."
+    },
+    {
+      "id": "onlyShowSecureChat",
+      "label": "Only Show Secure Chat",
+      "menus": [
+        "Chat"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Conditional on future authenticated chat design; no authenticity guarantee now."
+    },
+    {
+      "id": "saveChatDrafts",
+      "label": "Save Unsent Chats",
+      "menus": [
+        "Chat"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save preference only. Message text needs a separate future draft model."
+    },
+    {
+      "id": "fov",
+      "label": "FOV",
+      "menus": [
+        "General"
+      ],
+      "type": "number",
+      "default": 70,
+      "min": 30,
+      "max": 110,
+      "step": 1,
+      "format": "fov",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save desired degrees; define the future camera FOV convention before applying."
+    },
+    {
+      "id": "screenEffectScale",
+      "label": "Distortion Effects",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "fovEffectScale",
+      "label": "FOV Effects",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "darknessEffectScale",
+      "label": "Darkness Pulsing",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "glintSpeed",
+      "label": "Glint Speed",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "number",
+      "default": 0.5,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "glintStrength",
+      "label": "Glint Strength",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "number",
+      "default": 0.75,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "damageTiltStrength",
+      "label": "Damage Tilt",
+      "menus": [
+        "Accessibility"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "gamma",
+      "label": "Brightness",
+      "menus": [
+        "Video"
+      ],
+      "type": "number",
+      "default": 0.5,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "format": "gamma",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "guiScale",
+      "label": "GUI Scale",
+      "menus": [
+        "Video"
+      ],
+      "type": "enum",
+      "default": 0,
+      "values": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "format": "gui",
+      "currentPersistence": "native",
+      "proposal": "PRESERVE_EXISTING",
+      "note": "Keep existing native owner."
+    },
+    {
+      "id": "preferredGraphicsBackend",
+      "label": "Graphics API",
+      "menus": [
+        "Video"
+      ],
+      "type": "enum",
+      "default": "Default",
+      "values": [
+        "Default"
+      ],
+      "displayValues": [
+        "Default (DirectX 12)"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "RESERVE_ONLY",
+      "note": "Reserve only. Current source fixes Default (DirectX 12) and disables the control. Do not restore old OpenGL/Vulkan choices."
+    },
+    {
+      "id": "graphicsPreset",
+      "label": "Preset",
+      "menus": [
+        "Video"
+      ],
+      "type": "enum",
+      "default": "Fancy",
+      "values": [
+        "Fast",
+        "Fancy",
+        "Fabulous!",
+        "Custom"
+      ],
+      "min": 0,
+      "max": 3,
+      "step": 1,
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save atomically with its quality fields. Do not replay on load or overwrite functional blur."
+    },
+    {
+      "id": "inactivityFpsLimit",
+      "label": "Reduce fps when",
+      "menus": [
+        "Video"
+      ],
+      "type": "enum",
+      "default": "AFK",
+      "values": [
+        "Minimized",
+        "AFK"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "cloudStatus",
+      "label": "Clouds",
+      "menus": [
+        "Video"
+      ],
+      "type": "enum",
+      "default": "Fancy",
+      "values": [
+        "OFF",
+        "Fast",
+        "Fancy"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "prioritizeChunkUpdates",
+      "label": "Chunk Builder",
+      "menus": [
+        "Video"
+      ],
+      "type": "enum",
+      "default": "Threaded",
+      "values": [
+        "Threaded",
+        "Semi Blocking",
+        "Fully Blocking"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Conditional. Minecraft scheduling modes need an Unnamed meaning before use."
+    },
+    {
+      "id": "chatVisibility",
+      "label": "Chat",
+      "menus": [
+        "Chat"
+      ],
+      "type": "enum",
+      "default": "Shown",
+      "values": [
+        "Shown",
+        "Commands Only",
+        "Hidden"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "mainHand",
+      "label": "Main Hand",
+      "menus": [
+        "Skin customization"
+      ],
+      "type": "enum",
+      "default": "Right",
+      "values": [
+        "Left",
+        "Right"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save hand enum; equipment behavior is pending."
+    },
+    {
+      "id": "textureFiltering",
+      "label": "Texture Filtering",
+      "menus": [
+        "Video"
+      ],
+      "type": "enum",
+      "default": "None",
+      "values": [
+        "None",
+        "RGSS",
+        "Anisotropic"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Conditional. RGSS/Anisotropic need a supported renderer mapping."
+    },
+    {
+      "id": "attackIndicator",
+      "label": "Attack Indicator",
+      "menus": [
+        "Video"
+      ],
+      "type": "enum",
+      "default": "Crosshair",
+      "values": [
+        "OFF",
+        "Crosshair",
+        "Hotbar"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "particles",
+      "label": "Particles",
+      "menus": [
+        "Video"
+      ],
+      "type": "enum",
+      "default": "All",
+      "values": [
+        "All",
+        "Decreased",
+        "Minimal"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "narrator",
+      "label": "Narrator",
+      "menus": [
+        "Chat",
+        "Accessibility"
+      ],
+      "type": "enum",
+      "default": "OFF",
+      "values": [
+        "OFF",
+        "Narrates All",
+        "Narrates Chat",
+        "Narrates System"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Shared with Accessibility; speech service is absent."
+    },
+    {
+      "id": "soundDevice",
+      "label": "Device",
+      "menus": [
+        "Music and sounds"
+      ],
+      "type": "enum",
+      "default": "System Default",
+      "values": [
+        "System Default"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "RESERVE_ONLY",
+      "note": "Reserve System Default. Only one choice exists; later enumerate native devices and store stable IDs."
+    },
+    {
+      "id": "musicFrequency",
+      "label": "Music Frequency",
+      "menus": [
+        "Music and sounds"
+      ],
+      "type": "enum",
+      "default": "Default",
+      "values": [
+        "Default",
+        "Frequent",
+        "Constant"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "musicToast",
+      "label": "Music Toast",
+      "menus": [
+        "Music and sounds"
+      ],
+      "type": "enum",
+      "default": "Never",
+      "values": [
+        "Never",
+        "Pause Menu",
+        "Pause Menu and Toast"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "sharePresence",
+      "label": "Visibility",
+      "menus": [
+        "Online"
+      ],
+      "type": "enum",
+      "default": "Full",
+      "values": [
+        "Full",
+        "Limited",
+        "Hidden"
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save desired privacy choice; no presence service yet."
+    },
+    {
+      "id": "friendsList",
+      "label": "Friends List",
+      "menus": [
+        "Online"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Local UI preference; does not create an account or activate an external service."
+    },
+    {
+      "id": "allowFriendRequests",
+      "label": "Allow Requests",
+      "menus": [
+        "Online"
+      ],
+      "type": "boolean",
+      "default": false,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save child preference; effective behavior needs Friends List and an account service."
+    },
+    {
+      "id": "renderDistance",
+      "label": "Render Distance",
+      "menus": [
+        "Video"
+      ],
+      "type": "number",
+      "default": 12,
+      "min": 2,
+      "max": 32,
+      "step": 1,
+      "format": "chunks",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save the choice; its feature consumer remains pending."
+    },
+    {
+      "id": "simulationDistance",
+      "label": "Simulation Distance",
+      "menus": [
+        "Video"
+      ],
+      "type": "number",
+      "default": 12,
+      "min": 5,
+      "max": 32,
+      "step": 1,
+      "format": "chunks",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save requested distance; future local-world/server authority owns the effective value."
+    },
+    {
+      "id": "sound_master",
+      "label": "Master Volume",
+      "menus": [
+        "Music and sounds"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "format": "volume",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save normalized volume 0..1; audio playback/mixer remains pending."
+    },
+    {
+      "id": "sound_music",
+      "label": "Music",
+      "menus": [
+        "Music and sounds"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "format": "volume",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save normalized volume 0..1; audio playback/mixer remains pending."
+    },
+    {
+      "id": "sound_record",
+      "label": "Jukebox/Note Blocks",
+      "menus": [
+        "Music and sounds"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "format": "volume",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save normalized volume 0..1; audio playback/mixer remains pending."
+    },
+    {
+      "id": "sound_weather",
+      "label": "Weather",
+      "menus": [
+        "Music and sounds"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "format": "volume",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save normalized volume 0..1; audio playback/mixer remains pending."
+    },
+    {
+      "id": "sound_block",
+      "label": "Blocks",
+      "menus": [
+        "Music and sounds"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "format": "volume",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save normalized volume 0..1; audio playback/mixer remains pending."
+    },
+    {
+      "id": "sound_hostile",
+      "label": "Hostile Mobs",
+      "menus": [
+        "Music and sounds"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "format": "volume",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save normalized volume 0..1; audio playback/mixer remains pending."
+    },
+    {
+      "id": "sound_neutral",
+      "label": "Friendly Mobs",
+      "menus": [
+        "Music and sounds"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "format": "volume",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save normalized volume 0..1; audio playback/mixer remains pending."
+    },
+    {
+      "id": "sound_player",
+      "label": "Players",
+      "menus": [
+        "Music and sounds"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "format": "volume",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save normalized volume 0..1; audio playback/mixer remains pending."
+    },
+    {
+      "id": "sound_ambient",
+      "label": "Ambient/Environment",
+      "menus": [
+        "Music and sounds"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "format": "volume",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save normalized volume 0..1; audio playback/mixer remains pending."
+    },
+    {
+      "id": "sound_voice",
+      "label": "Narrator/Voice",
+      "menus": [
+        "Music and sounds"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "format": "volume",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save normalized volume 0..1; audio playback/mixer remains pending."
+    },
+    {
+      "id": "sound_ui",
+      "label": "UI",
+      "menus": [
+        "Music and sounds"
+      ],
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "format": "volume",
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save normalized volume 0..1; audio playback/mixer remains pending."
+    },
+    {
+      "id": "skin_cape",
+      "label": "Cape",
+      "menus": [
+        "Skin customization"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save cosmetic visibility if this avatar layer is retained."
+    },
+    {
+      "id": "skin_jacket",
+      "label": "Jacket",
+      "menus": [
+        "Skin customization"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save cosmetic visibility if this avatar layer is retained."
+    },
+    {
+      "id": "skin_left_sleeve",
+      "label": "Left Sleeve",
+      "menus": [
+        "Skin customization"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save cosmetic visibility if this avatar layer is retained."
+    },
+    {
+      "id": "skin_right_sleeve",
+      "label": "Right Sleeve",
+      "menus": [
+        "Skin customization"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save cosmetic visibility if this avatar layer is retained."
+    },
+    {
+      "id": "skin_left_pants_leg",
+      "label": "Left Pant Leg",
+      "menus": [
+        "Skin customization"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save cosmetic visibility if this avatar layer is retained."
+    },
+    {
+      "id": "skin_right_pants_leg",
+      "label": "Right Pant Leg",
+      "menus": [
+        "Skin customization"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save cosmetic visibility if this avatar layer is retained."
+    },
+    {
+      "id": "skin_hat",
+      "label": "Hat",
+      "menus": [
+        "Skin customization"
+      ],
+      "type": "boolean",
+      "default": true,
+      "values": [
+        false,
+        true
+      ],
+      "currentPersistence": "document-only",
+      "proposal": "SAVE_FOR_LATER_OR_CONDITIONAL",
+      "note": "Save cosmetic visibility if this avatar layer is retained."
+    }
+  ],
+  "bindings": [
+    {
+      "id": "key.forward",
+      "category": "movement",
+      "label": "Walk Forward",
+      "default": "W",
+      "order": 0,
+      "currentPersistence": "native",
+      "proposal": "PRESERVE_EXISTING"
+    },
+    {
+      "id": "key.left",
+      "category": "movement",
+      "label": "Strafe Left",
+      "default": "A",
+      "order": 0,
+      "currentPersistence": "native",
+      "proposal": "PRESERVE_EXISTING"
+    },
+    {
+      "id": "key.back",
+      "category": "movement",
+      "label": "Walk Backward",
+      "default": "S",
+      "order": 0,
+      "currentPersistence": "native",
+      "proposal": "PRESERVE_EXISTING"
+    },
+    {
+      "id": "key.right",
+      "category": "movement",
+      "label": "Strafe Right",
+      "default": "D",
+      "order": 0,
+      "currentPersistence": "native",
+      "proposal": "PRESERVE_EXISTING"
+    },
+    {
+      "id": "key.jump",
+      "category": "movement",
+      "label": "Jump",
+      "default": "Space",
+      "order": 0,
+      "currentPersistence": "native",
+      "proposal": "PRESERVE_EXISTING"
+    },
+    {
+      "id": "key.sneak",
+      "category": "movement",
+      "label": "Crouch",
+      "default": "C",
+      "order": 0,
+      "currentPersistence": "native",
+      "proposal": "PRESERVE_EXISTING"
+    },
+    {
+      "id": "key.sprint",
+      "category": "movement",
+      "label": "Sprint",
+      "default": "Left Shift",
+      "order": 0,
+      "currentPersistence": "native",
+      "proposal": "PRESERVE_EXISTING"
+    },
+    {
+      "id": "key.inventory",
+      "category": "inventory",
+      "label": "Open/Close Inventory",
+      "default": "E",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.swapOffhand",
+      "category": "inventory",
+      "label": "Swap Item With Off Hand",
+      "default": "F",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.drop",
+      "category": "inventory",
+      "label": "Drop Selected Item",
+      "default": "Q",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.use",
+      "category": "gameplay",
+      "label": "Use Item/Place Block",
+      "default": "Right Button",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.attack",
+      "category": "gameplay",
+      "label": "Attack/Destroy",
+      "default": "Left Button",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.pickItem",
+      "category": "gameplay",
+      "label": "Pick Block",
+      "default": "Middle Button",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.chat",
+      "category": "multiplayer",
+      "label": "Open Chat",
+      "default": "T",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.playerlist",
+      "category": "multiplayer",
+      "label": "List Players",
+      "default": "Tab",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.command",
+      "category": "multiplayer",
+      "label": "Open Command",
+      "default": "/",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.friends",
+      "category": "multiplayer",
+      "label": "Friends Screen",
+      "default": "O",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.socialInteractions",
+      "category": "multiplayer",
+      "label": "Social Interactions Screen",
+      "default": "P",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.screenshot",
+      "category": "misc",
+      "label": "Take Screenshot",
+      "default": "F2",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.togglePerspective",
+      "category": "misc",
+      "label": "Toggle Perspective",
+      "default": "F5",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.smoothCamera",
+      "category": "misc",
+      "label": "Toggle Cinematic Camera",
+      "default": "Not Bound",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.fullscreen",
+      "category": "misc",
+      "label": "Toggle Fullscreen",
+      "default": "F11",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "KEEP_FIXED_SHORTCUT"
+    },
+    {
+      "id": "key.advancements",
+      "category": "misc",
+      "label": "Advancements",
+      "default": "L",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.quickActions",
+      "category": "misc",
+      "label": "Quick Actions",
+      "default": "G",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.toggleGui",
+      "category": "misc",
+      "label": "Toggle GUI",
+      "default": "F1",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.toggleSpectatorShaderEffects",
+      "category": "misc",
+      "label": "Toggle Spectator Shader Effects",
+      "default": "F4",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.hotbar.1",
+      "category": "inventory",
+      "label": "Hotbar Slot 1",
+      "default": "1",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.hotbar.2",
+      "category": "inventory",
+      "label": "Hotbar Slot 2",
+      "default": "2",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.hotbar.3",
+      "category": "inventory",
+      "label": "Hotbar Slot 3",
+      "default": "3",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.hotbar.4",
+      "category": "inventory",
+      "label": "Hotbar Slot 4",
+      "default": "4",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.hotbar.5",
+      "category": "inventory",
+      "label": "Hotbar Slot 5",
+      "default": "5",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.hotbar.6",
+      "category": "inventory",
+      "label": "Hotbar Slot 6",
+      "default": "6",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.hotbar.7",
+      "category": "inventory",
+      "label": "Hotbar Slot 7",
+      "default": "7",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.hotbar.8",
+      "category": "inventory",
+      "label": "Hotbar Slot 8",
+      "default": "8",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.hotbar.9",
+      "category": "inventory",
+      "label": "Hotbar Slot 9",
+      "default": "9",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.saveToolbarActivator",
+      "category": "creative",
+      "label": "Save Hotbar Activator",
+      "default": "C",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.loadToolbarActivator",
+      "category": "creative",
+      "label": "Load Hotbar Activator",
+      "default": "X",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.spectatorOutlines",
+      "category": "spectator",
+      "label": "Highlight Players",
+      "default": "Not Bound",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.spectatorHotbar",
+      "category": "spectator",
+      "label": "Select On Hotbar",
+      "default": "Middle Button",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "SAVE_DORMANT_BINDING"
+    },
+    {
+      "id": "key.debug.overlay",
+      "category": "debug",
+      "label": "Toggle Overlay",
+      "default": "F3",
+      "order": -2,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.modifier",
+      "category": "debug",
+      "label": "Debug Modifier Key",
+      "default": "F3",
+      "order": -1,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.crash",
+      "category": "debug",
+      "label": "Debug Crash",
+      "default": "C",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.reloadChunk",
+      "category": "debug",
+      "label": "Reload Chunks",
+      "default": "A",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.showHitboxes",
+      "category": "debug",
+      "label": "Show Hitboxes",
+      "default": "B",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.clearChat",
+      "category": "debug",
+      "label": "Clear Chat",
+      "default": "D",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.showChunkBorders",
+      "category": "debug",
+      "label": "Show Chunk Boundaries",
+      "default": "G",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.showAdvancedTooltips",
+      "category": "debug",
+      "label": "Show Advanced Tooltips",
+      "default": "H",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.copyRecreateCommand",
+      "category": "debug",
+      "label": "Copy Data",
+      "default": "I",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.spectate",
+      "category": "debug",
+      "label": "Cycle Spectator",
+      "default": "N",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.switchGameMode",
+      "category": "debug",
+      "label": "Game Mode Switcher",
+      "default": "F4",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.debugOptions",
+      "category": "debug",
+      "label": "Debug Options",
+      "default": "F6",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.focusPause",
+      "category": "debug",
+      "label": "Toggle Lost Focus Pause",
+      "default": "P",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.dumpDynamicTextures",
+      "category": "debug",
+      "label": "Dump Dynamic Textures",
+      "default": "S",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.reloadResourcePacks",
+      "category": "debug",
+      "label": "Reload Resource Packs",
+      "default": "T",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.profiling",
+      "category": "debug",
+      "label": "Start/Stop Profiling",
+      "default": "L",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.copyLocation",
+      "category": "debug",
+      "label": "Copy Location",
+      "default": "C",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.dumpVersion",
+      "category": "debug",
+      "label": "Dump Version Info",
+      "default": "V",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.profilingChart",
+      "category": "debug",
+      "label": "Profiling Chart",
+      "default": "1",
+      "order": 1,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.fpsCharts",
+      "category": "debug",
+      "label": "Fps Charts",
+      "default": "2",
+      "order": 2,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.networkCharts",
+      "category": "debug",
+      "label": "Network Charts",
+      "default": "3",
+      "order": 3,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.lightmapTexture",
+      "category": "debug",
+      "label": "Lightmap Texture",
+      "default": "4",
+      "order": 4,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    },
+    {
+      "id": "key.debug.improvedTransparency",
+      "category": "debug",
+      "label": "Toggle Improved Transparency",
+      "default": "X",
+      "order": 0,
+      "currentPersistence": "planned-disabled",
+      "proposal": "DEFER_DESIGN"
+    }
+  ],
+  "rules": [
+    {
+      "id": "advance_time",
+      "label": "Advance time of day",
+      "type": "Boolean",
+      "default": true,
+      "category": "updates",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "advance_weather",
+      "label": "Update weather",
+      "type": "Boolean",
+      "default": true,
+      "category": "updates",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "allow_entering_nether_using_portals",
+      "label": "Allow Nether",
+      "type": "Boolean",
+      "default": true,
+      "category": "misc",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "block_drops",
+      "label": "Drop blocks",
+      "type": "Boolean",
+      "default": true,
+      "category": "drops",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "block_explosion_drop_decay",
+      "label": "In block interaction explosions, some blocks won't drop their loot",
+      "type": "Boolean",
+      "default": true,
+      "category": "drops",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "command_blocks_work",
+      "label": "Enable Command Blocks",
+      "type": "Boolean",
+      "default": true,
+      "category": "misc",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "command_block_output",
+      "label": "Broadcast command block output",
+      "type": "Boolean",
+      "default": true,
+      "category": "chat",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "drowning_damage",
+      "label": "Deal drowning damage",
+      "type": "Boolean",
+      "default": true,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "elytra_movement_check",
+      "label": "Do elytra movement check",
+      "type": "Boolean",
+      "default": true,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "ender_pearls_vanish_on_death",
+      "label": "Thrown Ender Pearls vanish on death",
+      "type": "Boolean",
+      "default": true,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "entity_drops",
+      "label": "Drop entity equipment",
+      "type": "Boolean",
+      "default": true,
+      "category": "drops",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "fall_damage",
+      "label": "Deal fall damage",
+      "type": "Boolean",
+      "default": true,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "fire_damage",
+      "label": "Deal fire damage",
+      "type": "Boolean",
+      "default": true,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "fire_spread_radius_around_player",
+      "label": "Fire spread radius",
+      "type": "Integer",
+      "default": 128,
+      "min": -1,
+      "max": 2147483647,
+      "category": "updates",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "forgive_dead_players",
+      "label": "Forgive dead players",
+      "type": "Boolean",
+      "default": true,
+      "category": "mobs",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "freeze_damage",
+      "label": "Deal freeze damage",
+      "type": "Boolean",
+      "default": true,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "global_sound_events",
+      "label": "Global sound events",
+      "type": "Boolean",
+      "default": true,
+      "category": "misc",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "immediate_respawn",
+      "label": "Respawn immediately",
+      "type": "Boolean",
+      "default": false,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "keep_inventory",
+      "label": "Keep inventory after death",
+      "type": "Boolean",
+      "default": false,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "lava_source_conversion",
+      "label": "Lava converts to source",
+      "type": "Boolean",
+      "default": false,
+      "category": "updates",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "limited_crafting",
+      "label": "Require recipe for crafting",
+      "type": "Boolean",
+      "default": false,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "locator_bar",
+      "label": "Enable player Locator Bar",
+      "type": "Boolean",
+      "default": true,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "log_admin_commands",
+      "label": "Broadcast admin commands",
+      "type": "Boolean",
+      "default": true,
+      "category": "chat",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "max_block_modifications",
+      "label": "Command modification block limit",
+      "type": "Integer",
+      "default": 32768,
+      "min": 1,
+      "max": 2147483647,
+      "category": "misc",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "max_command_forks",
+      "label": "Command context limit",
+      "type": "Integer",
+      "default": 65536,
+      "min": 0,
+      "max": 2147483647,
+      "category": "misc",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "max_command_sequence_length",
+      "label": "Command chain size limit",
+      "type": "Integer",
+      "default": 65536,
+      "min": 0,
+      "max": 2147483647,
+      "category": "misc",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "max_entity_cramming",
+      "label": "Entity cramming threshold",
+      "type": "Integer",
+      "default": 24,
+      "min": 0,
+      "max": 2147483647,
+      "category": "mobs",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "max_minecart_speed",
+      "label": "Minecart max speed",
+      "type": "Integer",
+      "default": 8,
+      "min": 1,
+      "max": 1000,
+      "category": "misc",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "max_snow_accumulation_height",
+      "label": "Snow accumulation height",
+      "type": "Integer",
+      "default": 1,
+      "min": 0,
+      "max": 8,
+      "category": "updates",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "mob_drops",
+      "label": "Drop mob loot",
+      "type": "Boolean",
+      "default": true,
+      "category": "drops",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "mob_explosion_drop_decay",
+      "label": "In mob explosions, some blocks won't drop their loot",
+      "type": "Boolean",
+      "default": true,
+      "category": "drops",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "mob_griefing",
+      "label": "Allow destructive mob actions",
+      "type": "Boolean",
+      "default": true,
+      "category": "mobs",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "natural_health_regeneration",
+      "label": "Regenerate health",
+      "type": "Boolean",
+      "default": true,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "player_movement_check",
+      "label": "Do player movement check",
+      "type": "Boolean",
+      "default": true,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "players_nether_portal_creative_delay",
+      "label": "Player's Nether Portal delay in creative mode",
+      "type": "Integer",
+      "default": 0,
+      "min": 0,
+      "max": 2147483647,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "players_nether_portal_default_delay",
+      "label": "Player's Nether Portal delay in non-creative mode",
+      "type": "Integer",
+      "default": 80,
+      "min": 0,
+      "max": 2147483647,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "players_sleeping_percentage",
+      "label": "Sleep percentage",
+      "type": "Integer",
+      "default": 100,
+      "min": 0,
+      "max": 2147483647,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "projectiles_can_break_blocks",
+      "label": "Projectiles can break blocks",
+      "type": "Boolean",
+      "default": true,
+      "category": "drops",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "pvp",
+      "label": "Enable pvp",
+      "type": "Boolean",
+      "default": true,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "raids",
+      "label": "Do raids",
+      "type": "Boolean",
+      "default": true,
+      "category": "mobs",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "random_tick_speed",
+      "label": "Random tick speed rate",
+      "type": "Integer",
+      "default": 3,
+      "min": 0,
+      "max": 2147483647,
+      "category": "updates",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "reduced_debug_info",
+      "label": "Reduce debug info",
+      "type": "Boolean",
+      "default": false,
+      "category": "misc",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "respawn_radius",
+      "label": "Respawn location radius",
+      "type": "Integer",
+      "default": 10,
+      "min": 0,
+      "max": 2147483647,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "send_command_feedback",
+      "label": "Send command feedback",
+      "type": "Boolean",
+      "default": true,
+      "category": "chat",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "show_advancement_messages",
+      "label": "Announce advancements",
+      "type": "Boolean",
+      "default": true,
+      "category": "chat",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "show_death_messages",
+      "label": "Show death messages",
+      "type": "Boolean",
+      "default": true,
+      "category": "chat",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "spawner_blocks_work",
+      "label": "Enable Spawner Blocks",
+      "type": "Boolean",
+      "default": true,
+      "category": "misc",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "spawn_mobs",
+      "label": "Spawn mobs",
+      "type": "Boolean",
+      "default": true,
+      "category": "spawning",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "spawn_monsters",
+      "label": "Spawn Monsters",
+      "type": "Boolean",
+      "default": true,
+      "category": "spawning",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "spawn_patrols",
+      "label": "Spawn pillager patrols",
+      "type": "Boolean",
+      "default": true,
+      "category": "spawning",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "spawn_phantoms",
+      "label": "Spawn phantoms",
+      "type": "Boolean",
+      "default": true,
+      "category": "spawning",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "spawn_wandering_traders",
+      "label": "Spawn Wandering Traders",
+      "type": "Boolean",
+      "default": true,
+      "category": "spawning",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "spawn_wardens",
+      "label": "Spawn Wardens",
+      "type": "Boolean",
+      "default": true,
+      "category": "spawning",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "spectators_generate_chunks",
+      "label": "Allow spectators to generate terrain",
+      "type": "Boolean",
+      "default": true,
+      "category": "player",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "spread_vines",
+      "label": "Vines spread",
+      "type": "Boolean",
+      "default": true,
+      "category": "updates",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "tnt_explodes",
+      "label": "Allow TNT to be activated and to explode",
+      "type": "Boolean",
+      "default": true,
+      "category": "misc",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "tnt_explosion_drop_decay",
+      "label": "In TNT explosions, some blocks won't drop their loot",
+      "type": "Boolean",
+      "default": false,
+      "category": "drops",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "universal_anger",
+      "label": "Universal anger",
+      "type": "Boolean",
+      "default": false,
+      "category": "mobs",
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "water_source_conversion",
+      "label": "Water converts to source",
+      "type": "Boolean",
+      "default": true,
+      "category": "updates",
+      "scope": "WORLD_DRAFT_ONLY"
+    }
+  ],
+  "experiments": [
+    {
+      "id": "minecart_improvements",
+      "default": false,
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "redstone_experiments",
+      "default": false,
+      "scope": "WORLD_DRAFT_ONLY"
+    },
+    {
+      "id": "trade_rebalance",
+      "default": false,
+      "scope": "WORLD_DRAFT_ONLY"
+    }
+  ],
+  "otherValues": [
+    {
+      "id": "language",
+      "default": "en_us",
+      "type": "locale-id",
+      "choices": [
+        "en_us",
+        "af_za",
+        "esan",
+        "enp",
+        "ast_es",
+        "az_az",
+        "id_id",
+        "ms_my",
+        "tzo_mx",
+        "qid",
+        "be_latn",
+        "bar",
+        "bs_ba",
+        "brb",
+        "br_fr",
+        "ca_es",
+        "val_es",
+        "cy_gb",
+        "qcb_es",
+        "da_dk",
+        "se_no",
+        "de_at",
+        "de_de",
+        "et_ee",
+        "en_au",
+        "en_ca",
+        "en_nz",
+        "en_gb",
+        "es_ar",
+        "es_cl",
+        "es_ec",
+        "es_es",
+        "es_mx",
+        "es_uy",
+        "es_ve",
+        "eo_uy",
+        "eu_es",
+        "fil_ph",
+        "fr_ca",
+        "fr_fr",
+        "fr_ch",
+        "fy_nl",
+        "fra_de",
+        "fur_it",
+        "fo_fo",
+        "ga_ie",
+        "gl_es",
+        "go_fr",
+        "gd_gb",
+        "hr_hr",
+        "hn_no",
+        "io_en",
+        "ig_ng",
+        "it_it",
+        "kw_gb",
+        "ksh",
+        "lol_us",
+        "la_la",
+        "lv_lv",
+        "lt_lt",
+        "li_li",
+        "lmo",
+        "lb_lu",
+        "hu_hu",
+        "mt_mt",
+        "isv",
+        "nah",
+        "nl_nl",
+        "pls",
+        "no_no",
+        "nn_no",
+        "uz_uz",
+        "oc_fr",
+        "en_pt",
+        "nds_de",
+        "pl_pl",
+        "pt_br",
+        "pt_pt",
+        "qya_aa",
+        "ro_ro",
+        "de_ch",
+        "enws",
+        "sq_al",
+        "sk_sk",
+        "sl_si",
+        "so_so",
+        "sr_cs",
+        "fi_fi",
+        "sv_se",
+        "sxu",
+        "tl_ph",
+        "vi_vn",
+        "tr_tr",
+        "vp_vl",
+        "nl_be",
+        "vec_it",
+        "vro",
+        "yo_ng",
+        "jbo_en",
+        "tlh_aa",
+        "tok",
+        "is_is",
+        "ovd",
+        "cs_cz",
+        "szl",
+        "en_ud",
+        "haw_us",
+        "el_gr",
+        "ba_ru",
+        "be_by",
+        "bg_bg",
+        "hal_ua",
+        "ky_kg",
+        "mk_mk",
+        "mn_mn",
+        "ry_ua",
+        "ru_ru",
+        "rpr",
+        "sah_sah",
+        "sr_sp",
+        "tt_ru",
+        "uk_ua",
+        "cv_cu",
+        "kk_kz",
+        "hy_am",
+        "yi_de",
+        "he_il",
+        "ar_sa",
+        "zlm_arab",
+        "fa_ir",
+        "hi_in",
+        "ta_in",
+        "kn_in",
+        "th_th",
+        "lo_la",
+        "ka_ge",
+        "lzh",
+        "ja_jp",
+        "zh_cn",
+        "zh_tw",
+        "zh_hk",
+        "ko_kr",
+        "got_de"
+      ]
+    },
+    {
+      "id": "packs",
+      "default": [],
+      "type": "ordered-id-list",
+      "choices": [
+        "programmer_art",
+        "high_contrast"
+      ]
+    },
+    {
+      "id": "skipWarning",
+      "default": false,
+      "type": "boolean"
+    },
+    {
+      "id": "telemetryOptInExtra",
+      "default": false,
+      "type": "boolean",
+      "scope": "DISPLAY_PREFERENCE_NOT_FUTURE_CONSENT"
+    },
+    {
+      "id": "servers",
+      "type": "name-address-pack-policy-records",
+      "scope": "LOCAL_FAVORITES"
+    },
+    {
+      "id": "lastAddress",
+      "type": "string",
+      "default": "",
+      "scope": "CONNECTION_HISTORY"
+    },
+    {
+      "id": "draft",
+      "type": "structured-world-draft",
+      "scope": "SEPARATE_DRAFT"
+    }
+  ],
+  "worldDraft": {
+    "scope": "SEPARATE_DRAFT_NOT_GLOBAL_PREFERENCES",
+    "defaults": {
+      "name": "New World",
+      "gameMode": "Survival",
+      "difficulty": "Normal",
+      "commands": false,
+      "type": "Default",
+      "seed": "",
+      "structures": true,
+      "bonus": false,
+      "biome": "minecraft:plains",
+      "flatBiome": "minecraft:plains",
+      "flat": [
+        {
+          "block": "minecraft:grass_block",
+          "height": 1
+        },
+        {
+          "block": "minecraft:dirt",
+          "height": 2
+        },
+        {
+          "block": "minecraft:bedrock",
+          "height": 1
+        }
+      ],
+      "experiments": {},
+      "rules": {
+        "advance_time": true,
+        "advance_weather": true,
+        "allow_entering_nether_using_portals": true,
+        "block_drops": true,
+        "block_explosion_drop_decay": true,
+        "command_blocks_work": true,
+        "command_block_output": true,
+        "drowning_damage": true,
+        "elytra_movement_check": true,
+        "ender_pearls_vanish_on_death": true,
+        "entity_drops": true,
+        "fall_damage": true,
+        "fire_damage": true,
+        "fire_spread_radius_around_player": 128,
+        "forgive_dead_players": true,
+        "freeze_damage": true,
+        "global_sound_events": true,
+        "immediate_respawn": false,
+        "keep_inventory": false,
+        "lava_source_conversion": false,
+        "limited_crafting": false,
+        "locator_bar": true,
+        "log_admin_commands": true,
+        "max_block_modifications": 32768,
+        "max_command_forks": 65536,
+        "max_command_sequence_length": 65536,
+        "max_entity_cramming": 24,
+        "max_minecart_speed": 8,
+        "max_snow_accumulation_height": 1,
+        "mob_drops": true,
+        "mob_explosion_drop_decay": true,
+        "mob_griefing": true,
+        "natural_health_regeneration": true,
+        "player_movement_check": true,
+        "players_nether_portal_creative_delay": 0,
+        "players_nether_portal_default_delay": 80,
+        "players_sleeping_percentage": 100,
+        "projectiles_can_break_blocks": true,
+        "pvp": true,
+        "raids": true,
+        "random_tick_speed": 3,
+        "reduced_debug_info": false,
+        "respawn_radius": 10,
+        "send_command_feedback": true,
+        "show_advancement_messages": true,
+        "show_death_messages": true,
+        "spawner_blocks_work": true,
+        "spawn_mobs": true,
+        "spawn_monsters": true,
+        "spawn_patrols": true,
+        "spawn_phantoms": true,
+        "spawn_wandering_traders": true,
+        "spawn_wardens": true,
+        "spectators_generate_chunks": true,
+        "spread_vines": true,
+        "tnt_explodes": true,
+        "tnt_explosion_drop_decay": false,
+        "universal_anger": false,
+        "water_source_conversion": true
+      }
+    },
+    "reservedMissingField": {
+      "id": "dataPacks",
+      "proposedDefault": [],
+      "currentImplementation": "absent from newDraft and not committed by Data Packs Done"
+    },
+    "flatPresets": [
+      {
+        "id": "classic_flat",
+        "label": "Classic Flat",
+        "biome": "minecraft:plains",
+        "layers": [
+          {
+            "block": "minecraft:bedrock",
+            "height": 1
+          },
+          {
+            "block": "minecraft:dirt",
+            "height": 2
+          },
+          {
+            "block": "minecraft:grass_block",
+            "height": 1
+          }
+        ]
+      },
+      {
+        "id": "tunnelers_dream",
+        "label": "Tunnelers' Dream",
+        "biome": "minecraft:windswept_hills",
+        "layers": [
+          {
+            "block": "minecraft:bedrock",
+            "height": 1
+          },
+          {
+            "block": "minecraft:stone",
+            "height": 230
+          },
+          {
+            "block": "minecraft:dirt",
+            "height": 5
+          },
+          {
+            "block": "minecraft:grass_block",
+            "height": 1
+          }
+        ]
+      },
+      {
+        "id": "water_world",
+        "label": "Water World",
+        "biome": "minecraft:deep_ocean",
+        "layers": [
+          {
+            "block": "minecraft:bedrock",
+            "height": 1
+          },
+          {
+            "block": "minecraft:deepslate",
+            "height": 64
+          },
+          {
+            "block": "minecraft:stone",
+            "height": 5
+          },
+          {
+            "block": "minecraft:dirt",
+            "height": 5
+          },
+          {
+            "block": "minecraft:gravel",
+            "height": 5
+          },
+          {
+            "block": "minecraft:water",
+            "height": 90
+          }
+        ]
+      },
+      {
+        "id": "overworld",
+        "label": "Overworld",
+        "biome": "minecraft:plains",
+        "layers": [
+          {
+            "block": "minecraft:bedrock",
+            "height": 1
+          },
+          {
+            "block": "minecraft:stone",
+            "height": 59
+          },
+          {
+            "block": "minecraft:dirt",
+            "height": 3
+          },
+          {
+            "block": "minecraft:grass_block",
+            "height": 1
+          }
+        ]
+      },
+      {
+        "id": "snowy_kingdom",
+        "label": "Snowy Kingdom",
+        "biome": "minecraft:snowy_plains",
+        "layers": [
+          {
+            "block": "minecraft:bedrock",
+            "height": 1
+          },
+          {
+            "block": "minecraft:stone",
+            "height": 59
+          },
+          {
+            "block": "minecraft:dirt",
+            "height": 3
+          },
+          {
+            "block": "minecraft:grass_block",
+            "height": 1
+          },
+          {
+            "block": "minecraft:snow",
+            "height": 1
+          }
+        ]
+      },
+      {
+        "id": "bottomless_pit",
+        "label": "Bottomless Pit",
+        "biome": "minecraft:plains",
+        "layers": [
+          {
+            "block": "minecraft:cobblestone",
+            "height": 2
+          },
+          {
+            "block": "minecraft:dirt",
+            "height": 3
+          },
+          {
+            "block": "minecraft:grass_block",
+            "height": 1
+          }
+        ]
+      },
+      {
+        "id": "desert",
+        "label": "Desert",
+        "biome": "minecraft:desert",
+        "layers": [
+          {
+            "block": "minecraft:bedrock",
+            "height": 1
+          },
+          {
+            "block": "minecraft:stone",
+            "height": 3
+          },
+          {
+            "block": "minecraft:sandstone",
+            "height": 52
+          },
+          {
+            "block": "minecraft:sand",
+            "height": 8
+          }
+        ]
+      },
+      {
+        "id": "redstone_ready",
+        "label": "Redstone Ready",
+        "biome": "minecraft:desert",
+        "layers": [
+          {
+            "block": "minecraft:bedrock",
+            "height": 1
+          },
+          {
+            "block": "minecraft:stone",
+            "height": 3
+          },
+          {
+            "block": "minecraft:sandstone",
+            "height": 116
+          }
+        ]
+      },
+      {
+        "id": "the_void",
+        "label": "The Void",
+        "biome": "minecraft:the_void",
+        "layers": [
+          {
+            "block": "minecraft:air",
+            "height": 1
+          }
+        ]
+      }
+    ],
+    "biomeChoices": [
+      {
+        "id": "minecraft:badlands",
+        "label": "Badlands"
+      },
+      {
+        "id": "minecraft:bamboo_jungle",
+        "label": "Bamboo Jungle"
+      },
+      {
+        "id": "minecraft:basalt_deltas",
+        "label": "Basalt Deltas"
+      },
+      {
+        "id": "minecraft:beach",
+        "label": "Beach"
+      },
+      {
+        "id": "minecraft:birch_forest",
+        "label": "Birch Forest"
+      },
+      {
+        "id": "minecraft:cherry_grove",
+        "label": "Cherry Grove"
+      },
+      {
+        "id": "minecraft:cold_ocean",
+        "label": "Cold Ocean"
+      },
+      {
+        "id": "minecraft:crimson_forest",
+        "label": "Crimson Forest"
+      },
+      {
+        "id": "minecraft:dappled_forest",
+        "label": "Dappled Forest"
+      },
+      {
+        "id": "minecraft:dark_forest",
+        "label": "Dark Forest"
+      },
+      {
+        "id": "minecraft:deep_cold_ocean",
+        "label": "Deep Cold Ocean"
+      },
+      {
+        "id": "minecraft:deep_dark",
+        "label": "Deep Dark"
+      },
+      {
+        "id": "minecraft:deep_frozen_ocean",
+        "label": "Deep Frozen Ocean"
+      },
+      {
+        "id": "minecraft:deep_lukewarm_ocean",
+        "label": "Deep Lukewarm Ocean"
+      },
+      {
+        "id": "minecraft:deep_ocean",
+        "label": "Deep Ocean"
+      },
+      {
+        "id": "minecraft:desert",
+        "label": "Desert"
+      },
+      {
+        "id": "minecraft:dripstone_caves",
+        "label": "Dripstone Caves"
+      },
+      {
+        "id": "minecraft:end_barrens",
+        "label": "End Barrens"
+      },
+      {
+        "id": "minecraft:end_highlands",
+        "label": "End Highlands"
+      },
+      {
+        "id": "minecraft:end_midlands",
+        "label": "End Midlands"
+      },
+      {
+        "id": "minecraft:eroded_badlands",
+        "label": "Eroded Badlands"
+      },
+      {
+        "id": "minecraft:flower_forest",
+        "label": "Flower Forest"
+      },
+      {
+        "id": "minecraft:forest",
+        "label": "Forest"
+      },
+      {
+        "id": "minecraft:frozen_ocean",
+        "label": "Frozen Ocean"
+      },
+      {
+        "id": "minecraft:frozen_peaks",
+        "label": "Frozen Peaks"
+      },
+      {
+        "id": "minecraft:frozen_river",
+        "label": "Frozen River"
+      },
+      {
+        "id": "minecraft:grove",
+        "label": "Grove"
+      },
+      {
+        "id": "minecraft:ice_spikes",
+        "label": "Ice Spikes"
+      },
+      {
+        "id": "minecraft:jagged_peaks",
+        "label": "Jagged Peaks"
+      },
+      {
+        "id": "minecraft:jungle",
+        "label": "Jungle"
+      },
+      {
+        "id": "minecraft:lukewarm_ocean",
+        "label": "Lukewarm Ocean"
+      },
+      {
+        "id": "minecraft:lush_caves",
+        "label": "Lush Caves"
+      },
+      {
+        "id": "minecraft:mangrove_swamp",
+        "label": "Mangrove Swamp"
+      },
+      {
+        "id": "minecraft:meadow",
+        "label": "Meadow"
+      },
+      {
+        "id": "minecraft:mushroom_fields",
+        "label": "Mushroom Fields"
+      },
+      {
+        "id": "minecraft:nether_wastes",
+        "label": "Nether Wastes"
+      },
+      {
+        "id": "minecraft:ocean",
+        "label": "Ocean"
+      },
+      {
+        "id": "minecraft:old_growth_birch_forest",
+        "label": "Old Growth Birch Forest"
+      },
+      {
+        "id": "minecraft:old_growth_pine_taiga",
+        "label": "Old Growth Pine Taiga"
+      },
+      {
+        "id": "minecraft:old_growth_spruce_taiga",
+        "label": "Old Growth Spruce Taiga"
+      },
+      {
+        "id": "minecraft:pale_garden",
+        "label": "Pale Garden"
+      },
+      {
+        "id": "minecraft:plains",
+        "label": "Plains"
+      },
+      {
+        "id": "minecraft:river",
+        "label": "River"
+      },
+      {
+        "id": "minecraft:savanna",
+        "label": "Savanna"
+      },
+      {
+        "id": "minecraft:savanna_plateau",
+        "label": "Savanna Plateau"
+      },
+      {
+        "id": "minecraft:small_end_islands",
+        "label": "Small End Islands"
+      },
+      {
+        "id": "minecraft:snowy_beach",
+        "label": "Snowy Beach"
+      },
+      {
+        "id": "minecraft:snowy_plains",
+        "label": "Snowy Plains"
+      },
+      {
+        "id": "minecraft:snowy_slopes",
+        "label": "Snowy Slopes"
+      },
+      {
+        "id": "minecraft:snowy_taiga",
+        "label": "Snowy Taiga"
+      },
+      {
+        "id": "minecraft:soul_sand_valley",
+        "label": "Soul Sand Valley"
+      },
+      {
+        "id": "minecraft:sparse_jungle",
+        "label": "Sparse Jungle"
+      },
+      {
+        "id": "minecraft:stony_peaks",
+        "label": "Stony Peaks"
+      },
+      {
+        "id": "minecraft:stony_shore",
+        "label": "Stony Shore"
+      },
+      {
+        "id": "minecraft:sulfur_caves",
+        "label": "Sulfur Caves"
+      },
+      {
+        "id": "minecraft:sunflower_plains",
+        "label": "Sunflower Plains"
+      },
+      {
+        "id": "minecraft:swamp",
+        "label": "Swamp"
+      },
+      {
+        "id": "minecraft:taiga",
+        "label": "Taiga"
+      },
+      {
+        "id": "minecraft:the_end",
+        "label": "The End"
+      },
+      {
+        "id": "minecraft:the_void",
+        "label": "The Void"
+      },
+      {
+        "id": "minecraft:warm_ocean",
+        "label": "Warm Ocean"
+      },
+      {
+        "id": "minecraft:warped_forest",
+        "label": "Warped Forest"
+      },
+      {
+        "id": "minecraft:windswept_forest",
+        "label": "Windswept Forest"
+      },
+      {
+        "id": "minecraft:windswept_gravelly_hills",
+        "label": "Windswept Gravelly Hills"
+      },
+      {
+        "id": "minecraft:windswept_hills",
+        "label": "Windswept Hills"
+      },
+      {
+        "id": "minecraft:windswept_savanna",
+        "label": "Windswept Savanna"
+      },
+      {
+        "id": "minecraft:wooded_badlands",
+        "label": "Wooded Badlands"
+      }
+    ]
+  }
+}

@@ -2,6 +2,6 @@
   "name": "unnamed-menu-verification",
   "private": true,
   "type": "module",
-  "scripts": { "smoke": "node smoke.mjs", "reference": "node source-check.mjs", "test": "node --test video-runtime.test.mjs debug-reset.test.mjs menu-application.test.mjs realms-removal.test.mjs review-fixes.test.mjs", "video": "node video-settings.mjs", "persistence": "node video-persistence.mjs", "quit": "node quit-game.mjs", "review": "node review-regression.mjs" },
+  "scripts": { "smoke": "node smoke.mjs", "reference": "node source-check.mjs", "test": "node --test video-runtime.test.mjs debug-reset.test.mjs menu-application.test.mjs menu-worlds.test.mjs realms-removal.test.mjs review-fixes.test.mjs input-runtime.test.mjs preferences-runtime.test.mjs", "video": "node video-settings.mjs", "persistence": "node video-persistence.mjs", "quit": "node quit-game.mjs", "review": "node review-regression.mjs" },
   "devDependencies": { "playwright": "1.56.1", "pngjs": "7.0.0" }
 }

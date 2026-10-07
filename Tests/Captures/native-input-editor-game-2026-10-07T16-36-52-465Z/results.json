@@ -1,0 +1,69 @@
+{
+  "finished": "2026-10-07T16:37:36.098Z",
+  "mode": "editor-game",
+  "exe": "C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe",
+  "runtime": "C:\\dev\\projects\\Unnamed\\Tests\\Runtime\\native-input-editor-game-2026-10-07T16-36-52-465Z",
+  "checks": [
+    {
+      "name": "current native build and fresh C/Shift defaults",
+      "pass": true,
+      "detail": {
+        "ok": true,
+        "ready": true,
+        "build": "Input v2",
+        "persistent": true,
+        "error": "",
+        "bindings": {
+          "key.forward": "W",
+          "key.back": "S",
+          "key.left": "A",
+          "key.right": "D",
+          "key.sprint": "Left Shift",
+          "key.sneak": "C",
+          "key.jump": "Space"
+        },
+        "nativeKeys": {
+          "key.forward": "W",
+          "key.back": "S",
+          "key.left": "A",
+          "key.right": "D",
+          "key.sprint": "LeftShift",
+          "key.sneak": "C",
+          "key.jump": "SpaceBar"
+        },
+        "defaults": {
+          "key.forward": "W",
+          "key.back": "S",
+          "key.left": "A",
+          "key.right": "D",
+          "key.sprint": "Left Shift",
+          "key.sneak": "C",
+          "key.jump": "Space"
+        },
+        "policies": {
+          "toggleSprint": false,
+          "toggleCrouch": false
+        },
+        "supported": [
+          "key.forward",
+          "key.back",
+          "key.left",
+          "key.right",
+          "key.sprint",
+          "key.sneak",
+          "key.jump"
+        ]
+      }
+    },
+    {
+      "name": "standalone preferences persist",
+      "pass": true
+    },
+    {
+      "name": "native Windows input suite",
+      "pass": false,
+      "detail": "Error: page.waitForFunction: Target page, context or browser has been closed"
+    }
+  ],
+  "events": []
+}

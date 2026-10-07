@@ -1,0 +1,644 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "JRHEREDIARAMIRE",
+			"instance": "2B5B220745E5D303EFA689A9EE95B99F",
+			"instanceName": "JRHEREDIARAMIRE-4360",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (25H2) [10.0.26200.9550] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 4070 Ti SUPER",
+			"cPUModel": "Intel(R) Core(TM) i9-14900KF",
+			"rAMInGB": 64,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.07-17.13.48",
+	"succeeded": 5,
+	"succeededWithWarnings": 2,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 1.8114998340606689,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "BindingsAndSerialization",
+			"fullTestPath": "Unnamed.Input.BindingsAndSerialization",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2B5B220745E5D303EFA689A9EE95B99F"
+			],
+			"duration": 0.014623899012804031,
+			"dateTime": "2026.10.07-17.13.46",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "IntentRules",
+			"fullTestPath": "Unnamed.Input.IntentRules",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2B5B220745E5D303EFA689A9EE95B99F"
+			],
+			"duration": 0.0022748000919818878,
+			"dateTime": "2026.10.07-17.13.46",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NativeKeyPipeline",
+			"fullTestPath": "Unnamed.Input.NativeKeyPipeline",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2B5B220745E5D303EFA689A9EE95B99F"
+			],
+			"duration": 0.011961203068494797,
+			"dateTime": "2026.10.07-17.13.46",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "QuitSafety",
+			"fullTestPath": "Unnamed.Menu.Application.QuitSafety",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2B5B220745E5D303EFA689A9EE95B99F"
+			],
+			"duration": 0.0082314983010292053,
+			"dateTime": "2026.10.07-17.13.46",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Contract",
+			"fullTestPath": "Unnamed.Menu.Preferences.Contract",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"2B5B220745E5D303EFA689A9EE95B99F"
+			],
+			"duration": 1.6819572448730469,
+			"dateTime": "2026.10.07-17.13.46",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Object None of class /Script/Unnamed.MenuPreferences with ClassWithin of /Script/Engine.GameInstance was created in invalid Outer /Script/CoreUObject.Package!",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.46"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogOutputDevice: \n\nScript Stack (0 frames) :\n",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.46"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: === Handled ensure: ===",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: ",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: Ensure condition failed: false  [File:D:\\build\\++UE5\\Sync\\Engine\\Source\\Runtime\\CoreUObject\\Private\\UObject\\UObjectGlobals.cpp] [Line: 3321] ",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: Object None of class /Script/Unnamed.MenuPreferences with ClassWithin of /Script/Engine.GameInstance was created in invalid Outer /Script/CoreUObject.Package!",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: Stack: ",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ffd772ca175 UnrealEditor-CoreUObject.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ffd770cd9bd UnrealEditor-CoreUObject.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ffd770cbb96 UnrealEditor-CoreUObject.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ffd770ce173 UnrealEditor-CoreUObject.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ffcc9f62b49 UnrealEditor-Unnamed-1013.dll!`anonymous namespace'::Service() [C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\MenuPreferencesTests.cpp:31]",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ffcc9f5ee1b UnrealEditor-Unnamed-1013.dll!FMenuPreferenceContractTest::RunTest() [C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\MenuPreferencesTests.cpp:41]",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ffd787211b6 UnrealEditor-Core.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ffd78740460 UnrealEditor-Core.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x0000013dd319f30f UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x0000013dd319e29d UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x0000013dd31a27ba UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x0000013dd31913fe UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff71b53325d UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff71b51c4ac UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff71b51c5ba UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff71b521256 UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff71b535c74 UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff71b53838a UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ffe01b4cdf7 KERNEL32.DLL!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ffe0231ee4c ntdll.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: ",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.47"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Reject {\"skipWarning\":1}' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\MenuPreferencesTests.cpp",
+					"lineNumber": 84,
+					"timestamp": "2026.10.07-17.13.48"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "EnsureFailed: Ensure condition failed: false  [File:D:\\build\\++UE5\\Sync\\Engine\\Source\\Runtime\\CoreUObject\\Private\\UObject\\UObjectGlobals.cpp] [Line: 3321] \r\nObject None of class /Script/Unnamed.MenuPreferences with ClassWithin of /Script/Engine.GameInstance was created in invalid Outer /Script/CoreUObject.Package!\r\nStack: \r\n0x00007ffd772ca175 UnrealEditor-CoreUObject.dll!UnknownFunction []\r\n0x00007ffd770cd9bd UnrealEditor-CoreUObject.dll!UnknownFunction []\r\n0x00007ffd770cbb96 UnrealEditor-CoreUObject.dll!UnknownFunction []\r\n0x00007ffd770ce173 UnrealEditor-CoreUObject.dll!UnknownFunction []\r\n0x00007ffcc9f62b49 UnrealEditor-Unnamed-1013.dll!`anonymous namespace'::Service() [C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\MenuPreferencesTests.cpp:31]\r\n0x00007ffcc9f5ee1b UnrealEditor-Unnamed-1013.dll!FMenuPreferenceContractTest::RunTest() [C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\MenuPreferencesTests.cpp:41]\r\n0x00007ffd787211b6 UnrealEditor-Core.dll!UnknownFunction []\r\n0x00007ffd78740460 UnrealEditor-Core.dll!UnknownFunction []\r\n0x0000013dd319f30f UnrealEditor-AutomationWorker.dll!UnknownFunction []\r\n0x0000013dd319e29d UnrealEditor-AutomationWorker.dll!UnknownFunction []\r\n0x0000013dd31a27ba UnrealEditor-AutomationWorker.dll!UnknownFunction []\r\n0x0000013dd31913fe UnrealEditor-AutomationWorker.dll!UnknownFunction []\r\n0x00007ff71b53325d UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ff71b51c4ac UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ff71b51c5ba UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ff71b521256 UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ff71b535c74 UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ff71b53838a UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ffe01b4cdf7 KERNEL32.DLL!UnknownFunction []\r\n0x00007ffe0231ee4c ntdll.dll!UnknownFunction []\r\n",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.48"
+				}
+			],
+			"warnings": 2,
+			"errors": 28,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FailureRecovery",
+			"fullTestPath": "Unnamed.Menu.Preferences.FailureRecovery",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2B5B220745E5D303EFA689A9EE95B99F"
+			],
+			"duration": 0.046930301934480667,
+			"dateTime": "2026.10.07-17.13.48",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Object None of class /Script/Unnamed.MenuPreferences with ClassWithin of /Script/Engine.GameInstance was created in invalid Outer /Script/CoreUObject.Package!",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.48"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Object None of class /Script/Unnamed.MenuPreferences with ClassWithin of /Script/Engine.GameInstance was created in invalid Outer /Script/CoreUObject.Package!",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.48"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Object None of class /Script/Unnamed.MenuPreferences with ClassWithin of /Script/Engine.GameInstance was created in invalid Outer /Script/CoreUObject.Package!",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.48"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Object None of class /Script/Unnamed.MenuPreferences with ClassWithin of /Script/Engine.GameInstance was created in invalid Outer /Script/CoreUObject.Package!",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.48"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Object None of class /Script/Unnamed.MenuPreferences with ClassWithin of /Script/Engine.GameInstance was created in invalid Outer /Script/CoreUObject.Package!",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.48"
+				}
+			],
+			"warnings": 5,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Persistence",
+			"fullTestPath": "Unnamed.Menu.Preferences.Persistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2B5B220745E5D303EFA689A9EE95B99F"
+			],
+			"duration": 0.03732689842581749,
+			"dateTime": "2026.10.07-17.13.48",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Object None of class /Script/Unnamed.MenuPreferences with ClassWithin of /Script/Engine.GameInstance was created in invalid Outer /Script/CoreUObject.Package!",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.48"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Object None of class /Script/Unnamed.MenuPreferences with ClassWithin of /Script/Engine.GameInstance was created in invalid Outer /Script/CoreUObject.Package!",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.48"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Object None of class /Script/Unnamed.MenuPreferences with ClassWithin of /Script/Engine.GameInstance was created in invalid Outer /Script/CoreUObject.Package!",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.48"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Object None of class /Script/Unnamed.MenuPreferences with ClassWithin of /Script/Engine.GameInstance was created in invalid Outer /Script/CoreUObject.Package!",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.48"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Object None of class /Script/Unnamed.MenuPreferences with ClassWithin of /Script/Engine.GameInstance was created in invalid Outer /Script/CoreUObject.Package!",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.48"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Object None of class /Script/Unnamed.MenuPreferences with ClassWithin of /Script/Engine.GameInstance was created in invalid Outer /Script/CoreUObject.Package!",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-17.13.48"
+				}
+			],
+			"warnings": 6,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Validation",
+			"fullTestPath": "Unnamed.Menu.VideoSettings.Validation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2B5B220745E5D303EFA689A9EE95B99F"
+			],
+			"duration": 0.0081939995288848877,
+			"dateTime": "2026.10.07-17.13.48",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

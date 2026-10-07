@@ -1,0 +1,78 @@
+{
+  "Status": "complete_for_super_flat_preview_scope",
+  "Package": "C:\\dev\\projects\\Unnamed\\Packages\\SuperFlatDevelopment\\Windows\\Unnamed.exe",
+  "NativeExecutableSHA256": "6a5f2fce88fae28669d110ab708eaa84ee69aad150b5718d8f7ecaf3aab4fef6",
+  "Map": "/Game/Maps/L_SuperFlat",
+  "DimensionsMeters": [
+    2000,
+    2000
+  ],
+  "SingleplayerEntries": [
+    "super-flat",
+    "fictional-forest",
+    "fictional-build"
+  ],
+  "PlayableSingleplayerEntries": [
+    "super-flat"
+  ],
+  "EditorBuild": "passed",
+  "PackageBuild": "passed",
+  "AssetValidation": "passed",
+  "NativeRoutingSuite": "passed",
+  "BrowserUnitTests": 44,
+  "PackagedChecks": 32,
+  "PackagedFailures": 0,
+  "PackagedEvidence": "Tests/Captures/super-flat-2026-10-07T18-36-54-558Z/results.json",
+  "VisualInspection": "passed for captured native world and Singleplayer list",
+  "RemainingAcceptance": [
+    "Physical keyboard/mouse input",
+    "Live embedded PIE",
+    "Future FPS character integration"
+  ],
+  "Preservation": {
+    "Baseline": "C:\\dev\\backups\\Unnamed\\super-flat-20261007-140749",
+    "ProtectedFileCount": 982,
+    "ChangedProtectedFiles": [
+      {
+        "Path": "C:\\dev\\projects\\Unnamed\\Content\\Input\\Actions\\IA_Look.uasset",
+        "SHA256": "D040CA1B901AA113C97D09BD09CF538E2D8CED3E9C2DB0EC7480980A19796973"
+      },
+      {
+        "Path": "C:\\dev\\projects\\Unnamed\\Content\\Input\\MappingContexts\\IMC_OnFoot.uasset",
+        "SHA256": "7EA6719ACC442EB1C9CEC515A6E963D55D1CC5F38F9A8FDDC0F419808908CDE7"
+      }
+    ],
+    "IndexEntryDifferenceCount": 0,
+    "Hashes": [
+      {
+        "Path": "C:\\dev\\projects\\Unnamed\\Content\\Maps\\L_SuperFlat.umap",
+        "Hash": "C63DDAFE3004DA54AC69E15A308F71C787C4DEEE94F6789EE1B7A354CEE55B76"
+      },
+      {
+        "Path": "C:\\dev\\projects\\Unnamed\\Content\\Maps\\SuperFlat\\M_SuperFlatGrid.uasset",
+        "Hash": "336E8933FE222B60AE1AF73BCC2D501B128D33AC965DFD2FB9B25AB40D7293CA"
+      },
+      {
+        "Path": "C:\\dev\\projects\\Unnamed\\Content\\Menu\\L_Menu.umap",
+        "Hash": "B4165889B793ECF4904C4370EFF7D0AFD872AB99243D5B5740D9B216EC87D83D"
+      },
+      {
+        "Path": "C:\\dev\\projects\\Unnamed\\Packages\\SuperFlatDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+        "Hash": "6A5F2FCE88FAE28669D110AB708EAA84EE69AAD150B5718D8F7ECAF3AAB4FEF6"
+      },
+      {
+        "Path": "C:\\dev\\projects\\Unnamed\\Packages\\SuperFlatDevelopment\\Windows\\Unnamed\\Content\\Menu\\Web\\index.html",
+        "Hash": "EC9C1B563AB5699F30E3A69A3848C0996AFC600BA2F9B3930D9CC30EDB89377A"
+      },
+      {
+        "Path": "C:\\dev\\projects\\Unnamed\\Content\\Menu\\Web\\index.html",
+        "Hash": "37CB446D2BF7E383CCE8BA4279EAE086E03431E8070A35843B67141EEA15425B"
+      },
+      {
+        "Path": "C:\\dev\\projects\\Unnamed\\Binaries\\Win64\\UnrealEditor.modules",
+        "Hash": "B2623D78ED71AC53702A6AC54BD1BE0B833177C7361E88B77FC74C1B2093EFE8"
+      }
+    ]
+  },
+  "ConcurrentChanges": "FPS Foundation task changed its input assets and shared sources during this run. The packaged snapshot was verified independently; newer FPS changes are not certified here."
+}

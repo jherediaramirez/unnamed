@@ -6,9 +6,11 @@ public class Unnamed : ModuleRules
     public Unnamed(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-        PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine" });
-        PrivateDependencyModuleNames.AddRange(new[] { "InputCore", "Slate", "SlateCore", "WebBrowser", "HTTP", "Json", "ApplicationCore" });
+        PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "EnhancedInput", "InputCore", "GameplayTags" });
+        PrivateDependencyModuleNames.AddRange(new[] { "InputCore", "Slate", "SlateCore", "WebBrowser", "HTTP", "Json", "ApplicationCore", "RHI", "RenderCore" });
         string WebRoot = Path.Combine(ModuleDirectory, "../../Content/Menu/Web");
+        // Regenerate build/staging metadata when the native preference contract changes.
+        ExternalDependencies.Add(Path.Combine(WebRoot, "preferences-schema.menuprefs"));
         // CEF loads physical files, not assets inside the cooked container.
         foreach (string File in Directory.GetFiles(WebRoot, "*", SearchOption.AllDirectories))
         {

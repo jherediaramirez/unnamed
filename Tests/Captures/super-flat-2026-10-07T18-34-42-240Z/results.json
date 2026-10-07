@@ -1,0 +1,109 @@
+{
+  "finished": "2026-10-07T18:35:38.816Z",
+  "packageName": "SuperFlatDevelopment",
+  "exeSHA256": "6a5f2fce88fae28669d110ab708eaa84ee69aad150b5718d8f7ecaf3aab4fef6",
+  "checks": [
+    {
+      "name": "Native rejects noncatalog travel: fictional-forest",
+      "pass": true,
+      "detail": {
+        "ok": false,
+        "canQuit": true,
+        "pendingQuit": false,
+        "quitIssued": false,
+        "canOpenWorld": true,
+        "pendingWorld": false,
+        "travelIssued": false,
+        "error": "Only Super Flat is playable. The other entries are design references."
+      }
+    },
+    {
+      "name": "Native rejects noncatalog travel: fictional-build",
+      "pass": true,
+      "detail": {
+        "ok": false,
+        "canQuit": true,
+        "pendingQuit": false,
+        "quitIssued": false,
+        "canOpenWorld": true,
+        "pendingWorld": false,
+        "travelIssued": false,
+        "error": "Only Super Flat is playable. The other entries are design references."
+      }
+    },
+    {
+      "name": "Native rejects noncatalog travel: /Game/Maps/L_SuperFlat",
+      "pass": true,
+      "detail": {
+        "ok": false,
+        "canQuit": true,
+        "pendingQuit": false,
+        "quitIssued": false,
+        "canOpenWorld": true,
+        "pendingWorld": false,
+        "travelIssued": false,
+        "error": "Only Super Flat is playable. The other entries are design references."
+      }
+    },
+    {
+      "name": "Native rejects noncatalog travel: super-flat?listen",
+      "pass": true,
+      "detail": {
+        "ok": false,
+        "canQuit": true,
+        "pendingQuit": false,
+        "quitIssued": false,
+        "canOpenWorld": true,
+        "pendingWorld": false,
+        "travelIssued": false,
+        "error": "Only Super Flat is playable. The other entries are design references."
+      }
+    },
+    {
+      "name": "Singleplayer keeps exactly Super Flat and two design references",
+      "pass": true
+    },
+    {
+      "name": "Super Flat selected with Play available",
+      "pass": true
+    },
+    {
+      "name": "Built-in map protected from mock Edit",
+      "pass": true
+    },
+    {
+      "name": "Built-in map protected from mock Delete",
+      "pass": true
+    },
+    {
+      "name": "Built-in map protected from mock Re-Create",
+      "pass": true
+    },
+    {
+      "name": "fictional-forest labeled as reference with Play disabled",
+      "pass": true
+    },
+    {
+      "name": "fictional-forest double click remains a reference explanation",
+      "pass": true
+    },
+    {
+      "name": "fictional-build labeled as reference with Play disabled",
+      "pass": true
+    },
+    {
+      "name": "fictional-build double click remains a reference explanation",
+      "pass": true
+    },
+    {
+      "name": "Play button loads the native level with ground collision and clear spawn",
+      "pass": true
+    },
+    {
+      "name": "Harness completed",
+      "pass": false,
+      "detail": "Error: Runtime condition timed out"
+    }
+  ],
+  "runtime": "C:\\dev\\projects\\Unnamed\\Tests\\Runtime\\super-flat-2026-10-07T18-34-42-240Z"
+}

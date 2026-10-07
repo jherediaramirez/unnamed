@@ -1,0 +1,80 @@
+{
+  "finished": "2026-10-07T16:49:44.655Z",
+  "htmlSHA256": "54d50d59497fa0285ff71ce99aaea2d956cf06eefadcd764b9b0c590583396b7",
+  "runtime": "C:\\dev\\projects\\Unnamed\\Tests\\Runtime\\input-foundation-2026-10-07T16-49-35-547Z",
+  "exe": "C:\\dev\\projects\\Unnamed\\Packages\\MenuInputCrouchCDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+  "checks": [
+    {
+      "name": "1280x720 seven native movement rows",
+      "pass": true
+    },
+    {
+      "name": "1280x720 saved/default forward binding",
+      "pass": true,
+      "detail": {
+        "key.forward": "W",
+        "key.back": "S",
+        "key.left": "A",
+        "key.right": "D",
+        "key.sprint": "LeftShift",
+        "key.sneak": "C",
+        "key.jump": "SpaceBar"
+      }
+    },
+    {
+      "name": "1280x720 saved/default Hold policy",
+      "pass": true,
+      "detail": {
+        "toggleSprint": false,
+        "toggleCrouch": false
+      }
+    },
+    {
+      "name": "1280x720 Shift sprint and C crouch defaults",
+      "pass": true
+    },
+    {
+      "name": "1280x720 native input build is v2",
+      "pass": true
+    },
+    {
+      "name": "1280x720 graphics API reports real DirectX 12 default",
+      "pass": true
+    },
+    {
+      "name": "1280x720 graphics tooltip reports actual running DirectX 12",
+      "pass": true
+    },
+    {
+      "name": "1280x720 hovering displays the real graphics API tooltip",
+      "pass": false
+    },
+    {
+      "name": "1280x720 runtime suite",
+      "pass": false,
+      "detail": "Error: 1280x720 hovering displays the real graphics API tooltip"
+    },
+    {
+      "name": "1920x1080 seven native movement rows",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 saved/default forward binding",
+      "pass": false,
+      "detail": {
+        "key.forward": "W",
+        "key.back": "S",
+        "key.left": "A",
+        "key.right": "D",
+        "key.sprint": "LeftShift",
+        "key.sneak": "C",
+        "key.jump": "SpaceBar"
+      }
+    },
+    {
+      "name": "1920x1080 runtime suite",
+      "pass": false,
+      "detail": "Error: 1920x1080 saved/default forward binding"
+    }
+  ]
+}

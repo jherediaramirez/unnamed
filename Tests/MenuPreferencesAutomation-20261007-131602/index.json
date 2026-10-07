@@ -1,0 +1,162 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "JRHEREDIARAMIRE",
+			"instance": "652F74F54F0141298992D2BAFAADE788",
+			"instanceName": "JRHEREDIARAMIRE-14092",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (25H2) [10.0.26200.9550] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 4070 Ti SUPER",
+			"cPUModel": "Intel(R) Core(TM) i9-14900KF",
+			"rAMInGB": 64,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.07-17.16.17",
+	"succeeded": 7,
+	"succeededWithWarnings": 0,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.29670029878616333,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "BindingsAndSerialization",
+			"fullTestPath": "Unnamed.Input.BindingsAndSerialization",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"652F74F54F0141298992D2BAFAADE788"
+			],
+			"duration": 0.016016498208045959,
+			"dateTime": "2026.10.07-17.16.16",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "IntentRules",
+			"fullTestPath": "Unnamed.Input.IntentRules",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"652F74F54F0141298992D2BAFAADE788"
+			],
+			"duration": 0.002005700021982193,
+			"dateTime": "2026.10.07-17.16.16",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NativeKeyPipeline",
+			"fullTestPath": "Unnamed.Input.NativeKeyPipeline",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"652F74F54F0141298992D2BAFAADE788"
+			],
+			"duration": 0.01238270103931427,
+			"dateTime": "2026.10.07-17.16.16",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "QuitSafety",
+			"fullTestPath": "Unnamed.Menu.Application.QuitSafety",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"652F74F54F0141298992D2BAFAADE788"
+			],
+			"duration": 0.0044200979173183441,
+			"dateTime": "2026.10.07-17.16.16",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Contract",
+			"fullTestPath": "Unnamed.Menu.Preferences.Contract",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"652F74F54F0141298992D2BAFAADE788"
+			],
+			"duration": 0.19604639708995819,
+			"dateTime": "2026.10.07-17.16.16",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Reject {\"skipWarning\":1}' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\MenuPreferencesTests.cpp",
+					"lineNumber": 85,
+					"timestamp": "2026.10.07-17.16.17"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FailureRecovery",
+			"fullTestPath": "Unnamed.Menu.Preferences.FailureRecovery",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"652F74F54F0141298992D2BAFAADE788"
+			],
+			"duration": 0.032073300331830978,
+			"dateTime": "2026.10.07-17.16.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Persistence",
+			"fullTestPath": "Unnamed.Menu.Preferences.Persistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"652F74F54F0141298992D2BAFAADE788"
+			],
+			"duration": 0.025471001863479614,
+			"dateTime": "2026.10.07-17.16.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Validation",
+			"fullTestPath": "Unnamed.Menu.VideoSettings.Validation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"652F74F54F0141298992D2BAFAADE788"
+			],
+			"duration": 0.0082845985889434814,
+			"dateTime": "2026.10.07-17.16.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

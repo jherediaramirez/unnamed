@@ -1,8 +1,12 @@
 # Control Registry
 
-Generated from rendered controls and structured definitions. Five video settings, confirmed preference reset and normal Quit Game are implemented; other controls remain mocks. See VideoSettings.md and QuitGame.md for functional acceptance and remaining human gates. `ControlRegistry.json` records the status of every entry.
+This generated table is the earlier menu-settings snapshot. The newer Singleplayer routing is documented in [SuperFlat.md](SuperFlat.md): Super Flat is playable; the original two worlds remain references. Concurrent FPS changes have their own evidence under `Foundation/` and are not retroactively certified by this table.
+
+Generated from rendered controls and structured definitions. Five video settings, confirmed preference reset and normal Quit Game are implemented. Seven movement binding settings and two Hold/Toggle policies use native Enhanced Input; actual character gameplay remains pending. Other binding rows are Planned and disabled. See Keybindings.md. See VideoSettings.md and QuitGame.md for functional acceptance and remaining human gates. `ControlRegistry.json` records the status of every entry.
 
 Observed 697 distinct controls across 33 source routes and Create tabs. Dynamic selected-pack controls are included in the supplemental observations.
+
+101 additional scalar preferences, language, pack order, warning dismissal and telemetry choice now use native persistence. Saved choices and implemented effects have separate statuses. See MenuPreferences.md.
 
 | Screen | Stable ID | Exact observed label | Widget | Default | Status |
 |---|---|---|---|---|---|
@@ -24,186 +28,186 @@ Observed 697 distinct controls across 33 source routes and Create tabs. Dynamic 
 | worlds | worlds..Delete | Delete | button | "Not applicable (command)" | UI_ONLY |
 | worlds | worlds..Re-Create | Re-Create | button | "Not applicable (command)" | UI_ONLY |
 | worlds | worlds..Back | Back | button | "Not applicable (command)" | UI_ONLY |
-| safety | safety..Do_not_show_this_screen_again | Do not show this screen again | checkbox | false | UI_ONLY |
+| safety | safety..Do_not_show_this_screen_again | Do not show this screen again | checkbox | false | PREFERENCE_IMPLEMENTED |
 | safety | safety..Proceed | Proceed | button | "Not applicable (command)" | UI_ONLY |
 | safety | safety..Back | Back | button | "Not applicable (command)" | UI_ONLY |
 | message | message..Back | Back | button | "Not applicable (command)" | UI_ONLY |
 | language | language..Language | Language | text | "" | UI_ONLY |
-| language | language.af_za | Afrikaans (Suid-Afrika) | option | "false" | UI_ONLY |
-| language | language.ar_sa | العربية (العالم العربي) | option | "false" | UI_ONLY |
-| language | language.ast_es | Asturianu (Asturies) | option | "false" | UI_ONLY |
-| language | language.az_az | Azərbaycanca (Azərbaycan) | option | "false" | UI_ONLY |
-| language | language.ba_ru | Башҡортса (Башҡортостан, Рәсәй) | option | "false" | UI_ONLY |
-| language | language.bar | Boarisch (Bayern) | option | "false" | UI_ONLY |
-| language | language.be_by | Беларуская (Беларусь) | option | "false" | UI_ONLY |
-| language | language.be_latn | Biełaruskaja (Biełaruś) | option | "false" | UI_ONLY |
-| language | language.bg_bg | Български (България) | option | "false" | UI_ONLY |
-| language | language.br_fr | Brezhoneg (Breizh) | option | "false" | UI_ONLY |
-| language | language.brb | Braobans (Braobant) | option | "false" | UI_ONLY |
-| language | language.bs_ba | Bosanski (Bosna i Hercegovina) | option | "false" | UI_ONLY |
-| language | language.ca_es | Català (Catalunya) | option | "false" | UI_ONLY |
-| language | language.cs_cz | Čeština (Česko) | option | "false" | UI_ONLY |
-| language | language.cv_cu | Чӑвашла (Чӑваш Ен, Раҫҫей) | option | "false" | UI_ONLY |
-| language | language.cy_gb | Cymraeg (Cymru) | option | "false" | UI_ONLY |
-| language | language.da_dk | Dansk (Danmark) | option | "false" | UI_ONLY |
-| language | language.de_at | Deitsch (Österreich) | option | "false" | UI_ONLY |
-| language | language.de_ch | Schwiizerdütsch (Schwiiz) | option | "false" | UI_ONLY |
-| language | language.de_de | Deutsch (Deutschland) | option | "false" | UI_ONLY |
-| language | language.el_gr | Ελληνικά (Ελλάδα) | option | "false" | UI_ONLY |
-| language | language.en_au | English (Australia) | option | "false" | UI_ONLY |
-| language | language.en_ca | English (Canada) | option | "false" | UI_ONLY |
-| language | language.en_gb | English (United Kingdom) | option | "false" | UI_ONLY |
-| language | language.en_nz | English (New Zealand) | option | "false" | UI_ONLY |
-| language | language.en_pt | Pirate Speak (The Seven Seas) | option | "false" | UI_ONLY |
-| language | language.en_ud | ɥsᴉꞁᵷuƎ (uʍoᗡ ǝpᴉsd∩) | option | "false" | UI_ONLY |
-| language | language.en_us | English (US) | option | "true" | UI_ONLY |
-| language | language.enp | Anglish (Oned Riches) | option | "false" | UI_ONLY |
-| language | language.enws | Shakespearean English (Kingdom of England) | option | "false" | UI_ONLY |
-| language | language.eo_uy | Esperanto (Esperantujo) | option | "false" | UI_ONLY |
-| language | language.es_ar | Español (Argentina) | option | "false" | UI_ONLY |
-| language | language.es_cl | Español (Chile) | option | "false" | UI_ONLY |
-| language | language.es_ec | Español (Ecuador) | option | "false" | UI_ONLY |
-| language | language.es_es | Español (España) | option | "false" | UI_ONLY |
-| language | language.es_mx | Español (México) | option | "false" | UI_ONLY |
-| language | language.es_uy | Español (Uruguay) | option | "false" | UI_ONLY |
-| language | language.es_ve | Español (Venezuela) | option | "false" | UI_ONLY |
-| language | language.esan | Andalûh (Andaluçía) | option | "false" | UI_ONLY |
-| language | language.et_ee | Eesti keel (Eesti) | option | "false" | UI_ONLY |
-| language | language.eu_es | Euskara (Euskal Herria) | option | "false" | UI_ONLY |
-| language | language.fa_ir | فارسی (ايران) | option | "false" | UI_ONLY |
-| language | language.fi_fi | Suomi (Suomi) | option | "false" | UI_ONLY |
-| language | language.fil_ph | Filipino (Pilipinas) | option | "false" | UI_ONLY |
-| language | language.fo_fo | Føroyskt (Føroyar) | option | "false" | UI_ONLY |
-| language | language.fr_ca | Français (Canada) | option | "false" | UI_ONLY |
-| language | language.fr_ch | Français (Suisse) | option | "false" | UI_ONLY |
-| language | language.fr_fr | Français (France) | option | "false" | UI_ONLY |
-| language | language.fra_de | Fränggisch (Franggn) | option | "false" | UI_ONLY |
-| language | language.fur_it | Furlan (Friûl) | option | "false" | UI_ONLY |
-| language | language.fy_nl | Frysk (Fryslân) | option | "false" | UI_ONLY |
-| language | language.ga_ie | Gaeilge (Éire) | option | "false" | UI_ONLY |
-| language | language.gd_gb | Gàidhlig (Alba) | option | "false" | UI_ONLY |
-| language | language.gl_es | Galego (Galicia / Galiza) | option | "false" | UI_ONLY |
-| language | language.go_fr | Galo (Bertègn) | option | "false" | UI_ONLY |
-| language | language.got_de | 𐌲𐌿𐍄𐍂𐌰𐌶𐌳𐌰 (𐌲𐌿𐍄𐌸𐌹𐌿𐌳𐌰) | option | "false" | UI_ONLY |
-| language | language.hal_ua | Галицка (Галичина, Вкраїна) | option | "false" | UI_ONLY |
-| language | language.haw_us | ʻŌlelo Hawaiʻi (Hawaiʻi) | option | "false" | UI_ONLY |
-| language | language.he_il | עברית (ישראל) | option | "false" | UI_ONLY |
-| language | language.hi_in | हिंदी (भारत) | option | "false" | UI_ONLY |
-| language | language.hn_no | Høgnorsk (Norig) | option | "false" | UI_ONLY |
-| language | language.hr_hr | Hrvatski (Hrvatska) | option | "false" | UI_ONLY |
-| language | language.hu_hu | Magyar (Magyarország) | option | "false" | UI_ONLY |
-| language | language.hy_am | Հայերեն (Հայաստան) | option | "false" | UI_ONLY |
-| language | language.id_id | Bahasa Indonesia (Indonesia) | option | "false" | UI_ONLY |
-| language | language.ig_ng | Igbo (Naigeria) | option | "false" | UI_ONLY |
-| language | language.io_en | Ido (Idia) | option | "false" | UI_ONLY |
-| language | language.is_is | Íslenska (Ísland) | option | "false" | UI_ONLY |
-| language | language.isv | Medžuslovjansky (Slovjanščina) | option | "false" | UI_ONLY |
-| language | language.it_it | Italiano (Italia) | option | "false" | UI_ONLY |
-| language | language.ja_jp | 日本語 (日本) | option | "false" | UI_ONLY |
-| language | language.jbo_en | la .lojban. (la jbogu'e) | option | "false" | UI_ONLY |
-| language | language.ka_ge | ქართული (საქართველო) | option | "false" | UI_ONLY |
-| language | language.kk_kz | Қазақша (Қазақстан) | option | "false" | UI_ONLY |
-| language | language.kn_in | ಕನ್ನಡ (ಭಾರತ) | option | "false" | UI_ONLY |
-| language | language.ko_kr | 한국어 (대한민국) | option | "false" | UI_ONLY |
-| language | language.ksh | Kölsch/Ripoarisch (Rhingland) | option | "false" | UI_ONLY |
-| language | language.kw_gb | Kernewek (Kernow) | option | "false" | UI_ONLY |
-| language | language.ky_kg | Кыргызча (Кыргызстан) | option | "false" | UI_ONLY |
-| language | language.la_la | Latina (Latium) | option | "false" | UI_ONLY |
-| language | language.lb_lu | Lëtzebuergesch (Lëtzebuerg) | option | "false" | UI_ONLY |
-| language | language.li_li | Limburgs (Limburg) | option | "false" | UI_ONLY |
-| language | language.lmo | Lombard (Lombardia) | option | "false" | UI_ONLY |
-| language | language.lo_la | ລາວ (ປະເທດລາວ) | option | "false" | UI_ONLY |
-| language | language.lol_us | LOLCAT (Kingdom of Cats) | option | "false" | UI_ONLY |
-| language | language.lt_lt | Lietuvių (Lietuva) | option | "false" | UI_ONLY |
-| language | language.lv_lv | Latviešu (Latvija) | option | "false" | UI_ONLY |
-| language | language.lzh | 文言 (華夏) | option | "false" | UI_ONLY |
-| language | language.mk_mk | Македонски (Северна Македонија) | option | "false" | UI_ONLY |
-| language | language.mn_mn | Монгол (Монгол Улс) | option | "false" | UI_ONLY |
-| language | language.ms_my | Bahasa Melayu (Malaysia) | option | "false" | UI_ONLY |
-| language | language.mt_mt | Malti (Malta) | option | "false" | UI_ONLY |
-| language | language.nah | Mēxikatlahtōlli (Mēxiko) | option | "false" | UI_ONLY |
-| language | language.nds_de | Plattdüütsch (Düütschland) | option | "false" | UI_ONLY |
-| language | language.nl_be | Vlaams (België) | option | "false" | UI_ONLY |
-| language | language.nl_nl | Nederlands (Nederland) | option | "false" | UI_ONLY |
-| language | language.nn_no | Norsk nynorsk (Noreg) | option | "false" | UI_ONLY |
-| language | language.no_no | Norsk bokmål (Norge) | option | "false" | UI_ONLY |
-| language | language.oc_fr | Occitan (Occitània) | option | "false" | UI_ONLY |
-| language | language.ovd | Övdalska (Swerre) | option | "false" | UI_ONLY |
-| language | language.pl_pl | Polski (Polska) | option | "false" | UI_ONLY |
-| language | language.pls | Ngiiwà (Ndanìꞌngà) | option | "false" | UI_ONLY |
-| language | language.pt_br | Português (Brasil) | option | "false" | UI_ONLY |
-| language | language.pt_pt | Português (Portugal) | option | "false" | UI_ONLY |
-| language | language.qcb_es | Cántabru/Montañés (Cantabria) | option | "false" | UI_ONLY |
-| language | language.qid | Bhs. Indonesia edjaän lama (Indonesia tempo doeloe) | option | "false" | UI_ONLY |
-| language | language.qya_aa | Quenya (Arda) | option | "false" | UI_ONLY |
-| language | language.ro_ro | Română (România) | option | "false" | UI_ONLY |
-| language | language.rpr | Русскій дореформенный (Россійская имперія) | option | "false" | UI_ONLY |
-| language | language.ru_ru | Русский (Россия) | option | "false" | UI_ONLY |
-| language | language.ry_ua | Руснацькый (Пудкарпатя, Украина) | option | "false" | UI_ONLY |
-| language | language.sah_sah | Сахалыы (Cаха Сирэ) | option | "false" | UI_ONLY |
-| language | language.se_no | Davvisámegiella (Sápmi) | option | "false" | UI_ONLY |
-| language | language.sk_sk | Slovenčina (Slovensko) | option | "false" | UI_ONLY |
-| language | language.sl_si | Slovenščina (Slovenija) | option | "false" | UI_ONLY |
-| language | language.so_so | Soomaali (Soomaaliya) | option | "false" | UI_ONLY |
-| language | language.sq_al | Shqip (Shqipëri) | option | "false" | UI_ONLY |
-| language | language.sr_cs | Srpski (Srbija) | option | "false" | UI_ONLY |
-| language | language.sr_sp | Српски (Србија) | option | "false" | UI_ONLY |
-| language | language.sv_se | Svenska (Sverige) | option | "false" | UI_ONLY |
-| language | language.sxu | Säggs’sch (Saggsn) | option | "false" | UI_ONLY |
-| language | language.szl | Ślōnski (Gōrny Ślōnsk) | option | "false" | UI_ONLY |
-| language | language.ta_in | தமிழ் (இந்தியா) | option | "false" | UI_ONLY |
-| language | language.th_th | ไทย (ประเทศไทย) | option | "false" | UI_ONLY |
-| language | language.tl_ph | Tagalog (Pilipinas) | option | "false" | UI_ONLY |
-| language | language.tlh_aa | tlhIngan Hol (tlhIngan wo') | option | "false" | UI_ONLY |
-| language | language.tok | toki pona (kulupu pona) | option | "false" | UI_ONLY |
-| language | language.tr_tr | Türkçe (Türkiye) | option | "false" | UI_ONLY |
-| language | language.tt_ru | Татарча (Татарстан, Рәсәй) | option | "false" | UI_ONLY |
-| language | language.tzo_mx | Bats'i k'op (Jobel) | option | "false" | UI_ONLY |
-| language | language.uk_ua | Українська (Україна) | option | "false" | UI_ONLY |
-| language | language.uz_uz | O'zbekcha (O'zbekiston) | option | "false" | UI_ONLY |
-| language | language.val_es | Català (Valencià) (País Valencià) | option | "false" | UI_ONLY |
-| language | language.vec_it | Vèneto (Veneto) | option | "false" | UI_ONLY |
-| language | language.vi_vn | Tiếng Việt (Việt Nam) | option | "false" | UI_ONLY |
-| language | language.vp_vl | Viossa (Vilant) | option | "false" | UI_ONLY |
-| language | language.vro | Võro (Eesti) | option | "false" | UI_ONLY |
-| language | language.yi_de | ייִדיש (אשכנזיש יידן) | option | "false" | UI_ONLY |
-| language | language.yo_ng | Yorùbá (Nàìjíríà) | option | "false" | UI_ONLY |
-| language | language.zh_cn | 简体中文 (中国大陆) | option | "false" | UI_ONLY |
-| language | language.zh_hk | 繁體中文 (香港特別行政區) | option | "false" | UI_ONLY |
-| language | language.zh_tw | 繁體中文 (台灣) | option | "false" | UI_ONLY |
-| language | language.zlm_arab | بهاس ملايو (مليسيا) | option | "false" | UI_ONLY |
+| language | language.af_za | Afrikaans (Suid-Afrika) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ar_sa | العربية (العالم العربي) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ast_es | Asturianu (Asturies) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.az_az | Azərbaycanca (Azərbaycan) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ba_ru | Башҡортса (Башҡортостан, Рәсәй) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.bar | Boarisch (Bayern) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.be_by | Беларуская (Беларусь) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.be_latn | Biełaruskaja (Biełaruś) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.bg_bg | Български (България) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.br_fr | Brezhoneg (Breizh) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.brb | Braobans (Braobant) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.bs_ba | Bosanski (Bosna i Hercegovina) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ca_es | Català (Catalunya) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.cs_cz | Čeština (Česko) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.cv_cu | Чӑвашла (Чӑваш Ен, Раҫҫей) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.cy_gb | Cymraeg (Cymru) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.da_dk | Dansk (Danmark) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.de_at | Deitsch (Österreich) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.de_ch | Schwiizerdütsch (Schwiiz) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.de_de | Deutsch (Deutschland) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.el_gr | Ελληνικά (Ελλάδα) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.en_au | English (Australia) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.en_ca | English (Canada) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.en_gb | English (United Kingdom) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.en_nz | English (New Zealand) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.en_pt | Pirate Speak (The Seven Seas) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.en_ud | ɥsᴉꞁᵷuƎ (uʍoᗡ ǝpᴉsd∩) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.en_us | English (US) | option | "true" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.enp | Anglish (Oned Riches) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.enws | Shakespearean English (Kingdom of England) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.eo_uy | Esperanto (Esperantujo) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.es_ar | Español (Argentina) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.es_cl | Español (Chile) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.es_ec | Español (Ecuador) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.es_es | Español (España) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.es_mx | Español (México) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.es_uy | Español (Uruguay) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.es_ve | Español (Venezuela) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.esan | Andalûh (Andaluçía) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.et_ee | Eesti keel (Eesti) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.eu_es | Euskara (Euskal Herria) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.fa_ir | فارسی (ايران) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.fi_fi | Suomi (Suomi) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.fil_ph | Filipino (Pilipinas) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.fo_fo | Føroyskt (Føroyar) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.fr_ca | Français (Canada) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.fr_ch | Français (Suisse) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.fr_fr | Français (France) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.fra_de | Fränggisch (Franggn) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.fur_it | Furlan (Friûl) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.fy_nl | Frysk (Fryslân) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ga_ie | Gaeilge (Éire) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.gd_gb | Gàidhlig (Alba) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.gl_es | Galego (Galicia / Galiza) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.go_fr | Galo (Bertègn) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.got_de | 𐌲𐌿𐍄𐍂𐌰𐌶𐌳𐌰 (𐌲𐌿𐍄𐌸𐌹𐌿𐌳𐌰) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.hal_ua | Галицка (Галичина, Вкраїна) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.haw_us | ʻŌlelo Hawaiʻi (Hawaiʻi) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.he_il | עברית (ישראל) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.hi_in | हिंदी (भारत) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.hn_no | Høgnorsk (Norig) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.hr_hr | Hrvatski (Hrvatska) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.hu_hu | Magyar (Magyarország) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.hy_am | Հայերեն (Հայաստան) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.id_id | Bahasa Indonesia (Indonesia) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ig_ng | Igbo (Naigeria) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.io_en | Ido (Idia) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.is_is | Íslenska (Ísland) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.isv | Medžuslovjansky (Slovjanščina) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.it_it | Italiano (Italia) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ja_jp | 日本語 (日本) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.jbo_en | la .lojban. (la jbogu'e) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ka_ge | ქართული (საქართველო) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.kk_kz | Қазақша (Қазақстан) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.kn_in | ಕನ್ನಡ (ಭಾರತ) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ko_kr | 한국어 (대한민국) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ksh | Kölsch/Ripoarisch (Rhingland) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.kw_gb | Kernewek (Kernow) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ky_kg | Кыргызча (Кыргызстан) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.la_la | Latina (Latium) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.lb_lu | Lëtzebuergesch (Lëtzebuerg) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.li_li | Limburgs (Limburg) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.lmo | Lombard (Lombardia) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.lo_la | ລາວ (ປະເທດລາວ) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.lol_us | LOLCAT (Kingdom of Cats) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.lt_lt | Lietuvių (Lietuva) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.lv_lv | Latviešu (Latvija) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.lzh | 文言 (華夏) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.mk_mk | Македонски (Северна Македонија) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.mn_mn | Монгол (Монгол Улс) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ms_my | Bahasa Melayu (Malaysia) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.mt_mt | Malti (Malta) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.nah | Mēxikatlahtōlli (Mēxiko) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.nds_de | Plattdüütsch (Düütschland) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.nl_be | Vlaams (België) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.nl_nl | Nederlands (Nederland) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.nn_no | Norsk nynorsk (Noreg) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.no_no | Norsk bokmål (Norge) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.oc_fr | Occitan (Occitània) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ovd | Övdalska (Swerre) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.pl_pl | Polski (Polska) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.pls | Ngiiwà (Ndanìꞌngà) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.pt_br | Português (Brasil) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.pt_pt | Português (Portugal) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.qcb_es | Cántabru/Montañés (Cantabria) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.qid | Bhs. Indonesia edjaän lama (Indonesia tempo doeloe) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.qya_aa | Quenya (Arda) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ro_ro | Română (România) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.rpr | Русскій дореформенный (Россійская имперія) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ru_ru | Русский (Россия) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ry_ua | Руснацькый (Пудкарпатя, Украина) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.sah_sah | Сахалыы (Cаха Сирэ) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.se_no | Davvisámegiella (Sápmi) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.sk_sk | Slovenčina (Slovensko) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.sl_si | Slovenščina (Slovenija) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.so_so | Soomaali (Soomaaliya) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.sq_al | Shqip (Shqipëri) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.sr_cs | Srpski (Srbija) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.sr_sp | Српски (Србија) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.sv_se | Svenska (Sverige) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.sxu | Säggs’sch (Saggsn) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.szl | Ślōnski (Gōrny Ślōnsk) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.ta_in | தமிழ் (இந்தியா) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.th_th | ไทย (ประเทศไทย) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.tl_ph | Tagalog (Pilipinas) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.tlh_aa | tlhIngan Hol (tlhIngan wo') | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.tok | toki pona (kulupu pona) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.tr_tr | Türkçe (Türkiye) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.tt_ru | Татарча (Татарстан, Рәсәй) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.tzo_mx | Bats'i k'op (Jobel) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.uk_ua | Українська (Україна) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.uz_uz | O'zbekcha (O'zbekiston) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.val_es | Català (Valencià) (País Valencià) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.vec_it | Vèneto (Veneto) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.vi_vn | Tiếng Việt (Việt Nam) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.vp_vl | Viossa (Vilant) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.vro | Võro (Eesti) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.yi_de | ייִדיש (אשכנזיש יידן) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.yo_ng | Yorùbá (Nàìjíríà) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.zh_cn | 简体中文 (中国大陆) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.zh_hk | 繁體中文 (香港特別行政區) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.zh_tw | 繁體中文 (台灣) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
+| language | language.zlm_arab | بهاس ملايو (مليسيا) | option | "false" | PREFERENCE_SAVED_EFFECT_PENDING |
 | language | language..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | language | language..Font_Settings... | Font Settings... | button | "Not applicable (command)" | UI_ONLY |
-| language | language..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| accessibility | accessibility.narrator | Narrator: Narrates All | button | "OFF" | UI_ONLY |
+| language | language..Done | Done | button | "Not applicable (command)" | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.narrator | Narrator: Narrates All | button | "OFF" | PREFERENCE_SAVED_EFFECT_PENDING |
 | accessibility | accessibility..Controls... | Controls... | button | "Not applicable (command)" | UI_ONLY |
-| accessibility | accessibility.showSubtitles | Closed Captions: OFF | button | false | UI_ONLY |
-| accessibility | accessibility.highContrast | High Contrast: ON | button | false | UI_ONLY |
+| accessibility | accessibility.showSubtitles | Closed Captions: OFF | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.highContrast | High Contrast: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
 | accessibility | accessibility.menuBackgroundBlurriness | Menu Background Blur | range | 5 | IMPLEMENTED |
-| accessibility | accessibility.textBackgroundOpacity | Text Background Opacity | range | 0.5 | UI_ONLY |
-| accessibility | accessibility.backgroundForChatOnly | Everywhere | button | true | UI_ONLY |
-| accessibility | accessibility.chatOpacity | Chat Text Opacity | range | 1 | UI_ONLY |
-| accessibility | accessibility.chatLineSpacing | Line Spacing | range | 0 | UI_ONLY |
-| accessibility | accessibility.chatDelay | options.chat.delay_instant | range | 0 | UI_ONLY |
-| accessibility | accessibility.notificationDisplayTime | Notification Time | range | 1 | UI_ONLY |
-| accessibility | accessibility.bobView | View Bobbing: OFF | button | true | UI_ONLY |
-| accessibility | accessibility.screenEffectScale | Distortion Effects | range | 1 | UI_ONLY |
-| accessibility | accessibility.fovEffectScale | FOV Effects | range | 1 | UI_ONLY |
-| accessibility | accessibility.darknessEffectScale | Darkness Pulsing | range | 1 | UI_ONLY |
-| accessibility | accessibility.damageTiltStrength | Damage Tilt | range | 1 | UI_ONLY |
-| accessibility | accessibility.glintSpeed | Glint Speed | range | 0.5 | UI_ONLY |
-| accessibility | accessibility.glintStrength | Glint Strength | range | 0.75 | UI_ONLY |
-| accessibility | accessibility.hideLightningFlash | Hide Sky Flashes: ON | button | false | UI_ONLY |
-| accessibility | accessibility.darkMojangStudiosBackground | Monochrome Logo: ON | button | false | UI_ONLY |
-| accessibility | accessibility.panoramaSpeed | Panorama Scroll Speed | range | 1 | UI_ONLY |
-| accessibility | accessibility.hideSplashTexts | Hide Splash Texts: ON | button | false | UI_ONLY |
-| accessibility | accessibility.narratorHotkey | Narrator Hotkey: OFF | button | true | UI_ONLY |
+| accessibility | accessibility.textBackgroundOpacity | Text Background Opacity | range | 0.5 | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.backgroundForChatOnly | Everywhere | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.chatOpacity | Chat Text Opacity | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.chatLineSpacing | Line Spacing | range | 0 | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.chatDelay | options.chat.delay_instant | range | 0 | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.notificationDisplayTime | Notification Time | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.bobView | View Bobbing: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.screenEffectScale | Distortion Effects | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.fovEffectScale | FOV Effects | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.darknessEffectScale | Darkness Pulsing | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.damageTiltStrength | Damage Tilt | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.glintSpeed | Glint Speed | range | 0.5 | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.glintStrength | Glint Strength | range | 0.75 | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.hideLightningFlash | Hide Sky Flashes: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.darkMojangStudiosBackground | Monochrome Logo: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.panoramaSpeed | Panorama Scroll Speed | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.hideSplashTexts | Hide Splash Texts: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| accessibility | accessibility.narratorHotkey | Narrator Hotkey: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
 | accessibility | accessibility.rotateWithMinecart | Rotate with Minecarts: OFF | button | false | INTENTIONALLY_DISABLED |
-| accessibility | accessibility.highContrastBlockOutline | High Contrast Block Outlines: ON | button | false | UI_ONLY |
+| accessibility | accessibility.highContrastBlockOutline | High Contrast Block Outlines: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
 | accessibility | accessibility..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | accessibility | accessibility..Accessibility_Guide | Accessibility Guide | button | "Not applicable (command)" | UI_ONLY |
 | accessibility | accessibility..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| options | options.fov | FOV | range | 70 | UI_ONLY |
+| options | options.fov | FOV | range | 70 | PREFERENCE_SAVED_EFFECT_PENDING |
 | options | options..Online... | Online... | button | "Not applicable (command)" | UI_ONLY |
 | options | options..Skin_Customization... | Skin Customization... | button | "Not applicable (command)" | UI_ONLY |
 | options | options..Music___Sounds... | Music & Sounds... | button | "Not applicable (command)" | UI_ONLY |
@@ -220,264 +224,264 @@ Observed 697 distinct controls across 33 source routes and Create tabs. Dynamic 
 | credits | credits..Attribution | Attribution | button | "Not applicable (command)" | UI_ONLY |
 | credits | credits..Licenses | Licenses | button | "Not applicable (command)" | UI_ONLY |
 | credits | credits..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| online | online.friendsList | Friends List: OFF | button | false | UI_ONLY |
-| online | online.allowFriendRequests | Allow Requests: OFF | button | false | UI_ONLY |
-| online | online.inGameNotification | In-Game Notification: OFF | button | false | UI_ONLY |
-| online | online.sharePresence | Visibility: Full | button | "Full" | UI_ONLY |
+| online | online.friendsList | Friends List: OFF | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| online | online.allowFriendRequests | Allow Requests: OFF | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| online | online.inGameNotification | In-Game Notification: OFF | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| online | online.sharePresence | Visibility: Full | button | "Full" | PREFERENCE_SAVED_EFFECT_PENDING |
 | online | online..Xbox_Settings... | Xbox Settings... | button | "Not applicable (command)" | UI_ONLY |
-| online | online.allowServerListing | Allow Server Listings: OFF | button | true | UI_ONLY |
+| online | online.allowServerListing | Allow Server Listings: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
 | online | online..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | online | online..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| skin | skin.skin_cape | Cape: OFF | button | true | UI_ONLY |
-| skin | skin.skin_jacket | Jacket: OFF | button | true | UI_ONLY |
-| skin | skin.skin_left_sleeve | Left Sleeve: OFF | button | true | UI_ONLY |
-| skin | skin.skin_right_sleeve | Right Sleeve: OFF | button | true | UI_ONLY |
-| skin | skin.skin_left_pants_leg | Left Pant Leg: OFF | button | true | UI_ONLY |
-| skin | skin.skin_right_pants_leg | Right Pant Leg: OFF | button | true | UI_ONLY |
-| skin | skin.skin_hat | Hat: OFF | button | true | UI_ONLY |
-| skin | skin.mainHand | Main Hand: Left | button | "Right" | UI_ONLY |
+| skin | skin.skin_cape | Cape: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| skin | skin.skin_jacket | Jacket: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| skin | skin.skin_left_sleeve | Left Sleeve: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| skin | skin.skin_right_sleeve | Right Sleeve: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| skin | skin.skin_left_pants_leg | Left Pant Leg: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| skin | skin.skin_right_pants_leg | Right Pant Leg: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| skin | skin.skin_hat | Hat: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| skin | skin.mainHand | Main Hand: Left | button | "Right" | PREFERENCE_SAVED_EFFECT_PENDING |
 | skin | skin..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | skin | skin..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| sounds | sounds.sound_master | Master Volume | range | 1 | UI_ONLY |
-| sounds | sounds.sound_music | Music | range | 1 | UI_ONLY |
-| sounds | sounds.sound_record | Jukebox/Note Blocks | range | 1 | UI_ONLY |
-| sounds | sounds.sound_weather | Weather | range | 1 | UI_ONLY |
-| sounds | sounds.sound_block | Blocks | range | 1 | UI_ONLY |
-| sounds | sounds.sound_hostile | Hostile Mobs | range | 1 | UI_ONLY |
-| sounds | sounds.sound_neutral | Friendly Mobs | range | 1 | UI_ONLY |
-| sounds | sounds.sound_player | Players | range | 1 | UI_ONLY |
-| sounds | sounds.sound_ambient | Ambient/Environment | range | 1 | UI_ONLY |
-| sounds | sounds.sound_voice | Narrator/Voice | range | 1 | UI_ONLY |
-| sounds | sounds.sound_ui | UI | range | 1 | UI_ONLY |
+| sounds | sounds.sound_master | Master Volume | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| sounds | sounds.sound_music | Music | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| sounds | sounds.sound_record | Jukebox/Note Blocks | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| sounds | sounds.sound_weather | Weather | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| sounds | sounds.sound_block | Blocks | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| sounds | sounds.sound_hostile | Hostile Mobs | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| sounds | sounds.sound_neutral | Friendly Mobs | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| sounds | sounds.sound_player | Players | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| sounds | sounds.sound_ambient | Ambient/Environment | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| sounds | sounds.sound_voice | Narrator/Voice | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| sounds | sounds.sound_ui | UI | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
 | sounds | sounds.soundDevice | System Default | button | "System Default" | UI_ONLY |
-| sounds | sounds.showSubtitles | Closed Captions: ON | button | false | UI_ONLY |
-| sounds | sounds.directionalAudio | Directional Audio: ON | button | false | UI_ONLY |
-| sounds | sounds.musicFrequency | Music Frequency: Frequent | button | "Default" | UI_ONLY |
-| sounds | sounds.musicToast | Music Toast: Pause Menu | button | "Never" | UI_ONLY |
+| sounds | sounds.showSubtitles | Closed Captions: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| sounds | sounds.directionalAudio | Directional Audio: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| sounds | sounds.musicFrequency | Music Frequency: Frequent | button | "Default" | PREFERENCE_SAVED_EFFECT_PENDING |
+| sounds | sounds.musicToast | Music Toast: Pause Menu | button | "Never" | PREFERENCE_SAVED_EFFECT_PENDING |
 | sounds | sounds..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | sounds | sounds..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | video | video..Exclusive_Fullscreen_Mode | Exclusive Fullscreen Mode | range | "0" | INTENTIONALLY_DISABLED |
 | video | video.framerateLimit | Max Framerate | range | 120 | IMPLEMENTED |
 | video | video.enableVsync | VSync: OFF | button | true | IMPLEMENTED |
-| video | video.inactivityFpsLimit | Reduce fps when: Minimized | button | "AFK" | UI_ONLY |
+| video | video.inactivityFpsLimit | Reduce fps when: Minimized | button | "AFK" | PREFERENCE_SAVED_EFFECT_PENDING |
 | video | video.guiScale | GUI Scale: 1 | button | 0 | IMPLEMENTED |
 | video | video.fullscreen | Fullscreen: ON | button | false | IMPLEMENTED |
-| video | video.exclusiveFullscreen | Exclusive Fullscreen: ON | button | false | UI_ONLY |
-| video | video.gamma | Brightness | range | 0.5 | UI_ONLY |
-| video | video.preferredGraphicsBackend | Graphics API: Prefer OpenGL | button | "Default" | UI_ONLY |
-| video | video.graphicsPreset | Preset | range | "Fancy" | UI_ONLY |
-| video | video.biomeBlendRadius | Biome Blend | range | 2 | UI_ONLY |
-| video | video.renderDistance | Render Distance | range | 12 | UI_ONLY |
-| video | video.prioritizeChunkUpdates | Chunk Builder: Semi Blocking | button | "Threaded" | UI_ONLY |
-| video | video.simulationDistance | Simulation Distance | range | 12 | UI_ONLY |
-| video | video.ambientOcclusion | Smooth Lighting: OFF | button | true | UI_ONLY |
-| video | video.cloudStatus | Clouds: OFF | button | "Fancy" | UI_ONLY |
-| video | video.particles | Particles: Decreased | button | "All" | UI_ONLY |
-| video | video.mipmapLevels | Mipmap Levels | range | 4 | UI_ONLY |
-| video | video.entityShadows | Entity Shadows: OFF | button | true | UI_ONLY |
-| video | video.entityDistanceScaling | Entity Distance | range | 1 | UI_ONLY |
+| video | video.exclusiveFullscreen | Exclusive Fullscreen: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.gamma | Brightness | range | 0.5 | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.preferredGraphicsBackend | Graphics API: DirectX 12 | button | "Default (DirectX 12)" | NATIVE_READ_ONLY |
+| video | video.graphicsPreset | Preset | range | "Fancy" | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.biomeBlendRadius | Biome Blend | range | 2 | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.renderDistance | Render Distance | range | 12 | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.prioritizeChunkUpdates | Chunk Builder: Semi Blocking | button | "Threaded" | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.simulationDistance | Simulation Distance | range | 12 | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.ambientOcclusion | Smooth Lighting: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.cloudStatus | Clouds: OFF | button | "Fancy" | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.particles | Particles: Decreased | button | "All" | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.mipmapLevels | Mipmap Levels | range | 4 | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.entityShadows | Entity Shadows: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.entityDistanceScaling | Entity Distance | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
 | video | video.menuBackgroundBlurriness | Menu Background Blur | range | 5 | IMPLEMENTED |
-| video | video.cloudRange | Cloud Distance | range | 128 | UI_ONLY |
-| video | video.cutoutLeaves | See-Through Leaves: OFF | button | true | UI_ONLY |
-| video | video.improvedTransparency | Improved Transparency: ON | button | false | UI_ONLY |
-| video | video.textureFiltering | Texture Filtering: RGSS | button | "None" | UI_ONLY |
-| video | video.maxAnisotropyBit | Anisotropic Filtering | range | 2 | UI_ONLY |
-| video | video.weatherRadius | Weather Effect Radius | range | 10 | UI_ONLY |
-| video | video.showAutosaveIndicator | Autosave Indicator: OFF | button | true | UI_ONLY |
-| video | video.vignette | Show Vignette: OFF | button | true | UI_ONLY |
-| video | video.attackIndicator | Attack Indicator: Hotbar | button | "Crosshair" | UI_ONLY |
-| video | video.chunkSectionFadeInTime | Chunk Fade Time | range | 0.75 | UI_ONLY |
+| video | video.cloudRange | Cloud Distance | range | 128 | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.cutoutLeaves | See-Through Leaves: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.improvedTransparency | Improved Transparency: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.textureFiltering | Texture Filtering: RGSS | button | "None" | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.maxAnisotropyBit | Anisotropic Filtering | range | 2 | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.weatherRadius | Weather Effect Radius | range | 10 | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.showAutosaveIndicator | Autosave Indicator: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.vignette | Show Vignette: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.attackIndicator | Attack Indicator: Hotbar | button | "Crosshair" | PREFERENCE_SAVED_EFFECT_PENDING |
+| video | video.chunkSectionFadeInTime | Chunk Fade Time | range | 0.75 | PREFERENCE_SAVED_EFFECT_PENDING |
 | video | video.hard-reset | Hard Reset | button | "Not applicable (command)" | IMPLEMENTED |
 | video | video..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | video | video..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | controls | controls..Mouse_Settings... | Mouse Settings... | button | "Not applicable (command)" | UI_ONLY |
 | controls | controls..Key_Binds... | Key Binds... | button | "Not applicable (command)" | UI_ONLY |
-| controls | controls.toggleCrouch | Sneak: Toggle | button | false | UI_ONLY |
-| controls | controls.toggleSprint | Sprint: Toggle | button | false | UI_ONLY |
-| controls | controls.toggleAttack | Attack/Destroy: Toggle | button | false | UI_ONLY |
-| controls | controls.toggleUse | Use Item/Place Block: Toggle | button | false | UI_ONLY |
-| controls | controls.autoJump | Auto-Jump: ON | button | false | UI_ONLY |
-| controls | controls.sprintWindow | Sprint Window | range | 7 | UI_ONLY |
-| controls | controls.quitShortcuts | Quit Shortcuts: OFF | button | true | UI_ONLY |
-| controls | controls.operatorItemsTab | Operator Items Tab: ON | button | false | UI_ONLY |
+| controls | controls.toggleCrouch | Crouch: Toggle | button | false | INPUT_SETTINGS_IMPLEMENTED |
+| controls | controls.toggleSprint | Sprint: Toggle | button | false | INPUT_SETTINGS_IMPLEMENTED |
+| controls | controls.toggleAttack | Attack/Destroy: Toggle | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| controls | controls.toggleUse | Use Item/Place Block: Toggle | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| controls | controls.autoJump | Auto-Jump: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| controls | controls.sprintWindow | Sprint Window | range | 7 | PREFERENCE_SAVED_EFFECT_PENDING |
+| controls | controls.quitShortcuts | Quit Shortcuts: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| controls | controls.operatorItemsTab | Operator Items Tab: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
 | controls | controls..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | controls | controls..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| chat | chat.chatVisibility | Chat: Commands Only | button | "Shown" | UI_ONLY |
-| chat | chat.chatColors | Colors: OFF | button | true | UI_ONLY |
-| chat | chat.chatLinks | Web Links: OFF | button | true | UI_ONLY |
-| chat | chat.chatLinksPrompt | Prompt on Links: OFF | button | true | UI_ONLY |
-| chat | chat.chatOpacity | Chat Text Opacity | range | 1 | UI_ONLY |
-| chat | chat.textBackgroundOpacity | Text Background Opacity | range | 0.5 | UI_ONLY |
-| chat | chat.chatScale | Chat Text Size | range | 1 | UI_ONLY |
-| chat | chat.chatLineSpacing | Line Spacing | range | 0 | UI_ONLY |
-| chat | chat.chatDelay | options.chat.delay_instant | range | 0 | UI_ONLY |
-| chat | chat.chatWidth | Width | range | 1 | UI_ONLY |
-| chat | chat.chatHeightFocused | Focused Height | range | 1 | UI_ONLY |
-| chat | chat.chatHeightUnfocused | Unfocused Height | range | 0.44366197 | UI_ONLY |
-| chat | chat.narrator | Narrator: Narrates Chat | button | "OFF" | UI_ONLY |
-| chat | chat.autoSuggestions | Command Suggestions: OFF | button | true | UI_ONLY |
-| chat | chat.hideMatchedNames | Hide Matched Names: OFF | button | true | UI_ONLY |
-| chat | chat.reducedDebugInfo | Reduced Debug Info: ON | button | false | UI_ONLY |
-| chat | chat.onlyShowSecureChat | Only Show Secure Chat: ON | button | false | UI_ONLY |
-| chat | chat.saveChatDrafts | Save Unsent Chats: ON | button | false | UI_ONLY |
+| chat | chat.chatVisibility | Chat: Commands Only | button | "Shown" | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.chatColors | Colors: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.chatLinks | Web Links: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.chatLinksPrompt | Prompt on Links: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.chatOpacity | Chat Text Opacity | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.textBackgroundOpacity | Text Background Opacity | range | 0.5 | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.chatScale | Chat Text Size | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.chatLineSpacing | Line Spacing | range | 0 | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.chatDelay | options.chat.delay_instant | range | 0 | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.chatWidth | Width | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.chatHeightFocused | Focused Height | range | 1 | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.chatHeightUnfocused | Unfocused Height | range | 0.44366197 | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.narrator | Narrator: Narrates Chat | button | "OFF" | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.autoSuggestions | Command Suggestions: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.hideMatchedNames | Hide Matched Names: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.reducedDebugInfo | Reduced Debug Info: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.onlyShowSecureChat | Only Show Secure Chat: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| chat | chat.saveChatDrafts | Save Unsent Chats: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
 | chat | chat..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | chat | chat..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft | Programmer ArtThe classic look of Minecraft | option | false | UI_ONLY |
-| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Select_Programmer_Art | Select Programmer Art | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft | High ContrastEnhances the UI contrast of Minecraft | option | false | UI_ONLY |
-| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Select_High_Contrast | Select High Contrast | button | "Not applicable (command)" | UI_ONLY |
+| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft | Programmer ArtThe classic look of Minecraft | option | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Select_Programmer_Art | Select Programmer Art | button | "Not applicable (command)" | PREFERENCE_SAVED_EFFECT_PENDING |
+| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft | High ContrastEnhances the UI contrast of Minecraft | option | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Select_High_Contrast | Select High Contrast | button | "Not applicable (command)" | PREFERENCE_SAVED_EFFECT_PENDING |
 | packs | packs..Open_Pack_Folder | Open Pack Folder | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| packs | packs..Done | Done | button | "Not applicable (command)" | PREFERENCE_SAVED_EFFECT_PENDING |
 | telemetry | telemetry..Privacy_Statement | Privacy Statement | button | "Not applicable (command)" | UI_ONLY |
 | telemetry | telemetry..Give_Feedback | Give Feedback | button | "Not applicable (command)" | UI_ONLY |
 | telemetry | telemetry..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| telemetry | telemetry..I_consent_to_sending_optional_telemetry_data | I consent to sending optional telemetry data | checkbox | false | UI_ONLY |
+| telemetry | telemetry..I_consent_to_sending_optional_telemetry_data | I consent to sending optional telemetry data | checkbox | false | PREFERENCE_SAVED_EFFECT_PENDING |
 | telemetry | telemetry..View_My_Data | View My Data | button | "Not applicable (command)" | UI_ONLY |
 | telemetry | telemetry..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | confirm | confirm..Hard_Reset | Hard Reset | button | "Not applicable (command)" | IMPLEMENTED |
 | confirm | confirm..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
-| mouse | mouse.sensitivity | Sensitivity | range | 0.5 | UI_ONLY |
-| mouse | mouse.mouseWheelSensitivity | Scroll Sensitivity | range | 0 | UI_ONLY |
-| mouse | mouse.discreteMouseScroll | Discrete Scrolling: ON | button | false | UI_ONLY |
-| mouse | mouse.invertXMouse | Invert Mouse X: ON | button | false | UI_ONLY |
-| mouse | mouse.invertYMouse | Invert Mouse Y: ON | button | false | UI_ONLY |
-| mouse | mouse.allowCursorChanges | Allow Cursor Changes: OFF | button | true | UI_ONLY |
+| mouse | mouse.sensitivity | Sensitivity | range | 0.5 | PREFERENCE_SAVED_EFFECT_PENDING |
+| mouse | mouse.mouseWheelSensitivity | Scroll Sensitivity | range | 0 | PREFERENCE_SAVED_EFFECT_PENDING |
+| mouse | mouse.discreteMouseScroll | Discrete Scrolling: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| mouse | mouse.invertXMouse | Invert Mouse X: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| mouse | mouse.invertYMouse | Invert Mouse Y: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| mouse | mouse.allowCursorChanges | Allow Cursor Changes: OFF | button | true | PREFERENCE_SAVED_EFFECT_PENDING |
 | mouse | mouse..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | mouse | mouse..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.jump | Space | button | "Space" | UI_ONLY |
-| keybinds | keybinds..Reset | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.sneak | Left Shift | button | "Left Shift" | UI_ONLY |
-| keybinds | keybinds..Reset.1 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.sprint | Left Control | button | "Left Control" | UI_ONLY |
-| keybinds | keybinds..Reset.2 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.left | A | button | "A" | UI_ONLY |
-| keybinds | keybinds..Reset.3 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.right | D | button | "D" | UI_ONLY |
-| keybinds | keybinds..Reset.4 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.back | S | button | "S" | UI_ONLY |
-| keybinds | keybinds..Reset.5 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.forward | W | button | "W" | UI_ONLY |
-| keybinds | keybinds..Reset.6 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.advancements | L | button | "L" | UI_ONLY |
-| keybinds | keybinds..Reset.7 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.quickActions | G | button | "G" | UI_ONLY |
-| keybinds | keybinds..Reset.8 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.screenshot | F2 | button | "F2" | UI_ONLY |
-| keybinds | keybinds..Reset.9 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.smoothCamera | Not Bound | button | "Not Bound" | UI_ONLY |
-| keybinds | keybinds..Reset.10 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.fullscreen | F11 | button | "F11" | UI_ONLY |
-| keybinds | keybinds..Reset.11 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.toggleGui | F1 | button | "F1" | UI_ONLY |
-| keybinds | keybinds..Reset.12 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.togglePerspective | F5 | button | "F5" | UI_ONLY |
-| keybinds | keybinds..Reset.13 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.toggleSpectatorShaderEffects | F4 | button | "F4" | UI_ONLY |
-| keybinds | keybinds..Reset.14 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.friends | O | button | "O" | UI_ONLY |
-| keybinds | keybinds..Reset.15 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.playerlist | Tab | button | "Tab" | UI_ONLY |
-| keybinds | keybinds..Reset.16 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.chat | T | button | "T" | UI_ONLY |
-| keybinds | keybinds..Reset.17 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.command | / | button | "/" | UI_ONLY |
-| keybinds | keybinds..Reset.18 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.socialInteractions | P | button | "P" | UI_ONLY |
-| keybinds | keybinds..Reset.19 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.attack | Left Button | button | "Left Button" | UI_ONLY |
-| keybinds | keybinds..Reset.20 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.pickItem | Middle Button | button | "Middle Button" | UI_ONLY |
-| keybinds | keybinds..Reset.21 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.use | Right Button | button | "Right Button" | UI_ONLY |
-| keybinds | keybinds..Reset.22 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.drop | Q | button | "Q" | UI_ONLY |
-| keybinds | keybinds..Reset.23 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.hotbar.1 | 1 | button | "1" | UI_ONLY |
-| keybinds | keybinds..Reset.24 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.hotbar.2 | 2 | button | "2" | UI_ONLY |
-| keybinds | keybinds..Reset.25 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.hotbar.3 | 3 | button | "3" | UI_ONLY |
-| keybinds | keybinds..Reset.26 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.hotbar.4 | 4 | button | "4" | UI_ONLY |
-| keybinds | keybinds..Reset.27 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.hotbar.5 | 5 | button | "5" | UI_ONLY |
-| keybinds | keybinds..Reset.28 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.hotbar.6 | 6 | button | "6" | UI_ONLY |
-| keybinds | keybinds..Reset.29 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.hotbar.7 | 7 | button | "7" | UI_ONLY |
-| keybinds | keybinds..Reset.30 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.hotbar.8 | 8 | button | "8" | UI_ONLY |
-| keybinds | keybinds..Reset.31 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.hotbar.9 | 9 | button | "9" | UI_ONLY |
-| keybinds | keybinds..Reset.32 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.inventory | E | button | "E" | UI_ONLY |
-| keybinds | keybinds..Reset.33 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.swapOffhand | F | button | "F" | UI_ONLY |
-| keybinds | keybinds..Reset.34 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.loadToolbarActivator | X | button | "X" | UI_ONLY |
-| keybinds | keybinds..Reset.35 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.saveToolbarActivator | C | button | "C" | UI_ONLY |
-| keybinds | keybinds..Reset.36 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.spectatorOutlines | Not Bound | button | "Not Bound" | UI_ONLY |
-| keybinds | keybinds..Reset.37 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.spectatorHotbar | Middle Button | button | "Middle Button" | UI_ONLY |
-| keybinds | keybinds..Reset.38 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.overlay | F3 | button | "F3" | UI_ONLY |
-| keybinds | keybinds..Reset.39 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.modifier | F3 | button | "F3" | UI_ONLY |
-| keybinds | keybinds..Reset.40 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.clearChat | D | button | "D" | UI_ONLY |
-| keybinds | keybinds..Reset.41 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.copyRecreateCommand | I | button | "I" | UI_ONLY |
-| keybinds | keybinds..Reset.42 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.copyLocation | C | button | "C" | UI_ONLY |
-| keybinds | keybinds..Reset.43 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.spectate | N | button | "N" | UI_ONLY |
-| keybinds | keybinds..Reset.44 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.crash | C | button | "C" | UI_ONLY |
-| keybinds | keybinds..Reset.45 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.debugOptions | F6 | button | "F6" | UI_ONLY |
-| keybinds | keybinds..Reset.46 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.dumpDynamicTextures | S | button | "S" | UI_ONLY |
-| keybinds | keybinds..Reset.47 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.dumpVersion | V | button | "V" | UI_ONLY |
-| keybinds | keybinds..Reset.48 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.switchGameMode | F4 | button | "F4" | UI_ONLY |
-| keybinds | keybinds..Reset.49 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.reloadChunk | A | button | "A" | UI_ONLY |
-| keybinds | keybinds..Reset.50 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.reloadResourcePacks | T | button | "T" | UI_ONLY |
-| keybinds | keybinds..Reset.51 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.showAdvancedTooltips | H | button | "H" | UI_ONLY |
-| keybinds | keybinds..Reset.52 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.showChunkBorders | G | button | "G" | UI_ONLY |
-| keybinds | keybinds..Reset.53 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.showHitboxes | B | button | "B" | UI_ONLY |
-| keybinds | keybinds..Reset.54 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.profiling | L | button | "L" | UI_ONLY |
-| keybinds | keybinds..Reset.55 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.improvedTransparency | X | button | "X" | UI_ONLY |
-| keybinds | keybinds..Reset.56 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.focusPause | P | button | "P" | UI_ONLY |
-| keybinds | keybinds..Reset.57 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.profilingChart | 1 | button | "1" | UI_ONLY |
-| keybinds | keybinds..Reset.58 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.fpsCharts | 2 | button | "2" | UI_ONLY |
-| keybinds | keybinds..Reset.59 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.networkCharts | 3 | button | "3" | UI_ONLY |
-| keybinds | keybinds..Reset.60 | Reset | button | "Not applicable (command)" | UI_ONLY |
-| keybinds | keybinds.key.debug.lightmapTexture | 4 | button | "4" | UI_ONLY |
-| keybinds | keybinds..Reset.61 | Reset | button | "Not applicable (command)" | UI_ONLY |
+| keybinds | keybinds.key.sneak | C | button | "C" | INPUT_SETTINGS_IMPLEMENTED |
+| keybinds | keybinds..Reset | Reset | button | "C" | INPUT_SETTINGS_IMPLEMENTED |
+| keybinds | keybinds.key.jump | Space | button | "Space" | INPUT_SETTINGS_IMPLEMENTED |
+| keybinds | keybinds..Reset.1 | Reset | button | "Space" | INPUT_SETTINGS_IMPLEMENTED |
+| keybinds | keybinds.key.sprint | Left Shift | button | "Left Shift" | INPUT_SETTINGS_IMPLEMENTED |
+| keybinds | keybinds..Reset.2 | Reset | button | "Left Shift" | INPUT_SETTINGS_IMPLEMENTED |
+| keybinds | keybinds.key.left | A | button | "A" | INPUT_SETTINGS_IMPLEMENTED |
+| keybinds | keybinds..Reset.3 | Reset | button | "A" | INPUT_SETTINGS_IMPLEMENTED |
+| keybinds | keybinds.key.right | D | button | "D" | INPUT_SETTINGS_IMPLEMENTED |
+| keybinds | keybinds..Reset.4 | Reset | button | "D" | INPUT_SETTINGS_IMPLEMENTED |
+| keybinds | keybinds.key.back | S | button | "S" | INPUT_SETTINGS_IMPLEMENTED |
+| keybinds | keybinds..Reset.5 | Reset | button | "S" | INPUT_SETTINGS_IMPLEMENTED |
+| keybinds | keybinds.key.forward | W | button | "W" | INPUT_SETTINGS_IMPLEMENTED |
+| keybinds | keybinds..Reset.6 | Reset | button | "W" | INPUT_SETTINGS_IMPLEMENTED |
+| keybinds | keybinds.key.advancements | L | button | "L" | PLANNED |
+| keybinds | keybinds..Reset.7 | Reset | button | "L" | PLANNED |
+| keybinds | keybinds.key.quickActions | G | button | "G" | PLANNED |
+| keybinds | keybinds..Reset.8 | Reset | button | "G" | PLANNED |
+| keybinds | keybinds.key.screenshot | F2 | button | "F2" | PLANNED |
+| keybinds | keybinds..Reset.9 | Reset | button | "F2" | PLANNED |
+| keybinds | keybinds.key.smoothCamera | Not Bound | button | "Not Bound" | PLANNED |
+| keybinds | keybinds..Reset.10 | Reset | button | "Not Bound" | PLANNED |
+| keybinds | keybinds.key.fullscreen | F11 | button | "F11" | PLANNED |
+| keybinds | keybinds..Reset.11 | Reset | button | "F11" | PLANNED |
+| keybinds | keybinds.key.toggleGui | F1 | button | "F1" | PLANNED |
+| keybinds | keybinds..Reset.12 | Reset | button | "F1" | PLANNED |
+| keybinds | keybinds.key.togglePerspective | F5 | button | "F5" | PLANNED |
+| keybinds | keybinds..Reset.13 | Reset | button | "F5" | PLANNED |
+| keybinds | keybinds.key.toggleSpectatorShaderEffects | F4 | button | "F4" | PLANNED |
+| keybinds | keybinds..Reset.14 | Reset | button | "F4" | PLANNED |
+| keybinds | keybinds.key.friends | O | button | "O" | PLANNED |
+| keybinds | keybinds..Reset.15 | Reset | button | "O" | PLANNED |
+| keybinds | keybinds.key.playerlist | Tab | button | "Tab" | PLANNED |
+| keybinds | keybinds..Reset.16 | Reset | button | "Tab" | PLANNED |
+| keybinds | keybinds.key.chat | T | button | "T" | PLANNED |
+| keybinds | keybinds..Reset.17 | Reset | button | "T" | PLANNED |
+| keybinds | keybinds.key.command | / | button | "/" | PLANNED |
+| keybinds | keybinds..Reset.18 | Reset | button | "/" | PLANNED |
+| keybinds | keybinds.key.socialInteractions | P | button | "P" | PLANNED |
+| keybinds | keybinds..Reset.19 | Reset | button | "P" | PLANNED |
+| keybinds | keybinds.key.attack | Left Button | button | "Left Button" | PLANNED |
+| keybinds | keybinds..Reset.20 | Reset | button | "Left Button" | PLANNED |
+| keybinds | keybinds.key.pickItem | Middle Button | button | "Middle Button" | PLANNED |
+| keybinds | keybinds..Reset.21 | Reset | button | "Middle Button" | PLANNED |
+| keybinds | keybinds.key.use | Right Button | button | "Right Button" | PLANNED |
+| keybinds | keybinds..Reset.22 | Reset | button | "Right Button" | PLANNED |
+| keybinds | keybinds.key.drop | Q | button | "Q" | PLANNED |
+| keybinds | keybinds..Reset.23 | Reset | button | "Q" | PLANNED |
+| keybinds | keybinds.key.hotbar.1 | 1 | button | "1" | PLANNED |
+| keybinds | keybinds..Reset.24 | Reset | button | "1" | PLANNED |
+| keybinds | keybinds.key.hotbar.2 | 2 | button | "2" | PLANNED |
+| keybinds | keybinds..Reset.25 | Reset | button | "2" | PLANNED |
+| keybinds | keybinds.key.hotbar.3 | 3 | button | "3" | PLANNED |
+| keybinds | keybinds..Reset.26 | Reset | button | "3" | PLANNED |
+| keybinds | keybinds.key.hotbar.4 | 4 | button | "4" | PLANNED |
+| keybinds | keybinds..Reset.27 | Reset | button | "4" | PLANNED |
+| keybinds | keybinds.key.hotbar.5 | 5 | button | "5" | PLANNED |
+| keybinds | keybinds..Reset.28 | Reset | button | "5" | PLANNED |
+| keybinds | keybinds.key.hotbar.6 | 6 | button | "6" | PLANNED |
+| keybinds | keybinds..Reset.29 | Reset | button | "6" | PLANNED |
+| keybinds | keybinds.key.hotbar.7 | 7 | button | "7" | PLANNED |
+| keybinds | keybinds..Reset.30 | Reset | button | "7" | PLANNED |
+| keybinds | keybinds.key.hotbar.8 | 8 | button | "8" | PLANNED |
+| keybinds | keybinds..Reset.31 | Reset | button | "8" | PLANNED |
+| keybinds | keybinds.key.hotbar.9 | 9 | button | "9" | PLANNED |
+| keybinds | keybinds..Reset.32 | Reset | button | "9" | PLANNED |
+| keybinds | keybinds.key.inventory | E | button | "E" | PLANNED |
+| keybinds | keybinds..Reset.33 | Reset | button | "E" | PLANNED |
+| keybinds | keybinds.key.swapOffhand | F | button | "F" | PLANNED |
+| keybinds | keybinds..Reset.34 | Reset | button | "F" | PLANNED |
+| keybinds | keybinds.key.loadToolbarActivator | X | button | "X" | PLANNED |
+| keybinds | keybinds..Reset.35 | Reset | button | "X" | PLANNED |
+| keybinds | keybinds.key.saveToolbarActivator | C | button | "C" | PLANNED |
+| keybinds | keybinds..Reset.36 | Reset | button | "C" | PLANNED |
+| keybinds | keybinds.key.spectatorOutlines | Not Bound | button | "Not Bound" | PLANNED |
+| keybinds | keybinds..Reset.37 | Reset | button | "Not Bound" | PLANNED |
+| keybinds | keybinds.key.spectatorHotbar | Middle Button | button | "Middle Button" | PLANNED |
+| keybinds | keybinds..Reset.38 | Reset | button | "Middle Button" | PLANNED |
+| keybinds | keybinds.key.debug.overlay | F3 | button | "F3" | PLANNED |
+| keybinds | keybinds..Reset.39 | Reset | button | "F3" | PLANNED |
+| keybinds | keybinds.key.debug.modifier | F3 | button | "F3" | PLANNED |
+| keybinds | keybinds..Reset.40 | Reset | button | "F3" | PLANNED |
+| keybinds | keybinds.key.debug.clearChat | D | button | "D" | PLANNED |
+| keybinds | keybinds..Reset.41 | Reset | button | "D" | PLANNED |
+| keybinds | keybinds.key.debug.copyRecreateCommand | I | button | "I" | PLANNED |
+| keybinds | keybinds..Reset.42 | Reset | button | "I" | PLANNED |
+| keybinds | keybinds.key.debug.copyLocation | C | button | "C" | PLANNED |
+| keybinds | keybinds..Reset.43 | Reset | button | "C" | PLANNED |
+| keybinds | keybinds.key.debug.spectate | N | button | "N" | PLANNED |
+| keybinds | keybinds..Reset.44 | Reset | button | "N" | PLANNED |
+| keybinds | keybinds.key.debug.crash | C | button | "C" | PLANNED |
+| keybinds | keybinds..Reset.45 | Reset | button | "C" | PLANNED |
+| keybinds | keybinds.key.debug.debugOptions | F6 | button | "F6" | PLANNED |
+| keybinds | keybinds..Reset.46 | Reset | button | "F6" | PLANNED |
+| keybinds | keybinds.key.debug.dumpDynamicTextures | S | button | "S" | PLANNED |
+| keybinds | keybinds..Reset.47 | Reset | button | "S" | PLANNED |
+| keybinds | keybinds.key.debug.dumpVersion | V | button | "V" | PLANNED |
+| keybinds | keybinds..Reset.48 | Reset | button | "V" | PLANNED |
+| keybinds | keybinds.key.debug.switchGameMode | F4 | button | "F4" | PLANNED |
+| keybinds | keybinds..Reset.49 | Reset | button | "F4" | PLANNED |
+| keybinds | keybinds.key.debug.reloadChunk | A | button | "A" | PLANNED |
+| keybinds | keybinds..Reset.50 | Reset | button | "A" | PLANNED |
+| keybinds | keybinds.key.debug.reloadResourcePacks | T | button | "T" | PLANNED |
+| keybinds | keybinds..Reset.51 | Reset | button | "T" | PLANNED |
+| keybinds | keybinds.key.debug.showAdvancedTooltips | H | button | "H" | PLANNED |
+| keybinds | keybinds..Reset.52 | Reset | button | "H" | PLANNED |
+| keybinds | keybinds.key.debug.showChunkBorders | G | button | "G" | PLANNED |
+| keybinds | keybinds..Reset.53 | Reset | button | "G" | PLANNED |
+| keybinds | keybinds.key.debug.showHitboxes | B | button | "B" | PLANNED |
+| keybinds | keybinds..Reset.54 | Reset | button | "B" | PLANNED |
+| keybinds | keybinds.key.debug.profiling | L | button | "L" | PLANNED |
+| keybinds | keybinds..Reset.55 | Reset | button | "L" | PLANNED |
+| keybinds | keybinds.key.debug.improvedTransparency | X | button | "X" | PLANNED |
+| keybinds | keybinds..Reset.56 | Reset | button | "X" | PLANNED |
+| keybinds | keybinds.key.debug.focusPause | P | button | "P" | PLANNED |
+| keybinds | keybinds..Reset.57 | Reset | button | "P" | PLANNED |
+| keybinds | keybinds.key.debug.profilingChart | 1 | button | "1" | PLANNED |
+| keybinds | keybinds..Reset.58 | Reset | button | "1" | PLANNED |
+| keybinds | keybinds.key.debug.fpsCharts | 2 | button | "2" | PLANNED |
+| keybinds | keybinds..Reset.59 | Reset | button | "2" | PLANNED |
+| keybinds | keybinds.key.debug.networkCharts | 3 | button | "3" | PLANNED |
+| keybinds | keybinds..Reset.60 | Reset | button | "3" | PLANNED |
+| keybinds | keybinds.key.debug.lightmapTexture | 4 | button | "4" | PLANNED |
+| keybinds | keybinds..Reset.61 | Reset | button | "4" | PLANNED |
 | keybinds | keybinds..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| keybinds | keybinds..Reset_Keys | Reset Keys | button | "Not applicable (command)" | UI_ONLY |
+| keybinds | keybinds..Reset_Keys | Reset Keys | button | "Not applicable (command)" | INPUT_SETTINGS_IMPLEMENTED |
 | keybinds | keybinds..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | linkconfirm | linkconfirm..Open_in_Browser | Open in Browser | button | "Not applicable (command)" | UI_ONLY |
 | linkconfirm | linkconfirm..Copy_to_Clipboard | Copy to Clipboard | button | "Not applicable (command)" | UI_ONLY |
 | linkconfirm | linkconfirm..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
 | confirm | confirm..Turn_ON | Turn ON | button | "Not applicable (command)" | UI_ONLY |
 | confirm | confirm..Turn_OFF | Turn OFF | button | "Not applicable (command)" | UI_ONLY |
-| font | font.forceUnicodeFont | Force Unicode Font: ON | button | false | UI_ONLY |
-| font | font.japaneseGlyphVariants | Japanese Glyph Variants: ON | button | false | UI_ONLY |
+| font | font.forceUnicodeFont | Force Unicode Font: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
+| font | font.japaneseGlyphVariants | Japanese Glyph Variants: ON | button | false | PREFERENCE_SAVED_EFFECT_PENDING |
 | font | font..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | font | font..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | create/game | create.game..Game | Game | tab | "Not applicable (command)" | UI_ONLY |
@@ -603,12 +607,12 @@ Observed 697 distinct controls across 33 source routes and Create tabs. Dynamic 
 | serveredit | serveredit.server.pack | Server Resource Packs: Enabled | button | "Not applicable (command)" | UI_ONLY |
 | serveredit | serveredit.server-save | Done | button | "Not applicable (command)" | UI_ONLY |
 | serveredit | serveredit..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_to_Available | Move High Contrast to Available | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_up | Move High Contrast up | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_down | Move High Contrast down | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_to_Available | Move Programmer Art to Available | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_up | Move Programmer Art up | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_down | Move Programmer Art down | button | "Not applicable (command)" | UI_ONLY |
+| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_to_Available | Move High Contrast to Available | button | "Not applicable (command)" | PREFERENCE_SAVED_EFFECT_PENDING |
+| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_up | Move High Contrast up | button | "Not applicable (command)" | PREFERENCE_SAVED_EFFECT_PENDING |
+| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_down | Move High Contrast down | button | "Not applicable (command)" | PREFERENCE_SAVED_EFFECT_PENDING |
+| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_to_Available | Move Programmer Art to Available | button | "Not applicable (command)" | PREFERENCE_SAVED_EFFECT_PENDING |
+| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_up | Move Programmer Art up | button | "Not applicable (command)" | PREFERENCE_SAVED_EFFECT_PENDING |
+| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_down | Move Programmer Art down | button | "Not applicable (command)" | PREFERENCE_SAVED_EFFECT_PENDING |
 | flat | flat.Grass_Block1 | Grass Block1 | option | null | UI_ONLY |
 | flat | flat.Dirt2 | Dirt2 | option | null | UI_ONLY |
 | flat | flat.Bedrock1 | Bedrock1 | option | null | UI_ONLY |

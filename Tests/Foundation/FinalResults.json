@@ -1,0 +1,75 @@
+{
+  "Status": "Implemented; available automated and rendered checks passed; played-reference and OS/human acceptance pending",
+  "Date": "2026-10-07T19:05:06.7552808Z",
+  "Project": "C:\\dev\\projects\\Unnamed\\Unnamed.uproject",
+  "Engine": "5.8.3 CL58210709",
+  "Reference": {
+    "EvidenceKind": "official notes, exact client source, source-derived numeric recurrence; not played-client measurements",
+    "Version": "26.3",
+    "ClientSHA1": "e877b6a07acd633fb3bb475002175cec036e7b87",
+    "InternalBuild": "2026-09-15T11:20:48Z"
+  },
+  "Package": "C:\\dev\\projects\\Unnamed\\Packages\\FoundationDevelopment20261007-r2\\Windows\\Unnamed.exe",
+  "NativeAutomation": {
+    "NotRun": 0,
+    "Evidence": "NativeAutomation/index.json",
+    "Failed": 0,
+    "Passed": 13
+  },
+  "JavaScript": {
+    "Evidence": "JavaScriptTests.log",
+    "Failed": 0,
+    "Passed": 44
+  },
+  "PackagedMenu": {
+    "Checks": 26,
+    "Evidence": "PackagedMenu/results.json",
+    "Failures": 0
+  },
+  "PackagedRuntime": [
+    {
+      "RequestedFPS": 30,
+      "ObservedMeanFPS": 24.36843838295291,
+      "Checks": 34,
+      "Failures": 0,
+      "Evidence": "PackagedRuntime/runtime-30.json"
+    },
+    {
+      "RequestedFPS": 60,
+      "ObservedMeanFPS": 46.3614930768148,
+      "Checks": 34,
+      "Failures": 0,
+      "Evidence": "PackagedRuntime/runtime-60.json"
+    },
+    {
+      "RequestedFPS": 120,
+      "ObservedMeanFPS": 65.14892755046249,
+      "Checks": 34,
+      "Failures": 0,
+      "Evidence": "PackagedRuntime/runtime-120.json"
+    }
+  ],
+  "Persistence": [
+    {
+      "Mode": "write",
+      "Checks": 3,
+      "Failures": 0,
+      "Evidence": "Persistence/write.json"
+    },
+    {
+      "Mode": "read",
+      "Checks": 2,
+      "Failures": 0,
+      "Evidence": "Persistence/read.json"
+    }
+  ],
+  "Preservation": "Preservation.json",
+  "PackageHashes": "PackageHashes.json",
+  "Limitations": [
+    "Windows Security prompt prevents native desktop testing; no permission prompt acted upon.",
+    "Rendered caps requested30/60/120 but observed mean24.37/46.36/65.15; exact fixed-cadence simulation separately passed.",
+    "Cuboid collision and primitive auto-jump scope; full camera effects and unrelated systems deferred.",
+    "Physical layout/IME, OS focus, hardware mouse and subjective acceptance not executed.",
+    "Production simulation unchanged after package; final editor build adds only test assertions."
+  ]
+}

@@ -1,0 +1,223 @@
+{
+  "Checked": "2026-10-07T19:02:49.6418524Z",
+  "Snapshot": "C:\\dev\\backups\\Unnamed\\fps-foundation-20261007-140749",
+  "SnapshotFileCount": 9623,
+  "MissingBaselineFiles": [],
+  "StagedEntriesUnchanged": true,
+  "IndexByteHashNote": "Git may refresh stat-cache bytes; staged object IDs and modes compared unchanged. No staging, commits, reset or clean performed.",
+  "ProtectedFiles": [
+    {
+      "Path": "Reference\\minecraft-menu\\index.html",
+      "Expected": "72F3DB289F4ECB7E55261EC48CD44B5FEAA170E8B4891641245390B473F1CD18",
+      "Actual": "72F3DB289F4ECB7E55261EC48CD44B5FEAA170E8B4891641245390B473F1CD18",
+      "Unchanged": true
+    },
+    {
+      "Path": "Content\\Menu\\L_Menu.umap",
+      "Expected": "B4165889B793ECF4904C4370EFF7D0AFD872AB99243D5B5740D9B216EC87D83D",
+      "Actual": "B4165889B793ECF4904C4370EFF7D0AFD872AB99243D5B5740D9B216EC87D83D",
+      "Unchanged": true
+    }
+  ],
+  "HistoricalPackageBinaries": [
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuDevelopment\\Windows\\Unnamed.exe",
+      "Expected": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Actual": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuDevelopment\\Windows\\Engine\\Binaries\\Win64\\EpicWebHelper.exe",
+      "Expected": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Actual": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Expected": "7E609A9202DF8CB103A19D692D9B37D53860AFEE1A9A55856B62E1813A825A17",
+      "Actual": "7E609A9202DF8CB103A19D692D9B37D53860AFEE1A9A55856B62E1813A825A17",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuInputCrouchCDevelopment\\Windows\\Unnamed.exe",
+      "Expected": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Actual": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuInputCrouchCDevelopment\\Windows\\Engine\\Binaries\\Win64\\EpicWebHelper.exe",
+      "Expected": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Actual": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuInputCrouchCDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Expected": "EA523A17B1A231CD20D940C5E2BA3F844B8946695B0AEBC137DA9F794C8AC231",
+      "Actual": "EA523A17B1A231CD20D940C5E2BA3F844B8946695B0AEBC137DA9F794C8AC231",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuInputFoundationDevelopment\\Windows\\Unnamed.exe",
+      "Expected": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Actual": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuInputFoundationDevelopment\\Windows\\Engine\\Binaries\\Win64\\EpicWebHelper.exe",
+      "Expected": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Actual": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuInputFoundationDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Expected": "700E46F5C4D0D2E72B0940563BC421151678DBE0071E41CD3DB4E727AA9D8A0A",
+      "Actual": "700E46F5C4D0D2E72B0940563BC421151678DBE0071E41CD3DB4E727AA9D8A0A",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuNoRealmsDevelopment\\Windows\\Unnamed.exe",
+      "Expected": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Actual": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuNoRealmsDevelopment\\Windows\\Engine\\Binaries\\Win64\\EpicWebHelper.exe",
+      "Expected": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Actual": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuNoRealmsDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Expected": "84BCE24BE3ADC683479C83345F545A682459E379ED3174E1B3CC203AA5759357",
+      "Actual": "84BCE24BE3ADC683479C83345F545A682459E379ED3174E1B3CC203AA5759357",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesDevelopment\\Windows\\Unnamed.exe",
+      "Expected": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Actual": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesDevelopment\\Windows\\Engine\\Binaries\\Win64\\EpicWebHelper.exe",
+      "Expected": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Actual": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Expected": "BD5895DF552183E88CD1DFC59F4E2FE74B4A531533F6BED048D29F9C00670053",
+      "Actual": "BD5895DF552183E88CD1DFC59F4E2FE74B4A531533F6BED048D29F9C00670053",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesV1Development\\Windows\\Unnamed.exe",
+      "Expected": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Actual": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesV1Development\\Windows\\Engine\\Binaries\\Win64\\EpicWebHelper.exe",
+      "Expected": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Actual": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesV1Development\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Expected": "7FE2FEDD67DFFB5036EA6CEEC023BCF3667EC3345FD757C6A7515691C3EB1BE6",
+      "Actual": "7FE2FEDD67DFFB5036EA6CEEC023BCF3667EC3345FD757C6A7515691C3EB1BE6",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesV2Development\\Windows\\Unnamed.exe",
+      "Expected": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Actual": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesV2Development\\Windows\\Engine\\Binaries\\Win64\\EpicWebHelper.exe",
+      "Expected": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Actual": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuPreferencesV2Development\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Expected": "E45CE43927DD6FB34BEEE9FA3AE8CC12B01321890E8D46449678FC6EC6DE321D",
+      "Actual": "E45CE43927DD6FB34BEEE9FA3AE8CC12B01321890E8D46449678FC6EC6DE321D",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuQuitDevelopment\\Windows\\Unnamed.exe",
+      "Expected": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Actual": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuQuitDevelopment\\Windows\\Engine\\Binaries\\Win64\\EpicWebHelper.exe",
+      "Expected": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Actual": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuQuitDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Expected": "84BCE24BE3ADC683479C83345F545A682459E379ED3174E1B3CC203AA5759357",
+      "Actual": "84BCE24BE3ADC683479C83345F545A682459E379ED3174E1B3CC203AA5759357",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuReviewFixesDevelopment\\Windows\\Unnamed.exe",
+      "Expected": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Actual": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuReviewFixesDevelopment\\Windows\\Engine\\Binaries\\Win64\\EpicWebHelper.exe",
+      "Expected": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Actual": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\MenuReviewFixesDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Expected": "84BCE24BE3ADC683479C83345F545A682459E379ED3174E1B3CC203AA5759357",
+      "Actual": "84BCE24BE3ADC683479C83345F545A682459E379ED3174E1B3CC203AA5759357",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\VideoSettingsDebugDevelopment\\Windows\\Unnamed.exe",
+      "Expected": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Actual": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\VideoSettingsDebugDevelopment\\Windows\\Engine\\Binaries\\Win64\\EpicWebHelper.exe",
+      "Expected": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Actual": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\VideoSettingsDebugDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Expected": "A502419F97C5E42F38F4BB49CAB5F22B43BC2019416272AFAB8CA779A86A7C5A",
+      "Actual": "A502419F97C5E42F38F4BB49CAB5F22B43BC2019416272AFAB8CA779A86A7C5A",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\VideoSettingsDevelopment\\Windows\\Unnamed.exe",
+      "Expected": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Actual": "3731FB8F33C0060E14BE728C388133C5F757A4705CFDC1AB173F2BDF14786D4F",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\VideoSettingsDevelopment\\Windows\\Engine\\Binaries\\Win64\\EpicWebHelper.exe",
+      "Expected": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Actual": "9E2E609B5A69FC109D37B3D89304E58CC45131DC95DE394864CE607C69142EFB",
+      "Unchanged": true
+    },
+    {
+      "Path": "C:\\dev\\projects\\Unnamed\\Packages\\VideoSettingsDevelopment\\Windows\\Unnamed\\Binaries\\Win64\\Unnamed.exe",
+      "Expected": "A502419F97C5E42F38F4BB49CAB5F22B43BC2019416272AFAB8CA779A86A7C5A",
+      "Actual": "A502419F97C5E42F38F4BB49CAB5F22B43BC2019416272AFAB8CA779A86A7C5A",
+      "Unchanged": true
+    }
+  ],
+  "ConcurrentWork": "Super Flat preview additions preserved; combined menu allowlist includes both playable maps."
+}

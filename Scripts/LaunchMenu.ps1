@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param([int]$Width=1920,[int]$Height=1080,[switch]$Editor,[switch]$Diagnostics,[int]$DebugPort=18888,[string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',
-    [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$PackageName='MenuReviewFixesDevelopment',
+    [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$PackageName='SuperFlatDevelopment',
     [switch]$SessionOnly,[string]$VideoSettingsFile)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent

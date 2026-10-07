@@ -1,0 +1,37 @@
+[
+  {
+    "Report": "InputAndMenuAutomation-20261007-final\\index.json",
+    "Checks": 5,
+    "Failed": 0
+  },
+  {
+    "Report": "Captures\\input-foundation-2026-10-07T15-58-51-187Z\\results.json",
+    "Checks": 38,
+    "Failed": 0
+  },
+  {
+    "Report": "Captures\\review-input-foundation-final-packaged-1280x720\\results.json",
+    "Checks": 369,
+    "Failed": 0
+  },
+  {
+    "Report": "Captures\\review-input-foundation-final-packaged-1920x1080\\results.json",
+    "Checks": 369,
+    "Failed": 0
+  },
+  {
+    "Report": "Captures\\review-input-foundation-video-1280x720\\results.json",
+    "Checks": 37,
+    "Failed": 0
+  },
+  {
+    "Report": "Captures\\review-input-foundation-video-1920x1080\\results.json",
+    "Checks": 37,
+    "Failed": 0
+  },
+  {
+    "Report": "review-input-foundation-final-ValidationResults.json",
+    "Checks": 4,
+    "Failed": 0
+  }
+]

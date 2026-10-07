@@ -6,16 +6,22 @@ import {fileURLToPath} from 'node:url';
 
 const tests=path.dirname(fileURLToPath(import.meta.url)),root=path.dirname(tests);
 const prefix=process.argv.find(a=>a.startsWith('--prefix='))?.slice(9)||'review-accepted';
+const packageName=process.argv.find(a=>a.startsWith('--package='))?.slice(10)||'MenuPreferencesV2Development';
+if(!/^[A-Za-z0-9_-]+$/.test(packageName))throw Error('Invalid package name');
 if(!/^[A-Za-z0-9_-]+$/.test(prefix))throw Error('Invalid capture prefix');
 const report=path.join(tests,prefix+'-ValidationResults.json');
 if(fs.existsSync(report))throw Error('Validation report exists; preserve it before selecting a new run.');
 const checks=[],delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const skipVideo=process.argv.includes('--skip-video');
+const skipMenu=process.argv.includes('--skip-menu');
+const selectedProfile=process.argv.find(a=>a.startsWith('--profile='))?.slice(10);
+if(selectedProfile&&!['1280x720','1920x1080'].includes(selectedProfile))throw Error('Invalid profile');
 const check=(name,pass,detail)=>{checks.push({name,pass:!!pass,detail});console.log((pass?'PASS ':'FAIL ')+name);};
 const exited=child=>new Promise((resolve,reject)=>{child.once('error',reject);child.once('exit',(code,signal)=>resolve({code,signal}));});
-for(const profile of ['1280x720','1920x1080']){
+for(const profile of selectedProfile?[selectedProfile]:['1280x720','1920x1080']){
   const [width,height]=profile.split('x');
   const directory=path.join(tests,'Runtime','review-validation-'+profile+'-'+Date.now());fs.mkdirSync(directory,{recursive:true});
-  const game=spawn(path.join(root,'Packages/MenuReviewFixesDevelopment/Windows/Unnamed/Binaries/Win64/Unnamed.exe'),
+  const game=spawn(path.join(root,'Packages',packageName,'Windows/Unnamed/Binaries/Win64/Unnamed.exe'),
     ['-windowed',`-ResX=${width}`,`-ResY=${height}`,'-NoSplash','-cefdebug=18912','-MenuSettingsSessionOnly',`-UserDir=${directory}/`,`-abslog=${directory}/game.log`],
     {cwd:root,windowsHide:true,stdio:'ignore'});
   const gameExit=exited(game);
@@ -26,8 +32,8 @@ for(const profile of ['1280x720','1920x1080']){
     while(!page){page=browser.contexts().flatMap(c=>c.pages()).find(p=>p.url().includes('/Menu/Web/index.html'));if(!page){if(Date.now()>deadline)throw Error('No menu target');await delay(100);}}
     await page.waitForFunction(()=>window.MenuApplication?.enabled()&&window.MenuVideo?.getState()?.capabilities.fullscreen);
     for(const [file,args] of [
-      ['video-settings.mjs',[`--capture=${prefix}-video-${profile}`]],
-      ['smoke.mjs',[`--mode=${prefix}-packaged`]]
+      ...(!skipVideo?[['video-settings.mjs',[`--capture=${prefix}-video-${profile}`]]]:[]),
+      ...(!skipMenu?[['smoke.mjs',[`--mode=${prefix}-packaged`]]]:[])
     ]){
       const child=spawn(process.execPath,[file,'--port=18912',`--profile=${profile}`,...args],{cwd:tests,windowsHide:true,stdio:'inherit'});
       const status=await exited(child);check(profile+' '+file,status.code===0&&status.signal===null,status);

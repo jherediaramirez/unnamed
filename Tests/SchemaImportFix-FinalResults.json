@@ -1,0 +1,16 @@
+{
+  "Status": "complete",
+  "Backup": "C:\\dev\\backups\\Unnamed\\preference-import-fix-20261007-133653",
+  "PreservedFilesChecked": 3,
+  "ChangedPriorFiles": [],
+  "StagedEntriesUnchanged": true,
+  "RuntimeChecks": 126,
+  "RuntimeFailures": 0,
+  "NativeAutomation": "Tests/SchemaImportFix-Automation-20261007-133854/index.json",
+  "FactoryProbe": "Tests/SchemaImportFix-FactoryExtensions.json",
+  "Package": "Packages/MenuPreferencesV2Development/Windows/Unnamed.exe",
+  "EditorModule": "UnrealEditor-Unnamed-1015.dll",
+  "HtmlSHA256": "4922F18AF17B35CD0CB06DBEAD826AF018BA9AE0AFE686E52C79F90129074FE9",
+  "SchemaSHA256": "BE71BB5C190AEFFE2A23D4DB43912987C65270EA9888FA6354DD1E27E7551C3B",
+  "LegacySchemaPresent": false
+}
