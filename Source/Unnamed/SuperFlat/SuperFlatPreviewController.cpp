@@ -1,6 +1,6 @@
 #include "SuperFlat/SuperFlatPreviewController.h"
 #include "SuperFlat/SuperFlatGameMode.h"
-#include "Menu/MenuApplication.h"
+#include "UnnamedProjectSettings.h"
 #include "Input/UnnamedInputSubsystem.h"
 #include "Components/InputComponent.h"
 #include "Engine/LocalPlayer.h"
@@ -55,7 +55,7 @@ void ASuperFlatPreviewController::ReturnToMenu()
     if (!IsLocalController() || bReturningToMenu) return;
     bReturningToMenu = true;
     UE_LOG(LogSuperFlat, Display, TEXT("Returning to main menu"));
-    UGameplayStatics::OpenLevel(this, FName(UMenuApplication::MenuMap()));
+    UGameplayStatics::OpenLevel(this, FName(UUnnamedProjectSettings::GetMenuMapPackage()));
 }
 
 #if WITH_DEV_AUTOMATION_TESTS

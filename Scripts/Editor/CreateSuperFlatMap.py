@@ -1,7 +1,12 @@
 """Author Super Flat once. Existing level/material edits are always preserved."""
+import os
+import sys
 import unreal
 
-MAP = "/Game/Maps/L_SuperFlat"
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # Unreal does not add the script folder.
+import ProjectPaths  # noqa: E402
+
+MAP = ProjectPaths.world_map("super-flat")
 MATERIAL = "/Game/Maps/SuperFlat/M_SuperFlatGrid"
 
 

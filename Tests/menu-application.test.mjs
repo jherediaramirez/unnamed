@@ -16,7 +16,7 @@ function fixture({canQuit=true, reject=false, saveFailure=false}={}) {
         ok:!reject,canQuit,pendingQuit:!reject&&saveFailure,quitIssued:!reject&&!saveFailure,
         error:reject?'Standalone only.':''});}
     }}},
-    screen:{querySelectorAll:()=>[button]},clone:structuredClone,
+    screen:{querySelectorAll:()=>[button]},clone:structuredClone,state:{worlds:[]},current:{name:'main'},drawWorlds:()=>{},
     MenuVideo:{prepareForExit:async()=>{calls.push('drain');await new Promise(resolve=>setTimeout(resolve,5));calls.push('saved');},cancelExit:()=>calls.push('unlock')},
     message:(...args)=>notices.push(args),console,Date,clearTimeout,
     setTimeout:(fn,ms)=>setTimeout(fn,ms>=20000?60:ms>=5000?40:ms),

@@ -1,31 +1,37 @@
 """Create the initial native Enhanced Input assets once; never overwrite existing assets."""
+import os
+import sys
 import unreal
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # Unreal does not add the script folder.
+import ProjectPaths  # noqa: E402
 
 tools = unreal.AssetToolsHelpers.get_asset_tools()
 def input_key(name):
     key = unreal.Key()
     key.set_editor_property("key_name", name)
     return key
-actions_root = "/Game/Input/Actions"
-context_path = "/Game/Input/MappingContexts/IMC_OnFoot"
+context_path = ProjectPaths.input_asset("OnFootContext")
 if unreal.EditorAssetLibrary.does_asset_exist(context_path):
     unreal.log("Input assets already exist; preserving authored mappings.")
 else:
-    unreal.EditorAssetLibrary.make_directory(actions_root)
-    unreal.EditorAssetLibrary.make_directory("/Game/Input/MappingContexts")
+    context_folder, context_name = ProjectPaths.split(context_path)
+    unreal.EditorAssetLibrary.make_directory(context_folder)
     actions = {}
     for name in ["Move", "Look", "Sprint", "Crouch", "Jump"]:
-        path = actions_root + "/IA_" + name
+        path = ProjectPaths.input_asset(name + "Action")
+        folder, asset_name = ProjectPaths.split(path)
+        unreal.EditorAssetLibrary.make_directory(folder)
         if unreal.EditorAssetLibrary.does_asset_exist(path):
             actions[name] = unreal.load_asset(path)
         else:
-            action = tools.create_asset("IA_" + name, actions_root, unreal.InputAction, unreal.InputAction_Factory())
+            action = tools.create_asset(asset_name, folder, unreal.InputAction, unreal.InputAction_Factory())
             action.set_editor_property("value_type", unreal.InputActionValueType.AXIS2D if name in ["Move", "Look"] else unreal.InputActionValueType.BOOLEAN)
             if name in ["Move", "Look"]:
                 action.set_editor_property("accumulation_behavior", unreal.InputActionAccumulationBehavior.CUMULATIVE)
             action.set_editor_property("action_description", "On-foot " + name.lower() + " request")
             actions[name] = action
-    context = tools.create_asset("IMC_OnFoot", "/Game/Input/MappingContexts", unreal.InputMappingContext, unreal.InputMappingContext_Factory())
+    context = tools.create_asset(context_name, context_folder, unreal.InputMappingContext, unreal.InputMappingContext_Factory())
     rows = [
         ("key.forward", "Walk Forward", "Move", "W", True, False),
         ("key.back", "Walk Backward", "Move", "S", True, True),

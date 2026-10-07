@@ -16,7 +16,8 @@ foreach($script in @('CreateInputAssets.py','SetupFoundation.py')){
     & "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" $taskProject -run=pythonscript "-script=$PSScriptRoot/Editor/$script" -unattended -nop4 -NullRHI
     if($LASTEXITCODE){throw "Asset setup failed: $script"}
 }
+# Cooked maps come from MapsToCook in Config/DefaultGame.ini.
 if($Package){
-    & "$EngineRoot/Engine/Build/BatchFiles/RunUAT.bat" BuildCookRun "-project=$taskProject" -noP4 -platform=Win64 -clientconfig=Development -build -skipbuildeditor -cook '-map=/Game/Menu/L_Menu+/Game/Maps/L_Foundation+/Game/Maps/L_SuperFlat' -stage -pak -archive "-archivedirectory=$taskRoot/Packages/$PackageName" -unattended -utf8output
+    & "$EngineRoot/Engine/Build/BatchFiles/RunUAT.bat" BuildCookRun "-project=$taskProject" -noP4 -platform=Win64 -clientconfig=Development -build -skipbuildeditor -cook -stage -pak -archive "-archivedirectory=$taskRoot/Packages/$PackageName" -unattended -utf8output
     if($LASTEXITCODE){throw 'Development packaging failed'}
 }

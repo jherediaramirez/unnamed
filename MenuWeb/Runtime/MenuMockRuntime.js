@@ -49,7 +49,7 @@ const MenuDiagnostics={
   go,back,setSetting,
   prepare:(name,variant='')=>{
     stack=[{name:'main',data:{}}];
-    chosenWorld=(name==='editworld'?state.worlds.find(w=>!['super-flat','foundation'].includes(w.id)):state.worlds[0])?.id;chosenServer=state.servers[0]?.id;chosenLanguage=state.language;
+    chosenWorld=(name==='editworld'?state.worlds.find(w=>!w.builtIn):state.worlds[0])?.id;chosenServer=state.servers[0]?.id;chosenLanguage=state.language;
     if(name==='create')draft=newDraft();
     if(['packs','datapacks'].includes(name))packDraft=name==='packs'?clone(state.packs):[];
     if(name==='rules')rulesEdit=clone(draft.rules);

@@ -1,4 +1,5 @@
 #include "Menu/MenuInputBridge.h"
+#include "UnnamedSession.h"
 #include "Input/UnnamedInputSettings.h"
 #include "Input/UnnamedInputSubsystem.h"
 #include "InputMappingContext.h"
@@ -191,8 +192,7 @@ FString UMenuInputBridge::Snapshot(bool bSuccess)
     Result->SetBoolField(TEXT("ready"), bReady);
     Result->SetStringField(TEXT("build"), TEXT("Foundation 26.3"));
     Result->SetNumberField(TEXT("schemaVersion"), bReady ? Input->Settings()->FoundationSchemaVersion : 0);
-    Result->SetBoolField(
-        TEXT("persistent"), !GIsEditor && !FParse::Param(FCommandLine::Get(), TEXT("MenuSettingsSessionOnly")));
+    Result->SetBoolField(TEXT("persistent"), UnnamedSession::CanSaveSettings());
     Result->SetStringField(TEXT("error"), LastError.IsEmpty() ? ReadyError : LastError);
     Result->SetObjectField(TEXT("bindings"), Bindings);
     Result->SetObjectField(TEXT("nativeKeys"), Keys);

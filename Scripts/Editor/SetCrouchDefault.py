@@ -1,7 +1,12 @@
 """Explicit one-time authored default update; preserves every other context row."""
+import os
+import sys
 import unreal
 
-context = unreal.load_asset("/Game/Input/MappingContexts/IMC_OnFoot")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # Unreal does not add the script folder.
+import ProjectPaths  # noqa: E402
+
+context = unreal.load_asset(ProjectPaths.input_asset("OnFootContext"))
 if not context:
     raise RuntimeError("Create the input foundation before updating its crouch default.")
 data = context.get_editor_property("default_key_mappings")

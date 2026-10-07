@@ -1,4 +1,5 @@
 #include "Menu/MenuApplication.h"
+#include "UnnamedProjectSettings.h"
 
 #include "Menu/MenuVideoSettings.h"
 #include "Menu/MenuPreferences.h"
@@ -13,11 +14,11 @@
 DEFINE_LOG_CATEGORY_STATIC(LogMenuApplication, Log, All);
 
 void UMenuApplication::Initialize(APlayerController* InController, UMenuVideoSettings* InVideoSettings,
-    UMenuInputBridge* InInputSettings, UMenuPreferences* InPreferences)
+    UMenuInputBridge* InInputBridge, UMenuPreferences* InPreferences)
 {
     Controller = InController;
     VideoSettings = InVideoSettings;
-    InputSettings = InInputSettings;
+    InputBridge = InInputBridge;
     Preferences = InPreferences;
 }
 
@@ -39,7 +40,7 @@ bool UMenuApplication::CanOpenWorld() const
 bool UMenuApplication::FlushSettings()
 {
     return VideoSettings.IsValid() && VideoSettings->FlushForExit(LastError) &&
-        (!InputSettings.IsValid() || InputSettings->FlushForExit(LastError)) &&
+        (!InputBridge.IsValid() || InputBridge->FlushForExit(LastError)) &&
         (!Preferences.IsValid() || Preferences->FlushForExit(LastError));
 }
 
@@ -54,6 +55,18 @@ FString UMenuApplication::GetState()
     State->SetBoolField(TEXT("pendingWorld"), bWorldPending);
     State->SetBoolField(TEXT("travelIssued"), bTravelIssued);
     State->SetStringField(TEXT("error"), LastError);
+    // The page renders and enables exactly these worlds; it keeps no list of its own.
+    TArray<TSharedPtr<FJsonValue>> Worlds;
+    for (const FUnnamedWorldEntry& Entry : UUnnamedProjectSettings::Get().Worlds)
+    {
+        const auto World = MakeShared<FJsonObject>();
+        World->SetStringField(TEXT("id"), Entry.Id.ToString());
+        World->SetStringField(TEXT("name"), Entry.Name);
+        World->SetStringField(TEXT("summary"), Entry.Summary);
+        World->SetStringField(TEXT("status"), Entry.Status);
+        Worlds.Add(MakeShared<FJsonValueObject>(World));
+    }
+    State->SetArrayField(TEXT("worlds"), Worlds);
     FString Json;
     FJsonSerializer::Serialize(State, TJsonWriterFactory<>::Create(&Json));
     return Json;
@@ -84,9 +97,9 @@ FString UMenuApplication::RequestQuit()
 FString UMenuApplication::RequestOpenWorld(const FString& WorldId)
 {
     LastError.Empty();
-    const FString RequestedMap = WorldId == TEXT("foundation") ? TEXT("/Game/Maps/L_Foundation") : SuperFlatMap();
-    if (WorldId != TEXT("super-flat") && WorldId != TEXT("foundation"))
-        LastError = TEXT("Player Foundation and Super Flat are playable. The other entries are design references.");
+    const FString RequestedMap = UUnnamedProjectSettings::GetWorldMapPackage(WorldId);
+    if (RequestedMap.IsEmpty())
+        LastError = TEXT("Only worlds marked Playable can open. The other entries are design references.");
     else if (!CanOpenWorld())
         LastError = TEXT("Opening a world requires a running game or Play in Editor session.");
     else if (!FPackageName::DoesPackageExist(RequestedMap))

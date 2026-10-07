@@ -8,10 +8,14 @@ function fixture({canQuit = true, saveFailure = false} = {}) {
   const calls = [], notices = [], intervals = [];
   let requested = false;
   const reply = () => ({ok: !(requested && saveFailure), canQuit, pendingQuit: false, quitIssued: false,
-    canOpenWorld: true, pendingWorld: false, travelIssued: requested && !saveFailure, error: requested && saveFailure ? 'Save failed.' : ''});
+    canOpenWorld: true, pendingWorld: false, travelIssued: requested && !saveFailure, error: requested && saveFailure ? 'Save failed.' : '',
+    worlds: [{id: 'foundation', name: 'Player Foundation', summary: 'Lab', status: 'Playable'},
+      {id: 'super-flat', name: 'Super Flat', summary: 'Flat', status: 'Playable'}]});
   const context = vm.createContext({
     window: {ue: {menuapp: {getstate: async () => reply(), requestopenworld: async id => {calls.push('open:' + id); requested = true; return reply();}}}},
     screen: {querySelectorAll: () => []}, clone: structuredClone, console, Date, clearTimeout,
+    state: {worlds: [{id: 'fictional-forest', name: 'Forest'}, {id: 'fictional-build', name: 'Build'}]},
+    current: {name: 'main'}, drawWorlds: () => calls.push('draw'),
     setTimeout: (fn, ms) => setTimeout(fn, ms >= 20000 ? 60 : ms >= 5000 ? 40 : ms), setInterval: fn => intervals.push(fn),
     message: (...args) => notices.push(args),
     MenuVideo: {prepareForExit: async () => {calls.push('video'); await new Promise(resolve => setTimeout(resolve, 5)); calls.push('video-saved');}, cancelExit: () => calls.push('video-unlock')},
@@ -23,10 +27,10 @@ function fixture({canQuit = true, saveFailure = false} = {}) {
   return {api: context.window.MenuApplication, context, calls, notices, intervals};
 }
 
-test('only Super Flat travels, after all three settings services drain, once', async () => {
+test('only catalog worlds travel, after all three settings services drain, once', async () => {
   const f = fixture(); await f.api.initialize();
   for (const id of ['fictional-forest', 'fictional-build', '/Game/Maps/L_SuperFlat', 'super-flat?listen']) await f.api.openWorld(id);
-  assert.deepEqual(f.calls, []);
+  assert.deepEqual(f.calls.filter(c => c !== 'draw'), []);
   const request = f.api.openWorld('super-flat');
   await f.api.openWorld('super-flat'); await f.api.quit(); await request;
   assert.equal(f.calls.at(-1), 'open:super-flat');
@@ -65,4 +69,22 @@ test('late pre-travel poll cannot overwrite the accepted travel', async () => {
   const poll = f.intervals[0](); await Promise.resolve();
   await f.api.openWorld('super-flat'); finish(before); await poll;
   assert.equal(f.api.getState().travelIssued, true);
+});
+
+test('native catalog leads the world list and is the only source of playable IDs', async () => {
+  const f = fixture(); await f.api.initialize();
+  assert.deepEqual([...f.context.state.worlds.map(w => w.id)], ['foundation', 'super-flat', 'fictional-forest', 'fictional-build']);
+  assert.deepEqual([...f.context.state.worlds.map(w => !!w.builtIn)], [true, true, false, false]);
+  assert.equal(f.api.defaultWorld(), 'foundation');
+  assert.equal(f.api.isPlayable('super-flat'), true);
+  for (const id of ['fictional-forest', 'Super-Flat', '/Game/Maps/L_SuperFlat', '']) assert.equal(f.api.isPlayable(id), false);
+});
+
+test('a rolled-back world list regains the built-in worlds on the next reply', async () => {
+  const f = fixture(); await f.api.initialize();
+  f.context.state.worlds = f.context.state.worlds.filter(w => !w.builtIn);
+  f.context.current.name = 'worlds';
+  await f.intervals[0]();
+  assert.equal(f.context.state.worlds.filter(w => w.builtIn).length, 2);
+  assert.equal(f.calls.at(-1), 'draw');
 });

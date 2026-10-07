@@ -1,4 +1,5 @@
 #include "Menu/MenuPreferences.h"
+#include "UnnamedSession.h"
 
 #include "Dom/JsonObject.h"
 #include "HAL/FileManager.h"
@@ -42,7 +43,7 @@ void UMenuPreferences::Initialize(FSubsystemCollectionBase& Collection)
     FString Override;
     if (FParse::Value(FCommandLine::Get(), TEXT("MenuPreferencesFile="), Override))
         Path = FPaths::ConvertRelativePathToFull(Override);
-    Load(Path, !GIsEditor && !FParse::Param(FCommandLine::Get(), TEXT("MenuSettingsSessionOnly")));
+    Load(Path, UnnamedSession::CanSaveSettings());
 }
 
 #if WITH_DEV_AUTOMATION_TESTS

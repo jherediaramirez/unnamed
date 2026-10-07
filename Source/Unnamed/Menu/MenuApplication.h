@@ -16,7 +16,7 @@ class UNNAMED_API UMenuApplication : public UObject
     GENERATED_BODY()
 public:
     void Initialize(APlayerController* InController, UMenuVideoSettings* InVideoSettings,
-        UMenuInputBridge* InInputSettings = nullptr, UMenuPreferences* InPreferences = nullptr);
+        UMenuInputBridge* InInputBridge = nullptr, UMenuPreferences* InPreferences = nullptr);
     void Tick();
 
     UFUNCTION()
@@ -25,13 +25,9 @@ public:
     UFUNCTION()
     FString RequestQuit();
 
-    // A catalog ID, never a browser-supplied package path or console command.
+    // A UUnnamedProjectSettings world ID, never a browser-supplied package path or console command.
     UFUNCTION()
     FString RequestOpenWorld(const FString& WorldId);
-
-    static const TCHAR* SuperFlatMap() { return TEXT("/Game/Maps/L_SuperFlat"); }
-
-    static const TCHAR* MenuMap() { return TEXT("/Game/Menu/L_Menu"); }
 
 private:
     bool CanQuit() const;
@@ -39,7 +35,7 @@ private:
     bool FlushSettings();
     TWeakObjectPtr<APlayerController> Controller;
     TWeakObjectPtr<UMenuVideoSettings> VideoSettings;
-    TWeakObjectPtr<UMenuInputBridge> InputSettings;
+    TWeakObjectPtr<UMenuInputBridge> InputBridge;
     TWeakObjectPtr<UMenuPreferences> Preferences;
     bool bQuitPending = false;
     bool bQuitIssued = false;

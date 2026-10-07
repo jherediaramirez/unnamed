@@ -1,5 +1,6 @@
 #include "Input/UnnamedInputSubsystem.h"
 #include "Input/UnnamedInputSettings.h"
+#include "UnnamedProjectSettings.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedPlayerInput.h"
@@ -23,8 +24,8 @@ bool UUnnamedInputSubsystem::EnsureReady(FString& OutError)
     }
     if (!OnFootContext)
     {
-        OnFootContext =
-            LoadObject<UInputMappingContext>(nullptr, TEXT("/Game/Input/MappingContexts/IMC_OnFoot.IMC_OnFoot"));
+        const UUnnamedProjectSettings& Project = UUnnamedProjectSettings::Get();
+        OnFootContext = Project.OnFootContext.LoadSynchronous();
         if (!OnFootContext)
         {
             OutError = TEXT("The on-foot input assets are missing. Run CreateInputAssets.py.");
@@ -36,8 +37,7 @@ bool UUnnamedInputSubsystem::EnsureReady(FString& OutError)
             OutError = TEXT("The on-foot bindings could not be registered.");
             return false;
         }
-        FoundationContext = LoadObject<UInputMappingContext>(
-            nullptr, TEXT("/Game/Input/MappingContexts/IMC_FoundationActions.IMC_FoundationActions"));
+        FoundationContext = Project.FoundationActionsContext.LoadSynchronous();
         if (FoundationContext)
         {
             Settings()->RegisterInputMappingContext(FoundationContext);
@@ -81,11 +81,12 @@ bool UUnnamedInputSubsystem::BindGameplayInput(UEnhancedInputComponent* Componen
             BoundComponent->RemoveBindingByHandle(Handle);
     BindingHandles.Empty();
     BoundComponent = Component;
-    auto* Move = LoadObject<UInputAction>(nullptr, TEXT("/Game/Input/Actions/IA_Move.IA_Move"));
-    auto* Look = LoadObject<UInputAction>(nullptr, TEXT("/Game/Input/Actions/IA_Look.IA_Look"));
-    auto* Sprint = LoadObject<UInputAction>(nullptr, TEXT("/Game/Input/Actions/IA_Sprint.IA_Sprint"));
-    auto* Crouch = LoadObject<UInputAction>(nullptr, TEXT("/Game/Input/Actions/IA_Crouch.IA_Crouch"));
-    auto* Jump = LoadObject<UInputAction>(nullptr, TEXT("/Game/Input/Actions/IA_Jump.IA_Jump"));
+    const UUnnamedProjectSettings& Project = UUnnamedProjectSettings::Get();
+    auto* Move = Project.MoveAction.LoadSynchronous();
+    auto* Look = Project.LookAction.LoadSynchronous();
+    auto* Sprint = Project.SprintAction.LoadSynchronous();
+    auto* Crouch = Project.CrouchAction.LoadSynchronous();
+    auto* Jump = Project.JumpAction.LoadSynchronous();
     if (!Move || !Look || !Sprint || !Crouch || !Jump) return false;
     for (ETriggerEvent Event : {ETriggerEvent::Triggered, ETriggerEvent::Completed, ETriggerEvent::Canceled})
     {

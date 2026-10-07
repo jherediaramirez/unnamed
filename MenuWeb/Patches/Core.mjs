@@ -4,6 +4,8 @@ export const name = 'Core';
 
 export function apply(patch, {debugTools}) {
   patch.line('let saved=', `const debugMenuToolsEnabled=${debugTools};const saved={};`);
+  // Start from the reference defaults; nothing is restored from browser storage.
+  patch.line('const state=', "const state={settings:{...defaults},worlds:clone(defaultWorlds),servers:clone(defaultServers),bindings:{},language:'en_us',lastAddress:'',packs:[]};");
   patch.line('state.settings.skipWarning=', 'state.settings.skipWarning=false;');
   patch.line('function persist()', 'function persist(){} // Mock state intentionally never leaves this document.');
   patch.line('async function initAudio()', 'function initAudio(){}');

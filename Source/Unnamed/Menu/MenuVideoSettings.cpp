@@ -1,4 +1,5 @@
 #include "Menu/MenuVideoSettings.h"
+#include "UnnamedSession.h"
 
 #include "Engine/Engine.h"
 #include "DynamicRHI.h"
@@ -43,7 +44,8 @@ void UMenuVideoSettings::Initialize(bool bAllowNativeChanges)
 {
     bWaitingForWindow = bAllowNativeChanges && !GetWindow().IsValid();
     bNativeAllowed = bAllowNativeChanges && GetWindow().IsValid();
-    bPersistenceEnabled = bNativeAllowed && !FParse::Param(FCommandLine::Get(), TEXT("MenuSettingsSessionOnly"));
+    // Video also needs a real standalone window; the editor never saves.
+    bPersistenceEnabled = bNativeAllowed && UnnamedSession::CanSaveSettings();
     SettingsFile = FPaths::ProjectSavedDir() / TEXT("Config/MenuVideoSettings.ini");
     FString Override;
     if (FParse::Value(FCommandLine::Get(), TEXT("MenuVideoSettingsFile="), Override))

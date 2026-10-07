@@ -28,6 +28,7 @@ if($LASTEXITCODE){throw 'Super Flat map setup failed'}
 if($Package){
     # The editor was built above, including a unique module suffix when needed.
     # Rebuilding it in UAT would discard that suffix and touch an open editor's DLL.
-    & "$EngineRoot\Engine\Build\BatchFiles\RunUAT.bat" BuildCookRun "-project=$project" -noP4 -platform=Win64 -clientconfig=Development -build -skipbuildeditor -cook '-map=/Game/Menu/L_Menu+/Game/Maps/L_SuperFlat' -stage -pak -archive "-archivedirectory=$root\Packages\$PackageName" -unattended -utf8output
+    # Cooked maps come from MapsToCook in Config/DefaultGame.ini.
+    & "$EngineRoot\Engine\Build\BatchFiles\RunUAT.bat" BuildCookRun "-project=$project" -noP4 -platform=Win64 -clientconfig=Development -build -skipbuildeditor -cook -stage -pak -archive "-archivedirectory=$root\Packages\$PackageName" -unattended -utf8output
     if($LASTEXITCODE){throw 'Development packaging failed'}
 }

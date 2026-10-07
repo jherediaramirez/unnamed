@@ -1,6 +1,11 @@
+import os
+import sys
 import unreal
 
-path = "/Game/Menu/L_Menu"
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # Unreal does not add the script folder.
+import ProjectPaths  # noqa: E402
+
+path = ProjectPaths.menu_map()
 if unreal.EditorAssetLibrary.does_asset_exist(path):
     unreal.log("Preserving existing menu map: " + path)
 else:

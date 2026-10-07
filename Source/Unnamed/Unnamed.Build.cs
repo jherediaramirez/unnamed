@@ -9,7 +9,7 @@ public class Unnamed : ModuleRules
         // Project headers are included by their path from this folder, e.g. "Menu/MenuApplication.h".
         PublicIncludePaths.Add(ModuleDirectory);
         PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "EnhancedInput", "InputCore", "GameplayTags" });
-        PrivateDependencyModuleNames.AddRange(new[] { "InputCore", "Slate", "SlateCore", "WebBrowser", "HTTP", "Json", "ApplicationCore", "RHI", "RenderCore" });
+        PrivateDependencyModuleNames.AddRange(new[] { "DeveloperSettings", "Slate", "SlateCore", "WebBrowser", "HTTP", "Json", "ApplicationCore", "RHI", "RenderCore" });
         string WebRoot = Path.Combine(ModuleDirectory, "../../Content/Menu/Web");
         // Regenerate build/staging metadata when the native preference contract changes.
         ExternalDependencies.Add(Path.Combine(WebRoot, "preferences-schema.menuprefs"));

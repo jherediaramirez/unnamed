@@ -1,9 +1,14 @@
 """Read-only verification of the authored map; run in an isolated editor commandlet."""
+import os
+import sys
 import unreal
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # Unreal does not add the script folder.
+import ProjectPaths  # noqa: E402
 
 levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-if not levels.load_level("/Game/Maps/L_SuperFlat"):
+if not levels.load_level(ProjectPaths.world_map("super-flat")):
     raise RuntimeError("Super Flat level did not load")
 world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
 assert world.get_world_settings().get_editor_property("default_game_mode") == unreal.SuperFlatGameMode.static_class()

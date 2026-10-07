@@ -1,7 +1,9 @@
 const MenuApplication = (() => {
   let bridge = null, snapshot = null, quitting = false, loading = false, polling = false, retryAllowed = false, revision = 0;
+  let catalog = []; // Native playable worlds, in list order.
   const enabled = () => !quitting && !loading && !snapshot?.pendingWorld && !snapshot?.travelIssued && !!snapshot?.canQuit && !snapshot.quitIssued && (!snapshot.pendingQuit || retryAllowed);
-  const worldEnabled = id => ['super-flat','foundation'].includes(id) && !loading && !quitting && !!snapshot?.canOpenWorld &&
+  const isPlayable = id => catalog.some(world => world.id === id);
+  const worldEnabled = id => isPlayable(id) && !loading && !quitting && !!snapshot?.canOpenWorld &&
     !snapshot.travelIssued && !snapshot.pendingQuit && (!snapshot.pendingWorld || retryAllowed);
   function refresh() {
     for (const button of screen.querySelectorAll('[data-application-quit]')) button.disabled = !enabled();
@@ -20,7 +22,17 @@ const MenuApplication = (() => {
       throw Error('Invalid response from the game shutdown service.');
     return reply;
   }
-  function absorb(reply) { snapshot = reply; retryAllowed = false; refresh(); }
+  // Built-in worlds lead the list; a rolled-back screen transaction may drop them, so every
+  // reply re-adds any that are missing.
+  function syncWorlds(worlds) {
+    if (!Array.isArray(worlds)) return;
+    const next = worlds.map(({id, name, summary, status}) => ({id, name, summary, status}));
+    if (JSON.stringify(next) === JSON.stringify(catalog) && catalog.every(world => state.worlds.some(w => w.id === world.id))) return;
+    catalog = next;
+    state.worlds = [...catalog.map(world => ({...world, folder: world.name, builtIn: true})), ...state.worlds.filter(w => !w.builtIn)];
+    if (current.name === 'worlds') drawWorlds();
+  }
+  function absorb(reply) { snapshot = reply; retryAllowed = false; syncWorlds(reply.worlds); refresh(); }
   async function openWorld(id) {
     if (!worldEnabled(id)) return;
     loading = true;
@@ -106,7 +118,8 @@ const MenuApplication = (() => {
     catch (error) { console.warn('Game shutdown synchronization: ' + error.message); }
     finally { polling = false; }
   }, 500);
-  return {enabled, quit, worldEnabled, openWorld, isLoading: () => loading, initialize, getState: () => snapshot ? clone(snapshot) : null};
+  return {enabled, quit, isPlayable, worldEnabled, openWorld, isLoading: () => loading, initialize,
+    defaultWorld: () => catalog[0]?.id ?? null, getState: () => snapshot ? clone(snapshot) : null};
 })();
 window.MenuApplication = MenuApplication;
 void MenuApplication.initialize();

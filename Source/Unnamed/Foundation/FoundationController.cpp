@@ -1,4 +1,5 @@
 #include "Foundation/FoundationController.h"
+#include "UnnamedProjectSettings.h"
 #include "Foundation/FoundationCoordinates.h"
 #include "Foundation/FoundationLab.h"
 #include "Foundation/FoundationProfile.h"
@@ -487,7 +488,7 @@ void UFoundationDiagnostics::Resume()
 void UFoundationDiagnostics::ReturnToMenu()
 {
     CancelActions();
-    UGameplayStatics::OpenLevel(this, TEXT("/Game/Menu/L_Menu"));
+    UGameplayStatics::OpenLevel(this, FName(UUnnamedProjectSettings::GetMenuMapPackage()));
 }
 
 void UFoundationDiagnostics::CopySnapshot()

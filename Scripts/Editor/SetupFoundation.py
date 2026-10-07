@@ -1,9 +1,14 @@
 """Supported Unreal editor setup. Extends native assets; no binary fabrication.
 Run only after compiling the Foundation classes. Does not change Super Flat.
 """
-import unreal
 import json
-from pathlib import Path
+import os
+import sys
+import unreal
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # Unreal does not add the script folder.
+import ProjectPaths  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 root = Path(unreal.Paths.project_dir())
 catalog = json.loads((root / 'Docs/Foundation/controls.json').read_text(encoding='utf-8'))
@@ -19,7 +24,7 @@ names = {'left':'LeftMouseButton','right':'RightMouseButton','middle':'MiddleMou
 # Restore the project's Shift sprint / C crouch defaults if the Foundation
 # setup previously replaced them with vanilla keys. Preserve other authored keys.
 # Saved player-mappable keys remain in the native user profile, not in these assets.
-old = unreal.load_asset('/Game/Input/MappingContexts/IMC_OnFoot')
+old = unreal.load_asset(ProjectPaths.input_asset('OnFootContext'))
 if old is None:
     raise RuntimeError('Run CreateInputAssets.py before SetupFoundation.py')
 data = old.get_editor_property('default_key_mappings')
@@ -36,12 +41,13 @@ for index, m in enumerate(mappings):
 data.set_editor_property('mappings', mappings)
 old.set_editor_property('default_key_mappings', data)
 if not unreal.EditorAssetLibrary.save_loaded_asset(old, only_if_is_dirty=False): raise RuntimeError('Could not save default-key migration')
-look = unreal.load_asset('/Game/Input/Actions/IA_Look')
+look = unreal.load_asset(ProjectPaths.input_asset('LookAction'))
 look.set_editor_property('accumulation_behavior', unreal.InputActionAccumulationBehavior.CUMULATIVE)
 if not unreal.EditorAssetLibrary.save_loaded_asset(look, only_if_is_dirty=False): raise RuntimeError('Could not save mouse accumulation')
-path = '/Game/Input/MappingContexts/IMC_FoundationActions'
+path = ProjectPaths.input_asset('FoundationActionsContext')
 if not unreal.EditorAssetLibrary.does_asset_exist(path):
-    ctx = tools.create_asset('IMC_FoundationActions','/Game/Input/MappingContexts',unreal.InputMappingContext,unreal.InputMappingContext_Factory())
+    folder, name = ProjectPaths.split(path)
+    ctx = tools.create_asset(name,folder,unreal.InputMappingContext,unreal.InputMappingContext_Factory())
     unreal.EditorAssetLibrary.make_directory('/Game/Input/Foundation')
     rows = []
     for row in catalog['rows']:
@@ -66,7 +72,7 @@ if not unreal.EditorAssetLibrary.does_asset_exist(path):
     ctx.set_editor_property('default_key_mappings',data)
     unreal.EditorAssetLibrary.save_loaded_asset(ctx)
 
-map_path = '/Game/Maps/L_Foundation'
+map_path = ProjectPaths.world_map('foundation')
 if not unreal.EditorAssetLibrary.does_asset_exist(map_path):
     levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     if not levels.new_level(map_path): raise RuntimeError('Failed to create foundation map')
