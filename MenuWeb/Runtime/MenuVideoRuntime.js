@@ -1,19 +1,12 @@
 const liveVideoSettings = new Set(['fullscreen', 'framerateLimit', 'enableVsync', 'guiScale', 'menuBackgroundBlurriness']);
+// The five native video settings through the menuvideo service, applied one at a time in order.
 const MenuVideo = (() => {
-  let bridge = null, snapshot = null, running = null, polling = false, resetting = false, exitLocked = false, revision = 0;
+  const client = MenuBridge.client('menuvideo', {service: 'video settings', unavailable: 'Video settings connection is unavailable.',
+    validate: reply => !!reply && typeof reply.ok === 'boolean' && !!reply.settings && !!reply.capabilities && !!reply.observed});
+  let snapshot = null, running = null, polling = false, resetting = false, exitLocked = false, revision = 0;
   const pending = new Map();
   const cloneState = () => snapshot ? clone(snapshot) : null;
-  const method = name => bridge[name.toLowerCase()] || bridge[name];
-  const call = async (name, ...args) => {
-    const fn = method(name);
-    if (typeof fn !== 'function') throw Error('Video settings connection is unavailable.');
-    const reply = await MenuBridge.wait(Promise.resolve().then(() => fn.apply(bridge, args)),
-      MenuBridge.requestTimeout, 'The video settings connection did not respond. Please try again.');
-    const value = typeof reply === 'string' ? JSON.parse(reply) : reply;
-    if (!value || typeof value.ok !== 'boolean' || !value.settings || !value.capabilities || !value.observed)
-      throw Error('Invalid response from the video settings service.');
-    return value;
-  };
+  const call = (name, ...args) => client.call(name, args);
   function absorb(value) {
     snapshot = value;
     const oldScale = state.settings.guiScale;
@@ -79,12 +72,7 @@ const MenuVideo = (() => {
   }
   async function initialize() {
     const ticket = revision;
-    for (let attempt = 0; attempt < 100; attempt++) {
-      bridge = window.ue?.menuvideo;
-      if (bridge) break;
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    if (!bridge) {
+    if (!await client.connect()) {
       console.warn('Native video settings unavailable; live controls remain disabled.');
       return;
     }
@@ -109,7 +97,7 @@ const MenuVideo = (() => {
     } catch (error) { resetting = false; window.MenuPreferences?.cancelExit(); refreshSettings(); report(error.message + '\nReset did not finish. Some preference groups may already have reset; retry to finish.'); }
   }
   setInterval(async () => {
-    if (!bridge || running || polling || resetting) return;
+    if (!client.connected || running || polling || resetting) return;
     polling = true;
     const ticket = revision;
     try { const reply = await call('GetState'); if (!running && !resetting && ticket === revision) absorb(reply); }
@@ -130,4 +118,5 @@ const MenuVideo = (() => {
   };
 })();
 window.MenuVideo = MenuVideo;
+MenuStores.register(MenuVideo);
 void MenuVideo.initialize();

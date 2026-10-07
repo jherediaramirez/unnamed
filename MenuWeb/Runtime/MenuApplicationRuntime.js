@@ -1,26 +1,19 @@
+// Quit Game and world travel through the native menuapp service. Both drain every settings
+// store first, send one request, then follow native state until Unreal confirms.
 const MenuApplication = (() => {
-  let bridge = null, snapshot = null, quitting = false, loading = false, polling = false, retryAllowed = false, revision = 0;
+  const client = MenuBridge.client('menuapp', {service: 'game application', unavailable: 'Game shutdown is unavailable.',
+    validate: reply => !!reply && typeof reply.ok === 'boolean' && typeof reply.canQuit === 'boolean' &&
+      typeof reply.pendingQuit === 'boolean' && typeof reply.quitIssued === 'boolean'});
+  let snapshot = null, leaving = null, polling = false, retryAllowed = false, revision = 0; // leaving: 'quit' | 'world'
   let catalog = []; // Native playable worlds, in list order.
-  const enabled = () => !quitting && !loading && !snapshot?.pendingWorld && !snapshot?.travelIssued && !!snapshot?.canQuit && !snapshot.quitIssued && (!snapshot.pendingQuit || retryAllowed);
+  const enabled = () => !leaving && !snapshot?.pendingWorld && !snapshot?.travelIssued && !!snapshot?.canQuit &&
+    !snapshot.quitIssued && (!snapshot.pendingQuit || retryAllowed);
   const isPlayable = id => catalog.some(world => world.id === id);
-  const worldEnabled = id => isPlayable(id) && !loading && !quitting && !!snapshot?.canOpenWorld &&
+  const worldEnabled = id => isPlayable(id) && !leaving && !!snapshot?.canOpenWorld &&
     !snapshot.travelIssued && !snapshot.pendingQuit && (!snapshot.pendingWorld || retryAllowed);
   function refresh() {
     for (const button of screen.querySelectorAll('[data-application-quit]')) button.disabled = !enabled();
     if (typeof refreshWorldActions === 'function') refreshWorldActions();
-  }
-  async function call(name, deadline = Infinity, ...args) {
-    const method = bridge[name.toLowerCase()] || bridge[name];
-    if (typeof method !== 'function') throw Error('Game shutdown is unavailable.');
-    const remaining = deadline - Date.now();
-    if (remaining <= 0) throw Error('The game did not finish closing. Please try again.');
-    const result = await MenuBridge.wait(Promise.resolve().then(() => method.call(bridge, ...args)),
-      Math.min(MenuBridge.requestTimeout, remaining), 'The game shutdown connection did not respond. Please try again.');
-    const reply = typeof result === 'string' ? JSON.parse(result) : result;
-    if (!reply || typeof reply.ok !== 'boolean' || typeof reply.canQuit !== 'boolean' ||
-        typeof reply.pendingQuit !== 'boolean' || typeof reply.quitIssued !== 'boolean')
-      throw Error('Invalid response from the game shutdown service.');
-    return reply;
   }
   // Built-in worlds lead the list; a rolled-back screen transaction may drop them, so every
   // reply re-adds any that are missing.
@@ -33,92 +26,71 @@ const MenuApplication = (() => {
     if (current.name === 'worlds') drawWorlds();
   }
   function absorb(reply) { snapshot = reply; retryAllowed = false; syncWorlds(reply.worlds); refresh(); }
-  async function openWorld(id) {
-    if (!worldEnabled(id)) return;
-    loading = true;
+
+  const exits = {
+    quit: {title: 'Quit Game', request: 'RequestQuit', done: reply => reply.quitIssued,
+      stillPending: () => true, failed: 'The game could not close.',
+      drain: 'Settings did not finish changing. Please try quitting again.',
+      timedOut: 'The game did not finish closing. Please try again.'},
+    world: {title: 'Open Level', request: 'RequestOpenWorld', done: reply => reply.travelIssued,
+      stillPending: reply => reply.pendingWorld, failed: 'The selected level could not open.',
+      drain: 'Settings did not finish changing. Please try opening the level again.',
+      timedOut: 'The selected level did not finish opening. Please try again.'}
+  };
+  async function leave(kind, ...args) {
+    const exit = exits[kind];
+    leaving = kind;
     retryAllowed = false;
     revision++;
     refresh();
     const deadline = Date.now() + MenuBridge.exitTimeout;
+    const call = (method, ...callArgs) => {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) throw Error(exit.timedOut);
+      return client.call(method, callArgs, Math.min(MenuBridge.requestTimeout, remaining));
+    };
     try {
-      await MenuBridge.wait(Promise.all([MenuVideo.prepareForExit(), window.MenuInput?.prepareForExit(), window.MenuPreferences?.prepareForExit()]), deadline - Date.now(),
-        'Settings did not finish changing. Please try opening the level again.');
-      let reply = await call('RequestOpenWorld', deadline, id);
+      await MenuBridge.wait(MenuStores.prepareForExit(), deadline - Date.now(), exit.drain);
+      let reply = await call(exit.request, ...args);
       absorb(reply);
-      if (!reply.ok) throw Error(reply.error || 'The selected level could not open.');
-      while (!reply.travelIssued) {
-        if (Date.now() > deadline) throw Error('The selected level did not finish opening. Please try again.');
+      if (!reply.ok) throw Error(reply.error || exit.failed);
+      while (!exit.done(reply)) {
+        if (Date.now() > deadline) throw Error(exit.timedOut);
         await new Promise(resolve => setTimeout(resolve, 100));
-        reply = await call('GetState', deadline);
+        reply = await call('GetState');
         absorb(reply);
-        if (!reply.ok || !reply.pendingWorld && !reply.travelIssued) throw Error(reply.error || 'The selected level could not open.');
+        if (!reply.ok || !exit.stillPending(reply) && !exit.done(reply)) throw Error(reply.error || exit.failed);
       }
-      // The outgoing document is destroyed when Unreal changes levels.
+      // Stay locked: Unreal shuts down or destroys this document when it changes levels.
     } catch (error) {
-      loading = false;
-      retryAllowed = true;
-      revision++;
-      MenuVideo.cancelExit();
-      window.MenuInput?.cancelExit();
-      window.MenuPreferences?.cancelExit();
-      refresh();
-      message('Open Level', error.message);
-    }
-  }
-  async function quit() {
-    if (!enabled()) return;
-    quitting = true;
-    retryAllowed = false;
-    revision++;
-    refresh();
-    const deadline = Date.now() + MenuBridge.exitTimeout;
-    try {
-      await MenuBridge.wait(Promise.all([MenuVideo.prepareForExit(), window.MenuInput?.prepareForExit(), window.MenuPreferences?.prepareForExit()]), deadline - Date.now(),
-        'Settings did not finish changing. Please try quitting again.');
-      let reply = await call('RequestQuit', deadline);
-      absorb(reply);
-      if (!reply.ok) throw Error(reply.error || 'The game could not close.');
-      while (!reply.quitIssued) {
-        if (Date.now() > deadline) throw Error('The game did not finish closing. Please try again.');
-        await new Promise(resolve => setTimeout(resolve, 100));
-        reply = await call('GetState', deadline);
-        absorb(reply);
-        if (!reply.ok) throw Error(reply.error || 'The game could not close.');
-      }
-      // Keep changes locked until Unreal completes its normal shutdown.
-    } catch (error) {
-      quitting = false;
+      leaving = null;
       // An unanswered completion must not leave a cached pending flag locking Retry.
       // Unreal still owns duplicate-request protection; fresh readback replaces this allowance.
       retryAllowed = true;
       revision++;
-      MenuVideo.cancelExit();
-      window.MenuInput?.cancelExit();
-      window.MenuPreferences?.cancelExit();
+      MenuStores.cancelExit();
       refresh();
-      message('Quit Game', error.message);
+      message(exit.title, error.message);
     }
   }
+  const quit = () => enabled() ? leave('quit') : Promise.resolve();
+  const openWorld = id => worldEnabled(id) ? leave('world', id) : Promise.resolve();
+
   async function initialize() {
     const ticket = revision;
-    for (let attempt = 0; attempt < 100; attempt++) {
-      bridge = window.ue?.menuapp;
-      if (bridge) break;
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    if (!bridge) return;
-    try { const reply = await call('GetState'); if (ticket === revision) absorb(reply); }
-    catch (error) { console.warn('Game shutdown: ' + error.message); }
+    if (!await client.connect()) return;
+    try { const reply = await client.call('GetState'); if (ticket === revision) absorb(reply); }
+    catch (error) { console.warn('Game application: ' + error.message); }
   }
   setInterval(async () => {
-    if (!bridge || quitting || loading || polling) return;
+    if (!client.connected || leaving || polling) return;
     polling = true;
     const ticket = revision;
-    try { const reply = await call('GetState'); if (!quitting && !loading && ticket === revision) absorb(reply); }
-    catch (error) { console.warn('Game shutdown synchronization: ' + error.message); }
+    try { const reply = await client.call('GetState'); if (!leaving && ticket === revision) absorb(reply); }
+    catch (error) { console.warn('Game application synchronization: ' + error.message); }
     finally { polling = false; }
   }, 500);
-  return {enabled, quit, isPlayable, worldEnabled, openWorld, isLoading: () => loading, initialize,
+  return {enabled, quit, isPlayable, worldEnabled, openWorld, isLoading: () => leaving === 'world', initialize,
     defaultWorld: () => catalog[0]?.id ?? null, getState: () => snapshot ? clone(snapshot) : null};
 })();
 window.MenuApplication = MenuApplication;

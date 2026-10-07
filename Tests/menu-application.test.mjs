@@ -23,6 +23,7 @@ function fixture({canQuit=true, reject=false, saveFailure=false}={}) {
     setInterval:fn=>intervals.push(fn),
   });
   vm.runInContext(bridgeScript,context);
+  vm.runInContext('MenuStores.register(MenuVideo)',context);
   vm.runInContext(script,context);
   return {api:context.window.MenuApplication,calls,notices,button,context,intervals};
 }

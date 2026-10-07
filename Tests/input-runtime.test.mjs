@@ -9,7 +9,7 @@ function fixture() {
   let native={ok:true,ready:true,persistent:true,error:'',bindings:{'key.forward':'W','key.jump':'Space'},
     nativeKeys:{'key.forward':'W','key.jump':'SpaceBar'},defaults:{'key.forward':'W','key.jump':'Space'},
     supported:['key.forward','key.jump'],policies:{toggleSprint:false,toggleCrouch:false}};
-  const calls=[],notices=[],window={ue:{menuinput:{
+  const calls=[],notices=[],window={addEventListener(){},ue:{menuinput:{
     getstate:async()=>structuredClone(native),
     applybinding:async(id,key)=>{calls.push([id,key]);if(key==='SpaceBar')return {...native,ok:false,error:'Conflict'};
       native.bindings[id]=key==='None'?'Not Bound':key;native.nativeKeys[id]=key;return structuredClone(native);},
@@ -21,6 +21,7 @@ function fixture() {
   const context=vm.createContext({window,clone:structuredClone,state:{bindings:{},settings:{}},
     DATA:{bindings:[{id:'key.forward',default:'W'},{id:'key.jump',default:'Space'}]},current:{name:'keybinds'},
     bindingCapture:null,render:()=>{},refreshSettings:()=>{},message:(...args)=>notices.push(args),console,Date,
+    document:{addEventListener(){}},
     setTimeout:(fn,ms)=>setTimeout(fn,ms>=5000?25:ms),clearTimeout});
   vm.runInContext(bridgeScript,context);vm.runInContext(script,context);
   return {api:window.MenuInput,bridge:window.ue.menuinput,context,calls,notices};
@@ -76,4 +77,16 @@ test('quit drains an in-flight edit and locks capture until cancelled',async()=>
   f.api.startCapture('key.jump');assert.equal(f.context.bindingCapture,null);
   finish();await draining;f.api.cancelExit();assert.equal(f.api.enabled('key.forward'),true);
   assert.equal(f.context.state.bindings['key.forward'],'K');
+});
+test('capture hooks: the native side hears capture start before keys and every way it ends',async()=>{
+  const f=fixture();await f.api.initialize();const events=[];let open;
+  f.api.setCaptureHooks({beforeStart:id=>new Promise(resolve=>{events.push('start:'+id);open=resolve;}),afterEnd:()=>events.push('end')});
+  const starting=f.api.startCapture('key.forward');
+  assert.equal(f.context.bindingCapture,null,'capture waits for the native side');
+  open();await starting;assert.equal(f.context.bindingCapture,'key.forward');
+  f.api.captureKey(keyEvent('K','KeyK',true));assert.deepEqual(events,['start:key.forward'],'a repeat keeps capturing');
+  f.api.captureKey(keyEvent('Escape','Escape'));assert.deepEqual(events,['start:key.forward','end']);
+  f.context.bindingCapture='key.jump';f.api.capturePointer({button:4,preventDefault(){},stopImmediatePropagation(){}});
+  await f.api.settled();assert.deepEqual(events,['start:key.forward','end','end']);
+  assert.deepEqual(f.calls.at(-1),['key.jump','ThumbMouseButton2']);
 });

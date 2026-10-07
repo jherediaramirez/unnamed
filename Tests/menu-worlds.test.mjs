@@ -23,6 +23,8 @@ function fixture({canQuit = true, saveFailure = false} = {}) {
   for (const name of ['MenuInput', 'MenuPreferences']) context.window[name] = {
     prepareForExit: async () => calls.push(name + '-saved'), cancelExit: () => calls.push(name + '-unlock')};
   vm.runInContext(read('MenuBridgeRuntime.js'), context);
+  // Script order registers video, input, then preferences.
+  vm.runInContext('for (const store of [MenuVideo, window.MenuInput, window.MenuPreferences]) MenuStores.register(store)', context);
   vm.runInContext(read('MenuApplicationRuntime.js'), context);
   return {api: context.window.MenuApplication, context, calls, notices, intervals};
 }

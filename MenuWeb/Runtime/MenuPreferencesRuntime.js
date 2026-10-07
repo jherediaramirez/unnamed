@@ -1,6 +1,15 @@
 const preferenceSettings = new Set(Object.keys(PREFERENCE_SCHEMA.settings));
+// The 101 saved menu preferences, language, pack order and two flags through the
+// menupreferences service. Edits queue in order; Done-style commits are transactions.
 const MenuPreferences = (() => {
-  let bridge = null, snapshot = null, running = null, locked = false, committing = false;
+  const client = MenuBridge.client('menupreferences', {service: 'preferences',
+    unavailable: 'Preferences are unavailable. Restart Unreal after rebuilding.',
+    validate: reply => !!reply && typeof reply.ok === 'boolean' && typeof reply.ready === 'boolean' &&
+      typeof reply.editable === 'boolean' && typeof reply.persistent === 'boolean' &&
+      (!reply.ready || (!!reply.settings && Array.isArray(reply.packs) && typeof reply.language === 'string' &&
+        Object.keys(reply.settings).length === preferenceSettings.size &&
+        [...preferenceSettings].every(id => Object.hasOwn(reply.settings, id))))});
+  let snapshot = null, running = null, locked = false, committing = false;
   let revision = 0, polling = false, initializing = null;
   const queue = [];
   // Done is a transaction: keep the selected draft stable until native saving
@@ -44,20 +53,7 @@ const MenuPreferences = (() => {
     refreshSettings();
   }
   function absorb(reply) { snapshot = copy(reply); project(); }
-  async function call(name, ...args) {
-    const method = bridge?.[name.toLowerCase()] || bridge?.[name];
-    if (typeof method !== 'function') throw Error('Preferences are unavailable. Restart Unreal after rebuilding.');
-    const raw = await MenuBridge.wait(Promise.resolve().then(() => method.apply(bridge,args)),
-      MenuBridge.requestTimeout, 'The preferences connection did not respond. Please try again.');
-    const reply = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    if (!reply || typeof reply.ok !== 'boolean' || typeof reply.ready !== 'boolean' ||
-        typeof reply.editable !== 'boolean' || typeof reply.persistent !== 'boolean' ||
-        (reply.ready && (!reply.settings || !Array.isArray(reply.packs) || typeof reply.language !== 'string' ||
-          Object.keys(reply.settings).length !== preferenceSettings.size ||
-          [...preferenceSettings].some(id => !Object.hasOwn(reply.settings,id)))))
-      throw Error('Invalid response from preferences.');
-    return reply;
-  }
+  const call = (name, ...args) => client.call(name, args);
   function report(error) {
     console.warn('Menu preferences: ' + error.message);
     message('Menu Preferences', error.message);
@@ -134,12 +130,7 @@ const MenuPreferences = (() => {
     if (initializing) return initializing;
     initializing = (async () => {
       const ticket = revision;
-      for (let attempt = 0; attempt < 100; attempt++) {
-        bridge = window.ue?.menupreferences;
-        if (bridge) break;
-        await new Promise(resolve => setTimeout(resolve,100));
-      }
-      if (!bridge) { console.warn('Menu preferences unavailable; restart Unreal after rebuilding.'); return; }
+      if (!await client.connect()) { console.warn('Menu preferences unavailable; restart Unreal after rebuilding.'); return; }
       try {
         const reply = await call('GetState');
         if (ticket === revision) absorb(reply);
@@ -149,7 +140,7 @@ const MenuPreferences = (() => {
     return initializing;
   }
   setInterval(async () => {
-    if (!bridge || !snapshot || locked || committing || queue.length || running || polling) return;
+    if (!client.connected || !snapshot || locked || committing || queue.length || running || polling) return;
     polling = true;
     const ticket = revision;
     try {
@@ -187,4 +178,5 @@ const MenuPreferences = (() => {
   };
 })();
 window.MenuPreferences = MenuPreferences;
+MenuStores.register(MenuPreferences);
 void MenuPreferences.initialize();

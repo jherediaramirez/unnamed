@@ -1,6 +1,12 @@
 const liveInputPolicies = new Set(['toggleSprint', 'toggleCrouch']);
+// Native key bindings and Hold/Toggle policies through the menuinput service. A world that must
+// know about key capture (Foundation's input router) registers setCaptureHooks.
 const MenuInput = (() => {
-  let bridge = null, snapshot = null, running = null, locked = false, ready = false;
+  const client = MenuBridge.client('menuinput', {service: 'input settings', unavailable: 'The input settings connection is unavailable.',
+    validate: reply => !!reply && typeof reply.ok === 'boolean' && typeof reply.ready === 'boolean' && !!reply.bindings &&
+      !!reply.defaults && !!reply.nativeKeys && !!reply.policies && Array.isArray(reply.supported)});
+  let snapshot = null, running = null, locked = false, ready = false;
+  let hooks = {beforeStart: null, afterEnd: null};
   function absorb(reply) {
     snapshot = reply; ready = reply.ready;
     Object.assign(state.bindings, reply.bindings);
@@ -8,17 +14,9 @@ const MenuInput = (() => {
     for (const row of DATA.bindings) if (Object.hasOwn(reply.defaults, row.id)) row.default = reply.defaults[row.id];
     if (current.name === 'keybinds') render(); else refreshSettings();
   }
-  async function call(name, ...args) {
-    const fn = bridge?.[name.toLowerCase()] || bridge?.[name];
-    if (typeof fn !== 'function') throw Error('The input settings connection is unavailable.');
-    const result = await MenuBridge.wait(Promise.resolve().then(() => fn.apply(bridge, args)),
-      MenuBridge.requestTimeout, 'The input settings connection did not respond. Please try again.');
-    const reply = typeof result === 'string' ? JSON.parse(result) : result;
-    if (!reply || typeof reply.ok !== 'boolean' || typeof reply.ready !== 'boolean' || !reply.bindings ||
-        !reply.defaults || !reply.nativeKeys || !reply.policies || !Array.isArray(reply.supported))
-      throw Error('Invalid response from the input settings service.');
-    return reply;
-  }
+  const call = (name, ...args) => client.call(name, args);
+  // Every way a capture can end (key, button, wheel, Escape, Backspace, blur) reports here.
+  const endCapture = () => hooks.afterEnd?.();
   function enabled(id) { return ready && !locked && !running && (liveInputPolicies.has(id) || snapshot.supported.includes(id)); }
   function supported(id) { return !!snapshot?.supported.includes(id); }
   async function mutate(name, ...args) {
@@ -79,23 +77,28 @@ const MenuInput = (() => {
     if (!key) { render(); message('Key Bindings', 'That key is not supported yet. Choose another keyboard key or mouse button.'); return; }
     void submit(!event.code && key !== 'None' ? 'ApplyCapturedKey' : 'ApplyBinding', id, key);
   }
+  function captureKeyAndReport(event) { captureKey(event); if (!bindingCapture) endCapture(); }
   function capturePointer(event) {
     event.preventDefault(); event.stopImmediatePropagation();
     const key = ['LeftMouseButton','MiddleMouseButton','RightMouseButton','ThumbMouseButton','ThumbMouseButton2'][event.button];
     const id = bindingCapture; bindingCapture = null;
     if (key) void submit('ApplyBinding', id, key); else render();
+    endCapture();
   }
+  function captureWheel(event) {
+    event.preventDefault(); event.stopImmediatePropagation();
+    const id = bindingCapture; bindingCapture = null;
+    if (enabled(id)) void submit('ApplyBinding', id, event.deltaY < 0 ? 'MouseScrollUp' : 'MouseScrollDown');
+    endCapture();
+  }
+  document.addEventListener('wheel', event => { if (bindingCapture) captureWheel(event); }, {capture: true, passive: false});
+  window.addEventListener('blur', endCapture);
   async function initialize() {
-    for (let attempt = 0; attempt < 100; attempt++) {
-      bridge = window.ue?.menuinput; if (bridge) break;
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    if (!bridge) return;
+    if (!await client.connect()) return;
     try { absorb(await call('GetState')); }
     catch (error) { console.warn('Input settings: ' + error.message); }
   }
-  return {initialize, enabled, supported, keyFromEvent, captureKey, capturePointer,
-    bindWheel: (id,key) => enabled(id) ? submit('ApplyBinding',id,key) : Promise.resolve(),
+  return {initialize, enabled, supported, keyFromEvent, captureKey: captureKeyAndReport, capturePointer,
     setPolicy: (id, value) => enabled(id) ? submit('ApplyPolicy', id, value) : Promise.resolve(),
     reset: id => enabled(id) ? submit('ResetBinding', id) : Promise.resolve(),
     unbind: id => enabled(id) ? submit('ApplyBinding', id, 'None') : Promise.resolve(),
@@ -104,7 +107,14 @@ const MenuInput = (() => {
       if (!ready || locked) throw Error('Input settings are unavailable. Please try again.');
       return mutate('ResetBindings', resetPolicies);
     },
-    startCapture: id => { if (enabled(id)) { bindingCapture = id; render(); } },
+    // Capture begins once beforeStart (if any) has settled, so the native side knows first.
+    startCapture: id => {
+      if (!enabled(id)) return;
+      const begin = () => { if (enabled(id)) { bindingCapture = id; render(); } };
+      if (!hooks.beforeStart) return void begin();
+      return Promise.resolve(hooks.beforeStart(id)).then(begin);
+    },
+    setCaptureHooks: next => { hooks = {beforeStart: null, afterEnd: null, ...next}; },
     getState: () => snapshot ? clone(snapshot) : null,
     statusLabel: () => !ready ? 'Input unavailable - restart Unreal after rebuilding' :
       (snapshot.build || 'Input') + ' - ' + (snapshot.persistent ? 'Changes save automatically' : 'Session only; changes do not save'),
@@ -114,4 +124,5 @@ const MenuInput = (() => {
   };
 })();
 window.MenuInput = MenuInput;
+MenuStores.register(MenuInput);
 void MenuInput.initialize();
