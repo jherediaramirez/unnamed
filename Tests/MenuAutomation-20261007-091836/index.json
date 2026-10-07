@@ -1,0 +1,59 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "JRHEREDIARAMIRE",
+			"instance": "438D04AE4E490F4704C043B83C939B9D",
+			"instanceName": "JRHEREDIARAMIRE-17032",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (25H2) [10.0.26200.9550] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 4070 Ti SUPER",
+			"cPUModel": "Intel(R) Core(TM) i9-14900KF",
+			"rAMInGB": 64,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.07-13.18.59",
+	"succeeded": 2,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.012465100735425949,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "QuitSafety",
+			"fullTestPath": "Unnamed.Menu.Application.QuitSafety",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"438D04AE4E490F4704C043B83C939B9D"
+			],
+			"duration": 0.0050178021192550659,
+			"dateTime": "2026.10.07-13.18.59",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Validation",
+			"fullTestPath": "Unnamed.Menu.VideoSettings.Validation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"438D04AE4E490F4704C043B83C939B9D"
+			],
+			"duration": 0.0074472986161708832,
+			"dateTime": "2026.10.07-13.18.59",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

@@ -1,3 +1,4 @@
+// Historical UI-only MenuDevelopment suite; Realms and mock fullscreen existed at that checkpoint.
 import {chromium} from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -13,6 +14,7 @@ const page=browser.contexts().flatMap(c=>c.pages()).find(p=>p.url().includes('Me
 const controls=[];const checks=[];
 const check=(name,pass,detail)=>checks.push({name,pass,detail});
 try{
+  if(await page.evaluate(()=>!!window.MenuVideo))throw Error('Historical UI-only suite: use MenuDevelopment, not the current functional menu.');
   await page.reload();await page.waitForFunction(()=>window.MenuPrototype?.getState().assets.panoramaLoaded);
   await page.getByRole('button',{name:'Singleplayer',exact:true}).click();
   check('World actions disabled before selection',await page.getByRole('button',{name:'Play Selected World',exact:true}).isDisabled());

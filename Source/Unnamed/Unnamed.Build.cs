@@ -7,7 +7,7 @@ public class Unnamed : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine" });
-        PrivateDependencyModuleNames.AddRange(new[] { "InputCore", "Slate", "SlateCore", "WebBrowser", "HTTP" });
+        PrivateDependencyModuleNames.AddRange(new[] { "InputCore", "Slate", "SlateCore", "WebBrowser", "HTTP", "Json", "ApplicationCore" });
         string WebRoot = Path.Combine(ModuleDirectory, "../../Content/Menu/Web");
         // CEF loads physical files, not assets inside the cooked container.
         foreach (string File in Directory.GetFiles(WebRoot, "*", SearchOption.AllDirectories))

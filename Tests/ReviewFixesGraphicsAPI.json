@@ -1,0 +1,13 @@
+{
+  "generated": "2026-10-07T11:08:31.3665071-04:00",
+  "package": "MenuReviewFixesDevelopment",
+  "log": "C:\\dev\\projects\\Unnamed\\Tests\\Runtime\\review-validation-1280x720-1791385653231\\game.log",
+  "excerpts": [
+    "[2026.10.07-15.07.33:759][  0]LogRHI: Using Default RHI: D3D12",
+    "[2026.10.07-15.07.34:121][  0]LogRHI: Using Highest Feature Level of D3D12: SM6",
+    "[2026.10.07-15.07.34:122][  0]LogD3D12RHI: Found D3D12 adapter 0: NVIDIA GeForce RTX 4070 Ti SUPER (VendorId: 10de, DeviceId: 2705, SubSysId: e13c1462, Revision: 00a1",
+    "[2026.10.07-15.07.34:123][  0]LogD3D12RHI: Found D3D12 adapter 1: Microsoft Basic Render Driver (VendorId: 1414, DeviceId: 008c, SubSysId: 0000, Revision: 0000",
+    "[2026.10.07-15.07.34:261][  0]LogRHI: Using Default RHI: D3D12",
+    "[2026.10.07-15.07.34:261][  0]LogRHI: Using Highest Feature Level of D3D12: SM6"
+  ]
+}

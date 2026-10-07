@@ -1,133 +1,33 @@
 # Control Registry
 
-Generated from rendered controls in the packaged browser, plus the supplied structured definitions. No real feature is marked implemented. `ControlRegistry.json` contains defaults, ranges, dependencies, transactions, source meaning, proposed integration, later acceptance and unresolved questions for every entry.
+Generated from rendered controls and structured definitions. Five video settings, confirmed preference reset and normal Quit Game are implemented; other controls remain mocks. See VideoSettings.md and QuitGame.md for functional acceptance and remaining human gates. `ControlRegistry.json` records the status of every entry.
 
-Observed 706 distinct controls across 36 source routes and Create tabs. Dynamic selected-pack controls are included in the supplemental observations.
+Observed 697 distinct controls across 33 source routes and Create tabs. Dynamic selected-pack controls are included in the supplemental observations.
 
 | Screen | Stable ID | Exact observed label | Widget | Default | Status |
 |---|---|---|---|---|---|
 | main | main..Singleplayer | Singleplayer | button | "Not applicable (command)" | UI_ONLY |
 | main | main..Multiplayer | Multiplayer | button | "Not applicable (command)" | UI_ONLY |
-| main | main..Minecraft_Realms | Minecraft Realms | button | "Not applicable (command)" | UI_ONLY |
 | main | main..Friends_List | Friends List | button | "Not applicable (command)" | UI_ONLY |
 | main | main..Language | Language | button | "" | UI_ONLY |
 | main | main..Accessibility_Settings | Accessibility Settings | button | "Not applicable (command)" | UI_ONLY |
 | main | main..Options... | Options... | button | "Not applicable (command)" | UI_ONLY |
-| main | main..Quit_Game | Quit Game | button | "Not applicable (command)" | UI_ONLY |
+| main | main..Quit_Game | Quit Game | button | "Not applicable (command)" | IMPLEMENTED |
 | main | main..Copyright_Mojang_AB._Do_not_distribute_ | Copyright Mojang AB. Do not distribute! | button | "Not applicable (command)" | UI_ONLY |
-| options | options.fov | FOV | range | 70 | UI_ONLY |
-| options | options..Online... | Online... | button | "Not applicable (command)" | UI_ONLY |
-| options | options..Skin_Customization... | Skin Customization... | button | "Not applicable (command)" | UI_ONLY |
-| options | options..Music___Sounds... | Music & Sounds... | button | "Not applicable (command)" | UI_ONLY |
-| options | options..Video_Settings... | Video Settings... | button | "Not applicable (command)" | UI_ONLY |
-| options | options..Controls... | Controls... | button | "Not applicable (command)" | UI_ONLY |
-| options | options..Language... | Language... | button | "Not applicable (command)" | UI_ONLY |
-| options | options..Chat_Settings... | Chat Settings... | button | "Not applicable (command)" | UI_ONLY |
-| options | options..Resource_Packs... | Resource Packs... | button | "Not applicable (command)" | UI_ONLY |
-| options | options..Accessibility_Settings... | Accessibility Settings... | button | "Not applicable (command)" | UI_ONLY |
-| options | options..Telemetry_Data... | Telemetry Data... | button | "Not applicable (command)" | UI_ONLY |
-| options | options..Credits___Attribution... | Credits & Attribution... | button | "Not applicable (command)" | UI_ONLY |
-| options | options..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| video | video..Exclusive_Fullscreen_Mode | Exclusive Fullscreen Mode | range | "0" | INTENTIONALLY_DISABLED |
-| video | video.framerateLimit | Max Framerate | range | 120 | UI_ONLY |
-| video | video.enableVsync | VSync: ON | button | true | UI_ONLY |
-| video | video.inactivityFpsLimit | Reduce fps when: AFK | button | "AFK" | UI_ONLY |
-| video | video.guiScale | GUI Scale: Auto | button | 0 | UI_ONLY |
-| video | video.fullscreen | Fullscreen: OFF | button | false | UI_ONLY |
-| video | video.exclusiveFullscreen | Exclusive Fullscreen: OFF | button | false | UI_ONLY |
-| video | video.gamma | Brightness | range | 0.5 | UI_ONLY |
-| video | video.preferredGraphicsBackend | Graphics API: Default | button | "Default" | UI_ONLY |
-| video | video.graphicsPreset | Preset | range | "Fancy" | UI_ONLY |
-| video | video.biomeBlendRadius | Biome Blend | range | 2 | UI_ONLY |
-| video | video.renderDistance | Render Distance | range | 12 | UI_ONLY |
-| video | video.prioritizeChunkUpdates | Chunk Builder: Threaded | button | "Threaded" | UI_ONLY |
-| video | video.simulationDistance | Simulation Distance | range | 12 | UI_ONLY |
-| video | video.ambientOcclusion | Smooth Lighting: ON | button | true | UI_ONLY |
-| video | video.cloudStatus | Clouds: Fancy | button | "Fancy" | UI_ONLY |
-| video | video.particles | Particles: All | button | "All" | UI_ONLY |
-| video | video.mipmapLevels | Mipmap Levels | range | 4 | UI_ONLY |
-| video | video.entityShadows | Entity Shadows: ON | button | true | UI_ONLY |
-| video | video.entityDistanceScaling | Entity Distance | range | 1 | UI_ONLY |
-| video | video.menuBackgroundBlurriness | Menu Background Blur | range | 5 | UI_ONLY |
-| video | video.cloudRange | Cloud Distance | range | 128 | UI_ONLY |
-| video | video.cutoutLeaves | See-Through Leaves: ON | button | true | UI_ONLY |
-| video | video.improvedTransparency | Improved Transparency: OFF | button | false | UI_ONLY |
-| video | video.textureFiltering | Texture Filtering: None | button | "None" | UI_ONLY |
-| video | video.maxAnisotropyBit | Anisotropic Filtering | range | 2 | UI_ONLY |
-| video | video.weatherRadius | Weather Effect Radius | range | 10 | UI_ONLY |
-| video | video.showAutosaveIndicator | Autosave Indicator: ON | button | true | UI_ONLY |
-| video | video.vignette | Show Vignette: ON | button | true | UI_ONLY |
-| video | video.attackIndicator | Attack Indicator: Crosshair | button | "Crosshair" | UI_ONLY |
-| video | video.chunkSectionFadeInTime | Chunk Fade Time | range | 0.75 | UI_ONLY |
-| video | video..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| video | video..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| sounds | sounds.sound_master | Master Volume | range | 1 | UI_ONLY |
-| sounds | sounds.sound_music | Music | range | 1 | UI_ONLY |
-| sounds | sounds.sound_record | Jukebox/Note Blocks | range | 1 | UI_ONLY |
-| sounds | sounds.sound_weather | Weather | range | 1 | UI_ONLY |
-| sounds | sounds.sound_block | Blocks | range | 1 | UI_ONLY |
-| sounds | sounds.sound_hostile | Hostile Mobs | range | 1 | UI_ONLY |
-| sounds | sounds.sound_neutral | Friendly Mobs | range | 1 | UI_ONLY |
-| sounds | sounds.sound_player | Players | range | 1 | UI_ONLY |
-| sounds | sounds.sound_ambient | Ambient/Environment | range | 1 | UI_ONLY |
-| sounds | sounds.sound_voice | Narrator/Voice | range | 1 | UI_ONLY |
-| sounds | sounds.sound_ui | UI | range | 1 | UI_ONLY |
-| sounds | sounds.soundDevice | System Default | button | "System Default" | UI_ONLY |
-| sounds | sounds.showSubtitles | Closed Captions: OFF | button | false | UI_ONLY |
-| sounds | sounds.directionalAudio | Directional Audio: OFF | button | false | UI_ONLY |
-| sounds | sounds.musicFrequency | Music Frequency: Default | button | "Default" | UI_ONLY |
-| sounds | sounds.musicToast | Music Toast: Never | button | "Never" | UI_ONLY |
-| sounds | sounds..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| sounds | sounds..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| controls | controls..Mouse_Settings... | Mouse Settings... | button | "Not applicable (command)" | UI_ONLY |
-| controls | controls..Key_Binds... | Key Binds... | button | "Not applicable (command)" | UI_ONLY |
-| controls | controls.toggleCrouch | Sneak: Hold | button | false | UI_ONLY |
-| controls | controls.toggleSprint | Sprint: Hold | button | false | UI_ONLY |
-| controls | controls.toggleAttack | Attack/Destroy: Hold | button | false | UI_ONLY |
-| controls | controls.toggleUse | Use Item/Place Block: Hold | button | false | UI_ONLY |
-| controls | controls.autoJump | Auto-Jump: OFF | button | false | UI_ONLY |
-| controls | controls.sprintWindow | Sprint Window | range | 7 | UI_ONLY |
-| controls | controls.quitShortcuts | Quit Shortcuts: ON | button | true | UI_ONLY |
-| controls | controls.operatorItemsTab | Operator Items Tab: OFF | button | false | UI_ONLY |
-| controls | controls..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| controls | controls..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| accessibility | accessibility.narrator | Narrator: OFF | button | "OFF" | UI_ONLY |
-| accessibility | accessibility..Controls... | Controls... | button | "Not applicable (command)" | UI_ONLY |
-| accessibility | accessibility.showSubtitles | Closed Captions: ON | button | false | UI_ONLY |
-| accessibility | accessibility.highContrast | High Contrast: OFF | button | false | UI_ONLY |
-| accessibility | accessibility.menuBackgroundBlurriness | Menu Background Blur | range | 5 | UI_ONLY |
-| accessibility | accessibility.textBackgroundOpacity | Text Background Opacity | range | 0.5 | UI_ONLY |
-| accessibility | accessibility.backgroundForChatOnly | Chat | button | true | UI_ONLY |
-| accessibility | accessibility.chatOpacity | Chat Text Opacity | range | 1 | UI_ONLY |
-| accessibility | accessibility.chatLineSpacing | Line Spacing | range | 0 | UI_ONLY |
-| accessibility | accessibility.chatDelay | options.chat.delay_instant | range | 0 | UI_ONLY |
-| accessibility | accessibility.notificationDisplayTime | Notification Time | range | 1 | UI_ONLY |
-| accessibility | accessibility.bobView | View Bobbing: ON | button | true | UI_ONLY |
-| accessibility | accessibility.screenEffectScale | Distortion Effects | range | 1 | UI_ONLY |
-| accessibility | accessibility.fovEffectScale | FOV Effects | range | 1 | UI_ONLY |
-| accessibility | accessibility.darknessEffectScale | Darkness Pulsing | range | 1 | UI_ONLY |
-| accessibility | accessibility.damageTiltStrength | Damage Tilt | range | 1 | UI_ONLY |
-| accessibility | accessibility.glintSpeed | Glint Speed | range | 0.5 | UI_ONLY |
-| accessibility | accessibility.glintStrength | Glint Strength | range | 0.75 | UI_ONLY |
-| accessibility | accessibility.hideLightningFlash | Hide Sky Flashes: OFF | button | false | UI_ONLY |
-| accessibility | accessibility.darkMojangStudiosBackground | Monochrome Logo: OFF | button | false | UI_ONLY |
-| accessibility | accessibility.panoramaSpeed | Panorama Scroll Speed | range | 1 | UI_ONLY |
-| accessibility | accessibility.hideSplashTexts | Hide Splash Texts: OFF | button | false | UI_ONLY |
-| accessibility | accessibility.narratorHotkey | Narrator Hotkey: ON | button | true | UI_ONLY |
-| accessibility | accessibility.rotateWithMinecart | Rotate with Minecarts: OFF | button | false | INTENTIONALLY_DISABLED |
-| accessibility | accessibility.highContrastBlockOutline | High Contrast Block Outlines: OFF | button | false | UI_ONLY |
-| accessibility | accessibility..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| accessibility | accessibility..Accessibility_Guide | Accessibility Guide | button | "Not applicable (command)" | UI_ONLY |
-| accessibility | accessibility..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| online | online.friendsList | Friends List: OFF | button | false | UI_ONLY |
-| online | online.allowFriendRequests | Allow Requests: OFF | button | false | UI_ONLY |
-| online | online.inGameNotification | In-Game Notification: OFF | button | false | UI_ONLY |
-| online | online.sharePresence | Visibility: Full | button | "Full" | UI_ONLY |
-| online | online..Xbox_Settings... | Xbox Settings... | button | "Not applicable (command)" | UI_ONLY |
-| online | online.allowServerListing | Allow Server Listings: ON | button | true | UI_ONLY |
-| online | online.realmsNotifications | News & Invites: ON | button | true | UI_ONLY |
-| online | online..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| online | online..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| worlds | worlds..search_for_worlds | search for worlds | text | "" | UI_ONLY |
+| worlds | worlds.fictional-forest | Fictional Forest Camp | option | false | UI_ONLY |
+| worlds | worlds.fictional-build | Fictional Creative Workshop | option | false | UI_ONLY |
+| worlds | worlds..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
+| worlds | worlds..Play_Selected_World | Play Selected World | button | "Not applicable (command)" | UI_ONLY |
+| worlds | worlds..Create_New_World | Create New World | button | "Not applicable (command)" | UI_ONLY |
+| worlds | worlds..Edit | Edit | button | "Not applicable (command)" | UI_ONLY |
+| worlds | worlds..Delete | Delete | button | "Not applicable (command)" | UI_ONLY |
+| worlds | worlds..Re-Create | Re-Create | button | "Not applicable (command)" | UI_ONLY |
+| worlds | worlds..Back | Back | button | "Not applicable (command)" | UI_ONLY |
+| safety | safety..Do_not_show_this_screen_again | Do not show this screen again | checkbox | false | UI_ONLY |
+| safety | safety..Proceed | Proceed | button | "Not applicable (command)" | UI_ONLY |
+| safety | safety..Back | Back | button | "Not applicable (command)" | UI_ONLY |
+| message | message..Back | Back | button | "Not applicable (command)" | UI_ONLY |
 | language | language..Language | Language | text | "" | UI_ONLY |
 | language | language.af_za | Afrikaans (Suid-Afrika) | option | "false" | UI_ONLY |
 | language | language.ar_sa | العربية (العالم العربي) | option | "false" | UI_ONLY |
@@ -275,6 +175,175 @@ Observed 706 distinct controls across 36 source routes and Create tabs. Dynamic 
 | language | language..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | language | language..Font_Settings... | Font Settings... | button | "Not applicable (command)" | UI_ONLY |
 | language | language..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| accessibility | accessibility.narrator | Narrator: Narrates All | button | "OFF" | UI_ONLY |
+| accessibility | accessibility..Controls... | Controls... | button | "Not applicable (command)" | UI_ONLY |
+| accessibility | accessibility.showSubtitles | Closed Captions: OFF | button | false | UI_ONLY |
+| accessibility | accessibility.highContrast | High Contrast: ON | button | false | UI_ONLY |
+| accessibility | accessibility.menuBackgroundBlurriness | Menu Background Blur | range | 5 | IMPLEMENTED |
+| accessibility | accessibility.textBackgroundOpacity | Text Background Opacity | range | 0.5 | UI_ONLY |
+| accessibility | accessibility.backgroundForChatOnly | Everywhere | button | true | UI_ONLY |
+| accessibility | accessibility.chatOpacity | Chat Text Opacity | range | 1 | UI_ONLY |
+| accessibility | accessibility.chatLineSpacing | Line Spacing | range | 0 | UI_ONLY |
+| accessibility | accessibility.chatDelay | options.chat.delay_instant | range | 0 | UI_ONLY |
+| accessibility | accessibility.notificationDisplayTime | Notification Time | range | 1 | UI_ONLY |
+| accessibility | accessibility.bobView | View Bobbing: OFF | button | true | UI_ONLY |
+| accessibility | accessibility.screenEffectScale | Distortion Effects | range | 1 | UI_ONLY |
+| accessibility | accessibility.fovEffectScale | FOV Effects | range | 1 | UI_ONLY |
+| accessibility | accessibility.darknessEffectScale | Darkness Pulsing | range | 1 | UI_ONLY |
+| accessibility | accessibility.damageTiltStrength | Damage Tilt | range | 1 | UI_ONLY |
+| accessibility | accessibility.glintSpeed | Glint Speed | range | 0.5 | UI_ONLY |
+| accessibility | accessibility.glintStrength | Glint Strength | range | 0.75 | UI_ONLY |
+| accessibility | accessibility.hideLightningFlash | Hide Sky Flashes: ON | button | false | UI_ONLY |
+| accessibility | accessibility.darkMojangStudiosBackground | Monochrome Logo: ON | button | false | UI_ONLY |
+| accessibility | accessibility.panoramaSpeed | Panorama Scroll Speed | range | 1 | UI_ONLY |
+| accessibility | accessibility.hideSplashTexts | Hide Splash Texts: ON | button | false | UI_ONLY |
+| accessibility | accessibility.narratorHotkey | Narrator Hotkey: OFF | button | true | UI_ONLY |
+| accessibility | accessibility.rotateWithMinecart | Rotate with Minecarts: OFF | button | false | INTENTIONALLY_DISABLED |
+| accessibility | accessibility.highContrastBlockOutline | High Contrast Block Outlines: ON | button | false | UI_ONLY |
+| accessibility | accessibility..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
+| accessibility | accessibility..Accessibility_Guide | Accessibility Guide | button | "Not applicable (command)" | UI_ONLY |
+| accessibility | accessibility..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| options | options.fov | FOV | range | 70 | UI_ONLY |
+| options | options..Online... | Online... | button | "Not applicable (command)" | UI_ONLY |
+| options | options..Skin_Customization... | Skin Customization... | button | "Not applicable (command)" | UI_ONLY |
+| options | options..Music___Sounds... | Music & Sounds... | button | "Not applicable (command)" | UI_ONLY |
+| options | options..Video_Settings... | Video Settings... | button | "Not applicable (command)" | UI_ONLY |
+| options | options..Controls... | Controls... | button | "Not applicable (command)" | UI_ONLY |
+| options | options..Language... | Language... | button | "Not applicable (command)" | UI_ONLY |
+| options | options..Chat_Settings... | Chat Settings... | button | "Not applicable (command)" | UI_ONLY |
+| options | options..Resource_Packs... | Resource Packs... | button | "Not applicable (command)" | UI_ONLY |
+| options | options..Accessibility_Settings... | Accessibility Settings... | button | "Not applicable (command)" | UI_ONLY |
+| options | options..Telemetry_Data... | Telemetry Data... | button | "Not applicable (command)" | UI_ONLY |
+| options | options..Credits___Attribution... | Credits & Attribution... | button | "Not applicable (command)" | UI_ONLY |
+| options | options..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| credits | credits..Credits | Credits | button | "Not applicable (command)" | UI_ONLY |
+| credits | credits..Attribution | Attribution | button | "Not applicable (command)" | UI_ONLY |
+| credits | credits..Licenses | Licenses | button | "Not applicable (command)" | UI_ONLY |
+| credits | credits..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| online | online.friendsList | Friends List: OFF | button | false | UI_ONLY |
+| online | online.allowFriendRequests | Allow Requests: OFF | button | false | UI_ONLY |
+| online | online.inGameNotification | In-Game Notification: OFF | button | false | UI_ONLY |
+| online | online.sharePresence | Visibility: Full | button | "Full" | UI_ONLY |
+| online | online..Xbox_Settings... | Xbox Settings... | button | "Not applicable (command)" | UI_ONLY |
+| online | online.allowServerListing | Allow Server Listings: OFF | button | true | UI_ONLY |
+| online | online..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
+| online | online..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| skin | skin.skin_cape | Cape: OFF | button | true | UI_ONLY |
+| skin | skin.skin_jacket | Jacket: OFF | button | true | UI_ONLY |
+| skin | skin.skin_left_sleeve | Left Sleeve: OFF | button | true | UI_ONLY |
+| skin | skin.skin_right_sleeve | Right Sleeve: OFF | button | true | UI_ONLY |
+| skin | skin.skin_left_pants_leg | Left Pant Leg: OFF | button | true | UI_ONLY |
+| skin | skin.skin_right_pants_leg | Right Pant Leg: OFF | button | true | UI_ONLY |
+| skin | skin.skin_hat | Hat: OFF | button | true | UI_ONLY |
+| skin | skin.mainHand | Main Hand: Left | button | "Right" | UI_ONLY |
+| skin | skin..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
+| skin | skin..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| sounds | sounds.sound_master | Master Volume | range | 1 | UI_ONLY |
+| sounds | sounds.sound_music | Music | range | 1 | UI_ONLY |
+| sounds | sounds.sound_record | Jukebox/Note Blocks | range | 1 | UI_ONLY |
+| sounds | sounds.sound_weather | Weather | range | 1 | UI_ONLY |
+| sounds | sounds.sound_block | Blocks | range | 1 | UI_ONLY |
+| sounds | sounds.sound_hostile | Hostile Mobs | range | 1 | UI_ONLY |
+| sounds | sounds.sound_neutral | Friendly Mobs | range | 1 | UI_ONLY |
+| sounds | sounds.sound_player | Players | range | 1 | UI_ONLY |
+| sounds | sounds.sound_ambient | Ambient/Environment | range | 1 | UI_ONLY |
+| sounds | sounds.sound_voice | Narrator/Voice | range | 1 | UI_ONLY |
+| sounds | sounds.sound_ui | UI | range | 1 | UI_ONLY |
+| sounds | sounds.soundDevice | System Default | button | "System Default" | UI_ONLY |
+| sounds | sounds.showSubtitles | Closed Captions: ON | button | false | UI_ONLY |
+| sounds | sounds.directionalAudio | Directional Audio: ON | button | false | UI_ONLY |
+| sounds | sounds.musicFrequency | Music Frequency: Frequent | button | "Default" | UI_ONLY |
+| sounds | sounds.musicToast | Music Toast: Pause Menu | button | "Never" | UI_ONLY |
+| sounds | sounds..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
+| sounds | sounds..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| video | video..Exclusive_Fullscreen_Mode | Exclusive Fullscreen Mode | range | "0" | INTENTIONALLY_DISABLED |
+| video | video.framerateLimit | Max Framerate | range | 120 | IMPLEMENTED |
+| video | video.enableVsync | VSync: OFF | button | true | IMPLEMENTED |
+| video | video.inactivityFpsLimit | Reduce fps when: Minimized | button | "AFK" | UI_ONLY |
+| video | video.guiScale | GUI Scale: 1 | button | 0 | IMPLEMENTED |
+| video | video.fullscreen | Fullscreen: ON | button | false | IMPLEMENTED |
+| video | video.exclusiveFullscreen | Exclusive Fullscreen: ON | button | false | UI_ONLY |
+| video | video.gamma | Brightness | range | 0.5 | UI_ONLY |
+| video | video.preferredGraphicsBackend | Graphics API: Prefer OpenGL | button | "Default" | UI_ONLY |
+| video | video.graphicsPreset | Preset | range | "Fancy" | UI_ONLY |
+| video | video.biomeBlendRadius | Biome Blend | range | 2 | UI_ONLY |
+| video | video.renderDistance | Render Distance | range | 12 | UI_ONLY |
+| video | video.prioritizeChunkUpdates | Chunk Builder: Semi Blocking | button | "Threaded" | UI_ONLY |
+| video | video.simulationDistance | Simulation Distance | range | 12 | UI_ONLY |
+| video | video.ambientOcclusion | Smooth Lighting: OFF | button | true | UI_ONLY |
+| video | video.cloudStatus | Clouds: OFF | button | "Fancy" | UI_ONLY |
+| video | video.particles | Particles: Decreased | button | "All" | UI_ONLY |
+| video | video.mipmapLevels | Mipmap Levels | range | 4 | UI_ONLY |
+| video | video.entityShadows | Entity Shadows: OFF | button | true | UI_ONLY |
+| video | video.entityDistanceScaling | Entity Distance | range | 1 | UI_ONLY |
+| video | video.menuBackgroundBlurriness | Menu Background Blur | range | 5 | IMPLEMENTED |
+| video | video.cloudRange | Cloud Distance | range | 128 | UI_ONLY |
+| video | video.cutoutLeaves | See-Through Leaves: OFF | button | true | UI_ONLY |
+| video | video.improvedTransparency | Improved Transparency: ON | button | false | UI_ONLY |
+| video | video.textureFiltering | Texture Filtering: RGSS | button | "None" | UI_ONLY |
+| video | video.maxAnisotropyBit | Anisotropic Filtering | range | 2 | UI_ONLY |
+| video | video.weatherRadius | Weather Effect Radius | range | 10 | UI_ONLY |
+| video | video.showAutosaveIndicator | Autosave Indicator: OFF | button | true | UI_ONLY |
+| video | video.vignette | Show Vignette: OFF | button | true | UI_ONLY |
+| video | video.attackIndicator | Attack Indicator: Hotbar | button | "Crosshair" | UI_ONLY |
+| video | video.chunkSectionFadeInTime | Chunk Fade Time | range | 0.75 | UI_ONLY |
+| video | video.hard-reset | Hard Reset | button | "Not applicable (command)" | IMPLEMENTED |
+| video | video..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
+| video | video..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| controls | controls..Mouse_Settings... | Mouse Settings... | button | "Not applicable (command)" | UI_ONLY |
+| controls | controls..Key_Binds... | Key Binds... | button | "Not applicable (command)" | UI_ONLY |
+| controls | controls.toggleCrouch | Sneak: Toggle | button | false | UI_ONLY |
+| controls | controls.toggleSprint | Sprint: Toggle | button | false | UI_ONLY |
+| controls | controls.toggleAttack | Attack/Destroy: Toggle | button | false | UI_ONLY |
+| controls | controls.toggleUse | Use Item/Place Block: Toggle | button | false | UI_ONLY |
+| controls | controls.autoJump | Auto-Jump: ON | button | false | UI_ONLY |
+| controls | controls.sprintWindow | Sprint Window | range | 7 | UI_ONLY |
+| controls | controls.quitShortcuts | Quit Shortcuts: OFF | button | true | UI_ONLY |
+| controls | controls.operatorItemsTab | Operator Items Tab: ON | button | false | UI_ONLY |
+| controls | controls..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
+| controls | controls..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| chat | chat.chatVisibility | Chat: Commands Only | button | "Shown" | UI_ONLY |
+| chat | chat.chatColors | Colors: OFF | button | true | UI_ONLY |
+| chat | chat.chatLinks | Web Links: OFF | button | true | UI_ONLY |
+| chat | chat.chatLinksPrompt | Prompt on Links: OFF | button | true | UI_ONLY |
+| chat | chat.chatOpacity | Chat Text Opacity | range | 1 | UI_ONLY |
+| chat | chat.textBackgroundOpacity | Text Background Opacity | range | 0.5 | UI_ONLY |
+| chat | chat.chatScale | Chat Text Size | range | 1 | UI_ONLY |
+| chat | chat.chatLineSpacing | Line Spacing | range | 0 | UI_ONLY |
+| chat | chat.chatDelay | options.chat.delay_instant | range | 0 | UI_ONLY |
+| chat | chat.chatWidth | Width | range | 1 | UI_ONLY |
+| chat | chat.chatHeightFocused | Focused Height | range | 1 | UI_ONLY |
+| chat | chat.chatHeightUnfocused | Unfocused Height | range | 0.44366197 | UI_ONLY |
+| chat | chat.narrator | Narrator: Narrates Chat | button | "OFF" | UI_ONLY |
+| chat | chat.autoSuggestions | Command Suggestions: OFF | button | true | UI_ONLY |
+| chat | chat.hideMatchedNames | Hide Matched Names: OFF | button | true | UI_ONLY |
+| chat | chat.reducedDebugInfo | Reduced Debug Info: ON | button | false | UI_ONLY |
+| chat | chat.onlyShowSecureChat | Only Show Secure Chat: ON | button | false | UI_ONLY |
+| chat | chat.saveChatDrafts | Save Unsent Chats: ON | button | false | UI_ONLY |
+| chat | chat..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
+| chat | chat..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft | Programmer ArtThe classic look of Minecraft | option | false | UI_ONLY |
+| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Select_Programmer_Art | Select Programmer Art | button | "Not applicable (command)" | UI_ONLY |
+| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft | High ContrastEnhances the UI contrast of Minecraft | option | false | UI_ONLY |
+| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Select_High_Contrast | Select High Contrast | button | "Not applicable (command)" | UI_ONLY |
+| packs | packs..Open_Pack_Folder | Open Pack Folder | button | "Not applicable (command)" | UI_ONLY |
+| packs | packs..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| telemetry | telemetry..Privacy_Statement | Privacy Statement | button | "Not applicable (command)" | UI_ONLY |
+| telemetry | telemetry..Give_Feedback | Give Feedback | button | "Not applicable (command)" | UI_ONLY |
+| telemetry | telemetry..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
+| telemetry | telemetry..I_consent_to_sending_optional_telemetry_data | I consent to sending optional telemetry data | checkbox | false | UI_ONLY |
+| telemetry | telemetry..View_My_Data | View My Data | button | "Not applicable (command)" | UI_ONLY |
+| telemetry | telemetry..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| confirm | confirm..Hard_Reset | Hard Reset | button | "Not applicable (command)" | IMPLEMENTED |
+| confirm | confirm..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
+| mouse | mouse.sensitivity | Sensitivity | range | 0.5 | UI_ONLY |
+| mouse | mouse.mouseWheelSensitivity | Scroll Sensitivity | range | 0 | UI_ONLY |
+| mouse | mouse.discreteMouseScroll | Discrete Scrolling: ON | button | false | UI_ONLY |
+| mouse | mouse.invertXMouse | Invert Mouse X: ON | button | false | UI_ONLY |
+| mouse | mouse.invertYMouse | Invert Mouse Y: ON | button | false | UI_ONLY |
+| mouse | mouse.allowCursorChanges | Allow Cursor Changes: OFF | button | true | UI_ONLY |
+| mouse | mouse..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
+| mouse | mouse..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | keybinds | keybinds.key.jump | Space | button | "Space" | UI_ONLY |
 | keybinds | keybinds..Reset | Reset | button | "Not applicable (command)" | UI_ONLY |
 | keybinds | keybinds.key.sneak | Left Shift | button | "Left Shift" | UI_ONLY |
@@ -402,16 +471,15 @@ Observed 706 distinct controls across 36 source routes and Create tabs. Dynamic 
 | keybinds | keybinds..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | keybinds | keybinds..Reset_Keys | Reset Keys | button | "Not applicable (command)" | UI_ONLY |
 | keybinds | keybinds..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| worlds | worlds..search_for_worlds | search for worlds | text | "" | UI_ONLY |
-| worlds | worlds.fictional-forest | Fictional Forest Camp | option | false | UI_ONLY |
-| worlds | worlds.fictional-build | Fictional Creative Workshop | option | false | UI_ONLY |
-| worlds | worlds..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| worlds | worlds..Play_Selected_World | Play Selected World | button | "Not applicable (command)" | UI_ONLY |
-| worlds | worlds..Create_New_World | Create New World | button | "Not applicable (command)" | UI_ONLY |
-| worlds | worlds..Edit | Edit | button | "Not applicable (command)" | UI_ONLY |
-| worlds | worlds..Delete | Delete | button | "Not applicable (command)" | UI_ONLY |
-| worlds | worlds..Re-Create | Re-Create | button | "Not applicable (command)" | UI_ONLY |
-| worlds | worlds..Back | Back | button | "Not applicable (command)" | UI_ONLY |
+| linkconfirm | linkconfirm..Open_in_Browser | Open in Browser | button | "Not applicable (command)" | UI_ONLY |
+| linkconfirm | linkconfirm..Copy_to_Clipboard | Copy to Clipboard | button | "Not applicable (command)" | UI_ONLY |
+| linkconfirm | linkconfirm..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
+| confirm | confirm..Turn_ON | Turn ON | button | "Not applicable (command)" | UI_ONLY |
+| confirm | confirm..Turn_OFF | Turn OFF | button | "Not applicable (command)" | UI_ONLY |
+| font | font.forceUnicodeFont | Force Unicode Font: ON | button | false | UI_ONLY |
+| font | font.japaneseGlyphVariants | Japanese Glyph Variants: ON | button | false | UI_ONLY |
+| font | font..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
+| font | font..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | create/game | create.game..Game | Game | tab | "Not applicable (command)" | UI_ONLY |
 | create/game | create.game..World | World | tab | "Not applicable (command)" | UI_ONLY |
 | create/game | create.game..More | More | tab | "Not applicable (command)" | UI_ONLY |
@@ -421,6 +489,15 @@ Observed 706 distinct controls across 36 source routes and Create tabs. Dynamic 
 | create/game | create.game.draft.commands | Allow Cheats: OFF | button | "Not applicable (command)" | UI_ONLY |
 | create/game | create.game..Create_New_World | Create New World | button | "Not applicable (command)" | UI_ONLY |
 | create/game | create.game..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
+| editworld | editworld..World_Name | World Name | text | "New World" | UI_ONLY |
+| editworld | editworld..Reset_Icon | Reset Icon | button | "Not applicable (command)" | INTENTIONALLY_DISABLED |
+| editworld | editworld..Open_World_Folder | Open World Folder | button | "Not applicable (command)" | UI_ONLY |
+| editworld | editworld..Make_Backup | Make Backup | button | "Not applicable (command)" | UI_ONLY |
+| editworld | editworld..Open_Backups_Folder | Open Backups Folder | button | "Not applicable (command)" | UI_ONLY |
+| editworld | editworld..Optimize_World | Optimize World | button | "Not applicable (command)" | UI_ONLY |
+| editworld | editworld.world-save | Save | button | "Not applicable (command)" | UI_ONLY |
+| editworld | editworld..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
+| confirm | confirm..Delete | Delete | button | "Not applicable (command)" | UI_ONLY |
 | create/world | create.world..Game | Game | tab | "Not applicable (command)" | UI_ONLY |
 | create/world | create.world..World | World | tab | "Not applicable (command)" | UI_ONLY |
 | create/world | create.world..More | More | tab | "Not applicable (command)" | UI_ONLY |
@@ -439,58 +516,6 @@ Observed 706 distinct controls across 36 source routes and Create tabs. Dynamic 
 | create/more | create.more..Data_Packs | Data Packs | button | "Not applicable (command)" | UI_ONLY |
 | create/more | create.more..Create_New_World | Create New World | button | "Not applicable (command)" | UI_ONLY |
 | create/more | create.more..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
-| editworld | editworld..World_Name | World Name | text | "New World" | UI_ONLY |
-| editworld | editworld..Reset_Icon | Reset Icon | button | "Not applicable (command)" | INTENTIONALLY_DISABLED |
-| editworld | editworld..Open_World_Folder | Open World Folder | button | "Not applicable (command)" | UI_ONLY |
-| editworld | editworld..Make_Backup | Make Backup | button | "Not applicable (command)" | UI_ONLY |
-| editworld | editworld..Open_Backups_Folder | Open Backups Folder | button | "Not applicable (command)" | UI_ONLY |
-| editworld | editworld..Optimize_World | Optimize World | button | "Not applicable (command)" | UI_ONLY |
-| editworld | editworld.world-save | Save | button | "Not applicable (command)" | UI_ONLY |
-| editworld | editworld..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
-| safety | safety..Do_not_show_this_screen_again | Do not show this screen again | checkbox | false | UI_ONLY |
-| safety | safety..Proceed | Proceed | button | "Not applicable (command)" | UI_ONLY |
-| safety | safety..Back | Back | button | "Not applicable (command)" | UI_ONLY |
-| multiplayer | multiplayer.fictional-example | Fictional Example Server | option | false | UI_ONLY |
-| multiplayer | multiplayer..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| multiplayer | multiplayer..Join_Server | Join Server | button | "Not applicable (command)" | UI_ONLY |
-| multiplayer | multiplayer..Direct_Connection | Direct Connection | button | "Not applicable (command)" | UI_ONLY |
-| multiplayer | multiplayer..Add_Server | Add Server | button | "Not applicable (command)" | UI_ONLY |
-| multiplayer | multiplayer..Edit | Edit | button | "Not applicable (command)" | UI_ONLY |
-| multiplayer | multiplayer..Delete | Delete | button | "Not applicable (command)" | UI_ONLY |
-| multiplayer | multiplayer..Refresh | Refresh | button | "Not applicable (command)" | UI_ONLY |
-| multiplayer | multiplayer..Back | Back | button | "Not applicable (command)" | UI_ONLY |
-| direct | direct..Server_Address | Server Address | text | "" | UI_ONLY |
-| direct | direct.direct-connect | Join Server | button | "Not applicable (command)" | UI_ONLY |
-| direct | direct..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
-| serveredit | serveredit..Server_Name | Server Name | text | "Minecraft Server" | UI_ONLY |
-| serveredit | serveredit..Server_Address | Server Address | text | "" | UI_ONLY |
-| serveredit | serveredit.server.pack | Server Resource Packs: Prompt | button | "Not applicable (command)" | UI_ONLY |
-| serveredit | serveredit.server-save | Done | button | "Not applicable (command)" | UI_ONLY |
-| serveredit | serveredit..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
-| realms | realms..Join_Realm | Join Realm | button | "Not applicable (command)" | UI_ONLY |
-| realms | realms..Pending_Invites | Pending Invites | button | "Not applicable (command)" | UI_ONLY |
-| realms | realms..Realms_news | Realms news | button | "Not applicable (command)" | UI_ONLY |
-| realms | realms..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| realms | realms..Add_Realm | Add Realm | button | "Not applicable (command)" | UI_ONLY |
-| realms | realms..Back | Back | button | "Not applicable (command)" | UI_ONLY |
-| realmjoin | realmjoin..Join_Code | Join Code | text | "" | UI_ONLY |
-| realmjoin | realmjoin.realm-join | Join Realm | button | "Not applicable (command)" | UI_ONLY |
-| realmjoin | realmjoin..Back | Back | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft | Programmer ArtThe classic look of Minecraft | option | false | UI_ONLY |
-| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Select_Programmer_Art | Select Programmer Art | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft | High ContrastEnhances the UI contrast of Minecraft | option | false | UI_ONLY |
-| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_to_Available | Move High Contrast to Available | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_up | Move High Contrast up | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_down | Move High Contrast down | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs..Open_Pack_Folder | Open Pack Folder | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| datapacks | datapacks..Open_Pack_Folder | Open Pack Folder | button | "Not applicable (command)" | UI_ONLY |
-| datapacks | datapacks..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| experiments | experiments.switch.Minecart_Improvements | OFF | button | "Not applicable (command)" | UI_ONLY |
-| experiments | experiments.switch.Redstone_Experiments | OFF | button | "Not applicable (command)" | UI_ONLY |
-| experiments | experiments.switch.Villager_Trade_Rebalance | OFF | button | "Not applicable (command)" | UI_ONLY |
-| experiments | experiments..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| experiments | experiments..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | rules | rules..Search... | Search... | text | "" | UI_ONLY |
 | rules | rules.rule.command_block_output | ON | button | true | UI_ONLY |
 | rules | rules.rule.log_admin_commands | ON | button | true | UI_ONLY |
@@ -550,10 +575,40 @@ Observed 706 distinct controls across 36 source routes and Create tabs. Dynamic 
 | rules | rules.max_snow_accumulation_height | Snow accumulation height | text | 1 | UI_ONLY |
 | rules | rules.random_tick_speed | Random tick speed rate | text | 3 | UI_ONLY |
 | rules | rules.rule.spread_vines | ON | button | true | UI_ONLY |
-| rules | rules.rule.water_source_conversion | ON | button | true | UI_ONLY |
+| rules | rules.rule.water_source_conversion | OFF | button | true | UI_ONLY |
 | rules | rules..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | rules | rules.rules-done | Done | button | "Not applicable (command)" | UI_ONLY |
 | rules | rules..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
+| experiments | experiments.switch.Minecart_Improvements | OFF | button | "Not applicable (command)" | UI_ONLY |
+| experiments | experiments.switch.Redstone_Experiments | OFF | button | "Not applicable (command)" | UI_ONLY |
+| experiments | experiments.switch.Villager_Trade_Rebalance | ON | button | "Not applicable (command)" | UI_ONLY |
+| experiments | experiments..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
+| experiments | experiments..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| datapacks | datapacks..Open_Pack_Folder | Open Pack Folder | button | "Not applicable (command)" | UI_ONLY |
+| datapacks | datapacks..Done | Done | button | "Not applicable (command)" | UI_ONLY |
+| multiplayer | multiplayer.fictional-example | Fictional Example Server | option | false | UI_ONLY |
+| multiplayer | multiplayer..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
+| multiplayer | multiplayer..Join_Server | Join Server | button | "Not applicable (command)" | UI_ONLY |
+| multiplayer | multiplayer..Direct_Connection | Direct Connection | button | "Not applicable (command)" | UI_ONLY |
+| multiplayer | multiplayer..Add_Server | Add Server | button | "Not applicable (command)" | UI_ONLY |
+| multiplayer | multiplayer..Edit | Edit | button | "Not applicable (command)" | UI_ONLY |
+| multiplayer | multiplayer..Delete | Delete | button | "Not applicable (command)" | UI_ONLY |
+| multiplayer | multiplayer..Refresh | Refresh | button | "Not applicable (command)" | UI_ONLY |
+| multiplayer | multiplayer..Back | Back | button | "Not applicable (command)" | UI_ONLY |
+| direct | direct..Server_Address | Server Address | text | "" | UI_ONLY |
+| direct | direct.direct-connect | Join Server | button | "Not applicable (command)" | UI_ONLY |
+| direct | direct..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
+| serveredit | serveredit..Server_Name | Server Name | text | "Minecraft Server" | UI_ONLY |
+| serveredit | serveredit..Server_Address | Server Address | text | "" | UI_ONLY |
+| serveredit | serveredit.server.pack | Server Resource Packs: Enabled | button | "Not applicable (command)" | UI_ONLY |
+| serveredit | serveredit.server-save | Done | button | "Not applicable (command)" | UI_ONLY |
+| serveredit | serveredit..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
+| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_to_Available | Move High Contrast to Available | button | "Not applicable (command)" | UI_ONLY |
+| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_up | Move High Contrast up | button | "Not applicable (command)" | UI_ONLY |
+| packs | packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_down | Move High Contrast down | button | "Not applicable (command)" | UI_ONLY |
+| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_to_Available | Move Programmer Art to Available | button | "Not applicable (command)" | UI_ONLY |
+| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_up | Move Programmer Art up | button | "Not applicable (command)" | UI_ONLY |
+| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_down | Move Programmer Art down | button | "Not applicable (command)" | UI_ONLY |
 | flat | flat.Grass_Block1 | Grass Block1 | option | null | UI_ONLY |
 | flat | flat.Dirt2 | Dirt2 | option | null | UI_ONLY |
 | flat | flat.Bedrock1 | Bedrock1 | option | null | UI_ONLY |
@@ -646,69 +701,5 @@ Observed 706 distinct controls across 36 source routes and Create tabs. Dynamic 
 | biomes | biomes..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | biomes | biomes..Done | Done | button | "Not applicable (command)" | UI_ONLY |
 | biomes | biomes..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
-| credits | credits..Credits | Credits | button | "Not applicable (command)" | UI_ONLY |
-| credits | credits..Attribution | Attribution | button | "Not applicable (command)" | UI_ONLY |
-| credits | credits..Licenses | Licenses | button | "Not applicable (command)" | UI_ONLY |
-| credits | credits..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| telemetry | telemetry..Privacy_Statement | Privacy Statement | button | "Not applicable (command)" | UI_ONLY |
-| telemetry | telemetry..Give_Feedback | Give Feedback | button | "Not applicable (command)" | UI_ONLY |
-| telemetry | telemetry..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| telemetry | telemetry..I_consent_to_sending_optional_telemetry_data | I consent to sending optional telemetry data | checkbox | false | UI_ONLY |
-| telemetry | telemetry..View_My_Data | View My Data | button | "Not applicable (command)" | UI_ONLY |
-| telemetry | telemetry..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| linkconfirm | linkconfirm..Open_in_Browser | Open in Browser | button | "Not applicable (command)" | UI_ONLY |
-| linkconfirm | linkconfirm..Copy_to_Clipboard | Copy to Clipboard | button | "Not applicable (command)" | UI_ONLY |
-| linkconfirm | linkconfirm..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
-| message | message..Back | Back | button | "Not applicable (command)" | UI_ONLY |
 | confirm | confirm..Proceed | Proceed | button | "Not applicable (command)" | UI_ONLY |
-| confirm | confirm..Cancel | Cancel | button | "Not applicable (command)" | UI_ONLY |
-| quit | quit..Return_to_Title | Return to Title | button | "Not applicable (command)" | UI_ONLY |
-| skin | skin.skin_cape | Cape: ON | button | true | UI_ONLY |
-| skin | skin.skin_jacket | Jacket: ON | button | true | UI_ONLY |
-| skin | skin.skin_left_sleeve | Left Sleeve: ON | button | true | UI_ONLY |
-| skin | skin.skin_right_sleeve | Right Sleeve: ON | button | true | UI_ONLY |
-| skin | skin.skin_left_pants_leg | Left Pant Leg: ON | button | true | UI_ONLY |
-| skin | skin.skin_right_pants_leg | Right Pant Leg: ON | button | true | UI_ONLY |
-| skin | skin.skin_hat | Hat: ON | button | true | UI_ONLY |
-| skin | skin.mainHand | Main Hand: Right | button | "Right" | UI_ONLY |
-| skin | skin..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| skin | skin..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| chat | chat.chatVisibility | Chat: Shown | button | "Shown" | UI_ONLY |
-| chat | chat.chatColors | Colors: ON | button | true | UI_ONLY |
-| chat | chat.chatLinks | Web Links: ON | button | true | UI_ONLY |
-| chat | chat.chatLinksPrompt | Prompt on Links: ON | button | true | UI_ONLY |
-| chat | chat.chatOpacity | Chat Text Opacity | range | 1 | UI_ONLY |
-| chat | chat.textBackgroundOpacity | Text Background Opacity | range | 0.5 | UI_ONLY |
-| chat | chat.chatScale | Chat Text Size | range | 1 | UI_ONLY |
-| chat | chat.chatLineSpacing | Line Spacing | range | 0 | UI_ONLY |
-| chat | chat.chatDelay | options.chat.delay_instant | range | 0 | UI_ONLY |
-| chat | chat.chatWidth | Width | range | 1 | UI_ONLY |
-| chat | chat.chatHeightFocused | Focused Height | range | 1 | UI_ONLY |
-| chat | chat.chatHeightUnfocused | Unfocused Height | range | 0.44366197 | UI_ONLY |
-| chat | chat.narrator | Narrator: Narrates All | button | "OFF" | UI_ONLY |
-| chat | chat.autoSuggestions | Command Suggestions: ON | button | true | UI_ONLY |
-| chat | chat.hideMatchedNames | Hide Matched Names: ON | button | true | UI_ONLY |
-| chat | chat.reducedDebugInfo | Reduced Debug Info: OFF | button | false | UI_ONLY |
-| chat | chat.onlyShowSecureChat | Only Show Secure Chat: OFF | button | false | UI_ONLY |
-| chat | chat.saveChatDrafts | Save Unsent Chats: OFF | button | false | UI_ONLY |
-| chat | chat..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| chat | chat..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| mouse | mouse.sensitivity | Sensitivity | range | 0.5 | UI_ONLY |
-| mouse | mouse.mouseWheelSensitivity | Scroll Sensitivity | range | 0 | UI_ONLY |
-| mouse | mouse.discreteMouseScroll | Discrete Scrolling: OFF | button | false | UI_ONLY |
-| mouse | mouse.invertXMouse | Invert Mouse X: OFF | button | false | UI_ONLY |
-| mouse | mouse.invertYMouse | Invert Mouse Y: OFF | button | false | UI_ONLY |
-| mouse | mouse.allowCursorChanges | Allow Cursor Changes: ON | button | true | UI_ONLY |
-| mouse | mouse..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| mouse | mouse..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| font | font.forceUnicodeFont | Force Unicode Font: OFF | button | false | UI_ONLY |
-| font | font.japaneseGlyphVariants | Japanese Glyph Variants: OFF | button | false | UI_ONLY |
-| font | font..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
-| font | font..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| confirm | confirm..Delete | Delete | button | "Not applicable (command)" | UI_ONLY |
 | message | message..Restore_Entry | Restore Entry | button | "Not applicable (command)" | UI_ONLY |
-| confirm | confirm..Turn_ON | Turn ON | button | "Not applicable (command)" | UI_ONLY |
-| confirm | confirm..Turn_OFF | Turn OFF | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_to_Available | Move Programmer Art to Available | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_up | Move Programmer Art up | button | "Not applicable (command)" | UI_ONLY |
-| packs | packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_down | Move Programmer Art down | button | "Not applicable (command)" | UI_ONLY |

@@ -1,0 +1,61 @@
+{
+  "packageName": "MenuNoRealmsDevelopment",
+  "profile": "1280x720",
+  "userDir": "C:\\dev\\projects\\Unnamed\\Tests\\Runtime\\review-before-1280x720-1791384562063",
+  "finished": "2026-10-07T14:50:02.066Z",
+  "checks": [
+    {
+      "name": "World-name draft survives child return",
+      "pass": false
+    },
+    {
+      "name": "World-name draft survives fullscreen redraw",
+      "pass": false
+    },
+    {
+      "name": "World Save commits the displayed draft",
+      "pass": false
+    },
+    {
+      "name": "Blank world name remains blank after redraw",
+      "pass": false
+    },
+    {
+      "name": "Blank world name keeps Save disabled",
+      "pass": false
+    },
+    {
+      "name": "World Cancel leaves committed name unchanged",
+      "pass": true
+    },
+    {
+      "name": "Preset text survives fullscreen redraw",
+      "pass": false
+    },
+    {
+      "name": "Preset submits the same displayed layers",
+      "pass": true
+    },
+    {
+      "name": "Empty preset remains empty after redraw",
+      "pass": false
+    },
+    {
+      "name": "Empty preset is rejected instead of falling back",
+      "pass": false
+    },
+    {
+      "name": "Suite completed",
+      "pass": false,
+      "detail": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Back', exact: true })\u001b[22m\n"
+    },
+    {
+      "name": "Owned diagnostic quits normally",
+      "pass": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  ]
+}

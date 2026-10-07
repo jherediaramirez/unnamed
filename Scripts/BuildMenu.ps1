@@ -1,9 +1,12 @@
 [CmdletBinding()]
-param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8', [switch]$Package, [switch]$CreateMap)
+param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8', [switch]$Package, [switch]$CreateMap,
+    [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$PackageName='MenuReviewFixesDevelopment', [switch]$ExcludeDebugTools)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 $project=Join-Path $root 'Unnamed.uproject'
-& node (Join-Path $PSScriptRoot 'AdaptMenu.mjs')
+$adapterArgs=@(Join-Path $PSScriptRoot 'AdaptMenu.mjs')
+if($ExcludeDebugTools){$adapterArgs+='--without-debug-tools'}
+& node @adapterArgs
 if($LASTEXITCODE){throw 'Menu adaptation failed'}
 & "$EngineRoot\Engine\Build\BatchFiles\Build.bat" UnnamedEditor Win64 Development "-Project=$project" -WaitMutex -NoHotReloadFromIDE
 if($LASTEXITCODE){throw 'Editor build failed'}
@@ -12,6 +15,6 @@ if($CreateMap){
     if($LASTEXITCODE){throw 'Menu map setup failed'}
 }
 if($Package){
-    & "$EngineRoot\Engine\Build\BatchFiles\RunUAT.bat" BuildCookRun "-project=$project" -noP4 -platform=Win64 -clientconfig=Development -build -cook -map=/Game/Menu/L_Menu -stage -pak -archive "-archivedirectory=$root\Packages\MenuDevelopment" -unattended -utf8output
+    & "$EngineRoot\Engine\Build\BatchFiles\RunUAT.bat" BuildCookRun "-project=$project" -noP4 -platform=Win64 -clientconfig=Development -build -cook -map=/Game/Menu/L_Menu -stage -pak -archive "-archivedirectory=$root\Packages\$PackageName" -unattended -utf8output
     if($LASTEXITCODE){throw 'Development packaging failed'}
 }

@@ -6,6 +6,8 @@
 #include "MenuHost.generated.h"
 
 class SWebBrowser;
+class UMenuVideoSettings;
+class UMenuApplication;
 
 UCLASS()
 class UNNAMED_API AMenuPlayerController : public APlayerController
@@ -14,8 +16,13 @@ class UNNAMED_API AMenuPlayerController : public APlayerController
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual void Tick(float DeltaSeconds) override;
 private:
     TSharedPtr<SWebBrowser> Browser;
+    UPROPERTY(Transient)
+    TObjectPtr<UMenuVideoSettings> VideoSettings;
+    UPROPERTY(Transient)
+    TObjectPtr<UMenuApplication> Application;
 };
 
 UCLASS()

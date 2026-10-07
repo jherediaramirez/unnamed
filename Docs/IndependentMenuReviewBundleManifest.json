@@ -1,0 +1,641 @@
+{
+  "created": "2026-10-07T09:50:06.3370549-04:00",
+  "purpose": "Independent read-only source/evidence review; not a runnable game",
+  "archive": "Independent_Menu_Review_Packet.zip",
+  "root": "C:\\dev\\projects\\Unnamed",
+  "exclusions": [
+    "Executable packages",
+    "Binaries/caches",
+    "Private Saved/preferences/worlds",
+    "Git directory",
+    "node_modules",
+    "Full binary asset mirror"
+  ],
+  "sanitization": "AndroidFileServer SecurityToken redacted in config copy only; actual project unchanged",
+  "entries": [
+    {
+      "path": ".gitignore",
+      "bytes": 123,
+      "sha256": "AE1049DC1839D6EC8C98F95C1496FCBFBE8FE9E9DBD6CE0002179C066551D50B",
+      "sanitized": false
+    },
+    {
+      "path": "Config/DefaultEditor.ini",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "sanitized": false
+    },
+    {
+      "path": "Config/DefaultEditorPerProjectUserSettings.ini",
+      "bytes": 153,
+      "sha256": "FF939902DFC2DF414E86B865BE78FA0094D7EE7214FCAF7F46D367C03C2C398D",
+      "sanitized": false
+    },
+    {
+      "path": "Config/DefaultEngine.ini",
+      "bytes": 3003,
+      "sha256": "B3E48CDFE6EA095423BBE2AA9F74F29B7B5CA1B9910EFC66176AC229B0BE9A9F",
+      "sanitized": true
+    },
+    {
+      "path": "Config/DefaultGame.ini",
+      "bytes": 357,
+      "sha256": "76426638E656F7945EB1222BAD538F74B027F0C43DB97DB993ACA392DB01D19D",
+      "sanitized": false
+    },
+    {
+      "path": "Config/DefaultInput.ini",
+      "bytes": 9028,
+      "sha256": "2CCD831A30AFAF0E06BB4B2CB2556F92F7B8F63338BEC1BE199A518671883B4D",
+      "sanitized": false
+    },
+    {
+      "path": "Content/Menu/Web/index.html",
+      "bytes": 6315749,
+      "sha256": "C64E9814B8093B905727D62204BD1AB101D5CE1C8CFEDF82C2F76B9E23FAB675",
+      "sanitized": false
+    },
+    {
+      "path": "Docs/Architecture.md",
+      "bytes": 5412,
+      "sha256": "5937FE2D20F0DA3D0934AB79F318D53337B4B1C03AF34A5F0C547DD565B56128",
+      "sanitized": false
+    },
+    {
+      "path": "Docs/ControlRegistry.json",
+      "bytes": 1346857,
+      "sha256": "E46EB1C607582B43C9923792D4B7C6166CFD4200EC244F51DC190E9FB290FB05",
+      "sanitized": false
+    },
+    {
+      "path": "Docs/ControlRegistry.md",
+      "bytes": 60411,
+      "sha256": "6053DD63D8741D4022346C17B60CDD1844C30B7C4EC29548444CA498F628EAB4",
+      "sanitized": false
+    },
+    {
+      "path": "Docs/FunctionalBacklog.md",
+      "bytes": 136101,
+      "sha256": "CBF6E01298A7A7F674689657F2525A76CF378B6AB7A5E532C0731C9A2AA43DCD",
+      "sanitized": false
+    },
+    {
+      "path": "Docs/Independent_Menu_Review_Prompt.txt",
+      "bytes": 22572,
+      "sha256": "A3CB681E581C8A23E72510514B6C6A03D76062FB8812B2D9FEA9259A857A403D",
+      "sanitized": false
+    },
+    {
+      "path": "Docs/KnownDifferences.md",
+      "bytes": 3185,
+      "sha256": "AC291AE21AE572C409505319CD4EAB9C12A07FBFFF5D38594F1013EABB87EDB1",
+      "sanitized": false
+    },
+    {
+      "path": "Docs/QuitGame.md",
+      "bytes": 3827,
+      "sha256": "DD762A2CC902E7A0C7012C47B406F60A045115361D680F2C0F550C0762C45A72",
+      "sanitized": false
+    },
+    {
+      "path": "Docs/ScreenInventory.md",
+      "bytes": 3711,
+      "sha256": "AAD899EC8454FA70BA46C4B46AB51ACBF2E6E023B26CFBD84E36F484261CC2CC",
+      "sanitized": false
+    },
+    {
+      "path": "Docs/Unnamed_Project_AI_Handoff/Unreal_Menu_Interface_Prompt.txt",
+      "bytes": 22533,
+      "sha256": "CC5D10759538416E242B079A7C296D6C85A635E1C52A0C17AC86A04F9D29F9B5",
+      "sanitized": false
+    },
+    {
+      "path": "Docs/Verification.md",
+      "bytes": 15296,
+      "sha256": "DED3E8CAA3EF37B4788DE6976D15DE8B02AEBB92EAD8F9A71C8B63B31DB9A190",
+      "sanitized": false
+    },
+    {
+      "path": "Docs/VideoSettings.md",
+      "bytes": 7391,
+      "sha256": "FCF039577D8CA234A97E006812B2A4E294055CEA8A0F1CBE19E8B8E443DA216F",
+      "sanitized": false
+    },
+    {
+      "path": "README.md",
+      "bytes": 3513,
+      "sha256": "4F47502F5892BE07A5ED6FC1A537E2A9F56A8A20016F9B8BC9DE9FBB719E3ACB",
+      "sanitized": false
+    },
+    {
+      "path": "Reference/minecraft-menu/assets/asset-provenance.json",
+      "bytes": 341666,
+      "sha256": "437184E653D490FCB135A268EE8B99313EEB50F3D7FB7754D7BEF8C9FB92FAC6",
+      "sanitized": false
+    },
+    {
+      "path": "Reference/minecraft-menu/index.html",
+      "bytes": 735778,
+      "sha256": "72F3DB289F4ECB7E55261EC48CD44B5FEAA170E8B4891641245390B473F1CD18",
+      "sanitized": false
+    },
+    {
+      "path": "Reference/minecraft-menu/minecraft-main-1280.jpg",
+      "bytes": 145796,
+      "sha256": "928D6FE17E831B1DF424DD24E5D4FA3656A92D0F03397E7E36D4E32BAA238303",
+      "sanitized": false
+    },
+    {
+      "path": "Reference/minecraft-menu/minecraft-main-1920.jpg",
+      "bytes": 232652,
+      "sha256": "1417F121773FE5E240EC48795730B8610EC68CB9DD9B7D27B7942310C8D591B4",
+      "sanitized": false
+    },
+    {
+      "path": "Reference/minecraft-menu/minecraft-options-1280.jpg",
+      "bytes": 96561,
+      "sha256": "10AEA42180A36F6FB71ED8DFE7F9884CB982747D2A264FB6C6CA1D9180F38A04",
+      "sanitized": false
+    },
+    {
+      "path": "Reference/minecraft-menu/minecraft-options-1920.jpg",
+      "bytes": 145686,
+      "sha256": "4A95C2C8A790034A44F40E2E2F515FD93ECE6BA08CF50B29A2DF9D4603B5A4CF",
+      "sanitized": false
+    },
+    {
+      "path": "Reference/minecraft-menu/minecraft-video-1280.jpg",
+      "bytes": 95676,
+      "sha256": "C646F5D81405FDBF6F3F590A571AFABB98886069794492E5F6AECB5728A1874C",
+      "sanitized": false
+    },
+    {
+      "path": "Reference/minecraft-menu/minecraft-video-1920.jpg",
+      "bytes": 145929,
+      "sha256": "35573FD3304CF97D7B3AAA2A63912814F209D0B4145886C1670161081E0FB4F2",
+      "sanitized": false
+    },
+    {
+      "path": "Reference/minecraft-menu/qa-report.md",
+      "bytes": 2587,
+      "sha256": "A48ABEFBE48795A5999475F0A558645E8361D76993DD32E2D640DC1798DD0EBA",
+      "sanitized": false
+    },
+    {
+      "path": "Reference/minecraft-menu/qa-results.json",
+      "bytes": 31929,
+      "sha256": "5D43A3E008832FC8FB4602BE5207365FF7F1C747EE64F697FAB5E47C4C08B626",
+      "sanitized": false
+    },
+    {
+      "path": "Reference/minecraft-menu/README.md",
+      "bytes": 6545,
+      "sha256": "3E988B8E90294890BE8BFEBFDD34E8680383181B907E26F5740C7BE6E8A08707",
+      "sanitized": false
+    },
+    {
+      "path": "Reference/minecraft-menu/reference-inventory.md",
+      "bytes": 10207,
+      "sha256": "2A9F993341E246CAE91CF3D0330407C4E87591941E56A76DCE85EB26935F5D63",
+      "sanitized": false
+    },
+    {
+      "path": "Reference/OriginalHashes.json",
+      "bytes": 188,
+      "sha256": "06C06AEB02102D28E5645C5648C0690BCDB310C1011A7FC138D6922861DF1C9C",
+      "sanitized": false
+    },
+    {
+      "path": "Scripts/AdaptMenu.mjs",
+      "bytes": 13278,
+      "sha256": "9A68E7292887EEF677B0074E1FFD157EB7782D68B7BDC43209D13B44D3A8C5CA",
+      "sanitized": false
+    },
+    {
+      "path": "Scripts/BuildMenu.ps1",
+      "bytes": 1288,
+      "sha256": "EACD83CC451140423AC4BF941F608732E9D1CE1A9714673383ED78317B2A9FC1",
+      "sanitized": false
+    },
+    {
+      "path": "Scripts/CreateMenuMap.py",
+      "bytes": 621,
+      "sha256": "E05F162FA169F096E255CD103D9983CF8823FEA36A3C1AEB80FA49BB0EED089B",
+      "sanitized": false
+    },
+    {
+      "path": "Scripts/ExportMenuReview.ps1",
+      "bytes": 5265,
+      "sha256": "9A7A676686F04F0989E2BB0F126F0AADB02E3D779E443591EF230E308D733DD2",
+      "sanitized": false
+    },
+    {
+      "path": "Scripts/Invoke-UnrealMCP.ps1",
+      "bytes": 2588,
+      "sha256": "62C4B9D1D72A38423FEA51949A5A867B2F86D61171B505B6E7BB6D8266A15D77",
+      "sanitized": false
+    },
+    {
+      "path": "Scripts/LaunchMenu.ps1",
+      "bytes": 1057,
+      "sha256": "98F56A669450FBF9269869B803BDFFA77E34D538D85F7B2B51FF1D36D648D645",
+      "sanitized": false
+    },
+    {
+      "path": "Scripts/MenuApplicationRuntime.js",
+      "bytes": 2592,
+      "sha256": "7E52D8625CCC2A2395E928465828F2C6A47E4599A74DB9DD3B61778829D13785",
+      "sanitized": false
+    },
+    {
+      "path": "Scripts/MenuMockRuntime.js",
+      "bytes": 5780,
+      "sha256": "187664158C457E8DCC2EF71AEF3C5C887F30432F6E6CFF5D022E17C98875861B",
+      "sanitized": false
+    },
+    {
+      "path": "Scripts/MenuVideoRuntime.js",
+      "bytes": 5441,
+      "sha256": "F45EB165830480535D61B6DB81D8BD5CE864C99B24C08B7AEF644598D3F06D57",
+      "sanitized": false
+    },
+    {
+      "path": "Scripts/TestMenu.ps1",
+      "bytes": 856,
+      "sha256": "E208AF5C3330BAFA7ED72852B689B99D9331D97219A6BA53EC34F3B9D8E31E4A",
+      "sanitized": false
+    },
+    {
+      "path": "Scripts/TestVideoSettings.ps1",
+      "bytes": 834,
+      "sha256": "A1A5D4AE2FCBDFE798D57507B12374C8F044A78497B5300A1A8ECD146713F98D",
+      "sanitized": false
+    },
+    {
+      "path": "Source/Unnamed.Target.cs",
+      "bytes": 370,
+      "sha256": "536EBF909BAD5251CEFCFAC4F9AF51F0A9B97AF1D5FCCB7B63F74611055EA27C",
+      "sanitized": false
+    },
+    {
+      "path": "Source/Unnamed/MenuApplication.cpp",
+      "bytes": 2529,
+      "sha256": "BCBFB5280414639F650E401900E93E4400C3B1FFF118AE93B0EC998A3A3B22C1",
+      "sanitized": false
+    },
+    {
+      "path": "Source/Unnamed/MenuApplication.h",
+      "bytes": 783,
+      "sha256": "81B2444A2819559118243AC0BEC851F495033AFEFCB80AFB456733E9C3D9B934",
+      "sanitized": false
+    },
+    {
+      "path": "Source/Unnamed/MenuHost.cpp",
+      "bytes": 4154,
+      "sha256": "00E2475428A59DD5881AD9D325C022D95E6CE5BE533911386FAE22F2E85B27D9",
+      "sanitized": false
+    },
+    {
+      "path": "Source/Unnamed/MenuHost.h",
+      "bytes": 819,
+      "sha256": "3AA3DD06B56E5BD0BCB468A7ABA3BADE0184335B50AB7EB84AAA3C5B3CDE2F6B",
+      "sanitized": false
+    },
+    {
+      "path": "Source/Unnamed/MenuVideoSettings.cpp",
+      "bytes": 14921,
+      "sha256": "FF24B304421119C4AAE009E4ADE6EA5074CDCCE60931C7F484C21CEC86171D43",
+      "sanitized": false
+    },
+    {
+      "path": "Source/Unnamed/MenuVideoSettings.h",
+      "bytes": 1579,
+      "sha256": "BEC058834B49A2FC10CAF3C75A7826109FB28269E6F5C6CE9127B819E35563CB",
+      "sanitized": false
+    },
+    {
+      "path": "Source/Unnamed/Tests/MenuApplicationTests.cpp",
+      "bytes": 1235,
+      "sha256": "C3B1F148988F92143AE66043E7583883512B44E215102B7B9504054EF92A25A1",
+      "sanitized": false
+    },
+    {
+      "path": "Source/Unnamed/Tests/MenuVideoSettingsTests.cpp",
+      "bytes": 2579,
+      "sha256": "9AF933421BCD8BFD0B6CB56AFE6DD9C032C79BFDEB8AA06006118DC7A7CA0D70",
+      "sanitized": false
+    },
+    {
+      "path": "Source/Unnamed/Unnamed.Build.cs",
+      "bytes": 781,
+      "sha256": "D2A8A3F59D8B1A21DEAA17DECA1E3700BF15D00FFAA7840BAEDA47A9EDE8670B",
+      "sanitized": false
+    },
+    {
+      "path": "Source/Unnamed/Unnamed.cpp",
+      "bytes": 111,
+      "sha256": "25A3573EBB05533630D8FB152AFFED0F600A19B590CCDFA01A2F972A9A59BAA0",
+      "sanitized": false
+    },
+    {
+      "path": "Source/UnnamedEditor.Target.cs",
+      "bytes": 384,
+      "sha256": "5F455331ACCE0DBC22DADF014C8D87702881A1AFEC81F46373D5DF6F1804F1D5",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/AdditionalControls.json",
+      "bytes": 9387,
+      "sha256": "5BBD7D25AE6E072E641B8EEE7FD6F4306D44B0DECB5599D27915F31E2279E983",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/artifact-manifest.mjs",
+      "bytes": 1923,
+      "sha256": "2408F5EB9619B908E09D234207065DA56C984C0996F130A717C10605C91C3667",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-packaged-1280x720/definitions.json",
+      "bytes": 637081,
+      "sha256": "596E7632500D7A94B547626E52A4F0E072D170A49285078AFF1BFC0ACE9ABDEC",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-packaged-1280x720/main.png",
+      "bytes": 689669,
+      "sha256": "09350C823DE55AE5DBBC25A9B242E906C54724AC8115401BE1687A20149874A1",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-packaged-1280x720/options.png",
+      "bytes": 432075,
+      "sha256": "BE47C04F9B21A8F8CE55B34C4A4A2A7C3123E6BB5810D0AE586D1899B50DDEEF",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-packaged-1280x720/results.json",
+      "bytes": 332884,
+      "sha256": "C75EFE43FDA7DB7F34B08E6AEC6D276863E58B9DB1017EFFFD253353C942E47C",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-packaged-1280x720/video.png",
+      "bytes": 443532,
+      "sha256": "7F288A16587CCA71A5E39AA053952F440DC55627A345EA7EE4B6FBFDD3A11E43",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-packaged-1920x1080/definitions.json",
+      "bytes": 637081,
+      "sha256": "596E7632500D7A94B547626E52A4F0E072D170A49285078AFF1BFC0ACE9ABDEC",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-packaged-1920x1080/main.png",
+      "bytes": 1291239,
+      "sha256": "40FC4D32317B85D64462923B2D28E5D7FB0D1BCB7FC0845AB1AA1D708C6B35A5",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-packaged-1920x1080/options.png",
+      "bytes": 905699,
+      "sha256": "90B373B98B0A27A33357A729726F7AB0A48D080C00A7F9371E69CBC0B472EAD7",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-packaged-1920x1080/results.json",
+      "bytes": 332902,
+      "sha256": "64C168041EB9CE9277154C090F985A57DE0E9EA35469F2F6C777B67EAA765423",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-packaged-1920x1080/video.png",
+      "bytes": 886825,
+      "sha256": "632C40404A67AC3DE0EADBDD3B7D6DF636B92A5C4A9A41F8DEC06E33160AD62B",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-video-1280x720/blur-0.png",
+      "bytes": 537893,
+      "sha256": "BCA4195E1DD7C85282A5BFD1680C297B5185807B0BE6C4F150B798DB22F55858",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-video-1280x720/blur-10.png",
+      "bytes": 356943,
+      "sha256": "03D93CC6A87A52A3069F00C242D5F2CC3BD99E739D75BAAB929A01F9041CBEFE",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-video-1280x720/debug-reset-button.png",
+      "bytes": 449854,
+      "sha256": "92B990538F40B2987EF721D74EFE3B5A9602CFDB5A226911F31D9B9AE708B0AA",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-video-1280x720/fullscreen.png",
+      "bytes": 1352997,
+      "sha256": "CF0CB65DD43F8B97D2888FE72A92AA76277905AA6D62EC9B6606A8CD2F2325DA",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-video-1280x720/hard-reset-confirmation.png",
+      "bytes": 413763,
+      "sha256": "17CCC67B3485D5562C3569497D53138DE26FB3BC0D1ED1DD5DF0D51EA619D01D",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-video-1280x720/results.json",
+      "bytes": 7002,
+      "sha256": "DC980B10AC769CD0ABDBC06ECE2DF301BC8135CD3F32A02FFDC94BDC5AF8AFF9",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-video-1920x1080/blur-0.png",
+      "bytes": 994135,
+      "sha256": "E405C7027033F595054D7409AEA329EB615EB2F4166395E53C5F378FBE177E45",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-video-1920x1080/blur-10.png",
+      "bytes": 732514,
+      "sha256": "94EFB5201346497EC681F1D64AC99394B024887B8856F2D45D22EFDF4D1BB767",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-video-1920x1080/debug-reset-button.png",
+      "bytes": 903549,
+      "sha256": "E66F18E1CB5F89E745E20FCF6B31F4176B614A4CAB4AA77655D8C90E6700D954",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-video-1920x1080/fullscreen.png",
+      "bytes": 1374866,
+      "sha256": "B676EC77BEC2832EC23F57E3AEF08C17F9F79A008D55FCAEED793F64C261C5D2",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-video-1920x1080/hard-reset-confirmation.png",
+      "bytes": 882630,
+      "sha256": "7CAD6A98C279132BC6380EB05A69EE2E11E8E79A49FC02F42DAA76D474C74372",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/Captures/no-realms-video-1920x1080/results.json",
+      "bytes": 7004,
+      "sha256": "B1502F07589BB722969171BEA74815558D05CA8AC6682E6E316E51AFBCDD0F55",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/debug-reset.test.mjs",
+      "bytes": 1325,
+      "sha256": "2F46430897084ED9EA4E71AA1281D6DF21B1FCDF470BC96AC6D364292FFE5106",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/menu-application.test.mjs",
+      "bytes": 2504,
+      "sha256": "30076900F21AFCE08B983AA75006FD361D7B4CA8CDF5D1387172A043A04E271B",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/MenuAutomation-20261007-091836/index.json",
+      "bytes": 1471,
+      "sha256": "ECAAF939FDD89BC9ED6994DFC22D98C3CD98566E81B0BBA4EE98405601830A82",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/NoRealmsArtifactManifest.json",
+      "bytes": 517588,
+      "sha256": "1D4B9368828335360678CBB054754A2CFEC6EB734F594B1A2640CBC903FA3722",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/NoRealmsGraphicsAPI.json",
+      "bytes": 703,
+      "sha256": "3EF1BB55E98A0DD7D114EB721F8FD72452E2B074872C693358EAC705151C891D",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/NoRealmsQuitResults.json",
+      "bytes": 6888,
+      "sha256": "1A720676A8648426BA4431F1E98ABDFF7D1DFDC82C195B250E71F073DAF845B5",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/NoRealmsUnitTests.tap",
+      "bytes": 3116,
+      "sha256": "65ECE0AFB71CEC873064DD7191ADDFA25516FF1DE6385B799EB18975467FD35C",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/package-lock.json",
+      "bytes": 2086,
+      "sha256": "80BABB376B0CD0BAFE806A425482A8E91842AD89CB312E0F6D0087DE4D02C87D",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/package.json",
+      "bytes": 458,
+      "sha256": "8023F7C3506C13DD2AC20CD85D1DDF6234D242B2233D26162A2C1CA2B418C275",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/quit-editor.mjs",
+      "bytes": 1507,
+      "sha256": "983705366CC2A683FCC3183EFBAC117E36F9820724C3267C42530BBB26D5F503",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/quit-game.mjs",
+      "bytes": 6068,
+      "sha256": "227A525FA5E707672FC0229E1F6E2D53CF244F7296AD0086356FA284457B5F95",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/QuitArtifactManifest.json",
+      "bytes": 517217,
+      "sha256": "1A3C49EAAD9F11E872990CA1AFDE8DA8F563D25BA4F19FBD2413BBF5565CB995",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/QuitBuild.log",
+      "bytes": 80986,
+      "sha256": "960F0C51B5A7146DF4DFC76F63F4CAC960D60F42E7A89FB82F8392AAC0EDAAB1",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/QuitEditorSafetyResults.json",
+      "bytes": 658,
+      "sha256": "E5F4D1C32CE29588CFBE2ABB30E32C23CDC5F5C0B509E49A540A122A31FBB7EC",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/realms-removal.test.mjs",
+      "bytes": 2665,
+      "sha256": "ED4AA46D969DF60BF38524560382D81B64F06C39268B7758D62D80ADBDC16495",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/registry.mjs",
+      "bytes": 15782,
+      "sha256": "C37C1C669A897DDAD1E70C842C88F39732359D2B900325D10AE136738D021EC7",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/smoke.mjs",
+      "bytes": 16878,
+      "sha256": "CBB6C4178DAFDDFA93C90641450DFFD1374334737FF8DD7F93D9214E0C124E7C",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/source-check.mjs",
+      "bytes": 1233,
+      "sha256": "EAF7C208E41442FDFDEF2C5B2D6D66BCDE9D9FD9AA73F30E6EF40333617916B3",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/supplement.mjs",
+      "bytes": 7323,
+      "sha256": "CA645814B33E1025590C0FB1461E807B83B230769792E655B5638EB33F8DE486",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/video-artifact-manifest.mjs",
+      "bytes": 9084,
+      "sha256": "6092465534502AF7BB925B01C8AC0A2F8FCAA97E28A9000DBCC6215C3E41B25A",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/video-persistence.mjs",
+      "bytes": 5130,
+      "sha256": "1E59A7C4374049FCF95A720C4411317C9C538737308064CE73829A9DBF3F6BF5",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/video-runtime.test.mjs",
+      "bytes": 4095,
+      "sha256": "20F7A227041356DAD2EE327EFC6266A67884202F70443321B1D0335F3A407E9C",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/video-settings.mjs",
+      "bytes": 12338,
+      "sha256": "D94C85E7C9FCE79B967CBA56CE53D8971C7658186D63D9C8404C1A8FC3BC895B",
+      "sanitized": false
+    },
+    {
+      "path": "Tests/VideoResetControls.json",
+      "bytes": 587,
+      "sha256": "A5A4B137FF31D4ED5CB58BE305CAA1DDE04F8B9B1F00044AE12EF6211FA068BF",
+      "sanitized": false
+    },
+    {
+      "path": "Unnamed.uproject",
+      "bytes": 1400,
+      "sha256": "3691E368AACB7D1FD845BDCAC24F0B8434CFFAAC08E0FA4F66F12F9D4D2A6D6D",
+      "sanitized": false
+    }
+  ]
+}

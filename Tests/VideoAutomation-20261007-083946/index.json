@@ -1,0 +1,44 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "JRHEREDIARAMIRE",
+			"instance": "3589B1EB4CFCEE2DDE90088990FE4E85",
+			"instanceName": "JRHEREDIARAMIRE-20612",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (25H2) [10.0.26200.9550] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 4070 Ti SUPER",
+			"cPUModel": "Intel(R) Core(TM) i9-14900KF",
+			"rAMInGB": 64,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.07-12.40.09",
+	"succeeded": 1,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.0081217996776103973,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "Validation",
+			"fullTestPath": "Unnamed.Menu.VideoSettings.Validation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"3589B1EB4CFCEE2DDE90088990FE4E85"
+			],
+			"duration": 0.0081217996776103973,
+			"dateTime": "2026.10.07-12.40.09",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

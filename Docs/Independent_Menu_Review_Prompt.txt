@@ -1,0 +1,352 @@
+INDEPENDENT REVIEW: UNREAL MENU, SETTINGS, PERSISTENCE AND ORGANIZATION
+Prepared for Jesus Heredia. Project snapshot: 2026-10-07.
+
+Hello. Please independently review the menu implementation described below.
+Do not assume the previous implementation or its passing reports are correct.
+Inspect the available source and evidence, identify genuine defects, and judge
+whether ownership and organization make future changes easy to find and maintain.
+
+This is a READ-ONLY REVIEW. Do not implement fixes, recreate the project, install
+plugins, upgrade Unreal, rename the project, stage/commit/reset Git, delete saves,
+overwrite existing packages, or implement deferred features without my approval.
+Give me both a technical findings report and a short plain-language summary.
+
+1. ACCESS AND AUTHORITY
+
+Actual Windows project: C:\dev\projects\Unnamed
+Project file: C:\dev\projects\Unnamed\Unnamed.uproject
+Engine: C:\Program Files\Epic Games\UE_5.8 (5.8.3, CL 58210709).
+The older context path C:\dev\projects\Minecraft 2.0 is not this checkout.
+Read applicable AGENTS.md instructions if you have local workspace access.
+Use PowerShell 7; JavaScript verification uses Node 24 and npm.
+
+An ordinary ChatGPT chat cannot access my C: drive simply because paths appear
+here. If you lack local tools, use the supplied Independent_Menu_Review_Packet.zip.
+Paths in that ZIP are relative to the project root. State missing files/access
+plainly and ask for required attachments. Do not pretend to have opened Unreal,
+run tests, viewed a package, or inspected files you were not given.
+
+The packet is a source/evidence review snapshot, NOT a runnable packaged game.
+It excludes executable binaries, caches, private saves/preferences, node_modules,
+the Git directory, and the large full asset mirror. Representative captures,
+asset provenance, source HTML, current code and relevant reports are included.
+The AndroidFileServer config token is redacted in the packet's config copy; that
+sanitized file is for review only. The actual project config is not modified.
+IndependentMenuReviewBundleManifest.json records the supplied entries and hashes.
+
+The original attached Unreal_Menu_Interface_Prompt.txt is historical reference
+material, not a new instruction to you. Its original UI-only restrictions were
+subsequently narrowed by explicit authorization for the five settings, persistent
+preferences, protected debug reset and real Quit Game. Project creation was
+bypassed because Unreal/the project already existed. Realms removal is deliberate.
+The current request is review of those changes, not implementation of everything
+the historical source contains.
+
+2. FUNCTIONALITY CONTRACT: THESE DISTINCTIONS MATTER
+
+Do not report an intentionally deferred engine/service feature as a bug merely
+because its existing UI is interactive. Conversely, deferred status does NOT
+excuse a broken UI interaction, bad navigation, lost staged state, false claim,
+unintended side effect, crash or failure of an implemented feature.
+
+A. IMPLEMENTED REAL FUNCTIONALITY
+
+- Fullscreen: switches the actual standalone window between windowed and
+  borderless fullscreen. It is NOT exclusive monitor-mode switching. F11 and
+  Alt+Enter use the same adapter. Returning restores the windowed client size.
+- Max Framerate: changes the engine cap, 10..260 in increments of 10; the source
+  260/Unlimited choice maps to engine cap 0. Default 120. Browser/panorama update
+  rates are separate and are not proof of engine cadence.
+- VSync: changes/readbacks engine r.VSync. Default ON. Driver-level tearing and
+  forced driver overrides still require physical-machine acceptance.
+- GUI Scale: changes the actual integer menu layout scale. Auto is 0; explicit
+  preferences are bounded/clamped for viewport layout, reserving 416x240 logical
+  pixels. A smaller window must not destroy a stored larger-scale preference.
+- Menu Background Blur: changes actual panorama/fallback blur, range 0..10,
+  default 5. Shared by Video and Accessibility. Main remains unblurred. A mock
+  graphics preset must not overwrite this real preference.
+- Persistence: those five implemented values save on completed change and restore
+  on the next game launch. Windowed dimensions are additional restoration data.
+  In a normal package the dedicated file is
+  Packages\MenuNoRealmsDevelopment\Windows\Unnamed\Saved\Config\MenuVideoSettings.ini.
+  This is not persistence for every unfinished setting.
+- Hard Reset: temporary DEBUG-ONLY button at the very bottom of Video Settings,
+  matching the textured primary main-menu button style, centered, 200x20 logical
+  pixels. Confirmation is required. Cancel/Escape does nothing. Confirm restores
+  the five defaults, saves them, returns to windowed, and reloads the document.
+  Reload also recreates mock settings, bindings, locale, packs, sample lists and
+  drafts. It PROTECTS worlds/player data/unrelated saves; it is not a directory
+  wipe. No real world/progression systems exist. The user confirmed this policy.
+  -ExcludeDebugTools / --without-debug-tools omits this temporary UI. That is not
+  a security restriction on the native reset service or a final Shipping policy.
+- Quit Game: main-menu action performs normal Unreal standalone shutdown. It
+  locks new video changes, drains queued edits, waits for settled native settings,
+  flushes the dedicated preference file, and requests normal exit on a controller
+  tick. It does not force-kill the process or reset preferences. A failed flush
+  cancels quitting and allows a recoverable retry. Duplicate requests are guarded.
+  Quit is disabled/rejected inside Unreal Editor Play so it cannot close the editor.
+
+Native window/FPS/VSync controls and Hard Reset require a ready standalone window;
+embedded editor Play protects those engine-global settings. GUI/blur remain usable
+in Play. Capability-driven disablement is intentional, not a broken button.
+
+B. WORKING UI, BUT INTENTIONALLY MOCKED ENGINE/SERVICE FUNCTIONALITY
+
+- Main Singleplayer and Multiplayer navigate correctly. They do NOT start a
+  playable world or network connection. World/server lists are fictional samples.
+- Create/Edit/Re-Create/Delete world, generation type, seed, rules, experiments,
+  layers, presets, biome and data packs edit staged/session-only UI or end at
+  reversible explanations. No real world is generated, loaded, deleted or backed up.
+- Add/Edit/Delete server and Direct Connection validate/edit fictional session
+  data. Join Server ends offline; no DNS, ping, account authentication or connection.
+- Options, Video, Audio, Controls, Language, Accessibility, Online, Skin, Chat,
+  Mouse, Font, Credits and Telemetry routes navigate; Back/Done/Cancel/Escape,
+  sliders/cycles, search, tabs, selection, wheel scrolling and fields should work.
+- Every video setting OTHER than the five real ones is deferred: FOV, brightness,
+  quality/presets, backend switching, render/simulation distance, particles, cloud
+  quality/range, filtering, anisotropy, mipmaps, entity shadows, vignette, etc.
+  Changing a displayed value must not secretly mutate Unreal rendering/gameplay.
+- Graphics API is currently a mock preference from the supplied source, not an
+  engine switcher. The running Windows game was verified as D3D12/DirectX 12 in its
+  RHI log. Locking the display to DirectX 12 was recommended, but is not implemented
+  in this snapshot without the user's confirmation. Do not claim backend switching.
+- Sound volume/device, narrator, subtitles and directional audio are UI mocks.
+  No actual menu audio playback, speech synthesis or audio-device switching exists.
+- Key capture/reset, sensitivity, toggles and player controls are mock bindings;
+  they do not rebind Unreal Enhanced Input or create a gameplay pawn.
+- Language choice, font/glyph variants, high contrast, splash/panorama preferences
+  and resource-pack ordering are staged/shared mocks. Apart from real GUI scale
+  and blur, presentation remains the frozen English/source baseline.
+- Friends/account actions, Xbox/privacy/guide links, folder/backup actions,
+  clipboard, telemetry consent/sending and external navigation stay offline at
+  reversible screens. No actual account, browser, clipboard or filesystem action.
+- Credits render the bundled source data offline; credit navigation/scrolling is
+  functional UI, not a claim that account/licensing integrations are implemented.
+
+Normal shared mock settings change in memory; staged dialogs commit only their
+owned domain on Done/Save and roll back on Cancel/Escape. Nested child commits
+remain subject to the parent transaction. Reload resets mocks but preserves the
+five real preferences. Do not call that intended mock reset a persistence bug.
+
+C. INTENTIONALLY DISABLED OR CONDITIONAL
+
+- Exclusive Fullscreen Mode/video-mode enumeration and Rotate with Minecart are
+  intentionally unavailable. Reset Icon also has no supported source action.
+- World/server command buttons need a selected sample. Empty/invalid names or
+  addresses block submission. Invalid numeric rules block Done. Key Reset is
+  disabled at its default. Pack movement is blocked at the first/last boundary.
+- Hardcore fixes Hard difficulty and disables commands/bonus chest. Friends
+  suboptions depend on Friends List. Anisotropy depends on Anisotropic filtering.
+  These dependencies are intentional; incorrect enablement is still reviewable.
+- A missing or unready native binding must not present unsupported actions as live.
+
+D. INTENTIONALLY REMOVED, NOT UNFINISHED
+
+- Minecraft Realms main-menu button and the retired row.
+- Realms screen, Join Realm route/code form and all their controls.
+- Invites, news, trial/features, subscription/purchase explanation endpoints.
+- Online Settings Realms header/news-and-invites preference and its definition.
+- Dead Realms feature CSS.
+- The old simulated Game closed/Return to Title route, replaced by real Quit.
+
+Current active renderer count is 33. The immutable reference still has all 36.
+Unused source translations/asset copies, earlier test suites, old captures and
+preserved earlier packages may contain Realms text. That alone is NOT active UI,
+an orphan route or a failed removal. Review reachability and active definitions.
+Do not demand deletion of immutable provenance/historical evidence.
+
+3. WHERE TO FIND AND CHANGE THINGS
+
+All paths below are relative to C:\dev\projects\Unnamed.
+
+- Source\Unnamed\MenuHost.h/.cpp: game mode/controller, empty UI-only game,
+  SWebBrowser host, local URL/navigation restrictions, service ownership/bindings,
+  tick order, input/focus and EndPlay cleanup. No pawn or HUD.
+- Source\Unnamed\MenuVideoSettings.h/.cpp: strict native five-setting validation,
+  window transitions/readback/timeouts, engine cap/VSync, persistence/reset,
+  capabilities, readiness and final preference flush. Browser binding menuvideo
+  exposes GetState, ApplySetting and HardReset only.
+- Source\Unnamed\MenuApplication.h/.cpp: restricted lifecycle binding menuapp,
+  GetState/RequestQuit, weak controller/service ownership, local standalone/editor
+  guards, duplicate/timeout/failure policy, normal UKismetSystemLibrary::QuitGame.
+- Source\Unnamed\Tests\*: native request-validation and quit-safety automation.
+- Source\Unnamed\Unnamed.Build.cs: module dependencies and physical NonUFS assets.
+- Config\DefaultEngine.ini / DefaultInput.ini / DefaultGame.ini: boot map/mode,
+  renderer defaults, shortcut policy and packaging. Template settings were retained.
+- Content\Menu\L_Menu.umap: existing empty menu host map. Do not overwrite it.
+- Reference\minecraft-menu\index.html: IMMUTABLE HTML/CSS/JS/structured-data source.
+  Original index SHA-256:
+  72F3DB289F4ECB7E55261EC48CD44B5FEAA170E8B4891641245390B473F1CD18.
+- Reference\minecraft-menu\assets\asset-provenance.json: original resources/rights.
+- Scripts\AdaptMenu.mjs: fail-fast source adaptations; removes prohibited effects,
+  Realms and simulated quit, embeds unchanged panorama/credits, injects runtime
+  modules, controls debug UI, syntax/effect audits, emits working HTML.
+- Scripts\MenuMockRuntime.js: domain transactions, stable IDs, diagnostics,
+  staged commit/rollback and optional deterministic captures.
+- Scripts\MenuVideoRuntime.js: serialized/coalesced native edits, state sync,
+  presentation application, failure readback, reset and exit locking/draining.
+- Scripts\MenuApplicationRuntime.js: quit interaction, queue drain, polling,
+  duplicate rejection, recoverable errors and unlock/retry.
+- Content\Menu\Web\index.html: GENERATED runtime document. Inspect it for deployed
+  results but make future edits in adapter/runtime modules, then regenerate.
+- Scripts\BuildMenu.ps1 / LaunchMenu.ps1: current package selection, regeneration,
+  editor/runtime build/cook/stage/archive and ordinary/isolated diagnostic launches.
+- Scripts\TestMenu.ps1 / TestVideoSettings.ps1: native automation with report checks.
+- Tests\registry.mjs: generates Docs\ControlRegistry.json/.md,
+  ScreenInventory.md and FunctionalBacklog.md from rendered current captures.
+  Do not manually hand-edit those generated inventories to conceal discrepancies.
+- Docs\Architecture.md, VideoSettings.md, QuitGame.md, Verification.md,
+  KnownDifferences.md: ownership, contracts, evidence and remaining acceptance.
+- Docs\ControlRegistry.json: per-control IMPLEMENTED / UI_ONLY /
+  INTENTIONALLY_DISABLED status, defaults, bounds, dependencies and future scope.
+  Verify the registry against code; it is not independent proof of correctness.
+
+The local browser is intentional, not an unfinished UMG conversion. There is no
+React/Tailwind/web backend/dev server. Panorama PNGs are embedded as data URLs to
+respect CEF file-origin security; actual fonts/images remain local. Do not propose
+disabling browser security. Native bindings must not expose arbitrary commands,
+files, paths, console variables or destructive world actions.
+
+4. REVIEW CHECKLIST
+
+Correctness and persistence:
+- Verify native and browser validation agree on names, types, bounds and choices.
+- Verify initial defaults, corrupt/versioned config handling and readback; verify
+  no label-only success, hidden broad ApplySettings call or unintended settings.
+- Check save-on-change, write failures, restore across independent launches,
+  fullscreen restore, reset/defaults/reload, and unrelated-save protection.
+- Examine asynchronous ordering/coalescing, poll versus mutation races, failed
+  native transitions, stale snapshots, timeouts, recovery and UI enablement.
+- Trace rapid changes followed by Quit, duplicate Quit/Reset, drain/lock order,
+  final flush, error unlock and normal shutdown. Check native editor guards even
+  when RequestQuit/ApplySetting are called without the visible UI.
+- Review UObject lifetime/weak references, browser binding lifetime, tick order,
+  local-controller ownership and cleanup when Play stops or the host disappears.
+
+UI and scope:
+- Verify Realms cannot be reached via buttons, renderers, forms or active settings.
+- Check main row closure and all controls for clipping/overlap at 1280x720,
+  1920x1080, smaller windows and explicit/Auto GUI scales.
+- Check Hard Reset is last, styled correctly, protected by confirmation and not
+  silently promoted into the final production UI or a world-wipe feature.
+- Check shared blur, native shortcuts, focus, keyboard and pointer paths; separate
+  CEF-injected keys from physical Windows routing.
+- Test mock commit/cancel/nesting, disabled dependencies and endpoint return paths.
+  Look for accidental engine, disk, network, audio, language/font or clipboard effects.
+- Verify generated code/data are consistent with current documentation and registry.
+
+Organization and maintainability:
+- Can another developer find the owner of a label/layout, a mock dependency, a
+  real engine action, a persisted preference, an exit policy and a test in minutes?
+- Is the adapter/runtime/native division coherent? Look for duplicate sources of
+  truth, mutable defaults, broad APIs, hidden cross-module coupling and brittle
+  global replacements. Does fail-fast regeneration prevent silent source drift?
+- Is source versus generated output clear? Are old candidates/tests labeled so
+  they cannot be mistaken for current acceptance? Are new output paths isolated?
+- Evaluate whether large embedded source/data and compact inherited renderer code
+  create specific maintenance risks. Recommend focused, justified improvements;
+  do not demand a wholesale framework rewrite or duplicate hand-written UI.
+- Give a concrete "to change X, edit Y and run Z" map. Propose a small prioritized
+  cleanup list separately from bugs, with ownership and preservation implications.
+
+Evidence quality:
+- Compare artifact hashes to source/package claims. Passing compilation is not
+  runtime proof; a test-count claim is not evidence unless report contents agree.
+- Separate current reruns, inherited unchanged-native evidence, historical mock
+  checkpoints, failed harness attempts and untested human/platform gates.
+- Identify gaps in failure, persistence, reset, UI, editor/standalone and physical
+  input coverage. Do not claim Shipping, other platforms or multiplayer acceptance.
+
+5. CURRENT CANDIDATE AND EVIDENCE TO CHECK
+
+Current game: Packages\MenuNoRealmsDevelopment\Windows\Unnamed.exe.
+Previous native Quit checkpoint: Packages\MenuQuitDevelopment\Windows.
+Realms removal changes the physical HTML only; all native source and every other
+candidate package file must match that previous checkpoint. No new native build
+or native automation is claimed for this presentation-only follow-up.
+
+Current reports:
+- Tests\Captures\no-realms-packaged-1280x720\results.json
+- Tests\Captures\no-realms-packaged-1920x1080\results.json
+- Tests\Captures\no-realms-video-1280x720\results.json
+- Tests\Captures\no-realms-video-1920x1080\results.json
+- Tests\NoRealmsQuitResults.json
+- Tests\NoRealmsArtifactManifest.json (hashes, preservation, provenance of checks)
+- Tests\NoRealmsUnitTests.tap (current unit-test run)
+- Tests\NoRealmsGraphicsAPI.json (actual running D3D12 log excerpts, not UI switching)
+
+Current JavaScript units: video-runtime.test.mjs, debug-reset.test.mjs,
+menu-application.test.mjs and realms-removal.test.mjs (15 tests).
+The current whole-menu reports each contain 417 passing checks; focused video
+reports each contain 37. The generated current registry records 696 distinct
+controls and 681 deferred features across 33 routes. Verify counts from the files
+rather than treating the numbers in this prompt as independent proof.
+Inherited native checkpoint: Tests\QuitBuild.log;
+Tests\MenuAutomation-20261007-091836\index.json (2 successful native tests);
+Tests\QuitEditorSafetyResults.json (4 successful live-editor safety checks).
+Prior source/package hashes: Tests\QuitArtifactManifest.json.
+
+Tests\video-persistence.mjs targets the earlier VideoSettingsDevelopment package.
+Tests\supplement.mjs targets original UI-only MenuDevelopment, where Realms and
+mock fullscreen existed. Its guard rejects current functional menus. Earlier
+captures/manifests and Tests\IssueRuns are historical, not current failures or
+proof that removed features remain. Do not overwrite them while reviewing.
+
+Realms-edit preservation snapshot:
+C:\dev\backups\Unnamed\no-realms-20261007-093729\PreservationManifest.json.
+Earlier snapshots/candidates remain. Git HEAD at the start was
+a6414949171f18783ab9fbf5185a98895e9af893. The checkout contains intentionally
+uncommitted implementation work. Compare staged entries semantically; a changed
+Git index stat-cache byte hash alone is not evidence of staged-content changes.
+
+Remaining human gates: physical keyboard/mouse focus/feel, driver VSync/tearing,
+multi-monitor/DPI, unsupported-window failure injection, native Minecraft visual
+parity, Shipping and other platforms. Source asset/branding rights still apply.
+Screenshots prove supplied-source composition, not native Minecraft pixel parity.
+
+6. OPTIONAL LOCAL VERIFICATION, ONLY WITH APPROPRIATE ACCESS
+
+Start with source inspection and supplied reports. Do not close the user's editor
+or unrelated game sessions. Do not test reset against the user's ordinary config.
+Diagnostic sessions MUST use -SessionOnly or an isolated settings file.
+The complete smoke intentionally skips destructive Quit; quit-game.mjs tests it
+in its own processes and isolated files. Never force-terminate an unrelated game.
+Use unique output names so the accepted reports above are preserved.
+
+From C:\dev\projects\Unnamed\Tests:
+  npm test
+  node source-check.mjs
+  node quit-game.mjs --package=MenuNoRealmsDevelopment --report=IndependentReviewQuit.json
+
+Launch a separate diagnostic window through Scripts\LaunchMenu.ps1 with
+-PackageName MenuNoRealmsDevelopment -Diagnostics -DebugPort 18901 -SessionOnly
+-Width 1280 -Height 720, after checking that the port is unused. Then:
+  node video-settings.mjs --port=18901 --profile=1280x720 --capture=independent-video-1280x720
+  node smoke.mjs --port=18901 --profile=1280x720 --mode=independent-review
+Repeat at 1920x1080 in a separate owned session with a unique capture name.
+Native automation creates reports; validate succeeded/failed/notRun fields, not
+only an editor exit code. Any rebuilt package must use a NEW -PackageName rather
+than overwriting the current or older candidate. No rebuild is required for a
+read-only source review. Do not regenerate the accepted artifact manifest just
+to replace its original evidence while performing an independent review.
+
+7. REPORT FORMAT
+
+Lead with genuine findings, highest severity first. Each finding needs:
+- Severity (P0 critical, P1 high, P2 medium, P3 low).
+- Exact file and one-based line, plus relevant symbols.
+- The concrete failure and violated implemented/UI contract.
+- A credible reproduction or source trace, expected versus actual outcome.
+- Confidence, impact and a scoped proposed fix; no implementation yet.
+
+Then provide:
+- Organization/maintainability assessment and change-location map.
+- A separate short list of optional cleanup recommendations, not mislabeled bugs.
+- Scope check: real functionality, mocks, intentional disablement and removals.
+- Checks you personally ran versus reports you only read; missing access/evidence.
+- Remaining risks/open questions and a prioritized next-action list for approval.
+- A simple explanation for me in the chat, without overwhelming technical detail.
+
+If you find no actionable defects, say so clearly and still state the limits of
+your review. Do not invent findings or call deferred world/network/audio features
+bugs simply to make the review look thorough.

@@ -1,0 +1,139 @@
+{
+  "directory": "C:\\dev\\projects\\Unnamed\\Tests\\Runtime\\quit-game-1791379126809",
+  "finished": "2026-10-07T13:20:48.819Z",
+  "checks": [
+    {
+      "name": "1280x720 removes the mock quit screen",
+      "pass": true
+    },
+    {
+      "name": "1280x720 Quit Game exits normally without process termination",
+      "pass": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "1280x720 records saved settings and normal engine shutdown",
+      "pass": true,
+      "detail": "Request Window 'Unnamed (64-bit Development PCD3D_SM6) ' being destroyed\r\n[2026.10.07-13.18.54:863][175]LogSlate: Window 'Unnamed (64-bit Development PCD3D_SM6) ' being destroyed\r\n[2026.10.07-13.18.54:872][175]LogSlate: Slate User Destroyed.  User Index 0, Is Virtual User: 0\r\n[2026.10.07-13.18.54:879][175]LogExit: Preparing to exit.\r\n[2026.10.07-13.18.54:883][175]LogMoviePlayer: Shutting down movie player\r\n[2026.10.07-13.18.54:926][175]LogSlate: Updating window title bar state: overlay mode, drag disabled, window buttons hidden, title bar hidden\r\n[2026.10.07-13.18.54:930][175]LogDemo: Cleaned up 0 splitscreen connections, owner deletion: enabled\r\n[2026.10.07-13.18.54:937][175]LogExit: Game engine shut down\r\n[2026.10.07-13.18.55:075][175]LogExit: Object subsystem successfully closed.\r\n[2026.10.07-13.18.55:100][175]LogShaderLibrary: Display: Closing logical shader library 'Global' with 1 components\r\n[2026.10.07-13.18.55:144][175]LogShaderLibrary: Display: Closing logical shader library 'Unnamed' with 1 components\r\n[2026.10.07-13.18.55:348][175]LogChaosDD: Chaos Debug Draw Shutdown\r\n[2026.10.07-13.18.55:353][175]LogNFORDenoise: NFORDenoise function shutting down\r\n[2026.10.07-13.18.55:354][175]RenderDocPlugin: plugin has been unloaded.\r\n[2026.10.07-13.18.55:356][175]LogPakFile: Destroying PakPlatformFile\r\n[2026.10.07-13.18.55:494][175]LogD3D12RHI: ~FD3D12DynamicRHI\r\n[2026.10.07-13.18.55:514][175]LogExit: Exiting.\r\n[2026.10.07-13.18.55:532][175]Log file closed, 10/07/26 09:18:55\r\n"
+    },
+    {
+      "name": "1280x720 queued settings finish before exit",
+      "pass": true,
+      "detail": "[MenuVideoSettings]\r\nVersion=1\r\nFullscreen=False\r\nVSync=False\r\nFrameLimit=60\r\nGuiScale=2\r\nBackgroundBlur=8\r\nWindowedWidth=1280\r\nWindowedHeight=720\r\n\r\n"
+    },
+    {
+      "name": "1280x720 saved settings restore after Quit Game",
+      "pass": true,
+      "detail": {
+        "ok": true,
+        "pendingFullscreen": false,
+        "persistent": true,
+        "error": "",
+        "settings": {
+          "fullscreen": false,
+          "framerateLimit": 60,
+          "enableVsync": false,
+          "guiScale": 2,
+          "menuBackgroundBlurriness": 8
+        },
+        "capabilities": {
+          "fullscreen": true,
+          "framerateLimit": true,
+          "enableVsync": true,
+          "guiScale": true,
+          "menuBackgroundBlurriness": true
+        },
+        "observed": {
+          "windowMode": "Windowed",
+          "clientWidth": 1280,
+          "clientHeight": 720,
+          "maxFPS": 60,
+          "vsync": 0,
+          "measuredFPS": 0
+        }
+      }
+    },
+    {
+      "name": "1280x720 unrelated save survives quit and relaunch",
+      "pass": true
+    },
+    {
+      "name": "1280x720 second Quit Game also exits normally",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 removes the mock quit screen",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 Quit Game exits normally without process termination",
+      "pass": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "1920x1080 records saved settings and normal engine shutdown",
+      "pass": true,
+      "detail": "Request Window 'Unnamed (64-bit Development PCD3D_SM6) ' being destroyed\r\n[2026.10.07-13.19.09:047][141]LogSlate: Window 'Unnamed (64-bit Development PCD3D_SM6) ' being destroyed\r\n[2026.10.07-13.19.09:058][141]LogSlate: Slate User Destroyed.  User Index 0, Is Virtual User: 0\r\n[2026.10.07-13.19.09:064][141]LogExit: Preparing to exit.\r\n[2026.10.07-13.19.09:064][141]LogMoviePlayer: Shutting down movie player\r\n[2026.10.07-13.19.09:079][141]LogSlate: Updating window title bar state: overlay mode, drag disabled, window buttons hidden, title bar hidden\r\n[2026.10.07-13.19.09:081][141]LogDemo: Cleaned up 0 splitscreen connections, owner deletion: enabled\r\n[2026.10.07-13.19.09:087][141]LogExit: Game engine shut down\r\n[2026.10.07-13.19.09:149][141]LogExit: Object subsystem successfully closed.\r\n[2026.10.07-13.19.09:167][141]LogShaderLibrary: Display: Closing logical shader library 'Global' with 1 components\r\n[2026.10.07-13.19.09:205][141]LogShaderLibrary: Display: Closing logical shader library 'Unnamed' with 1 components\r\n[2026.10.07-13.19.09:415][141]LogChaosDD: Chaos Debug Draw Shutdown\r\n[2026.10.07-13.19.09:418][141]LogNFORDenoise: NFORDenoise function shutting down\r\n[2026.10.07-13.19.09:418][141]RenderDocPlugin: plugin has been unloaded.\r\n[2026.10.07-13.19.09:418][141]LogPakFile: Destroying PakPlatformFile\r\n[2026.10.07-13.19.09:571][141]LogD3D12RHI: ~FD3D12DynamicRHI\r\n[2026.10.07-13.19.09:592][141]LogExit: Exiting.\r\n[2026.10.07-13.19.09:616][141]Log file closed, 10/07/26 09:19:09\r\n"
+    },
+    {
+      "name": "1920x1080 queued settings finish before exit",
+      "pass": true,
+      "detail": "[MenuVideoSettings]\r\nVersion=1\r\nFullscreen=True\r\nVSync=False\r\nFrameLimit=60\r\nGuiScale=2\r\nBackgroundBlur=8\r\nWindowedWidth=1920\r\nWindowedHeight=1080\r\n\r\n"
+    },
+    {
+      "name": "1920x1080 saved settings restore after Quit Game",
+      "pass": true,
+      "detail": {
+        "ok": true,
+        "pendingFullscreen": false,
+        "persistent": true,
+        "error": "",
+        "settings": {
+          "fullscreen": true,
+          "framerateLimit": 60,
+          "enableVsync": false,
+          "guiScale": 2,
+          "menuBackgroundBlurriness": 8
+        },
+        "capabilities": {
+          "fullscreen": true,
+          "framerateLimit": true,
+          "enableVsync": true,
+          "guiScale": true,
+          "menuBackgroundBlurriness": true
+        },
+        "observed": {
+          "windowMode": "Borderless",
+          "clientWidth": 2560,
+          "clientHeight": 1440,
+          "maxFPS": 60,
+          "vsync": 0,
+          "measuredFPS": 0
+        }
+      }
+    },
+    {
+      "name": "1920x1080 unrelated save survives quit and relaunch",
+      "pass": true
+    },
+    {
+      "name": "1920x1080 second Quit Game also exits normally",
+      "pass": true
+    },
+    {
+      "name": "Failed save keeps game running and cancels exit",
+      "pass": true
+    },
+    {
+      "name": "Runtime suite completed",
+      "pass": false,
+      "detail": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Done', exact: true })\u001b[22m\n"
+    }
+  ]
+}

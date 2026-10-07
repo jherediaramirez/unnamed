@@ -1,0 +1,163 @@
+TAP version 13
+# Subtest: temporary reset uses a centered main-menu-sized button
+ok 1 - temporary reset uses a centered main-menu-sized button
+  ---
+  duration_ms: 2.1359
+  type: 'test'
+  ...
+# Subtest: excluding debug tools removes the reset from video settings
+ok 2 - excluding debug tools removes the reset from video settings
+  ---
+  duration_ms: 1.8585
+  type: 'test'
+  ...
+# Subtest: quit drains settings once and prevents repeated submissions
+ok 3 - quit drains settings once and prevents repeated submissions
+  ---
+  duration_ms: 23.6534
+  type: 'test'
+  ...
+# Subtest: overall quit deadline includes an unanswered settings drain
+ok 4 - overall quit deadline includes an unanswered settings drain
+  ---
+  duration_ms: 75.5329
+  type: 'test'
+  ...
+# Subtest: unanswered quit request unlocks and ignores its late reply after retry
+ok 5 - unanswered quit request unlocks and ignores its late reply after retry
+  ---
+  duration_ms: 77.5584
+  type: 'test'
+  ...
+# Subtest: late pre-quit poll cannot replace the newer shutdown state
+ok 6 - late pre-quit poll cannot replace the newer shutdown state
+  ---
+  duration_ms: 15.1878
+  type: 'test'
+  ...
+# Subtest: accepted but unanswered shutdown completion still permits an explicit retry
+ok 7 - accepted but unanswered shutdown completion still permits an explicit retry
+  ---
+  duration_ms: 186.3322
+  type: 'test'
+  ...
+# Subtest: editor quit remains disabled and never reaches native shutdown
+ok 8 - editor quit remains disabled and never reaches native shutdown
+  ---
+  duration_ms: 1.447
+  type: 'test'
+  ...
+# Subtest: native rejection unlocks settings and reports the failure
+ok 9 - native rejection unlocks settings and reports the failure
+  ---
+  duration_ms: 13.2853
+  type: 'test'
+  ...
+# Subtest: failed final save cancels quit and keeps the interface recoverable
+ok 10 - failed final save cancels quit and keeps the interface recoverable
+  ---
+  duration_ms: 123.6779
+  type: 'test'
+  ...
+# Subtest: Realms renderers, entry points, join form and owned CSS are removed
+ok 11 - Realms renderers, entry points, join form and owned CSS are removed
+  ---
+  duration_ms: 5.5842
+  type: 'test'
+  ...
+# Subtest: retired Realms preference is absent while supported settings remain
+ok 12 - retired Realms preference is absent while supported settings remain
+  ---
+  duration_ms: 0.2473
+  type: 'test'
+  ...
+# Subtest: main menu closes the removed row and retains real Quit activation
+ok 13 - main menu closes the removed row and retains real Quit activation
+  ---
+  duration_ms: 1.8704
+  type: 'test'
+  ...
+# Subtest: Online Settings retains friends and server controls without Realms
+ok 14 - Online Settings retains friends and server controls without Realms
+  ---
+  duration_ms: 0.9168
+  type: 'test'
+  ...
+# Subtest: numeric validation preserves invalid raw drafts including hidden rules
+ok 15 - numeric validation preserves invalid raw drafts including hidden rules
+  ---
+  duration_ms: 2.2099
+  type: 'test'
+  ...
+# Subtest: server validation requires both trimmed name and valid address
+ok 16 - server validation requires both trimmed name and valid address
+  ---
+  duration_ms: 1.6724
+  type: 'test'
+  ...
+# Subtest: registry only reads explicitly selected matching capture evidence
+ok 17 - registry only reads explicitly selected matching capture evidence
+  ---
+  duration_ms: 15.6546
+  type: 'test'
+  ...
+# Video settings: First edit failed
+# Subtest: five settings use one ordered, coalescing native path
+ok 18 - five settings use one ordered, coalescing native path
+  ---
+  duration_ms: 48.3988
+  type: 'test'
+  ...
+# Subtest: failed earlier edit retains a newer queued choice
+ok 19 - failed earlier edit retains a newer queued choice
+  ---
+  duration_ms: 2.0369
+  type: 'test'
+  ...
+# Video settings: The video settings connection did not respond. Please try again.
+# Subtest: unanswered settings request times out and later edits still complete
+ok 20 - unanswered settings request times out and later edits still complete
+  ---
+  duration_ms: 57.7894
+  type: 'test'
+  ...
+# Subtest: poll started before an edit cannot overwrite its completed result
+ok 21 - poll started before an edit cannot overwrite its completed result
+  ---
+  duration_ms: 15.4379
+  type: 'test'
+  ...
+# Subtest: malformed and unsupported values never cross the bridge
+ok 22 - malformed and unsupported values never cross the bridge
+  ---
+  duration_ms: 1.4691
+  type: 'test'
+  ...
+# Video settings: Overridden by configuration
+# Subtest: editor capabilities protect global engine settings
+ok 23 - editor capabilities protect global engine settings
+  ---
+  duration_ms: 14.0057
+  type: 'test'
+  ...
+# Subtest: rejected changes restore actual values and surface the failure
+ok 24 - rejected changes restore actual values and surface the failure
+  ---
+  duration_ms: 2.1575
+  type: 'test'
+  ...
+# Subtest: exit locks new edits while completing already queued settings
+ok 25 - exit locks new edits while completing already queued settings
+  ---
+  duration_ms: 43.9291
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 625.6416

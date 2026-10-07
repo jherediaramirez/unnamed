@@ -1,4 +1,6 @@
 #include "MenuHost.h"
+#include "MenuVideoSettings.h"
+#include "MenuApplication.h"
 #include "Engine/Engine.h"
 #include "Engine/GameViewportClient.h"
 #include "Framework/Application/SlateApplication.h"
@@ -56,6 +58,13 @@ void AMenuPlayerController::BeginPlay()
         .OnLoadError_Lambda([] { UE_LOG(LogUnnamedMenu, Error, TEXT("Offline menu document failed to load")); });
     GEngine->GameViewport->AddViewportWidgetContent(Browser.ToSharedRef(), 100);
     Browser->SetParentWindow(FSlateApplication::Get().FindWidgetWindow(GEngine->GameViewport->GetGameViewportWidget().ToSharedRef()));
+    VideoSettings = NewObject<UMenuVideoSettings>(this);
+    VideoSettings->Initialize(!GIsEditor && GetWorld()->WorldType == EWorldType::Game);
+    Browser->BindUObject(TEXT("menuvideo"), VideoSettings, true);
+    Application = NewObject<UMenuApplication>(this);
+    Application->Initialize(this, VideoSettings);
+    Browser->BindUObject(TEXT("menuapp"), Application, true);
+    SetActorTickEnabled(true);
     bShowMouseCursor = true;
     FInputModeUIOnly Input;
     Input.SetWidgetToFocus(Browser);
@@ -63,13 +72,24 @@ void AMenuPlayerController::BeginPlay()
     SetInputMode(Input);
     SetIgnoreMoveInput(true);
     SetIgnoreLookInput(true);
-    UE_LOG(LogUnnamedMenu, Log, TEXT("Offline UI-only menu: %s; no pawn, settings bindings or services"), *MenuURL);
+    UE_LOG(LogUnnamedMenu, Log, TEXT("Offline menu: %s; five video settings bound; no pawn or gameplay services"), *MenuURL);
+}
+
+void AMenuPlayerController::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+    if (VideoSettings) VideoSettings->Tick();
+    if (Application) Application->Tick();
 }
 
 void AMenuPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     if (Browser.IsValid() && GEngine && GEngine->GameViewport)
         GEngine->GameViewport->RemoveViewportWidgetContent(Browser.ToSharedRef());
+    if (Browser.IsValid() && VideoSettings) Browser->UnbindUObject(TEXT("menuvideo"), VideoSettings, true);
+    if (Browser.IsValid() && Application) Browser->UnbindUObject(TEXT("menuapp"), Application, true);
     Browser.Reset();
+    VideoSettings = nullptr;
+    Application = nullptr;
     Super::EndPlay(EndPlayReason);
 }

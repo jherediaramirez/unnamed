@@ -1,0 +1,101 @@
+TAP version 13
+# Subtest: temporary reset uses a centered main-menu-sized button
+ok 1 - temporary reset uses a centered main-menu-sized button
+  ---
+  duration_ms: 2.0442
+  type: 'test'
+  ...
+# Subtest: excluding debug tools removes the reset from video settings
+ok 2 - excluding debug tools removes the reset from video settings
+  ---
+  duration_ms: 2.4915
+  type: 'test'
+  ...
+# Subtest: quit drains settings once and prevents repeated submissions
+ok 3 - quit drains settings once and prevents repeated submissions
+  ---
+  duration_ms: 8.7213
+  type: 'test'
+  ...
+# Subtest: editor quit remains disabled and never reaches native shutdown
+ok 4 - editor quit remains disabled and never reaches native shutdown
+  ---
+  duration_ms: 1.1517
+  type: 'test'
+  ...
+# Subtest: native rejection unlocks settings and reports the failure
+ok 5 - native rejection unlocks settings and reports the failure
+  ---
+  duration_ms: 17.0861
+  type: 'test'
+  ...
+# Subtest: failed final save cancels quit and keeps the interface recoverable
+ok 6 - failed final save cancels quit and keeps the interface recoverable
+  ---
+  duration_ms: 123.72
+  type: 'test'
+  ...
+# Subtest: Realms renderers, entry points, join form and owned CSS are removed
+ok 7 - Realms renderers, entry points, join form and owned CSS are removed
+  ---
+  duration_ms: 4.872
+  type: 'test'
+  ...
+# Subtest: retired Realms preference is absent while supported settings remain
+ok 8 - retired Realms preference is absent while supported settings remain
+  ---
+  duration_ms: 0.2155
+  type: 'test'
+  ...
+# Subtest: main menu closes the removed row and retains real Quit activation
+ok 9 - main menu closes the removed row and retains real Quit activation
+  ---
+  duration_ms: 2.0395
+  type: 'test'
+  ...
+# Subtest: Online Settings retains friends and server controls without Realms
+ok 10 - Online Settings retains friends and server controls without Realms
+  ---
+  duration_ms: 1.3042
+  type: 'test'
+  ...
+# Subtest: five settings use one ordered, coalescing native path
+ok 11 - five settings use one ordered, coalescing native path
+  ---
+  duration_ms: 42.8215
+  type: 'test'
+  ...
+# Subtest: malformed and unsupported values never cross the bridge
+ok 12 - malformed and unsupported values never cross the bridge
+  ---
+  duration_ms: 1.2613
+  type: 'test'
+  ...
+# Video settings: Overridden by configuration
+# Subtest: editor capabilities protect global engine settings
+ok 13 - editor capabilities protect global engine settings
+  ---
+  duration_ms: 2.8839
+  type: 'test'
+  ...
+# Subtest: rejected changes restore actual values and surface the failure
+ok 14 - rejected changes restore actual values and surface the failure
+  ---
+  duration_ms: 1.6387
+  type: 'test'
+  ...
+# Subtest: exit locks new edits while completing already queued settings
+ok 15 - exit locks new edits while completing already queued settings
+  ---
+  duration_ms: 37.1897
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 248.4141

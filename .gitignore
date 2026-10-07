@@ -7,5 +7,16 @@ Packages/
 *.sln
 *.suo
 Tests/node_modules/
+Tests/Runtime/
 *.log
 *.pdb
+
+# Local credentials and recovery history must never be uploaded.
+.env
+.env.*
+!.env.example
+.local/
+*.bundle
+*.p12
+*.pfx
+*.key

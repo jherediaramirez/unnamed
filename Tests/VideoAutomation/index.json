@@ -1,0 +1,93 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "JRHEREDIARAMIRE",
+			"instance": "A0FF518F49245C4C43C08C95A48A0A4C",
+			"instanceName": "JRHEREDIARAMIRE-26236",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (25H2) [10.0.26200.9550] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 4070 Ti SUPER",
+			"cPUModel": "Intel(R) Core(TM) i9-14900KF",
+			"rAMInGB": 64,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.07-12.28.39",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.094966500997543335,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "Validation",
+			"fullTestPath": "Unnamed.Menu.VideoSettings.Validation",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"A0FF518F49245C4C43C08C95A48A0A4C"
+			],
+			"duration": 0.094966500997543335,
+			"dateTime": "2026.10.07-12.28.38",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogMenuVideoSettings: Five-setting adapter initialized; native=0 persistence=0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.07-12.28.38"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Reject invalid blur: {\"value\":\"3\"}' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\MenuVideoSettingsTests.cpp",
+					"lineNumber": 24,
+					"timestamp": "2026.10.07-12.28.39"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Reject invalid blur: {\"value\":true}' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\MenuVideoSettingsTests.cpp",
+					"lineNumber": 24,
+					"timestamp": "2026.10.07-12.28.39"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Rejected changes preserve blur' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\MenuVideoSettingsTests.cpp",
+					"lineNumber": 32,
+					"timestamp": "2026.10.07-12.28.39"
+				}
+			],
+			"warnings": 0,
+			"errors": 3,
+			"artifacts": []
+		}
+	]
+}

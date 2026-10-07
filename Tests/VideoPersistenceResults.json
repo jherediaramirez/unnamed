@@ -1,0 +1,134 @@
+{
+  "directory": "C:\\dev\\projects\\Unnamed\\Tests\\Runtime\\video-persistence-1791377946923",
+  "checks": [
+    {
+      "name": "Persistence enabled on ordinary launch",
+      "pass": true
+    },
+    {
+      "name": "Only implemented settings reach disk",
+      "pass": true,
+      "detail": "[MenuVideoSettings]\r\nVersion=1\r\nFullscreen=True\r\nVSync=False\r\nFrameLimit=60\r\nGuiScale=2\r\nBackgroundBlur=8\r\nWindowedWidth=1280\r\nWindowedHeight=720\r\n\r\n"
+    },
+    {
+      "name": "All five settings survive process exit and relaunch",
+      "pass": true,
+      "detail": {
+        "ok": true,
+        "pendingFullscreen": false,
+        "persistent": true,
+        "error": "",
+        "settings": {
+          "fullscreen": true,
+          "framerateLimit": 60,
+          "enableVsync": false,
+          "guiScale": 2,
+          "menuBackgroundBlurriness": 8
+        },
+        "capabilities": {
+          "fullscreen": true,
+          "framerateLimit": true,
+          "enableVsync": true,
+          "guiScale": true,
+          "menuBackgroundBlurriness": true
+        },
+        "observed": {
+          "windowMode": "Borderless",
+          "clientWidth": 2560,
+          "clientHeight": 1440,
+          "maxFPS": 60,
+          "vsync": 0,
+          "measuredFPS": 51.78116762305624
+        }
+      }
+    },
+    {
+      "name": "Restored fullscreen is an actual borderless window",
+      "pass": true
+    },
+    {
+      "name": "Restored frame limit and VSync affect the engine",
+      "pass": true
+    },
+    {
+      "name": "Restored GUI and blur affect presentation",
+      "pass": true
+    },
+    {
+      "name": "Restored blur reaches rendered video background",
+      "pass": true
+    },
+    {
+      "name": "Unfinished settings remain session-only",
+      "pass": true
+    },
+    {
+      "name": "Reset exits fullscreen and restores prior window dimensions",
+      "pass": true,
+      "detail": {
+        "ok": true,
+        "pendingFullscreen": false,
+        "persistent": true,
+        "error": "",
+        "settings": {
+          "fullscreen": false,
+          "framerateLimit": 120,
+          "enableVsync": true,
+          "guiScale": 0,
+          "menuBackgroundBlurriness": 5
+        },
+        "capabilities": {
+          "fullscreen": true,
+          "framerateLimit": true,
+          "enableVsync": true,
+          "guiScale": true,
+          "menuBackgroundBlurriness": true
+        },
+        "observed": {
+          "windowMode": "Windowed",
+          "clientWidth": 1280,
+          "clientHeight": 720,
+          "maxFPS": 120,
+          "vsync": 1,
+          "measuredFPS": 69.85299448166575
+        }
+      }
+    },
+    {
+      "name": "Hard Reset leaves unrelated save data untouched",
+      "pass": true
+    },
+    {
+      "name": "Hard Reset defaults survive another launch",
+      "pass": true,
+      "detail": {
+        "ok": true,
+        "pendingFullscreen": false,
+        "persistent": true,
+        "error": "",
+        "settings": {
+          "fullscreen": false,
+          "framerateLimit": 120,
+          "enableVsync": true,
+          "guiScale": 0,
+          "menuBackgroundBlurriness": 5
+        },
+        "capabilities": {
+          "fullscreen": true,
+          "framerateLimit": true,
+          "enableVsync": true,
+          "guiScale": true,
+          "menuBackgroundBlurriness": true
+        },
+        "observed": {
+          "windowMode": "Windowed",
+          "clientWidth": 1280,
+          "clientHeight": 720,
+          "maxFPS": 120,
+          "vsync": 1,
+          "measuredFPS": 65.91125033973141
+        }
+      }
+    }
+  ]
+}

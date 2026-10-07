@@ -1,135 +1,34 @@
 # Functional Backlog
 
-Nothing in this backlog is authorized in the interface phase.
+## Implemented Batch
 
-## First Task: Fullscreen
+Fullscreen (borderless), Max Framerate, VSync, GUI Scale and Menu Background Blur are implemented with persistence and confirmed preference reset. Quit Game performs normal standalone shutdown after settings drain/flush and protects the editor. See VideoSettings.md and QuitGame.md for scope, evidence and remaining human gates.
 
-Keep the current control. Add a narrow Unreal user-settings/window adapter only after explicit approval. Distinguish windowed, borderless and supported exclusive behavior. Verify the actual resulting mode and viewport dimensions, not the displayed label. Test Alt+Enter/F11 policy, unsupported exclusive modes, focus loss, monitors/DPI, failure/revert and packaged execution. Do not enable resolution, audio or other settings in the same task. Persistence is a separate decision.
+## Deferred Controls
 
-## One Control At A Time
-
-The JSON registry is the authoritative per-control scope and acceptance record. Each item below is deferred real functionality, even where its mock is interactive. Minecraft-only concepts require a design decision before an Unreal adapter can exist.
+The JSON registry is the per-control scope record. Each item below remains deferred real functionality, even where its mock is interactive. Minecraft-only concepts need an explicit design decision; native API availability alone is not acceptance. Exclusive fullscreen and monitor video-mode selection remain deferred.
 
 - `main..Singleplayer`: Singleplayer. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `main..Multiplayer`: Multiplayer. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `main..Minecraft_Realms`: Minecraft Realms. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `main..Friends_List`: Friends List. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `main..Language`: Language. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `main..Accessibility_Settings`: Accessibility Settings. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `main..Options...`: Options.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `main..Quit_Game`: Quit Game. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `main..Copyright_Mojang_AB._Do_not_distribute_`: Copyright Mojang AB. Do not distribute!. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `fov`: FOV. Future camera projection adapter; investigate Minecraft versus Unreal horizontal/vertical FOV conventions first. Later checks and questions are in its registry entry.
-- `options..Online...`: Online.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `options..Skin_Customization...`: Skin Customization.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `options..Music___Sounds...`: Music & Sounds.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `options..Video_Settings...`: Video Settings.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `options..Controls...`: Controls.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `options..Language...`: Language.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `options..Chat_Settings...`: Chat Settings.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `options..Resource_Packs...`: Resource Packs.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `options..Accessibility_Settings...`: Accessibility Settings.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `options..Telemetry_Data...`: Telemetry Data.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `options..Credits___Attribution...`: Credits & Attribution.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `options..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `video..Exclusive_Fullscreen_Mode`: Exclusive Fullscreen Mode. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `framerateLimit`: Max Framerate. Future supported user-settings adapter; actual outcome must be measured and reversible. Later checks and questions are in its registry entry.
-- `enableVsync`: VSync: ON. Future supported user-settings adapter; actual outcome must be measured and reversible. Later checks and questions are in its registry entry.
-- `inactivityFpsLimit`: Reduce fps when: AFK. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `guiScale`: GUI Scale: Auto. Future presentation adapter separate from the frozen baseline; no current binding. Later checks and questions are in its registry entry.
-- `fullscreen`: Fullscreen: OFF. Future UGameUserSettings/window mode adapter; distinguish borderless and supported exclusive modes. Later checks and questions are in its registry entry.
-- `exclusiveFullscreen`: Exclusive Fullscreen: OFF. Future UGameUserSettings/window mode adapter; distinguish borderless and supported exclusive modes. Later checks and questions are in its registry entry.
-- `gamma`: Brightness. Future supported user-settings adapter; actual outcome must be measured and reversible. Later checks and questions are in its registry entry.
-- `preferredGraphicsBackend`: Graphics API: Default. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `graphicsPreset`: Preset. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `biomeBlendRadius`: Biome Blend. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `renderDistance`: Render Distance. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `prioritizeChunkUpdates`: Chunk Builder: Threaded. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `simulationDistance`: Simulation Distance. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `ambientOcclusion`: Smooth Lighting: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `cloudStatus`: Clouds: Fancy. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `particles`: Particles: All. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `mipmapLevels`: Mipmap Levels. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `entityShadows`: Entity Shadows: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `entityDistanceScaling`: Entity Distance. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `menuBackgroundBlurriness`: Menu Background Blur. Future presentation adapter separate from the frozen baseline; no current binding. Later checks and questions are in its registry entry.
-- `cloudRange`: Cloud Distance. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `cutoutLeaves`: See-Through Leaves: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `improvedTransparency`: Improved Transparency: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `textureFiltering`: Texture Filtering: None. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `maxAnisotropyBit`: Anisotropic Filtering. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `weatherRadius`: Weather Effect Radius. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `showAutosaveIndicator`: Autosave Indicator: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `vignette`: Show Vignette: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `attackIndicator`: Attack Indicator: Crosshair. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `chunkSectionFadeInTime`: Chunk Fade Time. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `video..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `video..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `sound_master`: Master Volume. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
-- `sound_music`: Music. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
-- `sound_record`: Jukebox/Note Blocks. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
-- `sound_weather`: Weather. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
-- `sound_block`: Blocks. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
-- `sound_hostile`: Hostile Mobs. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
-- `sound_neutral`: Friendly Mobs. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
-- `sound_player`: Players. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
-- `sound_ambient`: Ambient/Environment. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
-- `sound_voice`: Narrator/Voice. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
-- `sound_ui`: UI. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
-- `soundDevice`: System Default. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
-- `showSubtitles`: Closed Captions: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `directionalAudio`: Directional Audio: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `musicFrequency`: Music Frequency: Default. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `musicToast`: Music Toast: Never. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `sounds..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `sounds..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `controls..Mouse_Settings...`: Mouse Settings.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `controls..Key_Binds...`: Key Binds.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `toggleCrouch`: Sneak: Hold. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `toggleSprint`: Sprint: Hold. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `toggleAttack`: Attack/Destroy: Hold. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `toggleUse`: Use Item/Place Block: Hold. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `autoJump`: Auto-Jump: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `sprintWindow`: Sprint Window. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `quitShortcuts`: Quit Shortcuts: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `operatorItemsTab`: Operator Items Tab: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `controls..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `controls..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `narrator`: Narrator: Narrates All. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `accessibility..Controls...`: Controls.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `highContrast`: High Contrast: OFF. Future presentation adapter separate from the frozen baseline; no current binding. Later checks and questions are in its registry entry.
-- `textBackgroundOpacity`: Text Background Opacity. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `backgroundForChatOnly`: Chat. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `chatOpacity`: Chat Text Opacity. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `chatLineSpacing`: Line Spacing. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `chatDelay`: options.chat.delay_instant. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `notificationDisplayTime`: Notification Time. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `bobView`: View Bobbing: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `screenEffectScale`: Distortion Effects. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `fovEffectScale`: FOV Effects. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `darknessEffectScale`: Darkness Pulsing. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `damageTiltStrength`: Damage Tilt. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `glintSpeed`: Glint Speed. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `glintStrength`: Glint Strength. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `hideLightningFlash`: Hide Sky Flashes: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `darkMojangStudiosBackground`: Monochrome Logo: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `panoramaSpeed`: Panorama Scroll Speed. Future presentation adapter separate from the frozen baseline; no current binding. Later checks and questions are in its registry entry.
-- `hideSplashTexts`: Hide Splash Texts: OFF. Future presentation adapter separate from the frozen baseline; no current binding. Later checks and questions are in its registry entry.
-- `narratorHotkey`: Narrator Hotkey: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `rotateWithMinecart`: Rotate with Minecarts: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `highContrastBlockOutline`: High Contrast Block Outlines: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `accessibility..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `accessibility..Accessibility_Guide`: Accessibility Guide. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `accessibility..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `friendsList`: Friends List: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `allowFriendRequests`: Allow Requests: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `inGameNotification`: In-Game Notification: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `sharePresence`: Visibility: Full. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `online..Xbox_Settings...`: Xbox Settings.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `allowServerListing`: Allow Server Listings: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `realmsNotifications`: News & Invites: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `online..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `online..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `worlds..search_for_worlds`: search for worlds. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `worlds.fictional-forest`: Fictional Forest Camp. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `worlds.fictional-build`: Fictional Creative Workshop. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `worlds..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `worlds..Play_Selected_World`: Play Selected World. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `worlds..Create_New_World`: Create New World. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `worlds..Edit`: Edit. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `worlds..Delete`: Delete. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `worlds..Re-Create`: Re-Create. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `worlds..Back`: Back. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `safety..Do_not_show_this_screen_again`: Do not show this screen again. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `safety..Proceed`: Proceed. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `safety..Back`: Back. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `message..Back`: Back. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `language..Language`: Language. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `language.af_za`: Afrikaans (Suid-Afrika). TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `language.ar_sa`: العربية (العالم العربي). TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
@@ -277,6 +176,161 @@ The JSON registry is the authoritative per-control scope and acceptance record. 
 - `language..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `language..Font_Settings...`: Font Settings.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `language..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `narrator`: Narrator: Narrates Chat. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `accessibility..Controls...`: Controls.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `showSubtitles`: Closed Captions: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `highContrast`: High Contrast: ON. Future presentation adapter separate from the frozen baseline; no current binding. Later checks and questions are in its registry entry.
+- `textBackgroundOpacity`: Text Background Opacity. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `backgroundForChatOnly`: Everywhere. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `chatOpacity`: Chat Text Opacity. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `chatLineSpacing`: Line Spacing. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `chatDelay`: options.chat.delay_instant. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `notificationDisplayTime`: Notification Time. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `bobView`: View Bobbing: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `screenEffectScale`: Distortion Effects. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `fovEffectScale`: FOV Effects. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `darknessEffectScale`: Darkness Pulsing. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `damageTiltStrength`: Damage Tilt. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `glintSpeed`: Glint Speed. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `glintStrength`: Glint Strength. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `hideLightningFlash`: Hide Sky Flashes: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `darkMojangStudiosBackground`: Monochrome Logo: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `panoramaSpeed`: Panorama Scroll Speed. Future presentation adapter separate from the frozen baseline; no current binding. Later checks and questions are in its registry entry.
+- `hideSplashTexts`: Hide Splash Texts: ON. Future presentation adapter separate from the frozen baseline; no current binding. Later checks and questions are in its registry entry.
+- `narratorHotkey`: Narrator Hotkey: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `rotateWithMinecart`: Rotate with Minecarts: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `highContrastBlockOutline`: High Contrast Block Outlines: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `accessibility..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `accessibility..Accessibility_Guide`: Accessibility Guide. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `accessibility..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `fov`: FOV. Future camera projection adapter; investigate Minecraft versus Unreal horizontal/vertical FOV conventions first. Later checks and questions are in its registry entry.
+- `options..Online...`: Online.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `options..Skin_Customization...`: Skin Customization.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `options..Music___Sounds...`: Music & Sounds.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `options..Video_Settings...`: Video Settings.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `options..Controls...`: Controls.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `options..Language...`: Language.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `options..Chat_Settings...`: Chat Settings.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `options..Resource_Packs...`: Resource Packs.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `options..Accessibility_Settings...`: Accessibility Settings.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `options..Telemetry_Data...`: Telemetry Data.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `options..Credits___Attribution...`: Credits & Attribution.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `options..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `credits..Credits`: Credits. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `credits..Attribution`: Attribution. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `credits..Licenses`: Licenses. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `credits..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `friendsList`: Friends List: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `allowFriendRequests`: Allow Requests: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `inGameNotification`: In-Game Notification: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `sharePresence`: Visibility: Full. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `online..Xbox_Settings...`: Xbox Settings.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `allowServerListing`: Allow Server Listings: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `online..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `online..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `skin_cape`: Cape: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `skin_jacket`: Jacket: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `skin_left_sleeve`: Left Sleeve: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `skin_right_sleeve`: Right Sleeve: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `skin_left_pants_leg`: Left Pant Leg: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `skin_right_pants_leg`: Right Pant Leg: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `skin_hat`: Hat: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `mainHand`: Main Hand: Left. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `skin..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `skin..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `sound_master`: Master Volume. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
+- `sound_music`: Music. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
+- `sound_record`: Jukebox/Note Blocks. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
+- `sound_weather`: Weather. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
+- `sound_block`: Blocks. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
+- `sound_hostile`: Hostile Mobs. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
+- `sound_neutral`: Friendly Mobs. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
+- `sound_player`: Players. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
+- `sound_ambient`: Ambient/Environment. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
+- `sound_voice`: Narrator/Voice. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
+- `sound_ui`: UI. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
+- `soundDevice`: System Default. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
+- `directionalAudio`: Directional Audio: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `musicFrequency`: Music Frequency: Frequent. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `musicToast`: Music Toast: Pause Menu. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `sounds..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `sounds..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `video..Exclusive_Fullscreen_Mode`: Exclusive Fullscreen Mode. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `inactivityFpsLimit`: Reduce fps when: Minimized. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `exclusiveFullscreen`: Exclusive Fullscreen: ON. Future UGameUserSettings/window mode adapter; distinguish borderless and supported exclusive modes. Later checks and questions are in its registry entry.
+- `gamma`: Brightness. Future supported user-settings adapter; actual outcome must be measured and reversible. Later checks and questions are in its registry entry.
+- `preferredGraphicsBackend`: Graphics API: Prefer OpenGL. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `graphicsPreset`: Preset. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `biomeBlendRadius`: Biome Blend. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `renderDistance`: Render Distance. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `prioritizeChunkUpdates`: Chunk Builder: Semi Blocking. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `simulationDistance`: Simulation Distance. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `ambientOcclusion`: Smooth Lighting: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `cloudStatus`: Clouds: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `particles`: Particles: Decreased. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `mipmapLevels`: Mipmap Levels. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `entityShadows`: Entity Shadows: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `entityDistanceScaling`: Entity Distance. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `cloudRange`: Cloud Distance. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `cutoutLeaves`: See-Through Leaves: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `improvedTransparency`: Improved Transparency: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `textureFiltering`: Texture Filtering: RGSS. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `maxAnisotropyBit`: Anisotropic Filtering. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `weatherRadius`: Weather Effect Radius. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `showAutosaveIndicator`: Autosave Indicator: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `vignette`: Show Vignette: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `attackIndicator`: Attack Indicator: Hotbar. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `chunkSectionFadeInTime`: Chunk Fade Time. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `video..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `video..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `controls..Mouse_Settings...`: Mouse Settings.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `controls..Key_Binds...`: Key Binds.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `toggleCrouch`: Sneak: Toggle. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `toggleSprint`: Sprint: Toggle. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `toggleAttack`: Attack/Destroy: Toggle. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `toggleUse`: Use Item/Place Block: Toggle. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `autoJump`: Auto-Jump: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `sprintWindow`: Sprint Window. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `quitShortcuts`: Quit Shortcuts: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `operatorItemsTab`: Operator Items Tab: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `controls..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `controls..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `chatVisibility`: Chat: Commands Only. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `chatColors`: Colors: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `chatLinks`: Web Links: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `chatLinksPrompt`: Prompt on Links: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `chatScale`: Chat Text Size. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `chatWidth`: Width. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `chatHeightFocused`: Focused Height. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `chatHeightUnfocused`: Unfocused Height. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `autoSuggestions`: Command Suggestions: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `hideMatchedNames`: Hide Matched Names: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `reducedDebugInfo`: Reduced Debug Info: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `onlyShowSecureChat`: Only Show Secure Chat: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `saveChatDrafts`: Save Unsent Chats: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `chat..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `chat..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `packs.Programmer_ArtThe_classic_look_of_Minecraft`: Programmer ArtThe classic look of Minecraft. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `packs.Programmer_ArtThe_classic_look_of_Minecraft.Select_Programmer_Art`: Select Programmer Art. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft`: High ContrastEnhances the UI contrast of Minecraft. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Select_High_Contrast`: Select High Contrast. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `packs..Open_Pack_Folder`: Open Pack Folder. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `packs..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `telemetry..Privacy_Statement`: Privacy Statement. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `telemetry..Give_Feedback`: Give Feedback. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `telemetry..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `telemetry..I_consent_to_sending_optional_telemetry_data`: I consent to sending optional telemetry data. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `telemetry..View_My_Data`: View My Data. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `telemetry..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `confirm..Cancel`: Cancel. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `sensitivity`: Sensitivity. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `mouseWheelSensitivity`: Scroll Sensitivity. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `discreteMouseScroll`: Discrete Scrolling: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `invertXMouse`: Invert Mouse X: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `invertYMouse`: Invert Mouse Y: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `allowCursorChanges`: Allow Cursor Changes: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `mouse..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `mouse..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `key.jump`: Space. Future Enhanced Input mapping adapter; conflict policy and persistence require separate approval. Later checks and questions are in its registry entry.
 - `keybinds..Reset`: Reset. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `key.sneak`: Left Shift. Future Enhanced Input mapping adapter; conflict policy and persistence require separate approval. Later checks and questions are in its registry entry.
@@ -404,16 +458,15 @@ The JSON registry is the authoritative per-control scope and acceptance record. 
 - `keybinds..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `keybinds..Reset_Keys`: Reset Keys. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `keybinds..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `worlds..search_for_worlds`: search for worlds. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `worlds.fictional-forest`: Fictional Forest Camp. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `worlds.fictional-build`: Fictional Creative Workshop. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `worlds..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `worlds..Play_Selected_World`: Play Selected World. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `worlds..Create_New_World`: Create New World. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `worlds..Edit`: Edit. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `worlds..Delete`: Delete. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `worlds..Re-Create`: Re-Create. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `worlds..Back`: Back. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `linkconfirm..Open_in_Browser`: Open in Browser. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `linkconfirm..Copy_to_Clipboard`: Copy to Clipboard. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `linkconfirm..Cancel`: Cancel. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `confirm..Turn_ON`: Turn ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `confirm..Turn_OFF`: Turn OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `forceUnicodeFont`: Force Unicode Font: ON. Future presentation adapter separate from the frozen baseline; no current binding. Later checks and questions are in its registry entry.
+- `japaneseGlyphVariants`: Japanese Glyph Variants: ON. Future presentation adapter separate from the frozen baseline; no current binding. Later checks and questions are in its registry entry.
+- `font..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `font..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `create.game..Game`: Game. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `create.game..World`: World. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `create.game..More`: More. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
@@ -423,6 +476,15 @@ The JSON registry is the authoritative per-control scope and acceptance record. 
 - `create.game.draft.commands`: Allow Cheats: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `create.game..Create_New_World`: Create New World. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `create.game..Cancel`: Cancel. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `editworld..World_Name`: World Name. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `editworld..Reset_Icon`: Reset Icon. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `editworld..Open_World_Folder`: Open World Folder. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `editworld..Make_Backup`: Make Backup. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `editworld..Open_Backups_Folder`: Open Backups Folder. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `editworld..Optimize_World`: Optimize World. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `editworld.world-save`: Save. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `editworld..Cancel`: Cancel. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `confirm..Delete`: Delete. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `create.world..Game`: Game. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `create.world..World`: World. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `create.world..More`: More. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
@@ -441,58 +503,6 @@ The JSON registry is the authoritative per-control scope and acceptance record. 
 - `create.more..Data_Packs`: Data Packs. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `create.more..Create_New_World`: Create New World. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `create.more..Cancel`: Cancel. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `editworld..World_Name`: World Name. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `editworld..Reset_Icon`: Reset Icon. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `editworld..Open_World_Folder`: Open World Folder. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `editworld..Make_Backup`: Make Backup. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `editworld..Open_Backups_Folder`: Open Backups Folder. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `editworld..Optimize_World`: Optimize World. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `editworld.world-save`: Save. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `editworld..Cancel`: Cancel. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `safety..Do_not_show_this_screen_again`: Do not show this screen again. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `safety..Proceed`: Proceed. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `safety..Back`: Back. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `multiplayer.fictional-example`: Fictional Example Server. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `multiplayer..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `multiplayer..Join_Server`: Join Server. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `multiplayer..Direct_Connection`: Direct Connection. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `multiplayer..Add_Server`: Add Server. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `multiplayer..Edit`: Edit. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `multiplayer..Delete`: Delete. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `multiplayer..Refresh`: Refresh. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `multiplayer..Back`: Back. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `direct..Server_Address`: Server Address. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `direct.direct-connect`: Join Server. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `direct..Cancel`: Cancel. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `serveredit..Server_Name`: Server Name. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `serveredit..Server_Address`: Server Address. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `serveredit.server.pack`: Server Resource Packs: Prompt. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `serveredit.server-save`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `serveredit..Cancel`: Cancel. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `realms..Join_Realm`: Join Realm. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `realms..Pending_Invites`: Pending Invites. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `realms..Realms_news`: Realms news. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `realms..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `realms..Add_Realm`: Add Realm. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `realms..Back`: Back. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `realmjoin..Join_Code`: Join Code. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `realmjoin.realm-join`: Join Realm. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `realmjoin..Back`: Back. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `packs.Programmer_ArtThe_classic_look_of_Minecraft`: Programmer ArtThe classic look of Minecraft. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `packs.Programmer_ArtThe_classic_look_of_Minecraft.Select_Programmer_Art`: Select Programmer Art. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft`: High ContrastEnhances the UI contrast of Minecraft. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_to_Available`: Move High Contrast to Available. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_up`: Move High Contrast up. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_down`: Move High Contrast down. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `packs..Open_Pack_Folder`: Open Pack Folder. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `packs..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `datapacks..Open_Pack_Folder`: Open Pack Folder. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `datapacks..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `experiments.switch.Minecart_Improvements`: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `experiments.switch.Redstone_Experiments`: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `experiments.switch.Villager_Trade_Rebalance`: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `experiments..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `experiments..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `rules..Search...`: Search.... TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `rules.rule.command_block_output`: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `rules.rule.log_admin_commands`: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
@@ -552,10 +562,40 @@ The JSON registry is the authoritative per-control scope and acceptance record. 
 - `rules.max_snow_accumulation_height`: Snow accumulation height. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `rules.random_tick_speed`: Random tick speed rate. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `rules.rule.spread_vines`: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `rules.rule.water_source_conversion`: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `rules.rule.water_source_conversion`: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `rules..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `rules.rules-done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `rules..Cancel`: Cancel. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `experiments.switch.Minecart_Improvements`: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `experiments.switch.Redstone_Experiments`: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `experiments.switch.Villager_Trade_Rebalance`: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `experiments..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `experiments..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `datapacks..Open_Pack_Folder`: Open Pack Folder. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `datapacks..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `multiplayer.fictional-example`: Fictional Example Server. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `multiplayer..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `multiplayer..Join_Server`: Join Server. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `multiplayer..Direct_Connection`: Direct Connection. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `multiplayer..Add_Server`: Add Server. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `multiplayer..Edit`: Edit. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `multiplayer..Delete`: Delete. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `multiplayer..Refresh`: Refresh. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `multiplayer..Back`: Back. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `direct..Server_Address`: Server Address. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `direct.direct-connect`: Join Server. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `direct..Cancel`: Cancel. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `serveredit..Server_Name`: Server Name. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `serveredit..Server_Address`: Server Address. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `serveredit.server.pack`: Server Resource Packs: Enabled. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `serveredit.server-save`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `serveredit..Cancel`: Cancel. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_to_Available`: Move High Contrast to Available. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_up`: Move High Contrast up. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `packs.High_ContrastEnhances_the_UI_contrast_of_Minecraft.Move_High_Contrast_down`: Move High Contrast down. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_to_Available`: Move Programmer Art to Available. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_up`: Move Programmer Art up. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
+- `packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_down`: Move Programmer Art down. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `flat.Grass_Block1`: Grass Block1. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `flat.Dirt2`: Dirt2. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `flat.Bedrock1`: Bedrock1. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
@@ -648,64 +688,5 @@ The JSON registry is the authoritative per-control scope and acceptance record. 
 - `biomes..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `biomes..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `biomes..Cancel`: Cancel. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `credits..Credits`: Credits. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `credits..Attribution`: Attribution. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `credits..Licenses`: Licenses. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `credits..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `telemetry..Privacy_Statement`: Privacy Statement. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `telemetry..Give_Feedback`: Give Feedback. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `telemetry..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `telemetry..I_consent_to_sending_optional_telemetry_data`: I consent to sending optional telemetry data. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `telemetry..View_My_Data`: View My Data. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `telemetry..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `linkconfirm..Open_in_Browser`: Open in Browser. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `linkconfirm..Copy_to_Clipboard`: Copy to Clipboard. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `linkconfirm..Cancel`: Cancel. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `message..Back`: Back. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `confirm..Proceed`: Proceed. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `confirm..Cancel`: Cancel. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `quit..Return_to_Title`: Return to Title. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `skin_cape`: Cape: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `skin_jacket`: Jacket: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `skin_left_sleeve`: Left Sleeve: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `skin_right_sleeve`: Right Sleeve: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `skin_left_pants_leg`: Left Pant Leg: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `skin_right_pants_leg`: Right Pant Leg: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `skin_hat`: Hat: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `mainHand`: Main Hand: Right. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `skin..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `skin..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `chatVisibility`: Chat: Shown. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `chatColors`: Colors: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `chatLinks`: Web Links: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `chatLinksPrompt`: Prompt on Links: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `chatScale`: Chat Text Size. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `chatWidth`: Width. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `chatHeightFocused`: Focused Height. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `chatHeightUnfocused`: Unfocused Height. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `autoSuggestions`: Command Suggestions: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `hideMatchedNames`: Hide Matched Names: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `reducedDebugInfo`: Reduced Debug Info: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `onlyShowSecureChat`: Only Show Secure Chat: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `saveChatDrafts`: Save Unsent Chats: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `chat..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `chat..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `sensitivity`: Sensitivity. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `mouseWheelSensitivity`: Scroll Sensitivity. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `discreteMouseScroll`: Discrete Scrolling: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `invertXMouse`: Invert Mouse X: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `invertYMouse`: Invert Mouse Y: OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `allowCursorChanges`: Allow Cursor Changes: ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `mouse..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `mouse..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `forceUnicodeFont`: Force Unicode Font: OFF. Future presentation adapter separate from the frozen baseline; no current binding. Later checks and questions are in its registry entry.
-- `japaneseGlyphVariants`: Japanese Glyph Variants: OFF. Future presentation adapter separate from the frozen baseline; no current binding. Later checks and questions are in its registry entry.
-- `font..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `font..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `confirm..Delete`: Delete. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `message..Restore_Entry`: Restore Entry. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `confirm..Turn_ON`: Turn ON. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `confirm..Turn_OFF`: Turn OFF. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_to_Available`: Move Programmer Art to Available. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_up`: Move Programmer Art up. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `packs.Programmer_ArtThe_classic_look_of_Minecraft.Move_Programmer_Art_down`: Move Programmer Art down. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.

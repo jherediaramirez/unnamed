@@ -1,0 +1,28 @@
+{
+  "finished": "2026-10-07T13:26:02.104Z",
+  "checks": [
+    {
+      "name": "Editor Play has no quit capability",
+      "pass": true
+    },
+    {
+      "name": "Editor Play Quit Game is disabled",
+      "pass": true
+    },
+    {
+      "name": "Direct native quit request is rejected in editor Play",
+      "pass": true,
+      "detail": {
+        "ok": false,
+        "canQuit": false,
+        "pendingQuit": false,
+        "quitIssued": false,
+        "error": "Quit Game is available in the standalone game, not inside Unreal Editor."
+      }
+    },
+    {
+      "name": "Editor Play remains responsive after rejected quit",
+      "pass": true
+    }
+  ]
+}

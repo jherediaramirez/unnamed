@@ -70,4 +70,4 @@ const MenuDiagnostics={
   }
 };
 window.MenuPrototype=MenuDiagnostics;
-console.info('UnnamedMenu: offline mock ready; baseline English/Auto; no engine bridge');
+console.info('UnnamedMenu: offline menu ready; five video controls use the native settings adapter');

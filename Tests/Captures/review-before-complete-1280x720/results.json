@@ -1,0 +1,108 @@
+{
+  "packageName": "MenuNoRealmsDevelopment",
+  "profile": "1280x720",
+  "userDir": "C:\\dev\\projects\\Unnamed\\Tests\\Runtime\\review-before-complete-1280x720-1791385088826",
+  "finished": "2026-10-07T14:58:22.967Z",
+  "checks": [
+    {
+      "name": "World-name draft survives child return",
+      "pass": false
+    },
+    {
+      "name": "World-name draft survives fullscreen redraw",
+      "pass": false
+    },
+    {
+      "name": "World Save commits the displayed draft",
+      "pass": false
+    },
+    {
+      "name": "Blank world name remains blank after redraw",
+      "pass": false
+    },
+    {
+      "name": "Blank world name keeps Save disabled",
+      "pass": false
+    },
+    {
+      "name": "World Cancel leaves committed name unchanged",
+      "pass": true
+    },
+    {
+      "name": "Preset text survives fullscreen redraw",
+      "pass": false
+    },
+    {
+      "name": "Preset submits the same displayed layers",
+      "pass": true
+    },
+    {
+      "name": "Empty preset remains empty after redraw",
+      "pass": false
+    },
+    {
+      "name": "Empty preset is rejected instead of falling back",
+      "pass": false
+    },
+    {
+      "name": "Preset error return retains empty draft",
+      "pass": false
+    },
+    {
+      "name": "Invalid rule text survives redraw",
+      "pass": false
+    },
+    {
+      "name": "Invalid rule still blocks Done after redraw",
+      "pass": false
+    },
+    {
+      "name": "Filtering does not discard invalid rule validation",
+      "pass": false
+    },
+    {
+      "name": "Filtered rule retains raw invalid text",
+      "pass": false
+    },
+    {
+      "name": "Correcting invalid rule restores Done",
+      "pass": true
+    },
+    {
+      "name": "Rule Cancel discards invalid/raw drafts",
+      "pass": true
+    },
+    {
+      "name": "Whitespace-only server name blocks Done",
+      "pass": false
+    },
+    {
+      "name": "Blank server remains invalid after redraw",
+      "pass": false
+    },
+    {
+      "name": "Invalid server address also blocks Done",
+      "pass": true
+    },
+    {
+      "name": "Valid name and address enable Done",
+      "pass": true
+    },
+    {
+      "name": "Server Save commits the valid displayed name",
+      "pass": true
+    },
+    {
+      "name": "No browser runtime errors",
+      "pass": true
+    },
+    {
+      "name": "Owned diagnostic quits normally",
+      "pass": true,
+      "detail": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  ]
+}

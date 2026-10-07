@@ -1,0 +1,285 @@
+{
+  "profile": "1280x720",
+  "htmlSHA256": "0b4811ae882f3597fd387e934592060e717e6fe3c6e1401ec056dbac4c8a3250",
+  "checks": [
+    {
+      "name": "Native bridge exposes exactly five settings",
+      "pass": true,
+      "detail": {
+        "ok": true,
+        "pendingFullscreen": false,
+        "persistent": false,
+        "error": "",
+        "settings": {
+          "fullscreen": false,
+          "framerateLimit": 120,
+          "enableVsync": true,
+          "guiScale": 0,
+          "menuBackgroundBlurriness": 5
+        },
+        "capabilities": {
+          "fullscreen": true,
+          "framerateLimit": true,
+          "enableVsync": true,
+          "guiScale": true,
+          "menuBackgroundBlurriness": true
+        },
+        "observed": {
+          "windowMode": "Windowed",
+          "clientWidth": 1280,
+          "clientHeight": 720,
+          "maxFPS": 120,
+          "vsync": 1,
+          "measuredFPS": 87.13227586139944
+        }
+      }
+    },
+    {
+      "name": "Debug reset is not added to the main menu",
+      "pass": true
+    },
+    {
+      "name": "Debug reset matches the main-menu button style and is centered last",
+      "pass": true,
+      "detail": {
+        "width": "200px",
+        "height": "20px",
+        "font": "MC, MCUnicode, monospace",
+        "border": "url(\"file:///C:/dev/projects/Unnamed/Packages/MenuReviewFixesDevelopment/Windows/Unnamed/Content/Menu/Web/assets/minecraft/textures/gui/sprites/widget/button.png\")",
+        "centered": true,
+        "temporary": true,
+        "last": true
+      }
+    },
+    {
+      "name": "Debug reset fits within the video settings viewport",
+      "pass": true,
+      "detail": {
+        "x": 340.5,
+        "y": 540,
+        "width": 600,
+        "height": 60
+      }
+    },
+    {
+      "name": "Fullscreen button changes the real native window",
+      "pass": true,
+      "detail": {
+        "borderless": {
+          "ok": true,
+          "pendingFullscreen": false,
+          "persistent": false,
+          "error": "",
+          "settings": {
+            "fullscreen": true,
+            "framerateLimit": 120,
+            "enableVsync": true,
+            "guiScale": 0,
+            "menuBackgroundBlurriness": 5
+          },
+          "capabilities": {
+            "fullscreen": true,
+            "framerateLimit": true,
+            "enableVsync": true,
+            "guiScale": true,
+            "menuBackgroundBlurriness": true
+          },
+          "observed": {
+            "windowMode": "Borderless",
+            "clientWidth": 2560,
+            "clientHeight": 1440,
+            "maxFPS": 120,
+            "vsync": 1,
+            "measuredFPS": 61.88483747098205
+          }
+        },
+        "fullDimensions": [
+          2560,
+          1440
+        ]
+      }
+    },
+    {
+      "name": "No DOM fullscreen workaround",
+      "pass": true
+    },
+    {
+      "name": "F11 restores the exact windowed viewport",
+      "pass": true,
+      "detail": {
+        "ok": true,
+        "pendingFullscreen": false,
+        "persistent": false,
+        "error": "",
+        "settings": {
+          "fullscreen": false,
+          "framerateLimit": 120,
+          "enableVsync": true,
+          "guiScale": 0,
+          "menuBackgroundBlurriness": 5
+        },
+        "capabilities": {
+          "fullscreen": true,
+          "framerateLimit": true,
+          "enableVsync": true,
+          "guiScale": true,
+          "menuBackgroundBlurriness": true
+        },
+        "observed": {
+          "windowMode": "Windowed",
+          "clientWidth": 1280,
+          "clientHeight": 720,
+          "maxFPS": 120,
+          "vsync": 1,
+          "measuredFPS": 42.123641723254416
+        }
+      }
+    },
+    {
+      "name": "Alt+Enter enters borderless using the same adapter",
+      "pass": true
+    },
+    {
+      "name": "Alt+Enter returns to windowed",
+      "pass": true
+    },
+    {
+      "name": "Repeated fullscreen transitions settle correctly",
+      "pass": true
+    },
+    {
+      "name": "VSync OFF changes the real engine variable",
+      "pass": true
+    },
+    {
+      "name": "Actual engine cadence at 30 FPS",
+      "pass": true,
+      "detail": {
+        "windowMode": "Windowed",
+        "clientWidth": 1280,
+        "clientHeight": 720,
+        "maxFPS": 30,
+        "vsync": 0,
+        "measuredFPS": 29.998111057881665
+      }
+    },
+    {
+      "name": "Actual engine cadence at 60 FPS",
+      "pass": true,
+      "detail": {
+        "windowMode": "Windowed",
+        "clientWidth": 1280,
+        "clientHeight": 720,
+        "maxFPS": 60,
+        "vsync": 0,
+        "measuredFPS": 59.851651723071804
+      }
+    },
+    {
+      "name": "Unlimited disables the actual engine cap",
+      "pass": true
+    },
+    {
+      "name": "VSync ON changes the real engine variable",
+      "pass": true
+    },
+    {
+      "name": "Rapid frame-limit edits finish at the latest choice",
+      "pass": true
+    },
+    {
+      "name": "GUI scale changes actual layout",
+      "pass": true
+    },
+    {
+      "name": "GUI scale preserves its keyboard focus",
+      "pass": true
+    },
+    {
+      "name": "Auto restores integer scaling",
+      "pass": true
+    },
+    {
+      "name": "Largest supported scale fits the video toolbar",
+      "pass": true,
+      "detail": {
+        "x": 339,
+        "y": 642,
+        "width": 600,
+        "height": 60
+      }
+    },
+    {
+      "name": "Zero blur changes the rendered filter",
+      "pass": true
+    },
+    {
+      "name": "Blur slider changes real screenshot pixels",
+      "pass": true,
+      "detail": {
+        "changed": 304859,
+        "total": 921600
+      }
+    },
+    {
+      "name": "Mock graphics preset cannot overwrite functional blur",
+      "pass": true
+    },
+    {
+      "name": "Accessibility shares the same functional blur",
+      "pass": true
+    },
+    {
+      "name": "Video sees changes from shared controls",
+      "pass": true
+    },
+    {
+      "name": "Native validation rejects renderDistance {\"value\":24}",
+      "pass": true
+    },
+    {
+      "name": "Native validation rejects fullscreen {\"value\":1}",
+      "pass": true
+    },
+    {
+      "name": "Native validation rejects framerateLimit {\"value\":25}",
+      "pass": true
+    },
+    {
+      "name": "Native validation rejects guiScale {\"value\":-1}",
+      "pass": true
+    },
+    {
+      "name": "Native validation rejects menuBackgroundBlurriness {\"value\":11}",
+      "pass": true
+    },
+    {
+      "name": "Native validation rejects enableVsync {\"value\":false,\"extra\":true}",
+      "pass": true
+    },
+    {
+      "name": "Main menu keeps its unblurred background",
+      "pass": true
+    },
+    {
+      "name": "Reload rehydrates real native state",
+      "pass": true
+    },
+    {
+      "name": "No browser runtime errors",
+      "pass": true
+    },
+    {
+      "name": "Hard Reset cancellation preserves settings",
+      "pass": true
+    },
+    {
+      "name": "Hard Reset restores all five functional settings",
+      "pass": true
+    },
+    {
+      "name": "Hard Reset recreates first-run mock preferences",
+      "pass": true
+    }
+  ]
+}

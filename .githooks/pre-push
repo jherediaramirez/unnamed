@@ -1,0 +1,3 @@
+#!/bin/sh
+node Scripts/TestRepositorySafety.mjs --history || exit $?
+git lfs pre-push "$@"
