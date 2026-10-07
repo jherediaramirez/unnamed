@@ -248,6 +248,13 @@ FString UMenuVideoSettings::ApplySetting(const FString& Name, const FString& Val
     return Snapshot(bSuccess);
 }
 
+FString UMenuVideoSettings::ToggleFullscreen()
+{
+    const TSharedPtr<SWindow> Window = GetWindow();
+    const bool bFullscreen = Window && Window->GetWindowMode() != EWindowMode::Windowed;
+    return ApplySetting(TEXT("fullscreen"), bFullscreen ? TEXT("{\"value\":false}") : TEXT("{\"value\":true}"));
+}
+
 FString UMenuVideoSettings::HardReset()
 {
     LastError.Empty();

@@ -37,6 +37,11 @@ bool FMenuVideoValidationTest::RunTest(const FString& Parameters)
         TEXT("Reject wrong boolean type"), Apply(TEXT("fullscreen"), TEXT("{\"value\":1}"))->GetBoolField(TEXT("ok")));
     TestFalse(TEXT("Reject native mutation in editor"),
         Apply(TEXT("enableVsync"), TEXT("{\"value\":false}"))->GetBoolField(TEXT("ok")));
+    // The fullscreen key must send a well-formed request; in the editor it then stops at the window check.
+    const auto Toggle = Read(Service->ToggleFullscreen());
+    TestFalse(TEXT("Fullscreen key is refused in editor"), Toggle->GetBoolField(TEXT("ok")));
+    TestEqual(TEXT("Fullscreen key request is well formed"), Toggle->GetStringField(TEXT("error")),
+        FString(TEXT("Window and engine settings require the standalone game, not an editor Play viewport.")));
     const auto Settings = Read(Service->GetState())->GetObjectField(TEXT("settings"));
     TestEqual(TEXT("Rejected changes preserve GUI"), Settings->GetIntegerField(TEXT("guiScale")), 3);
     TestEqual(TEXT("Rejected changes preserve blur"), Settings->GetIntegerField(TEXT("menuBackgroundBlurriness")), 0);

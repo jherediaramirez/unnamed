@@ -28,6 +28,9 @@ public:
     UFUNCTION()
     FString HardReset();
 
+    // Native shortcut (key.fullscreen): the same validated, saved request as the menu toggle.
+    FString ToggleFullscreen();
+
 private:
     TSharedPtr<SWindow> GetWindow() const;
     bool SetFullscreen(bool bEnabled);

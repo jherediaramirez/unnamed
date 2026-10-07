@@ -17,7 +17,6 @@
 #include "GameFramework/PlayerInput.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/Paths.h"
-#include "Serialization/JsonSerializer.h"
 #include "UnrealClient.h"
 
 AFoundationController::AFoundationController()
@@ -127,15 +126,7 @@ bool AFoundationController::HandleInterfaceAction(const FString& Name)
         Hud->LogEvent(TEXT("screenshot requested"));
     }
     else if (Name == TEXT("key.fullscreen"))
-    {
-        UMenuVideoSettings* Video = MenuHost->GetVideoSettings();
-        TSharedPtr<FJsonObject> State;
-        FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Video->GetState()), State);
-        if (State)
-            Video->ApplySetting(TEXT("fullscreen"),
-                State->GetObjectField(TEXT("settings"))->GetBoolField(TEXT("fullscreen")) ? TEXT("false")
-                                                                                          : TEXT("true"));
-    }
+        MenuHost->GetVideoSettings()->ToggleFullscreen();
     else if (Name == TEXT("key.toggleGui"))
         Hud->bHideHud = !Hud->bHideHud;
     else if (Name == TEXT("key.togglePerspective") && GetFoundationPawn())
