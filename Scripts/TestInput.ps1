@@ -2,7 +2,9 @@
 param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
-$report=Join-Path $root ('Tests\InputAutomation-'+(Get-Date -Format 'yyyyMMdd-HHmmss'))
+# Evidence is committed under Tests\Evidence\<date>\ (see Tests\evidence.mjs).
+$evidence=New-Item -ItemType Directory -Force (Join-Path $root ('Tests\Evidence\'+(Get-Date -Format 'yyyy-MM-dd')))
+$report=Join-Path $evidence ('InputAutomation-'+(Get-Date -Format 'yyyyMMdd-HHmmss'))
 & "$EngineRoot\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "$root\Unnamed.uproject" -unattended -nop4 -NullRHI `
     '-ExecCmds=Automation RunTests Unnamed.Input' '-TestExit=Automation Test Queue Empty' `
     "-ReportExportPath=$report" "-abslog=$report.log" "-UserDir=$report-runtime/" *> "$report.console.log"

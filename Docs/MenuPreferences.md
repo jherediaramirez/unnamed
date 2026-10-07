@@ -48,10 +48,10 @@ PIE can exercise the menu and temporary preference values. Saving across applica
 
 ## Verification
 
-- All eight native suites passed in Tests/MenuPreferencesAutomation-20261007-131834/index.json, including the three new preference suites and the existing input/video/quit suites.
+- All eight native suites passed in Tests/Evidence/2026-10-07/MenuPreferencesAutomation-20261007-131834/index.json, including the three new preference suites and the existing input/video/quit suites.
 - All 39 JavaScript unit tests passed, covering the new queue, stale reads, invalid values, Done failure, reset and Quit drain.
 - All 938 original assets and working copies passed source/hash/syntax verification.
-- Tests/MenuPreferences-Preservation.json confirms 9,556 prior package/reference/input/map files and all 3,157 staged index entries are unchanged. The index byte hash changed later in the session; its original bytes remain in the preservation snapshot.
+- Tests/Evidence/2026-10-07/MenuPreferences-Preservation.json confirms 9,556 prior package/reference/input/map files and all 3,157 staged index entries are unchanged. The index byte hash changed later in the session; its original bytes remain in the preservation snapshot.
 - Packaged preference checks passed 126/126; existing input/API checks passed 50/50. The complete menu sweep passed 369/369 and video regression passed 37/37 at both 1280x720 and 1920x1080.
 - The accepted candidate is Packages/MenuPreferencesV2Development/Windows/Unnamed.exe. Exact paths, hashes and captures are in [the dated work record](<Documented Actions/2026-10-07-Menu-Preferences.md>).
 

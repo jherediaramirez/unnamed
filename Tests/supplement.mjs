@@ -1,5 +1,6 @@
 // Historical UI-only MenuDevelopment suite; Realms and mock fullscreen existed at that checkpoint.
 import {chromium} from 'playwright';
+import {evidencePath} from './evidence.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -73,7 +74,7 @@ try{
   const frame=await page.screenshot({clip:{x:0,y:0,width:300,height:300}});await page.waitForTimeout(500);
   check('Real panorama animation moves',!frame.equals(await page.screenshot({clip:{x:0,y:0,width:300,height:300}})));
 }finally{await browser.close()}
-fs.writeFileSync(path.join(root,'Tests/AdditionalControls.json'),JSON.stringify(controls,null,2)+'\n');
-fs.writeFileSync(path.join(root,'Tests/SupplementResults.json'),JSON.stringify(checks,null,2)+'\n');
+fs.mkdirSync(evidencePath(),{recursive:true});fs.writeFileSync(evidencePath('AdditionalControls.json'),JSON.stringify(controls,null,2)+'\n');
+fs.writeFileSync(evidencePath('SupplementResults.json'),JSON.stringify(checks,null,2)+'\n');
 console.log(JSON.stringify(checks,null,2));
 if(checks.some(c=>!c.pass))process.exitCode=1;

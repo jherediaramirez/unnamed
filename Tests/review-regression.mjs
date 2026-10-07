@@ -1,4 +1,5 @@
 import {chromium} from 'playwright';
+import {evidencePath} from './evidence.mjs';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,7 +13,7 @@ const profile=arg('profile','1280x720');
 const capture=arg('capture','review-regression-'+profile);
 if(!/^[A-Za-z0-9_-]+$/.test(packageName)||!/^[A-Za-z0-9_-]+$/.test(capture)||!/^\d+x\d+$/.test(profile))throw Error('Invalid suite arguments');
 const [width,height]=profile.split('x').map(Number);
-const out=path.join(root,'Tests/Captures',capture);
+const out=evidencePath('Captures',capture);
 if(fs.existsSync(out))throw Error('Capture exists; select a fresh name to preserve evidence');
 fs.mkdirSync(out,{recursive:true});
 const userDir=path.join(root,'Tests/Runtime',capture+'-'+Date.now());fs.mkdirSync(userDir,{recursive:true});

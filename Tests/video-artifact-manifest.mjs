@@ -45,36 +45,36 @@ if (digest(working) !== digest(path.join(packageRoot, 'Unnamed/Content/Menu/Web/
 const reference = path.join(root, 'Reference/minecraft-menu/index.html');
 if (digest(reference) !== readJSON(path.join(root, 'Reference/OriginalHashes.json')).index)
   throw Error('Reference HTML changed');
-const logFile = path.join(root, nativeQuit ? 'Tests/QuitBuild.log' : 'Tests/VideoBuild.log');
+const logFile = path.join(root, nativeQuit ? 'Tests/Evidence/2026-10-07/QuitBuild.log' : 'Tests/Evidence/2026-10-07/VideoBuild.log');
 const log = fs.readFileSync(logFile, 'utf8');
 if (!log.includes('BUILD SUCCESSFUL') || !log.includes('ExitCode=0 (Success)'))
   throw Error('Successful packaging evidence missing');
-const automationFile = path.join(root, nativeQuit ? 'Tests/MenuAutomation-20261007-091836/index.json' : 'Tests/VideoAutomation-20261007-083946/index.json');
+const automationFile = path.join(root, nativeQuit ? 'Tests/Evidence/2026-10-07/MenuAutomation-20261007-091836/index.json' : 'Tests/Evidence/2026-10-07/VideoAutomation-20261007-083946/index.json');
 const automation = readJSON(automationFile);
 if (automation.succeeded !== (nativeQuit ? 2 : 1) || automation.failed !== 0 || automation.notRun !== 0)
   throw Error('Native automation did not pass');
 const resultFiles = noRealmsFollowup ? [
-  'Tests/Captures/no-realms-video-1280x720/results.json',
-  'Tests/Captures/no-realms-video-1920x1080/results.json',
-  'Tests/Captures/no-realms-packaged-1280x720/results.json',
-  'Tests/Captures/no-realms-packaged-1920x1080/results.json',
-  'Tests/NoRealmsQuitResults.json'
+  'Tests/Evidence/2026-10-07/Captures/no-realms-video-1280x720/results.json',
+  'Tests/Evidence/2026-10-07/Captures/no-realms-video-1920x1080/results.json',
+  'Tests/Evidence/2026-10-07/Captures/no-realms-packaged-1280x720/results.json',
+  'Tests/Evidence/2026-10-07/Captures/no-realms-packaged-1920x1080/results.json',
+  'Tests/Evidence/2026-10-07/NoRealmsQuitResults.json'
 ] : quitFollowup ? [
-  'Tests/Captures/quit-video-1280x720/results.json',
-  'Tests/Captures/quit-video-1920x1080/results.json',
-  'Tests/Captures/quit-packaged-1280x720/results.json',
-  'Tests/Captures/quit-packaged-1920x1080/results.json',
-  'Tests/QuitGameResults.json',
-  'Tests/QuitEditorSafetyResults.json'
+  'Tests/Evidence/2026-10-07/Captures/quit-video-1280x720/results.json',
+  'Tests/Evidence/2026-10-07/Captures/quit-video-1920x1080/results.json',
+  'Tests/Evidence/2026-10-07/Captures/quit-packaged-1280x720/results.json',
+  'Tests/Evidence/2026-10-07/Captures/quit-packaged-1920x1080/results.json',
+  'Tests/Evidence/2026-10-07/QuitGameResults.json',
+  'Tests/Evidence/2026-10-07/QuitEditorSafetyResults.json'
 ] : debugFollowup ? [
-  'Tests/Captures/debug-reset-1280x720/results.json',
-  'Tests/Captures/debug-reset-1920x1080/results.json'
+  'Tests/Evidence/2026-10-07/Captures/debug-reset-1280x720/results.json',
+  'Tests/Evidence/2026-10-07/Captures/debug-reset-1920x1080/results.json'
 ] : [
-  'Tests/Captures/video-settings-1280x720/results.json',
-  'Tests/Captures/video-settings-1920x1080/results.json',
-  'Tests/Captures/video-packaged-1280x720/results.json',
-  'Tests/Captures/video-packaged-1920x1080/results.json',
-  'Tests/VideoPersistenceResults.json'
+  'Tests/Evidence/2026-10-07/Captures/video-settings-1280x720/results.json',
+  'Tests/Evidence/2026-10-07/Captures/video-settings-1920x1080/results.json',
+  'Tests/Evidence/2026-10-07/Captures/video-packaged-1280x720/results.json',
+  'Tests/Evidence/2026-10-07/Captures/video-packaged-1920x1080/results.json',
+  'Tests/Evidence/2026-10-07/VideoPersistenceResults.json'
 ];
 const results = resultFiles.map(file => {
   const result = readJSON(path.join(root, file));
@@ -85,7 +85,7 @@ const results = resultFiles.map(file => {
 const sourceFiles = ['Source', 'Scripts', 'Config'].flatMap(dir => walk(path.join(root, dir))).map(file => record(file));
 let previousPackage = null;
 if (debugFollowup || nativeQuit) {
-  const previousManifest = noRealmsFollowup ? 'Tests/QuitArtifactManifest.json' : quitFollowup ? 'Tests/DebugResetArtifactManifest.json' : 'Tests/VideoArtifactManifest.json';
+  const previousManifest = noRealmsFollowup ? 'Tests/Evidence/2026-10-07/QuitArtifactManifest.json' : quitFollowup ? 'Tests/Evidence/2026-10-07/DebugResetArtifactManifest.json' : 'Tests/Evidence/2026-10-07/VideoArtifactManifest.json';
   const previous = readJSON(path.join(root, previousManifest));
   for (const file of previous.files) {
     if (digest(path.join(previous.packageRoot, file.path)) !== file.sha256)
@@ -122,13 +122,13 @@ const report = {
   reference: record(reference),
   editorModule: record(path.join(root, 'Binaries/Win64/UnrealEditor-Unnamed.dll')),
   nativeAutomation: {...record(automationFile), succeeded: automation.succeeded, failed: automation.failed},
-  currentUnitTests: noRealmsFollowup ? record(path.join(root,'Tests/NoRealmsUnitTests.tap')) : null,
-  graphicsAPIReadback: noRealmsFollowup ? record(path.join(root,'Tests/NoRealmsGraphicsAPI.json')) : null,
+  currentUnitTests: noRealmsFollowup ? record(path.join(root,'Tests/Evidence/2026-10-07/NoRealmsUnitTests.tap')) : null,
+  graphicsAPIReadback: noRealmsFollowup ? record(path.join(root,'Tests/Evidence/2026-10-07/NoRealmsGraphicsAPI.json')) : null,
   runs: results,
   sourceFiles,
   preserved,
   files: walk(packageRoot).map(file => record(file, packageRoot)),
   remainingGates: ['Physical OS keyboard/focus', 'Driver VSync/tearing', 'Multi-monitor/DPI', 'Unsupported-window failure injection', 'Shipping and other platforms']
 };
-fs.writeFileSync(path.join(root, noRealmsFollowup ? 'Tests/NoRealmsArtifactManifest.json' : quitFollowup ? 'Tests/QuitArtifactManifest.json' : debugFollowup ? 'Tests/DebugResetArtifactManifest.json' : 'Tests/VideoArtifactManifest.json'), JSON.stringify(report, null, 2) + '\n');
+fs.writeFileSync(path.join(root, noRealmsFollowup ? 'Tests/Evidence/2026-10-07/NoRealmsArtifactManifest.json' : quitFollowup ? 'Tests/Evidence/2026-10-07/QuitArtifactManifest.json' : debugFollowup ? 'Tests/Evidence/2026-10-07/DebugResetArtifactManifest.json' : 'Tests/Evidence/2026-10-07/VideoArtifactManifest.json'), JSON.stringify(report, null, 2) + '\n');
 console.log(`Verified ${report.files.length} package files, ${preserved.length} preserved files and ${results.reduce((sum, run) => sum + run.passed, 0)} passing runtime checks. ${noRealmsFollowup?'Native evidence inherited; native source and binaries unchanged.':'Native automation passed.'} Source/package HTML matches.`);

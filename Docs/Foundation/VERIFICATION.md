@@ -10,7 +10,7 @@ Reference: vanilla Java **26.3**, internal build `2026-09-15T11:20:48Z`, client 
 
 Unreal measurements come from native automation or the real rendered game world with controller/Enhanced Input events injected by an opt-in application test component. CEF checks operate the actual embedded menu and native settings bridge. These are stronger than an HTML-only prototype test, but do not establish hardware scancode behavior, OS cursor capture, alternate layouts, IME or subjective feel. Rendered screenshots were visually inspected; they are engine captures, not mockups.
 
-Durable evidence lives in `Tests/Foundation/`:
+Durable evidence lives in `Tests/Evidence/2026-10-07/Foundation/`:
 
 | Evidence | Result | Files |
 |---|---|---|
@@ -127,4 +127,4 @@ For automated Unreal reproduction, use the exact commands in README.md with fres
 
 Snapshot: `C:\dev\backups\Unnamed\fps-foundation-20261007-140749`. All 9,623 baseline files still exist; staged object IDs/modes are unchanged; all 33 historical package binary hashes match; the reference HTML and original menu map hashes match. Git's index byte hash can change when its stat cache refreshes; unchanged staged entries are the meaningful preservation check. Separate concurrent Super Flat work remains present. No commit, reset, clean, deletion of old candidates or broad staging was performed.
 
-Final inner game executable SHA-256: `88E7A5DDDE666F8D6A8C7B96EC7F0B598C384CED04DA6B8FA38937E4896759ED`. The bootstrap executable hash is shared by multiple Unreal packages and is not enough to identify gameplay content; `Tests/Foundation/PackageHashes.json` records both executable and cooked-container hashes.
+Final inner game executable SHA-256: `88E7A5DDDE666F8D6A8C7B96EC7F0B598C384CED04DA6B8FA38937E4896759ED`. The bootstrap executable hash is shared by multiple Unreal packages and is not enough to identify gameplay content; `Tests/Evidence/2026-10-07/Foundation/PackageHashes.json` records both executable and cooked-container hashes.

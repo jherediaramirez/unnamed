@@ -1,4 +1,5 @@
 import {chromium} from 'playwright';
+import {evidencePath} from './evidence.mjs';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -8,7 +9,7 @@ import {fileURLToPath} from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const stamp = new Date().toISOString().replaceAll(/[:.]/g, '-');
 const runtime = path.join(root, 'Tests/Runtime/super-flat-' + stamp);
-const output = path.join(root, 'Tests/Captures/super-flat-' + stamp);
+const output = evidencePath('Captures', 'super-flat-' + stamp);
 const packageName = process.argv.find(a => a.startsWith('--package='))?.slice(10) || 'SuperFlatDevelopment';
 if (!/^[A-Za-z0-9_-]+$/.test(packageName)) throw Error('Invalid package name');
 fs.mkdirSync(runtime, {recursive: true}); fs.mkdirSync(output, {recursive: true});

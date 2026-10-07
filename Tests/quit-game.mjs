@@ -1,4 +1,5 @@
 import {chromium} from 'playwright';
+import {evidencePath} from './evidence.mjs';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,7 +13,7 @@ const argument=(key,fallback)=>process.argv.find(x=>x.startsWith(`--${key}=`))?.
 const packageName=argument('package','MenuReviewFixesDevelopment');
 const reportName=argument('report','ReviewFixesFinalQuitResults.json');
 if(!/^[A-Za-z0-9_-]+$/.test(packageName)||!/^[A-Za-z0-9_-]+\.json$/.test(reportName))throw Error('Invalid package or report name');
-if(fs.existsSync(path.join(root,'Tests',reportName)))throw Error('Report exists; choose a fresh name to preserve evidence.');
+if(fs.existsSync(evidencePath(reportName)))throw Error('Report exists; choose a fresh name to preserve evidence.');
 const exe=path.join(root,'Packages',packageName,'Windows/Unnamed/Binaries/Win64/Unnamed.exe');
 const checks=[];
 let game,browser,page;
@@ -80,5 +81,5 @@ try{
 }catch(error){checks.push({name:'Runtime suite completed',pass:false,detail:String(error)});throw error;}
 finally{
   await release();
-  fs.writeFileSync(path.join(root,'Tests',reportName),JSON.stringify({packageName,directory,finished:new Date().toISOString(),checks},null,2)+'\n');
+  fs.mkdirSync(evidencePath(),{recursive:true});fs.writeFileSync(evidencePath(reportName),JSON.stringify({packageName,directory,finished:new Date().toISOString(),checks},null,2)+'\n');
 }

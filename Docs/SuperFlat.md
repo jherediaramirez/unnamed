@@ -15,7 +15,7 @@ The Player Foundation (`/Game/Maps/L_Foundation`) now sits beside Super Flat in 
 
 ## Preservation
 
-Baseline: `b51afde03d97f5113b29c8c6ba59f4879e3bc085`, including all existing local changes. Backup: `C:\dev\backups\Unnamed\super-flat-20261007-140749`. See `Tests/SuperFlat-Preservation.json` and the backup's status, index, patches, copied files, and protected-file hash manifest.
+Baseline: `b51afde03d97f5113b29c8c6ba59f4879e3bc085`, including all existing local changes. Backup: `C:\dev\backups\Unnamed\super-flat-20261007-140749`. See `Tests/Evidence/2026-10-07/SuperFlat-Preservation.json` and the backup's status, index, patches, copied files, and protected-file hash manifest.
 
 Status: implemented and verified for the preview-world scope.
 
@@ -29,11 +29,11 @@ In Unreal, open the compiled project, press Play in `L_Menu`, then select Super 
 
 - Editor and Development package build: passed (`Tests/Runtime/SuperFlat-Package.log`). Packaging includes both the menu and Super Flat; setup preserves existing map/material edits.
 - Asset verification: passed (`Scripts/Editor/VerifySuperFlatMap.py`, `Tests/Runtime/SuperFlat-VerifyMap-2.log`). Checks dimensions, ground height, collision profile/enabled state, mesh, material, spawn, and GameMode.
-- Native routing/isolation suite: passed (`Tests/SuperFlat-NativeAutomation/index.json`). Rejects the two references and arbitrary package/command strings; checks separate menu and world classes.
+- Native routing/isolation suite: passed (`Tests/Evidence/2026-10-07/SuperFlat-NativeAutomation/index.json`). Rejects the two references and arbitrary package/command strings; checks separate menu and world classes.
 - Browser logic: 44/44 tests passed, including settings drain, rejected/duplicate world requests, PIE capability policy, timeout recovery, and stale poll protection.
-- Packaged integration: 32/32 passed in `Tests/Captures/super-flat-2026-10-07T18-36-54-558Z/results.json`. Three actual round trips using Play, double-click, and Enter; nine ground traces and a clear standing spawn per trip; preferences/bindings retained; one restored browser; normal Quit. The first harness run missed CEF's replacement browser after a successful return; the final harness reconnects after native map travel.
+- Packaged integration: 32/32 passed in `Tests/Evidence/2026-10-07/Captures/super-flat-2026-10-07T18-36-54-558Z/results.json`. Three actual round trips using Play, double-click, and Enter; nine ground traces and a clear standing spawn per trip; preferences/bindings retained; one restored browser; normal Quit. The first harness run missed CEF's replacement browser after a successful return; the final harness reconnects after native map travel.
 - Native world rendering and the Singleplayer layout were captured and visually inspected. See `super-flat-world.png` and `singleplayer-1280x720.png` in the accepted capture directory.
-- Original menu map, reference assets, previous package executables, and all staged Git entries are unchanged. The concurrent FPS task changed `IA_Look` and `IMC_OnFoot`; those changes were preserved, not reverted. See `Tests/SuperFlat-FinalPreservation.json`.
+- Original menu map, reference assets, previous package executables, and all staged Git entries are unchanged. The concurrent FPS task changed `IA_Look` and `IMC_OnFoot`; those changes were preserved, not reverted. See `Tests/Evidence/2026-10-07/SuperFlat-FinalPreservation.json`.
 
 The accepted package is a fixed snapshot. The concurrently active FPS task continued changing the working HTML/C++ after packaging, so this package's passing checks do not certify that task's newer changes. Its separate movement/F3/action acceptance remains with that task.
 

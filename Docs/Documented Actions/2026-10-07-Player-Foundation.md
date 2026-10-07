@@ -12,4 +12,4 @@ Build/cook/package succeeded. 13 native suites, 44 JavaScript tests, 26 packaged
 
 Played-client comparison and OS hardware/alternate-layout/mouse-feel acceptance are pending behind a Windows Security prompt, which was not acted upon. Cuboid collision, primitive auto-jump and deferred camera effects have explicit limits. Prior packages and staged entries were verified preserved; all 9,623 baseline files remain present.
 
-Use the [launch guide and document index](../Foundation/README.md), [verification report](../Foundation/VERIFICATION.md) and [durable result index](../../Tests/Foundation/FinalResults.json) for exact commands, source evidence, hashes and remaining checks. Earlier menu/input records retain their historical defaults and scope.
+Use the [launch guide and document index](../Foundation/README.md), [verification report](../Foundation/VERIFICATION.md) and [durable result index](../../Tests/Evidence/2026-10-07/Foundation/FinalResults.json) for exact commands, source evidence, hashes and remaining checks. Earlier menu/input records retain their historical defaults and scope.

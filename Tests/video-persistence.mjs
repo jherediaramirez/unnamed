@@ -1,4 +1,5 @@
 import {chromium} from 'playwright';
+import {evidencePath} from './evidence.mjs';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -67,6 +68,6 @@ try {
   await stop();
 } finally {
   await stop();
-  fs.writeFileSync(path.join(root,'Tests/VideoPersistenceResults.json'),JSON.stringify({directory,checks},null,2)+'\n');
+  fs.mkdirSync(evidencePath(),{recursive:true});fs.writeFileSync(evidencePath('VideoPersistenceResults.json'),JSON.stringify({directory,checks},null,2)+'\n');
 }
 assert.ok(checks.every(c=>c.pass),'One or more persistence checks failed.');

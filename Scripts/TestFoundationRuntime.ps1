@@ -4,7 +4,7 @@ param([switch]$Editor,[string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',
     [string]$OutputDirectory,[int[]]$FrameRates=@(30,60,120),[switch]$FullCostRendering)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
-if(-not $OutputDirectory){$OutputDirectory=Join-Path $root ('Tests/Foundation/Runtime-'+(Get-Date -Format 'yyyyMMdd-HHmmss'))}
+if(-not $OutputDirectory){$OutputDirectory=Join-Path $root ('Tests/Evidence/'+(Get-Date -Format 'yyyy-MM-dd')+'/Foundation/Runtime-'+(Get-Date -Format 'yyyyMMdd-HHmmss'))}
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $OutputDirectory=(Resolve-Path -LiteralPath $OutputDirectory).Path
 $exe=if($Editor){"$EngineRoot/Engine/Binaries/Win64/UnrealEditor.exe"}else{Join-Path $root "Packages/$PackageName/Windows/Unnamed/Binaries/Win64/Unnamed.exe"}

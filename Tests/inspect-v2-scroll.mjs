@@ -1,4 +1,5 @@
 import {chromium} from 'playwright';
+import {evidencePath} from './evidence.mjs';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -20,7 +21,7 @@ try{
   await p.mouse.move(apiPoint.x,apiPoint.y);await p.waitForTimeout(900);
   console.log('Tooltip '+JSON.stringify(await p.locator('#tooltip').evaluate(n=>({text:n.textContent,display:getComputedStyle(n).display}))));
   console.log('Pointer events '+JSON.stringify(await p.evaluate(()=>pointerEvidence)));
-  await p.screenshot({path:path.join(root,'Tests/Captures/v2-api-hover.png')});
+  fs.mkdirSync(evidencePath('Captures'),{recursive:true});await p.screenshot({path:evidencePath('Captures','v2-api-hover.png')});
   const box=await p.locator('.scroll').evaluate(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y}});await p.mouse.move(box.x+20,box.y+20);await p.mouse.wheel(0,500);await p.waitForTimeout(200);
   console.log('Wheel scrollTop '+await p.locator('.scroll').evaluate(n=>n.scrollTop));
   await p.evaluate(()=>MenuPrototype.prepare('main'));await p.getByRole('button',{name:'Quit Game',exact:true}).click();await exit;

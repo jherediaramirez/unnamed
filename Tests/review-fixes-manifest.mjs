@@ -21,14 +21,14 @@ const preserved=baseline.files.filter(file=>{
   const name=file.path.replaceAll('\\','/');
   return name.startsWith('Source/')||name.startsWith('Config/')||name==='Content/Menu/L_Menu.umap'||name==='Unnamed.uproject'||
     name.startsWith('Saved/Config/')||name.startsWith('Saved/SaveGames/')||
-    name.startsWith('Tests/Captures/')||/^Tests\/(?:.*Results\.json|.*ArtifactManifest\.json|.*UnitTests\.tap|AdditionalControls\.json|VideoResetControls\.json)$/.test(name)||
+    name.startsWith('Tests/Evidence/2026-10-07/Captures/')||/^Tests\/Evidence\/2026-10-07\/(?:.*Results\.json|.*ArtifactManifest\.json|.*UnitTests\.tap|AdditionalControls\.json|VideoResetControls\.json)$/.test(name)||
     /^Docs\/Independent/.test(name);
 }).map(file=>{
   const current=record(path.join(root,file.path));
   if(current.sha256!==file.sha256.toLowerCase())throw Error('Preservation mismatch: '+file.path);
   return current;
 });
-const previous=read(path.join(root,'Tests/NoRealmsArtifactManifest.json'));
+const previous=read(path.join(root,'Tests/Evidence/2026-10-07/NoRealmsArtifactManifest.json'));
 const inheritedNative=Object.fromEntries(['packaging','nativeAutomation','editorModule'].map(key=>{
   const evidence=previous[key],file=path.join(root,evidence.path);
   if(digest(file)!==evidence.sha256)throw Error('Inherited native evidence changed: '+key);
@@ -43,13 +43,13 @@ const html=path.join(root,'Content/Menu/Web/index.html');
 if(digest(html)!==digest(path.join(packageRoot,'Unnamed/Content/Menu/Web/index.html')))throw Error('Source/package HTML mismatch');
 const reference=path.join(root,'Reference/minecraft-menu/index.html');
 if(digest(reference)!==read(path.join(root,'Reference/OriginalHashes.json')).index)throw Error('Reference changed');
-const unitFile=path.join(root,'Tests/ReviewFixesUnitTests.tap');
+const unitFile=path.join(root,'Tests/Evidence/2026-10-07/ReviewFixesUnitTests.tap');
 if(!/# pass 25\b/.test(fs.readFileSync(unitFile,'utf8'))||!/# fail 0\b/.test(fs.readFileSync(unitFile,'utf8')))throw Error('Unit evidence missing');
 const resultNames=[
-  'Tests/Captures/review-accepted-drafts-1280x720/results.json','Tests/Captures/review-accepted-drafts-1920x1080/results.json',
+  'Tests/Evidence/2026-10-07/Captures/review-accepted-drafts-1280x720/results.json','Tests/Evidence/2026-10-07/Captures/review-accepted-drafts-1920x1080/results.json',
   ...['1280x720','1920x1080'].flatMap(profile=>[
-    `Tests/Captures/review-accepted-video-${profile}/results.json`,`Tests/Captures/review-accepted-packaged-${profile}/results.json`
-  ]),'Tests/ReviewFixesFinalQuitResults.json'
+    `Tests/Evidence/2026-10-07/Captures/review-accepted-video-${profile}/results.json`,`Tests/Evidence/2026-10-07/Captures/review-accepted-packaged-${profile}/results.json`
+  ]),'Tests/Evidence/2026-10-07/ReviewFixesFinalQuitResults.json'
 ];
 const runs=resultNames.map(name=>{
   const file=path.join(root,name),result=read(file);
@@ -57,7 +57,7 @@ const runs=resultNames.map(name=>{
   if(result.htmlSHA256&&result.htmlSHA256!==digest(html))throw Error('Capture HTML identity mismatch: '+name);
   return {...record(file),passed:result.checks.length,total:result.checks.length};
 });
-const cleanup=read(path.join(root,'Tests/review-accepted-ValidationResults.json'));
+const cleanup=read(path.join(root,'Tests/Evidence/2026-10-07/review-accepted-ValidationResults.json'));
 if(cleanup.checks.length!==6||cleanup.checks.some(check=>!check.pass))throw Error('Diagnostic ownership/cleanup failed');
 const registry=read(path.join(root,'Docs/ControlRegistry.json'));
 if(registry.htmlSHA256!==digest(html)||registry.captures.join(',')!=='review-accepted-packaged-1920x1080,review-accepted-video-1920x1080')
@@ -66,11 +66,11 @@ const report={
   generated:new Date().toISOString(),stage:'implemented_verified_with_remaining_human_gates',configuration:'Win64 Development',
   startingHead:baseline.head,indexEntriesMatch:true,backup,snapshotFiles:baseline.files.length,packageRoot,
   implementation:'Five independent-review fixes. Presentation/runtime-JavaScript only; native build, binaries and editor safety evidence inherited unchanged.',
-  previousPackage:{...record(path.join(root,'Tests/NoRealmsArtifactManifest.json')),filesPreserved:previous.files.length,nonHTMLCandidateFilesMatch:true},
+  previousPackage:{...record(path.join(root,'Tests/Evidence/2026-10-07/NoRealmsArtifactManifest.json')),filesPreserved:previous.files.length,nonHTMLCandidateFilesMatch:true},
   inheritedNative,
   ui:record(html),reference:record(reference),unitTests:{...record(unitFile),passed:25,total:25},
-  runtimeChecks:runs.reduce((sum,run)=>sum+run.passed,0),runs,diagnosticCleanup:record(path.join(root,'Tests/review-accepted-ValidationResults.json')),
-  graphicsAPIReadback:record(path.join(root,'Tests/ReviewFixesGraphicsAPI.json')),
+  runtimeChecks:runs.reduce((sum,run)=>sum+run.passed,0),runs,diagnosticCleanup:record(path.join(root,'Tests/Evidence/2026-10-07/review-accepted-ValidationResults.json')),
+  graphicsAPIReadback:record(path.join(root,'Tests/Evidence/2026-10-07/ReviewFixesGraphicsAPI.json')),
   controlRegistry:{...record(path.join(root,'Docs/ControlRegistry.json')),controls:registry.controls.length,routes:33},
   sourceFiles:['Source','Scripts','Config'].flatMap(dir=>walk(path.join(root,dir))).map(file=>record(file)),
   testSources:fs.readdirSync(path.join(root,'Tests')).filter(name=>/\.(mjs|json)$/.test(name)&&(!name.endsWith('.json')||name.startsWith('package'))).map(name=>record(path.join(root,'Tests',name))),
@@ -78,7 +78,7 @@ const report={
   preserved,files:walk(packageRoot).map(file=>record(file,packageRoot)),
   remainingGates:['Physical OS input/focus','Driver-level VSync/tearing','Multi-monitor/DPI','Real transport-stall injection (VM simulation tested)','Shipping/other platforms','Future gameplay save/quit lifecycle']
 };
-const out=path.join(root,'Tests/ReviewFixesArtifactManifest.json');
+const out=path.join(root,'Tests/Evidence/2026-10-07/ReviewFixesArtifactManifest.json');
 if(fs.existsSync(out))throw Error('Manifest exists; preserve the accepted record before selecting a new output.');
 fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');
 console.log(`Verified ${report.files.length} package files, ${preserved.length} protected records, 25 units and ${report.runtimeChecks} runtime checks. Native code unchanged; source/package HTML matches.`);

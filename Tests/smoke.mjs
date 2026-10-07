@@ -1,4 +1,5 @@
 import {chromium} from 'playwright';
+import {evidencePath} from './evidence.mjs';
 import {PNG} from 'pngjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -13,7 +14,7 @@ const slice=args.includes('--slice');
 const skipActions=args.includes('--skip-actions');
 if(!/^[A-Za-z0-9_-]+$/.test(mode)||!/^\d+x\d+$/.test(profile))throw Error('Invalid capture arguments');
 const [width,height]=profile.split('x').map(Number);
-const out=path.join(root,'Tests/Captures',mode+'-'+profile+(slice?'-slice':skipActions?'-targeted':''));
+const out=evidencePath('Captures',mode+'-'+profile+(slice?'-slice':skipActions?'-targeted':''));
 if(fs.existsSync(out))throw Error('Capture exists; choose a fresh mode to preserve evidence.');
 fs.mkdirSync(out,{recursive:true});
 const result={mode,profile,started:new Date().toISOString(),checks:[],console:[],requests:[],routes:[],controls:[],edges:[]};

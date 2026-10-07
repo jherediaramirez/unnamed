@@ -1,6 +1,7 @@
 // Owned, isolated game sessions. Windows input is supplied through Computer Use;
 // CDP observes its DOM/native result and verifies relaunch persistence.
 import {chromium} from 'playwright';
+import {evidencePath} from './evidence.mjs';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -9,7 +10,7 @@ import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const editor=process.argv.includes('--editor'),mode=editor?'editor-game':'packaged';
 const stamp=new Date().toISOString().replaceAll(/[:.]/g,'-');
-const output=path.join(root,'Tests/Captures','native-input-'+mode+'-'+stamp);
+const output=evidencePath('Captures','native-input-'+mode+'-'+stamp);
 const runtime=path.join(root,'Tests/Runtime','native-input-'+mode+'-'+stamp);
 fs.mkdirSync(output,{recursive:true});fs.mkdirSync(runtime,{recursive:true});
 const checks=[],events=[],delay=ms=>new Promise(r=>setTimeout(r,ms));

@@ -28,7 +28,7 @@ Inner executable SHA-256: `07D89D1FDDAFBCD7524DD80A7BDA2253DD72E12999D0FA4F17074
 
 ## Verification
 
-Evidence root: `C:\dev\projects\Unnamed\Tests\Foundation\PersonalControls-20261007`.
+Evidence root: `C:\dev\projects\Unnamed\Tests\Evidence\2026-10-07\Foundation\PersonalControls-20261007`.
 
 | Check | Result | Evidence relative to that root |
 |---|---|---|

@@ -26,19 +26,19 @@ $files+=@(
     'Reference\minecraft-menu\README.md','Reference\minecraft-menu\reference-inventory.md',
     'Reference\minecraft-menu\qa-report.md','Reference\minecraft-menu\qa-results.json',
     'Reference\minecraft-menu\assets\asset-provenance.json',
-    'Tests\package.json','Tests\package-lock.json','Tests\NoRealmsUnitTests.tap',
-    'Tests\NoRealmsGraphicsAPI.json','Tests\NoRealmsQuitResults.json',
-    'Tests\NoRealmsArtifactManifest.json','Tests\QuitArtifactManifest.json',
-    'Tests\QuitEditorSafetyResults.json','Tests\QuitBuild.log',
-    'Tests\AdditionalControls.json','Tests\VideoResetControls.json',
-    'Tests\MenuAutomation-20261007-091836\index.json'
+    'Tests\package.json','Tests\package-lock.json','Tests\Evidence\2026-10-07\NoRealmsUnitTests.tap',
+    'Tests\Evidence\2026-10-07\NoRealmsGraphicsAPI.json','Tests\Evidence\2026-10-07\NoRealmsQuitResults.json',
+    'Tests\Evidence\2026-10-07\NoRealmsArtifactManifest.json','Tests\Evidence\2026-10-07\QuitArtifactManifest.json',
+    'Tests\Evidence\2026-10-07\QuitEditorSafetyResults.json','Tests\Evidence\2026-10-07\QuitBuild.log',
+    'Tests\Evidence\2026-10-07\AdditionalControls.json','Tests\Evidence\2026-10-07\VideoResetControls.json',
+    'Tests\Evidence\2026-10-07\MenuAutomation-20261007-091836\index.json'
 )
 $files+=Get-ChildItem -LiteralPath (Join-Path $root 'Tests') -File -Filter '*.mjs' |
     ForEach-Object {[IO.Path]::GetRelativePath($root,$_.FullName)}
 $files+=Get-ChildItem -LiteralPath (Join-Path $root 'Reference\minecraft-menu') -File -Filter '*.jpg' |
     ForEach-Object {[IO.Path]::GetRelativePath($root,$_.FullName)}
 foreach($capture in @('no-realms-packaged-1280x720','no-realms-packaged-1920x1080','no-realms-video-1280x720','no-realms-video-1920x1080')){
-    $files+=Get-ChildItem -LiteralPath (Join-Path $root "Tests\Captures\$capture") -File -Recurse |
+    $files+=Get-ChildItem -LiteralPath (Join-Path $root "Tests\Evidence\2026-10-07\Captures\$capture") -File -Recurse |
         ForEach-Object {[IO.Path]::GetRelativePath($root,$_.FullName)}
 }
 $files=$files | Sort-Object -Unique

@@ -20,7 +20,7 @@ World/server/preset/rule actions are still session-only mocks. Correct draft beh
 
 Passed: 25 unit tests and 984 runtime checks. At both 1280x720 and 1920x1080: 24 draft/validation checks, 37 video checks, and 423 full-menu checks. Normal quit/persistence/recovery passed 16 checks. All 938 reference/mirrored assets remain unchanged.
 
-Final results and hashes are recorded in [Verification](../Verification.md) and `Tests/ReviewFixesArtifactManifest.json`. Before-fix failures and harness-label mistakes are retained, not counted as successful acceptance. Real transport stalls were simulated in JavaScript tests; no actual engine bridge outage was injected.
+Final results and hashes are recorded in [Verification](../Verification.md) and `Tests/Evidence/2026-10-07/ReviewFixesArtifactManifest.json`. Before-fix failures and harness-label mistakes are retained, not counted as successful acceptance. Real transport stalls were simulated in JavaScript tests; no actual engine bridge outage was injected.
 
 For a fresh rerun from `Tests`, use unique output names:
 

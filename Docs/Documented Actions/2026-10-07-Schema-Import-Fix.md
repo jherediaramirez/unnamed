@@ -14,11 +14,11 @@ Scripts/LaunchMenu.ps1 and current runtime-test defaults select this package.
 
 Verification:
 
-- The installed Unreal Python factory probe inspected 42 import factories: JSON is importable; menuprefs is unregistered. Tests/SchemaImportFix-FactoryExtensions.json records the declarations. No assets were imported by the probe.
-- Eight native suites passed: Tests/SchemaImportFix-Automation-20261007-133854/index.json.
+- The installed Unreal Python factory probe inspected 42 import factories: JSON is importable; menuprefs is unregistered. Tests/Evidence/2026-10-07/SchemaImportFix-FactoryExtensions.json records the declarations. No assets were imported by the probe.
+- Eight native suites passed: Tests/Evidence/2026-10-07/SchemaImportFix-Automation-20261007-133854/index.json.
 - All 39 JavaScript unit tests and the 938-asset source/hash/syntax check passed.
 - The corrected package contains the .menuprefs file and no legacy preferences-schema.json.
-- All 126 packaged preference checks passed, including every scalar, reload, independent relaunch, Done/Cancel, reset and Quit: Tests/Captures/preferences-2026-10-07T17-45-44-468Z/results.json.
+- All 126 packaged preference checks passed, including every scalar, reload, independent relaunch, Done/Cancel, reset and Quit: Tests/Evidence/2026-10-07/Captures/preferences-2026-10-07T17-45-44-468Z/results.json.
 - Earlier full menu/video/input captures remain applicable to the unchanged HTML; they were not rerun or relabeled as new captures.
 
 Hashes:

@@ -54,7 +54,7 @@ The primitive course includes 50/60/61/100 cm steps east of spawn; a 155 cm ceil
 - [Architecture and extension points](ARCHITECTURE.md)
 - [Measured verification and remaining acceptance gaps](VERIFICATION.md)
 - [Personal controls correction and new candidate verification](../Documented%20Actions/2026-10-07-Personal-Controls.md)
-- [Durable test evidence](../../Tests/Foundation/FinalResults.json)
+- [Durable test evidence](../../Tests/Evidence/2026-10-07/Foundation/FinalResults.json)
 
 The numeric Minecraft comparison is derived from the inspected hash-pinned client implementation. It is not a claim that a played vanilla client was instrumented. Exact auto-jump fidelity outside the primitive fixture, arbitrary mesh collision, alternate keyboard layouts, OS focus/capture and subjective mouse feel retain the limits listed in the report.
 

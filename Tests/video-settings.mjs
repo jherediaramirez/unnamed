@@ -1,4 +1,5 @@
 import {chromium} from 'playwright';
+import {evidencePath} from './evidence.mjs';
 import {PNG} from 'pngjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -10,7 +11,7 @@ const port = Number(process.argv.find(a => a.startsWith('--port='))?.split('=')[
 const profile = process.argv.find(a => a.startsWith('--profile='))?.split('=')[1] || '1280x720';
 const capture = process.argv.find(a => a.startsWith('--capture='))?.split('=')[1] || 'video-settings-' + profile;
 if (!/^[a-zA-Z0-9_-]+$/.test(capture)) throw Error('Invalid capture name');
-const out = path.resolve('Captures', capture);
+const out = evidencePath('Captures', capture);
 if (fs.existsSync(out)) throw Error('Capture exists; choose a fresh name to preserve evidence.');
 fs.mkdirSync(out, {recursive:true});
 const checks = [];

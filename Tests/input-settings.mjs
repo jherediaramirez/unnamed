@@ -1,4 +1,5 @@
 import {chromium} from 'playwright';
+import {evidencePath} from './evidence.mjs';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -8,7 +9,7 @@ import {fileURLToPath} from 'node:url';
 const tests=path.dirname(fileURLToPath(import.meta.url)),root=path.dirname(tests);
 const stamp=new Date().toISOString().replaceAll(/[:.]/g,'-');
 const runtime=path.join(tests,'Runtime','input-foundation-'+stamp);
-const output=path.join(tests,'Captures','input-foundation-'+stamp);
+const output=evidencePath('Captures','input-foundation-'+stamp);
 fs.mkdirSync(runtime,{recursive:true});fs.mkdirSync(output,{recursive:true});
 const checks=[],delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const packageName=process.argv.find(a=>a.startsWith('--package='))?.slice(10)||'MenuPreferencesV2Development';

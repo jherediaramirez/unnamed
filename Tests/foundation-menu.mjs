@@ -1,4 +1,5 @@
 import {chromium} from 'playwright';
+import {evidencePath} from './evidence.mjs';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -8,7 +9,7 @@ import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const argument=(name,fallback)=>process.argv.find(a=>a.startsWith(name+'='))?.slice(name.length+1)||fallback;
 const packageName=argument('--package','FoundationDevelopment20261007-r3');
-const output=path.resolve(argument('--output',path.join(root,'Tests/Foundation/Menu-'+Date.now())));
+const output=path.resolve(argument('--output',evidencePath('Foundation','Menu-'+Date.now())));
 const editor=process.argv.includes('--editor');
 const exe=editor?'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe':path.join(root,`Packages/${packageName}/Windows/Unnamed/Binaries/Win64/Unnamed.exe`);
 fs.mkdirSync(output,{recursive:true});const checks=[],errors=[],delay=ms=>new Promise(r=>setTimeout(r,ms));

@@ -22,15 +22,15 @@ Restart Unreal Editor before using Play to load the new C++ module. The current 
 
 | Check | Result | Evidence |
 |---|---|---|
-| Editor and game builds | Passed | Tests/MenuPreferences-EditorBuild-4.log; Tests/MenuPreferences-Package-Final.log |
-| Native automation | 8/8 suites | Tests/MenuPreferencesAutomation-20261007-131834/index.json |
+| Editor and game builds | Passed | Tests/Evidence/2026-10-07/MenuPreferences-EditorBuild-4.log; Tests/Evidence/2026-10-07/MenuPreferences-Package-Final.log |
+| Native automation | 8/8 suites | Tests/Evidence/2026-10-07/MenuPreferencesAutomation-20261007-131834/index.json |
 | JavaScript unit tests | 39/39 | npm test --prefix Tests |
-| Packaged preference tests | 126/126 | Tests/Captures/preferences-2026-10-07T17-22-50-913Z/results.json |
-| Existing input/API regression | 50/50 | Tests/Captures/input-foundation-2026-10-07T17-23-22-613Z/results.json |
-| Complete menu sweep | 369/369 at each size | Tests/Captures/review-preferences-v1-packaged-1280x720/results.json and matching 1920x1080 capture |
-| Video regression | 37/37 at each size | Tests/Captures/review-preferences-v1-video-1280x720/results.json and matching 1920x1080 capture |
+| Packaged preference tests | 126/126 | Tests/Evidence/2026-10-07/Captures/preferences-2026-10-07T17-22-50-913Z/results.json |
+| Existing input/API regression | 50/50 | Tests/Evidence/2026-10-07/Captures/input-foundation-2026-10-07T17-23-22-613Z/results.json |
+| Complete menu sweep | 369/369 at each size | Tests/Evidence/2026-10-07/Captures/review-preferences-v1-packaged-1280x720/results.json and matching 1920x1080 capture |
+| Video regression | 37/37 at each size | Tests/Evidence/2026-10-07/Captures/review-preferences-v1-video-1280x720/results.json and matching 1920x1080 capture |
 | Asset/source check | 938 original assets and working copies; reference hash and JavaScript syntax passed | Tests/source-check.mjs |
-| Preservation | 9,556 prior package/reference/input/map files and all 3,157 staged entries unchanged | Tests/MenuPreferences-Preservation.json |
+| Preservation | 9,556 prior package/reference/input/map files and all 3,157 staged entries unchanged | Tests/Evidence/2026-10-07/MenuPreferences-Preservation.json |
 
 The preference suite checks every scalar through the actual packaged native/browser bridge, separate-process restoration, shared captions, language/pack Done and Escape, ordered packs, warning/telemetry flags, reset confirmation, unrelated-save preservation and Quit with a pending edit. Screenshots at 1280x720 and 1920x1080 were inspected. The resource-pack footer explains its pending appearance effect.
 

@@ -1,12 +1,14 @@
 import fs from 'node:fs';
+import {evidencePath, findEvidence} from './evidence.mjs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {readCaptureEvidence} from './capture-evidence.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const captureName=process.argv.find(x=>x.startsWith('--capture='))?.split('=')[1]||'review-accepted-packaged-1920x1080';
 const videoCaptureName=process.argv.find(x=>x.startsWith('--video-capture='))?.split('=')[1]||'review-accepted-video-1920x1080';
-const capture=path.join(root,'Tests/Captures',captureName);
-const {run,data,extras}=readCaptureEvidence(path.join(root,'Tests/Captures'),captureName,videoCaptureName);
+const findCapture=name=>findEvidence('Captures',name)??evidencePath('Captures',name);
+const capture=findCapture(captureName);
+const {run,data,extras}=readCaptureEvidence(findCapture,captureName,videoCaptureName);
 const live=new Set(['fullscreen','framerateLimit','enableVsync','guiScale','menuBackgroundBlurriness']);
 const isQuit=c=>c.screen==='main'&&c.label==='Quit Game';
 const isWorld=c=>c.screen==='worlds'&&(c.label==='Play Selected World'||c.id.includes('super-flat'));
@@ -92,7 +94,7 @@ for(const c of registry.filter(isLive)){
     c.laterScope='The future FPS character replaces the stock preview camera after collision/input integration.';
     c.unresolved='Physical input and embedded PIE acceptance remain separate checks.';
     c.acceptance=['Play, double-click and Enter open the actual level.','Ground collision, clear spawn, repeated menu return, and retained settings.'];
-    c.evidence.functional='Docs/SuperFlat.md; Tests/Captures/super-flat-2026-10-07T18-36-54-558Z/results.json';
+    c.evidence.functional='Docs/SuperFlat.md; Tests/Evidence/2026-10-07/Captures/super-flat-2026-10-07T18-36-54-558Z/results.json';
     continue;
   }
   if(c.setting==='preferredGraphicsBackend'){
@@ -107,7 +109,7 @@ for(const c of registry.filter(isLive)){
     c.laterScope='A validated platform-specific startup/restart selector remains deferred.';
     c.unresolved='Graphics API switching, fallback recovery and other-platform policies are deferred.';
     c.acceptance=['Native configured default and actual active RHI match displayed label/tooltip.'];
-    c.evidence.functional='Tests/Captures/input-foundation-*/results.json; Docs/Keybindings.md';
+    c.evidence.functional='Tests/Evidence/2026-10-07/Captures/input-foundation-*/results.json; Docs/Keybindings.md';
     continue;
   }
   if(isInput(c)){
@@ -118,7 +120,7 @@ for(const c of registry.filter(isLive)){
     c.laterScope='Actual CharacterMovement stance, speed, jump, camera, animation and networking remain deferred.';
     c.unresolved='Physical OS focus/input and actual character movement require later acceptance.';
     c.acceptance=['Native key-to-action-to-intent pipeline, conflicts and serializer.','Packaged key capture, both modifier sides, reload/relaunch persistence and resets.','Future character decides legal actual movement and server authority.'];
-    c.evidence.functional='Docs/Keybindings.md; Tests/InputAutomation reports; Tests/Captures/input-foundation-*';
+    c.evidence.functional='Docs/Keybindings.md; Tests/Evidence/2026-10-07/InputAutomation reports; Tests/Evidence/2026-10-07/Captures/input-foundation-*';
     continue;
   }
   c.mockInteraction='Functional native setting or confirmed reset; see VideoSettings.md.';
@@ -126,7 +128,7 @@ for(const c of registry.filter(isLive)){
   c.laterScope='Implemented scope only. Other settings remain deferred.';
   c.unresolved='Physical OS input, driver-level VSync and multi-monitor/DPI checks remain human acceptance gates.';
   c.acceptance=['Native validation and ordered asynchronous requests.','Actual window/client dimensions, engine cadence and rendered presentation.','Independent process relaunch and confirmed reset; unrelated save data preserved.'];
-  c.evidence.functional='Docs/VideoSettings.md; Tests/VideoPersistenceResults.json; Tests/Captures/video-settings-1280x720/results.json';
+  c.evidence.functional='Docs/VideoSettings.md; Tests/Evidence/2026-10-07/VideoPersistenceResults.json; Tests/Evidence/2026-10-07/Captures/video-settings-1280x720/results.json';
   if(c.setting==='guiScale')c.dependencies='Integer Auto/explicit scale bounded by the live viewport, reserving 416x240 logical pixels; stored scale is clamped when rendering smaller windows.';
   c.disabledConditions=['fullscreen','framerateLimit','enableVsync'].includes(c.setting)||c.label==='Hard Reset'?'Unavailable in embedded PIE; requires a ready standalone native window.':'Requires a ready settings adapter.';
   if(isQuit(c)){
@@ -134,7 +136,7 @@ for(const c of registry.filter(isLive)){
     c.doneCancelEscape='Activates immediately; drains and flushes settings first. Save failure cancels exit and allows retry.';
     c.disabledConditions='Unavailable in editor Play or without a valid local standalone owner/binding; disabled while quitting.';
     c.acceptance=['Normal owned-process exit through the visible main-menu button.','Queued settings survive normal exit and relaunch; unrelated saves preserved.','Repeated-request guard, failed-save retry and editor rejection.'];
-    c.evidence.functional='Docs/QuitGame.md; Tests/QuitGameResults.json; Tests/QuitEditorSafetyResults.json';
+    c.evidence.functional='Docs/QuitGame.md; Tests/Evidence/2026-10-07/QuitGameResults.json; Tests/Evidence/2026-10-07/QuitEditorSafetyResults.json';
     c.unresolved='Physical OS input, Shipping, other platforms and future gameplay save lifecycle remain separate acceptance gates.';
   }
 }
@@ -150,7 +152,7 @@ for(const c of registry.filter(preference)){
   c.unresolved=id==='skipWarning'?'No multiplayer connection is implemented.':
     'The feature effect remains pending; saving this choice does not activate its gameplay, renderer, audio, language or telemetry system.';
   c.acceptance=['Native schema validation and readback for all 101 scalar IDs.','Reload, process relaunch, ordered requests, staged Done/Cancel, reset and normal Quit.','Future effects require their own functional acceptance.'];
-  c.evidence.functional='Docs/MenuPreferences.md; Tests/Captures/preferences-*/results.json; Tests/MenuPreferencesAutomation-*';
+  c.evidence.functional='Docs/MenuPreferences.md; Tests/Evidence/2026-10-07/Captures/preferences-*/results.json; Tests/Evidence/2026-10-07/MenuPreferencesAutomation-*';
 }
 fs.writeFileSync(path.join(root,'Docs/ControlRegistry.json'),JSON.stringify({phase:'PREFERENCES_SAVED_EFFECTS_PARTIAL',captures:[captureName,videoCaptureName],htmlSHA256:run.htmlSHA256,controls:registry},null,2)+'\n');
 const esc=x=>String(x??'').replaceAll('|','\\|').replaceAll('\n',' ');

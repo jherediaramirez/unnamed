@@ -28,19 +28,19 @@ Current candidate: `Packages/MenuReviewFixesDevelopment/Windows/Unnamed.exe`. Th
 
 | Verification | Result | Evidence |
 |---|---|---|
-| JavaScript units | 25/25 | `Tests/ReviewFixesUnitTests.tap` |
-| Draft/validation packaged regressions | 24/24 at both sizes | `Tests/Captures/review-accepted-drafts-*/results.json` |
-| Full menu sweeps | 423/423 at both sizes | `Tests/Captures/review-accepted-packaged-*/results.json` |
-| Focused native video/presentation/reset | 37/37 at both sizes | `Tests/Captures/review-accepted-video-*/results.json` |
-| Normal quit, relaunch persistence, failed-save retry | 16/16 | `Tests/ReviewFixesFinalQuitResults.json` |
+| JavaScript units | 25/25 | `Tests/Evidence/2026-10-07/ReviewFixesUnitTests.tap` |
+| Draft/validation packaged regressions | 24/24 at both sizes | `Tests/Evidence/2026-10-07/Captures/review-accepted-drafts-*/results.json` |
+| Full menu sweeps | 423/423 at both sizes | `Tests/Evidence/2026-10-07/Captures/review-accepted-packaged-*/results.json` |
+| Focused native video/presentation/reset | 37/37 at both sizes | `Tests/Evidence/2026-10-07/Captures/review-accepted-video-*/results.json` |
+| Normal quit, relaunch persistence, failed-save retry | 16/16 | `Tests/Evidence/2026-10-07/ReviewFixesFinalQuitResults.json` |
 | Reference/assets/syntax | Passed; 938 original/mirrored assets unchanged | `node Tests/source-check.mjs` |
-| Actual renderer | D3D12/SM6 | `Tests/ReviewFixesGraphicsAPI.json` |
+| Actual renderer | D3D12/SM6 | `Tests/Evidence/2026-10-07/ReviewFixesGraphicsAPI.json` |
 
-These suites total 984 passing runtime checks, separate from 25 units. All six diagnostic ownership/cleanup checks passed in `Tests/review-accepted-ValidationResults.json`; successful cases use normal game shutdown, not forced termination. Main-menu and reset captures were visually inspected at both sizes.
+These suites total 984 passing runtime checks, separate from 25 units. All six diagnostic ownership/cleanup checks passed in `Tests/Evidence/2026-10-07/review-accepted-ValidationResults.json`; successful cases use normal game shutdown, not forced termination. Main-menu and reset captures were visually inspected at both sizes.
 
 The registry now records 697 observed controls, 682 deferred features, and 33 routes. It consumes only the explicit matching `review-accepted-packaged-1920x1080` and `review-accepted-video-1920x1080` captures, including contextual confirmations, restore actions, and selected-pack arrows. Historical shared supplemental files are unchanged and no longer consumed.
 
-`Tests/ReviewFixesArtifactManifest.json` verifies matching working/package HTML, selected capture identity, native package preservation, source/config/map/saves, historical evidence, and unchanged Git index entries. The pre-edit snapshot is `C:/dev/backups/Unnamed/review-fixes-20261007-104750` (1217 files). No staging, commit, reset, or cleanup was performed.
+`Tests/Evidence/2026-10-07/ReviewFixesArtifactManifest.json` verifies matching working/package HTML, selected capture identity, native package preservation, source/config/map/saves, historical evidence, and unchanged Git index entries. The pre-edit snapshot is `C:/dev/backups/Unnamed/review-fixes-20261007-104750` (1217 files). No staging, commit, reset, or cleanup was performed.
 
 Before-fix runs and failed harness attempts remain historical, not accepted evidence. The corrected baseline suite reproduced 15 failed draft/validation assertions; the corrected candidate passes all 24 focused checks. The original review ZIP/prompt is a preserved pre-fix snapshot. Simulated promise stalls/late replies are unit evidence, not an injected real Unreal/CEF transport outage. Physical input, driver VSync, multi-monitor/DPI, Shipping/other platforms, and future gameplay save contracts remain open.
 
@@ -49,12 +49,12 @@ Before-fix runs and failed harness attempts remain historical, not accepted evid
 Minecraft Realms, Join Realm, their main-menu entry, invites/news/trial/purchase controls, join-code form, feature CSS and the Online Settings Realms news/invites option/definition are removed. The main menu closes the vacated row. The working interface now has 33 routes; immutable reference material, unused source assets/translations and earlier candidates remain preserved.
 
 - Current candidate: Packages/MenuNoRealmsDevelopment/Windows. This is a presentation-only copy of MenuQuitDevelopment with regenerated physical HTML. Native source and every non-HTML package file are unchanged; no new native compilation or automation run is claimed. Build/automation/editor-safety evidence below is inherited from the identical native checkpoint.
-- Complete rendered menu sweeps passed 417/417 at both 1280x720 and 1920x1080 in Tests/Captures/no-realms-packaged-*. These explicitly verify absent Realms routes, main button and retired preference, plus the remaining mock/native workflows. Both main-menu screenshots were visually inspected for the collapsed row, bounds and retained styling.
-- Focused video sweeps passed 37/37 at both sizes in Tests/Captures/no-realms-video-*. They retain actual fullscreen/FPS/VSync/layout/blur checks and protected reset behavior. All 15 current JavaScript unit tests passed; Tests/NoRealmsUnitTests.tap records the run, including four new Realms-removal/layout checks.
+- Complete rendered menu sweeps passed 417/417 at both 1280x720 and 1920x1080 in Tests/Evidence/2026-10-07/Captures/no-realms-packaged-*. These explicitly verify absent Realms routes, main button and retired preference, plus the remaining mock/native workflows. Both main-menu screenshots were visually inspected for the collapsed row, bounds and retained styling.
+- Focused video sweeps passed 37/37 at both sizes in Tests/Evidence/2026-10-07/Captures/no-realms-video-*. They retain actual fullscreen/FPS/VSync/layout/blur checks and protected reset behavior. All 15 current JavaScript unit tests passed; Tests/Evidence/2026-10-07/NoRealmsUnitTests.tap records the run, including four new Realms-removal/layout checks.
 - Registry regenerated from the current rendered capture: 696 distinct controls, 681 deferred features and 33 routes. Removed Realms items are absent from active inventory/backlog; navigation mocks are not misrepresented as real game/services.
-- Current owned-process checks passed 16/16 in Tests/NoRealmsQuitResults.json: normal mouse/Enter exit, queued preference completion, windowed/fullscreen relaunch restoration, unrelated-save preservation and failed-save cancellation/retry. Successful cases did not force-terminate a game. The current rendered/owned-process suites total 924 passing checks; the 15 JavaScript units are separate.
-- The running candidate's RHI is D3D12/DirectX 12, verified from actual engine log excerpts in Tests/NoRealmsGraphicsAPI.json. Graphics API remains a deferred mock control in this snapshot; a locked DirectX 12 display was recommended and awaits user confirmation.
-- Tests/NoRealmsArtifactManifest.json records current source/package hashes, current runtime reports and preservation of the previous native Quit package. Generate this current manifest with `node Tests/video-artifact-manifest.mjs --no-realms`. Older manifests and their generation modes describe historical checkpoints and should not be regenerated against newer working HTML.
+- Current owned-process checks passed 16/16 in Tests/Evidence/2026-10-07/NoRealmsQuitResults.json: normal mouse/Enter exit, queued preference completion, windowed/fullscreen relaunch restoration, unrelated-save preservation and failed-save cancellation/retry. Successful cases did not force-terminate a game. The current rendered/owned-process suites total 924 passing checks; the 15 JavaScript units are separate.
+- The running candidate's RHI is D3D12/DirectX 12, verified from actual engine log excerpts in Tests/Evidence/2026-10-07/NoRealmsGraphicsAPI.json. Graphics API remains a deferred mock control in this snapshot; a locked DirectX 12 display was recommended and awaits user confirmation.
+- Tests/Evidence/2026-10-07/NoRealmsArtifactManifest.json records current source/package hashes, current runtime reports and preservation of the previous native Quit package. Generate this current manifest with `node Tests/video-artifact-manifest.mjs --no-realms`. Older manifests and their generation modes describe historical checkpoints and should not be regenerated against newer working HTML.
 - Dirty work, configuration, map, index and preference data were preserved before edits at C:/dev/backups/Unnamed/no-realms-20261007-093729 (1189 files). The source reference and all 938 mirrored assets still verify. Git index entries, map and configuration remain preserved.
 - Docs/Independent_Menu_Review_Prompt.txt is the read-only independent-review handoff. Docs/Independent_Menu_Review_Packet.zip contains source and evidence for a ChatGPT reviewer without local access; its entry manifest identifies sanitized config and exclusions. It does not contain executable packages or private save data.
 
@@ -62,35 +62,35 @@ Minecraft Realms, Join Realm, their main-menu entry, invites/news/trial/purchase
 
 Quit Game now performs normal standalone shutdown after pending preferences finish and the dedicated file is flushed. The mock Game closed route is removed; 35 working routes remain. Editor Play is protected. See QuitGame.md for ownership, commands and remaining scope.
 
-- Editor/runtime builds and full Win64 Development BuildCookRun succeeded. Tests/QuitBuild.log records build/cook/stage/archive success for Packages/MenuQuitDevelopment.
-- Both native automation tests passed in Tests/MenuAutomation-20261007-091836/index.json. All 11 JavaScript unit tests passed, including queue draining, repeated-click rejection, failed-save recovery and editor capability protection.
-- Tests/QuitGameResults.json passed 16/16: normal exit code zero and engine shutdown logs through mouse/Enter activation, queued settings written before exit, windowed/fullscreen relaunch restoration, unrelated save preservation, and failed-save cancellation/retry. Successful cases never terminate the game process externally.
-- Live editor Play checks passed 4/4 in Tests/QuitEditorSafetyResults.json. The button is disabled, a direct native request is rejected, and Play remains responsive. The owned Play session was then stopped normally and the editor remains open.
-- Focused video suites passed 37/37 at both sizes in Tests/Captures/quit-video-*. Complete menu suites passed 426/426 at each size in Tests/Captures/quit-packaged-*. Their main-menu captures were inspected; the menu style and Quit placement remain unchanged.
+- Editor/runtime builds and full Win64 Development BuildCookRun succeeded. Tests/Evidence/2026-10-07/QuitBuild.log records build/cook/stage/archive success for Packages/MenuQuitDevelopment.
+- Both native automation tests passed in Tests/Evidence/2026-10-07/MenuAutomation-20261007-091836/index.json. All 11 JavaScript unit tests passed, including queue draining, repeated-click rejection, failed-save recovery and editor capability protection.
+- Tests/Evidence/2026-10-07/QuitGameResults.json passed 16/16: normal exit code zero and engine shutdown logs through mouse/Enter activation, queued settings written before exit, windowed/fullscreen relaunch restoration, unrelated save preservation, and failed-save cancellation/retry. Successful cases never terminate the game process externally.
+- Live editor Play checks passed 4/4 in Tests/Evidence/2026-10-07/QuitEditorSafetyResults.json. The button is disabled, a direct native request is rejected, and Play remains responsive. The owned Play session was then stopped normally and the editor remains open.
+- Focused video suites passed 37/37 at both sizes in Tests/Evidence/2026-10-07/Captures/quit-video-*. Complete menu suites passed 426/426 at each size in Tests/Evidence/2026-10-07/Captures/quit-packaged-*. Their main-menu captures were inspected; the menu style and Quit placement remain unchanged.
 - Registry regenerated from the current 35-route capture: 707 controls, with normal Quit marked implemented and removed from the deferred backlog. The source reference and all 938 assets still verify.
-- Tests/QuitArtifactManifest.json records that checkpoint's source/package hashes, passing reports, unchanged reference/map/config/index entries and preservation of the previous debug-reset candidate. It was generated with `node Tests/video-artifact-manifest.mjs --quit` before the later Realms removal. Earlier manifests/results remain historical checkpoints; failed harness attempts are retained under Tests/IssueRuns.
+- Tests/Evidence/2026-10-07/QuitArtifactManifest.json records that checkpoint's source/package hashes, passing reports, unchanged reference/map/config/index entries and preservation of the previous debug-reset candidate. It was generated with `node Tests/video-artifact-manifest.mjs --quit` before the later Realms removal. Earlier manifests/results remain historical checkpoints; failed harness attempts are retained under Tests/Evidence/2026-10-07/IssueRuns.
 
 ## Temporary Debug Reset Follow-Up
 
 The user confirmed that Hard Reset is temporary debugging UI and unrelated saves stay protected. The button is centered at the end of Video Settings, with the main menu's 200x20 logical size, textured style and font. No main-menu reset button was added. `BuildMenu.ps1 -ExcludeDebugTools` excludes it from the generated interface.
 
-- Both updated standalone video suites passed 37/37, including placement, main-menu style parity, confirmation/cancellation and the existing five functional settings. Evidence: Tests/Captures/debug-reset-1280x720 and debug-reset-1920x1080; both button screenshots were visually inspected.
+- Both updated standalone video suites passed 37/37, including placement, main-menu style parity, confirmation/cancellation and the existing five functional settings. Evidence: Tests/Evidence/2026-10-07/Captures/debug-reset-1280x720 and debug-reset-1920x1080; both button screenshots were visually inspected.
 - All six adapter/debug-control unit tests passed. Excluded adapter generation was checked, then the normal debugging interface was restored. All 938 source assets and the immutable reference still verify.
 - Packages/VideoSettingsDebugDevelopment is a presentation-only candidate. Native binaries and all non-HTML package files match the previously tested VideoSettingsDevelopment package, which remains untouched. No new native compilation or whole-menu sweep is claimed for this styling-only follow-up.
-- Tests/DebugResetArtifactManifest.json records that candidate's hashes and preservation checks; it was generated with `node Tests/video-artifact-manifest.mjs --debug-reset` at that checkpoint. The earlier manifest and complete persistence/regression evidence below remain unchanged.
+- Tests/Evidence/2026-10-07/DebugResetArtifactManifest.json records that candidate's hashes and preservation checks; it was generated with `node Tests/video-artifact-manifest.mjs --debug-reset` at that checkpoint. The earlier manifest and complete persistence/regression evidence below remain unchanged.
 
 ## Functional Video Settings Checkpoint
 
 See VideoSettings.md for scope and reproducible commands. Fullscreen, FPS limit, VSync, GUI scale and blur now have real functionality, save between launches, and support confirmed preference reset.
 
 - Win64 Development editor/runtime builds and BuildCookRun succeeded. The original MenuDevelopment package is preserved; the new package is VideoSettingsDevelopment.
-- Strict native request validation passed in Tests/VideoAutomation-20261007-083946/index.json. Four JavaScript adapter tests passed, including coalescing, rejection/readback and editor protection.
+- Strict native request validation passed in Tests/Evidence/2026-10-07/VideoAutomation-20261007-083946/index.json. Four JavaScript adapter tests passed, including coalescing, rejection/readback and editor protection.
 - Focused standalone video suites passed 34/34 at both 1280x720 and 1920x1080. They verify actual native modes and restored client dimensions, both shortcuts, measured 30/60 FPS engine cadence, VSync readback, Unlimited, GUI/focus behavior, rendered blur pixels, shared controls, native validation and confirmed reset.
-- Whole-menu regression suites passed 429/429 at each profile under Tests/Captures/video-packaged-*. They retain all 36 routes and test that unfinished controls remain session-only while the five functional values survive reload.
-- Independent-process persistence/reset checks passed 11/11 in Tests/VideoPersistenceResults.json, including restoration of all five effects after process termination, a second reset/defaults relaunch, and preservation of an unrelated save sentinel.
-- Actual 1024x768 standalone pack selection renders at scale 2, with both columns within the viewport. Tests/Captures/video-small-packs.png records the narrower-window guard.
+- Whole-menu regression suites passed 429/429 at each profile under Tests/Evidence/2026-10-07/Captures/video-packaged-*. They retain all 36 routes and test that unfinished controls remain session-only while the five functional values survive reload.
+- Independent-process persistence/reset checks passed 11/11 in Tests/Evidence/2026-10-07/VideoPersistenceResults.json, including restoration of all five effects after process termination, a second reset/defaults relaunch, and preservation of an unrelated save sentinel.
+- Actual 1024x768 standalone pack selection renders at scale 2, with both columns within the viewport. Tests/Evidence/2026-10-07/Captures/video-small-packs.png records the narrower-window guard.
 - Original source/map/config/index and prior package were preserved before edits. Reference index SHA-256 and all 938 assets remain unchanged. Final generated HTML and the physical package copy are hash matched after the presentation-only scale guard was staged.
-- Tests/VideoArtifactManifest.json records the final package/source hashes, passing reports and verified preservation of the map, project configuration, Git index entries and original package files. Git refreshed index stat metadata, but all paths, stages, modes and blob IDs match the saved baseline. Generate the manifest with `node Tests/video-artifact-manifest.mjs`; the earlier ArtifactManifest.json remains historical evidence.
+- Tests/Evidence/2026-10-07/VideoArtifactManifest.json records the final package/source hashes, passing reports and verified preservation of the map, project configuration, Git index entries and original package files. Git refreshed index stat metadata, but all paths, stages, modes and blob IDs match the saved baseline. Generate the manifest with `node Tests/video-artifact-manifest.mjs`; the earlier ArtifactManifest.json remains historical evidence.
 
 Native window readiness was found to occur after BeginPlay and is now handled by deferred initialization. Initial native tests also caught JSON numeric coercion; explicit JSON types now reject strings/booleans without mutation. Historical failed attempts are not counted as passing evidence.
 
@@ -105,12 +105,12 @@ The following records describe the earlier mock-only checkpoint, not the current
 | Map setup | Editor Python commandlet created and saved the empty 6515-byte L_Menu map; no binary asset hand edits |
 | Packaging | BuildCookRun build/cook/stage/archive exit 0; package under Packages/MenuDevelopment/Windows |
 | Early vertical slice | Editor-hosted and standalone 1920x1080 passed 17/17 original checks before whole-route investment |
-| Complete standalone 1920x1080 | 427/427 checks; Tests/Captures/packaged-1920x1080/results.json |
-| Complete standalone 1280x720 | 427/427 checks; Tests/Captures/packaged-1280x720/results.json |
+| Complete standalone 1920x1080 | 427/427 checks; Tests/Evidence/2026-10-07/Captures/packaged-1920x1080/results.json |
+| Complete standalone 1280x720 | 427/427 checks; Tests/Evidence/2026-10-07/Captures/packaged-1280x720/results.json |
 | Final package follow-up | Both profiles rerun after the dynamic GUI mock-range guard; 122/122 per profile in the targeted capture folders |
-| Relocated path / different cwd | 18/18 slice checks in `C:\dev\sandbox\Unnamed Menu Path Test\Windows`, launched with cwd C:\dev; Tests/Captures/path-space-1280x720-slice |
-| Supplemental | 18/18: selection/disabled states, sample delete/restore, Friends confirmation Cancel, pack ordering, shared settings, Single Biome/Realm endpoints, dynamic GUI mock-range unit check, no window-size effects, unchanged GameUserSettings hash, intact images and live panorama animation; Tests/SupplementResults.json |
-| Native editor composition | Real PIE floating window screenshot: Tests/Captures/native-pie/MainWindow.png; not a DOM-only mock or NullRHI rendering claim |
+| Relocated path / different cwd | 18/18 slice checks in `C:\dev\sandbox\Unnamed Menu Path Test\Windows`, launched with cwd C:\dev; Tests/Evidence/2026-10-07/Captures/path-space-1280x720-slice |
+| Supplemental | 18/18: selection/disabled states, sample delete/restore, Friends confirmation Cancel, pack ordering, shared settings, Single Biome/Realm endpoints, dynamic GUI mock-range unit check, no window-size effects, unchanged GameUserSettings hash, intact images and live panorama animation; Tests/Evidence/2026-10-07/SupplementResults.json |
+| Native editor composition | Real PIE floating window screenshot: Tests/Evidence/2026-10-07/Captures/native-pie/MainWindow.png; not a DOM-only mock or NullRHI rendering claim |
 | Registry | 706 observed control IDs plus structured reference definitions; contextual confirmations, Restore Entry and pack arrows included; ControlRegistry.json is authoritative |
 
 Complete smoke covers every source renderer, Create tabs, enabled button actions, mouse navigation, Escape return, keyboard slider changes, mock F11, shared state, Hardcore constraints, rule validation, staged Cancel/Done behavior, packs, language, key capture, scrolling, source service endpoints, bundled credits, resource restrictions and reload reset. Programmatic preparation isolates renderers; route buttons and targeted nested navigation establish their actual transitions separately.
@@ -127,7 +127,7 @@ Main, Options and Video screenshots exist for both exact packaged client profile
 |---|---|---|---|
 | Host compilation fails at else | UE_LOG macro statement expansion without braces | Explicit branch braces | Full UBT/UHT build succeeded |
 | WebGL SecurityError, no panorama texture | CEF console URL/line 178; file-origin images are cross-origin for texture upload | Embed the original six PNG byte streams as data URLs | Real cubemap, nonblank captures and animation pass; security remains enabled |
-| Initial route harness reports pack failures and times out | State was changed by its own earlier button sweep; wrong external button label | Compare staged packs against entry snapshot; use exact source label; reload before each suite | Both complete runs 427/427; initial report retained in Tests/IssueRuns |
+| Initial route harness reports pack failures and times out | State was changed by its own earlier button sweep; wrong external button label | Compare staged packs against entry snapshot; use exact source label; reload before each suite | Both complete runs 427/427; initial report retained in Tests/Evidence/2026-10-07/IssueRuns |
 | Animation readback seemed static | WebGL default framebuffer is not preserved for later toDataURL reads | Compare actual rendered screenshot pixels | Supplemental moving-frame check passes |
 | Synthetic native Tab did not establish DOM focus | Slate tool creates native key code 0, unlike OS input | Do not count synthetic tool return as acceptance | Documented physical-input residual check; browser-level keyboard tests pass |
 
@@ -137,4 +137,4 @@ Human physical-input/feel, driver-level VSync/tearing and native Minecraft pixel
 
 Build logs are retained under Saved/MenuBuild.log and Saved/MenuSmoke-*.log. Source-control checkpoints preserve the source and evidence, not generated caches or credentials. Tests use supported rendered CEF diagnostics; NullRHI was used only for data/map creation, never as visual proof.
 
-The historical UI-phase package sizes/SHA-256 values and run totals are in Tests/ArtifactManifest.json; Saved/MenuBuild-Final.log is its earlier build/cook/stage/archive record. The current review-fix checkpoint is recorded separately in Tests/ReviewFixesArtifactManifest.json and the current section above.
+The historical UI-phase package sizes/SHA-256 values and run totals are in Tests/Evidence/2026-10-07/ArtifactManifest.json; Saved/MenuBuild-Final.log is its earlier build/cook/stage/archive record. The current review-fix checkpoint is recorded separately in Tests/Evidence/2026-10-07/ReviewFixesArtifactManifest.json and the current section above.
