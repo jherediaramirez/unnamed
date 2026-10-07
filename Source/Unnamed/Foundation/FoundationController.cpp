@@ -174,7 +174,7 @@ void AFoundationController::HandleAction(FName Id, bool bDown)
     FFoundationActionRequest Request;
     Request.Target = FoundationPawn->Target();
     Request.Phase = bDown ? EFoundationPhase::Press : EFoundationPhase::Release;
-    Request.bSneak = FoundationPawn->LastIntent.bSneak;
+    Request.bCrouch = FoundationPawn->LastIntent.bCrouch;
     Request.bControl = InputRouter->IsKeyDown(EKeys::LeftControl) || InputRouter->IsKeyDown(EKeys::RightControl);
     if (bAttack)
         Request.Action = EFoundationAction::Attack;
@@ -222,7 +222,7 @@ void AFoundationController::UpdateHeldActions(const AFoundationPawn& FoundationP
         Request.Action = EFoundationAction::Use;
         Request.Phase = EFoundationPhase::Hold;
         Request.Target = Target;
-        Request.bSneak = FoundationPawn.LastIntent.bSneak;
+        Request.bCrouch = FoundationPawn.LastIntent.bCrouch;
         Actions.Dispatch(Request);
     }
     if (Actions.LastResult != LastActionResult)

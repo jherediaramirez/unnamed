@@ -3,15 +3,8 @@
 #include "CoreMinimal.h"
 #include "UnnamedInputIntent.generated.h"
 
-// Requests describe intent. FoundationSimulation resolves pose, velocity and
-// eligibility independently. RequestedGait is a legacy UI summary, never authority.
-UENUM(BlueprintType)
-enum class EUnnamedRequestedGait : uint8
-{
-    Idle,
-    Walk,
-    Sprint
-};
+// Requests describe intent only. FoundationSimulation resolves pose, gait, velocity and
+// eligibility (for example, crouching blocks a sprint start) independently.
 
 USTRUCT(BlueprintType)
 struct FUnnamedInputIntent
@@ -30,8 +23,6 @@ struct FUnnamedInputIntent
     bool bJumpHeld = false;
     UPROPERTY(BlueprintReadOnly)
     bool bJumpPressed = false;
-    UPROPERTY(BlueprintReadOnly)
-    EUnnamedRequestedGait RequestedGait = EUnnamedRequestedGait::Idle;
 };
 
 struct FUnnamedInputIntentModel
@@ -40,18 +31,7 @@ struct FUnnamedInputIntentModel
     bool bSprintDown = false, bCrouchDown = false;
     bool bToggleSprint = false, bToggleCrouch = false;
 
-    void Refresh()
-    {
-        Intent.RequestedGait = Intent.Move.IsNearlyZero()         ? EUnnamedRequestedGait::Idle
-            : Intent.bSprintRequested && !Intent.bCrouchRequested ? EUnnamedRequestedGait::Sprint
-                                                                  : EUnnamedRequestedGait::Walk;
-    }
-
-    void Move(FVector2D Value)
-    {
-        Intent.Move = Value.GetClampedToMaxSize(1.0);
-        Refresh();
-    }
+    void Move(FVector2D Value) { Intent.Move = Value.GetClampedToMaxSize(1.0); }
 
     void Sprint(bool bDown)
     {
@@ -63,7 +43,6 @@ struct FUnnamedInputIntentModel
         }
         else
             Intent.bSprintRequested = bDown;
-        Refresh();
     }
 
     void Crouch(bool bDown)
@@ -76,7 +55,6 @@ struct FUnnamedInputIntentModel
         }
         else
             Intent.bCrouchRequested = bDown;
-        Refresh();
     }
 
     void Jump(bool bDown)

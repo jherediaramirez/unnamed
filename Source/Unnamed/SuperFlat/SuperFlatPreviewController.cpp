@@ -1,4 +1,5 @@
 #include "SuperFlat/SuperFlatPreviewController.h"
+#include "UnnamedLog.h"
 #include "SuperFlat/SuperFlatGameMode.h"
 #include "UnnamedProjectSettings.h"
 #include "Input/UnnamedInputSubsystem.h"
@@ -19,8 +20,6 @@
 #include "UnrealClient.h"
 #endif
 
-DEFINE_LOG_CATEGORY_STATIC(LogSuperFlat, Log, All);
-
 void ASuperFlatPreviewController::BeginPlay()
 {
     Super::BeginPlay();
@@ -32,7 +31,7 @@ void ASuperFlatPreviewController::BeginPlay()
     SetIgnoreMoveInput(false);
     SetInputMode(FInputModeGameOnly());
     if (FSlateApplication::IsInitialized()) FSlateApplication::Get().SetAllUserFocusToGameViewport();
-    UE_LOG(LogSuperFlat, Display,
+    UE_LOG(LogUnnamedWorlds, Display,
         TEXT("Super Flat ready: 2000 m x 2000 m; temporary stock spectator camera; Escape returns to menu"));
 #if WITH_DEV_AUTOMATION_TESTS
     // Opt-in packaged integration check. Never runs in normal play or Shipping.
@@ -54,7 +53,7 @@ void ASuperFlatPreviewController::ReturnToMenu()
 {
     if (!IsLocalController() || bReturningToMenu) return;
     bReturningToMenu = true;
-    UE_LOG(LogSuperFlat, Display, TEXT("Returning to main menu"));
+    UE_LOG(LogUnnamedWorlds, Display, TEXT("Returning to main menu"));
     UGameplayStatics::OpenLevel(this, FName(UUnnamedProjectSettings::GetMenuMapPackage()));
 }
 
@@ -79,7 +78,7 @@ void ASuperFlatPreviewController::VerifyTestWorld()
     const bool bSpawnClear = !GetWorld()->OverlapBlockingTestByChannel(
         FVector(0, 0, 110), FQuat::Identity, ECC_Pawn, FCollisionShape::MakeCapsule(34, 88), Query);
     bPassed &= bSpawnClear;
-    UE_LOG(LogSuperFlat, Display, TEXT("SUPER_FLAT_TEST result=%s floorHits=%d/9 spawnClear=%d map=%s pawn=%s"),
+    UE_LOG(LogUnnamedWorlds, Display, TEXT("SUPER_FLAT_TEST result=%s floorHits=%d/9 spawnClear=%d map=%s pawn=%s"),
         bPassed ? TEXT("PASS") : TEXT("FAIL"), FloorHits, bSpawnClear, *UGameplayStatics::GetCurrentLevelName(this),
         *GetNameSafe(GetPawn() ? GetPawn()->GetClass() : nullptr));
     // Aim down enough for a useful rendered overview, without changing the authored spawn.

@@ -1,4 +1,5 @@
 #include "Menu/MenuPreferences.h"
+#include "UnnamedFiles.h"
 #include "UnnamedSession.h"
 
 #include "Dom/JsonObject.h"
@@ -89,7 +90,7 @@ void UMenuPreferences::Load(const FString& Path, bool bSave)
     if (!bPersistent) return;
     // Recover the last good document if replacement was interrupted after the
     // original was backed up. Never replace an existing invalid/future document.
-    const FString ReadPath = IFileManager::Get().FileExists(*Filename) ? Filename : Filename + TEXT(".bak");
+    const FString ReadPath = UnnamedFiles::ReadablePath(Filename);
     if (!IFileManager::Get().FileExists(*ReadPath)) return;
     TSharedPtr<FJsonObject> Saved;
     if (IFileManager::Get().FileSize(*ReadPath) > 262144 || !FFileHelper::LoadFileToString(Json, *ReadPath) ||
@@ -230,26 +231,20 @@ bool UMenuPreferences::Save(const TSharedPtr<FJsonObject>& Value)
     }
     const auto Document = Copy(Value);
     Document->SetNumberField(TEXT("version"), 1);
-    const FString Temporary = Filename + TEXT(".tmp");
-    IFileManager::Get().MakeDirectory(*FPaths::GetPath(Filename), true);
-    if (!FFileHelper::SaveStringToFile(
-            Encode(Document), *Temporary, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+    switch (UnnamedFiles::SaveTextAtomically(Filename, Encode(Document)))
     {
+    case UnnamedFiles::ESaveResult::Saved:
+        return true;
+    case UnnamedFiles::ESaveResult::WriteFailed:
         LastError = TEXT("Preferences could not be saved. Your previous saved choices are unchanged.");
         return false;
-    }
-    if (IFileManager::Get().FileExists(*Filename) &&
-        IFileManager::Get().Copy(*(Filename + TEXT(".bak")), *Filename) != COPY_OK)
-    {
+    case UnnamedFiles::ESaveResult::BackupFailed:
         LastError = TEXT("The previous preferences could not be backed up. Please try again.");
         return false;
-    }
-    if (!IFileManager::Get().Move(*Filename, *Temporary, true))
-    {
+    default:
         LastError = TEXT("Preferences could not be replaced. A backup of the previous choices was retained.");
         return false;
     }
-    return true;
 }
 
 FString UMenuPreferences::Snapshot(bool bSuccess) const
@@ -300,7 +295,7 @@ FString UMenuPreferences::ResetPreferences()
     if (bProtectedFile && bPersistent)
     {
         const FString Backup = Filename + TEXT(".protected-") + FGuid::NewGuid().ToString(EGuidFormats::Digits);
-        const FString Existing = IFileManager::Get().FileExists(*Filename) ? Filename : Filename + TEXT(".bak");
+        const FString Existing = UnnamedFiles::ReadablePath(Filename);
         if (IFileManager::Get().Copy(*Backup, *Existing) != COPY_OK)
         {
             LastError = TEXT("The protected preferences could not be backed up. Reset was cancelled.");

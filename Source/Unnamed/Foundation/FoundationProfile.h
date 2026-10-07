@@ -31,7 +31,7 @@ public:
     UPROPERTY(Config, EditAnywhere)
     double SprintMultiplier = 1.3;
     UPROPERTY(Config, EditAnywhere)
-    double SneakMultiplier = .3;
+    double CrouchMultiplier = .3;
     UPROPERTY(Config, EditAnywhere)
     double GroundFriction = .6;
     UPROPERTY(Config, EditAnywhere)
@@ -58,6 +58,9 @@ public:
     double MinorCollisionAngleDegrees = 8;
     UPROPERTY(Config, EditAnywhere)
     int32 JumpRepeatTicks = 10;
+    // Double-tap forward window when the sprintWindow preference is unavailable.
+    UPROPERTY(Config, EditAnywhere)
+    int32 SprintWindowTicks = 7;
     UPROPERTY(Config, EditAnywhere)
     double AutoJumpHeightCm = 120;
     UPROPERTY(Config, EditAnywhere)

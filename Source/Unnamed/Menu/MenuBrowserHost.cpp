@@ -1,4 +1,5 @@
 #include "Menu/MenuBrowserHost.h"
+#include "UnnamedLog.h"
 #include "Menu/MenuApplication.h"
 #include "Menu/MenuInputBridge.h"
 #include "Menu/MenuPreferences.h"
@@ -17,8 +18,6 @@
 #include "Misc/Parse.h"
 #include "Misc/Paths.h"
 #include "SWebBrowser.h"
-
-DEFINE_LOG_CATEGORY_STATIC(LogUnnamedMenu, Log, All);
 
 UMenuBrowserHost::UMenuBrowserHost()
 {
@@ -115,7 +114,7 @@ void UMenuBrowserHost::Show()
     Player->SetInputMode(InputMode);
     Player->SetIgnoreMoveInput(true);
     Player->SetIgnoreLookInput(true);
-    UE_LOG(LogUnnamedMenu, Log, TEXT("Offline menu shown: %s"), *MenuURL);
+    UE_LOG(LogUnnamedMenu, Log, TEXT("Offline menu: %s"), *MenuURL);
 }
 
 void UMenuBrowserHost::Hide()

@@ -15,6 +15,23 @@
 #include "EngineUtils.h"
 #include "Dom/JsonValue.h"
 
+namespace
+{
+    // FUnnamedInputIntent is the input layer's request; the simulation takes its own struct so it
+    // never depends on input or preference systems.
+    FFoundationIntent MakeSimulationIntent(const FUnnamedInputIntent& Input, bool bAutoJump, int32 SprintWindowTicks)
+    {
+        FFoundationIntent Intent;
+        Intent.Move = Input.Move;
+        Intent.bJump = Input.bJumpHeld;
+        Intent.bCrouch = Input.bCrouchRequested;
+        Intent.bSprint = Input.bSprintRequested;
+        Intent.bAutoJump = bAutoJump;
+        Intent.SprintWindowTicks = SprintWindowTicks;
+        return Intent;
+    }
+}
+
 AFoundationPawn::AFoundationPawn()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -22,20 +39,21 @@ AFoundationPawn::AFoundationPawn()
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("FeetOrigin"));
     Collision = CreateDefaultSubobject<UBoxComponent>(TEXT("WorldAlignedCollision"));
     Collision->SetupAttachment(RootComponent);
-    Collision->SetBoxExtent({30, 30, 90});
-    Collision->SetRelativeLocation({0, 0, 90});
+    const UFoundationProfile& Profile = *GetDefault<UFoundationProfile>();
+    Collision->SetBoxExtent({Profile.WidthCm * .5, Profile.WidthCm * .5, Profile.StandingHeightCm * .5});
+    Collision->SetRelativeLocation({0, 0, Profile.StandingHeightCm * .5});
     Collision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     Collision->SetCollisionObjectType(ECC_Pawn);
     Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Eyes"));
     Camera->SetupAttachment(RootComponent);
-    Camera->SetRelativeLocation({0, 0, 162});
+    Camera->SetRelativeLocation({0, 0, Profile.StandingEyesCm});
     Camera->bUsePawnControlRotation = false;
 }
 
 void AFoundationPawn::BeginPlay()
 {
     Super::BeginPlay();
-    Simulation.Reset(GetActorLocation());
+    Simulation.Reset(GetActorLocation(), *GetDefault<UFoundationProfile>());
     for (TActorIterator<AFoundationLab> It(GetWorld()); It; ++It)
     {
         Lab = *It;
@@ -86,6 +104,8 @@ void AFoundationPawn::Tick(float Dt)
     Super::Tick(Dt);
     auto* PC = Cast<APlayerController>(GetController());
     if (!PC || !PC->GetLocalPlayer() || !Lab.IsValid()) return;
+#if WITH_DEV_AUTOMATION_TESTS
+    // Opt-in runtime verification (-FoundationProbe=report.json); never part of Shipping.
     if (!bProbeCreated)
     {
         bProbeCreated = true;
@@ -97,6 +117,7 @@ void AFoundationPawn::Tick(float Dt)
             Probe->AddTickPrerequisiteActor(this);
         }
     }
+#endif
     const auto& P = *GetDefault<UFoundationProfile>();
     auto* Prefs = GetGameInstance()->GetSubsystem<UMenuPreferences>();
     auto Number = [&](const TCHAR* Id, double Default)
@@ -119,18 +140,14 @@ void AFoundationPawn::Tick(float Dt)
             View.Pitch - Request.Look.Y * Gain * (Boolean(TEXT("invertYMouse"), false) ? -1 : 1), -90., 90.);
         View.Roll = 0;
         PC->SetControlRotation(View);
-        LastIntent.Move = Request.Move;
-        LastIntent.bJump = Request.bJumpHeld;
-        LastIntent.bSneak = Request.bCrouchRequested;
-        LastIntent.bSprint = Request.bSprintRequested;
-        LastIntent.bAutoJump = Boolean(TEXT("autoJump"), false);
-        LastIntent.SprintWindowTicks = FMath::Clamp(int32(Number(TEXT("sprintWindow"), 7)), 0, 10);
+        LastIntent = MakeSimulationIntent(Request, Boolean(TEXT("autoJump"), false),
+            FMath::Clamp(int32(Number(TEXT("sprintWindow"), P.SprintWindowTicks)), 0, 10));
         Simulation.Advance(Dt, LastIntent, View.Yaw, P, Lab->CollisionBoxes, Eligibility);
         SetActorLocation(Simulation.Feet);
         SetActorRotation(FRotator::ZeroRotator);
         if (Simulation.Feet.Z < -1000)
         {
-            Simulation.Reset({0, 0, 0});
+            Simulation.Reset({0, 0, 0}, P);
             SetActorLocation(Simulation.Feet);
         }
     }

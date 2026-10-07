@@ -1,4 +1,6 @@
 #include "Menu/MenuVideoSettings.h"
+#include "UnnamedLog.h"
+#include "UnnamedFiles.h"
 #include "UnnamedSession.h"
 
 #include "Engine/Engine.h"
@@ -15,8 +17,6 @@
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Widgets/SWindow.h"
-
-DEFINE_LOG_CATEGORY_STATIC(LogMenuVideoSettings, Log, All);
 
 namespace
 {
@@ -70,8 +70,8 @@ void UMenuVideoSettings::Initialize(bool bAllowNativeChanges)
         else if (bLoadedSettings && !bSavedFullscreen)
             GetWindow()->ReshapeWindow(WindowedPosition, FVector2D(RestoredWindowedSize));
     }
-    UE_LOG(LogMenuVideoSettings, Display, TEXT("Five-setting adapter initialized; native=%d persistence=%d"),
-        bNativeAllowed, bPersistenceEnabled);
+    UE_LOG(LogUnnamedMenu, Display, TEXT("Five-setting adapter initialized; native=%d persistence=%d"), bNativeAllowed,
+        bPersistenceEnabled);
 }
 
 bool UMenuVideoSettings::SetFrameLimit(int32 Value)
@@ -185,7 +185,7 @@ void UMenuVideoSettings::Tick()
         UserSettings->SetFullscreenMode(bPreviousFullscreen ? EWindowMode::WindowedFullscreen : EWindowMode::Windowed);
         UserSettings->SetScreenResolution(WindowedSize);
         UserSettings->ApplyResolutionSettings(false);
-        UE_LOG(LogMenuVideoSettings, Error, TEXT("%s"), *LastError);
+        UE_LOG(LogUnnamedMenu, Error, TEXT("%s"), *LastError);
     }
 }
 
@@ -265,7 +265,7 @@ FString UMenuVideoSettings::HardReset()
     }
     const int32 PreviousLimit = FrameLimit;
     const bool bPreviousVSync = bVSync;
-    if (!SetFrameLimit(120) || !SetVSync(true) || !SetFullscreen(false))
+    if (!SetFrameLimit(MenuVideoDefaults::FrameLimit) || !SetVSync(MenuVideoDefaults::bVSync) || !SetFullscreen(false))
     {
         const FString Error = LastError;
         SetFrameLimit(PreviousLimit);
@@ -273,8 +273,8 @@ FString UMenuVideoSettings::HardReset()
         LastError = Error;
         return Snapshot(false);
     }
-    GuiScale = 0;
-    BackgroundBlur = 5;
+    GuiScale = MenuVideoDefaults::GuiScale;
+    BackgroundBlur = MenuVideoDefaults::BackgroundBlur;
     if (!bTransitionPending) Save();
     return Snapshot();
 }
@@ -332,7 +332,7 @@ void UMenuVideoSettings::Load()
 {
     if (!bPersistenceEnabled) return;
     FConfigFile File;
-    File.Read(SettingsFile);
+    File.Read(UnnamedFiles::ReadablePath(SettingsFile));
     int32 Version = 0;
     if (!File.GetInt(Section, TEXT("Version"), Version) || Version != 1) return;
     bLoadedSettings = true;
@@ -371,11 +371,13 @@ bool UMenuVideoSettings::Save()
     File.SetString(Section, TEXT("BackgroundBlur"), *LexToString(BackgroundBlur));
     File.SetString(Section, TEXT("WindowedWidth"), *LexToString(WindowedSize.X));
     File.SetString(Section, TEXT("WindowedHeight"), *LexToString(WindowedSize.Y));
-    IFileManager::Get().MakeDirectory(*FPaths::GetPath(SettingsFile), true);
-    if (!File.Write(SettingsFile))
+    FString Text;
+    File.WriteToString(Text, SettingsFile);
+    // Same temp-file + backup replacement as preferences, so a crash mid-save cannot corrupt it.
+    if (UnnamedFiles::SaveTextAtomically(SettingsFile, Text) != UnnamedFiles::ESaveResult::Saved)
     {
         LastError = TEXT("Settings changed for this session, but could not be saved.");
-        UE_LOG(LogMenuVideoSettings, Warning, TEXT("%s"), *LastError);
+        UE_LOG(LogUnnamedMenu, Warning, TEXT("%s"), *LastError);
         return false;
     }
     return true;

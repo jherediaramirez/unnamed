@@ -6,6 +6,15 @@
 
 class SWindow;
 
+// First-run values; Hard Reset restores them.
+namespace MenuVideoDefaults
+{
+    constexpr bool bVSync = true;
+    constexpr int32 FrameLimit = 120;
+    constexpr int32 GuiScale = 0; // 0 = Auto
+    constexpr int32 BackgroundBlur = 5;
+}
+
 // Restricted video-setting binding. No console or arbitrary settings API.
 UCLASS()
 class UNNAMED_API UMenuVideoSettings : public UObject
@@ -48,10 +57,10 @@ private:
     bool bTargetFullscreen = false;
     bool bPreviousFullscreen = false;
     bool bSavedFullscreen = false;
-    bool bVSync = true;
-    int32 FrameLimit = 120;
-    int32 GuiScale = 0;
-    int32 BackgroundBlur = 5;
+    bool bVSync = MenuVideoDefaults::bVSync;
+    int32 FrameLimit = MenuVideoDefaults::FrameLimit;
+    int32 GuiScale = MenuVideoDefaults::GuiScale;
+    int32 BackgroundBlur = MenuVideoDefaults::BackgroundBlur;
     FIntPoint WindowedSize = FIntPoint(1280, 720);
     FVector2D WindowedPosition = FVector2D::ZeroVector;
     double TransitionDeadline = 0;

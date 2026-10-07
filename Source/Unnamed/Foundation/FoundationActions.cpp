@@ -34,10 +34,10 @@ FFoundationActionResult FFoundationActions::Dispatch(const FFoundationActionRequ
             if (bBreaking)
                 Result.Reason = TEXT("use rejected: block break active");
             else if (R.Target.bInRange && R.Target.Kind == EFoundationTargetKind::Block &&
-                R.Target.bRejectInteraction && !(R.bSneak && (Slots[Slot] > 0 || Offhand > 0)))
+                R.Target.bRejectInteraction && !(R.bCrouch && (Slots[Slot] > 0 || Offhand > 0)))
                 Result.Reason = TEXT("block interaction failed; item/offhand fallback rejected");
             else if (R.Target.bInRange && R.Target.bInteractive &&
-                !(R.Target.Kind == EFoundationTargetKind::Block && R.bSneak && (Slots[Slot] > 0 || Offhand > 0)))
+                !(R.Target.Kind == EFoundationTargetKind::Block && R.bCrouch && (Slots[Slot] > 0 || Offhand > 0)))
                 Result = {true, TEXT("target interaction fixture accepted")};
             else if (Slots[Slot] > 0)
             {

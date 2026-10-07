@@ -1,10 +1,12 @@
 #include "Foundation/FoundationRuntimeProbe.h"
+#include "UnnamedLog.h"
 #include "Foundation/FoundationHud.h"
 #include "Foundation/FoundationInputRouter.h"
 #include "Foundation/FoundationPanels.h"
 #include "Menu/MenuBrowserHost.h"
 #include "Foundation/FoundationLab.h"
 #include "Foundation/FoundationPawn.h"
+#include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationController.h"
 #include "Menu/MenuInputBridge.h"
 #include "Input/UnnamedInputSubsystem.h"
@@ -52,7 +54,7 @@ void UFoundationRuntimeProbe::Reset(FVector P)
     for (FKey K : Keys)
         Key(K, false);
     PC->GetInputSubsystem()->ClearIntent();
-    Pawn->Simulation.Reset(P);
+    Pawn->Simulation.Reset(P, *GetDefault<UFoundationProfile>());
     Pawn->Simulation.bGrounded = true;
     Pawn->SetActorLocation(P);
     PC->SetControlRotation(FRotator::ZeroRotator);
@@ -71,7 +73,8 @@ void UFoundationRuntimeProbe::Record(FString Name, bool Pass, FString Detail)
         ++Failures;
         R->SetStringField(TEXT("runtime_snapshot"), PC->GetHud()->BuildSnapshot());
     }
-    UE_LOG(LogTemp, Display, TEXT("FOUNDATION CHECK %s: %s | %s"), Pass ? TEXT("PASS") : TEXT("FAIL"), *Name, *Detail);
+    UE_LOG(LogUnnamedFoundation, Display, TEXT("FOUNDATION CHECK %s: %s | %s"), Pass ? TEXT("PASS") : TEXT("FAIL"),
+        *Name, *Detail);
 }
 
 void UFoundationRuntimeProbe::Measure(FString Name, double Actual, double Expected, double Tolerance)
@@ -88,6 +91,7 @@ void UFoundationRuntimeProbe::Add(FString Name, double Duration, TFunction<void(
 void UFoundationRuntimeProbe::BeginPlay()
 {
     Super::BeginPlay();
+#if WITH_DEV_AUTOMATION_TESTS
     Pawn = Cast<AFoundationPawn>(GetOwner());
     PC = Pawn ? Cast<AFoundationController>(Pawn->GetController()) : nullptr;
     if (!Pawn || !PC || !FParse::Value(FCommandLine::Get(), TEXT("FoundationProbe="), Output))
@@ -211,7 +215,7 @@ void UFoundationRuntimeProbe::BeginPlay()
                 TEXT("continues until forward/eligibility/collision ends it"));
         });
     Add(
-        TEXT("sneak"), 2,
+        TEXT("crouch"), 2,
         [this]
         {
             Reset();
@@ -220,10 +224,10 @@ void UFoundationRuntimeProbe::BeginPlay()
         },
         [this]
         {
-            Measure(TEXT("sneak blocks/s"), Pawn->Simulation.LastDisplacement.Size2D() / 5., 1.2951542, .0129515);
+            Measure(TEXT("crouch blocks/s"), Pawn->Simulation.LastDisplacement.Size2D() / 5., 1.2951542, .0129515);
             Measure(TEXT("crouch height cm"), Pawn->Simulation.HeightCm, 150, .1);
             Measure(TEXT("crouch eye cm"), Pawn->Simulation.EyeCm, 127, .1);
-            Record(TEXT("C requests crouch"), Pawn->LastIntent.bSneak && Pawn->Simulation.bCrouched,
+            Record(TEXT("C requests crouch"), Pawn->LastIntent.bCrouch && Pawn->Simulation.bCrouched,
                 TEXT("project personal default C"));
         });
     Add(
@@ -404,7 +408,7 @@ void UFoundationRuntimeProbe::BeginPlay()
         },
         [this]
         {
-            Record(TEXT("F3+C does not also crouch"), !Pawn->LastIntent.bSneak && !Pawn->Simulation.bCrouched,
+            Record(TEXT("F3+C does not also crouch"), !Pawn->LastIntent.bCrouch && !Pawn->Simulation.bCrouched,
                 TEXT("debug chord consumes shared C binding"));
             Key(EKeys::C, false);
             Key(EKeys::F3, false);
@@ -541,6 +545,9 @@ void UFoundationRuntimeProbe::BeginPlay()
         [this] { FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(Output, TEXT("png")), true, false); });
     Add(TEXT("capture flush"), 1, [] {}, [] {});
     TotalStarted = Started = FPlatformTime::Seconds();
+#else
+    SetComponentTickEnabled(false);
+#endif
 }
 
 void UFoundationRuntimeProbe::TickComponent(float Delta, ELevelTick Type, FActorComponentTickFunction* Function)

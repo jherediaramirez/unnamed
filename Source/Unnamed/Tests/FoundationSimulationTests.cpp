@@ -35,7 +35,7 @@ bool FFoundationMovementTest::RunTest(const FString&)
     for (int32 FPS : {30, 60, 120})
     {
         FFoundationSimulation S;
-        S.Reset({0, 0, 0});
+        S.Reset({0, 0, 0}, P);
         S.bGrounded = true;
         FFoundationIntent I;
         I.Move = {0, 1};
@@ -55,14 +55,14 @@ bool FFoundationMovementTest::RunTest(const FString&)
         for (int32 T = 0; T < 20; ++T)
             S.Step(I, 0, P, Ground);
         TestTrue(TEXT("stopped"), S.VelocityPerTick.SizeSquared2D() == 0);
-        I.bSneak = true;
+        I.bCrouch = true;
         I.Move = {0, 1};
         for (int32 T = 0; T < 60; ++T)
             S.Step(I, 0, P, Ground);
-        TestTrue(TEXT("sneak speed"), FMath::IsNearlyEqual(S.LastDisplacement.Size2D() / 5., 1.2951542, .01295));
+        TestTrue(TEXT("crouch speed"), FMath::IsNearlyEqual(S.LastDisplacement.Size2D() / 5., 1.2951542, .01295));
         TestEqual(TEXT("crouch height"), S.HeightCm, 150.);
         TestTrue(TEXT("crouch eye"), FMath::Abs(S.EyeCm - 127) < .1);
-        S.Reset({});
+        S.Reset({}, P);
         S.bGrounded = true;
         I = {};
         I.bJump = true;
@@ -80,7 +80,7 @@ bool FFoundationMovementTest::RunTest(const FString&)
             FString::Printf(TEXT("fps=%d apex=%.8f blocks airtime=%d reference ticks"), FPS, Apex / 100., AirTicks));
         S.Step(I, 0, P, Ground);
         TestTrue(TEXT("held jump repeats"), S.Feet.Z > 0);
-        S.Reset({});
+        S.Reset({}, P);
         S.bGrounded = true;
         I = {};
         I.Move = {1, 1};
@@ -90,7 +90,7 @@ bool FFoundationMovementTest::RunTest(const FString&)
             TEXT("26.3 diagonal speed"), FMath::IsNearlyEqual(S.LastDisplacement.Size2D() / 5., 4.40528634, .04405));
     }
     FFoundationSimulation S;
-    S.Reset({});
+    S.Reset({}, P);
     S.bGrounded = true;
     FFoundationIntent I;
     I.Move = {0, 1};
@@ -109,16 +109,16 @@ bool FFoundationMovementTest::RunTest(const FString&)
         FMath::IsNearlyEqual(StopBlocks, .255845995478, .001));
     TestEqual(TEXT("walk release first zero displacement tick"), FirstStoppedTick, 8);
     AddInfo(FString::Printf(TEXT("walk release distance=%.10f blocks firstZeroTick=%d"), StopBlocks, FirstStoppedTick));
-    S.Reset({});
+    S.Reset({}, P);
     S.bGrounded = true;
     I.Move = {1, 1};
-    I.bSneak = true;
+    I.bCrouch = true;
     for (int32 T = 0; T < 60; ++T)
         S.Step(I, 0, P, Ground);
-    TestTrue(TEXT("26.3 sneak diagonal speed"),
+    TestTrue(TEXT("26.3 crouch diagonal speed"),
         FMath::IsNearlyEqual(S.LastDisplacement.Size2D() / 5., 1.8316246138, .0183163));
-    AddInfo(FString::Printf(TEXT("sneak diagonal=%.10f blocks/s"), S.LastDisplacement.Size2D() / 5.));
-    S.Reset({});
+    AddInfo(FString::Printf(TEXT("crouch diagonal=%.10f blocks/s"), S.LastDisplacement.Size2D() / 5.));
+    S.Reset({}, P);
     S.bGrounded = true;
     I = {};
     I.Move = {0, 1};
@@ -141,7 +141,7 @@ bool FFoundationMovementTest::RunTest(const FString&)
     Denied.bEnoughFood = false;
     S.Step(I, 90, P, Ground, Denied);
     TestFalse(TEXT("eligibility loss cancels resolved sprint"), S.bSprinting);
-    S.Reset({});
+    S.Reset({}, P);
     S.Advance(2., {}, 0, P, Ground);
     TestEqual(TEXT("hitch bounded"), S.Steps, int64(5));
     TestTrue(TEXT("hitch counted"), S.DroppedSeconds > 1.7);
@@ -162,7 +162,7 @@ bool FFoundationCollisionTest::RunTest(const FString&)
         TArray<FBox> Boxes = {FBox(FVector(-1000, -1000, -100), FVector(1000, 1000, 0)),
             FBox(FVector(100, -100, 0), FVector(200, 100, Height))};
         FFoundationSimulation S;
-        S.Reset({0, 0, 0});
+        S.Reset({0, 0, 0}, P);
         S.bGrounded = true;
         FFoundationIntent I;
         I.Move = {0, 1};
@@ -173,17 +173,17 @@ bool FFoundationCollisionTest::RunTest(const FString&)
     TArray<FBox> Low = {FBox(FVector(-1000, -1000, -100), FVector(1000, 1000, 0)),
         FBox(FVector(-100, -100, 155), FVector(100, 100, 200))};
     FFoundationSimulation S;
-    S.Reset({});
+    S.Reset({}, P);
     S.bGrounded = true;
     S.Step({}, 0, P, Low);
     TestTrue(TEXT("blocked standing retains crouch"), S.bCrouched);
     TestFalse(TEXT("headroom false"), S.bHeadroom);
     const TArray<FBox> Ledge = {FBox(FVector(-100, -100, -100), FVector(100, 100, 0))};
-    S.Reset({});
+    S.Reset({}, P);
     S.bGrounded = true;
     FFoundationIntent I;
     I.Move = {0, 1};
-    I.bSneak = true;
+    I.bCrouch = true;
     for (int32 T = 0; T < 300; ++T)
         S.Step(I, 0, P, Ledge);
     TestTrue(TEXT("ledge retains support"), S.Feet.X < 130 && S.Feet.Z >= 0);
@@ -198,7 +198,7 @@ bool FFoundationCollisionTest::RunTest(const FString&)
         FBox(FVector(-1000, -1000, -100), FVector(1000, 1000, 0)), FBox(FVector(100, -100, 0), FVector(250, 100, 100))};
     for (bool Enabled : {false, true})
     {
-        S.Reset({});
+        S.Reset({}, P);
         S.bGrounded = true;
         I = {};
         I.Move = {0, 1};

@@ -48,7 +48,8 @@ struct FFoundationActionRequest
     EFoundationAction Action = EFoundationAction::Attack;
     EFoundationPhase Phase = EFoundationPhase::Press;
     FFoundationTarget Target;
-    bool bSneak = false, bControl = false;
+    bool bCrouch = false; // Crouching use falls back to the held item instead of the block.
+    bool bControl = false; // Ctrl+Drop drops the whole stack.
 };
 
 struct FFoundationActionResult

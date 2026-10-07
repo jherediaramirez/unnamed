@@ -195,11 +195,11 @@ FString UFoundationHud::BuildSnapshot() const
         }
         if (Sections & MovementSection)
             Out += FString::Printf(
-                TEXT("%s | sprint intent=%d resolved=%d | sneak intent=%d pose=%d | headroom=%d\nVelocity post-drag "
+                TEXT("%s | sprint intent=%d resolved=%d | crouch intent=%d pose=%d | headroom=%d\nVelocity post-drag "
                      "cm/ref.tick %s | measured H %.4f blocks/s V %.4f blocks/s\nDisplacement %.5f blocks/reference "
                      "tick (20 Hz) | step %lld | dropped %.3fs\nEligibility: %s\n"),
                 Simulation.bGrounded ? TEXT("grounded") : TEXT("airborne"), Intent.bSprint, Simulation.bSprinting,
-                Intent.bSneak, Simulation.bCrouched, Simulation.bHeadroom,
+                Intent.bCrouch, Simulation.bCrouched, Simulation.bHeadroom,
                 *Simulation.VelocityPerTick.ToCompactString(), Simulation.LastDisplacement.Size2D() / 5.,
                 Simulation.LastDisplacement.Z / 5., Simulation.LastDisplacement.Size() / 100., Simulation.Steps,
                 Simulation.DroppedSeconds, *Simulation.Rejection);

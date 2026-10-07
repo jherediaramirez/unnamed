@@ -88,16 +88,19 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FInputIntentTest, "Unnamed.Input.IntentRules",
 bool FInputIntentTest::RunTest(const FString& Parameters)
 {
     FUnnamedInputIntentModel Model;
-    TestEqual(TEXT("No movement is idle"), Model.Intent.RequestedGait, EUnnamedRequestedGait::Idle);
+    TestTrue(TEXT("Nothing requested at rest"),
+        Model.Intent.Move.IsNearlyZero() && !Model.Intent.bSprintRequested && !Model.Intent.bCrouchRequested);
     Model.Sprint(true);
-    TestEqual(TEXT("Sprint while still remains idle"), Model.Intent.RequestedGait, EUnnamedRequestedGait::Idle);
+    TestTrue(TEXT("Sprint is requested even while still"), Model.Intent.bSprintRequested);
     Model.Move({0, 1});
-    TestEqual(TEXT("Move plus sprint requests sprint"), Model.Intent.RequestedGait, EUnnamedRequestedGait::Sprint);
     Model.Crouch(true);
-    TestEqual(TEXT("Crouch wins over sprint"), Model.Intent.RequestedGait, EUnnamedRequestedGait::Walk);
+    // Both requests stand; FoundationSimulation decides that crouching blocks a sprint start.
+    TestTrue(
+        TEXT("Crouch and sprint requests coexist"), Model.Intent.bSprintRequested && Model.Intent.bCrouchRequested);
     Model.Crouch(false);
     Model.Sprint(false);
-    TestEqual(TEXT("Released sprint becomes walk"), Model.Intent.RequestedGait, EUnnamedRequestedGait::Walk);
+    TestTrue(TEXT("Released keys clear their requests"),
+        !Model.Intent.bSprintRequested && !Model.Intent.bCrouchRequested && Model.Intent.Move.Y > 0);
     Model.Move({1, 1});
     TestTrue(TEXT("Diagonal request is normalized"), FMath::IsNearlyEqual(Model.Intent.Move.Size(), 1.0));
     Model.Jump(true);
@@ -214,11 +217,11 @@ bool FInputPipelineTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Both diagonal axes survive debug-key overlap"),
         F.Input->GetIntent().Move.X > .7 && F.Input->GetIntent().Move.Y > .7);
     F.Key(EKeys::LeftShift, IE_Pressed);
-    TestEqual(TEXT("Native Shift requests sprint"), F.Input->GetIntent().RequestedGait, EUnnamedRequestedGait::Sprint);
+    TestTrue(TEXT("Native Shift requests sprint"), F.Input->GetIntent().bSprintRequested);
     TestFalse(TEXT("Shift no longer crouches"), F.Input->GetIntent().bCrouchRequested);
     F.Key(EKeys::C, IE_Pressed);
     TestTrue(TEXT("Native C requests crouch despite debug C overlap"), F.Input->GetIntent().bCrouchRequested);
-    TestEqual(TEXT("Native crouch takes precedence"), F.Input->GetIntent().RequestedGait, EUnnamedRequestedGait::Walk);
+    TestTrue(TEXT("Native crouch and sprint requests coexist"), F.Input->GetIntent().bSprintRequested);
     F.Key(EKeys::SpaceBar, IE_Pressed);
     TestTrue(TEXT("Jump first simulation update sees edge"), F.Input->ConsumeIntent().bJumpPressed);
     TestFalse(TEXT("Next simulation update does not repeat edge"), F.Input->ConsumeIntent().bJumpPressed);
@@ -297,13 +300,13 @@ bool FFoundationActionsTest::RunTest(const FString&)
     TestFalse(TEXT("failed target did not begin item use"), A.bUsing);
     R.Target.bRejectInteraction = false;
     R.Target.Kind = EFoundationTargetKind::Entity;
-    R.bSneak = true;
+    R.bCrouch = true;
     A.Dispatch(R);
-    TestFalse(TEXT("sneaking does not generically bypass entity interaction"), A.bUsing);
+    TestFalse(TEXT("crouching does not generically bypass entity interaction"), A.bUsing);
     R.Target.Kind = EFoundationTargetKind::Block;
-    R.bSneak = true;
+    R.bCrouch = true;
     A.Dispatch(R);
-    TestTrue(TEXT("sneak with hand bypasses target to item"), A.bUsing);
+    TestTrue(TEXT("crouch with a held item bypasses the target to the item"), A.bUsing);
     R.Action = EFoundationAction::Attack;
     TestFalse(TEXT("using item consumes attack"), A.Dispatch(R).bAccepted);
     R.Action = EFoundationAction::Pick;

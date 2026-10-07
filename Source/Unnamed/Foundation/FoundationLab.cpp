@@ -33,9 +33,9 @@ void AFoundationLab::Add(FString Label, FVector Min, FVector Max, EFoundationTar
     {
         auto* Dynamic = UMaterialInstanceDynamic::Create(Material, this);
         Dynamic->SetVectorParameterValue(TEXT("Color"),
-            Kind == EFoundationTargetKind::Entity ? FLinearColor(.9, .35, .15)
-                : Interactive                     ? FLinearColor(.2, .6, .8)
-                                                  : FLinearColor(.5, .6, .55));
+            Kind == EFoundationTargetKind::Entity ? FLinearColor(.9f, .35f, .15f)
+                : Interactive                     ? FLinearColor(.2f, .6f, .8f)
+                                                  : FLinearColor(.5f, .6f, .55f));
         Mesh->SetMaterial(0, Dynamic);
     }
     auto* Text = NewObject<UTextRenderComponent>(this);

@@ -1,4 +1,5 @@
 #include "Menu/MenuApplication.h"
+#include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
 
 #include "Menu/MenuVideoSettings.h"
@@ -10,8 +11,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "Misc/PackageName.h"
 #include "Serialization/JsonSerializer.h"
-
-DEFINE_LOG_CATEGORY_STATIC(LogMenuApplication, Log, All);
 
 void UMenuApplication::Initialize(APlayerController* InController, UMenuVideoSettings* InVideoSettings,
     UMenuInputBridge* InInputBridge, UMenuPreferences* InPreferences)
@@ -89,7 +88,7 @@ FString UMenuApplication::RequestQuit()
     {
         bQuitPending = true;
         QuitDeadline = FPlatformTime::Seconds() + 8.0;
-        UE_LOG(LogMenuApplication, Display, TEXT("Quit requested; waiting for completed settings changes"));
+        UE_LOG(LogUnnamedMenu, Display, TEXT("Quit requested; waiting for completed settings changes"));
     }
     return GetState();
 }
@@ -109,7 +108,7 @@ FString UMenuApplication::RequestOpenWorld(const FString& WorldId)
         bWorldPending = true;
         PendingMap = RequestedMap;
         WorldDeadline = FPlatformTime::Seconds() + 8.0;
-        UE_LOG(LogMenuApplication, Display, TEXT("%s requested; waiting for completed settings changes"), *WorldId);
+        UE_LOG(LogUnnamedMenu, Display, TEXT("%s requested; waiting for completed settings changes"), *WorldId);
     }
     return GetState();
 }
@@ -130,12 +129,12 @@ void UMenuApplication::Tick()
         {
             bWorldPending = false;
             bTravelIssued = true;
-            UE_LOG(LogMenuApplication, Display, TEXT("Settings flushed; opening %s"), *PendingMap);
+            UE_LOG(LogUnnamedMenu, Display, TEXT("Settings flushed; opening %s"), *PendingMap);
             UGameplayStatics::OpenLevel(Controller.Get(), FName(*PendingMap));
             return;
         }
         bWorldPending = false;
-        UE_LOG(LogMenuApplication, Warning, TEXT("World travel cancelled: %s"), *LastError);
+        UE_LOG(LogUnnamedMenu, Warning, TEXT("World travel cancelled: %s"), *LastError);
         return;
     }
     if (!bQuitPending) return;
@@ -150,10 +149,10 @@ void UMenuApplication::Tick()
     {
         bQuitPending = false;
         bQuitIssued = true;
-        UE_LOG(LogMenuApplication, Display, TEXT("Settings flushed; requesting normal game shutdown"));
+        UE_LOG(LogUnnamedMenu, Display, TEXT("Settings flushed; requesting normal game shutdown"));
         UKismetSystemLibrary::QuitGame(Controller.Get(), Controller.Get(), EQuitPreference::Quit, false);
         return;
     }
     bQuitPending = false;
-    UE_LOG(LogMenuApplication, Warning, TEXT("Quit cancelled: %s"), *LastError);
+    UE_LOG(LogUnnamedMenu, Warning, TEXT("Quit cancelled: %s"), *LastError);
 }

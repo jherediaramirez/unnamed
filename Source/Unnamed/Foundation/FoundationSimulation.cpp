@@ -32,10 +32,12 @@ namespace
     }
 }
 
-void FFoundationSimulation::Reset(FVector Position)
+void FFoundationSimulation::Reset(FVector Position, const UFoundationProfile& P)
 {
     *this = {};
     Feet = PreviousFeet = Position;
+    HeightCm = P.StandingHeightCm;
+    EyeCm = PreviousEyeCm = P.StandingEyesCm;
 }
 
 FBox FFoundationSimulation::Bounds(FVector P, double H, double W)
@@ -101,14 +103,14 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
     SprintTimer = FMath::Max(0, SprintTimer - 1);
     JumpCooldown = FMath::Max(0, JumpCooldown - 1);
     bHeadroom = Fits(Bounds(Feet, P.StandingHeightCm, P.WidthCm), WorldBoxes);
-    bCrouched = Intent.bSneak || !bHeadroom;
+    bCrouched = Intent.bCrouch || !bHeadroom;
     HeightCm = bCrouched ? P.CrouchingHeightCm : P.StandingHeightCm;
     const double TargetEye = bCrouched ? P.CrouchingEyesCm : P.StandingEyesCm;
     EyeCm += (TargetEye - EyeCm) * P.EyeSmoothingPerTick;
     const bool Forward = Intent.Move.Y > 1e-5;
     const bool Possible = Eligibility.bMobile && Eligibility.bEnoughFood;
     const bool CanStart = Possible && Forward && !Eligibility.bItemSlows && !bCrouched;
-    if (Intent.bSneak || Eligibility.bItemSlows || Intent.Move.Y < 0) SprintTimer = 0;
+    if (Intent.bCrouch || Eligibility.bItemSlows || Intent.Move.Y < 0) SprintTimer = 0;
     if (!bSprinting && CanStart)
     {
         if (!bHadForward)
@@ -147,13 +149,13 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
     const bool WasGrounded = bGrounded;
     const double Friction = (WasGrounded ? P.GroundFriction : 1.) * P.HorizontalDrag;
     const FVector2D Input = ResolveInput(
-        Eligibility.bMobile ? Intent.Move : FVector2D::ZeroVector, bCrouched ? P.SneakMultiplier : 1., P.InputDamping);
+        Eligibility.bMobile ? Intent.Move : FVector2D::ZeroVector, bCrouched ? P.CrouchMultiplier : 1., P.InputDamping);
     const double Accel = (WasGrounded ? P.GroundAccelerationCmPerTick : P.AirAccelerationCmPerTick) *
         (bSprinting ? P.SprintMultiplier : 1.);
     VelocityPerTick += (ForwardVector * Input.Y + RightVector * Input.X) * Accel;
     FBox Box = Bounds(Feet, HeightCm, P.WidthCm);
     FVector Wanted = VelocityPerTick;
-    if (Intent.bSneak && Wanted.Z <= 0 &&
+    if (Intent.bCrouch && Wanted.Z <= 0 &&
         (bGrounded || (FallDistanceCm < P.StepCm && Supported(Box, P.StepCm - FallDistanceCm, WorldBoxes))))
     {
         auto Reduce = [&](double V)
@@ -212,7 +214,7 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
     VelocityPerTick.X *= Friction;
     VelocityPerTick.Y *= Friction;
     if (bSprinting && bHorizontalCollision) bSprinting = false;
-    if (Intent.bAutoJump && bGrounded && !Intent.bSneak && !bCrouched && !Input.IsNearlyZero())
+    if (Intent.bAutoJump && bGrounded && !Intent.bCrouch && !bCrouched && !Input.IsNearlyZero())
     {
         const FVector Direction = (ForwardVector * Input.Y + RightVector * Input.X).GetSafeNormal();
         const double Ahead = FMath::Max(Accel * P.AutoJumpLookaheadTicks, Moved.Size2D());
