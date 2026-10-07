@@ -1,6 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "Menu/MenuPlayerController.h"
+#include "GameFramework/PlayerController.h"
 #include "Components/ActorComponent.h"
 #include "Foundation/FoundationPawn.h"
 #include "FoundationController.generated.h"
@@ -8,6 +8,8 @@ class SWidget;
 class STextBlock;
 class IInputProcessor;
 class UUnnamedInputSubsystem;
+class UMenuBrowserHost;
+class AFoundationController;
 
 UCLASS()
 class UNNAMED_API UFoundationDiagnostics : public UActorComponent
@@ -35,7 +37,7 @@ public:
     FString Snapshot() const;
     FString State() const;
     void CopySnapshot();
-    AMenuPlayerController* Controller() const;
+    AFoundationController* Controller() const;
     UUnnamedInputSubsystem* Input() const;
     bool IsGameplay() const;
     bool bOverlay = false, bHideHud = false, bShowCollision = false, bCapture = false, bText = false, bPanel = false,
@@ -80,14 +82,24 @@ private:
 };
 
 UCLASS()
-class UNNAMED_API AFoundationController : public AMenuPlayerController
+class UNNAMED_API AFoundationController : public APlayerController
 {
     GENERATED_BODY()
 public:
+    AFoundationController();
+    UMenuBrowserHost* GetMenuHost() const { return MenuHost; }
+    UPROPERTY(VisibleAnywhere)
+    TObjectPtr<UFoundationDiagnostics> Diagnostics;
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
     virtual void OnPossess(APawn* NewPawn) override;
     virtual void OnUnPossess() override;
     void PauseFoundation();
     void ResumeFoundation();
+
+private:
+    UPROPERTY(VisibleAnywhere)
+    TObjectPtr<UMenuBrowserHost> MenuHost;
+    UPROPERTY(Transient)
+    TObjectPtr<UFoundationMenuBridge> MenuBridge;
 };

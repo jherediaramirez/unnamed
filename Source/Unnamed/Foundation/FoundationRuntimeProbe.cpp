@@ -1,4 +1,5 @@
 #include "Foundation/FoundationRuntimeProbe.h"
+#include "Menu/MenuBrowserHost.h"
 #include "Foundation/FoundationLab.h"
 #include "Foundation/FoundationPawn.h"
 #include "Foundation/FoundationController.h"
@@ -334,7 +335,8 @@ void UFoundationRuntimeProbe::BeginPlay()
         },
         [this]
         {
-            Record(TEXT("pause removes contexts"), !PC->Diagnostics->Input()->IsGameplayEnabled() && PC->IsMenuOpen(),
+            Record(TEXT("pause removes contexts"),
+                !PC->Diagnostics->Input()->IsGameplayEnabled() && PC->GetMenuHost()->IsOpen(),
                 TEXT("existing CEF menu opened; no sim movement"));
         });
     Add(
@@ -465,7 +467,7 @@ void UFoundationRuntimeProbe::BeginPlay()
         },
         [this]
         {
-            Record(TEXT("focus loss cancels"), PC->IsMenuOpen() && Pawn->LastIntent.Move.IsNearlyZero(),
+            Record(TEXT("focus loss cancels"), PC->GetMenuHost()->IsOpen() && Pawn->LastIntent.Move.IsNearlyZero(),
                 TEXT("application activation handler invoked, not physical OS focus test"));
             PC->Diagnostics->FocusChanged(true);
             PC->ResumeFoundation();

@@ -1,4 +1,5 @@
 #include "Foundation/FoundationController.h"
+#include "Menu/MenuBrowserHost.h"
 #include "UnnamedProjectSettings.h"
 #include "Foundation/FoundationCoordinates.h"
 #include "Foundation/FoundationLab.h"
@@ -83,9 +84,9 @@ UFoundationDiagnostics::UFoundationDiagnostics()
     PrimaryComponentTick.bTickEvenWhenPaused = true;
 }
 
-AMenuPlayerController* UFoundationDiagnostics::Controller() const
+AFoundationController* UFoundationDiagnostics::Controller() const
 {
-    return Cast<AMenuPlayerController>(GetOwner());
+    return Cast<AFoundationController>(GetOwner());
 }
 
 UUnnamedInputSubsystem* UFoundationDiagnostics::Input() const
@@ -97,8 +98,8 @@ UUnnamedInputSubsystem* UFoundationDiagnostics::Input() const
 
 bool UFoundationDiagnostics::IsGameplay() const
 {
-    return Controller() && Cast<AFoundationPawn>(Controller()->GetPawn()) && !Controller()->IsMenuOpen() && !bPanel &&
-        !bCapture;
+    return Controller() && Cast<AFoundationPawn>(Controller()->GetPawn()) && !Controller()->GetMenuHost()->IsOpen() &&
+        !bPanel && !bCapture;
 }
 
 void UFoundationDiagnostics::BeginPlay()
@@ -258,7 +259,7 @@ bool UFoundationDiagnostics::RouteKey(FKey Key, bool Down, bool Repeat)
         }
         if (IsGameplay())
         {
-            if (auto* PC = Cast<AFoundationController>(Controller())) PC->PauseFoundation();
+            Controller()->PauseFoundation();
             return true;
         }
     }
@@ -376,7 +377,7 @@ void UFoundationDiagnostics::Action(FName Id, bool Down)
         }
         if (S == TEXT("key.fullscreen"))
         {
-            auto* Video = Controller()->EnsureVideoSettings();
+            auto* Video = Controller()->GetMenuHost()->GetVideoSettings();
             TSharedPtr<FJsonObject> State;
             FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Video->GetState()), State);
             if (State)
@@ -445,8 +446,7 @@ void UFoundationDiagnostics::FocusChanged(bool Active)
     {
         CancelActions();
         if (Input()) Input()->ClearIntent();
-        if (IsGameplay())
-            if (auto* PC = Cast<AFoundationController>(Controller())) PC->PauseFoundation();
+        if (IsGameplay()) Controller()->PauseFoundation();
         Event(TEXT("window focus lost"));
     }
     else
@@ -477,12 +477,12 @@ void UFoundationDiagnostics::ClosePanel()
         GEngine->GameViewport->RemoveViewportWidgetContent(PanelRoot.ToSharedRef());
     PanelRoot.Reset();
     bPanel = bText = bInventory = false;
-    if (!Controller()->IsMenuOpen()) Resume();
+    if (!Controller()->GetMenuHost()->IsOpen()) Resume();
 }
 
 void UFoundationDiagnostics::Resume()
 {
-    if (auto* PC = Cast<AFoundationController>(Controller())) PC->ResumeFoundation();
+    if (Controller()) Controller()->ResumeFoundation();
 }
 
 void UFoundationDiagnostics::ReturnToMenu()
@@ -788,7 +788,7 @@ void UFoundationDiagnostics::TickComponent(float Dt, ELevelTick Kind, FActorComp
             DebugText->SetFont(
                 FCoreStyle::GetDefaultFontStyle("Mono", FMath::RoundToInt(11 * Input()->Settings()->DebugTextScale)));
     }
-    const bool Hud = Pawn && !bHideHud && !Controller()->IsMenuOpen() && !bPanel;
+    const bool Hud = Pawn && !bHideHud && !Controller()->GetMenuHost()->IsOpen() && !bPanel;
     HudText->SetVisibility(Hud ? EVisibility::HitTestInvisible : EVisibility::Collapsed);
     Crosshair->SetVisibility(Hud ? EVisibility::HitTestInvisible : EVisibility::Collapsed);
     FString Bar = TEXT("ESC menu   |   F3 diagnostics   |   F3+F6 options\n");
@@ -826,11 +826,22 @@ void AFoundationController::SetupInputComponent()
             Cast<UEnhancedInputComponent>(InputComponent));
 }
 
+AFoundationController::AFoundationController()
+{
+    MenuHost = CreateDefaultSubobject<UMenuBrowserHost>(TEXT("MenuHost"));
+    Diagnostics = CreateDefaultSubobject<UFoundationDiagnostics>(TEXT("FoundationDiagnostics"));
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bTickEvenWhenPaused = true;
+}
+
 void AFoundationController::BeginPlay()
 {
-    APlayerController::BeginPlay();
-    PrimaryActorTick.bTickEvenWhenPaused = true;
-    EnsureVideoSettings();
+    Super::BeginPlay();
+    // The pause menu is the same offline menu plus this world's bridge.
+    MenuBridge = NewObject<UFoundationMenuBridge>(this);
+    MenuBridge->Initialize(Diagnostics);
+    MenuHost->AddBridge(TEXT("foundation"), MenuBridge);
+    MenuHost->GetVideoSettings();
     ResumeFoundation();
 }
 
@@ -849,13 +860,13 @@ void AFoundationController::OnUnPossess()
 void AFoundationController::PauseFoundation()
 {
     if (auto* P = Cast<AFoundationPawn>(GetPawn())) P->SetSimulationEnabled(false);
-    ShowMenu();
+    MenuHost->Show();
     Diagnostics->Event(TEXT("pause: existing menu opened"));
 }
 
 void AFoundationController::ResumeFoundation()
 {
-    HideMenu();
+    MenuHost->Hide();
     if (!GetLocalPlayer()) return;
     auto* LocalInput = GetLocalPlayer()->GetSubsystem<UUnnamedInputSubsystem>();
     LocalInput->BindGameplayInput(Cast<UEnhancedInputComponent>(InputComponent));
