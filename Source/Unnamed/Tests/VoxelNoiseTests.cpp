@@ -6,10 +6,10 @@
 
 namespace
 {
-    constexpr uint64 TestSeed = 0x5EED5EED5EED5EEDull;
-    constexpr uint64 TestSalt = VoxelRandom::Salt("noise-test");
+    constexpr uint64 NoiseTestSeed = 0x5EED5EED5EED5EEDull;
+    constexpr uint64 NoiseTestSalt = VoxelRandom::Salt("noise-test");
 
-    uint32 FloatBits(float Value)
+    uint32 NoiseFloatBits(float Value)
     {
         uint32 Bits;
         FMemory::Memcpy(&Bits, &Value, sizeof(Bits));
@@ -17,25 +17,26 @@ namespace
     }
 
     // Order-sensitive checksum of exact float bit patterns.
-    uint64 Checksum(TConstArrayView<float> Values)
+    uint64 NoiseChecksum(TConstArrayView<float> Values)
     {
         uint64 Hash = 0;
         for (const float Value : Values)
-            Hash = VoxelRandom::Mix64(Hash ^ FloatBits(Value));
+            Hash = VoxelRandom::Mix64(Hash ^ NoiseFloatBits(Value));
         return Hash;
     }
 
-    FVoxelNoise MakeNoise(EVoxelFractal Fractal, int32 Octaves, double WarpAmplitude = 0, uint64 Salt = TestSalt)
+    FVoxelNoise MakeTestNoise(
+        EVoxelFractal Fractal, int32 Octaves, double WarpAmplitude = 0, uint64 Salt = NoiseTestSalt)
     {
         FVoxelNoiseSettings Settings;
         Settings.Fractal = Fractal;
         Settings.Frequency = 1. / 64;
         Settings.Octaves = Octaves;
         Settings.WarpAmplitude = WarpAmplitude;
-        return FVoxelNoise(TestSeed, Salt, Settings);
+        return FVoxelNoise(NoiseTestSeed, Salt, Settings);
     }
 
-    struct FGolden
+    struct FNoiseGolden
     {
         const TCHAR* Name;
         uint64 Expected;
@@ -49,7 +50,7 @@ bool FVoxelNoiseGoldenTest::RunTest(const FString& Parameters)
 {
     // Checksums of fixed grids, recorded from this implementation. A change here changes every world: only update one
     // on purpose, together with a note in Docs/VoxelWorld.md.
-    const FGolden Golden[] = {
+    const FNoiseGolden Golden[] = {
         {TEXT("gradient 2D"), 0xE475AA5F53E9F163ull},
         {TEXT("gradient 3D"), 0xECE883ECD6090FD1ull},
         {TEXT("fBm 2D, 6 octaves"), 0xA93CB3FE1AC72DE3ull},
@@ -63,7 +64,7 @@ bool FVoxelNoiseGoldenTest::RunTest(const FString& Parameters)
         {TEXT("fBm 2D, 30 million blocks out"), 0x39B3A5467F3977B3ull},
     };
 
-    const FVoxelGradientNoise Gradient(VoxelRandom::Hash64(TestSeed, TestSalt, 0, 0, 0));
+    const FVoxelGradientNoise Gradient(VoxelRandom::Hash64(NoiseTestSeed, NoiseTestSalt, 0, 0, 0));
     TArray<float> Values;
     auto Grid2 = [&Values](auto&& Function, double X0, double Y0)
     {
@@ -71,7 +72,7 @@ bool FVoxelNoiseGoldenTest::RunTest(const FString& Parameters)
         for (int32 IY = 0; IY < 64; ++IY)
             for (int32 IX = 0; IX < 64; ++IX)
                 Values.Add(Function(X0 + IX * 2.37, Y0 + IY * 2.37));
-        return Checksum(Values);
+        return NoiseChecksum(Values);
     };
     auto Grid3 = [&Values](auto&& Function)
     {
@@ -80,12 +81,14 @@ bool FVoxelNoiseGoldenTest::RunTest(const FString& Parameters)
             for (int32 IY = 0; IY < 16; ++IY)
                 for (int32 IX = 0; IX < 16; ++IX)
                     Values.Add(Function(-500.3 + IX * 3.1, 812.9 + IY * 3.1, -64 + IZ * 5.3));
-        return Checksum(Values);
+        return NoiseChecksum(Values);
     };
-    const FVoxelNoise Fbm6 = MakeNoise(EVoxelFractal::Fbm, 6), Fbm4 = MakeNoise(EVoxelFractal::Fbm, 4);
-    const FVoxelNoise Ridged6 = MakeNoise(EVoxelFractal::Ridged, 6), Ridged4 = MakeNoise(EVoxelFractal::Ridged, 4);
-    const FVoxelNoise Damped6 = MakeNoise(EVoxelFractal::Damped, 6), Damped4 = MakeNoise(EVoxelFractal::Damped, 4);
-    const FVoxelNoise Warped = MakeNoise(EVoxelFractal::Fbm, 4, 24);
+    const FVoxelNoise Fbm6 = MakeTestNoise(EVoxelFractal::Fbm, 6), Fbm4 = MakeTestNoise(EVoxelFractal::Fbm, 4);
+    const FVoxelNoise Ridged6 = MakeTestNoise(EVoxelFractal::Ridged, 6),
+                      Ridged4 = MakeTestNoise(EVoxelFractal::Ridged, 4);
+    const FVoxelNoise Damped6 = MakeTestNoise(EVoxelFractal::Damped, 6),
+                      Damped4 = MakeTestNoise(EVoxelFractal::Damped, 4);
+    const FVoxelNoise Warped = MakeTestNoise(EVoxelFractal::Fbm, 4, 24);
     const uint64 Actual[] = {
         Grid2([&](double X, double Y) { return Gradient.Sample(X / 16, Y / 16); }, -1000.3, 777.7),
         Grid3([&](double X, double Y, double Z) { return Gradient.Sample(X / 16, Y / 16, Z / 16); }),
@@ -107,7 +110,7 @@ bool FVoxelNoiseGoldenTest::RunTest(const FString& Parameters)
 
     // Two noises built from the same seed, salt and settings agree bit for bit.
     TestEqual(TEXT("A rebuilt noise matches"), Grid2([&](double X, double Y) { return Fbm6.Sample(X, Y); }, 5, 5),
-        Grid2([Copy = MakeNoise(EVoxelFractal::Fbm, 6)](double X, double Y) { return Copy.Sample(X, Y); }, 5, 5));
+        Grid2([Copy = MakeTestNoise(EVoxelFractal::Fbm, 6)](double X, double Y) { return Copy.Sample(X, Y); }, 5, 5));
     return true;
 }
 
@@ -116,7 +119,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelNoisePropertiesTest, "Unnamed.Voxel.Noise
 
 bool FVoxelNoisePropertiesTest::RunTest(const FString& Parameters)
 {
-    const FVoxelGradientNoise Gradient(VoxelRandom::Hash64(TestSeed, TestSalt, 1, 0, 0));
+    const FVoxelGradientNoise Gradient(VoxelRandom::Hash64(NoiseTestSeed, NoiseTestSalt, 1, 0, 0));
     FVoxelXoroshiro Stream(uint64(99));
     auto Uniform = [&Stream](double Range) { return (Stream.NextDouble() * 2 - 1) * Range; };
 
@@ -179,7 +182,7 @@ bool FVoxelNoisePropertiesTest::RunTest(const FString& Parameters)
         FString::Printf(TEXT("No seams at lattice planes (worst gradient jump %.6f)"), WorstSeam), WorstSeam < .001);
 
     // Thirty million blocks out the noise keeps its spread and stays smooth (no precision collapse).
-    const FVoxelNoise Fbm = MakeNoise(EVoxelFractal::Fbm, 4);
+    const FVoxelNoise Fbm = MakeTestNoise(EVoxelFractal::Fbm, 4);
     auto Spread = [&Fbm](double OriginX, double OriginY, double& OutRoughest)
     {
         double Sum = 0, SumSquares = 0;
@@ -203,9 +206,9 @@ bool FVoxelNoisePropertiesTest::RunTest(const FString& Parameters)
     TestTrue(FString::Printf(TEXT("Far noise is smooth (largest 0.01-block step %.5f)"), FarRough), FarRough < .01);
 
     // Different salts or seeds are uncorrelated.
-    const FVoxelNoise Other = MakeNoise(EVoxelFractal::Fbm, 4, 0, VoxelRandom::Salt("other"));
+    const FVoxelNoise Other = MakeTestNoise(EVoxelFractal::Fbm, 4, 0, VoxelRandom::Salt("other"));
     FVoxelNoiseSettings Settings = Fbm.GetSettings();
-    const FVoxelNoise OtherSeed(TestSeed + 1, TestSalt, Settings);
+    const FVoxelNoise OtherSeed(NoiseTestSeed + 1, NoiseTestSalt, Settings);
     for (const FVoxelNoise* Pair : {&Other, &OtherSeed})
     {
         double SumA = 0, SumB = 0, SumAA = 0, SumBB = 0, SumAB = 0;
@@ -228,7 +231,7 @@ bool FVoxelNoisePropertiesTest::RunTest(const FString& Parameters)
     for (const EVoxelFractal Fractal : {EVoxelFractal::Fbm, EVoxelFractal::Ridged, EVoxelFractal::Damped})
         for (const double Warp : {0., 40.})
         {
-            const FVoxelNoise Noise = MakeNoise(Fractal, 6, Warp);
+            const FVoxelNoise Noise = MakeTestNoise(Fractal, 6, Warp);
             double Peak = 0;
             for (int32 Index = 0; Index < 20000; ++Index)
             {
@@ -247,7 +250,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelNoiseGridTest, "Unnamed.Voxel.Noise.Grid"
 
 bool FVoxelNoiseGridTest::RunTest(const FString& Parameters)
 {
-    const FVoxelNoise Noise = MakeNoise(EVoxelFractal::Damped, 5, 16);
+    const FVoxelNoise Noise = MakeTestNoise(EVoxelFractal::Damped, 5, 16);
     TArray<float> Grid2, Grid3;
     Grid2.SetNumUninitialized(7 * 5);
     Grid3.SetNumUninitialized(5 * 5 * 49);
@@ -256,12 +259,13 @@ bool FVoxelNoiseGridTest::RunTest(const FString& Parameters)
     bool bMatches2 = true, bMatches3 = true;
     for (int32 IY = 0; IY < 5; ++IY)
         for (int32 IX = 0; IX < 7; ++IX)
-            bMatches2 &= FloatBits(Grid2[IY * 7 + IX]) == FloatBits(Noise.Sample(-31.5 + IX * 4, 12.25 + IY * 4));
+            bMatches2 &=
+                NoiseFloatBits(Grid2[IY * 7 + IX]) == NoiseFloatBits(Noise.Sample(-31.5 + IX * 4, 12.25 + IY * 4));
     for (int32 IZ = 0; IZ < 49; ++IZ)
         for (int32 IY = 0; IY < 5; ++IY)
             for (int32 IX = 0; IX < 5; ++IX)
-                bMatches3 &= FloatBits(Grid3[(IZ * 5 + IY) * 5 + IX]) ==
-                    FloatBits(Noise.Sample(160. + IX * 4, -32. + IY * 4, -64. + IZ * 8));
+                bMatches3 &= NoiseFloatBits(Grid3[(IZ * 5 + IY) * 5 + IX]) ==
+                    NoiseFloatBits(Noise.Sample(160. + IX * 4, -32. + IY * 4, -64. + IZ * 8));
     TestTrue(TEXT("2D grid equals point samples, X fastest"), bMatches2);
     TestTrue(TEXT("3D column corners (5 x 5 x 49, 4 x 8 cells) equal point samples"), bMatches3);
     return true;
@@ -273,7 +277,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelNoiseThroughputTest, "Unnamed.Voxel.Noise
 bool FVoxelNoiseThroughputTest::RunTest(const FString& Parameters)
 {
     // Logs timings only: thresholds would depend on the machine. voxel.Bench Noise runs the same code at full size.
-    const TArray<FVoxelBenchResult> Results = VoxelBench::RunNoise(200000, TestSeed);
+    const TArray<FVoxelBenchResult> Results = VoxelBench::RunNoise(200000, NoiseTestSeed);
     TArray<FString> Lines;
     VoxelBench::Describe(Results).ParseIntoArrayLines(Lines);
     for (const FString& Line : Lines)

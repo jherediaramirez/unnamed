@@ -319,7 +319,7 @@ void AFoundationPawn::Tick(float DeltaSeconds)
         SetActorLocation(Simulation.Feet);
         SetActorRotation(FRotator::ZeroRotator);
         // Falling out of the lab respawns at its spawn (a test-level convenience, not void damage).
-        if (Simulation.Feet.Z < -1000)
+        if (Simulation.Feet.Z < Lab->GetFallOutZ())
         {
             Simulation.Reset(Lab->GetSafeSpawn(Profile), Profile);
             Vitals.ResetFall();

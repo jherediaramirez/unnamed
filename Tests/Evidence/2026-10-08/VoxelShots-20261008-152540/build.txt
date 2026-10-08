@@ -1,0 +1,10 @@
+Seed -3224043261468865476 (text)
+Area 9 x 9 columns around (0, 0), 30 workers
+  Generate columns: 81, mean 0.668 ms, worst 1.135 ms, total 54.1 ms (wall 3.6 ms)
+  Gather sections: 1944, mean 0.020 ms, worst 0.110 ms, total 38.6 ms
+  Mesh sections, all: 1944, mean 0.061 ms, worst 0.472 ms, total 119.0 ms (wall 7.6 ms)
+  Mesh sections with geometry: 407, mean 0.249 ms, worst 0.472 ms, total 101.4 ms
+  Quads 24477 (60 per meshed section); columns 10.0 KB each (0.8 MB total)
+  Stream sets: 81 columns in 1.4 ms (wall, all workers)
+  Apply: 81 columns in 5.79 ms over 3 frames, worst frame 2.03 ms (budget 2.0 ms)
+  Start to last section on screen: 1530 ms; 81 chunk components hold 407 sections

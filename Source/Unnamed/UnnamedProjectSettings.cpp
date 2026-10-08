@@ -36,6 +36,7 @@ UUnnamedProjectSettings::UUnnamedProjectSettings()
             TEXT("2 km dev grid: movement course, building, mining and combat"),
             TEXT("Playable - Java 26.3 foundation, session only")),
     };
+    GeneratedMap = FSoftObjectPath(TEXT("/Game/Maps/L_Generated.L_Generated"));
     DevGridMaterial = Asset<UMaterialInterface>(TEXT("/Game/DevGrid/M_DevGrid.M_DevGrid"));
     OnFootContext = Asset<UInputMappingContext>(TEXT("/Game/Input/MappingContexts/IMC_OnFoot.IMC_OnFoot"));
     FoundationActionsContext =
@@ -63,6 +64,11 @@ FString UUnnamedProjectSettings::GetWorldMapPackage(const FString& WorldId)
 {
     const FUnnamedWorldEntry* World = Get().FindWorld(WorldId);
     return World ? World->Map.GetLongPackageName() : FString();
+}
+
+FString UUnnamedProjectSettings::GetGeneratedMapPackage()
+{
+    return Get().GeneratedMap.GetLongPackageName();
 }
 
 FString UUnnamedProjectSettings::GetInputAssetPath(FName AssetName)

@@ -37,6 +37,7 @@ Exceptions, with reasons:
 - Descriptive names. Single letters only for loop indices and the profile `P` in formula-heavy simulation code.
 - A browser-facing object that only forwards to another system is a `...Bridge` (`UMenuInputBridge`, `UFoundationMenuBridge`); an object that owns state is named for that state (`UMenuVideoSettings`, `UMenuPreferences`).
 - Format with the repository `.clang-format` (clang-format 19 ships with Visual Studio 2022).
+- Helpers in a `.cpp` file's anonymous namespace need names unique within the module (`FindBlockTexture`, `ChunkMaterialNames`, not `FindTexture`, `Size` or `FContext`). Unity builds compile several `.cpp` files as one, so two files' anonymous namespaces merge, and a generic name collides or hides an engine name (warnings C4456-C4459 are errors).
 
 ## One word per concept
 

@@ -34,7 +34,7 @@ namespace
             0xCC6FD03706F12FC5ull,
         "Hash64 at the coordinate extremes");
 
-    int32 CountBits(uint64 Value)
+    int32 CountSetBits(uint64 Value)
     {
         int32 Count = 0;
         for (; Value; Value &= Value - 1)
@@ -135,7 +135,7 @@ bool FVoxelRandomDistributionTest::RunTest(const FString& Parameters)
         for (int32 Bit = 0; Bit < 64; ++Bit)
             BitCounts[Bit] += int32(Hash >> Bit & 1);
         // Avalanche: the neighbouring cell should differ in about half of the bits.
-        FlippedBits += CountBits(Hash ^ VoxelRandom::Hash64(1234, Salt, X + 1, Y, Z));
+        FlippedBits += CountSetBits(Hash ^ VoxelRandom::Hash64(1234, Salt, X + 1, Y, Z));
     }
     // 2^18 samples: one standard deviation of a bit's frequency is about 0.001.
     double WorstBit = 0;

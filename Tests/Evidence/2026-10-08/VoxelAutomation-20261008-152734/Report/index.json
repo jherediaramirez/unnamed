@@ -1,0 +1,583 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "JRHEREDIARAMIRE",
+			"instance": "0C23DC22488D12B012140E9FAC63C0F0",
+			"instanceName": "JRHEREDIARAMIRE-34292",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9550] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 4070 Ti SUPER",
+			"cPUModel": "Intel(R) Core(TM) i9-14900KF",
+			"rAMInGB": 64,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.08-19.27.54",
+	"succeeded": 19,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.6096421480178833,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "Table",
+			"fullTestPath": "Unnamed.Voxel.Blocks.Table",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.024715300649404526,
+			"dateTime": "2026.10.08-19.27.53",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Threads",
+			"fullTestPath": "Unnamed.Voxel.Determinism.Threads",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.082104295492172241,
+			"dateTime": "2026.10.08-19.27.53",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "24000 jobs of 11 kinds, 8 threads x 2 passes, shuffled order",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.53"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Borders",
+			"fullTestPath": "Unnamed.Voxel.Mesher.Borders",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.040523100644350052,
+			"dateTime": "2026.10.08-19.27.53",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "greedy: 26896 faces expected, 26422 quads drawn",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.53"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "per face: 26896 faces expected, 26896 quads drawn",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.53"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Shapes",
+			"fullTestPath": "Unnamed.Voxel.Mesher.Shapes",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.040874999016523361,
+			"dateTime": "2026.10.08-19.27.53",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Golden",
+			"fullTestPath": "Unnamed.Voxel.Noise.Golden",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.0082433000206947327,
+			"dateTime": "2026.10.08-19.27.53",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Grid",
+			"fullTestPath": "Unnamed.Voxel.Noise.Grid",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.0080476999282836914,
+			"dateTime": "2026.10.08-19.27.54",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Properties",
+			"fullTestPath": "Unnamed.Voxel.Noise.Properties",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.078969001770019531,
+			"dateTime": "2026.10.08-19.27.54",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Gradient noise 2D over 200000 points: peak 0.9935, mean 0.0006, deviation 0.3045",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Gradient noise 3D over 200000 points: peak 0.7747, mean 0.0002, deviation 0.2210",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Gradient error against finite differences 0.00108; largest jump across a lattice plane 0.000009",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "fBm deviation near the origin 0.1946, 30 million blocks out 0.1762; largest 0.01-block step near 0.00047, far 0.00047",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Correlation with another salt: 0.0032",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Correlation with the next seed: -0.0045",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Throughput",
+			"fullTestPath": "Unnamed.Voxel.Noise.Throughput",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.22712050378322601,
+			"dateTime": "2026.10.08-19.27.54",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Hash64 (x, y, z)                                     5.7 ns/sample    175.15 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Xoroshiro128++ next                                  1.7 ns/sample    600.24 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Gradient noise 2D, 1 octave                         15.1 ns/sample     66.43 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Gradient noise 3D, 1 octave                         34.6 ns/sample     28.93 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "fBm 2D, 6 octaves                                   84.8 ns/sample     11.80 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "fBm 3D, 4 octaves                                  129.5 ns/sample      7.72 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Ridged 2D, 6 octaves                                93.8 ns/sample     10.66 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Damped 2D, 6 octaves                               159.5 ns/sample      6.27 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Warped fBm 2D, 6 octaves                           152.7 ns/sample      6.55 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Spline, 3 nested levels                             54.9 ns/sample     18.21 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Column corners, 3D fBm 4 octaves (5x5x49)          128.8 ns/sample      7.76 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "fBm 3D, 4 octaves, 30 workers                        8.8 ns/sample    113.34 M/s (all workers)",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Distribution",
+			"fullTestPath": "Unnamed.Voxel.Random.Distribution",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.016880899667739868,
+			"dateTime": "2026.10.08-19.27.54",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Seed",
+			"fullTestPath": "Unnamed.Voxel.Random.Seed",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.0081834010779857635,
+			"dateTime": "2026.10.08-19.27.54",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Vectors",
+			"fullTestPath": "Unnamed.Voxel.Random.Vectors",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.0080800019204616547,
+			"dateTime": "2026.10.08-19.27.54",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Hermite",
+			"fullTestPath": "Unnamed.Voxel.Spline.Hermite",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.0082101002335548401,
+			"dateTime": "2026.10.08-19.27.54",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Nested",
+			"fullTestPath": "Unnamed.Voxel.Spline.Nested",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.0082786008715629578,
+			"dateTime": "2026.10.08-19.27.54",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Column",
+			"fullTestPath": "Unnamed.Voxel.Storage.Column",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.0082685984671115875,
+			"dateTime": "2026.10.08-19.27.54",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Column memory: 9174 bytes",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.08-19.27.54"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Section",
+			"fullTestPath": "Unnamed.Voxel.Storage.Section",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.0087186992168426514,
+			"dateTime": "2026.10.08-19.27.54",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Generate",
+			"fullTestPath": "Unnamed.Voxel.Terrain.Generate",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.0081772021949291229,
+			"dateTime": "2026.10.08-19.27.54",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Constants",
+			"fullTestPath": "Unnamed.Voxel.Constants",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.0080623999238014221,
+			"dateTime": "2026.10.08-19.27.54",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MeshBackend",
+			"fullTestPath": "Unnamed.Voxel.MeshBackend",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.0082280002534389496,
+			"dateTime": "2026.10.08-19.27.54",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Settings",
+			"fullTestPath": "Unnamed.Voxel.Settings",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"0C23DC22488D12B012140E9FAC63C0F0"
+			],
+			"duration": 0.0079559981822967529,
+			"dateTime": "2026.10.08-19.27.54",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

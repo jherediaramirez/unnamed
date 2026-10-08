@@ -54,6 +54,10 @@ public:
     UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
     static FString GetWorldMapPackage(const FString& WorldId);
 
+    // Package of the generated voxel world's map ("/Game/Maps/L_Generated").
+    UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
+    static FString GetGeneratedMapPackage();
+
     // Object path ("/Game/Input/...IMC_OnFoot.IMC_OnFoot") of a named input asset, or empty.
     UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
     static FString GetInputAssetPath(FName AssetName);
@@ -82,6 +86,11 @@ public:
     // Playable Singleplayer entries, in list order. The first is selected by default.
     UPROPERTY(Config, EditAnywhere, Category = "Maps")
     TArray<FUnnamedWorldEntry> Worlds;
+
+    // The procedural map every generated world opens: an AVoxelWorld, the player start and the daylight rig, made by
+    // Scripts/Editor/CreateGeneratedMap.py. Not a catalog world: generated worlds come from Create New World.
+    UPROPERTY(Config, EditAnywhere, Category = "Maps", meta = (AllowedClasses = "/Script/Engine.World"))
+    FSoftObjectPath GeneratedMap;
 
     // The prototype surface of every lab solid and block: a world-aligned 1 m grid tinted by its "Color"
     // parameter. Created by Scripts/Editor/CreateDevGridMaterial.py.

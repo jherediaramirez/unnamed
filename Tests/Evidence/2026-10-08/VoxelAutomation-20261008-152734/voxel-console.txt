@@ -1,0 +1,26 @@
+Voxel world: Z -64..319 in 24 sections of 16, sea level 63, columns 16 x 16
+  Dev seed: "Unnamed" -> -3224043261468865476 (text) (used when a world has none)
+  voxel.AmbientOcclusion = true (set by ProjectSetting)
+  voxel.ApplyBudgetMs = 2 (set by ProjectSetting)
+  voxel.GreedyMeshing = true (set by ProjectSetting)
+  voxel.MaxTasksInFlight = 0 (set by ProjectSetting)
+  voxel.TestAreaRadius = 4 (set by ProjectSetting)
+  voxel.UnloadMargin = 2 (set by ProjectSetting)
+  voxel.ViewRadius = 12 (set by ProjectSetting)
+  Load 25 x 25 columns, unload beyond radius 14; test area 9 x 9 columns
+  Task workers 30, tasks in flight 60
+  Mesh backend: RealtimeMeshComponent (loaded)
+Dev seed "Unnamed" -> -3224043261468865476 (text)
+Voxel bench, 1000000 samples per primitive, seed -3224043261468865476 (text):
+Hash64 (x, y, z)                                     5.5 ns/sample    181.91 M/s
+Xoroshiro128++ next                                  1.7 ns/sample    598.52 M/s
+Gradient noise 2D, 1 octave                         14.9 ns/sample     67.05 M/s
+Gradient noise 3D, 1 octave                         34.6 ns/sample     28.86 M/s
+fBm 2D, 6 octaves                                   84.2 ns/sample     11.88 M/s
+fBm 3D, 4 octaves                                  128.6 ns/sample      7.78 M/s
+Ridged 2D, 6 octaves                                94.1 ns/sample     10.63 M/s
+Damped 2D, 6 octaves                               159.6 ns/sample      6.26 M/s
+Warped fBm 2D, 6 octaves                           154.0 ns/sample      6.49 M/s
+Spline, 3 nested levels                             60.5 ns/sample     16.53 M/s
+Column corners, 3D fBm 4 octaves (5x5x49)          130.0 ns/sample      7.69 M/s
+fBm 3D, 4 octaves, 30 workers                        8.7 ns/sample    114.42 M/s (all workers)

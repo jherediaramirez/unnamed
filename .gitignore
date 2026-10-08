@@ -10,6 +10,7 @@ Tests/node_modules/
 Tests/Runtime/
 *.log
 *.pdb
+__pycache__/
 
 # Local credentials and recovery history must never be uploaded.
 .env

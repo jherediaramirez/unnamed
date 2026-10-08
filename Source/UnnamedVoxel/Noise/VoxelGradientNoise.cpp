@@ -71,20 +71,20 @@ namespace
     };
 
     // The 12 cube-edge directions of improved Perlin noise, normalized to unit length.
-    constexpr float E = 0.707106781f;
+    constexpr float EdgeComponent = 0.707106781f;
     const FVector3f Gradients3[12] = {
-        {E, E, 0},
-        {-E, E, 0},
-        {E, -E, 0},
-        {-E, -E, 0},
-        {E, 0, E},
-        {-E, 0, E},
-        {E, 0, -E},
-        {-E, 0, -E},
-        {0, E, E},
-        {0, -E, E},
-        {0, E, -E},
-        {0, -E, -E},
+        {EdgeComponent, EdgeComponent, 0},
+        {-EdgeComponent, EdgeComponent, 0},
+        {EdgeComponent, -EdgeComponent, 0},
+        {-EdgeComponent, -EdgeComponent, 0},
+        {EdgeComponent, 0, EdgeComponent},
+        {-EdgeComponent, 0, EdgeComponent},
+        {EdgeComponent, 0, -EdgeComponent},
+        {-EdgeComponent, 0, -EdgeComponent},
+        {0, EdgeComponent, EdgeComponent},
+        {0, -EdgeComponent, EdgeComponent},
+        {0, EdgeComponent, -EdgeComponent},
+        {0, -EdgeComponent, -EdgeComponent},
     };
 
     // With unit gradients the noise peaks at sqrt(N) / 2 (a cell centre); these scale it to [-1, 1].

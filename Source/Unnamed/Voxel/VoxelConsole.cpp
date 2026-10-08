@@ -1,7 +1,11 @@
 #include "Voxel/VoxelConsole.h"
 #include "Async/Fundamental/Scheduler.h"
+#include "Blocks/VoxelBlockTable.h"
+#include "Generation/VoxelArea.h"
 #include "Modules/ModuleManager.h"
 #include "Random/VoxelSeed.h"
+#include "Voxel/VoxelBlocks.h"
+#include "Voxel/VoxelWorld.h"
 #include "Voxel/VoxelWorldSettings.h"
 #include "VoxelBench.h"
 #include "VoxelConstants.h"
@@ -66,7 +70,7 @@ FString VoxelConsole::DescribeInfo()
 namespace
 {
     // Each line to the console that ran the command and to the log, so headless runs keep the output.
-    void Print(FOutputDevice& Output, const FString& Text)
+    void PrintLines(FOutputDevice& Output, const FString& Text)
     {
         TArray<FString> Lines;
         Text.ParseIntoArrayLines(Lines);
@@ -77,40 +81,80 @@ namespace
         }
     }
 
-    FAutoConsoleCommandWithOutputDevice InfoCommand(TEXT("voxel.Info"),
+    FAutoConsoleCommandWithOutputDevice VoxelInfoCommand(TEXT("voxel.Info"),
         TEXT("Prints the voxel world's settings, console variables and limits."),
         FConsoleCommandWithOutputDeviceDelegate::CreateLambda(
-            [](FOutputDevice& Output) { Print(Output, VoxelConsole::DescribeInfo()); }));
+            [](FOutputDevice& Output) { PrintLines(Output, VoxelConsole::DescribeInfo()); }));
 
-    FAutoConsoleCommand SeedCommand(TEXT("voxel.Seed"),
+    FAutoConsoleCommandWithWorldArgsAndOutputDevice VoxelSeedCommand(TEXT("voxel.Seed"),
         TEXT("voxel.Seed [text]: shows the 64-bit world seed a seed text makes (blank: random; whole numbers as "
-             "typed; other text hashed). Without text, the dev seed."),
-        FConsoleCommandWithArgsAndOutputDeviceDelegate::CreateLambda(
-            [](const TArray<FString>& Args, FOutputDevice& Output)
+             "typed; other text hashed) and, in a voxel world, rebuilds it with that seed for the session. Without "
+             "text, the current seed."),
+        FConsoleCommandWithWorldArgsAndOutputDeviceDelegate::CreateLambda(
+            [](const TArray<FString>& Args, UWorld* World, FOutputDevice& Output)
             {
-                const FString Text =
-                    Args.IsEmpty() ? UVoxelWorldSettings::Get().DevSeed : FString::Join(Args, TEXT(" "));
-                Print(Output, FString::Printf(TEXT("Seed \"%s\" -> %s"), *Text, *FVoxelSeed::Parse(Text).Describe()));
-            }));
-
-    FAutoConsoleCommand BenchCommand(TEXT("voxel.Bench"),
-        TEXT(
-            "voxel.Bench Noise [millions]: times the deterministic core's primitives on this thread (default 1 million "
-            "samples each), then 3D fBm across every task worker."),
-        FConsoleCommandWithArgsAndOutputDeviceDelegate::CreateLambda(
-            [](const TArray<FString>& Args, FOutputDevice& Output)
-            {
-                if (Args.IsEmpty() || Args[0] != TEXT("Noise"))
+                AVoxelWorld* Voxels = AVoxelWorld::Find(World);
+                if (Args.IsEmpty())
                 {
-                    Print(Output, TEXT("Usage: voxel.Bench Noise [millions]"));
+                    const FString Dev = UVoxelWorldSettings::Get().DevSeed;
+                    PrintLines(Output,
+                        Voxels
+                            ? TEXT("World seed ") + Voxels->GetSeed().Describe()
+                            : FString::Printf(TEXT("Dev seed \"%s\" -> %s"), *Dev, *FVoxelSeed::Parse(Dev).Describe()));
                     return;
                 }
-                const double Millions = Args.Num() > 1 ? FMath::Clamp(FCString::Atod(*Args[1]), .01, 50.) : 1.;
+                const FString Text = FString::Join(Args, TEXT(" "));
+                const FVoxelSeed Seed = FVoxelSeed::Parse(Text);
+                PrintLines(Output,
+                    FString::Printf(TEXT("Seed \"%s\" -> %s%s"), *Text, *Seed.Describe(),
+                        Voxels ? TEXT(": rebuilding the world") : TEXT("")));
+                if (Voxels) Voxels->Regenerate(Seed);
+            }));
+
+    FAutoConsoleCommandWithWorldAndArgs VoxelRegenerateCommand(TEXT("voxel.Regenerate"),
+        TEXT("Rebuilds the voxel world with its seed, picking up voxel.TestAreaRadius, voxel.GreedyMeshing and "
+             "voxel.AmbientOcclusion."),
+        FConsoleCommandWithWorldAndArgsDelegate::CreateLambda(
+            [](const TArray<FString>&, UWorld* World)
+            {
+                if (AVoxelWorld* Voxels = AVoxelWorld::Find(World)) Voxels->Regenerate(Voxels->GetSeed());
+            }));
+
+    FAutoConsoleCommand VoxelBenchCommand(TEXT("voxel.Bench"),
+        TEXT("voxel.Bench Noise [millions]: times the deterministic core's primitives on this thread (default 1 "
+             "million samples each), then 3D fBm across every task worker.\n"
+             "voxel.Bench Columns [radius]: generates and meshes (2 radius + 1)^2 columns off screen (default radius "
+             "4), on this thread and then on every worker, and reports each stage."),
+        FConsoleCommandWithArgsAndOutputDeviceDelegate::CreateLambda(
+            [](const TArray<FString>& Args, FOutputDevice& Output)
+            {
                 const FVoxelSeed Seed = FVoxelSeed::Parse(UVoxelWorldSettings::Get().DevSeed);
-                const TArray<FVoxelBenchResult> Results = VoxelBench::RunNoise(int32(Millions * 1e6), Seed.Value);
-                Print(Output,
-                    FString::Printf(TEXT("Voxel bench, %d samples per primitive, seed %s:"), int32(Results[0].Samples),
-                        *Seed.Describe()) +
-                        TEXT("\n") + VoxelBench::Describe(Results));
+                if (!Args.IsEmpty() && Args[0] == TEXT("Noise"))
+                {
+                    const double Millions = Args.Num() > 1 ? FMath::Clamp(FCString::Atod(*Args[1]), .01, 50.) : 1.;
+                    const TArray<FVoxelBenchResult> Results = VoxelBench::RunNoise(int32(Millions * 1e6), Seed.Value);
+                    PrintLines(Output,
+                        FString::Printf(TEXT("Voxel bench, %d samples per primitive, seed %s:"),
+                            int32(Results[0].Samples), *Seed.Describe()) +
+                            TEXT("\n") + VoxelBench::Describe(Results));
+                    return;
+                }
+                if (!Args.IsEmpty() && Args[0] == TEXT("Columns"))
+                {
+                    const int32 Radius = Args.Num() > 1 ? FMath::Clamp(FCString::Atoi(*Args[1]), 0, 16) : 4;
+                    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+                    FVoxelMeshOptions Options;
+                    Options.bGreedy = VoxelConsole::CVarGreedyMeshing.GetValueOnGameThread();
+                    Options.bAmbientOcclusion = VoxelConsole::CVarAmbientOcclusion.GetValueOnGameThread();
+                    FVoxelArea Area;
+                    PrintLines(Output, FString::Printf(TEXT("Voxel column bench, seed %s:"), *Seed.Describe()));
+                    for (const bool bParallel : {false, true})
+                    {
+                        FVoxelArea::Build(*Table, Seed.Value, FIntPoint::ZeroValue, Radius, Options, bParallel, Area);
+                        PrintLines(Output, Area.Describe());
+                    }
+                    return;
+                }
+                PrintLines(Output, TEXT("Usage: voxel.Bench Noise [millions] | voxel.Bench Columns [radius]"));
             }));
 }

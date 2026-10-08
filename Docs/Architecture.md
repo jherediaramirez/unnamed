@@ -11,7 +11,7 @@ How the project fits together. Foundation-specific movement, input and diagnosti
 | `Source/Unnamed/Input/` | Enhanced Input layer: `UUnnamedInputSubsystem`, the saved `UUnnamedInputSettings`, `FUnnamedInputIntent`. |
 | `Source/Unnamed/Foundation/` | The first-person pawn, controller parts, pure simulation, player vitals (health, food, air, XP, attack recovery), lab geometry (`AFoundationLab`, and the Playground in `AFoundationPlayground`), runtime probe; the Playground's block world, items, targeting, authority, interaction state and presentation; the 26.3 block registry, placement rules, block meshes and texture animation ([Blocks](Blocks.md)). |
 | `Source/Unnamed/Hud/` | Native Slate HUD, pure layout/selection, cooked sprite metadata and the Foundation adapter (player vitals by default, an opt-in preview fixture); the creative inventory screen and 3D block item icons. |
-| `Source/Unnamed/Voxel/` | The voxel world's Unreal side: `UVoxelWorldSettings` and the `voxel.*` console ([Voxel world](VoxelWorld.md)). |
+| `Source/Unnamed/Voxel/` | The voxel world's Unreal side ([Voxel world](VoxelWorld.md)): `UVoxelWorldSettings`, the `voxel.*` console, the registry-to-table bridge, the column mesh `UVoxelChunkComponent`, and `AVoxelWorld`, the level actor of `/Game/Maps/L_Generated`. |
 | `Source/UnnamedVoxel/` | The second module: the voxel world's plain C++ core (generation, storage, meshing). It depends on `Core` only and compiles with precise floating point. |
 | `Source/Unnamed/Tests/` | Native automation tests, one file per area (`Unnamed.<Area>.*`). |
 | `Plugins/RealtimeMeshComponent/` | Vendored MIT RealtimeMeshComponent Core at a pinned commit, for chunk meshes; never edited ([Voxel world](VoxelWorld.md#realtimemeshcomponent)). |
@@ -26,6 +26,8 @@ How the project fits together. Foundation-specific movement, input and diagnosti
 ## Maps and controllers
 
 `/Game/Menu/L_Menu` uses `AMenuGameMode` and `AMenuPlayerController`: no pawn or HUD, just the menu. `/Game/Maps/L_Playground` uses `AFoundationGameMode` and `AFoundationController` with one placed `AFoundationPlayground` (the 2 km dev-grid ground, the starter-block stations, the block gallery and the movement course; see [Foundation architecture](Foundation/Architecture.md#playground-block-interaction) and [Playground](Playground.md)). It is the only world in the catalog.
+
+`/Game/Maps/L_Generated` (`UUnnamedProjectSettings::GeneratedMap`, not in the catalog) uses the same Foundation game mode with one placed `AVoxelWorld`. That actor is the map's `AFoundationLab`: it builds the voxel test area and gives the pawn its collision and spawn from block data ([Voxel world](VoxelWorld.md#the-test-area)).
 
 Neither gameplay controller inherits from the menu controller. Any controller that needs the menu adds a `UMenuBrowserHost` component: the menu controller shows it on BeginPlay; the Foundation controller shows it as the pause menu and adds its own `foundationmenu` bridge. Only the Foundation controller adds diagnostics (input router, HUD, panels), so the plain menu map has no F3 overlay or input preprocessor.
 

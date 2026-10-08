@@ -21,6 +21,11 @@ def world_map(world_id):
     return path
 
 
+def generated_map():
+    """Long package name of the generated voxel world's map, e.g. /Game/Maps/L_Generated."""
+    return _settings.get_generated_map_package()
+
+
 def input_asset(property_name):
     """Package path of an input asset setting, e.g. input_asset("OnFootContext")."""
     path = _settings.get_input_asset_path(property_name)

@@ -61,6 +61,8 @@ public:
     virtual void ApplyLogicalOffset(const FVector& Offset);
     // Where (re)spawning puts the feet.
     virtual FVector GetSafeSpawn(const UFoundationProfile& Profile) const { return FVector::ZeroVector; }
+    // Feet below this height (cm) return to the safe spawn: the lab's floor is at 0, a voxel world goes far deeper.
+    virtual double GetFallOutZ() const { return -1000; }
     // The gameplay interaction authority, when this lab has one (only the Playground does).
     virtual FFoundationAuthority* GetAuthority() { return nullptr; }
 

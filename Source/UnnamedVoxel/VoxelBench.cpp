@@ -22,7 +22,8 @@ namespace
         return (Index >> 10) * 1.37;
     }
 
-    template <typename FunctionType> FVoxelBenchResult Time(const TCHAR* Name, int32 Samples, FunctionType&& Function)
+    template <typename FunctionType>
+    FVoxelBenchResult TimePrimitive(const TCHAR* Name, int32 Samples, FunctionType&& Function)
     {
         TRACE_CPUPROFILER_EVENT_SCOPE(VoxelBench_Primitive);
         FVoxelBenchResult Result;
@@ -80,25 +81,26 @@ TArray<FVoxelBenchResult> VoxelBench::RunNoise(int32 Samples, uint64 Seed)
     const FVoxelSpline Spline = MakeBenchSpline();
 
     TArray<FVoxelBenchResult> Results;
-    Results.Add(Time(TEXT("Hash64 (x, y, z)"), Samples,
+    Results.Add(TimePrimitive(TEXT("Hash64 (x, y, z)"), Samples,
         [Seed](int32 I) { return double(VoxelRandom::Hash64(Seed, BenchSalt, I & 1023, I >> 10, I & 7) >> 40); }));
     FVoxelXoroshiro Stream(Seed);
-    Results.Add(Time(TEXT("Xoroshiro128++ next"), Samples, [&Stream](int32) { return double(Stream.Next() >> 40); }));
-    Results.Add(Time(TEXT("Gradient noise 2D, 1 octave"), Samples,
-        [&Gradient](int32 I) { return Gradient.Sample(PositionX(I) / 16, PositionY(I) / 16); }));
-    Results.Add(Time(TEXT("Gradient noise 3D, 1 octave"), Samples,
-        [&Gradient](int32 I) { return Gradient.Sample(PositionX(I) / 16, PositionY(I) / 16, (I & 63) * .37); }));
     Results.Add(
-        Time(TEXT("fBm 2D, 6 octaves"), Samples, [&Fbm6](int32 I) { return Fbm6.Sample(PositionX(I), PositionY(I)); }));
-    Results.Add(Time(TEXT("fBm 3D, 4 octaves"), Samples,
+        TimePrimitive(TEXT("Xoroshiro128++ next"), Samples, [&Stream](int32) { return double(Stream.Next() >> 40); }));
+    Results.Add(TimePrimitive(TEXT("Gradient noise 2D, 1 octave"), Samples,
+        [&Gradient](int32 I) { return Gradient.Sample(PositionX(I) / 16, PositionY(I) / 16); }));
+    Results.Add(TimePrimitive(TEXT("Gradient noise 3D, 1 octave"), Samples,
+        [&Gradient](int32 I) { return Gradient.Sample(PositionX(I) / 16, PositionY(I) / 16, (I & 63) * .37); }));
+    Results.Add(TimePrimitive(
+        TEXT("fBm 2D, 6 octaves"), Samples, [&Fbm6](int32 I) { return Fbm6.Sample(PositionX(I), PositionY(I)); }));
+    Results.Add(TimePrimitive(TEXT("fBm 3D, 4 octaves"), Samples,
         [&Fbm4](int32 I) { return Fbm4.Sample(PositionX(I), PositionY(I), (I & 63) * 2.1); }));
-    Results.Add(Time(TEXT("Ridged 2D, 6 octaves"), Samples,
+    Results.Add(TimePrimitive(TEXT("Ridged 2D, 6 octaves"), Samples,
         [&Ridged6](int32 I) { return Ridged6.Sample(PositionX(I), PositionY(I)); }));
-    Results.Add(Time(TEXT("Damped 2D, 6 octaves"), Samples,
+    Results.Add(TimePrimitive(TEXT("Damped 2D, 6 octaves"), Samples,
         [&Damped6](int32 I) { return Damped6.Sample(PositionX(I), PositionY(I)); }));
-    Results.Add(Time(TEXT("Warped fBm 2D, 6 octaves"), Samples,
+    Results.Add(TimePrimitive(TEXT("Warped fBm 2D, 6 octaves"), Samples,
         [&Warped6](int32 I) { return Warped6.Sample(PositionX(I), PositionY(I)); }));
-    Results.Add(Time(TEXT("Spline, 3 nested levels"), Samples,
+    Results.Add(TimePrimitive(TEXT("Spline, 3 nested levels"), Samples,
         [&Spline](int32 I)
         {
             const float Coordinates[3] = {

@@ -1,10 +1,17 @@
-"""Author the block materials: M_BlockOpaque, M_BlockCutout, M_BlockTranslucent and M_BlockWater.
+"""Author the block materials (M_BlockOpaque, M_BlockCutout, M_BlockTranslucent, M_BlockWater) and the voxel chunk
+materials (M_ChunkOpaque, M_ChunkCutout, M_ChunkTranslucent, M_ChunkWater).
 
-Each samples the block texture array by layer. Per-instance custom data carries the state's six face codes, overlay,
-tint and light (UFoundationInteractionView::MakeCustomData); UV channel 1 holds the face index, so a material picks
-its face's code, applies the face's UV transform and reads the current animation frame from the TextureTable
-parameter (UFoundationBlockTextureTable). A chunk mesher can feed the same codes per vertex later. Run after
-ImportBlocks.py; the graphs are code, so rerunning rebuilds them on the same assets:
+Each samples the block texture array by layer and reads the current animation frame from the TextureTable parameter
+(UFoundationBlockTextureTable).
+- Block materials: per-instance custom data carries the state's six face codes, overlay, tint and light
+  (UFoundationInteractionView::MakeCustomData); UV channel 1 holds the face index, so a material picks its face's code.
+- Chunk materials: each vertex carries its own face (UVoxelChunkComponent::BuildStreams). UV 0 is the block UV,
+  continuous across a greedy-merged quad; UV 1 the face and overlay codes; UV 2 the packed tint and face index; the
+  vertex color's R the ambient occlusion and G the light. The UV is transformed first, then each block's fraction is
+  sampled with the continuous UV's gradients, so mip selection never jumps at block edges.
+
+Run after ImportBlocks.py; the graphs are code, so rerunning rebuilds them on the same assets. -Materials=A,B limits
+the run to the named materials:
 
     & 'C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe' Unnamed.uproject
         -run=pythonscript "-script=Scripts\\Editor\\CreateBlockMaterials.py" -unattended -nop4 -nosplash
@@ -63,11 +70,58 @@ if (code & (1u << 13)) color.rgb *= tint;
 return color;
 """
 
+# Chunk vertices carry their own face: Codes = (code, overlay), FaceTint = (packed tint, face), Shade.r = occlusion.
+CHUNK_UNPACK = r"""
+int face = (int)round(FaceTint.y);
+uint code = (uint)round(Codes.x);
+uint overlay = (uint)round(Codes.y);
+uint packed = (uint)round(FaceTint.x);
+float3 tint = float3((packed >> 16) & 255, (packed >> 8) & 255, packed & 255) / 255.0;
+tint = lerp(tint / 12.92, pow((tint + 0.055) / 1.055, 2.4), step(0.04045, tint));
+float2 uv = UV;
+uint transform = (code >> 10) & 7;
+if (transform & 4) uv.x = 1 - uv.x;
+for (uint turn = 0; turn < (transform & 3); turn++) uv = float2(uv.y, 1 - uv.x);
+float2 dx = ddx(uv);
+float2 dy = ddy(uv);
+uv = frac(uv);
+float4 entry = Table.Load(int3(code & 1023, 0, 0));
+float shade = lerp(0.45, 1.0, saturate(Shade.r));
+"""
+
+CHUNK_BLOCK_HLSL = CHUNK_UNPACK + r"""
+float4 color = lerp(Texture2DArraySampleGrad(Blocks, BlocksSampler, float3(uv, entry.x), dx, dy), Texture2DArraySampleGrad(Blocks, BlocksSampler, float3(uv, entry.y), dx, dy), entry.z);
+if (code & (1u << 13)) color.rgb *= tint;
+if ((overlay & (1u << 15)) && ((overlay >> (16 + face)) & 1))
+{
+    float4 layer = Table.Load(int3(overlay & 1023, 0, 0));
+    float4 over = Texture2DArraySampleGrad(Blocks, BlocksSampler, float3(uv, layer.x), dx, dy);
+    if (overlay & (1u << 13)) over.rgb *= tint;
+    color.rgb = lerp(color.rgb, over.rgb, over.a);
+}
+color.rgb *= shade;
+return color;
+"""
+
+CHUNK_WATER_HLSL = CHUNK_UNPACK + r"""
+float4 color;
+if (face >= 4)
+    color = lerp(Texture2DArraySampleGrad(Blocks, BlocksSampler, float3(uv, entry.x), dx, dy), Texture2DArraySampleGrad(Blocks, BlocksSampler, float3(uv, entry.y), dx, dy), entry.z);
+else
+    color = lerp(Texture2DArraySampleGrad(Flow, FlowSampler, float3(uv * 0.5, entry.x), dx * 0.5, dy * 0.5), Texture2DArraySampleGrad(Flow, FlowSampler, float3(uv * 0.5, entry.y), dx * 0.5, dy * 0.5), entry.z);
+if (code & (1u << 13)) color.rgb *= tint;
+return color;
+"""
+
 MATERIALS = {
     "M_BlockOpaque": {"blend": unreal.BlendMode.BLEND_OPAQUE, "hlsl": BLOCK_HLSL},
     "M_BlockCutout": {"blend": unreal.BlendMode.BLEND_MASKED, "hlsl": BLOCK_HLSL},
     "M_BlockTranslucent": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": BLOCK_HLSL},
     "M_BlockWater": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": WATER_HLSL},
+    "M_ChunkOpaque": {"blend": unreal.BlendMode.BLEND_OPAQUE, "hlsl": CHUNK_BLOCK_HLSL, "chunk": True},
+    "M_ChunkCutout": {"blend": unreal.BlendMode.BLEND_MASKED, "hlsl": CHUNK_BLOCK_HLSL, "chunk": True},
+    "M_ChunkTranslucent": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": CHUNK_BLOCK_HLSL, "chunk": True},
+    "M_ChunkWater": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": CHUNK_WATER_HLSL, "chunk": True},
 }
 
 
@@ -94,10 +148,12 @@ def get_or_create(name):
 
 def build(name, spec, block_textures, flow_textures):
     material = get_or_create(name)
-    water = name == "M_BlockWater"
+    water = name.endswith("Water")
+    chunk = spec.get("chunk", False)
     material.set_editor_property("blend_mode", spec["blend"])
     material.set_editor_property("two_sided", False)
-    material.set_editor_property("used_with_instanced_static_meshes", True)
+    # Chunk meshes use RealtimeMesh's own vertex factory, which needs no usage flag.
+    material.set_editor_property("used_with_instanced_static_meshes", not chunk)
     if spec["blend"] == unreal.BlendMode.BLEND_MASKED:
         material.set_editor_property("opacity_mask_clip_value", 0.5)  # 26.3 cutout discards alpha below 0.5
     if spec["blend"] == unreal.BlendMode.BLEND_TRANSLUCENT:
@@ -117,7 +173,11 @@ def build(name, spec, block_textures, flow_textures):
         expr.set_editor_property("texture", texture)
         return expr
 
-    inputs = ["CD%d" % i for i in range(CUSTOM_DATA - 1)] + ["UV", "Face", "Blocks", "Table"] + (["Flow"] if water else [])
+    if chunk:
+        inputs = ["UV", "Codes", "FaceTint", "Shade", "Blocks", "Table"]
+    else:
+        inputs = ["CD%d" % i for i in range(CUSTOM_DATA - 1)] + ["UV", "Face", "Blocks", "Table"]
+    inputs += ["Flow"] if water else []
     custom = node(unreal.MaterialExpressionCustom, -400, 0)
     custom.set_editor_property("description", "Block face: texture layer, UV transform, animation, tint, overlay")
     custom.set_editor_property("output_type", unreal.CustomMaterialOutputType.CMOT_FLOAT4)
@@ -128,22 +188,32 @@ def build(name, spec, block_textures, flow_textures):
         item.set_editor_property("input_name", input_name)
         items.append(item)
     custom.set_editor_property("inputs", items)
-    data = []
-    for index in range(CUSTOM_DATA):
-        expr = node(unreal.MaterialExpressionPerInstanceCustomData, -900, -700 + index * 70)
-        expr.set_editor_property("data_index", index)
-        data.append(expr)
-        if index < CUSTOM_DATA - 1:
-            link(expr, "", custom, "CD%d" % index)
     uv0 = node(unreal.MaterialExpressionTextureCoordinate, -900, 0)
-    uv1 = node(unreal.MaterialExpressionTextureCoordinate, -900, 80)
-    uv1.set_editor_property("coordinate_index", 1)
-    face = node(unreal.MaterialExpressionComponentMask, -700, 80)
-    face.set_editor_property("r", True)
-    face.set_editor_property("g", False)
-    link(uv1, "", face, "")
     link(uv0, "", custom, "UV")
-    link(face, "", custom, "Face")
+    if chunk:
+        for index, input_name in ((1, "Codes"), (2, "FaceTint")):
+            channel = node(unreal.MaterialExpressionTextureCoordinate, -900, index * 80)
+            channel.set_editor_property("coordinate_index", index)
+            link(channel, "", custom, input_name)
+        vertex_color = node(unreal.MaterialExpressionVertexColor, -900, 240)
+        link(vertex_color, "", custom, "Shade")
+        light_source, light_output, light_divisor = vertex_color, "G", 1.0  # G is light / 15 already
+    else:
+        data = []
+        for index in range(CUSTOM_DATA):
+            expr = node(unreal.MaterialExpressionPerInstanceCustomData, -900, -700 + index * 70)
+            expr.set_editor_property("data_index", index)
+            data.append(expr)
+            if index < CUSTOM_DATA - 1:
+                link(expr, "", custom, "CD%d" % index)
+        uv1 = node(unreal.MaterialExpressionTextureCoordinate, -900, 80)
+        uv1.set_editor_property("coordinate_index", 1)
+        face = node(unreal.MaterialExpressionComponentMask, -700, 80)
+        face.set_editor_property("r", True)
+        face.set_editor_property("g", False)
+        link(uv1, "", face, "")
+        link(face, "", custom, "Face")
+        light_source, light_output, light_divisor = data[CUSTOM_DATA - 1], "", 15.0
     link(texture_parameter("BlockTextures", block_textures, 200), "", custom, "Blocks")
     # The runtime replaces this with the live animation table; the default only satisfies the compiler.
     default_table = unreal.load_asset("/Engine/EngineResources/Black")
@@ -177,8 +247,8 @@ def build(name, spec, block_textures, flow_textures):
         scale.set_editor_property("parameter_name", "LightEmissive")
         scale.set_editor_property("default_value", 4.0)
         light = node(unreal.MaterialExpressionDivide, -250, 450)
-        link(data[CUSTOM_DATA - 1], "", light, "A")
-        light.set_editor_property("const_b", 15.0)
+        link(light_source, light_output, light, "A")
+        light.set_editor_property("const_b", light_divisor)
         amount = node(unreal.MaterialExpressionMultiply, -100, 450)
         link(light, "", amount, "A")
         link(scale, "", amount, "B")
@@ -200,7 +270,16 @@ def main():
     flow_textures = registry.get_editor_property("water_flow_textures")
     cmdline = unreal.SystemLibrary.get_command_line()
     compiled = "AllowCommandletRendering" in cmdline and "NullRHI" not in cmdline
+    selected = set(MATERIALS)
+    for token in cmdline.split():
+        if token.lower().startswith("-materials="):
+            selected = {name.strip() for name in token.split("=", 1)[1].strip('"').split(",") if name.strip()}
+    unknown = selected - set(MATERIALS)
+    if unknown:
+        fail("unknown materials: " + ", ".join(sorted(unknown)))
     for name, spec in MATERIALS.items():
+        if name not in selected:
+            continue
         material = build(name, spec, block_textures, flow_textures)
         stats = lib.get_statistics(material)
         unreal.log("BLOCK_MATERIALS %s: PS instr %d, samplers %d" % (name, stats.num_pixel_shader_instructions,
