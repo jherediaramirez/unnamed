@@ -19,7 +19,7 @@ Unreal Engine 5.8.3 game project with an offline CEF menu generated from an unch
 & 'C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat' UnnamedEditor Win64 Development -Project="$PWD\Unnamed.uproject" -WaitMutex
 Set-Location Tests; npm test; node source-check.mjs                  # menu runtime units, reference/asset checks
 & Scripts\TestMenu.ps1; & Scripts\TestInput.ps1                         # native suites (Unnamed.Menu / Unnamed.Input)
-& Scripts\TestVoxel.ps1                                                  # voxel.Info, then Unnamed.Voxel
+& Scripts\TestVoxel.ps1                                                  # voxel.Info/Seed/Bench, then Unnamed.Voxel (13)
 & Scripts\TestFoundationRuntime.ps1 -Editor -FrameRates 60            # Playground probe (movement + interaction)
 & Scripts\TestFoundationRuntime.ps1 -Editor -Suite interaction -FrameRates 60   # Playground interaction scenarios
 Set-Location Tests; node foundation-menu.mjs --editor                 # CEF + native end to end

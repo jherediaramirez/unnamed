@@ -9,15 +9,15 @@ $OutputDirectory=(Resolve-Path -LiteralPath $OutputDirectory).Path
 # The editor's per-run user folder is a cache (an asset registry of ~120 MB), not evidence: keep it out of the record.
 $profileDirectory=Join-Path ([IO.Path]::GetTempPath()) ('UnnamedVoxelProfile-'+[guid]::NewGuid())
 & "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "$root/Unnamed.uproject" -unattended -nop4 -NullRHI `
-    '-ExecCmds=voxel.Info,Automation RunTests Unnamed.Voxel' '-TestExit=Automation Test Queue Empty' `
+    '-ExecCmds=voxel.Info,voxel.Seed,voxel.Bench Noise,Automation RunTests Unnamed.Voxel' '-TestExit=Automation Test Queue Empty' `
     "-ReportExportPath=$OutputDirectory/Report" "-abslog=$OutputDirectory/native.log" "-UserDir=$profileDirectory/" *> "$OutputDirectory/console.log"
 $code=$LASTEXITCODE
 Remove-Item -LiteralPath $profileDirectory -Recurse -Force -ErrorAction SilentlyContinue
 if(-not(Test-Path "$OutputDirectory/Report/index.json")){throw "Missing voxel report (exit $code)"}
 $report=Get-Content -Raw "$OutputDirectory/Report/index.json" | ConvertFrom-Json
-$expected=3
-if($code -ne 0 -or $report.failed -ne 0 -or $report.succeeded -ne $expected){throw "Voxel tests failed: $OutputDirectory"}
-# voxel.Info runs first, so its lines head the log: keep them next to the report.
-Select-String -Path "$OutputDirectory/native.log" -Pattern 'LogUnnamedVoxel: Display: ' | ForEach-Object { $_.Line -replace '^.*LogUnnamedVoxel: Display: ','' } | Set-Content "$OutputDirectory/voxel-info.txt"
+$expected=13
+# The console commands run before the tests: keep their output (settings, dev seed, timings) next to the report.
+Select-String -Path "$OutputDirectory/native.log" -Pattern 'LogUnnamedVoxel: Display: ' | ForEach-Object { $_.Line -replace '^.*LogUnnamedVoxel: Display: ','' } | Set-Content "$OutputDirectory/voxel-console.txt"
+if($code -ne 0 -or $report.failed -ne 0 -or $report.succeeded -ne $expected){throw "Voxel tests failed ($($report.succeeded) of $expected passed): $OutputDirectory"}
 "PASS: $expected voxel suites. $OutputDirectory/Report/index.json"
-Get-Content "$OutputDirectory/voxel-info.txt"
+Get-Content "$OutputDirectory/voxel-console.txt"

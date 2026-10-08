@@ -1,0 +1,27 @@
+#pragma once
+
+#include "CoreMinimal.h"
+
+// One timed run: how long Samples evaluations took, and a checksum so the work cannot be optimized away.
+struct FVoxelBenchResult
+{
+    FString Name;
+    int64 Samples = 0;
+    double Seconds = 0;
+    double Checksum = 0;
+    bool bParallel = false;
+
+    double GetNanosecondsPerSample() const { return Samples > 0 ? Seconds * 1e9 / double(Samples) : 0; }
+    double GetMillionsPerSecond() const { return Seconds > 0 ? double(Samples) / Seconds / 1e6 : 0; }
+};
+
+// Timings for the deterministic core, shared by voxel.Bench and the throughput test.
+namespace VoxelBench
+{
+    // Times each primitive on the calling thread over Samples evaluations (positions spread over a wide area, so the
+    // lattice hashes see realistic inputs), then 3D fBm across every task worker.
+    UNNAMEDVOXEL_API TArray<FVoxelBenchResult> RunNoise(int32 Samples, uint64 Seed);
+
+    // One line per result: name, nanoseconds per sample, millions per second.
+    UNNAMEDVOXEL_API FString Describe(TConstArrayView<FVoxelBenchResult> Results);
+}

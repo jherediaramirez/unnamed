@@ -1,7 +1,9 @@
 #include "Voxel/VoxelConsole.h"
 #include "Async/Fundamental/Scheduler.h"
 #include "Modules/ModuleManager.h"
+#include "Random/VoxelSeed.h"
 #include "Voxel/VoxelWorldSettings.h"
+#include "VoxelBench.h"
 #include "VoxelConstants.h"
 #include "VoxelLog.h"
 
@@ -33,7 +35,8 @@ FString VoxelConsole::DescribeInfo()
     FString Out = FString::Printf(TEXT("Voxel world: Z %d..%d in %d sections of %d, sea level %d, columns %d x %d\n"),
         VoxelConstants::MinZ, VoxelConstants::MaxZ, VoxelConstants::SectionCount, VoxelConstants::SectionSize,
         VoxelConstants::SeaLevel, VoxelConstants::ColumnSize, VoxelConstants::ColumnSize);
-    Out += FString::Printf(TEXT("  Dev seed: \"%s\" (used when a world has none)\n"), *Settings.DevSeed);
+    Out += FString::Printf(TEXT("  Dev seed: \"%s\" -> %s (used when a world has none)\n"), *Settings.DevSeed,
+        *FVoxelSeed::Parse(Settings.DevSeed).Describe());
 
     // Every voxel.* variable, sorted, so new ones show up here without touching this function.
     TArray<TPair<FString, IConsoleVariable*>> Variables;
@@ -62,18 +65,52 @@ FString VoxelConsole::DescribeInfo()
 
 namespace
 {
+    // Each line to the console that ran the command and to the log, so headless runs keep the output.
+    void Print(FOutputDevice& Output, const FString& Text)
+    {
+        TArray<FString> Lines;
+        Text.ParseIntoArrayLines(Lines);
+        for (const FString& Line : Lines)
+        {
+            Output.Log(Line);
+            UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Line);
+        }
+    }
+
     FAutoConsoleCommandWithOutputDevice InfoCommand(TEXT("voxel.Info"),
         TEXT("Prints the voxel world's settings, console variables and limits."),
         FConsoleCommandWithOutputDeviceDelegate::CreateLambda(
-            [](FOutputDevice& Output)
+            [](FOutputDevice& Output) { Print(Output, VoxelConsole::DescribeInfo()); }));
+
+    FAutoConsoleCommand SeedCommand(TEXT("voxel.Seed"),
+        TEXT("voxel.Seed [text]: shows the 64-bit world seed a seed text makes (blank: random; whole numbers as "
+             "typed; other text hashed). Without text, the dev seed."),
+        FConsoleCommandWithArgsAndOutputDeviceDelegate::CreateLambda(
+            [](const TArray<FString>& Args, FOutputDevice& Output)
             {
-                const FString Info = VoxelConsole::DescribeInfo();
-                TArray<FString> Lines;
-                Info.ParseIntoArrayLines(Lines);
-                for (const FString& Line : Lines)
+                const FString Text =
+                    Args.IsEmpty() ? UVoxelWorldSettings::Get().DevSeed : FString::Join(Args, TEXT(" "));
+                Print(Output, FString::Printf(TEXT("Seed \"%s\" -> %s"), *Text, *FVoxelSeed::Parse(Text).Describe()));
+            }));
+
+    FAutoConsoleCommand BenchCommand(TEXT("voxel.Bench"),
+        TEXT(
+            "voxel.Bench Noise [millions]: times the deterministic core's primitives on this thread (default 1 million "
+            "samples each), then 3D fBm across every task worker."),
+        FConsoleCommandWithArgsAndOutputDeviceDelegate::CreateLambda(
+            [](const TArray<FString>& Args, FOutputDevice& Output)
+            {
+                if (Args.IsEmpty() || Args[0] != TEXT("Noise"))
                 {
-                    Output.Log(Line);
-                    UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Line);
+                    Print(Output, TEXT("Usage: voxel.Bench Noise [millions]"));
+                    return;
                 }
+                const double Millions = Args.Num() > 1 ? FMath::Clamp(FCString::Atod(*Args[1]), .01, 50.) : 1.;
+                const FVoxelSeed Seed = FVoxelSeed::Parse(UVoxelWorldSettings::Get().DevSeed);
+                const TArray<FVoxelBenchResult> Results = VoxelBench::RunNoise(int32(Millions * 1e6), Seed.Value);
+                Print(Output,
+                    FString::Printf(TEXT("Voxel bench, %d samples per primitive, seed %s:"), int32(Results[0].Samples),
+                        *Seed.Describe()) +
+                        TEXT("\n") + VoxelBench::Describe(Results));
             }));
 }
