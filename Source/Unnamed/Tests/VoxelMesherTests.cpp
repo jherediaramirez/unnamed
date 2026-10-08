@@ -1,9 +1,13 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Foundation/FoundationGrid.h"
+#include "Foundation/FoundationProfile.h"
+#include "MeshCardBuild.h"
+#include "MeshCardRepresentation.h"
 #include "Meshing/VoxelMesher.h"
 #include "Misc/AutomationTest.h"
 #include "Random/VoxelRandom.h"
 #include "Tests/VoxelTestBlocks.h"
+#include "Voxel/VoxelChunkComponent.h"
 
 namespace
 {
@@ -168,6 +172,51 @@ namespace
                 }
         return Faces;
     }
+
+    // A column's Lumen cards, built from its meshed sections as the voxel world builds them.
+    FMeshCardsBuildData MesherCardsOf(TConstArrayView<FVoxelMeshData> Meshes)
+    {
+        TArray<const FVoxelMeshData*> Sections;
+        for (const FVoxelMeshData& Mesh : Meshes)
+            if (!Mesh.IsEmpty()) Sections.Add(&Mesh);
+        FMeshCardsBuildData Cards;
+        UVoxelChunkComponent::BuildCards(Sections, Cards);
+        return Cards;
+    }
+
+    // The opaque and cutout faces that no card facing the same way contains (Lumen captures a face only through
+    // such a card).
+    int32 CountUncardedFaces(TConstArrayView<FVoxelMeshData> Meshes, const FMeshCardsBuildData& Cards)
+    {
+        constexpr float BlockCm = float(UFoundationProfile::BlockCm);
+        int32 Uncarded = 0;
+        for (const FVoxelMeshData& Mesh : Meshes)
+            for (const EVoxelLayer LayerKind : {EVoxelLayer::Opaque, EVoxelLayer::Cutout})
+            {
+                const FVoxelMeshLayer& Layer = Mesh.Layers[int32(LayerKind)];
+                for (int32 Quad = 0; Quad < Layer.GetQuadCount(); ++Quad)
+                {
+                    const int32 Face = FMath::RoundToInt32(Layer.TintFaces[Quad * 4].Y);
+                    const bool bCarded = Cards.CardBuildData.ContainsByPredicate(
+                        [&](const FLumenCardBuildData& Card)
+                        {
+                            if (Card.AxisAlignedDirectionIndex != Face) return false;
+                            for (int32 Corner = 0; Corner < 4; ++Corner)
+                            {
+                                const FVector3f InCard =
+                                    Card.OBB.TransformLocalToCard(Layer.Positions[Quad * 4 + Corner] * BlockCm);
+                                if (FMath::Abs(InCard.X) > Card.OBB.Extent.X + 0.01f ||
+                                    FMath::Abs(InCard.Y) > Card.OBB.Extent.Y + 0.01f ||
+                                    FMath::Abs(InCard.Z) > Card.OBB.Extent.Z + 0.01f)
+                                    return false;
+                            }
+                            return true;
+                        });
+                    Uncarded += !bCarded;
+                }
+            }
+        return Uncarded;
+    }
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelMesherShapesTest, "Unnamed.Voxel.Mesher.Shapes",
@@ -303,6 +352,67 @@ bool FVoxelMesherBordersTest::RunTest(const FString& Parameters)
         TestEqual(FString::Printf(TEXT("%s: every face has its own corner shading"), Mode), Shading, 0);
         if (!bGreedy) TestEqual(TEXT("Unmerged: one quad per face"), Quads, Expected.Num());
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelMesherCardsTest, "Unnamed.Voxel.Mesher.Cards",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelMesherCardsTest::RunTest(const FString& Parameters)
+{
+    const FVoxelMeshOptions Greedy;
+    auto Meshed = [&Greedy](auto&& Fill) { return FMesherTestWorld(1, Fill).MeshColumn({0, 0}, Greedy); };
+    auto Block = [](uint16 State)
+    { return [State](int32 X, int32 Y, int32 Z) -> uint16 { return X == 5 && Y == 5 && Z == 5 ? State : 0; }; };
+
+    // One block: a card per direction, looking along that direction and fitted to its face.
+    const TArray<FVoxelMeshData> OneBlock = Meshed(Block(Stone));
+    const FMeshCardsBuildData StoneCards = MesherCardsOf(OneBlock);
+    TestEqual(TEXT("One block: 6 cards"), StoneCards.CardBuildData.Num(), 6);
+    for (int32 Face = 0; Face < 6; ++Face)
+    {
+        const FLumenCardBuildData* Card = StoneCards.CardBuildData.FindByPredicate(
+            [Face](const FLumenCardBuildData& Each) { return Each.AxisAlignedDirectionIndex == Face; });
+        if (!TestNotNull(FString::Printf(TEXT("A card for direction %d"), Face), Card)) continue;
+        TestTrue(FString::Printf(TEXT("Direction %d: the card looks along the face's normal"), Face),
+            Card->OBB.AxisZ.Equals(MeshCardRepresentation::GetAxisAlignedDirection(Face), 1e-5f));
+        TestTrue(FString::Printf(
+                     TEXT("Direction %d: the card is a block wide and thin (%s)"), Face, *Card->OBB.Extent.ToString()),
+            Card->OBB.Extent.X >= 50 && Card->OBB.Extent.Y >= 50 && Card->OBB.Extent.Z < 25);
+    }
+    TestEqual(TEXT("One block: every face is in a card"), CountUncardedFaces(OneBlock, StoneCards), 0);
+
+    // Lumen captures opaque and masked surfaces only.
+    TestEqual(TEXT("Glass gets no cards"), MesherCardsOf(Meshed(Block(Glass))).CardBuildData.Num(), 0);
+    TestEqual(TEXT("Water gets no cards"), MesherCardsOf(Meshed(Block(WaterSource))).CardBuildData.Num(), 0);
+    TestEqual(TEXT("Leaves (cutout) get 6 cards"), MesherCardsOf(Meshed(Block(Leaves))).CardBuildData.Num(), 6);
+
+    // A pillar through every section at the column's corner, with nothing around it: 24 sections x 4 sides plus the
+    // two ends would be 98 cards. They merge into Lumen's limit and still contain every face.
+    const TArray<FVoxelMeshData> Pillar =
+        Meshed([](int32 X, int32 Y, int32 Z) -> uint16 { return X == 0 && Y == 0 ? Stone : 0; });
+    const FMeshCardsBuildData PillarCards = MesherCardsOf(Pillar);
+    TestTrue(FString::Printf(TEXT("A full-height pillar: %d cards, at most %d"), PillarCards.CardBuildData.Num(),
+                 UVoxelChunkComponent::MaxCards),
+        PillarCards.CardBuildData.Num() <= UVoxelChunkComponent::MaxCards && PillarCards.CardBuildData.Num() >= 6);
+    TestEqual(TEXT("A full-height pillar: every face is in a card"), CountUncardedFaces(Pillar, PillarCards), 0);
+
+    // Random blocks of every kind (as in Mesher.Borders): every opaque and cutout face is in a card.
+    constexpr uint64 Salt = VoxelRandom::Salt("mesher-cards");
+    const TArray<FVoxelMeshData> Random = Meshed(
+        [](int32 X, int32 Y, int32 Z) -> uint16
+        {
+            if (Z < -8 || Z > 47) return Air;
+            if (Z < 0) return Stone;
+            const int32 Roll = VoxelRandom::ToIndex(VoxelRandom::Hash64(11, Salt, X, Y, Z), 100);
+            return Roll < 50 ? Air : Roll < 75 ? Stone : Roll < 85 ? Leaves : Roll < 92 ? Glass : SlabBottom;
+        });
+    const FMeshCardsBuildData RandomCards = MesherCardsOf(Random);
+    AddInfo(FString::Printf(TEXT("Random blocks: %d cards"), RandomCards.CardBuildData.Num()));
+    TestTrue(
+        TEXT("Random blocks: within Lumen's limit"), RandomCards.CardBuildData.Num() <= UVoxelChunkComponent::MaxCards);
+    TestEqual(
+        TEXT("Random blocks: every opaque and cutout face is in a card"), CountUncardedFaces(Random, RandomCards), 0);
     return true;
 }
 #endif

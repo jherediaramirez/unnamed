@@ -105,7 +105,7 @@ Verified at the end of phase 2:
 
 ## 6. Known bugs and fix-me items, with suggested approaches
 
-1. **Shaded slopes are almost black.**
+1. **Shaded slopes are almost black.** *Fixed after this handoff, differently from the advice below: see [step 2L](2026-10-08-Voxel-Lighting.md). RealtimeMesh Core does accept Lumen cards.*
    - **Cause:** RealtimeMesh Core gives Lumen no surface cache; the Lumen scene view (`r.Lumen.Visualize 3`) shows the chunks black, so nothing bounces light.
    - **Already tried:** `r.Lumen.HardwareRayTracing.LightingMode 2` passed through `-ExecCmds` changed nothing. Unverified: whether the variable exists in 5.8 and whether hardware ray tracing is on (check `r.Lumen.HardwareRayTracing`).
    - **Recommended for phase 3:** a per-vertex sky-light value. Compute sky visibility per cell in the mesher (from the column heightmaps, or a small sky-light flood like the reference's light engine), put it in vertex colour B, and add an ambient term in the chunk materials (`CHUNK_UNPACK` in `CreateBlockMaterials.py`). The same term later makes caves dark.

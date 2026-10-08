@@ -2,8 +2,8 @@
 
 /Game/Maps/L_Generated (UUnnamedProjectSettings::GeneratedMap) is the procedural map every generated world opens. It
 holds only what cannot be built at runtime: the AVoxelWorld actor (it generates and meshes the terrain), a PlayerStart,
-the Playground's daylight rig and a thin height fog. Phase 2 shows a fixed test area there; it is not a catalog world
-(generated worlds will come from Create New World).
+the Playground's daylight rig with a brighter sky light, and a thin height fog. Phase 2 shows a fixed test area there;
+it is not a catalog world (generated worlds will come from Create New World).
 
 Run after compiling the editor target (AVoxelWorld, AFoundationGameMode):
 
@@ -31,6 +31,10 @@ SUN_INTENSITY = 75000.0
 EXPOSURE_EV100 = 14.5
 FOG_DENSITY = 0.002
 FOG_START_DISTANCE = 3000.0
+# Except the sky light, three times the Playground's. Against a 75,000 lux sun the atmosphere's own sky leaves terrain
+# that faces away from the sun near black at this exposure (about 12:1); at 3 those slopes read as clearly as a
+# Minecraft side face, and caves stay dark because Lumen still occludes the sky (Docs/VoxelWorld.md, Lighting).
+SKY_LIGHT_INTENSITY = 3.0
 
 ORIGIN_TOLERANCE = 0.1
 
@@ -69,6 +73,7 @@ def create_map():
     sky = spawn(unreal.SkyLight, "Voxel world - Ambient", (0, 0, 1000))
     sky.light_component.set_mobility(unreal.ComponentMobility.MOVABLE)
     sky.light_component.set_editor_property("real_time_capture", True)
+    sky.light_component.set_editor_property("intensity", SKY_LIGHT_INTENSITY)
     exposure = spawn(unreal.PostProcessVolume, "Voxel world - stable daylight exposure", (0, 0, 0))
     exposure.set_editor_property("unbound", True)
     post = exposure.get_editor_property("settings")
@@ -125,13 +130,17 @@ def verify():
         problems.append("sun intensity is %s, expected %s" % (sun.light_component.get_editor_property("intensity"),
                                                               SUN_INTENSITY))
     exactly_one(of_type(unreal.SkyAtmosphere), "SkyAtmosphere")
-    exactly_one(of_type(unreal.SkyLight), "SkyLight")
+    sky = exactly_one(of_type(unreal.SkyLight), "SkyLight")
+    if sky and abs(sky.light_component.get_editor_property("intensity") - SKY_LIGHT_INTENSITY) > 0.001:
+        problems.append("sky light intensity is %s, expected %s" % (sky.light_component.get_editor_property("intensity"),
+                                                                   SKY_LIGHT_INTENSITY))
     exactly_one(of_type(unreal.PostProcessVolume), "PostProcessVolume")
     exactly_one(of_type(unreal.ExponentialHeightFog), "ExponentialHeightFog")
     if problems:
         raise RuntimeError("Generated world map %s is not set up: %s (delete Content/Maps/L_Generated.umap and rerun)"
                            % (MAP, "; ".join(problems)))
-    unreal.log("GENERATED MAP OK: %s - VoxelWorld + PlayerStart, FoundationGameMode, kill_z %s, daylight rig" % (MAP, KILL_Z))
+    unreal.log("GENERATED MAP OK: %s - VoxelWorld + PlayerStart, FoundationGameMode, kill_z %s, daylight rig, sky light %s"
+               % (MAP, KILL_Z, SKY_LIGHT_INTENSITY))
 
 
 def main():

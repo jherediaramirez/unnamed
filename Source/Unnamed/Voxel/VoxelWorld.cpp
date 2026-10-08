@@ -4,6 +4,8 @@
 #include "Camera/CameraActor.h"
 #include "Camera/CameraComponent.h"
 #include "Core/RealtimeMeshDataStream.h"
+#include "DynamicRHI.h"
+#include "Engine/GameViewportClient.h"
 #include "EngineUtils.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationBlockTextureTable.h"
@@ -14,7 +16,9 @@
 #include "HAL/FileManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "MeshCardBuild.h"
 #include "Misc/FileHelper.h"
+#include "RenderUtils.h"
 #include "Storage/VoxelColumn.h"
 #include "Terrain/VoxelHeightTerrain.h"
 #include "UnnamedProjectSettings.h"
@@ -29,8 +33,8 @@
 
 DECLARE_CYCLE_STAT(TEXT("Apply columns"), STAT_VoxelApplyColumns, STATGROUP_Voxel);
 
-// A finished build on its way to the screen: the area, one stream set per column with geometry, and the apply
-// bookkeeping.
+// A finished build on its way to the screen: the area, one stream set and set of Lumen cards per column with
+// geometry, and the apply bookkeeping.
 struct AVoxelWorld::FBuild
 {
     struct FColumnMesh
@@ -38,6 +42,8 @@ struct AVoxelWorld::FBuild
         // Index into Area.Columns.
         int32 Column = 0;
         RealtimeMesh::FRealtimeMeshStreamSet Streams;
+        FMeshCardsBuildData Cards;
+        double CardsMs = 0;
         uint32 LayerMask = 0, SectionMask = 0;
     };
 
@@ -45,6 +51,9 @@ struct AVoxelWorld::FBuild
     FVoxelArea Area;
     TArray<FColumnMesh> ColumnMeshes;
     double StreamsMs = 0;
+    // The Lumen cards across all columns, the most in one column, and their build time per column.
+    int32 CardCount = 0, MostCards = 0;
+    double CardsMs = 0, WorstCardsMs = 0;
     double StartSeconds = 0;
     int32 NextColumn = 0;
     double ApplyMs = 0, WorstFrameMs = 0;
@@ -59,6 +68,8 @@ namespace
 
     // Frames each screenshot waits for Lumen and the shadow cache to settle.
     constexpr int32 ShotSettleFrames = 150;
+    // The last settle frames, whose GPU time the shot report averages.
+    constexpr int32 ShotTimedFrames = 60;
     // Frames to wait for a requested screenshot file before moving on anyway.
     constexpr int32 ShotWriteFrames = 120;
 
@@ -69,6 +80,22 @@ namespace
         FVector Target;
         bool bLumenScene;
     };
+
+    // The settings that decide how the chunks are lit, so every shot report says what it shows.
+    FString DescribeShotLighting()
+    {
+        auto Value = [](const TCHAR* Name)
+        {
+            const IConsoleVariable* Variable = IConsoleManager::Get().FindConsoleVariable(Name);
+            return Variable ? Variable->GetString() : FString(TEXT("?"));
+        };
+        return FString::Printf(TEXT("  Lighting: r.DynamicGlobalIlluminationMethod %s, r.ReflectionMethod %s, "
+                                    "r.Lumen.HardwareRayTracing %s (ray tracing %s), "
+                                    "r.Lumen.HardwareRayTracing.LightingMode %s"),
+            *Value(TEXT("r.DynamicGlobalIlluminationMethod")), *Value(TEXT("r.ReflectionMethod")),
+            *Value(TEXT("r.Lumen.HardwareRayTracing")), IsRayTracingEnabled() ? TEXT("on") : TEXT("off"),
+            *Value(TEXT("r.Lumen.HardwareRayTracing.LightingMode")));
+    }
 }
 
 AVoxelWorld::AVoxelWorld()
@@ -150,8 +177,8 @@ void AVoxelWorld::StartBuild()
             Build->Serial = Serial;
             Build->StartSeconds = StartSeconds;
             FVoxelArea::Build(*SharedTable, SeedValue, FIntPoint::ZeroValue, Radius, Options, true, Build->Area);
-            // One stream set per column, merging its sections (UVoxelChunkComponent). Stream sets are plain data, so
-            // they are built here too; the game thread only hands them over.
+            // One stream set and set of Lumen cards per column, merging its sections (UVoxelChunkComponent). Both are
+            // plain data, so they are built here too; the game thread only hands them over.
             const double StreamStart = FPlatformTime::Seconds();
             TArray<TArray<const FVoxelMeshData*>> Sections;
             Sections.SetNum(Build->Area.Columns.Num());
@@ -174,9 +201,19 @@ void AVoxelWorld::StartBuild()
                 {
                     FBuild::FColumnMesh& Mesh = Build->ColumnMeshes[Index];
                     UVoxelChunkComponent::BuildStreams(Sections[Mesh.Column], Mesh.Streams);
+                    const double CardsStart = FPlatformTime::Seconds();
+                    UVoxelChunkComponent::BuildCards(Sections[Mesh.Column], Mesh.Cards);
+                    Mesh.CardsMs = (FPlatformTime::Seconds() - CardsStart) * 1000.;
                     Mesh.LayerMask = UVoxelChunkComponent::GetLayerMask(Sections[Mesh.Column]);
                 });
             Build->StreamsMs = (FPlatformTime::Seconds() - StreamStart) * 1000.;
+            for (const FBuild::FColumnMesh& Mesh : Build->ColumnMeshes)
+            {
+                Build->CardCount += Mesh.Cards.CardBuildData.Num();
+                Build->MostCards = FMath::Max(Build->MostCards, Mesh.Cards.CardBuildData.Num());
+                Build->CardsMs += Mesh.CardsMs;
+                Build->WorstCardsMs = FMath::Max(Build->WorstCardsMs, Mesh.CardsMs);
+            }
             return Build;
         });
 }
@@ -202,7 +239,7 @@ void AVoxelWorld::ApplyColumns(double BudgetSeconds)
     {
         FBuild::FColumnMesh& Mesh = Build.ColumnMeshes[Build.NextColumn];
         GetChunk(Build.Area.Columns[Mesh.Column]->GetPosition())
-            ->SetMesh(MoveTemp(Mesh.Streams), Mesh.LayerMask, Mesh.SectionMask);
+            ->SetMesh(MoveTemp(Mesh.Streams), MoveTemp(Mesh.Cards), Mesh.LayerMask, Mesh.SectionMask);
         ++Build.NextColumn;
     } while (Build.NextColumn < Build.ColumnMeshes.Num() && FPlatformTime::Seconds() - Start < BudgetSeconds);
     const double FrameMs = (FPlatformTime::Seconds() - Start) * 1000.;
@@ -212,8 +249,13 @@ void AVoxelWorld::ApplyColumns(double BudgetSeconds)
     if (Build.NextColumn < Build.ColumnMeshes.Num()) return;
 
     BuildReport = FString::Printf(TEXT("Seed %s\n"), *Seed.Describe()) + Build.Area.Describe() +
-        FString::Printf(TEXT("\n  Stream sets: %d columns in %.1f ms (wall, all workers)\n"), Build.ColumnMeshes.Num(),
-            Build.StreamsMs) +
+        FString::Printf(TEXT("\n  Stream sets and Lumen cards: %d columns in %.1f ms (wall, all workers)\n"),
+            Build.ColumnMeshes.Num(), Build.StreamsMs) +
+        FString::Printf(
+            TEXT("  Lumen cards: %d (%.1f per column, most %d of %d), mean %.3f ms per column, worst %.3f ms\n"),
+            Build.CardCount, Build.CardCount / FMath::Max(1., double(Build.ColumnMeshes.Num())), Build.MostCards,
+            UVoxelChunkComponent::MaxCards, Build.CardsMs / FMath::Max(1, Build.ColumnMeshes.Num()),
+            Build.WorstCardsMs) +
         FString::Printf(TEXT("  Apply: %d columns in %.2f ms over %d frames, worst frame %.2f ms (budget %.1f ms)\n"),
             Build.ColumnMeshes.Num(), Build.ApplyMs, Build.ApplyFrames, Build.WorstFrameMs,
             VoxelConsole::CVarApplyBudgetMs.GetValueOnGameThread()) +
@@ -398,10 +440,16 @@ void AVoxelWorld::UpdateShots()
             Shot.bLumenScene ? TEXT("ShowFlag.VisualizeLumen 1") : TEXT("ShowFlag.VisualizeLumen 0"));
     }
     ++ShotFrames;
+    // Lighting cost: the GPU time of the settled frames just before the screenshot.
+    if (ShotFrames > ShotSettleFrames - ShotTimedFrames && ShotFrames <= ShotSettleFrames)
+        ShotGpuMs += FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles());
     if (ShotFrames == ShotSettleFrames) FScreenshotRequest::RequestScreenshot(File, false, false);
     const bool bWritten = ShotFrames > ShotSettleFrames + 2 && IFileManager::Get().FileExists(*File);
     if (!bWritten && ShotFrames < ShotSettleFrames + ShotWriteFrames) return;
     UE_LOG(LogUnnamedVoxel, Display, TEXT("Screenshot %s: %s"), bWritten ? TEXT("saved") : TEXT("missing"), *File);
+    ShotTimings += FString::Printf(
+        TEXT("%s%s %.2f"), ShotTimings.IsEmpty() ? TEXT("") : TEXT(", "), Shot.Name, ShotGpuMs / ShotTimedFrames);
+    ShotGpuMs = 0;
     ++ShotIndex;
     ShotFrames = 0;
     if (ShotIndex < UE_ARRAY_COUNT(Shots)) return;
@@ -414,8 +462,17 @@ void AVoxelWorld::UpdateShots()
             *Pawn->Simulation.Feet.ToCompactString(), Pawn->Simulation.bGrounded ? TEXT("grounded") : TEXT("airborne"),
             *GetSpawnCell().ToString(), FVector::Dist(Pawn->Simulation.Feet, Expected));
     }
+    const FIntPoint Size = GetWorld()->GetGameViewport() && GetWorld()->GetGameViewport()->Viewport
+        ? GetWorld()->GetGameViewport()->Viewport->GetSizeXY()
+        : FIntPoint::ZeroValue;
+    const FString Gpu = FString::Printf(TEXT("  GPU frame per shot, ms (mean of %d settled frames at %d x %d): %s"),
+        ShotTimedFrames, Size.X, Size.Y, *ShotTimings);
+    const FString Lighting = DescribeShotLighting();
+    UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Lighting);
+    UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Gpu);
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Player);
     FFileHelper::SaveStringToFile(
-        BuildReport + TEXT("\n") + Player + TEXT("\n"), *FPaths::Combine(ShotFolder, TEXT("build.txt")));
+        BuildReport + TEXT("\n") + Lighting + TEXT("\n") + Gpu + TEXT("\n") + Player + TEXT("\n"),
+        *FPaths::Combine(ShotFolder, TEXT("build.txt")));
     FPlatformMisc::RequestExit(false, TEXT("VoxelShot"));
 }

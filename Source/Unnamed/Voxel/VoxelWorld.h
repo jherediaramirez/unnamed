@@ -82,10 +82,12 @@ private:
     FString BuildReport;
     mutable TOptional<FIntVector> SpawnCell;
 
-    // -VoxelShot: the shot being taken and frames spent on it.
+    // -VoxelShot: the shot being taken, frames spent on it, its summed GPU time and the finished shots' means.
     FString ShotFolder;
     int32 ShotIndex = INDEX_NONE;
     int32 ShotFrames = 0;
+    double ShotGpuMs = 0;
+    FString ShotTimings;
     UPROPERTY(Transient)
     TObjectPtr<ACameraActor> ShotCamera;
 };

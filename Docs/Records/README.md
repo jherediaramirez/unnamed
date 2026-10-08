@@ -4,6 +4,8 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 8, 2026
 
+- [Voxel world step 2L, lighting](2026-10-08-Voxel-Lighting.md): shaded slopes were near black because the chunks had no Lumen cards and the sky was dim against the sun. Covers the cards each column now builds, the generated map's sky light of 3, the experiments (hit lighting, software Lumen, no Lumen GI, sky levels), brightness and GPU measurements, and the cards' limits.
+
 - [Voxel world handoff](2026-10-08-Voxel-Handoff.md): start here in a new chat. It covers the project, the working agreement with the user, state at the end of phase 2 (uncommitted), known bugs with suggested fixes, the phase 2W plan, commands and gotchas.
 
 - [Voxel world phase 2](2026-10-08-Voxel-Phase2.md): the first generated chunks on screen. Covers the registry block table, palette sections, columns with heightmaps, a stand-in heightmap terrain, greedy meshing with neighbour borders and ambient occlusion, chunk materials, a 9 x 9-column walkable test area in `L_Generated`, offscreen screenshots, the RealtimeMesh workarounds, and timings.

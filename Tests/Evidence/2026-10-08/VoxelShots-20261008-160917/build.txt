@@ -1,0 +1,14 @@
+Seed -3224043261468865476 (text)
+Area 9 x 9 columns around (0, 0), 30 workers
+  Generate columns: 81, mean 0.639 ms, worst 1.269 ms, total 51.7 ms (wall 3.6 ms)
+  Gather sections: 1944, mean 0.021 ms, worst 0.608 ms, total 41.3 ms
+  Mesh sections, all: 1944, mean 0.064 ms, worst 0.476 ms, total 123.6 ms (wall 6.3 ms)
+  Mesh sections with geometry: 407, mean 0.258 ms, worst 0.476 ms, total 104.8 ms
+  Quads 24477 (60 per meshed section); columns 10.0 KB each (0.8 MB total)
+  Stream sets and Lumen cards: 81 columns in 1.5 ms (wall, all workers)
+  Lumen cards: 832 (10.3 per column, most 26 of 32), mean 0.010 ms per column, worst 0.023 ms
+  Apply: 81 columns in 5.22 ms over 3 frames, worst frame 2.15 ms (budget 2.0 ms)
+  Start to last section on screen: 1518 ms; 81 chunk components hold 407 sections
+  Lighting: r.DynamicGlobalIlluminationMethod 1, r.ReflectionMethod 1, r.Lumen.HardwareRayTracing 1 (ray tracing on), r.Lumen.HardwareRayTracing.LightingMode 0
+  GPU frame per shot, ms (mean of 60 settled frames at 1600 x 900): overview 2.86, closeup 2.77, ground 3.01, lumen-scene 3.48, section 2.75
+  Player: feet at V(X=50.00, Y=50.00, Z=6500.00), grounded; spawn cell X=0 Y=0 Z=65, 0.0 cm from spawn

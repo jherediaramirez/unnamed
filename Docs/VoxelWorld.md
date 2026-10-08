@@ -9,6 +9,7 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 | 0 | Scaffolding: core module, log, stat group, settings, console, tests, RealtimeMeshComponent | Done |
 | 1 | Deterministic core: seeds, hashing, Xoroshiro128++, noise, splines | Done |
 | 2 | Data and meshing on a fixed 9 x 9-column area | Done |
+| 2L | Lighting: Lumen cards for chunks and a brighter sky light, so shaded slopes are no longer black | Done |
 | 2W | Create New World: saved worlds, seed, world type, game mode, difficulty | Next |
 | 3 | Streaming, plus mining and placing on generated terrain | |
 | 4 | Terrain (needs lava for aquifers) | |
@@ -109,6 +110,7 @@ Mesher rules:
 Rendering:
 
 - **Chunk component:** `UVoxelChunkComponent` is one RealtimeMesh per column with a single buffer set: every section's geometry, and a poly group per layer mapped to that layer's material slot.
+- **Lumen cards:** each column also carries a Lumen card representation, built on the workers with its stream set (`UVoxelChunkComponent::BuildCards`). For each face direction there is a card per section, fitted to that section's opaque and cutout faces in that direction. When a column would exceed Lumen's 32 cards per mesh, the vertically closest cards of its busiest direction merge first. Lumen captures the cards into its surface cache, which is how the terrain bounces light ([Lighting](#lighting)).
 - **Chunk materials:** `M_ChunkOpaque`, `M_ChunkCutout`, `M_ChunkTranslucent` and `M_ChunkWater` reuse the block shader. They transform the continuous UV first, take each block's fraction, and sample with the continuous UV's gradients, so mips never jump at block edges. Texture animation uses the same `UFoundationBlockTextureTable`.
 - **Collision:** none on the meshes. `AVoxelWorld::GatherCollision` returns block boxes (full or half for slabs) from the columns, as the Playground does from its block world.
 
@@ -121,7 +123,7 @@ Measured on one thread, `voxel.Bench Columns 4` (81 columns, 1,944 sections, see
 | Mesh a section (all, including quick exits) | 0.048 ms | 0.320 ms |
 | Mesh a section with geometry (407 of them) | 0.202 ms | 0.320 ms |
 
-A whole column (generation plus 24 sections) costs about 1.9 ms on one worker. On all 30 workers the 81 columns generate in 3.5 ms and mesh in 6.8 ms of wall time, though per-item times rise by a third from cache contention. The area holds 24,477 quads, about 60 per meshed section, and columns take 10 KB each.
+A whole column (generation plus 24 sections) costs about 1.9 ms on one worker. On all 30 workers the 81 columns generate in 3.5 ms and mesh in 6.8 ms of wall time, though per-item times rise by a third from cache contention. The area holds 24,477 quads, about 60 per meshed section, and columns take 10 KB each. A column's Lumen cards take 0.010 ms to build (0.023 ms worst): 832 cards for the area, 10.3 per column and at most 26.
 
 ## The test area
 
@@ -137,7 +139,7 @@ To try it in the editor:
 2. `voxel.Seed hello` rebuilds the area with another seed. `voxel.Regenerate` rebuilds it after you change `voxel.TestAreaRadius`, `voxel.GreedyMeshing` or `voxel.AmbientOcclusion`.
 3. `stat Voxel` shows the generate, gather, mesh and apply timings. The build's report is in the Output Log under `LogUnnamedVoxel`.
 
-`& Scripts\CaptureVoxel.ps1 [-Seed <text>]` renders the area offscreen and saves 5 screenshots plus `build.txt` (the build report and where the player stands) to `Tests/Evidence/<date>/VoxelShots-<time>/`:
+`& Scripts\CaptureVoxel.ps1 [-Seed <text>] [-ExecCmds '<console commands>']` renders the area offscreen and saves 5 screenshots plus `build.txt` to `Tests/Evidence/<date>/VoxelShots-<time>/`. `build.txt` holds the build report, the lighting settings in effect, each shot's GPU frame time (the mean of its last 60 settled frames) and where the player stands. `-ExecCmds` compares settings without changing anything, for example `'r.Lumen.HardwareRayTracing.LightingMode 1'`. The shots:
 
 - `overview`;
 - `closeup` of the highest point;
@@ -192,11 +194,36 @@ What phase 2 found at this commit, and how the project works around it (all in `
 - **Several buffer sets in one mesh draw wrongly.** Only the most recently created one renders, with stray triangles from the others. The upstream examples use one buffer set per mesh. Workaround: each column is a single buffer set, and a changed section rebuilds its column's set.
 - **Ray tracing needs aligned index offsets.** Each poly group gets a ray-tracing segment at its offset in the shared index buffer, and D3D12 asserts unless that offset is a multiple of 16 bytes (`D3D12RayTracing.cpp`). Workaround: every layer is padded to a multiple of four triangles with zero-area ones.
 - **Cached bounds can go stale.** The component caches the mesh's bounds when render data changes, and a stale box frustum-culled near columns. Workaround: the component computes its own bounds, the column's footprint between its lowest and highest meshed sections.
-- **Lumen sees the meshes but has no surface cache for them.** Core has no Lumen cards or distance fields; those are in the Pro edition. In the Lumen scene view (`r.Lumen.Visualize 3`) the chunks are black, so light bounced off terrain is missing and slopes facing away from the sun are close to black. Switching to hit lighting (`r.Lumen.HardwareRayTracing.LightingMode 2`) made no visible difference. Phase 3 needs a decision: a per-vertex sky light term in the chunk materials (the reference's approach, which also darkens caves), RealtimeMesh Pro, or our own scene proxy with card support.
+- **Lumen needs cards from us.** The mesh accepts a Lumen card representation and a mesh distance field (`FRealtimeMesh::SetCardRepresentation` and `SetDistanceField`), and its scene proxy hands both to Lumen, but it generates neither. With hardware ray tracing the chunks are in Lumen's scene anyway, through their ray-tracing geometry, so without cards every surface-cache lookup on terrain came back black. Workaround: the column builds its own cards ([Lighting](#lighting)). No distance fields yet, so software Lumen does not see the chunks at all.
+
+## Lighting
+
+Generated terrain is lit by Unreal's lighting: the sun with virtual shadow maps, and Lumen global illumination with hardware ray tracing (the project default). Phase 2 showed slopes facing away from the sun almost black. Two causes, fixed in step 2L ([record](Records/2026-10-08-Voxel-Lighting.md)):
+
+1. **No surface cache for the terrain.** Lumen's hardware rays hit the chunks' ray-tracing geometry, then read the hit's lighting from Lumen's surface cache. Chunks had no cards, so every hit read black and no light bounced off the land. Fix: every column carries Lumen cards (`UVoxelChunkComponent::BuildCards`, under Rendering above). This was measured with the GPU cost below. Hit lighting (`r.Lumen.HardwareRayTracing.LightingMode 1`) gave the same lift at a higher cost, and leaves Lumen's scene black for reflections and further bounces. In 5.8, mode 2 lights hits for reflections only, which is why phase 2's try of mode 2 changed nothing.
+2. **A dim sky against the sun.** With bounce fixed, a wall that sees only sky still measured 28 of 255 against 101 for a sunlit wall. That is the physical ratio of the atmosphere's sky to a 75,000 lux sun at EV100 14.5. Fix: the generated map's SkyLight intensity is 3 (`SKY_LIGHT_INTENSITY` in `Scripts/Editor/CreateGeneratedMap.py`), three times the Playground's. This is art direction rather than physics. It lifts every sky-lit surface and leaves surfaces that cannot see the sky dark, because Lumen still traces the occlusion.
+
+Mean sRGB levels from the `ground` and `overview` shots, before and after (`Tests/Evidence/2026-10-08/VoxelShots-20261008-152702` and `-160917`):
+
+| Region | Before | After |
+|---|---|---|
+| Hill facing away from the sun | 24 | 47 |
+| Shaded dirt side next to sunlit ground | 27 | 64 |
+| Wall that sees only sky | 28 | 59 |
+| Sunlit wall | 101 | 113 |
+| Sunlit sand | 170 | 185 |
+
+GPU frame at 1600 x 900 on this machine: 2.7 ms before, 2.9 to 3.0 ms after. The cards cost the difference, because Lumen now keeps a surface cache for the terrain. The brighter sky costs nothing. Comparisons: `Tests/Evidence/2026-10-08/VoxelLighting-*`.
+
+Limits:
+
+- **Hidden faces in a card.** A card captures the front face along its direction, so a face behind another facing the same way in the same section (a dune behind a dune, a valley narrower than 16 blocks) stays black in Lumen's scene. Rays that hit it get no bounce. It shows as black strips on the seabed in the `lumen-scene` shot. Caves and overhangs in phase 4 will make it more common. Options then: cards sliced along their direction, or hit lighting.
+- **Software Lumen.** On a GPU without hardware ray tracing, Lumen traces distance fields. The chunks have none, so it cannot see them: no bounce and no sky occlusion, and caves would be lit by the sky. Mesh distance fields for columns (`SetDistanceField`) are the fix when it matters.
+- **The Playground** keeps its own rig (sky light 1).
 
 ## Tests
 
-`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 19 `Unnamed.Voxel` tests. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
+`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 20 `Unnamed.Voxel` tests. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
 
 | Test | Checks |
 |---|---|
@@ -218,14 +245,15 @@ What phase 2 found at this commit, and how the project works around it (all in `
 | `Unnamed.Voxel.Storage.Column` | All four heightmaps over water, floating leaves and glass; out-of-world reads; single-state sky sections; an empty column. |
 | `Unnamed.Voxel.Mesher.Shapes` | Known quad counts (a block, a merged cube, a bar, glass beside glass, leaves beside leaves, a floor across column borders, slab, water cell, pool), the slab top at half height, the water surface at 8/9, darkened corners. |
 | `Unnamed.Voxel.Mesher.Borders` | Random blocks of every kind over 3 x 3 columns and three sections, meshed and split back into faces. Compared with an independent cell-by-cell reading of the rules, every face matches: none missing, none hidden drawn, none drawn twice, and every face's four corner levels agree. Run with greedy merging on and off (26,896 faces). |
+| `Unnamed.Voxel.Mesher.Cards` | Lumen cards from meshed columns: one block gives one thin card per direction, looking along that face's normal; glass and water give none, leaves six. A pillar through all 24 sections, 98 cards before merging, stays within Lumen's 32. In both, and among random blocks, every opaque and cutout face lies inside a card facing its way. |
 | `Unnamed.Voxel.Terrain.Generate` | Five columns, including ones millions of blocks out, generated in order on this thread and in reverse on the workers: identical. Heightmaps follow the terrain function; bedrock floor and deepslate; every column under 64 KB; another seed changes the land. |
 
 ## Known gaps
 
-- **Dark shaded slopes:** RealtimeMesh Core gives Lumen no surface cache (above), so light bounced off terrain is missing.
+- **Lighting limits:** faces hidden behind a same-facing face inside one card stay black in Lumen's scene, and software Lumen cannot see the chunks ([Lighting](#lighting)).
 - **Pale water:** seen from high above, water over sand looks pale; tuning comes with biomes and water colour in phase 5.
 - **Water physics:** `AFoundationLab::IsInWater` reads the lab's water boxes and is not virtual, so generated water does not yet count for air, swimming or drowning. Phase 3 makes it ask the block data.
-- **Apply budget:** one column is applied whole, so a frame can overshoot the 2 ms budget by one column (worst 2.10 ms measured).
+- **Apply budget:** one column is applied whole, so a frame can overshoot the 2 ms budget by one column (worst 2.15 ms in the latest run; handing over the cards adds no measurable time).
 - **Meshing under load:** with all 30 workers busy, a meshed section averages 0.26 ms against 0.20 ms on one thread. A bitmask visibility pass is the next optimization if phase 3's streaming needs it.
 - **No mining or placing yet** on generated terrain: that is phase 3.
 

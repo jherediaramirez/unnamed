@@ -19,8 +19,8 @@ Unreal Engine 5.8.3 game project with an offline CEF menu generated from an unch
 & 'C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat' UnnamedEditor Win64 Development -Project="$PWD\Unnamed.uproject" -WaitMutex
 Set-Location Tests; npm test; node source-check.mjs                  # menu runtime units, reference/asset checks
 & Scripts\TestMenu.ps1; & Scripts\TestInput.ps1                         # native suites (Unnamed.Menu / Unnamed.Input)
-& Scripts\TestVoxel.ps1                                                  # voxel.Info/Seed/Bench, then Unnamed.Voxel (19)
-& Scripts\CaptureVoxel.ps1 [-Seed <text>]                               # L_Generated offscreen: 5 screenshots + build.txt
+& Scripts\TestVoxel.ps1                                                  # voxel.Info/Seed/Bench, then Unnamed.Voxel (20)
+& Scripts\CaptureVoxel.ps1 [-Seed <text>] [-ExecCmds '<cvars>']         # L_Generated offscreen: 5 screenshots + build.txt (timings, lighting, GPU ms)
 & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' Unnamed.uproject -run=pythonscript "-script=Scripts\Editor\CreateGeneratedMap.py" -unattended -nop4 -nosplash   # /Game/Maps/L_Generated (verifies, never rewrites)
 & Scripts\TestFoundationRuntime.ps1 -Editor -FrameRates 60            # Playground probe (movement + interaction)
 & Scripts\TestFoundationRuntime.ps1 -Editor -Suite interaction -FrameRates 60   # Playground interaction scenarios
