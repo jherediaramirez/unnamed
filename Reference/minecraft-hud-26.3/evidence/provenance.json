@@ -1,0 +1,63 @@
+{
+  "checked_utc": "2026-10-07T20:43:22.946309+00:00",
+  "version_url": "https://piston-meta.mojang.com/v1/packages/702fe59163c6ee6578607daa85811d9bc9c7cc40/26.3.json",
+  "client": {
+    "sha1": "e877b6a07acd633fb3bb475002175cec036e7b87",
+    "size": 41483720,
+    "url": "https://piston-data.mojang.com/v1/objects/e877b6a07acd633fb3bb475002175cec036e7b87/client.jar"
+  },
+  "local_jar": "C:\\Users\\jherediaramirez\\AppData\\Roaming\\ModrinthApp\\meta\\versions\\26.3\\26.3.jar",
+  "client_sha256": "4508d006323f24fa02876310c192d739af56516eb259000ac50f0909a68c9a2d",
+  "version": {
+    "id": "26.3",
+    "name": "26.3",
+    "world_version": 5023,
+    "series_id": "main",
+    "protocol_version": 777,
+    "pack_version": {
+      "resource_major": 97,
+      "resource_minor": 1,
+      "data_major": 121,
+      "data_minor": 0
+    },
+    "build_time": "2026-09-15T11:20:48+00:00",
+    "java_component": "java-runtime-epsilon",
+    "java_version": 25,
+    "stable": true,
+    "use_editor": false
+  },
+  "asset_index": {
+    "id": "34",
+    "sha1": "1e4e4a68dece1c0f51b8f93b45da8fe8da51bcd3",
+    "size": 597035,
+    "totalSize": 483888065,
+    "url": "https://piston-meta.mojang.com/v1/packages/1e4e4a68dece1c0f51b8f93b45da8fe8da51bcd3/34.json"
+  },
+  "source_root": "C:\\dev\\tmp\\Unnamed-HUD-Research-20261007\\source",
+  "counts": {
+    "Air": 3,
+    "Armor": 3,
+    "Attack indicator": 5,
+    "Boss bars": 22,
+    "Camera / item overlays": 11,
+    "Chat / notifications": 3,
+    "Context bar": 5,
+    "Crosshair": 1,
+    "Effect icons": 40,
+    "Effects": 2,
+    "Fonts": 5,
+    "Health": 44,
+    "Hotbar": 4,
+    "Hunger": 6,
+    "Locator": 8,
+    "Mode switcher": 3,
+    "Mount hearts": 3,
+    "Player list": 6,
+    "Spectator": 5,
+    "Toasts": 13,
+    "Tooltips": 2
+  },
+  "png_count": 194,
+  "file_count": 226,
+  "scope": "Research assets only; no Unreal import or gameplay implementation."
+}

@@ -1,0 +1,542 @@
+{
+  "fixed_references_covered": [
+    {
+      "identifier": "boss_bar/blue_background",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/blue_background.png"
+    },
+    {
+      "identifier": "boss_bar/blue_progress",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/blue_progress.png"
+    },
+    {
+      "identifier": "boss_bar/green_background",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/green_background.png"
+    },
+    {
+      "identifier": "boss_bar/green_progress",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/green_progress.png"
+    },
+    {
+      "identifier": "boss_bar/notched_10_background",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/notched_10_background.png"
+    },
+    {
+      "identifier": "boss_bar/notched_10_progress",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/notched_10_progress.png"
+    },
+    {
+      "identifier": "boss_bar/notched_12_background",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/notched_12_background.png"
+    },
+    {
+      "identifier": "boss_bar/notched_12_progress",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/notched_12_progress.png"
+    },
+    {
+      "identifier": "boss_bar/notched_20_background",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/notched_20_background.png"
+    },
+    {
+      "identifier": "boss_bar/notched_20_progress",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/notched_20_progress.png"
+    },
+    {
+      "identifier": "boss_bar/notched_6_background",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/notched_6_background.png"
+    },
+    {
+      "identifier": "boss_bar/notched_6_progress",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/notched_6_progress.png"
+    },
+    {
+      "identifier": "boss_bar/pink_background",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/pink_background.png"
+    },
+    {
+      "identifier": "boss_bar/pink_progress",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/pink_progress.png"
+    },
+    {
+      "identifier": "boss_bar/purple_background",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/purple_background.png"
+    },
+    {
+      "identifier": "boss_bar/purple_progress",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/purple_progress.png"
+    },
+    {
+      "identifier": "boss_bar/red_background",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/red_background.png"
+    },
+    {
+      "identifier": "boss_bar/red_progress",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/red_progress.png"
+    },
+    {
+      "identifier": "boss_bar/white_background",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/white_background.png"
+    },
+    {
+      "identifier": "boss_bar/white_progress",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/white_progress.png"
+    },
+    {
+      "identifier": "boss_bar/yellow_background",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/yellow_background.png"
+    },
+    {
+      "identifier": "boss_bar/yellow_progress",
+      "path": "assets/minecraft/textures/gui/sprites/boss_bar/yellow_progress.png"
+    },
+    {
+      "identifier": "friends/toast_background",
+      "path": "assets/minecraft/textures/gui/sprites/friends/toast_background.png"
+    },
+    {
+      "identifier": "hud/air",
+      "path": "assets/minecraft/textures/gui/sprites/hud/air.png"
+    },
+    {
+      "identifier": "hud/air_bursting",
+      "path": "assets/minecraft/textures/gui/sprites/hud/air_bursting.png"
+    },
+    {
+      "identifier": "hud/air_empty",
+      "path": "assets/minecraft/textures/gui/sprites/hud/air_empty.png"
+    },
+    {
+      "identifier": "hud/armor_empty",
+      "path": "assets/minecraft/textures/gui/sprites/hud/armor_empty.png"
+    },
+    {
+      "identifier": "hud/armor_full",
+      "path": "assets/minecraft/textures/gui/sprites/hud/armor_full.png"
+    },
+    {
+      "identifier": "hud/armor_half",
+      "path": "assets/minecraft/textures/gui/sprites/hud/armor_half.png"
+    },
+    {
+      "identifier": "hud/crosshair",
+      "path": "assets/minecraft/textures/gui/sprites/hud/crosshair.png"
+    },
+    {
+      "identifier": "hud/crosshair_attack_indicator_background",
+      "path": "assets/minecraft/textures/gui/sprites/hud/crosshair_attack_indicator_background.png"
+    },
+    {
+      "identifier": "hud/crosshair_attack_indicator_full",
+      "path": "assets/minecraft/textures/gui/sprites/hud/crosshair_attack_indicator_full.png"
+    },
+    {
+      "identifier": "hud/crosshair_attack_indicator_progress",
+      "path": "assets/minecraft/textures/gui/sprites/hud/crosshair_attack_indicator_progress.png"
+    },
+    {
+      "identifier": "hud/effect_background",
+      "path": "assets/minecraft/textures/gui/sprites/hud/effect_background.png"
+    },
+    {
+      "identifier": "hud/effect_background_ambient",
+      "path": "assets/minecraft/textures/gui/sprites/hud/effect_background_ambient.png"
+    },
+    {
+      "identifier": "hud/experience_bar_background",
+      "path": "assets/minecraft/textures/gui/sprites/hud/experience_bar_background.png"
+    },
+    {
+      "identifier": "hud/experience_bar_progress",
+      "path": "assets/minecraft/textures/gui/sprites/hud/experience_bar_progress.png"
+    },
+    {
+      "identifier": "hud/food_empty",
+      "path": "assets/minecraft/textures/gui/sprites/hud/food_empty.png"
+    },
+    {
+      "identifier": "hud/food_empty_hunger",
+      "path": "assets/minecraft/textures/gui/sprites/hud/food_empty_hunger.png"
+    },
+    {
+      "identifier": "hud/food_full",
+      "path": "assets/minecraft/textures/gui/sprites/hud/food_full.png"
+    },
+    {
+      "identifier": "hud/food_full_hunger",
+      "path": "assets/minecraft/textures/gui/sprites/hud/food_full_hunger.png"
+    },
+    {
+      "identifier": "hud/food_half",
+      "path": "assets/minecraft/textures/gui/sprites/hud/food_half.png"
+    },
+    {
+      "identifier": "hud/food_half_hunger",
+      "path": "assets/minecraft/textures/gui/sprites/hud/food_half_hunger.png"
+    },
+    {
+      "identifier": "hud/heart/absorbing_full",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/absorbing_full.png"
+    },
+    {
+      "identifier": "hud/heart/absorbing_full_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/absorbing_full_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/absorbing_half",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/absorbing_half.png"
+    },
+    {
+      "identifier": "hud/heart/absorbing_half_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/absorbing_half_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/absorbing_hardcore_full",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/absorbing_hardcore_full.png"
+    },
+    {
+      "identifier": "hud/heart/absorbing_hardcore_full_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/absorbing_hardcore_full_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/absorbing_hardcore_half",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/absorbing_hardcore_half.png"
+    },
+    {
+      "identifier": "hud/heart/absorbing_hardcore_half_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/absorbing_hardcore_half_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/container",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/container.png"
+    },
+    {
+      "identifier": "hud/heart/container_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/container_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/container_hardcore",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/container_hardcore.png"
+    },
+    {
+      "identifier": "hud/heart/container_hardcore_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/container_hardcore_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/frozen_full",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/frozen_full.png"
+    },
+    {
+      "identifier": "hud/heart/frozen_full_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/frozen_full_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/frozen_half",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/frozen_half.png"
+    },
+    {
+      "identifier": "hud/heart/frozen_half_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/frozen_half_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/frozen_hardcore_full",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/frozen_hardcore_full.png"
+    },
+    {
+      "identifier": "hud/heart/frozen_hardcore_full_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/frozen_hardcore_full_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/frozen_hardcore_half",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/frozen_hardcore_half.png"
+    },
+    {
+      "identifier": "hud/heart/frozen_hardcore_half_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/frozen_hardcore_half_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/full",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/full.png"
+    },
+    {
+      "identifier": "hud/heart/full_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/full_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/half",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/half.png"
+    },
+    {
+      "identifier": "hud/heart/half_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/half_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/hardcore_full",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/hardcore_full.png"
+    },
+    {
+      "identifier": "hud/heart/hardcore_full_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/hardcore_full_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/hardcore_half",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/hardcore_half.png"
+    },
+    {
+      "identifier": "hud/heart/hardcore_half_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/hardcore_half_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/poisoned_full",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/poisoned_full.png"
+    },
+    {
+      "identifier": "hud/heart/poisoned_full_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/poisoned_full_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/poisoned_half",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/poisoned_half.png"
+    },
+    {
+      "identifier": "hud/heart/poisoned_half_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/poisoned_half_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/poisoned_hardcore_full",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/poisoned_hardcore_full.png"
+    },
+    {
+      "identifier": "hud/heart/poisoned_hardcore_full_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/poisoned_hardcore_full_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/poisoned_hardcore_half",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/poisoned_hardcore_half.png"
+    },
+    {
+      "identifier": "hud/heart/poisoned_hardcore_half_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/poisoned_hardcore_half_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/vehicle_container",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/vehicle_container.png"
+    },
+    {
+      "identifier": "hud/heart/vehicle_full",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/vehicle_full.png"
+    },
+    {
+      "identifier": "hud/heart/vehicle_half",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/vehicle_half.png"
+    },
+    {
+      "identifier": "hud/heart/withered_full",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/withered_full.png"
+    },
+    {
+      "identifier": "hud/heart/withered_full_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/withered_full_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/withered_half",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/withered_half.png"
+    },
+    {
+      "identifier": "hud/heart/withered_half_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/withered_half_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/withered_hardcore_full",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/withered_hardcore_full.png"
+    },
+    {
+      "identifier": "hud/heart/withered_hardcore_full_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/withered_hardcore_full_blinking.png"
+    },
+    {
+      "identifier": "hud/heart/withered_hardcore_half",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/withered_hardcore_half.png"
+    },
+    {
+      "identifier": "hud/heart/withered_hardcore_half_blinking",
+      "path": "assets/minecraft/textures/gui/sprites/hud/heart/withered_hardcore_half_blinking.png"
+    },
+    {
+      "identifier": "hud/hotbar",
+      "path": "assets/minecraft/textures/gui/sprites/hud/hotbar.png"
+    },
+    {
+      "identifier": "hud/hotbar_attack_indicator_background",
+      "path": "assets/minecraft/textures/gui/sprites/hud/hotbar_attack_indicator_background.png"
+    },
+    {
+      "identifier": "hud/hotbar_attack_indicator_progress",
+      "path": "assets/minecraft/textures/gui/sprites/hud/hotbar_attack_indicator_progress.png"
+    },
+    {
+      "identifier": "hud/hotbar_offhand_left",
+      "path": "assets/minecraft/textures/gui/sprites/hud/hotbar_offhand_left.png"
+    },
+    {
+      "identifier": "hud/hotbar_offhand_right",
+      "path": "assets/minecraft/textures/gui/sprites/hud/hotbar_offhand_right.png"
+    },
+    {
+      "identifier": "hud/hotbar_selection",
+      "path": "assets/minecraft/textures/gui/sprites/hud/hotbar_selection.png"
+    },
+    {
+      "identifier": "hud/jump_bar_background",
+      "path": "assets/minecraft/textures/gui/sprites/hud/jump_bar_background.png"
+    },
+    {
+      "identifier": "hud/jump_bar_cooldown",
+      "path": "assets/minecraft/textures/gui/sprites/hud/jump_bar_cooldown.png"
+    },
+    {
+      "identifier": "hud/jump_bar_progress",
+      "path": "assets/minecraft/textures/gui/sprites/hud/jump_bar_progress.png"
+    },
+    {
+      "identifier": "hud/locator_bar_arrow_down",
+      "path": "assets/minecraft/textures/gui/sprites/hud/locator_bar_arrow_down.png"
+    },
+    {
+      "identifier": "hud/locator_bar_arrow_up",
+      "path": "assets/minecraft/textures/gui/sprites/hud/locator_bar_arrow_up.png"
+    },
+    {
+      "identifier": "hud/locator_bar_background",
+      "path": "assets/minecraft/textures/gui/sprites/hud/locator_bar_background.png"
+    },
+    {
+      "identifier": "icon/ping_1",
+      "path": "assets/minecraft/textures/gui/sprites/icon/ping_1.png"
+    },
+    {
+      "identifier": "icon/ping_2",
+      "path": "assets/minecraft/textures/gui/sprites/icon/ping_2.png"
+    },
+    {
+      "identifier": "icon/ping_3",
+      "path": "assets/minecraft/textures/gui/sprites/icon/ping_3.png"
+    },
+    {
+      "identifier": "icon/ping_4",
+      "path": "assets/minecraft/textures/gui/sprites/icon/ping_4.png"
+    },
+    {
+      "identifier": "icon/ping_5",
+      "path": "assets/minecraft/textures/gui/sprites/icon/ping_5.png"
+    },
+    {
+      "identifier": "icon/ping_unknown",
+      "path": "assets/minecraft/textures/gui/sprites/icon/ping_unknown.png"
+    },
+    {
+      "identifier": "spectator/close",
+      "path": "assets/minecraft/textures/gui/sprites/spectator/close.png"
+    },
+    {
+      "identifier": "spectator/scroll_left",
+      "path": "assets/minecraft/textures/gui/sprites/spectator/scroll_left.png"
+    },
+    {
+      "identifier": "spectator/scroll_right",
+      "path": "assets/minecraft/textures/gui/sprites/spectator/scroll_right.png"
+    },
+    {
+      "identifier": "spectator/teleport_to_player",
+      "path": "assets/minecraft/textures/gui/sprites/spectator/teleport_to_player.png"
+    },
+    {
+      "identifier": "spectator/teleport_to_team",
+      "path": "assets/minecraft/textures/gui/sprites/spectator/teleport_to_team.png"
+    },
+    {
+      "identifier": "textures/misc/nausea.png",
+      "path": "assets/minecraft/textures/misc/nausea.png"
+    },
+    {
+      "identifier": "textures/misc/powder_snow_outline.png",
+      "path": "assets/minecraft/textures/misc/powder_snow_outline.png"
+    },
+    {
+      "identifier": "textures/misc/spyglass_scope.png",
+      "path": "assets/minecraft/textures/misc/spyglass_scope.png"
+    },
+    {
+      "identifier": "textures/misc/underwater.png",
+      "path": "assets/minecraft/textures/misc/underwater.png"
+    },
+    {
+      "identifier": "textures/misc/vignette.png",
+      "path": "assets/minecraft/textures/misc/vignette.png"
+    },
+    {
+      "identifier": "toast/advancement",
+      "path": "assets/minecraft/textures/gui/sprites/toast/advancement.png"
+    },
+    {
+      "identifier": "toast/mouse",
+      "path": "assets/minecraft/textures/gui/sprites/toast/mouse.png"
+    },
+    {
+      "identifier": "toast/movement_keys",
+      "path": "assets/minecraft/textures/gui/sprites/toast/movement_keys.png"
+    },
+    {
+      "identifier": "toast/now_playing",
+      "path": "assets/minecraft/textures/gui/sprites/toast/now_playing.png"
+    },
+    {
+      "identifier": "toast/recipe",
+      "path": "assets/minecraft/textures/gui/sprites/toast/recipe.png"
+    },
+    {
+      "identifier": "toast/recipe_book",
+      "path": "assets/minecraft/textures/gui/sprites/toast/recipe_book.png"
+    },
+    {
+      "identifier": "toast/right_click",
+      "path": "assets/minecraft/textures/gui/sprites/toast/right_click.png"
+    },
+    {
+      "identifier": "toast/social_interactions",
+      "path": "assets/minecraft/textures/gui/sprites/toast/social_interactions.png"
+    },
+    {
+      "identifier": "toast/system",
+      "path": "assets/minecraft/textures/gui/sprites/toast/system.png"
+    },
+    {
+      "identifier": "toast/tree",
+      "path": "assets/minecraft/textures/gui/sprites/toast/tree.png"
+    },
+    {
+      "identifier": "toast/tutorial",
+      "path": "assets/minecraft/textures/gui/sprites/toast/tutorial.png"
+    },
+    {
+      "identifier": "toast/wooden_planks",
+      "path": "assets/minecraft/textures/gui/sprites/toast/wooden_planks.png"
+    }
+  ],
+  "non_texture_action_identifiers": [
+    "internal/expand_chat_queue",
+    "internal/go_to_restrictions_screen"
+  ],
+  "missing": [],
+  "additional_dynamic_groups": [
+    "all 40 mob-effect icons",
+    "all locator style PNGs and JSON",
+    "font providers and Unicode dependencies",
+    "camera equipment pumpkin mask",
+    "fire and portal animation textures"
+  ],
+  "excluded_dynamic_dependencies": [
+    "all inventory item/block/entity models",
+    "player skin downloads",
+    "arbitrary resource-pack/data-pack assets"
+  ],
+  "scope": "Fixed texture identifiers in Hud, context bars, boss/tab/chat/subtitle/toast/spectator and ScreenEffectRenderer. Does not claim all game textures or runtime visual parity."
+}

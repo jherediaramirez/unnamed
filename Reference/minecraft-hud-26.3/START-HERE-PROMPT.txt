@@ -1,0 +1,49 @@
+Reproduce the Minecraft Java 26.3 HUD in our existing first-person Unreal project, using the research and original PNGs already collected.
+
+PROJECT
+C:\dev\projects\Unnamed\Unnamed.uproject
+
+REFERENCE FOLDER
+C:\dev\projects\Unnamed\Reference\minecraft-hud-26.3
+All reference paths below are relative to this folder.
+
+START HERE — READ IN THIS ORDER
+1. README.md — Overview of the package, contents and verification limits.
+2. HUD-RESEARCH.md — Exact placement, spacing, health/food/air behavior, visibility rules, animations, Unreal recommendations and acceptance checks.
+3. PNG-GUIDE.md — Explains every PNG: what it represents, when it appears, where it belongs and how to use it.
+4. IMPLEMENT-HUD-IN-UNREAL.txt — The detailed implementation contract. Use it for requirements this short prompt does not repeat.
+
+VISUAL AND ASSET REFERENCES
+- catalog.html — Searchable visual catalog of all 194 PNGs.
+- layout.html — Interactive placement diagram showing how HUD elements relate to each other. It is a research illustration, not a game screenshot.
+- manifest.csv — Convenient spreadsheet-style list of PNGs, dimensions, descriptions and hashes.
+- manifest.json — Complete machine-readable asset inventory, original paths, metadata links and provenance; use this for import tooling.
+- assets\minecraft\textures\ — The actual PNGs, organized by their original names and categories. Start with gui\sprites\hud\ for the core HUD.
+- assets\minecraft\font\ — Glyph definitions and Unicode dependencies for text rendering.
+- assets\minecraft\waypoint_style\ — Rules selecting locator marker shapes by distance.
+- assets\minecraft\atlases\ — Native atlas definitions for understanding resource lookup.
+- data\minecraft\enchantment\respiration.json — Reference data explaining the Respiration oxygen modifier.
+- Adjacent .png.mcmeta files — Animation, slicing and texture settings. Read them with their PNG; some sheets contain multiple frames.
+
+SUPPORTING FILES — CONSULT WHEN NEEDED
+- evidence\provenance.json — Which release/client/assets were inspected.
+- evidence\official-version.json — Mojang's version metadata and expected client identity.
+- evidence\official-asset-index.json — Official resource-object identities, including font dependencies.
+- evidence\source-map.json — Exact local Java source locations, methods and hashes for checking behavior.
+- evidence\reference-coverage.json — Which fixed HUD texture references were checked and what is outside that coverage.
+- evidence\verification.json — PNG decoding, byte/hash and local-link verification results.
+- evidence\review-status.json — Completed checks and remaining visual/runtime verification gaps.
+- evidence\preservation.json — Pre-existing project files checked and concurrent changes observed.
+- tools\verify_reference.py — Recheck the delivered asset library.
+- tools\build_reference.py — Rebuild extraction/catalog outputs from recorded inputs; normally unnecessary.
+
+WHERE IMPLEMENTATION BEGINS
+First inspect the current project's Docs\Foundation\README.md, ARCHITECTURE.md, CONTROLS.md and VERIFICATION.md. Then read Source\Unnamed\Foundation and Source\Unnamed\Input to find the current HUD, slot selection, input and focus behavior. These paths are relative to C:\dev\projects\Unnamed.
+
+Preserve existing work and make a short plan before editing. Begin with additive asset import, a native Slate/UMG HUD and a clearly labeled preview for missing gameplay data. Match the hotbar-centered layout, pixel scale, icon states and conditional visibility documented in the research. Keep movement, controls, menus and F3 working.
+
+The original audit found placeholder inventory values and no real survival-resource backend. Recheck current code. Connect real systems where available; otherwise keep explicit preview data. Health, drowning, inventory, networking and other gameplay systems are separate scope, and their rules must not live in widgets.
+
+Use native Unreal UI for gameplay. The HTML files are reference viewers. Treat text, counts, durability and cooldown shading as runtime rendering rather than missing PNGs. Keep original assets intact.
+
+Verify layout, scaling, input and a packaged run before claiming completion. Distinguish preview behavior from working gameplay, and report remaining gaps. Automated HTML visual review was blocked by browser policy; consult review-status.json before relying on the diagrams as acceptance evidence.
