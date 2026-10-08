@@ -1,0 +1,377 @@
+#include "Hud/HudPresenter.h"
+#include "Hud/HudAssets.h"
+#include "Hud/HudCreative.h"
+#include "Hud/HudDrawList.h"
+#include "Hud/HudView.h"
+#include "Foundation/FoundationAuthority.h"
+#include "Foundation/FoundationController.h"
+#include "Foundation/FoundationHud.h"
+#include "Foundation/FoundationPawn.h"
+#include "Menu/MenuBrowserHost.h"
+#include "Menu/MenuPreferences.h"
+#include "Menu/MenuVideoSettings.h"
+#include "UnnamedLog.h"
+#include "UnnamedProjectSettings.h"
+#include "Dom/JsonValue.h"
+#include "Engine/GameInstance.h"
+#include "Engine/Texture2D.h"
+#include "Widgets/Input/SButton.h"
+#include "Widgets/Input/SCheckBox.h"
+#include "Widgets/Input/SSpinBox.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/Layout/SBorder.h"
+#include "Widgets/Layout/SScrollBox.h"
+#include "Styling/CoreStyle.h"
+#include "Widgets/SBoxPanel.h"
+#include "Widgets/Text/STextBlock.h"
+
+TSharedRef<SWidget> UHudPresenter::CreateView()
+{
+    Assets = LoadObject<UHudAssets>(nullptr, *UUnnamedProjectSettings::GetHudRegistryPath());
+    View = SNew(SHudView);
+    if (!Assets)
+    {
+        ++MissingTextures;
+        UE_LOG(LogUnnamedHud, Error, TEXT("Missing HUD registry; run ImportHud.py and cook the HUD directory"));
+        return View.ToSharedRef();
+    }
+    TMap<FName, FSlateBrush> Brushes;
+    for (const FHudSpriteAsset& Entry : Assets->Sprites)
+    {
+        if (!Entry.Id.ToString().StartsWith(TEXT("gui/sprites/hud/")) && Entry.Id != TEXT("font/ascii")) continue;
+        UTexture2D* Texture = Entry.Texture.LoadSynchronous();
+        FIntPoint Size = Texture ? FIntPoint(Texture->GetSizeX(), Texture->GetSizeY()) : FIntPoint::ZeroValue;
+#if WITH_EDITORONLY_DATA
+        if (Texture) Size = {int32(Texture->Source.GetSizeX()), int32(Texture->Source.GetSizeY())};
+#endif
+        if (!Texture || Size != Entry.NativeSize)
+        {
+            ++MissingTextures;
+            UE_LOG(LogUnnamedHud, Error, TEXT("Missing or resized HUD texture: %s"), *Entry.Id.ToString());
+            continue;
+        }
+        Textures.Add(Texture);
+        FSlateBrush Brush;
+        Brush.SetResourceObject(Texture);
+        Brush.ImageSize = FVector2D(Entry.NativeSize);
+        Brush.DrawAs = ESlateBrushDrawType::Image;
+        Brushes.Add(Entry.Id, Brush);
+    }
+    View->SetBrushes(MoveTemp(Brushes));
+    UE_LOG(LogUnnamedHud, Display,
+        TEXT("HUD_READY registry=%d textures=%d missing=%d glyphs=%d; resources from player vitals, items PREVIEW"),
+        Assets->Sprites.Num(), Textures.Num(), MissingTextures, Assets->Glyphs.Num());
+    return View.ToSharedRef();
+}
+
+void UHudPresenter::ApplyVitals(FHudSnapshot& S, const FFoundationVitals& V, const FFoundationTarget& Target)
+{
+    S.Resources = EHudDataSource::Authoritative;
+    switch (V.Mode)
+    {
+    case EFoundationPlayerMode::Creative:
+        S.Mode = EHudMode::Creative;
+        break;
+    case EFoundationPlayerMode::Adventure:
+        S.Mode = EHudMode::Adventure;
+        break;
+    case EFoundationPlayerMode::Spectator:
+        S.Mode = EHudMode::Spectator;
+        break;
+    default:
+        S.Mode = EHudMode::Survival;
+        break;
+    }
+    S.Health = V.Health;
+    S.MaxHealth = V.MaxHealth;
+    S.Absorption = V.Absorption;
+    S.Armor = V.Armor;
+    S.Food = V.Food;
+    S.Saturation = V.Saturation;
+    S.Air = V.Air;
+    S.MaxAir = V.MaxAir;
+    S.bUnderwater = V.bEyesInWater;
+    S.Level = V.Level;
+    S.Experience = V.Progress;
+    S.AttackStrength = V.GetAttackStrength();
+    S.AttackDelay = V.GetAttackDelay();
+    S.bDamageCooldown = V.DamageCooldown > 0;
+    // The eye ray's nearest fixture: an entity in reach is the crosshair entity; the lab's entities are alive.
+    // An interactive target in reach stands in for a block or entity with a menu (spectator crosshair).
+    const bool bEntity = Target.Kind == EFoundationTargetKind::Entity && Target.bInRange;
+    S.bLivingTarget = S.bTargetInRange = bEntity;
+    S.bTargetAlive = bEntity && Target.bAlive;
+    S.bSpectatorTarget = Target.bInRange && Target.bInteractive;
+    S.bHardcore = S.bPoison = S.bWither = S.bFrozen = S.bHunger = S.bRegeneration = false;
+}
+
+void UHudPresenter::ApplyInventory(FHudSnapshot& S, const FFoundationInventory& Inventory,
+    const FFoundationRules& Rules, const FFoundationBlockRegistry* Blocks)
+{
+    S.Items = EHudDataSource::Authoritative;
+    S.SelectedSlot = Inventory.Selected;
+    auto View = [&Inventory, &Rules, Blocks](const FFoundationItemInstance& Stack, int32& OutCount)
+    {
+        FHudItemView Out;
+        OutCount = Stack.IsEmpty() ? 0 : Stack.Count;
+        if (Stack.IsEmpty()) return Out;
+        const FFoundationItemDefinition& Item = Rules.GetItem(Stack.Item);
+        Out.Icon = Item.Icon == TEXT("block") ? EHudItemIcon::Block
+            : Item.Icon == TEXT("pickaxe")    ? EHudItemIcon::Pickaxe
+            : Item.Icon == TEXT("sword")      ? EHudItemIcon::Sword
+                                              : EHudItemIcon::Token;
+        Out.Tint = Item.IconColor;
+        if (Out.Icon == EHudItemIcon::Block && Blocks && Blocks->FindBlock(Item.PlacesBlock))
+        {
+            Out.Block = Item.PlacesBlock;
+            Out.bAnimatedBlock = HudBlockIcon::IsAnimated(*Blocks, Item.PlacesBlock);
+        }
+        if (Item.MaxDurability > 0) Out.Durability = 1. - double(Stack.Damage) / Item.MaxDurability;
+        // Unlimited supply shows a sign instead of a count that never changes.
+        Out.bInfinite = Inventory.bInfiniteSupply && Item.CanPlace();
+        return Out;
+    };
+    S.Counts.SetNum(FFoundationInventory::HotbarSlots);
+    S.ItemViews.SetNum(FFoundationInventory::HotbarSlots);
+    for (int32 Slot = 0; Slot < FFoundationInventory::HotbarSlots; ++Slot)
+        S.ItemViews[Slot] = View(Inventory.Hotbar[Slot], S.Counts[Slot]);
+    S.OffhandView = View(Inventory.Offhand, S.OffhandCount);
+    const FFoundationItemInstance& Held = Inventory.GetHand(EFoundationHand::Main);
+    S.ItemName = Held.IsEmpty() ? FString() : Rules.GetItem(Held.Item).DisplayName;
+}
+
+void UHudPresenter::ResetPreview()
+{
+    Preview.Reset();
+    Presentation = FHudPresentation{};
+    LastSampleTick = -1;
+}
+int32 UHudPresenter::GetDrawCount() const
+{
+    return View ? View->GetDrawCount() : 0;
+}
+
+void UHudPresenter::Refresh(AFoundationController& Controller, double Now)
+{
+    if (!View || !Assets) return;
+    const double Delta = LastTime > 0 ? FMath::Clamp(Now - LastTime, 0., .25) : 0;
+    LastTime = Now;
+    const bool bGameplay = Controller.IsGameplay();
+    if (bGameplay) Accumulator += Delta;
+    while (Accumulator >= .05)
+    {
+        Accumulator -= .05;
+        ++HudTick;
+        Preview.Step();
+    }
+    FIntPoint Viewport;
+    Controller.GetViewportSize(Viewport.X, Viewport.Y);
+    const bool bVisible = bGameplay && !Controller.GetHud()->bHideHud;
+    const bool bVisibilityChanged = Snapshot.bVisible != bVisible;
+    if (HudTick == LastSampleTick && Viewport == LastViewport && !bVisibilityChanged) return;
+    LastSampleTick = HudTick;
+    LastViewport = Viewport;
+
+    const AFoundationPawn* Pawn = Controller.GetFoundationPawn();
+    if (bPreviewEnabled || !Pawn)
+        Snapshot = Preview.Values;
+    else
+    {
+        Snapshot = FHudSnapshot{};
+        ApplyVitals(Snapshot, Pawn->Vitals, Pawn->TraceTarget());
+    }
+    Snapshot.bVisible = bVisible;
+    Snapshot.bFirstPerson = Pawn && Pawn->GetPerspective() == 0;
+    const FFoundationAuthority* Authority = Pawn ? Pawn->GetAuthority() : nullptr;
+    const FFoundationPlayer* Player = Authority ? Authority->FindPlayer(Pawn->Interaction.PlayerId) : nullptr;
+    if (Player)
+        ApplyInventory(Snapshot, Player->Inventory, Authority->Rules, &Authority->World.GetRegistry());
+    else
+    {
+        Snapshot.SelectedSlot = Controller.Actions.Slot;
+        Snapshot.Counts = Controller.Actions.Slots;
+        Snapshot.OffhandCount = Controller.Actions.Offhand;
+        Snapshot.Items =
+            EHudDataSource::Preview; // selection is real; token counts are the existing action test double.
+        Snapshot.ItemName =
+            Snapshot.Counts.IsValidIndex(Snapshot.SelectedSlot) && Snapshot.Counts[Snapshot.SelectedSlot] > 0
+            ? TEXT("Preview Token")
+            : TEXT("");
+    }
+    if (View && View->GetBlockIcons() != (Authority ? &Authority->World.GetRegistry() : nullptr))
+        View->SetBlockIcons(Authority ? Authority->World.GetRegistryRef().ToSharedPtr() : nullptr);
+    const UMenuPreferences* Preferences = Controller.GetGameInstance()->GetSubsystem<UMenuPreferences>();
+    if (Preferences)
+    {
+        const auto Hand = Preferences->FindPreference(TEXT("mainHand"));
+        Snapshot.bMainHandLeft = Hand.IsValid() && Hand->AsString() == TEXT("Left");
+        const auto Attack = Preferences->FindPreference(TEXT("attackIndicator"));
+        const FString Indicator = Attack.IsValid() ? Attack->AsString() : TEXT("Crosshair");
+        Snapshot.AttackIndicator = Indicator == TEXT("Hotbar") ? EHudAttack::Hotbar
+            : Indicator == TEXT("Crosshair")                   ? EHudAttack::Crosshair
+                                                               : EHudAttack::Off;
+        const auto Duration = Preferences->FindPreference(TEXT("notificationDisplayTime"));
+        Snapshot.NotificationTime = Duration.IsValid() ? Duration->AsNumber() : 1;
+    }
+    GuiScale = HudModel::GetScale(Viewport, Controller.GetMenuHost()->GetVideoSettings()->GetGuiScale());
+    Presentation.Update(Snapshot, HudTick, HudTick * .05);
+    const bool bBlink = Presentation.IsBlinking(HudTick);
+    const float NameAlpha = Presentation.GetNameAlpha(HudTick);
+    const bool bTickGeometry = Snapshot.bRegeneration ||
+        FMath::CeilToInt(Snapshot.Health) + FMath::CeilToInt(Snapshot.Absorption) <= 4 || Snapshot.Saturation <= 0 ||
+        Snapshot.Air <= 0 || Snapshot.OffhandView.bAnimatedBlock ||
+        Snapshot.ItemViews.ContainsByPredicate([](const FHudItemView& Item) { return Item.bAnimatedBlock; });
+    if (Snapshot == LastDrawSnapshot && LastDrawViewport == Viewport && LastDrawScale == GuiScale &&
+        LastDrawHealth == Presentation.DisplayedHealth && bLastDrawBlink == bBlink && LastDrawNameAlpha == NameAlpha &&
+        (!bTickGeometry || LastDrawTick == HudTick))
+        return;
+    LastDrawSnapshot = Snapshot;
+    LastDrawViewport = Viewport;
+    LastDrawScale = GuiScale;
+    LastDrawHealth = Presentation.DisplayedHealth;
+    bLastDrawBlink = bBlink;
+    LastDrawNameAlpha = NameAlpha;
+    LastDrawTick = HudTick;
+    View->SetFrame(HudDrawList::Build(Snapshot, Presentation,
+                       HudModel::GetLayout(
+                           HudModel::GetLogicalSize(Viewport, GuiScale), Snapshot.SelectedSlot, Snapshot.bMainHandLeft),
+                       HudTick, Assets->Glyphs),
+        GuiScale);
+}
+
+TSharedRef<SWidget> UHudPresenter::CreatePreviewControls()
+{
+    const TWeakObjectPtr<UHudPresenter> WeakThis = this;
+    const TSharedRef<SVerticalBox> List = SNew(SVerticalBox);
+    auto Label = [](const TCHAR* Text) { return SNew(STextBlock).Text(FText::FromString(Text)).AutoWrapText(true); };
+    List->AddSlot().AutoHeight()[Label(
+        TEXT("HUD PREVIEW fixture - session only. It replaces the player's vitals on screen while shown; its "
+             "edits and sequences never change the player."))];
+    List->AddSlot().AutoHeight().Padding(0, 2)[SNew(SCheckBox)
+            .IsChecked_Lambda(
+                [WeakThis]
+                {
+                    return WeakThis.IsValid() && WeakThis->bPreviewEnabled ? ECheckBoxState::Checked
+                                                                           : ECheckBoxState::Unchecked;
+                })
+            .OnCheckStateChanged_Lambda(
+                [WeakThis](ECheckBoxState State)
+                {
+                    if (WeakThis.IsValid()) WeakThis->bPreviewEnabled = State == ECheckBoxState::Checked;
+                })[Label(TEXT("Show the preview fixture instead of the player's vitals"))]];
+    auto Number = [&List, WeakThis, Label](const TCHAR* Name, double Min, double Max,
+                      TFunction<double(const FHudSnapshot&)> Get, TFunction<void(FHudSnapshot&, double)> Set)
+    {
+        List->AddSlot().AutoHeight().Padding(
+            0, 2)[SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1)[Label(Name)] +
+            SHorizontalBox::Slot().AutoWidth()[SNew(SSpinBox<double>)
+                    .MinDesiredWidth(105)
+                    .MinValue(Min)
+                    .MaxValue(Max)
+                    .Value_Lambda([WeakThis, Get] { return WeakThis.IsValid() ? Get(WeakThis->Preview.Values) : 0.; })
+                    .OnValueChanged_Lambda(
+                        [WeakThis, Set](double Value)
+                        {
+                            if (!WeakThis.IsValid()) return;
+                            WeakThis->Preview.Sequence = EHudPreviewSequence::None;
+                            Set(WeakThis->Preview.Values, Value);
+                        })]];
+    };
+    auto Real = [&Number](const TCHAR* Name, double Min, double Max, double FHudSnapshot::* Member)
+    {
+        Number(
+            Name, Min, Max, [Member](const FHudSnapshot& S) { return S.*Member; },
+            [Member](FHudSnapshot& S, double V) { S.*Member = V; });
+    };
+    auto Integer = [&Number](const TCHAR* Name, int32 Min, int32 Max, int32 FHudSnapshot::* Member)
+    {
+        Number(
+            Name, Min, Max, [Member](const FHudSnapshot& S) { return double(S.*Member); },
+            [Member](FHudSnapshot& S, double V) { S.*Member = FMath::RoundToInt(V); });
+    };
+    auto Check = [&List, WeakThis, Label](const TCHAR* Name, bool FHudSnapshot::* Member)
+    {
+        List->AddSlot().AutoHeight().Padding(0, 2)[SNew(SCheckBox)
+                .IsChecked_Lambda(
+                    [WeakThis, Member]
+                    {
+                        return WeakThis.IsValid() && WeakThis->Preview.Values.*Member ? ECheckBoxState::Checked
+                                                                                      : ECheckBoxState::Unchecked;
+                    })
+                .OnCheckStateChanged_Lambda(
+                    [WeakThis, Member](ECheckBoxState State)
+                    {
+                        if (WeakThis.IsValid()) WeakThis->Preview.Values.*Member = State == ECheckBoxState::Checked;
+                    })[Label(Name)]];
+    };
+    List->AddSlot().AutoHeight()[SNew(SButton)
+            .Text_Lambda(
+                [WeakThis]
+                {
+                    static const TCHAR* Modes[] = {
+                        TEXT("Survival"), TEXT("Adventure"), TEXT("Creative"), TEXT("Spectator")};
+                    return FText::FromString(FString(TEXT("Preview mode: ")) +
+                        Modes[WeakThis.IsValid() ? int32(WeakThis->Preview.Values.Mode) : 0]);
+                })
+            .OnClicked_Lambda(
+                [WeakThis]
+                {
+                    if (WeakThis.IsValid())
+                        WeakThis->Preview.Values.Mode = EHudMode((int32(WeakThis->Preview.Values.Mode) + 1) % 4);
+                    return FReply::Handled();
+                })];
+    Real(TEXT("Health (points)"), 0, 200, &FHudSnapshot::Health);
+    Real(TEXT("Maximum health"), 1, 200, &FHudSnapshot::MaxHealth);
+    Real(TEXT("Absorption"), 0, 200, &FHudSnapshot::Absorption);
+    Integer(TEXT("Armor"), 0, 20, &FHudSnapshot::Armor);
+    Integer(TEXT("Food"), 0, 20, &FHudSnapshot::Food);
+    Real(TEXT("Saturation (no visible meter)"), 0, 20, &FHudSnapshot::Saturation);
+    Integer(TEXT("Air"), -20, 1200, &FHudSnapshot::Air);
+    Integer(TEXT("Maximum air (modifier input)"), 1, 1200, &FHudSnapshot::MaxAir);
+    Integer(TEXT("XP level"), 0, 999, &FHudSnapshot::Level);
+    Real(TEXT("XP progress"), 0, 1, &FHudSnapshot::Experience);
+    Real(TEXT("Attack strength"), 0, 1, &FHudSnapshot::AttackStrength);
+    Real(TEXT("Attack delay (ticks)"), 1, 40, &FHudSnapshot::AttackDelay);
+    Check(TEXT("Eyes underwater"), &FHudSnapshot::bUnderwater);
+    Check(TEXT("Hardcore art"), &FHudSnapshot::bHardcore);
+    Check(TEXT("Poison"), &FHudSnapshot::bPoison);
+    Check(TEXT("Wither"), &FHudSnapshot::bWither);
+    Check(TEXT("Fully frozen"), &FHudSnapshot::bFrozen);
+    Check(TEXT("Hunger effect"), &FHudSnapshot::bHunger);
+    Check(TEXT("Regeneration lift"), &FHudSnapshot::bRegeneration);
+    Check(TEXT("Damage cooldown (health edits blink)"), &FHudSnapshot::bDamageCooldown);
+    Check(TEXT("Living target"), &FHudSnapshot::bLivingTarget);
+    Check(TEXT("Target alive"), &FHudSnapshot::bTargetAlive);
+    Check(TEXT("Target in attack range"), &FHudSnapshot::bTargetInRange);
+    Check(TEXT("Spectator interaction target"), &FHudSnapshot::bSpectatorTarget);
+    const TCHAR* Sequences[] = {TEXT("Damage + healing during blink"), TEXT("Absorption loss"),
+        TEXT("Air depletion + surface refill"), TEXT("XP gain"), TEXT("Attack recharge + ready target")};
+    for (int32 Index = 0; Index < UE_ARRAY_COUNT(Sequences); ++Index)
+        List->AddSlot().AutoHeight().Padding(0, 2)[SNew(SButton)
+                .Text(FText::FromString(Sequences[Index]))
+                .OnClicked_Lambda(
+                    [WeakThis, Index]
+                    {
+                        // A timed sequence is only useful on screen, so it shows the fixture.
+                        if (WeakThis.IsValid())
+                        {
+                            WeakThis->Preview.Start(EHudPreviewSequence(Index + 1));
+                            WeakThis->bPreviewEnabled = true;
+                        }
+                        return FReply::Handled();
+                    })];
+    List->AddSlot().AutoHeight()[Label(TEXT(
+        "Close options to run a timed preview. Hand / attack style / GUI scale use the existing Options screens."))];
+    List->AddSlot().AutoHeight()[SNew(SButton)
+            .Text(FText::FromString(TEXT("Reset HUD preview")))
+            .OnClicked_Lambda(
+                [WeakThis]
+                {
+                    if (WeakThis.IsValid()) WeakThis->ResetPreview();
+                    return FReply::Handled();
+                })];
+    return SNew(SBorder)
+        .BorderImage(FCoreStyle::Get().GetBrush(TEXT("WhiteBrush")))
+        .BorderBackgroundColor(FLinearColor(.02f, .025f, .03f, 1.f))
+        .Padding(10)[SNew(SBox).WidthOverride(500).HeightOverride(330)[SNew(SScrollBox) + SScrollBox::Slot()[List]]];
+}

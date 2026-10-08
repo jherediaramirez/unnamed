@@ -182,13 +182,14 @@ bool UFoundationInputRouter::RouteKey(FKey Key, bool bDown, bool bRepeat)
             return true;
         }
     }
-    if (Panels->IsInventoryOpen() && bDown && Key == InputSubsystem->GetCurrentKey(TEXT("key.inventory")))
+    if (Panels->IsInventoryOpen() && !Panels->IsTypingInInventory() && bDown &&
+        Key == InputSubsystem->GetCurrentKey(TEXT("key.inventory")))
     {
         Panels->Close();
         return true;
     }
     // Screenshot and fullscreen work everywhere except while typing.
-    if (!Panels->IsTextOpen() && bDown)
+    if (!Panels->IsTextOpen() && !Panels->IsTypingInInventory() && bDown)
         for (FName Id : {FName(TEXT("key.screenshot")), FName(TEXT("key.fullscreen"))})
             if (InputSubsystem->GetCurrentKey(Id) == Key)
             {

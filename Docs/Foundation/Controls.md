@@ -4,6 +4,12 @@
 
 ## Project defaults
 
+HUD milestone 1 adds a **HUD PREVIEW** section to F3+F6: resource values, mode/effect flags and timed presentation sequences. These change only session-only fixture data. The selected hotbar slot, number keys/wheel and offhand action remain existing real input over token counts. Main hand, attack indicator and GUI scale stay in their existing Options screens. See [HUD scope and evidence](../Records/2026-10-07-Hud.md).
+
+HUD milestone 2 adds **PLAYER VITALS** above it: the player's real session-only mode, difficulty, natural regeneration, values and lab actions (hits, healing, eating, experience, absorption, kill), all through the same rules as play. The HUD shows these vitals unless *Show the preview fixture* is checked; starting a preview sequence checks it. Attack recovery now follows the real Attack action. See [Player vitals](../Records/2026-10-07-Vitals.md).
+
+In the **Playground** (`playground`), Attack, Use, Pick Block, Drop, Swap Item With Offhand, the hotbar keys and the wheel drive a real interaction instead of the token fixture: place and mine blocks, attack the training target, swap the offhand, pick the targeted block's slot; Drop is refused (no item entities). Hold and Toggle for Attack/Use keep their meaning: a held or toggled Attack mines but never repeats attacks; Use repeats at the selected preset's cadence. Focus loss, UI, rebinding, possession, death and a lab reset cancel held actions and require a fresh press. Only a map with no lab actor keeps the token fixture. See [the interaction record](../Records/2026-10-08-Interaction.md).
+
 The reference matrix below records vanilla Java 26.3 keys. The project's established personal layout is **Left Shift = Sprint; C = Crouch**, as specified in [Keybindings](../Keybindings.md). Native `IMC_OnFoot`, the existing Controls screen, Reset One and Reset All use those project defaults. Saved custom bindings take precedence. `projectDefaultNativeKey` records these two deliberate differences in the structured matrix; `defaultPhysical` remains the vanilla reference. Movement behavior and fixed context modifiers such as Ctrl+Drop are independent of these configurable action keys.
 
 | ID / label | Category / vanilla default physical | Modifiers / context | Behavior / cancellation | Scope / proposed handler | Evidence |

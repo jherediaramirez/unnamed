@@ -1,0 +1,511 @@
+#include "Foundation/FoundationInteraction.h"
+
+void FFoundationInteraction::SetPreset(const FFoundationPlacementPreset& NewPreset, double StepSeconds)
+{
+    Preset = NewPreset;
+    const double Seconds = FMath::Max(StepSeconds, 1e-3);
+    HeldRepeatSteps = FMath::Max(1, FMath::RoundToInt32(Preset.HeldRepeatSeconds / Seconds));
+    RetrySteps = FMath::Max(0, FMath::RoundToInt32(Preset.SelfClearanceRetrySeconds / Seconds));
+    if (Retry.bActive) CancelRetry(EFoundationReason::Canceled);
+}
+
+void FFoundationInteraction::Press(EFoundationInput Input, double NowSeconds)
+{
+    ++PressSerial;
+    LastPressed = Input;
+    if (Input == EFoundationInput::Attack)
+    {
+        bAttackHeld = true;
+        bAttackNeedsRelease = false;
+        ++AttackPresses;
+        AttackPressTime = NowSeconds;
+    }
+    else
+    {
+        bUseHeld = true;
+        ++UsePresses;
+        UsePressTime = NowSeconds;
+    }
+}
+
+void FFoundationInteraction::Release(EFoundationInput Input)
+{
+    if (Input == EFoundationInput::Attack)
+    {
+        // A held break ends at the next step (the reference stops it on its next tick).
+        bAttackHeld = false;
+        bAttackNeedsRelease = false;
+        return;
+    }
+    bUseHeld = false;
+    if (Retry.bActive) CancelRetry(EFoundationReason::Released);
+}
+
+void FFoundationInteraction::CancelAll(
+    FFoundationAuthority& Authority, FFoundationVitals& Vitals, EFoundationReason Reason)
+{
+    bAttackHeld = bUseHeld = bAttackNeedsRelease = false;
+    AttackPresses = UsePresses = 0;
+    if (Retry.bActive) CancelRetry(Reason);
+    if (bMining && SessionId == Authority.GetSessionId()) AbortMining(Authority, Vitals);
+    ClearMining();
+}
+
+void FFoundationInteraction::Resync(FFoundationAuthority& Authority)
+{
+    SessionId = Authority.GetSessionId();
+    NextSequence = 1;
+    ClearMining();
+    MiningDelay = 0;
+    Retry = {};
+    AttackPresses = UsePresses = 0;
+    bAttackNeedsRelease = false;
+    LastRejectedMine = {};
+    NextUseStep = 0;
+    LastPlacementStep = MIN_int64 / 2;
+    LastText = TEXT("new lab session");
+}
+
+void FFoundationInteraction::ClearMining()
+{
+    bMining = false;
+    MiningProgress = 0;
+    MiningItem = {};
+}
+
+bool FFoundationInteraction::IsCadenceOpen() const
+{
+    return !Preset.bCommitCadence || Step >= LastPlacementStep + HeldRepeatSteps;
+}
+
+void FFoundationInteraction::SyncEquipment(const FFoundationAuthority& Authority, FFoundationVitals& Vitals) const
+{
+    const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId);
+    if (!Player) return;
+    const FFoundationItemInstance& Main = Player->Inventory.GetHand(EFoundationHand::Main);
+    const FFoundationItemDefinition& Item = Main.IsEmpty() ? Authority.Rules.Hand : Authority.Rules.GetItem(Main.Item);
+    // Item type identity, like the reference's same-item check: a different item restarts recovery,
+    // wear or another stack of the same item does not.
+    Vitals.UpdateMainHand(Main.IsEmpty() ? FName() : Item.Id);
+    Vitals.AttackSpeed = Item.AttacksPerSecond;
+}
+
+FFoundationCommand FFoundationInteraction::MakeCommand(
+    const FFoundationAuthority& Authority, EFoundationCommandType Type, EFoundationHand Hand) const
+{
+    FFoundationCommand Command;
+    Command.SessionId = SessionId;
+    Command.Type = Type;
+    Command.Hand = Hand;
+    if (const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId))
+        Command.Item = Player->Inventory.GetHand(Hand).GetRef();
+    return Command;
+}
+
+FFoundationResult FFoundationInteraction::Send(
+    FFoundationAuthority& Authority, FFoundationVitals& Vitals, FFoundationCommand Command)
+{
+    Command.Sequence = NextSequence++;
+    const FFoundationResult Result = Authority.Execute(PlayerId, Command, Vitals);
+    ++Commands;
+    LastResult = Result;
+    History.Add(Result);
+    if (History.Num() > 32) History.RemoveAt(0, History.Num() - 32);
+    LastText = FString::Printf(TEXT("#%u %s %s%s%s"), Result.Sequence, LexToString(Result.Type),
+        LexToString(Result.Outcome), Result.Reason == EFoundationReason::None ? TEXT("") : TEXT(": "),
+        Result.Reason == EFoundationReason::None ? TEXT("") : LexToString(Result.Reason));
+    return Result;
+}
+
+void FFoundationInteraction::StepOnce(
+    FFoundationAuthority& Authority, FFoundationVitals& Vitals, bool bLatestStep, double NowSeconds)
+{
+    const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId);
+    if (!Player) return;
+    if (SessionId != Authority.GetSessionId()) Resync(Authority);
+    Step = Player->Facts.Step;
+    SyncEquipment(Authority, Vitals);
+    Target = Authority.Resolve(Player->Facts);
+    if (!Player->Facts.bAlive)
+    {
+        // Death disables actions; nothing waits to act after the respawn.
+        if (bMining) AbortMining(Authority, Vitals);
+        if (Retry.bActive) CancelRetry(EFoundationReason::Dead);
+        AttackPresses = UsePresses = 0;
+        return;
+    }
+    const bool bFreshAttack = bLatestStep && AttackPresses > 0;
+    if (bFreshAttack) AttackPresses = 0;
+    StepAttack(Authority, Vitals, bFreshAttack);
+    // A target interaction may have reset the lab; the new session starts clean next step.
+    if (SessionId != Authority.GetSessionId()) return;
+    StepUse(Authority, Vitals, bLatestStep, NowSeconds);
+}
+
+void FFoundationInteraction::StepAttack(FFoundationAuthority& Authority, FFoundationVitals& Vitals, bool bFresh)
+{
+    if (bFresh)
+    {
+        // One issued attack per press: an entity in reach, else a block to mine, else a whiff.
+        if (Target.bInRange && Target.Kind == EFoundationHitKind::Entity)
+        {
+            FFoundationCommand Command = MakeCommand(Authority, EFoundationCommandType::Attack, EFoundationHand::Main);
+            Command.Target = Target;
+            Send(Authority, Vitals, Command);
+            if (bMining) AbortMining(Authority, Vitals);
+            return;
+        }
+        if (Target.bInRange && Target.IsBlockLike())
+        {
+            StartMining(Authority, Vitals, true);
+            return;
+        }
+        Send(Authority, Vitals, MakeCommand(Authority, EFoundationCommandType::Whiff, EFoundationHand::Main));
+        if (bMining) AbortMining(Authority, Vitals);
+        return;
+    }
+    // A hold that began with a press still waiting for the latest step has not begun at this earlier
+    // catch-up step: nothing acts for time before the press.
+    if (AttackPresses > 0) return;
+    if (bAttackHeld)
+    {
+        // Holding continues or starts a break on a block in reach; it never repeats melee attacks.
+        // The post-break delay counts only while aiming at a block, as in the reference.
+        if (bAttackNeedsRelease) return;
+        if (Target.bInRange && Target.IsBlockLike())
+        {
+            if (MiningDelay > 0)
+                --MiningDelay;
+            else
+                StartMining(Authority, Vitals, false);
+            return;
+        }
+    }
+    if (bMining) AbortMining(Authority, Vitals);
+}
+
+void FFoundationInteraction::StartMining(FFoundationAuthority& Authority, FFoundationVitals& Vitals, bool bFresh)
+{
+    const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId);
+    const FFoundationItemRef Item =
+        Player ? Player->Inventory.GetHand(EFoundationHand::Main).GetRef() : FFoundationItemRef{};
+    // The same cell, block revision and stack continues; a face change keeps the progress.
+    if (bMining && Target.Kind == EFoundationHitKind::Block && Target.Cell == MiningCell &&
+        Target.Revision == MiningRevision && Item == MiningItem)
+    {
+        if (MiningDelay > 0)
+            --MiningDelay;
+        else
+            ContinueMining(Authority, Vitals);
+        return;
+    }
+    // A rejected target is asked about once while held, not every step.
+    if (!bFresh && LastRejectedMine.SameTarget(Target) && LastRejectedMine.Revision == Target.Revision)
+    {
+        if (bMining) AbortMining(Authority, Vitals);
+        return;
+    }
+    FFoundationCommand Command = MakeCommand(Authority, EFoundationCommandType::MineStart, EFoundationHand::Main);
+    Command.Target = Target;
+    const FFoundationResult Result = Send(Authority, Vitals, Command);
+    // Whatever session existed has ended at the authority: replaced, refused or completed.
+    ClearMining();
+    if (Result.IsCommitted())
+    {
+        LastRejectedMine = {};
+        if (Result.bBroken) return; // the instant path: no accumulation, no post-break delay
+        bMining = true;
+        MiningCell = Target.Cell;
+        MiningRevision = Target.Revision;
+        MiningItem = Item;
+        // A fresh click accumulates in its own step; a held continuation starts now and accumulates next step.
+        if (bFresh)
+        {
+            if (MiningDelay > 0)
+                --MiningDelay;
+            else
+                ContinueMining(Authority, Vitals);
+        }
+        return;
+    }
+    LastRejectedMine = Target;
+}
+
+void FFoundationInteraction::ContinueMining(FFoundationAuthority& Authority, FFoundationVitals& Vitals)
+{
+    FFoundationCommand Command = MakeCommand(Authority, EFoundationCommandType::MineContinue, EFoundationHand::Main);
+    Command.Target = Target;
+    Command.Target.Cell = MiningCell;
+    const FFoundationResult Result = Send(Authority, Vitals, Command);
+    if (Result.IsCommitted())
+    {
+        if (!Result.bBroken)
+        {
+            MiningProgress = Result.Progress;
+            return;
+        }
+        // Ordinary progressive completion: a separate 5-step delay before the next break accumulates.
+        LastBreakSteps = Result.MiningSteps;
+        ClearMining();
+        MiningDelay = MiningDelaySteps;
+        return;
+    }
+    ClearMining();
+    // Without room for the return the block stays; holding does not retry until a fresh press.
+    if (Result.Reason == EFoundationReason::InventoryFull) bAttackNeedsRelease = true;
+}
+
+void FFoundationInteraction::AbortMining(FFoundationAuthority& Authority, FFoundationVitals& Vitals)
+{
+    FFoundationCommand Command = MakeCommand(Authority, EFoundationCommandType::MineAbort, EFoundationHand::Main);
+    Command.Target.Cell = MiningCell;
+    Send(Authority, Vitals, Command);
+    ClearMining();
+}
+
+void FFoundationInteraction::StepUse(
+    FFoundationAuthority& Authority, FFoundationVitals& Vitals, bool bLatestStep, double NowSeconds)
+{
+    if (bMining)
+    {
+        // Active mining wins: use never places during a live break, and its clicks are spent.
+        UsePresses = 0;
+        if (Retry.bActive) CancelRetry(EFoundationReason::Canceled);
+        return;
+    }
+    if (Retry.bActive && StepRetry(Authority, Vitals, NowSeconds)) return;
+    if (bLatestStep && UsePresses > 0)
+    {
+        // Never two placements in one update, nor ahead of a commit cadence: the press waits instead.
+        if (bPlacedThisUpdate || !IsCadenceOpen()) return;
+        UsePresses = 0;
+        Attempt(Authority, Vitals, UsePressTime, NowSeconds);
+        return;
+    }
+    // A hold that began with a still-pending press acts from its press onward, never on earlier catch-up steps.
+    if (bUseHeld && UsePresses == 0 && Step >= NextUseStep && !bPlacedThisUpdate && IsCadenceOpen())
+        Attempt(Authority, Vitals, 0, NowSeconds);
+}
+
+bool FFoundationInteraction::StepRetry(FFoundationAuthority& Authority, FFoundationVitals& Vitals, double NowSeconds)
+{
+    const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId);
+    EFoundationReason Cancel = EFoundationReason::None;
+    if (!bUseHeld)
+        Cancel = EFoundationReason::Released;
+    else if (Step > Retry.ExpiresStep)
+        Cancel = EFoundationReason::Expired;
+    else if (!Target.bInRange || !Target.SameTarget(Retry.Target) || Target.Revision != Retry.Target.Revision)
+        Cancel = EFoundationReason::TargetChanged;
+    else if (!Player || Player->Inventory.GetHand(Retry.Hand).GetRef() != Retry.Item)
+        Cancel = EFoundationReason::ItemChanged;
+    if (Cancel != EFoundationReason::None)
+    {
+        CancelRetry(Cancel);
+        return false;
+    }
+    // Waiting for the update or cadence still runs the fixed expiry.
+    if (bPlacedThisUpdate || !IsCadenceOpen()) return true;
+    FFoundationCommand Command = MakeCommand(Authority, EFoundationCommandType::UseOn, Retry.Hand);
+    Command.Target = Retry.Target;
+    Command.Destination = Retry.Destination;
+    Command.DestinationRevision = Retry.DestinationRevision;
+    const FFoundationResult Result = Send(Authority, Vitals, Command);
+    if (Result.bPlaced)
+    {
+        ++RetryCommits;
+        const double PressTime = Retry.PressTime;
+        Retry = {};
+        OnPlaced(PressTime, NowSeconds);
+        return true;
+    }
+    // Still inside the player's own body: recheck next step until the expiry.
+    if (Result.Outcome == EFoundationOutcome::Rejected && Result.Reason == EFoundationReason::ObstructedBySelf)
+        return true;
+    CancelRetry(Result.Reason);
+    return true;
+}
+
+void FFoundationInteraction::Attempt(
+    FFoundationAuthority& Authority, FFoundationVitals& Vitals, double PressTime, double NowSeconds)
+{
+    ++Attempts;
+    // The reference waits its held repeat after every attempt. A commit cadence only charges commits,
+    // so after a non-placing attempt holding may try again next step.
+    NextUseStep = Step + (Preset.bCommitCadence ? 1 : HeldRepeatSteps);
+    const FFoundationResult Result = UsePipeline(Authority, Vitals);
+    if (Result.bPlaced)
+    {
+        OnPlaced(PressTime, NowSeconds);
+        return;
+    }
+    if (Result.Outcome == EFoundationOutcome::Rejected && Result.Reason == EFoundationReason::ObstructedBySelf &&
+        RetrySteps > 0 && bUseHeld)
+    {
+        const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId);
+        Retry.bActive = true;
+        Retry.Hand = Result.Hand;
+        Retry.Target = Target;
+        Retry.Destination = Result.Cell;
+        Retry.DestinationRevision = Authority.World.Get(Result.Cell).Revision;
+        Retry.Item = Player ? Player->Inventory.GetHand(Result.Hand).GetRef() : FFoundationItemRef{};
+        Retry.ExpiresStep = Step + RetrySteps;
+        Retry.PressTime = PressTime;
+        ++RetriesStarted;
+    }
+}
+
+FFoundationResult FFoundationInteraction::UsePipeline(FFoundationAuthority& Authority, FFoundationVitals& Vitals)
+{
+    FFoundationResult Result;
+    Result.Outcome = EFoundationOutcome::Pass;
+    // A ray miss never places: there is no anchor at the ray's end.
+    if (!Target.bInRange || Target.Kind == EFoundationHitKind::None) return Result;
+    // The target's interaction (inside UseOn), then the item, then the offhand only after a pass.
+    // An explicit failure stops; no item here has a use in the air.
+    for (const EFoundationHand Hand : {EFoundationHand::Main, EFoundationHand::Off})
+    {
+        const bool bEntity = Target.Kind == EFoundationHitKind::Entity;
+        FFoundationCommand Command =
+            MakeCommand(Authority, bEntity ? EFoundationCommandType::UseEntity : EFoundationCommandType::UseOn, Hand);
+        Command.Target = Target;
+        FIntVector Destination;
+        EFoundationReason Ignored;
+        const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId);
+        if (!bEntity && Player && Authority.GetDestination(*Player, Hand, Target, Destination, Ignored) &&
+            Authority.World.IsKnown(Destination))
+        {
+            Command.Destination = Destination;
+            Command.DestinationRevision = Authority.World.Get(Destination).Revision;
+        }
+        Result = Send(Authority, Vitals, Command);
+        if (Result.Outcome != EFoundationOutcome::Pass) return Result;
+    }
+    return Result;
+}
+
+void FFoundationInteraction::OnPlaced(double PressTime, double NowSeconds)
+{
+    ++Placed;
+    LastPlacementStep = Step;
+    bPlacedThisUpdate = true;
+    if (PressTime > 0)
+    {
+        LastPressToCommitMs = (NowSeconds - PressTime) * 1000.;
+        PressToCommitMs.Add(LastPressToCommitMs);
+        if (PressToCommitMs.Num() > 256) PressToCommitMs.RemoveAt(0, PressToCommitMs.Num() - 256);
+    }
+}
+
+void FFoundationInteraction::CancelRetry(EFoundationReason Reason)
+{
+    if (!Retry.bActive) return;
+    ++RetriesCanceled;
+    Retry = {};
+    LastText = FString(TEXT("retry canceled: ")) + LexToString(Reason);
+}
+
+FFoundationResult FFoundationInteraction::SelectSlot(
+    FFoundationAuthority& Authority, FFoundationVitals& Vitals, int32 Slot)
+{
+    FFoundationCommand Command = MakeCommand(Authority, EFoundationCommandType::SelectSlot, EFoundationHand::Main);
+    Command.Slot = Slot;
+    if (Retry.bActive) CancelRetry(EFoundationReason::ItemChanged);
+    return Send(Authority, Vitals, Command);
+}
+
+FFoundationResult FFoundationInteraction::Scroll(
+    FFoundationAuthority& Authority, FFoundationVitals& Vitals, int32 Notches)
+{
+    const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId);
+    const int32 Current = Player ? Player->Inventory.Selected : 0;
+    const int32 Slots = FFoundationInventory::HotbarSlots;
+    return SelectSlot(Authority, Vitals, ((Current - Notches) % Slots + Slots) % Slots);
+}
+
+FFoundationResult FFoundationInteraction::SwapHands(FFoundationAuthority& Authority, FFoundationVitals& Vitals)
+{
+    if (Retry.bActive) CancelRetry(EFoundationReason::ItemChanged);
+    return Send(Authority, Vitals, MakeCommand(Authority, EFoundationCommandType::SwapHands, EFoundationHand::Main));
+}
+
+FFoundationResult FFoundationInteraction::Drop(
+    FFoundationAuthority& Authority, FFoundationVitals& Vitals, bool bWholeStack)
+{
+    FFoundationCommand Command = MakeCommand(Authority, EFoundationCommandType::Drop, EFoundationHand::Main);
+    Command.bWholeStack = bWholeStack;
+    return Send(Authority, Vitals, Command);
+}
+
+FFoundationResult FFoundationInteraction::SetCreativeSlot(
+    FFoundationAuthority& Authority, FFoundationVitals& Vitals, int32 Slot, FName Item, int32 Count)
+{
+    FFoundationCommand Command = MakeCommand(Authority, EFoundationCommandType::SetCreativeSlot, EFoundationHand::Main);
+    Command.Slot = Slot;
+    Command.CreativeItem = Item;
+    Command.CreativeCount = Count;
+    if (Retry.bActive) CancelRetry(EFoundationReason::ItemChanged);
+    return Send(Authority, Vitals, Command);
+}
+
+bool FFoundationInteraction::Pick(FFoundationAuthority& Authority, FFoundationVitals& Vitals)
+{
+    const FFoundationHit& Hit = Preview.Target.Kind != EFoundationHitKind::None ? Preview.Target : Target;
+    const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId);
+    if (!Player || !Hit.bInRange || Hit.Kind != EFoundationHitKind::Block) return false;
+    const FName Block = Authority.World.GetBlock(Authority.World.Get(Hit.Cell).State).Id;
+    for (int32 Slot = 0; Slot < FFoundationInventory::HotbarSlots; ++Slot)
+    {
+        const FFoundationItemInstance& Stack = Player->Inventory.Hotbar[Slot];
+        if (!Stack.IsEmpty() && Authority.Rules.GetItem(Stack.Item).PlacesBlock == Block)
+        {
+            if (Slot != Player->Inventory.Selected) SelectSlot(Authority, Vitals, Slot);
+            return true;
+        }
+    }
+    return false;
+}
+
+void FFoundationInteraction::UpdatePreview(const FFoundationAuthority& Authority, const FFoundationPlayerFacts& Facts)
+{
+    Preview = {};
+    Preview.Target = Authority.Resolve(Facts);
+    const FFoundationHit& Hit = Preview.Target;
+    const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId);
+    if (!Player || !Facts.bAlive || !Hit.bInRange || !Hit.IsBlockLike() || bMining) return;
+    const bool bHolding = !Player->Inventory.GetHand(EFoundationHand::Main).IsEmpty() ||
+        !Player->Inventory.GetHand(EFoundationHand::Off).IsEmpty();
+    if (Hit.Kind == EFoundationHitKind::Static && Authority.Statics.IsValidIndex(Hit.StaticIndex) &&
+        !Authority.Statics[Hit.StaticIndex].Interaction.IsNone() && !(Facts.bSecondaryUse && bHolding))
+    {
+        Preview.bInteraction = true;
+        return;
+    }
+    for (const EFoundationHand Hand : {EFoundationHand::Main, EFoundationHand::Off})
+    {
+        const FFoundationItemInstance& Stack = Player->Inventory.GetHand(Hand);
+        if (Stack.IsEmpty() || !Authority.Rules.GetItem(Stack.Item).CanPlace()) continue;
+        Preview.bPlacement = true;
+        Preview.Hand = Hand;
+        Preview.Reason = Authority.CheckPlacement(*Player, Hand, Hit, Preview.Cell, &Preview.State);
+        Preview.bValid = Preview.Reason == EFoundationReason::None;
+        return;
+    }
+}
+
+FString FFoundationInteraction::Describe() const
+{
+    FString Text = FString::Printf(TEXT("Preset %s: held repeat %d steps, retry %d, %s | session %d seq %u\n"),
+        *Preset.Name.ToString(), HeldRepeatSteps, RetrySteps,
+        Preset.bCommitCadence ? TEXT("commit cadence") : TEXT("attempt cadence"), SessionId, NextSequence - 1);
+    Text +=
+        FString::Printf(TEXT("Held attack=%d use=%d | mining %s %.0f%% delay %d | retry %s\n"), bAttackHeld, bUseHeld,
+            bMining ? *FoundationGrid::DescribeCell(MiningCell) : TEXT("none"), MiningProgress * 100., MiningDelay,
+            Retry.bActive ? *FString::Printf(TEXT("%s until step %lld"),
+                                *FoundationGrid::DescribeCell(Retry.Destination), Retry.ExpiresStep)
+                          : TEXT("none"));
+    Text += FString::Printf(TEXT("Use next step %lld (now %lld) | attempts %d placed %d retries %d->%d canceled %d | "
+                                 "press->commit %.1f ms\n"),
+        NextUseStep, Step, Attempts, Placed, RetriesStarted, RetryCommits, RetriesCanceled, LastPressToCommitMs);
+    return Text + TEXT("Last: ") + LastText;
+}

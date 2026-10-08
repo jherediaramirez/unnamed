@@ -14,7 +14,7 @@ def menu_map():
 
 
 def world_map(world_id):
-    """Long package name of a Singleplayer catalog world, e.g. world_map("super-flat")."""
+    """Long package name of a Singleplayer catalog world, e.g. world_map("playground")."""
     path = _settings.get_world_map_package(world_id)
     if not path:
         raise RuntimeError("Unknown world ID: " + world_id)
@@ -29,7 +29,25 @@ def input_asset(property_name):
     return path.split(".")[0]
 
 
+def dev_grid_material():
+    """Package of the dev grid material (UUnnamedProjectSettings::DevGridMaterial), e.g. /Game/DevGrid/M_DevGrid."""
+    return input_asset("DevGridMaterial")  # GetInputAssetPath resolves any soft-object setting by property name.
+
+
 def split(package):
     """("/Game/Input/Actions", "IA_Move") for "/Game/Input/Actions/IA_Move"."""
     folder, name = package.rsplit("/", 1)
     return folder, name
+
+
+def hud_registry():
+    return _settings.get_hud_registry_path().split('.')[0]
+
+
+def hud_texture(relative_texture):
+    return _settings.get_hud_texture_package(relative_texture)
+
+
+def block_asset(asset_name):
+    """Package of a generated block asset under UUnnamedProjectSettings::BlockRoot, e.g. block_asset("DA_Blocks")."""
+    return _settings.get_block_asset_package(asset_name)

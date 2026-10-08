@@ -7,3 +7,4 @@
 DECLARE_LOG_CATEGORY_EXTERN(LogUnnamedMenu, Log, All); // Menu host, application, video and preferences.
 DECLARE_LOG_CATEGORY_EXTERN(LogUnnamedWorlds, Log, All); // World travel targets such as Super Flat.
 DECLARE_LOG_CATEGORY_EXTERN(LogUnnamedFoundation, Log, All); // Player Foundation and its runtime probe.
+DECLARE_LOG_CATEGORY_EXTERN(LogUnnamedHud, Log, All); // Native HUD registry, textures and presenter.

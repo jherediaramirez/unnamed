@@ -72,8 +72,7 @@ FVector2D FFoundationSimulation::ResolveInput(FVector2D Requested, double SlowFa
     return Unit * FMath::Min(1., Magnitude / FMath::Max(FMath::Abs(Unit.X), FMath::Abs(Unit.Y)));
 }
 
-int32 FFoundationSimulation::Advance(double Seconds, const FFoundationIntent& Intent, double YawDegrees,
-    const UFoundationProfile& P, const TArray<FBox>& WorldBoxes, const FFoundationEligibility& Eligibility)
+int32 FFoundationSimulation::TakeDueSteps(double Seconds, const UFoundationProfile& P)
 {
     const double SafeStep = FMath::Max(.001, P.TickSeconds);
     const double Budget = SafeStep * FMath::Max(1, P.MaxCatchupSteps);
@@ -86,10 +85,18 @@ int32 FFoundationSimulation::Advance(double Seconds, const FFoundationIntent& In
     int32 Count = 0;
     while (Accumulator + 1e-9 >= SafeStep && Count < P.MaxCatchupSteps)
     {
-        Step(Intent, YawDegrees, P, WorldBoxes, Eligibility);
         Accumulator = FMath::Max(0., Accumulator - SafeStep);
         ++Count;
     }
+    return Count;
+}
+
+int32 FFoundationSimulation::Advance(double Seconds, const FFoundationIntent& Intent, double YawDegrees,
+    const UFoundationProfile& P, const TArray<FBox>& WorldBoxes, const FFoundationEligibility& Eligibility)
+{
+    const int32 Count = TakeDueSteps(Seconds, P);
+    for (int32 Index = 0; Index < Count; ++Index)
+        Step(Intent, YawDegrees, P, WorldBoxes, Eligibility);
     return Count;
 }
 
@@ -97,6 +104,7 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
     const TArray<FBox>& WorldBoxes, const FFoundationEligibility& Eligibility)
 {
     ++Steps;
+    bJumped = bSprintJumped = false;
     PreviousFeet = Feet;
     PreviousEyeCm = EyeCm;
     PreviousFovMultiplier = FovMultiplier;
@@ -144,6 +152,8 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
         VelocityPerTick.Z = FMath::Max(P.JumpCmPerTick, VelocityPerTick.Z);
         if (bSprinting) VelocityPerTick += ForwardVector * P.SprintJumpCmPerTick;
         JumpCooldown = P.JumpRepeatTicks;
+        bJumped = true;
+        bSprintJumped = bSprinting;
     }
     if (!Jump) JumpCooldown = 0;
     const bool WasGrounded = bGrounded;

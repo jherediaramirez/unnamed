@@ -1,0 +1,91 @@
+Implement the Minecraft Java 26.3 HUD foundation inside the existing Unnamed first-person Unreal project.
+
+PROJECT AND REQUIRED INPUTS
+Project: C:\dev\projects\Unnamed\Unnamed.uproject
+Engine: inspect the installed UE 5.8 build; current project evidence records 5.8.3.
+Reference folder: C:\dev\projects\Unnamed\Reference\minecraft-hud-26.3
+
+Read these before editing:
+1. Reference\minecraft-hud-26.3\README.md
+2. Reference\minecraft-hud-26.3\HUD-RESEARCH.md
+3. Reference\minecraft-hud-26.3\PNG-GUIDE.md and manifest.json
+4. Reference\minecraft-hud-26.3\evidence\source-map.json and reference-coverage.json
+5. Docs\Foundation\README.md, ARCHITECTURE.md, CONTROLS.md, VERIFICATION.md
+6. Current Source\Unnamed\Foundation, Source\Unnamed\Input and the relevant local-player/controller/menu seams.
+
+Open catalog.html to inspect each original PNG and layout.html to understand the measured relationships. The layout is a source-derived diagram, not vanilla runtime evidence. The PNG guide gives every file's purpose, position, behavior and native source reference. The reference pins the unmodified 26.3 client SHA-1 e877b6a07acd633fb3bb475002175cec036e7b87 and contains 194 PNGs plus their necessary support data. Use those assets; do not search for an old icons.png sheet or redraw the icons from memory.
+
+FIRST MILESTONE AND SCOPE
+Build a native, readable and pixel-faithful HUD presentation foundation with an isolated preview fixture. Integrate only facts already provided by real project systems. The current FFoundationActions slots are explicitly a typed test double; the foundation does not provide real health, drowning, inventory, loot or damage. Keep a clearly labeled preview adapter for missing systems. Never claim real gameplay acceptance because mock hearts changed. Describe missing backends and leave an adapter boundary ready for them. The research of every HUD item does not authorize building every gameplay system, networking feature, full inventory, world generator or menu redesign in this milestone.
+
+PRESERVE CURRENT WORK
+Read applicable AGENTS.md files if present. Inspect current Git status and current shared APIs; this repository contains unrelated in-progress changes. Before edits, record status and hashes, preserve affected original files and Git index, and write a short implementation plan. Do not reset, clean, broad-stage, commit, push, replace maps, overwrite accepted packages or alter unrelated settings. Keep current movement/collision, Left Shift sprint / C crouch defaults, physical-key rebinding, menu flows and F3 diagnostics working. Earlier Minecraft2/M2-prefixed code and paths are a different project and are not implementation targets.
+
+ARCHITECTURE
+Prefer a local-player-owned native Slate HUD, consistent with the current foundation. UMG is acceptable for suitable authored components, but keep one coherent view model and shallow hierarchy. Do not use gameplay Chromium/WebBrowser or turn the HTML research viewer into the runtime HUD.
+
+Create a gameplay-to-HUD adapter publishing a coherent snapshot: mode/capabilities; health/max/absorption; armor; food/saturation; air/maxAir/eyesUnderwater; effects; XP level/progress/recent-display tick; selected slot and item presentations; handedness/offhand; attack charge/target eligibility; vehicle health/jump/cooldown; approved waypoints; hide-HUD/debug/camera/screen-focus state. Fields for absent systems must carry explicit validity/support, not silently default into fictional production values.
+
+Keep snapshot state distinct from presentation history (last/displayed health, blink clocks, item-name timer, air-pop guard, icon animation). Compute geometry and sprite choice in pure testable functions. The paint function only consumes that output. Gameplay owns resource changes, authority, persistence and item transactions; widgets never apply damage, regenerate health, consume stacks or award XP. When networking exists, gameplay data comes from the appropriate server-authoritative owners and client feedback is confirmatory. No widget scans all world actors for locator data.
+
+ASSETS
+Import additively through an Editor-only script into a dedicated HUD content folder. Keep the original files untouched. Create a registry mapping source path to cooked texture/brush, native dimensions, animation frames/timing, GUI slice rules and semantic role. The manifest contains per-file hashes.
+
+Small pixel icons: nearest sampling, no mipmaps, preserved RGBA, suitable UI compression, sRGB for ordinary color artwork, clamp addressing, no resizing/padding that changes UVs. Check the installed engine's actual property APIs. Large blurred overlays, animated fire/portal and item glint use separate appropriate materials. Honor every .png.mcmeta; the locator background is a 12x5 nine-slice drawn 182x5, and its arrows are 7x10 sheets with 7x5 frames lasting 10 then 4 ticks. Dots are distance variants, not animation frames.
+
+Font PNGs are glyph atlases with provider JSON, not whole text images. Use the supplied font metrics/Unicode dependencies through an appropriate adapter, or explicitly report an agreed font substitution. Stack counts, names, XP numbers, chat, scoreboard and subtitles remain text. Item models, skins, durability rectangles and cooldown rectangles are runtime dependencies, not missing HUD PNGs.
+
+LAYOUT CONTRACT
+Let W,H be logical GUI viewport dimensions and C=floor(W/2). Use one integer GUI scale with final viewport/DPI compensation, avoiding double scaling. Match source rounding, not arbitrary screen percentages. Keep crosshair at true view center. Default reference mode adds no safe-area padding; any accessibility inset is a separate option.
+
+- Hotbar: C-91,H-22, size 182x22.
+- Selection: C-92+20*slot,H-23, size 24x23, slots 0..8.
+- Item cell origin: C-88+20*slot,H-19, nominal 16x16.
+- Left offhand: C-120,H-23,29x24; item C-117,H-19.
+- Right offhand: C+91,H-23,29x24; item C+101,H-19.
+- Hearts: C-91+8*column,H-39-row*rowHeight; 9x9 on an 8-unit pitch.
+- Food: C+82-8*i,H-39; 9x9, from the right.
+- Armor: H-49-(heartRows-1)*rowHeight, aligned to hearts; hidden at armor=0.
+- Air: H-49 normally, rises 10 per additional mount-heart row, aligned to food.
+- XP/locator/mount-jump shared track: floor((W-182)/2),H-29,182x5.
+- XP level: centered measured text at H-35, independent of shared-track owner.
+- Item name: centered H-59, or H-45 when player cannot be hurt.
+- Crosshair: floor((W-15)/2),floor((H-15)/2),15x15.
+- Effects: 24x24 tiles at W-25*n, y=1 beneficial and y=27 non-beneficial; icons 18x18 inset 3.
+- Bosses: C-91,12+19*i,182x5, label nine units above.
+
+Read HUD-RESEARCH.md for exact attack-indicator, locator-dot, peripheral UI and fractional/odd-size formulas. Keep the 182-unit central composition fixed in logical units. Do not scale icon spacing independently from the assets.
+
+BEHAVIOR CONTRACT
+Health: normal maximum 20 points; one full heart=2, half=1; ceil display health. Draw container, absorption, blink-history and current layers in source order. Poison > Wither > fully frozen > normal. Hardcore selects artwork. Absorption extends containers; max health and absorption are different. Keep delayed displayed health (~1 second), damage/heal blink windows (20/10 ticks under cooldown), three-tick blink bands, <=4-point jitter and regeneration's raised-heart step. Derive extra rows/armor displacement exactly from the report; do not hardcode ten hearts.
+
+Food: 20 points, six normal/Hunger variants, saturation-dependent jitter; no invented stamina/saturation bar. Sprint food eligibility is >6 food points, not low-health based. Existing movement eligibility remains owned by the movement/gameplay system.
+
+Air: render while eyes underwater OR air<max. Default max=300 ticks, ordinary depletion=1/tick, refill=4/tick. At 20Hz that is 15 seconds to zero, first ordinary drowning hit around 16 seconds, then 2 damage each second; 0-to-full refill takes 3.75 seconds. These are gameplay reference rules, not a request to put damage in the widget. Respect oxygen modifiers, invulnerability, Water Breathing/Conduit, and Nautilus preventing depletion without independently refilling. Use full/bursting/empty formulas and surface refill behavior in the report. Gate bubble-pop audio once per transition if audio is implemented; never play it on every paint.
+
+Context state: with waypoints, active jump/cooldown takes priority, then recent XP for 100 ticks when mode supports it, then locator. Without waypoints: jumpable mount, else XP-capable, else empty. Level>0 text is independent. XP uses floor(183*p) crop; mount/boss discrete fill uses zero at zero and floor(181*p)+1 for p>0. Crop fill UV/destination; never squeeze an entire progress texture.
+
+Crosshair: replace the font '+' with the actual sprite. Honor first-person/spectator/3D-debug gates. Native inverse blending is a real visual requirement; prove the chosen compositing path on bright and dark scenes or document its remaining gap. Crosshair attack background/progress is 16x4; full marker is 16x16 with a living in-range ready target and source attack-delay conditions. Hotbar attack meter fills vertically on the opposite side from offhand. This is not mining progress.
+
+Effects: 40 icon mappings, showIcon/ambient flags, source sorting, neutral effects in lower row, final-200-tick pulse; do not always show every available icon. Mount health replaces food and shifts air. Boss bars are event-driven by stable ID. Peripheral chat, player-list, subtitles, title/action messages, spectator and toasts are separate layers driven by their actual features. Camera overlays use correct blending, aspect, intensity and animation; do not import the whole animated sheet as a static giant icon.
+
+Mode/F1/focus: Survival/Adventure stat block, Creative suppression, spectator selector and gated crosshair. Vehicle/locator capability is separately evaluated. Passive HUD is hit-test invisible. Preserve input ownership through menus, inventory/chat fixtures, capture, focus loss and pause. Keep existing F3 telemetry separate and avoid two crosshairs/two HUDs after integration. Respect source exceptions instead of hiding unrelated screens by toggling one global UI root.
+
+PERFORMANCE
+Update changed fields by events/delegates; cache stable geometry and brush references. Reuse rows and icons. Allow per-frame work only for active transitions and camera-relative locator positions. Avoid raw polling UMG bindings, deep Canvas nesting, per-icon render targets, repetitive texture loading and per-frame string formatting. Measure HUD-off/on CPU, GPU, Slate and frame times in the same warmed scene. Do not claim optimization merely from compilation or a low widget count.
+
+IMPLEMENTATION ORDER
+1. Preservation snapshot, current API audit, short plan and missing-backend list.
+2. Additive asset import/metadata registry with hash/dimension/alpha checks.
+3. Pure layout/state selection and a controlled native preview with labeled fixtures.
+4. Smallest native integration for current hotbar selection/handedness/F1/crosshair/focus, preserving diagnostics and controls.
+5. Presentation edge states from the report, with honest fixture-versus-real labels.
+6. Relevant native/editor/packaged validation and measured performance.
+7. Document remaining gameplay/replication/item-rendering dependencies and stop at the agreed milestone. Do not silently expand into survival, mounts, bosses or networking.
+
+ACCEPTANCE AND DELIVERY
+Use the full validation matrix in HUD-RESEARCH.md. Test odd/even GUI sizes, GUI scales, 720p/1080p/1440p/4K and ultrawide, Windows DPI, left/right hand, slot 0/8, half/empty/full and multirow hearts, Hardcore/effect precedence, absorption, healing during blink, air burst/empty/refill thresholds, mount row displacement, context priority, effect expiry and F1/F3/menu focus. Where a backend is absent, validate the fixture presentation and label gameplay acceptance pending.
+
+Verify cooked PNG sharpness/transparency and font metrics, native input, and a packaged run. Do not call a unit test, editor compile or HTML screenshot gameplay parity. Compare with actual vanilla captures at recorded GUI scale when claiming visual equivalence. Preserve previous packages and supply a new candidate path, launch command, hashes, evidence and explicit remaining gaps. Report what changed, why, and what was actually tested.
+
+The local art reference retains Mojang/Microsoft provenance; it does not grant redistribution rights. Preserve it and keep distribution decisions separate from local research/implementation.

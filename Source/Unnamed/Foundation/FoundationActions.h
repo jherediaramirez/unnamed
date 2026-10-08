@@ -41,6 +41,8 @@ struct FFoundationTarget
     FVector Hit = {}, Normal = {};
     double DistanceCm = 0, ReachCm = 0;
     bool bInRange = false, bInteractive = false, bRejectInteraction = false;
+    // Entities only: a downed training target stays in place but is not alive.
+    bool bAlive = true;
 };
 
 struct FFoundationActionRequest

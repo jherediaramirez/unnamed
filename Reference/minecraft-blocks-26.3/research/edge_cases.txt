@@ -1,0 +1,57 @@
+chiseled_bookshelf -- mixed_states: 1/13 models are full cubes; non-cube: block/chiseled_bookshelf_empty_slot_bottom_left, block/chiseled_bookshelf_empty_slot_bottom_mid, block/chiseled_bookshelf_empty_slot_bottom_right, block/chiseled_bookshelf_empty_slot_top_left, block/chiseled_bookshelf_empty_slot_top_mid, block/chiseled_bookshelf_empty_slot_top_right, block/chiseled_bookshelf_occupied_slot_bottom_left, block/chiseled_bookshelf_occupied_slot_bottom_mid, block/chiseled_bookshelf_occupied_slot_bottom_right, block/chiseled_bookshelf_occupied_slot_top_left, block/chiseled_bookshelf_occupied_slot_top_mid, block/chiseled_bookshelf_occupied_slot_top_right
+piston -- mixed_states: 1/2 models are full cubes; non-cube: block/piston_base
+snow -- mixed_states: 1/8 models are full cubes; non-cube: block/snow_height10, block/snow_height12, block/snow_height14, block/snow_height2, block/snow_height4, block/snow_height6, block/snow_height8
+sticky_piston -- mixed_states: 1/2 models are full cubes; non-cube: block/piston_base
+beacon -- full_element_plus_inner: full-size element plus up to 2 other element(s) in: block/beacon
+cactus -- full_element_plus_inner: full-size element plus up to 2 other element(s) in: block/cactus
+honey_block -- full_element_plus_inner: full-size element plus up to 1 other element(s) in: block/honey_block
+slime_block -- full_element_plus_inner: full-size element plus up to 1 other element(s) in: block/slime_block
+spawner -- full_element_plus_inner: full-size element plus up to 1 other element(s) in: block/spawner
+trial_spawner -- full_element_plus_inner: full-size element plus up to 1 other element(s) in: block/trial_spawner, block/trial_spawner_active, block/trial_spawner_active_ominous, block/trial_spawner_ejecting_reward, block/trial_spawner_ejecting_reward_ominous, block/trial_spawner_inactive_ominous
+vault -- full_element_plus_inner: full-size element plus up to 1 other element(s) in: block/vault, block/vault_active, block/vault_active_ominous, block/vault_ejecting_reward, block/vault_ejecting_reward_ominous, block/vault_ominous, block/vault_unlocking, block/vault_unlocking_ominous
+brown_mushroom_block -- per_face_multipart: multipart of six single-face parts (template_single_face); reads as a cube only when all six faces are present: block/brown_mushroom_block, block/mushroom_block_inside
+mushroom_stem -- per_face_multipart: multipart of six single-face parts (template_single_face); reads as a cube only when all six faces are present: block/mushroom_block_inside, block/mushroom_stem
+red_mushroom_block -- per_face_multipart: multipart of six single-face parts (template_single_face); reads as a cube only when all six faces are present: block/mushroom_block_inside, block/red_mushroom_block
+dirt_path -- near_full_cube: bbox spans >=15/16 on every axis, not exact 0..16: block/dirt_path lo=[0, 0, 0] hi=[16, 15, 16]
+farmland -- near_full_cube: bbox spans >=15/16 on every axis, not exact 0..16: block/farmland lo=[0, 0, 0] hi=[16, 15, 16]; block/farmland_moist lo=[0, 0, 0] hi=[16, 15, 16]
+no_elements: air, cave_air, void_air -- no element geometry in any model (root: block/air)
+no_elements: black_banner, black_wall_banner, blue_banner, blue_wall_banner, brown_banner, brown_wall_banner, cyan_banner, cyan_wall_banner, gray_banner, gray_wall_banner, green_banner, green_wall_banner, light_blue_banner, light_blue_wall_banner, light_gray_banner, light_gray_wall_banner, lime_banner, lime_wall_banner, magenta_banner, magenta_wall_banner, orange_banner, orange_wall_banner, pink_banner, pink_wall_banner, purple_banner, purple_wall_banner, red_banner, red_wall_banner, white_banner, white_wall_banner, yellow_banner, yellow_wall_banner -- no element geometry in any model (root: block/banner)
+no_elements: barrier -- no element geometry in any model (root: block/barrier)
+no_elements: black_shulker_box -- no element geometry in any model (root: block/black_shulker_box)
+no_elements: blue_shulker_box -- no element geometry in any model (root: block/blue_shulker_box)
+no_elements: brown_shulker_box -- no element geometry in any model (root: block/brown_shulker_box)
+no_elements: chest -- no element geometry in any model (root: block/chest)
+no_elements: conduit -- no element geometry in any model (root: block/conduit)
+no_elements: copper_chest, waxed_copper_chest -- no element geometry in any model (root: block/copper_chest)
+no_elements: copper_golem_statue, waxed_copper_golem_statue -- no element geometry in any model (root: block/copper_golem_statue)
+no_elements: cyan_shulker_box -- no element geometry in any model (root: block/cyan_shulker_box)
+no_elements: decorated_pot -- no element geometry in any model (root: block/decorated_pot)
+no_elements: end_gateway -- no element geometry in any model (root: block/end_gateway)
+no_elements: end_portal -- no element geometry in any model (root: block/end_portal)
+no_elements: ender_chest -- no element geometry in any model (root: block/ender_chest)
+no_elements: exposed_copper_chest, waxed_exposed_copper_chest -- no element geometry in any model (root: block/exposed_copper_chest)
+no_elements: exposed_copper_golem_statue, waxed_exposed_copper_golem_statue -- no element geometry in any model (root: block/exposed_copper_golem_statue)
+no_elements: gray_shulker_box -- no element geometry in any model (root: block/gray_shulker_box)
+no_elements: green_shulker_box -- no element geometry in any model (root: block/green_shulker_box)
+no_elements: lava -- no element geometry in any model (root: block/lava)
+no_elements: light -- no element geometry in any model (root: block/light_00, block/light_01, block/light_02, block/light_03, block/light_04, block/light_05, block/light_06, block/light_07, block/light_08, block/light_09, block/light_10, block/light_11, block/light_12, block/light_13, block/light_14, block/light_15)
+no_elements: light_blue_shulker_box -- no element geometry in any model (root: block/light_blue_shulker_box)
+no_elements: light_gray_shulker_box -- no element geometry in any model (root: block/light_gray_shulker_box)
+no_elements: lime_shulker_box -- no element geometry in any model (root: block/lime_shulker_box)
+no_elements: magenta_shulker_box -- no element geometry in any model (root: block/magenta_shulker_box)
+no_elements: moving_piston -- no element geometry in any model (root: block/moving_piston)
+no_elements: orange_shulker_box -- no element geometry in any model (root: block/orange_shulker_box)
+no_elements: oxidized_copper_chest, waxed_oxidized_copper_chest -- no element geometry in any model (root: block/oxidized_copper_chest)
+no_elements: oxidized_copper_golem_statue, waxed_oxidized_copper_golem_statue -- no element geometry in any model (root: block/oxidized_copper_golem_statue)
+no_elements: pink_shulker_box -- no element geometry in any model (root: block/pink_shulker_box)
+no_elements: purple_shulker_box -- no element geometry in any model (root: block/purple_shulker_box)
+no_elements: red_shulker_box -- no element geometry in any model (root: block/red_shulker_box)
+no_elements: shulker_box -- no element geometry in any model (root: block/shulker_box)
+no_elements: creeper_head, creeper_wall_head, dragon_head, dragon_wall_head, piglin_head, piglin_wall_head, player_head, player_wall_head, skeleton_skull, skeleton_wall_skull, wither_skeleton_skull, wither_skeleton_wall_skull, zombie_head, zombie_wall_head -- no element geometry in any model (root: block/skull)
+no_elements: structure_void -- no element geometry in any model (root: block/structure_void)
+no_elements: trapped_chest -- no element geometry in any model (root: block/trapped_chest)
+no_elements: bubble_column, water -- no element geometry in any model (root: block/water)
+no_elements: waxed_weathered_copper_chest, weathered_copper_chest -- no element geometry in any model (root: block/weathered_copper_chest)
+no_elements: waxed_weathered_copper_golem_statue, weathered_copper_golem_statue -- no element geometry in any model (root: block/weathered_copper_golem_statue)
+no_elements: white_shulker_box -- no element geometry in any model (root: block/white_shulker_box)
+no_elements: yellow_shulker_box -- no element geometry in any model (root: block/yellow_shulker_box)

@@ -2,6 +2,8 @@
 
 #include "InputAction.h"
 #include "InputMappingContext.h"
+#include "Materials/MaterialInterface.h"
+#include "Misc/PackageName.h"
 #include "UObject/UnrealType.h"
 
 namespace
@@ -28,12 +30,13 @@ UUnnamedProjectSettings::UUnnamedProjectSettings()
 {
     CategoryName = TEXT("Game");
     MenuMap = FSoftObjectPath(TEXT("/Game/Menu/L_Menu.L_Menu"));
+    // One world for every feature. Retired IDs, never to be reused: foundation, super-flat, interaction-lab.
     Worlds = {
-        MakeWorld(TEXT("foundation"), TEXT("/Game/Maps/L_Foundation.L_Foundation"), TEXT("Player Foundation"),
-            TEXT("First-person movement, controls and diagnostics"), TEXT("Playable - Java 26.3 foundation")),
-        MakeWorld(TEXT("super-flat"), TEXT("/Game/Maps/L_SuperFlat.L_SuperFlat"), TEXT("Super Flat"),
-            TEXT("2 km x 2 km - flat test ground"), TEXT("Playable - temporary fly camera")),
+        MakeWorld(TEXT("playground"), TEXT("/Game/Maps/L_Playground.L_Playground"), TEXT("Playground"),
+            TEXT("2 km dev grid: movement course, building, mining and combat"),
+            TEXT("Playable - Java 26.3 foundation, session only")),
     };
+    DevGridMaterial = Asset<UMaterialInterface>(TEXT("/Game/DevGrid/M_DevGrid.M_DevGrid"));
     OnFootContext = Asset<UInputMappingContext>(TEXT("/Game/Input/MappingContexts/IMC_OnFoot.IMC_OnFoot"));
     FoundationActionsContext =
         Asset<UInputMappingContext>(TEXT("/Game/Input/MappingContexts/IMC_FoundationActions.IMC_FoundationActions"));
@@ -66,4 +69,26 @@ FString UUnnamedProjectSettings::GetInputAssetPath(FName AssetName)
 {
     const FSoftObjectProperty* Property = FindFProperty<FSoftObjectProperty>(StaticClass(), AssetName);
     return Property ? Property->GetPropertyValue_InContainer(&Get()).ToSoftObjectPath().ToString() : FString();
+}
+
+FString UUnnamedProjectSettings::GetHudRegistryPath()
+{
+    return Get().HudRoot / TEXT("DA_HudAssets.DA_HudAssets");
+}
+
+FString UUnnamedProjectSettings::GetHudTexturePackage(const FString& RelativeTexture)
+{
+    return Get().HudRoot / TEXT("Textures") / RelativeTexture;
+}
+
+FString UUnnamedProjectSettings::GetBlockAssetPackage(const FString& AssetName)
+{
+    return Get().BlockRoot / AssetName;
+}
+
+FSoftObjectPath UUnnamedProjectSettings::GetBlockAssetPath(const FString& AssetName)
+{
+    // The object is named after the package's last segment ("Gui/gui/.../tab_items" -> "tab_items").
+    const FString Package = GetBlockAssetPackage(AssetName);
+    return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
 }

@@ -1,0 +1,148 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
+#include "Foundation/FoundationActions.h"
+#include "FoundationItems.generated.h"
+
+// One ordered tool rule, as in 26.3's tool component: the first rule matching the block that states a
+// speed supplies the speed; the first matching rule that states drop correctness supplies that.
+USTRUCT()
+struct FFoundationMiningRule
+{
+    GENERATED_BODY()
+
+    // Matches a block carrying any of these tags.
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    FGameplayTagContainer BlockTags;
+
+    // Zero states no speed.
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    float Speed = 0;
+
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    bool bStatesCorrectForDrops = false;
+
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    bool bCorrectForDrops = false;
+};
+
+// An authorable item type. Capabilities are independent optional fields, so one item can place, mine and
+// fight; rules read capabilities and tags, never names.
+USTRUCT()
+struct FFoundationItemDefinition
+{
+    GENERATED_BODY()
+
+    // Stable saved ID, e.g. "practice_pickaxe".
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    FName Id;
+
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    FString DisplayName;
+
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    FGameplayTagContainer Tags;
+
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    int32 MaxStack = 1;
+
+    // Place capability: the block this item places, or None.
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    FName PlacesBlock;
+
+    // Melee capability: total damage and attacks per second (not additive modifiers).
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    float AttackDamage = 1;
+
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    float AttacksPerSecond = 4;
+
+    // Mining capability: speed where no rule states one, then ordered rules.
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    float DefaultMiningSpeed = 1;
+
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    TArray<FFoundationMiningRule> MiningRules;
+
+    // Durability: zero means the item never wears. Costs apply only when lab tool wear is on.
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    int32 MaxDurability = 0;
+
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    int32 DurabilityPerBlock = 0;
+
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    int32 DurabilityPerHit = 0;
+
+    // Presentation only: which HUD/held-item drawing to use ("block", "pickaxe", "sword") and its tint.
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    FName Icon;
+
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    FLinearColor IconColor = FLinearColor::White;
+
+    bool CanPlace() const { return !PlacesBlock.IsNone(); }
+    // Speed from the first rule that matches and states one, else the default.
+    float GetMiningSpeed(const FGameplayTagContainer& BlockTags) const;
+    // Drop correctness from the first matching rule that states it, else false.
+    bool IsCorrectForDrops(const FGameplayTagContainer& BlockTags) const;
+};
+
+// What a command says the hand held: an instance and its revision.
+struct FFoundationItemRef
+{
+    int32 InstanceId = 0;
+    int32 Revision = 0;
+
+    bool operator==(const FFoundationItemRef& Other) const = default;
+};
+
+// A stack in a slot. InstanceId is its identity for the session (0 = empty); Revision bumps on every
+// change (count, durability), so a command made against an older state is detectably stale.
+struct FFoundationItemInstance
+{
+    int32 InstanceId = 0;
+    int32 Item = INDEX_NONE;
+    int32 Count = 0;
+    int32 Damage = 0;
+    int32 Revision = 0;
+
+    bool IsEmpty() const { return InstanceId == 0 || Count <= 0 || Item == INDEX_NONE; }
+    FFoundationItemRef GetRef() const
+    {
+        return IsEmpty() ? FFoundationItemRef{} : FFoundationItemRef{InstanceId, Revision};
+    }
+};
+
+// The lab inventory: nine hotbar slots plus the offhand, the project's existing hand conventions.
+// Infinite supply is its own rule: placement leaves the count unchanged and nothing else differs.
+struct UNNAMED_API FFoundationInventory
+{
+    static constexpr int32 HotbarSlots = 9;
+
+    TArray<FFoundationItemInstance> Hotbar;
+    FFoundationItemInstance Offhand;
+    int32 Selected = 0;
+    bool bInfiniteSupply = false;
+    int32 NextInstanceId = 1;
+    // Bumps on any change, for snapshots.
+    int32 Revision = 0;
+
+    FFoundationInventory();
+    FFoundationItemInstance& GetHand(EFoundationHand Hand);
+    const FFoundationItemInstance& GetHand(EFoundationHand Hand) const;
+    FFoundationItemInstance MakeStack(int32 Item, int32 Count);
+    void SetSlot(int32 Slot, const FFoundationItemInstance& Stack);
+    void Select(int32 Slot);
+    void SwapHands();
+    // Count that could be added (merge into same-item stacks, selected/offhand first, then free hotbar slots).
+    int32 GetSpaceFor(int32 Item, int32 MaxStack) const;
+    // Adds up to Count; returns how many fit.
+    int32 Add(int32 Item, int32 Count, int32 MaxStack);
+    // Removes one from a hand's stack (a placement); an emptied slot loses its identity.
+    void ConsumeOne(EFoundationHand Hand);
+    // Wears a hand's tool. True when this call used its last point and broke it.
+    bool Wear(EFoundationHand Hand, int32 Amount, int32 MaxDurability);
+    void Touch(FFoundationItemInstance& Stack);
+};

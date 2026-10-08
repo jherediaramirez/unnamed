@@ -12,7 +12,7 @@ $buildArgs=@('UnnamedEditor','Win64','Development',"-Project=$project",'-WaitMut
 if($EditorModuleSuffix){$buildArgs+="-ModuleWithSuffix=Unnamed,$EditorModuleSuffix"}
 & "$EngineRoot/Engine/Build/BatchFiles/Build.bat" @buildArgs
 if($LASTEXITCODE){throw 'Editor build failed'}
-foreach($script in @('CreateInputAssets.py','SetupFoundation.py')){
+foreach($script in @('CreateInputAssets.py','SetupFoundation.py','ImportHud.py','CreateDevGridMaterial.py','CreatePlaygroundMap.py')){
     & "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" $project -run=pythonscript "-script=$PSScriptRoot/Editor/$script" -unattended -nop4 -NullRHI
     if($LASTEXITCODE){throw "Asset setup failed: $script"}
 }

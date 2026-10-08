@@ -2,7 +2,19 @@
 
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
+## October 8, 2026
+
+- [Blocks](2026-10-08-Blocks.md): all 529 Java 26.3 full-cube blocks and slabs plus static water with exact protocol and state ids; textures, render layers, tints, animation; vanilla placement rules; block gallery; 1:1 creative inventory and 3D hotbar icons; dummy block retired; tests and gallery evidence.
+
+- [Playground](2026-10-08-Playground.md): one built-in world (`playground`) replaces Player Foundation, Super Flat and Interaction Lab; retired IDs; the dev grid material; anchor rule; token fixtures and line grids removed; movement course moved east; verification pending.
+
+- [Dummy Block interaction foundation](2026-10-08-Interaction.md): the Interaction Lab world (since retired; now the Playground); block world, items, targeting, authority and interaction state; placing, mining and melee on Java 26.3 rules; VanillaReference and LucidFluid presets; jump/fall placement; the mouse-look pitch fix; tests, package and evidence.
+
 ## October 7, 2026
+
+- [Player vitals - HUD milestone 2](2026-10-07-Vitals.md): review of the milestone-1 HUD; real session-only health, armor, food, air, falls, XP, attack recovery, mode and difficulty on Java 26.3 rules; lab water column and jump stair; tests and package evidence.
+
+- [Java 26.3 HUD milestone 1](2026-10-07-Hud.md): native Slate presentation, original PNG import/registry, explicit preview controls, test and package evidence.
 
 - [Code-review cleanup](2026-10-07-Code-Review-Cleanup.md): independent review applied step by step - formatting, layout, world catalog, menu host component, diagnostics split, shared menu JS, consistency, naming, evidence and docs; behavior changes and verification.
 
@@ -24,6 +36,6 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 - [Keybindings foundation](2026-10-07-Keybindings.md): native movement bindings, saved policies, intent rules, verification and package.
 
 Project: `C:\dev\projects\Unnamed`.
-Current candidate: `C:\dev\projects\Unnamed\Packages\CodeReviewDevelopment20261007\Windows\Unnamed.exe`; Super Flat preview checkpoint: `Packages\SuperFlatDevelopment`.
+Playground: no packaged candidate yet (see the [Playground record](2026-10-08-Playground.md)). Newest preserved package: `C:\dev\projects\Unnamed\Packages\InteractionDevelopment20261008-r3\Windows\Unnamed.exe` (retired worlds); earlier checkpoints include `Packages\VitalsDevelopment20261007-r2` and `Packages\SuperFlatDevelopment`.
 
 Add a new `YYYY-MM-DD-Topic.md` for future work. Keep historical records intact and link the newest record here. Broader ownership and evidence remain in [Architecture](../Architecture.md) and [Verification](../Verification.md).

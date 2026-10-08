@@ -24,6 +24,9 @@ public:
     void Initialize(bool bAllowNativeChanges);
     void Tick();
 
+    // Shared read-only native view; zero is Auto. HUD and menu resolve their own minimum viewport.
+    int32 GetGuiScale() const { return GuiScale; }
+
     bool IsReadyForExit() const { return !bWaitingForWindow && !bTransitionPending; }
 
     bool FlushForExit(FString& OutError);

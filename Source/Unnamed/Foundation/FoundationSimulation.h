@@ -4,7 +4,8 @@
 
 class UFoundationProfile;
 
-// Future eligibility owner supplies facts; no hunger, item, fluid or survival system here.
+// Movement eligibility facts. The pawn supplies death (mobility) and food from FFoundationVitals each
+// step; item slowdown has no owner yet. The simulation itself has no survival rules.
 struct FFoundationEligibility
 {
     bool bMobile = true, bEnoughFood = true, bItemSlows = false;
@@ -30,9 +31,14 @@ struct UNNAMED_API FFoundationSimulation
     int32 JumpCooldown = 0, SprintTimer = 0, AutoJumpDelay = 0;
     bool bGrounded = false, bCrouched = false, bSprinting = false, bHeadroom = true, bHorizontalCollision = false,
          bHadForward = false;
+    // The last step started a jump, and whether it was a sprint jump (food exhaustion facts).
+    bool bJumped = false, bSprintJumped = false;
     FString Rejection = TEXT("unhindered fixture: sufficient food, no effects");
     // Stands the player at Position with the profile's standing height and eyes.
     void Reset(FVector Position, const UFoundationProfile& P);
+    // Banks Seconds and returns how many reference steps are due now (bounded catch-up). Callers that
+    // must act between steps run Step themselves; Advance does both.
+    int32 TakeDueSteps(double Seconds, const UFoundationProfile& P);
     int32 Advance(double Seconds, const FFoundationIntent& Intent, double YawDegrees, const UFoundationProfile& P,
         const TArray<FBox>& WorldBoxes, const FFoundationEligibility& Eligibility = {});
     void Step(const FFoundationIntent& Intent, double YawDegrees, const UFoundationProfile& P,

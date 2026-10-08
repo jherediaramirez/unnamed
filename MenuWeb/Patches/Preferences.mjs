@@ -16,7 +16,7 @@ export function apply(patch) {
   patch.edit('function settingTooltip(', "return d.tip?(DATA.tipKeys[d.tip]?tr(DATA.tipKeys[d.tip]):d.tip):''}",
     "return d.tip?(DATA.tipKeys[d.tip]?tr(DATA.tipKeys[d.tip]):d.tip):''}\n" +
     `function settingTooltip(id){const detail=referenceSettingTooltip(id);const live=${liveInFoundation}.includes(id);` +
-    "return live?'Applies in Player Foundation; saved automatically.'+(detail?'\\n\\n'+detail:''):preferenceSettings.has(id)?MenuPreferences.tooltip()+(detail?'\\n\\n'+detail:''):detail}");
+    "return live?'Applies in the Playground; saved automatically.'+(detail?'\\n\\n'+detail:''):preferenceSettings.has(id)?MenuPreferences.tooltip()+(detail?'\\n\\n'+detail:''):detail}");
 
   patch.line('async function applyLanguage(', "async function applyLanguage(code,close=false){if(!DATA.languages[code])throw Error('Unknown locale');return MenuPreferences.commit({language:code},()=>{chosenLanguage=state.language;activeLabels=L;document.documentElement.lang='en-US';commitStage();if(close)back();else render()})}");
   patch.text("button(tr('gui.done'),C+4,H-26,150,()=>{void applyLanguage(chosenLanguage,true)})",

@@ -5,11 +5,14 @@
 #include "FoundationPanels.generated.h"
 
 class AFoundationController;
+class AFoundationPlayground;
+class SHudCreativeScreen;
 class SWidget;
 
 // Blocking native panels over gameplay: Debug Options (F3+F6), the local chat/command text
-// fixture and the inventory routing fixture. Opening one stops gameplay input and the
-// simulation; closing it resumes play unless the pause menu is open.
+// fixture and the inventory: in the Playground the creative inventory screen (SHudCreativeScreen),
+// elsewhere the inventory routing fixture. Opening one stops gameplay input and the simulation;
+// closing it resumes play unless the pause menu is open.
 UCLASS(ClassGroup = Foundation)
 class UNNAMED_API UFoundationPanels : public UActorComponent
 {
@@ -24,14 +27,19 @@ public:
     bool IsOpen() const { return bOpen; }
     bool IsTextOpen() const { return bTextOpen; }
     bool IsInventoryOpen() const { return bInventoryOpen; }
+    // The creative screen's search tab takes typed text: the inventory key types instead of closing.
+    bool IsTypingInInventory() const;
+    TSharedPtr<SHudCreativeScreen> GetCreativeScreen() const { return Creative; }
 
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
     AFoundationController* GetFoundationController() const;
     void Show(TSharedRef<SWidget> Content);
+    void OpenCreative(AFoundationPlayground& Playground);
 
     TSharedPtr<SWidget> Root;
+    TSharedPtr<SHudCreativeScreen> Creative;
     bool bOpen = false;
     bool bTextOpen = false;
     bool bInventoryOpen = false;

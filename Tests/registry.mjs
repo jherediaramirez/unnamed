@@ -11,7 +11,7 @@ const capture=findCapture(captureName);
 const {run,data,extras}=readCaptureEvidence(findCapture,captureName,videoCaptureName);
 const live=new Set(['fullscreen','framerateLimit','enableVsync','guiScale','menuBackgroundBlurriness']);
 const isQuit=c=>c.screen==='main'&&c.label==='Quit Game';
-const isWorld=c=>c.screen==='worlds'&&(c.label==='Play Selected World'||c.id.includes('super-flat'));
+const isWorld=c=>c.screen==='worlds'&&(c.label==='Play Selected World'||c.id.includes('playground'));
 const movement=new Set(['key.forward','key.back','key.left','key.right','key.sprint','key.sneak','key.jump']);
 const isInput=c=>movement.has(c.binding)||['toggleSprint','toggleCrouch'].includes(c.setting)||(c.screen==='keybinds'&&c.label==='Reset Keys');
 const isLive=c=>live.has(c.setting)||c.label==='Hard Reset'||isQuit(c)||isWorld(c)||isInput(c)||c.setting==='preferredGraphicsBackend';
@@ -35,7 +35,7 @@ const fields={
   'Language':'','Search Game Rules':'','Search Biomes':'','Search Worlds':'',
 };
 const integration=(c)=>{
-  if(isWorld(c))return 'Restricted native map travel to Super Flat after settings drain/flush; the other two entries remain references. See SuperFlat.md.';
+  if(isWorld(c))return 'Restricted native map travel to Playground after settings drain/flush; the other two entries remain references. See Playground.md.';
   if(isInput(c))return 'Native Enhanced Input binding/policy settings and movement intent; actual character movement remains pending. See Keybindings.md.';
   if(isQuit(c))return 'Implemented by restricted MenuApplication shutdown binding; queued settings drain, final preference flush, normal Unreal exit and editor protection are documented in QuitGame.md.';
   if(isLive(c))return 'Implemented by the restricted MenuVideoSettings/MenuVideo adapter; persistence and confirmed preference reset are documented in VideoSettings.md.';
@@ -88,13 +88,13 @@ const registry=controls.map(c=>{
 for(const c of registry.filter(isLive)){
   if(isWorld(c)){
     c.status='WORLD_TRAVEL_IMPLEMENTED';
-    c.mockInteraction='Select or open the built-in Super Flat test level through the restricted native application service.';
+    c.mockInteraction='Select or open the built-in Playground level through the restricted native application service.';
     c.doneCancelEscape='Escape leaves the list; from the standalone preview world it returns to the main menu.';
-    c.disabledConditions='Play requires Super Flat selected and a ready native game/PIE service. Reference entries never load. Edit/Delete/Re-Create are unavailable for the built-in map.';
+    c.disabledConditions='Play requires Playground selected and a ready native game/PIE service. Reference entries never load. Edit/Delete/Re-Create are unavailable for the built-in map.';
     c.laterScope='The future FPS character replaces the stock preview camera after collision/input integration.';
     c.unresolved='Physical input and embedded PIE acceptance remain separate checks.';
     c.acceptance=['Play, double-click and Enter open the actual level.','Ground collision, clear spawn, repeated menu return, and retained settings.'];
-    c.evidence.functional='Docs/SuperFlat.md; Tests/Evidence/2026-10-07/Captures/super-flat-2026-10-07T18-36-54-558Z/results.json';
+    c.evidence.functional='Docs/Playground.md; Tests/Evidence/2026-10-07/Captures/super-flat-2026-10-07T18-36-54-558Z/results.json';
     continue;
   }
   if(c.setting==='preferredGraphicsBackend'){

@@ -1,5 +1,6 @@
 """Supported Unreal editor setup. Extends native assets; no binary fabrication.
-Run only after compiling the Foundation classes. Does not change Super Flat.
+Run only after compiling the Foundation classes. Input assets only; the Playground map is
+CreatePlaygroundMap.py.
 """
 import json
 import os
@@ -72,18 +73,4 @@ if not unreal.EditorAssetLibrary.does_asset_exist(path):
     ctx.set_editor_property('default_key_mappings',data)
     unreal.EditorAssetLibrary.save_loaded_asset(ctx)
 
-map_path = ProjectPaths.world_map('foundation')
-if not unreal.EditorAssetLibrary.does_asset_exist(map_path):
-    levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-    if not levels.new_level(map_path): raise RuntimeError('Failed to create foundation map')
-    world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
-    world.get_world_settings().set_editor_property('default_game_mode',unreal.FoundationGameMode)
-    actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    actors.spawn_actor_from_class(unreal.PlayerStart,unreal.Vector(0,0,0))
-    light = actors.spawn_actor_from_class(unreal.DirectionalLight,unreal.Vector(0,0,1000),unreal.Rotator(-45,-30,0))
-    light.light_component.set_editor_property('intensity',3)
-    sky = actors.spawn_actor_from_class(unreal.SkyLight,unreal.Vector(0,0,800))
-    sky.light_component.set_editor_property('intensity',1)
-    actors.spawn_actor_from_class(unreal.SkyAtmosphere,unreal.Vector(0,0,0))
-    if not levels.save_current_level(): raise RuntimeError('Failed to save foundation map')
-unreal.log('Foundation native assets and map ready; existing maps preserved.')
+unreal.log('Foundation native assets ready.')

@@ -1,4 +1,6 @@
 #include "Foundation/FoundationHud.h"
+#include "Hud/HudPresenter.h"
+#include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationController.h"
 #include "Foundation/FoundationCoordinates.h"
 #include "Foundation/FoundationInputRouter.h"
@@ -51,25 +53,17 @@ void UFoundationHud::BeginPlay()
         !FSlateApplication::IsInitialized())
         return;
     const FLinearColor White = FLinearColor::White;
+    Presenter = NewObject<UHudPresenter>(this);
     // clang-format off: Slate's declarative layout reads best indented by hand.
     OverlayRoot = SNew(SOverlay).Visibility(EVisibility::HitTestInvisible)
+        + SOverlay::Slot()
+        [ Presenter->CreateView() ]
         + SOverlay::Slot().HAlign(HAlign_Left).VAlign(VAlign_Top).Padding(12)
         [
             SNew(SBorder).BorderBackgroundColor(FLinearColor(0.f, 0.f, 0.f, .75f))
             [
                 SAssignNew(DebugText, STextBlock).Font(FCoreStyle::GetDefaultFontStyle("Mono", 11)).ColorAndOpacity(White)
             ]
-        ]
-        + SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Bottom).Padding(10)
-        [
-            SAssignNew(HudText, STextBlock).Font(FCoreStyle::GetDefaultFontStyle("Bold", 14)).ColorAndOpacity(White)
-        ]
-        + SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Center)
-        [
-            SAssignNew(Crosshair, STextBlock)
-                .Text(FText::FromString(TEXT("+")))
-                .Font(FCoreStyle::GetDefaultFontStyle("Bold", 20))
-                .ColorAndOpacity(White)
         ];
     // clang-format on
     GEngine->GameViewport->AddViewportWidgetContent(OverlayRoot.ToSharedRef(), 200);
@@ -119,6 +113,20 @@ void UFoundationHud::NoteMotion(const AFoundationPawn& Pawn)
     LogEvent(Motion);
 }
 
+void UFoundationHud::NoteVitals(const FFoundationVitals& Vitals)
+{
+    if (Vitals.DamageEvents != LoggedDamageEvents)
+    {
+        LoggedDamageEvents = Vitals.DamageEvents;
+        LogEvent(TEXT("damage: ") + Vitals.LastDamage);
+    }
+    if (Vitals.IsDead() != bLoggedDead)
+    {
+        bLoggedDead = Vitals.IsDead();
+        LogEvent(bLoggedDead ? Vitals.DeathMessage : FString(TEXT("respawned with fresh vitals")));
+    }
+}
+
 void UFoundationHud::DrawDebug(const AFoundationPawn& Pawn) const
 {
     const FFoundationSimulation& Simulation = Pawn.Simulation;
@@ -130,12 +138,18 @@ void UFoundationHud::DrawDebug(const AFoundationPawn& Pawn) const
             1.5);
     }
     if (bShowCollision && Pawn.GetLab())
-        for (const FBox& Box : Pawn.GetLab()->CollisionBoxes)
+    {
+        // What the movement solver sees near the player: the lab's cuboids and any committed blocks.
+        TArray<FBox> Boxes;
+        Pawn.GetLab()->GatherCollision(FFoundationSimulation::Bounds(Simulation.Feet, 180, 60).ExpandBy(800), Boxes);
+        for (const FBox& Box : Boxes)
             DrawDebugBox(GetWorld(), Box.GetCenter(), Box.GetExtent(), FColor::Green, false, -1, 0, .3f);
+    }
 }
 
 void UFoundationHud::Refresh()
 {
+    if (Presenter) Presenter->Refresh(*GetFoundationController(), Now);
     if (Now < NextRefreshTime || !DebugText) return;
     NextRefreshTime = Now + .1;
     AFoundationController* Controller = GetFoundationController();
@@ -148,17 +162,54 @@ void UFoundationHud::Refresh()
             DebugText->SetFont(
                 FCoreStyle::GetDefaultFontStyle("Mono", FMath::RoundToInt(11 * Settings->DebugTextScale)));
     }
-    const bool bShowHud = Controller->GetFoundationPawn() && !bHideHud && !Controller->GetMenuHost()->IsOpen() &&
-        !Controller->GetPanels()->IsOpen();
-    const EVisibility HudVisibility = bShowHud ? EVisibility::HitTestInvisible : EVisibility::Collapsed;
-    HudText->SetVisibility(HudVisibility);
-    Crosshair->SetVisibility(HudVisibility);
-    const FFoundationActions& Actions = Controller->Actions;
-    FString Bar = TEXT("ESC menu   |   F3 diagnostics   |   F3+F6 options\n");
-    for (int32 Slot = 0; Slot < 9; ++Slot)
-        Bar += Slot == Actions.Slot ? FString::Printf(TEXT(" [%d:%d] "), Slot + 1, Actions.Slots[Slot])
-                                    : FString::Printf(TEXT("  %d:%d  "), Slot + 1, Actions.Slots[Slot]);
-    HudText->SetText(FText::FromString(Bar));
+}
+
+FString UFoundationHud::BuildInteractionText(const AFoundationPawn& Pawn, const FFoundationAuthority& Authority)
+{
+    const FFoundationInteraction& Interaction = Pawn.Interaction;
+    const FFoundationPlayer* Player = Authority.FindPlayer(Interaction.PlayerId);
+    if (!Player) return TEXT("Interaction: not registered\n");
+    auto Describe = [&Authority, Player](const FFoundationItemInstance& Stack)
+    {
+        if (Stack.IsEmpty()) return FString(TEXT("empty hand"));
+        const FFoundationItemDefinition& Item = Authority.Rules.GetItem(Stack.Item);
+        FString Text = FString::Printf(TEXT("%s #%d r%d"), *Item.Id.ToString(), Stack.InstanceId, Stack.Revision);
+        if (Item.CanPlace())
+            Text += Player->Inventory.bInfiniteSupply ? TEXT(" x inf") : *FString::Printf(TEXT(" x%d"), Stack.Count);
+        if (Item.MaxDurability > 0)
+            Text += FString::Printf(TEXT(" %d/%d"), Item.MaxDurability - Stack.Damage, Item.MaxDurability);
+        return Text;
+    };
+    const FFoundationPreview& Preview = Interaction.Preview;
+    FString Out =
+        FString::Printf(TEXT("PLAYGROUND (session-only) | supply %s | blocks %d rev %lld | placed %d broke %d hits %d "
+                             "rejected %d duplicates %d resets %d\n"),
+            Player->Inventory.bInfiniteSupply ? TEXT("infinite") : TEXT("finite, tool wear"),
+            Authority.World.GetSolidCount(), Authority.World.Revision, Authority.Placements, Authority.Breaks,
+            Authority.Hits, Authority.Rejections, Authority.Duplicates, Authority.Resets);
+    Out += FString::Printf(TEXT("Hand slot %d: %s | off: %s\n"), Player->Inventory.Selected + 1,
+        *Describe(Player->Inventory.GetHand(EFoundationHand::Main)), *Describe(Player->Inventory.Offhand));
+    Out += TEXT("Target ") + FoundationTargeting::Describe(Preview.Target);
+    if (Preview.bInteraction)
+        Out += TEXT(" | use: interact");
+    else if (Preview.bPlacement)
+        Out += FString::Printf(TEXT(" | place %s %s"), *FoundationGrid::DescribeCell(Preview.Cell),
+            Preview.bValid ? TEXT("ok") : LexToString(Preview.Reason));
+    Out += TEXT("\n") + Interaction.Describe() + TEXT("\n");
+    for (const FFoundationTrainingTarget& Target : Authority.Targets)
+        Out += FString::Printf(TEXT("%s #%d: %.2f/%.0f cooldown %d hits %d%s | "), *Target.Label, Target.Id,
+            Target.Health.Health, Target.Health.MaxHealth, Target.Health.DamageCooldown, Target.Hits,
+            Target.Health.IsDead() ? TEXT(" DOWN") : TEXT(""));
+    if (Pawn.InteractionMs.Num())
+    {
+        TArray<float> Recent(Pawn.InteractionMs.GetData() + FMath::Max(0, Pawn.InteractionMs.Num() - 600),
+            FMath::Min(600, Pawn.InteractionMs.Num()));
+        Recent.Sort();
+        Out += FString::Printf(TEXT("\nInteraction cost p50 %.3f p95 %.3f ms/update (%d updates)"),
+            Recent[Recent.Num() / 2], Recent[FMath::Min(Recent.Num() - 1, FMath::FloorToInt32(Recent.Num() * .95f))],
+            Recent.Num());
+    }
+    return Out + TEXT("\n");
 }
 
 FString UFoundationHud::BuildSnapshot() const
@@ -203,7 +254,14 @@ FString UFoundationHud::BuildSnapshot() const
                 *Simulation.VelocityPerTick.ToCompactString(), Simulation.LastDisplacement.Size2D() / 5.,
                 Simulation.LastDisplacement.Z / 5., Simulation.LastDisplacement.Size() / 100., Simulation.Steps,
                 Simulation.DroppedSeconds, *Simulation.Rejection);
-        if (Sections & ActionSection)
+        if (Sections & MovementSection)
+            Out += TEXT("Vitals: ") + Pawn->Vitals.Describe() + TEXT("\nLast damage: ") + Pawn->Vitals.LastDamage +
+                FString::Printf(
+                    TEXT(" | deaths %d | fall %.2f blocks\n"), Pawn->Vitals.Deaths, Pawn->Vitals.FallDistanceCm / 100.);
+        const FFoundationAuthority* Authority = Pawn->GetAuthority();
+        if ((Sections & ActionSection) && Authority)
+            Out += BuildInteractionText(*Pawn, *Authority);
+        else if (Sections & ActionSection)
         {
             const FFoundationActions& Actions = Controller->Actions;
             const FFoundationTarget Target = Pawn->TraceTarget();

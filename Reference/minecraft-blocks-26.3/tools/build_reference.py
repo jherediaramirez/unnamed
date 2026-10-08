@@ -1,0 +1,488 @@
+"""Build Reference/minecraft-blocks-26.3 from the pinned 26.3 jars and the research outputs.
+
+usage (from the repository root):
+    uv run --no-project --python 3.13 --with pillow python -I Reference/minecraft-blocks-26.3/tools/build_reference.py
+        [--research C:/dev/sandbox/mc-26.3-blocks] [--facts C:/dev/sandbox/mc-26.3-creative/facts]
+
+Inputs: the client and server jars (SHA-1 pinned below), the research work folder (manifest, CSVs, notes,
+textures, Mojang's blocks.json report) and the facts dumped by tools/FactsDump.java (creative tabs, hardness).
+Every copied asset is compared byte for byte with its jar entry. The folder must not exist yet (only tools/),
+so an accepted reference is never overwritten; to rebuild, move the old folder away first.
+
+Generated files (see README.md for the formats):
+    block_manifest.json  the research manifest merged with hardness, tints, names, items and creative positions
+    block_states.json    every state of every imported block: 26.3 state id, properties, shape and six faces
+    textures.json        every texture: size, animation, mipmap strategy, alpha class and its array layers
+    items.json           block items: name, stack size, GUI tint, creative tab positions
+    SHA256SUMS.txt       every file in the folder except itself
+"""
+import argparse
+import csv
+import hashlib
+import io
+import json
+import os
+import shutil
+import sys
+import zipfile
+from pathlib import Path
+
+from PIL import Image
+
+ROOT = Path(__file__).resolve().parents[1]
+CLIENT_SHA1 = "e877b6a07acd633fb3bb475002175cec036e7b87"
+SERVER_SHA1 = "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c"
+CLIENT_JAR = Path(os.environ.get("APPDATA", "")) / "ModrinthApp/meta/versions/26.3/26.3.jar"
+ASSETS = "assets/minecraft/"
+
+# 26.3 BlockColors.createDefault (javap of net.minecraft.client.color.block.BlockColors), limited to imported
+# blocks. A model tintindex without a registered source renders untinted (cherry, pale oak, azalea, poplar leaves).
+GRASS_PLAINS, FOLIAGE_PLAINS, WATER_PLAINS = (0.8, 0.4), (0.8, 0.4), "#3F76E4"
+TINT_SOURCES = {
+    "grass_block": ("grass", None),
+    "oak_leaves": ("foliage", None), "jungle_leaves": ("foliage", None), "acacia_leaves": ("foliage", None),
+    "dark_oak_leaves": ("foliage", None), "mangrove_leaves": ("foliage", None),
+    "spruce_leaves": ("constant", -10380959), "birch_leaves": ("constant", -8345771),
+    "water": ("water", None),
+}
+
+# FaceInfo vertex extents per direction (javap of net.minecraft.client.renderer.FaceInfo). (axis, max?) triples.
+FACE_INFO = {
+    "down": [("x0", "y0", "z1"), ("x0", "y0", "z0"), ("x1", "y0", "z0"), ("x1", "y0", "z1")],
+    "up": [("x0", "y1", "z0"), ("x0", "y1", "z1"), ("x1", "y1", "z1"), ("x1", "y1", "z0")],
+    "north": [("x1", "y1", "z0"), ("x1", "y0", "z0"), ("x0", "y0", "z0"), ("x0", "y1", "z0")],
+    "south": [("x0", "y1", "z1"), ("x0", "y0", "z1"), ("x1", "y0", "z1"), ("x1", "y1", "z1")],
+    "west": [("x0", "y1", "z0"), ("x0", "y0", "z0"), ("x0", "y0", "z1"), ("x0", "y1", "z1")],
+    "east": [("x1", "y1", "z1"), ("x1", "y0", "z1"), ("x1", "y0", "z0"), ("x1", "y1", "z0")],
+}
+NORMALS = {"down": (0, -1, 0), "up": (0, 1, 0), "north": (0, 0, -1), "south": (0, 0, 1), "west": (-1, 0, 0),
+           "east": (1, 0, 0)}
+# Output face order = the project's EFoundationFace (West, East, North, South, Down, Up).
+FACE_ORDER = ["west", "east", "north", "south", "down", "up"]
+
+
+def default_uv(f, t, d):
+    """FaceBakery.defaultFaceUV (javap): [minU, minV, maxU, maxV] in 0..16."""
+    return {"down": [f[0], 16 - t[2], t[0], 16 - f[2]], "up": [f[0], f[2], t[0], t[2]],
+            "north": [16 - t[0], 16 - t[1], 16 - f[0], 16 - f[1]], "south": [f[0], 16 - t[1], t[0], 16 - f[1]],
+            "west": [f[2], 16 - t[1], t[2], 16 - f[1]], "east": [16 - t[2], 16 - t[1], 16 - f[2], 16 - f[1]]}[d]
+
+
+def vertex_uv(uvs, shift, i):
+    """CuboidFace.getU/getV with Quadrant.rotateVertexIndex: index (i + shift) % 4 picks min/max U and V."""
+    k = (i + shift) % 4
+    return (uvs[0] if k in (0, 1) else uvs[2]) / 16, (uvs[1] if k in (0, 3) else uvs[3]) / 16
+
+
+def canonical_uv(d, p):
+    """UV an unrotated full cube's face d shows at block-relative point p (x east, y up, z south; 0..1).
+    Derived from defaultFaceUV + FaceInfo above; the Unreal meshes carry exactly these UVs."""
+    x, y, z = p
+    return {"down": (x, 1 - z), "up": (x, z), "north": (1 - x, 1 - y), "south": (x, 1 - y), "west": (z, 1 - y),
+            "east": (1 - z, 1 - y)}[d]
+
+
+def transform_uv(code, u, v):
+    """The 8 UV transforms a face code may carry: bit 2 mirrors U first, bits 0-1 turn (u, v) -> (v, 1 - u)
+    that many times. FoundationBlockFaces::TransformUV and the block materials implement the same."""
+    if code & 4:
+        u = 1 - u
+    for _ in range(code & 3):
+        u, v = v, 1 - u
+    return u, v
+
+
+def rotate(p, xr, yr):
+    """Blockstate rotation about the block centre: X by -x degrees, then Y by -y degrees (furnace y=90 faces east)."""
+    x, y, z = p[0] - .5, p[1] - .5, p[2] - .5
+    for _ in range((xr // 90) % 4):  # Rx(-90): y' = z, z' = -y
+        y, z = z, -y
+    for _ in range((yr // 90) % 4):  # Ry(-90): x' = -z, z' = x
+        x, z = -z, x
+    return (round(x + .5, 6), round(y + .5, 6), round(z + .5, 6))
+
+
+def direction_of(n):
+    return next(d for d, v in NORMALS.items() if v == tuple(round(c) for c in n))
+
+
+class Models:
+    def __init__(self, jar):
+        self.jar, self.cache = jar, {}
+
+    def raw(self, name):
+        name = name.removeprefix("minecraft:")
+        if name not in self.cache:
+            self.cache[name] = json.loads(self.jar.read(f"{ASSETS}models/{name}.json"))
+        return self.cache[name]
+
+    def resolve(self, name):
+        """(textures, elements, chain) with parent inheritance; texture variables resolved to texture names."""
+        chain, textures, elements = [], {}, None
+        while name:
+            data = self.raw(name)
+            chain.append(name.removeprefix("minecraft:"))
+            for key, value in data.get("textures", {}).items():
+                textures.setdefault(key, value)
+            if elements is None and "elements" in data:
+                elements = data["elements"]
+            name = data.get("parent")
+
+        def texture(ref, depth=0):
+            assert depth < 10, ref
+            if isinstance(ref, dict):  # 26.x: {"sprite": ..., "force_translucent": true}
+                ref = ref["sprite"]
+            if ref.startswith("#"):
+                return texture(textures[ref[1:]], depth + 1)
+            return ref.removeprefix("minecraft:").removeprefix("block/")
+
+        return texture, elements or [], chain
+
+
+def matches(when, props):
+    if "OR" in when:
+        return any(matches(w, props) for w in when["OR"])
+    if "AND" in when:
+        return all(matches(w, props) for w in when["AND"])
+    return all(props[k] in str(v).split("|") for k, v in when.items())
+
+
+def variants_for(blockstate, props):
+    """The applied variants for one state (first entry of weighted lists, as the default seed shows)."""
+    if "variants" in blockstate:
+        for key, value in blockstate["variants"].items():
+            cond = dict(part.split("=") for part in key.split(",")) if key else {}
+            if all(props[k] == v for k, v in cond.items()):
+                return [value[0] if isinstance(value, list) else value], isinstance(value, list) and len(value) > 1
+        raise AssertionError(f"no variant for {props}")
+    applied = []
+    for part in blockstate["multipart"]:
+        if "when" not in part or matches(part["when"], props):
+            a = part["apply"]
+            applied.append(a[0] if isinstance(a, list) else a)
+    return applied, False
+
+
+def bake_state(models, blockstate, props, tinted_block):
+    variants, random = variants_for(blockstate, props)
+    faces = {d: [] for d in FACE_ORDER}
+    boxes = []
+    for variant in variants:
+        texture, elements, _ = models.resolve(variant["model"])
+        xr, yr, uvlock = variant.get("x", 0), variant.get("y", 0), variant.get("uvlock", False)
+        for element in elements:
+            assert "rotation" not in element, "element rotation is not supported for cube imports"
+            f, t = element["from"], element["to"]
+            boxes.append((tuple(f), tuple(t)))
+            ext = {"x0": f[0] / 16, "x1": t[0] / 16, "y0": f[1] / 16, "y1": t[1] / 16, "z0": f[2] / 16, "z1": t[2] / 16}
+            for face_dir, face in element["faces"].items():
+                uvs = face.get("uv", default_uv(f, t, face_dir))
+                shift = (face.get("rotation", 0) // 90) % 4
+                world = direction_of(tuple(a - .5 for a in rotate(tuple(.5 + c for c in NORMALS[face_dir]), xr, yr)))
+                verts = [rotate(tuple(ext[e] for e in FACE_INFO[face_dir][i]), xr, yr) for i in range(4)]
+                actual = [vertex_uv(uvs, shift, i) for i in range(4)]
+                canon = [canonical_uv(world, p) for p in verts]
+                if uvlock:
+                    # Only the mushroom blocks use uvlock: full-face planes whose texture keeps the world
+                    # orientation, i.e. the unrotated face's mapping.
+                    assert uvs in ([0, 0, 16, 16], default_uv(f, t, face_dir)) and shift == 0, (variant, face_dir)
+                    code = 0
+                else:
+                    code = next((c for c in range(8) if all(
+                        abs(a - b) < 1e-6 for uv, cv in zip(actual, canon) for a, b in zip(uv, transform_uv(c, *cv)))),
+                        None)
+                    assert code is not None, f"no UV transform for {variant} {face_dir}: {actual} vs {canon}"
+                tint = face.get("tintindex", -1) if tinted_block else -1
+                faces[world].append({"t": texture(face["texture"]), "x": code, "tint": tint,
+                                     "cull": "cullface" in face})
+    full = ((0, 0, 0), (16, 16, 16))
+    shape = "full" if full in boxes or any(b == ((0, 0, 0), (16, 16, 0)) for b in boxes) else (
+        "slab_bottom" if ((0, 0, 0), (16, 8, 16)) in boxes else "slab_top" if ((0, 8, 0), (16, 16, 16)) in boxes
+        else None)
+    assert shape, f"unknown shape {boxes}"
+    out = []
+    for d in FACE_ORDER:
+        layers = faces[d]
+        assert 1 <= len(layers) <= 2, f"{d}: {len(layers)} layers"
+        entry = dict(layers[0])
+        if len(layers) == 2:
+            assert layers[1]["x"] == layers[0]["x"], "overlay must share the base face's UV transform"
+            entry["overlay"] = {"t": layers[1]["t"], "tint": layers[1]["tint"]}
+        out.append(entry)
+    return shape, out, random
+
+
+def alpha_class(img):
+    alphas = set(img.getchannel("A").get_flattened_data())
+    return "opaque" if alphas == {255} else "cutout" if alphas <= {0, 255} else "translucent"
+
+
+def colormap(path, temperature, downfall):
+    """ColorMapColorUtil.get as GrassColor/FoliageColor call it: x = (1 - t) * 255, y = (1 - d * t) * 255."""
+    img = Image.open(path).convert("RGB")
+    t, d = min(max(temperature, 0), 1), min(max(downfall, 0), 1) * min(max(temperature, 0), 1)
+    return "#%02X%02X%02X" % img.getpixel((int((1 - t) * 255), int((1 - d) * 255)))
+
+
+def argb_hex(value):
+    return "#%06X" % (value & 0xFFFFFF)
+
+
+def sha1(path):
+    return hashlib.sha1(path.read_bytes()).hexdigest()
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--research", default="C:/dev/sandbox/mc-26.3-blocks")
+    parser.add_argument("--facts", default="C:/dev/sandbox/mc-26.3-creative/facts")
+    # Rewrites SHA256SUMS.txt only, after a documentation or tool edit; generated data is never rebuilt in place.
+    parser.add_argument("--sums-only", action="store_true")
+    args = parser.parse_args()
+    if args.sums_only:
+        print(f"SHA256SUMS.txt: {len(write_sums())} files")
+        return
+    research, facts = Path(args.research), Path(args.facts)
+    server_jar = research / "downloads/server.jar"
+    if [p.name for p in ROOT.iterdir()] != ["tools"]:
+        raise SystemExit(f"{ROOT} already holds more than tools/: an accepted reference is never overwritten")
+    for jar, pin in ((CLIENT_JAR, CLIENT_SHA1), (server_jar, SERVER_SHA1)):
+        if sha1(jar) != pin:
+            raise SystemExit(f"SHA-1 mismatch: {jar}")
+    jar = zipfile.ZipFile(CLIENT_JAR)
+    manifest = json.loads((research / "out/block_manifest.json").read_text(encoding="utf-8"))
+    report = json.loads((research / "reports/reports/blocks.json").read_text(encoding="utf-8"))
+    block_facts = {r["id"]: r for r in csv.DictReader(open(facts / "block_facts.csv", encoding="utf-8"))}
+    tabs = json.loads((facts / "creative_tabs.json").read_text(encoding="utf-8"))
+    lang = json.loads(jar.read(ASSETS + "lang/en_us.json"))
+    ids = [b["id"] for b in manifest["blocks"]]
+    imported = ids + ["water"]
+
+    def copy_jar(entry, dest=None):
+        target = ROOT / (dest or entry)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(jar.read(entry))
+        return target
+
+    # Research outputs, verbatim.
+    for name in ("blocks_registry.csv", "block_tags.csv", "blocks_assets.csv", "edge_cases.txt", "water_research.md",
+                 "worldgen_heights.md", "creative_tabs.md", "version_notes.md", "locations.json"):
+        (ROOT / "research").mkdir(exist_ok=True)
+        shutil.copyfile(research / "out" / name, ROOT / "research" / name)
+    shutil.copyfile(research / "out/block_manifest.json", ROOT / "research/block_manifest.research.json")
+    (ROOT / "facts").mkdir()
+    for name in ("block_facts.csv", "creative_tabs.json"):
+        shutil.copyfile(facts / name, ROOT / "facts" / name)
+    (ROOT / "reports").mkdir()
+    subset = {f"minecraft:{i}": report[f"minecraft:{i}"] for i in imported}
+    (ROOT / "reports/blocks-imported.json").write_text(json.dumps(subset, indent=1), encoding="utf-8")
+
+    # Textures: every research copy must equal its jar entry.
+    names = sorted(p.name for p in (research / "textures/block").iterdir())
+    for name in names:
+        entry = f"{ASSETS}textures/block/{name}"
+        if (research / "textures/block" / name).read_bytes() != jar.read(entry):
+            raise SystemExit(f"research texture differs from the jar: {name}")
+        copy_jar(entry)
+    for name in ("grass.png", "foliage.png"):
+        copy_jar(f"{ASSETS}textures/colormap/{name}")
+    # GUI art for the creative inventory, item definitions of imported blocks and the tab icons, and the
+    # block item display transform.
+    gui_prefixes = (f"{ASSETS}textures/gui/container/creative_inventory/",
+                    f"{ASSETS}textures/gui/sprites/container/creative_inventory/",
+                    f"{ASSETS}textures/gui/sprites/container/slot_highlight_",
+                    f"{ASSETS}textures/gui/sprites/container/slot.png")
+    tab_icons = sorted({t["icon"].removeprefix("minecraft:") for t in tabs})
+    for entry in jar.namelist():
+        if entry.startswith(gui_prefixes) and not entry.endswith("/"):
+            copy_jar(entry)
+    for item in imported + tab_icons:
+        if f"{ASSETS}items/{item}.json" in jar.namelist():
+            copy_jar(f"{ASSETS}items/{item}.json")
+    # Flat item sprites for the tab icons that are not blocks (compass frames, sign, redstone, tools...).
+    for entry in jar.namelist():
+        stem = entry.rsplit("/", 1)[-1].split(".")[0]
+        if entry.startswith(f"{ASSETS}textures/item/") and stem and any(
+                stem == icon or stem.startswith(icon + "_") for icon in tab_icons):
+            copy_jar(entry)
+    for name in ("block/block.json", "item/generated.json", "item/handheld.json"):
+        copy_jar(f"{ASSETS}models/{name}")
+
+    # Textures: size, animation, alpha and the array layer plan. water_flow (32x32 frames) gets its own array.
+    textures, layer, flow_layer = [], 0, 0
+    for name in names:
+        if not name.endswith(".png"):
+            continue
+        stem = name[:-4]
+        path = ROOT / f"{ASSETS}textures/block/{name}"
+        img = Image.open(path)
+        img.load()
+        rgba = img.convert("RGBA")
+        meta_path = Path(str(path) + ".mcmeta")
+        meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+        anim = meta.get("animation")
+        fw = anim.get("width", min(img.size)) if anim is not None else img.width
+        fh = anim.get("height", min(img.size)) if anim is not None else img.height
+        count = (img.width // fw) * (img.height // fh)
+        frames = None
+        if anim is not None:
+            order = anim.get("frames", list(range(count)))
+            frames = [{"index": f if isinstance(f, int) else f["index"],
+                       "time": anim.get("frametime", 1) if isinstance(f, int) else f.get("time", anim.get("frametime", 1))}
+                      for f in order]
+        rgba_frames = [rgba.crop((0, i * fh, fw, (i + 1) * fh)) for i in range(count)]
+        water_flow = (fw, fh) == (32, 32)
+        assert water_flow == (stem == "water_flow") and (water_flow or (fw, fh) == (16, 16)), stem
+        entry = {"name": stem, "png_sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "size": list(img.size),
+                 "frame_size": [fw, fh], "frame_count": count, "array": "water_flow" if water_flow else "blocks",
+                 "first_layer": flow_layer if water_flow else layer,
+                 "layer_rgba_sha256": [hashlib.sha256(f.tobytes()).hexdigest() for f in rgba_frames],
+                 "alpha": alpha_class(rgba),
+                 "mipmap_strategy": meta.get("texture", {}).get("mipmap_strategy", "auto")}
+        if anim is not None:
+            entry["animation"] = {"frametime": anim.get("frametime", 1), "interpolate": bool(anim.get("interpolate")),
+                                  "frames": frames}
+        textures.append(entry)
+        if water_flow:
+            flow_layer += count
+        else:
+            layer += count
+    texture_index = {t["name"]: t for t in textures}
+
+    # Tints (plains defaults, 26.3 BlockColors) and the block states with their faces.
+    colormaps = ROOT / f"{ASSETS}textures/colormap"
+    plains = {"grass": colormap(colormaps / "grass.png", *GRASS_PLAINS),
+              "foliage": colormap(colormaps / "foliage.png", *FOLIAGE_PLAINS), "water": WATER_PLAINS}
+
+    def tint_of(block):
+        source = TINT_SOURCES.get(block)
+        if not source:
+            return None
+        kind, value = source
+        return {"source": kind, "color": argb_hex(value) if kind == "constant" else plains[kind],
+                "note": "plains biome default" if kind != "constant" else "fixed in BlockColors"}
+
+    models = Models(jar)
+    states_out, shapes, randoms = [], {}, []
+    for block in manifest["blocks"] + [dict(manifest["fluids"][0])]:
+        bid = block["id"]
+        rep = report[f"minecraft:{bid}"]
+        props = list(rep.get("properties", {}).items())
+        states = sorted(rep["states"], key=lambda s: s["id"])
+        base = states[0]["id"]
+        # Mojang enumerates states as a cartesian product, last property fastest, values in declared order.
+        for index, state in enumerate(states):
+            expect, rest = {}, index
+            for name, values in reversed(props):
+                expect[name] = values[rest % len(values)]
+                rest //= len(values)
+            assert state["id"] == base + index and expect == state.get("properties", {}), (bid, state)
+        entry = {"id": bid, "protocol_id": block["protocol_id"], "min_state_id": base,
+                 "default_state_id": next(s["id"] for s in states if s.get("default")),
+                 "properties": [[n, v] for n, v in props], "states": []}
+        if bid == "water":
+            for state in states:
+                level = int(state["properties"]["level"])
+                amount = 8 if level == 0 or level >= 8 else 8 - level
+                entry["states"].append({"id": state["id"], "properties": state["properties"], "shape": "fluid",
+                                        "fluid": {"source": level == 0, "falling": level >= 8, "amount": amount}})
+            entry["textures"] = block["textures"]
+        else:
+            blockstate = json.loads(jar.read(f"{ASSETS}blockstates/{bid}.json"))
+            for state in states:
+                shape, faces, random = bake_state(models, blockstate, state.get("properties", {}), bid in TINT_SOURCES)
+                entry["states"].append({"id": state["id"], "properties": state.get("properties", {}),
+                                        "shape": shape, "faces": faces})
+                if random and bid not in randoms:
+                    randoms.append(bid)
+                for face in faces:
+                    for name in (face["t"], face.get("overlay", {}).get("t")):
+                        assert name is None or name in texture_index, (bid, name)
+            shapes[bid] = sorted({s["shape"] for s in entry["states"]})
+        states_out.append(entry)
+
+    # Material layer per block: translucent if forced or any face texture has partial alpha, cutout if any base
+    # face has binary holes (overlays are composited inside the opaque material), else opaque.
+    def material_layer(block, entry):
+        if block.get("force_translucent"):
+            return "translucent"
+        classes = {texture_index[f["t"]]["alpha"] for s in entry["states"] for f in s["faces"]}
+        return "translucent" if "translucent" in classes else "cutout" if "cutout" in classes else "opaque"
+
+    by_id = {e["id"]: e for e in states_out}
+    creative = {}
+    for tab in tabs:
+        for index, item in enumerate(tab["display"]):
+            item_id = (item if isinstance(item, str) else item["id"]).removeprefix("minecraft:")
+            creative.setdefault(item_id, []).append({"tab": tab["id"].removeprefix("minecraft:"), "index": index})
+
+    merged_blocks, items = [], []
+    for block in manifest["blocks"]:
+        bid = block["id"]
+        fact = block_facts[bid]
+        merged = dict(block)
+        merged.update({
+            "name": lang[f"block.minecraft.{bid}"],
+            "hardness": float(fact["destroy_time"]), "blast_resistance": float(fact["explosion_resistance"]),
+            "requires_correct_tool_for_drops": fact["requires_correct_tool_for_drops"] == "true",
+            "light_emission": int(fact["light_emission"]),
+            "facts_source": "26.3 server registry at runtime (facts/block_facts.csv, tools/FactsDump.java)",
+            "tint": tint_of(bid), "material_layer": material_layer(block, by_id[bid]),
+            "random_variants": bid in randoms,
+        })
+        merged_blocks.append(merged)
+        if fact["item"]:
+            definition = json.loads(jar.read(f"{ASSETS}items/{bid}.json"))["model"]
+            tint = None
+            for source in definition.get("tints", []):
+                kind = source["type"].removeprefix("minecraft:")
+                tint = argb_hex(source["value"]) if kind == "constant" else colormap(
+                    colormaps / f"{kind}.png", source["temperature"], source["downfall"])
+            items.append({"id": fact["item"].removeprefix("minecraft:"), "block": bid,
+                          "name": fact["item_name"], "max_stack": int(fact["item_max_stack"]),
+                          "model": definition.get("model", "").removeprefix("minecraft:"), "gui_tint": tint,
+                          "creative": creative.get(bid, [])})
+    fluids = []
+    for fluid in manifest["fluids"]:
+        merged = dict(fluid)
+        fact = block_facts[fluid["id"]]
+        merged.update({"name": lang[f"block.minecraft.{fluid['id']}"], "hardness": float(fact["destroy_time"]),
+                       "blast_resistance": float(fact["explosion_resistance"]), "tint": tint_of(fluid["id"]),
+                       "material_layer": "translucent", "facts_source": merged_blocks[0]["facts_source"]})
+        fluids.append(merged)
+
+    def write(name, data):
+        (ROOT / name).write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    common = {"minecraft_version": "26.3", "client_sha1": CLIENT_SHA1, "server_sha1": SERVER_SHA1}
+    write("block_manifest.json", {**common, "source": manifest["source"], "id_policy": manifest["id_policy"],
+                                  "block_count_in_registry": manifest["block_count_in_registry"],
+                                  "blocks": merged_blocks, "fluids": fluids})
+    write("block_states.json", {**common, "face_order": FACE_ORDER,
+                                "uv_transform": "bit 2 mirrors U (u = 1 - u), then bits 0-1 turn (u, v) -> (v, 1 - u)",
+                                "blocks": states_out})
+    write("textures.json", {**common, "arrays": {"blocks": {"frame_size": [16, 16], "layers": layer},
+                                                 "water_flow": {"frame_size": [32, 32], "layers": flow_layer}},
+                            "plains": plains, "textures": textures})
+    write("items.json", {**common, "creative_tabs": [{k: v for k, v in t.items() if k not in ("display", "search")}
+                                                     for t in tabs], "items": items})
+
+    for source in ("build_manifest.py", "classify_blocks.py", "build_blocks.py", "build_worldgen.py", "doc_template.md"):
+        shutil.copyfile(research / "scripts" / source, ROOT / "tools" / source)
+    shutil.copyfile(facts.parent / "tools/FactsDump.java", ROOT / "tools/FactsDump.java")
+
+    files = write_sums()
+    print(f"blocks {len(merged_blocks)} + water; states {sum(len(e['states']) for e in states_out)}; "
+          f"textures {len(textures)} -> {layer} block layers + {flow_layer} water flow layers; items {len(items)}; "
+          f"random-variant blocks {len(randoms)}; files {len(files) + 1}")
+
+
+def write_sums():
+    files = sorted(p for p in ROOT.rglob("*") if p.is_file() and p.name != "SHA256SUMS.txt" and "__pycache__" not in p.parts)
+    (ROOT / "SHA256SUMS.txt").write_text("".join(
+        f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(ROOT).as_posix()}\n" for p in files), encoding="utf-8")
+    return files
+
+
+if __name__ == "__main__":
+    sys.exit(main())

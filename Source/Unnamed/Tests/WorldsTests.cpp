@@ -3,24 +3,27 @@
 #include "UnnamedProjectSettings.h"
 #include "Menu/MenuGameMode.h"
 #include "Menu/MenuPlayerController.h"
-#include "SuperFlat/SuperFlatGameMode.h"
-#include "SuperFlat/SuperFlatPreviewController.h"
-#include "GameFramework/SpectatorPawn.h"
+#include "Foundation/FoundationController.h"
+#include "Foundation/FoundationGameMode.h"
+#include "Foundation/FoundationPawn.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
+#include "Materials/MaterialInterface.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/PackageName.h"
 #include "Serialization/JsonSerializer.h"
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSuperFlatRoutingTest, "Unnamed.Worlds.SuperFlat.RoutingAndIsolation",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWorldRoutingTest, "Unnamed.Worlds.RoutingAndIsolation",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FSuperFlatRoutingTest::RunTest(const FString& Parameters)
+bool FWorldRoutingTest::RunTest(const FString& Parameters)
 {
     UMenuApplication* Service = NewObject<UMenuApplication>();
     Service->Initialize(nullptr, nullptr);
-    for (const FString Id : {TEXT("fictional-forest"), TEXT("fictional-build"), TEXT("/Game/Maps/L_SuperFlat"),
-             TEXT("super-flat?listen"), TEXT("open /Game/Menu/L_Menu"), TEXT(""), TEXT("super-flat")})
+    // Design references, retired worlds, paths, commands and the real ID without a menu controller.
+    for (const FString Id : {TEXT("fictional-forest"), TEXT("fictional-build"), TEXT("super-flat"), TEXT("foundation"),
+             TEXT("interaction-lab"), TEXT("/Game/Maps/L_Playground"), TEXT("playground?listen"),
+             TEXT("open /Game/Menu/L_Menu"), TEXT(""), TEXT("playground")})
     {
         TSharedPtr<FJsonObject> Reply;
         FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Service->RequestOpenWorld(Id)), Reply);
@@ -31,14 +34,13 @@ bool FSuperFlatRoutingTest::RunTest(const FString& Parameters)
         TestFalse(TEXT("Rejected request never issues travel"), Reply->GetBoolField(TEXT("travelIssued")));
         Service->Tick();
     }
-    TestTrue(TEXT("Super Flat asset exists"),
-        FPackageName::DoesPackageExist(UUnnamedProjectSettings::GetWorldMapPackage(TEXT("super-flat"))));
+    TestTrue(TEXT("Playground asset exists"),
+        FPackageName::DoesPackageExist(UUnnamedProjectSettings::GetWorldMapPackage(TEXT("playground"))));
     TestTrue(TEXT("Menu asset retained"), FPackageName::DoesPackageExist(UUnnamedProjectSettings::GetMenuMapPackage()));
-    const ASuperFlatGameMode* WorldMode = GetDefault<ASuperFlatGameMode>();
-    TestTrue(TEXT("Temporary stock camera; no new FPS character"),
-        WorldMode->DefaultPawnClass == ASpectatorPawn::StaticClass());
-    TestTrue(TEXT("World uses its own controller, not the menu browser"),
-        WorldMode->PlayerControllerClass == ASuperFlatPreviewController::StaticClass());
+    const AFoundationGameMode* WorldMode = GetDefault<AFoundationGameMode>();
+    TestTrue(TEXT("World plays the first-person pawn"), WorldMode->DefaultPawnClass == AFoundationPawn::StaticClass());
+    TestTrue(TEXT("World uses its own controller, not the menu's"),
+        WorldMode->PlayerControllerClass == AFoundationController::StaticClass());
     TestTrue(TEXT("Existing menu keeps its controller"),
         GetDefault<AMenuGameMode>()->PlayerControllerClass == AMenuPlayerController::StaticClass());
     return true;
@@ -50,12 +52,16 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWorldCatalogTest, "Unnamed.Worlds.Catalog",
 bool FWorldCatalogTest::RunTest(const FString& Parameters)
 {
     const UUnnamedProjectSettings& Project = UUnnamedProjectSettings::Get();
-    TestNotNull(TEXT("Exact catalog ID resolves"), Project.FindWorld(TEXT("super-flat")));
-    TestNull(TEXT("IDs are case-sensitive"), Project.FindWorld(TEXT("Super-Flat")));
-    TestNull(TEXT("Paths are never IDs"), Project.FindWorld(TEXT("/Game/Maps/L_SuperFlat")));
+    TestEqual(TEXT("One world for every feature"), Project.Worlds.Num(), 1);
+    TestNotNull(TEXT("Exact catalog ID resolves"), Project.FindWorld(TEXT("playground")));
+    TestNull(TEXT("IDs are case-sensitive"), Project.FindWorld(TEXT("Playground")));
+    TestNull(TEXT("Paths are never IDs"), Project.FindWorld(TEXT("/Game/Maps/L_Playground")));
+    for (const TCHAR* Retired : {TEXT("foundation"), TEXT("super-flat"), TEXT("interaction-lab")})
+        TestNull(TEXT("Retired world stays retired: ") + FString(Retired), Project.FindWorld(Retired));
     for (const FUnnamedWorldEntry& World : Project.Worlds)
         TestTrue(TEXT("Catalog map exists: ") + World.Id.ToString(),
             FPackageName::DoesPackageExist(World.Map.GetLongPackageName()));
+    TestNotNull(TEXT("Dev grid material loads"), Project.DevGridMaterial.LoadSynchronous());
     TestTrue(TEXT("Every input asset loads"),
         Project.OnFootContext.LoadSynchronous() && Project.FoundationActionsContext.LoadSynchronous() &&
             Project.MoveAction.LoadSynchronous() && Project.LookAction.LoadSynchronous() &&

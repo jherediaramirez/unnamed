@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "asset_files": 226,
+  "pngs_decoded": 194,
+  "core_hud_pngs": 84,
+  "types": {
+    "json": 12,
+    "png": 194,
+    "mcmeta": 17,
+    "zip": 3
+  },
+  "asset_bytes": 2041863,
+  "source_files_compared": 226,
+  "source_client_available": true,
+  "annotated_pngs": 194,
+  "fixed_texture_references": 130,
+  "broken_local_links": [],
+  "errors": [],
+  "acceptance": "Asset/reference validation only. Native Minecraft captures and Unreal implementation acceptance are not claimed."
+}

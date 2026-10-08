@@ -3,6 +3,7 @@
 #include "Foundation/FoundationInputRouter.h"
 #include "Foundation/FoundationMenuBridge.h"
 #include "Foundation/FoundationPanels.h"
+#include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationPawn.h"
 #include "Input/UnnamedInputSubsystem.h"
 #include "Menu/MenuBrowserHost.h"
@@ -11,7 +12,9 @@
 #include "UnnamedProjectSettings.h"
 #include "Dom/JsonValue.h"
 #include "EnhancedInputComponent.h"
+#include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
+#include "Engine/GameViewportClient.h"
 #include "Engine/LocalPlayer.h"
 #include "Framework/Application/SlateApplication.h"
 #include "GameFramework/PlayerInput.h"
@@ -75,11 +78,24 @@ void AFoundationController::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
     // One fixed order per frame: timing, pawn-driven updates, then the throttled HUD refresh.
     Hud->BeginFrame();
-    if (const AFoundationPawn* FoundationPawn = GetFoundationPawn())
+    if (AFoundationPawn* FoundationPawn = GetFoundationPawn())
     {
+        // The Playground's pawn updates the held item itself (its equipment seam), and its interaction
+        // is the one held-action owner; the token fixture and its repeat serve only the Foundation lab.
+        const bool bInteraction = FoundationPawn->HasInteraction();
+        if (!bInteraction)
+        {
+            // Tokens are one item type; switching between token and empty hands restarts attack recovery.
+            static const FName Token(TEXT("token"));
+            FoundationPawn->Vitals.UpdateMainHand(Actions.Slots[Actions.Slot] > 0 ? Token : NAME_None);
+        }
         Hud->NoteMotion(*FoundationPawn);
+        Hud->NoteVitals(FoundationPawn->Vitals);
         InputRouter->ReleaseWheelPulses(FoundationPawn->Simulation.Steps);
-        UpdateHeldActions(*FoundationPawn);
+        if (bInteraction)
+            NoteInteraction(*FoundationPawn);
+        else
+            UpdateHeldActions(*FoundationPawn);
         Hud->DrawDebug(*FoundationPawn);
     }
     Hud->Refresh();
@@ -163,13 +179,11 @@ void AFoundationController::HandleAction(FName Id, bool bDown)
         HeldActions.Add(Id);
     else
         HeldActions.Remove(Id);
-    if (bDown)
-    {
-        Hud->LogEvent(LastLogical);
-        if (HandleInterfaceAction(Name)) return;
-    }
-
+    if (bDown) Hud->LogEvent(LastLogical);
     AFoundationPawn* FoundationPawn = GetFoundationPawn();
+    if (FoundationPawn && FoundationPawn->HasInteraction() && HandleInteractionAction(*FoundationPawn, Name, bDown))
+        return;
+    if (bDown && HandleInterfaceAction(Name)) return;
     if (!FoundationPawn) return;
     FFoundationActionRequest Request;
     Request.Target = FoundationPawn->TraceTarget();
@@ -192,7 +206,69 @@ void AFoundationController::HandleAction(FName Id, bool bDown)
     else
         return;
     // Only attack and use have a release phase.
-    if (bDown || bAttack || bUse) Hud->LogEvent(Actions.Dispatch(Request).Reason);
+    if (!bDown && !bAttack && !bUse) return;
+    const bool bWasBreaking = Actions.bBreaking, bWasUsing = Actions.bUsing;
+    Hud->LogEvent(Actions.Dispatch(Request).Reason);
+    // Attack recovery restarts on a swing (an entity in reach, or nothing in reach) and on an abandoned break.
+    const bool bSwing =
+        bDown && !bWasUsing && (!Request.Target.bInRange || Request.Target.Kind == EFoundationTargetKind::Entity);
+    if (bAttack && (bSwing || (!bDown && bWasBreaking))) FoundationPawn->Vitals.ResetAttackStrength();
+}
+
+bool AFoundationController::HandleInteractionAction(AFoundationPawn& FoundationPawn, const FString& Name, bool bDown)
+{
+    if (Name == TEXT("key.attack") || Name == TEXT("key.use"))
+    {
+        // Logical held state (Hold/Toggle resolved above); the interaction times everything else.
+        const EFoundationInput Input = Name == TEXT("key.attack") ? EFoundationInput::Attack : EFoundationInput::Use;
+        if (bDown)
+            FoundationPawn.PressInteraction(Input);
+        else
+            FoundationPawn.ReleaseInteraction(Input);
+        return true;
+    }
+    const bool bHotbar = Name.StartsWith(TEXT("key.hotbar."));
+    const bool bWorldAction =
+        Name == TEXT("key.pickItem") || Name == TEXT("key.drop") || Name == TEXT("key.swapOffhand");
+    if (!bHotbar && !bWorldAction) return false;
+    if (!bDown) return true;
+    if (bHotbar)
+        FoundationPawn.SelectInteractionSlot(FCString::Atoi(*Name.Right(1)) - 1);
+    else if (Name == TEXT("key.pickItem"))
+        FoundationPawn.PickInteractionBlock();
+    else if (Name == TEXT("key.drop"))
+        FoundationPawn.DropInteractionItem(
+            InputRouter->IsKeyDown(EKeys::LeftControl) || InputRouter->IsKeyDown(EKeys::RightControl));
+    else
+        FoundationPawn.SwapInteractionHands();
+    Hud->LogEvent(FoundationPawn.Interaction.LastText);
+    return true;
+}
+
+void AFoundationController::NoteInteraction(const AFoundationPawn& FoundationPawn)
+{
+    const FFoundationAuthority* Authority = FoundationPawn.GetAuthority();
+    if (!Authority) return;
+    static const TCHAR* Kinds[] = {TEXT("placed"), TEXT("broke"), TEXT("hit"), TEXT("whiff"), TEXT("rejected"),
+        TEXT("interacted"), TEXT("tool broke"), TEXT("target down"), TEXT("lab reset")};
+    for (const FFoundationEvent& Event : Authority->GetEvents())
+    {
+        if (Event.Serial <= LastInteractionEvent) continue;
+        LastInteractionEvent = Event.Serial;
+        FString Text =
+            FString::Printf(TEXT("%s %s"), Kinds[int32(Event.Kind)], *FoundationGrid::DescribeCell(Event.Cell));
+        if (Event.Kind == EFoundationEventKind::Hit)
+            Text = FString::Printf(TEXT("hit target #%d for %.2f%s"), Event.EntityId, Event.Amount,
+                Event.bCritical ? TEXT(" CRITICAL") : TEXT(""));
+        else if (Event.Kind == EFoundationEventKind::Rejected)
+            Text += FString(TEXT(": ")) + LexToString(Event.Reason);
+        else if (Event.Kind == EFoundationEventKind::Interacted)
+            Text += TEXT(" ") + Event.Interaction.ToString();
+        // Held repeats can refuse the same thing every step; log a repeat once.
+        if (Text == LastInteractionText) continue;
+        LastInteractionText = Text;
+        Hud->LogEvent(Text);
+    }
 }
 
 void AFoundationController::UpdateHeldActions(const AFoundationPawn& FoundationPawn)
@@ -234,13 +310,18 @@ void AFoundationController::UpdateHeldActions(const AFoundationPawn& FoundationP
 
 void AFoundationController::ScrollHotbar(int32 Notches)
 {
-    Actions.Scroll(Notches);
+    if (AFoundationPawn* FoundationPawn = GetFoundationPawn(); FoundationPawn && FoundationPawn->HasInteraction())
+        FoundationPawn->ScrollInteraction(Notches);
+    else
+        Actions.Scroll(Notches);
     Hud->LogEvent(TEXT("wheel selected slot"));
 }
 
 void AFoundationController::CancelActions()
 {
     Actions.Cancel();
+    if (AFoundationPawn* FoundationPawn = GetFoundationPawn())
+        FoundationPawn->CancelInteraction(EFoundationReason::Canceled);
     HeldActions.Reset();
     InputRouter->BlockHeldKeys();
     LastActionStep = 0;
@@ -256,7 +337,10 @@ void AFoundationController::HandleFocusChanged(bool bActive)
     }
     CancelActions();
     if (UUnnamedInputSubsystem* InputSubsystem = GetInputSubsystem()) InputSubsystem->ClearIntent();
-    if (IsGameplay()) PauseFoundation();
+    // Closing the game window deactivates the application as well; by then the game viewport is gone and there
+    // is no menu to open (opening one asserted on the missing viewport widget).
+    const bool bViewport = GEngine && GEngine->GameViewport && GEngine->GameViewport->GetGameViewportWidget().IsValid();
+    if (IsGameplay() && bViewport && !IsEngineExitRequested()) PauseFoundation();
     Hud->LogEvent(TEXT("window focus lost"));
 }
 

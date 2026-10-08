@@ -7,6 +7,7 @@
 
 class UInputAction;
 class UInputMappingContext;
+class UMaterialInterface;
 
 // A world the menu may open. The browser only ever sends Id; the map path stays native.
 USTRUCT()
@@ -14,7 +15,7 @@ struct FUnnamedWorldEntry
 {
     GENERATED_BODY()
 
-    // Stable catalog ID, e.g. "super-flat". Never a path or command.
+    // Stable catalog ID, e.g. "playground". Never a path or command.
     UPROPERTY(Config, EditAnywhere, Category = "World")
     FName Id;
 
@@ -57,12 +58,35 @@ public:
     UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
     static FString GetInputAssetPath(FName AssetName);
 
+    UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
+    static FString GetHudRegistryPath();
+    UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
+    static FString GetHudTexturePackage(const FString& RelativeTexture);
+
+    UPROPERTY(Config, EditAnywhere, Category = "Hud")
+    FString HudRoot = TEXT("/Game/Hud");
+
+    // Package of a generated block asset under BlockRoot, e.g. "DA_Blocks" (the registry), "T_BlockTextures",
+    // "M_BlockOpaque". Written by Scripts/Editor/ImportBlocks.py and CreateBlockMaterials.py.
+    UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
+    static FString GetBlockAssetPackage(const FString& AssetName);
+    // Object path of the same asset ("/Game/Blocks/DA_Blocks.DA_Blocks").
+    static FSoftObjectPath GetBlockAssetPath(const FString& AssetName);
+
+    UPROPERTY(Config, EditAnywhere, Category = "Blocks")
+    FString BlockRoot = TEXT("/Game/Blocks");
+
     UPROPERTY(Config, EditAnywhere, Category = "Maps", meta = (AllowedClasses = "/Script/Engine.World"))
     FSoftObjectPath MenuMap;
 
     // Playable Singleplayer entries, in list order. The first is selected by default.
     UPROPERTY(Config, EditAnywhere, Category = "Maps")
     TArray<FUnnamedWorldEntry> Worlds;
+
+    // The prototype surface of every lab solid and block: a world-aligned 1 m grid tinted by its "Color"
+    // parameter. Created by Scripts/Editor/CreateDevGridMaterial.py.
+    UPROPERTY(Config, EditAnywhere, Category = "Maps")
+    TSoftObjectPtr<UMaterialInterface> DevGridMaterial;
 
     UPROPERTY(Config, EditAnywhere, Category = "Input")
     TSoftObjectPtr<UInputMappingContext> OnFootContext;

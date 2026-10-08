@@ -33,6 +33,10 @@ private:
     };
 
     TArray<FCase> Cases;
+    // Optional per-frame work of the running case (set by its Start, cleared by the next case).
+    TFunction<void()> FrameHook;
+    // Extra measurements merged into the report (interaction timing, costs, captures).
+    TSharedPtr<class FJsonObject> Extra;
     TArray<TSharedPtr<FJsonValue>> Results;
     TArray<TSharedPtr<FJsonValue>> PhaseRates;
     TArray<FKey> DownKeys;
@@ -41,12 +45,32 @@ private:
     FString Output;
     int32 Phase = -1, Failures = 0, RequestedFPS = 60, Frames = 0, PhaseStartFrame = 0;
     double Started = 0, TotalStarted = 0, PhaseStarted = 0, Apex = 0, LastZ = 0;
+    double LastSampleTime = 0, GameMsSum = 0, RenderMsSum = 0, GpuMsSum = 0;
+    int32 CpuSamples = 0, GpuSamples = 0;
+    TArray<double> FrameSamples;
+    // Engine game-thread time per frame of the running phase (ms), for percentiles.
+    TArray<double> GameSamples;
+    // Interaction suite: run the ordinary scenarios with this preset (-InteractionPreset=) instead of the reference.
+    FString ScenarioPreset;
     int64 LaunchTick = -1, LandTick = -1;
     bool bDone = false;
     void PressKey(FKey Key, bool bDown);
-    void ResetPlayer(FVector Position = FVector(0, 0, 0));
+    // Stands the player at a world position (cm); fresh vitals unless a case continues the current ones.
+    void ResetPlayer(FVector Position = FVector(0, 0, 0), bool bFreshVitals = true);
+    // The same at a position local to the movement course; the default start is the course origin.
+    void ResetCoursePlayer(FVector Local = FVector(0, 0, 0), bool bFreshVitals = true);
+    // Where the movement course's local (0, 0, 0) sits in the world (the lab's course origin).
+    FVector GetCourseOrigin() const;
     void Record(FString Name, bool bPassed, FString Detail);
     void Measure(FString Name, double Actual, double Expected, double Tolerance);
     void AddCase(FString Name, double Duration, TFunction<void()> Start, TFunction<void()> End);
     void Finish();
+    // -FoundationSuite=movement: the input pipeline and movement physics, played on the course.
+    void AddMovementCases();
+    // -HudCaptures: HUD captures and the player-vitals fixtures (HudRuntimeProbe.cpp).
+    void AddHudCases();
+    // -FoundationSuite=interaction: the Playground's interaction stations (FoundationInteractionProbe.cpp).
+    void AddInteractionCases();
+    // -FoundationSuite=tour: named screenshots of the Playground with the HUD visible (FoundationTourProbe.cpp).
+    void AddTourCases();
 };

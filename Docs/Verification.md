@@ -1,5 +1,39 @@
 # Verification
 
+## Blocks - October 8, 2026
+
+Native `Automation RunTests Unnamed` 46/46; runtime probe (`-FrameRates 60 -HudCaptures`) 139 checks, 0 failures; screenshot tour 24 shots, 0 failures, including the block gallery and creative inventory. Evidence: `Tests/Evidence/2026-10-08/Blocks-20261008/` (`Native-6`, `Runtime-all-3`, `Tour-5`). Details and gaps: [blocks record](Records/2026-10-08-Blocks.md).
+
+## Playground - October 8, 2026
+
+Pending: see `Tests/Evidence/2026-10-08/Playground-*`. No Playground result is recorded here yet. Layout, creation and test commands are in [Playground](Playground.md); the record is [Records/2026-10-08-Playground.md](Records/2026-10-08-Playground.md).
+
+```powershell
+& Scripts\TestFoundationRuntime.ps1 -Editor -FrameRates 60                     # Playground: movement and interaction suites
+& Scripts\TestFoundationRuntime.ps1 -Editor -Suite interaction -FrameRates 60  # add -Preset LucidFluid for the other preset
+Set-Location Tests; node foundation-menu.mjs --editor                          # CEF + native end to end
+```
+
+Native suites `Unnamed.Worlds.*` and `Unnamed.Foundation.*` run with the commands in [CLAUDE.md](../CLAUDE.md).
+
+## Dummy Block interaction - October 8, 2026
+
+The [interaction record](Records/2026-10-08-Interaction.md) has the rules, presets, decisions, defects, evidence paths and remaining gaps; evidence is under `Tests/Evidence/2026-10-08/Interaction-20261008/`. The editor build has no warnings. Native automation is 37/37 (nine new `Unnamed.Foundation.Interaction.*` suites) and JavaScript units 53/53, and 938 reference assets are unchanged. The fresh candidate `Packages/InteractionDevelopment20261008-r3/Windows/Unnamed.exe` cooks 738 packages with no errors or warnings; `Content/` is hash-identical before and after packaging. Packaged, the Interaction Lab passes 61/61 at 30/60/120/144 FPS caps and at a 15 FPS stress cap, the full LucidFluid run 61/61 at all four caps, the Foundation regression with HUD captures 74/74 at 30/60/120 and CEF capture/persistence/travel 33/33. Interaction logic costs at most 0.028 ms at p95 per engine update (budget 0.5 ms); 4,096 cubes build in about 4.3 ms and 1,000 place/break cycles run in about 2 ms; whole-frame p99 in the Foundation course is 18.17 ms against 18.13 ms for `VitalsDevelopment20261007-r2`.
+
+OS-level mouse and keyboard play (synthesized with Win32 `SendInput`, not physical devices or a human player) placed, jump-stacked, mined, fought and switched presets in the packaged lab, and showed LucidFluid placing under a falling player where VanillaReference's held repeat misses. It also found that closing the game window during play crashed, in this and the previous candidate; that is fixed and verified in both labs. Block edits are session-only and nothing is networked.
+
+## Player vitals (HUD milestone 2) - October 7, 2026
+
+The [vitals record](Records/2026-10-07-Vitals.md) contains the rules, sources, evidence paths and remaining gaps; evidence is under `Tests/Evidence/2026-10-07/Vitals-20261007-204932/`. The editor build has no warnings. Native automation is 28/28 (six new `Unnamed.Foundation.Vitals.*` suites and `Unnamed.Hud.VitalsAdapter`), HUD suites 7/7 and JavaScript units 53/53, and 938 reference assets are unchanged. In the editor the Foundation regression, milestone-1 HUD captures and 12 vitals cases pass 74/74 at 30, 60 and 120 FPS caps, and CEF capture/persistence/travel passes 30/30. The fresh candidate `Packages/VitalsDevelopment20261007-r2/Windows/Unnamed.exe` cooks 737 packages with no errors or warnings and passes 74/74 at 1920×1080 and at 1280×720 with 30/60/120 FPS caps, plus CEF 30/30; all exits are normal. `Content/` is hash-identical before and after packaging.
+
+Health, food, air, falls, XP, attack recovery, mode and difficulty are real session-only player state; the token hotbar is still labelled **PREVIEW ITEMS**. Effects, Hardcore, Peaceful, equipment, items, the death screen, persistence and multiplayer are not implemented.
+
+## HUD milestone 1 - October 7, 2026
+
+Current candidate: `Packages/HudDevelopment20261007-r2/Windows/Unnamed.exe`. The [HUD record](Records/2026-10-07-Hud.md) contains all evidence paths, hashes, real-versus-preview ownership and remaining gaps. Import reruns leave all 194 textures plus registry unchanged; original-reference verification passes. Native automation is 21/21, final HUD suites 6/6, input suites 3/3 and JavaScript units 53/53. Editor regression passes at 30/60/120 FPS caps; CEF capture/persistence/travel passes 30/30 in both editor and package. Packaged HUD checks pass 62/62 at 720p, 1080p, 1440p, 4K and ultrawide, with actual PNG dimensions and exact source-pixel blocks verified.
+
+Resources, XP, attack and mode are labelled preview fixtures; no gameplay backend or vanilla visual equivalence is claimed. Normal runs exit cleanly. Opt-in tracing yields usable Insights data but returns 777003 during shutdown and is not accepted as a clean-exit pass. Historical checkpoints below remain unchanged.
+
 ## Code-review cleanup - October 7, 2026
 
 Current candidate: `Packages/CodeReviewDevelopment20261007/Windows/Unnamed.exe`, packaged from branch `refactor/code-review-cleanup` with the three maps from `MapsToCook` (542 cooked packages, 0 errors). Every cleanup step was verified before its commit; the final state passed:
@@ -17,7 +51,7 @@ Current candidate: `Packages/CodeReviewDevelopment20261007/Windows/Unnamed.exe`,
 The menu generator split kept `index.html` byte-identical; later changes to the page were covered by the Node and CEF suites. The fullscreen-key fix is covered by a native request test; the actual window-mode change still needs a visible standalone window. Physical OS input, Shipping and other platforms remain untested, as before. See [the record](Records/2026-10-07-Code-Review-Cleanup.md).
 ## Super Flat - October 7, 2026
 
-`Packages/SuperFlatDevelopment/Windows/Unnamed.exe` passed editor/package builds, authored-level validation, the native routing/isolation suite, 44 browser unit tests and 32 packaged integration checks. Play, double-click and Enter each loaded the actual level, passed nine ground traces and a spawn-clearance check, and returned to a working menu with retained settings. Native rendering was captured and visually inspected. Physical input and embedded PIE were not verified in this pass. This fixed package does not certify the concurrent FPS task's continuing changes. See [Super Flat](SuperFlat.md) and [the dated record](Records/2026-10-07-Super-Flat.md).
+`Packages/SuperFlatDevelopment/Windows/Unnamed.exe` passed editor/package builds, authored-level validation, the native routing/isolation suite, 44 browser unit tests and 32 packaged integration checks. Play, double-click and Enter each loaded the actual level, passed nine ground traces and a spawn-clearance check, and returned to a working menu with retained settings. Native rendering was captured and visually inspected. Physical input and embedded PIE were not verified in this pass. This fixed package does not certify the concurrent FPS task's continuing changes. See [the dated record](Records/2026-10-07-Super-Flat.md). The world is retired; see [Playground](Playground.md).
 
 ## Schema import fix - October 7, 2026
 

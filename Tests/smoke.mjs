@@ -114,7 +114,7 @@ try{
             continue;
           }
           if(functionalWorld&&route==='worlds'&&control.label==='Play Selected World'){
-            check('Super Flat is a real map action (verified separately)',await page.evaluate(()=>MenuApplication.worldEnabled('super-flat')));
+            check('Playground is a real map action (verified separately)',await page.evaluate(()=>MenuApplication.worldEnabled('playground')));
             continue;
           }
           await buttons.nth(i).evaluate(n=>n.click());
@@ -205,7 +205,7 @@ try{
   check('Reload preserves native Hold/Toggle input policies',Object.keys(inputBeforeReload).every(id=>reset.settings[id]===inputBeforeReload[id]));
   check('Reload preserves locale and pack preferences',reset.language===preferencesBeforeReload.language&&JSON.stringify(reset.packs)===JSON.stringify(preferencesBeforeReload.packs));
   check('Reload retains warning and telemetry choices',reset.settings.skipWarning===preferencesBeforeReload.skipWarning&&reset.settings.telemetryOptInExtra===preferencesBeforeReload.telemetryOptInExtra);
-  check('Reload restores the built-in world catalog and transient reference entries',reset.worlds.length===(functionalWorld?3:2)&&(!functionalWorld||reset.worlds[0].id==='super-flat'&&reset.worlds[0].name==='Super Flat')&&reset.servers.length===1);
+  check('Reload restores the built-in world catalog and transient reference entries',reset.worlds.length===(functionalWorld?3:2)&&(!functionalWorld||reset.worlds[0].id==='playground'&&reset.worlds[0].name==='Playground')&&reset.servers.length===1);
   result.final=reset;result.finished=new Date().toISOString();
 }catch(e){check('Harness completed',false,String(e));result.failure=String(e);}
 finally{

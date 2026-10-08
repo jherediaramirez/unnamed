@@ -1,0 +1,119 @@
+#pragma once
+
+#include "CoreMinimal.h"
+
+// The player's game type (Java's GameType). Unrelated to Unreal's AGameMode class.
+enum class EFoundationPlayerMode : uint8
+{
+    Survival,
+    Creative,
+    Adventure,
+    Spectator
+};
+
+// Peaceful is deferred: its extra regeneration belongs to the server player, outside the pinned sources.
+enum class EFoundationDifficulty : uint8
+{
+    Easy,
+    Normal,
+    Hard
+};
+
+// Damage types the lab can cause. Each carries its 26.3 data: armor bypass, invulnerability
+// bypass, difficulty scaling and food exhaustion.
+enum class EFoundationDamage : uint8
+{
+    Generic,
+    MobAttack,
+    Fall,
+    Drown,
+    Starve,
+    Kill,
+    // A player's melee hit: armor applies, no difficulty scaling (26.3 player_attack).
+    PlayerAttack
+};
+
+// One reference tick of facts from movement and the lab world. Distances are centimeters.
+struct FFoundationVitalsStep
+{
+    FVector DisplacementCm = FVector::ZeroVector;
+    bool bGrounded = false, bSprinting = false;
+    bool bJumped = false, bSprintJumped = false;
+    bool bBodyInWater = false, bEyesInWater = false;
+};
+
+// Session-only survival state on the 20 Hz reference tick: health, absorption, armor, food,
+// air, experience and attack recovery. Pure rules from the pinned Java 26.3 sources: the pawn
+// feeds it movement and world facts, the HUD reads it. Floats mirror Java's arithmetic.
+struct UNNAMED_API FFoundationVitals
+{
+    static constexpr int32 RespawnTicks = 20;
+
+    // Lab configuration, kept across respawn. Armor, toughness and attack speed stand in for equipment.
+    EFoundationPlayerMode Mode = EFoundationPlayerMode::Survival;
+    EFoundationDifficulty Difficulty = EFoundationDifficulty::Normal;
+    bool bNaturalRegeneration = true;
+    float MaxHealth = 20, ArmorToughness = 0, AttackSpeed = 4;
+    int32 Armor = 0;
+
+    // Player state, restored by Respawn().
+    float Health = 20, Absorption = 0, Saturation = 5, Exhaustion = 0, Progress = 0, LastHurt = 0;
+    int32 Food = 20, FoodTimer = 0, Air = 300, MaxAir = 300, Level = 0, TotalExperience = 0;
+    int32 AttackTicker = 0, DamageCooldown = 0, DeathTicks = -1;
+    double FallDistanceCm = 0;
+    bool bEyesInWater = false;
+    FName MainHandItem;
+
+    // Session diagnostics, kept across respawn.
+    int32 DamageEvents = 0, Deaths = 0;
+    FString LastDamage = TEXT("none"), DeathMessage;
+
+    // One reference tick: timers, movement exhaustion and falls, air, then food.
+    void Step(const FFoundationVitalsStep& Facts);
+    // The whole hurt path: invulnerability, difficulty, damage cooldown, armor, absorption, exhaustion, death.
+    bool Hurt(EFoundationDamage Type, float Amount);
+    void Heal(float Amount);
+    void Eat(int32 Nutrition, float SaturationGain);
+    // Player exhaustion: ignored while invulnerable, capped at 40.
+    void AddExhaustion(float Amount);
+    void AddExperience(int32 Points);
+    void AddLevels(int32 Levels);
+    // The Absorption effect's start: the buffer becomes at least Amount. Its timer is not modelled.
+    void GrantAbsorption(float Amount);
+    // A different main-hand item restarts attack recovery.
+    void UpdateMainHand(FName Item);
+    void ResetAttackStrength() { AttackTicker = 0; }
+    // Teleports must not turn the distance already fallen into landing damage.
+    void ResetFall() { FallDistanceCm = 0; }
+    // One reference tick for a non-player holder (the lab's training target): only the damage cooldown
+    // counts down. Food, air, falls and regeneration stay the player's.
+    void StepDamageCooldown()
+    {
+        if (DamageCooldown > 0) --DamageCooldown;
+    }
+    // A fresh spawn: lab configuration and diagnostics stay; experience is lost.
+    void Respawn();
+
+    bool IsDead() const { return DeathTicks >= 0; }
+    bool ShouldRespawn() const { return DeathTicks >= RespawnTicks; }
+    // Creative and Spectator abilities.
+    bool IsInvulnerable() const;
+    // Sprint eligibility: more than six food points, or a mode that may fly.
+    bool HasEnoughFood() const;
+    bool IsHurt() const { return Health > 0 && Health < MaxHealth; }
+    // Reference ticks for a full swing: 20 / attack speed.
+    float GetAttackDelay() const;
+    // The HUD's sample (no partial tick).
+    float GetAttackStrength() const;
+    // The same clock sampled PartialTicks ahead; an attack evaluates at 0.5.
+    float GetAttackStrength(float PartialTicks) const;
+    int32 GetExperienceForNextLevel() const;
+    FString Describe() const;
+
+    static float GetDamageAfterArmor(float Damage, int32 ArmorPoints, float Toughness);
+    static int32 GetFallDamage(double FallCm);
+
+private:
+    void AddFoodExhaustion(float Amount);
+    void TickFood();
+};

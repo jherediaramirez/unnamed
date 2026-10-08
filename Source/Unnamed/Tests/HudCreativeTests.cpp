@@ -1,0 +1,204 @@
+#include "Misc/AutomationTest.h"
+#include "Foundation/FoundationAuthority.h"
+#include "Foundation/FoundationInteractionSettings.h"
+#include "Hud/HudCreative.h"
+
+#if WITH_DEV_AUTOMATION_TESTS
+namespace
+{
+    constexpr EAutomationTestFlags CreativeTestFlags =
+        EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
+
+    // The model over the project's items: every block item and the practice tools.
+    bool MakeModel(FHudCreativeModel& Model, FFoundationRules& Rules)
+    {
+        const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();
+        if (!Registry->GetAssets()) return false;
+        UFoundationInteractionSettings::Get().BuildRules(Rules);
+        TMap<FName, FHudCreativeItem> Items;
+        for (const FFoundationItemDefinition& Item : Rules.Items)
+        {
+            FHudCreativeItem& Entry = Items.Add(Item.Id);
+            Entry.Name = Item.DisplayName;
+            Entry.MaxStack = Item.MaxStack;
+            if (Item.PlacesBlock == TEXT("oak_log") || Item.PlacesBlock == TEXT("birch_log"))
+                Entry.Tags.Add(TEXT("logs"));
+        }
+        Model.Build(Registry->GetAssets()->CreativeTabs, Items);
+        return true;
+    }
+
+    int32 FindTab(const FHudCreativeModel& Model, const TCHAR* Id)
+    {
+        return Model.GetTabs().IndexOfByPredicate([Id](const FHudCreativeModel::FTab& Tab) { return Tab.Id == Id; });
+    }
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHudCreativeTabsTest, "Unnamed.Hud.Creative.Tabs", CreativeTestFlags)
+
+bool FHudCreativeTabsTest::RunTest(const FString&)
+{
+    FHudCreativeModel Model;
+    FFoundationRules Rules;
+    if (!TestTrue(TEXT("block registry asset"), MakeModel(Model, Rules))) return false;
+    // Empty category tabs hide (shouldDisplay); hotbar, search and inventory always show.
+    TestEqual(TEXT("tools tab hidden: no vanilla tools here"), FindTab(Model, TEXT("tools_and_utilities")),
+        int32(INDEX_NONE));
+    TestEqual(TEXT("food tab hidden"), FindTab(Model, TEXT("food_and_drinks")), int32(INDEX_NONE));
+    for (const TCHAR* Id :
+        {TEXT("building_blocks"), TEXT("colored_blocks"), TEXT("natural_blocks"), TEXT("functional_blocks"),
+            TEXT("redstone_blocks"), TEXT("hotbar"), TEXT("search"), TEXT("op_blocks"), TEXT("inventory")})
+        TestNotEqual(FString(TEXT("tab shown: ")) + Id, FindTab(Model, Id), int32(INDEX_NONE));
+    // 26.3 order within a tab, skipping items that do not exist here (stairs, fences...).
+    Model.SelectTab(FindTab(Model, TEXT("building_blocks")));
+    const TArray<FName>& Items = Model.GetItems();
+    TestTrue(TEXT("building blocks start with the oak family"),
+        Items.Num() > 6 && Items[0] == TEXT("oak_log") && Items[1] == TEXT("oak_wood") &&
+            Items[2] == TEXT("stripped_oak_log") && Items[3] == TEXT("stripped_oak_wood") &&
+            Items[4] == TEXT("oak_planks") && Items[5] == TEXT("oak_slab"));
+    // Layout: tab and slot positions from the 26.3 screen.
+    const FHudCreativeModel::FTab& Search = Model.GetTabs()[FindTab(Model, TEXT("search"))];
+    const FHudCreativeModel::FTab& Inventory = Model.GetTabs()[FindTab(Model, TEXT("inventory"))];
+    TestEqual(TEXT("search tab top right"), FHudCreativeModel::GetTabPosition(Search), FIntPoint(169, -28));
+    TestEqual(TEXT("inventory tab bottom right"), FHudCreativeModel::GetTabPosition(Inventory), FIntPoint(169, 132));
+    TestEqual(TEXT("building tab top left"),
+        FHudCreativeModel::GetTabPosition(Model.GetTabs()[FindTab(Model, TEXT("building_blocks"))]), FIntPoint(0, -28));
+    TestTrue(TEXT("grid slot 0 at (9, 18), hovered from one pixel out"),
+        Model.HitTest({9, 18}).Kind == EHudCreativeHit::Grid && Model.HitTest({8, 17}).Index == 0);
+    TestTrue(TEXT("hotbar slot 3"),
+        Model.HitTest({9 + 54 + 4, 115}).Kind == EHudCreativeHit::Hotbar &&
+            Model.HitTest({9 + 54 + 4, 115}).Index == 3);
+    TestEqual(TEXT("scroller"), Model.HitTest({176, 40}).Kind, EHudCreativeHit::Scroller);
+    TestEqual(TEXT("outside"), Model.HitTest({-5, 50}).Kind, EHudCreativeHit::Outside);
+    TestEqual(TEXT("a tab"), Model.HitTest({5, -20}).Kind, EHudCreativeHit::Tab);
+    // Scrolling: one row per notch over the rows past the first five.
+    TestTrue(TEXT("building blocks scroll"), Model.CanScroll());
+    Model.ScrollRows(1);
+    TestEqual(TEXT("one row down"), Model.GetFirstRow(), 1);
+    TestEqual(TEXT("grid shows the second row"), Model.GetGridItem(0), Items[9]);
+    // Search: names and ids contain the text; "#" matches tags.
+    Model.SelectTab(FindTab(Model, TEXT("search")));
+    Model.SetSearch(TEXT("Stained Glass"));
+    TestTrue(
+        TEXT("16 stained glass"), Model.GetItems().Num() == 16 && Model.GetItems().Contains(TEXT("red_stained_glass")));
+    Model.SetSearch(TEXT("#logs"));
+    TestTrue(
+        TEXT("tag search"), Model.GetItems().Contains(TEXT("oak_log")) && !Model.GetItems().Contains(TEXT("stone")));
+    Model.SetSearch(TEXT(""));
+    TestTrue(TEXT("empty search lists every item once"), Model.GetItems().Num() >= 520);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHudCreativeClicksTest, "Unnamed.Hud.Creative.Clicks", CreativeTestFlags)
+
+bool FHudCreativeClicksTest::RunTest(const FString&)
+{
+    FHudCreativeModel Model;
+    FFoundationRules Rules;
+    if (!TestTrue(TEXT("block registry asset"), MakeModel(Model, Rules))) return false;
+    Model.SelectTab(FindTab(Model, TEXT("building_blocks")));
+    TArray<FHudCreativeStack> Inventory;
+    Inventory.SetNum(10);
+    const FHudCreativeHit Log{EHudCreativeHit::Grid, 0}, Wood{EHudCreativeHit::Grid, 1};
+    // The picker (slotClicked): one item, +1, shift fills, right takes one away, elsewhere deletes.
+    Model.Click(Log, 0, false, Inventory);
+    TestEqual(TEXT("left click picks one"), Model.Carried, FHudCreativeStack{TEXT("oak_log"), 1});
+    Model.Click(Log, 0, false, Inventory);
+    TestEqual(TEXT("again adds one"), Model.Carried.Count, 2);
+    Model.Click(Log, 0, true, Inventory);
+    TestEqual(TEXT("shift fills the stack"), Model.Carried.Count, 64);
+    Model.Click(Log, 1, false, Inventory);
+    TestEqual(TEXT("right takes one away"), Model.Carried.Count, 63);
+    Model.Click(Wood, 0, false, Inventory);
+    TestTrue(TEXT("left on another item deletes the carried stack"), Model.Carried.IsEmpty());
+    Model.Click(Wood, 2, false, Inventory);
+    TestEqual(TEXT("middle click: a full stack"), Model.Carried, FHudCreativeStack{TEXT("oak_wood"), 64});
+    // Hotbar slots are ordinary container slots.
+    TArray<FHudCreativeWrite> Writes = Model.Click({EHudCreativeHit::Hotbar, 2}, 1, false, Inventory);
+    TestTrue(TEXT("right places one"),
+        Writes.Num() == 1 && Writes[0].Slot == 2 && Writes[0].Stack.Count == 1 && Model.Carried.Count == 63);
+    Inventory[2] = Writes[0].Stack;
+    Writes = Model.Click({EHudCreativeHit::Hotbar, 2}, 0, false, Inventory);
+    TestTrue(TEXT("left merges the rest"), Writes.Num() == 1 && Writes[0].Stack.Count == 64 && Model.Carried.IsEmpty());
+    Inventory[2] = Writes[0].Stack;
+    Writes = Model.Click({EHudCreativeHit::Hotbar, 2}, 0, true, Inventory);
+    TestTrue(TEXT("shift-click in the picker tabs deletes"), Writes.Num() == 1 && Writes[0].Stack.IsEmpty());
+    Inventory[2] = {};
+    // Number keys over the picker put a full stack in that hotbar slot.
+    Writes = Model.PressNumber(Log, 4, Inventory);
+    TestTrue(TEXT("number key"),
+        Writes.Num() == 1 && Writes[0].Slot == 4 && Writes[0].Stack == FHudCreativeStack{TEXT("oak_log"), 64});
+    // The survival tab: the bin deletes the carried stack; shift empties everything.
+    Model.SelectTab(FindTab(Model, TEXT("inventory")));
+    Model.Carried = {TEXT("stone"), 5};
+    Inventory[0] = {TEXT("stone"), 64};
+    Inventory[9] = {TEXT("glass"), 3};
+    Model.Click({EHudCreativeHit::Destroy, 0}, 0, false, Inventory);
+    TestTrue(TEXT("bin"), Model.Carried.IsEmpty());
+    Writes = Model.Click({EHudCreativeHit::Destroy, 0}, 0, true, Inventory);
+    TestEqual(TEXT("shift on the bin clears the hotbar and offhand"), Writes.Num(), 2);
+    TestEqual(TEXT("offhand slot is the survival tab's"), Model.HitTest({36, 21}).Kind, EHudCreativeHit::Offhand);
+    // Block icons: the gui display transform shows the top, east (left) and north (right) faces.
+    const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();
+    const TArray<HudBlockIcon::FQuad> Grass = HudBlockIcon::Build(*Registry, TEXT("grass_block"));
+    TestEqual(TEXT("grass icon: three faces and two side overlays"), Grass.Num(), 5);
+    if (Grass.Num() == 5)
+    {
+        TestEqual(TEXT("top tinted with the item's grass color #7CBD6B"), Grass[0].Color, FColor(0x7C, 0xBD, 0x6B));
+        float Left = 16, Right = 0;
+        for (const FVector2f& Corner : Grass[1].Corners)
+            Left = FMath::Min(Left, Corner.X);
+        for (const FVector2f& Corner : Grass[3].Corners)
+            Right = FMath::Max(Right, Corner.X);
+        TestTrue(TEXT("east face on the left, north on the right, within the slot"),
+            Left > .5f && Left < 2 && Right > 14 && Right < 15.5f);
+    }
+    const TArray<HudBlockIcon::FQuad> Slab = HudBlockIcon::Build(*Registry, TEXT("oak_slab"));
+    float SlabTop = 16;
+    for (const FVector2f& Corner : Slab[0].Corners)
+        SlabTop = FMath::Min(SlabTop, Corner.Y);
+    const TArray<HudBlockIcon::FQuad> Planks = HudBlockIcon::Build(*Registry, TEXT("oak_planks"));
+    float PlanksTop = 16;
+    for (const FVector2f& Corner : Planks[0].Corners)
+        PlanksTop = FMath::Min(PlanksTop, Corner.Y);
+    TestTrue(TEXT("a slab icon is the bottom half"), SlabTop > PlanksTop + 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHudCreativeAuthorityTest, "Unnamed.Hud.Creative.Authority", CreativeTestFlags)
+
+bool FHudCreativeAuthorityTest::RunTest(const FString&)
+{
+    // The creative write goes through the authority like every inventory change.
+    FFoundationAuthority A;
+    UFoundationInteractionSettings::Get().BuildRules(A.Rules);
+    A.World.SetRegistry(FFoundationBlockRegistry::GetDefault());
+    const int32 Player = A.AddPlayer();
+    A.Reset();
+    FFoundationVitals Vitals;
+    uint32 Sequence = 1;
+    auto Write = [&](int32 Slot, FName Item, int32 Count)
+    {
+        FFoundationCommand Command;
+        Command.SessionId = A.GetSessionId();
+        Command.Sequence = Sequence++;
+        Command.Type = EFoundationCommandType::SetCreativeSlot;
+        Command.Slot = Slot;
+        Command.CreativeItem = Item;
+        Command.CreativeCount = Count;
+        return A.Execute(Player, Command, Vitals);
+    };
+    const FFoundationInventory& Inventory = A.FindPlayer(Player)->Inventory;
+    TestTrue(TEXT("hotbar write"),
+        Write(4, TEXT("oak_slab"), 64).IsCommitted() &&
+            A.Rules.GetItem(Inventory.Hotbar[4].Item).Id == TEXT("oak_slab") && Inventory.Hotbar[4].Count == 64);
+    TestTrue(TEXT("offhand write"), Write(9, TEXT("glass"), 3).IsCommitted() && Inventory.Offhand.Count == 3);
+    TestTrue(TEXT("clear"), Write(4, NAME_None, 0).IsCommitted() && Inventory.Hotbar[4].IsEmpty());
+    TestEqual(TEXT("bad slot"), Write(10, TEXT("stone"), 1).Reason, EFoundationReason::InvalidSlot);
+    TestEqual(TEXT("over the stack size"), Write(0, TEXT("stone"), 65).Reason, EFoundationReason::NoItem);
+    TestEqual(TEXT("unknown item"), Write(0, TEXT("dummy_block_item"), 1).Reason, EFoundationReason::NoItem);
+    A.Options.bCreativeInventory = false;
+    TestEqual(TEXT("only while the lab allows it"), Write(0, TEXT("stone"), 1).Reason, EFoundationReason::InvalidSlot);
+    return true;
+}
+#endif

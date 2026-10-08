@@ -6,10 +6,13 @@
 
 class AFoundationController;
 class AFoundationPawn;
+class FFoundationAuthority;
 class STextBlock;
 class SWidget;
+class UHudPresenter;
+struct FFoundationVitals;
 
-// The F3 debug overlay, the hotbar/help line, the crosshair, the recent-event log and debug
+// The F3 debug overlay, native Hud presenter, recent-event log and debug
 // drawing. Display only: it reads the controller, pawn and router and changes no game state.
 // AFoundationController drives it once per frame (BeginFrame, NoteMotion, DrawDebug, Refresh).
 UCLASS(ClassGroup = Foundation)
@@ -26,26 +29,33 @@ public:
 
     void BeginFrame();
     void NoteMotion(const AFoundationPawn& Pawn);
+    // Logs each applied damage, death and respawn once.
+    void NoteVitals(const FFoundationVitals& Vitals);
     void DrawDebug(const AFoundationPawn& Pawn) const;
-    // Updates widget text and visibility at most ten times a second.
+    // F3 text stays at 10 Hz. The separate presentation adapter samples at up to 20 Hz.
     void Refresh();
 
     bool bOverlay = false;
     bool bHideHud = false;
     bool bShowCollision = false;
+    UHudPresenter* GetPresenter() const { return Presenter; }
 
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
     AFoundationController* GetFoundationController() const;
+    // The Playground's F3 lines: lab rules, hands, target and preview, timing and target health.
+    static FString BuildInteractionText(const AFoundationPawn& Pawn, const FFoundationAuthority& Authority);
 
     TSharedPtr<SWidget> OverlayRoot;
     TSharedPtr<STextBlock> DebugText;
-    TSharedPtr<STextBlock> HudText;
-    TSharedPtr<STextBlock> Crosshair;
+    UPROPERTY(Transient)
+    TObjectPtr<UHudPresenter> Presenter;
     TArray<FString> Events;
     FString LastMotionState;
+    int32 LoggedDamageEvents = 0;
+    bool bLoggedDead = false;
     double Now = 0;
     double LastFrameTime = 0;
     double FrameMs = 0;

@@ -6,22 +6,23 @@ How the project fits together. Foundation-specific movement, input and diagnosti
 
 | Folder | Contents |
 |---|---|
-| `Source/Unnamed/` | The one game module. Project-wide pieces at the root: `UnnamedProjectSettings` (maps, world catalog, input assets), `UnnamedSession` (may this run save settings?), `UnnamedFiles` (crash-safe saves), `UnnamedLog` (log categories). |
+| `Source/Unnamed/` | The one game module. Project-wide pieces at the root: `UnnamedProjectSettings` (maps, world catalog, input assets, HUD and block asset roots), `UnnamedSession` (may this run save settings?), `UnnamedFiles` (crash-safe saves), `UnnamedLog` (log categories). |
 | `Source/Unnamed/Menu/` | The offline menu: `UMenuBrowserHost`, the menu services it binds, and the menu map's game mode/controller. |
 | `Source/Unnamed/Input/` | Enhanced Input layer: `UUnnamedInputSubsystem`, the saved `UUnnamedInputSettings`, `FUnnamedInputIntent`. |
-| `Source/Unnamed/Foundation/` | The first-person Player Foundation lab: controller parts, pawn, pure simulation, lab geometry, runtime probe. |
-| `Source/Unnamed/SuperFlat/` | The 2 km Super Flat preview world. |
+| `Source/Unnamed/Foundation/` | The first-person pawn, controller parts, pure simulation, player vitals (health, food, air, XP, attack recovery), lab geometry (`AFoundationLab`, and the Playground in `AFoundationPlayground`), runtime probe; the Playground's block world, items, targeting, authority, interaction state and presentation; the 26.3 block registry, placement rules, block meshes and texture animation ([Blocks](Blocks.md)). |
+| `Source/Unnamed/Hud/` | Native Slate HUD, pure layout/selection, cooked sprite metadata and the Foundation adapter (player vitals by default, an opt-in preview fixture); the creative inventory screen and 3D block item icons. |
 | `Source/Unnamed/Tests/` | Native automation tests, one file per area (`Unnamed.<Area>.*`). |
 | `MenuWeb/` | Menu generator (`AdaptMenu.mjs` + `Patches/`) and the JavaScript shipped inside the page (`Runtime/`). |
 | `Content/Menu/Web/` | Generated `index.html`, preference schema and mirrored reference assets, staged as loose files. |
 | `Reference/minecraft-menu/` | The unchanged, hash-checked reference menu. |
+| `Reference/minecraft-blocks-26.3/` | The generated, hash-checked Java 26.3 block reference that `Scripts/Editor/ImportBlocks.py` reads. |
 | `Scripts/` | PowerShell build/launch/test entry points; `Scripts/Editor/` holds Unreal editor Python. |
 | `Tests/` | Node unit tests (`*.test.mjs`) and CEF integration suites; recorded evidence in `Tests/Evidence/<date>/`. |
 | `Docs/` | Living docs; dated work records in `Docs/Records/`; preserved inputs in `Docs/Archive/`. |
 
 ## Maps and controllers
 
-`/Game/Menu/L_Menu` uses `AMenuGameMode` and `AMenuPlayerController`: no pawn or HUD, just the menu. `/Game/Maps/L_Foundation` uses `AFoundationGameMode` and `AFoundationController`. `/Game/Maps/L_SuperFlat` uses `ASuperFlatGameMode`, `ASuperFlatPreviewController`, the stock spectator pawn and `ASuperFlatPreviewHUD`.
+`/Game/Menu/L_Menu` uses `AMenuGameMode` and `AMenuPlayerController`: no pawn or HUD, just the menu. `/Game/Maps/L_Playground` uses `AFoundationGameMode` and `AFoundationController` with one placed `AFoundationPlayground` (the 2 km dev-grid ground, the starter-block stations, the block gallery and the movement course; see [Foundation architecture](Foundation/Architecture.md#playground-block-interaction) and [Playground](Playground.md)). It is the only world in the catalog.
 
 Neither gameplay controller inherits from the menu controller. Any controller that needs the menu adds a `UMenuBrowserHost` component: the menu controller shows it on BeginPlay; the Foundation controller shows it as the pause menu and adds its own `foundationmenu` bridge. Only the Foundation controller adds diagnostics (input router, HUD, panels), so the plain menu map has no F3 overlay or input preprocessor.
 
@@ -41,7 +42,7 @@ Quit and world travel drain every settings store, lock further edits, flush all 
 
 ## Project settings and world catalog
 
-`UUnnamedProjectSettings` (Project Settings > Game > Unnamed; C++ defaults, overridable in `DefaultGame.ini`) is the one place for the menu map, the input mapping contexts and actions, and the Singleplayer world catalog (ID, map, name, summary, status). `UMenuApplication::RequestOpenWorld` accepts only an exact, case-sensitive catalog ID and sends the catalog to the page in `GetState`; the page lists those worlds first, marks them built-in and keeps no list of its own. Editor Python reads the same paths through `Scripts/Editor/ProjectPaths.py`. Cooked maps come from `MapsToCook` in `DefaultGame.ini`.
+`UUnnamedProjectSettings` (Project Settings > Game > Unnamed; C++ defaults, overridable in `DefaultGame.ini`) is the one place for the menu map, the dev grid material, the input mapping contexts and actions, the HUD and block asset roots (`HudRoot`, `BlockRoot`), and the Singleplayer world catalog (ID, map, name, summary, status). The catalog holds one world, `playground`; the retired IDs `foundation`, `super-flat` and `interaction-lab` are never reused. `UMenuApplication::RequestOpenWorld` accepts only an exact, case-sensitive catalog ID and sends the catalog to the page in `GetState`; the page lists those worlds first, marks them built-in and keeps no list of its own. Editor Python reads the same paths through `Scripts/Editor/ProjectPaths.py`. Cooked maps come from `MapsToCook` in `DefaultGame.ini`.
 
 ## Menu web layer
 
@@ -61,7 +62,7 @@ CSS alone applies integer scaling; no UMG DPI wrapper scales a second time. Veri
 
 ## Diagnostics and logging
 
-`UnnamedLog.h` defines `LogUnnamedMenu` (host, application, video, preferences, browser console), `LogUnnamedWorlds` (Super Flat) and `LogUnnamedFoundation` (lab and probe). `window.MenuPrototype` exposes screen state, dimensions, controls and definitions for CEF tests. Playwright connects to Unreal's own CEF through the optional `-cefdebug` port. Slate tools can inspect the native window, not HTML buttons. The Foundation runtime probe (`-FoundationProbe=report.json`) exists only in builds with dev automation tests.
+`UnnamedLog.h` defines `LogUnnamedMenu` (host, application, video, preferences, browser console), `LogUnnamedWorlds` (world catalog and travel; not yet used) and `LogUnnamedFoundation` (lab and probe). `window.MenuPrototype` exposes screen state, dimensions, controls and definitions for CEF tests. Playwright connects to Unreal's own CEF through the optional `-cefdebug` port. Slate tools can inspect the native window, not HTML buttons. The Foundation runtime probe (`-FoundationProbe=report.json`) exists only in builds with dev automation tests.
 
 ## Verification
 

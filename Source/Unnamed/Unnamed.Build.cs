@@ -10,6 +10,8 @@ public class Unnamed : ModuleRules
         PublicIncludePaths.Add(ModuleDirectory);
         PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "EnhancedInput", "InputCore", "GameplayTags" });
         PrivateDependencyModuleNames.AddRange(new[] { "DeveloperSettings", "Slate", "SlateCore", "WebBrowser", "HTTP", "Json", "ApplicationCore", "RHI", "RenderCore" });
+        // Block meshes are built at runtime; the editor-only block import decodes PNGs and registers new assets.
+        PrivateDependencyModuleNames.AddRange(new[] { "MeshDescription", "StaticMeshDescription", "ImageWrapper", "AssetRegistry" });
         string WebRoot = Path.Combine(ModuleDirectory, "../../Content/Menu/Web");
         // Regenerate build/staging metadata when the native preference contract changes.
         ExternalDependencies.Add(Path.Combine(WebRoot, "preferences-schema.menuprefs"));

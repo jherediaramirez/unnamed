@@ -16,7 +16,7 @@ class UUnnamedInputSubsystem;
 // Player controller for the Foundation lab. It owns four parts and coordinates them:
 //   UMenuBrowserHost       - the shared offline menu, shown as the pause menu;
 //   UFoundationInputRouter - raw input, debug chords and binding capture;
-//   UFoundationHud         - F3 overlay, hotbar line, event log, debug drawing;
+//   UFoundationHud         - F3 overlay, native Hud presenter, event log, debug drawing;
 //   UFoundationPanels      - Debug Options, chat/command text and inventory fixtures.
 // The controller itself handles logical actions, pause/resume and focus loss.
 UCLASS()
@@ -49,7 +49,8 @@ public:
 
     const FString& GetLastLogical() const { return LastLogical; }
 
-    // Typed action test double: hotbar tokens, break/use state, last result.
+    // Typed action test double: hotbar tokens, break/use state, last result. The Foundation lab's
+    // receiver; the Playground sends the same actions to the pawn's interaction instead.
     FFoundationActions Actions;
 
 protected:
@@ -63,8 +64,12 @@ protected:
 private:
     // Menus, panels, HUD toggles, screenshot, fullscreen, perspective and hotbar; false for world actions.
     bool HandleInterfaceAction(const FString& Name);
-    // Repeats held attack/use once per simulation step.
+    // In the Playground, world actions and the hotbar go to the pawn's interaction; false otherwise.
+    bool HandleInteractionAction(AFoundationPawn& FoundationPawn, const FString& Name, bool bDown);
+    // Repeats held attack/use once per simulation step for the token fixture (Foundation lab only).
     void UpdateHeldActions(const AFoundationPawn& FoundationPawn);
+    // Logs the interaction authority's committed and rejected outcomes once each.
+    void NoteInteraction(const AFoundationPawn& FoundationPawn);
 
     UPROPERTY(VisibleAnywhere)
     TObjectPtr<UMenuBrowserHost> MenuHost;
@@ -81,5 +86,7 @@ private:
     int64 NextUseStep = 0;
     int64 LastActionStep = 0;
     FString LastActionResult;
+    int64 LastInteractionEvent = 0;
+    FString LastInteractionText;
     FString LastLogical = TEXT("none");
 };

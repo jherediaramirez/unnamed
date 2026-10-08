@@ -14,7 +14,7 @@ if($ExcludeDebugTools){$adapterArgs+='--without-debug-tools'}
 if($LASTEXITCODE){throw 'Menu adaptation failed'}
 $buildArguments=@('UnnamedEditor','Win64','Development',"-Project=$project",'-WaitMutex','-NoHotReloadFromIDE')
 if($EditorModuleSuffix){$buildArguments+="-ModuleWithSuffix=Unnamed,$EditorModuleSuffix"}
-& "$EngineRoot\Engine\Build\BatchFiles\Build.bat" @taskBuildArguments
+& "$EngineRoot\Engine\Build\BatchFiles\Build.bat" @buildArguments
 if($LASTEXITCODE){throw 'Editor build failed'}
 & "$EngineRoot\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" $project -run=pythonscript "-script=$PSScriptRoot\Editor\CreateInputAssets.py" -unattended -nop4 -NullRHI
 if($LASTEXITCODE){throw 'Input asset setup failed'}
@@ -22,9 +22,12 @@ if($CreateMap){
     & "$EngineRoot\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" $project -run=pythonscript "-script=$PSScriptRoot\Editor\CreateMenuMap.py" -unattended -nop4 -NullRHI
     if($LASTEXITCODE){throw 'Menu map setup failed'}
 }
-# Both entry maps are part of the product. Setup preserves an already-authored level.
-& "$EngineRoot\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" $project -run=pythonscript "-script=$PSScriptRoot\Editor\CreateSuperFlatMap.py" -unattended -nop4 -NullRHI
-if($LASTEXITCODE){throw 'Super Flat map setup failed'}
+# Both entry maps are part of the product: the menu and the Playground (with its dev grid material).
+# Setup preserves an already-authored level and verifies it.
+foreach($script in @('CreateDevGridMaterial.py','CreatePlaygroundMap.py')){
+    & "$EngineRoot\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" $project -run=pythonscript "-script=$PSScriptRoot\Editor\$script" -unattended -nop4 -NullRHI
+    if($LASTEXITCODE){throw "Asset setup failed: $script"}
+}
 if($Package){
     # The editor was built above, including a unique module suffix when needed.
     # Rebuilding it in UAT would discard that suffix and touch an open editor's DLL.

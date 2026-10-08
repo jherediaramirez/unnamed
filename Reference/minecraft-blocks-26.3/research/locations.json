@@ -1,0 +1,1094 @@
+{
+  "stone": {
+    "where": "Main solid rock of the overworld: surface mountains, caves, and underground in all biomes",
+    "dimension": "overworld",
+    "y_range": "8..320 (solid stone above Y=8; blends to deepslate between Y=8 and Y=0)",
+    "source": "https://minecraft.wiki/w/Stone"
+  },
+  "deepslate": {
+    "where": "Main solid rock below Y=0; ancient cities",
+    "dimension": "overworld",
+    "y_range": "-64..0 (gradient from Y=8 down to Y=0; fully deepslate at Y<=0)",
+    "source": "https://minecraft.wiki/w/Deepslate"
+  },
+  "granite": {
+    "where": "Ore blobs in stone in all overworld biomes; also the filler of the copper ore vein",
+    "dimension": "overworld",
+    "y_range": "0..60 and 64..128 (two blob batches)",
+    "source": "https://minecraft.wiki/w/Granite"
+  },
+  "diorite": {
+    "where": "Ore blobs in stone in all overworld biomes",
+    "dimension": "overworld",
+    "y_range": "0..60 and 64..128 (two blob batches)",
+    "source": "https://minecraft.wiki/w/Diorite"
+  },
+  "andesite": {
+    "where": "Ore blobs in stone in all overworld biomes; also coral reef crusts",
+    "dimension": "overworld",
+    "y_range": "0..60 and 64..128 (two blob batches)",
+    "source": "https://minecraft.wiki/w/Andesite"
+  },
+  "tuff": {
+    "where": "Ore blobs below Y=0 in all overworld biomes; filler of the iron ore vein; sulfur springs",
+    "dimension": "overworld",
+    "y_range": "-64..0 (ore blobs)",
+    "source": "https://minecraft.wiki/w/Tuff"
+  },
+  "calcite": {
+    "where": "Middle layer of amethyst geodes; striped in stony peaks",
+    "dimension": "overworld",
+    "y_range": "-58..30 (amethyst geodes); stony peaks surface strips",
+    "source": "https://minecraft.wiki/w/Calcite"
+  },
+  "smooth_basalt": {
+    "where": "Outer layer of amethyst geodes; also in ancient cities",
+    "dimension": "overworld",
+    "y_range": "-58..30 (amethyst geodes)",
+    "source": "https://minecraft.wiki/w/Smooth_Basalt"
+  },
+  "dripstone_block": {
+    "where": "Dripstone caves (stalactites, stalagmites, stalagnates)",
+    "dimension": "overworld",
+    "y_range": "-64..256 (cluster placement range; cave-limited)",
+    "source": "https://minecraft.wiki/w/Dripstone_Block"
+  },
+  "cobbled_deepslate": {
+    "where": "Ancient cities and trial chambers",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Cobbled_Deepslate"
+  },
+  "infested_stone": {
+    "where": "Silverfish ore feature in mountain biomes (meadow, cherry grove, grove, snowy slopes, peaks, windswept hills and forest)",
+    "dimension": "overworld",
+    "y_range": "-64..63 (ore_infested placement)",
+    "source": "https://minecraft.wiki/w/Infested_Block"
+  },
+  "infested_deepslate": {
+    "where": "Deepslate variant of the silverfish ore feature in the same mountain biomes",
+    "dimension": "overworld",
+    "y_range": "-64..63 (ore_infested placement)",
+    "source": "https://minecraft.wiki/w/Infested_Block"
+  },
+  "infested_stone_bricks": {
+    "where": "Strongholds and igloo basements, in place of some stone bricks",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Infested_Block"
+  },
+  "infested_cobblestone": {
+    "where": "Rare fake End portal room in woodland mansions",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Infested_Block"
+  },
+  "bedrock": {
+    "where": "Indestructible layer at the bottom of the overworld and Nether, the Nether roof, End spikes and End gateways",
+    "dimension": "multiple",
+    "y_range": "-64..-60 (overworld floor, gradient to -59); Nether floor 0..4 and roof near 122..127; End spikes and gateways",
+    "source": "https://minecraft.wiki/w/Bedrock"
+  },
+  "coal_ore": {
+    "where": "Ore blobs in stone, tuff and deepslate across all overworld biomes",
+    "dimension": "overworld",
+    "y_range": "0..319 (two batches: 136..319 and 0..192)",
+    "source": "https://minecraft.wiki/w/Coal_Ore"
+  },
+  "deepslate_coal_ore": {
+    "where": "Coal ore that replaces deepslate or tuff below Y=0",
+    "dimension": "overworld",
+    "y_range": "-64..0 (deepslate layer; rare near Y=8)",
+    "source": "https://minecraft.wiki/w/Coal_Ore"
+  },
+  "iron_ore": {
+    "where": "Ore blobs in stone across all overworld biomes; main iron source",
+    "dimension": "overworld",
+    "y_range": "-64..319 (three batches; upper batch 80..384 clipped at world top, most common near 232)",
+    "source": "https://minecraft.wiki/w/Iron_Ore"
+  },
+  "deepslate_iron_ore": {
+    "where": "Iron ore in the deepslate layer and in the iron ore vein (tuff filler)",
+    "dimension": "overworld",
+    "y_range": "-64..0 (deepslate blobs) and -60..-9 (iron ore vein)",
+    "source": "https://minecraft.wiki/w/Iron_Ore"
+  },
+  "copper_ore": {
+    "where": "Ore blobs across the overworld except dripstone caves (larger blobs there); copper ore vein with granite filler",
+    "dimension": "overworld",
+    "y_range": "-16..112 (trapezoid, most common around Y 47-48); copper vein 0..49",
+    "source": "https://minecraft.wiki/w/Copper_Ore"
+  },
+  "deepslate_copper_ore": {
+    "where": "Copper ore in the deepslate layer below Y=0",
+    "dimension": "overworld",
+    "y_range": "-16..0 (blobs in deepslate)",
+    "source": "https://minecraft.wiki/w/Copper_Ore"
+  },
+  "gold_ore": {
+    "where": "Ore blobs across the overworld; extra batch in badlands, eroded badlands and wooded badlands",
+    "dimension": "overworld",
+    "y_range": "-64..32 (most common near Y -16); badlands extra batch 32..256",
+    "source": "https://minecraft.wiki/w/Gold_Ore"
+  },
+  "deepslate_gold_ore": {
+    "where": "Gold ore in deepslate and tuff below Y=0",
+    "dimension": "overworld",
+    "y_range": "-64..0",
+    "source": "https://minecraft.wiki/w/Gold_Ore"
+  },
+  "redstone_ore": {
+    "where": "Ore blobs across the overworld",
+    "dimension": "overworld",
+    "y_range": "-64..15 (plus lower batch -96..-32 clipped to world bottom)",
+    "source": "https://minecraft.wiki/w/Redstone_Ore"
+  },
+  "deepslate_redstone_ore": {
+    "where": "Redstone ore in the deepslate layer",
+    "dimension": "overworld",
+    "y_range": "-64..0",
+    "source": "https://minecraft.wiki/w/Redstone_Ore"
+  },
+  "lapis_ore": {
+    "where": "Ore blobs across the overworld, plus buried blobs",
+    "dimension": "overworld",
+    "y_range": "-64..64 (main batch -32..32, peak near 0)",
+    "source": "https://minecraft.wiki/w/Lapis_Lazuli_Ore"
+  },
+  "deepslate_lapis_ore": {
+    "where": "Lapis ore in the deepslate layer",
+    "dimension": "overworld",
+    "y_range": "-64..0",
+    "source": "https://minecraft.wiki/w/Lapis_Lazuli_Ore"
+  },
+  "diamond_ore": {
+    "where": "Ore features in stone across the overworld; more common deeper down",
+    "dimension": "overworld",
+    "y_range": "-64..16 (placement -144..16 clipped at world bottom; peak -59)",
+    "source": "https://minecraft.wiki/w/Diamond_Ore"
+  },
+  "deepslate_diamond_ore": {
+    "where": "Diamond ore in the deepslate layer",
+    "dimension": "overworld",
+    "y_range": "-64..0",
+    "source": "https://minecraft.wiki/w/Diamond_Ore"
+  },
+  "emerald_ore": {
+    "where": "Single scattered blocks in mountains, windswept hills and windswept forest, meadows, cherry groves, groves, snowy slopes and peaks",
+    "dimension": "overworld",
+    "y_range": "-16..319 (placement -16..480 clipped at world top)",
+    "source": "https://minecraft.wiki/w/Emerald_Ore"
+  },
+  "deepslate_emerald_ore": {
+    "where": "Emerald ore in the deepslate layer of mountain biomes",
+    "dimension": "overworld",
+    "y_range": "-16..0",
+    "source": "https://minecraft.wiki/w/Emerald_Ore"
+  },
+  "raw_iron_block": {
+    "where": "Replaces about 2% of iron ore inside iron ore veins",
+    "dimension": "overworld",
+    "y_range": "-60..-9 (iron ore vein)",
+    "source": "https://minecraft.wiki/w/Block_of_Raw_Iron"
+  },
+  "raw_copper_block": {
+    "where": "Replaces about 2% of copper ore inside copper ore veins",
+    "dimension": "overworld",
+    "y_range": "0..49 (copper ore vein)",
+    "source": "https://minecraft.wiki/w/Block_of_Raw_Copper"
+  },
+  "nether_gold_ore": {
+    "where": "Netherrack blobs in all Nether biomes; more attempts in basalt deltas",
+    "dimension": "nether",
+    "y_range": "10..117 (effective; placed 10..245, nether terrain ends near 127)",
+    "source": "https://minecraft.wiki/w/Nether_Gold_Ore"
+  },
+  "nether_quartz_ore": {
+    "where": "Netherrack blobs in all Nether biomes; more attempts in basalt deltas",
+    "dimension": "nether",
+    "y_range": "10..117 (effective; placed 10..245)",
+    "source": "https://minecraft.wiki/w/Nether_Quartz_Ore"
+  },
+  "ancient_debris": {
+    "where": "Scattered in netherrack, basalt and blackstone, never exposed to air",
+    "dimension": "nether",
+    "y_range": "8..24 (main clusters, peak near 16); rare small clusters up to about 247",
+    "source": "https://minecraft.wiki/w/Ancient_Debris"
+  },
+  "dirt": {
+    "where": "Upper terrain layers in most overworld biomes; dirt blobs inside stone; shallow-water disks",
+    "dimension": "overworld",
+    "y_range": "0..160 (blobs in stone); surface layers elsewhere",
+    "source": "https://minecraft.wiki/w/Dirt"
+  },
+  "coarse_dirt": {
+    "where": "Patches in windswept savanna, wooded badlands, old growth taiga and dappled forest; ice patches; trail ruins; abandoned camps",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Coarse_Dirt"
+  },
+  "rooted_dirt": {
+    "where": "Roots under azalea trees in lush caves",
+    "dimension": "overworld",
+    "y_range": "-64..256 (rooted azalea tree placement; extends into lush caves)",
+    "source": "https://minecraft.wiki/w/Rooted_Dirt"
+  },
+  "podzol": {
+    "where": "Old growth taiga, bamboo jungle, trial chamber spawner areas, abandoned camps",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Podzol"
+  },
+  "mycelium": {
+    "where": "Mushroom fields in abundance; single blocks in swamp abandoned camps",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Mycelium"
+  },
+  "grass_block": {
+    "where": "Surface of most overworld biomes; disks between mud in mangrove swamps; villages and ancient cities",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Grass_Block"
+  },
+  "mud": {
+    "where": "Mangrove swamp terrain; trail ruins; some trial chamber entrance rooms",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Mud"
+  },
+  "packed_mud": {
+    "where": "Trail ruins (archaeology)",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Packed_Mud"
+  },
+  "clay": {
+    "where": "Blobs in lush caves and underwater disks in shallow rivers, lakes and oceans; mason houses in villages",
+    "dimension": "overworld",
+    "y_range": "-64..256 (lush caves blobs, any height); underwater disks at sea level",
+    "source": "https://minecraft.wiki/w/Clay"
+  },
+  "moss_block": {
+    "where": "Floor and ceiling of lush caves; trial chambers",
+    "dimension": "overworld",
+    "y_range": "-64..256 (lush cave vegetation placement)",
+    "source": "https://minecraft.wiki/w/Moss_Block"
+  },
+  "pale_moss_block": {
+    "where": "Moss patches in pale gardens",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Pale_Moss_Block"
+  },
+  "muddy_mangrove_roots": {
+    "where": "Where mud meets mangrove roots in mangrove swamps; some trial chamber entrances",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Muddy_Mangrove_Roots"
+  },
+  "mangrove_roots": {
+    "where": "Roots of mangrove trees in mangrove swamps; some trial chamber entrances",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Mangrove_Roots"
+  },
+  "sand": {
+    "where": "Disks in shallow water; deserts and beaches (layers over sandstone)",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Sand"
+  },
+  "red_sand": {
+    "where": "Single layer in badlands below about Y=74",
+    "dimension": "overworld",
+    "y_range": "below about 74 (badlands)",
+    "source": "https://minecraft.wiki/w/Red_Sand"
+  },
+  "gravel": {
+    "where": "Blobs in stone and disks in shallow water across overworld biomes; beds of deep water",
+    "dimension": "overworld",
+    "y_range": "-64..319 (gravel blobs in stone; ore_gravel)",
+    "source": "https://minecraft.wiki/w/Gravel"
+  },
+  "suspicious_sand": {
+    "where": "Buried rooms under desert pyramids, desert wells, warm ocean ruins",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Suspicious_Sand"
+  },
+  "suspicious_gravel": {
+    "where": "Cold ocean ruins and trail ruins",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Suspicious_Gravel"
+  },
+  "sandstone": {
+    "where": "Under sand in deserts and beaches; desert wells, villages, pyramids, warm ocean ruins",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Sandstone"
+  },
+  "red_sandstone": {
+    "where": "Floating badlands cave entrances, replacing red sand",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Red_Sandstone"
+  },
+  "terracotta": {
+    "where": "Badlands layers; desert and plains village houses and lamps",
+    "dimension": "overworld",
+    "y_range": "above about 74 (badlands layers)",
+    "source": "https://minecraft.wiki/w/Terracotta"
+  },
+  "white_terracotta": {
+    "where": "Badlands layers",
+    "dimension": "overworld",
+    "y_range": "above about 74 (badlands layers); also under shallow water",
+    "source": "https://minecraft.wiki/w/Stained_Terracotta"
+  },
+  "orange_terracotta": {
+    "where": "Badlands layers",
+    "dimension": "overworld",
+    "y_range": "above about 74 (layers); lower elevations below red sand",
+    "source": "https://minecraft.wiki/w/Stained_Terracotta"
+  },
+  "yellow_terracotta": {
+    "where": "Badlands layers",
+    "dimension": "overworld",
+    "y_range": "above about 74 (badlands layers)",
+    "source": "https://minecraft.wiki/w/Stained_Terracotta"
+  },
+  "brown_terracotta": {
+    "where": "Badlands layers",
+    "dimension": "overworld",
+    "y_range": "above about 74 (badlands layers)",
+    "source": "https://minecraft.wiki/w/Stained_Terracotta"
+  },
+  "red_terracotta": {
+    "where": "Badlands layers",
+    "dimension": "overworld",
+    "y_range": "above about 74 (badlands layers)",
+    "source": "https://minecraft.wiki/w/Stained_Terracotta"
+  },
+  "light_gray_terracotta": {
+    "where": "Badlands layers",
+    "dimension": "overworld",
+    "y_range": "above about 74 (badlands layers)",
+    "source": "https://minecraft.wiki/w/Stained_Terracotta"
+  },
+  "ice": {
+    "where": "Freeze-top-layer ice on frozen oceans, frozen rivers, snowy beaches, lakes and exposed aquifers in snowy biomes",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Ice"
+  },
+  "packed_ice": {
+    "where": "Ice spikes, frozen peaks, ice caves, icebergs, igloo windows, some snowy village houses",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Packed_Ice"
+  },
+  "blue_ice": {
+    "where": "Bottoms of icebergs and arches in frozen oceans; piles in snowy village houses; ancient cities",
+    "dimension": "overworld",
+    "y_range": "30..61 (blue ice placement in frozen oceans)",
+    "source": "https://minecraft.wiki/w/Blue_Ice"
+  },
+  "snow_block": {
+    "where": "Ground in ice spikes, groves, snowy slopes and peaks; igloo walls; some abandoned camps",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Snow_Block"
+  },
+  "powder_snow": {
+    "where": "Strips in groves and snowy slopes; trial chamber rooms",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Powder_Snow"
+  },
+  "obsidian": {
+    "where": "Ruined portals (Overworld and Nether); woodland mansion obsidian rooms; cold ocean ruins; End spikes on the main End island and End ship (End city)",
+    "dimension": "multiple",
+    "y_range": "null (End spikes reach Y=0)",
+    "source": "https://minecraft.wiki/w/Obsidian"
+  },
+  "crying_obsidian": {
+    "where": "Some ruined portals (about 15% of their obsidian)",
+    "dimension": "multiple",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Crying_Obsidian"
+  },
+  "magma_block": {
+    "where": "Overworld: underwater clusters at aquifer bottoms, sulfur springs, ocean ruins, ruined portals outside cold biomes, trial chamber eruption rooms. Nether: magma ore features on netherrack",
+    "dimension": "multiple",
+    "y_range": "27..36 (Nether magma feature)",
+    "source": "https://minecraft.wiki/w/Magma_Block"
+  },
+  "amethyst_block": {
+    "where": "Inner layer of amethyst geodes",
+    "dimension": "overworld",
+    "y_range": "-58..30 (amethyst geodes)",
+    "source": "https://minecraft.wiki/w/Block_of_Amethyst"
+  },
+  "budding_amethyst": {
+    "where": "Replaces about 8% of the inner amethyst layer of geodes",
+    "dimension": "overworld",
+    "y_range": "-58..30 (amethyst geodes)",
+    "source": "https://minecraft.wiki/w/Budding_Amethyst"
+  },
+  "sculk": {
+    "where": "Sculk patches in the deep dark biome, plus sculk veins",
+    "dimension": "overworld",
+    "y_range": "-64..256 (deep dark sculk patch placement)",
+    "source": "https://minecraft.wiki/w/Sculk"
+  },
+  "sculk_catalyst": {
+    "where": "Deep dark biome and ancient cities",
+    "dimension": "overworld",
+    "y_range": "-64..256 (deep dark sculk patch placement)",
+    "source": "https://minecraft.wiki/w/Sculk_Catalyst"
+  },
+  "sculk_shrieker": {
+    "where": "Ancient cities (sculk patches), rarely in the deep dark biome",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Sculk_Shrieker"
+  },
+  "bee_nest": {
+    "where": "Bee trees in forests, flower forests and plains",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Bee_Nest"
+  },
+  "pumpkin": {
+    "where": "Pumpkin patches on clear grass in most overworld biomes; woodland mansions, taiga villages, pillager outposts, abandoned camps",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Pumpkin"
+  },
+  "melon": {
+    "where": "Melon patches in jungle biomes; savanna villages; woodland mansion tillage rooms; abandoned camps",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Melon"
+  },
+  "hay_block": {
+    "where": "Hay piles in plains villages (less often savanna and desert villages); pillager outposts; abandoned camps",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Hay_Bale"
+  },
+  "bone_block": {
+    "where": "Fossils in desert, swamp and mangrove swamp biomes; nether fossils; trial chamber spawners",
+    "dimension": "multiple",
+    "y_range": "-64..-8 (lower fossils) and 0..319 (upper fossils); nether fossils in soul sand valleys",
+    "source": "https://minecraft.wiki/w/Bone_Block"
+  },
+  "resin_block": {
+    "where": "Pale garden abandoned camps (per wiki)",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Block_of_Resin"
+  },
+  "netherrack": {
+    "where": "Most of the Nether terrain; ruined portals; bastion remnants",
+    "dimension": "nether",
+    "y_range": "0..127 (nether terrain)",
+    "source": "https://minecraft.wiki/w/Netherrack"
+  },
+  "soul_sand": {
+    "where": "Soul sand valleys surface; Nether ore blobs; fortress nether wart rooms; ancient cities (Overworld)",
+    "dimension": "multiple",
+    "y_range": "0..31 (ore blobs in Nether)",
+    "source": "https://minecraft.wiki/w/Soul_Sand"
+  },
+  "soul_soil": {
+    "where": "Soul sand valleys surface, with soul sand",
+    "dimension": "nether",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Soul_Soil"
+  },
+  "basalt": {
+    "where": "Basalt deltas (terrain, blobs and columns) and soul sand valley pillars",
+    "dimension": "nether",
+    "y_range": "0..127 (nether terrain)",
+    "source": "https://minecraft.wiki/w/Basalt"
+  },
+  "blackstone": {
+    "where": "Basalt deltas, below lava seas, underground blobs, bastion remnants",
+    "dimension": "nether",
+    "y_range": "5..36 (ore blobs); nether terrain",
+    "source": "https://minecraft.wiki/w/Blackstone"
+  },
+  "polished_blackstone": {
+    "where": "Nether ruined portals",
+    "dimension": "nether",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Polished_Blackstone"
+  },
+  "polished_blackstone_bricks": {
+    "where": "Bastion remnants and Nether ruined portals",
+    "dimension": "nether",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Polished_Blackstone_Bricks"
+  },
+  "cracked_polished_blackstone_bricks": {
+    "where": "Bastion remnants and Nether ruined portals",
+    "dimension": "nether",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Cracked_Polished_Blackstone_Bricks"
+  },
+  "chiseled_polished_blackstone": {
+    "where": "Bastion remnants and Nether ruined portals",
+    "dimension": "nether",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Chiseled_Polished_Blackstone"
+  },
+  "gilded_blackstone": {
+    "where": "Bastion remnants, replacing some blackstone",
+    "dimension": "nether",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Gilded_Blackstone"
+  },
+  "nether_wart_block": {
+    "where": "Huge crimson fungi in crimson forests",
+    "dimension": "nether",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Nether_Wart_Block"
+  },
+  "warped_wart_block": {
+    "where": "Huge warped fungi in warped forests",
+    "dimension": "nether",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Warped_Wart_Block"
+  },
+  "crimson_nylium": {
+    "where": "Crimson forest surface",
+    "dimension": "nether",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Crimson_Nylium"
+  },
+  "warped_nylium": {
+    "where": "Warped forest surface",
+    "dimension": "nether",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Warped_Nylium"
+  },
+  "shroomlight": {
+    "where": "Upper parts of huge crimson and warped fungi",
+    "dimension": "nether",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Shroomlight"
+  },
+  "glowstone": {
+    "where": "Ceilings of netherrack in all Nether biomes (rarer in soul sand valleys); bastion hoglin stables",
+    "dimension": "nether",
+    "y_range": "0..127 (ceiling blobs)",
+    "source": "https://minecraft.wiki/w/Glowstone"
+  },
+  "crimson_stem": {
+    "where": "Trunks of huge crimson fungi in crimson forests",
+    "dimension": "nether",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Log"
+  },
+  "warped_stem": {
+    "where": "Trunks of huge warped fungi in warped forests",
+    "dimension": "nether",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Log"
+  },
+  "nether_bricks": {
+    "where": "Walls and pillars of Nether fortresses",
+    "dimension": "nether",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Nether_Bricks"
+  },
+  "end_stone": {
+    "where": "All End islands, main and outer",
+    "dimension": "end",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/End_Stone"
+  },
+  "end_stone_bricks": {
+    "where": "End cities and End ships",
+    "dimension": "end",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/End_Stone_Bricks"
+  },
+  "purpur_block": {
+    "where": "End cities and End ships",
+    "dimension": "end",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Purpur_Block"
+  },
+  "purpur_pillar": {
+    "where": "End cities and End ships",
+    "dimension": "end",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Purpur_Pillar"
+  },
+  "oak_log": {
+    "where": "Oak trees across temperate overworld biomes; azalea trees; fallen oak trees",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Log"
+  },
+  "spruce_log": {
+    "where": "Spruce trees in taiga and snowy taiga; mega spruce and pine trees; fallen spruce trees",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Log"
+  },
+  "birch_log": {
+    "where": "Birch trees in birch forests and other forests; fallen birch trees",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Log"
+  },
+  "jungle_log": {
+    "where": "Jungle trees and jungle bushes in jungle biomes; fallen jungle trees",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Log"
+  },
+  "acacia_log": {
+    "where": "Acacia trees in savannas",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Log"
+  },
+  "dark_oak_log": {
+    "where": "Dark oak trees in dark forests",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Log"
+  },
+  "mangrove_log": {
+    "where": "Mangrove trees in mangrove swamps",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Log"
+  },
+  "cherry_log": {
+    "where": "Cherry trees in cherry groves",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Log"
+  },
+  "pale_oak_log": {
+    "where": "Pale oak trees in pale gardens (creaking hearts inside trunks)",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Log"
+  },
+  "poplar_log": {
+    "where": "Poplar trees in dappled forests (26.3); fallen poplar trees",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Poplar_Log"
+  },
+  "oak_leaves": {
+    "where": "Canopy of oak trees; also in plains villages, trial chambers, abandoned camps",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Oak_Leaves"
+  },
+  "spruce_leaves": {
+    "where": "Canopy of spruce trees; abandoned camps",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Spruce_Leaves"
+  },
+  "birch_leaves": {
+    "where": "Canopy of birch trees; abandoned camps in birch and flower forests",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Birch_Leaves"
+  },
+  "jungle_leaves": {
+    "where": "Canopy of jungle trees; abandoned camps in bamboo jungles",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Jungle_Leaves"
+  },
+  "acacia_leaves": {
+    "where": "Canopy of acacia trees in savannas; abandoned camps",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Acacia_Leaves"
+  },
+  "dark_oak_leaves": {
+    "where": "Canopy of dark oak trees in dark forests; woodland mansions",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Dark_Oak_Leaves"
+  },
+  "mangrove_leaves": {
+    "where": "Canopy of mangrove trees; some trial chamber entrances",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Mangrove_Leaves"
+  },
+  "cherry_leaves": {
+    "where": "Canopy of cherry trees in cherry groves",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Cherry_Leaves"
+  },
+  "pale_oak_leaves": {
+    "where": "Canopy of pale oak trees in pale gardens",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Pale_Oak_Leaves"
+  },
+  "red_poplar_leaves": {
+    "where": "Poplar canopy in dappled forests (26.3)",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Poplar_Leaves"
+  },
+  "orange_poplar_leaves": {
+    "where": "Poplar canopy in dappled forests (26.3)",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Poplar_Leaves"
+  },
+  "yellow_poplar_leaves": {
+    "where": "Poplar canopy in dappled forests (26.3)",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Poplar_Leaves"
+  },
+  "acacia_wood": {
+    "where": "Savanna villages",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Wood"
+  },
+  "spruce_wood": {
+    "where": "Snowy taiga and taiga villages",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Wood"
+  },
+  "mangrove_wood": {
+    "where": "Some trial chamber entrance rooms",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Wood"
+  },
+  "creaking_heart": {
+    "where": "About 10% of pale oak trunks in pale gardens (fully enclosed by logs)",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Creaking_Heart"
+  },
+  "brown_mushroom_block": {
+    "where": "Huge brown mushrooms (mushroom fields, taiga, swamp); swamp abandoned camps",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Mushroom_Block"
+  },
+  "red_mushroom_block": {
+    "where": "Huge red mushrooms (mushroom fields, taiga, swamp); swamp abandoned camps",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Mushroom_Block"
+  },
+  "mushroom_stem": {
+    "where": "Trunks of huge brown and red mushrooms; dark forest vegetation",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Mushroom_Block"
+  },
+  "oak_planks": {
+    "where": "Plains villages and mineshafts (oak beams)",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Planks"
+  },
+  "spruce_planks": {
+    "where": "Taiga and snowy taiga villages",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Planks"
+  },
+  "acacia_planks": {
+    "where": "Savanna villages",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Planks"
+  },
+  "stone_bricks": {
+    "where": "Strongholds (walls, floors, ceilings); ruined portals; cold ocean ruins; igloo basements; trail ruins; trial chambers",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Stone_Bricks"
+  },
+  "mossy_stone_bricks": {
+    "where": "Strongholds and igloo basements; ocean ruins; ruined portals",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Mossy_Stone_Bricks"
+  },
+  "cracked_stone_bricks": {
+    "where": "Strongholds; ocean ruins, igloo basements, ruined portals, trail ruins",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Cracked_Stone_Bricks"
+  },
+  "chiseled_stone_bricks": {
+    "where": "Ocean ruins, ruined portals, jungle pyramids (three per pyramid), igloo basements",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Chiseled_Stone_Bricks"
+  },
+  "mossy_cobblestone": {
+    "where": "Monster rooms, jungle pyramids, pillager outposts, cold ocean ruins, plains and taiga villages; forest rocks; trial chambers",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Mossy_Cobblestone"
+  },
+  "cobblestone": {
+    "where": "Monster rooms, jungle pyramids, pillager outposts, ocean ruins, strongholds, villages, woodland mansions, trail ruins",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Cobblestone"
+  },
+  "prismarine": {
+    "where": "Ocean monuments (main structure blocks); cold ocean ruins",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Prismarine"
+  },
+  "prismarine_bricks": {
+    "where": "Ocean monuments (main structure blocks and pillars)",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Prismarine_Bricks"
+  },
+  "dark_prismarine": {
+    "where": "Ocean monuments (treasure room and decoration)",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Dark_Prismarine"
+  },
+  "sea_lantern": {
+    "where": "Ocean monuments and some ocean ruins",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Sea_Lantern"
+  },
+  "wet_sponge": {
+    "where": "Sponge rooms of ocean monuments (about 30 per room)",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Sponge"
+  },
+  "bricks": {
+    "where": "Ocean ruins, plains village armorer houses, trail ruins",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Bricks"
+  },
+  "mud_bricks": {
+    "where": "Trail ruins",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Mud_Bricks"
+  },
+  "deepslate_bricks": {
+    "where": "Ancient cities",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Deepslate_Bricks"
+  },
+  "deepslate_tiles": {
+    "where": "Ancient cities",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Deepslate_Tiles"
+  },
+  "cracked_deepslate_bricks": {
+    "where": "Ancient cities",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Cracked_Deepslate_Bricks"
+  },
+  "cracked_deepslate_tiles": {
+    "where": "Ancient cities",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Cracked_Deepslate_Tiles"
+  },
+  "chiseled_deepslate": {
+    "where": "Ancient cities",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Chiseled_Deepslate"
+  },
+  "polished_deepslate": {
+    "where": "Ancient cities",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Polished_Deepslate"
+  },
+  "polished_granite": {
+    "where": "Many ocean ruin variants",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Polished_Granite"
+  },
+  "polished_diorite": {
+    "where": "Warm ocean ruins",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Polished_Diorite"
+  },
+  "polished_andesite": {
+    "where": "Igloo basements, woodland mansions, trial chamber supply chests",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Polished_Andesite"
+  },
+  "chiseled_tuff": {
+    "where": "Trial chambers",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Chiseled_Tuff"
+  },
+  "chiseled_tuff_bricks": {
+    "where": "Trial chambers",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Chiseled_Tuff_Bricks"
+  },
+  "polished_tuff": {
+    "where": "Trial chambers (primary ceiling block of many rooms)",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Polished_Tuff"
+  },
+  "tuff_bricks": {
+    "where": "Trial chambers (ceiling and wall block)",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Tuff_Bricks"
+  },
+  "copper_block": {
+    "where": "Trial chambers",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Block_of_Copper"
+  },
+  "waxed_copper_block": {
+    "where": "Trial chambers",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Block_of_Copper"
+  },
+  "waxed_oxidized_copper": {
+    "where": "Trial chambers",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Block_of_Copper"
+  },
+  "oxidized_cut_copper": {
+    "where": "Trial chambers",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Cut_Copper"
+  },
+  "waxed_cut_copper": {
+    "where": "Trial chambers",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Cut_Copper"
+  },
+  "waxed_oxidized_cut_copper": {
+    "where": "Trial chambers",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Cut_Copper"
+  },
+  "cut_sandstone": {
+    "where": "Desert villages, desert pyramids, warm ocean ruins",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Cut_Sandstone"
+  },
+  "chiseled_sandstone": {
+    "where": "Desert pyramids, warm ocean ruins, trial chambers",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Chiseled_Sandstone"
+  },
+  "smooth_sandstone": {
+    "where": "Desert villages",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Smooth_Sandstone"
+  },
+  "sandstone_slab": {
+    "where": "Desert pyramids, desert villages, desert wells",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Sandstone_Slab"
+  },
+  "stone_brick_slab": {
+    "where": "Overworld ruined portals and strongholds",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Stone_Brick_Slab"
+  },
+  "cobblestone_slab": {
+    "where": "Plains villages, pillager outposts, woodland mansions",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Cobblestone_Slab"
+  },
+  "deepslate_brick_slab": {
+    "where": "Ancient cities",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Deepslate_Brick_Slab"
+  },
+  "deepslate_tile_slab": {
+    "where": "Ancient cities",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Deepslate_Tile_Slab"
+  },
+  "mud_brick_slab": {
+    "where": "Trail ruins",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Mud_Brick_Slab"
+  },
+  "polished_blackstone_brick_slab": {
+    "where": "Nether ruined portals",
+    "dimension": "nether",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Polished_Blackstone_Brick_Slab"
+  },
+  "spawner": {
+    "where": "Monster rooms (dungeons: center spawner plus scattered cave spider spawners); stronghold end portal room (silverfish spawner); woodland mansion secret room (spider spawner)",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Monster_Spawner"
+  },
+  "trial_spawner": {
+    "where": "Every chamber and corridor of trial chambers except entrance and intersection chambers",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Trial_Spawner"
+  },
+  "bookshelf": {
+    "where": "Village libraries and some village houses; stronghold libraries",
+    "dimension": "overworld",
+    "y_range": null,
+    "source": "https://minecraft.wiki/w/Bookshelf"
+  }
+}

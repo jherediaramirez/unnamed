@@ -1,0 +1,16 @@
+{
+  "scope": "Read-only hash comparison of 2987 pre-existing files under Source, Config, Content, Docs and Reference. Only Reference/minecraft-hud-26.3 was written by this task.",
+  "preexisting_files_checked": 2987,
+  "changed_during_research": [
+    "Source/Unnamed/UnnamedProjectSettings.cpp",
+    "Source/Unnamed/Foundation/FoundationController.cpp",
+    "Source/Unnamed/Foundation/FoundationController.h",
+    "Source/Unnamed/Foundation/FoundationRuntimeProbe.cpp",
+    "Source/Unnamed/Menu/MenuPlayerController.cpp",
+    "Source/Unnamed/Menu/MenuPlayerController.h"
+  ],
+  "missing_during_research": [
+    "Source/Unnamed/Tests/SuperFlatTests.cpp"
+  ],
+  "note": "Any changed pre-existing files indicate concurrent workspace work; this task did not modify or restore them."
+}

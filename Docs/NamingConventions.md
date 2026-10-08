@@ -11,15 +11,18 @@ The project is split into a few areas. The area name is used everywhere: folder,
 | Menu | `Source/Unnamed/Menu/` | `Menu` (`UMenuBrowserHost`) | `Unnamed.Menu.*` | `LogUnnamedMenu` |
 | Input | `Source/Unnamed/Input/` | `UnnamedInput` (`UUnnamedInputSubsystem`) | `Unnamed.Input.*` | - |
 | Foundation | `Source/Unnamed/Foundation/` | `Foundation` (`AFoundationController`) | `Unnamed.Foundation.*` | `LogUnnamedFoundation` |
-| Worlds | `Source/Unnamed/SuperFlat/` | `SuperFlat` (`ASuperFlatGameMode`) | `Unnamed.Worlds.*` | `LogUnnamedWorlds` |
+| Hud | `Source/Unnamed/Hud/` | `Hud` (`UHudAssets`, `SHudView`) | `Unnamed.Hud.*` | `LogUnnamedHud` |
+| Worlds | - (catalog in `Source/Unnamed/UnnamedProjectSettings.*`) | `Unnamed` (`FUnnamedWorldEntry`) | `Unnamed.Worlds.*` | `LogUnnamedWorlds` |
 | Project-wide | `Source/Unnamed/` | `Unnamed` (`UUnnamedProjectSettings`) | `Unnamed.Project.*` | - |
 
 Exceptions, with reasons:
 
 - Input uses `UnnamedInput` rather than `Input`: bare `Input*` collides with engine names such as `UInputSettings`, and `UUnnamedInputSettings` is stored by class path in players' saved settings, so renaming it would lose their bindings.
 - Log categories always carry the `LogUnnamed` prefix; they are global symbols and must not clash with engine categories.
-- Saved IDs never change once shipped: binding IDs such as `key.sneak` (labelled Crouch), world IDs such as `super-flat`, the input save slot `UnnamedInputSettings`. Rename the label, not the ID.
+- Saved IDs never change once shipped: binding IDs such as `key.sneak` (labelled Crouch), world IDs such as `playground` (retired: `foundation`, `super-flat`, `interaction-lab`; never reused), block and item IDs (the vanilla names without `minecraft:`; item id = block id; retired: `dummy_block`, `dummy_block_item`; never reused), the input save slot `UnnamedInputSettings`. Rename the label, not the ID.
 - "Unnamed" is the placeholder project name. Renaming the project is a separate task ([Project rename notes](ProjectRenameNotes.md)).
+
+- Pure HUD equations and compact automation vectors use local mathematical symbols (`S` snapshot, `P` presentation, `L` layout, `B` draw builder) to keep reference coordinates and truth tables easy to compare. Public APIs and stored fields still use descriptive names.
 
 ## C++ (Unreal style)
 
@@ -51,7 +54,7 @@ Exceptions, with reasons:
 
 ## Scripts, tests and evidence
 
-- PowerShell and editor Python scripts: `VerbNoun` (`BuildFoundation.ps1`, `TestInput.ps1`, `CreateSuperFlatMap.py`); editor Python lives in `Scripts/Editor/`.
+- PowerShell and editor Python scripts: `VerbNoun` (`BuildFoundation.ps1`, `TestInput.ps1`, `CreatePlaygroundMap.py`); editor Python lives in `Scripts/Editor/`.
 - `Scripts/Test<Area>.ps1` runs the native suite `Unnamed.<Area>`.
 - Node unit tests: `Tests/<topic>.test.mjs` (run by `npm test`); CEF integration suites: `Tests/<topic>.mjs`.
 - Native test files: `Source/Unnamed/Tests/<Area>Tests.cpp` or `<Area><Topic>Tests.cpp`, with test paths `Unnamed.<Area>.<Topic>`.
