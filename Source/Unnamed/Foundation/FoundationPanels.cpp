@@ -127,10 +127,10 @@ namespace
         Cycle(
             [](const FFoundationVitals& V)
             {
-                static const TCHAR* Difficulties[] = {TEXT("Easy"), TEXT("Normal"), TEXT("Hard")};
+                static const TCHAR* Difficulties[] = {TEXT("Peaceful"), TEXT("Easy"), TEXT("Normal"), TEXT("Hard")};
                 return FString(TEXT("Difficulty: ")) + Difficulties[int32(V.Difficulty)];
             },
-            [](FFoundationVitals& V) { V.Difficulty = EFoundationDifficulty((int32(V.Difficulty) + 1) % 3); });
+            [](FFoundationVitals& V) { V.Difficulty = EFoundationDifficulty((int32(V.Difficulty) + 1) % 4); });
         List->AddSlot().AutoHeight().Padding(0, 2)[SNew(SCheckBox)
                 .IsChecked_Lambda(
                     [WeakPawn]

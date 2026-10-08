@@ -1,5 +1,19 @@
 # Verification
 
+## Voxel world: lighting (step 2L) and Create New World (phase 2W) - October 8, 2026
+
+- **Step 2L** (Lumen cards for chunks, the generated map's sky light 3):
+  - voxel tests 20/20 and native 66/66;
+  - shaded slopes measure 24 to 47 of 255;
+  - evidence: `Tests/Evidence/2026-10-08/VoxelShots-20261008-160917/` and `VoxelLightingCompare-20261008-161235/`.
+- **Phase 2W** (saved worlds; Peaceful in the vitals):
+  - voxel tests 21/21, native 68/68, JavaScript units 57/57, and 938 reference assets unchanged;
+  - `Tests/create-world.mjs --editor` 32/32 (create, list, rename, re-create, play, delete; Superflat in Creative on Peaceful);
+  - `Tests/foundation-menu.mjs --editor` 36/36;
+  - the Playground runtime probe at 60 FPS: 103 checks, 0 failures (`Tests/Evidence/2026-10-08/Playground-all/Runtime-20261008-171232/`, kept local: 22 MB of HUD captures).
+
+Details, evidence and gaps: [lighting record](Records/2026-10-08-Voxel-Lighting.md) and [phase 2W record](Records/2026-10-08-Voxel-Phase2W.md).
+
 ## Blocks - October 8, 2026
 
 Native `Automation RunTests Unnamed` 46/46; runtime probe (`-FrameRates 60 -HudCaptures`) 139 checks, 0 failures; screenshot tour 24 shots, 0 failures, including the block gallery and creative inventory. Evidence: `Tests/Evidence/2026-10-08/Blocks-20261008/` (`Native-6`, `Runtime-all-3`, `Tour-5`). Details and gaps: [blocks record](Records/2026-10-08-Blocks.md).

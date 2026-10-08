@@ -74,6 +74,11 @@ int32 FVoxelHeightTerrain::GetSurfaceHeight(int32 X, int32 Y) const
     return FMath::Clamp(FMath::FloorToInt32(Height), VoxelConstants::MinZ + 8, VoxelConstants::MaxZ - 16);
 }
 
+bool FVoxelHeightTerrain::IsDry(int32 X, int32 Y) const
+{
+    return GetSurfaceHeight(X, Y) >= VoxelConstants::SeaLevel;
+}
+
 void FVoxelHeightTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelHeightTerrain_Generate);

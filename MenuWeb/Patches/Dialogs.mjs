@@ -5,7 +5,8 @@ export const name = 'Dialogs';
 export function apply(patch) {
   patch.edit('editworld(){', 'let newName=w.name;', 'let newName=current.data.worldName??w.name;');
   patch.edit('editworld(){', 'newName=v;', 'current.data.worldName=newName=v;');
-  patch.edit('editworld(){', 'w.name=newName.trim();persist();back()});save.id=', 'w.name=newName.trim();commitStage();back()},!newName.trim());save.id=');
+  // Save renames the saved world natively too; its reply brings the list back in line.
+  patch.edit('editworld(){', 'w.name=newName.trim();persist();back()});save.id=', 'w.name=newName.trim();commitStage();back();void MenuApplication.renameWorld(w.id,w.name)},!newName.trim());save.id=');
 
   patch.edit('presets(){', "const f=field(flatEdit.slice().reverse().map(l=>(l.height>1?l.height+'*':'')+l.block).join(',')+';'+flatBiomeEdit,",
     "const f=field(current.data.presetText??(flatEdit.slice().reverse().map(l=>(l.height>1?l.height+'*':'')+l.block).join(',')+';'+flatBiomeEdit),");

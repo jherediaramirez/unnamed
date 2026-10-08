@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Noise/VoxelNoise.h"
+#include "Terrain/VoxelTerrain.h"
 
 class FVoxelBlockTable;
 class FVoxelColumn;
@@ -18,16 +19,16 @@ struct FVoxelTerrainBlocks
 // (bedrock thinning out by Z -60, deepslate below 0 mixing into stone up to 8, sea at 63). It gives storage, meshing
 // and streaming varied ground to run on until phase 4's density terrain replaces it. Immutable after construction;
 // any worker may generate any column, and the result depends only on the seed and the column.
-class UNNAMEDVOXEL_API FVoxelHeightTerrain
+class UNNAMEDVOXEL_API FVoxelHeightTerrain final : public IVoxelTerrain
 {
 public:
     // Table must outlive the terrain.
     FVoxelHeightTerrain(int64 InSeed, const FVoxelBlockTable& InTable);
 
-    // The top solid block's Z at a world column.
-    int32 GetSurfaceHeight(int32 X, int32 Y) const;
-    // Fills Out with column Position; Dense is scratch, resized to FVoxelColumn::DenseVolume.
-    void Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const;
+    virtual int32 GetSurfaceHeight(int32 X, int32 Y) const override;
+    // Dry from sea level up.
+    virtual bool IsDry(int32 X, int32 Y) const override;
+    virtual void Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const override;
 
 private:
     int64 Seed;

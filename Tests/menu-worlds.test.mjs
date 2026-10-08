@@ -4,18 +4,38 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const read = file => fs.readFileSync(new URL('../MenuWeb/Runtime/' + file, import.meta.url), 'utf8');
-function fixture({canQuit = true, saveFailure = false} = {}) {
+const playground = {id: 'playground', name: 'Playground', summary: '2 km dev grid: movement course, building, mining and combat',
+  status: 'Playable - Java 26.3 foundation, session only'};
+const helloDraft = {name: 'Hello', seed: 'hello', gameMode: 'Survival', difficulty: 'Normal', type: 'Default'};
+function fixture({canQuit = true, saveFailure = false, createError = ''} = {}) {
   const calls = [], notices = [], intervals = [];
   let requested = false;
-  const reply = () => ({ok: !(requested && saveFailure), canQuit, pendingQuit: false, quitIssued: false,
-    canOpenWorld: true, pendingWorld: false, travelIssued: requested && !saveFailure, error: requested && saveFailure ? 'Save failed.' : '',
-    worlds: [{id: 'playground', name: 'Playground', summary: '2 km dev grid: movement course, building, mining and combat',
-      status: 'Playable - Java 26.3 foundation, session only'}]});
+  // Native's saves, most recently played first.
+  let saved = [{id: 'hello', name: 'Hello', summary: 'hello (10/8/26, 4:30 PM)', status: 'Survival Mode', draft: helloDraft}];
+  const reply = (error = '') => ({ok: !(requested && saveFailure) && !error, canQuit, pendingQuit: false, quitIssued: false,
+    canOpenWorld: true, pendingWorld: false, travelIssued: requested && !saveFailure && !error,
+    error: error || (requested && saveFailure ? 'Save failed.' : ''), worlds: [playground], savedWorlds: structuredClone(saved)});
+  const native = {
+    getstate: async () => reply(),
+    requestopenworld: async id => { calls.push('open:' + id); requested = true; return reply(); },
+    createworld: async json => {
+      calls.push('create:' + JSON.parse(json).name);
+      if (createError) return reply(createError);
+      saved = [{id: 'new-world', name: JSON.parse(json).name, summary: 'new-world', status: 'Survival Mode', draft: JSON.parse(json)}, ...saved];
+      requested = true;
+      return reply();
+    },
+    deleteworld: async id => { calls.push('delete:' + id); saved = saved.filter(w => w.id !== id); return reply(); },
+    renameworld: async (id, name) => {
+      calls.push('rename:' + id + ':' + name);
+      saved = saved.map(w => w.id === id ? {...w, name} : w);
+      return reply();
+    },
+  };
   const context = vm.createContext({
-    window: {ue: {menuapplication: {getstate: async () => reply(), requestopenworld: async id => {calls.push('open:' + id); requested = true; return reply();}}}},
+    window: {ue: {menuapplication: native}},
     screen: {querySelectorAll: () => []}, clone: structuredClone, console, Date, clearTimeout,
-    state: {worlds: [{id: 'fictional-forest', name: 'Forest'}, {id: 'fictional-build', name: 'Build'}]},
-    current: {name: 'main'}, drawWorlds: () => calls.push('draw'),
+    state: {worlds: []}, current: {name: 'main'}, drawWorlds: () => calls.push('draw'),
     setTimeout: (fn, ms) => setTimeout(fn, ms >= 20000 ? 60 : ms >= 5000 ? 40 : ms), setInterval: fn => intervals.push(fn),
     message: (...args) => notices.push(args),
     MenuVideo: {prepareForExit: async () => {calls.push('video'); await new Promise(resolve => setTimeout(resolve, 5)); calls.push('video-saved');}, cancelExit: () => calls.push('video-unlock')},
@@ -26,12 +46,12 @@ function fixture({canQuit = true, saveFailure = false} = {}) {
   // Script order registers video, input, then preferences.
   vm.runInContext('for (const store of [MenuVideo, window.MenuInput, window.MenuPreferences]) MenuStores.register(store)', context);
   vm.runInContext(read('MenuApplicationRuntime.js'), context);
-  return {api: context.window.MenuApplication, context, calls, notices, intervals};
+  return {api: context.window.MenuApplication, context, calls, notices, intervals, native};
 }
 
-test('only catalog worlds travel, after all three settings services drain, once', async () => {
+test('only listed worlds travel, after all three settings services drain, once', async () => {
   const f = fixture(); await f.api.initialize();
-  for (const id of ['fictional-forest', 'fictional-build', '/Game/Maps/L_Playground', 'playground?listen']) await f.api.openWorld(id);
+  for (const id of ['fictional-forest', 'fictional-build', '/Game/Maps/L_Playground', 'playground?listen', '../hello']) await f.api.openWorld(id);
   assert.deepEqual(f.calls.filter(c => c !== 'draw'), []);
   const request = f.api.openWorld('playground');
   await f.api.openWorld('playground'); await f.api.quit(); await request;
@@ -73,21 +93,68 @@ test('late pre-travel poll cannot overwrite the accepted travel', async () => {
   assert.equal(f.api.getState().travelIssued, true);
 });
 
-test('native catalog leads the world list and is the only source of playable IDs', async () => {
+test('native worlds are the whole list: the catalog, then the saves; no sample entries', async () => {
   const f = fixture(); await f.api.initialize();
-  assert.deepEqual([...f.context.state.worlds.map(w => w.id)], ['playground', 'fictional-forest', 'fictional-build']);
-  assert.deepEqual([...f.context.state.worlds.map(w => !!w.builtIn)], [true, false, false]);
-  assert.equal(f.api.defaultWorld(), 'playground');
+  assert.deepEqual([...f.context.state.worlds.map(w => w.id)], ['playground', 'hello']);
+  assert.deepEqual([...f.context.state.worlds.map(w => !!w.builtIn)], [true, false]);
+  assert.deepEqual([...f.context.state.worlds.map(w => !!w.saved)], [false, true]);
+  assert.deepEqual({...f.context.state.worlds[1].draft}, helloDraft, 'a save carries its settings for Re-Create');
+  assert.equal(f.api.defaultWorld(), 'hello', 'the last played save is selected first');
   assert.equal(f.api.isPlayable('playground'), true);
-  for (const id of ['fictional-forest', 'Playground', '/Game/Maps/L_Playground', '', 'foundation', 'super-flat', 'interaction-lab'])
+  assert.equal(f.api.isPlayable('hello'), true);
+  for (const id of ['fictional-forest', 'Playground', '/Game/Maps/L_Playground', '', 'foundation', 'super-flat', 'interaction-lab', 'hello?x'])
     assert.equal(f.api.isPlayable(id), false);
+  await f.api.openWorld('hello');
+  assert.equal(f.calls.at(-1), 'open:hello');
 });
 
-test('a rolled-back world list regains the built-in worlds on the next reply', async () => {
+test('a rolled-back world list is repaired on the next reply', async () => {
   const f = fixture(); await f.api.initialize();
   f.context.state.worlds = f.context.state.worlds.filter(w => !w.builtIn);
   f.context.current.name = 'worlds';
   await f.intervals[0]();
-  assert.equal(f.context.state.worlds.filter(w => w.builtIn).length, 1);
+  assert.deepEqual([...f.context.state.worlds.map(w => w.id)], ['playground', 'hello']);
   assert.equal(f.calls.at(-1), 'draw');
+});
+
+test('Create sends the draft once, after the settings drain, then follows travel', async () => {
+  const f = fixture(); await f.api.initialize();
+  const creating = f.api.createWorld({name: 'New World', seed: '', gameMode: 'Creative'});
+  await f.api.createWorld({name: 'Twice'}); await f.api.openWorld('playground'); await creating;
+  assert.deepEqual(f.calls.filter(c => c.startsWith('create:') || c.startsWith('open:')), ['create:New World']);
+  assert.ok(f.calls.indexOf('create:New World') > f.calls.indexOf('MenuPreferences-saved'));
+  assert.equal(f.api.getState().travelIssued, true);
+  assert.equal(f.api.isLoading(), true, 'the page stays locked while Unreal travels');
+  assert.equal(f.context.state.worlds.find(w => w.id === 'new-world').name, 'New World');
+  assert.deepEqual(f.notices, []);
+});
+
+test("a refused draft shows native's reason and leaves the menu usable", async () => {
+  const f = fixture({createError: 'Enter a name for the world.'}); await f.api.initialize();
+  await f.api.createWorld({name: ' '});
+  assert.deepEqual([...f.notices.at(-1)], ['Create New World', 'Enter a name for the world.']);
+  assert.equal(f.api.isLoading(), false);
+  assert.equal(f.api.worldEnabled('playground'), true);
+  assert.deepEqual(f.calls.slice(-3), ['video-unlock', 'MenuInput-unlock', 'MenuPreferences-unlock']);
+});
+
+test('Create without the game explains instead of failing silently', async () => {
+  const f = fixture(); // never initialized: no native state
+  await f.api.createWorld({name: 'Offline'});
+  assert.equal(f.calls.some(c => c.startsWith('create:')), false);
+  assert.equal(f.notices.at(-1)[0], 'Create New World');
+});
+
+test('delete and rename reach native for saved worlds only, and the reply updates the list', async () => {
+  const f = fixture(); await f.api.initialize();
+  await f.api.deleteWorld('playground'); await f.api.renameWorld('playground', 'Mine'); await f.api.deleteWorld('../hello');
+  assert.equal(f.calls.some(c => c.startsWith('delete:') || c.startsWith('rename:')), false);
+  await f.api.renameWorld('hello', 'Hi there');
+  assert.equal(f.calls.at(-1), 'rename:hello:Hi there');
+  assert.equal(f.context.state.worlds.find(w => w.id === 'hello').name, 'Hi there');
+  await f.api.deleteWorld('hello');
+  assert.equal(f.calls.at(-1), 'delete:hello');
+  assert.deepEqual([...f.context.state.worlds.map(w => w.id)], ['playground']);
+  assert.equal(f.api.isPlayable('hello'), false);
+  assert.deepEqual(f.notices, []);
 });

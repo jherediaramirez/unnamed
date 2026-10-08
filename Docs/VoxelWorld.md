@@ -10,8 +10,8 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 | 1 | Deterministic core: seeds, hashing, Xoroshiro128++, noise, splines | Done |
 | 2 | Data and meshing on a fixed 9 x 9-column area | Done |
 | 2L | Lighting: Lumen cards for chunks and a brighter sky light, so shaded slopes are no longer black | Done |
-| 2W | Create New World: saved worlds, seed, world type, game mode, difficulty | Next |
-| 3 | Streaming, plus mining and placing on generated terrain | |
+| 2W | Create New World: saved worlds, seed, world type, game mode, difficulty | Done |
+| 3 | Streaming, plus mining and placing on generated terrain | Next |
 | 4 | Terrain (needs lava for aquifers) | |
 | 5 | Biomes and surface (needs snow layers) | |
 | 6 | Decoration, after a block-shapes step (plants, cross models) | |
@@ -24,7 +24,7 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 
 | Where | What |
 |---|---|
-| `Source/UnnamedVoxel/` | The core module: RNG, noise, density, biomes, storage and meshing in plain C++. It depends on `Core` only, so UObjects, actors and render state cannot be included, and it compiles with precise floating point (below). Headers are included by their path from this folder (`"Random/VoxelSeed.h"`). It holds:<br>- `Random/`: seeds, hashing, streams;<br>- `Noise/`: gradient and fractal noise;<br>- `Spline/`: nested splines;<br>- `Blocks/`: the per-state table;<br>- `Storage/`: sections and columns;<br>- `Terrain/`: the phase 2 heightmap terrain;<br>- `Meshing/`: the mesher;<br>- `Generation/`: the area builder;<br>- `VoxelBench`: timings;<br>- the module-wide `VoxelConstants`, `VoxelLog` and `VoxelStats`. |
+| `Source/UnnamedVoxel/` | The core module: RNG, noise, density, biomes, storage and meshing in plain C++. It depends on `Core` only, so UObjects, actors and render state cannot be included, and it compiles with precise floating point (below). Headers are included by their path from this folder (`"Random/VoxelSeed.h"`). It holds:<br>- `Random/`: seeds, hashing, streams;<br>- `Noise/`: gradient and fractal noise;<br>- `Spline/`: nested splines;<br>- `Blocks/`: the per-state table;<br>- `Storage/`: sections and columns;<br>- `Terrain/`: the terrain interface, the phase 2 height terrain and Superflat's flat terrain;<br>- `Meshing/`: the mesher;<br>- `Generation/`: the area builder;<br>- `VoxelBench`: timings;<br>- the module-wide `VoxelConstants`, `VoxelLog` and `VoxelStats`. |
 | `Source/Unnamed/Voxel/` | The Unreal side:<br>- `UVoxelWorldSettings` and the console (`VoxelConsole`);<br>- the registry-to-table bridge (`VoxelBlocks`);<br>- the column mesh (`UVoxelChunkComponent`);<br>- the level actor (`AVoxelWorld`). |
 | `/Game/Maps/L_Generated` | The generated world's map (`UUnnamedProjectSettings::GeneratedMap`), made by `Scripts/Editor/CreateGeneratedMap.py`. It is not a catalog world. |
 | `/Game/Blocks/M_Chunk*` | The chunk materials, made by `Scripts/Editor/CreateBlockMaterials.py`. |
@@ -50,7 +50,7 @@ These differ from the prompt because of what the project already had.
 - **Noise:** our own scalar noise behind a batch API, not FastNoise2. Runtime SIMD dispatch can round differently on different CPUs, and golden-value tests lock the output.
 - **Seeds:** text seeds use our own 64-bit hash, pinned by test vectors, so an engine upgrade cannot change existing worlds.
 - **Floating point:** `UnnamedVoxel` compiles with `FPSemanticsMode.Precise`. By default Unreal builds the editor with `/fp:precise` and game targets with `/fp:fast` (`VCToolChain.cs`), which would let a packaged build generate different blocks from the editor for the same seed.
-- **Worlds:** generated worlds are player-made worlds from Create New World, all opening one procedural map. The Playground stays the only built-in world.
+- **Worlds:** generated worlds are player-made worlds from Create New World, all opening one procedural map ([Saved worlds](#saved-worlds)). The Playground stays the only built-in world.
 - **Worldgen numbers:** biome parameter boxes, splines and noise settings will come from the 26.3 data on this machine into a new hash-checked `Reference/minecraft-worldgen-26.3/`, as numbers only, never code.
 
 ## Deterministic core
@@ -94,7 +94,9 @@ A column's density corners at 4 x 8 x 4 cells (5 x 5 x 49 points) cost about 160
 | Block table | `Blocks/VoxelBlockTable.h`, `Voxel/VoxelBlocks.cpp` | One `FVoxelStateInfo` per state id, compiled from the registry on the game thread and shared read-only. It holds the shape (full, bottom or top slab, fluid), the layer (opaque, cutout, translucent, water), the seven face codes, the tint, the light, and three flags: solid, leaves and shades corners. `OpaqueFaces` marks the faces that hide a neighbour: all six for an opaque cube, only the bottom or top for a slab, none for glass or leaves. Water's faces come from its still and flow textures, as the Playground draws it. `VoxelBlocks.cpp` checks that the core's face order and cull bit match the registry's. |
 | Sections | `Storage/VoxelSection.h` | 16^3 states, X fastest, then Y, then Z. One state needs no index array; up to 16 states use 4-bit indices; up to 256 use 8-bit; more store 16-bit state ids directly. Widths divide 64, so no index straddles two words. `Set` widens as the palette fills; `Compact` narrows. Allocations are exact. |
 | Columns | `Storage/VoxelColumn.h` | 24 sections plus the four heightmaps (world surface, ocean floor, motion blocking, motion blocking without leaves), stored as Z - MinZ + 1 with 0 for none. Built from a dense column buffer on a worker, then read-only. A generated column takes about 10 KB. |
-| Terrain (phase 2) | `Terrain/VoxelHeightTerrain.h` | A stand-in until phase 4. A 2D height comes from continent fBm (1/220), damped hills (1/90) and detail (1/24), giving sea level 63 plus up to about 100 blocks. Layers: bedrock thinning from Z -64 to -60; deepslate below 0, blending into stone up to 8; stone; 3 to 5 blocks of soil. The top is grass, sand at the shore, gravel deep under water, bare stone from 110 and snow from 128. Water fills to Z 62. |
+| Terrains | `Terrain/VoxelTerrain.h` | `IVoxelTerrain`: a column generator the area builder, the spawn search and the bench all take. Every column is a pure function of the terrain's settings and its position. |
+| Flat terrain | `Terrain/VoxelFlatTerrain.h` | Superflat: the same stack of layers in every column, laid from Z -64 up and cut at the world's top. The surface is the top solid layer; a fluid above it makes the land not dry. |
+| Height terrain (phase 2) | `Terrain/VoxelHeightTerrain.h` | A stand-in until phase 4. A 2D height comes from continent fBm (1/220), damped hills (1/90) and detail (1/24), giving sea level 63 plus up to about 100 blocks. Layers: bedrock thinning from Z -64 to -60; deepslate below 0, blending into stone up to 8; stone; 3 to 5 blocks of soil. The top is grass, sand at the shore, gravel deep under water, bare stone from 110 and snow from 128. Water fills to Z 62. |
 | Meshing | `Meshing/VoxelMesher.h` | Each section meshes alone from an 18^3 padded copy: itself plus a one-cell border from its 26 neighbours, which may sit in other columns. A missing column reads as air. Rules: see below. |
 | Area builder | `Generation/VoxelArea.h` | Generates a square of columns, then meshes every section with its neighbours, one task each, timing every stage. The test area and `voxel.Bench Columns` use it. |
 
@@ -129,23 +131,47 @@ A whole column (generation plus 24 sections) costs about 1.9 ms on one worker. O
 
 `AVoxelWorld` is the level actor of `/Game/Maps/L_Generated` and the map's `AFoundationLab`.
 
-- **Start:** at BeginPlay it builds a square of `2 * voxel.TestAreaRadius + 1` columns around the origin with the dev seed (`-VoxelSeed=<text>` overrides it).
+- **Start:** at BeginPlay it builds a square of `2 * voxel.TestAreaRadius + 1` columns around the origin, from its saved world's seed and terrain (`?VoxelWorld=<id>`, [Saved worlds](#saved-worlds)) or, when the map opens without one, the dev seed. `-VoxelSeed=<text>` overrides either seed.
 - **Build:** a background task generates, meshes and builds every column's stream set; the game thread then applies whole columns within `voxel.ApplyBudgetMs` per frame.
 - **Player:** once the columns exist, the player returns to spawn: the dry surface nearest the origin, found from the terrain function so it is known before any column is built. Collision comes from block data, and falling below Z -128 returns the player to spawn.
 
 To try it in the editor:
 
-1. Open `Content/Maps/L_Generated` and press Play. You stand on the test area and can walk, jump and look around; the edges show the cut through the world down to bedrock.
+1. Open `Content/Maps/L_Generated` and press Play. You stand on the test area and can walk, jump and look around; the edges show the cut through the world down to bedrock. Or start from the menu: Singleplayer, Create New World.
 2. `voxel.Seed hello` rebuilds the area with another seed. `voxel.Regenerate` rebuilds it after you change `voxel.TestAreaRadius`, `voxel.GreedyMeshing` or `voxel.AmbientOcclusion`.
 3. `stat Voxel` shows the generate, gather, mesh and apply timings. The build's report is in the Output Log under `LogUnnamedVoxel`.
 
-`& Scripts\CaptureVoxel.ps1 [-Seed <text>] [-ExecCmds '<console commands>']` renders the area offscreen and saves 5 screenshots plus `build.txt` to `Tests/Evidence/<date>/VoxelShots-<time>/`. `build.txt` holds the build report, the lighting settings in effect, each shot's GPU frame time (the mean of its last 60 settled frames) and where the player stands. `-ExecCmds` compares settings without changing anything, for example `'r.Lumen.HardwareRayTracing.LightingMode 1'`. The shots:
+`& Scripts\CaptureVoxel.ps1 [-Seed <text>] [-World <id> [-WorldsDir <folder>]] [-ExecCmds '<console commands>']` renders the area offscreen (`-World` opens a saved world, from `Saved/Worlds` by default) and saves 5 screenshots plus `build.txt` to `Tests/Evidence/<date>/VoxelShots-<time>/`. `build.txt` holds the build report, the lighting settings in effect, each shot's GPU frame time (the mean of its last 60 settled frames) and where the player stands. `-ExecCmds` compares settings without changing anything, for example `'r.Lumen.HardwareRayTracing.LightingMode 1'`. The shots:
 
 - `overview`;
 - `closeup` of the highest point;
 - `ground` from the player's view;
 - `lumen-scene` (what Lumen sees);
 - `section` (a cut through the west edge).
+
+## Saved worlds
+
+Create New World makes a saved world, and Play opens one. Both go through `UMenuApplication` (`CreateWorld`, `RequestOpenWorld`, `RenameWorld`, `DeleteWorld`) to the store `UnnamedSavedWorlds` in `Source/Unnamed/Worlds/`. The page's list is native: the catalog's built-in worlds, then the saved worlds, most recently played first. The reference's two sample saves are gone.
+
+- **Where:** `Saved/Worlds/<id>/world.json`, written crash-safely (`UnnamedFiles::SaveTextAtomically`). `-WorldsDir=<folder>` moves the store for tests and captures. Worlds save in the editor too: they are the player's content, not settings.
+- **Ids:** made once from the name, as lowercase ASCII letters and digits joined by dashes. "My World!" becomes `my-world`, and a name with nothing usable becomes `world`. A taken id gets `-2`, `-3` and so on; an id is never a catalog id, a retired id or a Windows device name. A world id is a saved id: it never changes, so renaming changes only the name. Every id from the page is checked before it becomes a path.
+- **world.json:**
+  - `version` 1 and `generator` 1;
+  - the Create screen's own keys and values: `name`, `seed`, `gameMode`, `difficulty`, `commands`, `type`, `structures`, `bonus`, `biome`, `flatBiome`, `flat`, `experiments` and `rules`;
+  - `seedValue`, the 64-bit seed written as text;
+  - `created` and `lastPlayed` (UTC, ISO 8601).
+
+  A file from a newer version or generator is refused, never rewritten. Re-Create refills the Create screen from these keys; a random seed comes back as its number.
+- **Travel:** `L_Generated?VoxelWorld=<id>`. `AVoxelWorld` reads its world on first use and builds the terrain. The pawn asks its lab for the player's rules when it arrives (`AFoundationLab::ConfigurePlayer`).
+
+| Choice | What it does now |
+|---|---|
+| Seed | Parsed at creation (`FVoxelSeed::Parse`); a blank seed draws a random one once, and the world keeps it. |
+| World type | Superflat builds the flat terrain from its layers: listed top first on screen, laid from the floor up. Every layer must be a block this game has. Default, Large Biomes, AMPLIFIED and Single Biome build today's height terrain; the last three are saved for phases 4 and 5. |
+| Game mode | Survival and Creative set the player's mode. Hardcore plays as Survival on Hard: the screen and the store force Hard, no commands and no bonus chest. Permadeath needs a game-over screen first. |
+| Difficulty | Peaceful, Easy, Normal or Hard in the player's vitals. Peaceful means no mob damage and, with natural regeneration on, a point of health every second and of food every half second. |
+| Game rules | `natural_health_regeneration` drives the player's regeneration; the others are saved for their systems. |
+| Commands, structures, bonus chest, experiments, Single Biome's biome | Saved; each takes effect when its system exists. Data Packs stay a mock. |
 
 ## Settings and console variables
 
@@ -223,7 +249,7 @@ Limits:
 
 ## Tests
 
-`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 20 `Unnamed.Voxel` tests. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
+`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 21 `Unnamed.Voxel` tests. Saved worlds are tested by `Unnamed.Worlds.Saved` (native) and, through the menu end to end, by `Tests/create-world.mjs`. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
 
 | Test | Checks |
 |---|---|
@@ -246,6 +272,7 @@ Limits:
 | `Unnamed.Voxel.Mesher.Shapes` | Known quad counts (a block, a merged cube, a bar, glass beside glass, leaves beside leaves, a floor across column borders, slab, water cell, pool), the slab top at half height, the water surface at 8/9, darkened corners. |
 | `Unnamed.Voxel.Mesher.Borders` | Random blocks of every kind over 3 x 3 columns and three sections, meshed and split back into faces. Compared with an independent cell-by-cell reading of the rules, every face matches: none missing, none hidden drawn, none drawn twice, and every face's four corner levels agree. Run with greedy merging on and off (26,896 faces). |
 | `Unnamed.Voxel.Mesher.Cards` | Lumen cards from meshed columns: one block gives one thin card per direction, looking along that face's normal; glass and water give none, leaves six. A pillar through all 24 sections, 98 cards before merging, stays within Lumen's 32. In both, and among random blocks, every opaque and cutout face lies inside a card facing its way. |
+| `Unnamed.Voxel.Terrain.Flat` | The classic Superflat stack (bedrock, two dirt, grass) in every column with its surface and heightmap; water on top is not dry land; a stack taller than the world fills it; trailing air is dropped; no layers stands nowhere. |
 | `Unnamed.Voxel.Terrain.Generate` | Five columns, including ones millions of blocks out, generated in order on this thread and in reverse on the workers: identical. Heightmaps follow the terrain function; bedrock floor and deepslate; every column under 64 KB; another seed changes the land. |
 
 ## Known gaps
@@ -255,7 +282,8 @@ Limits:
 - **Water physics:** `AFoundationLab::IsInWater` reads the lab's water boxes and is not virtual, so generated water does not yet count for air, swimming or drowning. Phase 3 makes it ask the block data.
 - **Apply budget:** one column is applied whole, so a frame can overshoot the 2 ms budget by one column (worst 2.15 ms in the latest run; handing over the cards adds no measurable time).
 - **Meshing under load:** with all 30 workers busy, a meshed section averages 0.26 ms against 0.20 ms on one thread. A bitmask visibility pass is the next optimization if phase 3's streaming needs it.
-- **No mining or placing yet** on generated terrain: that is phase 3.
+- **No mining or placing yet** on generated terrain: that is phase 3. Creative's inventory needs it too.
+- **World choices still to land:** Hardcore has no permadeath or hardcore hearts; Large Biomes, AMPLIFIED and Single Biome generate the default terrain until phases 4 and 5; Superflat refuses layers of blocks the game lacks (snow layers, lava).
 
 The registry has full cubes, slabs and still water only. The generator also needs:
 

@@ -35,8 +35,9 @@ namespace
 
 void FFoundationVitals::Step(const FFoundationVitalsStep& Facts)
 {
-    // Attack recovery counts every player tick, through the death animation too.
+    // Attack recovery and age count every player tick, through the death animation too.
     ++AttackTicker;
+    ++Age;
     if (IsDead())
     {
         ++DeathTicks;
@@ -81,6 +82,12 @@ void FFoundationVitals::Step(const FFoundationVitalsStep& Facts)
         Air = FMath::Min(Air + 4, MaxAir);
     if (IsDead()) return;
 
+    // Peaceful restores a point of health every second and of food every half second.
+    if (Difficulty == EFoundationDifficulty::Peaceful && bNaturalRegeneration)
+    {
+        if (IsHurt() && Age % 20 == 0) Heal(1.f);
+        if (Food < 20 && Age % 10 == 0) ++Food;
+    }
     TickFood();
 }
 
@@ -137,6 +144,8 @@ bool FFoundationVitals::Hurt(EFoundationDamage Type, float Amount)
     float Damage = Amount;
     if (Rule.bScalesWithDifficulty)
     {
+        // Mobs cannot hurt a Peaceful player.
+        if (Difficulty == EFoundationDifficulty::Peaceful) return false;
         if (Difficulty == EFoundationDifficulty::Easy)
             Damage = FMath::Min(Damage / 2.f + 1.f, Damage);
         else if (Difficulty == EFoundationDifficulty::Hard)
@@ -301,7 +310,7 @@ int32 FFoundationVitals::GetFallDamage(double FallCm)
 FString FFoundationVitals::Describe() const
 {
     static const TCHAR* Modes[] = {TEXT("Survival"), TEXT("Creative"), TEXT("Adventure"), TEXT("Spectator")};
-    static const TCHAR* Difficulties[] = {TEXT("Easy"), TEXT("Normal"), TEXT("Hard")};
+    static const TCHAR* Difficulties[] = {TEXT("Peaceful"), TEXT("Easy"), TEXT("Normal"), TEXT("Hard")};
     return FString::Printf(TEXT("%s %s regen=%d | health %.2f/%.0f absorption %.1f armor %d/%.0f | food %d "
                                 "saturation %.2f exhaustion %.3f | air %d/%d eyes-water=%d | XP L%d %.3f (%d) | "
                                 "attack %.2f of %.1f ticks%s"),

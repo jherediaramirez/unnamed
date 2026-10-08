@@ -4,6 +4,7 @@
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Misc/AutomationTest.h"
 #include "Storage/VoxelColumn.h"
+#include "Terrain/VoxelFlatTerrain.h"
 #include "Terrain/VoxelHeightTerrain.h"
 #include "Voxel/VoxelBlocks.h"
 
@@ -139,6 +140,63 @@ bool FVoxelTerrainTest::RunTest(const FString& Parameters)
     for (int32 X = 0; X < 64; ++X)
         Different += Terrain.GetSurfaceHeight(X, 7) != Other.GetSurfaceHeight(X, 7);
     TestTrue(FString::Printf(TEXT("Another seed changes the land (%d of 64 heights)"), Different), Different > 32);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelFlatTerrainTest, "Unnamed.Voxel.Terrain.Flat",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelFlatTerrainTest::RunTest(const FString& Parameters)
+{
+    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+    const uint16 Bedrock = Table->FindState(TEXT("bedrock")), Dirt = Table->FindState(TEXT("dirt")),
+                 Grass = Table->FindState(TEXT("grass_block")), Water = Table->FindState(TEXT("water"));
+    if (!Bedrock || !Grass || !Water)
+    {
+        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return true;
+    }
+    constexpr int32 Floor = VoxelConstants::MinZ;
+
+    // The classic preset, bottom up: bedrock, two dirt, grass. Every column is the same stack from the floor.
+    const FVoxelFlatLayer Classic[] = {{Bedrock, 1}, {Dirt, 2}, {Grass, 1}};
+    const FVoxelFlatTerrain Terrain(Classic, *Table);
+    TestEqual(TEXT("Classic: the surface is the grass, 3 above the floor"), Terrain.GetSurfaceHeight(5, -9), Floor + 3);
+    TestTrue(TEXT("Classic: dry land"), Terrain.IsDry(0, 0));
+    for (const FIntPoint Position : {FIntPoint(0, 0), FIntPoint(-7, 123456)})
+    {
+        FVoxelColumn Column;
+        TArray<uint16> Dense;
+        Terrain.Generate(Position, Column, Dense);
+        bool bStack = true;
+        for (int32 Y = 0; Y < 16; ++Y)
+            for (int32 X = 0; X < 16; ++X)
+            {
+                bStack &= Column.GetState(X, Y, Floor) == Bedrock && Column.GetState(X, Y, Floor + 1) == Dirt &&
+                    Column.GetState(X, Y, Floor + 2) == Dirt && Column.GetState(X, Y, Floor + 3) == Grass &&
+                    Column.GetState(X, Y, Floor + 4) == 0;
+                bStack &= Column.GetHeight(EVoxelHeightmap::WorldSurface, X, Y) == Floor + 3;
+            }
+        TestTrue(
+            FString::Printf(TEXT("Column %s holds the stack, with the surface on the grass"), *Position.ToString()),
+            bStack);
+    }
+
+    // Water on top: the surface is the ground under it, and it is not dry.
+    const FVoxelFlatLayer Flooded[] = {{Bedrock, 1}, {Dirt, 5}, {Water, 4}};
+    const FVoxelFlatTerrain Sea(Flooded, *Table);
+    TestEqual(TEXT("Flooded: the surface is the dirt under the water"), Sea.GetSurfaceHeight(0, 0), Floor + 5);
+    TestFalse(TEXT("Flooded: not dry"), Sea.IsDry(0, 0));
+
+    // Layers past the world's top are cut off; trailing air adds nothing.
+    const FVoxelFlatLayer Tall[] = {{Bedrock, 1}, {Dirt, 1000}, {0, 3}};
+    const FVoxelFlatTerrain Tower(Tall, *Table);
+    TestEqual(TEXT("A stack taller than the world fills it"), Tower.GetStack().Num(), VoxelConstants::Height);
+    TestEqual(TEXT("...and its surface is the top block"), Tower.GetSurfaceHeight(0, 0), VoxelConstants::MaxZ);
+    const FVoxelFlatLayer Airy[] = {{Bedrock, 2}, {0, 5}};
+    TestEqual(TEXT("Trailing air is dropped"), FVoxelFlatTerrain(Airy, *Table).GetStack().Num(), 2);
+    TestEqual(TEXT("No layers: nothing to stand on, one below the floor"),
+        FVoxelFlatTerrain({}, *Table).GetSurfaceHeight(0, 0), Floor - 1);
     return true;
 }
 #endif

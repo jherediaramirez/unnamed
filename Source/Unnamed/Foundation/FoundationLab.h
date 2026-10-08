@@ -6,6 +6,7 @@
 #include "FoundationLab.generated.h"
 
 class FFoundationAuthority;
+struct FFoundationVitals;
 class UFoundationProfile;
 class UStaticMesh;
 class UStaticMeshComponent;
@@ -65,6 +66,9 @@ public:
     virtual double GetFallOutZ() const { return -1000; }
     // The gameplay interaction authority, when this lab has one (only the Playground does).
     virtual FFoundationAuthority* GetAuthority() { return nullptr; }
+    // The world's rules for its player (game mode, difficulty, natural regeneration), applied once when the player
+    // arrives; respawning keeps them. The Playground leaves the defaults.
+    virtual void ConfigurePlayer(FFoundationVitals&) const {}
 
 protected:
     // A solid, immutable cuboid with an optional caption. The Playground overrides this so every solid is

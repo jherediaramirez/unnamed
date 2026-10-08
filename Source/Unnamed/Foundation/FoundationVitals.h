@@ -11,9 +11,12 @@ enum class EFoundationPlayerMode : uint8
     Spectator
 };
 
-// Peaceful is deferred: its extra regeneration belongs to the server player, outside the pinned sources.
+// The world's difficulty, in the reference's order. Peaceful's rules (no mob damage; with natural regeneration, a
+// point of health every second and of food every half second) are the documented mechanic: the pinned sources leave
+// that regeneration to the server player.
 enum class EFoundationDifficulty : uint8
 {
+    Peaceful,
     Easy,
     Normal,
     Hard
@@ -60,6 +63,8 @@ struct UNNAMED_API FFoundationVitals
     float Health = 20, Absorption = 0, Saturation = 5, Exhaustion = 0, Progress = 0, LastHurt = 0;
     int32 Food = 20, FoodTimer = 0, Air = 300, MaxAir = 300, Level = 0, TotalExperience = 0;
     int32 AttackTicker = 0, DamageCooldown = 0, DeathTicks = -1;
+    // Ticks since this spawn: the clock Peaceful's regeneration keeps.
+    int32 Age = 0;
     double FallDistanceCm = 0;
     bool bEyesInWater = false;
     FName MainHandItem;

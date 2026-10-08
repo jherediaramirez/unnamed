@@ -12,6 +12,26 @@
 #include "Misc/PackageName.h"
 #include "Serialization/JsonSerializer.h"
 
+namespace
+{
+    // The list's second line, as the reference shows a save: its folder and when it was last played, local time.
+    FString DescribeSavedWorldPlayed(const FUnnamedSavedWorld& World)
+    {
+        const FDateTime Local = World.LastPlayed + (FDateTime::Now() - FDateTime::UtcNow());
+        return FString::Printf(TEXT("%s (%d/%d/%02d, %d:%02d %s)"), *World.Id, Local.GetMonth(), Local.GetDay(),
+            Local.GetYear() % 100, Local.GetHour12(), Local.GetMinute(), Local.IsMorning() ? TEXT("AM") : TEXT("PM"));
+    }
+
+    // The third line: the mode, then cheats and any world type other than Default.
+    FString DescribeSavedWorldRules(const FUnnamedSavedWorld& World)
+    {
+        FString Text = World.IsHardcore() ? TEXT("Hardcore Mode!") : World.GameMode + TEXT(" Mode");
+        if (World.bCommands) Text += TEXT(", Cheats");
+        if (World.Type != TEXT("Default")) Text += TEXT(", ") + World.Type;
+        return Text;
+    }
+}
+
 void UMenuApplication::Initialize(APlayerController* InController, UMenuVideoSettings* InVideoSettings,
     UMenuInputBridge* InInputBridge, UMenuPreferences* InPreferences)
 {
@@ -19,6 +39,22 @@ void UMenuApplication::Initialize(APlayerController* InController, UMenuVideoSet
     VideoSettings = InVideoSettings;
     InputBridge = InInputBridge;
     Preferences = InPreferences;
+    RefreshSavedWorlds();
+}
+
+void UMenuApplication::RefreshSavedWorlds()
+{
+    SavedWorlds = UnnamedSavedWorlds::List();
+}
+
+void UMenuApplication::QueueTravel(const FString& Map, const FString& Options, const FString& Label)
+{
+    if (bWorldPending || bTravelIssued) return;
+    bWorldPending = true;
+    PendingMap = Map;
+    PendingOptions = Options;
+    WorldDeadline = FPlatformTime::Seconds() + 8.0;
+    UE_LOG(LogUnnamedMenu, Display, TEXT("%s requested; waiting for completed settings changes"), *Label);
 }
 
 bool UMenuApplication::CanQuit() const
@@ -66,6 +102,19 @@ FString UMenuApplication::GetState()
         Worlds.Add(MakeShared<FJsonValueObject>(World));
     }
     State->SetArrayField(TEXT("worlds"), Worlds);
+    // Create New World's saves, most recently played first, each with its settings for Re-Create.
+    TArray<TSharedPtr<FJsonValue>> Saved;
+    for (const FUnnamedSavedWorld& Entry : SavedWorlds)
+    {
+        const auto World = MakeShared<FJsonObject>();
+        World->SetStringField(TEXT("id"), Entry.Id);
+        World->SetStringField(TEXT("name"), Entry.Name);
+        World->SetStringField(TEXT("summary"), DescribeSavedWorldPlayed(Entry));
+        World->SetStringField(TEXT("status"), DescribeSavedWorldRules(Entry));
+        World->SetObjectField(TEXT("draft"), Entry.ToDraft());
+        Saved.Add(MakeShared<FJsonValueObject>(World));
+    }
+    State->SetArrayField(TEXT("savedWorlds"), Saved);
     FString Json;
     FJsonSerializer::Serialize(State, TJsonWriterFactory<>::Create(&Json));
     return Json;
@@ -96,20 +145,63 @@ FString UMenuApplication::RequestQuit()
 FString UMenuApplication::RequestOpenWorld(const FString& WorldId)
 {
     LastError.Empty();
-    const FString RequestedMap = UUnnamedProjectSettings::GetWorldMapPackage(WorldId);
+    // A catalog world opens its own map; a saved world opens the generated map with its id.
+    FString RequestedMap = UUnnamedProjectSettings::GetWorldMapPackage(WorldId), Options;
+    const bool bSaved = RequestedMap.IsEmpty() && UnnamedSavedWorlds::IsValidId(WorldId);
+    if (bSaved)
+    {
+        RequestedMap = UUnnamedProjectSettings::GetGeneratedMapPackage();
+        Options = TEXT("VoxelWorld=") + WorldId;
+    }
     if (RequestedMap.IsEmpty())
-        LastError = TEXT("Only worlds marked Playable can open. The other entries are design references.");
+        LastError = TEXT("Choose a world from the list.");
     else if (!CanOpenWorld())
         LastError = TEXT("Opening a world requires a running game or Play in Editor session.");
     else if (!FPackageName::DoesPackageExist(RequestedMap))
         LastError = TEXT("The selected world is missing from this build.");
-    else if (!bWorldPending && !bTravelIssued)
+    else if (bWorldPending || bTravelIssued)
+        return GetState();
+    else if (!bSaved || UnnamedSavedWorlds::Touch(WorldId, LastError))
+        QueueTravel(RequestedMap, Options, WorldId);
+    if (bSaved) RefreshSavedWorlds();
+    return GetState();
+}
+
+FString UMenuApplication::CreateWorld(const FString& DraftJson)
+{
+    LastError.Empty();
+    const FString Map = UUnnamedProjectSettings::GetGeneratedMapPackage();
+    FUnnamedSavedWorld World;
+    if (bWorldPending || bTravelIssued) return GetState();
+    if (!CanOpenWorld())
+        LastError = TEXT("Creating a world requires a running game or Play in Editor session.");
+    else if (!FPackageName::DoesPackageExist(Map))
+        LastError = TEXT("The generated world's map is missing from this build.");
+    else if (UnnamedSavedWorlds::Create(DraftJson, World, LastError))
     {
-        bWorldPending = true;
-        PendingMap = RequestedMap;
-        WorldDeadline = FPlatformTime::Seconds() + 8.0;
-        UE_LOG(LogUnnamedMenu, Display, TEXT("%s requested; waiting for completed settings changes"), *WorldId);
+        RefreshSavedWorlds();
+        QueueTravel(Map, TEXT("VoxelWorld=") + World.Id, World.Id);
     }
+    return GetState();
+}
+
+FString UMenuApplication::DeleteWorld(const FString& WorldId)
+{
+    LastError.Empty();
+    if (bWorldPending || bTravelIssued)
+        LastError = TEXT("Please wait for the selected world to open.");
+    else if (UnnamedSavedWorlds::Delete(WorldId, LastError))
+        RefreshSavedWorlds();
+    return GetState();
+}
+
+FString UMenuApplication::RenameWorld(const FString& WorldId, const FString& Name)
+{
+    LastError.Empty();
+    if (Name.Len() > 1024)
+        LastError = TEXT("A world name can be at most 128 characters.");
+    else if (UnnamedSavedWorlds::Rename(WorldId, Name, LastError))
+        RefreshSavedWorlds();
     return GetState();
 }
 
@@ -129,8 +221,9 @@ void UMenuApplication::Tick()
         {
             bWorldPending = false;
             bTravelIssued = true;
-            UE_LOG(LogUnnamedMenu, Display, TEXT("Settings flushed; opening %s"), *PendingMap);
-            UGameplayStatics::OpenLevel(Controller.Get(), FName(*PendingMap));
+            UE_LOG(LogUnnamedMenu, Display, TEXT("Settings flushed; opening %s%s%s"), *PendingMap,
+                PendingOptions.IsEmpty() ? TEXT("") : TEXT("?"), *PendingOptions);
+            UGameplayStatics::OpenLevel(Controller.Get(), FName(*PendingMap), true, PendingOptions);
             return;
         }
         bWorldPending = false;

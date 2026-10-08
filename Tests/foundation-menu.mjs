@@ -44,24 +44,16 @@ try{
     const saved=(await state()).nativeKeys;await quit();
     await start('reload');s=await state();check('bindings survive process relaunch',JSON.stringify(s.nativeKeys)===JSON.stringify(saved));check('toggle mode survives process relaunch',s.policies.toggleCrouch===true);
     await page.evaluate(()=>MenuInput.resetAll(true));check('reset-all restores Shift sprint and C crouch',(await state()).nativeKeys['key.sprint']==='LeftShift'&&(await state()).nativeKeys['key.sneak']==='C');
-    for(const id of ['fictional-forest','fictional-build','/Game/Maps/L_Playground','playground?listen']){const reply=await page.evaluate(async id=>JSON.parse(await window.ue.menuapplication.requestopenworld(id)),id);check('Native rejects noncatalog travel: '+id,!reply.ok&&!reply.pendingWorld&&!reply.travelIssued,reply);}
+    // Ids that are neither in the catalog nor saved never travel (Create New World saves are covered by create-world.mjs).
+    for(const id of ['fictional-forest','fictional-build','/Game/Maps/L_Playground','playground?listen','../playground']){const reply=await page.evaluate(async id=>JSON.parse(await window.ue.menuapplication.requestopenworld(id)),id);check('Native rejects travel to an unknown world: '+id,!reply.ok&&!reply.pendingWorld&&!reply.travelIssued,reply);}
     for(const [index,action] of ['button','double click','Enter'].entries()){
         await page.getByRole('button',{name:'Singleplayer',exact:true}).click();
         await page.waitForFunction(()=>MenuPrototype.getState().screen==='worlds');
-        if(!index){
-            check('Singleplayer lists Playground and exactly two design references',await page.locator('[data-world]').count()===3&&await page.locator('[data-world="playground"]').count()===1);
-            for(const id of ['fictional-forest','fictional-build']){
-                const row=page.locator(`[data-world="${id}"]`);await row.click();
-                check(id+' labeled as reference with Play disabled',(await row.textContent()).includes('Design reference')&&await page.getByRole('button',{name:'Play Selected World',exact:true}).isDisabled());
-                await row.dblclick();
-                check(id+' double click remains a reference explanation',await page.evaluate(()=>MenuPrototype.getState().screen==='message'));
-                await page.keyboard.press('Escape');
-            }
-        }
+        if(!index)check('A fresh profile lists only the Playground: no sample saves',await page.locator('[data-world]').count()===1&&await page.locator('[data-world="playground"]').count()===1);
         await page.locator('[data-world="playground"]').click();
         if(!index){
             await page.screenshot({path:path.join(output,'singleplayer-native-cef.png')});
-            for(const label of ['Edit','Delete','Re-Create'])check('Built-in world protected from mock '+label,await page.getByRole('button',{name:label,exact:true}).isDisabled());
+            for(const label of ['Edit','Delete','Re-Create'])check('Built-in world cannot be '+label,await page.getByRole('button',{name:label,exact:true}).isDisabled());
         }
         if(action==='button')await page.getByRole('button',{name:'Play Selected World',exact:true}).click();
         else if(action==='double click')await page.locator('[data-world="playground"]').dblclick();

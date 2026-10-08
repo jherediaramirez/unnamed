@@ -128,6 +128,8 @@ Verified at the end of phase 2:
 
 ## 7. Next: phase 2W, Create New World (the user asked for menu settings to really work)
 
+*Done after this handoff: see [phase 2W](2026-10-08-Voxel-Phase2W.md). Phase 3, streaming, is next.*
+
 What exists today (from the menu exploration; line numbers may drift):
 
 - **The Create screen:** `Reference/minecraft-menu/index.html` around line 126; the generated copy is `Content/Menu/Web/index.html` around 127.

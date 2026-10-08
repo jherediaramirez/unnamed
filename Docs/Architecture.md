@@ -11,6 +11,7 @@ How the project fits together. Foundation-specific movement, input and diagnosti
 | `Source/Unnamed/Input/` | Enhanced Input layer: `UUnnamedInputSubsystem`, the saved `UUnnamedInputSettings`, `FUnnamedInputIntent`. |
 | `Source/Unnamed/Foundation/` | The first-person pawn, controller parts, pure simulation, player vitals (health, food, air, XP, attack recovery), lab geometry (`AFoundationLab`, and the Playground in `AFoundationPlayground`), runtime probe; the Playground's block world, items, targeting, authority, interaction state and presentation; the 26.3 block registry, placement rules, block meshes and texture animation ([Blocks](Blocks.md)). |
 | `Source/Unnamed/Hud/` | Native Slate HUD, pure layout/selection, cooked sprite metadata and the Foundation adapter (player vitals by default, an opt-in preview fixture); the creative inventory screen and 3D block item icons. |
+| `Source/Unnamed/Worlds/` | Saved worlds from Create New World: the `UnnamedSavedWorlds` store (`Saved/Worlds/<id>/world.json`, ids, draft checks) ([Voxel world](VoxelWorld.md#saved-worlds)). The world catalog stays in `UnnamedProjectSettings`. |
 | `Source/Unnamed/Voxel/` | The voxel world's Unreal side ([Voxel world](VoxelWorld.md)): `UVoxelWorldSettings`, the `voxel.*` console, the registry-to-table bridge, the column mesh `UVoxelChunkComponent`, and `AVoxelWorld`, the level actor of `/Game/Maps/L_Generated`. |
 | `Source/UnnamedVoxel/` | The second module: the voxel world's plain C++ core (generation, storage, meshing). It depends on `Core` only and compiles with precise floating point. |
 | `Source/Unnamed/Tests/` | Native automation tests, one file per area (`Unnamed.<Area>.*`). |
@@ -27,7 +28,7 @@ How the project fits together. Foundation-specific movement, input and diagnosti
 
 `/Game/Menu/L_Menu` uses `AMenuGameMode` and `AMenuPlayerController`: no pawn or HUD, just the menu. `/Game/Maps/L_Playground` uses `AFoundationGameMode` and `AFoundationController` with one placed `AFoundationPlayground` (the 2 km dev-grid ground, the starter-block stations, the block gallery and the movement course; see [Foundation architecture](Foundation/Architecture.md#playground-block-interaction) and [Playground](Playground.md)). It is the only world in the catalog.
 
-`/Game/Maps/L_Generated` (`UUnnamedProjectSettings::GeneratedMap`, not in the catalog) uses the same Foundation game mode with one placed `AVoxelWorld`. That actor is the map's `AFoundationLab`: it builds the voxel test area and gives the pawn its collision and spawn from block data ([Voxel world](VoxelWorld.md#the-test-area)).
+`/Game/Maps/L_Generated` (`UUnnamedProjectSettings::GeneratedMap`, not in the catalog) uses the same Foundation game mode with one placed `AVoxelWorld`. Every saved world opens it as `L_Generated?VoxelWorld=<id>`. That actor is the map's `AFoundationLab`: it builds the world's terrain from the saved seed and type, gives the pawn its collision and spawn from block data, and gives it the world's game mode and difficulty through `AFoundationLab::ConfigurePlayer` ([Voxel world](VoxelWorld.md#the-test-area)).
 
 Neither gameplay controller inherits from the menu controller. Any controller that needs the menu adds a `UMenuBrowserHost` component: the menu controller shows it on BeginPlay; the Foundation controller shows it as the pause menu and adds its own `foundationmenu` bridge. Only the Foundation controller adds diagnostics (input router, HUD, panels), so the plain menu map has no F3 overlay or input preprocessor.
 
@@ -40,14 +41,14 @@ Neither gameplay controller inherits from the menu controller. Any controller th
 | `MenuVideo` | `menuvideo` | `UMenuVideoSettings` | Fullscreen, frame limit, VSync, GUI scale, menu blur; saved to `Saved/Config/MenuVideoSettings.ini`. |
 | `MenuInput` | `menuinput` | `UMenuInputBridge` -> `UUnnamedInputSubsystem` | Player-mappable bindings and Hold/Toggle sprint/crouch; saved in the Enhanced Input SaveGame slot. |
 | `MenuPreferences` | `menupreferences` | `UMenuPreferences` (GameInstance subsystem) | 101 further options, language, pack order, two flags; saved to `Saved/Config/MenuPreferences.json`. |
-| `MenuApplication` | `menuapplication` | `UMenuApplication` | Quit Game and world travel. |
+| `MenuApplication` | `menuapplication` | `UMenuApplication` | Quit Game, world travel and saved worlds (create, list, rename, delete); worlds are saved to `Saved/Worlds/<id>/world.json`. |
 | `FoundationMenu` | `foundationmenu` | `UFoundationMenuBridge` | Foundation pause menu and binding-capture handoff (Foundation map only). |
 
-Quit and world travel drain every settings store, lock further edits, flush all three native stores, then call Unreal's normal QuitGame or OpenLevel on a later tick. Editor Play cannot quit. Saving is crash-safe: `UnnamedFiles::SaveTextAtomically` writes a temporary file, backs up the previous file and moves the new one into place; loads fall back to the backup. `UnnamedSession::CanSaveSettings()` is the single rule that keeps editor and `-MenuSettingsSessionOnly` runs from saving.
+Quit and world travel drain every settings store, lock further edits, flush all three native stores, then call Unreal's normal QuitGame or OpenLevel on a later tick. Editor Play cannot quit. Saving is crash-safe: `UnnamedFiles::SaveTextAtomically` writes a temporary file, backs up the previous file and moves the new one into place; loads fall back to the backup. `UnnamedSession::CanSaveSettings()` is the single rule that keeps editor and `-MenuSettingsSessionOnly` runs from saving settings. Saved worlds are the player's content, not settings, and always save; `-WorldsDir=` moves them for tests.
 
 ## Project settings and world catalog
 
-`UUnnamedProjectSettings` (Project Settings > Game > Unnamed; C++ defaults, overridable in `DefaultGame.ini`) is the one place for the menu map, the dev grid material, the input mapping contexts and actions, the HUD and block asset roots (`HudRoot`, `BlockRoot`), and the Singleplayer world catalog (ID, map, name, summary, status). The catalog holds one world, `playground`; the retired IDs `foundation`, `super-flat` and `interaction-lab` are never reused. `UMenuApplication::RequestOpenWorld` accepts only an exact, case-sensitive catalog ID and sends the catalog to the page in `GetState`; the page lists those worlds first, marks them built-in and keeps no list of its own. Editor Python reads the same paths through `Scripts/Editor/ProjectPaths.py`. Cooked maps come from `MapsToCook` in `DefaultGame.ini`.
+`UUnnamedProjectSettings` (Project Settings > Game > Unnamed; C++ defaults, overridable in `DefaultGame.ini`) is the one place for the menu map, the dev grid material, the input mapping contexts and actions, the HUD and block asset roots (`HudRoot`, `BlockRoot`), and the Singleplayer world catalog (ID, map, name, summary, status). The catalog holds one world, `playground`; the retired IDs `foundation`, `super-flat` and `interaction-lab` are never reused. `UMenuApplication::RequestOpenWorld` accepts an exact, case-sensitive catalog ID or a saved world's id. `GetState` sends the catalog (`worlds`) and the saved worlds (`savedWorlds`, most recently played first, each with its settings for Re-Create). The page lists the catalog first, marked built-in, then the saves, and keeps no list of its own. Editor Python reads the same paths through `Scripts/Editor/ProjectPaths.py`. Cooked maps come from `MapsToCook` in `DefaultGame.ini`.
 
 ## Menu web layer
 
@@ -67,7 +68,7 @@ CSS alone applies integer scaling; no UMG DPI wrapper scales a second time. Veri
 
 ## Diagnostics and logging
 
-`UnnamedLog.h` defines `LogUnnamedMenu` (host, application, video, preferences, browser console), `LogUnnamedWorlds` (world catalog and travel; not yet used) and `LogUnnamedFoundation` (lab and probe). `window.MenuPrototype` exposes screen state, dimensions, controls and definitions for CEF tests. Playwright connects to Unreal's own CEF through the optional `-cefdebug` port. Slate tools can inspect the native window, not HTML buttons. The Foundation runtime probe (`-FoundationProbe=report.json`) exists only in builds with dev automation tests.
+`UnnamedLog.h` defines `LogUnnamedMenu` (host, application, video, preferences, browser console), `LogUnnamedWorlds` (saved worlds: created, opened, deleted) and `LogUnnamedFoundation` (lab and probe). `window.MenuPrototype` exposes screen state, dimensions, controls and definitions for CEF tests. Playwright connects to Unreal's own CEF through the optional `-cefdebug` port. Slate tools can inspect the native window, not HTML buttons. The Foundation runtime probe (`-FoundationProbe=report.json`) exists only in builds with dev automation tests.
 
 ## Verification
 

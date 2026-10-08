@@ -1,31 +1,36 @@
-// Quit Game and world travel through the native menuapplication service. Both drain every settings
-// store first, send one request, then follow native state until Unreal confirms.
+// Quit Game, world travel and Create New World through the native menuapplication service. Leaving drains
+// every settings store first, sends one request, then follows native state until Unreal confirms.
 const MenuApplication = (() => {
   const client = MenuBridge.client('menuapplication', {service: 'game application', unavailable: 'Game shutdown is unavailable.',
     validate: reply => !!reply && typeof reply.ok === 'boolean' && typeof reply.canQuit === 'boolean' &&
       typeof reply.pendingQuit === 'boolean' && typeof reply.quitIssued === 'boolean'});
-  let snapshot = null, leaving = null, polling = false, retryAllowed = false, revision = 0; // leaving: 'quit' | 'world'
-  let catalog = []; // Native playable worlds, in list order.
+  let snapshot = null, leaving = null, polling = false, retryAllowed = false, revision = 0; // leaving: 'quit' | 'world' | 'create'
+  let catalog = [], saved = []; // Native worlds in list order: the catalog's, then Create New World's saves.
   const enabled = () => !leaving && !snapshot?.pendingWorld && !snapshot?.travelIssued && !!snapshot?.canQuit &&
     !snapshot.quitIssued && (!snapshot.pendingQuit || retryAllowed);
-  const isPlayable = id => catalog.some(world => world.id === id);
-  const worldEnabled = id => isPlayable(id) && !leaving && !!snapshot?.canOpenWorld &&
-    !snapshot.travelIssued && !snapshot.pendingQuit && (!snapshot.pendingWorld || retryAllowed);
+  const isPlayable = id => catalog.some(world => world.id === id) || saved.some(world => world.id === id);
+  const canTravel = () => !leaving && !!snapshot?.canOpenWorld && !snapshot.travelIssued && !snapshot.pendingQuit &&
+    (!snapshot.pendingWorld || retryAllowed);
+  const worldEnabled = id => isPlayable(id) && canTravel();
   function refresh() {
     for (const button of screen.querySelectorAll('[data-application-quit]')) button.disabled = !enabled();
+    if (typeof draft !== 'undefined')
+      for (const button of screen.querySelectorAll('[data-create-submit]')) button.disabled = !!leaving || !draft.name.trim();
     if (typeof refreshWorldActions === 'function') refreshWorldActions();
   }
-  // Built-in worlds lead the list; a rolled-back screen transaction may drop them, so every
-  // reply re-adds any that are missing.
-  function syncWorlds(worlds) {
+  // The world list is native: the catalog's built-in worlds, then the saved worlds, most recently played first.
+  // A rolled-back screen transaction may restore an older list, so every reply repairs it.
+  function syncWorlds(worlds, savedWorlds) {
     if (!Array.isArray(worlds)) return;
-    const next = worlds.map(({id, name, summary, status}) => ({id, name, summary, status}));
-    if (JSON.stringify(next) === JSON.stringify(catalog) && catalog.every(world => state.worlds.some(w => w.id === world.id))) return;
-    catalog = next;
-    state.worlds = [...catalog.map(world => ({...world, folder: world.name, builtIn: true})), ...state.worlds.filter(w => !w.builtIn)];
+    catalog = worlds.map(({id, name, summary, status}) => ({id, name, summary, status}));
+    saved = (Array.isArray(savedWorlds) ? savedWorlds : []).map(({id, name, summary, status, draft}) => ({id, name, summary, status, draft}));
+    const list = [...catalog.map(world => ({...world, folder: world.name, builtIn: true})),
+      ...saved.map(world => ({...world, folder: world.id, saved: true}))];
+    if (JSON.stringify(list) === JSON.stringify(state.worlds)) return;
+    state.worlds = list;
     if (current.name === 'worlds') drawWorlds();
   }
-  function absorb(reply) { snapshot = reply; retryAllowed = false; syncWorlds(reply.worlds); refresh(); }
+  function absorb(reply) { snapshot = reply; retryAllowed = false; syncWorlds(reply.worlds, reply.savedWorlds); refresh(); }
 
   const exits = {
     quit: {title: 'Quit Game', request: 'RequestQuit', done: reply => reply.quitIssued,
@@ -35,7 +40,12 @@ const MenuApplication = (() => {
     world: {title: 'Open World', request: 'RequestOpenWorld', done: reply => reply.travelIssued,
       stillPending: reply => reply.pendingWorld, failed: 'The selected world could not open.',
       drain: 'Settings did not finish changing. Please try opening the world again.',
-      timedOut: 'The selected world did not finish opening. Please try again.'}
+      timedOut: 'The selected world did not finish opening. Please try again.'},
+    // Native checks and saves the draft, then opens the new world like any other.
+    create: {title: 'Create New World', request: 'CreateWorld', done: reply => reply.travelIssued,
+      stillPending: reply => reply.pendingWorld, failed: 'The world could not be created.',
+      drain: 'Settings did not finish changing. Please try creating the world again.',
+      timedOut: 'The new world did not finish opening. Please try again.'}
   };
   async function leave(kind, ...args) {
     const exit = exits[kind];
@@ -75,6 +85,23 @@ const MenuApplication = (() => {
   }
   const quit = () => enabled() ? leave('quit') : Promise.resolve();
   const openWorld = id => worldEnabled(id) ? leave('world', id) : Promise.resolve();
+  function createWorld(settings) {
+    if (canTravel()) return leave('create', JSON.stringify(settings));
+    if (!leaving) message('Create New World', 'A new world can be created only while the game is running.');
+    return Promise.resolve();
+  }
+  // Edits to a saved world: one request each; the reply's list replaces the page's. Older polls are discarded.
+  async function editSaved(title, method, id, ...args) {
+    if (leaving || !saved.some(world => world.id === id)) return;
+    revision++;
+    try {
+      const reply = await client.call(method, [id, ...args]);
+      absorb(reply);
+      if (!reply.ok) throw Error(reply.error || title + ' did not finish.');
+    } catch (error) { message(title, error.message); }
+  }
+  const deleteWorld = id => editSaved('Delete World', 'DeleteWorld', id);
+  const renameWorld = (id, name) => editSaved('Edit World', 'RenameWorld', id, name);
 
   async function initialize() {
     const ticket = revision;
@@ -90,8 +117,9 @@ const MenuApplication = (() => {
     catch (error) { console.warn('Game application synchronization: ' + error.message); }
     finally { polling = false; }
   }, 500);
-  return {enabled, quit, isPlayable, worldEnabled, openWorld, isLoading: () => leaving === 'world', initialize,
-    defaultWorld: () => catalog[0]?.id ?? null, getState: () => snapshot ? clone(snapshot) : null};
+  return {enabled, quit, isPlayable, worldEnabled, openWorld, createWorld, deleteWorld, renameWorld,
+    isLoading: () => leaving === 'world' || leaving === 'create', initialize,
+    defaultWorld: () => saved[0]?.id ?? catalog[0]?.id ?? null, getState: () => snapshot ? clone(snapshot) : null};
 })();
 window.MenuApplication = MenuApplication;
 void MenuApplication.initialize();

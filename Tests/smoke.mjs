@@ -117,6 +117,11 @@ try{
             check('Playground is a real map action (verified separately)',await page.evaluate(()=>MenuApplication.worldEnabled('playground')));
             continue;
           }
+          // Create New World saves a real world and travels (verified by create-world.mjs).
+          if(functionalWorld&&route==='create'&&await buttons.nth(i).evaluate(n=>n.dataset.createSubmit==='true')){
+            check('Create New World is a real world action (verified separately)',await page.evaluate(()=>typeof MenuApplication.createWorld==='function'));
+            continue;
+          }
           await buttons.nth(i).evaluate(n=>n.click());
           await settle();
           const next=await state();
@@ -142,7 +147,8 @@ try{
     await page.locator('[data-setting=friendsList]').click();await settle();
     check('Friends enable then disable returns OFF',friendsEnabled&&await value('friendsList')===false);
     await set('friendsList',friendsBefore);
-    for(const [route,collection] of [['worlds','worlds'],['multiplayer','servers']]){
+    // Saved worlds are real now (create-world.mjs deletes them); the server list keeps its session-only samples.
+    for(const [route,collection] of [['multiplayer','servers']]){
       await prepare(route);const count=(await state())[collection].length;
       await mouseButton('Delete');await recordControls(route+' delete confirmation');
       await mouseButton('Delete');await recordControls(route+' restore entry');
@@ -185,7 +191,8 @@ try{
     await prepare('create','more');await mouseButton('Game Rules');const numeric=page.locator('#rule-list input').first();await numeric.fill('bad');check('Invalid rule blocks Done',await page.locator('#rules-done').isDisabled());await page.keyboard.press('Escape');await mouseButton('Game Rules');check('Canceled invalid rule clears error',await page.locator('#rules-done').isEnabled());await page.keyboard.press('Escape');
     await prepare('create','world');await page.locator('[data-local="draft.type"]').click();await mouseButton('Customize');check('Superflat expected route',(await state()).screen==='flat');const layers=(await state()).draft.flat.length;await mouseButton('Remove Layer');await mouseButton('Cancel');check('Superflat Cancel discards',(await state()).draft.flat.length===layers);await mouseButton('Customize');await mouseButton('Remove Layer');await mouseButton('Done');check('Superflat Done commits',(await state()).draft.flat.length===layers-1);
     await prepare('multiplayer');await mouseButton('Direct Connection');const address=page.locator('input').first();await address.fill('not valid/address');check('Invalid server address blocks Join',await page.locator('#direct-connect').isDisabled());await address.fill('play.example.invalid:25565');await mouseButton('Join Server');check('Server connection stops at mock endpoint',(await state()).screen==='message');await page.keyboard.press('Escape');await mouseButton('Cancel');
-    await prepare('editworld');const referenceWorld=()=>state().then(s=>s.worlds.find(w=>w.id==='fictional-forest'));const worldName=(await referenceWorld()).name;await page.locator('input').first().fill('Session Edit');await mouseButton('Cancel');check('World name Cancel discards',(await referenceWorld()).name===worldName);await prepare('editworld');await page.locator('input').first().fill('Session Edit');await mouseButton('Save');check('World name Save is session-only',(await referenceWorld()).name==='Session Edit');
+    // Edit World's Save renames a real save (create-world.mjs); here only Cancel, when a save exists.
+    const savedWorld=(await state()).worlds.find(w=>w.saved);if(savedWorld){await prepare('editworld');const named=()=>state().then(s=>s.worlds.find(w=>w.id===savedWorld.id));await page.locator('input').first().fill('Session Edit');await mouseButton('Cancel');check('World name Cancel discards',(await named()).name===savedWorld.name);}
     await prepare('language');await page.locator('input').first().fill('English');check('Language search filters sample list',await page.locator('[data-language]').count()<143&&await page.locator('[data-language]').count()>0);
     if(functionalQuit)check('Mock quit route replaced by normal shutdown',!(await state()).routes.includes('quit'));
     else{await prepare('quit');await mouseButton('Return to Title');check('Quit returns, process remains alive',(await state()).screen==='main');}

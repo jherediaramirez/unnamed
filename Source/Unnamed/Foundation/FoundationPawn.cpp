@@ -72,6 +72,7 @@ void AFoundationPawn::BeginPlay()
         break;
     }
     if (!Lab.IsValid()) Lab = GetWorld()->SpawnActor<AFoundationLab>();
+    Lab->ConfigurePlayer(Vitals);
 }
 
 void AFoundationPawn::EndPlay(const EEndPlayReason::Type EndPlayReason)

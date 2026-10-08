@@ -70,7 +70,7 @@ bool FFoundationVitalsDamageTest::RunTest(const FString&)
     TestEqual(TEXT("absorption empties, remainder reaches health"), Buffer.Absorption, 0.f);
     TestEqual(TEXT("remainder"), Buffer.Health, 18.f);
 
-    const TPair<EFoundationDifficulty, float> Scaled[] = {
+    const TPair<EFoundationDifficulty, float> Scaled[] = {{EFoundationDifficulty::Peaceful, 20},
         {EFoundationDifficulty::Easy, 17}, {EFoundationDifficulty::Normal, 16}, {EFoundationDifficulty::Hard, 14}};
     for (const auto& [Difficulty, Health] : Scaled)
     {
@@ -170,6 +170,25 @@ bool FFoundationVitalsFoodTest::RunTest(const FString&)
         TestEqual(TEXT("starvation floor by difficulty"), S.Health, Floor);
         TestEqual(TEXT("only Hard starves to death"), S.IsDead(), Difficulty == EFoundationDifficulty::Hard);
     }
+
+    // Peaceful refills: a point of health every 20 ticks, of food every 10, so nobody starves.
+    FFoundationVitals Peace;
+    Peace.Difficulty = EFoundationDifficulty::Peaceful;
+    Peace.Health = 10;
+    Peace.Food = 0;
+    Peace.Saturation = 0;
+    StepTimes(Peace, Standing(), 19);
+    TestEqual(TEXT("Peaceful heals once a second"), Peace.Health, 10.f);
+    Peace.Step(Standing());
+    TestEqual(TEXT("...a point at a time"), Peace.Health, 11.f);
+    TestEqual(TEXT("...and refills food every half second"), Peace.Food, 2);
+    StepTimes(Peace, Standing(), 1700);
+    TestTrue(TEXT("Peaceful never starves: full health and food"), Peace.Health == 20.f && Peace.Food == 20);
+    FFoundationVitals PeaceOff = Quiet();
+    PeaceOff.Difficulty = EFoundationDifficulty::Peaceful;
+    PeaceOff.Health = 10;
+    StepTimes(PeaceOff, Standing(), 200);
+    TestEqual(TEXT("the regeneration game rule stops Peaceful healing too"), PeaceOff.Health, 10.f);
 
     FFoundationVitals Sprint;
     Sprint.Food = 7;

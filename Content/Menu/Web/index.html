@@ -51,7 +51,7 @@ const defaults=Object.fromEntries(Object.entries(D).map(([k,d])=>[k,d.default]))
 const defaultWorlds=[{id:'fictional-forest',name:'Fictional Forest Camp',folder:'Fictional_Forest_Camp',date:'10/6/26, 1:00 PM',mode:'Survival',version:'26.3'},{id:'fictional-build',name:'Fictional Creative Workshop',folder:'Fictional_Creative_Workshop',date:'10/5/26, 8:30 PM',mode:'Creative',version:'26.3'}];
 const defaultServers=[{id:'fictional-example',name:'Fictional Example Server',address:'play.example.invalid',pack:'Prompt'}];
 const debugMenuToolsEnabled=true;const saved={};
-const state={settings:{...defaults},worlds:clone(defaultWorlds),servers:clone(defaultServers),bindings:{},language:'en_us',lastAddress:'',packs:[]};
+const state={settings:{...defaults},worlds:[],servers:clone(defaultServers),bindings:{},language:'en_us',lastAddress:'',packs:[]};
 for(const[k,v]of Object.entries(saved.settings||{})){const d=D[k];if(d&&((d.values&&d.values.includes(v))||(!d.values&&typeof v==='number'&&Number.isFinite(v)&&v>=d.min&&v<=d.max)))state.settings[k]=v}
 for(const b of DATA.bindings)state.bindings[b.id]=typeof saved.bindings?.[b.id]==='string'?saved.bindings[b.id]:b.default;
 state.settings.skipWarning=false;
@@ -123,9 +123,9 @@ accessibility(){title(tr('options.accessibility.title'));let{c,y}=scroll();setti
 online(){title(tr('options.online.title'));let{c,y}=scroll();y=heading(tr('options.online.friends.header'),c,y);y=listSettings(['friendsList','allowFriendRequests','inGameNotification','sharePresence'],c,y);button(tr('options.online.xboxSettings'),0,y,310,()=>link('https://aka.ms/MinecraftJavaXboxPrivacyAndSafety'),false,c);y+=25;y=heading(tr('options.online.servers.header'),c,y,18);setting('allowServerListing',0,y,310,c);y+=25;finishList(c,y);done()},
 language(){title(tr('options.language.title'),6);const search=field(searches.language,C-100,19,200,v=>{searches.language=v;drawLanguages()}, {height:15,hint:tr('gui.language.search'),label:tr('options.language.title')});let{c}=scroll(36,53,270);c.id='language-list';drawLanguages();text('Language choice is remembered; translations are planned.',0,H-47,W,'center muted');button(tr('options.font'),C-154,H-26,150,()=>go('font'));button(tr('gui.done'),C+4,H-26,150,()=>{void applyLanguage(chosenLanguage,true)}).dataset.preferenceCommit='language';search.focus({preventScroll:true});if(!searches.language)requestAnimationFrame(()=>{const r=$('[data-language=\"'+chosenLanguage+'\"]');if(r)r.scrollIntoView({block:'center'})})},
 keybinds(){title(tr('controls.keybinds.title'));const inputStatus=text(MenuInput.statusLabel(),0,24,W,'center muted');inputStatus.dataset.inputStatus='true';const{c}=scroll(33,33,340);let y=0,cat='';for(const b of [...DATA.bindings].sort((a,b)=>['movement','misc','multiplayer','gameplay','inventory','creative','spectator','debug'].indexOf(a.category)-['movement','misc','multiplayer','gameplay','inventory','creative','spectator','debug'].indexOf(b.category)||(a.order||0)-(b.order||0)||a.label.localeCompare(b.label))){if(b.category!==cat){cat=b.category;text(tr('key.category.minecraft.'+cat),0,y+11,340,'center',c).style.textDecoration='underline';y+=20}const supported=MenuInput.supported(b.id),value=state.bindings[b.id];text((b.id==='key.sneak'?'Crouch':tr(b.id))+(supported?'':' (Planned)'),2,y+6,201,'',c);const bind=button(bindingCapture===b.id?'> '+value+' <':value,208,y,75,()=>MenuInput.startCapture(b.id),!MenuInput.enabled(b.id),c);bind.dataset.binding=b.id;bind.dataset.tooltip=supported?'Default: '+b.default+'. Press a keyboard key or mouse button. Backspace unbinds. Escape cancels.':'This action will be wired when its gameplay system exists.';const reset=button(tr('controls.reset'),288,y,50,()=>void MenuInput.reset(b.id),!MenuInput.enabled(b.id)||value===b.default,c);reset.dataset.bindingReset=b.id;y+=20}finishList(c,y);footerPair(tr('controls.resetAll'),()=>void MenuInput.resetAll().catch(()=>{}),tr('gui.done'),back);screen.querySelector(':scope > button:nth-last-child(2)').disabled=!MenuInput.enabled('key.forward')||DATA.bindings.filter(b=>MenuInput.supported(b.id)).every(b=>state.bindings[b.id]===b.default);},
-worlds(){if(!chosenWorld)chosenWorld=MenuApplication.defaultWorld();title(tr('selectWorld.title'),8);field(searches.worlds,C-100,23,200,v=>{searches.worlds=v;drawWorlds()},{hint:tr('gui.selectWorld.search'),label:tr('selectWorld.search')});const{c}=scroll(49,60,270);c.id='world-list';drawWorlds();button(tr('selectWorld.select'),C-154,H-49,150,loadWorld,!chosenWorld).dataset.worldAction='play';button(tr('selectWorld.create'),C+4,H-49,150,()=>{draft=newDraft();go('create',{tab:'game'})});const btns=[[tr('selectWorld.edit'),()=>go('editworld')],[tr('selectWorld.delete'),deleteWorld],[tr('selectWorld.recreate'),()=>{const w=state.worlds.find(w=>w.id===chosenWorld);if(w){draft=newDraft();draft.name=w.name;draft.gameMode=w.mode;go('create',{tab:'game'})}}],[tr('gui.back'),back]];btns.forEach(([t,f],i)=>{const b=button(t,C-154+i*79,H-25,71,f,i<3&&!chosenWorld);if(i<3)b.dataset.worldAction='reference'});refreshWorldActions()},
-create(){const tab=current.data.tab||'game';for(const[i,n]of ['game','world','more'].entries()){const b=button(tr('createWorld.tab.'+n+'.title'),C-154+i*104,0,104,()=>{current.data.tab=n;render()},false,screen,'tab');b.style.height='24px';b.setAttribute('role','tab');b.setAttribute('aria-selected',tab===n)}const y=Math.min(54,H-57-(tab==='world'?145:143));if(tab==='game'){text(tr('selectWorld.enterName'),C-104,y,208);field(draft.name,C-104,y+13,208,v=>{draft.name=v;const b=$('[data-create-submit]');if(b)b.disabled=!v.trim()},{label:tr('selectWorld.enterName'),max:128});localCycle('draft.gameMode',tr('selectWorld.gameMode'),draft.gameMode,['Survival','Hardcore','Creative'],C-105,y+42,210,v=>{draft.gameMode=v;if(v==='Hardcore'){draft.difficulty='Hard';draft.commands=false;draft.bonus=false}else draft.commands=v==='Creative';render()});localCycle('draft.difficulty',tr('options.difficulty'),draft.gameMode==='Hardcore'?'Hard':draft.difficulty,['Peaceful','Easy','Normal','Hard'],C-105,y+70,210,v=>draft.difficulty=v,draft.gameMode==='Hardcore');localCycle('draft.commands',tr('selectWorld.allowCommands'),draft.gameMode==='Hardcore'?false:draft.commands,[false,true],C-105,y+98,210,v=>draft.commands=v,draft.gameMode==='Hardcore');}else if(tab==='world'){localCycle('draft.type',tr('selectWorld.mapType'),draft.type,['Default','Superflat','Large Biomes','AMPLIFIED','Single Biome'],C-155,y,150,v=>{draft.type=v;render()});button(tr('selectWorld.customizeType'),C+5,y,150,()=>{if(draft.type==='Superflat'){flatEdit=clone(draft.flat);flatBiomeEdit=draft.flatBiome;go('flat')}else{biomeEdit=draft.biome;go('biomes')}},!['Superflat','Single Biome'].includes(draft.type));text(tr('selectWorld.enterSeed'),C-154,y+32,310);field(draft.seed,C-154,y+45,308,v=>draft.seed=v,{hint:tr('selectWorld.seedInfo'),label:tr('selectWorld.enterSeed'),max:128});switchRow(tr('selectWorld.mapFeatures'),tr('selectWorld.mapFeatures.info'),draft.structures,C-155,y+81,310,v=>draft.structures=v);switchRow(tr('selectWorld.bonusItems'),'',draft.gameMode==='Hardcore'?false:draft.bonus,C-155,y+115,310,v=>draft.bonus=v,draft.gameMode==='Hardcore')}else{button(tr('selectWorld.gameRules'),C-105,y,210,()=>{rulesEdit=clone(draft.rules);go('rules')});button(tr('selectWorld.experiments'),C-105,y+28,210,()=>{experimentsEdit=clone(draft.experiments);go('experiments')});button(tr('selectWorld.dataPacks'),C-105,y+56,210,()=>{packDraft=[];go('datapacks')})}button(tr('selectWorld.create'),C-154,H-26,150,()=>message('World creation stops here','No world is generated in this menu prototype. Your name, seed, game rules, and generation settings are kept so you can return and change them.',tr('gui.back')),!draft.name.trim()).dataset.createSubmit='true';button(tr('gui.cancel'),C+4,H-26,150,back)},
-editworld(){const w=state.worlds.find(w=>w.id===chosenWorld);if(!w||w.builtIn){back();return}title(tr('selectWorld.edit.title'),15);text(tr('selectWorld.enterName'),C-100,38,200);let newName=current.data.worldName??w.name;field(newName,C-100,50,200,v=>{current.data.worldName=newName=v;$('#world-save').disabled=!v.trim()},{label:tr('selectWorld.enterName')});const actions=[[tr('selectWorld.edit.resetIcon'),'A fictional entry has no saved world icon.'],[tr('selectWorld.edit.openFolder'),'This browser prototype has no world-save folder.'],[tr('selectWorld.edit.backup'),'A game client is needed to create world backups.'],[tr('selectWorld.edit.backupFolder'),'This prototype has no Minecraft backup folder.'],[tr('selectWorld.edit.optimize'),'World optimization requires a real Minecraft world.']];actions.forEach(([t,body],i)=>button(t,C-100,80+i*24,200,()=>message(t,body),i===0));const save=button(tr('selectWorld.edit.save'),C-154,H-26,150,()=>{w.name=newName.trim();commitStage();back()},!newName.trim());save.id='world-save';button(tr('gui.cancel'),C+4,H-26,150,back)},
+worlds(){if(!chosenWorld)chosenWorld=MenuApplication.defaultWorld();title(tr('selectWorld.title'),8);field(searches.worlds,C-100,23,200,v=>{searches.worlds=v;drawWorlds()},{hint:tr('gui.selectWorld.search'),label:tr('selectWorld.search')});const{c}=scroll(49,60,270);c.id='world-list';drawWorlds();button(tr('selectWorld.select'),C-154,H-49,150,loadWorld,!chosenWorld).dataset.worldAction='play';button(tr('selectWorld.create'),C+4,H-49,150,()=>{draft=newDraft();go('create',{tab:'game'})});const btns=[[tr('selectWorld.edit'),()=>go('editworld')],[tr('selectWorld.delete'),deleteWorld],[tr('selectWorld.recreate'),()=>{const w=state.worlds.find(w=>w.id===chosenWorld);if(w){draft=recreateDraft(w);go('create',{tab:'game'})}}],[tr('gui.back'),back]];btns.forEach(([t,f],i)=>{const b=button(t,C-154+i*79,H-25,71,f,i<3&&!chosenWorld);if(i<3)b.dataset.worldAction='saved'});refreshWorldActions()},
+create(){const tab=current.data.tab||'game';for(const[i,n]of ['game','world','more'].entries()){const b=button(tr('createWorld.tab.'+n+'.title'),C-154+i*104,0,104,()=>{current.data.tab=n;render()},false,screen,'tab');b.style.height='24px';b.setAttribute('role','tab');b.setAttribute('aria-selected',tab===n)}const y=Math.min(54,H-57-(tab==='world'?145:143));if(tab==='game'){text(tr('selectWorld.enterName'),C-104,y,208);field(draft.name,C-104,y+13,208,v=>{draft.name=v;const b=$('[data-create-submit]');if(b)b.disabled=!v.trim()},{label:tr('selectWorld.enterName'),max:128});localCycle('draft.gameMode',tr('selectWorld.gameMode'),draft.gameMode,['Survival','Hardcore','Creative'],C-105,y+42,210,v=>{draft.gameMode=v;if(v==='Hardcore'){draft.difficulty='Hard';draft.commands=false;draft.bonus=false}else draft.commands=v==='Creative';render()});localCycle('draft.difficulty',tr('options.difficulty'),draft.gameMode==='Hardcore'?'Hard':draft.difficulty,['Peaceful','Easy','Normal','Hard'],C-105,y+70,210,v=>draft.difficulty=v,draft.gameMode==='Hardcore');localCycle('draft.commands',tr('selectWorld.allowCommands'),draft.gameMode==='Hardcore'?false:draft.commands,[false,true],C-105,y+98,210,v=>draft.commands=v,draft.gameMode==='Hardcore');}else if(tab==='world'){localCycle('draft.type',tr('selectWorld.mapType'),draft.type,['Default','Superflat','Large Biomes','AMPLIFIED','Single Biome'],C-155,y,150,v=>{draft.type=v;render()});button(tr('selectWorld.customizeType'),C+5,y,150,()=>{if(draft.type==='Superflat'){flatEdit=clone(draft.flat);flatBiomeEdit=draft.flatBiome;go('flat')}else{biomeEdit=draft.biome;go('biomes')}},!['Superflat','Single Biome'].includes(draft.type));text(tr('selectWorld.enterSeed'),C-154,y+32,310);field(draft.seed,C-154,y+45,308,v=>draft.seed=v,{hint:tr('selectWorld.seedInfo'),label:tr('selectWorld.enterSeed'),max:128});switchRow(tr('selectWorld.mapFeatures'),tr('selectWorld.mapFeatures.info'),draft.structures,C-155,y+81,310,v=>draft.structures=v);switchRow(tr('selectWorld.bonusItems'),'',draft.gameMode==='Hardcore'?false:draft.bonus,C-155,y+115,310,v=>draft.bonus=v,draft.gameMode==='Hardcore')}else{button(tr('selectWorld.gameRules'),C-105,y,210,()=>{rulesEdit=clone(draft.rules);go('rules')});button(tr('selectWorld.experiments'),C-105,y+28,210,()=>{experimentsEdit=clone(draft.experiments);go('experiments')});button(tr('selectWorld.dataPacks'),C-105,y+56,210,()=>{packDraft=[];go('datapacks')})}button(tr('selectWorld.create'),C-154,H-26,150,()=>void MenuApplication.createWorld(draft),!draft.name.trim()).dataset.createSubmit='true';button(tr('gui.cancel'),C+4,H-26,150,back)},
+editworld(){const w=state.worlds.find(w=>w.id===chosenWorld);if(!w||!w.saved){back();return}title(tr('selectWorld.edit.title'),15);text(tr('selectWorld.enterName'),C-100,38,200);let newName=current.data.worldName??w.name;field(newName,C-100,50,200,v=>{current.data.worldName=newName=v;$('#world-save').disabled=!v.trim()},{label:tr('selectWorld.enterName')});const actions=[[tr('selectWorld.edit.resetIcon'),'Worlds have no icons yet.'],[tr('selectWorld.edit.openFolder'),'Opening the world folder is not available yet.'],[tr('selectWorld.edit.backup'),'World backups are not available yet.'],[tr('selectWorld.edit.backupFolder'),'World backups are not available yet.'],[tr('selectWorld.edit.optimize'),'Optimize World is not available yet.']];actions.forEach(([t,body],i)=>button(t,C-100,80+i*24,200,()=>message(t,body),i===0));const save=button(tr('selectWorld.edit.save'),C-154,H-26,150,()=>{w.name=newName.trim();commitStage();back();void MenuApplication.renameWorld(w.id,w.name)},!newName.trim());save.id='world-save';button(tr('gui.cancel'),C+4,H-26,150,back)},
 safety(){title(tr('multiplayerWarning.header'),Math.floor(H/4)-24);text(tr('multiplayerWarning.message'),C-150,Math.floor(H/4)+1,300,'center');const ch=check(!!state.settings.skipWarning,C-150,Math.floor(H/4)+64,v=>{void MenuPreferences.setFlag('skipWarning',v)});ch.dataset.preferenceFlag='skipWarning';ch.setAttribute('aria-label',tr('multiplayerWarning.check'));text(tr('multiplayerWarning.check'),C-126,Math.floor(H/4)+70,280);button(tr('gui.proceed'),C-154,Math.floor(H/4)+96,150,()=>replace('multiplayer'));button(tr('gui.back'),C+4,Math.floor(H/4)+96,150,back)},
 multiplayer(){title(tr('multiplayer.title'));const{c}=scroll(33,64,305);c.id='server-list';drawServers();const y=H-53;button(tr('selectServer.select'),C-154,y,100,connectServer,!chosenServer).dataset.serverAction='select';button(tr('selectServer.direct'),C-50,y,100,()=>go('direct'));button(tr('selectServer.add'),C+54,y,100,()=>{editServer={id:'sample-'+Date.now(),name:tr('selectServer.defaultName'),address:'',pack:'Prompt'};go('serveredit')});[[tr('selectServer.edit'),()=>{editServer=clone(state.servers.find(s=>s.id===chosenServer));go('serveredit',{edit:true})}],[tr('selectServer.delete'),deleteServer],[tr('selectServer.refresh'),()=>{chosenServer=null;render()}],[tr('gui.back'),back]].forEach(([t,f],i)=>{const b=button(t,C-154+i*79,H-29,71,f,i<2&&!chosenServer);if(i<2)b.dataset.serverAction='select'})},
 direct(){title(tr('selectServer.direct'),20);text(tr('addServer.enterIp'),C-99,100,200,'muted');const f=field(state.lastAddress,C-100,116,200,v=>{state.lastAddress=v;$('#direct-connect').disabled=!validAddress(v)},{label:tr('addServer.enterIp')});const b=button(tr('selectServer.select'),C-100,Math.floor(H/4)+108,200,()=>{commitStage();stopConnection(state.lastAddress)},!validAddress(state.lastAddress));b.id='direct-connect';button(tr('gui.cancel'),C-100,Math.floor(H/4)+132,200,back);f.focus({preventScroll:true});f.onkeydown=e=>{if(e.key==='Enter'&&validAddress(f.value))b.click()}},
@@ -151,10 +151,10 @@ function localCycle(id,label,value,values,x,y,w,fn,disabled=false,parent=screen)
 function switchRow(label,info,value,x,y,width,fn,disabled=false,parent=screen){text(label,x,y+6,width-50,'',parent);if(info)text(info,x,y+20,width-50,'muted',parent);return localCycle('switch.'+label,'',value,[false,true],x+width-44,y,44,fn,disabled,parent)}
 async function applyLanguage(code,close=false){if(!DATA.languages[code])throw Error('Unknown locale');return MenuPreferences.commit({language:code},()=>{chosenLanguage=state.language;activeLabels=L;document.documentElement.lang='en-US';commitStage();if(close)back();else render()})}
 function drawLanguages(){const c=$('#language-list');if(!c)return;c.replaceChildren();let y=0;const q=searches.language.toLowerCase();const langs=Object.entries(DATA.languages).sort(([a],[b])=>a.localeCompare(b));for(const[code,info]of langs){const label=info.name+' ('+info.region+')';if(q&&!label.toLowerCase().includes(q))continue;const r=pos(el('div','row',c),0,y,270,18);r.setAttribute('role','option');r.tabIndex=0;r.dataset.language=code;r.classList.toggle('selected',code===chosenLanguage);r.setAttribute('aria-selected',code===chosenLanguage);text(label,0,5,270,'center',r);r.onclick=()=>{chosenLanguage=code;clickSound();c.querySelectorAll('[data-language]').forEach(e=>{const sel=e===r;e.classList.toggle('selected',sel);e.setAttribute('aria-selected',sel)})};r.ondblclick=()=>{void applyLanguage(chosenLanguage,true)};r.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')r.click()};y+=18}finishList(c,y)}
-function drawWorlds(){const c=$('#world-list');if(!c)return;c.replaceChildren();let y=0;const visible=state.worlds.filter(w=>(w.name+' '+w.folder).toLowerCase().includes(searches.worlds.toLowerCase()));if(!visible.some(w=>w.id===chosenWorld))chosenWorld=null;for(const w of visible){const r=pos(el('div','row',c),0,y,270,36);r.tabIndex=0;r.setAttribute('role','option');r.setAttribute('aria-label',w.name);r.dataset.world=w.id;r.classList.toggle('selected',chosenWorld===w.id);r.setAttribute('aria-selected',chosenWorld===w.id);const img=pos(el('img','world-icon',r),1,1);img.src='assets/minecraft/textures/misc/unknown_server.png';img.alt='';if(w.builtIn)el('span','world-play',r);text(w.name,38,3,227,'',r);text((w.summary??'Design reference - does not load'),38,14,227,'muted',r);text((w.status??w.mode+' - menu design only'),38,25,227,'muted',r);r.onclick=()=>{chosenWorld=w.id;clickSound();c.querySelectorAll('[data-world]').forEach(e=>{const s=e===r;e.classList.toggle('selected',s);e.setAttribute('aria-selected',s)});refreshWorldActions()};r.ondblclick=loadWorld;r.onkeydown=e=>{if(e.key==='Enter'){r.click();loadWorld()}else if(e.key===' ')r.click()};y+=36}finishList(c,y);refreshWorldActions()}
+function drawWorlds(){const c=$('#world-list');if(!c)return;c.replaceChildren();let y=0;const visible=state.worlds.filter(w=>(w.name+' '+w.folder).toLowerCase().includes(searches.worlds.toLowerCase()));if(!visible.some(w=>w.id===chosenWorld))chosenWorld=null;for(const w of visible){const r=pos(el('div','row',c),0,y,270,36);r.tabIndex=0;r.setAttribute('role','option');r.setAttribute('aria-label',w.name);r.dataset.world=w.id;r.classList.toggle('selected',chosenWorld===w.id);r.setAttribute('aria-selected',chosenWorld===w.id);const img=pos(el('img','world-icon',r),1,1);img.src='assets/minecraft/textures/misc/unknown_server.png';img.alt='';if(w.builtIn||w.saved)el('span','world-play',r);text(w.name,38,3,227,'',r);text((w.summary??''),38,14,227,'muted',r);text((w.status??''),38,25,227,'muted',r);r.onclick=()=>{chosenWorld=w.id;clickSound();c.querySelectorAll('[data-world]').forEach(e=>{const s=e===r;e.classList.toggle('selected',s);e.setAttribute('aria-selected',s)});refreshWorldActions()};r.ondblclick=loadWorld;r.onkeydown=e=>{if(e.key==='Enter'){r.click();loadWorld()}else if(e.key===' ')r.click()};y+=36}finishList(c,y);refreshWorldActions()}
 function drawServers(){const c=$('#server-list');if(!c)return;c.replaceChildren();let y=0;for(const s of state.servers){const r=pos(el('div','row',c),0,y,305,36);r.tabIndex=0;r.setAttribute('role','option');r.setAttribute('aria-label',s.name);r.dataset.server=s.id;r.classList.toggle('selected',chosenServer===s.id);r.setAttribute('aria-selected',chosenServer===s.id);const img=pos(el('img','world-icon',r),1,1);img.src='assets/minecraft/textures/misc/unknown_server.png';img.alt='';text(s.name,38,3,243,'',r);text('Fictional server · offline prototype',38,14,243,'muted',r);text(s.address,38,25,243,'muted',r);const ping=pos(el('img','',r),292,2,10,8);ping.src=A+'sprites/icon/ping_unknown.png';ping.alt='No connection';tip(ping,'No server is contacted');r.onclick=()=>{chosenServer=s.id;clickSound();c.querySelectorAll('[data-server]').forEach(e=>{const sel=e===r;e.classList.toggle('selected',sel);e.setAttribute('aria-selected',sel)});screen.querySelectorAll('[data-server-action]').forEach(e=>e.disabled=false)};r.ondblclick=connectServer;r.onkeydown=e=>{if(e.key==='Enter'){r.click();connectServer()}else if(e.key===' ')r.click()};y+=36}text(tr('lanServer.scanning'),0,y+18,305,'center',c);text('···',0,y+34,305,'center',c);finishList(c,y+57)}
 // Defined by MenuWorldsRuntime.js.
-function deleteWorld(){const w=state.worlds.find(w=>w.id===chosenWorld);if(!w||w.builtIn)return;confirm(tr('selectWorld.deleteQuestion'),tr('selectWorld.deleteWarning',w.name),tr('selectWorld.deleteButton'),()=>{const i=state.worlds.indexOf(w);state.worlds.splice(i,1);chosenWorld=null;persist();render();message('Fictional entry removed','Only the local sample list was changed. You can restore this entry below.','Restore Entry',()=>{state.worlds.splice(i,0,w);persist();render()})})}
+function deleteWorld(){const w=state.worlds.find(w=>w.id===chosenWorld);if(!w||!w.saved)return;confirm(tr('selectWorld.deleteQuestion'),tr('selectWorld.deleteWarning',w.name),tr('selectWorld.deleteButton'),()=>{chosenWorld=null;void MenuApplication.deleteWorld(w.id)})}
 function validAddress(v){return typeof v==='string'&&v.trim().length>0&&v.length<=128&&!/\s|[/?#]/.test(v)&&(/^(?:[a-zA-Z0-9_.-]+|\[[a-fA-F0-9:]+\])(?::\d{1,5})?$/.test(v))}
 function stopConnection(address){message(tr('connect.failed'),'No connection was made. This browser prototype stops before contacting '+address+'.',tr('gui.back'))}
 function connectServer(){const s=state.servers.find(s=>s.id===chosenServer);if(s)stopConnection(s.address)}
@@ -807,14 +807,15 @@ window.MenuPreferences = MenuPreferences;
 MenuStores.register(MenuPreferences);
 void MenuPreferences.initialize();
 
-// Built-in worlds come from the native catalog (MenuApplication); the fictional entries keep
-// their design workflows. Only a catalog ID reaches native travel: no URL, path or console text.
+// The Singleplayer list is native (MenuApplication merges the catalog's built-in worlds and the saves of Create New
+// World). Only an id from that list reaches native travel: no URL, path or console text.
 function refreshWorldActions() {
   const world = state.worlds.find(w => w.id === chosenWorld);
   const loading = !!window.MenuApplication?.isLoading();
   for (const button of screen.querySelectorAll('[data-world-action]')) {
     const play = button.dataset.worldAction === 'play';
-    button.disabled = loading || (play ? !window.MenuApplication?.worldEnabled(world?.id) : !world || !!world.builtIn);
+    // Edit, Delete and Re-Create act on saved worlds; built-in worlds belong to the game.
+    button.disabled = loading || (play ? !window.MenuApplication?.worldEnabled(world?.id) : !world?.saved);
     if (play) button.textContent = loading ? 'Opening world...' : tr('selectWorld.select');
   }
 }
@@ -822,38 +823,47 @@ function refreshWorldActions() {
 function loadWorld() {
   const world = state.worlds.find(w => w.id === chosenWorld);
   if (!world || window.MenuApplication?.isLoading()) return;
-  if (world.builtIn) { void MenuApplication.openWorld(world.id); return; }
-  message(world.name, 'Design reference only. Choose a world marked Playable.', tr('gui.back'));
+  void MenuApplication.openWorld(world.id);
 }
 
-// Quit Game and world travel through the native menuapplication service. Both drain every settings
-// store first, send one request, then follow native state until Unreal confirms.
+// Re-Create starts from the saved world's own settings, its seed included, as the reference does.
+function recreateDraft(world) {
+  return Object.assign(newDraft(), clone(world.draft ?? {name: world.name}));
+}
+
+// Quit Game, world travel and Create New World through the native menuapplication service. Leaving drains
+// every settings store first, sends one request, then follows native state until Unreal confirms.
 const MenuApplication = (() => {
   const client = MenuBridge.client('menuapplication', {service: 'game application', unavailable: 'Game shutdown is unavailable.',
     validate: reply => !!reply && typeof reply.ok === 'boolean' && typeof reply.canQuit === 'boolean' &&
       typeof reply.pendingQuit === 'boolean' && typeof reply.quitIssued === 'boolean'});
-  let snapshot = null, leaving = null, polling = false, retryAllowed = false, revision = 0; // leaving: 'quit' | 'world'
-  let catalog = []; // Native playable worlds, in list order.
+  let snapshot = null, leaving = null, polling = false, retryAllowed = false, revision = 0; // leaving: 'quit' | 'world' | 'create'
+  let catalog = [], saved = []; // Native worlds in list order: the catalog's, then Create New World's saves.
   const enabled = () => !leaving && !snapshot?.pendingWorld && !snapshot?.travelIssued && !!snapshot?.canQuit &&
     !snapshot.quitIssued && (!snapshot.pendingQuit || retryAllowed);
-  const isPlayable = id => catalog.some(world => world.id === id);
-  const worldEnabled = id => isPlayable(id) && !leaving && !!snapshot?.canOpenWorld &&
-    !snapshot.travelIssued && !snapshot.pendingQuit && (!snapshot.pendingWorld || retryAllowed);
+  const isPlayable = id => catalog.some(world => world.id === id) || saved.some(world => world.id === id);
+  const canTravel = () => !leaving && !!snapshot?.canOpenWorld && !snapshot.travelIssued && !snapshot.pendingQuit &&
+    (!snapshot.pendingWorld || retryAllowed);
+  const worldEnabled = id => isPlayable(id) && canTravel();
   function refresh() {
     for (const button of screen.querySelectorAll('[data-application-quit]')) button.disabled = !enabled();
+    if (typeof draft !== 'undefined')
+      for (const button of screen.querySelectorAll('[data-create-submit]')) button.disabled = !!leaving || !draft.name.trim();
     if (typeof refreshWorldActions === 'function') refreshWorldActions();
   }
-  // Built-in worlds lead the list; a rolled-back screen transaction may drop them, so every
-  // reply re-adds any that are missing.
-  function syncWorlds(worlds) {
+  // The world list is native: the catalog's built-in worlds, then the saved worlds, most recently played first.
+  // A rolled-back screen transaction may restore an older list, so every reply repairs it.
+  function syncWorlds(worlds, savedWorlds) {
     if (!Array.isArray(worlds)) return;
-    const next = worlds.map(({id, name, summary, status}) => ({id, name, summary, status}));
-    if (JSON.stringify(next) === JSON.stringify(catalog) && catalog.every(world => state.worlds.some(w => w.id === world.id))) return;
-    catalog = next;
-    state.worlds = [...catalog.map(world => ({...world, folder: world.name, builtIn: true})), ...state.worlds.filter(w => !w.builtIn)];
+    catalog = worlds.map(({id, name, summary, status}) => ({id, name, summary, status}));
+    saved = (Array.isArray(savedWorlds) ? savedWorlds : []).map(({id, name, summary, status, draft}) => ({id, name, summary, status, draft}));
+    const list = [...catalog.map(world => ({...world, folder: world.name, builtIn: true})),
+      ...saved.map(world => ({...world, folder: world.id, saved: true}))];
+    if (JSON.stringify(list) === JSON.stringify(state.worlds)) return;
+    state.worlds = list;
     if (current.name === 'worlds') drawWorlds();
   }
-  function absorb(reply) { snapshot = reply; retryAllowed = false; syncWorlds(reply.worlds); refresh(); }
+  function absorb(reply) { snapshot = reply; retryAllowed = false; syncWorlds(reply.worlds, reply.savedWorlds); refresh(); }
 
   const exits = {
     quit: {title: 'Quit Game', request: 'RequestQuit', done: reply => reply.quitIssued,
@@ -863,7 +873,12 @@ const MenuApplication = (() => {
     world: {title: 'Open World', request: 'RequestOpenWorld', done: reply => reply.travelIssued,
       stillPending: reply => reply.pendingWorld, failed: 'The selected world could not open.',
       drain: 'Settings did not finish changing. Please try opening the world again.',
-      timedOut: 'The selected world did not finish opening. Please try again.'}
+      timedOut: 'The selected world did not finish opening. Please try again.'},
+    // Native checks and saves the draft, then opens the new world like any other.
+    create: {title: 'Create New World', request: 'CreateWorld', done: reply => reply.travelIssued,
+      stillPending: reply => reply.pendingWorld, failed: 'The world could not be created.',
+      drain: 'Settings did not finish changing. Please try creating the world again.',
+      timedOut: 'The new world did not finish opening. Please try again.'}
   };
   async function leave(kind, ...args) {
     const exit = exits[kind];
@@ -903,6 +918,23 @@ const MenuApplication = (() => {
   }
   const quit = () => enabled() ? leave('quit') : Promise.resolve();
   const openWorld = id => worldEnabled(id) ? leave('world', id) : Promise.resolve();
+  function createWorld(settings) {
+    if (canTravel()) return leave('create', JSON.stringify(settings));
+    if (!leaving) message('Create New World', 'A new world can be created only while the game is running.');
+    return Promise.resolve();
+  }
+  // Edits to a saved world: one request each; the reply's list replaces the page's. Older polls are discarded.
+  async function editSaved(title, method, id, ...args) {
+    if (leaving || !saved.some(world => world.id === id)) return;
+    revision++;
+    try {
+      const reply = await client.call(method, [id, ...args]);
+      absorb(reply);
+      if (!reply.ok) throw Error(reply.error || title + ' did not finish.');
+    } catch (error) { message(title, error.message); }
+  }
+  const deleteWorld = id => editSaved('Delete World', 'DeleteWorld', id);
+  const renameWorld = (id, name) => editSaved('Edit World', 'RenameWorld', id, name);
 
   async function initialize() {
     const ticket = revision;
@@ -918,8 +950,9 @@ const MenuApplication = (() => {
     catch (error) { console.warn('Game application synchronization: ' + error.message); }
     finally { polling = false; }
   }, 500);
-  return {enabled, quit, isPlayable, worldEnabled, openWorld, isLoading: () => leaving === 'world', initialize,
-    defaultWorld: () => catalog[0]?.id ?? null, getState: () => snapshot ? clone(snapshot) : null};
+  return {enabled, quit, isPlayable, worldEnabled, openWorld, createWorld, deleteWorld, renameWorld,
+    isLoading: () => leaving === 'world' || leaving === 'create', initialize,
+    defaultWorld: () => saved[0]?.id ?? catalog[0]?.id ?? null, getState: () => snapshot ? clone(snapshot) : null};
 })();
 window.MenuApplication = MenuApplication;
 void MenuApplication.initialize();

@@ -4,7 +4,7 @@
 #include "HAL/PlatformTime.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Storage/VoxelColumn.h"
-#include "Terrain/VoxelHeightTerrain.h"
+#include "Terrain/VoxelTerrain.h"
 #include "VoxelConstants.h"
 
 namespace
@@ -22,7 +22,7 @@ namespace
     }
 }
 
-void FVoxelArea::Build(const FVoxelBlockTable& Table, int64 Seed, FIntPoint InCenter, int32 InRadius,
+void FVoxelArea::Build(const FVoxelBlockTable& Table, const IVoxelTerrain& Terrain, FIntPoint InCenter, int32 InRadius,
     const FVoxelMeshOptions& Options, bool bParallel, FVoxelArea& Out)
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelArea_Build);
@@ -33,8 +33,7 @@ void FVoxelArea::Build(const FVoxelBlockTable& Table, int64 Seed, FIntPoint InCe
     const int32 Side = 2 * InRadius + 1, ColumnCount = Side * Side;
     const EParallelForFlags Flags = bParallel ? EParallelForFlags::Unbalanced : EParallelForFlags::ForceSingleThread;
 
-    // Columns: each is a pure function of the seed and its position.
-    const FVoxelHeightTerrain Terrain(Seed, Table);
+    // Columns: each is a pure function of the terrain's settings and its position.
     TArray<TSharedPtr<FVoxelColumn, ESPMode::ThreadSafe>> Built;
     Built.SetNum(ColumnCount);
     Out.GenerateMs.SetNumZeroed(ColumnCount);

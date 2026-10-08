@@ -12,6 +12,7 @@
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationPawn.h"
 #include "Foundation/FoundationProfile.h"
+#include "Foundation/FoundationVitals.h"
 #include "Generation/VoxelArea.h"
 #include "HAL/FileManager.h"
 #include "Kismet/GameplayStatics.h"
@@ -20,7 +21,9 @@
 #include "Misc/FileHelper.h"
 #include "RenderUtils.h"
 #include "Storage/VoxelColumn.h"
+#include "Terrain/VoxelFlatTerrain.h"
 #include "Terrain/VoxelHeightTerrain.h"
+#include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
 #include "UnrealClient.h"
 #include "Voxel/VoxelBlocks.h"
@@ -115,11 +118,72 @@ void AVoxelWorld::BuildLayout()
 {
     // Not the lab's ground and course: this map's ground is the voxel world.
     Table = VoxelBlocks::GetDefault();
-    FString SeedText = UVoxelWorldSettings::Get().DevSeed;
-    FParse::Value(FCommandLine::Get(), TEXT("VoxelSeed="), SeedText);
+    FVoxelSeed StartSeed = FVoxelSeed::Parse(UVoxelWorldSettings::Get().DevSeed);
+    if (const FUnnamedSavedWorld* World = GetSavedWorld())
+    {
+        // The seed saved at creation; a blank text's random draw is never repeated.
+        StartSeed.Value = World->Seed;
+        StartSeed.Source = World->SeedText.TrimStartAndEnd().IsEmpty() ? EVoxelSeedSource::Random
+                                                                       : FVoxelSeed::Parse(World->SeedText).Source;
+    }
+    FString SeedText;
+    if (FParse::Value(FCommandLine::Get(), TEXT("VoxelSeed="), SeedText)) StartSeed = FVoxelSeed::Parse(SeedText);
     FParse::Value(FCommandLine::Get(), TEXT("VoxelShot="), ShotFolder);
     LoadMaterials();
-    Regenerate(FVoxelSeed::Parse(SeedText));
+    Regenerate(StartSeed);
+}
+
+const FUnnamedSavedWorld* AVoxelWorld::GetSavedWorld() const
+{
+    const UWorld* World = GetWorld();
+    if (!bSavedWorldRead && World && World->IsGameWorld())
+    {
+        bSavedWorldRead = true;
+        if (const TCHAR* Id = World->URL.GetOption(TEXT("VoxelWorld="), nullptr))
+        {
+            FUnnamedSavedWorld Saved;
+            FString Error;
+            if (UnnamedSavedWorlds::Load(Id, Saved, Error))
+            {
+                UE_LOG(LogUnnamedWorlds, Display, TEXT("Opened world %s (\"%s\", %s, %s, %s)"), *Saved.Id, *Saved.Name,
+                    *Saved.Type, *Saved.GameMode, *Saved.Difficulty);
+                SavedWorld = MoveTemp(Saved);
+            }
+            else
+                UE_LOG(LogUnnamedWorlds, Error, TEXT("World %s could not be opened (%s); showing the test area."), Id,
+                    *Error);
+        }
+    }
+    return SavedWorld.GetPtrOrNull();
+}
+
+void AVoxelWorld::ConfigurePlayer(FFoundationVitals& Vitals) const
+{
+    const FUnnamedSavedWorld* World = GetSavedWorld();
+    if (!World) return;
+    // Hardcore plays as Survival on Hard (the store forces Hard); its permadeath needs a game-over screen first.
+    Vitals.Mode =
+        World->GameMode == TEXT("Creative") ? EFoundationPlayerMode::Creative : EFoundationPlayerMode::Survival;
+    static_assert(int32(EFoundationDifficulty::Hard) == 3, "Difficulty names follow the enum");
+    const TCHAR* const Difficulties[] = {TEXT("Peaceful"), TEXT("Easy"), TEXT("Normal"), TEXT("Hard")};
+    for (int32 Index = 0; Index < UE_ARRAY_COUNT(Difficulties); ++Index)
+        if (World->Difficulty == Difficulties[Index]) Vitals.Difficulty = EFoundationDifficulty(Index);
+    Vitals.bNaturalRegeneration = World->GetRule(TEXT("natural_health_regeneration"), true);
+}
+
+TSharedRef<const IVoxelTerrain> AVoxelWorld::MakeTerrain() const
+{
+    const FUnnamedSavedWorld* World = GetSavedWorld();
+    if (!World || !World->IsSuperflat()) return MakeShared<FVoxelHeightTerrain>(Seed.Value, *Table);
+    // The screen lists layers top first; the terrain stacks them up from the floor. Ids lose their "minecraft:".
+    TArray<FVoxelFlatLayer> Stack;
+    for (int32 Index = World->FlatLayers.Num() - 1; Index >= 0; --Index)
+    {
+        const FString Block = World->FlatLayers[Index].Block.RightChop(10);
+        Stack.Add(
+            {Block == TEXT("air") ? uint16(0) : Table->FindState(FName(*Block)), World->FlatLayers[Index].Height});
+    }
+    return MakeShared<FVoxelFlatTerrain>(Stack, *Table);
 }
 
 void AVoxelWorld::LoadMaterials()
@@ -147,7 +211,7 @@ void AVoxelWorld::LoadMaterials()
 void AVoxelWorld::Regenerate(const FVoxelSeed& NewSeed)
 {
     Seed = NewSeed;
-    Terrain = MakeShared<FVoxelHeightTerrain>(Seed.Value, *Table);
+    Terrain = MakeTerrain();
     SpawnCell.Reset();
     for (const TPair<FIntPoint, TObjectPtr<UVoxelChunkComponent>>& Chunk : Chunks)
         if (Chunk.Value) Chunk.Value->DestroyComponent();
@@ -165,18 +229,19 @@ void AVoxelWorld::StartBuild()
     FVoxelMeshOptions Options;
     Options.bGreedy = VoxelConsole::CVarGreedyMeshing.GetValueOnGameThread();
     Options.bAmbientOcclusion = VoxelConsole::CVarAmbientOcclusion.GetValueOnGameThread();
+    // The terrain refers to the table, so the task keeps both alive.
     const TSharedRef<const FVoxelBlockTable> SharedTable = Table.ToSharedRef();
-    const int64 SeedValue = Seed.Value;
+    const TSharedRef<const IVoxelTerrain> SharedTerrain = Terrain.ToSharedRef();
     const double StartSeconds = FPlatformTime::Seconds();
     UE_LOG(LogUnnamedVoxel, Display, TEXT("Building %d x %d columns, seed %s"), 2 * Radius + 1, 2 * Radius + 1,
         *Seed.Describe());
     BuildTask = UE::Tasks::Launch(UE_SOURCE_LOCATION,
-        [SharedTable, SeedValue, Radius, Options, Serial, StartSeconds]
+        [SharedTable, SharedTerrain, Radius, Options, Serial, StartSeconds]
         {
             TSharedPtr<FBuild> Build = MakeShared<FBuild>();
             Build->Serial = Serial;
             Build->StartSeconds = StartSeconds;
-            FVoxelArea::Build(*SharedTable, SeedValue, FIntPoint::ZeroValue, Radius, Options, true, Build->Area);
+            FVoxelArea::Build(*SharedTable, *SharedTerrain, FIntPoint::ZeroValue, Radius, Options, true, Build->Area);
             // One stream set and set of Lumen cards per column, merging its sections (UVoxelChunkComponent). Both are
             // plain data, so they are built here too; the game thread only hands them over.
             const double StreamStart = FPlatformTime::Seconds();
@@ -346,16 +411,14 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
 FIntVector AVoxelWorld::GetSpawnCell() const
 {
     if (SpawnCell) return *SpawnCell;
-    // Rings outward from the origin; the first column whose top solid block is above the sea wins.
+    // Rings outward from the origin; the first column whose top solid block is dry land wins.
     const int32 Reach = FMath::Max(8, VoxelConsole::CVarTestAreaRadius.GetValueOnGameThread() * 16);
     for (int32 Ring = 0; Ring <= Reach && Terrain; ++Ring)
         for (int32 Y = -Ring; Y <= Ring; ++Y)
             for (int32 X = -Ring; X <= Ring; ++X)
             {
-                if (FMath::Max(FMath::Abs(X), FMath::Abs(Y)) != Ring) continue;
-                const int32 Surface = Terrain->GetSurfaceHeight(X, Y);
-                if (Surface < VoxelConstants::SeaLevel) continue;
-                SpawnCell = FIntVector(X, Y, Surface + 1);
+                if (FMath::Max(FMath::Abs(X), FMath::Abs(Y)) != Ring || !Terrain->IsDry(X, Y)) continue;
+                SpawnCell = FIntVector(X, Y, Terrain->GetSurfaceHeight(X, Y) + 1);
                 return *SpawnCell;
             }
     // All sea: stand on the water surface's floor at the origin.
@@ -391,9 +454,10 @@ void AVoxelWorld::UpdateShots()
 {
     APlayerController* Controller = UGameplayStatics::GetPlayerController(this, 0);
     if (!Controller) return;
-    // Framing from the built area: its centre, its highest surface and the spawn.
+    // Framing from the built area: its centre, its highest surface and the spawn. The Min()s only matter for land
+    // far below sea level, such as Superflat's; the height terrain frames as it always has.
     const int32 Radius = FMath::Clamp(VoxelConsole::CVarTestAreaRadius.GetValueOnGameThread(), 0, 16);
-    int32 Highest = VoxelConstants::SeaLevel;
+    int32 Highest = VoxelConstants::MinZ - 1;
     FIntPoint Peak = FIntPoint::ZeroValue;
     for (const TPair<FIntPoint, TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>>& Pair : Columns)
         for (int32 Y = 0; Y < VoxelConstants::ColumnSize; ++Y)
@@ -407,14 +471,16 @@ void AVoxelWorld::UpdateShots()
     auto Blocks = [this](double X, double Y, double Z) { return OriginCm + FVector(X, Y, Z) * CellCm; };
     const double Edge = Radius * VoxelConstants::ColumnSize + 8, Middle = VoxelConstants::ColumnSize / 2.;
     const FIntVector Spawn = GetSpawnCell();
+    const double OverviewZ = FMath::Min(Highest * .5, Highest - 30.),
+                 SectionZ = FMath::Min(20., (VoxelConstants::MinZ + Highest) / 2.);
     const FShot Shots[] = {
-        {TEXT("overview"), Blocks(-Edge - 30, -Edge - 30, Highest + 60), Blocks(Middle, Middle, Highest * .5), false},
+        {TEXT("overview"), Blocks(-Edge - 30, -Edge - 30, Highest + 60), Blocks(Middle, Middle, OverviewZ), false},
         {TEXT("closeup"), Blocks(Peak.X - 28, Peak.Y - 34, Highest + 6), Blocks(Peak.X, Peak.Y, Highest - 12), false},
         {TEXT("ground"), Blocks(Spawn.X + .5, Spawn.Y + .5, Spawn.Z + 1.62),
-            Blocks(Peak.X, Peak.Y, FMath::Max(Spawn.Z + 1.62, Highest * .7)), false},
-        {TEXT("lumen-scene"), Blocks(-Edge - 30, -Edge - 30, Highest + 60), Blocks(Middle, Middle, Highest * .5), true},
+            Blocks(Peak.X, Peak.Y, FMath::Max(Spawn.Z + 1.62, FMath::Min(Highest * .7, Highest - 20.))), false},
+        {TEXT("lumen-scene"), Blocks(-Edge - 30, -Edge - 30, Highest + 60), Blocks(Middle, Middle, OverviewZ), true},
         // Outside the west edge, level with the middle of the world: the cut face from bedrock to the surface.
-        {TEXT("section"), Blocks(-Edge - 150, Middle, 20), Blocks(Middle, Middle, 20), false},
+        {TEXT("section"), Blocks(-Edge - 150, Middle, SectionZ), Blocks(Middle, Middle, SectionZ), false},
     };
 
     if (ShotIndex == INDEX_NONE)
@@ -458,10 +524,17 @@ void AVoxelWorld::UpdateShots()
     if (const AFoundationPawn* Pawn = Cast<AFoundationPawn>(UGameplayStatics::GetPlayerPawn(this, 0)))
     {
         const FVector Expected = GetSafeSpawn(*GetDefault<UFoundationProfile>());
-        Player = FString::Printf(TEXT("  Player: feet at %s, %s; spawn cell %s, %.1f cm from spawn"),
+        // Vitals.Describe() starts with the mode and difficulty.
+        FString Rules = Pawn->Vitals.Describe();
+        Rules.Split(TEXT(" regen="), &Rules, nullptr);
+        Player = FString::Printf(TEXT("  Player: feet at %s, %s; %s; spawn cell %s, %.1f cm from spawn"),
             *Pawn->Simulation.Feet.ToCompactString(), Pawn->Simulation.bGrounded ? TEXT("grounded") : TEXT("airborne"),
-            *GetSpawnCell().ToString(), FVector::Dist(Pawn->Simulation.Feet, Expected));
+            *Rules, *GetSpawnCell().ToString(), FVector::Dist(Pawn->Simulation.Feet, Expected));
     }
+    const FUnnamedSavedWorld* Saved = GetSavedWorld();
+    const FString World = Saved ? FString::Printf(TEXT("  World: %s \"%s\", %s, %s, %s"), *Saved->Id, *Saved->Name,
+                                      *Saved->Type, *Saved->GameMode, *Saved->Difficulty)
+                                : FString(TEXT("  World: none (the dev seed's test area)"));
     const FIntPoint Size = GetWorld()->GetGameViewport() && GetWorld()->GetGameViewport()->Viewport
         ? GetWorld()->GetGameViewport()->Viewport->GetSizeXY()
         : FIntPoint::ZeroValue;
@@ -470,9 +543,10 @@ void AVoxelWorld::UpdateShots()
     const FString Lighting = DescribeShotLighting();
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Lighting);
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Gpu);
+    UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *World);
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Player);
     FFileHelper::SaveStringToFile(
-        BuildReport + TEXT("\n") + Lighting + TEXT("\n") + Gpu + TEXT("\n") + Player + TEXT("\n"),
+        BuildReport + TEXT("\n") + Lighting + TEXT("\n") + Gpu + TEXT("\n") + World + TEXT("\n") + Player + TEXT("\n"),
         *FPaths::Combine(ShotFolder, TEXT("build.txt")));
     FPlatformMisc::RequestExit(false, TEXT("VoxelShot"));
 }

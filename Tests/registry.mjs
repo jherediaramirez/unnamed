@@ -61,22 +61,24 @@ const registry=controls.map(c=>{
   let disabled=dependencies[c.setting]||'Enabled; fields are subject to source validation.';
   if(c.binding&&!movement.has(c.binding))disabled='Planned and disabled until its owning gameplay system and context are implemented.';
   else if(c.screen==='create'&&['draft.difficulty','draft.commands'].includes(c.local))disabled='Disabled in Hardcore (Hard difficulty, commands off); Bonus Chest is also disabled in Hardcore.';
-  else if(['worlds','multiplayer'].includes(c.screen)&&['Play Selected World','Join Server','Edit','Delete','Re-Create'].includes(c.label))disabled='Requires a selected fictional list entry.';
+  else if(c.screen==='worlds'&&c.label==='Play Selected World')disabled='Requires a selected world, while no world is opening.';
+  else if(c.screen==='worlds'&&['Edit','Delete','Re-Create'].includes(c.label))disabled='Requires a selected saved world; built-in worlds belong to the game.';
+  else if(c.screen==='multiplayer'&&['Join Server','Edit','Delete'].includes(c.label))disabled='Requires a selected fictional list entry.';
   else if(c.label==='Reset'||c.label==='Reset Keys')disabled='Disabled when the relevant mock binding(s) equal their defaults.';
   else if(c.id.includes('move_up')||c.label.endsWith(' up'))disabled='Disabled at the top of the selected pack order.';
   else if(c.id.includes('move_down')||c.label.endsWith(' down'))disabled='Disabled at the bottom of the selected pack order.';
   else if(c.id.includes('server-save'))disabled='Nonempty trimmed name and syntactically valid address required; no DNS, server or account validation.';
   else if(c.id.includes('direct-connect'))disabled='Nonempty syntactically valid address required; no DNS, server or account validation.';
   else if(c.id.includes('rules-done'))disabled='Disabled while any integer draft is invalid or outside its supplied min/max, including filtered-out fields.';
-  else if(c.screen==='create'&&c.label==='Customize')disabled='Enabled only for mock Superflat or Single Biome world type.';
-  else if(c.screen==='flat'&&c.label==='Remove Layer')disabled='Disabled when the staged mock layer list is empty.';
-  else if(c.screen==='create'&&c.label==='Create New World'||c.id.includes('world-save'))disabled='Requires a nonempty trimmed mock world name.';
+  else if(c.screen==='create'&&c.label==='Customize')disabled='Enabled only for the Superflat or Single Biome world type.';
+  else if(c.screen==='flat'&&c.label==='Remove Layer')disabled='Disabled when the staged layer list is empty.';
+  else if(c.screen==='create'&&c.label==='Create New World'||c.id.includes('world-save'))disabled='Requires a nonempty trimmed world name; disabled while a world opens.';
   else if(isScroll)disabled='Hidden when content does not exceed the viewport; otherwise wheel/drag/page keys affect only list position.';
   const meaning=def?`${def.label}. ${def.tip||c.tooltip||'Source setting '+c.setting+' controls the named Minecraft option.'}`:binding?`Minecraft action: ${binding.label||binding.id}; source key ${binding.id}.`:rule?`Minecraft game rule ${rule.id}: ${rule.tip||rule.label}; source default ${JSON.stringify(rule.default)}.`:edge?`Source menu command ${c.label} opens ${edge.to}.`:c.type==='option'?`Select the displayed ${c.screen} entry; source sample data or bundled Minecraft metadata.`:`Source ${c.screen} control: ${c.label||c.id}. Behavior is defined by its renderer, not an assumed engine equivalent.`;
   return {...c,label:c.label,default:defaultValue,range:bounds,
     dependencies:dependencies[c.setting]||'No additional dependency in source.',disabledConditions:disabled,
     mockInteraction:c.setting?'Update shared in-memory value and label only. No engine/window/device effect.':c.binding?'Capture a keyboard or mouse symbol in session state; Reset restores source default.':rule?'Edit staged rule value; validate source bounds.':isScroll?'Scroll the menu list only; never change a graphics or mouse-sensitivity setting.':edge?`Navigate to ${edge.to}; no real service starts.`:c.type==='option'?'Select a session-only entry; pack movement changes staged order.':c.type==='text'?'Edit a session-only draft/search value; no disk or network output.':'Execute the source navigation/mock command. Service commands end at reversible explanation screens.',
-    doneCancelEscape:stageScreens.has(c.screen)?'Done/Save/Use Preset commits the staged domain; Cancel/Escape discards it. Child commits remain staged until the parent is committed. Create opens an explanation, never generates a world.':'Shared settings change immediately in memory; Done/Escape navigates back without engine changes. Confirmation Cancel/Escape never runs its affirmative action.',
+    doneCancelEscape:stageScreens.has(c.screen)?'Done/Save/Use Preset commits the staged domain; Cancel/Escape discards it. Child commits remain staged until the parent is committed. Create New World saves the world natively and opens it.':'Shared settings change immediately in memory; Done/Escape navigates back without engine changes. Confirmation Cancel/Escape never runs its affirmative action.',
     minecraftMeaning:meaning,proposedUnrealIntegration:integration(c),
     laterScope:'Separate explicitly authorized task for this control only; preserve visual control, add one real adapter, no unrelated gameplay framework.',
     acceptance:['Verify actual supported outcome, not label alone.','Verify failure, revert, shared state, supported bounds and input paths.','Verify editor and packaged application; persistence/network only if separately authorized.'],

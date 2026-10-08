@@ -1,0 +1,15 @@
+Seed 1656767905311477007 (text)
+Area 9 x 9 columns around (0, 0), 30 workers
+  Generate columns: 81, mean 0.660 ms, worst 1.711 ms, total 53.4 ms (wall 4.1 ms)
+  Gather sections: 1944, mean 0.021 ms, worst 0.284 ms, total 40.8 ms
+  Mesh sections, all: 1944, mean 0.066 ms, worst 0.589 ms, total 128.4 ms (wall 7.5 ms)
+  Mesh sections with geometry: 442, mean 0.251 ms, worst 0.589 ms, total 110.8 ms
+  Quads 29405 (67 per meshed section); columns 10.4 KB each (0.8 MB total)
+  Stream sets and Lumen cards: 81 columns in 1.4 ms (wall, all workers)
+  Lumen cards: 904 (11.2 per column, most 27 of 32), mean 0.015 ms per column, worst 0.044 ms
+  Apply: 81 columns in 6.48 ms over 4 frames, worst frame 2.05 ms (budget 2.0 ms)
+  Start to last section on screen: 136 ms; 81 chunk components hold 442 sections
+  Lighting: r.DynamicGlobalIlluminationMethod 1, r.ReflectionMethod 1, r.Lumen.HardwareRayTracing 1 (ray tracing on), r.Lumen.HardwareRayTracing.LightingMode 0
+  GPU frame per shot, ms (mean of 60 settled frames at 1280 x 720): overview 2.68, closeup 2.67, ground 2.80, lumen-scene 3.10, section 2.62
+  World: hello-world "Hello Again", Default, Survival, Normal
+  Player: feet at V(X=50.00, Y=50.00, Z=6400.00), grounded; Survival Normal; spawn cell X=0 Y=0 Z=64, 0.0 cm from spawn

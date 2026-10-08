@@ -5,6 +5,7 @@
 
 class FVoxelBlockTable;
 class FVoxelColumn;
+class IVoxelTerrain;
 
 // A square of columns generated and meshed in one go: phase 2's fixed test area and the column bench. Phase 3's
 // streaming replaces it with per-column jobs; the stages and their timings stay the same.
@@ -30,9 +31,9 @@ struct UNNAMEDVOXEL_API FVoxelArea
     double GenerateWallMs = 0, MeshWallMs = 0;
     int32 Workers = 1;
 
-    // Builds the area: every column, then every section with its neighbours (columns outside the area read as air,
-    // so the edges show their cross-section). Parallel runs one task per column or section.
-    static void Build(const FVoxelBlockTable& Table, int64 Seed, FIntPoint Center, int32 Radius,
+    // Builds the area: every column from Terrain, then every section with its neighbours (columns outside the area
+    // read as air, so the edges show their cross-section). Parallel runs one task per column or section.
+    static void Build(const FVoxelBlockTable& Table, const IVoxelTerrain& Terrain, FIntPoint Center, int32 Radius,
         const FVoxelMeshOptions& Options, bool bParallel, FVoxelArea& Out);
 
     int32 GetColumnIndex(FIntPoint Column) const;

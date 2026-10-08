@@ -4,6 +4,7 @@
 #include "Generation/VoxelArea.h"
 #include "Modules/ModuleManager.h"
 #include "Random/VoxelSeed.h"
+#include "Terrain/VoxelHeightTerrain.h"
 #include "Voxel/VoxelBlocks.h"
 #include "Voxel/VoxelWorld.h"
 #include "Voxel/VoxelWorldSettings.h"
@@ -146,11 +147,12 @@ namespace
                     FVoxelMeshOptions Options;
                     Options.bGreedy = VoxelConsole::CVarGreedyMeshing.GetValueOnGameThread();
                     Options.bAmbientOcclusion = VoxelConsole::CVarAmbientOcclusion.GetValueOnGameThread();
+                    const FVoxelHeightTerrain Terrain(Seed.Value, *Table);
                     FVoxelArea Area;
                     PrintLines(Output, FString::Printf(TEXT("Voxel column bench, seed %s:"), *Seed.Describe()));
                     for (const bool bParallel : {false, true})
                     {
-                        FVoxelArea::Build(*Table, Seed.Value, FIntPoint::ZeroValue, Radius, Options, bParallel, Area);
+                        FVoxelArea::Build(*Table, Terrain, FIntPoint::ZeroValue, Radius, Options, bParallel, Area);
                         PrintLines(Output, Area.Describe());
                     }
                     return;
