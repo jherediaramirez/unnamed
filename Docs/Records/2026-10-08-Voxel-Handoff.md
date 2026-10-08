@@ -1,5 +1,7 @@
 # Voxel world handoff - October 8, 2026
 
+*Superseded by the [handoff into phase 3](2026-10-08-Voxel-Handoff-Phase3.md), written after step 2L and phase 2W. Kept as the record of the state at the end of phase 2.*
+
 Read this first if you are picking up the voxel world (chunk loader and world generator) in a new chat. It gives the project, the working agreement, what is done, what is broken, and what to do next. Facts below were true at the end of phase 2; check `git status` and the newer [records](README.md) before trusting them.
 
 ## 1. The project in one paragraph

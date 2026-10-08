@@ -4,6 +4,8 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 8, 2026
 
+- [Voxel world handoff into phase 3](2026-10-08-Voxel-Handoff-Phase3.md): start here in a new chat. It covers what to read, the working agreement, what phases 0 to 2W and step 2L did, known issues with suggested fixes, phase 3 (streaming and editing) and a way to build it, where subagents (Haiku 5.5, Sonnet 5.5) help, commands and gotchas. It replaces the earlier handoff.
+
 - [Voxel world phase 2W, Create New World](2026-10-08-Voxel-Phase2W.md): real saved worlds. Covers `Saved/Worlds/<id>/world.json` and its ids, the native create, open, rename and delete calls, the native world list without sample saves, Superflat's flat terrain, game mode and difficulty reaching the player (Peaceful added), the end-to-end CEF suite and timings.
 
 - [Voxel world step 2L, lighting](2026-10-08-Voxel-Lighting.md): shaded slopes were near black because the chunks had no Lumen cards and the sky was dim against the sun. Covers the cards each column now builds, the generated map's sky light of 3, the experiments (hit lighting, software Lumen, no Lumen GI, sky levels), brightness and GPU measurements, and the cards' limits.
