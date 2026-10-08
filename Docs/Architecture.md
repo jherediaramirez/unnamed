@@ -6,12 +6,15 @@ How the project fits together. Foundation-specific movement, input and diagnosti
 
 | Folder | Contents |
 |---|---|
-| `Source/Unnamed/` | The one game module. Project-wide pieces at the root: `UnnamedProjectSettings` (maps, world catalog, input assets, HUD and block asset roots), `UnnamedSession` (may this run save settings?), `UnnamedFiles` (crash-safe saves), `UnnamedLog` (log categories). |
+| `Source/Unnamed/` | The game module. Project-wide pieces at the root: `UnnamedProjectSettings` (maps, world catalog, input assets, HUD and block asset roots), `UnnamedSession` (may this run save settings?), `UnnamedFiles` (crash-safe saves), `UnnamedLog` (log categories). |
 | `Source/Unnamed/Menu/` | The offline menu: `UMenuBrowserHost`, the menu services it binds, and the menu map's game mode/controller. |
 | `Source/Unnamed/Input/` | Enhanced Input layer: `UUnnamedInputSubsystem`, the saved `UUnnamedInputSettings`, `FUnnamedInputIntent`. |
 | `Source/Unnamed/Foundation/` | The first-person pawn, controller parts, pure simulation, player vitals (health, food, air, XP, attack recovery), lab geometry (`AFoundationLab`, and the Playground in `AFoundationPlayground`), runtime probe; the Playground's block world, items, targeting, authority, interaction state and presentation; the 26.3 block registry, placement rules, block meshes and texture animation ([Blocks](Blocks.md)). |
 | `Source/Unnamed/Hud/` | Native Slate HUD, pure layout/selection, cooked sprite metadata and the Foundation adapter (player vitals by default, an opt-in preview fixture); the creative inventory screen and 3D block item icons. |
+| `Source/Unnamed/Voxel/` | The voxel world's Unreal side: `UVoxelWorldSettings` and the `voxel.*` console ([Voxel world](VoxelWorld.md)). |
+| `Source/UnnamedVoxel/` | The second module: the voxel world's plain C++ core (generation, storage, meshing). It depends on `Core` only and compiles with precise floating point. |
 | `Source/Unnamed/Tests/` | Native automation tests, one file per area (`Unnamed.<Area>.*`). |
+| `Plugins/RealtimeMeshComponent/` | Vendored MIT RealtimeMeshComponent Core at a pinned commit, for chunk meshes; never edited ([Voxel world](VoxelWorld.md#realtimemeshcomponent)). |
 | `MenuWeb/` | Menu generator (`AdaptMenu.mjs` + `Patches/`) and the JavaScript shipped inside the page (`Runtime/`). |
 | `Content/Menu/Web/` | Generated `index.html`, preference schema and mirrored reference assets, staged as loose files. |
 | `Reference/minecraft-menu/` | The unchanged, hash-checked reference menu. |

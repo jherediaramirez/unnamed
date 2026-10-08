@@ -1,0 +1,74 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "JRHEREDIARAMIRE",
+			"instance": "4F0D7735458EDE4A1EDE939A968675F2",
+			"instanceName": "JRHEREDIARAMIRE-26392",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9550] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 4070 Ti SUPER",
+			"cPUModel": "Intel(R) Core(TM) i9-14900KF",
+			"rAMInGB": 64,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.08-18.15.37",
+	"succeeded": 3,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.024191897362470627,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "Constants",
+			"fullTestPath": "Unnamed.Voxel.Constants",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"4F0D7735458EDE4A1EDE939A968675F2"
+			],
+			"duration": 0.0080133005976676941,
+			"dateTime": "2026.10.08-18.15.37",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MeshBackend",
+			"fullTestPath": "Unnamed.Voxel.MeshBackend",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"4F0D7735458EDE4A1EDE939A968675F2"
+			],
+			"duration": 0.0079458989202976227,
+			"dateTime": "2026.10.08-18.15.37",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Settings",
+			"fullTestPath": "Unnamed.Voxel.Settings",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"4F0D7735458EDE4A1EDE939A968675F2"
+			],
+			"duration": 0.0082326978445053101,
+			"dateTime": "2026.10.08-18.15.37",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

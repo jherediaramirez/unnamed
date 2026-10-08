@@ -1,0 +1,12 @@
+Voxel world: Z -64..319 in 24 sections of 16, sea level 63, columns 16 x 16
+  Dev seed: "Unnamed" (used when a world has none)
+  voxel.AmbientOcclusion = true (set by ProjectSetting)
+  voxel.ApplyBudgetMs = 2 (set by ProjectSetting)
+  voxel.GreedyMeshing = true (set by ProjectSetting)
+  voxel.MaxTasksInFlight = 0 (set by ProjectSetting)
+  voxel.TestAreaRadius = 4 (set by ProjectSetting)
+  voxel.UnloadMargin = 2 (set by ProjectSetting)
+  voxel.ViewRadius = 12 (set by ProjectSetting)
+  Load 25 x 25 columns, unload beyond radius 14; test area 9 x 9 columns
+  Task workers 30, tasks in flight 60
+  Mesh backend: RealtimeMeshComponent (loaded)

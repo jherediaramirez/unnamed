@@ -1,6 +1,6 @@
 # Unnamed - project notes
 
-Unreal Engine 5.8.3 game project (one C++ module, `Unnamed`) with an offline CEF menu generated from an unchanged reference. Read [Docs/Architecture.md](Docs/Architecture.md) for how it fits together and [Docs/NamingConventions.md](Docs/NamingConventions.md) before adding or renaming anything.
+Unreal Engine 5.8.3 game project with an offline CEF menu generated from an unchanged reference. Two C++ modules: the game module `Unnamed`, and `UnnamedVoxel`, the voxel world's plain C++ core (depends on `Core` only). Read [Docs/Architecture.md](Docs/Architecture.md) for how it fits together and [Docs/NamingConventions.md](Docs/NamingConventions.md) before adding or renaming anything. The voxel world (chunk loader and generator) is built in phases; status and decisions are in [Docs/VoxelWorld.md](Docs/VoxelWorld.md).
 
 ## Rules
 
@@ -8,6 +8,7 @@ Unreal Engine 5.8.3 game project (one C++ module, `Unnamed`) with an offline CEF
 - Map, world and input asset paths live only in `UUnnamedProjectSettings` (Python: `Scripts/Editor/ProjectPaths.py`; cooking: `MapsToCook` in `Config/DefaultGame.ini`).
 - The Playground (`playground`, `/Game/Maps/L_Playground`) is the one built-in world; see [Docs/Playground.md](Docs/Playground.md). The 26.3 blocks and their items come from the generated registry asset `DA_Blocks` (`UUnnamedProjectSettings::BlockRoot`; see [Docs/Blocks.md](Docs/Blocks.md)). `UFoundationInteractionSettings` holds only project blocks, tools, placement presets and the loadout. Gameplay changes go through `FFoundationAuthority` commands, never presentation or the HUD. Block/item IDs (item id = block id) and the world ID `playground` are saved IDs. Retired IDs are never reused: worlds `foundation`, `super-flat` and `interaction-lab`; block/item `dummy_block` and `dummy_block_item`.
 - Never rename saved IDs (`key.*` binding IDs such as `key.sneak`, world IDs, the input save slot) or `UUnnamedInputSettings`: players' saved settings depend on them.
+- `Source/UnnamedVoxel/` stays UObject-free and deterministic: every random value is a pure function of (seed, salt, coordinates). `Plugins/RealtimeMeshComponent/` is vendored upstream source at a pinned commit and never edited; update it by replacing the folder (see Docs/VoxelWorld.md).
 - Evidence under `Tests/Evidence/<date>/` and existing `Packages/` builds are never overwritten; use fresh names.
 - Format C++ with the repository `.clang-format` (`C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\Llvm\x64\bin\clang-format.exe`).
 - Commits run `Scripts/TestRepositorySafety.mjs` (credential scan) through `.githooks`.
@@ -18,6 +19,7 @@ Unreal Engine 5.8.3 game project (one C++ module, `Unnamed`) with an offline CEF
 & 'C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat' UnnamedEditor Win64 Development -Project="$PWD\Unnamed.uproject" -WaitMutex
 Set-Location Tests; npm test; node source-check.mjs                  # menu runtime units, reference/asset checks
 & Scripts\TestMenu.ps1; & Scripts\TestInput.ps1                         # native suites (Unnamed.Menu / Unnamed.Input)
+& Scripts\TestVoxel.ps1                                                  # voxel.Info, then Unnamed.Voxel
 & Scripts\TestFoundationRuntime.ps1 -Editor -FrameRates 60            # Playground probe (movement + interaction)
 & Scripts\TestFoundationRuntime.ps1 -Editor -Suite interaction -FrameRates 60   # Playground interaction scenarios
 Set-Location Tests; node foundation-menu.mjs --editor                 # CEF + native end to end

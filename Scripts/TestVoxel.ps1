@@ -1,0 +1,23 @@
+[CmdletBinding()]
+param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$OutputDirectory)
+$ErrorActionPreference='Stop'
+$root=Split-Path $PSScriptRoot -Parent
+if(-not $OutputDirectory){$OutputDirectory=Join-Path $root ('Tests/Evidence/'+(Get-Date -Format 'yyyy-MM-dd')+'/VoxelAutomation-'+(Get-Date -Format 'yyyyMMdd-HHmmss'))}
+if(Test-Path -LiteralPath $OutputDirectory){throw 'Use a fresh evidence directory.'}
+New-Item -ItemType Directory -Path $OutputDirectory | Out-Null
+$OutputDirectory=(Resolve-Path -LiteralPath $OutputDirectory).Path
+# The editor's per-run user folder is a cache (an asset registry of ~120 MB), not evidence: keep it out of the record.
+$profileDirectory=Join-Path ([IO.Path]::GetTempPath()) ('UnnamedVoxelProfile-'+[guid]::NewGuid())
+& "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "$root/Unnamed.uproject" -unattended -nop4 -NullRHI `
+    '-ExecCmds=voxel.Info,Automation RunTests Unnamed.Voxel' '-TestExit=Automation Test Queue Empty' `
+    "-ReportExportPath=$OutputDirectory/Report" "-abslog=$OutputDirectory/native.log" "-UserDir=$profileDirectory/" *> "$OutputDirectory/console.log"
+$code=$LASTEXITCODE
+Remove-Item -LiteralPath $profileDirectory -Recurse -Force -ErrorAction SilentlyContinue
+if(-not(Test-Path "$OutputDirectory/Report/index.json")){throw "Missing voxel report (exit $code)"}
+$report=Get-Content -Raw "$OutputDirectory/Report/index.json" | ConvertFrom-Json
+$expected=3
+if($code -ne 0 -or $report.failed -ne 0 -or $report.succeeded -ne $expected){throw "Voxel tests failed: $OutputDirectory"}
+# voxel.Info runs first, so its lines head the log: keep them next to the report.
+Select-String -Path "$OutputDirectory/native.log" -Pattern 'LogUnnamedVoxel: Display: ' | ForEach-Object { $_.Line -replace '^.*LogUnnamedVoxel: Display: ','' } | Set-Content "$OutputDirectory/voxel-info.txt"
+"PASS: $expected voxel suites. $OutputDirectory/Report/index.json"
+Get-Content "$OutputDirectory/voxel-info.txt"

@@ -4,6 +4,8 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 8, 2026
 
+- [Voxel world phase 0](2026-10-08-Voxel-Phase0.md): the chunk loader's scaffolding. Covers the Core-only `UnnamedVoxel` module with precise floating point, voxel settings mirrored to `voxel.*` console variables, `voxel.Info`, the vendored RealtimeMeshComponent, `Unnamed.Voxel` tests, and the checkpoint commit and branch.
+
 - [Blocks](2026-10-08-Blocks.md): all 529 Java 26.3 full-cube blocks and slabs plus static water with exact protocol and state ids; textures, render layers, tints, animation; vanilla placement rules; block gallery; 1:1 creative inventory and 3D hotbar icons; dummy block retired; tests and gallery evidence.
 
 - [Playground](2026-10-08-Playground.md): one built-in world (`playground`) replaces Player Foundation, Super Flat and Interaction Lab; retired IDs; the dev grid material; anchor rule; token fixtures and line grids removed; movement course moved east; verification pending.

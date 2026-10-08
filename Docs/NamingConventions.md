@@ -13,12 +13,15 @@ The project is split into a few areas. The area name is used everywhere: folder,
 | Foundation | `Source/Unnamed/Foundation/` | `Foundation` (`AFoundationController`) | `Unnamed.Foundation.*` | `LogUnnamedFoundation` |
 | Hud | `Source/Unnamed/Hud/` | `Hud` (`UHudAssets`, `SHudView`) | `Unnamed.Hud.*` | `LogUnnamedHud` |
 | Worlds | - (catalog in `Source/Unnamed/UnnamedProjectSettings.*`) | `Unnamed` (`FUnnamedWorldEntry`) | `Unnamed.Worlds.*` | `LogUnnamedWorlds` |
+| Voxel | `Source/UnnamedVoxel/` (core module), `Source/Unnamed/Voxel/` (Unreal side) | `Voxel` (`UVoxelWorldSettings`, `VoxelConstants`) | `Unnamed.Voxel.*` | `LogUnnamedVoxel` |
 | Project-wide | `Source/Unnamed/` | `Unnamed` (`UUnnamedProjectSettings`) | `Unnamed.Project.*` | - |
 
 Exceptions, with reasons:
 
 - Input uses `UnnamedInput` rather than `Input`: bare `Input*` collides with engine names such as `UInputSettings`, and `UUnnamedInputSettings` is stored by class path in players' saved settings, so renaming it would lose their bindings.
 - Log categories always carry the `LogUnnamed` prefix; they are global symbols and must not clash with engine categories.
+- Voxel is the one area with its own module, `UnnamedVoxel`. Its core must run on any thread and in tests, and depending on `Core` alone lets the compiler keep UObjects out ([Voxel world](VoxelWorld.md)). The module name carries the project prefix so it cannot clash with third-party `Voxel*` plugin modules. Its `LogUnnamedVoxel` lives in that module (`VoxelLog.h`), not in `UnnamedLog.h`.
+- Voxel console variables and commands use the `voxel.` prefix (`voxel.ViewRadius`, `voxel.Info`); its stat group is `STATGROUP_Voxel` (`stat Voxel`).
 - Saved IDs never change once shipped: binding IDs such as `key.sneak` (labelled Crouch), world IDs such as `playground` (retired: `foundation`, `super-flat`, `interaction-lab`; never reused), block and item IDs (the vanilla names without `minecraft:`; item id = block id; retired: `dummy_block`, `dummy_block_item`; never reused), the input save slot `UnnamedInputSettings`. Rename the label, not the ID.
 - "Unnamed" is the placeholder project name. Renaming the project is a separate task ([Project rename notes](ProjectRenameNotes.md)).
 

@@ -12,6 +12,8 @@ public class Unnamed : ModuleRules
         PrivateDependencyModuleNames.AddRange(new[] { "DeveloperSettings", "Slate", "SlateCore", "WebBrowser", "HTTP", "Json", "ApplicationCore", "RHI", "RenderCore" });
         // Block meshes are built at runtime; the editor-only block import decodes PNGs and registers new assets.
         PrivateDependencyModuleNames.AddRange(new[] { "MeshDescription", "StaticMeshDescription", "ImageWrapper", "AssetRegistry" });
+        // The voxel world: its plain C++ core (Source/UnnamedVoxel) and the vendored chunk mesh component.
+        PrivateDependencyModuleNames.AddRange(new[] { "UnnamedVoxel", "RealtimeMeshComponent" });
         string WebRoot = Path.Combine(ModuleDirectory, "../../Content/Menu/Web");
         // Regenerate build/staging metadata when the native preference contract changes.
         ExternalDependencies.Add(Path.Combine(WebRoot, "preferences-schema.menuprefs"));
