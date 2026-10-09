@@ -4,6 +4,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 9, 2026
 
+- [Voxel world phase 5 plan, biomes and surface](2026-10-09-Voxel-Phase5-Plan.md): read right after the phase 5 handoff. Plan only, nothing built. The data check (surface rules live in 26.3's new `material_rule` and `material_condition` registries, not in the noise settings; 67 biome files; the overworld parameter list is code-built), the block gaps (`powder_snow` and snow layers), the design for biome lookup, storage, surface rules and the snow line, five build sessions with files, tests and acceptance captures, and the questions for Jesus with recommendations.
 - [Voxel world phase 4, terrain](2026-10-09-Voxel-Phase4.md): real terrain on generator 2, from 26.3's own density graph with our own noise, evaluator and aquifers. Covers the five sessions (worldgen data, noise and climate, every op and column density, caves and still lava, performance and benches), the decisions confirmed with the user and those made overnight by the manager for Jesus's review, the acceptance table (all four criteria met), the performance against the 5 ms limit and 2 ms target (overworld 4.53 ms mean with caves, Large Biomes and AMPLIFIED slightly over, none at 2 ms), the flight (3 of 10,107 frames over the 2 ms budget, worst 2.12 ms), the problems found, measurements and known issues.
 
 ## October 8, 2026
