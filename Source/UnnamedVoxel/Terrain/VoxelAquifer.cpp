@@ -253,59 +253,72 @@ void FVoxelAquifer::Fill(int32 X0, int32 Z0, TConstArrayView<float> Density, FVo
     check(Density.Num() == Size * Size * Height && Scratch.Statuses.Num() == Layers * 9);
     Out.SetNumUninitialized(Density.Num(), EAllowShrinking::No);
     Scratch.Pending.Reset();
-    for (int32 Z = 0; Z < Size; ++Z)
-        for (int32 X = 0; X < Size; ++X)
+    // Layer by layer from the top, so the buffers are read and written in order. A block column is open to the sky
+    // until its first solid block from the top. Raw pointers keep range checks out of the loop.
+    constexpr int32 Area = Size * Size;
+    bool Sky[Area];
+    for (bool& bOpen : Sky)
+        bOpen = true;
+    const float* const Values = Density.GetData();
+    EVoxelAquiferFluid* const Fluids = Out.GetData();
+    const FIntVector* const Centers = Scratch.Centers.GetData();
+    const FVoxelAquiferStatus* const Statuses = Scratch.Statuses.GetData();
+    for (int32 Y = MinY + Height - 1; Y >= MinY; --Y)
+    {
+        // Open sky, the lava line and a uniform layer each give one fluid per y.
+        const EVoxelAquiferFluid Global = GetGlobal(Y).At(Y);
+        const bool bLayered = Y >= LavaLine;
+        const int32 Layer = bLayered ? LayerOf(Y) - FirstLayer : 0;
+        const bool bUniform = bLayered && Scratch.Uniform[Layer];
+        const EVoxelAquiferFluid UniformFluid = bUniform ? Statuses[Layer * 9].At(Y) : EVoxelAquiferFluid::Air;
+        const int32 First = (Y - MinY) * Area;
+        for (int32 Cell = 0; Cell < Area; ++Cell)
         {
-            // Open to the sky until the first solid block from the top.
-            bool bSky = true;
-            for (int32 Y = MinY + Height - 1; Y >= MinY; --Y)
+            const int32 Block = First + Cell;
+            EVoxelAquiferFluid& Result = Fluids[Block];
+            if (Values[Block] > 0)
             {
-                const int32 Block = ((Y - MinY) * Size + Z) * Size + X;
-                EVoxelAquiferFluid& Result = Out[Block];
-                if (Density[Block] > 0)
-                {
-                    Result = EVoxelAquiferFluid::Air;
-                    bSky = false;
-                    continue;
-                }
-                if (bSky || Y < LavaLine)
-                {
-                    Result = GetGlobal(Y).At(Y);
-                    continue;
-                }
-                const int32 Layer = LayerOf(Y) - FirstLayer;
-                if (Scratch.Uniform[Layer])
-                {
-                    Result = Scratch.Statuses[Layer * 9].At(Y);
-                    continue;
-                }
-                // The three nearest centres among the 27 around the block.
-                int32 Cells[3] = {INDEX_NONE, INDEX_NONE, INDEX_NONE};
-                int32 Distances[3] = {MAX_int32, MAX_int32, MAX_int32};
-                const FIntVector Position(X0 + X, Y, Z0 + Z);
-                for (int32 Index = (Layer - 1) * 9; Index < (Layer + 2) * 9; ++Index)
-                {
-                    const FIntVector Delta = Scratch.Centers[Index] - Position;
-                    const int32 Distance = Delta.X * Delta.X + Delta.Y * Delta.Y + Delta.Z * Delta.Z;
-                    if (Distance >= Distances[2]) continue;
-                    int32 Slot = 2;
-                    for (; Slot > 0 && Distance < Distances[Slot - 1]; --Slot)
-                    {
-                        Distances[Slot] = Distances[Slot - 1];
-                        Cells[Slot] = Cells[Slot - 1];
-                    }
-                    Distances[Slot] = Distance;
-                    Cells[Slot] = Index;
-                }
-                const FVoxelAquiferStatus& Nearest = Scratch.Statuses[Cells[0]];
-                Result = Nearest.At(Y);
-                const float Near2 = 1 - (Distances[1] - Distances[0]) / AquiferBlend;
-                const float Near3 = 1 - (Distances[2] - Distances[0]) / AquiferBlend;
-                const bool bDiffer2 = Near2 > 0 && !(Scratch.Statuses[Cells[1]] == Nearest);
-                const bool bDiffer3 = Near3 > 0 && !(Scratch.Statuses[Cells[2]] == Nearest);
-                if (bDiffer2 || bDiffer3) Scratch.Pending.Add({Block, {Cells[0], Cells[1], Cells[2]}, {Near2, Near3}});
+                Result = EVoxelAquiferFluid::Air;
+                Sky[Cell] = false;
+                continue;
             }
+            if (Sky[Cell] || !bLayered)
+            {
+                Result = Global;
+                continue;
+            }
+            if (bUniform)
+            {
+                Result = UniformFluid;
+                continue;
+            }
+            // The three nearest centres among the 27 around the block.
+            int32 Cells[3] = {INDEX_NONE, INDEX_NONE, INDEX_NONE};
+            int32 Distances[3] = {MAX_int32, MAX_int32, MAX_int32};
+            const FIntVector Position(X0 + Cell % Size, Y, Z0 + Cell / Size);
+            for (int32 Index = (Layer - 1) * 9; Index < (Layer + 2) * 9; ++Index)
+            {
+                const FIntVector Delta = Centers[Index] - Position;
+                const int32 Distance = Delta.X * Delta.X + Delta.Y * Delta.Y + Delta.Z * Delta.Z;
+                if (Distance >= Distances[2]) continue;
+                int32 Slot = 2;
+                for (; Slot > 0 && Distance < Distances[Slot - 1]; --Slot)
+                {
+                    Distances[Slot] = Distances[Slot - 1];
+                    Cells[Slot] = Cells[Slot - 1];
+                }
+                Distances[Slot] = Distance;
+                Cells[Slot] = Index;
+            }
+            const FVoxelAquiferStatus& Nearest = Statuses[Cells[0]];
+            Result = Nearest.At(Y);
+            const float Near2 = 1 - (Distances[1] - Distances[0]) / AquiferBlend;
+            const float Near3 = 1 - (Distances[2] - Distances[0]) / AquiferBlend;
+            const bool bDiffer2 = Near2 > 0 && !(Statuses[Cells[1]] == Nearest);
+            const bool bDiffer3 = Near3 > 0 && !(Statuses[Cells[2]] == Nearest);
+            if (bDiffer2 || bDiffer3) Scratch.Pending.Add({Block, {Cells[0], Cells[1], Cells[2]}, {Near2, Near3}});
         }
+    }
 
     // Walls: the barrier noise only where two or three different statuses meet.
     const int32 Count = Scratch.Pending.Num();

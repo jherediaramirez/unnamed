@@ -7,6 +7,35 @@ namespace
     {
         return Bits == 4 ? 4 : Bits == 8 ? 3 : 2;
     }
+
+    // Packs Volume states into Words a whole word at a time, as SetRaw would place them: index I at bit
+    // (I % PerWord) * Bits of word I / PerWord. Below 16 bits each state becomes its first index in Palette, which
+    // holds every state. Returns the non-air count.
+    template <int32 Bits> int32 EncodeWords(const uint16* States, const uint16* Palette, uint64* Words)
+    {
+        constexpr int32 PerWord = 64 / Bits;
+        int32 NonAir = 0, Last = 0;
+        for (int32 Word = 0; Word < FVoxelSection::Volume / PerWord; ++Word)
+        {
+            uint64 Value = 0;
+            for (int32 Slot = 0; Slot < PerWord; ++Slot)
+            {
+                const uint16 State = *States++;
+                NonAir += int32(State != 0);
+                uint32 Raw = State;
+                if constexpr (Bits != 16)
+                {
+                    if (Palette[Last] != State)
+                        for (Last = 0; Palette[Last] != State;)
+                            ++Last;
+                    Raw = uint32(Last);
+                }
+                Value |= uint64(Raw) << (Slot * Bits);
+            }
+            *Words++ = Value;
+        }
+        return NonAir;
+    }
 }
 
 FVoxelSection::FVoxelSection(uint16 Fill) : Uniform(Fill), NonAir(Fill ? Volume : 0) {}
@@ -49,21 +78,10 @@ void FVoxelSection::Encode(TConstArrayView<uint16> States, TConstArrayView<uint1
     Palette.Empty(Bits == 16 ? 0 : NewPalette.Num());
     if (Bits != 16) Palette.Append(NewPalette.GetData(), NewPalette.Num());
     Words.Empty(Volume * Bits / 64);
-    Words.AddZeroed(Volume * Bits / 64);
-    NonAir = 0;
-    int32 LastIndex = 0;
-    for (int32 Index = 0; Index < Volume; ++Index)
-    {
-        const uint16 State = States[Index];
-        NonAir += int32(State != 0);
-        if (Bits == 16)
-        {
-            SetRaw(Index, State);
-            continue;
-        }
-        if (Palette[LastIndex] != State) LastIndex = Palette.IndexOfByKey(State);
-        SetRaw(Index, uint32(LastIndex));
-    }
+    Words.SetNumUninitialized(Volume * Bits / 64);
+    NonAir = Bits == 4 ? EncodeWords<4>(States.GetData(), Palette.GetData(), Words.GetData())
+        : Bits == 8    ? EncodeWords<8>(States.GetData(), Palette.GetData(), Words.GetData())
+                       : EncodeWords<16>(States.GetData(), Palette.GetData(), Words.GetData());
 }
 
 uint32 FVoxelSection::GetRaw(int32 Index) const

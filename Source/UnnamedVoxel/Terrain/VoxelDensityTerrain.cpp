@@ -234,14 +234,16 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelDensityTerrain_Generate);
     SCOPE_CYCLE_COUNTER(STAT_VoxelGenerateColumn);
-    // Init, not SetNumZeroed: callers reuse Dense, and SetNumZeroed clears only elements it adds.
-    Dense.Init(0, FVoxelColumn::DenseVolume);
     Out = FVoxelColumn(Position);
     if (!IsValid())
     {
+        // Init, not SetNumZeroed: callers reuse Dense, and SetNumZeroed clears only elements it adds.
+        Dense.Init(0, FVoxelColumn::DenseVolume);
         Out.Build(Dense, Table);
         return;
     }
+    // Both fills below write every block.
+    Dense.SetNumUninitialized(FVoxelColumn::DenseVolume, EAllowShrinking::No);
     constexpr int32 Size = VoxelConstants::ColumnSize;
     TUniquePtr<FScratch> Scratch = TakeScratch();
 
@@ -374,47 +376,50 @@ void FVoxelDensityTerrain::FillWithRules(FIntPoint Position, const FVoxelColumn&
     constexpr int32 Size = VoxelConstants::ColumnSize, Height = VoxelConstants::Height;
     const int32 SeaTop = SeaLevel - 1;
     const int32 X0 = Position.X * Size, Y0 = Position.Y * Size;
-    const TArray<float>& Density = Scratch.Density;
-    const TArray<EVoxelAquiferFluid>& Fluids = Scratch.Fluids;
-
     // What each block holds before the rules (the aquifer's barriers are stone), and each block column's top non-air
-    // block for the steep test.
-    Scratch.Kinds.SetNumUninitialized(Size * Size * Height);
-    int32 Heights[Size * Size];
-    for (int32 LocalY = 0; LocalY < Size; ++LocalY)
-        for (int32 LocalX = 0; LocalX < Size; ++LocalX)
+    // block for the steep test. Layer by layer, so the dense buffers are read and written in order; Kinds stays one
+    // run per block column, as the rules read it. Raw pointers and local copies keep range checks and reloads out of
+    // the loop.
+    constexpr int32 Area = Size * Size;
+    Scratch.Kinds.SetNumUninitialized(Area * Height);
+    EVoxelSurfaceKind* const Kinds = Scratch.Kinds.GetData();
+    const float* const Density = Scratch.Density.GetData();
+    const EVoxelAquiferFluid* const Fluids = Settings.bCaves ? Scratch.Fluids.GetData() : nullptr;
+    uint16* const States = Dense.GetData();
+    const uint16 Stone = Blocks.Stone, Water = Blocks.Water, Lava = Blocks.Lava;
+    int32 Heights[Area];
+    for (int32& Top : Heights)
+        Top = VoxelConstants::MinZ - 1;
+    for (int32 Z = VoxelConstants::MinZ; Z <= VoxelConstants::MaxZ; ++Z)
+    {
+        const int32 Local = Z - VoxelConstants::MinZ, First = Local * Area;
+        const EVoxelAquiferFluid Open = Z <= SeaTop ? EVoxelAquiferFluid::Water : EVoxelAquiferFluid::Air;
+        for (int32 Cell = 0; Cell < Area; ++Cell)
         {
-            EVoxelSurfaceKind* Kinds = &Scratch.Kinds[(LocalY * Size + LocalX) * Height];
-            int32 Top = VoxelConstants::MinZ - 1;
-            for (int32 Z = VoxelConstants::MinZ; Z <= VoxelConstants::MaxZ; ++Z)
+            const int32 Index = First + Cell;
+            const EVoxelAquiferFluid Fluid = Fluids ? Fluids[Index] : Open;
+            EVoxelSurfaceKind Kind = EVoxelSurfaceKind::Air;
+            uint16 State = 0;
+            if (Density[Index] > 0 || Fluid == EVoxelAquiferFluid::Barrier)
             {
-                const int32 Index = FVoxelColumn::GetDenseIndex(LocalX, LocalY, Z);
-                const EVoxelAquiferFluid Fluid = Settings.bCaves ? Fluids[Index]
-                    : Z <= SeaTop                                ? EVoxelAquiferFluid::Water
-                                                                 : EVoxelAquiferFluid::Air;
-                EVoxelSurfaceKind Kind = EVoxelSurfaceKind::Air;
-                uint16 State = 0;
-                if (Density[Index] > 0 || Fluid == EVoxelAquiferFluid::Barrier)
-                {
-                    Kind = EVoxelSurfaceKind::Solid;
-                    State = Blocks.Stone;
-                }
-                else if (Fluid == EVoxelAquiferFluid::Water)
-                {
-                    Kind = EVoxelSurfaceKind::Water;
-                    State = Blocks.Water;
-                }
-                else if (Fluid == EVoxelAquiferFluid::Lava)
-                {
-                    Kind = EVoxelSurfaceKind::Lava;
-                    State = Blocks.Lava;
-                }
-                Kinds[Z - VoxelConstants::MinZ] = Kind;
-                Dense[Index] = State;
-                if (Kind != EVoxelSurfaceKind::Air) Top = Z;
+                Kind = EVoxelSurfaceKind::Solid;
+                State = Stone;
             }
-            Heights[LocalY * Size + LocalX] = Top;
+            else if (Fluid == EVoxelAquiferFluid::Water)
+            {
+                Kind = EVoxelSurfaceKind::Water;
+                State = Water;
+            }
+            else if (Fluid == EVoxelAquiferFluid::Lava)
+            {
+                Kind = EVoxelSurfaceKind::Lava;
+                State = Lava;
+            }
+            Kinds[Cell * Height + Local] = Kind;
+            States[Index] = State;
+            if (Kind != EVoxelSurfaceKind::Air) Heights[Cell] = Z;
         }
+    }
 
     const double Start = FPlatformTime::Seconds();
     TRACE_CPUPROFILER_EVENT_SCOPE(Voxel_SurfaceRules);

@@ -12,6 +12,11 @@ Tests/Runtime/
 *.pdb
 __pycache__/
 
+# Local evidence and logs stay on disk only (decided October 9, 2026). Files already tracked stay tracked;
+# add a new one with git add -f.
+Tests/Evidence/
+logs/
+
 # Local credentials and recovery history must never be uploaded.
 .env
 .env.*

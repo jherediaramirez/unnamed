@@ -50,6 +50,7 @@ The plan's section 4.
 | Surface per biome | **Met.** Desert to badlands (sand, red sand, terracotta bands), stony and frozen peaks (session 5), a swamp shot from inside the swamp (the debug overlay reads `minecraft:swamp`) and a mangrove swamp | `SurfaceScenes-20261009-1508/montage-desert-badlands.png`, `montage-frozen-peaks.png`; `TintScenes-20261009-s6/montage-swamp-mangrove.png` |
 | Reproducible | **Met.** Biome and block goldens unchanged by session 6; radius-8 hashes equal in both load orders (`0xeb1c3d76838e2481`, `0xcb42685280f8b57c`, `0xc4403ff66465fcf0`, as session 5); 0 of 7,962,624 blocks differ with the surface shortcut, biomes, sharing and skipping on and off; 0 of 478,352 vertex tints differ with the tint shortcut on and off | `BenchLogs-20261009-s6/final.txt`, `lever1-r8.txt` |
 | Timings | **Not met for the 5 ms limit:** AMPLIFIED's column mean is 5.32 ms (median of three on a quiet machine), over the limit. Overworld (4.50) and Large Biomes (4.88) are under it. The 2 ms target is met by none. The flight keeps the 2 ms chunk budget in all but 4 of 10,302 frames, with no holes | below; `VoxelFlight-20261009-165749` |
+| Timings, after S0 (phase 6's speed-up, October 9) | **Met for the 5 ms limit:** column means 3.29 / 3.47 / 4.45 ms (overworld / large_biomes / AMPLIFIED; medians of three, against 5.25 / 5.70 / 6.30 for the old code in the same runs). Exact levers only; goldens and the radius-8 hashes unchanged. The 2 ms target is still met by none | below; `BenchLogs-20261009-s0/` |
 
 ## Performance against the targets
 
@@ -64,6 +65,14 @@ The plan's section 4.
 - **Stages, run 1** (overworld / large_biomes / AMPLIFIED, mean ms): corners 0.94 / 1.17 / 1.31, aquifer 0.57 / 0.48 / 0.77, biomes 0.17 / 0.15 / 0.17, surface 0.73 / 0.76 / 0.89.
 - **Across 30 workers:** 0.35 to 0.46 ms per column.
 - **What session 6 did about it:** the batched normal noise (exact) took 0.3 to 0.5 ms off the corners stage. The per-run memo of the surface tree was exact but did not pay, so it was reverted ([Voxel world](../VoxelWorld.md), "Surface rules"). Per the day manager's condition, speed-up work stopped there; AMPLIFIED is left for its own session.
+- **After S0 (phase 6's speed-up session, October 9):** three exact levers (block fill, aquifer fill, cells to blocks; [Voxel world](../VoxelWorld.md), "Speed-up session S0"). The old and new code alternated run by run on one machine, so the two columns compare directly; that machine ran about 15% slower than at session 6's runs.
+
+| Preset | Old code, median of three | S0, median of three | Against 5 ms |
+|---|---|---|---|
+| overworld | 5.25 | **3.29** | under |
+| large_biomes | 5.70 | **3.47** | under |
+| amplified | 6.30 | **4.45** | under |
+
 - **Tints in the mesher:** +1.0% quads; the mesh time stays within run-to-run noise (+3.5% and -5.6% in two runs).
 - **The flight** (`VoxelFlight-20261009-165749`, the acceptance path): 4 of 10,302 frames over the 2.0 ms chunk budget (east legs at 20, 40 and 80 blocks/s; worst 4.10 ms at 80), no holes, memory flat (3,857 -> 3,854 MB). Start to view on screen 3.2 s. Phase 4's record had 3 of 10,107 frames over, worst 2.12 ms.
 

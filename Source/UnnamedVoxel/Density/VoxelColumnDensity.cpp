@@ -346,44 +346,67 @@ void FVoxelColumnDensity::Generate(int32 X0, int32 Z0, bool bSkip, FVoxelColumnD
         Scratch.WeightsY[D] = float(double(D) / CellY);
     const float* WeightsXZ = Scratch.WeightsXZ.GetData();
     const float* WeightsY = Scratch.WeightsY.GetData();
+    // Raw pointers keep range checks out of the per-block loops. Blocks of a layer of cells run Y, then Z, then X.
+    float* const Densities = OutDensity.GetData();
+    const int32 LayerBlocks = CellY * ColumnSize * ColumnSize;
+    const auto RowOf = [this](int32 CX, int32 DY, int32 CZ, int32 DZ)
+    { return (DY * ColumnSize + CZ * CellXZ + DZ) * ColumnSize + CX * CellXZ; };
     for (int32 CY = 0; CY < CellsY; ++CY)
     {
+        const uint8* const States = Scratch.CellStates.GetData() + CellIndex(0, CY, 0);
+        float* const Layer = Densities + CY * LayerBlocks;
         int32 Count = 0;
-        for (int32 CZ = 0; CZ < CellsXZ; ++CZ)
-            for (int32 CX = 0; CX < CellsXZ; ++CX)
-            {
-                const uint8 State = Scratch.CellStates[CellIndex(CX, CY, CZ)];
-                if (State == Mixed)
+        bool bOneState = true;
+        for (int32 Cell = 0; Cell < CellsXZ * CellsXZ; ++Cell)
+        {
+            Count += States[Cell] == Mixed ? BlocksPerCell : 0;
+            bOneState &= States[Cell] == States[0];
+        }
+        // Certain cells read +1 or -1; a layer of one certain state is one run.
+        if (bOneState && States[0] != Mixed)
+        {
+            const float Value = States[0] == Solid ? 1.f : -1.f;
+            for (int32 Block = 0; Block < LayerBlocks; ++Block)
+                Layer[Block] = Value;
+        }
+        else
+            for (int32 CZ = 0; CZ < CellsXZ; ++CZ)
+                for (int32 CX = 0; CX < CellsXZ; ++CX)
                 {
-                    Count += BlocksPerCell;
-                    continue;
+                    const uint8 State = States[CZ * CellsXZ + CX];
+                    if (State == Mixed) continue;
+                    const float Value = State == Solid ? 1.f : -1.f;
+                    for (int32 DY = 0; DY < CellY; ++DY)
+                        for (int32 DZ = 0; DZ < CellXZ; ++DZ)
+                        {
+                            float* const Row = Layer + RowOf(CX, DY, CZ, DZ);
+                            for (int32 DX = 0; DX < CellXZ; ++DX)
+                                Row[DX] = Value;
+                        }
                 }
-                for (int32 DY = 0; DY < CellY; ++DY)
-                    for (int32 DZ = 0; DZ < CellXZ; ++DZ)
-                        for (int32 DX = 0; DX < CellXZ; ++DX)
-                            OutDensity[((CY * CellY + DY) * ColumnSize + CZ * CellXZ + DZ) * ColumnSize + CX * CellXZ +
-                                DX] = State == Solid ? 1.f : -1.f;
-            }
         if (Count == 0) continue;
         Stats.BlocksEvaluated += Count;
 
         Scratch.X.SetNumUninitialized(Count, EAllowShrinking::No);
         Scratch.Y.SetNumUninitialized(Count, EAllowShrinking::No);
         Scratch.Z.SetNumUninitialized(Count, EAllowShrinking::No);
+        double* const PX = Scratch.X.GetData();
+        double* const PY = Scratch.Y.GetData();
+        double* const PZ = Scratch.Z.GetData();
         Eval.Prepare(Scratch.Blocks, Count);
         int32 K = 0;
         for (int32 CZ = 0; CZ < CellsXZ; ++CZ)
             for (int32 CX = 0; CX < CellsXZ; ++CX)
             {
-                if (Scratch.CellStates[CellIndex(CX, CY, CZ)] != Mixed) continue;
+                if (States[CZ * CellsXZ + CX] != Mixed) continue;
                 const int32 First = K;
                 for (int32 DY = 0; DY < CellY; ++DY)
                     for (int32 DZ = 0; DZ < CellXZ; ++DZ)
                         for (int32 DX = 0; DX < CellXZ; ++DX, ++K)
                         {
-                            Scratch.X[K] = X0 + CX * CellXZ + DX;
-                            Scratch.Y[K] = MinY + CY * CellY + DY;
-                            Scratch.Z[K] = Z0 + CZ * CellXZ + DZ;
+                            PX[K] = X0 + CX * CellXZ + DX;
+                            PY[K] = MinY + CY * CellY + DY;
+                            PZ[K] = Z0 + CZ * CellXZ + DZ;
                         }
                 for (int32 Slot = 0; Slot < InterpolatedNodes.Num(); ++Slot)
                 {
@@ -393,21 +416,51 @@ void FVoxelColumnDensity::Generate(int32 X0, int32 Z0, bool bSkip, FVoxelColumnD
                         Corners[Corner] =
                             Values[CornerIndex(CX + (Corner & 1), CY + (Corner >> 1 & 1), CZ + (Corner >> 2 & 1))];
                     float* Target = Eval.GetMutableValues(Scratch.Blocks, InterpolatedNodes[Slot]).GetData() + First;
+                    // VoxelDensity::Trilinear's steps, each computed once for the blocks that share it: the same
+                    // expressions on the same values, so every block gets Trilinear's value bit for bit.
+                    float X00[ColumnSize], X10[ColumnSize], X01[ColumnSize], X11[ColumnSize];
+                    for (int32 DX = 0; DX < CellXZ; ++DX)
+                    {
+                        const float TX = WeightsXZ[DX];
+                        X00[DX] = Corners[0] + TX * (Corners[1] - Corners[0]);
+                        X10[DX] = Corners[2] + TX * (Corners[3] - Corners[2]);
+                        X01[DX] = Corners[4] + TX * (Corners[5] - Corners[4]);
+                        X11[DX] = Corners[6] + TX * (Corners[7] - Corners[6]);
+                    }
                     for (int32 DY = 0; DY < CellY; ++DY)
+                    {
+                        const float TY = WeightsY[DY];
+                        float Y0[ColumnSize], Y1[ColumnSize];
+                        for (int32 DX = 0; DX < CellXZ; ++DX)
+                        {
+                            Y0[DX] = X00[DX] + TY * (X10[DX] - X00[DX]);
+                            Y1[DX] = X01[DX] + TY * (X11[DX] - X01[DX]);
+                        }
                         for (int32 DZ = 0; DZ < CellXZ; ++DZ)
+                        {
+                            const float TZ = WeightsXZ[DZ];
                             for (int32 DX = 0; DX < CellXZ; ++DX)
-                                *Target++ =
-                                    VoxelDensity::Trilinear(Corners, WeightsXZ[DX], WeightsY[DY], WeightsXZ[DZ]);
+                                *Target++ = Y0[DX] + TZ * (Y1[DX] - Y0[DX]);
+                        }
+                    }
                 }
             }
         Eval.EvaluateNodes(BlockNodes, Scratch.X.GetData(), Scratch.Y.GetData(), Scratch.Z.GetData(), Scratch.Blocks);
-        const TConstArrayView<float> Density = Eval.GetValues(Scratch.Blocks, Root);
-        for (int32 Point = 0; Point < Count; ++Point)
-        {
-            const int32 X = int32(Scratch.X[Point]) - X0, Y = int32(Scratch.Y[Point]) - MinY,
-                        Z = int32(Scratch.Z[Point]) - Z0;
-            OutDensity[(Y * ColumnSize + Z) * ColumnSize + X] = Density[Point];
-        }
+        // Back in the order the points were laid out.
+        const float* const Density = Eval.GetValues(Scratch.Blocks, Root).GetData();
+        K = 0;
+        for (int32 CZ = 0; CZ < CellsXZ; ++CZ)
+            for (int32 CX = 0; CX < CellsXZ; ++CX)
+            {
+                if (States[CZ * CellsXZ + CX] != Mixed) continue;
+                for (int32 DY = 0; DY < CellY; ++DY)
+                    for (int32 DZ = 0; DZ < CellXZ; ++DZ)
+                    {
+                        float* const Row = Layer + RowOf(CX, DY, CZ, DZ);
+                        for (int32 DX = 0; DX < CellXZ; ++DX)
+                            Row[DX] = Density[K++];
+                    }
+            }
     }
     Lap(Stats.BlocksMs);
     if (OutStats) *OutStats = Stats;

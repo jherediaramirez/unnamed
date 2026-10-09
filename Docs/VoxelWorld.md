@@ -13,8 +13,8 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 | 2W | Create New World: saved worlds, seed, world type, game mode, difficulty | Done |
 | 3 | Streaming, plus mining and placing on generated terrain | Done |
 | 4 | Terrain: 26.3's density graph, climate, caves, aquifers and lava | Done (5 sessions: worldgen data and reader; noise, climate, splines and debug views; 3D density and generator 2; caves on, aquifers, still lava, cave-lighting decision; performance). Caves-on columns were slightly over 5 ms on two presets; phase 5 session 3's corner sharing brings them under it in the bench's best case ([Known gaps](#known-gaps)) |
-| 5 | Biomes and surface | Done (6 sessions: reference data, blocks and readers; performance levers; cave brightness and the cave-lighting comparison; the biome source, storage, maps and minimap; surface rules, temperature, the snow line and Single Biome; biome tints, ocean variants, the batched normal noise, captures and the record). AMPLIFIED's column mean stays over the 5 ms limit on a quiet machine ([Known gaps](#known-gaps)); [the phase 5 record](Records/2026-10-09-Voxel-Phase5.md) |
-| 6 | Decoration, after a block-shapes step (plants, cross models) | |
+| 5 | Biomes and surface | Done (6 sessions: reference data, blocks and readers; performance levers; cave brightness and the cave-lighting comparison; the biome source, storage, maps and minimap; surface rules, temperature, the snow line and Single Biome; biome tints, ocean variants, the batched normal noise, captures and the record). AMPLIFIED's column mean was over the 5 ms limit until phase 6's speed-up session; [the phase 5 record](Records/2026-10-09-Voxel-Phase5.md) |
+| 6 | Decoration, after a block-shapes step (plants, cross models) | In progress ([the phase 6 plan](Records/2026-10-09-Voxel-Phase6-Plan.md)). S0, the speed-up, is done: every preset's column mean is under 5 ms ([Column density](#column-density-and-terrain-generator-2), "Speed-up session S0"). S1 (worldgen data, reader and probes) is next |
 | 7 | Structures that fit the land (needs stairs, doors, fences, paths) | |
 | 8 | Mountains | |
 | 9 | Far LOD | |
@@ -291,6 +291,35 @@ Phase 5 session 3 (corner sharing, batch blended noise), `voxel.Bench Density 8 
 - **Batch blended noise:** 863 / 865 / 847 -> 781 / 848 / 810 ns per point, while the unchanged normal noise moved by up to 4%, so no gain is credited.
 - **Batched normal noise (phase 5 session 6):** `noise`, `shift_a` and `shift_b` sample their whole batch octave by octave (`FVoxelNormalNoise::SampleBatch`). `FVoxelGradientNoise::AccumulateOctave`, which `old_blended_noise` uses too, fetches a lattice cell's eight gradients once while consecutive points stay in that cell, as most corners do at low frequencies. Each point keeps Sample's arithmetic and octave order, so the values are bit-identical. The corners stage fell from 1.21 / 1.43 / 1.91 to 0.90 / 1.13 / 1.38 ms (overworld / large_biomes / AMPLIFIED, quiet machine). Goldens and the radius-8 hashes are unchanged.
 - **Profile before the levers** (a temporary per-op timer; ms per column): corners overworld 1.62 = normal noise 1.03 + `old_blended_noise` 0.50 + the rest 0.09; large_biomes 2.07 = 1.33 + 0.63; amplified 2.34 = 1.34 + 0.89. The costliest corner noises are `cave_cheese`, `cave_entrance`, `spaghetti_3d_rarity` and `pillar`, then the spaghetti and noodle noises.
+- **Speed-up session S0 (phase 6, October 9).** Most of the column's time outside the noise went to walking dense buffers with a 256-element stride, and to TArray range checks, which Development builds keep. Three exact levers, each gated on its own:
+  - **Block fill:**
+    - `FillWithRules` builds the block kinds layer by layer, through raw pointers.
+    - `FVoxelSection::Encode` packs a whole 64-bit word at a time, per width.
+    - `FVoxelColumn::Build` starts its heightmap scans at the highest section that is not all air.
+    - `Generate` no longer clears the dense buffer, which both fills overwrite.
+  - **Aquifer fill:** layer by layer from the top, with a sky flag per block column, and the per-y values hoisted (global fluid, uniform layer).
+  - **Cells to blocks:**
+    - certain cells are written by rows, and a layer of one certain state as one run;
+    - the trilinear steps are shared across a cell, as the same expressions on the same values;
+    - the results go back by rows.
+  - **Exact:**
+    - goldens unchanged; radius-8 hashes as before in both load orders;
+    - 0 blocks differ in the bench passes;
+    - an old-against-new `Build` comparison: 0 of 1,944 sections (palette, words, NonAir, allocation) and 0 of 82,944 heightmap values per preset;
+    - `Density.Column` checks blocks bit for bit against direct evaluation.
+  - **Figures:** the old and new `UnnamedVoxel` DLLs alternated run by run (three pairs, 18:10 to 18:13, no `java`, `javaw` or `UnrealEditor`, the Modrinth launcher open; the machine ran about 15% slower than at 17:42). Column-mean medians of three, old code -> S0: overworld 5.25 -> 3.29 ms (-37%), large_biomes 5.70 -> 3.47 (-39%), AMPLIFIED 6.30 -> 4.45 (-29%). Evidence: `Tests/Evidence/2026-10-09/BenchLogs-20261009-s0/`.
+  - **AMPLIFIED's stages after S0** (the median run, ms):
+    - density 2.31: corners 1.67, bounds 0.13, flat 0.09, cells from corners 0.18, cells to blocks 0.25;
+    - aquifer 0.43;
+    - biomes 0.20;
+    - blocks 1.51, of which surface 1.13.
+  - **Finer split** (a temporary per-slot timer in separate runs, its own overhead included, so the figures do not add up to the stages above; AMPLIFIED, before -> after, ms):
+    - kinds 0.63 -> 0.19;
+    - sections 0.29 -> 0.17;
+    - heightmaps 0.09 -> 0.03;
+    - aquifer fill 0.62 -> 0.37;
+    - cells to blocks 0.50 -> 0.30.
+  - **Corner noises:** 1.09 ms of AMPLIFIED's corners: `old_blended_noise` 0.52, the entrances (`cave_entrance`, the 3D spaghetti, roughness) 0.33, the noodle noises 0.13, the underground branch 0.10.
 
 Streaming (`CaptureVoxel`, dev seed):
 
@@ -780,7 +809,11 @@ A deliberate off-by-one in `GetSectionsTouching` fails `Edit.Sections` (13 error
 
 ## Known gaps
 
-- **Over 5 ms:** on a quiet machine, AMPLIFIED's column mean stays over the limit after the batched normal noise (the phase 5 record has the figures); a per-run memo of the surface tree did not pay ([Surface rules](#surface-rules-temperature-and-snow)). Further speed-up is its own session. The levers left: conditional noodle corners, an aquifer status cache, the block fill by runs, and the surface tree's biome tests.
+- **The 5 ms limit:** since S0 every preset's column mean is under it ([Column density](#column-density-and-terrain-generator-2), "Speed-up session S0"). Phase 6's decoration will add to it (the plan's allowances, section 3.5). Levers still untried:
+  - the entrance and noodle noises at corners whose cells sloped_cheese's upper bound already proves empty;
+  - conditional noodle corners;
+  - the aquifer's 27-centre search;
+  - the surface tree's biome tests.
 - **Surface rules** ([Surface rules](#surface-rules-temperature-and-snow)): the stage adds 0.6 to 0.9 ms (p50) per column. No eroded-badlands hoodoos or frozen-ocean icebergs (code-made in 26.3; decided out of phase 5). Ore veins give nothing until phase 6. The freeze pass takes block light as 0 and runs before any trees exist.
 - **Lighting limits:** faces hidden behind a same-facing face inside one card stay black in Lumen's scene, and software Lumen cannot see the chunks ([Lighting](#lighting)).
 - **Edge fog:** its color is fixed to the map's sun (there is no day cycle yet), and a faint seam remains on the sun side. Columns still arriving inside the fade show up late: in the session 5 flight (2,392 frames, at most 35 at a time), one frame each, when crossing a column corner moves the rings diagonally.
@@ -788,9 +821,8 @@ A deliberate off-by-one in `GetSectionsTouching` fails `Edit.Sections` (13 error
 - **Frozen-ocean checkerboard:** where ice covers water, merged squares under the ice read lighter or darker from run to run: translucent ice over translucent water, sorted per merged quad. It is there with tints off too, so it came with session 5's freeze pass. A translucency-sorting fix is its own task.
 - **Fluids:** generated water counts as water for the player, but it does not flow: carving into water leaves air pockets.
 - **First view:** the view is on screen 3.3 to 3.6 s after the first frame with generator 2 and caves (2.5 to 2.6 s before caves; 0.5 to 0.6 s with the stand-in).
-- **AMPLIFIED skipping:** it skips only 28% of cells (loose bounds where the factor is small).
-- **Block fill:** it costs about 0.8 ms per column (the palette build and the per-block loop).
-- **Caves near the limit:** corner sharing (phase 5, session 3) brings caves-on columns under 5 ms in the bench's best case (overworld 3.76 to 3.79, large_biomes 3.92 to 4.64, amplified 4.28 to 4.64 ms). Without sharing, overworld 4.13 to 4.37, large_biomes 4.56 to 4.58 and amplified 4.96 to 5.24 ms are near or over the limit, and the in-game figure lies between. Biomes add 0.19 ms (session 4); the surface rules will add more. The normal noise is batched since phase 5 session 6 (see "Over 5 ms" above); the next levers are conditional noodle corners, an aquifer status cache, block fill by runs, the flight's 3 frames over 2 ms, and inner rings first.
+- **AMPLIFIED skipping:** bounds settle only 9% of its cells (loose where the factor is small), against the overworld's 54%. Its corners settle another 76% of cells, but those corners must be evaluated first: about 757 per column, against the overworld's 390.
+- **Caves near the limit:** corner sharing (phase 5, session 3) brings caves-on columns under 5 ms in the bench's best case (overworld 3.76 to 3.79, large_biomes 3.92 to 4.64, amplified 4.28 to 4.64 ms). Without sharing, overworld 4.13 to 4.37, large_biomes 4.56 to 4.58 and amplified 4.96 to 5.24 ms are near or over the limit, and the in-game figure lies between. Biomes add 0.19 ms (session 4); the surface rules will add more. The normal noise is batched since phase 5 session 6, and S0 took a further 1.9 to 2.2 ms off the whole column (see "The 5 ms limit" above). Still open: the flight's frames over 2 ms, and inner rings first.
 - **Biome stage:** 0.19 ms per column. Its climate pass (about 0.05 ms) is shared neither with the density's corners nor with neighbouring columns.
 - **`voxel.Debug.Climate`** on screen is unconfirmed since session 3.
 - **Still lava:** it has no damage and no flow, and it counts as water for the player's movement.
