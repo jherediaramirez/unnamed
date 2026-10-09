@@ -2,6 +2,10 @@
 
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
+## October 9, 2026
+
+- [Voxel world phase 4, terrain](2026-10-09-Voxel-Phase4.md): real terrain on generator 2, from 26.3's own density graph with our own noise, evaluator and aquifers. Covers the five sessions (worldgen data, noise and climate, every op and column density, caves and still lava, performance and benches), the decisions confirmed with the user and those made overnight by the manager for Jesus's review, the acceptance table (all four criteria met), the performance against the 5 ms limit and 2 ms target (overworld 4.53 ms mean with caves, Large Biomes and AMPLIFIED slightly over, none at 2 ms), the flight (3 of 10,107 frames over the 2 ms budget, worst 2.12 ms), the problems found, measurements and known issues.
+
 ## October 8, 2026
 
 - [Voxel world handoff: phase 4, into session 5](2026-10-09-Voxel-Handoff-Phase4-Session5.md): start here in a new chat. Session 4 (commit `b306f87`) turned caves on, added our own aquifers (water, still lava, walls) with exact skipping, still lava in the voxel table, lazy interval_select, and the cave-lighting comparison (Lumen cards kept). It covers what to read, the working agreement and settled decisions, timings before and after with the performance levers for session 5, the session 5 brief, a code map, open questions for Jesus, what worked and failed, commands and token use. It replaces the session 4 handoff below.
