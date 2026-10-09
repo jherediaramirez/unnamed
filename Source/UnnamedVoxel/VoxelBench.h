@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 
+class FVoxelClimateSampler;
+
 // One timed run: how long Samples evaluations took, and a checksum so the work cannot be optimized away.
 struct FVoxelBenchResult
 {
@@ -21,6 +23,10 @@ namespace VoxelBench
     // Times each primitive on the calling thread over Samples evaluations (positions spread over a wide area, so the
     // lattice hashes see realistic inputs), then 3D fBm across every task worker.
     UNNAMEDVOXEL_API TArray<FVoxelBenchResult> RunNoise(int32 Samples, uint64 Seed);
+
+    // Times the climate pass of (2 Radius + 1)^2 columns around the origin, on the calling thread and then across every
+    // task worker. Each result counts columns, so its nanoseconds per sample are the time per column.
+    UNNAMEDVOXEL_API TArray<FVoxelBenchResult> RunClimate(const FVoxelClimateSampler& Sampler, int32 Radius);
 
     // One line per result: name, nanoseconds per sample, millions per second.
     UNNAMEDVOXEL_API FString Describe(TConstArrayView<FVoxelBenchResult> Results);

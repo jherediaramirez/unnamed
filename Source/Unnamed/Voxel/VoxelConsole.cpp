@@ -7,6 +7,7 @@
 #include "Streaming/VoxelStreamingPlanner.h"
 #include "Terrain/VoxelHeightTerrain.h"
 #include "Voxel/VoxelBlocks.h"
+#include "Voxel/VoxelClimateDebug.h"
 #include "Voxel/VoxelFlyCamera.h"
 #include "Voxel/VoxelWorld.h"
 #include "Voxel/VoxelWorldSettings.h"
@@ -146,7 +147,9 @@ namespace
         TEXT("voxel.Bench Noise [millions]: times the deterministic core's primitives on this thread (default 1 "
              "million samples each), then 3D fBm across every task worker.\n"
              "voxel.Bench Columns [radius]: generates and meshes (2 radius + 1)^2 columns off screen (default radius "
-             "4), on this thread and then on every worker, and reports each stage."),
+             "4), on this thread and then on every worker, and reports each stage.\n"
+             "voxel.Bench Climate [radius] [preset]: times the terrain climate pass of (2 radius + 1)^2 columns "
+             "(default radius 8, preset overworld), on this thread and then on every worker."),
         FConsoleCommandWithArgsAndOutputDeviceDelegate::CreateLambda(
             [](const TArray<FString>& Args, FOutputDevice& Output)
             {
@@ -178,6 +181,27 @@ namespace
                     }
                     return;
                 }
-                PrintLines(Output, TEXT("Usage: voxel.Bench Noise [millions] | voxel.Bench Columns [radius]"));
+                if (!Args.IsEmpty() && Args[0] == TEXT("Climate"))
+                {
+                    const int32 Radius = Args.Num() > 1 ? FMath::Clamp(FCString::Atoi(*Args[1]), 0, 64) : 8;
+                    const FString Preset = Args.Num() > 2 ? Args[2] : TEXT("overworld");
+                    FString Error;
+                    const TSharedPtr<const FVoxelClimateSampler> Sampler =
+                        VoxelClimateDebug::GetSampler(Preset, Seed.Value, Error);
+                    if (!Sampler)
+                    {
+                        PrintLines(Output, Error);
+                        return;
+                    }
+                    PrintLines(Output,
+                        FString::Printf(
+                            TEXT("Voxel climate bench, %s, %d columns, seed %s (ns per sample = per column):"), *Preset,
+                            (2 * Radius + 1) * (2 * Radius + 1), *Seed.Describe()) +
+                            TEXT("\n") + VoxelBench::Describe(VoxelBench::RunClimate(*Sampler, Radius)));
+                    return;
+                }
+                PrintLines(Output,
+                    TEXT("Usage: voxel.Bench Noise [millions] | voxel.Bench Columns [radius] | voxel.Bench "
+                         "Climate [radius] [preset]"));
             }));
 }

@@ -20,6 +20,7 @@ The verifier checks every file against `SHA256SUMS.txt`, compares every `data/` 
 | `data/minecraft/worldgen/density_function/` | The 4 shared functions (`shift_x`, `shift_z`, `y`, `zero`) and the folders `overworld` (27, with `caves/` and `ore_vein/`), `overworld_amplified` (8) and `overworld_large_biomes` (12). |
 | `data/minecraft/worldgen/noise/` | The 62 top-level noises. |
 | `facts/spline_samples.json` | Mojang's own values for the 9 terrain splines (offset, factor and jaggedness for each world type): 512 seeded samples each, as coordinates then value, about a quarter of the coordinates exactly on a point's location. Dumped by `tools/WorldgenFacts.java`. |
+| `facts/noise_samples.json` | The value spread of all 62 noises as the jar's `NormalNoise` makes them: the declared range, then mean, standard deviation and 11 percentiles of `get(x, 0, z)` and `get(x, y, z)` over 4 fixed seeds x 16,384 seeded positions spanning 64 periods of the lowest octave. Our own noise is calibrated against it (`Unnamed.Voxel.Worldgen.NoiseSpread`). Dumped by `tools/WorldgenFacts.java`. |
 | `manifest.json` | The source jar's hashes and the file counts. |
 | `SHA256SUMS.txt` | Every other file's SHA-256. |
 | `tools/` | `build_reference.py` copies the data from the jar and writes the manifest and sums; `verify_reference.py`; `WorldgenFacts.java`. |
@@ -27,7 +28,7 @@ The verifier checks every file against `SHA256SUMS.txt`, compares every `data/` 
 ## Rebuilding
 
 1. `uv run --no-project --python 3.13 python -I Reference/minecraft-worldgen-26.3/tools/build_reference.py [server jar]` replaces `data/`.
-2. With JDK 25 and a classpath of the server jar plus the 39 jars of its `libraries` folder: `javac -cp <classpath> -d <temp> tools/WorldgenFacts.java`, then `java -cp <temp>;<classpath> WorldgenFacts Reference/minecraft-worldgen-26.3`.
+2. With JDK 25 and a classpath of the server jar plus the 39 jars of its `libraries` folder: `javac -cp <classpath> -d <temp> tools/WorldgenFacts.java`, then `java -cp <temp>;<classpath> WorldgenFacts Reference/minecraft-worldgen-26.3` (writes both facts files; run it outside `Source/`, since the game's bootstrap leaves a `logs/` folder in the working directory).
 3. Run `build_reference.py` again so `SHA256SUMS.txt` covers the new facts, then the verifier.
 
 ## What 26.3 changed

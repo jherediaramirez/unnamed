@@ -1,5 +1,21 @@
 # Verification
 
+## Voxel world: phase 4 session 2, noise, climate, splines and debug views - October 9, 2026
+
+- **Builds:** the editor build and a `-DisableAdaptiveUnity` build are clean.
+- **Reference:** `verify_reference.py`: `REFERENCE OK: 123 files hashed, 116 compared with the jar, 580 references resolved, 9 splines with 4608 samples`.
+- **Native tests:**
+  - `Scripts\TestVoxel.ps1` 34/34, 29 before (`Tests/Evidence/2026-10-09/VoxelAutomation-20261009-002741/`);
+  - every native suite 81/81, 76 before (`Tests/Evidence/2026-10-09/AllNative-20261009-002806/`);
+  - new: `Worldgen.NoiseSpread` (every climate noise of the three presets within 10% standard deviation and 15% p1/p99 of vanilla; all 62 logged and within it), `Climate.NormalNoise`, `Climate.Ops`, `Climate.Presets`, `Climate.Threads`;
+  - swapping `lerp`'s order and `shift_b`'s axes fails `Climate.Ops` (4 errors) and `Climate.Presets` (3).
+- **Measurements:** climate column 46 µs on one thread, 6 to 7 µs across 30 workers (289 columns); maps 0.12 µs per point (1024 x 1024 in about 125 ms); reading a preset about 8 ms. Under the 2 ms target.
+- **Maps:** `Tests/Evidence/2026-10-09/ClimateMaps-20261009-001155/`. Continents span thousands of blocks; about 43 to 48 % of the area estimates below sea level.
+- **Other suites:** JavaScript units 57/57; `source-check.mjs` passes.
+- **Not run**, because the terrain does not use the climate yet: the Playground probe, `create-world.mjs` and `foundation-menu.mjs`.
+
+Details: [Voxel world, Worldgen data](VoxelWorld.md#worldgen-data).
+
 ## Voxel world: phase 4 session 1, worldgen data and reader - October 8, 2026
 
 - **Builds:** the editor build and a `-DisableAdaptiveUnity` build are clean, with no warnings in project code.

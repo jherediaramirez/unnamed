@@ -12,7 +12,7 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 | 2L | Lighting: Lumen cards for chunks and a brighter sky light, so shaded slopes are no longer black | Done |
 | 2W | Create New World: saved worlds, seed, world type, game mode, difficulty | Done |
 | 3 | Streaming, plus mining and placing on generated terrain | Done |
-| 4 | Terrain: 26.3's density graph, climate, caves, aquifers and lava | In progress: session 1 of 5 (worldgen data and reader) done |
+| 4 | Terrain: 26.3's density graph, climate, caves, aquifers and lava | In progress: session 2 of 5 done (worldgen data and reader, then noise, climate, splines and debug views) |
 | 5 | Biomes and surface (needs snow layers) | |
 | 6 | Decoration, after a block-shapes step (plants, cross models) | |
 | 7 | Structures that fit the land (needs stairs, doors, fences, paths) | |
@@ -24,8 +24,9 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 
 | Where | What |
 |---|---|
-| `Source/UnnamedVoxel/` | The core module: RNG, noise, density, biomes, storage, meshing and the streaming plan in plain C++. It depends on `Core` only, so UObjects, actors and render state cannot be included, and it compiles with precise floating point (below). Headers are included by their path from this folder (`"Random/VoxelSeed.h"`). It holds:<br>- `Random/`: seeds, hashing, streams;<br>- `Noise/`: gradient and fractal noise;<br>- `Spline/`: nested splines;<br>- `Density/`: the density graph, the reference's density functions as plain data;<br>- `Blocks/`: the per-state table;<br>- `Storage/`: sections and columns;<br>- `Terrain/`: the terrain interface, the phase 2 height terrain and Superflat's flat terrain;<br>- `Meshing/`: the mesher and its remesh rule;<br>- `Generation/`: the area builder;<br>- `Streaming/`: the planner (which columns are in view, which exist, which unload);<br>- `VoxelBench`: timings;<br>- the module-wide `VoxelConstants`, `VoxelLog` and `VoxelStats`. |
-| `Source/Unnamed/Voxel/` | The Unreal side:<br>- `UVoxelWorldSettings` and the console (`VoxelConsole`);<br>- the registry-to-table bridge (`VoxelBlocks`);<br>- the worldgen reader (`VoxelWorldgenReader`): the reference's JSON into the density graph;<br>- the column mesh (`UVoxelChunkComponent`);<br>- the column pipeline (`FVoxelColumnPipeline`, plain C++ with no UObjects);<br>- the streaming subsystem (`UVoxelWorldSubsystem`);<br>- the storage adapter (`FVoxelBlockStorage`);<br>- the level actor (`AVoxelWorld`);<br>- the free camera (`AVoxelFlyCamera`) and the acceptance flight (`FVoxelFlight`). |
+| `Source/UnnamedVoxel/` | The core module: RNG, noise, density, biomes, storage, meshing and the streaming plan in plain C++. It depends on `Core` only, so UObjects, actors and render state cannot be included, and it compiles with precise floating point (below). Headers are included by their path from this folder (`"Random/VoxelSeed.h"`). It holds:<br>- `Random/`: seeds, hashing, streams;<br>- `Noise/`: gradient and fractal noise, and the 26.3-style normal noise;<br>- `Spline/`: nested splines;<br>- `Density/`: the density graph, the reference's density functions as plain data, and the evaluator;<br>- `Blocks/`: the per-state table;<br>- `Storage/`: sections and columns;<br>- `Terrain/`: the terrain interface, the phase 2 height terrain, Superflat's flat terrain and the climate sampler;<br>- `Meshing/`: the mesher and its remesh rule;<br>- `Generation/`: the area builder;<br>- `Streaming/`: the planner (which columns are in view, which exist, which unload);<br>- `VoxelBench`: timings;<br>- the module-wide `VoxelConstants`, `VoxelLog` and `VoxelStats`. |
+| `Source/Unnamed/Voxel/` | The Unreal side:<br>- `UVoxelWorldSettings` and the console (`VoxelConsole`);<br>- the registry-to-table bridge (`VoxelBlocks`);<br>- the worldgen reader (`VoxelWorldgenReader`): the reference's JSON into the density graph;
+- the climate debug tools (`VoxelClimateDebug`): a cached sampler per (preset, seed), the map writer and the values at the player;<br>- the column mesh (`UVoxelChunkComponent`);<br>- the column pipeline (`FVoxelColumnPipeline`, plain C++ with no UObjects);<br>- the streaming subsystem (`UVoxelWorldSubsystem`);<br>- the storage adapter (`FVoxelBlockStorage`);<br>- the level actor (`AVoxelWorld`);<br>- the free camera (`AVoxelFlyCamera`) and the acceptance flight (`FVoxelFlight`). |
 | `/Game/Maps/L_Generated` | The generated world's map (`UUnnamedProjectSettings::GeneratedMap`), made by `Scripts/Editor/CreateGeneratedMap.py`. It is not a catalog world. |
 | `/Game/Blocks/M_Chunk*` | The chunk materials, made by `Scripts/Editor/CreateBlockMaterials.py`. |
 | `Source/Unnamed/Tests/Voxel*Tests.cpp` | Native tests, `Unnamed.Voxel.*`; `Scripts/TestVoxel.ps1` runs them. `VoxelTestBlocks.h` is a hand-built block table for tests. |
@@ -81,6 +82,7 @@ The constants below decide every saved world. Tests pin them, either against an 
 | Values | `Random/VoxelRandom.h` | `ToUnitFloat` and `ToUnitDouble` give [0, 1); `ToIndex` and `ToRange` give integers by multiply-high. With no rejection loop they stay pure functions, with bias below Bound / 2^32. `FVoxelXoroshiro::NextInt` is exactly uniform. |
 | Gradient noise | `Noise/VoxelGradientNoise.h` | One octave in 2D and 3D, with analytic gradients and a quintic fade. Lattice points pick a gradient by an integer hash of (seed, cell), so there is no permutation table and nothing repeats within the int32 lattice. Gradient directions are literal tables, with no runtime trigonometry. The cell and fraction split happens in double precision; the fraction is evaluated in float. Values are 0 on lattice points. 2D peaks near ±1; 3D (the 12 edge directions) reaches about ±0.78 in practice. |
 | Fractal noise | `Noise/VoxelNoise.h` | `FVoxelNoiseSettings` (frequency in cycles per block, octaves, lacunarity, gain, warp) compiles to an `FVoxelNoise`. Each octave is seeded and offset from (seed, salt) alone. `Fbm` sums octaves; `Ridged` is Musgrave's ridged multifractal; `Damped` fades octaves on steep accumulated slopes (Quilez). Domain warp moves positions by up to `WarpAmplitude` blocks. `SampleGrid` fills grids with X fastest, then Y, then Z. |
+| Normal noise | `Noise/VoxelNormalNoise.h` | `FVoxelNormalNoise` is the 26.3-style noise, built from a noise file (`FVoxelDensityNoise`). Octave i runs at 2^(base_octave + i) cycles per unit. Weights halve going up, are normalized to sum 1, then multiplied by the amplitude modifiers. Two stacks of our 3D gradient noise are summed, the second read at scale 1.0183. Every octave has its own seed and lattice offset, all from one Xoroshiro stream seeded by `Hash64(world seed, VoxelRandom::Salt(noise name))`. Zero-modifier octaves still draw from the stream but are not sampled. Spread: standard deviation = base_amplitude / 3 x summed weights x `SpreadScale` (1.06), with the sum rescaled by the linear/quadrature sum, because independent octaves add in quadrature. The rule was fitted from the jar: vanilla's standard deviation follows base_amplitude x (1/3) x summed normalized weights within 2% across all climate noises (1/3 is the jar's `NormalNoise.TARGET_DEVIATION`). `SpreadScale` decides saved worlds like the golden checksums: never change it to pass a test. This is not seed-for-seed vanilla. |
 | Splines | `Spline/VoxelSpline.h` | `FVoxelSplineBuilder` assembles nodes, each over one coordinate. A point's value is a constant or a nested node, and `Build` rejects empty nodes, unsorted points, cycles and bad coordinates. `FVoxelSpline` holds flat arrays with the root first: cubic Hermite between points, straight lines beyond the ends. |
 
 Measured on this machine, Development editor build, one thread, `voxel.Bench Noise` with 1 million samples each (`Tests/Evidence/2026-10-08/VoxelAutomation-20261008-144031/voxel-console.txt`):
@@ -117,7 +119,39 @@ Phase 4 builds the terrain from 26.3's own worldgen data. `Reference/minecraft-w
 
 - **Size:** each preset reads as 24 functions, 279 nodes, 31 noises and 118 splines with 430 points, in about 8 ms in the editor. All 51 functions and 62 noises together make 530 nodes.
 - **Splines:** our `FVoxelSpline` matches Mojang's `CubicSpline` on all 4,608 samples, within 9.5e-7 (float rounding).
-- **Not done yet:** nothing evaluates the graph; noise, climate and density come in the next sessions. Packaged builds don't include the reference until the terrain uses it.
+- **Noise facts:** `facts/noise_samples.json` has 62 noises with range, mean, standard deviation and 11 percentiles over xz and xyz, from 4 seeds x 16,384 positions, dumped by `tools/WorldgenFacts.java`. The reference's verifier now reports `REFERENCE OK: 123 files hashed, 116 compared with the jar, 580 references resolved, 9 splines with 4608 samples`.
+- **Not done yet:** the terrain does not use the graph. `AVoxelWorld` still uses the stand-in terrain until session 3. Packaged builds don't include the reference until the terrain uses it.
+
+### Density evaluator
+
+`Density/VoxelDensityEvaluator.h`: `FVoxelDensityEvaluator` compiles the nodes the requested roots read, for one seed. Noises are created and splines baked with `BuildSpline`. It then evaluates node by node over a batch of points, in graph order, with float values and the reference's axes (x, y up, z). Each thread needs its own `FVoxelDensityScratch`.
+
+- **Runs:** every op except `interpolated`, `find_top_surface`, `old_blended_noise` and `interval_select` (session 3). It refuses those with a reason.
+- **Fixed values:** `blend_alpha` is 1, `blend_offset` is 0, `beardifier` is 0, and `blend_density` passes its input.
+- **Confirmed against the 26.3 jar** by black-box sampling (`DensityFunction.CODEC` and our own `CompileContext`, numbers only):
+  - `noise` = N(x * xz_scale + shift_x, y * y_scale, z * xz_scale + shift_z);
+  - `shift_a` = 4 * N(x/4, 0, z/4); `shift_b` = 4 * N(z/4, x/4, 0);
+  - `lerp` = first + alpha * (second - first);
+  - `squeeze(2)` = 11/24 (clamp to [-1, 1], then x/2 - x^3/24);
+  - `half_negative` and `quarter_negative` scale negatives by 1/2 and 1/4;
+  - `div`; `gradient` is linear between its coordinates (values at the ends confirmed, clamping beyond them assumed);
+  - `range_choice` max is exclusive.
+- **Unconfirmed:** `cache` (treated as identity) and the session 3 ops.
+
+### Climate
+
+`Terrain/VoxelClimate.h`: `FVoxelClimateSampler` evaluates continentalness (C), erosion (E), weirdness (W), peaks and valleys (PV), temperature (T), vegetation (V), and the depth function's offset (O), factor (F) and jaggedness (J). Offset, factor and jaggedness are found as functions in the router depth's folder. `SampleColumn` takes the 5 x 5 cell corners (4 blocks apart) and a time; `SampleDepth` takes one block. The cycle stat is "Climate column" (`STAT_VoxelClimateColumn`) with the trace scope `Voxel_ClimateColumn`. Not in the terrain yet.
+
+| Measured (Development editor, this machine, seed "Unnamed") | Time |
+|---|---|
+| Climate column, one thread | 46 µs, after one warm-up column (45 to 51 µs across runs and presets) |
+| Climate column across 30 workers, one scratch per worker | 6 to 7 µs per column over 289 columns (too few to scale fully) |
+| Maps | 0.12 µs per point (1024 x 1024 in about 125 ms on all workers) |
+| Reading a preset | about 8 ms |
+
+This is under the 2 ms target.
+
+On the maps (seed "Unnamed"): continents span thousands of blocks; Large Biomes are about 4x larger; AMPLIFIED raises more peaks; PV valleys form river-like channels. About 43 to 48 % of the area estimates below sea level, which includes rivers and beach-level land the estimate puts just under 63. Evidence: `Tests/Evidence/2026-10-09/ClimateMaps-20261009-001155/` (PNGs and the montages `climate-overworld-8192.png` and `climate-continental-32768.png`).
 
 ## Storage and meshing
 
@@ -297,6 +331,8 @@ Runtime code reads the console variables, never the settings object. The setting
 | `bAmbientOcclusion` | `voxel.AmbientOcclusion` | on | 2 |
 | `bGreedyMeshing` | `voxel.GreedyMeshing` | on | 2 |
 
+`voxel.Debug.Climate <C|E|W|PV|T|V|O|F|J|D|off>` (default off) shows all climate values at the player on screen (overworld preset) and highlights the one named. N and PS wait for session 3. It is debug-only, like the next variable, so it has no row. The in-game minimap is deferred to session 5.
+
 `voxel.Debug.EdgeWalls` (default off) is a debug-only variable, not a setting, so it has no row. It meshes the view's edge against air, so the outer columns draw their sides: the cut through the world that the `overview` and `section` shots show. `CaptureVoxel.ps1` turns it on for its shots.
 
 ## Commands and diagnostics
@@ -311,6 +347,8 @@ Runtime code reads the console variables, never the settings object. The setting
 - `voxel.Fly [blocks per second]` is the free camera ([Streaming](#streaming)).
 - `voxel.Bench Noise [millions]` times each primitive on the calling thread (1 million samples each by default), then 3D fBm across every task worker.
 - `voxel.Bench Columns [radius]` builds `(2 radius + 1)^2` columns off screen (default radius 4), first on one thread and then on every worker, and reports each stage.
+- `voxel.Bench Climate [radius] [preset]` times the climate sampler over `(2 radius + 1)^2` columns (default radius 8 = 289 columns, overworld preset).
+- `voxel.ClimateMap <C|E|W|PV|T|V|O|F|J|all> [size px 1024] [blocks per px 8] [preset]` writes PNGs to `Saved/VoxelClimate`, centered on the player (or 0,0), and logs the time and percentiles. O is drawn as the surface height the offset implies (y = -64 + (O + 1.5) x 128, before factor, jaggedness and 3D noise).
 - `stat Voxel` shows the `STATGROUP_Voxel` timings and the streaming counters. Each stage adds its cycle stats there, next to a matching `TRACE_CPUPROFILER_EVENT_SCOPE` for Unreal Insights.
 - `LogUnnamedVoxel` is the one log category, shared by both modules. While a voxel world runs it gets a line every second with the worst frame's plan, jobs and apply split.
 
@@ -371,7 +409,7 @@ Limits:
 
 ## Tests
 
-`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 29 `Unnamed.Voxel` tests. Saved worlds are tested by `Unnamed.Worlds.Saved` (native) and, through the menu end to end, by `Tests/create-world.mjs`. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
+`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 34 `Unnamed.Voxel` tests. Saved worlds are tested by `Unnamed.Worlds.Saved` (native) and, through the menu end to end, by `Tests/create-world.mjs`. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
 
 | Test | Checks |
 |---|---|
@@ -404,8 +442,13 @@ Limits:
 | `Unnamed.Voxel.Worldgen.Presets` | The three presets read and validate: sea level, height, blocks, every router and aquifer entry, and the debug views. Each world type's entry points come from its own files. Overworld nodes are checked by hand against their JSON: `y`, `shift_x`, the final density, the aquifer exclusion and barrier, an interval select, continentalness and shared references. Files no preset reaches also read: `zero`, `small_patch` and `gravel`. |
 | `Unnamed.Voxel.Worldgen.RoundTrip` | All 51 function files and 62 noise files, read into one graph and written back, equal their files; so do each preset's router, aquifers and debug views. Fifteen malformed files are refused with a reason, including wrong-case types, fields and axes. Nodes found by their values pin each op's field order, which a shared field table could otherwise swap unseen. `Validate` refuses eight kinds of bad graph and `BuildSpline` two, each with its reason. |
 | `Unnamed.Voxel.Worldgen.Splines` | The 9 terrain splines, baked into `FVoxelSpline`, against Mojang's values on 4,608 samples. |
+| `Unnamed.Voxel.Worldgen.NoiseSpread` | `Tests/VoxelNoiseSpreadTests.cpp`: every climate noise of the three presets has a standard deviation within 10% and p1/p99 within 15% of vanilla. The tolerance was fixed before calibrating. All 62 noises are logged, and in fact all are within it. |
+| `Unnamed.Voxel.Climate.NormalNoise` | `Tests/VoxelClimateTests.cpp`: golden checksums of the normal noise. |
+| `Unnamed.Voxel.Climate.Ops` | Op values measured from the jar (the list under Density evaluator), plus our own cases for the rest: squeeze inside [-1, 1], positive half and quarter negative, clamp, min, max, abs, square, cube, gradients along x and z, batch independence, and the refusal of `interpolated`. |
+| `Unnamed.Voxel.Climate.Presets` | Climate values of the three presets: goldens (each parameter weighted by its index, so swapped parameters fail), shared column edges, the PV formula. |
+| `Unnamed.Voxel.Climate.Threads` | 8 threads in shuffled order match the single-threaded result. |
 
-A deliberate off-by-one in `GetSectionsTouching` fails `Edit.Sections` (13 errors) and `Edit.Remesh` (11). Zeroing spline derivatives in `BuildSpline` and negating the reader's constants fail `Worldgen.Splines` (6 errors), `Worldgen.RoundTrip` (34) and `Worldgen.Presets` (1).
+A deliberate off-by-one in `GetSectionsTouching` fails `Edit.Sections` (13 errors) and `Edit.Remesh` (11). Zeroing spline derivatives in `BuildSpline` and negating the reader's constants fail `Worldgen.Splines` (6 errors), `Worldgen.RoundTrip` (34) and `Worldgen.Presets` (1). Swapping `lerp`'s order and `shift_b`'s axes fails `Climate.Ops` (4 errors) and `Climate.Presets` (3).
 
 ## Known gaps
 

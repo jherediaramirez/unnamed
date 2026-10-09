@@ -6,6 +6,7 @@
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Random/VoxelRandom.h"
 #include "Spline/VoxelSpline.h"
+#include "Terrain/VoxelClimate.h"
 
 namespace
 {
@@ -162,4 +163,53 @@ FString VoxelBench::Describe(TConstArrayView<FVoxelBenchResult> Results)
             FString::Printf(TEXT("%-46s %9.1f ns/sample %9.2f M/s%s\n"), *Result.Name, Result.GetNanosecondsPerSample(),
                 Result.GetMillionsPerSecond(), Result.bParallel ? TEXT(" (all workers)") : TEXT(""));
     return Out;
+}
+
+TArray<FVoxelBenchResult> VoxelBench::RunClimate(const FVoxelClimateSampler& Sampler, int32 Radius)
+{
+    TRACE_CPUPROFILER_EVENT_SCOPE(VoxelBench_RunClimate);
+    const int32 Side = 2 * Radius + 1, Columns = Side * Side;
+    TArray<FVoxelBenchResult> Results;
+
+    // Each result's Samples counts columns, so nanoseconds per sample read as the time per column.
+    FVoxelBenchResult Single;
+    Single.Name = TEXT("Climate column, 5x5 corners, one thread");
+    Single.Samples = Columns;
+    {
+        FVoxelDensityScratch Scratch;
+        FVoxelColumnClimate Climate;
+        // One untimed column sizes the scratch, as a worker's would be after its first column.
+        Sampler.SampleColumn(0, 0, Scratch, Climate);
+        const double Start = FPlatformTime::Seconds();
+        for (int32 Index = 0; Index < Columns; ++Index)
+        {
+            Sampler.SampleColumn(Index % Side - Radius, Index / Side - Radius, Scratch, Climate);
+            Single.Checksum += Climate.Samples[Index % 25].Values[Index % int32(EVoxelClimate::Count)];
+        }
+        Single.Seconds = FPlatformTime::Seconds() - Start;
+    }
+    Results.Add(Single);
+
+    const int32 Workers = FMath::Max(1, int32(LowLevelTasks::FScheduler::Get().GetNumWorkers()));
+    FVoxelBenchResult Parallel;
+    Parallel.Name = FString::Printf(TEXT("Climate column, %d workers"), Workers);
+    Parallel.Samples = Columns;
+    Parallel.bParallel = true;
+    TArray<double> Sums;
+    Sums.SetNumZeroed(Columns);
+    const double Start = FPlatformTime::Seconds();
+    // One scratch per worker context, as the generator's workers would keep theirs.
+    TArray<FVoxelDensityScratch> Scratches;
+    ParallelForWithTaskContext(Scratches, Columns,
+        [&](FVoxelDensityScratch& Scratch, int32 Index)
+        {
+            FVoxelColumnClimate Climate;
+            Sampler.SampleColumn(Index % Side - Radius, Index / Side - Radius, Scratch, Climate);
+            Sums[Index] = Climate.Samples[Index % 25].Values[Index % int32(EVoxelClimate::Count)];
+        });
+    Parallel.Seconds = FPlatformTime::Seconds() - Start;
+    for (const double Sum : Sums)
+        Parallel.Checksum += Sum;
+    Results.Add(Parallel);
+    return Results;
 }
