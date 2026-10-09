@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Density/VoxelColumnDensity.h"
+#include "Density/VoxelCornerCache.h"
 #include "HAL/CriticalSection.h"
 #include "Noise/VoxelNoise.h"
 #include "Terrain/VoxelAquifer.h"
@@ -20,6 +21,8 @@ struct FVoxelDensityTerrainSettings
     bool bCaves = true;
     // Height-bound skipping (FVoxelColumnDensity); off only to compare against.
     bool bSkip = true;
+    // Corners shared between neighbouring columns (FVoxelCornerCache, about 7 MB); off only to compare against.
+    bool bShareCorners = true;
 };
 
 // What one column's generation cost, by stage.
@@ -53,13 +56,17 @@ public:
     virtual bool IsDry(int32 X, int32 Y) const override;
     virtual bool ConfirmDry(int32 X, int32 Y) const override;
     virtual void Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const override;
+    virtual void ResetCaches() const override;
 
     // The preset's preliminary surface level (its PS view, a find_top_surface): the y of the top 8-block cell whose
     // smooth density is positive, ignoring the 3D noise.
     int32 EstimateSurface(int32 X, int32 Y) const;
-    // Generates a column and reports its stage times.
+    // Generates a column and reports its stage times. The overrides replace the settings' bSkip and bShareCorners
+    // (sharing needs bShareCorners at construction).
     void Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense, FVoxelDensityTerrainTimings* Timings,
-        const bool* bSkipOverride = nullptr) const;
+        const bool* bSkipOverride = nullptr, const bool* bShareOverride = nullptr) const;
+    // The corner cache's size in bytes, 0 without sharing.
+    int64 GetCornerCacheBytes() const;
     // The column's density, ((Z - MinZ) * 16 + local Y) * 16 + local X.
     void GenerateDensity(FIntPoint Position, TArray<float>& Out, bool bSkip, FVoxelColumnDensityStats* Stats) const;
 
@@ -92,6 +99,8 @@ private:
     FVoxelDensityEvaluator Evaluator, SurfaceEvaluator;
     int32 FinalDensity = INDEX_NONE, Surface = INDEX_NONE;
     FVoxelColumnDensity Column;
+    // Shared by every worker (it locks itself); null without bShareCorners.
+    TUniquePtr<FVoxelCornerCache> CornerCache;
     FVoxelAquifer Aquifer;
 
     mutable FCriticalSection PoolLock;

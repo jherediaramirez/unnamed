@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Density/VoxelDensityEvaluator.h"
 
+class FVoxelCornerCache;
+
 // Working memory for FVoxelColumnDensity, one per thread.
 struct FVoxelColumnDensityScratch
 {
@@ -14,6 +16,8 @@ struct FVoxelColumnDensityScratch
     TArray<uint8> CellStates, CornerNeeded;
     TArray<int32> CornerPoints, CornerFlat;
     TArray<float> WeightsXZ, WeightsY;
+    // One corner column's values in FVoxelCornerCache's layout.
+    TArray<float> CacheValues;
 };
 
 // What one column's density cost.
@@ -23,6 +27,8 @@ struct FVoxelColumnDensityStats
     int32 SolidCells = 0;
     int32 EmptyCells = 0;
     int32 CornersEvaluated = 0;
+    // Corners a neighbouring column had already evaluated (FVoxelCornerCache), not counted in CornersEvaluated.
+    int32 CornersShared = 0;
     int32 BlocksEvaluated = 0;
     // Mixed cells found solid or empty from their evaluated corners (stage 3b), not counted in SolidCells/EmptyCells.
     int32 RefinedCells = 0;
@@ -36,8 +42,10 @@ struct FVoxelColumnDensityStats
 // Height-bound skipping: before any corner is evaluated, each cell's density is bounded from the column's exact
 // y-independent values and conservative bounds of the rest (noise amplitudes, the cell's y range). A cell whose density
 // is certainly positive is solid and one whose density is certainly not is empty, so neither is evaluated.
-// Immutable after Initialize; any thread may generate with its own scratch, and results equal direct evaluation of the
-// function at each block (FVoxelDensityEvaluator::Evaluate) bit for bit, skipped cells aside.
+// Corner sharing: with a cache (MakeCornerCache), corners on the column's edges that a neighbour already evaluated are
+// read from it, and those evaluated here are kept for the neighbours.
+// Immutable after Initialize; any thread may generate with its own scratch (and one shared cache), and results equal
+// direct evaluation of the function at each block (FVoxelDensityEvaluator::Evaluate) bit for bit, skipped cells aside.
 class UNNAMEDVOXEL_API FVoxelColumnDensity
 {
 public:
@@ -51,9 +59,13 @@ public:
     // Density at every block of the column whose lowest corner is (X0, Z0) in the reference's axes, indexed
     // ((y - MinY) * 16 + z) * 16 + x. Skipped cells read +1 (solid) or -1 (empty). KeepEmpty (empty, or one flag per
     // block y from MinY) keeps cells touching a flagged y from being skipped as empty, for callers that read the exact
-    // value of non-positive density there (aquifer barriers).
+    // value of non-positive density there (aquifer barriers). Cache, if given, must come from MakeCornerCache.
     void Generate(int32 X0, int32 Z0, bool bSkip, FVoxelColumnDensityScratch& Scratch, TArray<float>& OutDensity,
-        FVoxelColumnDensityStats* OutStats = nullptr, TConstArrayView<uint8> KeepEmpty = {}) const;
+        FVoxelColumnDensityStats* OutStats = nullptr, TConstArrayView<uint8> KeepEmpty = {},
+        FVoxelCornerCache* Cache = nullptr) const;
+
+    // Sizes Out for this column's corners. Fails when they cannot be shared (more than 64 corners per corner column).
+    bool MakeCornerCache(FVoxelCornerCache& Out) const;
 
     int32 GetMinY() const { return MinY; }
     int32 GetHeight() const { return Height; }

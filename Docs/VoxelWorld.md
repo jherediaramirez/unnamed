@@ -12,8 +12,8 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 | 2L | Lighting: Lumen cards for chunks and a brighter sky light, so shaded slopes are no longer black | Done |
 | 2W | Create New World: saved worlds, seed, world type, game mode, difficulty | Done |
 | 3 | Streaming, plus mining and placing on generated terrain | Done |
-| 4 | Terrain: 26.3's density graph, climate, caves, aquifers and lava | Done (5 sessions: worldgen data and reader; noise, climate, splines and debug views; 3D density and generator 2; caves on, aquifers, still lava, cave-lighting decision; performance). Caves-on columns are slightly over 5 ms on two presets ([Known gaps](#known-gaps)) |
-| 5 | Biomes and surface | In progress (session 2 of 5 done: reference data, blocks and readers) |
+| 4 | Terrain: 26.3's density graph, climate, caves, aquifers and lava | Done (5 sessions: worldgen data and reader; noise, climate, splines and debug views; 3D density and generator 2; caves on, aquifers, still lava, cave-lighting decision; performance). Caves-on columns were slightly over 5 ms on two presets; phase 5 session 3's corner sharing brings them under it in the bench's best case ([Known gaps](#known-gaps)) |
+| 5 | Biomes and surface | In progress (sessions 2 and 3 done: reference data, blocks and readers; performance levers. Next: 3b, cave brightness; then sessions 4 to 6) |
 | 6 | Decoration, after a block-shapes step (plants, cross models) | |
 | 7 | Structures that fit the land (needs stairs, doors, fences, paths) | |
 | 8 | Mountains | |
@@ -24,7 +24,7 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 
 | Where | What |
 |---|---|
-| `Source/UnnamedVoxel/` | The core module: RNG, noise, density, biomes, storage, meshing and the streaming plan in plain C++. It depends on `Core` only, so UObjects, actors and render state cannot be included, and it compiles with precise floating point (below). Headers are included by their path from this folder (`"Random/VoxelSeed.h"`). It holds:<br>- `Random/`: seeds, hashing, streams;<br>- `Noise/`: gradient and fractal noise, and the 26.3-style normal noise;<br>- `Spline/`: nested splines;<br>- `Density/`: the density graph, the reference's density functions as plain data, and the evaluator;<br>- `Blocks/`: the per-state table;<br>- `Storage/`: sections and columns;<br>- `Terrain/`: the terrain interface, the phase 2 height terrain, Superflat's flat terrain and the climate sampler;<br>- `Meshing/`: the mesher and its remesh rule;<br>- `Generation/`: the area builder;<br>- `Streaming/`: the planner (which columns are in view, which exist, which unload);<br>- `VoxelBench`: timings;<br>- the module-wide `VoxelConstants`, `VoxelLog` and `VoxelStats`. |
+| `Source/UnnamedVoxel/` | The core module: RNG, noise, density, biomes, storage, meshing and the streaming plan in plain C++. It depends on `Core` only, so UObjects, actors and render state cannot be included, and it compiles with precise floating point (below). Headers are included by their path from this folder (`"Random/VoxelSeed.h"`). It holds:<br>- `Random/`: seeds, hashing, streams;<br>- `Noise/`: gradient and fractal noise, and the 26.3-style normal noise;<br>- `Spline/`: nested splines;<br>- `Density/`: the density graph, the reference's density functions as plain data, the evaluator, the column density and its shared corner cache;<br>- `Blocks/`: the per-state table;<br>- `Storage/`: sections and columns;<br>- `Terrain/`: the terrain interface, the phase 2 height terrain, Superflat's flat terrain and the climate sampler;<br>- `Meshing/`: the mesher and its remesh rule;<br>- `Generation/`: the area builder;<br>- `Streaming/`: the planner (which columns are in view, which exist, which unload);<br>- `VoxelBench`: timings;<br>- the module-wide `VoxelConstants`, `VoxelLog` and `VoxelStats`. |
 | `Source/Unnamed/Voxel/` | The Unreal side:<br>- `UVoxelWorldSettings` and the console (`VoxelConsole`);<br>- the registry-to-table bridge (`VoxelBlocks`);<br>- the worldgen readers (`VoxelWorldgenReader`, `VoxelSurfaceReader`, shared helpers in `VoxelWorldgenJson.h`): the reference's JSON into the density graph, the biome table and the surface rules;<br>- the terrain factory (`VoxelTerrainFactory`): every world's terrain, used by the voxel world and by the menu's check before travel;
 - the climate debug tools (`VoxelClimateDebug`): a cached sampler per (preset, seed), the map writer and the values at the player;<br>- the column mesh (`UVoxelChunkComponent`);<br>- the column pipeline (`FVoxelColumnPipeline`, plain C++ with no UObjects);<br>- the streaming subsystem (`UVoxelWorldSubsystem`);<br>- the storage adapter (`FVoxelBlockStorage`);<br>- the level actor (`AVoxelWorld`);<br>- the free camera (`AVoxelFlyCamera`) and the acceptance flight (`FVoxelFlight`). |
 | `/Game/Maps/L_Generated` | The generated world's map (`UUnnamedProjectSettings::GeneratedMap`), made by `Scripts/Editor/CreateGeneratedMap.py`. It is not a catalog world. |
@@ -162,6 +162,7 @@ Phase 4 builds the terrain from 26.3's own worldgen data, and phase 5 adds the b
   - Only branches holding costly work (noise, shift, blended noise, spline, `interval_select`) go lazy. Nested choices take their own private nodes: outer choices first, ownership goes to the innermost.
   - `Evaluate` and `EvaluateNodes` skip deferred nodes (`IsDeferred`); `EvaluateBounds` still bounds them.
   - Exact, because every op is per point. Corners: overworld 2.0 -> 1.7 ms, amplified 3.68 -> 2.81 ms.
+- **Batch `old_blended_noise` (phase 5, session 3):** `FVoxelBlendedNoise::Sample` over a batch, one octave at a time (`FVoxelGradientNoise::AccumulateOctave`, with the gradient noise inlined). Each point adds the same octaves in the same order and skips the same limit, so its value equals the single-point `Sample` bit for bit (test `Density.BlendedBatch`). No measurable gain yet (at the noise floor, about 0.03 ms per column); it is the groundwork for the normal-noise lever.
 
 ### Climate
 
@@ -187,6 +188,7 @@ On the maps (seed "Unnamed"): continents span thousands of blocks; Large Biomes 
 - **Cells from corners (stage 3b):** once a mixed cell's corners are evaluated, each interpolated node is bounded by its 8 corner values (trilinear weights are convex; a margin of 1e-5 x max |corner| + 1e-30 covers float rounding). `EvaluateBounds` then runs over the per-block nodes for the cell's y range, so per-block terms outside `interpolated` get their own bounds. Certainly positive means solid; certainly <= 0 and not KeepEmpty means empty; neither needs per-block work. Overworld caves on: 34.2% more cells settled, cells to blocks 2.38 -> 0.75 ms. Stats: `RefinedCells`, `RefineMs`.
 - **Weights table (stage 4):** trilinear weights by offset are precomputed as float(double(D) / Cell), the expression direct evaluation uses, so results are bit-identical. It removes 3 double divisions per block per interpolated node.
 - **Exact:** results equal direct evaluation bit for bit (test `Density.Column`).
+- **Corner sharing (phase 5, session 3):** the corners on a column's edges are the ones its neighbours need, so `Density/VoxelCornerCache.h` (`FVoxelCornerCache`, one per terrain) keeps the edge corner columns' interpolated inputs once evaluated: per column the 4 on its west line and 3 more on its north line, direct-mapped over a 32 x 32-column window. Nothing inside the loaded area (31 columns across) collides, and a corner column a window away takes its slot over (the newest wins). Each slot has its key, a 49-bit mask of the corners present and a 1-byte `UE::FMutex`; the table takes 6.9 MB, fixed at construction (at most 16 MiB). Stage 3 copies the needed edge corners it finds, evaluates only the rest, then stores what it evaluated. Corners are pure functions of the seed, the graph and the position, so a corner found equals a fresh evaluation bit for bit and load order cannot matter. Benches and `HashLoadOrders` call `ResetCaches` before each pass, so every check starts cold. `FVoxelDensityTerrainSettings::bShareCorners` turns it off (only to compare against). Tests: `Density.SharedCorners`, `Density.LoadOrder`.
 
 `Terrain/VoxelDensityTerrain.h`: `FVoxelDensityTerrain` (`IVoxelTerrain`).
 
@@ -226,6 +228,23 @@ Caves on (session 5), `voxel.Bench Density 8 <preset>`, 289 columns, one thread,
 - **Skipping is exact:** 0 of 28,409,856 blocks differ with skipping on and off, every preset, caves on and off. Goldens are unchanged.
 - **Targets:** the overworld mean is under 5 ms (p95 is over). large_biomes (5.13) and amplified (5.74) are slightly over. p50 is under 5 ms for all three. None reaches the 2 ms target with caves.
 - **Streaming flight with caves** (`Tests/Evidence/2026-10-09/VoxelFlight-20261009-035142`): no holes, 3 of 10,107 frames over the 2 ms chunk budget (worst 2.12 ms, one per circle), start to view 3.34 s (session 4: 3.64 s), late columns in the fog fade in 2,392 frames (session 4: 2,890; at most 35), memory over laps 2 and 3 3,831 -> 3,841 MB. Columns generate in 7.26 ms mean while workers mesh (13.8 ms in session 4). Apply worst frame 1.76 ms.
+
+Phase 5 session 3 (corner sharing, batch blended noise), `voxel.Bench Density 8 <preset>`, caves on, 289 columns, one thread, mean ms per column over two editor runs. Sharing on and off ran in the same editor run. Baseline: the same bench at `5168c69`, two runs on the same day.
+
+| Preset | Baseline | Sharing on: row order, warm neighbours (best case) | Sharing off | Corners shared |
+|---|---|---|---|---|
+| overworld | 4.42 / 4.35 | 3.79 / 3.76 | 4.37 / 4.13 | 198 of 582 per column (34%) |
+| large_biomes | 4.39 / 5.40 | 3.92 / 4.64 | 4.58 / 4.56 | 247 of 728 (34%) |
+| amplified | 5.30 / 5.62 | 4.28 / 4.64 | 4.96 / 5.24 | 357 of 1,049 (34%) |
+
+- **In game, expect something between sharing on and off:** streaming loads columns ring by ring, so a new column often has one neighbour done, sometimes none.
+- **Corners stage,** sharing on against off in the same run: overworld -0.52 / -0.48 ms, large_biomes -0.69 / -0.51, amplified -0.80 / -0.78.
+- **Across 30 workers** (index order, sharing on): 0.247 / 0.232 ms per column (baseline 0.268), large_biomes 0.243 / 0.243 (0.282), amplified 0.250 / 0.247 (0.298).
+- **Spread:** runs differ a lot on this machine (large_biomes' baseline: 4.39 and 5.40), so the comparison that counts is sharing on against off within one run. One pass broke that: large_biomes run 2's sharing-on mean (4.64) is above its sharing-off mean (4.56), from outliers (p95 9.24), though its p50 (3.74 against 4.07) and its corners stage (-0.51 ms) are lower.
+- **A third run, after the review's fixes** (a busier machine): sharing on 3.93 / 4.25 / 4.55, off 4.60 / 4.99 / 5.61 (overworld / large_biomes / amplified), with every gate unchanged.
+- **Exact:** 0 of 28,409,856 blocks differ with skipping on and off, and with sharing on and off, every preset. `voxel.Bench Columns 8` hashes `0x7bbf1f42c5434443` in both orders, as before. Goldens are unchanged.
+- **Batch blended noise:** 863 / 865 / 847 -> 781 / 848 / 810 ns per point, while the unchanged normal noise moved by up to 4%, so no gain is credited.
+- **Profile before the levers** (a temporary per-op timer; ms per column): corners overworld 1.62 = normal noise 1.03 + `old_blended_noise` 0.50 + the rest 0.09; large_biomes 2.07 = 1.33 + 0.63; amplified 2.34 = 1.34 + 0.89. The costliest corner noises are `cave_cheese`, `cave_entrance`, `spaghetti_3d_rarity` and `pillar`, then the spaghetti and noodle noises.
 
 Streaming (`CaptureVoxel`, dev seed):
 
@@ -448,7 +467,7 @@ Runtime code reads the console variables, never the settings object. The setting
 - `voxel.Bench Noise [millions]` times each primitive on the calling thread (1 million samples each by default), then 3D fBm across every task worker.
 - `voxel.Bench Columns [radius 4] [preset|standin] [nocaves]` builds `(2 radius + 1)^2` columns off screen (default: overworld with caves; `standin` is generator 1's height terrain). It reports the area stages (generate, gather, mesh) on one thread and then on every worker. For a density terrain it adds the generation stages (density, aquifer, blocks: p50, p95, mean), then block hashes in two load orders: row by row on one thread against backwards across every worker (`VoxelBench::HashLoadOrders`, CityHash64 of each column's dense blocks, combined in position order). Radius 8 hashes: overworld `0x7bbf1f42c5434443`, large_biomes `0xc70b24ba700501f2`, amplified `0x27c2d49086a4614a`; both orders agree, 0 columns differ.
 - `voxel.Bench Climate [radius] [preset]` times the climate sampler over `(2 radius + 1)^2` columns (default radius 8 = 289 columns, overworld preset).
-- `voxel.Bench Density [radius 4] [preset] [nocaves]` times the density terrain with skipping on and off, with its stages and the number of differing blocks, then on all workers. `nocaves` turns caves off.
+- `voxel.Bench Density [radius 4] [preset] [nocaves]` times the density terrain in three passes, each starting cold (`ResetCaches`): skipping and corner sharing on (row by row, so each column finds its west and north neighbours' corners: the best case), sharing off, and skipping off without sharing. It prints their stages, corners evaluated and shared, the blocks that differ from the first pass (skipping on and off; sharing on and off) and the cache's size, then times all workers. `nocaves` turns caves off.
 - `Scripts\CaptureVoxel.ps1 -Caves` adds a cave view and a lava view to the capture.
 - `voxel.ClimateMap <C|E|W|PV|T|V|O|F|J|N|PS|all> [size px 1024] [blocks per px 8] [preset]` writes PNGs to `Saved/VoxelClimate`, centered on the player (or 0,0), and logs the time and percentiles. `all` includes N and PS. PS is the terrain height. N is the final density at sea level (red solid, blue open), about 3.3 µs per point. O is drawn as the surface height the offset implies (y = -64 + (O + 1.5) x 128, before factor, jaggedness and 3D noise).
 - `stat Voxel` shows the `STATGROUP_Voxel` timings and the streaming counters. Each stage adds its cycle stats there, next to a matching `TRACE_CPUPROFILER_EVENT_SCOPE` for Unreal Insights.
@@ -514,7 +533,7 @@ Limits:
 
 ## Tests
 
-`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 46 `Unnamed.Voxel` tests (every native suite: 94). Saved worlds are tested by `Unnamed.Worlds.Saved` (native) and, through the menu end to end, by `Tests/create-world.mjs`. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
+`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 48 `Unnamed.Voxel` tests (every native suite: 96). Saved worlds are tested by `Unnamed.Worlds.Saved` (native) and, through the menu end to end, by `Tests/create-world.mjs`. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
 
 | Test | Checks |
 |---|---|
@@ -551,13 +570,15 @@ Limits:
 | `Unnamed.Voxel.Climate.NormalNoise` | `Tests/VoxelClimateTests.cpp`: golden checksums of the normal noise. |
 | `Unnamed.Voxel.Climate.Ops` | Op values measured from the jar (the list under Density evaluator), plus our own cases for the rest: squeeze inside [-1, 1], positive half and quarter negative, clamp, min, max, abs, square, cube, gradients along x and z, batch independence, and that `interpolated` compiles and returns a constant. |
 | `Unnamed.Voxel.Density.BlendedSpread` | `Tests/VoxelBlendedNoiseTests.cpp`: the blended noise's spread against the jar (the calibration under Deterministic core). |
+| `Unnamed.Voxel.Density.BlendedBatch` | `Tests/VoxelBlendedNoiseTests.cpp`: the batch `Sample` equals `Sample` point by point, bit for bit, for two sets of numbers, 4,096 positions each (block corners and fractional), in batches of uneven sizes. |
 | `Unnamed.Voxel.Density.Ops` | The jar-confirmed op values of session 3 (`interval_select`, `gradient`, `interpolated`, `find_top_surface`). |
 | `Unnamed.Voxel.Density.Column` | The column equals direct evaluation bit for bit on 3 presets x 3 columns x 300 blocks; skipped cells keep the sign. |
 | `Unnamed.Voxel.Density.Terrain` | Runs caves off and on. Skipping on and off are equal on 25 columns per preset; row, reverse and parallel orders are equal; the bedrock, sea and air rules; `GetSurfaceHeight` and `ConfirmDry` agree with the column. |
 | `Unnamed.Voxel.Density.Golden` | Block hashes per preset, seed 263 (caves off, session 3's). |
 | `Unnamed.Voxel.Aquifer.Determinism` | Two aquifers with one seed fill a column identically (and flag the same KeepEmpty rows); a scratch's earlier columns do not change a column; another seed differs. Load order and threads are checked by `Density.Terrain` with caves on. |
 | `Unnamed.Voxel.Aquifer.Fluids` | Over 98 overworld columns: no water below y -54 and open space there is lava, no lava at y -10 or above, water above the sea only under solid ground, and lava and walls exist. |
-| `Unnamed.Voxel.Density.LoadOrder` | In `VoxelAquiferTests.cpp`: 5 x 5 columns per preset with caves, generated in two load orders (row by row; backwards across the workers). Mismatches 0 and equal combined hashes. |
+| `Unnamed.Voxel.Density.LoadOrder` | In `VoxelAquiferTests.cpp`: 5 x 5 columns per preset with caves, generated in two load orders (row by row; backwards across the workers). Each order starts cold (`ResetCaches`), so the corner cache is shared differently in each. Mismatches 0 and equal combined hashes. |
+| `Unnamed.Voxel.Density.SharedCorners` | Corner sharing changes no value: 5 x 5 columns per preset, caves on, in three orders (row by row, backwards, shuffled), each starting cold, have densities bit-identical to a terrain without sharing, and corners were shared. Then the cache alone: found values are the stored ones bit for bit, a corner column a window away evicts, negative positions work, positions inside a column are never kept, and the table stays within 16 MiB. |
 | `Unnamed.Voxel.Aquifer.Golden` | Caves-on block hashes at the `Density.Golden` positions (seed 263), recorded once: overworld `0xe9376e319a221c4c`, large_biomes `0x9e26565ae0dc0258`, amplified `0x3e5329bd4ce985c4`. |
 | `Unnamed.Voxel.Climate.Presets` | Climate values of the three presets: goldens (each parameter weighted by its index, so swapped parameters fail), shared column edges, the PV formula. |
 | `Unnamed.Voxel.Climate.Threads` | 8 threads in shuffled order match the single-threaded result. |
@@ -579,7 +600,7 @@ A deliberate off-by-one in `GetSectionsTouching` fails `Edit.Sections` (13 error
 - **First view:** the view is on screen 3.3 to 3.6 s after the first frame with generator 2 and caves (2.5 to 2.6 s before caves; 0.5 to 0.6 s with the stand-in).
 - **AMPLIFIED skipping:** it skips only 28% of cells (loose bounds where the factor is small).
 - **Block fill:** it costs about 0.8 ms per column (the palette build and the per-block loop).
-- **Caves near the limit:** a caves-on column costs 4.53 ms mean (overworld, under the 5 ms limit); large_biomes (5.13) and amplified (5.74) are slightly over. Remaining levers are listed in the phase 5 handoff: cross-column corner sharing, `base_3d_noise` speed, conditional noodle corners, an aquifer status cache, block fill by runs, the flight's 3 frames over 2 ms, and inner rings first.
+- **Caves near the limit:** corner sharing (phase 5, session 3) brings caves-on columns under 5 ms in the bench's best case (overworld 3.76 to 3.79, large_biomes 3.92 to 4.64, amplified 4.28 to 4.64 ms). Without sharing, overworld 4.13 to 4.37, large_biomes 4.56 to 4.58 and amplified 4.96 to 5.24 ms are near or over the limit, and the in-game figure lies between. Biomes and surface rules will add an estimated 0.5 to 1 ms. Next levers: the normal noise (57 to 64% of corner time), batched like `old_blended_noise` with the x and z work shared by a corner column's 49 corners hoisted; then conditional noodle corners, an aquifer status cache, block fill by runs, the flight's 3 frames over 2 ms, and inner rings first.
 - **Climate minimap:** not built; build it with phase 5's biome debug map.
 - **`voxel.Debug.Climate`** on screen is unconfirmed since session 3.
 - **Still lava:** it has no damage and no flow, and it counts as water for the player's movement.

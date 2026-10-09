@@ -1,4 +1,5 @@
 #include "Density/VoxelColumnDensity.h"
+#include "Density/VoxelCornerCache.h"
 #include "HAL/PlatformTime.h"
 
 bool FVoxelColumnDensity::Initialize(
@@ -75,6 +76,11 @@ bool FVoxelColumnDensity::Initialize(
     return true;
 }
 
+bool FVoxelColumnDensity::MakeCornerCache(FVoxelCornerCache& Out) const
+{
+    return Out.Initialize(InterpolatedNodes.Num(), CornersY, CellXZ, ColumnSize, this);
+}
+
 bool FVoxelColumnDensity::IsKeptEmpty(TConstArrayView<uint8> KeepEmpty, int32 CY) const
 {
     if (KeepEmpty.IsEmpty()) return false;
@@ -84,7 +90,8 @@ bool FVoxelColumnDensity::IsKeptEmpty(TConstArrayView<uint8> KeepEmpty, int32 CY
 }
 
 void FVoxelColumnDensity::Generate(int32 X0, int32 Z0, bool bSkip, FVoxelColumnDensityScratch& Scratch,
-    TArray<float>& OutDensity, FVoxelColumnDensityStats* OutStats, TConstArrayView<uint8> KeepEmpty) const
+    TArray<float>& OutDensity, FVoxelColumnDensityStats* OutStats, TConstArrayView<uint8> KeepEmpty,
+    FVoxelCornerCache* Cache) const
 {
     check(KeepEmpty.IsEmpty() || KeepEmpty.Num() == Height);
     check(Evaluator);
@@ -192,17 +199,53 @@ void FVoxelColumnDensity::Generate(int32 X0, int32 Z0, bool bSkip, FVoxelColumnD
                     for (int32 Corner = 0; Corner < 8; ++Corner)
                         Scratch.CornerNeeded[CornerIndex(
                             CX + (Corner & 1), CY + (Corner >> 1 & 1), CZ + (Corner >> 2 & 1))] = 1;
+    Scratch.CornerValues.SetNumUninitialized(InterpolatedNodes.Num() * CornerCount, EAllowShrinking::No);
+    // Edge corners a neighbour has already evaluated come from the cache (marked 2); the rest (1) are evaluated here.
+    const int32 ValueCount = InterpolatedNodes.Num();
+    const auto ForEachEdge = [this](auto&& Visit)
+    {
+        const int32 Last = CornersXZ - 1;
+        for (int32 CZ = 0; CZ < CornersXZ; ++CZ)
+            for (int32 CX = 0; CX < CornersXZ; ++CX)
+                if (CX == 0 || CX == Last || CZ == 0 || CZ == Last) Visit(CX, CZ);
+    };
+    // A cache made by another column density holds other corners: never read it.
+    if (Cache &&
+        !ensureMsgf(
+            Cache->BelongsTo(this, ValueCount, CornersY, CellXZ), TEXT("A corner cache from another column density")))
+        Cache = nullptr;
+    if (Cache)
+    {
+        Scratch.CacheValues.SetNumUninitialized(CornersY * ValueCount, EAllowShrinking::No);
+        ForEachEdge(
+            [&](int32 CX, int32 CZ)
+            {
+                uint64 Wanted = 0;
+                for (int32 CY = 0; CY < CornersY; ++CY)
+                    Wanted |= uint64(Scratch.CornerNeeded[CornerIndex(CX, CY, CZ)] != 0) << CY;
+                const uint64 Found =
+                    Cache->Find(X0 + CX * CellXZ, Z0 + CZ * CellXZ, Wanted, Scratch.CacheValues.GetData());
+                for (uint64 Bits = Found; Bits != 0; Bits &= Bits - 1)
+                {
+                    const int32 CY = int32(FMath::CountTrailingZeros64(Bits));
+                    const int32 Index = CornerIndex(CX, CY, CZ);
+                    for (int32 Slot = 0; Slot < ValueCount; ++Slot)
+                        Scratch.CornerValues[Slot * CornerCount + Index] = Scratch.CacheValues[CY * ValueCount + Slot];
+                    Scratch.CornerNeeded[Index] = 2;
+                    ++Stats.CornersShared;
+                }
+            });
+    }
     Scratch.CornerPoints.Reset();
     Scratch.CornerFlat.Reset();
     for (int32 Index = 0; Index < CornerCount; ++Index)
-        if (Scratch.CornerNeeded[Index])
+        if (Scratch.CornerNeeded[Index] == 1)
         {
             Scratch.CornerPoints.Add(Index);
             Scratch.CornerFlat.Add(Index % FlatCount);
         }
     const int32 Needed = Scratch.CornerPoints.Num();
     Stats.CornersEvaluated = Needed;
-    Scratch.CornerValues.SetNumUninitialized(InterpolatedNodes.Num() * CornerCount, EAllowShrinking::No);
     if (Needed > 0)
     {
         Scratch.X.SetNumUninitialized(Needed, EAllowShrinking::No);
@@ -233,13 +276,28 @@ void FVoxelColumnDensity::Generate(int32 X0, int32 Z0, bool bSkip, FVoxelColumnD
                 Target[Scratch.CornerPoints[K]] = Values[K];
         }
     }
+    if (Cache && Needed > 0)
+        ForEachEdge(
+            [&](int32 CX, int32 CZ)
+            {
+                uint64 Mask = 0;
+                for (int32 CY = 0; CY < CornersY; ++CY)
+                {
+                    const int32 Index = CornerIndex(CX, CY, CZ);
+                    if (Scratch.CornerNeeded[Index] != 1) continue;
+                    Mask |= uint64(1) << CY;
+                    for (int32 Slot = 0; Slot < ValueCount; ++Slot)
+                        Scratch.CacheValues[CY * ValueCount + Slot] = Scratch.CornerValues[Slot * CornerCount + Index];
+                }
+                Cache->Store(X0 + CX * CellXZ, Z0 + CZ * CellXZ, Mask, Scratch.CacheValues.GetData());
+            });
 
     Lap(Stats.CornersMs);
 
     // 3b. Mixed cells again, now from their corners: inside a cell an interpolated value lies between its 8 corner
     // values (trilinear weights are convex; the margin covers float rounding), and the nodes above it are bounded over
     // the cell's blocks as in stage 2. Cells that turn out certain skip the per-block work.
-    if (bSkip && Needed > 0)
+    if (bSkip && Needed + Stats.CornersShared > 0)
     {
         for (int32 CY = 0; CY < CellsY; ++CY)
         {

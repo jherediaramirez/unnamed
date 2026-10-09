@@ -782,9 +782,7 @@ void FVoxelDensityEvaluator::EvaluateNode(
     }
     case EVoxelDensityOp::OldBlendedNoise:
     {
-        const FVoxelBlendedNoise& Noise = BlendedNoises.FindChecked(Node);
-        for (int32 I = 0; I < Count; ++I)
-            Out[I] = Noise.Sample(X[I], Y[I], Z[I]);
+        BlendedNoises.FindChecked(Node).Sample(X, Y, Z, Count, Out, Scratch.Blended);
         break;
     }
     case EVoxelDensityOp::Spline:

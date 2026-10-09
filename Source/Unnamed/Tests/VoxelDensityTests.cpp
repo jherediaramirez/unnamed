@@ -1,6 +1,7 @@
 #include "Async/ParallelFor.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "Density/VoxelColumnDensity.h"
+#include "Density/VoxelCornerCache.h"
 #include "Density/VoxelDensityEvaluator.h"
 #include "Density/VoxelDensityGraph.h"
 #include "Math/RandomStream.h"
@@ -531,6 +532,120 @@ bool FVoxelDensityGoldenTest::RunTest(const FString& Parameters)
                 static_cast<unsigned long long>(Hash),
                 static_cast<unsigned long long>(DensityTestGolden[PresetIndex])));
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelDensitySharedCornersTest, "Unnamed.Voxel.Density.SharedCorners",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// Corners shared between neighbouring columns (FVoxelCornerCache) change no value: 5 x 5 columns per preset, caves on,
+// in three orders (row by row, backwards, shuffled), each starting cold, have densities bit-identical to a terrain
+// without sharing. GenerateDensity runs on one thread and without the aquifer's KeepEmpty; Density.LoadOrder and
+// Aquifer.Golden cover sharing with both. Then the cache's own rules: a corner column a window away evicts, positions
+// inside a column are never kept, and the table stays under its memory bound.
+bool FVoxelDensitySharedCornersTest::RunTest(const FString& Parameters)
+{
+    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+    if (!Table->FindState(TEXT("stone")))
+    {
+        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return true;
+    }
+    constexpr int32 Side = 5, Columns = Side * Side;
+    TArray<int32> Orders[3];
+    for (int32 Index = 0; Index < Columns; ++Index)
+    {
+        Orders[0].Add(Index);
+        Orders[1].Add(Columns - 1 - Index);
+        Orders[2].Add(Index);
+    }
+    FRandomStream Stream(263);
+    for (int32 Index = Columns - 1; Index > 0; --Index)
+        Orders[2].Swap(Index, Stream.RandRange(0, Index));
+    const TCHAR* const OrderNames[3] = {TEXT("row by row"), TEXT("backwards"), TEXT("shuffled")};
+    const auto PositionOf = [](int32 Index) { return FIntPoint(Index % Side - Side / 2, Index / Side - Side / 2); };
+
+    for (const TCHAR* PresetName : DensityTestPresets)
+    {
+        FVoxelTerrainPreset Preset;
+        FString Error;
+        if (!TestTrue(
+                FString::Printf(TEXT("%s reads (%s)"), PresetName, *Error), DensityTestLoad(PresetName, Preset, Error)))
+            continue;
+        FVoxelDensityTerrainSettings Fresh;
+        Fresh.bShareCorners = false;
+        const FVoxelDensityTerrain Shared(Preset, DensityTestSeed, *Table);
+        const FVoxelDensityTerrain Unshared(Preset, DensityTestSeed, *Table, Fresh);
+        if (!TestTrue(
+                FString::Printf(TEXT("%s terrains are valid"), PresetName), Shared.IsValid() && Unshared.IsValid()))
+            continue;
+        TestTrue(FString::Printf(TEXT("%s: sharing is on, within %lld bytes (%lld)"), PresetName,
+                     FVoxelCornerCache::MaxBytes, Shared.GetCornerCacheBytes()),
+            Shared.GetCornerCacheBytes() > 0 && Shared.GetCornerCacheBytes() <= FVoxelCornerCache::MaxBytes);
+        TestEqual(FString::Printf(TEXT("%s: no cache without sharing"), PresetName), Unshared.GetCornerCacheBytes(), 0);
+
+        TArray<TArray<float>> Expected;
+        Expected.SetNum(Columns);
+        for (int32 Index = 0; Index < Columns; ++Index)
+            Unshared.GenerateDensity(PositionOf(Index), Expected[Index], true, nullptr);
+        TArray<float> Density;
+        for (int32 Order = 0; Order < 3; ++Order)
+        {
+            Shared.ResetCaches();
+            int64 SharedCorners = 0;
+            int32 Differing = 0;
+            for (const int32 Index : Orders[Order])
+            {
+                FVoxelColumnDensityStats Stats;
+                Shared.GenerateDensity(PositionOf(Index), Density, true, &Stats);
+                SharedCorners += Stats.CornersShared;
+                Differing += Density.Num() != Expected[Index].Num() ||
+                    FMemory::Memcmp(Density.GetData(), Expected[Index].GetData(), Density.Num() * sizeof(float)) != 0;
+            }
+            TestEqual(FString::Printf(
+                          TEXT("%s, %s: columns whose density differs without sharing"), PresetName, OrderNames[Order]),
+                Differing, 0);
+            TestTrue(FString::Printf(
+                         TEXT("%s, %s: corners were shared (%lld)"), PresetName, OrderNames[Order], SharedCorners),
+                SharedCorners > 0);
+        }
+    }
+
+    FVoxelCornerCache Cache;
+    if (TestTrue(TEXT("a cache of 5 values x 49 corners initializes"), Cache.Initialize(5, 49, 4, 16)))
+    {
+        TArray<float> In, Out;
+        In.SetNum(49 * 5);
+        Out.SetNumZeroed(49 * 5);
+        for (int32 Index = 0; Index < In.Num(); ++Index)
+            In[Index] = float(Index) + .5f;
+        const uint64 Mask = (uint64(1) << 3) | (uint64(1) << 48), All = ~uint64(0);
+        // (16, 4) lies on column 1's west line; (528, 4) is a window (32 columns) away, in the same slot.
+        Cache.Store(16, 4, Mask, In.GetData());
+        TestEqual(TEXT("stored corners are found"), Cache.Find(16, 4, All, Out.GetData()), Mask);
+        TestTrue(TEXT("found values are the stored ones, bit for bit"),
+            FMemory::Memcmp(&Out[3 * 5], &In[3 * 5], 5 * sizeof(float)) == 0 &&
+                FMemory::Memcmp(&Out[48 * 5], &In[48 * 5], 5 * sizeof(float)) == 0);
+        TestEqual(
+            TEXT("only wanted corners are found"), Cache.Find(16, 4, uint64(1) << 3, Out.GetData()), uint64(1) << 3);
+        // The newcomer keeps only its own corner: corner 48, which only the evicted key had, must not come back.
+        Cache.Store(16 + FVoxelCornerCache::Window * 16, 4, uint64(1) << 3, In.GetData());
+        TestEqual(TEXT("a corner column a window away evicts"), Cache.Find(16, 4, All, Out.GetData()), uint64(0));
+        TestEqual(TEXT("the newest is kept, without the evicted key's corners"),
+            Cache.Find(16 + FVoxelCornerCache::Window * 16, 4, All, Out.GetData()), uint64(1) << 3);
+        Cache.Store(16, 8, uint64(1) << 60, In.GetData());
+        TestEqual(
+            TEXT("corners above the column's top are never kept"), Cache.Find(16, 8, All, Out.GetData()), uint64(0));
+        Cache.Store(-12, -32, Mask, In.GetData());
+        TestEqual(TEXT("negative positions on a north line are kept"), Cache.Find(-12, -32, All, Out.GetData()), Mask);
+        Cache.Store(20, 8, Mask, In.GetData());
+        TestEqual(TEXT("positions inside a column are never kept"), Cache.Find(20, 8, All, Out.GetData()), uint64(0));
+        Cache.Reset();
+        TestEqual(TEXT("reset forgets every corner"), Cache.Find(-12, -32, All, Out.GetData()), uint64(0));
+        TestTrue(TEXT("the table stays within MaxBytes"), Cache.GetBytes() <= FVoxelCornerCache::MaxBytes);
+    }
+    TestFalse(
+        TEXT("more than 64 corners per corner column cannot be shared"), FVoxelCornerCache().Initialize(5, 65, 4, 16));
     return true;
 }
 

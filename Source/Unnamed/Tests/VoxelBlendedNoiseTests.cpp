@@ -77,4 +77,60 @@ bool FVoxelBlendedNoiseSpreadTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelBlendedNoiseBatchTest, "Unnamed.Voxel.Density.BlendedBatch",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// The batch Sample equals Sample point by point, bit for bit: the overworld's numbers and another set, 4,096 positions
+// each (block corners and fractional positions, x and z in +-100,000, y in [-64, 320)), in batches of uneven sizes. The
+// selector's gain clamps about a third of the points to one limit or the other, so both skips are covered.
+bool FVoxelBlendedNoiseBatchTest::RunTest(const FString& Parameters)
+{
+    constexpr int32 Positions = 4096;
+    const int32 Batches[] = {1, 7, 64, 1000, Positions};
+    const FVoxelBlendedNoise Noises[2] = {
+        FVoxelBlendedNoise(263, .25, .125, 80, 160), FVoxelBlendedNoise(264, 1, 1.5, 40, 20)};
+    FVoxelXoroshiro Stream(VoxelRandom::Hash64(263, VoxelRandom::Salt("blended-batch-test"), 0, 0, 0));
+    TArray<double> X, Y, Z;
+    for (int32 Index = 0; Index < Positions; ++Index)
+    {
+        const bool bCorner = Index % 2 == 0;
+        const double PX = Stream.NextDouble() * 200000 - 100000, PY = Stream.NextDouble() * 384 - 64,
+                     PZ = Stream.NextDouble() * 200000 - 100000;
+        X.Add(bCorner ? FMath::FloorToDouble(PX) : PX);
+        Y.Add(bCorner ? FMath::FloorToDouble(PY) : PY);
+        Z.Add(bCorner ? FMath::FloorToDouble(PZ) : PZ);
+    }
+    FVoxelBlendedNoiseScratch Scratch;
+    TArray<float> Batched;
+    Batched.SetNumUninitialized(Positions);
+    for (int32 Set = 0; Set < 2; ++Set)
+    {
+        // The scratch is reused across batches and sets, as an evaluator's is.
+        int32 Start = 0, Next = 0;
+        while (Start < Positions)
+        {
+            const int32 Count = FMath::Min(Batches[Next++ % UE_ARRAY_COUNT(Batches)], Positions - Start);
+            Noises[Set].Sample(&X[Start], &Y[Start], &Z[Start], Count, &Batched[Start], Scratch);
+            Start += Count;
+        }
+        // The last batch's alphas stay in the scratch: both clamps must have happened, so both skips ran.
+        int32 Zeros = 0, Ones = 0;
+        for (const float Alpha : Scratch.Selector)
+        {
+            Zeros += Alpha == 0;
+            Ones += Alpha == 1;
+        }
+        TestTrue(FString::Printf(TEXT("set %d: selectors clamped to both limits (%d at 0, %d at 1)"), Set, Zeros, Ones),
+            Zeros > 0 && Ones > 0);
+        int32 Differing = 0;
+        for (int32 Index = 0; Index < Positions; ++Index)
+        {
+            const float Single = Noises[Set].Sample(X[Index], Y[Index], Z[Index]);
+            Differing += FMemory::Memcmp(&Single, &Batched[Index], sizeof(float)) != 0;
+        }
+        TestEqual(FString::Printf(TEXT("set %d: values that differ from Sample point by point"), Set), Differing, 0);
+    }
+    return true;
+}
+
 #endif

@@ -157,7 +157,8 @@ namespace
         return (N00 + K1 * U + K2 * V + K3 * U * V) * Scale2;
     }
 
-    template <bool bGradient> float Evaluate3(uint32 Seed, double X, double Y, double Z, FVector3f* OutGradient)
+    template <bool bGradient>
+    FORCEINLINE float Evaluate3(uint32 Seed, double X, double Y, double Z, FVector3f* OutGradient)
     {
         uint32 X0, Y0, Z0;
         float FX, FY, FZ;
@@ -207,6 +208,19 @@ float FVoxelGradientNoise::Sample(double X, double Y) const
 float FVoxelGradientNoise::Sample(double X, double Y, double Z) const
 {
     return Evaluate3<false>(Seed32, X, Y, Z, nullptr);
+}
+
+void FVoxelGradientNoise::AccumulateOctave(const double* X, const double* Y, const double* Z, const int32* Points,
+    int32 Count, double FrequencyXZ, double FrequencyY, const FVector3d& Offset, float Amplitude, float* Sums) const
+{
+    const double OffsetX = Offset.X, OffsetY = Offset.Y, OffsetZ = Offset.Z;
+    for (int32 K = 0; K < Count; ++K)
+    {
+        const int32 P = Points ? Points[K] : K;
+        Sums[P] += Amplitude *
+            Evaluate3<false>(Seed32, X[P] * FrequencyXZ + OffsetX, Y[P] * FrequencyY + OffsetY,
+                Z[P] * FrequencyXZ + OffsetZ, nullptr);
+    }
 }
 
 FVoxelNoiseSample2 FVoxelGradientNoise::SampleWithGradient(double X, double Y) const

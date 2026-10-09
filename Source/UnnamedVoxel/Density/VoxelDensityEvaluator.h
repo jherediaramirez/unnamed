@@ -25,6 +25,8 @@ struct FVoxelDensityScratch
     TArray<int32> NestedPoints;
     // For interval_select with lazy functions: each point's function.
     TArray<int32> Choices;
+    // For old_blended_noise's batch sampling.
+    FVoxelBlendedNoiseScratch Blended;
 };
 
 // A conservative range of a node's values over a box of positions.

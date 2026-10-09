@@ -72,3 +72,37 @@ float FVoxelBlendedNoise::Sample(double X, double Y, double Z) const
     const float Second = Alpha > 0 ? SampleOctaves(Limits[1], X, Y, Z) : 0.f;
     return float(OutputScale) * (First + Alpha * (Second - First));
 }
+
+void FVoxelBlendedNoise::Sample(const double* X, const double* Y, const double* Z, int32 Count, float* Out,
+    FVoxelBlendedNoiseScratch& Scratch) const
+{
+    // Sums start at 0 as in SampleOctaves; a limit a point does not sample stays 0, as in Sample.
+    for (TArray<float>* Sums : {&Scratch.Selector, &Scratch.First, &Scratch.Second})
+    {
+        Sums->SetNumUninitialized(Count, EAllowShrinking::No);
+        FMemory::Memzero(Sums->GetData(), Count * sizeof(float));
+    }
+    const auto Accumulate = [&](const FOctaves& Octaves, const TArray<int32>* Points, TArray<float>& Sums)
+    {
+        for (const FOctave& Octave : Octaves)
+            Octave.Noise.AccumulateOctave(X, Y, Z, Points ? Points->GetData() : nullptr, Points ? Points->Num() : Count,
+                Octave.FrequencyXZ, Octave.FrequencyY, Octave.Offset, Octave.Amplitude, Sums.GetData());
+    };
+    Accumulate(Selector, nullptr, Scratch.Selector);
+    Scratch.FirstPoints.Reset();
+    Scratch.SecondPoints.Reset();
+    for (int32 Point = 0; Point < Count; ++Point)
+    {
+        const float Alpha = FMath::Clamp(.5f + BlendedNoiseSelectorGain * Scratch.Selector[Point], 0.f, 1.f);
+        Scratch.Selector[Point] = Alpha;
+        if (Alpha < 1) Scratch.FirstPoints.Add(Point);
+        if (Alpha > 0) Scratch.SecondPoints.Add(Point);
+    }
+    Accumulate(Limits[0], &Scratch.FirstPoints, Scratch.First);
+    Accumulate(Limits[1], &Scratch.SecondPoints, Scratch.Second);
+    for (int32 Point = 0; Point < Count; ++Point)
+    {
+        const float Alpha = Scratch.Selector[Point], First = Scratch.First[Point], Second = Scratch.Second[Point];
+        Out[Point] = float(OutputScale) * (First + Alpha * (Second - First));
+    }
+}

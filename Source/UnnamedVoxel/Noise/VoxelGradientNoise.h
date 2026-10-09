@@ -33,6 +33,12 @@ public:
     FVoxelNoiseSample2 SampleWithGradient(double X, double Y) const;
     FVoxelNoiseSample3 SampleWithGradient(double X, double Y, double Z) const;
 
+    // One octave of an fBm over a batch: adds Amplitude * Sample(X[P] * FrequencyXZ + Offset.X, Y[P] * FrequencyY +
+    // Offset.Y, Z[P] * FrequencyXZ + Offset.Z) to Sums[P] for each P = Points[K] (P = K when Points is null), K <
+    // Count. The arithmetic is Sample's, so every sum gets the bits it would get point by point.
+    void AccumulateOctave(const double* X, const double* Y, const double* Z, const int32* Points, int32 Count,
+        double FrequencyXZ, double FrequencyY, const FVector3d& Offset, float Amplitude, float* Sums) const;
+
 private:
     uint32 Seed32 = 0;
 };

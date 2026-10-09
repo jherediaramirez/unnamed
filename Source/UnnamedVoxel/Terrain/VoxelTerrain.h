@@ -21,4 +21,7 @@ public:
     virtual bool ConfirmDry(int32 X, int32 Y) const { return IsDry(X, Y); }
     // Fills Out with column Position; Dense is scratch, resized to FVoxelColumn::DenseVolume.
     virtual void Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const = 0;
+    // Forgets work shared between columns (results never depend on it), so a measurement or a load-order check starts
+    // cold.
+    virtual void ResetCaches() const {}
 };

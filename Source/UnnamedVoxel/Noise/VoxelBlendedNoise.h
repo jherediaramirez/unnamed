@@ -3,6 +3,14 @@
 #include "CoreMinimal.h"
 #include "Noise/VoxelGradientNoise.h"
 
+// Per-thread working memory for FVoxelBlendedNoise's batch Sample.
+struct FVoxelBlendedNoiseScratch
+{
+    // Per point: the selector's sum (then its alpha) and each limit's sum; the points that sample each limit.
+    TArray<float> Selector, First, Second;
+    TArray<int32> FirstPoints, SecondPoints;
+};
+
 // The terrain's base 3D noise (the reference's old_blended_noise): two independent "limit" fBm noises, blended by a
 // coarser selector fBm, so the ground alternates between two characters of roughness. Our own design on our gradient
 // noise. It takes 26.3's numbers: block positions scale by 684.412 times the node's xz/y scale, the selector reads
@@ -25,6 +33,10 @@ public:
 
     // Block positions with the reference's axes (y up).
     float Sample(double X, double Y, double Z) const;
+    // Sample at Count points into Out, one octave at a time over the batch: each point adds the same octaves in the
+    // same order and skips the same limit, so every value equals Sample's bit for bit.
+    void Sample(const double* X, const double* Y, const double* Z, int32 Count, float* Out,
+        FVoxelBlendedNoiseScratch& Scratch) const;
 
     // No sample's magnitude exceeds this (each octave of our gradient noise lies in [-1, 1]).
     float GetBound() const { return float(OutputScale); }

@@ -246,8 +246,11 @@ VoxelBench::FLoadOrderHashes VoxelBench::HashLoadOrders(const IVoxelTerrain& Ter
     Forward.SetNumZeroed(Columns);
     Backward.SetNumZeroed(Columns);
     TArray<uint16> Dense;
+    // Each order starts cold, so no column reads work the other order shared.
+    Terrain.ResetCaches();
     for (int32 Index = 0; Index < Columns; ++Index)
         Forward[Index] = HashColumn(Index, Dense);
+    Terrain.ResetCaches();
     ParallelFor(Columns,
         [&](int32 Step)
         {
@@ -273,6 +276,7 @@ FString VoxelBench::RunColumns(const FVoxelBlockTable& Table, const IVoxelTerrai
     FVoxelArea Area;
     for (const bool bParallel : {false, true})
     {
+        Terrain.ResetCaches();
         FVoxelArea::Build(Table, Terrain, FIntPoint::ZeroValue, Radius, Options, bParallel, Area);
         Report += Area.Describe() + TEXT("\n");
     }
@@ -283,6 +287,7 @@ FString VoxelBench::RunColumns(const FVoxelBlockTable& Table, const IVoxelTerrai
         TArray<double> Total, DensityMs, Aquifer, Blocks;
         TArray<uint16> Dense;
         FVoxelColumn Column;
+        Terrain.ResetCaches();
         for (int32 Index = 0; Index < Columns; ++Index)
         {
             FVoxelDensityTerrainTimings Timings;
@@ -317,17 +322,26 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
     // One untimed column sizes the scratch, as a worker's would be after its first column.
     Terrain.Generate(FIntPoint::ZeroValue, Column, Dense);
 
-    int64 Differences = 0;
-    for (const bool bSkip : {true, false})
+    // Three passes, each starting cold: the default (skipping and corner sharing), sharing off, and skipping off
+    // without sharing (fresh evaluation of every corner). Row by row, so with sharing each column finds the corners its
+    // west and north neighbours evaluated: the best case. Both comparisons are against the first pass.
+    struct FPass
     {
+        bool bSkip, bShare;
+    };
+    int64 Differences = 0, ShareDifferences = 0;
+    for (const FPass Pass : {FPass{true, true}, FPass{true, false}, FPass{false, false}})
+    {
+        const bool bSkip = Pass.bSkip;
         TArray<double> Total, Density, Aquifer, Blocks, Flat, Bounds, Corners, Refine, Cells;
-        int64 SolidCells = 0, EmptyCells = 0, RefinedCells = 0, AllCells = 0, CornerCount = 0;
+        int64 SolidCells = 0, EmptyCells = 0, RefinedCells = 0, AllCells = 0, CornerCount = 0, SharedCount = 0;
+        Terrain.ResetCaches();
         for (int32 Index = 0; Index < Columns; ++Index)
         {
             const FIntPoint Position(Index % Side - Radius, Index / Side - Radius);
             FVoxelDensityTerrainTimings Timings;
             const double Start = FPlatformTime::Seconds();
-            Terrain.Generate(Position, Column, Dense, &Timings, &bSkip);
+            Terrain.Generate(Position, Column, Dense, &Timings, &bSkip, &Pass.bShare);
             Total.Add((FPlatformTime::Seconds() - Start) * 1000);
             Density.Add(Timings.DensityMs);
             Aquifer.Add(Timings.AquiferMs);
@@ -342,18 +356,19 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
             RefinedCells += Timings.Density.RefinedCells;
             AllCells += Timings.Density.Cells;
             CornerCount += Timings.Density.CornersEvaluated;
-            if (bSkip)
+            SharedCount += Timings.Density.CornersShared;
+            if (Pass.bShare)
                 Skipped.Append(Dense);
             else
                 for (int32 Cell = 0; Cell < Dense.Num(); ++Cell)
-                    Differences += Dense[Cell] != Skipped[Index * Dense.Num() + Cell];
+                    (bSkip ? ShareDifferences : Differences) += Dense[Cell] != Skipped[Index * Dense.Num() + Cell];
         }
-        Report += FString::Printf(TEXT("%d columns, one thread, skipping %s: %.1f%% of cells skipped (%.1f%% solid, "
-                                       "%.1f%% empty) from bounds, %.1f%% more from corners, %.0f corners "
-                                       "evaluated per column\n"),
-            Columns, bSkip ? TEXT("on") : TEXT("off"), 100. * (SolidCells + EmptyCells) / AllCells,
-            100. * SolidCells / AllCells, 100. * EmptyCells / AllCells, 100. * RefinedCells / AllCells,
-            double(CornerCount) / Columns);
+        Report += FString::Printf(TEXT("%d columns, one thread, skipping %s, sharing %s: %.1f%% of cells skipped "
+                                       "(%.1f%% solid, %.1f%% empty) from bounds, %.1f%% more from corners, %.0f "
+                                       "corners evaluated and %.0f shared per column\n"),
+            Columns, bSkip ? TEXT("on") : TEXT("off"), Pass.bShare ? TEXT("on") : TEXT("off"),
+            100. * (SolidCells + EmptyCells) / AllCells, 100. * SolidCells / AllCells, 100. * EmptyCells / AllCells,
+            100. * RefinedCells / AllCells, double(CornerCount) / Columns, double(SharedCount) / Columns);
         Report += DensityBenchStage(TEXT("Generate column"), Total) + TEXT("\n");
         Report += DensityBenchStage(TEXT("  density"), Density) + TEXT("\n");
         Report += DensityBenchStage(TEXT("    flat (climate)"), Flat) + TEXT("\n");
@@ -366,8 +381,11 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
     }
     Report += FString::Printf(TEXT("Blocks that differ with skipping on and off: %lld of %lld\n"), Differences,
         int64(Columns) * FVoxelColumn::DenseVolume);
+    Report += FString::Printf(TEXT("Blocks that differ with sharing on and off: %lld of %lld (corner cache %.1f MB)\n"),
+        ShareDifferences, int64(Columns) * FVoxelColumn::DenseVolume, Terrain.GetCornerCacheBytes() / 1048576.);
 
     const int32 Workers = FMath::Max(1, int32(LowLevelTasks::FScheduler::Get().GetNumWorkers()));
+    Terrain.ResetCaches();
     const double Start = FPlatformTime::Seconds();
     ParallelFor(Columns,
         [&](int32 Index)

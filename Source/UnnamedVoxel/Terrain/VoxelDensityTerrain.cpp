@@ -102,10 +102,29 @@ FVoxelDensityTerrain::FVoxelDensityTerrain(const FVoxelTerrainPreset& Preset, ui
         !SurfaceEvaluator.Compile(Preset.Graph, Seed, {Surface}, &Reason) ||
         !Column.Initialize(Evaluator, FinalDensity, Preset.MinY, Preset.Height, &Reason) ||
         (Settings.bCaves && !Aquifer.Initialize(Preset, Seed, &Reason)))
+    {
         Error = Preset.Name + TEXT(": ") + Reason;
+        return;
+    }
+    // Sharing only saves work, so a column shape the cache cannot hold just goes without it.
+    if (Settings.bShareCorners)
+    {
+        CornerCache = MakeUnique<FVoxelCornerCache>();
+        if (!Column.MakeCornerCache(*CornerCache)) CornerCache.Reset();
+    }
 }
 
 FVoxelDensityTerrain::~FVoxelDensityTerrain() = default;
+
+void FVoxelDensityTerrain::ResetCaches() const
+{
+    if (CornerCache) CornerCache->Reset();
+}
+
+int64 FVoxelDensityTerrain::GetCornerCacheBytes() const
+{
+    return CornerCache ? CornerCache->GetBytes() : 0;
+}
 
 TUniquePtr<FVoxelDensityTerrain::FScratch> FVoxelDensityTerrain::TakeScratch() const
 {
@@ -150,7 +169,7 @@ void FVoxelDensityTerrain::GenerateDensity(
     check(IsValid());
     TUniquePtr<FScratch> Scratch = TakeScratch();
     constexpr int32 Size = VoxelConstants::ColumnSize;
-    Column.Generate(Position.X * Size, Position.Y * Size, bSkip, Scratch->Column, Out, Stats);
+    Column.Generate(Position.X * Size, Position.Y * Size, bSkip, Scratch->Column, Out, Stats, {}, CornerCache.Get());
     ReturnScratch(MoveTemp(Scratch));
 }
 
@@ -160,7 +179,8 @@ int32 FVoxelDensityTerrain::GetSurfaceHeight(int32 X, int32 Y) const
     constexpr int32 Size = VoxelConstants::ColumnSize;
     const FIntPoint Position(FMath::FloorToInt32(X / double(Size)), FMath::FloorToInt32(Y / double(Size)));
     TUniquePtr<FScratch> Scratch = TakeScratch();
-    Column.Generate(Position.X * Size, Position.Y * Size, Settings.bSkip, Scratch->Column, Scratch->Density);
+    Column.Generate(Position.X * Size, Position.Y * Size, Settings.bSkip, Scratch->Column, Scratch->Density, nullptr,
+        {}, CornerCache.Get());
     const int32 LocalX = X - Position.X * Size, LocalY = Y - Position.Y * Size;
     int32 Result = VoxelConstants::MinZ;
     for (int32 Z = VoxelConstants::MaxZ; Z >= VoxelConstants::MinZ; --Z)
@@ -179,7 +199,7 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
 }
 
 void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense,
-    FVoxelDensityTerrainTimings* Timings, const bool* bSkipOverride) const
+    FVoxelDensityTerrainTimings* Timings, const bool* bSkipOverride, const bool* bShareOverride) const
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelDensityTerrain_Generate);
     SCOPE_CYCLE_COUNTER(STAT_VoxelGenerateColumn);
@@ -208,7 +228,8 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
         TRACE_CPUPROFILER_EVENT_SCOPE(Voxel_DensityColumn);
         SCOPE_CYCLE_COUNTER(STAT_VoxelDensityColumn);
         Column.Generate(X0, Z0, bSkipOverride ? *bSkipOverride : Settings.bSkip, Scratch->Column, Scratch->Density,
-            &Stats, Settings.bCaves ? Aquifer.GetKeepEmpty(Scratch->Aquifer) : TConstArrayView<uint8>());
+            &Stats, Settings.bCaves ? Aquifer.GetKeepEmpty(Scratch->Aquifer) : TConstArrayView<uint8>(),
+            !bShareOverride || *bShareOverride ? CornerCache.Get() : nullptr);
     }
     const double AfterDensity = FPlatformTime::Seconds();
     if (Settings.bCaves)
