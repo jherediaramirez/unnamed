@@ -19,6 +19,11 @@
     "material_condition": 8,
     "multi_noise_biome_source_parameter_list": 1,
     "biome": 56,
-    "biome_tag": 1
+    "biome_tag": 1,
+    "placed_feature": 210,
+    "feature": 182,
+    "block_state_provider": 8,
+    "carver": 3,
+    "block_tag": 127
   }
 }

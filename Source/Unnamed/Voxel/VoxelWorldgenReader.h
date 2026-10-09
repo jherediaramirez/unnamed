@@ -5,6 +5,7 @@
 class FJsonValue;
 class FVoxelBiomeTable;
 class FVoxelDensityGraph;
+class FVoxelFeatureGraph;
 class FVoxelSurfaceRules;
 struct FVoxelDensityNoise;
 struct FVoxelSurfaceInputs;
@@ -61,4 +62,22 @@ namespace VoxelWorldgen
     // itself when bExpand is set (a named node's own file).
     TSharedPtr<FJsonValue> WriteSurfaceRule(const FVoxelSurfaceRules& Rules, int32 Index, bool bExpand);
     TSharedPtr<FJsonValue> WriteSurfaceCondition(const FVoxelSurfaceRules& Rules, int32 Index, bool bExpand);
+
+    // Decoration (VoxelFeatureReader.cpp). These paths are under data/minecraft/, not worldgen/
+    // ("worldgen/placed_feature/ore_iron_upper.json", "tags/block/logs.json").
+
+    // Reads the decoration the overworld biomes reach into Out (emptied first): the biomes is_overworld names, their
+    // features and carvers lists, every placed feature, feature, block state provider and carver those name, the block
+    // tags they name, the tags the game's code reads by name (GetCodeTags) and every tag those include. Strict as the
+    // other readers: an unknown type or field, a missing field, a value of the wrong kind, a bad id or a missing file
+    // fails, naming the file and the field.
+    bool ReadFeatures(const FString& Root, FVoxelFeatureGraph& Out, FString& OutError);
+    bool ReadFeatures(FLoadFile LoadFile, FVoxelFeatureGraph& Out, FString& OutError);
+
+    // Writes a node back as the reference's JSON; an entry's node is its file.
+    TSharedPtr<FJsonValue> WriteFeatureNode(const FVoxelFeatureGraph& Graph, int32 Node);
+    TSharedPtr<FJsonValue> WriteBlockTag(const FVoxelFeatureGraph& Graph, int32 Tag);
+
+    // The block tags the game's code reads by name (build_reference.py's CODE_TAGS), without "minecraft:".
+    TConstArrayView<const TCHAR*> GetCodeTags();
 } // namespace VoxelWorldgen

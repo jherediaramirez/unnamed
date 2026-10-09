@@ -7,6 +7,7 @@
 #include "Misc/Paths.h"
 #include "Modules/ModuleManager.h"
 #include "Blocks/VoxelBlockTable.h"
+#include "Decoration/VoxelFeatureGraph.h"
 #include "Density/VoxelDensityGraph.h"
 #include "Surface/VoxelSurfaceEvaluator.h"
 #include "Terrain/VoxelDensityTerrain.h"
@@ -92,10 +93,13 @@ TSharedPtr<const IVoxelTerrain> VoxelTerrainFactory::Make(const FUnnamedSavedWor
     FVoxelTerrainPreset Preset;
     FVoxelBiomeTable Biomes;
     FVoxelSurfaceInputs Surface;
+    const TSharedRef<FVoxelFeatureGraph> Features = MakeShared<FVoxelFeatureGraph>();
     FString Error;
-    if (ReadInputs(ReferenceRoot, PresetName, Preset, Biomes, Surface, Error))
+    if (ReadInputs(ReferenceRoot, PresetName, Preset, Biomes, Surface, Error) &&
+        VoxelWorldgen::ReadFeatures(ReferenceRoot, *Features, Error))
     {
         FVoxelDensityTerrainSettings Settings;
+        Settings.Features = Features;
         // A biome outside the overworld list refuses the world (the terrain reports it); world.json is not changed.
         if (World && World->Type == TEXT("Single Biome")) Settings.FixedBiome = World->Biome;
         // The dev seed can show the earlier dressing instead, to compare looks; saved worlds always keep the rules.

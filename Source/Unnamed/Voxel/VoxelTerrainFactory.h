@@ -14,9 +14,10 @@ struct FVoxelTerrainPreset;
 namespace VoxelTerrainFactory
 {
     // Superflat's layers, generator 1's stand-in, or generator 2's 26.3 preset for the world type with the overworld
-    // biome parameter list and the preset's surface rules (Single Biome: the world's one biome). A saved world never
-    // falls back: when its preset, the parameter list or the rules cannot be read or compiled, or its single biome is
-    // not an overworld biome, this returns null with the reason, because another terrain under a saved world would
+    // biome parameter list and the preset's surface rules (Single Biome: the world's one biome), holding the decoration
+    // data (VoxelWorldgen::ReadFeatures) for the decoration stages. A saved world never falls back: when its preset,
+    // the parameter list, the rules or the decoration data cannot be read or compiled, or its single biome is not an
+    // overworld biome, this returns null with the reason, because another terrain under a saved world would
     // later carry its edits on the wrong land. Only the dev seed (World null) falls back to the stand-in, with an error
     // in the log.
     UNNAMED_API TSharedPtr<const IVoxelTerrain> Make(const FUnnamedSavedWorld* World, int64 Seed,

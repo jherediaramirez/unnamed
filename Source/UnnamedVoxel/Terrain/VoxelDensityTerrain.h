@@ -16,6 +16,7 @@
 
 class FVoxelBlockTable;
 class FVoxelColumn;
+class FVoxelFeatureGraph;
 struct FVoxelTerrainPreset;
 
 struct FVoxelDensityTerrainSettings
@@ -36,6 +37,8 @@ struct FVoxelDensityTerrainSettings
     bool bSurfaceShortcut = true;
     // Single Biome: this biome everywhere, by full id ("minecraft:desert"). Empty: the multi-noise source.
     FString FixedBiome;
+    // The decoration data, held for the decoration stages (phase 6, S2 on); generation does not read it yet.
+    TSharedPtr<const FVoxelFeatureGraph> Features;
 };
 
 // Per-call replacements for the settings, for benches and gates; unset keeps the setting. Sharing needs bShareCorners
