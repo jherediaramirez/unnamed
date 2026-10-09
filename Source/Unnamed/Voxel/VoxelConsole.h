@@ -14,12 +14,15 @@ namespace VoxelConsole
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarMaxTasksInFlight;
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarAmbientOcclusion;
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarGreedyMeshing;
+    extern UNNAMED_API TAutoConsoleVariable<int32> CVarTintBlend;
     // Debug only, not a setting: columns at the edge of the view mesh against air (captures' cut through the world).
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarEdgeWalls;
 
     // Tasks in flight when voxel.MaxTasksInFlight is 0: twice the task workers, so workers never idle between
     // finishing one job and the game thread queuing the next.
     UNNAMED_API int32 GetMaxTasksInFlight();
+    // voxel.TintBlend clamped to -1 (biome tints off) to FVoxelMeshOptions::MaxTintBlend.
+    UNNAMED_API int32 GetTintBlend();
 
     // The text voxel.Info prints: the world range, the dev seed, every voxel.* variable with its value and what set
     // it, the derived limits and the mesh backend.

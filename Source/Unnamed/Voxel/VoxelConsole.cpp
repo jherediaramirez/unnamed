@@ -32,8 +32,16 @@ TAutoConsoleVariable<bool> VoxelConsole::CVarAmbientOcclusion(
     TEXT("voxel.AmbientOcclusion"), true, TEXT("Per-vertex ambient occlusion in chunk meshes."));
 TAutoConsoleVariable<bool> VoxelConsole::CVarGreedyMeshing(TEXT("voxel.GreedyMeshing"), true,
     TEXT("Merge coplanar faces into larger quads; off emits one quad per face, for debugging."));
+TAutoConsoleVariable<int32> VoxelConsole::CVarTintBlend(TEXT("voxel.TintBlend"), 2,
+    TEXT("Biome blend radius for grass, foliage and water tints, 0-8 (26.3's default 2); 0 gives each block its own "
+         "biome's colour, -1 keeps every block's plains tint. A change remeshes every loaded column."));
 TAutoConsoleVariable<bool> VoxelConsole::CVarEdgeWalls(TEXT("voxel.Debug.EdgeWalls"), false,
     TEXT("Debug: mesh the columns at the edge of the view against air, showing the cut through the world."));
+
+int32 VoxelConsole::GetTintBlend()
+{
+    return FMath::Clamp(CVarTintBlend.GetValueOnGameThread(), -1, FVoxelMeshOptions::MaxTintBlend);
+}
 
 int32 VoxelConsole::GetMaxTasksInFlight()
 {
@@ -181,6 +189,7 @@ namespace
                     FVoxelMeshOptions Options;
                     Options.bGreedy = VoxelConsole::CVarGreedyMeshing.GetValueOnGameThread();
                     Options.bAmbientOcclusion = VoxelConsole::CVarAmbientOcclusion.GetValueOnGameThread();
+                    Options.TintBlend = VoxelConsole::GetTintBlend();
                     // "standin" benches generator 1's terrain; anything else names a preset of generator 2's.
                     if (PresetName == TEXT("standin"))
                     {

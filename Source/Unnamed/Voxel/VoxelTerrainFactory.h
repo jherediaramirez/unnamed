@@ -28,8 +28,12 @@ namespace VoxelTerrainFactory
     // The 26.3 preset a generator-2 world type uses: "large_biomes", "amplified", else "overworld" (Single Biome too).
     UNNAMED_API const TCHAR* GetPresetName(const FString& Type);
 
-    // Reads what a generator-2 terrain needs: the preset, the overworld biome parameter list and the preset's surface
-    // rules with their noises.
+    // Reads what a generator-2 terrain needs: the preset, the overworld biome parameter list, the preset's surface
+    // rules with their noises, and the block reference's grass and foliage colormaps (into OutBiomes) for the tints.
+    // Game thread only (it loads the image module).
     UNNAMED_API bool ReadInputs(const FString& ReferenceRoot, const FString& PresetName, FVoxelTerrainPreset& OutPreset,
         FVoxelBiomeTable& OutBiomes, FVoxelSurfaceInputs& OutSurface, FString& OutError);
+
+    // The block reference's colormaps folder (grass.png, foliage.png), staged with packages.
+    UNNAMED_API FString GetColormapRoot();
 } // namespace VoxelTerrainFactory

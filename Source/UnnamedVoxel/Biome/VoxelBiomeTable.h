@@ -70,12 +70,17 @@ public:
     FString Preset;
     TArray<FVoxelBiome> Biomes;
     TArray<FVoxelBiomeParameter> Points;
+    // The block reference's grass and foliage colormaps, ColormapSize x ColormapSize colours as 0xRRGGBB, row by row
+    // from the top left; empty when not read (no biome tints).
+    static constexpr int32 ColormapSize = 256;
+    TArray<uint32> GrassColormap;
+    TArray<uint32> FoliageColormap;
 
     // A biome's index by full id, or INDEX_NONE.
     int32 FindBiome(FStringView Name) const;
 
-    // Checks unique non-empty names, finite numbers, colours in 0..0xFFFFFF, every range's min <= max and every point's
-    // biome index.
+    // Checks unique non-empty names, finite numbers, colours in 0..0xFFFFFF, every range's min <= max, every point's
+    // biome index, and colormaps that are both empty or both full.
     bool Validate(FString* OutError = nullptr) const;
 
     static int64 Quantize(float Value) { return int64(Value * float(Quantization)); }

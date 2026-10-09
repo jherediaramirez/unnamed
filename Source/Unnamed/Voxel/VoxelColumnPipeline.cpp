@@ -68,6 +68,15 @@ void FVoxelColumnPipeline::SetEdgeWalls(bool bEdgeWalls)
     bPlanned = false;
 }
 
+void FVoxelColumnPipeline::SetTintBlend(int32 TintBlend)
+{
+    if (Settings.MeshOptions.TintBlend == TintBlend) return;
+    Settings.MeshOptions.TintBlend = TintBlend;
+    // Every column's colours change. Jobs already running drop their results as stale and mesh again.
+    for (TPair<FIntPoint, FRecord>& Pair : Records)
+        if (Pair.Value.Data) MarkDirty(Pair.Value, PipelineAllSections);
+}
+
 void FVoxelColumnPipeline::WaitForJobs()
 {
     for (FJob& Job : Jobs)
@@ -307,7 +316,7 @@ void FVoxelColumnPipeline::LaunchMesh(FIntPoint Column, FRecord& Record, uint8 N
     if (bUseCache) Cached = Record.Cache;
     Job.Task = UE::Tasks::Launch(
         UE_SOURCE_LOCATION,
-        [Table = Table, Options = Settings.MeshOptions, Around, Cached = MoveTemp(Cached), Sections]
+        [Table = Table, Terrain = Terrain, Options = Settings.MeshOptions, Around, Cached = MoveTemp(Cached), Sections]
         {
             TRACE_CPUPROFILER_EVENT_SCOPE(VoxelPipeline_Mesh);
             const double Start = FPlatformTime::Seconds();
@@ -333,7 +342,8 @@ void FVoxelColumnPipeline::LaunchMesh(FIntPoint Column, FRecord& Record, uint8 N
                     VoxelMesher::GatherPadded(Neighborhood, Section, *Padded);
                     TSharedPtr<FVoxelMeshData, ESPMode::ThreadSafe> Data =
                         MakeShared<FVoxelMeshData, ESPMode::ThreadSafe>();
-                    VoxelMesher::MeshSection(*Table, *Padded, Section, Options, *Data);
+                    VoxelMesher::MeshSection(
+                        *Table, *Padded, Section, Options, *Data, Terrain->GetTints(), &Neighborhood);
                     ++Mesh.MeshedSections;
                     if (!Data->IsEmpty()) Mesh.Sections[Section] = Data;
                 }

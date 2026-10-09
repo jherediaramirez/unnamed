@@ -13,7 +13,7 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 | 2W | Create New World: saved worlds, seed, world type, game mode, difficulty | Done |
 | 3 | Streaming, plus mining and placing on generated terrain | Done |
 | 4 | Terrain: 26.3's density graph, climate, caves, aquifers and lava | Done (5 sessions: worldgen data and reader; noise, climate, splines and debug views; 3D density and generator 2; caves on, aquifers, still lava, cave-lighting decision; performance). Caves-on columns were slightly over 5 ms on two presets; phase 5 session 3's corner sharing brings them under it in the bench's best case ([Known gaps](#known-gaps)) |
-| 5 | Biomes and surface | In progress (sessions 2 to 5 done: reference data, blocks and readers; performance levers; cave brightness and the cave-lighting comparison; the biome source, storage, maps and minimap; surface rules, temperature, the snow line and Single Biome. Next: session 6) |
+| 5 | Biomes and surface | Done (6 sessions: reference data, blocks and readers; performance levers; cave brightness and the cave-lighting comparison; the biome source, storage, maps and minimap; surface rules, temperature, the snow line and Single Biome; biome tints, ocean variants, the batched normal noise, captures and the record). AMPLIFIED's column mean stays over the 5 ms limit on a quiet machine ([Known gaps](#known-gaps)); [the phase 5 record](Records/2026-10-09-Voxel-Phase5.md) |
 | 6 | Decoration, after a block-shapes step (plants, cross models) | |
 | 7 | Structures that fit the land (needs stairs, doors, fences, paths) | |
 | 8 | Mountains | |
@@ -289,6 +289,7 @@ Phase 5 session 3 (corner sharing, batch blended noise), `voxel.Bench Density 8 
 - **A fourth run, on the committed code** (a quiet machine: p95 within 1 ms of p50): sharing on 3.15 / 3.45 / 3.59, off 3.62 / 4.07 / 4.33.
 - **Exact:** 0 of 28,409,856 blocks differ with skipping on and off, and with sharing on and off, every preset. `voxel.Bench Columns 8` hashes `0x7bbf1f42c5434443` in both orders, as before. Goldens are unchanged.
 - **Batch blended noise:** 863 / 865 / 847 -> 781 / 848 / 810 ns per point, while the unchanged normal noise moved by up to 4%, so no gain is credited.
+- **Batched normal noise (phase 5 session 6):** `noise`, `shift_a` and `shift_b` sample their whole batch octave by octave (`FVoxelNormalNoise::SampleBatch`). `FVoxelGradientNoise::AccumulateOctave`, which `old_blended_noise` uses too, fetches a lattice cell's eight gradients once while consecutive points stay in that cell, as most corners do at low frequencies. Each point keeps Sample's arithmetic and octave order, so the values are bit-identical. The corners stage fell from 1.21 / 1.43 / 1.91 to 0.90 / 1.13 / 1.38 ms (overworld / large_biomes / AMPLIFIED, quiet machine). Goldens and the radius-8 hashes are unchanged.
 - **Profile before the levers** (a temporary per-op timer; ms per column): corners overworld 1.62 = normal noise 1.03 + `old_blended_noise` 0.50 + the rest 0.09; large_biomes 2.07 = 1.33 + 0.63; amplified 2.34 = 1.34 + 0.89. The costliest corner noises are `cave_cheese`, `cave_entrance`, `spaghetti_3d_rarity` and `pillar`, then the spaghetti and noodle noises.
 
 Streaming (`CaptureVoxel`, dev seed):
@@ -362,11 +363,41 @@ Phase 5 session 5 replaced the stand-in dressing with 26.3's surface rules (`mat
 | Blocks the rules change, of 7,962,624 | 147,926 | 106,000 | 135,887 |
 
 - **Of the stage:** the preliminary surface takes about 0.03 ms and the freeze pass about 0.06 ms. A block the whole tree decides runs 7 to 9 of the 261 instructions.
-- **Against the 5 ms limit:** with Minecraft open, every preset's mean is over it with the rules on and under it with them off (4.41 to 4.86). The passes run one after another, so the whole-column difference (0.75, 0.54 and 1.47 ms) and the stage's own mean disagree by up to 0.4 ms: run-to-run noise on a busy machine. Session 6's normal-noise lever and a quiet-machine benchmark come next ([Known gaps](#known-gaps)).
+- **Against the 5 ms limit:** with Minecraft open, every preset's mean was over it with the rules on and under it with them off (4.41 to 4.86). The passes run one after another, so the whole-column difference (0.75, 0.54 and 1.47 ms) and the stage's own mean disagree by up to 0.4 ms: run-to-run noise on a busy machine.
+- **Session 6, quiet machine:** before any lever, 4.91 / 5.03 / 6.15 ms (overworld / large_biomes / AMPLIFIED). With the batched normal noise ([Column density](#column-density-and-terrain-generator-2)), the median of three runs is 4.50 / 4.88 / 5.32 ms: overworld and Large Biomes under 5 ms, AMPLIFIED over it ([the phase 5 record](Records/2026-10-09-Voxel-Phase5.md)).
+- **A per-run memo, tried and reverted:** a block reused the walk of the block above it in its run when every test on that path kept its outcome. Stone depth, height and water outcomes were proven from the depth steps, and biome tests were run again. It was exact (0 differing blocks), but only about 116 of 3,780 tree blocks per column could reuse a walk: 52% of walks end at a stone_depth boundary and 39% pass more biome tests than it kept. A ceiling near 0.1 ms per column did not pay for the code.
 - **Across 30 workers** (`voxel.Bench Columns 8`, 289 columns): 0.27, 0.27 and 0.29 ms per column.
 - **Gates** (radius 4, all three presets): 0 of 7,962,624 blocks differ with the shortcut on and off, with biomes on and off (rules off), with sharing on and off, and with skipping on and off.
 - **Radius-8 block hashes,** equal in both load orders: overworld `0xeb1c3d76838e2481`, large_biomes `0xcb42685280f8b57c`, amplified `0xc4403ff66465fcf0`. Biome hashes are unchanged from session 4.
 - **Mutation checks:** snow at or below 0.15 instead of below fails `Surface.Snow`; steep's two directions swapped fail `Surface.Conditions`.
+
+### Biome tints
+
+Phase 5 session 6 colours grass, foliage and water by biome, as 26.3's `BlockColors` and biome blend do ([the scout's facts](Records/2026-10-09-Voxel-Phase5-Scout-Facts.md), section 5).
+
+- **Colours per biome** (`Biome/VoxelBiomeTints.h`, `FVoxelTintTable`), built from the biome table:
+  - water: the biome's `water_color`;
+  - grass: `grass_color`, or the block reference's grass colormap at the biome's own temperature and downfall, each clamped to [0, 1] (`dd = d * t`, pixel `(trunc((1 - t) * 255), trunc((1 - dd) * 255))`). Then the modifier: dark forest blends halfway toward `#28340A`; swamp gives `#4C763C` where the info noise at `(x, y) * 0.0225` is below -0.1, else `#6A7039`;
+  - foliage: `foliage_color`, or the foliage colormap.
+  - Height, the snow line and the frozen modifier play no part. The swamp pattern uses our own seedless info noise, so it does not match the jar block for block.
+- **Which blocks** (`FVoxelStateInfo::TintSource`): the registry keeps each tint as its plains colour, so `VoxelBlocks.cpp` reads grass `#91BD59` as the grass source (the grass block) and foliage `#77AB2F` as the foliage source (oak, jungle, acacia, dark oak and mangrove leaves). Other tints stay constant (spruce `#619961`, birch `#80A755`), and water takes the water colour.
+- **The colormaps:** `ReadInputs` reads `grass.png` and `foliage.png` from `Reference/minecraft-blocks-26.3/assets/minecraft/textures/colormap/` into the biome table (`VoxelTerrainFactory::GetColormapRoot`). `Unnamed.Build.cs` stages the two files with packages, and a world whose colormaps cannot be read is refused like one whose rules cannot.
+- **In the mesher:** a face's tint is the per-channel integer mean of its source's colour over the (2r + 1)^2 blocks around its block, at the block's height. That is 26.3's biome blend; r is `voxel.TintBlend` (2, vanilla's default).
+  - Each block takes its own jittered biome (`FVoxelBiomeStorage::GetBlock`, the lookup the rules use) from whichever of the 3 x 3 columns holds it, with each column's corner jitters cached per section. A face's colour does not depend on which section meshes it.
+  - A block in a missing column (a finite area's edge, or the edge-walls view of the shots) takes the biome of the meshed column's nearest block, so the edge shows no stray plains colour. Blocks without biomes keep their plains tint (Superflat, the stand-in). The streamed world meshes a column only once its neighbours exist.
+  - The colour is the same at a face's four vertices (UV 2's packed tint, as before), so the material is unchanged. The greedy-merge key includes the tint, so a merged quad never spans two colours.
+  - When every quart corner that the blend's block lookups can reach holds one biome (and the colour does not vary with position, as swamp grass does), the face takes that biome's colour without averaging. The result is the same: the bench gate counts 0 differing vertex tints with this shortcut on and off.
+- **Switches:** `voxel.TintBlend 0` gives each block its own biome's colour (hard, ragged edges); `-1` gives every block its plains tint. A change remeshes every loaded column (`FVoxelColumnPipeline::SetTintBlend`), so it works from the console and from a capture's `-ExecCmds`.
+
+| Measured (Development editor, seed "Unnamed", quiet machine; `voxel.Bench Columns 4`, 81 columns meshed again on one thread, same run) | Quads per column | Mesh ms per column |
+|---|---|---|
+| Tints off (plains colours) | 1,462.2 | 2.162 / 2.024 |
+| Blend 0 | 1,463.9 (+0.1%) | 2.286 (+5.7%) / 1.846 (-8.8%) |
+| Blend 2 | 1,476.4 (+1.0%) | 2.236 (+3.5%) / 1.912 (-5.6%) |
+
+- Two runs. The quads rise by 1%: merges stop where the colour changes. The mesh times lie within run-to-run noise of each other. Before the jitter cache, blend 2 cost +19%.
+- **Looks** (phase 5 session 6, decided by the day manager under Jesus's delegation): blend 2, against blend 0's hard per-block edges. Evidence: `Tests/Evidence/2026-10-09/TintScenes-20261009-s6c/montage-blend2-vs-0.png`; the oceans and before/after montages in `TintScenes-20261009-s6/`. That folder's `*-blend0` and `*-blend-1` shots are invalid: the variable was not live yet, so they show blend 2.
+- Gates: 0 of 474,288 (blend 0) and 0 of 478,352 (blend 2) vertex tints differ with the shortcut on and off. Tints change no block: block and biome hashes, goldens and the load-order hashes are unchanged.
 
 ## Storage and meshing
 
@@ -385,11 +416,11 @@ Phase 5 session 5 replaced the stand-in dressing with 26.3's surface rules (`mat
 Mesher rules:
 
 - **Culling:** a face is hidden when its code has the cull bit and the neighbour's facing side is opaque, or when the neighbour is the same see-through block (glass beside glass). Leaves keep the faces between leaves. Water never draws against water.
-- **Merging:** full-cube faces, water surfaces and water floors merge greedily in each 16 x 16 slice. The key is the state and the four corner occlusion levels, so a merged quad never blurs shading.
+- **Merging:** full-cube faces, water surfaces and water floors merge greedily in each 16 x 16 slice. The key is the state, the four corner occlusion levels and the tint, so a merged quad never blurs shading or colour.
 - **Partial faces:** slab faces and water sides stay one quad per cell.
 - **Ambient occlusion:** per vertex, from the two sides and the diagonal in front of each corner. Each quad is split along its brighter diagonal.
 - **Fast exits:** sections that are all air, or solid with every side covered, return at once.
-- **Output:** positions are in blocks from the column corner. UV 0 carries the block UV, continuous across a merged quad; UV 1 the face and overlay codes; UV 2 the tint and face. Vertex colour R holds occlusion and G holds light.
+- **Output:** positions are in blocks from the column corner. UV 0 carries the block UV, continuous across a merged quad; UV 1 the face and overlay codes; UV 2 the tint (the biome's colour, [Biome tints](#biome-tints)) and face. Vertex colour R holds occlusion and G holds light.
 
 Rendering:
 
@@ -674,7 +705,7 @@ Limits:
 
 ## Tests
 
-`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 56 `Unnamed.Voxel` tests (every native suite: 104). Saved worlds are tested by `Unnamed.Worlds.Saved` (native) and, through the menu end to end, by `Tests/create-world.mjs`. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
+`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 61 `Unnamed.Voxel` tests (every native suite: 109). Saved worlds are tested by `Unnamed.Worlds.Saved` (native) and, through the menu end to end, by `Tests/create-world.mjs`. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
 
 | Test | Checks |
 |---|---|
@@ -730,11 +761,16 @@ Limits:
 | `Unnamed.Voxel.Surface.Rules` | The whole overworld tree on the jar's own columns (facts 2.8, its noise values injected): 16 biomes, four profiles, two columns each, 41 blocks top down, shortcut on and off. Badlands are compared down to where our own bands start. |
 | `Unnamed.Voxel.Surface.Snow` | Temperature: the 30 values of facts table 3.3, 0.15 exactly at old-growth pine taiga's Y 200 (not cold), the wobble within 8, the frozen modifier's two values. The freeze pass on hand-made columns: snow and snowy grass, ice, nothing on lava, ice, packed ice or powder snow, nothing in a warm biome; the taiga snow line (no snow at Z 150, snow at 175). |
 | `Unnamed.Voxel.Surface.Exact` | Three presets, six columns: the shortcut on and off give the same blocks; rules off differ; the surface has dressed blocks. |
+| `Unnamed.Voxel.Tints.Colormap` | `Tests/VoxelTintTests.cpp`: both colormaps read (65,536 colours); every in-range grid row of the scout's `colors.json` matches `LookupColormap` for grass and foliage. |
+| `Unnamed.Voxel.Tints.Biomes` | Every overworld biome's water, grass and foliage against the jar's `per_biome` (swamp grass aside), the facts' spot values, the dark forest formula, and the fallback for other sources. |
+| `Unnamed.Voxel.Tints.Swamp` | Swamp and mangrove grass at 22,801 positions against the literal rule (info noise at 0.0225 below -0.1); both colours occur. A threshold of -0.05 fails it. |
+| `Unnamed.Voxel.Tints.Blocks` | Grass block, oak, spruce and birch leaves, water and stone take the right tint source and colour. |
+| `Unnamed.Voxel.Tints.Mesher` | Real columns at a biome border: every up-face cell's tint at blend 2 and 0 equals an independent per-block computation; blend -1 gives the plains tints; the shortcut off gives the same mesh; with two neighbours missing, blocks there take the centre column's nearest block. Blend radius 1 run as 2 fails it. |
 | `Unnamed.Voxel.Biome.Lookup` | `Tests/VoxelBiomeSourceTests.cpp`: four depth groups. All 5,120 samples of `facts/biome_lookup_samples.json`: the pruned search, and our brute force, equal the jar's brute-force answer (point and fitness agree too). The 95 samples where the jar's indexed search differs are all ties of equal fitness. A fixed source answers its biome and fills every quart with it, and refuses a biome outside the table. Every biome has its own map colour, and the on-screen biome views start off. |
 | `Unnamed.Voxel.Biome.Exact` | Three presets, the `Density.Golden` columns: every quart of the pruned fill equals brute force. The column's depths equal `SampleDepth` bit for bit, and a target sampled at a quart (the maps' and readout's path) finds the biome the column stored. |
 | `Unnamed.Voxel.Biome.Jitter` | 5 x 5 columns filled forward on one thread and backwards on the workers are equal. Each column's ring equals its neighbours' own quarts. Every block takes one of its cell's 8 corners, and some take another than their own, which moves borders. The jitter repeats and stays within 0.45 quart. Through the terrain, the column stores the source's biomes and reads them per block; biomes off leaves it without biomes and with the same blocks. |
 | `Unnamed.Voxel.Biome.Golden` | Biome hashes at the `Density.Golden` positions (seed 263), recorded once after the gates passed. Quarts: overworld `0xe3013e9a963d42fe`, large_biomes `0x6d37af6332445934`, amplified `0xbdc71ddbc5a89adf`. Jittered blocks on every seventh layer (these pin the jitter): `0x9aa40aa00117a819`, `0x83db5e7e69587903`, `0x6bbcb6f996e2a018`. |
-| `Unnamed.Worlds.TerrainCheck` | `Tests/WorldsTests.cpp`, outside `TestVoxel.ps1`'s 56: `VoxelTerrainFactory::Check` builds all three generator-2 world types from the reference. With an empty folder instead, a generator-2 world fails with an error naming its preset, while generator 1 and Superflat need no reference. With the reference's data but no facts, every generator-2 type fails naming `biome_parameters.json`, and a saved world gets no terrain. Without `material_rule/`, every generator-2 type (Single Biome too) fails naming it. Single Biome builds with desert, frozen peaks and deep dark, and refuses `minecraft:the_void`, naming it. A saved world whose preset cannot be read gets no terrain, but the dev seed falls back to the stand-in and says why. Each world type reads its own preset (Single Biome reads `overworld`). |
+| `Unnamed.Worlds.TerrainCheck` | `Tests/WorldsTests.cpp`, outside `TestVoxel.ps1`'s 61: `VoxelTerrainFactory::Check` builds all three generator-2 world types from the reference. With an empty folder instead, a generator-2 world fails with an error naming its preset, while generator 1 and Superflat need no reference. With the reference's data but no facts, every generator-2 type fails naming `biome_parameters.json`, and a saved world gets no terrain. Without `material_rule/`, every generator-2 type (Single Biome too) fails naming it. Single Biome builds with desert, frozen peaks and deep dark, and refuses `minecraft:the_void`, naming it. A saved world whose preset cannot be read gets no terrain, but the dev seed falls back to the stand-in and says why. Each world type reads its own preset (Single Biome reads `overworld`). |
 
 Aquifer mutation check: turning global lava into water, and disabling the walls, fail `Aquifer.Fluids` (3 checks) and `Aquifer.Golden` (3).
 
@@ -744,23 +780,23 @@ A deliberate off-by-one in `GetSectionsTouching` fails `Edit.Sections` (13 error
 
 ## Known gaps
 
-- **Surface rules** ([Surface rules](#surface-rules-temperature-and-snow)): the stage adds 0.6 to 0.9 ms (p50) per column, which keeps the whole-column means near or over 5 ms with Minecraft open; session 6 times the next exact lever (a per-run memo) with the normal-noise batch on a quiet machine. No eroded-badlands hoodoos or frozen-ocean icebergs (code-made in 26.3; decided out of phase 5). Ore veins give nothing until phase 6. The freeze pass takes block light as 0 and runs before any trees exist.
+- **Over 5 ms:** on a quiet machine, AMPLIFIED's column mean stays over the limit after the batched normal noise (the phase 5 record has the figures); a per-run memo of the surface tree did not pay ([Surface rules](#surface-rules-temperature-and-snow)). Further speed-up is its own session. The levers left: conditional noodle corners, an aquifer status cache, the block fill by runs, and the surface tree's biome tests.
+- **Surface rules** ([Surface rules](#surface-rules-temperature-and-snow)): the stage adds 0.6 to 0.9 ms (p50) per column. No eroded-badlands hoodoos or frozen-ocean icebergs (code-made in 26.3; decided out of phase 5). Ore veins give nothing until phase 6. The freeze pass takes block light as 0 and runs before any trees exist.
 - **Lighting limits:** faces hidden behind a same-facing face inside one card stay black in Lumen's scene, and software Lumen cannot see the chunks ([Lighting](#lighting)).
 - **Edge fog:** its color is fixed to the map's sun (there is no day cycle yet), and a faint seam remains on the sun side. Columns still arriving inside the fade show up late: in the session 5 flight (2,392 frames, at most 35 at a time), one frame each, when crossing a column corner moves the rings diagonally.
-- **Pale water:** seen from high above, water over sand looks pale; tuning comes with biomes and water colour in phase 5.
+- **Pale water:** seen from high above, water over sand looks pale even with the biomes' water colours (phase 5 session 6); the water material decides it.
+- **Frozen-ocean checkerboard:** where ice covers water, merged squares under the ice read lighter or darker from run to run: translucent ice over translucent water, sorted per merged quad. It is there with tints off too, so it came with session 5's freeze pass. A translucency-sorting fix is its own task.
 - **Fluids:** generated water counts as water for the player, but it does not flow: carving into water leaves air pockets.
 - **First view:** the view is on screen 3.3 to 3.6 s after the first frame with generator 2 and caves (2.5 to 2.6 s before caves; 0.5 to 0.6 s with the stand-in).
 - **AMPLIFIED skipping:** it skips only 28% of cells (loose bounds where the factor is small).
 - **Block fill:** it costs about 0.8 ms per column (the palette build and the per-block loop).
-- **Caves near the limit:** corner sharing (phase 5, session 3) brings caves-on columns under 5 ms in the bench's best case (overworld 3.76 to 3.79, large_biomes 3.92 to 4.64, amplified 4.28 to 4.64 ms). Without sharing, overworld 4.13 to 4.37, large_biomes 4.56 to 4.58 and amplified 4.96 to 5.24 ms are near or over the limit, and the in-game figure lies between. Biomes add 0.19 ms (session 4); the surface rules will add more. Next levers: the normal noise (57 to 64% of corner time), batched like `old_blended_noise` with the x and z work shared by a corner column's 49 corners hoisted; then conditional noodle corners, an aquifer status cache, block fill by runs, the flight's 3 frames over 2 ms, and inner rings first.
+- **Caves near the limit:** corner sharing (phase 5, session 3) brings caves-on columns under 5 ms in the bench's best case (overworld 3.76 to 3.79, large_biomes 3.92 to 4.64, amplified 4.28 to 4.64 ms). Without sharing, overworld 4.13 to 4.37, large_biomes 4.56 to 4.58 and amplified 4.96 to 5.24 ms are near or over the limit, and the in-game figure lies between. Biomes add 0.19 ms (session 4); the surface rules will add more. The normal noise is batched since phase 5 session 6 (see "Over 5 ms" above); the next levers are conditional noodle corners, an aquifer status cache, block fill by runs, the flight's 3 frames over 2 ms, and inner rings first.
 - **Biome stage:** 0.19 ms per column. Its climate pass (about 0.05 ms) is shared neither with the density's corners nor with neighbouring columns.
-- **Biome tints:** none yet; water, grass and foliage tints come in session 6.
 - **`voxel.Debug.Climate`** on screen is unconfirmed since session 3.
 - **Still lava:** it has no damage and no flow, and it counts as water for the player's movement.
 - **Snow layers:** placement gives one layer (no stacking); eight layers collide as a full cube (26.3 collides at 7/8); the creative item icon draws as a cube.
 - **Lava in a cave clips:** with eye adaptation, 36% of the `cave-lava` view has a channel at 255; the lava reads yellow-orange with its texture still visible ([Lighting](#lighting), "Cave exposure and glow").
 - **PS biased low:** the spawn estimate rounds to 8-block cells and ignores the 3D noise.
-- **Beaches:** sand-wide beaches until phase 5's surface rules.
 - **Horizon seam:** the sky/fog seam at the horizon is unchanged from phase 3 (the same in the stand-in's flight).
 - **Edits:** they last for the session until phase 10.
 - **Survival** has no inventory screen yet. Creative has the creative inventory.
@@ -771,7 +807,7 @@ A deliberate off-by-one in `GetSectionsTouching` fails `Edit.Sections` (13 error
   - **Unloads in one frame.** Columns past the unload distance are released in one frame, outside the apply budget. A teleport, a respawn or turning `voxel.Fly` off far away can release about 500 chunks at once, which causes a hitch. Fix: queue the releases and drain them under the apply estimate.
   - **Clearing a populated world.** `FFoundationBlockWorld::Clear` (from `FFoundationAuthority::Reset`) lists every solid cell, which over the streamed storage means every non-air cell generated. `AVoxelWorld::Regenerate` resets only while the pipeline is still empty. A reset of a populated world would allocate hundreds of MB and stall. Fix: let the storage say it streams, and have `Clear` call `Empty` only.
   - **`voxel.Fly` restore.** `AVoxelFlyCamera::EndPlay` turns the pawn's tick and gameplay input back on unconditionally, even on quit or a level change. Fix: record the state when freezing and restore only that.
-- **World choices still to land:** Hardcore has no permadeath or hardcore hearts; Single Biome generates the overworld terrain with the overworld's biomes until phase 5 session 5 wires the fixed source; Superflat refuses layers of blocks the game lacks.
+- **World choices still to land:** Hardcore has no permadeath or hardcore hearts; Single Biome refuses a biome outside the overworld list (Jesus's call between refusing and a plains fallback is pending); Superflat refuses layers of blocks the game lacks.
 
 The registry has full cubes, slabs, powder snow, snow layers, still water and still lava. The generator also needs:
 

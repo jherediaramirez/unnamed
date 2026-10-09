@@ -69,6 +69,7 @@ void UVoxelWorldSubsystem::Start(AVoxelWorld& InOwner, TSharedRef<const FVoxelBl
     FVoxelColumnPipeline::FSettings Settings;
     Settings.MeshOptions.bGreedy = VoxelConsole::CVarGreedyMeshing.GetValueOnGameThread();
     Settings.MeshOptions.bAmbientOcclusion = VoxelConsole::CVarAmbientOcclusion.GetValueOnGameThread();
+    Settings.MeshOptions.TintBlend = VoxelConsole::GetTintBlend();
     Settings.MaxTasksInFlight = VoxelConsole::GetMaxTasksInFlight();
     Settings.bEdgeWalls = VoxelConsole::CVarEdgeWalls.GetValueOnGameThread();
     Pipeline = MakeUnique<FVoxelColumnPipeline>(MoveTemp(Table), MoveTemp(Terrain), Settings);
@@ -139,6 +140,7 @@ void UVoxelWorldSubsystem::Tick(float DeltaTime)
     FVoxelStreamingFrame Frame;
     Pipeline->SetMaxTasksInFlight(VoxelConsole::GetMaxTasksInFlight());
     Pipeline->SetEdgeWalls(VoxelConsole::CVarEdgeWalls.GetValueOnGameThread());
+    Pipeline->SetTintBlend(VoxelConsole::GetTintBlend());
     const FVoxelStreamingRings Before = Pipeline->GetRings();
     Pipeline->SetFocus(MakeRings(LastFocus), VoxelStreaming::GetViewSector(Yaw));
     if (!(Pipeline->GetRings() == Before)) UpdateVisibility();

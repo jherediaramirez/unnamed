@@ -138,6 +138,9 @@ private:
     // Where the spawn search starts (-VoxelSpawnAt=X,Y, to shoot a chosen place); the origin by default. It moves only
     // the spawn, never a block.
     FIntPoint SpawnSearchCenter = FIntPoint::ZeroValue;
+    // -VoxelSpawnExact (shots): every candidate is checked against its real column instead of the estimate first, so
+    // the spawn can land on low dry ground the estimate calls sea, such as a swamp's.
+    bool bSpawnExact = false;
     int32 ShotIndex = INDEX_NONE;
     int32 ShotFrames = 0;
     double ShotGpuMs = 0;

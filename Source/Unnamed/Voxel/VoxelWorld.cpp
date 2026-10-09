@@ -133,6 +133,7 @@ void AVoxelWorld::BuildLayout()
             UE_LOG(LogUnnamedVoxel, Warning, TEXT("-VoxelSpawnAt=%s is not X,Y; the spawn search starts at the origin"),
                 *SpawnAt);
     }
+    bSpawnExact = FParse::Param(FCommandLine::Get(), TEXT("VoxelSpawnExact"));
     bShotEdits = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotEdits"));
     bShotCaves = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotCaves"));
     FString FlightFolder;
@@ -538,12 +539,14 @@ FIntVector AVoxelWorld::GetSpawnCell() const
     // the real column.
     const FIntPoint Center = SpawnSearchCenter;
     const int32 Reach = FMath::Max(8, VoxelConsole::CVarViewRadius.GetValueOnGameThread() * VoxelConstants::ColumnSize);
-    int32 Confirmations = 64;
+    // -VoxelSpawnExact confirms every column within 32 blocks instead (a few seconds at most).
+    int32 Confirmations = bSpawnExact ? 65 * 65 : 64;
     for (int32 Ring = 0; Ring <= Reach && Terrain && Confirmations > 0; ++Ring)
         for (int32 Y = -Ring; Y <= Ring; ++Y)
             for (int32 X = -Ring; X <= Ring; ++X)
             {
-                if (FMath::Max(FMath::Abs(X), FMath::Abs(Y)) != Ring || !Terrain->IsDry(Center.X + X, Center.Y + Y))
+                if (FMath::Max(FMath::Abs(X), FMath::Abs(Y)) != Ring ||
+                    (!bSpawnExact && !Terrain->IsDry(Center.X + X, Center.Y + Y)))
                     continue;
                 if (Confirmations <= 0 || (--Confirmations, !Terrain->ConfirmDry(Center.X + X, Center.Y + Y))) continue;
                 SpawnCell =

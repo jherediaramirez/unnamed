@@ -1,6 +1,11 @@
 #include "Voxel/VoxelTerrainFactory.h"
 
 #include "Biome/VoxelBiomeTable.h"
+#include "IImageWrapper.h"
+#include "IImageWrapperModule.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "Modules/ModuleManager.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "Density/VoxelDensityGraph.h"
 #include "Surface/VoxelSurfaceEvaluator.h"
@@ -11,6 +16,35 @@
 #include "Voxel/VoxelWorldgenReader.h"
 #include "VoxelLog.h"
 #include "Worlds/UnnamedSavedWorlds.h"
+
+namespace
+{
+    // One of the block reference's colormaps as 0xRRGGBB, row by row from the top left.
+    bool ReadColormap(const FString& Path, TArray<uint32>& Out, FString& OutError)
+    {
+        constexpr int32 Size = FVoxelBiomeTable::ColormapSize;
+        TArray<uint8> Bytes, Rgba;
+        IImageWrapperModule& Images = FModuleManager::LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
+        const TSharedPtr<IImageWrapper> Png = Images.CreateImageWrapper(EImageFormat::PNG);
+        if (!FFileHelper::LoadFileToArray(Bytes, *Path) || !Png || !Png->SetCompressed(Bytes.GetData(), Bytes.Num()) ||
+            Png->GetWidth() != Size || Png->GetHeight() != Size || !Png->GetRaw(ERGBFormat::RGBA, 8, Rgba) ||
+            Rgba.Num() != Size * Size * 4)
+        {
+            OutError = FString::Printf(TEXT("cannot read the %d x %d colormap %s"), Size, Size, *Path);
+            return false;
+        }
+        Out.SetNumUninitialized(Size * Size);
+        for (int32 Index = 0; Index < Out.Num(); ++Index)
+            Out[Index] = uint32(Rgba[4 * Index]) << 16 | uint32(Rgba[4 * Index + 1]) << 8 | Rgba[4 * Index + 2];
+        return true;
+    }
+}
+
+FString VoxelTerrainFactory::GetColormapRoot()
+{
+    return FPaths::ConvertRelativePathToFull(FPaths::Combine(
+        FPaths::ProjectDir(), TEXT("Reference/minecraft-blocks-26.3/assets/minecraft/textures/colormap")));
+}
 
 const TCHAR* VoxelTerrainFactory::GetPresetName(const FString& Type)
 {
@@ -26,7 +60,9 @@ bool VoxelTerrainFactory::ReadInputs(const FString& ReferenceRoot, const FString
     // stretches the climate instead.
     return VoxelWorldgen::ReadPreset(ReferenceRoot, PresetName, OutPreset, OutError) &&
         VoxelWorldgen::ReadBiomeParameters(ReferenceRoot, TEXT("overworld"), OutBiomes, OutError) &&
-        VoxelWorldgen::ReadSurface(ReferenceRoot, OutPreset.MaterialRule, OutSurface, OutError);
+        VoxelWorldgen::ReadSurface(ReferenceRoot, OutPreset.MaterialRule, OutSurface, OutError) &&
+        ReadColormap(GetColormapRoot() / TEXT("grass.png"), OutBiomes.GrassColormap, OutError) &&
+        ReadColormap(GetColormapRoot() / TEXT("foliage.png"), OutBiomes.FoliageColormap, OutError);
 }
 
 TSharedPtr<const IVoxelTerrain> VoxelTerrainFactory::Make(const FUnnamedSavedWorld* World, int64 Seed,

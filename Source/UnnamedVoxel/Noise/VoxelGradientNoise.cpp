@@ -198,6 +198,27 @@ namespace
         }
         return (N000 + K1 * U + K2 * V + K3 * W + K4 * U * V + K5 * V * W + K6 * W * U + K7 * U * V * W) * Scale3;
     }
+
+    // Evaluate3's value for a cell's eight gradients (G000, G100, G010, G110, G001, G101, G011, G111) and the
+    // fractions: the same expressions in the same order, so the same bits.
+    FORCEINLINE float EvaluateCell3(const FVector3f* G, float FX, float FY, float FZ)
+    {
+        const FVector3f &G000 = G[0], &G100 = G[1], &G010 = G[2], &G110 = G[3];
+        const FVector3f &G001 = G[4], &G101 = G[5], &G011 = G[6], &G111 = G[7];
+        const float N000 = G000.X * FX + G000.Y * FY + G000.Z * FZ;
+        const float N100 = G100.X * (FX - 1) + G100.Y * FY + G100.Z * FZ;
+        const float N010 = G010.X * FX + G010.Y * (FY - 1) + G010.Z * FZ;
+        const float N110 = G110.X * (FX - 1) + G110.Y * (FY - 1) + G110.Z * FZ;
+        const float N001 = G001.X * FX + G001.Y * FY + G001.Z * (FZ - 1);
+        const float N101 = G101.X * (FX - 1) + G101.Y * FY + G101.Z * (FZ - 1);
+        const float N011 = G011.X * FX + G011.Y * (FY - 1) + G011.Z * (FZ - 1);
+        const float N111 = G111.X * (FX - 1) + G111.Y * (FY - 1) + G111.Z * (FZ - 1);
+        const float U = Fade(FX), V = Fade(FY), W = Fade(FZ);
+        const float K1 = N100 - N000, K2 = N010 - N000, K3 = N001 - N000;
+        const float K4 = N000 - N100 - N010 + N110, K5 = N000 - N010 - N001 + N011, K6 = N000 - N100 - N001 + N101;
+        const float K7 = -N000 + N100 + N010 - N110 + N001 - N101 - N011 + N111;
+        return (N000 + K1 * U + K2 * V + K3 * W + K4 * U * V + K5 * V * W + K6 * W * U + K7 * U * V * W) * Scale3;
+    }
 }
 
 float FVoxelGradientNoise::Sample(double X, double Y) const
@@ -214,12 +235,34 @@ void FVoxelGradientNoise::AccumulateOctave(const double* X, const double* Y, con
     int32 Count, double FrequencyXZ, double FrequencyY, const FVector3d& Offset, float Amplitude, float* Sums) const
 {
     const double OffsetX = Offset.X, OffsetY = Offset.Y, OffsetZ = Offset.Z;
+    // Neighbouring points often share a lattice cell (at low frequencies most do): its gradients are fetched once.
+    FVector3f G[8];
+    uint32 CellX = 0, CellY = 0, CellZ = 0;
+    bool bHaveCell = false;
     for (int32 K = 0; K < Count; ++K)
     {
         const int32 P = Points ? Points[K] : K;
-        Sums[P] += Amplitude *
-            Evaluate3<false>(Seed32, X[P] * FrequencyXZ + OffsetX, Y[P] * FrequencyY + OffsetY,
-                Z[P] * FrequencyXZ + OffsetZ, nullptr);
+        uint32 X0, Y0, Z0;
+        float FX, FY, FZ;
+        Split(X[P] * FrequencyXZ + OffsetX, X0, FX);
+        Split(Y[P] * FrequencyY + OffsetY, Y0, FY);
+        Split(Z[P] * FrequencyXZ + OffsetZ, Z0, FZ);
+        if (!bHaveCell || X0 != CellX || Y0 != CellY || Z0 != CellZ)
+        {
+            bHaveCell = true;
+            CellX = X0;
+            CellY = Y0;
+            CellZ = Z0;
+            G[0] = Gradient3(Seed32, X0, Y0, Z0);
+            G[1] = Gradient3(Seed32, X0 + 1, Y0, Z0);
+            G[2] = Gradient3(Seed32, X0, Y0 + 1, Z0);
+            G[3] = Gradient3(Seed32, X0 + 1, Y0 + 1, Z0);
+            G[4] = Gradient3(Seed32, X0, Y0, Z0 + 1);
+            G[5] = Gradient3(Seed32, X0 + 1, Y0, Z0 + 1);
+            G[6] = Gradient3(Seed32, X0, Y0 + 1, Z0 + 1);
+            G[7] = Gradient3(Seed32, X0 + 1, Y0 + 1, Z0 + 1);
+        }
+        Sums[P] += Amplitude * EvaluateCell3(G, FX, FY, FZ);
     }
 }
 

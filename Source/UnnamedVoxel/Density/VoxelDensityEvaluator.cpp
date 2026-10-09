@@ -54,6 +54,17 @@ namespace
         const float V = FMath::Clamp(Value, -1.f, 1.f);
         return V * .5f - V * V * V / 24.f;
     }
+
+    // The scratch's noise position buffers, sized for Count points.
+    void GetNoisePositions(FVoxelDensityScratch& Scratch, int32 Count, double*& OutX, double*& OutY, double*& OutZ)
+    {
+        Scratch.NoiseX.SetNumUninitialized(Count, EAllowShrinking::No);
+        Scratch.NoiseY.SetNumUninitialized(Count, EAllowShrinking::No);
+        Scratch.NoiseZ.SetNumUninitialized(Count, EAllowShrinking::No);
+        OutX = Scratch.NoiseX.GetData();
+        OutY = Scratch.NoiseY.GetData();
+        OutZ = Scratch.NoiseZ.GetData();
+    }
 } // namespace
 
 bool FVoxelDensityEvaluator::Compile(
@@ -762,22 +773,47 @@ void FVoxelDensityEvaluator::EvaluateNode(
     {
         const FVoxelNormalNoise& Noise = Noises[Data.Ref];
         const double ScaleXZ = Data.Params[0], ScaleY = Data.Params[1];
+        double *NX, *NY, *NZ;
+        GetNoisePositions(Scratch, Count, NX, NY, NZ);
         for (int32 I = 0; I < Count; ++I)
-            Out[I] = Noise.Sample(X[I] * ScaleXZ + (A ? A[I] : 0.f), Y[I] * ScaleY, Z[I] * ScaleXZ + (B ? B[I] : 0.f));
+        {
+            NX[I] = X[I] * ScaleXZ + (A ? A[I] : 0.f);
+            NY[I] = Y[I] * ScaleY;
+            NZ[I] = Z[I] * ScaleXZ + (B ? B[I] : 0.f);
+        }
+        Noise.SampleBatch(NX, NY, NZ, Count, Out);
         break;
     }
     case EVoxelDensityOp::ShiftA:
     {
         const FVoxelNormalNoise& Noise = Noises[Data.Ref];
+        double *NX, *NY, *NZ;
+        GetNoisePositions(Scratch, Count, NX, NY, NZ);
         for (int32 I = 0; I < Count; ++I)
-            Out[I] = 4 * Noise.Sample(X[I] * .25, 0, Z[I] * .25);
+        {
+            NX[I] = X[I] * .25;
+            NY[I] = 0;
+            NZ[I] = Z[I] * .25;
+        }
+        Noise.SampleBatch(NX, NY, NZ, Count, Out);
+        for (int32 I = 0; I < Count; ++I)
+            Out[I] = 4 * Out[I];
         break;
     }
     case EVoxelDensityOp::ShiftB:
     {
         const FVoxelNormalNoise& Noise = Noises[Data.Ref];
+        double *NX, *NY, *NZ;
+        GetNoisePositions(Scratch, Count, NX, NY, NZ);
         for (int32 I = 0; I < Count; ++I)
-            Out[I] = 4 * Noise.Sample(Z[I] * .25, X[I] * .25, 0);
+        {
+            NX[I] = Z[I] * .25;
+            NY[I] = X[I] * .25;
+            NZ[I] = 0;
+        }
+        Noise.SampleBatch(NX, NY, NZ, Count, Out);
+        for (int32 I = 0; I < Count; ++I)
+            Out[I] = 4 * Out[I];
         break;
     }
     case EVoxelDensityOp::OldBlendedNoise:

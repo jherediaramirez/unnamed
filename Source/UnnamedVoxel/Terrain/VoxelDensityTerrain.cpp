@@ -135,6 +135,7 @@ FVoxelDensityTerrain::~FVoxelDensityTerrain() = default;
 bool FVoxelDensityTerrain::InitializeBiomes(
     const FVoxelBiomeTable& BiomeTable, const FVoxelTerrainPreset& Preset, FString& OutError)
 {
+    if (!BiomeTable.GrassColormap.IsEmpty() && !Tints.Initialize(BiomeTable, &OutError)) return false;
     if (Settings.FixedBiome.IsEmpty()) return Biomes.Initialize(BiomeTable, Preset, Seed, &OutError);
     const int32 Biome = BiomeTable.FindBiome(Settings.FixedBiome);
     if (Biome == INDEX_NONE)

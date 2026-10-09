@@ -4,6 +4,7 @@
 
 class FVoxelBiomeSource;
 class FVoxelColumn;
+class FVoxelTintTable;
 
 // A world's column generator: the stand-in height terrain, a flat world, and later phase 4's density terrain. A
 // column is a pure function of the generator's settings and the column's position, so any worker may generate any
@@ -27,4 +28,7 @@ public:
     virtual void ResetCaches() const {}
     // The biomes the terrain's columns carry, or null when it has none (Superflat, the stand-in).
     virtual const FVoxelBiomeSource* GetBiomeSource() const { return nullptr; }
+    // The colours its biomes give grass, foliage and water, indexed like the columns' biomes; null without biomes or
+    // colormaps (blocks keep their plains tints).
+    virtual const FVoxelTintTable* GetTints() const { return nullptr; }
 };

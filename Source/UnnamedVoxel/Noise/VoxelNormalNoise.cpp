@@ -67,6 +67,16 @@ FVoxelNormalNoise::FVoxelNormalNoise(uint64 WorldSeed, const FVoxelDensityNoise&
     }
 }
 
+void FVoxelNormalNoise::SampleBatch(const double* X, const double* Y, const double* Z, int32 Count, float* Out) const
+{
+    // Sample's sum starts at 0 and adds the octaves in order; so does each point here.
+    for (int32 I = 0; I < Count; ++I)
+        Out[I] = 0;
+    for (const FOctave& Octave : Octaves)
+        Octave.Noise.AccumulateOctave(
+            X, Y, Z, nullptr, Count, Octave.Frequency, Octave.Frequency, Octave.Offset, Octave.Amplitude, Out);
+}
+
 float FVoxelNormalNoise::Sample(double X, double Y, double Z) const
 {
     float Sum = 0;

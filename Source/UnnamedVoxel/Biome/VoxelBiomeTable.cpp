@@ -46,5 +46,11 @@ bool FVoxelBiomeTable::Validate(FString* OutError) const
                 return BiomeTableFail(
                     OutError, FString::Printf(TEXT("point %d: parameter %d has min above max"), Index, Axis));
     }
+    const int32 ColormapPixels = ColormapSize * ColormapSize;
+    const bool bNoColormaps = GrassColormap.IsEmpty() && FoliageColormap.IsEmpty();
+    if (!bNoColormaps && (GrassColormap.Num() != ColormapPixels || FoliageColormap.Num() != ColormapPixels))
+        return BiomeTableFail(OutError,
+            FString::Printf(TEXT("colormaps need %d colours each (grass %d, foliage %d)"), ColormapPixels,
+                GrassColormap.Num(), FoliageColormap.Num()));
     return true;
 }

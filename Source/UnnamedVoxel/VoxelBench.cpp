@@ -1,5 +1,7 @@
 #include "VoxelBench.h"
 #include "Biome/VoxelBiomeStorage.h"
+#include "Biome/VoxelBiomeTints.h"
+#include "Meshing/VoxelMesher.h"
 #include "Async/Fundamental/Scheduler.h"
 #include "Async/ParallelFor.h"
 #include "Generation/VoxelArea.h"
@@ -316,6 +318,81 @@ VoxelBench::FLoadOrderHashes VoxelBench::HashLoadOrders(const IVoxelTerrain& Ter
     return Result;
 }
 
+namespace
+{
+    // One mesh pass over a built area on one thread, with Options and the terrain's tints.
+    struct FMeshPass
+    {
+        int64 Quads = 0;
+        double Ms = 0;
+    };
+
+    void GetAreaNeighborhood(const FVoxelArea& Area, int32 ColumnIndex, FVoxelNeighborhood& Out)
+    {
+        const FIntPoint Position = Area.Columns[ColumnIndex]->GetPosition();
+        for (int32 DY = -1; DY <= 1; ++DY)
+            for (int32 DX = -1; DX <= 1; ++DX)
+            {
+                const int32 Neighbor = Area.GetColumnIndex(Position + FIntPoint(DX, DY));
+                Out.Set(DX, DY, Neighbor == INDEX_NONE ? nullptr : Area.Columns[Neighbor].Get());
+            }
+    }
+
+    FMeshPass MeshArea(const FVoxelBlockTable& Table, const FVoxelArea& Area, const FVoxelTintTable* Tints,
+        const FVoxelMeshOptions& Options)
+    {
+        FMeshPass Pass;
+        TUniquePtr<FVoxelPaddedSection> Padded = MakeUnique<FVoxelPaddedSection>();
+        FVoxelMeshData Data;
+        for (int32 ColumnIndex = 0; ColumnIndex < Area.Columns.Num(); ++ColumnIndex)
+        {
+            FVoxelNeighborhood Neighborhood;
+            GetAreaNeighborhood(Area, ColumnIndex, Neighborhood);
+            for (int32 Section = 0; Section < VoxelConstants::SectionCount; ++Section)
+            {
+                VoxelMesher::GatherPadded(Neighborhood, Section, *Padded);
+                const double Start = FPlatformTime::Seconds();
+                VoxelMesher::MeshSection(Table, *Padded, Section, Options, Data, Tints, &Neighborhood);
+                Pass.Ms += (FPlatformTime::Seconds() - Start) * 1000.;
+                Pass.Quads += Data.GetQuadCount();
+            }
+        }
+        return Pass;
+    }
+
+    // Vertices whose tint differs between two option sets that must give the same mesh otherwise; INDEX_NONE when
+    // the meshes themselves differ.
+    int64 CountTintDifferences(const FVoxelBlockTable& Table, const FVoxelArea& Area, const FVoxelTintTable* Tints,
+        const FVoxelMeshOptions& A, const FVoxelMeshOptions& B, int64& OutVertices)
+    {
+        int64 Differences = 0;
+        OutVertices = 0;
+        TUniquePtr<FVoxelPaddedSection> Padded = MakeUnique<FVoxelPaddedSection>();
+        FVoxelMeshData DataA, DataB;
+        for (int32 ColumnIndex = 0; ColumnIndex < Area.Columns.Num(); ++ColumnIndex)
+        {
+            FVoxelNeighborhood Neighborhood;
+            GetAreaNeighborhood(Area, ColumnIndex, Neighborhood);
+            for (int32 Section = 0; Section < VoxelConstants::SectionCount; ++Section)
+            {
+                VoxelMesher::GatherPadded(Neighborhood, Section, *Padded);
+                VoxelMesher::MeshSection(Table, *Padded, Section, A, DataA, Tints, &Neighborhood);
+                VoxelMesher::MeshSection(Table, *Padded, Section, B, DataB, Tints, &Neighborhood);
+                for (int32 Layer = 0; Layer < int32(EVoxelLayer::Count); ++Layer)
+                {
+                    const FVoxelMeshLayer &LayerA = DataA.Layers[Layer], &LayerB = DataB.Layers[Layer];
+                    if (LayerA.Positions != LayerB.Positions || LayerA.TintFaces.Num() != LayerB.TintFaces.Num())
+                        return INDEX_NONE;
+                    OutVertices += LayerA.TintFaces.Num();
+                    for (int32 Vertex = 0; Vertex < LayerA.TintFaces.Num(); ++Vertex)
+                        Differences += LayerA.TintFaces[Vertex] != LayerB.TintFaces[Vertex];
+                }
+            }
+        }
+        return Differences;
+    }
+}
+
 FString VoxelBench::RunColumns(const FVoxelBlockTable& Table, const IVoxelTerrain& Terrain,
     const FVoxelDensityTerrain* Density, const FVoxelMeshOptions& Options, int32 Radius)
 {
@@ -327,6 +404,43 @@ FString VoxelBench::RunColumns(const FVoxelBlockTable& Table, const IVoxelTerrai
         Terrain.ResetCaches();
         FVoxelArea::Build(Table, Terrain, FIntPoint::ZeroValue, Radius, Options, bParallel, Area);
         Report += Area.Describe() + TEXT("\n");
+    }
+
+    // Tints: the same columns meshed again on one thread with biome tints off, blend 0 and blend 2, then the uniform-
+    // biome shortcut's gate.
+    if (const FVoxelTintTable* Tints = Terrain.GetTints())
+    {
+        const int32 AreaColumns = Area.Columns.Num();
+        FMeshPass Passes[3];
+        const int32 Blends[3] = {-1, 0, 2};
+        for (int32 Index = 0; Index < 3; ++Index)
+        {
+            FVoxelMeshOptions Pass = Options;
+            Pass.TintBlend = Blends[Index];
+            Passes[Index] = MeshArea(Table, Area, Tints, Pass);
+        }
+        Report += FString::Printf(
+            TEXT("Tints, %d columns meshed on one thread (quads per column, mesh ms per column):"), AreaColumns);
+        const TCHAR* Labels[3] = {TEXT("off"), TEXT("blend 0"), TEXT("blend 2")};
+        for (int32 Index = 0; Index < 3; ++Index)
+            Report += FString::Printf(TEXT("\n  %-8s %8.1f quads (%+.1f%%), %.3f ms (%+.1f%%)"), Labels[Index],
+                double(Passes[Index].Quads) / AreaColumns,
+                100. * (double(Passes[Index].Quads) / FMath::Max<int64>(1, Passes[0].Quads) - 1.),
+                Passes[Index].Ms / AreaColumns, 100. * (Passes[Index].Ms / FMath::Max(1e-9, Passes[0].Ms) - 1.));
+        for (const int32 Blend : {0, 2})
+        {
+            FVoxelMeshOptions On = Options, Off = Options;
+            On.TintBlend = Off.TintBlend = Blend;
+            Off.bTintShortcut = false;
+            int64 Vertices = 0;
+            const int64 Differences = CountTintDifferences(Table, Area, Tints, On, Off, Vertices);
+            Report += Differences == INDEX_NONE
+                ? FString::Printf(TEXT("\nTint shortcut, blend %d: the meshes differ"), Blend)
+                : FString::Printf(
+                      TEXT("\nVertex tints that differ with the tint shortcut on and off, blend %d: %lld of %lld"),
+                      Blend, Differences, Vertices);
+        }
+        Report += TEXT("\n");
     }
 
     const int32 Side = 2 * Radius + 1, Columns = Side * Side;

@@ -27,6 +27,8 @@ struct FVoxelDensityScratch
     TArray<int32> Choices;
     // For old_blended_noise's batch sampling.
     FVoxelBlendedNoiseScratch Blended;
+    // For noise, shift_a and shift_b: the positions each samples its noise at.
+    TArray<double> NoiseX, NoiseY, NoiseZ;
 };
 
 // A conservative range of a node's values over a box of positions.

@@ -1,4 +1,6 @@
 #include "Meshing/VoxelMesher.h"
+#include "Biome/VoxelBiomeStorage.h"
+#include "Biome/VoxelBiomeTints.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Storage/VoxelColumn.h"
@@ -15,11 +17,191 @@ namespace
     constexpr uint8 OpenCorners = 0xFF;
     constexpr uint8 AllFaces = 0x3F;
 
-    // Greedy-merge keys: state and corner levels, plus one so 0 means "no face".
-    FORCEINLINE uint32 MakeKey(uint16 State, uint8 Corners)
+    // Greedy-merge keys: the tint above state and corner levels, plus one so 0 means "no face".
+    FORCEINLINE uint64 MakeKey(uint16 State, uint8 Corners, uint32 Tint)
     {
-        return ((uint32(State) << 8) | Corners) + 1;
+        return uint64(Tint) << 32 | (((uint32(State) << 8) | Corners) + 1);
     }
+
+    // Biome tints for one section, as 26.3's biome blend: a face takes the mean of its source's colour over the
+    // (2 Radius + 1)^2 blocks around its block at the same height, channel by channel in integers. Each block takes
+    // its own jittered biome (FVoxelBiomeStorage::GetBlock) from the column that holds it, so a face's colour does not
+    // depend on which section meshes it. A block in a missing column (the edge of a finite area or of the edge-walls
+    // view) takes the biome of the meshed column's nearest block; blocks without biomes take the state's plains tint.
+    class FTintSampler
+    {
+    public:
+        FTintSampler(const FVoxelTintTable& InTints, const FVoxelNeighborhood& InNeighborhood, int32 SectionIndex,
+            int32 InRadius, bool bInShortcut)
+            : Tints(InTints), Neighborhood(InNeighborhood), Radius(InRadius), bShortcut(bInShortcut)
+        {
+            check(Radius >= 0 && Radius <= Margin && Tints.Num() < int32(Unknown));
+            const FVoxelColumn* Center = Neighborhood.Get(0, 0);
+            Origin = Center ? Center->GetPosition() * VoxelConstants::ColumnSize : FIntPoint::ZeroValue;
+            BaseZ = VoxelConstants::MinZ + SectionIndex * SectionSize;
+            FMemory::Memset(Biomes, Unknown, sizeof(Biomes));
+            FMemory::Memzero(Swamp, sizeof(Swamp));
+            FMemory::Memzero(GetJitters().Filled, sizeof(FJitterScratch::Filled));
+        }
+
+        // The colour of a face of Cell (section coordinates) whose state takes Source; Fallback is its plains tint.
+        uint32 Get(EVoxelTintSource Source, const FIntVector& Cell, uint32 Fallback)
+        {
+            if (bShortcut)
+            {
+                // When every quart corner the blend's block lookups can pick holds one biome, every block takes it,
+                // and the mean of one colour is that colour.
+                const int32 Uniform = FindUniformBiome(Cell);
+                if (Uniform != INDEX_NONE && !Tints.VariesWithPosition(Source, Uniform))
+                    return Tints.GetColor(Source, Uniform, 0, 0, Fallback);
+            }
+            uint32 Sum[3] = {};
+            for (int32 Y = Cell.Y - Radius; Y <= Cell.Y + Radius; ++Y)
+                for (int32 X = Cell.X - Radius; X <= Cell.X + Radius; ++X)
+                {
+                    const uint32 Color = GetBlockColor(Source, X, Y, Cell.Z, Fallback);
+                    Sum[0] += Color >> 16;
+                    Sum[1] += (Color >> 8) & 0xFF;
+                    Sum[2] += Color & 0xFF;
+                }
+            const uint32 Count = uint32((2 * Radius + 1) * (2 * Radius + 1));
+            return (Sum[0] / Count) << 16 | (Sum[1] / Count) << 8 | Sum[2] / Count;
+        }
+
+    private:
+        static constexpr int32 Margin = FVoxelMeshOptions::MaxTintBlend;
+        static constexpr int32 Footprint = SectionSize + 2 * Margin;
+        static constexpr uint8 Unknown = 0xFE, NoBiome = 0xFF;
+        static_assert(Margin <= VoxelConstants::ColumnSize, "The blend must stay within the 3 x 3 columns");
+        static_assert(SectionSize == VoxelConstants::ColumnSize && SectionSize == 16,
+            "Block coordinates split into columns with >> 4 and & 15");
+
+        static int32 GetFootprintIndex(int32 X, int32 Y) { return (Y + Margin) * Footprint + X + Margin; }
+
+        // Each of the 3 x 3 columns' quart corner jitters, filled a layer at a time as lookups need them, so a
+        // block's biome costs no hashes (FVoxelBiomeStorage::GetBlock with a cache gives the same answer). Scratch,
+        // reused by every section a worker meshes: only one sampler may be alive per thread at a time (each lives for
+        // one MeshSection, which never waits on other work).
+        struct FJitterScratch
+        {
+            TArray<FVector3f> Columns[9];
+            uint64 Filled[9][(FVoxelBiomeStorage::Layers + 63) / 64];
+        };
+
+        static FJitterScratch& GetJitters()
+        {
+            thread_local FJitterScratch Scratch;
+            return Scratch;
+        }
+
+        static void FillLayer(const FVoxelBiomeStorage& Storage, FJitterScratch& Scratch, int32 Index, int32 Layer)
+        {
+            uint64& Bits = Scratch.Filled[Index][Layer >> 6];
+            if (Bits & (1ull << (Layer & 63))) return;
+            Bits |= 1ull << (Layer & 63);
+            if (Scratch.Columns[Index].Num() != FVoxelBiomeStorage::Volume)
+                Scratch.Columns[Index].SetNumUninitialized(FVoxelBiomeStorage::Volume);
+            Storage.FillJitterLayer(Layer, Scratch.Columns[Index].GetData());
+        }
+
+        // A block's biome by section coordinates (X and Y may reach Margin into the neighbours), cached.
+        int32 GetBiome(int32 X, int32 Y, int32 LocalZ)
+        {
+            uint8& Cached = Biomes[LocalZ][GetFootprintIndex(X, Y)];
+            if (Cached == Unknown)
+            {
+                // Arithmetic shifts floor negative coordinates: -1, 0 or 1 column over.
+                int32 DX = X >> 4, DY = Y >> 4, LocalX = X & 15, LocalY = Y & 15;
+                const FVoxelColumn* Column = Neighborhood.Get(DX, DY);
+                if (!Column)
+                {
+                    DX = DY = 0;
+                    LocalX = FMath::Clamp(X, 0, SectionSize - 1);
+                    LocalY = FMath::Clamp(Y, 0, SectionSize - 1);
+                    Column = Neighborhood.Get(0, 0);
+                }
+                int32 Biome = INDEX_NONE;
+                if (Column && !Column->GetBiomes().IsEmpty())
+                {
+                    const FVoxelBiomeStorage& Storage = Column->GetBiomes();
+                    FJitterScratch& Scratch = GetJitters();
+                    const int32 Index = (DY + 1) * 3 + DX + 1, Z = BaseZ + LocalZ;
+                    const int32 Layer = (Z - VoxelConstants::MinZ) / FVoxelBiomeStorage::QuartSize;
+                    FillLayer(Storage, Scratch, Index, Layer);
+                    if (Layer + 1 < FVoxelBiomeStorage::Layers) FillLayer(Storage, Scratch, Index, Layer + 1);
+                    Biome = Storage.GetBlock(LocalX, LocalY, Z, Scratch.Columns[Index].GetData());
+                }
+                Cached = Biome == INDEX_NONE ? NoBiome : uint8(Biome);
+            }
+            return Cached == NoBiome ? INDEX_NONE : int32(Cached);
+        }
+
+        uint32 GetBlockColor(EVoxelTintSource Source, int32 X, int32 Y, int32 LocalZ, uint32 Fallback)
+        {
+            const int32 Biome = GetBiome(X, Y, LocalZ);
+            if (!Tints.VariesWithPosition(Source, Biome)) return Tints.GetColor(Source, Biome, 0, 0, Fallback);
+            // Swamp grass depends on (x, y) alone; no colour is 0, so 0 marks "not yet".
+            uint32& Cached = Swamp[GetFootprintIndex(X, Y)];
+            if (!Cached) Cached = Tints.GetSwampGrass(Origin.X + X, Origin.Y + Y);
+            return Cached;
+        }
+
+        // A quart's biome by section-relative quart coordinates (X and Y may reach into the neighbours); INDEX_NONE
+        // without one.
+        int32 GetQuart(int32 X, int32 Y, int32 Layer) const
+        {
+            const FVoxelColumn* Column = Neighborhood.Get(X >> 2, Y >> 2);
+            if (!Column || Column->GetBiomes().IsEmpty()) return INDEX_NONE;
+            const uint8 Biome = Column->GetBiomes().GetQuart(X & 3, Y & 3, Layer);
+            return Biome == FVoxelBiomeStorage::None ? INDEX_NONE : int32(Biome);
+        }
+
+        // The one biome of every quart corner that the lookups of the blend's blocks can pick (each block's cell
+        // corners, FVoxelBiomeStorage::GetBlock), or INDEX_NONE.
+        int32 FindUniformBiome(const FIntVector& Cell) const
+        {
+            const int32 Layer = (BaseZ + Cell.Z - VoxelConstants::MinZ) / FVoxelBiomeStorage::QuartSize;
+            const int32 TopLayer = FMath::Min(Layer + 1, FVoxelBiomeStorage::Layers - 1);
+            const int32 MinX = (Cell.X - Radius) >> 2, MaxX = ((Cell.X + Radius) >> 2) + 1;
+            const int32 MinY = (Cell.Y - Radius) >> 2, MaxY = ((Cell.Y + Radius) >> 2) + 1;
+            const int32 Biome = GetQuart(MinX, MinY, Layer);
+            if (Biome == INDEX_NONE) return INDEX_NONE;
+            for (int32 Z = Layer; Z <= TopLayer; ++Z)
+                for (int32 Y = MinY; Y <= MaxY; ++Y)
+                    for (int32 X = MinX; X <= MaxX; ++X)
+                        if (GetQuart(X, Y, Z) != Biome) return INDEX_NONE;
+            return Biome;
+        }
+
+        const FVoxelTintTable& Tints;
+        const FVoxelNeighborhood& Neighborhood;
+        int32 Radius;
+        bool bShortcut;
+        FIntPoint Origin;
+        int32 BaseZ;
+        uint8 Biomes[SectionSize][Footprint * Footprint];
+        uint32 Swamp[Footprint * Footprint];
+    };
+
+    // A face's tint: its state's own, or its biome's colour when the face is tinted from a biome and tints are on.
+    struct FFaceTints
+    {
+        const FVoxelTintTable* Table = nullptr;
+        const FVoxelNeighborhood* Neighborhood = nullptr;
+        int32 SectionIndex = 0;
+        int32 Radius = 0;
+        bool bShortcut = true;
+        TOptional<FTintSampler> Sampler;
+
+        uint32 Get(const FVoxelStateInfo& Info, int32 Face, const FIntVector& Cell)
+        {
+            if (!Table || Info.TintSource < EVoxelTintSource::Grass ||
+                !((Info.Faces[Face] | Info.Faces[VoxelFaces::OverlayIndex]) & VoxelFaces::TintBit))
+                return Info.Tint;
+            if (!Sampler) Sampler.Emplace(*Table, *Neighborhood, SectionIndex, Radius, bShortcut);
+            return Sampler->Get(Info.TintSource, Cell, Info.Tint);
+        }
+    };
 
     // Occlusion levels at a face's four corners, (-,-), (+,-), (+,+), (-,+) across it, from the cells around the one
     // in front of the face: two darkening sides make the darkest corner whatever the diagonal holds.
@@ -42,12 +224,13 @@ namespace
         FVoxelMeshData& Out;
         // World Z of the section's first block row.
         int32 BaseZ;
+        FFaceTints& Tints;
 
         // A quad on Face: Plane along the face's axis, [U0, U1] x [V0, V1] across it (section blocks; U and V are the
         // next two axes after it), Cell the section cell whose corner is the UV origin. Corners holds the occlusion
-        // levels at (-,-), (+,-), (+,+), (-,+).
+        // levels at (-,-), (+,-), (+,+), (-,+); Tint is every vertex's packed sRGB colour.
         void Quad(const FVoxelStateInfo& Info, int32 Face, float Plane, float U0, float U1, float V0, float V1,
-            const FIntVector& Cell, uint8 Corners) const
+            const FIntVector& Cell, uint8 Corners, uint32 Tint) const
         {
             const int32 Axis = VoxelFaces::GetAxis(Face), AxisU = (Axis + 1) % 3, AxisV = (Axis + 2) % 3;
             // Corner order turns against the face normal, which RealtimeMesh draws as the front: positive faces walk
@@ -61,7 +244,7 @@ namespace
             const uint32 First = uint32(Layer.Positions.Num());
             const FVector3f Origin(float(Cell.X), float(Cell.Y), float(Cell.Z));
             const FVector2f Codes(float(Info.Faces[Face]), float(Info.Faces[VoxelFaces::OverlayIndex]));
-            const FVector2f TintFace(float(Info.Tint), float(Face));
+            const FVector2f TintFace{float(Tint), float(Face)};
             int32 Levels[4];
             for (int32 Corner = 0; Corner < 4; ++Corner)
             {
@@ -99,7 +282,8 @@ namespace
             }
             const float Plane = bPositive ? Max[Axis] : Min[Axis];
             const int32 AxisU = (Axis + 1) % 3, AxisV = (Axis + 2) % 3;
-            Quad(Info, Face, Plane, Min[AxisU], Max[AxisU], Min[AxisV], Max[AxisV], Cell, OpenCorners);
+            Quad(Info, Face, Plane, Min[AxisU], Max[AxisU], Min[AxisV], Max[AxisV], Cell, OpenCorners,
+                Tints.Get(Info, Face, Cell));
         }
     };
 
@@ -203,7 +387,8 @@ void VoxelMesher::GatherPadded(const FVoxelNeighborhood& Neighborhood, int32 Sec
 }
 
 void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedSection& Padded, int32 SectionIndex,
-    const FVoxelMeshOptions& Options, FVoxelMeshData& Out)
+    const FVoxelMeshOptions& Options, FVoxelMeshData& Out, const FVoxelTintTable* Tints,
+    const FVoxelNeighborhood* Neighborhood)
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelMesher_MeshSection);
     SCOPE_CYCLE_COUNTER(STAT_VoxelMeshSection);
@@ -260,7 +445,16 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
         if (bBuried) return;
     }
 
-    const FEmitter Emit{Out, VoxelConstants::MinZ + SectionIndex * SectionSize};
+    FFaceTints FaceTints;
+    if (Tints && Neighborhood && Options.TintBlend >= 0)
+    {
+        FaceTints.Table = Tints;
+        FaceTints.Neighborhood = Neighborhood;
+        FaceTints.SectionIndex = SectionIndex;
+        FaceTints.Radius = FMath::Min(Options.TintBlend, FVoxelMeshOptions::MaxTintBlend);
+        FaceTints.bShortcut = Options.bTintShortcut;
+    }
+    const FEmitter Emit{Out, VoxelConstants::MinZ + SectionIndex * SectionSize, FaceTints};
     for (int32 Face = 0; Face < VoxelFaces::Count; ++Face)
     {
         const int32 Axis = VoxelFaces::GetAxis(Face), AxisU = (Axis + 1) % 3, AxisV = (Axis + 2) % 3;
@@ -270,7 +464,7 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
         for (int32 Slice = 0; Slice < SectionSize; ++Slice)
         {
             // This slice's mergeable faces, [V][U].
-            uint32 Keys[SectionSize * SectionSize] = {};
+            uint64 Keys[SectionSize * SectionSize] = {};
             bool bAnyKey = false;
             for (int32 V = 0; V < SectionSize; ++V)
                 for (int32 U = 0; U < SectionSize; ++U)
@@ -301,7 +495,7 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
                         const uint8 Corners = Options.bAmbientOcclusion
                             ? GetCorners(Casts, Neighbor, AxisStep[AxisU], AxisStep[AxisV])
                             : OpenCorners;
-                        Keys[V * SectionSize + U] = MakeKey(State, Corners);
+                        Keys[V * SectionSize + U] = MakeKey(State, Corners, FaceTints.Get(Info, Face, Cell));
                         bAnyKey = true;
                         break;
                     }
@@ -328,7 +522,7 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
                         if (Axis == 2)
                         {
                             // The top face only shows with no fluid above, so its height follows from the state.
-                            Keys[V * SectionSize + U] = MakeKey(State, OpenCorners);
+                            Keys[V * SectionSize + U] = MakeKey(State, OpenCorners, FaceTints.Get(Info, Face, Cell));
                             bAnyKey = true;
                         }
                         else
@@ -345,7 +539,7 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
             for (int32 V = 0; V < SectionSize; ++V)
                 for (int32 U = 0; U < SectionSize; ++U)
                 {
-                    const uint32 Key = Keys[V * SectionSize + U];
+                    const uint64 Key = Keys[V * SectionSize + U];
                     if (!Key) continue;
                     int32 Width = 1, Height = 1;
                     if (Options.bGreedy)
@@ -360,8 +554,9 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
                         for (int32 Offset = 0; Offset < Width; ++Offset)
                             Keys[(V + Row) * SectionSize + U + Offset] = 0;
 
-                    const uint16 State = uint16((Key - 1) >> 8);
-                    const uint8 Corners = uint8((Key - 1) & 0xFF);
+                    const uint32 Low = uint32(Key) - 1;
+                    const uint16 State = uint16(Low >> 8);
+                    const uint8 Corners = uint8(Low & 0xFF);
                     const FVoxelStateInfo& Info = Table.Get(State);
                     float Plane = float(bPositive ? Slice + 1 : Slice);
                     if (Info.IsFluid() && Face == int32(EVoxelFace::Up)) Plane = Slice + Info.GetFluidHeight();
@@ -370,7 +565,7 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
                     Coordinates[AxisU] = U;
                     Coordinates[AxisV] = V;
                     Emit.Quad(Info, Face, Plane, float(U), float(U + Width), float(V), float(V + Height),
-                        FIntVector(Coordinates[0], Coordinates[1], Coordinates[2]), Corners);
+                        FIntVector(Coordinates[0], Coordinates[1], Coordinates[2]), Corners, uint32(Key >> 32));
                 }
         }
     }

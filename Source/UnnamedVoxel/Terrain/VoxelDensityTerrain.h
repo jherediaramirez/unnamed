@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Biome/VoxelBiomeClimate.h"
 #include "Biome/VoxelBiomeSource.h"
+#include "Biome/VoxelBiomeTints.h"
 #include "Density/VoxelColumnDensity.h"
 #include "Density/VoxelCornerCache.h"
 #include "HAL/CriticalSection.h"
@@ -112,6 +113,10 @@ public:
     {
         return Biomes.IsInitialized() ? &Biomes : nullptr;
     }
+    virtual const FVoxelTintTable* GetTints() const override
+    {
+        return Biomes.IsInitialized() && Tints.IsInitialized() ? &Tints : nullptr;
+    }
     int32 GetFinalDensity() const { return FinalDensity; }
     // The compiled surface rules; not compiled without rules.
     const FVoxelSurfaceEvaluator& GetSurfaceRules() const { return SurfaceRules; }
@@ -158,6 +163,8 @@ private:
     TUniquePtr<FVoxelCornerCache> CornerCache;
     FVoxelAquifer Aquifer;
     FVoxelBiomeSource Biomes;
+    // Built when the biome table carries the colormaps.
+    FVoxelTintTable Tints;
     FVoxelSurfaceEvaluator SurfaceRules;
     FVoxelFreezePass Freeze;
     FVoxelBiomeClimate Climate;

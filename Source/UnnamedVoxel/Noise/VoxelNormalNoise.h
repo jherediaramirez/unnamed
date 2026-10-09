@@ -28,6 +28,9 @@ public:
     // Positions are in the noise's own units (the density graph has already applied its scales and shifts). The
     // reference's y is the vertical axis.
     float Sample(double X, double Y, double Z) const;
+    // Sample at Count points, octave by octave (FVoxelGradientNoise::AccumulateOctave): Out[I] gets the bits
+    // Sample(X[I], Y[I], Z[I]) gives.
+    void SampleBatch(const double* X, const double* Y, const double* Z, int32 Count, float* Out) const;
 
     int32 GetOctaveCount() const { return Octaves.Num(); }
 

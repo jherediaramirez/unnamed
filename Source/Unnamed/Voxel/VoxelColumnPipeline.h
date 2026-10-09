@@ -136,9 +136,11 @@ public:
     FVoxelColumnPipeline(const FVoxelColumnPipeline&) = delete;
     FVoxelColumnPipeline& operator=(const FVoxelColumnPipeline&) = delete;
 
-    // Changes picked up by the next Update; changing the edge walls remeshes the columns at the edge.
+    // Changes picked up by the next Update; changing the edge walls remeshes the columns at the edge, and changing the
+    // tint blend remeshes every column.
     void SetMaxTasksInFlight(int32 MaxTasks);
     void SetEdgeWalls(bool bEdgeWalls);
+    void SetTintBlend(int32 TintBlend);
 
     // Moves the rings. A new plan is made only when the rings or the view sector change.
     void SetFocus(const FVoxelStreamingRings& Rings, int32 ViewSector);

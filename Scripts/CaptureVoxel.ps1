@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Caves,[int[]]$SpawnAt,[switch]$NoSurfaceRules)
+param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Caves,[int[]]$SpawnAt,[switch]$SpawnExact,[switch]$NoSurfaceRules)
 # Renders the generated world offscreen (/Game/Maps/L_Generated) and saves AVoxelWorld's screenshots: overview,
 # closeup, ground, lumen-scene and section, plus build.txt with the first view's streaming timings. The rings stay on
 # the player's spawn, and the view's edge is meshed against air (voxel.Debug.EdgeWalls 1; -ExecCmds can turn it off),
@@ -8,7 +8,8 @@ param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[in
 # flight.csv with every frame, flight.txt per leg and four screenshots, with the edge fog and no edge walls.
 # -Caves adds views inside a cave and onto still lava when the streamed area has them. -FlightSeconds stops it early (a quick look at the fog from the start shot). -Edits first carves a pit across a
 # column corner and builds a pillar through the authority, then adds an "edits" shot of them.
-# -SpawnAt X,Y starts the spawn search there instead of at the origin, to shoot a chosen place. -NoSurfaceRules shows
+# -SpawnAt X,Y starts the spawn search there instead of at the origin, to shoot a chosen place; -SpawnExact checks every
+# column within 32 blocks of it against the real terrain, so low dry ground such as a swamp's counts. -NoSurfaceRules shows
 # the dev seed with the earlier simple dressing instead of the surface rules, to compare looks.
 # Evidence is never overwritten.
 $ErrorActionPreference='Stop'
@@ -28,6 +29,7 @@ if($Seed){$arguments+=('-VoxelSeed="'+$Seed+'"')}
 if($Edits -and -not $Flight){$arguments+='-VoxelShotEdits'}
 if($Caves -and -not $Flight){$arguments+='-VoxelShotCaves'}
 if($SpawnAt){if($SpawnAt.Count -ne 2){throw '-SpawnAt takes X,Y'};$arguments+=('-VoxelSpawnAt={0},{1}' -f $SpawnAt[0],$SpawnAt[1])}
+if($SpawnExact){$arguments+='-VoxelSpawnExact'}
 if($NoSurfaceRules){$arguments+='-VoxelNoSurfaceRules'}
 if($Flight -and $FlightSeconds -gt 0){$arguments+="-VoxelFlightSeconds=$FlightSeconds"}
 if($WorldsDir){$arguments+=('-WorldsDir="'+(Resolve-Path -LiteralPath $WorldsDir).Path+'"')}

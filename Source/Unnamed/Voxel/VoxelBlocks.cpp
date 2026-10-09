@@ -11,6 +11,7 @@ static_assert(int32(EVoxelFace::West) == int32(EFoundationFace::West) &&
         int32(EVoxelFace::Down) == int32(EFoundationFace::Down) && int32(EVoxelFace::Up) == int32(EFoundationFace::Up),
     "EVoxelFace must follow EFoundationFace");
 static_assert(VoxelFaces::CullBit == FoundationBlockFaces::CullBit, "Cull bit");
+static_assert(VoxelFaces::TintBit == FoundationBlockFaces::TintBit, "Tint bit");
 static_assert(VoxelFaces::OverlayIndex == FoundationBlockFaces::OverlayIndex, "Overlay code index");
 
 namespace
@@ -25,6 +26,19 @@ namespace
     uint32 PackRgb(FColor Color)
     {
         return uint32(Color.R) << 16 | uint32(Color.G) << 8 | Color.B;
+    }
+
+    // The registry keeps every tint as its plains colour (the block reference's README): the grass and foliage
+    // colormaps' plains colours mark the biome tints; any other colour is fixed (spruce and birch leaves).
+    constexpr uint32 PlainsGrass = 0x91BD59, PlainsFoliage = 0x77AB2F;
+
+    EVoxelTintSource GetTintSource(FColor Tint)
+    {
+        if (!Tint.A) return EVoxelTintSource::None;
+        const uint32 Packed = PackRgb(Tint);
+        return Packed == PlainsGrass  ? EVoxelTintSource::Grass
+            : Packed == PlainsFoliage ? EVoxelTintSource::Foliage
+                                      : EVoxelTintSource::Constant;
     }
 }
 
@@ -47,6 +61,7 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
         Info.LightEmission = uint8(FMath::Clamp(Block.LightEmission, 0, 15));
         Info.bLeaves = Leaves.IsValid() && Block.Tags.HasTag(Leaves);
         Info.Tint = PackRgb(Block.Tint);
+        Info.TintSource = GetTintSource(Block.Tint);
         if (Block.IsWater())
         {
             // Still texture on top and bottom, the flow texture (its own array) on the sides; tinted, never culled
@@ -58,6 +73,7 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
                 Info.Faces[Face] =
                     (Face >= int32(EVoxelFace::Down) ? WaterStill : WaterFlow) | FoundationBlockFaces::TintBit;
             Info.Tint = PackRgb(Assets ? Assets->WaterColor : FColor(0x3F, 0x76, 0xE4));
+            Info.TintSource = EVoxelTintSource::Water;
         }
         else if (Block.IsLava())
         {

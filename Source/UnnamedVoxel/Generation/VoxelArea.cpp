@@ -79,7 +79,7 @@ void FVoxelArea::Build(const FVoxelBlockTable& Table, const IVoxelTerrain& Terra
             TUniquePtr<FVoxelPaddedSection> Padded = MakeUnique<FVoxelPaddedSection>();
             VoxelMesher::GatherPadded(Neighborhood, Section, *Padded);
             const double MeshStart = FPlatformTime::Seconds();
-            VoxelMesher::MeshSection(Table, *Padded, Section, Options, Meshes[Job]);
+            VoxelMesher::MeshSection(Table, *Padded, Section, Options, Meshes[Job], Terrain.GetTints(), &Neighborhood);
             Out.GatherMs[Job] = (MeshStart - GatherStart) * 1000.;
             Out.MeshMs[Job] = (FPlatformTime::Seconds() - MeshStart) * 1000.;
         },

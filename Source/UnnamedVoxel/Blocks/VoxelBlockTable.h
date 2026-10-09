@@ -33,7 +33,9 @@ namespace VoxelFaces
         return Face ^ 1;
     }
 
-    // From the block registry's face codes (FoundationBlockFaces): the face is hidden by a full neighbour.
+    // From the block registry's face codes (FoundationBlockFaces): the face's texture takes the state's tint.
+    constexpr uint32 TintBit = 1u << 13;
+    // The face is hidden by a full neighbour.
     constexpr uint32 CullBit = 1u << 14;
     // Index of the overlay code after the six face codes.
     constexpr int32 OverlayIndex = 6;
@@ -61,6 +63,17 @@ enum class EVoxelLayer : uint8
     Count
 };
 
+// Where a state's tint comes from (26.3's BlockColors): the grass or foliage colour, or the water colour, of the
+// block's biome; or one colour everywhere (spruce and birch leaves, and every tint without biomes).
+enum class EVoxelTintSource : uint8
+{
+    None,
+    Constant,
+    Grass,
+    Foliage,
+    Water
+};
+
 // What generation and meshing need to know about one block state.
 struct FVoxelStateInfo
 {
@@ -81,8 +94,10 @@ struct FVoxelStateInfo
     uint8 Layers = 0;
     // The block this state belongs to. Faces between two states of one see-through block are hidden (glass, ice).
     uint16 Block = 0;
-    // Packed sRGB 0xRRGGBB, for faces whose code carries the tint bit.
+    // Packed sRGB 0xRRGGBB, for faces whose code carries the tint bit: the plains colour for biome tints, which
+    // the mesher uses where a block has no biome.
     uint32 Tint = 0;
+    EVoxelTintSource TintSource = EVoxelTintSource::None;
     // Six face codes in EVoxelFace order, then the overlay code (FoundationBlockFaces).
     uint32 Faces[7] = {};
 
