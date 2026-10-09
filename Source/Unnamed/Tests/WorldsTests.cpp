@@ -2,6 +2,7 @@
 #include "Blocks/VoxelBlockTable.h"
 #include "Dom/JsonObject.h"
 #include "HAL/FileManager.h"
+#include "HAL/PlatformFileManager.h"
 #include "HAL/PlatformProcess.h"
 #include "Menu/MenuApplication.h"
 #include "Misc/CommandLine.h"
@@ -344,6 +345,32 @@ bool FWorldTerrainCheckTest::RunTest(const FString& Parameters)
             VoxelTerrainFactory::Check(WorldOf(PresetGenerator, Type), EmptyRoot, Error));
         TestTrue(FString::Printf(TEXT("...and its error names %s (%s)"), Preset, *Error), Error.Contains(Preset));
     }
+    // The presets without the biome facts: the parameter list cannot be read, so a generator-2 world is refused with
+    // the file named, and a saved one gets no terrain.
+    const FString NoBiomesRoot = FPaths::ProjectSavedDir() / TEXT("Automation") / TEXT("TerrainCheckNoBiomes");
+    IFileManager::Get().DeleteDirectory(*NoBiomesRoot, false, true);
+    ON_SCOPE_EXIT
+    {
+        IFileManager::Get().DeleteDirectory(*NoBiomesRoot, false, true);
+    };
+    if (TestTrue(TEXT("The reference's data copies without its facts"),
+            FPlatformFileManager::Get().GetPlatformFile().CopyDirectoryTree(
+                *(NoBiomesRoot / TEXT("data")), *(RealRoot / TEXT("data")), true)))
+    {
+        for (const TCHAR* Type : {TEXT("Default"), TEXT("Large Biomes"), TEXT("AMPLIFIED")})
+        {
+            Error.Reset();
+            TestFalse(FString(TEXT("Without the biome facts a generator-2 world fails: ")) + Type,
+                VoxelTerrainFactory::Check(WorldOf(PresetGenerator, Type), NoBiomesRoot, Error));
+            TestTrue(FString::Printf(TEXT("...and its error names the parameter facts (%s)"), *Error),
+                Error.Contains(TEXT("biome_parameters.json")));
+        }
+        const FUnnamedSavedWorld NoBiomesWorld = WorldOf(PresetGenerator, TEXT("Default"));
+        Error.Reset();
+        TestFalse(TEXT("A saved world whose biomes cannot be read gets no terrain"),
+            VoxelTerrainFactory::Make(&NoBiomesWorld, 263, *VoxelBlocks::GetDefault(), NoBiomesRoot, Error).IsValid());
+    }
+
     TestTrue(TEXT("A generator-1 world needs no reference"),
         VoxelTerrainFactory::Check(WorldOf(1, TEXT("Default")), EmptyRoot, Error));
     TestTrue(TEXT("A Superflat world needs no reference"),

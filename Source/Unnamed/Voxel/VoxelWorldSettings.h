@@ -4,6 +4,20 @@
 #include "Engine/DeveloperSettings.h"
 #include "VoxelWorldSettings.generated.h"
 
+// One biome's colour on the debug biome maps and the minimap.
+USTRUCT()
+struct FVoxelBiomeMapColor
+{
+    GENERATED_BODY()
+
+    // The full id, "minecraft:plains".
+    UPROPERTY(Config, EditAnywhere, Category = "Debug")
+    FString Biome;
+
+    UPROPERTY(Config, EditAnywhere, Category = "Debug")
+    FColor Color = FColor::Black;
+};
+
 // Generator and streaming defaults (Project Settings > Game > Unnamed Voxel). Each tunable mirrors a voxel.* console
 // variable (VoxelConsole): these values are pushed at startup and on every edit, and runtime code reads the
 // variables, so a console override (`voxel.ViewRadius 16`) wins for the session without touching the saved defaults.
@@ -52,4 +66,9 @@ public:
     // voxel.GreedyMeshing: merge coplanar faces into larger quads; off emits one quad per face, for debugging.
     UPROPERTY(Config, EditAnywhere, Category = "Meshing")
     bool bGreedyMeshing = true;
+
+    // The biome maps' palette (voxel.BiomeMap, voxel.Debug.Minimap), one colour per biome, after the community maps'
+    // conventions. A biome without one is drawn in a colour hashed from its id, and the map's summary names it.
+    UPROPERTY(Config, EditAnywhere, Category = "Debug")
+    TArray<FVoxelBiomeMapColor> BiomeMapColors;
 };

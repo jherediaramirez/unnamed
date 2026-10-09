@@ -73,5 +73,5 @@ SIZE_T FVoxelColumn::GetAllocatedSize() const
     SIZE_T Size = sizeof(*this);
     for (const FVoxelSection& Section : Sections)
         Size += Section.GetAllocatedSize();
-    return Size;
+    return Size + Biomes.GetAllocatedSize();
 }

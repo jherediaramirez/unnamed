@@ -32,9 +32,9 @@ namespace VoxelClimateDebug
         double CenterY = 0;
     };
 
-    // Samples Size x Size points across every task worker and writes a PNG. North (+Y) is up. Offset is drawn as the
-    // surface height it implies (the depth gradient's zero), with water below sea level; the other parameters on a
-    // ramp over their usual range. OutSummary gets the timing and the value spread.
+    // Samples Size x Size points across every task worker and writes a PNG. North (-Y, since Y points south) is up.
+    // Offset is drawn as the surface height it implies (the depth gradient's zero), with water below sea level; the
+    // other parameters on a ramp over their usual range. OutSummary gets the timing and the value spread.
     bool WriteMap(const FVoxelClimateSampler& Sampler, const FMapOptions& Options, const FString& Path,
         FString& OutSummary, FString& OutError);
 
@@ -45,4 +45,9 @@ namespace VoxelClimateDebug
     // The height in blocks where the depth gradient cancels Offset: a surface estimate before factor, jaggedness and
     // the 3D noise.
     double EstimateSurface(float Offset);
+
+    // A parameter's map colour: offset as the surface height it implies, the others on a ramp over their usual range.
+    FColor GetColor(EVoxelClimate Parameter, float Value);
+    // Writes Size x Size pixels (row 0 at the top) as a PNG.
+    bool WritePng(TConstArrayView<FColor> Pixels, int32 Size, const FString& Path, FString& OutError);
 } // namespace VoxelClimateDebug

@@ -10,8 +10,9 @@ struct FUnnamedSavedWorld;
 // travelling to it (Create and Play), so both decide alike.
 namespace VoxelTerrainFactory
 {
-    // Superflat's layers, generator 1's stand-in, or generator 2's 26.3 preset for the world type. A saved world never
-    // falls back: when its preset cannot be read or compiled this returns null with the reason, because another
+    // Superflat's layers, generator 1's stand-in, or generator 2's 26.3 preset for the world type with the overworld
+    // biome parameter list. A saved world never falls back: when its preset or the parameter list cannot be read or
+    // compiled this returns null with the reason, because another
     // terrain under a saved world would later carry its edits on the wrong land. Only the dev seed (World null) falls
     // back to the stand-in, with an error in the log.
     UNNAMED_API TSharedPtr<const IVoxelTerrain> Make(const FUnnamedSavedWorld* World, int64 Seed,

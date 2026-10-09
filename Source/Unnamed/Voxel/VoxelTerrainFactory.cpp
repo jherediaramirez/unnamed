@@ -1,5 +1,6 @@
 #include "Voxel/VoxelTerrainFactory.h"
 
+#include "Biome/VoxelBiomeTable.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "Density/VoxelDensityGraph.h"
 #include "Terrain/VoxelDensityTerrain.h"
@@ -42,10 +43,15 @@ TSharedPtr<const IVoxelTerrain> VoxelTerrainFactory::Make(const FUnnamedSavedWor
 
     const TCHAR* PresetName = GetPresetName(World ? World->Type : FString(TEXT("Default")));
     FVoxelTerrainPreset Preset;
+    // Every generator-2 type picks its biomes from the overworld parameter list, as 26.3's presets do; Large Biomes
+    // stretches the climate instead.
+    FVoxelBiomeTable Biomes;
     FString Error;
-    if (VoxelWorldgen::ReadPreset(ReferenceRoot, PresetName, Preset, Error))
+    if (VoxelWorldgen::ReadPreset(ReferenceRoot, PresetName, Preset, Error) &&
+        VoxelWorldgen::ReadBiomeParameters(ReferenceRoot, TEXT("overworld"), Biomes, Error))
     {
-        TSharedRef<FVoxelDensityTerrain> Density = MakeShared<FVoxelDensityTerrain>(Preset, uint64(Seed), Table);
+        TSharedRef<FVoxelDensityTerrain> Density =
+            MakeShared<FVoxelDensityTerrain>(Preset, uint64(Seed), Table, FVoxelDensityTerrainSettings(), &Biomes);
         if (Density->IsValid()) return Density;
         Error = Density->GetError();
     }

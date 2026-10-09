@@ -35,7 +35,8 @@ namespace VoxelBench
     // Generates (2 Radius + 1)^2 columns of a density terrain around the origin on the calling thread, with
     // height-bound skipping on and off, and reports each stage's p50, p95 and mean per column, how many cells skipping
     // filled, and how many blocks differ between the two (always 0 unless skipping is wrong); then the same columns
-    // across every task worker.
+    // across every task worker. With biomes it adds a biomes-off pass (the biome stage's cost; blocks must not differ)
+    // and compares the pruned biome search against brute force on the central 3 x 3 columns.
     UNNAMEDVOXEL_API FString RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius);
 
     // Block hashes of (2 Radius + 1)^2 columns around the origin generated in two load orders: row by row on the
@@ -46,6 +47,9 @@ namespace VoxelBench
         // Each order's hash of every column's blocks, combined in position order.
         uint64 Forward = 0, Backward = 0;
         int32 Columns = 0, Mismatches = 0;
+        // The same for the columns' biomes (equal hashes of nothing without biomes).
+        uint64 BiomeForward = 0, BiomeBackward = 0;
+        int32 BiomeMismatches = 0;
     };
     UNNAMEDVOXEL_API FLoadOrderHashes HashLoadOrders(const IVoxelTerrain& Terrain, int32 Radius);
 

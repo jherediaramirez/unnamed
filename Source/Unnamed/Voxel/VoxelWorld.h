@@ -72,6 +72,11 @@ public:
     const FVoxelSeed& GetSeed() const { return Seed; }
     // The state at a world cell; air in columns not generated.
     uint16 GetState(const FIntVector& Cell) const;
+    // The terrain the world streams, or null before BeginPlay.
+    TSharedPtr<const IVoxelTerrain> GetTerrain() const { return Terrain; }
+    // The biome index (into the terrain's biome table) of a world cell, read from its loaded column; INDEX_NONE when
+    // the column is not generated or the terrain has no biomes.
+    int32 GetBiome(const FIntVector& Cell) const;
     // The player stands on the spawn and every column in view is on screen.
     bool IsReady() const;
     // The seed, then how the first view got on screen (UVoxelWorldSubsystem::GetFirstViewReport).

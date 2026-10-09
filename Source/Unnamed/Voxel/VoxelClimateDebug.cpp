@@ -281,7 +281,8 @@ namespace
                 TArray<double> X, Y;
                 X.SetNumUninitialized(Size);
                 Y.SetNumUninitialized(Size);
-                const double BlockY = Options.CenterY + (Size / 2 - Row) * Options.BlocksPerPixel;
+                // Y points south, so rows run north to south.
+                const double BlockY = Options.CenterY + (Row - Size / 2) * Options.BlocksPerPixel;
                 for (int32 Column = 0; Column < Size; ++Column)
                 {
                     X[Column] = Options.CenterX + (Column - Size / 2) * Options.BlocksPerPixel;
@@ -294,14 +295,7 @@ namespace
             });
         const double Seconds = FPlatformTime::Seconds() - Start;
 
-        IImageWrapperModule& Images = FModuleManager::LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
-        const TSharedPtr<IImageWrapper> Png = Images.CreateImageWrapper(EImageFormat::PNG);
-        if (!Png->SetRaw(Pixels.GetData(), Pixels.Num() * sizeof(FColor), Size, Size, ERGBFormat::BGRA, 8) ||
-            !FFileHelper::SaveArrayToFile(Png->GetCompressed(), *Path))
-        {
-            OutError = TEXT("could not write ") + Path;
-            return false;
-        }
+        if (!VoxelClimateDebug::WritePng(Pixels, Size, Path, OutError)) return false;
 
         // Only finite values are ranked: a NaN would break the sort's ordering.
         Values.RemoveAll([](float Value) { return !FMath::IsFinite(Value); });
@@ -322,6 +316,25 @@ namespace
         return true;
     }
 } // namespace
+
+FColor VoxelClimateDebug::GetColor(EVoxelClimate Parameter, float Value)
+{
+    return ClimateDebugColor(Parameter, Value);
+}
+
+bool VoxelClimateDebug::WritePng(TConstArrayView<FColor> Pixels, int32 Size, const FString& Path, FString& OutError)
+{
+    IImageWrapperModule& Images = FModuleManager::LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
+    const TSharedPtr<IImageWrapper> Png = Images.CreateImageWrapper(EImageFormat::PNG);
+    if (Pixels.Num() != Size * Size ||
+        !Png->SetRaw(Pixels.GetData(), Pixels.Num() * sizeof(FColor), Size, Size, ERGBFormat::BGRA, 8) ||
+        !FFileHelper::SaveArrayToFile(Png->GetCompressed(), *Path))
+    {
+        OutError = TEXT("could not write ") + Path;
+        return false;
+    }
+    return true;
+}
 
 double VoxelClimateDebug::EstimateSurface(float Offset)
 {

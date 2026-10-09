@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Biome/VoxelBiomeStorage.h"
 #include "Storage/VoxelSection.h"
 #include "VoxelConstants.h"
 
@@ -46,6 +47,12 @@ public:
 
     // Builds the sections and heightmaps from a dense buffer of DenseVolume states.
     void Build(TConstArrayView<uint16> Dense, const FVoxelBlockTable& Table);
+    // The column's biomes, empty when its terrain has none. Edits leave them as they are.
+    const FVoxelBiomeStorage& GetBiomes() const { return Biomes; }
+    void SetBiomes(FVoxelBiomeStorage&& InBiomes) { Biomes = MoveTemp(InBiomes); }
+    // The biome index (into the terrain's biome table) of the block at local X and Y and world Z, or INDEX_NONE.
+    int32 GetBiome(int32 X, int32 Y, int32 Z) const { return Biomes.GetBlock(X, Y, Z); }
+
     // Sets one cell (local X and Y, world Z) and that X, Y's heightmaps; a Z outside the world changes nothing.
     void SetState(int32 X, int32 Y, int32 Z, uint16 State, const FVoxelBlockTable& Table);
     SIZE_T GetAllocatedSize() const;
@@ -55,4 +62,5 @@ private:
     FVoxelSection Sections[VoxelConstants::SectionCount];
     // Z - MinZ + 1 of the top matching block, 0 for none: the reference's encoding.
     uint16 Heightmaps[int32(EVoxelHeightmap::Count)][Area] = {};
+    FVoxelBiomeStorage Biomes;
 };

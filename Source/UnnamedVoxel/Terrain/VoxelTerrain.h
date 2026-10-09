@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 
+class FVoxelBiomeSource;
 class FVoxelColumn;
 
 // A world's column generator: the stand-in height terrain, a flat world, and later phase 4's density terrain. A
@@ -24,4 +25,6 @@ public:
     // Forgets work shared between columns (results never depend on it), so a measurement or a load-order check starts
     // cold.
     virtual void ResetCaches() const {}
+    // The biomes the terrain's columns carry, or null when it has none (Superflat, the stand-in).
+    virtual const FVoxelBiomeSource* GetBiomeSource() const { return nullptr; }
 };

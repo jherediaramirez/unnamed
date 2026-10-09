@@ -69,7 +69,7 @@ int32 FVoxelDensityTerrain::RemoveCaves(FVoxelDensityGraph& Graph)
 }
 
 FVoxelDensityTerrain::FVoxelDensityTerrain(const FVoxelTerrainPreset& Preset, uint64 InSeed,
-    const FVoxelBlockTable& InTable, const FVoxelDensityTerrainSettings& InSettings)
+    const FVoxelBlockTable& InTable, const FVoxelDensityTerrainSettings& InSettings, const FVoxelBiomeTable* BiomeTable)
     : Seed(InSeed),
       Table(InTable),
       Settings(InSettings),
@@ -101,7 +101,8 @@ FVoxelDensityTerrain::FVoxelDensityTerrain(const FVoxelTerrainPreset& Preset, ui
     if (!Evaluator.Compile(Graph, Seed, {FinalDensity}, &Reason) ||
         !SurfaceEvaluator.Compile(Preset.Graph, Seed, {Surface}, &Reason) ||
         !Column.Initialize(Evaluator, FinalDensity, Preset.MinY, Preset.Height, &Reason) ||
-        (Settings.bCaves && !Aquifer.Initialize(Preset, Seed, &Reason)))
+        (Settings.bCaves && !Aquifer.Initialize(Preset, Seed, &Reason)) ||
+        (BiomeTable && !Biomes.Initialize(*BiomeTable, Preset, Seed, &Reason)))
     {
         Error = Preset.Name + TEXT(": ") + Reason;
         return;
@@ -199,7 +200,8 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
 }
 
 void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense,
-    FVoxelDensityTerrainTimings* Timings, const bool* bSkipOverride, const bool* bShareOverride) const
+    FVoxelDensityTerrainTimings* Timings, const bool* bSkipOverride, const bool* bShareOverride,
+    const EVoxelBiomeFill* BiomeOverride) const
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelDensityTerrain_Generate);
     SCOPE_CYCLE_COUNTER(STAT_VoxelGenerateColumn);
@@ -237,6 +239,14 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
         TRACE_CPUPROFILER_EVENT_SCOPE(Voxel_AquiferFill);
         SCOPE_CYCLE_COUNTER(STAT_VoxelAquiferColumn);
         Aquifer.Fill(X0, Z0, Scratch->Density, Scratch->Aquifer, Scratch->Fluids);
+    }
+    const double AfterAquifer = FPlatformTime::Seconds();
+    // Before the blocks, which the surface rules (session 5) will choose by biome.
+    if (Biomes.IsInitialized())
+    {
+        FVoxelBiomeStorage Storage;
+        Biomes.FillColumn(Position, Scratch->Biome, Storage, BiomeOverride ? *BiomeOverride : EVoxelBiomeFill::Pruned);
+        Out.SetBiomes(MoveTemp(Storage));
     }
     const double Middle = FPlatformTime::Seconds();
     {
@@ -302,7 +312,8 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
     if (Timings)
     {
         Timings->DensityMs = (AfterDensity - AfterPrepare) * 1000;
-        Timings->AquiferMs = ((AfterPrepare - Start) + (Middle - AfterDensity)) * 1000;
+        Timings->AquiferMs = ((AfterPrepare - Start) + (AfterAquifer - AfterDensity)) * 1000;
+        Timings->BiomesMs = (Middle - AfterAquifer) * 1000;
         Timings->BlocksMs = (FPlatformTime::Seconds() - Middle) * 1000;
         Timings->Density = Stats;
     }

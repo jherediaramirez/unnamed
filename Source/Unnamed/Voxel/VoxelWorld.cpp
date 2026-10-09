@@ -32,6 +32,7 @@
 #include "UnnamedProjectSettings.h"
 #include "UnrealClient.h"
 #include "Voxel/VoxelBlockStorage.h"
+#include "Voxel/VoxelBiomeDebug.h"
 #include "Voxel/VoxelBlocks.h"
 #include "Voxel/VoxelConsole.h"
 #include "Voxel/VoxelFlight.h"
@@ -446,6 +447,19 @@ uint16 AVoxelWorld::GetState(const FIntVector& Cell) const
                 : 0;
 }
 
+int32 AVoxelWorld::GetBiome(const FIntVector& Cell) const
+{
+    const UVoxelWorldSubsystem* Streaming = GetStreaming();
+    const FVoxelColumnPipeline* Pipeline = Streaming ? Streaming->GetPipeline() : nullptr;
+    if (!Pipeline) return INDEX_NONE;
+    const FIntPoint Column(FoundationGrid::FloorDivide(Cell.X, VoxelConstants::ColumnSize),
+        FoundationGrid::FloorDivide(Cell.Y, VoxelConstants::ColumnSize));
+    const FVoxelColumn* Data = Pipeline->FindColumn(Column);
+    return Data ? Data->GetBiome(Cell.X - Column.X * VoxelConstants::ColumnSize,
+                      Cell.Y - Column.Y * VoxelConstants::ColumnSize, Cell.Z)
+                : INDEX_NONE;
+}
+
 void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
 {
     Super::GatherCollision(Region, Out);
@@ -814,7 +828,9 @@ void AVoxelWorld::UpdateShots()
     // Lighting cost: the GPU time of the settled frames just before the screenshot.
     if (ShotFrames > ShotSettleFrames - ShotTimedFrames && ShotFrames <= ShotSettleFrames)
         ShotGpuMs += FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles());
-    if (ShotFrames == ShotSettleFrames) FScreenshotRequest::RequestScreenshot(File, false, false);
+    // The UI stays out of shots, except the biome debug views when one is on.
+    if (ShotFrames == ShotSettleFrames)
+        FScreenshotRequest::RequestScreenshot(File, VoxelBiomeDebug::IsOverlayOn(), false);
     const bool bWritten = ShotFrames > ShotSettleFrames + 2 && IFileManager::Get().FileExists(*File);
     if (!bWritten && ShotFrames < ShotSettleFrames + ShotWriteFrames) return;
     UE_LOG(LogUnnamedVoxel, Display, TEXT("Screenshot %s: %s"), bWritten ? TEXT("saved") : TEXT("missing"), *File);

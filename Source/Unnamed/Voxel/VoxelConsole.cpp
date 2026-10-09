@@ -1,5 +1,6 @@
 #include "Voxel/VoxelConsole.h"
 #include "Async/Fundamental/Scheduler.h"
+#include "Biome/VoxelBiomeTable.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "Generation/VoxelArea.h"
 #include "Modules/ModuleManager.h"
@@ -190,15 +191,18 @@ namespace
                     }
                     FString Error;
                     FVoxelTerrainPreset Preset;
+                    FVoxelBiomeTable Biomes;
                     if (!VoxelClimateDebug::GetSampler(PresetName, Seed.Value, Error) ||
-                        !VoxelWorldgen::ReadPreset(VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Error))
+                        !VoxelWorldgen::ReadPreset(VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Error) ||
+                        !VoxelWorldgen::ReadBiomeParameters(
+                            VoxelWorldgen::GetReferenceRoot(), TEXT("overworld"), Biomes, Error))
                     {
                         PrintLines(Output, Error);
                         return;
                     }
                     FVoxelDensityTerrainSettings Settings;
                     Settings.bCaves = !(Args.Num() > 3 && Args[3] == TEXT("nocaves"));
-                    const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings);
+                    const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings, &Biomes);
                     if (!Terrain.IsValid())
                     {
                         PrintLines(Output, Terrain.GetError());
@@ -236,8 +240,11 @@ namespace
                     FString Error;
                     // The sampler's check keeps the name to the reference's three presets.
                     FVoxelTerrainPreset Preset;
+                    FVoxelBiomeTable Biomes;
                     if (!VoxelClimateDebug::GetSampler(PresetName, Seed.Value, Error) ||
-                        !VoxelWorldgen::ReadPreset(VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Error))
+                        !VoxelWorldgen::ReadPreset(VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Error) ||
+                        !VoxelWorldgen::ReadBiomeParameters(
+                            VoxelWorldgen::GetReferenceRoot(), TEXT("overworld"), Biomes, Error))
                     {
                         PrintLines(Output, Error);
                         return;
@@ -246,7 +253,7 @@ namespace
                     // A fourth argument "nocaves" benches the terrain without caves and aquifers (session 3's).
                     FVoxelDensityTerrainSettings Settings;
                     Settings.bCaves = !(Args.Num() > 3 && Args[3] == TEXT("nocaves"));
-                    const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings);
+                    const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings, &Biomes);
                     if (!Terrain.IsValid())
                     {
                         PrintLines(Output, Terrain.GetError());

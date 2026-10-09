@@ -2,6 +2,7 @@
 
 DEFINE_STAT(STAT_VoxelGenerateColumn);
 DEFINE_STAT(STAT_VoxelClimateColumn);
+DEFINE_STAT(STAT_VoxelBiomeColumn);
 DEFINE_STAT(STAT_VoxelDensityColumn);
 DEFINE_STAT(STAT_VoxelFillColumn);
 DEFINE_STAT(STAT_VoxelAquiferColumn);
