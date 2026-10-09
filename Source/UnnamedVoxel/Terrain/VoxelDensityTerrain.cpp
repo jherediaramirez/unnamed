@@ -5,6 +5,7 @@
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Random/VoxelRandom.h"
 #include "Storage/VoxelColumn.h"
+#include "Surface/VoxelSurfaceContext.h"
 #include "VoxelConstants.h"
 #include "VoxelStats.h"
 
@@ -69,7 +70,8 @@ int32 FVoxelDensityTerrain::RemoveCaves(FVoxelDensityGraph& Graph)
 }
 
 FVoxelDensityTerrain::FVoxelDensityTerrain(const FVoxelTerrainPreset& Preset, uint64 InSeed,
-    const FVoxelBlockTable& InTable, const FVoxelDensityTerrainSettings& InSettings, const FVoxelBiomeTable* BiomeTable)
+    const FVoxelBlockTable& InTable, const FVoxelDensityTerrainSettings& InSettings, const FVoxelBiomeTable* BiomeTable,
+    const FVoxelSurfaceInputs* SurfaceInputs)
     : Seed(InSeed),
       Table(InTable),
       Settings(InSettings),
@@ -102,10 +104,23 @@ FVoxelDensityTerrain::FVoxelDensityTerrain(const FVoxelTerrainPreset& Preset, ui
         !SurfaceEvaluator.Compile(Preset.Graph, Seed, {Surface}, &Reason) ||
         !Column.Initialize(Evaluator, FinalDensity, Preset.MinY, Preset.Height, &Reason) ||
         (Settings.bCaves && !Aquifer.Initialize(Preset, Seed, &Reason)) ||
-        (BiomeTable && !Biomes.Initialize(*BiomeTable, Preset, Seed, &Reason)))
+        (BiomeTable && !InitializeBiomes(*BiomeTable, Preset, Reason)))
     {
         Error = Preset.Name + TEXT(": ") + Reason;
         return;
+    }
+    // Compiled even with bSurfaceRules off, so a per-call override (the bench) can turn them on.
+    if (SurfaceInputs)
+    {
+        if (!BiomeTable)
+            Reason = TEXT("surface rules need biomes");
+        else if (SurfaceRules.Compile(*SurfaceInputs, InTable, Biomes.GetTable(), Seed, &Reason))
+            Freeze.Initialize(InTable, &Reason);
+        if (!Freeze.IsInitialized())
+        {
+            Error = Preset.Name + TEXT(": ") + Reason;
+            return;
+        }
     }
     // Sharing only saves work, so a column shape the cache cannot hold just goes without it.
     if (Settings.bShareCorners)
@@ -116,6 +131,20 @@ FVoxelDensityTerrain::FVoxelDensityTerrain(const FVoxelTerrainPreset& Preset, ui
 }
 
 FVoxelDensityTerrain::~FVoxelDensityTerrain() = default;
+
+bool FVoxelDensityTerrain::InitializeBiomes(
+    const FVoxelBiomeTable& BiomeTable, const FVoxelTerrainPreset& Preset, FString& OutError)
+{
+    if (Settings.FixedBiome.IsEmpty()) return Biomes.Initialize(BiomeTable, Preset, Seed, &OutError);
+    const int32 Biome = BiomeTable.FindBiome(Settings.FixedBiome);
+    if (Biome == INDEX_NONE)
+    {
+        OutError = FString::Printf(
+            TEXT("%s is not one of the world type's %d biomes"), *Settings.FixedBiome, BiomeTable.Biomes.Num());
+        return false;
+    }
+    return Biomes.InitializeFixed(BiomeTable, Biome, &OutError);
+}
 
 void FVoxelDensityTerrain::ResetCaches() const
 {
@@ -200,8 +229,7 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
 }
 
 void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense,
-    FVoxelDensityTerrainTimings* Timings, const bool* bSkipOverride, const bool* bShareOverride,
-    const EVoxelBiomeFill* BiomeOverride) const
+    FVoxelDensityTerrainTimings* Timings, const FVoxelDensityTerrainOverrides& Overrides) const
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelDensityTerrain_Generate);
     SCOPE_CYCLE_COUNTER(STAT_VoxelGenerateColumn);
@@ -214,7 +242,6 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
         return;
     }
     constexpr int32 Size = VoxelConstants::ColumnSize;
-    const int32 SeaTop = SeaLevel - 1;
     TUniquePtr<FScratch> Scratch = TakeScratch();
 
     const int32 X0 = Position.X * Size, Z0 = Position.Y * Size;
@@ -229,9 +256,9 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
     {
         TRACE_CPUPROFILER_EVENT_SCOPE(Voxel_DensityColumn);
         SCOPE_CYCLE_COUNTER(STAT_VoxelDensityColumn);
-        Column.Generate(X0, Z0, bSkipOverride ? *bSkipOverride : Settings.bSkip, Scratch->Column, Scratch->Density,
-            &Stats, Settings.bCaves ? Aquifer.GetKeepEmpty(Scratch->Aquifer) : TConstArrayView<uint8>(),
-            !bShareOverride || *bShareOverride ? CornerCache.Get() : nullptr);
+        Column.Generate(X0, Z0, Overrides.bSkip.Get(Settings.bSkip), Scratch->Column, Scratch->Density, &Stats,
+            Settings.bCaves ? Aquifer.GetKeepEmpty(Scratch->Aquifer) : TConstArrayView<uint8>(),
+            Overrides.bShareCorners.Get(true) ? CornerCache.Get() : nullptr);
     }
     const double AfterDensity = FPlatformTime::Seconds();
     if (Settings.bCaves)
@@ -241,71 +268,24 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
         Aquifer.Fill(X0, Z0, Scratch->Density, Scratch->Aquifer, Scratch->Fluids);
     }
     const double AfterAquifer = FPlatformTime::Seconds();
-    // Before the blocks, which the surface rules (session 5) will choose by biome.
+    // Before the blocks, which the surface rules choose by biome.
     if (Biomes.IsInitialized())
     {
         FVoxelBiomeStorage Storage;
-        Biomes.FillColumn(Position, Scratch->Biome, Storage, BiomeOverride ? *BiomeOverride : EVoxelBiomeFill::Pruned);
+        Biomes.FillColumn(Position, Scratch->Biome, Storage, Overrides.BiomeFill.Get(EVoxelBiomeFill::Pruned));
         Out.SetBiomes(MoveTemp(Storage));
     }
     const double Middle = FPlatformTime::Seconds();
+    FVoxelDensityTerrainTimings SurfaceTimings;
     {
         TRACE_CPUPROFILER_EVENT_SCOPE(Voxel_FillColumn);
         SCOPE_CYCLE_COUNTER(STAT_VoxelFillColumn);
-        const TArray<float>& Density = Scratch->Density;
-        const TArray<EVoxelAquiferFluid>& Fluids = Scratch->Fluids;
-        for (int32 LocalY = 0; LocalY < Size; ++LocalY)
-            for (int32 LocalX = 0; LocalX < Size; ++LocalX)
-            {
-                const int32 X = X0 + LocalX, Y = Z0 + LocalY;
-                const int32 SoilDepth =
-                    3 + FMath::Clamp(FMath::FloorToInt32((Soil.Sample(X + .5, Y + .5) + 1) * 1.5f), 0, 2);
-                // Blocks below the top of the current solid run; -1 above solid ground.
-                int32 Depth = -1;
-                // With caves, only the first surface from the sky is dressed; cave floors stay bare rock.
-                bool bDressed = false, bBare = false;
-                uint16 Top = Blocks.Grass, Under = Blocks.Dirt;
-                for (int32 Z = VoxelConstants::MaxZ; Z >= VoxelConstants::MinZ; --Z)
-                {
-                    const int32 Index = ((Z - VoxelConstants::MinZ) * Size + LocalY) * Size + LocalX;
-                    const EVoxelAquiferFluid Fluid = Settings.bCaves ? Fluids[Index]
-                        : Z <= SeaTop                                ? EVoxelAquiferFluid::Water
-                                                                     : EVoxelAquiferFluid::Air;
-                    uint16 State;
-                    if (Density[Index] > 0 || Fluid == EVoxelAquiferFluid::Barrier)
-                    {
-                        if (Depth < 0)
-                        {
-                            // A new surface: its dressing depends on how it sits against the sea.
-                            bBare = Settings.bCaves && bDressed;
-                            Top = Blocks.Grass;
-                            Under = Blocks.Dirt;
-                            if (Z < SeaTop - 6)
-                                Top = Under = Blocks.Gravel;
-                            else if (Z <= SeaTop + 2)
-                                Top = Under = Blocks.Sand;
-                            bDressed = true;
-                        }
-                        ++Depth;
-                        if (DensityTerrainIsLowerLayer(Seed, X, Y, Z, VoxelConstants::MinZ, VoxelConstants::MinZ + 5))
-                            State = Blocks.Bedrock;
-                        else if (Depth < SoilDepth && !bBare)
-                            State = Depth == 0 ? Top : Under;
-                        else if (DensityTerrainIsLowerLayer(Seed, X, Y, Z, 0, 8))
-                            State = Blocks.Deepslate;
-                        else
-                            State = Blocks.Stone;
-                    }
-                    else
-                    {
-                        Depth = -1;
-                        State = Fluid == EVoxelAquiferFluid::Water ? Blocks.Water
-                            : Fluid == EVoxelAquiferFluid::Lava    ? Blocks.Lava
-                                                                   : uint16(0);
-                    }
-                    Dense[FVoxelColumn::GetDenseIndex(LocalX, LocalY, Z)] = State;
-                }
-            }
+        if (SurfaceRules.IsCompiled() && Overrides.bSurfaceRules.Get(Settings.bSurfaceRules) &&
+            !Out.GetBiomes().IsEmpty())
+            FillWithRules(Position, Out, Dense, *Scratch, Overrides.bSurfaceShortcut.Get(Settings.bSurfaceShortcut),
+                SurfaceTimings);
+        else
+            FillDressed(X0, Z0, Dense, *Scratch);
         Out.Build(Dense, Table);
     }
     ReturnScratch(MoveTemp(Scratch));
@@ -315,6 +295,165 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
         Timings->AquiferMs = ((AfterPrepare - Start) + (AfterAquifer - AfterDensity)) * 1000;
         Timings->BiomesMs = (Middle - AfterAquifer) * 1000;
         Timings->BlocksMs = (FPlatformTime::Seconds() - Middle) * 1000;
+        Timings->SurfaceMs = SurfaceTimings.SurfaceMs;
+        Timings->PreliminaryMs = SurfaceTimings.PreliminaryMs;
+        Timings->FreezeMs = SurfaceTimings.FreezeMs;
+        Timings->SurfaceDeep = SurfaceTimings.SurfaceDeep;
+        Timings->SurfaceInterior = SurfaceTimings.SurfaceInterior;
+        Timings->SurfaceFull = SurfaceTimings.SurfaceFull;
+        Timings->SurfaceInteriorRuns = SurfaceTimings.SurfaceInteriorRuns;
+        Timings->SurfaceSteps = SurfaceTimings.SurfaceSteps;
         Timings->Density = Stats;
     }
+}
+
+void FVoxelDensityTerrain::FillDressed(int32 X0, int32 Z0, TArray<uint16>& Dense, const FScratch& Scratch) const
+{
+    constexpr int32 Size = VoxelConstants::ColumnSize;
+    const int32 SeaTop = SeaLevel - 1;
+    const TArray<float>& Density = Scratch.Density;
+    const TArray<EVoxelAquiferFluid>& Fluids = Scratch.Fluids;
+    for (int32 LocalY = 0; LocalY < Size; ++LocalY)
+        for (int32 LocalX = 0; LocalX < Size; ++LocalX)
+        {
+            const int32 X = X0 + LocalX, Y = Z0 + LocalY;
+            const int32 SoilDepth =
+                3 + FMath::Clamp(FMath::FloorToInt32((Soil.Sample(X + .5, Y + .5) + 1) * 1.5f), 0, 2);
+            // Blocks below the top of the current solid run; -1 above solid ground.
+            int32 Depth = -1;
+            // With caves, only the first surface from the sky is dressed; cave floors stay bare rock.
+            bool bDressed = false, bBare = false;
+            uint16 Top = Blocks.Grass, Under = Blocks.Dirt;
+            for (int32 Z = VoxelConstants::MaxZ; Z >= VoxelConstants::MinZ; --Z)
+            {
+                const int32 Index = ((Z - VoxelConstants::MinZ) * Size + LocalY) * Size + LocalX;
+                const EVoxelAquiferFluid Fluid = Settings.bCaves ? Fluids[Index]
+                    : Z <= SeaTop                                ? EVoxelAquiferFluid::Water
+                                                                 : EVoxelAquiferFluid::Air;
+                uint16 State;
+                if (Density[Index] > 0 || Fluid == EVoxelAquiferFluid::Barrier)
+                {
+                    if (Depth < 0)
+                    {
+                        // A new surface: its dressing depends on how it sits against the sea.
+                        bBare = Settings.bCaves && bDressed;
+                        Top = Blocks.Grass;
+                        Under = Blocks.Dirt;
+                        if (Z < SeaTop - 6)
+                            Top = Under = Blocks.Gravel;
+                        else if (Z <= SeaTop + 2)
+                            Top = Under = Blocks.Sand;
+                        bDressed = true;
+                    }
+                    ++Depth;
+                    if (DensityTerrainIsLowerLayer(Seed, X, Y, Z, VoxelConstants::MinZ, VoxelConstants::MinZ + 5))
+                        State = Blocks.Bedrock;
+                    else if (Depth < SoilDepth && !bBare)
+                        State = Depth == 0 ? Top : Under;
+                    else if (DensityTerrainIsLowerLayer(Seed, X, Y, Z, 0, 8))
+                        State = Blocks.Deepslate;
+                    else
+                        State = Blocks.Stone;
+                }
+                else
+                {
+                    Depth = -1;
+                    State = Fluid == EVoxelAquiferFluid::Water ? Blocks.Water
+                        : Fluid == EVoxelAquiferFluid::Lava    ? Blocks.Lava
+                                                               : uint16(0);
+                }
+                Dense[FVoxelColumn::GetDenseIndex(LocalX, LocalY, Z)] = State;
+            }
+        }
+}
+
+void FVoxelDensityTerrain::FillWithRules(FIntPoint Position, const FVoxelColumn& Out, TArray<uint16>& Dense,
+    FScratch& Scratch, bool bShortcut, FVoxelDensityTerrainTimings& Timings) const
+{
+    constexpr int32 Size = VoxelConstants::ColumnSize, Height = VoxelConstants::Height;
+    const int32 SeaTop = SeaLevel - 1;
+    const int32 X0 = Position.X * Size, Y0 = Position.Y * Size;
+    const TArray<float>& Density = Scratch.Density;
+    const TArray<EVoxelAquiferFluid>& Fluids = Scratch.Fluids;
+
+    // What each block holds before the rules (the aquifer's barriers are stone), and each block column's top non-air
+    // block for the steep test.
+    Scratch.Kinds.SetNumUninitialized(Size * Size * Height);
+    int32 Heights[Size * Size];
+    for (int32 LocalY = 0; LocalY < Size; ++LocalY)
+        for (int32 LocalX = 0; LocalX < Size; ++LocalX)
+        {
+            EVoxelSurfaceKind* Kinds = &Scratch.Kinds[(LocalY * Size + LocalX) * Height];
+            int32 Top = VoxelConstants::MinZ - 1;
+            for (int32 Z = VoxelConstants::MinZ; Z <= VoxelConstants::MaxZ; ++Z)
+            {
+                const int32 Index = FVoxelColumn::GetDenseIndex(LocalX, LocalY, Z);
+                const EVoxelAquiferFluid Fluid = Settings.bCaves ? Fluids[Index]
+                    : Z <= SeaTop                                ? EVoxelAquiferFluid::Water
+                                                                 : EVoxelAquiferFluid::Air;
+                EVoxelSurfaceKind Kind = EVoxelSurfaceKind::Air;
+                uint16 State = 0;
+                if (Density[Index] > 0 || Fluid == EVoxelAquiferFluid::Barrier)
+                {
+                    Kind = EVoxelSurfaceKind::Solid;
+                    State = Blocks.Stone;
+                }
+                else if (Fluid == EVoxelAquiferFluid::Water)
+                {
+                    Kind = EVoxelSurfaceKind::Water;
+                    State = Blocks.Water;
+                }
+                else if (Fluid == EVoxelAquiferFluid::Lava)
+                {
+                    Kind = EVoxelSurfaceKind::Lava;
+                    State = Blocks.Lava;
+                }
+                Kinds[Z - VoxelConstants::MinZ] = Kind;
+                Dense[Index] = State;
+                if (Kind != EVoxelSurfaceKind::Air) Top = Z;
+            }
+            Heights[LocalY * Size + LocalX] = Top;
+        }
+
+    const double Start = FPlatformTime::Seconds();
+    TRACE_CPUPROFILER_EVENT_SCOPE(Voxel_SurfaceRules);
+    // The preliminary surface at the column's four corners, lerped across it as the jar does.
+    double Corners[4];
+    {
+        const double PX[4] = {double(X0), double(X0 + Size), double(X0), double(X0 + Size)};
+        const double PY[4] = {0, 0, 0, 0};
+        const double PZ[4] = {double(Y0), double(Y0), double(Y0 + Size), double(Y0 + Size)};
+        SurfaceEvaluator.Evaluate(PX, PY, PZ, 4, Scratch.Point);
+        const TConstArrayView<float> Values = SurfaceEvaluator.GetValues(Scratch.Point, Surface);
+        for (int32 Corner = 0; Corner < 4; ++Corner)
+            Corners[Corner] = Values[Corner];
+    }
+    const double AfterPreliminary = FPlatformTime::Seconds();
+    FVoxelSurfaceChunk& Chunk = Scratch.SurfaceChunk;
+    SurfaceRules.PrepareChunk(Chunk, &Out.GetBiomes(), bShortcut);
+    constexpr int32 Stride = Size * Size;
+    for (int32 LocalY = 0; LocalY < Size; ++LocalY)
+        for (int32 LocalX = 0; LocalX < Size; ++LocalX)
+        {
+            FVoxelSurfaceColumn SurfaceColumn;
+            SurfaceRules.PrepareColumn(SurfaceColumn, X0 + LocalX, Y0 + LocalY,
+                VoxelSurfaceContext::LerpPreliminary(
+                    double(LocalX) / Size, double(LocalY) / Size, Corners[0], Corners[1], Corners[2], Corners[3]),
+                VoxelSurfaceContext::IsSteep(MakeArrayView(Heights), Size, LocalX, LocalY));
+            const int32 First = FVoxelColumn::GetDenseIndex(LocalX, LocalY, VoxelConstants::MinZ);
+            SurfaceRules.ApplyColumn(Chunk, SurfaceColumn, LocalX, LocalY,
+                TConstArrayView<EVoxelSurfaceKind>(&Scratch.Kinds[(LocalY * Size + LocalX) * Height], Height),
+                TArrayView<uint16>(&Dense[First], Dense.Num() - First), Stride, Heights[LocalY * Size + LocalX]);
+        }
+    const double AfterRules = FPlatformTime::Seconds();
+    Freeze.Apply(Position, Dense, Out.GetBiomes(), Biomes.GetTable(), Climate, SeaLevel, MakeArrayView(Heights));
+    const double End = FPlatformTime::Seconds();
+    Timings.SurfaceMs = (End - Start) * 1000;
+    Timings.PreliminaryMs = (AfterPreliminary - Start) * 1000;
+    Timings.FreezeMs = (End - AfterRules) * 1000;
+    Timings.SurfaceDeep = Chunk.DeepBlocks;
+    Timings.SurfaceInterior = Chunk.InteriorBlocks;
+    Timings.SurfaceFull = Chunk.FullBlocks;
+    Timings.SurfaceInteriorRuns = Chunk.InteriorRuns;
+    Timings.SurfaceSteps = Chunk.Steps;
 }

@@ -332,7 +332,7 @@ FString VoxelBench::RunColumns(const FVoxelBlockTable& Table, const IVoxelTerrai
     const int32 Side = 2 * Radius + 1, Columns = Side * Side;
     if (Density)
     {
-        TArray<double> Total, DensityMs, Aquifer, Biomes, Blocks;
+        TArray<double> Total, DensityMs, Aquifer, Biomes, Blocks, Surface;
         TArray<uint16> Dense;
         FVoxelColumn Column;
         Terrain.ResetCaches();
@@ -346,6 +346,7 @@ FString VoxelBench::RunColumns(const FVoxelBlockTable& Table, const IVoxelTerrai
             Aquifer.Add(Timings.AquiferMs);
             Biomes.Add(Timings.BiomesMs);
             Blocks.Add(Timings.BlocksMs);
+            Surface.Add(Timings.SurfaceMs);
         }
         Report += FString::Printf(TEXT("Generation stages, %d columns, one thread:\n"), Columns);
         Report += DensityBenchStage(TEXT("Generate column"), Total) + TEXT("\n");
@@ -353,6 +354,7 @@ FString VoxelBench::RunColumns(const FVoxelBlockTable& Table, const IVoxelTerrai
         Report += DensityBenchStage(TEXT("  aquifer"), Aquifer) + TEXT("\n");
         Report += DensityBenchStage(TEXT("  biomes"), Biomes) + TEXT("\n");
         Report += DensityBenchStage(TEXT("  blocks"), Blocks) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("    surface"), Surface) + TEXT("\n");
     }
 
     const FLoadOrderHashes Hashes = HashLoadOrders(Terrain, Radius);
@@ -370,42 +372,82 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelBench_RunDensity);
     const int32 Side = 2 * Radius + 1, Columns = Side * Side;
     FString Report;
-    TArray<uint16> Dense, Skipped;
+    TArray<uint16> Dense;
     FVoxelColumn Column;
     // One untimed column sizes the scratch, as a worker's would be after its first column.
     Terrain.Generate(FIntPoint::ZeroValue, Column, Dense);
 
-    // Four passes, each starting cold: the default (skipping, corner sharing and biomes), biomes off, sharing off, and
-    // skipping off without sharing (fresh evaluation of every corner). Row by row, so with sharing each column finds
-    // the corners its west and north neighbours evaluated: the best case. Every comparison is against the first pass.
+    // Passes, each starting cold: the default (skipping, corner sharing, biomes, surface rules with the shortcut), then
+    // one setting changed at a time. Row by row, so with sharing each column finds the corners its west and north
+    // neighbours evaluated: the best case. Each pass but rules off must give the blocks of the pass it names.
     struct FPass
     {
-        bool bSkip, bShare;
-        EVoxelBiomeFill Biomes;
+        const TCHAR* Label;
+        FVoxelDensityTerrainOverrides Overrides;
+        // The pass whose blocks this one must equal; INDEX_NONE: timed only.
+        int32 Compare;
+        const TCHAR* Gate;
     };
     const bool bHasBiomes = Terrain.GetBiomeSource() != nullptr;
-    TArray<FPass> Passes = {{true, true, EVoxelBiomeFill::Pruned}, {true, false, EVoxelBiomeFill::Pruned},
-        {false, false, EVoxelBiomeFill::Pruned}};
-    if (bHasBiomes) Passes.Insert({true, true, EVoxelBiomeFill::Off}, 1);
-    int64 Differences = 0, ShareDifferences = 0, BiomeOffDifferences = 0;
+    const bool bHasRules = bHasBiomes && Terrain.GetSurfaceRules().IsCompiled();
+    TArray<FPass> Passes;
+    Passes.Add({TEXT("default"), {}, INDEX_NONE, nullptr});
+    if (bHasRules)
+    {
+        FVoxelDensityTerrainOverrides Shortcut;
+        Shortcut.bSurfaceShortcut = false;
+        Passes.Add({TEXT("surface shortcut off"), Shortcut, 0, TEXT("the surface shortcut on and off")});
+        FVoxelDensityTerrainOverrides Rules;
+        Rules.bSurfaceRules = false;
+        Passes.Add({TEXT("surface rules off"), Rules, INDEX_NONE, nullptr});
+    }
+    if (bHasBiomes)
+    {
+        // Without rules no block reads its biome, so biomes off must give the rules-off blocks.
+        FVoxelDensityTerrainOverrides BiomesOff;
+        BiomesOff.bSurfaceRules = false;
+        BiomesOff.BiomeFill = EVoxelBiomeFill::Off;
+        Passes.Add({TEXT("biomes off, rules off"), BiomesOff, bHasRules ? Passes.Num() - 1 : 0,
+            TEXT("biomes on and off (rules off)")});
+    }
+    FVoxelDensityTerrainOverrides ShareOff;
+    ShareOff.bShareCorners = false;
+    Passes.Add({TEXT("sharing off"), ShareOff, 0, TEXT("sharing on and off")});
+    FVoxelDensityTerrainOverrides SkipOff;
+    SkipOff.bSkip = false;
+    SkipOff.bShareCorners = false;
+    Passes.Add({TEXT("skipping and sharing off"), SkipOff, 0, TEXT("skipping on and off")});
+
+    TArray<TArray<uint16>> Kept;
+    Kept.SetNum(Passes.Num());
+    TArray<int64> Differences;
+    Differences.Init(0, Passes.Num());
+    int64 RulesDifferences = 0;
     for (int32 PassIndex = 0; PassIndex < Passes.Num(); ++PassIndex)
     {
         const FPass& Pass = Passes[PassIndex];
-        const bool bSkip = Pass.bSkip;
-        TArray<double> Total, Density, Aquifer, Biomes, Blocks, Flat, Bounds, Corners, Refine, Cells;
+        TArray<double> Total, Density, Aquifer, Biomes, Blocks, Surface, Preliminary, Freeze, Flat, Bounds, Corners,
+            Refine, Cells;
         int64 SolidCells = 0, EmptyCells = 0, RefinedCells = 0, AllCells = 0, CornerCount = 0, SharedCount = 0;
+        int64 DeepBlocks = 0, InteriorBlocks = 0, FullBlocks = 0, Steps = 0, InteriorRuns = 0;
+        // Keep the blocks of every pass another names, and of the default for the rules-off count.
+        const bool bKeep = PassIndex == 0 ||
+            Passes.ContainsByPredicate([PassIndex](const FPass& Other) { return Other.Compare == PassIndex; });
         Terrain.ResetCaches();
         for (int32 Index = 0; Index < Columns; ++Index)
         {
             const FIntPoint Position(Index % Side - Radius, Index / Side - Radius);
             FVoxelDensityTerrainTimings Timings;
             const double Start = FPlatformTime::Seconds();
-            Terrain.Generate(Position, Column, Dense, &Timings, &bSkip, &Pass.bShare, &Pass.Biomes);
+            Terrain.Generate(Position, Column, Dense, &Timings, Pass.Overrides);
             Total.Add((FPlatformTime::Seconds() - Start) * 1000);
             Density.Add(Timings.DensityMs);
             Aquifer.Add(Timings.AquiferMs);
             Biomes.Add(Timings.BiomesMs);
             Blocks.Add(Timings.BlocksMs);
+            Surface.Add(Timings.SurfaceMs);
+            Preliminary.Add(Timings.PreliminaryMs);
+            Freeze.Add(Timings.FreezeMs);
             Flat.Add(Timings.Density.FlatMs);
             Bounds.Add(Timings.Density.BoundsMs);
             Corners.Add(Timings.Density.CornersMs);
@@ -417,22 +459,24 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
             AllCells += Timings.Density.Cells;
             CornerCount += Timings.Density.CornersEvaluated;
             SharedCount += Timings.Density.CornersShared;
-            if (PassIndex == 0)
-                Skipped.Append(Dense);
-            else
-            {
-                int64& Count = !Pass.bShare ? (bSkip ? ShareDifferences : Differences) : BiomeOffDifferences;
-                for (int32 Cell = 0; Cell < Dense.Num(); ++Cell)
-                    Count += Dense[Cell] != Skipped[Index * Dense.Num() + Cell];
-            }
+            DeepBlocks += Timings.SurfaceDeep;
+            InteriorBlocks += Timings.SurfaceInterior;
+            FullBlocks += Timings.SurfaceFull;
+            Steps += Timings.SurfaceSteps;
+            InteriorRuns += Timings.SurfaceInteriorRuns;
+            if (bKeep) Kept[PassIndex].Append(Dense);
+            const int32 Against = Pass.Compare != INDEX_NONE ? Pass.Compare : (PassIndex > 0 ? 0 : INDEX_NONE);
+            if (Against == INDEX_NONE) continue;
+            int64& Count = Pass.Compare != INDEX_NONE ? Differences[PassIndex] : RulesDifferences;
+            for (int32 Cell = 0; Cell < Dense.Num(); ++Cell)
+                Count += Dense[Cell] != Kept[Against][Index * Dense.Num() + Cell];
         }
-        Report += FString::Printf(TEXT("%d columns, one thread, skipping %s, sharing %s, biomes %s: %.1f%% of cells "
-                                       "skipped (%.1f%% solid, %.1f%% empty) from bounds, %.1f%% more from corners, "
-                                       "%.0f corners evaluated and %.0f shared per column\n"),
-            Columns, bSkip ? TEXT("on") : TEXT("off"), Pass.bShare ? TEXT("on") : TEXT("off"),
-            !bHasBiomes ? TEXT("none") : (Pass.Biomes == EVoxelBiomeFill::Off ? TEXT("off") : TEXT("on")),
-            100. * (SolidCells + EmptyCells) / AllCells, 100. * SolidCells / AllCells, 100. * EmptyCells / AllCells,
-            100. * RefinedCells / AllCells, double(CornerCount) / Columns, double(SharedCount) / Columns);
+        Report += FString::Printf(TEXT("%d columns, one thread, %s: %.1f%% of cells skipped (%.1f%% solid, %.1f%% "
+                                       "empty) from bounds, %.1f%% more from corners, %.0f corners evaluated and %.0f "
+                                       "shared per column\n"),
+            Columns, Pass.Label, 100. * (SolidCells + EmptyCells) / AllCells, 100. * SolidCells / AllCells,
+            100. * EmptyCells / AllCells, 100. * RefinedCells / AllCells, double(CornerCount) / Columns,
+            double(SharedCount) / Columns);
         Report += DensityBenchStage(TEXT("Generate column"), Total) + TEXT("\n");
         Report += DensityBenchStage(TEXT("  density"), Density) + TEXT("\n");
         Report += DensityBenchStage(TEXT("    flat (climate)"), Flat) + TEXT("\n");
@@ -443,17 +487,25 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
         Report += DensityBenchStage(TEXT("  aquifer"), Aquifer) + TEXT("\n");
         Report += DensityBenchStage(TEXT("  biomes"), Biomes) + TEXT("\n");
         Report += DensityBenchStage(TEXT("  blocks"), Blocks) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("    surface"), Surface) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("      preliminary"), Preliminary) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("      freeze"), Freeze) + TEXT("\n");
+        if (FullBlocks > 0)
+            Report += FString::Printf(TEXT("  surface blocks per column: %.0f deep, %.0f interior (%.0f heights "
+                                           "built), %.0f through the tree (%.1f of %d instructions each)\n"),
+                double(DeepBlocks) / Columns, double(InteriorBlocks) / Columns, double(InteriorRuns) / Columns,
+                double(FullBlocks) / Columns, double(Steps) / FullBlocks, Terrain.GetSurfaceRules().GetProgramSize());
     }
-    Report += FString::Printf(TEXT("Blocks that differ with skipping on and off: %lld of %lld\n"), Differences,
-        int64(Columns) * FVoxelColumn::DenseVolume);
-    if (bHasBiomes)
-    {
-        Report += FString::Printf(TEXT("Blocks that differ with biomes on and off: %lld of %lld\n"),
-            BiomeOffDifferences, int64(Columns) * FVoxelColumn::DenseVolume);
-        Report += CompareBiomeFills(*Terrain.GetBiomeSource(), FMath::Min(Radius, 1)) + TEXT("\n");
-    }
-    Report += FString::Printf(TEXT("Blocks that differ with sharing on and off: %lld of %lld (corner cache %.1f MB)\n"),
-        ShareDifferences, int64(Columns) * FVoxelColumn::DenseVolume, Terrain.GetCornerCacheBytes() / 1048576.);
+    const int64 AllBlocks = int64(Columns) * FVoxelColumn::DenseVolume;
+    for (int32 PassIndex = 0; PassIndex < Passes.Num(); ++PassIndex)
+        if (Passes[PassIndex].Gate)
+            Report += FString::Printf(TEXT("Blocks that differ with %s: %lld of %lld\n"), Passes[PassIndex].Gate,
+                Differences[PassIndex], AllBlocks);
+    if (bHasRules)
+        Report += FString::Printf(TEXT("Blocks the surface rules change (rules on against off): %lld of %lld\n"),
+            RulesDifferences, AllBlocks);
+    if (bHasBiomes) Report += CompareBiomeFills(*Terrain.GetBiomeSource(), FMath::Min(Radius, 1)) + TEXT("\n");
+    Report += FString::Printf(TEXT("Corner cache %.1f MB\n"), Terrain.GetCornerCacheBytes() / 1048576.);
 
     const int32 Workers = FMath::Max(1, int32(LowLevelTasks::FScheduler::Get().GetNumWorkers()));
     Terrain.ResetCaches();

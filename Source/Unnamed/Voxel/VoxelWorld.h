@@ -135,6 +135,9 @@ private:
 
     // -VoxelShot: the shot being taken, frames spent on it, its summed GPU time and the finished shots' means.
     FString ShotFolder;
+    // Where the spawn search starts (-VoxelSpawnAt=X,Y, to shoot a chosen place); the origin by default. It moves only
+    // the spawn, never a block.
+    FIntPoint SpawnSearchCenter = FIntPoint::ZeroValue;
     int32 ShotIndex = INDEX_NONE;
     int32 ShotFrames = 0;
     double ShotGpuMs = 0;

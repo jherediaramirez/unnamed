@@ -1,0 +1,321 @@
+{'x0_z0': (5, 0.788), 'x1_z0': (5, 0.782), 'x2_z0': (5, 0.767), 'x3_z0': (5, 0.744), 'x4_z0': (5, 0.716), 'x5_z0': (4, 0.685), 'x6_z0': (4, 0.653), 'x7_z0': (4, 0.62), 'x8_z0': (4, 0.586), 'x9_z0': (4, 0.552), 'x10_z0': (4, 0.517), 'x11_z0': (4, 0.482), 'x12_z0': (4, 0.449), 'x13_z0': (4, 0.421), 'x14_z0': (4, 0.398), 'x15_z0': (4, 0.383)}
+plains land70 0,1,2,3,4 | a40 grass_block dirt*5
+plains land70 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+plains shore62 0,1,2,3,4 | a40 grass_block dirt*5
+plains shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+plains sea_floor50_water51to62 all | a40 water*12 gravel
+plains high140 0,1,2,3,4 | a40 grass_block dirt*5
+plains high140 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+plains high300 0,1,2,3,4 | a19 grass_block dirt*5
+plains high300 5,6,7,8,9,10,11,12,13,14,15 | a19 grass_block dirt*4
+forest land70 0,1,2,3,4 | a40 grass_block dirt*5
+forest land70 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+forest shore62 0,1,2,3,4 | a40 grass_block dirt*5
+forest shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+forest sea_floor50_water51to62 all | a40 water*12 gravel
+forest high140 0,1,2,3,4 | a40 grass_block dirt*5
+forest high140 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+forest high300 0,1,2,3,4 | a19 grass_block dirt*5
+forest high300 5,6,7,8,9,10,11,12,13,14,15 | a19 grass_block dirt*4
+desert land70 0,1 | a40 sand*6 sandstone*13
+desert land70 2,3,4 | a40 sand*6 sandstone*14
+desert land70 5,6,7 | a40 sand*5 sandstone*15
+desert land70 8,9,10,11,12,13,14,15 | a40 sand*5 sandstone*16
+desert shore62 0,1 | a40 sand*6 sandstone*13
+desert shore62 2,3,4 | a40 sand*6 sandstone*14
+desert shore62 5,6,7 | a40 sand*5 sandstone*15
+desert shore62 8,9,10,11,12,13,14,15 | a40 sand*5 sandstone*16
+desert sea_floor50_water51to62 all | a40 water*12 gravel
+desert high140 0,1 | a40 sand*6 sandstone*13
+desert high140 2,3,4 | a40 sand*6 sandstone*14
+desert high140 5,6,7 | a40 sand*5 sandstone*15
+desert high140 8,9,10,11,12,13,14,15 | a40 sand*5 sandstone*16
+desert high300 0,1 | a19 sand*6 sandstone*13
+desert high300 2,3,4 | a19 sand*6 sandstone*14
+desert high300 5,6,7 | a19 sand*5 sandstone*15
+desert high300 8,9,10,11,12,13,14,15 | a19 sand*5 sandstone*16
+badlands land70 0,1,2,3,4 | a40 red_sand orange_terracotta*7 terracotta red_terracotta*2 terracotta white_terracotta terracotta*5 orange_terracotta terracotta*2 brown_terracotta*
+badlands land70 5,6,7,8,9,10,11,12,13,14,15 | a40 red_sand orange_terracotta*7 terracotta red_terracotta*2 terracotta white_terracotta terracotta*5 orange_terracotta terracotta*2 brown_terracotta*
+badlands shore62 0,1,2,3,4 | a40 red_sand red_terracotta*2 terracotta white_terracotta terracotta*5 orange_terracotta terracotta*2 brown_terracotta*3 white_terracotta light_gray_t
+badlands shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 red_sand red_terracotta*2 terracotta white_terracotta terracotta*5 orange_terracotta terracotta*2 brown_terracotta*3 white_terracotta light_gray_t
+badlands sea_floor50_water51to62 all | a40 water*12 orange_terracotta
+badlands high140 0,1,2,3,4,5,6,7,8,9 | a40 terracotta yellow_terracotta terracotta orange_terracotta yellow_terracotta*3 terracotta*5 orange_terracotta brown_terracotta*2 terracotta*2 yello
+badlands high140 10,11,12,13,14,15 | a40 yellow_terracotta*2 terracotta orange_terracotta yellow_terracotta*3 terracotta*5 orange_terracotta brown_terracotta*2 terracotta*2 yellow_terraco
+badlands high300 all | a19 orange_terracotta terracotta*2 orange_terracotta terracotta*2 orange_terracotta terracotta*2 yellow_terracotta*2 terracotta*2 orange_terracotta te
+wooded_badlands land70 0,1,2,3,4 | a40 red_sand orange_terracotta*7 terracotta red_terracotta*2 terracotta white_terracotta terracotta*5 orange_terracotta terracotta*2 brown_terracotta*
+wooded_badlands land70 5,6,7,8,9,10,11,12,13,14,15 | a40 red_sand orange_terracotta*7 terracotta red_terracotta*2 terracotta white_terracotta terracotta*5 orange_terracotta terracotta*2 brown_terracotta*
+wooded_badlands shore62 0,1,2,3,4 | a40 red_sand red_terracotta*2 terracotta white_terracotta terracotta*5 orange_terracotta terracotta*2 brown_terracotta*3 white_terracotta light_gray_t
+wooded_badlands shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 red_sand red_terracotta*2 terracotta white_terracotta terracotta*5 orange_terracotta terracotta*2 brown_terracotta*3 white_terracotta light_gray_t
+wooded_badlands sea_floor50_water51to62 all | a40 water*12 orange_terracotta
+wooded_badlands high140 0,1,2,3,4,5,6,7,8,9 | a40 coarse_dirt yellow_terracotta terracotta orange_terracotta yellow_terracotta*3 terracotta*5 orange_terracotta brown_terracotta*2 terracotta*2 yell
+wooded_badlands high140 10,11,12,13,14,15 | a40 grass_block yellow_terracotta terracotta orange_terracotta yellow_terracotta*3 terracotta*5 orange_terracotta brown_terracotta*2 terracotta*2 yell
+wooded_badlands high300 0,1,2,3,4,5,6,7,8,9 | a19 coarse_dirt terracotta*2 orange_terracotta terracotta*2 orange_terracotta terracotta*2 yellow_terracotta*2 terracotta*2 orange_terracotta terracot
+wooded_badlands high300 10,11,12,13,14,15 | a19 grass_block terracotta*2 orange_terracotta terracotta*2 orange_terracotta terracotta*2 yellow_terracotta*2 terracotta*2 orange_terracotta terracot
+eroded_badlands land70 0,1,2,3,4 | a40 red_sand orange_terracotta*7 terracotta red_terracotta*2 terracotta white_terracotta terracotta*5 orange_terracotta terracotta*2 brown_terracotta*
+eroded_badlands land70 5,6,7,8,9,10,11,12,13,14,15 | a40 red_sand orange_terracotta*7 terracotta red_terracotta*2 terracotta white_terracotta terracotta*5 orange_terracotta terracotta*2 brown_terracotta*
+eroded_badlands shore62 5 distinct; e.g. a37 red_sand orange_terracotta*2 terracotta red_terracotta*2 terracotta white_terracotta terracotta*5 orange_t
+eroded_badlands sea_floor50_water51to62 all | a40 water*12 orange_terracotta
+eroded_badlands high140 0,1,2,3,4,5,6,7,8,9 | a40 terracotta yellow_terracotta terracotta orange_terracotta yellow_terracotta*3 terracotta*5 orange_terracotta brown_terracotta*2 terracotta*2 yello
+eroded_badlands high140 10,11,12,13,14,15 | a40 yellow_terracotta*2 terracotta orange_terracotta yellow_terracotta*3 terracotta*5 orange_terracotta brown_terracotta*2 terracotta*2 yellow_terraco
+eroded_badlands high300 all | a19 orange_terracotta terracotta*2 orange_terracotta terracotta*2 orange_terracotta terracotta*2 yellow_terracotta*2 terracotta*2 orange_terracotta te
+swamp land70 0,1,2,3,4 | a40 grass_block dirt*5
+swamp land70 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+swamp shore62 0,1,2,3,4 | a40 grass_block dirt*5
+swamp shore62 5,6,11,12,13,14 | a40 grass_block dirt*4
+swamp shore62 7,8,9,10,15 | a40 water dirt*4
+swamp sea_floor50_water51to62 all | a40 water*12 gravel
+swamp high140 0,1,2,3,4 | a40 grass_block dirt*5
+swamp high140 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+swamp high300 0,1,2,3,4 | a19 grass_block dirt*5
+swamp high300 5,6,7,8,9,10,11,12,13,14,15 | a19 grass_block dirt*4
+mangrove_swamp land70 0,1,2,3,4 | a40 mud*6
+mangrove_swamp land70 5,6,7,8,9,10,11,12,13,14,15 | a40 mud*5
+mangrove_swamp shore62 0,1,2,3,4 | a40 mud*6
+mangrove_swamp shore62 5,6,11,12,13,14 | a40 mud*5
+mangrove_swamp shore62 7,8,9,10,15 | a40 water mud*4
+mangrove_swamp sea_floor50_water51to62 all | a40 water*12 gravel
+mangrove_swamp high140 0,1,2,3,4 | a40 mud*6
+mangrove_swamp high140 5,6,7,8,9,10,11,12,13,14,15 | a40 mud*5
+mangrove_swamp high300 0,1,2,3,4 | a19 mud*6
+mangrove_swamp high300 5,6,7,8,9,10,11,12,13,14,15 | a19 mud*5
+beach land70 0,1,2,3,4 | a40 sand*6 sandstone*2
+beach land70 5,6,7,8,9,10,11,12,13,14,15 | a40 sand*5 sandstone*3
+beach shore62 0,1,2,3,4 | a40 sand*6 sandstone*2
+beach shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 sand*5 sandstone*3
+beach sea_floor50_water51to62 all | a40 water*12 gravel
+beach high140 0,1,2,3,4 | a40 sand*6 sandstone*2
+beach high140 5,6,7,8,9,10,11,12,13,14,15 | a40 sand*5 sandstone*3
+beach high300 0,1,2,3,4 | a19 sand*6 sandstone*2
+beach high300 5,6,7,8,9,10,11,12,13,14,15 | a19 sand*5 sandstone*3
+snowy_beach land70 0,1,2,3,4 | a40 sand*6 sandstone*2
+snowy_beach land70 5,6,7,8,9,10,11,12,13,14,15 | a40 sand*5 sandstone*3
+snowy_beach shore62 0,1,2,3,4 | a40 sand*6 sandstone*2
+snowy_beach shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 sand*5 sandstone*3
+snowy_beach sea_floor50_water51to62 all | a40 water*12 gravel
+snowy_beach high140 0,1,2,3,4 | a40 sand*6 sandstone*2
+snowy_beach high140 5,6,7,8,9,10,11,12,13,14,15 | a40 sand*5 sandstone*3
+snowy_beach high300 0,1,2,3,4 | a19 sand*6 sandstone*2
+snowy_beach high300 5,6,7,8,9,10,11,12,13,14,15 | a19 sand*5 sandstone*3
+stony_shore land70 all | a40
+stony_shore shore62 all | a40
+stony_shore sea_floor50_water51to62 all | a40 water*12 gravel
+stony_shore high140 all | a40
+stony_shore high300 all | a19
+river land70 0,1,2,3,4 | a40 grass_block dirt*5
+river land70 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+river shore62 0,1,2,3,4 | a40 grass_block dirt*5
+river shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+river sea_floor50_water51to62 all | a40 water*12 gravel
+river high140 0,1,2,3,4 | a40 grass_block dirt*5
+river high140 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+river high300 0,1,2,3,4 | a19 grass_block dirt*5
+river high300 5,6,7,8,9,10,11,12,13,14,15 | a19 grass_block dirt*4
+frozen_river land70 0,1,2,3,4 | a40 grass_block dirt*5
+frozen_river land70 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+frozen_river shore62 0,1,2,3,4 | a40 grass_block dirt*5
+frozen_river shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+frozen_river sea_floor50_water51to62 all | a40 water*12 gravel
+frozen_river high140 0,1,2,3,4 | a40 grass_block dirt*5
+frozen_river high140 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+frozen_river high300 0,1,2,3,4 | a19 grass_block dirt*5
+frozen_river high300 5,6,7,8,9,10,11,12,13,14,15 | a19 grass_block dirt*4
+ocean land70 0,1,2,3,4 | a40 grass_block dirt*5
+ocean land70 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+ocean shore62 0,1,2,3,4 | a40 grass_block dirt*5
+ocean shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+ocean sea_floor50_water51to62 all | a40 water*12 gravel
+ocean high140 0,1,2,3,4 | a40 grass_block dirt*5
+ocean high140 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+ocean high300 0,1,2,3,4 | a19 grass_block dirt*5
+ocean high300 5,6,7,8,9,10,11,12,13,14,15 | a19 grass_block dirt*4
+deep_ocean land70 0,1,2,3,4 | a40 grass_block dirt*5
+deep_ocean land70 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+deep_ocean shore62 0,1,2,3,4 | a40 grass_block dirt*5
+deep_ocean shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+deep_ocean sea_floor50_water51to62 all | a40 water*12 gravel
+deep_ocean high140 0,1,2,3,4 | a40 grass_block dirt*5
+deep_ocean high140 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+deep_ocean high300 0,1,2,3,4 | a19 grass_block dirt*5
+deep_ocean high300 5,6,7,8,9,10,11,12,13,14,15 | a19 grass_block dirt*4
+warm_ocean land70 0,1,2,3,4 | a40 sand*6 sandstone*2
+warm_ocean land70 5,6,7,8,9,10,11,12,13,14,15 | a40 sand*5 sandstone*3
+warm_ocean shore62 0,1,2,3,4 | a40 sand*6 sandstone*2
+warm_ocean shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 sand*5 sandstone*3
+warm_ocean sea_floor50_water51to62 all | a40 water*12 sand
+warm_ocean high140 0,1,2,3,4 | a40 sand*6 sandstone*2
+warm_ocean high140 5,6,7,8,9,10,11,12,13,14,15 | a40 sand*5 sandstone*3
+warm_ocean high300 0,1,2,3,4 | a19 sand*6 sandstone*2
+warm_ocean high300 5,6,7,8,9,10,11,12,13,14,15 | a19 sand*5 sandstone*3
+lukewarm_ocean land70 0,1,2,3,4 | a40 grass_block dirt*5
+lukewarm_ocean land70 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+lukewarm_ocean shore62 0,1,2,3,4 | a40 grass_block dirt*5
+lukewarm_ocean shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+lukewarm_ocean sea_floor50_water51to62 all | a40 water*12 sand
+lukewarm_ocean high140 0,1,2,3,4 | a40 grass_block dirt*5
+lukewarm_ocean high140 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+lukewarm_ocean high300 0,1,2,3,4 | a19 grass_block dirt*5
+lukewarm_ocean high300 5,6,7,8,9,10,11,12,13,14,15 | a19 grass_block dirt*4
+cold_ocean land70 0,1,2,3,4 | a40 grass_block dirt*5
+cold_ocean land70 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+cold_ocean shore62 0,1,2,3,4 | a40 grass_block dirt*5
+cold_ocean shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+cold_ocean sea_floor50_water51to62 all | a40 water*12 gravel
+cold_ocean high140 0,1,2,3,4 | a40 grass_block dirt*5
+cold_ocean high140 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+cold_ocean high300 0,1,2,3,4 | a19 grass_block dirt*5
+cold_ocean high300 5,6,7,8,9,10,11,12,13,14,15 | a19 grass_block dirt*4
+frozen_ocean land70 10 distinct; e.g. a33 packed_ice*7 grass_block dirt*5
+frozen_ocean shore62 11 distinct; e.g. a25 packed_ice*15 grass_block dirt*5
+frozen_ocean sea_floor50_water51to62 12 distinct; e.g. a25 packed_ice*26 water gravel
+frozen_ocean high140 0,1,2,3,4 | a40 grass_block dirt*5
+frozen_ocean high140 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+frozen_ocean high300 0,1,2,3,4 | a19 grass_block dirt*5
+frozen_ocean high300 5,6,7,8,9,10,11,12,13,14,15 | a19 grass_block dirt*4
+deep_frozen_ocean land70 8 distinct; e.g. a33 packed_ice*7 grass_block dirt*5
+deep_frozen_ocean shore62 11 distinct; e.g. a25 packed_ice*15 grass_block dirt*5
+deep_frozen_ocean sea_floor50_water51to62 12 distinct; e.g. a25 packed_ice*26 water gravel
+deep_frozen_ocean high140 0,1,2,3,4 | a40 grass_block dirt*5
+deep_frozen_ocean high140 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+deep_frozen_ocean high300 0,1,2,3,4 | a19 grass_block dirt*5
+deep_frozen_ocean high300 5,6,7,8,9,10,11,12,13,14,15 | a19 grass_block dirt*4
+frozen_peaks land70 0,1,2,3,4 | a40 snow_block packed_ice*5
+frozen_peaks land70 5,6,7,8 | a40 snow_block packed_ice*4
+frozen_peaks land70 9,10,11,12,13,14,15 | a40 packed_ice*5
+frozen_peaks shore62 0,1,2,3,4 | a40 snow_block packed_ice*5
+frozen_peaks shore62 5,6,7,8 | a40 snow_block packed_ice*4
+frozen_peaks shore62 9,10,11,12,13,14,15 | a40 packed_ice*5
+frozen_peaks sea_floor50_water51to62 all | a40 water*12
+frozen_peaks high140 0,1,2,3,4 | a40 snow_block packed_ice*5
+frozen_peaks high140 5,6,7,8 | a40 snow_block packed_ice*4
+frozen_peaks high140 9,10,11,12,13,14,15 | a40 packed_ice*5
+frozen_peaks high300 0,1,2,3,4 | a19 snow_block packed_ice*5
+frozen_peaks high300 5,6,7,8 | a19 snow_block packed_ice*4
+frozen_peaks high300 9,10,11,12,13,14,15 | a19 packed_ice*5
+jagged_peaks land70 all | a40 snow_block
+jagged_peaks shore62 all | a40 snow_block
+jagged_peaks sea_floor50_water51to62 all | a40 water*12
+jagged_peaks high140 all | a40 snow_block
+jagged_peaks high300 all | a19 snow_block
+snowy_slopes land70 0,1,2,3,4 | a40 snow_block*6
+snowy_slopes land70 5,6,7,8,9,10,11,12,13,14,15 | a40 snow_block*5
+snowy_slopes shore62 0,1,2,3,4 | a40 snow_block*6
+snowy_slopes shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 snow_block*5
+snowy_slopes sea_floor50_water51to62 all | a40 water*12 gravel
+snowy_slopes high140 0,1,2,3,4 | a40 snow_block*6
+snowy_slopes high140 5,6,7,8,9,10,11,12,13,14,15 | a40 snow_block*5
+snowy_slopes high300 0,1,2,3,4 | a19 snow_block*6
+snowy_slopes high300 5,6,7,8,9,10,11,12,13,14,15 | a19 snow_block*5
+grove land70 0,1,2,3,4 | a40 snow_block dirt*5
+grove land70 5,6,7,8,9,10,11,12,13,14,15 | a40 snow_block dirt*4
+grove shore62 0,1,2,3,4 | a40 snow_block dirt*5
+grove shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 snow_block dirt*4
+grove sea_floor50_water51to62 all | a40 water*12 gravel
+grove high140 0,1,2,3,4 | a40 snow_block dirt*5
+grove high140 5,6,7,8,9,10,11,12,13,14,15 | a40 snow_block dirt*4
+grove high300 0,1,2,3,4 | a19 snow_block dirt*5
+grove high300 5,6,7,8,9,10,11,12,13,14,15 | a19 snow_block dirt*4
+stony_peaks land70 all | a40
+stony_peaks shore62 all | a40
+stony_peaks sea_floor50_water51to62 all | a40 water*12 gravel
+stony_peaks high140 all | a40
+stony_peaks high300 all | a19
+windswept_hills land70 all | a40
+windswept_hills shore62 all | a40
+windswept_hills sea_floor50_water51to62 all | a40 water*12 gravel
+windswept_hills high140 all | a40
+windswept_hills high300 all | a19
+windswept_gravelly_hills land70 0,1,2,3,4 | a40 gravel*6
+windswept_gravelly_hills land70 5,6,7,8,9,10,11,12,13,14,15 | a40 gravel*5
+windswept_gravelly_hills shore62 0,1,2,3,4 | a40 gravel*6
+windswept_gravelly_hills shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 gravel*5
+windswept_gravelly_hills sea_floor50_water51to62 all | a40 water*12 gravel
+windswept_gravelly_hills high140 0,1,2,3,4 | a40 gravel*6
+windswept_gravelly_hills high140 5,6,7,8,9,10,11,12,13,14,15 | a40 gravel*5
+windswept_gravelly_hills high300 0,1,2,3,4 | a19 gravel*6
+windswept_gravelly_hills high300 5,6,7,8,9,10,11,12,13,14,15 | a19 gravel*5
+windswept_savanna land70 all | a40
+windswept_savanna shore62 all | a40
+windswept_savanna sea_floor50_water51to62 all | a40 water*12 gravel
+windswept_savanna high140 all | a40
+windswept_savanna high300 all | a19
+old_growth_pine_taiga land70 0,1,2,3,4 | a40 coarse_dirt dirt*5
+old_growth_pine_taiga land70 5,6,7,8,9,10,11,12,13,14,15 | a40 coarse_dirt dirt*4
+old_growth_pine_taiga shore62 0,1,2,3,4 | a40 coarse_dirt dirt*5
+old_growth_pine_taiga shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 coarse_dirt dirt*4
+old_growth_pine_taiga sea_floor50_water51to62 all | a40 water*12 gravel
+old_growth_pine_taiga high140 0,1,2,3,4 | a40 coarse_dirt dirt*5
+old_growth_pine_taiga high140 5,6,7,8,9,10,11,12,13,14,15 | a40 coarse_dirt dirt*4
+old_growth_pine_taiga high300 0,1,2,3,4 | a19 coarse_dirt dirt*5
+old_growth_pine_taiga high300 5,6,7,8,9,10,11,12,13,14,15 | a19 coarse_dirt dirt*4
+old_growth_spruce_taiga land70 0,1,2,3,4 | a40 coarse_dirt dirt*5
+old_growth_spruce_taiga land70 5,6,7,8,9,10,11,12,13,14,15 | a40 coarse_dirt dirt*4
+old_growth_spruce_taiga shore62 0,1,2,3,4 | a40 coarse_dirt dirt*5
+old_growth_spruce_taiga shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 coarse_dirt dirt*4
+old_growth_spruce_taiga sea_floor50_water51to62 all | a40 water*12 gravel
+old_growth_spruce_taiga high140 0,1,2,3,4 | a40 coarse_dirt dirt*5
+old_growth_spruce_taiga high140 5,6,7,8,9,10,11,12,13,14,15 | a40 coarse_dirt dirt*4
+old_growth_spruce_taiga high300 0,1,2,3,4 | a19 coarse_dirt dirt*5
+old_growth_spruce_taiga high300 5,6,7,8,9,10,11,12,13,14,15 | a19 coarse_dirt dirt*4
+ice_spikes land70 0,1,2,3,4 | a40 snow_block dirt*5
+ice_spikes land70 5,6,7,8,9,10,11,12,13,14,15 | a40 snow_block dirt*4
+ice_spikes shore62 0,1,2,3,4 | a40 snow_block dirt*5
+ice_spikes shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 snow_block dirt*4
+ice_spikes sea_floor50_water51to62 all | a40 water*12 gravel
+ice_spikes high140 0,1,2,3,4 | a40 snow_block dirt*5
+ice_spikes high140 5,6,7,8,9,10,11,12,13,14,15 | a40 snow_block dirt*4
+ice_spikes high300 0,1,2,3,4 | a19 snow_block dirt*5
+ice_spikes high300 5,6,7,8,9,10,11,12,13,14,15 | a19 snow_block dirt*4
+mushroom_fields land70 0,1,2,3,4 | a40 mycelium dirt*5
+mushroom_fields land70 5,6,7,8,9,10,11,12,13,14,15 | a40 mycelium dirt*4
+mushroom_fields shore62 0,1,2,3,4 | a40 mycelium dirt*5
+mushroom_fields shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 mycelium dirt*4
+mushroom_fields sea_floor50_water51to62 all | a40 water*12 gravel
+mushroom_fields high140 0,1,2,3,4 | a40 mycelium dirt*5
+mushroom_fields high140 5,6,7,8,9,10,11,12,13,14,15 | a40 mycelium dirt*4
+mushroom_fields high300 0,1,2,3,4 | a19 mycelium dirt*5
+mushroom_fields high300 5,6,7,8,9,10,11,12,13,14,15 | a19 mycelium dirt*4
+dappled_forest land70 0,1,2,3 | a40 grass_block dirt*5
+dappled_forest land70 4 | a40 coarse_dirt dirt*5
+dappled_forest land70 5,6,7,8,9 | a40 coarse_dirt dirt*4
+dappled_forest land70 10,11,12,13,14,15 | a40 grass_block dirt*4
+dappled_forest shore62 0,1,2,3 | a40 grass_block dirt*5
+dappled_forest shore62 4 | a40 coarse_dirt dirt*5
+dappled_forest shore62 5,6,7,8,9 | a40 coarse_dirt dirt*4
+dappled_forest shore62 10,11,12,13,14,15 | a40 grass_block dirt*4
+dappled_forest sea_floor50_water51to62 all | a40 water*12 gravel
+dappled_forest high140 0,1,2,3 | a40 grass_block dirt*5
+dappled_forest high140 4 | a40 coarse_dirt dirt*5
+dappled_forest high140 5,6,7,8,9 | a40 coarse_dirt dirt*4
+dappled_forest high140 10,11,12,13,14,15 | a40 grass_block dirt*4
+dappled_forest high300 0,1,2,3 | a19 grass_block dirt*5
+dappled_forest high300 4 | a19 coarse_dirt dirt*5
+dappled_forest high300 5,6,7,8,9 | a19 coarse_dirt dirt*4
+dappled_forest high300 10,11,12,13,14,15 | a19 grass_block dirt*4
+dripstone_caves land70 all | a40
+dripstone_caves shore62 all | a40
+dripstone_caves sea_floor50_water51to62 all | a40 water*12 gravel
+dripstone_caves high140 all | a40
+dripstone_caves high300 all | a19
+sulfur_caves land70 13 distinct; e.g. a40 stone sulfur*7
+sulfur_caves shore62 12 distinct; e.g. a40
+sulfur_caves sea_floor50_water51to62 14 distinct; e.g. a40 water*12 gravel cinnabar*2
+sulfur_caves high140 16 distinct; e.g. a40 stone sulfur*13 cinnabar*4 sulfur*15
+sulfur_caves high300 15 distinct; e.g. a19 cinnabar*3
+snowy_plains land70 0,1,2,3,4 | a40 grass_block dirt*5
+snowy_plains land70 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+snowy_plains shore62 0,1,2,3,4 | a40 grass_block dirt*5
+snowy_plains shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+snowy_plains sea_floor50_water51to62 all | a40 water*12 gravel
+snowy_plains high140 0,1,2,3,4 | a40 grass_block dirt*5
+snowy_plains high140 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+snowy_plains high300 0,1,2,3,4 | a19 grass_block dirt*5
+snowy_plains high300 5,6,7,8,9,10,11,12,13,14,15 | a19 grass_block dirt*4
+pale_garden land70 0,1,2,3,4 | a40 grass_block dirt*5
+pale_garden land70 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+pale_garden shore62 0,1,2,3,4 | a40 grass_block dirt*5
+pale_garden shore62 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+pale_garden sea_floor50_water51to62 all | a40 water*12 gravel
+pale_garden high140 0,1,2,3,4 | a40 grass_block dirt*5
+pale_garden high140 5,6,7,8,9,10,11,12,13,14,15 | a40 grass_block dirt*4
+pale_garden high300 0,1,2,3,4 | a19 grass_block dirt*5
+pale_garden high300 5,6,7,8,9,10,11,12,13,14,15 | a19 grass_block dirt*4

@@ -1,11 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Biome/VoxelBiomeClimate.h"
 #include "Biome/VoxelBiomeSource.h"
 #include "Density/VoxelColumnDensity.h"
 #include "Density/VoxelCornerCache.h"
 #include "HAL/CriticalSection.h"
 #include "Noise/VoxelNoise.h"
+#include "Surface/VoxelFreezePass.h"
+#include "Surface/VoxelSurfaceEvaluator.h"
 #include "Terrain/VoxelAquifer.h"
 #include "Terrain/VoxelHeightTerrain.h"
 #include "Terrain/VoxelTerrain.h"
@@ -24,6 +27,25 @@ struct FVoxelDensityTerrainSettings
     bool bSkip = true;
     // Corners shared between neighbouring columns (FVoxelCornerCache, about 7 MB); off only to compare against.
     bool bShareCorners = true;
+    // With surface rules and biomes: 26.3's surface rules (FVoxelSurfaceEvaluator), then the freeze pass. Off: the
+    // earlier simple dressing (grass on dirt, sand at the shore, gravel deep under water, bedrock and deepslate mixed
+    // in), kept to compare against.
+    bool bSurfaceRules = true;
+    // The surface rules' deep-stone shortcut (exact); off only to compare against.
+    bool bSurfaceShortcut = true;
+    // Single Biome: this biome everywhere, by full id ("minecraft:desert"). Empty: the multi-noise source.
+    FString FixedBiome;
+};
+
+// Per-call replacements for the settings, for benches and gates; unset keeps the setting. Sharing needs bShareCorners
+// at construction; biomes and rules need their tables.
+struct FVoxelDensityTerrainOverrides
+{
+    TOptional<bool> bSkip;
+    TOptional<bool> bShareCorners;
+    TOptional<EVoxelBiomeFill> BiomeFill;
+    TOptional<bool> bSurfaceRules;
+    TOptional<bool> bSurfaceShortcut;
 };
 
 // What one column's generation cost, by stage.
@@ -33,22 +55,33 @@ struct FVoxelDensityTerrainTimings
     double AquiferMs = 0;
     double BlocksMs = 0;
     double BiomesMs = 0;
+    // Inside BlocksMs: the preliminary surface, the surface rules and the freeze pass; the first and last also apart.
+    double SurfaceMs = 0;
+    double PreliminaryMs = 0;
+    double FreezeMs = 0;
+    // Solid blocks the rules decided from the deep and interior tables and through the full tree, and the full tree's
+    // instructions run.
+    int32 SurfaceDeep = 0, SurfaceInterior = 0, SurfaceFull = 0, SurfaceInteriorRuns = 0;
+    int64 SurfaceSteps = 0;
     FVoxelColumnDensityStats Density;
 };
 
 // Generator 2: a world type's terrain from 26.3's density graph (final_density > 0 is solid), its open space filled by
-// aquifers (FVoxelAquifer: sea water, cave water and still lava), bedrock and deepslate at the bottom, and a simple top
-// layer (grass on dirt, sand at the shore, gravel deep under water) until phase 5's surface rules. With a biome table,
-// each column also gets its biomes (FVoxelBiomeSource, multi-noise over the preset's climate). Axes: the
-// reference's x is our X, its z our Y and its y our Z. Immutable after construction; any worker may generate any
-// column, and the result depends only on the preset, the seed and the column.
+// aquifers (FVoxelAquifer: sea water, cave water and still lava). With a biome table, each column gets its biomes
+// (FVoxelBiomeSource, multi-noise over the preset's climate, or one fixed biome); with surface rules as well, the
+// rules choose every solid block (FVoxelSurfaceEvaluator: bedrock, deepslate, the surface by biome) and the freeze pass
+// adds ice and snow (FVoxelFreezePass). Without rules, a simple dressing stands in. Axes: the reference's x is our X,
+// its z our Y and its y our Z. Immutable after construction; any worker may generate any column, and the result
+// depends only on the preset, the seed and the column.
 class UNNAMEDVOXEL_API FVoxelDensityTerrain final : public IVoxelTerrain
 {
 public:
-    // Table must outlive the terrain; BiomeTable (a parameter list, copied) may be null for no biomes. Check IsValid: a
-    // preset that cannot compile, or biomes that cannot be built, leave the terrain empty.
+    // Table must outlive the terrain; BiomeTable (a parameter list, copied) may be null for no biomes, and
+    // SurfaceInputs (read once) null for no rules. Rules need biomes. Check IsValid: a preset that cannot compile, or
+    // biomes or rules that cannot be built, leave the terrain empty.
     FVoxelDensityTerrain(const FVoxelTerrainPreset& Preset, uint64 InSeed, const FVoxelBlockTable& InTable,
-        const FVoxelDensityTerrainSettings& InSettings = {}, const FVoxelBiomeTable* BiomeTable = nullptr);
+        const FVoxelDensityTerrainSettings& InSettings = {}, const FVoxelBiomeTable* BiomeTable = nullptr,
+        const FVoxelSurfaceInputs* SurfaceInputs = nullptr);
     virtual ~FVoxelDensityTerrain() override;
 
     bool IsValid() const { return Error.IsEmpty(); }
@@ -65,11 +98,10 @@ public:
     // The preset's preliminary surface level (its PS view, a find_top_surface): the y of the top 8-block cell whose
     // smooth density is positive, ignoring the 3D noise.
     int32 EstimateSurface(int32 X, int32 Y) const;
-    // Generates a column and reports its stage times. The overrides replace the settings' bSkip and bShareCorners
-    // (sharing needs bShareCorners at construction) and the biome fill (Pruned by default; ignored without biomes).
+    // Generates a column and reports its stage times, with the settings replaced as Overrides says (the biome fill is
+    // Pruned by default).
     void Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense, FVoxelDensityTerrainTimings* Timings,
-        const bool* bSkipOverride = nullptr, const bool* bShareOverride = nullptr,
-        const EVoxelBiomeFill* BiomeOverride = nullptr) const;
+        const FVoxelDensityTerrainOverrides& Overrides = {}) const;
     // The corner cache's size in bytes, 0 without sharing.
     int64 GetCornerCacheBytes() const;
     // The column's density, ((Z - MinZ) * 16 + local Y) * 16 + local X.
@@ -81,6 +113,10 @@ public:
         return Biomes.IsInitialized() ? &Biomes : nullptr;
     }
     int32 GetFinalDensity() const { return FinalDensity; }
+    // The compiled surface rules; not compiled without rules.
+    const FVoxelSurfaceEvaluator& GetSurfaceRules() const { return SurfaceRules; }
+    const FVoxelBiomeClimate& GetClimate() const { return Climate; }
+    int32 GetSeaLevel() const { return SeaLevel; }
 
     // Rewrites Graph so final_density ignores caves: range choices on a function named */sloped_cheese read it alone,
     // and */caves/noodle becomes a large constant (neutral under final_density's min). Returns the nodes rewritten.
@@ -95,9 +131,18 @@ private:
         FVoxelDensityScratch Biome;
         TArray<float> Density;
         TArray<EVoxelAquiferFluid> Fluids;
+        // Per block column (local Y * 16 + X), bottom-up: what each block holds before the rules.
+        TArray<EVoxelSurfaceKind> Kinds;
+        FVoxelSurfaceChunk SurfaceChunk;
     };
     TUniquePtr<FScratch> TakeScratch() const;
     void ReturnScratch(TUniquePtr<FScratch> Scratch) const;
+    bool InitializeBiomes(const FVoxelBiomeTable& BiomeTable, const FVoxelTerrainPreset& Preset, FString& OutError);
+    // The simple dressing without rules.
+    void FillDressed(int32 X0, int32 Z0, TArray<uint16>& Dense, const FScratch& Scratch) const;
+    // The rules and the freeze pass over the column's biomes, with their times.
+    void FillWithRules(FIntPoint Position, const FVoxelColumn& Out, TArray<uint16>& Dense, FScratch& Scratch,
+        bool bShortcut, FVoxelDensityTerrainTimings& Timings) const;
 
     uint64 Seed;
     const FVoxelBlockTable& Table;
@@ -113,6 +158,9 @@ private:
     TUniquePtr<FVoxelCornerCache> CornerCache;
     FVoxelAquifer Aquifer;
     FVoxelBiomeSource Biomes;
+    FVoxelSurfaceEvaluator SurfaceRules;
+    FVoxelFreezePass Freeze;
+    FVoxelBiomeClimate Climate;
 
     mutable FCriticalSection PoolLock;
     mutable TArray<TUniquePtr<FScratch>> Pool;

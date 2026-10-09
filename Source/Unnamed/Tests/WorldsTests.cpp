@@ -371,6 +371,50 @@ bool FWorldTerrainCheckTest::RunTest(const FString& Parameters)
             VoxelTerrainFactory::Make(&NoBiomesWorld, 263, *VoxelBlocks::GetDefault(), NoBiomesRoot, Error).IsValid());
     }
 
+    // The reference without its surface rules: every generator-2 world is refused, with the folder named.
+    const FString NoRulesRoot = FPaths::ProjectSavedDir() / TEXT("Automation") / TEXT("TerrainCheckNoRules");
+    IFileManager::Get().DeleteDirectory(*NoRulesRoot, false, true);
+    ON_SCOPE_EXIT
+    {
+        IFileManager::Get().DeleteDirectory(*NoRulesRoot, false, true);
+    };
+    IPlatformFile& Files = FPlatformFileManager::Get().GetPlatformFile();
+    if (TestTrue(TEXT("The reference copies"),
+            Files.CopyDirectoryTree(*(NoRulesRoot / TEXT("data")), *(RealRoot / TEXT("data")), true) &&
+                Files.CopyDirectoryTree(*(NoRulesRoot / TEXT("facts")), *(RealRoot / TEXT("facts")), true)) &&
+        TestTrue(TEXT("...and loses its surface rules"),
+            IFileManager::Get().DeleteDirectory(
+                *(NoRulesRoot / TEXT("data/minecraft/worldgen/material_rule")), true, true)))
+    {
+        for (const TCHAR* Type : {TEXT("Default"), TEXT("Large Biomes"), TEXT("AMPLIFIED"), TEXT("Single Biome")})
+        {
+            Error.Reset();
+            TestFalse(FString(TEXT("Without the surface rules a generator-2 world fails: ")) + Type,
+                VoxelTerrainFactory::Check(WorldOf(PresetGenerator, Type), NoRulesRoot, Error));
+            TestTrue(FString::Printf(TEXT("...and its error names the rules (%s)"), *Error),
+                Error.Contains(TEXT("material_rule")));
+        }
+    }
+
+    // Single Biome: any of the overworld list's biomes builds; another id (the Create screen also offers biomes of
+    // other dimensions) refuses the world and names the biome, and world.json stays as it is.
+    FUnnamedSavedWorld SingleBiome = WorldOf(PresetGenerator, TEXT("Single Biome"));
+    for (const TCHAR* Biome : {TEXT("minecraft:desert"), TEXT("minecraft:frozen_peaks"), TEXT("minecraft:deep_dark")})
+    {
+        SingleBiome.Biome = Biome;
+        Error.Reset();
+        const bool bBuilds = VoxelTerrainFactory::Check(SingleBiome, RealRoot, Error);
+        TestTrue(FString::Printf(
+                     TEXT("A Single Biome world of %s builds%s"), Biome, *(bBuilds ? FString() : TEXT(": ") + Error)),
+            bBuilds);
+    }
+    SingleBiome.Biome = TEXT("minecraft:the_void");
+    Error.Reset();
+    TestFalse(TEXT("A Single Biome world of minecraft:the_void is refused"),
+        VoxelTerrainFactory::Check(SingleBiome, RealRoot, Error));
+    TestTrue(FString::Printf(TEXT("...and its error names the biome (%s)"), *Error),
+        Error.Contains(TEXT("minecraft:the_void")));
+
     TestTrue(TEXT("A generator-1 world needs no reference"),
         VoxelTerrainFactory::Check(WorldOf(1, TEXT("Default")), EmptyRoot, Error));
     TestTrue(TEXT("A Superflat world needs no reference"),

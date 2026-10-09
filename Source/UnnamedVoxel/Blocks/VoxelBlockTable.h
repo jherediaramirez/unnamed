@@ -107,8 +107,12 @@ public:
     // A block's default state by id ("stone"); 0 (air) when the block is unknown.
     uint16 FindState(FName Block) const;
     void SetDefaultState(FName Block, uint16 State);
+    // A state's snowy=true variant (grass block, podzol, mycelium under snow); State itself when it has none.
+    uint16 GetSnowyState(uint16 State) const;
+    void SetSnowyState(uint16 State, uint16 Snowy);
 
 private:
     TArray<FVoxelStateInfo> States;
     TMap<FName, uint16> DefaultStates;
+    TMap<uint16, uint16> SnowyStates;
 };

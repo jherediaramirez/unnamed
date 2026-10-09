@@ -7,6 +7,7 @@ class FVoxelBiomeTable;
 class FVoxelDensityGraph;
 class FVoxelSurfaceRules;
 struct FVoxelDensityNoise;
+struct FVoxelSurfaceInputs;
 struct FVoxelTerrainPreset;
 
 // Reads the 26.3 worldgen reference (Reference/minecraft-worldgen-26.3) into the voxel core's plain density graph, and
@@ -51,6 +52,10 @@ namespace VoxelWorldgen
     // Reads material_rule/<Rule>.json and every rule and condition it references into Out (emptied first), then
     // validates the tree. Out.Root is that rule.
     bool ReadSurfaceRules(const FString& Root, const FString& Rule, FVoxelSurfaceRules& Out, FString& OutError);
+
+    // Reads the surface rule tree Rule names (an id, "minecraft:overworld", as a preset's MaterialRule) and the noises
+    // it reads (FVoxelSurfaceEvaluator::GetNoiseIds) into Out.
+    bool ReadSurface(const FString& Root, const FString& Rule, FVoxelSurfaceInputs& Out, FString& OutError);
 
     // Write a rule or a condition back as the reference's JSON. A named node is written as its name, except Index
     // itself when bExpand is set (a named node's own file).

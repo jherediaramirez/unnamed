@@ -553,8 +553,8 @@ namespace
 
         bool ReadSettings(const FJsonObject& Settings, FVoxelTerrainPreset& Out)
         {
-            // Read here, then left for later phases: surface rules and spawn targets (5), mob generation, legacy
-            // seeding.
+            // Read here, then left for later phases: spawn targets, mob generation, legacy seeding. The surface rule
+            // tree's id is kept; ReadSurface reads the tree.
             static const TCHAR* const Known[] = {TEXT("sea_level"), TEXT("noise"), TEXT("default_block"),
                 TEXT("default_fluid"), TEXT("noise_router"), TEXT("aquifers"), TEXT("debug_functions"),
                 TEXT("material_rule"), TEXT("spawn_target"), TEXT("disable_mob_generation"),
@@ -584,6 +584,7 @@ namespace
             Out.SeaLevel = int32(SeaLevel);
             Out.MinY = int32(MinY);
             Out.Height = int32(Height);
+            Settings.TryGetStringField(TEXT("material_rule"), Out.MaterialRule);
 
             const FWorldgenEntry Router[] = {
                 {TEXT("continents"), &Out.Router.Continents},

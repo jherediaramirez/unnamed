@@ -3,6 +3,7 @@
 #include "Biome/VoxelBiomeTable.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "Density/VoxelDensityGraph.h"
+#include "Surface/VoxelSurfaceEvaluator.h"
 #include "Terrain/VoxelDensityTerrain.h"
 #include "Terrain/VoxelFlatTerrain.h"
 #include "Terrain/VoxelHeightTerrain.h"
@@ -16,6 +17,16 @@ const TCHAR* VoxelTerrainFactory::GetPresetName(const FString& Type)
     return Type == TEXT("Large Biomes") ? TEXT("large_biomes")
         : Type == TEXT("AMPLIFIED")     ? TEXT("amplified")
                                         : TEXT("overworld");
+}
+
+bool VoxelTerrainFactory::ReadInputs(const FString& ReferenceRoot, const FString& PresetName,
+    FVoxelTerrainPreset& OutPreset, FVoxelBiomeTable& OutBiomes, FVoxelSurfaceInputs& OutSurface, FString& OutError)
+{
+    // Every generator-2 type picks its biomes from the overworld parameter list, as 26.3's presets do; Large Biomes
+    // stretches the climate instead.
+    return VoxelWorldgen::ReadPreset(ReferenceRoot, PresetName, OutPreset, OutError) &&
+        VoxelWorldgen::ReadBiomeParameters(ReferenceRoot, TEXT("overworld"), OutBiomes, OutError) &&
+        VoxelWorldgen::ReadSurface(ReferenceRoot, OutPreset.MaterialRule, OutSurface, OutError);
 }
 
 TSharedPtr<const IVoxelTerrain> VoxelTerrainFactory::Make(const FUnnamedSavedWorld* World, int64 Seed,
@@ -43,15 +54,18 @@ TSharedPtr<const IVoxelTerrain> VoxelTerrainFactory::Make(const FUnnamedSavedWor
 
     const TCHAR* PresetName = GetPresetName(World ? World->Type : FString(TEXT("Default")));
     FVoxelTerrainPreset Preset;
-    // Every generator-2 type picks its biomes from the overworld parameter list, as 26.3's presets do; Large Biomes
-    // stretches the climate instead.
     FVoxelBiomeTable Biomes;
+    FVoxelSurfaceInputs Surface;
     FString Error;
-    if (VoxelWorldgen::ReadPreset(ReferenceRoot, PresetName, Preset, Error) &&
-        VoxelWorldgen::ReadBiomeParameters(ReferenceRoot, TEXT("overworld"), Biomes, Error))
+    if (ReadInputs(ReferenceRoot, PresetName, Preset, Biomes, Surface, Error))
     {
+        FVoxelDensityTerrainSettings Settings;
+        // A biome outside the overworld list refuses the world (the terrain reports it); world.json is not changed.
+        if (World && World->Type == TEXT("Single Biome")) Settings.FixedBiome = World->Biome;
+        // The dev seed can show the earlier dressing instead, to compare looks; saved worlds always keep the rules.
+        if (!World && FParse::Param(FCommandLine::Get(), TEXT("VoxelNoSurfaceRules"))) Settings.bSurfaceRules = false;
         TSharedRef<FVoxelDensityTerrain> Density =
-            MakeShared<FVoxelDensityTerrain>(Preset, uint64(Seed), Table, FVoxelDensityTerrainSettings(), &Biomes);
+            MakeShared<FVoxelDensityTerrain>(Preset, uint64(Seed), Table, Settings, &Biomes, &Surface);
         if (Density->IsValid()) return Density;
         Error = Density->GetError();
     }

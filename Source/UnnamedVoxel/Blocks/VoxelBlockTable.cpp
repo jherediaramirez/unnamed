@@ -22,3 +22,14 @@ void FVoxelBlockTable::SetDefaultState(FName Block, uint16 State)
 {
     DefaultStates.Add(Block, State);
 }
+
+uint16 FVoxelBlockTable::GetSnowyState(uint16 State) const
+{
+    const uint16* Snowy = SnowyStates.Find(State);
+    return Snowy ? *Snowy : State;
+}
+
+void FVoxelBlockTable::SetSnowyState(uint16 State, uint16 Snowy)
+{
+    SnowyStates.Add(State, Snowy);
+}

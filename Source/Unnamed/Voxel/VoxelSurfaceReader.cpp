@@ -1,4 +1,5 @@
 #include "Biome/VoxelBiomeTable.h"
+#include "Surface/VoxelSurfaceEvaluator.h"
 #include "Surface/VoxelSurfaceRules.h"
 #include "Voxel/VoxelWorldgenJson.h"
 #include "Voxel/VoxelWorldgenReader.h"
@@ -816,6 +817,21 @@ bool VoxelWorldgen::ReadSurfaceRules(
         OutError = FString::Printf(TEXT("material_rule/%s.json: %s"), *Rule, *Invalid);
         return false;
     }
+    return true;
+}
+
+bool VoxelWorldgen::ReadSurface(const FString& Root, const FString& Rule, FVoxelSurfaceInputs& Out, FString& OutError)
+{
+    Out = FVoxelSurfaceInputs();
+    if (!Rule.StartsWith(TEXT("minecraft:")))
+    {
+        OutError = FString::Printf(TEXT("%s is not a surface rule id"), *Rule);
+        return false;
+    }
+    if (!ReadSurfaceRules(Root, Rule.RightChop(10), Out.Rules, OutError)) return false;
+    FVoxelDensityGraph Graph;
+    if (!ReadReferences(Root, {}, FVoxelSurfaceEvaluator::GetNoiseIds(Out.Rules), Graph, OutError)) return false;
+    Out.Noises = MoveTemp(Graph.Noises);
     return true;
 }
 

@@ -1,0 +1,86 @@
+## material_rule/overworld/surface.json
+seq
+  if @on_floor
+    seq
+      if biome(wooded_badlands)
+        if y_above({"add_stone_depth":false,"anchor":{"absolute":97},"surface_depth_multiplier":2})
+          seq
+            if noise(surface,-0.909,-0.5454)
+              =minecraft:coarse_dirt
+            if noise(surface,-0.1818,0.1818)
+              =minecraft:coarse_dirt
+            if noise(surface,0.5454,0.909)
+              =minecraft:coarse_dirt
+            @overworld/biome_surface/default
+      if biome(swamp)
+        if y_above({"add_stone_depth":false,"anchor":{"absolute":62},"surface_depth_multiplier":0})
+          if NOT y_above({"add_stone_depth":false,"anchor":{"absolute":63},"surface_depth_multiplier":0})
+            if noise(surface_swamp,0.0,1.7976931348623157e+308)
+              =minecraft:water
+      if biome(mangrove_swamp)
+        if y_above({"add_stone_depth":false,"anchor":{"absolute":60},"surface_depth_multiplier":0})
+          if NOT y_above({"add_stone_depth":false,"anchor":{"absolute":63},"surface_depth_multiplier":0})
+            if noise(surface_swamp,0.0,1.7976931348623157e+308)
+              =minecraft:water
+  if biome(badlands,eroded_badlands,wooded_badlands)
+    seq
+      if @on_floor
+        seq
+          if y_above({"add_stone_depth":false,"anchor":{"absolute":256},"surface_depth_multiplier":0})
+            =minecraft:orange_terracotta
+          if y_above({"add_stone_depth":true,"anchor":{"absolute":74},"surface_depth_multiplier":1})
+            seq
+              if noise(surface,-0.909,-0.5454)
+                =minecraft:terracotta
+              if noise(surface,-0.1818,0.1818)
+                =minecraft:terracotta
+              if noise(surface,0.5454,0.909)
+                =minecraft:terracotta
+              bandlands {}
+          if @not_underwater
+            seq
+              if @on_ceiling
+                =minecraft:red_sandstone
+              =minecraft:red_sand
+          if NOT hole({})
+            =minecraft:orange_terracotta
+          if @not_under_deep_water
+            =minecraft:white_terracotta
+          @overworld/gravel_or_stone_if_ceiling
+      if y_above({"add_stone_depth":true,"anchor":{"absolute":63},"surface_depth_multiplier":-1})
+        seq
+          if y_above({"add_stone_depth":false,"anchor":{"absolute":63},"surface_depth_multiplier":0})
+            if NOT y_above({"add_stone_depth":true,"anchor":{"absolute":74},"surface_depth_multiplier":1})
+              =minecraft:orange_terracotta
+          bandlands {}
+      if @under_floor
+        if @not_under_deep_water
+          =minecraft:white_terracotta
+  if @on_floor
+    if @not_underwater
+      seq
+        if biome(frozen_ocean,deep_frozen_ocean)
+          if hole({})
+            =minecraft:air
+        @overworld/biome_surface
+  if @not_under_deep_water
+    seq
+      if @on_floor
+        if biome(frozen_ocean,deep_frozen_ocean)
+          if hole({})
+            =minecraft:water
+      if @under_floor
+        @overworld/under_biome_surface
+      if biome(warm_ocean,beach,snowy_beach)
+        if @deep_under_floor
+          =minecraft:sandstone
+      if biome(desert)
+        if @very_deep_under_floor
+          =minecraft:sandstone
+  if @on_floor
+    seq
+      if biome(frozen_peaks,jagged_peaks)
+        =minecraft:stone
+      if biome(warm_ocean,lukewarm_ocean,deep_lukewarm_ocean)
+        @overworld/sand_or_sandstone_if_ceiling
+      @overworld/gravel_or_stone_if_ceiling

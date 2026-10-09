@@ -9,6 +9,7 @@
 #include "Storage/VoxelColumn.h"
 #include "Terrain/VoxelDensityTerrain.h"
 #include "Voxel/VoxelBlocks.h"
+#include "Voxel/VoxelTerrainFactory.h"
 #include "Voxel/VoxelWorldgenReader.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -18,8 +19,9 @@ namespace
     constexpr uint64 DensityTestSeed = 263;
     const TCHAR* const DensityTestPresets[3] = {TEXT("overworld"), TEXT("large_biomes"), TEXT("amplified")};
 
-    // Recorded from the first run; never update to pass. A changed value means saved worlds changed.
-    constexpr uint64 DensityTestGolden[3] = {0x800a889edf05371dull, 0xb2f78828e8b1de94ull, 0xe11d7425da82c0b7ull};
+    // Re-recorded once for the surface rules (phase 5 session 5, a decided change); never update to pass. A changed
+    // value means saved worlds changed.
+    constexpr uint64 DensityTestGolden[3] = {0xf7ba992062080de1ull, 0x9cdb8dff3e065521ull, 0xab4971c1b4ee6520ull};
 
     const TCHAR* const DensityTestNoiseJson = TEXT("{'base_octave':-3,'base_amplitude':0.9381732587751005,'octave_"
                                                    "count':4,'amplitude_modifiers':[1.0,1.0,1.0,0.0]}");
@@ -378,7 +380,9 @@ bool FVoxelDensityTerrainTest::RunTest(const FString& Parameters)
             FVoxelColumn Column;
             TArray<uint16> Dense;
             FVoxelDensityTerrainTimings Timings;
-            Terrain.Generate(Position, Column, Dense, &Timings, bSkip);
+            FVoxelDensityTerrainOverrides Overrides;
+            if (bSkip) Overrides.bSkip = *bSkip;
+            Terrain.Generate(Position, Column, Dense, &Timings, Overrides);
             return Dense;
         };
 
@@ -494,13 +498,17 @@ bool FVoxelDensityGoldenTest::RunTest(const FString& Parameters)
         const TCHAR* const PresetName = DensityTestPresets[PresetIndex];
         FVoxelTerrainPreset Preset;
         FString Error;
-        if (!TestTrue(
-                FString::Printf(TEXT("%s reads (%s)"), PresetName, *Error), DensityTestLoad(PresetName, Preset, Error)))
+        FVoxelBiomeTable Biomes;
+        FVoxelSurfaceInputs Surface;
+        if (!TestTrue(FString::Printf(TEXT("%s reads (%s)"), PresetName, *Error),
+                VoxelTerrainFactory::ReadInputs(
+                    VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Biomes, Surface, Error)))
             continue;
-        // Session 3's goldens: caves off. Caves on has its own (Unnamed.Voxel.Aquifer.Golden).
+        // Caves off; caves on has its own (Unnamed.Voxel.Aquifer.Golden). With biomes and the surface rules since phase
+        // 5 session 5.
         FVoxelDensityTerrainSettings Settings;
         Settings.bCaves = false;
-        const FVoxelDensityTerrain Terrain(Preset, DensityTestSeed, *Table, Settings);
+        const FVoxelDensityTerrain Terrain(Preset, DensityTestSeed, *Table, Settings, &Biomes, &Surface);
         if (!TestTrue(
                 FString::Printf(TEXT("%s terrain is valid (%s)"), PresetName, *Terrain.GetError()), Terrain.IsValid()))
             continue;

@@ -122,6 +122,17 @@ void AVoxelWorld::BuildLayout()
     FString SeedText;
     if (FParse::Value(FCommandLine::Get(), TEXT("VoxelSeed="), SeedText)) StartSeed = FVoxelSeed::Parse(SeedText);
     FParse::Value(FCommandLine::Get(), TEXT("VoxelShot="), ShotFolder);
+    FString SpawnAt;
+    // Not stopping at the comma between X and Y.
+    if (FParse::Value(FCommandLine::Get(), TEXT("VoxelSpawnAt="), SpawnAt, false))
+    {
+        FString X, Y;
+        if (SpawnAt.Split(TEXT(","), &X, &Y) && X.IsNumeric() && Y.IsNumeric())
+            SpawnSearchCenter = FIntPoint(FCString::Atoi(*X), FCString::Atoi(*Y));
+        else
+            UE_LOG(LogUnnamedVoxel, Warning, TEXT("-VoxelSpawnAt=%s is not X,Y; the spawn search starts at the origin"),
+                *SpawnAt);
+    }
     bShotEdits = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotEdits"));
     bShotCaves = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotCaves"));
     FString FlightFolder;
@@ -522,21 +533,26 @@ bool AVoxelWorld::AreSpawnColumnsGenerated() const
 FIntVector AVoxelWorld::GetSpawnCell() const
 {
     if (SpawnCell) return *SpawnCell;
-    // Rings outward from the origin; the first column whose top solid block is dry land wins. Where IsDry is an
-    // estimate, a limited number of candidates are confirmed against the real column.
+    // Rings outward from the search centre (the origin unless -VoxelSpawnAt says otherwise); the first column whose top
+    // solid block is dry land wins. Where IsDry is an estimate, a limited number of candidates are confirmed against
+    // the real column.
+    const FIntPoint Center = SpawnSearchCenter;
     const int32 Reach = FMath::Max(8, VoxelConsole::CVarViewRadius.GetValueOnGameThread() * VoxelConstants::ColumnSize);
     int32 Confirmations = 64;
     for (int32 Ring = 0; Ring <= Reach && Terrain && Confirmations > 0; ++Ring)
         for (int32 Y = -Ring; Y <= Ring; ++Y)
             for (int32 X = -Ring; X <= Ring; ++X)
             {
-                if (FMath::Max(FMath::Abs(X), FMath::Abs(Y)) != Ring || !Terrain->IsDry(X, Y)) continue;
-                if (Confirmations <= 0 || (--Confirmations, !Terrain->ConfirmDry(X, Y))) continue;
-                SpawnCell = FIntVector(X, Y, Terrain->GetSurfaceHeight(X, Y) + 1);
+                if (FMath::Max(FMath::Abs(X), FMath::Abs(Y)) != Ring || !Terrain->IsDry(Center.X + X, Center.Y + Y))
+                    continue;
+                if (Confirmations <= 0 || (--Confirmations, !Terrain->ConfirmDry(Center.X + X, Center.Y + Y))) continue;
+                SpawnCell =
+                    FIntVector(Center.X + X, Center.Y + Y, Terrain->GetSurfaceHeight(Center.X + X, Center.Y + Y) + 1);
                 return *SpawnCell;
             }
-    // All sea: stand on the water surface's floor at the origin.
-    SpawnCell = FIntVector(0, 0, Terrain ? Terrain->GetSurfaceHeight(0, 0) + 1 : VoxelConstants::SeaLevel);
+    // All sea: stand on the water surface's floor at the centre.
+    SpawnCell = FIntVector(
+        Center.X, Center.Y, Terrain ? Terrain->GetSurfaceHeight(Center.X, Center.Y) + 1 : VoxelConstants::SeaLevel);
     return *SpawnCell;
 }
 

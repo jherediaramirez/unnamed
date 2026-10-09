@@ -130,6 +130,8 @@ struct FVoxelTerrainPreset
     int32 Height = 0;
     FString DefaultBlock;
     FString DefaultFluid;
+    // The surface rule tree's id ("minecraft:overworld"); empty when the settings name none.
+    FString MaterialRule;
 
     struct FRouter
     {

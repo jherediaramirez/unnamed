@@ -7,6 +7,7 @@
 #include "Terrain/VoxelAquifer.h"
 #include "Terrain/VoxelDensityTerrain.h"
 #include "Voxel/VoxelBlocks.h"
+#include "Voxel/VoxelTerrainFactory.h"
 #include "Voxel/VoxelWorldgenReader.h"
 #include "VoxelBench.h"
 
@@ -17,8 +18,9 @@ namespace
     constexpr uint64 AquiferTestSeed = 263;
     const TCHAR* const AquiferTestPresets[3] = {TEXT("overworld"), TEXT("large_biomes"), TEXT("amplified")};
 
-    // Recorded once on 2026-10-09 (caves on, phase 4 session 4); never edit to pass a test.
-    constexpr uint64 AquiferTestGolden[3] = {0xe9376e319a221c4cull, 0x9e26565ae0dc0258ull, 0x3e5329bd4ce985c4ull};
+    // Recorded once on 2026-10-09 (caves on, phase 4 session 4), re-recorded once for the surface rules (phase 5
+    // session 5, a decided change); never edit to pass a test.
+    constexpr uint64 AquiferTestGolden[3] = {0x22523b7400c2f38eull, 0x6b19b1927b73266aull, 0x863f9b8b01468a3full};
 
     constexpr int32 AquiferTestMinY = -64;
     constexpr int32 AquiferTestHeight = 384;
@@ -265,12 +267,16 @@ bool FVoxelAquiferGoldenTest::RunTest(const FString& Parameters)
         const TCHAR* const PresetName = AquiferTestPresets[PresetIndex];
         FVoxelTerrainPreset Preset;
         FString Error;
-        if (!TestTrue(
-                FString::Printf(TEXT("%s reads (%s)"), PresetName, *Error), AquiferTestLoad(PresetName, Preset, Error)))
+        FVoxelBiomeTable Biomes;
+        FVoxelSurfaceInputs Surface;
+        if (!TestTrue(FString::Printf(TEXT("%s reads (%s)"), PresetName, *Error),
+                VoxelTerrainFactory::ReadInputs(
+                    VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Biomes, Surface, Error)))
             continue;
+        // With biomes and the surface rules since phase 5 session 5.
         FVoxelDensityTerrainSettings Settings;
         Settings.bCaves = true;
-        const FVoxelDensityTerrain Terrain(Preset, AquiferTestSeed, *Table, Settings);
+        const FVoxelDensityTerrain Terrain(Preset, AquiferTestSeed, *Table, Settings, &Biomes, &Surface);
         if (!TestTrue(
                 FString::Printf(TEXT("%s terrain is valid (%s)"), PresetName, *Terrain.GetError()), Terrain.IsValid()))
             continue;

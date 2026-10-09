@@ -35,7 +35,8 @@ FVector3f FVoxelBiomeStorage::GetJitter(uint64 WorldSeed, int32 QuartX, int32 Qu
     return FVector3f(BiomeJitterAxis(Hash, 54), BiomeJitterAxis(Hash, 44), BiomeJitterAxis(Hash, 34));
 }
 
-FIntVector FVoxelBiomeStorage::GetBlockQuart(int32 LocalX, int32 LocalY, int32 Z) const
+template <typename FGetJitter>
+FIntVector FVoxelBiomeStorage::FindBlockQuart(int32 LocalX, int32 LocalY, int32 Z, FGetJitter GetCornerJitter) const
 {
     check(LocalX >= 0 && LocalX < VoxelConstants::ColumnSize && LocalY >= 0 && LocalY < VoxelConstants::ColumnSize);
     check(Z >= VoxelConstants::MinZ && Z <= VoxelConstants::MaxZ);
@@ -54,8 +55,7 @@ FIntVector FVoxelBiomeStorage::GetBlockQuart(int32 LocalX, int32 LocalY, int32 Z
     {
         const int32 Step[3] = {Corner & 1, (Corner >> 1) & 1, Corner >> 2};
         if (Cell[2] + Step[2] >= Layers) continue;
-        const FVector3f Jitter =
-            GetJitter(Seed, Base[0] + Cell[0] + Step[0], Base[1] + Cell[1] + Step[1], Base[2] + Cell[2] + Step[2]);
+        const FVector3f Jitter = GetCornerJitter(Base, Cell[0] + Step[0], Cell[1] + Step[1], Cell[2] + Step[2]);
         const float DX = Fraction[0] - (float(Step[0]) + Jitter.X);
         const float DY = Fraction[1] - (float(Step[1]) + Jitter.Y);
         const float DZ = Fraction[2] - (float(Step[2]) + Jitter.Z);
@@ -67,6 +67,29 @@ FIntVector FVoxelBiomeStorage::GetBlockQuart(int32 LocalX, int32 LocalY, int32 Z
         }
     }
     return Best;
+}
+
+FIntVector FVoxelBiomeStorage::GetBlockQuart(int32 LocalX, int32 LocalY, int32 Z) const
+{
+    return FindBlockQuart(LocalX, LocalY, Z, [this](const int32* Base, int32 X, int32 Y, int32 QuartZ)
+        { return GetJitter(Seed, Base[0] + X, Base[1] + Y, Base[2] + QuartZ); });
+}
+
+void FVoxelBiomeStorage::FillJitterLayer(int32 Layer, FVector3f* Jitters) const
+{
+    for (int32 Y = 0; Y < Width; ++Y)
+        for (int32 X = 0; X < Width; ++X)
+            Jitters[GetIndex(X, Y, Layer)] =
+                GetJitter(Seed, Column.X * (Width - 1) + X, Column.Y * (Width - 1) + Y, BiomeStorageMinQuartZ + Layer);
+}
+
+int32 FVoxelBiomeStorage::GetBlock(int32 LocalX, int32 LocalY, int32 Z, const FVector3f* Jitters) const
+{
+    if (IsEmpty() || Z < VoxelConstants::MinZ || Z > VoxelConstants::MaxZ) return INDEX_NONE;
+    const FIntVector Quart = FindBlockQuart(LocalX, LocalY, Z,
+        [Jitters](const int32*, int32 X, int32 Y, int32 QuartZ) { return Jitters[GetIndex(X, Y, QuartZ)]; });
+    const uint8 Biome = GetQuart(Quart.X, Quart.Y, Quart.Z);
+    return Biome == None ? INDEX_NONE : int32(Biome);
 }
 
 int32 FVoxelBiomeStorage::GetBlock(int32 LocalX, int32 LocalY, int32 Z) const

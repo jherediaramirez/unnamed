@@ -363,8 +363,9 @@ bool FVoxelBiomeJitterTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("a block's biome through the column"), Column.GetBiome(9, 3, 70), Forward[7].GetBlock(9, 3, 70));
         TestTrue(TEXT("the column counts its biomes' memory"),
             Column.GetAllocatedSize() >= SIZE_T(FVoxelBiomeStorage::Volume));
-        const EVoxelBiomeFill Off = EVoxelBiomeFill::Off;
-        Terrain.Generate(Position, Plain, PlainDense, nullptr, nullptr, nullptr, &Off);
+        FVoxelDensityTerrainOverrides Off;
+        Off.BiomeFill = EVoxelBiomeFill::Off;
+        Terrain.Generate(Position, Plain, PlainDense, nullptr, Off);
         TestTrue(TEXT("biomes off leaves the column without biomes"), Plain.GetBiomes().IsEmpty());
         TestEqual(TEXT("...and a block without a biome"), Plain.GetBiome(9, 3, 70), int32(INDEX_NONE));
         TestTrue(TEXT("...and the same blocks"), Dense == PlainDense);

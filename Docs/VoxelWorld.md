@@ -13,7 +13,7 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 | 2W | Create New World: saved worlds, seed, world type, game mode, difficulty | Done |
 | 3 | Streaming, plus mining and placing on generated terrain | Done |
 | 4 | Terrain: 26.3's density graph, climate, caves, aquifers and lava | Done (5 sessions: worldgen data and reader; noise, climate, splines and debug views; 3D density and generator 2; caves on, aquifers, still lava, cave-lighting decision; performance). Caves-on columns were slightly over 5 ms on two presets; phase 5 session 3's corner sharing brings them under it in the bench's best case ([Known gaps](#known-gaps)) |
-| 5 | Biomes and surface | In progress (sessions 2, 3, 3b and 4 done: reference data, blocks and readers; performance levers; cave brightness and the cave-lighting comparison; the biome source, storage, maps and minimap. Next: sessions 5 and 6) |
+| 5 | Biomes and surface | In progress (sessions 2 to 5 done: reference data, blocks and readers; performance levers; cave brightness and the cave-lighting comparison; the biome source, storage, maps and minimap; surface rules, temperature, the snow line and Single Biome. Next: session 6) |
 | 6 | Decoration, after a block-shapes step (plants, cross models) | |
 | 7 | Structures that fit the land (needs stairs, doors, fences, paths) | |
 | 8 | Mountains | |
@@ -122,7 +122,7 @@ Phase 4 builds the terrain from 26.3's own worldgen data, and phase 5 adds the b
 | Preset | `Density/VoxelDensityGraph.h` | `FVoxelTerrainPreset`: a world type's sea level and height, its router entry points, its aquifer inputs and the 9 debug views (N, T, V, C, E, D, W, PV, PS), all nodes of one graph. The router entries are continents, erosion, ridges, temperature, vegetation, depth, chunk surface level and final density. The aquifer inputs are barrier, exclusion, floodedness, spread, lava and surface level. |
 | Reader | `Voxel/VoxelWorldgenReader.h` (game module) | `VoxelWorldgen::ReadPreset` and `ReadReferences` read files into the graph. `WriteValue` and `WriteNoise` write nodes back as the reference's JSON. Reading is strict: an unknown type, a missing or unexpected field, a bad id, a missing file or a cycle fails with the file and the field. Noise files leave out `octave_count` when it is 1 and `amplitude_modifiers` when all are 1; the reader fills both in. |
 | Biome table | `Biome/VoxelBiomeTable.h` | `FVoxelBiomeTable`: the biomes (`FVoxelBiome`) and the parameter points (`FVoxelBiomeParameter`) of one list, as plain data. `Quantize` turns a float into the table's x10,000 integer and `Validate` checks the table. The lookup is `FVoxelBiomeSource` ([Biomes](#biomes)). |
-| Surface rules | `Surface/VoxelSurfaceRules.h` | `FVoxelSurfaceRules`: a rule tree as flat arrays of rules and conditions, every node after its inputs, as the density graph keeps its nodes. 5 rule ops (`sequence`, `condition`, `block`, `ore_vein`, `bandlands`) and 10 condition ops (`biome`, `noise_threshold`, `vertical_gradient`, `y_above`, `water`, `stone_depth`, `not`, `steep`, `hole`, `above_preliminary_surface`). Ids (blocks, biomes, noises) stay strings for the evaluator. `Validate` checks it. No evaluator yet (phase 5, session 5). |
+| Surface rules | `Surface/VoxelSurfaceRules.h` | `FVoxelSurfaceRules`: a rule tree as flat arrays of rules and conditions, every node after its inputs, as the density graph keeps its nodes. 5 rule ops (`sequence`, `condition`, `block`, `ore_vein`, `bandlands`) and 10 condition ops (`biome`, `noise_threshold`, `vertical_gradient`, `y_above`, `water`, `stone_depth`, `not`, `steep`, `hole`, `above_preliminary_surface`). Ids (blocks, biomes, noises) stay strings for the evaluator. `Validate` checks it. The evaluator is `FVoxelSurfaceEvaluator` ([Surface rules](#surface-rules-temperature-and-snow)). |
 | Biome and surface readers | `Voxel/VoxelSurfaceReader.cpp` (declared in `VoxelWorldgenReader.h`) | `ReadBiomes`, `ReadBiomeParameters` and `ReadSurfaceRules` read the files; `WriteSurfaceRule` and `WriteSurfaceCondition` write nodes back as the reference's JSON. Strict like `ReadPreset`, with the file and field in every error; a biome file's `attributes`, `features` and `carvers` are skipped by name. The overworld tree reads as 231 rules and 107 conditions, with 37 named rules and 7 named conditions. The JSON helpers shared with `ReadPreset` are in `Voxel/VoxelWorldgenJson.h`. |
 
 - **Size:** each preset reads as 24 functions, 279 nodes, 31 noises and 118 splines with 430 points, in about 8 ms in the editor. All 51 functions and 62 noises together make 530 nodes.
@@ -193,7 +193,7 @@ On the maps (seed "Unnamed"): continents span thousands of blocks; Large Biomes 
   - T, H (vegetation), C, E and W come from `FVoxelClimateSampler` at the 25 quart columns.
   - Depth is the router depth's y gradient plus the offset, computed as the evaluator computes it, so it is bit-identical to `SampleDepth`.
   - `Initialize` refuses a preset whose depth is not the offset plus a y gradient.
-- **Fixed source:** `InitializeFixed` gives one biome everywhere, for Single Biome. Session 5 wires it to world.json's `biome`.
+- **Fixed source:** `InitializeFixed` gives one biome everywhere: Single Biome's, from world.json's `biome` ([Surface rules](#surface-rules-temperature-and-snow)).
 - **Storage:** `Biome/VoxelBiomeStorage.h`: `FVoxelBiomeStorage` holds one byte per quart over the column's 5 x 5 x 96 quart lattice (2,400 bytes: its own 4 x 4 plus the next column's first row and column).
   - Every block's lookup is answered inside its own column, whatever is loaded around it. The ring equals the neighbours' own values, because they are pure.
   - `FVoxelColumn` carries the storage (`GetBiomes`, `GetBiome(x, y, z)`). Superflat and the stand-in leave it empty, and an edit keeps it.
@@ -237,8 +237,8 @@ On the maps (seed "Unnamed"): continents span thousands of blocks; Large Biomes 
 `Terrain/VoxelDensityTerrain.h`: `FVoxelDensityTerrain` (`IVoxelTerrain`).
 
 - **Axes:** reference x = our X, z = our Y, y = our Z.
-- **Blocks:** density > 0 is solid. Water fills open space up to Z 62 (sea level 63 - 1). Bedrock thins from Z -64 to -60 and deepslate mixes into stone from Z 0 to 8, as in the stand-in. The top layer is grass on 3 to 5 dirt, sand where the surface is within Z 56..64 and gravel below Z 56, until phase 5's surface rules.
-- **Caves:** on by default (`FVoxelDensityTerrainSettings::bCaves`). Off (`voxel.Bench Density ... nocaves`) gives session 3's terrain exactly (`RemoveCaves`, water to Z 62), and its goldens stay. `RemoveCaves` makes range choices on `*/sloped_cheese` read it alone, and `*/caves/noodle` a neutral constant 64. With caves only the first surface from the sky is dressed (grass/sand/gravel); cave floors stay stone or deepslate.
+- **Blocks:** density > 0 is solid. Water fills open space up to Z 62 (sea level 63 - 1). With biomes and surface rules (every generator-2 world since phase 5 session 5) the rules choose every solid block and the freeze pass adds ice and snow ([Surface rules](#surface-rules-temperature-and-snow)). Without them (`bSurfaceRules` off, or no rules) the earlier dressing stands in: bedrock thinning from Z -64 to -60, deepslate mixing into stone from Z 0 to 8, grass on 3 to 5 dirt, sand where the surface is within Z 56..64 and gravel below Z 56.
+- **Caves:** on by default (`FVoxelDensityTerrainSettings::bCaves`). Off (`voxel.Bench Density ... nocaves`) gives session 3's terrain exactly (`RemoveCaves`, water to Z 62), and its goldens stay. `RemoveCaves` makes range choices on `*/sloped_cheese` read it alone, and `*/caves/noodle` a neutral constant 64. Without surface rules, with caves only the first surface from the sky is dressed (grass/sand/gravel); cave floors stay stone or deepslate.
 - **Spawn:** `IsDry` is cheap (the preset's PS view at or above sea level). `ConfirmDry` and `GetSurfaceHeight` generate the real column (about a millisecond). The spawn search confirms at most 64 candidates. PS rounds down to 8-block cells and ignores the 3D noise, so on maps 74% of the overworld area estimates below sea level, though the real terrain has much more land.
 - **Stats:** "Density column" (`STAT_VoxelDensityColumn`, trace `Voxel_DensityColumn`) and "Fill column blocks" (`STAT_VoxelFillColumn`, `Voxel_FillColumn`), both inside "Generate column".
 
@@ -315,6 +315,58 @@ Evidence: `Tests/Evidence/2026-10-09/VoxelShots-20261009-005643` (first generato
 - **Global rules:** open space below y -54 is lava. Open space with no solid block above it takes the global fluid (no aquifer pockets in oceans or under open sky).
 - **Skipping:** layers whose 27 centres all agree skip the per-block work. `GetKeepEmpty` flags the other y levels so `FVoxelColumnDensity` does not skip those cells as empty (barriers read exact density), which keeps skip on/off exact.
 - **Cost:** 0.5 to 0.7 ms per column. Stat "Aquifer fill" (`STAT_VoxelAquiferColumn`).
+
+### Surface rules, temperature and snow
+
+Phase 5 session 5 replaced the stand-in dressing with 26.3's surface rules (`material_rule/overworld`), run by our own code over our own noise. What each rule and condition does was black-boxed from the jar: [the scout's facts](Records/2026-10-09-Voxel-Phase5-Scout-Facts.md) (sections 1 to 4), with the evidence beside them.
+
+- **Inputs** (`Surface/VoxelSurfaceContext.h`), per block column:
+  - the surface depth, `trunc(surface * 2.75 + 3 + r * 0.25)` with `r` from `Hash64(seed, "surface/depth", x, y)`;
+  - the preliminary surface P: the preset's `preliminary_surface_level` (`find_top_surface`) at the generated column's four corners, lerped across it as the jar does. The minimum surface level is `floor(P) + depth - 8`;
+  - steep: 26.3's chunk-local test (the height 1 block south minus 1 north is 4 or more, or 1 west minus 1 east). Neighbours clamp to the column, so no column reads another and load order cannot matter;
+  - per block, from one top-down pass: the stone depth above (air resets it; fluid neither counts nor resets it), below (to the next air or fluid), and the water height (set at the first fluid after the last air, lava included).
+- **Evaluator** (`Surface/VoxelSurfaceEvaluator.h`): the tree compiles into a linear program (overworld: 261 instructions). A failed condition jumps past its rule, the first block given ends the run, and inversions fold into the tests.
+  - Ids resolve once: 32 blocks, biome sets as bit masks, 11 noises (`FVoxelNormalNoise`, seeded like the density graph's).
+  - Each solid block takes the biome its own position gives (`FVoxelBiomeStorage::GetBlock`, the jittered per-block lookup).
+  - Ore veins give nothing until phase 6.
+- **Our own parts:**
+  - the vertical gradients: `Hash64(seed, random_name, x, y, z)`; bedrock from Z -64 to -59, deepslate from 0 to 8;
+  - the depth jitter;
+  - the badlands bands: a 192-block pattern from a seeded stream, offset by `round(clay_bands_offset * 4)`. About half is plain terracotta, with orange singles every 4 to 8 blocks, yellow, brown and red runs, and white beside light gray. Badlands look like 26.3's but do not match them block for block.
+- **The exact shortcut** (`FVoxelDensityTerrainSettings::bSurfaceShortcut`): per generated column, the tree is decided once per height where the height and the biomes of the quart layers are enough.
+  - Below a column's minimum surface level, the surface branch cannot run (the deep table). Rows it cannot decide alone, the gradients, resume the tree where the table stopped, and rows that give nothing are not visited.
+  - Some blocks lie deeper in their run than every stone_depth condition the column's biomes can reach. They take the interior table, which works out each instruction's outcome backwards; an undecided test whose two ways end alike counts as decided.
+  - Biome tests read the layer masks first, and corner jitters are cached per column.
+  - Off, every solid block runs the whole tree and looks its biome up directly. Both give the same blocks (the bench and `Surface.Exact`).
+- **Temperature** (`Biome/VoxelBiomeClimate.h`):
+  - the biome's temperature, with the frozen oceans' modifier (0.2 in open-water patches, from two seedless noises);
+  - above sea level + 17 (Z 80), minus `(Z - 80 + wobble) * 0.05 / 40`, in float as the jar computes it. The wobble is a seedless noise of up to 8 blocks;
+  - cold enough to snow: below 0.15 (strictly);
+  - the climate noises take no world seed, as in 26.3.
+- **The freeze pass** (`Surface/VoxelFreezePass.h`) runs after the rules. Per block column, the top is the position above the highest block that blocks movement or holds fluid. With the biome there:
+  - still water just below the top turns to ice when cold;
+  - a cold top takes one snow layer, if the block below can hold it (a full top face; not ice, packed ice, powder snow or barriers). Grass, podzol and mycelium below turn snowy (`FVoxelBlockTable::GetSnowyState`);
+  - block light is taken as 0;
+  - when trees arrive, run it after them.
+- **Not built (decided):** eroded-badlands hoodoos and frozen-ocean icebergs, which 26.3 makes in code rather than data.
+- **Single Biome:** world.json's `biome` becomes the fixed source (`FVoxelDensityTerrainSettings::FixedBiome`). An id outside the overworld list refuses the world and names the id; world.json is not changed. The Create screen also offers other dimensions' biomes, such as `minecraft:the_void`.
+- **Off:** `bSurfaceRules = false` keeps the earlier dressing, for comparisons.
+
+| Measured (Development editor, seed "Unnamed", Minecraft open; `voxel.Bench Density 4`, 81 columns, one thread, same run) | overworld | large_biomes | amplified |
+|---|---|---|---|
+| Whole column, rules on: mean / p50 ms | 5.16 / 4.38 | 5.20 / 4.54 | 6.33 / 5.39 |
+| Whole column, rules off | 4.41 / 3.85 | 4.66 / 3.90 | 4.86 / 4.29 |
+| Surface stage (inside it): mean / p50 / p95 | 0.76 / 0.61 / 1.70 | 0.82 / 0.63 / 1.70 | 1.04 / 0.89 / 1.97 |
+| Surface stage with the shortcut off, mean | 7.35 | 9.21 | 7.77 |
+| Solid blocks per column: deep table / interior table / whole tree | 14,525 / 3,730 / 3,780 | 14,503 / 4,808 / 3,736 | 14,063 / 15,020 / 3,922 |
+| Blocks the rules change, of 7,962,624 | 147,926 | 106,000 | 135,887 |
+
+- **Of the stage:** the preliminary surface takes about 0.03 ms and the freeze pass about 0.06 ms. A block the whole tree decides runs 7 to 9 of the 261 instructions.
+- **Against the 5 ms limit:** with Minecraft open, every preset's mean is over it with the rules on and under it with them off (4.41 to 4.86). The passes run one after another, so the whole-column difference (0.75, 0.54 and 1.47 ms) and the stage's own mean disagree by up to 0.4 ms: run-to-run noise on a busy machine. Session 6's normal-noise lever and a quiet-machine benchmark come next ([Known gaps](#known-gaps)).
+- **Across 30 workers** (`voxel.Bench Columns 8`, 289 columns): 0.27, 0.27 and 0.29 ms per column.
+- **Gates** (radius 4, all three presets): 0 of 7,962,624 blocks differ with the shortcut on and off, with biomes on and off (rules off), with sharing on and off, and with skipping on and off.
+- **Radius-8 block hashes,** equal in both load orders: overworld `0xeb1c3d76838e2481`, large_biomes `0xcb42685280f8b57c`, amplified `0xc4403ff66465fcf0`. Biome hashes are unchanged from session 4.
+- **Mutation checks:** snow at or below 0.15 instead of below fails `Surface.Snow`; steep's two directions swapped fail `Surface.Conditions`.
 
 ## Storage and meshing
 
@@ -622,7 +674,7 @@ Limits:
 
 ## Tests
 
-`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 52 `Unnamed.Voxel` tests (every native suite: 100). Saved worlds are tested by `Unnamed.Worlds.Saved` (native) and, through the menu end to end, by `Tests/create-world.mjs`. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
+`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 56 `Unnamed.Voxel` tests (every native suite: 104). Saved worlds are tested by `Unnamed.Worlds.Saved` (native) and, through the menu end to end, by `Tests/create-world.mjs`. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
 
 | Test | Checks |
 |---|---|
@@ -663,22 +715,26 @@ Limits:
 | `Unnamed.Voxel.Density.Ops` | The jar-confirmed op values of session 3 (`interval_select`, `gradient`, `interpolated`, `find_top_surface`). |
 | `Unnamed.Voxel.Density.Column` | The column equals direct evaluation bit for bit on 3 presets x 3 columns x 300 blocks; skipped cells keep the sign. |
 | `Unnamed.Voxel.Density.Terrain` | Runs caves off and on. Skipping on and off are equal on 25 columns per preset; row, reverse and parallel orders are equal; the bedrock, sea and air rules; `GetSurfaceHeight` and `ConfirmDry` agree with the column. |
-| `Unnamed.Voxel.Density.Golden` | Block hashes per preset, seed 263 (caves off, session 3's). |
+| `Unnamed.Voxel.Density.Golden` | Block hashes per preset, seed 263, caves off, with biomes and surface rules. Re-recorded once for the rules (phase 5 session 5): overworld `0xf7ba992062080de1`, large_biomes `0x9cdb8dff3e065521`, amplified `0xab4971c1b4ee6520`. |
 | `Unnamed.Voxel.Aquifer.Determinism` | Two aquifers with one seed fill a column identically (and flag the same KeepEmpty rows); a scratch's earlier columns do not change a column; another seed differs. Load order and threads are checked by `Density.Terrain` with caves on. |
 | `Unnamed.Voxel.Aquifer.Fluids` | Over 98 overworld columns: no water below y -54 and open space there is lava, no lava at y -10 or above, water above the sea only under solid ground, and lava and walls exist. |
 | `Unnamed.Voxel.Density.LoadOrder` | In `VoxelAquiferTests.cpp`: 5 x 5 columns per preset with caves, generated in two load orders (row by row; backwards across the workers). Each order starts cold (`ResetCaches`), so the corner cache is shared differently in each. Mismatches 0 and equal combined hashes. |
 | `Unnamed.Voxel.Density.SharedCorners` | Corner sharing changes no value: 5 x 5 columns per preset, caves on, in three orders (row by row, backwards, shuffled), each starting cold, have densities bit-identical to a terrain without sharing, and corners were shared. Then the cache alone: found values are the stored ones bit for bit, a corner column a window away evicts, negative positions work, positions inside a column are never kept, and the table stays within 16 MiB. |
-| `Unnamed.Voxel.Aquifer.Golden` | Caves-on block hashes at the `Density.Golden` positions (seed 263), recorded once: overworld `0xe9376e319a221c4c`, large_biomes `0x9e26565ae0dc0258`, amplified `0x3e5329bd4ce985c4`. |
+| `Unnamed.Voxel.Aquifer.Golden` | Caves-on block hashes at the `Density.Golden` positions (seed 263), with biomes and surface rules. Re-recorded once for the rules (phase 5 session 5): overworld `0x22523b7400c2f38e`, large_biomes `0x6b19b1927b73266a`, amplified `0x863f9b8b01468a3f` (phase 4: `0xe9376e319a221c4c`, `0x9e26565ae0dc0258`, `0x3e5329bd4ce985c4`). |
 | `Unnamed.Voxel.Climate.Presets` | Climate values of the three presets: goldens (each parameter weighted by its index, so swapped parameters fail), shared column edges, the PV formula. |
 | `Unnamed.Voxel.Climate.Threads` | 8 threads in shuffled order match the single-threaded result. |
 | `Unnamed.Voxel.Biome.Read` | `Tests/VoxelBiomeTests.cpp`: the overworld list reads as 56 biomes and 7,594 points and validates; every biome has a point; every point equals its row of `facts/biome_parameters.json`, read without the reader; spot values of six biomes (colours, temperature, downfall, modifiers), and only the two frozen oceans are frozen; `ReadBiomes` reuses the ids a table holds. Seven malformed small roots are refused, each error naming the file and the field. |
 | `Unnamed.Voxel.Surface.Read` | The overworld tree reads as 231 rules and 107 conditions, with the pinned count of each of the 5 rule ops and 10 condition ops, validates, and has 37 named rules and 7 named conditions (`under_ceiling` is not read). What it names resolves: its `noise_threshold` noises exist, its two ore veins' density functions resolve, its 29 biomes are among the list's 56, and its 32 block ids are in the `minecraft:` namespace. Eight malformed small roots are refused with the file and the field. |
 | `Unnamed.Voxel.Surface.RoundTrip` | All 44 named rule and condition files (37 and 7), written back by `WriteSurfaceRule` and `WriteSurfaceCondition`, equal their files in the reference. |
+| `Unnamed.Voxel.Surface.Conditions` | `Tests/VoxelSurfaceTests.cpp`, the scout's cases (facts section 2): the column scan (C1 to C11: depth above and below, water height) through marker trees, `stone_depth` S1 to S14, `y_above` Y1 to Y11, `water` W1 to W9, `noise_threshold` N1 to N8, steep T1 to T9 (slopes rising south or west only, neighbours clamped, the 39-cell plateau), hole, the preliminary surface, the vertical gradient (frequency, repeats, biome-free) and the per-block biome, with the shortcut's layer masks on and off. |
+| `Unnamed.Voxel.Surface.Rules` | The whole overworld tree on the jar's own columns (facts 2.8, its noise values injected): 16 biomes, four profiles, two columns each, 41 blocks top down, shortcut on and off. Badlands are compared down to where our own bands start. |
+| `Unnamed.Voxel.Surface.Snow` | Temperature: the 30 values of facts table 3.3, 0.15 exactly at old-growth pine taiga's Y 200 (not cold), the wobble within 8, the frozen modifier's two values. The freeze pass on hand-made columns: snow and snowy grass, ice, nothing on lava, ice, packed ice or powder snow, nothing in a warm biome; the taiga snow line (no snow at Z 150, snow at 175). |
+| `Unnamed.Voxel.Surface.Exact` | Three presets, six columns: the shortcut on and off give the same blocks; rules off differ; the surface has dressed blocks. |
 | `Unnamed.Voxel.Biome.Lookup` | `Tests/VoxelBiomeSourceTests.cpp`: four depth groups. All 5,120 samples of `facts/biome_lookup_samples.json`: the pruned search, and our brute force, equal the jar's brute-force answer (point and fitness agree too). The 95 samples where the jar's indexed search differs are all ties of equal fitness. A fixed source answers its biome and fills every quart with it, and refuses a biome outside the table. Every biome has its own map colour, and the on-screen biome views start off. |
 | `Unnamed.Voxel.Biome.Exact` | Three presets, the `Density.Golden` columns: every quart of the pruned fill equals brute force. The column's depths equal `SampleDepth` bit for bit, and a target sampled at a quart (the maps' and readout's path) finds the biome the column stored. |
 | `Unnamed.Voxel.Biome.Jitter` | 5 x 5 columns filled forward on one thread and backwards on the workers are equal. Each column's ring equals its neighbours' own quarts. Every block takes one of its cell's 8 corners, and some take another than their own, which moves borders. The jitter repeats and stays within 0.45 quart. Through the terrain, the column stores the source's biomes and reads them per block; biomes off leaves it without biomes and with the same blocks. |
 | `Unnamed.Voxel.Biome.Golden` | Biome hashes at the `Density.Golden` positions (seed 263), recorded once after the gates passed. Quarts: overworld `0xe3013e9a963d42fe`, large_biomes `0x6d37af6332445934`, amplified `0xbdc71ddbc5a89adf`. Jittered blocks on every seventh layer (these pin the jitter): `0x9aa40aa00117a819`, `0x83db5e7e69587903`, `0x6bbcb6f996e2a018`. |
-| `Unnamed.Worlds.TerrainCheck` | `Tests/WorldsTests.cpp`, outside `TestVoxel.ps1`'s 52: `VoxelTerrainFactory::Check` builds all three generator-2 world types from the reference. With an empty folder instead, a generator-2 world fails with an error naming its preset, while generator 1 and Superflat need no reference. With the reference's data but no facts, every generator-2 type fails naming `biome_parameters.json`, and a saved world gets no terrain. A saved world whose preset cannot be read gets no terrain, but the dev seed falls back to the stand-in and says why. Each world type reads its own preset (Single Biome reads `overworld`). |
+| `Unnamed.Worlds.TerrainCheck` | `Tests/WorldsTests.cpp`, outside `TestVoxel.ps1`'s 56: `VoxelTerrainFactory::Check` builds all three generator-2 world types from the reference. With an empty folder instead, a generator-2 world fails with an error naming its preset, while generator 1 and Superflat need no reference. With the reference's data but no facts, every generator-2 type fails naming `biome_parameters.json`, and a saved world gets no terrain. Without `material_rule/`, every generator-2 type (Single Biome too) fails naming it. Single Biome builds with desert, frozen peaks and deep dark, and refuses `minecraft:the_void`, naming it. A saved world whose preset cannot be read gets no terrain, but the dev seed falls back to the stand-in and says why. Each world type reads its own preset (Single Biome reads `overworld`). |
 
 Aquifer mutation check: turning global lava into water, and disabling the walls, fail `Aquifer.Fluids` (3 checks) and `Aquifer.Golden` (3).
 
@@ -688,6 +744,7 @@ A deliberate off-by-one in `GetSectionsTouching` fails `Edit.Sections` (13 error
 
 ## Known gaps
 
+- **Surface rules** ([Surface rules](#surface-rules-temperature-and-snow)): the stage adds 0.6 to 0.9 ms (p50) per column, which keeps the whole-column means near or over 5 ms with Minecraft open; session 6 times the next exact lever (a per-run memo) with the normal-noise batch on a quiet machine. No eroded-badlands hoodoos or frozen-ocean icebergs (code-made in 26.3; decided out of phase 5). Ore veins give nothing until phase 6. The freeze pass takes block light as 0 and runs before any trees exist.
 - **Lighting limits:** faces hidden behind a same-facing face inside one card stay black in Lumen's scene, and software Lumen cannot see the chunks ([Lighting](#lighting)).
 - **Edge fog:** its color is fixed to the map's sun (there is no day cycle yet), and a faint seam remains on the sun side. Columns still arriving inside the fade show up late: in the session 5 flight (2,392 frames, at most 35 at a time), one frame each, when crossing a column corner moves the rings diagonally.
 - **Pale water:** seen from high above, water over sand looks pale; tuning comes with biomes and water colour in phase 5.

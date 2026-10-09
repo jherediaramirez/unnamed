@@ -39,6 +39,11 @@ public:
     FIntVector GetBlockQuart(int32 LocalX, int32 LocalY, int32 Z) const;
     // That quart's biome index, or INDEX_NONE when the storage is empty or Z is outside the world.
     int32 GetBlock(int32 LocalX, int32 LocalY, int32 Z) const;
+    // The same with the corners' jitters from a cache of Volume entries (index GetIndex), whose layers the caller
+    // fills with FillJitterLayer before reading them: the same arithmetic, so the same answer, without the hashes.
+    int32 GetBlock(int32 LocalX, int32 LocalY, int32 Z, const FVector3f* Jitters) const;
+    // Fills Jitters' entries for one quart layer (Width x Width corners).
+    void FillJitterLayer(int32 Layer, FVector3f* Jitters) const;
 
     // A quart corner's offset from its grid position, in quarts (each axis in [-0.45, 0.45)), for world quart
     // coordinates (block coordinates divided by 4, rounded down).
@@ -47,6 +52,11 @@ public:
     SIZE_T GetAllocatedSize() const { return Quarts.GetAllocatedSize(); }
 
 private:
+    // GetBlockQuart's search with each corner's jitter from GetCornerJitter(Base, X, Y, Z) (quart coordinates inside
+    // the storage; Base is the column's first quart in world quarts).
+    template <typename FGetJitter>
+    FIntVector FindBlockQuart(int32 LocalX, int32 LocalY, int32 Z, FGetJitter GetCornerJitter) const;
+
     TArray<uint8> Quarts;
     FIntPoint Column = FIntPoint::ZeroValue;
     uint64 Seed = 0;
