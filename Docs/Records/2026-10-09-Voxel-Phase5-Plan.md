@@ -133,3 +133,36 @@ Ore veins: question 4.
 - **`bandlands` and the vertical gradients** use code-side randomness in vanilla. We use our own hashes and our own band pattern, so badlands will look like vanilla's but not match it.
 - **Underground biomes matter for blocks:** `overworld/underground` checks `sulfur_caves`, so storage must be 3D everywhere, not only at the surface.
 - **Steepness** compares neighbouring surface heights. At a column's edge those belong to the next column, which may not be generated yet. Session 5 must get them without depending on load order (heights inside the column only, or the edge heights from the preliminary surface), and prove it with the load-order hashes.
+
+## 7. Jesus's answers (October 9, morning)
+
+These are settled. Treat them as decisions.
+
+**Phase 5 questions (section 5).** Each one took the recommendation.
+
+1. **Generator version:** keep changing generator 2 until edit saving lands in phase 10, then freeze it.
+2. **Biome fidelity:** check the climate-to-biome mapping exactly against jar facts. Check biome positions statistically.
+3. **Snow blocks:** add powder snow and snow layers through the block reference's own tools. Snow layers get a new k/8 shape; powder snow is solid for now.
+4. **Ore veins:** read them in phase 5 and switch them on in phase 6.
+5. **Biome colours:** water plus grass and foliage tints per vertex, in phase 5.
+6. **Session order:** the five sessions in section 3, with the performance levers (session 3) before any biome work.
+
+**The handoff's still-open questions.**
+
+- **Cave exposure and emission (handoff question 1):**
+  - Decision: eye adaptation between two EV bounds, plus stronger emission for light-emitting blocks.
+  - It isn't in a session yet. Session 2's plan proposes a place for it: with the real lava in session 2 if the budget allows, otherwise a short step before session 6.
+- **Cave lighting (2):**
+  - Decision: keep Lumen cards for now.
+  - Right after the brightness fix, re-run the same-cave comparison in both modes (`CaptureVoxel -Caves`, cards vs `r.Lumen.HardwareRayTracing.LightingMode 1`, with GPU ms). Switch to hit lighting if it looks clearly better in caves.
+  - Background, from the morning review: Lumen's own view with cards has holes at cave mouths, overhangs and steep slopes, and 24% of its pixels differ from hit lighting. Today the on-screen image differs on only 0.04 to 0.16% of pixels. Hit lighting costs 0.4 to 1.2 ms more per frame at 1600 x 900.
+  - Images: `C:\dev\sandbox\overnight-review-20261009\cave-lighting.html`.
+- **Lava in the block reference (3):**
+  - Decision: yes. In session 2, extend `Reference/minecraft-blocks-26.3` with lava through its own tools (the fluids entry, plus the `lava_still` and `lava_flow` textures), then give lava its real animated texture.
+  - Lava stays still, with no damage and no flow.
+- **Silent fallback (5):** a saved world gets a hard error when the reference is missing or a preset fails to build. The fallback stays only for the dev seed.
+- **Housekeeping (9), done on October 9:**
+  - The two `Content/DevGrid` assets were restored with git.
+  - Moved to the Recycle Bin: `Packages/Phase4Terrain20261009`, the untracked pre-phase-3 `Tests/Evidence` (27 folders, 4.95 GB; the 2.4 GB in earlier handoffs was an undercount), and the two HUD zips.
+  - `logs/` stays.
+- **`voxel.Debug.Climate` in game (10):** still for Jesus to try.
