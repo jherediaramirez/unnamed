@@ -1,0 +1,36 @@
+azalea_tree | bending_trunk_placer/random_spread_foliage_placer | max h 6 | 
+cherry_bees_005 | cherry_trunk_placer/cherry_foliage_placer | max h 8 | beehive
+pale_oak_creaking | dark_oak_trunk_placer/dark_oak_foliage_placer | max h 9 | creaking_heart,pale_moss
+pale_oak | dark_oak_trunk_placer/dark_oak_foliage_placer | max h 9 | pale_moss
+dark_oak_leaf_litter | dark_oak_trunk_placer/dark_oak_foliage_placer | max h 9 | place_on_ground
+fancy_oak | fancy_trunk_placer/fancy_foliage_placer | max h 14 | 
+fancy_oak_bees | fancy_trunk_placer/fancy_foliage_placer | max h 14 | beehive
+fancy_oak_bees_002 | fancy_trunk_placer/fancy_foliage_placer | max h 14 | beehive
+fancy_oak_bees_005 | fancy_trunk_placer/fancy_foliage_placer | max h 14 | beehive
+fancy_oak_bees_0002_leaf_litter | fancy_trunk_placer/fancy_foliage_placer | max h 14 | beehive,place_on_ground
+fancy_oak_leaf_litter | fancy_trunk_placer/fancy_foliage_placer | max h 14 | place_on_ground
+acacia | forking_trunk_placer/acacia_foliage_placer | max h 9 | 
+mega_pine | giant_trunk_placer/mega_pine_foliage_placer | max h 29 | alter_ground
+mega_spruce | giant_trunk_placer/mega_pine_foliage_placer | max h 29 | alter_ground
+mega_jungle_tree | mega_jungle_trunk_placer/jungle_foliage_placer | max h 31 | leave_vine,trunk_vine
+orange_poplar_leaf_litter | poplar_trunk_placer/poplar_foliage_placer | max h 11 | place_on_ground,shelf_mushroom
+red_poplar_leaf_litter | poplar_trunk_placer/poplar_foliage_placer | max h 11 | place_on_ground,shelf_mushroom
+yellow_poplar_leaf_litter | poplar_trunk_placer/poplar_foliage_placer | max h 11 | place_on_ground,shelf_mushroom
+jungle_tree | straight_trunk_placer/blob_foliage_placer | max h 12 | cocoa,leave_vine,trunk_vine
+super_birch_bees | straight_trunk_placer/blob_foliage_placer | max h 13 | beehive
+super_birch_bees_0002 | straight_trunk_placer/blob_foliage_placer | max h 13 | beehive
+oak | straight_trunk_placer/blob_foliage_placer | max h 6 | 
+oak_bees_002 | straight_trunk_placer/blob_foliage_placer | max h 6 | beehive
+oak_bees_005 | straight_trunk_placer/blob_foliage_placer | max h 6 | beehive
+oak_bees_0002_leaf_litter | straight_trunk_placer/blob_foliage_placer | max h 6 | beehive,place_on_ground
+oak_leaf_litter | straight_trunk_placer/blob_foliage_placer | max h 6 | place_on_ground
+birch_bees_0002 | straight_trunk_placer/blob_foliage_placer | max h 7 | beehive
+birch_bees_002 | straight_trunk_placer/blob_foliage_placer | max h 7 | beehive
+birch_bees_0002_leaf_litter | straight_trunk_placer/blob_foliage_placer | max h 7 | beehive,place_on_ground
+birch_leaf_litter | straight_trunk_placer/blob_foliage_placer | max h 7 | place_on_ground
+swamp_oak | straight_trunk_placer/blob_foliage_placer | max h 8 | leave_vine
+jungle_bush | straight_trunk_placer/bush_foliage_placer | max h 1 | 
+pine | straight_trunk_placer/pine_foliage_placer | max h 10 | 
+spruce | straight_trunk_placer/spruce_foliage_placer | max h 8 | 
+tall_mangrove | upwards_branching_trunk_placer/random_spread_foliage_placer+mangrove_root_placer | max h 14 | attached_to_leaves,beehive,leave_vine
+mangrove | upwards_branching_trunk_placer/random_spread_foliage_placer+mangrove_root_placer | max h 7 | attached_to_leaves,beehive,leave_vine

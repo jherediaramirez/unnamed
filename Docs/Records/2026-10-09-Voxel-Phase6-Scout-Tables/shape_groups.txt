@@ -1,0 +1,11 @@
+A0 cross: 33 blocks, 120 states: allium azure_bluet blue_orchid brain_coral brown_mushroom bubble_coral cactus_flower cave_vines cave_vines_plant closed_eyeblossom cornflower dandelion dead_bush fire_coral firefly_bush hanging_roots horn_coral kelp kelp_plant lily_of_the_valley orange_tulip oxeye_daisy pale_hanging_moss pink_tulip poppy red_mushroom red_shrub red_tulip short_dry_grass sweet_berry_bush tall_dry_grass tube_coral white_tulip
+A0 cross (facing): 4 blocks, 48 states: amethyst_cluster large_amethyst_bud medium_amethyst_bud small_amethyst_bud
+A1 cross, tinted: 6 blocks, 23 states: bush fern large_fern short_grass sugar_cane tall_grass
+A2 double cross: 4 blocks, 8 states: lilac peony rose_bush sunflower
+A3 seagrass template: 2 blocks, 3 states: seagrass tall_seagrass
+B1 flowerbed / leaf litter: 3 blocks, 48 states: leaf_litter pink_petals wildflowers
+B2 carpet: 2 blocks, 163 states: moss_carpet pale_moss_carpet
+C multiface: 3 blocks, 288 states: glow_lichen sculk_vein vine
+D custom elements: 27 blocks, 256 states: azalea bamboo big_dripleaf big_dripleaf_stem brain_coral_fan brain_coral_wall_fan bubble_coral_fan bubble_coral_wall_fan cactus cocoa fire_coral_fan fire_coral_wall_fan flowering_azalea horn_coral_fan horn_coral_wall_fan lily_pad mangrove_propagule mangrove_roots pointed_dripstone sculk_shrieker sea_pickle shelf_mushroom small_dripleaf spore_blossom sulfur_spike tube_coral_fan tube_coral_wall_fan
+H block entity (defer): 2 blocks, 25 states: chest spawner
+supported: 97

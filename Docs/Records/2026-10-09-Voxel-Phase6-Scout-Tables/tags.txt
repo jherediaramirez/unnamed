@@ -1,0 +1,26 @@
+air | 3 | NOT in ini
+azalea_grows_on | 32 | in ini
+azalea_root_replaceable | 39 | in ini
+base_stone_overworld | 6 | in ini
+beneath_tree_podzol_replaceable | 10 | in ini
+cannot_replace_below_tree_trunk | 8 | in ini
+cannot_support_kelp | 1 | in ini
+corals | 10 | NOT in ini
+deepslate_ore_replaceables | 1 | in ini
+dripstone_replaceable_blocks | 6 | in ini
+features_cannot_replace | 7 | in ini
+forest_rock_can_place_on | 16 | in ini
+geode_invalid_blocks | 6 | in ini
+height_specific_ore_replaceables | 1 | in ini
+huge_brown_mushroom_can_place_on | 12 | in ini
+huge_red_mushroom_can_place_on | 12 | in ini
+ice_spike_replaceable | 12 | in ini
+lava_pool_stone_cannot_replace | 69 | in ini
+lush_ground_replaceable | 21 | in ini
+mangrove_logs_can_grow_through | 8 | in ini
+mangrove_roots_can_grow_through | 7 | in ini
+moss_replaceable | 18 | in ini
+replaceable_by_trees | 57 | in ini
+stone_ore_replaceables | 4 | in ini
+sulfur_spike_replaceable_blocks | 2 | in ini
+wall_corals | 5 | NOT in ini
