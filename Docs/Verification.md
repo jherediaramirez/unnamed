@@ -1,5 +1,19 @@
 # Verification
 
+## Voxel world: phase 4 session 1, worldgen data and reader - October 8, 2026
+
+- **Builds:** the editor build and a `-DisableAdaptiveUnity` build are clean, with no warnings in project code.
+- **Reference:** `verify_reference.py`: 122 files hashed, 116 compared with the jar, 580 references resolved, 9 splines with 4,608 samples. Given a jar without the data, `build_reference.py` stops and leaves `data/` untouched.
+- **Native tests:**
+  - `Scripts\TestVoxel.ps1` 29/29 (`Tests/Evidence/2026-10-08/VoxelAutomation-20261008-235254/`);
+  - every native suite 76/76, 73 before (`Tests/Evidence/2026-10-08/AllNative-20261008-235326/`);
+  - zeroing spline derivatives in `BuildSpline` and negating the reader's constants fail `Worldgen.Splines` (6 errors), `Worldgen.RoundTrip` (34) and `Worldgen.Presets` (1) (`Tests/Evidence/2026-10-08/VoxelAutomation-20261008-232628/`).
+- **Measurements:** each preset reads in about 8 ms in the editor. `FVoxelSpline` matches Mojang's `CubicSpline` within 9.5e-7 on 4,608 samples.
+- **Other suites:** JavaScript units 57/57; `source-check.mjs` passes (938 assets unchanged).
+- **Not run**, because no runtime path changed (nothing calls the reader yet): the Playground probe, `create-world.mjs` and `foundation-menu.mjs`.
+
+Details: [Voxel world, Worldgen data](VoxelWorld.md#worldgen-data) and the [session 2 handoff](Records/2026-10-08-Voxel-Handoff-Phase4-Session2.md).
+
 ## Voxel world: streaming and editing (phase 3) - October 8, 2026
 
 - **Builds:** the editor build and a `-DisableAdaptiveUnity` build are clean, with no warnings in project code.

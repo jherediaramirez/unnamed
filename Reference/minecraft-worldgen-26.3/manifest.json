@@ -1,0 +1,19 @@
+{
+  "version": "26.3",
+  "source": {
+    "file": "server-26.3.jar, from the official 26.3 server download",
+    "sha256": "a362163eec5d1612d520772bc16e5b39c09e3b234fdc045f56bf544284ee8ae6",
+    "sha1": "cc3964451a3b32a0488110d5e3e6ad8d75fe6a66",
+    "size": 26652008
+  },
+  "presets": [
+    "overworld",
+    "large_biomes",
+    "amplified"
+  ],
+  "counts": {
+    "noise_settings": 3,
+    "density_function": 51,
+    "noise": 62
+  }
+}
