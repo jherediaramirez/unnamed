@@ -207,7 +207,7 @@ Goldens are re-recorded only where the session's own decided change alters the b
 | S4 | Ore veins | The surface evaluator's `ore_vein` | S | S1 |
 | S5 | Block models: data | The blocks reference and `DA_Blocks` | L | |
 | S6 | Block models: rendering | The voxel mesher and the Playground's meshes | M to L | S5 |
-| S7 | Plant interaction, collision and the plant items | Placement, survival, collision, targeting, and the items that place plants | M | S6 |
+| S7 | Plant interaction and collision | Placement, survival, collision and targeting | M | S6 |
 | S8 | Plants and patches | Vegetation feature types | L | S3, S6 |
 | S9 | Trees and big vegetation | Tree feature types | L | S8 |
 | S10 | Carvers | The carver pass in Generate | M | |
@@ -330,7 +330,7 @@ Jesus answered Q9 yes, so this session runs first. The [phase 6 handoff](2026-10
   - **A model baker** in the reference's tools: per state, quads with UV, texture layer, `tintindex`, `cullface`, `shade` and rotation (with uvlock).
   - **`FactsDump.java`:** per state, collision and outline boxes, fluid state, offset kind and maximum, `replaceable` and occluding faces; and tags for the new blocks.
   - **`DA_Blocks`:** reimported, with old assets moved deliberately. `EFoundationBlockShape::Model` and a baked-model index in the registry.
-  - **Items:** icons as flat sprites from each item model's layers, for the new blocks whose vanilla item has the block's id. The facts dump records each new block's vanilla item, so S7 can add the items with other ids (Jesus's answer 7).
+  - **Items:** icons as flat sprites from each item model's layers, for the new blocks whose vanilla item has the block's id. The facts dump records each new block's vanilla item, for the inventory pass that adds the items with other ids (Jesus's answer 7).
 - **Files:**
   - the reference: `Reference/minecraft-blocks-26.3/tools/` (`build_manifest.py`, `classify_blocks.py`, `build_blocks.py`, `FactsDump.java`, a new `bake_models.py`, `verify_reference.py`) and the regenerated reference;
   - editor scripts: `Scripts/Editor/ImportBlocks.py`, `BlockImportData.py`, `CreateBlockMaterials.py` (cutout mips);
@@ -377,11 +377,9 @@ Jesus answered Q9 yes, so this session runs first. The [phase 6 handoff](2026-10
   - A plant-dense test column is measured; the cross fast path (Q1 c) only if crosses cost more than 0.2 ms per column over the generic path.
   - Mesh per section stays under the prompt's 0.2 ms.
 
-### S7. Plant interaction, collision and the plant items
+### S7. Plant interaction and collision
 
 **Area:** gameplay with model blocks, in the voxel world and the Playground.
-
-**Why the items are here:** an item whose id differs from its block (glow berries placing cave vines) is useful only once placing it obeys the support rules, which this session builds.
 
 - **Scope:**
   - collision and outline boxes from the facts (`GatherCollision`, targeting);
@@ -391,23 +389,15 @@ Jesus answered Q9 yes, so this session runs first. The [phase 6 handoff](2026-10
   - pop-when-unsupported after mining, one level deep;
   - instant mining from the facts;
   - placing into replaceable plants.
-  - **The vanilla items with their own ids (Jesus's answer 7):**
-    - Add the decoration blocks' items whose id differs from the block's, taking the list from S5's facts. At least `sweet_berries` (places `sweet_berry_bush`), `glow_berries` (`cave_vines`) and `cocoa_beans` (`cocoa`).
-    - Each gets the vanilla name, stack size, icon and creative-tab position, and places its block through the support rules.
-    - `kelp` and `seagrass` already have item id = block id. `kelp_plant`, `tall_seagrass`, `cave_vines_plant` and `big_dripleaf_stem` have no vanilla item, so they get none.
-    - Powder snow's bucket stays with buckets.
-  - **The id rule:**
-    - This session updates the project's id rule as Jesus decided, in `CLAUDE.md` ("Block/item IDs (item id = block id)") and in `Docs/Blocks.md` ("Item ids").
-    - It adds these items as new saved ids, and never renames an existing block or item id.
+  - No items with another id (Jesus's answer 7): decoration blocks whose vanilla item has another id get no block item, as with powder snow; items come with an inventory pass.
 - **Files:**
-  - `Source/Unnamed/Foundation/FoundationBlockPlacement.*`, `FoundationBlocks.*` (`GatherCollision`, the item rules), `FoundationAuthority.*`, `FoundationBlockRegistry.*` (items apart from blocks);
+  - `Source/Unnamed/Foundation/FoundationBlockPlacement.*`, `FoundationBlocks.*` (`GatherCollision`), `FoundationAuthority.*`;
   - `Source/Unnamed/Voxel/VoxelBlockStorage.*`;
   - tests: `FoundationInteractionTests.cpp`, `FoundationBlocksTests.cpp`;
-  - docs: `CLAUDE.md`, `Docs/Blocks.md`.
+  - docs: `Docs/Blocks.md` (placement and survival).
 - **Tests:**
   - `Blocks.Placement`: truth tables for plants.
   - `Blocks.Survival`: the cascade.
-  - `Blocks.Items`: each other-id item places its block, every existing item id is unchanged, and the new ids are listed.
   - An interaction-suite scenario: a flower on grass; mine the grass, and the flower pops.
 - **Evidence:** `TestFoundationRuntime.ps1 -Editor -Suite interaction`; a walk-through-grass clip or shots.
 - **Gate:** the Playground probe's FPS is not lower beyond noise; collision gather time per tick reported (at most +10%).
@@ -662,9 +652,8 @@ Jesus answered every question by tap, through the day manager (Hemera). These ar
 4. **Feature seeds:** (a) a stable hash of the placed feature's id, plus the world seed for flower and noise-count patterns.
 5. **Terrain slabs:** (b) their own session after phase 6.
 6. **Plant interaction:** (a) placement checked against the support tags, plus pop-when-unsupported, one level deep.
-7. **Items:** **(b) add the vanilla items now**, overriding the recommendation (a).
-   - This changes a project rule: `CLAUDE.md` says item id = block id, and these items have their own ids.
-   - S7 does the work (section 4). It updates the id rule in `CLAUDE.md` and `Docs/Blocks.md` as Jesus decided, adds the items as new saved ids, and never renames an existing id.
+7. **Items:** (a) keep the `Blocks.md` rule: no block item for decoration blocks whose vanilla item has another id (as with powder snow); items come with an inventory pass. `CLAUDE.md` and `Docs/Blocks.md` stay as they are.
+   - Corrected the same evening: Jesus first tapped (b) by mistake; (a) is his answer.
 8. **The R+3 ring:** (a) accept it and measure, with S3's gate.
 9. **Speed-up first:** (a) yes. S0 runs first.
 10. **Session order:** (a) section 4's order: data, the decoration core with ores, streaming, ore veins, then the block models, then the rest.
