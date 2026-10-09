@@ -62,6 +62,9 @@ namespace
     constexpr int32 ShotTimedFrames = 60;
     // Frames to wait for a requested screenshot file before moving on anyway.
     constexpr int32 ShotWriteFrames = 120;
+    // Eye adaptation speed of the shot camera, in f-stops per second. The map adapts slowly (CreateGeneratedMap.py);
+    // shots must land on the adapted exposure within the settle frames, even going from daylight into a cave.
+    constexpr float ShotExposureSpeed = 50.f;
 
     struct FShot
     {
@@ -788,6 +791,9 @@ void AVoxelWorld::UpdateShots()
         ShotCamera = GetWorld()->SpawnActor<ACameraActor>();
         ShotCamera->GetCameraComponent()->SetFieldOfView(75);
         ShotCamera->GetCameraComponent()->bConstrainAspectRatio = false;
+        FPostProcessSettings& Post = ShotCamera->GetCameraComponent()->PostProcessSettings;
+        Post.bOverride_AutoExposureSpeedUp = Post.bOverride_AutoExposureSpeedDown = true;
+        Post.AutoExposureSpeedUp = Post.AutoExposureSpeedDown = ShotExposureSpeed;
         Controller->SetViewTarget(ShotCamera);
         IFileManager::Get().MakeDirectory(*ShotFolder, true);
     }

@@ -2,7 +2,7 @@
 
 /Game/Maps/L_Generated (UUnnamedProjectSettings::GeneratedMap) is the procedural map every generated world opens. It
 holds only what cannot be built at runtime: the AVoxelWorld actor (it generates and meshes the terrain), a PlayerStart,
-the Playground's daylight rig with a brighter sky light, and a thin height fog. Phase 2 shows a fixed test area there;
+the Playground's daylight rig with a brighter sky light and eye adaptation for caves, and a thin height fog. Phase 2 shows a fixed test area there;
 it is not a catalog world (generated worlds will come from Create New World).
 
 Run after compiling the editor target (AVoxelWorld, AFoundationGameMode):
@@ -28,13 +28,37 @@ KILL_Z = -20000.0
 
 # The Playground's daylight rig (Scripts/Editor/CreatePlaygroundMap.py).
 SUN_INTENSITY = 75000.0
-EXPOSURE_EV100 = 14.5
 FOG_DENSITY = 0.002
 FOG_START_DISTANCE = 3000.0
 # Except the sky light, three times the Playground's. Against a 75,000 lux sun the atmosphere's own sky leaves terrain
 # that faces away from the sun near black at this exposure (about 12:1); at 3 those slopes read as clearly as a
 # Minecraft side face, and caves stay dark because Lumen still occludes the sky (Docs/VoxelWorld.md, Lighting).
 SKY_LIGHT_INTENSITY = 3.0
+# Eye adaptation between two EV100 bounds (histogram method), slow, like eyes getting used to the dark
+# (Docs/VoxelWorld.md, Lighting). Daylight keeps the Playground's fixed exposure: EV100 14.5 at the engine's default
+# exposure compensation, +1. Metering reads sunlit terrain at only EV100 12.8 to 13.5 (the block textures are dark),
+# so a 14.5 cap would brighten every outdoor view. Instead the cap is lower and the compensation lower by as much:
+# every view metered at the cap or above gets exactly the daylight exposure. Local exposure pivots on middle grey times
+# the compensation, so its middle grey is raised by as much to keep its pivot. Caves open up 6.5 stops below the cap.
+DAYLIGHT_EV100 = 14.5
+DEFAULT_EXPOSURE_BIAS = 1.0  # r.DefaultFeature.AutoExposure.Bias, which verify() checks
+EXPOSURE_MAX_EV100 = 12.5
+EXPOSURE_BIAS = DEFAULT_EXPOSURE_BIAS + EXPOSURE_MAX_EV100 - DAYLIGHT_EV100
+# The old compensation minus the new one, over the engine's default middle-grey bias of 0.
+LOCAL_EXPOSURE_MIDDLE_GREY_BIAS = DEFAULT_EXPOSURE_BIAS - EXPOSURE_BIAS
+EXPOSURE_MIN_EV100 = EXPOSURE_MAX_EV100 - 6.5
+EXPOSURE_SPEED_UP = 2.0  # f-stops per second, towards a brighter scene (leaving a cave)
+EXPOSURE_SPEED_DOWN = 1.0  # towards a darker scene (entering a cave)
+# The map's unbound PostProcessVolume overrides exactly these (the -VoxelShot camera speeds them up; AVoxelWorld).
+EXPOSURE_SETTINGS = {
+    "auto_exposure_method": unreal.AutoExposureMethod.AEM_HISTOGRAM,
+    "auto_exposure_min_brightness": EXPOSURE_MIN_EV100,
+    "auto_exposure_max_brightness": EXPOSURE_MAX_EV100,
+    "auto_exposure_bias": EXPOSURE_BIAS,
+    "local_exposure_middle_grey_bias": LOCAL_EXPOSURE_MIDDLE_GREY_BIAS,
+    "auto_exposure_speed_up": EXPOSURE_SPEED_UP,
+    "auto_exposure_speed_down": EXPOSURE_SPEED_DOWN,
+}
 
 ORIGIN_TOLERANCE = 0.1
 
@@ -74,13 +98,12 @@ def create_map():
     sky.light_component.set_mobility(unreal.ComponentMobility.MOVABLE)
     sky.light_component.set_editor_property("real_time_capture", True)
     sky.light_component.set_editor_property("intensity", SKY_LIGHT_INTENSITY)
-    exposure = spawn(unreal.PostProcessVolume, "Voxel world - stable daylight exposure", (0, 0, 0))
+    exposure = spawn(unreal.PostProcessVolume, "Voxel world - eye adaptation", (0, 0, 0))
     exposure.set_editor_property("unbound", True)
     post = exposure.get_editor_property("settings")
-    post.set_editor_property("override_auto_exposure_min_brightness", True)
-    post.set_editor_property("override_auto_exposure_max_brightness", True)
-    post.set_editor_property("auto_exposure_min_brightness", EXPOSURE_EV100)
-    post.set_editor_property("auto_exposure_max_brightness", EXPOSURE_EV100)
+    for name, value in EXPOSURE_SETTINGS.items():
+        post.set_editor_property("override_" + name, True)
+        post.set_editor_property(name, value)
     exposure.set_editor_property("settings", post)
     fog = spawn(unreal.ExponentialHeightFog, "Voxel world - haze", (0, 0, 0))
     fog_component = fog.get_component_by_class(unreal.ExponentialHeightFogComponent)
@@ -134,13 +157,28 @@ def verify():
     if sky and abs(sky.light_component.get_editor_property("intensity") - SKY_LIGHT_INTENSITY) > 0.001:
         problems.append("sky light intensity is %s, expected %s" % (sky.light_component.get_editor_property("intensity"),
                                                                    SKY_LIGHT_INTENSITY))
-    exactly_one(of_type(unreal.PostProcessVolume), "PostProcessVolume")
+    volume = exactly_one(of_type(unreal.PostProcessVolume), "PostProcessVolume")
+    if volume:
+        post = volume.get_editor_property("settings")
+        if not volume.get_editor_property("unbound"):
+            problems.append("the PostProcessVolume must be unbound")
+        for name, value in EXPOSURE_SETTINGS.items():
+            found = post.get_editor_property(name)
+            if not post.get_editor_property("override_" + name):
+                problems.append("%s is not overridden (expected %s)" % (name, value))
+            elif found != value if isinstance(value, unreal.AutoExposureMethod) else abs(found - value) > 0.001:
+                problems.append("%s is %s, expected %s" % (name, found, value))
+    default_bias = unreal.SystemLibrary.get_console_variable_float_value("r.DefaultFeature.AutoExposure.Bias")
+    if abs(default_bias - DEFAULT_EXPOSURE_BIAS) > 0.001:
+        problems.append("r.DefaultFeature.AutoExposure.Bias is %s, but the daylight exposure assumes %s"
+                        % (default_bias, DEFAULT_EXPOSURE_BIAS))
     exactly_one(of_type(unreal.ExponentialHeightFog), "ExponentialHeightFog")
     if problems:
         raise RuntimeError("Generated world map %s is not set up: %s (delete Content/Maps/L_Generated.umap and rerun)"
                            % (MAP, "; ".join(problems)))
-    unreal.log("GENERATED MAP OK: %s - VoxelWorld + PlayerStart, FoundationGameMode, kill_z %s, daylight rig, sky light %s"
-               % (MAP, KILL_Z, SKY_LIGHT_INTENSITY))
+    unreal.log("GENERATED MAP OK: %s - VoxelWorld + PlayerStart, FoundationGameMode, kill_z %s, daylight rig, "
+               "sky light %s, exposure EV100 %s to %s"
+               % (MAP, KILL_Z, SKY_LIGHT_INTENSITY, EXPOSURE_MIN_EV100, EXPOSURE_MAX_EV100))
 
 
 def main():

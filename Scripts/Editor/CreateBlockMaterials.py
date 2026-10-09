@@ -27,6 +27,11 @@ import ProjectPaths  # noqa: E402
 
 lib = unreal.MaterialEditingLibrary
 CUSTOM_DATA = 9
+# Emission of a light-level-15 block: color x light / 15 x LightEmissive. The Playground's block materials keep 4.
+# The generated world is exposed for a 75,000 lux sun (EV100 14.5), where 4 reads as black: its chunk materials glow
+# strongly enough that still lava reads in daylight and lights the caves around it (Docs/VoxelWorld.md, Lighting).
+BLOCK_LIGHT_EMISSIVE = 4.0
+CHUNK_LIGHT_EMISSIVE = 8000.0
 
 # Shared unpacking: the face's code, its transformed UV and the plains tint (linear). FoundationBlockFaces in
 # Source/Unnamed/Foundation/FoundationBlockRegistry.h defines the bits; TransformUV the transform.
@@ -245,7 +250,7 @@ def build(name, spec, block_textures, flow_textures):
         # Light-emitting blocks (sea lantern, glowstone...): color x light / 15 x LightEmissive.
         scale = node(unreal.MaterialExpressionScalarParameter, -400, 400)
         scale.set_editor_property("parameter_name", "LightEmissive")
-        scale.set_editor_property("default_value", 4.0)
+        scale.set_editor_property("default_value", CHUNK_LIGHT_EMISSIVE if chunk else BLOCK_LIGHT_EMISSIVE)
         light = node(unreal.MaterialExpressionDivide, -250, 450)
         link(light_source, light_output, light, "A")
         light.set_editor_property("const_b", light_divisor)

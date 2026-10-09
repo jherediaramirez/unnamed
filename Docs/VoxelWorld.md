@@ -13,7 +13,7 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 | 2W | Create New World: saved worlds, seed, world type, game mode, difficulty | Done |
 | 3 | Streaming, plus mining and placing on generated terrain | Done |
 | 4 | Terrain: 26.3's density graph, climate, caves, aquifers and lava | Done (5 sessions: worldgen data and reader; noise, climate, splines and debug views; 3D density and generator 2; caves on, aquifers, still lava, cave-lighting decision; performance). Caves-on columns were slightly over 5 ms on two presets; phase 5 session 3's corner sharing brings them under it in the bench's best case ([Known gaps](#known-gaps)) |
-| 5 | Biomes and surface | In progress (sessions 2 and 3 done: reference data, blocks and readers; performance levers. Next: 3b, cave brightness; then sessions 4 to 6) |
+| 5 | Biomes and surface | In progress (sessions 2, 3 and 3b done: reference data, blocks and readers; performance levers; cave brightness and the cave-lighting comparison. Next: sessions 4 to 6) |
 | 6 | Decoration, after a block-shapes step (plants, cross models) | |
 | 7 | Structures that fit the land (needs stairs, doors, fences, paths) | |
 | 8 | Mountains | |
@@ -513,6 +513,26 @@ Mean sRGB levels from the `ground` and `overview` shots, before and after (`Test
 
 GPU frame at 1600 x 900 on this machine: 2.7 ms before, 2.9 to 3.0 ms after. The cards cost the difference, because Lumen now keeps a surface cache for the terrain. The brighter sky costs nothing. Comparisons: `Tests/Evidence/2026-10-08/VoxelLighting-*`.
 
+**Cave exposure and glow (phase 5, session 3b).** At the fixed daylight exposure cave interiors were near black and lava was invisible (the `cave-lava` view measured 0/0/0). Jesus's decision: eye adaptation between two EV bounds, plus stronger emission for light-emitting blocks. Hemera took the look call on October 9 (option (a)).
+
+- **Emission:** `CHUNK_LIGHT_EMISSIVE = 8000` in `Scripts/Editor/CreateBlockMaterials.py` sets the `LightEmissive` default of `M_ChunkOpaque`, `M_ChunkCutout` and `M_ChunkTranslucent` (color x light / 15 x LightEmissive). The block materials keep 4 (`BLOCK_LIGHT_EMISSIVE`), so the Playground is unchanged. At the daylight exposure, still lava's pixels read red 188, like sunlit sand (185): full-bright, as in vanilla. The view's mean red is 76.4, with nothing at 255; 2000 gave 38.7.
+- **Exposure:** the map's unbound PostProcessVolume (`EXPOSURE_SETTINGS` in `Scripts/Editor/CreateGeneratedMap.py`, which `verify()` checks) uses the histogram method, at 2 f-stops per second towards brighter scenes and 1 towards darker ones.
+  - Metering reads sunlit terrain at only EV100 12.8 to 13.5 (the block textures are dark). A cap at the old fixed 14.5 would therefore brighten every outdoor view (the overview went from 88 to 133 mean sRGB).
+  - So the cap is 12.5 and the exposure compensation 2 stops lower (-1 instead of the engine default 1). Local exposure pivots on middle grey times the compensation, so its middle-grey bias is +2. Without that, daylight came out about 0.4 EV darker: the overview's mean went from 88 to 75 (`VoxelShots-20261009-105141`), and its exposure fell from 1.11e-4 to 8.43e-5 at the same metered EV100, 12.8 (the overlay crops `hdr-old.png` and `hdr-text.png` in the evidence folder below).
+  - Every view metered at 12.5 or above gets exactly the old daylight exposure. The floor, EV100 6, lets caves open up to 6.5 stops brighter.
+- **Shots:** `-VoxelShot`'s camera adapts at 50 f-stops per second, so each shot lands on its adapted exposure within the settle frames. `ShowFlag.VisualizeHDR 1` in `-ExecCmds` prints the metered EV100 and the exposure on each shot.
+- **Result, mean sRGB:**
+
+| View | Before | After |
+|---|---|---|
+| `cave-lava` | 0.0 / 0.0 / 0.0 | 130.2 / 85.1 / 27.0 |
+| `cave` (reaches open sky) | 63.1 / 70.2 / 58.9 | 105.9 / 110.5 / 93.5 |
+| `overview` | 88.0 / 103.2 / 108.4 | the same |
+| `closeup`, `ground`, `section` | 90.8 / 111.8 / 55.7, 159.4 / 113.1 / 69.8, 104.9 / 114.7 / 125.0 | within 0.1 per channel |
+
+- **Lava in a cave clips:** with the eye adapted to the cave, 36% of the `cave-lava` view has a channel at 255, mostly red. The lava reads yellow-orange with its texture still visible, and the walls glow. The knob is `CHUNK_LIGHT_EMISSIVE`. An estimate, not measured: 5000 would give about 0.7 stop less clipping (log2 of 8000 / 5000), with the daylight `cave-lava` view's mean red near 63. That is interpolated in stops between the measured 38.7 at 2000 and 76.4 at 8000.
+- **Evidence:** `Tests/Evidence/2026-10-09/VoxelShots-20261009-104219` (before), `-104748` (emission only, at the daylight exposure), `-105556` (both); HDR overlays `-105247` (new map) and `-105415` (old map); montages and crops in `Tests/Evidence/2026-10-09/CaveBrightness-20261009-3b/` (`look-brightness.png` first).
+
 **Edge fog (phase 3).** The view ends at `voxel.ViewRadius`. Instead of a wall or a dark void, the last 1.5 columns fade into the sky, so the land seems to run off into a distance that is too far and foggy to see. `AVoxelWorld` refits the map's `ExponentialHeightFog` from the view radius at runtime:
 
 - **Fog:** clear until 1.5 columns before the radius and 99% opaque at it: density 1000 * ln(100) / 2400, about 1.92, where 2,400 cm is the fade. Height falloff 0.001. Cutoff distance 1e9 cm, so the sky stays clear.
@@ -526,8 +546,13 @@ Limits:
 
 - **Hidden faces in a card.** A card captures the front face along its direction, so a face behind another facing the same way in the same section (a dune behind a dune, a valley narrower than 16 blocks) stays black in Lumen's scene. Rays that hit it get no bounce. It shows as black strips on the seabed in the `lumen-scene` shot. Caves and overhangs in phase 4 will make it more common. Options then: cards sliced along their direction, or hit lighting.
   - Session 4 compared the same cave mouth (`CaptureVoxel -Caves`): cards 3.29 ms against hit lighting 3.71 ms GPU at 1600x900. The images are identical (mean sRGB 63.1/70.2/59.0 against 63.2/70.2/59.0, also at +3 EV), so cards stay.
-  - Caveat: the fixed daylight exposure (EV100 14.5) keeps cave interiors near black and lava's emission nearly invisible, which could hide card artifacts. Re-run the comparison once exposure is decided.
   - Evidence: `C:\dev\sandbox\phase4s4\montage\cavecmp2.png`, `Tests/Evidence/2026-10-09/VoxelShots-20261009-025021` (cards), `-025054` (hit), `-025126` and `-025159` (+3 EV).
+  - Re-run in phase 5 session 3b, after the brightness fix above, so caves and lava are visible: cards stay (the settled test: switch only if hit lighting looks clearly better in caves).
+    - `cave`: the same image. 0.02% of pixels differ by more than 8/255, against 0.03% between two cards runs.
+    - `cave-lava`: 21% of pixels differ by more than 24/255 (two cards runs: 0.05%; smaller differences come from lava's animation). All of it is on the lava surface: slightly more saturated orange with hit lighting, a little whiter with cards. The walls are the same.
+    - GPU frame at 1600 x 900, cards / hit / cards in sequence: `cave` 4.12 / 5.53 / 3.79 ms, `cave-lava` 5.13 / 6.22 / 5.31 ms. Measured with Minecraft open on the same PC, so compare only within the sequence: hit lighting costs 1 to 1.5 ms more.
+    - The switch, if a later look needs it: `r.Lumen.HardwareRayTracing.LightingMode 1`.
+    - Evidence: `Tests/Evidence/2026-10-09/VoxelShots-20261009-105747` (cards), `-105826` (hit), `-105906` (cards); montage `Tests/Evidence/2026-10-09/CaveBrightness-20261009-3b/look-lighting.png`.
 - **Software Lumen.** On a GPU without hardware ray tracing, Lumen traces distance fields. The chunks have none, so it cannot see them: no bounce and no sky occlusion, and caves would be lit by the sky. Mesh distance fields for columns (`SetDistanceField`) are the fix when it matters.
 - **Fog color.** It is fitted to the map's sun, so a day cycle would need it refitted. A faint seam remains on the sun side.
 - **The Playground** keeps its own rig (sky light 1).
@@ -606,7 +631,7 @@ A deliberate off-by-one in `GetSectionsTouching` fails `Edit.Sections` (13 error
 - **`voxel.Debug.Climate`** on screen is unconfirmed since session 3.
 - **Still lava:** it has no damage and no flow, and it counts as water for the player's movement.
 - **Snow layers:** placement gives one layer (no stacking); eight layers collide as a full cube (26.3 collides at 7/8); the creative item icon draws as a cube.
-- **Cave exposure:** the fixed daylight exposure keeps cave interiors near black and lava's emission nearly invisible (the lava view is still black). Still open; the brightness fix is proposed for phase 5's session 3.
+- **Lava in a cave clips:** with eye adaptation, 36% of the `cave-lava` view has a channel at 255; the lava reads yellow-orange with its texture still visible ([Lighting](#lighting), "Cave exposure and glow").
 - **PS biased low:** the spawn estimate rounds to 8-block cells and ignores the 3D noise.
 - **Beaches:** sand-wide beaches until phase 5's surface rules.
 - **Horizon seam:** the sky/fog seam at the horizon is unchanged from phase 3 (the same in the stand-in's flight).
