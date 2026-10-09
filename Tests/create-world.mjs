@@ -97,7 +97,7 @@ try {
   await createWorld({name: 'Hello World', seed: 'hello'});
   await finishWorld('Hello World');
   const hello = world('hello-world');
-  check('world.json: the draft as created', hello.version === 1 && hello.generator === 1 && hello.name === 'Hello World' &&
+  check('world.json: the draft as created', hello.version === 1 && hello.generator === 2 && hello.name === 'Hello World' &&
     hello.seed === 'hello' && hello.gameMode === 'Survival' && hello.difficulty === 'Normal' && hello.type === 'Default' &&
     Object.keys(hello.rules).length > 40, hello);
   const helloReport = report(helloShots);

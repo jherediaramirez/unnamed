@@ -31,6 +31,15 @@ namespace
         FString Error;
     };
     TArray<FClimateDebugCacheEntry> ClimateDebugCache;
+
+    struct FClimateDebugViewsEntry
+    {
+        FString Preset;
+        uint64 Seed = 0;
+        TSharedPtr<const VoxelClimateDebug::FViews> Views;
+        FString Error;
+    };
+    TArray<FClimateDebugViewsEntry> ClimateDebugViewsCache;
     const TCHAR* const ClimateDebugPresets[] = {TEXT("overworld"), TEXT("large_biomes"), TEXT("amplified")};
 
     FLinearColor ClimateDebugLerp(const FLinearColor& A, const FLinearColor& B, double Alpha)
@@ -113,9 +122,10 @@ namespace
     constexpr int32 ClimateDebugMessageKey = 0x5C11A7E;
 
     TAutoConsoleVariable<FString> CVarDebugClimate(TEXT("voxel.Debug.Climate"), TEXT("off"),
-        TEXT("Shows the terrain climate at the player on screen, from the overworld preset: C, E, W, PV, T, V, O, F, J "
-             "and D (depth at the player's height), highlighting the parameter named (C|E|W|PV|T|V|O|F|J|D; off hides "
-             "it). N and PS come with the 3D density in phase 4 session 3. Debug only, not a setting."));
+        TEXT(
+            "Shows the terrain climate at the player on screen, from the overworld preset: C, E, W, PV, T, V, O, F, J, "
+            "D (depth at the player's height), N (final density at the player) and PS (preliminary surface), "
+            "highlighting the one named (C|E|W|PV|T|V|O|F|J|D|N|PS; off hides it). Debug only, not a setting."));
 
     bool TickClimateDebug(float)
     {
@@ -151,6 +161,19 @@ namespace
             FString::Printf(TEXT("  %sD %.3f%s"), bDepth ? TEXT("[") : TEXT(""), Depth, bDepth ? TEXT("]") : TEXT(""));
         Line +=
             FString::Printf(TEXT("  surface ~%.0f"), VoxelClimateDebug::EstimateSurface(Sample[EVoxelClimate::Offset]));
+        // N at the player and PS under them, through the reference axes (x, y up, z).
+        if (const TSharedPtr<const VoxelClimateDebug::FViews> Views =
+                VoxelClimateDebug::GetViews(TEXT("overworld"), ClimateDebugSeed(World), Error))
+        {
+            const double PX = Blocks.X, PY = Blocks.Z, PZ = Blocks.Y;
+            Views->Evaluator.Evaluate(&PX, &PY, &PZ, 1, Scratch);
+            const bool bN = Label.Equals(TEXT("N"), ESearchCase::IgnoreCase);
+            const bool bPS = Label.Equals(TEXT("PS"), ESearchCase::IgnoreCase);
+            Line += FString::Printf(TEXT("  %sN %.3f%s  %sPS %.0f%s"), bN ? TEXT("[") : TEXT(""),
+                Views->Evaluator.GetValues(Scratch, Views->Density)[0], bN ? TEXT("]") : TEXT(""),
+                bPS ? TEXT("[") : TEXT(""), Views->Evaluator.GetValues(Scratch, Views->Surface)[0],
+                bPS ? TEXT("]") : TEXT(""));
+        }
         GEngine->AddOnScreenDebugMessage(ClimateDebugMessageKey, 0, FColor::White, Line);
         return true;
     }
@@ -163,23 +186,33 @@ namespace
         });
 
     FAutoConsoleCommandWithWorldArgsAndOutputDevice ClimateMapCommand(TEXT("voxel.ClimateMap"),
-        TEXT("voxel.ClimateMap <C|E|W|PV|T|V|O|F|J|all> [size px, default 1024] [blocks per px, default 8] [preset: "
-             "overworld|large_biomes|amplified]: writes a top-down map of the climate centered on the player (or 0, 0) "
-             "to Saved/VoxelClimate. O draws the surface height the offset implies."),
+        TEXT("voxel.ClimateMap <C|E|W|PV|T|V|O|F|J|N|PS|all> [size px, default 1024] [blocks per px, default 8] "
+             "[preset: "
+             "overworld|large_biomes|amplified]: writes a top-down map centered on the player (or 0, 0) to "
+             "Saved/VoxelClimate. O draws the surface height the offset implies, PS the preliminary surface, and N "
+             "the final density at sea level (solid red, open blue)."),
         FConsoleCommandWithWorldArgsAndOutputDeviceDelegate::CreateLambda(
             [](const TArray<FString>& Args, UWorld* World, FOutputDevice& Output)
             {
-                TArray<EVoxelClimate> Parameters;
+                // Climate parameters by index; the views as -1 (N) and -2 (PS).
+                TArray<int32> Maps;
                 EVoxelClimate Parameter;
                 if (!Args.IsEmpty() && Args[0].Equals(TEXT("all"), ESearchCase::IgnoreCase))
+                {
                     for (int32 Index = 0; Index < int32(EVoxelClimate::Count); ++Index)
-                        Parameters.Add(EVoxelClimate(Index));
+                        Maps.Add(Index);
+                    Maps.Append({-1, -2});
+                }
                 else if (!Args.IsEmpty() && FVoxelClimateSampler::ParseLabel(Args[0], Parameter))
-                    Parameters.Add(Parameter);
+                    Maps.Add(int32(Parameter));
+                else if (!Args.IsEmpty() && Args[0].Equals(TEXT("N"), ESearchCase::IgnoreCase))
+                    Maps.Add(-1);
+                else if (!Args.IsEmpty() && Args[0].Equals(TEXT("PS"), ESearchCase::IgnoreCase))
+                    Maps.Add(-2);
                 else
                 {
                     Output.Log(
-                        TEXT("Usage: voxel.ClimateMap <C|E|W|PV|T|V|O|F|J|all> [size] [blocks per px] [preset]"));
+                        TEXT("Usage: voxel.ClimateMap <C|E|W|PV|T|V|O|F|J|N|PS|all> [size] [blocks per px] [preset]"));
                     return;
                 }
                 VoxelClimateDebug::FMapOptions Options;
@@ -193,20 +226,34 @@ namespace
                 FString Error;
                 const TSharedPtr<const FVoxelClimateSampler> Sampler =
                     VoxelClimateDebug::GetSampler(Preset, Seed, Error);
-                if (!Sampler)
+                // The N and PS views compile only when asked for.
+                const bool bViews = Maps.ContainsByPredicate([](int32 Map) { return Map < 0; });
+                const TSharedPtr<const VoxelClimateDebug::FViews> Views =
+                    Sampler && bViews ? VoxelClimateDebug::GetViews(Preset, Seed, Error) : nullptr;
+                if (!Sampler || (bViews && !Views))
                 {
                     Output.Log(ELogVerbosity::Error, Error);
                     return;
                 }
                 const FString Folder = FPaths::ProjectSavedDir() / TEXT("VoxelClimate");
-                for (const EVoxelClimate Each : Parameters)
+                for (const int32 Map : Maps)
                 {
-                    Options.Parameter = Each;
+                    const TCHAR* Label = Map >= 0 ? FVoxelClimateSampler::GetLabel(EVoxelClimate(Map))
+                                                  : (Map == -1 ? TEXT("N") : TEXT("PS"));
                     const FString Path = Folder /
-                        FString::Printf(TEXT("%s-%lld-%s-%d-%g.png"), *Preset, int64(Seed),
-                            FVoxelClimateSampler::GetLabel(Each), Options.Size, Options.BlocksPerPixel);
+                        FString::Printf(TEXT("%s-%lld-%s-%d-%g.png"), *Preset, int64(Seed), Label, Options.Size,
+                            Options.BlocksPerPixel);
                     FString Summary;
-                    if (VoxelClimateDebug::WriteMap(*Sampler, Options, Path, Summary, Error))
+                    bool bWritten;
+                    if (Map >= 0)
+                    {
+                        Options.Parameter = EVoxelClimate(Map);
+                        bWritten = VoxelClimateDebug::WriteMap(*Sampler, Options, Path, Summary, Error);
+                    }
+                    else
+                        bWritten = VoxelClimateDebug::WriteViewMap(
+                            *Views, Map == -2, VoxelConstants::SeaLevel, Options, Path, Summary, Error);
+                    if (bWritten)
                     {
                         Output.Log(Summary);
                         UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Summary);
@@ -215,6 +262,65 @@ namespace
                         Output.Log(ELogVerbosity::Error, Error);
                 }
             }));
+
+    // Fills Size x Size values across every task worker, row by row (row 0 at the top, the map's north), colors them
+    // and writes the PNG; OutSummary gets the timing and spread. SampleRow(X, Y, Count, Out) samples one row.
+    bool ClimateDebugWriteValues(const VoxelClimateDebug::FMapOptions& Options, const TCHAR* Label,
+        TFunctionRef<void(const double*, const double*, int32, float*)> SampleRow, TFunctionRef<FColor(float)> Color,
+        bool bHeights, const FString& Path, FString& OutSummary, FString& OutError)
+    {
+        const int32 Size = Options.Size;
+        TArray<FColor> Pixels;
+        Pixels.SetNumUninitialized(Size * Size);
+        TArray<float> Values;
+        Values.SetNumUninitialized(Size * Size);
+        const double Start = FPlatformTime::Seconds();
+        ParallelFor(Size,
+            [&](int32 Row)
+            {
+                TArray<double> X, Y;
+                X.SetNumUninitialized(Size);
+                Y.SetNumUninitialized(Size);
+                const double BlockY = Options.CenterY + (Size / 2 - Row) * Options.BlocksPerPixel;
+                for (int32 Column = 0; Column < Size; ++Column)
+                {
+                    X[Column] = Options.CenterX + (Column - Size / 2) * Options.BlocksPerPixel;
+                    Y[Column] = BlockY;
+                }
+                float* Out = Values.GetData() + Row * Size;
+                SampleRow(X.GetData(), Y.GetData(), Size, Out);
+                for (int32 Column = 0; Column < Size; ++Column)
+                    Pixels[Row * Size + Column] = Color(Out[Column]);
+            });
+        const double Seconds = FPlatformTime::Seconds() - Start;
+
+        IImageWrapperModule& Images = FModuleManager::LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
+        const TSharedPtr<IImageWrapper> Png = Images.CreateImageWrapper(EImageFormat::PNG);
+        if (!Png->SetRaw(Pixels.GetData(), Pixels.Num() * sizeof(FColor), Size, Size, ERGBFormat::BGRA, 8) ||
+            !FFileHelper::SaveArrayToFile(Png->GetCompressed(), *Path))
+        {
+            OutError = TEXT("could not write ") + Path;
+            return false;
+        }
+
+        // Only finite values are ranked: a NaN would break the sort's ordering.
+        Values.RemoveAll([](float Value) { return !FMath::IsFinite(Value); });
+        if (Values.IsEmpty()) Values.Add(0);
+        Values.Sort();
+        auto At = [&Values](double Fraction) { return Values[FMath::FloorToInt(Fraction * (Values.Num() - 1))]; };
+        int32 Below = 0;
+        if (bHeights)
+            for (const float Value : Values)
+                Below += Value < VoxelConstants::SeaLevel;
+        OutSummary =
+            FString::Printf(TEXT("voxel.ClimateMap %s: %d x %d px at %g blocks per px (%.0f blocks across) in %.0f "
+                                 "ms (%.2f us per point); p1 %.3f, p50 %.3f, p99 %.3f%s -> %s"),
+                Label, Size, Size, Options.BlocksPerPixel, Size * Options.BlocksPerPixel, Seconds * 1000,
+                Seconds * 1e6 / Values.Num(), At(.01), At(.5), At(.99),
+                bHeights ? *FString::Printf(TEXT("; below sea level %.0f%%"), 100. * Below / Values.Num()) : TEXT(""),
+                *FPaths::ConvertRelativePathToFull(Path));
+        return true;
+    }
 } // namespace
 
 double VoxelClimateDebug::EstimateSurface(float Offset)
@@ -251,67 +357,80 @@ TSharedPtr<const FVoxelClimateSampler> VoxelClimateDebug::GetSampler(
     return Entry.Sampler;
 }
 
+TSharedPtr<const VoxelClimateDebug::FViews> VoxelClimateDebug::GetViews(
+    const FString& Preset, uint64 Seed, FString& OutError)
+{
+    check(IsInGameThread());
+    for (const FClimateDebugViewsEntry& Entry : ClimateDebugViewsCache)
+        if (Entry.Preset == Preset && Entry.Seed == Seed)
+        {
+            OutError = Entry.Error;
+            return Entry.Views;
+        }
+
+    // A failure is cached too, so a per-frame caller never re-reads the reference.
+    if (ClimateDebugViewsCache.Num() >= 4) ClimateDebugViewsCache.RemoveAt(0);
+    FClimateDebugViewsEntry& Entry = ClimateDebugViewsCache.AddDefaulted_GetRef();
+    Entry.Preset = Preset;
+    Entry.Seed = Seed;
+    FVoxelTerrainPreset Data;
+    const TSharedRef<FViews> Views = MakeShared<FViews>();
+    if (!Algo::Find(ClimateDebugPresets, Preset))
+        OutError = FString::Printf(TEXT("unknown preset %s (overworld, large_biomes or amplified)"), *Preset);
+    else if (VoxelWorldgen::ReadPreset(VoxelWorldgen::GetReferenceRoot(), Preset, Data, OutError))
+    {
+        for (const FVoxelTerrainPreset::FDebugView& View : Data.DebugViews)
+        {
+            if (View.Label == TEXT("N")) Views->Density = View.Node;
+            if (View.Label == TEXT("PS")) Views->Surface = View.Node;
+        }
+        if (Views->Density == INDEX_NONE || Views->Surface == INDEX_NONE)
+            OutError = Preset + TEXT(" has no N or PS view");
+        else if (Views->Evaluator.Compile(Data.Graph, Seed, {Views->Density, Views->Surface}, &OutError))
+            Entry.Views = Views;
+    }
+    Entry.Error = OutError;
+    return Entry.Views;
+}
+
 bool VoxelClimateDebug::WriteMap(const FVoxelClimateSampler& Sampler, const FMapOptions& Options, const FString& Path,
     FString& OutSummary, FString& OutError)
 {
-    const int32 Size = Options.Size;
-    TArray<FColor> Pixels;
-    Pixels.SetNumUninitialized(Size * Size);
-    TArray<float> Values;
-    Values.SetNumUninitialized(Size * Size);
-    const double Start = FPlatformTime::Seconds();
-    ParallelFor(Size,
-        [&](int32 Row)
+    const EVoxelClimate Parameter = Options.Parameter;
+    const bool bOffset = Parameter == EVoxelClimate::Offset;
+    return ClimateDebugWriteValues(
+        Options, FVoxelClimateSampler::GetLabel(Parameter),
+        [&Sampler, Parameter, bOffset](const double* X, const double* Y, int32 Count, float* Out)
         {
             FVoxelDensityScratch Scratch;
-            TArray<double> X, Y;
             TArray<FVoxelClimateSample> Samples;
-            X.SetNumUninitialized(Size);
-            Y.SetNumUninitialized(Size);
-            Samples.SetNum(Size);
-            // Row 0 is the top of the image, the map's north (+Y).
-            const double BlockY = Options.CenterY + (Size / 2 - Row) * Options.BlocksPerPixel;
-            for (int32 Column = 0; Column < Size; ++Column)
-            {
-                X[Column] = Options.CenterX + (Column - Size / 2) * Options.BlocksPerPixel;
-                Y[Column] = BlockY;
-            }
-            Sampler.Sample(X.GetData(), Y.GetData(), Size, Scratch, Samples);
-            for (int32 Column = 0; Column < Size; ++Column)
-            {
-                const float Value = Samples[Column][Options.Parameter];
-                Values[Row * Size + Column] = Value;
-                Pixels[Row * Size + Column] = ClimateDebugColor(Options.Parameter, Value);
-            }
-        });
-    const double Seconds = FPlatformTime::Seconds() - Start;
+            Samples.SetNum(Count);
+            Sampler.Sample(X, Y, Count, Scratch, Samples);
+            // Offset is kept as the surface height it implies, for the colors and the share below sea level.
+            for (int32 Index = 0; Index < Count; ++Index)
+                Out[Index] = bOffset ? float(EstimateSurface(Samples[Index][Parameter])) : Samples[Index][Parameter];
+        },
+        [Parameter, bOffset](float Value)
+        { return bOffset ? ClimateDebugHeightColor(Value) : ClimateDebugColor(Parameter, Value); }, bOffset, Path,
+        OutSummary, OutError);
+}
 
-    IImageWrapperModule& Images = FModuleManager::LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
-    const TSharedPtr<IImageWrapper> Png = Images.CreateImageWrapper(EImageFormat::PNG);
-    if (!Png->SetRaw(Pixels.GetData(), Pixels.Num() * sizeof(FColor), Size, Size, ERGBFormat::BGRA, 8) ||
-        !FFileHelper::SaveArrayToFile(Png->GetCompressed(), *Path))
-    {
-        OutError = TEXT("could not write ") + Path;
-        return false;
-    }
-
-    // Only finite values are ranked: a NaN would break the sort's ordering.
-    Values.RemoveAll([](float Value) { return !FMath::IsFinite(Value); });
-    if (Values.IsEmpty()) Values.Add(0);
-    Values.Sort();
-    auto At = [&Values](double Fraction) { return Values[FMath::FloorToInt(Fraction * (Values.Num() - 1))]; };
-    int32 Below = 0;
-    if (Options.Parameter == EVoxelClimate::Offset)
-        for (const float Value : Values)
-            Below += EstimateSurface(Value) < VoxelConstants::SeaLevel;
-    OutSummary =
-        FString::Printf(TEXT("voxel.ClimateMap %s: %d x %d px at %g blocks per px (%.0f blocks across) in %.0f "
-                             "ms (%.2f us per point); p1 %.3f, p50 %.3f, p99 %.3f%s -> %s"),
-            FVoxelClimateSampler::GetLabel(Options.Parameter), Size, Size, Options.BlocksPerPixel,
-            Size * Options.BlocksPerPixel, Seconds * 1000, Seconds * 1e6 / Values.Num(), At(.01), At(.5), At(.99),
-            Options.Parameter == EVoxelClimate::Offset
-                ? *FString::Printf(TEXT("; below sea level %.0f%%"), 100. * Below / Values.Num())
-                : TEXT(""),
-            *FPaths::ConvertRelativePathToFull(Path));
-    return true;
+bool VoxelClimateDebug::WriteViewMap(const FViews& Views, bool bSurface, double Height, const FMapOptions& Options,
+    const FString& Path, FString& OutSummary, FString& OutError)
+{
+    const int32 Node = bSurface ? Views.Surface : Views.Density;
+    return ClimateDebugWriteValues(
+        Options, bSurface ? TEXT("PS") : TEXT("N"),
+        [&Views, Node, Height](const double* X, const double* Y, int32 Count, float* Out)
+        {
+            // Our X and Y are the reference's x and z; its y is the height.
+            FVoxelDensityScratch Scratch;
+            TArray<double> Heights;
+            Heights.Init(Height, Count);
+            Views.Evaluator.Evaluate(X, Heights.GetData(), Y, Count, Scratch);
+            FMemory::Memcpy(Out, Views.Evaluator.GetValues(Scratch, Node).GetData(), Count * sizeof(float));
+        },
+        [bSurface](float Value)
+        { return bSurface ? ClimateDebugHeightColor(Value) : ClimateDebugColor(EVoxelClimate::Erosion, Value); },
+        bSurface, Path, OutSummary, OutError);
 }

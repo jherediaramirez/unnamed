@@ -11,9 +11,10 @@ struct UNNAMED_API FUnnamedSavedWorld
 {
     // world.json's layout. A file from a newer version is refused, never rewritten.
     static constexpr int32 FormatVersion = 1;
-    // The terrain generator a world was made with: 1 is phase 2's stand-in height terrain (and Superflat). Terrain is
-    // not saved, only the seed and these settings, so a new generator must keep the old one to keep old worlds' land.
-    static constexpr int32 CurrentGenerator = 1;
+    // The terrain generator a world was made with: 1 is phase 2's stand-in height terrain, 2 phase 4's density terrain
+    // from the 26.3 graph (Superflat stays flat under both). Terrain is not saved, only the seed and these settings, so
+    // a new generator must keep the old one to keep old worlds' land.
+    static constexpr int32 CurrentGenerator = 2;
 
     // One Superflat layer as the screen lists it: a block id ("minecraft:dirt") and its height.
     struct FFlatLayer

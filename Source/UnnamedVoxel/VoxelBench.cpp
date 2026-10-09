@@ -6,7 +6,9 @@
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Random/VoxelRandom.h"
 #include "Spline/VoxelSpline.h"
+#include "Storage/VoxelColumn.h"
 #include "Terrain/VoxelClimate.h"
+#include "Terrain/VoxelDensityTerrain.h"
 
 namespace
 {
@@ -212,4 +214,86 @@ TArray<FVoxelBenchResult> VoxelBench::RunClimate(const FVoxelClimateSampler& Sam
         Parallel.Checksum += Sum;
     Results.Add(Parallel);
     return Results;
+}
+
+namespace
+{
+    FString DensityBenchStage(const TCHAR* Name, TArray<double>& Values)
+    {
+        Values.Sort();
+        double Sum = 0;
+        for (const double Value : Values)
+            Sum += Value;
+        const auto At = [&Values](double Fraction) { return Values[FMath::FloorToInt(Fraction * (Values.Num() - 1))]; };
+        return FString::Printf(TEXT("  %-22s p50 %.3f  p95 %.3f  mean %.3f  max %.3f ms"), Name, At(.5), At(.95),
+            Sum / Values.Num(), Values.Last());
+    }
+} // namespace
+
+FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius)
+{
+    TRACE_CPUPROFILER_EVENT_SCOPE(VoxelBench_RunDensity);
+    const int32 Side = 2 * Radius + 1, Columns = Side * Side;
+    FString Report;
+    TArray<uint16> Dense, Skipped;
+    FVoxelColumn Column;
+    // One untimed column sizes the scratch, as a worker's would be after its first column.
+    Terrain.Generate(FIntPoint::ZeroValue, Column, Dense);
+
+    int64 Differences = 0;
+    for (const bool bSkip : {true, false})
+    {
+        TArray<double> Total, Density, Blocks, Flat, Bounds, Corners, Cells;
+        int64 SolidCells = 0, EmptyCells = 0, AllCells = 0, CornerCount = 0;
+        for (int32 Index = 0; Index < Columns; ++Index)
+        {
+            const FIntPoint Position(Index % Side - Radius, Index / Side - Radius);
+            FVoxelDensityTerrainTimings Timings;
+            const double Start = FPlatformTime::Seconds();
+            Terrain.Generate(Position, Column, Dense, &Timings, &bSkip);
+            Total.Add((FPlatformTime::Seconds() - Start) * 1000);
+            Density.Add(Timings.DensityMs);
+            Blocks.Add(Timings.BlocksMs);
+            Flat.Add(Timings.Density.FlatMs);
+            Bounds.Add(Timings.Density.BoundsMs);
+            Corners.Add(Timings.Density.CornersMs);
+            Cells.Add(Timings.Density.BlocksMs);
+            SolidCells += Timings.Density.SolidCells;
+            EmptyCells += Timings.Density.EmptyCells;
+            AllCells += Timings.Density.Cells;
+            CornerCount += Timings.Density.CornersEvaluated;
+            if (bSkip)
+                Skipped.Append(Dense);
+            else
+                for (int32 Cell = 0; Cell < Dense.Num(); ++Cell)
+                    Differences += Dense[Cell] != Skipped[Index * Dense.Num() + Cell];
+        }
+        Report += FString::Printf(TEXT("%d columns, one thread, skipping %s: %.1f%% of cells skipped (%.1f%% solid, "
+                                       "%.1f%% empty), %.0f corners evaluated per column\n"),
+            Columns, bSkip ? TEXT("on") : TEXT("off"), 100. * (SolidCells + EmptyCells) / AllCells,
+            100. * SolidCells / AllCells, 100. * EmptyCells / AllCells, double(CornerCount) / Columns);
+        Report += DensityBenchStage(TEXT("Generate column"), Total) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("  density"), Density) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("    flat (climate)"), Flat) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("    bounds"), Bounds) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("    corners"), Corners) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("    cells to blocks"), Cells) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("  blocks"), Blocks) + TEXT("\n");
+    }
+    Report += FString::Printf(TEXT("Blocks that differ with skipping on and off: %lld of %lld\n"), Differences,
+        int64(Columns) * FVoxelColumn::DenseVolume);
+
+    const int32 Workers = FMath::Max(1, int32(LowLevelTasks::FScheduler::Get().GetNumWorkers()));
+    const double Start = FPlatformTime::Seconds();
+    ParallelFor(Columns,
+        [&](int32 Index)
+        {
+            TArray<uint16> WorkerDense;
+            FVoxelColumn WorkerColumn;
+            Terrain.Generate(FIntPoint(Index % Side - Radius, Index / Side - Radius), WorkerColumn, WorkerDense);
+        });
+    const double Seconds = FPlatformTime::Seconds() - Start;
+    Report += FString::Printf(TEXT("%d columns across %d workers: %.1f ms wall, %.3f ms per column"), Columns, Workers,
+        Seconds * 1000, Seconds * 1000 / Columns);
+    return Report;
 }

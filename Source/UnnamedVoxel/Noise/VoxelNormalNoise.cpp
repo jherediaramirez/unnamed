@@ -62,6 +62,7 @@ FVoxelNormalNoise::FVoxelNormalNoise(uint64 WorldSeed, const FVoxelDensityNoise&
             Octave.Amplitude = float(Description.BaseAmplitude * SpreadScale * Spread *
                 Description.AmplitudeModifiers[Index] * Weight / WeightSum);
             if (Octave.Amplitude != 0) Octaves.Add(Octave);
+            Bound += FMath::Abs(Octave.Amplitude);
         }
     }
 }

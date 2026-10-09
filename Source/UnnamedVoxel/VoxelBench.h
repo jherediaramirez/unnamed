@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 
 class FVoxelClimateSampler;
+class FVoxelDensityTerrain;
 
 // One timed run: how long Samples evaluations took, and a checksum so the work cannot be optimized away.
 struct FVoxelBenchResult
@@ -27,6 +28,12 @@ namespace VoxelBench
     // Times the climate pass of (2 Radius + 1)^2 columns around the origin, on the calling thread and then across every
     // task worker. Each result counts columns, so its nanoseconds per sample are the time per column.
     UNNAMEDVOXEL_API TArray<FVoxelBenchResult> RunClimate(const FVoxelClimateSampler& Sampler, int32 Radius);
+
+    // Generates (2 Radius + 1)^2 columns of a density terrain around the origin on the calling thread, with
+    // height-bound skipping on and off, and reports each stage's p50, p95 and mean per column, how many cells skipping
+    // filled, and how many blocks differ between the two (always 0 unless skipping is wrong); then the same columns
+    // across every task worker.
+    UNNAMEDVOXEL_API FString RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius);
 
     // One line per result: name, nanoseconds per sample, millions per second.
     UNNAMEDVOXEL_API FString Describe(TConstArrayView<FVoxelBenchResult> Results);

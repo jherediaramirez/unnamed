@@ -268,7 +268,8 @@ bool FWorldSavedTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("world.json reads back"), UnnamedSavedWorlds::FromJson(Json, Loaded, Error));
     const TPair<const TCHAR*, TFunction<void(FJsonObject&)>> Refused[] = {
         {TEXT("a newer format"), [](FJsonObject& File) { File.SetNumberField(TEXT("version"), 2); }},
-        {TEXT("a newer generator"), [](FJsonObject& File) { File.SetNumberField(TEXT("generator"), 2); }},
+        {TEXT("a newer generator"), [](FJsonObject& File)
+            { File.SetNumberField(TEXT("generator"), FUnnamedSavedWorld::CurrentGenerator + 1); }},
         {TEXT("a broken seed"), [](FJsonObject& File) { File.SetStringField(TEXT("seedValue"), TEXT("12abc")); }},
         {TEXT("a seed beyond 64 bits"),
             [](FJsonObject& File) { File.SetStringField(TEXT("seedValue"), TEXT("9223372036854775808")); }},

@@ -299,14 +299,19 @@ bool FVoxelClimateOpsTest::RunTest(const FString& Parameters)
         TEXT("shift_b"), [&](const FVector3d& P) { return float(4 * double(N.Sample(P.Z * .25, P.X * .25, 0))); });
     ExpectExact(TEXT("noise_shifted"), [&](const FVector3d& P) { return N.Sample(P.X * .25 + 3, 0, P.Z * .25 - 5); });
 
-    // Ops that wait for the 3D density must refuse to compile rather than guess.
+    // Since the 3D density (phase 4 session 3) every op compiles; interpolating a constant gives it back everywhere.
     {
         FVoxelDensityEvaluator Evaluator;
         FString CompileError;
         const int32 Node = Graph.FindFunction(ClimateTestFunctionId(TEXT("interpolated")));
-        TestTrue(TEXT("interpolated root refuses to compile"),
-            !Evaluator.Compile(Graph, ClimateTestSeed, {Node}, &CompileError));
-        TestTrue(TEXT("the refusal names the op"), CompileError.Contains(TEXT("interpolated")));
+        TestTrue(TEXT("interpolated compiles"), Evaluator.Compile(Graph, ClimateTestSeed, {Node}, &CompileError));
+        if (Evaluator.IsCompiled())
+        {
+            const double X = 5.5, Y = -13, Z = 2;
+            FVoxelDensityScratch Interpolated;
+            Evaluator.Evaluate(&X, &Y, &Z, 1, Interpolated);
+            TestEqual(TEXT("interpolated constant"), Evaluator.GetValues(Interpolated, Node)[0], 1.f);
+        }
     }
 
     // Batch independence: a point's value never depends on its neighbors or on what the scratch held before.

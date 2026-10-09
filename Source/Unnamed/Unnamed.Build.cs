@@ -22,5 +22,8 @@ public class Unnamed : ModuleRules
         {
             RuntimeDependencies.Add(File, StagedFileType.NonUFS);
         }
+        // The terrain reads the 26.3 worldgen data at runtime (VoxelWorldgen::GetReferenceRoot), so packages stage it at
+        // the same place under the project folder. Only data/: the facts and tools are for tests and rebuilding.
+        RuntimeDependencies.Add("$(ProjectDir)/Reference/minecraft-worldgen-26.3/data/...", StagedFileType.NonUFS);
     }
 }

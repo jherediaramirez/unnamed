@@ -5,12 +5,14 @@
 #include "Modules/ModuleManager.h"
 #include "Random/VoxelSeed.h"
 #include "Streaming/VoxelStreamingPlanner.h"
+#include "Terrain/VoxelDensityTerrain.h"
 #include "Terrain/VoxelHeightTerrain.h"
 #include "Voxel/VoxelBlocks.h"
 #include "Voxel/VoxelClimateDebug.h"
 #include "Voxel/VoxelFlyCamera.h"
 #include "Voxel/VoxelWorld.h"
 #include "Voxel/VoxelWorldSettings.h"
+#include "Voxel/VoxelWorldgenReader.h"
 #include "VoxelBench.h"
 #include "VoxelConstants.h"
 #include "VoxelLog.h"
@@ -149,7 +151,9 @@ namespace
              "voxel.Bench Columns [radius]: generates and meshes (2 radius + 1)^2 columns off screen (default radius "
              "4), on this thread and then on every worker, and reports each stage.\n"
              "voxel.Bench Climate [radius] [preset]: times the terrain climate pass of (2 radius + 1)^2 columns "
-             "(default radius 8, preset overworld), on this thread and then on every worker."),
+             "(default radius 8, preset overworld), on this thread and then on every worker.\n"
+             "voxel.Bench Density [radius] [preset]: generates (2 radius + 1)^2 columns of the density terrain "
+             "(default radius 4, preset overworld) with height-bound skipping on and off, and reports each stage."),
         FConsoleCommandWithArgsAndOutputDeviceDelegate::CreateLambda(
             [](const TArray<FString>& Args, FOutputDevice& Output)
             {
@@ -200,8 +204,33 @@ namespace
                             TEXT("\n") + VoxelBench::Describe(VoxelBench::RunClimate(*Sampler, Radius)));
                     return;
                 }
+                if (!Args.IsEmpty() && Args[0] == TEXT("Density"))
+                {
+                    const int32 Radius = Args.Num() > 1 ? FMath::Clamp(FCString::Atoi(*Args[1]), 0, 32) : 4;
+                    const FString PresetName = Args.Num() > 2 ? Args[2] : TEXT("overworld");
+                    FString Error;
+                    // The sampler's check keeps the name to the reference's three presets.
+                    FVoxelTerrainPreset Preset;
+                    if (!VoxelClimateDebug::GetSampler(PresetName, Seed.Value, Error) ||
+                        !VoxelWorldgen::ReadPreset(VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Error))
+                    {
+                        PrintLines(Output, Error);
+                        return;
+                    }
+                    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+                    const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table);
+                    if (!Terrain.IsValid())
+                    {
+                        PrintLines(Output, Terrain.GetError());
+                        return;
+                    }
+                    PrintLines(Output,
+                        FString::Printf(TEXT("Voxel density bench, %s, seed %s:"), *PresetName, *Seed.Describe()) +
+                            TEXT("\n") + VoxelBench::RunDensity(Terrain, Radius));
+                    return;
+                }
                 PrintLines(Output,
                     TEXT("Usage: voxel.Bench Noise [millions] | voxel.Bench Columns [radius] | voxel.Bench "
-                         "Climate [radius] [preset]"));
+                         "Climate [radius] [preset] | voxel.Bench Density [radius] [preset]"));
             }));
 }

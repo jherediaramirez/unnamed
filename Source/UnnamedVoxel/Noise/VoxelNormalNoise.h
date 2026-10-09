@@ -31,6 +31,10 @@ public:
 
     int32 GetOctaveCount() const { return Octaves.Num(); }
 
+    // No sample's magnitude exceeds this: the octaves' amplitudes summed (each octave of our gradient noise lies in
+    // [-1, 1]).
+    float GetBound() const { return Bound; }
+
 private:
     struct FOctave
     {
@@ -42,4 +46,5 @@ private:
 
     // Both stacks' octaves, interleaved: the first stack's octave, then the second's at the same frequency.
     TArray<FOctave, TInlineAllocator<16>> Octaves;
+    float Bound = 0;
 };

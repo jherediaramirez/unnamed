@@ -16,6 +16,9 @@ public:
     virtual int32 GetSurfaceHeight(int32 X, int32 Y) const = 0;
     // Whether that top block is dry land rather than under water.
     virtual bool IsDry(int32 X, int32 Y) const = 0;
+    // A second, exact look where IsDry is an estimate (the density terrain's). Spawning checks it before standing on
+    // land.
+    virtual bool ConfirmDry(int32 X, int32 Y) const { return IsDry(X, Y); }
     // Fills Out with column Position; Dense is scratch, resized to FVoxelColumn::DenseVolume.
     virtual void Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const = 0;
 };

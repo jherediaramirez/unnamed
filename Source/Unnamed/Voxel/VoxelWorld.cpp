@@ -24,6 +24,7 @@
 #include "Misc/FileHelper.h"
 #include "RenderUtils.h"
 #include "Storage/VoxelColumn.h"
+#include "Terrain/VoxelDensityTerrain.h"
 #include "Terrain/VoxelFlatTerrain.h"
 #include "Terrain/VoxelHeightTerrain.h"
 #include "UnnamedLog.h"
@@ -35,6 +36,7 @@
 #include "Voxel/VoxelFlight.h"
 #include "Voxel/VoxelWorldSettings.h"
 #include "Voxel/VoxelWorldSubsystem.h"
+#include "Voxel/VoxelWorldgenReader.h"
 #include "VoxelConstants.h"
 #include "VoxelLog.h"
 
@@ -201,7 +203,33 @@ void AVoxelWorld::ConfigurePlayer(FFoundationVitals& Vitals) const
 TSharedRef<const IVoxelTerrain> AVoxelWorld::MakeTerrain() const
 {
     const FUnnamedSavedWorld* World = GetSavedWorld();
-    if (!World || !World->IsSuperflat()) return MakeShared<FVoxelHeightTerrain>(Seed.Value, *Table);
+    if (!World || !World->IsSuperflat())
+    {
+        // Saved worlds keep the generator they were made with. The dev seed takes the newest, or -VoxelGenerator=<n>.
+        int32 Generator = FUnnamedSavedWorld::CurrentGenerator;
+        if (World)
+            Generator = World->Generator;
+        else
+            FParse::Value(FCommandLine::Get(), TEXT("VoxelGenerator="), Generator);
+        if (Generator < 2) return MakeShared<FVoxelHeightTerrain>(Seed.Value, *Table);
+        // Generator 2: the world type's 26.3 preset. Single Biome takes the overworld's until phase 5's biomes.
+        const FString Type = World ? World->Type : FString(TEXT("Default"));
+        const TCHAR* PresetName = Type == TEXT("Large Biomes") ? TEXT("large_biomes")
+            : Type == TEXT("AMPLIFIED")                        ? TEXT("amplified")
+                                                               : TEXT("overworld");
+        FVoxelTerrainPreset Preset;
+        FString Error;
+        if (VoxelWorldgen::ReadPreset(VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Error))
+        {
+            TSharedRef<FVoxelDensityTerrain> Density =
+                MakeShared<FVoxelDensityTerrain>(Preset, uint64(Seed.Value), *Table);
+            if (Density->IsValid()) return Density;
+            Error = Density->GetError();
+        }
+        UE_LOG(LogUnnamedVoxel, Error, TEXT("The %s terrain could not be built (%s); using the stand-in terrain."),
+            PresetName, *Error);
+        return MakeShared<FVoxelHeightTerrain>(Seed.Value, *Table);
+    }
     // The screen lists layers top first; the terrain stacks them up from the floor. Ids lose their "minecraft:".
     TArray<FVoxelFlatLayer> Stack;
     for (int32 Index = World->FlatLayers.Num() - 1; Index >= 0; --Index)
@@ -498,13 +526,16 @@ bool AVoxelWorld::AreSpawnColumnsGenerated() const
 FIntVector AVoxelWorld::GetSpawnCell() const
 {
     if (SpawnCell) return *SpawnCell;
-    // Rings outward from the origin; the first column whose top solid block is dry land wins.
+    // Rings outward from the origin; the first column whose top solid block is dry land wins. Where IsDry is an
+    // estimate, a limited number of candidates are confirmed against the real column.
     const int32 Reach = FMath::Max(8, VoxelConsole::CVarViewRadius.GetValueOnGameThread() * VoxelConstants::ColumnSize);
-    for (int32 Ring = 0; Ring <= Reach && Terrain; ++Ring)
+    int32 Confirmations = 64;
+    for (int32 Ring = 0; Ring <= Reach && Terrain && Confirmations > 0; ++Ring)
         for (int32 Y = -Ring; Y <= Ring; ++Y)
             for (int32 X = -Ring; X <= Ring; ++X)
             {
                 if (FMath::Max(FMath::Abs(X), FMath::Abs(Y)) != Ring || !Terrain->IsDry(X, Y)) continue;
+                if (Confirmations <= 0 || (--Confirmations, !Terrain->ConfirmDry(X, Y))) continue;
                 SpawnCell = FIntVector(X, Y, Terrain->GetSurfaceHeight(X, Y) + 1);
                 return *SpawnCell;
             }
