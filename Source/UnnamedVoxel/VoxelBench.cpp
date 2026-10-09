@@ -1,6 +1,8 @@
 #include "VoxelBench.h"
 #include "Async/Fundamental/Scheduler.h"
 #include "Async/ParallelFor.h"
+#include "Generation/VoxelArea.h"
+#include "Hash/CityHash.h"
 #include "HAL/PlatformTime.h"
 #include "Noise/VoxelNoise.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
@@ -230,6 +232,81 @@ namespace
     }
 } // namespace
 
+VoxelBench::FLoadOrderHashes VoxelBench::HashLoadOrders(const IVoxelTerrain& Terrain, int32 Radius)
+{
+    TRACE_CPUPROFILER_EVENT_SCOPE(VoxelBench_HashLoadOrders);
+    const int32 Side = 2 * Radius + 1, Columns = Side * Side;
+    const auto HashColumn = [&Terrain, Side, Radius](int32 Index, TArray<uint16>& Dense)
+    {
+        FVoxelColumn Column;
+        Terrain.Generate(FIntPoint(Index % Side - Radius, Index / Side - Radius), Column, Dense);
+        return CityHash64(reinterpret_cast<const char*>(Dense.GetData()), Dense.Num() * sizeof(uint16));
+    };
+    TArray<uint64> Forward, Backward;
+    Forward.SetNumZeroed(Columns);
+    Backward.SetNumZeroed(Columns);
+    TArray<uint16> Dense;
+    for (int32 Index = 0; Index < Columns; ++Index)
+        Forward[Index] = HashColumn(Index, Dense);
+    ParallelFor(Columns,
+        [&](int32 Step)
+        {
+            TArray<uint16> WorkerDense;
+            const int32 Index = Columns - 1 - Step;
+            Backward[Index] = HashColumn(Index, WorkerDense);
+        });
+
+    FLoadOrderHashes Result;
+    Result.Columns = Columns;
+    for (int32 Index = 0; Index < Columns; ++Index)
+        Result.Mismatches += Forward[Index] != Backward[Index];
+    Result.Forward = CityHash64(reinterpret_cast<const char*>(Forward.GetData()), Columns * sizeof(uint64));
+    Result.Backward = CityHash64(reinterpret_cast<const char*>(Backward.GetData()), Columns * sizeof(uint64));
+    return Result;
+}
+
+FString VoxelBench::RunColumns(const FVoxelBlockTable& Table, const IVoxelTerrain& Terrain,
+    const FVoxelDensityTerrain* Density, const FVoxelMeshOptions& Options, int32 Radius)
+{
+    TRACE_CPUPROFILER_EVENT_SCOPE(VoxelBench_RunColumns);
+    FString Report;
+    FVoxelArea Area;
+    for (const bool bParallel : {false, true})
+    {
+        FVoxelArea::Build(Table, Terrain, FIntPoint::ZeroValue, Radius, Options, bParallel, Area);
+        Report += Area.Describe() + TEXT("\n");
+    }
+
+    const int32 Side = 2 * Radius + 1, Columns = Side * Side;
+    if (Density)
+    {
+        TArray<double> Total, DensityMs, Aquifer, Blocks;
+        TArray<uint16> Dense;
+        FVoxelColumn Column;
+        for (int32 Index = 0; Index < Columns; ++Index)
+        {
+            FVoxelDensityTerrainTimings Timings;
+            const double Start = FPlatformTime::Seconds();
+            Density->Generate(FIntPoint(Index % Side - Radius, Index / Side - Radius), Column, Dense, &Timings);
+            Total.Add((FPlatformTime::Seconds() - Start) * 1000);
+            DensityMs.Add(Timings.DensityMs);
+            Aquifer.Add(Timings.AquiferMs);
+            Blocks.Add(Timings.BlocksMs);
+        }
+        Report += FString::Printf(TEXT("Generation stages, %d columns, one thread:\n"), Columns);
+        Report += DensityBenchStage(TEXT("Generate column"), Total) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("  density"), DensityMs) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("  aquifer"), Aquifer) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("  blocks"), Blocks) + TEXT("\n");
+    }
+
+    const FLoadOrderHashes Hashes = HashLoadOrders(Terrain, Radius);
+    Report += FString::Printf(TEXT("Block hashes, %d columns: row by row on one thread 0x%016llx, backwards across "
+                                   "workers 0x%016llx, %d columns differ"),
+        Hashes.Columns, Hashes.Forward, Hashes.Backward, Hashes.Mismatches);
+    return Report;
+}
+
 FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius)
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelBench_RunDensity);
@@ -243,8 +320,8 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
     int64 Differences = 0;
     for (const bool bSkip : {true, false})
     {
-        TArray<double> Total, Density, Aquifer, Blocks, Flat, Bounds, Corners, Cells;
-        int64 SolidCells = 0, EmptyCells = 0, AllCells = 0, CornerCount = 0;
+        TArray<double> Total, Density, Aquifer, Blocks, Flat, Bounds, Corners, Refine, Cells;
+        int64 SolidCells = 0, EmptyCells = 0, RefinedCells = 0, AllCells = 0, CornerCount = 0;
         for (int32 Index = 0; Index < Columns; ++Index)
         {
             const FIntPoint Position(Index % Side - Radius, Index / Side - Radius);
@@ -258,9 +335,11 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
             Flat.Add(Timings.Density.FlatMs);
             Bounds.Add(Timings.Density.BoundsMs);
             Corners.Add(Timings.Density.CornersMs);
+            Refine.Add(Timings.Density.RefineMs);
             Cells.Add(Timings.Density.BlocksMs);
             SolidCells += Timings.Density.SolidCells;
             EmptyCells += Timings.Density.EmptyCells;
+            RefinedCells += Timings.Density.RefinedCells;
             AllCells += Timings.Density.Cells;
             CornerCount += Timings.Density.CornersEvaluated;
             if (bSkip)
@@ -270,14 +349,17 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
                     Differences += Dense[Cell] != Skipped[Index * Dense.Num() + Cell];
         }
         Report += FString::Printf(TEXT("%d columns, one thread, skipping %s: %.1f%% of cells skipped (%.1f%% solid, "
-                                       "%.1f%% empty), %.0f corners evaluated per column\n"),
+                                       "%.1f%% empty) from bounds, %.1f%% more from corners, %.0f corners "
+                                       "evaluated per column\n"),
             Columns, bSkip ? TEXT("on") : TEXT("off"), 100. * (SolidCells + EmptyCells) / AllCells,
-            100. * SolidCells / AllCells, 100. * EmptyCells / AllCells, double(CornerCount) / Columns);
+            100. * SolidCells / AllCells, 100. * EmptyCells / AllCells, 100. * RefinedCells / AllCells,
+            double(CornerCount) / Columns);
         Report += DensityBenchStage(TEXT("Generate column"), Total) + TEXT("\n");
         Report += DensityBenchStage(TEXT("  density"), Density) + TEXT("\n");
         Report += DensityBenchStage(TEXT("    flat (climate)"), Flat) + TEXT("\n");
         Report += DensityBenchStage(TEXT("    bounds"), Bounds) + TEXT("\n");
         Report += DensityBenchStage(TEXT("    corners"), Corners) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("    cells from corners"), Refine) + TEXT("\n");
         Report += DensityBenchStage(TEXT("    cells to blocks"), Cells) + TEXT("\n");
         Report += DensityBenchStage(TEXT("  aquifer"), Aquifer) + TEXT("\n");
         Report += DensityBenchStage(TEXT("  blocks"), Blocks) + TEXT("\n");

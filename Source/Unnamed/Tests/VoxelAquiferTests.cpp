@@ -8,6 +8,7 @@
 #include "Terrain/VoxelDensityTerrain.h"
 #include "Voxel/VoxelBlocks.h"
 #include "Voxel/VoxelWorldgenReader.h"
+#include "VoxelBench.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -309,6 +310,36 @@ bool FVoxelAquiferGoldenTest::RunTest(const FString& Parameters)
                 static_cast<unsigned long long>(Hash),
                 static_cast<unsigned long long>(AquiferTestGolden[PresetIndex])));
         }
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelDensityLoadOrderTest, "Unnamed.Voxel.Density.LoadOrder",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// Generator 2 with caves gives every column the same blocks whatever ran before it: 5 x 5 columns per preset, row by
+// row on one thread (scratch reused column after column) and backwards across every worker.
+bool FVoxelDensityLoadOrderTest::RunTest(const FString& Parameters)
+{
+    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+    if (!Table->FindState(TEXT("stone")))
+    {
+        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return true;
+    }
+    for (const TCHAR* Name : {TEXT("overworld"), TEXT("large_biomes"), TEXT("amplified")})
+    {
+        FVoxelTerrainPreset Preset;
+        FString Error;
+        if (!TestTrue(FString::Printf(TEXT("%s reads (%s)"), Name, *Error), AquiferTestLoad(Name, Preset, Error)))
+            continue;
+        const FVoxelDensityTerrain Terrain(Preset, AquiferTestSeed, *Table);
+        if (!TestTrue(FString::Printf(TEXT("%s terrain is valid (%s)"), Name, *Terrain.GetError()), Terrain.IsValid()))
+            continue;
+        const VoxelBench::FLoadOrderHashes Hashes = VoxelBench::HashLoadOrders(Terrain, 2);
+        TestEqual(FString::Printf(TEXT("%s: columns hashed"), Name), Hashes.Columns, 25);
+        TestEqual(FString::Printf(TEXT("%s: columns that differ between load orders"), Name), Hashes.Mismatches, 0);
+        TestEqual(FString::Printf(TEXT("%s: combined hashes"), Name), Hashes.Forward, Hashes.Backward);
     }
     return true;
 }

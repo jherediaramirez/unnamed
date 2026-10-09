@@ -13,6 +13,7 @@ struct FVoxelColumnDensityScratch
     TArray<float> CornerValues;
     TArray<uint8> CellStates, CornerNeeded;
     TArray<int32> CornerPoints, CornerFlat;
+    TArray<float> WeightsXZ, WeightsY;
 };
 
 // What one column's density cost.
@@ -23,8 +24,10 @@ struct FVoxelColumnDensityStats
     int32 EmptyCells = 0;
     int32 CornersEvaluated = 0;
     int32 BlocksEvaluated = 0;
-    // Stage times: y-independent corner values, cell bounds, corner evaluation and blocks.
-    double FlatMs = 0, BoundsMs = 0, CornersMs = 0, BlocksMs = 0;
+    // Mixed cells found solid or empty from their evaluated corners (stage 3b), not counted in SolidCells/EmptyCells.
+    int32 RefinedCells = 0;
+    // Stage times: y-independent corner values, cell bounds, corner evaluation, corner refinement and blocks.
+    double FlatMs = 0, BoundsMs = 0, CornersMs = 0, RefineMs = 0, BlocksMs = 0;
 };
 
 // A density function evaluated over one 16 x 16 column the way 26.3 builds terrain: the parts under `interpolated`
@@ -71,6 +74,8 @@ private:
     int32 MinY = 0, Height = 0;
     int32 CellXZ = ColumnSize, CellY = 0;
     int32 CornersXZ = 2, CornersY = 2;
+    // Cells bounded together from the top of the column down while they are certain.
+    static constexpr int32 BoundStack = 8;
     // Nodes under interpolated that never read y, those that may, the interpolated nodes, and the per-block nodes
     // above them (interpolated excluded), each in evaluation order.
     TArray<int32> FlatNodes, CornerNodes, InterpolatedNodes, BlockNodes;

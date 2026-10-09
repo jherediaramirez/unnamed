@@ -12,7 +12,7 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 | 2L | Lighting: Lumen cards for chunks and a brighter sky light, so shaded slopes are no longer black | Done |
 | 2W | Create New World: saved worlds, seed, world type, game mode, difficulty | Done |
 | 3 | Streaming, plus mining and placing on generated terrain | Done |
-| 4 | Terrain: 26.3's density graph, climate, caves, aquifers and lava | In progress: sessions 1-4 of 5 done (worldgen data and reader; noise, climate, splines and debug views; 3D density and generator 2; session 4: caves on, aquifers, still lava, cave-lighting decision) |
+| 4 | Terrain: 26.3's density graph, climate, caves, aquifers and lava | Done (5 sessions: worldgen data and reader; noise, climate, splines and debug views; 3D density and generator 2; caves on, aquifers, still lava, cave-lighting decision; performance). Caves-on columns are slightly over 5 ms on two presets ([Known gaps](#known-gaps)) |
 | 5 | Biomes and surface (needs snow layers) | |
 | 6 | Decoration, after a block-shapes step (plants, cross models) | |
 | 7 | Structures that fit the land (needs stairs, doors, fences, paths) | |
@@ -151,6 +151,10 @@ Phase 4 builds the terrain from 26.3's own worldgen data. `Reference/minecraft-w
   - a conservative `EvaluateBounds`: noise by amplitude sums, splines and divisions across 0 unbounded, a small widening for rounding;
   - `interpolated` and `find_top_surface` use a nested evaluator of their inner function; `find_top_surface` runs its flat part once and only the y-dependent part per step.
 - **Lazy `interval_select`:** functions whose whole subtree nothing else reads are not compiled in the parent. The select evaluates each only at the points that pick it, through a nested evaluator, and bounds it by a bound over all y found at compile. Exact (goldens unchanged); about 10% off a caves-on column.
+- **Lazy `range_choice`:** a branch's private nodes (read only by that branch; never interpolated or `find_top_surface` nodes, and roots are never private) run only at the points that pick that branch, in a nested scratch with the branch's frontier values gathered in.
+  - Only branches holding costly work (noise, shift, blended noise, spline, `interval_select`) go lazy. Nested choices take their own private nodes: outer choices first, ownership goes to the innermost.
+  - `Evaluate` and `EvaluateNodes` skip deferred nodes (`IsDeferred`); `EvaluateBounds` still bounds them.
+  - Exact, because every op is per point. Corners: overworld 2.0 -> 1.7 ms, amplified 3.68 -> 2.81 ms.
 
 ### Climate
 
@@ -172,7 +176,9 @@ On the maps (seed "Unnamed"): continents span thousands of blocks; Large Biomes 
 `Density/VoxelColumnDensity.h`: `FVoxelColumnDensity` evaluates final_density over a 16 x 16 column.
 
 - **Corners:** nodes under `interpolated` run at the 5 x 5 x 49 corners of 4 x 8 x 4 cells (flat ones once per corner column, 5 x 5). Inside a cell they are trilinear. Nodes above it run per block.
-- **Height-bound skipping:** each cell is bounded first. A certainly positive cell is solid and a certainly non-positive one is empty; neither is evaluated. Only the corners of mixed cells are evaluated.
+- **Height-bound skipping:** each cell is bounded first. A certainly positive cell is solid and a certainly non-positive one is empty; neither is evaluated. Each cell column is bounded from the top in stacks of 8 cells (`BoundStack`) while a whole stack is certain, then one cell at a time down to the first mixed cell. Cells below it stay mixed (with caves their bounds never proved anything). Only the corners of mixed cells are evaluated. Overworld caves on: bounds 1.51 -> 0.27 ms.
+- **Cells from corners (stage 3b):** once a mixed cell's corners are evaluated, each interpolated node is bounded by its 8 corner values (trilinear weights are convex; a margin of 1e-5 x max |corner| + 1e-30 covers float rounding). `EvaluateBounds` then runs over the per-block nodes for the cell's y range, so per-block terms outside `interpolated` get their own bounds. Certainly positive means solid; certainly <= 0 and not KeepEmpty means empty; neither needs per-block work. Overworld caves on: 34.2% more cells settled, cells to blocks 2.38 -> 0.75 ms. Stats: `RefinedCells`, `RefineMs`.
+- **Weights table (stage 4):** trilinear weights by offset are precomputed as float(double(D) / Cell), the expression direct evaluation uses, so results are bit-identical. It removes 3 double divisions per block per interpolated node.
 - **Exact:** results equal direct evaluation bit for bit (test `Density.Column`).
 
 `Terrain/VoxelDensityTerrain.h`: `FVoxelDensityTerrain` (`IVoxelTerrain`).
@@ -197,20 +203,22 @@ Measured (Development editor, this machine, seed "Unnamed"), `voxel.Bench Densit
 - **Climate column** this run: 74 µs on one thread (46 µs in session 2; the machine was busier).
 - **Targets:** under the 5 ms limit; the overworld is near the 2 ms target.
 
-Caves on (session 4, after lazy interval_select), 289 columns, one thread, ms per column; skipping off in brackets:
+Caves off now (session 5) measures 2.03 / 2.26 / 2.34 ms mean (overworld / large_biomes / amplified; amplified was 4.06). The table above is session 3, kept as history.
 
-| Preset | Mean | p50 | p95 | Cells skipped |
+Caves on (session 5), `voxel.Bench Density 8 <preset>`, 289 columns, one thread, ms per column; skipping off in brackets:
+
+| Preset | Mean | p50 | p95 | Cells skipped (bounds + corners) |
 |---|---|---|---|---|
-| overworld | 7.83 (11.05) | 6.57 (9.49) | 13.78 (18.24) | 54% (0% solid; was 81%) |
-| large_biomes | 8.65 (10.95) | 7.44 (9.55) | 14.04 (17.19) | 42% |
-| amplified | 11.04 (10.90) | 10.16 (9.53) | 18.09 (17.60) | 15% |
+| overworld | 4.53 (8.09) | 3.84 (7.12) | 7.71 (14.01) | 53.8% + 34.2% = 88.0% |
+| large_biomes | 5.13 (7.84) | 4.44 (6.68) | 8.62 (13.30) | 41.6% + 44.6% = 86.2% |
+| amplified | 5.74 (7.74) | 4.94 (6.47) | 10.40 (13.37) | 15.1% + 72.3% = 87.4% |
 
-- **Before lazy interval_select** (same day): overworld 8.47/7.33/13.98, large_biomes 9.78/8.75/16.56, amplified 12.27/11.41/19.91.
-- **Split of an overworld column:** bounds 1.54, corners 2.10, cells to blocks 2.38, aquifer 0.67, block fill 0.96.
-- **Across 30 workers:** 0.46 ms per column (amplified 0.60).
-- **Skipping is exact:** 0 of 28,409,856 blocks differ with skipping on and off, every preset, caves on and off.
-- **Over the 5 ms limit:** performance is session 5's work.
-- **Streaming flight with caves** (`Tests/Evidence/2026-10-09/VoxelFlight-20261009-024034`): no holes, 2 of 10,230 frames over the 2 ms chunk budget (worst 2.35 ms), start to view 3.64 s, late columns in the fog fade in 2,890 frames (at most 35), memory flat. Columns generate in 13.8 ms mean while workers mesh.
+- **Session 4** (mean/p50/p95): overworld 7.83/6.57/13.78, large_biomes 8.65/7.44/14.04, amplified 11.04/10.16/18.09.
+- **Split of an overworld column:** flat 0.08-0.09, bounds 0.27-0.28, corners 1.7-2.1, cells from corners 0.09, cells to blocks 0.6, aquifer 0.65-0.70, block fill 0.97-1.08.
+- **Across 30 workers:** 0.260 ms per column (large_biomes 0.281, amplified 0.285).
+- **Skipping is exact:** 0 of 28,409,856 blocks differ with skipping on and off, every preset, caves on and off. Goldens are unchanged.
+- **Targets:** the overworld mean is under 5 ms (p95 is over). large_biomes (5.13) and amplified (5.74) are slightly over. p50 is under 5 ms for all three. None reaches the 2 ms target with caves.
+- **Streaming flight with caves** (`Tests/Evidence/2026-10-09/VoxelFlight-20261009-035142`): no holes, 3 of 10,107 frames over the 2 ms chunk budget (worst 2.12 ms, one per circle), start to view 3.34 s (session 4: 3.64 s), late columns in the fog fade in 2,392 frames (session 4: 2,890; at most 35), memory over laps 2 and 3 3,831 -> 3,841 MB. Columns generate in 7.26 ms mean while workers mesh (13.8 ms in session 4). Apply worst frame 1.76 ms.
 
 Streaming (`CaptureVoxel`, dev seed):
 
@@ -416,7 +424,7 @@ Runtime code reads the console variables, never the settings object. The setting
 | `bAmbientOcclusion` | `voxel.AmbientOcclusion` | on | 2 |
 | `bGreedyMeshing` | `voxel.GreedyMeshing` | on | 2 |
 
-`voxel.Debug.Climate <C|E|W|PV|T|V|O|F|J|D|off>` (default off) shows all climate values at the player on screen (overworld preset) and highlights the one named. It also shows N at the player and PS (still not confirmed on screen: offscreen captures do not show on-screen debug messages). It is debug-only, like the next variable, so it has no row. The in-game minimap is deferred to session 5.
+`voxel.Debug.Climate <C|E|W|PV|T|V|O|F|J|D|off>` (default off) shows all climate values at the player on screen (overworld preset) and highlights the one named. It also shows N at the player and PS (still not confirmed on screen: offscreen captures do not show on-screen debug messages). It is debug-only, like the next variable, so it has no row. The in-game minimap is not built yet; it comes with phase 5's biome debug map.
 
 `voxel.Debug.EdgeWalls` (default off) is a debug-only variable, not a setting, so it has no row. It meshes the view's edge against air, so the outer columns draw their sides: the cut through the world that the `overview` and `section` shots show. `CaptureVoxel.ps1` turns it on for its shots.
 
@@ -431,7 +439,7 @@ Runtime code reads the console variables, never the settings object. The setting
 - `voxel.Regenerate` rebuilds the voxel world with its seed, picking up changed console variables.
 - `voxel.Fly [blocks per second]` is the free camera ([Streaming](#streaming)).
 - `voxel.Bench Noise [millions]` times each primitive on the calling thread (1 million samples each by default), then 3D fBm across every task worker.
-- `voxel.Bench Columns [radius]` builds `(2 radius + 1)^2` columns off screen (default radius 4), first on one thread and then on every worker, and reports each stage.
+- `voxel.Bench Columns [radius 4] [preset|standin] [nocaves]` builds `(2 radius + 1)^2` columns off screen (default: overworld with caves; `standin` is generator 1's height terrain). It reports the area stages (generate, gather, mesh) on one thread and then on every worker. For a density terrain it adds the generation stages (density, aquifer, blocks: p50, p95, mean), then block hashes in two load orders: row by row on one thread against backwards across every worker (`VoxelBench::HashLoadOrders`, CityHash64 of each column's dense blocks, combined in position order). Radius 8 hashes: overworld `0x7bbf1f42c5434443`, large_biomes `0xc70b24ba700501f2`, amplified `0x27c2d49086a4614a`; both orders agree, 0 columns differ.
 - `voxel.Bench Climate [radius] [preset]` times the climate sampler over `(2 radius + 1)^2` columns (default radius 8 = 289 columns, overworld preset).
 - `voxel.Bench Density [radius 4] [preset] [nocaves]` times the density terrain with skipping on and off, with its stages and the number of differing blocks, then on all workers. `nocaves` turns caves off.
 - `Scripts\CaptureVoxel.ps1 -Caves` adds a cave view and a lava view to the capture.
@@ -499,7 +507,7 @@ Limits:
 
 ## Tests
 
-`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 39 `Unnamed.Voxel` tests (every native suite: 86). Saved worlds are tested by `Unnamed.Worlds.Saved` (native) and, through the menu end to end, by `Tests/create-world.mjs`. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
+`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 43 `Unnamed.Voxel` tests (every native suite: 86). Saved worlds are tested by `Unnamed.Worlds.Saved` (native) and, through the menu end to end, by `Tests/create-world.mjs`. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
 
 | Test | Checks |
 |---|---|
@@ -542,6 +550,7 @@ Limits:
 | `Unnamed.Voxel.Density.Golden` | Block hashes per preset, seed 263 (caves off, session 3's). |
 | `Unnamed.Voxel.Aquifer.Determinism` | Two aquifers with one seed fill a column identically (and flag the same KeepEmpty rows); a scratch's earlier columns do not change a column; another seed differs. Load order and threads are checked by `Density.Terrain` with caves on. |
 | `Unnamed.Voxel.Aquifer.Fluids` | Over 98 overworld columns: no water below y -54 and open space there is lava, no lava at y -10 or above, water above the sea only under solid ground, and lava and walls exist. |
+| `Unnamed.Voxel.Density.LoadOrder` | In `VoxelAquiferTests.cpp`: 5 x 5 columns per preset with caves, generated in two load orders (row by row; backwards across the workers). Mismatches 0 and equal combined hashes. |
 | `Unnamed.Voxel.Aquifer.Golden` | Caves-on block hashes at the `Density.Golden` positions (seed 263), recorded once: overworld `0xe9376e319a221c4c`, large_biomes `0x9e26565ae0dc0258`, amplified `0x3e5329bd4ce985c4`. |
 | `Unnamed.Voxel.Climate.Presets` | Climate values of the three presets: goldens (each parameter weighted by its index, so swapped parameters fail), shared column edges, the PV formula. |
 | `Unnamed.Voxel.Climate.Threads` | 8 threads in shuffled order match the single-threaded result. |
@@ -553,13 +562,15 @@ A deliberate off-by-one in `GetSectionsTouching` fails `Edit.Sections` (13 error
 ## Known gaps
 
 - **Lighting limits:** faces hidden behind a same-facing face inside one card stay black in Lumen's scene, and software Lumen cannot see the chunks ([Lighting](#lighting)).
-- **Edge fog:** its color is fixed to the map's sun (there is no day cycle yet), and a faint seam remains on the sun side. Columns still arriving inside the fade show up late: up to 33 at a time in 1,155 frames of the flight, one frame each, when crossing a column corner moves the rings diagonally.
+- **Edge fog:** its color is fixed to the map's sun (there is no day cycle yet), and a faint seam remains on the sun side. Columns still arriving inside the fade show up late: in the session 5 flight (2,392 frames, at most 35 at a time), one frame each, when crossing a column corner moves the rings diagonally.
 - **Pale water:** seen from high above, water over sand looks pale; tuning comes with biomes and water colour in phase 5.
 - **Fluids:** generated water counts as water for the player, but it does not flow: carving into water leaves air pockets.
-- **First view:** the view is on screen 2.5 to 2.6 s after the first frame with generator 2 (0.5 to 0.6 s with the stand-in).
+- **First view:** the view is on screen 3.3 to 3.6 s after the first frame with generator 2 and caves (2.5 to 2.6 s before caves; 0.5 to 0.6 s with the stand-in).
 - **AMPLIFIED skipping:** it skips only 28% of cells (loose bounds where the factor is small).
 - **Block fill:** it costs about 0.8 ms per column (the palette build and the per-block loop).
-- **Caves over the limit:** a caves-on column costs 7.83 ms (overworld) against the 5 ms limit. Performance is session 5's work.
+- **Caves near the limit:** a caves-on column costs 4.53 ms mean (overworld, under the 5 ms limit); large_biomes (5.13) and amplified (5.74) are slightly over. Remaining levers are listed in the phase 5 handoff: cross-column corner sharing, `base_3d_noise` speed, conditional noodle corners, an aquifer status cache, block fill by runs, the flight's 3 frames over 2 ms, and inner rings first.
+- **Climate minimap:** not built; build it with phase 5's biome debug map.
+- **`voxel.Debug.Climate`** on screen is unconfirmed since session 3.
 - **Still lava:** it has no texture of its own (orange-tinted still water stands in), no damage and no flow.
 - **Cave exposure:** the fixed daylight exposure keeps cave interiors near black and lava's emission nearly invisible. Open question.
 - **PS biased low:** the spawn estimate rounds to 8-block cells and ignores the 3D noise.

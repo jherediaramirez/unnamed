@@ -148,8 +148,10 @@ namespace
     FAutoConsoleCommand VoxelBenchCommand(TEXT("voxel.Bench"),
         TEXT("voxel.Bench Noise [millions]: times the deterministic core's primitives on this thread (default 1 "
              "million samples each), then 3D fBm across every task worker.\n"
-             "voxel.Bench Columns [radius]: generates and meshes (2 radius + 1)^2 columns off screen (default radius "
-             "4), on this thread and then on every worker, and reports each stage.\n"
+             "voxel.Bench Columns [radius] [preset|standin] [nocaves]: generates and meshes (2 radius + 1)^2 columns "
+             "off "
+             "screen (default radius 4, preset overworld with caves), on this thread and then on every worker, reports "
+             "each stage, and hashes the columns' blocks in two load orders.\n"
              "voxel.Bench Climate [radius] [preset]: times the terrain climate pass of (2 radius + 1)^2 columns "
              "(default radius 8, preset overworld), on this thread and then on every worker.\n"
              "voxel.Bench Density [radius] [preset] [nocaves]: generates (2 radius + 1)^2 columns of the density "
@@ -172,18 +174,40 @@ namespace
                 if (!Args.IsEmpty() && Args[0] == TEXT("Columns"))
                 {
                     const int32 Radius = Args.Num() > 1 ? FMath::Clamp(FCString::Atoi(*Args[1]), 0, 16) : 4;
+                    const FString PresetName = Args.Num() > 2 ? Args[2] : TEXT("overworld");
                     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
                     FVoxelMeshOptions Options;
                     Options.bGreedy = VoxelConsole::CVarGreedyMeshing.GetValueOnGameThread();
                     Options.bAmbientOcclusion = VoxelConsole::CVarAmbientOcclusion.GetValueOnGameThread();
-                    const FVoxelHeightTerrain Terrain(Seed.Value, *Table);
-                    FVoxelArea Area;
-                    PrintLines(Output, FString::Printf(TEXT("Voxel column bench, seed %s:"), *Seed.Describe()));
-                    for (const bool bParallel : {false, true})
+                    // "standin" benches generator 1's terrain; anything else names a preset of generator 2's.
+                    if (PresetName == TEXT("standin"))
                     {
-                        FVoxelArea::Build(*Table, Terrain, FIntPoint::ZeroValue, Radius, Options, bParallel, Area);
-                        PrintLines(Output, Area.Describe());
+                        const FVoxelHeightTerrain Terrain(Seed.Value, *Table);
+                        PrintLines(Output,
+                            FString::Printf(TEXT("Voxel column bench, stand-in terrain, seed %s:"), *Seed.Describe()) +
+                                TEXT("\n") + VoxelBench::RunColumns(*Table, Terrain, nullptr, Options, Radius));
+                        return;
                     }
+                    FString Error;
+                    FVoxelTerrainPreset Preset;
+                    if (!VoxelClimateDebug::GetSampler(PresetName, Seed.Value, Error) ||
+                        !VoxelWorldgen::ReadPreset(VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Error))
+                    {
+                        PrintLines(Output, Error);
+                        return;
+                    }
+                    FVoxelDensityTerrainSettings Settings;
+                    Settings.bCaves = !(Args.Num() > 3 && Args[3] == TEXT("nocaves"));
+                    const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings);
+                    if (!Terrain.IsValid())
+                    {
+                        PrintLines(Output, Terrain.GetError());
+                        return;
+                    }
+                    PrintLines(Output,
+                        FString::Printf(TEXT("Voxel column bench, %s, caves %s, seed %s:"), *PresetName,
+                            Settings.bCaves ? TEXT("on") : TEXT("off"), *Seed.Describe()) +
+                            TEXT("\n") + VoxelBench::RunColumns(*Table, Terrain, &Terrain, Options, Radius));
                     return;
                 }
                 if (!Args.IsEmpty() && Args[0] == TEXT("Climate"))
@@ -235,7 +259,8 @@ namespace
                     return;
                 }
                 PrintLines(Output,
-                    TEXT("Usage: voxel.Bench Noise [millions] | voxel.Bench Columns [radius] | voxel.Bench "
+                    TEXT("Usage: voxel.Bench Noise [millions] | voxel.Bench Columns [radius] [preset|standin] "
+                         "[nocaves] | voxel.Bench "
                          "Climate [radius] [preset] | voxel.Bench Density [radius] [preset] [nocaves]"));
             }));
 }

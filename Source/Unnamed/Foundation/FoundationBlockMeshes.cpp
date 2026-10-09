@@ -91,7 +91,11 @@ UStaticMesh* FoundationBlockMeshes::Build(UObject* Outer, int32 Kind)
     }
 
     UStaticMesh* StaticMesh = NewObject<UStaticMesh>(Outer, NAME_None, RF_Transient);
+#if WITH_EDITORONLY_DATA
     StaticMesh->GetStaticMaterials().Add(FStaticMaterial(nullptr, TEXT("Block"), TEXT("Block")));
+#else
+    StaticMesh->GetStaticMaterials().Add(FStaticMaterial(nullptr, TEXT("Block")));
+#endif
     UStaticMesh::FBuildMeshDescriptionsParams Params;
     Params.bFastBuild = true;
     Params.bBuildSimpleCollision = false;

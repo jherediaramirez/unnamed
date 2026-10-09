@@ -77,6 +77,8 @@ bool FVoxelDensityEvaluator::Compile(
     NestedEvaluators.Reset();
     NestedIndices.Reset();
     LazyBounds.Reset();
+    LazyChoices.Reset();
+    Owners.Reset();
     FString GraphError;
     if (!Graph.Validate(&GraphError)) return Fail(TEXT("invalid graph: ") + GraphError);
 
@@ -191,6 +193,7 @@ bool FVoxelDensityEvaluator::Compile(
         NodeReadsY[Node] = bReadsY;
         (bReadsY ? VaryingOrder : FlatOrder).Add(Node);
     }
+    FindLazyChoices(Roots);
     return true;
 }
 
@@ -292,6 +295,159 @@ void FVoxelDensityEvaluator::FindLazyFunctions(TArray<bool>& Needed, TConstArray
     }
 }
 
+void FVoxelDensityEvaluator::FindLazyChoices(TConstArrayView<int32> Roots)
+{
+    const int32 NodeCount = Graph.Nodes.Num();
+    Owners.Init(INDEX_NONE, NodeCount);
+    // Who reads each compiled node; roots are read from outside.
+    TArray<TArray<int32>> Readers;
+    Readers.SetNum(NodeCount);
+    TArray<bool> External;
+    External.Init(false, NodeCount);
+    for (const int32 Root : Roots)
+        External[Root] = true;
+    TArray<int32> Reads;
+    for (const int32 Node : Order)
+    {
+        GetReads(Node, Reads);
+        for (const int32 Child : Reads)
+            Readers[Child].Add(Node);
+    }
+
+    // Outer choices first, so a choice inside the branch of another takes its own private nodes from it.
+    TArray<int32> Branches, Stamps, Subtree, Stack, Members;
+    Branches.Init(INDEX_NONE, NodeCount);
+    Stamps.Init(INDEX_NONE, NodeCount);
+    int32 Stamp = 0;
+    for (int32 Position = Order.Num() - 1; Position >= 0; --Position)
+    {
+        const int32 Choice = Order[Position];
+        const FVoxelDensityNode& Data = Graph.Nodes[Choice];
+        if (Data.Op != EVoxelDensityOp::RangeChoice) continue;
+        for (int32 Branch = 0; Branch < 2; ++Branch)
+        {
+            const int32 Root = Data.Inputs[1 + Branch];
+            if (Root == Data.Inputs[0] || Root == Data.Inputs[2 - Branch]) continue;
+            Subtree.Reset();
+            Stack = {Root};
+            ++Stamp;
+            while (!Stack.IsEmpty())
+            {
+                const int32 Node = Stack.Pop(EAllowShrinking::No);
+                if (Stamps[Node] == Stamp) continue;
+                Stamps[Node] = Stamp;
+                Subtree.Add(Node);
+                GetReads(Node, Reads);
+                Stack.Append(Reads);
+            }
+            // Readers come after what they read, so from the end down each node's readers are decided before it.
+            Subtree.Sort([](int32 Left, int32 Right) { return Left > Right; });
+            ++Stamp;
+            Members.Reset();
+            bool bCostly = false;
+            for (const int32 Node : Subtree)
+            {
+                const EVoxelDensityOp Op = Graph.Nodes[Node].Op;
+                if (External[Node] || Op == EVoxelDensityOp::Interpolated || Op == EVoxelDensityOp::FindTopSurface)
+                    continue;
+                bool bPrivate = true;
+                for (const int32 Reader : Readers[Node])
+                    bPrivate &= Reader == Choice ? Node == Root : Stamps[Reader] == Stamp;
+                if (!bPrivate) continue;
+                Stamps[Node] = Stamp;
+                Members.Add(Node);
+                bCostly |= Op == EVoxelDensityOp::Noise || Op == EVoxelDensityOp::ShiftA ||
+                    Op == EVoxelDensityOp::ShiftB || Op == EVoxelDensityOp::OldBlendedNoise ||
+                    Op == EVoxelDensityOp::Spline || Op == EVoxelDensityOp::IntervalSelect;
+            }
+            if (!bCostly) continue;
+            LazyChoices.FindOrAdd(Choice);
+            for (const int32 Node : Members)
+            {
+                Owners[Node] = Choice;
+                Branches[Node] = Branch;
+            }
+        }
+    }
+    if (LazyChoices.IsEmpty()) return;
+    for (const int32 Node : Order)
+        if (Owners[Node] != INDEX_NONE) LazyChoices[Owners[Node]].Nodes[Branches[Node]].Add(Node);
+
+    // A branch's frontier: what the nodes evaluated in its scratch (its own, and those of choices nested inside it)
+    // read from outside the choice. The branch of Choice a node is evaluated in, or INDEX_NONE.
+    const auto BranchOf = [this, &Branches](int32 Node, int32 Choice)
+    {
+        for (int32 Current = Node; Owners[Current] != INDEX_NONE; Current = Owners[Current])
+            if (Owners[Current] == Choice) return Branches[Current];
+        return int32(INDEX_NONE);
+    };
+    for (TPair<int32, FLazyChoice>& Pair : LazyChoices)
+        for (const int32 Node : Order)
+        {
+            const int32 Branch = BranchOf(Node, Pair.Key);
+            if (Branch == INDEX_NONE) continue;
+            GetReads(Node, Reads);
+            for (const int32 Child : Reads)
+                if (BranchOf(Child, Pair.Key) == INDEX_NONE) Pair.Value.Frontier[Branch].AddUnique(Child);
+        }
+    for (const TPair<int32, FLazyChoice>& Pair : LazyChoices)
+        NestedIndices.Add(Pair.Key, NestedIndices.Num());
+}
+
+void FVoxelDensityEvaluator::EvaluateLazyChoice(
+    int32 Node, const double* X, const double* Y, const double* Z, FVoxelDensityScratch& Scratch) const
+{
+    // As the plain range_choice, but a branch with private nodes evaluates them only at the points that pick it.
+    const FVoxelDensityNode& Data = Graph.Nodes[Node];
+    const FLazyChoice& Choice = LazyChoices.FindChecked(Node);
+    const int32 Count = Scratch.Count;
+    float* Out = Buffer(Scratch, Node);
+    const float* A = Input(Scratch, Node, 0);
+    const float Min = float(Data.Params[0]), Max = float(Data.Params[1]);
+    for (int32 Branch = 0; Branch < 2; ++Branch)
+    {
+        const bool bInRange = Branch == 0;
+        const int32 Root = Data.Inputs[1 + Branch];
+        if (Choice.Nodes[Branch].IsEmpty())
+        {
+            const float* Values = Buffer(Scratch, Root);
+            for (int32 I = 0; I < Count; ++I)
+                if ((A[I] >= Min && A[I] < Max) == bInRange) Out[I] = Values[I];
+            continue;
+        }
+        TArray<int32>& Points = Scratch.ChoicePoints;
+        Points.Reset();
+        for (int32 I = 0; I < Count; ++I)
+            if ((A[I] >= Min && A[I] < Max) == bInRange) Points.Add(I);
+        const int32 Picked = Points.Num();
+        if (Picked == 0) continue;
+        Scratch.ChoiceX.SetNumUninitialized(Picked, EAllowShrinking::No);
+        Scratch.ChoiceY.SetNumUninitialized(Picked, EAllowShrinking::No);
+        Scratch.ChoiceZ.SetNumUninitialized(Picked, EAllowShrinking::No);
+        for (int32 K = 0; K < Picked; ++K)
+        {
+            Scratch.ChoiceX[K] = X[Points[K]];
+            Scratch.ChoiceY[K] = Y[Points[K]];
+            Scratch.ChoiceZ[K] = Z[Points[K]];
+        }
+        FVoxelDensityScratch& Inner = GetNested(Scratch, Node);
+        Prepare(Inner, Picked);
+        for (const int32 Read : Choice.Frontier[Branch])
+        {
+            const float* Source = Buffer(Scratch, Read);
+            float* Target = Buffer(Inner, Read);
+            for (int32 K = 0; K < Picked; ++K)
+                Target[K] = Source[Points[K]];
+        }
+        for (const int32 Private : Choice.Nodes[Branch])
+            EvaluateNode(
+                Private, Scratch.ChoiceX.GetData(), Scratch.ChoiceY.GetData(), Scratch.ChoiceZ.GetData(), Inner);
+        const float* Values = Buffer(Inner, Root);
+        for (int32 K = 0; K < Picked; ++K)
+            Out[Points[K]] = Values[K];
+    }
+}
+
 float* FVoxelDensityEvaluator::Buffer(FVoxelDensityScratch& Scratch, int32 Node) const
 {
     return Scratch.Values.GetData() + Slots[Node] * Scratch.Count;
@@ -306,6 +462,7 @@ const float* FVoxelDensityEvaluator::Input(const FVoxelDensityScratch& Scratch, 
 TConstArrayView<float> FVoxelDensityEvaluator::GetValues(const FVoxelDensityScratch& Scratch, int32 Node) const
 {
     check(IsCompiledNode(Node));
+    checkSlow(!IsDeferred(Node));
     return TConstArrayView<float>(Scratch.Values.GetData() + Slots[Node] * Scratch.Count, Scratch.Count);
 }
 
@@ -328,14 +485,14 @@ void FVoxelDensityEvaluator::Evaluate(
 {
     Prepare(Scratch, Count);
     for (const int32 Node : Order)
-        EvaluateNode(Node, X, Y, Z, Scratch);
+        if (Owners[Node] == INDEX_NONE) EvaluateNode(Node, X, Y, Z, Scratch);
 }
 
 void FVoxelDensityEvaluator::EvaluateNodes(TConstArrayView<int32> Nodes, const double* X, const double* Y,
     const double* Z, FVoxelDensityScratch& Scratch) const
 {
     for (const int32 Node : Nodes)
-        EvaluateNode(Node, X, Y, Z, Scratch);
+        if (Owners[Node] == INDEX_NONE) EvaluateNode(Node, X, Y, Z, Scratch);
 }
 
 FVoxelDensityScratch& FVoxelDensityEvaluator::GetNested(FVoxelDensityScratch& Scratch, int32 Node) const
@@ -574,6 +731,11 @@ void FVoxelDensityEvaluator::EvaluateNode(
             Out[I] = B[I] + A[I] * (C[I] - B[I]);
         break;
     case EVoxelDensityOp::RangeChoice:
+        if (LazyChoices.Contains(Node))
+        {
+            EvaluateLazyChoice(Node, X, Y, Z, Scratch);
+            break;
+        }
         for (int32 I = 0; I < Count; ++I)
             Out[I] = A[I] >= float(Data.Params[0]) && A[I] < float(Data.Params[1]) ? B[I] : C[I];
         break;

@@ -18,6 +18,10 @@ struct FVoxelDensityScratch
     TIndirectArray<FVoxelDensityScratch> Nested;
     TArray<double> NestedX, NestedY, NestedZ;
     TArray<float> NestedSums;
+    // For a lazy range_choice: the points that pick a branch and their positions, read by the branch's scratch (in
+    // Nested under the choice).
+    TArray<int32> ChoicePoints;
+    TArray<double> ChoiceX, ChoiceY, ChoiceZ;
     TArray<int32> NestedPoints;
     // For interval_select with lazy functions: each point's function.
     TArray<int32> Choices;
@@ -83,7 +87,11 @@ public:
     // Sizes the scratch for Count points; values are left unset.
     void Prepare(FVoxelDensityScratch& Scratch, int32 Count) const;
     TArrayView<float> GetMutableValues(FVoxelDensityScratch& Scratch, int32 Node) const;
-    // Evaluates Nodes, in the order given (inputs first), at the scratch's prepared count of points.
+    // Whether a lazy range_choice evaluates this node (only at the points that pick its branch). Evaluate and
+    // EvaluateNodes leave such nodes to their choice, so their buffers hold nothing; EvaluateBounds still bounds them.
+    bool IsDeferred(int32 Node) const { return Owners.IsValidIndex(Node) && Owners[Node] != INDEX_NONE; }
+    // Evaluates Nodes, in the order given (inputs first), at the scratch's prepared count of points. Deferred nodes
+    // are skipped.
     void EvaluateNodes(TConstArrayView<int32> Nodes, const double* X, const double* Y, const double* Z,
         FVoxelDensityScratch& Scratch) const;
     // Conservative bounds of Nodes over positions whose y lies in [MinY, MaxY], in graph-node indexing. The caller
@@ -133,6 +141,20 @@ private:
     // NestedEvaluators under the function's node), and bounds it by a bound over every y, found at compile.
     TMap<int32, FVoxelDensityBounds> LazyBounds;
     void FindLazyFunctions(TArray<bool>& Needed, TConstArrayView<int32> Roots, uint64 WorldSeed);
+    // Lazy range_choice, by its node: a branch's private nodes (read only by that branch, and none of them interpolated
+    // or find_top_surface) run only at the points that pick it, in a nested scratch, when they include costly work.
+    // Exact: every op is per point, so a subset of points gets the same values.
+    struct FLazyChoice
+    {
+        // Per branch (when in range, otherwise): its private nodes in order, and the other nodes they read.
+        TArray<int32> Nodes[2], Frontier[2];
+    };
+    TMap<int32, FLazyChoice> LazyChoices;
+    // Per graph node: the lazy range_choice that evaluates it, or INDEX_NONE.
+    TArray<int32> Owners;
+    void FindLazyChoices(TConstArrayView<int32> Roots);
+    void EvaluateLazyChoice(
+        int32 Node, const double* X, const double* Y, const double* Z, FVoxelDensityScratch& Scratch) const;
     void EvaluateLazySelect(
         int32 Node, const double* X, const double* Y, const double* Z, FVoxelDensityScratch& Scratch) const;
 };

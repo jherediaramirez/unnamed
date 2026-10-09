@@ -196,6 +196,8 @@ bool FFoundationBlocksCodecTest::RunTest(const FString&)
     return true;
 }
 
+// Faces and Textures read the texture arrays' source data, which only editor builds keep.
+#if WITH_EDITORONLY_DATA
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBlocksFacesTest, "Unnamed.Foundation.Blocks.Faces", BlockTestFlags)
 
 bool FFoundationBlocksFacesTest::RunTest(const FString&)
@@ -323,6 +325,7 @@ bool FFoundationBlocksTexturesTest::RunTest(const FString&)
     TestEqual(TEXT("layers whose pixels differ from the jar"), Different, 0);
     return true;
 }
+#endif
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBlocksPlacementTest, "Unnamed.Foundation.Blocks.Placement", BlockTestFlags)
 

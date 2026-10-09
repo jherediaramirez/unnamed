@@ -65,7 +65,10 @@ bool FVoxelColumnDensity::Initialize(
 
     for (const int32 Node : InEvaluator.GetOrder())
     {
-        if (InCorners[Node]) (InEvaluator.ReadsY(Node) ? CornerNodes : FlatNodes).Add(Node);
+        // Deferred nodes (lazy range_choice branches) hold no values to bound from, so they are bounded with the
+        // nodes that read y.
+        if (InCorners[Node])
+            (InEvaluator.ReadsY(Node) || InEvaluator.IsDeferred(Node) ? CornerNodes : FlatNodes).Add(Node);
         if (InBlocks[Node])
             (Graph.Nodes[Node].Op == EVoxelDensityOp::Interpolated ? InterpolatedNodes : BlockNodes).Add(Node);
     }
@@ -140,21 +143,40 @@ void FVoxelColumnDensity::Generate(int32 X0, int32 Z0, bool bSkip, FVoxelColumnD
                         Bounds.Max = FMath::Max(Bounds.Max, Values[Columns[K]]);
                     }
                 }
-                for (int32 CY = 0; CY < CellsY; ++CY)
+                // The density's bound over cells Low to High, as Solid, Empty or Mixed.
+                const auto BoundCells = [&](int32 Low, int32 High)
                 {
-                    const double Bottom = MinY + CY * CellY;
-                    Eval.EvaluateBounds(CornerNodes, Bottom, Bottom + CellY, Scratch.CornerBounds);
+                    const double Bottom = MinY + Low * CellY, Top = MinY + (High + 1) * CellY;
+                    Eval.EvaluateBounds(CornerNodes, Bottom, Top, Scratch.CornerBounds);
                     for (const int32 Node : InterpolatedNodes)
                         Scratch.BlockBounds[Node] = Scratch.CornerBounds[Graph.Nodes[Node].Inputs[0]];
-                    Eval.EvaluateBounds(BlockNodes, Bottom, Bottom + CellY - 1, Scratch.BlockBounds);
+                    Eval.EvaluateBounds(BlockNodes, Bottom, Top - 1, Scratch.BlockBounds);
                     const FVoxelDensityBounds& Density = Scratch.BlockBounds[Root];
-                    uint8& State = Scratch.CellStates[CellIndex(CX, CY, CZ)];
-                    if (Density.Min > 0)
-                        State = Solid;
-                    else if (Density.Max <= 0 && !IsKeptEmpty(KeepEmpty, CY))
-                        State = Empty;
+                    if (Density.Min > 0) return Solid;
+                    if (!(Density.Max <= 0)) return Mixed;
+                    for (int32 CY = Low; CY <= High; ++CY)
+                        if (IsKeptEmpty(KeepEmpty, CY)) return Mixed;
+                    return Empty;
+                };
+                // From the top down: stacks of cells while a whole stack is certain (the open air above the
+                // terrain), then one cell at a time down to the first mixed cell. Cells below it stay mixed: with caves
+                // their bounds are too loose to prove anything, and stage 3b settles them from their corners.
+                int32 CY = CellsY - 1;
+                for (; CY >= BoundStack - 1; CY -= BoundStack)
+                {
+                    const uint8 State = BoundCells(CY - BoundStack + 1, CY);
+                    if (State == Mixed) break;
+                    for (int32 Cell = CY - BoundStack + 1; Cell <= CY; ++Cell)
+                        Scratch.CellStates[CellIndex(CX, Cell, CZ)] = State;
+                    (State == Solid ? Stats.SolidCells : Stats.EmptyCells) += BoundStack;
+                }
+                for (; CY >= 0; --CY)
+                {
+                    const uint8 State = BoundCells(CY, CY);
+                    Scratch.CellStates[CellIndex(CX, CY, CZ)] = State;
                     Stats.SolidCells += State == Solid;
                     Stats.EmptyCells += State == Empty;
+                    if (State == Mixed) break;
                 }
             }
     }
@@ -214,8 +236,58 @@ void FVoxelColumnDensity::Generate(int32 X0, int32 Z0, bool bSkip, FVoxelColumnD
 
     Lap(Stats.CornersMs);
 
+    // 3b. Mixed cells again, now from their corners: inside a cell an interpolated value lies between its 8 corner
+    // values (trilinear weights are convex; the margin covers float rounding), and the nodes above it are bounded over
+    // the cell's blocks as in stage 2. Cells that turn out certain skip the per-block work.
+    if (bSkip && Needed > 0)
+    {
+        for (int32 CY = 0; CY < CellsY; ++CY)
+        {
+            const double Bottom = MinY + CY * CellY;
+            const bool bKeptEmpty = IsKeptEmpty(KeepEmpty, CY);
+            for (int32 CZ = 0; CZ < CellsXZ; ++CZ)
+                for (int32 CX = 0; CX < CellsXZ; ++CX)
+                {
+                    uint8& State = Scratch.CellStates[CellIndex(CX, CY, CZ)];
+                    if (State != Mixed) continue;
+                    for (int32 Slot = 0; Slot < InterpolatedNodes.Num(); ++Slot)
+                    {
+                        const float* Values = Scratch.CornerValues.GetData() + Slot * CornerCount;
+                        float Min = UE_BIG_NUMBER, Max = -UE_BIG_NUMBER;
+                        for (int32 Corner = 0; Corner < 8; ++Corner)
+                        {
+                            const float Value =
+                                Values[CornerIndex(CX + (Corner & 1), CY + (Corner >> 1 & 1), CZ + (Corner >> 2 & 1))];
+                            Min = FMath::Min(Min, Value);
+                            Max = FMath::Max(Max, Value);
+                        }
+                        const float Margin = FMath::Max(FMath::Abs(Min), FMath::Abs(Max)) * 1e-5f + 1e-30f;
+                        Scratch.BlockBounds[InterpolatedNodes[Slot]] = {Min - Margin, Max + Margin};
+                    }
+                    Eval.EvaluateBounds(BlockNodes, Bottom, Bottom + CellY - 1, Scratch.BlockBounds);
+                    const FVoxelDensityBounds& Density = Scratch.BlockBounds[Root];
+                    if (Density.Min > 0)
+                        State = Solid;
+                    else if (Density.Max <= 0 && !bKeptEmpty)
+                        State = Empty;
+                    Stats.RefinedCells += State != Mixed;
+                }
+        }
+    }
+
+    Lap(Stats.RefineMs);
+
     // 4. Blocks, one layer of cells at a time: interpolated values first, then the nodes above them.
     const int32 BlocksPerCell = CellXZ * CellY * CellXZ;
+    // Trilinear weights by offset in the cell, computed as direct evaluation computes them.
+    Scratch.WeightsXZ.SetNumUninitialized(CellXZ, EAllowShrinking::No);
+    Scratch.WeightsY.SetNumUninitialized(CellY, EAllowShrinking::No);
+    for (int32 D = 0; D < CellXZ; ++D)
+        Scratch.WeightsXZ[D] = float(double(D) / CellXZ);
+    for (int32 D = 0; D < CellY; ++D)
+        Scratch.WeightsY[D] = float(double(D) / CellY);
+    const float* WeightsXZ = Scratch.WeightsXZ.GetData();
+    const float* WeightsY = Scratch.WeightsY.GetData();
     for (int32 CY = 0; CY < CellsY; ++CY)
     {
         int32 Count = 0;
@@ -262,13 +334,12 @@ void FVoxelColumnDensity::Generate(int32 X0, int32 Z0, bool bSkip, FVoxelColumnD
                     for (int32 Corner = 0; Corner < 8; ++Corner)
                         Corners[Corner] =
                             Values[CornerIndex(CX + (Corner & 1), CY + (Corner >> 1 & 1), CZ + (Corner >> 2 & 1))];
-                    const TArrayView<float> Target = Eval.GetMutableValues(Scratch.Blocks, InterpolatedNodes[Slot]);
-                    int32 Point = First;
+                    float* Target = Eval.GetMutableValues(Scratch.Blocks, InterpolatedNodes[Slot]).GetData() + First;
                     for (int32 DY = 0; DY < CellY; ++DY)
                         for (int32 DZ = 0; DZ < CellXZ; ++DZ)
-                            for (int32 DX = 0; DX < CellXZ; ++DX, ++Point)
-                                Target[Point] = VoxelDensity::Trilinear(Corners, float(double(DX) / CellXZ),
-                                    float(double(DY) / CellY), float(double(DZ) / CellXZ));
+                            for (int32 DX = 0; DX < CellXZ; ++DX)
+                                *Target++ =
+                                    VoxelDensity::Trilinear(Corners, WeightsXZ[DX], WeightsY[DY], WeightsXZ[DZ]);
                 }
             }
         Eval.EvaluateNodes(BlockNodes, Scratch.X.GetData(), Scratch.Y.GetData(), Scratch.Z.GetData(), Scratch.Blocks);
