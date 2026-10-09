@@ -100203,6 +100203,389 @@
    ]
   },
   {
+   "id": "snow",
+   "protocol_id": 325,
+   "min_state_id": 8589,
+   "default_state_id": 8589,
+   "properties": [
+    [
+     "layers",
+     [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    ]
+   ],
+   "states": [
+    {
+     "id": 8589,
+     "properties": {
+      "layers": "1"
+     },
+     "shape": "layers_1",
+     "faces": [
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": false
+      }
+     ]
+    },
+    {
+     "id": 8590,
+     "properties": {
+      "layers": "2"
+     },
+     "shape": "layers_2",
+     "faces": [
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": false
+      }
+     ]
+    },
+    {
+     "id": 8591,
+     "properties": {
+      "layers": "3"
+     },
+     "shape": "layers_3",
+     "faces": [
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": false
+      }
+     ]
+    },
+    {
+     "id": 8592,
+     "properties": {
+      "layers": "4"
+     },
+     "shape": "layers_4",
+     "faces": [
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": false
+      }
+     ]
+    },
+    {
+     "id": 8593,
+     "properties": {
+      "layers": "5"
+     },
+     "shape": "layers_5",
+     "faces": [
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": false
+      }
+     ]
+    },
+    {
+     "id": 8594,
+     "properties": {
+      "layers": "6"
+     },
+     "shape": "layers_6",
+     "faces": [
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": false
+      }
+     ]
+    },
+    {
+     "id": 8595,
+     "properties": {
+      "layers": "7"
+     },
+     "shape": "layers_7",
+     "faces": [
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": false
+      }
+     ]
+    },
+    {
+     "id": 8596,
+     "properties": {
+      "layers": "8"
+     },
+     "shape": "full",
+     "faces": [
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      }
+     ]
+    }
+   ]
+  },
+  {
    "id": "ice",
    "protocol_id": 326,
    "min_state_id": 8597,
@@ -155905,6 +156288,58 @@
    ]
   },
   {
+   "id": "powder_snow",
+   "protocol_id": 1117,
+   "min_state_id": 30519,
+   "default_state_id": 30519,
+   "properties": [],
+   "states": [
+    {
+     "id": 30519,
+     "properties": {},
+     "shape": "full",
+     "faces": [
+      {
+       "t": "powder_snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "powder_snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "powder_snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "powder_snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "powder_snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      },
+      {
+       "t": "powder_snow",
+       "x": 0,
+       "tint": -1,
+       "cull": true
+      }
+     ]
+    }
+   ]
+  },
+  {
    "id": "sculk",
    "protocol_id": 1120,
    "min_state_id": 31000,
@@ -167719,6 +168154,233 @@
     "still": "water_still",
     "flow": "water_flow",
     "overlay": "water_overlay"
+   }
+  },
+  {
+   "id": "lava",
+   "protocol_id": 38,
+   "min_state_id": 105,
+   "default_state_id": 105,
+   "properties": [
+    [
+     "level",
+     [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15"
+     ]
+    ]
+   ],
+   "states": [
+    {
+     "id": 105,
+     "properties": {
+      "level": "0"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": true,
+      "falling": false,
+      "amount": 8
+     }
+    },
+    {
+     "id": 106,
+     "properties": {
+      "level": "1"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": false,
+      "falling": false,
+      "amount": 7
+     }
+    },
+    {
+     "id": 107,
+     "properties": {
+      "level": "2"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": false,
+      "falling": false,
+      "amount": 6
+     }
+    },
+    {
+     "id": 108,
+     "properties": {
+      "level": "3"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": false,
+      "falling": false,
+      "amount": 5
+     }
+    },
+    {
+     "id": 109,
+     "properties": {
+      "level": "4"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": false,
+      "falling": false,
+      "amount": 4
+     }
+    },
+    {
+     "id": 110,
+     "properties": {
+      "level": "5"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": false,
+      "falling": false,
+      "amount": 3
+     }
+    },
+    {
+     "id": 111,
+     "properties": {
+      "level": "6"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": false,
+      "falling": false,
+      "amount": 2
+     }
+    },
+    {
+     "id": 112,
+     "properties": {
+      "level": "7"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": false,
+      "falling": false,
+      "amount": 1
+     }
+    },
+    {
+     "id": 113,
+     "properties": {
+      "level": "8"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": false,
+      "falling": true,
+      "amount": 8
+     }
+    },
+    {
+     "id": 114,
+     "properties": {
+      "level": "9"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": false,
+      "falling": true,
+      "amount": 8
+     }
+    },
+    {
+     "id": 115,
+     "properties": {
+      "level": "10"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": false,
+      "falling": true,
+      "amount": 8
+     }
+    },
+    {
+     "id": 116,
+     "properties": {
+      "level": "11"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": false,
+      "falling": true,
+      "amount": 8
+     }
+    },
+    {
+     "id": 117,
+     "properties": {
+      "level": "12"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": false,
+      "falling": true,
+      "amount": 8
+     }
+    },
+    {
+     "id": 118,
+     "properties": {
+      "level": "13"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": false,
+      "falling": true,
+      "amount": 8
+     }
+    },
+    {
+     "id": 119,
+     "properties": {
+      "level": "14"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": false,
+      "falling": true,
+      "amount": 8
+     }
+    },
+    {
+     "id": 120,
+     "properties": {
+      "level": "15"
+     },
+     "shape": "fluid",
+     "fluid": {
+      "source": false,
+      "falling": true,
+      "amount": 8
+     }
+    }
+   ],
+   "textures": {
+    "still": "lava_still",
+    "flow": "lava_flow"
    }
   }
  ]

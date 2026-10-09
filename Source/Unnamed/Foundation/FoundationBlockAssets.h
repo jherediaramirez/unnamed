@@ -12,7 +12,8 @@ class UTexture2DArray;
 // is generated (properties are editable only so the import can write them); edit the reference or the import, never
 // the asset. FFoundationBlockRegistry turns it into the runtime lookup tables.
 
-// Which mesh and collision a state has. Water's height comes from its level.
+// Which mesh and collision a state has. A fluid's height comes from its level. Layers1 to Layers7 are snow layers, a
+// box k/8 high from the cell's floor (8 layers are Full).
 UENUM()
 enum class EFoundationBlockShape : uint8
 {
@@ -20,8 +21,23 @@ enum class EFoundationBlockShape : uint8
     Full,
     SlabBottom,
     SlabTop,
-    Fluid
+    Fluid,
+    Layers1,
+    Layers2,
+    Layers3,
+    Layers4,
+    Layers5,
+    Layers6,
+    Layers7
 };
+
+// k for LayersK, else 0.
+inline int32 GetFoundationShapeLayers(EFoundationBlockShape Shape)
+{
+    return Shape >= EFoundationBlockShape::Layers1 && Shape <= EFoundationBlockShape::Layers7
+        ? int32(Shape) - int32(EFoundationBlockShape::Layers1) + 1
+        : 0;
+}
 
 // The pass a block draws in: one material each. A grass block's side overlay is composited in the opaque pass.
 UENUM()

@@ -1,6 +1,7 @@
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import java.nio.charset.StandardCharsets;
@@ -15,6 +16,10 @@ import net.minecraft.util.BoundedFloatFunction;
 import net.minecraft.util.CubicSpline;
 import net.minecraft.util.Interval;
 import net.minecraft.util.RandomSource;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Climate;
+import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterList;
 import net.minecraft.world.level.levelgen.synth.Noise;
 import net.minecraft.world.level.levelgen.synth.NormalNoise;
 
@@ -23,7 +28,9 @@ import net.minecraft.world.level.levelgen.synth.NormalNoise;
 // coordinates, a quarter of them exactly on a point's location. The coordinates are plain inputs here, so the values
 // test spline parsing and evaluation alone. It also dumps the value spread of every top-level noise into
 // facts/noise_samples.json: each noise is decoded with the game's codec, created from fixed seeds and sampled at seeded
-// positions spread over many periods of its lowest octave. Numbers only: no game code is copied.
+// positions spread over many periods of its lowest octave. The overworld biome parameter list, which the jar builds
+// in code (its JSON only names the preset), goes to facts/biome_parameters.json, and seeded climate points with the
+// biome the jar picks for each to facts/biome_lookup_samples.json. Numbers only: no game code is copied.
 //
 // usage (JDK 25, classpath = server-26.3.jar plus its libraries):
 //   javac -cp <classpath> -d <classes> WorldgenFacts.java
@@ -79,6 +86,80 @@ public class WorldgenFacts {
         Files.writeString(target, out.toString(), StandardCharsets.UTF_8);
         System.out.println("WROTE " + FUNCTIONS.length + " splines x " + SAMPLES + " samples: " + target);
         writeNoiseSpread(root);
+        writeBiomes(root);
+    }
+
+    static final int LOOKUP_UNIFORM = 4096, LOOKUP_EDGES = 1024;
+
+    static Climate.Parameter parameter(Climate.ParameterPoint point, int axis) {
+        return switch (axis) {
+            case 0 -> point.temperature();
+            case 1 -> point.humidity();
+            case 2 -> point.continentalness();
+            case 3 -> point.erosion();
+            case 4 -> point.depth();
+            default -> point.weirdness();
+        };
+    }
+
+    // The points in list order (the order decides ties), each as the biome's index in "biomes", then min and max of
+    // the six climate parameters and the offset, quantized as the game stores them. The samples are target points in
+    // the same units with the biome the jar's indexed search picks and the one its brute-force scan picks (the first
+    // best point in list order). Half sit at depth 0 (the surface); the edge samples put one to three parameters on a
+    // random point's bounds, give or take one unit, where inclusive and exclusive bounds part.
+    static void writeBiomes(Path root) throws Exception {
+        Climate.ParameterList<ResourceKey<Biome>> list =
+            MultiNoiseBiomeSourceParameterList.knownPresets().get(MultiNoiseBiomeSourceParameterList.Preset.OVERWORLD);
+        List<Pair<Climate.ParameterPoint, ResourceKey<Biome>>> values = list.values();
+        List<String> biomes = values.stream().map(p -> p.getSecond().identifier().toString()).distinct().sorted().toList();
+        StringBuilder out = new StringBuilder("{\"generated_by\":\"tools/WorldgenFacts.java\",")
+            .append("\"preset\":\"minecraft:overworld\",\"quantization\":10000,")
+            .append("\"columns\":[\"biome\",\"temperature\",\"humidity\",\"continentalness\",\"erosion\",\"depth\",")
+            .append("\"weirdness\",\"offset\"],\"biomes\":[");
+        for (int b = 0; b < biomes.size(); b++) out.append(b == 0 ? "\n\"" : ",\n\"").append(biomes.get(b)).append('"');
+        out.append("],\"points\":[");
+        for (int i = 0; i < values.size(); i++) {
+            Climate.ParameterPoint point = values.get(i).getFirst();
+            out.append(i == 0 ? "\n[" : ",\n[").append(biomes.indexOf(values.get(i).getSecond().identifier().toString()));
+            for (int axis = 0; axis < 6; axis++)
+                out.append(',').append(parameter(point, axis).min()).append(',').append(parameter(point, axis).max());
+            out.append(',').append(point.offset()).append(']');
+        }
+        out.append("\n]}\n");
+        Path target = root.resolve("facts/biome_parameters.json");
+        Files.writeString(target, out.toString(), StandardCharsets.UTF_8);
+        System.out.println("WROTE " + values.size() + " biome points over " + biomes.size() + " biomes: " + target);
+
+        out = new StringBuilder("{\"generated_by\":\"tools/WorldgenFacts.java\",\"preset\":\"minecraft:overworld\",")
+            .append("\"columns\":[\"temperature\",\"humidity\",\"continentalness\",\"erosion\",\"depth\",\"weirdness\",")
+            .append("\"brute_force\",\"indexed\"],\"biomes\":\"the biomes list of biome_parameters.json\",\"samples\":[");
+        Random random = new Random(263_005L);
+        int disagree = 0;
+        for (int s = 0; s < LOOKUP_UNIFORM + LOOKUP_EDGES; s++) {
+            long[] t = new long[6];
+            for (int axis = 0; axis < 6; axis++) t[axis] = random.nextInt(30001) - 15000;
+            t[4] = random.nextBoolean() ? 0 : random.nextInt(30001) - 10000;
+            if (s >= LOOKUP_UNIFORM) {
+                Climate.ParameterPoint point = values.get(random.nextInt(values.size())).getFirst();
+                for (int k = 1 + random.nextInt(3); k > 0; k--) {
+                    int axis = random.nextInt(6);
+                    Climate.Parameter range = parameter(point, axis);
+                    t[axis] = (random.nextBoolean() ? range.min() : range.max()) + random.nextInt(3) - 1;
+                }
+            }
+            Climate.TargetPoint point = new Climate.TargetPoint(t[0], t[1], t[2], t[3], t[4], t[5]);
+            int brute = biomes.indexOf(list.findValueBruteForce(point).identifier().toString());
+            int indexed = biomes.indexOf(list.findValue(point).identifier().toString());
+            if (brute != indexed) disagree++;
+            out.append(s == 0 ? "\n[" : ",\n[");
+            for (long v : t) out.append(v).append(',');
+            out.append(brute).append(',').append(indexed).append(']');
+        }
+        out.append("\n]}\n");
+        target = root.resolve("facts/biome_lookup_samples.json");
+        Files.writeString(target, out.toString(), StandardCharsets.UTF_8);
+        System.out.println("WROTE " + (LOOKUP_UNIFORM + LOOKUP_EDGES) + " lookup samples (" + disagree
+            + " where the indexed search and brute force differ): " + target);
     }
 
     static final long[] NOISE_SEEDS = {0L, 263L, -4_000_000_007L, 1_234_567_890_123L};

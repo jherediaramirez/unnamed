@@ -13,7 +13,7 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 | 2W | Create New World: saved worlds, seed, world type, game mode, difficulty | Done |
 | 3 | Streaming, plus mining and placing on generated terrain | Done |
 | 4 | Terrain: 26.3's density graph, climate, caves, aquifers and lava | Done (5 sessions: worldgen data and reader; noise, climate, splines and debug views; 3D density and generator 2; caves on, aquifers, still lava, cave-lighting decision; performance). Caves-on columns are slightly over 5 ms on two presets ([Known gaps](#known-gaps)) |
-| 5 | Biomes and surface (needs snow layers) | |
+| 5 | Biomes and surface | In progress (session 2 of 5 done: reference data, blocks and readers) |
 | 6 | Decoration, after a block-shapes step (plants, cross models) | |
 | 7 | Structures that fit the land (needs stairs, doors, fences, paths) | |
 | 8 | Mountains | |
@@ -25,7 +25,7 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 | Where | What |
 |---|---|
 | `Source/UnnamedVoxel/` | The core module: RNG, noise, density, biomes, storage, meshing and the streaming plan in plain C++. It depends on `Core` only, so UObjects, actors and render state cannot be included, and it compiles with precise floating point (below). Headers are included by their path from this folder (`"Random/VoxelSeed.h"`). It holds:<br>- `Random/`: seeds, hashing, streams;<br>- `Noise/`: gradient and fractal noise, and the 26.3-style normal noise;<br>- `Spline/`: nested splines;<br>- `Density/`: the density graph, the reference's density functions as plain data, and the evaluator;<br>- `Blocks/`: the per-state table;<br>- `Storage/`: sections and columns;<br>- `Terrain/`: the terrain interface, the phase 2 height terrain, Superflat's flat terrain and the climate sampler;<br>- `Meshing/`: the mesher and its remesh rule;<br>- `Generation/`: the area builder;<br>- `Streaming/`: the planner (which columns are in view, which exist, which unload);<br>- `VoxelBench`: timings;<br>- the module-wide `VoxelConstants`, `VoxelLog` and `VoxelStats`. |
-| `Source/Unnamed/Voxel/` | The Unreal side:<br>- `UVoxelWorldSettings` and the console (`VoxelConsole`);<br>- the registry-to-table bridge (`VoxelBlocks`);<br>- the worldgen reader (`VoxelWorldgenReader`): the reference's JSON into the density graph;
+| `Source/Unnamed/Voxel/` | The Unreal side:<br>- `UVoxelWorldSettings` and the console (`VoxelConsole`);<br>- the registry-to-table bridge (`VoxelBlocks`);<br>- the worldgen readers (`VoxelWorldgenReader`, `VoxelSurfaceReader`, shared helpers in `VoxelWorldgenJson.h`): the reference's JSON into the density graph, the biome table and the surface rules;<br>- the terrain factory (`VoxelTerrainFactory`): every world's terrain, used by the voxel world and by the menu's check before travel;
 - the climate debug tools (`VoxelClimateDebug`): a cached sampler per (preset, seed), the map writer and the values at the player;<br>- the column mesh (`UVoxelChunkComponent`);<br>- the column pipeline (`FVoxelColumnPipeline`, plain C++ with no UObjects);<br>- the streaming subsystem (`UVoxelWorldSubsystem`);<br>- the storage adapter (`FVoxelBlockStorage`);<br>- the level actor (`AVoxelWorld`);<br>- the free camera (`AVoxelFlyCamera`) and the acceptance flight (`FVoxelFlight`). |
 | `/Game/Maps/L_Generated` | The generated world's map (`UUnnamedProjectSettings::GeneratedMap`), made by `Scripts/Editor/CreateGeneratedMap.py`. It is not a catalog world. |
 | `/Game/Blocks/M_Chunk*` | The chunk materials, made by `Scripts/Editor/CreateBlockMaterials.py`. |
@@ -58,7 +58,7 @@ These differ from the prompt because of what the project already had, or settle 
 - **Unloaded columns:** solid for collision and unknown to the authority, so nothing is placed in them.
 - **Interaction view:** it stays the presentation in generated worlds (outline, cracks, held item, effects), with block drawing and lab fixtures off. The chunks draw the blocks.
 - **World edge:** fog, a floor and aerial perspective hide it until phase 9's far LOD ([Lighting](#lighting)). Meshing the edge against air, the alternative, is kept for captures (`voxel.Debug.EdgeWalls`).
-- **Worldgen data:** the terrain's noise settings, density functions and noises come byte for byte from the 26.3 jar into the hash-checked `Reference/minecraft-worldgen-26.3/`: data and numbers only, never code. Biome parameter boxes and surface rules join it in phase 5. The game module reads the JSON (`VoxelWorldgen::ReadPreset`), because the core depends on `Core` alone and has no JSON reader ([Worldgen data](#worldgen-data)).
+- **Worldgen data:** the terrain's noise settings, density functions and noises come byte for byte from the 26.3 jar into the hash-checked `Reference/minecraft-worldgen-26.3/`: data and numbers only, never code. Biome parameter boxes and surface rules have joined it (phase 5, session 2); the parameter list comes from a facts file, because the jar builds it in code. The game module reads the JSON (`VoxelWorldgen::ReadPreset`), because the core depends on `Core` alone and has no JSON reader ([Worldgen data](#worldgen-data)).
 - **Terrain (phase 4, decided on October 8):**
   - our own code and noise evaluate 26.3's density-function graph;
   - Large Biomes and AMPLIFIED use their own presets;
@@ -106,23 +106,30 @@ A column's density corners at 4 x 8 x 4 cells (5 x 5 x 49 points) cost about 160
 
 ## Worldgen data
 
-Phase 4 builds the terrain from 26.3's own worldgen data. `Reference/minecraft-worldgen-26.3/` holds it byte for byte, with a verifier and notes on how the format changed after 1.21 ([README](../Reference/minecraft-worldgen-26.3/README.md)):
+Phase 4 builds the terrain from 26.3's own worldgen data, and phase 5 adds the biomes and the surface rules. `Reference/minecraft-worldgen-26.3/` holds it byte for byte, with a verifier and notes on how the format changed after 1.21 ([README](../Reference/minecraft-worldgen-26.3/README.md)):
 
 - **Noise settings:** `overworld`, `large_biomes` and `amplified`.
 - **Density functions:** the 51 those presets use.
 - **Noises:** the 62 top-level noises.
 - **Spline facts:** Mojang's own values for the 9 terrain splines, 512 samples each, dumped by running the jar's `CubicSpline` (`tools/WorldgenFacts.java`).
+- **Surface rules:** the overworld tree, 37 files in `material_rule/` (`overworld`, `bedrock_floor` and 35 under `overworld/`), and the 8 named conditions in `material_condition/` (the tree leaves `under_ceiling` unused).
+- **Biomes:** the 56 overworld biomes (the jar's `#minecraft:is_overworld` tag decides which), that tag, and `multi_noise_biome_source_parameter_list/overworld.json` (`{"preset": "minecraft:overworld"}`).
+- **Biome facts:** the jar builds the parameter list in code, so `facts/biome_parameters.json` holds it: 7,594 points over 56 biomes, quantized x10,000, in list order. `facts/biome_lookup_samples.json` has 5,120 seeded target points with the jar's brute-force and indexed answers; they differ on 95, all ties, checked with an independent Python scan.
 
 | Piece | Where | How it works |
 |---|---|---|
 | Density graph | `Density/VoxelDensityGraph.h` | `FVoxelDensityGraph` holds the reference's 30 node types (`EVoxelDensityOp`) as one flat array of nodes with children by index, plus splines, interval lists and noises. A named function is one node however often it is referenced, so evaluation can compute it once per point. Every node comes after its inputs, and every spline after its nested splines, so evaluating in index order needs no recursion. `Validate` checks indices, each op's inputs, that order, thresholds and names. `BuildSpline` bakes a spline into an `FVoxelSpline`, with its coordinates in first use. |
 | Preset | `Density/VoxelDensityGraph.h` | `FVoxelTerrainPreset`: a world type's sea level and height, its router entry points, its aquifer inputs and the 9 debug views (N, T, V, C, E, D, W, PV, PS), all nodes of one graph. The router entries are continents, erosion, ridges, temperature, vegetation, depth, chunk surface level and final density. The aquifer inputs are barrier, exclusion, floodedness, spread, lava and surface level. |
 | Reader | `Voxel/VoxelWorldgenReader.h` (game module) | `VoxelWorldgen::ReadPreset` and `ReadReferences` read files into the graph. `WriteValue` and `WriteNoise` write nodes back as the reference's JSON. Reading is strict: an unknown type, a missing or unexpected field, a bad id, a missing file or a cycle fails with the file and the field. Noise files leave out `octave_count` when it is 1 and `amplitude_modifiers` when all are 1; the reader fills both in. |
+| Biome table | `Biome/VoxelBiomeTable.h` | `FVoxelBiomeTable`: the biomes (`FVoxelBiome`) and the parameter points (`FVoxelBiomeParameter`) of one list, as plain data. `Quantize` turns a float into the table's x10,000 integer and `Validate` checks the table. No biome lookup yet (phase 5, session 4). |
+| Surface rules | `Surface/VoxelSurfaceRules.h` | `FVoxelSurfaceRules`: a rule tree as flat arrays of rules and conditions, every node after its inputs, as the density graph keeps its nodes. 5 rule ops (`sequence`, `condition`, `block`, `ore_vein`, `bandlands`) and 10 condition ops (`biome`, `noise_threshold`, `vertical_gradient`, `y_above`, `water`, `stone_depth`, `not`, `steep`, `hole`, `above_preliminary_surface`). Ids (blocks, biomes, noises) stay strings for the evaluator. `Validate` checks it. No evaluator yet (phase 5, session 5). |
+| Biome and surface readers | `Voxel/VoxelSurfaceReader.cpp` (declared in `VoxelWorldgenReader.h`) | `ReadBiomes`, `ReadBiomeParameters` and `ReadSurfaceRules` read the files; `WriteSurfaceRule` and `WriteSurfaceCondition` write nodes back as the reference's JSON. Strict like `ReadPreset`, with the file and field in every error; a biome file's `attributes`, `features` and `carvers` are skipped by name. The overworld tree reads as 231 rules and 107 conditions, with 37 named rules and 7 named conditions. The JSON helpers shared with `ReadPreset` are in `Voxel/VoxelWorldgenJson.h`. |
 
 - **Size:** each preset reads as 24 functions, 279 nodes, 31 noises and 118 splines with 430 points, in about 8 ms in the editor. All 51 functions and 62 noises together make 530 nodes.
 - **Splines:** our `FVoxelSpline` matches Mojang's `CubicSpline` on all 4,608 samples, within 9.5e-7 (float rounding).
-- **Noise facts:** `facts/noise_samples.json` has 62 noises with range, mean, standard deviation and 11 percentiles over xz and xyz, from 4 seeds x 16,384 positions, dumped by `tools/WorldgenFacts.java`. The reference's verifier now reports `REFERENCE OK: 123 files hashed, 116 compared with the jar, 580 references resolved, 9 splines with 4608 samples`.
-- **In use:** the terrain uses the graph since session 3 (generator 2). Packages stage the reference's `data/` folder (116 files) as runtime dependencies at the same path under the project (`Unnamed.Build.cs`), so `GetReferenceRoot` works unchanged. Checked from the target receipt only; a full package check is for session 5.
+- **Noise facts:** `facts/noise_samples.json` has 62 noises with range, mean, standard deviation and 11 percentiles over xz and xyz, from 4 seeds x 16,384 positions, dumped by `tools/WorldgenFacts.java`.
+- **Verifier:** it now reports `REFERENCE OK: 228 files hashed, 219 compared with the jar, 580 references resolved, 9 splines with 4608 samples, 44 rule and condition files with 182 references, 7594 biome points over 56 biomes, 5120 lookup samples`. The 123 files of phase 4 are byte-identical, except `manifest.json` and the two edited tools.
+- **In use:** the terrain uses the graph since session 3 (generator 2). Packages stage the reference's `data/` folder (219 files) and `facts/biome_parameters.json` as runtime dependencies at the same paths under the project (`Unnamed.Build.cs`), so `GetReferenceRoot` works unchanged. Checked from the target receipt only; a full package check is for session 5.
 
 ### Density evaluator
 
@@ -397,12 +404,12 @@ Create New World makes a saved world, and Play opens one. Both go through `UMenu
   - `created` and `lastPlayed` (UTC, ISO 8601).
 
   A file from a newer version or generator is refused, never rewritten. Re-Create refills the Create screen from these keys; a random seed comes back as its number.
-- **Travel:** `L_Generated?VoxelWorld=<id>`. `AVoxelWorld` reads its world on first use and builds the terrain. The pawn asks its lab for the player's rules when it arrives (`AFoundationLab::ConfigurePlayer`).
+- **Travel:** `L_Generated?VoxelWorld=<id>`. `AVoxelWorld` reads its world on first use and builds the terrain with `VoxelTerrainFactory`. The pawn asks its lab for the player's rules when it arrives (`AFoundationLab::ConfigurePlayer`).
 
 | Choice | What it does now |
 |---|---|
 | Seed | Parsed at creation (`FVoxelSeed::Parse`); a blank seed draws a random one once, and the world keeps it. |
-| World type | Superflat builds the flat terrain from its layers: listed top first on screen, laid from the floor up. Every layer must be a block this game has. Default and Single Biome build the overworld preset (Single Biome until phase 5); Large Biomes and AMPLIFIED build their own presets. Plain `L_Generated` (the dev seed) uses generator 2, or `-VoxelGenerator=1` for the stand-in. If the preset cannot be read or compiled, the stand-in is used with an error in the log. |
+| World type | Superflat builds the flat terrain from its layers: listed top first on screen, laid from the floor up. Every layer must be a block this game has. Default and Single Biome build the overworld preset (Single Biome until phase 5); Large Biomes and AMPLIFIED build their own presets. Plain `L_Generated` (the dev seed) uses generator 2, or `-VoxelGenerator=1` for the stand-in. A saved generator-2 world whose preset cannot be read or compiled gets no stand-in: Create and Play refuse it before travelling, with the menu's error line ("This world cannot be played: ..."), and opened directly the map builds an empty terrain, logs the error and returns to the title screen (the title screen does not show the reason yet: the page shows errors only for its own requests). Only the dev seed falls back to the stand-in, with an error in the log. |
 | Game mode | Survival and Creative set the player's mode and the lab's block rules: Creative gets infinite supply, no tool wear and the creative inventory; Survival gets finite supply and tool wear, and starts with the loadout's tools and no blocks. Hardcore plays as Survival on Hard: the screen and the store force Hard, no commands and no bonus chest. Permadeath needs a game-over screen first. |
 | Difficulty | Peaceful, Easy, Normal or Hard in the player's vitals. Peaceful means no mob damage and, with natural regeneration on, a point of health every second and of food every half second. |
 | Game rules | `natural_health_regeneration` drives the player's regeneration; the others are saved for their systems. |
@@ -507,7 +514,7 @@ Limits:
 
 ## Tests
 
-`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 43 `Unnamed.Voxel` tests (every native suite: 86). Saved worlds are tested by `Unnamed.Worlds.Saved` (native) and, through the menu end to end, by `Tests/create-world.mjs`. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
+`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 46 `Unnamed.Voxel` tests (every native suite: 94). Saved worlds are tested by `Unnamed.Worlds.Saved` (native) and, through the menu end to end, by `Tests/create-world.mjs`. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
 
 | Test | Checks |
 |---|---|
@@ -554,6 +561,10 @@ Limits:
 | `Unnamed.Voxel.Aquifer.Golden` | Caves-on block hashes at the `Density.Golden` positions (seed 263), recorded once: overworld `0xe9376e319a221c4c`, large_biomes `0x9e26565ae0dc0258`, amplified `0x3e5329bd4ce985c4`. |
 | `Unnamed.Voxel.Climate.Presets` | Climate values of the three presets: goldens (each parameter weighted by its index, so swapped parameters fail), shared column edges, the PV formula. |
 | `Unnamed.Voxel.Climate.Threads` | 8 threads in shuffled order match the single-threaded result. |
+| `Unnamed.Voxel.Biome.Read` | `Tests/VoxelBiomeTests.cpp`: the overworld list reads as 56 biomes and 7,594 points and validates; every biome has a point; every point equals its row of `facts/biome_parameters.json`, read without the reader; spot values of six biomes (colours, temperature, downfall, modifiers), and only the two frozen oceans are frozen; `ReadBiomes` reuses the ids a table holds. Seven malformed small roots are refused, each error naming the file and the field. |
+| `Unnamed.Voxel.Surface.Read` | The overworld tree reads as 231 rules and 107 conditions, with the pinned count of each of the 5 rule ops and 10 condition ops, validates, and has 37 named rules and 7 named conditions (`under_ceiling` is not read). What it names resolves: its `noise_threshold` noises exist, its two ore veins' density functions resolve, its 29 biomes are among the list's 56, and its 32 block ids are in the `minecraft:` namespace. Eight malformed small roots are refused with the file and the field. |
+| `Unnamed.Voxel.Surface.RoundTrip` | All 44 named rule and condition files (37 and 7), written back by `WriteSurfaceRule` and `WriteSurfaceCondition`, equal their files in the reference. |
+| `Unnamed.Worlds.TerrainCheck` | `Tests/WorldsTests.cpp`, outside `TestVoxel.ps1`'s 46: `VoxelTerrainFactory::Check` builds all three generator-2 world types from the reference; with an empty folder instead, a generator-2 world fails with an error naming its preset, while generator 1 and Superflat need no reference. A saved world whose preset cannot be read gets no terrain, but the dev seed falls back to the stand-in and says why. Each world type reads its own preset (Single Biome reads `overworld`). |
 
 Aquifer mutation check: turning global lava into water, and disabling the walls, fail `Aquifer.Fluids` (3 checks) and `Aquifer.Golden` (3).
 
@@ -571,8 +582,9 @@ A deliberate off-by-one in `GetSectionsTouching` fails `Edit.Sections` (13 error
 - **Caves near the limit:** a caves-on column costs 4.53 ms mean (overworld, under the 5 ms limit); large_biomes (5.13) and amplified (5.74) are slightly over. Remaining levers are listed in the phase 5 handoff: cross-column corner sharing, `base_3d_noise` speed, conditional noodle corners, an aquifer status cache, block fill by runs, the flight's 3 frames over 2 ms, and inner rings first.
 - **Climate minimap:** not built; build it with phase 5's biome debug map.
 - **`voxel.Debug.Climate`** on screen is unconfirmed since session 3.
-- **Still lava:** it has no texture of its own (orange-tinted still water stands in), no damage and no flow.
-- **Cave exposure:** the fixed daylight exposure keeps cave interiors near black and lava's emission nearly invisible. Open question.
+- **Still lava:** it has no damage and no flow, and it counts as water for the player's movement.
+- **Snow layers:** placement gives one layer (no stacking); eight layers collide as a full cube (26.3 collides at 7/8); the creative item icon draws as a cube.
+- **Cave exposure:** the fixed daylight exposure keeps cave interiors near black and lava's emission nearly invisible (the lava view is still black). Still open; the brightness fix is proposed for phase 5's session 3.
 - **PS biased low:** the spawn estimate rounds to 8-block cells and ignores the 3D noise.
 - **Beaches:** sand-wide beaches until phase 5's surface rules.
 - **Horizon seam:** the sky/fog seam at the horizon is unchanged from phase 3 (the same in the stand-in's flight).
@@ -585,12 +597,10 @@ A deliberate off-by-one in `GetSectionsTouching` fails `Edit.Sections` (13 error
   - **Unloads in one frame.** Columns past the unload distance are released in one frame, outside the apply budget. A teleport, a respawn or turning `voxel.Fly` off far away can release about 500 chunks at once, which causes a hitch. Fix: queue the releases and drain them under the apply estimate.
   - **Clearing a populated world.** `FFoundationBlockWorld::Clear` (from `FFoundationAuthority::Reset`) lists every solid cell, which over the streamed storage means every non-air cell generated. `AVoxelWorld::Regenerate` resets only while the pipeline is still empty. A reset of a populated world would allocate hundreds of MB and stall. Fix: let the storage say it streams, and have `Clear` call `Empty` only.
   - **`voxel.Fly` restore.** `AVoxelFlyCamera::EndPlay` turns the pawn's tick and gameplay input back on unconditionally, even on quit or a level change. Fix: record the state when freezing and restore only that.
-- **World choices still to land:** Hardcore has no permadeath or hardcore hearts; Single Biome generates the overworld terrain until phase 5; Superflat refuses layers of blocks the game lacks (snow layers, lava).
+- **World choices still to land:** Hardcore has no permadeath or hardcore hearts; Single Biome generates the overworld terrain until phase 5; Superflat refuses layers of blocks the game lacks.
 
-The registry has full cubes, slabs and still water only. The generator also needs:
+The registry has full cubes, slabs, powder snow, snow layers, still water and still lava. The generator also needs:
 
-- lava, for aquifers;
-- snow layers;
 - grass, flowers and ferns, cactus, sugar cane, kelp, seagrass, vines and pointed dripstone;
 - dirt paths and farmland;
 - stairs, fences, doors and panes, for villages.

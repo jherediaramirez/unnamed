@@ -46,7 +46,9 @@ enum class EVoxelShape : uint8
     Full,
     SlabBottom,
     SlabTop,
-    Fluid
+    Fluid,
+    // Snow layers: a box Layers/8 high from the cell's floor.
+    Layers
 };
 
 // The mesh pass, and material slot, a state's faces draw in.
@@ -73,8 +75,10 @@ struct FVoxelStateInfo
     bool bCastsOcclusion = false;
     bool bLeaves = false;
     uint8 LightEmission = 0;
-    // Water: the amount 1-8 (a source holds 8); 0 for anything else.
+    // Fluids: the amount 1-8 (a source holds 8); 0 for anything else.
     uint8 FluidAmount = 0;
+    // Layers: how many eighths of the cell the box fills, 1-7.
+    uint8 Layers = 0;
     // The block this state belongs to. Faces between two states of one see-through block are hidden (glass, ice).
     uint16 Block = 0;
     // Packed sRGB 0xRRGGBB, for faces whose code carries the tint bit.

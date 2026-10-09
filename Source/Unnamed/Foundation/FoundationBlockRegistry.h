@@ -28,11 +28,13 @@ struct FFoundationSavedState
     bool operator==(const FFoundationSavedState& Other) const = default;
 };
 
-// What a water state means (26.3 FlowingFluid): level 0 is a source (amount 8); 1-7 flow with amount 8 - level;
-// 8-15 fall with amount 8. The surface is amount / 9 of the cell, full height when water is directly above.
+// What a fluid state means (26.3 FlowingFluid, water and lava alike): level 0 is a source (amount 8); 1-7 flow with
+// amount 8 - level; 8-15 fall with amount 8. The surface is amount / 9 of the cell, full height when the same fluid
+// is directly above.
 struct FFoundationFluid
 {
     bool bWater = false;
+    bool bLava = false;
     bool bSource = false;
     bool bFalling = false;
     int32 Amount = 0;
@@ -78,6 +80,9 @@ struct FFoundationBlockType
 
     bool IsAir() const { return ProtocolId == 0; }
     bool IsWater() const { return Id == TEXT("water"); }
+    // Still lava: no flow and no damage yet.
+    bool IsLava() const { return Id == TEXT("lava"); }
+    bool IsFluid() const { return IsWater() || IsLava(); }
     FFoundationBlockState GetDefaultState() const { return {uint16(DefaultStateId)}; }
     bool Contains(FFoundationBlockState State) const
     {

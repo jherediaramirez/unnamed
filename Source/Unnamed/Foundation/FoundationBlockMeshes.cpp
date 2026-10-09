@@ -14,6 +14,8 @@ FBox FoundationBlockMeshes::GetUnitBox(int32 Kind)
     default:
         if (Kind >= WaterFirst && Kind < WaterFull)
             return FBox(FVector::ZeroVector, FVector(1, 1, (Kind - WaterFirst + 1) / 9.));
+        if (Kind >= LayersFirst && Kind < Count)
+            return FBox(FVector::ZeroVector, FVector(1, 1, (Kind - LayersFirst + 1) / 8.));
         return FBox(FVector::ZeroVector, FVector::OneVector);
     }
 }
@@ -21,7 +23,9 @@ FBox FoundationBlockMeshes::GetUnitBox(int32 Kind)
 int32 FoundationBlockMeshes::GetKind(
     const FFoundationBlockRegistry& Registry, FFoundationBlockState State, bool bWaterAbove)
 {
-    switch (Registry.GetShape(State))
+    const EFoundationBlockShape Shape = Registry.GetShape(State);
+    if (const int32 Layers = GetFoundationShapeLayers(Shape)) return LayersFirst + Layers - 1;
+    switch (Shape)
     {
     case EFoundationBlockShape::SlabBottom:
         return SlabBottom;

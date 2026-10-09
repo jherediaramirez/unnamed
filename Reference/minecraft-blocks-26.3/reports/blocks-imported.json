@@ -17630,6 +17630,71 @@
    }
   ]
  },
+ "minecraft:snow": {
+  "properties": {
+   "layers": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8"
+   ]
+  },
+  "states": [
+   {
+    "default": true,
+    "id": 8589,
+    "properties": {
+     "layers": "1"
+    }
+   },
+   {
+    "id": 8590,
+    "properties": {
+     "layers": "2"
+    }
+   },
+   {
+    "id": 8591,
+    "properties": {
+     "layers": "3"
+    }
+   },
+   {
+    "id": 8592,
+    "properties": {
+     "layers": "4"
+    }
+   },
+   {
+    "id": 8593,
+    "properties": {
+     "layers": "5"
+    }
+   },
+   {
+    "id": 8594,
+    "properties": {
+     "layers": "6"
+    }
+   },
+   {
+    "id": 8595,
+    "properties": {
+     "layers": "7"
+    }
+   },
+   {
+    "id": 8596,
+    "properties": {
+     "layers": "8"
+    }
+   }
+  ]
+ },
  "minecraft:ice": {
   "states": [
    {
@@ -28168,6 +28233,14 @@
    }
   ]
  },
+ "minecraft:powder_snow": {
+  "states": [
+   {
+    "default": true,
+    "id": 30519
+   }
+  ]
+ },
  "minecraft:sculk": {
   "states": [
    {
@@ -30445,6 +30518,127 @@
    },
    {
     "id": 104,
+    "properties": {
+     "level": "15"
+    }
+   }
+  ]
+ },
+ "minecraft:lava": {
+  "properties": {
+   "level": [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15"
+   ]
+  },
+  "states": [
+   {
+    "default": true,
+    "id": 105,
+    "properties": {
+     "level": "0"
+    }
+   },
+   {
+    "id": 106,
+    "properties": {
+     "level": "1"
+    }
+   },
+   {
+    "id": 107,
+    "properties": {
+     "level": "2"
+    }
+   },
+   {
+    "id": 108,
+    "properties": {
+     "level": "3"
+    }
+   },
+   {
+    "id": 109,
+    "properties": {
+     "level": "4"
+    }
+   },
+   {
+    "id": 110,
+    "properties": {
+     "level": "5"
+    }
+   },
+   {
+    "id": 111,
+    "properties": {
+     "level": "6"
+    }
+   },
+   {
+    "id": 112,
+    "properties": {
+     "level": "7"
+    }
+   },
+   {
+    "id": 113,
+    "properties": {
+     "level": "8"
+    }
+   },
+   {
+    "id": 114,
+    "properties": {
+     "level": "9"
+    }
+   },
+   {
+    "id": 115,
+    "properties": {
+     "level": "10"
+    }
+   },
+   {
+    "id": 116,
+    "properties": {
+     "level": "11"
+    }
+   },
+   {
+    "id": 117,
+    "properties": {
+     "level": "12"
+    }
+   },
+   {
+    "id": 118,
+    "properties": {
+     "level": "13"
+    }
+   },
+   {
+    "id": 119,
+    "properties": {
+     "level": "14"
+    }
+   },
+   {
+    "id": 120,
     "properties": {
      "level": "15"
     }

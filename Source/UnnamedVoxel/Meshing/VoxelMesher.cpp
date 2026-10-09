@@ -313,6 +313,13 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
                         Emit.CellFace(Info, Face, Cell, Low, Low + .5f);
                         break;
                     }
+                    case EVoxelShape::Layers:
+                    {
+                        // The top never culls (it sits below the cell's top); the rest cull like a slab's.
+                        if ((Info.Faces[Face] & VoxelFaces::CullBit) && bCovered) break;
+                        Emit.CellFace(Info, Face, Cell, 0, Info.Layers / 8.f);
+                        break;
+                    }
                     case EVoxelShape::Fluid:
                     {
                         if (bCovered || Table.Get(States[Neighbor]).IsFluid()) break;

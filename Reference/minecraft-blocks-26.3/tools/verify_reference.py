@@ -51,9 +51,10 @@ if jar_path.exists():
 
 # Counts and state ids: every imported state is in the report with the same id and properties.
 blocks = manifest["blocks"]
-check(len(blocks) == 529 and len(manifest["fluids"]) == 1, "expected 529 blocks + water")
-check(sum(b["shape"] == "full_cube" for b in blocks) == 428 and sum(b["shape"] == "slab" for b in blocks) == 101,
-      "expected 428 cubes + 101 slabs")
+check(len(blocks) == 531 and [f["id"] for f in manifest["fluids"]] == ["water", "lava"],
+      "expected 531 blocks + water and lava")
+check(sum(b["shape"] == "full_cube" for b in blocks) == 429 and sum(b["shape"] == "slab" for b in blocks) == 101 and
+      sum(b["shape"] == "layers" for b in blocks) == 1, "expected 429 cubes (powder snow among them), 101 slabs, 1 layered")
 state_count = 0
 for block in states["blocks"]:
     entry = report["minecraft:" + block["id"]]
@@ -63,7 +64,7 @@ for block in states["blocks"]:
     state_count += len(got)
     for state in block.get("states", []):
         check(len(state.get("faces", [None] * 6)) == 6, f"face count: {block['id']} {state['id']}")
-check(state_count == 3445, f"expected 3445 states, found {state_count}")
+check(state_count == 3470, f"expected 3470 states, found {state_count}")
 
 # Texture layers: decoding every PNG reproduces the recorded per-frame RGBA hashes.
 layers = {"blocks": 0, "water_flow": 0}
@@ -81,5 +82,5 @@ if errors:
     print("REFERENCE FAIL")
     print("\n".join(errors[:40]))
     sys.exit(1)
-print(f"REFERENCE OK: {len(sums)} files hashed, {jar_checked} compared with the jar, {len(blocks)} blocks + water, "
-      f"{state_count} states, {layers['blocks']} block layers + {layers['water_flow']} water flow layers")
+print(f"REFERENCE OK: {len(sums)} files hashed, {jar_checked} compared with the jar, {len(blocks)} blocks + water and lava, "
+      f"{state_count} states, {layers['blocks']} block layers + {layers['water_flow']} flow layers")

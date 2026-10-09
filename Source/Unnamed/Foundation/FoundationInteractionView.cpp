@@ -216,6 +216,15 @@ void UFoundationInteractionView::MakeCustomData(
         Out[7] = float(uint32(Water.R) << 16 | uint32(Water.G) << 8 | Water.B);
         return;
     }
+    if (Type.IsLava())
+    {
+        // Still lava: its animated still texture on every face, untinted, drawn opaque so its light shows.
+        const int32 Still = FMath::Max(0, FindTexture(Registry.GetAssets(), TEXT("lava_still")));
+        for (int32 Face = 0; Face < 6; ++Face)
+            Out[Face] = float(uint32(Still));
+        Out[8] = float(Type.LightEmission);
+        return;
+    }
     if (const uint32* Codes = Registry.GetFaces(State))
         for (int32 Index = 0; Index < FoundationBlockFaces::CodesPerState; ++Index)
             Out[Index] = float(Codes[Index]);
@@ -246,9 +255,10 @@ void UFoundationInteractionView::AddInstance(
 {
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
     const FFoundationBlockType& Type = Registry.GetBlock(State);
-    const bool bWaterAbove = Type.IsWater() && World.GetBlock(World.Get(Cell + FIntVector(0, 0, 1)).State).IsWater();
+    const bool bFluidAbove =
+        Type.IsFluid() && World.GetBlock(World.Get(Cell + FIntVector(0, 0, 1)).State).Id == Type.Id;
     const FSectionKey Key{FoundationGrid::SectionOf(Cell),
-        uint8(FoundationBlockMeshes::GetKind(Registry, State, bWaterAbove)),
+        uint8(FoundationBlockMeshes::GetKind(Registry, State, bFluidAbove)),
         Type.IsWater() ? WaterLayer : uint8(Type.Layer)};
     FSectionMesh& Section = Sections.FindOrAdd(Key);
     if (!Section.Mesh)
@@ -280,7 +290,7 @@ void UFoundationInteractionView::RefreshWaterBelow(const FFoundationBlockWorld& 
 {
     const FIntVector Below = Cell - FIntVector(0, 0, 1);
     const FFoundationBlockState State = World.Get(Below).State;
-    if (!World.GetBlock(State).IsWater() || !DrawnKeys.Contains(Below)) return;
+    if (!World.GetBlock(State).IsFluid() || !DrawnKeys.Contains(Below)) return;
     RemoveInstance(Below);
     AddInstance(World, Below, State);
 }

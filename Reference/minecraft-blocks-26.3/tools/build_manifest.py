@@ -70,6 +70,20 @@ for bid, tex in MUSHROOMS.items():
                    "state_props": "down,east,north,south,up,west", "random_rotation": "false", "tinted": "false",
                    "animated": "false", "model_count": "2", "render_layer": "opaque", "tex_size": "16x16"}
 
+# Blocks the classifier leaves out but the world generator places (phase 5's surface rules and snow line), drawn
+# with shapes the importer knows: powder snow as a full cube (its model is six face plates, so it also shows from
+# inside), and snow layers (1-7 a box k/8 high, 8 the snow block's cube; edge_cases.txt lists snow as mixed_states).
+GENERATOR_BLOCKS = {"powder_snow": ("powder_snow", "full_cube", "", "1"), "snow": ("snow", "layers", "layers", "8")}
+for bid, (tex, shape, props, count) in GENERATOR_BLOCKS.items():
+    dst = tex_dir / f"{tex}.png"
+    if not dst.exists():
+        dst.write_bytes(jar.read(f"assets/minecraft/textures/block/{tex}.png"))
+    faces = ";".join(f"{f}=assets/minecraft/textures/block/{tex}.png" for f in ("down", "up", "north", "south", "east", "west"))
+    assets[bid] = {"id": bid, "shape": shape, "template": "generator_" + shape, "faces": faces,
+                   "textures": f"assets/minecraft/textures/block/{tex}.png", "state_props": props,
+                   "random_rotation": "false", "tinted": "false", "animated": "false", "model_count": count,
+                   "render_layer": "opaque", "tex_size": "16x16"}
+
 blocks = []
 for bid, a in assets.items():
     r = registry[bid]
@@ -101,14 +115,25 @@ for bid, a in assets.items():
     })
 blocks.sort(key=lambda b: b["protocol_id"])
 
-water = registry["water"]
-fluid = {"id": "water", "protocol_id": int(water["protocol_id"]), "default_state_id": int(water["default_state_id"]),
-         "state_id_range": [int(water["min_state_id"]), int(water["max_state_id"])], "properties": water["properties"],
-         "textures": {"still": "water_still", "flow": "water_flow", "overlay": "water_overlay"},
-         "tinted": True, "render_layer": "translucent"}
+# Fluids: water, and still lava for the aquifers (phase 4; its textures join the research copies here).
+for name in ("lava_still.png", "lava_still.png.mcmeta", "lava_flow.png", "lava_flow.png.mcmeta"):
+    if not (tex_dir / name).exists():
+        (tex_dir / name).write_bytes(jar.read(f"assets/minecraft/textures/block/{name}"))
+
+
+def fluid_entry(fid, textures, tinted, layer):
+    r = registry[fid]
+    return {"id": fid, "protocol_id": int(r["protocol_id"]), "default_state_id": int(r["default_state_id"]),
+            "state_id_range": [int(r["min_state_id"]), int(r["max_state_id"])], "properties": r["properties"],
+            "textures": textures, "tinted": tinted, "render_layer": layer}
+
+
+fluids = [fluid_entry("water", {"still": "water_still", "flow": "water_flow", "overlay": "water_overlay"}, True,
+                      "translucent"),
+          fluid_entry("lava", {"still": "lava_still", "flow": "lava_flow"}, False, "opaque")]
 manifest = {"minecraft_version": "26.3", "source": "26.3.jar models/blockstates + server data-generator reports",
             "id_policy": "save files store string ids (palette per section); protocol_id/state ids are runtime-only and shift between versions",
-            "block_count_in_registry": len(registry), "blocks": blocks, "fluids": [fluid]}
+            "block_count_in_registry": len(registry), "blocks": blocks, "fluids": fluids}
 (out / "block_manifest.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
 
 def faces_short(f):

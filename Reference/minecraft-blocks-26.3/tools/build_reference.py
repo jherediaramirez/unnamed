@@ -59,6 +59,17 @@ NORMALS = {"down": (0, -1, 0), "up": (0, 1, 0), "north": (0, 0, -1), "south": (0
            "east": (1, 0, 0)}
 # Output face order = the project's EFoundationFace (West, East, North, South, Down, Up).
 FACE_ORDER = ["west", "east", "north", "south", "down", "up"]
+# 32 x 32 frame textures go to the flow array (still called water_flow), in name order: lava's, then water's.
+FLOW_TEXTURES = {"water_flow", "lava_flow"}
+# Drawn as a full cube from a model of six thin face plates (powder snow): each plate's outward face only. The
+# inward faces show from inside the block, which the importer does not draw.
+PLATE_CUBES = {"powder_snow"}
+# Layered blocks (snow): layers 1 to 7 are a box k/8 high, shape "layers_<k>"; 8 uses the full cube's model. 26.3's
+# layer models add an inverted inner box (from > to) whose face shows from inside; it is skipped like the plates'.
+LAYERED = {"snow"}
+# A block whose vanilla item has another id (powder snow's is powder_snow_bucket). Item id = block id here, so it gets
+# no block item until buckets exist.
+OTHER_ITEM_BLOCKS = {"powder_snow"}
 
 
 def default_uv(f, t, d):
@@ -163,7 +174,7 @@ def variants_for(blockstate, props):
     return applied, False
 
 
-def bake_state(models, blockstate, props, tinted_block):
+def bake_state(models, blockstate, props, tinted_block, plate_cube=False, layered=False):
     variants, random = variants_for(blockstate, props)
     faces = {d: [] for d in FACE_ORDER}
     boxes = []
@@ -173,9 +184,13 @@ def bake_state(models, blockstate, props, tinted_block):
         for element in elements:
             assert "rotation" not in element, "element rotation is not supported for cube imports"
             f, t = element["from"], element["to"]
+            if (plate_cube or layered) and any(a > b for a, b in zip(f, t)):
+                continue
             boxes.append((tuple(f), tuple(t)))
             ext = {"x0": f[0] / 16, "x1": t[0] / 16, "y0": f[1] / 16, "y1": t[1] / 16, "z0": f[2] / 16, "z1": t[2] / 16}
             for face_dir, face in element["faces"].items():
+                if plate_cube and face.get("cullface") != face_dir:
+                    continue
                 uvs = face.get("uv", default_uv(f, t, face_dir))
                 shift = (face.get("rotation", 0) // 90) % 4
                 world = direction_of(tuple(a - .5 for a in rotate(tuple(.5 + c for c in NORMALS[face_dir]), xr, yr)))
@@ -196,7 +211,13 @@ def bake_state(models, blockstate, props, tinted_block):
                 faces[world].append({"t": texture(face["texture"]), "x": code, "tint": tint,
                                      "cull": "cullface" in face})
     full = ((0, 0, 0), (16, 16, 16))
-    shape = "full" if full in boxes or any(b == ((0, 0, 0), (16, 16, 0)) for b in boxes) else (
+    heights = {t[1] for f, t in boxes if f == (0, 0, 0) and t[0] == 16 and t[2] == 16}
+    if plate_cube:
+        boxes = [full]
+    elif layered and len(boxes) == 1 and len(heights) == 1 and min(heights) in range(2, 16, 2):
+        boxes = [("layers", min(heights) // 2)]
+    shape = f"layers_{boxes[0][1]}" if boxes and boxes[0][0] == "layers" else "full" if full in boxes or any(
+        b == ((0, 0, 0), (16, 16, 0)) for b in boxes) else (
         "slab_bottom" if ((0, 0, 0), (16, 8, 16)) in boxes else "slab_top" if ((0, 8, 0), (16, 16, 16)) in boxes
         else None)
     assert shape, f"unknown shape {boxes}"
@@ -256,7 +277,8 @@ def main():
     tabs = json.loads((facts / "creative_tabs.json").read_text(encoding="utf-8"))
     lang = json.loads(jar.read(ASSETS + "lang/en_us.json"))
     ids = [b["id"] for b in manifest["blocks"]]
-    imported = ids + ["water"]
+    fluid_ids = [f["id"] for f in manifest["fluids"]]
+    imported = ids + fluid_ids
 
     def copy_jar(entry, dest=None):
         target = ROOT / (dest or entry)
@@ -308,7 +330,7 @@ def main():
     for name in ("block/block.json", "item/generated.json", "item/handheld.json"):
         copy_jar(f"{ASSETS}models/{name}")
 
-    # Textures: size, animation, alpha and the array layer plan. water_flow (32x32 frames) gets its own array.
+    # Textures: size, animation, alpha and the array layer plan. The flow textures (32x32 frames) get their own array.
     textures, layer, flow_layer = [], 0, 0
     for name in names:
         if not name.endswith(".png"):
@@ -332,7 +354,7 @@ def main():
                       for f in order]
         rgba_frames = [rgba.crop((0, i * fh, fw, (i + 1) * fh)) for i in range(count)]
         water_flow = (fw, fh) == (32, 32)
-        assert water_flow == (stem == "water_flow") and (water_flow or (fw, fh) == (16, 16)), stem
+        assert water_flow == (stem in FLOW_TEXTURES) and (water_flow or (fw, fh) == (16, 16)), stem
         entry = {"name": stem, "png_sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "size": list(img.size),
                  "frame_size": [fw, fh], "frame_count": count, "array": "water_flow" if water_flow else "blocks",
                  "first_layer": flow_layer if water_flow else layer,
@@ -364,7 +386,7 @@ def main():
 
     models = Models(jar)
     states_out, shapes, randoms = [], {}, []
-    for block in manifest["blocks"] + [dict(manifest["fluids"][0])]:
+    for block in manifest["blocks"] + [dict(f) for f in manifest["fluids"]]:
         bid = block["id"]
         rep = report[f"minecraft:{bid}"]
         props = list(rep.get("properties", {}).items())
@@ -380,7 +402,7 @@ def main():
         entry = {"id": bid, "protocol_id": block["protocol_id"], "min_state_id": base,
                  "default_state_id": next(s["id"] for s in states if s.get("default")),
                  "properties": [[n, v] for n, v in props], "states": []}
-        if bid == "water":
+        if bid in fluid_ids:
             for state in states:
                 level = int(state["properties"]["level"])
                 amount = 8 if level == 0 or level >= 8 else 8 - level
@@ -390,7 +412,8 @@ def main():
         else:
             blockstate = json.loads(jar.read(f"{ASSETS}blockstates/{bid}.json"))
             for state in states:
-                shape, faces, random = bake_state(models, blockstate, state.get("properties", {}), bid in TINT_SOURCES)
+                shape, faces, random = bake_state(models, blockstate, state.get("properties", {}), bid in TINT_SOURCES,
+                                                  bid in PLATE_CUBES, bid in LAYERED)
                 entry["states"].append({"id": state["id"], "properties": state.get("properties", {}),
                                         "shape": shape, "faces": faces})
                 if random and bid not in randoms:
@@ -431,7 +454,9 @@ def main():
             "random_variants": bid in randoms,
         })
         merged_blocks.append(merged)
-        if fact["item"]:
+        if fact["item"] and fact["item"].removeprefix("minecraft:") != bid:
+            assert bid in OTHER_ITEM_BLOCKS, (bid, fact["item"])
+        elif fact["item"]:
             definition = json.loads(jar.read(f"{ASSETS}items/{bid}.json"))["model"]
             tint = None
             for source in definition.get("tints", []):
@@ -448,7 +473,8 @@ def main():
         fact = block_facts[fluid["id"]]
         merged.update({"name": lang[f"block.minecraft.{fluid['id']}"], "hardness": float(fact["destroy_time"]),
                        "blast_resistance": float(fact["explosion_resistance"]), "tint": tint_of(fluid["id"]),
-                       "material_layer": "translucent", "facts_source": merged_blocks[0]["facts_source"]})
+                       "light_emission": int(fact["light_emission"]), "material_layer": fluid["render_layer"],
+                       "facts_source": merged_blocks[0]["facts_source"]})
         fluids.append(merged)
 
     def write(name, data):
@@ -472,8 +498,8 @@ def main():
     shutil.copyfile(facts.parent / "tools/FactsDump.java", ROOT / "tools/FactsDump.java")
 
     files = write_sums()
-    print(f"blocks {len(merged_blocks)} + water; states {sum(len(e['states']) for e in states_out)}; "
-          f"textures {len(textures)} -> {layer} block layers + {flow_layer} water flow layers; items {len(items)}; "
+    print(f"blocks {len(merged_blocks)} + fluids {fluid_ids}; states {sum(len(e['states']) for e in states_out)}; "
+          f"textures {len(textures)} -> {layer} block layers + {flow_layer} flow layers; items {len(items)}; "
           f"random-variant blocks {len(randoms)}; files {len(files) + 1}")
 
 

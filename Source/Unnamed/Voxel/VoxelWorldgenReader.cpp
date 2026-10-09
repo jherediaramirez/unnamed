@@ -1,17 +1,15 @@
 #include "Voxel/VoxelWorldgenReader.h"
 
-#include "Algo/Find.h"
 #include "Density/VoxelDensityGraph.h"
-#include "Dom/JsonObject.h"
-#include "Dom/JsonValue.h"
-#include "Misc/FileHelper.h"
-#include "Misc/Paths.h"
-#include "Serialization/JsonReader.h"
-#include "Serialization/JsonSerializer.h"
+#include "Voxel/VoxelWorldgenJson.h"
 
 namespace
 {
-    const TCHAR* const WorldgenIdPrefix = TEXT("minecraft:");
+    using VoxelWorldgenJson::HasOnlyWorldgenKeys;
+    using VoxelWorldgenJson::IsWorldgenKey;
+    using VoxelWorldgenJson::LoadWorldgenFile;
+    using VoxelWorldgenJson::WorldgenIdPrefix;
+    using VoxelWorldgenJson::WorldgenIdToPath;
     const TCHAR* const WorldgenAxes[] = {TEXT("x"), TEXT("y"), TEXT("z")};
 
     // The reference's field names for an op's inputs and params, in slot order, and the fields read by hand.
@@ -75,24 +73,6 @@ namespace
         }
     }
 
-    // Field names match case-sensitively: FString's own comparisons and the engine's JSON lookups ignore case.
-    bool IsWorldgenKey(const FString& Key, const TCHAR* Name)
-    {
-        return Key.Equals(Name, ESearchCase::CaseSensitive);
-    }
-
-    bool HasOnlyWorldgenKeys(const FJsonObject& Object, std::initializer_list<const TCHAR*> Keys)
-    {
-        for (const TPair<FString, TSharedPtr<FJsonValue>>& Field : Object.Values)
-        {
-            if (!Algo::FindByPredicate(Keys, [&Field](const TCHAR* Key) { return IsWorldgenKey(Field.Key, Key); }))
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
     bool HasWorldgenField(const FWorldgenOpFields& Fields, const FString& Key)
     {
         for (const TCHAR* Field : Fields.Inputs)
@@ -117,36 +97,6 @@ namespace
             }
         }
         return false;
-    }
-
-    // "minecraft:overworld/continents" -> "density_function/overworld/continents.json" for Folder "density_function".
-    // Ids are lowercase names and folders, so a reference can never leave the reference folder.
-    bool WorldgenIdToPath(const FString& Id, const TCHAR* Folder, FString& OutPath)
-    {
-        if (!Id.StartsWith(WorldgenIdPrefix, ESearchCase::CaseSensitive))
-        {
-            return false;
-        }
-        const FString Name = Id.RightChop(FCString::Strlen(WorldgenIdPrefix));
-        if (Name.IsEmpty() || Name.StartsWith(TEXT("/")) || Name.Contains(TEXT("..")))
-        {
-            return false;
-        }
-        for (const TCHAR Char : Name)
-        {
-            if (!(FChar::IsLower(Char) || FChar::IsDigit(Char) || Char == TEXT('_') || Char == TEXT('-') ||
-                    Char == TEXT('/') || Char == TEXT('.')))
-            {
-                return false;
-            }
-        }
-        OutPath = FString::Printf(TEXT("%s/%s.json"), Folder, *Name);
-        return true;
-    }
-
-    bool LoadWorldgenFile(const FString& Root, const FString& Path, FString& OutText)
-    {
-        return FFileHelper::LoadFileToString(OutText, *FPaths::Combine(Root, TEXT("data/minecraft/worldgen"), Path));
     }
 
     struct FWorldgenEntry

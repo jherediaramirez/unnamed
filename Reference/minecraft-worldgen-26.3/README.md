@@ -1,6 +1,6 @@
 # Java 26.3 worldgen reference
 
-The overworld terrain's worldgen data from vanilla Java 26.3, byte for byte: the noise settings of the three overworld world types, the density functions they use, and every top-level noise. The voxel world's terrain is built from it ([Voxel world](../../Docs/VoxelWorld.md)). This folder is generated, hash-listed and never edited by hand. It holds data and numbers only, no game code.
+The overworld terrain's worldgen data from vanilla Java 26.3, byte for byte: the noise settings of the three overworld world types, the density functions they use, every top-level noise, the overworld's surface rules and its biomes. The voxel world's terrain is built from it ([Voxel world](../../Docs/VoxelWorld.md)). This folder is generated, hash-listed and never edited by hand. It holds data and numbers only, no game code.
 
 | Source | SHA-256 |
 |---|---|
@@ -10,17 +10,24 @@ The overworld terrain's worldgen data from vanilla Java 26.3, byte for byte: the
 uv run --no-project --python 3.13 python -I Reference/minecraft-worldgen-26.3/tools/verify_reference.py
 ```
 
-The verifier checks every file against `SHA256SUMS.txt`, compares every `data/` file with its jar entry when the jar is present, resolves every reference between the files, and checks the spline facts' shape.
+The verifier checks every file against `SHA256SUMS.txt`, compares every `data/` file with its jar entry when the jar is present, resolves every reference between the files (density functions; rules to rules, conditions, noises, biomes and the ore veins' density functions), checks that every rule file is reached from the presets, and checks the facts' shape: the splines, and the biome points and lookup samples against the biome files.
 
 ## Files
 
 | Path | What it is |
 |---|---|
-| `data/minecraft/worldgen/noise_settings/` | `overworld`, `large_biomes` and `amplified`: sea level, height, the noise router's 8 entry points, the `aquifers` inputs and the `debug_functions` views. Their surface rules (`material_rule`) and `spawn_target` are for phase 5. |
+| `data/minecraft/worldgen/noise_settings/` | `overworld`, `large_biomes` and `amplified`: sea level, height, the noise router's 8 entry points, the `aquifers` inputs and the `debug_functions` views. All three name the surface rule `minecraft:overworld` (`material_rule`); `spawn_target` is not read yet. |
 | `data/minecraft/worldgen/density_function/` | The 4 shared functions (`shift_x`, `shift_z`, `y`, `zero`) and the folders `overworld` (27, with `caves/` and `ore_vein/`), `overworld_amplified` (8) and `overworld_large_biomes` (12). |
 | `data/minecraft/worldgen/noise/` | The 62 top-level noises. |
+| `data/minecraft/worldgen/material_rule/` | The overworld's surface rule tree, 37 files: `overworld` (bedrock floor, the copper and iron ore veins, the surface above the preliminary surface, then the underground), `bedrock_floor` and the 35 under `overworld/` (per-biome subtrees in `biome_surface/` and `under_biome_surface/`). |
+| `data/minecraft/worldgen/material_condition/` | The 8 named conditions (`on_floor`, `under_floor`, `deep_under_floor`, `very_deep_under_floor`, `on_ceiling`, `under_ceiling`, `not_underwater`, `not_under_deep_water`); the overworld tree does not use `under_ceiling`. |
+| `data/minecraft/worldgen/biome/` | The 56 overworld biomes: temperature, downfall, precipitation, the temperature modifier, colours under `effects`, and `attributes`, `features` and `carvers` (not read). |
+| `data/minecraft/tags/worldgen/biome/is_overworld.json` | The jar's list of overworld biomes; `build_reference.py` copies the biome files it names. |
+| `data/minecraft/worldgen/multi_noise_biome_source_parameter_list/overworld.json` | Only `{"preset": "minecraft:overworld"}`: the jar builds the list in code, so its points are in `facts/biome_parameters.json`. Normal, Large Biomes and AMPLIFIED all use this preset. |
 | `facts/spline_samples.json` | Mojang's own values for the 9 terrain splines (offset, factor and jaggedness for each world type): 512 seeded samples each, as coordinates then value, about a quarter of the coordinates exactly on a point's location. Dumped by `tools/WorldgenFacts.java`. |
 | `facts/noise_samples.json` | The value spread of all 62 noises as the jar's `NormalNoise` makes them: the declared range, then mean, standard deviation and 11 percentiles of `get(x, 0, z)` and `get(x, y, z)` over 4 fixed seeds x 16,384 seeded positions spanning 64 periods of the lowest octave. Our own noise is calibrated against it (`Unnamed.Voxel.Worldgen.NoiseSpread`). Dumped by `tools/WorldgenFacts.java`. |
+| `facts/biome_parameters.json` | The overworld biome parameter list as the jar builds it (`MultiNoiseBiomeSourceParameterList.knownPresets()`): 7,594 points in list order (the order decides ties), each as the biome's index in `biomes`, then min and max of temperature, humidity, continentalness, erosion, depth and weirdness, then the offset, all quantized as the game stores them (x 10,000). Dumped by `tools/WorldgenFacts.java`. |
+| `facts/biome_lookup_samples.json` | 5,120 seeded climate target points in the same units with the biome the jar picks: by its brute-force scan (the first best point in list order) and by its indexed search. They differ on 95 samples, where several points fit equally well. 4,096 points are uniform, half of them at depth 0; 1,024 put one to three parameters on a random point's bounds, give or take one unit. Dumped by `tools/WorldgenFacts.java`. |
 | `manifest.json` | The source jar's hashes and the file counts. |
 | `SHA256SUMS.txt` | Every other file's SHA-256. |
 | `tools/` | `build_reference.py` copies the data from the jar and writes the manifest and sums; `verify_reference.py`; `WorldgenFacts.java`. |
@@ -28,7 +35,7 @@ The verifier checks every file against `SHA256SUMS.txt`, compares every `data/` 
 ## Rebuilding
 
 1. `uv run --no-project --python 3.13 python -I Reference/minecraft-worldgen-26.3/tools/build_reference.py [server jar]` replaces `data/`.
-2. With JDK 25 and a classpath of the server jar plus the 39 jars of its `libraries` folder: `javac -cp <classpath> -d <temp> tools/WorldgenFacts.java`, then `java -cp <temp>;<classpath> WorldgenFacts Reference/minecraft-worldgen-26.3` (writes both facts files; run it outside `Source/`, since the game's bootstrap leaves a `logs/` folder in the working directory).
+2. With JDK 25 and a classpath of the server jar plus the 39 jars of its `libraries` folder: `javac -cp <classpath> -d <temp> tools/WorldgenFacts.java`, then `java -cp <temp>;<classpath> WorldgenFacts Reference/minecraft-worldgen-26.3` (writes the four facts files; the existing ones come out byte-identical; run it outside the project, since the game leaves a `logs/` folder in the working directory).
 3. Run `build_reference.py` again so `SHA256SUMS.txt` covers the new facts, then the verifier.
 
 ## What 26.3 changed
@@ -44,5 +51,7 @@ Older docs and the wiki describe the 1.18 to 1.21 format. In 26.3:
   - `noise` with optional `shift_x` and `shift_z`, which replaces `shifted_noise`;
   - `interpolated`, which carries its own cell sizes;
   - `find_top_surface`, which gives the preliminary surface level.
-- **Ore veins:** the router no longer references them. The surface rules (`material_rule`) do.
+- **Ore veins:** the router no longer references them. The surface rules (`material_rule`) do, through the `ore_vein` rule.
+- **Surface rules:** they moved out of the noise settings into two registries, `material_rule` (rules: `sequence`, `condition`, `block`, `ore_vein`, `bandlands`) and `material_condition` (named conditions). The overworld tree uses the conditions `biome`, `noise_threshold` (with `is_3d`), `vertical_gradient`, `y_above`, `water`, `stone_depth` (with `surface_type` and `secondary_depth_range`), `not`, `steep`, `hole` and `above_preliminary_surface`. A `block` rule's `result_state` is a string such as `minecraft:grass_block`.
+- **Biomes:** colours under `effects` are `#rrggbb` strings; sky, fog, music and mob spawns moved to `attributes`.
 - **Evaluation:** the game compiles density functions into samplers (`DensityFunction.compileSampler`), so a single point is no longer one `compute` call. `WorldgenFacts.java` samples the splines through `CubicSpline` and its codec alone.

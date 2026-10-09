@@ -27,6 +27,7 @@
 #include "Terrain/VoxelDensityTerrain.h"
 #include "Terrain/VoxelFlatTerrain.h"
 #include "Terrain/VoxelHeightTerrain.h"
+#include "Voxel/VoxelTerrainFactory.h"
 #include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
 #include "UnrealClient.h"
@@ -203,43 +204,17 @@ void AVoxelWorld::ConfigurePlayer(FFoundationVitals& Vitals) const
 
 TSharedRef<const IVoxelTerrain> AVoxelWorld::MakeTerrain() const
 {
-    const FUnnamedSavedWorld* World = GetSavedWorld();
-    if (!World || !World->IsSuperflat())
-    {
-        // Saved worlds keep the generator they were made with. The dev seed takes the newest, or -VoxelGenerator=<n>.
-        int32 Generator = FUnnamedSavedWorld::CurrentGenerator;
-        if (World)
-            Generator = World->Generator;
-        else
-            FParse::Value(FCommandLine::Get(), TEXT("VoxelGenerator="), Generator);
-        if (Generator < 2) return MakeShared<FVoxelHeightTerrain>(Seed.Value, *Table);
-        // Generator 2: the world type's 26.3 preset. Single Biome takes the overworld's until phase 5's biomes.
-        const FString Type = World ? World->Type : FString(TEXT("Default"));
-        const TCHAR* PresetName = Type == TEXT("Large Biomes") ? TEXT("large_biomes")
-            : Type == TEXT("AMPLIFIED")                        ? TEXT("amplified")
-                                                               : TEXT("overworld");
-        FVoxelTerrainPreset Preset;
-        FString Error;
-        if (VoxelWorldgen::ReadPreset(VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Error))
-        {
-            TSharedRef<FVoxelDensityTerrain> Density =
-                MakeShared<FVoxelDensityTerrain>(Preset, uint64(Seed.Value), *Table);
-            if (Density->IsValid()) return Density;
-            Error = Density->GetError();
-        }
-        UE_LOG(LogUnnamedVoxel, Error, TEXT("The %s terrain could not be built (%s); using the stand-in terrain."),
-            PresetName, *Error);
-        return MakeShared<FVoxelHeightTerrain>(Seed.Value, *Table);
-    }
-    // The screen lists layers top first; the terrain stacks them up from the floor. Ids lose their "minecraft:".
-    TArray<FVoxelFlatLayer> Stack;
-    for (int32 Index = World->FlatLayers.Num() - 1; Index >= 0; --Index)
-    {
-        const FString Block = World->FlatLayers[Index].Block.RightChop(10);
-        Stack.Add(
-            {Block == TEXT("air") ? uint16(0) : Table->FindState(FName(*Block)), World->FlatLayers[Index].Height});
-    }
-    return MakeShared<FVoxelFlatTerrain>(Stack, *Table);
+    FString Error;
+    if (TSharedPtr<const IVoxelTerrain> Made =
+            VoxelTerrainFactory::Make(GetSavedWorld(), Seed.Value, *Table, VoxelWorldgen::GetReferenceRoot(), Error))
+        return Made.ToSharedRef();
+    // A saved world whose terrain cannot be built gets no other terrain: back to the title screen, with the reason in
+    // the log (Create and Play refuse such a world before travelling, with the reason on screen). Until the travel, an
+    // empty world generates nothing.
+    UE_LOG(LogUnnamedVoxel, Error, TEXT("World %s cannot be played: %s. Returning to the title screen."),
+        *GetSavedWorld()->Id, *Error);
+    UGameplayStatics::OpenLevel(this, FName(UUnnamedProjectSettings::GetMenuMapPackage()));
+    return MakeShared<FVoxelFlatTerrain>(TArray<FVoxelFlatLayer>(), *Table);
 }
 
 void AVoxelWorld::LoadMaterials()
@@ -503,7 +478,10 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
                         if (!Info.bSolid) continue;
                         const FVector Min = FoundationGrid::CellMin({X, Y, Z}, OriginCm);
                         const double Bottom = Info.Shape == EVoxelShape::SlabTop ? .5 : 0.;
-                        const double Top = Info.Shape == EVoxelShape::SlabBottom ? .5 : 1.;
+                        // Snow layers collide one layer lower than they show (bSolid is off for a single layer).
+                        const double Top = Info.Shape == EVoxelShape::SlabBottom ? .5
+                            : Info.Shape == EVoxelShape::Layers                  ? (Info.Layers - 1) / 8.
+                                                                                 : 1.;
                         Out.Add(
                             FBox(Min + FVector(0, 0, Bottom * CellCm), Min + FVector(CellCm, CellCm, Top * CellCm)));
                     }

@@ -35,8 +35,10 @@ for name, digest in sums.items():
 
 manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 data_files = sorted(n for n in sums if n.startswith("data/"))
-check(manifest["counts"] == {"noise_settings": 3, "density_function": 51, "noise": 62}, f"counts {manifest['counts']}")
-check(len(data_files) == 116, f"expected 116 data files, found {len(data_files)}")
+COUNTS = {"noise_settings": 3, "density_function": 51, "noise": 62, "material_rule": 37, "material_condition": 8,
+          "multi_noise_biome_source_parameter_list": 1, "biome": 56, "biome_tag": 1}
+check(manifest["counts"] == COUNTS, f"counts {manifest['counts']}")
+check(len(data_files) == sum(COUNTS.values()), f"expected {sum(COUNTS.values())} data files, found {len(data_files)}")
 
 jar_path = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_JAR
 jar_checked = 0
@@ -83,6 +85,66 @@ for path in (WORLDGEN / "density_function").rglob("*.json"):
 for is_noise, name in reached:
     check((noise_file if is_noise else function_file)(name).is_file(), f"unresolved reference: {name}")
 
+
+# Surface rules: in a rule, strings under "sequence" and "then_run" name rules, under "if_true" and "invert"
+# conditions, under "noise" noises, under "biome_is" biomes, and the ore vein's "density", "richness" and
+# "filler_gap" density functions. Block states ("result_state", the ore vein's blocks) are not files.
+RULE_KEYS = {"sequence": "material_rule", "then_run": "material_rule", "if_true": "material_condition",
+             "invert": "material_condition", "noise": "noise", "biome_is": "biome", "density": "density_function",
+             "richness": "density_function", "filler_gap": "density_function"}
+
+
+def rule_references(value, out, key=None):
+    if isinstance(value, dict):
+        for k, v in value.items():
+            rule_references(v, out, k)
+    elif isinstance(value, list):
+        for v in value:
+            rule_references(v, out, key)
+    elif isinstance(value, str) and key in RULE_KEYS:
+        out.append((RULE_KEYS[key], value))
+
+
+def worldgen_file(folder, name):
+    return WORLDGEN / folder / (name.removeprefix("minecraft:") + ".json")
+
+
+rule_reached, pending, rule_refs = set(), [], 0
+for preset in manifest["presets"]:
+    settings = json.loads((WORLDGEN / "noise_settings" / f"{preset}.json").read_text(encoding="utf-8"))
+    pending.append(("material_rule", settings["material_rule"]))
+while pending:
+    folder, name = pending.pop()
+    path = worldgen_file(folder, name)
+    rule_refs += 1
+    check(path.is_file(), f"unresolved {folder} reference: {name}")
+    if folder not in ("material_rule", "material_condition") or not path.is_file() or path in rule_reached:
+        continue
+    rule_reached.add(path)
+    found = []
+    rule_references(json.loads(path.read_text(encoding="utf-8")), found)
+    pending += found
+# Every rule file is reached; the 8 named conditions are copied whole, and the overworld tree leaves under_ceiling unused.
+for path in (WORLDGEN / "material_rule").rglob("*.json"):
+    check(path in rule_reached, f"not reached from the presets' surface rules: {path.relative_to(ROOT).as_posix()}")
+
+# Biomes: the tag names exactly the biome files, the parameter list file names the dumped preset, and the facts'
+# points and samples are well formed and name only those biomes.
+tag = json.loads((ROOT / "data/minecraft/tags/worldgen/biome/is_overworld.json").read_text(encoding="utf-8"))
+biome_files = {p.stem for p in (WORLDGEN / "biome").glob("*.json")}
+check({v.removeprefix("minecraft:") for v in tag["values"]} == biome_files, "is_overworld differs from the biome files")
+parameter_list = json.loads((WORLDGEN / "multi_noise_biome_source_parameter_list/overworld.json").read_text("utf-8"))
+parameters = json.loads((ROOT / "facts/biome_parameters.json").read_text(encoding="utf-8"))
+check(parameter_list == {"preset": parameters["preset"]}, f"parameter list file {parameter_list}")
+check({b.removeprefix("minecraft:") for b in parameters["biomes"]} == biome_files, "parameter list biomes differ")
+for point in parameters["points"]:
+    check(len(point) == 14 and 0 <= point[0] < len(parameters["biomes"]) and
+          all(point[i] <= point[i + 1] for i in range(1, 13, 2)), f"bad parameter point {point}")
+lookups = json.loads((ROOT / "facts/biome_lookup_samples.json").read_text(encoding="utf-8"))
+check(len(lookups["samples"]) == 5120, f"lookup samples {len(lookups['samples'])}")
+for sample in lookups["samples"]:
+    check(len(sample) == 8 and all(0 <= b < len(parameters["biomes"]) for b in sample[6:]), f"bad sample {sample}")
+
 # Facts: every sampled function holds exactly one spline over the listed coordinates.
 facts = json.loads((ROOT / "facts/spline_samples.json").read_text(encoding="utf-8"))
 sample_count = 0
@@ -103,4 +165,6 @@ if errors:
     sys.exit(1)
 jar_note = f"{jar_checked} compared with the jar" if jar_path.exists() else f"NO JAR at {jar_path}, bytes not compared"
 print(f"REFERENCE OK: {len(sums)} files hashed, {jar_note}, {len(reached)} references resolved, "
-      f"{len(facts['splines'])} splines with {sample_count} samples")
+      f"{len(facts['splines'])} splines with {sample_count} samples, {len(rule_reached)} rule and condition files "
+      f"with {rule_refs} references, {len(parameters['points'])} biome points over {len(parameters['biomes'])} biomes, "
+      f"{len(lookups['samples'])} lookup samples")

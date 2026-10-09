@@ -66,6 +66,35 @@ bool FVoxelBlocksTableTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Grass has its side overlay"),
         (Grass.Faces[VoxelFaces::OverlayIndex] & FoundationBlockFaces::OverlayBit) != 0);
     TestTrue(TEXT("Glowstone glows"), State(TEXT("glowstone")).LightEmission == 15);
+
+    // Still lava comes from the registry now: a fluid in the opaque layer (for its light), untinted, its animated
+    // still texture on every face.
+    const FVoxelStateInfo& Lava = State(TEXT("lava"));
+    const int32 LavaStill = Registry->GetAssets()->Textures.IndexOfByPredicate(
+        [](const FFoundationBlockTextureAsset& Texture) { return Texture.Name == TEXT("lava_still"); });
+    bool bLavaFaces = LavaStill > 0;
+    for (int32 Face = 0; Face < VoxelFaces::Count; ++Face)
+        bLavaFaces &= Lava.Faces[Face] == uint32(LavaStill);
+    TestTrue(TEXT("Lava: a full source in the opaque layer, glowing, not solid"),
+        Lava.IsFluid() && Lava.FluidAmount == 8 && Lava.Layer == EVoxelLayer::Opaque && Lava.LightEmission == 15 &&
+            !Lava.bSolid);
+    TestTrue(TEXT("Lava draws lava_still on every face, untinted"), bLavaFaces);
+    TestEqual(TEXT("Lava keeps 26.3's state id"), Table->FindState(TEXT("lava")), uint16(105));
+    // Snow layers: k/8 boxes that cover their bottom face; one layer has no collision (26.3), eight are a cube.
+    const uint16 Snow = Table->FindState(TEXT("snow"));
+    const FVoxelStateInfo& OneLayer = Table->Get(Snow);
+    const FVoxelStateInfo& FourLayers = Table->Get(uint16(Snow + 3));
+    TestTrue(TEXT("One snow layer: 1/8 high, covers its bottom, not solid"),
+        OneLayer.Shape == EVoxelShape::Layers && OneLayer.Layers == 1 &&
+            OneLayer.OpaqueFaces == (1 << int32(EVoxelFace::Down)) && !OneLayer.bSolid && !OneLayer.bCastsOcclusion);
+    TestTrue(TEXT("Four snow layers: 4/8 high and solid"),
+        FourLayers.Shape == EVoxelShape::Layers && FourLayers.Layers == 4 && FourLayers.bSolid);
+    TestTrue(TEXT("Eight snow layers are a full cube"), Table->Get(uint16(Snow + 7)).Shape == EVoxelShape::Full);
+    TestTrue(TEXT("The top of a snow layer never culls"),
+        (OneLayer.Faces[int32(EVoxelFace::Up)] & VoxelFaces::CullBit) == 0);
+    const FVoxelStateInfo& Powder = State(TEXT("powder_snow"));
+    TestTrue(TEXT("Powder snow: a solid opaque cube for now"),
+        Powder.Shape == EVoxelShape::Full && Powder.bSolid && Powder.Layer == EVoxelLayer::Opaque);
     return true;
 }
 

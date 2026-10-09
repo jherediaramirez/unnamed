@@ -247,12 +247,16 @@ bool FVoxelMesherShapesTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("A 16x16 floor crossing every column border is one quad per side in each column"),
         Quads(Box(Stone, {-8, -8, 0}, {7, 7, 0}), Greedy, EVoxelLayer::Opaque), 4);
     TestEqual(TEXT("A slab: 6 faces"), Quads(Box(SlabBottom, {3, 3, 3}, {3, 3, 3}), Greedy, EVoxelLayer::Opaque), 6);
+    TestEqual(
+        TEXT("Three snow layers: 6 faces"), Quads(Box(Snow3, {3, 3, 3}, {3, 3, 3}), Greedy, EVoxelLayer::Opaque), 6);
 
     // Partial faces sit where the shape ends.
     const TArray<FVoxelMeshData> Slab =
         FMesherTestWorld(1, Box(SlabBottom, {3, 3, 3}, {3, 3, 3})).MeshColumn({0, 0}, Greedy);
     const TArray<FVoxelMeshData> Water =
         FMesherTestWorld(1, Box(WaterSource, {3, 3, 3}, {3, 3, 3})).MeshColumn({0, 0}, Greedy);
+    const TArray<FVoxelMeshData> Snow =
+        FMesherTestWorld(1, Box(Snow3, {3, 3, 3}, {3, 3, 3})).MeshColumn({0, 0}, Greedy);
     auto TopOf = [](const FVoxelMeshLayer& Layer)
     {
         float Top = -1e9f;
@@ -267,6 +271,31 @@ bool FVoxelMesherShapesTest::RunTest(const FString& Parameters)
         3 + 8.f / 9, 1e-5f);
     TestEqual(
         TEXT("A lone water cell has 6 faces"), Water[Section].Layers[int32(EVoxelLayer::Water)].GetQuadCount(), 6);
+    TestEqual(TEXT("Three snow layers reach 3/8 of the cell"), TopOf(Snow[Section].Layers[int32(EVoxelLayer::Opaque)]),
+        3 + 3.f / 8, 1e-5f);
+
+    // Snow on stone: the layer's opaque bottom hides the stone's top, and the stone hides the layer's bottom.
+    const TArray<FVoxelMeshData> SnowOnStone = FMesherTestWorld(1,
+        [](int32 X, int32 Y, int32 Z) -> uint16
+        {
+            if (X != 3 || Y != 3) return Air;
+            return Z == 2 ? Stone : Z == 3 ? Snow3 : Air;
+        }).MeshColumn({0, 0}, Greedy);
+    int32 Overdrawn = 0;
+    const TMap<int32, uint8> Drawn = DrawnMesherFaces(SnowOnStone, Overdrawn);
+    auto FacesDrawnIn = [&Drawn](const FIntVector& Cell)
+    {
+        int32 Found = 0;
+        for (int32 Face = 0; Face < VoxelFaces::Count; ++Face)
+            Found += Drawn.Contains(MesherFaceKey(Cell, Face));
+        return Found;
+    };
+    const FIntVector StoneCell(3, 3, 2), SnowCell(3, 3, 3);
+    TestEqual(TEXT("Snow on stone: 10 faces in all"), CountLayerQuads(SnowOnStone, EVoxelLayer::Opaque), 10);
+    TestEqual(TEXT("...5 of them the stone's"), FacesDrawnIn(StoneCell), 5);
+    TestFalse(TEXT("...not its top"), Drawn.Contains(MesherFaceKey(StoneCell, int32(EVoxelFace::Up))));
+    TestEqual(TEXT("...5 of them the snow's"), FacesDrawnIn(SnowCell), 5);
+    TestFalse(TEXT("...not its bottom"), Drawn.Contains(MesherFaceKey(SnowCell, int32(EVoxelFace::Down))));
 
     // A pool on stone: the surface merges, the floor is hidden, sides only face air.
     const FMesherTestWorld Pool(1,

@@ -90,8 +90,9 @@ bool FFoundationBlocksRegistryTest::RunTest(const FString&)
     if (!TestNotNull(TEXT("registry asset"), Registry->GetAssets()) || !TestValid(TEXT("manifest"), Manifest) ||
         !TestValid(TEXT("report"), Report))
         return false;
-    // 529 blocks (428 cubes + 101 slabs) plus air and water, and no project blocks by default.
-    TestEqual(TEXT("air + 529 + water"), Registry->GetBlockCount(), 531);
+    // 531 blocks (428 cubes, 101 slabs, powder snow and snow layers) plus air, water and lava, and no project blocks
+    // by default.
+    TestEqual(TEXT("air + 531 + water + lava"), Registry->GetBlockCount(), 534);
     TArray<TSharedPtr<FJsonValue>> Blocks = Manifest->GetArrayField(TEXT("blocks"));
     Blocks.Append(Manifest->GetArrayField(TEXT("fluids")));
     int32 States = 0, Mismatches = 0;
@@ -128,7 +129,7 @@ bool FFoundationBlocksRegistryTest::RunTest(const FString&)
             ++States;
         }
     }
-    TestEqual(TEXT("states checked"), States, 3445);
+    TestEqual(TEXT("states checked"), States, 3470);
     TestEqual(TEXT("states whose id or properties differ from the report"), Mismatches, 0);
     TestEqual(TEXT("air is state 0"), Registry->GetBlock({0}).Id, FName(TEXT("air")));
     TestTrue(TEXT("unknown ids resolve to air"),
@@ -166,7 +167,7 @@ bool FFoundationBlocksCodecTest::RunTest(const FString&)
             ++States;
         }
     }
-    TestEqual(TEXT("every imported state"), States, 3445);
+    TestEqual(TEXT("every imported state"), States, 3470);
     TestEqual(TEXT("save/load and text round-trip failures"), Failures, 0);
     // The saved form is ids and properties, never numbers.
     const FFoundationBlockState Slab = Registry->FindBlock(TEXT("oak_slab"))->GetDefaultState();
@@ -219,7 +220,7 @@ bool FFoundationBlocksFacesTest::RunTest(const FString&)
     for (int32 Index = 1; Index < Registry->GetBlockCount(); ++Index)
     {
         const FFoundationBlockType& Block = Registry->GetBlockAt(Index);
-        if (Block.IsWater()) continue;
+        if (Block.IsFluid()) continue;
         for (int32 Local = 0; Local < Block.StateCount; ++Local)
         {
             const uint32* Codes = Registry->GetFaces({uint16(Block.MinStateId + Local)});
@@ -230,7 +231,7 @@ bool FFoundationBlocksFacesTest::RunTest(const FString&)
                 Invalid += !ValidTexture(FoundationBlockFaces::GetTexture(Overlay));
         }
     }
-    TestEqual(TEXT("faces checked (3429 states x 6)"), Faces, 3429 * 6);
+    TestEqual(TEXT("faces checked (3438 states x 6)"), Faces, 3438 * 6);
     TestEqual(TEXT("faces without a valid array layer"), Invalid, 0);
     TestTrue(TEXT("water textures"),
         ValidTexture(Assets->Textures.IndexOfByPredicate(
@@ -321,7 +322,8 @@ bool FFoundationBlocksTexturesTest::RunTest(const FString&)
                 AddError(FString::Printf(TEXT("%s frame %d differs"), *Texture->GetStringField(TEXT("name")), Frame));
             }
     }
-    TestEqual(TEXT("layers checked"), Checked, 719);
+    // 708 block frames and 48 flow frames (water 32, lava 16).
+    TestEqual(TEXT("layers checked"), Checked, 756);
     TestEqual(TEXT("layers whose pixels differ from the jar"), Different, 0);
     return true;
 }
@@ -481,6 +483,27 @@ bool FFoundationBlocksShapesTest::RunTest(const FString&)
         !Flowing.bSource && Flowing.Amount == 5 && FMath::IsNearlyEqual(Flowing.GetHeight(false), 5. / 9));
     TestTrue(
         TEXT("falling, full under water"), Falling.bFalling && Falling.Amount == 8 && Falling.GetHeight(true) == 1.);
+    // Snow layers: the outline is k/8 high and the collision one layer lower (26.3), so one layer has none; eight
+    // layers are a full cube. Powder snow is a solid cube for now.
+    TestTrue(TEXT("three snow layers outline Z 0-3/8"),
+        B.R().GetSelectionShape(B.State(TEXT("snow[layers=3]")), Box) &&
+            Box == FBox(FVector::ZeroVector, FVector(1, 1, 3. / 8)));
+    TestTrue(TEXT("three snow layers collide to Z 2/8"),
+        B.R().GetCollisionShape(B.State(TEXT("snow[layers=3]")), Box) &&
+            Box == FBox(FVector::ZeroVector, FVector(1, 1, 2. / 8)));
+    TestFalse(TEXT("one snow layer has no collision"), B.R().GetCollisionShape(B.State(TEXT("snow[layers=1]")), Box));
+    TestTrue(TEXT("one snow layer can be targeted"), B.R().GetSelectionShape(B.State(TEXT("snow[layers=1]")), Box));
+    TestTrue(TEXT("eight snow layers are a full cube"),
+        B.R().GetShape(B.State(TEXT("snow[layers=8]"))) == EFoundationBlockShape::Full);
+    TestTrue(TEXT("powder snow is solid"),
+        B.R().GetCollisionShape(B.State(TEXT("powder_snow")), Box) &&
+            Box == FBox(FVector::ZeroVector, FVector::OneVector));
+    // Lava is a fluid like water (still for now): no collision or selection, light 15.
+    const FFoundationFluid Lava = B.R().GetFluid(B.State(TEXT("lava[level=0]")));
+    TestTrue(TEXT("lava source"), Lava.bLava && !Lava.bWater && Lava.bSource && Lava.Amount == 8);
+    TestFalse(TEXT("lava has no collision"), B.R().GetCollisionShape(B.State(TEXT("lava[level=0]")), Box));
+    TestFalse(TEXT("lava has no selection"), B.R().GetSelectionShape(B.State(TEXT("lava[level=0]")), Box));
+    TestEqual(TEXT("lava gives light 15"), B.R().GetBlock(B.State(TEXT("lava[level=0]"))).LightEmission, 15);
     // Targeting and movement see the half: a ray over a bottom slab passes, one into its top face hits at z 50.
     B.Put({0, 0, 0}, TEXT("smooth_stone_slab[type=bottom,waterlogged=false]"));
     B.Put({2, 0, 0}, TEXT("water[level=0]"));

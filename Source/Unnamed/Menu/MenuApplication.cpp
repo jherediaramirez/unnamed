@@ -11,6 +11,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Misc/PackageName.h"
 #include "Serialization/JsonSerializer.h"
+#include "Voxel/VoxelTerrainFactory.h"
+#include "Voxel/VoxelWorldgenReader.h"
 
 namespace
 {
@@ -29,6 +31,21 @@ namespace
         if (World.bCommands) Text += TEXT(", Cheats");
         if (World.Type != TEXT("Default")) Text += TEXT(", ") + World.Type;
         return Text;
+    }
+
+    // A saved world whose terrain cannot be built never opens: the voxel world has no fallback for it.
+    bool CanBuildSavedWorldTerrain(const FUnnamedSavedWorld& World, FString& OutError)
+    {
+        FString Reason;
+        if (VoxelTerrainFactory::Check(World, VoxelWorldgen::GetReferenceRoot(), Reason)) return true;
+        OutError = FString::Printf(TEXT("This world cannot be played: %s."), *Reason);
+        return false;
+    }
+
+    bool CanPlaySavedWorld(const FString& Id, FString& OutError)
+    {
+        FUnnamedSavedWorld World;
+        return UnnamedSavedWorlds::Load(Id, World, OutError) && CanBuildSavedWorldTerrain(World, OutError);
     }
 }
 
@@ -161,7 +178,7 @@ FString UMenuApplication::RequestOpenWorld(const FString& WorldId)
         LastError = TEXT("The selected world is missing from this build.");
     else if (bWorldPending || bTravelIssued)
         return GetState();
-    else if (!bSaved || UnnamedSavedWorlds::Touch(WorldId, LastError))
+    else if (!bSaved || (CanPlaySavedWorld(WorldId, LastError) && UnnamedSavedWorlds::Touch(WorldId, LastError)))
         QueueTravel(RequestedMap, Options, WorldId);
     if (bSaved) RefreshSavedWorlds();
     return GetState();
@@ -177,7 +194,8 @@ FString UMenuApplication::CreateWorld(const FString& DraftJson)
         LastError = TEXT("Creating a world requires a running game or Play in Editor session.");
     else if (!FPackageName::DoesPackageExist(Map))
         LastError = TEXT("The generated world's map is missing from this build.");
-    else if (UnnamedSavedWorlds::Create(DraftJson, World, LastError))
+    else if (UnnamedSavedWorlds::ParseDraft(DraftJson, World, LastError) &&
+        CanBuildSavedWorldTerrain(World, LastError) && UnnamedSavedWorlds::Create(DraftJson, World, LastError))
     {
         RefreshSavedWorlds();
         QueueTravel(Map, TEXT("VoxelWorld=") + World.Id, World.Id);

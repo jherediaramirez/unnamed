@@ -2990,6 +2990,24 @@
    ]
   },
   {
+   "id": "snow",
+   "block": "snow",
+   "name": "Snow",
+   "max_stack": 64,
+   "model": "block/snow_height2",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 19
+    },
+    {
+     "tab": "search",
+     "index": 770
+    }
+   ]
+  },
+  {
    "id": "ice",
    "block": "ice",
    "name": "Ice",

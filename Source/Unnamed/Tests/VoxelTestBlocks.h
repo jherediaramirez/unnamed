@@ -20,6 +20,8 @@ namespace VoxelTestBlocks
         WaterSource,
         // Level 3: amount 5, so its surface is at 5/9.
         WaterFlowing,
+        // Three snow layers: a box 3/8 high; only its bottom covers its square.
+        Snow3,
         Count
     };
 
@@ -39,12 +41,15 @@ namespace VoxelTestBlocks
                 Info.OpaqueFaces = Shape == EVoxelShape::Full ? 0x3F
                     : Shape == EVoxelShape::SlabBottom        ? uint8(1 << int32(EVoxelFace::Down))
                     : Shape == EVoxelShape::SlabTop           ? uint8(1 << int32(EVoxelFace::Up))
+                    : Shape == EVoxelShape::Layers            ? uint8(1 << int32(EVoxelFace::Down))
                                                               : 0;
             for (int32 Face = 0; Face < VoxelFaces::Count; ++Face)
                 Info.Faces[Face] = uint32(State * 8 + Face) | (Shape == EVoxelShape::Fluid ? 0 : VoxelFaces::CullBit);
             // A slab's inner face (the bottom slab's top, the top slab's bottom) has no cull face, as in the reference.
             if (Shape == EVoxelShape::SlabBottom) Info.Faces[int32(EVoxelFace::Up)] &= ~VoxelFaces::CullBit;
             if (Shape == EVoxelShape::SlabTop) Info.Faces[int32(EVoxelFace::Down)] &= ~VoxelFaces::CullBit;
+            // A snow layer's top has none either: it sits below the cell's top, so nothing above hides it.
+            if (Shape == EVoxelShape::Layers) Info.Faces[int32(EVoxelFace::Up)] &= ~VoxelFaces::CullBit;
             Table.SetState(State, Info);
             Table.SetDefaultState(Name, State);
             return Info;
@@ -60,6 +65,9 @@ namespace VoxelTestBlocks
         Table.SetState(WaterSource, Water);
         Water.FluidAmount = 5;
         Table.SetState(WaterFlowing, Water);
+        FVoxelStateInfo Snow = Add(Snow3, TEXT("snow"), EVoxelShape::Layers, EVoxelLayer::Opaque, 7);
+        Snow.Layers = 3;
+        Table.SetState(Snow3, Snow);
         return Table;
     }
 

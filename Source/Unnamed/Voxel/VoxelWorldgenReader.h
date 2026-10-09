@@ -3,7 +3,9 @@
 #include "CoreMinimal.h"
 
 class FJsonValue;
+class FVoxelBiomeTable;
 class FVoxelDensityGraph;
+class FVoxelSurfaceRules;
 struct FVoxelDensityNoise;
 struct FVoxelTerrainPreset;
 
@@ -35,4 +37,23 @@ namespace VoxelWorldgen
     TSharedPtr<FJsonValue> WriteValue(const FVoxelDensityGraph& Graph, int32 Node, bool bExpand);
     // Writes a noise as its file, leaving out the count and modifiers where the reference does.
     TSharedPtr<FJsonValue> WriteNoise(const FVoxelDensityNoise& Noise);
+
+    // Biomes and surface rules (VoxelSurfaceReader.cpp). Each biome file's attributes, features and carvers are
+    // skipped by name; any other unknown field fails.
+
+    // Reads biome/<name>.json for each full id ("minecraft:plains") into Out.Biomes. Ids Out already holds are reused.
+    bool ReadBiomes(const FString& Root, TConstArrayView<FString> Ids, FVoxelBiomeTable& Out, FString& OutError);
+
+    // Reads multi_noise_biome_source_parameter_list/<List>.json, then the points of the preset it names from the
+    // reference's facts/biome_parameters.json and the biomes they use, into Out (emptied first), then validates it.
+    bool ReadBiomeParameters(const FString& Root, const FString& List, FVoxelBiomeTable& Out, FString& OutError);
+
+    // Reads material_rule/<Rule>.json and every rule and condition it references into Out (emptied first), then
+    // validates the tree. Out.Root is that rule.
+    bool ReadSurfaceRules(const FString& Root, const FString& Rule, FVoxelSurfaceRules& Out, FString& OutError);
+
+    // Write a rule or a condition back as the reference's JSON. A named node is written as its name, except Index
+    // itself when bExpand is set (a named node's own file).
+    TSharedPtr<FJsonValue> WriteSurfaceRule(const FVoxelSurfaceRules& Rules, int32 Index, bool bExpand);
+    TSharedPtr<FJsonValue> WriteSurfaceCondition(const FVoxelSurfaceRules& Rules, int32 Index, bool bExpand);
 } // namespace VoxelWorldgen

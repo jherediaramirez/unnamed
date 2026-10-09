@@ -147,12 +147,15 @@ def build(root):
 
     state_blocks = {b["id"]: b for b in states["blocks"]}
     item_by_block = {i["block"]: i for i in items["items"]}
-    shapes = {"full": "FULL", "slab_bottom": "SLAB_BOTTOM", "slab_top": "SLAB_TOP", "fluid": "FLUID"}
+    shapes = {"full": "FULL", "slab_bottom": "SLAB_BOTTOM", "slab_top": "SLAB_TOP", "fluid": "FLUID",
+              **{f"layers_{k}": f"LAYERS{k}" for k in range(1, 8)}}
+    fluid_ids = {f["id"] for f in manifest["fluids"]}
     blocks = []
     for block in manifest["blocks"] + manifest["fluids"]:
         bid = block["id"]
         entry = state_blocks[bid]
-        water = bid == "water"
+        # Fluids (water, lava) have no faces of their own: the runtime draws their still and flow textures.
+        water = bid in fluid_ids
         default = next(s for s in entry["states"] if s["id"] == entry["default_state_id"])
         item = item_by_block.get(bid)
         blocks.append({

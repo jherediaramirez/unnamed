@@ -86,7 +86,8 @@ private:
     void SetupAuthority();
     // The world box of the water in a cell, or false when it holds none.
     bool GetWaterBox(const FIntVector& Cell, FBox& OutBox) const;
-    // The terrain for the current seed: a Superflat world's layers, otherwise the height terrain.
+    // The terrain for the current seed (VoxelTerrainFactory::Make). A saved world whose terrain cannot be built gets an
+    // empty terrain and leaves for the title screen, with the reason in the log.
     TSharedRef<const IVoxelTerrain> MakeTerrain() const;
     UVoxelWorldSubsystem* GetStreaming() const;
     // The feet cell of the spawn: the dry surface nearest the origin, from the terrain function, so it is known

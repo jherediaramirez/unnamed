@@ -1,9 +1,11 @@
 """Build Reference/minecraft-worldgen-26.3 from the 26.3 server jar: the overworld terrain's worldgen JSON, byte for byte.
 
 usage: uv run --no-project --python 3.13 python -I Reference/minecraft-worldgen-26.3/tools/build_reference.py [server jar]
-Copies the noise settings of the three overworld world types, the density functions they use and every top-level noise
-into data/, replacing it, then writes manifest.json and SHA256SUMS.txt over the whole folder. facts/ comes from
-tools/WorldgenFacts.java and is only hashed here, so run this again after refreshing the facts.
+Copies the noise settings of the three overworld world types, the density functions they use, every top-level noise,
+the overworld's surface rules (material_rule/overworld, bedrock_floor and overworld/, with every material_condition),
+the overworld biome parameter list's file, the biome tag is_overworld and the biomes it names into data/, replacing
+it, then writes manifest.json and SHA256SUMS.txt over the whole folder. facts/ comes from tools/WorldgenFacts.java and
+is only hashed here, so run this again after refreshing the facts.
 """
 import hashlib
 import json
@@ -18,9 +20,13 @@ DEFAULT_JAR = Path(r"C:\dev\sandbox\mc-26.3-blocks\datagen\versions\26.3\server-
 PREFIX = "data/minecraft/worldgen/"
 PRESETS = ("overworld", "large_biomes", "amplified")
 FUNCTION_FOLDERS = ("overworld/", "overworld_amplified/", "overworld_large_biomes/")
+# The jar's own list of overworld biomes decides which biome files are copied.
+BIOME_TAG = "data/minecraft/tags/worldgen/biome/is_overworld.json"
 
 
-def wanted(name):
+def wanted(name, biomes):
+    if name == BIOME_TAG:
+        return True
     if not name.startswith(PREFIX) or not name.endswith(".json") or ".." in name or "\\" in name:
         return False
     rel = name[len(PREFIX):]
@@ -29,17 +35,32 @@ def wanted(name):
         return rest[:-5] in PRESETS
     if folder == "density_function":
         return "/" not in rest or rest.startswith(FUNCTION_FOLDERS)
-    if folder == "noise":
+    if folder in ("noise", "material_condition"):
         return "/" not in rest
+    if folder == "material_rule":
+        return rest in ("overworld.json", "bedrock_floor.json") or rest.startswith("overworld/")
+    if folder == "multi_noise_biome_source_parameter_list":
+        return rest == "overworld.json"
+    if folder == "biome":
+        return rest[:-5] in biomes
     return False
+
+
+def folder_of(name):
+    return "biome_tag" if name == BIOME_TAG else name[len(PREFIX):].split("/", 1)[0]
 
 
 jar_path = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_JAR
 jar_bytes = jar_path.read_bytes()
 jar = zipfile.ZipFile(jar_path)
-names = sorted(n for n in jar.namelist() if wanted(n))
-counts = Counter(name[len(PREFIX):].split("/", 1)[0] for name in names)
-EXPECTED = {"noise_settings": 3, "density_function": 51, "noise": 62}
+tag_values = json.loads(jar.read(BIOME_TAG))["values"]
+if any(not v.startswith("minecraft:") for v in tag_values):
+    sys.exit(f"BUILD FAIL: {BIOME_TAG} holds entries other than minecraft biomes (nested tags?): {tag_values}")
+overworld_biomes = {v.removeprefix("minecraft:") for v in tag_values}
+names = sorted(n for n in jar.namelist() if wanted(n, overworld_biomes))
+counts = Counter(folder_of(name) for name in names)
+EXPECTED = {"noise_settings": 3, "density_function": 51, "noise": 62, "material_rule": 37, "material_condition": 8,
+            "multi_noise_biome_source_parameter_list": 1, "biome": 56, "biome_tag": 1}
 if dict(counts) != EXPECTED:
     sys.exit(f"BUILD FAIL: {jar_path} gives {dict(counts)}, expected {EXPECTED}; data/ is left as it was")
 
@@ -60,8 +81,7 @@ manifest = {
         "size": len(jar_bytes),
     },
     "presets": list(PRESETS),
-    "counts": {"noise_settings": counts["noise_settings"], "density_function": counts["density_function"],
-               "noise": counts["noise"]},
+    "counts": {folder: counts[folder] for folder in EXPECTED},
 }
 (ROOT / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
 

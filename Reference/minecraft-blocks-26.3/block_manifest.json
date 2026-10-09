@@ -9370,6 +9370,61 @@
    "random_variants": false
   },
   {
+   "id": "snow",
+   "protocol_id": 325,
+   "default_state_id": 8589,
+   "state_id_range": [
+    8589,
+    8596
+   ],
+   "properties": "layers=1|2|3|4|5|6|7|8",
+   "shape": "layers",
+   "template": "generator_layers",
+   "faces": {
+    "down": "snow",
+    "up": "snow",
+    "north": "snow",
+    "south": "snow",
+    "east": "snow",
+    "west": "snow"
+   },
+   "all_textures": [
+    "snow"
+   ],
+   "render_layer": "opaque",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "layers",
+   "tex_size": "16x16",
+   "tags": [
+    "combination_step_sound_blocks",
+    "enchantment_power_transmitter",
+    "foxes_spawnable_on",
+    "goats_spawnable_on",
+    "mangrove_roots_can_grow_through",
+    "mineable/shovel",
+    "rabbits_spawnable_on",
+    "replaceable",
+    "snow",
+    "washed_away_by_fluids",
+    "wolves_spawnable_on"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null,
+   "name": "Snow",
+   "hardness": 0.1,
+   "blast_resistance": 0.1,
+   "requires_correct_tool_for_drops": true,
+   "light_emission": 0,
+   "facts_source": "26.3 server registry at runtime (facts/block_facts.csv, tools/FactsDump.java)",
+   "tint": null,
+   "material_layer": "opaque",
+   "random_variants": false
+  },
+  {
    "id": "ice",
    "protocol_id": 326,
    "default_state_id": 8597,
@@ -26478,6 +26533,61 @@
    "random_variants": false
   },
   {
+   "id": "powder_snow",
+   "protocol_id": 1117,
+   "default_state_id": 30519,
+   "state_id_range": [
+    30519,
+    30519
+   ],
+   "properties": "",
+   "shape": "full_cube",
+   "template": "generator_full_cube",
+   "faces": {
+    "down": "powder_snow",
+    "up": "powder_snow",
+    "north": "powder_snow",
+    "south": "powder_snow",
+    "east": "powder_snow",
+    "west": "powder_snow"
+   },
+   "all_textures": [
+    "powder_snow"
+   ],
+   "render_layer": "opaque",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "azalea_grows_on",
+    "azalea_root_replaceable",
+    "cat_does_not_teleport_to",
+    "dangerous_for_teleportation",
+    "enderman_does_not_teleport_to",
+    "inside_step_sound_blocks",
+    "polar_bear_immune_to",
+    "snow",
+    "snow_golem_immune_to",
+    "stray_immune_to",
+    "washed_away_by_fluids"
+   ],
+   "where": "Strips in groves and snowy slopes; trial chamber rooms",
+   "dimension": "overworld",
+   "y_range": null,
+   "name": "Powder Snow",
+   "hardness": 0.25,
+   "blast_resistance": 0.25,
+   "requires_correct_tool_for_drops": false,
+   "light_emission": 0,
+   "facts_source": "26.3 server registry at runtime (facts/block_facts.csv, tools/FactsDump.java)",
+   "tint": null,
+   "material_layer": "opaque",
+   "random_variants": false
+  },
+  {
    "id": "sculk",
    "protocol_id": 1120,
    "default_state_id": 31000,
@@ -31253,7 +31363,31 @@
     "color": "#3F76E4",
     "note": "plains biome default"
    },
+   "light_emission": 0,
    "material_layer": "translucent",
+   "facts_source": "26.3 server registry at runtime (facts/block_facts.csv, tools/FactsDump.java)"
+  },
+  {
+   "id": "lava",
+   "protocol_id": 38,
+   "default_state_id": 105,
+   "state_id_range": [
+    105,
+    120
+   ],
+   "properties": "level=0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15",
+   "textures": {
+    "still": "lava_still",
+    "flow": "lava_flow"
+   },
+   "tinted": false,
+   "render_layer": "opaque",
+   "name": "Lava",
+   "hardness": 100.0,
+   "blast_resistance": 100.0,
+   "tint": null,
+   "light_emission": 15,
+   "material_layer": "opaque",
    "facts_source": "26.3 server registry at runtime (facts/block_facts.csv, tools/FactsDump.java)"
   }
  ]

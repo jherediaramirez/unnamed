@@ -335,20 +335,34 @@ EFoundationBlockShape FFoundationBlockRegistry::GetShape(FFoundationBlockState S
 
 bool FFoundationBlockRegistry::GetSelectionShape(FFoundationBlockState State, FBox& OutBox) const
 {
-    return GetSolidShape(GetShape(State), OutBox);
+    const EFoundationBlockShape Shape = GetShape(State);
+    if (const int32 Layers = GetFoundationShapeLayers(Shape))
+    {
+        OutBox = FBox(FVector::ZeroVector, FVector(1, 1, Layers / 8.));
+        return true;
+    }
+    return GetSolidShape(Shape, OutBox);
 }
 
 bool FFoundationBlockRegistry::GetCollisionShape(FFoundationBlockState State, FBox& OutBox) const
 {
-    return GetSolidShape(GetShape(State), OutBox);
+    const EFoundationBlockShape Shape = GetShape(State);
+    // Snow layers collide one layer lower than they show, as in 26.3, so a single layer has no collision.
+    if (const int32 Layers = GetFoundationShapeLayers(Shape))
+    {
+        OutBox = FBox(FVector::ZeroVector, FVector(1, 1, (Layers - 1) / 8.));
+        return Layers > 1;
+    }
+    return GetSolidShape(Shape, OutBox);
 }
 
 FFoundationFluid FFoundationBlockRegistry::GetFluid(FFoundationBlockState State) const
 {
     FFoundationFluid Fluid;
     const FFoundationBlockType& Block = GetBlock(State);
-    if (!Block.IsWater()) return Fluid;
-    Fluid.bWater = true;
+    if (!Block.IsFluid()) return Fluid;
+    Fluid.bWater = Block.IsWater();
+    Fluid.bLava = Block.IsLava();
     Fluid.Level = State.Id - Block.MinStateId;
     Fluid.bSource = Fluid.Level == 0;
     Fluid.bFalling = Fluid.Level >= 8;

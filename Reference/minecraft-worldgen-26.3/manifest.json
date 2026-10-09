@@ -14,6 +14,11 @@
   "counts": {
     "noise_settings": 3,
     "density_function": 51,
-    "noise": 62
+    "noise": 62,
+    "material_rule": 37,
+    "material_condition": 8,
+    "multi_noise_biome_source_parameter_list": 1,
+    "biome": 56,
+    "biome_tag": 1
   }
 }

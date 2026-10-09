@@ -1,13 +1,19 @@
 #if WITH_DEV_AUTOMATION_TESTS
+#include "Blocks/VoxelBlockTable.h"
 #include "Dom/JsonObject.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformProcess.h"
 #include "Menu/MenuApplication.h"
+#include "Misc/CommandLine.h"
 #include "Misc/Guid.h"
+#include "Misc/Parse.h"
 #include "Misc/Paths.h"
 #include "Misc/ScopeExit.h"
 #include "Random/VoxelSeed.h"
 #include "UnnamedProjectSettings.h"
+#include "Voxel/VoxelBlocks.h"
+#include "Voxel/VoxelTerrainFactory.h"
+#include "Voxel/VoxelWorldgenReader.h"
 #include "Worlds/UnnamedSavedWorlds.h"
 #include "Menu/MenuGameMode.h"
 #include "Menu/MenuPlayerController.h"
@@ -287,6 +293,92 @@ bool FWorldSavedTest::RunTest(const FString& Parameters)
     for (const TCHAR* Bad : {TEXT("../Automation"), TEXT(""), TEXT("test-world/.."), TEXT("C:\\Windows")})
         TestFalse(FString(TEXT("Delete refuses ")) + Bad, UnnamedSavedWorlds::Delete(Bad, Error));
     TestTrue(TEXT("The other worlds are untouched"), IFileManager::Get().DirectoryExists(*(Root / First.Id)));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWorldTerrainCheckTest, "Unnamed.Worlds.TerrainCheck",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FWorldTerrainCheckTest::RunTest(const FString& Parameters)
+{
+    // Saved worlds as the Create screen's default draft makes them, set to a generator and a world type.
+    FUnnamedSavedWorld Base;
+    FString Error;
+    if (!TestTrue(TEXT("The default draft parses"), UnnamedSavedWorlds::ParseDraft(SavedWorldDraft, Base, Error)))
+        return false;
+    const auto WorldOf = [&Base](int32 Generator, const TCHAR* Type)
+    {
+        FUnnamedSavedWorld Made = Base;
+        Made.Generator = Generator;
+        Made.Type = Type;
+        return Made;
+    };
+    // Generator 2 reads the 26.3 preset of its world type from the reference; generator 1 and Superflat do not.
+    constexpr int32 PresetGenerator = 2;
+
+    // The reference as shipped builds every generator-2 world type.
+    const FString RealRoot = VoxelWorldgen::GetReferenceRoot();
+    for (const TCHAR* Type : {TEXT("Default"), TEXT("Large Biomes"), TEXT("AMPLIFIED")})
+    {
+        Error.Reset();
+        const bool bBuilds = VoxelTerrainFactory::Check(WorldOf(PresetGenerator, Type), RealRoot, Error);
+        TestTrue(FString::Printf(TEXT("A generator-2 %s world builds from the reference%s"), Type,
+                     *(bBuilds ? FString() : TEXT(": ") + Error)),
+            bBuilds);
+    }
+
+    // An empty folder has no reference: generator 2's presets cannot be read, and the error names the preset.
+    const FString EmptyRoot = FPaths::ProjectSavedDir() / TEXT("Automation") / TEXT("TerrainCheck");
+    IFileManager::Get().DeleteDirectory(*EmptyRoot, false, true);
+    IFileManager::Get().MakeDirectory(*EmptyRoot, true);
+    ON_SCOPE_EXIT
+    {
+        IFileManager::Get().DeleteDirectory(*EmptyRoot, false, true);
+    };
+    const TPair<const TCHAR*, const TCHAR*> Unreadable[] = {
+        {TEXT("Default"), TEXT("overworld")}, {TEXT("Large Biomes"), TEXT("large_biomes")}};
+    for (const auto& [Type, Preset] : Unreadable)
+    {
+        Error.Reset();
+        TestFalse(FString(TEXT("Without the reference a generator-2 world fails: ")) + Type,
+            VoxelTerrainFactory::Check(WorldOf(PresetGenerator, Type), EmptyRoot, Error));
+        TestTrue(FString::Printf(TEXT("...and its error names %s (%s)"), Preset, *Error), Error.Contains(Preset));
+    }
+    TestTrue(TEXT("A generator-1 world needs no reference"),
+        VoxelTerrainFactory::Check(WorldOf(1, TEXT("Default")), EmptyRoot, Error));
+    TestTrue(TEXT("A Superflat world needs no reference"),
+        VoxelTerrainFactory::Check(WorldOf(PresetGenerator, TEXT("Superflat")), EmptyRoot, Error));
+
+    // Make: a saved world never falls back to another terrain; the dev seed does, and logs an error.
+    const FUnnamedSavedWorld SavedWorld = WorldOf(PresetGenerator, TEXT("Default"));
+    Error.Reset();
+    const TSharedPtr<const IVoxelTerrain> SavedTerrain =
+        VoxelTerrainFactory::Make(&SavedWorld, 263, *VoxelBlocks::GetDefault(), EmptyRoot, Error);
+    TestFalse(TEXT("A saved world whose preset cannot be read gets no terrain"), SavedTerrain.IsValid());
+    TestTrue(TEXT("...and the reason"), Error.Contains(TEXT("overworld")));
+    // The dev seed takes the newest generator unless -VoxelGenerator=<n> says otherwise; generator 1 has no preset to
+    // fall back from.
+    int32 DevGenerator = FUnnamedSavedWorld::CurrentGenerator;
+    FParse::Value(FCommandLine::Get(), TEXT("VoxelGenerator="), DevGenerator);
+    if (DevGenerator >= PresetGenerator)
+    {
+        AddExpectedError(TEXT("using the stand-in terrain"), EAutomationExpectedErrorFlags::Contains, 1);
+        Error.Reset();
+        const TSharedPtr<const IVoxelTerrain> DevTerrain =
+            VoxelTerrainFactory::Make(nullptr, 263, *VoxelBlocks::GetDefault(), EmptyRoot, Error);
+        TestTrue(TEXT("The dev seed falls back to the stand-in terrain"), DevTerrain.IsValid());
+        TestFalse(TEXT("...and says why"), Error.IsEmpty());
+    }
+    else
+        AddInfo(FString::Printf(TEXT("-VoxelGenerator=%d: the dev seed's fallback is not exercised"), DevGenerator));
+
+    // The preset each world type reads.
+    const TPair<const TCHAR*, const TCHAR*> Presets[] = {{TEXT("Large Biomes"), TEXT("large_biomes")},
+        {TEXT("AMPLIFIED"), TEXT("amplified")}, {TEXT("Default"), TEXT("overworld")},
+        {TEXT("Single Biome"), TEXT("overworld")}};
+    for (const auto& [Type, Preset] : Presets)
+        TestEqual(
+            FString(TEXT("Preset of ")) + Type, FString(VoxelTerrainFactory::GetPresetName(Type)), FString(Preset));
     return true;
 }
 #endif

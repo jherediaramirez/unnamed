@@ -2,7 +2,7 @@
 
 As of 2026-10-08. Source of truth: vanilla Java **26.3** (`%APPDATA%\ModrinthApp\meta\versions\26.3\26.3.jar`, plus the official server jar SHA-1 `33680f5f…05f4c` for Mojang's data-generator reports). This sheet is the input for the block/texture import and the research base for the chunk loader. Only water gets behavior; every other block here just needs the correct ID, textures and render flags.
 
-**In scope:** 529 blocks (428 full cubes + 101 slabs) out of 1286 registered blocks, plus water. A block counts as a full cube when every model it can show is made only of `[0,0,0]→[16,16,16]` boxes. Stairs, fences, plants, chests, tools and items are excluded. Render layers: opaque 486, cutout 23, translucent 20.
+**In scope:** 531 blocks (429 full cubes + 101 slabs + snow layers) out of 1286 registered blocks, plus water and lava; powder snow and snow layers were added in phase 5 for the world generator. A block counts as a full cube when every model it can show is made only of `[0,0,0]→[16,16,16]` boxes. Stairs, fences, plants, chests, tools and items are excluded. Render layers: opaque 488, cutout 23, translucent 20.
 
 ## Files
 
@@ -11,7 +11,7 @@ The research outputs are preserved, hash-listed, in [`Reference/minecraft-blocks
 | File | What it is |
 |---|---|
 | `block_manifest.json` | **Import input.** One entry per block in registry order. Each entry has: string id, protocol id, state-id range, properties, per-face textures, render layer, tint/animation/rotation flags, tags, and where it is found. Water is listed under `fluids`. The reference version adds hardness, tints, names and material layers; the research original is `research\block_manifest.research.json`. |
-| `assets\minecraft\textures\block\*.png` (+ `.png.mcmeta`) | 553 block textures copied byte-for-byte from the jar, including water still/flow/overlay. |
+| `assets\minecraft\textures\block\*.png` (+ `.png.mcmeta`) | 556 block textures copied byte-for-byte from the jar, including water still/flow/overlay. |
 | `assets\minecraft\textures\colormap\grass.png`, `foliage.png` | Biome tint lookup maps for tinted blocks. |
 | `research\blocks_registry.csv` | All 1,286 blocks with protocol id, default/min/max state id, and properties (from `blocks.json`). |
 | `research\block_tags.csv` | Every block's tags, with nested `#tag` references resolved. |
