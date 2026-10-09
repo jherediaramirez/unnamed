@@ -4,9 +4,21 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 8, 2026
 
-- [Voxel world phase 3, streaming and editing](2026-10-08-Voxel-Phase3.md): start here in a new chat. An endless world around the player, with mining and placing on it. Covers the planner's circle of columns (545 in view, 657 generated at radius 12), the column pipeline and its stale-result rules, the 2 ms game-thread budget, per-column edit lists and the storage adapter, the shared Foundation changes, `voxel.Fly` and the acceptance flight (no holes, 0 of 16,736 frames over budget, flat memory), the edge fog, the decisions confirmed with the user, the problems found (including the probe that had lowered the user's graphics settings), measurements and known issues.
+- [Voxel world handoff into phase 4](2026-10-08-Voxel-Handoff-Phase4.md): start here in a new chat. It covers:
+  - what to read, in order;
+  - the working agreement with the user;
+  - where every phase stands, and what phase 3 did;
+  - a code map for phase 4 (terrain);
+  - the user's answers to the phase 4 questions, and a five-session plan;
+  - known issues, including three deferred from the pre-commit review;
+  - what worked and what failed;
+  - commands and gotchas.
 
-- [Voxel world handoff: the phase 3 plan](2026-10-08-Voxel-Handoff-Phase3-Plan.md): start here in a new chat. It covers:
+  It replaces the earlier handoffs.
+
+- [Voxel world phase 3, streaming and editing](2026-10-08-Voxel-Phase3.md): an endless world around the player, with mining and placing on it. Covers the planner's circle of columns (545 in view, 657 generated at radius 12), the column pipeline and its stale-result rules, the 2 ms game-thread budget, per-column edit lists and the storage adapter, the shared Foundation changes, `voxel.Fly` and the acceptance flight (no holes, 0 of 16,736 frames over budget, flat memory), the edge fog, the decisions confirmed with the user, the problems found (including the probe that had lowered the user's graphics settings), measurements and known issues.
+
+- [Voxel world handoff: the phase 3 plan](2026-10-08-Voxel-Handoff-Phase3-Plan.md): the planning session's handoff. It covers:
   - the verified state at `9dce565`;
   - a code map of what phase 3 touches, so there is no need to explore again;
   - where the code differs from the previous handoff;
@@ -19,7 +31,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 - [Voxel world step 2L, lighting](2026-10-08-Voxel-Lighting.md): shaded slopes were near black because the chunks had no Lumen cards and the sky was dim against the sun. Covers the cards each column now builds, the generated map's sky light of 3, the experiments (hit lighting, software Lumen, no Lumen GI, sky levels), brightness and GPU measurements, and the cards' limits.
 
-- [Voxel world handoff](2026-10-08-Voxel-Handoff.md): start here in a new chat. It covers the project, the working agreement with the user, state at the end of phase 2 (uncommitted), known bugs with suggested fixes, the phase 2W plan, commands and gotchas.
+- [Voxel world handoff](2026-10-08-Voxel-Handoff.md): the first handoff, at the end of phase 2. It covers the project, the working agreement with the user, state at the end of phase 2 (uncommitted), known bugs with suggested fixes, the phase 2W plan, commands and gotchas.
 
 - [Voxel world phase 2](2026-10-08-Voxel-Phase2.md): the first generated chunks on screen. Covers the registry block table, palette sections, columns with heightmaps, a stand-in heightmap terrain, greedy meshing with neighbour borders and ambient occlusion, chunk materials, a 9 x 9-column walkable test area in `L_Generated`, offscreen screenshots, the RealtimeMesh workarounds, and timings.
 
