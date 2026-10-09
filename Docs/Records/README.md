@@ -4,7 +4,9 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 8, 2026
 
-- [Voxel world handoff into phase 4](2026-10-08-Voxel-Handoff-Phase4.md): start here in a new chat. It covers:
+- [Voxel world handoff: phase 4, into session 2](2026-10-08-Voxel-Handoff-Phase4-Session2.md): start here in a new chat. Session 1 (commit `6c2c608`) brought in the 26.3 worldgen data (`Reference/minecraft-worldgen-26.3/`) and read it into a density graph. It covers what to read, the working agreement (including the overnight manager chat), the phase 4 plan and decisions, what session 1 did and verified, the session 2 brief (noise, climate, splines, debug views), a code map, known issues, what worked and failed, commands and token use. It replaces the phase 4 handoff below.
+
+- [Voxel world handoff into phase 4](2026-10-08-Voxel-Handoff-Phase4.md): the handoff session 1 started from. It covers:
   - what to read, in order;
   - the working agreement with the user;
   - where every phase stands, and what phase 3 did;
