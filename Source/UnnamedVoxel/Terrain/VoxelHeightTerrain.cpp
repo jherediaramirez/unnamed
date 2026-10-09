@@ -47,6 +47,7 @@ FVoxelTerrainBlocks FVoxelTerrainBlocks::Find(const FVoxelBlockTable& Table)
     Blocks.Water = Table.FindState(TEXT("water"));
     Blocks.Bedrock = Table.FindState(TEXT("bedrock"));
     Blocks.Snow = Table.FindState(TEXT("snow_block"));
+    Blocks.Lava = Table.FindState(TEXT("lava"));
     return Blocks;
 }
 

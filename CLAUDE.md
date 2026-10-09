@@ -19,9 +19,9 @@ Unreal Engine 5.8.3 game project with an offline CEF menu generated from an unch
 & 'C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat' UnnamedEditor Win64 Development -Project="$PWD\Unnamed.uproject" -WaitMutex
 Set-Location Tests; npm test; node source-check.mjs                  # menu runtime units, reference/asset checks
 & Scripts\TestMenu.ps1; & Scripts\TestInput.ps1                         # native suites (Unnamed.Menu / Unnamed.Input)
-& Scripts\TestVoxel.ps1                                                  # voxel.Info/Seed/Bench, then Unnamed.Voxel (39)
+& Scripts\TestVoxel.ps1                                                  # voxel.Info/Seed/Bench, then Unnamed.Voxel (42)
 uv run --no-project --python 3.13 python -I Reference/minecraft-worldgen-26.3/tools/verify_reference.py   # worldgen reference hashes, references, spline facts
-& Scripts\CaptureVoxel.ps1 [-Seed <text>] [-World <id>] [-ExecCmds '<cvars>'] [-Edits] [-Flight [-FlightSeconds <s>]]   # L_Generated offscreen: 5 screenshots + build.txt (first-view timings, lighting, GPU ms, world); -Edits adds an edit shot; -Flight flies the acceptance path instead (flight.csv, flight.txt, 4 shots: holes, budget, memory)
+& Scripts\CaptureVoxel.ps1 [-Seed <text>] [-World <id>] [-ExecCmds '<cvars>'] [-Edits] [-Caves] [-Flight [-FlightSeconds <s>]]   # L_Generated offscreen: 5 screenshots + build.txt (first-view timings, lighting, GPU ms, world); -Edits adds an edit shot; -Caves adds a cave view (one reaching open sky) and a lava view; -Flight flies the acceptance path instead (flight.csv, flight.txt, 4 shots: holes, budget, memory)
 Set-Location Tests; node create-world.mjs --editor                    # Create New World end to end: create, list, rename, re-create, play, delete
 & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' Unnamed.uproject -run=pythonscript "-script=Scripts\Editor\CreateGeneratedMap.py" -unattended -nop4 -nosplash   # /Game/Maps/L_Generated (verifies, never rewrites)
 & Scripts\TestFoundationRuntime.ps1 -Editor -FrameRates 60            # Playground probe (movement + interaction)

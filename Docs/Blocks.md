@@ -41,6 +41,7 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
 
 - **Shapes:** full cubes have one shape. Slabs are bottom, top or double. Water has no selection or collision shape. Its surface height is `amount / 9`, so a source is 8/9 tall, and falling water (level 8 and up) is full.
 - **Waterlogging:** `waterlogged` is a real property. Placement always sets it to false.
+- **Still lava:** it exists only in the voxel block table (`VoxelBlocks::MakeTable`), at 26.3's ids (state 105 = lava level 0, block 38, light 15). The block reference, `DA_Blocks`, the registry and saves do not know it (the authority reads it as air). The fluid mesher draws it in the opaque layer so the chunk material's emission lights it, with the still water texture tinted #FF6A10 standing in for lava's own animated texture until the block reference gains lava through its tools (open question for Jesus).
 - **Mining:** the 26.3 hardness and correct-tool facts plus `Block.Mineable.*` and `Block.IncorrectForTool.*` tags drive mining.
 - **Drops:** a broken block drops itself, and a double slab drops 2. This is a provisional rule, not loot tables.
 

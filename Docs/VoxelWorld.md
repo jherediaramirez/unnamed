@@ -12,7 +12,7 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 | 2L | Lighting: Lumen cards for chunks and a brighter sky light, so shaded slopes are no longer black | Done |
 | 2W | Create New World: saved worlds, seed, world type, game mode, difficulty | Done |
 | 3 | Streaming, plus mining and placing on generated terrain | Done |
-| 4 | Terrain: 26.3's density graph, climate, caves, aquifers and lava | In progress: session 3 of 5 done (worldgen data and reader; noise, climate, splines and debug views; 3D density and generator 2) |
+| 4 | Terrain: 26.3's density graph, climate, caves, aquifers and lava | In progress: sessions 1-4 of 5 done (worldgen data and reader; noise, climate, splines and debug views; 3D density and generator 2; session 4: caves on, aquifers, still lava, cave-lighting decision) |
 | 5 | Biomes and surface (needs snow layers) | |
 | 6 | Decoration, after a block-shapes step (plants, cross models) | |
 | 7 | Structures that fit the land (needs stairs, doors, fences, paths) | |
@@ -65,7 +65,8 @@ These differ from the prompt because of what the project already had, or settle 
   - the new terrain is generator 2, and saved worlds made before it keep the stand-in terrain;
   - aquifers get still lava, built like water;
   - for now caves are lit correctly only with hardware ray tracing;
-  - Lumen card occlusion is decided from cave captures.
+  - caves on through the full final_density (session 4);
+  - cave lighting: Lumen cards stay (hit lighting is one switch away: r.Lumen.HardwareRayTracing.LightingMode 1), decided by the manager overnight on October 9 from same-cave captures; for Jesus's review.
 
 ## Deterministic core
 
@@ -149,6 +150,7 @@ Phase 4 builds the terrain from 26.3's own worldgen data. `Reference/minecraft-w
   - `EvaluateNodes` on a chosen subset;
   - a conservative `EvaluateBounds`: noise by amplitude sums, splines and divisions across 0 unbounded, a small widening for rounding;
   - `interpolated` and `find_top_surface` use a nested evaluator of their inner function; `find_top_surface` runs its flat part once and only the y-dependent part per step.
+- **Lazy `interval_select`:** functions whose whole subtree nothing else reads are not compiled in the parent. The select evaluates each only at the points that pick it, through a nested evaluator, and bounds it by a bound over all y found at compile. Exact (goldens unchanged); about 10% off a caves-on column.
 
 ### Climate
 
@@ -177,7 +179,7 @@ On the maps (seed "Unnamed"): continents span thousands of blocks; Large Biomes 
 
 - **Axes:** reference x = our X, z = our Y, y = our Z.
 - **Blocks:** density > 0 is solid. Water fills open space up to Z 62 (sea level 63 - 1). Bedrock thins from Z -64 to -60 and deepslate mixes into stone from Z 0 to 8, as in the stand-in. The top layer is grass on 3 to 5 dirt, sand where the surface is within Z 56..64 and gravel below Z 56, until phase 5's surface rules.
-- **Caves:** off until session 4. `RemoveCaves` makes range choices on `*/sloped_cheese` read it alone, and `*/caves/noodle` a neutral constant 64.
+- **Caves:** on by default (`FVoxelDensityTerrainSettings::bCaves`). Off (`voxel.Bench Density ... nocaves`) gives session 3's terrain exactly (`RemoveCaves`, water to Z 62), and its goldens stay. `RemoveCaves` makes range choices on `*/sloped_cheese` read it alone, and `*/caves/noodle` a neutral constant 64. With caves only the first surface from the sky is dressed (grass/sand/gravel); cave floors stay stone or deepslate.
 - **Spawn:** `IsDry` is cheap (the preset's PS view at or above sea level). `ConfirmDry` and `GetSurfaceHeight` generate the real column (about a millisecond). The spawn search confirms at most 64 candidates. PS rounds down to 8-block cells and ignores the 3D noise, so on maps 74% of the overworld area estimates below sea level, though the real terrain has much more land.
 - **Stats:** "Density column" (`STAT_VoxelDensityColumn`, trace `Voxel_DensityColumn`) and "Fill column blocks" (`STAT_VoxelFillColumn`, `Voxel_FillColumn`), both inside "Generate column".
 
@@ -195,6 +197,21 @@ Measured (Development editor, this machine, seed "Unnamed"), `voxel.Bench Densit
 - **Climate column** this run: 74 µs on one thread (46 µs in session 2; the machine was busier).
 - **Targets:** under the 5 ms limit; the overworld is near the 2 ms target.
 
+Caves on (session 4, after lazy interval_select), 289 columns, one thread, ms per column; skipping off in brackets:
+
+| Preset | Mean | p50 | p95 | Cells skipped |
+|---|---|---|---|---|
+| overworld | 7.83 (11.05) | 6.57 (9.49) | 13.78 (18.24) | 54% (0% solid; was 81%) |
+| large_biomes | 8.65 (10.95) | 7.44 (9.55) | 14.04 (17.19) | 42% |
+| amplified | 11.04 (10.90) | 10.16 (9.53) | 18.09 (17.60) | 15% |
+
+- **Before lazy interval_select** (same day): overworld 8.47/7.33/13.98, large_biomes 9.78/8.75/16.56, amplified 12.27/11.41/19.91.
+- **Split of an overworld column:** bounds 1.54, corners 2.10, cells to blocks 2.38, aquifer 0.67, block fill 0.96.
+- **Across 30 workers:** 0.46 ms per column (amplified 0.60).
+- **Skipping is exact:** 0 of 28,409,856 blocks differ with skipping on and off, every preset, caves on and off.
+- **Over the 5 ms limit:** performance is session 5's work.
+- **Streaming flight with caves** (`Tests/Evidence/2026-10-09/VoxelFlight-20261009-024034`): no holes, 2 of 10,230 frames over the 2 ms chunk budget (worst 2.35 ms), start to view 3.64 s, late columns in the fog fade in 2,890 frames (at most 35), memory flat. Columns generate in 13.8 ms mean while workers mesh.
+
 Streaming (`CaptureVoxel`, dev seed):
 
 - columns generate in 3.7 to 3.8 ms mean (9.3 ms worst) while 30 workers also mesh;
@@ -203,6 +220,22 @@ Streaming (`CaptureVoxel`, dev seed):
 - the first view's apply peaked at 2.04 ms once.
 
 Evidence: `Tests/Evidence/2026-10-09/VoxelShots-20261009-005643` (first generator-2 shots) and `DensityMaps-*` (PS and N maps).
+
+### Aquifers
+
+`Terrain/VoxelAquifer.h`: `FVoxelAquifer`. Our own design on the preset's `aquifers` inputs (barrier, exclusion, fluid_level_floodedness, fluid_level_spread, lava, surface_level) and 26.3's numbers.
+
+- **Cells:** 16 x 12 x 16. Each has a centre jittered inside it by `Hash64(seed, "aquifer/center", cell)`.
+- **Near the surface:** a centre within 12 blocks under the preliminary surface (PS, sampled at the cell column's middle), or above it, takes the global fluid: water below sea level 63, lava below y -54.
+- **Deeper:** floodedness (clamped to ±1) is compared with thresholds that move with closeness under a sea floor.
+  - Deep: global fluid above 0.8, own level above 0.4. Right under a sea floor: -0.3 and -0.8. Closeness falls to 0 at 64 blocks under the floor.
+  - Exclusion > 0 keeps a cell dry.
+  - An own level is the 40-block band's middle + spread * 10, quantized to 3, capped at the surface.
+  - Lava when the level is <= -10 and |lava noise| > 0.3 (sampled per 64 x 40 x 64).
+- **Per block:** a non-solid block takes the nearest of the 27 centres around it. Where the 2nd or 3rd nearest is almost as near (squared distance within 25) and differs, a wall term can make it stone. The term is strongest inside the band between the two levels, plus the barrier noise; lava against water always.
+- **Global rules:** open space below y -54 is lava. Open space with no solid block above it takes the global fluid (no aquifer pockets in oceans or under open sky).
+- **Skipping:** layers whose 27 centres all agree skip the per-block work. `GetKeepEmpty` flags the other y levels so `FVoxelColumnDensity` does not skip those cells as empty (barriers read exact density), which keeps skip on/off exact.
+- **Cost:** 0.5 to 0.7 ms per column. Stat "Aquifer fill" (`STAT_VoxelAquiferColumn`).
 
 ## Storage and meshing
 
@@ -400,7 +433,8 @@ Runtime code reads the console variables, never the settings object. The setting
 - `voxel.Bench Noise [millions]` times each primitive on the calling thread (1 million samples each by default), then 3D fBm across every task worker.
 - `voxel.Bench Columns [radius]` builds `(2 radius + 1)^2` columns off screen (default radius 4), first on one thread and then on every worker, and reports each stage.
 - `voxel.Bench Climate [radius] [preset]` times the climate sampler over `(2 radius + 1)^2` columns (default radius 8 = 289 columns, overworld preset).
-- `voxel.Bench Density [radius 4] [preset]` times the density terrain with skipping on and off, with its stages and the number of differing blocks, then on all workers.
+- `voxel.Bench Density [radius 4] [preset] [nocaves]` times the density terrain with skipping on and off, with its stages and the number of differing blocks, then on all workers. `nocaves` turns caves off.
+- `Scripts\CaptureVoxel.ps1 -Caves` adds a cave view and a lava view to the capture.
 - `voxel.ClimateMap <C|E|W|PV|T|V|O|F|J|N|PS|all> [size px 1024] [blocks per px 8] [preset]` writes PNGs to `Saved/VoxelClimate`, centered on the player (or 0,0), and logs the time and percentiles. `all` includes N and PS. PS is the terrain height. N is the final density at sea level (red solid, blue open), about 3.3 µs per point. O is drawn as the surface height the offset implies (y = -64 + (O + 1.5) x 128, before factor, jaggedness and 3D noise).
 - `stat Voxel` shows the `STATGROUP_Voxel` timings and the streaming counters. Each stage adds its cycle stats there, next to a matching `TRACE_CPUPROFILER_EVENT_SCOPE` for Unreal Insights.
 - `LogUnnamedVoxel` is the one log category, shared by both modules. While a voxel world runs it gets a line every second with the worst frame's plan, jobs and apply split.
@@ -456,6 +490,9 @@ GPU frame at 1600 x 900 on this machine: 2.7 ms before, 2.9 to 3.0 ms after. The
 Limits:
 
 - **Hidden faces in a card.** A card captures the front face along its direction, so a face behind another facing the same way in the same section (a dune behind a dune, a valley narrower than 16 blocks) stays black in Lumen's scene. Rays that hit it get no bounce. It shows as black strips on the seabed in the `lumen-scene` shot. Caves and overhangs in phase 4 will make it more common. Options then: cards sliced along their direction, or hit lighting.
+  - Session 4 compared the same cave mouth (`CaptureVoxel -Caves`): cards 3.29 ms against hit lighting 3.71 ms GPU at 1600x900. The images are identical (mean sRGB 63.1/70.2/59.0 against 63.2/70.2/59.0, also at +3 EV), so cards stay.
+  - Caveat: the fixed daylight exposure (EV100 14.5) keeps cave interiors near black and lava's emission nearly invisible, which could hide card artifacts. Re-run the comparison once exposure is decided.
+  - Evidence: `C:\dev\sandbox\phase4s4\montage\cavecmp2.png`, `Tests/Evidence/2026-10-09/VoxelShots-20261009-025021` (cards), `-025054` (hit), `-025126` and `-025159` (+3 EV).
 - **Software Lumen.** On a GPU without hardware ray tracing, Lumen traces distance fields. The chunks have none, so it cannot see them: no bounce and no sky occlusion, and caves would be lit by the sky. Mesh distance fields for columns (`SetDistanceField`) are the fix when it matters.
 - **Fog color.** It is fitted to the map's sun, so a day cycle would need it refitted. A faint seam remains on the sun side.
 - **The Playground** keeps its own rig (sky light 1).
@@ -501,10 +538,15 @@ Limits:
 | `Unnamed.Voxel.Density.BlendedSpread` | `Tests/VoxelBlendedNoiseTests.cpp`: the blended noise's spread against the jar (the calibration under Deterministic core). |
 | `Unnamed.Voxel.Density.Ops` | The jar-confirmed op values of session 3 (`interval_select`, `gradient`, `interpolated`, `find_top_surface`). |
 | `Unnamed.Voxel.Density.Column` | The column equals direct evaluation bit for bit on 3 presets x 3 columns x 300 blocks; skipped cells keep the sign. |
-| `Unnamed.Voxel.Density.Terrain` | Skipping on and off are equal on 25 columns per preset; row, reverse and parallel orders are equal; the bedrock, sea and air rules; `GetSurfaceHeight` and `ConfirmDry` agree with the column. |
-| `Unnamed.Voxel.Density.Golden` | Block hashes per preset, seed 263. |
+| `Unnamed.Voxel.Density.Terrain` | Runs caves off and on. Skipping on and off are equal on 25 columns per preset; row, reverse and parallel orders are equal; the bedrock, sea and air rules; `GetSurfaceHeight` and `ConfirmDry` agree with the column. |
+| `Unnamed.Voxel.Density.Golden` | Block hashes per preset, seed 263 (caves off, session 3's). |
+| `Unnamed.Voxel.Aquifer.Determinism` | Two aquifers with one seed fill a column identically (and flag the same KeepEmpty rows); a scratch's earlier columns do not change a column; another seed differs. Load order and threads are checked by `Density.Terrain` with caves on. |
+| `Unnamed.Voxel.Aquifer.Fluids` | Over 98 overworld columns: no water below y -54 and open space there is lava, no lava at y -10 or above, water above the sea only under solid ground, and lava and walls exist. |
+| `Unnamed.Voxel.Aquifer.Golden` | Caves-on block hashes at the `Density.Golden` positions (seed 263), recorded once: overworld `0xe9376e319a221c4c`, large_biomes `0x9e26565ae0dc0258`, amplified `0x3e5329bd4ce985c4`. |
 | `Unnamed.Voxel.Climate.Presets` | Climate values of the three presets: goldens (each parameter weighted by its index, so swapped parameters fail), shared column edges, the PV formula. |
 | `Unnamed.Voxel.Climate.Threads` | 8 threads in shuffled order match the single-threaded result. |
+
+Aquifer mutation check: turning global lava into water, and disabling the walls, fail `Aquifer.Fluids` (3 checks) and `Aquifer.Golden` (3).
 
 A deliberate off-by-one in `GetSectionsTouching` fails `Edit.Sections` (13 errors) and `Edit.Remesh` (11). Zeroing spline derivatives in `BuildSpline` and negating the reader's constants fail `Worldgen.Splines` (6 errors), `Worldgen.RoundTrip` (34) and `Worldgen.Presets` (1). Swapping `lerp`'s order and `shift_b`'s axes fails `Climate.Ops` (4 errors) and `Climate.Presets` (3). Making `interval_select`'s thresholds exclusive and swapping the column's x/z interpolation weights fail `Density.Ops` (3 errors), `Density.Column` (3) and `Density.Golden` (3).
 
@@ -517,6 +559,9 @@ A deliberate off-by-one in `GetSectionsTouching` fails `Edit.Sections` (13 error
 - **First view:** the view is on screen 2.5 to 2.6 s after the first frame with generator 2 (0.5 to 0.6 s with the stand-in).
 - **AMPLIFIED skipping:** it skips only 28% of cells (loose bounds where the factor is small).
 - **Block fill:** it costs about 0.8 ms per column (the palette build and the per-block loop).
+- **Caves over the limit:** a caves-on column costs 7.83 ms (overworld) against the 5 ms limit. Performance is session 5's work.
+- **Still lava:** it has no texture of its own (orange-tinted still water stands in), no damage and no flow.
+- **Cave exposure:** the fixed daylight exposure keeps cave interiors near black and lava's emission nearly invisible. Open question.
 - **PS biased low:** the spawn estimate rounds to 8-block cells and ignores the 3D noise.
 - **Beaches:** sand-wide beaches until phase 5's surface rules.
 - **Horizon seam:** the sky/fog seam at the horizon is unchanged from phase 3 (the same in the stand-in's flight).

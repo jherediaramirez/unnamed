@@ -19,6 +19,8 @@ struct FVoxelDensityScratch
     TArray<double> NestedX, NestedY, NestedZ;
     TArray<float> NestedSums;
     TArray<int32> NestedPoints;
+    // For interval_select with lazy functions: each point's function.
+    TArray<int32> Choices;
 };
 
 // A conservative range of a node's values over a box of positions.
@@ -126,4 +128,11 @@ private:
     // index in the scratch's Nested list.
     TMap<int32, TSharedPtr<const FVoxelDensityEvaluator>> NestedEvaluators;
     TMap<int32, int32> NestedIndices;
+    // Lazy interval_select functions, by their node: functions whose whole subtree nothing else reads. They are not
+    // compiled here; the select evaluates each only at the points that pick it, through a nested evaluator (in
+    // NestedEvaluators under the function's node), and bounds it by a bound over every y, found at compile.
+    TMap<int32, FVoxelDensityBounds> LazyBounds;
+    void FindLazyFunctions(TArray<bool>& Needed, TConstArrayView<int32> Roots, uint64 WorldSeed);
+    void EvaluateLazySelect(
+        int32 Node, const double* X, const double* Y, const double* Z, FVoxelDensityScratch& Scratch) const;
 };

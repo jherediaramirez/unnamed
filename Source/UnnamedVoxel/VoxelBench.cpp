@@ -243,7 +243,7 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
     int64 Differences = 0;
     for (const bool bSkip : {true, false})
     {
-        TArray<double> Total, Density, Blocks, Flat, Bounds, Corners, Cells;
+        TArray<double> Total, Density, Aquifer, Blocks, Flat, Bounds, Corners, Cells;
         int64 SolidCells = 0, EmptyCells = 0, AllCells = 0, CornerCount = 0;
         for (int32 Index = 0; Index < Columns; ++Index)
         {
@@ -253,6 +253,7 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
             Terrain.Generate(Position, Column, Dense, &Timings, &bSkip);
             Total.Add((FPlatformTime::Seconds() - Start) * 1000);
             Density.Add(Timings.DensityMs);
+            Aquifer.Add(Timings.AquiferMs);
             Blocks.Add(Timings.BlocksMs);
             Flat.Add(Timings.Density.FlatMs);
             Bounds.Add(Timings.Density.BoundsMs);
@@ -278,6 +279,7 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
         Report += DensityBenchStage(TEXT("    bounds"), Bounds) + TEXT("\n");
         Report += DensityBenchStage(TEXT("    corners"), Corners) + TEXT("\n");
         Report += DensityBenchStage(TEXT("    cells to blocks"), Cells) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("  aquifer"), Aquifer) + TEXT("\n");
         Report += DensityBenchStage(TEXT("  blocks"), Blocks) + TEXT("\n");
     }
     Report += FString::Printf(TEXT("Blocks that differ with skipping on and off: %lld of %lld\n"), Differences,

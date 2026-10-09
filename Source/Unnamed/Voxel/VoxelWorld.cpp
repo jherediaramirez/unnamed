@@ -118,6 +118,7 @@ void AVoxelWorld::BuildLayout()
     if (FParse::Value(FCommandLine::Get(), TEXT("VoxelSeed="), SeedText)) StartSeed = FVoxelSeed::Parse(SeedText);
     FParse::Value(FCommandLine::Get(), TEXT("VoxelShot="), ShotFolder);
     bShotEdits = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotEdits"));
+    bShotCaves = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotCaves"));
     FString FlightFolder;
     if (FParse::Value(FCommandLine::Get(), TEXT("VoxelFlight="), FlightFolder))
     {
@@ -644,6 +645,107 @@ void AVoxelWorld::ApplyShotEdits()
         Columns.Num(), ShotEditCorner.X, ShotEditCorner.Y);
 }
 
+void AVoxelWorld::FindCaveShots()
+{
+    bShotCavesSearched = true;
+    const UVoxelWorldSubsystem* Streaming = GetStreaming();
+    const FVoxelColumnPipeline* Pipeline = Streaming ? Streaming->GetPipeline() : nullptr;
+    if (!Pipeline || !Table) return;
+    constexpr int32 Size = VoxelConstants::ColumnSize;
+    const FVoxelBlockTable& States = *Table;
+    const uint16 Lava = States.FindState(TEXT("lava"));
+    // Unloaded cells count as solid, so no view looks into a missing column.
+    auto Get = [Pipeline](int32 X, int32 Y, int32 Z) -> uint16
+    {
+        if (Z < VoxelConstants::MinZ || Z > VoxelConstants::MaxZ) return 0;
+        const FIntPoint Column(FoundationGrid::FloorDivide(X, Size), FoundationGrid::FloorDivide(Y, Size));
+        const FVoxelColumn* Data = Pipeline->FindColumn(Column);
+        return Data ? Data->GetState(X - Column.X * Size, Y - Column.Y * Size, Z) : uint16(1);
+    };
+    auto IsOpen = [&States, &Get](int32 X, int32 Y, int32 Z) { return !States.Get(Get(X, Y, Z)).bSolid; };
+    auto Covered = [Pipeline](int32 X, int32 Y, int32 Z)
+    {
+        const FIntPoint Column(FoundationGrid::FloorDivide(X, Size), FoundationGrid::FloorDivide(Y, Size));
+        const FVoxelColumn* Data = Pipeline->FindColumn(Column);
+        return Data && Z < Data->GetHeight(EVoxelHeightmap::WorldSurface, X - Column.X * Size, Y - Column.Y * Size) - 3;
+    };
+    auto IsSkyOpen = [Pipeline](int32 X, int32 Y, int32 Z)
+    {
+        const FIntPoint Column(FoundationGrid::FloorDivide(X, Size), FoundationGrid::FloorDivide(Y, Size));
+        const FVoxelColumn* Data = Pipeline->FindColumn(Column);
+        return Data && Z > Data->GetHeight(EVoxelHeightmap::WorldSurface, X - Column.X * Size, Y - Column.Y * Size);
+    };
+    const FIntPoint Directions[4] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+    auto Blocks = [this](double X, double Y, double Z) { return OriginCm + FVector(X, Y, Z) * CellCm; };
+    const FIntPoint Center = Pipeline->GetRings().Center;
+
+    // The cave: the covered, floored spot with headroom and the longest straight open run ahead (up to 40 blocks).
+    int32 BestRun = 0;
+    FIntVector BestCell = FIntVector::ZeroValue;
+    FIntPoint BestDirection = FIntPoint::ZeroValue;
+    // Lava: the first covered lava surface with open air above it seen from 3 to 6 blocks away.
+    bool bLava = false;
+    FIntVector LavaCell = FIntVector::ZeroValue, LavaCamera = FIntVector::ZeroValue;
+    for (int32 CY = Center.Y - 7; CY <= Center.Y + 7; ++CY)
+        for (int32 CX = Center.X - 7; CX <= Center.X + 7; ++CX)
+            for (int32 LocalY = 0; LocalY < Size; LocalY += 2)
+                for (int32 LocalX = 0; LocalX < Size; LocalX += 2)
+                {
+                    const int32 X = CX * Size + LocalX, Y = CY * Size + LocalY;
+                    for (int32 Z = VoxelConstants::MinZ + 6; Z < VoxelConstants::MaxZ - 2; ++Z)
+                    {
+                        if (!Covered(X, Y, Z)) break;
+                        const uint16 State = Get(X, Y, Z);
+                        if (!bLava && Lava && State == Lava && Get(X, Y, Z + 1) == 0)
+                            for (const FIntPoint& Direction : Directions)
+                                for (int32 Away = 6; Away >= 3 && !bLava; --Away)
+                                {
+                                    bool bClear = true;
+                                    for (int32 Step = 1; Step <= Away && bClear; ++Step)
+                                        bClear = Get(X + Direction.X * Step, Y + Direction.Y * Step, Z + 1) == 0 &&
+                                            Get(X + Direction.X * Step, Y + Direction.Y * Step, Z + 2) == 0;
+                                    if (!bClear) continue;
+                                    bLava = true;
+                                    LavaCell = FIntVector(X, Y, Z);
+                                    LavaCamera = FIntVector(X + Direction.X * Away, Y + Direction.Y * Away, Z + 2);
+                                }
+                        if (State != 0 || States.Get(Get(X, Y, Z - 1)).bSolid == false || !IsOpen(X, Y, Z + 1) ||
+                            !IsOpen(X, Y, Z + 2))
+                            continue;
+                        for (const FIntPoint& Direction : Directions)
+                        {
+                            // A run that reaches a cell under open sky lets daylight in: those views come first.
+                            int32 Run = 0;
+                            bool bSky = false;
+                            while (Run < 40 && IsOpen(X + Direction.X * (Run + 1), Y + Direction.Y * (Run + 1), Z) &&
+                                IsOpen(X + Direction.X * (Run + 1), Y + Direction.Y * (Run + 1), Z + 1))
+                            {
+                                ++Run;
+                                bSky |= IsSkyOpen(X + Direction.X * Run, Y + Direction.Y * Run, Z + 1);
+                            }
+                            const int32 Score = Run + (bSky ? 100 : 0);
+                            if (Score > BestRun)
+                            {
+                                BestRun = Score;
+                                BestCell = FIntVector(X, Y, Z);
+                                BestDirection = Direction;
+                            }
+                        }
+                    }
+                }
+    const int32 Length = BestRun % 100;
+    if (Length >= 8)
+        ShotCaveViews.Emplace(TEXT("cave"), Blocks(BestCell.X + .5, BestCell.Y + .5, BestCell.Z + 1.5),
+            Blocks(BestCell.X + .5 + BestDirection.X * Length, BestCell.Y + .5 + BestDirection.Y * Length,
+                BestCell.Z + .8));
+    if (bLava)
+        ShotCaveViews.Emplace(TEXT("cave-lava"), Blocks(LavaCamera.X + .5, LavaCamera.Y + .5, LavaCamera.Z + .6),
+            Blocks(LavaCell.X + .5, LavaCell.Y + .5, LavaCell.Z + .9));
+    UE_LOG(LogUnnamedVoxel, Display, TEXT("Cave shots: cave %s (run %d%s at %s), lava %s (at %s)"),
+        Length >= 8 ? TEXT("found") : TEXT("not found"), Length, BestRun >= 100 ? TEXT(" to open sky") : TEXT(""),
+        *BestCell.ToString(), bLava ? TEXT("found") : TEXT("not found"), *LavaCell.ToString());
+}
+
 void AVoxelWorld::UpdateShots()
 {
     APlayerController* Controller = UGameplayStatics::GetPlayerController(this, 0);
@@ -696,6 +798,10 @@ void AVoxelWorld::UpdateShots()
     if (bShotEdits)
         Shots.Add({TEXT("edits"), Blocks(ShotEditCorner.X - 7, ShotEditCorner.Y - 7, ShotEditTop + 8),
             Blocks(ShotEditCorner.X + 1, ShotEditCorner.Y + 2, ShotEditTop - 5), false, true});
+
+    if (bShotCaves && !bShotCavesSearched) FindCaveShots();
+    for (const TTuple<FString, FVector, FVector>& CaveView : ShotCaveViews)
+        Shots.Add({*CaveView.Get<0>(), CaveView.Get<1>(), CaveView.Get<2>(), false, true});
 
     if (ShotIndex == INDEX_NONE)
     {

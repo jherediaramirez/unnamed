@@ -152,7 +152,8 @@ namespace
              "4), on this thread and then on every worker, and reports each stage.\n"
              "voxel.Bench Climate [radius] [preset]: times the terrain climate pass of (2 radius + 1)^2 columns "
              "(default radius 8, preset overworld), on this thread and then on every worker.\n"
-             "voxel.Bench Density [radius] [preset]: generates (2 radius + 1)^2 columns of the density terrain "
+             "voxel.Bench Density [radius] [preset] [nocaves]: generates (2 radius + 1)^2 columns of the density "
+             "terrain "
              "(default radius 4, preset overworld) with height-bound skipping on and off, and reports each stage."),
         FConsoleCommandWithArgsAndOutputDeviceDelegate::CreateLambda(
             [](const TArray<FString>& Args, FOutputDevice& Output)
@@ -218,19 +219,23 @@ namespace
                         return;
                     }
                     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
-                    const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table);
+                    // A fourth argument "nocaves" benches the terrain without caves and aquifers (session 3's).
+                    FVoxelDensityTerrainSettings Settings;
+                    Settings.bCaves = !(Args.Num() > 3 && Args[3] == TEXT("nocaves"));
+                    const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings);
                     if (!Terrain.IsValid())
                     {
                         PrintLines(Output, Terrain.GetError());
                         return;
                     }
                     PrintLines(Output,
-                        FString::Printf(TEXT("Voxel density bench, %s, seed %s:"), *PresetName, *Seed.Describe()) +
+                        FString::Printf(TEXT("Voxel density bench, %s, caves %s, seed %s:"), *PresetName,
+                            Settings.bCaves ? TEXT("on") : TEXT("off"), *Seed.Describe()) +
                             TEXT("\n") + VoxelBench::RunDensity(Terrain, Radius));
                     return;
                 }
                 PrintLines(Output,
                     TEXT("Usage: voxel.Bench Noise [millions] | voxel.Bench Columns [radius] | voxel.Bench "
-                         "Climate [radius] [preset] | voxel.Bench Density [radius] [preset]"));
+                         "Climate [radius] [preset] | voxel.Bench Density [radius] [preset] [nocaves]"));
             }));
 }

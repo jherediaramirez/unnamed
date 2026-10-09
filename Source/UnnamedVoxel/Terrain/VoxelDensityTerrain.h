@@ -4,6 +4,7 @@
 #include "Density/VoxelColumnDensity.h"
 #include "HAL/CriticalSection.h"
 #include "Noise/VoxelNoise.h"
+#include "Terrain/VoxelAquifer.h"
 #include "Terrain/VoxelHeightTerrain.h"
 #include "Terrain/VoxelTerrain.h"
 
@@ -13,9 +14,10 @@ struct FVoxelTerrainPreset;
 
 struct FVoxelDensityTerrainSettings
 {
-    // Caves come in phase 4's session 4 with aquifers. Without them, final_density's cave branch reads sloped_cheese
-    // alone and noodle caves are neutral (RemoveCaves).
-    bool bCaves = false;
+    // The full final_density with aquifers (water and still lava underground), and only the first surface from the
+    // sky dressed in grass, sand or gravel. Off: final_density's cave branch reads sloped_cheese alone, noodle caves
+    // are neutral (RemoveCaves), and open space below sea level is water, exactly as before caves (session 3).
+    bool bCaves = true;
     // Height-bound skipping (FVoxelColumnDensity); off only to compare against.
     bool bSkip = true;
 };
@@ -24,15 +26,16 @@ struct FVoxelDensityTerrainSettings
 struct FVoxelDensityTerrainTimings
 {
     double DensityMs = 0;
+    double AquiferMs = 0;
     double BlocksMs = 0;
     FVoxelColumnDensityStats Density;
 };
 
-// Generator 2: a world type's terrain from 26.3's density graph (final_density > 0 is solid), filled with water up to
-// the sea, bedrock and deepslate at the bottom, and a simple top layer (grass on dirt, sand at the shore, gravel deep
-// under water) until phase 5's surface rules. Axes: the reference's x is our X, its z our Y and its y our Z.
-// Immutable after construction; any worker may generate any column, and the result depends only on the preset, the
-// seed and the column.
+// Generator 2: a world type's terrain from 26.3's density graph (final_density > 0 is solid), its open space filled by
+// aquifers (FVoxelAquifer: sea water, cave water and still lava), bedrock and deepslate at the bottom, and a simple top
+// layer (grass on dirt, sand at the shore, gravel deep under water) until phase 5's surface rules. Axes: the
+// reference's x is our X, its z our Y and its y our Z. Immutable after construction; any worker may generate any
+// column, and the result depends only on the preset, the seed and the column.
 class UNNAMEDVOXEL_API FVoxelDensityTerrain final : public IVoxelTerrain
 {
 public:
@@ -72,7 +75,9 @@ private:
     {
         FVoxelColumnDensityScratch Column;
         FVoxelDensityScratch Point;
+        FVoxelAquiferScratch Aquifer;
         TArray<float> Density;
+        TArray<EVoxelAquiferFluid> Fluids;
     };
     TUniquePtr<FScratch> TakeScratch() const;
     void ReturnScratch(TUniquePtr<FScratch> Scratch) const;
@@ -87,6 +92,7 @@ private:
     FVoxelDensityEvaluator Evaluator, SurfaceEvaluator;
     int32 FinalDensity = INDEX_NONE, Surface = INDEX_NONE;
     FVoxelColumnDensity Column;
+    FVoxelAquifer Aquifer;
 
     mutable FCriticalSection PoolLock;
     mutable TArray<TUniquePtr<FScratch>> Pool;

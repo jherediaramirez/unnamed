@@ -354,14 +354,20 @@ bool FVoxelDensityTerrainTest::RunTest(const FString& Parameters)
     const uint16 Water = Table->FindState(TEXT("water"));
     constexpr int32 TopWater = VoxelConstants::SeaLevel - 1;
 
-    for (const TCHAR* PresetName : DensityTestPresets)
+    for (int32 Run = 0; Run < 2 * UE_ARRAY_COUNT(DensityTestPresets); ++Run)
     {
+        const bool bCaves = Run % 2 == 1;
+        const FString PresetLabel =
+            FString(DensityTestPresets[Run / 2]) + (bCaves ? TEXT(" (caves on)") : TEXT(" (caves off)"));
+        const TCHAR* const PresetName = *PresetLabel;
         FVoxelTerrainPreset Preset;
         FString Error;
-        if (!TestTrue(
-                FString::Printf(TEXT("%s reads (%s)"), PresetName, *Error), DensityTestLoad(PresetName, Preset, Error)))
+        if (!TestTrue(FString::Printf(TEXT("%s reads (%s)"), PresetName, *Error),
+                DensityTestLoad(DensityTestPresets[Run / 2], Preset, Error)))
             continue;
-        const FVoxelDensityTerrain Terrain(Preset, DensityTestSeed, *Table);
+        FVoxelDensityTerrainSettings Settings;
+        Settings.bCaves = bCaves;
+        const FVoxelDensityTerrain Terrain(Preset, DensityTestSeed, *Table, Settings);
         if (!TestTrue(
                 FString::Printf(TEXT("%s terrain is valid (%s)"), PresetName, *Terrain.GetError()), Terrain.IsValid()))
             continue;
@@ -406,7 +412,9 @@ bool FVoxelDensityTerrainTest::RunTest(const FString& Parameters)
                         }
                         for (int32 Z = FMath::Max(Top, TopWater) + 1; Z <= VoxelConstants::MaxZ; ++Z)
                             BadAir += On[FVoxelColumn::GetDenseIndex(LocalX, LocalY, Z)] != 0;
-                        for (int32 Z = TopWater + 1; Z <= VoxelConstants::MaxZ; ++Z)
+                        // Caves on: aquifers may hold water above the sea, but only under solid ground.
+                        for (int32 Z = bCaves ? FMath::Max(Top, TopWater) + 1 : TopWater + 1; Z <= VoxelConstants::MaxZ;
+                            ++Z)
                             BadWater += On[FVoxelColumn::GetDenseIndex(LocalX, LocalY, Z)] == Water;
                     }
                 }
@@ -488,7 +496,10 @@ bool FVoxelDensityGoldenTest::RunTest(const FString& Parameters)
         if (!TestTrue(
                 FString::Printf(TEXT("%s reads (%s)"), PresetName, *Error), DensityTestLoad(PresetName, Preset, Error)))
             continue;
-        const FVoxelDensityTerrain Terrain(Preset, DensityTestSeed, *Table);
+        // Session 3's goldens: caves off. Caves on has its own (Unnamed.Voxel.Aquifer.Golden).
+        FVoxelDensityTerrainSettings Settings;
+        Settings.bCaves = false;
+        const FVoxelDensityTerrain Terrain(Preset, DensityTestSeed, *Table, Settings);
         if (!TestTrue(
                 FString::Printf(TEXT("%s terrain is valid (%s)"), PresetName, *Terrain.GetError()), Terrain.IsValid()))
             continue;

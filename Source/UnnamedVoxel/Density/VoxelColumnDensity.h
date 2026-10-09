@@ -46,9 +46,11 @@ public:
         FString* OutError = nullptr);
 
     // Density at every block of the column whose lowest corner is (X0, Z0) in the reference's axes, indexed
-    // ((y - MinY) * 16 + z) * 16 + x. Skipped cells read +1 (solid) or -1 (empty).
+    // ((y - MinY) * 16 + z) * 16 + x. Skipped cells read +1 (solid) or -1 (empty). KeepEmpty (empty, or one flag per
+    // block y from MinY) keeps cells touching a flagged y from being skipped as empty, for callers that read the exact
+    // value of non-positive density there (aquifer barriers).
     void Generate(int32 X0, int32 Z0, bool bSkip, FVoxelColumnDensityScratch& Scratch, TArray<float>& OutDensity,
-        FVoxelColumnDensityStats* OutStats = nullptr) const;
+        FVoxelColumnDensityStats* OutStats = nullptr, TConstArrayView<uint8> KeepEmpty = {}) const;
 
     int32 GetMinY() const { return MinY; }
     int32 GetHeight() const { return Height; }
@@ -61,6 +63,7 @@ private:
         Empty
     };
 
+    bool IsKeptEmpty(TConstArrayView<uint8> KeepEmpty, int32 CY) const;
     int32 CornerIndex(int32 CX, int32 CY, int32 CZ) const { return (CY * CornersXZ + CZ) * CornersXZ + CX; }
 
     const FVoxelDensityEvaluator* Evaluator = nullptr;

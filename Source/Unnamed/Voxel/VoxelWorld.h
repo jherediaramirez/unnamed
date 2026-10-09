@@ -135,6 +135,12 @@ private:
     FString ShotTimings;
     // -VoxelShotEdits: 0 before the edits, 1 while their columns remesh, 2 once they are on screen.
     bool bShotEdits = false;
+    // -VoxelShotCaves: views inside a cave and onto still lava, searched once near the center (names, camera and target
+    // in cm); empty when none was found.
+    bool bShotCaves = false;
+    bool bShotCavesSearched = false;
+    TArray<TTuple<FString, FVector, FVector>> ShotCaveViews;
+    void FindCaveShots();
     int32 ShotEditStage = 0;
     FIntPoint ShotEditCorner = FIntPoint::ZeroValue;
     int32 ShotEditTop = 0;

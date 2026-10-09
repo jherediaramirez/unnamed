@@ -11,6 +11,8 @@ class FVoxelColumn;
 struct FVoxelTerrainBlocks
 {
     uint16 Stone = 0, Deepslate = 0, Dirt = 0, Grass = 0, Sand = 0, Gravel = 0, Water = 0, Bedrock = 0, Snow = 0;
+    // Still lava (aquifers); 0 when the table has none.
+    uint16 Lava = 0;
 
     static FVoxelTerrainBlocks Find(const FVoxelBlockTable& Table);
 };

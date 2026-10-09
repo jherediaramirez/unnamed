@@ -72,9 +72,18 @@ bool FVoxelColumnDensity::Initialize(
     return true;
 }
 
-void FVoxelColumnDensity::Generate(int32 X0, int32 Z0, bool bSkip, FVoxelColumnDensityScratch& Scratch,
-    TArray<float>& OutDensity, FVoxelColumnDensityStats* OutStats) const
+bool FVoxelColumnDensity::IsKeptEmpty(TConstArrayView<uint8> KeepEmpty, int32 CY) const
 {
+    if (KeepEmpty.IsEmpty()) return false;
+    for (int32 DY = 0; DY < CellY; ++DY)
+        if (KeepEmpty[CY * CellY + DY]) return true;
+    return false;
+}
+
+void FVoxelColumnDensity::Generate(int32 X0, int32 Z0, bool bSkip, FVoxelColumnDensityScratch& Scratch,
+    TArray<float>& OutDensity, FVoxelColumnDensityStats* OutStats, TConstArrayView<uint8> KeepEmpty) const
+{
+    check(KeepEmpty.IsEmpty() || KeepEmpty.Num() == Height);
     check(Evaluator);
     const FVoxelDensityEvaluator& Eval = *Evaluator;
     const FVoxelDensityGraph& Graph = Eval.GetGraph();
@@ -142,7 +151,7 @@ void FVoxelColumnDensity::Generate(int32 X0, int32 Z0, bool bSkip, FVoxelColumnD
                     uint8& State = Scratch.CellStates[CellIndex(CX, CY, CZ)];
                     if (Density.Min > 0)
                         State = Solid;
-                    else if (Density.Max <= 0)
+                    else if (Density.Max <= 0 && !IsKeptEmpty(KeepEmpty, CY))
                         State = Empty;
                     Stats.SolidCells += State == Solid;
                     Stats.EmptyCells += State == Empty;

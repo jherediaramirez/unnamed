@@ -97,6 +97,25 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
         const FFoundationBlockType& Block = Registry.GetBlockAt(Index);
         Table->SetDefaultState(Block.Id, uint16(Block.DefaultStateId));
     }
+    // Still lava for aquifers. The block reference has no lava yet, so only the voxel table knows it, at 26.3's own
+    // ids (state 105 = lava level 0, a source; block 38; light 15); the registry and the authority read it as air.
+    // Drawn like water by the fluid mesher, but in the opaque layer so the chunk material's emission lights it: the
+    // still water texture tinted orange stands in for lava's own animated texture.
+    constexpr uint16 LavaState = 105, LavaBlock = 38;
+    if (!Registry.IsKnown(FFoundationBlockState{LavaState}) && Table->FindState(TEXT("lava")) == 0)
+    {
+        FVoxelStateInfo Lava;
+        Lava.Shape = EVoxelShape::Fluid;
+        Lava.Layer = EVoxelLayer::Opaque;
+        Lava.FluidAmount = 8;
+        Lava.LightEmission = 15;
+        Lava.Block = LavaBlock;
+        Lava.Tint = PackRgb(FColor(0xFF, 0x6A, 0x10));
+        for (int32 Face = 0; Face < VoxelFaces::Count; ++Face)
+            Lava.Faces[Face] = WaterStill | FoundationBlockFaces::TintBit;
+        Table->SetState(LavaState, Lava);
+        Table->SetDefaultState(TEXT("lava"), LavaState);
+    }
     return Table;
 }
 

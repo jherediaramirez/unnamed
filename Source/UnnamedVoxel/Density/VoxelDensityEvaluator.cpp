@@ -76,6 +76,7 @@ bool FVoxelDensityEvaluator::Compile(
     BlendedNoises.Reset();
     NestedEvaluators.Reset();
     NestedIndices.Reset();
+    LazyBounds.Reset();
     FString GraphError;
     if (!Graph.Validate(&GraphError)) return Fail(TEXT("invalid graph: ") + GraphError);
 
@@ -138,6 +139,8 @@ bool FVoxelDensityEvaluator::Compile(
             Needed[Child] = true;
     }
 
+    FindLazyFunctions(Needed, Roots, WorldSeed);
+
     Noises.SetNum(Graph.Noises.Num());
     Slots.Init(INDEX_NONE, Graph.Nodes.Num());
     NodeReadsY.Init(false, Graph.Nodes.Num());
@@ -179,6 +182,12 @@ bool FVoxelDensityEvaluator::Compile(
         if (Data.Op == EVoxelDensityOp::FindTopSurface) Reads = {Data.Inputs[1]};
         for (const int32 Child : Reads)
             bReadsY |= NodeReadsY[Child];
+        if (Data.Op == EVoxelDensityOp::IntervalSelect)
+            for (int32 Entry = 0; Entry < Data.ListCount; ++Entry)
+            {
+                const int32 Function = Graph.ListNodes[Data.Ref + Entry];
+                if (LazyBounds.Contains(Function)) bReadsY |= NestedEvaluators[Function]->ReadsY(Function);
+            }
         NodeReadsY[Node] = bReadsY;
         (bReadsY ? VaryingOrder : FlatOrder).Add(Node);
     }
@@ -201,7 +210,86 @@ void FVoxelDensityEvaluator::GetReads(int32 Node, TArray<int32>& Out) const
         if (const FCompiledSpline* Compiled = Splines.Find(Data.Ref)) Out.Append(Compiled->Coordinates);
     if (Data.Op == EVoxelDensityOp::IntervalSelect)
         for (int32 Entry = 0; Entry < Data.ListCount; ++Entry)
-            Out.Add(Graph.ListNodes[Data.Ref + Entry]);
+            if (!LazyBounds.Contains(Graph.ListNodes[Data.Ref + Entry])) Out.Add(Graph.ListNodes[Data.Ref + Entry]);
+}
+
+void FVoxelDensityEvaluator::FindLazyFunctions(TArray<bool>& Needed, TConstArrayView<int32> Roots, uint64 WorldSeed)
+{
+    // Every read among the needed nodes, as the needed pass follows them; roots are read from outside.
+    const int32 NodeCount = Graph.Nodes.Num();
+    auto ForEachRead = [this](int32 Node, auto&& Visit)
+    {
+        const FVoxelDensityNode& Data = Graph.Nodes[Node];
+        if (Data.Op == EVoxelDensityOp::FindTopSurface)
+        {
+            Visit(Data.Inputs[1]);
+            return;
+        }
+        for (const int32 Child : Data.Inputs)
+            if (Child != INDEX_NONE) Visit(Child);
+        if (Data.Op == EVoxelDensityOp::Spline)
+            for (const int32 Coordinate : Splines[Data.Ref].Coordinates)
+                Visit(Coordinate);
+        if (Data.Op == EVoxelDensityOp::IntervalSelect)
+            for (int32 Entry = 0; Entry < Data.ListCount; ++Entry)
+                Visit(Graph.ListNodes[Data.Ref + Entry]);
+    };
+    TArray<int32> Readers;
+    Readers.Init(0, NodeCount);
+    for (int32 Node = 0; Node < NodeCount; ++Node)
+        if (Needed[Node]) ForEachRead(Node, [&Readers](int32 Child) { ++Readers[Child]; });
+    for (const int32 Root : Roots)
+        Readers[Root] += NodeCount;
+
+    TArray<int32> Inner, Stack;
+    Inner.Init(0, NodeCount);
+    TArray<int32> Subtree;
+    for (int32 Select = 0; Select < NodeCount; ++Select)
+    {
+        const FVoxelDensityNode& Data = Graph.Nodes[Select];
+        if (!Needed[Select] || Data.Op != EVoxelDensityOp::IntervalSelect) continue;
+        for (int32 Entry = 0; Entry < Data.ListCount; ++Entry)
+        {
+            const int32 Function = Graph.ListNodes[Data.Ref + Entry];
+            if (Graph.Nodes[Function].Op == EVoxelDensityOp::Constant || LazyBounds.Contains(Function)) continue;
+            // The function's subtree, and how often its own nodes and this select read each node in it.
+            Subtree.Reset();
+            Stack = {Function};
+            bool bPlain = true;
+            while (!Stack.IsEmpty() && bPlain)
+            {
+                const int32 Node = Stack.Pop(EAllowShrinking::No);
+                if (Subtree.Contains(Node)) continue;
+                Subtree.Add(Node);
+                const EVoxelDensityOp Op = Graph.Nodes[Node].Op;
+                bPlain = Op != EVoxelDensityOp::Interpolated && Op != EVoxelDensityOp::FindTopSurface;
+                ForEachRead(Node, [&Stack](int32 Child) { Stack.Add(Child); });
+            }
+            if (!bPlain) continue;
+            for (const int32 Node : Subtree)
+                ForEachRead(Node, [&Inner](int32 Child) { ++Inner[Child]; });
+            for (int32 Other = 0; Other < Data.ListCount; ++Other)
+                Inner[Function] += Graph.ListNodes[Data.Ref + Other] == Function;
+            bool bPrivate = true;
+            for (const int32 Node : Subtree)
+            {
+                bPrivate &= Readers[Node] == Inner[Node];
+                Inner[Node] = 0;
+            }
+            if (!bPrivate) continue;
+
+            TSharedPtr<FVoxelDensityEvaluator> Nested = MakeShared<FVoxelDensityEvaluator>();
+            if (!Nested->Compile(Graph, WorldSeed, {Function})) continue;
+            TArray<FVoxelDensityBounds> Bounds;
+            Bounds.Init(FVoxelDensityBounds(), NodeCount);
+            Nested->EvaluateBounds(Nested->GetOrder(), -1e6, 1e6, Bounds);
+            LazyBounds.Add(Function, Bounds[Function]);
+            NestedIndices.Add(Function, NestedEvaluators.Num());
+            NestedEvaluators.Add(Function, Nested);
+            for (const int32 Node : Subtree)
+                Needed[Node] = false;
+        }
+    }
 }
 
 float* FVoxelDensityEvaluator::Buffer(FVoxelDensityScratch& Scratch, int32 Node) const
@@ -341,6 +429,53 @@ void FVoxelDensityEvaluator::EvaluateTopSurface(
         Active.SetNum(Kept, EAllowShrinking::No);
     }
 }
+void FVoxelDensityEvaluator::EvaluateLazySelect(
+    int32 Node, const double* X, const double* Y, const double* Z, FVoxelDensityScratch& Scratch) const
+{
+    // As the plain interval_select, but lazy functions run only at the points that pick them, by their own evaluator.
+    const FVoxelDensityNode& Data = Graph.Nodes[Node];
+    const int32 Count = Scratch.Count;
+    float* Out = Buffer(Scratch, Node);
+    const float* A = Input(Scratch, Node, 0);
+    const int32 Last = Data.ListCount - 1;
+    Scratch.Choices.SetNumUninitialized(Count, EAllowShrinking::No);
+    for (int32 I = 0; I < Count; ++I)
+    {
+        int32 Entry = 0;
+        while (Entry < Last && A[I] >= float(Graph.ListValues[Data.Ref + Entry]))
+            ++Entry;
+        Scratch.Choices[I] = Entry;
+        const int32 Function = Graph.ListNodes[Data.Ref + Entry];
+        if (Slots[Function] != INDEX_NONE) Out[I] = Scratch.Values[Slots[Function] * Count + I];
+    }
+    for (int32 Entry = 0; Entry <= Last; ++Entry)
+    {
+        const int32 Function = Graph.ListNodes[Data.Ref + Entry];
+        if (Slots[Function] != INDEX_NONE) continue;
+        Scratch.NestedPoints.Reset();
+        for (int32 I = 0; I < Count; ++I)
+            if (Scratch.Choices[I] == Entry) Scratch.NestedPoints.Add(I);
+        const int32 Picked = Scratch.NestedPoints.Num();
+        if (Picked == 0) continue;
+        Scratch.NestedX.SetNumUninitialized(Picked, EAllowShrinking::No);
+        Scratch.NestedY.SetNumUninitialized(Picked, EAllowShrinking::No);
+        Scratch.NestedZ.SetNumUninitialized(Picked, EAllowShrinking::No);
+        for (int32 K = 0; K < Picked; ++K)
+        {
+            const int32 Point = Scratch.NestedPoints[K];
+            Scratch.NestedX[K] = X[Point];
+            Scratch.NestedY[K] = Y[Point];
+            Scratch.NestedZ[K] = Z[Point];
+        }
+        const FVoxelDensityEvaluator& Nested = *NestedEvaluators.FindChecked(Function);
+        FVoxelDensityScratch& Inner = GetNested(Scratch, Function);
+        Nested.Evaluate(Scratch.NestedX.GetData(), Scratch.NestedY.GetData(), Scratch.NestedZ.GetData(), Picked, Inner);
+        const TConstArrayView<float> Values = Nested.GetValues(Inner, Function);
+        for (int32 K = 0; K < Picked; ++K)
+            Out[Scratch.NestedPoints[K]] = Values[K];
+    }
+}
+
 void FVoxelDensityEvaluator::EvaluateNode(
     int32 Node, const double* X, const double* Y, const double* Z, FVoxelDensityScratch& Scratch) const
 {
@@ -444,6 +579,11 @@ void FVoxelDensityEvaluator::EvaluateNode(
         break;
     case EVoxelDensityOp::IntervalSelect:
     {
+        if (!LazyBounds.IsEmpty())
+        {
+            EvaluateLazySelect(Node, X, Y, Z, Scratch);
+            break;
+        }
         // Function K covers inputs from threshold K - 1 (inclusive) up to threshold K (exclusive); the first function
         // takes everything below the first threshold and the last everything from the last threshold up.
         const int32 Last = Data.ListCount - 1;
@@ -522,7 +662,14 @@ void FVoxelDensityEvaluator::EvaluateBounds(
 {
     check(Bounds.Num() == Graph.Nodes.Num());
     for (const int32 Node : Nodes)
+    {
+        const FVoxelDensityNode& Data = Graph.Nodes[Node];
+        if (Data.Op == EVoxelDensityOp::IntervalSelect && !LazyBounds.IsEmpty())
+            for (int32 Entry = 0; Entry < Data.ListCount; ++Entry)
+                if (const FVoxelDensityBounds* Lazy = LazyBounds.Find(Graph.ListNodes[Data.Ref + Entry]))
+                    Bounds[Graph.ListNodes[Data.Ref + Entry]] = *Lazy;
         Bounds[Node] = DensityBoundsWiden(GetBounds(Node, MinY, MaxY, Bounds));
+    }
 }
 
 FVoxelDensityBounds FVoxelDensityEvaluator::GetBounds(

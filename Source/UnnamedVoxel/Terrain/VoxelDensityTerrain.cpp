@@ -100,7 +100,8 @@ FVoxelDensityTerrain::FVoxelDensityTerrain(const FVoxelTerrainPreset& Preset, ui
     FString Reason;
     if (!Evaluator.Compile(Graph, Seed, {FinalDensity}, &Reason) ||
         !SurfaceEvaluator.Compile(Preset.Graph, Seed, {Surface}, &Reason) ||
-        !Column.Initialize(Evaluator, FinalDensity, Preset.MinY, Preset.Height, &Reason))
+        !Column.Initialize(Evaluator, FinalDensity, Preset.MinY, Preset.Height, &Reason) ||
+        (Settings.bCaves && !Aquifer.Initialize(Preset, Seed, &Reason)))
         Error = Preset.Name + TEXT(": ") + Reason;
 }
 
@@ -194,51 +195,71 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
     const int32 SeaTop = SeaLevel - 1;
     TUniquePtr<FScratch> Scratch = TakeScratch();
 
+    const int32 X0 = Position.X * Size, Z0 = Position.Y * Size;
     const double Start = FPlatformTime::Seconds();
+    if (Settings.bCaves)
+    {
+        TRACE_CPUPROFILER_EVENT_SCOPE(Voxel_AquiferPrepare);
+        Aquifer.Prepare(X0, Z0, Scratch->Aquifer);
+    }
+    const double AfterPrepare = FPlatformTime::Seconds();
     FVoxelColumnDensityStats Stats;
     {
         TRACE_CPUPROFILER_EVENT_SCOPE(Voxel_DensityColumn);
         SCOPE_CYCLE_COUNTER(STAT_VoxelDensityColumn);
-        Column.Generate(Position.X * Size, Position.Y * Size, bSkipOverride ? *bSkipOverride : Settings.bSkip,
-            Scratch->Column, Scratch->Density, &Stats);
+        Column.Generate(X0, Z0, bSkipOverride ? *bSkipOverride : Settings.bSkip, Scratch->Column, Scratch->Density,
+            &Stats, Settings.bCaves ? Aquifer.GetKeepEmpty(Scratch->Aquifer) : TConstArrayView<uint8>());
+    }
+    const double AfterDensity = FPlatformTime::Seconds();
+    if (Settings.bCaves)
+    {
+        TRACE_CPUPROFILER_EVENT_SCOPE(Voxel_AquiferFill);
+        SCOPE_CYCLE_COUNTER(STAT_VoxelAquiferColumn);
+        Aquifer.Fill(X0, Z0, Scratch->Density, Scratch->Aquifer, Scratch->Fluids);
     }
     const double Middle = FPlatformTime::Seconds();
     {
         TRACE_CPUPROFILER_EVENT_SCOPE(Voxel_FillColumn);
         SCOPE_CYCLE_COUNTER(STAT_VoxelFillColumn);
         const TArray<float>& Density = Scratch->Density;
+        const TArray<EVoxelAquiferFluid>& Fluids = Scratch->Fluids;
         for (int32 LocalY = 0; LocalY < Size; ++LocalY)
             for (int32 LocalX = 0; LocalX < Size; ++LocalX)
             {
-                const int32 X = Position.X * Size + LocalX, Y = Position.Y * Size + LocalY;
+                const int32 X = X0 + LocalX, Y = Z0 + LocalY;
                 const int32 SoilDepth =
                     3 + FMath::Clamp(FMath::FloorToInt32((Soil.Sample(X + .5, Y + .5) + 1) * 1.5f), 0, 2);
                 // Blocks below the top of the current solid run; -1 above solid ground.
                 int32 Depth = -1;
+                // With caves, only the first surface from the sky is dressed; cave floors stay bare rock.
+                bool bDressed = false, bBare = false;
                 uint16 Top = Blocks.Grass, Under = Blocks.Dirt;
                 for (int32 Z = VoxelConstants::MaxZ; Z >= VoxelConstants::MinZ; --Z)
                 {
-                    const float Value = Density[((Z - VoxelConstants::MinZ) * Size + LocalY) * Size + LocalX];
+                    const int32 Index = ((Z - VoxelConstants::MinZ) * Size + LocalY) * Size + LocalX;
+                    const EVoxelAquiferFluid Fluid = Settings.bCaves ? Fluids[Index]
+                        : Z <= SeaTop                                ? EVoxelAquiferFluid::Water
+                                                                     : EVoxelAquiferFluid::Air;
                     uint16 State;
-                    if (Value > 0)
+                    if (Density[Index] > 0 || Fluid == EVoxelAquiferFluid::Barrier)
                     {
                         if (Depth < 0)
                         {
                             // A new surface: its dressing depends on how it sits against the sea.
+                            bBare = Settings.bCaves && bDressed;
                             Top = Blocks.Grass;
                             Under = Blocks.Dirt;
                             if (Z < SeaTop - 6)
                                 Top = Under = Blocks.Gravel;
                             else if (Z <= SeaTop + 2)
                                 Top = Under = Blocks.Sand;
+                            bDressed = true;
                         }
                         ++Depth;
                         if (DensityTerrainIsLowerLayer(Seed, X, Y, Z, VoxelConstants::MinZ, VoxelConstants::MinZ + 5))
                             State = Blocks.Bedrock;
-                        else if (Depth == 0)
-                            State = Top;
-                        else if (Depth < SoilDepth)
-                            State = Under;
+                        else if (Depth < SoilDepth && !bBare)
+                            State = Depth == 0 ? Top : Under;
                         else if (DensityTerrainIsLowerLayer(Seed, X, Y, Z, 0, 8))
                             State = Blocks.Deepslate;
                         else
@@ -247,7 +268,9 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
                     else
                     {
                         Depth = -1;
-                        State = Z <= SeaTop ? Blocks.Water : uint16(0);
+                        State = Fluid == EVoxelAquiferFluid::Water ? Blocks.Water
+                            : Fluid == EVoxelAquiferFluid::Lava    ? Blocks.Lava
+                                                                   : uint16(0);
                     }
                     Dense[FVoxelColumn::GetDenseIndex(LocalX, LocalY, Z)] = State;
                 }
@@ -257,7 +280,8 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
     ReturnScratch(MoveTemp(Scratch));
     if (Timings)
     {
-        Timings->DensityMs = (Middle - Start) * 1000;
+        Timings->DensityMs = (AfterDensity - AfterPrepare) * 1000;
+        Timings->AquiferMs = ((AfterPrepare - Start) + (Middle - AfterDensity)) * 1000;
         Timings->BlocksMs = (FPlatformTime::Seconds() - Middle) * 1000;
         Timings->Density = Stats;
     }
