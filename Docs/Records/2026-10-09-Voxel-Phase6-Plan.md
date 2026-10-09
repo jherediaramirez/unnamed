@@ -200,14 +200,14 @@ Goldens are re-recorded only where the session's own decided change alters the b
 
 | # | Session | Area | Size | Needs |
 |---|---|---|---|---|
-| S0 | AMPLIFIED speed-up (optional, Q9) | Generate's density, aquifer and block fill | M | |
+| S0 | AMPLIFIED speed-up (first: Q9 answered yes) | Generate's density, aquifer and block fill | M | |
 | S1 | Worldgen data, reader and probes | The worldgen reference and its reader | L | |
 | S2 | Decoration core, with ores | `Source/UnnamedVoxel/Decoration/` on the fixed area | L | S1 |
 | S3 | Streaming stages and Finalize | The column pipeline | M to L | S2 |
 | S4 | Ore veins | The surface evaluator's `ore_vein` | S | S1 |
 | S5 | Block models: data | The blocks reference and `DA_Blocks` | L | |
 | S6 | Block models: rendering | The voxel mesher and the Playground's meshes | M to L | S5 |
-| S7 | Plant interaction and collision | Placement, survival, collision, targeting | M (S with Q6 b) | S6 |
+| S7 | Plant interaction, collision and the plant items | Placement, survival, collision, targeting, and the items that place plants | M | S6 |
 | S8 | Plants and patches | Vegetation feature types | L | S3, S6 |
 | S9 | Trees and big vegetation | Tree feature types | L | S8 |
 | S10 | Carvers | The carver pass in Generate | M | |
@@ -216,10 +216,11 @@ Goldens are re-recorded only where the session's own decided change alters the b
 
 A lead usually ends a session between 300k and 550k tokens (phase 5 session 6: 547k). The handoff's checkpoints apply.
 
-### S0. AMPLIFIED speed-up (optional, Q9)
+### S0. AMPLIFIED speed-up (runs first)
 
-The [phase 6 handoff](2026-10-09-Voxel-Handoff-Phase6.md)'s section 4b already plans this session: its levers, gates, figures and what was ruled out.
+Jesus answered Q9 yes, so this session runs first. The [phase 6 handoff](2026-10-09-Voxel-Handoff-Phase6.md)'s section 4b already plans it: its levers, gates, figures and what was ruled out.
 - **Gate:** AMPLIFIED's median of three under 5 ms; no preset slower; every gate at 0 differing blocks.
+- **Housekeeping (decided October 9):** its commit also adds `Tests/Evidence/` and `logs/` to `.gitignore`, deleting nothing.
 
 ### S1. Worldgen data, reader and probes
 
@@ -329,7 +330,7 @@ The [phase 6 handoff](2026-10-09-Voxel-Handoff-Phase6.md)'s section 4b already p
   - **A model baker** in the reference's tools: per state, quads with UV, texture layer, `tintindex`, `cullface`, `shade` and rotation (with uvlock).
   - **`FactsDump.java`:** per state, collision and outline boxes, fluid state, offset kind and maximum, `replaceable` and occluding faces; and tags for the new blocks.
   - **`DA_Blocks`:** reimported, with old assets moved deliberately. `EFoundationBlockShape::Model` and a baked-model index in the registry.
-  - **Items:** icons as flat sprites from each item model's layers; items per Q7.
+  - **Items:** icons as flat sprites from each item model's layers, for the new blocks whose vanilla item has the block's id. The facts dump records each new block's vanilla item, so S7 can add the items with other ids (Jesus's answer 7).
 - **Files:**
   - the reference: `Reference/minecraft-blocks-26.3/tools/` (`build_manifest.py`, `classify_blocks.py`, `build_blocks.py`, `FactsDump.java`, a new `bake_models.py`, `verify_reference.py`) and the regenerated reference;
   - editor scripts: `Scripts/Editor/ImportBlocks.py`, `BlockImportData.py`, `CreateBlockMaterials.py` (cutout mips);
@@ -376,27 +377,37 @@ The [phase 6 handoff](2026-10-09-Voxel-Handoff-Phase6.md)'s section 4b already p
   - A plant-dense test column is measured; the cross fast path (Q1 c) only if crosses cost more than 0.2 ms per column over the generic path.
   - Mesh per section stays under the prompt's 0.2 ms.
 
-### S7. Plant interaction and collision
+### S7. Plant interaction, collision and the plant items
 
 **Area:** gameplay with model blocks, in the voxel world and the Playground.
 
+**Why the items are here:** an item whose id differs from its block (glow berries placing cave vines) is useful only once placing it obeys the support rules, which this session builds.
+
 - **Scope:**
   - collision and outline boxes from the facts (`GatherCollision`, targeting);
-  - placement checked against the support tags (Q6);
+  - placement checked against the support tags (Jesus's answer 6);
   - both halves of double plants;
   - attached faces (vine, lichen, cocoa);
   - pop-when-unsupported after mining, one level deep;
   - instant mining from the facts;
   - placing into replaceable plants.
-
-  With Q6 (b) it shrinks to collision, outlines and double-plant halves.
+  - **The vanilla items with their own ids (Jesus's answer 7):**
+    - Add the decoration blocks' items whose id differs from the block's, taking the list from S5's facts. At least `sweet_berries` (places `sweet_berry_bush`), `glow_berries` (`cave_vines`) and `cocoa_beans` (`cocoa`).
+    - Each gets the vanilla name, stack size, icon and creative-tab position, and places its block through the support rules.
+    - `kelp` and `seagrass` already have item id = block id. `kelp_plant`, `tall_seagrass`, `cave_vines_plant` and `big_dripleaf_stem` have no vanilla item, so they get none.
+    - Powder snow's bucket stays with buckets.
+  - **The id rule:**
+    - This session updates the project's id rule as Jesus decided, in `CLAUDE.md` ("Block/item IDs (item id = block id)") and in `Docs/Blocks.md` ("Item ids").
+    - It adds these items as new saved ids, and never renames an existing block or item id.
 - **Files:**
-  - `Source/Unnamed/Foundation/FoundationBlockPlacement.*`, `FoundationBlocks.*` (`GatherCollision`), `FoundationAuthority.*`;
+  - `Source/Unnamed/Foundation/FoundationBlockPlacement.*`, `FoundationBlocks.*` (`GatherCollision`, the item rules), `FoundationAuthority.*`, `FoundationBlockRegistry.*` (items apart from blocks);
   - `Source/Unnamed/Voxel/VoxelBlockStorage.*`;
-  - tests: `FoundationInteractionTests.cpp`, `FoundationBlocksTests.cpp`.
+  - tests: `FoundationInteractionTests.cpp`, `FoundationBlocksTests.cpp`;
+  - docs: `CLAUDE.md`, `Docs/Blocks.md`.
 - **Tests:**
   - `Blocks.Placement`: truth tables for plants.
   - `Blocks.Survival`: the cascade.
+  - `Blocks.Items`: each other-id item places its block, every existing item id is unchanged, and the new ids are listed.
   - An interaction-suite scenario: a flower on grass; mine the grass, and the flower pops.
 - **Evidence:** `TestFoundationRuntime.ps1 -Editor -Suite interaction`; a walk-through-grass clip or shots.
 - **Gate:** the Playground probe's FPS is not lower beyond noise; collision gather time per tick reported (at most +10%).
@@ -577,7 +588,7 @@ The scout's eight (its 4.3) come first, each with my recommendation; I agree wit
 
     (a) keeps the prompt's yardstick and makes the cost visible without stalling the phase. (c) mixes areas in every session.
 
-**Still open from earlier** (no new recommendation): Single Biome with a non-overworld id refuses the world (built). The alternative is a plains fallback.
+**Still open from earlier** (no new recommendation): Single Biome with a non-overworld id refuses the world (built). The alternative is a plains fallback. Answered in section 9.
 
 ## 7. Risks
 
@@ -595,19 +606,35 @@ The scout's eight (its 4.3) come first, each with my recommendation; I agree wit
 - **Overlapping trees:** a known, deterministic difference from vanilla. The earlier tree in the merge order keeps its blocks.
 - **Goldens:** five sessions change blocks on purpose. Each re-record names its decided change. A golden that moves without one is a bug.
 
-## 8. Short prompt for the first build session
+## 8. Short prompts for the first two sessions
 
-If Jesus answers Q9 with (a), the first session is S0. Its prompt:
+Jesus answered Q9 yes (section 9). The chain runs S0, then S1, then stops for his review before S2.
 
-> Voxel world: the AMPLIFIED speed-up session before phase 6. Read `C:\dev\projects\Unnamed\Docs\Records\2026-10-09-Voxel-Handoff-Phase6.md` sections 1 to 3 and 4b, then the phase 6 plan's section 3.5 and Jesus's answers in its section 9 (`Docs/Records/2026-10-09-Voxel-Phase6-Plan.md`). Send the manager a plan (levers, files, gates) before building.
+S0:
 
-The first phase 6 build session is S1:
-
-> Voxel world phase 6, session 1: worldgen data, reader and probes.
+> Voxel world: the AMPLIFIED speed-up session (S0), the first session of phase 6's chain.
 >
 > Read, in this order:
-> 1. `C:\dev\projects\Unnamed\Docs\Records\2026-10-09-Voxel-Handoff-Phase6.md`, sections 1 to 3 and 5 to 9.
-> 2. The phase 6 plan (`Docs/Records/2026-10-09-Voxel-Phase6-Plan.md`): sections 1, 3.1, 3.2, 3.5, S1 in section 4, and Jesus's answers in section 9. Do not start before section 9 holds them.
+> 1. `C:\dev\projects\Unnamed\Docs\Records\2026-10-09-Voxel-Handoff-Phase6.md`: sections 1 to 3, 4b and 5 to 9.
+> 2. The phase 6 plan (`Docs/Records/2026-10-09-Voxel-Phase6-Plan.md`): section 3.5, S0 in section 4, and Jesus's answers in section 9.
+>
+> The goal is AMPLIFIED's column mean under 5 ms (`voxel.Bench Density 4`, median of three on a quiet machine), with no preset slower.
+> - Use exact levers only:
+>   - every gate at 0 differing blocks;
+>   - `Density.Golden`, `Aquifer.Golden` and `Noise.Golden` unchanged;
+>   - the radius-8 hashes equal in both load orders.
+> - Profile before trying levers, and timebox each lever.
+> - In the same commit, add `Tests/Evidence/` and `logs/` to `.gitignore`; delete nothing.
+>
+> Send the manager a plan (levers, files, gates) before building. Report as the handoff's section 2 says, and measure your context at each checkpoint. End with a handoff into S1 (worldgen data, reader and probes); S1 runs next.
+
+S1:
+
+> Voxel world phase 6, session 1 (S1): worldgen data, reader and probes. S0, the AMPLIFIED speed-up, ran before it.
+>
+> Read, in this order:
+> 1. The newest voxel handoff: the first voxel handoff in `C:\dev\projects\Unnamed\Docs\Records\README.md`. That is S0's, which replaces the phase 6 handoff as the entry point.
+> 2. The phase 6 plan (`Docs/Records/2026-10-09-Voxel-Phase6-Plan.md`): sections 1, 3.1, 3.2 and 3.5, S1 in section 4, and Jesus's answers in section 9.
 > 3. The scout's research (`Docs/Records/2026-10-09-Voxel-Phase6-Scout-Research.md`): sections 1.1 and 5.
 >
 > Build S1 only:
@@ -617,8 +644,35 @@ The first phase 6 build session is S1:
 > - the feature probe harness, with the ore probes (check `Get-Process java, javaw, UnrealEditor*` before server runs);
 > - `FVoxelFeatureGraph` and its strict reader, with round-trip tests.
 >
-> Goldens and the radius-8 hashes must not change. Send the manager a short plan (files and why) before building. Report as the handoff's section 2 says, and measure your context at each checkpoint.
+> Goldens and the radius-8 hashes must not change. Feature seeds follow Jesus's answer 4: a stable hash of the placed feature's id, and the world seed for flower and noise-count patterns.
+>
+> Send the manager a short plan (files and why) before building. Report as the handoff's section 2 says, and measure your context at each checkpoint.
+>
+> After S1 the chain stops for Jesus's review: end with a handoff into S2 (the decoration core, with ores) and do not start S2.
 
-## 9. Jesus's answers
+## 9. Jesus's answers (October 9, 2026, just before 17:38)
 
-Not answered yet. The manager adds them here, or in a newer record, once Jesus has replied.
+Jesus answered every question by tap, through the day manager (Hemera). These are settled; treat them as decisions.
+
+**Phase 6 questions (section 6):**
+
+1. **Block shapes:** (a) generic baked models.
+2. **Templates and block entities:** (a) deferred to phase 7, with the template loader.
+3. **Springs:** (a) in the data, switched off by default.
+4. **Feature seeds:** (a) a stable hash of the placed feature's id, plus the world seed for flower and noise-count patterns.
+5. **Terrain slabs:** (b) their own session after phase 6.
+6. **Plant interaction:** (a) placement checked against the support tags, plus pop-when-unsupported, one level deep.
+7. **Items:** **(b) add the vanilla items now**, overriding the recommendation (a).
+   - This changes a project rule: `CLAUDE.md` says item id = block id, and these items have their own ids.
+   - S7 does the work (section 4). It updates the id rule in `CLAUDE.md` and `Docs/Blocks.md` as Jesus decided, adds the items as new saved ids, and never renames an existing id.
+8. **The R+3 ring:** (a) accept it and measure, with S3's gate.
+9. **Speed-up first:** (a) yes. S0 runs first.
+10. **Session order:** (a) section 4's order: data, the decoration core with ores, streaming, ore veins, then the block models, then the rest.
+11. **The 5 ms limit:** (a) the whole column (Generate, Decorate and Finalize), with each session's allowance and its flags (section 3.5).
+
+**Single Biome:** a non-overworld id refuses to open the world. The built default stays; the plains fallback is not taken.
+
+**Also decided, for the chain:**
+- The chain runs S0, then S1, then stops for Jesus's review before S2.
+- S0's commit also adds `Tests/Evidence/` and `logs/` to `.gitignore`; nothing is deleted.
+- Today's four look calls, made by the day manager under Jesus's delegation of October 9, stand.
