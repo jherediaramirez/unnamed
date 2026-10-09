@@ -113,6 +113,27 @@ namespace
     }
 }
 
+void VoxelMesher::GetSectionsTouching(const FIntVector& Cell, TArray<FVoxelSectionKey, TInlineAllocator<8>>& Out)
+{
+    static_assert(VoxelConstants::ColumnSize == 16 && VoxelConstants::SectionSize == 16, "Shifts divide by 16");
+    Out.Reset();
+    if (Cell.Z < VoxelConstants::MinZ || Cell.Z > VoxelConstants::MaxZ) return;
+    // Per axis: the cell's own index, and the neighbour on the side where the cell is that neighbour's border.
+    auto Indices = [](int32 Index, int32 Local, int32 First, int32 Last)
+    {
+        TArray<int32, TInlineAllocator<2>> Result = {Index};
+        if (Local == 0 && Index > First) Result.Add(Index - 1);
+        if (Local == 15 && Index < Last) Result.Add(Index + 1);
+        return Result;
+    };
+    const int32 LocalZ = Cell.Z - VoxelConstants::MinZ;
+    // Columns are unbounded; arithmetic shifts floor negative coordinates.
+    for (const int32 Y : Indices(Cell.Y >> 4, Cell.Y & 15, MIN_int32, MAX_int32))
+        for (const int32 X : Indices(Cell.X >> 4, Cell.X & 15, MIN_int32, MAX_int32))
+            for (const int32 Section : Indices(LocalZ >> 4, LocalZ & 15, 0, VoxelConstants::SectionCount - 1))
+                Out.Add({FIntPoint(X, Y), Section});
+}
+
 FVector2f VoxelMesher::GetCanonicalUV(int32 Face, const FVector3f& P)
 {
     switch (EVoxelFace(Face))

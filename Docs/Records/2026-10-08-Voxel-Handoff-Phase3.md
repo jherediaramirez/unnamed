@@ -1,5 +1,7 @@
 # Voxel world handoff: into phase 3 - October 8, 2026
 
+*Continued by [the phase 3 plan handoff](2026-10-08-Voxel-Handoff-Phase3-Plan.md): start there. It adds a code map, the proposed phase 3 plan with its test spec, and the risks. This record still holds the working agreement, the history, the open issues, the commands and the gotchas.*
+
 Read this first if you are picking up the voxel world (chunk loader and world generator) in a new chat. It replaces the [earlier handoff](2026-10-08-Voxel-Handoff.md) and covers the project, the working agreement, what each step did, the known issues with fixes, phase 3 and how to approach it, and where subagents help. Facts below were true at commit `4987cdb` (phase 2W). Check `git status`, `git log` and newer [records](README.md) before trusting them.
 
 ## 1. The project in one paragraph

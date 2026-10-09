@@ -1,0 +1,13 @@
+Seed -3224043261468865476 (text)
+Streaming: view radius 12 (545 columns in view, 657 generated), unload beyond 15, 30 workers, 60 jobs in flight
+  Generate columns: 657, mean 1.015 ms, worst 2.613 ms, total 667.0 ms
+  Mesh columns: 545, mean 1.407 ms, worst 3.607 ms, total 766.6 ms
+  Stream sets and Lumen cards: 545, mean 0.188 ms, worst 1.523 ms, total 102.3 ms
+  Quads 166376 (305 per column on screen); columns 10.3 KB each (6.6 MB total); mesh cache 1.3 MB
+  Lumen cards: 4822 (8.8 per column, most 29 of 32)
+  Apply: 545 columns in 46.10 ms over 27 frames, worst frame 1.99 ms; worst chunk work 2.09 ms (budget 2.0 ms)
+  Start to view on screen: 2430 ms (first frame to view: 602 ms over 28 frames); 545 chunk components hold 1877 sections; 0 results dropped
+  Lighting: r.DynamicGlobalIlluminationMethod 1, r.ReflectionMethod 1, r.Lumen.HardwareRayTracing 1 (ray tracing on), r.Lumen.HardwareRayTracing.LightingMode 0
+  GPU frame per shot, ms (mean of 60 settled frames at 1600 x 900): overview 3.32, closeup 3.37, ground 3.16, lumen-scene 3.95, section 3.07
+  World: none (the dev seed's test area)
+  Player: feet at V(X=50.00, Y=50.00, Z=6500.00), grounded; Survival Normal; spawn cell X=0 Y=0 Z=65, 0.0 cm from spawn

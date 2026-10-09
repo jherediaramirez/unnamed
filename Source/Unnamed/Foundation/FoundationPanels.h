@@ -5,6 +5,7 @@
 #include "FoundationPanels.generated.h"
 
 class AFoundationController;
+class AFoundationLab;
 class AFoundationPlayground;
 class SHudCreativeScreen;
 class SWidget;
@@ -36,7 +37,7 @@ public:
 private:
     AFoundationController* GetFoundationController() const;
     void Show(TSharedRef<SWidget> Content);
-    void OpenCreative(AFoundationPlayground& Playground);
+    void OpenCreative(AFoundationLab& Lab);
 
     TSharedPtr<SWidget> Root;
     TSharedPtr<SHudCreativeScreen> Creative;

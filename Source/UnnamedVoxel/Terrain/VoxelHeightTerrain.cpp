@@ -83,7 +83,8 @@ void FVoxelHeightTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArray
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelHeightTerrain_Generate);
     SCOPE_CYCLE_COUNTER(STAT_VoxelGenerateColumn);
-    Dense.SetNumZeroed(FVoxelColumn::DenseVolume);
+    // Init, not SetNumZeroed: callers reuse Dense, and SetNumZeroed clears only elements it adds.
+    Dense.Init(0, FVoxelColumn::DenseVolume);
     constexpr int32 Size = VoxelConstants::ColumnSize, SeaTop = VoxelConstants::SeaLevel - 1;
     for (int32 LocalY = 0; LocalY < Size; ++LocalY)
         for (int32 LocalX = 0; LocalX < Size; ++LocalX)

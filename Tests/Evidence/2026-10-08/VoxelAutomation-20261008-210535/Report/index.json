@@ -1,0 +1,991 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "JRHEREDIARAMIRE",
+			"instance": "982E8BB6452CA256B3025B911460BD1B",
+			"instanceName": "JRHEREDIARAMIRE-5200",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9550] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 4070 Ti SUPER",
+			"cPUModel": "Intel(R) Core(TM) i9-14900KF",
+			"rAMInGB": 64,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.09-01.05.57",
+	"succeeded": 24,
+	"succeededWithWarnings": 0,
+	"failed": 2,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 1.9708875417709351,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "Table",
+			"fullTestPath": "Unnamed.Voxel.Blocks.Table",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.025097601115703583,
+			"dateTime": "2026.10.09-01.05.55",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Threads",
+			"fullTestPath": "Unnamed.Voxel.Determinism.Threads",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.082565702497959137,
+			"dateTime": "2026.10.09-01.05.55",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "24000 jobs of 11 kinds, 8 threads x 2 passes, shuffled order",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.55"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Authority",
+			"fullTestPath": "Unnamed.Voxel.Edit.Authority",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.088010802865028381,
+			"dateTime": "2026.10.09-01.05.55",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Remesh",
+			"fullTestPath": "Unnamed.Voxel.Edit.Remesh",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.64778900146484375,
+			"dateTime": "2026.10.09-01.05.55",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "edit 4 (section border, mine): column (0, 0) section 7 (Z 48 to 63): layer 0 has 944 vertices, a fresh mesh has 948",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 437,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "edit 5 (column border, place): column (0, 0) section 7 (Z 48 to 63): layer 0 has 944 vertices, a fresh mesh has 948",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 437,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "edit 6 (column border, mine): column (0, 1) section 7 (Z 48 to 63): layer 0 has 572 vertices, a fresh mesh has 576",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 437,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "edit 7 (column corner, place): column (0, 1) section 7 (Z 48 to 63): layer 0 has 572 vertices, a fresh mesh has 576",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 437,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "edit 8 (column corner, mine): column (0, 1) section 7 (Z 48 to 63): layer 0 has 572 vertices, a fresh mesh has 576",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 437,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "edit 9 (corner on a section border, place): column (0, 1) section 7 (Z 48 to 63): layer 0 has 572 vertices, a fresh mesh has 576",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 437,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "edit 10 (corner on a section border, mine): column (0, 0) section 7 (Z 48 to 63): layer 0 has 984 vertices, a fresh mesh has 988",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 437,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "edit 10 (corner on a section border, mine): column (0, 1) section 6 (Z 32 to 47): the kept mesh is empty, a fresh mesh has 1 quads",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 437,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "edit 10 (corner on a section border, mine): column (0, 1) section 7 (Z 48 to 63): layer 0 has 572 vertices, a fresh mesh has 576",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 437,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "survival: after the reload: column (0, 0) meshes differ between before the unload (hash 7225b67ff8935e7a) and after the reload (hash 06f56ccb1ba03cf1), first in section 7",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "survival: after the reload: column (0, 1) meshes differ between before the unload (hash 23d58e39ad68525f) and after the reload (hash ed9525fe9c1c623c), first in section 6",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.09-01.05.55"
+				}
+			],
+			"warnings": 0,
+			"errors": 11,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Sections",
+			"fullTestPath": "Unnamed.Voxel.Edit.Sections",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.24876059591770172,
+			"dateTime": "2026.10.09-01.05.55",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "sections, section border, top of section 0: cell (8, 8, -49) is touched by 1 sections [(0, 0)#0], the definition gives 2 [(0, 0)#0 (0, 0)#1]",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "sections, section border, top of section 0: cell (8, 8, -49) is touched by 1 sections, expected 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "sections, column border, x = 15: cell (15, 8, -40) is touched by 1 sections [(0, 0)#1], the definition gives 2 [(0, 0)#1 (1, 0)#1]",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "sections, column border, x = 15: cell (15, 8, -40) is touched by 1 sections, expected 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "sections, column border, y = 15: cell (8, 15, -40) is touched by 1 sections [(0, 0)#1], the definition gives 2 [(0, 0)#1 (0, 1)#1]",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "sections, column border, y = 15: cell (8, 15, -40) is touched by 1 sections, expected 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "sections, column border, x = -1: cell (-1, 8, -40) is touched by 1 sections [(-1, 0)#1], the definition gives 2 [(-1, 0)#1 (0, 0)#1]",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "sections, column border, x = -1: cell (-1, 8, -40) is touched by 1 sections, expected 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "sections, column corner, 15 and 15: cell (15, 15, -40) is touched by 1 sections [(0, 0)#1], the definition gives 4 [(0, 0)#1 (1, 0)#1 (0, 1)#1 (1, 1)#1]",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "sections, column corner, 15 and 15: cell (15, 15, -40) is touched by 1 sections, expected 4",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "sections, column corner, 0 and 15: cell (0, 15, -40) is touched by 2 sections [(-1, 0)#1 (0, 0)#1], the definition gives 4 [(-1, 0)#1 (0, 0)#1 (-1, 1)#1 (0, 1)#1]",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "sections, column corner, 0 and 15: cell (0, 15, -40) is touched by 2 sections, expected 4",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.09-01.05.55"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Further errors are not listed.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\dev\\projects\\Unnamed\\Source\\Unnamed\\Tests\\VoxelEditTests.cpp",
+					"lineNumber": 70,
+					"timestamp": "2026.10.09-01.05.55"
+				}
+			],
+			"warnings": 0,
+			"errors": 13,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Borders",
+			"fullTestPath": "Unnamed.Voxel.Mesher.Borders",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.045220397412776947,
+			"dateTime": "2026.10.09-01.05.56",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "greedy: 26896 faces expected, 26422 quads drawn",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "per face: 26896 faces expected, 26896 quads drawn",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Cards",
+			"fullTestPath": "Unnamed.Voxel.Mesher.Cards",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.034342899918556213,
+			"dateTime": "2026.10.09-01.05.56",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Random blocks: 20 cards",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Shapes",
+			"fullTestPath": "Unnamed.Voxel.Mesher.Shapes",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.042733896523714066,
+			"dateTime": "2026.10.09-01.05.56",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Golden",
+			"fullTestPath": "Unnamed.Voxel.Noise.Golden",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.0081687010824680328,
+			"dateTime": "2026.10.09-01.05.56",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Grid",
+			"fullTestPath": "Unnamed.Voxel.Noise.Grid",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.0083860009908676147,
+			"dateTime": "2026.10.09-01.05.56",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Properties",
+			"fullTestPath": "Unnamed.Voxel.Noise.Properties",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.077964499592781067,
+			"dateTime": "2026.10.09-01.05.56",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Gradient noise 2D over 200000 points: peak 0.9935, mean 0.0006, deviation 0.3045",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Gradient noise 3D over 200000 points: peak 0.7747, mean 0.0002, deviation 0.2210",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Gradient error against finite differences 0.00108; largest jump across a lattice plane 0.000009",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "fBm deviation near the origin 0.1946, 30 million blocks out 0.1762; largest 0.01-block step near 0.00047, far 0.00047",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Correlation with another salt: 0.0032",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Correlation with the next seed: -0.0045",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Throughput",
+			"fullTestPath": "Unnamed.Voxel.Noise.Throughput",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.23339110612869263,
+			"dateTime": "2026.10.09-01.05.56",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Hash64 (x, y, z)                                     5.5 ns/sample    182.90 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Xoroshiro128++ next                                  1.7 ns/sample    600.42 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Gradient noise 2D, 1 octave                         15.2 ns/sample     65.85 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Gradient noise 3D, 1 octave                         36.0 ns/sample     27.76 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "fBm 2D, 6 octaves                                   85.8 ns/sample     11.66 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "fBm 3D, 4 octaves                                  134.4 ns/sample      7.44 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Ridged 2D, 6 octaves                                94.1 ns/sample     10.63 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Damped 2D, 6 octaves                               161.5 ns/sample      6.19 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Warped fBm 2D, 6 octaves                           155.1 ns/sample      6.45 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Spline, 3 nested levels                             57.3 ns/sample     17.44 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Column corners, 3D fBm 4 octaves (5x5x49)          130.7 ns/sample      7.65 M/s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "fBm 3D, 4 octaves, 30 workers                        9.3 ns/sample    107.06 M/s (all workers)",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Distribution",
+			"fullTestPath": "Unnamed.Voxel.Random.Distribution",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.016810696572065353,
+			"dateTime": "2026.10.09-01.05.56",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Seed",
+			"fullTestPath": "Unnamed.Voxel.Random.Seed",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.0083095990121364594,
+			"dateTime": "2026.10.09-01.05.56",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Vectors",
+			"fullTestPath": "Unnamed.Voxel.Random.Vectors",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.0083604007959365845,
+			"dateTime": "2026.10.09-01.05.56",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Hermite",
+			"fullTestPath": "Unnamed.Voxel.Spline.Hermite",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.0082699991762638092,
+			"dateTime": "2026.10.09-01.05.56",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Nested",
+			"fullTestPath": "Unnamed.Voxel.Spline.Nested",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.0085427016019821167,
+			"dateTime": "2026.10.09-01.05.56",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Column",
+			"fullTestPath": "Unnamed.Voxel.Storage.Column",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.0082342997193336487,
+			"dateTime": "2026.10.09-01.05.56",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Column memory: 9174 bytes",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.09-01.05.56"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Section",
+			"fullTestPath": "Unnamed.Voxel.Storage.Section",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.0083204023540019989,
+			"dateTime": "2026.10.09-01.05.56",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Pipeline",
+			"fullTestPath": "Unnamed.Voxel.Streaming.Pipeline",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.30993449687957764,
+			"dateTime": "2026.10.09-01.05.56",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Planner",
+			"fullTestPath": "Unnamed.Voxel.Streaming.Planner",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.011725999414920807,
+			"dateTime": "2026.10.09-01.05.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Flat",
+			"fullTestPath": "Unnamed.Voxel.Terrain.Flat",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.0080838985741138458,
+			"dateTime": "2026.10.09-01.05.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Generate",
+			"fullTestPath": "Unnamed.Voxel.Terrain.Generate",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.007814798504114151,
+			"dateTime": "2026.10.09-01.05.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Constants",
+			"fullTestPath": "Unnamed.Voxel.Constants",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.0083111003041267395,
+			"dateTime": "2026.10.09-01.05.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MeshBackend",
+			"fullTestPath": "Unnamed.Voxel.MeshBackend",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.0075737982988357544,
+			"dateTime": "2026.10.09-01.05.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Settings",
+			"fullTestPath": "Unnamed.Voxel.Settings",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"982E8BB6452CA256B3025B911460BD1B"
+			],
+			"duration": 0.0081638991832733154,
+			"dateTime": "2026.10.09-01.05.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

@@ -4,8 +4,10 @@
 #include "Generation/VoxelArea.h"
 #include "Modules/ModuleManager.h"
 #include "Random/VoxelSeed.h"
+#include "Streaming/VoxelStreamingPlanner.h"
 #include "Terrain/VoxelHeightTerrain.h"
 #include "Voxel/VoxelBlocks.h"
+#include "Voxel/VoxelFlyCamera.h"
 #include "Voxel/VoxelWorld.h"
 #include "Voxel/VoxelWorldSettings.h"
 #include "VoxelBench.h"
@@ -14,11 +16,9 @@
 
 // Defaults match UVoxelWorldSettings; the settings object overwrites them at startup.
 TAutoConsoleVariable<int32> VoxelConsole::CVarViewRadius(
-    TEXT("voxel.ViewRadius"), 12, TEXT("Columns kept loaded around the player, as a radius in 16-block columns."));
+    TEXT("voxel.ViewRadius"), 12, TEXT("Columns drawn around the camera, as a radius in 16-block columns."));
 TAutoConsoleVariable<int32> VoxelConsole::CVarUnloadMargin(
     TEXT("voxel.UnloadMargin"), 2, TEXT("Extra columns beyond the view radius before a column unloads (hysteresis)."));
-TAutoConsoleVariable<int32> VoxelConsole::CVarTestAreaRadius(
-    TEXT("voxel.TestAreaRadius"), 4, TEXT("Radius in columns of the fixed test area; 4 builds 9 x 9 columns."));
 TAutoConsoleVariable<float> VoxelConsole::CVarApplyBudgetMs(
     TEXT("voxel.ApplyBudgetMs"), 2.f, TEXT("Game-thread milliseconds per frame for applying finished chunk work."));
 TAutoConsoleVariable<int32> VoxelConsole::CVarMaxTasksInFlight(TEXT("voxel.MaxTasksInFlight"), 0,
@@ -27,6 +27,8 @@ TAutoConsoleVariable<bool> VoxelConsole::CVarAmbientOcclusion(
     TEXT("voxel.AmbientOcclusion"), true, TEXT("Per-vertex ambient occlusion in chunk meshes."));
 TAutoConsoleVariable<bool> VoxelConsole::CVarGreedyMeshing(TEXT("voxel.GreedyMeshing"), true,
     TEXT("Merge coplanar faces into larger quads; off emits one quad per face, for debugging."));
+TAutoConsoleVariable<bool> VoxelConsole::CVarEdgeWalls(TEXT("voxel.Debug.EdgeWalls"), false,
+    TEXT("Debug: mesh the columns at the edge of the view against air, showing the cut through the world."));
 
 int32 VoxelConsole::GetMaxTasksInFlight()
 {
@@ -57,10 +59,16 @@ FString VoxelConsole::DescribeInfo()
         Out += FString::Printf(TEXT("  %s = %s (set by %s)\n"), *Variable.Key, *Variable.Value->GetString(),
             GetConsoleVariableSetByName(Variable.Value->GetFlags()));
 
-    const int32 View = CVarViewRadius.GetValueOnAnyThread();
-    const int32 TestArea = CVarTestAreaRadius.GetValueOnAnyThread();
-    Out += FString::Printf(TEXT("  Load %d x %d columns, unload beyond radius %d; test area %d x %d columns\n"),
-        2 * View + 1, 2 * View + 1, View + CVarUnloadMargin.GetValueOnAnyThread(), 2 * TestArea + 1, 2 * TestArea + 1);
+    // The rings around a camera at the origin (Streaming/VoxelStreamingPlanner.h).
+    const FVoxelStreamingRings Rings(FIntPoint::ZeroValue, FMath::Clamp(CVarViewRadius.GetValueOnAnyThread(), 1, 64),
+        CVarUnloadMargin.GetValueOnAnyThread());
+    TArray<FIntPoint> Needed;
+    VoxelStreaming::GetNeededColumns(Rings, 0, Needed);
+    int32 InView = 0;
+    for (const FIntPoint Column : Needed)
+        InView += Rings.IsInView(Column);
+    Out += FString::Printf(TEXT("  View radius %d: %d columns in view, %d generated; unload beyond %d columns\n"),
+        Rings.ViewRadius, InView, Needed.Num(), Rings.GetUnloadDistance());
     Out += FString::Printf(TEXT("  Task workers %u, tasks in flight %d\n"),
         LowLevelTasks::FScheduler::Get().GetNumWorkers(), GetMaxTasksInFlight());
     Out += FString::Printf(TEXT("  Mesh backend: RealtimeMeshComponent (%s)"),
@@ -113,12 +121,25 @@ namespace
             }));
 
     FAutoConsoleCommandWithWorldAndArgs VoxelRegenerateCommand(TEXT("voxel.Regenerate"),
-        TEXT("Rebuilds the voxel world with its seed, picking up voxel.TestAreaRadius, voxel.GreedyMeshing and "
-             "voxel.AmbientOcclusion."),
+        TEXT("Rebuilds the voxel world with its seed, picking up voxel.GreedyMeshing and voxel.AmbientOcclusion."),
         FConsoleCommandWithWorldAndArgsDelegate::CreateLambda(
             [](const TArray<FString>&, UWorld* World)
             {
                 if (AVoxelWorld* Voxels = AVoxelWorld::Find(World)) Voxels->Regenerate(Voxels->GetSeed());
+            }));
+
+    FAutoConsoleCommandWithWorldAndArgs VoxelFlyCommand(TEXT("voxel.Fly"),
+        TEXT("voxel.Fly [blocks per second]: toggles a free camera detached from the player, who holds still; the "
+             "streaming follows the camera. W, A, S, D fly along the view, Space and Left Ctrl rise and sink, Left "
+             "Shift goes four times as fast. Default 40 blocks per second; a speed while flying changes it."),
+        FConsoleCommandWithWorldAndArgsDelegate::CreateLambda(
+            [](const TArray<FString>& Args, UWorld* World)
+            {
+                const double Speed = Args.IsEmpty() ? 0. : FMath::Clamp(FCString::Atod(*Args[0]), 0., 10000.);
+                const AVoxelFlyCamera* Fly = AVoxelFlyCamera::Toggle(World, Speed);
+                UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"),
+                    Fly ? *FString::Printf(TEXT("voxel.Fly: flying at %.0f blocks per second"), Fly->BlocksPerSecond)
+                        : TEXT("voxel.Fly: back to the player"));
             }));
 
     FAutoConsoleCommand VoxelBenchCommand(TEXT("voxel.Bench"),

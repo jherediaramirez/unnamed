@@ -444,11 +444,11 @@ namespace
     }
 }
 
-void UFoundationPanels::OpenCreative(AFoundationPlayground& Playground)
+void UFoundationPanels::OpenCreative(AFoundationLab& Lab)
 {
     AFoundationController* Controller = GetFoundationController();
     AFoundationPawn* Pawn = Controller->GetFoundationPawn();
-    FFoundationAuthority& Authority = *Playground.GetAuthority();
+    FFoundationAuthority& Authority = *Lab.GetAuthority();
     const TSharedRef<const FFoundationBlockRegistry> Registry = Authority.World.GetRegistryRef();
     // Everything the player could hold: names, stack sizes and the placed block's tags for "#" search.
     FHudCreativeItems Items;
@@ -461,7 +461,7 @@ void UFoundationPanels::OpenCreative(AFoundationPlayground& Playground)
             for (const FGameplayTag& Tag : Block->Tags)
                 Entry.Tags.Add(VanillaTagName(Tag));
     }
-    const TWeakObjectPtr<AFoundationPlayground> WeakLab = &Playground;
+    const TWeakObjectPtr<AFoundationLab> WeakLab = &Lab;
     const TWeakObjectPtr<AFoundationPawn> WeakPawn = Pawn;
     const TWeakObjectPtr<UFoundationPanels> WeakThis = this;
     // clang-format off
@@ -473,8 +473,8 @@ void UFoundationPanels::OpenCreative(AFoundationPlayground& Playground)
         {
             TArray<FHudCreativeStack> Stacks;
             Stacks.SetNum(FFoundationInventory::HotbarSlots + 1);
-            if (!WeakLab.IsValid() || !WeakPawn.IsValid()) return Stacks;
-            const FFoundationAuthority& A = WeakLab->GetAuthorityState();
+            if (!WeakLab.IsValid() || !WeakPawn.IsValid() || !WeakLab->GetAuthority()) return Stacks;
+            const FFoundationAuthority& A = *WeakLab->GetAuthority();
             const FFoundationPlayer* Player = A.FindPlayer(WeakPawn->Interaction.PlayerId);
             if (!Player) return Stacks;
             auto Stack = [&A](const FFoundationItemInstance& Item)
@@ -486,7 +486,7 @@ void UFoundationPanels::OpenCreative(AFoundationPlayground& Playground)
         })
         .OnWrite([WeakLab, WeakPawn](const FHudCreativeWrite& Write)
         {
-            if (WeakLab.IsValid() && WeakPawn.IsValid())
+            if (WeakLab.IsValid() && WeakPawn.IsValid() && WeakLab->GetAuthority())
                 WeakPawn->Interaction.SetCreativeSlot(*WeakLab->GetAuthority(), WeakPawn->Vitals, Write.Slot,
                     Write.Stack.Item, Write.Stack.Count);
         })
@@ -515,9 +515,11 @@ void UFoundationPanels::OpenInventory()
     GetFoundationController()->Actions.Dispatch(Request);
     if (bOpen) Close();
     if (AFoundationPawn* Pawn = GetFoundationController()->GetFoundationPawn())
-        if (auto* Playground = Cast<AFoundationPlayground>(Pawn->GetLab()))
+        // Any lab whose authority allows creative writes: the Playground, a Creative generated world.
+        if (AFoundationLab* Lab = Pawn->GetLab();
+            Lab && Lab->GetAuthority() && Lab->GetAuthority()->Options.bCreativeInventory)
         {
-            OpenCreative(*Playground);
+            OpenCreative(*Lab);
             return;
         }
     const TWeakObjectPtr<UFoundationPanels> WeakThis = this;

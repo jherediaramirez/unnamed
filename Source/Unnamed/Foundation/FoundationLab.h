@@ -53,8 +53,9 @@ public:
     // Nearest primitive along the view ray, with reach checked against the profile.
     virtual FFoundationTarget TraceTarget(FVector Eye, FVector Direction, const UFoundationProfile& Profile) const;
     // Eyes: strictly below a water surface. Body: overlapping water by more than a touch.
-    bool IsInWater(FVector Point) const;
-    bool IsInWater(const FBox& Body) const;
+    // The lab's water boxes; generated worlds answer from their blocks.
+    virtual bool IsInWater(FVector Point) const;
+    virtual bool IsInWater(const FBox& Body) const;
     // The movement collision provider: every box that can touch Region. This lab's immutable cuboids;
     // the Playground adds its committed blocks.
     virtual void GatherCollision(const FBox& Region, TArray<FBox>& Out) const;
@@ -71,6 +72,8 @@ public:
     virtual void ConfigurePlayer(FFoundationVitals&) const {}
 
 protected:
+    // A lab with an authority aims through it: blocks, statics and targets, as the authority resolves them.
+    static FFoundationTarget TraceAuthority(const FFoundationAuthority& Authority, FVector Eye, FVector Direction);
     // A solid, immutable cuboid with an optional caption. The Playground overrides this so every solid is
     // also an interaction static: targetable, occluding and, when grid aligned, a placement anchor.
     virtual void AddSolid(const FString& Label, FVector Minimum, FVector Maximum, FLinearColor Color, bool bCaption);

@@ -104,10 +104,16 @@ FFoundationBlockWorld::FFoundationBlockWorld()
 {
 }
 
+void FFoundationBlockWorld::SetStorage(TUniquePtr<IFoundationBlockStorage> NewStorage)
+{
+    check(NewStorage.IsValid());
+    Storage = MoveTemp(NewStorage);
+}
+
 bool FFoundationBlockWorld::IsKnown(const FIntVector& Cell) const
 {
     return Cell.X >= BoundsMin.X && Cell.Y >= BoundsMin.Y && Cell.Z >= BoundsMin.Z && Cell.X <= BoundsMax.X &&
-        Cell.Y <= BoundsMax.Y && Cell.Z <= BoundsMax.Z;
+        Cell.Y <= BoundsMax.Y && Cell.Z <= BoundsMax.Z && Storage->IsLoaded(Cell);
 }
 
 FFoundationCell FFoundationBlockWorld::Get(const FIntVector& Cell) const

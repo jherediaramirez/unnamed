@@ -12,8 +12,8 @@ How the project fits together. Foundation-specific movement, input and diagnosti
 | `Source/Unnamed/Foundation/` | The first-person pawn, controller parts, pure simulation, player vitals (health, food, air, XP, attack recovery), lab geometry (`AFoundationLab`, and the Playground in `AFoundationPlayground`), runtime probe; the Playground's block world, items, targeting, authority, interaction state and presentation; the 26.3 block registry, placement rules, block meshes and texture animation ([Blocks](Blocks.md)). |
 | `Source/Unnamed/Hud/` | Native Slate HUD, pure layout/selection, cooked sprite metadata and the Foundation adapter (player vitals by default, an opt-in preview fixture); the creative inventory screen and 3D block item icons. |
 | `Source/Unnamed/Worlds/` | Saved worlds from Create New World: the `UnnamedSavedWorlds` store (`Saved/Worlds/<id>/world.json`, ids, draft checks) ([Voxel world](VoxelWorld.md#saved-worlds)). The world catalog stays in `UnnamedProjectSettings`. |
-| `Source/Unnamed/Voxel/` | The voxel world's Unreal side ([Voxel world](VoxelWorld.md)): `UVoxelWorldSettings`, the `voxel.*` console, the registry-to-table bridge, the column mesh `UVoxelChunkComponent`, and `AVoxelWorld`, the level actor of `/Game/Maps/L_Generated`. |
-| `Source/UnnamedVoxel/` | The second module: the voxel world's plain C++ core (generation, storage, meshing). It depends on `Core` only and compiles with precise floating point. |
+| `Source/Unnamed/Voxel/` | The voxel world's Unreal side ([Voxel world](VoxelWorld.md)): `UVoxelWorldSettings`, the `voxel.*` console, the registry-to-table bridge, the column mesh `UVoxelChunkComponent`, the streaming subsystem `UVoxelWorldSubsystem` with its column pipeline `FVoxelColumnPipeline`, the storage adapter `FVoxelBlockStorage`, the `voxel.Fly` camera and the acceptance flight, and `AVoxelWorld`, the level actor of `/Game/Maps/L_Generated`. |
+| `Source/UnnamedVoxel/` | The second module: the voxel world's plain C++ core (generation, storage, meshing, the streaming planner). It depends on `Core` only and compiles with precise floating point. |
 | `Source/Unnamed/Tests/` | Native automation tests, one file per area (`Unnamed.<Area>.*`). |
 | `Plugins/RealtimeMeshComponent/` | Vendored MIT RealtimeMeshComponent Core at a pinned commit, for chunk meshes; never edited ([Voxel world](VoxelWorld.md#realtimemeshcomponent)). |
 | `MenuWeb/` | Menu generator (`AdaptMenu.mjs` + `Patches/`) and the JavaScript shipped inside the page (`Runtime/`). |
@@ -28,9 +28,20 @@ How the project fits together. Foundation-specific movement, input and diagnosti
 
 `/Game/Menu/L_Menu` uses `AMenuGameMode` and `AMenuPlayerController`: no pawn or HUD, just the menu. `/Game/Maps/L_Playground` uses `AFoundationGameMode` and `AFoundationController` with one placed `AFoundationPlayground` (the 2 km dev-grid ground, the starter-block stations, the block gallery and the movement course; see [Foundation architecture](Foundation/Architecture.md#playground-block-interaction) and [Playground](Playground.md)). It is the only world in the catalog.
 
-`/Game/Maps/L_Generated` (`UUnnamedProjectSettings::GeneratedMap`, not in the catalog) uses the same Foundation game mode with one placed `AVoxelWorld`. Every saved world opens it as `L_Generated?VoxelWorld=<id>`. That actor is the map's `AFoundationLab`: it builds the world's terrain from the saved seed and type, gives the pawn its collision and spawn from block data, and gives it the world's game mode and difficulty through `AFoundationLab::ConfigurePlayer` ([Voxel world](VoxelWorld.md#the-test-area)).
+`/Game/Maps/L_Generated` (`UUnnamedProjectSettings::GeneratedMap`, not in the catalog) uses the same Foundation game mode with one placed `AVoxelWorld`. Every saved world opens it as `L_Generated?VoxelWorld=<id>`. That actor is the map's `AFoundationLab`: it streams the world's terrain, built from the saved seed and type, around the player, gives the pawn its collision and spawn from block data, owns the authority for mining and placing, and gives the pawn the world's game mode and difficulty through `AFoundationLab::ConfigurePlayer` ([below](#voxel-world-streaming)).
 
 Neither gameplay controller inherits from the menu controller. Any controller that needs the menu adds a `UMenuBrowserHost` component: the menu controller shows it on BeginPlay; the Foundation controller shows it as the pause menu and adds its own `foundationmenu` bridge. Only the Foundation controller adds diagnostics (input router, HUD, panels), so the plain menu map has no F3 overlay or input preprocessor.
+
+## Voxel world streaming
+
+`AVoxelWorld` starts `UVoxelWorldSubsystem`, and the two split the work ([Voxel world](VoxelWorld.md#streaming)):
+
+- **`UVoxelWorldSubsystem`** is the game-thread driver. Each tick it takes the player's camera as the focus and does three things within `voxel.ApplyBudgetMs`: plan (the core's planner, `Source/UnnamedVoxel/Streaming/`, pure functions, decides which columns to load and unload), start jobs, and apply finished meshes to pooled `UVoxelChunkComponent`s.
+- **`FVoxelColumnPipeline`** is plain C++ with no UObjects, so tests drive it without a world. It owns one record per column: the data, the `UE::Tasks` jobs (generate, then mesh once the 3 x 3 neighbourhood exists), the section mesh cache near the center, and the column's edit list.
+- **`AVoxelWorld`**, the lab, holds the saved world and its terrain, reads the pipeline's columns for collision, spawn and water, and owns the `FFoundationAuthority`.
+- **`FVoxelBlockStorage`** is an `IFoundationBlockStorage` over the pipeline, which the authority's block world takes through `SetStorage`. A cell is loaded when its column is generated. A write goes to the pipeline's `SetCell`, which copies the column and marks the touched sections dirty; the pipeline then remeshes them.
+
+Targeting, mining, placing, the HUD and the creative inventory stay the Foundation's own code ([Foundation architecture](Foundation/Architecture.md#playground-block-interaction)). The interaction view presents the outline, cracks, held item and effects, while the chunk meshes draw the blocks.
 
 ## Menu host and native services
 

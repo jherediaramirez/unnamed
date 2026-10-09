@@ -1,0 +1,22 @@
+Seed -3224043261468865476 (text)
+Streaming: view radius 12 (545 columns in view, 657 generated), unload beyond 15, 30 workers, 60 jobs in flight
+  Generate columns: 657, mean 1.004 ms, worst 2.622 ms, total 659.5 ms
+  Mesh columns: 545, mean 1.193 ms, worst 3.403 ms, total 650.3 ms
+  Stream sets and Lumen cards: 545, mean 0.178 ms, worst 1.430 ms, total 96.9 ms
+  Quads 154167 (283 per column on screen); columns 10.3 KB each (6.6 MB total); mesh cache 1.3 MB
+  Lumen cards: 3943 (7.2 per column, most 13 of 32)
+  Apply: 545 columns in 44.14 ms over 30 frames, worst frame 1.65 ms; worst chunk work 1.67 ms (budget 2.0 ms)
+  Start to view on screen: 1652 ms (first frame to view: 484 ms over 31 frames); 545 chunk components hold 1376 sections; 0 results dropped
+Flight: 16736 frames over 99.9 s at 180 blocks altitude; circle radius 288 blocks; chunk work budget 2.0 ms
+  hover: 2.4 s at 0 blocks/s, 346 frames; chunk work mean 0.01 ms, worst 1.57 ms, 0 over budget; holes in 0 frames (most 0), late columns in 0 (most 0); applied 22, generated 0 columns, jobs at most 0; process 3177 -> 3304 MB, columns 6.62 -> 6.62 MB, cache 1.27 MB
+  east 20: 8.0 s at 20 blocks/s, 1384 frames; chunk work mean 0.02 ms, worst 1.75 ms, 0 over budget; holes in 0 frames (most 0), late columns in 21 (most 25); applied 243, generated 290 columns, jobs at most 29; process 3304 -> 3228 MB, columns 6.62 -> 7.34 MB, cache 0.00 MB
+  east 40: 8.0 s at 40 blocks/s, 1363 frames; chunk work mean 0.04 ms, worst 1.68 ms, 0 over budget; holes in 0 frames (most 0), late columns in 41 (most 25); applied 540, generated 551 columns, jobs at most 29; process 3228 -> 3220 MB, columns 7.34 -> 7.39 MB, cache 0.00 MB
+  east 80: 8.2 s at 80 blocks/s, 1333 frames; chunk work mean 0.08 ms, worst 1.81 ms, 0 over budget; holes in 0 frames (most 0), late columns in 88 (most 25); applied 1080, generated 1160 columns, jobs at most 29; process 3220 -> 3226 MB, columns 7.09 -> 7.30 MB, cache 0.00 MB
+  east 160: 6.2 s at 160 blocks/s, 973 frames; chunk work mean 0.14 ms, worst 1.72 ms, 0 over budget; holes in 0 frames (most 0), late columns in 125 (most 25); applied 1620, generated 1740 columns, jobs at most 29; process 3226 -> 3231 MB, columns 7.30 -> 7.06 MB, cache 0.00 MB
+  circle 1: 22.6 s at 80 blocks/s, 3781 frames; chunk work mean 0.08 ms, worst 1.77 ms, 0 over budget; holes in 0 frames (most 0), late columns in 292 (most 33); applied 3067, generated 3359 columns, jobs at most 37; process 3231 -> 3230 MB, columns 7.06 -> 7.11 MB, cache 0.00 MB
+  circle 2: 22.8 s at 80 blocks/s, 3762 frames; chunk work mean 0.08 ms, worst 1.74 ms, 0 over budget; holes in 0 frames (most 0), late columns in 297 (most 33); applied 3071, generated 3360 columns, jobs at most 38; process 3230 -> 3233 MB, columns 6.81 -> 7.11 MB, cache 0.00 MB
+  circle 3: 22.6 s at 80 blocks/s, 3794 frames; chunk work mean 0.08 ms, worst 1.73 ms, 0 over budget; holes in 0 frames (most 0), late columns in 291 (most 33); applied 3070, generated 3360 columns, jobs at most 37; process 3233 -> 3238 MB, columns 7.11 -> 7.11 MB, cache 0.00 MB
+Holes: none
+Late columns in the fog's fade: 1155 frames, at most 33 columns
+Chunk work: worst 1.81 ms (east 80), 0 of 16736 frames over the 2.0 ms budget
+Memory over laps 2 and 3: process 3230 -> 3238 MB, columns 6.81 -> 7.11 MB

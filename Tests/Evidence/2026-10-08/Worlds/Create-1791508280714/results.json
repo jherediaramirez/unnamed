@@ -1,0 +1,711 @@
+{
+  "evidence": "Create New World through CEF and the native bridge",
+  "checks": [
+    {
+      "name": "A fresh profile lists only the built-in Playground",
+      "pass": true,
+      "detail": [
+        "playground"
+      ]
+    },
+    {
+      "name": "Hello World: the draft holds the choices",
+      "pass": true,
+      "detail": {
+        "name": "Hello World",
+        "gameMode": "Survival",
+        "difficulty": "Normal",
+        "commands": false,
+        "type": "Default",
+        "seed": "hello",
+        "structures": true,
+        "bonus": false,
+        "biome": "minecraft:plains",
+        "flatBiome": "minecraft:plains",
+        "flat": [
+          {
+            "block": "minecraft:grass_block",
+            "height": 1
+          },
+          {
+            "block": "minecraft:dirt",
+            "height": 2
+          },
+          {
+            "block": "minecraft:bedrock",
+            "height": 1
+          }
+        ],
+        "experiments": {},
+        "rules": {
+          "advance_time": true,
+          "advance_weather": true,
+          "allow_entering_nether_using_portals": true,
+          "block_drops": true,
+          "block_explosion_drop_decay": true,
+          "command_blocks_work": true,
+          "command_block_output": true,
+          "drowning_damage": true,
+          "elytra_movement_check": true,
+          "ender_pearls_vanish_on_death": true,
+          "entity_drops": true,
+          "fall_damage": true,
+          "fire_damage": true,
+          "fire_spread_radius_around_player": 128,
+          "forgive_dead_players": true,
+          "freeze_damage": true,
+          "global_sound_events": true,
+          "immediate_respawn": false,
+          "keep_inventory": false,
+          "lava_source_conversion": false,
+          "limited_crafting": false,
+          "locator_bar": true,
+          "log_admin_commands": true,
+          "max_block_modifications": 32768,
+          "max_command_forks": 65536,
+          "max_command_sequence_length": 65536,
+          "max_entity_cramming": 24,
+          "max_minecart_speed": 8,
+          "max_snow_accumulation_height": 1,
+          "mob_drops": true,
+          "mob_explosion_drop_decay": true,
+          "mob_griefing": true,
+          "natural_health_regeneration": true,
+          "player_movement_check": true,
+          "players_nether_portal_creative_delay": 0,
+          "players_nether_portal_default_delay": 80,
+          "players_sleeping_percentage": 100,
+          "projectiles_can_break_blocks": true,
+          "pvp": true,
+          "raids": true,
+          "random_tick_speed": 3,
+          "reduced_debug_info": false,
+          "respawn_radius": 10,
+          "send_command_feedback": true,
+          "show_advancement_messages": true,
+          "show_death_messages": true,
+          "spawner_blocks_work": true,
+          "spawn_mobs": true,
+          "spawn_monsters": true,
+          "spawn_patrols": true,
+          "spawn_phantoms": true,
+          "spawn_wandering_traders": true,
+          "spawn_wardens": true,
+          "spectators_generate_chunks": true,
+          "spread_vines": true,
+          "tnt_explodes": true,
+          "tnt_explosion_drop_decay": false,
+          "universal_anger": false,
+          "water_source_conversion": true
+        }
+      }
+    },
+    {
+      "name": "Hello World: the world ran and closed normally",
+      "pass": true,
+      "detail": "{\"code\":0,\"signal\":null}"
+    },
+    {
+      "name": "world.json: the draft as created",
+      "pass": true,
+      "detail": {
+        "version": 1,
+        "generator": 1,
+        "name": "Hello World",
+        "seed": "hello",
+        "gameMode": "Survival",
+        "difficulty": "Normal",
+        "commands": false,
+        "type": "Default",
+        "structures": true,
+        "bonus": false,
+        "biome": "minecraft:plains",
+        "flatBiome": "minecraft:plains",
+        "flat": [
+          {
+            "block": "minecraft:grass_block",
+            "height": 1
+          },
+          {
+            "block": "minecraft:dirt",
+            "height": 2
+          },
+          {
+            "block": "minecraft:bedrock",
+            "height": 1
+          }
+        ],
+        "experiments": {},
+        "rules": {
+          "advance_time": true,
+          "advance_weather": true,
+          "allow_entering_nether_using_portals": true,
+          "block_drops": true,
+          "block_explosion_drop_decay": true,
+          "command_blocks_work": true,
+          "command_block_output": true,
+          "drowning_damage": true,
+          "elytra_movement_check": true,
+          "ender_pearls_vanish_on_death": true,
+          "entity_drops": true,
+          "fall_damage": true,
+          "fire_damage": true,
+          "fire_spread_radius_around_player": 128,
+          "forgive_dead_players": true,
+          "freeze_damage": true,
+          "global_sound_events": true,
+          "immediate_respawn": false,
+          "keep_inventory": false,
+          "lava_source_conversion": false,
+          "limited_crafting": false,
+          "locator_bar": true,
+          "log_admin_commands": true,
+          "max_block_modifications": 32768,
+          "max_command_forks": 65536,
+          "max_command_sequence_length": 65536,
+          "max_entity_cramming": 24,
+          "max_minecart_speed": 8,
+          "max_snow_accumulation_height": 1,
+          "mob_drops": true,
+          "mob_explosion_drop_decay": true,
+          "mob_griefing": true,
+          "natural_health_regeneration": true,
+          "player_movement_check": true,
+          "players_nether_portal_creative_delay": 0,
+          "players_nether_portal_default_delay": 80,
+          "players_sleeping_percentage": 100,
+          "projectiles_can_break_blocks": true,
+          "pvp": true,
+          "raids": true,
+          "random_tick_speed": 3,
+          "reduced_debug_info": false,
+          "respawn_radius": 10,
+          "send_command_feedback": true,
+          "show_advancement_messages": true,
+          "show_death_messages": true,
+          "spawner_blocks_work": true,
+          "spawn_mobs": true,
+          "spawn_monsters": true,
+          "spawn_patrols": true,
+          "spawn_phantoms": true,
+          "spawn_wandering_traders": true,
+          "spawn_wardens": true,
+          "spectators_generate_chunks": true,
+          "spread_vines": true,
+          "tnt_explodes": true,
+          "tnt_explosion_drop_decay": false,
+          "universal_anger": false,
+          "water_source_conversion": true
+        },
+        "seedValue": "1656767905311477007",
+        "created": "2026-10-09T01:11:37.910Z",
+        "lastPlayed": "2026-10-09T01:11:37.910Z"
+      }
+    },
+    {
+      "name": "The world was built from its saved seed",
+      "pass": true,
+      "detail": "Seed 1656767905311477007 (text)"
+    },
+    {
+      "name": "The world report names the saved world",
+      "pass": true,
+      "detail": "Seed 1656767905311477007 (text)\nStreaming: view radius 12 (545 columns in view, 657 generated), unload beyond 15, 30 workers, 60 jobs in flight\n  Generate columns: 657, mean 1.051 ms, worst 2.603 ms, total 690.5 ms\n  Mesh columns: 545, mean 1.350 ms, worst 5.358 ms, total 735.7 ms\n  Stream sets and Lumen cards: 545, mean 0.181 ms, worst 1.731 ms, total 98.7 ms\n  Quads 150103 (275 per column on screen); columns 10.2 KB each (6.6 MB total); mesh cache 1.5 MB\n  Lumen cards: 3901 (7.2 per column, most 15 of 32)\n  Apply: 545 columns in 60.92 ms over 42 frames, worst frame 1.70 ms; worst chunk work 1.71 ms (budget 2.0 ms)\n  Start to view on screen: 698 ms (first frame to view: 545 ms over 43 frames); 545 chunk components hold 1370 sections; 0 results dropped\n  Lighting: r.DynamicGlobalIlluminationMethod 1, r.ReflectionMethod 1, r.Lumen.HardwareRayTracing 1 (ray tracing on), r.Lumen.HardwareRayTracing.LightingMode 0\n  GPU frame per shot, ms (mean of 60 settled frames at 1280 x 720): overview 4.14, closeup 5.40, ground 4.27, lumen-scene 5.18, section 4.22\n  World: hello-world \"Hello World\", Default, Survival, Normal\n  Player: feet at V(X=50.00, Y=50.00, Z=6400.00), grounded; Survival Normal; spawn cell X=0 Y=0 Z=64, 0.0 cm from spawn\n"
+    },
+    {
+      "name": "The player plays it in Survival on Normal, on the ground",
+      "pass": true,
+      "detail": "Seed 1656767905311477007 (text)\nStreaming: view radius 12 (545 columns in view, 657 generated), unload beyond 15, 30 workers, 60 jobs in flight\n  Generate columns: 657, mean 1.051 ms, worst 2.603 ms, total 690.5 ms\n  Mesh columns: 545, mean 1.350 ms, worst 5.358 ms, total 735.7 ms\n  Stream sets and Lumen cards: 545, mean 0.181 ms, worst 1.731 ms, total 98.7 ms\n  Quads 150103 (275 per column on screen); columns 10.2 KB each (6.6 MB total); mesh cache 1.5 MB\n  Lumen cards: 3901 (7.2 per column, most 15 of 32)\n  Apply: 545 columns in 60.92 ms over 42 frames, worst frame 1.70 ms; worst chunk work 1.71 ms (budget 2.0 ms)\n  Start to view on screen: 698 ms (first frame to view: 545 ms over 43 frames); 545 chunk components hold 1370 sections; 0 results dropped\n  Lighting: r.DynamicGlobalIlluminationMethod 1, r.ReflectionMethod 1, r.Lumen.HardwareRayTracing 1 (ray tracing on), r.Lumen.HardwareRayTracing.LightingMode 0\n  GPU frame per shot, ms (mean of 60 settled frames at 1280 x 720): overview 4.14, closeup 5.40, ground 4.27, lumen-scene 5.18, section 4.22\n  World: hello-world \"Hello World\", Default, Survival, Normal\n  Player: feet at V(X=50.00, Y=50.00, Z=6400.00), grounded; Survival Normal; spawn cell X=0 Y=0 Z=64, 0.0 cm from spawn\n"
+    },
+    {
+      "name": "The list is the Playground, then the save",
+      "pass": true,
+      "detail": [
+        "playground",
+        "hello-world"
+      ]
+    },
+    {
+      "name": "The save shows its folder, date and mode",
+      "pass": true,
+      "detail": "Hello World\nhello-world (10/8/26, 9:11 PM)\nSurvival Mode"
+    },
+    {
+      "name": "The last played save is selected",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Built-in world: no selectWorld.edit",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Built-in world: no selectWorld.delete",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Built-in world: no selectWorld.recreate",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Saved world: selectWorld.edit",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Saved world: selectWorld.delete",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Saved world: selectWorld.recreate",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Re-Create starts from the saved settings and seed",
+      "pass": true,
+      "detail": {
+        "name": "Hello World",
+        "gameMode": "Survival",
+        "difficulty": "Normal",
+        "commands": false,
+        "type": "Default",
+        "seed": "hello",
+        "structures": true,
+        "bonus": false,
+        "biome": "minecraft:plains",
+        "flatBiome": "minecraft:plains",
+        "flat": [
+          {
+            "block": "minecraft:grass_block",
+            "height": 1
+          },
+          {
+            "block": "minecraft:dirt",
+            "height": 2
+          },
+          {
+            "block": "minecraft:bedrock",
+            "height": 1
+          }
+        ],
+        "experiments": {},
+        "rules": {
+          "advance_time": true,
+          "advance_weather": true,
+          "allow_entering_nether_using_portals": true,
+          "block_drops": true,
+          "block_explosion_drop_decay": true,
+          "command_blocks_work": true,
+          "command_block_output": true,
+          "drowning_damage": true,
+          "elytra_movement_check": true,
+          "ender_pearls_vanish_on_death": true,
+          "entity_drops": true,
+          "fall_damage": true,
+          "fire_damage": true,
+          "fire_spread_radius_around_player": 128,
+          "forgive_dead_players": true,
+          "freeze_damage": true,
+          "global_sound_events": true,
+          "immediate_respawn": false,
+          "keep_inventory": false,
+          "lava_source_conversion": false,
+          "limited_crafting": false,
+          "locator_bar": true,
+          "log_admin_commands": true,
+          "max_block_modifications": 32768,
+          "max_command_forks": 65536,
+          "max_command_sequence_length": 65536,
+          "max_entity_cramming": 24,
+          "max_minecart_speed": 8,
+          "max_snow_accumulation_height": 1,
+          "mob_drops": true,
+          "mob_explosion_drop_decay": true,
+          "mob_griefing": true,
+          "natural_health_regeneration": true,
+          "player_movement_check": true,
+          "players_nether_portal_creative_delay": 0,
+          "players_nether_portal_default_delay": 80,
+          "players_sleeping_percentage": 100,
+          "projectiles_can_break_blocks": true,
+          "pvp": true,
+          "raids": true,
+          "random_tick_speed": 3,
+          "reduced_debug_info": false,
+          "respawn_radius": 10,
+          "send_command_feedback": true,
+          "show_advancement_messages": true,
+          "show_death_messages": true,
+          "spawner_blocks_work": true,
+          "spawn_mobs": true,
+          "spawn_monsters": true,
+          "spawn_patrols": true,
+          "spawn_phantoms": true,
+          "spawn_wandering_traders": true,
+          "spawn_wardens": true,
+          "spectators_generate_chunks": true,
+          "spread_vines": true,
+          "tnt_explodes": true,
+          "tnt_explosion_drop_decay": false,
+          "universal_anger": false,
+          "water_source_conversion": true
+        }
+      }
+    },
+    {
+      "name": "Edit renames the save natively; its id stays",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Flat Test: the draft holds the choices",
+      "pass": true,
+      "detail": {
+        "name": "Flat Test",
+        "gameMode": "Creative",
+        "difficulty": "Peaceful",
+        "commands": true,
+        "type": "Superflat",
+        "seed": "",
+        "structures": true,
+        "bonus": false,
+        "biome": "minecraft:plains",
+        "flatBiome": "minecraft:plains",
+        "flat": [
+          {
+            "block": "minecraft:grass_block",
+            "height": 1
+          },
+          {
+            "block": "minecraft:dirt",
+            "height": 2
+          },
+          {
+            "block": "minecraft:bedrock",
+            "height": 1
+          }
+        ],
+        "experiments": {},
+        "rules": {
+          "advance_time": true,
+          "advance_weather": true,
+          "allow_entering_nether_using_portals": true,
+          "block_drops": true,
+          "block_explosion_drop_decay": true,
+          "command_blocks_work": true,
+          "command_block_output": true,
+          "drowning_damage": true,
+          "elytra_movement_check": true,
+          "ender_pearls_vanish_on_death": true,
+          "entity_drops": true,
+          "fall_damage": true,
+          "fire_damage": true,
+          "fire_spread_radius_around_player": 128,
+          "forgive_dead_players": true,
+          "freeze_damage": true,
+          "global_sound_events": true,
+          "immediate_respawn": false,
+          "keep_inventory": false,
+          "lava_source_conversion": false,
+          "limited_crafting": false,
+          "locator_bar": true,
+          "log_admin_commands": true,
+          "max_block_modifications": 32768,
+          "max_command_forks": 65536,
+          "max_command_sequence_length": 65536,
+          "max_entity_cramming": 24,
+          "max_minecart_speed": 8,
+          "max_snow_accumulation_height": 1,
+          "mob_drops": true,
+          "mob_explosion_drop_decay": true,
+          "mob_griefing": true,
+          "natural_health_regeneration": true,
+          "player_movement_check": true,
+          "players_nether_portal_creative_delay": 0,
+          "players_nether_portal_default_delay": 80,
+          "players_sleeping_percentage": 100,
+          "projectiles_can_break_blocks": true,
+          "pvp": true,
+          "raids": true,
+          "random_tick_speed": 3,
+          "reduced_debug_info": false,
+          "respawn_radius": 10,
+          "send_command_feedback": true,
+          "show_advancement_messages": true,
+          "show_death_messages": true,
+          "spawner_blocks_work": true,
+          "spawn_mobs": true,
+          "spawn_monsters": true,
+          "spawn_patrols": true,
+          "spawn_phantoms": true,
+          "spawn_wandering_traders": true,
+          "spawn_wardens": true,
+          "spectators_generate_chunks": true,
+          "spread_vines": true,
+          "tnt_explodes": true,
+          "tnt_explosion_drop_decay": false,
+          "universal_anger": false,
+          "water_source_conversion": true
+        }
+      }
+    },
+    {
+      "name": "Flat Test: the world ran and closed normally",
+      "pass": true,
+      "detail": "{\"code\":0,\"signal\":null}"
+    },
+    {
+      "name": "world.json: Superflat with its layers",
+      "pass": true,
+      "detail": {
+        "version": 1,
+        "generator": 1,
+        "name": "Flat Test",
+        "seed": "",
+        "gameMode": "Creative",
+        "difficulty": "Peaceful",
+        "commands": true,
+        "type": "Superflat",
+        "structures": true,
+        "bonus": false,
+        "biome": "minecraft:plains",
+        "flatBiome": "minecraft:plains",
+        "flat": [
+          {
+            "block": "minecraft:grass_block",
+            "height": 1
+          },
+          {
+            "block": "minecraft:dirt",
+            "height": 2
+          },
+          {
+            "block": "minecraft:bedrock",
+            "height": 1
+          }
+        ],
+        "experiments": {},
+        "rules": {
+          "advance_time": true,
+          "advance_weather": true,
+          "allow_entering_nether_using_portals": true,
+          "block_drops": true,
+          "block_explosion_drop_decay": true,
+          "command_blocks_work": true,
+          "command_block_output": true,
+          "drowning_damage": true,
+          "elytra_movement_check": true,
+          "ender_pearls_vanish_on_death": true,
+          "entity_drops": true,
+          "fall_damage": true,
+          "fire_damage": true,
+          "fire_spread_radius_around_player": 128,
+          "forgive_dead_players": true,
+          "freeze_damage": true,
+          "global_sound_events": true,
+          "immediate_respawn": false,
+          "keep_inventory": false,
+          "lava_source_conversion": false,
+          "limited_crafting": false,
+          "locator_bar": true,
+          "log_admin_commands": true,
+          "max_block_modifications": 32768,
+          "max_command_forks": 65536,
+          "max_command_sequence_length": 65536,
+          "max_entity_cramming": 24,
+          "max_minecart_speed": 8,
+          "max_snow_accumulation_height": 1,
+          "mob_drops": true,
+          "mob_explosion_drop_decay": true,
+          "mob_griefing": true,
+          "natural_health_regeneration": true,
+          "player_movement_check": true,
+          "players_nether_portal_creative_delay": 0,
+          "players_nether_portal_default_delay": 80,
+          "players_sleeping_percentage": 100,
+          "projectiles_can_break_blocks": true,
+          "pvp": true,
+          "raids": true,
+          "random_tick_speed": 3,
+          "reduced_debug_info": false,
+          "respawn_radius": 10,
+          "send_command_feedback": true,
+          "show_advancement_messages": true,
+          "show_death_messages": true,
+          "spawner_blocks_work": true,
+          "spawn_mobs": true,
+          "spawn_monsters": true,
+          "spawn_patrols": true,
+          "spawn_phantoms": true,
+          "spawn_wandering_traders": true,
+          "spawn_wardens": true,
+          "spectators_generate_chunks": true,
+          "spread_vines": true,
+          "tnt_explodes": true,
+          "tnt_explosion_drop_decay": false,
+          "universal_anger": false,
+          "water_source_conversion": true
+        },
+        "seedValue": "5021647478945247266",
+        "created": "2026-10-09T01:12:08.477Z",
+        "lastPlayed": "2026-10-09T01:12:08.477Z"
+      }
+    },
+    {
+      "name": "The flat world opened as saved",
+      "pass": true,
+      "detail": "Seed 5021647478945247266 (random)\nStreaming: view radius 12 (545 columns in view, 657 generated), unload beyond 15, 30 workers, 60 jobs in flight\n  Generate columns: 657, mean 0.611 ms, worst 1.598 ms, total 401.6 ms\n  Mesh columns: 545, mean 0.351 ms, worst 2.521 ms, total 191.2 ms\n  Stream sets and Lumen cards: 545, mean 0.020 ms, worst 0.453 ms, total 11.0 ms\n  Quads 1090 (2 per column on screen); columns 5.0 KB each (3.2 MB total); mesh cache 0.0 MB\n  Lumen cards: 1090 (2.0 per column, most 2 of 32)\n  Apply: 545 columns in 40.88 ms over 29 frames, worst frame 1.70 ms; worst chunk work 1.72 ms (budget 2.0 ms)\n  Start to view on screen: 501 ms (first frame to view: 358 ms over 30 frames); 545 chunk components hold 545 sections; 0 results dropped\n  Lighting: r.DynamicGlobalIlluminationMethod 1, r.ReflectionMethod 1, r.Lumen.HardwareRayTracing 1 (ray tracing on), r.Lumen.HardwareRayTracing.LightingMode 0\n  GPU frame per shot, ms (mean of 60 settled frames at 1280 x 720): overview 3.76, closeup 4.74, ground 4.16, lumen-scene 4.13, section 3.21\n  World: flat-test \"Flat Test\", Superflat, Creative, Peaceful\n  Player: feet at V(X=50.00, Y=50.00, Z=-6000.00), grounded; Creative Peaceful; spawn cell X=0 Y=0 Z=-60, 0.0 cm from spawn\n"
+    },
+    {
+      "name": "Its player stands on the grass four blocks above the floor, in Creative on Peaceful",
+      "pass": true,
+      "detail": "Seed 5021647478945247266 (random)\nStreaming: view radius 12 (545 columns in view, 657 generated), unload beyond 15, 30 workers, 60 jobs in flight\n  Generate columns: 657, mean 0.611 ms, worst 1.598 ms, total 401.6 ms\n  Mesh columns: 545, mean 0.351 ms, worst 2.521 ms, total 191.2 ms\n  Stream sets and Lumen cards: 545, mean 0.020 ms, worst 0.453 ms, total 11.0 ms\n  Quads 1090 (2 per column on screen); columns 5.0 KB each (3.2 MB total); mesh cache 0.0 MB\n  Lumen cards: 1090 (2.0 per column, most 2 of 32)\n  Apply: 545 columns in 40.88 ms over 29 frames, worst frame 1.70 ms; worst chunk work 1.72 ms (budget 2.0 ms)\n  Start to view on screen: 501 ms (first frame to view: 358 ms over 30 frames); 545 chunk components hold 545 sections; 0 results dropped\n  Lighting: r.DynamicGlobalIlluminationMethod 1, r.ReflectionMethod 1, r.Lumen.HardwareRayTracing 1 (ray tracing on), r.Lumen.HardwareRayTracing.LightingMode 0\n  GPU frame per shot, ms (mean of 60 settled frames at 1280 x 720): overview 3.76, closeup 4.74, ground 4.16, lumen-scene 4.13, section 3.21\n  World: flat-test \"Flat Test\", Superflat, Creative, Peaceful\n  Player: feet at V(X=50.00, Y=50.00, Z=-6000.00), grounded; Creative Peaceful; spawn cell X=0 Y=0 Z=-60, 0.0 cm from spawn\n"
+    },
+    {
+      "name": "Saves follow the catalog, most recently played first",
+      "pass": true,
+      "detail": [
+        "playground",
+        "flat-test",
+        "hello-world"
+      ]
+    },
+    {
+      "name": "Hello Again: the world ran and closed normally",
+      "pass": true,
+      "detail": "{\"code\":0,\"signal\":null}"
+    },
+    {
+      "name": "Playing it again builds the same seed",
+      "pass": true,
+      "detail": "Seed 1656767905311477007 (text)\nStreaming: view radius 12 (545 columns in view, 657 generated), unload beyond 15, 30 workers, 60 jobs in flight\n  Generate columns: 657, mean 1.062 ms, worst 2.807 ms, total 698.0 ms\n  Mesh columns: 545, mean 1.324 ms, worst 4.898 ms, total 721.6 ms\n  Stream sets and Lumen cards: 545, mean 0.188 ms, worst 1.411 ms, total 102.7 ms\n  Quads 150103 (275 per column on screen); columns 10.2 KB each (6.6 MB total); mesh cache 1.5 MB\n  Lumen cards: 3901 (7.2 per column, most 15 of 32)\n  Apply: 545 columns in 65.55 ms over 45 frames, worst frame 1.69 ms; worst chunk work 1.75 ms (budget 2.0 ms)\n  Start to view on screen: 722 ms (first frame to view: 565 ms over 46 frames); 545 chunk components hold 1370 sections; 0 results dropped\n  Lighting: r.DynamicGlobalIlluminationMethod 1, r.ReflectionMethod 1, r.Lumen.HardwareRayTracing 1 (ray tracing on), r.Lumen.HardwareRayTracing.LightingMode 0\n  GPU frame per shot, ms (mean of 60 settled frames at 1280 x 720): overview 4.05, closeup 4.60, ground 4.64, lumen-scene 4.94, section 4.18\n  World: hello-world \"Hello Again\", Default, Survival, Normal\n  Player: feet at V(X=50.00, Y=50.00, Z=6400.00), grounded; Survival Normal; spawn cell X=0 Y=0 Z=64, 0.0 cm from spawn\n"
+    },
+    {
+      "name": "...under its new name",
+      "pass": true,
+      "detail": "Seed 1656767905311477007 (text)\nStreaming: view radius 12 (545 columns in view, 657 generated), unload beyond 15, 30 workers, 60 jobs in flight\n  Generate columns: 657, mean 1.062 ms, worst 2.807 ms, total 698.0 ms\n  Mesh columns: 545, mean 1.324 ms, worst 4.898 ms, total 721.6 ms\n  Stream sets and Lumen cards: 545, mean 0.188 ms, worst 1.411 ms, total 102.7 ms\n  Quads 150103 (275 per column on screen); columns 10.2 KB each (6.6 MB total); mesh cache 1.5 MB\n  Lumen cards: 3901 (7.2 per column, most 15 of 32)\n  Apply: 545 columns in 65.55 ms over 45 frames, worst frame 1.69 ms; worst chunk work 1.75 ms (budget 2.0 ms)\n  Start to view on screen: 722 ms (first frame to view: 565 ms over 46 frames); 545 chunk components hold 1370 sections; 0 results dropped\n  Lighting: r.DynamicGlobalIlluminationMethod 1, r.ReflectionMethod 1, r.Lumen.HardwareRayTracing 1 (ray tracing on), r.Lumen.HardwareRayTracing.LightingMode 0\n  GPU frame per shot, ms (mean of 60 settled frames at 1280 x 720): overview 4.05, closeup 4.60, ground 4.64, lumen-scene 4.94, section 4.18\n  World: hello-world \"Hello Again\", Default, Survival, Normal\n  Player: feet at V(X=50.00, Y=50.00, Z=6400.00), grounded; Survival Normal; spawn cell X=0 Y=0 Z=64, 0.0 cm from spawn\n"
+    },
+    {
+      "name": "Playing updates last played",
+      "pass": true,
+      "detail": {
+        "version": 1,
+        "generator": 1,
+        "name": "Hello Again",
+        "seed": "hello",
+        "gameMode": "Survival",
+        "difficulty": "Normal",
+        "commands": false,
+        "type": "Default",
+        "structures": true,
+        "bonus": false,
+        "biome": "minecraft:plains",
+        "flatBiome": "minecraft:plains",
+        "flat": [
+          {
+            "block": "minecraft:grass_block",
+            "height": 1
+          },
+          {
+            "block": "minecraft:dirt",
+            "height": 2
+          },
+          {
+            "block": "minecraft:bedrock",
+            "height": 1
+          }
+        ],
+        "experiments": {},
+        "rules": {
+          "advance_time": true,
+          "advance_weather": true,
+          "allow_entering_nether_using_portals": true,
+          "block_drops": true,
+          "block_explosion_drop_decay": true,
+          "command_blocks_work": true,
+          "command_block_output": true,
+          "drowning_damage": true,
+          "elytra_movement_check": true,
+          "ender_pearls_vanish_on_death": true,
+          "entity_drops": true,
+          "fall_damage": true,
+          "fire_damage": true,
+          "fire_spread_radius_around_player": 128,
+          "forgive_dead_players": true,
+          "freeze_damage": true,
+          "global_sound_events": true,
+          "immediate_respawn": false,
+          "keep_inventory": false,
+          "lava_source_conversion": false,
+          "limited_crafting": false,
+          "locator_bar": true,
+          "log_admin_commands": true,
+          "max_block_modifications": 32768,
+          "max_command_forks": 65536,
+          "max_command_sequence_length": 65536,
+          "max_entity_cramming": 24,
+          "max_minecart_speed": 8,
+          "max_snow_accumulation_height": 1,
+          "mob_drops": true,
+          "mob_explosion_drop_decay": true,
+          "mob_griefing": true,
+          "natural_health_regeneration": true,
+          "player_movement_check": true,
+          "players_nether_portal_creative_delay": 0,
+          "players_nether_portal_default_delay": 80,
+          "players_sleeping_percentage": 100,
+          "projectiles_can_break_blocks": true,
+          "pvp": true,
+          "raids": true,
+          "random_tick_speed": 3,
+          "reduced_debug_info": false,
+          "respawn_radius": 10,
+          "send_command_feedback": true,
+          "show_advancement_messages": true,
+          "show_death_messages": true,
+          "spawner_blocks_work": true,
+          "spawn_mobs": true,
+          "spawn_monsters": true,
+          "spawn_patrols": true,
+          "spawn_phantoms": true,
+          "spawn_wandering_traders": true,
+          "spawn_wardens": true,
+          "spectators_generate_chunks": true,
+          "spread_vines": true,
+          "tnt_explodes": true,
+          "tnt_explosion_drop_decay": false,
+          "universal_anger": false,
+          "water_source_conversion": true
+        },
+        "seedValue": "1656767905311477007",
+        "created": "2026-10-09T01:11:37.910Z",
+        "lastPlayed": "2026-10-09T01:12:35.526Z"
+      }
+    },
+    {
+      "name": "Delete removes flat-test from the list and the disk",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Delete removes hello-world from the list and the disk",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "no uncaught JavaScript errors",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "normal exit",
+      "pass": true,
+      "detail": "{\"code\":0,\"signal\":null}"
+    }
+  ]
+}

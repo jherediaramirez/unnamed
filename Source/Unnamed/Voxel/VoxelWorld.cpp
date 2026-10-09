@@ -1,23 +1,26 @@
 #include "Voxel/VoxelWorld.h"
-#include "Async/ParallelFor.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "Camera/CameraActor.h"
 #include "Camera/CameraComponent.h"
-#include "Core/RealtimeMeshDataStream.h"
+#include "Components/ExponentialHeightFogComponent.h"
+#include "Components/SkyAtmosphereComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "DynamicRHI.h"
+#include "Engine/ExponentialHeightFog.h"
 #include "Engine/GameViewportClient.h"
+#include "Engine/StaticMesh.h"
 #include "EngineUtils.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationBlockTextureTable.h"
 #include "Foundation/FoundationGrid.h"
+#include "Foundation/FoundationInteractionSettings.h"
+#include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationPawn.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationVitals.h"
-#include "Generation/VoxelArea.h"
 #include "HAL/FileManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
-#include "MeshCardBuild.h"
 #include "Misc/FileHelper.h"
 #include "RenderUtils.h"
 #include "Storage/VoxelColumn.h"
@@ -26,46 +29,27 @@
 #include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
 #include "UnrealClient.h"
+#include "Voxel/VoxelBlockStorage.h"
 #include "Voxel/VoxelBlocks.h"
-#include "Voxel/VoxelChunkComponent.h"
 #include "Voxel/VoxelConsole.h"
+#include "Voxel/VoxelFlight.h"
 #include "Voxel/VoxelWorldSettings.h"
+#include "Voxel/VoxelWorldSubsystem.h"
 #include "VoxelConstants.h"
 #include "VoxelLog.h"
-#include "VoxelStats.h"
-
-DECLARE_CYCLE_STAT(TEXT("Apply columns"), STAT_VoxelApplyColumns, STATGROUP_Voxel);
-
-// A finished build on its way to the screen: the area, one stream set and set of Lumen cards per column with
-// geometry, and the apply bookkeeping.
-struct AVoxelWorld::FBuild
-{
-    struct FColumnMesh
-    {
-        // Index into Area.Columns.
-        int32 Column = 0;
-        RealtimeMesh::FRealtimeMeshStreamSet Streams;
-        FMeshCardsBuildData Cards;
-        double CardsMs = 0;
-        uint32 LayerMask = 0, SectionMask = 0;
-    };
-
-    int32 Serial = 0;
-    FVoxelArea Area;
-    TArray<FColumnMesh> ColumnMeshes;
-    double StreamsMs = 0;
-    // The Lumen cards across all columns, the most in one column, and their build time per column.
-    int32 CardCount = 0, MostCards = 0;
-    double CardsMs = 0, WorstCardsMs = 0;
-    double StartSeconds = 0;
-    int32 NextColumn = 0;
-    double ApplyMs = 0, WorstFrameMs = 0;
-    int32 ApplyFrames = 0;
-};
 
 namespace
 {
     constexpr double CellCm = UFoundationProfile::BlockCm;
+    // Edits reach as far as the reference's world border, in blocks.
+    constexpr int32 VoxelWorldLimit = 30000000;
+
+    // The edge fog's own light in cd/m2, matched to the sky just above the horizon at the map's sun, in the flight's
+    // screenshots: (184, 189, 184) in sRGB.
+    const FLinearColor EdgeHazeLuminance(5900.f, 6500.f, 6000.f);
+    // How far away the view radius looks to the sky's aerial perspective, as a multiple of its real distance at
+    // radius 12; smaller radii scale it up, so the land is as hazy at the edge whatever the radius.
+    constexpr double EdgeAerialScale = 50.;
     const TCHAR* const ChunkMaterialNames[] = {
         TEXT("M_ChunkOpaque"), TEXT("M_ChunkCutout"), TEXT("M_ChunkTranslucent"), TEXT("M_ChunkWater")};
 
@@ -82,6 +66,8 @@ namespace
         FVector Location;
         FVector Target;
         bool bLumenScene;
+        // The edge fog, for shots from inside the world; it would hide the world from outside.
+        bool bFog;
     };
 
     // The settings that decide how the chunks are lit, so every shot report says what it shows.
@@ -129,8 +115,49 @@ void AVoxelWorld::BuildLayout()
     FString SeedText;
     if (FParse::Value(FCommandLine::Get(), TEXT("VoxelSeed="), SeedText)) StartSeed = FVoxelSeed::Parse(SeedText);
     FParse::Value(FCommandLine::Get(), TEXT("VoxelShot="), ShotFolder);
+    bShotEdits = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotEdits"));
+    FString FlightFolder;
+    if (FParse::Value(FCommandLine::Get(), TEXT("VoxelFlight="), FlightFolder))
+    {
+        double FlightSeconds = 0;
+        FParse::Value(FCommandLine::Get(), TEXT("VoxelFlightSeconds="), FlightSeconds);
+        Flight = MakeShared<FVoxelFlight>(FlightFolder, FlightSeconds);
+    }
+    for (TActorIterator<AExponentialHeightFog> It(GetWorld()); It; ++It)
+    {
+        EdgeFog = It->GetComponent();
+        break;
+    }
+    for (TActorIterator<ASkyAtmosphere> It(GetWorld()); It; ++It)
+    {
+        Sky = It->GetComponent();
+        break;
+    }
+    // A plane a thousand kilometres wide under the world's bottom, for the fog to color below the horizon. Fogged
+    // through, its own look never shows, so it stays out of shadows, Lumen and ray tracing.
+    if (UStaticMesh* Plane = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Plane.Plane")))
+    {
+        FogFloor = NewObject<UStaticMeshComponent>(this, TEXT("FogFloor"));
+        FogFloor->SetStaticMesh(Plane);
+        FogFloor->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        FogFloor->SetCanEverAffectNavigation(false);
+        FogFloor->SetCastShadow(false);
+        FogFloor->SetReceivesDecals(false);
+        FogFloor->bVisibleInRayTracing = false;
+        FogFloor->bAffectDynamicIndirectLighting = false;
+        FogFloor->bAffectDistanceFieldLighting = false;
+        FogFloor->SetupAttachment(GetRootComponent());
+        FogFloor->RegisterComponent();
+        FogFloor->SetWorldScale3D(FVector(1e6, 1e6, 1));
+    }
     LoadMaterials();
+    SetupAuthority();
     Regenerate(StartSeed);
+    // The outline, cracks, held item and effects; the chunks draw the blocks.
+    View = NewObject<UFoundationInteractionView>(this);
+    View->bDrawBlocks = false;
+    View->bLabFixtures = false;
+    View->RegisterComponent();
 }
 
 const FUnnamedSavedWorld* AVoxelWorld::GetSavedWorld() const
@@ -213,206 +240,266 @@ void AVoxelWorld::Regenerate(const FVoxelSeed& NewSeed)
     Seed = NewSeed;
     Terrain = MakeTerrain();
     SpawnCell.Reset();
-    for (const TPair<FIntPoint, TObjectPtr<UVoxelChunkComponent>>& Chunk : Chunks)
-        if (Chunk.Value) Chunk.Value->DestroyComponent();
-    Chunks.Reset();
-    Columns.Reset();
-    Applying.Reset();
-    bReady = false;
-    StartBuild();
-}
-
-void AVoxelWorld::StartBuild()
-{
-    const int32 Serial = ++BuildSerial;
-    const int32 Radius = FMath::Clamp(VoxelConsole::CVarTestAreaRadius.GetValueOnGameThread(), 0, 16);
-    FVoxelMeshOptions Options;
-    Options.bGreedy = VoxelConsole::CVarGreedyMeshing.GetValueOnGameThread();
-    Options.bAmbientOcclusion = VoxelConsole::CVarAmbientOcclusion.GetValueOnGameThread();
-    // The terrain refers to the table, so the task keeps both alive.
-    const TSharedRef<const FVoxelBlockTable> SharedTable = Table.ToSharedRef();
-    const TSharedRef<const IVoxelTerrain> SharedTerrain = Terrain.ToSharedRef();
-    const double StartSeconds = FPlatformTime::Seconds();
-    UE_LOG(LogUnnamedVoxel, Display, TEXT("Building %d x %d columns, seed %s"), 2 * Radius + 1, 2 * Radius + 1,
-        *Seed.Describe());
-    BuildTask = UE::Tasks::Launch(UE_SOURCE_LOCATION,
-        [SharedTable, SharedTerrain, Radius, Options, Serial, StartSeconds]
-        {
-            TSharedPtr<FBuild> Build = MakeShared<FBuild>();
-            Build->Serial = Serial;
-            Build->StartSeconds = StartSeconds;
-            FVoxelArea::Build(*SharedTable, *SharedTerrain, FIntPoint::ZeroValue, Radius, Options, true, Build->Area);
-            // One stream set and set of Lumen cards per column, merging its sections (UVoxelChunkComponent). Both are
-            // plain data, so they are built here too; the game thread only hands them over.
-            const double StreamStart = FPlatformTime::Seconds();
-            TArray<TArray<const FVoxelMeshData*>> Sections;
-            Sections.SetNum(Build->Area.Columns.Num());
-            TArray<uint32> SectionMasks;
-            SectionMasks.SetNumZeroed(Build->Area.Columns.Num());
-            for (const FVoxelArea::FSectionMesh& Section : Build->Area.Meshes)
-            {
-                Sections[Section.Column].Add(&Section.Mesh);
-                SectionMasks[Section.Column] |= 1u << Section.Section;
-            }
-            for (int32 Column = 0; Column < Sections.Num(); ++Column)
-                if (!Sections[Column].IsEmpty())
-                {
-                    FBuild::FColumnMesh& Mesh = Build->ColumnMeshes.AddDefaulted_GetRef();
-                    Mesh.Column = Column;
-                    Mesh.SectionMask = SectionMasks[Column];
-                }
-            ParallelFor(TEXT("VoxelWorld.Streams"), Build->ColumnMeshes.Num(), 1,
-                [&Build, &Sections](int32 Index)
-                {
-                    FBuild::FColumnMesh& Mesh = Build->ColumnMeshes[Index];
-                    UVoxelChunkComponent::BuildStreams(Sections[Mesh.Column], Mesh.Streams);
-                    const double CardsStart = FPlatformTime::Seconds();
-                    UVoxelChunkComponent::BuildCards(Sections[Mesh.Column], Mesh.Cards);
-                    Mesh.CardsMs = (FPlatformTime::Seconds() - CardsStart) * 1000.;
-                    Mesh.LayerMask = UVoxelChunkComponent::GetLayerMask(Sections[Mesh.Column]);
-                });
-            Build->StreamsMs = (FPlatformTime::Seconds() - StreamStart) * 1000.;
-            for (const FBuild::FColumnMesh& Mesh : Build->ColumnMeshes)
-            {
-                Build->CardCount += Mesh.Cards.CardBuildData.Num();
-                Build->MostCards = FMath::Max(Build->MostCards, Mesh.Cards.CardBuildData.Num());
-                Build->CardsMs += Mesh.CardsMs;
-                Build->WorstCardsMs = FMath::Max(Build->WorstCardsMs, Mesh.CardsMs);
-            }
-            return Build;
-        });
-}
-
-void AVoxelWorld::FinishBuild(const TSharedPtr<FBuild>& Build)
-{
-    Columns.Reset();
-    for (const TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>& Column : Build->Area.Columns)
-        Columns.Add(Column->GetPosition(), Column);
-    Applying = Build;
-    // Collision exists from now on, so the player can stand on the ground even before every mesh is up.
-    ReturnPlayerToSpawn();
-}
-
-void AVoxelWorld::ApplyColumns(double BudgetSeconds)
-{
-    SCOPE_CYCLE_COUNTER(STAT_VoxelApplyColumns);
-    TRACE_CPUPROFILER_EVENT_SCOPE(VoxelWorld_ApplyColumns);
-    FBuild& Build = *Applying;
-    const double Start = FPlatformTime::Seconds();
-    // At least one column per frame, then as many as fit in the budget.
-    do
-    {
-        FBuild::FColumnMesh& Mesh = Build.ColumnMeshes[Build.NextColumn];
-        GetChunk(Build.Area.Columns[Mesh.Column]->GetPosition())
-            ->SetMesh(MoveTemp(Mesh.Streams), MoveTemp(Mesh.Cards), Mesh.LayerMask, Mesh.SectionMask);
-        ++Build.NextColumn;
-    } while (Build.NextColumn < Build.ColumnMeshes.Num() && FPlatformTime::Seconds() - Start < BudgetSeconds);
-    const double FrameMs = (FPlatformTime::Seconds() - Start) * 1000.;
-    Build.ApplyMs += FrameMs;
-    Build.WorstFrameMs = FMath::Max(Build.WorstFrameMs, FrameMs);
-    ++Build.ApplyFrames;
-    if (Build.NextColumn < Build.ColumnMeshes.Num()) return;
-
-    BuildReport = FString::Printf(TEXT("Seed %s\n"), *Seed.Describe()) + Build.Area.Describe() +
-        FString::Printf(TEXT("\n  Stream sets and Lumen cards: %d columns in %.1f ms (wall, all workers)\n"),
-            Build.ColumnMeshes.Num(), Build.StreamsMs) +
-        FString::Printf(
-            TEXT("  Lumen cards: %d (%.1f per column, most %d of %d), mean %.3f ms per column, worst %.3f ms\n"),
-            Build.CardCount, Build.CardCount / FMath::Max(1., double(Build.ColumnMeshes.Num())), Build.MostCards,
-            UVoxelChunkComponent::MaxCards, Build.CardsMs / FMath::Max(1, Build.ColumnMeshes.Num()),
-            Build.WorstCardsMs) +
-        FString::Printf(TEXT("  Apply: %d columns in %.2f ms over %d frames, worst frame %.2f ms (budget %.1f ms)\n"),
-            Build.ColumnMeshes.Num(), Build.ApplyMs, Build.ApplyFrames, Build.WorstFrameMs,
-            VoxelConsole::CVarApplyBudgetMs.GetValueOnGameThread()) +
-        FString::Printf(TEXT("  Start to last section on screen: %.0f ms; %d chunk components hold %d sections"),
-            (FPlatformTime::Seconds() - Build.StartSeconds) * 1000., Chunks.Num(), GetSectionMeshCount());
-    TArray<FString> Lines;
-    BuildReport.ParseIntoArrayLines(Lines);
-    for (const FString& Line : Lines)
-        UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Line);
-    Applying.Reset();
-    bReady = true;
-}
-
-UVoxelChunkComponent* AVoxelWorld::GetChunk(FIntPoint Column)
-{
-    if (TObjectPtr<UVoxelChunkComponent>* Found = Chunks.Find(Column)) return *Found;
-    UVoxelChunkComponent* Chunk = NewObject<UVoxelChunkComponent>(this);
-    Chunk->SetupAttachment(GetRootComponent());
-    Chunk->RegisterComponent();
-    Chunk->SetWorldLocation(OriginCm + FVector(Column.X, Column.Y, 0) * VoxelConstants::ColumnSize * CellCm);
+    bSpawned = false;
+    UVoxelWorldSubsystem* Streaming = GetStreaming();
+    if (!Streaming) return;
+    UE_LOG(LogUnnamedVoxel, Display, TEXT("Streaming the world around the camera, seed %s"), *Seed.Describe());
     TArray<UMaterialInterface*> Materials;
     for (UMaterialInterface* Instance : LayerMaterials)
         Materials.Add(Instance);
-    Chunk->Setup(Materials);
-    Chunks.Add(Column, Chunk);
-    return Chunk;
+    const FVector Spawn = GetSafeSpawn(*GetDefault<UFoundationProfile>());
+    Streaming->Start(*this, Table.ToSharedRef(), Terrain.ToSharedRef(), Materials, Spawn);
+    // A new session on a new world: nothing is loaded yet, so emptying the block world is free.
+    Authority.World.OriginCm = OriginCm;
+    Authority.Reset();
+    // Shots fly the camera far out; the rings stay around the player.
+    if (!ShotFolder.IsEmpty()) Streaming->SetFocusOverride(Spawn);
 }
 
-int32 AVoxelWorld::GetSectionMeshCount() const
+void AVoxelWorld::SetupAuthority()
 {
-    int32 Count = 0;
-    for (const TPair<FIntPoint, TObjectPtr<UVoxelChunkComponent>>& Chunk : Chunks)
-        if (Chunk.Value) Count += Chunk.Value->GetSectionMeshCount();
-    return Count;
+    const UFoundationInteractionSettings& Settings = UFoundationInteractionSettings::Get();
+    Settings.BuildRules(Authority.Rules);
+    Authority.World.SetRegistry(FFoundationBlockRegistry::GetDefault());
+    Authority.World.OriginCm = OriginCm;
+    Authority.World.BoundsMin = FIntVector(-VoxelWorldLimit, -VoxelWorldLimit, VoxelConstants::MinZ);
+    Authority.World.BoundsMax = FIntVector(VoxelWorldLimit - 1, VoxelWorldLimit - 1, VoxelConstants::MaxZ);
+    Authority.World.SetStorage(MakeUnique<FVoxelBlockStorage>(
+        [Streaming = TWeakObjectPtr<UVoxelWorldSubsystem>(GetStreaming())]() -> FVoxelColumnPipeline*
+        { return Streaming.IsValid() ? Streaming->GetPipeline() : nullptr; }));
+    Authority.Options.PlacementPreset = Settings.DefaultPreset;
+    // A saved world plays by its game mode; the map opened bare plays as the Playground's lab does.
+    const FUnnamedSavedWorld* Saved = GetSavedWorld();
+    const bool bCreative = Saved ? Saved->GameMode == TEXT("Creative") : Settings.bInfiniteSupplyDefault;
+    Authority.Options.bInfiniteSupply = bCreative;
+    Authority.Options.bToolWear = !bCreative;
+    Authority.Options.bCreativeInventory = bCreative;
+    // Survival starts with the loadout's tools and no blocks: blocks come from mining.
+    Authority.Options.FiniteBlockCount = Saved ? 0 : Settings.FiniteBlockCount;
+}
+
+FFoundationTarget AVoxelWorld::TraceTarget(FVector Eye, FVector Direction, const UFoundationProfile& Profile) const
+{
+    return TraceAuthority(Authority, Eye, Direction);
+}
+
+bool AVoxelWorld::GetWaterBox(const FIntVector& Cell, FBox& OutBox) const
+{
+    if (!Table) return false;
+    const FVoxelStateInfo& Info = Table->Get(GetState(Cell));
+    if (!Info.IsFluid()) return false;
+    const double Top = Table->Get(GetState(Cell + FIntVector(0, 0, 1))).IsFluid() ? 1. : Info.GetFluidHeight();
+    const FVector Min = FoundationGrid::CellMin(Cell, OriginCm);
+    OutBox = FBox(Min, Min + FVector(CellCm, CellCm, Top * CellCm));
+    return true;
+}
+
+bool AVoxelWorld::IsInWater(FVector Point) const
+{
+    FBox Water;
+    return GetWaterBox(FoundationGrid::CellAt(Point, OriginCm), Water) && Water.IsInside(Point);
+}
+
+bool AVoxelWorld::IsInWater(const FBox& Body) const
+{
+    // As the lab's water boxes: any water overlapping the body, shrunk a hair so touching a surface is not wading.
+    const FBox Inner = Body.ExpandBy(-.1);
+    const FIntVector Low = FoundationGrid::CellAt(Inner.Min, OriginCm),
+                     High = FoundationGrid::CellAt(Inner.Max, OriginCm);
+    for (int32 Z = Low.Z; Z <= High.Z; ++Z)
+        for (int32 Y = Low.Y; Y <= High.Y; ++Y)
+            for (int32 X = Low.X; X <= High.X; ++X)
+            {
+                FBox Water;
+                if (GetWaterBox({X, Y, Z}, Water) && Water.Intersect(Inner)) return true;
+            }
+    return false;
+}
+
+UVoxelWorldSubsystem* AVoxelWorld::GetStreaming() const
+{
+    return UVoxelWorldSubsystem::Get(GetWorld());
+}
+
+void AVoxelWorld::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    if (UVoxelWorldSubsystem* Streaming = GetStreaming()) Streaming->Stop();
+    Super::EndPlay(EndPlayReason);
+}
+
+bool AVoxelWorld::IsReady() const
+{
+    const UVoxelWorldSubsystem* Streaming = GetStreaming();
+    return bSpawned && Streaming && Streaming->IsViewOnScreen();
+}
+
+FString AVoxelWorld::GetBuildReport() const
+{
+    const UVoxelWorldSubsystem* Streaming = GetStreaming();
+    return FString::Printf(TEXT("Seed %s\n"), *Seed.Describe()) +
+        (Streaming ? Streaming->GetFirstViewReport() : FString());
 }
 
 void AVoxelWorld::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
-    if (BuildTask.IsValid() && BuildTask.IsCompleted())
-    {
-        const TSharedPtr<FBuild> Build = BuildTask.GetResult();
-        BuildTask = {};
-        // A regenerate during the build already started a newer one.
-        if (Build && Build->Serial == BuildSerial) FinishBuild(Build);
-    }
-    if (Applying && Applying->ColumnMeshes.IsEmpty())
-    {
-        Applying.Reset();
-        bReady = true;
-    }
-    else if (Applying)
-        ApplyColumns(VoxelConsole::CVarApplyBudgetMs.GetValueOnGameThread() / 1000.);
     if (TextureTable)
         TextureTable->SetTick(FMath::FloorToInt64(GetWorld()->GetTimeSeconds() * FoundationBlockFaces::TicksPerSecond));
-    if (!ShotFolder.IsEmpty() && bReady) UpdateShots();
+    // Collision exists once the columns around the spawn do: the player is put there then, once.
+    if (!bSpawned && AreSpawnColumnsGenerated())
+    {
+        bSpawned = true;
+        ReturnPlayerToSpawn();
+    }
+    UpdateEdgeFog();
+    if (ShotEditStage == 1) ++ShotEditFrames;
+    if (!ShotFolder.IsEmpty() && IsReady())
+    {
+        // With -VoxelShotEdits the shots wait until the edited columns are back on screen.
+        if (bShotEdits && ShotEditStage == 0)
+        {
+            ApplyShotEdits();
+            ShotEditStage = 1;
+            ShotEditSeconds = FPlatformTime::Seconds();
+        }
+        else if (ShotEditStage == 1)
+        {
+            ShotEditStage = 2;
+            ShotEditReport += FString::Printf(TEXT(", on screen after %.0f ms over %d frames"),
+                (FPlatformTime::Seconds() - ShotEditSeconds) * 1000., ShotEditFrames);
+            UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *ShotEditReport);
+        }
+        else
+            UpdateShots();
+    }
+    if (Flight && (Flight->IsStarted() || IsReady()) && !Flight->Tick(*this, DeltaSeconds))
+    {
+        Flight.Reset();
+        FPlatformMisc::RequestExit(false, TEXT("VoxelFlight"));
+    }
+}
+
+void AVoxelWorld::UpdateEdgeFog()
+{
+    const UVoxelWorldSubsystem* Streaming = GetStreaming();
+    if (FogFloor)
+    {
+        const APlayerController* Controller = GetWorld()->GetFirstPlayerController();
+        const FVector Camera = Controller && Controller->PlayerCameraManager
+            ? Controller->PlayerCameraManager->GetCameraLocation()
+            : OriginCm;
+        FogFloor->SetWorldLocation(FVector(Camera.X, Camera.Y, OriginCm.Z + (VoxelConstants::MinZ - 1) * CellCm));
+    }
+    if (!EdgeFog || !Streaming || !Streaming->GetPipeline()) return;
+    const FVoxelStreamingRings& Rings = Streaming->GetPipeline()->GetRings();
+    if (Rings.ViewRadius == EdgeFogRadius) return;
+    EdgeFogRadius = Rings.ViewRadius;
+    constexpr double ColumnCm = VoxelConstants::ColumnSize * CellCm;
+    // Clear until 1.5 columns before the view radius, then 99% opaque by it: the density (per 1000 cm, as the
+    // engine counts it) times the fade's length is ln 100. Every block within the radius is drawn, so the fog
+    // never shows a missing column. Almost no height falloff: the edge fades the same from a mountain top.
+    constexpr double FadeCm = 1.5 * ColumnCm;
+    EdgeFog->SetStartDistance(float(FMath::Max(0., Rings.ViewRadius * ColumnCm - FadeCm)));
+    EdgeFog->SetFogDensity(float(1000. * FMath::Loge(100.) / FadeCm));
+    EdgeFog->SetFogHeightFalloff(0.001f);
+    EdgeFog->SetFogMaxOpacity(1.f);
+    // Distant haze glows like the sky at the horizon, a pale neutral, rather than like the sky's average light,
+    // which is the blue overhead: the land then fades into the horizon instead of into a darker band below it.
+    // The sun side still brightens it (directional in-scattering).
+    EdgeFog->SetSkyAtmosphereAmbientContributionColorScale(FLinearColor::Black);
+    EdgeFog->SetFogInscatteringColor(EdgeHazeLuminance);
+    if (Sky && bEdgeFogVisible)
+        Sky->SetAerialPespectiveViewDistanceScale(float(EdgeAerialScale * 12. / FMath::Max(1, Rings.ViewRadius)));
+    // Everything but the sky, which lies beyond any distance: the terrain and the fog floor take the fog's color,
+    // the sky stays clear.
+    EdgeFog->SetFogCutoffDistance(1e9f);
+}
+
+void AVoxelWorld::SetEdgeFogVisible(bool bVisible)
+{
+    bEdgeFogVisible = bVisible;
+    if (EdgeFog) EdgeFog->SetVisibility(bVisible);
+    if (FogFloor) FogFloor->SetVisibility(bVisible);
+    // Shots from outside the world see it at the sky's own scale, as before the fog.
+    if (Sky)
+        Sky->SetAerialPespectiveViewDistanceScale(
+            bVisible ? float(EdgeAerialScale * 12. / FMath::Max(1, EdgeFogRadius)) : 1.f);
 }
 
 uint16 AVoxelWorld::GetState(const FIntVector& Cell) const
 {
+    const UVoxelWorldSubsystem* Streaming = GetStreaming();
+    const FVoxelColumnPipeline* Pipeline = Streaming ? Streaming->GetPipeline() : nullptr;
+    if (!Pipeline) return 0;
     const FIntPoint Column(FoundationGrid::FloorDivide(Cell.X, VoxelConstants::ColumnSize),
         FoundationGrid::FloorDivide(Cell.Y, VoxelConstants::ColumnSize));
-    const TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>* Found = Columns.Find(Column);
-    if (!Found) return 0;
-    return (*Found)->GetState(
-        Cell.X - Column.X * VoxelConstants::ColumnSize, Cell.Y - Column.Y * VoxelConstants::ColumnSize, Cell.Z);
+    const FVoxelColumn* Data = Pipeline->FindColumn(Column);
+    return Data ? Data->GetState(Cell.X - Column.X * VoxelConstants::ColumnSize,
+                      Cell.Y - Column.Y * VoxelConstants::ColumnSize, Cell.Z)
+                : 0;
 }
 
 void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
 {
     Super::GatherCollision(Region, Out);
-    if (!Table) return;
+    const UVoxelWorldSubsystem* Streaming = GetStreaming();
+    const FVoxelColumnPipeline* Pipeline = Streaming ? Streaming->GetPipeline() : nullptr;
+    if (!Table || !Pipeline) return;
     const FIntVector Low = FoundationGrid::CellAt(Region.Min, OriginCm);
     const FIntVector High = FoundationGrid::CellAt(Region.Max, OriginCm);
-    for (int32 Z = FMath::Max(Low.Z, VoxelConstants::MinZ); Z <= FMath::Min(High.Z, VoxelConstants::MaxZ); ++Z)
-        for (int32 Y = Low.Y; Y <= High.Y; ++Y)
-            for (int32 X = Low.X; X <= High.X; ++X)
+    const int32 LowZ = FMath::Max(Low.Z, VoxelConstants::MinZ), HighZ = FMath::Min(High.Z, VoxelConstants::MaxZ);
+    if (LowZ > HighZ) return;
+    constexpr int32 Size = VoxelConstants::ColumnSize;
+    for (int32 ColumnY = FoundationGrid::FloorDivide(Low.Y, Size); ColumnY <= FoundationGrid::FloorDivide(High.Y, Size);
+        ++ColumnY)
+        for (int32 ColumnX = FoundationGrid::FloorDivide(Low.X, Size);
+            ColumnX <= FoundationGrid::FloorDivide(High.X, Size); ++ColumnX)
+        {
+            const int32 LowX = FMath::Max(Low.X, ColumnX * Size), HighX = FMath::Min(High.X, ColumnX * Size + Size - 1);
+            const int32 LowY = FMath::Max(Low.Y, ColumnY * Size), HighY = FMath::Min(High.Y, ColumnY * Size + Size - 1);
+            const FVoxelColumn* Column = Pipeline->FindColumn({ColumnX, ColumnY});
+            if (!Column)
             {
-                const FVoxelStateInfo& Info = Table->Get(GetState({X, Y, Z}));
-                if (!Info.bSolid) continue;
-                const FVector Min = FoundationGrid::CellMin({X, Y, Z}, OriginCm);
-                const double Bottom = Info.Shape == EVoxelShape::SlabTop ? .5 : 0.;
-                const double Top = Info.Shape == EVoxelShape::SlabBottom ? .5 : 1.;
-                Out.Add(FBox(Min + FVector(0, 0, Bottom * CellCm), Min + FVector(CellCm, CellCm, Top * CellCm)));
+                // Not generated yet: solid, so nothing walks or falls into it.
+                Out.Add(FBox(FoundationGrid::CellMin({LowX, LowY, LowZ}, OriginCm),
+                    FoundationGrid::CellMin({HighX + 1, HighY + 1, HighZ + 1}, OriginCm)));
+                continue;
             }
+            for (int32 Z = LowZ; Z <= HighZ; ++Z)
+                for (int32 Y = LowY; Y <= HighY; ++Y)
+                    for (int32 X = LowX; X <= HighX; ++X)
+                    {
+                        const FVoxelStateInfo& Info =
+                            Table->Get(Column->GetState(X - ColumnX * Size, Y - ColumnY * Size, Z));
+                        if (!Info.bSolid) continue;
+                        const FVector Min = FoundationGrid::CellMin({X, Y, Z}, OriginCm);
+                        const double Bottom = Info.Shape == EVoxelShape::SlabTop ? .5 : 0.;
+                        const double Top = Info.Shape == EVoxelShape::SlabBottom ? .5 : 1.;
+                        Out.Add(
+                            FBox(Min + FVector(0, 0, Bottom * CellCm), Min + FVector(CellCm, CellCm, Top * CellCm)));
+                    }
+        }
+}
+
+bool AVoxelWorld::AreSpawnColumnsGenerated() const
+{
+    const UVoxelWorldSubsystem* Streaming = GetStreaming();
+    const FVoxelColumnPipeline* Pipeline = Streaming ? Streaming->GetPipeline() : nullptr;
+    if (!Pipeline || !Terrain) return false;
+    const FIntVector Cell = GetSpawnCell();
+    const FIntPoint Column(FoundationGrid::FloorDivide(Cell.X, VoxelConstants::ColumnSize),
+        FoundationGrid::FloorDivide(Cell.Y, VoxelConstants::ColumnSize));
+    for (int32 DY = -1; DY <= 1; ++DY)
+        for (int32 DX = -1; DX <= 1; ++DX)
+            if (!Pipeline->IsGenerated(Column + FIntPoint(DX, DY))) return false;
+    return true;
 }
 
 FIntVector AVoxelWorld::GetSpawnCell() const
 {
     if (SpawnCell) return *SpawnCell;
     // Rings outward from the origin; the first column whose top solid block is dry land wins.
-    const int32 Reach = FMath::Max(8, VoxelConsole::CVarTestAreaRadius.GetValueOnGameThread() * 16);
+    const int32 Reach = FMath::Max(8, VoxelConsole::CVarViewRadius.GetValueOnGameThread() * VoxelConstants::ColumnSize);
     for (int32 Ring = 0; Ring <= Reach && Terrain; ++Ring)
         for (int32 Y = -Ring; Y <= Ring; ++Y)
             for (int32 X = -Ring; X <= Ring; ++X)
@@ -442,6 +529,7 @@ void AVoxelWorld::ApplyLogicalOffset(const FVector& Offset)
 {
     Super::ApplyLogicalOffset(Offset);
     OriginCm += Offset;
+    Authority.World.OriginCm = OriginCm;
 }
 
 void AVoxelWorld::ReturnPlayerToSpawn() const
@@ -450,38 +538,133 @@ void AVoxelWorld::ReturnPlayerToSpawn() const
     if (Pawn && Pawn->GetLab() == this) Pawn->Respawn();
 }
 
+void AVoxelWorld::ApplyShotEdits()
+{
+    UVoxelWorldSubsystem* Streaming = GetStreaming();
+    const FVoxelColumnPipeline* Pipeline = Streaming ? Streaming->GetPipeline() : nullptr;
+    FFoundationBlockWorld& World = Authority.World;
+    const FFoundationBlockType* Stone = World.FindBlock(TEXT("stone"));
+    const FFoundationBlockType* Glass = World.FindBlock(TEXT("glass"));
+    const FFoundationBlockType* Glowstone = World.FindBlock(TEXT("glowstone"));
+    if (!Pipeline || !Stone || !Glass || !Glowstone) return;
+    constexpr int32 Size = VoxelConstants::ColumnSize;
+    const FIntVector Spawn = GetSpawnCell();
+    // The column corner nearest the spawn's column whose pit and pillar stand on dry land, clear of the player, so
+    // they read clearly; the corner east and south of the spawn's column when none within four columns does.
+    const FIntPoint Home(FoundationGrid::FloorDivide(Spawn.X, Size), FoundationGrid::FloorDivide(Spawn.Y, Size));
+    ShotEditCorner = (Home + FIntPoint(1, 1)) * Size;
+    auto IsGoodCorner = [this, &Spawn](FIntPoint Corner)
+    {
+        if (FMath::Max(FMath::Abs(Corner.X - Spawn.X), FMath::Abs(Corner.Y - Spawn.Y)) < 8) return false;
+        for (int32 Y = Corner.Y - 2; Y < Corner.Y + 6; ++Y)
+            for (int32 X = Corner.X - 2; X < Corner.X + 2; ++X)
+                if (!Terrain->IsDry(X, Y)) return false;
+        return true;
+    };
+    bool bFound = false;
+    // Rings of corners around the spawn's column: ring 1 is its own four.
+    for (int32 Ring = 1; Ring <= 4 && !bFound; ++Ring)
+        for (int32 DY = 1 - Ring; DY <= Ring && !bFound; ++DY)
+            for (int32 DX = 1 - Ring; DX <= Ring && !bFound; ++DX)
+            {
+                const bool bOnRing = FMath::Max(FMath::Abs(DX - .5), FMath::Abs(DY - .5)) > Ring - 1;
+                if (bOnRing && IsGoodCorner((Home + FIntPoint(DX, DY)) * Size))
+                {
+                    ShotEditCorner = (Home + FIntPoint(DX, DY)) * Size;
+                    bFound = true;
+                }
+            }
+    // The top non-air block at a world X, Y, from its column's heightmap.
+    auto Surface = [Pipeline](int32 X, int32 Y)
+    {
+        const FIntPoint Column(FoundationGrid::FloorDivide(X, Size), FoundationGrid::FloorDivide(Y, Size));
+        const FVoxelColumn* Data = Pipeline->FindColumn(Column);
+        return Data ? Data->GetHeight(EVoxelHeightmap::WorldSurface, X - Column.X * Size, Y - Column.Y * Size)
+                    : VoxelConstants::MinZ - 1;
+    };
+    TSet<FIntPoint> Columns;
+    int32 Changed = 0;
+    auto Write = [&World, &Columns, &Changed](const FIntVector& Cell, FFoundationBlockState State)
+    {
+        if (!World.IsKnown(Cell) || World.Get(Cell).State == State) return;
+        World.Set(Cell, State);
+        Columns.Add(FIntPoint(FoundationGrid::FloorDivide(Cell.X, Size), FoundationGrid::FloorDivide(Cell.Y, Size)));
+        ++Changed;
+    };
+    // A pit four cells wide and ten deep, centred on the corner, so it opens into four columns.
+    ShotEditTop = VoxelConstants::MinZ;
+    for (int32 Y = ShotEditCorner.Y - 2; Y < ShotEditCorner.Y + 2; ++Y)
+        for (int32 X = ShotEditCorner.X - 2; X < ShotEditCorner.X + 2; ++X)
+        {
+            const int32 Top = Surface(X, Y);
+            ShotEditTop = FMath::Max(ShotEditTop, Top);
+            for (int32 Z = Top - 9; Z <= Top; ++Z)
+                Write({X, Y, Z}, FFoundationBlockState{});
+        }
+    // A pillar on the border between two columns, five cells south of the corner: stone and glass, glowstone on top.
+    const int32 PillarY = ShotEditCorner.Y + 5, Base = Surface(ShotEditCorner.X, PillarY);
+    for (int32 Level = 1; Level <= 6; ++Level)
+        Write({ShotEditCorner.X, PillarY, Base + Level},
+            (Level == 6         ? Glowstone
+                    : Level % 2 ? Stone
+                                : Glass)
+                ->GetDefaultState());
+    ShotEditReport = FString::Printf(TEXT("  Edits: %d cells in %d columns around the corner (%d, %d)"), Changed,
+        Columns.Num(), ShotEditCorner.X, ShotEditCorner.Y);
+}
+
 void AVoxelWorld::UpdateShots()
 {
     APlayerController* Controller = UGameplayStatics::GetPlayerController(this, 0);
     if (!Controller) return;
-    // Framing from the built area: its centre, its highest surface and the spawn. The Min()s only matter for land
-    // far below sea level, such as Superflat's; the height terrain frames as it always has.
-    const int32 Radius = FMath::Clamp(VoxelConsole::CVarTestAreaRadius.GetValueOnGameThread(), 0, 16);
+    // Framing from the streamed area around the player: its center column, the highest surface near it (the
+    // closeup stays as close as phase 2's area was) and the spawn. The Min()s only matter for land far below sea
+    // level, such as Superflat's; the height terrain frames as it always has.
+    const UVoxelWorldSubsystem* Streaming = GetStreaming();
+    const FVoxelColumnPipeline* Pipeline = Streaming ? Streaming->GetPipeline() : nullptr;
+    if (!Pipeline) return;
+    const FVoxelStreamingRings& Rings = Pipeline->GetRings();
+    // The drawn area reaches one column past the view radius on each axis.
+    const int32 Radius = Rings.ViewRadius + 1;
     int32 Highest = VoxelConstants::MinZ - 1;
     FIntPoint Peak = FIntPoint::ZeroValue;
-    for (const TPair<FIntPoint, TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>>& Pair : Columns)
-        for (int32 Y = 0; Y < VoxelConstants::ColumnSize; ++Y)
-            for (int32 X = 0; X < VoxelConstants::ColumnSize; ++X)
-            {
-                const int32 Height = Pair.Value->GetHeight(EVoxelHeightmap::WorldSurface, X, Y);
-                if (Height <= Highest) continue;
-                Highest = Height;
-                Peak = Pair.Key * VoxelConstants::ColumnSize + FIntPoint(X, Y);
-            }
+    Pipeline->ForEachColumn(
+        [&Highest, &Peak, &Rings](FIntPoint Position, const FVoxelColumn& Column)
+        {
+            if (FMath::Abs(Position.X - Rings.Center.X) > 4 || FMath::Abs(Position.Y - Rings.Center.Y) > 4) return;
+            for (int32 Y = 0; Y < VoxelConstants::ColumnSize; ++Y)
+                for (int32 X = 0; X < VoxelConstants::ColumnSize; ++X)
+                {
+                    const int32 Height = Column.GetHeight(EVoxelHeightmap::WorldSurface, X, Y);
+                    if (Height <= Highest) continue;
+                    Highest = Height;
+                    Peak = Position * VoxelConstants::ColumnSize + FIntPoint(X, Y);
+                }
+        });
     auto Blocks = [this](double X, double Y, double Z) { return OriginCm + FVector(X, Y, Z) * CellCm; };
-    const double Edge = Radius * VoxelConstants::ColumnSize + 8, Middle = VoxelConstants::ColumnSize / 2.;
+    const double Edge = Radius * VoxelConstants::ColumnSize + 8;
+    const double MiddleX = Rings.Center.X * VoxelConstants::ColumnSize + VoxelConstants::ColumnSize / 2.;
+    const double MiddleY = Rings.Center.Y * VoxelConstants::ColumnSize + VoxelConstants::ColumnSize / 2.;
     const FIntVector Spawn = GetSpawnCell();
     const double OverviewZ = FMath::Min(Highest * .5, Highest - 30.),
                  SectionZ = FMath::Min(20., (VoxelConstants::MinZ + Highest) / 2.);
-    const FShot Shots[] = {
-        {TEXT("overview"), Blocks(-Edge - 30, -Edge - 30, Highest + 60), Blocks(Middle, Middle, OverviewZ), false},
-        {TEXT("closeup"), Blocks(Peak.X - 28, Peak.Y - 34, Highest + 6), Blocks(Peak.X, Peak.Y, Highest - 12), false},
+    TArray<FShot, TInlineAllocator<6>> Shots = {
+        {TEXT("overview"), Blocks(MiddleX - Edge - 30, MiddleY - Edge - 30, Highest + 60),
+            Blocks(MiddleX, MiddleY, OverviewZ), false, false},
+        {TEXT("closeup"), Blocks(Peak.X - 28, Peak.Y - 34, Highest + 6), Blocks(Peak.X, Peak.Y, Highest - 12), false,
+            true},
         {TEXT("ground"), Blocks(Spawn.X + .5, Spawn.Y + .5, Spawn.Z + 1.62),
-            Blocks(Peak.X, Peak.Y, FMath::Max(Spawn.Z + 1.62, FMath::Min(Highest * .7, Highest - 20.))), false},
-        {TEXT("lumen-scene"), Blocks(-Edge - 30, -Edge - 30, Highest + 60), Blocks(Middle, Middle, OverviewZ), true},
+            Blocks(Peak.X, Peak.Y, FMath::Max(Spawn.Z + 1.62, FMath::Min(Highest * .7, Highest - 20.))), false, true},
+        {TEXT("lumen-scene"), Blocks(MiddleX - Edge - 30, MiddleY - Edge - 30, Highest + 60),
+            Blocks(MiddleX, MiddleY, OverviewZ), true, false},
         // Outside the west edge, level with the middle of the world: the cut face from bedrock to the surface.
-        {TEXT("section"), Blocks(-Edge - 150, Middle, SectionZ), Blocks(Middle, Middle, SectionZ), false},
+        {TEXT("section"), Blocks(MiddleX - Edge - 150, MiddleY, SectionZ), Blocks(MiddleX, MiddleY, SectionZ), false,
+            false},
     };
+    // Looking down into the pit across the column corner, the pillar beyond it.
+    if (bShotEdits)
+        Shots.Add({TEXT("edits"), Blocks(ShotEditCorner.X - 7, ShotEditCorner.Y - 7, ShotEditTop + 8),
+            Blocks(ShotEditCorner.X + 1, ShotEditCorner.Y + 2, ShotEditTop - 5), false, true});
 
     if (ShotIndex == INDEX_NONE)
     {
@@ -493,7 +676,7 @@ void AVoxelWorld::UpdateShots()
         Controller->SetViewTarget(ShotCamera);
         IFileManager::Get().MakeDirectory(*ShotFolder, true);
     }
-    if (ShotIndex >= UE_ARRAY_COUNT(Shots)) return;
+    if (ShotIndex >= Shots.Num()) return;
     const FShot& Shot = Shots[ShotIndex];
     const FString File = FPaths::Combine(ShotFolder, FString(Shot.Name) + TEXT(".png"));
     if (ShotFrames == 0)
@@ -504,6 +687,7 @@ void AVoxelWorld::UpdateShots()
         Controller->ConsoleCommand(Shot.bLumenScene ? TEXT("r.Lumen.Visualize 3") : TEXT("r.Lumen.Visualize 0"));
         Controller->ConsoleCommand(
             Shot.bLumenScene ? TEXT("ShowFlag.VisualizeLumen 1") : TEXT("ShowFlag.VisualizeLumen 0"));
+        SetEdgeFogVisible(Shot.bFog);
     }
     ++ShotFrames;
     // Lighting cost: the GPU time of the settled frames just before the screenshot.
@@ -518,7 +702,7 @@ void AVoxelWorld::UpdateShots()
     ShotGpuMs = 0;
     ++ShotIndex;
     ShotFrames = 0;
-    if (ShotIndex < UE_ARRAY_COUNT(Shots)) return;
+    if (ShotIndex < Shots.Num()) return;
     // The player has been standing at spawn for every shot: on the block collision, its feet rest on the surface.
     FString Player = TEXT("  Player: none");
     if (const AFoundationPawn* Pawn = Cast<AFoundationPawn>(UGameplayStatics::GetPlayerPawn(this, 0)))
@@ -545,8 +729,9 @@ void AVoxelWorld::UpdateShots()
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Gpu);
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *World);
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Player);
-    FFileHelper::SaveStringToFile(
-        BuildReport + TEXT("\n") + Lighting + TEXT("\n") + Gpu + TEXT("\n") + World + TEXT("\n") + Player + TEXT("\n"),
+    const FString Edits = ShotEditReport.IsEmpty() ? FString() : ShotEditReport + TEXT("\n");
+    FFileHelper::SaveStringToFile(GetBuildReport() + TEXT("\n") + Edits + Lighting + TEXT("\n") + Gpu + TEXT("\n") +
+            World + TEXT("\n") + Player + TEXT("\n"),
         *FPaths::Combine(ShotFolder, TEXT("build.txt")));
     FPlatformMisc::RequestExit(false, TEXT("VoxelShot"));
 }

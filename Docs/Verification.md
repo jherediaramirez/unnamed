@@ -1,5 +1,31 @@
 # Verification
 
+## Voxel world: streaming and editing (phase 3) - October 8, 2026
+
+- **Builds:** the editor build and a `-DisableAdaptiveUnity` build are clean, with no warnings in project code.
+- **Native tests:**
+  - `Scripts\TestVoxel.ps1` 26/26 (`Tests/Evidence/2026-10-08/VoxelAutomation-20261008-210609/`);
+  - every native suite 73/73, 68 before (`Tests/Evidence/2026-10-08/AllNative-20261008-211040/`);
+  - a deliberate off-by-one in `GetSectionsTouching` fails `Unnamed.Voxel.Edit.Sections` (13 errors) and `Unnamed.Voxel.Edit.Remesh` (11) (`Tests/Evidence/2026-10-08/VoxelAutomation-20261008-210535/`).
+- **Acceptance flight** at view radius 12 (`Tests/Evidence/2026-10-08/VoxelFlight-20261008-200725/`, 16,736 frames over 99.9 s):
+  - holes: none;
+  - chunk work on the game thread: worst 1.81 ms, 0 frames over the 2 ms budget;
+  - memory over laps 2 and 3: process 3230 -> 3238 MB, column data 7.11 MB at the end of each lap;
+  - GPU mean 3.25 ms, frame mean 6.0 ms.
+- **Editing:** 166 cells in 4 columns around a column corner are back on screen 22 to 30 ms (2 frames) after the edit (`Tests/Evidence/2026-10-08/VoxelShots-20261008-210841/` and `-210934/`).
+- **Foundation and menu**, because phase 3 changes Foundation files:
+  - the Playground runtime probe at 60 FPS: 103 checks, 0 failures (`Tests/Evidence/2026-10-08/Playground-all/Runtime-20261008-202349/`);
+  - `Tests/create-world.mjs --editor` 32/32 (`Tests/Evidence/2026-10-08/Worlds/Create-1791508280714/`);
+  - `Tests/foundation-menu.mjs --editor` 36/36 (`Tests/Evidence/2026-10-08/Foundation/Menu-1791508711248/`);
+  - JavaScript units 57/57, and 938 reference assets unchanged.
+- **After the pre-commit review's apply-gate fix**, which touches only `UVoxelWorldSubsystem`:
+  - `Scripts\TestVoxel.ps1` 26/26 (`Tests/Evidence/2026-10-08/VoxelAutomation-20261008-225350/`);
+  - the acceptance flight again (`Tests/Evidence/2026-10-08/VoxelFlight-20261008-225439/`, 13,106 frames): no holes, worst chunk work 1.88 ms, 0 frames over budget, memory flat over laps 2 and 3 (process 3365 -> 3372 MB, columns 7.11 MB);
+  - one first-view frame reached 3.31 ms, because a single column took 2.01 ms (estimate 0.13 ms) to get a new chunk component; either gate lets a column with that estimate through;
+  - a repeat capture's first view stayed within budget, worst 1.86 ms (`Tests/Evidence/2026-10-08/VoxelShots-20261008-225725/`).
+
+Details, evidence and gaps: [phase 3 record](Records/2026-10-08-Voxel-Phase3.md).
+
 ## Voxel world: lighting (step 2L) and Create New World (phase 2W) - October 8, 2026
 
 - **Step 2L** (Lumen cards for chunks, the generated map's sky light 3):

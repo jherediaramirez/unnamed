@@ -4,7 +4,16 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 8, 2026
 
-- [Voxel world handoff into phase 3](2026-10-08-Voxel-Handoff-Phase3.md): start here in a new chat. It covers what to read, the working agreement, what phases 0 to 2W and step 2L did, known issues with suggested fixes, phase 3 (streaming and editing) and a way to build it, where subagents (Haiku 5.5, Sonnet 5.5) help, commands and gotchas. It replaces the earlier handoff.
+- [Voxel world phase 3, streaming and editing](2026-10-08-Voxel-Phase3.md): start here in a new chat. An endless world around the player, with mining and placing on it. Covers the planner's circle of columns (545 in view, 657 generated at radius 12), the column pipeline and its stale-result rules, the 2 ms game-thread budget, per-column edit lists and the storage adapter, the shared Foundation changes, `voxel.Fly` and the acceptance flight (no holes, 0 of 16,736 frames over budget, flat memory), the edge fog, the decisions confirmed with the user, the problems found (including the probe that had lowered the user's graphics settings), measurements and known issues.
+
+- [Voxel world handoff: the phase 3 plan](2026-10-08-Voxel-Handoff-Phase3-Plan.md): start here in a new chat. It covers:
+  - the verified state at `9dce565`;
+  - a code map of what phase 3 touches, so there is no need to explore again;
+  - where the code differs from the previous handoff;
+  - the proposed phase 3 plan (not yet approved), with its assumptions, files, design and test spec;
+  - risks, how to run the next test, and what the explorers cost.
+
+- [Voxel world handoff into phase 3](2026-10-08-Voxel-Handoff-Phase3.md): read it with the plan handoff above. It covers what to read, the working agreement, what phases 0 to 2W and step 2L did, known issues with suggested fixes, phase 3 (streaming and editing) and a way to build it, where subagents (Haiku 5.5, Sonnet 5.5) help, commands and gotchas. It replaces the earlier handoff.
 
 - [Voxel world phase 2W, Create New World](2026-10-08-Voxel-Phase2W.md): real saved worlds. Covers `Saved/Worlds/<id>/world.json` and its ids, the native create, open, rename and delete calls, the native world list without sample saves, Superflat's flat terrain, game mode and difficulty reaching the player (Peaceful added), the end-to-end CEF suite and timings.
 

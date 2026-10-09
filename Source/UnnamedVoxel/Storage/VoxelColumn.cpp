@@ -1,6 +1,34 @@
 #include "Storage/VoxelColumn.h"
 #include "Blocks/VoxelBlockTable.h"
 
+namespace
+{
+    // A heightmap value (Z - MinZ + 1, 0 for none) per EVoxelHeightmap, from one X, Y's states top down: each map
+    // stops at its first match. GetLocalState(Local) reads the state at Z = MinZ + Local.
+    template <typename FGetLocalState>
+    void FindColumnHeights(
+        const FVoxelBlockTable& Table, FGetLocalState&& GetLocalState, uint16 (&Found)[int32(EVoxelHeightmap::Count)])
+    {
+        int32 Remaining = int32(EVoxelHeightmap::Count);
+        for (uint16& Height : Found)
+            Height = 0;
+        for (int32 Local = VoxelConstants::Height - 1; Local >= 0 && Remaining > 0; --Local)
+        {
+            const uint16 State = GetLocalState(Local);
+            if (State == 0) continue;
+            const FVoxelStateInfo& Info = Table.Get(State);
+            const bool bMotion = Info.bSolid || Info.IsFluid();
+            const bool Matches[] = {true, Info.bSolid, bMotion, bMotion && !Info.bLeaves};
+            for (int32 Map = 0; Map < int32(EVoxelHeightmap::Count); ++Map)
+                if (!Found[Map] && Matches[Map])
+                {
+                    Found[Map] = uint16(Local + 1);
+                    --Remaining;
+                }
+        }
+    }
+}
+
 uint16 FVoxelColumn::GetState(int32 X, int32 Y, int32 Z) const
 {
     if (Z < VoxelConstants::MinZ || Z > VoxelConstants::MaxZ) return 0;
@@ -20,29 +48,24 @@ void FVoxelColumn::Build(TConstArrayView<uint16> Dense, const FVoxelBlockTable& 
         Sections[Section] =
             FVoxelSection::FromStates(Dense.Slice(Section * FVoxelSection::Volume, FVoxelSection::Volume));
 
-    // From the top down, each heightmap stops at its first match.
     for (int32 Cell = 0; Cell < Area; ++Cell)
     {
-        uint16 Found[int32(EVoxelHeightmap::Count)] = {};
-        int32 Remaining = int32(EVoxelHeightmap::Count);
-        for (int32 Local = VoxelConstants::Height - 1; Local >= 0 && Remaining > 0; --Local)
-        {
-            const uint16 State = Dense[Local * Area + Cell];
-            if (State == 0) continue;
-            const FVoxelStateInfo& Info = Table.Get(State);
-            const uint16 Height = uint16(Local + 1);
-            const bool bMotion = Info.bSolid || Info.IsFluid();
-            const bool Matches[] = {true, Info.bSolid, bMotion, bMotion && !Info.bLeaves};
-            for (int32 Map = 0; Map < int32(EVoxelHeightmap::Count); ++Map)
-                if (!Found[Map] && Matches[Map])
-                {
-                    Found[Map] = Height;
-                    --Remaining;
-                }
-        }
+        uint16 Found[int32(EVoxelHeightmap::Count)];
+        FindColumnHeights(Table, [&Dense, Cell](int32 Local) { return Dense[Local * Area + Cell]; }, Found);
         for (int32 Map = 0; Map < int32(EVoxelHeightmap::Count); ++Map)
             Heightmaps[Map][Cell] = Found[Map];
     }
+}
+
+void FVoxelColumn::SetState(int32 X, int32 Y, int32 Z, uint16 State, const FVoxelBlockTable& Table)
+{
+    if (Z < VoxelConstants::MinZ || Z > VoxelConstants::MaxZ) return;
+    const int32 Local = Z - VoxelConstants::MinZ;
+    Sections[Local >> 4].Set(FVoxelSection::GetIndex(X, Y, Local & 15), State);
+    uint16 Found[int32(EVoxelHeightmap::Count)];
+    FindColumnHeights(Table, [this, X, Y](int32 Cell) { return Sections[Cell >> 4].Get(X, Y, Cell & 15); }, Found);
+    for (int32 Map = 0; Map < int32(EVoxelHeightmap::Count); ++Map)
+        Heightmaps[Map][Y * VoxelConstants::ColumnSize + X] = Found[Map];
 }
 
 SIZE_T FVoxelColumn::GetAllocatedSize() const

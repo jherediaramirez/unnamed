@@ -5,7 +5,7 @@
 #include "Foundation/FoundationAuthority.h"
 #include "FoundationInteractionView.generated.h"
 
-class AFoundationPlayground;
+class AFoundationLab;
 class AFoundationPawn;
 class UInstancedStaticMeshComponent;
 class ULineBatchComponent;
@@ -16,8 +16,10 @@ class USceneComponent;
 class UStaticMeshComponent;
 class UTextRenderComponent;
 
-// The Playground's presentation adapter. It reads the block world's change log, the authority's events and
-// targets and the local player's interaction snapshot; it never changes gameplay state.
+// A lab's block-interaction presentation: the Playground's, and a generated world's (AVoxelWorld). It reads the
+// block world's change log, the authority's events and targets and the local player's interaction snapshot; it never
+// changes gameplay state (draining the change log is reading it). A generated world's chunks draw its blocks, so
+// there the view leaves block drawing off and draws only the outline, cracks, held item and effects.
 // Blocks draw as instances grouped by 16^3 section, mesh (cube, slab half, water height) and render layer, and
 // are tracked by stable instance IDs, never by instance index. Each instance carries its state's face codes,
 // overlay, tint and light as custom data (FoundationBlockFaces); the block materials pick each face's texture
@@ -29,6 +31,10 @@ class UNNAMED_API UFoundationInteractionView : public UActorComponent
     GENERATED_BODY()
 public:
     UFoundationInteractionView();
+    // Set before registering. Blocks as instances from the change log (the Playground's blocks; generated worlds
+    // draw theirs as chunks), and the Playground's fixtures: the jump-stack pad and the station labels.
+    bool bDrawBlocks = true;
+    bool bLabFixtures = true;
     virtual void BeginPlay() override;
     virtual void TickComponent(
         float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -94,7 +100,7 @@ private:
         double HitAge = 10;
     };
 
-    AFoundationPlayground* GetLab() const;
+    AFoundationLab* GetLab() const;
     AFoundationPawn* GetLocalPawn() const;
     UMaterialInstanceDynamic* MakeMaterial(FLinearColor Color, bool bSurface = false);
     UStaticMeshComponent* MakeCube(USceneComponent* Parent, FLinearColor Color, bool bSurface = false);

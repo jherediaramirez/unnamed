@@ -21,7 +21,7 @@ enum class EVoxelHeightmap : uint8
 };
 
 // One 16 x 16 column of the world at full height: 24 sections and the heightmaps. A column is built on a worker and
-// shared read-only from then on; phase 10's edits will copy a section before changing it.
+// shared read-only from then on; an edit copies the whole column (about 10 KB) and changes the copy.
 class UNNAMEDVOXEL_API FVoxelColumn
 {
 public:
@@ -46,6 +46,8 @@ public:
 
     // Builds the sections and heightmaps from a dense buffer of DenseVolume states.
     void Build(TConstArrayView<uint16> Dense, const FVoxelBlockTable& Table);
+    // Sets one cell (local X and Y, world Z) and that X, Y's heightmaps; a Z outside the world changes nothing.
+    void SetState(int32 X, int32 Y, int32 Z, uint16 State, const FVoxelBlockTable& Table);
     SIZE_T GetAllocatedSize() const;
 
 private:

@@ -1,4 +1,6 @@
 #include "Foundation/FoundationLab.h"
+#include "Foundation/FoundationGrid.h"
+#include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationProfile.h"
 #include "UnnamedProjectSettings.h"
 #include "Components/StaticMeshComponent.h"
@@ -149,6 +151,38 @@ bool AFoundationLab::IsInWater(const FBox& Body) const
 {
     const FBox Inner = Body.ExpandBy(-.1);
     return WaterBoxes.ContainsByPredicate([&Inner](const FBox& Water) { return Water.Intersect(Inner); });
+}
+
+FFoundationTarget AFoundationLab::TraceAuthority(const FFoundationAuthority& Authority, FVector Eye, FVector Direction)
+{
+    FFoundationPlayerFacts Facts;
+    Facts.EyeCm = Eye;
+    Facts.Aim = Direction;
+    const FFoundationHit Hit = Authority.Resolve(Facts);
+    FFoundationTarget Target;
+    if (Hit.Kind == EFoundationHitKind::None) return Target;
+    Target.Kind = Hit.Kind == EFoundationHitKind::Entity ? EFoundationTargetKind::Entity : EFoundationTargetKind::Block;
+    Target.Hit = Hit.Point;
+    Target.Normal = FoundationGrid::FaceNormal(Hit.Face);
+    Target.DistanceCm = Hit.DistanceCm;
+    Target.ReachCm = Hit.ReachCm;
+    Target.bInRange = Hit.bInRange;
+    if (Hit.Kind == EFoundationHitKind::Block)
+        Target.Name = Authority.World.GetBlock(Authority.World.Get(Hit.Cell).State).DisplayName + TEXT(" ") +
+            FoundationGrid::DescribeCell(Hit.Cell);
+    else if (Hit.Kind == EFoundationHitKind::Static)
+    {
+        const FFoundationStatic& Static = Authority.Statics[Hit.StaticIndex];
+        Target.Name = Static.Label;
+        Target.bInteractive = !Static.Interaction.IsNone();
+    }
+    else if (const FFoundationTrainingTarget* Entity = Authority.Targets.FindByPredicate(
+                 [&Hit](const FFoundationTrainingTarget& Candidate) { return Candidate.Id == Hit.EntityId; }))
+    {
+        Target.Name = Entity->Label;
+        Target.bAlive = !Entity->Health.IsDead();
+    }
+    return Target;
 }
 
 FFoundationTarget AFoundationLab::TraceTarget(FVector Eye, FVector Direction, const UFoundationProfile& Profile) const

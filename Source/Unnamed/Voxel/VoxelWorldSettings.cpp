@@ -21,7 +21,6 @@ void UVoxelWorldSettings::PushToConsoleVariables() const
     using namespace VoxelConsole;
     CVarViewRadius->Set(ViewRadius, ECVF_SetByProjectSetting);
     CVarUnloadMargin->Set(UnloadMargin, ECVF_SetByProjectSetting);
-    CVarTestAreaRadius->Set(TestAreaRadius, ECVF_SetByProjectSetting);
     CVarApplyBudgetMs->Set(ApplyBudgetMs, ECVF_SetByProjectSetting);
     CVarMaxTasksInFlight->Set(MaxTasksInFlight, ECVF_SetByProjectSetting);
     CVarAmbientOcclusion->Set(bAmbientOcclusion, ECVF_SetByProjectSetting);

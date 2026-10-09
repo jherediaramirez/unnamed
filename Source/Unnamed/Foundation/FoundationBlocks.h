@@ -65,9 +65,8 @@ struct FFoundationBlockChange
     int64 Revision = 0;
 };
 
-// Cell storage behind the block world. The Playground uses bounded sparse 16^3 sections; the chunk loader will
-// implement this interface (paletted sections of state ids) without changing queries, commits or the
-// interaction loop.
+// Cell storage behind the block world. The Playground uses bounded sparse 16^3 sections; generated worlds use the
+// streamed voxel columns (FVoxelBlockStorage), without changing queries, commits or the interaction loop.
 class IFoundationBlockStorage
 {
 public:
@@ -80,6 +79,9 @@ public:
     virtual void ForEachSolid(const FIntVector& Min, const FIntVector& Max,
         TFunctionRef<void(const FIntVector&, const FFoundationCell&)> Visit) const = 0;
     virtual SIZE_T GetAllocatedSize() const = 0;
+    // Whether the cell's data is present: streamed storage loads around the player, and the world knows no cell
+    // that is not loaded.
+    virtual bool IsLoaded(const FIntVector& Cell) const { return true; }
 };
 
 // 16x16x16 sections allocated on first write and kept (their revisions matter) until Empty.
@@ -107,7 +109,8 @@ private:
 };
 
 // The mutable block grid: the shared registry, build bounds, revisions and the change log. Pure data; the
-// authority is its only writer. Cells outside the bounds are unknown (never placeable).
+// authority is its only writer. Cells outside the bounds, or not loaded by the storage, are unknown (never
+// placeable).
 struct UNNAMED_API FFoundationBlockWorld
 {
     FFoundationBlockWorld();
@@ -128,6 +131,8 @@ struct UNNAMED_API FFoundationBlockWorld
     const FFoundationBlockType* FindBlock(FName Id) const { return Registry->FindBlock(Id); }
     const FFoundationBlockType& GetBlock(FFoundationBlockState State) const { return Registry->GetBlock(State); }
 
+    // Replaces the storage (empty sections by default); the change log and the revision stay.
+    void SetStorage(TUniquePtr<IFoundationBlockStorage> NewStorage);
     bool IsKnown(const FIntVector& Cell) const;
     FFoundationCell Get(const FIntVector& Cell) const;
     // The only mutation: sets the state, stamps the next world revision and records the change.

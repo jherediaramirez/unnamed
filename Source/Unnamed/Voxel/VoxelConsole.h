@@ -10,11 +10,12 @@ namespace VoxelConsole
 {
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarViewRadius;
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarUnloadMargin;
-    extern UNNAMED_API TAutoConsoleVariable<int32> CVarTestAreaRadius;
     extern UNNAMED_API TAutoConsoleVariable<float> CVarApplyBudgetMs;
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarMaxTasksInFlight;
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarAmbientOcclusion;
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarGreedyMeshing;
+    // Debug only, not a setting: columns at the edge of the view mesh against air (captures' cut through the world).
+    extern UNNAMED_API TAutoConsoleVariable<bool> CVarEdgeWalls;
 
     // Tasks in flight when voxel.MaxTasksInFlight is 0: twice the task workers, so workers never idle between
     // finishing one job and the game thread queuing the next.

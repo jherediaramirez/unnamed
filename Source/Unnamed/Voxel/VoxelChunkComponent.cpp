@@ -26,6 +26,14 @@ namespace
 
     // How far a card's capture box reaches past its faces, so faces lying on the box's planes are captured.
     constexpr float CardPaddingCm = 10.f;
+
+    // A layer's section: its own material slot. Water casts no shadow.
+    FRealtimeMeshSectionConfig GetChunkLayerSection(int32 Layer)
+    {
+        FRealtimeMeshSectionConfig Config(Layer);
+        Config.bCastsShadow = Layer != ChunkLayerCount - 1;
+        return Config;
+    }
 }
 
 UVoxelChunkComponent::UVoxelChunkComponent()
@@ -75,44 +83,58 @@ void UVoxelChunkComponent::SetMesh(
     URealtimeMeshSimple* Mesh = Cast<URealtimeMeshSimple>(GetRealtimeMesh());
     if (!Mesh) return;
     const FRealtimeMeshBufferSetKey Key = GetColumnKey();
+    // One RealtimeMesh update for the buffer set, its sections and the cards: each update commits separately, so the
+    // calls URealtimeMeshSimple offers would make up to six.
+    FRealtimeMeshUpdateBuilder Update;
     if (!LayerMask)
     {
-        if (bHasBufferSet) Mesh->RemoveBufferSet(Key);
+        if (bHasBufferSet)
+            Update.AddLODTask<FRealtimeMeshLODManaged>(Key,
+                [Key](FRealtimeMeshUpdateContext& Context, FRealtimeMeshLODManaged& LOD)
+                { LOD.RemoveSectionGroup(Context, Key); });
         bHasBufferSet = false;
         SectionMask = 0;
     }
-    else if (bHasBufferSet)
-        Mesh->UpdateBufferSet(Key, MoveTemp(Streams));
     else
     {
-        Mesh->CreateBufferSet(Key, MoveTemp(Streams));
+        const bool bCreate = !bHasBufferSet;
+        if (bCreate)
+            Update.AddLODTask<FRealtimeMeshLODManaged>(Key,
+                [Key](FRealtimeMeshUpdateContext& Context, FRealtimeMeshLODManaged& LOD)
+                { LOD.CreateOrUpdateSectionGroup(Context, Key, FRealtimeMeshBufferSetConfig()); });
+        Update.AddSectionGroupTask<FRealtimeMeshBufferSetSimple>(Key,
+            [bCreate, Streams = MoveTemp(Streams)](
+                FRealtimeMeshUpdateContext& Context, FRealtimeMeshBufferSetSimple& Set) mutable
+            {
+                // Each poly group becomes a section on its layer's slot, configured once when the set is made.
+                if (bCreate)
+                    Set.SetPolyGroupSectionHandler(
+                        Context, FRealtimeMeshPolyGroupConfigHandler::CreateStatic(&GetChunkLayerSection));
+                Set.SetAllStreams(Context, MoveTemp(Streams));
+            });
         bHasBufferSet = true;
     }
+    // The cards travel with the geometry: RealtimeMesh hands them to its scene proxy, which gives them to Lumen.
+    Update.AddMeshTask<FRealtimeMeshSimple>(
+        [bCards = LayerMask && !Cards.CardBuildData.IsEmpty(), Cards = MoveTemp(Cards)](
+            FRealtimeMeshUpdateContext& Context, FRealtimeMeshSimple& Data) mutable
+        {
+            if (!bCards)
+            {
+                Data.ClearCardRepresentation(Context);
+                return;
+            }
+            FCardRepresentationData Representation;
+            Representation.MeshCardsBuildData = MoveTemp(Cards);
+            Data.SetCardRepresentation(Context, FRealtimeMeshCardRepresentation(Representation));
+        });
+    Update.Commit(Mesh->GetMeshData());
     if (MeshedSections != SectionMask)
     {
         MeshedSections = SectionMask;
         UpdateBounds();
         MarkRenderTransformDirty();
     }
-    // Each poly group became a section; point it at its layer's slot. Water casts no shadow.
-    for (int32 Layer = 0; Layer < ChunkLayerCount; ++Layer)
-    {
-        if (!(LayerMask & (1u << Layer))) continue;
-        FRealtimeMeshSectionConfig Config(Layer);
-        Config.bCastsShadow = Layer != ChunkLayerCount - 1;
-        Mesh->UpdateSectionConfig(FRealtimeMeshSectionKey::CreateForPolyGroup(Key, Layer), Config);
-    }
-    // The cards travel with the geometry: RealtimeMesh hands them to its scene proxy, which gives them to Lumen.
-    FRealtimeMeshUpdateContext UpdateContext(Mesh->GetMesh());
-    if (LayerMask && !Cards.CardBuildData.IsEmpty())
-    {
-        FCardRepresentationData Representation;
-        Representation.MeshCardsBuildData = MoveTemp(Cards);
-        Mesh->GetMeshData()->SetCardRepresentation(UpdateContext, FRealtimeMeshCardRepresentation(Representation));
-    }
-    else
-        Mesh->GetMeshData()->ClearCardRepresentation(UpdateContext);
-    UpdateContext.Commit();
 }
 
 void UVoxelChunkComponent::BuildCards(TConstArrayView<const FVoxelMeshData*> Sections, FMeshCardsBuildData& Out)

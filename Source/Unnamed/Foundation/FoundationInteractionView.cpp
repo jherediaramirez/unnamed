@@ -20,7 +20,7 @@
 
 namespace
 {
-    constexpr double Block = UFoundationProfile::BlockCm;
+    constexpr double InteractionViewBlockCm = UFoundationProfile::BlockCm;
     constexpr uint8 WaterLayer = 3;
     const TCHAR* LayerMaterialNames[] = {
         TEXT("M_BlockOpaque"), TEXT("M_BlockCutout"), TEXT("M_BlockTranslucent"), TEXT("M_BlockWater")};
@@ -45,9 +45,9 @@ UFoundationInteractionView::UFoundationInteractionView()
     PrimaryComponentTick.TickGroup = TG_PostUpdateWork;
 }
 
-AFoundationPlayground* UFoundationInteractionView::GetLab() const
+AFoundationLab* UFoundationInteractionView::GetLab() const
 {
-    return Cast<AFoundationPlayground>(GetOwner());
+    return Cast<AFoundationLab>(GetOwner());
 }
 
 AFoundationPawn* UFoundationInteractionView::GetLocalPawn() const
@@ -58,7 +58,7 @@ AFoundationPawn* UFoundationInteractionView::GetLocalPawn() const
 
 UMaterialInstanceDynamic* UFoundationInteractionView::MakeMaterial(FLinearColor Color, bool bSurface)
 {
-    AFoundationPlayground* Lab = GetLab();
+    AFoundationLab* Lab = GetLab();
     // World-fixed geometry shares the lab's dev grid; moving or tiny cubes (held items, particles, the
     // mining overlay) keep the plain material, where a world-aligned grid would swim.
     UMaterialInterface* Base = bSurface && Lab && Lab->GetSurfaceMaterial()
@@ -94,15 +94,15 @@ void UFoundationInteractionView::BeginPlay()
     GridLines = NewObject<ULineBatchComponent>(Owner, TEXT("InteractionGrid"));
     GridLines->SetupAttachment(Owner->GetRootComponent());
     GridLines->RegisterComponent();
-    AFoundationPlayground* Lab = GetLab();
-    if (!Lab) return;
-    const FFoundationAuthority& Authority = Lab->GetAuthorityState();
+    AFoundationLab* Lab = GetLab();
+    if (!Lab || !Lab->GetAuthority()) return;
+    const FFoundationAuthority& Authority = *Lab->GetAuthority();
     // The dev grid material draws the cell lines; only the jump-stack pad, matching its sign, is drawn once
     // and never flushed.
     const FVector Origin = Authority.World.OriginCm;
     const FVector Pad[4] = {Origin + FVector(0, -600, .3), Origin + FVector(200, -600, .3),
         Origin + FVector(200, -400, .3), Origin + FVector(0, -400, .3)};
-    for (int32 Corner = 0; Corner < 4; ++Corner)
+    for (int32 Corner = 0; Corner < 4 && bLabFixtures; ++Corner)
         GridLines->DrawLine(Pad[Corner], Pad[(Corner + 1) % 4], FLinearColor(.95f, .8f, .2f), SDPG_World, 2.f, 0);
 
     MiningOverlay = MakeCube(nullptr, FLinearColor::White);
@@ -114,7 +114,7 @@ void UFoundationInteractionView::BeginPlay()
         Visual.Body = MakeCube(nullptr, TargetColor(false), true);
         Visual.Material = Cast<UMaterialInstanceDynamic>(Visual.Body->GetMaterial(0));
         Visual.Body->SetWorldLocation(Target.Box.GetCenter());
-        Visual.Body->SetWorldScale3D(Target.Box.GetSize() / Block);
+        Visual.Body->SetWorldScale3D(Target.Box.GetSize() / InteractionViewBlockCm);
         Visual.Body->SetCastShadow(true);
         Visual.Label = NewObject<UTextRenderComponent>(Owner);
         Visual.Label->SetupAttachment(Owner->GetRootComponent());
@@ -138,8 +138,11 @@ void UFoundationInteractionView::BeginPlay()
         Owned.Add(Label);
         return Label;
     };
-    PresetLabel = MakeLabel(Origin + FVector(-290, -150, 112));
-    SupplyLabel = MakeLabel(Origin + FVector(-290, 250, 112));
+    if (bLabFixtures)
+    {
+        PresetLabel = MakeLabel(Origin + FVector(-290, -150, 112));
+        SupplyLabel = MakeLabel(Origin + FVector(-290, 250, 112));
+    }
     // Effect pools up front: the first break, critical or hit of a session would otherwise register
     // components in the middle of play.
     for (int32 Index = 0; Index < MaxParticles; ++Index)
@@ -170,7 +173,7 @@ int32 UFoundationInteractionView::GetInstanceCount() const
 void UFoundationInteractionView::LoadBlockAssets()
 {
     const UFoundationBlockAssets* Assets =
-        GetLab() ? GetLab()->GetAuthorityState().World.GetRegistry().GetAssets() : nullptr;
+        GetLab() && GetLab()->GetAuthority() ? GetLab()->GetAuthority()->World.GetRegistry().GetAssets() : nullptr;
     for (int32 Kind = 0; Kind < FoundationBlockMeshes::Count; ++Kind)
         BlockMeshes.Add(FoundationBlockMeshes::Build(this, Kind));
     TextureTable = NewObject<UFoundationBlockTextureTable>(this);
@@ -284,6 +287,13 @@ void UFoundationInteractionView::RefreshWaterBelow(const FFoundationBlockWorld& 
 
 void UFoundationInteractionView::RebuildBlocks(FFoundationAuthority& Authority)
 {
+    if (!bDrawBlocks)
+    {
+        Authority.World.TakeChanges();
+        Authority.World.bChangesOverflowed = false;
+        DrawnRevision = Authority.World.Revision;
+        return;
+    }
     for (auto& Pair : Sections)
     {
         Pair.Value.Mesh->ClearInstances();
@@ -302,7 +312,7 @@ void UFoundationInteractionView::RebuildBlocks(FFoundationAuthority& Authority)
 void UFoundationInteractionView::ApplyChanges(FFoundationAuthority& Authority)
 {
     FFoundationBlockWorld& World = Authority.World;
-    if (World.bChangesOverflowed)
+    if (World.bChangesOverflowed || !bDrawBlocks)
     {
         RebuildBlocks(Authority);
         return;
@@ -334,7 +344,7 @@ void UFoundationInteractionView::Burst(
         Free->Life = Random.FRandRange(.45f, .75f);
         Free->Size = Size;
         Free->Mesh->SetWorldLocation(Center + Random.VRand() * 20);
-        Free->Mesh->SetWorldScale3D(FVector(Size / Block));
+        Free->Mesh->SetWorldScale3D(FVector(Size / InteractionViewBlockCm));
     }
 }
 
@@ -424,6 +434,7 @@ void UFoundationInteractionView::UpdateTargets(const FFoundationAuthority& Autho
 
 void UFoundationInteractionView::UpdateLabels(const FFoundationAuthority& Authority)
 {
+    if (!PresetLabel || !SupplyLabel) return;
     PresetLabel->SetText(FText::FromString(Authority.Options.PlacementPreset.ToString()));
     SupplyLabel->SetText(FText::FromString(Authority.Options.bInfiniteSupply
             ? TEXT("INFINITE, no wear")
@@ -443,7 +454,8 @@ void UFoundationInteractionView::UpdateEffects(double DeltaTime)
         }
         Particle.Velocity.Z -= 980 * DeltaTime;
         Particle.Mesh->AddWorldOffset(Particle.Velocity * DeltaTime);
-        Particle.Mesh->SetWorldScale3D(FVector(Particle.Size / Block * (1. - Particle.Age / Particle.Life)));
+        Particle.Mesh->SetWorldScale3D(
+            FVector(Particle.Size / InteractionViewBlockCm * (1. - Particle.Age / Particle.Life)));
     }
     for (FFloatingText& Number : Numbers)
     {
@@ -606,7 +618,7 @@ void UFoundationInteractionView::UpdateHeldItem(
         {
             UStaticMeshComponent* Mesh = MakeCube(HandPivot, Color);
             Mesh->SetRelativeLocationAndRotation(Location, Rotation);
-            Mesh->SetRelativeScale3D(Size / Block);
+            Mesh->SetRelativeScale3D(Size / InteractionViewBlockCm);
             Mesh->SetCastShadow(false);
             Mesh->SetFirstPersonPrimitiveType(EFirstPersonPrimitiveType::FirstPerson);
             return Mesh;
@@ -648,7 +660,7 @@ void UFoundationInteractionView::UpdateHeldItem(
                 LayerMaterials[Type && Type->IsWater() ? WaterLayer
                                                        : uint8(Type ? Type->Layer : EFoundationRenderLayer::Opaque)]);
             const FPrimitiveInstanceId Id = HeldBlock->AddInstanceById(
-                FTransform(-FoundationBlockMeshes::GetUnitBox(Kind).GetCenter() * Block), false);
+                FTransform(-FoundationBlockMeshes::GetUnitBox(Kind).GetCenter() * InteractionViewBlockCm), false);
             float Data[CustomDataFloats];
             MakeCustomData(Registry, State, Data);
             HeldBlock->SetCustomDataById(Id, Data);
@@ -679,8 +691,8 @@ void UFoundationInteractionView::TickComponent(
     float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    AFoundationPlayground* Lab = GetLab();
-    if (!Lab) return;
+    AFoundationLab* Lab = GetLab();
+    if (!Lab || !Lab->GetAuthority()) return;
     const double Start = FPlatformTime::Seconds();
     FFoundationAuthority& Authority = *Lab->GetAuthority();
     if (TextureTable)
@@ -709,7 +721,7 @@ void UFoundationInteractionView::TickComponent(
         Authority.World.GetSelectionBox(
             Interaction.MiningCell, Authority.World.Get(Interaction.MiningCell).State, Cell);
         MiningOverlay->SetWorldLocation(Cell.GetCenter());
-        MiningOverlay->SetWorldScale3D(Cell.GetSize() / Block * 1.006);
+        MiningOverlay->SetWorldScale3D(Cell.GetSize() / InteractionViewBlockCm * 1.006);
         MiningMaterial->SetVectorParameterValue(
             TEXT("Color"), FMath::Lerp(FLinearColor(.92f, .92f, .92f), FLinearColor(.35f, .35f, .37f), Stage / 9.f));
         DrawCracks(Authority, Interaction);

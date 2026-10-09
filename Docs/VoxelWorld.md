@@ -11,8 +11,8 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 | 2 | Data and meshing on a fixed 9 x 9-column area | Done |
 | 2L | Lighting: Lumen cards for chunks and a brighter sky light, so shaded slopes are no longer black | Done |
 | 2W | Create New World: saved worlds, seed, world type, game mode, difficulty | Done |
-| 3 | Streaming, plus mining and placing on generated terrain | Next |
-| 4 | Terrain (needs lava for aquifers) | |
+| 3 | Streaming, plus mining and placing on generated terrain | Done |
+| 4 | Terrain (needs lava for aquifers) | Next |
 | 5 | Biomes and surface (needs snow layers) | |
 | 6 | Decoration, after a block-shapes step (plants, cross models) | |
 | 7 | Structures that fit the land (needs stairs, doors, fences, paths) | |
@@ -24,8 +24,8 @@ The infinite, seeded block world: streaming, terrain, caves, biomes, decoration 
 
 | Where | What |
 |---|---|
-| `Source/UnnamedVoxel/` | The core module: RNG, noise, density, biomes, storage and meshing in plain C++. It depends on `Core` only, so UObjects, actors and render state cannot be included, and it compiles with precise floating point (below). Headers are included by their path from this folder (`"Random/VoxelSeed.h"`). It holds:<br>- `Random/`: seeds, hashing, streams;<br>- `Noise/`: gradient and fractal noise;<br>- `Spline/`: nested splines;<br>- `Blocks/`: the per-state table;<br>- `Storage/`: sections and columns;<br>- `Terrain/`: the terrain interface, the phase 2 height terrain and Superflat's flat terrain;<br>- `Meshing/`: the mesher;<br>- `Generation/`: the area builder;<br>- `VoxelBench`: timings;<br>- the module-wide `VoxelConstants`, `VoxelLog` and `VoxelStats`. |
-| `Source/Unnamed/Voxel/` | The Unreal side:<br>- `UVoxelWorldSettings` and the console (`VoxelConsole`);<br>- the registry-to-table bridge (`VoxelBlocks`);<br>- the column mesh (`UVoxelChunkComponent`);<br>- the level actor (`AVoxelWorld`). |
+| `Source/UnnamedVoxel/` | The core module: RNG, noise, density, biomes, storage, meshing and the streaming plan in plain C++. It depends on `Core` only, so UObjects, actors and render state cannot be included, and it compiles with precise floating point (below). Headers are included by their path from this folder (`"Random/VoxelSeed.h"`). It holds:<br>- `Random/`: seeds, hashing, streams;<br>- `Noise/`: gradient and fractal noise;<br>- `Spline/`: nested splines;<br>- `Blocks/`: the per-state table;<br>- `Storage/`: sections and columns;<br>- `Terrain/`: the terrain interface, the phase 2 height terrain and Superflat's flat terrain;<br>- `Meshing/`: the mesher and its remesh rule;<br>- `Generation/`: the area builder;<br>- `Streaming/`: the planner (which columns are in view, which exist, which unload);<br>- `VoxelBench`: timings;<br>- the module-wide `VoxelConstants`, `VoxelLog` and `VoxelStats`. |
+| `Source/Unnamed/Voxel/` | The Unreal side:<br>- `UVoxelWorldSettings` and the console (`VoxelConsole`);<br>- the registry-to-table bridge (`VoxelBlocks`);<br>- the column mesh (`UVoxelChunkComponent`);<br>- the column pipeline (`FVoxelColumnPipeline`, plain C++ with no UObjects);<br>- the streaming subsystem (`UVoxelWorldSubsystem`);<br>- the storage adapter (`FVoxelBlockStorage`);<br>- the level actor (`AVoxelWorld`);<br>- the free camera (`AVoxelFlyCamera`) and the acceptance flight (`FVoxelFlight`). |
 | `/Game/Maps/L_Generated` | The generated world's map (`UUnnamedProjectSettings::GeneratedMap`), made by `Scripts/Editor/CreateGeneratedMap.py`. It is not a catalog world. |
 | `/Game/Blocks/M_Chunk*` | The chunk materials, made by `Scripts/Editor/CreateBlockMaterials.py`. |
 | `Source/Unnamed/Tests/Voxel*Tests.cpp` | Native tests, `Unnamed.Voxel.*`; `Scripts/TestVoxel.ps1` runs them. `VoxelTestBlocks.h` is a hand-built block table for tests. |
@@ -42,15 +42,21 @@ Cells use the project's Unreal axes, as the block world does: X east, Y south, Z
 
 ## Design decisions
 
-These differ from the prompt because of what the project already had.
+These differ from the prompt because of what the project already had, or settle what it left open.
 
 - **Block registry:** reused. The mesher reads a flat per-state table compiled from `FFoundationBlockRegistry`: shape, render layer and the seven face codes the block materials already decode.
-- **Collision:** none is cooked for chunks. The Foundation pawn collides against block data through `AFoundationLab::GatherCollision`, so voxel storage answers that query directly.
-- **Storage:** paletted sections. Phase 3 puts them behind `IFoundationBlockStorage`, so targeting, mining and placing work on generated terrain through the existing authority. Collision already reads them in phase 2.
+- **Collision:** none is cooked for chunks. The Foundation pawn collides against block data through `AFoundationLab::GatherCollision`, so voxel storage answers that query directly. Columns not generated yet count as solid, so the pawn can never fall into a hole.
+- **Storage:** paletted sections, read-only once built. `FVoxelBlockStorage` puts them behind `IFoundationBlockStorage`, so targeting, mining and placing work on generated terrain through the existing authority. Columns are shared read-only with workers, so an edit copies its column (about 10 KB) instead of changing it in place.
 - **Noise:** our own scalar noise behind a batch API, not FastNoise2. Runtime SIMD dispatch can round differently on different CPUs, and golden-value tests lock the output.
 - **Seeds:** text seeds use our own 64-bit hash, pinned by test vectors, so an engine upgrade cannot change existing worlds.
 - **Floating point:** `UnnamedVoxel` compiles with `FPSemanticsMode.Precise`. By default Unreal builds the editor with `/fp:precise` and game targets with `/fp:fast` (`VCToolChain.cs`), which would let a packaged build generate different blocks from the editor for the same seed.
 - **Worlds:** generated worlds are player-made worlds from Create New World, all opening one procedural map ([Saved worlds](#saved-worlds)). The Playground stays the only built-in world.
+- **View shape:** a circle of columns measured edge to edge, not a square, so a fog ending at the view radius never shows a missing column ([Streaming](#streaming)).
+- **Edits:** kept as a list per column, each with a stamp, and replayed when the column generates again. Unloading frees the column, and the edits survive. They last for the session until phase 10's saves.
+- **Mesh cache:** kept only within 2 columns of the center, where edits happen. Elsewhere an edit remeshes the whole column.
+- **Unloaded columns:** solid for collision and unknown to the authority, so nothing is placed in them.
+- **Interaction view:** it stays the presentation in generated worlds (outline, cracks, held item, effects), with block drawing and lab fixtures off. The chunks draw the blocks.
+- **World edge:** fog, a floor and aerial perspective hide it until phase 9's far LOD ([Lighting](#lighting)). Meshing the edge against air, the alternative, is kept for captures (`voxel.Debug.EdgeWalls`).
 - **Worldgen numbers:** biome parameter boxes, splines and noise settings will come from the 26.3 data on this machine into a new hash-checked `Reference/minecraft-worldgen-26.3/`, as numbers only, never code.
 
 ## Deterministic core
@@ -93,12 +99,12 @@ A column's density corners at 4 x 8 x 4 cells (5 x 5 x 49 points) cost about 160
 |---|---|---|
 | Block table | `Blocks/VoxelBlockTable.h`, `Voxel/VoxelBlocks.cpp` | One `FVoxelStateInfo` per state id, compiled from the registry on the game thread and shared read-only. It holds the shape (full, bottom or top slab, fluid), the layer (opaque, cutout, translucent, water), the seven face codes, the tint, the light, and three flags: solid, leaves and shades corners. `OpaqueFaces` marks the faces that hide a neighbour: all six for an opaque cube, only the bottom or top for a slab, none for glass or leaves. Water's faces come from its still and flow textures, as the Playground draws it. `VoxelBlocks.cpp` checks that the core's face order and cull bit match the registry's. |
 | Sections | `Storage/VoxelSection.h` | 16^3 states, X fastest, then Y, then Z. One state needs no index array; up to 16 states use 4-bit indices; up to 256 use 8-bit; more store 16-bit state ids directly. Widths divide 64, so no index straddles two words. `Set` widens as the palette fills; `Compact` narrows. Allocations are exact. |
-| Columns | `Storage/VoxelColumn.h` | 24 sections plus the four heightmaps (world surface, ocean floor, motion blocking, motion blocking without leaves), stored as Z - MinZ + 1 with 0 for none. Built from a dense column buffer on a worker, then read-only. A generated column takes about 10 KB. |
-| Terrains | `Terrain/VoxelTerrain.h` | `IVoxelTerrain`: a column generator the area builder, the spawn search and the bench all take. Every column is a pure function of the terrain's settings and its position. |
+| Columns | `Storage/VoxelColumn.h` | 24 sections plus the four heightmaps (world surface, ocean floor, motion blocking, motion blocking without leaves), stored as Z - MinZ + 1 with 0 for none. Built from a dense column buffer on a worker, then read-only. An edit copies the column, and `SetState` sets one cell and its heightmaps through the helper `Build` shares. A generated column takes about 10 KB. |
+| Terrains | `Terrain/VoxelTerrain.h` | `IVoxelTerrain`: a column generator the area builder, the pipeline, the spawn search and the bench all take. Every column is a pure function of the terrain's settings and its position. The dense scratch buffer is reused between columns, so a terrain must set every cell (`Dense.Init`), not rely on zeroes. |
 | Flat terrain | `Terrain/VoxelFlatTerrain.h` | Superflat: the same stack of layers in every column, laid from Z -64 up and cut at the world's top. The surface is the top solid layer; a fluid above it makes the land not dry. |
 | Height terrain (phase 2) | `Terrain/VoxelHeightTerrain.h` | A stand-in until phase 4. A 2D height comes from continent fBm (1/220), damped hills (1/90) and detail (1/24), giving sea level 63 plus up to about 100 blocks. Layers: bedrock thinning from Z -64 to -60; deepslate below 0, blending into stone up to 8; stone; 3 to 5 blocks of soil. The top is grass, sand at the shore, gravel deep under water, bare stone from 110 and snow from 128. Water fills to Z 62. |
-| Meshing | `Meshing/VoxelMesher.h` | Each section meshes alone from an 18^3 padded copy: itself plus a one-cell border from its 26 neighbours, which may sit in other columns. A missing column reads as air. Rules: see below. |
-| Area builder | `Generation/VoxelArea.h` | Generates a square of columns, then meshes every section with its neighbours, one task each, timing every stage. The test area and `voxel.Bench Columns` use it. |
+| Meshing | `Meshing/VoxelMesher.h` | Each section meshes alone from an 18^3 padded copy: itself plus a one-cell border from its 26 neighbours, which may sit in other columns. A missing column reads as air. `GetSectionsTouching` is the remesh rule for an edit: the sections whose padded box holds the cell, up to 8 in 4 columns (`FVoxelSectionKey` names a section). Rules: see below. |
+| Area builder | `Generation/VoxelArea.h` | Generates a square of columns, then meshes every section with its neighbours, one task each, timing every stage. `voxel.Bench Columns` uses it. The streamed world runs the same stages per column in the pipeline ([Streaming](#streaming)). |
 
 Mesher rules:
 
@@ -111,10 +117,10 @@ Mesher rules:
 
 Rendering:
 
-- **Chunk component:** `UVoxelChunkComponent` is one RealtimeMesh per column with a single buffer set: every section's geometry, and a poly group per layer mapped to that layer's material slot.
+- **Chunk component:** `UVoxelChunkComponent` is one RealtimeMesh per column with a single buffer set: every section's geometry, and a poly group per layer mapped to that layer's material slot. `SetMesh` hands the buffer set, the layer sections and the Lumen cards to RealtimeMesh in one update. The subsystem pools the components.
 - **Lumen cards:** each column also carries a Lumen card representation, built on the workers with its stream set (`UVoxelChunkComponent::BuildCards`). For each face direction there is a card per section, fitted to that section's opaque and cutout faces in that direction. When a column would exceed Lumen's 32 cards per mesh, the vertically closest cards of its busiest direction merge first. Lumen captures the cards into its surface cache, which is how the terrain bounces light ([Lighting](#lighting)).
 - **Chunk materials:** `M_ChunkOpaque`, `M_ChunkCutout`, `M_ChunkTranslucent` and `M_ChunkWater` reuse the block shader. They transform the continuous UV first, take each block's fraction, and sample with the continuous UV's gradients, so mips never jump at block edges. Texture animation uses the same `UFoundationBlockTextureTable`.
-- **Collision:** none on the meshes. `AVoxelWorld::GatherCollision` returns block boxes (full or half for slabs) from the columns, as the Playground does from its block world.
+- **Collision:** none on the meshes. `AVoxelWorld::GatherCollision` returns block boxes (full or half for slabs) from the columns, as the Playground does from its block world. Columns not generated yet count as solid.
 
 Measured on one thread, `voxel.Bench Columns 4` (81 columns, 1,944 sections, seed `Unnamed`):
 
@@ -127,21 +133,97 @@ Measured on one thread, `voxel.Bench Columns 4` (81 columns, 1,944 sections, see
 
 A whole column (generation plus 24 sections) costs about 1.9 ms on one worker. On all 30 workers the 81 columns generate in 3.5 ms and mesh in 6.8 ms of wall time, though per-item times rise by a third from cache contention. The area holds 24,477 quads, about 60 per meshed section, and columns take 10 KB each. A column's Lumen cards take 0.010 ms to build (0.023 ms worst): 832 cards for the area, 10.3 per column and at most 26.
 
-## The test area
+## Streaming
 
-`AVoxelWorld` is the level actor of `/Game/Maps/L_Generated` and the map's `AFoundationLab`.
+`AVoxelWorld` is the level actor of `/Game/Maps/L_Generated` and the map's `AFoundationLab`. It starts `UVoxelWorldSubsystem`, which streams columns around the player's camera, and owns the `FFoundationAuthority` that mines and places ([phase 3 record](Records/2026-10-08-Voxel-Phase3.md)). The world comes from its saved world's seed and terrain (`?VoxelWorld=<id>`, [Saved worlds](#saved-worlds)) or, when the map opens without one, the dev seed. `-VoxelSeed=<text>` overrides either seed.
 
-- **Start:** at BeginPlay it builds a square of `2 * voxel.TestAreaRadius + 1` columns around the origin, from its saved world's seed and terrain (`?VoxelWorld=<id>`, [Saved worlds](#saved-worlds)) or, when the map opens without one, the dev seed. `-VoxelSeed=<text>` overrides either seed.
-- **Build:** a background task generates, meshes and builds every column's stream set; the game thread then applies whole columns within `voxel.ApplyBudgetMs` per frame.
-- **Player:** once the columns exist, the player returns to spawn: the dry surface nearest the origin, found from the terrain function so it is known before any column is built. Collision comes from block data, and falling below Z -128 returns the player to spawn.
+Rings around the center column (`FVoxelStreamingRings`, in the core's `Streaming/VoxelStreamingPlanner.h`):
+
+| Set | Rule | At radius 12 |
+|---|---|---|
+| In view | gap <= `ViewRadius`; meshed and drawn | 545 columns |
+| Needed | in view or beside a column in view; generated, because a section meshes from its 3 x 3 | 657 columns |
+| Unloaded | beyond `ViewRadius + 1 + UnloadMargin` | beyond 15 columns |
+
+- **Gap:** the distance between the center column's square and another column's square, in columns. Every block within `ViewRadius` columns of the camera, anywhere in its column, lies in a column in view, so a fog ending at `ViewRadius * 16` blocks never shows a missing column.
+- **Shape:** a circle. A square with the same clear distance is 25 x 25 = 625 columns, so the circle loads 13% fewer.
+- **Hysteresis:** the unload ring is the prompt's "unload radius = load radius + 2", with the generated ring as the load radius. The margin has a minimum of 2 (`MinUnloadMargin`), which covers a diagonal move.
+- **Order:** `VoxelStreaming::GetNeededColumns` sorts by distance, then ahead of the view (the yaw in 8 sectors), then Y, then X. `GetUnloads`, `Plan` and `GetViewSector` complete the planner. All are pure functions.
+
+The pipeline (`FVoxelColumnPipeline`, `Voxel/VoxelColumnPipeline.h`):
+
+- **Plain C++** with no UObjects, so tests drive it without a world. It keeps one record per column.
+- **Jobs:** `UE::Tasks` at `BackgroundHigh`, up to `voxel.MaxTasksInFlight` (0 = twice the workers, 60 here). Walking the needed columns nearest first, a column gets a mesh job when it is in view and its 3 x 3 is generated, and a generation job otherwise.
+- **A mesh job** meshes the dirty sections (all of them when it has no cache), skips all-air sections, then builds the stream set and the Lumen cards.
+- **Stale results** are dropped: by a serial per record when the column unloads, and by a mesh version when it was edited while meshing.
+- **Mesh cache:** section meshes are kept for columns within 2 columns of the center (1.3 MB at the first view; empty while flying, because new columns are meshed far away), so an edit remeshes only the touched sections.
+- **`voxel.Debug.EdgeWalls`** meshes the view's edge against air (captures).
+
+Editing:
+
+- **`SetCell`** copies the column (copy on write, about 10 KB), sets the cell and its heightmaps (`FVoxelColumn::SetState`), and marks dirty exactly the sections whose padded 18^3 box holds the cell (`VoxelMesher::GetSectionsTouching`: up to 8 sections in 4 columns).
+- **Edits** are kept per column with a stamp (the block world's revision) and replayed after the column generates, so they survive unloading. They last for the session until phase 10.
+- **`FVoxelBlockStorage`** (`Voxel/VoxelBlockStorage.h`) is an `IFoundationBlockStorage` over the pipeline, reached through a getter so tests pass their own pipeline. A cell is loaded when its column is generated. `Empty` drops the edits.
+
+The subsystem (`UVoxelWorldSubsystem`, a `UTickableWorldSubsystem` for game and PIE worlds, started by `AVoxelWorld`):
+
+- **Focus:** the player's camera, so `voxel.Fly` works. Captures pin it to the spawn.
+- **Budget:** all chunk work on the game thread in a frame (plan, jobs, apply) stays within `voxel.ApplyBudgetMs`. A column's apply cost is estimated from its quads (a line fitted to measured applies, weighted to recent ones, times 1.5), and applying stops when the estimate would pass 85% of the budget. A frame's first column always goes, so no column waits forever, however big. Each measured apply counts as at most 4 times its estimate plus 1 ms, so one stall does not raise the estimates after it.
+- **Components** are pooled. Columns out of view stay loaded but hidden.
+- **Instruments:** `stat Voxel` counters, a log line every second with the worst frame's plan, jobs and apply split, and a first-view report in the captures' `build.txt`.
+
+The lab (`AVoxelWorld`):
+
+- **Authority:** it owns an `FFoundationAuthority` over `FVoxelBlockStorage`, with bounds Z -64 to 319 and X and Y ±30,000,000. `TraceTarget` goes through it.
+- **Presentation:** it creates the interaction view with block drawing and lab fixtures off.
+- **Rules:** a Creative saved world gets infinite supply, no tool wear and the creative inventory. A Survival world gets finite supply and tool wear, and starts with the loadout's tools and no blocks. The bare map uses the Playground's lab defaults.
+- **Collision and spawn:** columns not generated yet count as solid. The spawn is the dry surface nearest the origin, found from the terrain function. The player is put there once its 3 x 3 is generated, and falling below Z -128 returns the player to it.
+- **Water:** `IsInWater` reads the blocks. A fluid cell counts up to `FluidAmount / 9` of a block, and fully when more fluid lies above it.
+
+Fast travel and the acceptance flight:
+
+- **`voxel.Fly [blocks per second]`** (`AVoxelFlyCamera`) is a free camera, default speed 40. W, A, S, D fly along the view, Space and Left Ctrl rise and sink, and Left Shift is x4. The keys are physical keys, not the player's bindings. The player is frozen: actor tick off, gameplay input off.
+- **The flight** (`FVoxelFlight`; `-VoxelFlight=<folder>`, or `CaptureVoxel.ps1 -Flight`) flies at altitude 180 blocks with pitch -20: hover 2 s; east at 20, 40 and 80 blocks per second for 8 s each and at 160 for 6 s; then 3 laps of a circle of radius 288 blocks (1.5 view radii) at 80. It writes `flight.csv`, `flight.txt` and 4 screenshots. `flight.csv` has a row per frame: time, position, speed, leg, center column, columns generated, needed, in view and in view on screen, jobs, ready, applied, `tick_ms` (all chunk work), `plan_ms`, `jobs_ms`, `apply_ms`, holes, late, column and cache MB, process MB, and frame and GPU ms. One frame moves the camera at most 50 ms of flight, because the flight's own screenshots cause hitches of about 400 ms.
+- **A hole** is a column closer than the fog's start (`ViewRadius - 1.5` as a gap), in the frustum, and never on screen. Columns still arriving inside the fade are counted apart as late columns.
+
+At the edge the view ends in fog, a fog floor and aerial perspective rather than a wall ([Lighting](#lighting)).
+
+Measured on this machine, Development editor, 1600 x 900. Runs before 20:23 are clean; after it another GPU-heavy app was running, so the edits run's GPU times are not comparable.
+
+- **First view at radius 12** (`Tests/Evidence/2026-10-08/VoxelShots-20261008-193131/`):
+  - generate 657 columns: mean 1.02 ms, worst 2.6 ms;
+  - mesh 545 columns: mean 1.5 ms (1.19 ms in the flight run);
+  - stream sets and cards: mean 0.20 ms;
+  - quads: 166,376 (305 per column) with edge walls, 154,167 without; columns 10.3 KB each (6.6 MB); mesh cache 1.3 MB;
+  - Lumen cards: 8.8 per column (most 29) with edge walls, 7.2 (most 13) without;
+  - apply: 545 columns in 44 ms over 26 frames;
+  - from the first frame to the whole view on screen: 0.5 to 0.6 s over about 30 frames. Engine startup before the first frame adds about 1.3 s in captures.
+- **Acceptance flight** at radius 12 (`Tests/Evidence/2026-10-08/VoxelFlight-20261008-200725/`, 16,736 frames over 99.9 s):
+  - holes: none;
+  - late columns in the fog's fade: 1,155 frames, at most 33 columns, one frame each, when crossing a column corner moves the rings diagonally;
+  - chunk work on the game thread: worst 1.81 ms, 0 of 16,736 frames over the 2 ms budget; the mean per leg is 0.01 to 0.14 ms (0.14 at 160 blocks per second);
+  - memory over laps 2 and 3: process 3230 -> 3238 MB, column data 7.11 MB at the end of each lap; each lap generates about 3,360 columns and applies about 3,070;
+  - GPU mean 3.25 ms, frame mean 6.0 ms.
+- **Edits** (`Tests/Evidence/2026-10-08/VoxelShots-20261008-210841/` and `-210934/`): 166 cells in 4 columns around the corner (-16, -16) are back on screen 22 to 30 ms (2 frames) after the edit.
+
+GPU frame per shot, mean of the last 60 settled frames (radius 12 with edge walls and no fog, `VoxelShots-20261008-192828/`, against phase 2W's 9 x 9 area, `VoxelShots-20261008-171008/`):
+
+| Shot | Radius 12 | Phase 2W |
+|---|---|---|
+| `overview` | 3.32 ms | 2.86 ms |
+| `closeup` | 3.37 ms | 2.77 ms |
+| `ground` | 3.16 ms | 3.01 ms |
+| `lumen-scene` | 3.95 ms | 3.47 ms |
+| `section` | 3.07 ms | 2.76 ms |
 
 To try it in the editor:
 
-1. Open `Content/Maps/L_Generated` and press Play. You stand on the test area and can walk, jump and look around; the edges show the cut through the world down to bedrock. Or start from the menu: Singleplayer, Create New World.
-2. `voxel.Seed hello` rebuilds the area with another seed. `voxel.Regenerate` rebuilds it after you change `voxel.TestAreaRadius`, `voxel.GreedyMeshing` or `voxel.AmbientOcclusion`.
-3. `stat Voxel` shows the generate, gather, mesh and apply timings. The build's report is in the Output Log under `LogUnnamedVoxel`.
+1. Open `Content/Maps/L_Generated` and press Play. You stand on the generated land and can walk, jump, look around, mine and place, and the land streams in as you move. Or start from the menu: Singleplayer, Create New World.
+2. `voxel.Fly` detaches a free camera for crossing the world fast.
+3. `voxel.Seed hello` rebuilds the world with another seed. `voxel.Regenerate` rebuilds it after you change `voxel.GreedyMeshing` or `voxel.AmbientOcclusion`.
+4. `stat Voxel` shows the streaming counters and the generate, gather, mesh and apply timings. The reports are in the Output Log under `LogUnnamedVoxel`.
 
-`& Scripts\CaptureVoxel.ps1 [-Seed <text>] [-World <id> [-WorldsDir <folder>]] [-ExecCmds '<console commands>']` renders the area offscreen (`-World` opens a saved world, from `Saved/Worlds` by default) and saves 5 screenshots plus `build.txt` to `Tests/Evidence/<date>/VoxelShots-<time>/`. `build.txt` holds the build report, the lighting settings in effect, each shot's GPU frame time (the mean of its last 60 settled frames) and where the player stands. `-ExecCmds` compares settings without changing anything, for example `'r.Lumen.HardwareRayTracing.LightingMode 1'`. The shots:
+`& Scripts\CaptureVoxel.ps1 [-Seed <text>] [-World <id> [-WorldsDir <folder>]] [-ExecCmds '<console commands>'] [-Edits] [-Flight [-FlightSeconds <s>]]` renders the world offscreen (`-World` opens a saved world, from `Saved/Worlds` by default) and saves 5 screenshots plus `build.txt` to `Tests/Evidence/<date>/VoxelShots-<time>/`. `build.txt` holds the first-view report, the lighting settings in effect, each shot's GPU frame time and where the player stands. `-ExecCmds` compares settings without changing anything, for example `'r.Lumen.HardwareRayTracing.LightingMode 1'`. Edge walls are on by default for the shots. `-Edits` carves a 4 x 4 x 10 pit across the nearest dry column corner, builds a stone, glass and glowstone pillar on a column border, and adds an `edits` shot (the game's `-VoxelShotEdits`). `-Flight` flies the acceptance path instead and writes `Tests/Evidence/<date>/VoxelFlight-<time>/`; `-FlightSeconds` ends the flight after that many seconds. The shots:
 
 - `overview`;
 - `closeup` of the highest point;
@@ -168,7 +250,7 @@ Create New World makes a saved world, and Play opens one. Both go through `UMenu
 |---|---|
 | Seed | Parsed at creation (`FVoxelSeed::Parse`); a blank seed draws a random one once, and the world keeps it. |
 | World type | Superflat builds the flat terrain from its layers: listed top first on screen, laid from the floor up. Every layer must be a block this game has. Default, Large Biomes, AMPLIFIED and Single Biome build today's height terrain; the last three are saved for phases 4 and 5. |
-| Game mode | Survival and Creative set the player's mode. Hardcore plays as Survival on Hard: the screen and the store force Hard, no commands and no bonus chest. Permadeath needs a game-over screen first. |
+| Game mode | Survival and Creative set the player's mode and the lab's block rules: Creative gets infinite supply, no tool wear and the creative inventory; Survival gets finite supply and tool wear, and starts with the loadout's tools and no blocks. Hardcore plays as Survival on Hard: the screen and the store force Hard, no commands and no bonus chest. Permadeath needs a game-over screen first. |
 | Difficulty | Peaceful, Easy, Normal or Hard in the player's vitals. Peaceful means no mob damage and, with natural regeneration on, a point of health every second and of food every half second. |
 | Game rules | `natural_health_regeneration` drives the player's regeneration; the others are saved for their systems. |
 | Commands, structures, bonus chest, experiments, Single Biome's biome | Saved; each takes effect when its system exists. Data Packs stay a mock. |
@@ -181,27 +263,30 @@ Runtime code reads the console variables, never the settings object. The setting
 
 | Setting | Console variable | Default | Used from |
 |---|---|---|---|
-| `DevSeed` | (`voxel.Seed` command) | `Unnamed` | 2: the test area's seed when the map opens without one (`-VoxelSeed=` overrides it) |
-| `ViewRadius` | `voxel.ViewRadius` | 12 columns | 3 |
-| `UnloadMargin` | `voxel.UnloadMargin` | 2 columns | 3: unload beyond radius 14 |
-| `TestAreaRadius` | `voxel.TestAreaRadius` | 4 (9 x 9 columns) | 2 |
-| `ApplyBudgetMs` | `voxel.ApplyBudgetMs` | 2 ms | 2 |
-| `MaxTasksInFlight` | `voxel.MaxTasksInFlight` | 0 = twice the task workers | 3 |
+| `DevSeed` | (`voxel.Seed` command) | `Unnamed` | 2: the world's seed when the map opens without a saved world (`-VoxelSeed=` overrides it) |
+| `ViewRadius` | `voxel.ViewRadius` | 12 columns | 3: the circle of columns in view; the fog ends here |
+| `UnloadMargin` | `voxel.UnloadMargin` | 2 columns (at least 2) | 3: unload beyond `ViewRadius + 1 + UnloadMargin`, which is 15 at radius 12 |
+| `ApplyBudgetMs` | `voxel.ApplyBudgetMs` | 2 ms | 2; from 3 it bounds all chunk work on the game thread in a frame |
+| `MaxTasksInFlight` | `voxel.MaxTasksInFlight` | 0 = twice the task workers (60 here) | 3 |
 | `bAmbientOcclusion` | `voxel.AmbientOcclusion` | on | 2 |
 | `bGreedyMeshing` | `voxel.GreedyMeshing` | on | 2 |
+
+`voxel.Debug.EdgeWalls` (default off) is a debug-only variable, not a setting, so it has no row. It meshes the view's edge against air, so the outer columns draw their sides: the cut through the world that the `overview` and `section` shots show. `CaptureVoxel.ps1` turns it on for its shots.
 
 ## Commands and diagnostics
 
 - `voxel.Info` prints the following, to the console and to `LogUnnamedVoxel`:
   - the world range and the dev seed;
   - every `voxel.*` variable, with its value and what set it;
-  - the load and unload limits, the task workers, and the mesh backend.
+  - the view radius with its column counts, for example `View radius 12: 545 columns in view, 657 generated; unload beyond 15 columns`;
+  - the task workers, the tasks in flight and the mesh backend.
 - `voxel.Seed [text]` shows the world seed a seed text makes, for example `Seed "Unnamed" -> -3224043261468865476 (text)`. In a voxel world it also rebuilds the world with that seed for the session. Without text it shows the current seed.
 - `voxel.Regenerate` rebuilds the voxel world with its seed, picking up changed console variables.
+- `voxel.Fly [blocks per second]` is the free camera ([Streaming](#streaming)).
 - `voxel.Bench Noise [millions]` times each primitive on the calling thread (1 million samples each by default), then 3D fBm across every task worker.
 - `voxel.Bench Columns [radius]` builds `(2 radius + 1)^2` columns off screen (default radius 4), first on one thread and then on every worker, and reports each stage.
-- `stat Voxel` shows the `STATGROUP_Voxel` timings. Each stage adds its cycle stats there, next to a matching `TRACE_CPUPROFILER_EVENT_SCOPE` for Unreal Insights.
-- `LogUnnamedVoxel` is the one log category, shared by both modules.
+- `stat Voxel` shows the `STATGROUP_Voxel` timings and the streaming counters. Each stage adds its cycle stats there, next to a matching `TRACE_CPUPROFILER_EVENT_SCOPE` for Unreal Insights.
+- `LogUnnamedVoxel` is the one log category, shared by both modules. While a voxel world runs it gets a line every second with the worst frame's plan, jobs and apply split.
 
 ## RealtimeMeshComponent
 
@@ -215,12 +300,13 @@ Runtime code reads the console variables, never the settings object. The setting
 
 To update it, replace the folder from a newer upstream commit, record the commit here, rebuild and run `Scripts\TestVoxel.ps1`.
 
-What phase 2 found at this commit, and how the project works around it (all in `UVoxelChunkComponent`):
+What phases 2 and 3 found at this commit, and how the project works around it (all in `UVoxelChunkComponent`):
 
 - **Several buffer sets in one mesh draw wrongly.** Only the most recently created one renders, with stray triangles from the others. The upstream examples use one buffer set per mesh. Workaround: each column is a single buffer set, and a changed section rebuilds its column's set.
 - **Ray tracing needs aligned index offsets.** Each poly group gets a ray-tracing segment at its offset in the shared index buffer, and D3D12 asserts unless that offset is a multiple of 16 bytes (`D3D12RayTracing.cpp`). Workaround: every layer is padded to a multiple of four triangles with zero-area ones.
 - **Cached bounds can go stale.** The component caches the mesh's bounds when render data changes, and a stale box frustum-culled near columns. Workaround: the component computes its own bounds, the column's footprint between its lowest and highest meshed sections.
 - **Lumen needs cards from us.** The mesh accepts a Lumen card representation and a mesh distance field (`FRealtimeMesh::SetCardRepresentation` and `SetDistanceField`), and its scene proxy hands both to Lumen, but it generates neither. With hardware ray tracing the chunks are in Lumen's scene anyway, through their ray-tracing geometry, so without cards every surface-cache lookup on terrain came back black. Workaround: the column builds its own cards ([Lighting](#lighting)). No distance fields yet, so software Lumen does not see the chunks at all.
+- **Updates can be batched.** `SetMesh` used to make up to six RealtimeMesh updates: the buffer set, up to four section configs, then the cards. It now makes one (`FRealtimeMeshUpdateBuilder`) for the buffer set, the sections and the cards. The layer sections come from a poly-group section handler set when the set is created.
 
 ## Lighting
 
@@ -241,20 +327,30 @@ Mean sRGB levels from the `ground` and `overview` shots, before and after (`Test
 
 GPU frame at 1600 x 900 on this machine: 2.7 ms before, 2.9 to 3.0 ms after. The cards cost the difference, because Lumen now keeps a surface cache for the terrain. The brighter sky costs nothing. Comparisons: `Tests/Evidence/2026-10-08/VoxelLighting-*`.
 
+**Edge fog (phase 3).** The view ends at `voxel.ViewRadius`. Instead of a wall or a dark void, the last 1.5 columns fade into the sky, so the land seems to run off into a distance that is too far and foggy to see. `AVoxelWorld` refits the map's `ExponentialHeightFog` from the view radius at runtime:
+
+- **Fog:** clear until 1.5 columns before the radius and 99% opaque at it: density 1000 * ln(100) / 2400, about 1.92, where 2,400 cm is the fade. Height falloff 0.001. Cutoff distance 1e9 cm, so the sky stays clear.
+- **Color:** matched to the sky just above the horizon, which measures (184, 189, 184) sRGB in screenshots: in-scattering (5900, 6500, 6000) cd/m2 and sky ambient contribution 0. Directional in-scattering keeps a glow on the sun side.
+- **Floor:** a plane under the world's bottom follows the camera: the engine Plane scaled to 1,000 km, with no shadows, Lumen or ray tracing. Below the horizon past the edge it takes the fog's color instead of the sky atmosphere's dark ground.
+- **Aerial perspective:** the sky's aerial perspective is scaled x50 at radius 12 (the scale follows 12 / R at radius R), so land pales with distance.
+- **Shots from outside the world** (`overview`, `lumen-scene`, `section`) turn the fog, the floor and the aerial perspective off.
+- **Cost:** the flight's mean GPU time went from 3.03 ms before the fog floor to 3.25 ms with the floor and the haze (`Tests/Evidence/2026-10-08/VoxelFlight-20261008-195430/` and `-200725/`).
+
 Limits:
 
 - **Hidden faces in a card.** A card captures the front face along its direction, so a face behind another facing the same way in the same section (a dune behind a dune, a valley narrower than 16 blocks) stays black in Lumen's scene. Rays that hit it get no bounce. It shows as black strips on the seabed in the `lumen-scene` shot. Caves and overhangs in phase 4 will make it more common. Options then: cards sliced along their direction, or hit lighting.
 - **Software Lumen.** On a GPU without hardware ray tracing, Lumen traces distance fields. The chunks have none, so it cannot see them: no bounce and no sky occlusion, and caves would be lit by the sky. Mesh distance fields for columns (`SetDistanceField`) are the fix when it matters.
+- **Fog color.** It is fitted to the map's sun, so a day cycle would need it refitted. A faint seam remains on the sun side.
 - **The Playground** keeps its own rig (sky light 1).
 
 ## Tests
 
-`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 21 `Unnamed.Voxel` tests. Saved worlds are tested by `Unnamed.Worlds.Saved` (native) and, through the menu end to end, by `Tests/create-world.mjs`. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
+`& Scripts\TestVoxel.ps1` runs `voxel.Info`, `voxel.Seed` and `voxel.Bench Noise`, then the 26 `Unnamed.Voxel` tests. Saved worlds are tested by `Unnamed.Worlds.Saved` (native) and, through the menu end to end, by `Tests/create-world.mjs`. It writes `Tests/Evidence/<date>/VoxelAutomation-<time>/`, with the commands' output in `voxel-console.txt`. The editor's throwaway user folder goes to a temp folder, not into the evidence.
 
 | Test | Checks |
 |---|---|
 | `Unnamed.Voxel.Constants` | The world range, 24 sections, sea level, and that voxel sections match the block world's sections. |
-| `Unnamed.Voxel.Settings` | Every variable mirrors its setting unless overridden; `voxel.Info` lists every variable, the seed and the range; the command is registered. |
+| `Unnamed.Voxel.Settings` | Every setting's variable mirrors it unless overridden; `voxel.Info` lists every variable, the seed and the range; the command is registered. |
 | `Unnamed.Voxel.MeshBackend` | A worker task builds a one-face stream set; the game thread hands it to a `URealtimeMeshSimple`, which then holds 4 vertices and 6 indices. |
 | `Unnamed.Voxel.Random.Vectors` | SplitMix64 from 0 and 1234567, Xoroshiro128++ from a raw state and from seeds 0 and 42, the FNV-1a published vectors, salts and `Hash64`. Expected values come from an independent Python implementation; the salts and hashes are also `static_assert`s, so the build checks them. |
 | `Unnamed.Voxel.Random.Seed` | Numbers (signs, leading zeros, both 64-bit limits), text (pinned hashes, including non-ASCII), out-of-range numbers as text, trimming, case sensitivity, random seeds for blank text. |
@@ -274,15 +370,30 @@ Limits:
 | `Unnamed.Voxel.Mesher.Cards` | Lumen cards from meshed columns: one block gives one thin card per direction, looking along that face's normal; glass and water give none, leaves six. A pillar through all 24 sections, 98 cards before merging, stays within Lumen's 32. In both, and among random blocks, every opaque and cutout face lies inside a card facing its way. |
 | `Unnamed.Voxel.Terrain.Flat` | The classic Superflat stack (bedrock, two dirt, grass) in every column with its surface and heightmap; water on top is not dry land; a stack taller than the world fills it; trailing air is dropped; no layers stands nowhere. |
 | `Unnamed.Voxel.Terrain.Generate` | Five columns, including ones millions of blocks out, generated in order on this thread and in reverse on the workers: identical. Heightmaps follow the terrain function; bedrock floor and deepslate; every column under 64 KB; another seed changes the land. |
+| `Unnamed.Voxel.Streaming.Planner` | 274 checks on the pure planner: the in-view and generated counts, coverage of the view, the order of loads, view sectors, hysteresis, the rows a one-column move adds and removes in steady state, radius changes, and far coordinates. |
+| `Unnamed.Voxel.Streaming.Pipeline` | The pipeline without a world: results do not depend on load order (three runs); unload and reload; stale results are dropped; work in flight stays bounded; no column meshes before its 3 x 3 exists; done means done. |
+| `Unnamed.Voxel.Edit.Sections` | The remesh rule (`GetSectionsTouching`) against a brute-force search. |
+| `Unnamed.Voxel.Edit.Remesh` | Ten edits at section borders, column borders and corners. Exactly the touched sections remesh; every section equals a full rebuild; heightmaps; stamps; the edits survive an unload; `DropEdits`. |
+| `Unnamed.Voxel.Edit.Authority` | `IsKnown`; `UseOn` placing; mining; refusals in unloaded columns. |
+
+A deliberate off-by-one in `GetSectionsTouching` fails `Edit.Sections` (13 errors) and `Edit.Remesh` (11).
 
 ## Known gaps
 
 - **Lighting limits:** faces hidden behind a same-facing face inside one card stay black in Lumen's scene, and software Lumen cannot see the chunks ([Lighting](#lighting)).
+- **Edge fog:** its color is fixed to the map's sun (there is no day cycle yet), and a faint seam remains on the sun side. Columns still arriving inside the fade show up late: up to 33 at a time in 1,155 frames of the flight, one frame each, when crossing a column corner moves the rings diagonally.
 - **Pale water:** seen from high above, water over sand looks pale; tuning comes with biomes and water colour in phase 5.
-- **Water physics:** `AFoundationLab::IsInWater` reads the lab's water boxes and is not virtual, so generated water does not yet count for air, swimming or drowning. Phase 3 makes it ask the block data.
-- **Apply budget:** one column is applied whole, so a frame can overshoot the 2 ms budget by one column (worst 2.15 ms in the latest run; handing over the cards adds no measurable time).
-- **Meshing under load:** with all 30 workers busy, a meshed section averages 0.26 ms against 0.20 ms on one thread. A bitmask visibility pass is the next optimization if phase 3's streaming needs it.
-- **No mining or placing yet** on generated terrain: that is phase 3. Creative's inventory needs it too.
+- **Fluids:** generated water counts as water for the player, but it does not flow: carving into water leaves air pockets.
+- **First view:** the view is on screen 0.5 to 0.6 s after the first frame.
+- **Edits:** they last for the session until phase 10.
+- **Survival** has no inventory screen yet. Creative has the creative inventory.
+- **`voxel.Fly`** reads physical keys, not the player's bindings. The pawn's own Creative flight is deferred: it changes the shared 20 Hz movement step, and `voxel.Fly` covers fast travel.
+- **The `section` shot** shows the circle's stepped edge.
+- **Meshing under load:** with all 30 workers busy, a meshed section averages 0.26 ms against 0.20 ms on one thread. Streaming did not need the optimization; a bitmask visibility pass is the next one if a later phase does.
+- **Deferred from the phase 3 review:**
+  - **Unloads in one frame.** Columns past the unload distance are released in one frame, outside the apply budget. A teleport, a respawn or turning `voxel.Fly` off far away can release about 500 chunks at once, which causes a hitch. Fix: queue the releases and drain them under the apply estimate.
+  - **Clearing a populated world.** `FFoundationBlockWorld::Clear` (from `FFoundationAuthority::Reset`) lists every solid cell, which over the streamed storage means every non-air cell generated. `AVoxelWorld::Regenerate` resets only while the pipeline is still empty. A reset of a populated world would allocate hundreds of MB and stall. Fix: let the storage say it streams, and have `Clear` call `Empty` only.
+  - **`voxel.Fly` restore.** `AVoxelFlyCamera::EndPlay` turns the pawn's tick and gameplay input back on unconditionally, even on quit or a level change. Fix: record the state when freezing and restore only that.
 - **World choices still to land:** Hardcore has no permadeath or hardcore hearts; Large Biomes, AMPLIFIED and Single Biome generate the default terrain until phases 4 and 5; Superflat refuses layers of blocks the game lacks (snow layers, lava).
 
 The registry has full cubes, slabs and still water only. The generator also needs:

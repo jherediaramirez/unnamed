@@ -46,7 +46,6 @@ bool FVoxelSettingsTest::RunTest(const FString& Parameters)
     };
     Mirrors(TEXT("voxel.ViewRadius"), CVarViewRadius.AsVariable(), FString::FromInt(Settings.ViewRadius));
     Mirrors(TEXT("voxel.UnloadMargin"), CVarUnloadMargin.AsVariable(), FString::FromInt(Settings.UnloadMargin));
-    Mirrors(TEXT("voxel.TestAreaRadius"), CVarTestAreaRadius.AsVariable(), FString::FromInt(Settings.TestAreaRadius));
     Mirrors(
         TEXT("voxel.MaxTasksInFlight"), CVarMaxTasksInFlight.AsVariable(), FString::FromInt(Settings.MaxTasksInFlight));
     if ((CVarApplyBudgetMs->GetFlags() & ECVF_SetByMask) <= ECVF_SetByProjectSetting)
@@ -63,9 +62,8 @@ bool FVoxelSettingsTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("At least two tasks in flight"), GetMaxTasksInFlight() >= 2);
 
     const FString Info = DescribeInfo();
-    for (const TCHAR* Name : {TEXT("voxel.ViewRadius"), TEXT("voxel.UnloadMargin"), TEXT("voxel.TestAreaRadius"),
-             TEXT("voxel.ApplyBudgetMs"), TEXT("voxel.MaxTasksInFlight"), TEXT("voxel.AmbientOcclusion"),
-             TEXT("voxel.GreedyMeshing")})
+    for (const TCHAR* Name : {TEXT("voxel.ViewRadius"), TEXT("voxel.UnloadMargin"), TEXT("voxel.ApplyBudgetMs"),
+             TEXT("voxel.MaxTasksInFlight"), TEXT("voxel.AmbientOcclusion"), TEXT("voxel.GreedyMeshing")})
         TestTrue(TEXT("voxel.Info lists ") + FString(Name), Info.Contains(Name));
     TestTrue(TEXT("voxel.Info shows the dev seed"), Info.Contains(TEXT("\"") + Settings.DevSeed + TEXT("\"")));
     TestTrue(TEXT("voxel.Info shows the world range"), Info.Contains(TEXT("Z -64..319")));

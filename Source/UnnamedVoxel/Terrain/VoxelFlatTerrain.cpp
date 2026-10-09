@@ -39,7 +39,8 @@ void FVoxelFlatTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArray<u
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelFlatTerrain_Generate);
     SCOPE_CYCLE_COUNTER(STAT_VoxelGenerateColumn);
-    Dense.SetNumZeroed(FVoxelColumn::DenseVolume);
+    // Init, not SetNumZeroed: callers reuse Dense, and SetNumZeroed clears only elements it adds.
+    Dense.Init(0, FVoxelColumn::DenseVolume);
     constexpr int32 Size = VoxelConstants::ColumnSize;
     for (int32 Index = 0; Index < Stack.Num(); ++Index)
         for (int32 LocalY = 0; LocalY < Size; ++LocalY)

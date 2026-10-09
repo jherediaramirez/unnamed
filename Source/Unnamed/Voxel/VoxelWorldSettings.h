@@ -27,17 +27,15 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Generation")
     FString DevSeed = TEXT("Unnamed");
 
-    // voxel.ViewRadius: columns kept loaded around the player, as a radius in 16-block columns.
+    // voxel.ViewRadius: columns drawn around the camera, as a radius in 16-block columns. Every block within this
+    // many columns of the camera is in a drawn column; the fog ends there.
     UPROPERTY(Config, EditAnywhere, Category = "Streaming", meta = (ClampMin = 2, ClampMax = 64))
     int32 ViewRadius = 12;
 
-    // voxel.UnloadMargin: a column unloads only beyond ViewRadius + this, so walking along a border never thrashes.
-    UPROPERTY(Config, EditAnywhere, Category = "Streaming", meta = (ClampMin = 1, ClampMax = 8))
+    // voxel.UnloadMargin: a column unloads only beyond the generated ring (ViewRadius + 1) plus this, so walking
+    // along a border never thrashes. At least 2, which covers moving back and forth across a corner.
+    UPROPERTY(Config, EditAnywhere, Category = "Streaming", meta = (ClampMin = 2, ClampMax = 8))
     int32 UnloadMargin = 2;
-
-    // voxel.TestAreaRadius: the fixed test area's radius in columns; 4 builds 9 x 9 columns.
-    UPROPERTY(Config, EditAnywhere, Category = "Streaming", meta = (ClampMin = 0, ClampMax = 16))
-    int32 TestAreaRadius = 4;
 
     // voxel.ApplyBudgetMs: game-thread time per frame for applying finished chunk work.
     UPROPERTY(Config, EditAnywhere, Category = "Budgets", meta = (ClampMin = 0.1, ClampMax = 16, Units = "ms"))

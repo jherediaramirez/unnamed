@@ -29,6 +29,15 @@ struct FVoxelNeighborhood
     void Set(int32 DX, int32 DY, const FVoxelColumn* Column) { Columns[DY + 1][DX + 1] = Column; }
 };
 
+// One section of one column, as an edit marks it dirty.
+struct FVoxelSectionKey
+{
+    FIntPoint Column = FIntPoint::ZeroValue;
+    int32 Section = 0;
+
+    bool operator==(const FVoxelSectionKey& Other) const { return Column == Other.Column && Section == Other.Section; }
+};
+
 struct FVoxelMeshOptions
 {
     // Merge equal neighbouring faces into larger quads; off gives one quad per face (debugging, tests).
@@ -51,4 +60,10 @@ namespace VoxelMesher
     // A face's block UV at point P (blocks from the face's first cell): the block registry's canonical UVs
     // (FoundationBlockFaces::GetCanonicalUV), which follow the reference's FaceBakery.
     UNNAMEDVOXEL_API FVector2f GetCanonicalUV(int32 Face, const FVector3f& P);
+
+    // The sections whose padded copy holds a world cell, so whose mesh a change there can alter: its own section and,
+    // when it lies on a section or column border, the neighbours reading it as their border. Up to 8 sections in up
+    // to 4 columns; none for a cell outside the world's height.
+    UNNAMEDVOXEL_API void GetSectionsTouching(
+        const FIntVector& Cell, TArray<FVoxelSectionKey, TInlineAllocator<8>>& Out);
 }

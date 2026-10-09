@@ -230,34 +230,7 @@ void AFoundationPlayground::BuildLayout()
 FFoundationTarget AFoundationPlayground::TraceTarget(
     FVector Eye, FVector Direction, const UFoundationProfile& Profile) const
 {
-    FFoundationPlayerFacts Facts;
-    Facts.EyeCm = Eye;
-    Facts.Aim = Direction;
-    const FFoundationHit Hit = Authority.Resolve(Facts);
-    FFoundationTarget Target;
-    if (Hit.Kind == EFoundationHitKind::None) return Target;
-    Target.Kind = Hit.Kind == EFoundationHitKind::Entity ? EFoundationTargetKind::Entity : EFoundationTargetKind::Block;
-    Target.Hit = Hit.Point;
-    Target.Normal = FoundationGrid::FaceNormal(Hit.Face);
-    Target.DistanceCm = Hit.DistanceCm;
-    Target.ReachCm = Hit.ReachCm;
-    Target.bInRange = Hit.bInRange;
-    if (Hit.Kind == EFoundationHitKind::Block)
-        Target.Name = Authority.World.GetBlock(Authority.World.Get(Hit.Cell).State).DisplayName + TEXT(" ") +
-            FoundationGrid::DescribeCell(Hit.Cell);
-    else if (Hit.Kind == EFoundationHitKind::Static)
-    {
-        const FFoundationStatic& Static = Authority.Statics[Hit.StaticIndex];
-        Target.Name = Static.Label;
-        Target.bInteractive = !Static.Interaction.IsNone();
-    }
-    else if (const FFoundationTrainingTarget* Entity = Authority.Targets.FindByPredicate(
-                 [&Hit](const FFoundationTrainingTarget& Candidate) { return Candidate.Id == Hit.EntityId; }))
-    {
-        Target.Name = Entity->Label;
-        Target.bAlive = !Entity->Health.IsDead();
-    }
-    return Target;
+    return TraceAuthority(Authority, Eye, Direction);
 }
 
 void AFoundationPlayground::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
