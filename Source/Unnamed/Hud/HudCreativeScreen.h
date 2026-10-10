@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Hud/HudCreative.h"
 #include "Styling/SlateBrush.h"
+#include "UObject/StrongObjectPtr.h"
 #include "Widgets/SLeafWidget.h"
 
 class FFoundationBlockRegistry;
@@ -84,6 +85,9 @@ private:
     FHudCreativeWriter OnWrite;
     TFunction<void()> OnClose;
     TMap<FString, FSlateBrush> Brushes;
+    // A brush does not keep its texture alive; these do, so a garbage collection while the screen is open cannot
+    // free them (it did once the held-item shots made the tour longer).
+    TArray<TStrongObjectPtr<UTexture2D>> BrushTextures;
     FSlateBrush Atlas;
     FSlateBrush Solid;
     FIntPoint Mouse = FIntPoint(-1000, -1000);

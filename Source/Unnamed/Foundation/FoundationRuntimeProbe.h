@@ -35,6 +35,10 @@ private:
     TArray<FCase> Cases;
     // Optional per-frame work of the running case (set by its Start, cleared by the next case).
     TFunction<void()> FrameHook;
+    // Set by a case whose FrameHook steps the game itself: the case runs past its duration until the hook clears this
+    // (at most MaxHoldSeconds, so a stuck hook still lets its End report the failure).
+    bool bHoldCase = false;
+    static constexpr double MaxHoldSeconds = 10;
     // Extra measurements merged into the report (interaction timing, costs, captures).
     TSharedPtr<class FJsonObject> Extra;
     TArray<TSharedPtr<FJsonValue>> Results;

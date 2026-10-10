@@ -5,6 +5,8 @@
 #include "Foundation/FoundationPlayground.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationInteractionView.h"
+#include "Foundation/FoundationItemAssets.h"
+#include "Foundation/FoundationItemMesh.h"
 #include "Foundation/FoundationPawn.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationTags.h"
@@ -12,6 +14,9 @@
 #include "Menu/MenuBrowserHost.h"
 #include "Menu/MenuPreferences.h"
 #include "Engine/GameInstance.h"
+#include "Engine/StaticMesh.h"
+#include "Engine/Texture2DArray.h"
+#include "StaticMeshResources.h"
 #include "Dom/JsonObject.h"
 #include "HAL/PlatformMemory.h"
 #include "HAL/PlatformProcess.h"
@@ -89,6 +94,41 @@ void UFoundationRuntimeProbe::AddInteractionCases()
     {
         FScreenshotRequest::RequestScreenshot(
             FPaths::ChangeExtension(Output, TEXT("")) + TEXT("-interaction-") + Name + TEXT(".png"), true, false);
+    };
+    // The held item (items S4): an item's extruded sprite, as many triangles as its mask's quads make, placed by its
+    // first-person display transform, with its sprite array on the material; nothing for None.
+    auto RecordHeld = [this, Lab](const TCHAR* Name, FName Item)
+    {
+        const UFoundationInteractionView* View = Lab->GetView();
+        const UStaticMeshComponent* Held = View->GetHeldItem();
+        const UStaticMesh* Mesh = Held ? Held->GetStaticMesh() : nullptr;
+        const int32 Triangles =
+            Mesh && Mesh->GetRenderData() ? Mesh->GetRenderData()->LODResources[0].GetNumTriangles() : 0;
+        const UFoundationItemAssets* Items = UFoundationItemAssets::LoadDefault();
+        FFoundationItemModelView Model;
+        if (Item.IsNone() || !Items || !Items->FindModelView(Item, TEXT("firstperson_righthand"), Model))
+        {
+            Record(Name, View->GetHeldSprite().IsNone() && Held && !Held->IsVisible(),
+                FString::Printf(TEXT("sprite %s"), *View->GetHeldSprite().ToString()));
+            return;
+        }
+        TArray<bool> Opaque;
+        FoundationItemMesh::ReadMask(*Model.Texture, Opaque);
+        const int32 Expected =
+            2 * FoundationItemMesh::BuildQuads(Model.Texture->Width, Model.Texture->Height, Opaque).Num();
+        const FTransform Display =
+            FoundationItemMesh::MakeDisplayTransform(*Model.Display, UFoundationInteractionView::HeldModelBlockCm);
+        UTexture* Sprites = nullptr;
+        if (const UMaterialInterface* Material = Held ? Held->GetMaterial(0) : nullptr)
+            Material->GetTextureParameterValue(TEXT("Sprites"), Sprites);
+        const TSoftObjectPtr<UTexture2DArray>& Array =
+            Model.Texture->Width == 32 ? Items->ItemTextures32 : Items->ItemTextures;
+        Record(Name,
+            View->GetHeldSprite() == Model.Texture->Name && Held && Held->IsVisible() && Triangles == Expected &&
+                Held->GetRelativeTransform().Equals(Display, 1e-3) && Sprites &&
+                FSoftObjectPath(Sprites) == Array.ToSoftObjectPath(),
+            FString::Printf(TEXT("sprite %s, %d of %d triangles, sprites %s"), *View->GetHeldSprite().ToString(),
+                Triangles, Expected, Sprites ? *Sprites->GetName() : TEXT("none")));
     };
     // Preset is used only by the A/B cases; the others take the scenario preset.
     auto Prepare = [this, Lab](const TCHAR* Name, bool bFinite, const TCHAR* Preset = nullptr)
@@ -205,8 +245,9 @@ void UFoundationRuntimeProbe::AddInteractionCases()
     // 2. Item selection through the hotbar keys and wheel; the held item drives attack speed.
     AddCase(
         TEXT("select pickaxe"), .2, [this, Click] { Click(EKeys::Two); },
-        [this, Player]
+        [this, Player, RecordHeld]
         {
+            RecordHeld(TEXT("the iron pickaxe is held as its extruded sprite"), TEXT("iron_pickaxe"));
             Record(TEXT("2 selects the iron pickaxe"),
                 Player()->Inventory.Selected == 1 && Pawn->Vitals.AttackSpeed == 1.2f &&
                     Controller->GetHud()->GetPresenter()->GetSnapshot().ItemName == TEXT("Iron Pickaxe"),
@@ -215,8 +256,9 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         });
     AddCase(
         TEXT("select sword"), .2, [this, Click] { Click(EKeys::Three); },
-        [this, Player]
+        [this, Player, RecordHeld]
         {
+            RecordHeld(TEXT("the iron sword is held as its extruded sprite"), TEXT("iron_sword"));
             Record(TEXT("3 selects the iron sword"),
                 Player()->Inventory.Selected == 2 && Pawn->Vitals.AttackSpeed == 1.6f,
                 FString::Printf(
@@ -224,8 +266,9 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         });
     AddCase(
         TEXT("wheel"), .2, [this] { Controller->GetInputRouter()->RouteWheel(-1); },
-        [this, Player]
+        [this, Player, RecordHeld]
         {
+            RecordHeld(TEXT("the empty hand holds no item mesh"), NAME_None);
             Record(TEXT("wheel moves to the empty hand"),
                 Player()->Inventory.Selected == 3 && Pawn->Vitals.AttackSpeed == 4.f,
                 FString::Printf(TEXT("slot %d"), Player()->Inventory.Selected + 1));
@@ -720,26 +763,92 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             Look(FVector(0, 1000, 20));
         },
         [] {});
-    AddCase(
-        TEXT("sword hit"), .1, [this, Click] { Click(EKeys::LeftMouseButton); },
-        [this, Authority, Capture]
+    // The hit and the weak repeat count reference steps, not wall time: until the repeat resolves, the pawn takes at
+    // most one step per frame (the profile's catch-up limit, restored after), so the hook sees every step and a loaded
+    // machine's catch-up steps cannot end the target's cooldown in between. Game time may fall behind wall time here.
+    // The strong click waits for a full charge, the weak one comes 4 steps (0.2 s) after the hit; each press waits for
+    // the next step, however many frames take none.
+    struct FCombatSteps
+    {
+        int32 SavedCatchupSteps = 0;
+        int64 HitStep = -1, AttackStep = -1;
+        uint32 Sequence = 0;
+        bool bHitClicked = false, bClicked = false;
+        FFoundationResult Hit, Repeat;
+        void RestoreCatchup()
         {
-            const FFoundationTrainingTarget& Target = Authority().Targets[0];
+            if (SavedCatchupSteps > 0) GetMutableDefault<UFoundationProfile>()->MaxCatchupSteps = SavedCatchupSteps;
+            SavedCatchupSteps = 0;
+        }
+        // Also when the probe is torn down inside the case, so a later session in the same editor keeps the limit.
+        ~FCombatSteps() { RestoreCatchup(); }
+    };
+    const TSharedRef<FCombatSteps> CombatSteps = MakeShared<FCombatSteps>();
+    AddCase(
+        TEXT("sword hit"), .1,
+        [this, Click, CombatSteps]
+        {
+            UFoundationProfile* Profile = GetMutableDefault<UFoundationProfile>();
+            CombatSteps->SavedCatchupSteps = Profile->MaxCatchupSteps;
+            Profile->MaxCatchupSteps = 1;
+            CombatSteps->HitStep = CombatSteps->AttackStep = -1;
+            CombatSteps->bHitClicked = CombatSteps->bClicked = false;
+            CombatSteps->Sequence = Pawn->Interaction.LastResult.Sequence;
+            bHoldCase = true;
+            FrameHook = [this, Click, CombatSteps]
+            {
+                if (!bHoldCase) return;
+                if (!CombatSteps->bHitClicked)
+                {
+                    if (Pawn->Vitals.GetAttackStrength() < 1) return;
+                    CombatSteps->bHitClicked = true;
+                    Click(EKeys::LeftMouseButton);
+                }
+                const FFoundationResult& R = Pawn->Interaction.LastResult;
+                const int64 Step = Pawn->Simulation.Steps;
+                if (R.Sequence != CombatSteps->Sequence && R.Type == EFoundationCommandType::Attack)
+                {
+                    CombatSteps->Sequence = R.Sequence;
+                    if (CombatSteps->HitStep < 0)
+                    {
+                        CombatSteps->HitStep = Step;
+                        CombatSteps->Hit = R;
+                        return;
+                    }
+                    CombatSteps->AttackStep = Step;
+                    CombatSteps->Repeat = R;
+                    bHoldCase = false;
+                }
+                else if (CombatSteps->HitStep >= 0 && !CombatSteps->bClicked && Step - CombatSteps->HitStep == 4)
+                {
+                    CombatSteps->bClicked = true;
+                    Click(EKeys::LeftMouseButton);
+                }
+            };
+        },
+        [this, CombatSteps, Capture]
+        {
+            CombatSteps->RestoreCatchup();
+            const FFoundationResult& Hit = CombatSteps->Hit;
             Record(TEXT("full sword hit deals 6"),
-                Target.Health.Health == 14 && Pawn->Interaction.LastResult.DamageApplied == 6,
-                FString::Printf(
-                    TEXT("health %.2f strength %.3f"), Target.Health.Health, Pawn->Interaction.LastResult.Strength));
+                CombatSteps->HitStep >= 0 && Hit.TargetHealth == 14 && Hit.DamageApplied == 6,
+                FString::Printf(TEXT("health %.2f strength %.3f"), Hit.TargetHealth, Hit.Strength));
             Capture(TEXT("hit"));
         });
     AddCase(
-        TEXT("weak repeat"), .2, [this, Click] { Click(EKeys::LeftMouseButton); },
-        [this, Authority]
+        TEXT("weak repeat"), .2, [] {},
+        [this, Authority, CombatSteps]
         {
-            const FFoundationResult& R = Pawn->Interaction.LastResult;
+            const FFoundationResult& R = CombatSteps->Repeat;
+            // -1: the hit or the repeat never happened.
+            const int64 StepsAfterHit = CombatSteps->HitStep >= 0 && CombatSteps->AttackStep >= 0
+                ? CombatSteps->AttackStep - CombatSteps->HitStep
+                : -1;
             Record(TEXT("a weak hit inside the target's cooldown adds nothing"),
-                Authority().Targets[0].Health.Health == 14 && R.Reason == EFoundationReason::TargetCooldown &&
-                    R.Strength < .5f,
-                FString::Printf(TEXT("strength %.3f damage %.3f"), R.Strength, R.Damage));
+                StepsAfterHit == 5 && Authority().Targets[0].Health.Health == 14 &&
+                    R.Reason == EFoundationReason::TargetCooldown && R.Strength < .5f,
+                FString::Printf(
+                    TEXT("%lld steps after the hit: strength %.3f damage %.3f"), StepsAfterHit, R.Strength, R.Damage));
         });
     AddCase(
         TEXT("recharge"), .9, [] {},

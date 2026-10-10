@@ -1498,9 +1498,10 @@ bool FVoxelDecorationGoldenTest::RunTest(const FString& Parameters)
     // Plants on, trees off: recorded on S8 part B's first passing run (S8's plants plus glow lichen).
     constexpr uint64 PlantHashes[3] = {0xb77656a8d37bde4aull, 0xa290112228773eefull, 0xed3582d140b6c106ull};
     constexpr int64 PlantWrites[3] = {769195, 774817, 829385};
-    // Plants and trees on: recorded on S9a's first run with trees in the world.
-    constexpr uint64 TreeHashes[3] = {0x56c797f071194ef7ull, 0x3625dcba631991c6ull, 0x3634ee586cb5898cull};
-    constexpr int64 TreeWrites[3] = {817117, 774870, 854341};
+    // Plants and trees on: recorded on S9a's first run with trees in the world; S9c re-recorded (tree decorators, mega
+    // spruce and pine).
+    constexpr uint64 TreeHashes[3] = {0x079658c484f2c46full, 0x489b7d9f32c4567cull, 0x0896d92106e14e18ull};
+    constexpr int64 TreeWrites[3] = {822126, 774879, 857228};
     for (const int32 Case : {0, 1, 2})
         for (int32 Preset = 0; Preset < 3; ++Preset)
         {

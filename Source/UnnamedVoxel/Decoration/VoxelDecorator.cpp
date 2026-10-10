@@ -450,7 +450,7 @@ bool FVoxelDecorator::CompilePlant(const FVoxelFeatureGraph& Graph, int32 Node, 
         OutSkip = Value ? Error : FString::Printf(TEXT("%s without %s"), *FString(Type), Key);
         return true;
     };
-    // With trees on, a selector entry of a type S9b builds places nothing (counted once the selector compiles); so does
+    // With trees on, a selector entry of a type S9d builds places nothing (counted once the selector compiles); so does
     // a tree whose trunk, foliage or root placer is not built (a fit not solved yet), so the selector's other trees
     // still place.
     TArray<FString> Stubs;

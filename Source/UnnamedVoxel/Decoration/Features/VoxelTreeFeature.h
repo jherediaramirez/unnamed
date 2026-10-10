@@ -14,8 +14,8 @@ struct FVoxelPlantEnvironment;
 // The tree feature of phase 6's S9a (minecraft.wiki "Tree definition"): trunk, foliage and root placers, feature sizes,
 // the soil under the trunk and the leaves' distance. The placers' shapes are ours where the wiki is silent, fitted to
 // scout J's probes (facts/feature_probes/tree_*.json) as S2 fitted the ore blob; Docs/VoxelWorld.md lists the rules.
-// Decorators come in S9b: a tree's decorators are left out and counted. Coordinates are ours: X east, Y south, Z up
-// (the reference's x, z and y).
+// The decorators (S9c, VoxelTreeDecorators.cpp) run after the trunk, foliage and leaves' distance; one not built yet is
+// left out and counted. Coordinates are ours: X east, Y south, Z up (the reference's x, z and y).
 enum class EVoxelTrunkPlacer : uint8
 {
     Straight,
@@ -87,6 +87,39 @@ struct FVoxelMangroveRoots
     int32 CanGrowThroughSet = INDEX_NONE, MuddyRootsInSet = INDEX_NONE;
 };
 
+// The tree decorators of 26.3's data (minecraft.wiki "Tree definition"), in S9's order.
+enum class EVoxelTreeDecorator : uint8
+{
+    AlterGround,
+    Beehive,
+    Cocoa,
+    TrunkVine,
+    LeaveVine,
+    PlaceOnGround,
+    AttachedToLeaves,
+    AttachedToLogs,
+    PaleMoss,
+    CreakingHeart,
+    ShelfMushroom,
+    Count
+};
+
+// One decorator's data: its number fields by name (probability, tries, radius and so on), its state provider
+// (provider, block_provider or block_state_provider) and the fixed states it writes (each decorator's Compile says
+// which, in what order).
+struct UNNAMEDVOXEL_API FVoxelTreeDecoratorConfig
+{
+    EVoxelTreeDecorator Type = EVoxelTreeDecorator::Count;
+    TArray<TPair<FName, double>> Numbers;
+    int32 Provider = INDEX_NONE;
+    TArray<uint16> States;
+    // attached_to_leaves and attached_to_logs: the data's directions, one bit per step (0 -X, 1 +X, 2 -Y, 3 +Y, 4 down,
+    // 5 up).
+    uint8 Directions = 0;
+
+    double GetNumber(FName Name, double Default = 0) const;
+};
+
 struct UNNAMEDVOXEL_API FVoxelTreeConfig
 {
     FString Id;
@@ -106,7 +139,8 @@ struct UNNAMEDVOXEL_API FVoxelTreeConfig
     bool bIgnoreVines = false;
     // How far a tree's cells can lie from its origin horizontally (Chebyshev), asserted at most 16 at compile.
     int32 Reach = 0;
-    // The data's decorators, left out until S9c, by type.
+    // The decorators built, in the data's order, and the data's decorators not built yet (left out), by type.
+    TArray<FVoxelTreeDecoratorConfig> Decorators;
     TArray<FString> SkippedDecorators;
 };
 
@@ -135,7 +169,11 @@ public:
         Leaf,
         Root,
         // The soil under the trunk (below_trunk_provider).
-        Ground
+        Ground,
+        // A decorator's block (S9c).
+        Decoration,
+        // A leaf dropped for its distance before the decorators run: no longer the tree's.
+        Dropped
     };
 
     FVoxelTreeBuilder(const FVoxelTreeConfig& InConfig, const FVoxelPlantEnvironment& InEnv, FVoxelXoroshiro& InRandom);
@@ -155,7 +193,23 @@ public:
 
     bool IsLog(FIntVector Cell) const;
     bool IsLeaf(FIntVector Cell) const;
+    // Any air block in the view above (the tree's own cells included), inside the world.
+    bool IsAir(FIntVector Cell) const;
+    // The kind of this tree's cell at Cell, or false when the tree has none there.
+    bool GetKind(FIntVector Cell, ECell& OutKind) const;
     int32 GetCellCount() const { return Cells.Num(); }
+
+    // The decorators' writes (S9c). A decoration goes where the cell holds none of this tree's logs, leaves or roots,
+    // inside the world; over the tree's soil or an earlier decoration it replaces the state and keeps the kind. False
+    // where it cannot go.
+    bool SetDecoration(FIntVector Cell, uint16 State);
+    // Turns the cell at Index, one of this tree's own, into a decoration of State (a creaking heart over a log: no
+    // longer a log, emitted and counted as the decorator's block).
+    void ReplaceWithDecoration(int32 Index, uint16 State);
+    // Drops the cell at Index (a leaf too far from the logs), so later steps see the working copy there.
+    void Drop(int32 Index);
+    // This tree's cells of one kind from the lowest Z up (in cell order within a layer), as the decorators read them.
+    void GetCells(ECell Kind, TArray<FIntVector>& Out) const;
 
     const FVoxelTreeConfig& Config;
     const FVoxelPlantEnvironment& Env;
@@ -211,6 +265,23 @@ namespace VoxelRootPlacers
     // fails (nothing is emitted).
     UNNAMEDVOXEL_API bool PlaceMangrove(const FVoxelMangroveRoots& Roots, FVoxelTreeBuilder& Builder);
     UNNAMEDVOXEL_API int32 GetReach(const FVoxelMangroveRoots& Roots);
+}
+
+namespace VoxelTreeDecorators
+{
+    // The decorator of a data type id ("minecraft:alter_ground"), or Count when not built.
+    UNNAMEDVOXEL_API EVoxelTreeDecorator FindType(FStringView Type);
+    // Compiles a decorator node of a built type. A provider type not built leaves OutSkip naming it (the decorator is
+    // then left out); false on malformed data.
+    UNNAMEDVOXEL_API bool Compile(const FVoxelFeatureGraph& Graph, int32 Node, EVoxelTreeDecorator Type,
+        FVoxelBlockTags& Tags, const FVoxelBlockTable& Table, FVoxelBlockPredicates& Predicates,
+        FVoxelStateProviders& Providers, FVoxelTreeDecoratorConfig& Out, FString& OutSkip, FString* OutError);
+    // The farthest a decorator's block lies from the origin horizontally (Chebyshev), given the tree's reach without
+    // decorators.
+    UNNAMEDVOXEL_API int32 GetReach(
+        const FVoxelTreeDecoratorConfig& Decorator, const FVoxelTreeConfig& Tree, int32 TreeReach);
+    // Runs the tree's decorators in the data's order on its builder, drawing from the tree's stream.
+    UNNAMEDVOXEL_API void Place(const FVoxelTreeConfig& Config, FVoxelTreeBuilder& Builder);
 }
 
 namespace VoxelTreeFeature

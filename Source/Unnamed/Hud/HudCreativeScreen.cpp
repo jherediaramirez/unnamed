@@ -202,14 +202,22 @@ void SHudCreativeScreen::Construct(const FArguments& Arguments)
             : nullptr;
         if (!Texture)
             Texture = Cast<UTexture2D>(UUnnamedProjectSettings::GetBlockAssetPath(TEXT("Gui/") + Id).TryLoad());
-        if (Texture) Brushes.Add(Id, MakeBrush(Texture));
+        if (Texture)
+        {
+            Brushes.Add(Id, MakeBrush(Texture));
+            BrushTextures.Emplace(Texture);
+        }
     }
     if (const UHudAssets* Hud = HudAssets.Get())
         for (const FHudSpriteAsset& Sprite : Hud->Sprites)
         {
             const FString Id = Sprite.Id.ToString();
             if (Id == TEXT("font/ascii") || Id.StartsWith(TEXT("gui/sprites/tooltip/")))
-                if (UTexture2D* Texture = Sprite.Texture.LoadSynchronous()) Brushes.Add(Id, MakeBrush(Texture));
+                if (UTexture2D* Texture = Sprite.Texture.LoadSynchronous())
+                {
+                    Brushes.Add(Id, MakeBrush(Texture));
+                    BrushTextures.Emplace(Texture);
+                }
         }
 }
 

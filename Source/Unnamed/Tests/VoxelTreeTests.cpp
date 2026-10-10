@@ -35,7 +35,8 @@ namespace
     constexpr int32 TreeTestCount = 2000;
     constexpr uint64 TreeTestSeed = 263;
     // For manual runs: 0 none, 1 base_height one higher, 2 the foliage radius one wider (both on the configurations
-    // RunTreeProbes compiles; Trees.Shapes must fail). With 0, every test must pass.
+    // RunTreeProbes compiles; Trees.Shapes must fail), 3 to 7 as ApplyTreeTestMutation says. With 0, every test must
+    // pass.
     constexpr int32 TreeTestMutation = 0;
     // For manual runs: the number of 100-tree self-samples per configuration that check the distribution rules'
     // calibration (RunTreeProbes); 0 in the suite.
@@ -67,13 +68,24 @@ namespace
         double Bfs7 = 0, Dirt = 0;
         TMap<int32, int64> TopHist, Comp6Hist, Comp26Hist;
         int32 Reach = 0, Comp26Max = 0, OriginLogsMin = 0, OriginLogsMax = 0;
+        // The reach of every cell, the decorators' included (max_reach_h_any_cell).
+        int32 AllReach = 0;
         TSet<FString> Blocks;
+        // Each block's mean count per tree (the decorators' oracle, scout J's distribution 4).
+        TMap<FString, double> BlockMeans;
         // The leaf layers by dy from the highest log: (dx, dy) to the share of trees with a leaf there.
         int32 ProfileCount = 0;
         TMap<int32, TMap<FIntPoint, double>> Occupancy;
         // A ceiling probe's dy (variant "_ceil<H>"), or 0.
         int32 Ceiling = 0;
     };
+
+    // A probe of under 50 tries (a ceiling's 16): too few trees for the distribution rules (the means, decorations,
+    // soil, occupancy, reach and parts). CompareTrees and the calibration (RunTreeProbes) both skip them through this.
+    bool IsSmallProbe(const FTreeProbe& Probe)
+    {
+        return Probe.Tries < 50;
+    }
 
     // Our trees on a probe's column, measured as the probe measures.
     struct FTreeRun
@@ -84,9 +96,14 @@ namespace
         TArray<double> Logs, Leaves, Cells, Ground;
         TMap<int32, int64> TopHist, Comp6Hist, Comp26Hist;
         int32 Reach = 0, TopMax = MIN_int32, OriginLogsMin = MAX_int32, OriginLogsMax = MIN_int32;
+        // Logs and leaves (Reach), and every write (AllReach); per tree, its every-write reach (the count of trees
+        // per reach).
+        int32 AllReach = 0;
+        TMap<int32, int64> AllReachHist;
         TSet<int32> Blocks;
-        // The blocks of every write but the soil under the trunk (alter_ground's rule in CompareTrees).
-        TSet<int32> NonSoilBlocks;
+        // The decorators' blocks (every write but logs, leaves and the dirt under the trunk) per block: the sum over
+        // trees of each tree's count, and of its square.
+        TMap<int32, double> DecorationSums, DecorationSquares;
         TMap<int32, TMap<FIntPoint, int32>> Occupancy;
         // Leaves whose distance is not the BFS from the tree's own logs through its own leaves (1 to 6), or that are
         // persistent.
@@ -184,14 +201,19 @@ namespace
         Out.Reach = int32(FMath::Max(ReadTreeStat(*Json, TEXT("leaf_reach_h"), TEXT("max")),
             ReadTreeStat(*Json, TEXT("log_reach_h"), TEXT("max"))));
         Out.Comp26Max = int32(ReadTreeStat(*Json, TEXT("log_comp26"), TEXT("max")));
+        double AllReach = 0;
+        Json->TryGetNumberField(TEXT("max_reach_h_any_cell"), AllReach);
+        Out.AllReach = FMath::Max(int32(AllReach), Out.Reach);
         Out.OriginLogsMin = int32(ReadTreeStat(*Json, TEXT("origin_column_logs"), TEXT("min")));
         Out.OriginLogsMax = int32(ReadTreeStat(*Json, TEXT("origin_column_logs"), TEXT("max")));
         if (Json->TryGetObjectField(TEXT("blocks"), Object))
             for (const TPair<FString, TSharedPtr<FJsonValue>>& Block : (*Object)->Values)
             {
                 Out.Blocks.Add(Block.Key);
-                if (Block.Key == TEXT("dirt"))
-                    Block.Value->AsObject()->TryGetNumberField(TEXT("mean_per_tree"), Out.Dirt);
+                double Mean = 0;
+                Block.Value->AsObject()->TryGetNumberField(TEXT("mean_per_tree"), Mean);
+                Out.BlockMeans.Add(Block.Key, Mean);
+                if (Block.Key == TEXT("dirt")) Out.Dirt = Mean;
             }
         if (Json->TryGetObjectField(TEXT("profile"), Object))
         {
@@ -475,12 +497,24 @@ namespace
             All.Add(Write.Cell);
             if (Write.Mode == EVoxelWriteMode::IfReplaceable) (Info.bLeaves ? Leaves : Logs).Add(Write.Cell);
         }
+        // The soil under the trunk is the dirt below a log; every other write but logs and leaves is a decoration.
+        const int32 DirtBlock = Table.FindBlock(TEXT("dirt"));
         int32 Ground = 0;
+        TMap<int32, int32> Decorations;
         for (const FVoxelPlantWrite& Write : Writes)
-            if (Write.Mode != EVoxelWriteMode::IfReplaceable && Logs.Contains(Write.Cell + FIntVector(0, 0, 1)))
+        {
+            if (Write.Mode == EVoxelWriteMode::IfReplaceable) continue;
+            const int32 Block = Table.Get(Write.State).Block;
+            if (Block == DirtBlock && Logs.Contains(Write.Cell + FIntVector(0, 0, 1)))
                 ++Ground;
             else
-                Run.NonSoilBlocks.Add(Table.Get(Write.State).Block);
+                ++Decorations.FindOrAdd(Block);
+        }
+        for (const TPair<int32, int32>& Decoration : Decorations)
+        {
+            Run.DecorationSums.FindOrAdd(Decoration.Key) += Decoration.Value;
+            Run.DecorationSquares.FindOrAdd(Decoration.Key) += FMath::Square(double(Decoration.Value));
+        }
         const TMap<FIntVector, int32> Bfs = GetBfsDistances(Logs, Leaves);
         for (const FVoxelPlantWrite& Write : Writes)
         {
@@ -495,14 +529,21 @@ namespace
             Top = FMath::Max(Top, Log.Z);
             OriginLogs += Log.X == Origin.X && Log.Y == Origin.Y;
         }
-        int32 Reach = 0;
-        for (const FIntVector& Cell : All)
-            Reach = FMath::Max(Reach, FMath::Max(FMath::Abs(Cell.X - Origin.X), FMath::Abs(Cell.Y - Origin.Y)));
+        const auto GetReach = [&Origin](const TSet<FIntVector>& Cells, int32 Reach)
+        {
+            for (const FIntVector& Cell : Cells)
+                Reach = FMath::Max(Reach, FMath::Max(FMath::Abs(Cell.X - Origin.X), FMath::Abs(Cell.Y - Origin.Y)));
+            return Reach;
+        };
+        const int32 Reach = GetReach(Leaves, GetReach(Logs, 0));
+        const int32 AllReach = GetReach(All, 0);
+        Run.AllReach = FMath::Max(Run.AllReach, AllReach);
+        ++Run.AllReachHist.FindOrAdd(AllReach);
         ++Run.Placed;
         Run.Logs.Add(Logs.Num());
         Run.Leaves.Add(Leaves.Num());
         Run.Ground.Add(Ground);
-        Run.Cells.Add(All.Num());
+        Run.Cells.Add(Logs.Num() + Leaves.Num() + Ground);
         Run.Reach = FMath::Max(Run.Reach, Reach);
         Run.OriginLogsMin = FMath::Min(Run.OriginLogsMin, OriginLogs);
         Run.OriginLogsMax = FMath::Max(Run.OriginLogsMax, OriginLogs);
@@ -654,9 +695,155 @@ namespace
         }
         return FMath::Min(1., Smallest * CellCount);
     }
-    // Compares one probe with our run; returns the failures (empty when it passes) and a summary line.
+    // The signed normal z of a two-sided p value (the sign of Sign, 0 for 0): erfc(|z| / sqrt 2) = P, by bisection.
+    double GetDecorationPZ(double P, double Sign)
+    {
+        double Low = 0, High = 40;
+        for (int32 Step = 0; Step < 100; ++Step)
+        {
+            const double Mid = (Low + High) / 2;
+            (std::erfc(Mid / std::sqrt(2.)) > P ? Low : High) = Mid;
+        }
+        return Sign > 0 ? Low : (Sign < 0 ? -Low : 0);
+    }
+
+    // The decorators' blocks per tree against the probe's (scout J's distribution 4): every block but the tree's logs,
+    // leaves and dirt, ours within 5% of the probe's mean unless they differ: |z| > 3 for a block at 1 or more per
+    // tree, an exact p under 0.01 for a rarer one (below). z: both samples take our deviation (the null is one
+    // distribution); where ours has none, the larger mean stands in as a Poisson variance. A block the probe saw and we
+    // never write is only reported while the tree has decorators left out. OutZ, when given, takes the z of each
+    // compared block that ours expects at least once in the probe's trees (the pooled check, PoolDecorationZ).
+    // A block under 1 per tree in both (the S9c manager's call B) took the z rule until S9c, which failed some probe in
+    // 587 of 1000 calibration runs (TreeTestCalibration), all from the four 0.002 bee probes: ours draws about one nest
+    // in 2000 trees, so a 100-tree sample that draws one gives z near -4 (a count that small has a tail z misreads).
+    // Now its total counts take the exact conditional test, a the probe's (its mean times its placed trees, rounded)
+    // and b ours: under the null a ~ Binomial(a + b, n1 / (n1 + n2)), n1 the probe's placed trees and n2 ours,
+    // two-sided as BinomialTwoSided (GetOccupancyP's style). Both counts are first divided by our variance over our
+    // mean where that is over 1 (a quasi-Poisson scale): cocoa fires on 1 jungle tree in 5 and then sets about 2, shelf
+    // mushrooms cluster too, and their raw counts failed jungle_tree's samples 96 times in 1000 and the poplars'
+    // about 50. With the scale, some probe fails 138 runs in 1000, each probe at most 21 (birch_bees_0002: where our
+    // 2000 trees drew 0 or 1 nest, a sample drawing 2 fails; the test keeps 1% over our draws, not given one), the
+    // poplars 7 to 9. The line's z for a rare block is the exact p's signed equivalent (GetDecorationPZ, |z| > 2.58 at
+    // p 0.01); OutZ keeps the z rule's z (the pooled check's calibration, unchanged: the p's z shrinks for a nest at
+    // probability 1, under 1 per tree and far less variable than Poisson, so it would weaken the bee pool).
+    void CheckDecorations(const FTreeTestKit& Kit, const FVoxelTreeConfig& Config, const FTreeProbe& Probe,
+        const FTreeRun& Run, FString& OutLine, TArray<FString>& Failures, TMap<int32, double>* OutZ = nullptr)
+    {
+        const FVoxelBlockTable& Table = *Kit.Table;
+        TSet<int32> TreeBlocks;
+        TreeBlocks.Add(Table.FindBlock(TEXT("dirt")));
+        for (const uint16 State : Config.LogStates)
+            TreeBlocks.Add(Table.Get(State).Block);
+        for (const TPair<uint16, TArray<uint16>>& Leaf : Config.LeafStates)
+            TreeBlocks.Add(Table.Get(Leaf.Key).Block);
+        TMap<int32, double> Theirs;
+        TMap<int32, FString> Names;
+        for (const TPair<FString, double>& Block : Probe.BlockMeans)
+            if (const int32 Id = Table.FindBlock(Block.Key); !TreeBlocks.Contains(Id))
+            {
+                Theirs.Add(Id, Block.Value);
+                Names.Add(Id, Block.Key);
+            }
+        TSet<int32> Blocks;
+        for (const TPair<int32, double>& Each : Theirs)
+            Blocks.Add(Each.Key);
+        // The tree's own blocks are left out on our side too (until the S9c review only the probe's were): a log, leaf
+        // or dirt state a decorator writes (dirt beside the trunk rather than under it) is no decoration block here.
+        for (const TPair<int32, double>& Each : Run.DecorationSums)
+            if (!TreeBlocks.Contains(Each.Key)) Blocks.Add(Each.Key);
+        const double OurN = FMath::Max(Run.Placed, 1), ProbeN = FMath::Max(Probe.Placed, 1);
+        for (const int32 Block : Blocks)
+        {
+            const FString Name = Names.Contains(Block) ? Names[Block] : FString::Printf(TEXT("block %d"), Block);
+            const double Sum = Run.DecorationSums.FindRef(Block);
+            if (Sum == 0 && !Config.SkippedDecorators.IsEmpty())
+            {
+                OutLine += FString::Printf(TEXT(", %s left out"), *Name);
+                continue;
+            }
+            const double OurMean = Sum / OurN, TheirMean = Theirs.FindRef(Block);
+            const double OurVariance = Run.DecorationSquares.FindRef(Block) / OurN - FMath::Square(OurMean);
+            const double Variance = OurVariance > 1e-9 ? OurVariance : FMath::Max(OurMean, TheirMean);
+            const double Error = FMath::Sqrt(Variance * (1 / ProbeN + 1 / OurN));
+            double Z = Error > 0 ? (OurMean - TheirMean) / Error : 0;
+            if (OutZ && Error > 0 && OurMean * ProbeN >= 1) OutZ->Add(Block, Z);
+            const double Relative = TheirMean ? (OurMean - TheirMean) / TheirMean : (OurMean ? 1 : 0);
+            bool bDiffers = FMath::Abs(Z) > 3;
+            // The quasi-Poisson scale D a rare block's counts are divided by, logged on the line (the S9c manager's
+            // call E: a reader sees how far it widens the test).
+            double Dispersion = 0;
+            if (OurMean < 1 && TheirMean < 1)
+            {
+                Dispersion = OurMean > 0 ? FMath::Max(OurVariance / OurMean, 1.) : 1;
+                const int32 TheirCount = FMath::RoundToInt32(TheirMean * ProbeN / Dispersion),
+                            OurCount = FMath::RoundToInt32(Sum / Dispersion);
+                const double P = BinomialTwoSided(TheirCount, TheirCount + OurCount, ProbeN / (ProbeN + OurN));
+                bDiffers = P < 0.01;
+                Z = GetDecorationPZ(P, OurMean - TheirMean);
+            }
+            OutLine += Dispersion
+                ? FString::Printf(TEXT(", %s %.2f/%.2f (z %+.1f, D %.2f)"), *Name, OurMean, TheirMean, Z, Dispersion)
+                : FString::Printf(TEXT(", %s %.2f/%.2f (z %+.1f)"), *Name, OurMean, TheirMean, Z);
+            if (FMath::Abs(Relative) > 0.05 && bDiffers)
+                Failures.Add(FString::Printf(TEXT("%s per tree %+.1f%%"), *Name, 100 * Relative));
+        }
+    }
+
+    // The blocks a tree's built decorators can write: their fixed states and their providers' states (the block-set
+    // rule's exemption, CompareTrees).
+    TSet<int32> GetDecoratorBlocks(const FTreeTestKit& Kit, const FVoxelTreeConfig& Config)
+    {
+        TArray<uint16> States;
+        for (const FVoxelTreeDecoratorConfig& Decorator : Config.Decorators)
+        {
+            States.Append(Decorator.States);
+            if (Decorator.Provider != INDEX_NONE) Kit.Providers.GetStates(Decorator.Provider, States);
+        }
+        TSet<int32> Blocks;
+        for (const uint16 State : States)
+            Blocks.Add(Kit.Table->Get(State).Block);
+        return Blocks;
+    }
+
+    // The pooled decoration check (the S9c manager's call 2a), after every probe is compared: per decoration block,
+    // Stouffer's combined z of its per-probe z (CheckDecorations) over the k probes that compared it (not those that
+    // left it out), sum / sqrt(k). One probe's 100 trees cannot tell a beehive at 0.05 from one at 0.10 (z about 2,
+    // scout J's "beehive probability x2" passed every probe); the bee probes together can. Returns per block k and the
+    // combined z; IsPooledFailure decides.
+    // Calibrated on 1000 runs of the configurations' own samples (TreeTestCalibration): with every compared probe in
+    // the sum, the check false-failed 70 runs in 1000, bee_nest 58 of them (its combined z's deviation 1.55, not 1).
+    // A block ours draws about 0.002 per tree is expected 0.2 times in a probe's 100 trees, and one drawn there gives
+    // a z near -4 (where our 2000 trees drew one or two, the deviation is small), so z is far from normal. A probe
+    // therefore joins the sum only where ours expects the block at least once in its trees (CheckDecorations), and a
+    // block one probe compares is the per-probe rule's alone (cocoa on jungle_tree: 10 of the 70).
+    // The bound was 3 until the pool held ten leaf-litter probes and the pale garden's blocks: then the check
+    // false-failed 21 runs in 1000 (leaf_litter 13, its combined z's deviation 1.30), so it is 3.5 (the S9c manager's
+    // call F; recalibrated below).
+    constexpr double PooledDecorationBound = 3.5;
+    bool IsPooledFailure(const TPair<int32, double>& Pooled)
+    {
+        return Pooled.Key >= 2 && FMath::Abs(Pooled.Value) > PooledDecorationBound;
+    }
+    TMap<int32, TPair<int32, double>> PoolDecorationZ(TConstArrayView<TMap<int32, double>> PerProbe)
+    {
+        TMap<int32, TPair<int32, double>> Pooled;
+        for (const TMap<int32, double>& Probe : PerProbe)
+            for (const TPair<int32, double>& Block : Probe)
+            {
+                TPair<int32, double>& Sum = Pooled.FindOrAdd(Block.Key, TPair<int32, double>(0, 0.));
+                ++Sum.Key;
+                Sum.Value += Block.Value;
+            }
+        for (TPair<int32, TPair<int32, double>>& Block : Pooled)
+            Block.Value.Value /= FMath::Sqrt(double(Block.Value.Key));
+        return Pooled;
+    }
+
+    // Compares one probe with our run; returns the failures (empty when it passes) and a summary line. DecoratorBlocks
+    // are the blocks the tree's built decorators can write (GetDecoratorBlocks); OutDecorationZ takes each compared
+    // decoration block's z.
     TArray<FString> CompareTrees(const FTreeTestKit& Kit, const FVoxelTreeConfig& Config, const FTreeProbe& Probe,
-        const FTreeRun& Run, FString& OutLine)
+        const FTreeRun& Run, const TSet<int32>& DecoratorBlocks, FString& OutLine, TMap<int32, double>* OutDecorationZ)
     {
         TArray<FString> Failures;
         const double Rate = Run.Tries ? double(Run.Placed) / Run.Tries : 0;
@@ -665,27 +852,39 @@ namespace
             100. * Probe.Placed / FMath::Max(Probe.Tries, 1), RateP);
         if (RateP < 0.01) Failures.Add(TEXT("placed rate"));
         if (Run.FailedWrites) Failures.Add(FString::Printf(TEXT("%d failed tries emitted writes"), Run.FailedWrites));
+        // "Placed none against some" failed every probe that placed none while ours placed some, until S9c. That fails
+        // a correct model: under mega_spruce_ceil15's ceiling ours places only h 13, 1/45 = 2.2% of its tries, and the
+        // probe's 0 of 16 has p (44/45)^16 = 0.70 under that rate; with ours' tries in the thousands, every run places
+        // some. So a probe that placed none now fails only when its none is unlikely under our placed rate q, (1 - q)^n
+        // < 0.01 for its n tries (16 tries: q over about 25%). Ours none against the probe's some stays categorical,
+        // and the placed-rate binomial above still applies (the S9c manager's call).
         if (Probe.Placed == 0 || Run.Placed == 0)
         {
-            if ((Probe.Placed == 0) != (Run.Placed == 0)) Failures.AddUnique(TEXT("placed none against some"));
+            if (Run.Placed == 0 && Probe.Placed != 0) Failures.AddUnique(TEXT("placed none against some"));
+            const double NoneP = std::pow(1 - Rate, double(Probe.Tries));
+            if (Probe.Placed == 0 && Run.Placed != 0 && NoneP < 0.01)
+                Failures.AddUnique(
+                    FString::Printf(TEXT("placed none against some (ours %.1f%%, (1 - q)^n %.4f)"), 100 * Rate, NoneP));
             return Failures;
         }
-        const bool bSmall = Probe.Tries < 50;
+        const bool bSmall = IsSmallProbe(Probe);
         // Exact rules: the leaves' distance and persistence; the blocks the probe saw; the 26-connected trunk.
         if (Run.BadDistances) Failures.Add(FString::Printf(TEXT("%d leaves off the BFS distance"), Run.BadDistances));
         if (Run.Persistent) Failures.Add(FString::Printf(TEXT("%d persistent leaves"), Run.Persistent));
-        // A tree whose alter_ground decorator is left out (until S9c builds it) writes its below-trunk soil where the
-        // probe's decorator then wrote its own block (podzol under the giant trunks), so the probe has no dirt: its
-        // soil under the trunk is checked exactly instead (one per trunk column, scout J's exact rule 6) and left out
-        // of the block set. Every other tree keeps the probe's blocks and dirt (the S9b manager's call).
-        const bool bGroundAltered = Config.SkippedDecorators.ContainsByPredicate(
-            [](const FString& Type) { return Type.EndsWith(TEXT("alter_ground")); });
-        for (const int32 Block : bGroundAltered ? Run.NonSoilBlocks : Run.Blocks)
+        for (const int32 Block : Run.Blocks)
         {
             bool bSeen = false;
             for (const FString& Id : Probe.Blocks)
                 bSeen |= Kit.Table->FindBlock(Id) == Block;
-            if (!bSeen) Failures.Add(FString::Printf(TEXT("block %d not in the probe's blocks"), Block));
+            // Until S9c every block the probe never saw failed here. D2 then exempted every decoration block on a
+            // probe of 50 tries or more, so that a nest the probe's 100 trees never drew (oak_bees_002 drew none at
+            // probability 0.02; ours draw some in 2000) is tested by CheckDecorations instead, its mean per tree
+            // against the probe's 0 by the z rule. That also let through any decoration a decorator should never
+            // write. Since the S9c manager's call 1a, an unseen block passes only when it is a decoration one of this
+            // tree's built decorators can write (their states and their providers' states, DecoratorBlocks), and is
+            // then z-tested as D2 had it; every other unseen block fails as before S9c.
+            if (!bSeen && (bSmall || !DecoratorBlocks.Contains(Block) || !Run.DecorationSums.Contains(Block)))
+                Failures.Add(FString::Printf(TEXT("block %d not in the probe's blocks"), Block));
         }
         int32 Comp26Max = 0;
         for (const auto& Bin : Run.Comp26Hist)
@@ -705,14 +904,11 @@ namespace
         if (!bSmall)
         {
             CheckMeans(Probe, Run, OutLine, Failures);
+            CheckDecorations(Kit, Config, Probe, Run, OutLine, Failures, OutDecorationZ);
             double DirtMean, DirtDeviation;
             MeanAndDeviation(Run.Ground, DirtMean, DirtDeviation);
-            const double SoilWanted = bGroundAltered
-                ? double(VoxelTrunkPlacers::GetFootprint(EVoxelTrunkPlacer(Config.Trunk.Type)).Num())
-                : Probe.Dirt;
-            if (FMath::Abs(DirtMean - SoilWanted) > 0.05)
-                Failures.Add(FString::Printf(TEXT("soil under the trunk %.2f (%s %.2f)"), DirtMean,
-                    bGroundAltered ? TEXT("one per trunk column, alter_ground left out:") : TEXT("probe"), SoilWanted));
+            if (FMath::Abs(DirtMean - Probe.Dirt) > 0.05)
+                Failures.Add(FString::Printf(TEXT("soil under the trunk %.2f (probe %.2f)"), DirtMean, Probe.Dirt));
         }
         // The top-log histogram: a straight trunk's (open sky) is known exactly from the data, so ours and the probe's
         // are each tested against it and only the probe's own sampling counts; elsewhere ours against the probe's.
@@ -753,6 +949,24 @@ namespace
             }
             OutLine += FString::Printf(TEXT(", reach %d/%d"), Run.Reach, Probe.Reach);
             if (Run.Reach > Probe.Reach) Failures.Add(TEXT("reach"));
+            // The reach of every cell (the decorators' writes included). Until the S9c review it failed whenever our
+            // largest over TreeTestCount trees passed the probe's largest over its 100, so a correct decorator with a
+            // rare far cell failed by sampling alone. Now it is a guard calibrated like the probe-none one: under the
+            // null one of our trees passes the largest of the probe's 100 with probability about 1/101, so it fails
+            // only when more than 5% of our placed trees reach beyond the probe's largest (a correct model's 100 probe
+            // trees all fall short of that 5% quantile with probability 0.95^100 = 0.006).
+            int64 Beyond = 0;
+            for (const TPair<int32, int64>& Bin : Run.AllReachHist)
+                if (Bin.Key > Probe.AllReach) Beyond += Bin.Value;
+            const double BeyondShare = double(Beyond) / FMath::Max(Run.Placed, 1);
+            if (Run.AllReach != Run.Reach || Probe.AllReach != Probe.Reach || Beyond)
+            {
+                OutLine += FString::Printf(
+                    TEXT(", every cell %d/%d (beyond %.1f%%)"), Run.AllReach, Probe.AllReach, 100 * BeyondShare);
+                if (BeyondShare > 0.05)
+                    Failures.Add(FString::Printf(
+                        TEXT("reach of every cell (%.1f%% of trees beyond %d)"), 100 * BeyondShare, Probe.AllReach));
+            }
             const double Comp6P = ChiSquareHomogeneity(Run.Comp6Hist, Probe.Comp6Hist);
             OutLine += FString::Printf(TEXT(", 6-connected parts p %.2f"), Comp6P);
             if (Comp6P < 0.01) Failures.Add(TEXT("6-connected log parts"));
@@ -760,11 +974,17 @@ namespace
         return Failures;
     }
 
-    // A sample of our own trees dressed as a probe, for the calibration below: its per-tree counts and its leaf
-    // layers' shares, rounded to 0.01 as the probes keep them.
-    FTreeProbe MakeSampleProbe(const FTreeRun& Sample)
+    // A sample of our own trees dressed as a probe, for the calibration below: its per-tree counts, its leaf layers'
+    // shares, rounded to 0.01 as the probes keep them, its tries and placed trees, and its decoration blocks' means
+    // per tree by id (Names: the probes' ids by block).
+    FTreeProbe MakeSampleProbe(const FTreeRun& Sample, const TMap<int32, FString>& Names)
     {
         FTreeProbe Probe;
+        Probe.Tries = Sample.Tries;
+        Probe.Placed = Sample.Placed;
+        for (const TPair<int32, double>& Decoration : Sample.DecorationSums)
+            if (const FString* Name = Names.Find(Decoration.Key))
+                Probe.BlockMeans.Add(*Name, Decoration.Value / FMath::Max(Sample.Placed, 1));
         Probe.Logs = Sample.Logs;
         Probe.Leaves = Sample.Leaves;
         double Deviation;
@@ -780,7 +1000,7 @@ namespace
     }
 
     // TreeTestMutation's change to a compiled configuration.
-    void ApplyTreeTestMutation(FVoxelTreeConfig& Config)
+    void ApplyTreeTestMutation(const FVoxelBlockTable& Table, FVoxelTreeConfig& Config)
     {
         const auto Raise = [](FVoxelTreePlacerConfig& Placer, FName Name)
         {
@@ -793,6 +1013,53 @@ namespace
         };
         if (TreeTestMutation == 1) Raise(Config.Trunk, TEXT("base_height"));
         if (TreeTestMutation == 2) Raise(Config.Foliage, TEXT("radius"));
+        // Scout J's "beehive probability x2" (must fail distribution 4: the nests per tree).
+        if (TreeTestMutation == 3)
+            for (FVoxelTreeDecoratorConfig& Decorator : Config.Decorators)
+                if (Decorator.Type == EVoxelTreeDecorator::Beehive)
+                    for (TPair<FName, double>& Number : Decorator.Numbers)
+                        if (Number.Key == FName(TEXT("probability"))) Number.Value *= 2;
+        // The probe-none guard's (CompareTrees): the giant trunk's base_height 5 lower, so under mega_spruce_ceil15's
+        // ceiling (h at most 13) ours places 15/45 = 33% of its tries, and the probe's 0 of 16 has (2/3)^16 = 0.0015
+        // (must fail the guard; ceil12's 6/45 = 13% passes it).
+        if (TreeTestMutation == 4 && EVoxelTrunkPlacer(Config.Trunk.Type) == EVoxelTrunkPlacer::Giant)
+            for (TPair<FName, FVoxelIntProvider>& Field : Config.Trunk.Ints)
+                if (Field.Key == FName(TEXT("base_height")))
+                {
+                    Field.Value.Min -= 5;
+                    Field.Value.Max -= 5;
+                }
+        // The block-set rule's (CompareTrees, the S9c manager's call 1a): the beehive writes oak_planks, a block none
+        // of the tree's built decorators can write (RunTreeProbes reads their blocks before this change), so every bee
+        // probe whose trees draw a nest must fail "not in the probe's blocks".
+        if (TreeTestMutation == 5)
+            for (FVoxelTreeDecoratorConfig& Decorator : Config.Decorators)
+                if (Decorator.Type == EVoxelTreeDecorator::Beehive)
+                    for (uint16& State : Decorator.States)
+                        State = Table.FindState(TEXT("oak_planks"));
+        // The rare-block rule's (CheckDecorations, the S9c manager's call B): cocoa's probability zeroed, so ours sets
+        // none where jungle_tree's probe has 0.44 per tree (must fail "cocoa per tree -100.0%" on jungle_tree).
+        if (TreeTestMutation == 6)
+            for (FVoxelTreeDecoratorConfig& Decorator : Config.Decorators)
+                if (Decorator.Type == EVoxelTreeDecorator::Cocoa)
+                    for (TPair<FName, double>& Number : Decorator.Numbers)
+                        if (Number.Key == FName(TEXT("probability"))) Number.Value = 0;
+        // The every-cell reach guard's (CompareTrees, the S9c review): place_on_ground's radius 2 wider (its default 2
+        // where the configuration gives none), so the litter reaches past the litter probes' largest on most trees
+        // (must fail "reach of every cell" on them).
+        if (TreeTestMutation == 7)
+            for (FVoxelTreeDecoratorConfig& Decorator : Config.Decorators)
+                if (Decorator.Type == EVoxelTreeDecorator::PlaceOnGround)
+                {
+                    bool bFound = false;
+                    for (TPair<FName, double>& Number : Decorator.Numbers)
+                        if (Number.Key == FName(TEXT("radius")))
+                        {
+                            Number.Value += 2;
+                            bFound = true;
+                        }
+                    if (!bFound) Decorator.Numbers.Emplace(FName(TEXT("radius")), 4.);
+                }
     }
 
     // Runs every tree probe Filter accepts: compiles each probe's feature, simulates TreeTestCount trees in parallel
@@ -809,6 +1076,7 @@ namespace
         Test.TestEqual(TEXT("tree probes"), Files.Num(), 82);
         TArray<FTreeProbe> Probes;
         TArray<FVoxelTreeConfig> Configs;
+        TArray<TSet<int32>> DecoratorBlocks;
         TArray<FString> Skipped;
         for (const FString& File : Files)
         {
@@ -825,7 +1093,9 @@ namespace
                 if (!Skip.IsEmpty()) Skipped.Add(FString::Printf(TEXT("%s (%s)"), *Probe.Name, *Skip));
                 continue;
             }
-            ApplyTreeTestMutation(Config);
+            // The built decorators' blocks, read before a mutation changes what one writes (mutation 5).
+            DecoratorBlocks.Add(GetDecoratorBlocks(Kit, Config));
+            ApplyTreeTestMutation(*Kit.Table, Config);
             Probes.Add(MoveTemp(Probe));
             Configs.Add(MoveTemp(Config));
         }
@@ -833,43 +1103,112 @@ namespace
         Runs.SetNum(Probes.Num());
         ParallelFor(Probes.Num(), [&](int32 Index)
             { SimulateTrees(Kit, Configs[Index], Probes[Index], TreeTestCount, TreeTestSeed, Runs[Index]); });
+        TArray<TMap<int32, double>> DecorationZ;
+        DecorationZ.SetNum(Probes.Num());
         for (int32 Index = 0; Index < Probes.Num(); ++Index)
         {
             FString Line;
-            const TArray<FString> Failures = CompareTrees(Kit, Configs[Index], Probes[Index], Runs[Index], Line);
+            const TArray<FString> Failures = CompareTrees(
+                Kit, Configs[Index], Probes[Index], Runs[Index], DecoratorBlocks[Index], Line, &DecorationZ[Index]);
             Test.AddInfo(Line);
             for (const FString& Failure : Failures)
                 Test.AddError(FString::Printf(TEXT("%s: %s"), *Probes[Index].Name, *Failure));
         }
+        // The pooled decoration check (PoolDecorationZ), one line per block.
+        TMap<int32, FString> Names;
+        for (const FTreeProbe& Probe : Probes)
+            for (const TPair<FString, double>& Block : Probe.BlockMeans)
+                Names.Add(Kit.Table->FindBlock(Block.Key), Block.Key);
+        const auto GetName = [&Names](int32 Block)
+        {
+            const FString* Name = Names.Find(Block);
+            return Name ? *Name : FString::Printf(TEXT("block %d"), Block);
+        };
+        TMap<int32, TPair<int32, double>> Pooled = PoolDecorationZ(DecorationZ);
+        Pooled.KeySort([&GetName](int32 A, int32 B) { return GetName(A) < GetName(B); });
+        for (const TPair<int32, TPair<int32, double>>& Block : Pooled)
+        {
+            Test.AddInfo(FString::Printf(TEXT("pooled decoration %s: k %d, combined z %+.2f"), *GetName(Block.Key),
+                Block.Value.Key, Block.Value.Value));
+            if (IsPooledFailure(Block.Value))
+                Test.AddError(FString::Printf(TEXT("pooled decoration %s: combined z %+.2f over %d probes"),
+                    *GetName(Block.Key), Block.Value.Value, Block.Value.Key));
+        }
         if (Skipped.Num()) Test.AddInfo(FString::Printf(TEXT("skipped: %s"), *FString::Join(Skipped, TEXT(", "))));
         // For manual runs (TreeTestCalibration > 0): each configuration's own 100-tree samples, scored as probes
-        // against its TreeTestCount trees. A correct model must rarely fail the distribution rules this way.
+        // against its TreeTestCount trees. A correct model must rarely fail the distribution rules this way. The
+        // samples' seeds differ per configuration as well, so that they are independent across probes as the probes
+        // are (the pooled check adds their z); sample s of every configuration makes one run of the pooled check.
         if (TreeTestCalibration > 0)
         {
-            TArray<FIntPoint> Fails;
+            // Per configuration: samples failing occupancy (X), a mean (Y), a decoration block (Z).
+            TArray<FIntVector> Fails;
             Fails.SetNumZeroed(Probes.Num());
+            TArray<TArray<TMap<int32, double>>> SampleZ;
+            SampleZ.SetNum(TreeTestCalibration);
+            for (TArray<TMap<int32, double>>& Each : SampleZ)
+                Each.SetNum(Probes.Num());
+            TArray<bool> DecorationFailed;
+            DecorationFailed.SetNumZeroed(TreeTestCalibration * Probes.Num());
             ParallelFor(Probes.Num(),
                 [&](int32 Index)
                 {
-                    if (Probes[Index].Tries < 50) return;
+                    // As CompareTrees: a small (ceiling) probe takes no distribution rule, so no sample of it either.
+                    if (IsSmallProbe(Probes[Index])) return;
                     for (int32 Sample = 0; Sample < TreeTestCalibration; ++Sample)
                     {
                         FTreeRun Own;
-                        SimulateTrees(Kit, Configs[Index], Probes[Index], 100, TreeTestSeed + 1 + Sample, Own);
-                        const FTreeProbe AsProbe = MakeSampleProbe(Own);
+                        SimulateTrees(Kit, Configs[Index], Probes[Index], 100,
+                            TreeTestSeed + 1 + Sample + uint64(Index) * TreeTestCalibration, Own);
+                        const FTreeProbe AsProbe = MakeSampleProbe(Own, Names);
                         FString Line, Worst;
-                        TArray<FString> MeanFailures;
+                        TArray<FString> MeanFailures, DecorationFailures;
                         CheckMeans(AsProbe, Runs[Index], Line, MeanFailures);
                         Fails[Index].X += GetOccupancyP(AsProbe, Runs[Index], Worst) < 0.01;
                         Fails[Index].Y += MeanFailures.Num() > 0;
+                        if (Own.Placed && Runs[Index].Placed)
+                            CheckDecorations(Kit, Configs[Index], AsProbe, Runs[Index], Line, DecorationFailures,
+                                &SampleZ[Sample][Index]);
+                        Fails[Index].Z += DecorationFailures.Num() > 0;
+                        DecorationFailed[Sample * Probes.Num() + Index] = DecorationFailures.Num() > 0;
                     }
                 });
             for (int32 Index = 0; Index < Probes.Num(); ++Index)
-                if (Probes[Index].Tries >= 50)
+                if (!IsSmallProbe(Probes[Index]))
                     Test.AddInfo(
                         FString::Printf(TEXT("calibration %s: occupancy p under 0.01 in %d of %d samples, a mean "
-                                             "failed in %d"),
-                            *Probes[Index].Name, Fails[Index].X, TreeTestCalibration, Fails[Index].Y));
+                                             "failed in %d, a decoration block in %d"),
+                            *Probes[Index].Name, Fails[Index].X, TreeTestCalibration, Fails[Index].Y, Fails[Index].Z));
+            // Per block: the samples failing the pooled check (X), the largest k (Y), and the combined z's squares.
+            TMap<int32, FIntPoint> PooledFails;
+            TMap<int32, double> PooledSquares;
+            int32 AnyDecoration = 0, AnyPooled = 0;
+            for (int32 Sample = 0; Sample < TreeTestCalibration; ++Sample)
+            {
+                bool bDecoration = false, bPooled = false;
+                for (int32 Index = 0; Index < Probes.Num(); ++Index)
+                    bDecoration |= DecorationFailed[Sample * Probes.Num() + Index];
+                for (const TPair<int32, TPair<int32, double>>& Block : PoolDecorationZ(SampleZ[Sample]))
+                {
+                    const bool bFail = IsPooledFailure(Block.Value);
+                    FIntPoint& Count = PooledFails.FindOrAdd(Block.Key, FIntPoint(0, 0));
+                    Count.X += bFail;
+                    Count.Y = FMath::Max(Count.Y, Block.Value.Key);
+                    PooledSquares.FindOrAdd(Block.Key) += FMath::Square(Block.Value.Value);
+                    bPooled |= bFail;
+                }
+                AnyDecoration += bDecoration;
+                AnyPooled += bPooled;
+            }
+            PooledFails.KeySort([&GetName](int32 A, int32 B) { return GetName(A) < GetName(B); });
+            for (const TPair<int32, FIntPoint>& Block : PooledFails)
+                Test.AddInfo(FString::Printf(TEXT("calibration pooled decoration %s: k %d, failed in %d of %d samples "
+                                                  "(k 2 or more, |combined z| over %.1f), sd %.2f"),
+                    *GetName(Block.Key), Block.Value.Y, Block.Value.X, TreeTestCalibration, PooledDecorationBound,
+                    FMath::Sqrt(PooledSquares[Block.Key] / TreeTestCalibration)));
+            Test.AddInfo(FString::Printf(TEXT("calibration runs (sample s of every configuration): a probe's "
+                                              "decoration rule failed in %d of %d, the pooled check in %d"),
+                AnyDecoration, TreeTestCalibration, AnyPooled));
         }
         OutRun = Probes.Num();
         return true;
@@ -1183,10 +1522,10 @@ bool FVoxelTreeShapesTest::RunTest(const FString& Parameters)
     // Every built tree configuration against its probe (scout J's oracles, the fits' harness rules): the leaves'
     // distance and persistence, the probe's blocks, one 26-connected trunk and a straight trunk's height exactly; the
     // means, the top-log histogram, leaf occupancy by an exact binomial test per cell, reach and 6-connected parts as
-    // distributions. Every built configuration runs: 31 probes since S9b (dark oak, pale oak and mega jungle).
+    // distributions. Every built configuration runs: 33 probes since S9c (mega spruce and mega pine).
     int32 Ran = 0;
     if (!RunTreeProbes(*this, [](const FTreeProbe& Probe) { return Probe.Ceiling == 0; }, Ran)) return false;
-    TestEqual(TEXT("probes run (a placer that stops compiling drops its probes)"), Ran, 31);
+    TestEqual(TEXT("probes run (a placer that stops compiling drops its probes)"), Ran, 33);
     return true;
 }
 
@@ -1196,11 +1535,11 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelTreeFeatureSizeTest, "Unnamed.Voxel.Trees
 bool FVoxelTreeFeatureSizeTest::RunTest(const FString& Parameters)
 {
     // The ceiling probes (a 17 x 17 stone ceiling at dy H, 16 tries): the placed rate, and every placed tree's top log
-    // at H - 3 or lower (H - 2 for trunks other than straight): oak, spruce, fancy oak and dark oak, 26 probes since
-    // S9b.
+    // at H - 3 or lower (H - 2 for trunks other than straight): oak, spruce, fancy oak, dark oak and mega spruce, 32
+    // probes since S9c.
     int32 Ran = 0;
     if (!RunTreeProbes(*this, [](const FTreeProbe& Probe) { return Probe.Ceiling != 0; }, Ran)) return false;
-    TestEqual(TEXT("ceiling probes run"), Ran, 26);
+    TestEqual(TEXT("ceiling probes run"), Ran, 32);
     return true;
 }
 

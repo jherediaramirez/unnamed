@@ -1293,6 +1293,89 @@ void UFoundationRuntimeProbe::AddTourCases()
         });
     AddCase(TEXT("tour flush hotbar"), .4, [] {}, [] {});
 
+    // i3. Held items (items S4): each item's extruded sprite in first person, standing on the grid facing east at
+    // pitch 0 (probe P1's scene; the hand's pose stays provisional until P1 runs), the empty hand as the control and a
+    // held block to compare. Slot 4 holds the item; it and the selection are restored after, so the creative shots'
+    // hotbar row is unchanged.
+    // The selection and slot 4 before the first held case, restored after the last.
+    const TSharedRef<int32> Selected = MakeShared<int32>(INDEX_NONE);
+    const TSharedRef<FFoundationItemInstance> Slot4 = MakeShared<FFoundationItemInstance>();
+    auto Hold = [this, Authority, Selected, Slot4](const FFoundationItemInstance& Stack, bool bRestore)
+    {
+        FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
+        if (!Player) return;
+        FFoundationInventory& Inventory = Player->Inventory;
+        if (*Selected == INDEX_NONE)
+        {
+            *Selected = Inventory.Selected;
+            *Slot4 = Inventory.Hotbar[3];
+        }
+        Inventory.SetSlot(3, bRestore ? *Slot4 : Stack);
+        Inventory.Select(bRestore ? *Selected : 3);
+    };
+    for (const TCHAR* Item : {TEXT("empty"), TEXT("iron_pickaxe"), TEXT("iron_sword"), TEXT("stick"), TEXT("apple"),
+             TEXT("water_bucket"), TEXT("iron_spear"), TEXT("wooden_pickaxe"), TEXT("golden_pickaxe"),
+             TEXT("netherite_pickaxe"), TEXT("stone")})
+    {
+        AddCase(
+            FString(TEXT("tour held ")) + Item, .5,
+            [this, Authority, Hold, Item]
+            {
+                ResetPlayer({-250, -350, 0});
+                FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
+                if (!Player) return;
+                const bool bEmpty = FName(Item) == TEXT("empty");
+                Hold(bEmpty ? FFoundationItemInstance()
+                            : Player->Inventory.MakeStack(Authority().Rules.FindItem(Item), 1),
+                    false);
+            },
+            [this, Shot, Lab, Item]
+            {
+                // An item draws its sprite; the empty hand and the block draw none.
+                const FName Sprite = Lab->GetView()->GetHeldSprite();
+                const bool bSprite = FName(Item) != TEXT("empty") && FName(Item) != TEXT("stone");
+                Record(*(FString(TEXT("tour held ")) + Item),
+                    Lab->GetView()->IsHeldItemVisible() && bSprite == !Sprite.IsNone() &&
+                        bSprite == Lab->GetView()->GetHeldItem()->IsVisible(),
+                    FString::Printf(TEXT("sprite %s"), *Sprite.ToString()));
+                Shot(*(FString(TEXT("19i-held-")) + Item));
+            });
+        // The shot is taken on a later frame: hold the item still until then.
+        Flush(*(FString(TEXT("held ")) + Item));
+    }
+    // The glow's A/B pair: a few items again with foundation.Held.Glow 0, lit by the scene alone.
+    // Its value before the first of them, restored after the last.
+    const TSharedRef<FString> Glow = MakeShared<FString>();
+    struct FGlowShot
+    {
+        const TCHAR* Item;
+        const TCHAR* Glow;
+    };
+    for (const FGlowShot& Pair : {FGlowShot{TEXT("iron_pickaxe"), TEXT("0")}, FGlowShot{TEXT("iron_sword"), TEXT("0")},
+             FGlowShot{TEXT("water_bucket"), TEXT("0")}, FGlowShot{TEXT("apple"), TEXT("0")}})
+    {
+        AddCase(
+            FString::Printf(TEXT("tour held %s glow %s"), Pair.Item, Pair.Glow), .5,
+            [this, Authority, Hold, Pair, Glow]
+            {
+                ResetPlayer({-250, -350, 0});
+                if (Glow->IsEmpty()) *Glow = GetTourCVar(TEXT("foundation.Held.Glow"));
+                SetTourCVar(TEXT("foundation.Held.Glow"), Pair.Glow);
+                if (FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId))
+                    Hold(Player->Inventory.MakeStack(Authority().Rules.FindItem(Pair.Item), 1), false);
+            },
+            [Shot, Pair] { Shot(*FString::Printf(TEXT("19i-held-%s-glow%s"), Pair.Item, Pair.Glow)); });
+        Flush(*FString::Printf(TEXT("held %s glow %s"), Pair.Item, Pair.Glow));
+    }
+    AddCase(
+        TEXT("tour held restore"), .4,
+        [Hold, Glow]
+        {
+            if (!Glow->IsEmpty()) SetTourCVar(TEXT("foundation.Held.Glow"), *Glow);
+            Hold(FFoundationItemInstance(), true);
+        },
+        [] {});
+
     // j. The creative inventory (E): a category tab with a hovered item and its tooltip, the search tab with a
     // query, and the survival inventory tab, each over the darkened world.
     auto Creative = [this](const TCHAR* Name, TFunction<void(SHudCreativeScreen&)> Arrange)
@@ -1305,6 +1388,9 @@ void UFoundationRuntimeProbe::AddTourCases()
                 if (!Controller->GetPanels()->IsInventoryOpen()) Controller->GetPanels()->OpenInventory();
                 if (TSharedPtr<SHudCreativeScreen> Screen = Controller->GetPanels()->GetCreativeScreen())
                     Arrange(*Screen);
+                // A full garbage collection with the screen open: its brushes' textures must survive it (they did not
+                // once the held-item shots made the tour long enough to reach the periodic one).
+                CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
             },
             [this, Name]
             {
