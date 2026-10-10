@@ -1222,4 +1222,140 @@ bool FFoundationInteractionStressTest::RunTest(const FString&)
         L.A.World.GetPendingChangeCount()));
     return true;
 }
+
+// Plants through the authority (phase 6, S7): a double plant is one unit (placed, mined and replaced together), pops
+// drop nothing, plants are replaced in place, a faceless vine and a double plant without room are refused, and the
+// rules switch off for A/B.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationInteractionPlantsTest, "Unnamed.Foundation.Interaction.Plants",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationInteractionPlantsTest::RunTest(const FString& Parameters)
+{
+    constexpr int32 Slot = 5;
+    auto Give = [](FLab& L, const TCHAR* Item)
+    {
+        const int32 Index = L.A.Rules.FindItem(Item);
+        L.P().Inventory.SetSlot(Slot, L.P().Inventory.MakeStack(Index, 64));
+        L.Hold(Slot);
+        return Index != INDEX_NONE;
+    };
+    auto Text = [](FLab& L, FIntVector Cell) { return L.A.World.GetRegistry().ToString(L.A.World.Get(Cell).State); };
+    auto Pops = [](FLab& L, int64 After)
+    {
+        int32 Count = 0;
+        for (const FFoundationEvent& Event : L.A.GetEvents())
+            Count += Event.Serial > After && Event.Kind == EFoundationEventKind::Popped;
+        return Count;
+    };
+    // From (-150, 50, 0) the eye is at z 162: this aim meets the top face of (0, 0, 0), these the middles of
+    // (0, 0, 1) and (0, 0, 2).
+    const FVector OnGround(200, 0, -62), AtLower(200, 0, -12), AtUpper(200, 0, 88);
+    const FIntVector Ground(0, 0, 0), LowerCell(0, 0, 1), UpperCell(0, 0, 2);
+
+    FLab L;
+    L.Put(Ground, TEXT("grass_block"));
+    TestTrue(TEXT("tall grass has an item"), Give(L, TEXT("tall_grass")));
+    L.Stand({-150, 50, 0}, OnGround);
+    FFoundationResult R = L.Use();
+    TestTrue(TEXT("tall grass places"), R.bPlaced && R.Cell == LowerCell);
+    TestEqual(TEXT("its lower half"), Text(L, LowerCell), FString(TEXT("tall_grass[half=lower]")));
+    TestEqual(TEXT("and its upper half above"), Text(L, UpperCell), FString(TEXT("tall_grass[half=upper]")));
+    // Mining either half takes both, the other half as a pop.
+    int64 Mark = L.A.GetEventSerial();
+    L.Stand({-150, 50, 0}, AtUpper);
+    R = L.Run(L.Make(EFoundationCommandType::MineStart));
+    TestTrue(TEXT("the upper half breaks at once"), R.bBroken && R.bInstant && R.Cell == UpperCell);
+    TestTrue(TEXT("and takes the lower half"), !L.Solid(LowerCell) && !L.Solid(UpperCell) && Pops(L, Mark) == 1);
+    L.NextStep();
+    L.Stand({-150, 50, 0}, OnGround);
+    TestTrue(TEXT("re-placed"), L.Use().bPlaced);
+    Mark = L.A.GetEventSerial();
+    L.Stand({-150, 50, 0}, AtLower);
+    R = L.Run(L.Make(EFoundationCommandType::MineStart));
+    TestTrue(TEXT("the lower half breaks"), R.bBroken && R.Cell == LowerCell);
+    TestTrue(TEXT("and takes the upper half"), !L.Solid(LowerCell) && !L.Solid(UpperCell) && Pops(L, Mark) == 1);
+    // No room for the upper half: refused.
+    L.NextStep();
+    L.Put(UpperCell, TEXT("stone"));
+    L.Stand({-150, 50, 0}, OnGround);
+    R = L.Use();
+    TestTrue(TEXT("a block above refuses the double plant"),
+        !R.bPlaced && R.Reason == EFoundationReason::DestinationOccupied && !L.Solid(LowerCell));
+    FFoundationHit Ceiling;
+    Ceiling.Kind = EFoundationHitKind::Block;
+    Ceiling.Cell = FIntVector(3, 0, 14);
+    Ceiling.Face = EFoundationFace::Up;
+    Ceiling.bInRange = true;
+    Ceiling.Point = FoundationGrid::CellBox(Ceiling.Cell, L.A.World.OriginCm).GetCenter() + FVector(0, 0, 50);
+    L.Put(Ceiling.Cell, TEXT("grass_block"));
+    FIntVector Destination;
+    TestEqual(TEXT("the build limit refuses the upper half"), L.A.CheckPlacement(L.P(), Main, Ceiling, Destination),
+        EFoundationReason::OutsideBounds);
+
+    // A vine on an underside holds no face (until Jesus decides the vine's up face, Q8).
+    TestTrue(TEXT("vine has an item"), Give(L, TEXT("vine")));
+    FFoundationHit Underside = Ceiling;
+    Underside.Cell = FIntVector(3, 0, 5);
+    Underside.Face = EFoundationFace::Down;
+    Underside.Point = FoundationGrid::CellBox(Underside.Cell, L.A.World.OriginCm).GetCenter() - FVector(0, 0, 50);
+    L.Put(Underside.Cell, TEXT("stone"));
+    TestEqual(TEXT("a vine under a block is refused"), L.A.CheckPlacement(L.P(), Main, Underside, Destination),
+        EFoundationReason::CannotSurvive);
+    Underside.Face = EFoundationFace::South;
+    Underside.Point = FoundationGrid::CellBox(Underside.Cell, L.A.World.OriginCm).GetCenter() + FVector(0, 50, 0);
+    FFoundationBlockState Vine;
+    TestEqual(TEXT("a vine on a side places"), L.A.CheckPlacement(L.P(), Main, Underside, Destination, &Vine),
+        EFoundationReason::None);
+    FFoundationBlockState North;
+    L.A.World.GetRegistry().Parse(TEXT("vine[north=true]"), North);
+    TestEqual(TEXT("holding the face toward the block"), L.A.World.GetRegistry().ToString(Vine),
+        L.A.World.GetRegistry().ToString(North));
+
+    // Replaceable plants are their own destination; replacing a double plant's half pops the other half.
+    FLab Rep;
+    Rep.Put(Ground, TEXT("grass_block"));
+    Rep.Put(LowerCell, TEXT("short_grass"));
+    TestTrue(TEXT("stone has an item"), Give(Rep, TEXT("stone")));
+    Rep.Stand({-150, 50, 0}, AtLower);
+    R = Rep.Use();
+    TestTrue(TEXT("stone replaces short grass in place"), R.bPlaced && R.Cell == LowerCell);
+    TestEqual(TEXT("stone in the grass cell"), Text(Rep, LowerCell), FString(TEXT("stone")));
+    FFoundationBlockState Lower, Upper;
+    Rep.A.World.GetRegistry().Parse(TEXT("tall_grass[half=lower]"), Lower);
+    Rep.A.World.GetRegistry().Parse(TEXT("tall_grass[half=upper]"), Upper);
+    Rep.A.World.Set(LowerCell, Lower);
+    Rep.A.World.Set(UpperCell, Upper);
+    Mark = Rep.A.GetEventSerial();
+    Rep.Stand({-150, 50, 0}, AtLower);
+    R = Rep.Use();
+    TestTrue(TEXT("stone replaces the lower half"),
+        R.bPlaced && R.Cell == LowerCell && Text(Rep, LowerCell) == TEXT("stone"));
+    TestTrue(TEXT("and the upper half pops"), !Rep.Solid(UpperCell) && Pops(Rep, Mark) == 1);
+
+    // Pops drop nothing: mining one half returns one item in the finite fixture.
+    FLab F(false);
+    F.Put(Ground, TEXT("grass_block"));
+    Give(F, TEXT("tall_grass"));
+    F.Stand({-150, 50, 0}, OnGround);
+    TestTrue(TEXT("finite tall grass places"), F.Use().bPlaced);
+    TestEqual(TEXT("one item used"), F.P().Inventory.Hotbar[Slot].Count, 63);
+    F.Stand({-150, 50, 0}, AtUpper);
+    R = F.Run(F.Make(EFoundationCommandType::MineStart));
+    TestTrue(TEXT("finite upper half breaks"), R.bBroken && !F.Solid(LowerCell));
+    TestEqual(TEXT("one item back, none for the pop"), F.P().Inventory.Hotbar[Slot].Count, 64);
+
+    // Instant mining from the facts: a flower at once, a vine (hardness 0.2) not.
+    TestEqual(TEXT("dandelion is instant"), L.A.GetMiningDelta(L.P(), *L.A.World.FindBlock(TEXT("dandelion"))), 1.);
+    TestTrue(TEXT("vine is not instant"), L.A.GetMiningDelta(L.P(), *L.A.World.FindBlock(TEXT("vine"))) < 1);
+
+    // The switch: without plant rules a double plant writes one half and nothing pops.
+    FLab Off;
+    Off.A.Options.bPlantRules = false;
+    Off.Put(Ground, TEXT("grass_block"));
+    Give(Off, TEXT("tall_grass"));
+    Off.Stand({-150, 50, 0}, OnGround);
+    TestTrue(TEXT("rules off: placed"), Off.Use().bPlaced);
+    TestTrue(TEXT("rules off: no upper half"), Off.Solid(LowerCell) && !Off.Solid(UpperCell));
+    return true;
+}
 #endif

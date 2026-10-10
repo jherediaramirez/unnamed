@@ -1,5 +1,6 @@
 #include "Foundation/FoundationBlockPlacement.h"
 #include "Foundation/FoundationCoordinates.h"
+#include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationTags.h"
 
 namespace
@@ -131,6 +132,9 @@ FFoundationBlockState FoundationBlockPlacement::GetStateForPlacement(
     const FFoundationBlockWorld& World, const FFoundationBlockType& Block, const FFoundationPlacementContext& Context)
 {
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    // Plants and the other model blocks place by their properties.
+    if (Registry.GetShape(Block.GetDefaultState()) == EFoundationBlockShape::Model)
+        return FoundationPlantRules::GetStateForPlacement(World, Block, Context);
     FFoundationBlockState State = Block.GetDefaultState();
     auto Set = [&Registry, &State](const TCHAR* Property, FName Value)
     { State = Registry.WithValue(State, Property, Value); };

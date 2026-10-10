@@ -1,4 +1,5 @@
 #include "Foundation/FoundationAuthority.h"
+#include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationSimulation.h"
 
 namespace
@@ -270,6 +271,8 @@ EFoundationReason FFoundationAuthority::CheckPlacement(const FFoundationPlayer& 
                 [&BelowBox](const FFoundationStatic& Static) { return Static.Box.IsInside(BelowBox.GetCenter()); });
         if (!bSolidBelow) return EFoundationReason::CannotSurvive;
     }
+    if (const EFoundationReason Plant = CheckPlantPlacement(OutDestination, Placed); Plant != EFoundationReason::None)
+        return Plant;
     if (!Player.Inventory.bInfiniteSupply && Stack.Count < 1) return EFoundationReason::NoSupply;
     // Obstruction by the placed state's collision shape (a bottom slab fills only the lower half). The player's
     // own body is checked last, so ObstructedBySelf means nothing else is in the way.
@@ -546,6 +549,7 @@ void FFoundationAuthority::UseOn(
         }
         return;
     }
+    const FFoundationBlockState Replaced = World.Get(Destination).State;
     World.Set(Destination, Placed);
     if (!Player.Inventory.bInfiniteSupply)
     {
@@ -564,6 +568,7 @@ void FFoundationAuthority::UseOn(
     Event.State = Placed;
     Event.Step = Player.Facts.Step;
     AddEvent(Event);
+    SettlePlants(Destination, Replaced, Player);
 }
 
 void FFoundationAuthority::UseEntity(
@@ -736,7 +741,83 @@ bool FFoundationAuthority::BreakBlock(FFoundationPlayer& Player, const FIntVecto
         Event.Kind = EFoundationEventKind::ToolBroke;
         AddEvent(Event);
     }
+    SettlePlants(Cell, State, Player);
     return true;
+}
+
+EFoundationReason FFoundationAuthority::CheckPlantPlacement(
+    const FIntVector& Destination, FFoundationBlockState Placed) const
+{
+    if (!Options.bPlantRules) return EFoundationReason::None;
+    if (FoundationPlantRules::HasNoFace(World.GetRegistry(), Placed)) return EFoundationReason::CannotSurvive;
+    // A double plant's upper half needs a cell that takes it, as the lower half does (inferred).
+    FIntVector Upper;
+    FFoundationBlockState UpperState;
+    if (FoundationPlantRules::GetOtherHalf(World, Destination, Placed, Upper, UpperState))
+    {
+        if (!World.IsKnown(Upper)) return EFoundationReason::OutsideBounds;
+        if (!World.GetBlock(World.Get(Upper).State).bReplaceable) return EFoundationReason::DestinationOccupied;
+    }
+    return EFoundationReason::None;
+}
+
+bool FFoundationAuthority::CanPlantSurvive(const FIntVector& Cell, FFoundationBlockState State) const
+{
+    return true;
+}
+
+void FFoundationAuthority::SettlePlants(
+    const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player)
+{
+    if (!Options.bPlantRules) return;
+    // Pops drop nothing until item entities exist (scout H, Q4).
+    TArray<FIntVector, TInlineAllocator<8>> Changed = {Cell};
+    auto Pop = [this, &Player, &Changed](const FIntVector& At)
+    {
+        FFoundationEvent Event;
+        Event.Kind = EFoundationEventKind::Popped;
+        Event.Player = Player.Id;
+        Event.Cell = At;
+        Event.State = World.Get(At).State;
+        Event.Step = Player.Facts.Step;
+        World.Set(At, {});
+        Changed.Add(At);
+        ++Pops;
+        AddEvent(Event);
+    };
+    // A double plant is one unit: the half that was removed or replaced takes its other half along.
+    auto PopOtherHalf = [this, &Pop](const FIntVector& At, FFoundationBlockState Old)
+    {
+        FIntVector Other;
+        FFoundationBlockState Ignored;
+        if (FoundationPlantRules::GetOtherHalf(World, At, Old, Other, Ignored) && World.IsKnown(Other) &&
+            FoundationPlantRules::IsOtherHalf(World.GetRegistry(), Old, World.Get(Other).State))
+            Pop(Other);
+    };
+    PopOtherHalf(Cell, Before);
+    // A placed lower half writes its upper half (CheckPlantPlacement found the cell free).
+    FIntVector Upper;
+    FFoundationBlockState UpperState;
+    if (FoundationPlantRules::GetOtherHalf(World, Cell, World.Get(Cell).State, Upper, UpperState) &&
+        World.IsKnown(Upper))
+    {
+        const FFoundationBlockState UpperBefore = World.Get(Upper).State;
+        World.Set(Upper, UpperState);
+        Changed.AddUnique(Upper);
+        PopOtherHalf(Upper, UpperBefore);
+    }
+    // One level deep: the neighbours of the edited unit are checked, the neighbours of a pop are not.
+    const int32 Edited = Changed.Num();
+    for (int32 Index = 0; Index < Edited; ++Index)
+        for (int32 Face = 0; Face < 6; ++Face)
+        {
+            const FIntVector Neighbour = Changed[Index] + FoundationGrid::FaceOffset(EFoundationFace(Face));
+            if (Changed.Contains(Neighbour) || !World.IsKnown(Neighbour)) continue;
+            const FFoundationBlockState State = World.Get(Neighbour).State;
+            if (State.IsAir() || CanPlantSurvive(Neighbour, State)) continue;
+            Pop(Neighbour);
+            PopOtherHalf(Neighbour, State);
+        }
 }
 
 void FFoundationAuthority::Attack(

@@ -73,22 +73,32 @@ FFoundationHit FoundationTargeting::Resolve(const FFoundationRay& Ray, const FFo
             : D < 0        ? (Cell[Axis] - Start[Axis]) / D
                            : TNumericLimits<double>::Max();
     }
+    TArray<FBox> Outlines;
     for (double Travelled = 0; Travelled * Block <= Limit;)
     {
         if (World.IsKnown(Cell))
         {
             const FFoundationCell Value = World.Get(Cell);
-            FBox Selection;
-            // Water has no selection shape and a slab only its half: the ray continues through the rest.
-            if (!Value.State.IsAir() && World.GetSelectionBox(Cell, Value.State, Selection))
+            // Water has no outline, a slab only its half and a plant its boxes: the ray continues through the rest.
+            Outlines.Reset();
+            if (!Value.State.IsAir() && World.GetOutlineBoxes(Cell, Value.State, Outlines))
             {
-                if (IntersectBox(Selection, Ray.Eye, Direction, Limit, Distance, Face))
+                double CellDistance = TNumericLimits<double>::Max();
+                EFoundationFace CellFace = EFoundationFace::None;
+                for (const FBox& Outline : Outlines)
+                    if (IntersectBox(Outline, Ray.Eye, Direction, Limit, Distance, Face) && Distance < CellDistance)
+                    {
+                        CellDistance = Distance;
+                        CellFace = Face;
+                    }
+                if (CellFace != EFoundationFace::None)
                 {
-                    // Shapes stay inside their cells, so the first hit in traversal order is the nearest.
+                    // Outline boxes stay inside their cells, moved ones too, so the first hit in traversal order is
+                    // the nearest.
                     Best.Kind = EFoundationHitKind::Block;
                     Best.Cell = Cell;
-                    Best.Face = Face;
-                    Best.DistanceCm = BestDistance = Distance;
+                    Best.Face = CellFace;
+                    Best.DistanceCm = BestDistance = CellDistance;
                     Best.Revision = Value.Revision;
                     break;
                 }

@@ -40,7 +40,8 @@ namespace FoundationBlockPlacement
     UNNAMED_API bool ResolveDestination(const FFoundationBlockWorld& World, const FFoundationBlockType& Placing,
         bool bClickedIsBlock, FFoundationPlacementContext& Context);
     // getStateForPlacement for the block's placement family. waterlogged always stays false here: water
-    // behaviour (and waterlogging) arrives with the chunk loader.
+    // behaviour (and waterlogging) arrives with the chunk loader. Model blocks (plants) place by their properties
+    // instead (FoundationPlantRules), and take waterlogged from the destination.
     UNNAMED_API FFoundationBlockState GetStateForPlacement(const FFoundationBlockWorld& World,
         const FFoundationBlockType& Block, const FFoundationPlacementContext& Context);
 }

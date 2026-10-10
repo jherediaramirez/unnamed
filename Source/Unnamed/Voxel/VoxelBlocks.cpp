@@ -1,5 +1,6 @@
 #include "Voxel/VoxelBlocks.h"
 #include "Blocks/VoxelBlockTable.h"
+#include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Meshing/VoxelOreLooks.h"
 #include "GameplayTagContainer.h"
@@ -176,11 +177,7 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
                 Info.ModelParts = Table->AddModelParts(Parts);
                 Info.ModelPartCount = uint8(Parts.Num());
                 if (Registry.GetFluid(State).Amount > 0) Info.HeldFluid = WaterSource;
-                Info.Offset = Block.OffsetKind == EFoundationOffsetKind::XYZ ? EVoxelOffset::HorizontalAndDown
-                    : Block.OffsetKind == EFoundationOffsetKind::XZ          ? EVoxelOffset::Horizontal
-                                                                             : EVoxelOffset::None;
-                Info.OffsetHorizontal = Block.OffsetMaxHorizontal;
-                Info.OffsetDown = Block.OffsetKind == EFoundationOffsetKind::XYZ ? Block.OffsetMinVertical : 0.f;
+                FoundationBlockOffsets::CopyTo(Block, Info);
             }
             Info.bCastsOcclusion = Info.Shape == EVoxelShape::Full && Info.Layer != EVoxelLayer::Translucent;
             // Only opaque surfaces hide a neighbour's face; a slab covers just its bottom or top square, snow layers

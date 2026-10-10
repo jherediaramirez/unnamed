@@ -172,6 +172,8 @@ struct FFoundationLabOptions
     FName PlacementPreset;
     // The creative inventory may write any item into the hotbar and offhand (the Playground's block picker).
     bool bCreativeInventory = true;
+    // Plant rules (phase 6, S7): double plants as one unit, and pops after an edit. Off only for A/B runs.
+    bool bPlantRules = true;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -220,7 +222,9 @@ enum class EFoundationEventKind : uint8
     Interacted,
     ToolBroke,
     TargetDown,
-    Reset
+    Reset,
+    // A plant (or another model block) lost its support after an edit and was removed (FoundationPlantRules).
+    Popped
 };
 
 // A committed (or rejected) outcome for presentation: effects fire once from these.
@@ -305,7 +309,7 @@ public:
     int64 GetEventSerial() const { return EventSerial; }
 
     // Diagnostics.
-    int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0;
+    int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
 
 private:
     FFoundationInventory MakeLoadout();
@@ -327,6 +331,13 @@ private:
     // Removes a block once: capacity first, then removal, return and wear together.
     bool BreakBlock(FFoundationPlayer& Player, const FIntVector& Cell, FFoundationResult& Result);
     bool CheckHand(const FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
+    // Plants: a placed state that can never hold (a faceless vine), or a double plant without room for its upper half.
+    EFoundationReason CheckPlantPlacement(const FIntVector& Destination, FFoundationBlockState Placed) const;
+    // Whether a state still holds in its cell after a neighbour changed (the plant survival rules).
+    bool CanPlantSurvive(const FIntVector& Cell, FFoundationBlockState State) const;
+    // After an edit at Cell replaced Before: a double plant's two halves stay one unit, then the changed cells'
+    // neighbours that no longer survive pop, one level deep (Jesus's answer 6).
+    void SettlePlants(const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player);
 
     TArray<FFoundationPlayer> Players;
     TArray<FFoundationEvent> Events;

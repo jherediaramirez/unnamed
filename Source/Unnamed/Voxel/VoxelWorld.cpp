@@ -525,8 +525,15 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
                 for (int32 Y = LowY; Y <= HighY; ++Y)
                     for (int32 X = LowX; X <= HighX; ++X)
                     {
-                        const FVoxelStateInfo& Info =
-                            Table->Get(Column->GetState(X - ColumnX * Size, Y - ColumnY * Size, Z));
+                        const uint16 State = Column->GetState(X - ColumnX * Size, Y - ColumnY * Size, Z);
+                        const FVoxelStateInfo& Info = Table->Get(State);
+                        if (Info.Shape == EVoxelShape::Model)
+                        {
+                            // Model states collide with their facts boxes, moved where the facts move them (cactus,
+                            // bamboo, lily pads, carpets); bSolid (blocks_motion) is for the heightmaps.
+                            Authority.World.GetCollisionBoxes({X, Y, Z}, FFoundationBlockState{State}, Out);
+                            continue;
+                        }
                         if (!Info.bSolid) continue;
                         const FVector Min = FoundationGrid::CellMin({X, Y, Z}, OriginCm);
                         const double Bottom = Info.Shape == EVoxelShape::SlabTop ? .5 : 0.;

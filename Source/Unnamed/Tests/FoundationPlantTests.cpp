@@ -1,0 +1,343 @@
+#include "Misc/AutomationTest.h"
+#include "Blocks/VoxelBlockTable.h"
+#include "Dom/JsonObject.h"
+#include "Foundation/FoundationBlockPlacement.h"
+#include "Foundation/FoundationBlockRegistry.h"
+#include "Foundation/FoundationPlantRules.h"
+#include "Foundation/FoundationProfile.h"
+#include "Foundation/FoundationTargeting.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
+#include "Voxel/VoxelBlocks.h"
+
+#if WITH_DEV_AUTOMATION_TESTS
+// Plants and the other model blocks (phase 6, S7): their moved boxes, placement states and replaceable flags.
+namespace FoundationPlantTests
+{
+    constexpr EAutomationTestFlags Flags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
+    constexpr double BlockCm = UFoundationProfile::BlockCm;
+
+    // A world on the project registry with a few cells set by block-state text.
+    struct FWorld
+    {
+        FFoundationBlockWorld World;
+
+        FWorld()
+        {
+            World.SetRegistry(FFoundationBlockRegistry::GetDefault());
+            World.BoundsMin = FIntVector(-20);
+            World.BoundsMax = FIntVector(19);
+        }
+
+        const FFoundationBlockRegistry& R() const { return World.GetRegistry(); }
+
+        FFoundationBlockState State(const TCHAR* Text) const
+        {
+            FFoundationBlockState State;
+            ensureMsgf(R().Parse(Text, State), TEXT("parse %s"), Text);
+            return State;
+        }
+
+        void Put(FIntVector Cell, const TCHAR* Text) { World.Set(Cell, State(Text)); }
+
+        // getStateForPlacement for a click on Cell's Face, the hit at the middle of the face.
+        FFoundationBlockState Place(
+            const TCHAR* Block, FIntVector Clicked, EFoundationFace Face, double Yaw = 0, double Pitch = 0)
+        {
+            FFoundationPlacementContext Context;
+            Context.ClickedCell = Clicked;
+            Context.ClickedFace = Face;
+            Context.Yaw = Yaw;
+            Context.Pitch = Pitch;
+            Context.ClickPointCm = FoundationGrid::CellBox(Clicked, World.OriginCm).GetCenter() +
+                FoundationGrid::FaceNormal(Face) * (BlockCm / 2);
+            const FFoundationBlockType& Type = *World.FindBlock(Block);
+            FoundationBlockPlacement::ResolveDestination(World, Type, true, Context);
+            Destination = Context.Destination;
+            return FoundationBlockPlacement::GetStateForPlacement(World, Type, Context);
+        }
+
+        FString Text(FFoundationBlockState State) const { return R().ToString(State); }
+
+        FIntVector Destination = FIntVector::ZeroValue;
+    };
+
+    bool SameBox(const FBox& A, const FBox& B)
+    {
+        return A.Min.Equals(B.Min, 1e-4) && A.Max.Equals(B.Max, 1e-4);
+    }
+}
+
+// Every model state's outline and collision boxes in a cell: the facts' boxes moved by the one offset mapping (the
+// voxel table's, which the mesher draws with) where the facts move them, inside their cell; the single boxes are
+// their bounds; collision gathers every box; a ray misses a flower's empty corner and hits its moved middle.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationPlantShapesTest, "Unnamed.Foundation.Blocks.PlantShapes", FoundationPlantTests::Flags)
+
+bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
+{
+    using namespace FoundationPlantTests;
+    FWorld W;
+    const FFoundationBlockRegistry& Registry = W.R();
+    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::MakeTable(Registry);
+    const FIntVector Cells[] = {{3, -7, 2}, {-11, 5, 0}, {0, 0, 1}, {17, 12, -4}};
+    int32 ModelStates = 0, Mismatches = 0, MovedBoxes = 0, Outside = 0, OffsetBlocks = 0;
+    auto Fail = [&](const FString& Message)
+    {
+        if (++Mismatches <= 20) AddError(Message);
+    };
+    for (int32 Index = 1; Index < Registry.GetBlockCount(); ++Index)
+    {
+        const FFoundationBlockType& Block = Registry.GetBlockAt(Index);
+        OffsetBlocks += Block.OffsetKind != EFoundationOffsetKind::None;
+        for (int32 Local = 0; Local < Block.StateCount; ++Local)
+        {
+            const FFoundationBlockState State{uint16(Block.MinStateId + Local)};
+            if (Registry.GetShape(State) != EFoundationBlockShape::Model) continue;
+            ++ModelStates;
+            for (const FIntVector& Cell : Cells)
+            {
+                const FVector Offset = FoundationBlockOffsets::GetOffset(Block, Cell);
+                if (!Offset.Equals(FVector(VoxelModels::GetOffset(Table->Get(State.Id), Cell.X, Cell.Y)), 1e-6))
+                    Fail(Registry.ToString(State) + TEXT(" offset differs from the voxel table's"));
+                const FBox CellBox = FoundationGrid::CellBox(Cell, W.World.OriginCm).ExpandBy(1e-3);
+                for (const bool bCollision : {false, true})
+                {
+                    TArray<FBox> Units, Boxes;
+                    if (bCollision)
+                        Registry.GetCollisionBoxes(State, Units);
+                    else
+                        Registry.GetOutlineBoxes(State, Units);
+                    const bool bAny = bCollision ? W.World.GetCollisionBoxes(Cell, State, Boxes)
+                                                 : W.World.GetOutlineBoxes(Cell, State, Boxes);
+                    const bool bMoves = bCollision ? Block.bCollisionMovesWithOffset : Block.bOutlineMovesWithOffset;
+                    const FVector Min = FoundationGrid::CellMin(Cell, W.World.OriginCm) +
+                        (bMoves ? Offset : FVector::ZeroVector) * BlockCm;
+                    const FString Label =
+                        Registry.ToString(State) + (bCollision ? TEXT(" collision") : TEXT(" outline"));
+                    if (bAny == Units.IsEmpty() || Boxes.Num() != Units.Num())
+                    {
+                        Fail(Label + TEXT(" box count differs"));
+                        continue;
+                    }
+                    FBox Bounds(ForceInit);
+                    for (int32 Box = 0; Box < Boxes.Num(); ++Box)
+                    {
+                        if (!SameBox(Boxes[Box], FBox(Min + Units[Box].Min * BlockCm, Min + Units[Box].Max * BlockCm)))
+                            Fail(Label + TEXT(" box differs"));
+                        Outside += !CellBox.IsInside(Boxes[Box]);
+                        MovedBoxes += bMoves && !Offset.IsNearlyZero();
+                        Bounds += Boxes[Box];
+                    }
+                    FBox Single;
+                    const bool bSingle = bCollision ? W.World.GetCollisionBox(Cell, State, Single)
+                                                    : W.World.GetSelectionBox(Cell, State, Single);
+                    if (bSingle != bAny || (bAny && !SameBox(Single, Bounds)))
+                        Fail(Label + TEXT(" single box is not the bounds"));
+                }
+            }
+        }
+    }
+    TestEqual(TEXT("model states"), ModelStates, 949);
+    TestEqual(TEXT("moved boxes and their bounds that differ"), Mismatches, 0);
+    TestEqual(TEXT("boxes outside their cell (none, moved ones too)"), Outside, 0);
+    TestTrue(TEXT("boxes moved by an offset"), MovedBoxes > 0);
+    TestTrue(TEXT("blocks with an offset"), OffsetBlocks > 0);
+
+    // Collision gathers every box of every cell: an azalea's five, a bamboo's one moved by its offset, a cube's one.
+    FWorld G;
+    const FIntVector Azalea(1, 1, 1), Bamboo(4, 2, 1), Stone(6, 2, 1);
+    G.Put(Azalea, TEXT("azalea"));
+    G.Put(Bamboo, TEXT("bamboo"));
+    G.Put(Stone, TEXT("stone"));
+    TArray<FBox> Gathered, Expected;
+    G.World.GatherCollision(FBox(FVector(-100), FVector(1000)), Gathered);
+    for (const FIntVector& Cell : {Azalea, Bamboo, Stone})
+        G.World.GetCollisionBoxes(Cell, G.World.Get(Cell).State, Expected);
+    TestEqual(TEXT("gathered boxes (5 azalea, 1 bamboo, 1 stone)"), Gathered.Num(), 7);
+    bool bSame = Gathered.Num() == Expected.Num();
+    for (int32 Box = 0; bSame && Box < Gathered.Num(); ++Box)
+        bSame = Expected.ContainsByPredicate([&](const FBox& Want) { return SameBox(Want, Gathered[Box]); });
+    TestTrue(TEXT("gathered boxes are the cells' boxes"), bSame);
+    const FVector BambooOffset = FoundationBlockOffsets::GetOffset(*G.World.FindBlock(TEXT("bamboo")), Bamboo);
+    TestFalse(TEXT("the bamboo cell has an offset"), BambooOffset.IsNearlyZero());
+    const FVector BambooMin = FoundationGrid::CellMin(Bamboo, G.World.OriginCm) + BambooOffset * BlockCm;
+    TestTrue(TEXT("bamboo collides where it is drawn (facts 0.40625-0.59375, moved)"),
+        Gathered.ContainsByPredicate(
+            [&](const FBox& Box)
+            {
+                return SameBox(Box,
+                    FBox(BambooMin + FVector(.40625, .40625, 0) * BlockCm,
+                        BambooMin + FVector(.59375, .59375, 1) * BlockCm));
+            }));
+
+    // A ray through a dandelion's empty corner hits the stone behind it; through its moved middle, the dandelion.
+    FWorld T;
+    const FIntVector Flower(0, 0, 1);
+    T.Put(Flower, TEXT("dandelion"));
+    T.Put(Flower + FIntVector(0, 1, 0), TEXT("stone"));
+    const FVector FlowerOffset = FoundationBlockOffsets::GetOffset(*T.World.FindBlock(TEXT("dandelion")), Flower);
+    TestFalse(TEXT("the dandelion cell has an offset"), FlowerOffset.IsNearlyZero());
+    const FVector CellMin = FoundationGrid::CellMin(Flower, T.World.OriginCm);
+    FFoundationRay Ray;
+    Ray.Direction = FVector(0, 1, 0);
+    Ray.Eye = CellMin + FVector(3, -150, 30);
+    FFoundationHit Hit = FoundationTargeting::Resolve(Ray, T.World, {}, {});
+    TestTrue(TEXT("the empty corner passes to the stone"),
+        Hit.Kind == EFoundationHitKind::Block && Hit.Cell == Flower + FIntVector(0, 1, 0));
+    Ray.Eye = CellMin + FVector(50 + FlowerOffset.X * BlockCm, -150, 30);
+    Hit = FoundationTargeting::Resolve(Ray, T.World, {}, {});
+    TestTrue(TEXT("the moved middle hits the dandelion"), Hit.Kind == EFoundationHitKind::Block && Hit.Cell == Flower);
+    return true;
+}
+
+// getStateForPlacement for the model blocks, and the halves of double plants.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationPlantPlacementTest, "Unnamed.Foundation.Blocks.PlantPlacement", FoundationPlantTests::Flags)
+
+bool FFoundationPlantPlacementTest::RunTest(const FString& Parameters)
+{
+    using namespace FoundationPlantTests;
+    FWorld W;
+    const FFoundationBlockRegistry& R = W.R();
+    W.Put({0, 0, 0}, TEXT("grass_block"));
+    W.Put({5, 0, 0}, TEXT("stone"));
+    W.Put({8, 0, 0}, TEXT("jungle_log"));
+    auto Expect = [&](const TCHAR* What, FFoundationBlockState Actual, const TCHAR* Want)
+    { TestEqual(What, W.Text(Actual), W.Text(W.State(Want))); };
+    Expect(TEXT("a flower places its default state"), W.Place(TEXT("dandelion"), {0, 0, 0}, EFoundationFace::Up),
+        TEXT("dandelion"));
+    TestEqual(TEXT("on top of the clicked block"), W.Destination, FIntVector(0, 0, 1));
+    const FFoundationBlockState Lower = W.Place(TEXT("tall_grass"), {0, 0, 0}, EFoundationFace::Up);
+    Expect(TEXT("a double plant places its lower half"), Lower, TEXT("tall_grass[half=lower]"));
+
+    // The two halves.
+    FIntVector Other;
+    FFoundationBlockState Half;
+    TestTrue(TEXT("the lower half's other half"),
+        FoundationPlantRules::GetOtherHalf(W.World, {0, 0, 1}, Lower, Other, Half) && Other == FIntVector(0, 0, 2) &&
+            Half == W.State(TEXT("tall_grass[half=upper]")));
+    TestTrue(TEXT("the upper half's other half"),
+        FoundationPlantRules::GetOtherHalf(W.World, {0, 0, 2}, Half, Other, Half) && Other == FIntVector(0, 0, 1) &&
+            Half == Lower);
+    TestFalse(TEXT("a flower has no other half"),
+        FoundationPlantRules::GetOtherHalf(W.World, {0, 0, 1}, W.State(TEXT("dandelion")), Other, Half));
+    TestTrue(TEXT("lower and upper are halves"),
+        FoundationPlantRules::IsOtherHalf(R, Lower, W.State(TEXT("tall_grass[half=upper]"))));
+    TestFalse(TEXT("two lower halves are not"), FoundationPlantRules::IsOtherHalf(R, Lower, Lower));
+    TestFalse(TEXT("another double plant is not"),
+        FoundationPlantRules::IsOtherHalf(R, Lower, W.State(TEXT("large_fern[half=upper]"))));
+    W.Put({12, 0, 1}, TEXT("water"));
+    TestTrue(TEXT("the default water state is a source"), R.GetFluid(W.World.Get({12, 0, 1}).State).bSource);
+    TestTrue(TEXT("a small dripleaf's upper half takes waterlogged from its cell"),
+        FoundationPlantRules::GetOtherHalf(
+            W.World, {12, 0, 0}, W.State(TEXT("small_dripleaf[half=lower,waterlogged=false]")), Other, Half) &&
+            W.Text(Half) == W.Text(W.State(TEXT("small_dripleaf[half=upper,waterlogged=true]"))));
+
+    // Facing: amethyst points away from the clicked block on every face; cocoa faces the log it hangs on; the
+    // others face the player (yaw 0 looks south, 90 west).
+    for (int32 Face = 0; Face < 6; ++Face)
+    {
+        const EFoundationFace Clicked = EFoundationFace(Face);
+        TestEqual(FString::Printf(TEXT("amethyst on the %s face"), FoundationGrid::FaceName(Clicked)),
+            R.GetValue(W.Place(TEXT("amethyst_cluster"), {5, 0, 0}, Clicked), TEXT("facing")),
+            FName(FoundationGrid::FaceName(Clicked)));
+    }
+    TestEqual(TEXT("cocoa on a log's south side faces north, toward the log"),
+        R.GetValue(W.Place(TEXT("cocoa"), {8, 0, 0}, EFoundationFace::South), TEXT("facing")), FName(TEXT("north")));
+    Expect(TEXT("small dripleaf faces the player"), W.Place(TEXT("small_dripleaf"), {0, 0, 0}, EFoundationFace::Up),
+        TEXT("small_dripleaf[facing=north,half=lower]"));
+    TestEqual(TEXT("pink petals face the player looking west"),
+        R.GetValue(W.Place(TEXT("pink_petals"), {0, 0, 0}, EFoundationFace::Up, 90), TEXT("facing")),
+        FName(TEXT("east")));
+
+    // Multiface: the one face toward the clicked block; a vine has no floor face, and its ceiling face waits for Q8.
+    Expect(TEXT("vine on a south side"), W.Place(TEXT("vine"), {5, 0, 0}, EFoundationFace::South),
+        TEXT("vine[north=true]"));
+    Expect(
+        TEXT("vine on an east side"), W.Place(TEXT("vine"), {5, 0, 0}, EFoundationFace::East), TEXT("vine[west=true]"));
+    TestTrue(TEXT("vine on a top face holds no face"),
+        FoundationPlantRules::HasNoFace(R, W.Place(TEXT("vine"), {5, 0, 0}, EFoundationFace::Up)));
+    TestTrue(TEXT("vine on an underside holds no face (Q8)"),
+        FoundationPlantRules::HasNoFace(R, W.Place(TEXT("vine"), {5, 0, 0}, EFoundationFace::Down)));
+    Expect(TEXT("glow lichen on a top face"), W.Place(TEXT("glow_lichen"), {5, 0, 0}, EFoundationFace::Up),
+        TEXT("glow_lichen[down=true]"));
+    Expect(TEXT("glow lichen on an underside"), W.Place(TEXT("glow_lichen"), {5, 0, 0}, EFoundationFace::Down),
+        TEXT("glow_lichen[up=true]"));
+    Expect(TEXT("sculk vein on a west side"), W.Place(TEXT("sculk_vein"), {5, 0, 0}, EFoundationFace::West),
+        TEXT("sculk_vein[east=true]"));
+    TestFalse(TEXT("a vine with a face has one"), FoundationPlantRules::HasNoFace(R, W.State(TEXT("vine[up=true]"))));
+    TestFalse(TEXT("other blocks are not multiface"), FoundationPlantRules::HasNoFace(R, W.State(TEXT("dandelion"))));
+    TestFalse(TEXT("pale moss carpet is not multiface"),
+        FoundationPlantRules::HasNoFace(R, W.State(TEXT("pale_moss_carpet"))));
+
+    // Pointed dripstone: up on a top face, down under a block, and on a side against the vertical look.
+    auto Direction = [&](EFoundationFace Face, double Pitch)
+    { return R.GetValue(W.Place(TEXT("pointed_dripstone"), {5, 0, 0}, Face, 0, Pitch), TEXT("vertical_direction")); };
+    TestEqual(TEXT("dripstone on a top face"), Direction(EFoundationFace::Up, -30), FName(TEXT("up")));
+    TestEqual(TEXT("dripstone under a block"), Direction(EFoundationFace::Down, 30), FName(TEXT("down")));
+    TestEqual(TEXT("dripstone on a side looking down"), Direction(EFoundationFace::North, 30), FName(TEXT("up")));
+    TestEqual(TEXT("dripstone on a side looking up"), Direction(EFoundationFace::North, -30), FName(TEXT("down")));
+
+    // Waterlogged from a water-source destination.
+    W.Put({12, 0, 0}, TEXT("stone"));
+    TestEqual(TEXT("sea pickle into water is waterlogged"),
+        R.GetValue(W.Place(TEXT("sea_pickle"), {12, 0, 0}, EFoundationFace::Up), TEXT("waterlogged")),
+        FName(TEXT("true")));
+    TestEqual(TEXT("sea pickle in air is not"),
+        R.GetValue(W.Place(TEXT("sea_pickle"), {5, 0, 0}, EFoundationFace::Up), TEXT("waterlogged")),
+        FName(TEXT("false")));
+    TestEqual(TEXT("glow lichen into water is waterlogged"),
+        R.GetValue(W.Place(TEXT("glow_lichen"), {12, 0, 0}, EFoundationFace::Up), TEXT("waterlogged")),
+        FName(TEXT("true")));
+    return true;
+}
+
+// Every block takes the facts' replaceable flag (Jesus's answer 4), except snow, which stays as today until Jesus
+// decides its layers (scout H, Q5).
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationPlantReplaceableTest, "Unnamed.Foundation.Blocks.Replaceable", FoundationPlantTests::Flags)
+
+bool FFoundationPlantReplaceableTest::RunTest(const FString& Parameters)
+{
+    using namespace FoundationPlantTests;
+    FWorld W;
+    FString Text;
+    TSharedPtr<FJsonObject> Facts;
+    const FString Path = FPaths::ProjectDir() / TEXT("Reference/minecraft-blocks-26.3/facts/block_state_facts.json");
+    if (FFileHelper::LoadFileToString(Text, *Path))
+        FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Facts);
+    if (!TestValid(TEXT("block_state_facts.json"), Facts)) return false;
+    int32 Blocks = 0, Replaceable = 0, Mismatches = 0;
+    for (const TSharedPtr<FJsonValue>& Value : Facts->GetArrayField(TEXT("blocks")))
+    {
+        const TSharedPtr<FJsonObject> Entry = Value->AsObject();
+        const FString Id = Entry->GetStringField(TEXT("id"));
+        const FFoundationBlockType* Block = W.World.FindBlock(*Id);
+        if (!Block)
+        {
+            AddError(Id + TEXT(" is not in the registry"));
+            continue;
+        }
+        ++Blocks;
+        // The flag is constant per block (Blocks.Shapes checks every model state).
+        const bool bFact = Entry->GetArrayField(TEXT("states"))[0]->AsObject()->GetBoolField(TEXT("replaceable"));
+        Replaceable += bFact;
+        if (Id == TEXT("snow"))
+        {
+            TestTrue(TEXT("snow is replaceable in the facts"), bFact);
+            TestFalse(TEXT("snow is pinned as today (Q5)"), Block->bReplaceable);
+            continue;
+        }
+        if (Block->bReplaceable != bFact && ++Mismatches <= 20)
+            AddError(Id + TEXT(" replaceable differs from the facts"));
+    }
+    TestEqual(TEXT("facts blocks"), Blocks, 616);
+    TestEqual(TEXT("replaceable in the facts (water, lava, snow and 15 model blocks)"), Replaceable, 18);
+    TestEqual(TEXT("blocks whose flag differs from the facts"), Mismatches, 0);
+    TestTrue(TEXT("air is replaceable"), W.World.GetBlock(FFoundationBlockState{}).bReplaceable);
+    return true;
+}
+#endif
