@@ -44,6 +44,7 @@ public:
         int32 Second = 0, SecondCount = 0;
         // Weighted: the weights' sum (Weights run beside States).
         int32 Total = 0;
+        // RuleBased: the provider when no rule matches; INDEX_NONE keeps the cell's state.
         int32 Fallback = INDEX_NONE;
         int32 Noise = INDEX_NONE, SlowNoise = INDEX_NONE;
         double Scale = 1, SlowScale = 1, Threshold = 0;

@@ -10,7 +10,10 @@
 class ACameraActor;
 class FVoxelFlight;
 class FVoxelLightShots;
+class FVoxelLightTable;
+class FVoxelLights;
 class UExponentialHeightFogComponent;
+class UPointLightComponent;
 class UStaticMeshComponent;
 class USkyAtmosphereComponent;
 class FVoxelBlockTable;
@@ -86,6 +89,13 @@ public:
     // The -VoxelShotCaves views (name, camera and target in cm), searched near the streamed area's centre on first
     // use; empty when none was found.
     const TArray<TTuple<FString, FVector, FVector>>& GetCaveShotViews();
+    // The torch light pool (session T3): the streaming hands it each column's light sources; null before BeginPlay.
+    FVoxelLights* GetLights() const { return Lights.Get(); }
+    // The light table the column meshes scan their light sources with (voxel.LightMinLevel); null before BeginPlay.
+    TSharedPtr<const FVoxelLightTable> GetLightTable() const { return LightTable; }
+    // The voxel.TorchGlow level the columns are meshed with (the torch models' glow; 14 unless lowered), as read at the
+    // last build or voxel.Regenerate.
+    int32 GetMeshTorchGlow() const { return MeshTorchGlow; }
 
     // World position of cell (0, 0, 0)'s minimum corner; world rebasing moves it.
     FVector OriginCm = FVector::ZeroVector;
@@ -121,6 +131,10 @@ private:
     mutable TOptional<FUnnamedSavedWorld> SavedWorld;
     mutable bool bSavedWorldRead = false;
     TSharedPtr<const FVoxelBlockTable> Table;
+    // What the columns are meshed with: Table with the torch models' glow at voxel.TorchGlow (MakeTorchGlowTable),
+    // remade at every Regenerate. Everything else (terrain, light table, fluids) reads Table.
+    TSharedPtr<const FVoxelBlockTable> MeshTable;
+    int32 MeshTorchGlow = 14;
     TSharedPtr<const IVoxelTerrain> Terrain;
     FFoundationAuthority Authority;
     // Per state id: a model state with collision boxes (cactus, bamboo, lily pads, carpets), so GatherCollision passes
@@ -146,6 +160,13 @@ private:
     TSharedPtr<FVoxelFlight> Flight;
     // -VoxelShotLights: the torch light probe, run before the shots.
     TSharedPtr<FVoxelLightShots> LightShots;
+    // The torch lights: the light table for voxel.LightMinLevel at LightMinLevel, and the pool, whose point lights
+    // LightComponents holds for the GC.
+    TSharedPtr<const FVoxelLightTable> LightTable;
+    int32 LightMinLevel = 0;
+    TSharedPtr<FVoxelLights> Lights;
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UPointLightComponent>> LightComponents;
 
     // -VoxelShot: the shot being taken, frames spent on it, its summed GPU time and the finished shots' means.
     FString ShotFolder;

@@ -45,7 +45,17 @@ private:
         // Frames from this one on are read back and handed to OnFrame.
         int32 CaptureFrom = TNumericLimits<int32>::Max();
         TFunction<void(int32 Frame, const TArray<FColor>& Pixels)> OnFrame;
+        // Every frame from the one after Begin on, an edit's wait included.
+        TFunction<void()> OnTick;
         TFunction<void()> End;
+    };
+    // One torch edit's pool updates (-VoxelShotTorchGates): their game-thread ms summed, how many, and the light
+    // components the pool made for them.
+    struct FEditCost
+    {
+        double Ms = 0;
+        int32 Updates = 0;
+        int32 Created = 0;
     };
     struct FTimes
     {
@@ -68,6 +78,10 @@ private:
         VoxelLightProbe::EMode Mode = VoxelLightProbe::EMode::None;
         int32 Count = 0;
         bool bMegaLights = false;
+        // Torches through the block world, lit by the world's light pool, instead of probe lights; bSpread takes
+        // them from the spread floor cells.
+        bool bTorches = false;
+        bool bSpread = false;
     };
 
     FStep& AddStep(const FString& Name, int32 Frames, TFunction<void()> Begin = nullptr);
@@ -75,8 +89,35 @@ private:
     void AddCubeSteps(AVoxelWorld& World);
     void FindProbeView();
     void AddProbeSteps(AVoxelWorld& World);
-    void AddLeakSteps(AVoxelWorld& World);
+    // With bTorch, the leak site's cases are leak-floor and leak-torch-1 (a torch on the column's top, lit by the
+    // pool).
+    void AddLeakSteps(AVoxelWorld& World, bool bTorch = false);
     void AddEditSteps(AVoxelWorld& World);
+    // -VoxelShotTorchGates: the look pairs, the edit cost, the timed cases and the torch leak test.
+    void AddTorchGateSteps(AVoxelWorld& World);
+    void AddTorchLookSteps(AVoxelWorld& World);
+    void AddTorchEditSteps(AVoxelWorld& World);
+    // -VoxelShotTorchRoom: finds the room's place under the spawn and adds the room's steps; AddTorchRoomTables writes
+    // its patch table, RestoreRoomVariables puts back the pool's intensity and temperature.
+    void AddTorchRoomSteps(AVoxelWorld& World);
+    void AddTorchRoomTables();
+    void RestoreRoomVariables();
+    // The room's last step: the torches, the variables, MegaLights and every written cell back.
+    void AddTorchRoomCleanup(AVoxelWorld& World);
+    // -VoxelShotTorchLook: the look pairs in the built room (Eye, Rotation; OneTorch stands when they start) and the
+    // probe cave.
+    void AddTorchLookPairSteps(AVoxelWorld& World, const FVector& Eye, const FRotator& Rotation,
+        const TArray<FIntVector>& OneTorch, const TArray<FIntVector>& FourTorches);
+    // Count covered cave floor cells within Radius blocks of the view's eye, spread out (farthest first).
+    TArray<FIntVector> FindSpreadTorchCells(int32 Count, double Radius) const;
+    // A case's lights: torches on its floor cells (the probe's ones are taken back), or the probe's lights at
+    // Positions (the torches are taken back).
+    void ShowTorchCase(AVoxelWorld& World, const FCase& Case, const TArray<FVector>& Positions);
+    // The probe lights shown and the pool's picks while it is live.
+    int32 CountAllShown(const AVoxelWorld& World) const;
+    TArray<FVector> GetCasePositions(const FCase& Case) const;
+    void SetExposureSpeed(float Speed);
+    void AddTorchTables(AVoxelWorld& World);
     void OnScreenshot(int32 InWidth, int32 InHeight, const TArray<FColor>& Pixels);
     void SetView(const FVector& Blocks, const FRotator& Rotation);
     void SetMegaLights(bool bOn);
@@ -87,8 +128,8 @@ private:
     bool Project(const FVector& From, const FRotator& Rotation, const FVector& Blocks, FVector2D& OutPixel,
         double& OutDepth) const;
     bool IsOnScreen(const FVector2D& Pixel, double Margin) const;
-    // Of the first Count probe lights, those whose reach meets the view's frustum (the ones the renderer draws).
-    int32 CountInView(int32 Count) const;
+    // Of these lights (cm), those whose reach meets the view's frustum (the ones the renderer draws).
+    int32 CountInView(TConstArrayView<FVector> Positions) const;
     // The patch's mean sRGB in the current view; W < 0 when it is not wholly on screen.
     FVector4 Measure(const FPatch& Patch, const TArray<FColor>& Pixels) const;
     void Record(const FString& Step, int32 Frame, const FPatch& Patch, const FVector4& Value);
@@ -104,6 +145,64 @@ private:
     FString Folder;
     // -VoxelLightsIntensity=<cd> overrides the probe lights' intensity.
     double IntensityCd = VoxelLightProbe::FSettings().IntensityCd;
+    // -VoxelShotTorches=<N> (session T3): instead of the probe, `voxel.LightProbe N torches` in the probe cave, lit by
+    // the world's light pool, one screenshot (lights-torches.png) and voxel.LightsInfo; MegaLights stays as the run
+    // set it.
+    int32 TorchCount = 0;
+    // -VoxelShotTorchGates (session T3): the torch light pool's gate cases instead of T0/T1's, written to torches.txt
+    // (AddTorchGateSteps; Scripts/CaptureVoxel.ps1 -TorchGates).
+    bool bTorchGates = false;
+    // -VoxelShotTorchRoom (session T3, probe P4): the look reference for the torch light. A 9 x 4 x 9 air room in an
+    // 11 x 6 x 11 stone shell, built through the authority's block world 31 blocks under the lowest surface over it
+    // near the spawn, seen from a fixed corner at eye height: one torch in the middle of the floor, then four on its
+    // quarter points, with MegaLights off and on at several voxel.LightIntensity and voxel.LightTemperature values,
+    // then a glowstone in the middle of the ceiling instead; last, one and four torches with voxel.LightFalloff 2 and
+    // 8, each at the voxel.LightBrightness a short search finds to match the 1000 cd floor-1 patch. The exposure
+    // settles on the one-torch case at 1000 cd and stays frozen for every shot. Writes room.txt (cells, camera, patch
+    // table, voxel.LightsInfo), room.csv and room-*.png; every cell and variable it changes is put back
+    // (Scripts/CaptureVoxel.ps1 -TorchRoom).
+    bool bTorchRoom = false;
+    // -VoxelShotTorchLook (session T3, the warm look; Scripts/CaptureVoxel.ps1 -TorchLook): pairs only, at the run's
+    // own settings (no sweep), each with MegaLights 0 and 1, in the torch room under the room's frozen exposure: the
+    // room with 1 torch, a close crop of that torch (the camera 1.2 blocks from it at the flame's height), the room
+    // with 4 torches, and the probe cave with 10. Writes look.txt (per shot: mean luma, saturated and black shares, the
+    // settings, voxel.LightsInfo) and look-<view>-ml<0|1>.png; implies -VoxelShotTorchRoom's room, without its shots.
+    bool bTorchLookPairs = false;
+    TArray<FString> LookRows;
+    // The torches standing for the look pairs.
+    TArray<FIntVector> LookTorches;
+    // The floor and wall patches the room measures, and one formatted table row per shot.
+    TArray<FPatch> RoomPatches;
+    TArray<FString> RoomRows;
+    // The torches standing in the room (0, 1 or 4; -1 before the first shot).
+    int32 RoomTorches = -1;
+    IConsoleVariable* RoomIntensityVariable = nullptr;
+    IConsoleVariable* RoomTemperatureVariable = nullptr;
+    float RoomIntensityAtStart = 0;
+    float RoomTemperatureAtStart = 0;
+    // voxel.LightFalloff and voxel.LightBrightness: the falloff shots set them; put back with the others.
+    IConsoleVariable* RoomFalloffVariable = nullptr;
+    IConsoleVariable* RoomBrightnessVariable = nullptr;
+    float RoomFalloffAtStart = 0;
+    float RoomBrightnessAtStart = 0;
+    // The brightness searches: per falloff exponent the voxel.LightBrightness to try next (after the last search step,
+    // the one its shots use) and the last try as (log brightness, log linear floor-1); the target is the reference
+    // shot's floor-1 mean sRGB (-1 until measured).
+    TMap<float, float> RoomBrightness;
+    TMap<float, FVector2D> RoomSearchLast;
+    double RoomTargetFloor1 = -1;
+    // The probe cave's floor cells, as FindFloorLightCells orders them (torches-N takes the first N), and the spread
+    // ones (torches-64-spread).
+    TArray<FIntVector> TorchCells;
+    TArray<FIntVector> SpreadCells;
+    // The cells torches stood on, checked at the end.
+    TSet<FIntVector> TorchSites;
+    TArray<FEditCost> PlaceCosts;
+    TArray<FEditCost> RemoveCosts;
+    FEditCost EditCost;
+    int64 EditUpdates = 0;
+    int32 EditComponents = 0;
+    FString LeakGate;
     TUniquePtr<VoxelLightProbe::FCells> Cells;
     TArray<FStep> Steps;
     int32 StepIndex = 0;

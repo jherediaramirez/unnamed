@@ -6,6 +6,7 @@
 #include "HAL/PlatformTime.h"
 #include "Voxel/VoxelWorldgenReader.h"
 #include "VoxelLog.h"
+#include "Foundation/FoundationBlockMeshes.h"
 #include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Meshing/VoxelOreLooks.h"
@@ -58,15 +59,16 @@ namespace
         return A.Code == B.Code && A.CullFace == B.CullFace && A.Shade == B.Shade && A.Light == B.Light;
     }
 
-    // The registry's baked models, in its order, so model indices carry over. A quad repeating an earlier one of its
-    // model exactly (some flowerbed segments list a plane twice) is dropped: it would draw the same pixels again.
+    // The registry's baked models, in its order, so model indices carry over, as the Playground draws them (the
+    // torch's quads cut at its flame: FoundationBlockMeshes::GetDrawnModelQuads). A quad repeating an earlier one of
+    // its model exactly (some flowerbed segments list a plane twice) is dropped: it would draw the same pixels again.
     void CopyModels(const FFoundationBlockRegistry& Registry, FVoxelBlockTable& Table)
     {
         TArray<FVoxelModelQuad> Quads;
         for (int32 Model = 0; Model < Registry.GetModelCount(); ++Model)
         {
             Quads.Reset();
-            for (const FFoundationModelQuad& Source : Registry.GetModelQuads(Model))
+            for (const FFoundationModelQuad& Source : FoundationBlockMeshes::GetDrawnModelQuads(Registry, Model))
             {
                 FVoxelModelQuad& Quad = Quads.AddDefaulted_GetRef();
                 for (int32 Vertex = 0; Vertex < 4; ++Vertex)

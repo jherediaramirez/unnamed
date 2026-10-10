@@ -664,6 +664,51 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             Drawn(TEXT("the halves are gone from the view"));
         });
 
+    // 10c. Torches (torch session T3): a torch on a wall's side hangs there as a wall torch, and mining the wall pops
+    // it through S7's cascade. Cells and instances stay exact.
+    {
+        Prepare(TEXT("torches"), false);
+        const FIntVector TorchWall(-5, 22, 1), WallTorch(-6, 22, 1), Footing(-5, 22, 0);
+        AddCase(
+            TEXT("hang a wall torch"), .4,
+            [this, Click, Look, Give, Seed, TorchWall, Footing]
+            {
+                ResetPlayer({-850, 2250, 0});
+                Seed(Footing, TEXT("stone"));
+                Seed(TorchWall, TEXT("stone"));
+                Give(TEXT("torch"));
+                Click(EKeys::Five);
+                Look(FVector(-500, 2250, 150));
+                Click(EKeys::RightMouseButton);
+            },
+            [this, BlockAt, Drawn, Capture, WallTorch]
+            {
+                Record(TEXT("a torch on a wall's side hangs as a wall torch"),
+                    BlockAt(WallTorch) == TEXT("wall_torch[facing=west]"), BlockAt(WallTorch));
+                Drawn(TEXT("the wall torch is drawn"));
+                Capture(TEXT("wall-torch"));
+            });
+        AddCase(
+            TEXT("mine the torch's wall"), 1.,
+            [this, Click, Look, Authority]
+            {
+                Extra->SetNumberField(TEXT("torch_pops_before"), Authority().Pops);
+                Click(EKeys::Two);
+                // Beside the torch, whose box covers only the middle of the wall's face.
+                Look(FVector(-500, 2215, 150));
+                PressKey(EKeys::LeftMouseButton, true);
+            },
+            [this, Solid, Authority, Drawn, TorchWall, WallTorch, Footing]
+            {
+                PressKey(EKeys::LeftMouseButton, false);
+                const int32 Pops = Authority().Pops - int32(Extra->GetNumberField(TEXT("torch_pops_before")));
+                Record(TEXT("mining the wall pops the wall torch"),
+                    !Solid(TorchWall) && !Solid(WallTorch) && Solid(Footing) && Pops == 1,
+                    FString::Printf(TEXT("wall %d torch %d pops %d"), Solid(TorchWall), Solid(WallTorch), Pops));
+                Drawn(TEXT("the wall and its torch are gone from the view"));
+            });
+    }
+
     // 11. Combat: full sword hit, the target's cooldown, a falling critical, recharge and a wall.
     Prepare(TEXT("combat"), false);
     AddCase(

@@ -24,12 +24,21 @@ struct FFoundationPlacementContext
 namespace FoundationBlockPlacement
 {
     UNNAMED_API EFoundationFace GetOpposite(EFoundationFace Face);
-    // Unreal aim vector -> Minecraft yaw and pitch (FoundationCoordinates conventions).
+    // Unreal aim vector -> Minecraft yaw and pitch (FoundationCoordinates conventions; Unreal X east, Y south, Z up).
+    // Yaw 0 looks south (+Y), 90 west (-X), 180 north (-Y), -90 east (+X); pitch -90 looks up, 90 down. The aim is
+    // (-sin yaw cos pitch, cos yaw cos pitch, -sin pitch). The yaw comes back in (-180, 180].
     UNNAMED_API void GetYawPitch(const FVector& Aim, double& OutYaw, double& OutPitch);
     // Direction.fromYRot: floor(yaw / 90 + 0.5) & 3 -> south, west, north, east.
     UNNAMED_API EFoundationFace GetHorizontalLook(double Yaw);
-    // Direction.orderedByNearest(entity), with Mth.sin/cos's 65536-step table: nearest to the look first.
+    // Direction.orderedByNearest(entity), with Mth.sin/cos's 65536-step table: nearest to the look first, then the
+    // opposites in reverse (a b c -c -b -a). Exact ties follow the table (yaw 0's zero east-west part reads west, 90's
+    // north-south part north, 180's east, 270's south), and at pitch +-90 the sides still follow the yaw. The yaw is
+    // taken in [0, 360), the probe's range: the table splits yaw 315 and -45 at their ties. Probe P3
+    // (Tests/Probes/torch-placement-26.3.json) measured all 312 looks of its 15 degree grid; this reproduces them.
     UNNAMED_API TStaticArray<EFoundationFace, 6> GetNearestLooks(double Yaw, double Pitch);
+    // BlockPlaceContext.getNearestLookingDirections, as measured by probe P3: GetNearestLooks, with the direction into
+    // the clicked block moved to the front (the rest keep their order) unless the click replaces that block.
+    UNNAMED_API TStaticArray<EFoundationFace, 6> GetClickLooks(const FFoundationPlacementContext& Context);
 
     // BlockState.canBeReplaced(context): replaceable blocks (air, water) always; a single slab only by its own
     // slab item, and when it is the clicked block only from the side that would make it double.
@@ -44,12 +53,16 @@ namespace FoundationBlockPlacement
     // instead (FoundationPlantRules), and take waterlogged from the destination.
     UNNAMED_API FFoundationBlockState GetStateForPlacement(const FFoundationBlockWorld& World,
         const FFoundationBlockType& Block, const FFoundationPlacementContext& Context);
-    // StandingAndWallBlockItem (the torch): its wall block on a side face, its own block on the top face and the
-    // underside. Items without a wall block always place their block.
-    UNNAMED_API FName GetItemBlock(FName Block, FName WallBlock, EFoundationFace ClickedFace);
-    // A placed torch survives (the reference's support table): a floor torch on a top face that holds one, a wall
-    // torch against a side that holds one behind it. An underside click places nothing until torch session T3 brings
-    // vanilla's choice among the other faces.
-    UNNAMED_API bool HasTorchSupport(const FFoundationBlockWorld& World, FFoundationBlockState Placed,
-        const FIntVector& Destination, EFoundationFace ClickedFace);
+    // A torch state at Cell is held (the reference's support table): a floor torch by the top face of the cell below,
+    // a wall torch by the side of the cell behind it. OutSupport gets that cell; an unknown one reads as air.
+    UNNAMED_API bool IsTorchSupported(const FFoundationBlockWorld& World, FFoundationBlockState State,
+        const FIntVector& Cell, FIntVector* OutSupport = nullptr);
+    // StandingAndWallBlockItem (the torch), as measured by probe P3 (Tests/Probes/torch-placement-26.3.json, 64,896
+    // clicks) at the resolved destination. The wall is the first side in the click's looks (GetClickLooks) that holds
+    // WallBlock, which then faces away from it. Walking the looks: up is skipped, down gives Block if the cell below
+    // holds it, any side gives the wall if there is one; the first hit wins. False when nothing holds (nothing is
+    // placed). A plain click on a side or top face that holds a torch therefore always places it on the clicked block.
+    UNNAMED_API bool GetTorchState(const FFoundationBlockWorld& World, const FFoundationBlockType& Block,
+        const FFoundationBlockType& WallBlock, const FFoundationPlacementContext& Context,
+        FFoundationBlockState& OutState);
 }

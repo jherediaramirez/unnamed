@@ -953,8 +953,9 @@ bool FFoundationBlocksModelsTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FFoundationBlocksModelMeshesTest, "Unnamed.Foundation.Blocks.ModelMeshes", BlockTestFlags)
 
-// The Playground's model meshes (FoundationBlockMeshes::BuildModel): every baked model but its exact repeats, two
-// triangles per drawn quad, and full-precision UVs that carry the quad's texture UV, shade face and own code exactly.
+// The Playground's model meshes (FoundationBlockMeshes::BuildModel): every baked model but its exact repeats (the
+// torch's quads cut at its flame), two triangles per drawn quad, and full-precision UVs that carry the quad's texture
+// UV, shade face and own code exactly.
 bool FFoundationBlocksModelMeshesTest::RunTest(const FString&)
 {
     using namespace FoundationBlockMeshes;
@@ -976,15 +977,17 @@ bool FFoundationBlocksModelMeshesTest::RunTest(const FString&)
     Probe.Light = 0;
     TestEqual(TEXT("untinted unlit code"), MakeModelCode(Probe), 5u | ModelCodeBit);
 
-    int32 Quads = 0, Drawn = 0, Triangles = 0, Empty = 0, Mismatches = 0, Lifted = 0;
+    int32 Quads = 0, Cut = 0, Drawn = 0, Triangles = 0, Empty = 0, Mismatches = 0, Lifted = 0;
     auto Fail = [&](const FString& Message)
     {
         if (++Mismatches <= 20) AddError(Message);
     };
     for (int32 Model = 0; Model < Registry->GetModelCount(); ++Model)
     {
-        const TConstArrayView<FFoundationModelQuad> Source = Registry->GetModelQuads(Model);
-        Quads += Source.Num();
+        // The quads as drawn: the baked ones, with the torch's cut at its flame (GetDrawnModelQuads).
+        const TArray<FFoundationModelQuad> Source = GetDrawnModelQuads(*Registry, Model);
+        Quads += Registry->GetModelQuads(Model).Num();
+        Cut += Source.Num() - Registry->GetModelQuads(Model).Num();
         UStaticMesh* Mesh = BuildModel(GetTransientPackage(), Source);
         if (!Mesh || !Mesh->GetRenderData() || Mesh->GetRenderData()->LODResources.IsEmpty())
         {
@@ -1018,7 +1021,9 @@ bool FFoundationBlocksModelMeshesTest::RunTest(const FString&)
             Fail(FString::Printf(TEXT("model %d: %d vertices, %d expected"), Model, LOD.GetNumVertices(), Vertex));
     }
     TestEqual(TEXT("baked quads (S5's 2,410 and the torch's 30)"), Quads, 2440);
-    TestEqual(TEXT("quads drawn (16 exact repeats dropped, as the voxel world drops them)"), Drawn, 2424);
+    TestEqual(TEXT("quads the torch's flame cut adds (4 sides in each of its 5 models)"), Cut, 20);
+    TestEqual(TEXT("quads drawn (16 exact repeats dropped, as the voxel world drops them; 20 flame cuts added)"), Drawn,
+        2444);
     TestEqual(TEXT("triangles, two per drawn quad"), Triangles, 2 * Drawn);
     TestEqual(TEXT("models without a mesh"), Empty, 0);
     // Only the firefly bush's emissive overlay lies on another quad (S6's Mesher.ModelData allows exactly its four).

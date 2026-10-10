@@ -340,6 +340,33 @@ bool FVoxelDecorator::CompileModifiers(const FVoxelFeatureGraph& Graph, int32 No
             Modifier.Below = int32(DecoratorNumber(Graph, ModifierNode, TEXT("below_noise")));
             Modifier.Above = int32(DecoratorNumber(Graph, ModifierNode, TEXT("above_noise")));
         }
+        else if (ModifierType == TEXT("minecraft:surface_water_depth_filter") && Options.bTrees)
+        {
+            // The water over the floor (WORLD_SURFACE minus OCEAN_FLOOR) is at most max_water_depth, as the field's
+            // name says (the wiki's strict "less than" would refuse every tree on land, whose data says 0).
+            Modifier.Type = FModifier::EType::SurfaceWaterDepth;
+            Modifier.Above = int32(DecoratorNumber(Graph, ModifierNode, TEXT("max_water_depth")));
+        }
+        else if (ModifierType == TEXT("minecraft:environment_scan") && Options.bTrees)
+        {
+            Modifier.Type = FModifier::EType::EnvironmentScan;
+            const FStringView Direction = DecoratorString(Graph, ModifierNode, TEXT("direction_of_search"));
+            if (Direction != TEXT("up") && Direction != TEXT("down"))
+                return DecoratorFail(OutError, TEXT("environment_scan without an up or down direction"));
+            Modifier.ScanStep = Direction == TEXT("up") ? 1 : -1;
+            Modifier.ScanSteps = int32(DecoratorNumber(Graph, ModifierNode, TEXT("max_steps")));
+            const FVoxelFeatureValue* Target = Graph.FindField(ModifierNode, TEXT("target_condition"));
+            if (!Target) return DecoratorFail(OutError, TEXT("environment_scan without a target_condition"));
+            if (!Predicates.Compile(Graph, Graph.GetNode(*Target), Tags, Modifier.Predicate, OutSkip, OutError))
+                return false;
+            if (!OutSkip.IsEmpty()) return true;
+            if (const FVoxelFeatureValue* Allowed = Graph.FindField(ModifierNode, TEXT("allowed_search_condition")))
+            {
+                if (!Predicates.Compile(Graph, Graph.GetNode(*Allowed), Tags, Modifier.ScanAllowed, OutSkip, OutError))
+                    return false;
+                if (!OutSkip.IsEmpty()) return true;
+            }
+        }
         else if (ModifierType == TEXT("minecraft:noise_based_count"))
         {
             Modifier.Type = FModifier::EType::NoiseBasedCount;
@@ -423,6 +450,25 @@ bool FVoxelDecorator::CompilePlant(const FVoxelFeatureGraph& Graph, int32 Node, 
         OutSkip = Value ? Error : FString::Printf(TEXT("%s without %s"), *FString(Type), Key);
         return true;
     };
+    // With trees on, a selector entry of a type S9b builds places nothing (counted once the selector compiles); so does
+    // a tree whose trunk, foliage or root placer is not built (a fit not solved yet), so the selector's other trees
+    // still place.
+    TArray<FString> Stubs;
+    const auto TakeStub = [&](int32& Index) -> bool
+    {
+        static const TCHAR* const LaterTypes[] = {
+            TEXT("minecraft:fallen_tree"), TEXT("minecraft:huge_brown_mushroom"), TEXT("minecraft:huge_red_mushroom")};
+        if (!Options.bTrees || OutSkip.IsEmpty()) return false;
+        bool bStub = OutSkip.EndsWith(TEXT("_trunk_placer")) || OutSkip.EndsWith(TEXT("_foliage_placer")) ||
+            OutSkip.EndsWith(TEXT("_root_placer"));
+        for (const TCHAR* LaterType : LaterTypes)
+            bStub |= OutSkip == LaterType;
+        if (!bStub) return false;
+        Stubs.Add(OutSkip);
+        OutSkip.Reset();
+        Index = INDEX_NONE;
+        return true;
+    };
     const auto PlacedList = [&](const FVoxelFeatureValue* List, const TCHAR* Inner) -> bool
     {
         for (int32 Item = 0; List && List->Type == EVoxelFeatureValueType::List && Item < List->Count; ++Item)
@@ -433,7 +479,7 @@ bool FVoxelDecorator::CompilePlant(const FVoxelFeatureGraph& Graph, int32 Node, 
             if (!Value)
                 return DecoratorFail(OutError, FString::Printf(TEXT("%s entry without %s"), *FString(Type), Inner));
             if (!CompilePlaced(Graph, *Value, Tags, Index, OutSkip, OutError)) return false;
-            if (!OutSkip.IsEmpty()) return true;
+            if (!OutSkip.IsEmpty() && !TakeStub(Index)) return true;
             Plant.Selector.Placed.Add(Index);
             if (Inner)
             {
@@ -541,6 +587,17 @@ bool FVoxelDecorator::CompilePlant(const FVoxelFeatureGraph& Graph, int32 Node, 
         Plant.BaseSet = Predicates.AddSet(MoveTemp(Base));
         Plant.SpreadChance = float(DecoratorNumber(Graph, Node, TEXT("chance_of_spreading"), 0.5));
     }
+    else if (Type == TEXT("minecraft:tree") && Options.bTrees)
+    {
+        Plant.Kind = EVoxelPlantFeature::Tree;
+        FVoxelTreeConfig Tree;
+        if (!VoxelTreeFeature::Compile(Graph, Node, Tags, *Table, Predicates, Providers, Tree, OutSkip, OutError))
+            return false;
+        if (!OutSkip.IsEmpty()) return true;
+        for (const FString& Decorator : Tree.SkippedDecorators)
+            ++SkippedDecorators.FindOrAdd(Decorator);
+        Plant.Tree = Trees.Add(MoveTemp(Tree));
+    }
     else if (Type == TEXT("minecraft:random_selector"))
     {
         Plant.Selector.Op = EVoxelSelectorOp::Random;
@@ -549,6 +606,7 @@ bool FVoxelDecorator::CompilePlant(const FVoxelFeatureGraph& Graph, int32 Node, 
         if (!PlacedList(Graph.FindField(Node, TEXT("features")), TEXT("feature")) ||
             (OutSkip.IsEmpty() && !CompilePlaced(Graph, *Default, Tags, Plant.Selector.Default, OutSkip, OutError)))
             return false;
+        TakeStub(Plant.Selector.Default);
     }
     else if (Type == TEXT("minecraft:simple_random_selector") || Type == TEXT("minecraft:sequence"))
     {
@@ -583,6 +641,20 @@ bool FVoxelDecorator::CompilePlant(const FVoxelFeatureGraph& Graph, int32 Node, 
         return true;
     }
     if (!OutSkip.IsEmpty()) return true;
+    if (!Stubs.IsEmpty())
+    {
+        // A selector of nothing but S9b's entries stays skipped, as before S9a.
+        bool bAnyBuilt = Plant.Selector.Default != INDEX_NONE;
+        for (const int32 Entry : Plant.Selector.Placed)
+            bAnyBuilt |= Entry != INDEX_NONE;
+        if (!bAnyBuilt)
+        {
+            OutSkip = Stubs[0];
+            return true;
+        }
+        for (const FString& Stub : Stubs)
+            ++Placeholders.FindOrAdd(Stub);
+    }
     OutPlant = Plants.Add(MoveTemp(Plant));
     PlantOfNode.Add(Node, OutPlant);
     return true;
@@ -645,6 +717,28 @@ void FVoxelDecorator::RunModifiers(TConstArrayView<FModifier> Modifiers, bool bP
     {
         const int32 Relative = Position.Z - (Context.GetHeight(Step.Map, Position.X, Position.Y) + 1);
         if (Relative < Step.Below || Relative > Step.Above) return;
+        break;
+    }
+    case FModifier::EType::SurfaceWaterDepth:
+        if (Context.GetHeight(EVoxelDecorationHeightmap::WorldSurface, Position.X, Position.Y) -
+                Context.GetHeight(EVoxelDecorationHeightmap::OceanFloor, Position.X, Position.Y) >
+            Step.Above)
+            return;
+        break;
+    case FModifier::EType::EnvironmentScan:
+    {
+        // The start cell is tested first, then each step moves one cell. A cell walked onto that is not the target
+        // must meet the allowed condition, when there is one, for the scan to go on: the wiki ends the scan on such a
+        // cell only when no target is found there, so the target itself need not meet it. Ours where the wiki is
+        // silent: the start cell is not held to the allowed condition.
+        for (int32 Steps = 0; !Predicates.Test(Step.Predicate, Context, Position); ++Steps)
+        {
+            if (Steps > 0 && Step.ScanAllowed != INDEX_NONE && !Predicates.Test(Step.ScanAllowed, Context, Position))
+                return;
+            Position.Z += Step.ScanStep;
+            if (Steps >= Step.ScanSteps || Position.Z < VoxelConstants::MinZ || Position.Z > VoxelConstants::MaxZ)
+                return;
+        }
         break;
     }
     case FModifier::EType::Offset:
@@ -710,6 +804,10 @@ void FVoxelDecorator::PlacePlant(
         ++Stats.PlantTries;
         VoxelPatchFeatures::PlaceMultiface(Plant, Position, Random, Env);
         return;
+    case EVoxelPlantFeature::Tree:
+        ++Stats.PlantTries;
+        VoxelTreeFeature::Place(Trees[Plant.Tree], Position, Random, Env);
+        return;
     case EVoxelPlantFeature::VegetationPatch:
     {
         ++Stats.PlantTries;
@@ -724,7 +822,7 @@ void FVoxelDecorator::PlacePlant(
         if (Plant.Selector.Op == EVoxelSelectorOp::Sequence)
         {
             for (const int32 Entry : Plant.Selector.Placed)
-                RunPlaced(Entry, Position, Random.Next(), Env, Stats);
+                if (Entry != INDEX_NONE) RunPlaced(Entry, Position, Random.Next(), Env, Stats);
             return;
         }
         if (const int32 Entry = VoxelSelectorFeatures::Pick(Plant.Selector, Random); Entry != INDEX_NONE)
@@ -1053,6 +1151,22 @@ FString FVoxelDecorator::Describe() const
         for (const TPair<FString, int32>& Reason : Reasons)
             List += FString::Printf(TEXT("%s%s %d"), List.IsEmpty() ? TEXT("") : TEXT(", "), *Reason.Key, Reason.Value);
         Out += FString::Printf(TEXT(" [%s]"), *List);
+    }
+    if (Options.bPlants && Options.bTrees)
+    {
+        const auto Join = [](const TMap<FString, int32>& Counts)
+        {
+            TArray<TPair<FString, int32>> Sorted = Counts.Array();
+            Sorted.Sort([](const TPair<FString, int32>& A, const TPair<FString, int32>& B)
+                { return A.Value != B.Value ? A.Value > B.Value : A.Key < B.Key; });
+            FString List;
+            for (const TPair<FString, int32>& Pair : Sorted)
+                List += FString::Printf(TEXT("%s%s %d"), List.IsEmpty() ? TEXT("") : TEXT(", "), *Pair.Key, Pair.Value);
+            return List;
+        };
+        Out += FString::Printf(TEXT("; trees (S9a): %d configurations; S9b's selector entries placing nothing [%s]; "
+                                    "tree decorators left out [%s]"),
+            Trees.Num(), *Join(Placeholders), *Join(SkippedDecorators));
     }
     if (!MissingBlocks.IsEmpty())
         Out += FString::Printf(

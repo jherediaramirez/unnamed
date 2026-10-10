@@ -269,6 +269,17 @@ TSharedRef<FFoundationBlockRegistry> FFoundationBlockRegistry::Build(
             Codes[Face] = int32(FoundationBlockFaces::TintBit | FoundationBlockFaces::CullBit);
         Registry->AddBlock(MoveTemp(Block), MakeArrayView(&Shape, 1), Codes);
     }
+
+    // Standing-and-wall pairs (torch and wall_torch): both blocks follow the torch rule, and the wall block, which has
+    // no item of its own, drops its standing block's item (the reference's vanilla_item: a wall torch drops a torch).
+    for (FFoundationBlockType& Standing : Registry->Blocks)
+    {
+        const int32* Wall = Standing.ItemWallBlock.IsNone() ? nullptr : Registry->ById.Find(Standing.ItemWallBlock);
+        if (!Wall) continue;
+        FFoundationBlockType& WallBlock = Registry->Blocks[*Wall];
+        Standing.bTorchRule = WallBlock.bTorchRule = true;
+        if (WallBlock.DropItem.IsNone()) WallBlock.DropItem = Standing.DropItem;
+    }
     return Registry;
 }
 

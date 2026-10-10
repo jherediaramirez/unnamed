@@ -62,6 +62,9 @@ struct FFoundationBlockType
     bool bReplaceable = false;
     // Survival rule hook; no imported block needs support.
     bool bNeedsSupportBelow = false;
+    // The torch rule: both blocks of a standing-and-wall pair (a block and its ItemWallBlock; set when the registry is
+    // built) stay only while the face they stand on or hang from holds a torch (GetTorchSupport).
+    bool bTorchRule = false;
     int32 LightEmission = 0;
     FGameplayTagContainer Tags;
     EFoundationRenderLayer Layer = EFoundationRenderLayer::Opaque;
@@ -70,7 +73,8 @@ struct FFoundationBlockType
     FColor Tint = FColor(0, 0, 0, 0);
     FLinearColor Color = FLinearColor::White;
 
-    // Provisional loot rule: a block drops its own item. Loot tables are not imported yet.
+    // Provisional loot rule: a block drops its own item, and a wall block without one (wall_torch) its standing
+    // block's. Loot tables are not imported yet.
     FName DropItem;
     int32 DropCount = 1;
     FName Item;

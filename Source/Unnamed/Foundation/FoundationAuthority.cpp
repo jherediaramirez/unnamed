@@ -211,9 +211,8 @@ bool FFoundationAuthority::GetDestination(const FFoundationPlayer& Player, EFoun
 {
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Hand);
     const FFoundationItemDefinition* Item = Stack.IsEmpty() ? nullptr : &Rules.GetItem(Stack.Item);
-    const FFoundationBlockType* Placing = Item
-        ? World.FindBlock(FoundationBlockPlacement::GetItemBlock(Item->PlacesBlock, Item->PlacesWallBlock, Hit.Face))
-        : nullptr;
+    // A standing-and-wall item resolves its destination with its standing block (the wall one is chosen there).
+    const FFoundationBlockType* Placing = Item ? World.FindBlock(Item->PlacesBlock) : nullptr;
     if (!Placing) return GetDestination(Hit, OutDestination, OutReason);
     FFoundationPlacementContext Context;
     bool bAccepted;
@@ -250,9 +249,10 @@ EFoundationReason FFoundationAuthority::CheckPlacement(const FFoundationPlayer& 
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Hand);
     if (Stack.IsEmpty()) return EFoundationReason::NoItem;
     const FFoundationItemDefinition& Item = Rules.GetItem(Stack.Item);
-    const FFoundationBlockType* Placing =
-        World.FindBlock(FoundationBlockPlacement::GetItemBlock(Item.PlacesBlock, Item.PlacesWallBlock, Hit.Face));
-    if (!Item.CanPlace() || !Placing) return EFoundationReason::UnknownBlock;
+    const FFoundationBlockType* Placing = World.FindBlock(Item.PlacesBlock);
+    const FFoundationBlockType* Wall = Item.PlacesWallBlock.IsNone() ? nullptr : World.FindBlock(Item.PlacesWallBlock);
+    if (!Item.CanPlace() || !Placing || (!Item.PlacesWallBlock.IsNone() && !Wall))
+        return EFoundationReason::UnknownBlock;
     if (!Hit.IsBlockLike()) return EFoundationReason::NoTarget;
     if (!Hit.bInRange) return EFoundationReason::OutOfRange;
     FFoundationPlacementContext Context;
@@ -263,11 +263,13 @@ EFoundationReason FFoundationAuthority::CheckPlacement(const FFoundationPlayer& 
     if (!bResolved) return Reason;
     if (!World.IsKnown(OutDestination)) return EFoundationReason::OutsideBounds;
     if (!bAccepted) return EFoundationReason::DestinationOccupied;
-    const FFoundationBlockState Placed = FoundationBlockPlacement::GetStateForPlacement(World, *Placing, Context);
-    if (OutState) *OutState = Placed;
-    if (!Item.PlacesWallBlock.IsNone() &&
-        !FoundationBlockPlacement::HasTorchSupport(World, Placed, OutDestination, Hit.Face))
+    // A standing-and-wall item (the torch) places by look among the faces that hold it, or not at all.
+    FFoundationBlockState Placed;
+    if (!Wall)
+        Placed = FoundationBlockPlacement::GetStateForPlacement(World, *Placing, Context);
+    else if (!FoundationBlockPlacement::GetTorchState(World, *Placing, *Wall, Context, Placed))
         return EFoundationReason::CannotSurvive;
+    if (OutState) *OutState = Placed;
     if (Placing->bNeedsSupportBelow)
     {
         const FIntVector Below = OutDestination - FIntVector(0, 0, 1);
@@ -790,6 +792,12 @@ EFoundationReason FFoundationAuthority::CheckPlantPlacement(
 
 bool FFoundationAuthority::CanPlantSurvive(const FIntVector& Cell, FFoundationBlockState State) const
 {
+    // Torches (T3): the support table, as at placement; an unknown support cell keeps the torch.
+    if (World.GetBlock(State).bTorchRule)
+    {
+        FIntVector Support;
+        return FoundationBlockPlacement::IsTorchSupported(World, State, Cell, &Support) || !World.IsKnown(Support);
+    }
     if (!PlantSurvival) return true;
     bool bUnknown = false;
     const bool bSurvives = PlantSurvival->Survives(State.Id, Cell.X, Cell.Y, Cell.Z,

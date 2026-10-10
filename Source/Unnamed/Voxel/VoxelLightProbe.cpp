@@ -2,6 +2,7 @@
 #include "Blocks/VoxelBlockTable.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/PointLightComponent.h"
+#include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationProfile.h"
 #include "HAL/IConsoleManager.h"
@@ -19,6 +20,17 @@ namespace
     constexpr double LightProbeCellCm = UFoundationProfile::BlockCm;
     // The lights live on the voxel world's actor; weak, so a world that ends takes them along.
     TArray<TWeakObjectPtr<UPointLightComponent>> GLightProbePool;
+    // `voxel.LightProbe <N> torches`: a placed torch's cell, what the cell held before, and its world.
+    struct FLightProbeTorch
+    {
+        FIntVector Cell;
+        FFoundationBlockState Before;
+        TWeakObjectPtr<AVoxelWorld> World;
+    };
+    TArray<FLightProbeTorch> GLightProbeTorches;
+    // The torches RemoveTorches could not put back because their column was unloaded: the next RemoveTorches (also
+    // the one PlaceTorches starts with) tries them again, so a torch that comes back with its column still goes.
+    TArray<FLightProbeTorch> GLightProbePendingTorches;
 }
 
 bool VoxelLightProbe::ParseMode(const FString& Text, EMode& OutMode)
@@ -162,7 +174,15 @@ TArray<FVector> VoxelLightProbe::FindFloorLights(
     const FCells& Cells, const FVector& EyeCm, const FVector& Forward, int32 Count)
 {
     TArray<FVector> Positions;
-    if (!Cells.IsValid() || Count <= 0) return Positions;
+    for (const FIntVector& Cell : FindFloorLightCells(Cells, EyeCm, Forward, Count))
+        Positions.Add(Cells.ToCm(FVector(Cell) + FVector(.5, .5, 1)));
+    return Positions;
+}
+
+TArray<FIntVector> VoxelLightProbe::FindFloorLightCells(
+    const FCells& Cells, const FVector& EyeCm, const FVector& Forward, int32 Count)
+{
+    if (!Cells.IsValid() || Count <= 0) return {};
     const FVector Eye = Cells.ToBlocks(EyeCm);
     TArray<FIntVector> Front, Behind;
     for (const FIntVector& Cell : FindFloorCells(Cells, FCells::ToCell(Eye)))
@@ -178,9 +198,59 @@ TArray<FVector> VoxelLightProbe::FindFloorLights(
                 bSpaced &= FVector::DistSquared(FVector(Cell), FVector(Other)) >= Spacing * Spacing;
             if (bSpaced) Kept.Add(Cell);
         }
-    for (const FIntVector& Cell : Kept)
-        Positions.Add(Cells.ToCm(FVector(Cell) + FVector(.5, .5, 1)));
-    return Positions;
+    return Kept;
+}
+
+int32 VoxelLightProbe::PlaceTorches(AVoxelWorld& World, const TArray<FIntVector>& FloorCells)
+{
+    RemoveTorches();
+    FFoundationBlockWorld& Blocks = World.GetAuthority()->World;
+    const FFoundationBlockType* Torch = Blocks.FindBlock(TEXT("torch"));
+    if (!Torch) return 0;
+    const FFoundationBlockState State = Torch->GetDefaultState();
+    for (const FIntVector& Cell : FloorCells)
+    {
+        if (!Blocks.IsKnown(Cell)) continue;
+        const FFoundationBlockState Before = Blocks.Get(Cell).State;
+        if (Before == State) continue;
+        GLightProbeTorches.Add({Cell, Before, TWeakObjectPtr<AVoxelWorld>(&World)});
+        Blocks.Set(Cell, State);
+    }
+    return GLightProbeTorches.Num();
+}
+
+int32 VoxelLightProbe::RemoveTorches()
+{
+    int32 Removed = 0;
+    TArray<FLightProbeTorch> Torches = MoveTemp(GLightProbePendingTorches);
+    Torches.Append(MoveTemp(GLightProbeTorches));
+    GLightProbePendingTorches.Reset();
+    GLightProbeTorches.Reset();
+    for (FLightProbeTorch& Placed : Torches)
+    {
+        // A world that ended took its torches along.
+        AVoxelWorld* World = Placed.World.Get();
+        if (!World) continue;
+        FFoundationBlockWorld& Blocks = World->GetAuthority()->World;
+        if (!Blocks.IsKnown(Placed.Cell))
+        {
+            // The column is unloaded: the torch comes back with it, so it is tried again later.
+            GLightProbePendingTorches.Add(MoveTemp(Placed));
+            continue;
+        }
+        // A torch that was popped or replaced since stays as it is.
+        const FFoundationBlockType* Torch = Blocks.FindBlock(TEXT("torch"));
+        if (Torch && Blocks.Get(Placed.Cell).State == Torch->GetDefaultState())
+        {
+            Blocks.Set(Placed.Cell, Placed.Before);
+            ++Removed;
+        }
+    }
+    if (!GLightProbePendingTorches.IsEmpty())
+        UE_LOG(LogUnnamedVoxel, Display,
+            TEXT("voxel.LightProbe: %d torches put back (%d not restored: column unloaded)"), Removed,
+            GLightProbePendingTorches.Num());
+    return Removed;
 }
 
 int32 VoxelLightProbe::Show(AVoxelWorld& World, const TArray<FVector>& Positions, const FSettings& Settings)
@@ -245,18 +315,40 @@ namespace
         AVoxelWorld* Voxel = AVoxelWorld::Find(World);
         const APlayerCameraManager* Camera = UGameplayStatics::GetPlayerCameraManager(World, 0);
         FSettings Settings;
+        const bool bTorches = Args.Num() > 1 && Args[1] == TEXT("torches");
         if (!Voxel || !Camera || Args.IsEmpty() || !Args[0].IsNumeric() ||
-            (Args.Num() > 1 && !ParseMode(Args[1], Settings.Mode)))
+            (Args.Num() > 1 && !bTorches && !ParseMode(Args[1], Settings.Mode)))
         {
             UE_LOG(LogUnnamedVoxel, Display,
-                TEXT("voxel.LightProbe <N> [megalights|vsm|none] [intensity cd] [radius cm], in L_Generated"));
+                TEXT("voxel.LightProbe <N> [megalights|vsm|none] [intensity cd] [radius cm], or <N> torches, in "
+                     "L_Generated"));
             return;
         }
         const int32 Count = FMath::Clamp(FCString::Atoi(*Args[0]), 0, 1024);
         if (Count == 0)
         {
             Clear();
-            UE_LOG(LogUnnamedVoxel, Display, TEXT("voxel.LightProbe: the lights are removed"));
+            const int32 Removed = RemoveTorches();
+            UE_LOG(
+                LogUnnamedVoxel, Display, TEXT("voxel.LightProbe: the lights are removed (and %d torches)"), Removed);
+            return;
+        }
+        if (bTorches)
+        {
+            // The pool's lights instead of the probe's: torches on the same floor cells, through the block world.
+            Clear();
+            const TArray<FIntVector> FloorCells = FindFloorLightCells(
+                FCells(*Voxel), Camera->GetCameraLocation(), Camera->GetCameraRotation().Vector(), Count);
+            const int32 Placed = PlaceTorches(*Voxel, FloorCells);
+            const IConsoleVariable* MegaLights =
+                IConsoleManager::Get().FindConsoleVariable(TEXT("r.MegaLights.EnableForProject"));
+            UE_LOG(LogUnnamedVoxel, Display,
+                TEXT("voxel.LightProbe: %d of %d torches placed on cave floor cells; their lights come from the "
+                     "light pool (voxel.LightsInfo)%s"),
+                Placed, Count,
+                MegaLights && MegaLights->GetInt() == 1
+                    ? TEXT("")
+                    : TEXT("; the pool is not live while r.MegaLights.EnableForProject is 0"));
             return;
         }
         if (Args.Num() > 2) Settings.IntensityCd = FMath::Max(0., FCString::Atod(*Args[2]));
@@ -279,7 +371,8 @@ namespace
     FAutoConsoleCommandWithWorldAndArgs GVoxelLightProbeCommand(TEXT("voxel.LightProbe"),
         TEXT("voxel.LightProbe <N> [megalights|vsm|none] [intensity cd] [radius cm]: development only. N movable "
              "point lights on cave floor cells around the view (1 m up, radius 1300 cm by default); 0 removes them. "
-             "megalights needs r.MegaLights.EnableForProject 1 for the run."),
+             "megalights needs r.MegaLights.EnableForProject 1 for the run. voxel.LightProbe <N> torches places a "
+             "floor torch on each of those cells instead, lit by the light pool; 0 takes them back."),
         FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&RunLightProbeCommand));
 }
 #endif
