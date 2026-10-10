@@ -2,6 +2,7 @@
 #include "Blocks/VoxelBlockTable.h"
 #include "Foundation/FoundationBlockMeshes.h"
 #include "Foundation/FoundationBlockTextureTable.h"
+#include "Foundation/FoundationBreakEffects.h"
 #include "Foundation/FoundationController.h"
 #include "Foundation/FoundationHud.h"
 #include "Foundation/FoundationPlayground.h"
@@ -178,6 +179,9 @@ void UFoundationInteractionView::BeginPlay()
         Numbers.Add({Label});
     }
     LoadBlockAssets();
+    // The breaking effects' pools (foundation.Break.*), hidden until a switch turns one on.
+    BreakEffects = MakeShared<FFoundationBreakEffects>(*this);
+    BreakEffects->Initialize(*Lab->GetAuthority());
     RebuildBlocks(*Lab->GetAuthority());
 }
 
@@ -458,7 +462,8 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
             break;
         case EFoundationEventKind::Broken:
         case EFoundationEventKind::Popped:
-            Burst(Cell.GetCenter(), Authority.World.GetBlock(Event.State).Color, 10, 12, 260, uint32(Event.Serial));
+            if (!BreakEffects || !BreakEffects->OnBlockRemoved(Authority, Event))
+                Burst(Cell.GetCenter(), Authority.World.GetBlock(Event.State).Color, 10, 12, 260, uint32(Event.Serial));
             break;
         case EFoundationEventKind::Rejected:
             Flashes.Add({Cell.ExpandBy(.5), FLinearColor(.95f, .15f, .1f), 0, .3, true});
@@ -607,8 +612,10 @@ void UFoundationInteractionView::DrawSelection(
             OutlineColor = Target->Health.IsDead() ? FLinearColor(.4f, .4f, .4f) : FLinearColor(.9f, .1f, .05f);
         }
     if (Outline.IsValid) Outlines.Add(Outline);
-    for (const FBox& Box : Outlines)
-        DrawBox(Box.ExpandBy(.3), OutlineColor, .9f);
+    // A block's outline can come from the breaking effects instead (foundation.Break.Outline).
+    if (!(Hit.Kind == EFoundationHitKind::Block && BreakEffects && BreakEffects->SubmitOutline(Outlines)))
+        for (const FBox& Box : Outlines)
+            DrawBox(Box.ExpandBy(.3), OutlineColor, .9f);
     bOutlineVisible = !Outlines.IsEmpty();
     if (!Preview.bPlacement) return;
     // Destination preview: white when it would place, orange while only the player's body is in the
@@ -800,9 +807,11 @@ void UFoundationInteractionView::UpdateHeldItem(
     }
     SwingAge += DeltaTime;
     MiningSwing = Pawn->Interaction.bMining ? MiningSwing + DeltaTime : 0;
-    const double Swing = SwingAge < .25 ? FMath::Sin(SwingAge / .25 * PI)
-        : Pawn->Interaction.bMining     ? FMath::Abs(FMath::Sin(MiningSwing / .3 * PI))
-                                        : 0.;
+    double Swing = SwingAge < .25   ? FMath::Sin(SwingAge / .25 * PI)
+        : Pawn->Interaction.bMining ? FMath::Abs(FMath::Sin(MiningSwing / .3 * PI))
+                                    : 0.;
+    // foundation.Break.Swing: the swing clock's 6-tick swings instead, in today's pose.
+    if (BreakEffects) BreakEffects->GetSwing(Swing);
     HandPivot->SetRelativeLocationAndRotation(
         FVector(42 + Swing * 6, 24 - Swing * 8, -24 + Swing * 4), FRotator(-55 * Swing, -10 * Swing, 0));
 }
@@ -815,6 +824,7 @@ void UFoundationInteractionView::TickComponent(
     if (!Lab || !Lab->GetAuthority()) return;
     const double Start = FPlatformTime::Seconds();
     FFoundationAuthority& Authority = *Lab->GetAuthority();
+    if (BreakEffects) BreakEffects->BeginFrame(Authority);
     if (TextureTable)
         TextureTable->SetTick(FMath::FloorToInt64(GetWorld()->GetTimeSeconds() * FoundationBlockFaces::TicksPerSecond));
     ApplyChanges(Authority);
@@ -831,6 +841,11 @@ void UFoundationInteractionView::TickComponent(
     const bool bMining = bVisible && Pawn && Pawn->Interaction.bMining;
     // The darkening overlay is opaque: only the untextured fallback uses it; textured blocks show the cracks.
     MiningOverlay->SetVisibility(bMining && !Authority.World.GetRegistry().GetAssets());
+    // The breaking effects follow the reference steps even with the HUD hidden (hit sounds); they draw only when
+    // visible. With foundation.Break.Cracks on they draw the cracks instead of the lines below.
+    const bool bBreakCracks = BreakEffects &&
+        BreakEffects->UpdateMining(
+            Authority, Pawn && Pawn->HasInteraction() ? &Pawn->Interaction : nullptr, bVisible, DeltaTime);
     if (bMining)
     {
         const FFoundationInteraction& Interaction = Pawn->Interaction;
@@ -844,8 +859,9 @@ void UFoundationInteractionView::TickComponent(
         MiningOverlay->SetWorldScale3D(Cell.GetSize() / InteractionViewBlockCm * 1.006);
         MiningMaterial->SetVectorParameterValue(
             TEXT("Color"), FMath::Lerp(FLinearColor(.92f, .92f, .92f), FLinearColor(.35f, .35f, .37f), Stage / 9.f));
-        DrawCracks(Authority, Interaction);
+        if (!bBreakCracks) DrawCracks(Authority, Interaction);
     }
     if (Pawn && Pawn->HasInteraction()) UpdateHeldItem(Authority, Pawn, bVisible, DeltaTime);
+    if (BreakEffects) BreakEffects->EndFrame(Authority, DeltaTime);
     LastViewMs = (FPlatformTime::Seconds() - Start) * 1000.;
 }
