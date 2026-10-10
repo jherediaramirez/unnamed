@@ -8,6 +8,7 @@ param([Parameter(Mandatory)][string]$Folder)
 #   frustum (the driver counts them) and megalights none.
 # - VSM: "VirtualShadowMapProjection" events: the sun's, plus one pass for all shadowed local lights (vsm only), and
 #   ShadowDepths' inclusive ms.
+# - -TorchGates' torches-* cases (the world's light pool) are MegaLights lights, with megalights' signature.
 # A case without its signature is invalid, not cheap.
 $ErrorActionPreference='Stop'
 $log=Get-Content -LiteralPath (Join-Path $Folder 'game.log')
@@ -47,7 +48,7 @@ $out=@('Light probe GPU profiles (one ProfileGPU per case, round 1)','',
 foreach($r in $rows){
     $count=if($r.Case -match '-(\d+)$'){[int]$Matches[1]}else{0}
     $lights=$r.PerLight-$base.PerLight
-    $mega=$r.Case -like 'megalights-*'
+    $mega=($r.Case -like 'megalights-*') -or ($r.Case -like 'torches-*')
     $ok=(($r.MegaEvents -gt 0) -eq $mega) -and ($r.MegaLights -eq [int]($mega -or $r.Case -eq 'floor'))
     $ok=$ok -and ($lights -eq $(if($mega -or $count -eq 0){0}else{$r.InView}))
     $ok=$ok -and ($r.VsmProjections -eq $base.VsmProjections+[int]($r.Case -like 'vsm-*'))

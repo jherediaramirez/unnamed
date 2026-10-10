@@ -130,6 +130,7 @@ FVoxelLightShots::FVoxelLightShots(const FString& InFolder) : Folder(InFolder)
 {
     FParse::Value(FCommandLine::Get(), TEXT("VoxelLightsIntensity="), IntensityCd);
     FParse::Value(FCommandLine::Get(), TEXT("VoxelShotTorches="), TorchCount);
+    bTorchGates = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotTorchGates"));
 }
 
 FVoxelLightShots::~FVoxelLightShots()
@@ -150,6 +151,7 @@ FVoxelLightShots::FStep& FVoxelLightShots::AddStep(const FString& Name, int32 Fr
 bool FVoxelLightShots::Tick(AVoxelWorld& World)
 {
     if (bFinished) return false;
+    if (bBegun && Steps.IsValidIndex(StepIndex) && Steps[StepIndex].OnTick) Steps[StepIndex].OnTick();
     if (!bBuilt)
     {
         bBuilt = true;
@@ -262,6 +264,11 @@ void FVoxelLightShots::Build(AVoxelWorld& World)
 
     // Every case but the leak test looks into the probe cave: dark, and big enough for 100 lights.
     FindProbeView();
+    if (bTorchGates)
+    {
+        AddTorchGateSteps(World);
+        return;
+    }
     if (TorchCount > 0)
     {
         // -VoxelShotTorches: torches through the block world, their lights from the pool, frames counted from the
@@ -586,7 +593,9 @@ void FVoxelLightShots::AddProbeSteps(AVoxelWorld& World)
                 // One GPU profile per case, in the log after this marker (Scripts/SummarizeLightProbe.ps1).
                 UE_LOG(LogUnnamedVoxel, Display,
                     TEXT("LightShots ProfileGPU %s: %d lights shown, %d in view, MegaLights %d"), *Case.Name,
-                    VoxelLightProbe::CountShown(), CountInView(FMath::Min(Case.Count, LightPositions.Num())),
+                    VoxelLightProbe::CountShown(),
+                    CountInView(
+                        TConstArrayView<FVector>(LightPositions).Left(FMath::Min(Case.Count, LightPositions.Num()))),
                     MegaLightsVariable->GetInt());
                 GEngine->Exec(Camera->GetWorld(), TEXT("ProfileGPU"));
             };
@@ -690,7 +699,7 @@ void FVoxelLightShots::AddProbeSteps(AVoxelWorld& World)
     }
 }
 
-void FVoxelLightShots::AddLeakSteps(AVoxelWorld& World)
+void FVoxelLightShots::AddLeakSteps(AVoxelWorld& World, bool bTorch)
 {
     using VoxelLightProbe::EMode;
     // The leak site: a column whose top three blocks are opaque cubes over a cave, with a camera in the cave 2.5 to 6
@@ -743,17 +752,36 @@ void FVoxelLightShots::AddLeakSteps(AVoxelWorld& World)
         FVector::Dist(LeakLight, Patch.Point)));
     const FRotator Rotation = (Patch.Point - LeakCamera).Rotation();
     const TArray<FVector> Light = {Cells->ToCm(LeakLight)};
-    for (const FCase& Case : {FCase{TEXT("base"), EMode::None, 0, false}, FCase{TEXT("none-1"), EMode::None, 1, false},
-             FCase{TEXT("vsm-1"), EMode::Vsm, 1, false}, FCase{TEXT("floor"), EMode::MegaLights, 0, true},
-             FCase{TEXT("megalights-1"), EMode::MegaLights, 1, true}})
+    // The torch stands on the column's top, a block under where the probe light hangs.
+    const FIntVector TorchCell = VoxelLightProbe::FCells::ToCell(LeakLight) - LightShotsUp;
+    const TArray<FCase> LeakCases = bTorch
+        ? TArray<FCase>{FCase{TEXT("floor"), EMode::MegaLights, 0, true},
+              FCase{TEXT("torch-1"), EMode::MegaLights, 1, true, true}}
+        : TArray<FCase>{FCase{TEXT("base"), EMode::None, 0, false}, FCase{TEXT("none-1"), EMode::None, 1, false},
+              FCase{TEXT("vsm-1"), EMode::Vsm, 1, false}, FCase{TEXT("floor"), EMode::MegaLights, 0, true},
+              FCase{TEXT("megalights-1"), EMode::MegaLights, 1, true}};
+    if (bTorch)
+        Line(FString::Printf(TEXT("Torch leak test: the torch on cell %s, the column's top."), *TorchCell.ToString()));
+    for (const FCase& Case : LeakCases)
     {
         const FString Name = TEXT("leak-") + Case.Name;
         FStep& Step = AddStep(Name, 150,
-            [this, &World, Case, Light, LeakCamera, Rotation]
+            [this, &World, Case, Light, LeakCamera, Rotation, TorchCell]
             {
                 SetView(LeakCamera, Rotation);
-                ShowCase(World, Case, Light);
+                if (!Case.bTorches)
+                {
+                    VoxelLightProbe::RemoveTorches();
+                    ShowCase(World, Case, Light);
+                    return;
+                }
+                SetMegaLights(Case.bMegaLights);
+                VoxelLightProbe::Clear();
+                TorchSites.Add(TorchCell);
+                VoxelLightProbe::PlaceTorches(World, {TorchCell});
             });
+        // With torches, every leak step waits for the columns it edits (leak-floor removes the spread torches).
+        Step.bEdit = bTorch;
         Step.CaptureFrom = 120;
         Step.OnFrame = [this, Name, Patch](int32 Frame, const TArray<FColor>& Pixels)
         {
@@ -771,8 +799,19 @@ void FVoxelLightShots::AddLeakSteps(AVoxelWorld& World)
                 LightShotsDeviation(Values, 0, 30),
                 Case.Count ? *FString::Printf(TEXT(", %+.2f against %s"), Mean.W - Settles.FindRef(Zero).W, *Zero)
                            : TEXT("")));
+            if (!Case.bTorches) return;
+            // Gate: the torch adds at most 1/255 to the cave floor under three blocks of rock.
+            if (!Settles.Contains(Zero))
+            {
+                LeakGate = FString::Printf(TEXT("Leak gate: FAIL (%s not measured)."), *Zero);
+                return;
+            }
+            const double Added = Mean.W - Settles.FindRef(Zero).W;
+            LeakGate = FString::Printf(TEXT("Leak gate: %s %+.2f/255 against %s, gate within 1/255: %s."), *Name, Added,
+                *Zero, FMath::Abs(Added) <= 1 ? TEXT("PASS") : TEXT("FAIL"));
         };
     }
+    if (bTorch) AddStep(TEXT("leak-restore"), 10, [] { VoxelLightProbe::RemoveTorches(); }).bEdit = true;
 }
 
 void FVoxelLightShots::AddEditSteps(AVoxelWorld& World)
@@ -901,16 +940,16 @@ bool FVoxelLightShots::Project(
     return true;
 }
 
-int32 FVoxelLightShots::CountInView(int32 Count) const
+int32 FVoxelLightShots::CountInView(TConstArrayView<FVector> Positions) const
 {
     // Spheres of the lights' radius against the view frustum's side planes and the camera plane.
     const double Reach = VoxelLightProbe::FSettings().RadiusCm / 100;
     const double Across = FMath::DegreesToRadians(LightShotsFieldOfView / 2);
     const double Up = FMath::Atan(FMath::Tan(Across) * Height / FMath::Max(Width, 1));
     int32 InView = 0;
-    for (int32 Index = 0; Index < FMath::Min(Count, LightPositions.Num()); ++Index)
+    for (const FVector& Position : Positions)
     {
-        const FVector Local = ViewRotation.UnrotateVector(Cells->ToBlocks(LightPositions[Index]) - ViewBlocks);
+        const FVector Local = ViewRotation.UnrotateVector(Cells->ToBlocks(Position) - ViewBlocks);
         const double Side = FMath::Abs(Local.Y) * FMath::Cos(Across) - Local.X * FMath::Sin(Across);
         const double Height2 = FMath::Abs(Local.Z) * FMath::Cos(Up) - Local.X * FMath::Sin(Up);
         InView += Local.X > -Reach && Side < Reach && Height2 < Reach;
@@ -1048,6 +1087,7 @@ void FVoxelLightShots::Finish(AVoxelWorld& World)
                 Noise ? *FString::Printf(TEXT("%.2f, %.2f, %.2f"), Noise->X, Noise->Y, Noise->Z) : TEXT("-")));
         }
     }
+    if (bTorchGates) AddTorchTables(World);
     float Low = TNumericLimits<float>::Max(), High = 0;
     for (const TPair<FString, float>& Value : Exposures)
     {
@@ -1067,8 +1107,427 @@ void FVoxelLightShots::Finish(AVoxelWorld& World)
     Line(FString::Printf(TEXT("Restored %d edited cells (%d not restored: column unloaded); MegaLights for the "
                               "project back to %d."),
         Originals.Num() - Unloaded, Unloaded, MegaLightsVariable ? MegaLightsVariable->GetInt() : -1));
-    FFileHelper::SaveStringToFile(
-        FString::Join(Report, TEXT("\n")) + TEXT("\n"), *FPaths::Combine(Folder, TEXT("lights.txt")));
+    FFileHelper::SaveStringToFile(FString::Join(Report, TEXT("\n")) + TEXT("\n"),
+        *FPaths::Combine(Folder, bTorchGates ? TEXT("torches.txt") : TEXT("lights.txt")));
     FFileHelper::SaveStringToFile(TEXT("step,frame,patch,r,g,b,mean\n") + FString::Join(Csv, TEXT("\n")) + TEXT("\n"),
-        *FPaths::Combine(Folder, TEXT("lights.csv")));
+        *FPaths::Combine(Folder, bTorchGates ? TEXT("torches.csv") : TEXT("lights.csv")));
+}
+
+namespace
+{
+    // Mean luma difference of two images and the % of pixels changed by more than 8/255.
+    FVector2D LightShotsTorchDifference(const TArray<FColor>& Pixels, const TArray<FColor>& Zero)
+    {
+        if (Zero.Num() != Pixels.Num() || Pixels.IsEmpty()) return FVector2D(-1, -1);
+        double Sum = 0;
+        int32 Changed = 0;
+        for (int32 Index = 0; Index < Pixels.Num(); ++Index)
+        {
+            const FColor& A = Pixels[Index];
+            const FColor& B = Zero[Index];
+            Sum += FMath::Abs(LightShotsLuma(A) - LightShotsLuma(B));
+            Changed += FMath::Max3(FMath::Abs(A.R - B.R), FMath::Abs(A.G - B.G), FMath::Abs(A.B - B.B)) > 8;
+        }
+        return FVector2D(Sum / Pixels.Num(), 100. * Changed / Pixels.Num());
+    }
+
+    // Mean, p95 (nearest rank) and max of edit costs, as table cells.
+    FString LightShotsTorchCostCells(TArray<double> Values)
+    {
+        if (Values.IsEmpty()) return TEXT("- | - | -");
+        Values.Sort();
+        double Sum = 0;
+        for (const double Value : Values)
+            Sum += Value;
+        const int32 Rank = FMath::Clamp(FMath::CeilToInt32(.95 * Values.Num()) - 1, 0, Values.Num() - 1);
+        return FString::Printf(TEXT("%.3f | %.3f | %.3f"), Sum / Values.Num(), Values[Rank], Values.Last());
+    }
+}
+
+void FVoxelLightShots::AddTorchGateSteps(AVoxelWorld& World)
+{
+    using VoxelLightProbe::EMode;
+    // The probe's floor cells: torches-N stands on the first N, megalights-N hangs its lights 1 m over the same ones.
+    const FVector EyeCm = Cells->ToCm(ViewBlocks);
+    TorchCells = VoxelLightProbe::FindFloorLightCells(*Cells, EyeCm, ViewRotation.Vector(), MaxLights);
+    LightPositions = VoxelLightProbe::FindFloorLights(*Cells, EyeCm, ViewRotation.Vector(), MaxLights);
+    SpreadCells = FindSpreadTorchCells(64, 48);
+    TArray<double> Spread, Clustered;
+    for (const FIntVector& Cell : SpreadCells)
+        Spread.Add(FVector::Dist(FVector(Cell) + FVector(.5, .5, .5), ViewBlocks));
+    for (int32 Index = 0; Index < FMath::Min(64, TorchCells.Num()); ++Index)
+        Clustered.Add(FVector::Dist(FVector(TorchCells[Index]) + FVector(.5, .5, .5), ViewBlocks));
+    Spread.Sort();
+    Clustered.Sort();
+    auto Quartiles = [](const TArray<double>& Values)
+    {
+        if (Values.IsEmpty()) return FString(TEXT("none"));
+        const int32 Last = Values.Num() - 1;
+        return FString::Printf(TEXT("%.1f / %.1f / %.1f / %.1f / %.1f"), Values[0], Values[Last / 4], Values[Last / 2],
+            Values[Last * 3 / 4], Values[Last]);
+    };
+    Line(FString::Printf(TEXT("Torch gates: %d probe floor cells for torches and probe lights (of %d); %d spread floor "
+                              "cells (of 64, toward 48 blocks)."),
+        TorchCells.Num(), MaxLights, SpreadCells.Num()));
+    Line(FString::Printf(TEXT("Distance from the eye (blocks; min / quartiles / max): clustered 64 %s; spread 64 %s."),
+        *Quartiles(Clustered), *Quartiles(Spread)));
+
+    AddTorchLookSteps(World);
+    // The probe cave: the eye adapts once with MegaLights off, then stays as it is for every case (as T1).
+    AddStep(TEXT("settle"), 150,
+        [this]
+        {
+            SetView(ViewBlocks, ViewRotation);
+            SetMegaLights(false);
+            VoxelLightProbe::Clear();
+            VoxelLightProbe::RemoveTorches();
+            SetExposureSpeed(50);
+        })
+        .bEdit = true;
+    AddStep(TEXT("freeze"), 30, [this] { SetExposureSpeed(0); }).End = [this]
+    { Line(FString::Printf(TEXT("Exposure frozen at %.6g."), GetExposure())); };
+    // (e) The probe cave with 10 torches, MegaLights off, then on.
+    for (const bool bOn : {false, true})
+    {
+        const FString Shot = FString::Printf(TEXT("torches-look-probe-10-megalights%d"), int32(bOn));
+        const FCase Case{TEXT("torches-10"), EMode::MegaLights, 10, bOn, true};
+        FStep& Look = AddStep(Shot, 91, [this, &World, Case] { ShowTorchCase(World, Case, LightPositions); });
+        Look.bEdit = true;
+        Look.CaptureFrom = 90;
+        Look.OnFrame = [this, Shot](int32 Frame, const TArray<FColor>& Pixels) { SavePng(Shot, Pixels); };
+    }
+    AddTorchEditSteps(World);
+
+    // (b) and (c): T1's cases with the pool's torches beside the probe's lights, in three rounds, the middle one in
+    // reverse order. Every case waits for its edits' columns before settling.
+    Cases = {{TEXT("base"), EMode::None, 0, false}, {TEXT("floor"), EMode::MegaLights, 0, true}};
+    for (const int32 Count : {1, 10, 100})
+        Cases.Add({FString::Printf(TEXT("torches-%d"), Count), EMode::MegaLights, Count, true, true});
+    for (const int32 Count : {1, 10, 100})
+        Cases.Add({FString::Printf(TEXT("megalights-%d"), Count), EMode::MegaLights, Count, true});
+    Cases.Add({TEXT("torches-64-clustered"), EMode::MegaLights, 64, true, true});
+    Cases.Add({TEXT("torches-64-spread"), EMode::MegaLights, 64, true, true, true});
+    for (int32 Round = 0; Round < 3; ++Round)
+        for (int32 Order = 0; Order < Cases.Num(); ++Order)
+        {
+            const FCase Case = Cases[Round == 1 ? Cases.Num() - 1 - Order : Order];
+            AddStep(FString::Printf(TEXT("%s-r%d-settle"), *Case.Name, Round + 1), 90,
+                [this, &World, Case]
+                {
+                    SetView(ViewBlocks, ViewRotation);
+                    ShowTorchCase(World, Case, LightPositions);
+                })
+                .bEdit = true;
+            FStep& Timed = AddStep(FString::Printf(TEXT("%s-r%d"), *Case.Name, Round + 1), 120 + TimedSkip);
+            Timed.bTimed = true;
+            Timed.End = [this, &World, Case, Round]
+            {
+                CaseTimes.FindOrAdd(Case.Name).Add(Times);
+                if (Round > 0) return;
+                // One GPU profile per case, in the log after this marker (Scripts/SummarizeLightProbe.ps1).
+                UE_LOG(LogUnnamedVoxel, Display,
+                    TEXT("LightShots ProfileGPU %s: %d lights shown, %d in view, MegaLights %d"), *Case.Name,
+                    CountAllShown(World), CountInView(GetCasePositions(Case)), MegaLightsVariable->GetInt());
+                GEngine->Exec(Camera->GetWorld(), TEXT("ProfileGPU"));
+            };
+            if (Round > 0) continue;
+            FStep& Look = AddStep(Case.Name + TEXT("-look"), 11);
+            Look.CaptureFrom = 10;
+            Look.OnFrame = [this, Case](int32 Frame, const TArray<FColor>& Pixels)
+            {
+                SavePng(TEXT("torches-probe-") + Case.Name, Pixels);
+                if (Case.Count == 0)
+                {
+                    Images.Add(Case.Name, Pixels);
+                    if (Case.Name == TEXT("base")) return;
+                }
+                // Against the N = 0 image with MegaLights on (the floor's against the base).
+                const FVector2D Difference =
+                    LightShotsTorchDifference(Pixels, Images.FindRef(Case.Count > 0 ? TEXT("floor") : TEXT("base")));
+                if (Difference.X >= 0) Differences.Add(Case.Name, Difference);
+            };
+            Look.End = [this, &World, Case]
+            {
+                NoteExposure(Case.Name);
+                Shown.Add(Case.Name, CountAllShown(World));
+            };
+        }
+    // (d) The leak site with a torch on the column's top.
+    AddLeakSteps(World, true);
+    // Last, so a stopped run still gets here: every torch and the MegaLights setting back.
+    AddStep(TEXT("cleanup"), 10,
+        [this]
+        {
+            VoxelLightProbe::Clear();
+            VoxelLightProbe::RemoveTorches();
+            SetMegaLights(MegaLightsAtStart != 0);
+        });
+}
+
+void FVoxelLightShots::AddTorchLookSteps(AVoxelWorld& World)
+{
+    // (e) The -Caves views without torches, MegaLights off, then on: the eye adapts to each view with MegaLights off,
+    // then stays for the pair.
+    int32 Views = 0;
+    for (const TTuple<FString, FVector, FVector>& View : World.GetCaveShotViews())
+    {
+        const FString Name = View.Get<0>();
+        if (Name != TEXT("cave") && Name != TEXT("cave-lava")) continue;
+        ++Views;
+        const FVector From = Cells->ToBlocks(View.Get<1>());
+        const FRotator Rotation = (View.Get<2>() - View.Get<1>()).Rotation();
+        AddStep(Name + TEXT("-adapt"), 150,
+            [this, From, Rotation]
+            {
+                SetView(From, Rotation);
+                SetMegaLights(false);
+                VoxelLightProbe::RemoveTorches();
+                SetExposureSpeed(50);
+            });
+        for (const bool bOn : {false, true})
+        {
+            const FString Shot = FString::Printf(TEXT("torches-look-%s-megalights%d"), *Name, int32(bOn));
+            FStep& Look = AddStep(Shot, 91,
+                [this, bOn]
+                {
+                    SetExposureSpeed(0);
+                    SetMegaLights(bOn);
+                });
+            Look.CaptureFrom = 90;
+            Look.OnFrame = [this, Shot](int32 Frame, const TArray<FColor>& Pixels) { SavePng(Shot, Pixels); };
+        }
+    }
+    Line(FString::Printf(TEXT("Look pairs: %d of the -Caves views (cave, cave-lava) in the streamed area."), Views));
+}
+
+void FVoxelLightShots::AddTorchEditSteps(AVoxelWorld& World)
+{
+    // (a) One torch on the probe floor cell nearest the eye in front of it, placed and taken back 20 times with
+    // MegaLights on: the game-thread ms of the pool's updates from the edit until its column is back on screen.
+    FIntVector Near = FIntVector::ZeroValue;
+    double Nearest = TNumericLimits<double>::Max();
+    for (const FIntVector& Cell : TorchCells)
+    {
+        const FVector Center = FVector(Cell) + FVector(.5, .5, .5);
+        const double Distance = FVector::Dist(Center, ViewBlocks);
+        if (ViewRotation.UnrotateVector(Center - ViewBlocks).X > 2 && Distance < Nearest)
+        {
+            Nearest = Distance;
+            Near = Cell;
+        }
+    }
+    if (Nearest == TNumericLimits<double>::Max())
+    {
+        Line(TEXT("Edit cost: no probe floor cell in front of the camera."));
+        return;
+    }
+    Line(FString::Printf(TEXT("Edit cost: one torch on cell %s, %.1f blocks from the eye, placed and taken back 20 "
+                              "times with MegaLights on."),
+        *Near.ToString(), Nearest));
+    // The pool off first, so it holds no component and the first placement makes one.
+    AddStep(TEXT("edit-off"), 10,
+        [this]
+        {
+            SetMegaLights(false);
+            VoxelLightProbe::Clear();
+            VoxelLightProbe::RemoveTorches();
+        })
+        .bEdit = true;
+    AddStep(TEXT("edit-live"), 60, [this] { SetMegaLights(true); }).End = [this, &World]
+    {
+        Line(FString::Printf(TEXT("Edit cost: the pool live with %d components before the first placement."),
+            World.GetLights() ? World.GetLights()->GetComponentCount() : -1));
+    };
+    for (int32 Index = 0; Index < 20; ++Index)
+        for (const bool bPlace : {true, false})
+        {
+            FStep& Step =
+                AddStep(FString::Printf(TEXT("edit-%s-%d"), bPlace ? TEXT("place") : TEXT("remove"), Index + 1), 10,
+                    [this, &World, Near, bPlace]
+                    {
+                        const FVoxelLights* Pool = World.GetLights();
+                        EditCost = FEditCost();
+                        EditUpdates = Pool ? Pool->GetUpdateCount() : 0;
+                        EditComponents = Pool ? Pool->GetComponentCount() : 0;
+                        if (!bPlace)
+                        {
+                            VoxelLightProbe::RemoveTorches();
+                            return;
+                        }
+                        TorchSites.Add(Near);
+                        VoxelLightProbe::PlaceTorches(World, {Near});
+                    });
+            Step.bEdit = true;
+            Step.OnTick = [this, &World]
+            {
+                const FVoxelLights* Pool = World.GetLights();
+                if (!Pool || Pool->GetUpdateCount() == EditUpdates) return;
+                EditUpdates = Pool->GetUpdateCount();
+                EditCost.Ms += Pool->GetLastMs();
+                ++EditCost.Updates;
+            };
+            Step.End = [this, &World, bPlace]
+            {
+                const FVoxelLights* Pool = World.GetLights();
+                EditCost.Created = (Pool ? Pool->GetComponentCount() : 0) - EditComponents;
+                (bPlace ? PlaceCosts : RemoveCosts).Add(EditCost);
+            };
+        }
+}
+
+TArray<FIntVector> FVoxelLightShots::FindSpreadTorchCells(int32 Count, double Radius) const
+{
+    // Every covered floor cell (air on a solid cell, air above, under three blocks or more) within Radius of the eye,
+    // then the farthest from the eye and from those picked before, in turn.
+    const FIntVector Eye = VoxelLightProbe::FCells::ToCell(ViewBlocks);
+    const int32 Reach = FMath::FloorToInt32(Radius);
+    TArray<FVector> Floors;
+    for (int32 Y = Eye.Y - Reach; Y <= Eye.Y + Reach; ++Y)
+        for (int32 X = Eye.X - Reach; X <= Eye.X + Reach; ++X)
+            for (int32 Z = FMath::Max(Eye.Z - Reach, VoxelConstants::MinZ + 1),
+                       Top = FMath::Min(Eye.Z + Reach, Cells->GetSurface(X, Y) - 4);
+                Z <= Top; ++Z)
+            {
+                const FIntVector Cell(X, Y, Z);
+                const FVector Center = FVector(Cell) + FVector(.5, .5, .5);
+                if (FVector::DistSquared(Center, ViewBlocks) <= Radius * Radius && Cells->IsAir(Cell) &&
+                    Cells->IsSolid(Cell - LightShotsUp) && Cells->IsAir(Cell + LightShotsUp) && Cells->IsCovered(Cell))
+                    Floors.Add(Center);
+            }
+    TArray<FIntVector> Picked;
+    TArray<double> Gaps;
+    Gaps.Init(TNumericLimits<double>::Max(), Floors.Num());
+    FVector Last = ViewBlocks;
+    while (Picked.Num() < FMath::Min(Count, Floors.Num()))
+    {
+        int32 Best = 0;
+        for (int32 Index = 0; Index < Floors.Num(); ++Index)
+        {
+            Gaps[Index] = FMath::Min(Gaps[Index], FVector::DistSquared(Floors[Index], Last));
+            if (Gaps[Index] > Gaps[Best]) Best = Index;
+        }
+        Last = Floors[Best];
+        Gaps[Best] = 0;
+        Picked.Add(VoxelLightProbe::FCells::ToCell(Last));
+    }
+    return Picked;
+}
+
+void FVoxelLightShots::ShowTorchCase(AVoxelWorld& World, const FCase& Case, const TArray<FVector>& Positions)
+{
+    if (!Case.bTorches)
+    {
+        VoxelLightProbe::RemoveTorches();
+        ShowCase(World, Case, Positions);
+        return;
+    }
+    SetMegaLights(Case.bMegaLights);
+    VoxelLightProbe::Clear();
+    const TArray<FIntVector>& Floor = Case.bSpread ? SpreadCells : TorchCells;
+    const TArray<FIntVector> Placing(Floor.GetData(), FMath::Min(Case.Count, Floor.Num()));
+    TorchSites.Append(Placing);
+    const int32 Placed = VoxelLightProbe::PlaceTorches(World, Placing);
+    if (Placed < Case.Count)
+        Line(FString::Printf(TEXT("%s: %d of %d torches placed."), *Case.Name, Placed, Case.Count));
+}
+
+int32 FVoxelLightShots::CountAllShown(const AVoxelWorld& World) const
+{
+    const FVoxelLights* Pool = World.GetLights();
+    return VoxelLightProbe::CountShown() + (Pool && Pool->IsLive() ? Pool->GetPicks().Num() : 0);
+}
+
+TArray<FVector> FVoxelLightShots::GetCasePositions(const FCase& Case) const
+{
+    if (!Case.bTorches) return TArray<FVector>(LightPositions.GetData(), FMath::Min(Case.Count, LightPositions.Num()));
+    const TArray<FIntVector>& Floor = Case.bSpread ? SpreadCells : TorchCells;
+    TArray<FVector> Positions;
+    for (int32 Index = 0; Index < FMath::Min(Case.Count, Floor.Num()); ++Index)
+        Positions.Add(Cells->ToCm(FVector(Floor[Index]) + FVector(.5, .5, .5)));
+    return Positions;
+}
+
+void FVoxelLightShots::SetExposureSpeed(float Speed)
+{
+    if (!Camera.IsValid()) return;
+    FPostProcessSettings& Post = Camera->GetCameraComponent()->PostProcessSettings;
+    Post.AutoExposureSpeedUp = Post.AutoExposureSpeedDown = Speed;
+}
+
+void FVoxelLightShots::AddTorchTables(AVoxelWorld& World)
+{
+    auto MeanGpu = [this](const FString& Name)
+    {
+        double Sum = 0;
+        int32 Rounds = 0;
+        for (const FTimes& Round : CaseTimes.FindRef(Name))
+            if (Round.Frames)
+            {
+                Sum += Round.GpuMs / Round.Frames;
+                ++Rounds;
+            }
+        return Rounds ? Sum / Rounds : -1.;
+    };
+    // (b): torches-N against the probe's megalights-N, the same cells and run.
+    for (const int32 Count : {1, 10, 100})
+    {
+        const FString Torches = FString::Printf(TEXT("torches-%d"), Count);
+        const FString Probe = FString::Printf(TEXT("megalights-%d"), Count);
+        const double Delta = MeanGpu(Torches) - MeanGpu(Probe);
+        // Only a measured pair showing as many lights compares (a stopped run, or the pool's cap below 100, fails).
+        const bool bMeasured = MeanGpu(Torches) >= 0 && MeanGpu(Probe) >= 0;
+        const bool bComparable = Shown.FindRef(Torches) == Shown.FindRef(Probe);
+        const TCHAR* Verdict = !bMeasured ? TEXT("FAIL (not measured)")
+            : !bComparable                ? TEXT("FAIL (not comparable: the lights shown differ)")
+            : Delta <= .3                 ? TEXT("PASS")
+                                          : TEXT("FAIL");
+        Line(FString::Printf(TEXT("Gate %s against %s: %.2f against %.2f ms, %+.2f ms, within 0.3 ms: %s (%d against "
+                                  "%d lights shown)."),
+            *Torches, *Probe, MeanGpu(Torches), MeanGpu(Probe), Delta, Verdict, Shown.FindRef(Torches),
+            Shown.FindRef(Probe)));
+    }
+    // (c): spread against clustered.
+    Line(FString::Printf(TEXT("Spread against clustered (64 torches): %.2f against %.2f ms, %+.2f ms (%d against %d "
+                              "lights shown)."),
+        MeanGpu(TEXT("torches-64-spread")), MeanGpu(TEXT("torches-64-clustered")),
+        MeanGpu(TEXT("torches-64-spread")) - MeanGpu(TEXT("torches-64-clustered")),
+        Shown.FindRef(TEXT("torches-64-spread")), Shown.FindRef(TEXT("torches-64-clustered"))));
+    // (d)
+    Line(LeakGate.IsEmpty() ? FString(TEXT("Leak gate: not measured (no leak site).")) : LeakGate);
+    // (a): the first placement makes the pool's component; the others reuse it.
+    auto Row = [this](const FString& Name, TConstArrayView<FEditCost> Edits)
+    {
+        TArray<double> Values;
+        int32 Updates = 0, Created = 0, Missed = 0;
+        for (const FEditCost& Edit : Edits)
+        {
+            Updates += Edit.Updates;
+            Created += Edit.Created;
+            Missed += Edit.Updates == 0;
+            if (Edit.Updates) Values.Add(Edit.Ms);
+        }
+        Line(FString::Printf(TEXT("| %s | %d | %s | %d | %d | %d |"), *Name, Values.Num(),
+            *LightShotsTorchCostCells(Values), Updates, Missed, Created));
+    };
+    Line(TEXT("Edit cost: the pool's game-thread ms per torch edit (its updates from the edit until the column is back "
+              "on screen, summed):"));
+    Line(TEXT("| Edits | n | Mean ms | p95 ms | Max ms | Updates | Edits without one | Components made |"));
+    Line(TEXT("|---|---|---|---|---|---|---|---|"));
+    if (!PlaceCosts.IsEmpty())
+    {
+        Row(TEXT("place, first"), TConstArrayView<FEditCost>(PlaceCosts).Left(1));
+        Row(TEXT("place, rest"), TConstArrayView<FEditCost>(PlaceCosts).RightChop(1));
+    }
+    Row(TEXT("remove"), RemoveCosts);
+    // Every cell a torch stood on is back.
+    FFoundationBlockWorld& Blocks = World.GetAuthority()->World;
+    const FFoundationBlockType* Torch = Blocks.FindBlock(TEXT("torch"));
+    int32 Standing = 0, Unknown = 0;
+    for (const FIntVector& Cell : TorchSites)
+        if (!Blocks.IsKnown(Cell))
+            ++Unknown;
+        else if (Torch && Blocks.Get(Cell).State == Torch->GetDefaultState())
+            ++Standing;
+    Line(FString::Printf(TEXT("Torch cells: %d used, %d still a torch, %d unloaded; the pool has %d components."),
+        TorchSites.Num(), Standing, Unknown, World.GetLights() ? World.GetLights()->GetComponentCount() : -1));
 }

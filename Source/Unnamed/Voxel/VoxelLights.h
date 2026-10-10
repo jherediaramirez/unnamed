@@ -73,6 +73,8 @@ public:
     int32 GetComponentCount() const;
     // Re-picks since the pool was made.
     int64 GetUpdateCount() const { return UpdateCount; }
+    // The last update's game-thread ms (a re-pick, or the switch off).
+    double GetLastMs() const { return LastMs; }
     // voxel.LightsInfo: whether it is live, columns and sources known, picks, components, the last update's changes
     // and the last and peak update times.
     FString Describe() const;
