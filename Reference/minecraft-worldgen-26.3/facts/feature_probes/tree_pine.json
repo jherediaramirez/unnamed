@@ -1,0 +1,2748 @@
+{
+ "generated_by": "tools/tree_probe.py",
+ "minecraft": "26.3",
+ "probe": "pine",
+ "feature": "minecraft:pine",
+ "variant": null,
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:stone",
+    -63,
+    55
+   ],
+   [
+    "minecraft:dirt",
+    56,
+    58
+   ],
+   [
+    "minecraft:grass_block",
+    59,
+    59
+   ]
+  ],
+  "grid_spacing": 32,
+  "random_tick_speed": 0,
+  "settle_s": 3
+ },
+ "y": 60,
+ "grid": 10,
+ "settled": true,
+ "prep": [],
+ "tries": 100,
+ "responses": {
+  "placed": 100
+ },
+ "placed_but_empty": 0,
+ "failed_but_changed": 0,
+ "n": {
+  "n": 100,
+  "min": 17,
+  "p5": 18,
+  "p50": 39,
+  "p95": 101,
+  "max": 101,
+  "mean": 49.68
+ },
+ "logs": {
+  "n": 100,
+  "min": 6,
+  "p5": 6,
+  "p50": 8,
+  "p95": 10,
+  "max": 10,
+  "mean": 8.2
+ },
+ "leaves": {
+  "n": 100,
+  "min": 10,
+  "p5": 10,
+  "p50": 30,
+  "p95": 90,
+  "max": 90,
+  "mean": 40.48
+ },
+ "log_top": {
+  "n": 100,
+  "min": 5,
+  "p5": 5,
+  "p50": 7,
+  "p95": 9,
+  "max": 9,
+  "mean": 7.2
+ },
+ "log_bottom": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "origin_column_logs": {
+  "n": 100,
+  "min": 6,
+  "p5": 6,
+  "p50": 8,
+  "p95": 10,
+  "max": 10,
+  "mean": 8.2
+ },
+ "reach_h": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 2,
+  "p95": 3,
+  "max": 3,
+  "mean": 1.93
+ },
+ "log_reach_h": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "leaf_reach_h": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 2,
+  "p95": 3,
+  "max": 3,
+  "mean": 1.93
+ },
+ "leaf_top": {
+  "n": 100,
+  "min": 7,
+  "p5": 7,
+  "p50": 9,
+  "p95": 11,
+  "max": 11,
+  "mean": 9.2
+ },
+ "log_comp6": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "log_comp26": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_mismatch": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 44,
+  "mean": 0.64
+ },
+ "leaf_comp6": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_pending_tick": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "leaf_mismatch_no_tick": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 44,
+  "mean": 0.64
+ },
+ "leaf_bfs7": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "log_top_hist": {
+  "5": 15,
+  "6": 19,
+  "7": 20,
+  "8": 23,
+  "9": 23
+ },
+ "origin_column_logs_hist": {
+  "6": 15,
+  "7": 19,
+  "8": 20,
+  "9": 23,
+  "10": 23
+ },
+ "log_comp6_hist": {
+  "1": 100
+ },
+ "log_comp26_hist": {
+  "1": 100
+ },
+ "bbox_extremes": {
+  "min_dx": -3,
+  "max_dx": 3,
+  "min_dy": -1,
+  "max_dy": 11,
+  "min_dz": -3,
+  "max_dz": 3
+ },
+ "blocks": {
+  "dirt": {
+   "mean_per_tree": 1.0,
+   "share_of_trees": 1.0,
+   "max_reach_h": 0,
+   "per_tree": {
+    "n": 100,
+    "min": 1,
+    "p5": 1,
+    "p50": 1,
+    "p95": 1,
+    "max": 1,
+    "mean": 1.0
+   }
+  },
+  "spruce_leaves": {
+   "mean_per_tree": 40.48,
+   "share_of_trees": 1.0,
+   "max_reach_h": 3,
+   "per_tree": {
+    "n": 100,
+    "min": 10,
+    "p5": 10,
+    "p50": 30,
+    "p95": 90,
+    "max": 90,
+    "mean": 40.48
+   }
+  },
+  "spruce_log": {
+   "mean_per_tree": 8.2,
+   "share_of_trees": 1.0,
+   "max_reach_h": 0,
+   "per_tree": {
+    "n": 100,
+    "min": 6,
+    "p5": 6,
+    "p50": 8,
+    "p95": 10,
+    "max": 10,
+    "mean": 8.2
+   }
+  }
+ },
+ "leaf_distance": {
+  "1": 980,
+  "2": 1508,
+  "3": 1100,
+  "4": 272,
+  "5": 180,
+  "6": 8
+ },
+ "leaf_bfs": {
+  "1": 988,
+  "2": 1516,
+  "3": 1104,
+  "4": 264,
+  "5": 176
+ },
+ "leaf_persistent": {
+  "false": 4048
+ },
+ "log_axis": {
+  "y": 820
+ },
+ "max_reach_h_any_cell": 3,
+ "profile": {
+  "n": 100,
+  "log_columns": {
+   "0,0": 1.0
+  },
+  "logs_per_dy": {
+   "0": 1.0,
+   "1": 1.0,
+   "2": 1.0,
+   "3": 1.0,
+   "4": 1.0,
+   "5": 1.0,
+   "6": 0.85,
+   "7": 0.66,
+   "8": 0.46,
+   "9": 0.23
+  },
+  "leaf_layers": [
+   {
+    "dy_from_top_log": -2,
+    "mean_per_tree": 4.88,
+    "max_radius": 2,
+    "occupancy": {
+     "-2,-1": 0.22,
+     "-2,0": 0.22,
+     "-2,1": 0.22,
+     "-1,-2": 0.22,
+     "-1,-1": 0.22,
+     "-1,0": 0.34,
+     "-1,1": 0.22,
+     "-1,2": 0.22,
+     "0,-2": 0.22,
+     "0,-1": 0.34,
+     "0,1": 0.34,
+     "0,2": 0.22,
+     "1,-2": 0.22,
+     "1,-1": 0.22,
+     "1,0": 0.34,
+     "1,1": 0.22,
+     "1,2": 0.22,
+     "2,-1": 0.22,
+     "2,0": 0.22,
+     "2,1": 0.22
+    }
+   },
+   {
+    "dy_from_top_log": -1,
+    "mean_per_tree": 14.24,
+    "max_radius": 3,
+    "occupancy": {
+     "-3,-2": 0.22,
+     "-3,-1": 0.22,
+     "-3,0": 0.22,
+     "-3,1": 0.22,
+     "-3,2": 0.22,
+     "-2,-3": 0.22,
+     "-2,-2": 0.22,
+     "-2,-1": 0.34,
+     "-2,0": 0.34,
+     "-2,1": 0.34,
+     "-2,2": 0.22,
+     "-2,3": 0.22,
+     "-1,-3": 0.22,
+     "-1,-2": 0.34,
+     "-1,-1": 0.34,
+     "-1,0": 0.88,
+     "-1,1": 0.34,
+     "-1,2": 0.34,
+     "-1,3": 0.22,
+     "0,-3": 0.22,
+     "0,-2": 0.34,
+     "0,-1": 0.88,
+     "0,1": 0.88,
+     "0,2": 0.34,
+     "0,3": 0.22,
+     "1,-3": 0.22,
+     "1,-2": 0.34,
+     "1,-1": 0.34,
+     "1,0": 0.88,
+     "1,1": 0.34,
+     "1,2": 0.34,
+     "1,3": 0.22,
+     "2,-3": 0.22,
+     "2,-2": 0.22,
+     "2,-1": 0.34,
+     "2,0": 0.34,
+     "2,1": 0.34,
+     "2,2": 0.22,
+     "2,3": 0.22,
+     "3,-2": 0.22,
+     "3,-1": 0.22,
+     "3,0": 0.22,
+     "3,1": 0.22,
+     "3,2": 0.22
+    }
+   },
+   {
+    "dy_from_top_log": 0,
+    "mean_per_tree": 15.36,
+    "max_radius": 2,
+    "occupancy": {
+     "-2,-1": 0.71,
+     "-2,0": 0.71,
+     "-2,1": 0.71,
+     "-1,-2": 0.71,
+     "-1,-1": 0.71,
+     "-1,0": 1.0,
+     "-1,1": 0.71,
+     "-1,2": 0.71,
+     "0,-2": 0.71,
+     "0,-1": 1.0,
+     "0,1": 1.0,
+     "0,2": 0.71,
+     "1,-2": 0.71,
+     "1,-1": 0.71,
+     "1,0": 1.0,
+     "1,1": 0.71,
+     "1,2": 0.71,
+     "2,-1": 0.71,
+     "2,0": 0.71,
+     "2,1": 0.71
+    }
+   },
+   {
+    "dy_from_top_log": 1,
+    "mean_per_tree": 5.0,
+    "max_radius": 1,
+    "occupancy": {
+     "-1,0": 1.0,
+     "0,-1": 1.0,
+     "0,0": 1.0,
+     "0,1": 1.0,
+     "1,0": 1.0
+    }
+   },
+   {
+    "dy_from_top_log": 2,
+    "mean_per_tree": 1.0,
+    "max_radius": 0,
+    "occupancy": {
+     "0,0": 1.0
+    }
+   }
+  ],
+  "decorators": {
+   "dirt": {
+    "total": 100,
+    "per_tree": 1.0,
+    "dy": {
+     "-1": 100
+    },
+    "radius": {
+     "0": 100
+    }
+   }
+  }
+ },
+ "examples": [
+  {
+   "origin": [
+    15376,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -1,
+     6,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     6,
+     -1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     7,
+     1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     9,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ]
+   ]
+  },
+  {
+   "origin": [
+    15408,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -2,
+     8,
+     -1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     9,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     7,
+     -1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     7,
+     1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -2,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     8,
+     1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     2,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     9,
+     -1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     9,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     9,
+     1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     10,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     9,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     -1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ]
+   ]
+  }
+ ],
+ "per_placement": [
+  {
+   "n": 23,
+   "logs": 8,
+   "leaves": 14,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    9,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 40,
+   "logs": 9,
+   "leaves": 30,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    10,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 20,
+   "logs": 9,
+   "leaves": 10,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    10,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 18,
+   "logs": 7,
+   "leaves": 10,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    8,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 18,
+   "logs": 7,
+   "leaves": 10,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    8,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 61,
+   "logs": 10,
+   "leaves": 50,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    11,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 98,
+   "logs": 7,
+   "leaves": 90,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    8,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 38,
+   "logs": 7,
+   "leaves": 30,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    8,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 41,
+   "logs": 10,
+   "leaves": 30,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    11,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 39,
+   "logs": 8,
+   "leaves": 30,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    9,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 24,
+   "logs": 9,
+   "leaves": 14,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    10,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 39,
+   "logs": 8,
+   "leaves": 30,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    9,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 18,
+   "logs": 7,
+   "leaves": 10,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    8,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 38,
+   "logs": 7,
+   "leaves": 30,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    8,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 20,
+   "logs": 9,
+   "leaves": 10,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    10,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 60,
+   "logs": 9,
+   "leaves": 50,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    10,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 38,
+   "logs": 7,
+   "leaves": 30,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    8,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 40,
+   "logs": 9,
+   "leaves": 30,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    10,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 40,
+   "logs": 9,
+   "leaves": 30,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    10,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 22,
+   "logs": 7,
+   "leaves": 14,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    8,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 41,
+   "logs": 10,
+   "leaves": 30,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    11,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 24,
+   "logs": 9,
+   "leaves": 14,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    10,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 100,
+   "logs": 9,
+   "leaves": 90,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    10,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 44,
+   "result": "placed"
+  },
+  {
+   "n": 97,
+   "logs": 6,
+   "leaves": 90,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    7,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 60,
+   "logs": 9,
+   "leaves": 50,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    10,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 20,
+   "result": "placed"
+  },
+  {
+   "n": 22,
+   "logs": 7,
+   "leaves": 14,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    8,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 97,
+   "logs": 6,
+   "leaves": 90,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    7,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 100,
+   "logs": 9,
+   "leaves": 90,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    10,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 59,
+   "logs": 8,
+   "leaves": 50,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    9,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 61,
+   "logs": 10,
+   "leaves": 50,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    11,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 99,
+   "logs": 8,
+   "leaves": 90,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    9,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 39,
+   "logs": 8,
+   "leaves": 30,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    9,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 61,
+   "logs": 10,
+   "leaves": 50,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    11,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 38,
+   "logs": 7,
+   "leaves": 30,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    8,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 100,
+   "logs": 9,
+   "leaves": 90,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    10,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 41,
+   "logs": 10,
+   "leaves": 30,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    11,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 101,
+   "logs": 10,
+   "leaves": 90,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    11,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 21,
+   "logs": 6,
+   "leaves": 14,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    7,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 39,
+   "logs": 8,
+   "leaves": 30,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    9,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 38,
+   "logs": 7,
+   "leaves": 30,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    8,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 37,
+   "logs": 6,
+   "leaves": 30,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    7,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 37,
+   "logs": 6,
+   "leaves": 30,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    7,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 100,
+   "logs": 9,
+   "leaves": 90,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    10,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 38,
+   "logs": 7,
+   "leaves": 30,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    8,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 38,
+   "logs": 7,
+   "leaves": 30,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    8,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 21,
+   "logs": 6,
+   "leaves": 14,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    7,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 40,
+   "logs": 9,
+   "leaves": 30,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    10,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 21,
+   "logs": 6,
+   "leaves": 14,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    7,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 57,
+   "logs": 6,
+   "leaves": 50,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    7,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 101,
+   "logs": 10,
+   "leaves": 90,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    11,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 61,
+   "logs": 10,
+   "leaves": 50,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    11,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 41,
+   "logs": 10,
+   "leaves": 30,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    11,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 25,
+   "logs": 10,
+   "leaves": 14,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    11,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 18,
+   "logs": 7,
+   "leaves": 10,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    8,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 99,
+   "logs": 8,
+   "leaves": 90,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    9,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 60,
+   "logs": 9,
+   "leaves": 50,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    10,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 25,
+   "logs": 10,
+   "leaves": 14,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    11,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 18,
+   "logs": 7,
+   "leaves": 10,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    8,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 100,
+   "logs": 9,
+   "leaves": 90,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    10,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 18,
+   "logs": 7,
+   "leaves": 10,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    8,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 39,
+   "logs": 8,
+   "leaves": 30,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    9,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 101,
+   "logs": 10,
+   "leaves": 90,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    11,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 40,
+   "logs": 9,
+   "leaves": 30,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    10,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 37,
+   "logs": 6,
+   "leaves": 30,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    7,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 17,
+   "logs": 6,
+   "leaves": 10,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    7,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 60,
+   "logs": 9,
+   "leaves": 50,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    10,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 101,
+   "logs": 10,
+   "leaves": 90,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    11,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 21,
+   "logs": 6,
+   "leaves": 14,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    7,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 40,
+   "logs": 9,
+   "leaves": 30,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    10,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 38,
+   "logs": 7,
+   "leaves": 30,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    8,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 60,
+   "logs": 9,
+   "leaves": 50,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    10,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 19,
+   "logs": 8,
+   "leaves": 10,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    9,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 39,
+   "logs": 8,
+   "leaves": 30,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    9,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 41,
+   "logs": 10,
+   "leaves": 30,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    11,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 25,
+   "logs": 10,
+   "leaves": 14,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    11,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 39,
+   "logs": 8,
+   "leaves": 30,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    9,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 39,
+   "logs": 8,
+   "leaves": 30,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    9,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 23,
+   "logs": 8,
+   "leaves": 14,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    9,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 99,
+   "logs": 8,
+   "leaves": 90,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    9,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 23,
+   "logs": 8,
+   "leaves": 14,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    9,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 41,
+   "logs": 10,
+   "leaves": 30,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    11,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 97,
+   "logs": 6,
+   "leaves": 90,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    7,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 41,
+   "logs": 10,
+   "leaves": 30,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    11,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 37,
+   "logs": 6,
+   "leaves": 30,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    7,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 39,
+   "logs": 8,
+   "leaves": 30,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    9,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 39,
+   "logs": 8,
+   "leaves": 30,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    9,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 37,
+   "logs": 6,
+   "leaves": 30,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    7,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 39,
+   "logs": 8,
+   "leaves": 30,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    9,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 100,
+   "logs": 9,
+   "leaves": 90,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    10,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 100,
+   "logs": 9,
+   "leaves": 90,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    10,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 101,
+   "logs": 10,
+   "leaves": 90,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    11,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 101,
+   "logs": 10,
+   "leaves": 90,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    11,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 22,
+   "logs": 7,
+   "leaves": 14,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    8,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 25,
+   "logs": 10,
+   "leaves": 14,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    11,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 21,
+   "logs": 6,
+   "leaves": 14,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    7,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 98,
+   "logs": 7,
+   "leaves": 90,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    8,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 101,
+   "logs": 10,
+   "leaves": 90,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    11,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 21,
+   "logs": 10,
+   "leaves": 10,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    11,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 60,
+   "logs": 9,
+   "leaves": 50,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    10,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 19,
+   "logs": 8,
+   "leaves": 10,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    9,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  }
+ ]
+}

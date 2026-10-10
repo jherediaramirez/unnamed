@@ -294,9 +294,81 @@ vein_samples = sum(len(seed["samples"]) for seed in veins["seeds"])
 for seed in veins["seeds"]:
     for sample in seed["samples"]:
         check(len(sample) == len(veins["columns"]) and 0 <= sample[3] < len(veins["blocks"]), f"bad vein sample {sample}")
+
+
+def check_tree_probe(path, probe):
+    """A tree_<probe>.json from tools/tree_probe.py names a reached feature, alone or with its variant (_ceil<dy>: a
+    stone ceiling dy above the origin; @mudwater: mud under water), and its counts, histograms and profile add up."""
+    def bad(what):
+        errors.append(f"tree probe {path.name}: {what}")
+    name, feature, variant = path.stem.removeprefix("tree_"), probe.get("feature", ""), probe.get("variant")
+    base = feature.removeprefix("minecraft:")
+    if not (probe.get("generated_by") == "tools/tree_probe.py" and probe.get("probe") == name and
+            feature.startswith("minecraft:") and WORLDGEN / "feature" / f"{base}.json" in decoration_reached and
+            name == base + (variant or "")):
+        return bad("not a reached feature with its variant")
+    fills = {(f[1], f[4], f[6]) for f in probe["prep"]}
+    if variant is None:
+        variant_ok = "ceiling_dy" not in probe
+    elif variant.startswith("_ceil") and variant[5:].isdigit():
+        dy = int(variant[5:])
+        variant_ok = probe.get("ceiling_dy") == dy and (probe["y"] + dy, probe["y"] + dy, "minecraft:stone") in fills
+    else:
+        variant_ok = variant == "@mudwater" and {f[2] for f in fills} == {"minecraft:mud", "minecraft:water"}
+    if not variant_ok:
+        return bad(f"variant {variant} does not match its prep")
+    responses, runs = probe["responses"], probe["per_placement"]
+    placed = responses.get("placed", 0)
+    if not (set(responses) <= {"placed", "failed"} and
+            probe["tries"] == probe["grid"] ** 2 == sum(responses.values()) == len(runs) and
+            sum(run["result"] == "placed" for run in runs) == placed <= probe["tries"]):
+        return bad("tries, responses and placements disagree")
+    if placed and probe["n"]["n"] != placed:
+        bad("the cell counts do not cover every placed tree")
+    for key in ("log_top", "origin_column_logs", "log_comp6", "log_comp26"):
+        if (key in probe) != (key + "_hist" in probe) or \
+                key in probe and not sum(probe[key + "_hist"].values()) == probe[key]["n"] <= placed:
+            bad(f"{key}_hist does not add up to {key}")
+    blocks = probe["blocks"]
+    for block, entry in blocks.items():
+        if block not in registry_blocks or entry["per_tree"]["n"] != placed or not 0 < entry["share_of_trees"] <= 1:
+            bad(f"block {block}: not a 26.3 block, or its counts do not cover the placed trees")
+    profile = probe["profile"]
+    if profile["n"] != placed or not placed and any(profile[k] for k in ("log_columns", "logs_per_dy", "leaf_layers",
+                                                                        "decorators")):
+        return bad("profile does not cover the placed trees")
+    if not all(0 < share <= 1 for share in profile["log_columns"].values()):
+        bad("profile log column shares outside (0, 1]")
+    layers = [layer["dy_from_top_log"] for layer in profile["leaf_layers"]]
+    if layers != sorted(set(layers)):
+        bad("profile leaf layers out of order")
+    for layer in profile["leaf_layers"]:
+        occupancy = layer["occupancy"]
+        radius = max((max(abs(int(v)) for v in xz.split(",")) for xz in occupancy), default=-1)
+        if not (occupancy and radius == layer["max_radius"] and all(0 < v <= 1 for v in occupancy.values()) and
+                abs(sum(occupancy.values()) - layer["mean_per_tree"]) <= 6e-5 * (len(occupancy) + 1)):
+            bad(f"profile leaf layer {layer['dy_from_top_log']}: occupancy, radius and mean disagree")
+    leafy = {b for b in blocks if b.endswith("_leaves") or b.endswith("_mushroom_block")}
+    others = {b for b in blocks if b not in leafy and not (b.endswith("_log") or b.endswith("_wood"))}
+    if abs(sum(layer["mean_per_tree"] for layer in profile["leaf_layers"]) -
+           sum(blocks[b]["mean_per_tree"] for b in leafy)) > 6e-5 * len(layers) + 6e-4 * len(leafy):
+        bad("profile leaf layers do not add up to the leaf blocks")
+    if set(profile["decorators"]) != others:
+        bad("profile decorators are not the blocks other than logs and leaves")
+    for block, deco in profile["decorators"].items():
+        if not (sum(deco["dy"].values()) == deco["total"] == sum(deco["radius"].values()) and
+                deco["per_tree"] == round(deco["total"] / placed, 4) and
+                abs(deco["per_tree"] - blocks.get(block, {}).get("mean_per_tree", -1)) <= 6e-4):
+            bad(f"profile decorator {block}: histograms, total and mean disagree")
+
+
 probes = sorted((ROOT / "facts/feature_probes").glob("*.json"))
+tree_probes = [path for path in probes if path.name.startswith("tree_")]
 for path in probes:
     probe = json.loads(path.read_text(encoding="utf-8"))
+    if path in tree_probes:
+        check_tree_probe(path, probe)
+        continue
     check(probe["generated_by"] == "tools/feature_probe.py" and probe["feature"] == "minecraft:" + path.stem and
           WORLDGEN / "feature" / path.name in decoration_reached, f"probe {path.name}: not a reached feature")
 
@@ -310,4 +382,4 @@ print(f"REFERENCE OK: {len(sums)} files hashed, {jar_note}, {len(reached)} refer
       f"with {rule_refs} references, {len(parameters['points'])} biome points over {len(parameters['biomes'])} biomes, "
       f"{len(lookups['samples'])} lookup samples, {len(decoration_reached)} decoration files and block tags with "
       f"{decoration_refs} references and {len(block_refs)} blocks, vanilla's order over {len(order['biomes'])} biomes, "
-      f"{len(providers['providers'])} provider histograms, {vein_samples} ore vein samples, {len(probes)} feature probes")
+      f"{len(providers['providers'])} provider histograms, {vein_samples} ore vein samples, {len(probes)} feature probes ({len(tree_probes)} of them tree probes)")

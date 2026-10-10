@@ -1,0 +1,2774 @@
+{
+ "generated_by": "tools/tree_probe.py",
+ "minecraft": "26.3",
+ "probe": "fancy_oak_ceil10",
+ "feature": "minecraft:fancy_oak",
+ "variant": "_ceil10",
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:stone",
+    -63,
+    55
+   ],
+   [
+    "minecraft:dirt",
+    56,
+    58
+   ],
+   [
+    "minecraft:grass_block",
+    59,
+    59
+   ]
+  ],
+  "grid_spacing": 32,
+  "random_tick_speed": 0,
+  "settle_s": 3
+ },
+ "y": 60,
+ "grid": 4,
+ "settled": true,
+ "prep": [
+  [
+   -8,
+   70,
+   -8,
+   8,
+   70,
+   8,
+   "minecraft:stone"
+  ]
+ ],
+ "tries": 16,
+ "responses": {
+  "placed": 16
+ },
+ "ceiling_dy": 10,
+ "placed_but_empty": 0,
+ "failed_but_changed": 0,
+ "n": {
+  "n": 16,
+  "min": 74,
+  "p5": 74,
+  "p50": 126,
+  "p95": 178,
+  "max": 178,
+  "mean": 126.188
+ },
+ "logs": {
+  "n": 16,
+  "min": 4,
+  "p5": 4,
+  "p50": 8,
+  "p95": 11,
+  "max": 11,
+  "mean": 8.0
+ },
+ "leaves": {
+  "n": 16,
+  "min": 69,
+  "p5": 69,
+  "p50": 117,
+  "p95": 166,
+  "max": 166,
+  "mean": 117.188
+ },
+ "log_top": {
+  "n": 16,
+  "min": 3,
+  "p5": 3,
+  "p50": 6,
+  "p95": 6,
+  "max": 6,
+  "mean": 5.125
+ },
+ "log_bottom": {
+  "n": 16,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "origin_column_logs": {
+  "n": 16,
+  "min": 4,
+  "p5": 4,
+  "p50": 7,
+  "p95": 7,
+  "max": 7,
+  "mean": 6.125
+ },
+ "reach_h": {
+  "n": 16,
+  "min": 2,
+  "p5": 2,
+  "p50": 4,
+  "p95": 5,
+  "max": 5,
+  "mean": 3.438
+ },
+ "log_reach_h": {
+  "n": 16,
+  "min": 0,
+  "p5": 0,
+  "p50": 2,
+  "p95": 3,
+  "max": 3,
+  "mean": 1.438
+ },
+ "leaf_reach_h": {
+  "n": 16,
+  "min": 2,
+  "p5": 2,
+  "p50": 4,
+  "p95": 5,
+  "max": 5,
+  "mean": 3.438
+ },
+ "leaf_top": {
+  "n": 16,
+  "min": 4,
+  "p5": 4,
+  "p50": 9,
+  "p95": 9,
+  "max": 9,
+  "mean": 7.875
+ },
+ "log_comp6": {
+  "n": 16,
+  "min": 1,
+  "p5": 1,
+  "p50": 2,
+  "p95": 3,
+  "max": 3,
+  "mean": 1.688
+ },
+ "log_comp26": {
+  "n": 16,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_mismatch": {
+  "n": 16,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 27,
+  "max": 27,
+  "mean": 1.938
+ },
+ "leaf_comp6": {
+  "n": 16,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_pending_tick": {
+  "n": 16,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "leaf_mismatch_no_tick": {
+  "n": 16,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 27,
+  "max": 27,
+  "mean": 1.938
+ },
+ "leaf_bfs7": {
+  "n": 16,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "log_top_hist": {
+  "3": 3,
+  "4": 1,
+  "5": 3,
+  "6": 9
+ },
+ "origin_column_logs_hist": {
+  "4": 3,
+  "5": 1,
+  "6": 3,
+  "7": 9
+ },
+ "log_comp6_hist": {
+  "1": 8,
+  "2": 5,
+  "3": 3
+ },
+ "log_comp26_hist": {
+  "1": 16
+ },
+ "bbox_extremes": {
+  "min_dx": -4,
+  "max_dx": 5,
+  "min_dy": -1,
+  "max_dy": 9,
+  "min_dz": -4,
+  "max_dz": 5
+ },
+ "blocks": {
+  "dirt": {
+   "mean_per_tree": 1.0,
+   "share_of_trees": 1.0,
+   "max_reach_h": 0,
+   "per_tree": {
+    "n": 16,
+    "min": 1,
+    "p5": 1,
+    "p50": 1,
+    "p95": 1,
+    "max": 1,
+    "mean": 1.0
+   }
+  },
+  "oak_leaves": {
+   "mean_per_tree": 117.188,
+   "share_of_trees": 1.0,
+   "max_reach_h": 5,
+   "per_tree": {
+    "n": 16,
+    "min": 69,
+    "p5": 69,
+    "p50": 117,
+    "p95": 166,
+    "max": 166,
+    "mean": 117.188
+   }
+  },
+  "oak_log": {
+   "mean_per_tree": 8.0,
+   "share_of_trees": 1.0,
+   "max_reach_h": 3,
+   "per_tree": {
+    "n": 16,
+    "min": 4,
+    "p5": 4,
+    "p50": 8,
+    "p95": 11,
+    "max": 11,
+    "mean": 8.0
+   }
+  }
+ },
+ "leaf_distance": {
+  "1": 248,
+  "2": 367,
+  "3": 514,
+  "4": 482,
+  "5": 235,
+  "6": 29
+ },
+ "leaf_bfs": {
+  "1": 254,
+  "2": 373,
+  "3": 513,
+  "4": 473,
+  "5": 233,
+  "6": 29
+ },
+ "leaf_persistent": {
+  "false": 1875
+ },
+ "log_axis": {
+  "x": 18,
+  "y": 98,
+  "z": 12
+ },
+ "max_reach_h_any_cell": 5,
+ "profile": {
+  "n": 16,
+  "log_columns": {
+   "-2,-1": 0.0625,
+   "-1,-2": 0.0625,
+   "-1,-1": 0.0625,
+   "-1,0": 0.0625,
+   "-1,1": 0.0625,
+   "0,-1": 0.1875,
+   "0,0": 1.0,
+   "0,1": 0.1875,
+   "0,2": 0.125,
+   "1,-2": 0.0625,
+   "1,-1": 0.125,
+   "1,0": 0.3125,
+   "1,1": 0.0625,
+   "1,2": 0.0625,
+   "1,3": 0.0625,
+   "2,-1": 0.125,
+   "2,0": 0.125,
+   "3,-2": 0.0625,
+   "3,0": 0.0625
+  },
+  "logs_per_dy": {
+   "0": 1.0,
+   "1": 1.0,
+   "2": 1.0,
+   "3": 2.1875,
+   "4": 1.5,
+   "5": 0.75,
+   "6": 0.5625
+  },
+  "leaf_layers": [
+   {
+    "dy_from_top_log": -3,
+    "mean_per_tree": 1.375,
+    "max_radius": 3,
+    "occupancy": {
+     "-3,-1": 0.0625,
+     "-2,-2": 0.0625,
+     "-2,0": 0.0625,
+     "-2,1": 0.0625,
+     "-1,-1": 0.0625,
+     "-1,0": 0.125,
+     "-1,2": 0.125,
+     "0,-1": 0.0625,
+     "0,1": 0.125,
+     "0,3": 0.0625,
+     "1,-1": 0.0625,
+     "1,0": 0.0625,
+     "1,1": 0.125,
+     "1,2": 0.0625,
+     "2,-1": 0.0625,
+     "2,0": 0.0625,
+     "2,1": 0.0625,
+     "3,0": 0.0625
+    }
+   },
+   {
+    "dy_from_top_log": -2,
+    "mean_per_tree": 11.0625,
+    "max_radius": 4,
+    "occupancy": {
+     "-4,-2": 0.0625,
+     "-4,-1": 0.0625,
+     "-4,0": 0.0625,
+     "-3,-3": 0.0625,
+     "-3,-2": 0.0625,
+     "-3,-1": 0.0625,
+     "-3,0": 0.125,
+     "-3,1": 0.125,
+     "-3,2": 0.0625,
+     "-2,-3": 0.0625,
+     "-2,-2": 0.125,
+     "-2,-1": 0.25,
+     "-2,0": 0.1875,
+     "-2,1": 0.25,
+     "-2,2": 0.125,
+     "-2,3": 0.125,
+     "-1,-3": 0.125,
+     "-1,-2": 0.1875,
+     "-1,-1": 0.5,
+     "-1,0": 0.5625,
+     "-1,1": 0.375,
+     "-1,2": 0.25,
+     "-1,3": 0.125,
+     "-1,4": 0.0625,
+     "0,-2": 0.4375,
+     "0,-1": 0.5,
+     "0,1": 0.5,
+     "0,2": 0.3125,
+     "0,3": 0.25,
+     "0,4": 0.0625,
+     "1,-3": 0.0625,
+     "1,-2": 0.25,
+     "1,-1": 0.5,
+     "1,0": 0.4375,
+     "1,1": 0.3125,
+     "1,2": 0.5,
+     "1,3": 0.0625,
+     "1,4": 0.125,
+     "2,-2": 0.3125,
+     "2,-1": 0.25,
+     "2,0": 0.375,
+     "2,1": 0.375,
+     "2,2": 0.25,
+     "2,3": 0.125,
+     "3,-3": 0.0625,
+     "3,-2": 0.0625,
+     "3,-1": 0.25,
+     "3,0": 0.125,
+     "3,1": 0.1875,
+     "3,2": 0.0625,
+     "4,-2": 0.0625,
+     "4,-1": 0.0625,
+     "4,0": 0.125,
+     "4,1": 0.0625
+    }
+   },
+   {
+    "dy_from_top_log": -1,
+    "mean_per_tree": 24.3125,
+    "max_radius": 5,
+    "occupancy": {
+     "-4,-2": 0.0625,
+     "-4,-1": 0.0625,
+     "-4,0": 0.0625,
+     "-3,-3": 0.125,
+     "-3,-2": 0.1875,
+     "-3,-1": 0.1875,
+     "-3,0": 0.1875,
+     "-3,1": 0.125,
+     "-3,2": 0.0625,
+     "-2,-4": 0.0625,
+     "-2,-3": 0.1875,
+     "-2,-2": 0.3125,
+     "-2,-1": 0.5625,
+     "-2,0": 0.5625,
+     "-2,1": 0.5,
+     "-2,2": 0.1875,
+     "-2,3": 0.1875,
+     "-1,-4": 0.0625,
+     "-1,-3": 0.3125,
+     "-1,-2": 0.5,
+     "-1,-1": 0.75,
+     "-1,0": 1.0,
+     "-1,1": 0.75,
+     "-1,2": 0.4375,
+     "-1,3": 0.25,
+     "-1,4": 0.1875,
+     "0,-4": 0.125,
+     "0,-3": 0.3125,
+     "0,-2": 0.75,
+     "0,-1": 1.0,
+     "0,1": 1.0,
+     "0,2": 0.5625,
+     "0,3": 0.25,
+     "0,4": 0.1875,
+     "0,5": 0.0625,
+     "1,-4": 0.0625,
+     "1,-3": 0.375,
+     "1,-2": 0.75,
+     "1,-1": 0.8125,
+     "1,0": 1.0,
+     "1,1": 0.8125,
+     "1,2": 0.625,
+     "1,3": 0.25,
+     "1,4": 0.1875,
+     "1,5": 0.0625,
+     "2,-4": 0.125,
+     "2,-3": 0.1875,
+     "2,-2": 0.5,
+     "2,-1": 0.75,
+     "2,0": 0.75,
+     "2,1": 0.6875,
+     "2,2": 0.4375,
+     "2,3": 0.25,
+     "2,4": 0.0625,
+     "2,5": 0.0625,
+     "3,-4": 0.0625,
+     "3,-3": 0.1875,
+     "3,-2": 0.3125,
+     "3,-1": 0.375,
+     "3,0": 0.375,
+     "3,1": 0.375,
+     "3,2": 0.25,
+     "3,3": 0.0625,
+     "3,4": 0.0625,
+     "4,-4": 0.0625,
+     "4,-3": 0.0625,
+     "4,-2": 0.1875,
+     "4,-1": 0.25,
+     "4,0": 0.25,
+     "4,1": 0.125,
+     "4,2": 0.0625,
+     "5,-3": 0.0625,
+     "5,-2": 0.0625,
+     "5,-1": 0.125,
+     "5,0": 0.0625,
+     "5,1": 0.0625
+    }
+   },
+   {
+    "dy_from_top_log": 0,
+    "mean_per_tree": 29.75,
+    "max_radius": 5,
+    "occupancy": {
+     "-4,-2": 0.0625,
+     "-4,-1": 0.0625,
+     "-4,0": 0.0625,
+     "-3,-3": 0.125,
+     "-3,-2": 0.1875,
+     "-3,-1": 0.1875,
+     "-3,0": 0.1875,
+     "-3,1": 0.125,
+     "-3,2": 0.0625,
+     "-2,-4": 0.0625,
+     "-2,-3": 0.1875,
+     "-2,-2": 0.3125,
+     "-2,-1": 1.0,
+     "-2,0": 1.0,
+     "-2,1": 1.0,
+     "-2,2": 0.1875,
+     "-2,3": 0.1875,
+     "-1,-4": 0.0625,
+     "-1,-3": 0.3125,
+     "-1,-2": 1.0,
+     "-1,-1": 1.0,
+     "-1,0": 1.0,
+     "-1,1": 1.0,
+     "-1,2": 1.0,
+     "-1,3": 0.25,
+     "-1,4": 0.1875,
+     "0,-4": 0.125,
+     "0,-3": 0.3125,
+     "0,-2": 1.0,
+     "0,-1": 1.0,
+     "0,1": 1.0,
+     "0,2": 1.0,
+     "0,3": 0.25,
+     "0,4": 0.1875,
+     "0,5": 0.0625,
+     "1,-4": 0.0625,
+     "1,-3": 0.375,
+     "1,-2": 1.0,
+     "1,-1": 1.0,
+     "1,0": 1.0,
+     "1,1": 1.0,
+     "1,2": 1.0,
+     "1,3": 0.25,
+     "1,4": 0.1875,
+     "1,5": 0.0625,
+     "2,-4": 0.125,
+     "2,-3": 0.1875,
+     "2,-2": 0.5,
+     "2,-1": 1.0,
+     "2,0": 1.0,
+     "2,1": 1.0,
+     "2,2": 0.4375,
+     "2,3": 0.25,
+     "2,4": 0.0625,
+     "2,5": 0.0625,
+     "3,-4": 0.0625,
+     "3,-3": 0.1875,
+     "3,-2": 0.3125,
+     "3,-1": 0.375,
+     "3,0": 0.375,
+     "3,1": 0.375,
+     "3,2": 0.25,
+     "3,3": 0.0625,
+     "3,4": 0.0625,
+     "4,-4": 0.0625,
+     "4,-3": 0.0625,
+     "4,-2": 0.1875,
+     "4,-1": 0.25,
+     "4,0": 0.25,
+     "4,1": 0.125,
+     "4,2": 0.0625,
+     "5,-3": 0.0625,
+     "5,-2": 0.0625,
+     "5,-1": 0.125,
+     "5,0": 0.0625,
+     "5,1": 0.0625
+    }
+   },
+   {
+    "dy_from_top_log": 1,
+    "mean_per_tree": 27.6875,
+    "max_radius": 5,
+    "occupancy": {
+     "-3,-3": 0.0625,
+     "-3,-2": 0.125,
+     "-3,-1": 0.1875,
+     "-3,0": 0.0625,
+     "-2,-4": 0.0625,
+     "-2,-3": 0.125,
+     "-2,-2": 0.3125,
+     "-2,-1": 0.9375,
+     "-2,0": 0.9375,
+     "-2,1": 0.9375,
+     "-2,2": 0.0625,
+     "-2,3": 0.0625,
+     "-1,-4": 0.0625,
+     "-1,-3": 0.3125,
+     "-1,-2": 0.9375,
+     "-1,-1": 0.9375,
+     "-1,0": 1.0,
+     "-1,1": 0.9375,
+     "-1,2": 0.9375,
+     "-1,3": 0.125,
+     "-1,4": 0.125,
+     "0,-4": 0.125,
+     "0,-3": 0.3125,
+     "0,-2": 0.9375,
+     "0,-1": 1.0,
+     "0,0": 1.0,
+     "0,1": 1.0,
+     "0,2": 0.9375,
+     "0,3": 0.25,
+     "0,4": 0.125,
+     "0,5": 0.0625,
+     "1,-4": 0.0625,
+     "1,-3": 0.375,
+     "1,-2": 0.9375,
+     "1,-1": 0.9375,
+     "1,0": 1.0,
+     "1,1": 0.9375,
+     "1,2": 0.9375,
+     "1,3": 0.1875,
+     "1,4": 0.125,
+     "1,5": 0.0625,
+     "2,-4": 0.125,
+     "2,-3": 0.1875,
+     "2,-2": 0.4375,
+     "2,-1": 0.9375,
+     "2,0": 0.9375,
+     "2,1": 0.9375,
+     "2,2": 0.3125,
+     "2,3": 0.1875,
+     "2,4": 0.0625,
+     "2,5": 0.0625,
+     "3,-4": 0.0625,
+     "3,-3": 0.1875,
+     "3,-2": 0.25,
+     "3,-1": 0.3125,
+     "3,0": 0.375,
+     "3,1": 0.25,
+     "3,2": 0.1875,
+     "3,3": 0.0625,
+     "3,4": 0.0625,
+     "4,-4": 0.0625,
+     "4,-3": 0.0625,
+     "4,-2": 0.1875,
+     "4,-1": 0.1875,
+     "4,0": 0.1875,
+     "4,1": 0.0625,
+     "4,2": 0.0625,
+     "5,-3": 0.0625,
+     "5,-2": 0.0625,
+     "5,-1": 0.125,
+     "5,0": 0.0625,
+     "5,1": 0.0625
+    }
+   },
+   {
+    "dy_from_top_log": 2,
+    "mean_per_tree": 18.9375,
+    "max_radius": 4,
+    "occupancy": {
+     "-2,-2": 0.0625,
+     "-2,-1": 0.8125,
+     "-2,0": 0.8125,
+     "-2,1": 0.8125,
+     "-1,-3": 0.0625,
+     "-1,-2": 0.8125,
+     "-1,-1": 0.8125,
+     "-1,0": 0.9375,
+     "-1,1": 0.8125,
+     "-1,2": 0.8125,
+     "0,-2": 0.8125,
+     "0,-1": 0.9375,
+     "0,0": 0.9375,
+     "0,1": 0.9375,
+     "0,2": 0.8125,
+     "0,3": 0.125,
+     "1,-3": 0.0625,
+     "1,-2": 0.8125,
+     "1,-1": 0.8125,
+     "1,0": 0.9375,
+     "1,1": 0.8125,
+     "1,2": 0.8125,
+     "1,3": 0.0625,
+     "1,4": 0.0625,
+     "2,-2": 0.1875,
+     "2,-1": 0.8125,
+     "2,0": 0.8125,
+     "2,1": 0.8125,
+     "2,3": 0.0625,
+     "3,-3": 0.0625,
+     "3,-2": 0.0625,
+     "3,-1": 0.1875,
+     "3,0": 0.0625,
+     "3,1": 0.0625,
+     "4,-2": 0.0625,
+     "4,0": 0.0625
+    }
+   },
+   {
+    "dy_from_top_log": 3,
+    "mean_per_tree": 4.0625,
+    "max_radius": 1,
+    "occupancy": {
+     "-1,0": 0.8125,
+     "0,-1": 0.8125,
+     "0,0": 0.8125,
+     "0,1": 0.8125,
+     "1,0": 0.8125
+    }
+   }
+  ],
+  "decorators": {
+   "dirt": {
+    "total": 16,
+    "per_tree": 1.0,
+    "dy": {
+     "-1": 16
+    },
+    "radius": {
+     "0": 16
+    }
+   }
+  }
+ },
+ "examples": [
+  {
+   "origin": [
+    31760,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -2,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     -1,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     0,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     1,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     9,
+     0,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     4,
+     -2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     9,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     9,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     9,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     -1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     0,
+     "minecraft:oak_log[axis=x]"
+    ],
+    [
+     1,
+     3,
+     1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     9,
+     0,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     0,
+     "minecraft:oak_log[axis=x]"
+    ],
+    [
+     2,
+     4,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     -2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     -1,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     0,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     1,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     0,
+     "minecraft:oak_log[axis=x]"
+    ],
+    [
+     3,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     -2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     -1,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     0,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     1,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     -2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     -2,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     2,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     8,
+     0,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ]
+   ]
+  },
+  {
+   "origin": [
+    31792,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -2,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     3,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     2,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     3,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     4,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     4,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     4,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     0,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     3,
+     1,
+     "minecraft:oak_log[axis=z]"
+    ],
+    [
+     0,
+     3,
+     2,
+     "minecraft:oak_log[axis=z]"
+    ],
+    [
+     0,
+     3,
+     3,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     3,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     4,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     3,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     4,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     4,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     2,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     3,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     4,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     4,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     4,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     0,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     3,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ]
+   ]
+  }
+ ],
+ "per_placement": [
+  {
+   "n": 164,
+   "logs": 10,
+   "leaves": 153,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -2,
+    5,
+    -1,
+    9,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 121,
+   "logs": 8,
+   "leaves": 112,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    8,
+    -2,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 153,
+   "logs": 10,
+   "leaves": 142,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -2,
+    3,
+    -1,
+    9,
+    -2,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 140,
+   "logs": 10,
+   "leaves": 129,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -2,
+    3,
+    -1,
+    9,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 114,
+   "logs": 8,
+   "leaves": 105,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    2,
+    -1,
+    9,
+    -3,
+    2
+   ],
+   "reach_h": 3,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 151,
+   "logs": 9,
+   "leaves": 141,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    9,
+    -2,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 177,
+   "logs": 11,
+   "leaves": 165,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    3,
+    -1,
+    9,
+    -4,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 3,
+   "leaf_mismatch": 1,
+   "result": "placed"
+  },
+  {
+   "n": 178,
+   "logs": 11,
+   "leaves": 166,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -2,
+    5,
+    -1,
+    9,
+    -4,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 75,
+   "logs": 4,
+   "leaves": 70,
+   "log_top": 3,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    5,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 126,
+   "logs": 8,
+   "leaves": 117,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -2,
+    4,
+    -1,
+    8,
+    -3,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 109,
+   "logs": 8,
+   "leaves": 100,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    9,
+    -3,
+    2
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 1,
+   "result": "placed"
+  },
+  {
+   "n": 75,
+   "logs": 4,
+   "leaves": 70,
+   "log_top": 3,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    5,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 27,
+   "result": "placed"
+  },
+  {
+   "n": 77,
+   "logs": 5,
+   "leaves": 71,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    7,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 74,
+   "logs": 4,
+   "leaves": 69,
+   "log_top": 3,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    4,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 108,
+   "logs": 7,
+   "leaves": 100,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    8,
+    -3,
+    2
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 1,
+   "result": "placed"
+  },
+  {
+   "n": 177,
+   "logs": 11,
+   "leaves": 165,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    9,
+    -4,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 1,
+   "result": "placed"
+  }
+ ]
+}
