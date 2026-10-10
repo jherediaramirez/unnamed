@@ -50,6 +50,18 @@ struct FFoundationBlockDefinition
     FLinearColor Color = FLinearColor::White;
 };
 
+struct FVoxelStateInfo;
+
+// 26.3's position offsets (minecraft.wiki "Block offset"), from the voxel core's VoxelModels::GetOffset: one mapping
+// for the voxel world's table, the Playground's models and the block world's boxes, so a box sits on its drawn plant.
+namespace FoundationBlockOffsets
+{
+    // Copies the block's offset kind and range into a voxel table entry.
+    UNNAMED_API void CopyTo(const FFoundationBlockType& Block, FVoxelStateInfo& Info);
+    // The block's offset at a cell, block units on Unreal axes (zero for blocks without one).
+    UNNAMED_API FVector GetOffset(const FFoundationBlockType& Block, const FIntVector& Cell);
+}
+
 // A cell's state and the world revision at which it last changed (0 = never changed).
 struct FFoundationCell
 {
@@ -140,9 +152,14 @@ struct UNNAMED_API FFoundationBlockWorld
     // Empties every cell (a lab reset). The world revision keeps counting.
     void Clear();
 
-    // World boxes of a state's shapes in a cell; false when it has none (air, water).
+    // World boxes of a state's shapes in a cell; false when it has none (air, water). A model state's box is the
+    // bounds of its boxes, moved as below.
     bool GetSelectionBox(const FIntVector& Cell, FFoundationBlockState State, FBox& OutBox) const;
     bool GetCollisionBox(const FIntVector& Cell, FFoundationBlockState State, FBox& OutBox) const;
+    // Appends every outline (selection) or collision box of a state in a cell, world cm, moved by the block's offset
+    // where 26.3 moves them (bOutlineMovesWithOffset, bCollisionMovesWithOffset). False when it appends none.
+    bool GetOutlineBoxes(const FIntVector& Cell, FFoundationBlockState State, TArray<FBox>& Out) const;
+    bool GetCollisionBoxes(const FIntVector& Cell, FFoundationBlockState State, TArray<FBox>& Out) const;
     // Appends the collision boxes of solid cells overlapping Region (world cm).
     void GatherCollision(const FBox& Region, TArray<FBox>& Out) const;
 

@@ -44,17 +44,11 @@ namespace
         return Registry.GetBlock(State).IsWater() || IsHeldWater(Registry, State);
     }
 
-    // A block's position offset at a cell in centimetres, mapped as VoxelBlocks::MakeTable maps it, so the Playground
-    // and the voxel world move a model alike.
+    // A block's position offset at a cell in centimetres (FoundationBlockOffsets, as the voxel world's table and the
+    // block world's boxes move it).
     FVector GetModelOffsetCm(const FFoundationBlockType& Type, const FIntVector& Cell)
     {
-        FVoxelStateInfo Info;
-        Info.Offset = Type.OffsetKind == EFoundationOffsetKind::XYZ ? EVoxelOffset::HorizontalAndDown
-            : Type.OffsetKind == EFoundationOffsetKind::XZ          ? EVoxelOffset::Horizontal
-                                                                    : EVoxelOffset::None;
-        Info.OffsetHorizontal = Type.OffsetMaxHorizontal;
-        Info.OffsetDown = Type.OffsetKind == EFoundationOffsetKind::XYZ ? Type.OffsetMinVertical : 0.f;
-        return FVector(VoxelModels::GetOffset(Info, Cell.X, Cell.Y)) * InteractionViewBlockCm;
+        return FoundationBlockOffsets::GetOffset(Type, Cell) * InteractionViewBlockCm;
     }
 
     FLinearColor TargetColor(bool bDead)
@@ -463,6 +457,7 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
             Flashes.Add({Cell.ExpandBy(1), FLinearColor(1, 1, 1), 0, .15});
             break;
         case EFoundationEventKind::Broken:
+        case EFoundationEventKind::Popped:
             Burst(Cell.GetCenter(), Authority.World.GetBlock(Event.State).Color, 10, 12, 260, uint32(Event.Serial));
             break;
         case EFoundationEventKind::Rejected:
@@ -590,11 +585,12 @@ void UFoundationInteractionView::DrawSelection(
     const FFoundationPreview& Preview = Pawn->Interaction.Preview;
     const FFoundationHit& Hit = Preview.Target;
     if (!Hit.bInRange) return;
-    // The target outline: a block's selection shape, an anchor's clicked cell, other geometry or an entity.
+    // The target outline: a block's outline boxes, an anchor's clicked cell, other geometry or an entity.
     FBox Outline(ForceInit);
+    TArray<FBox> Outlines;
     FLinearColor OutlineColor(.02f, .02f, .02f);
     if (Hit.Kind == EFoundationHitKind::Block)
-        Authority.World.GetSelectionBox(Hit.Cell, Authority.World.Get(Hit.Cell).State, Outline);
+        Authority.World.GetOutlineBoxes(Hit.Cell, Authority.World.Get(Hit.Cell).State, Outlines);
     else if (Hit.Kind == EFoundationHitKind::Static && Authority.Statics.IsValidIndex(Hit.StaticIndex))
     {
         const FFoundationStatic& Static = Authority.Statics[Hit.StaticIndex];
@@ -610,11 +606,10 @@ void UFoundationInteractionView::DrawSelection(
             Outline = Target->Box;
             OutlineColor = Target->Health.IsDead() ? FLinearColor(.4f, .4f, .4f) : FLinearColor(.9f, .1f, .05f);
         }
-    if (Outline.IsValid)
-    {
-        DrawBox(Outline.ExpandBy(.3), OutlineColor, .9f);
-        bOutlineVisible = true;
-    }
+    if (Outline.IsValid) Outlines.Add(Outline);
+    for (const FBox& Box : Outlines)
+        DrawBox(Box.ExpandBy(.3), OutlineColor, .9f);
+    bOutlineVisible = !Outlines.IsEmpty();
     if (!Preview.bPlacement) return;
     // Destination preview: white when it would place, orange while only the player's body is in the
     // way, red otherwise. Never solid: the block appears only from the committed change. A valid placement

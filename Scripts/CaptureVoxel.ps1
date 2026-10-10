@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[switch]$NoSurfaceRules,[switch]$Lights)
+param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights)
 # Renders the generated world offscreen (/Game/Maps/L_Generated) and saves AVoxelWorld's screenshots: overview,
 # closeup, ground, lumen-scene and section, plus build.txt with the first view's streaming timings. The rings stay on
 # the player's spawn, and the view's edge is meshed against air (voxel.Debug.EdgeWalls 1; -ExecCmds can turn it off),
@@ -43,6 +43,9 @@ if($Veins -and -not $Flight){$arguments+='-VoxelShotVeins'}
 if($VeinsAt -and -not $Flight){if($VeinsAt.Count -ne 6){throw '-VeinsAt takes F,A,Z,F,A,Z'};$arguments+=('-VoxelShotVeinsAt='+($VeinsAt -join ','))}
 if($SpawnAt){if($SpawnAt.Count -ne 2){throw '-SpawnAt takes X,Y'};$arguments+=('-VoxelSpawnAt={0},{1}' -f $SpawnAt[0],$SpawnAt[1])}
 if($SpawnExact){$arguments+='-VoxelSpawnExact'}
+# -View CX,CY,CZ,TX,TY,TZ adds a "view" shot from a camera to a target, in blocks (a spot -SpawnAt streams), e.g. an
+# ocean floor or the column grid (-ExecCmds 'voxel.Debug.ColumnGrid 1').
+if($View -and -not $Flight){if($View.Count -ne 6){throw '-View takes CX,CY,CZ,TX,TY,TZ'};$arguments+=('-VoxelShotView='+($View -join ','))}
 if($NoSurfaceRules){$arguments+='-VoxelNoSurfaceRules'}
 if($Lights -and -not $Flight){$arguments+='-VoxelShotLights'}
 if($Flight -and $FlightSeconds -gt 0){$arguments+="-VoxelFlightSeconds=$FlightSeconds"}
@@ -62,7 +65,7 @@ if($Flight){
     Get-Content (Join-Path $OutputDirectory 'flight.txt')
     return
 }
-$names=@('overview','closeup','ground','lumen-scene','section')+@(if($Edits){'edits'})+@(if($Garden){'garden','garden-close','garden-pool','garden-lichen','garden-amethyst','garden-border','field','field-clearing','distance-008','distance-016','distance-032','distance-064','distance-128'})
+$names=@('overview','closeup','ground','lumen-scene','section')+@(if($Edits){'edits'})+@(if($View){'view'})+@(if($Garden){'garden','garden-close','garden-pool','garden-lichen','garden-amethyst','garden-border','field','field-clearing','distance-008','distance-016','distance-032','distance-064','distance-128'})
 $shots=$names | Where-Object { Test-Path (Join-Path $OutputDirectory "$_.png") }
 if($shots.Count -ne $names.Count -or -not(Test-Path (Join-Path $OutputDirectory 'build.txt'))){throw "Missing screenshots ($($shots.Count) of $($names.Count)) after $elapsed s: $OutputDirectory"}
 if($Lights -and -not(Test-Path (Join-Path $OutputDirectory 'lights.txt'))){throw "No lights.txt after $elapsed s: $OutputDirectory"}

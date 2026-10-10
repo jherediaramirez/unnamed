@@ -138,6 +138,22 @@ void AVoxelWorld::BuildLayout()
             UE_LOG(LogUnnamedVoxel, Warning, TEXT("-VoxelSpawnAt=%s is not X,Y; the spawn search starts at the origin"),
                 *SpawnAt);
     }
+    FString ViewText;
+    if (FParse::Value(FCommandLine::Get(), TEXT("VoxelShotView="), ViewText, false))
+    {
+        TArray<FString> Parts;
+        ViewText.ParseIntoArray(Parts, TEXT(","));
+        bool bNumeric = Parts.Num() == 6;
+        for (const FString& Part : Parts)
+            bNumeric = bNumeric && Part.IsNumeric();
+        if (bNumeric)
+            ShotView = TPair<FVector, FVector>(
+                FVector(FCString::Atod(*Parts[0]), FCString::Atod(*Parts[1]), FCString::Atod(*Parts[2])),
+                FVector(FCString::Atod(*Parts[3]), FCString::Atod(*Parts[4]), FCString::Atod(*Parts[5])));
+        else
+            UE_LOG(
+                LogUnnamedVoxel, Warning, TEXT("-VoxelShotView=%s is not CX,CY,CZ,TX,TY,TZ; no view shot"), *ViewText);
+    }
     bSpawnExact = FParse::Param(FCommandLine::Get(), TEXT("VoxelSpawnExact"));
     bShotEdits = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotEdits"));
     bShotGarden = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotGarden"));
@@ -300,6 +316,16 @@ void AVoxelWorld::SetupAuthority()
     const UFoundationInteractionSettings& Settings = UFoundationInteractionSettings::Get();
     Settings.BuildRules(Authority.Rules);
     Authority.World.SetRegistry(FFoundationBlockRegistry::GetDefault());
+    Authority.PlantSurvival = VoxelBlocks::GetPlantSurvival(Authority.World.GetRegistry());
+    const FFoundationBlockRegistry& Registry = Authority.World.GetRegistry();
+    ModelCollides.Init(false, Registry.GetStateLimit());
+    TArray<FBox> Boxes;
+    for (int32 Id = 0; Id < Registry.GetStateLimit(); ++Id)
+        if (Registry.GetShape({uint16(Id)}) == EFoundationBlockShape::Model)
+        {
+            Registry.GetCollisionBoxes({uint16(Id)}, Boxes);
+            ModelCollides[Id] = !Boxes.IsEmpty();
+        }
     Authority.World.OriginCm = OriginCm;
     Authority.World.BoundsMin = FIntVector(-VoxelWorldLimit, -VoxelWorldLimit, VoxelConstants::MinZ);
     Authority.World.BoundsMax = FIntVector(VoxelWorldLimit - 1, VoxelWorldLimit - 1, VoxelConstants::MaxZ);
@@ -525,8 +551,16 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
                 for (int32 Y = LowY; Y <= HighY; ++Y)
                     for (int32 X = LowX; X <= HighX; ++X)
                     {
-                        const FVoxelStateInfo& Info =
-                            Table->Get(Column->GetState(X - ColumnX * Size, Y - ColumnY * Size, Z));
+                        const uint16 State = Column->GetState(X - ColumnX * Size, Y - ColumnY * Size, Z);
+                        const FVoxelStateInfo& Info = Table->Get(State);
+                        if (Info.Shape == EVoxelShape::Model)
+                        {
+                            // Model states collide with their facts boxes, moved where the facts move them (cactus,
+                            // bamboo, lily pads, carpets); bSolid (blocks_motion) is for the heightmaps.
+                            if (State < ModelCollides.Num() && ModelCollides.GetData()[State])
+                                Authority.World.GetCollisionBoxes({X, Y, Z}, FFoundationBlockState{State}, Out);
+                            continue;
+                        }
                         if (!Info.bSolid) continue;
                         const FVector Min = FoundationGrid::CellMin({X, Y, Z}, OriginCm);
                         const double Bottom = Info.Shape == EVoxelShape::SlabTop ? .5 : 0.;
@@ -1204,6 +1238,9 @@ void AVoxelWorld::UpdateShots()
     if (bShotEdits)
         Shots.Add({TEXT("edits"), Blocks(ShotEditCorner.X - 7, ShotEditCorner.Y - 7, ShotEditTop + 8),
             Blocks(ShotEditCorner.X + 1, ShotEditCorner.Y + 2, ShotEditTop - 5), false, true});
+    if (ShotView)
+        Shots.Add({TEXT("view"), Blocks(ShotView->Key.X, ShotView->Key.Y, ShotView->Key.Z),
+            Blocks(ShotView->Value.X, ShotView->Value.Y, ShotView->Value.Z), false, true});
 
     if (bShotGarden)
     {

@@ -1,4 +1,5 @@
 #include "Foundation/FoundationBlocks.h"
+#include "Blocks/VoxelBlockTable.h"
 
 namespace
 {
@@ -146,11 +147,55 @@ void FFoundationBlockWorld::Clear()
     Storage->Empty();
 }
 
+void FoundationBlockOffsets::CopyTo(const FFoundationBlockType& Block, FVoxelStateInfo& Info)
+{
+    Info.Offset = Block.OffsetKind == EFoundationOffsetKind::XYZ ? EVoxelOffset::HorizontalAndDown
+        : Block.OffsetKind == EFoundationOffsetKind::XZ          ? EVoxelOffset::Horizontal
+                                                                 : EVoxelOffset::None;
+    Info.OffsetHorizontal = Block.OffsetMaxHorizontal;
+    Info.OffsetDown = Block.OffsetKind == EFoundationOffsetKind::XYZ ? Block.OffsetMinVertical : 0.f;
+}
+
+FVector FoundationBlockOffsets::GetOffset(const FFoundationBlockType& Block, const FIntVector& Cell)
+{
+    if (Block.OffsetKind == EFoundationOffsetKind::None) return FVector::ZeroVector;
+    FVoxelStateInfo Info;
+    CopyTo(Block, Info);
+    return FVector(VoxelModels::GetOffset(Info, Cell.X, Cell.Y));
+}
+
+namespace
+{
+    // Where a state's unit boxes start in a cell, world cm: the cell's corner, moved when the shape moves.
+    FVector GetShapeMin(const FFoundationBlockRegistry& Registry, const FIntVector& Cell, const FVector& OriginCm,
+        FFoundationBlockState State, bool bCollision)
+    {
+        const FFoundationBlockType& Block = Registry.GetBlock(State);
+        const bool bMoves = bCollision ? Block.bCollisionMovesWithOffset : Block.bOutlineMovesWithOffset;
+        const FVector Min = FoundationGrid::CellMin(Cell, OriginCm);
+        return bMoves ? Min + FoundationBlockOffsets::GetOffset(Block, Cell) * UFoundationProfile::BlockCm : Min;
+    }
+
+    bool AppendShapeBoxes(const FFoundationBlockRegistry& Registry, const FIntVector& Cell, const FVector& OriginCm,
+        FFoundationBlockState State, bool bCollision, TArray<FBox>& Out)
+    {
+        static thread_local TArray<FBox> Units;
+        if (bCollision)
+            Registry.GetCollisionBoxes(State, Units);
+        else
+            Registry.GetOutlineBoxes(State, Units);
+        const FVector Min = GetShapeMin(Registry, Cell, OriginCm, State, bCollision);
+        for (const FBox& Unit : Units)
+            Out.Add(FBox(Min + Unit.Min * UFoundationProfile::BlockCm, Min + Unit.Max * UFoundationProfile::BlockCm));
+        return !Units.IsEmpty();
+    }
+}
+
 bool FFoundationBlockWorld::GetSelectionBox(const FIntVector& Cell, FFoundationBlockState State, FBox& OutBox) const
 {
     FBox Unit;
     if (!Registry->GetSelectionShape(State, Unit)) return false;
-    const FVector Min = FoundationGrid::CellMin(Cell, OriginCm);
+    const FVector Min = GetShapeMin(*Registry, Cell, OriginCm, State, false);
     OutBox = FBox(Min + Unit.Min * UFoundationProfile::BlockCm, Min + Unit.Max * UFoundationProfile::BlockCm);
     return true;
 }
@@ -159,24 +204,41 @@ bool FFoundationBlockWorld::GetCollisionBox(const FIntVector& Cell, FFoundationB
 {
     FBox Unit;
     if (!Registry->GetCollisionShape(State, Unit)) return false;
-    const FVector Min = FoundationGrid::CellMin(Cell, OriginCm);
+    const FVector Min = GetShapeMin(*Registry, Cell, OriginCm, State, true);
     OutBox = FBox(Min + Unit.Min * UFoundationProfile::BlockCm, Min + Unit.Max * UFoundationProfile::BlockCm);
     return true;
 }
 
+bool FFoundationBlockWorld::GetOutlineBoxes(
+    const FIntVector& Cell, FFoundationBlockState State, TArray<FBox>& Out) const
+{
+    return AppendShapeBoxes(*Registry, Cell, OriginCm, State, false, Out);
+}
+
+bool FFoundationBlockWorld::GetCollisionBoxes(
+    const FIntVector& Cell, FFoundationBlockState State, TArray<FBox>& Out) const
+{
+    // Cubes, slabs and layers have their one box; a model state has its list.
+    if (Registry->GetShape(State) != EFoundationBlockShape::Model)
+    {
+        FBox Box;
+        if (!GetCollisionBox(Cell, State, Box)) return false;
+        Out.Add(Box);
+        return true;
+    }
+    return AppendShapeBoxes(*Registry, Cell, OriginCm, State, true, Out);
+}
+
 void FFoundationBlockWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
 {
-    // Cells whose unit box can touch the region; collision shapes stay inside their cell.
+    // Cells whose unit box can touch the region; collision shapes stay inside their cell, moved ones too (bamboo,
+    // dripstone and sulfur spike move theirs; Blocks.PlantShapes checks it).
     FIntVector Low = FoundationGrid::CellAt(Region.Min, OriginCm), High = FoundationGrid::CellAt(Region.Max, OriginCm);
     Low = FIntVector(FMath::Max(Low.X, BoundsMin.X), FMath::Max(Low.Y, BoundsMin.Y), FMath::Max(Low.Z, BoundsMin.Z));
     High =
         FIntVector(FMath::Min(High.X, BoundsMax.X), FMath::Min(High.Y, BoundsMax.Y), FMath::Min(High.Z, BoundsMax.Z));
-    Storage->ForEachSolid(Low, High,
-        [this, &Out](const FIntVector& Cell, const FFoundationCell& Value)
-        {
-            FBox Box;
-            if (GetCollisionBox(Cell, Value.State, Box)) Out.Add(Box);
-        });
+    Storage->ForEachSolid(Low, High, [this, &Out](const FIntVector& Cell, const FFoundationCell& Value)
+        { GetCollisionBoxes(Cell, Value.State, Out); });
 }
 
 int32 FFoundationBlockWorld::GetSolidCount() const

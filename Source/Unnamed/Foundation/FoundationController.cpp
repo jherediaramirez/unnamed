@@ -250,7 +250,7 @@ void AFoundationController::NoteInteraction(const AFoundationPawn& FoundationPaw
     const FFoundationAuthority* Authority = FoundationPawn.GetAuthority();
     if (!Authority) return;
     static const TCHAR* Kinds[] = {TEXT("placed"), TEXT("broke"), TEXT("hit"), TEXT("whiff"), TEXT("rejected"),
-        TEXT("interacted"), TEXT("tool broke"), TEXT("target down"), TEXT("lab reset")};
+        TEXT("interacted"), TEXT("tool broke"), TEXT("target down"), TEXT("lab reset"), TEXT("popped")};
     for (const FFoundationEvent& Event : Authority->GetEvents())
     {
         if (Event.Serial <= LastInteractionEvent) continue;

@@ -13,15 +13,22 @@ enum class EVoxelWriteMode : uint8
     // An ore's target list (the argument): the first target whose rule test matches the block there decides the
     // state; no match, no write.
     IfTargets,
+    // Plants (S8): only while the cell still holds the state the Decorate saw there (the argument), so a plant lands
+    // only where its filter and survival checks held, and never over another column's plant (or half of one).
+    IfUnchanged,
     Count
 };
 
 // An optional condition on a write's support, checked at replay against the merged target column (scout C,
-// recommendation 7): a vertical support lies in the same column, so the check is exact. Only the slot exists in S2;
-// plants (S8) add "the block below is in tag X".
+// recommendation 7): a vertical support lies in the same column, so the check is exact.
 enum class EVoxelWriteSupport : uint8
 {
     None,
+    // The state's survival rule, its vertical part (FVoxelPlantSurvival::SurvivesOn), against the merged cell below.
+    Plant,
+    // The lower half of a two-cell plant: it lands only together with the next write, its upper half (both or
+    // neither).
+    PlantPair,
     Count = 8
 };
 
@@ -31,7 +38,7 @@ struct FVoxelWrite
     // Bits 0-3 local X, 4-7 local Y, 8-16 Z - MinZ, 17-18 mode, 19-21 support, 22-31 the support's argument.
     uint32 Packed = 0;
     uint16 State = 0;
-    // IfReplaceable: a tag index; IfTargets: a target list index (the decorator's).
+    // IfReplaceable: a block set index; IfTargets: a target list index (the decorator's); IfUnchanged: a state.
     uint16 Argument = 0;
 
     static FVoxelWrite Make(int32 X, int32 Y, int32 Z, uint16 State, EVoxelWriteMode Mode, uint16 Argument,

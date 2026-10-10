@@ -2,12 +2,16 @@
 #include "Algo/Find.h"
 #include "Async/ParallelFor.h"
 #include "Biome/VoxelBiomeSource.h"
+#include "Blocks/VoxelBlockTable.h"
 #include "Debug/DebugDrawService.h"
+#include "Decoration/VoxelDecorator.h"
+#include "Decoration/VoxelFeatureGraph.h"
 #include "Dom/JsonObject.h"
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
 #include "Engine/Texture2D.h"
 #include "Engine/World.h"
+#include "Foundation/FoundationBlockRegistry.h"
 #include "GameFramework/PlayerController.h"
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformTime.h"
@@ -18,10 +22,15 @@
 #include "Random/VoxelSeed.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "Storage/VoxelColumn.h"
 #include "Tasks/Task.h"
+#include "Terrain/VoxelDensityTerrain.h"
 #include "Terrain/VoxelTerrain.h"
 #include "UObject/StrongObjectPtr.h"
+#include "Voxel/VoxelBlocks.h"
 #include "Voxel/VoxelClimateDebug.h"
+#include "Voxel/VoxelConsole.h"
+#include "Voxel/VoxelTerrainFactory.h"
 #include "Voxel/VoxelWorld.h"
 #include "Voxel/VoxelWorldSettings.h"
 #include "Voxel/VoxelWorldgenReader.h"
@@ -167,6 +176,301 @@ namespace
                 else
                     Output.Log(ELogVerbosity::Error, Error);
             }));
+
+    constexpr int32 FindBiomeLattice = 32;
+    constexpr int32 FindBiomeMaxHits = 3;
+    constexpr int32 FindBiomeMaxConfirmations = 40;
+    constexpr int32 FindBiomeMaxRadius = 20000;
+    // voxel.FindBlock decorates each column alone (25 Generates): its radius in columns and its column budget.
+    constexpr int32 FindBlockMaxRadius = 24;
+    constexpr int32 FindBlockMaxColumns = 400;
+
+    // A surface cell as voxel.FindBiome reads it: the WORLD_SURFACE top block, or under water the cell above the sea
+    // floor (the floor's biome).
+    struct FFindBiomeCell
+    {
+        int32 Biome = INDEX_NONE;
+        int32 Top = 0;
+        int32 Floor = 0;
+        uint16 TopState = 0;
+        bool bWater = false;
+    };
+
+    FFindBiomeCell FindBiomeReadCell(const FVoxelColumn& Column, const FVoxelBlockTable& Blocks, int32 X, int32 Y)
+    {
+        FFindBiomeCell Cell;
+        Cell.Top = Column.GetHeight(EVoxelHeightmap::WorldSurface, X, Y);
+        Cell.Floor = Column.GetHeight(EVoxelHeightmap::OceanFloor, X, Y);
+        Cell.TopState = Column.GetState(X, Y, Cell.Top);
+        Cell.bWater = Blocks.Get(Cell.TopState).IsFluid();
+        Cell.Biome = Column.GetBiome(X, Y, Cell.bWater ? Cell.Floor + 1 : Cell.Top);
+        return Cell;
+    }
+
+    int32 FindBiomeSample(const FVoxelBiomeSource& Source, double X, double Y, double Z, FVoxelDensityScratch& Scratch)
+    {
+        if (Source.IsFixed()) return Source.GetBiome(FVoxelBiomeMatch());
+        FVoxelBiomeTarget Target;
+        Source.SampleTargets(&X, &Y, &Z, 1, Scratch, MakeArrayView(&Target, 1));
+        return Source.GetBiome(Source.Find(Target));
+    }
+
+    // Generates Column and its eight neighbours and, when the target biome covers enough of their surface cells and the
+    // centre cell, returns the hit's line.
+    TOptional<FString> FindBiomeConfirm(const IVoxelTerrain& Terrain, const FVoxelBlockTable& Blocks, FIntPoint Column,
+        int32 Target, const FString& Id, FIntPoint Origin, TArray<uint16>& Dense)
+    {
+        constexpr int32 Size = VoxelConstants::ColumnSize;
+        TArray<TUniquePtr<FVoxelColumn>> Columns;
+        for (int32 Y = -1; Y <= 1; ++Y)
+            for (int32 X = -1; X <= 1; ++X)
+            {
+                const FIntPoint Position = Column + FIntPoint(X, Y);
+                Columns.Add(MakeUnique<FVoxelColumn>(Position));
+                Terrain.Generate(Position, *Columns.Last(), Dense);
+            }
+        int32 Matches = 0, BestDistance = MAX_int32;
+        FIntPoint Best = FIntPoint::ZeroValue;
+        FFindBiomeCell BestCell, CentreCell;
+        for (int32 Y = 0; Y < 3 * Size; ++Y)
+            for (int32 X = 0; X < 3 * Size; ++X)
+            {
+                const FFindBiomeCell Cell =
+                    FindBiomeReadCell(*Columns[Y / Size * 3 + X / Size], Blocks, X % Size, Y % Size);
+                if (X == Size + Size / 2 && Y == Size + Size / 2) CentreCell = Cell;
+                if (Cell.Biome != Target) continue;
+                ++Matches;
+                const int32 Distance = FMath::Square(X - (Size + Size / 2)) + FMath::Square(Y - (Size + Size / 2));
+                if (Distance < BestDistance) BestDistance = Distance, Best = FIntPoint(X, Y), BestCell = Cell;
+            }
+        const double Coverage = double(Matches) / (9 * Size * Size);
+        if (CentreCell.Biome != Target || Coverage < .6) return {};
+        const FIntPoint Cell = (Column - FIntPoint(1, 1)) * Size + Best;
+        const FFoundationBlockRegistry& Registry = *FFoundationBlockRegistry::GetDefault();
+        const FFoundationBlockState TopState{BestCell.TopState};
+        return FString::Printf(
+            TEXT(
+                "FindBiome %s: at %d,%d (column %d,%d) from %d,%d, distance %.0f, surface Z %d (%s), floor Z %d, water "
+                "top Z %s, coverage %.2f"),
+            *Id, Cell.X, Cell.Y, Column.X, Column.Y, Origin.X, Origin.Y,
+            FMath::Sqrt(double(FMath::Square(Cell.X - Origin.X) + FMath::Square(Cell.Y - Origin.Y))), BestCell.Top,
+            Registry.IsKnown(TopState) ? *Registry.GetBlock(TopState).Id.ToString() : TEXT("?"), BestCell.Floor,
+            BestCell.bWater ? *FString::FromInt(BestCell.Top) : TEXT("-"), Coverage);
+    }
+
+    void FindBiomeRun(const TArray<FString>& Args, UWorld* World, FOutputDevice& Output)
+    {
+        const auto Print = [&Output](const FString& Line)
+        {
+            Output.Log(Line);
+            UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Line);
+        };
+        if (Args.IsEmpty())
+        {
+            Print(TEXT("Usage: voxel.FindBiome <biome> [X Y] [MaxRadius=6000] [preset=overworld]"));
+            return;
+        }
+        FString Id = Args[0].ToLower(), PresetName = TEXT("overworld");
+        if (!Id.Contains(TEXT(":"))) Id = TEXT("minecraft:") + Id;
+        TArray<double> Numbers;
+        for (int32 Index = 1; Index < Args.Num(); ++Index)
+            if (Args[Index].IsNumeric())
+                Numbers.Add(FCString::Atod(*Args[Index]));
+            else
+                PresetName = Args[Index];
+        const FIntPoint Origin = Numbers.Num() >= 2
+            ? FIntPoint(FMath::FloorToInt(Numbers[0]), FMath::FloorToInt(Numbers[1]))
+            : FIntPoint::ZeroValue;
+        const double RadiusArgument = Numbers.Num() >= 3 ? Numbers[2] : Numbers.Num() == 1 ? Numbers[0] : 6000.;
+        const int32 MaxRadius = int32(FMath::Clamp(RadiusArgument, 0., double(FindBiomeMaxRadius)));
+
+        const uint64 Seed = BiomeDebugSeed(World);
+        FString Error;
+        FVoxelTerrainPreset Preset;
+        FVoxelBiomeTable Biomes;
+        FVoxelSurfaceInputs Surface;
+        if (!VoxelClimateDebug::GetSampler(PresetName, Seed, Error) ||
+            !VoxelTerrainFactory::ReadInputs(
+                VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Biomes, Surface, Error))
+        {
+            Print(Error);
+            return;
+        }
+        const TSharedRef<const FVoxelBlockTable> Blocks = VoxelBlocks::GetDefault();
+        const FVoxelDensityTerrain Terrain(Preset, Seed, *Blocks, FVoxelDensityTerrainSettings(), &Biomes, &Surface);
+        const FVoxelBiomeSource* Source = Terrain.IsValid() ? Terrain.GetBiomeSource() : nullptr;
+        if (!Source)
+        {
+            Print(Terrain.IsValid() ? TEXT("voxel.FindBiome: this terrain has no biomes") : Terrain.GetError());
+            return;
+        }
+        const int32 Target = Source->GetTable().FindBiome(Id);
+        if (Target == INDEX_NONE)
+        {
+            Print(FString::Printf(TEXT("voxel.FindBiome: no biome %s in preset %s"), *Id, *PresetName));
+            return;
+        }
+        // Ocean ids read at sea level; the others at the terrain's surface estimate.
+        const bool bOcean = Id.Contains(TEXT("ocean"));
+        FVoxelDensityScratch Scratch;
+        TArray<uint16> Dense;
+        const FIntPoint Start(FMath::FloorToInt(Origin.X / double(FindBiomeLattice)),
+            FMath::FloorToInt(Origin.Y / double(FindBiomeLattice)));
+        int32 Hits = 0, Confirmations = 0;
+        for (int32 Ring = 0; Ring <= MaxRadius / FindBiomeLattice + 2 && Hits < FindBiomeMaxHits &&
+            Confirmations < FindBiomeMaxConfirmations;
+            ++Ring)
+        {
+            // Every second column's centre; the candidates of a ring, nearest first.
+            TArray<TPair<double, FIntPoint>> Candidates;
+            // The ring's perimeter only: whole rows at its top and bottom, the two ends of the rows between.
+            for (int32 Y = -Ring; Y <= Ring; ++Y)
+                for (int32 X = -Ring; X <= Ring; X += FMath::Abs(Y) == Ring ? 1 : 2 * Ring)
+                {
+                    const FIntPoint Point = (Start + FIntPoint(X, Y)) * FindBiomeLattice + FIntPoint(8, 8);
+                    const double Distance = FVector2D::Distance(FVector2D(Point), FVector2D(Origin));
+                    if (Distance > MaxRadius) continue;
+                    const double Z = bOcean ? VoxelConstants::SeaLevel : Terrain.GetSurfaceHeight(Point.X, Point.Y);
+                    if (FindBiomeSample(*Source, Point.X, Point.Y, Z, Scratch) == Target)
+                        Candidates.Add({Distance,
+                            FIntPoint(FMath::FloorToInt(Point.X / double(VoxelConstants::ColumnSize)),
+                                FMath::FloorToInt(Point.Y / double(VoxelConstants::ColumnSize)))});
+                }
+            Candidates.Sort(
+                [](const TPair<double, FIntPoint>& A, const TPair<double, FIntPoint>& B) { return A.Key < B.Key; });
+            for (const TPair<double, FIntPoint>& Candidate : Candidates)
+            {
+                if (Hits >= FindBiomeMaxHits || Confirmations++ >= FindBiomeMaxConfirmations) break;
+                if (const TOptional<FString> Line =
+                        FindBiomeConfirm(Terrain, *Blocks, Candidate.Value, Target, Id, Origin, Dense))
+                {
+                    Print(*Line);
+                    ++Hits;
+                }
+            }
+        }
+        if (Hits == 0)
+            Print(FString::Printf(TEXT("FindBiome %s: not found within %d blocks of %d,%d (%d candidates confirmed)"),
+                *Id, MaxRadius, Origin.X, Origin.Y, FMath::Min(Confirmations, FindBiomeMaxConfirmations)));
+    }
+
+    FAutoConsoleCommandWithWorldArgsAndOutputDevice FindBiomeCommand(TEXT("voxel.FindBiome"),
+        TEXT("voxel.FindBiome <biome> [X Y] [MaxRadius, default 6000] [preset, default overworld]: searches outward "
+             "from X, Y (blocks, default 0 0) for places where the biome (plains or minecraft:plains) covers the "
+             "surface, and logs up to three. Works without a game world, with the world's seed or the dev seed."),
+        FConsoleCommandWithWorldArgsAndOutputDeviceDelegate::CreateStatic(&FindBiomeRun));
+
+    // voxel.FindBlock: decorates columns outward from a point, each alone (the oracle, as voxel.Decoration.Plants
+    // says), and logs the first three that hold the block: for aiming shots at plants only some places grow (kelp,
+    // where its noise count is positive; sea pickles, one chunk in 16).
+    void FindBlockRun(const TArray<FString>& Args, UWorld* World, FOutputDevice& Output)
+    {
+        const auto Print = [&Output](const FString& Line)
+        {
+            Output.Log(Line);
+            UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Line);
+        };
+        if (Args.IsEmpty())
+        {
+            Print(TEXT("Usage: voxel.FindBlock <block> [X Y] [radius in columns, default 12] [preset=overworld]"));
+            return;
+        }
+        FString Id = Args[0].ToLower(), PresetName = TEXT("overworld");
+        Id.RemoveFromStart(TEXT("minecraft:"));
+        TArray<double> Numbers;
+        for (int32 Index = 1; Index < Args.Num(); ++Index)
+            if (Args[Index].IsNumeric())
+                Numbers.Add(FCString::Atod(*Args[Index]));
+            else
+                PresetName = Args[Index];
+        const FIntPoint Origin = Numbers.Num() >= 2
+            ? FIntPoint(FMath::FloorToInt(Numbers[0]), FMath::FloorToInt(Numbers[1]))
+            : FIntPoint::ZeroValue;
+        const double RadiusArgument = Numbers.Num() >= 3 ? Numbers[2] : Numbers.Num() == 1 ? Numbers[0] : 12.;
+        const int32 Radius = int32(FMath::Clamp(RadiusArgument, 0., double(FindBlockMaxRadius)));
+
+        const uint64 Seed = BiomeDebugSeed(World);
+        FString Error;
+        FVoxelTerrainPreset Preset;
+        FVoxelBiomeTable Biomes;
+        FVoxelSurfaceInputs Surface;
+        FVoxelFeatureGraph Graph;
+        if (!VoxelClimateDebug::GetSampler(PresetName, Seed, Error) ||
+            !VoxelTerrainFactory::ReadInputs(
+                VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Biomes, Surface, Error) ||
+            !VoxelWorldgen::ReadFeatures(VoxelWorldgen::GetReferenceRoot(), Graph, Error))
+        {
+            Print(Error);
+            return;
+        }
+        const TSharedRef<const FVoxelBlockTable> Blocks = VoxelBlocks::GetDefault();
+        const int32 Target = Blocks->FindBlock(Id);
+        if (Target == INDEX_NONE)
+        {
+            Print(FString::Printf(TEXT("voxel.FindBlock: no block %s"), *Id));
+            return;
+        }
+        const FVoxelDensityTerrain Terrain(Preset, Seed, *Blocks, FVoxelDensityTerrainSettings(), &Biomes, &Surface);
+        if (!Terrain.IsValid() || !Terrain.GetBiomeSource())
+        {
+            Print(Terrain.IsValid() ? TEXT("voxel.FindBlock: this terrain has no biomes") : Terrain.GetError());
+            return;
+        }
+        FVoxelDecorationOptions Options;
+        Options.bFreezeLast = VoxelConsole::CVarDecorationFreezeLast.GetValueOnGameThread();
+        Options.bPlants = VoxelConsole::CVarDecorationPlants.GetValueOnGameThread();
+        FVoxelDecorator Decorator;
+        if (!Decorator.Initialize(
+                Graph, *Blocks, Terrain.GetBiomeSource()->GetTable(), Terrain.GetSeed(), Options, &Error))
+        {
+            Print(Error);
+            return;
+        }
+        constexpr int32 Size = VoxelConstants::ColumnSize;
+        const FIntPoint Start(FMath::DivideAndRoundDown(Origin.X, Size), FMath::DivideAndRoundDown(Origin.Y, Size));
+        int32 Hits = 0, Searched = 0;
+        // Ring by ring (each one's perimeter), at most FindBlockMaxColumns columns: each costs 25 Generates.
+        const auto Searching = [&Hits, &Searched] { return Hits < 3 && Searched < FindBlockMaxColumns; };
+        for (int32 Ring = 0; Ring <= Radius && Searching(); ++Ring)
+            for (int32 DY = -Ring; DY <= Ring && Searching(); ++DY)
+                for (int32 DX = -Ring; DX <= Ring && Searching(); DX += FMath::Abs(DY) == Ring ? 1 : 2 * Ring)
+                {
+                    const FIntPoint Position = Start + FIntPoint(DX, DY);
+                    TUniquePtr<FVoxelColumn> Column = MakeUnique<FVoxelColumn>(Position);
+                    Decorator.DecorateAlone(Terrain, Position, *Column);
+                    ++Searched;
+                    // The lowest cell of the block nearest the column's centre, and how many cells hold it.
+                    int32 Count = 0, BestDistance = MAX_int32;
+                    FIntVector Best = FIntVector::ZeroValue;
+                    for (int32 Y = 0; Y < Size; ++Y)
+                        for (int32 X = 0; X < Size; ++X)
+                            for (int32 Z = VoxelConstants::MinZ; Z <= VoxelConstants::MaxZ; ++Z)
+                            {
+                                if (Blocks->Get(Column->GetState(X, Y, Z)).Block != Target) continue;
+                                ++Count;
+                                const int32 Distance = FMath::Square(X - Size / 2) + FMath::Square(Y - Size / 2);
+                                if (Distance < BestDistance) BestDistance = Distance, Best = FIntVector(X, Y, Z);
+                            }
+                    if (!Count) continue;
+                    ++Hits;
+                    Print(FString::Printf(
+                        TEXT("FindBlock %s: column %d,%d holds %d, nearest its centre at %d,%d,%d; floor "
+                             "Z %d, surface Z %d"),
+                        *Id, Position.X, Position.Y, Count, Position.X * Size + Best.X, Position.Y * Size + Best.Y,
+                        Best.Z, Column->GetHeight(EVoxelHeightmap::OceanFloor, Best.X, Best.Y),
+                        Column->GetHeight(EVoxelHeightmap::WorldSurface, Best.X, Best.Y)));
+                }
+        if (!Hits)
+            Print(FString::Printf(TEXT("FindBlock %s: none in the %d columns searched within %d of column %d,%d%s"),
+                *Id, Searched, Radius, Start.X, Start.Y,
+                Searched >= FindBlockMaxColumns ? TEXT(" (stopped at the column budget)") : TEXT("")));
+    }
+
+    FAutoConsoleCommandWithWorldArgsAndOutputDevice FindBlockCommand(TEXT("voxel.FindBlock"),
+        TEXT("voxel.FindBlock <block> [X Y] [radius in columns, default 12] [preset, default overworld]: decorates "
+             "columns outward from X, Y (blocks) one at a time and logs the first three that hold the block (kelp or "
+             "minecraft:kelp), as voxel.Decoration.Plants says. Works without a game world."),
+        FConsoleCommandWithWorldArgsAndOutputDeviceDelegate::CreateStatic(&FindBlockRun));
 
     TAutoConsoleVariable<bool> CVarDebugBiomes(TEXT("voxel.Debug.Biomes"), false,
         TEXT(

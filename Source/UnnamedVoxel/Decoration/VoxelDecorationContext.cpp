@@ -1,16 +1,22 @@
 #include "Decoration/VoxelDecorationContext.h"
+#include "Blocks/VoxelBlockTable.h"
 
 namespace
 {
     // Slots to start with: room for 8,192 writes, a little over an ordinary column's ores (about 7,000).
     constexpr int32 InitialSlotBits = 14;
+    constexpr int32 LiveMaps = 4;
+    constexpr int32 WindowArea = FVoxelDecorationContext::Window * FVoxelDecorationContext::Window;
 }
 
-FVoxelDecorationContext::FVoxelDecorationContext(FIntPoint InCenter, TConstArrayView<const FVoxelColumn*> Snapshots)
+FVoxelDecorationContext::FVoxelDecorationContext(
+    FIntPoint InCenter, TConstArrayView<const FVoxelColumn*> Snapshots, const FVoxelBlockTable* InTable)
     : Center(InCenter),
       MinX((InCenter.X - 1) * VoxelConstants::ColumnSize),
-      MinY((InCenter.Y - 1) * VoxelConstants::ColumnSize)
+      MinY((InCenter.Y - 1) * VoxelConstants::ColumnSize),
+      Table(InTable)
 {
+    if (Table) Raised.Init(int16(VoxelConstants::MinZ - 1), LiveMaps * WindowArea);
     check(Snapshots.Num() == 9);
     for (int32 Column = 0; Column < 9; ++Column)
     {
@@ -79,6 +85,33 @@ void FVoxelDecorationContext::SetState(int32 X, int32 Y, int32 Z, uint16 State)
     Written[Key >> 6] |= uint64(1) << (Key & 63);
     const int32 Column = (LY >> 4) * 3 + (LX >> 4);
     if (State != 0) TopZ[Column] = FMath::Max(TopZ[Column], Z);
+    if (Table && !bFrozenHeights && State != 0)
+    {
+        // FVoxelColumn's rules: any block; blocks motion; blocks motion or holds fluid; the same without leaves.
+        const FVoxelStateInfo& Info = Table->Get(State);
+        const bool bMotion = Info.bSolid || Info.HoldsFluid();
+        const bool Counts[LiveMaps] = {true, Info.bSolid, bMotion, bMotion && !Info.bLeaves};
+        const int32 Cell = LY * Window + LX;
+        for (int32 Map = 0; Map < LiveMaps; ++Map)
+            if (Counts[Map])
+            {
+                int16& Top = Raised[Map * WindowArea + Cell];
+                Top = int16(FMath::Max(int32(Top), Z));
+            }
+    }
+}
+
+int32 FVoxelDecorationContext::GetHeight(EVoxelDecorationHeightmap Map, int32 X, int32 Y) const
+{
+    const int32 LX = X - MinX, LY = Y - MinY;
+    if (uint32(LX) >= uint32(Window) || uint32(LY) >= uint32(Window)) return VoxelConstants::MinZ - 1;
+    static constexpr EVoxelHeightmap SnapshotMap[] = {EVoxelHeightmap::WorldSurface, EVoxelHeightmap::OceanFloor,
+        EVoxelHeightmap::WorldSurface, EVoxelHeightmap::OceanFloor, EVoxelHeightmap::MotionBlocking,
+        EVoxelHeightmap::MotionBlockingNoLeaves};
+    const int32 Snapshot = Columns[(LY >> 4) * 3 + (LX >> 4)]->GetHeight(SnapshotMap[int32(Map)], LX & 15, LY & 15);
+    const int32 Live = int32(Map) - int32(EVoxelDecorationHeightmap::WorldSurface);
+    if (Live < 0 || Raised.IsEmpty()) return Snapshot;
+    return FMath::Max(Snapshot, int32(Raised[Live * WindowArea + LY * Window + LX]));
 }
 
 int32 FVoxelDecorationContext::GetBiome(int32 X, int32 Y, int32 Z) const

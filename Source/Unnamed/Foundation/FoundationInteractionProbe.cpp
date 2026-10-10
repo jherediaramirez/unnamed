@@ -556,6 +556,114 @@ void UFoundationRuntimeProbe::AddInteractionCases()
                 Pawn->Interaction.LastText);
         });
 
+    // 10b. Plants (phase 6, S7): a dandelion on grass pops when the grass is mined; a dandelion on stone is refused;
+    // tall grass places both halves and goes as one unit. Cells and instances stay exact (one per model part).
+    Prepare(TEXT("plants"), false);
+    const FIntVector Grass(-6, 13, 0), Flower(-6, 13, 1), Rock(-6, 16, 0), Meadow(-6, 19, 0);
+    auto Give = [Authority, Player](const TCHAR* Item)
+    {
+        FFoundationInventory& Inventory = Player()->Inventory;
+        Inventory.SetSlot(4, Inventory.MakeStack(Authority().Rules.FindItem(Item), 64));
+    };
+    auto Seed = [Authority](FIntVector Cell, const TCHAR* Block)
+    { Authority().World.Set(Cell, Authority().World.FindBlock(Block)->GetDefaultState()); };
+    auto BlockAt = [Authority](FIntVector Cell)
+    { return Authority().World.GetRegistry().ToString(Authority().World.Get(Cell).State); };
+    auto Drawn = [this, Lab, Authority](const TCHAR* Name)
+    {
+        const int32 Expected = CountExpectedBlockInstances(Authority().World);
+        Record(Name,
+            Lab->GetView()->GetDrawnCellCount() == Authority().World.GetSolidCount() &&
+                Lab->GetView()->GetInstanceCount() == Expected,
+            FString::Printf(TEXT("cells %d of %d, instances %d of %d"), Lab->GetView()->GetDrawnCellCount(),
+                Authority().World.GetSolidCount(), Lab->GetView()->GetInstanceCount(), Expected));
+    };
+    AddCase(
+        TEXT("plant a flower"), .4,
+        [this, Click, Look, Give, Seed, Grass]
+        {
+            ResetPlayer({-850, 1350, 0});
+            Seed(Grass, TEXT("grass_block"));
+            Give(TEXT("dandelion"));
+            Click(EKeys::Five);
+            Look(FVector(-550, 1350, 100));
+            Click(EKeys::RightMouseButton);
+        },
+        [this, BlockAt, Drawn, Capture, Flower]
+        {
+            Record(TEXT("a dandelion places on grass"), BlockAt(Flower) == TEXT("dandelion"), BlockAt(Flower));
+            Drawn(TEXT("the dandelion is drawn"));
+            Capture(TEXT("plant-flower"));
+        });
+    AddCase(
+        TEXT("mine under the flower"), 1.6,
+        [this, Click, Look, Authority]
+        {
+            Extra->SetNumberField(TEXT("pops_before"), Authority().Pops);
+            Click(EKeys::Four);
+            Look(FVector(-600, 1350, 50));
+            PressKey(EKeys::LeftMouseButton, true);
+        },
+        [this, Solid, Authority, Drawn, Grass, Flower]
+        {
+            PressKey(EKeys::LeftMouseButton, false);
+            const int32 Pops = Authority().Pops - int32(Extra->GetNumberField(TEXT("pops_before")));
+            Record(TEXT("mining the grass pops the dandelion"), !Solid(Grass) && !Solid(Flower) && Pops == 1,
+                FString::Printf(TEXT("grass %d flower %d pops %d"), Solid(Grass), Solid(Flower), Pops));
+            Drawn(TEXT("both are gone from the view"));
+        });
+    AddCase(
+        TEXT("flower on stone"), .4,
+        [this, Click, Look, Seed, Rock]
+        {
+            ResetPlayer({-850, 1650, 0});
+            Seed(Rock, TEXT("stone"));
+            Click(EKeys::Five);
+            Look(FVector(-550, 1650, 100));
+            Click(EKeys::RightMouseButton);
+        },
+        [this, Solid, Rock]
+        {
+            Record(TEXT("a dandelion is refused on stone"),
+                !Solid(Rock + FIntVector(0, 0, 1)) &&
+                    Pawn->Interaction.LastResult.Reason == EFoundationReason::CannotSurvive,
+                LexToString(Pawn->Interaction.LastResult.Reason));
+        });
+    AddCase(
+        TEXT("plant tall grass"), .4,
+        [this, Click, Look, Give, Seed, Meadow]
+        {
+            ResetPlayer({-850, 1950, 0});
+            Seed(Meadow, TEXT("grass_block"));
+            Give(TEXT("tall_grass"));
+            Click(EKeys::Five);
+            Look(FVector(-550, 1950, 100));
+            Click(EKeys::RightMouseButton);
+        },
+        [this, BlockAt, Drawn, Meadow]
+        {
+            Record(TEXT("tall grass places both halves"),
+                BlockAt(Meadow + FIntVector(0, 0, 1)) == TEXT("tall_grass[half=lower]") &&
+                    BlockAt(Meadow + FIntVector(0, 0, 2)) == TEXT("tall_grass[half=upper]"),
+                BlockAt(Meadow + FIntVector(0, 0, 2)));
+            Drawn(TEXT("both halves are drawn"));
+        });
+    AddCase(
+        TEXT("mine the upper half"), .4,
+        [this, Click, Look]
+        {
+            Click(EKeys::Four);
+            Look(FVector(-550, 1950, 250));
+            Click(EKeys::LeftMouseButton);
+        },
+        [this, Solid, Drawn, Meadow]
+        {
+            Record(TEXT("mining the upper half takes the lower"),
+                !Solid(Meadow + FIntVector(0, 0, 1)) && !Solid(Meadow + FIntVector(0, 0, 2)) && Solid(Meadow),
+                Pawn->Interaction.LastText);
+            Drawn(TEXT("the halves are gone from the view"));
+        });
+
     // 11. Combat: full sword hit, the target's cooldown, a falling critical, recharge and a wall.
     Prepare(TEXT("combat"), false);
     AddCase(

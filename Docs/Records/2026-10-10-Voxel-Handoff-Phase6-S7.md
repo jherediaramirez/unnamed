@@ -73,6 +73,7 @@ Tests: `Blocks.Placement` (truth tables for plants), `Blocks.Survival` (the casc
 | The voxel world's firefly bush draws black with lit fireflies: its overlay is coplanar with the cross, masked in the prepass only. Crop: `Tests/Evidence/2026-10-10/S6b/S6b-voxel-firefly-bush-black-crop.png` | The morning list. Fix: the same 1/512-block lift along the facing in `FEmitter::Model` |
 | Playground water draws every face, so a water face coplanar with a solid neighbour z-fights (the pool stone at (12, 6, 0)); held water meets the same faces where water-holding plants touch solids | Later: face-culled water meshes or a small water inset |
 | 901 ISM section components cost about 0.15 ms render thread and 0.15 ms game thread in the Playground | A budget item. If it grows: merge each section's model parts into one mesh per layer |
+| The Playground's model codes in UV1's second channel reach about 2^21 (texture, tint, light, and the marker at bit 20). The ore looks found float interpolation off by one near 2^23 and keep their words under 2^15. Tonight's shots render correctly (from S6b) | A follow-up of about 30 minutes: split the code across UV1's two channels (each under 2^12), re-save the four `M_Block*` materials, and check a cube with TAA off |
 | The combat "weak hit inside the target's cooldown" check failed once under load (strength 0.52 against 0.44) | Watch it; re-run it alone on a quiet machine if it repeats |
 | Generation places no model block | S8 |
 | The 30-frame jitter shimmer test (S6's G1) | Open |
