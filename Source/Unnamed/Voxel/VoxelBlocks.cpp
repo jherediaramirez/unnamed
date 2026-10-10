@@ -50,6 +50,7 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
     const uint32 WaterFlow = uint32(FMath::Max(0, FindBlockTexture(Assets, TEXT("water_flow"))));
     const uint32 LavaStill = uint32(FMath::Max(0, FindBlockTexture(Assets, TEXT("lava_still"))));
     const FGameplayTag Leaves = FGameplayTag::RequestGameplayTag(TEXT("Block.Leaves"), false);
+    const FGameplayTag BlocksMotion = FGameplayTag::RequestGameplayTag(TEXT("Block.BlocksMotion"), false);
 
     for (int32 Id = 1; Id < Registry.GetStateLimit(); ++Id)
     {
@@ -112,6 +113,11 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
                     Info.Faces[Index] = Codes[Index];
             // A single snow layer has no collision box (26.3's collision is one layer below the outline).
             Info.bSolid = Info.Shape != EVoxelShape::Air && !(Info.Shape == EVoxelShape::Layers && Info.Layers == 1);
+            // Model states (plants and other baked models) have no voxel shape until their meshes exist (phase 6,
+            // S6), but they block motion, and count for the motion-blocking heightmaps, as 26.3's blocks_motion tag
+            // says (cactus, bamboo, mangrove roots, amethyst ...).
+            if (Registry.GetShape(State) == EFoundationBlockShape::Model)
+                Info.bSolid = BlocksMotion.IsValid() && Block.Tags.HasTag(BlocksMotion);
             Info.bCastsOcclusion = Info.Shape == EVoxelShape::Full && Info.Layer != EVoxelLayer::Translucent;
             // Only opaque surfaces hide a neighbour's face; a slab covers just its bottom or top square, snow layers
             // their bottom.
