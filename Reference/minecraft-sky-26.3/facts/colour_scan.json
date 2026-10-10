@@ -1,0 +1,199 @@
+{
+ "method": "A headless 26.3 server on scout N's harness (C:/dev/sandbox/scout-daynight/probes/time_probe.py), superflat plains, with\na data pack adding dn0:white_sky (sky_color and fog_color #ffffff) and dn0:grey_sky (sky_color #808080), filled at\nx 0-15 and 16-31; plains stays at x 32-47. The clock is held (gamerule advance_time false) and set with time set T.\nColours are read with the environment_attribute_check predicate (equality; RGB values as \"#rrggbb\", ARGB ones as\npacked ints). Public commands only. Three parts:\n- controls: at 6000 each biome reads its own sky exactly, and white is not #fefefe;\n- edges: for each colour track, the first T where a plateau value starts or stops matching, found by bisection;\n  the data's keyframe ticks are the reference points;\n- tick 0: the white sky at totals 0, 1, 132, 133, 24000 and 24133.",
+ "setup": [
+  {
+   "command": "gamerule advance_time false",
+   "reply": [
+    "System chat: Game rule advance_time is now set to false"
+   ]
+  },
+  {
+   "command": "gamerule advance_weather false",
+   "reply": [
+    "System chat: Game rule advance_weather is now set to false"
+   ]
+  },
+  {
+   "command": "weather clear 1000000",
+   "reply": [
+    "System chat: Set the weather to clear"
+   ]
+  },
+  {
+   "command": "forceload add 0 0 47 15",
+   "reply": [
+    "System chat: Marked 3 chunks in minecraft:overworld from [0, 0] to [2, 0] to be force loaded"
+   ]
+  },
+  {
+   "command": "fillbiome 0 -64 0 15 -40 15 dn0:white_sky",
+   "reply": [
+    "System chat: 112 biome entry/entries set between 0, -64, 0 and 12, -40, 12"
+   ]
+  },
+  {
+   "command": "fillbiome 16 -64 0 31 -40 15 dn0:grey_sky",
+   "reply": [
+    "System chat: 112 biome entry/entries set between 16, -64, 0 and 28, -40, 12"
+   ]
+  },
+  {
+   "command": "datapack list enabled",
+   "reply": [
+    "System chat: There are 2 data pack(s) enabled: [vanilla (built-in)], [file/dn0_colour (world)]"
+   ]
+  }
+ ],
+ "controls": [
+  {
+   "tick": 6000,
+   "pos": "4 -60 4",
+   "attr": "minecraft:visual/sky_color",
+   "value": "#ffffff",
+   "expected": true,
+   "matches": true
+  },
+  {
+   "tick": 6000,
+   "pos": "20 -60 4",
+   "attr": "minecraft:visual/sky_color",
+   "value": "#808080",
+   "expected": true,
+   "matches": true
+  },
+  {
+   "tick": 6000,
+   "pos": "36 -60 4",
+   "attr": "minecraft:visual/sky_color",
+   "value": "#78a7ff",
+   "expected": true,
+   "matches": true
+  },
+  {
+   "tick": 6000,
+   "pos": "4 -60 4",
+   "attr": "minecraft:visual/fog_color",
+   "value": "#ffffff",
+   "expected": true,
+   "matches": true
+  },
+  {
+   "tick": 6000,
+   "pos": "4 -60 4",
+   "attr": "minecraft:visual/sky_color",
+   "value": "#fefefe",
+   "expected": false,
+   "matches": false
+  }
+ ],
+ "edges": [
+  {
+   "search": "sky white ends",
+   "data_keyframe": 11867,
+   "first_tick_changed": 11868,
+   "attr": "minecraft:visual/sky_color",
+   "pos": "4 -60 4",
+   "value": "#ffffff"
+  },
+  {
+   "search": "sky black starts",
+   "data_keyframe": 13670,
+   "first_tick_changed": 13670,
+   "attr": "minecraft:visual/sky_color",
+   "pos": "4 -60 4",
+   "value": "#000000"
+  },
+  {
+   "search": "sky black ends",
+   "data_keyframe": 22330,
+   "first_tick_changed": 22331,
+   "attr": "minecraft:visual/sky_color",
+   "pos": "4 -60 4",
+   "value": "#000000"
+  },
+  {
+   "search": "sky white starts",
+   "data_keyframe": 24133,
+   "first_tick_changed": 24133,
+   "attr": "minecraft:visual/sky_color",
+   "pos": "4 -60 4",
+   "value": "#ffffff"
+  },
+  {
+   "search": "plains sky ends",
+   "data_keyframe": 11867,
+   "first_tick_changed": 11868,
+   "attr": "minecraft:visual/sky_color",
+   "pos": "36 -60 4",
+   "value": "#78a7ff"
+  },
+  {
+   "search": "fog white ends",
+   "data_keyframe": 11867,
+   "first_tick_changed": 11868,
+   "attr": "minecraft:visual/fog_color",
+   "pos": "4 -60 4",
+   "value": "#ffffff"
+  },
+  {
+   "search": "fog night starts",
+   "data_keyframe": 13670,
+   "first_tick_changed": 13670,
+   "attr": "minecraft:visual/fog_color",
+   "pos": "4 -60 4",
+   "value": "#0f0f16"
+  },
+  {
+   "search": "light white ends",
+   "data_keyframe": 11270,
+   "first_tick_changed": 11271,
+   "attr": "minecraft:visual/sky_light_color",
+   "pos": "36 -60 4",
+   "value": "#ffffff"
+  },
+  {
+   "search": "light blue starts",
+   "data_keyframe": 13140,
+   "first_tick_changed": 13140,
+   "attr": "minecraft:visual/sky_light_color",
+   "pos": "36 -60 4",
+   "value": "#7a7aff"
+  },
+  {
+   "search": "glow off ends",
+   "data_keyframe": 11270,
+   "first_tick_changed": 11271,
+   "attr": "minecraft:visual/sunrise_sunset_color",
+   "pos": "36 -60 4",
+   "value": "#00ffe533"
+  }
+ ],
+ "tick0": [
+  {
+   "total": 0,
+   "white_sky_is_ffffff": false
+  },
+  {
+   "total": 1,
+   "white_sky_is_ffffff": false
+  },
+  {
+   "total": 132,
+   "white_sky_is_ffffff": false
+  },
+  {
+   "total": 133,
+   "white_sky_is_ffffff": true
+  },
+  {
+   "total": 24000,
+   "white_sky_is_ffffff": false
+  },
+  {
+   "total": 24133,
+   "white_sky_is_ffffff": true
+  }
+ ],
+ "checks": 136,
+ "seconds": 35
+}

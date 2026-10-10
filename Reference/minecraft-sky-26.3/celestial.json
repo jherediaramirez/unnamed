@@ -1,0 +1,94 @@
+{
+ "minecraft_version": "26.3",
+ "atlas": "assets/minecraft/atlases/celestials.json",
+ "sun": {
+  "texture": "assets/minecraft/textures/environment/celestial/sun.png",
+  "size": [
+   32,
+   32
+  ],
+  "png_sha256": "c7188d5685ec66b0200d716e53161803c119f609d9b2a67f6a86b30bd96043eb"
+ },
+ "moon_phases": [
+  {
+   "index": 0,
+   "phase": "full_moon",
+   "texture": "assets/minecraft/textures/environment/celestial/moon/full_moon.png",
+   "size": [
+    32,
+    32
+   ],
+   "png_sha256": "46e8a21f0045ceeba2cea48e5457a2fe8130ec9cdecb729a64a74a8acf771d61"
+  },
+  {
+   "index": 1,
+   "phase": "waning_gibbous",
+   "texture": "assets/minecraft/textures/environment/celestial/moon/waning_gibbous.png",
+   "size": [
+    32,
+    32
+   ],
+   "png_sha256": "94acef9f6a620c907de58f3e31a87cf1d5830891e4325ff381cc11ea42961b8c"
+  },
+  {
+   "index": 2,
+   "phase": "third_quarter",
+   "texture": "assets/minecraft/textures/environment/celestial/moon/third_quarter.png",
+   "size": [
+    32,
+    32
+   ],
+   "png_sha256": "1313962d00b7e2dc2666bef8c7fe95df0761e5b76c22b3b35986b39864d573d8"
+  },
+  {
+   "index": 3,
+   "phase": "waning_crescent",
+   "texture": "assets/minecraft/textures/environment/celestial/moon/waning_crescent.png",
+   "size": [
+    32,
+    32
+   ],
+   "png_sha256": "afece7904b3637143712a2a03f88e2d280f0c760e230537bb5bac2fc5c0506ee"
+  },
+  {
+   "index": 4,
+   "phase": "new_moon",
+   "texture": "assets/minecraft/textures/environment/celestial/moon/new_moon.png",
+   "size": [
+    32,
+    32
+   ],
+   "png_sha256": "2abe081af29b67708ee32aa46560e24084fc7bc89bad22cdcd835c5c641215b6"
+  },
+  {
+   "index": 5,
+   "phase": "waxing_crescent",
+   "texture": "assets/minecraft/textures/environment/celestial/moon/waxing_crescent.png",
+   "size": [
+    32,
+    32
+   ],
+   "png_sha256": "29412ef1fe5d7ad056d616163be824bae08208114eb5935da81c95517f933b02"
+  },
+  {
+   "index": 6,
+   "phase": "first_quarter",
+   "texture": "assets/minecraft/textures/environment/celestial/moon/first_quarter.png",
+   "size": [
+    32,
+    32
+   ],
+   "png_sha256": "19c18579d421520444118a7e45c1ba66420e5f239c76a72a166b1e1d50f7e3c5"
+  },
+  {
+   "index": 7,
+   "phase": "waxing_gibbous",
+   "texture": "assets/minecraft/textures/environment/celestial/moon/waxing_gibbous.png",
+   "size": [
+    32,
+    32
+   ],
+   "png_sha256": "4e147710da120c85442cd7429d1d5aacc1fc4a29e0cad54a110de5c8857d12d0"
+  }
+ ]
+}
