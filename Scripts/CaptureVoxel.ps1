@@ -31,7 +31,8 @@ param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[in
 # (no sweep), each with MegaLights 0 and 1, under the room's frozen exposure: the room with 1 torch, a close crop of that
 # torch, the room with 4 torches and T1's probe cave with 10; look.txt (mean luma, saturated and black shares, settings,
 # voxel.LightsInfo per shot) and look-<view>-ml<0|1>.png, in a folder ending in -look.
-# -TorchGlow <0-15> meshes the torch models at that glow from the start (-VoxelTorchGlow=N, voxel.TorchGlow; 14 is today's).
+# -TorchGlow <0-15> meshes the torch models at that glow from the start (-VoxelTorchGlow=N, voxel.TorchGlow; the default 1
+# is warm A's whole torch (T3b), 0 leaves only the flame glowing at its own 1, 14 is the old white torch).
 # Evidence is never overwritten.
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent

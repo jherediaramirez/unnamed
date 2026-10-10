@@ -12,7 +12,7 @@ class UStaticMesh;
 // (EFoundationFace) in channel 1, which the block materials use to pick that face's code. The pivot is the
 // cell's minimum corner.
 //
-// Baked models (FFoundationBlockRegistry::GetModelQuads) follow the kinds, one mesh each (mesh Count + model index).
+// Baked models (GetDrawnModelQuads) follow the kinds, one mesh each (mesh Count + model index).
 // Their UV 0 is the quad's texture UV, and UV 1 is (shade face, the quad's own code): its texture, tint bit and element
 // light, marked with ModelCodeBit, which the block materials read instead of the instance's face code. Normals and
 // tangents follow the shade face, as the voxel world's do (crosses are lit as up). The cube kinds keep UV 1's second
@@ -54,6 +54,20 @@ namespace FoundationBlockMeshes
     // across the whole quad beneath it and draw its transparent texels there.
     constexpr float OverlayLift = 1.f / 512;
     UNNAMED_API FVector3f GetOverlayLift(TConstArrayView<FFoundationModelQuad> Quads, int32 Index);
+
+    // The torch's flame (torch session T3b; Jesus: only the flame glows): torch.png's rows 6 and 7, above the stick's
+    // rows 8-15. A quad textured `torch` that crosses UV v = TorchFlameV is cut there into the flame above and the
+    // stick below. The flame, and a torch quad wholly above the line (the top face), carries TorchFlameLight as its
+    // element light; the stick keeps the baked 0. Torch-rule states themselves glow at voxel.TorchGlow (GetDrawnLight).
+    constexpr float TorchFlameV = 8.f / 16;
+    constexpr int32 TorchFlameLight = 1;
+    // A model's quads as both worlds draw them (these model meshes, and the voxel world's table): the registry's, in
+    // order, with each torch quad cut at the flame (its flame piece first). The registry keeps the baked quads.
+    UNNAMED_API TArray<FFoundationModelQuad> GetDrawnModelQuads(const FFoundationBlockRegistry& Registry, int32 Model);
+    // The light a state's instances glow at: torch-rule states (torch, wall_torch) at voxel.TorchGlow, read when the
+    // instance is made; every other state at its own light emission.
+    UNNAMED_API int32 GetDrawnLight(const FFoundationBlockRegistry& Registry, FFoundationBlockState State);
+
     // A model's mesh: its quads but the repeats, in order, four vertices each. Null when nothing is left.
     UNNAMED_API UStaticMesh* BuildModel(UObject* Outer, TConstArrayView<FFoundationModelQuad> Quads);
 }

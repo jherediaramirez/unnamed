@@ -1,22 +1,30 @@
 # Torch handoff: after T3 (the look round, then particles)
 
-Start here for the next torch work. T3 (placeable torch with light) is done on `feature/voxel-t3`; its record is [2026-10-10-Torch-T3.md](2026-10-10-Torch-T3.md). Nothing in T3 changed the default game's look: the torch lights are live only with MegaLights on, and every look option is a switch at today's value.
+Start here for the next torch work. T3 (placeable torch with light) and T3b (the look round) are done on `feature/voxel-t3`. Their records are [2026-10-10-Torch-T3.md](2026-10-10-Torch-T3.md) and [2026-10-10-Torch-T3b.md](2026-10-10-Torch-T3b.md).
+
+T3b changed the default look:
+- MegaLights is on for the whole project.
+- The torch lights are warm A (600 cd, 2,200 K).
+- The torch glows at level 1 instead of 14.
+- The flame's quads are cut from the stick, so a flame-only glow is one switch away (`voxel.TorchGlow 0`).
 
 ## Reading list
 
-1. [2026-10-10-Torch-T3.md](2026-10-10-Torch-T3.md), all of it: what was built, the gates, the look pack and the known issues.
-2. [2026-10-10-Torch-Light-Probe.md](2026-10-10-Torch-Light-Probe.md), "Method" and "What T3 needs": the capture method the gates reuse.
-3. [2026-10-10-Torch-Scout-G-Research.md](2026-10-10-Torch-Scout-G-Research.md), section 2 "T4" and "T5", section 4.1 (the torch's model and texture), and section 4.6 P5 (the particle-rate probe).
-4. `Tests/Probes/README.md`, only if placement changes again.
-5. [Blocks.md](../Blocks.md), the torch paragraph and "Light sources".
+1. [2026-10-10-Torch-T3b.md](2026-10-10-Torch-T3b.md), all of it: the look round, why the stick is tan for now, and T3c.
+2. [2026-10-10-Torch-T3.md](2026-10-10-Torch-T3.md), all of it: what was built, the gates, the look pack and the known issues.
+3. [2026-10-10-Torch-Light-Probe.md](2026-10-10-Torch-Light-Probe.md), "Method" and "What T3 needs": the capture method the gates reuse.
+4. [2026-10-10-Torch-Scout-G-Research.md](2026-10-10-Torch-Scout-G-Research.md), section 2 "T4" and "T5", section 4.1 (the torch's model and texture), and section 4.6 P5 (the particle-rate probe).
+5. `Tests/Probes/README.md`, only if placement changes again.
+6. [Blocks.md](../Blocks.md): the torch paragraph, "Model meshes" (the flame cut) and "Light sources".
 
 ## Where it stands
 
 | Session | What | State |
 |---|---|---|
-| T3 | Placement by look, survival, drop, the light pool, the gates | done; the look round waits for Jesus's pick |
-| **T3 look round** | **Apply Jesus's pick (warm A) and, if he confirms, MegaLights on** | **next (short)** |
-| Particles | A flame-and-smoke emitter at pooled torches | after the look round (Jesus: "later, not in T3") |
+| T3 | Placement by look, survival, drop, the light pool, the gates | done |
+| T3b | The look round: warm A, MegaLights on, the flame cut; the default glow 1 (manager's call B) | done |
+| **T3c** | **The brown stick: a glow under level 1 for the torch's stick, so `voxel.TorchGlow 0` can become the default** | **next (short), after S9b's commit: it touches `VoxelMesher.cpp`, which S9b edits** |
+| Particles | A flame-and-smoke emitter at pooled torches | after T3c (Jesus: "later, not in T3") |
 | T4 | Held light (a setting) | only if Jesus asks for it |
 | T5 | Block-light field (gameplay light: spawning, melting) | later |
 
@@ -35,54 +43,32 @@ Start here for the next torch work. T3 (placeable torch with light) is done on `
 
 - Torches place, survive and drop as measured. Probe P3's matrix lives in `Tests/Probes`, not in the blocks reference (Jesus, Q1 (a)).
 - One MegaLights point light per light source at level 10 or more: torches, glowing cubes and emitting models, never lava. The pool takes the nearest 64 within 48 blocks (at most 100) and merges sources under 2 blocks apart.
-- The lights are presentation only. The pool is live only while `r.MegaLights.EnableForProject` is 1. `Config/` stays at 0 until Jesus decides.
+- The lights are presentation only. The pool is live only while `r.MegaLights.EnableForProject` is 1, which is now the project's setting (Jesus, T3b: "it's worth it").
+- Warm A for the lights: 600 cd, 2,200 K, inverse square (Jesus, T3b).
+- Only the flame glows, the stick in its real brown with no glow (Jesus, T3b). Built as the flame cut (`FoundationBlockMeshes::GetDrawnModelQuads`). It is not the default yet: the default glow is 1, warm A as Jesus saw it (manager's call B), until T3c gives the stick a glow under level 1.
 - Particles and a held light are not in T3 (Jesus).
 
-## The look round (next)
+## The look round (done in T3b)
 
-Jesus's direction: "It shouldn't look blown out. I want it to give.. warm look like you would see in tomb raider. You should still see the texture under it."
+Jesus decided both looks after seeing T3's look pack: warm A with MegaLights on for the whole project, and only the flame glowing. He accepted the MegaLights cost (+0.13 ms GPU and about +1.4 ms of game thread with no lights) as "worth it". T3b built both. The flame-only stick came out black in a cave, so the default is warm A's whole-torch glow 1 for now. The details are in [the T3b record](2026-10-10-Torch-T3b.md).
 
-The pack (paths in the T3 record, section 4) compared today's look with two warm options at the same views (the torch room with 1 and 4 torches, a torch crop, the probe cave with 10 torches), with MegaLights on and off.
+## T3c: the brown stick (next)
 
-**Jesus's decisions (confirmed through the manager, October 10, 2026):**
-- (a) Warm A (600 cd, 2,200 K, inverse square), with MegaLights on for the whole project (`r.MegaLights.EnableForProject=1`). He weighed the cost: "it's worth it".
-- (b) Only the flame glows. The stick shows its real texture (vanilla's brown) with no glow. This is torch-only: glow lichen stays as is.
+- **Goal:** `voxel.TorchGlow 0` (only the flame glows) with the stick reading its texture's brown at the cave exposure floor. torch.png's stick texels average sRGB 110/87/55. Then make 0 the default.
+- **Why it needs code:** glow steps are whole levels. Level 1 (vertex G 17) gives the stick 202/176/126, a tan about 1.8 times the texture; 0 gives 9/3/1. Lighting cannot fill the gap: the torch quads are lit as up, so the 2 x 2 top face shadows the stick from its own light, and unshadowed the stick would be blown out.
+- **Route:** a per-quad glow finer than a level, for the stick quads only.
+  - **Voxel world:** a field on `FVoxelModelQuad` in vertex-G units (the core struct). `FEmitter::Model` (`VoxelMesher.cpp`) then emits the brightest of the state's G, the element light's G and that field.
+  - **Playground:** the own code's element light (bits 16-19, under 2^21) has no room. Either carry the glow in UV 1's first channel next to the shade face, or widen the field and check the float's precision. Either way `CreateBlockMaterials.py` changes and `M_Block*` are re-saved (Content).
+  - `GetDrawnModelQuads` sets the stick quads' glow.
+- **Sweep:**
+  - Run `CaptureVoxel.ps1 -TorchLook` at stick G 2, 4, 6, 8 and 11 (about 0.1 to 0.65 of a level).
+  - Take the stick's mean sRGB in the crop: the box from (730, 330) to (860, 820) of `look-crop-ml1.png`, as T3b measured.
+  - Pick the value nearest 110/87/55 that isn't blown.
+  - Send the pick to the manager with captures, using T3b's warm A capture as the control.
+- **Pins:** none should move. No generated world holds a torch, so `Mesher.Digest` stays, and the drawn quad counts stay at 2,444. Re-run `Voxel.Lights` (its flame rows) and `Blocks.ModelMeshes`.
+- **When:** after S9b's commit (S9b edits `VoxelMesher.cpp`), in the main lane or as a lane after it.
 
-Then:
-
-1. **Defaults:** in `Source/Unnamed/Voxel/VoxelLights.cpp`, set the file-local cvars' defaults:
-   - `voxel.TorchGlow` 14 -> 1 (warm A), or 0 for the stick once the flame glows on its own (b);
-   - `voxel.LightIntensity` 1000 -> 600;
-   - `voxel.LightTemperature` 3000 -> 2200;
-   - `voxel.LightFalloff` stays 0.
-   - Update `Docs/Blocks.md` "Light sources" and the tests that pin those defaults (`Voxel.Lights`, `Voxel.LightPool`).
-2. **The glow change** alters the default (MegaLights off) look too: a low-glow torch lights nothing without MegaLights. That is why it goes with (a).
-   - It is torch-only and changes no golden, because no generated world holds a torch.
-   - Re-run TestVoxel (Mesher.Digest) to prove it.
-3. **MegaLights project-wide** (confirmed, a): `r.MegaLights.EnableForProject=1` in `Config/DefaultEngine.ini` [/Script/Engine.RendererSettings].
-   - Cost with no lights: +0.13 ms GPU and about +1.4 ms of game thread.
-   - Cost with torches: +0.6 / +0.9 / +1.45 ms GPU at 1 / 10 / 100.
-   - Re-measure the Playground probe FPS and the T3 gates (`CaptureVoxel.ps1 -TorchGates`, quiet window), because the floor now applies everywhere.
-4. **Flame-only (b), confirmed:** the flame texels keep a glow and the stick gets 0. The routes:
-   - **Element light (most likely):** S6b's per-quad element light, the firefly bush's overlay path (Blocks.md "Model meshes": UV 1 bits 16-19, "emit the brighter of the state's light and the element light").
-     - Split the torch's quads so the flame part, the top 2 pixels of each side plus the top face (UV rows 6-8), carries an element light. The stick part gets none, and the torch state's glow goes to 0.
-     - The split happens where the torch's model quads are built, for both the voxel table and the Playground's model meshes.
-     - It changes the torch's quad count, so `Blocks.ModelMeshes` (2,440 baked, 2,424 drawn) and the mesher's model pins move.
-   - **A per-texel emissive mask in the chunk and block materials:** Content, shared with every emissive model block. Lichen must not change.
-   - Both touch shared code or pinned counts. **Plan first, list the files and the pins that would move, and stop before committing.** A pinned count, golden or `Mesher.Digest` that moves needs the manager's go; this lane does not re-record them.
-   - `voxel.TorchGlow 0` alone (the stick lit only by its light, the flame dark) is the free fallback to show beside it: `-TorchLook -TorchGlow 0`.
-5. **Re-run** the look capture (`CaptureVoxel.ps1 -TorchLook`) after the change, plus the Playground probe and the e2e checks (create-world, flight).
-6. **Merge (one, for T3 and T3b together):** `feature/voxel-t3` was not merged in T3. T3b commits its change on `feature/voxel-t3` when green. Then, on the manager's go and after S9a has committed, it merges `feature/voxel-world` in once, never with a rebase or force.
-   - Rebuild with `-DisableAdaptiveUnity`.
-   - Run every suite once, plus the radius-8 hashes and `Mesher.Digest`, and send one combined report.
-   - `Scripts/TestVoxel.ps1`'s expected count becomes main's count plus T3's 2 (`Voxel.Lights`, `Voxel.LightPool`). Say how you got it.
-   - `Docs/VoxelWorld.md` and the records index are the main lane's. Add T3's lines (the light pool in VoxelWorld.md, this record and handoff in the index) after the merge.
-
-Options Jesus may ask for that T3 did not build:
-- **Flame-only emission:** the 4 flame texels glow and the stick doesn't. It needs a per-texel mask in the chunk materials or split torch quads in the mesher. Either touches shared code: glow lichen goes through the same path. Ask before touching it.
-- **Exposure:** caves and the torch room sit on the project's auto-exposure floor (EV100 6; the read-back exposure scale there is 0.0078125 = 2^-7, which T3's notes called "EV 7"). A darker or brighter cave changes the whole project's look.
-
-## Particles (after the look round)
+## Particles (after T3c)
 
 - **Scope** (scout G section 2, T3 "Particles"): a small Niagara flame-and-smoke emitter at each pooled torch within 16 blocks, at 2 to 4 particles per second.
 - **First measure the rates black-box:** probe P5 in a vanilla client, or a public-API run if one can observe particle spawns.
@@ -99,7 +85,10 @@ Options Jesus may ask for that T3 did not build:
 - **Survival:** `FoundationAuthority.cpp` `CanPlantSurvive` (torch-rule blocks) inside `SettlePlants`. `FoundationBlockRegistry.cpp` sets `bTorchRule` and gives a wall block its standing block's drop.
 - **Pick:** `FoundationInteraction.cpp` `Pick` matches `PlacesWallBlock`.
 - **The light core:** `Source/Unnamed/Voxel/VoxelLightSources.*`: the light table, the light points, `GatherSources` (the column scan) and `PickLights`.
-- **The pool:** `Source/Unnamed/Voxel/VoxelLights.*` (`FVoxelLights`): every `voxel.Light*` cvar, `voxel.TorchGlow`, `voxel.LightsInfo`, the falloff option and the torch-glow table copy.
+- **The pool:** `Source/Unnamed/Voxel/VoxelLights.*` (`FVoxelLights`): every `voxel.Light*` cvar, `voxel.TorchGlow` (`DefaultTorchGlow`), `voxel.LightsInfo`, the falloff option and the torch-glow table copy.
+- **The flame cut (T3b):**
+  - `FoundationBlockMeshes::GetDrawnModelQuads` (`TorchFlameV`, `TorchFlameLight`, `CutAtTorchFlame`) is used by `VoxelBlocks.cpp` `CopyModels` and by `UFoundationInteractionView::GetBlockMesh`.
+  - `GetDrawnLight` gives torch-rule instances `voxel.TorchGlow` in `MakeCustomData`.
 - **Hooks:**
   - `VoxelColumnPipeline.*`: the mesh job gathers sources, and `SetLightTable`;
   - `VoxelWorldSubsystem.cpp`: hand-over on apply, release and stop;
@@ -119,8 +108,8 @@ Options Jesus may ask for that T3 did not build:
 
 ## Known issues (with when)
 
-- **The torch glows white with MegaLights off:** S6's whole-model emission at 14. It is today's default until the look round.
-- **The same root makes glow lichen read near-white** at cave exposure. Untouched by T3; it needs its own look call (main lane or a look session).
+- **The torch's stick is tan, not brown** (glow 1). When: T3c.
+- **Glow lichen reads near-white** at cave exposure (whole-model emission at 7). T3 and T3b left it untouched; it needs its own look call (main lane or a look session).
 - **Lit full cubes have no per-state light:** DA_Blocks imports per-state light only for model blocks. A lit furnace, lit copper bulb, lit redstone lamp or lit redstone ore reads 0, so it neither glows nor gets a pool light.
   - When: the next blocks-import session (importer change plus reimport).
 - **Coral fans:** `CheckPlacement` sends every item with `PlacesWallBlock` through the torch rule, and `bTorchRule` covers every `ItemWallBlock` pair.
@@ -162,10 +151,36 @@ The probe sandbox is `C:\dev\sandbox\t3-torch-probe\`.
 
 ## Open questions (with options)
 
-1. **The torch look:** warm A, confirmed by Jesus.
-2. **MegaLights project-wide:** on, confirmed by Jesus ("it's worth it").
-3. **Glow lichen's white glow:** a look call for the main lane, with the same options as the torch (a lower glow level, or a texel mask).
-4. **Flame-only glow** (confirmed by Jesus): which route?
-   - (a) split torch quads carrying an element light (the pins move);
-   - (b) a material mask (shared materials).
-   - *Recommendation:* (a). It is torch-only, and its pin moves come from a known source. Plan it and send the manager the list of pins that move before you build.
+1. **Glow lichen's white glow:** a look call for the main lane. The options are the torch's: a lower glow level, or a glow under level 1 once T3c builds one.
+2. **T3c's Playground route:** UV 1's first channel, or a wider own-code field (see T3c). *Recommendation:* UV 1's first channel; it leaves the own code's precision bound alone.
+
+## For the next session in this worktree (S7b)
+
+What T3b changed that S7b meets:
+- `Config/DefaultEngine.ini` turns MegaLights on, which costs about 1.4 ms of game thread with no lights.
+- `CopyModels` copies the drawn quads, so the voxel table has 2,444 model quads (`Mesher.ModelData`).
+- `MakeCustomData` reads `voxel.TorchGlow` for torches.
+
+## Short prompt (T3b, as sent)
+
+T3's handoff didn't contain the prompt that started T3b. Here it is, verbatim:
+
+```text
+Torch T3b: the torch look round, on Jesus's confirmed decisions. Work in the worktree C:\dev\projects\Unnamed-s5 on branch feature/voxel-t3, which holds T3's five commits (03a69d1..a1316ae), not yet merged. Read Docs/Records/2026-10-10-Torch-Handoff-T4.md in full, and sections 4 and 5 of Docs/Records/2026-10-10-Torch-T3.md.
+
+Jesus confirmed:
+1. Warm A with MegaLights on for the whole project. Warm A is voxel.TorchGlow 1, voxel.LightIntensity 600 and voxel.LightTemperature 2200, inverse square. MegaLights is r.MegaLights.EnableForProject=1 in Config/DefaultEngine.ini.
+2. Only the flame glows. The stick shows its real brown texture with no glow, torch-only; glow lichen stays as it is.
+
+Plan first. List every file, plus every pinned count, golden or hash that would move, against the main lane's dirty files; the flame-only routes are in the handoff. Send the list to the manager for confirmation. Stop before anything touches shared emission or mesher code or moves Mesher.Digest.
+
+Then:
+- Build the change.
+- Take a final pair against today's look: CaptureVoxel.ps1 -TorchLook, with -TorchGlow for the old look.
+- In a quiet window, re-run the T3 gates (-TorchGates) and the Playground probe.
+- Commit when green.
+- On the manager's go, and after S9a has committed, merge feature/voxel-world into the branch once (no rebase, no force). Rebuild with -DisableAdaptiveUnity, then run every suite plus the radius-8 hashes and Mesher.Digest. TestVoxel's expected count becomes main's count plus T3's 2; say how you got it.
+- Send one combined report.
+
+Report to the manager chat that started you.
+```

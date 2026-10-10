@@ -28,8 +28,9 @@ public:
         int32 Count = 64;
         // voxel.LightRadius: sources farther than this from the camera (blocks) get no light.
         double Radius = 48;
-        // voxel.LightIntensity: candelas of one level-14 source; a light gets it times its pick's weight.
-        float IntensityCd = 1000;
+        // voxel.LightIntensity: candelas of one level-14 source; a light gets it times its pick's weight. 600 cd at
+        // 2,200 K with inverse-squared falloff is warm A, Jesus's pick in the torch look round (T3b).
+        float IntensityCd = 600;
         // voxel.LightFalloff: 0 for inverse-squared falloff in candelas (IntensityCd); above 0 (at most 16) the lights'
         // falloff exponent instead, with Brightness as their unitless intensity.
         float Falloff = 0;
@@ -37,7 +38,7 @@ public:
         // it times its pick's weight.
         float Brightness = 700;
         // voxel.LightTemperature: the lights' colour temperature (K).
-        float Temperature = 3000;
+        float Temperature = 2200;
 
         bool operator==(const FSettings& Other) const = default;
     };
@@ -54,8 +55,13 @@ public:
     // voxel.LightMinLevel: the light level a state needs for a light (VoxelLightSources::MakeTable). A change makes a
     // new light table, which columns use from their next mesh (voxel.Regenerate meshes them all again).
     static int32 ReadMinLevel();
-    // voxel.TorchGlow (0-15, default 14): the glow the torch-rule models are meshed with
-    // (VoxelLightSources::MakeTorchGlowTable); the world reads it when it is built and at voxel.Regenerate.
+    // voxel.TorchGlow (0-15, default DefaultTorchGlow): the glow the torch-rule models are meshed with
+    // (VoxelLightSources::MakeTorchGlowTable); the world reads it when it is built and at voxel.Regenerate, the
+    // Playground as it makes a torch's instance (FoundationBlockMeshes::GetDrawnLight). The flame glows on its own
+    // (FoundationBlockMeshes::TorchFlameLight). 1 is warm A, the whole torch at 1, as Jesus picked it (T3b); 0 leaves
+    // only the flame glowing, but the stick then reads black in a cave (the torch's top face shadows it from its own
+    // light), so it waits for a stick glow under level 1 (T3c); 14 is the whole torch's old white glow.
+    static constexpr int32 DefaultTorchGlow = 1;
     static int32 ReadTorchGlow();
     // -VoxelTorchGlow=N on the command line sets voxel.TorchGlow (by command line, so the console still wins later).
     static void SetTorchGlowFromCommandLine();

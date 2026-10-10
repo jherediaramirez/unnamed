@@ -1109,7 +1109,8 @@ void FVoxelLightShots::Finish(AVoxelWorld& World)
         Line(
             TEXT("Look pairs (luma 0.2126 R + 0.7152 G + 0.0722 B of the saved sRGB pixels, 0-255; saturated: luma 250 "
                  "or more; black: luma 5 or less; glow: the level the torch models are meshed with, voxel.TorchGlow at "
-                 "the world's build; intensity in cd with falloff 0 (1/d^2), brightness unitless above 0):"));
+                 "the world's build, the flame at 1 or more on its own; intensity in cd with falloff 0 (1/d^2), "
+                 "brightness unitless above 0):"));
         Line(
             TEXT("| Shot | MegaLights | Mean luma | Saturated % | Black % | Glow | Intensity | Temperature | Falloff | "
                  "Brightness | Exposure |"));

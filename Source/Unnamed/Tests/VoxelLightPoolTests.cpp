@@ -111,6 +111,13 @@ bool FVoxelLightPoolTest::RunTest(const FString& Parameters)
         Passed += bOk;
         TestTrue(What, bOk);
     };
+    // The defaults the console variables start at: warm A, Jesus's pick in the torch look round (T3b).
+    {
+        const FVoxelLights::FSettings Defaults;
+        Row(TEXT("Defaults: 64 lights within 48 blocks, 600 cd at 2,200 K, inverse squared (falloff 0)"),
+            Defaults.Count == 64 && Defaults.Radius == 48 && Defaults.IntensityCd == 600 &&
+                Defaults.Temperature == 2200 && Defaults.Falloff == 0);
+    }
     FVoxelLights::FSettings Live;
     Live.bLive = true;
     Live.Count = 4;

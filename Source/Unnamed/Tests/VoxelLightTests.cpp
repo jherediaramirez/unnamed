@@ -1,5 +1,6 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Blocks/VoxelBlockTable.h"
+#include "Foundation/FoundationBlockMeshes.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "HAL/PlatformTime.h"
 #include "Meshing/VoxelMesher.h"
@@ -9,6 +10,7 @@
 #include "Storage/VoxelSection.h"
 #include "Voxel/VoxelBlocks.h"
 #include "Voxel/VoxelLightSources.h"
+#include "Voxel/VoxelLights.h"
 #include "VoxelConstants.h"
 
 namespace
@@ -356,6 +358,142 @@ bool FVoxelLightsTest::RunTest(const FString& Parameters)
                 BlockTable.Get(StateOf(TEXT("torch"))).LightEmission == 14);
         Row(TEXT("Torch glow: 14 gives a table equal to the base (the base itself)"),
             &*Glow14 == &BlockTable && Same14 == BlockTable.GetStateCount());
+    }
+
+    // --- Torch flame (T3b; Jesus: only the flame glows) ----------------------------------------------------------
+    {
+        using namespace FoundationBlockMeshes;
+        Row(TEXT("Torch flame: voxel.TorchGlow defaults to 1 (warm A), and the flame glows at 1 on its own"),
+            FVoxelLights::DefaultTorchGlow == 1 && TorchFlameLight == 1 && TorchFlameV == .5f);
+        // The drawn quads: every model but the torch's as baked; a torch model's four sides cut at the flame line,
+        // covering what they covered (the same area), and nothing else moved.
+        auto SameQuad = [](const FFoundationModelQuad& A, const FFoundationModelQuad& B)
+        {
+            for (int32 Corner = 0; Corner < 4; ++Corner)
+                if (A.Positions[Corner] != B.Positions[Corner] || A.UVs[Corner] != B.UVs[Corner]) return false;
+            return A.Texture == B.Texture && A.TintIndex == B.TintIndex && A.CullFace == B.CullFace &&
+                A.Facing == B.Facing && A.Shade == B.Shade && A.Light == B.Light;
+        };
+        auto Area = [](const FFoundationModelQuad& Quad)
+        {
+            return .5f *
+                FVector3f::CrossProduct(Quad.Positions[2] - Quad.Positions[0], Quad.Positions[3] - Quad.Positions[1])
+                    .Size();
+        };
+        int32 Unchanged = 0, Cut = 0, CutQuads = 0, AreaKept = 0, SharedCuts = 0;
+        for (int32 Model = 0; Model < Registry.GetModelCount(); ++Model)
+        {
+            const TConstArrayView<FFoundationModelQuad> Baked = Registry.GetModelQuads(Model);
+            const TArray<FFoundationModelQuad> Drawn = GetDrawnModelQuads(Registry, Model);
+            bool bSame = Drawn.Num() == Baked.Num();
+            for (int32 Index = 0; bSame && Index < Baked.Num(); ++Index)
+                bSame = SameQuad(Drawn[Index], Baked[Index]);
+            if (bSame)
+            {
+                ++Unchanged;
+                continue;
+            }
+            ++Cut;
+            CutQuads += Drawn.Num() - Baked.Num();
+            float BakedArea = 0, DrawnArea = 0;
+            for (const FFoundationModelQuad& Quad : Baked)
+                BakedArea += Area(Quad);
+            for (const FFoundationModelQuad& Quad : Drawn)
+                DrawnArea += Area(Quad);
+            AreaKept += FMath::IsNearlyEqual(BakedArea, DrawnArea, 1e-5f);
+            // Each cut's flame and stick pieces share exactly the two corners of the cut (same position and UV).
+            for (int32 Index = 0; Index < Drawn.Num(); ++Index)
+                for (int32 Other = Index + 1; Other < Drawn.Num(); ++Other)
+                {
+                    if (Drawn[Index].Light == Drawn[Other].Light) continue;
+                    int32 Shared = 0;
+                    for (int32 Corner = 0; Corner < 4; ++Corner)
+                        for (int32 OtherCorner = 0; OtherCorner < 4; ++OtherCorner)
+                            Shared += Drawn[Index].Positions[Corner] == Drawn[Other].Positions[OtherCorner] &&
+                                Drawn[Index].UVs[Corner] == Drawn[Other].UVs[OtherCorner];
+                    SharedCuts += Shared == 2;
+                }
+        }
+        Row(FString::Printf(
+                TEXT("Torch flame: only the 5 torch models are cut (%d cut, %d as baked of %d), 4 quads more "
+                     "each (%d), covering the same area (%d)"),
+                Cut, Unchanged, Registry.GetModelCount(), CutQuads, AreaKept),
+            Cut == 5 && Unchanged == Registry.GetModelCount() - 5 && CutQuads == 20 && AreaKept == 5);
+        Row(FString::Printf(
+                TEXT("Torch flame: each of the 20 cuts' two pieces share the cut's two corners exactly (%d)"),
+                SharedCuts),
+            SharedCuts == 20);
+
+        // One row per torch-rule state: with voxel.TorchGlow 0 (only the flame glowing) it meshes at glow 0 and draws 5
+        // flame quads at 1 (the four cut sides and the top, all above the line) and 5 stick quads at 0 (the four sides
+        // and the bottom, all below it).
+        const TSharedRef<const FVoxelBlockTable> Default =
+            VoxelLightSources::MakeTorchGlowTable(Registry, BlocksRef, 0);
+        int32 TorchRuleStates = 0;
+        for (int32 Id = 1; Id < BlockTable.GetStateCount(); ++Id)
+        {
+            const FFoundationBlockState State{uint16(Id)};
+            if (!Registry.IsKnown(State) || !Registry.GetBlock(State).bTorchRule) continue;
+            ++TorchRuleStates;
+            const FVoxelStateInfo& Info = Default->Get(uint16(Id));
+            int32 Flame = 0, Stick = 0, Other = 0;
+            const int32* Part = Default->GetModelParts(Info);
+            for (int32 Index = 0; Index < Info.ModelPartCount; ++Index, Part += 1 + Part[0])
+                for (int32 Alternative = 0; Alternative < Part[0]; ++Alternative)
+                    for (const FVoxelModelQuad& Quad : Default->GetModelQuads(Part[1 + Alternative]))
+                    {
+                        float MinV = 1, MaxV = 0;
+                        for (const FVector2f& UV : Quad.UVs)
+                        {
+                            MinV = FMath::Min(MinV, UV.Y);
+                            MaxV = FMath::Max(MaxV, UV.Y);
+                        }
+                        const bool bFlame = Quad.Light == TorchFlameLight && MaxV <= TorchFlameV;
+                        const bool bStick = !bFlame && Quad.Light == 0 && MinV >= TorchFlameV;
+                        Flame += bFlame;
+                        Stick += bStick;
+                        Other += !bFlame && !bStick;
+                    }
+            Row(FString::Printf(TEXT("Torch flame: %s meshes at glow %d with %d flame quads at %d, %d stick quads at 0 "
+                                     "and %d others; the Playground draws it at glow %d"),
+                    *Registry.ToString(State), Info.LightEmission, Flame, TorchFlameLight, Stick, Other,
+                    GetDrawnLight(Registry, State)),
+                Info.LightEmission == 0 && Info.ModelPartCount == 1 && Flame == 5 && Stick == 5 && Other == 0 &&
+                    GetDrawnLight(Registry, State) == FVoxelLights::ReadTorchGlow());
+        }
+        // The standing torch's stick (0 to 10/16 high, v 1 to 6/16) is cut 8/16 high, where the texture's row 8 starts.
+        {
+            const FVoxelStateInfo& Standing = Default->Get(StateOf(TEXT("torch")));
+            float FlameLow = 2, StickHigh = -1;
+            const int32* Part = Default->GetModelParts(Standing);
+            for (const FVoxelModelQuad& Quad : Default->GetModelQuads(Part[1]))
+                for (const FVector3f& Position : Quad.Positions)
+                {
+                    if (Quad.Light)
+                        FlameLow = FMath::Min(FlameLow, Position.Z);
+                    else
+                        StickHigh = FMath::Max(StickHigh, Position.Z);
+                }
+            Row(FString::Printf(TEXT("Torch flame: the standing torch's flame starts at %.5f blocks, its stick ends at "
+                                     "%.5f (8/16)"),
+                    FlameLow, StickHigh),
+                FMath::IsNearlyEqual(FlameLow, .5f, 1e-5f) && FMath::IsNearlyEqual(StickHigh, .5f, 1e-5f));
+        }
+        Row(FString::Printf(TEXT("Torch flame: the torch rule covers 5 states (%d): torch and wall_torch's 4 facings"),
+                TorchRuleStates),
+            TorchRuleStates == 5);
+        // The Playground: every other state glows at its own light (glow lichen 7, glowstone 15).
+        int32 OthersOwn = 0, Others = 0;
+        for (int32 Id = 1; Id < Registry.GetStateLimit(); ++Id)
+        {
+            const FFoundationBlockState State{uint16(Id)};
+            if (!Registry.IsKnown(State) || Registry.GetBlock(State).bTorchRule) continue;
+            ++Others;
+            OthersOwn += GetDrawnLight(Registry, State) == Registry.GetLightEmission(State);
+        }
+        Row(FString::Printf(TEXT("Torch flame: every other state draws at its own light in the Playground (%d of %d)"),
+                OthersOwn, Others),
+            Others > 4000 && OthersOwn == Others);
     }
 
     // --- Points --------------------------------------------------------------------------------------------------

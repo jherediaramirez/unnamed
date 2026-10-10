@@ -26,7 +26,7 @@ namespace
         ECVF_Default);
     TAutoConsoleVariable<float> CVarLightRadius(TEXT("voxel.LightRadius"), 48,
         TEXT("Light sources farther than this from the camera (blocks) get no torch light."), ECVF_Default);
-    TAutoConsoleVariable<float> CVarLightIntensity(TEXT("voxel.LightIntensity"), 1000,
+    TAutoConsoleVariable<float> CVarLightIntensity(TEXT("voxel.LightIntensity"), FVoxelLights::FSettings().IntensityCd,
         TEXT("Candelas of one torch light (a level-14 source); merged and dimmer sources scale it by their summed "
              "level over 14."),
         ECVF_Default);
@@ -40,19 +40,23 @@ namespace
         TEXT(
             "Unitless intensity of one torch light (a level-14 source) while voxel.LightFalloff is above 0; merged and "
             "dimmer sources scale it by their summed level over 14. The default puts the floor a block from one torch "
-            "about where 1000 cd with inverse-squared falloff puts it."),
+            "about where 1000 cd (T3's default intensity) with inverse-squared falloff puts it."),
         ECVF_Default);
-    TAutoConsoleVariable<float> CVarLightTemperature(
-        TEXT("voxel.LightTemperature"), 3000, TEXT("The torch lights' colour temperature (K)."), ECVF_Default);
+    TAutoConsoleVariable<float> CVarLightTemperature(TEXT("voxel.LightTemperature"),
+        FVoxelLights::FSettings().Temperature, TEXT("The torch lights' colour temperature (K)."), ECVF_Default);
     TAutoConsoleVariable<int32> CVarLightMinLevel(TEXT("voxel.LightMinLevel"), VoxelLightSources::DefaultMinLevel,
         TEXT("The light level a block state needs for a torch light (a torch is 14). A change makes a new light table, "
              "which a column uses from its next mesh; voxel.Regenerate meshes every column again."),
         ECVF_Default);
-    TAutoConsoleVariable<int32> CVarTorchGlow(TEXT("voxel.TorchGlow"), VoxelLightSources::TorchLevel,
-        TEXT("The level (0-15) the torch models (torch, wall_torch: the torch rule) glow with in the mesh; 14, a "
-             "torch's light level, is the default. Lower keeps the stick's texture from blowing out to white. Only the "
-             "mesh's glow: the torch lights stay at level 14, and every other block keeps its glow. Applies when the "
-             "world is built and at voxel.Regenerate; -VoxelTorchGlow=N on the command line sets it from the start."),
+    TAutoConsoleVariable<int32> CVarTorchGlow(TEXT("voxel.TorchGlow"), FVoxelLights::DefaultTorchGlow,
+        TEXT(
+            "The level (0-15) the torch models (torch, wall_torch: the torch rule) glow with in the mesh. The default, "
+            "1, is warm A's glow; 0 leaves only the flame glowing (at level 1, its own), with the stick dark in a "
+            "cave; "
+            "14, a torch's light level, is the old white torch. Only the mesh's glow: the torch "
+            "lights stay at level 14, and every other block keeps its glow. Applies when the voxel world is built and "
+            "at voxel.Regenerate, and to Playground torches as they are drawn; -VoxelTorchGlow=N on the command line "
+            "sets it from the start."),
         ECVF_Default);
 
     bool IsSameSources(TConstArrayView<FVoxelLightSource> A, TConstArrayView<FVoxelLightSource> B)
