@@ -31,7 +31,8 @@ class UVoxelWorldSubsystem;
 // The menu opens a saved world as L_Generated?VoxelWorld=<id>: its seed and type pick the terrain. Without one the map
 // shows the dev seed. -VoxelSeed=<text> overrides either seed; -VoxelShot=<folder> saves screenshots once the view is
 // on screen, then quits (-VoxelShotEdits first carves and builds across a column corner through the authority and
-// adds an "edits" shot); -VoxelFlight=<folder> flies phase 3's acceptance flight (FVoxelFlight), then quits.
+// adds an "edits" shot; -VoxelShotView=CX,CY,CZ,TX,TY,TZ adds a "view" shot from a camera to a target, in blocks);
+// -VoxelFlight=<folder> flies phase 3's acceptance flight (FVoxelFlight), then quits.
 //
 // The map's height fog becomes the edge fog: clear until 1.5 columns before voxel.ViewRadius and opaque at it, so
 // the edge of the streamed world fades out (until phase 9's far LOD shows what lies beyond). Below the horizon, past
@@ -154,6 +155,8 @@ private:
     // -VoxelSpawnExact (shots): every candidate is checked against its real column instead of the estimate first, so
     // the spawn can land on low dry ground the estimate calls sea, such as a swamp's.
     bool bSpawnExact = false;
+    // -VoxelShotView=CX,CY,CZ,TX,TY,TZ (shots): an extra "view" shot from a camera to a target, both in blocks.
+    TOptional<TPair<FVector, FVector>> ShotView;
     int32 ShotIndex = INDEX_NONE;
     int32 ShotFrames = 0;
     double ShotGpuMs = 0;
