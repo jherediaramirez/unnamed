@@ -129,6 +129,17 @@ void FVoxelColumnPipeline::SetModelOptions(bool bModels, bool bShadeUnturned)
     Regress();
 }
 
+void FVoxelColumnPipeline::SetOreLooks(int32 OreHost, int32 OreGlint)
+{
+    FVoxelMeshOptions& Options = Settings.MeshOptions;
+    if (Options.OreHost == OreHost && Options.OreGlint == OreGlint) return;
+    Options.OreHost = OreHost;
+    Options.OreGlint = OreGlint;
+    for (TPair<FIntPoint, FRecord>& Pair : Records)
+        if (Pair.Value.Data) MarkDirty(Pair.Value, PipelineAllSections);
+    Regress();
+}
+
 void FVoxelColumnPipeline::WaitForJobs()
 {
     for (FJob& Job : Jobs)

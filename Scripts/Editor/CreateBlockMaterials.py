@@ -10,6 +10,9 @@ Each samples the block texture array by layer and reads the current animation fr
   vertex color's R the ambient occlusion and G the light. The UV is transformed first, then each block's fraction is
   sampled with the continuous UV's gradients, so mip selection never jumps at block edges.
 
+M_ChunkOpaque also draws the render-only ore looks from T_OreLooks (CHUNK_OPAQUE_HLSL; voxel.Look.OreHost and
+voxel.Look.OreGlint), so ImportOreLooks.py runs first.
+
 Run after ImportBlocks.py; the graphs are code, so rerunning rebuilds them on the same assets. -Materials=A,B limits
 the run to the named materials:
 
@@ -108,6 +111,37 @@ color.rgb *= shade;
 return color;
 """
 
+# M_ChunkOpaque adds the render-only ore looks (Source/UnnamedVoxel/Meshing/VoxelOreLooks.h, Scripts/OreLooks.py): an
+# ore face whose overlay code carries bit 14 without the overlay's bit 15 samples T_OreLooks' layer (bits 0-9) instead
+# of its block texture. Level (bits 10-11) 1 reads the gloss class from that layer's alpha (1 matte, 2/3 metal, 1/3
+# gem) into roughness and specular; 3 is the debug mask, flat magenta. Every other face keeps roughness 1, specular
+# 0.1 and no extra emission.
+CHUNK_OPAQUE_HLSL = CHUNK_BLOCK_HLSL.replace("color.rgb *= shade;", r"""LookRoughness = 1.0;
+LookSpecular = 0.1;
+LookEmissive = float3(0, 0, 0);
+if ((overlay & (3u << 14)) == (1u << 14))
+{
+    uint level = (overlay >> 10) & 3;
+    float4 look = Texture2DArraySampleGrad(Looks, LooksSampler, float3(uv, overlay & 1023), dx, dy);
+    color.rgb = look.rgb;
+    if (level == 1)
+    {
+        float metal = step(0.5, look.a) * step(look.a, 0.9);
+        float gem = step(look.a, 0.5);
+        LookRoughness = 1.0 - 0.6 * metal - 0.8 * gem;
+        LookSpecular = 0.1 + 0.5 * metal + 0.8 * gem;
+    }
+    else if (level == 3)
+    {
+        color.rgb = float3(1, 0, 1);
+        LookEmissive = float3(20000, 0, 20000);
+    }
+}
+color.rgb *= shade;""")
+LOOK_OUTPUTS = ("LookRoughness", "LookSpecular", "LookEmissive")
+if CHUNK_BLOCK_HLSL.count("color.rgb *= shade;") != 1:
+    raise RuntimeError("BLOCK_MATERIALS FAIL: the ore looks' anchor in CHUNK_BLOCK_HLSL moved")
+
 CHUNK_WATER_HLSL = CHUNK_UNPACK + r"""
 float4 color;
 if (face >= 4)
@@ -123,7 +157,7 @@ MATERIALS = {
     "M_BlockCutout": {"blend": unreal.BlendMode.BLEND_MASKED, "hlsl": BLOCK_HLSL},
     "M_BlockTranslucent": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": BLOCK_HLSL},
     "M_BlockWater": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": WATER_HLSL},
-    "M_ChunkOpaque": {"blend": unreal.BlendMode.BLEND_OPAQUE, "hlsl": CHUNK_BLOCK_HLSL, "chunk": True},
+    "M_ChunkOpaque": {"blend": unreal.BlendMode.BLEND_OPAQUE, "hlsl": CHUNK_OPAQUE_HLSL, "chunk": True, "looks": True},
     "M_ChunkCutout": {"blend": unreal.BlendMode.BLEND_MASKED, "hlsl": CHUNK_BLOCK_HLSL, "chunk": True},
     "M_ChunkTranslucent": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": CHUNK_BLOCK_HLSL, "chunk": True},
     "M_ChunkWater": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": CHUNK_WATER_HLSL, "chunk": True},
@@ -183,10 +217,21 @@ def build(name, spec, block_textures, flow_textures):
     else:
         inputs = ["CD%d" % i for i in range(CUSTOM_DATA - 1)] + ["UV", "Face", "Blocks", "Table"]
     inputs += ["Flow"] if water else []
+    looks = spec.get("looks", False)
+    inputs += ["Looks"] if looks else []
     custom = node(unreal.MaterialExpressionCustom, -400, 0)
     custom.set_editor_property("description", "Block face: texture layer, UV transform, animation, tint, overlay")
     custom.set_editor_property("output_type", unreal.CustomMaterialOutputType.CMOT_FLOAT4)
     custom.set_editor_property("code", spec["hlsl"])
+    if looks:
+        outputs = []
+        for output_name in LOOK_OUTPUTS:
+            output = unreal.CustomOutput()
+            output.set_editor_property("output_name", output_name)
+            output.set_editor_property("output_type", unreal.CustomMaterialOutputType.CMOT_FLOAT3
+                                       if output_name == "LookEmissive" else unreal.CustomMaterialOutputType.CMOT_FLOAT1)
+            outputs.append(output)
+        custom.set_editor_property("additional_outputs", outputs)
     items = []
     for input_name in inputs:
         item = unreal.CustomInput()
@@ -225,6 +270,11 @@ def build(name, spec, block_textures, flow_textures):
     link(texture_parameter("TextureTable", default_table, 320), "", custom, "Table")
     if water:
         link(texture_parameter("WaterFlowTextures", flow_textures, 440), "", custom, "Flow")
+    if looks:
+        ore_looks = unreal.EditorAssetLibrary.load_asset(ProjectPaths.block_asset("T_OreLooks"))
+        if not ore_looks:
+            fail("T_OreLooks is missing: run ImportOreLooks.py first")
+        link(texture_parameter("OreLookTextures", ore_looks, 440), "", custom, "Looks")
 
     def mask(channels, y):
         expr = node(unreal.MaterialExpressionComponentMask, -150, y)
@@ -240,12 +290,19 @@ def build(name, spec, block_textures, flow_textures):
     if spec["blend"] == unreal.BlendMode.BLEND_TRANSLUCENT:
         lib.connect_material_property(mask("a", 120), "", unreal.MaterialProperty.MP_OPACITY)
     # Flat, matte blocks; water keeps a little sheen.
-    roughness = node(unreal.MaterialExpressionConstant, -150, 240)
-    roughness.set_editor_property("r", 0.25 if water else 1.0)
-    lib.connect_material_property(roughness, "", unreal.MaterialProperty.MP_ROUGHNESS)
-    specular = node(unreal.MaterialExpressionConstant, -150, 320)
-    specular.set_editor_property("r", 0.5 if water else 0.1)
-    lib.connect_material_property(specular, "", unreal.MaterialProperty.MP_SPECULAR)
+    if looks:
+        # The same 1 and 0.1 on every face but a glossy ore look's (CHUNK_OPAQUE_HLSL).
+        for output_name, prop in (("LookRoughness", unreal.MaterialProperty.MP_ROUGHNESS),
+                                  ("LookSpecular", unreal.MaterialProperty.MP_SPECULAR)):
+            if not lib.connect_material_property(custom, output_name, prop):
+                fail("%s: could not connect %s" % (name, output_name))
+    else:
+        roughness = node(unreal.MaterialExpressionConstant, -150, 240)
+        roughness.set_editor_property("r", 0.25 if water else 1.0)
+        lib.connect_material_property(roughness, "", unreal.MaterialProperty.MP_ROUGHNESS)
+        specular = node(unreal.MaterialExpressionConstant, -150, 320)
+        specular.set_editor_property("r", 0.5 if water else 0.1)
+        lib.connect_material_property(specular, "", unreal.MaterialProperty.MP_SPECULAR)
     if not water:
         # Light-emitting blocks (sea lantern, glowstone...): color x light / 15 x LightEmissive.
         scale = node(unreal.MaterialExpressionScalarParameter, -400, 400)
@@ -260,6 +317,13 @@ def build(name, spec, block_textures, flow_textures):
         emissive = node(unreal.MaterialExpressionMultiply, 50, 400)
         link(rgb, "", emissive, "A")
         link(amount, "", emissive, "B")
+        if looks:
+            # Plus the debug mask's glow, zero on every other face.
+            total = node(unreal.MaterialExpressionAdd, 200, 400)
+            link(emissive, "", total, "A")
+            if not lib.connect_material_expressions(custom, "LookEmissive", total, "B"):
+                fail(name + ": could not connect LookEmissive")
+            emissive = total
         lib.connect_material_property(emissive, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
     lib.recompile_material(material)
     if not unreal.EditorAssetLibrary.save_loaded_asset(material):

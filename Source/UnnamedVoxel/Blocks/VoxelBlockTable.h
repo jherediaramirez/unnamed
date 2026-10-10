@@ -141,6 +141,10 @@ struct FVoxelStateInfo
     // the mesher uses where a block has no biome.
     uint32 Tint = 0;
     EVoxelTintSource TintSource = EVoxelTintSource::None;
+    // Render-only ore looks (Meshing/VoxelOreLooks.h): the ore class (stone and deepslate ores) and the rock class
+    // (their bases and the host rocks); 0 for none. Declared here, they fill padding: the struct keeps its size.
+    uint8 Ore = 0;
+    uint8 Rock = 0;
     // Six face codes in EVoxelFace order, then the overlay code (FoundationBlockFaces).
     uint32 Faces[7] = {};
     // Model states: the first of their parts in the table (FVoxelBlockTable::GetModelParts) and how many.

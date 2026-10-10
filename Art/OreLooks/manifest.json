@@ -1,0 +1,3289 @@
+{
+ "generator": "Scripts/OreLooks.py",
+ "generator_sha256": "71440437c9392cbd7e6cf48bbf137b1de639b2d8714ca1dd71a22b69fdd2e5dc",
+ "inputs_sha256": {
+  "stone.png": "b5e10adc72442bfb257ce7ba0b9bbe36475a0c8cdfec89b80dc9517203ff3e9f",
+  "deepslate.png": "dc72c722bec23c929817fab7cc56e08e5e828ae3607fbfb7e7730e68b67d4cfc",
+  "granite.png": "9bde1239e00c17b0d2842a941cda606c395039f59ec351ec8866a27e77ee7f8b",
+  "diorite.png": "5f44c6743cd72c00a074e6c43cc9c46b9cf54a82c0cf87c5eb675a7207cff648",
+  "andesite.png": "7c7960dd3dd2084233907c1529dcbea0b8a2195fadaa608027f395b6f430fbd7",
+  "tuff.png": "a9e5466e34449fb0c73de64341e38a6bef1bcb16efba2a387a5ad6700af2cd90",
+  "coal_ore.png": "a24553e4cb9cfe70aae48fdb19d8205736135551301dc9c16ecca842d8dd3ae3",
+  "iron_ore.png": "72fb64f5a1c7ef0c356b1510b84174576d8cca5ae1de3bb9fa41e3dd1a7a2719",
+  "copper_ore.png": "3b102154c38a9cacb5f545b5102e2c09ec20e12830e6dfe5db88bdfd658b95f3",
+  "gold_ore.png": "5253e5a8ea32739a5c8cb1d844f0e46c8c85641f77c3d07dcc03645e2914dd1f",
+  "redstone_ore.png": "742b6a5bad43ec8875f3861ee713ca32a57a1a257c7fefecf981c0355615248f",
+  "emerald_ore.png": "4b67bad7d39643dd712b06d74437aaa17b63bf9cbb77e7dd7a037e352f2407dc",
+  "lapis_ore.png": "f85afc08c133c664a39f1526da82b4627960d1d460982185b1a6e1d4eebda312",
+  "diamond_ore.png": "2ef421308b678d2225aef41affc087ae512a81213a24a98cf456dbe231884122",
+  "deepslate_coal_ore.png": "62ea6c01050148f32c081f7d03a3039e4cf918322943ebf31c4a39af9896e3bf",
+  "deepslate_iron_ore.png": "63ea4e6794a98251c475a160ee889273cfccfb37fd3c5098b24b6dc4d34113c0",
+  "deepslate_copper_ore.png": "d1af5c209e42642d9cd21c93e8ec52637d2aad2167a9bb8ef8b4c9b791d15ff0",
+  "deepslate_gold_ore.png": "ae0e8aec748e94a966e35b06a171aef39d208c651d77f68d47b459d250305854",
+  "deepslate_redstone_ore.png": "ebfe512c3840e87f55d2bd64c0e6ba38a2b426fb9b6d12f51e2034afd89b17c3",
+  "deepslate_emerald_ore.png": "9920fa86166024c04adb8596f6243f5d5456733b79c718855b58840bef968977",
+  "deepslate_lapis_ore.png": "b035ec69053435892f3a3300fb908171aecbeed373f44288b7ae50c3a498ecd8",
+  "deepslate_diamond_ore.png": "0acd146e99716a104c6053198fa51fe0d1ef464501c123ae9a56ba3f6f957dd7"
+ },
+ "frame_size": 16,
+ "mip_count": 5,
+ "frames_per_slot": 5,
+ "ores": [
+  "coal",
+  "iron",
+  "copper",
+  "gold",
+  "redstone",
+  "emerald",
+  "lapis",
+  "diamond"
+ ],
+ "bases": [
+  "stone",
+  "deepslate"
+ ],
+ "hosts": [
+  "granite",
+  "diorite",
+  "andesite",
+  "tuff"
+ ],
+ "modes": [
+  "composite",
+  "swap",
+  "composite_ore_mips",
+  "swap_ore_mips"
+ ],
+ "gloss_alpha": {
+  "coal": 255,
+  "iron": 170,
+  "copper": 170,
+  "gold": 170,
+  "redstone": 85,
+  "emerald": 85,
+  "lapis": 85,
+  "diamond": 85
+ },
+ "ore_pixels_of_256": {
+  "coal_ore": 83,
+  "iron_ore": 63,
+  "copper_ore": 79,
+  "gold_ore": 93,
+  "redstone_ore": 98,
+  "emerald_ore": 74,
+  "lapis_ore": 98,
+  "diamond_ore": 93,
+  "deepslate_coal_ore": 47,
+  "deepslate_iron_ore": 63,
+  "deepslate_copper_ore": 50,
+  "deepslate_gold_ore": 59,
+  "deepslate_redstone_ore": 73,
+  "deepslate_emerald_ore": 53,
+  "deepslate_lapis_ore": 60,
+  "deepslate_diamond_ore": 86
+ },
+ "strip": "T_OreLooks.png",
+ "strip_sha256": "09729c5e1b032c0f59d427dbbe2fffe77b18422822c81b96f4cf9f7583387591",
+ "slots": [
+  {
+   "slot": 0,
+   "mode": "composite",
+   "ore": "coal",
+   "base": "stone",
+   "host": "stone",
+   "texture": "coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "a0c6c6a853a5fc0a7ce931cd3f0cd0f37a197e19f4981df9f879a9196cbc46b4"
+  },
+  {
+   "slot": 1,
+   "mode": "composite",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "36e4773b6f220100cee374093305e7ee663046f562857903772c3362552ae203"
+  },
+  {
+   "slot": 2,
+   "mode": "composite",
+   "ore": "iron",
+   "base": "stone",
+   "host": "stone",
+   "texture": "iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "e4d7f021910adb113e2542d3ac3284d4a434047bbd5af500baaa66be429ab733"
+  },
+  {
+   "slot": 3,
+   "mode": "composite",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "3a51e70619824bfd3f04ffc4290a9ce92019013491f043779e7dc46a456a987d"
+  },
+  {
+   "slot": 4,
+   "mode": "composite",
+   "ore": "copper",
+   "base": "stone",
+   "host": "stone",
+   "texture": "copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "cfce1de24e88045cf23e960cbca03f971ada8a5cfbb4470a6ae7959c5f68835a"
+  },
+  {
+   "slot": 5,
+   "mode": "composite",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "a9631a09dafda04bba536edb72dbc1926c1fb8bcd53992bd10753e2d63f2baa2"
+  },
+  {
+   "slot": 6,
+   "mode": "composite",
+   "ore": "gold",
+   "base": "stone",
+   "host": "stone",
+   "texture": "gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "e84ade8121dae8e074cd883739f63885a83c6005172049d28a575f7332f70ab5"
+  },
+  {
+   "slot": 7,
+   "mode": "composite",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "55da21f0a4aa04455a93a031ac898117775c4ec9ca889a07eb535b6c886ef6f5"
+  },
+  {
+   "slot": 8,
+   "mode": "composite",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "stone",
+   "texture": "redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "d95458fcf98972eec9f9df42839b158c43a63d90dfca60c9db9bcc9ec0d89b05"
+  },
+  {
+   "slot": 9,
+   "mode": "composite",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "ee377f9ed1e7e33cfe9e119b4895f86e37af10b3638aff08c839bbf4e71cba57"
+  },
+  {
+   "slot": 10,
+   "mode": "composite",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "stone",
+   "texture": "emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "ab3f6b2b47ea671708de771b1391a11050e0c285b9ceda8ea906920073971293"
+  },
+  {
+   "slot": 11,
+   "mode": "composite",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "72f0883e0b81367df0dd4f5f55f78d29e62b6af308fd5e458014980e97f0beab"
+  },
+  {
+   "slot": 12,
+   "mode": "composite",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "stone",
+   "texture": "lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "64618a694e77a1058a42a81ad6e5acd8dd089f5d3ccd9ff295a2748dd08784e9"
+  },
+  {
+   "slot": 13,
+   "mode": "composite",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "b0316ed67db03e2d6aac82ff0b8624d5be243a0086cd252a4f1b9ced822b5531"
+  },
+  {
+   "slot": 14,
+   "mode": "composite",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "stone",
+   "texture": "diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "aa7117a3f334b31da9fee30944939ca4ff68cd8fb7b3f27dd704e570125d5067"
+  },
+  {
+   "slot": 15,
+   "mode": "composite",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "c9735e3476ee12c3fdbbd8a9292a8a5b24f78d7d71c6e71e8029ebfba60846fa"
+  },
+  {
+   "slot": 16,
+   "mode": "composite",
+   "ore": "coal",
+   "base": "stone",
+   "host": "granite",
+   "texture": "coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "4ad81dd00720e6cdd655080856d67a99a2decff5e457dab2ed8618975b8afbc7"
+  },
+  {
+   "slot": 17,
+   "mode": "composite",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "aba04fbabf080129373548e90170a85e62fd8ebbaf1c365265f82363d9c83e22"
+  },
+  {
+   "slot": 18,
+   "mode": "composite",
+   "ore": "iron",
+   "base": "stone",
+   "host": "granite",
+   "texture": "iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "816b1569e8c00668d99ddf862affbceac0420cb75d9f220cd0932198c0091bb1"
+  },
+  {
+   "slot": 19,
+   "mode": "composite",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "816b1569e8c00668d99ddf862affbceac0420cb75d9f220cd0932198c0091bb1"
+  },
+  {
+   "slot": 20,
+   "mode": "composite",
+   "ore": "copper",
+   "base": "stone",
+   "host": "granite",
+   "texture": "copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "6b44fd9b217bcb2c27cc4f73b083b71fe57de542fdbaf2e80857da859fddcca1"
+  },
+  {
+   "slot": 21,
+   "mode": "composite",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "b98cb533ac68e37899cd061082dd62f8fa2f84fb988118252f3bd167f0e99f3c"
+  },
+  {
+   "slot": 22,
+   "mode": "composite",
+   "ore": "gold",
+   "base": "stone",
+   "host": "granite",
+   "texture": "gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "9a40e0b1cdc4470509c3f61eb8a42d9a846765c2543088245ac04c03eabaf0e3"
+  },
+  {
+   "slot": 23,
+   "mode": "composite",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "6ae15da6ebbb2b42a4879625479c0e3fd1aed592dabba0ea00cf07c7ce143d3e"
+  },
+  {
+   "slot": 24,
+   "mode": "composite",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "granite",
+   "texture": "redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "8708d5aa9dc00bece4059236a551f2b38033da4707fd6be3ff076b3e304a17a5"
+  },
+  {
+   "slot": 25,
+   "mode": "composite",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "a797d916913d125204afac7bc2be622f2518ef1cbadfc87f88bd345ba213cda4"
+  },
+  {
+   "slot": 26,
+   "mode": "composite",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "granite",
+   "texture": "emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "b94223fddf57d273479ab1d56a18a9c378661231f008a080969bedb0ca91a3fa"
+  },
+  {
+   "slot": 27,
+   "mode": "composite",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "44cb7b56c92d8b5f4027039db49a49f6c6903dacf5f5b774cd32a7895afb67db"
+  },
+  {
+   "slot": 28,
+   "mode": "composite",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "granite",
+   "texture": "lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "312cf2ea0146d23065a4e38df2efddf778dd496c19cbab08c08529db61d39257"
+  },
+  {
+   "slot": 29,
+   "mode": "composite",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "4abed6973a15c885e19c6d9d6ce61b342af4d5347ecd77e5a83e900bb36a3aa1"
+  },
+  {
+   "slot": 30,
+   "mode": "composite",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "granite",
+   "texture": "diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "189fc4bd2cb8f0cc22f7448a8b72ca016de550442d8b3840a547f0e19ab16ccb"
+  },
+  {
+   "slot": 31,
+   "mode": "composite",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "b1d27bdb07ef5d0a3ced1b7a910da42a29907da2f9354ac8f836760f3ba09d93"
+  },
+  {
+   "slot": 32,
+   "mode": "composite",
+   "ore": "coal",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "10d603859ebf27ba2ee672f74cf95a5495b3150bbe56ff9a016b22e10bb3d092"
+  },
+  {
+   "slot": 33,
+   "mode": "composite",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "8ae626921a2ade026140c9164f6c2b0eb6c063719a8a3605adeacb0f7c444a75"
+  },
+  {
+   "slot": 34,
+   "mode": "composite",
+   "ore": "iron",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "fa78660c38cb3f9ac8805c98bbf4ca83aff0d394a8fdbf173680fe5a7c6f61a5"
+  },
+  {
+   "slot": 35,
+   "mode": "composite",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "fa78660c38cb3f9ac8805c98bbf4ca83aff0d394a8fdbf173680fe5a7c6f61a5"
+  },
+  {
+   "slot": 36,
+   "mode": "composite",
+   "ore": "copper",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "3374b0e563c65f78dd5c8192370d52befe0d82e77f6b7ce247ca88d6ae7e7b65"
+  },
+  {
+   "slot": 37,
+   "mode": "composite",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "e9651ae575a919c3520802283d5f7a5303b63b0d153e6789b7eb41236fd9688b"
+  },
+  {
+   "slot": 38,
+   "mode": "composite",
+   "ore": "gold",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "4df7202a682cfb141dd4546de496dc1ecc5f0c545da49e11396024f2bed7f3ca"
+  },
+  {
+   "slot": 39,
+   "mode": "composite",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "85ca100a072197fd5f4819ee13e09d08cbea7b7570206ed7117656ae13b30f78"
+  },
+  {
+   "slot": 40,
+   "mode": "composite",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "624dc871fdf3ac0712fe50356096db48710523ab5e35bac7032b975acc6230d7"
+  },
+  {
+   "slot": 41,
+   "mode": "composite",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "3f1e131cdf31619bacbddcb3323679ea77747b9b3c90cc84af687aa7c08a5c1a"
+  },
+  {
+   "slot": 42,
+   "mode": "composite",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "bb90b552e0441b0220ecf5ae9f824cceb4bcf3269a2e8730a53914e3449f9380"
+  },
+  {
+   "slot": 43,
+   "mode": "composite",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "08f1921fcfa9d2e3de9be664673035ae962d7b092f143ce24c02d0243d2d8e74"
+  },
+  {
+   "slot": 44,
+   "mode": "composite",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "1a08f842099e90e018cc610467af76b1586be7ccc1437ffbddb2912d4aa2cb23"
+  },
+  {
+   "slot": 45,
+   "mode": "composite",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "4234c965b9d1d170c8fa3648ad9bd6e92ee9b7cceca34144fe66e731f0b91394"
+  },
+  {
+   "slot": 46,
+   "mode": "composite",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "257d9155d15d325da9490c196eb45addadb4d684328dbaf90de9a6ad0304b27b"
+  },
+  {
+   "slot": 47,
+   "mode": "composite",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "e071131dcb4d87e7b903d9500f8ca234de4a148f244f476d70ece21b4ea55c98"
+  },
+  {
+   "slot": 48,
+   "mode": "composite",
+   "ore": "coal",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "d40ecd4c1879fdb75e21b7120b8cccbed409ea8e344e9694cc17b10c7ee87cdc"
+  },
+  {
+   "slot": 49,
+   "mode": "composite",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "e7474e5e50c736c2470e26b4256efe1644b11cc32a7056b8dc55d32a836c683e"
+  },
+  {
+   "slot": 50,
+   "mode": "composite",
+   "ore": "iron",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "306c178d4888cceba4cca077d4166b96e010503f6728a04a70ab7b4e923ef36e"
+  },
+  {
+   "slot": 51,
+   "mode": "composite",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "306c178d4888cceba4cca077d4166b96e010503f6728a04a70ab7b4e923ef36e"
+  },
+  {
+   "slot": 52,
+   "mode": "composite",
+   "ore": "copper",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "4f90982530eacba662024b1a2abc6bbe397ffdcb79216e4c7df58d369d3b247b"
+  },
+  {
+   "slot": 53,
+   "mode": "composite",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "d3228206f6ddf2790a3374cea58b9792ef05859f971722216ac2e9f38469564c"
+  },
+  {
+   "slot": 54,
+   "mode": "composite",
+   "ore": "gold",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "2244ec50ae0855d9c9ebbb9311cb6c61a7e8e1470a82de3e7ef539078b3f5603"
+  },
+  {
+   "slot": 55,
+   "mode": "composite",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "4938be79d40965d0dc269df10ec95ddd7f6b434dd9e61f0ab8d00d1168c20957"
+  },
+  {
+   "slot": 56,
+   "mode": "composite",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "445dc6cba1df22c0ba9cf40fc80b8919ff0ce39bcd0d66afd5f99744aa60d05b"
+  },
+  {
+   "slot": 57,
+   "mode": "composite",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "d477bea8b3355986817d17225a4dfcc7f7e5f82b197ad5ee22479f6def6864bc"
+  },
+  {
+   "slot": 58,
+   "mode": "composite",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "30f2b3b8a47bbe6538352a79aaae0293ed8e6f05d06e46f1bf14d40a605a3ce5"
+  },
+  {
+   "slot": 59,
+   "mode": "composite",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "df8f28398b86fa41dcfe5e16d49ef91a0a54e3fa17f119d4fce3dc5585321e61"
+  },
+  {
+   "slot": 60,
+   "mode": "composite",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "fba8cbe92fe59c9cfd6729cf5a35ae7ef761c017a6e64b27d0900f51b4b5821c"
+  },
+  {
+   "slot": 61,
+   "mode": "composite",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "8cef2bd9a6e28dc652dce9f91312d45c13437e80e1f30a9834b6f1a09acac61f"
+  },
+  {
+   "slot": 62,
+   "mode": "composite",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "1c6eb60a3c98b4c2fde1bcf1abc4751924815d942aa63af02f7d73c1a323609d"
+  },
+  {
+   "slot": 63,
+   "mode": "composite",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "24bd1e8e9aba344b66be63656ddca93166ec616b544fa94de445d04997caf02a"
+  },
+  {
+   "slot": 64,
+   "mode": "composite",
+   "ore": "coal",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "453992a289039e75448807ae1b475c427475eca1dd083c906019dbc90eb0255c"
+  },
+  {
+   "slot": 65,
+   "mode": "composite",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "0cd0ffa2a63adf15daae33fcefeb088ffa481edbd64f467b037b7e2f484a2491"
+  },
+  {
+   "slot": 66,
+   "mode": "composite",
+   "ore": "iron",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "8e7fac0293dd727fd6f60405c31899103764689200d6d302d2169df18d1e0f91"
+  },
+  {
+   "slot": 67,
+   "mode": "composite",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "8e7fac0293dd727fd6f60405c31899103764689200d6d302d2169df18d1e0f91"
+  },
+  {
+   "slot": 68,
+   "mode": "composite",
+   "ore": "copper",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "bc11a1ba52f57b52afece42afbec00458e135a4d178c212182d3952c44282969"
+  },
+  {
+   "slot": 69,
+   "mode": "composite",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "545189187ae6cc8bf8a3d4fd24ba12e6f2f9d56df384c1fb032fe66aa0b78589"
+  },
+  {
+   "slot": 70,
+   "mode": "composite",
+   "ore": "gold",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "cd7ad1a6de36a929ebdf185abb742927d9dee487f7737842aea36e30d6686b10"
+  },
+  {
+   "slot": 71,
+   "mode": "composite",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "7d190895b29c39b48d8945b18d2618fb18a1df38cb19eb9295dd844f3081c806"
+  },
+  {
+   "slot": 72,
+   "mode": "composite",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "01c2d1f628f45a535e0400c09600b04e257b1ee3d22a2edabbb57d40de2e4803"
+  },
+  {
+   "slot": 73,
+   "mode": "composite",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "4775d69f2526e8eadbc8822e736e7d36768e83c1bfc84791363dab0dda931e97"
+  },
+  {
+   "slot": 74,
+   "mode": "composite",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "cc2afdcde856374d0dd262250a192246744e94d940742fea962ca06d64e41fec"
+  },
+  {
+   "slot": 75,
+   "mode": "composite",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "c2e6cfe51cdaecb2ecbea0cd6fc82918d7ad561cb7a02d3da5d9181e6734738e"
+  },
+  {
+   "slot": 76,
+   "mode": "composite",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "1f5e40dfb1357e6a5570400e5a88f2db0e4837ae9abca6eeb3726023045d9d79"
+  },
+  {
+   "slot": 77,
+   "mode": "composite",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "074190e6af7b31324d3af021386d4236e1d19042b2b2806b3e5f87ba76ee10ff"
+  },
+  {
+   "slot": 78,
+   "mode": "composite",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "fcf745e6060c0d19023d6c7607923968072b36e40c4c52da9e007a7c9d60dafb"
+  },
+  {
+   "slot": 79,
+   "mode": "composite",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "7a3d328be0124a038d366b6f3de10f27b659ff1c106295de416ea9207d94f9ce"
+  },
+  {
+   "slot": 80,
+   "mode": "swap",
+   "ore": "coal",
+   "base": "stone",
+   "host": "stone",
+   "texture": "coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "a0c6c6a853a5fc0a7ce931cd3f0cd0f37a197e19f4981df9f879a9196cbc46b4"
+  },
+  {
+   "slot": 81,
+   "mode": "swap",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "36e4773b6f220100cee374093305e7ee663046f562857903772c3362552ae203"
+  },
+  {
+   "slot": 82,
+   "mode": "swap",
+   "ore": "iron",
+   "base": "stone",
+   "host": "stone",
+   "texture": "iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "e4d7f021910adb113e2542d3ac3284d4a434047bbd5af500baaa66be429ab733"
+  },
+  {
+   "slot": 83,
+   "mode": "swap",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "3a51e70619824bfd3f04ffc4290a9ce92019013491f043779e7dc46a456a987d"
+  },
+  {
+   "slot": 84,
+   "mode": "swap",
+   "ore": "copper",
+   "base": "stone",
+   "host": "stone",
+   "texture": "copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "cfce1de24e88045cf23e960cbca03f971ada8a5cfbb4470a6ae7959c5f68835a"
+  },
+  {
+   "slot": 85,
+   "mode": "swap",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "a9631a09dafda04bba536edb72dbc1926c1fb8bcd53992bd10753e2d63f2baa2"
+  },
+  {
+   "slot": 86,
+   "mode": "swap",
+   "ore": "gold",
+   "base": "stone",
+   "host": "stone",
+   "texture": "gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "e84ade8121dae8e074cd883739f63885a83c6005172049d28a575f7332f70ab5"
+  },
+  {
+   "slot": 87,
+   "mode": "swap",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "55da21f0a4aa04455a93a031ac898117775c4ec9ca889a07eb535b6c886ef6f5"
+  },
+  {
+   "slot": 88,
+   "mode": "swap",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "stone",
+   "texture": "redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "d95458fcf98972eec9f9df42839b158c43a63d90dfca60c9db9bcc9ec0d89b05"
+  },
+  {
+   "slot": 89,
+   "mode": "swap",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "ee377f9ed1e7e33cfe9e119b4895f86e37af10b3638aff08c839bbf4e71cba57"
+  },
+  {
+   "slot": 90,
+   "mode": "swap",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "stone",
+   "texture": "emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "ab3f6b2b47ea671708de771b1391a11050e0c285b9ceda8ea906920073971293"
+  },
+  {
+   "slot": 91,
+   "mode": "swap",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "72f0883e0b81367df0dd4f5f55f78d29e62b6af308fd5e458014980e97f0beab"
+  },
+  {
+   "slot": 92,
+   "mode": "swap",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "stone",
+   "texture": "lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "64618a694e77a1058a42a81ad6e5acd8dd089f5d3ccd9ff295a2748dd08784e9"
+  },
+  {
+   "slot": 93,
+   "mode": "swap",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "b0316ed67db03e2d6aac82ff0b8624d5be243a0086cd252a4f1b9ced822b5531"
+  },
+  {
+   "slot": 94,
+   "mode": "swap",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "stone",
+   "texture": "diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "aa7117a3f334b31da9fee30944939ca4ff68cd8fb7b3f27dd704e570125d5067"
+  },
+  {
+   "slot": 95,
+   "mode": "swap",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "c9735e3476ee12c3fdbbd8a9292a8a5b24f78d7d71c6e71e8029ebfba60846fa"
+  },
+  {
+   "slot": 96,
+   "mode": "swap",
+   "ore": "coal",
+   "base": "stone",
+   "host": "granite",
+   "texture": "coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "8f031297bd853ab65cf315a9e2ef4df5333a8a90ebcfddbb2fceac3dacc07e16"
+  },
+  {
+   "slot": 97,
+   "mode": "swap",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "2d7443c17f1bd02883749f1ca900dd5b5b4c70db0bb4d322ec240bc67028cdbe"
+  },
+  {
+   "slot": 98,
+   "mode": "swap",
+   "ore": "iron",
+   "base": "stone",
+   "host": "granite",
+   "texture": "iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "14d24f33d8fbdd61b7a47c0483959dfb76b3940ed16d84dee931d295ad1b2924"
+  },
+  {
+   "slot": 99,
+   "mode": "swap",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "12752d47735d2f7b766d2678dd858fa122df8525d5c1bf5bd4c316182dcd3fb7"
+  },
+  {
+   "slot": 100,
+   "mode": "swap",
+   "ore": "copper",
+   "base": "stone",
+   "host": "granite",
+   "texture": "copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "7e4c3a1d57ddeffcaf2665711f2d663b339572fe872095bf77d7727f1b10e3a7"
+  },
+  {
+   "slot": 101,
+   "mode": "swap",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "6b41cfd7f267f3b704675cc0700d7250eee1dacfe8b4b4def3a60c0b738a38c2"
+  },
+  {
+   "slot": 102,
+   "mode": "swap",
+   "ore": "gold",
+   "base": "stone",
+   "host": "granite",
+   "texture": "gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "b694e64ffab24ac0ef0f24cba8bf019a98a711357f0c16370889526f07c9e8c4"
+  },
+  {
+   "slot": 103,
+   "mode": "swap",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "ea53a8991d0deeaae4dd4fd6fd44c555557f45807cfa4f5e0e0534d8f8a6d764"
+  },
+  {
+   "slot": 104,
+   "mode": "swap",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "granite",
+   "texture": "redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "58215599ebc56dcdd873d173c5a452d37b910a939c5c1f1800940d22c56e0ae2"
+  },
+  {
+   "slot": 105,
+   "mode": "swap",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "6d1fd188b803917fa92f7dc520a50ffa48a80f9facec7866b21146dbbf8a89d5"
+  },
+  {
+   "slot": 106,
+   "mode": "swap",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "granite",
+   "texture": "emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "af7e846fe38890319ccf528a479419695aaa7545f7d7be5fe896d7c08d8798a6"
+  },
+  {
+   "slot": 107,
+   "mode": "swap",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "45b495e3a8d48fdf01f2163244c67cbe06a7920bd6c31d267e68892dc429ec40"
+  },
+  {
+   "slot": 108,
+   "mode": "swap",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "granite",
+   "texture": "lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "84f9d8be2f5f57e340237cd50ef5e852369b15f94f590f208c2efc2314858d9f"
+  },
+  {
+   "slot": 109,
+   "mode": "swap",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "1f5751d216fcdbbdb26c0048e1c97cba43378352b400f87420095e352e5ae062"
+  },
+  {
+   "slot": 110,
+   "mode": "swap",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "granite",
+   "texture": "diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "1f352f41725013716d39a6f33b73deba744afd9026dfad808356b6eeaf6b7f0c"
+  },
+  {
+   "slot": 111,
+   "mode": "swap",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "402a51b763a0b1494ddaca3c06d5a658218d75d9c8955ef6a2e29c9116915341"
+  },
+  {
+   "slot": 112,
+   "mode": "swap",
+   "ore": "coal",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "855cee09a12b770e4f4e0b74a01cf34df3aef9fd71eae98387e6ca2d6e8b17a5"
+  },
+  {
+   "slot": 113,
+   "mode": "swap",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "f418fc0612530201630f020bad9fffa2aa8af4212dcadc6c61472f5a6d55145a"
+  },
+  {
+   "slot": 114,
+   "mode": "swap",
+   "ore": "iron",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "bff39e9199bd07bbf8be3389693dcd68169550ebbb21be236f3962edbf10f1ba"
+  },
+  {
+   "slot": 115,
+   "mode": "swap",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "ae9ee6088e20f6931b4ff448174bfbce76ab9538b2410aa8537753c20af45914"
+  },
+  {
+   "slot": 116,
+   "mode": "swap",
+   "ore": "copper",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "a892bd91d3d0d68e69bae9d118b58bb704d21a566ed7c4e1b06da49ab35451c5"
+  },
+  {
+   "slot": 117,
+   "mode": "swap",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "dc51c60457ba788f8b5917223893416d7c3de807dfed4759a970b3890373f6e8"
+  },
+  {
+   "slot": 118,
+   "mode": "swap",
+   "ore": "gold",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "c515787be383991e95544239253d0a80be8230dae406922ff81e95a21e7dfb18"
+  },
+  {
+   "slot": 119,
+   "mode": "swap",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "9c7fb1e0d5deaea8c21d599cbddeb8ae02e85a26a21ec1698701d5425c346b33"
+  },
+  {
+   "slot": 120,
+   "mode": "swap",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "11aa0f469ed228c19ebef1e7356f487f7133ff82ceac913d04c6a199a2797d48"
+  },
+  {
+   "slot": 121,
+   "mode": "swap",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "073940b791f62b6f849db36fdf840c7af6be658f0e74731c63e7a8150bd5c2f2"
+  },
+  {
+   "slot": 122,
+   "mode": "swap",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "da10e39b1ff0c0cfdabc49b94c506f37ed4f383e365a8f62e3e75ab68293f951"
+  },
+  {
+   "slot": 123,
+   "mode": "swap",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "44897663d53f75f3fdaae4b80895a984f7f73b16cc53318908dcfcc6de7cf26c"
+  },
+  {
+   "slot": 124,
+   "mode": "swap",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "0719bf34258c3b71cda90419c6e82308dcdaea7f703d3689aa73a968cb1e6c1f"
+  },
+  {
+   "slot": 125,
+   "mode": "swap",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "36f2813f9db02b33313797ada5240b719500913ac209f6e2fbb09ea640261cb0"
+  },
+  {
+   "slot": 126,
+   "mode": "swap",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "efa9db95bff2838cb5d46df3faea601986fa48d87b849424a7cd8afdf45f5b82"
+  },
+  {
+   "slot": 127,
+   "mode": "swap",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "c692c3ed670fdb23ae45934b1252f241737ccbc51f29afed9e4f9f3c2c439b2f"
+  },
+  {
+   "slot": 128,
+   "mode": "swap",
+   "ore": "coal",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "2093435a04f94c70142a4d7180fe4dc9320fa63c028fcfbaec0ec537ea945b5c"
+  },
+  {
+   "slot": 129,
+   "mode": "swap",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "09609eea0222f939353d7b811dc23fd1df01174f8cbaaa93dee0079b435b538c"
+  },
+  {
+   "slot": 130,
+   "mode": "swap",
+   "ore": "iron",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "5475c4e935d4db603075741e032f436f8ba5c5658a021d08e2b9869ba2b65518"
+  },
+  {
+   "slot": 131,
+   "mode": "swap",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "4d800f3e773f67ef0607c6ab6d7770080a66cbc39769089ed1f76314b6343220"
+  },
+  {
+   "slot": 132,
+   "mode": "swap",
+   "ore": "copper",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "d9b721cfda53db5fa5c14b518e4e4df7c7bb43dda605d696faae7c6c667277b4"
+  },
+  {
+   "slot": 133,
+   "mode": "swap",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "4ed87d4bdaa95867c569c8bf32114ec06274e449371cdfde2e85426872e92803"
+  },
+  {
+   "slot": 134,
+   "mode": "swap",
+   "ore": "gold",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "d900df3d1852a78f57377e8c0aca358576a28aa85810391405ab48b3f55eb4ed"
+  },
+  {
+   "slot": 135,
+   "mode": "swap",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "15f25707cc55e9f248eac438d1b163681c39b2f5d52021ca50629a7f91425cbc"
+  },
+  {
+   "slot": 136,
+   "mode": "swap",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "aef3b002f777d45607ba5af579ea47ec32541779af5b8cae4565a8ad654b7009"
+  },
+  {
+   "slot": 137,
+   "mode": "swap",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "5cbdea614fe79868f3758ecb0255ac6dbe36b51127f74802b7200ef7cfa752ee"
+  },
+  {
+   "slot": 138,
+   "mode": "swap",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "d65b9309ded30a35397b0978440486b5fbd07a3791d6f8fd4862816cb1ba3a8e"
+  },
+  {
+   "slot": 139,
+   "mode": "swap",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "2e916fcc337cd36897dccde2da0f6228afe6a5f42416304af194940c9eaa40d4"
+  },
+  {
+   "slot": 140,
+   "mode": "swap",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "1e9222a931fcc7cf90aee3f7926d2fe2427662bcf35f841d3757adb659fb15de"
+  },
+  {
+   "slot": 141,
+   "mode": "swap",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "9113dab82d92e8fed0a7c8403c51dbfb9ac1959ab4c4b2843853a522aa0eca5b"
+  },
+  {
+   "slot": 142,
+   "mode": "swap",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "07a4d6bf49d57ccf71e7e15bf086a43b0eaf3a69054eb4cc3d1151984a9e8235"
+  },
+  {
+   "slot": 143,
+   "mode": "swap",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "62a16d311583dd61d3d93c60a6a96251f69f70396114f52c94d58b17b9b62738"
+  },
+  {
+   "slot": 144,
+   "mode": "swap",
+   "ore": "coal",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "515e83f13dcb0ea0ff054d103b67190590f79d6e1692ab9df6b38dc14b06248c"
+  },
+  {
+   "slot": 145,
+   "mode": "swap",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_coal_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "f4e7a3b248d2ed6488663416d35011bd3c9edd93aead41c92f7d0297a793d4ed"
+  },
+  {
+   "slot": 146,
+   "mode": "swap",
+   "ore": "iron",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "cdd5e35434c64baa988ee07b3e8d8154390421a23764fe1ca793ab9b3dd8b9dc"
+  },
+  {
+   "slot": 147,
+   "mode": "swap",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_iron_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "bae53b9da3d3b750b2a0e2fd07ffe198dee2cd197bdf1834db6344db8c8f5634"
+  },
+  {
+   "slot": 148,
+   "mode": "swap",
+   "ore": "copper",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "3617e3175d3c70549e7f97a33d5f4a4be141164be11fef16f5c135c42a69699b"
+  },
+  {
+   "slot": 149,
+   "mode": "swap",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_copper_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "2d69097435278c12b0ae5215628f94f7181b0d335968a2d536cc8e654e49d395"
+  },
+  {
+   "slot": 150,
+   "mode": "swap",
+   "ore": "gold",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "c21e66096d5ad529dd9d0b1d459d69ccd0165d654a70eaa9bbf45821eaac26c1"
+  },
+  {
+   "slot": 151,
+   "mode": "swap",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_gold_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "430c6c572948571acf00a1cad2f88fff58add977d0fc3fafce2defcf5ad0188c"
+  },
+  {
+   "slot": 152,
+   "mode": "swap",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "4c32eaec95c306ed46fb49e5ac7403e965b4c513356ef6592f008dfb4a930b34"
+  },
+  {
+   "slot": 153,
+   "mode": "swap",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_redstone_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "4f9a0ac4f93bbc0f052434accc1f8fcfc5083e77d566979064fed7fa95cec288"
+  },
+  {
+   "slot": 154,
+   "mode": "swap",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "fba488a99c982ee5140a21109effeefdaa6bc72a37e9b7b90a26c50eaff0f178"
+  },
+  {
+   "slot": 155,
+   "mode": "swap",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_emerald_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "dc8ebceacaaa0859056f8cb134c941149f44f520293181482d9a2f40937ac613"
+  },
+  {
+   "slot": 156,
+   "mode": "swap",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "fd6798cc1194a2faba886ad9daea8905603a44392e3cfc09b4e53176debf460c"
+  },
+  {
+   "slot": 157,
+   "mode": "swap",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_lapis_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "991d88ab071dee9402d9519ce149106dc8c23f3f40ed960f9409d506a77df432"
+  },
+  {
+   "slot": 158,
+   "mode": "swap",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "6d2d8013b23deba03c1af4307eea46a300d120688bc09892bc6a44b1e44089ab"
+  },
+  {
+   "slot": 159,
+   "mode": "swap",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_diamond_ore",
+   "mips": "vanilla",
+   "rgba_sha256": "ea79e444ca8a8413176e36fee3417dcc54dea52847301f31d011188e6ddd04f3"
+  },
+  {
+   "slot": 160,
+   "mode": "composite_ore_mips",
+   "ore": "coal",
+   "base": "stone",
+   "host": "stone",
+   "texture": "coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "a0c6c6a853a5fc0a7ce931cd3f0cd0f37a197e19f4981df9f879a9196cbc46b4"
+  },
+  {
+   "slot": 161,
+   "mode": "composite_ore_mips",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "36e4773b6f220100cee374093305e7ee663046f562857903772c3362552ae203"
+  },
+  {
+   "slot": 162,
+   "mode": "composite_ore_mips",
+   "ore": "iron",
+   "base": "stone",
+   "host": "stone",
+   "texture": "iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "48f29763791fb52948887b0fe773d72cf21847fce399c275dbbb610efaf9758b"
+  },
+  {
+   "slot": 163,
+   "mode": "composite_ore_mips",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "d6ecca5d64f9d1cfb68e4516c008871d585e89569b8ffeb7e08088097f406280"
+  },
+  {
+   "slot": 164,
+   "mode": "composite_ore_mips",
+   "ore": "copper",
+   "base": "stone",
+   "host": "stone",
+   "texture": "copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "4239ea09a6a9ea85a19e091568b39ebb609743401c31ea6f51f33a308d7a654e"
+  },
+  {
+   "slot": 165,
+   "mode": "composite_ore_mips",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "addec037263b85490a2ab77a746b29369dc626b2e290f28f91bb3c68cb8b24bf"
+  },
+  {
+   "slot": 166,
+   "mode": "composite_ore_mips",
+   "ore": "gold",
+   "base": "stone",
+   "host": "stone",
+   "texture": "gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "be45055eb58f0d26f15b067a849f5e96697b540fd1f6a40d7b1e667f877f8a99"
+  },
+  {
+   "slot": 167,
+   "mode": "composite_ore_mips",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "2b09254245306011b95be737e0daaaed83e7f95854ca1d1610e9ed11953799c9"
+  },
+  {
+   "slot": 168,
+   "mode": "composite_ore_mips",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "stone",
+   "texture": "redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "93aed0441ed682ac7455d76b411aa4c99d57778138b4ad0efa2d1cd67d16ee31"
+  },
+  {
+   "slot": 169,
+   "mode": "composite_ore_mips",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "ab9719657ef099f7510c0722b63c1ae573fc4f004bf33cf456c37ab2a7b3fe0e"
+  },
+  {
+   "slot": 170,
+   "mode": "composite_ore_mips",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "stone",
+   "texture": "emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "edc60571b7a1f99e091d317d4fd3b93dc707c43e560cf500abb3725da0e5efc9"
+  },
+  {
+   "slot": 171,
+   "mode": "composite_ore_mips",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "1563e66411b61bbe5de91dfb857828dd6aa10b328d55b42880ad8b4950dc05eb"
+  },
+  {
+   "slot": 172,
+   "mode": "composite_ore_mips",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "stone",
+   "texture": "lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "43887a571e39a26e5f16c9e52c09ff93443dd7b3cf2a39f5fe6851b9bee5153c"
+  },
+  {
+   "slot": 173,
+   "mode": "composite_ore_mips",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "d5d7ffcde10d51c3b490b55c5b27b08f216b5d31fb72184c92c37b78fec0f80e"
+  },
+  {
+   "slot": 174,
+   "mode": "composite_ore_mips",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "stone",
+   "texture": "diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "fe8b8b27bf83955acc5511ba5b178cf752496fd3e06070c21b4aff45292bf3b1"
+  },
+  {
+   "slot": 175,
+   "mode": "composite_ore_mips",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "928420c770bdb850997ac250699be01b0c98759bbc97b5ade967ef572778b6ad"
+  },
+  {
+   "slot": 176,
+   "mode": "composite_ore_mips",
+   "ore": "coal",
+   "base": "stone",
+   "host": "granite",
+   "texture": "coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "4ad81dd00720e6cdd655080856d67a99a2decff5e457dab2ed8618975b8afbc7"
+  },
+  {
+   "slot": 177,
+   "mode": "composite_ore_mips",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "aba04fbabf080129373548e90170a85e62fd8ebbaf1c365265f82363d9c83e22"
+  },
+  {
+   "slot": 178,
+   "mode": "composite_ore_mips",
+   "ore": "iron",
+   "base": "stone",
+   "host": "granite",
+   "texture": "iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "47f961d8f72297c03bf00cf6d323a1231c1ab78f9ca0b8e899dc0c5a046f66b3"
+  },
+  {
+   "slot": 179,
+   "mode": "composite_ore_mips",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "47f961d8f72297c03bf00cf6d323a1231c1ab78f9ca0b8e899dc0c5a046f66b3"
+  },
+  {
+   "slot": 180,
+   "mode": "composite_ore_mips",
+   "ore": "copper",
+   "base": "stone",
+   "host": "granite",
+   "texture": "copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "2b748a56f90f45ec6f54d3a7b902eec9e6dd3b0ff8c58057adca189daccca180"
+  },
+  {
+   "slot": 181,
+   "mode": "composite_ore_mips",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "e3b3f393396b5cffdc93e2f2cc07ceec4acb49fdef7d84b582996ba19f44cafe"
+  },
+  {
+   "slot": 182,
+   "mode": "composite_ore_mips",
+   "ore": "gold",
+   "base": "stone",
+   "host": "granite",
+   "texture": "gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "ae35053c24fa2d99ce7fd311b77bbca5585e7be6c8fca7555b2919a8510d83f6"
+  },
+  {
+   "slot": 183,
+   "mode": "composite_ore_mips",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "89b7b07363afdb4f5aa471ef151cac9fc7df35012db1761d97593eb984a50469"
+  },
+  {
+   "slot": 184,
+   "mode": "composite_ore_mips",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "granite",
+   "texture": "redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "ef8c0de212cfd80b94536f135cb9cacff51353e81f1584d6e6d3ec876ed45763"
+  },
+  {
+   "slot": 185,
+   "mode": "composite_ore_mips",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "5093fd1b2c8ded49c0d01d6c8e82dce66c04aeb8496bbfaa0a5be493173e0fe8"
+  },
+  {
+   "slot": 186,
+   "mode": "composite_ore_mips",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "granite",
+   "texture": "emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "1f1ee71743c63418e0f0aece9a61515dbc8c947872579da456e9acf2f491b5e7"
+  },
+  {
+   "slot": 187,
+   "mode": "composite_ore_mips",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "686dc52039a6c0800512d2491ada20db36c53274dda34982b676ea37048cdb60"
+  },
+  {
+   "slot": 188,
+   "mode": "composite_ore_mips",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "granite",
+   "texture": "lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "ec4a7efb6e15bfef162a7638e8e9e919d017776a1d56847fd37e7af23371fc5e"
+  },
+  {
+   "slot": 189,
+   "mode": "composite_ore_mips",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "91aa1f504c8773203b224470a57044ae0532c370e0f9bd00981ef6c9256faa6a"
+  },
+  {
+   "slot": 190,
+   "mode": "composite_ore_mips",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "granite",
+   "texture": "diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "9b2dc9151e9be53e0be81f2017e7fa58239fca7ee5511f2b4639120d95a7cc9f"
+  },
+  {
+   "slot": 191,
+   "mode": "composite_ore_mips",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "73deaf8b027b9aba7609e0c4ddf59cadca76659dc26a2fbc003d3807235b60c0"
+  },
+  {
+   "slot": 192,
+   "mode": "composite_ore_mips",
+   "ore": "coal",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "10d603859ebf27ba2ee672f74cf95a5495b3150bbe56ff9a016b22e10bb3d092"
+  },
+  {
+   "slot": 193,
+   "mode": "composite_ore_mips",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "8ae626921a2ade026140c9164f6c2b0eb6c063719a8a3605adeacb0f7c444a75"
+  },
+  {
+   "slot": 194,
+   "mode": "composite_ore_mips",
+   "ore": "iron",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "b42ca4284b983bfd8e45053fc80d7b4ec45ac69524e466c3f3fb91bef40c349c"
+  },
+  {
+   "slot": 195,
+   "mode": "composite_ore_mips",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "b42ca4284b983bfd8e45053fc80d7b4ec45ac69524e466c3f3fb91bef40c349c"
+  },
+  {
+   "slot": 196,
+   "mode": "composite_ore_mips",
+   "ore": "copper",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "e6c3bd5dc62575b9ccce565623ef206ea322240f3a9dce084d7a35189968f93f"
+  },
+  {
+   "slot": 197,
+   "mode": "composite_ore_mips",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "4443434f245b3eabaf6be89a0c06133d86c5d8f2f3eed68588024f1a4bc2286a"
+  },
+  {
+   "slot": 198,
+   "mode": "composite_ore_mips",
+   "ore": "gold",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "58d767235f4092bd56776f962c129148f9ea086c77965cbbea39d9a5c010dc5a"
+  },
+  {
+   "slot": 199,
+   "mode": "composite_ore_mips",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "9aa2bc9d984b0184c54621843bc2e7a6de86925ec9c4c2125acfe7bbfbd34506"
+  },
+  {
+   "slot": 200,
+   "mode": "composite_ore_mips",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "8314288d736a2e235f6a230f11b9476107ddacdff8aef9a35aad0d31786ce913"
+  },
+  {
+   "slot": 201,
+   "mode": "composite_ore_mips",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "3ec605f0c7dd71af8b3789c62565ef6c23242485c397d5b366bcd8247e031a34"
+  },
+  {
+   "slot": 202,
+   "mode": "composite_ore_mips",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "80ec5580ccd4653d9b00a4b69681f3aaeb8c8ce7bc46c68388d53ef06d62548b"
+  },
+  {
+   "slot": 203,
+   "mode": "composite_ore_mips",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "fbf39f796574becfe00b12e4e99080e12d7b5e3bfe2ee63a6df5869cc7ef73ea"
+  },
+  {
+   "slot": 204,
+   "mode": "composite_ore_mips",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "0efba6894b384a1600bc1a1b5580fbb5aded6c9ac2d16918ef28765dee8cf1fa"
+  },
+  {
+   "slot": 205,
+   "mode": "composite_ore_mips",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "6a124764b7d9622fb14bdd2a55308d9a8743d6247f775b32ef5db7534b3e779e"
+  },
+  {
+   "slot": 206,
+   "mode": "composite_ore_mips",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "ae95ad189acf2ebfa84daa2888f704f8c7b547ee75dd220ffee6160b1bbdbac6"
+  },
+  {
+   "slot": 207,
+   "mode": "composite_ore_mips",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "c0f4ff92bbc7fb26eeb69d7b68181dd7ddf06eb2123d2d15ee686cd4d996ed88"
+  },
+  {
+   "slot": 208,
+   "mode": "composite_ore_mips",
+   "ore": "coal",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "d40ecd4c1879fdb75e21b7120b8cccbed409ea8e344e9694cc17b10c7ee87cdc"
+  },
+  {
+   "slot": 209,
+   "mode": "composite_ore_mips",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "e7474e5e50c736c2470e26b4256efe1644b11cc32a7056b8dc55d32a836c683e"
+  },
+  {
+   "slot": 210,
+   "mode": "composite_ore_mips",
+   "ore": "iron",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "a2bbe64ad2454b61f603b4c859690a809e059485c4d4679fdf34f24d4d7edef7"
+  },
+  {
+   "slot": 211,
+   "mode": "composite_ore_mips",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "a2bbe64ad2454b61f603b4c859690a809e059485c4d4679fdf34f24d4d7edef7"
+  },
+  {
+   "slot": 212,
+   "mode": "composite_ore_mips",
+   "ore": "copper",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "c2e906d8c00d26c3030f955d7ff122b36514b3cca10124f91b0755d8656aa3e0"
+  },
+  {
+   "slot": 213,
+   "mode": "composite_ore_mips",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "7bacf27cc69527a65e6e1d5c2634db2c4bd7ed1d8b450e8781acf0e3b497631a"
+  },
+  {
+   "slot": 214,
+   "mode": "composite_ore_mips",
+   "ore": "gold",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "7bb89d2a0c37eb4685b6b5c7aeed872b079f2a6720adaa71468c7b0e067263af"
+  },
+  {
+   "slot": 215,
+   "mode": "composite_ore_mips",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "f34d796311cf4a60560534422497c7e2af620b92e0a1675b94b7b9dbcf6af900"
+  },
+  {
+   "slot": 216,
+   "mode": "composite_ore_mips",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "f6474dcaa6ad4ff0ae181a9849afdf79246fc741db6574e2474996320fd6956a"
+  },
+  {
+   "slot": 217,
+   "mode": "composite_ore_mips",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "41607d92f7478c62629f336e241140d7ee5831c065c064eddc18a89fa1665535"
+  },
+  {
+   "slot": 218,
+   "mode": "composite_ore_mips",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "f4413ad7f12504ab632bd0f5d750828273f283d199bba998d200e105b960a0d5"
+  },
+  {
+   "slot": 219,
+   "mode": "composite_ore_mips",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "55f0353d9c820326186bc1f2948c16bc5b1e59f42793fb8e3ef97c99498c4f77"
+  },
+  {
+   "slot": 220,
+   "mode": "composite_ore_mips",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "57c579aba1e04b3e4716323568fb0dd909ab135a7f874cac9df605c39e007743"
+  },
+  {
+   "slot": 221,
+   "mode": "composite_ore_mips",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "f868875d7e8239df6764cb831dfc3c5bccbd8a8b1c051f30a69a57efa2f22be5"
+  },
+  {
+   "slot": 222,
+   "mode": "composite_ore_mips",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "265351dd086e9eac4241bb0fe7d15b2024c18cd30c0bdf4ca7973caa4c393241"
+  },
+  {
+   "slot": 223,
+   "mode": "composite_ore_mips",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "a6d51bbdaca40b373a002ccdbe418575d1d206307141cf81009caf125641de13"
+  },
+  {
+   "slot": 224,
+   "mode": "composite_ore_mips",
+   "ore": "coal",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "453992a289039e75448807ae1b475c427475eca1dd083c906019dbc90eb0255c"
+  },
+  {
+   "slot": 225,
+   "mode": "composite_ore_mips",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "0cd0ffa2a63adf15daae33fcefeb088ffa481edbd64f467b037b7e2f484a2491"
+  },
+  {
+   "slot": 226,
+   "mode": "composite_ore_mips",
+   "ore": "iron",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "d89626b900b2b27c463d47755934764530c88f432d5aac8fe9e5dc85b654e2ac"
+  },
+  {
+   "slot": 227,
+   "mode": "composite_ore_mips",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "d89626b900b2b27c463d47755934764530c88f432d5aac8fe9e5dc85b654e2ac"
+  },
+  {
+   "slot": 228,
+   "mode": "composite_ore_mips",
+   "ore": "copper",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "ba19e61ed0ab7bb1940f5b5c2d141c4d08b7f7b640b8b842f0d129dc87dfb430"
+  },
+  {
+   "slot": 229,
+   "mode": "composite_ore_mips",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "6d6f2fff7e0ea343fc2b55e6d9f12f8244f315040b3309cef7d0af9d18911992"
+  },
+  {
+   "slot": 230,
+   "mode": "composite_ore_mips",
+   "ore": "gold",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "9066ef64bc7c261dec5713f8c71e5ebcd4552c9d277a6f8fecb3e43eb26ed560"
+  },
+  {
+   "slot": 231,
+   "mode": "composite_ore_mips",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "4c3a4b0e04e27851efb5c5e3f3332fa47463c156f781b3a97cf1ad68cbc70e18"
+  },
+  {
+   "slot": 232,
+   "mode": "composite_ore_mips",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "86b6e4dfd3db08560346c1415ad0015f525478f58b915b36733a1f3b3c68a2a6"
+  },
+  {
+   "slot": 233,
+   "mode": "composite_ore_mips",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "85d7abd1ceebc804177d20fc794d22754e1f81838d0b3c4d3c238ff2728c43b6"
+  },
+  {
+   "slot": 234,
+   "mode": "composite_ore_mips",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "547781b1b252037ad937feb8d1c192bb3f16650299bd325e610bf6032521a1c1"
+  },
+  {
+   "slot": 235,
+   "mode": "composite_ore_mips",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "76c447a63a718ac1a11ed0c4c09fae091e3642931ae8717a0b46e0f1a9680f62"
+  },
+  {
+   "slot": 236,
+   "mode": "composite_ore_mips",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "dea6fde68ab49e65cc29e6f331ac7ff57a87f2fe5e615aeda42ed9e415be7100"
+  },
+  {
+   "slot": 237,
+   "mode": "composite_ore_mips",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "70cd1b55c3c6765786a3c5e3b3f5505af4f65e3df2ffaab306f7b27de06b1b7b"
+  },
+  {
+   "slot": 238,
+   "mode": "composite_ore_mips",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "8ac6bc6873e0de51aa15c377d49472d617f777f08569f8dea07bf13f213d432e"
+  },
+  {
+   "slot": 239,
+   "mode": "composite_ore_mips",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "bb9db5c918da57d721b5a46f1a4856b659a9e836a8e691263ee8a7c0efe93062"
+  },
+  {
+   "slot": 240,
+   "mode": "swap_ore_mips",
+   "ore": "coal",
+   "base": "stone",
+   "host": "stone",
+   "texture": "coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "a0c6c6a853a5fc0a7ce931cd3f0cd0f37a197e19f4981df9f879a9196cbc46b4"
+  },
+  {
+   "slot": 241,
+   "mode": "swap_ore_mips",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "36e4773b6f220100cee374093305e7ee663046f562857903772c3362552ae203"
+  },
+  {
+   "slot": 242,
+   "mode": "swap_ore_mips",
+   "ore": "iron",
+   "base": "stone",
+   "host": "stone",
+   "texture": "iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "48f29763791fb52948887b0fe773d72cf21847fce399c275dbbb610efaf9758b"
+  },
+  {
+   "slot": 243,
+   "mode": "swap_ore_mips",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "d6ecca5d64f9d1cfb68e4516c008871d585e89569b8ffeb7e08088097f406280"
+  },
+  {
+   "slot": 244,
+   "mode": "swap_ore_mips",
+   "ore": "copper",
+   "base": "stone",
+   "host": "stone",
+   "texture": "copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "4239ea09a6a9ea85a19e091568b39ebb609743401c31ea6f51f33a308d7a654e"
+  },
+  {
+   "slot": 245,
+   "mode": "swap_ore_mips",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "addec037263b85490a2ab77a746b29369dc626b2e290f28f91bb3c68cb8b24bf"
+  },
+  {
+   "slot": 246,
+   "mode": "swap_ore_mips",
+   "ore": "gold",
+   "base": "stone",
+   "host": "stone",
+   "texture": "gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "be45055eb58f0d26f15b067a849f5e96697b540fd1f6a40d7b1e667f877f8a99"
+  },
+  {
+   "slot": 247,
+   "mode": "swap_ore_mips",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "2b09254245306011b95be737e0daaaed83e7f95854ca1d1610e9ed11953799c9"
+  },
+  {
+   "slot": 248,
+   "mode": "swap_ore_mips",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "stone",
+   "texture": "redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "93aed0441ed682ac7455d76b411aa4c99d57778138b4ad0efa2d1cd67d16ee31"
+  },
+  {
+   "slot": 249,
+   "mode": "swap_ore_mips",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "ab9719657ef099f7510c0722b63c1ae573fc4f004bf33cf456c37ab2a7b3fe0e"
+  },
+  {
+   "slot": 250,
+   "mode": "swap_ore_mips",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "stone",
+   "texture": "emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "edc60571b7a1f99e091d317d4fd3b93dc707c43e560cf500abb3725da0e5efc9"
+  },
+  {
+   "slot": 251,
+   "mode": "swap_ore_mips",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "1563e66411b61bbe5de91dfb857828dd6aa10b328d55b42880ad8b4950dc05eb"
+  },
+  {
+   "slot": 252,
+   "mode": "swap_ore_mips",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "stone",
+   "texture": "lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "43887a571e39a26e5f16c9e52c09ff93443dd7b3cf2a39f5fe6851b9bee5153c"
+  },
+  {
+   "slot": 253,
+   "mode": "swap_ore_mips",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "d5d7ffcde10d51c3b490b55c5b27b08f216b5d31fb72184c92c37b78fec0f80e"
+  },
+  {
+   "slot": 254,
+   "mode": "swap_ore_mips",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "stone",
+   "texture": "diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "fe8b8b27bf83955acc5511ba5b178cf752496fd3e06070c21b4aff45292bf3b1"
+  },
+  {
+   "slot": 255,
+   "mode": "swap_ore_mips",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "deepslate",
+   "texture": "deepslate_diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "928420c770bdb850997ac250699be01b0c98759bbc97b5ade967ef572778b6ad"
+  },
+  {
+   "slot": 256,
+   "mode": "swap_ore_mips",
+   "ore": "coal",
+   "base": "stone",
+   "host": "granite",
+   "texture": "coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "8f031297bd853ab65cf315a9e2ef4df5333a8a90ebcfddbb2fceac3dacc07e16"
+  },
+  {
+   "slot": 257,
+   "mode": "swap_ore_mips",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "2d7443c17f1bd02883749f1ca900dd5b5b4c70db0bb4d322ec240bc67028cdbe"
+  },
+  {
+   "slot": 258,
+   "mode": "swap_ore_mips",
+   "ore": "iron",
+   "base": "stone",
+   "host": "granite",
+   "texture": "iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "a657dfd2a037c19e110cdf8616a694e0d8e7a3bf3db8ca4d6b61d97ed1666eb5"
+  },
+  {
+   "slot": 259,
+   "mode": "swap_ore_mips",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "b17c9eb6615563151c3ef48f062b64fce9bcbef27f818b38e0aec07b74250f23"
+  },
+  {
+   "slot": 260,
+   "mode": "swap_ore_mips",
+   "ore": "copper",
+   "base": "stone",
+   "host": "granite",
+   "texture": "copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "df3017048049b54a135f9cc731c33b459e0b2b3420a820f879baccdd0fa37a1e"
+  },
+  {
+   "slot": 261,
+   "mode": "swap_ore_mips",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "3ef119bec8ff5c687f9eb213032810d2269c2776322ff2509ced6f45a8a2fbf4"
+  },
+  {
+   "slot": 262,
+   "mode": "swap_ore_mips",
+   "ore": "gold",
+   "base": "stone",
+   "host": "granite",
+   "texture": "gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "8484492d869a540c491facf51027c46bc76ab5931c09786b437e89825f9d8f1d"
+  },
+  {
+   "slot": 263,
+   "mode": "swap_ore_mips",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "bb77238d382bbab48f13f7a3dff15df0f3bf81083e84f371d918b391109e117e"
+  },
+  {
+   "slot": 264,
+   "mode": "swap_ore_mips",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "granite",
+   "texture": "redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "dd8becad91bc2abc7264707d00bb660e0851acf0fef56beff29b29f4512cd024"
+  },
+  {
+   "slot": 265,
+   "mode": "swap_ore_mips",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "71ee856140291eb70fc95316d9a6b7144903be6099a7431bd39ade2968832c85"
+  },
+  {
+   "slot": 266,
+   "mode": "swap_ore_mips",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "granite",
+   "texture": "emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "bf1caa2fcf28c52cb17db1cafdc8aa057fbaf2d8334cd488c6f9502d545e64f8"
+  },
+  {
+   "slot": 267,
+   "mode": "swap_ore_mips",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "93dec36cc0eef3d9a998491dad7e857433cc3c333034c8fd04f1e849ec30765f"
+  },
+  {
+   "slot": 268,
+   "mode": "swap_ore_mips",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "granite",
+   "texture": "lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "a85c1e12634ea85a9c2b1f3cd7b0dd11a3fbe8cff495d5912eb47c13a0cbeee9"
+  },
+  {
+   "slot": 269,
+   "mode": "swap_ore_mips",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "14c919fff4c01c401ea683b979f894902f6119169a01fe6145d50660a52e34bc"
+  },
+  {
+   "slot": 270,
+   "mode": "swap_ore_mips",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "granite",
+   "texture": "diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "97102cc87add70b9fb41b2f10779904847d1fca6063ace046820a497f549db4c"
+  },
+  {
+   "slot": 271,
+   "mode": "swap_ore_mips",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "granite",
+   "texture": "deepslate_diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "5b205e3b6efb49aabcbce4af19f4fccfad5ca5497bf8b9a856d9dc6b5ceb0063"
+  },
+  {
+   "slot": 272,
+   "mode": "swap_ore_mips",
+   "ore": "coal",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "855cee09a12b770e4f4e0b74a01cf34df3aef9fd71eae98387e6ca2d6e8b17a5"
+  },
+  {
+   "slot": 273,
+   "mode": "swap_ore_mips",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "f418fc0612530201630f020bad9fffa2aa8af4212dcadc6c61472f5a6d55145a"
+  },
+  {
+   "slot": 274,
+   "mode": "swap_ore_mips",
+   "ore": "iron",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "3e7dc18ea19d38c2168d98a705a37c616e36fd168ee4e0b28fc5e97d44b45f82"
+  },
+  {
+   "slot": 275,
+   "mode": "swap_ore_mips",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "dc952540d435c59560a3389147bc099c64cbef8b8d81dcf41566e71840a92c3b"
+  },
+  {
+   "slot": 276,
+   "mode": "swap_ore_mips",
+   "ore": "copper",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "724689a74baf08a485493c2031d4801793f64aedec569836e62df0464ef0032c"
+  },
+  {
+   "slot": 277,
+   "mode": "swap_ore_mips",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "f45ac55574d48651ff36990d7968d7fcb642a734511391e4b2ae91aea55dbf05"
+  },
+  {
+   "slot": 278,
+   "mode": "swap_ore_mips",
+   "ore": "gold",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "a6a8e904a8fb09f0dd573d22f5a7642eaf21585b3940b0333693ddeb8a9dbfeb"
+  },
+  {
+   "slot": 279,
+   "mode": "swap_ore_mips",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "e16bf635da568b023a1ac1dd71b3a051e92ce1c01c2e49f40e72d593b389e9b9"
+  },
+  {
+   "slot": 280,
+   "mode": "swap_ore_mips",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "2206fe59ce1f026954fcfb458b910ab40ed62d1986b8ece7b317a6d542df5f00"
+  },
+  {
+   "slot": 281,
+   "mode": "swap_ore_mips",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "77c0863efcbf0091f8ddfb0a7dd3635bccbeeeb40fddc8bec2dbbddb99a33305"
+  },
+  {
+   "slot": 282,
+   "mode": "swap_ore_mips",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "600adff072eafb9c9380069172b34833576fc0d1e69ef452f5d5bef09d01911a"
+  },
+  {
+   "slot": 283,
+   "mode": "swap_ore_mips",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "a72057ec9f2ae4f2e95e8b3044fb0efba26cc63852b71ed95e568b4c06364ac8"
+  },
+  {
+   "slot": 284,
+   "mode": "swap_ore_mips",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "c3f12c952178e8d86670e8c001dee68966a52cc5755f3410ac590afdc635c84b"
+  },
+  {
+   "slot": 285,
+   "mode": "swap_ore_mips",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "28e68659ff281a11e30ea6e904d269e3c6bc1a50b3a93802eedf7f4778004aa7"
+  },
+  {
+   "slot": 286,
+   "mode": "swap_ore_mips",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "diorite",
+   "texture": "diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "06459e24564bce338a029660143c7106670c5623203428047f897e76872c1c8f"
+  },
+  {
+   "slot": 287,
+   "mode": "swap_ore_mips",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "diorite",
+   "texture": "deepslate_diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "9d46a24314a8afe0645efdc19c160a223ffcbe671fcb2da5aeb18b87ae413172"
+  },
+  {
+   "slot": 288,
+   "mode": "swap_ore_mips",
+   "ore": "coal",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "2093435a04f94c70142a4d7180fe4dc9320fa63c028fcfbaec0ec537ea945b5c"
+  },
+  {
+   "slot": 289,
+   "mode": "swap_ore_mips",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "09609eea0222f939353d7b811dc23fd1df01174f8cbaaa93dee0079b435b538c"
+  },
+  {
+   "slot": 290,
+   "mode": "swap_ore_mips",
+   "ore": "iron",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "71783dfa47cc679c4012529f6eb12481dd16df4437acb87b0d6cb1154ede18e3"
+  },
+  {
+   "slot": 291,
+   "mode": "swap_ore_mips",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "e57f7ccfcd178648db8a4351c5c31020d02d41c03d796d21dad13fa53ba30952"
+  },
+  {
+   "slot": 292,
+   "mode": "swap_ore_mips",
+   "ore": "copper",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "7ab7a6dced89676dd95232a362cfea5871695285234db6567bb79c9818753855"
+  },
+  {
+   "slot": 293,
+   "mode": "swap_ore_mips",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "14e7b3082a71a9eaf21f67442b3b8410061b71a27e4359508ac8d6d171f23885"
+  },
+  {
+   "slot": 294,
+   "mode": "swap_ore_mips",
+   "ore": "gold",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "3a0681d2eac5df294c48a1f5d56ba1cbf24ff252e5afeeb2452f26668d4d2828"
+  },
+  {
+   "slot": 295,
+   "mode": "swap_ore_mips",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "cca56439ab72858fb7f62e48553e5ec00fd6a0f441c3c3fa29858b8604fdcd47"
+  },
+  {
+   "slot": 296,
+   "mode": "swap_ore_mips",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "2fec6445eaff139cdbd045ba4ce2be7042328f5a68133f3b4865679945348348"
+  },
+  {
+   "slot": 297,
+   "mode": "swap_ore_mips",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "d7ed0489eaa2c92823382bf9154dfbc5140cce13be1ac4caeacd1152e718f794"
+  },
+  {
+   "slot": 298,
+   "mode": "swap_ore_mips",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "7d513accae7a0290aa713633ab8fd5981f89527fe15cf22ecd546f913b9df7ac"
+  },
+  {
+   "slot": 299,
+   "mode": "swap_ore_mips",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "70b7fab75c1465af0eb806de64bdba4b5b6f664517b601412623466139b4ecb8"
+  },
+  {
+   "slot": 300,
+   "mode": "swap_ore_mips",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "4ff3f230067b0d20645871dda4973d8f95eab56fbc4fb428e8d1a7190807fdb3"
+  },
+  {
+   "slot": 301,
+   "mode": "swap_ore_mips",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "9ae90cd91c51564f590e51adff9cb455100fae91e3181e6df438fea91e713539"
+  },
+  {
+   "slot": 302,
+   "mode": "swap_ore_mips",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "andesite",
+   "texture": "diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "46903e4c6aa03ebf61cf153a77cd709579ab3915278443b755e66e9a22454812"
+  },
+  {
+   "slot": 303,
+   "mode": "swap_ore_mips",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "andesite",
+   "texture": "deepslate_diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "166887ac011724da91b754622041a020888e75ec15934f4972b8b2dd772c3e38"
+  },
+  {
+   "slot": 304,
+   "mode": "swap_ore_mips",
+   "ore": "coal",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "515e83f13dcb0ea0ff054d103b67190590f79d6e1692ab9df6b38dc14b06248c"
+  },
+  {
+   "slot": 305,
+   "mode": "swap_ore_mips",
+   "ore": "coal",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_coal_ore",
+   "mips": "explicit",
+   "rgba_sha256": "f4e7a3b248d2ed6488663416d35011bd3c9edd93aead41c92f7d0297a793d4ed"
+  },
+  {
+   "slot": 306,
+   "mode": "swap_ore_mips",
+   "ore": "iron",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "b1c960fa5e9d9382268e726f5bf7f304b4160b1bb9b7cf2d104f8e73aa700d81"
+  },
+  {
+   "slot": 307,
+   "mode": "swap_ore_mips",
+   "ore": "iron",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_iron_ore",
+   "mips": "explicit",
+   "rgba_sha256": "b35f085169a14a5b28d4d67e2ac3600e1aa36a979f588bbaa50eafaed6449c37"
+  },
+  {
+   "slot": 308,
+   "mode": "swap_ore_mips",
+   "ore": "copper",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "49f288bc474cc79d9b0f4b22ce85e97c09fa0f1d63dd90111ec397bfa2e05257"
+  },
+  {
+   "slot": 309,
+   "mode": "swap_ore_mips",
+   "ore": "copper",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_copper_ore",
+   "mips": "explicit",
+   "rgba_sha256": "11ab59af743ccb6a291c82e52279cafb8c4c1dab9f7829a7c0c7f97ad314e5de"
+  },
+  {
+   "slot": 310,
+   "mode": "swap_ore_mips",
+   "ore": "gold",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "864f270ec1fd8abe3b8b30645615d5b84ca0952d76df6d756d75c8779eb4268d"
+  },
+  {
+   "slot": 311,
+   "mode": "swap_ore_mips",
+   "ore": "gold",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_gold_ore",
+   "mips": "explicit",
+   "rgba_sha256": "7e85363e043327574bb7d0bc394e0d11e0a2623536dae1a7c4441f4f6aeb0e24"
+  },
+  {
+   "slot": 312,
+   "mode": "swap_ore_mips",
+   "ore": "redstone",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "98448b848bb17f5a45d296584935b88ebdbf41af1da8e01929cdbe0d445869f6"
+  },
+  {
+   "slot": 313,
+   "mode": "swap_ore_mips",
+   "ore": "redstone",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_redstone_ore",
+   "mips": "explicit",
+   "rgba_sha256": "15fc42a829ef8d068eb217bef4aa9fe697027281957fc764b9b4821d6f7ae196"
+  },
+  {
+   "slot": 314,
+   "mode": "swap_ore_mips",
+   "ore": "emerald",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "59dbc56c3302815f76070d8eb8a69fe4947e0aa2610c99557be3631caa4e10d3"
+  },
+  {
+   "slot": 315,
+   "mode": "swap_ore_mips",
+   "ore": "emerald",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_emerald_ore",
+   "mips": "explicit",
+   "rgba_sha256": "ad6db9eb82f4018f6a524ad2ece5c7f59c6ca3ffbb39b28b2e6cc2621d825242"
+  },
+  {
+   "slot": 316,
+   "mode": "swap_ore_mips",
+   "ore": "lapis",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "49452864f543128d49e3a6e68207eee0439899588ea0298d64e3de8bcb6358ac"
+  },
+  {
+   "slot": 317,
+   "mode": "swap_ore_mips",
+   "ore": "lapis",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_lapis_ore",
+   "mips": "explicit",
+   "rgba_sha256": "999d1dfaf5416b67aa1ad031b582687d7bd9007f717c131593275556e9d4c558"
+  },
+  {
+   "slot": 318,
+   "mode": "swap_ore_mips",
+   "ore": "diamond",
+   "base": "stone",
+   "host": "tuff",
+   "texture": "diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "2940945cd12b97ecbbd6823ad446138669fe7a8cbae62fe0f2a8fa8776b3c8ad"
+  },
+  {
+   "slot": 319,
+   "mode": "swap_ore_mips",
+   "ore": "diamond",
+   "base": "deepslate",
+   "host": "tuff",
+   "texture": "deepslate_diamond_ore",
+   "mips": "explicit",
+   "rgba_sha256": "5c73a0fe0b8dcccfb9a7e492112da6b9300ed3ecf00a2a7c42d38b46d55d0716"
+  }
+ ]
+}

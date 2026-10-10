@@ -208,6 +208,8 @@ public:
     // Model quads on or off (voxel.Models) and the look-call shading switch (voxel.Debug.ModelShadeUnturned); a change
     // remeshes every column.
     void SetModelOptions(bool bModels, bool bShadeUnturned);
+    // The render-only ore looks (voxel.Look.OreHost, voxel.Look.OreGlint); a change remeshes every column.
+    void SetOreLooks(int32 OreHost, int32 OreGlint);
     bool IsDecorating() const { return Settings.Decorator.IsValid(); }
     const FVoxelDecorator* GetDecorator() const { return Settings.Decorator.Get(); }
 

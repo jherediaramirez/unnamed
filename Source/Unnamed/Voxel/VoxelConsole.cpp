@@ -4,6 +4,7 @@
 #include "Blocks/VoxelBlockTable.h"
 #include "Decoration/VoxelFeatureGraph.h"
 #include "Generation/VoxelArea.h"
+#include "Meshing/VoxelOreLooks.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Modules/ModuleManager.h"
@@ -55,10 +56,31 @@ TAutoConsoleVariable<bool> VoxelConsole::CVarOreVeins(TEXT("voxel.OreVeins"), tr
         "Ore veins (phase 6, S4): 1 runs 26.3's ore_vein rules in Generate (copper veins in granite from Z 0 to 49, "
         "iron veins in tuff from Z -60 to -9) in streamed worlds and every bench (each takes noveins as well); 0 gives "
         "the blocks from before S4, the control. A change rebuilds the world."));
+TAutoConsoleVariable<int32> VoxelConsole::CVarOreHost(TEXT("voxel.Look.OreHost"), 0,
+    TEXT("Ore look L1, render-only: 0 vanilla (stone ores on grey stone everywhere); 1 a stone or deepslate ore in "
+         "granite, diorite, andesite or tuff draws its ore pixels over that rock (the host most common among its "
+         "neighbours); 2 the same with the base rock's tones mapped onto the host's (palette swap). A change remeshes "
+         "every loaded column."));
+TAutoConsoleVariable<int32> VoxelConsole::CVarOreGlint(TEXT("voxel.Look.OreGlint"), 0,
+    TEXT("Ore look L2 level 1, render-only: 0 vanilla; 1 ore textures keep their ore pixels' share and colour in the "
+         "mips, and metal and gem pixels are glossy (light catches them; no light, no glint); 3 debug, every ore face "
+         "flat magenta. A change remeshes every loaded column."));
 
 int32 VoxelConsole::GetTintBlend()
 {
     return FMath::Clamp(CVarTintBlend.GetValueOnGameThread(), -1, FVoxelMeshOptions::MaxTintBlend);
+}
+
+int32 VoxelConsole::GetOreHost()
+{
+    const int32 Value = CVarOreHost.GetValueOnAnyThread();
+    return Value == 1 || Value == 2 ? Value : 0;
+}
+
+int32 VoxelConsole::GetOreGlint()
+{
+    const int32 Value = CVarOreGlint.GetValueOnAnyThread();
+    return Value == 1 || Value == VoxelOreLooks::DebugMask ? Value : 0;
 }
 
 int32 VoxelConsole::GetMaxTasksInFlight()
@@ -244,6 +266,8 @@ namespace
                     Options.bGreedy = VoxelConsole::CVarGreedyMeshing.GetValueOnGameThread();
                     Options.bAmbientOcclusion = VoxelConsole::CVarAmbientOcclusion.GetValueOnGameThread();
                     Options.TintBlend = VoxelConsole::GetTintBlend();
+                    Options.OreHost = VoxelConsole::GetOreHost();
+                    Options.OreGlint = VoxelConsole::GetOreGlint();
                     // "standin" benches generator 1's terrain; anything else names a preset of generator 2's.
                     if (PresetName == TEXT("standin"))
                     {

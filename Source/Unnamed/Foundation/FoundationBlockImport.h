@@ -26,7 +26,9 @@ public:
     // vertically), with MipCount levels made by 26.3's MipmapGenerator using MipStrategies[i] and
     // AlphaCutoffBiases[i] (the .mcmeta values). Mip 0 is the PNG's pixels unchanged, except a still PNG twice
     // FrameSize (the shelf mushroom's 32 x 32 textures), whose layer starts at its own mip 1. Uncompressed BGRA8,
-    // sRGB, nearest filtering, the mips left as built. A path of "white" makes a plain white layer.
+    // sRGB, nearest filtering, the mips left as built. A path of "white" makes a plain white layer. The strategy
+    // "explicit" takes the mips from the PNG instead: level L is the top-left (FrameSize >> L) square of frame
+    // FrameIndices[i] + L (the ore looks, Scripts/OreLooks.py).
     UFUNCTION(BlueprintCallable, Category = "Unnamed|Blocks")
     static FString BuildTextureArray(UTexture2DArray* Array, const TArray<FString>& PngPaths,
         const TArray<int32>& FrameIndices, const TArray<FString>& MipStrategies, const TArray<float>& AlphaCutoffBiases,

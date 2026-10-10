@@ -25,12 +25,20 @@ namespace VoxelConsole
     // Ore veins (phase 6, S4): on, Generate runs the ore_vein rules in streamed worlds and benches; off is the control
     // that gives the blocks from before S4. Read when a world starts; a change rebuilds it.
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarOreVeins;
+    // Render-only ore looks (scout E's look calls; Meshing/VoxelOreLooks.h): voxel.Look.OreHost and
+    // voxel.Look.OreGlint. A change remeshes every loaded column; benches read them too.
+    extern UNNAMED_API TAutoConsoleVariable<int32> CVarOreHost;
+    extern UNNAMED_API TAutoConsoleVariable<int32> CVarOreGlint;
 
     // Tasks in flight when voxel.MaxTasksInFlight is 0: twice the task workers, so workers never idle between
     // finishing one job and the game thread queuing the next.
     UNNAMED_API int32 GetMaxTasksInFlight();
     // voxel.TintBlend clamped to -1 (biome tints off) to FVoxelMeshOptions::MaxTintBlend.
     UNNAMED_API int32 GetTintBlend();
+    // voxel.Look.OreHost as 0 (vanilla), 1 (composite) or 2 (palette swap); other values read as 0.
+    UNNAMED_API int32 GetOreHost();
+    // voxel.Look.OreGlint as 0 (vanilla), 1 (ore-aware mips and gloss) or 3 (debug mask); other values read as 0.
+    UNNAMED_API int32 GetOreGlint();
 
     // The text voxel.Info prints: the world range, the dev seed, every voxel.* variable with its value and what set
     // it, the derived limits and the mesh backend; with World's voxel world running, its streaming stages too.

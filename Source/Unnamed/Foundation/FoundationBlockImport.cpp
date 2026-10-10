@@ -147,6 +147,34 @@ FString UFoundationBlockImport::BuildTextureArray(UTexture2DArray* Array, const 
     TMap<FString, TTuple<TArray<uint8>, int32, int32>> Decoded;
     for (int32 Layer = 0; Layer < Layers; ++Layer)
     {
+        if (MipStrategies[Layer] == TEXT("explicit"))
+        {
+            // The PNG holds the mips: level L is the top-left (FrameSize >> L) square of frame FrameIndices[i] + L.
+            if (!Decoded.Contains(PngPaths[Layer]))
+            {
+                TTuple<TArray<uint8>, int32, int32> Image;
+                if (!DecodePng(PngPaths[Layer], Image.Get<0>(), Image.Get<1>(), Image.Get<2>()))
+                    return TEXT("cannot decode ") + PngPaths[Layer];
+                Decoded.Add(PngPaths[Layer], MoveTemp(Image));
+            }
+            const auto& [Pixels, Width, Height] = Decoded[PngPaths[Layer]];
+            if (Width != FrameSize || FrameIndices[Layer] < 0 ||
+                int64(FrameIndices[Layer] + MipCount) * FrameSize > Height)
+                return FString::Printf(
+                    TEXT("%s has no %d explicit mips from frame %d"), *PngPaths[Layer], MipCount, FrameIndices[Layer]);
+            TArray<TArray<uint8>>& Mips = LayerMips.AddDefaulted_GetRef();
+            for (int32 Mip = 0; Mip < MipCount; ++Mip)
+            {
+                const int32 Size = FMath::Max(1, FrameSize >> Mip);
+                const int64 Top = int64(FrameIndices[Layer] + Mip) * FrameSize;
+                TArray<uint8>& Level = Mips.AddDefaulted_GetRef();
+                Level.SetNumUninitialized(Size * Size * 4);
+                for (int32 Row = 0; Row < Size; ++Row)
+                    FMemory::Memcpy(
+                        Level.GetData() + Row * Size * 4, Pixels.GetData() + (Top + Row) * Width * 4, Size * 4);
+            }
+            continue;
+        }
         TArray<uint8> Frame;
         Frame.SetNumUninitialized(FrameSize * FrameSize * 4);
         // A still texture twice the frame size gives its layer from its own mip chain, one level down.
