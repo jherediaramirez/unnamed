@@ -106,19 +106,22 @@ struct UNNAMEDVOXEL_API FVoxelTreeConfig
     bool bIgnoreVines = false;
     // How far a tree's cells can lie from its origin horizontally (Chebyshev), asserted at most 16 at compile.
     int32 Reach = 0;
-    // The data's decorators, left out until S9b, by type.
+    // The data's decorators, left out until S9c, by type.
     TArray<FString> SkippedDecorators;
 };
 
 // Where a trunk wants foliage: the cell above its top log (or a branch end), a radius bonus, and whether the trunk is
 // 2 x 2 there (the foliage then centres on the four columns). A poplar trunk also says how far below Position its
-// branch layer lies, where its foliage ends (0 for every other trunk).
+// branch layer lies, where its foliage ends (0 for every other trunk). A mega jungle branch also says whether its
+// canopy gets its bottom layer, drawn in the trunk's stream between the branch's angle and the next branch (ours,
+// fitted (S9b refit); false for every other attachment).
 struct FVoxelFoliageAttachment
 {
     FIntVector Position = FIntVector::ZeroValue;
     int32 RadiusBonus = 0;
     bool bDoubleTrunk = false;
     int32 BranchDepth = 0;
+    bool bBottomLayer = false;
 };
 
 // One tree under construction: its own cells over the working copy, in the order they were set. A cell holds one kind;

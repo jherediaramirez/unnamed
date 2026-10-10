@@ -8,7 +8,7 @@
 namespace
 {
     const FName FoliageRadius(TEXT("radius")), FoliageOffset(TEXT("offset")), FoliageHeight(TEXT("height")),
-        FoliageTrunkHeight(TEXT("trunk_height"));
+        FoliageTrunkHeight(TEXT("trunk_height")), FoliageCrownHeight(TEXT("crown_height"));
 
     // The chance a pine's radius cap grows by one more layer (ours, fitted: 96 growths in 134 tries of the pine probe).
     constexpr float PineGrowChance = 0.72f;
@@ -315,6 +315,147 @@ namespace
                 Builder, FIntVector(Attachment.Position.X, Attachment.Position.Y, BranchZ), 2, 1, bFlip, Hole);
         }
     }
+
+    // The folded disc around a 2 x 2 trunk (ours, fitted: every leaf layer of the mega spruce and mega pine example
+    // trees is one): with PlaceLayer's folded offsets, a cell stays when AbsX^2 + AbsY^2 <= R^2 and
+    // AbsX + AbsY <= R + 1 (the second rule only matters from R 5: mega jungle's R 5 layer has 96 cells). R 0 to 5 hold
+    // 4, 12, 24, 44, 68 and 96 cells.
+    bool OutsideFoldedDisc(int32 AbsX, int32 AbsY, int32 Radius)
+    {
+        return AbsX * AbsX + AbsY * AbsY > Radius * Radius || AbsX + AbsY > Radius + 1;
+    }
+
+    // A plain disc around one column: a cell stays when AbsX^2 + AbsY^2 <= R^2. R 1 to 3 hold 5, 13 and 29 cells.
+    bool OutsideDisc(int32 AbsX, int32 AbsY, int32 Radius)
+    {
+        return AbsX * AbsX + AbsY * AbsY > Radius * Radius;
+    }
+
+    // jungle_foliage_placer (ours, fitted to mega jungle tree): layers t downward from the attachment plus offset. On a
+    // double trunk (the main crown) t = 0 .. height, each a folded disc of radius R + bonus + t (the probe's crown
+    // layers hold exactly 44, 67 and 92 leaves around the top logs). On a single trunk (a branch's canopy; ours, fitted
+    // (S9b refit)) t = 0 .. height - 1, plus t = height when the trunk drew the bottom layer, each a plain disc of
+    // radius R + bonus - 1 + t: for the data's R 2, height 2, r 1 above the end log, r 2 at it and r 3 one below.
+    void PlaceJungle(const FVoxelTreePlacerConfig& Foliage, FVoxelTreeBuilder& Builder,
+        TConstArrayView<FVoxelFoliageAttachment> Attachments)
+    {
+        FVoxelXoroshiro& Random = Builder.Random;
+        const int32 Radius = Foliage.SampleInt(FoliageRadius, Random);
+        const int32 Offset = Foliage.SampleInt(FoliageOffset, Random);
+        const int32 Height = Foliage.SampleInt(FoliageHeight, Random, 2);
+        for (const FVoxelFoliageAttachment& Attachment : Attachments)
+        {
+            const bool bDouble = Attachment.bDoubleTrunk;
+            const int32 Layers = bDouble || Attachment.bBottomLayer ? Height + 1 : Height;
+            for (int32 Layer = 0; Layer < Layers; ++Layer)
+            {
+                const FIntVector Center = Attachment.Position + FIntVector(0, 0, Offset - Layer);
+                if (bDouble)
+                    PlaceLayer(Builder, Center, FMath::Max(0, Radius + Attachment.RadiusBonus + Layer), true,
+                        OutsideFoldedDisc);
+                else
+                    PlaceLayer(Builder, Center, FMath::Max(0, Radius + Attachment.RadiusBonus - 1 + Layer), false,
+                        OutsideDisc);
+            }
+        }
+    }
+
+    // mega_pine_foliage_placer's crown (ours, fitted to mega spruce and mega pine): the bottom layer's radius, and how
+    // far the radius falls over the crown's C + 1 layers.
+    constexpr int32 MegaPineBase = 3, MegaPineDrop = 4;
+
+    // round(Numerator / Denominator) with halves rounding up, for Numerator >= 0 and Denominator > 0.
+    int32 DivideRoundHalfUp(int32 Numerator, int32 Denominator)
+    {
+        return (2 * Numerator + Denominator) / (2 * Denominator);
+    }
+
+    // The radius of crown layer t (0 at the attachment, C at the bottom) whose Z lies Z above the tree's origin (ours,
+    // fitted). With s = C - t layers under it: the bottom layer (s 0) has MegaPineBase; a layer at an odd Z (a "low"
+    // layer) MegaPineBase - round(MegaPineDrop s / (C + 1)); one at an even Z (a "high" layer) one more than the low
+    // rule taken one layer lower, MegaPineBase + 1 - round(MegaPineDrop (s - 1) / (C + 1)); then at most t (the top
+    // layer is the bare 2 x 2) and at least 0. The probes' leaf counts split by the top log's parity, so the shape
+    // depends on Z's; their origins all lie at an even world Z, so the origin's Z and the world's cannot be told apart
+    // and the origin's is used. Exact on the four example trees, but 7 of the 20 (C, parity) leaf totals miss
+    // (big-report section 4).
+    int32 GetMegaPineRadius(int32 Layer, int32 Crown, int32 Z)
+    {
+        const int32 Above = Crown - Layer;
+        const int32 Radius = Above == 0 ? MegaPineBase
+            : (Z & 1) != 0              ? MegaPineBase - DivideRoundHalfUp(MegaPineDrop * Above, Crown + 1)
+                                        : MegaPineBase + 1 - DivideRoundHalfUp(MegaPineDrop * (Above - 1), Crown + 1);
+        return FMath::Max(0, FMath::Min(Layer, Radius));
+    }
+
+    // mega_pine_foliage_placer (ours, fitted; draws radius, offset, crown_height in that order): layers t = 0 .. C
+    // downward from the attachment plus offset, each of radius GetMegaPineRadius + radius + bonus: a folded disc on a
+    // double trunk, else a disc (AbsX^2 + AbsY^2 <= R^2; no probe has a single-trunk mega pine).
+    void PlaceMegaPine(const FVoxelTreePlacerConfig& Foliage, FVoxelTreeBuilder& Builder,
+        TConstArrayView<FVoxelFoliageAttachment> Attachments)
+    {
+        FVoxelXoroshiro& Random = Builder.Random;
+        const int32 Radius = Foliage.SampleInt(FoliageRadius, Random);
+        const int32 Offset = Foliage.SampleInt(FoliageOffset, Random);
+        const int32 Crown = Foliage.SampleInt(FoliageCrownHeight, Random);
+        for (const FVoxelFoliageAttachment& Attachment : Attachments)
+            for (int32 Layer = 0; Layer <= Crown; ++Layer)
+            {
+                const FIntVector Center = Attachment.Position + FIntVector(0, 0, Offset - Layer);
+                const int32 LayerRadius = FMath::Max(
+                    0, GetMegaPineRadius(Layer, Crown, Center.Z - Builder.Origin.Z) + Radius + Attachment.RadiusBonus);
+                if (Attachment.bDoubleTrunk)
+                    PlaceLayer(Builder, Center, LayerRadius, true, OutsideFoldedDisc);
+                else
+                    PlaceLayer(Builder, Center, LayerRadius, false,
+                        [](int32 AbsX, int32 AbsY, int32 R) { return AbsX * AbsX + AbsY * AbsY > R * R; });
+            }
+    }
+
+    // dark_oak_foliage_placer's chance (ours, fitted to the dark oak and pale oak probes): the 2 x 2 cap.
+    constexpr double DarkOakCapChance = 0.5;
+
+    // dark_oak_foliage_placer (ours, fitted): around the attachment A plus offset, with R = radius + bonus (0 in the
+    // data). The main attachment (double trunk, A at the shifted top 2 x 2's min corner): A + 1 the bare 2 x 2 with
+    // chance 1/2 (the only draw); A a folded disc of radius R + 2 (24 cells for R 0); A - 1 and A - 2 as below. A
+    // branch attachment (single trunk, A one above a branch column's top log): no draws, see below. Leaves never
+    // replace logs.
+    void PlaceDarkOakFoliage(const FVoxelTreePlacerConfig& Foliage, FVoxelTreeBuilder& Builder,
+        TConstArrayView<FVoxelFoliageAttachment> Attachments)
+    {
+        FVoxelXoroshiro& Random = Builder.Random;
+        const int32 Radius = Foliage.SampleInt(FoliageRadius, Random);
+        const int32 Offset = Foliage.SampleInt(FoliageOffset, Random);
+        for (const FVoxelFoliageAttachment& Attachment : Attachments)
+        {
+            const FIntVector Center = Attachment.Position + FIntVector(0, 0, Offset);
+            const int32 Bonus = Radius + Attachment.RadiusBonus;
+            if (!Attachment.bDoubleTrunk)
+            {
+                // A branch blob (ours, fitted (S9b refit)): at A - 1 (the branch's top log level) the square of radius
+                // R + 2 around the column minus its corners (21 cells for R 0), at A the full square of radius R + 1
+                // (9 cells).
+                PlaceLayer(Builder, Center - FIntVector(0, 0, 1), FMath::Max(0, 2 + Bonus), false, CutCorners);
+                PlaceLayer(Builder, Center, FMath::Max(0, 1 + Bonus), false, [](int32, int32, int32) { return false; });
+                continue;
+            }
+            if (Random.NextDouble() < DarkOakCapChance)
+                PlaceLayer(Builder, Center + FIntVector(0, 0, 1), 0, true, OutsideFoldedDisc);
+            PlaceLayer(Builder, Center, FMath::Max(0, 2 + Bonus), true, OutsideFoldedDisc);
+            // The top log's layer A - 1 (ours, fitted (S9b refit)): the square -r .. r + 1 with r = R + 3, minus the
+            // cells where both raw offsets from A (not folded) are at least r: 55 cells for R 0. Each edge row spans
+            // -(r - 1) .. r - 1 about A, so about the 2 x 2's centre its +X / +Y end is one cell short of its -X / -Y
+            // end.
+            const int32 TopRadius = FMath::Max(0, 3 + Bonus);
+            for (int32 DX = -TopRadius; DX <= TopRadius + 1; ++DX)
+                for (int32 DY = -TopRadius; DY <= TopRadius + 1; ++DY)
+                    if (FMath::Abs(DX) < TopRadius || FMath::Abs(DY) < TopRadius)
+                        Builder.SetLeaf(Center + FIntVector(DX, DY, -1));
+            // The layer under it, A - 2 (ours, fitted (S9b refit)): the full folded square of radius R + 2 (36 cells
+            // for R 0).
+            PlaceLayer(Builder, Center - FIntVector(0, 0, 2), FMath::Max(0, 2 + Bonus), true,
+                [](int32, int32, int32) { return false; });
+        }
+    }
 }
 
 EVoxelFoliagePlacer VoxelFoliagePlacers::FindType(FStringView Type)
@@ -327,6 +468,9 @@ EVoxelFoliagePlacer VoxelFoliagePlacers::FindType(FStringView Type)
     if (Type == TEXT("minecraft:acacia_foliage_placer")) return EVoxelFoliagePlacer::Acacia;
     if (Type == TEXT("minecraft:cherry_foliage_placer")) return EVoxelFoliagePlacer::Cherry;
     if (Type == TEXT("minecraft:poplar_foliage_placer")) return EVoxelFoliagePlacer::Poplar;
+    if (Type == TEXT("minecraft:jungle_foliage_placer")) return EVoxelFoliagePlacer::Jungle;
+    if (Type == TEXT("minecraft:mega_pine_foliage_placer")) return EVoxelFoliagePlacer::MegaPine;
+    if (Type == TEXT("minecraft:dark_oak_foliage_placer")) return EVoxelFoliagePlacer::DarkOak;
     return EVoxelFoliagePlacer::Count;
 }
 
@@ -358,6 +502,15 @@ void VoxelFoliagePlacers::Place(const FVoxelTreePlacerConfig& Foliage, FVoxelTre
         return;
     case EVoxelFoliagePlacer::Poplar:
         PlacePoplarFoliage(Foliage, Builder, Attachments);
+        return;
+    case EVoxelFoliagePlacer::Jungle:
+        PlaceJungle(Foliage, Builder, Attachments);
+        return;
+    case EVoxelFoliagePlacer::MegaPine:
+        PlaceMegaPine(Foliage, Builder, Attachments);
+        return;
+    case EVoxelFoliagePlacer::DarkOak:
+        PlaceDarkOakFoliage(Foliage, Builder, Attachments);
         return;
     default:
         return;
@@ -392,6 +545,19 @@ int32 VoxelFoliagePlacers::GetReach(const FVoxelTreePlacerConfig& Foliage)
     case EVoxelFoliagePlacer::Poplar:
         // The widest layer, r - 1 (the cross logs reach r - 5), plus one for a radius bonus.
         return Foliage.GetMaxInt(FoliageRadius);
+    case EVoxelFoliagePlacer::Jungle:
+        // The double trunk's bottom layer, R + bonus + height, plus one for a radius bonus and one for the 2 x 2's far
+        // side. A single trunk's canopy reaches R + bonus + height - 1 past its attachment with its bottom layer: 3
+        // past a mega jungle branch's end, which the trunk's reach (5) puts 8 from the origin, the probe's leaf reach.
+        // The tree's reach is the two summed (VoxelTreeFeature), which covers it.
+        return Foliage.GetMaxInt(FoliageRadius) + Foliage.GetMaxInt(FoliageHeight, 2) + 2;
+    case EVoxelFoliagePlacer::MegaPine:
+        // A high layer's MegaPineBase + 1, plus radius, plus one for a radius bonus and one for the 2 x 2's far side.
+        return MegaPineBase + 1 + Foliage.GetMaxInt(FoliageRadius) + 2;
+    case EVoxelFoliagePlacer::DarkOak:
+        // The top log's layer, R + bonus + 3, plus one for a radius bonus and one for the 2 x 2's far side (a branch
+        // blob reaches R + bonus + 2 from its column).
+        return Foliage.GetMaxInt(FoliageRadius) + 3 + 2;
     default:
         return VoxelConstants::ColumnSize;
     }

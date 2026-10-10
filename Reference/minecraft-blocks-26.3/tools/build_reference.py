@@ -4,7 +4,7 @@ usage (from the repository root):
     uv run --no-project --python 3.13 --with pillow python -I Reference/minecraft-blocks-26.3/tools/build_reference.py
         [--research C:/dev/sandbox/mc-26.3-blocks] [--facts C:/dev/sandbox/mc-26.3-creative/facts]
 
-Inputs: the client and server jars (SHA-1 pinned below), the research work folder (manifest, CSVs, notes,
+Inputs: the client and server jars and the 26.3 asset index (SHA-1 pinned below), the research work folder (manifest, CSVs, notes,
 textures, Mojang's blocks.json report) and the facts dumped by tools/FactsDump.java (creative tabs, hardness).
 Every copied asset is compared byte for byte with its jar entry. The folder must not exist yet (only tools/),
 so an accepted reference is never overwritten; to rebuild, move the old folder away first.
@@ -13,7 +13,9 @@ Generated files (see README.md for the formats):
     block_manifest.json  the research manifest merged with hardness, tints, names, items and creative positions
     block_states.json    every state of every imported block: 26.3 state id, properties, shape and six faces
     textures.json        every texture: size, animation, mipmap strategy, alpha class and its array layers
-    facts/               FactsDump.java's output: hardness, creative tabs, per-state facts and the torch support table
+    facts/               FactsDump.java's output: hardness, creative tabs, per-state facts, the torch support table and
+                         block_sounds.csv (each block's sound type)
+    block_particles.json each state's particle texture, from the jar's block models
     items.json           block items: name, stack size, GUI tint, creative tab positions
     SHA256SUMS.txt       every file in the folder except itself
 """
@@ -36,6 +38,13 @@ CLIENT_SHA1 = "e877b6a07acd633fb3bb475002175cec036e7b87"
 SERVER_SHA1 = "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c"
 CLIENT_JAR = Path(os.environ.get("APPDATA", "")) / "ModrinthApp/meta/versions/26.3/26.3.jar"
 ASSETS = "assets/minecraft/"
+# Asset index 34 (the 26.3 client's assetIndex): sounds.json and the .ogg files of the block break and hit sounds.
+# Modrinth's local copy differs from Mojang's published index (SHA-1 below) in its minecraft/lang/ entries only, so
+# the pin is on the rest of the entries: SHA-1 of their canonical JSON (sorted keys, compact separators).
+ASSET_INDEX_SHA1 = "abfaa525f923f807df8b4e4d29c1b5e3a104adbe"
+ASSET_INDEX_NONLANG_SHA1 = "9ba09e4fc9e2245b7395eee4732096038d9f6e2d"
+PARTICLE_ONLY_TEXTURES = frozenset({"shelf_mushroom_particle"})  # particle textures outside textures.json, copied as plain files
+ASSET_DIR = Path(os.environ.get("APPDATA", "")) / "ModrinthApp/meta/assets"
 
 # 26.3 BlockColors.createDefault (javap of net.minecraft.client.color.block.BlockColors), limited to imported
 # blocks. A model tintindex without a registered source renders untinted (cherry, pale oak, azalea, poplar leaves).
@@ -271,6 +280,77 @@ def sha1(path):
     return hashlib.sha1(path.read_bytes()).hexdigest()
 
 
+def index_objects(asset_dir=None):
+    """The asset index 34 objects: {name: {hash, size}}, after the pin check (see ASSET_INDEX_NONLANG_SHA1)."""
+    objects = json.loads(((asset_dir or ASSET_DIR) / "indexes/34.json").read_text(encoding="utf-8"))["objects"]
+    rest = {k: v for k, v in objects.items() if not k.startswith("minecraft/lang/")}
+    digest = hashlib.sha1(json.dumps(rest, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    if digest != ASSET_INDEX_NONLANG_SHA1:
+        raise SystemExit("asset index 34 differs from the pinned one (non-lang entries)")
+    return objects
+
+
+def asset_object(objects, name, asset_dir=None):
+    """Bytes of the asset-index entry `name`, checked against its SHA-1 and size."""
+    entry = objects[name]
+    data = ((asset_dir or ASSET_DIR) / "objects" / entry["hash"][:2] / entry["hash"]).read_bytes()
+    assert hashlib.sha1(data).hexdigest() == entry["hash"] and len(data) == entry["size"], name
+    return data
+
+
+def sound_files(sounds_json, events):
+    """Every .ogg name (without extension) the sound events play; `type: event` entries follow their event."""
+    names, seen = [], set()
+
+    def visit(event):
+        event = event.removeprefix("minecraft:")
+        if event in seen:
+            return
+        seen.add(event)
+        for sound in sounds_json[event]["sounds"]:
+            if isinstance(sound, str):
+                sound = {"name": sound}
+            if sound.get("type", "sound") == "event":
+                visit(sound["name"])
+            else:
+                name = sound["name"].removeprefix("minecraft:")
+                if name not in names:
+                    names.append(name)
+
+    for event in events:
+        visit(event)
+    return names
+
+
+def resolve_particles(jar, models, report, manifest):
+    """{block: {"default": texture, "states": {state id: texture}}} (states only where they differ) and the
+    (block, state id, texture) of every state, for the manifest blocks then the fluids (registry order). The texture is
+    the `particle` texture of the model the state uses (the first applied variant or part, first entry of weighted
+    lists), through parent chains and `#` variables. Fluids use their still texture."""
+    particles, every = {}, []
+    for block in manifest["blocks"] + manifest["fluids"]:
+        bid = block["id"]
+        if bid in {f["id"] for f in manifest["fluids"]}:
+            particles[bid] = {"default": block["textures"]["still"]}
+            every.append((bid, None, block["textures"]["still"]))
+            continue
+        rep = report[f"minecraft:{bid}"]
+        states = sorted(rep["states"], key=lambda s: s["id"])
+        blockstate = json.loads(jar.read(f"{ASSETS}blockstates/{bid}.json"))
+        per_state = {}
+        for state in states:
+            variants, _ = variants_for(blockstate, state.get("properties", {}))
+            texture, _, _ = models.resolve(variants[0]["model"])
+            per_state[state["id"]] = texture("#particle")
+        default = per_state[next(s["id"] for s in states if s.get("default"))]
+        particles[bid] = {"default": default}
+        differ = {str(i): t for i, t in per_state.items() if t != default}
+        if differ:
+            particles[bid]["states"] = differ
+        every += [(bid, sid, t) for sid, t in per_state.items()]
+    return particles, every
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--research", default="C:/dev/sandbox/mc-26.3-blocks")
@@ -301,6 +381,25 @@ def main():
     fluid_ids = [f["id"] for f in manifest["fluids"]]
     imported = ids + fluid_ids
 
+    # Everything that can fail on its inputs is loaded and checked before the first write: the asset index (pin),
+    # sounds.json with every sound file, block_sounds.csv against the facts, and the particle textures.
+    sound_rows = list(csv.DictReader(open(facts / "block_sounds.csv", encoding="utf-8")))
+    state_fact_ids = [b["id"] for b in json.loads((facts / "block_state_facts.json").read_text(encoding="utf-8"))["blocks"]]
+    if [r["id"] for r in sound_rows] != state_fact_ids or set(state_fact_ids) != set(imported):
+        raise SystemExit("block_sounds.csv ids differ from block_state_facts.json (order) or from the imported blocks")
+    objects = index_objects()
+    sounds_json = asset_object(objects, "minecraft/sounds.json")
+    events = sorted({r[k] for r in sound_rows for k in ("break", "hit")} - {"intentionally_empty"})
+    sound_data = {name: asset_object(objects, f"minecraft/sounds/{name}.ogg")
+                  for name in sound_files(json.loads(sounds_json), events)}
+    models = Models(jar)
+    particles, every_particle = resolve_particles(jar, models, report, manifest)
+    block_pngs = {p.name[:-4] for p in (research / "textures/block").iterdir() if p.name.endswith(".png")}
+    outside = {t for _, _, t in every_particle if t not in block_pngs}
+    bad = [x for x in every_particle if x[2] in outside and x[2] not in PARTICLE_ONLY_TEXTURES]
+    if bad:
+        raise SystemExit("particle textures missing from the block textures:\n" + "\n".join(map(str, bad)))
+
     def copy_jar(entry, dest=None):
         target = ROOT / (dest or entry)
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -314,7 +413,8 @@ def main():
         shutil.copyfile(research / "out" / name, ROOT / "research" / name)
     shutil.copyfile(research / "out/block_manifest.json", ROOT / "research/block_manifest.research.json")
     (ROOT / "facts").mkdir()
-    for name in ("block_facts.csv", "creative_tabs.json", "block_state_facts.json", "block_support.json"):
+    for name in ("block_facts.csv", "creative_tabs.json", "block_state_facts.json", "block_support.json",
+                 "block_sounds.csv"):
         shutil.copyfile(facts / name, ROOT / "facts" / name)
     (ROOT / "reports").mkdir()
     subset = {f"minecraft:{i}": report[f"minecraft:{i}"] for i in imported}
@@ -337,6 +437,17 @@ def main():
         copy_jar(entry)
     for name in ("grass.png", "foliage.png", "dry_foliage.png"):
         copy_jar(f"{ASSETS}textures/colormap/{name}")
+    # Crack overlay for mining progress. Not in textures.json: no texture index may shift.
+    for stage in range(10):
+        copy_jar(f"{ASSETS}textures/block/destroy_stage_{stage}.png")
+    # Break and hit sounds of the imported blocks (block_sounds.csv), from the asset index; step, place and fall are
+    # not copied.
+    (ROOT / ASSETS / "sounds").mkdir(parents=True, exist_ok=True)
+    (ROOT / ASSETS / "sounds.json").write_bytes(sounds_json)
+    for name, data in sound_data.items():
+        target = ROOT / f"{ASSETS}sounds/{name}.ogg"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
     # GUI art for the creative inventory, item definitions of imported blocks and the tab icons, and the
     # block item display transform.
     gui_prefixes = (f"{ASSETS}textures/gui/container/creative_inventory/",
@@ -419,7 +530,6 @@ def main():
         return {"source": kind, "color": argb_hex(value) if kind == "constant" else plains[kind],
                 "note": "plains biome default" if kind != "constant" else "fixed in BlockColors"}
 
-    models = Models(jar)
     baker = bake_models.Baker(sys.modules[__name__], models)
     model_ids = {b["id"] for b in manifest["blocks"] if b["shape"] == "model"}
     states_out, shapes, randoms, by_id = [], {}, [], {}
@@ -577,6 +687,15 @@ def main():
                        "facts_source": merged_blocks[0]["facts_source"]})
         fluids.append(merged)
 
+    # Particle textures (resolved above, before the first write) must all be in textures.json, fluids' still textures
+    # included, or be one of the particle-only files copied as plain files.
+    missing = [x for x in every_particle if x[2] not in texture_index and x[2] not in PARTICLE_ONLY_TEXTURES]
+    if missing:
+        raise SystemExit("particle textures missing from textures.json:\n" + "\n".join(map(str, missing)))
+    # Particle-only textures are not in textures.json; they ship as plain files in assets/ (copied byte for byte).
+    for t in sorted(outside):
+        copy_jar(f"{ASSETS}textures/block/{t}.png")
+
     def write(name, data):
         (ROOT / name).write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
@@ -598,6 +717,14 @@ def main():
                                            "shade": "shade_direction_override, else facing",
                                            "light": "light_emission 0-15"},
                                   "models": baker.baked})
+    lines = ",\n".join(f" {json.dumps(b)}: {json.dumps(v, separators=(',', ':'))}" for b, v in particles.items())
+    (ROOT / "block_particles.json").write_text(
+        json.dumps({**common, "note": "particle texture per imported block (registry order): `default` for the default "
+                    "state, `states` only for state ids (as strings) whose texture differs",
+                    "textures_outside_textures_json": sorted(outside),
+                    "outside_note": "these particle textures are not in textures.json; the files are in "
+                    "assets/minecraft/textures/block/", "blocks": "@@"},
+                   indent=1).replace('"@@"', "{\n" + lines + "\n }") + "\n", encoding="utf-8")
     write("items.json", {**common, "creative_tabs": [{k: v for k, v in t.items() if k not in ("display", "search")}
                                                      for t in tabs], "items": items})
 

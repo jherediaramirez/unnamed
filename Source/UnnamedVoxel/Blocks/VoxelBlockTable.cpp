@@ -1,17 +1,100 @@
 #include "Blocks/VoxelBlockTable.h"
 #include "Random/VoxelRandom.h"
 
+namespace
+{
+    // Two states draw alike when they are equal in every field the mesher, the light and decoration read. Fields added
+    // for other systems stay out unless the mesher reads them.
+    bool IsSameLook(const FVoxelStateInfo& A, const FVoxelStateInfo& B)
+    {
+        return A.Shape == B.Shape && A.Layer == B.Layer && A.OpaqueFaces == B.OpaqueFaces && A.bSolid == B.bSolid &&
+            A.bCastsOcclusion == B.bCastsOcclusion && A.bLeaves == B.bLeaves && A.LightEmission == B.LightEmission &&
+            A.FluidAmount == B.FluidAmount && A.Layers == B.Layers && A.Block == B.Block && A.Tint == B.Tint &&
+            A.TintSource == B.TintSource && A.Ore == B.Ore && A.Rock == B.Rock &&
+            FMemory::Memcmp(A.Faces, B.Faces, sizeof(A.Faces)) == 0 && A.ModelParts == B.ModelParts &&
+            A.ModelPartCount == B.ModelPartCount && A.HeldFluid == B.HeldFluid && A.Offset == B.Offset &&
+            A.OffsetHorizontal == B.OffsetHorizontal && A.OffsetDown == B.OffsetDown;
+    }
+
+    // Equal looks hash equal; most different ones differ in a face code.
+    uint32 HashLook(const FVoxelStateInfo& Info)
+    {
+        uint32 Hash = uint32(Info.Block) | uint32(Info.Shape) << 16 | uint32(Info.Layer) << 24;
+        for (const uint32 Face : Info.Faces)
+            Hash = HashCombineFast(Hash, Face);
+        return HashCombineFast(Hash, Info.Tint ^ uint32(Info.HeldFluid) << 8 ^ uint32(Info.LightEmission) << 24);
+    }
+}
+
 FVoxelBlockTable::FVoxelBlockTable()
 {
     States.AddDefaulted();
+    LookStates.Add(0);
+    LookHashes.Add(HashLook(States[0]));
+    SetStates.Add(false);
     DefaultStates.Add(TEXT("air"), 0);
 }
 
 void FVoxelBlockTable::SetState(uint16 State, const FVoxelStateInfo& Info)
 {
-    if (State >= States.Num()) States.SetNum(State + 1);
+    if (State >= States.Num())
+    {
+        States.SetNum(State + 1);
+        LookStates.SetNumZeroed(State + 1);
+        LookHashes.SetNumZeroed(State + 1);
+        SetStates.Add(false, State + 1 - SetStates.Num());
+    }
+    const bool bWasSet = SetStates[State];
+    const uint16 OldBlock = States[State].Block;
     States[State] = Info;
+    LookHashes[State] = HashLook(Info);
+    SetStates[State] = true;
     BlockLimit = FMath::Max(BlockLimit, int32(Info.Block) + 1);
+    if (BlockStates.Num() < BlockLimit) BlockStates.SetNum(BlockLimit);
+
+    TArray<uint16>& Siblings = BlockStates[Info.Block];
+    if (!bWasSet && (Siblings.IsEmpty() || Siblings.Last() < State))
+    {
+        // The usual order, a block's states set in ascending order: the new state takes the look state of its first
+        // earlier sibling that draws alike.
+        Siblings.Add(State);
+        LookStates[State] = State;
+        for (const uint16 Other : Siblings)
+            if (Other != State && LookHashes[Other] == LookHashes[State] && IsSameLook(States[Other], Info))
+            {
+                LookStates[State] = LookStates[Other];
+                break;
+            }
+        return;
+    }
+    // A state set again, or out of order: its block (and its old block) are recomputed.
+    if (bWasSet && OldBlock != Info.Block)
+    {
+        BlockStates[OldBlock].Remove(State);
+        UpdateLooks(OldBlock);
+    }
+    if (!Siblings.Contains(State)) Siblings.Add(State);
+    UpdateLooks(Info.Block);
+}
+
+void FVoxelBlockTable::UpdateLooks(uint16 Block)
+{
+    TArray<uint16>& Siblings = BlockStates[Block];
+    Siblings.Sort();
+    for (int32 Index = 0; Index < Siblings.Num(); ++Index)
+    {
+        const uint16 State = Siblings[Index];
+        LookStates[State] = State;
+        for (int32 Earlier = 0; Earlier < Index; ++Earlier)
+        {
+            const uint16 Other = Siblings[Earlier];
+            if (LookHashes[Other] == LookHashes[State] && IsSameLook(States[Other], States[State]))
+            {
+                LookStates[State] = LookStates[Other];
+                break;
+            }
+        }
+    }
 }
 
 uint16 FVoxelBlockTable::FindState(FName Block) const

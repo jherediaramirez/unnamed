@@ -43,6 +43,9 @@ struct FVoxelMeshOptions
 {
     // Merge equal neighbouring faces into larger quads; off gives one quad per face (debugging, tests).
     bool bGreedy = true;
+    // Full-cube faces merge by look (FVoxelBlockTable::GetLookState), so states that draw alike, such as leaves of
+    // every distance, merge with each other; off, they merge only within one state (the bench's comparison).
+    bool bMergeLooks = true;
     bool bAmbientOcclusion = true;
     // Biome blend radius for grass, foliage and water tints (26.3's biome blend; its default is 2): a face takes the
     // mean tint of the (2r + 1)^2 blocks around its block. 0 gives each block its own biome's colour; below 0 every

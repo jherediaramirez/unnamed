@@ -61,3 +61,8 @@ def block_asset(asset_name):
 def item_asset(asset_name):
     """Package of a generated item asset under UUnnamedProjectSettings::ItemRoot, e.g. item_asset("DA_Items")."""
     return _settings.get_item_asset_package(asset_name)
+
+
+def break_asset(asset_name):
+    """Package of a breaking-effects asset under UUnnamedProjectSettings::BreakRoot, e.g. break_asset("DA_BreakAssets")."""
+    return _settings.get_break_asset_package(asset_name)

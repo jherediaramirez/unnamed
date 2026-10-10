@@ -109,3 +109,14 @@ FSoftObjectPath UUnnamedProjectSettings::GetItemAssetPath(const FString& AssetNa
     const FString Package = GetItemAssetPackage(AssetName);
     return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
 }
+
+FString UUnnamedProjectSettings::GetBreakAssetPackage(const FString& AssetName)
+{
+    return Get().BreakRoot / AssetName;
+}
+
+FSoftObjectPath UUnnamedProjectSettings::GetBreakAssetPath(const FString& AssetName)
+{
+    const FString Package = GetBreakAssetPackage(AssetName);
+    return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
+}

@@ -210,6 +210,10 @@ public:
     const FVoxelStateInfo& Get(uint16 State) const { return State < States.Num() ? States[State] : States[0]; }
     int32 GetStateCount() const { return States.Num(); }
     void SetState(uint16 State, const FVoxelStateInfo& Info);
+    // The lowest state of State's block whose info equals State's in every field the mesher, the light and decoration
+    // read (IsSameLook in VoxelBlockTable.cpp): states that draw alike, such as leaves of every distance and
+    // persistence. The mesher merges full-cube faces by it. Kept by SetState.
+    uint16 GetLookState(uint16 State) const { return State < LookStates.Num() ? LookStates[State] : 0; }
 
     // A block's default state by id ("stone"); 0 (air) when the block is unknown.
     uint16 FindState(FName Block) const;
@@ -250,7 +254,16 @@ public:
     const int32* GetModelParts(const FVoxelStateInfo& Info) const { return PartData.GetData() + Info.ModelParts; }
 
 private:
+    // Recomputes the look states of Block's states.
+    void UpdateLooks(uint16 Block);
+
     TArray<FVoxelStateInfo> States;
+    // Per state: its look state, and a hash of the fields the look compares.
+    TArray<uint16> LookStates;
+    TArray<uint32> LookHashes;
+    // Per block: its states in ascending order. Bit per state that SetState has set.
+    TArray<TArray<uint16>> BlockStates;
+    TBitArray<> SetStates;
     TArray<FVoxelModelQuad> ModelQuads;
     // Per model: its first quad and quad count.
     TArray<FIntPoint> ModelRanges;

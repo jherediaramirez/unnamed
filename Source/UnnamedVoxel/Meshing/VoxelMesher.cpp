@@ -597,7 +597,8 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
                             : OpenCorners;
                         // An ore wearing its host rock merges only with faces on the same host.
                         const int32 Host = bOreHosts && Info.Ore ? VoxelOreLooks::PickHost(Table, States, Index) : 0;
-                        Keys[V * SectionSize + U] = MakeKey(State, Corners, FaceTints.Get(Info, Face, Cell), Host);
+                        Keys[V * SectionSize + U] = MakeKey(Options.bMergeLooks ? Table.GetLookState(State) : State,
+                            Corners, FaceTints.Get(Info, Face, Cell), Host);
                         bAnyKey = true;
                         break;
                     }
