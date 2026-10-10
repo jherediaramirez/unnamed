@@ -8,7 +8,7 @@
     16,
     16
    ],
-   "layers": 944
+   "layers": 945
   },
   "water_flow": {
    "frame_size": [
@@ -15806,6 +15806,26 @@
     "7da029d0f639b8d3b76afbade4d16d26cdb25158b1a4dd3f608817ab9544c041"
    ],
    "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "torch",
+   "png_sha256": "1e0a18d6a5f4e839f07b3a7cbe2703f98d7db1c65eb1c96e1e575eec61410e16",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 944,
+   "layer_rgba_sha256": [
+    "ba6d6ec36b1cf75e8261706f2ba8c7e6f627f43d299e8b10b52081685b70998a"
+   ],
+   "alpha": "cutout",
    "mipmap_strategy": "auto"
   }
  ]

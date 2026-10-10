@@ -51,6 +51,10 @@ struct FFoundationItemDefinition
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     FName PlacesBlock;
 
+    // A standing-and-wall item (the torch): the block it places against a side face instead, or None.
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    FName PlacesWallBlock;
+
     // Melee capability: total damage and attacks per second (not additive modifiers).
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     float AttackDamage = 1;

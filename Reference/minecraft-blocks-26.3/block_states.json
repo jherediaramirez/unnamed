@@ -99649,6 +99649,92 @@
    ]
   },
   {
+   "id": "torch",
+   "protocol_id": 238,
+   "min_state_id": 4926,
+   "default_state_id": 4926,
+   "properties": [],
+   "states": [
+    {
+     "id": 4926,
+     "properties": {},
+     "shape": "model",
+     "model": [
+      [
+       303
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "wall_torch",
+   "protocol_id": 239,
+   "min_state_id": 4927,
+   "default_state_id": 4927,
+   "properties": [
+    [
+     "facing",
+     [
+      "north",
+      "south",
+      "west",
+      "east"
+     ]
+    ]
+   ],
+   "states": [
+    {
+     "id": 4927,
+     "properties": {
+      "facing": "north"
+     },
+     "shape": "model",
+     "model": [
+      [
+       304
+      ]
+     ]
+    },
+    {
+     "id": 4928,
+     "properties": {
+      "facing": "south"
+     },
+     "shape": "model",
+     "model": [
+      [
+       305
+      ]
+     ]
+    },
+    {
+     "id": 4929,
+     "properties": {
+      "facing": "west"
+     },
+     "shape": "model",
+     "model": [
+      [
+       306
+      ]
+     ]
+    },
+    {
+     "id": 4930,
+     "properties": {
+      "facing": "east"
+     },
+     "shape": "model",
+     "model": [
+      [
+       307
+      ]
+     ]
+    }
+   ]
+  },
+  {
    "id": "creaking_heart",
    "protocol_id": 243,
    "min_state_id": 5445,

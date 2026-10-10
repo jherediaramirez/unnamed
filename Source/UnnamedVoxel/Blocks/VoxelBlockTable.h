@@ -178,6 +178,13 @@ namespace VoxelModels
     UNNAMEDVOXEL_API int32 PickAlternative(int32 X, int32 Y, int32 Z, int32 Part, int32 Count);
 }
 
+// One of a block's 26.3 blockstate properties ("half": lower, upper) with its values in declaration order.
+struct FVoxelBlockProperty
+{
+    FName Name;
+    TArray<FName> Values;
+};
+
 // Every block state the world can hold, indexed by state id; state 0 is air. Built once on the game thread from the
 // block registry (VoxelBlocks::MakeTable), then shared read-only by every worker.
 class UNNAMEDVOXEL_API FVoxelBlockTable
@@ -202,6 +209,18 @@ public:
     uint16 GetSnowyState(uint16 State) const;
     void SetSnowyState(uint16 State, uint16 Snowy);
 
+    // A block's properties (FVoxelStateInfo::Block): its states enumerate their values as a cartesian product in
+    // declaration order, the last property fastest, from FirstState, as the registry numbers them. For compiling
+    // decoration (plants with properties), not for per-cell work.
+    void SetBlockProperties(int32 Block, uint16 FirstState, TArray<FVoxelBlockProperty> Properties);
+    // State's block with Property set to Value; INDEX_NONE when the block has no such property or value.
+    int32 WithValue(uint16 State, FName Property, FName Value) const;
+    // Property's value in State, or NAME_None.
+    FName GetValue(uint16 State, FName Property) const;
+    // A block's state (id with or without "minecraft:") with Properties set over its default; INDEX_NONE when the
+    // block, a property or a value is unknown.
+    int32 MakeState(FStringView Block, TConstArrayView<TPair<FName, FName>> Properties) const;
+
     // Baked models, in the block registry's order: their quads and whether they take ambient occlusion. Adding one
     // finds each quad's OcclusionFront. Returns the model's index.
     int32 AddModel(TConstArrayView<FVoxelModelQuad> Quads, bool bAmbientOcclusion);
@@ -225,4 +244,12 @@ private:
     int32 BlockLimit = 1;
     TMap<FName, uint16> DefaultStates;
     TMap<uint16, uint16> SnowyStates;
+    struct FBlockProperties
+    {
+        uint16 FirstState = 0;
+        TArray<FVoxelBlockProperty> Properties;
+        // Per property: how far apart in state ids two of its neighbouring values are.
+        TArray<int32> Strides;
+    };
+    TMap<int32, FBlockProperties> BlockProperties;
 };

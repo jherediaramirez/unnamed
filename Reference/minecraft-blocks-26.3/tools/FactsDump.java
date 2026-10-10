@@ -10,7 +10,8 @@ import net.minecraft.world.level.block.Block;
 
 // Dumps 26.3 creative tab contents and per-block hardness facts by running the game's own registries. With a
 // second argument (a file of block ids, one per line), also dumps per-state shapes and behaviour for those blocks
-// (block_state_facts.json), measured through public state methods only.
+// (block_state_facts.json) and the faces each of their states holds a torch on (block_support.json), measured
+// through public state methods only.
 public class FactsDump {
     static String q(String s) { return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""; }
 
@@ -80,7 +81,10 @@ public class FactsDump {
                     + (itemId.isEmpty() ? "" : q(new ItemStack(item).getHoverName().getString())));
             }
         }
-        if (args.length > 1) dumpStates(out, Path.of(args[1]));
+        if (args.length > 1) {
+            dumpStates(out, Path.of(args[1]));
+            dumpSupport(out, Path.of(args[1]));
+        }
         System.out.println("FACTS DUMP OK");
         System.exit(0);
     }
@@ -170,6 +174,92 @@ public class FactsDump {
                         + ",\"fluid\":" + fluidText + "}");
                 }
                 w.print("]}");
+            }
+            w.println("\n]}");
+        }
+    }
+
+    // A world holding one state at one position and air everywhere else, as a proxy of the public LevelReader
+    // interface: block and fluid lookups answer from that state, the interface's default methods run as declared,
+    // and any other method fails the dump instead of guessing.
+    static net.minecraft.world.level.LevelReader worldWith(net.minecraft.core.BlockPos at,
+            net.minecraft.world.level.block.state.BlockState state) {
+        var air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        var type = net.minecraft.world.level.LevelReader.class;
+        return (net.minecraft.world.level.LevelReader) java.lang.reflect.Proxy.newProxyInstance(type.getClassLoader(),
+            new Class<?>[] {type}, (proxy, method, a) -> switch (method.getName()) {
+                case "getBlockState" -> at.equals(a[0]) ? state : air;
+                case "getFluidState" -> (at.equals(a[0]) ? state : air).getFluidState();
+                case "getBlockEntity" -> null;
+                case "isClientSide" -> false;
+                case "getMinY" -> -64;
+                case "getHeight" -> {
+                    if (a == null || a.length == 0) yield 384;
+                    throw new UnsupportedOperationException(method.toString());
+                }
+                case "hashCode" -> System.identityHashCode(proxy);
+                case "equals" -> proxy == a[0];
+                case "toString" -> "support probe world";
+                default -> {
+                    if (method.isDefault()) yield java.lang.reflect.InvocationHandler.invokeDefault(proxy, method, a);
+                    throw new UnsupportedOperationException(method.toString());
+                }
+            });
+    }
+
+    // Per state: a bit per face (face_order) when a torch attached to that face survives, from canSurvive on the
+    // torch's own state in a world holding only the supporting state. Up: a floor torch on top. The four sides: a wall
+    // torch against that side, facing away from it. Down: no torch hangs, so always clear. Per standing-and-wall item
+    // of an imported block: its floor and wall blocks, the blocks BlockItem.registerBlocks maps to it.
+    static void dumpSupport(Path out, Path idsFile) throws Exception {
+        var dirs = new net.minecraft.core.Direction[] {net.minecraft.core.Direction.WEST, net.minecraft.core.Direction.EAST,
+            net.minecraft.core.Direction.NORTH, net.minecraft.core.Direction.SOUTH, net.minecraft.core.Direction.DOWN,
+            net.minecraft.core.Direction.UP};
+        var at = new net.minecraft.core.BlockPos(0, 64, 0);
+        var torch = net.minecraft.world.level.block.Blocks.TORCH.defaultBlockState();
+        var wall = net.minecraft.world.level.block.Blocks.WALL_TORCH.defaultBlockState();
+        var ids = Files.readAllLines(idsFile).stream().filter(s -> !s.isBlank()).map(String::trim).toList();
+        try (PrintWriter w = new PrintWriter(Files.newBufferedWriter(out.resolve("block_support.json")))) {
+            w.print("{\"face_order\":[\"west\",\"east\",\"north\",\"south\",\"down\",\"up\"],\"probes\":{\"west\":"
+                + "\"wall_torch[facing=west]\",\"east\":\"wall_torch[facing=east]\",\"north\":\"wall_torch[facing=north]\","
+                + "\"south\":\"wall_torch[facing=south]\",\"down\":null,\"up\":\"torch\"},\"items\":[");
+            boolean firstItem = true;
+            for (String id : ids) {
+                Block b = BuiltInRegistries.BLOCK.getValue(net.minecraft.resources.Identifier.withDefaultNamespace(id));
+                if (!(b.asItem() instanceof StandingAndWallBlockItem item) || item.getBlock() != b) continue;
+                var map = new java.util.LinkedHashMap<Block, Item>();
+                item.registerBlocks(map, item);
+                var others = map.keySet().stream().filter(k -> k != b).toList();
+                if (others.size() != 1) throw new IllegalStateException(id + ": expected one wall block, got " + others);
+                if (!firstItem) w.print(",");
+                firstItem = false;
+                w.print("\n {\"item\":" + q(String.valueOf(BuiltInRegistries.ITEM.getKey(item))) + ",\"standing\":" + q(id)
+                    + ",\"wall\":" + q(BuiltInRegistries.BLOCK.getKey(others.get(0)).getPath()) + "}");
+            }
+            w.print("],\"blocks\":[");
+            boolean firstBlock = true;
+            for (String id : ids) {
+                Block b = BuiltInRegistries.BLOCK.getValue(net.minecraft.resources.Identifier.withDefaultNamespace(id));
+                StringBuilder masks = new StringBuilder();
+                int previous = -1;
+                for (var s : b.getStateDefinition().getPossibleStates()) {
+                    if (Block.getId(s) != previous + 1 && previous >= 0)
+                        throw new IllegalStateException(id + ": state ids are not consecutive");
+                    previous = Block.getId(s);
+                    var level = worldWith(at, s);
+                    int mask = 0;
+                    for (int i = 0; i < 6; i++) {
+                        if (dirs[i] == net.minecraft.core.Direction.DOWN) continue;
+                        var probe = dirs[i] == net.minecraft.core.Direction.UP ? torch
+                            : wall.setValue(net.minecraft.world.level.block.WallTorchBlock.FACING, dirs[i]);
+                        if (probe.canSurvive(level, at.relative(dirs[i]))) mask |= 1 << i;
+                    }
+                    masks.append(masks.length() > 0 ? "," : "").append(mask);
+                }
+                if (!firstBlock) w.print(",");
+                firstBlock = false;
+                w.print("\n {\"id\":" + q(id) + ",\"first_state\":" + Block.getId(b.getStateDefinition().getPossibleStates().get(0))
+                    + ",\"support\":[" + masks + "]}");
             }
             w.println("\n]}");
         }

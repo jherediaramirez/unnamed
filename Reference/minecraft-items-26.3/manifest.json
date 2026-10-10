@@ -6,7 +6,7 @@
  "block_reference_inputs": {
   "facts/block_facts.csv": "691821568c5fa110396b66a07b063dc9012aed431006f891d81816c477726685",
   "facts/creative_tabs.json": "772c499504b2c3ac16c9270b052a47d82374f2da27fce5fdf142b4e8eef0ca7e",
-  "block_manifest.json": "fa016fdaca7af0d4a1c24b49fd61914b433a830618e1e5437963fd85fb4add2a"
+  "block_manifest.json": "24e9753c8b5e4982fa70a3758ef51359d7388008778b0cbd6225caf9b5868515"
  },
  "tier_a": {
   "tool": [

@@ -132,8 +132,9 @@ FFoundationBlockState FoundationBlockPlacement::GetStateForPlacement(
     const FFoundationBlockWorld& World, const FFoundationBlockType& Block, const FFoundationPlacementContext& Context)
 {
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
-    // Plants and the other model blocks place by their properties.
-    if (Registry.GetShape(Block.GetDefaultState()) == EFoundationBlockShape::Model)
+    // Plants and the other model blocks without a rule of their own (the torches have one) place by their properties.
+    if (Block.Placement == EFoundationPlacementRule::Default &&
+        Registry.GetShape(Block.GetDefaultState()) == EFoundationBlockShape::Model)
         return FoundationPlantRules::GetStateForPlacement(World, Block, Context);
     FFoundationBlockState State = Block.GetDefaultState();
     auto Set = [&Registry, &State](const TCHAR* Property, FName Value)
@@ -217,8 +218,30 @@ FFoundationBlockState FoundationBlockPlacement::GetStateForPlacement(
         Set(TEXT("snowy"), World.GetBlock(Above).Tags.HasTag(FoundationTags::BlockSnow) ? TEXT("true") : TEXT("false"));
         break;
     }
+    case EFoundationPlacementRule::WallAttached:
+        if (IsHorizontal(Context.ClickedFace)) Set(TEXT("facing"), FaceValue(Context.ClickedFace));
+        break;
     default:
         break;
     }
     return State;
+}
+
+FName FoundationBlockPlacement::GetItemBlock(FName Block, FName WallBlock, EFoundationFace ClickedFace)
+{
+    return !WallBlock.IsNone() && IsHorizontal(ClickedFace) ? WallBlock : Block;
+}
+
+bool FoundationBlockPlacement::HasTorchSupport(const FFoundationBlockWorld& World, FFoundationBlockState Placed,
+    const FIntVector& Destination, EFoundationFace ClickedFace)
+{
+    if (ClickedFace == EFoundationFace::Down) return false;
+    const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    // A wall torch hangs on the face its facing points away from; a floor torch stands on the top face below it.
+    const FName Facing = Registry.GetValue(Placed, TEXT("facing"));
+    EFoundationFace Face = EFoundationFace::Up;
+    for (int32 Side = 0; Side < 4; ++Side)
+        if (FaceValue(EFoundationFace(Side)) == Facing) Face = EFoundationFace(Side);
+    const FFoundationBlockState Support = World.Get(Destination - FoundationGrid::FaceOffset(Face)).State;
+    return (Registry.GetTorchSupport(Support) >> int32(Face) & 1) != 0;
 }

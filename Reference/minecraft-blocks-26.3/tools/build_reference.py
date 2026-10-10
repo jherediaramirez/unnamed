@@ -13,6 +13,7 @@ Generated files (see README.md for the formats):
     block_manifest.json  the research manifest merged with hardness, tints, names, items and creative positions
     block_states.json    every state of every imported block: 26.3 state id, properties, shape and six faces
     textures.json        every texture: size, animation, mipmap strategy, alpha class and its array layers
+    facts/               FactsDump.java's output: hardness, creative tabs, per-state facts and the torch support table
     items.json           block items: name, stack size, GUI tint, creative tab positions
     SHA256SUMS.txt       every file in the folder except itself
 """
@@ -83,6 +84,10 @@ LAYERED = {"snow"}
 OTHER_ITEM_BLOCKS = {"powder_snow"}
 # Item models drawn as flat sprites from their layers; any other item model is a block model drawn in 3D.
 SPRITE_PARENTS = {"item/generated", "item/handheld"}
+# Blocks added after the first ordering was fixed, in the order they came (torch session T2). Their new textures and
+# baked models go after every earlier one, so no existing texture index, array layer or model index moves; blocks,
+# states, items and facts keep registry order. verify_reference.py asserts it. Later blocks join the end of the list.
+APPENDED_BLOCKS = ["torch", "wall_torch"]
 
 
 def default_uv(f, t, d):
@@ -309,7 +314,7 @@ def main():
         shutil.copyfile(research / "out" / name, ROOT / "research" / name)
     shutil.copyfile(research / "out/block_manifest.json", ROOT / "research/block_manifest.research.json")
     (ROOT / "facts").mkdir()
-    for name in ("block_facts.csv", "creative_tabs.json", "block_state_facts.json"):
+    for name in ("block_facts.csv", "creative_tabs.json", "block_state_facts.json", "block_support.json"):
         shutil.copyfile(facts / name, ROOT / "facts" / name)
     (ROOT / "reports").mkdir()
     subset = {f"minecraft:{i}": report[f"minecraft:{i}"] for i in imported}
@@ -317,6 +322,14 @@ def main():
 
     # Textures: every research copy must equal its jar entry.
     names = sorted(p.name for p in (research / "textures/block").iterdir())
+    # APPENDED_BLOCKS' new textures follow every earlier texture, in the order those blocks came.
+    by_manifest = {b["id"]: b for b in manifest["blocks"]}
+    earlier = {t for b in manifest["blocks"] if b["id"] not in APPENDED_BLOCKS for t in b["all_textures"]}
+    earlier |= {t for f in manifest["fluids"] for t in f["textures"].values()}
+    appended_textures = list(dict.fromkeys(t for bid in APPENDED_BLOCKS for t in by_manifest[bid]["all_textures"]
+                                           if t not in earlier))
+    names = [n for n in names if n.split(".")[0] not in appended_textures] + [
+        n for t in appended_textures for n in (f"{t}.png", f"{t}.png.mcmeta") if n in names]
     for name in names:
         entry = f"{ASSETS}textures/block/{name}"
         if (research / "textures/block" / name).read_bytes() != jar.read(entry):
@@ -409,58 +422,62 @@ def main():
     models = Models(jar)
     baker = bake_models.Baker(sys.modules[__name__], models)
     model_ids = {b["id"] for b in manifest["blocks"] if b["shape"] == "model"}
-    states_out, shapes, randoms = [], {}, []
-    for block in manifest["blocks"] + [dict(f) for f in manifest["fluids"]]:
-        bid = block["id"]
-        rep = report[f"minecraft:{bid}"]
-        props = list(rep.get("properties", {}).items())
-        states = sorted(rep["states"], key=lambda s: s["id"])
-        base = states[0]["id"]
-        # Mojang enumerates states as a cartesian product, last property fastest, values in declared order.
-        for index, state in enumerate(states):
-            expect, rest = {}, index
-            for name, values in reversed(props):
-                expect[name] = values[rest % len(values)]
-                rest //= len(values)
-            assert state["id"] == base + index and expect == state.get("properties", {}), (bid, state)
-        entry = {"id": bid, "protocol_id": block["protocol_id"], "min_state_id": base,
-                 "default_state_id": next(s["id"] for s in states if s.get("default")),
-                 "properties": [[n, v] for n, v in props], "states": []}
-        if bid in fluid_ids:
-            for state in states:
-                level = int(state["properties"]["level"])
-                amount = 8 if level == 0 or level >= 8 else 8 - level
-                entry["states"].append({"id": state["id"], "properties": state["properties"], "shape": "fluid",
-                                        "fluid": {"source": level == 0, "falling": level >= 8, "amount": amount}})
-            entry["textures"] = block["textures"]
-        elif bid in model_ids:
-            blockstate = json.loads(jar.read(f"{ASSETS}blockstates/{bid}.json"))
-            tints = TINT_INDICES.get(bid, frozenset({0})) if bid in TINT_SOURCES else frozenset()
-            for state in states:
-                parts = baker.bake_state(blockstate, state.get("properties", {}), tints)
-                entry["states"].append({"id": state["id"], "properties": state.get("properties", {}),
-                                        "shape": "model", "model": parts})
-                if any(len(part) > 1 for part in parts) and bid not in randoms:
-                    randoms.append(bid)
-                for part in parts:
-                    for index in part:
-                        for quad in baker.baked[index]["quads"]:
-                            assert quad["t"] in texture_index, (bid, quad["t"])
-            shapes[bid] = ["model"]
-        else:
-            blockstate = json.loads(jar.read(f"{ASSETS}blockstates/{bid}.json"))
-            for state in states:
-                shape, faces, random = bake_state(models, blockstate, state.get("properties", {}), bid in TINT_SOURCES,
-                                                  bid in PLATE_CUBES, bid in LAYERED)
-                entry["states"].append({"id": state["id"], "properties": state.get("properties", {}),
-                                        "shape": shape, "faces": faces})
-                if random and bid not in randoms:
-                    randoms.append(bid)
-                for face in faces:
-                    for name in (face["t"], face.get("overlay", {}).get("t")):
-                        assert name is None or name in texture_index, (bid, name)
-            shapes[bid] = sorted({s["shape"] for s in entry["states"]})
-        states_out.append(entry)
+    states_out, shapes, randoms, by_id = [], {}, [], {}
+
+    def bake(blocks):
+        """Each block's states with their faces or baked models; new models take the next free indices."""
+        for block in blocks:
+            bid = block["id"]
+            rep = report[f"minecraft:{bid}"]
+            props = list(rep.get("properties", {}).items())
+            states = sorted(rep["states"], key=lambda s: s["id"])
+            base = states[0]["id"]
+            # Mojang enumerates states as a cartesian product, last property fastest, values in declared order.
+            for index, state in enumerate(states):
+                expect, rest = {}, index
+                for name, values in reversed(props):
+                    expect[name] = values[rest % len(values)]
+                    rest //= len(values)
+                assert state["id"] == base + index and expect == state.get("properties", {}), (bid, state)
+            entry = {"id": bid, "protocol_id": block["protocol_id"], "min_state_id": base,
+                     "default_state_id": next(s["id"] for s in states if s.get("default")),
+                     "properties": [[n, v] for n, v in props], "states": []}
+            if bid in fluid_ids:
+                for state in states:
+                    level = int(state["properties"]["level"])
+                    amount = 8 if level == 0 or level >= 8 else 8 - level
+                    entry["states"].append({"id": state["id"], "properties": state["properties"], "shape": "fluid",
+                                            "fluid": {"source": level == 0, "falling": level >= 8, "amount": amount}})
+                entry["textures"] = block["textures"]
+            elif bid in model_ids:
+                blockstate = json.loads(jar.read(f"{ASSETS}blockstates/{bid}.json"))
+                tints = TINT_INDICES.get(bid, frozenset({0})) if bid in TINT_SOURCES else frozenset()
+                for state in states:
+                    parts = baker.bake_state(blockstate, state.get("properties", {}), tints)
+                    entry["states"].append({"id": state["id"], "properties": state.get("properties", {}),
+                                            "shape": "model", "model": parts})
+                    if any(len(part) > 1 for part in parts) and bid not in randoms:
+                        randoms.append(bid)
+                    for part in parts:
+                        for index in part:
+                            for quad in baker.baked[index]["quads"]:
+                                assert quad["t"] in texture_index, (bid, quad["t"])
+                shapes[bid] = ["model"]
+            else:
+                blockstate = json.loads(jar.read(f"{ASSETS}blockstates/{bid}.json"))
+                for state in states:
+                    shape, faces, random = bake_state(models, blockstate, state.get("properties", {}), bid in TINT_SOURCES,
+                                                      bid in PLATE_CUBES, bid in LAYERED)
+                    entry["states"].append({"id": state["id"], "properties": state.get("properties", {}),
+                                            "shape": shape, "faces": faces})
+                    if random and bid not in randoms:
+                        randoms.append(bid)
+                    for face in faces:
+                        for name in (face["t"], face.get("overlay", {}).get("t")):
+                            assert name is None or name in texture_index, (bid, name)
+                shapes[bid] = sorted({s["shape"] for s in entry["states"]})
+            states_out.append(entry)
+            by_id[bid] = entry
 
     # Material layer per block: translucent if forced or any face texture has partial alpha, cutout if any base
     # face has binary holes (overlays are composited inside the opaque material), else opaque.
@@ -474,7 +491,6 @@ def main():
             classes = {texture_index[f["t"]]["alpha"] for s in entry["states"] for f in s["faces"]}
         return "translucent" if "translucent" in classes else "cutout" if "cutout" in classes else "opaque"
 
-    by_id = {e["id"]: e for e in states_out}
     creative = {}
     for tab in tabs:
         for index, item in enumerate(tab["display"]):
@@ -503,38 +519,54 @@ def main():
         return {"model": index, "gui": gui}
 
     merged_blocks, items = [], []
-    for block in manifest["blocks"]:
-        bid = block["id"]
-        fact = block_facts[bid]
-        merged = dict(block)
-        merged.update({
-            "name": lang[f"block.minecraft.{bid}"],
-            "hardness": float(fact["destroy_time"]), "blast_resistance": float(fact["explosion_resistance"]),
-            "requires_correct_tool_for_drops": fact["requires_correct_tool_for_drops"] == "true",
-            "light_emission": int(fact["light_emission"]),
-            "facts_source": "26.3 server registry at runtime (facts/block_facts.csv, tools/FactsDump.java)",
-            "tint": tint_of(bid), "material_layer": material_layer(block, by_id[bid]),
-            "random_variants": bid in randoms,
-        })
-        if block["shape"] == "model":
-            merged["vanilla_item"] = fact["item"].removeprefix("minecraft:") or None
-        merged_blocks.append(merged)
-        if fact["item"] and fact["item"].removeprefix("minecraft:") != bid:
-            assert bid in OTHER_ITEM_BLOCKS or bid in model_ids, (bid, fact["item"])
-        elif fact["item"]:
-            definition = json.loads(jar.read(f"{ASSETS}items/{bid}.json"))["model"]
-            tint = None
-            for source in definition.get("tints", []):
-                kind = source["type"].removeprefix("minecraft:")
-                tint = argb_hex(source["value"]) if kind == "constant" else colormap(
-                    colormaps / f"{kind}.png", source["temperature"], source["downfall"])
-            item = {"id": fact["item"].removeprefix("minecraft:"), "block": bid,
-                    "name": fact["item_name"], "max_stack": int(fact["item_max_stack"]),
-                    "model": definition.get("model", "").removeprefix("minecraft:"), "gui_tint": tint,
-                    "creative": creative.get(bid, [])}
-            if bid in model_ids:
-                item["icon"] = item_icon(item["model"], tint)
-            items.append(item)
+
+    def merge(blocks):
+        """Each block's manifest entry and item; a model block's 3D item icon takes the next free model index."""
+        for block in blocks:
+            bid = block["id"]
+            fact = block_facts[bid]
+            merged = dict(block)
+            merged.update({
+                "name": lang[f"block.minecraft.{bid}"],
+                "hardness": float(fact["destroy_time"]), "blast_resistance": float(fact["explosion_resistance"]),
+                "requires_correct_tool_for_drops": fact["requires_correct_tool_for_drops"] == "true",
+                "light_emission": int(fact["light_emission"]),
+                "facts_source": "26.3 server registry at runtime (facts/block_facts.csv, tools/FactsDump.java)",
+                "tint": tint_of(bid), "material_layer": material_layer(block, by_id[bid]),
+                "random_variants": bid in randoms,
+            })
+            if block["shape"] == "model":
+                merged["vanilla_item"] = fact["item"].removeprefix("minecraft:") or None
+            merged_blocks.append(merged)
+            if fact["item"] and fact["item"].removeprefix("minecraft:") != bid:
+                assert bid in OTHER_ITEM_BLOCKS or bid in model_ids, (bid, fact["item"])
+            elif fact["item"]:
+                definition = json.loads(jar.read(f"{ASSETS}items/{bid}.json"))["model"]
+                tint = None
+                for source in definition.get("tints", []):
+                    kind = source["type"].removeprefix("minecraft:")
+                    tint = argb_hex(source["value"]) if kind == "constant" else colormap(
+                        colormaps / f"{kind}.png", source["temperature"], source["downfall"])
+                item = {"id": fact["item"].removeprefix("minecraft:"), "block": bid,
+                        "name": fact["item_name"], "max_stack": int(fact["item_max_stack"]),
+                        "model": definition.get("model", "").removeprefix("minecraft:"), "gui_tint": tint,
+                        "creative": creative.get(bid, [])}
+                if bid in model_ids:
+                    item["icon"] = item_icon(item["model"], tint)
+                items.append(item)
+
+    # Earlier blocks and their item icons first, then APPENDED_BLOCKS, so every new model follows every earlier one;
+    # the outputs return to registry order.
+    base_blocks = [b for b in manifest["blocks"] if b["id"] not in APPENDED_BLOCKS]
+    appended_blocks = [by_manifest[bid] for bid in APPENDED_BLOCKS]
+    bake(base_blocks + [dict(f) for f in manifest["fluids"]])
+    merge(base_blocks)
+    bake(appended_blocks)
+    merge(appended_blocks)
+    order = {b["id"]: i for i, b in enumerate(manifest["blocks"] + manifest["fluids"])}
+    states_out.sort(key=lambda e: order[e["id"]])
+    merged_blocks.sort(key=lambda b: order[b["id"]])
+    items.sort(key=lambda i: order[i["block"]])
     fluids = []
     for fluid in manifest["fluids"]:
         merged = dict(fluid)

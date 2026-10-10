@@ -52,11 +52,11 @@ if jar_path.exists():
 
 # Counts and state ids: every imported state is in the report with the same id and properties.
 blocks = manifest["blocks"]
-check(len(blocks) == 614 and [f["id"] for f in manifest["fluids"]] == ["water", "lava"],
-      "expected 614 blocks + water and lava")
+check(len(blocks) == 616 and [f["id"] for f in manifest["fluids"]] == ["water", "lava"],
+      "expected 616 blocks + water and lava")
 check(sum(b["shape"] == "full_cube" for b in blocks) == 429 and sum(b["shape"] == "slab" for b in blocks) == 101 and
-      sum(b["shape"] == "layers" for b in blocks) == 1 and sum(b["shape"] == "model" for b in blocks) == 83,
-      "expected 429 cubes (powder snow among them), 101 slabs, 1 layered, 83 model blocks")
+      sum(b["shape"] == "layers" for b in blocks) == 1 and sum(b["shape"] == "model" for b in blocks) == 85,
+      "expected 429 cubes (powder snow among them), 101 slabs, 1 layered, 85 model blocks")
 models = json.loads((ROOT / "block_models.json").read_text(encoding="utf-8"))["models"]
 texture_names = {t["name"] for t in textures["textures"]}
 for model in models:
@@ -77,7 +77,7 @@ for block in states["blocks"]:
                 f"model parts: {block['id']} {state['id']}")
         else:
             check(len(state.get("faces", [None] * 6)) == 6, f"face count: {block['id']} {state['id']}")
-check(state_count == 4419, f"expected 4419 states, found {state_count}")
+check(state_count == 4424, f"expected 4424 states, found {state_count}")
 
 # Per-state facts (FactsDump.java): every imported block and state, in registry order.
 facts = json.loads((ROOT / "facts/block_state_facts.json").read_text(encoding="utf-8"))
@@ -85,6 +85,25 @@ check([b["id"] for b in facts["blocks"]] == [b["id"] for b in sorted(blocks + ma
       "block_state_facts.json: block list differs from the manifest")
 fact_states = {s["id"] for b in facts["blocks"] for s in b["states"]}
 check(fact_states == {s["id"] for b in states["blocks"] for s in b["states"]}, "block_state_facts.json: state ids differ")
+
+# Torch support (FactsDump.java): a face mask for every imported state, in registry and state order, and spot checks
+# against minecraft.wiki "Torch": stone and glass hold a torch on top and on every side, leaves on none, an
+# upside-down slab on top; the torch item places the wall torch.
+support = json.loads((ROOT / "facts/block_support.json").read_text(encoding="utf-8"))
+check(support["face_order"] == ["west", "east", "north", "south", "down", "up"] and support["probes"]["down"] is None,
+      "block_support.json: face order or probes")
+check([(b["id"], b["first_state"], len(b["support"])) for b in support["blocks"]] ==
+      [(b["id"], b["min_state_id"], len(b["states"])) for b in sorted(states["blocks"], key=lambda b: b["protocol_id"])],
+      "block_support.json: blocks or states differ from block_states.json")
+masks = {b["id"]: b["support"] for b in support["blocks"]}
+SIDES_AND_TOP = 0b101111
+check(masks["stone"] == [SIDES_AND_TOP] and masks["glass"] == [SIDES_AND_TOP], "support: stone and glass")
+check(all(m == 0 for b in blocks if "leaves" in b["tags"] for m in masks[b["id"]]), "support: leaves hold none")
+slab = next(b for b in states["blocks"] if b["id"] == "oak_slab")
+check(all(m & 1 << 5 for s, m in zip(slab["states"], masks["oak_slab"]) if s["properties"]["type"] == "top"),
+      "support: an upside-down slab holds a torch on top")
+check(all(m & 1 << 4 == 0 for ms in masks.values() for m in ms), "support: no torch hangs from a face")
+check({e["standing"]: e["wall"] for e in support["items"]}.get("torch") == "wall_torch", "support: the torch's wall block")
 
 # Items: block items for every block whose vanilla item has its id; model blocks' icons resolve.
 items = json.loads((ROOT / "items.json").read_text(encoding="utf-8"))["items"]
@@ -97,17 +116,58 @@ for item in items:
                   name.removeprefix("block/") in texture_names, f"icon sprite: {item['id']} {name}")
     elif icon:
         check(0 <= icon["model"] < len(models), f"icon model: {item['id']}")
-check(len(items) == 600 and sum("icon" in i for i in items) == 71, "expected 600 items, 71 with model icons")
+check(len(items) == 601 and sum("icon" in i for i in items) == 72, "expected 601 items, 72 with model icons")
+
+
+def load(name):
+    spec = importlib.util.spec_from_file_location(name, Path(__file__).with_name(f"{name}.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+# Appended blocks (build_reference.APPENDED_BLOCKS): the textures and models only they use are the last ones, so a
+# later block never moves an earlier texture index, array layer or model index.
+build = load("build_reference")
+appended = set(build.APPENDED_BLOCKS)
+check(appended <= {b["id"] for b in blocks}, "APPENDED_BLOCKS are imported")
+texture_order = [t["name"] for t in textures["textures"]]
+
+
+def used_by(ids):
+    names, indices = set(), set()
+    for block in states["blocks"]:
+        if block["id"] not in ids:
+            continue
+        for state in block["states"]:
+            for face in state.get("faces", []):
+                names |= {face["t"], face.get("overlay", {}).get("t")}
+            for part in state.get("model", []):
+                indices |= set(part)
+    for item in items:
+        if item["block"] in ids and "model" in item.get("icon", {}):
+            indices.add(item["icon"]["model"])
+        if item["block"] in ids:
+            names |= {l["texture"].removeprefix("block/") for l in item.get("icon", {}).get("sprite", [])}
+    for b in manifest["fluids"]:
+        if b["id"] in ids:
+            names |= set(b["textures"].values())
+    names |= {models[i]["quads"][q]["t"] for i in indices for q in range(len(models[i]["quads"]))}
+    return names, indices
+
+
+base_names, base_models = used_by({b["id"] for b in blocks + manifest["fluids"]} - appended)
+new_names, new_models = used_by(appended)
+new_names, new_models = new_names - base_names, new_models - base_models
+check(sorted(texture_order.index(n) for n in new_names) == list(range(len(texture_order) - len(new_names), len(texture_order))),
+      f"appended textures are not the last ones: {sorted(new_names)}")
+check(sorted(new_models) == list(range(len(models) - len(new_models), len(models))),
+      f"appended models are not the last ones: {sorted(new_models)}")
 
 # Re-bake every model state from the jar's models and compare (needs the client jar).
 rebaked = 0
 if jar_path.exists():
-    def load(name):
-        spec = importlib.util.spec_from_file_location(name, Path(__file__).with_name(f"{name}.py"))
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module
-    build, bake = load("build_reference"), load("bake_models")
+    bake = load("bake_models")
     baker = bake.Baker(build, build.Models(jar))
     model_ids = {b["id"] for b in blocks if b["shape"] == "model"}
     for block in states["blocks"]:

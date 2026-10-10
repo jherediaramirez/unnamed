@@ -209,8 +209,10 @@ bool FFoundationAuthority::GetDestination(const FFoundationPlayer& Player, EFoun
     const FFoundationHit& Hit, FIntVector& OutDestination, EFoundationReason& OutReason) const
 {
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Hand);
-    const FFoundationBlockType* Placing =
-        Stack.IsEmpty() ? nullptr : World.FindBlock(Rules.GetItem(Stack.Item).PlacesBlock);
+    const FFoundationItemDefinition* Item = Stack.IsEmpty() ? nullptr : &Rules.GetItem(Stack.Item);
+    const FFoundationBlockType* Placing = Item
+        ? World.FindBlock(FoundationBlockPlacement::GetItemBlock(Item->PlacesBlock, Item->PlacesWallBlock, Hit.Face))
+        : nullptr;
     if (!Placing) return GetDestination(Hit, OutDestination, OutReason);
     FFoundationPlacementContext Context;
     bool bAccepted;
@@ -247,7 +249,8 @@ EFoundationReason FFoundationAuthority::CheckPlacement(const FFoundationPlayer& 
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Hand);
     if (Stack.IsEmpty()) return EFoundationReason::NoItem;
     const FFoundationItemDefinition& Item = Rules.GetItem(Stack.Item);
-    const FFoundationBlockType* Placing = World.FindBlock(Item.PlacesBlock);
+    const FFoundationBlockType* Placing =
+        World.FindBlock(FoundationBlockPlacement::GetItemBlock(Item.PlacesBlock, Item.PlacesWallBlock, Hit.Face));
     if (!Item.CanPlace() || !Placing) return EFoundationReason::UnknownBlock;
     if (!Hit.IsBlockLike()) return EFoundationReason::NoTarget;
     if (!Hit.bInRange) return EFoundationReason::OutOfRange;
@@ -261,6 +264,9 @@ EFoundationReason FFoundationAuthority::CheckPlacement(const FFoundationPlayer& 
     if (!bAccepted) return EFoundationReason::DestinationOccupied;
     const FFoundationBlockState Placed = FoundationBlockPlacement::GetStateForPlacement(World, *Placing, Context);
     if (OutState) *OutState = Placed;
+    if (!Item.PlacesWallBlock.IsNone() &&
+        !FoundationBlockPlacement::HasTorchSupport(World, Placed, OutDestination, Hit.Face))
+        return EFoundationReason::CannotSurvive;
     if (Placing->bNeedsSupportBelow)
     {
         const FIntVector Below = OutDestination - FIntVector(0, 0, 1);

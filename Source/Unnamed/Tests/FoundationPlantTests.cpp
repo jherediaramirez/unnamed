@@ -140,7 +140,7 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
             }
         }
     }
-    TestEqual(TEXT("model states"), ModelStates, 949);
+    TestEqual(TEXT("model states (S5's 949, the torch and four wall torches)"), ModelStates, 954);
     TestEqual(TEXT("moved boxes and their bounds that differ"), Mismatches, 0);
     TestEqual(TEXT("boxes outside their cell (none, moved ones too)"), Outside, 0);
     TestTrue(TEXT("boxes moved by an offset"), MovedBoxes > 0);
@@ -334,7 +334,7 @@ bool FFoundationPlantReplaceableTest::RunTest(const FString& Parameters)
         if (Block->bReplaceable != bFact && ++Mismatches <= 20)
             AddError(Id + TEXT(" replaceable differs from the facts"));
     }
-    TestEqual(TEXT("facts blocks"), Blocks, 616);
+    TestEqual(TEXT("facts blocks (with the two torches)"), Blocks, 618);
     TestEqual(TEXT("replaceable in the facts (water, lava, snow and 15 model blocks)"), Replaceable, 18);
     TestEqual(TEXT("blocks whose flag differs from the facts"), Mismatches, 0);
     TestTrue(TEXT("air is replaceable"), W.World.GetBlock(FFoundationBlockState{}).bReplaceable);

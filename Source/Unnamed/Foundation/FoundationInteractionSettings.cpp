@@ -110,6 +110,7 @@ void UFoundationInteractionSettings::AddBlockItems(
         Item.Tags = FGameplayTagContainer(FoundationTags::ItemBlock);
         Item.MaxStack = 64;
         Item.PlacesBlock = Block.Id;
+        Item.PlacesWallBlock = Block.ItemWallBlock;
         Item.IconColor = Block.Color;
         Items.Add(Item);
     }

@@ -104,6 +104,9 @@ MODEL_GROUPS = {
               "bubble_coral_wall_fan cactus cocoa fire_coral_fan fire_coral_wall_fan flowering_azalea horn_coral_fan "
               "horn_coral_wall_fan lily_pad mangrove_propagule mangrove_roots pointed_dripstone sea_pickle "
               "shelf_mushroom small_dripleaf spore_blossom sulfur_spike tube_coral_fan tube_coral_wall_fan",
+    # The torch (torch session T2): the floor and wall blocks of the torch item. build_reference.py appends their
+    # textures and models after the groups above (APPENDED_BLOCKS), so no earlier index moves.
+    "torch": "torch wall_torch",
 }
 
 

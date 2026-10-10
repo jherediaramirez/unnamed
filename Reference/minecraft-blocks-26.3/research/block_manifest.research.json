@@ -8416,6 +8416,65 @@
    "y_range": "null (End spikes reach Y=0)"
   },
   {
+   "id": "torch",
+   "protocol_id": 238,
+   "default_state_id": 4926,
+   "state_id_range": [
+    4926,
+    4926
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "torch",
+   "faces": {},
+   "all_textures": [
+    "torch"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "wall_post_override",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "wall_torch",
+   "protocol_id": 239,
+   "default_state_id": 4927,
+   "state_id_range": [
+    4927,
+    4930
+   ],
+   "properties": "facing=north|south|west|east",
+   "shape": "model",
+   "template": "torch",
+   "faces": {},
+   "all_textures": [
+    "torch"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing",
+   "tex_size": "16x16",
+   "tags": [
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
    "id": "creaking_heart",
    "protocol_id": 243,
    "default_state_id": 5452,

@@ -195,6 +195,13 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
     {
         const FFoundationBlockType& Block = Registry.GetBlockAt(Index);
         Table->SetDefaultState(Block.Id, uint16(Block.DefaultStateId));
+        if (!Block.Properties.IsEmpty())
+        {
+            TArray<FVoxelBlockProperty> Properties;
+            for (const FFoundationBlockAssetProperty& Property : Block.Properties)
+                Properties.Add({Property.Name, Property.Values});
+            Table->SetBlockProperties(Block.ProtocolId, uint16(Block.MinStateId), MoveTemp(Properties));
+        }
         // Generation places default states; the freeze pass turns a default under snow into its snowy variant.
         const FFoundationBlockState Default = Block.GetDefaultState();
         if (Registry.GetValue(Default, TEXT("snowy")) == TEXT("false"))

@@ -2,7 +2,7 @@
 
 As of 2026-10-08. Source of truth: vanilla Java **26.3** (`%APPDATA%\ModrinthApp\meta\versions\26.3\26.3.jar`, plus the official server jar SHA-1 `33680f5f…05f4c` for Mojang's data-generator reports). This sheet is the input for the block/texture import and the research base for the chunk loader. Only water gets behavior; every other block here just needs the correct ID, textures and render flags.
 
-**In scope:** 614 blocks (429 full cubes, powder snow among them, + 101 slabs + snow layers + 83 model blocks) out of 1286 registered blocks, plus water and lava; powder snow and snow layers were added in phase 5 for the world generator. A block counts as a full cube when every model it can show is made only of `[0,0,0]→[16,16,16]` boxes. Stairs, fences, chests, tools and items are excluded. Render layers: opaque 490, cutout 104, translucent 20.
+**In scope:** 616 blocks (429 full cubes, powder snow among them, + 101 slabs + snow layers + 85 model blocks, the torch and wall torch among them since torch session T2) out of 1286 registered blocks, plus water and lava; powder snow and snow layers were added in phase 5 for the world generator. A block counts as a full cube when every model it can show is made only of `[0,0,0]→[16,16,16]` boxes. Stairs, fences, chests, tools and items are excluded. Render layers: opaque 490, cutout 104, translucent 20.
 
 **Model blocks:** 83 blocks are drawn from their own baked models rather than as cubes or slabs: plants, flowers, crosses, seagrass, flowerbeds, carpets, multiface and custom models. See `Reference/minecraft-blocks-26.3/README.md` ("Baked models", "Shapes and offsets") for details.
 
@@ -13,7 +13,7 @@ The research outputs are preserved, hash-listed, in [`Reference/minecraft-blocks
 | File | What it is |
 |---|---|
 | `block_manifest.json` | **Import input.** One entry per block in registry order. Each entry has: string id, protocol id, state-id range, properties, per-face textures, render layer, tint/animation/rotation flags, tags, and where it is found. Water is listed under `fluids`. The reference version adds hardness, tints, names and material layers; the research original is `research\block_manifest.research.json`. |
-| `assets\minecraft\textures\block\*.png` (+ `.png.mcmeta`) | 689 block textures copied byte-for-byte from the jar, including water still/flow/overlay. |
+| `assets\minecraft\textures\block\*.png` (+ `.png.mcmeta`) | 690 block textures copied byte-for-byte from the jar, including water still/flow/overlay. |
 | `assets\minecraft\textures\colormap\grass.png`, `foliage.png` | Biome tint lookup maps for tinted blocks. |
 | `research\blocks_registry.csv` | All 1,286 blocks with protocol id, default/min/max state id, and properties (from `blocks.json`). |
 | `research\block_tags.csv` | Every block's tags, with nested `#tag` references resolved. |
@@ -336,6 +336,8 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 221 | `bookshelf` | full cube | ends: oak_planks · side: bookshelf | opaque |  | 3835 | Village libraries and some village houses; stronghold libraries |
 | 236 | `mossy_cobblestone` | full cube | mossy_cobblestone | opaque |  | 4924 | Monster rooms, jungle pyramids, pillager outposts, cold ocean ruins, plains and taiga villages; forest rocks; trial chambers |
 | 237 | `obsidian` | full cube | obsidian | opaque |  | 4925 | Ruined portals (Overworld and Nether); woodland mansion obsidian rooms; cold ocean ruins; End spikes on the main End island and End ship (End city) — Y null (End spikes reach Y=0) |
+| 238 | `torch` | model | torch | cutout |  | 4926 | — |
+| 239 | `wall_torch` | model | torch | cutout |  | 4927–4930 | — |
 | 243 | `creaking_heart` | full cube | ends: creaking_heart_top_awake · side: creaking_heart_awake | opaque | axis,creaking_heart_state | 5445–5462 | About 10% of pale oak trunks in pale gardens (fully enclosed by logs) |
 | 247 | `diamond_ore` | full cube | diamond_ore | opaque |  | 6863 | Ore features in stone across the overworld; more common deeper down — Y -64..16 (peak -64) + -64..-4 |
 | 248 | `deepslate_diamond_ore` | full cube | deepslate_diamond_ore | opaque |  | 6864 | Diamond ore in the deepslate layer — Y -64..16 (peak -64) + -64..-4 (where it replaces deepslate, ~Y<8) |
