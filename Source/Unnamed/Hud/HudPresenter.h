@@ -39,6 +39,7 @@ public:
     const FHudSnapshot& GetSnapshot() const { return Snapshot; }
     const FHudPresentation& GetPresentation() const { return Presentation; }
     int32 GetLoadedTextureCount() const { return Textures.Num(); }
+    int32 GetItemSpriteCount() const { return ItemSprites.Num(); }
     int32 GetMissingTextures() const { return MissingTextures; }
     int32 GetDrawCount() const;
     int32 GetGuiScale() const { return GuiScale; }
@@ -50,6 +51,9 @@ private:
     // Slate brushes do not retain UObjects against GC.
     UPROPERTY(Transient)
     TArray<TObjectPtr<UTexture2D>> Textures;
+    // The items' GUI sprites, by DA_Items order.
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UTexture2D>> ItemSprites;
     TSharedPtr<SHudView> View;
     FHudSnapshot Snapshot;
     FHudSnapshot LastDrawSnapshot;

@@ -187,8 +187,9 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             Record(TEXT("HUD items authoritative"),
                 S.Items == EHudDataSource::Authoritative && S.ItemViews.Num() == 9 &&
                     S.ItemViews[0].Icon == EHudItemIcon::Block && S.ItemViews[0].Block == TEXT("stone") &&
-                    S.ItemViews[0].bInfinite && S.ItemViews[1].Icon == EHudItemIcon::Pickaxe &&
-                    S.ItemViews[2].Icon == EHudItemIcon::Sword,
+                    S.ItemViews[0].bInfinite && S.ItemViews[1].Icon == EHudItemIcon::Sprite &&
+                    S.ItemViews[1].Sprite == TEXT("item/iron_pickaxe") && S.ItemViews[2].Icon == EHudItemIcon::Sprite &&
+                    S.ItemViews[2].Sprite == TEXT("item/iron_sword"),
                 S.ItemName);
         });
     AddCase(

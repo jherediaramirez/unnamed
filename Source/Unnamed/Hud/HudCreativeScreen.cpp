@@ -3,6 +3,7 @@
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Hud/HudAssets.h"
+#include "Hud/HudModel.h"
 #include "Misc/PackageName.h"
 #include "Rendering/DrawElements.h"
 #include "Rendering/SlateRenderer.h"
@@ -114,8 +115,13 @@ struct SHudCreativeScreen::FPainter
         const FSlateBrush* Font = Screen.FindBrush(TEXT("font/ascii"));
         if (!Assets || !Font) return;
         if (bShadow)
-            this->Text(Text, Point + FIntPoint(1, 1),
-                FLinearColor(Color.R * .25f, Color.G * .25f, Color.B * .25f, Color.A), false);
+        {
+            // As HudDrawList: Java quarters the encoded RGB bytes (white's shadow is 63, not linear quarter's 137).
+            const FColor Encoded = Color.ToFColorSRGB();
+            FLinearColor Shadow(FColor(Encoded.R / 4, Encoded.G / 4, Encoded.B / 4));
+            Shadow.A = Color.A;
+            this->Text(Text, Point + FIntPoint(1, 1), Shadow, false);
+        }
         for (const TCHAR Character : Text)
             if (const FHudGlyph* Glyph = Assets->Glyphs.FindByPredicate(
                     [Character](const FHudGlyph& G) { return G.Code == int32(Character); }))
@@ -141,6 +147,16 @@ struct SHudCreativeScreen::FPainter
     {
         if (Stack.IsEmpty()) return;
         Item(Stack.Item, Position);
+        // The durability bar, as the HUD's hotbar draws it.
+        const FHudCreativeItem* Info = Screen.Items.Find(Stack.Item);
+        if (const FHudDurabilityBar Bar = HudModel::GetDurabilityBar(Stack.Damage, Info ? Info->MaxDamage : 0);
+            Bar.bVisible)
+        {
+            const FBox2f Whole(FVector2f(0), FVector2f(1));
+            Box(&Screen.Solid, Position + FIntPoint(2, 13), {13, 2}, Whole, FLinearColor::Black);
+            if (Bar.Width > 0)
+                Box(&Screen.Solid, Position + FIntPoint(2, 13), {Bar.Width, 1}, Whole, FLinearColor(Bar.Color));
+        }
         if (Stack.Count > 1)
         {
             // ItemDecorations: the count at the slot's bottom right, white with a shadow.
@@ -410,24 +426,35 @@ int32 SHudCreativeScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geome
         Paint.Stack(Model.Carried, O + Mouse - FIntPoint(8, 8));
     else
     {
-        FString Tooltip;
+        // An item's tooltip: its name, then its attribute lines (FHudCreativeItem::Details).
+        TArray<FHudTooltipLine> Lines;
+        auto ForItem = [this, &Lines](FName Item)
+        {
+            Lines.Add({ItemName(Item), HudTooltip::White});
+            if (const FHudCreativeItem* Info = Items.Find(Item)) Lines.Append(Info->Details);
+        };
         if (Hover.Kind == EHudCreativeHit::Tab)
-            Tooltip = Model.GetTabs()[Hover.Index].Title;
-        else if (Hover.Kind == EHudCreativeHit::Grid)
-            Tooltip = Model.GetGridItem(Hover.Index).IsNone() ? FString() : ItemName(Model.GetGridItem(Hover.Index));
+            Lines.Add({Model.GetTabs()[Hover.Index].Title, HudTooltip::White});
+        else if (Hover.Kind == EHudCreativeHit::Grid && !Model.GetGridItem(Hover.Index).IsNone())
+            ForItem(Model.GetGridItem(Hover.Index));
         else if (Hover.Kind == EHudCreativeHit::Hotbar && Inventory.IsValidIndex(Hover.Index) &&
             !Inventory[Hover.Index].IsEmpty())
-            Tooltip = ItemName(Inventory[Hover.Index].Item);
-        if (!Tooltip.IsEmpty())
+            ForItem(Inventory[Hover.Index].Item);
+        if (!Lines.IsEmpty())
         {
             // TooltipRenderingUtil: 12 right and 12 up of the cursor, 3 pixels of padding, nine-sliced sprites.
             const FIntPoint At = O + Mouse + FIntPoint(12, -12);
-            const FIntPoint Size(Paint.Measure(Tooltip), 8);
+            int32 Width = 0;
+            for (const FHudTooltipLine& Line : Lines)
+                Width = FMath::Max(Width, Paint.Measure(Line.Text));
+            const FIntPoint Size(Width, HudTooltip::GetHeight(Lines.Num()));
             Paint.NineSlice(
                 FindBrush(TEXT("gui/sprites/tooltip/background")), At - FIntPoint(12, 12), Size + FIntPoint(24, 24), 9);
             Paint.NineSlice(
                 FindBrush(TEXT("gui/sprites/tooltip/frame")), At - FIntPoint(12, 12), Size + FIntPoint(24, 24), 10);
-            Paint.Text(Tooltip, At, FLinearColor::White, true);
+            for (int32 Line = 0; Line < Lines.Num(); ++Line)
+                Paint.Text(Lines[Line].Text, At + FIntPoint(0, HudTooltip::GetLineY(Line)),
+                    FLinearColor(Lines[Line].Color), true);
         }
     }
     return LayerId;

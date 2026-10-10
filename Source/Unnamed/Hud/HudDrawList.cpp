@@ -78,20 +78,9 @@ namespace
                 Pixels(Point, {{6, 8}, {8, 10}}, {2, 2}, Ink);
                 Pixels(Point, {{8, 8}, {6, 10}}, {2, 2}, FLinearColor(FColor(240, 200, 40)));
                 break;
-            case EHudItemIcon::Pickaxe:
-                Pixels(Point, {{9, 4}, {8, 5}, {7, 6}, {6, 7}, {5, 8}, {4, 9}, {3, 10}, {2, 11}}, {2, 2},
-                    FLinearColor(FColor(120, 82, 44)));
-                Rect(Point + FIntPoint(5, 2), {7, 2}, Tint);
-                Pixels(Point, {{4, 3}, {11, 3}}, {2, 2}, Tint);
-                Rect(Point + FIntPoint(12, 5), {2, 3}, Tint * FLinearColor(.75f, .75f, .78f));
-                Rect(Point + FIntPoint(3, 5), {2, 2}, Tint * FLinearColor(.75f, .75f, .78f));
-                break;
-            case EHudItemIcon::Sword:
-                Pixels(Point, {{12, 2}, {11, 3}, {10, 4}, {9, 5}, {8, 6}, {7, 7}}, {2, 2}, Tint);
-                Pixels(Point, {{13, 2}, {12, 3}, {11, 4}, {10, 5}}, {1, 1}, FLinearColor::White);
-                Pixels(Point, {{4, 7}, {5, 8}, {8, 11}, {9, 12}}, {2, 2}, FLinearColor(FColor(70, 70, 76)));
-                Pixels(Point, {{6, 9}, {5, 10}}, {2, 2}, FLinearColor(FColor(120, 82, 44)));
-                Rect(Point + FIntPoint(3, 12), {2, 2}, FLinearColor(FColor(70, 70, 76)));
+            case EHudItemIcon::Sprite:
+                // The item's own 16 x 16 GUI sprite (ItemRoot/Gui), untinted.
+                Sprite(View->Sprite, Point, {16, 16});
                 break;
             default:
                 // Original geometric token: a cyan outlined tile with a white notch. No Minecraft item identity.
@@ -101,13 +90,12 @@ namespace
                 Rect(Point + FIntPoint(8, 8), {2, 3}, FLinearColor(FColor(34, 107, 132)));
                 break;
             }
-            if (View && View->Durability >= 0 && View->Durability < 1)
+            if (const FHudDurabilityBar Bar =
+                    HudModel::GetDurabilityBar(View ? View->Damage : 0, View ? View->MaxDamage : 0);
+                Bar.bVisible)
             {
-                // The reference bar: 13 px, green to red by what is left, black behind.
-                const double Left = FMath::Clamp(View->Durability, 0., 1.);
                 Rect(Point + FIntPoint(2, 13), {13, 2}, FLinearColor::Black);
-                Rect(Point + FIntPoint(2, 13), {FMath::RoundToInt32(13 * Left), 1},
-                    FLinearColor::MakeFromHSV8(uint8(Left / 3. * 255.), 255, 255));
+                if (Bar.Width > 0) Rect(Point + FIntPoint(2, 13), {Bar.Width, 1}, FLinearColor(Bar.Color));
             }
             if (View && View->bInfinite)
             {

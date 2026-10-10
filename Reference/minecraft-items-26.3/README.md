@@ -13,7 +13,7 @@ Also read, pinned by SHA-256 in `manifest.json` and not copied: `Reference/minec
 uv run --no-project --python 3.13 --with pillow python -I Reference/minecraft-items-26.3/tools/verify_reference.py
 ```
 
-The verifier checks every file against `SHA256SUMS.txt` and the block reference inputs against their pins. It re-derives every generated file byte for byte from this folder's own copies and the jar, through the same `derive()` the builder uses. It compares every `assets/` copy with its jar entry and every report copy with the data generator's output when that folder is present. Last, it checks counts and spot values: scout F's appendix A per material, attack totals, and worked break times.
+The verifier checks every file against `SHA256SUMS.txt` and the block reference inputs against their pins. It re-derives every generated file byte for byte from this folder's own copies and the jar, through the same `derive()` the builder uses. It compares every `assets/` copy with its jar entry and every report copy with the data generator's output when that folder is present. Last, it checks counts and spot values: scout F's appendix A per material, attack totals, and worked break times. It also checks the black-box facts against the data: one durability bar entry per max damage with its items, every damage value from 0 to the max, the ramp's ends, and every item's tooltip lines rebuilt from `items.json` and `lang.json`.
 
 ## Files
 
@@ -26,11 +26,14 @@ The verifier checks every file against `SHA256SUMS.txt` and the block reference 
 | `item_index.json` | All 1,658 items in protocol order: `id`, `protocol_id`, `places_block` (the block whose item it is, from `block_facts.csv`: its own id when one matches, else the first block in protocol order), `block_with_same_id`, and `definition` (the first model the definition selects: `block_model` 834, `sprite` 761, `special` 62, `other` 1). Only `air` and `wheat` share a block's id without being that block's item. 14 items place a block with another id (`redstone`, `string`, `wheat_seeds`, `carrot`, `potato`, `powder_snow_bucket`, ...); none is in Tier A. |
 | `facts/break_times.json` | The truth table: the hand and the 35 tools on all 1,286 blocks. Per block: `hardness`, `requires_correct_tool`, `imported` (in the block reference), `mineable` kinds, then `ticks` and `drops` in `tools` order. Ticks 0 is instant and -1 unbreakable. |
 | `facts/break_times.md` | Scout F's 21 sample blocks, rendered from the JSON. |
+| `lang.json` | The tooltip text the items' attribute modifiers need, verbatim from the jar's `en_us.json` (6 keys): the slot header `item.modifiers.mainhand` ("When in Main Hand:"), the attribute names, and the `attribute.modifier.equals`, `plus` and `take` forms of `add_value` (`.0`). |
+| `facts/durability_bar.json` | Black box (`tools/ItemFacts.java`): for each max damage among the items (7: 32, 59, 131, 190, 250, 1561, 2031) and every damage value from 0 to it, the server jar's `ItemStack.isBarVisible()`, `getBarWidth()` (0-13) and `getBarColor()` (RGB hex), with the items that share the max (ItemFacts checks they all answer the same). |
+| `facts/tooltips.json` | Black box (`tools/ItemFacts.java`): every item's `ItemStack.getTooltipLines` with no player and the creative flag (`TooltipFlag.NORMAL.asCreative()`), each line as its text runs `[text, colour]`. With no player the base modifiers show their own amounts ("+3 Attack Damage" in blue, "-2.8 Attack Speed" in red), and a zero amount shows no line (the diamond hoe shows only the header). In game a player is present and adds its base values; see "Where each value comes from". |
 | `manifest.json` | Versions and jar SHA-1s, the block reference inputs' SHA-256, the Tier A list, counts, and the generated and copied file lists. |
 | `reports/components/item/<id>.json` | The data generator's Default Components report for the 63 items, byte for byte. |
 | `reports/registries-item.json` | The `minecraft:item` registry from `registries.json` (all 1,658 ids and protocol ids), re-serialized. |
 | `assets/minecraft/` | Jar files, byte for byte: `items/<id>.json` (63), the `models/item` chains (73: 70 item models plus `generated`, `handheld` and `spear_in_hand`) and `textures/item/*.png` (70). |
-| `tools/` | `build_reference.py` and `verify_reference.py`. |
+| `tools/` | `build_reference.py`, `verify_reference.py` and `ItemFacts.java` (the black-box facts). |
 
 ## Where each value comes from
 
@@ -41,6 +44,7 @@ The verifier checks every file against `SHA256SUMS.txt` and the block reference 
 - **Model definitions:** each `items/<id>.json` is a `model` or a `select` on `display_context`. The spears select their 16 x 16 icon for `gui`, `ground`, `fixed` and `on_shelf`, and the 32 x 32 in-hand model otherwise, with `swap_animation_scale` 1.95. Root fields not given use their defaults (`swap_animation_scale` 1, `hand_animation_on_swap` true). The builder stops if a Tier A item's definition uses another type or a tint.
 - **Display transforms:** verbatim per context (minecraft.wiki "Model": translation, then rotation, then scale; a missing left-hand entry falls back to the right hand, which the data leaves to the renderer).
 - **Creative positions:** the index of the plain entry (`minecraft:<id>`) in each tab's `display` list, from `FactsDump`'s `creative_tabs.json`.
+- **Durability bar and tooltip lines:** the server jar's own `ItemStack`, called through its public API only (`tools/ItemFacts.java`, after loading the vanilla data pack as a dedicated server does). The tooltip run has no player: `Player` needs a live level, which a black-box run does not have. So the in-game form of the base modifiers, with the player's base values added (iron pickaxe: 4 Attack Damage, 1.2 Attack Speed), is not in these facts. Its text is the `attribute.modifier.equals.0` form in `lang.json`.
 
 ## Break times
 
@@ -55,5 +59,12 @@ The arithmetic is exact (fractions of the data's decimal values). In 35,393 of t
 ## Rebuild
 
 `build_reference.py` needs the pinned client jar, the report folder (`--reports`, default above) and the block reference. It refuses to run unless this folder holds only `tools/` and `README.md`, so to rebuild, move the accepted folder away first (keeping `tools/` and this README). After a README or tool edit, `build_reference.py --sums-only` rewrites only `SHA256SUMS.txt`. More tiers are added by extending `TIER_A`'s groups (or a new tier list) and rebuilding.
+
+The black-box facts come after the build:
+
+1. Use JDK 25 and a classpath of the unbundled server jar (`C:\dev\sandbox\mc-26.3-blocks\datagen\versions\26.3\server-26.3.jar`) plus the 39 jars of its `libraries` folder.
+2. Compile with `javac -cp <classpath> -d <temp> tools/ItemFacts.java`.
+3. Run `java -cp <temp>;<classpath> ItemFacts <this folder>` outside the project, since the game leaves a `logs/` folder in the working directory. It reads `items.json` and writes the two `facts/` files.
+4. Run `build_reference.py --sums-only`.
 
 Minecraft art and data remain Mojang/Microsoft material. Local development builds may use them; anything distributed must replace them.

@@ -136,6 +136,29 @@ int32 HudModel::GetAttackHeight(double Strength)
     return FMath::Min(18, FMath::FloorToInt(19 * FMath::Clamp(Strength, 0., 1.)));
 }
 
+// The bar's numbers are single-precision steps; keep the compiler from reordering or contracting them, so every
+// value matches the reference table.
+#pragma float_control(precise, on, push)
+FHudDurabilityBar HudModel::GetDurabilityBar(int32 Damage, int32 MaxDamage)
+{
+    FHudDurabilityBar Bar;
+    if (MaxDamage <= 0 || Damage <= 0) return Bar;
+    Bar.bVisible = true;
+    const float Max = float(MaxDamage), Used = float(Damage);
+    // Clamped for damage past the max, which the table (0 to the max) does not cover.
+    Bar.Width = FMath::Clamp(FMath::FloorToInt32(13.f - Used * 13.f / Max + .5f), 0, 13);
+    // Hue from a third (green) at full durability to zero (red), full saturation and value.
+    const float Hue = FMath::Max(0.f, (Max - Used) / Max) / 3.f;
+    const int32 Sector = int32(Hue * 6.f) % 6;
+    const float F = Hue * 6.f - float(int32(Hue * 6.f));
+    const float P = 0.f, Q = 1.f - F, T = 1.f - (1.f - F);
+    const float Channels[6][3] = {{1, T, P}, {Q, 1, P}, {P, 1, T}, {P, Q, 1}, {T, P, 1}, {1, P, Q}};
+    auto Byte = [](float Value) { return uint8(FMath::Clamp(int32(Value * 255.f), 0, 255)); };
+    Bar.Color = FColor(Byte(Channels[Sector][0]), Byte(Channels[Sector][1]), Byte(Channels[Sector][2]));
+    return Bar;
+}
+#pragma float_control(pop)
+
 EHudContext HudModel::GetContext(
     bool bWaypoints, bool bExperience, bool bRecentXp, bool bJumpable, bool bCharging, bool bCooldown)
 {
