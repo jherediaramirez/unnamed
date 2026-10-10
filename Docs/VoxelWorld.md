@@ -461,6 +461,35 @@ Scout E's two render-only looks for ores ([the record](Records/2026-10-10-Voxel-
 - **Switching:** a change remeshes every loaded column (`FVoxelColumnPipeline::SetOreLooks`); captures take them in `-ExecCmds`, and `voxel.Bench Columns` reads them.
 - **Cost** (quiet machine, October 10; old and new alternated): GPU frame per shot +0.00 ms at 0 and +0.00 to +0.07 ms with both looks on; quads per column +0.04% with OreHost on (merges stop at host changes); mesh per column: at 0 inside the old build's own spread (one-thread area pass, mean per section: 0.091 ms against 0.092 to 0.109; per column 2.240 ms against 1.984 to 2.314), both looks on +0.03 ms per column against old's median (+1.4%, within noise).
 
+### Carvers (phase 6, S10)
+
+`Terrain/VoxelCarvers.h`: `FVoxelCarvers`, 26.3's three carvers (`cave`, `cave_extra_underground`, `canyon`) as a pull pass in Generate. **Off by default** (`FVoxelDensityTerrainSettings::bCarvers`, console `voxel.Carvers`; `carvers` and `nocarvers` on the Columns and Density benches). Off gives the blocks from before S10 exactly. S11 turns them on, with the re-records.
+
+- **Data:** the reader's carver entries compile into `FVoxelCarverConfig`. `start_vertical_radius_multiplier` is missing from the 26.3 files, so it defaults to 1, the codec's default. The carvers come from the biome lists. All 56 overworld biomes list the same three, so the per-biome rule cannot change a block, and `Initialize` fails if the lists ever differ (`Carvers.BiomeRule`).
+- **Starts and reach:** a column starts a carver when `Hash64(seed, "carver/<id>", column) < probability`. A column carves the parts of every path that starts within 8 columns (2 x the jar's `getRange()`). A step that would reach farther is dropped; in the tests no step ever is.
+- **Paths:** a path is a pure function of the seed, the carver and the start. It comes from our own walker, shaped after the wiki; vanilla's random is not reproduced.
+  - Caves: one system per `count` draw (very_biased_to_bottom 0 to 14). A system is a room (1 in 4) with 1 to 4 trunks, or one trunk. A trunk runs 85 to 112 steps, with a radius of 1.5 + sin x thickness, times the system's multipliers. One step in four carves nothing (the flicker). A trunk thicker than 1 splits into two T branches in its middle half.
+  - Canyons: one per start, 84 to 112 steps. The radius is (2 + sin x thickness) x the factor, the vertical radius is y_scale x that, and the width has ledges every few heights (width_smoothness).
+  - The free numbers were fitted to scout K's black-box statistics in four rounds (`C:\dev\sandbox\phase6s10\walkfit.py` mirrors the walk). Ours against the jar's, per start:
+
+| | cave | cave_extra_underground | canyon |
+|---|---|---|---|
+| zero-cell share | 0.429 / 0.418 | 0.421 / 0.460 | 0 / 0 |
+| mean cells | 4,933 / 5,134 | 5,221 / 4,885 | 10,291 / 11,038 |
+| farthest chunk | 6 / 6 | 6 / 6 | 7 / 7 |
+| y range | -63..217 / -63..224 | -63..95 / -63..104 | -8..90 / -13..89 |
+
+  - Marked cells per column: 1,242 against about 1,226.
+  - Known miss: the canyon top (90 against the jar's sample maximum 89), and canyon y spans a little short (26.4 against 29.2). S11 tunes.
+- **Cells:** scout K's ellipsoid rule (`Voxelize`). A block column is in when (dx^2 + dy^2) < 1 at its centre. Z runs from floor(z - v) to floor(z + v) + 1, never below -63, and the skip test reads (Z - 0.5 - z) / v. Caves keep the unit sphere above the floor level; canyons keep the width-scaled ellipsoid. Five jar cases plus a tie case (confirmed on the jar on October 10) are checked with the skip test off, and with it on from the jar's own recorded skip arguments.
+- **Cache:** `FVoxelCarvePathCache`, 4,096 direct-mapped slots with a lock each. It holds immutable paths indexed by the columns they touch, and a newer key takes an older one's slot. Results never depend on it: `Carvers.CacheOff` compares with no cache and with a 16-slot cache, and the bench compares cache on and off.
+- **The pass:** `FillWithRules`, after the surface rules (the wiki: carvers follow the surface) and before the freeze. A marked block that is not air, water, lava or bedrock takes what the aquifer gives an open block there (`FVoxelAquifer::FillCarved`; S10-Q1 (a), the manager's call under Jesus's away rule). FillCarved applies Fill's rules to single blocks on Prepare's statuses, with the sky taken from before carving; a barrier stays solid. `Carvers.AquiferAgrees` checks FillCarved against Fill on every open block of 12 columns (784,636 blocks, 0 differ). `Heights` come down past carved air for the freeze. Carving runs only with caves, the rules and the decoration data.
+- **Fluids:** 64 columns spread over the world, seed 263:
+  - Carved blocks are 71.8% air, 25.8% water and 2.5% lava.
+  - The noise caves' open blocks in the same columns are 78.3% air, 20.6% water and 1.1% lava.
+  - So carved tunnels hold what the noise caves hold. Scout K's vanilla diff (94% / 0.6% / 5%) differs because our aquifer floods more than vanilla's; that is a question for S11.
+- **Cost:** see the S10 record.
+- **Not built:** sand, sandstone, snow, ice and terracotta are carved, which is unverified against vanilla. Vanilla may re-dress dirt exposed under carved grass; that's an S11 open item. Fluids stay static, as in the noise caves.
 ### Biome tints
 
 Phase 5 session 6 colours grass, foliage and water by biome, as 26.3's `BlockColors` and biome blend do ([the scout's facts](Records/2026-10-09-Voxel-Phase5-Scout-Facts.md), section 5).

@@ -108,8 +108,24 @@ TSharedPtr<const IVoxelTerrain> VoxelTerrainFactory::Make(const FUnnamedSavedWor
         if (!World && FParse::Param(FCommandLine::Get(), TEXT("VoxelNoSurfaceRules"))) Settings.bSurfaceRules = false;
         // Ore veins as voxel.OreVeins says when the world starts (the world subsystem rebuilds it on a change).
         Settings.bOreVeins = VoxelConsole::CVarOreVeins.GetValueOnAnyThread();
+        // The carvers (S10) as voxel.Carvers says when the world is made (voxel.Regenerate picks up a change).
+        Settings.bCarvers = VoxelConsole::CVarCarvers.GetValueOnAnyThread();
         TSharedRef<FVoxelDensityTerrain> Density =
             MakeShared<FVoxelDensityTerrain>(Preset, uint64(Seed), Table, Settings, &Biomes, &Surface);
+        if (Density->IsValid() && Settings.bCarvers)
+        {
+            // UE_LOG is a block, so each branch gets braces.
+            if (Density->GetCarvers().IsInitialized())
+            {
+                UE_LOG(LogUnnamedVoxel, Display, TEXT("voxel.Carvers: on (%d carvers)"),
+                    Density->GetCarvers().GetConfigs().Num());
+            }
+            else
+            {
+                UE_LOG(LogUnnamedVoxel, Warning, TEXT("voxel.Carvers: on, but the terrain cannot carve (%s)"),
+                    *Density->GetCarverError());
+            }
+        }
         if (Density->IsValid()) return Density;
         Error = Density->GetError();
     }

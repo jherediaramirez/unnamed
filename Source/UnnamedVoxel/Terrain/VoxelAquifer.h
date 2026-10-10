@@ -79,6 +79,15 @@ public:
     void Fill(int32 X0, int32 Z0, TConstArrayView<float> Density, FVoxelAquiferScratch& Scratch,
         TArray<EVoxelAquiferFluid>& Out) const;
 
+    // The carvers' query (phase 6, S10): what Fill gives each listed block if that block were open, from the statuses
+    // Prepare built for the same column, so a carved cell gets what a noise-cave cell there gets. Blocks index the
+    // column as Density does; the wall test reads min(Density, 0) (0 for a carved solid block, as an open one would
+    // read). SkyTop holds each block column's highest block with positive density (MinY - 1 for none; index z * 16 +
+    // x): blocks at or above it take the global fluid, as Fill's sky rule gives them. Out[K] is Blocks[K]'s fluid;
+    // Barrier keeps the block solid.
+    void FillCarved(int32 X0, int32 Z0, TConstArrayView<int32> Blocks, TConstArrayView<float> Density,
+        TConstArrayView<int32> SkyTop, FVoxelAquiferScratch& Scratch, TArray<EVoxelAquiferFluid>& Out) const;
+
     // A status's global fluid at a centre's y.
     FVoxelAquiferStatus GetGlobal(int32 Y) const;
 

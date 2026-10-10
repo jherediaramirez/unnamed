@@ -4,6 +4,13 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 10, 2026
 
+- [Voxel world phase 6, S10: the carvers (side lane), and the handoff into S11's start](2026-10-10-Voxel-Phase6-S10.md): start here when S11 turns the carvers on. The three carvers run as a pull pass in Generate behind `voxel.Carvers`, default 0, so no golden or hash moves until then.
+  - A carved cell gets the aquifer's answer for an open cell (S10-Q1 (a)).
+  - The gate passed: 0.14 to 0.18 ms added per column; cache on and off give 0 differing blocks.
+  - 12 tests, with mutation checks.
+  - The walker is our own, fitted to scout K's black-box statistics. One known miss: the canyon top.
+  - Section 6 lists what turning carvers on moves; section 9 holds questions S10-1 to S10-4. The short prompt is at the top.
+- [Scout K: S10 carvers and S11 underground features, facts](2026-10-10-Voxel-Phase6-Scout-K-Underground.md): scout K's prep doc, committed byte-identical (SHA-256 `C644589485DF1552B0D981315491FC356A08FA1EDD6596035F6FB3A01722573D`). It covers the carver data, the reach, the per-start statistics, the ellipsoid rule and a same-seed diff of what carving opens, the S10 oracles, and Part S11 (22 placed features) for S11.
 - [Torch handoff: after T3 and T3b (into T3c, the brown stick, then particles)](2026-10-10-Torch-Handoff-T4.md): start here for the torch work. T3c gives the torch's stick a glow under level 1 so that only the flame glows; it runs after S9b's commit, because it touches `VoxelMesher.cpp`. The handoff ends with T3b's short prompt.
 - [Torch T3b: the torch look round](2026-10-10-Torch-T3b.md): Jesus's decisions after T3's look pack:
   - warm A (600 cd, 2,200 K) with MegaLights on for the project, where he accepted the cost as "worth it";
