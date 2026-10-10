@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Density/VoxelDensityGraph.h"
 #include "Noise/VoxelNormalNoise.h"
+#include "Surface/VoxelOreVeins.h"
 #include "Surface/VoxelSurfaceContext.h"
 #include "Surface/VoxelSurfaceRules.h"
 
@@ -16,6 +17,8 @@ struct FVoxelSurfaceInputs
     FVoxelSurfaceRules Rules;
     // Every noise GetNoiseIds names.
     TArray<FVoxelDensityNoise> Noises;
+    // The density functions the ore_vein rules name, with everything they read (GetVeinFunctionIds).
+    FVoxelDensityGraph Functions;
 };
 
 // What one generated column (16 x 16) shares between its block columns: its biome storage and, with the shortcut, the
@@ -52,6 +55,18 @@ struct FVoxelSurfaceChunk
     // instructions run for those, and the heights the interior table was built for.
     mutable int32 DeepBlocks = 0, InteriorBlocks = 0, FullBlocks = 0, InteriorRuns = 0;
     mutable int64 Steps = 0;
+
+    // Ore veins (phase 6, S4): whether the ore_vein rules run, and whether only at the heights their densities reach
+    // (the vein shortcut; off evaluates every solid block directly, only to compare against).
+    bool bVeins = false;
+    bool bVeinShortcut = true;
+    // This column's vein blocks (FVoxelSurfaceEvaluator::PrepareVeins).
+    FVoxelOreVeinField Veins;
+    FVoxelOreVeinScratch VeinScratch;
+    // Per height, with the shortcut: the veins (a bit per vein, in program order) the deep or interior table passes
+    // before its result. A block there takes the first of them that gives a block, and the table's result otherwise.
+    TArray<uint8> DeepVeins;
+    mutable TArray<uint8> InteriorVeins;
 };
 
 // Evaluates a surface rule tree (FVoxelSurfaceRules) as 26.3's surface pass does, through our own noise and hashes:
@@ -60,13 +75,15 @@ struct FVoxelSurfaceChunk
 // 1.4). Compiled once per terrain into a linear program: a rule that gives nothing falls through to the next.
 //
 // Our own parts: the per-column jitter of the surface depth (a hash of seed and column), the vertical gradients
-// (Hash64(seed, random_name, x, y, z)), and the badlands band pattern (192 blocks from a seeded stream). Ore veins are
-// phase 6's: they give nothing yet.
+// (Hash64(seed, random_name, x, y, z)), the badlands band pattern (192 blocks from a seeded stream) and the ore veins'
+// draws (FVoxelOreVeins). Veins run when the chunk asks for them (PrepareChunk); otherwise they give nothing, as
+// before phase 6's S4.
 //
 // The deep-stone shortcut is exact: below a column's preliminary surface the surface branch cannot run, so per height
 // the rest of the tree is decided once per generated column (y-only conditions by height, biome conditions by the
 // biomes the quart layers hold). Heights it cannot decide, and blocks above, run the full tree. With bShortcut off
-// every block runs it and reads its biome from the storage; both give the same blocks (test Surface.Exact).
+// every block runs it and reads its biome from the storage; both give the same blocks (test Surface.Exact). An ore
+// vein decides per block, so the tables pass over it and note it: a block at that height asks its veins first.
 //
 // Immutable after Compile; any thread may evaluate with its own chunk and column values.
 class UNNAMEDVOXEL_API FVoxelSurfaceEvaluator
@@ -80,15 +97,23 @@ public:
     // The noise ids a tree needs: those its noise_threshold conditions name, plus the code side's minecraft:surface,
     // minecraft:surface_secondary and minecraft:clay_bands_offset.
     static TArray<FString> GetNoiseIds(const FVoxelSurfaceRules& Rules);
+    // The density function ids its ore_vein rules name (density, richness and filler gap), each once.
+    static TArray<FString> GetVeinFunctionIds(const FVoxelSurfaceRules& Rules);
 
     // Resolves blocks against Table (default states; minecraft:air is 0), biomes against Biomes (an id the table lacks
-    // never matches) and noises against Inputs.Noises. Fails on an unknown block, a missing noise or an invalid tree.
+    // never matches), noises against Inputs.Noises and the veins' functions against Inputs.Functions. Fails on an
+    // unknown block, a missing noise or function, or an invalid tree.
     bool Compile(const FVoxelSurfaceInputs& Inputs, const FVoxelBlockTable& Table, const FVoxelBiomeTable& Biomes,
         uint64 WorldSeed, FString* OutError = nullptr);
     bool IsCompiled() const { return bCompiled; }
 
-    // Per generated column. Biomes may be null or empty (no biome matches).
-    void PrepareChunk(FVoxelSurfaceChunk& Chunk, const FVoxelBiomeStorage* Biomes, bool bShortcut) const;
+    // Per generated column. Biomes may be null or empty (no biome matches). With bVeins, call PrepareVeins before the
+    // first ApplyColumn.
+    void PrepareChunk(FVoxelSurfaceChunk& Chunk, const FVoxelBiomeStorage* Biomes, bool bShortcut, bool bVeins = false,
+        bool bVeinShortcut = true) const;
+    // Per generated column, with veins: their blocks for the column whose lowest corner is (X0, Y0). Kinds are every
+    // block column's, local Y * 16 + local X, bottom-up, as ApplyColumn reads them.
+    void PrepareVeins(FVoxelSurfaceChunk& Chunk, int32 X0, int32 Y0, TConstArrayView<EVoxelSurfaceKind> Kinds) const;
     // Per block column (world X and Y): the surface depth from the surface noise, and the minimum surface level from P.
     // The chunk's reach for interior blocks is set when the column is applied.
     void PrepareColumn(FVoxelSurfaceColumn& Column, int32 X, int32 Y, double PreliminarySurface, bool bSteep) const;
@@ -116,6 +141,7 @@ public:
     TConstArrayView<uint16> GetBands() const { return Bands; }
     // The compiled program's length, for the docs and tests.
     int32 GetProgramSize() const { return Program.Num(); }
+    const FVoxelOreVeins& GetOreVeins() const { return OreVeins; }
 
 private:
     enum class EOp : uint8
@@ -125,7 +151,9 @@ private:
         // The result is State.
         Give,
         // The result is the band at the block's height.
-        Bands
+        Bands,
+        // Ore vein State (its index in OreVeins): its block, if it gives one; otherwise the next instruction.
+        Vein
     };
     struct FInstruction
     {
@@ -163,11 +191,17 @@ private:
     // 1 true, 0 false, -1 not decided by height and the layer's biomes alone. bAbove: at or above the preliminary
     // surface; bInterior: deeper than every stone_depth condition reaches.
     int32 TestPartial(int32 Condition, int32 Z, const uint64* LayerMask, bool bAbove, bool bInterior) const;
-    // Below the preliminary surface: the tree walked forward to its result or to the first undecided instruction.
-    int32 RunDeep(int32 Z, const uint64* LayerMask) const;
+    // Below the preliminary surface: the tree walked forward to its result or to the first undecided instruction, and
+    // the veins it passes.
+    int32 RunDeep(const FVoxelSurfaceChunk& Chunk, int32 Z, const uint64* LayerMask, uint8& OutVeins) const;
     // Interior blocks at height Z: each instruction's outcome from the end back; an undecided test whose two ways end
-    // alike is decided (jumps only go forward).
-    int32 RunInterior(const FVoxelSurfaceChunk& Chunk, int32 Z) const;
+    // alike is decided (jumps only go forward). Veins pass, noted in OutVeins; one past an undecided test whose ways
+    // end alike leaves the height to the full tree.
+    int32 RunInterior(const FVoxelSurfaceChunk& Chunk, int32 Z, uint8& OutVeins) const;
+    // The veins (bits) the chunk runs at height Z.
+    uint32 GetActiveVeins(const FVoxelSurfaceChunk& Chunk, int32 Z) const;
+    // The first of Veins (bits, in program order) that gives a block at the block column Cell and height Z, or NoState.
+    int32 GiveVein(const FVoxelSurfaceChunk& Chunk, uint32 Veins, int32 Cell, int32 Z) const;
     int32 GetStoneDepthLimit(const FCondition& Data, FVoxelSurfaceColumn& Column) const;
     // A biome condition against a set of biomes a block may take: 1 all in it, 0 none, -1 some.
     int32 DecideBiome(const FCondition& Data, const uint64* Mask) const;
@@ -178,6 +212,9 @@ private:
     // Per instruction: whether running the tree from it below the preliminary surface may read a block's depths or
     // water height.
     TArray<bool> NeedsContext;
+    // Per instruction: the veins at or after it.
+    TArray<uint8> VeinsFrom;
+    FVoxelOreVeins OreVeins;
     TArray<uint64> BiomeMasks;
     int32 BiomeWords = 1;
     TArray<FVoxelNormalNoise> Noises;

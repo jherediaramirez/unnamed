@@ -3,6 +3,7 @@
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Hud/HudAssets.h"
+#include "Misc/PackageName.h"
 #include "Rendering/DrawElements.h"
 #include "Rendering/SlateRenderer.h"
 #include "Styling/CoreStyle.h"
@@ -23,11 +24,9 @@ namespace
         return Brush;
     }
 
-    // Item sprites for items that are not imported blocks: the tab icons and this lab's practice tools.
+    // Item sprites for items that are not imported blocks: the tab icons and the 26.3 items (DA_Items).
     FString ItemSprite(FName Item)
     {
-        if (Item == TEXT("practice_pickaxe")) return TEXT("item/diamond_pickaxe");
-        if (Item == TEXT("practice_sword")) return TEXT("item/netherite_sword");
         if (Item == TEXT("compass")) return TEXT("item/compass_16");
         return TEXT("item/") + Item.ToString();
     }
@@ -175,12 +174,20 @@ void SHudCreativeScreen::Construct(const FArguments& Arguments)
                 Ids.Add(FString::Printf(TEXT("%stab_%s_%s_%d"), CreativeSprites, Row, State, Column));
     for (const FHudCreativeModel::FTab& Tab : Model.GetTabs())
         Ids.Add(ItemSprite(Tab.Icon));
-    Ids.Add(ItemSprite(TEXT("practice_pickaxe")));
-    Ids.Add(ItemSprite(TEXT("practice_sword")));
+    for (const TPair<FName, FHudCreativeItem>& Item : Items)
+        if (!Registry || !Registry->FindBlock(Item.Key)) Ids.AddUnique(ItemSprite(Item.Key));
     for (const FString& Id : Ids)
-        if (UTexture2D* Texture =
-                Cast<UTexture2D>(UUnnamedProjectSettings::GetBlockAssetPath(TEXT("Gui/") + Id).TryLoad()))
-            Brushes.Add(Id, MakeBrush(Texture));
+    {
+        // Item sprites come from ImportItems.py (ItemRoot/Gui) where it has them, else from BlockRoot/Gui.
+        const FSoftObjectPath ItemPath = UUnnamedProjectSettings::GetItemAssetPath(TEXT("Gui/") + Id);
+        UTexture2D* Texture =
+            Id.StartsWith(TEXT("item/")) && FPackageName::DoesPackageExist(ItemPath.GetLongPackageName())
+            ? Cast<UTexture2D>(ItemPath.TryLoad())
+            : nullptr;
+        if (!Texture)
+            Texture = Cast<UTexture2D>(UUnnamedProjectSettings::GetBlockAssetPath(TEXT("Gui/") + Id).TryLoad());
+        if (Texture) Brushes.Add(Id, MakeBrush(Texture));
+    }
     if (const UHudAssets* Hud = HudAssets.Get())
         for (const FHudSpriteAsset& Sprite : Hud->Sprites)
         {

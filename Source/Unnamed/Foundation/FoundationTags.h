@@ -15,8 +15,7 @@ namespace FoundationTags
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(BlockPreventsNearbyLeafDecay);
     // Makes the block below snowy (#minecraft:snow).
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(BlockSnow);
-    // Item identities; capabilities stay separate fields, so one item may carry several.
+    // Item identities; capabilities stay separate fields, so one item may carry several. The vanilla item tags
+    // (Item.Pickaxes, Item.Swords...) are data: Config/Tags/MinecraftItemTags.ini, written by ItemImportData.py.
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(ItemBlock);
-    UE_DECLARE_GAMEPLAY_TAG_EXTERN(ItemToolPickaxe);
-    UE_DECLARE_GAMEPLAY_TAG_EXTERN(ItemWeaponSword);
 }

@@ -34,7 +34,7 @@ struct FFoundationItemDefinition
 {
     GENERATED_BODY()
 
-    // Stable saved ID, e.g. "practice_pickaxe".
+    // Stable saved ID, e.g. "iron_pickaxe".
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     FName Id;
 

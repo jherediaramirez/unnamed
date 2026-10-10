@@ -43,7 +43,7 @@ The Foundation HUD uses the original Java 26.3 sprites and ASCII bitmap text and
 | F3+F6 | Debug Options: text scale, section visibility, coordinates, Copy Snapshot, player vitals and HUD preview controls |
 | F3+B / F3+C / F3+D / F3+V | Collision outlines / copy snapshot / clear event history / version event |
 
-In the Playground the mouse buttons, hotbar, pick, drop and swap act on real blocks, practice tools and training targets instead of the fixtures; drop is refused because there are no item entities.
+In the Playground the mouse buttons, hotbar, pick, drop and swap act on real blocks, the 26.3 tools and training targets instead of the fixtures; drop is refused because there are no item entities.
 
 The debug modifier and supported debug keys are configurable. The F3 chord consumes its secondary key, including when perspective is rebound to F6. The unimplemented vanilla rows stay visibly Planned. The fixture HUD gives token counts; the overlay gives action acceptance/rejection and target distance. Screenshots use the engine's Saved/Screenshots location, reported by the runtime log.
 

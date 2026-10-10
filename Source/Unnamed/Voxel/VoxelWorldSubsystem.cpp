@@ -91,6 +91,9 @@ void UVoxelWorldSubsystem::Start(AVoxelWorld& InOwner, TSharedRef<const FVoxelBl
     Settings.bEdgeWalls = VoxelConsole::CVarEdgeWalls.GetValueOnGameThread();
     bDecoration = VoxelConsole::CVarDecoration.GetValueOnGameThread();
     bFreezeLast = VoxelConsole::CVarDecorationFreezeLast.GetValueOnGameThread();
+    // The terrain read voxel.OreVeins when it was made (VoxelTerrainFactory), this frame.
+    bOreVeins = VoxelConsole::CVarOreVeins.GetValueOnGameThread();
+    UE_LOG(LogUnnamedVoxel, Display, TEXT("voxel.OreVeins: %s"), bOreVeins ? TEXT("on") : TEXT("off"));
     if (bDecoration && Terrain->GetFeatures() && Terrain->GetBiomeSource())
     {
         // Streaming decorates (phase 6, S3): Generate, Decorate and Finalize before a column meshes.
@@ -175,10 +178,11 @@ void UVoxelWorldSubsystem::Tick(float DeltaTime)
     if (!FirstTickSeconds) FirstTickSeconds = Start;
     if (FirstViewReport.IsEmpty()) ++FirstViewFrames;
 
-    // Decoration switched on or off, or the freeze moved (captures pass them with -ExecCmds, after the world started),
-    // rebuilds the world.
+    // Decoration or the ore veins switched on or off, or the freeze moved (captures pass them with -ExecCmds, after the
+    // world started), rebuilds the world.
     if ((VoxelConsole::CVarDecoration.GetValueOnGameThread() != bDecoration ||
-            VoxelConsole::CVarDecorationFreezeLast.GetValueOnGameThread() != bFreezeLast) &&
+            VoxelConsole::CVarDecorationFreezeLast.GetValueOnGameThread() != bFreezeLast ||
+            VoxelConsole::CVarOreVeins.GetValueOnGameThread() != bOreVeins) &&
         Owner.IsValid())
     {
         Owner->Regenerate(Owner->GetSeed());

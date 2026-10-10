@@ -88,10 +88,11 @@ private:
 
     TUniquePtr<FVoxelColumnPipeline> Pipeline;
     TWeakObjectPtr<AVoxelWorld> Owner;
-    // voxel.Decoration and voxel.Decoration.FreezeLast as the pipeline was started with them; a change rebuilds the
-    // world.
+    // voxel.Decoration, voxel.Decoration.FreezeLast and voxel.OreVeins as the pipeline was started with them; a change
+    // rebuilds the world.
     bool bDecoration = false;
     bool bFreezeLast = true;
+    bool bOreVeins = true;
     UPROPERTY(Transient)
     TMap<FIntPoint, TObjectPtr<UVoxelChunkComponent>> Chunks;
     UPROPERTY(Transient)

@@ -1,0 +1,9015 @@
+{
+ "models": [
+  {
+   "id": "item/apple",
+   "parent": "item/generated",
+   "chain": [
+    "item/apple",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/apple"
+   },
+   "layers": [
+    "item/apple"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/bread",
+   "parent": "item/generated",
+   "chain": [
+    "item/bread",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/bread"
+   },
+   "layers": [
+    "item/bread"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/bucket",
+   "parent": "item/generated",
+   "chain": [
+    "item/bucket",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/bucket"
+   },
+   "layers": [
+    "item/bucket"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/coal",
+   "parent": "item/generated",
+   "chain": [
+    "item/coal",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/coal"
+   },
+   "layers": [
+    "item/coal"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/cooked_beef",
+   "parent": "item/generated",
+   "chain": [
+    "item/cooked_beef",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/cooked_beef"
+   },
+   "layers": [
+    "item/cooked_beef"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/copper_axe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/copper_axe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/copper_axe"
+   },
+   "layers": [
+    "item/copper_axe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/copper_hoe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/copper_hoe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/copper_hoe"
+   },
+   "layers": [
+    "item/copper_hoe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/copper_ingot",
+   "parent": "item/generated",
+   "chain": [
+    "item/copper_ingot",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/copper_ingot"
+   },
+   "layers": [
+    "item/copper_ingot"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/copper_pickaxe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/copper_pickaxe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/copper_pickaxe"
+   },
+   "layers": [
+    "item/copper_pickaxe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/copper_shovel",
+   "parent": "item/handheld",
+   "chain": [
+    "item/copper_shovel",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/copper_shovel"
+   },
+   "layers": [
+    "item/copper_shovel"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/copper_spear",
+   "parent": "item/generated",
+   "chain": [
+    "item/copper_spear",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/copper_spear"
+   },
+   "layers": [
+    "item/copper_spear"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/copper_spear_in_hand",
+   "parent": "item/spear_in_hand",
+   "chain": [
+    "item/copper_spear_in_hand",
+    "item/spear_in_hand",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/copper_spear_in_hand"
+   },
+   "layers": [
+    "item/copper_spear_in_hand"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "firstperson_righthand": {
+     "rotation": [
+      -20,
+      90,
+      -35
+     ],
+     "translation": [
+      3.13,
+      2.0,
+      0.13
+     ],
+     "scale": [
+      1.36,
+      1.36,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      -20,
+      -90,
+      35
+     ],
+     "translation": [
+      3.13,
+      2.0,
+      0.13
+     ],
+     "scale": [
+      1.36,
+      1.36,
+      0.68
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      5,
+      270,
+      -40
+     ],
+     "translation": [
+      0,
+      2,
+      2
+     ],
+     "scale": [
+      1.7,
+      1.7,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      5,
+      -270,
+      40
+     ],
+     "translation": [
+      0,
+      2,
+      2
+     ],
+     "scale": [
+      1.7,
+      1.7,
+      0.85
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "firstperson_righthand": "item/spear_in_hand",
+    "firstperson_lefthand": "item/spear_in_hand",
+    "thirdperson_righthand": "item/spear_in_hand",
+    "thirdperson_lefthand": "item/spear_in_hand",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/copper_sword",
+   "parent": "item/handheld",
+   "chain": [
+    "item/copper_sword",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/copper_sword"
+   },
+   "layers": [
+    "item/copper_sword"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/diamond",
+   "parent": "item/generated",
+   "chain": [
+    "item/diamond",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/diamond"
+   },
+   "layers": [
+    "item/diamond"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/diamond_axe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/diamond_axe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/diamond_axe"
+   },
+   "layers": [
+    "item/diamond_axe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/diamond_hoe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/diamond_hoe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/diamond_hoe"
+   },
+   "layers": [
+    "item/diamond_hoe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/diamond_pickaxe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/diamond_pickaxe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/diamond_pickaxe"
+   },
+   "layers": [
+    "item/diamond_pickaxe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/diamond_shovel",
+   "parent": "item/handheld",
+   "chain": [
+    "item/diamond_shovel",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/diamond_shovel"
+   },
+   "layers": [
+    "item/diamond_shovel"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/diamond_spear",
+   "parent": "item/generated",
+   "chain": [
+    "item/diamond_spear",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/diamond_spear"
+   },
+   "layers": [
+    "item/diamond_spear"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/diamond_spear_in_hand",
+   "parent": "item/spear_in_hand",
+   "chain": [
+    "item/diamond_spear_in_hand",
+    "item/spear_in_hand",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/diamond_spear_in_hand"
+   },
+   "layers": [
+    "item/diamond_spear_in_hand"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "firstperson_righthand": {
+     "rotation": [
+      -20,
+      90,
+      -35
+     ],
+     "translation": [
+      3.13,
+      2.0,
+      0.13
+     ],
+     "scale": [
+      1.36,
+      1.36,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      -20,
+      -90,
+      35
+     ],
+     "translation": [
+      3.13,
+      2.0,
+      0.13
+     ],
+     "scale": [
+      1.36,
+      1.36,
+      0.68
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      5,
+      270,
+      -40
+     ],
+     "translation": [
+      0,
+      2,
+      2
+     ],
+     "scale": [
+      1.7,
+      1.7,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      5,
+      -270,
+      40
+     ],
+     "translation": [
+      0,
+      2,
+      2
+     ],
+     "scale": [
+      1.7,
+      1.7,
+      0.85
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "firstperson_righthand": "item/spear_in_hand",
+    "firstperson_lefthand": "item/spear_in_hand",
+    "thirdperson_righthand": "item/spear_in_hand",
+    "thirdperson_lefthand": "item/spear_in_hand",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/diamond_sword",
+   "parent": "item/handheld",
+   "chain": [
+    "item/diamond_sword",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/diamond_sword"
+   },
+   "layers": [
+    "item/diamond_sword"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/emerald",
+   "parent": "item/generated",
+   "chain": [
+    "item/emerald",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/emerald"
+   },
+   "layers": [
+    "item/emerald"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/gold_ingot",
+   "parent": "item/generated",
+   "chain": [
+    "item/gold_ingot",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/gold_ingot"
+   },
+   "layers": [
+    "item/gold_ingot"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/golden_axe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/golden_axe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/golden_axe"
+   },
+   "layers": [
+    "item/golden_axe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/golden_hoe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/golden_hoe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/golden_hoe"
+   },
+   "layers": [
+    "item/golden_hoe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/golden_pickaxe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/golden_pickaxe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/golden_pickaxe"
+   },
+   "layers": [
+    "item/golden_pickaxe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/golden_shovel",
+   "parent": "item/handheld",
+   "chain": [
+    "item/golden_shovel",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/golden_shovel"
+   },
+   "layers": [
+    "item/golden_shovel"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/golden_spear",
+   "parent": "item/generated",
+   "chain": [
+    "item/golden_spear",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/golden_spear"
+   },
+   "layers": [
+    "item/golden_spear"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/golden_spear_in_hand",
+   "parent": "item/spear_in_hand",
+   "chain": [
+    "item/golden_spear_in_hand",
+    "item/spear_in_hand",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/golden_spear_in_hand"
+   },
+   "layers": [
+    "item/golden_spear_in_hand"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "firstperson_righthand": {
+     "rotation": [
+      -20,
+      90,
+      -35
+     ],
+     "translation": [
+      3.13,
+      2.0,
+      0.13
+     ],
+     "scale": [
+      1.36,
+      1.36,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      -20,
+      -90,
+      35
+     ],
+     "translation": [
+      3.13,
+      2.0,
+      0.13
+     ],
+     "scale": [
+      1.36,
+      1.36,
+      0.68
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      5,
+      270,
+      -40
+     ],
+     "translation": [
+      0,
+      2,
+      2
+     ],
+     "scale": [
+      1.7,
+      1.7,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      5,
+      -270,
+      40
+     ],
+     "translation": [
+      0,
+      2,
+      2
+     ],
+     "scale": [
+      1.7,
+      1.7,
+      0.85
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "firstperson_righthand": "item/spear_in_hand",
+    "firstperson_lefthand": "item/spear_in_hand",
+    "thirdperson_righthand": "item/spear_in_hand",
+    "thirdperson_lefthand": "item/spear_in_hand",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/golden_sword",
+   "parent": "item/handheld",
+   "chain": [
+    "item/golden_sword",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/golden_sword"
+   },
+   "layers": [
+    "item/golden_sword"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/iron_axe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/iron_axe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/iron_axe"
+   },
+   "layers": [
+    "item/iron_axe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/iron_hoe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/iron_hoe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/iron_hoe"
+   },
+   "layers": [
+    "item/iron_hoe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/iron_ingot",
+   "parent": "item/generated",
+   "chain": [
+    "item/iron_ingot",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/iron_ingot"
+   },
+   "layers": [
+    "item/iron_ingot"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/iron_pickaxe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/iron_pickaxe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/iron_pickaxe"
+   },
+   "layers": [
+    "item/iron_pickaxe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/iron_shovel",
+   "parent": "item/handheld",
+   "chain": [
+    "item/iron_shovel",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/iron_shovel"
+   },
+   "layers": [
+    "item/iron_shovel"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/iron_spear",
+   "parent": "item/generated",
+   "chain": [
+    "item/iron_spear",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/iron_spear"
+   },
+   "layers": [
+    "item/iron_spear"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/iron_spear_in_hand",
+   "parent": "item/spear_in_hand",
+   "chain": [
+    "item/iron_spear_in_hand",
+    "item/spear_in_hand",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/iron_spear_in_hand"
+   },
+   "layers": [
+    "item/iron_spear_in_hand"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "firstperson_righthand": {
+     "rotation": [
+      -20,
+      90,
+      -35
+     ],
+     "translation": [
+      3.13,
+      2.0,
+      0.13
+     ],
+     "scale": [
+      1.36,
+      1.36,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      -20,
+      -90,
+      35
+     ],
+     "translation": [
+      3.13,
+      2.0,
+      0.13
+     ],
+     "scale": [
+      1.36,
+      1.36,
+      0.68
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      5,
+      270,
+      -40
+     ],
+     "translation": [
+      0,
+      2,
+      2
+     ],
+     "scale": [
+      1.7,
+      1.7,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      5,
+      -270,
+      40
+     ],
+     "translation": [
+      0,
+      2,
+      2
+     ],
+     "scale": [
+      1.7,
+      1.7,
+      0.85
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "firstperson_righthand": "item/spear_in_hand",
+    "firstperson_lefthand": "item/spear_in_hand",
+    "thirdperson_righthand": "item/spear_in_hand",
+    "thirdperson_lefthand": "item/spear_in_hand",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/iron_sword",
+   "parent": "item/handheld",
+   "chain": [
+    "item/iron_sword",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/iron_sword"
+   },
+   "layers": [
+    "item/iron_sword"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/lapis_lazuli",
+   "parent": "item/generated",
+   "chain": [
+    "item/lapis_lazuli",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/lapis_lazuli"
+   },
+   "layers": [
+    "item/lapis_lazuli"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/lava_bucket",
+   "parent": "item/generated",
+   "chain": [
+    "item/lava_bucket",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/lava_bucket"
+   },
+   "layers": [
+    "item/lava_bucket"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/netherite_axe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/netherite_axe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/netherite_axe"
+   },
+   "layers": [
+    "item/netherite_axe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/netherite_hoe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/netherite_hoe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/netherite_hoe"
+   },
+   "layers": [
+    "item/netherite_hoe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/netherite_ingot",
+   "parent": "item/generated",
+   "chain": [
+    "item/netherite_ingot",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/netherite_ingot"
+   },
+   "layers": [
+    "item/netherite_ingot"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/netherite_pickaxe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/netherite_pickaxe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/netherite_pickaxe"
+   },
+   "layers": [
+    "item/netherite_pickaxe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/netherite_scrap",
+   "parent": "item/generated",
+   "chain": [
+    "item/netherite_scrap",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/netherite_scrap"
+   },
+   "layers": [
+    "item/netherite_scrap"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/netherite_shovel",
+   "parent": "item/handheld",
+   "chain": [
+    "item/netherite_shovel",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/netherite_shovel"
+   },
+   "layers": [
+    "item/netherite_shovel"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/netherite_spear",
+   "parent": "item/generated",
+   "chain": [
+    "item/netherite_spear",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/netherite_spear"
+   },
+   "layers": [
+    "item/netherite_spear"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/netherite_spear_in_hand",
+   "parent": "item/spear_in_hand",
+   "chain": [
+    "item/netherite_spear_in_hand",
+    "item/spear_in_hand",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/netherite_spear_in_hand"
+   },
+   "layers": [
+    "item/netherite_spear_in_hand"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "firstperson_righthand": {
+     "rotation": [
+      -20,
+      90,
+      -35
+     ],
+     "translation": [
+      3.13,
+      2.0,
+      0.13
+     ],
+     "scale": [
+      1.36,
+      1.36,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      -20,
+      -90,
+      35
+     ],
+     "translation": [
+      3.13,
+      2.0,
+      0.13
+     ],
+     "scale": [
+      1.36,
+      1.36,
+      0.68
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      5,
+      270,
+      -40
+     ],
+     "translation": [
+      0,
+      2,
+      2
+     ],
+     "scale": [
+      1.7,
+      1.7,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      5,
+      -270,
+      40
+     ],
+     "translation": [
+      0,
+      2,
+      2
+     ],
+     "scale": [
+      1.7,
+      1.7,
+      0.85
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "firstperson_righthand": "item/spear_in_hand",
+    "firstperson_lefthand": "item/spear_in_hand",
+    "thirdperson_righthand": "item/spear_in_hand",
+    "thirdperson_lefthand": "item/spear_in_hand",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/netherite_sword",
+   "parent": "item/handheld",
+   "chain": [
+    "item/netherite_sword",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/netherite_sword"
+   },
+   "layers": [
+    "item/netherite_sword"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/quartz",
+   "parent": "item/generated",
+   "chain": [
+    "item/quartz",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/quartz"
+   },
+   "layers": [
+    "item/quartz"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/raw_copper",
+   "parent": "item/generated",
+   "chain": [
+    "item/raw_copper",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/raw_copper"
+   },
+   "layers": [
+    "item/raw_copper"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/raw_gold",
+   "parent": "item/generated",
+   "chain": [
+    "item/raw_gold",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/raw_gold"
+   },
+   "layers": [
+    "item/raw_gold"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/raw_iron",
+   "parent": "item/generated",
+   "chain": [
+    "item/raw_iron",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/raw_iron"
+   },
+   "layers": [
+    "item/raw_iron"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/redstone",
+   "parent": "item/generated",
+   "chain": [
+    "item/redstone",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/redstone"
+   },
+   "layers": [
+    "item/redstone"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/stick",
+   "parent": "item/handheld",
+   "chain": [
+    "item/stick",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/stick"
+   },
+   "layers": [
+    "item/stick"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/stone_axe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/stone_axe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/stone_axe"
+   },
+   "layers": [
+    "item/stone_axe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/stone_hoe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/stone_hoe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/stone_hoe"
+   },
+   "layers": [
+    "item/stone_hoe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/stone_pickaxe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/stone_pickaxe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/stone_pickaxe"
+   },
+   "layers": [
+    "item/stone_pickaxe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/stone_shovel",
+   "parent": "item/handheld",
+   "chain": [
+    "item/stone_shovel",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/stone_shovel"
+   },
+   "layers": [
+    "item/stone_shovel"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/stone_spear",
+   "parent": "item/generated",
+   "chain": [
+    "item/stone_spear",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/stone_spear"
+   },
+   "layers": [
+    "item/stone_spear"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/stone_spear_in_hand",
+   "parent": "item/spear_in_hand",
+   "chain": [
+    "item/stone_spear_in_hand",
+    "item/spear_in_hand",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/stone_spear_in_hand"
+   },
+   "layers": [
+    "item/stone_spear_in_hand"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "firstperson_righthand": {
+     "rotation": [
+      -20,
+      90,
+      -35
+     ],
+     "translation": [
+      3.13,
+      2.0,
+      0.13
+     ],
+     "scale": [
+      1.36,
+      1.36,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      -20,
+      -90,
+      35
+     ],
+     "translation": [
+      3.13,
+      2.0,
+      0.13
+     ],
+     "scale": [
+      1.36,
+      1.36,
+      0.68
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      5,
+      270,
+      -40
+     ],
+     "translation": [
+      0,
+      2,
+      2
+     ],
+     "scale": [
+      1.7,
+      1.7,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      5,
+      -270,
+      40
+     ],
+     "translation": [
+      0,
+      2,
+      2
+     ],
+     "scale": [
+      1.7,
+      1.7,
+      0.85
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "firstperson_righthand": "item/spear_in_hand",
+    "firstperson_lefthand": "item/spear_in_hand",
+    "thirdperson_righthand": "item/spear_in_hand",
+    "thirdperson_lefthand": "item/spear_in_hand",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/stone_sword",
+   "parent": "item/handheld",
+   "chain": [
+    "item/stone_sword",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/stone_sword"
+   },
+   "layers": [
+    "item/stone_sword"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/water_bucket",
+   "parent": "item/generated",
+   "chain": [
+    "item/water_bucket",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/water_bucket"
+   },
+   "layers": [
+    "item/water_bucket"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/wooden_axe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/wooden_axe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/wooden_axe"
+   },
+   "layers": [
+    "item/wooden_axe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/wooden_hoe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/wooden_hoe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/wooden_hoe"
+   },
+   "layers": [
+    "item/wooden_hoe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/wooden_pickaxe",
+   "parent": "item/handheld",
+   "chain": [
+    "item/wooden_pickaxe",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/wooden_pickaxe"
+   },
+   "layers": [
+    "item/wooden_pickaxe"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/wooden_shovel",
+   "parent": "item/handheld",
+   "chain": [
+    "item/wooden_shovel",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/wooden_shovel"
+   },
+   "layers": [
+    "item/wooden_shovel"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/wooden_spear",
+   "parent": "item/generated",
+   "chain": [
+    "item/wooden_spear",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/wooden_spear"
+   },
+   "layers": [
+    "item/wooden_spear"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/wooden_spear_in_hand",
+   "parent": "item/spear_in_hand",
+   "chain": [
+    "item/wooden_spear_in_hand",
+    "item/spear_in_hand",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/wooden_spear_in_hand"
+   },
+   "layers": [
+    "item/wooden_spear_in_hand"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "firstperson_righthand": {
+     "rotation": [
+      -20,
+      90,
+      -35
+     ],
+     "translation": [
+      3.13,
+      2.0,
+      0.13
+     ],
+     "scale": [
+      1.36,
+      1.36,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      -20,
+      -90,
+      35
+     ],
+     "translation": [
+      3.13,
+      2.0,
+      0.13
+     ],
+     "scale": [
+      1.36,
+      1.36,
+      0.68
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      5,
+      270,
+      -40
+     ],
+     "translation": [
+      0,
+      2,
+      2
+     ],
+     "scale": [
+      1.7,
+      1.7,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      5,
+      -270,
+      40
+     ],
+     "translation": [
+      0,
+      2,
+      2
+     ],
+     "scale": [
+      1.7,
+      1.7,
+      0.85
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "firstperson_righthand": "item/spear_in_hand",
+    "firstperson_lefthand": "item/spear_in_hand",
+    "thirdperson_righthand": "item/spear_in_hand",
+    "thirdperson_lefthand": "item/spear_in_hand",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/wooden_sword",
+   "parent": "item/handheld",
+   "chain": [
+    "item/wooden_sword",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/wooden_sword"
+   },
+   "layers": [
+    "item/wooden_sword"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  }
+ ]
+}

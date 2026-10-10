@@ -56,3 +56,8 @@ def hud_texture(relative_texture):
 def block_asset(asset_name):
     """Package of a generated block asset under UUnnamedProjectSettings::BlockRoot, e.g. block_asset("DA_Blocks")."""
     return _settings.get_block_asset_package(asset_name)
+
+
+def item_asset(asset_name):
+    """Package of a generated item asset under UUnnamedProjectSettings::ItemRoot, e.g. item_asset("DA_Items")."""
+    return _settings.get_item_asset_package(asset_name)

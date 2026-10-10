@@ -35,6 +35,12 @@ struct FVoxelDensityTerrainSettings
     bool bSurfaceRules = true;
     // The surface rules' deep-stone shortcut (exact); off only to compare against.
     bool bSurfaceShortcut = true;
+    // With surface rules: the ore_vein rules (copper and iron veins, phase 6 S4; FVoxelOreVeins). Off gives the blocks
+    // from before S4 exactly.
+    bool bOreVeins = true;
+    // The veins' shortcut (exact: only the heights their densities reach, cells their bounds rule out skipped); off
+    // evaluates every solid block directly, only to compare against.
+    bool bOreVeinShortcut = true;
     // Single Biome: this biome everywhere, by full id ("minecraft:desert"). Empty: the multi-noise source.
     FString FixedBiome;
     // The decoration data, held for the decoration stages (phase 6, S2 on); generation does not read it yet.
@@ -52,6 +58,8 @@ struct FVoxelDensityTerrainOverrides
     TOptional<bool> bSurfaceShortcut;
     // Off for decoration's snapshot: the freeze pass then runs in FinishColumn (default on).
     TOptional<bool> bFreeze;
+    TOptional<bool> bOreVeins;
+    TOptional<bool> bOreVeinShortcut;
 };
 
 // What one column's generation cost, by stage.
@@ -65,6 +73,9 @@ struct FVoxelDensityTerrainTimings
     double SurfaceMs = 0;
     double PreliminaryMs = 0;
     double FreezeMs = 0;
+    // Inside SurfaceMs: the ore veins' field (FVoxelOreVeins::Generate), and its counts.
+    double VeinMs = 0;
+    int32 VeinCells = 0, VeinCorners = 0, VeinBlocks = 0, VeinGaps = 0, VeinGiven = 0;
     // Solid blocks the rules decided from the deep and interior tables and through the full tree, and the full tree's
     // instructions run.
     int32 SurfaceDeep = 0, SurfaceInterior = 0, SurfaceFull = 0, SurfaceInteriorRuns = 0;
@@ -157,7 +168,7 @@ private:
     void FillDressed(int32 X0, int32 Z0, TArray<uint16>& Dense, const FScratch& Scratch) const;
     // The rules and the freeze pass over the column's biomes, with their times.
     void FillWithRules(FIntPoint Position, const FVoxelColumn& Out, TArray<uint16>& Dense, FScratch& Scratch,
-        bool bShortcut, bool bFreeze, FVoxelDensityTerrainTimings& Timings) const;
+        const FVoxelDensityTerrainOverrides& Overrides, FVoxelDensityTerrainTimings& Timings) const;
 
     uint64 Seed;
     const FVoxelBlockTable& Table;

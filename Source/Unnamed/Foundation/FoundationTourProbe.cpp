@@ -366,6 +366,20 @@ void UFoundationRuntimeProbe::AddTourCases()
                 Screen.GetModel().ScrollRows(Rows);
                 Screen.SetMouse({-200, -200});
             });
+    // The 26.3 items (items S2, DA_Items): their own sprites, hovering the iron pickaxe and the iron sword.
+    Creative(TEXT("22e-creative-tools"),
+        [TabIndex](SHudCreativeScreen& Screen)
+        {
+            Screen.GetModel().Carried = {};
+            Screen.GetModel().SelectTab(TabIndex(Screen, TEXT("tools_and_utilities")));
+            Screen.SetMouse(FHudCreativeModel::GetSlotPosition(EHudCreativeHit::Grid, 13) + FIntPoint(8, 8));
+        });
+    Creative(TEXT("22f-creative-combat"),
+        [TabIndex](SHudCreativeScreen& Screen)
+        {
+            Screen.GetModel().SelectTab(TabIndex(Screen, TEXT("combat")));
+            Screen.SetMouse(FHudCreativeModel::GetSlotPosition(EHudCreativeHit::Grid, 3) + FIntPoint(8, 8));
+        });
     Creative(TEXT("23-creative-inventory"),
         [TabIndex](SHudCreativeScreen& Screen)
         {

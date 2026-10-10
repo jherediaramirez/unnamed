@@ -20,7 +20,10 @@ namespace
 
     // Recorded once on 2026-10-09 (caves on, phase 4 session 4), re-recorded once for the surface rules (phase 5
     // session 5, a decided change); never edit to pass a test.
-    constexpr uint64 AquiferTestGolden[3] = {0x22523b7400c2f38eull, 0x6b19b1927b73266aull, 0x863f9b8b01468a3full};
+    // Recorded under the decided change "veins on" (phase 6, S4); veins off must give the values from before S4.
+    constexpr uint64 AquiferTestGolden[3] = {0x06587391fe15bb98ull, 0x6bef4434e7dee57cull, 0x82816e657968c3f1ull};
+    constexpr uint64 AquiferTestGoldenNoVeins[3] = {
+        0x22523b7400c2f38eull, 0x6b19b1927b73266aull, 0x863f9b8b01468a3full};
 
     constexpr int32 AquiferTestMinY = -64;
     constexpr int32 AquiferTestHeight = 384;
@@ -316,6 +319,22 @@ bool FVoxelAquiferGoldenTest::RunTest(const FString& Parameters)
                 static_cast<unsigned long long>(Hash),
                 static_cast<unsigned long long>(AquiferTestGolden[PresetIndex])));
         }
+
+        // Veins off: the blocks from before S4, exactly.
+        FVoxelDensityTerrainOverrides NoVeins;
+        NoVeins.bOreVeins = false;
+        uint64 NoVeinsHash = 0xcbf29ce484222325ull;
+        for (const FIntPoint& Position : Positions)
+        {
+            FVoxelColumn Column;
+            TArray<uint16> Dense;
+            Terrain.Generate(Position, Column, Dense, nullptr, NoVeins);
+            NoVeinsHash = AquiferTestHash(NoVeinsHash, Dense);
+        }
+        if (NoVeinsHash != AquiferTestGoldenNoVeins[PresetIndex])
+            AddError(FString::Printf(TEXT("%s: veins off: block hash 0x%016llx, golden 0x%016llx"), PresetName,
+                static_cast<unsigned long long>(NoVeinsHash),
+                static_cast<unsigned long long>(AquiferTestGoldenNoVeins[PresetIndex])));
     }
     return true;
 }

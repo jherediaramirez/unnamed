@@ -16,7 +16,7 @@ Remove-Item -LiteralPath $profileDirectory -Recurse -Force -ErrorAction Silently
 if(-not(Test-Path "$OutputDirectory/Report/index.json")){throw "Missing voxel report (exit $code)"}
 $report=Get-Content -Raw "$OutputDirectory/Report/index.json" | ConvertFrom-Json
 # Every voxel test, passing with or without warnings (an editor HTTP timeout lands on whichever test is running).
-$expected=88
+$expected=89
 $passed=$report.succeeded+$report.succeededWithWarnings
 # The console commands run before the tests: keep their output (settings, dev seed, timings) next to the report.
 Select-String -Path "$OutputDirectory/native.log" -Pattern 'LogUnnamedVoxel: Display: ' | ForEach-Object { $_.Line -replace '^.*LogUnnamedVoxel: Display: ','' } | Set-Content "$OutputDirectory/voxel-console.txt"

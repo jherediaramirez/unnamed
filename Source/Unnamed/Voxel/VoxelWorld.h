@@ -157,6 +157,21 @@ private:
     bool bShotCavesSearched = false;
     TArray<TTuple<FString, FVector, FVector>> ShotCaveViews;
     void FindCaveShots();
+    // -VoxelShotVeins: a view per ore vein type (vein-copper, vein-iron) onto one of the four cut faces (the edge
+    // walls), aimed at the 32 x 18 window where that vein's ore and filler mix most. -VoxelShotVeinsAt=F,A,Z,F,A,Z aims
+    // them at fixed windows instead (face 0 west, 1 east, 2 north, 3 south; A along the face; Z): the control run with
+    // veins off reuses the first run's. The windows' block counts go to build.txt.
+    struct FShotVeinTarget
+    {
+        int32 Face = 0;
+        int32 Along = 0;
+        int32 Z = 0;
+    };
+    bool bShotVeins = false;
+    bool bShotVeinsSearched = false;
+    TArray<FShotVeinTarget> ShotVeinTargets;
+    FString ShotVeinReport;
+    void FindVeinShots();
     int32 ShotEditStage = 0;
     FIntPoint ShotEditCorner = FIntPoint::ZeroValue;
     int32 ShotEditTop = 0;

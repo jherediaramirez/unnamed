@@ -829,9 +829,13 @@ bool VoxelWorldgen::ReadSurface(const FString& Root, const FString& Rule, FVoxel
         return false;
     }
     if (!ReadSurfaceRules(Root, Rule.RightChop(10), Out.Rules, OutError)) return false;
+    // The noises the conditions read, and the ore veins' density functions with everything they read.
     FVoxelDensityGraph Graph;
-    if (!ReadReferences(Root, {}, FVoxelSurfaceEvaluator::GetNoiseIds(Out.Rules), Graph, OutError)) return false;
-    Out.Noises = MoveTemp(Graph.Noises);
+    if (!ReadReferences(Root, FVoxelSurfaceEvaluator::GetVeinFunctionIds(Out.Rules),
+            FVoxelSurfaceEvaluator::GetNoiseIds(Out.Rules), Graph, OutError))
+        return false;
+    Out.Noises = Graph.Noises;
+    Out.Functions = MoveTemp(Graph);
     return true;
 }
 

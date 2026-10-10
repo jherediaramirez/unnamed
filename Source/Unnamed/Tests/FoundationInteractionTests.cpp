@@ -14,7 +14,7 @@ namespace
     constexpr EFoundationHand OffHand = EFoundationHand::Off;
 
     // The interaction mechanics run on a stand-in block with the retired Dummy Block's numbers (hardness 1.5,
-    // pickaxe-mineable, no correct tool needed: hand 45 steps, practice pickaxe 8), so their arithmetic stays the
+    // pickaxe-mineable, no correct tool needed: hand 45 steps, iron pickaxe 8), so their arithmetic stays the
     // same; the imported 26.3 blocks have their own tests (FoundationBlocksTests.cpp).
     FFoundationBlockDefinition MakeTestBlock(const TCHAR* Id = TEXT("lab_block"))
     {
@@ -447,7 +447,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationInteractionMiningTest, "Unnamed.Foun
 
 bool FFoundationInteractionMiningTest::RunTest(const FString&)
 {
-    // Nominal grounded steps: hand 45, practice pickaxe 8 (excluding the post-break delay).
+    // Nominal grounded steps: hand 45, iron pickaxe 8 (excluding the post-break delay).
     for (const auto& [Slot, Grounded, Water, Expected] : TArray<TTuple<int32, bool, bool, int32>>{{3, true, false, 45},
              {1, true, false, 8}, {3, false, false, 225}, {1, false, false, 38}, {3, true, true, 225},
              {3, false, true, 1125}, {2, true, false, 45}, {0, true, false, 45}})
@@ -1119,15 +1119,18 @@ bool FFoundationInteractionDataTest::RunTest(const FString&)
             Rules.Items[StoneItem].MaxStack == 64);
     TestEqual(TEXT("loadout slot 1"), Rules.Loadout[0], FName(TEXT("stone")));
     TestEqual(TEXT("no item for water"), Rules.FindItem(TEXT("water")), int32(INDEX_NONE));
-    const FFoundationItemDefinition& Pickaxe = Rules.Items[Rules.FindItem(TEXT("practice_pickaxe"))];
-    TestTrue(TEXT("pickaxe mines and fights"),
+    if (!TestTrue(TEXT("the 26.3 iron tools (DA_Items)"),
+            Rules.FindItem(TEXT("iron_pickaxe")) != INDEX_NONE && Rules.FindItem(TEXT("iron_sword")) != INDEX_NONE))
+        return false;
+    const FFoundationItemDefinition& Pickaxe = Rules.Items[Rules.FindItem(TEXT("iron_pickaxe"))];
+    TestTrue(TEXT("iron pickaxe mines and fights"),
         Pickaxe.GetMiningSpeed(Stone->Tags) == 6 && Pickaxe.AttackDamage == 4 && Pickaxe.AttacksPerSecond == 1.2f &&
             Pickaxe.MaxDurability == 250);
     TestTrue(TEXT("iron tier: iron ore yes, obsidian no"),
         Pickaxe.IsCorrectForDrops(IronOre->Tags) && !Pickaxe.IsCorrectForDrops(Obsidian->Tags) &&
             Pickaxe.GetMiningSpeed(Obsidian->Tags) == 6);
-    const FFoundationItemDefinition& Sword = Rules.Items[Rules.FindItem(TEXT("practice_sword"))];
-    TestTrue(TEXT("sword mines at 1"), Sword.GetMiningSpeed(Stone->Tags) == 1 && Sword.AttackDamage == 6);
+    const FFoundationItemDefinition& Sword = Rules.Items[Rules.FindItem(TEXT("iron_sword"))];
+    TestTrue(TEXT("iron sword mines stone at 1"), Sword.GetMiningSpeed(Stone->Tags) == 1 && Sword.AttackDamage == 6);
     // A project block and its item, added as data only, go through the same loop.
     FLab L(false);
     FFoundationBlockDefinition Brick = MakeTestBlock(TEXT("lab_brick"));
@@ -1140,7 +1143,7 @@ bool FFoundationInteractionDataTest::RunTest(const FString&)
     BrickItem.Id = TEXT("lab_brick");
     BrickItem.PlacesBlock = TEXT("lab_brick");
     L.A.Rules.Items.Add(BrickItem);
-    L.A.Rules.Loadout = {TEXT("lab_brick"), TEXT("practice_pickaxe")};
+    L.A.Rules.Loadout = {TEXT("lab_brick"), TEXT("iron_pickaxe")};
     L.A.Reset();
     L.Stand({-150, 50, 0}, FVector(150, 0, -161));
     TestTrue(TEXT("places the new block"), L.Use().bPlaced);
@@ -1188,7 +1191,7 @@ bool FFoundationInteractionStressTest::RunTest(const FString&)
     }
     const double GatherUs = (FPlatformTime::Seconds() - GatherStart) * 1000.;
     // 1000 cycles on one cell with an instant-mining test tool.
-    FFoundationItemDefinition Tool = L.A.Rules.Items[L.A.Rules.FindItem(TEXT("practice_pickaxe"))];
+    FFoundationItemDefinition Tool = L.A.Rules.Items[L.A.Rules.FindItem(TEXT("iron_pickaxe"))];
     Tool.Id = TEXT("stress_tool");
     for (FFoundationMiningRule& Rule : Tool.MiningRules)
         if (Rule.Speed > 0) Rule.Speed = 1000;

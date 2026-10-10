@@ -23,12 +23,14 @@ public:
     static const UFoundationInteractionSettings& Get() { return *GetDefault<UFoundationInteractionSettings>(); }
 
     const FFoundationPlacementPreset* FindPreset(FName Name) const;
-    // The authority's rules from these definitions and the block registry's items (reach comes from
-    // UFoundationProfile).
+    // The authority's rules (reach comes from UFoundationProfile). Items: the block registry's block items, then
+    // DA_Items (the other 26.3 items), then the project's Items; an id defined twice is an error.
     void BuildRules(FFoundationRules& Rules) const;
-    // One item per block that has one (item id = block id), appended after Items unless an item with that id
-    // already exists.
+    // One item per block that has one (item id = block id), appended unless an item with that id already exists.
     static void AddBlockItems(const class FFoundationBlockRegistry& Registry, TArray<FFoundationItemDefinition>& Items);
+    // Appends Added to Into; an id already there logs an error naming Source and is skipped. Returns the clash count.
+    static int32 MergeItems(
+        TArray<FFoundationItemDefinition>& Into, TConstArrayView<FFoundationItemDefinition> Added, const TCHAR* Source);
 
     // VanillaReference (initial default) and LucidFluid (experimental A/B).
     UPROPERTY(Config, EditAnywhere, Category = "Placement")
@@ -41,6 +43,7 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Definitions")
     TArray<FFoundationBlockDefinition> Blocks;
 
+    // Project items, appended after the 26.3 items (DA_Items). Empty by default.
     UPROPERTY(Config, EditAnywhere, Category = "Definitions")
     TArray<FFoundationItemDefinition> Items;
 
