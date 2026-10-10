@@ -19,7 +19,7 @@ Unreal Engine 5.8.3 game project with an offline CEF menu generated from an unch
 & 'C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat' UnnamedEditor Win64 Development -Project="$PWD\Unnamed.uproject" -WaitMutex
 Set-Location Tests; npm test; node source-check.mjs                  # menu runtime units, reference/asset checks
 & Scripts\TestMenu.ps1; & Scripts\TestInput.ps1                         # native suites (Unnamed.Menu / Unnamed.Input)
-& Scripts\TestVoxel.ps1                                                  # voxel.Info/Seed/Bench, then Unnamed.Voxel (61)
+& Scripts\TestVoxel.ps1                                                  # voxel.Info/Seed/Bench, then Unnamed.Voxel
 uv run --no-project --python 3.13 python -I Reference/minecraft-worldgen-26.3/tools/verify_reference.py   # worldgen reference hashes, references, spline facts
 & Scripts\CaptureVoxel.ps1 [-Seed <text>] [-World <id>] [-ExecCmds '<cvars>'] [-Edits] [-Caves] [-Flight [-FlightSeconds <s>]] [-SpawnAt X,Y [-SpawnExact]] [-NoSurfaceRules]   # L_Generated offscreen: 5 screenshots + build.txt (first-view timings, lighting, GPU ms, world); -Edits adds an edit shot; -Caves adds a cave view (one reaching open sky) and a lava view; -Flight flies the acceptance path instead (flight.csv, flight.txt, 4 shots: holes, budget, memory)
 Set-Location Tests; node create-world.mjs --editor                    # Create New World end to end: create, list, rename, re-create, play, delete

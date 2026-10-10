@@ -93,6 +93,12 @@ Scope as [the plan's S3](2026-10-09-Voxel-Phase6-Plan.md) (lines 284 to 314), wi
 4. **The blob's provenance** (from the night manager): keep the commonly published shape with constants confirmed by the probes, or derive one from the probe statistics alone? Recommend keeping it: it matches all 24 probes, and the jar's code was not read.
 5. **Subagent budgets** (from the night manager): the test subagent ran to 251.7k against its 150k brief (the reviewers to 130.7k and 173.9k). Recommend briefing test writers with a smaller first slice (the scheduler and three tests), then a fresh agent for the rest.
 
+**Jesus's answers (October 9, about 22:40, by tap to Nyx; settled):**
+- **Question 4, the ore blob:** keep it: the commonly published shape with its constants confirmed by the probes, with the provenance note.
+- **Question 2, the test count:** drop the number (Jesus's tap answer to the S5 chain; `CLAUDE.md`'s `TestVoxel.ps1` line no longer carries a count since the S5 merge).
+- **Ore looks:** after S3, try [scout E](2026-10-09-Voxel-Phase6-Scout-Ores.md)'s L1 (ores wear their host rock) and L2 level 1 (ore-aware mips and glint, no glow) as look calls; vanilla stays the default, one switch away.
+- **Items (a later phase):** yes to rewording the id rule to "item IDs are the 26.3 item names; a block's item has the block's id" (the `CLAUDE.md` edit belongs to that phase's first session), and yes to all of [scout F](2026-10-09-Items-Scout-Research.md)'s other recommendations.
+
 ## 7. Code map: S2
 
 | What | Where |
