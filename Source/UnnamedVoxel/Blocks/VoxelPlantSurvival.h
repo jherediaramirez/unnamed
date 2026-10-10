@@ -32,7 +32,22 @@ enum class EVoxelSurvival : uint8
     // Below: a water source or a supports_lily_pad block, with no fluid in the cell itself.
     LilyPad,
     // Below: anything but air (carpets, moss carpets).
-    NotAirBelow
+    NotAirBelow,
+    // S7's plants, from scout H's measured support table (T1):
+    // The neighbour at Face shows a sturdy face toward the plant, or holds a block of Tag: amethyst and shelf mushroom
+    // (behind their facing), corals and coral fans (below), the hanging plants (above: spore blossom, hanging roots;
+    // cave vines also under cave vines, pale hanging moss also under leaves or itself).
+    Attached,
+    // The neighbour at Face holds a block of Tag: cocoa toward its facing (jungle logs), a hanging mangrove propagule
+    // under mangrove leaves; below: azalea, the propagule, bamboo, big and small dripleaf.
+    TagAt,
+    // Every face the state holds (Faces) is held (HoldsFace). A vine's up face is not checked until Jesus decides it
+    // (scout H, Q8).
+    Multiface,
+    // Pointed dripstone and sulfur spike: a sturdy face at Face, or the same block pointing the same way there.
+    Pointed,
+    // Big dripleaf stem: below a Tag block or a stem, and above a big dripleaf or a stem.
+    DripleafStem
 };
 
 struct FVoxelSurvivalRule
@@ -40,6 +55,11 @@ struct FVoxelSurvivalRule
     EVoxelSurvival Kind = EVoxelSurvival::Always;
     // The support set the rule reads (FVoxelPlantSurvival::GetSet), or INDEX_NONE.
     int32 Tag = INDEX_NONE;
+    // Attached, TagAt and Pointed: the EVoxelFace toward the support.
+    int8 Face = -1;
+    // Multiface: the faces the state holds, one bit per EVoxelFace, and VineUpFace for a vine's up face.
+    uint8 Faces = 0;
+    static constexpr uint8 VineUpFace = 1 << 6;
 };
 
 // One survival rule per block state, built once and read-only after (any thread may ask).
@@ -90,9 +110,39 @@ public:
                 if (Beside.bSolid || (Beside.IsFluid() && Beside.Block == LavaBlock)) return false;
             }
             return true;
+        case EVoxelSurvival::Attached:
+        case EVoxelSurvival::TagAt:
+        case EVoxelSurvival::Pointed:
+        {
+            const int8* Step = FaceSteps[Rule.Face];
+            return HoldsAt(State, Rule, GetState(X + Step[0], Y + Step[1], Z + Step[2]));
+        }
+        case EVoxelSurvival::Multiface:
+            for (int32 Face = 0; Face < 6; ++Face)
+                if ((Rule.Faces >> Face & 1) && !HoldsFace(State, Face, X, Y, Z, GetState)) return false;
+            return Rule.Faces != 0;
+        case EVoxelSurvival::DripleafStem:
+        {
+            const int32 Above = Table->Get(GetState(X, Y, Z + 1)).Block;
+            return Above == DripleafBlock || Above == DripleafStemBlock;
+        }
         default:
             return true;
         }
+    }
+
+    // Whether one face (an EVoxelFace) of a multiface state is held at (X, Y, Z): the neighbour there has a full
+    // collision face or a sturdy face toward it, or, for a vine's side face, the vine above holds the same face
+    // (scout H, T1). S7 trims the faces that are no longer held after a neighbour changes.
+    template <typename FGetState>
+    bool HoldsFace(uint16 State, int32 Face, int32 X, int32 Y, int32 Z, FGetState&& GetState) const
+    {
+        const int8* Step = FaceSteps[Face];
+        const uint16 Beside = GetState(X + Step[0], Y + Step[1], Z + Step[2]);
+        if (Table->Get(Beside).Shape == EVoxelShape::Full || (GetSturdyFaces(Beside) >> (Face ^ 1) & 1)) return true;
+        if (Face >= int32(EVoxelFace::Down) || Table->Get(State).Block != VineBlock) return false;
+        const uint16 Above = GetState(X, Y, Z + 1);
+        return Table->Get(Above).Block == VineBlock && (GetRule(Above).Faces >> Face & 1) != 0;
     }
 
     // The vertical part of the rule alone: Below is the state under the cell and Cell what the cell holds before
@@ -122,4 +172,10 @@ private:
           CactusFlowerSet = INDEX_NONE, LilyPadSet = INDEX_NONE;
     int32 WaterBlock = INDEX_NONE, LavaBlock = INDEX_NONE, SugarCaneBlock = INDEX_NONE, CactusBlock = INDEX_NONE,
           KelpBlock = INDEX_NONE, KelpPlantBlock = INDEX_NONE;
+    int32 VineBlock = INDEX_NONE, DripleafBlock = INDEX_NONE, DripleafStemBlock = INDEX_NONE;
+    // One cell toward each EVoxelFace (X east, Y south, Z up).
+    static constexpr int8 FaceSteps[6][3] = {{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}};
+
+    // Attached, TagAt and Pointed: whether Support (the state at the rule's Face) holds State.
+    bool HoldsAt(uint16 State, const FVoxelSurvivalRule& Rule, uint16 Support) const;
 };

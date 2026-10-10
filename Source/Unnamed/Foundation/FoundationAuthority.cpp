@@ -1,4 +1,5 @@
 #include "Foundation/FoundationAuthority.h"
+#include "Blocks/VoxelPlantSurvival.h"
 #include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationSimulation.h"
 
@@ -759,17 +760,73 @@ EFoundationReason FFoundationAuthority::CheckPlantPlacement(
     // A double plant's upper half needs a cell that takes it, as the lower half does (inferred).
     FIntVector Upper;
     FFoundationBlockState UpperState;
-    if (FoundationPlantRules::GetOtherHalf(World, Destination, Placed, Upper, UpperState))
+    const bool bTwoHalves =
+        FoundationPlantRules::GetOtherHalf(World, Destination, Placed, Upper, UpperState) && Upper.Z > Destination.Z;
+    if (bTwoHalves)
     {
         if (!World.IsKnown(Upper)) return EFoundationReason::OutsideBounds;
         if (!World.GetBlock(World.Get(Upper).State).bReplaceable) return EFoundationReason::DestinationOccupied;
     }
-    return EFoundationReason::None;
+    if (!PlantSurvival) return EFoundationReason::None;
+    // The placed state must survive where it goes, read as the cell is now (the water seagrass goes into), and a
+    // double plant's upper half on its lower half. A rule that reads an unknown cell refuses.
+    bool bUnknown = false;
+    auto Read = [this, &bUnknown](const FIntVector& At) -> uint16
+    {
+        if (World.IsKnown(At)) return World.Get(At).State.Id;
+        bUnknown = true;
+        return 0;
+    };
+    if (!PlantSurvival->Survives(Placed.Id, Destination.X, Destination.Y, Destination.Z,
+            [&Read](int32 X, int32 Y, int32 Z) { return Read({X, Y, Z}); }))
+        return EFoundationReason::CannotSurvive;
+    if (bTwoHalves &&
+        !PlantSurvival->Survives(UpperState.Id, Upper.X, Upper.Y, Upper.Z,
+            [&Read, &Destination, Placed](int32 X, int32 Y, int32 Z)
+            { return FIntVector(X, Y, Z) == Destination ? Placed.Id : Read({X, Y, Z}); }))
+        return EFoundationReason::CannotSurvive;
+    return bUnknown ? EFoundationReason::CannotSurvive : EFoundationReason::None;
 }
 
 bool FFoundationAuthority::CanPlantSurvive(const FIntVector& Cell, FFoundationBlockState State) const
 {
-    return true;
+    if (!PlantSurvival) return true;
+    bool bUnknown = false;
+    const bool bSurvives = PlantSurvival->Survives(State.Id, Cell.X, Cell.Y, Cell.Z,
+        [this, &bUnknown](int32 X, int32 Y, int32 Z) -> uint16
+        {
+            const FIntVector At(X, Y, Z);
+            if (World.IsKnown(At)) return World.Get(At).State.Id;
+            bUnknown = true;
+            return 0;
+        });
+    return bSurvives || bUnknown;
+}
+
+FFoundationBlockState FFoundationAuthority::TrimPlantFaces(const FIntVector& Cell, FFoundationBlockState State) const
+{
+    if (!PlantSurvival) return State;
+    const FVoxelSurvivalRule& Rule = PlantSurvival->GetRule(State.Id);
+    if (Rule.Kind != EVoxelSurvival::Multiface) return State;
+    // A neighbour change trims only the faces it no longer holds (scout H, 4.2); an unknown neighbour keeps its face.
+    FFoundationBlockState Trimmed = State;
+    for (int32 Face = 0; Face < 6; ++Face)
+    {
+        if (!(Rule.Faces >> Face & 1)) continue;
+        bool bUnknown = false;
+        const bool bHeld = PlantSurvival->HoldsFace(State.Id, Face, Cell.X, Cell.Y, Cell.Z,
+            [this, &bUnknown](int32 X, int32 Y, int32 Z) -> uint16
+            {
+                const FIntVector At(X, Y, Z);
+                if (World.IsKnown(At)) return World.Get(At).State.Id;
+                bUnknown = true;
+                return 0;
+            });
+        if (!bHeld && !bUnknown)
+            Trimmed =
+                World.GetRegistry().WithValue(Trimmed, FoundationGrid::FaceName(EFoundationFace(Face)), TEXT("false"));
+    }
+    return Trimmed;
 }
 
 void FFoundationAuthority::SettlePlants(
@@ -804,7 +861,7 @@ void FFoundationAuthority::SettlePlants(
     // A placed lower half writes its upper half (CheckPlantPlacement found the cell free).
     FIntVector Upper;
     FFoundationBlockState UpperState;
-    if (FoundationPlantRules::GetOtherHalf(World, Cell, World.Get(Cell).State, Upper, UpperState) &&
+    if (FoundationPlantRules::GetOtherHalf(World, Cell, World.Get(Cell).State, Upper, UpperState) && Upper.Z > Cell.Z &&
         World.IsKnown(Upper))
     {
         const FFoundationBlockState UpperBefore = World.Get(Upper).State;
@@ -821,6 +878,14 @@ void FFoundationAuthority::SettlePlants(
             if (Changed.Contains(Neighbour) || !World.IsKnown(Neighbour)) continue;
             const FFoundationBlockState State = World.Get(Neighbour).State;
             if (State.IsAir() || CanPlantSurvive(Neighbour, State)) continue;
+            // A vine, glow lichen or sculk vein loses only the faces no longer held while one is left.
+            const FFoundationBlockState Trimmed = TrimPlantFaces(Neighbour, State);
+            if (Trimmed.Id != State.Id && !FoundationPlantRules::HasNoFace(World.GetRegistry(), Trimmed))
+            {
+                World.Set(Neighbour, Trimmed);
+                Changed.Add(Neighbour);
+                continue;
+            }
             Pop(Neighbour);
             PopOtherHalf(Neighbour, State);
         }

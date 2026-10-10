@@ -16,15 +16,16 @@
 // Plants and the other model blocks (phase 6, S7): their moved boxes, placement states and replaceable flags.
 namespace FoundationPlantTests
 {
-    constexpr EAutomationTestFlags Flags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
-    constexpr double BlockCm = UFoundationProfile::BlockCm;
+    constexpr EAutomationTestFlags PlantTestFlags =
+        EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
+    constexpr double PlantBlockCm = UFoundationProfile::BlockCm;
 
     // A world on the project registry with a few cells set by block-state text.
-    struct FWorld
+    struct FPlantWorld
     {
         FFoundationBlockWorld World;
 
-        FWorld()
+        FPlantWorld()
         {
             World.SetRegistry(FFoundationBlockRegistry::GetDefault());
             World.BoundsMin = FIntVector(-20);
@@ -52,7 +53,7 @@ namespace FoundationPlantTests
             Context.Yaw = Yaw;
             Context.Pitch = Pitch;
             Context.ClickPointCm = FoundationGrid::CellBox(Clicked, World.OriginCm).GetCenter() +
-                FoundationGrid::FaceNormal(Face) * (BlockCm / 2);
+                FoundationGrid::FaceNormal(Face) * (PlantBlockCm / 2);
             const FFoundationBlockType& Type = *World.FindBlock(Block);
             FoundationBlockPlacement::ResolveDestination(World, Type, true, Context);
             Destination = Context.Destination;
@@ -64,7 +65,7 @@ namespace FoundationPlantTests
         FIntVector Destination = FIntVector::ZeroValue;
     };
 
-    bool SameBox(const FBox& A, const FBox& B)
+    bool SamePlantBox(const FBox& A, const FBox& B)
     {
         return A.Min.Equals(B.Min, 1e-4) && A.Max.Equals(B.Max, 1e-4);
     }
@@ -74,12 +75,12 @@ namespace FoundationPlantTests
 // voxel table's, which the mesher draws with) where the facts move them, inside their cell; the single boxes are
 // their bounds; collision gathers every box; a ray misses a flower's empty corner and hits its moved middle.
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-    FFoundationPlantShapesTest, "Unnamed.Foundation.Blocks.PlantShapes", FoundationPlantTests::Flags)
+    FFoundationPlantShapesTest, "Unnamed.Foundation.Blocks.PlantShapes", FoundationPlantTests::PlantTestFlags)
 
 bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
 {
     using namespace FoundationPlantTests;
-    FWorld W;
+    FPlantWorld W;
     const FFoundationBlockRegistry& Registry = W.R();
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::MakeTable(Registry);
     const FIntVector Cells[] = {{3, -7, 2}, {-11, 5, 0}, {0, 0, 1}, {17, 12, -4}};
@@ -114,7 +115,7 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
                                                  : W.World.GetOutlineBoxes(Cell, State, Boxes);
                     const bool bMoves = bCollision ? Block.bCollisionMovesWithOffset : Block.bOutlineMovesWithOffset;
                     const FVector Min = FoundationGrid::CellMin(Cell, W.World.OriginCm) +
-                        (bMoves ? Offset : FVector::ZeroVector) * BlockCm;
+                        (bMoves ? Offset : FVector::ZeroVector) * PlantBlockCm;
                     const FString Label =
                         Registry.ToString(State) + (bCollision ? TEXT(" collision") : TEXT(" outline"));
                     if (bAny == Units.IsEmpty() || Boxes.Num() != Units.Num())
@@ -125,16 +126,19 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
                     FBox Bounds(ForceInit);
                     for (int32 Box = 0; Box < Boxes.Num(); ++Box)
                     {
-                        if (!SameBox(Boxes[Box], FBox(Min + Units[Box].Min * BlockCm, Min + Units[Box].Max * BlockCm)))
+                        if (!SamePlantBox(Boxes[Box],
+                                FBox(Min + Units[Box].Min * PlantBlockCm, Min + Units[Box].Max * PlantBlockCm)))
                             Fail(Label + TEXT(" box differs"));
-                        Outside += !CellBox.IsInside(Boxes[Box]);
+                        // Collision stays in its cell; a thick bamboo outline reaches 1/16 into the next one at
+                        // the largest offsets.
+                        Outside += !(bCollision ? CellBox : CellBox.ExpandBy(PlantBlockCm / 16)).IsInside(Boxes[Box]);
                         MovedBoxes += bMoves && !Offset.IsNearlyZero();
                         Bounds += Boxes[Box];
                     }
                     FBox Single;
                     const bool bSingle = bCollision ? W.World.GetCollisionBox(Cell, State, Single)
                                                     : W.World.GetSelectionBox(Cell, State, Single);
-                    if (bSingle != bAny || (bAny && !SameBox(Single, Bounds)))
+                    if (bSingle != bAny || (bAny && !SamePlantBox(Single, Bounds)))
                         Fail(Label + TEXT(" single box is not the bounds"));
                 }
             }
@@ -142,12 +146,31 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
     }
     TestEqual(TEXT("model states (S5's 949, the torch and four wall torches)"), ModelStates, 954);
     TestEqual(TEXT("moved boxes and their bounds that differ"), Mismatches, 0);
-    TestEqual(TEXT("boxes outside their cell (none, moved ones too)"), Outside, 0);
+    TestEqual(TEXT("collision boxes outside their cell, outline boxes beyond 1/16 of it"), Outside, 0);
     TestTrue(TEXT("boxes moved by an offset"), MovedBoxes > 0);
+    // Bamboo at 256 cells: its outline leaves the cell by at most 1/16, its moved collision never.
+    int32 BambooOutside = 0;
+    const FFoundationBlockType& BambooBlock = *W.World.FindBlock(TEXT("bamboo"));
+    for (int32 Y = 0; Y < 16; ++Y)
+        for (int32 X = 0; X < 16; ++X)
+            for (int32 Local = 0; Local < BambooBlock.StateCount; ++Local)
+            {
+                const FIntVector Cell(X, Y, 1);
+                const FFoundationBlockState State{uint16(BambooBlock.MinStateId + Local)};
+                const FBox CellBox = FoundationGrid::CellBox(Cell, W.World.OriginCm).ExpandBy(1e-3);
+                TArray<FBox> Outline, Collision;
+                W.World.GetOutlineBoxes(Cell, State, Outline);
+                W.World.GetCollisionBoxes(Cell, State, Collision);
+                for (const FBox& Box : Outline)
+                    BambooOutside += !CellBox.ExpandBy(PlantBlockCm / 16).IsInside(Box);
+                for (const FBox& Box : Collision)
+                    BambooOutside += !CellBox.IsInside(Box);
+            }
+    TestEqual(TEXT("bamboo boxes beyond those bounds at 256 cells"), BambooOutside, 0);
     TestTrue(TEXT("blocks with an offset"), OffsetBlocks > 0);
 
     // Collision gathers every box of every cell: an azalea's five, a bamboo's one moved by its offset, a cube's one.
-    FWorld G;
+    FPlantWorld G;
     const FIntVector Azalea(1, 1, 1), Bamboo(4, 2, 1), Stone(6, 2, 1);
     G.Put(Azalea, TEXT("azalea"));
     G.Put(Bamboo, TEXT("bamboo"));
@@ -159,22 +182,22 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("gathered boxes (5 azalea, 1 bamboo, 1 stone)"), Gathered.Num(), 7);
     bool bSame = Gathered.Num() == Expected.Num();
     for (int32 Box = 0; bSame && Box < Gathered.Num(); ++Box)
-        bSame = Expected.ContainsByPredicate([&](const FBox& Want) { return SameBox(Want, Gathered[Box]); });
+        bSame = Expected.ContainsByPredicate([&](const FBox& Want) { return SamePlantBox(Want, Gathered[Box]); });
     TestTrue(TEXT("gathered boxes are the cells' boxes"), bSame);
     const FVector BambooOffset = FoundationBlockOffsets::GetOffset(*G.World.FindBlock(TEXT("bamboo")), Bamboo);
     TestFalse(TEXT("the bamboo cell has an offset"), BambooOffset.IsNearlyZero());
-    const FVector BambooMin = FoundationGrid::CellMin(Bamboo, G.World.OriginCm) + BambooOffset * BlockCm;
+    const FVector BambooMin = FoundationGrid::CellMin(Bamboo, G.World.OriginCm) + BambooOffset * PlantBlockCm;
     TestTrue(TEXT("bamboo collides where it is drawn (facts 0.40625-0.59375, moved)"),
         Gathered.ContainsByPredicate(
             [&](const FBox& Box)
             {
-                return SameBox(Box,
-                    FBox(BambooMin + FVector(.40625, .40625, 0) * BlockCm,
-                        BambooMin + FVector(.59375, .59375, 1) * BlockCm));
+                return SamePlantBox(Box,
+                    FBox(BambooMin + FVector(.40625, .40625, 0) * PlantBlockCm,
+                        BambooMin + FVector(.59375, .59375, 1) * PlantBlockCm));
             }));
 
     // A ray through a dandelion's empty corner hits the stone behind it; through its moved middle, the dandelion.
-    FWorld T;
+    FPlantWorld T;
     const FIntVector Flower(0, 0, 1);
     T.Put(Flower, TEXT("dandelion"));
     T.Put(Flower + FIntVector(0, 1, 0), TEXT("stone"));
@@ -187,7 +210,7 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
     FFoundationHit Hit = FoundationTargeting::Resolve(Ray, T.World, {}, {});
     TestTrue(TEXT("the empty corner passes to the stone"),
         Hit.Kind == EFoundationHitKind::Block && Hit.Cell == Flower + FIntVector(0, 1, 0));
-    Ray.Eye = CellMin + FVector(50 + FlowerOffset.X * BlockCm, -150, 30);
+    Ray.Eye = CellMin + FVector(50 + FlowerOffset.X * PlantBlockCm, -150, 30);
     Hit = FoundationTargeting::Resolve(Ray, T.World, {}, {});
     TestTrue(TEXT("the moved middle hits the dandelion"), Hit.Kind == EFoundationHitKind::Block && Hit.Cell == Flower);
     return true;
@@ -195,12 +218,12 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
 
 // getStateForPlacement for the model blocks, and the halves of double plants.
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-    FFoundationPlantPlacementTest, "Unnamed.Foundation.Blocks.PlantPlacement", FoundationPlantTests::Flags)
+    FFoundationPlantPlacementTest, "Unnamed.Foundation.Blocks.PlantPlacement", FoundationPlantTests::PlantTestFlags)
 
 bool FFoundationPlantPlacementTest::RunTest(const FString& Parameters)
 {
     using namespace FoundationPlantTests;
-    FWorld W;
+    FPlantWorld W;
     const FFoundationBlockRegistry& R = W.R();
     W.Put({0, 0, 0}, TEXT("grass_block"));
     W.Put({5, 0, 0}, TEXT("stone"));
@@ -298,12 +321,12 @@ bool FFoundationPlantPlacementTest::RunTest(const FString& Parameters)
 // Every block takes the facts' replaceable flag (Jesus's answer 4), except snow, which stays as today until Jesus
 // decides its layers (scout H, Q5).
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-    FFoundationPlantReplaceableTest, "Unnamed.Foundation.Blocks.Replaceable", FoundationPlantTests::Flags)
+    FFoundationPlantReplaceableTest, "Unnamed.Foundation.Blocks.Replaceable", FoundationPlantTests::PlantTestFlags)
 
 bool FFoundationPlantReplaceableTest::RunTest(const FString& Parameters)
 {
     using namespace FoundationPlantTests;
-    FWorld W;
+    FPlantWorld W;
     FString Text;
     TSharedPtr<FJsonObject> Facts;
     const FString Path = FPaths::ProjectDir() / TEXT("Reference/minecraft-blocks-26.3/facts/block_state_facts.json");

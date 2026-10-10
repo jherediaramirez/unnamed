@@ -93,8 +93,9 @@ FFoundationHit FoundationTargeting::Resolve(const FFoundationRay& Ray, const FFo
                     }
                 if (CellFace != EFoundationFace::None)
                 {
-                    // Outline boxes stay inside their cells, moved ones too, so the first hit in traversal order is
-                    // the nearest.
+                    // Outline boxes stay inside their cells, so the first hit in traversal order is the nearest.
+                    // The exception: a thick bamboo stalk's outline reaches 1/16 into the next cell at its largest
+                    // offsets, and a ray through that sliver alone misses it.
                     Best.Kind = EFoundationHitKind::Block;
                     Best.Cell = Cell;
                     Best.Face = CellFace;

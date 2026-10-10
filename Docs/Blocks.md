@@ -40,8 +40,8 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
 ## States and shapes
 
 - **Shapes:** full cubes have one shape. Slabs are bottom, top or double. Snow layers (`snow`, layers 1-8) use `layers_1` to `layers_7` (`EFoundationBlockShape::Layers1..Layers7`), boxes k/8 high, and 8 layers is a full cube. Their collision is one layer lower than the outline, as in 26.3, so 1 layer has none; 8 layers collide as a full cube (26.3 collides at 7/8). Placement gives 1 layer, with no stacking yet. Powder snow is a solid full cube for now, with no sinking. Water has no selection or collision shape. Its surface height is `amount / 9`, so a source is 8/9 tall, and falling water (level 8 and up) is full.
-- **Model blocks:** `EFoundationBlockShape::Model` states are drawn from baked quads (`FFoundationBlockRegistry::GetModelParts`, `GetModelQuads`): per state a list of parts, each with its alternatives (random variant lists keep every entry: lily pad, sea pickle, bamboo). Quads carry positions, UVs, texture, `tintindex`, cull face, facing, shade direction (`shade_direction_override`) and light; models carry their ambient occlusion flag. Outline and collision boxes, per-state light, water and the position offset (kind, range, and whether the shapes move with it) come from the server facts (`facts/block_state_facts.json`), never from the models. Selection and collision of a model state are the bounds of its boxes. The voxel world draws them since phase 6 S6, in their own chunk section ([Block models](VoxelWorld.md#block-models)), and the Playground since S6b (Rendering, below); placement gives the default state until S7's rules.
-- **Waterlogging:** `waterlogged` is a real property. Placement always sets it to false. Waterlogged and always-water model states (kelp, seagrass, corals) report water through `GetFluid`.
+- **Model blocks:** `EFoundationBlockShape::Model` states are drawn from baked quads (`FFoundationBlockRegistry::GetModelParts`, `GetModelQuads`): per state a list of parts, each with its alternatives (random variant lists keep every entry: lily pad, sea pickle, bamboo). Quads carry positions, UVs, texture, `tintindex`, cull face, facing, shade direction (`shade_direction_override`) and light; models carry their ambient occlusion flag. Outline and collision boxes, per-state light, water and the position offset (kind, range, and whether the shapes move with it) come from the server facts (`facts/block_state_facts.json`), never from the models. Since phase 6 S7 a model state's outline and collision are its own boxes (`FFoundationBlockWorld::GetOutlineBoxes`, `GetCollisionBoxes`), moved by the block's offset where the facts move them, with the mapping the renderers use (`FoundationBlockOffsets`). Targeting tests each box, the outline draws each, and collision gathers each, in the Playground and in generated worlds. The single-box getters (`GetSelectionBox`, `GetCollisionBox`) give their bounds, which the preview, the mining overlay and the placement obstruction check use. The voxel world draws model states since phase 6 S6, in their own chunk section ([Block models](VoxelWorld.md#block-models)), and the Playground since S6b (Rendering, below); placement follows the plant rules (Placement, below).
+- **Waterlogging:** `waterlogged` is a real property. Placement sets it to false, except that a model block placed into a water source is waterlogged (S7). Waterlogged and always-water model states (kelp, seagrass, corals) report water through `GetFluid`.
 - **Still lava:** a fluid like water, now in the block reference, `DA_Blocks` and the registry (states 105-120). It is in the opaque layer with light 15, and has no item, no damage and no flow. It is drawn with its animated `lava_still` on every face, untinted; `lava_flow` is in the flow array for later flowing lava. It still counts as water for the player's movement, as the stand-in did. The stand-in in `VoxelBlocks::MakeTable` is gone.
 - **Mining:** the 26.3 hardness and correct-tool facts plus `Block.Mineable.*` and `Block.IncorrectForTool.*` tags drive mining.
 - **Drops:** a broken block drops itself, and a double slab drops 2. This is a provisional rule, not loot tables.
@@ -63,6 +63,25 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
 | `WallAttached` | wall torch | `facing` the clicked side face, away from its wall |
 
 **The torch** (torch session T2). The `torch` item (`PlacesWallBlock`, from the reference's standing-and-wall items) places `torch` on a top face and `wall_torch` on a side face. Either needs a support that holds it: `FFoundationBlockRegistry::GetTorchSupport` gives each state's faces from `facts/block_support.json`, which `FactsDump.java` measures with the torch's own `canSurvive` (leaves and powder snow hold none, every other full cube all five, an upside-down slab a floor torch, a bottom slab nothing). An underside click places nothing until T3 brings vanilla's choice among the other faces. Survival after placement (popping), light and the coral fans' wall fans are later work.
+
+**Plants and the other model blocks** (phase 6, S7; `FoundationPlantRules`, `FFoundationAuthority::CheckPlantPlacement` and `SettlePlants`). Behaviour comes from the reference's properties and tags, scout H's black-box support table ([the prep](Records/2026-10-10-Voxel-Phase6-Scout-H-Plant-Interaction.md), T1) and minecraft.wiki.
+- **State from the click**, by property, for model blocks without an asset rule:
+  - `half`: the lower half, and the authority writes the upper half above it. The upper cell must be replaceable (else `DestinationOccupied`, or `OutsideBounds` at the build limit);
+  - `facing`: amethyst, shelf mushroom and coral wall fans point away from the clicked block; cocoa faces it; the others face the player;
+  - vine, glow lichen and sculk vein: the one face toward the clicked block. A vine is never placed on an underside until Jesus decides its up face (Q8), and a state without a face is refused;
+  - `vertical_direction`: up on a top face, down under a block, and on a side against the vertical look;
+  - `waterlogged`: in a water source.
+- **Survival:** the placed state must survive where it goes (`CannotSurvive`), by the voxel core's one table, `FVoxelPlantSurvival` (S8's ground plants plus S7's attached, hanging, multiface and pointed kinds; `VoxelBlocks::GetPlantSurvival`). A rule that reads an unknown cell refuses, so nothing is placed on the Playground's floor, which is not a block. Sturdy faces are S8's `GetSturdyFaces` until Jesus decides Q2. Corals need no water (Q6), and coral fans place only on floors (Q7).
+- **After an edit** (a placement or a break), one level deep (Jesus's answer 6):
+  - a double plant is one unit, so mining or replacing either half removes the other;
+  - each neighbour of the changed cells that no longer survives pops, with its other half;
+  - a vine, glow lichen or sculk vein loses only the faces no longer held while one is left;
+  - a pop's neighbours are not checked, so a stack (sugar cane, cactus, kelp, dripstone) loses only the segment next to the edit (Q1 open);
+  - a rule that reads an unknown cell keeps the plant;
+  - pops are `Popped` events and drop nothing (Q4).
+- **Replaceable:** every block takes the facts' flag (Jesus's answer 4), except snow, which stays not replaceable until Jesus decides its layers (Q5).
+- **Mining:** hardness 0 breaks at once (68 of the 85 model blocks, the torches included); vines, lichen, cocoa and sculk vein take 0.2.
+- `Options.bPlantRules` switches all of this off, for A/B runs.
 
 ## Rendering
 
@@ -111,6 +130,13 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
 
 - **Texture codes:** face and quad codes hold a texture index in 10 bits: 691 of 1,024 are used (white included). The block array holds 946 of D3D12's 2,048 slices. Both are asserted by the reference verifier and `.Textures`. Phase 7's blocks must stay inside both, or widen the field.
 - **Water against solids (Playground):** water instances draw every face, so a water face coplanar with a solid neighbour's face z-fights (the starter stone at (12, 6, 0) in the water station; S6b's re-save flipped which wins, about 70-260 pixels per shot). Held water around water-holding model states meets the same faces where it touches solids. Options for later: face-culled water meshes or a small water inset.
+- **Plants (S7):**
+  - breaking or popping a water-holding plant leaves air, not its water (vanilla leaves the source);
+  - project blocks (`UFoundationInteractionSettings`) hold no plant: the survival table knows only the imported blocks;
+  - a stack pops one segment per edit (Q1);
+  - the vine's up face is never checked (Q8);
+  - the mushrooms ignore light (S8);
+  - a thick bamboo stalk's outline reaches 1/16 block into the next cell at its largest offsets, so a ray through that sliver alone misses it (targeting tests one cell at a time).
 - **Shelf mushroom:** its two textures are 32 x 32; the 16 x 16 block array holds their own vanilla mip 1 (S6 decides whether they need more).
 
 ## Tests
@@ -123,7 +149,12 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
   - `.Placement`: truth tables.
   - `.Support` and `.Torch`: every state's torch support against the reference; the torch item, the block by clicked face, the wall torch's facing and survival on stone, glass, leaves and slabs.
   - `.Shapes`: slab, water, snow layer, powder snow and lava shapes; every model state's boxes, light, water and offset against the facts.
+  - `.PlantShapes`: every model state's moved outline and collision boxes at four cells against the voxel table's offset (collision never leaves its cell; a thick bamboo outline reaches at most 1/16 block out, checked at 256 cells), the gathered boxes, and a ray through a dandelion's empty corner.
+  - `.PlantPlacement`: the plant states from the click, and the halves of double plants.
+  - `.Replaceable`: every block's flag against the facts (snow pinned as today).
+  - `.Survival`: about 80 support rows from scout H's table, then the pop pass through the authority (a flower, both halves, one segment of a stack, trimmed vine and lichen faces, a cactus beside a placed block, unknown cells).
+  - `Unnamed.Foundation.Interaction.Plants`: both halves through the authority, replacing grass, refusals, pops dropping nothing, instant mining, and the switch.
   - `.Models`: every baked quad and every model state's parts against the reference, with spot checks.
   - `.ModelMeshes`: the Playground's model meshes: 2,440 baked quads, 2,424 drawn (two triangles each), full-precision UVs, and every vertex's position, texture UV, shade face and own code.
   - `Unnamed.Hud.Creative.Tabs`, `.Clicks` and `.Authority`.
-- **Runtime:** `TestFoundationRuntime.ps1 -Suite tour` shots 09-23 cover the gallery and the creative screen (17p and 17q: the plant row). The interaction suite covers stone placement and mining and the hotbar block icon, and checks the drawn cells and the exact instance count (one per part, plus held water) against the world.
+- **Runtime:** `TestFoundationRuntime.ps1 -Suite tour` shots 09-23 cover the gallery and the creative screen (17p and 17q: the plant row). The interaction suite covers stone placement and mining and the hotbar block icon, and checks the drawn cells and the exact instance count (one per part, plus held water) against the world. Its plants group (S7) places a dandelion on grass and mines the grass (the dandelion pops), refuses a dandelion on stone, and places and mines tall grass (both halves go).

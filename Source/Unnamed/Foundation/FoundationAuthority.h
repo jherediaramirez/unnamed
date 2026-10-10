@@ -79,6 +79,8 @@ UNNAMED_API const TCHAR* LexToString(EFoundationReason Reason);
 UNNAMED_API const TCHAR* LexToString(EFoundationOutcome Outcome);
 UNNAMED_API const TCHAR* LexToString(EFoundationCommandType Type);
 
+class FVoxelPlantSurvival;
+
 // One request across the authority boundary. Target, destination, revisions and item are the caller's
 // claims; the authority re-resolves and re-validates everything from its own state.
 struct FFoundationCommand
@@ -264,6 +266,9 @@ class UNNAMED_API FFoundationAuthority
 {
 public:
     FFoundationBlockWorld World;
+    // The plant survival rules (VoxelBlocks::GetPlantSurvival), set by the world's owner. Without them plants keep
+    // only their two halves together.
+    TSharedPtr<const FVoxelPlantSurvival> PlantSurvival;
     FFoundationRules Rules;
     FFoundationLabOptions Options;
     TArray<FFoundationStatic> Statics;
@@ -333,8 +338,11 @@ private:
     bool CheckHand(const FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
     // Plants: a placed state that can never hold (a faceless vine), or a double plant without room for its upper half.
     EFoundationReason CheckPlantPlacement(const FIntVector& Destination, FFoundationBlockState Placed) const;
-    // Whether a state still holds in its cell after a neighbour changed (the plant survival rules).
+    // Whether a state still holds in its cell after a neighbour changed (the plant survival rules). A rule that reads
+    // an unknown cell (outside the bounds, a column not loaded) keeps the plant.
     bool CanPlantSurvive(const FIntVector& Cell, FFoundationBlockState State) const;
+    // A vine, glow lichen or sculk vein without the faces that are no longer held (State when all are).
+    FFoundationBlockState TrimPlantFaces(const FIntVector& Cell, FFoundationBlockState State) const;
     // After an edit at Cell replaced Before: a double plant's two halves stay one unit, then the changed cells'
     // neighbours that no longer survive pop, one level deep (Jesus's answer 6).
     void SettlePlants(const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player);

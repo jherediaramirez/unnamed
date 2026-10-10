@@ -1,5 +1,11 @@
 #include "Voxel/VoxelBlocks.h"
 #include "Blocks/VoxelBlockTable.h"
+#include "Blocks/VoxelPlantSurvival.h"
+#include "Decoration/VoxelFeatureGraph.h"
+#include "Decoration/VoxelRuleTests.h"
+#include "HAL/PlatformTime.h"
+#include "Voxel/VoxelWorldgenReader.h"
+#include "VoxelLog.h"
 #include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Meshing/VoxelOreLooks.h"
@@ -218,4 +224,43 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::GetDefault()
     static TSharedPtr<const FVoxelBlockTable> Default;
     if (!Default) Default = MakeTable(*FFoundationBlockRegistry::GetDefault());
     return Default.ToSharedRef();
+}
+
+TSharedPtr<const FVoxelPlantSurvival> VoxelBlocks::GetPlantSurvival(const FFoundationBlockRegistry& Registry)
+{
+    check(IsInGameThread());
+    const UFoundationBlockAssets* Assets = Registry.GetAssets();
+    if (!Assets || Assets != FFoundationBlockRegistry::GetDefault()->GetAssets()) return nullptr;
+    // The rules point into their table: one owner keeps both.
+    struct FBundle
+    {
+        TSharedPtr<const FVoxelBlockTable> Table;
+        FVoxelPlantSurvival Survival;
+    };
+    static TSharedPtr<FBundle> Bundle;
+    static bool bTried = false;
+    if (!bTried)
+    {
+        bTried = true;
+        const double Start = FPlatformTime::Seconds();
+        FVoxelFeatureGraph Graph;
+        FString Error;
+        TSharedRef<FBundle> Built = MakeShared<FBundle>();
+        Built->Table = GetDefault();
+        if (!VoxelWorldgen::ReadFeatures(VoxelWorldgen::GetReferenceRoot(), Graph, Error))
+        {
+            UE_LOG(LogUnnamedVoxel, Error, TEXT("Plant survival: the worldgen reference does not read: %s"), *Error);
+        }
+        else
+        {
+            FVoxelBlockTags Tags(Graph, *Built->Table);
+            if (Built->Survival.Initialize(*Built->Table, Tags, &Error))
+                Bundle = Built;
+            else
+                UE_LOG(LogUnnamedVoxel, Error, TEXT("Plant survival: %s"), *Error);
+        }
+        UE_LOG(LogUnnamedVoxel, Display, TEXT("Plant survival rules built in %.1f ms"),
+            (FPlatformTime::Seconds() - Start) * 1000.);
+    }
+    return Bundle ? TSharedPtr<const FVoxelPlantSurvival>(Bundle, &Bundle->Survival) : nullptr;
 }

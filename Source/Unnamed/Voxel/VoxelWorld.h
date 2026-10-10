@@ -122,6 +122,9 @@ private:
     TSharedPtr<const FVoxelBlockTable> Table;
     TSharedPtr<const IVoxelTerrain> Terrain;
     FFoundationAuthority Authority;
+    // Per state id: a model state with collision boxes (cactus, bamboo, lily pads, carpets), so GatherCollision passes
+    // the others (grass, flowers) with one lookup.
+    TArray<bool> ModelCollides;
     UPROPERTY(Transient)
     TObjectPtr<UFoundationInteractionView> View;
     UPROPERTY(Transient)

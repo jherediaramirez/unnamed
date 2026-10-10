@@ -3,6 +3,7 @@
 #include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationSimulation.h"
+#include "Voxel/VoxelBlocks.h"
 #include "Components/TextRenderComponent.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
@@ -167,6 +168,7 @@ void AFoundationPlayground::BuildLayout()
     const UFoundationInteractionSettings& Settings = UFoundationInteractionSettings::Get();
     Settings.BuildRules(Authority.Rules);
     Authority.World.SetRegistry(FFoundationBlockRegistry::GetDefault());
+    Authority.PlantSurvival = VoxelBlocks::GetPlantSurvival(Authority.World.GetRegistry());
     Authority.World.OriginCm = FVector::ZeroVector;
     // The whole ground is buildable: 2000 x 2000 cells, BuildHeightCells high.
     const int32 HalfCells = int32(GroundHalfExtentCm / UFoundationProfile::BlockCm);

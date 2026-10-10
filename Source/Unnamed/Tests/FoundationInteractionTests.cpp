@@ -1,4 +1,5 @@
 #include "Misc/AutomationTest.h"
+#include "Blocks/VoxelPlantSurvival.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationInteraction.h"
 #include "Foundation/FoundationInteractionSettings.h"
@@ -6,6 +7,7 @@
 #include "Foundation/FoundationSimulation.h"
 #include "Foundation/FoundationTags.h"
 #include "HAL/PlatformTime.h"
+#include "Voxel/VoxelBlocks.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
@@ -58,6 +60,7 @@ namespace
             A.Rules.Items.Add(Item);
             A.Rules.Loadout[0] = TEXT("lab_block");
             A.World.SetRegistry(MakeRegistry());
+            A.PlantSurvival = VoxelBlocks::GetPlantSurvival(A.World.GetRegistry());
             A.World.BoundsMin = FIntVector(-20, -20, 0);
             A.World.BoundsMax = FIntVector(19, 19, 15);
             FFoundationStatic Floor;
@@ -128,7 +131,11 @@ namespace
         FFoundationResult Use(EFoundationHand Hand = Main) { return Run(Make(EFoundationCommandType::UseOn, Hand)); }
 
         // Replaces the blocks (registry) with the imported ones, the stand-in and these.
-        void SetBlocks(TArray<FFoundationBlockDefinition> Extra) { A.World.SetRegistry(MakeRegistry(Extra)); }
+        void SetBlocks(TArray<FFoundationBlockDefinition> Extra)
+        {
+            A.World.SetRegistry(MakeRegistry(Extra));
+            A.PlantSurvival = VoxelBlocks::GetPlantSurvival(A.World.GetRegistry());
+        }
 
         void Put(FIntVector Cell, FName Id = TEXT("lab_block"))
         {
@@ -1356,6 +1363,233 @@ bool FFoundationInteractionPlantsTest::RunTest(const FString& Parameters)
     Off.Stand({-150, 50, 0}, OnGround);
     TestTrue(TEXT("rules off: placed"), Off.Use().bPlaced);
     TestTrue(TEXT("rules off: no upper half"), Off.Solid(LowerCell) && !Off.Solid(UpperCell));
+    return true;
+}
+
+// Plant survival (phase 6, S7): rows pinned from scout H's measured support table (T1; none for leaves, mud, soul sand
+// or 8-layer snow until Jesus decides sturdy faces, Q2), then the cascade through the authority: one level deep, a
+// double plant as one unit, multiface blocks trimmed, unknown cells never popping.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBlocksSurvivalTest, "Unnamed.Foundation.Blocks.Survival",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationBlocksSurvivalTest::RunTest(const FString& Parameters)
+{
+    FLab L;
+    if (!TestTrue(TEXT("plant survival rules built"), L.A.PlantSurvival.IsValid())) return false;
+    const FFoundationBlockRegistry& Registry = L.A.World.GetRegistry();
+    auto Parse = [&Registry](const TCHAR* Text)
+    {
+        FFoundationBlockState State;
+        ensureMsgf(Registry.Parse(Text, State), TEXT("parse %s"), Text);
+        return State;
+    };
+    // One row: the plant at P, its neighbours given by offset, everything else air.
+    struct FNeighbour
+    {
+        FIntVector Offset;
+        const TCHAR* Block;
+    };
+    const FIntVector P(0, 0, 5);
+    auto Survives = [&](const TCHAR* Plant, const TArray<FNeighbour>& Around)
+    {
+        TMap<FIntVector, uint16> Cells;
+        Cells.Add(P, Parse(Plant).Id);
+        for (const FNeighbour& Cell : Around)
+            Cells.Add(P + Cell.Offset, Parse(Cell.Block).Id);
+        return L.A.PlantSurvival->Survives(Parse(Plant).Id, P.X, P.Y, P.Z,
+            [&Cells](int32 X, int32 Y, int32 Z) { return Cells.FindRef(FIntVector(X, Y, Z)); });
+    };
+    const FIntVector Below(0, 0, -1), Above(0, 0, 1), North(0, -1, 0), South(0, 1, 0), East(1, 0, 0), West(-1, 0, 0);
+    struct FRow
+    {
+        const TCHAR* Plant;
+        TArray<FNeighbour> Around;
+        bool bSurvives;
+    };
+    const FRow Rows[] = {
+        // Ground plants (supports_vegetation, supports_dry_vegetation).
+        {TEXT("dandelion"), {{Below, TEXT("grass_block")}}, true},
+        {TEXT("dandelion"), {{Below, TEXT("podzol")}}, true},
+        {TEXT("dandelion"), {{Below, TEXT("stone")}}, false},
+        {TEXT("dandelion"), {{Below, TEXT("sand")}}, false},
+        {TEXT("dandelion"), {}, false},
+        {TEXT("short_grass"), {{Below, TEXT("moss_block")}}, true},
+        {TEXT("dead_bush"), {{Below, TEXT("sand")}}, true},
+        {TEXT("dead_bush"), {{Below, TEXT("terracotta")}}, true},
+        {TEXT("dead_bush"), {{Below, TEXT("stone")}}, false},
+        // Double plants: the lower half on soil, the upper half on its own lower half only.
+        {TEXT("tall_grass[half=lower]"), {{Below, TEXT("grass_block")}}, true},
+        {TEXT("tall_grass[half=upper]"), {{Below, TEXT("tall_grass[half=lower]")}}, true},
+        {TEXT("tall_grass[half=upper]"), {{Below, TEXT("grass_block")}}, false},
+        {TEXT("small_dripleaf[half=lower,waterlogged=false]"), {{Below, TEXT("clay")}}, true},
+        {TEXT("small_dripleaf[half=lower,waterlogged=false]"), {{Below, TEXT("dirt")}}, false},
+        {TEXT("small_dripleaf[half=lower,waterlogged=true]"), {{Below, TEXT("dirt")}}, true},
+        // Tagged soils.
+        {TEXT("azalea"), {{Below, TEXT("clay")}}, true},
+        {TEXT("azalea"), {{Below, TEXT("stone")}}, false},
+        {TEXT("bamboo"), {{Below, TEXT("gravel")}}, true},
+        {TEXT("bamboo"), {{Below, TEXT("bamboo")}}, true},
+        {TEXT("bamboo"), {{Below, TEXT("stone")}}, false},
+        {TEXT("mangrove_propagule[hanging=false]"), {{Below, TEXT("dirt")}}, true},
+        {TEXT("mangrove_propagule[hanging=true]"), {{Above, TEXT("mangrove_leaves")}}, true},
+        {TEXT("mangrove_propagule[hanging=true]"), {{Above, TEXT("oak_leaves")}}, false},
+        {TEXT("big_dripleaf"), {{Below, TEXT("clay")}}, true},
+        {TEXT("big_dripleaf"), {{Below, TEXT("stone")}}, false},
+        {TEXT("big_dripleaf_stem"), {{Below, TEXT("clay")}, {Above, TEXT("big_dripleaf")}}, true},
+        {TEXT("big_dripleaf_stem"), {{Below, TEXT("clay")}}, false},
+        // Cactus and sugar cane.
+        {TEXT("cactus"), {{Below, TEXT("sand")}}, true},
+        {TEXT("cactus"), {{Below, TEXT("sand")}, {East, TEXT("stone")}}, false},
+        {TEXT("cactus"), {{Below, TEXT("dirt")}}, false},
+        {TEXT("sugar_cane"), {{Below, TEXT("sand")}, {Below + East, TEXT("water")}}, true},
+        {TEXT("sugar_cane"), {{Below, TEXT("sand")}}, false},
+        {TEXT("sugar_cane"), {{Below, TEXT("sugar_cane")}}, true},
+        // Water plants: the cell holds the plant's own water.
+        {TEXT("lily_pad"), {{Below, TEXT("water")}}, true},
+        {TEXT("lily_pad"), {{Below, TEXT("ice")}}, true},
+        {TEXT("lily_pad"), {{Below, TEXT("stone")}}, false},
+        {TEXT("seagrass"), {{Below, TEXT("stone")}}, true},
+        {TEXT("seagrass"), {{Below, TEXT("magma_block")}}, false},
+        {TEXT("kelp_plant"), {{Below, TEXT("kelp_plant")}}, true},
+        // Sturdy floors and anything-but-air.
+        {TEXT("leaf_litter"), {{Below, TEXT("stone")}}, true},
+        {TEXT("leaf_litter"), {{Below, TEXT("stone_slab[type=bottom]")}}, false},
+        {TEXT("sea_pickle"), {{Below, TEXT("stone_slab[type=top]")}}, true},
+        {TEXT("moss_carpet"), {{Below, TEXT("water")}}, true},
+        {TEXT("moss_carpet"), {}, false},
+        {TEXT("tube_coral"), {{Below, TEXT("stone")}}, true},
+        {TEXT("tube_coral"), {}, false},
+        // Attached: a sturdy face toward the plant.
+        {TEXT("amethyst_cluster[facing=up]"), {{Below, TEXT("stone")}}, true},
+        {TEXT("amethyst_cluster[facing=up]"), {{Above, TEXT("stone")}}, false},
+        {TEXT("amethyst_cluster[facing=north]"), {{South, TEXT("stone")}}, true},
+        {TEXT("amethyst_cluster[facing=north]"), {{North, TEXT("stone")}}, false},
+        {TEXT("shelf_mushroom[facing=east]"), {{West, TEXT("stone")}}, true},
+        {TEXT("hanging_roots"), {{Above, TEXT("stone")}}, true},
+        {TEXT("hanging_roots"), {{Above, TEXT("stone_slab[type=bottom]")}}, true},
+        {TEXT("hanging_roots"), {{Above, TEXT("stone_slab[type=top]")}}, false},
+        {TEXT("spore_blossom"), {{Above, TEXT("stone")}}, true},
+        {TEXT("spore_blossom"), {}, false},
+        {TEXT("cave_vines"), {{Above, TEXT("cave_vines_plant")}}, true},
+        {TEXT("pale_hanging_moss"), {{Above, TEXT("pale_oak_leaves")}}, true},
+        {TEXT("cocoa[facing=north]"), {{North, TEXT("jungle_log")}}, true},
+        {TEXT("cocoa[facing=north]"), {{North, TEXT("oak_log")}}, false},
+        {TEXT("cocoa[facing=north]"), {{South, TEXT("jungle_log")}}, false},
+        // Pointed dripstone: a sturdy face, or a column pointing the same way.
+        {TEXT("pointed_dripstone[vertical_direction=up]"), {{Below, TEXT("stone")}}, true},
+        {TEXT("pointed_dripstone[vertical_direction=up]"), {{Below, TEXT("pointed_dripstone[vertical_direction=up]")}},
+            true},
+        {TEXT("pointed_dripstone[vertical_direction=up]"),
+            {{Below, TEXT("pointed_dripstone[vertical_direction=down]")}}, false},
+        {TEXT("pointed_dripstone[vertical_direction=down]"), {{Above, TEXT("stone")}}, true},
+        // Multiface: every face held; a vine's side face may hang from the vine above; a vine's up face waits (Q8).
+        {TEXT("vine[north=true]"), {{North, TEXT("stone")}}, true},
+        {TEXT("vine[north=true]"), {}, false},
+        {TEXT("vine[north=true]"), {{Above, TEXT("vine[north=true]")}}, true},
+        {TEXT("vine[north=true,east=true]"), {{North, TEXT("stone")}}, false},
+        {TEXT("vine[up=true]"), {}, true},
+        {TEXT("glow_lichen[down=true]"), {{Below, TEXT("stone")}}, true},
+        {TEXT("glow_lichen[up=true]"), {{Above, TEXT("stone_slab[type=bottom]")}}, true},
+        {TEXT("glow_lichen[up=true]"), {{Above, TEXT("stone_slab[type=top]")}}, false},
+        {TEXT("sculk_vein[west=true]"), {{West, TEXT("glass")}}, true},
+        {TEXT("mangrove_roots"), {}, true},
+    };
+    int32 Wrong = 0;
+    for (const FRow& Row : Rows)
+        if (Survives(Row.Plant, Row.Around) != Row.bSurvives)
+        {
+            ++Wrong;
+            AddError(
+                FString::Printf(TEXT("%s: expected %s"), Row.Plant, Row.bSurvives ? TEXT("survives") : TEXT("pops")));
+        }
+    TestEqual(TEXT("support rows that differ"), Wrong, 0);
+
+    // The cascade. Dirt (hardness 0.5, 15 steps by hand) is the support that gets mined.
+    auto Put = [&L, &Parse](FIntVector Cell, const TCHAR* Text) { L.A.World.Set(Cell, Parse(Text)); };
+    auto Text = [&L](FIntVector Cell) { return L.A.World.GetRegistry().ToString(L.A.World.Get(Cell).State); };
+    // From (-150, 50, 0) this aim meets the west face of (0, 0, 1).
+    const FVector AtCell(200, 0, -12);
+    const FIntVector Support(0, 0, 1);
+    L.Hold(3);
+    // A flower and a double plant on the mined block pop, the double plant with both halves.
+    Put(Support, TEXT("dirt"));
+    Put(Support + FIntVector(0, 0, 1), TEXT("dandelion"));
+    L.Stand({-150, 50, 0}, AtCell);
+    int64 Mark = L.A.GetEventSerial();
+    TestTrue(TEXT("dirt under the flower mined"), MineSteps(L) > 0);
+    TestTrue(TEXT("the flower pops"), !L.Solid(Support + FIntVector(0, 0, 1)) && L.A.Pops == 1);
+    Put(Support, TEXT("dirt"));
+    Put(Support + FIntVector(0, 0, 1), TEXT("tall_grass[half=lower]"));
+    Put(Support + FIntVector(0, 0, 2), TEXT("tall_grass[half=upper]"));
+    L.NextStep();
+    L.Stand({-150, 50, 0}, AtCell);
+    TestTrue(TEXT("dirt under the tall grass mined"), MineSteps(L) > 0);
+    TestTrue(TEXT("both halves pop"),
+        !L.Solid(Support + FIntVector(0, 0, 1)) && !L.Solid(Support + FIntVector(0, 0, 2)) && L.A.Pops == 3);
+    // One level deep: a sugar cane stack loses only the segment on the mined block (scout H, Q1 open).
+    Put(Support, TEXT("dirt"));
+    Put(Support + FIntVector(0, 1, 0), TEXT("water"));
+    for (int32 Z = 1; Z <= 3; ++Z)
+        Put(Support + FIntVector(0, 0, Z), TEXT("sugar_cane"));
+    L.NextStep();
+    L.Stand({-150, 50, 0}, AtCell);
+    TestTrue(TEXT("dirt under the cane mined"), MineSteps(L) > 0);
+    TestTrue(TEXT("the bottom segment pops, the ones above stay"),
+        !L.Solid(Support + FIntVector(0, 0, 1)) && L.Solid(Support + FIntVector(0, 0, 2)) &&
+            L.Solid(Support + FIntVector(0, 0, 3)));
+    for (int32 Z = 0; Z <= 3; ++Z)
+        L.A.World.Set(Support + FIntVector(0, 0, Z), {});
+    L.A.World.Set(Support + FIntVector(0, 1, 0), {});
+    // Multiface: a vine on two blocks loses the face of the mined one; glow lichen the same.
+    Put(Support, TEXT("dirt"));
+    Put(FIntVector(1, 1, 1), TEXT("dirt"));
+    Put(FIntVector(0, 1, 1), TEXT("vine[north=true,east=true]"));
+    L.NextStep();
+    L.Stand({-150, 50, 0}, AtCell);
+    TestTrue(TEXT("the vine's north block mined"), MineSteps(L) > 0);
+    TestEqual(TEXT("the vine keeps its east face"), Text({0, 1, 1}), Registry.ToString(Parse(TEXT("vine[east=true]"))));
+    Put(Support, TEXT("dirt"));
+    Put(FIntVector(0, 1, 1), TEXT("glow_lichen[north=true,down=true]"));
+    Put(FIntVector(0, 1, 0), TEXT("dirt"));
+    L.NextStep();
+    L.Stand({-150, 50, 0}, AtCell);
+    TestTrue(TEXT("the lichen's north block mined"), MineSteps(L) > 0);
+    TestEqual(TEXT("the lichen keeps its floor face"), Text({0, 1, 1}),
+        Registry.ToString(Parse(TEXT("glow_lichen[down=true]"))));
+    // Placing beside a cactus pops it.
+    L.A.World.Set({0, 1, 1}, {});
+    Put({3, 0, 0}, TEXT("sand"));
+    Put({3, 0, 1}, TEXT("cactus"));
+    Put({2, 0, 0}, TEXT("dirt"));
+    L.P().Inventory.SetSlot(6, L.P().Inventory.MakeStack(L.A.Rules.FindItem(TEXT("stone")), 64));
+    L.Hold(6);
+    L.NextStep();
+    L.Stand({-150, 50, 0}, FVector(400, 0, -62));
+    FFoundationResult R = L.Use();
+    TestTrue(TEXT("a block placed beside the cactus"), R.bPlaced && R.Cell == FIntVector(2, 0, 1));
+    TestFalse(TEXT("pops the cactus"), L.Solid({3, 0, 1}));
+    // Unknown cells: the ground below z 0 is outside the bounds. A flower there never pops, and none is placed there.
+    Put({9, 1, 0}, TEXT("dandelion"));
+    Put({9, 0, 0}, TEXT("dirt"));
+    const int32 PopsBefore = L.A.Pops;
+    L.Hold(3);
+    L.NextStep();
+    L.Stand({750, 50, 0}, FVector(150, 0, -112));
+    TestTrue(TEXT("the flower's neighbour mined"), MineSteps(L) > 0 && !L.Solid({9, 0, 0}));
+    TestTrue(TEXT("a flower over an unknown cell stays"), L.Solid({9, 1, 0}) && L.A.Pops == PopsBefore);
+    FFoundationHit Floor;
+    Floor.Kind = EFoundationHitKind::Static;
+    Floor.StaticIndex = 0;
+    Floor.Cell = FIntVector(12, 0, -1);
+    Floor.Face = EFoundationFace::Up;
+    Floor.bInRange = true;
+    Floor.Point = FVector(1250, 50, 0);
+    const int32 Flower = L.A.Rules.FindItem(TEXT("dandelion"));
+    L.P().Inventory.SetSlot(5, L.P().Inventory.MakeStack(Flower, 64));
+    L.Hold(5);
+    FIntVector Destination;
+    TestEqual(TEXT("a flower on the lab floor (unknown below) is refused"),
+        L.A.CheckPlacement(L.P(), Main, Floor, Destination), EFoundationReason::CannotSurvive);
     return true;
 }
 #endif

@@ -300,6 +300,16 @@ void AVoxelWorld::SetupAuthority()
     const UFoundationInteractionSettings& Settings = UFoundationInteractionSettings::Get();
     Settings.BuildRules(Authority.Rules);
     Authority.World.SetRegistry(FFoundationBlockRegistry::GetDefault());
+    Authority.PlantSurvival = VoxelBlocks::GetPlantSurvival(Authority.World.GetRegistry());
+    const FFoundationBlockRegistry& Registry = Authority.World.GetRegistry();
+    ModelCollides.Init(false, Registry.GetStateLimit());
+    TArray<FBox> Boxes;
+    for (int32 Id = 0; Id < Registry.GetStateLimit(); ++Id)
+        if (Registry.GetShape({uint16(Id)}) == EFoundationBlockShape::Model)
+        {
+            Registry.GetCollisionBoxes({uint16(Id)}, Boxes);
+            ModelCollides[Id] = !Boxes.IsEmpty();
+        }
     Authority.World.OriginCm = OriginCm;
     Authority.World.BoundsMin = FIntVector(-VoxelWorldLimit, -VoxelWorldLimit, VoxelConstants::MinZ);
     Authority.World.BoundsMax = FIntVector(VoxelWorldLimit - 1, VoxelWorldLimit - 1, VoxelConstants::MaxZ);
@@ -531,7 +541,8 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
                         {
                             // Model states collide with their facts boxes, moved where the facts move them (cactus,
                             // bamboo, lily pads, carpets); bSolid (blocks_motion) is for the heightmaps.
-                            Authority.World.GetCollisionBoxes({X, Y, Z}, FFoundationBlockState{State}, Out);
+                            if (State < ModelCollides.Num() && ModelCollides.GetData()[State])
+                                Authority.World.GetCollisionBoxes({X, Y, Z}, FFoundationBlockState{State}, Out);
                             continue;
                         }
                         if (!Info.bSolid) continue;

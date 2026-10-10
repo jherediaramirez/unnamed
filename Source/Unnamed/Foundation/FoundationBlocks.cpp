@@ -231,7 +231,8 @@ bool FFoundationBlockWorld::GetCollisionBoxes(
 
 void FFoundationBlockWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
 {
-    // Cells whose unit box can touch the region; collision shapes stay inside their cell, moved ones too.
+    // Cells whose unit box can touch the region; collision shapes stay inside their cell, moved ones too (bamboo,
+    // dripstone and sulfur spike move theirs; Blocks.PlantShapes checks it).
     FIntVector Low = FoundationGrid::CellAt(Region.Min, OriginCm), High = FoundationGrid::CellAt(Region.Max, OriginCm);
     Low = FIntVector(FMath::Max(Low.X, BoundsMin.X), FMath::Max(Low.Y, BoundsMin.Y), FMath::Max(Low.Z, BoundsMin.Z));
     High =
