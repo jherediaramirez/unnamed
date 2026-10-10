@@ -1305,6 +1305,9 @@ void UFoundationRuntimeProbe::AddTourCases()
                 if (!Controller->GetPanels()->IsInventoryOpen()) Controller->GetPanels()->OpenInventory();
                 if (TSharedPtr<SHudCreativeScreen> Screen = Controller->GetPanels()->GetCreativeScreen())
                     Arrange(*Screen);
+                // A full garbage collection with the screen open: its brushes' textures must survive it (they did not
+                // once the held-item shots made the tour long enough to reach the periodic one).
+                CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
             },
             [this, Name]
             {
