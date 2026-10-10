@@ -55,6 +55,9 @@ public:
 
     // Sets one cell (local X and Y, world Z) and that X, Y's heightmaps; a Z outside the world changes nothing.
     void SetState(int32 X, int32 Y, int32 Z, uint16 State, const FVoxelBlockTable& Table);
+    // Sets several cells, each a dense index (GetDenseIndex) and its state, in order, then the heightmaps once for each
+    // X, Y they touch: the same column as SetState for each in turn. An index outside the column changes nothing.
+    void SetStates(TConstArrayView<TPair<int32, uint16>> Cells, const FVoxelBlockTable& Table);
     // Replaces one section's states (FVoxelSection::Volume, in FVoxelSection::GetIndex order) and leaves the
     // heightmaps alone: Finalize calls UpdateHeights for each X, Y where a write changed what the heightmaps count.
     void SetSectionStates(int32 Section, TConstArrayView<uint16> States);

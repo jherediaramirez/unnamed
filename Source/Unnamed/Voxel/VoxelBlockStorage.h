@@ -28,6 +28,8 @@ public:
     // The edits; the columns themselves are counted by the streaming stats.
     virtual SIZE_T GetAllocatedSize() const override;
     virtual bool IsLoaded(const FIntVector& Cell) const override;
+    // One FVoxelColumnPipeline::SetCells per column, each column's cells in the order given.
+    virtual void SetMany(TConstArrayView<TPair<FIntVector, FFoundationCell>> Cells) override;
 
 private:
     TFunction<FVoxelColumnPipeline*()> GetPipeline;

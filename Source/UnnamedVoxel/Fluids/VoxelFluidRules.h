@@ -444,6 +444,18 @@ namespace VoxelFluidRules
     void Wake(TWorld& World, FVoxelFluidScheduler& Scheduler, uint64 Tick, FIntVector Cell,
         const FVoxelFluidOptions& Options, bool bReact);
 
+    // What follows a change at Cell: the cell hears of it first (placed lava meets water at once, unless bReact is
+    // false), then its neighbours in UpdateOrder. Apply calls it after its own writes; the game (W2a) after every
+    // other change to its world (edits, plant pops).
+    template <typename TWorld>
+    void WakeAround(TWorld& World, FVoxelFluidScheduler& Scheduler, uint64 Tick, FIntVector Cell,
+        const FVoxelFluidOptions& Options, bool bReact)
+    {
+        Wake(World, Scheduler, Tick, Cell, Options, bReact);
+        for (const int32 Face : UpdateOrder)
+            Wake(World, Scheduler, Tick, Cell + GetFaceOffset(Face), Options, true);
+    }
+
     // Every change goes through here, as every block change does in 26.3: the cell is set, placed lava meets water at
     // once, then the neighbours hear of it in UpdateOrder. Returns false, changing nothing, when the cell no longer
     // holds Write.Before. TWorld: FVoxelFluidCell Get(FIntVector) const; void Set(FIntVector, const FVoxelFluidCell&).
@@ -454,9 +466,8 @@ namespace VoxelFluidRules
         if (World.Get(Write.Cell) != Write.Before) return false;
         if (Write.After == Write.Before) return true;
         World.Set(Write.Cell, Write.After);
-        Wake(World, Scheduler, Tick, Write.Cell, Options, Options.Mutation != EVoxelFluidMutation::NoPlacedReaction);
-        for (const int32 Face : UpdateOrder)
-            Wake(World, Scheduler, Tick, Write.Cell + GetFaceOffset(Face), Options, true);
+        WakeAround(
+            World, Scheduler, Tick, Write.Cell, Options, Options.Mutation != EVoxelFluidMutation::NoPlacedReaction);
         return true;
     }
 

@@ -42,10 +42,8 @@ namespace
     void ReplayPipelineEdits(
         FVoxelColumn& Column, TConstArrayView<TPair<int32, uint16>> Replay, const FVoxelBlockTable& Table)
     {
-        for (const TPair<int32, uint16>& Edit : Replay)
-            Column.SetState(Edit.Key % VoxelConstants::ColumnSize,
-                Edit.Key / VoxelConstants::ColumnSize % VoxelConstants::ColumnSize,
-                Edit.Key / FVoxelColumn::Area + VoxelConstants::MinZ, Edit.Value, Table);
+        // One heightmap pass for the lot: a flooded column holds many edits (water and sky W2a).
+        Column.SetStates(Replay, Table);
     }
 }
 
@@ -112,7 +110,7 @@ void FVoxelColumnPipeline::SetTintBlend(int32 TintBlend)
 {
     if (Settings.MeshOptions.TintBlend == TintBlend) return;
     Settings.MeshOptions.TintBlend = TintBlend;
-    // Every column's colours change. Jobs already running drop their results as stale and mesh again.
+    // Every column's colours change. Jobs already running are stale: their meshes show until their columns mesh again.
     for (TPair<FIntPoint, FRecord>& Pair : Records)
         if (Pair.Value.Data) MarkDirty(Pair.Value, PipelineAllSections);
     Regress();
@@ -162,6 +160,16 @@ bool FVoxelColumnPipeline::RunJob(int32 Index)
     if (!Jobs.IsValidIndex(Index) || !Jobs[Index].Work) return false;
     Jobs[Index].Run();
     return true;
+}
+
+FIntPoint FVoxelColumnPipeline::GetJobColumn(int32 Index) const
+{
+    return Jobs.IsValidIndex(Index) ? Jobs[Index].Column : FIntPoint::ZeroValue;
+}
+
+bool FVoxelColumnPipeline::IsJobPending(int32 Index) const
+{
+    return Jobs.IsValidIndex(Index) && bool(Jobs[Index].Work);
 }
 
 FVoxelColumnPipeline::FRecord& FVoxelColumnPipeline::AddRecord(FIntPoint Column)
@@ -372,13 +380,13 @@ void FVoxelColumnPipeline::CollectFinalize(const FJob& Job, FJobResult& Result, 
 void FVoxelColumnPipeline::CollectMesh(const FJob& Job, FJobResult& Result, FRecord& Record)
 {
     Record.bMeshing = false;
+    // Marked dirty again while the job ran (water and sky W2a): its mesh is still the newest there is, so it goes to
+    // the screen, or a column edited every few frames (flowing water) would show none. The column stays dirty and
+    // meshes again. Otherwise nothing became dirty since the job started, so it meshed every dirty section.
     if (Record.MeshVersion != Job.MeshVersion)
-    {
-        ++Dropped;
-        return;
-    }
-    // Nothing became dirty since the job started, so it meshed every dirty section.
-    Record.Dirty = 0;
+        ++Stale;
+    else
+        Record.Dirty = 0;
     Record.MeshedNeighbors = Job.Neighbors;
     if (IsPipelineNear(Job.Column, Rings.Center, Settings.MeshCacheRadius))
     {
@@ -897,6 +905,45 @@ bool FVoxelColumnPipeline::SetCell(const FIntVector& Cell, uint16 State, int64 S
     return true;
 }
 
+bool FVoxelColumnPipeline::SetCells(FIntPoint Column, TConstArrayView<FCellWrite> Cells)
+{
+    FRecord* Record = Records.Find(Column);
+    if (!Record || !Record->Data) return false;
+    TArray<TPair<int32, uint16>> Dense;
+    Dense.Reserve(Cells.Num());
+    // The sections to mark, per column of the 3 x 3: the union of what SetCell marks for each cell.
+    TArray<TPair<FIntPoint, uint32>, TInlineAllocator<9>> Dirty;
+    TArray<FVoxelSectionKey, TInlineAllocator<8>> Touched;
+    for (const FCellWrite& Write : Cells)
+    {
+        if (FIntPoint(Write.Cell.X >> 4, Write.Cell.Y >> 4) != Column || Write.Cell.Z < VoxelConstants::MinZ ||
+            Write.Cell.Z > VoxelConstants::MaxZ)
+            continue;
+        const int32 Index = FVoxelColumn::GetDenseIndex(Write.Cell.X & 15, Write.Cell.Y & 15, Write.Cell.Z);
+        Dense.Add({Index, Write.State});
+        Edits.FindOrAdd(Column).Add(Index, {Write.State, Write.Stamp});
+        Touched.Reset();
+        VoxelMesher::GetSectionsTouching(Write.Cell, Touched);
+        for (const FVoxelSectionKey& Key : Touched)
+        {
+            TPair<FIntPoint, uint32>* Found = Dirty.FindByPredicate(
+                [&Key](const TPair<FIntPoint, uint32>& Entry) { return Entry.Key == Key.Column; });
+            if (!Found) Found = &Dirty.Add_GetRef({Key.Column, 0});
+            Found->Value |= 1u << Key.Section;
+        }
+    }
+    if (Dense.IsEmpty()) return true;
+    // One copy on write for every cell: jobs in flight keep reading the column they started with.
+    TSharedPtr<FVoxelColumn, ESPMode::ThreadSafe> Copy = MakeShared<FVoxelColumn, ESPMode::ThreadSafe>(*Record->Data);
+    Copy->SetStates(Dense, *Table);
+    Record->Data = Copy;
+    Record->DataBytes = Copy->GetAllocatedSize();
+    for (const TPair<FIntPoint, uint32>& Entry : Dirty)
+        if (FRecord* Neighbor = Records.Find(Entry.Key); Neighbor && Neighbor->Data) MarkDirty(*Neighbor, Entry.Value);
+    Regress();
+    return true;
+}
+
 void FVoxelColumnPipeline::DropEdits()
 {
     for (const TPair<FIntPoint, TMap<int32, FEdit>>& Column : Edits)
@@ -1026,6 +1073,7 @@ FVoxelPipelineStats FVoxelColumnPipeline::GetStats() const
         ++Stats.NeededPerRing[FMath::Min<int32>(Ring, FVoxelStreamingRings::MaxStages)];
     Stats.Ready = ReadyColumns.Num();
     Stats.Dropped = Dropped;
+    Stats.Stale = Stale;
     for (const TPair<FIntPoint, TMap<int32, FEdit>>& Column : Edits)
         Stats.Edits += Column.Value.Num();
     Stats.Generate = GenerateTimes;

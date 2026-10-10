@@ -94,6 +94,12 @@ public:
     // Whether the cell's data is present: streamed storage loads around the player, and the world knows no cell
     // that is not loaded.
     virtual bool IsLoaded(const FIntVector& Cell) const { return true; }
+    // Several cells at once (FFoundationBlockWorld::SetMany), each at most once; storage may write them together.
+    virtual void SetMany(TConstArrayView<TPair<FIntVector, FFoundationCell>> Cells)
+    {
+        for (const TPair<FIntVector, FFoundationCell>& Cell : Cells)
+            Set(Cell.Key, Cell.Value);
+    }
 };
 
 // 16x16x16 sections allocated on first write and kept (their revisions matter) until Empty.
@@ -149,6 +155,12 @@ struct UNNAMED_API FFoundationBlockWorld
     FFoundationCell Get(const FIntVector& Cell) const;
     // The only mutation: sets the state, stamps the next world revision and records the change.
     int64 Set(const FIntVector& Cell, FFoundationBlockState State);
+    // Set for many known cells, each at most once (a fluid tick's writes, water and sky W2a): each is stamped and
+    // recorded as Set does, in order, and the storage writes them together.
+    void SetMany(TConstArrayView<TPair<FIntVector, FFoundationBlockState>> Cells);
+    // Called after every change Set and SetMany commit, with the cell's state before and after: the voxel world's
+    // fluids wake up from it (water and sky W2a). It may change other cells through Set. Clear does not call it.
+    TFunction<void(const FIntVector& Cell, FFoundationBlockState Before, FFoundationBlockState After)> OnSet;
     // Empties every cell (a lab reset). The world revision keeps counting.
     void Clear();
 

@@ -71,6 +71,22 @@ void FVoxelColumn::SetState(int32 X, int32 Y, int32 Z, uint16 State, const FVoxe
     UpdateHeights(X, Y, Table);
 }
 
+void FVoxelColumn::SetStates(TConstArrayView<TPair<int32, uint16>> Cells, const FVoxelBlockTable& Table)
+{
+    bool Touched[Area] = {};
+    for (const TPair<int32, uint16>& Cell : Cells)
+    {
+        if (Cell.Key < 0 || Cell.Key >= DenseVolume) continue;
+        const int32 Local = Cell.Key / Area, Spot = Cell.Key % Area;
+        Sections[Local >> 4].Set(
+            FVoxelSection::GetIndex(Spot % VoxelConstants::ColumnSize, Spot / VoxelConstants::ColumnSize, Local & 15),
+            Cell.Value);
+        Touched[Spot] = true;
+    }
+    for (int32 Spot = 0; Spot < Area; ++Spot)
+        if (Touched[Spot]) UpdateHeights(Spot % VoxelConstants::ColumnSize, Spot / VoxelConstants::ColumnSize, Table);
+}
+
 void FVoxelColumn::SetSectionStates(int32 Section, TConstArrayView<uint16> States)
 {
     Sections[Section] = FVoxelSection::FromStates(States);
