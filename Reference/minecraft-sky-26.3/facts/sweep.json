@@ -1,0 +1,1050 @@
+{
+ "ticks": [
+  {
+   "tick": 0,
+   "sun_angle": 282.37431,
+   "moon_angle": 462.37432,
+   "star_angle": 282.37431,
+   "star_brightness": 0.05463,
+   "sky_light_factor": 0.70332,
+   "sky_light_level": 14.18857,
+   "light": 15,
+   "detector": 7,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 92,
+   "sun_angle": 283.80196,
+   "moon_angle": 463.80195,
+   "star_angle": 283.80196,
+   "star_brightness": 0.037,
+   "sky_light_factor": 0.74071,
+   "sky_light_level": 14.74986,
+   "light": 15,
+   "detector": 7,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 133,
+   "sun_angle": 284.43617,
+   "moon_angle": 464.43619,
+   "star_angle": 284.43617,
+   "star_brightness": 0.03416,
+   "sky_light_factor": 0.75737,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 7,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 500,
+   "sun_angle": 290.05766,
+   "moon_angle": 470.05766,
+   "star_angle": 290.05766,
+   "star_brightness": 0.00878,
+   "sky_light_factor": 0.90652,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 8,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 627,
+   "sun_angle": 291.97911,
+   "moon_angle": 471.97911,
+   "star_angle": 291.97911,
+   "star_brightness": -0.0,
+   "sky_light_factor": 0.95814,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 9,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 730,
+   "sun_angle": 293.52828,
+   "moon_angle": 473.52827,
+   "star_angle": 293.52828,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 9,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 1000,
+   "sun_angle": 297.5457,
+   "moon_angle": 477.54572,
+   "star_angle": 297.5457,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 10,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 1500,
+   "sun_angle": 304.83519,
+   "moon_angle": 484.83517,
+   "star_angle": 304.83519,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 11,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 2000,
+   "sun_angle": 311.91304,
+   "moon_angle": 491.91302,
+   "star_angle": 311.91304,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 12,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 2500,
+   "sun_angle": 318.77021,
+   "moon_angle": 498.77023,
+   "star_angle": 318.77021,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 13,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 3000,
+   "sun_angle": 325.40148,
+   "moon_angle": 505.40147,
+   "star_angle": 325.40148,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 13,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 3500,
+   "sun_angle": 331.79298,
+   "moon_angle": 511.793,
+   "star_angle": 331.79298,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 14,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 4000,
+   "sun_angle": 337.94164,
+   "moon_angle": 517.94161,
+   "star_angle": 337.94164,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 14,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 4500,
+   "sun_angle": 343.84141,
+   "moon_angle": 523.84139,
+   "star_angle": 343.84141,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 15,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 5000,
+   "sun_angle": 349.48726,
+   "moon_angle": 529.48726,
+   "star_angle": 349.48726,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 15,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 5500,
+   "sun_angle": 354.87477,
+   "moon_angle": 534.87472,
+   "star_angle": 354.87477,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 15,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 6000,
+   "sun_angle": -1e-05,
+   "moon_angle": 180.0,
+   "star_angle": -1e-05,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 15,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 6500,
+   "sun_angle": 5.12528,
+   "moon_angle": 185.12528,
+   "star_angle": 5.12528,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 15,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 7000,
+   "sun_angle": 10.51272,
+   "moon_angle": 190.51274,
+   "star_angle": 10.51272,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 15,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 7500,
+   "sun_angle": 16.15857,
+   "moon_angle": 196.15857,
+   "star_angle": 16.15857,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 15,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 8000,
+   "sun_angle": 22.05836,
+   "moon_angle": 202.05835,
+   "star_angle": 22.05836,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 14,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 8500,
+   "sun_angle": 28.20697,
+   "moon_angle": 208.207,
+   "star_angle": 28.20697,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 14,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 9000,
+   "sun_angle": 34.59856,
+   "moon_angle": 214.59857,
+   "star_angle": 34.59856,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 13,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 9500,
+   "sun_angle": 41.22977,
+   "moon_angle": 221.22977,
+   "star_angle": 41.22977,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 13,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 10000,
+   "sun_angle": 48.08694,
+   "moon_angle": 228.08694,
+   "star_angle": 48.08694,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 12,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 10500,
+   "sun_angle": 55.16478,
+   "moon_angle": 235.16479,
+   "star_angle": 55.16478,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 11,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 11000,
+   "sun_angle": 62.45432,
+   "moon_angle": 242.45432,
+   "star_angle": 62.45432,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 10,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 11270,
+   "sun_angle": 66.4753,
+   "moon_angle": 246.4753,
+   "star_angle": 66.4753,
+   "star_brightness": -0.0,
+   "sky_light_factor": 1.0,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 9,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 11373,
+   "sun_angle": 68.02087,
+   "moon_angle": 248.02089,
+   "star_angle": 68.02087,
+   "star_brightness": -0.0,
+   "sky_light_factor": 0.95814,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 9,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 11500,
+   "sun_angle": 69.94234,
+   "moon_angle": 249.94234,
+   "star_angle": 69.94234,
+   "star_brightness": 0.00566,
+   "sky_light_factor": 0.90652,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 8,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 11867,
+   "sun_angle": 75.56381,
+   "moon_angle": 255.56381,
+   "star_angle": 75.56381,
+   "star_brightness": 0.03265,
+   "sky_light_factor": 0.75737,
+   "sky_light_level": 15.0,
+   "light": 15,
+   "detector": 7,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 12000,
+   "sun_angle": 77.62567,
+   "moon_angle": 257.62564,
+   "star_angle": 77.62567,
+   "star_brightness": 0.05322,
+   "sky_light_factor": 0.70332,
+   "sky_light_level": 14.18857,
+   "light": 15,
+   "detector": 7,
+   "detector_inverted": 0
+  },
+  {
+   "tick": 12500,
+   "sun_angle": 85.48932,
+   "moon_angle": 265.4893,
+   "star_angle": 85.48932,
+   "star_brightness": 0.1782,
+   "sky_light_factor": 0.50011,
+   "sky_light_level": 11.1381,
+   "light": 12,
+   "detector": 4,
+   "detector_inverted": 3
+  },
+  {
+   "tick": 12542,
+   "sun_angle": 86.15771,
+   "moon_angle": 266.15771,
+   "star_angle": 86.15771,
+   "star_brightness": 0.19283,
+   "sky_light_factor": 0.48304,
+   "sky_light_level": 10.88186,
+   "light": 11,
+   "detector": 4,
+   "detector_inverted": 4
+  },
+  {
+   "tick": 12786,
+   "sun_angle": 90.06384,
+   "moon_angle": 270.06383,
+   "star_angle": 90.06384,
+   "star_brightness": 0.28564,
+   "sky_light_factor": 0.38387,
+   "sky_light_level": 9.39323,
+   "light": 10,
+   "detector": 3,
+   "detector_inverted": 5
+  },
+  {
+   "tick": 13000,
+   "sun_angle": 93.52134,
+   "moon_angle": 273.52131,
+   "star_angle": 93.52134,
+   "star_brightness": 0.38943,
+   "sky_light_factor": 0.2969,
+   "sky_light_level": 8.08763,
+   "light": 9,
+   "detector": 2,
+   "detector_inverted": 6
+  },
+  {
+   "tick": 13140,
+   "sun_angle": 95.79873,
+   "moon_angle": 275.7987,
+   "star_angle": 95.79873,
+   "star_brightness": 0.45732,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 7.2335,
+   "light": 8,
+   "detector": 2,
+   "detector_inverted": 7
+  },
+  {
+   "tick": 13228,
+   "sun_angle": 97.23634,
+   "moon_angle": 277.23631,
+   "star_angle": 97.23634,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 6.69662,
+   "light": 7,
+   "detector": 1,
+   "detector_inverted": 8
+  },
+  {
+   "tick": 13500,
+   "sun_angle": 101.7089,
+   "moon_angle": 281.70889,
+   "star_angle": 101.7089,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 5.03716,
+   "light": 6,
+   "detector": 1,
+   "detector_inverted": 9
+  },
+  {
+   "tick": 13670,
+   "sun_angle": 104.52576,
+   "moon_angle": 284.52572,
+   "star_angle": 104.52576,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 14000,
+   "sun_angle": 110.03866,
+   "moon_angle": 290.03866,
+   "star_angle": 110.03866,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 14500,
+   "sun_angle": 118.49651,
+   "moon_angle": 298.4965,
+   "star_angle": 118.49651,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 15000,
+   "sun_angle": 127.06784,
+   "moon_angle": 307.06782,
+   "star_angle": 127.06784,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 15500,
+   "sun_angle": 135.73743,
+   "moon_angle": 315.73739,
+   "star_angle": 135.73743,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 16000,
+   "sun_angle": 144.48966,
+   "moon_angle": 324.48967,
+   "star_angle": 144.48966,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 16500,
+   "sun_angle": 153.30855,
+   "moon_angle": 333.30853,
+   "star_angle": 153.30855,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 17000,
+   "sun_angle": 162.17766,
+   "moon_angle": 342.17765,
+   "star_angle": 162.17766,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 17500,
+   "sun_angle": 171.08039,
+   "moon_angle": 351.08038,
+   "star_angle": 171.08039,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 18000,
+   "sun_angle": 179.99999,
+   "moon_angle": 359.99998,
+   "star_angle": 179.99999,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 18500,
+   "sun_angle": 188.91957,
+   "moon_angle": 368.91958,
+   "star_angle": 188.91957,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 19000,
+   "sun_angle": 197.82234,
+   "moon_angle": 377.82231,
+   "star_angle": 197.82234,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 19500,
+   "sun_angle": 206.69143,
+   "moon_angle": 386.69143,
+   "star_angle": 206.69143,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 20000,
+   "sun_angle": 215.51027,
+   "moon_angle": 395.51028,
+   "star_angle": 215.51027,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 20500,
+   "sun_angle": 224.26259,
+   "moon_angle": 404.26257,
+   "star_angle": 224.26259,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 21000,
+   "sun_angle": 232.93216,
+   "moon_angle": 412.93218,
+   "star_angle": 232.93216,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 21500,
+   "sun_angle": 241.50347,
+   "moon_angle": 421.50346,
+   "star_angle": 241.50347,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 22000,
+   "sun_angle": 249.96134,
+   "moon_angle": 429.96134,
+   "star_angle": 249.96134,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 22330,
+   "sun_angle": 255.47422,
+   "moon_angle": 435.47424,
+   "star_angle": 255.47422,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 4.0,
+   "light": 4,
+   "detector": 0,
+   "detector_inverted": 11
+  },
+  {
+   "tick": 22500,
+   "sun_angle": 258.29106,
+   "moon_angle": 438.29106,
+   "star_angle": 258.29106,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 5.03716,
+   "light": 6,
+   "detector": 1,
+   "detector_inverted": 9
+  },
+  {
+   "tick": 22772,
+   "sun_angle": 262.7636,
+   "moon_angle": 442.7636,
+   "star_angle": 262.7636,
+   "star_brightness": 0.5,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 6.69662,
+   "light": 7,
+   "detector": 1,
+   "detector_inverted": 8
+  },
+  {
+   "tick": 22860,
+   "sun_angle": 264.20122,
+   "moon_angle": 444.20121,
+   "star_angle": 264.20122,
+   "star_brightness": 0.45397,
+   "sky_light_factor": 0.24,
+   "sky_light_level": 7.2335,
+   "light": 8,
+   "detector": 2,
+   "detector_inverted": 7
+  },
+  {
+   "tick": 23000,
+   "sun_angle": 266.47866,
+   "moon_angle": 446.47865,
+   "star_angle": 266.47866,
+   "star_brightness": 0.38074,
+   "sky_light_factor": 0.2969,
+   "sky_light_level": 8.08763,
+   "light": 9,
+   "detector": 2,
+   "detector_inverted": 6
+  },
+  {
+   "tick": 23460,
+   "sun_angle": 273.87414,
+   "moon_angle": 453.87413,
+   "star_angle": 273.87414,
+   "star_brightness": 0.19292,
+   "sky_light_factor": 0.48385,
+   "sky_light_level": 10.89407,
+   "light": 11,
+   "detector": 4,
+   "detector_inverted": 4
+  },
+  {
+   "tick": 23500,
+   "sun_angle": 274.51066,
+   "moon_angle": 454.51066,
+   "star_angle": 274.51066,
+   "star_brightness": 0.18058,
+   "sky_light_factor": 0.50011,
+   "sky_light_level": 11.1381,
+   "light": 12,
+   "detector": 4,
+   "detector_inverted": 3
+  },
+  {
+   "tick": 23999,
+   "sun_angle": 282.35877,
+   "moon_angle": 462.35878,
+   "star_angle": 282.35877,
+   "star_brightness": 0.05482,
+   "sky_light_factor": 0.70291,
+   "sky_light_level": 14.18247,
+   "light": 15,
+   "detector": 7,
+   "detector_inverted": 0
+  }
+ ],
+ "moon": [
+  {
+   "tick": 0,
+   "phase": "full_moon"
+  },
+  {
+   "tick": 6000,
+   "phase": "full_moon"
+  },
+  {
+   "tick": 18000,
+   "phase": "full_moon"
+  },
+  {
+   "tick": 23999,
+   "phase": "full_moon"
+  },
+  {
+   "tick": 24000,
+   "phase": "waning_gibbous"
+  },
+  {
+   "tick": 30000,
+   "phase": "waning_gibbous"
+  },
+  {
+   "tick": 42000,
+   "phase": "waning_gibbous"
+  },
+  {
+   "tick": 47999,
+   "phase": "waning_gibbous"
+  },
+  {
+   "tick": 48000,
+   "phase": "third_quarter"
+  },
+  {
+   "tick": 66000,
+   "phase": "third_quarter"
+  },
+  {
+   "tick": 90000,
+   "phase": "waning_crescent"
+  },
+  {
+   "tick": 114000,
+   "phase": "new_moon"
+  },
+  {
+   "tick": 138000,
+   "phase": "waxing_crescent"
+  },
+  {
+   "tick": 162000,
+   "phase": "first_quarter"
+  },
+  {
+   "tick": 186000,
+   "phase": "waxing_gibbous"
+  },
+  {
+   "tick": 210000,
+   "phase": "full_moon"
+  }
+ ],
+ "colours": [
+  {
+   "tick": 12318,
+   "f": 0.25014,
+   "candidates": {
+    "srgb_lerp": [
+     89.98,
+     125.23,
+     191.21
+    ],
+    "linear_lerp": [
+     105.69,
+     147.09,
+     224.59
+    ]
+   },
+   "match": null
+  },
+  {
+   "tick": 12768,
+   "f": 0.49972,
+   "candidates": {
+    "srgb_lerp": [
+     60.03,
+     83.55,
+     127.57
+    ],
+    "linear_lerp": [
+     88.26,
+     122.84,
+     187.56
+    ]
+   },
+   "match": null
+  },
+  {
+   "tick": 13219,
+   "f": 0.74986,
+   "candidates": {
+    "srgb_lerp": [
+     30.02,
+     41.77,
+     63.79
+    ],
+    "linear_lerp": [
+     64.47,
+     89.72,
+     137.0
+    ]
+   },
+   "match": null
+  },
+  {
+   "tick": 13670,
+   "f": 1.0,
+   "candidates": {
+    "srgb_lerp": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "linear_lerp": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "match": [
+    "srgb_lerp",
+    "#000000"
+   ]
+  },
+  {
+   "tick": 6000,
+   "f": 0.0,
+   "candidates": {
+    "srgb_lerp": [
+     120.0,
+     167.0,
+     255.0
+    ],
+    "linear_lerp": [
+     120.0,
+     167.0,
+     255.0
+    ]
+   },
+   "match": [
+    "srgb_lerp",
+    "#78a7ff"
+   ]
+  },
+  {
+   "tick": 18000,
+   "f": 1.0,
+   "candidates": {
+    "srgb_lerp": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "linear_lerp": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "match": [
+    "srgb_lerp",
+    "#000000"
+   ]
+  }
+ ],
+ "biome_blend": [
+  {
+   "x": 0,
+   "plains": true,
+   "desert": false
+  },
+  {
+   "x": 2,
+   "plains": true,
+   "desert": false
+  },
+  {
+   "x": 4,
+   "plains": true,
+   "desert": false
+  },
+  {
+   "x": 6,
+   "plains": true,
+   "desert": false
+  },
+  {
+   "x": 8,
+   "plains": true,
+   "desert": false
+  },
+  {
+   "x": 10,
+   "plains": true,
+   "desert": false
+  },
+  {
+   "x": 12,
+   "plains": true,
+   "desert": false
+  },
+  {
+   "x": 14,
+   "plains": true,
+   "desert": false
+  },
+  {
+   "x": 16,
+   "plains": false,
+   "desert": true
+  },
+  {
+   "x": 18,
+   "plains": false,
+   "desert": true
+  },
+  {
+   "x": 20,
+   "plains": false,
+   "desert": true
+  },
+  {
+   "x": 22,
+   "plains": false,
+   "desert": true
+  },
+  {
+   "x": 24,
+   "plains": false,
+   "desert": true
+  },
+  {
+   "x": 26,
+   "plains": false,
+   "desert": true
+  },
+  {
+   "x": 28,
+   "plains": false,
+   "desert": true
+  },
+  {
+   "x": 30,
+   "plains": false,
+   "desert": true
+  },
+  {
+   "x": 32,
+   "plains": false,
+   "desert": true
+  }
+ ]
+}
