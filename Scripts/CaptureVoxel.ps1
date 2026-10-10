@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates)
+param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates,[switch]$TorchRoom,[switch]$TorchLook,[int]$TorchGlow=-1)
 # Renders the generated world offscreen (/Game/Maps/L_Generated) and saves AVoxelWorld's screenshots: overview,
 # closeup, ground, lumen-scene and section, plus build.txt with the first view's streaming timings. The rings stay on
 # the player's spawn, and the view's edge is meshed against air (voxel.Debug.EdgeWalls 1; -ExecCmds can turn it off),
@@ -21,11 +21,24 @@ param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[in
 # look pairs (cave, cave-lava and the probe cave with 10 torches, MegaLights 0 and 1), the edit cost of one torch, T1's timed
 # cases with torches-1/10/100 beside megalights-1/10/100, 64 torches clustered against spread, and the torch leak test:
 # torches.txt, torches.csv, torches-*.png and lights-leak-*.png, in a folder ending in -torches; lights-passes.txt as for -Lights.
+# -TorchRoom instead builds the torch look reference (session T3, probe P4; FVoxelLightShots with -VoxelShotTorchRoom): a
+# 9 x 4 x 9 air room in a stone shell 31 blocks under the surface near the spawn, seen from a corner at eye height with the
+# exposure frozen on one torch at 1000 cd: one torch, then four, with MegaLights 0 and 1 at several voxel.LightIntensity and
+# voxel.LightTemperature values, then a glowstone in the ceiling, then one and four torches at voxel.LightFalloff 2 and 8
+# (each after a short voxel.LightBrightness search matching the 1000 cd floor patch); room.txt (cells, camera, EV, patch table, voxel.LightsInfo),
+# room.csv and room-*.png, in a folder ending in -room. Every written cell and changed variable is put back.
+# -TorchLook instead shoots the torch look pairs (session T3, the warm look; -VoxelShotTorchLook) at the run's own settings
+# (no sweep), each with MegaLights 0 and 1, under the room's frozen exposure: the room with 1 torch, a close crop of that
+# torch, the room with 4 torches and T1's probe cave with 10; look.txt (mean luma, saturated and black shares, settings,
+# voxel.LightsInfo per shot) and look-<view>-ml<0|1>.png, in a folder ending in -look.
+# -TorchGlow <0-15> meshes the torch models at that glow from the start (-VoxelTorchGlow=N, voxel.TorchGlow; 14 is today's).
 # Evidence is never overwritten.
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
+# The look pairs build the torch room (its steps are skipped).
+if($TorchLook){$TorchRoom=[switch]$true}
 $kind=if($Flight){'VoxelFlight'}else{'VoxelShots'}
-if(($Lights -or $TorchGates) -and -not $Flight){if(-not $OutputDirectory){$OutputDirectory=Join-Path $root ('Tests/Evidence/'+(Get-Date -Format 'yyyy-MM-dd')+'/VoxelShots-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+$(if($TorchGates){'-torches'}else{'-lights'}))};if(-not $PSBoundParameters.ContainsKey('TimeoutSeconds')){$TimeoutSeconds=2400}}
+if(($Lights -or $TorchGates -or $TorchRoom) -and -not $Flight){if(-not $OutputDirectory){$OutputDirectory=Join-Path $root ('Tests/Evidence/'+(Get-Date -Format 'yyyy-MM-dd')+'/VoxelShots-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+$(if($TorchLook){'-look'}elseif($TorchRoom){'-room'}elseif($TorchGates){'-torches'}else{'-lights'}))};if(-not $PSBoundParameters.ContainsKey('TimeoutSeconds')){$TimeoutSeconds=2400}}
 if(-not $OutputDirectory){$OutputDirectory=Join-Path $root ('Tests/Evidence/'+(Get-Date -Format 'yyyy-MM-dd')+"/$kind-"+(Get-Date -Format 'yyyyMMdd-HHmmss'))}
 if(Test-Path -LiteralPath $OutputDirectory){throw 'Use a fresh evidence directory.'}
 New-Item -ItemType Directory -Path $OutputDirectory | Out-Null
@@ -51,8 +64,11 @@ if($SpawnExact){$arguments+='-VoxelSpawnExact'}
 # ocean floor or the column grid (-ExecCmds 'voxel.Debug.ColumnGrid 1').
 if($View -and -not $Flight){if($View.Count -ne 6){throw '-View takes CX,CY,CZ,TX,TY,TZ'};$arguments+=('-VoxelShotView='+($View -join ','))}
 if($NoSurfaceRules){$arguments+='-VoxelNoSurfaceRules'}
-if(($Lights -or $TorchGates) -and -not $Flight){$arguments+='-VoxelShotLights'}
+if(($Lights -or $TorchGates -or $TorchRoom) -and -not $Flight){$arguments+='-VoxelShotLights'}
 if($TorchGates -and -not $Flight){$arguments+='-VoxelShotTorchGates'}
+if($TorchRoom -and -not $Flight){$arguments+='-VoxelShotTorchRoom'}
+if($TorchLook -and -not $Flight){$arguments+='-VoxelShotTorchLook'}
+if($TorchGlow -ge 0){$arguments+="-VoxelTorchGlow=$TorchGlow"}
 if($Flight -and $FlightSeconds -gt 0){$arguments+="-VoxelFlightSeconds=$FlightSeconds"}
 if($WorldsDir){$arguments+=('-WorldsDir="'+(Resolve-Path -LiteralPath $WorldsDir).Path+'"')}
 # Extra console commands for comparisons, e.g. -ExecCmds 'r.Lumen.HardwareRayTracing.LightingMode 2'; later ones win.
@@ -75,8 +91,9 @@ if($Flight){
 $names=@('overview','closeup','ground','lumen-scene','section')+@(if($Edits){'edits'})+@(if($View){'view'})+@(if($Garden){'garden','garden-close','garden-pool','garden-lichen','garden-amethyst','garden-border','field','field-clearing','distance-008','distance-016','distance-032','distance-064','distance-128'})
 $shots=$names | Where-Object { Test-Path (Join-Path $OutputDirectory "$_.png") }
 if($shots.Count -ne $names.Count -or -not(Test-Path (Join-Path $OutputDirectory 'build.txt'))){throw "Missing screenshots ($($shots.Count) of $($names.Count)) after $elapsed s: $OutputDirectory"}
-$lightsReport=if($TorchGates){'torches.txt'}else{'lights.txt'}
-if(($Lights -or $TorchGates) -and -not(Test-Path (Join-Path $OutputDirectory $lightsReport))){throw "No $lightsReport after $elapsed s: $OutputDirectory"}
+$lightsReport=if($TorchLook){'look.txt'}elseif($TorchRoom){'room.txt'}elseif($TorchGates){'torches.txt'}else{'lights.txt'}
+if(($Lights -or $TorchGates -or $TorchRoom) -and -not(Test-Path (Join-Path $OutputDirectory $lightsReport))){throw "No $lightsReport after $elapsed s: $OutputDirectory"}
 "PASS: $($names.Count) screenshots in $elapsed s. $OutputDirectory"
 Get-Content (Join-Path $OutputDirectory 'build.txt')
-if($Lights -or $TorchGates){Get-Content (Join-Path $OutputDirectory $lightsReport);& (Join-Path $PSScriptRoot 'SummarizeLightProbe.ps1') -Folder $OutputDirectory}
+if($Lights -or $TorchGates -or $TorchRoom){Get-Content (Join-Path $OutputDirectory $lightsReport)}
+if(($Lights -or $TorchGates) -and -not $TorchRoom){& (Join-Path $PSScriptRoot 'SummarizeLightProbe.ps1') -Folder $OutputDirectory}

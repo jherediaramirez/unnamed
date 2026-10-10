@@ -3,6 +3,8 @@
 #include "Foundation/FoundationProfile.h"
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformTime.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "Voxel/VoxelWorld.h"
 #include "VoxelConstants.h"
 #include "VoxelLog.h"
@@ -28,11 +30,29 @@ namespace
         TEXT("Candelas of one torch light (a level-14 source); merged and dimmer sources scale it by their summed "
              "level over 14."),
         ECVF_Default);
+    TAutoConsoleVariable<float> CVarLightFalloff(TEXT("voxel.LightFalloff"), 0,
+        TEXT("The torch lights' falloff. 0: inverse squared, in candelas (voxel.LightIntensity). Above 0 (up to 16): "
+             "no inverse-squared falloff, this falloff exponent over the light's radius instead (UE's (1 - (d/r)^2)^n, "
+             "flatter than inverse squared), with the unitless voxel.LightBrightness as the intensity. Either way a "
+             "level-L source lights L - 1 blocks around it."),
+        ECVF_Default);
+    TAutoConsoleVariable<float> CVarLightBrightness(TEXT("voxel.LightBrightness"), FVoxelLights::FSettings().Brightness,
+        TEXT(
+            "Unitless intensity of one torch light (a level-14 source) while voxel.LightFalloff is above 0; merged and "
+            "dimmer sources scale it by their summed level over 14. The default puts the floor a block from one torch "
+            "about where 1000 cd with inverse-squared falloff puts it."),
+        ECVF_Default);
     TAutoConsoleVariable<float> CVarLightTemperature(
         TEXT("voxel.LightTemperature"), 3000, TEXT("The torch lights' colour temperature (K)."), ECVF_Default);
     TAutoConsoleVariable<int32> CVarLightMinLevel(TEXT("voxel.LightMinLevel"), VoxelLightSources::DefaultMinLevel,
         TEXT("The light level a block state needs for a torch light (a torch is 14). A change makes a new light table, "
              "which a column uses from its next mesh; voxel.Regenerate meshes every column again."),
+        ECVF_Default);
+    TAutoConsoleVariable<int32> CVarTorchGlow(TEXT("voxel.TorchGlow"), VoxelLightSources::TorchLevel,
+        TEXT("The level (0-15) the torch models (torch, wall_torch: the torch rule) glow with in the mesh; 14, a "
+             "torch's light level, is the default. Lower keeps the stick's texture from blowing out to white. Only the "
+             "mesh's glow: the torch lights stay at level 14, and every other block keeps its glow. Applies when the "
+             "world is built and at voxel.Regenerate; -VoxelTorchGlow=N on the command line sets it from the start."),
         ECVF_Default);
 
     bool IsSameSources(TConstArrayView<FVoxelLightSource> A, TConstArrayView<FVoxelLightSource> B)
@@ -67,6 +87,8 @@ FVoxelLights::FSettings FVoxelLights::ReadSettings()
     Settings.Count = FMath::Clamp(CVarLightCount.GetValueOnGameThread(), 0, VoxelLightSources::MaxLights);
     Settings.Radius = FMath::Max(0.f, CVarLightRadius.GetValueOnGameThread());
     Settings.IntensityCd = FMath::Max(0.f, CVarLightIntensity.GetValueOnGameThread());
+    Settings.Falloff = FMath::Clamp(CVarLightFalloff.GetValueOnGameThread(), 0.f, 16.f);
+    Settings.Brightness = FMath::Max(0.f, CVarLightBrightness.GetValueOnGameThread());
     Settings.Temperature = FMath::Clamp(CVarLightTemperature.GetValueOnGameThread(), 1700.f, 12000.f);
     return Settings;
 }
@@ -74,6 +96,18 @@ FVoxelLights::FSettings FVoxelLights::ReadSettings()
 int32 FVoxelLights::ReadMinLevel()
 {
     return FMath::Clamp(CVarLightMinLevel.GetValueOnGameThread(), 1, 15);
+}
+
+int32 FVoxelLights::ReadTorchGlow()
+{
+    return FMath::Clamp(CVarTorchGlow.GetValueOnGameThread(), 0, 15);
+}
+
+void FVoxelLights::SetTorchGlowFromCommandLine()
+{
+    int32 Glow = 0;
+    if (FParse::Value(FCommandLine::Get(), TEXT("VoxelTorchGlow="), Glow))
+        CVarTorchGlow->Set(FMath::Clamp(Glow, 0, 15), ECVF_SetByCommandline);
 }
 
 void FVoxelLights::SetColumn(FIntPoint Column, TArray<FVoxelLightSource>&& LightSources)
@@ -151,8 +185,9 @@ bool FVoxelLights::Update(const FVector& CameraCm, const FSettings& InSettings)
     if (!bChanged && !bMoved && !bDirty) return false;
 
     const double Start = FPlatformTime::Seconds();
-    const bool bRetuneAll =
-        bLive && (Settings.IntensityCd != LastSettings.IntensityCd || Settings.Temperature != LastSettings.Temperature);
+    const bool bRetuneAll = bLive &&
+        (Settings.IntensityCd != LastSettings.IntensityCd || Settings.Falloff != LastSettings.Falloff ||
+            Settings.Brightness != LastSettings.Brightness || Settings.Temperature != LastSettings.Temperature);
     bLive = true;
     bPicked = true;
     bDirty = false;
@@ -261,7 +296,14 @@ void FVoxelLights::Show(int32 Slot, const FVoxelLightPick& Pick, const FSettings
     if (bMove) Light->SetWorldLocation(OriginCm + Pick.Centroid * LightsBlockCm);
     if (bRetune)
     {
-        Light->SetIntensity(Settings.IntensityCd * Pick.Weight);
+        // voxel.LightFalloff 0: inverse squared in candelas, the exponent left at the component's default (unused);
+        // above 0: that exponent and the unitless brightness.
+        const bool bInverseSquared = Settings.Falloff <= 0;
+        Light->SetUseInverseSquaredFalloff(bInverseSquared);
+        Light->SetLightFalloffExponent(
+            bInverseSquared ? GetDefault<UPointLightComponent>()->LightFalloffExponent : Settings.Falloff);
+        Light->SetIntensityUnits(bInverseSquared ? ELightUnits::Candelas : ELightUnits::Unitless);
+        Light->SetIntensity((bInverseSquared ? Settings.IntensityCd : Settings.Brightness) * Pick.Weight);
         // A level-L source lights L - 1 blocks around it.
         Light->SetAttenuationRadius(float(FMath::Max(1, int32(Pick.Level) - 1) * LightsBlockCm));
         Light->SetTemperature(Settings.Temperature);
@@ -285,7 +327,8 @@ UPointLightComponent* FVoxelLights::CreateComponent(const FSettings& Settings)
 {
     AActor* Actor = Owner.Get();
     if (!Actor) return nullptr;
-    // T1's "megalights" probe light: movable, shadowed, MegaLights allowed, in candelas with inverse-squared falloff.
+    // T1's "megalights" probe light: movable, shadowed, MegaLights allowed, in candelas with inverse-squared falloff
+    // (Show switches the falloff and units when voxel.LightFalloff is above 0).
     UPointLightComponent* Light = NewObject<UPointLightComponent>(Actor, NAME_None, RF_Transient);
     Light->SetMobility(EComponentMobility::Movable);
     Light->CastShadows = true;
@@ -344,15 +387,18 @@ FString FVoxelLights::Describe() const
             Shown += Light->IsRegistered() && Light->IsVisible();
     for (const FVoxelLightPick& Pick : Picks)
         Merged += Pick.Members;
+    const FString Falloff = LastSettings.Falloff > 0
+        ? FString::Printf(TEXT("falloff exponent %g, brightness %g"), LastSettings.Falloff, LastSettings.Brightness)
+        : FString::Printf(TEXT("inverse squared, %.0f cd"), LastSettings.IntensityCd);
     return FString::Printf(
         TEXT("voxel.LightsInfo: pool %s (voxel.Lights %d, r.MegaLights.EnableForProject %d); %d columns with %d "
-             "sources known, %d in reach at the last pick; %d picks of %d sources (K %d, radius %.0f blocks, %.0f cd, "
+             "sources known, %d in reach at the last pick; %d picks of %d sources (K %d, radius %.0f blocks, %s, "
              "%.0f K, min level %d); %d components, %d shown; %lld updates, last %.3f ms, peak %.3f ms; the last: %d "
              "added, %d moved, %d retuned, %d freed, %d kept, %d created, %d destroyed"),
         bLive ? TEXT("live") : TEXT("not live"), CVarLights.GetValueOnGameThread(), GetMegaLightsForProject(),
         Columns.Num(), SourceCount, GatheredCount, Picks.Num(), Merged, LastSettings.Count, LastSettings.Radius,
-        LastSettings.IntensityCd, LastSettings.Temperature, ReadMinLevel(), GetComponentCount(), Shown, UpdateCount,
-        LastMs, PeakMs, LastChanges.Added, LastChanges.Moved, LastChanges.Retuned, LastChanges.Freed, LastChanges.Kept,
+        *Falloff, LastSettings.Temperature, ReadMinLevel(), GetComponentCount(), Shown, UpdateCount, LastMs, PeakMs,
+        LastChanges.Added, LastChanges.Moved, LastChanges.Retuned, LastChanges.Freed, LastChanges.Kept,
         LastChanges.Created, LastChanges.Destroyed);
 }
 

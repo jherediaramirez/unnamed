@@ -288,6 +288,76 @@ bool FVoxelLightsTest::RunTest(const FString& Parameters)
         Row(TEXT("Table: MinLevel 16 drops everything"), Min16->Get(GlowstoneState).Level == 0);
     }
 
+    // --- Torch glow (voxel.TorchGlow: the mesh's table) -----------------------------------------------------------
+    {
+        auto TorchLookSameButGlow = [](const FVoxelStateInfo& A, const FVoxelStateInfo& B)
+        {
+            return A.Shape == B.Shape && A.Layer == B.Layer && A.OpaqueFaces == B.OpaqueFaces && A.bSolid == B.bSolid &&
+                A.bCastsOcclusion == B.bCastsOcclusion && A.bLeaves == B.bLeaves && A.FluidAmount == B.FluidAmount &&
+                A.Layers == B.Layers && A.Block == B.Block && A.Tint == B.Tint && A.TintSource == B.TintSource &&
+                A.Ore == B.Ore && A.Rock == B.Rock && FMemory::Memcmp(A.Faces, B.Faces, sizeof(A.Faces)) == 0 &&
+                A.ModelParts == B.ModelParts && A.ModelPartCount == B.ModelPartCount && A.HeldFluid == B.HeldFluid &&
+                A.Offset == B.Offset && A.OffsetHorizontal == B.OffsetHorizontal && A.OffsetDown == B.OffsetDown;
+        };
+        auto IsTorchRule = [&Registry](int32 Id)
+        {
+            const FFoundationBlockState State{uint16(Id)};
+            return Registry.IsKnown(State) && Registry.GetBlock(State).bTorchRule;
+        };
+        const TSharedRef<const FVoxelBlockTable> Glow1 = VoxelLightSources::MakeTorchGlowTable(Registry, BlocksRef, 1);
+        const TSharedRef<const FVoxelBlockTable> Glow14 =
+            VoxelLightSources::MakeTorchGlowTable(Registry, BlocksRef, 14);
+        int32 TorchRuleStates = 0, Lowered = 0, OtherChanged = 0, FieldsChanged = 0, Same14 = 0;
+        for (int32 Id = 0; Id < BlockTable.GetStateCount(); ++Id)
+        {
+            const FVoxelStateInfo& Base = BlockTable.Get(uint16(Id));
+            const FVoxelStateInfo& One = Glow1->Get(uint16(Id));
+            FieldsChanged += !TorchLookSameButGlow(Base, One);
+            Same14 += TorchLookSameButGlow(Base, Glow14->Get(uint16(Id))) &&
+                Base.LightEmission == Glow14->Get(uint16(Id)).LightEmission;
+            if (IsTorchRule(Id))
+            {
+                ++TorchRuleStates;
+                Lowered += Base.LightEmission == 14 && One.LightEmission == 1;
+            }
+            else
+                OtherChanged += Base.LightEmission != One.LightEmission;
+        }
+        Row(FString::Printf(TEXT("Torch glow: glow 1 lowers every torch-rule state from 14 to 1 (%d of %d)"), Lowered,
+                TorchRuleStates),
+            TorchRuleStates > 0 && Lowered == TorchRuleStates);
+        Row(FString::Printf(TEXT("Torch glow: with glow 1 only torch-rule states differ from the base table (%d other "
+                                 "states' glow and %d states' other fields changed)"),
+                OtherChanged, FieldsChanged),
+            OtherChanged == 0 && FieldsChanged == 0 && Glow1->GetStateCount() == BlockTable.GetStateCount() &&
+                Glow1->GetModelCount() == BlockTable.GetModelCount());
+        for (const TCHAR* Id :
+            {TEXT("glow_lichen"), TEXT("glowstone"), TEXT("sea_pickle"), TEXT("cave_vines"), TEXT("lava")})
+        {
+            const FFoundationBlockType* Type = Registry.FindBlock(Id);
+            bool bKept = Type != nullptr;
+            int32 Brightest = 0;
+            for (int32 State = Type ? Type->MinStateId : 0; Type && State < Type->MinStateId + Type->StateCount;
+                ++State)
+            {
+                bKept &= Glow1->Get(uint16(State)).LightEmission == BlockTable.Get(uint16(State)).LightEmission;
+                Brightest = FMath::Max(Brightest, int32(BlockTable.Get(uint16(State)).LightEmission));
+            }
+            Row(FString::Printf(TEXT("Torch glow: %s keeps its glow with glow 1 (brightest state %d)"), Id, Brightest),
+                bKept && Brightest > 0);
+        }
+        // The world makes its light table from the unlowered table: torches still give level-14 lights.
+        const TSharedRef<const FVoxelLightTable> AfterGlow1 = VoxelLightSources::MakeTable(Registry, BlockTable);
+        const FVoxelLightInfo& WallInfo =
+            AfterGlow1->Get(StateOf(TEXT("wall_torch"), {FLightTestProperty(TEXT("facing"), TEXT("north"))}));
+        Row(TEXT("Torch glow: the light table still says torch 14 and wall torch 14"),
+            AfterGlow1->Get(StateOf(TEXT("torch"))).Level == 14 && WallInfo.Level == 14 &&
+                WallInfo.Shape == EVoxelLightShape::WallTorch &&
+                BlockTable.Get(StateOf(TEXT("torch"))).LightEmission == 14);
+        Row(TEXT("Torch glow: 14 gives a table equal to the base (the base itself)"),
+            &*Glow14 == &BlockTable && Same14 == BlockTable.GetStateCount());
+    }
+
     // --- Points --------------------------------------------------------------------------------------------------
     {
         FVoxelLightInfo Info;

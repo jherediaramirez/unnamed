@@ -118,6 +118,9 @@ void AVoxelWorld::BuildLayout()
 {
     // Not the lab's ground and course: this map's ground is the voxel world.
     Table = VoxelBlocks::GetDefault();
+    // The torch models' mesh glow (voxel.TorchGlow) is read at Regenerate, which meshes with Table lowered to it;
+    // captures set it from the start with -VoxelTorchGlow=N.
+    FVoxelLights::SetTorchGlowFromCommandLine();
     // The torch lights: which states give light, and the pool of point lights around the camera.
     LightMinLevel = FVoxelLights::ReadMinLevel();
     LightTable = VoxelLightSources::MakeTable(*FFoundationBlockRegistry::GetDefault(), *Table, LightMinLevel);
@@ -311,7 +314,13 @@ void AVoxelWorld::Regenerate(const FVoxelSeed& NewSeed)
     for (UMaterialInterface* Instance : LayerMaterials)
         Materials.Add(Instance);
     const FVector Spawn = GetSafeSpawn(*GetDefault<UFoundationProfile>());
-    Streaming->Start(*this, Table.ToSharedRef(), Terrain.ToSharedRef(), Materials, Spawn);
+    // The torch models glow at voxel.TorchGlow in the mesh; the light table keeps Table's level (14).
+    MeshTorchGlow = FVoxelLights::ReadTorchGlow();
+    MeshTable = VoxelLightSources::MakeTorchGlowTable(
+        *FFoundationBlockRegistry::GetDefault(), Table.ToSharedRef(), MeshTorchGlow);
+    if (MeshTable != Table)
+        UE_LOG(LogUnnamedVoxel, Display, TEXT("Torch models meshed at glow %d (voxel.TorchGlow)."), MeshTorchGlow);
+    Streaming->Start(*this, MeshTable.ToSharedRef(), Terrain.ToSharedRef(), Materials, Spawn);
     // A new session on a new world: nothing is loaded yet, so emptying the block world is free.
     Authority.World.OriginCm = OriginCm;
     Authority.Reset();

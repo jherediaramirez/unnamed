@@ -30,6 +30,12 @@ public:
         double Radius = 48;
         // voxel.LightIntensity: candelas of one level-14 source; a light gets it times its pick's weight.
         float IntensityCd = 1000;
+        // voxel.LightFalloff: 0 for inverse-squared falloff in candelas (IntensityCd); above 0 (at most 16) the lights'
+        // falloff exponent instead, with Brightness as their unitless intensity.
+        float Falloff = 0;
+        // voxel.LightBrightness: the unitless intensity of one level-14 source while Falloff is above 0; a light gets
+        // it times its pick's weight.
+        float Brightness = 700;
         // voxel.LightTemperature: the lights' colour temperature (K).
         float Temperature = 3000;
 
@@ -43,11 +49,16 @@ public:
     FVoxelLights& operator=(const FVoxelLights&) = delete;
 
     // The console now: voxel.Lights and r.MegaLights.EnableForProject (bLive), voxel.LightCount, voxel.LightRadius,
-    // voxel.LightIntensity and voxel.LightTemperature.
+    // voxel.LightIntensity, voxel.LightFalloff, voxel.LightBrightness and voxel.LightTemperature.
     static FSettings ReadSettings();
     // voxel.LightMinLevel: the light level a state needs for a light (VoxelLightSources::MakeTable). A change makes a
     // new light table, which columns use from their next mesh (voxel.Regenerate meshes them all again).
     static int32 ReadMinLevel();
+    // voxel.TorchGlow (0-15, default 14): the glow the torch-rule models are meshed with
+    // (VoxelLightSources::MakeTorchGlowTable); the world reads it when it is built and at voxel.Regenerate.
+    static int32 ReadTorchGlow();
+    // -VoxelTorchGlow=N on the command line sets voxel.TorchGlow (by command line, so the console still wins later).
+    static void SetTorchGlowFromCommandLine();
 
     // A column's sources as its latest mesh found them; the same sources again change nothing.
     void SetColumn(FIntPoint Column, TArray<FVoxelLightSource>&& LightSources);

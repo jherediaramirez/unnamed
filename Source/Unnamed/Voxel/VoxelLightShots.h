@@ -97,6 +97,17 @@ private:
     void AddTorchGateSteps(AVoxelWorld& World);
     void AddTorchLookSteps(AVoxelWorld& World);
     void AddTorchEditSteps(AVoxelWorld& World);
+    // -VoxelShotTorchRoom: finds the room's place under the spawn and adds the room's steps; AddTorchRoomTables writes
+    // its patch table, RestoreRoomVariables puts back the pool's intensity and temperature.
+    void AddTorchRoomSteps(AVoxelWorld& World);
+    void AddTorchRoomTables();
+    void RestoreRoomVariables();
+    // The room's last step: the torches, the variables, MegaLights and every written cell back.
+    void AddTorchRoomCleanup(AVoxelWorld& World);
+    // -VoxelShotTorchLook: the look pairs in the built room (Eye, Rotation; OneTorch stands when they start) and the
+    // probe cave.
+    void AddTorchLookPairSteps(AVoxelWorld& World, const FVector& Eye, const FRotator& Rotation,
+        const TArray<FIntVector>& OneTorch, const TArray<FIntVector>& FourTorches);
     // Count covered cave floor cells within Radius blocks of the view's eye, spread out (farthest first).
     TArray<FIntVector> FindSpreadTorchCells(int32 Count, double Radius) const;
     // A case's lights: torches on its floor cells (the probe's ones are taken back), or the probe's lights at
@@ -141,6 +152,45 @@ private:
     // -VoxelShotTorchGates (session T3): the torch light pool's gate cases instead of T0/T1's, written to torches.txt
     // (AddTorchGateSteps; Scripts/CaptureVoxel.ps1 -TorchGates).
     bool bTorchGates = false;
+    // -VoxelShotTorchRoom (session T3, probe P4): the look reference for the torch light. A 9 x 4 x 9 air room in an
+    // 11 x 6 x 11 stone shell, built through the authority's block world 31 blocks under the lowest surface over it
+    // near the spawn, seen from a fixed corner at eye height: one torch in the middle of the floor, then four on its
+    // quarter points, with MegaLights off and on at several voxel.LightIntensity and voxel.LightTemperature values,
+    // then a glowstone in the middle of the ceiling instead; last, one and four torches with voxel.LightFalloff 2 and
+    // 8, each at the voxel.LightBrightness a short search finds to match the 1000 cd floor-1 patch. The exposure
+    // settles on the one-torch case at 1000 cd and stays frozen for every shot. Writes room.txt (cells, camera, patch
+    // table, voxel.LightsInfo), room.csv and room-*.png; every cell and variable it changes is put back
+    // (Scripts/CaptureVoxel.ps1 -TorchRoom).
+    bool bTorchRoom = false;
+    // -VoxelShotTorchLook (session T3, the warm look; Scripts/CaptureVoxel.ps1 -TorchLook): pairs only, at the run's
+    // own settings (no sweep), each with MegaLights 0 and 1, in the torch room under the room's frozen exposure: the
+    // room with 1 torch, a close crop of that torch (the camera 1.2 blocks from it at the flame's height), the room
+    // with 4 torches, and the probe cave with 10. Writes look.txt (per shot: mean luma, saturated and black shares, the
+    // settings, voxel.LightsInfo) and look-<view>-ml<0|1>.png; implies -VoxelShotTorchRoom's room, without its shots.
+    bool bTorchLookPairs = false;
+    TArray<FString> LookRows;
+    // The torches standing for the look pairs.
+    TArray<FIntVector> LookTorches;
+    // The floor and wall patches the room measures, and one formatted table row per shot.
+    TArray<FPatch> RoomPatches;
+    TArray<FString> RoomRows;
+    // The torches standing in the room (0, 1 or 4; -1 before the first shot).
+    int32 RoomTorches = -1;
+    IConsoleVariable* RoomIntensityVariable = nullptr;
+    IConsoleVariable* RoomTemperatureVariable = nullptr;
+    float RoomIntensityAtStart = 0;
+    float RoomTemperatureAtStart = 0;
+    // voxel.LightFalloff and voxel.LightBrightness: the falloff shots set them; put back with the others.
+    IConsoleVariable* RoomFalloffVariable = nullptr;
+    IConsoleVariable* RoomBrightnessVariable = nullptr;
+    float RoomFalloffAtStart = 0;
+    float RoomBrightnessAtStart = 0;
+    // The brightness searches: per falloff exponent the voxel.LightBrightness to try next (after the last search step,
+    // the one its shots use) and the last try as (log brightness, log linear floor-1); the target is the reference
+    // shot's floor-1 mean sRGB (-1 until measured).
+    TMap<float, float> RoomBrightness;
+    TMap<float, FVector2D> RoomSearchLast;
+    double RoomTargetFloor1 = -1;
     // The probe cave's floor cells, as FindFloorLightCells orders them (torches-N takes the first N), and the spread
     // ones (torches-64-spread).
     TArray<FIntVector> TorchCells;

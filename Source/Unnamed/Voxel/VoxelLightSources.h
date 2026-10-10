@@ -121,6 +121,14 @@ namespace VoxelLightSources
     UNNAMED_API TSharedRef<const FVoxelLightTable> MakeTable(
         const FFoundationBlockRegistry& Registry, const FVoxelBlockTable& Blocks, int32 MinLevel = DefaultMinLevel);
 
+    // The voxel table the world meshes with for voxel.TorchGlow: a copy of Blocks in which only the registry's
+    // torch-rule states (bTorchRule: torch, wall_torch) glow at Glow (FVoxelStateInfo::LightEmission, clamped 0-15),
+    // so the stick's texture is not blown out to white; every other state (glowstone, glow lichen, lava, ...) and the
+    // models are as in Blocks. Blocks itself when no state would change (Glow 14, the torches' own level). The light
+    // table is still made from the unlowered Blocks (MakeTable), so the torch lights stay at 14. Game thread.
+    UNNAMED_API TSharedRef<const FVoxelBlockTable> MakeTorchGlowTable(
+        const FFoundationBlockRegistry& Registry, const TSharedRef<const FVoxelBlockTable>& Blocks, int32 Glow);
+
     // The point of a state's light within its cell, from the cell's minimum corner. OpenFaces, for cubes, holds a bit
     // per EVoxelFace whose neighbour is not an opaque full cube. A cube's point is CubeOffset from the centre along
     // every axis where exactly one of the two faces is open (toward it); an axis with both or neither open stays

@@ -65,7 +65,7 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
 **The torch** (torch sessions T2 and T3). The `torch` item (`PlacesWallBlock`, from the reference's standing-and-wall items) places `torch` or `wall_torch`, where a support holds it: `FFoundationBlockRegistry::GetTorchSupport` gives each state's faces from `facts/block_support.json`, which `FactsDump.java` measures with the torch's own `canSurvive` (leaves and powder snow hold none, every other full cube all five, an upside-down slab a floor torch, a bottom slab nothing).
 - **Placement by look** (`FoundationBlockPlacement::GetTorchState`), as measured black-box in 26.3 by probe P3 (`Tests/Probes/torch-placement-26.3.json`, 64,896 clicks): the directions nearest the look (`GetNearestLooks`), with the direction into the clicked block first unless the click replaces it (short grass). Up is skipped, down gives the floor torch if the cell below holds one, and a side gives the wall torch against the first side, in that order, that holds one; the first hit wins, and nothing holding places nothing (`CannotSurvive`). So a side or top click on a block that holds a torch always places on it, an underside click places by look, and a click on short grass chooses by look, not by the clicked face. The preview and the placement share the rule.
 - **Survival:** a torch pops through S7's one-level cascade when its support stops holding it (an unknown support cell keeps it). It shares the plants' switch, `Options.bPlantRules`.
-- **Drops:** a broken wall torch drops a `torch`, and pick block on it selects the torch. Light and the coral fans' wall fans are later work.
+- **Drops:** a broken wall torch drops a `torch`, and pick block on it selects the torch. Its light is in "Light sources" below; the coral fans' wall fans are later work.
 
 **Plants and the other model blocks** (phase 6, S7; `FoundationPlantRules`, `FFoundationAuthority::CheckPlantPlacement` and `SettlePlants`). Behaviour comes from the reference's properties and tags, scout H's black-box support table ([the prep](Records/2026-10-10-Voxel-Phase6-Scout-H-Plant-Interaction.md), T1) and minecraft.wiki.
 - **State from the click**, by property, for model blocks without an asset rule:
@@ -106,6 +106,23 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
 
   GUI items use `items/*.json` tints, such as grass `#7CBD6B`. Model blocks' sources come from minecraft.wiki: grass for the tinted crosses, sugar cane and bush (pink petals and wildflowers on their stems only), foliage for vine, the dry foliage colormap for leaf litter (plains `#A37546`), and lily pad `#208030`.
 - **Animation:** `UFoundationBlockTextureTable` holds each animated texture's current layer, next layer and blend, updated at 20 ticks per second from the `.mcmeta` frame list. Interpolated textures blend.
+
+## Light sources (voxel world, torch session T3)
+
+- **Which blocks:** every state whose block light is `voxel.LightMinLevel` (10) or more gets a point light, except lava (`VoxelLightSources`):
+  - the torch and wall torch (14);
+  - glowing cubes: glowstone, sea lantern, shroomlight, the froglights, jack o'lantern, crying obsidian;
+  - emitting models: cave vines with berries, sea pickles of three or more.
+- **Where the light sits:** a torch's light hangs just past its flame. A cube's light sits just outside its open faces; a buried cube gets none.
+- **The pool:** `FVoxelLights`, on `AVoxelWorld`.
+  - It lights the nearest `voxel.LightCount` (64, at most 100) sources within `voxel.LightRadius` (48 blocks). Sources under 2 blocks apart share one light.
+  - The lights are movable `UPointLightComponent`s that cast shadows and allow MegaLights. Their radius is (level - 1) blocks, and their intensity is `voxel.LightIntensity` cd times level / 14. `voxel.LightTemperature` sets the colour.
+  - With `voxel.LightFalloff` above 0, the falloff is that exponent instead of inverse square, and intensity comes from `voxel.LightBrightness`.
+- **When it is live:** only while `r.MegaLights.EnableForProject` is 1 (the project default is 0) and `voxel.Lights` is on. Otherwise no light component exists.
+- **When it updates:** when a column's sources change (they are gathered by the column's mesh job), when the camera moves a block, or when a setting changes. A torch edit costs about 0.01 ms of game thread. `voxel.LightsInfo` reports the pool.
+- **The torch's own glow:** `voxel.TorchGlow` (default 14) is the level the torch models glow at in the voxel world, applied at world build and at `voxel.Regenerate` (or with `-VoxelTorchGlow=N`). The pool still lights at the real level.
+- **The Playground** has no torch lights.
+- **Records:** T3's gates and look captures are in [Records/2026-10-10-Torch-T3.md](Records/2026-10-10-Torch-T3.md).
 
 ## Playground gallery
 

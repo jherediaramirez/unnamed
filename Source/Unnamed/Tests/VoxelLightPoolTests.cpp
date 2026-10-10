@@ -2,6 +2,7 @@
 #include "Blocks/VoxelBlockTable.h"
 #include "Components/PointLightComponent.h"
 #include "Foundation/FoundationBlockRegistry.h"
+#include "GameFramework/Actor.h"
 #include "HAL/IConsoleManager.h"
 #include "Misc/AutomationTest.h"
 #include "Random/VoxelSeed.h"
@@ -256,6 +257,67 @@ bool FVoxelLightPoolTest::RunTest(const FString& Parameters)
                 MegaLights->GetString() == MegaLightsWas && Lights->GetString() == LightsWas &&
                     FPoolTestCVarGuard::GetSetBy(*MegaLights) == MegaLightsSetBy &&
                     FPoolTestCVarGuard::GetSetBy(*Lights) == LightsSetBy);
+        }
+    }
+
+    // --- The falloff: voxel.LightFalloff retunes the shown components ---------------------------------------------
+    {
+        IConsoleVariable* Falloff = IConsoleManager::Get().FindConsoleVariable(TEXT("voxel.LightFalloff"));
+        IConsoleVariable* Brightness = IConsoleManager::Get().FindConsoleVariable(TEXT("voxel.LightBrightness"));
+        Row(TEXT("Falloff: voxel.LightFalloff and voxel.LightBrightness exist"), Falloff && Brightness);
+        if (Falloff && Brightness)
+        {
+            const FString FalloffWas = Falloff->GetString(), BrightnessWas = Brightness->GetString();
+            {
+                const FPoolTestCVarGuard FalloffGuard(*Falloff), BrightnessGuard(*Brightness);
+                // An owner without a world: the pool makes its components, unregistered, and tunes them as it would
+                // registered ones.
+                AActor* Owner = NewObject<AActor>(GetTransientPackage(), NAME_None, RF_Transient);
+                TArray<TObjectPtr<UPointLightComponent>> Components;
+                FVoxelLights Pool(Owner, Components);
+                Pool.SetColumn(FIntPoint(0, 0),
+                    {MakePoolTestSource(FIntVector(3, 3, 64)), MakePoolTestSource(FIntVector(9, 3, 64))});
+                const FVector Camera = FVector(6, 3, 66) * 100;
+                // The console's settings, live without MegaLights: the switches are the console block's rows.
+                auto ReadLive = []
+                {
+                    FVoxelLights::FSettings Settings = FVoxelLights::ReadSettings();
+                    Settings.bLive = true;
+                    Settings.Count = 4;
+                    return Settings;
+                };
+                // Both lights (level 14, weight 1) show this falloff, exponent, units and intensity.
+                auto AllTuned = [&Components](bool bInverseSquared, float Exponent, ELightUnits Units, float Intensity)
+                {
+                    int32 Tuned = 0;
+                    for (const TObjectPtr<UPointLightComponent>& Light : Components)
+                        Tuned += Light && bool(Light->bUseInverseSquaredFalloff) == bInverseSquared &&
+                            Light->LightFalloffExponent == Exponent && Light->IntensityUnits == Units &&
+                            FMath::IsNearlyEqual(Light->Intensity, Intensity, .01f);
+                    return Components.Num() == 2 && Tuned == 2;
+                };
+                const float DefaultExponent = GetDefault<UPointLightComponent>()->LightFalloffExponent;
+                Falloff->Set(0, ECVF_SetByCode);
+                Brightness->Set(500, ECVF_SetByCode);
+                const float Candelas = ReadLive().IntensityCd;
+                Row(TEXT("Falloff: 0 shows two components, inverse squared in candelas"),
+                    Pool.Update(Camera, ReadLive()) &&
+                        AllTuned(true, DefaultExponent, ELightUnits::Candelas, Candelas));
+                Falloff->Set(8, ECVF_SetByCode);
+                Row(TEXT("Falloff: 8 re-picks"), Pool.Update(Camera, ReadLive()) && ReadLive().Falloff == 8);
+                Row(TEXT("Falloff: 8 retunes both: no inverse square, exponent 8, unitless at voxel.LightBrightness"),
+                    AllTuned(false, 8, ELightUnits::Unitless, 500));
+                Brightness->Set(250, ECVF_SetByCode);
+                Falloff->Set(2, ECVF_SetByCode);
+                Row(TEXT("Falloff: 2 and a new brightness retune both"),
+                    Pool.Update(Camera, ReadLive()) && AllTuned(false, 2, ELightUnits::Unitless, 250));
+                Falloff->Set(0, ECVF_SetByCode);
+                Row(TEXT("Falloff: 0 restores the default: inverse squared, default exponent, candelas"),
+                    Pool.Update(Camera, ReadLive()) &&
+                        AllTuned(true, DefaultExponent, ELightUnits::Candelas, Candelas));
+            }
+            Row(TEXT("Falloff: both variables restored"),
+                Falloff->GetString() == FalloffWas && Brightness->GetString() == BrightnessWas);
         }
     }
 

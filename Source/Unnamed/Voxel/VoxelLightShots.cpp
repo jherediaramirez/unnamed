@@ -131,11 +131,14 @@ FVoxelLightShots::FVoxelLightShots(const FString& InFolder) : Folder(InFolder)
     FParse::Value(FCommandLine::Get(), TEXT("VoxelLightsIntensity="), IntensityCd);
     FParse::Value(FCommandLine::Get(), TEXT("VoxelShotTorches="), TorchCount);
     bTorchGates = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotTorchGates"));
+    bTorchLookPairs = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotTorchLook"));
+    bTorchRoom = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotTorchRoom")) || bTorchLookPairs;
 }
 
 FVoxelLightShots::~FVoxelLightShots()
 {
     if (bBuilt && !bFinished) SetMegaLights(MegaLightsAtStart != 0);
+    if (bBuilt && !bFinished) RestoreRoomVariables();
     if (ScreenshotHandle.IsValid()) UGameViewportClient::OnScreenshotCaptured().Remove(ScreenshotHandle);
 }
 
@@ -236,7 +239,8 @@ void FVoxelLightShots::Build(AVoxelWorld& World)
     for (const TTuple<FString, FVector, FVector>& Candidate : World.GetCaveShotViews())
         if (Candidate.Get<0>() == TEXT("cave")) CaveView = &Candidate;
     APlayerController* Controller = UGameplayStatics::GetPlayerController(&World, 0);
-    if (!Cells->IsValid() || !CaveView || !MegaLightsVariable || !Controller || Width <= 0)
+    // The torch room is built under the spawn, so it needs no cave view.
+    if (!Cells->IsValid() || (!CaveView && !bTorchRoom) || !MegaLightsVariable || !Controller || Width <= 0)
     {
         Line(FString::Printf(TEXT("No light probe: %s."),
             !CaveView ? TEXT("no cave view in the streamed area") : TEXT("no streaming, player or MegaLights")));
@@ -255,6 +259,18 @@ void FVoxelLightShots::Build(AVoxelWorld& World)
     Camera = ShotCamera;
     Exposure = FSceneViewExtensions::NewExtension<FLightShotsExposure>();
     ScreenshotHandle = UGameViewportClient::OnScreenshotCaptured().AddRaw(this, &FVoxelLightShots::OnScreenshot);
+    if (bTorchRoom)
+    {
+        // The look pairs also shoot T1's probe cave.
+        if (bTorchLookPairs && CaveView)
+        {
+            ViewBlocks = Cells->ToBlocks(CaveView->Get<1>());
+            ViewRotation = (CaveView->Get<2>() - CaveView->Get<1>()).Rotation();
+            FindProbeView();
+        }
+        AddTorchRoomSteps(World);
+        return;
+    }
     ViewBlocks = Cells->ToBlocks(CaveView->Get<1>());
     ViewRotation = (CaveView->Get<2>() - CaveView->Get<1>()).Rotation();
     Line(FString::Printf(TEXT("Cave view: camera %s, facing %s (blocks). Light intensity %.0f cd, radius %.0f cm, "
@@ -1088,6 +1104,34 @@ void FVoxelLightShots::Finish(AVoxelWorld& World)
         }
     }
     if (bTorchGates) AddTorchTables(World);
+    if (bTorchLookPairs)
+    {
+        Line(
+            TEXT("Look pairs (luma 0.2126 R + 0.7152 G + 0.0722 B of the saved sRGB pixels, 0-255; saturated: luma 250 "
+                 "or more; black: luma 5 or less; glow: the level the torch models are meshed with, voxel.TorchGlow at "
+                 "the world's build; intensity in cd with falloff 0 (1/d^2), brightness unitless above 0):"));
+        Line(
+            TEXT("| Shot | MegaLights | Mean luma | Saturated % | Black % | Glow | Intensity | Temperature | Falloff | "
+                 "Brightness | Exposure |"));
+        Line(TEXT("|---|---|---|---|---|---|---|---|---|---|---|"));
+        for (const FString& Row : LookRows)
+            Line(Row);
+        FFoundationBlockWorld& LookBlocks = World.GetAuthority()->World;
+        const FFoundationBlockType* LookTorch = LookBlocks.FindBlock(TEXT("torch"));
+        int32 Standing = 0, Unknown = 0;
+        for (const FIntVector& Cell : TorchSites)
+            if (!LookBlocks.IsKnown(Cell))
+                ++Unknown;
+            else if (LookTorch && LookBlocks.Get(Cell).State == LookTorch->GetDefaultState())
+                ++Standing;
+        Line(FString::Printf(
+            TEXT("Torch cells: %d used, %d still a torch, %d unloaded."), TorchSites.Num(), Standing, Unknown));
+    }
+    if (bTorchRoom)
+    {
+        RestoreRoomVariables();
+        AddTorchRoomTables();
+    }
     float Low = TNumericLimits<float>::Max(), High = 0;
     for (const TPair<FString, float>& Value : Exposures)
     {
@@ -1107,10 +1151,14 @@ void FVoxelLightShots::Finish(AVoxelWorld& World)
     Line(FString::Printf(TEXT("Restored %d edited cells (%d not restored: column unloaded); MegaLights for the "
                               "project back to %d."),
         Originals.Num() - Unloaded, Unloaded, MegaLightsVariable ? MegaLightsVariable->GetInt() : -1));
-    FFileHelper::SaveStringToFile(FString::Join(Report, TEXT("\n")) + TEXT("\n"),
-        *FPaths::Combine(Folder, bTorchGates ? TEXT("torches.txt") : TEXT("lights.txt")));
+    const FString ReportName = bTorchLookPairs ? TEXT("look")
+        : bTorchRoom                           ? TEXT("room")
+        : bTorchGates                          ? TEXT("torches")
+                                               : TEXT("lights");
+    FFileHelper::SaveStringToFile(
+        FString::Join(Report, TEXT("\n")) + TEXT("\n"), *FPaths::Combine(Folder, ReportName + TEXT(".txt")));
     FFileHelper::SaveStringToFile(TEXT("step,frame,patch,r,g,b,mean\n") + FString::Join(Csv, TEXT("\n")) + TEXT("\n"),
-        *FPaths::Combine(Folder, bTorchGates ? TEXT("torches.csv") : TEXT("lights.csv")));
+        *FPaths::Combine(Folder, ReportName + TEXT(".csv")));
 }
 
 namespace
@@ -1530,4 +1578,517 @@ void FVoxelLightShots::AddTorchTables(AVoxelWorld& World)
             ++Standing;
     Line(FString::Printf(TEXT("Torch cells: %d used, %d still a torch, %d unloaded; the pool has %d components."),
         TorchSites.Num(), Standing, Unknown, World.GetLights() ? World.GetLights()->GetComponentCount() : -1));
+}
+
+namespace
+{
+    // -VoxelShotTorchRoom: the room's interior is TorchRoomSize x TorchRoomHeight x TorchRoomSize air cells in a stone
+    // shell one block thick, and its ceiling's shell cells are TorchRoomDepth blocks under the lowest surface over it.
+    constexpr int32 TorchRoomSize = 9;
+    constexpr int32 TorchRoomHeight = 4;
+    constexpr int32 TorchRoomDepth = 31;
+    constexpr double TorchRoomEyeHeight = 1.62;
+    constexpr double TorchRoomPitch = -15;
+
+    // A cell from interior coordinates (1 to TorchRoomSize across, 1 to TorchRoomHeight up; 0 and one past the last
+    // are the shell). Corner is interior (1, 1, 1).
+    FIntVector TorchRoomCell(const FIntVector& Corner, int32 X, int32 Y, int32 Z = 1)
+    {
+        return Corner + FIntVector(X - 1, Y - 1, Z - 1);
+    }
+
+    struct FTorchRoomShot
+    {
+        FString Name;
+        bool bMegaLights = false;
+        // 1 or 4 torches, or 0 for the ceiling's glowstone.
+        int32 Torches = 0;
+        float Candelas = 1000;
+        float Kelvin = 3000;
+        // voxel.LightFalloff: 0 for inverse squared in candelas; above 0 that exponent, with the brightness the
+        // room's search found for it (RoomBrightness).
+        float Falloff = 0;
+    };
+
+    // The pool's falloff exponents the room shows beside inverse squared, and the brightness searches' steps each.
+    constexpr float TorchRoomFalloffs[] = {2, 8};
+    constexpr int32 TorchRoomSearchSteps = 4;
+    // The one-torch inverse-squared shot whose floor-1 patch the searches aim at.
+    const TCHAR* const TorchRoomReferenceShot = TEXT("room-ml1-torch1-1000cd");
+
+    // A mean sRGB value (0-255) as linear light (0-1), near enough for a patch's mean.
+    double TorchRoomLinear(double Srgb)
+    {
+        const double Value = FMath::Clamp(Srgb / 255, 0., 1.);
+        return Value <= .04045 ? Value / 12.92 : FMath::Pow((Value + .055) / 1.055, 2.4);
+    }
+
+    // Vanilla's block light at an air cell of the room: the brightest source's level less its taxicab distance (the
+    // room is an open box, so light reaches every cell along such a path).
+    int32 TorchRoomVanillaLevel(const FIntVector& Cell, const TArray<FIntVector>& LightCells, int32 Level)
+    {
+        int32 Best = 0;
+        for (const FIntVector& Source : LightCells)
+        {
+            const FIntVector Offset = Cell - Source;
+            Best = FMath::Max(Best, Level - (FMath::Abs(Offset.X) + FMath::Abs(Offset.Y) + FMath::Abs(Offset.Z)));
+        }
+        return Best;
+    }
+}
+
+void FVoxelLightShots::AddTorchRoomSteps(AVoxelWorld& World)
+{
+    FFoundationBlockWorld& Blocks = World.GetAuthority()->World;
+    const FFoundationBlockType* Stone = Blocks.FindBlock(TEXT("stone"));
+    const FFoundationBlockType* Glowstone = Blocks.FindBlock(TEXT("glowstone"));
+    IConsoleVariable* Intensity = IConsoleManager::Get().FindConsoleVariable(TEXT("voxel.LightIntensity"));
+    IConsoleVariable* Temperature = IConsoleManager::Get().FindConsoleVariable(TEXT("voxel.LightTemperature"));
+    IConsoleVariable* Falloff = IConsoleManager::Get().FindConsoleVariable(TEXT("voxel.LightFalloff"));
+    IConsoleVariable* Brightness = IConsoleManager::Get().FindConsoleVariable(TEXT("voxel.LightBrightness"));
+    if (!Stone || !Glowstone || !Blocks.FindBlock(TEXT("torch")) || !Intensity || !Temperature || !Falloff ||
+        !Brightness)
+    {
+        Line(TEXT("No torch room: stone, glowstone, torch or the pool's console variables are missing."));
+        return;
+    }
+    RoomIntensityVariable = Intensity;
+    RoomTemperatureVariable = Temperature;
+    RoomFalloffVariable = Falloff;
+    RoomBrightnessVariable = Brightness;
+    RoomIntensityAtStart = Intensity->GetFloat();
+    RoomTemperatureAtStart = Temperature->GetFloat();
+    RoomFalloffAtStart = Falloff->GetFloat();
+    RoomBrightnessAtStart = Brightness->GetFloat();
+
+    // The place: under the spawn's column first, then 16 blocks further out ring by ring; the first whose whole shell
+    // is in known columns and clear of the bedrock layers.
+    FVector Spawn = FVector::ZeroVector;
+    if (const APlayerController* Controller = UGameplayStatics::GetPlayerController(&World, 0);
+        Controller && Controller->GetPawn())
+        Spawn = Cells->ToBlocks(Controller->GetPawn()->GetActorLocation());
+    TOptional<FIntVector> Found;
+    int32 Surface = 0;
+    for (int32 Ring = 0; Ring <= 3 && !Found; ++Ring)
+        for (int32 DY = -Ring; DY <= Ring && !Found; ++DY)
+            for (int32 DX = -Ring; DX <= Ring && !Found; ++DX)
+            {
+                if (FMath::Max(FMath::Abs(DX), FMath::Abs(DY)) != Ring) continue;
+                const int32 X0 = FMath::FloorToInt32(Spawn.X) + DX * 16 - TorchRoomSize / 2;
+                const int32 Y0 = FMath::FloorToInt32(Spawn.Y) + DY * 16 - TorchRoomSize / 2;
+                int32 Lowest = TNumericLimits<int32>::Max();
+                for (int32 Y = Y0 - 1; Y <= Y0 + TorchRoomSize; ++Y)
+                    for (int32 X = X0 - 1; X <= X0 + TorchRoomSize; ++X)
+                        Lowest = FMath::Min(Lowest, Cells->GetSurface(X, Y));
+                const FIntVector Corner(X0, Y0, Lowest - TorchRoomDepth - TorchRoomHeight);
+                if (Corner.Z - 1 < VoxelConstants::MinZ + 8) continue;
+                bool bKnown = true;
+                for (int32 Z = -1; Z <= TorchRoomHeight && bKnown; ++Z)
+                    for (int32 Y = -1; Y <= TorchRoomSize && bKnown; ++Y)
+                        for (int32 X = -1; X <= TorchRoomSize; ++X)
+                            bKnown &= Blocks.IsKnown(Corner + FIntVector(X, Y, Z));
+                if (!bKnown) continue;
+                Found = Corner;
+                Surface = Lowest;
+            }
+    if (!Found)
+    {
+        Line(TEXT("No torch room: no place near the spawn with its whole shell known and above the bedrock."));
+        return;
+    }
+    const FIntVector Corner = *Found;
+    const FFoundationBlockState StoneState = Stone->GetDefaultState(), GlowState = Glowstone->GetDefaultState();
+    const FIntVector GlowCell = TorchRoomCell(Corner, 5, 5, TorchRoomHeight + 1);
+    const TArray<FIntVector> OneTorch = {TorchRoomCell(Corner, 5, 5)};
+    const TArray<FIntVector> FourTorches = {TorchRoomCell(Corner, 3, 3), TorchRoomCell(Corner, 3, 7),
+        TorchRoomCell(Corner, 7, 3), TorchRoomCell(Corner, 7, 7)};
+    const TArray<FIntVector> GlowCells = {GlowCell};
+    // The eye: the corner cell's centre, 1.62 blocks over the floor, toward the room's middle and slightly down.
+    const FVector Eye = FVector(Corner) + FVector(.5, .5, TorchRoomEyeHeight);
+    FRotator Rotation =
+        (FVector(Corner) + FVector(TorchRoomSize * .5, TorchRoomSize * .5, TorchRoomEyeHeight) - Eye).Rotation();
+    Rotation.Pitch = TorchRoomPitch;
+    Rotation.Roll = 0;
+    const FIntVector Last = Corner + FIntVector(TorchRoomSize - 1, TorchRoomSize - 1, TorchRoomHeight - 1);
+    Line(FString::Printf(TEXT("Torch room (probe P4): interior air X %d..%d, Y %d..%d, Z %d..%d (9 x 4 x 9; interior "
+                              "coordinates 1-9 across and 1-4 up from cell %s), stone shell X %d..%d, Y %d..%d, Z "
+                              "%d..%d (11 x 6 x 11). Lowest surface over it Z %d: the ceiling's shell is %d blocks "
+                              "under it. Spawn (blocks) %s. Cells: X east, Y south, Z up (vanilla x, z, y)."),
+        Corner.X, Last.X, Corner.Y, Last.Y, Corner.Z, Last.Z, *Corner.ToString(), Corner.X - 1, Last.X + 1,
+        Corner.Y - 1, Last.Y + 1, Corner.Z - 1, Last.Z + 1, Surface, Surface - (Last.Z + 1), *Spawn.ToCompactString()));
+    Line(FString::Printf(TEXT("Lights: one torch on the floor at interior (5,5) (cell %s); four at (3,3), (3,7), (7,3) "
+                              "and (7,7), the floor's quarter points (cells %s, %s, %s, %s); the glowstone replaces "
+                              "the ceiling's shell over (5,5) (cell %s)."),
+        *OneTorch[0].ToString(), *FourTorches[0].ToString(), *FourTorches[1].ToString(), *FourTorches[2].ToString(),
+        *FourTorches[3].ToString(), *GlowCell.ToString()));
+    const double Vertical = 2 *
+        FMath::RadiansToDegrees(FMath::Atan(
+            FMath::Tan(FMath::DegreesToRadians(LightShotsFieldOfView / 2)) * Height / FMath::Max(Width, 1)));
+    Line(FString::Printf(TEXT("Camera: blocks %s, the centre of interior corner cell (1,1) with the eye 1.62 over the "
+                              "floor; yaw %.1f (toward the room's middle: south-east, vanilla yaw -45), pitch %.0f "
+                              "(vanilla pitch %.0f, looking down). FOV %.0f deg horizontal (the shot camera's; %.1f "
+                              "deg vertical at %d x %d). Vanilla's default FOV 70 is vertical."),
+        *Eye.ToCompactString(), Rotation.Yaw, Rotation.Pitch, -Rotation.Pitch, LightShotsFieldOfView, Vertical, Width,
+        Height));
+
+    // The patches: floor faces 1, 2, 4 and 6 blocks (taxicab) from the single torch, on the side away from the camera
+    // so the torch hides none, and the east wall's face beside them.
+    auto AddPatch = [this](const TCHAR* Name, const FVector& Point, const FVector& Normal)
+    {
+        FPatch& Patch = RoomPatches.AddDefaulted_GetRef();
+        Patch.Name = Name;
+        Patch.Point = Point;
+        Patch.Normal = Normal;
+    };
+    const FVector Up(0, 0, 1);
+    AddPatch(TEXT("floor-1"), FVector(TorchRoomCell(Corner, 6, 5)) + FVector(.5, .5, .01), Up);
+    AddPatch(TEXT("floor-2"), FVector(TorchRoomCell(Corner, 7, 5)) + FVector(.5, .5, .01), Up);
+    AddPatch(TEXT("floor-4"), FVector(TorchRoomCell(Corner, 9, 5)) + FVector(.5, .5, .01), Up);
+    AddPatch(TEXT("floor-6"), FVector(TorchRoomCell(Corner, 9, 7)) + FVector(.5, .5, .01), Up);
+    AddPatch(TEXT("wall"), FVector(TorchRoomCell(Corner, 10, 5, 2)) + FVector(-.01, .5, .5), FVector(-1, 0, 0));
+    Line(TEXT("Patches (mean sRGB 0-255 of a square about 0.4 block across at the face's centre, from the frozen "
+              "exposure): floor-1 = the floor under interior (6,5), 1 block from the single torch; floor-2 (7,5), 2 "
+              "blocks; floor-4 (9,5), 4 blocks; floor-6 (9,7), 6 blocks taxicab (4.47 straight); wall = the east "
+              "wall's face in front of interior (9,5), second block up (5 blocks taxicab from the torch's cell). "
+              "Vanilla's block light falls one level per block, taxicab: 14 at the torch, 13 one block away, down to "
+              "1 at 13 blocks (glowstone: 15, 14 beside it). L<n> in the table is vanilla's level in the air cell in "
+              "front of the patch for that shot's lights."));
+
+    // Every shot: MegaLights off (no pool lights: today's default look), then on at four intensities, two colour
+    // temperatures and the glowstone.
+    const float Kelvin = RoomTemperatureAtStart;
+    TArray<FTorchRoomShot> Shots;
+    for (const int32 Torches : {1, 4})
+        Shots.Add({FString::Printf(TEXT("room-ml0-torch%d"), Torches), false, Torches, 1000, Kelvin});
+    for (const float Candelas : {250.f, 500.f, 1000.f, 2000.f})
+        for (const int32 Torches : {1, 4})
+            Shots.Add({FString::Printf(TEXT("room-ml1-torch%d-%04dcd"), Torches, int32(Candelas)), true, Torches,
+                Candelas, Kelvin});
+    for (const float Other : {2700.f, 4000.f})
+        Shots.Add({FString::Printf(TEXT("room-ml1-torch1-1000cd-%dK"), int32(Other)), true, 1, 1000, Other});
+    Shots.Add({TEXT("room-ml0-glowstone"), false, 0, 1000, Kelvin});
+    Shots.Add({TEXT("room-ml1-glowstone-1000cd"), true, 0, 1000, Kelvin});
+
+    // The room is built, the camera put in its corner, and the eye adapts to the one-torch case at 1000 cd with
+    // MegaLights on; then the exposure stays frozen for every shot.
+    AddStep(TEXT("room-build"), 150,
+        [this, &World, Corner, StoneState, Eye, Rotation, OneTorch]
+        {
+            for (int32 Z = -1; Z <= TorchRoomHeight; ++Z)
+                for (int32 Y = -1; Y <= TorchRoomSize; ++Y)
+                    for (int32 X = -1; X <= TorchRoomSize; ++X)
+                    {
+                        const bool bInside =
+                            X >= 0 && Y >= 0 && Z >= 0 && X < TorchRoomSize && Y < TorchRoomSize && Z < TorchRoomHeight;
+                        SetCell(World, Corner + FIntVector(X, Y, Z), bInside ? FFoundationBlockState() : StoneState);
+                    }
+            SetView(Eye, Rotation);
+            SetMegaLights(true);
+            RoomIntensityVariable->Set(1000.f, ECVF_SetByConsole);
+            RoomTemperatureVariable->Set(RoomTemperatureAtStart, ECVF_SetByConsole);
+            RoomFalloffVariable->Set(0.f, ECVF_SetByConsole);
+            VoxelLightProbe::PlaceTorches(World, OneTorch);
+            RoomTorches = 1;
+            SetExposureSpeed(50);
+        })
+        .bEdit = true;
+    AddStep(TEXT("room-freeze"), 30, [this] { SetExposureSpeed(0); }).End = [this]
+    {
+        const float Value = GetExposure();
+        Line(FString::Printf(TEXT("Exposure settled on the one-torch case (MegaLights 1, 1000 cd, %.0f K) and frozen "
+                                  "at %.6g for every shot: EV %.2f (-log2 of the exposure scale, UE's EV100 with the "
+                                  "extended luminance range and no exposure compensation)."),
+            RoomTemperatureAtStart, Value, Value > 0 ? -FMath::Log2(Value) : 0.f));
+    };
+    if (bTorchLookPairs)
+    {
+        AddTorchLookPairSteps(World, Eye, Rotation, OneTorch, FourTorches);
+        AddTorchRoomCleanup(World);
+        return;
+    }
+    auto AddShot = [&](const FTorchRoomShot& Shot)
+    {
+        FStep& Look = AddStep(Shot.Name, 91,
+            [this, &World, Shot, Eye, Rotation, OneTorch, FourTorches, GlowCell, StoneState, GlowState]
+            {
+                SetView(Eye, Rotation);
+                SetMegaLights(Shot.bMegaLights);
+                RoomIntensityVariable->Set(Shot.Candelas, ECVF_SetByConsole);
+                RoomTemperatureVariable->Set(Shot.Kelvin, ECVF_SetByConsole);
+                RoomFalloffVariable->Set(Shot.Falloff, ECVF_SetByConsole);
+                RoomBrightnessVariable->Set(
+                    Shot.Falloff > 0 ? RoomBrightness.FindRef(Shot.Falloff) : RoomBrightnessAtStart, ECVF_SetByConsole);
+                SetCell(World, GlowCell, Shot.Torches ? StoneState : GlowState);
+                if (Shot.Torches == RoomTorches) return;
+                if (Shot.Torches)
+                    VoxelLightProbe::PlaceTorches(World, Shot.Torches == 1 ? OneTorch : FourTorches);
+                else
+                    VoxelLightProbe::RemoveTorches();
+                RoomTorches = Shot.Torches;
+            });
+        Look.bEdit = true;
+        Look.CaptureFrom = 90;
+        Look.OnFrame = [this, Shot, OneTorch, FourTorches, GlowCells](int32 Frame, const TArray<FColor>& Pixels)
+        {
+            SavePng(Shot.Name, Pixels);
+            const FString Light = Shot.Torches == 0 ? FString(TEXT("glowstone"))
+                : Shot.Torches == 1                 ? FString(TEXT("1 torch"))
+                                                    : FString::Printf(TEXT("%d torches"), Shot.Torches);
+            const FString Intensity = Shot.Falloff > 0
+                ? FString::Printf(TEXT("%.0f (unitless)"), RoomBrightness.FindRef(Shot.Falloff))
+                : FString::Printf(TEXT("%.0f cd"), Shot.Candelas);
+            const FString Falloff =
+                Shot.Falloff > 0 ? FString::Printf(TEXT("exponent %g"), Shot.Falloff) : FString(TEXT("1/d^2"));
+            FString Row = FString::Printf(TEXT("| %s | %d | %s | %s | %s | %.0f |"), *Shot.Name,
+                int32(Shot.bMegaLights), *Light, *Intensity, *Falloff, Shot.Kelvin);
+            for (const FPatch& Patch : RoomPatches)
+            {
+                const FVector4 Value = Measure(Patch, Pixels);
+                Record(Shot.Name, Frame, Patch, Value);
+                if (Shot.Name == TorchRoomReferenceShot && Patch.Name == TEXT("floor-1")) RoomTargetFloor1 = Value.W;
+                const FIntVector Air = VoxelLightProbe::FCells::ToCell(Patch.Point + Patch.Normal * .5);
+                const int32 Level = Shot.Torches
+                    ? TorchRoomVanillaLevel(Air, Shot.Torches == 1 ? OneTorch : FourTorches, 14)
+                    : TorchRoomVanillaLevel(Air, GlowCells, 15);
+                Row += Value.W < 0 ? FString::Printf(TEXT(" off screen, L%d |"), Level)
+                                   : FString::Printf(TEXT(" %.1f (%.0f, %.0f, %.0f) L%d |"), Value.W, Value.X, Value.Y,
+                                         Value.Z, Level);
+            }
+            RoomRows.Add(Row);
+        };
+        Look.End = [this, &World, Shot]
+        {
+            NoteExposure(Shot.Name);
+            if (!Shot.bMegaLights) return;
+            if (const FVoxelLights* Pool = World.GetLights()) Line(Shot.Name + TEXT(": ") + Pool->Describe());
+        };
+    };
+    for (const FTorchRoomShot& Shot : Shots)
+        AddShot(Shot);
+
+    // The flatter falloffs (voxel.LightFalloff above 0, MegaLights on): per exponent a short search for the
+    // voxel.LightBrightness that puts the single torch's floor-1 patch where the inverse-squared 1000 cd shot put it,
+    // then the one- and four-torch shots at the brightness found.
+    for (const float Exponent : TorchRoomFalloffs)
+    {
+        RoomBrightness.Add(Exponent, RoomBrightnessAtStart > 0 ? RoomBrightnessAtStart : 700.f);
+        for (int32 Search = 1; Search <= TorchRoomSearchSteps; ++Search)
+        {
+            const FString Name = FString::Printf(TEXT("room-search-exp%g-%d"), Exponent, Search);
+            FStep& Try = AddStep(Name, 91,
+                [this, &World, Exponent, Eye, Rotation, OneTorch, GlowCell, StoneState]
+                {
+                    SetView(Eye, Rotation);
+                    SetMegaLights(true);
+                    RoomIntensityVariable->Set(1000.f, ECVF_SetByConsole);
+                    RoomTemperatureVariable->Set(RoomTemperatureAtStart, ECVF_SetByConsole);
+                    RoomFalloffVariable->Set(Exponent, ECVF_SetByConsole);
+                    RoomBrightnessVariable->Set(RoomBrightness.FindRef(Exponent), ECVF_SetByConsole);
+                    SetCell(World, GlowCell, StoneState);
+                    if (RoomTorches == 1) return;
+                    VoxelLightProbe::PlaceTorches(World, OneTorch);
+                    RoomTorches = 1;
+                });
+            Try.bEdit = true;
+            Try.CaptureFrom = 90;
+            Try.OnFrame = [this, Name, Exponent](int32 Frame, const TArray<FColor>& Pixels)
+            {
+                const FPatch& Floor1 = RoomPatches[0];
+                const FVector4 Value = Measure(Floor1, Pixels);
+                Record(Name, Frame, Floor1, Value);
+                const float Tried = RoomBrightness.FindRef(Exponent);
+                // Aim at the reference shot's floor-1 (room-1's 138.3 if this run has none).
+                const double Target = RoomTargetFloor1 > 0 ? RoomTargetFloor1 : 138.3;
+                if (Value.W <= 0)
+                {
+                    Line(
+                        FString::Printf(TEXT("%s: brightness %.1f, floor-1 off screen or black; kept."), *Name, Tried));
+                    return;
+                }
+                // Linear light against brightness: a secant through the last two tries in log-log, or a straight
+                // proportion for the first; at most a factor 4 a step.
+                const double LogB = FMath::Loge(double(Tried)), LogM = FMath::Loge(TorchRoomLinear(Value.W));
+                double Slope = 1;
+                if (const FVector2D* Last = RoomSearchLast.Find(Exponent); Last && FMath::Abs(LogB - Last->X) > 1e-3)
+                    Slope = FMath::Clamp((LogM - Last->Y) / (LogB - Last->X), .25, 2.);
+                RoomSearchLast.Add(Exponent, FVector2D(LogB, LogM));
+                const double Step = FMath::Clamp(
+                    (FMath::Loge(TorchRoomLinear(Target)) - LogM) / Slope, -FMath::Loge(4.), FMath::Loge(4.));
+                const float Next = float(FMath::Exp(LogB + Step));
+                RoomBrightness.Add(Exponent, Next);
+                Line(FString::Printf(TEXT("%s: voxel.LightFalloff %g, voxel.LightBrightness %.1f gives floor-1 %.1f "
+                                          "against %.1f (%s); next %.1f."),
+                    *Name, Exponent, Tried, Value.W, Target,
+                    RoomTargetFloor1 > 0 ? TorchRoomReferenceShot : TEXT("room-1's value"), Next));
+            };
+        }
+        for (const int32 Torches : {1, 4})
+            AddShot({FString::Printf(TEXT("room-ml1-torch%d-exp%g"), Torches, Exponent), true, Torches, 1000, Kelvin,
+                Exponent});
+    }
+    AddTorchRoomCleanup(World);
+}
+
+void FVoxelLightShots::AddTorchRoomCleanup(AVoxelWorld& World)
+{
+    // Last, so a stopped run still gets here: the torches, the variables, MegaLights and every written cell back.
+    AddStep(TEXT("room-cleanup"), 10,
+        [this, &World]
+        {
+            VoxelLightProbe::RemoveTorches();
+            RoomTorches = 0;
+            LookTorches.Reset();
+            RestoreRoomVariables();
+            SetMegaLights(MegaLightsAtStart != 0);
+            for (const TPair<FIntVector, FFoundationBlockState>& Original : Originals)
+                SetCell(World, Original.Key, Original.Value);
+        });
+}
+
+void FVoxelLightShots::AddTorchRoomTables()
+{
+    if (!RoomRows.IsEmpty())
+    {
+        Line(TEXT("Patch means per shot, mean sRGB (R, G, B) and vanilla's level L<n> (intensity: the pool's "
+                  "voxel.LightIntensity in cd with inverse-squared falloff 1/d^2, or voxel.LightBrightness, unitless, "
+                  "with voxel.LightFalloff's exponent; K is voxel.LightTemperature; with MegaLights 0 the pool has no "
+                  "lights):"));
+        Line(TEXT(
+            "| Shot | MegaLights | Light | Intensity | Falloff | K | floor-1 | floor-2 | floor-4 | floor-6 | wall |"));
+        Line(TEXT("|---|---|---|---|---|---|---|---|---|---|---|"));
+        for (const FString& Row : RoomRows)
+            Line(Row);
+    }
+    for (const TPair<float, float>& Found : RoomBrightness)
+        Line(FString::Printf(TEXT("voxel.LightFalloff %g: voxel.LightBrightness %.1f after %d search steps (the "
+                                  "room-search-exp%g-* lines above), aiming floor-1 at %.1f."),
+            Found.Key, Found.Value, TorchRoomSearchSteps, Found.Key, RoomTargetFloor1));
+    if (RoomIntensityVariable && RoomTemperatureVariable && RoomFalloffVariable && RoomBrightnessVariable)
+        Line(FString::Printf(TEXT("voxel.LightIntensity back to %.0f, voxel.LightTemperature to %.0f, "
+                                  "voxel.LightFalloff to %g and voxel.LightBrightness to %g (at start %.0f, %.0f, %g "
+                                  "and %g)."),
+            RoomIntensityVariable->GetFloat(), RoomTemperatureVariable->GetFloat(), RoomFalloffVariable->GetFloat(),
+            RoomBrightnessVariable->GetFloat(), RoomIntensityAtStart, RoomTemperatureAtStart, RoomFalloffAtStart,
+            RoomBrightnessAtStart));
+}
+
+void FVoxelLightShots::RestoreRoomVariables()
+{
+    if (RoomIntensityVariable) RoomIntensityVariable->Set(RoomIntensityAtStart, ECVF_SetByConsole);
+    if (RoomTemperatureVariable) RoomTemperatureVariable->Set(RoomTemperatureAtStart, ECVF_SetByConsole);
+    if (RoomFalloffVariable) RoomFalloffVariable->Set(RoomFalloffAtStart, ECVF_SetByConsole);
+    if (RoomBrightnessVariable) RoomBrightnessVariable->Set(RoomBrightnessAtStart, ECVF_SetByConsole);
+}
+
+namespace
+{
+    // -VoxelShotTorchLook's crop: the camera this far from the single torch (blocks, level), its eye at the flame's
+    // height over the floor, aiming at the torch's middle, with a narrower field of view (degrees, horizontal) so the
+    // torch fills much of the frame; the exposure stays the room's frozen one.
+    constexpr double TorchLookCropDistance = 1.2;
+    constexpr double TorchLookCropEyeHeight = .6;
+    constexpr double TorchLookCropAimHeight = .36;
+    constexpr double TorchLookCropFieldOfView = 60;
+    // Torches in the probe cave's view.
+    constexpr int32 TorchLookProbeTorches = 10;
+
+    // An image's mean luma (0-255) and its shares (%) of saturated (luma 250 or more) and black (5 or less) pixels.
+    FVector TorchLookStats(const TArray<FColor>& Pixels)
+    {
+        if (Pixels.IsEmpty()) return FVector(-1, -1, -1);
+        double Sum = 0;
+        int32 Saturated = 0, Black = 0;
+        for (const FColor& Pixel : Pixels)
+        {
+            const double Luma = LightShotsLuma(Pixel);
+            Sum += Luma;
+            Saturated += Luma >= 250;
+            Black += Luma <= 5;
+        }
+        return FVector(Sum / Pixels.Num(), 100. * Saturated / Pixels.Num(), 100. * Black / Pixels.Num());
+    }
+
+    struct FTorchLookView
+    {
+        FString Name;
+        FVector Eye = FVector::ZeroVector;
+        FRotator Rotation = FRotator::ZeroRotator;
+        double FieldOfView = LightShotsFieldOfView;
+        TArray<FIntVector> Torches;
+    };
+}
+
+void FVoxelLightShots::AddTorchLookPairSteps(AVoxelWorld& World, const FVector& Eye, const FRotator& Rotation,
+    const TArray<FIntVector>& OneTorch, const TArray<FIntVector>& FourTorches)
+{
+    // The room-build step leaves the single torch standing.
+    LookTorches = OneTorch;
+    TorchSites.Append(OneTorch);
+    TorchSites.Append(FourTorches);
+    TArray<FTorchLookView> Views;
+    Views.Add({TEXT("room-1"), Eye, Rotation, LightShotsFieldOfView, OneTorch});
+    // The crop: from the single torch toward the room's corner camera, so the lit floor and far wall are behind it.
+    const FVector TorchBase = FVector(OneTorch[0]) + FVector(.5, .5, 0);
+    FVector Toward = Eye - TorchBase;
+    Toward.Z = 0;
+    const FVector CropEye =
+        TorchBase + Toward.GetSafeNormal() * TorchLookCropDistance + FVector(0, 0, TorchLookCropEyeHeight);
+    FRotator CropRotation = (TorchBase + FVector(0, 0, TorchLookCropAimHeight) - CropEye).Rotation();
+    CropRotation.Roll = 0;
+    Views.Add({TEXT("crop"), CropEye, CropRotation, TorchLookCropFieldOfView, OneTorch});
+    Views.Add({TEXT("room-4"), Eye, Rotation, LightShotsFieldOfView, FourTorches});
+    Line(FString::Printf(TEXT("Look pairs at the run's own settings, each with MegaLights 0 then 1, under the frozen "
+                              "exposure: room-1, crop, room-4, probe-%d. Crop: camera %s (blocks), %.1f blocks level "
+                              "from the torch at cell %s with the eye %.2f over the floor (the flame's height), aiming "
+                              "%.2f over the floor (pitch %.1f), FOV %.0f deg horizontal."),
+        TorchLookProbeTorches, *CropEye.ToCompactString(), TorchLookCropDistance, *OneTorch[0].ToString(),
+        TorchLookCropEyeHeight, TorchLookCropAimHeight, CropRotation.Pitch, TorchLookCropFieldOfView));
+    if (!ViewBlocks.IsZero())
+    {
+        const TArray<FIntVector> ProbeCells = VoxelLightProbe::FindFloorLightCells(
+            *Cells, Cells->ToCm(ViewBlocks), ViewRotation.Vector(), TorchLookProbeTorches);
+        TorchSites.Append(ProbeCells);
+        Views.Add({FString::Printf(TEXT("probe-%d"), TorchLookProbeTorches), ViewBlocks, ViewRotation,
+            LightShotsFieldOfView, ProbeCells});
+        Line(FString::Printf(TEXT("probe-%d: %d floor cells of the probe cave (T1's), camera %s facing %s."),
+            TorchLookProbeTorches, ProbeCells.Num(), *ViewBlocks.ToCompactString(),
+            *ViewRotation.Vector().ToCompactString()));
+    }
+    else
+        Line(FString::Printf(TEXT("probe-%d: no cave view in the streamed area; skipped."), TorchLookProbeTorches));
+
+    for (const FTorchLookView& View : Views)
+        for (const bool bOn : {false, true})
+        {
+            const FString Shot = FString::Printf(TEXT("look-%s-ml%d"), *View.Name, int32(bOn));
+            FStep& Look = AddStep(Shot, 91,
+                [this, &World, View, bOn]
+                {
+                    SetView(View.Eye, View.Rotation);
+                    if (Camera.IsValid()) Camera->GetCameraComponent()->SetFieldOfView(float(View.FieldOfView));
+                    SetMegaLights(bOn);
+                    // The run's own settings: the room-build step set the settle's.
+                    RestoreRoomVariables();
+                    if (LookTorches == View.Torches) return;
+                    VoxelLightProbe::PlaceTorches(World, View.Torches);
+                    LookTorches = View.Torches;
+                });
+            Look.bEdit = true;
+            Look.CaptureFrom = 90;
+            Look.OnFrame = [this, &World, Shot, bOn](int32 Frame, const TArray<FColor>& Pixels)
+            {
+                SavePng(Shot, Pixels);
+                const FVector Stats = TorchLookStats(Pixels);
+                const FVoxelLights::FSettings Settings = FVoxelLights::ReadSettings();
+                LookRows.Add(FString::Printf(TEXT("| %s | %d | %.2f | %.3f | %.3f | %d | %.0f cd | %.0f K | %g | %g | "
+                                                  "%.6g |"),
+                    *Shot, int32(bOn), Stats.X, Stats.Y, Stats.Z, World.GetMeshTorchGlow(), Settings.IntensityCd,
+                    Settings.Temperature, Settings.Falloff, Settings.Brightness, GetExposure()));
+            };
+            Look.End = [this, &World, Shot]
+            {
+                NoteExposure(Shot);
+                if (const FVoxelLights* Pool = World.GetLights()) Line(Shot + TEXT(": ") + Pool->Describe());
+            };
+        }
 }

@@ -74,6 +74,29 @@ namespace
     }
 }
 
+TSharedRef<const FVoxelBlockTable> VoxelLightSources::MakeTorchGlowTable(
+    const FFoundationBlockRegistry& Registry, const TSharedRef<const FVoxelBlockTable>& Blocks, int32 Glow)
+{
+    const uint8 TorchLookGlow = uint8(FMath::Clamp(Glow, 0, 15));
+    TArray<uint16> TorchLookStates;
+    for (int32 Id = 0; Id < Blocks->GetStateCount(); ++Id)
+    {
+        const FFoundationBlockState RegistryState{uint16(Id)};
+        if (Registry.IsKnown(RegistryState) && Registry.GetBlock(RegistryState).bTorchRule &&
+            Blocks->Get(uint16(Id)).LightEmission != TorchLookGlow)
+            TorchLookStates.Add(uint16(Id));
+    }
+    if (TorchLookStates.IsEmpty()) return Blocks;
+    TSharedRef<FVoxelBlockTable> Lowered = MakeShared<FVoxelBlockTable>(*Blocks);
+    for (const uint16 State : TorchLookStates)
+    {
+        FVoxelStateInfo Info = Lowered->Get(State);
+        Info.LightEmission = TorchLookGlow;
+        Lowered->SetState(State, Info);
+    }
+    return Lowered;
+}
+
 TSharedRef<const FVoxelLightTable> VoxelLightSources::MakeTable(
     const FFoundationBlockRegistry& Registry, const FVoxelBlockTable& Blocks, int32 MinLevel)
 {

@@ -93,6 +93,9 @@ public:
     FVoxelLights* GetLights() const { return Lights.Get(); }
     // The light table the column meshes scan their light sources with (voxel.LightMinLevel); null before BeginPlay.
     TSharedPtr<const FVoxelLightTable> GetLightTable() const { return LightTable; }
+    // The voxel.TorchGlow level the columns are meshed with (the torch models' glow; 14 unless lowered), as read at the
+    // last build or voxel.Regenerate.
+    int32 GetMeshTorchGlow() const { return MeshTorchGlow; }
 
     // World position of cell (0, 0, 0)'s minimum corner; world rebasing moves it.
     FVector OriginCm = FVector::ZeroVector;
@@ -128,6 +131,10 @@ private:
     mutable TOptional<FUnnamedSavedWorld> SavedWorld;
     mutable bool bSavedWorldRead = false;
     TSharedPtr<const FVoxelBlockTable> Table;
+    // What the columns are meshed with: Table with the torch models' glow at voxel.TorchGlow (MakeTorchGlowTable),
+    // remade at every Regenerate. Everything else (terrain, light table, fluids) reads Table.
+    TSharedPtr<const FVoxelBlockTable> MeshTable;
+    int32 MeshTorchGlow = 14;
     TSharedPtr<const IVoxelTerrain> Terrain;
     FFoundationAuthority Authority;
     // Per state id: a model state with collision boxes (cactus, bamboo, lily pads, carpets), so GatherCollision passes
