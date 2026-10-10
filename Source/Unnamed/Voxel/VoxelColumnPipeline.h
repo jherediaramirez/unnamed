@@ -7,6 +7,7 @@
 #include "Meshing/VoxelMesher.h"
 #include "Streaming/VoxelStreamingPlanner.h"
 #include "Tasks/Task.h"
+#include "Voxel/VoxelLightSources.h"
 
 class FVoxelBlockTable;
 class FVoxelColumn;
@@ -29,6 +30,9 @@ struct FVoxelColumnMesh
     // Every section's mesh, null where it has no geometry: the column's cache near the camera.
     TArray<TSharedPtr<const FVoxelMeshData, ESPMode::ThreadSafe>> Sections;
     SIZE_T SectionBytes = 0;
+    // The column's light sources (VoxelLightSources::GatherSources), scanned by every mesh job while the pipeline has
+    // a light table, whether the light pool is live or not; empty without a table.
+    TArray<FVoxelLightSource> Lights;
     // Worker time gathering and meshing the sections, then building the stream set and the cards.
     double MeshMs = 0;
     double StreamsMs = 0;
@@ -210,6 +214,9 @@ public:
     void SetModelOptions(bool bModels, bool bShadeUnturned);
     // The render-only ore looks (voxel.Look.OreHost, voxel.Look.OreGlint); a change remeshes every column.
     void SetOreLooks(int32 OreHost, int32 OreGlint);
+    // The light table mesh jobs scan their column's light sources with (FVoxelColumnMesh::Lights); null scans none.
+    // Jobs launched from now on use it: a column picks a new table up when it next meshes, nothing remeshes for it.
+    void SetLightTable(TSharedPtr<const FVoxelLightTable> InLightTable) { LightTable = MoveTemp(InLightTable); }
     bool IsDecorating() const { return Settings.Decorator.IsValid(); }
     const FVoxelDecorator* GetDecorator() const { return Settings.Decorator.Get(); }
 
@@ -358,6 +365,7 @@ private:
     TSharedRef<const FVoxelBlockTable> Table;
     TSharedRef<const IVoxelTerrain> Terrain;
     FSettings Settings;
+    TSharedPtr<const FVoxelLightTable> LightTable;
 
     FVoxelStreamingRings Rings;
     int32 ViewSector = 0;

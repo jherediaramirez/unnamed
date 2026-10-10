@@ -104,6 +104,10 @@ private:
     FString Folder;
     // -VoxelLightsIntensity=<cd> overrides the probe lights' intensity.
     double IntensityCd = VoxelLightProbe::FSettings().IntensityCd;
+    // -VoxelShotTorches=<N> (session T3): instead of the probe, `voxel.LightProbe N torches` in the probe cave, lit by
+    // the world's light pool, one screenshot (lights-torches.png) and voxel.LightsInfo; MegaLights stays as the run
+    // set it.
+    int32 TorchCount = 0;
     TUniquePtr<VoxelLightProbe::FCells> Cells;
     TArray<FStep> Steps;
     int32 StepIndex = 0;

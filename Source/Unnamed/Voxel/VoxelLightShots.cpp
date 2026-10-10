@@ -16,6 +16,7 @@
 #include "SceneViewExtension.h"
 #include "UnrealClient.h"
 #include "Voxel/VoxelColumnPipeline.h"
+#include "Voxel/VoxelLights.h"
 #include "Voxel/VoxelWorld.h"
 #include "Voxel/VoxelWorldSubsystem.h"
 #include "VoxelConstants.h"
@@ -128,6 +129,7 @@ namespace
 FVoxelLightShots::FVoxelLightShots(const FString& InFolder) : Folder(InFolder)
 {
     FParse::Value(FCommandLine::Get(), TEXT("VoxelLightsIntensity="), IntensityCd);
+    FParse::Value(FCommandLine::Get(), TEXT("VoxelShotTorches="), TorchCount);
 }
 
 FVoxelLightShots::~FVoxelLightShots()
@@ -260,6 +262,27 @@ void FVoxelLightShots::Build(AVoxelWorld& World)
 
     // Every case but the leak test looks into the probe cave: dark, and big enough for 100 lights.
     FindProbeView();
+    if (TorchCount > 0)
+    {
+        // -VoxelShotTorches: torches through the block world, their lights from the pool, frames counted from the
+        // placement until the columns are back on screen.
+        AddStep(TEXT("settle"), 90, [this] { SetView(ViewBlocks, ViewRotation); });
+        FStep& Torches = AddStep(TEXT("torches"), 30, [this, &World]
+            { GEngine->Exec(World.GetWorld(), *FString::Printf(TEXT("voxel.LightProbe %d torches"), TorchCount)); });
+        Torches.bEdit = true;
+        Torches.CaptureFrom = 29;
+        Torches.OnFrame = [this](int32 Frame, const TArray<FColor>& Pixels)
+        { SavePng(TEXT("lights-torches"), Pixels); };
+        Torches.End = [this, &World]
+        {
+            Line(FString::Printf(TEXT("Torches: %d placed through the block world, columns on screen after %d frames."),
+                TorchCount, EditFrames));
+            if (const FVoxelLights* Pool = World.GetLights()) Line(Pool->Describe());
+            GEngine->Exec(World.GetWorld(), TEXT("voxel.LightsInfo"));
+        };
+        AddStep(TEXT("cleanup"), 5, [&World] { GEngine->Exec(World.GetWorld(), TEXT("voxel.LightProbe 0")); });
+        return;
+    }
     // The eye adapts to the cave once, then stays as it is for every case.
     AddStep(TEXT("settle"), 150,
         [this]
@@ -1034,11 +1057,16 @@ void FVoxelLightShots::Finish(AVoxelWorld& World)
     if (!Exposures.IsEmpty())
         Line(FString::Printf(TEXT("Exposure over the %d measured steps: %.6g to %.6g (%s)."), Exposures.Num(), Low,
             High, Low == High ? TEXT("identical") : TEXT("NOT identical")));
+    // SetCell skips a cell whose column is unloaded, so the cleanup cannot put those back: count them.
+    int32 Unloaded = 0;
     for (const TPair<FIntVector, FFoundationBlockState>& Original : Originals)
-        if (World.GetAuthority()->World.Get(Original.Key).State != Original.Value)
+        if (!World.GetAuthority()->World.IsKnown(Original.Key))
+            ++Unloaded;
+        else if (World.GetAuthority()->World.Get(Original.Key).State != Original.Value)
             Line(FString::Printf(TEXT("Cell %s was not restored."), *Original.Key.ToString()));
-    Line(FString::Printf(TEXT("Restored %d edited cells; MegaLights for the project back to %d."), Originals.Num(),
-        MegaLightsVariable ? MegaLightsVariable->GetInt() : -1));
+    Line(FString::Printf(TEXT("Restored %d edited cells (%d not restored: column unloaded); MegaLights for the "
+                              "project back to %d."),
+        Originals.Num() - Unloaded, Unloaded, MegaLightsVariable ? MegaLightsVariable->GetInt() : -1));
     FFileHelper::SaveStringToFile(
         FString::Join(Report, TEXT("\n")) + TEXT("\n"), *FPaths::Combine(Folder, TEXT("lights.txt")));
     FFileHelper::SaveStringToFile(TEXT("step,frame,patch,r,g,b,mean\n") + FString::Join(Csv, TEXT("\n")) + TEXT("\n"),

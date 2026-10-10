@@ -10,7 +10,10 @@
 class ACameraActor;
 class FVoxelFlight;
 class FVoxelLightShots;
+class FVoxelLightTable;
+class FVoxelLights;
 class UExponentialHeightFogComponent;
+class UPointLightComponent;
 class UStaticMeshComponent;
 class USkyAtmosphereComponent;
 class FVoxelBlockTable;
@@ -86,6 +89,10 @@ public:
     // The -VoxelShotCaves views (name, camera and target in cm), searched near the streamed area's centre on first
     // use; empty when none was found.
     const TArray<TTuple<FString, FVector, FVector>>& GetCaveShotViews();
+    // The torch light pool (session T3): the streaming hands it each column's light sources; null before BeginPlay.
+    FVoxelLights* GetLights() const { return Lights.Get(); }
+    // The light table the column meshes scan their light sources with (voxel.LightMinLevel); null before BeginPlay.
+    TSharedPtr<const FVoxelLightTable> GetLightTable() const { return LightTable; }
 
     // World position of cell (0, 0, 0)'s minimum corner; world rebasing moves it.
     FVector OriginCm = FVector::ZeroVector;
@@ -146,6 +153,13 @@ private:
     TSharedPtr<FVoxelFlight> Flight;
     // -VoxelShotLights: the torch light probe, run before the shots.
     TSharedPtr<FVoxelLightShots> LightShots;
+    // The torch lights: the light table for voxel.LightMinLevel at LightMinLevel, and the pool, whose point lights
+    // LightComponents holds for the GC.
+    TSharedPtr<const FVoxelLightTable> LightTable;
+    int32 LightMinLevel = 0;
+    TSharedPtr<FVoxelLights> Lights;
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UPointLightComponent>> LightComponents;
 
     // -VoxelShot: the shot being taken, frames spent on it, its summed GPU time and the finished shots' means.
     FString ShotFolder;

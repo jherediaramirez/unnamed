@@ -11,6 +11,7 @@
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Voxel/VoxelChunkComponent.h"
 #include "Voxel/VoxelConsole.h"
+#include "Voxel/VoxelLights.h"
 #include "Voxel/VoxelWorld.h"
 #include "VoxelConstants.h"
 #include "VoxelLog.h"
@@ -119,6 +120,8 @@ void UVoxelWorldSubsystem::Start(AVoxelWorld& InOwner, TSharedRef<const FVoxelBl
     else if (bDecoration)
         UE_LOG(LogUnnamedVoxel, Display, TEXT("voxel.Decoration: this terrain has no decoration data or biomes"));
     Pipeline = MakeUnique<FVoxelColumnPipeline>(MoveTemp(Table), MoveTemp(Terrain), Settings);
+    // Mesh jobs scan their column's light sources for the owner's light pool (FVoxelColumnMesh::Lights).
+    Pipeline->SetLightTable(InOwner.GetLightTable());
     LastFocus = InitialFocus;
     StartSeconds = LogSeconds = FPlatformTime::Seconds();
     FirstTickSeconds = 0;
@@ -146,6 +149,9 @@ void UVoxelWorldSubsystem::Stop()
 {
     // Waits for the jobs in flight; their results go with it.
     Pipeline.Reset();
+    // No column is on screen any more, so none gives light.
+    if (AVoxelWorld* World = Owner.Get())
+        if (FVoxelLights* Lights = World->GetLights()) Lights->Reset();
     for (const TPair<FIntPoint, TObjectPtr<UVoxelChunkComponent>>& Chunk : Chunks)
         if (Chunk.Value) Chunk.Value->DestroyComponent();
     for (const TObjectPtr<UVoxelChunkComponent>& Chunk : Pool)
@@ -257,6 +263,10 @@ void UVoxelWorldSubsystem::ApplyReady(double BudgetMs, double TickStartSeconds)
                     Ready.Mesh->SectionMask);
         else
             ReleaseChunk(Ready.Column);
+        // The column's light sources go to the light pool with its mesh (none when the mesh is empty).
+        if (AVoxelWorld* World = Owner.Get())
+            if (FVoxelLights* Lights = World->GetLights())
+                Lights->SetColumn(Ready.Column, MoveTemp(Ready.Mesh->Lights));
         // Freeing what the mesh leaves behind is part of applying it.
         Ready.Mesh.Reset();
         const double Ms = (FPlatformTime::Seconds() - ApplyStart) * 1000.;
@@ -332,6 +342,9 @@ UVoxelChunkComponent* UVoxelWorldSubsystem::AcquireChunk(FIntPoint Column)
 
 void UVoxelWorldSubsystem::ReleaseChunk(FIntPoint Column)
 {
+    // Off screen, the column gives no light.
+    if (AVoxelWorld* World = Owner.Get())
+        if (FVoxelLights* Lights = World->GetLights()) Lights->ClearColumn(Column);
     TObjectPtr<UVoxelChunkComponent> Chunk;
     if (!Chunks.RemoveAndCopyValue(Column, Chunk) || !Chunk) return;
     // Empty and hidden until a column needs it again.
