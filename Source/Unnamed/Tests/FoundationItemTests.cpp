@@ -16,7 +16,7 @@ namespace
     constexpr EAutomationTestFlags ItemTestFlags =
         EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
 
-    TSharedPtr<FJsonObject> ReadReference(const TCHAR* Name)
+    TSharedPtr<FJsonObject> ReadItemReference(const TCHAR* Name)
     {
         FString Text;
         TSharedPtr<FJsonObject> Root;
@@ -85,10 +85,10 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationItemsRegistryTest, "Unnamed.Foundati
 bool FFoundationItemsRegistryTest::RunTest(const FString&)
 {
     const UFoundationItemAssets* Assets = UFoundationItemAssets::LoadDefault();
-    const TSharedPtr<FJsonObject> Reference = ReadReference(TEXT("items.json"));
-    const TSharedPtr<FJsonObject> ModelsJson = ReadReference(TEXT("models.json"));
-    const TSharedPtr<FJsonObject> TexturesJson = ReadReference(TEXT("textures.json"));
-    const TSharedPtr<FJsonObject> IndexJson = ReadReference(TEXT("item_index.json"));
+    const TSharedPtr<FJsonObject> Reference = ReadItemReference(TEXT("items.json"));
+    const TSharedPtr<FJsonObject> ModelsJson = ReadItemReference(TEXT("models.json"));
+    const TSharedPtr<FJsonObject> TexturesJson = ReadItemReference(TEXT("textures.json"));
+    const TSharedPtr<FJsonObject> IndexJson = ReadItemReference(TEXT("item_index.json"));
     if (!TestTrue(
             TEXT("DA_Items and the item reference"), Assets && Reference && ModelsJson && TexturesJson && IndexJson))
         return false;
@@ -303,7 +303,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationItemsRulesTest, "Unnamed.Foundation.
 bool FFoundationItemsRulesTest::RunTest(const FString&)
 {
     const UFoundationItemAssets* Assets = UFoundationItemAssets::LoadDefault();
-    const TSharedPtr<FJsonObject> TagsJson = ReadReference(TEXT("tags.json"));
+    const TSharedPtr<FJsonObject> TagsJson = ReadItemReference(TEXT("tags.json"));
     const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();
     if (!TestTrue(TEXT("DA_Items, tags.json and the block registry"), Assets && TagsJson && Registry->GetAssets()))
         return false;
