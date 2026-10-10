@@ -1,4 +1,5 @@
-"""Verify Reference/minecraft-items-26.3: file hashes, re-derivation of every generated file, copies, counts, spot values.
+"""Verify Reference/minecraft-items-26.3: file hashes, re-derivation of every generated file, copies, counts, spot values,
+and the black-box facts (ItemFacts.java) against the data.
 
 usage: uv run --no-project --python 3.13 --with pillow python -I Reference/minecraft-items-26.3/tools/verify_reference.py
 Re-derivation and the jar comparisons need the pinned client jar; the report comparison runs when the data
@@ -10,6 +11,7 @@ import importlib.util
 import json
 import sys
 import zipfile
+from decimal import ROUND_HALF_EVEN, Decimal
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -59,8 +61,8 @@ if build.CLIENT_JAR.exists():
     for name, data in generated.items():
         check((ROOT / name).is_file() and (ROOT / name).read_bytes() == data, f"re-derived file differs: {name}")
         derived += 1
-    expected = set(generated) | set(copies) | {build.REGISTRY, "README.md", "tools/build_reference.py",
-                                                "tools/verify_reference.py"}
+    expected = set(generated) | set(copies) | set(build.DUMPED) | {
+        build.REGISTRY, "README.md", "tools/build_reference.py", "tools/verify_reference.py", "tools/ItemFacts.java"}
     check(expected == set(sums), f"files differ from the derivation: +{sorted(set(sums) - expected)[:5]} "
                                  f"-{sorted(expected - set(sums))[:5]}")
     for name in copies:
@@ -127,6 +129,48 @@ textures = {t["name"]: t for t in load("textures.json")["textures"]}
 check(textures["item/iron_spear_in_hand"]["size"] == [32, 32] and textures["item/stick"]["size"] == [16, 16] and
       all(len(t["mask"]) == t["size"][1] for t in textures.values()), "texture sizes and masks")
 
+# 6. The tooltip lang keys, and ItemFacts.java's black-box facts against the data: the durability bar at every damage
+# value of each max damage, and every item's tooltip lines rebuilt from items.json and lang.json.
+lang = load("lang.json")["keys"]
+check(lang.get("item.modifiers.mainhand") == "When in Main Hand:" and lang.get("attribute.modifier.equals.0") ==
+      "%s %s" and lang.get("attribute.name.attack_speed") == "Attack Speed", "lang spot values")
+bar = load("facts/durability_bar.json")["maxima"]
+by_max = {}
+for item in items.values():
+    if item["max_damage"]:
+        by_max.setdefault(item["max_damage"], []).append(item["id"])
+check([m["max_damage"] for m in bar] == sorted(by_max) and all(m["items"] == by_max[m["max_damage"]] for m in bar),
+      "durability bar: one entry per max damage, with its items in registry order")
+for m in bar:
+    width, count = m["width"], m["max_damage"] + 1
+    check(len(m["visible"]) == len(width) == len(m["color"]) == count and m["visible"] == [0] + [1] * (count - 1) and
+          width[0] == 13 and width[-1] == 0 and all(a >= b for a, b in zip(width, width[1:])) and
+          m["color"][0] == "00ff00" and m["color"][-1] == "ff0000", f"durability bar: max damage {m['max_damage']}")
+
+
+def tooltip_number(value):
+    """The amount as the tooltip shows it (two decimals at most, half-even, no trailing zeros)."""
+    return format(Decimal(value).quantize(Decimal("0.01"), ROUND_HALF_EVEN).normalize(), "f")
+
+
+tips = {t["id"]: t["lines"] for t in load("facts/tooltips.json")["items"]}
+check(list(tips) == list(items), "tooltips: every item, in registry order")
+for item in items.values():
+    expected = [[[item["name"], "white"]]]
+    if item["attack"]:
+        expected += [[], [[lang["item.modifiers." + item["attack"]["modifiers"][0]["slot"]], "gray"]]]
+        for modifier in item["attack"]["modifiers"]:
+            # No player in the run: the base modifiers show their own amounts (the plus and take forms), and a zero
+            # amount shows no line (the diamond hoe keeps only its header).
+            if modifier["amount"] == 0:
+                continue
+            form, colour = ("plus", "blue") if modifier["amount"] > 0 else ("take", "red")
+            pieces = lang[f"attribute.modifier.{form}.{build.OPERATIONS.index(modifier['operation'])}"].split("%s")
+            texts = [pieces[0], tooltip_number(abs(modifier["amount"])), pieces[1],
+                     lang["attribute.name." + build.bare(modifier["type"])], pieces[2]]
+            expected.append([[text, colour] for text in texts if text])
+    check(tips.get(item["id"]) == expected, f"tooltip lines: {item['id']}")
+
 breaks = load("facts/break_times.json")
 tools = breaks["tools"]
 rows = {r["id"]: r for r in breaks["blocks"]}
@@ -148,4 +192,5 @@ if errors:
 partial = "" if derived else " (PARTIAL: no client jar, nothing re-derived)"
 print(f"REFERENCE OK{partial}: {len(sums)} files hashed, {derived} generated files re-derived, {jar_checked} compared with "
       f"the jar, {report_checked} with the data generator's report; {len(items)} items, {len(index)} registry items, "
-      f"{len(textures)} textures, break times for {len(rows)} blocks x {len(tools)} tools")
+      f"{len(textures)} textures, break times for {len(rows)} blocks x {len(tools)} tools; {len(lang)} lang keys, "
+      f"the durability bar at {sum(len(m['width']) for m in bar)} damage values, {len(tips)} tooltips")

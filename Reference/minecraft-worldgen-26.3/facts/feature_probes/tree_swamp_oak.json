@@ -1,0 +1,4918 @@
+{
+ "generated_by": "tools/tree_probe.py",
+ "minecraft": "26.3",
+ "probe": "swamp_oak",
+ "feature": "minecraft:swamp_oak",
+ "variant": null,
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:stone",
+    -63,
+    55
+   ],
+   [
+    "minecraft:dirt",
+    56,
+    58
+   ],
+   [
+    "minecraft:grass_block",
+    59,
+    59
+   ]
+  ],
+  "grid_spacing": 32,
+  "random_tick_speed": 0,
+  "settle_s": 3
+ },
+ "y": 60,
+ "grid": 10,
+ "settled": true,
+ "prep": [],
+ "tries": 100,
+ "responses": {
+  "placed": 100
+ },
+ "placed_but_empty": 0,
+ "failed_but_changed": 0,
+ "n": {
+  "n": 100,
+  "min": 172,
+  "p5": 186,
+  "p50": 208,
+  "p95": 230,
+  "max": 237,
+  "mean": 207.65
+ },
+ "logs": {
+  "n": 100,
+  "min": 5,
+  "p5": 5,
+  "p50": 7,
+  "p95": 8,
+  "max": 8,
+  "mean": 6.44
+ },
+ "leaves": {
+  "n": 100,
+  "min": 131,
+  "p5": 133,
+  "p50": 135,
+  "p95": 138,
+  "max": 139,
+  "mean": 135.14
+ },
+ "log_top": {
+  "n": 100,
+  "min": 4,
+  "p5": 4,
+  "p50": 6,
+  "p95": 7,
+  "max": 7,
+  "mean": 5.44
+ },
+ "log_bottom": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "origin_column_logs": {
+  "n": 100,
+  "min": 5,
+  "p5": 5,
+  "p50": 7,
+  "p95": 8,
+  "max": 8,
+  "mean": 6.44
+ },
+ "reach_h": {
+  "n": 100,
+  "min": 4,
+  "p5": 4,
+  "p50": 4,
+  "p95": 4,
+  "max": 4,
+  "mean": 4.0
+ },
+ "log_reach_h": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "leaf_reach_h": {
+  "n": 100,
+  "min": 3,
+  "p5": 3,
+  "p50": 3,
+  "p95": 3,
+  "max": 3,
+  "mean": 3.0
+ },
+ "leaf_top": {
+  "n": 100,
+  "min": 5,
+  "p5": 5,
+  "p50": 7,
+  "p95": 8,
+  "max": 8,
+  "mean": 6.44
+ },
+ "log_comp6": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "log_comp26": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_mismatch": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 8,
+  "max": 69,
+  "mean": 2.89
+ },
+ "leaf_comp6": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_pending_tick": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "leaf_mismatch_no_tick": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 8,
+  "max": 69,
+  "mean": 2.89
+ },
+ "leaf_bfs7": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "log_top_hist": {
+  "4": 25,
+  "5": 24,
+  "6": 33,
+  "7": 18
+ },
+ "origin_column_logs_hist": {
+  "5": 25,
+  "6": 24,
+  "7": 33,
+  "8": 18
+ },
+ "log_comp6_hist": {
+  "1": 100
+ },
+ "log_comp26_hist": {
+  "1": 100
+ },
+ "bbox_extremes": {
+  "min_dx": -4,
+  "max_dx": 4,
+  "min_dy": -1,
+  "max_dy": 8,
+  "min_dz": -4,
+  "max_dz": 4
+ },
+ "blocks": {
+  "dirt": {
+   "mean_per_tree": 1.0,
+   "share_of_trees": 1.0,
+   "max_reach_h": 0,
+   "per_tree": {
+    "n": 100,
+    "min": 1,
+    "p5": 1,
+    "p50": 1,
+    "p95": 1,
+    "max": 1,
+    "mean": 1.0
+   }
+  },
+  "oak_leaves": {
+   "mean_per_tree": 135.14,
+   "share_of_trees": 1.0,
+   "max_reach_h": 3,
+   "per_tree": {
+    "n": 100,
+    "min": 131,
+    "p5": 133,
+    "p50": 135,
+    "p95": 138,
+    "max": 139,
+    "mean": 135.14
+   }
+  },
+  "oak_log": {
+   "mean_per_tree": 6.44,
+   "share_of_trees": 1.0,
+   "max_reach_h": 0,
+   "per_tree": {
+    "n": 100,
+    "min": 5,
+    "p5": 5,
+    "p50": 7,
+    "p95": 8,
+    "max": 8,
+    "mean": 6.44
+   }
+  },
+  "vine": {
+   "mean_per_tree": 65.07,
+   "share_of_trees": 1.0,
+   "max_reach_h": 4,
+   "per_tree": {
+    "n": 100,
+    "min": 29,
+    "p5": 45,
+    "p50": 65,
+    "p95": 87,
+    "max": 94,
+    "mean": 65.07
+   }
+  }
+ },
+ "leaf_distance": {
+  "1": 1262,
+  "2": 2767,
+  "3": 3989,
+  "4": 3432,
+  "5": 1629,
+  "6": 430,
+  "7": 5
+ },
+ "leaf_bfs": {
+  "1": 1300,
+  "2": 2800,
+  "3": 4000,
+  "4": 3411,
+  "5": 1600,
+  "6": 403
+ },
+ "leaf_persistent": {
+  "false": 13514
+ },
+ "log_axis": {
+  "y": 644
+ },
+ "max_reach_h_any_cell": 4,
+ "profile": {
+  "n": 100,
+  "log_columns": {
+   "0,0": 1.0
+  },
+  "logs_per_dy": {
+   "0": 1.0,
+   "1": 1.0,
+   "2": 1.0,
+   "3": 1.0,
+   "4": 1.0,
+   "5": 0.75,
+   "6": 0.51,
+   "7": 0.18
+  },
+  "leaf_layers": [
+   {
+    "dy_from_top_log": -2,
+    "mean_per_tree": 46.06,
+    "max_radius": 3,
+    "occupancy": {
+     "-3,-3": 0.48,
+     "-3,-2": 1.0,
+     "-3,-1": 1.0,
+     "-3,0": 1.0,
+     "-3,1": 1.0,
+     "-3,2": 1.0,
+     "-3,3": 0.49,
+     "-2,-3": 1.0,
+     "-2,-2": 1.0,
+     "-2,-1": 1.0,
+     "-2,0": 1.0,
+     "-2,1": 1.0,
+     "-2,2": 1.0,
+     "-2,3": 1.0,
+     "-1,-3": 1.0,
+     "-1,-2": 1.0,
+     "-1,-1": 1.0,
+     "-1,0": 1.0,
+     "-1,1": 1.0,
+     "-1,2": 1.0,
+     "-1,3": 1.0,
+     "0,-3": 1.0,
+     "0,-2": 1.0,
+     "0,-1": 1.0,
+     "0,1": 1.0,
+     "0,2": 1.0,
+     "0,3": 1.0,
+     "1,-3": 1.0,
+     "1,-2": 1.0,
+     "1,-1": 1.0,
+     "1,0": 1.0,
+     "1,1": 1.0,
+     "1,2": 1.0,
+     "1,3": 1.0,
+     "2,-3": 1.0,
+     "2,-2": 1.0,
+     "2,-1": 1.0,
+     "2,0": 1.0,
+     "2,1": 1.0,
+     "2,2": 1.0,
+     "2,3": 1.0,
+     "3,-3": 0.51,
+     "3,-2": 1.0,
+     "3,-1": 1.0,
+     "3,0": 1.0,
+     "3,1": 1.0,
+     "3,2": 1.0,
+     "3,3": 0.58
+    }
+   },
+   {
+    "dy_from_top_log": -1,
+    "mean_per_tree": 45.97,
+    "max_radius": 3,
+    "occupancy": {
+     "-3,-3": 0.44,
+     "-3,-2": 1.0,
+     "-3,-1": 1.0,
+     "-3,0": 1.0,
+     "-3,1": 1.0,
+     "-3,2": 1.0,
+     "-3,3": 0.53,
+     "-2,-3": 1.0,
+     "-2,-2": 1.0,
+     "-2,-1": 1.0,
+     "-2,0": 1.0,
+     "-2,1": 1.0,
+     "-2,2": 1.0,
+     "-2,3": 1.0,
+     "-1,-3": 1.0,
+     "-1,-2": 1.0,
+     "-1,-1": 1.0,
+     "-1,0": 1.0,
+     "-1,1": 1.0,
+     "-1,2": 1.0,
+     "-1,3": 1.0,
+     "0,-3": 1.0,
+     "0,-2": 1.0,
+     "0,-1": 1.0,
+     "0,1": 1.0,
+     "0,2": 1.0,
+     "0,3": 1.0,
+     "1,-3": 1.0,
+     "1,-2": 1.0,
+     "1,-1": 1.0,
+     "1,0": 1.0,
+     "1,1": 1.0,
+     "1,2": 1.0,
+     "1,3": 1.0,
+     "2,-3": 1.0,
+     "2,-2": 1.0,
+     "2,-1": 1.0,
+     "2,0": 1.0,
+     "2,1": 1.0,
+     "2,2": 1.0,
+     "2,3": 1.0,
+     "3,-3": 0.5,
+     "3,-2": 1.0,
+     "3,-1": 1.0,
+     "3,0": 1.0,
+     "3,1": 1.0,
+     "3,2": 1.0,
+     "3,3": 0.5
+    }
+   },
+   {
+    "dy_from_top_log": 0,
+    "mean_per_tree": 22.11,
+    "max_radius": 2,
+    "occupancy": {
+     "-2,-2": 0.48,
+     "-2,-1": 1.0,
+     "-2,0": 1.0,
+     "-2,1": 1.0,
+     "-2,2": 0.55,
+     "-1,-2": 1.0,
+     "-1,-1": 1.0,
+     "-1,0": 1.0,
+     "-1,1": 1.0,
+     "-1,2": 1.0,
+     "0,-2": 1.0,
+     "0,-1": 1.0,
+     "0,1": 1.0,
+     "0,2": 1.0,
+     "1,-2": 1.0,
+     "1,-1": 1.0,
+     "1,0": 1.0,
+     "1,1": 1.0,
+     "1,2": 1.0,
+     "2,-2": 0.5,
+     "2,-1": 1.0,
+     "2,0": 1.0,
+     "2,1": 1.0,
+     "2,2": 0.58
+    }
+   },
+   {
+    "dy_from_top_log": 1,
+    "mean_per_tree": 21.0,
+    "max_radius": 2,
+    "occupancy": {
+     "-2,-1": 1.0,
+     "-2,0": 1.0,
+     "-2,1": 1.0,
+     "-1,-2": 1.0,
+     "-1,-1": 1.0,
+     "-1,0": 1.0,
+     "-1,1": 1.0,
+     "-1,2": 1.0,
+     "0,-2": 1.0,
+     "0,-1": 1.0,
+     "0,0": 1.0,
+     "0,1": 1.0,
+     "0,2": 1.0,
+     "1,-2": 1.0,
+     "1,-1": 1.0,
+     "1,0": 1.0,
+     "1,1": 1.0,
+     "1,2": 1.0,
+     "2,-1": 1.0,
+     "2,0": 1.0,
+     "2,1": 1.0
+    }
+   }
+  ],
+  "decorators": {
+   "dirt": {
+    "total": 100,
+    "per_tree": 1.0,
+    "dy": {
+     "-1": 100
+    },
+    "radius": {
+     "0": 100
+    }
+   },
+   "vine": {
+    "total": 6507,
+    "per_tree": 65.07,
+    "dy": {
+     "0": 794,
+     "1": 1066,
+     "2": 1147,
+     "3": 1014,
+     "4": 912,
+     "5": 720,
+     "6": 481,
+     "7": 290,
+     "8": 83
+    },
+    "radius": {
+     "2": 311,
+     "3": 1495,
+     "4": 4701
+    }
+   }
+  }
+ },
+ "examples": [
+  {
+   "origin": [
+    17936,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -4,
+     0,
+     -2,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     0,
+     -1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     0,
+     1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     0,
+     3,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     1,
+     -2,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     1,
+     -1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     1,
+     1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     1,
+     3,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     2,
+     -2,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     2,
+     -1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     2,
+     1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     2,
+     3,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     3,
+     3,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     0,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -3,
+     0,
+     -3,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     0,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     1,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -3,
+     1,
+     -3,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     1,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     2,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -3,
+     2,
+     -3,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     2,
+     -2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     2,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     2,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     2,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     2,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     2,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     3,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -3,
+     3,
+     -3,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     3,
+     -2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     3,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     3,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     3,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     3,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     3,
+     3,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     3,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     4,
+     -1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     4,
+     0,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     5,
+     0,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     0,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     1,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     2,
+     -3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     2,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     2,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     2,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     2,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     2,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     2,
+     3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     2,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     3,
+     -3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     0,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     1,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     2,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     2,
+     -3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     3,
+     -3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     4,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     2,
+     -3,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     2,
+     -2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     2,
+     -1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     2,
+     1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     2,
+     2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     2,
+     3,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     -3,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     -2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     -1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     3,
+     1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     3,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     -3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     -3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     0,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     1,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     2,
+     -3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     3,
+     -3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     2,
+     4,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     0,
+     3,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     1,
+     3,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     2,
+     -3,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     2,
+     -2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     2,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     2,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     2,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     2,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     2,
+     3,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     3,
+     -3,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     -2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     3,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     4,
+     -1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     4,
+     0,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     5,
+     0,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     0,
+     -2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     0,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     1,
+     -2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     1,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     2,
+     -2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     2,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     3,
+     -2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ]
+   ]
+  },
+  {
+   "origin": [
+    17968,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -4,
+     1,
+     1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     2,
+     1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     3,
+     1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     4,
+     1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -4,
+     5,
+     1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     4,
+     -3,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     -2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     3,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     0,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     6,
+     2,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     0,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -2,
+     1,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -2,
+     1,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     2,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -2,
+     2,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     3,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -2,
+     3,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     4,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -2,
+     4,
+     -3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     5,
+     -3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     6,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     0,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     0,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     1,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     1,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     2,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     2,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     3,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     3,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     4,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     4,
+     -3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     5,
+     -3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     6,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     7,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     0,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     4,
+     -3,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     3,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -3,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     3,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     0,
+     6,
+     -2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     2,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     3,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     1,
+     6,
+     -2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     2,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     1,
+     7,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     1,
+     7,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     0,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     1,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     2,
+     1,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     2,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     2,
+     2,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     3,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     2,
+     3,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     4,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     2,
+     4,
+     -3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     4,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     5,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     2,
+     5,
+     -3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     3,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     0,
+     "minecraft:oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     1,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     2,
+     7,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     2,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     3,
+     0,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     3,
+     1,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     3,
+     1,
+     3,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     2,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     3,
+     2,
+     3,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     3,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     3,
+     3,
+     3,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     4,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     3,
+     4,
+     -3,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     -2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     3,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     5,
+     -3,
+     "minecraft:oak_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     -2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     -1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     0,
+     "minecraft:oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     1,
+     "minecraft:oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     2,
+     "minecraft:oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     3,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     6,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     7,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     0,
+     -1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     0,
+     2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     1,
+     -1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     1,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     1,
+     2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     2,
+     -1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     2,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     2,
+     2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     3,
+     -1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     3,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     3,
+     2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     4,
+     -1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     4,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     4,
+     2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     5,
+     -1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     5,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ]
+   ]
+  }
+ ],
+ "per_placement": [
+  {
+   "n": 195,
+   "logs": 5,
+   "leaves": 135,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 217,
+   "logs": 7,
+   "leaves": 135,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 197,
+   "logs": 7,
+   "leaves": 132,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 219,
+   "logs": 8,
+   "leaves": 135,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 223,
+   "logs": 7,
+   "leaves": 132,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 215,
+   "logs": 7,
+   "leaves": 136,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 212,
+   "logs": 7,
+   "leaves": 137,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 186,
+   "logs": 5,
+   "leaves": 137,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 8,
+   "result": "placed"
+  },
+  {
+   "n": 212,
+   "logs": 7,
+   "leaves": 133,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 218,
+   "logs": 8,
+   "leaves": 138,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 196,
+   "logs": 5,
+   "leaves": 131,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 219,
+   "logs": 6,
+   "leaves": 135,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 218,
+   "logs": 7,
+   "leaves": 135,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 196,
+   "logs": 7,
+   "leaves": 135,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 195,
+   "logs": 5,
+   "leaves": 136,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 207,
+   "logs": 7,
+   "leaves": 135,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 204,
+   "logs": 7,
+   "leaves": 133,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 197,
+   "logs": 6,
+   "leaves": 136,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 209,
+   "logs": 8,
+   "leaves": 136,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 187,
+   "logs": 5,
+   "leaves": 136,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    3,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 195,
+   "logs": 5,
+   "leaves": 135,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 206,
+   "logs": 8,
+   "leaves": 135,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 204,
+   "logs": 6,
+   "leaves": 137,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 236,
+   "logs": 8,
+   "leaves": 139,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 202,
+   "logs": 5,
+   "leaves": 136,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 205,
+   "logs": 6,
+   "leaves": 133,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 190,
+   "logs": 6,
+   "leaves": 135,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 173,
+   "logs": 6,
+   "leaves": 134,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 209,
+   "logs": 7,
+   "leaves": 133,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 213,
+   "logs": 6,
+   "leaves": 135,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 193,
+   "logs": 7,
+   "leaves": 137,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 212,
+   "logs": 7,
+   "leaves": 133,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 183,
+   "logs": 5,
+   "leaves": 133,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 53,
+   "result": "placed"
+  },
+  {
+   "n": 205,
+   "logs": 6,
+   "leaves": 133,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 207,
+   "logs": 6,
+   "leaves": 134,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 200,
+   "logs": 5,
+   "leaves": 137,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 224,
+   "logs": 8,
+   "leaves": 135,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 231,
+   "logs": 8,
+   "leaves": 134,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 214,
+   "logs": 8,
+   "leaves": 136,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 192,
+   "logs": 7,
+   "leaves": 134,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 214,
+   "logs": 7,
+   "leaves": 136,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 191,
+   "logs": 5,
+   "leaves": 134,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 186,
+   "logs": 5,
+   "leaves": 134,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 198,
+   "logs": 7,
+   "leaves": 132,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 189,
+   "logs": 5,
+   "leaves": 133,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 199,
+   "logs": 6,
+   "leaves": 133,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 199,
+   "logs": 5,
+   "leaves": 138,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 195,
+   "logs": 5,
+   "leaves": 133,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 210,
+   "logs": 6,
+   "leaves": 135,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 234,
+   "logs": 7,
+   "leaves": 139,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 229,
+   "logs": 6,
+   "leaves": 135,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 198,
+   "logs": 6,
+   "leaves": 137,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 227,
+   "logs": 6,
+   "leaves": 135,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 198,
+   "logs": 6,
+   "leaves": 134,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 229,
+   "logs": 6,
+   "leaves": 135,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 208,
+   "logs": 7,
+   "leaves": 134,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 213,
+   "logs": 5,
+   "leaves": 135,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 213,
+   "logs": 5,
+   "leaves": 134,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 191,
+   "logs": 7,
+   "leaves": 135,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 195,
+   "logs": 5,
+   "leaves": 135,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 203,
+   "logs": 6,
+   "leaves": 134,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 222,
+   "logs": 8,
+   "leaves": 135,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 221,
+   "logs": 6,
+   "leaves": 134,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 172,
+   "logs": 7,
+   "leaves": 135,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 200,
+   "logs": 5,
+   "leaves": 135,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 220,
+   "logs": 7,
+   "leaves": 134,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 228,
+   "logs": 6,
+   "leaves": 134,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 197,
+   "logs": 5,
+   "leaves": 134,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 199,
+   "logs": 8,
+   "leaves": 135,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 68,
+   "result": "placed"
+  },
+  {
+   "n": 201,
+   "logs": 8,
+   "leaves": 132,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 200,
+   "logs": 5,
+   "leaves": 137,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 225,
+   "logs": 7,
+   "leaves": 137,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 209,
+   "logs": 8,
+   "leaves": 136,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    3,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 218,
+   "logs": 6,
+   "leaves": 138,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 216,
+   "logs": 5,
+   "leaves": 134,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 203,
+   "logs": 8,
+   "leaves": 137,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 69,
+   "result": "placed"
+  },
+  {
+   "n": 211,
+   "logs": 7,
+   "leaves": 137,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 205,
+   "logs": 8,
+   "leaves": 135,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 67,
+   "result": "placed"
+  },
+  {
+   "n": 208,
+   "logs": 6,
+   "leaves": 138,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 203,
+   "logs": 7,
+   "leaves": 134,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 203,
+   "logs": 7,
+   "leaves": 136,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 211,
+   "logs": 7,
+   "leaves": 137,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 209,
+   "logs": 7,
+   "leaves": 133,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 215,
+   "logs": 7,
+   "leaves": 133,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 215,
+   "logs": 8,
+   "leaves": 137,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 205,
+   "logs": 5,
+   "leaves": 138,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 8,
+   "result": "placed"
+  },
+  {
+   "n": 228,
+   "logs": 8,
+   "leaves": 135,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 226,
+   "logs": 7,
+   "leaves": 139,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    3,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 206,
+   "logs": 7,
+   "leaves": 134,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 212,
+   "logs": 7,
+   "leaves": 138,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 182,
+   "logs": 5,
+   "leaves": 137,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    3,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 8,
+   "result": "placed"
+  },
+  {
+   "n": 237,
+   "logs": 8,
+   "leaves": 134,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 200,
+   "logs": 5,
+   "leaves": 136,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 8,
+   "result": "placed"
+  },
+  {
+   "n": 196,
+   "logs": 5,
+   "leaves": 134,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 212,
+   "logs": 6,
+   "leaves": 133,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 214,
+   "logs": 7,
+   "leaves": 136,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 225,
+   "logs": 6,
+   "leaves": 136,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 218,
+   "logs": 8,
+   "leaves": 138,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 228,
+   "logs": 7,
+   "leaves": 137,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 230,
+   "logs": 6,
+   "leaves": 136,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  }
+ ]
+}

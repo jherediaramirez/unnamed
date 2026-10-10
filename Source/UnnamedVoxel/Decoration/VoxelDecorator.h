@@ -4,6 +4,7 @@
 #include "Blocks/VoxelPlantSurvival.h"
 #include "Decoration/Features/VoxelOreFeature.h"
 #include "Decoration/Features/VoxelPatchFeatures.h"
+#include "Decoration/Features/VoxelTreeFeature.h"
 #include "Decoration/VoxelBlockPredicates.h"
 #include "Decoration/VoxelDecorationContext.h"
 #include "Decoration/VoxelNumberProviders.h"
@@ -51,6 +52,11 @@ struct FVoxelDecorationOptions
     // The seven placed features S8's types complete that belong to S11 and S12 (lush caves x3, cave vines, spore
     // blossom, sculk vein, ice patch): off until those sessions (scout I's question 1, recommendation b).
     bool bLaterPlants = false;
+    // voxel.Decoration.Trees: the tree feature (S9a) compiles with its modifiers (surface_water_depth_filter,
+    // environment_scan); inside a selector, an entry of a type S9b builds (fallen trees, huge mushrooms) places
+    // nothing, and a tree's decorators are left out, all counted by Describe. Off: trees are skipped as before S9a, so
+    // S8's goldens and hashes reproduce. Needs bPlants.
+    bool bTrees = true;
     // When set, only the placed features it accepts (by full id) run.
     TFunction<bool(FStringView)> Filter;
     EVoxelDecorationMutation Mutation = EVoxelDecorationMutation::None;
@@ -136,6 +142,11 @@ public:
     const FVoxelStateProviders& GetProviders() const { return Providers; }
     // The skipped placed features' reasons with their counts.
     const TMap<FString, int32>& GetSkipped() const { return Skipped; }
+    // Trees (S9a): the configurations compiled, the selector entries of S9b's types placing nothing, and the tree
+    // decorators left out, by type.
+    TConstArrayView<FVoxelTreeConfig> GetTrees() const { return Trees; }
+    const TMap<FString, int32>& GetPlaceholders() const { return Placeholders; }
+    const TMap<FString, int32>& GetSkippedDecorators() const { return SkippedDecorators; }
     // The noise the count modifiers read (noise_threshold_count at X / 200, Y / 200).
     float SampleCountNoise(double X, double Y) const { return CountNoise.Sample(X, Y); }
 
@@ -155,7 +166,10 @@ private:
             Filter,
             NoiseThresholdCount,
             NoiseBasedCount,
-            SurfaceRelative
+            SurfaceRelative,
+            // S9a:
+            SurfaceWaterDepth,
+            EnvironmentScan
         };
         EType Type = EType::Count;
         FVoxelIntProvider Provider;
@@ -170,6 +184,9 @@ private:
         // SurfaceRelative: Below and Above as the inclusive bounds.
         double Level = 0, Ratio = 0, Factor = 1, NoiseOffset = 0;
         int32 Below = 0, Above = 0;
+        // SurfaceWaterDepth: Above is the largest depth. EnvironmentScan: the Z step (1 up, -1 down), the steps, the
+        // target (Predicate) and the optional condition each cell walked onto must meet unless it is the target.
+        int32 ScanStep = 0, ScanSteps = 0, ScanAllowed = INDEX_NONE;
     };
 
     // A nested placed feature (selectors, a patch's vegetation): its modifiers (never biome) and its feature.
@@ -249,4 +266,8 @@ private:
     FVoxelGradientNoise CountNoise{0};
     // Compile memos: graph node to plant or nested placed feature.
     TMap<int32, int32> PlantOfNode, PlacedOfNode;
+
+    // Trees (S9a).
+    TArray<FVoxelTreeConfig> Trees;
+    TMap<FString, int32> Placeholders, SkippedDecorators;
 };

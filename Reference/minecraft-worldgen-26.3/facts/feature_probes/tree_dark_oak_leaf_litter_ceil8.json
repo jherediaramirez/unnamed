@@ -1,0 +1,2726 @@
+{
+ "generated_by": "tools/tree_probe.py",
+ "minecraft": "26.3",
+ "probe": "dark_oak_leaf_litter_ceil8",
+ "feature": "minecraft:dark_oak_leaf_litter",
+ "variant": "_ceil8",
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:stone",
+    -63,
+    55
+   ],
+   [
+    "minecraft:dirt",
+    56,
+    58
+   ],
+   [
+    "minecraft:grass_block",
+    59,
+    59
+   ]
+  ],
+  "grid_spacing": 32,
+  "random_tick_speed": 0,
+  "settle_s": 3
+ },
+ "y": 60,
+ "grid": 4,
+ "settled": true,
+ "prep": [
+  [
+   -8,
+   68,
+   -8,
+   8,
+   68,
+   8,
+   "minecraft:stone"
+  ]
+ ],
+ "tries": 16,
+ "responses": {
+  "failed": 13,
+  "placed": 3
+ },
+ "ceiling_dy": 8,
+ "placed_but_empty": 0,
+ "failed_but_changed": 0,
+ "n": {
+  "n": 3,
+  "min": 151,
+  "p5": 151,
+  "p50": 161,
+  "p95": 168,
+  "max": 168,
+  "mean": 160.0
+ },
+ "logs": {
+  "n": 3,
+  "min": 29,
+  "p5": 29,
+  "p50": 33,
+  "p95": 43,
+  "max": 43,
+  "mean": 35.0
+ },
+ "leaves": {
+  "n": 3,
+  "min": 118,
+  "p5": 118,
+  "p50": 121,
+  "p95": 124,
+  "max": 124,
+  "mean": 121.0
+ },
+ "log_top": {
+  "n": 3,
+  "min": 5,
+  "p5": 5,
+  "p50": 5,
+  "p95": 5,
+  "max": 5,
+  "mean": 5.0
+ },
+ "log_bottom": {
+  "n": 3,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "origin_column_logs": {
+  "n": 3,
+  "min": 5,
+  "p5": 5,
+  "p50": 6,
+  "p95": 6,
+  "max": 6,
+  "mean": 5.667
+ },
+ "reach_h": {
+  "n": 3,
+  "min": 4,
+  "p5": 4,
+  "p50": 4,
+  "p95": 5,
+  "max": 5,
+  "mean": 4.333
+ },
+ "log_reach_h": {
+  "n": 3,
+  "min": 2,
+  "p5": 2,
+  "p50": 2,
+  "p95": 2,
+  "max": 2,
+  "mean": 2.0
+ },
+ "leaf_reach_h": {
+  "n": 3,
+  "min": 4,
+  "p5": 4,
+  "p50": 4,
+  "p95": 5,
+  "max": 5,
+  "mean": 4.333
+ },
+ "leaf_top": {
+  "n": 3,
+  "min": 6,
+  "p5": 6,
+  "p50": 7,
+  "p95": 7,
+  "max": 7,
+  "mean": 6.667
+ },
+ "log_comp6": {
+  "n": 3,
+  "min": 1,
+  "p5": 1,
+  "p50": 2,
+  "p95": 3,
+  "max": 3,
+  "mean": 2.0
+ },
+ "log_comp26": {
+  "n": 3,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_mismatch": {
+  "n": 3,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "leaf_comp6": {
+  "n": 3,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_pending_tick": {
+  "n": 3,
+  "min": 0,
+  "p5": 0,
+  "p50": 7,
+  "p95": 8,
+  "max": 8,
+  "mean": 5.0
+ },
+ "leaf_mismatch_no_tick": {
+  "n": 3,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "leaf_bfs7": {
+  "n": 3,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "log_top_hist": {
+  "5": 3
+ },
+ "origin_column_logs_hist": {
+  "5": 1,
+  "6": 2
+ },
+ "log_comp6_hist": {
+  "1": 1,
+  "2": 1,
+  "3": 1
+ },
+ "log_comp26_hist": {
+  "1": 3
+ },
+ "bbox_extremes": {
+  "min_dx": -3,
+  "max_dx": 4,
+  "min_dy": -1,
+  "max_dy": 7,
+  "min_dz": -3,
+  "max_dz": 5
+ },
+ "blocks": {
+  "dark_oak_leaves": {
+   "mean_per_tree": 121.0,
+   "share_of_trees": 1.0,
+   "max_reach_h": 5,
+   "per_tree": {
+    "n": 3,
+    "min": 118,
+    "p5": 118,
+    "p50": 121,
+    "p95": 124,
+    "max": 124,
+    "mean": 121.0
+   }
+  },
+  "dark_oak_log": {
+   "mean_per_tree": 35.0,
+   "share_of_trees": 1.0,
+   "max_reach_h": 2,
+   "per_tree": {
+    "n": 3,
+    "min": 29,
+    "p5": 29,
+    "p50": 33,
+    "p95": 43,
+    "max": 43,
+    "mean": 35.0
+   }
+  },
+  "dirt": {
+   "mean_per_tree": 4.0,
+   "share_of_trees": 1.0,
+   "max_reach_h": 1,
+   "per_tree": {
+    "n": 3,
+    "min": 4,
+    "p5": 4,
+    "p50": 4,
+    "p95": 4,
+    "max": 4,
+    "mean": 4.0
+   }
+  }
+ },
+ "leaf_distance": {
+  "1": 79,
+  "2": 128,
+  "3": 120,
+  "4": 28,
+  "5": 8
+ },
+ "leaf_bfs": {
+  "1": 79,
+  "2": 128,
+  "3": 120,
+  "4": 28,
+  "5": 8
+ },
+ "leaf_persistent": {
+  "false": 363
+ },
+ "log_axis": {
+  "y": 105
+ },
+ "pending_ticks": {
+  "minecraft:dark_oak_leaves": 15
+ },
+ "max_reach_h_any_cell": 5,
+ "profile": {
+  "n": 3,
+  "log_columns": {
+   "-1,-1": 0.3333,
+   "-1,0": 0.3333,
+   "-1,2": 0.6667,
+   "0,-1": 0.3333,
+   "0,0": 1.0,
+   "0,1": 1.0,
+   "0,2": 0.3333,
+   "1,-1": 0.6667,
+   "1,0": 1.0,
+   "1,1": 1.0,
+   "1,2": 0.3333,
+   "2,1": 0.3333,
+   "2,2": 0.6667
+  },
+  "logs_per_dy": {
+   "0": 4.0,
+   "1": 5.6667,
+   "2": 6.6667,
+   "3": 7.3333,
+   "4": 7.3333,
+   "5": 4.0
+  },
+  "leaf_layers": [
+   {
+    "dy_from_top_log": -1,
+    "mean_per_tree": 43.0,
+    "max_radius": 4,
+    "occupancy": {
+     "-3,-2": 0.3333,
+     "-3,-1": 0.3333,
+     "-3,0": 0.3333,
+     "-3,1": 1.0,
+     "-3,2": 0.6667,
+     "-3,3": 0.6667,
+     "-2,-3": 0.3333,
+     "-2,-2": 1.0,
+     "-2,-1": 1.0,
+     "-2,0": 1.0,
+     "-2,1": 1.0,
+     "-2,2": 1.0,
+     "-2,3": 1.0,
+     "-2,4": 1.0,
+     "-1,-3": 0.6667,
+     "-1,-2": 1.0,
+     "-1,-1": 0.6667,
+     "-1,0": 0.6667,
+     "-1,1": 1.0,
+     "-1,2": 0.3333,
+     "-1,3": 1.0,
+     "-1,4": 1.0,
+     "0,-3": 1.0,
+     "0,-2": 1.0,
+     "0,-1": 0.6667,
+     "0,2": 1.0,
+     "0,3": 1.0,
+     "0,4": 1.0,
+     "1,-3": 1.0,
+     "1,-2": 1.0,
+     "1,-1": 0.3333,
+     "1,2": 1.0,
+     "1,3": 1.0,
+     "1,4": 0.6667,
+     "2,-3": 0.6667,
+     "2,-2": 1.0,
+     "2,-1": 1.0,
+     "2,0": 1.0,
+     "2,1": 0.6667,
+     "2,2": 0.3333,
+     "2,3": 1.0,
+     "2,4": 0.6667,
+     "3,-2": 1.0,
+     "3,-1": 1.0,
+     "3,0": 1.0,
+     "3,1": 1.0,
+     "3,2": 1.0,
+     "3,3": 1.0,
+     "3,4": 0.6667,
+     "4,0": 0.3333,
+     "4,1": 0.6667,
+     "4,2": 0.6667,
+     "4,3": 0.6667
+    }
+   },
+   {
+    "dy_from_top_log": 0,
+    "mean_per_tree": 51.3333,
+    "max_radius": 5,
+    "occupancy": {
+     "-3,-2": 0.6667,
+     "-3,-1": 1.0,
+     "-3,0": 1.0,
+     "-3,1": 1.0,
+     "-3,2": 1.0,
+     "-3,3": 0.3333,
+     "-2,-3": 0.6667,
+     "-2,-2": 1.0,
+     "-2,-1": 1.0,
+     "-2,0": 1.0,
+     "-2,1": 1.0,
+     "-2,2": 1.0,
+     "-2,3": 1.0,
+     "-2,4": 1.0,
+     "-2,5": 0.3333,
+     "-1,-3": 0.6667,
+     "-1,-2": 1.0,
+     "-1,-1": 1.0,
+     "-1,0": 1.0,
+     "-1,1": 1.0,
+     "-1,2": 1.0,
+     "-1,3": 1.0,
+     "-1,4": 1.0,
+     "-1,5": 0.3333,
+     "0,-3": 0.6667,
+     "0,-2": 1.0,
+     "0,-1": 1.0,
+     "0,0": 0.3333,
+     "0,2": 0.6667,
+     "0,3": 1.0,
+     "0,4": 1.0,
+     "0,5": 0.3333,
+     "1,-3": 0.6667,
+     "1,-2": 1.0,
+     "1,-1": 1.0,
+     "1,0": 0.3333,
+     "1,2": 0.6667,
+     "1,3": 1.0,
+     "1,4": 1.0,
+     "1,5": 0.3333,
+     "2,-3": 0.6667,
+     "2,-2": 1.0,
+     "2,-1": 1.0,
+     "2,0": 1.0,
+     "2,1": 1.0,
+     "2,2": 1.0,
+     "2,3": 1.0,
+     "2,4": 1.0,
+     "2,5": 0.3333,
+     "3,-2": 0.6667,
+     "3,-1": 1.0,
+     "3,0": 1.0,
+     "3,1": 1.0,
+     "3,2": 1.0,
+     "3,3": 0.6667,
+     "4,-2": 0.6667,
+     "4,-1": 1.0,
+     "4,0": 1.0,
+     "4,1": 1.0,
+     "4,2": 1.0,
+     "4,3": 0.3333
+    }
+   },
+   {
+    "dy_from_top_log": 1,
+    "mean_per_tree": 24.0,
+    "max_radius": 4,
+    "occupancy": {
+     "-2,0": 0.6667,
+     "-2,1": 1.0,
+     "-2,2": 0.3333,
+     "-1,-1": 0.6667,
+     "-1,0": 1.0,
+     "-1,1": 1.0,
+     "-1,2": 1.0,
+     "-1,3": 0.3333,
+     "0,-2": 0.6667,
+     "0,-1": 1.0,
+     "0,0": 1.0,
+     "0,1": 1.0,
+     "0,2": 1.0,
+     "0,3": 1.0,
+     "0,4": 0.3333,
+     "1,-2": 0.6667,
+     "1,-1": 1.0,
+     "1,0": 1.0,
+     "1,1": 1.0,
+     "1,2": 1.0,
+     "1,3": 1.0,
+     "1,4": 0.3333,
+     "2,-1": 0.6667,
+     "2,0": 1.0,
+     "2,1": 1.0,
+     "2,2": 1.0,
+     "2,3": 0.3333,
+     "3,0": 0.6667,
+     "3,1": 1.0,
+     "3,2": 0.3333
+    }
+   },
+   {
+    "dy_from_top_log": 2,
+    "mean_per_tree": 2.6667,
+    "max_radius": 1,
+    "occupancy": {
+     "0,0": 0.6667,
+     "0,1": 0.6667,
+     "1,0": 0.6667,
+     "1,1": 0.6667
+    }
+   }
+  ],
+  "decorators": {
+   "dirt": {
+    "total": 12,
+    "per_tree": 4.0,
+    "dy": {
+     "-1": 12
+    },
+    "radius": {
+     "0": 3,
+     "1": 9
+    }
+   }
+  }
+ },
+ "examples": [
+  {
+   "origin": [
+    34320,
+    60,
+    48
+   ],
+   "cells": [
+    [
+     -3,
+     4,
+     -2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     -1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     0,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     0,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     3,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     0,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     3,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     4,
+     "minecraft:dark_oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     0,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     4,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     5,
+     "minecraft:dark_oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     1,
+     -1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     -1,
+     2,
+     -1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     -1,
+     2,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     -1,
+     3,
+     -1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     -1,
+     3,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     -1,
+     4,
+     -3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     -1,
+     4,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     -1,
+     4,
+     1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     4,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     0,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     4,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     5,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     0,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     -1,
+     1,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     0,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     1,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     2,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     3,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     4,
+     -3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     4,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     4,
+     2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     4,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     5,
+     2,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     5,
+     3,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     4,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     5,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     4,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     1,
+     -1,
+     1,
+     "minecraft:dirt"
+    ],
+    [
+     1,
+     0,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     0,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     1,
+     -1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     1,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     1,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     2,
+     -1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     2,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     2,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     3,
+     -1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     3,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     3,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     4,
+     -3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     4,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     4,
+     2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     4,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     0,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     5,
+     2,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     5,
+     3,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     4,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     5,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     0,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     4,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     1,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     2,
+     1,
+     2,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     2,
+     2,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     2,
+     2,
+     2,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     2,
+     3,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     2,
+     3,
+     2,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     2,
+     4,
+     -3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     0,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     2,
+     4,
+     2,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     2,
+     4,
+     3,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     4,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     0,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     4,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     5,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     0,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     -2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     -1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     0,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     4,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     0,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     0,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     0,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     3,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ]
+   ]
+  },
+  {
+   "origin": [
+    34416,
+    60,
+    48
+   ],
+   "cells": [
+    [
+     -3,
+     4,
+     1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     -2,
+     "minecraft:dark_oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     0,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -2,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     0,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     4,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -3,
+     "minecraft:dark_oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -2,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     0,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     4,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     0,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     2,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     -1,
+     4,
+     -2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     0,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     2,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     -1,
+     4,
+     3,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     4,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -3,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     0,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     4,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     0,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     -1,
+     1,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     0,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     1,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     2,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     3,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     4,
+     -3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     4,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     4,
+     2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     4,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     5,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     0,
+     5,
+     2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     4,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     1,
+     -1,
+     1,
+     "minecraft:dirt"
+    ],
+    [
+     1,
+     0,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     0,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     1,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     1,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     2,
+     -1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     2,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     2,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     3,
+     -1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     3,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     3,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     4,
+     -3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     4,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     4,
+     2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     4,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     0,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     5,
+     1,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     1,
+     5,
+     2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     4,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     0,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     0,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     1,
+     2,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     2,
+     2,
+     2,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     2,
+     3,
+     2,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     2,
+     4,
+     -3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     0,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     2,
+     "minecraft:dark_oak_log"
+    ],
+    [
+     2,
+     4,
+     3,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     4,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -3,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     0,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     1,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     4,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     0,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     -2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     -1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     0,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     2,
+     "minecraft:dark_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     3,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     4,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     -2,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     0,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     1,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     0,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     2,
+     "minecraft:dark_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     3,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     -2,
+     "minecraft:dark_oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     -1,
+     "minecraft:dark_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     0,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     1,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     2,
+     "minecraft:dark_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ]
+   ]
+  }
+ ],
+ "per_placement": [
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 168,
+   "logs": 43,
+   "leaves": 121,
+   "log_top": 5,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    6,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 161,
+   "logs": 33,
+   "leaves": 124,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 151,
+   "logs": 29,
+   "leaves": 118,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  }
+ ]
+}

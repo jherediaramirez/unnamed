@@ -1,0 +1,5211 @@
+{
+ "generated_by": "tools/tree_probe.py",
+ "minecraft": "26.3",
+ "probe": "rooted_azalea_tree",
+ "feature": "minecraft:rooted_azalea_tree",
+ "variant": null,
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:stone",
+    -63,
+    55
+   ],
+   [
+    "minecraft:dirt",
+    56,
+    58
+   ],
+   [
+    "minecraft:grass_block",
+    59,
+    59
+   ]
+  ],
+  "grid_spacing": 32,
+  "random_tick_speed": 0,
+  "settle_s": 3
+ },
+ "y": 49,
+ "grid": 10,
+ "settled": true,
+ "prep": [
+  [
+   -6,
+   40,
+   -6,
+   6,
+   49,
+   6,
+   "minecraft:air"
+  ]
+ ],
+ "tries": 100,
+ "responses": {
+  "placed": 100
+ },
+ "placed_but_empty": 0,
+ "failed_but_changed": 0,
+ "n": {
+  "n": 100,
+  "min": 182,
+  "p5": 190,
+  "p50": 219,
+  "p95": 252,
+  "max": 265,
+  "mean": 221.68
+ },
+ "logs": {
+  "n": 100,
+  "min": 6,
+  "p5": 6,
+  "p50": 8,
+  "p95": 9,
+  "max": 9,
+  "mean": 7.6
+ },
+ "leaves": {
+  "n": 100,
+  "min": 58,
+  "p5": 63,
+  "p50": 92,
+  "p95": 121,
+  "max": 125,
+  "mean": 91.58
+ },
+ "log_top": {
+  "n": 100,
+  "min": 15,
+  "p5": 15,
+  "p50": 16,
+  "p95": 17,
+  "max": 17,
+  "mean": 16.04
+ },
+ "log_bottom": {
+  "n": 100,
+  "min": 11,
+  "p5": 11,
+  "p50": 11,
+  "p95": 11,
+  "max": 11,
+  "mean": 11.0
+ },
+ "origin_column_logs": {
+  "n": 100,
+  "min": 2,
+  "p5": 2,
+  "p50": 3,
+  "p95": 5,
+  "max": 5,
+  "mean": 3.51
+ },
+ "reach_h": {
+  "n": 100,
+  "min": 4,
+  "p5": 4,
+  "p50": 5,
+  "p95": 6,
+  "max": 6,
+  "mean": 5.09
+ },
+ "log_reach_h": {
+  "n": 100,
+  "min": 2,
+  "p5": 2,
+  "p50": 3,
+  "p95": 4,
+  "max": 4,
+  "mean": 3.09
+ },
+ "leaf_reach_h": {
+  "n": 100,
+  "min": 4,
+  "p5": 4,
+  "p50": 5,
+  "p95": 6,
+  "max": 6,
+  "mean": 5.09
+ },
+ "leaf_top": {
+  "n": 100,
+  "min": 16,
+  "p5": 16,
+  "p50": 17,
+  "p95": 18,
+  "max": 18,
+  "mean": 17.04
+ },
+ "log_comp6": {
+  "n": 100,
+  "min": 2,
+  "p5": 2,
+  "p50": 3,
+  "p95": 3,
+  "max": 3,
+  "mean": 2.53
+ },
+ "log_comp26": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_mismatch": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 1,
+  "max": 3,
+  "mean": 0.08
+ },
+ "leaf_comp6": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 3,
+  "p95": 5,
+  "max": 6,
+  "mean": 2.98
+ },
+ "leaf_pending_tick": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "leaf_mismatch_no_tick": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 1,
+  "max": 3,
+  "mean": 0.08
+ },
+ "leaf_bfs7": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 2,
+  "p95": 5,
+  "max": 5,
+  "mean": 2.11
+ },
+ "log_top_hist": {
+  "15": 31,
+  "16": 34,
+  "17": 35
+ },
+ "origin_column_logs_hist": {
+  "2": 17,
+  "3": 34,
+  "4": 30,
+  "5": 19
+ },
+ "log_comp6_hist": {
+  "2": 47,
+  "3": 53
+ },
+ "log_comp26_hist": {
+  "1": 100
+ },
+ "bbox_extremes": {
+  "min_dx": -6,
+  "max_dx": 6,
+  "min_dy": 0,
+  "max_dy": 18,
+  "min_dz": -6,
+  "max_dz": 6
+ },
+ "blocks": {
+  "azalea_leaves": {
+   "mean_per_tree": 68.83,
+   "share_of_trees": 1.0,
+   "max_reach_h": 6,
+   "per_tree": {
+    "n": 100,
+    "min": 41,
+    "p5": 46,
+    "p50": 69,
+    "p95": 92,
+    "max": 98,
+    "mean": 68.83
+   }
+  },
+  "flowering_azalea_leaves": {
+   "mean_per_tree": 22.75,
+   "share_of_trees": 1.0,
+   "max_reach_h": 6,
+   "per_tree": {
+    "n": 100,
+    "min": 10,
+    "p5": 12,
+    "p50": 23,
+    "p95": 34,
+    "max": 36,
+    "mean": 22.75
+   }
+  },
+  "hanging_roots": {
+   "mean_per_tree": 8.07,
+   "share_of_trees": 1.0,
+   "max_reach_h": 2,
+   "per_tree": {
+    "n": 100,
+    "min": 4,
+    "p5": 5,
+    "p50": 8,
+    "p95": 11,
+    "max": 12,
+    "mean": 8.07
+   }
+  },
+  "oak_log": {
+   "mean_per_tree": 7.6,
+   "share_of_trees": 1.0,
+   "max_reach_h": 4,
+   "per_tree": {
+    "n": 100,
+    "min": 6,
+    "p5": 6,
+    "p50": 8,
+    "p95": 9,
+    "max": 9,
+    "mean": 7.6
+   }
+  },
+  "rooted_dirt": {
+   "mean_per_tree": 114.43,
+   "share_of_trees": 1.0,
+   "max_reach_h": 2,
+   "per_tree": {
+    "n": 100,
+    "min": 100,
+    "p5": 108,
+    "p50": 115,
+    "p95": 122,
+    "max": 125,
+    "mean": 114.43
+   }
+  }
+ },
+ "leaf_distance": {
+  "1": 2002,
+  "2": 3266,
+  "3": 2567,
+  "4": 982,
+  "5": 114,
+  "6": 16,
+  "7": 211
+ },
+ "leaf_bfs": {
+  "1": 2007,
+  "2": 3264,
+  "3": 2564,
+  "4": 982,
+  "5": 114,
+  "6": 16,
+  "7": 211
+ },
+ "leaf_persistent": {
+  "false": 9158
+ },
+ "log_axis": {
+  "y": 760
+ },
+ "max_reach_h_any_cell": 6,
+ "profile": {
+  "n": 100,
+  "log_columns": {
+   "-4,0": 0.04,
+   "-3,0": 0.16,
+   "-2,0": 0.18,
+   "-1,0": 0.18,
+   "0,-4": 0.06,
+   "0,-3": 0.17,
+   "0,-2": 0.29,
+   "0,-1": 0.29,
+   "0,0": 1.0,
+   "0,1": 0.23,
+   "0,2": 0.23,
+   "0,3": 0.21,
+   "0,4": 0.07,
+   "1,0": 0.3,
+   "2,0": 0.3,
+   "3,0": 0.26,
+   "4,0": 0.12
+  },
+  "logs_per_dy": {
+   "11": 1.0,
+   "12": 1.0,
+   "13": 1.0,
+   "14": 1.0,
+   "15": 1.48,
+   "16": 1.22,
+   "17": 0.9
+  },
+  "leaf_layers": [
+   {
+    "dy_from_top_log": -4,
+    "mean_per_tree": 3.18,
+    "max_radius": 2,
+    "occupancy": {
+     "-2,-2": 0.09,
+     "-2,-1": 0.14,
+     "-2,0": 0.16,
+     "-2,1": 0.1,
+     "-2,2": 0.08,
+     "-1,-2": 0.11,
+     "-1,-1": 0.15,
+     "-1,0": 0.2,
+     "-1,1": 0.13,
+     "-1,2": 0.11,
+     "0,-2": 0.12,
+     "0,-1": 0.23,
+     "0,1": 0.23,
+     "0,2": 0.14,
+     "1,-2": 0.08,
+     "1,-1": 0.13,
+     "1,0": 0.23,
+     "1,1": 0.17,
+     "1,2": 0.14,
+     "2,-2": 0.05,
+     "2,-1": 0.11,
+     "2,0": 0.13,
+     "2,1": 0.07,
+     "2,2": 0.08
+    }
+   },
+   {
+    "dy_from_top_log": -3,
+    "mean_per_tree": 8.68,
+    "max_radius": 3,
+    "occupancy": {
+     "-3,-2": 0.03,
+     "-3,-1": 0.03,
+     "-3,0": 0.03,
+     "-3,1": 0.01,
+     "-3,2": 0.01,
+     "-2,-3": 0.01,
+     "-2,-2": 0.16,
+     "-2,-1": 0.29,
+     "-2,0": 0.3,
+     "-2,1": 0.27,
+     "-2,2": 0.17,
+     "-1,-3": 0.02,
+     "-1,-2": 0.35,
+     "-1,-1": 0.41,
+     "-1,0": 0.59,
+     "-1,1": 0.44,
+     "-1,2": 0.3,
+     "-1,3": 0.05,
+     "0,-3": 0.04,
+     "0,-2": 0.42,
+     "0,-1": 0.48,
+     "0,1": 0.54,
+     "0,2": 0.4,
+     "0,3": 0.03,
+     "1,-3": 0.01,
+     "1,-2": 0.3,
+     "1,-1": 0.45,
+     "1,0": 0.48,
+     "1,1": 0.42,
+     "1,2": 0.25,
+     "1,3": 0.02,
+     "2,-3": 0.02,
+     "2,-2": 0.15,
+     "2,-1": 0.26,
+     "2,0": 0.36,
+     "2,1": 0.29,
+     "2,2": 0.18,
+     "3,-1": 0.03,
+     "3,0": 0.03,
+     "3,1": 0.03,
+     "3,2": 0.02
+    }
+   },
+   {
+    "dy_from_top_log": -2,
+    "mean_per_tree": 15.82,
+    "max_radius": 4,
+    "occupancy": {
+     "-4,-2": 0.01,
+     "-4,-1": 0.01,
+     "-4,0": 0.03,
+     "-4,1": 0.03,
+     "-4,2": 0.01,
+     "-3,-2": 0.03,
+     "-3,-1": 0.12,
+     "-3,0": 0.12,
+     "-3,1": 0.06,
+     "-3,2": 0.07,
+     "-2,-4": 0.03,
+     "-2,-3": 0.07,
+     "-2,-2": 0.23,
+     "-2,-1": 0.43,
+     "-2,0": 0.49,
+     "-2,1": 0.47,
+     "-2,2": 0.24,
+     "-2,3": 0.09,
+     "-2,4": 0.01,
+     "-1,-4": 0.06,
+     "-1,-3": 0.18,
+     "-1,-2": 0.47,
+     "-1,-1": 0.6,
+     "-1,0": 0.7,
+     "-1,1": 0.64,
+     "-1,2": 0.49,
+     "-1,3": 0.11,
+     "-1,4": 0.05,
+     "0,-4": 0.06,
+     "0,-3": 0.19,
+     "0,-2": 0.55,
+     "0,-1": 0.6,
+     "0,0": 0.37,
+     "0,1": 0.59,
+     "0,2": 0.58,
+     "0,3": 0.11,
+     "0,4": 0.04,
+     "1,-4": 0.05,
+     "1,-3": 0.15,
+     "1,-2": 0.56,
+     "1,-1": 0.64,
+     "1,0": 0.58,
+     "1,1": 0.65,
+     "1,2": 0.53,
+     "1,3": 0.14,
+     "1,4": 0.02,
+     "2,-4": 0.03,
+     "2,-3": 0.08,
+     "2,-2": 0.37,
+     "2,-1": 0.57,
+     "2,0": 0.66,
+     "2,1": 0.51,
+     "2,2": 0.32,
+     "2,3": 0.06,
+     "2,4": 0.05,
+     "3,-2": 0.08,
+     "3,-1": 0.14,
+     "3,0": 0.19,
+     "3,1": 0.21,
+     "3,2": 0.08,
+     "4,-2": 0.01,
+     "4,-1": 0.04,
+     "4,0": 0.09,
+     "4,1": 0.03,
+     "4,2": 0.04
+    }
+   },
+   {
+    "dy_from_top_log": -1,
+    "mean_per_tree": 23.34,
+    "max_radius": 6,
+    "occupancy": {
+     "-6,-1": 0.02,
+     "-6,0": 0.01,
+     "-6,2": 0.01,
+     "-5,-2": 0.04,
+     "-5,-1": 0.09,
+     "-5,0": 0.08,
+     "-5,1": 0.08,
+     "-5,2": 0.04,
+     "-4,-2": 0.06,
+     "-4,-1": 0.14,
+     "-4,0": 0.13,
+     "-4,1": 0.1,
+     "-4,2": 0.08,
+     "-3,-2": 0.13,
+     "-3,-1": 0.17,
+     "-3,0": 0.17,
+     "-3,1": 0.18,
+     "-3,2": 0.14,
+     "-2,-5": 0.07,
+     "-2,-4": 0.14,
+     "-2,-3": 0.2,
+     "-2,-2": 0.37,
+     "-2,-1": 0.49,
+     "-2,0": 0.5,
+     "-2,1": 0.49,
+     "-2,2": 0.37,
+     "-2,3": 0.18,
+     "-2,4": 0.11,
+     "-2,5": 0.04,
+     "-2,6": 0.01,
+     "-1,-6": 0.02,
+     "-1,-5": 0.04,
+     "-1,-4": 0.18,
+     "-1,-3": 0.25,
+     "-1,-2": 0.51,
+     "-1,-1": 0.68,
+     "-1,0": 0.62,
+     "-1,1": 0.68,
+     "-1,2": 0.45,
+     "-1,3": 0.21,
+     "-1,4": 0.19,
+     "-1,5": 0.1,
+     "0,-6": 0.02,
+     "0,-5": 0.1,
+     "0,-4": 0.16,
+     "0,-3": 0.28,
+     "0,-2": 0.43,
+     "0,-1": 0.62,
+     "0,0": 0.9,
+     "0,1": 0.72,
+     "0,2": 0.45,
+     "0,3": 0.23,
+     "0,4": 0.17,
+     "0,5": 0.06,
+     "0,6": 0.02,
+     "1,-5": 0.07,
+     "1,-4": 0.2,
+     "1,-3": 0.24,
+     "1,-2": 0.59,
+     "1,-1": 0.74,
+     "1,0": 0.68,
+     "1,1": 0.71,
+     "1,2": 0.58,
+     "1,3": 0.22,
+     "1,4": 0.16,
+     "1,5": 0.07,
+     "1,6": 0.02,
+     "2,-6": 0.01,
+     "2,-5": 0.01,
+     "2,-4": 0.14,
+     "2,-3": 0.23,
+     "2,-2": 0.53,
+     "2,-1": 0.65,
+     "2,0": 0.46,
+     "2,1": 0.59,
+     "2,2": 0.43,
+     "2,3": 0.19,
+     "2,4": 0.13,
+     "2,5": 0.05,
+     "3,-2": 0.23,
+     "3,-1": 0.28,
+     "3,0": 0.3,
+     "3,1": 0.28,
+     "3,2": 0.18,
+     "4,-2": 0.18,
+     "4,-1": 0.22,
+     "4,0": 0.27,
+     "4,1": 0.21,
+     "4,2": 0.11,
+     "5,-2": 0.08,
+     "5,-1": 0.08,
+     "5,0": 0.14,
+     "5,1": 0.12,
+     "5,2": 0.06,
+     "6,-2": 0.04,
+     "6,-1": 0.04,
+     "6,0": 0.04,
+     "6,1": 0.03,
+     "6,2": 0.02
+    }
+   },
+   {
+    "dy_from_top_log": 0,
+    "mean_per_tree": 22.9,
+    "max_radius": 6,
+    "occupancy": {
+     "-6,-2": 0.01,
+     "-6,-1": 0.02,
+     "-6,0": 0.02,
+     "-6,1": 0.03,
+     "-5,-2": 0.08,
+     "-5,-1": 0.08,
+     "-5,0": 0.09,
+     "-5,1": 0.06,
+     "-5,2": 0.07,
+     "-4,-2": 0.09,
+     "-4,-1": 0.16,
+     "-4,0": 0.14,
+     "-4,1": 0.15,
+     "-4,2": 0.12,
+     "-3,-2": 0.16,
+     "-3,-1": 0.17,
+     "-3,0": 0.02,
+     "-3,1": 0.16,
+     "-3,2": 0.13,
+     "-2,-6": 0.02,
+     "-2,-5": 0.05,
+     "-2,-4": 0.19,
+     "-2,-3": 0.21,
+     "-2,-2": 0.45,
+     "-2,-1": 0.48,
+     "-2,0": 0.23,
+     "-2,1": 0.43,
+     "-2,2": 0.35,
+     "-2,3": 0.2,
+     "-2,4": 0.16,
+     "-2,5": 0.1,
+     "-2,6": 0.01,
+     "-1,-6": 0.03,
+     "-1,-5": 0.12,
+     "-1,-4": 0.19,
+     "-1,-3": 0.28,
+     "-1,-2": 0.48,
+     "-1,-1": 0.55,
+     "-1,0": 0.56,
+     "-1,1": 0.59,
+     "-1,2": 0.42,
+     "-1,3": 0.23,
+     "-1,4": 0.2,
+     "-1,5": 0.1,
+     "-1,6": 0.04,
+     "0,-6": 0.04,
+     "0,-5": 0.12,
+     "0,-4": 0.22,
+     "0,-3": 0.12,
+     "0,-2": 0.26,
+     "0,-1": 0.56,
+     "0,0": 0.79,
+     "0,1": 0.61,
+     "0,2": 0.25,
+     "0,3": 0.02,
+     "0,4": 0.16,
+     "0,5": 0.16,
+     "0,6": 0.05,
+     "1,-6": 0.03,
+     "1,-5": 0.11,
+     "1,-4": 0.23,
+     "1,-3": 0.29,
+     "1,-2": 0.58,
+     "1,-1": 0.69,
+     "1,0": 0.65,
+     "1,1": 0.67,
+     "1,2": 0.52,
+     "1,3": 0.22,
+     "1,4": 0.22,
+     "1,5": 0.13,
+     "1,6": 0.02,
+     "2,-5": 0.08,
+     "2,-4": 0.18,
+     "2,-3": 0.25,
+     "2,-2": 0.56,
+     "2,-1": 0.58,
+     "2,0": 0.29,
+     "2,1": 0.59,
+     "2,2": 0.48,
+     "2,3": 0.21,
+     "2,4": 0.14,
+     "2,5": 0.08,
+     "2,6": 0.01,
+     "3,-2": 0.28,
+     "3,-1": 0.29,
+     "3,0": 0.04,
+     "3,1": 0.3,
+     "3,2": 0.25,
+     "4,-2": 0.22,
+     "4,-1": 0.27,
+     "4,0": 0.18,
+     "4,1": 0.29,
+     "4,2": 0.17,
+     "5,-2": 0.09,
+     "5,-1": 0.18,
+     "5,0": 0.2,
+     "5,1": 0.17,
+     "5,2": 0.14,
+     "6,-2": 0.04,
+     "6,-1": 0.03,
+     "6,0": 0.05,
+     "6,1": 0.06,
+     "6,2": 0.05
+    }
+   },
+   {
+    "dy_from_top_log": 1,
+    "mean_per_tree": 17.66,
+    "max_radius": 6,
+    "occupancy": {
+     "-6,-2": 0.01,
+     "-5,-2": 0.03,
+     "-5,-1": 0.06,
+     "-5,0": 0.05,
+     "-5,1": 0.05,
+     "-5,2": 0.02,
+     "-4,-2": 0.07,
+     "-4,-1": 0.08,
+     "-4,0": 0.11,
+     "-4,1": 0.1,
+     "-4,2": 0.06,
+     "-3,-2": 0.09,
+     "-3,-1": 0.12,
+     "-3,0": 0.17,
+     "-3,1": 0.15,
+     "-3,2": 0.09,
+     "-2,-5": 0.04,
+     "-2,-4": 0.1,
+     "-2,-3": 0.17,
+     "-2,-2": 0.23,
+     "-2,-1": 0.36,
+     "-2,0": 0.35,
+     "-2,1": 0.3,
+     "-2,2": 0.23,
+     "-2,3": 0.14,
+     "-2,4": 0.09,
+     "-2,5": 0.05,
+     "-2,6": 0.03,
+     "-1,-6": 0.02,
+     "-1,-5": 0.06,
+     "-1,-4": 0.16,
+     "-1,-3": 0.2,
+     "-1,-2": 0.28,
+     "-1,-1": 0.44,
+     "-1,0": 0.39,
+     "-1,1": 0.4,
+     "-1,2": 0.35,
+     "-1,3": 0.22,
+     "-1,4": 0.14,
+     "-1,5": 0.09,
+     "-1,6": 0.01,
+     "0,-6": 0.02,
+     "0,-5": 0.14,
+     "0,-4": 0.16,
+     "0,-3": 0.26,
+     "0,-2": 0.38,
+     "0,-1": 0.54,
+     "0,0": 0.66,
+     "0,1": 0.44,
+     "0,2": 0.27,
+     "0,3": 0.21,
+     "0,4": 0.17,
+     "0,5": 0.09,
+     "0,6": 0.01,
+     "1,-6": 0.03,
+     "1,-5": 0.06,
+     "1,-4": 0.12,
+     "1,-3": 0.21,
+     "1,-2": 0.44,
+     "1,-1": 0.4,
+     "1,0": 0.6,
+     "1,1": 0.38,
+     "1,2": 0.34,
+     "1,3": 0.19,
+     "1,4": 0.15,
+     "1,5": 0.1,
+     "2,-6": 0.01,
+     "2,-5": 0.04,
+     "2,-4": 0.1,
+     "2,-3": 0.1,
+     "2,-2": 0.4,
+     "2,-1": 0.39,
+     "2,0": 0.42,
+     "2,1": 0.41,
+     "2,2": 0.26,
+     "2,3": 0.14,
+     "2,4": 0.11,
+     "2,5": 0.04,
+     "2,6": 0.01,
+     "3,-2": 0.18,
+     "3,-1": 0.22,
+     "3,0": 0.28,
+     "3,1": 0.26,
+     "3,2": 0.13,
+     "4,-2": 0.14,
+     "4,-1": 0.18,
+     "4,0": 0.25,
+     "4,1": 0.21,
+     "4,2": 0.14,
+     "5,-2": 0.09,
+     "5,-1": 0.13,
+     "5,0": 0.19,
+     "5,1": 0.14,
+     "5,2": 0.04,
+     "6,-2": 0.01,
+     "6,-1": 0.03,
+     "6,0": 0.08,
+     "6,1": 0.02,
+     "6,2": 0.03
+    }
+   }
+  ],
+  "decorators": {
+   "hanging_roots": {
+    "total": 807,
+    "per_tree": 8.07,
+    "dy": {
+     "0": 807
+    },
+    "radius": {
+     "0": 72,
+     "1": 389,
+     "2": 346
+    }
+   },
+   "rooted_dirt": {
+    "total": 11443,
+    "per_tree": 114.43,
+    "dy": {
+     "1": 1277,
+     "2": 1255,
+     "3": 1235,
+     "4": 1270,
+     "5": 1255,
+     "6": 1258,
+     "7": 1254,
+     "8": 1285,
+     "9": 1254,
+     "10": 100
+    },
+    "radius": {
+     "0": 912,
+     "1": 5051,
+     "2": 5480
+    }
+   }
+  }
+ },
+ "examples": [
+  {
+   "origin": [
+    20496,
+    49,
+    16
+   ],
+   "cells": [
+    [
+     -2,
+     1,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     1,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     3,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     4,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     4,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     5,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     5,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     6,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     7,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     8,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     9,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     9,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     9,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     14,
+     0,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     14,
+     4,
+     "minecraft:azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     15,
+     -1,
+     "minecraft:flowering_azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     15,
+     0,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     15,
+     2,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     15,
+     3,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     15,
+     4,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     16,
+     0,
+     "minecraft:azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     16,
+     1,
+     "minecraft:flowering_azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     16,
+     5,
+     "minecraft:azalea_leaves"
+    ],
+    [
+     -1,
+     0,
+     1,
+     "minecraft:hanging_roots"
+    ],
+    [
+     -1,
+     0,
+     2,
+     "minecraft:hanging_roots"
+    ],
+    [
+     -1,
+     1,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     2,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     2,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     3,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     3,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     3,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     4,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     4,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     4,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     5,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     5,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     5,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     6,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     6,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     7,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     7,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     7,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     8,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     8,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     8,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     9,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     9,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     13,
+     -1,
+     "minecraft:flowering_azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     13,
+     0,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     13,
+     1,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     14,
+     -1,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     14,
+     0,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     14,
+     1,
+     "minecraft:flowering_azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     14,
+     2,
+     "minecraft:flowering_azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     14,
+     3,
+     "minecraft:flowering_azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     14,
+     5,
+     "minecraft:azalea_leaves"
+    ],
+    [
+     -1,
+     15,
+     -1,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     15,
+     0,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     15,
+     1,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     15,
+     2,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     15,
+     3,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     15,
+     4,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     16,
+     1,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     16,
+     2,
+     "minecraft:flowering_azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     16,
+     3,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:hanging_roots"
+    ],
+    [
+     0,
+     1,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     1,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     1,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     1,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     2,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     2,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     2,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     2,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     3,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     3,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     3,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     4,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     4,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     4,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     5,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     5,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     5,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     5,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     6,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     7,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     7,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     7,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     8,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     8,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     8,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     8,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     9,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     9,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     9,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     9,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     10,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     11,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     12,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     13,
+     -1,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     13,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     13,
+     1,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     13,
+     2,
+     "minecraft:flowering_azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     13,
+     3,
+     "minecraft:flowering_azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     14,
+     -1,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     14,
+     0,
+     "minecraft:flowering_azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     14,
+     1,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     14,
+     2,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     14,
+     3,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     15,
+     -1,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     15,
+     0,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     15,
+     1,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     15,
+     2,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     15,
+     3,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     15,
+     4,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     16,
+     -1,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     16,
+     0,
+     "minecraft:flowering_azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     16,
+     1,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     16,
+     2,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     16,
+     3,
+     "minecraft:flowering_azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     0,
+     1,
+     "minecraft:hanging_roots"
+    ],
+    [
+     1,
+     1,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     1,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     1,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     1,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     2,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     2,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     3,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     3,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     3,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     4,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     5,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     5,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     5,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     6,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     6,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     7,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     7,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     7,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     8,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     8,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     8,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     9,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     9,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     9,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     13,
+     1,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     13,
+     2,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     13,
+     3,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     14,
+     -1,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     14,
+     0,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     14,
+     1,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     14,
+     2,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     14,
+     3,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     14,
+     4,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     14,
+     5,
+     "minecraft:azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     15,
+     -1,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     15,
+     0,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     15,
+     1,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     15,
+     2,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     15,
+     3,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     15,
+     4,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     16,
+     0,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     16,
+     1,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     16,
+     2,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     16,
+     3,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     16,
+     4,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     16,
+     5,
+     "minecraft:flowering_azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     0,
+     0,
+     "minecraft:hanging_roots"
+    ],
+    [
+     2,
+     0,
+     2,
+     "minecraft:hanging_roots"
+    ],
+    [
+     2,
+     1,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     2,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     2,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     4,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     4,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     5,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     5,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     6,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     6,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     7,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     7,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     13,
+     -1,
+     "minecraft:azalea_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     13,
+     1,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     13,
+     2,
+     "minecraft:azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     14,
+     -1,
+     "minecraft:azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     14,
+     1,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     14,
+     3,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     14,
+     4,
+     "minecraft:azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     15,
+     -1,
+     "minecraft:flowering_azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     15,
+     0,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     15,
+     1,
+     "minecraft:flowering_azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     15,
+     2,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     15,
+     3,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     15,
+     4,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     16,
+     1,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     16,
+     2,
+     "minecraft:flowering_azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     16,
+     3,
+     "minecraft:flowering_azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     16,
+     4,
+     "minecraft:flowering_azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ]
+   ]
+  },
+  {
+   "origin": [
+    20528,
+    49,
+    16
+   ],
+   "cells": [
+    [
+     -2,
+     1,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     2,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     2,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     2,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     2,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     3,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     3,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     3,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     4,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     4,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     5,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     5,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     5,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     6,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     6,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     6,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     7,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     7,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     8,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     8,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     8,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     9,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     9,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -2,
+     9,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     0,
+     -1,
+     "minecraft:hanging_roots"
+    ],
+    [
+     -1,
+     0,
+     2,
+     "minecraft:hanging_roots"
+    ],
+    [
+     -1,
+     1,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     2,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     2,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     2,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     3,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     3,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     3,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     3,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     4,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     5,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     5,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     5,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     5,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     6,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     6,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     6,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     7,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     7,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     8,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     8,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     8,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     9,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     9,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     -1,
+     9,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     0,
+     -1,
+     "minecraft:hanging_roots"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:hanging_roots"
+    ],
+    [
+     0,
+     0,
+     2,
+     "minecraft:hanging_roots"
+    ],
+    [
+     0,
+     1,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     1,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     1,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     1,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     2,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     2,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     3,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     3,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     3,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     4,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     4,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     4,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     5,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     5,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     6,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     6,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     7,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     7,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     7,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     8,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     8,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     8,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     8,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     9,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     9,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     10,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     0,
+     11,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     12,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     0,
+     13,
+     0,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     14,
+     -2,
+     "minecraft:azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     14,
+     0,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     14,
+     1,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     15,
+     1,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     0,
+     0,
+     "minecraft:hanging_roots"
+    ],
+    [
+     1,
+     0,
+     2,
+     "minecraft:hanging_roots"
+    ],
+    [
+     1,
+     1,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     1,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     1,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     2,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     2,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     2,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     3,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     3,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     3,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     4,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     4,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     4,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     5,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     6,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     6,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     7,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     7,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     7,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     8,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     8,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     8,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     8,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     9,
+     -1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     9,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     1,
+     13,
+     -1,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     13,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     1,
+     14,
+     -2,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     14,
+     -1,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     14,
+     1,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     14,
+     2,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     15,
+     -2,
+     "minecraft:flowering_azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     15,
+     0,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     15,
+     1,
+     "minecraft:flowering_azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     15,
+     2,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     16,
+     -2,
+     "minecraft:azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     16,
+     -1,
+     "minecraft:flowering_azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     16,
+     0,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     16,
+     1,
+     "minecraft:flowering_azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     0,
+     1,
+     "minecraft:hanging_roots"
+    ],
+    [
+     2,
+     1,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     1,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     1,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     4,
+     -2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     4,
+     1,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     5,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     5,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     7,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     8,
+     0,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     9,
+     2,
+     "minecraft:rooted_dirt"
+    ],
+    [
+     2,
+     13,
+     -2,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     13,
+     -1,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     13,
+     0,
+     "minecraft:flowering_azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     14,
+     -2,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     14,
+     -1,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     14,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     2,
+     14,
+     1,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     14,
+     2,
+     "minecraft:flowering_azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     15,
+     -2,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     15,
+     -1,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     15,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     2,
+     15,
+     1,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     15,
+     2,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     16,
+     -1,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     16,
+     0,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     16,
+     2,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     13,
+     -1,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     13,
+     0,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     13,
+     1,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     14,
+     -2,
+     "minecraft:flowering_azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     14,
+     -1,
+     "minecraft:flowering_azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     14,
+     0,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     14,
+     1,
+     "minecraft:flowering_azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     14,
+     2,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     15,
+     -2,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     15,
+     -1,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     15,
+     0,
+     "minecraft:oak_log"
+    ],
+    [
+     3,
+     15,
+     1,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     16,
+     -2,
+     "minecraft:flowering_azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     16,
+     -1,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     16,
+     1,
+     "minecraft:flowering_azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     13,
+     -1,
+     "minecraft:flowering_azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     13,
+     0,
+     "minecraft:flowering_azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     13,
+     2,
+     "minecraft:azalea_leaves"
+    ],
+    [
+     4,
+     14,
+     -2,
+     "minecraft:azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     14,
+     -1,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     14,
+     0,
+     "minecraft:flowering_azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     14,
+     1,
+     "minecraft:flowering_azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     15,
+     -2,
+     "minecraft:flowering_azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     15,
+     0,
+     "minecraft:azalea_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     15,
+     1,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     16,
+     -1,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     16,
+     0,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     16,
+     1,
+     "minecraft:flowering_azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     16,
+     2,
+     "minecraft:azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     14,
+     0,
+     "minecraft:flowering_azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     14,
+     1,
+     "minecraft:flowering_azalea_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     14,
+     2,
+     "minecraft:azalea_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     15,
+     -1,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     15,
+     0,
+     "minecraft:azalea_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     15,
+     1,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     16,
+     0,
+     "minecraft:azalea_leaves[distance=3,persistent=false,waterlogged=false]"
+    ]
+   ]
+  }
+ ],
+ "per_placement": [
+  {
+   "n": 206,
+   "logs": 7,
+   "leaves": 83,
+   "log_top": 15,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 197,
+   "logs": 6,
+   "leaves": 67,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    5,
+    0,
+    16,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 231,
+   "logs": 8,
+   "leaves": 101,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    17,
+    -6,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 204,
+   "logs": 7,
+   "leaves": 75,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -6,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 225,
+   "logs": 8,
+   "leaves": 96,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    6,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 249,
+   "logs": 9,
+   "leaves": 119,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -5,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 191,
+   "logs": 6,
+   "leaves": 58,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 217,
+   "logs": 8,
+   "leaves": 93,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    6,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 226,
+   "logs": 8,
+   "leaves": 92,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    6,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 207,
+   "logs": 7,
+   "leaves": 80,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -2,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 265,
+   "logs": 9,
+   "leaves": 123,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -6,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 1,
+   "result": "placed"
+  },
+  {
+   "n": 224,
+   "logs": 7,
+   "leaves": 85,
+   "log_top": 16,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    0,
+    17,
+    -4,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 243,
+   "logs": 8,
+   "leaves": 108,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -4,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 257,
+   "logs": 9,
+   "leaves": 122,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    5,
+    0,
+    18,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 182,
+   "logs": 6,
+   "leaves": 63,
+   "log_top": 15,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -4,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 242,
+   "logs": 8,
+   "leaves": 105,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -5,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 205,
+   "logs": 7,
+   "leaves": 78,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    17,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 250,
+   "logs": 8,
+   "leaves": 112,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -4,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 214,
+   "logs": 7,
+   "leaves": 82,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    17,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 233,
+   "logs": 8,
+   "leaves": 104,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    4,
+    0,
+    18,
+    -2,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 224,
+   "logs": 8,
+   "leaves": 91,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    6,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 189,
+   "logs": 6,
+   "leaves": 66,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    5,
+    0,
+    16,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 194,
+   "logs": 6,
+   "leaves": 71,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -5,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 217,
+   "logs": 7,
+   "leaves": 93,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    2,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 233,
+   "logs": 8,
+   "leaves": 100,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -4,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 250,
+   "logs": 9,
+   "leaves": 115,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 240,
+   "logs": 8,
+   "leaves": 108,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -5,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 219,
+   "logs": 8,
+   "leaves": 87,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    17,
+    -2,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 193,
+   "logs": 6,
+   "leaves": 66,
+   "log_top": 15,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -4,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 249,
+   "logs": 9,
+   "leaves": 115,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -5,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 213,
+   "logs": 8,
+   "leaves": 87,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    17,
+    -2,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 3,
+   "result": "placed"
+  },
+  {
+   "n": 247,
+   "logs": 9,
+   "leaves": 118,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -5,
+    2,
+    0,
+    18,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 251,
+   "logs": 9,
+   "leaves": 118,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -5,
+    2,
+    0,
+    18,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 254,
+   "logs": 9,
+   "leaves": 123,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -6,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 204,
+   "logs": 7,
+   "leaves": 75,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    6,
+    0,
+    16,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 244,
+   "logs": 8,
+   "leaves": 110,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -4,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 250,
+   "logs": 9,
+   "leaves": 119,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -2,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 193,
+   "logs": 6,
+   "leaves": 62,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    5,
+    0,
+    16,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 232,
+   "logs": 8,
+   "leaves": 97,
+   "log_top": 16,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    5,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 219,
+   "logs": 8,
+   "leaves": 95,
+   "log_top": 16,
+   "origin_column_logs": 4,
+   "bbox": [
+    -5,
+    2,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 205,
+   "logs": 7,
+   "leaves": 79,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    17,
+    -5,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 228,
+   "logs": 8,
+   "leaves": 95,
+   "log_top": 16,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    0,
+    17,
+    -5,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 247,
+   "logs": 9,
+   "leaves": 117,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -2,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 245,
+   "logs": 9,
+   "leaves": 121,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -6,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 232,
+   "logs": 8,
+   "leaves": 96,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    17,
+    -2,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 213,
+   "logs": 8,
+   "leaves": 86,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -6,
+    2,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 211,
+   "logs": 7,
+   "leaves": 87,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    5,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 191,
+   "logs": 6,
+   "leaves": 66,
+   "log_top": 15,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -4,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 2,
+   "result": "placed"
+  },
+  {
+   "n": 248,
+   "logs": 8,
+   "leaves": 113,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    5,
+    0,
+    18,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 184,
+   "logs": 7,
+   "leaves": 69,
+   "log_top": 15,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 218,
+   "logs": 8,
+   "leaves": 90,
+   "log_top": 16,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    5,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 261,
+   "logs": 9,
+   "leaves": 125,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    5,
+    0,
+    18,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 240,
+   "logs": 9,
+   "leaves": 110,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 246,
+   "logs": 9,
+   "leaves": 114,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 242,
+   "logs": 8,
+   "leaves": 109,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    2,
+    0,
+    18,
+    -2,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 229,
+   "logs": 8,
+   "leaves": 97,
+   "log_top": 16,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    5,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 218,
+   "logs": 8,
+   "leaves": 86,
+   "log_top": 16,
+   "origin_column_logs": 4,
+   "bbox": [
+    -5,
+    2,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 1,
+   "result": "placed"
+  },
+  {
+   "n": 214,
+   "logs": 7,
+   "leaves": 86,
+   "log_top": 16,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    4,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 207,
+   "logs": 7,
+   "leaves": 77,
+   "log_top": 15,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 195,
+   "logs": 6,
+   "leaves": 66,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -5,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 233,
+   "logs": 8,
+   "leaves": 100,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    4,
+    0,
+    18,
+    -2,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 210,
+   "logs": 7,
+   "leaves": 82,
+   "log_top": 16,
+   "origin_column_logs": 4,
+   "bbox": [
+    -4,
+    2,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 1,
+   "result": "placed"
+  },
+  {
+   "n": 220,
+   "logs": 8,
+   "leaves": 94,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    6,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 237,
+   "logs": 8,
+   "leaves": 103,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    5,
+    0,
+    18,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 222,
+   "logs": 7,
+   "leaves": 95,
+   "log_top": 16,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    4,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 252,
+   "logs": 9,
+   "leaves": 107,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    6,
+    0,
+    18,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 192,
+   "logs": 6,
+   "leaves": 67,
+   "log_top": 15,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -4,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 200,
+   "logs": 7,
+   "leaves": 77,
+   "log_top": 15,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    2,
+    0,
+    16,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 245,
+   "logs": 9,
+   "leaves": 114,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -5,
+    2,
+    0,
+    18,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 209,
+   "logs": 7,
+   "leaves": 83,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -6,
+    2,
+    0,
+    16,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 204,
+   "logs": 7,
+   "leaves": 72,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -2,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 211,
+   "logs": 7,
+   "leaves": 84,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    2,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 217,
+   "logs": 7,
+   "leaves": 76,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    6,
+    0,
+    16,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 248,
+   "logs": 9,
+   "leaves": 117,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    5,
+    0,
+    18,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 192,
+   "logs": 6,
+   "leaves": 63,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    5,
+    0,
+    16,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 235,
+   "logs": 8,
+   "leaves": 110,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 219,
+   "logs": 7,
+   "leaves": 87,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    17,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 238,
+   "logs": 8,
+   "leaves": 107,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 190,
+   "logs": 6,
+   "leaves": 64,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -5,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 199,
+   "logs": 7,
+   "leaves": 75,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    6,
+    0,
+    16,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 238,
+   "logs": 9,
+   "leaves": 113,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -6,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 225,
+   "logs": 8,
+   "leaves": 94,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    6,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 201,
+   "logs": 7,
+   "leaves": 69,
+   "log_top": 15,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    2,
+    0,
+    16,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 237,
+   "logs": 9,
+   "leaves": 106,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -6,
+    2,
+    0,
+    18,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 224,
+   "logs": 8,
+   "leaves": 100,
+   "log_top": 17,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    2,
+    0,
+    18,
+    -2,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 206,
+   "logs": 7,
+   "leaves": 73,
+   "log_top": 15,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    5,
+    0,
+    16,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 230,
+   "logs": 8,
+   "leaves": 96,
+   "log_top": 16,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    0,
+    17,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 213,
+   "logs": 7,
+   "leaves": 84,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    17,
+    -5,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 190,
+   "logs": 6,
+   "leaves": 60,
+   "log_top": 15,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -4,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 231,
+   "logs": 8,
+   "leaves": 98,
+   "log_top": 16,
+   "origin_column_logs": 4,
+   "bbox": [
+    -5,
+    2,
+    0,
+    17,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 187,
+   "logs": 6,
+   "leaves": 58,
+   "log_top": 15,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -4,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 234,
+   "logs": 8,
+   "leaves": 106,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -5,
+    2,
+    0,
+    18,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 214,
+   "logs": 7,
+   "leaves": 82,
+   "log_top": 15,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    16,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 213,
+   "logs": 7,
+   "leaves": 84,
+   "log_top": 16,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    0,
+    17,
+    -4,
+    2
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 199,
+   "logs": 7,
+   "leaves": 74,
+   "log_top": 15,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    2,
+    0,
+    16,
+    -2,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 250,
+   "logs": 9,
+   "leaves": 115,
+   "log_top": 17,
+   "origin_column_logs": 4,
+   "bbox": [
+    -6,
+    2,
+    0,
+    18,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 218,
+   "logs": 7,
+   "leaves": 85,
+   "log_top": 16,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    2,
+    0,
+    17,
+    -5,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 208,
+   "logs": 7,
+   "leaves": 85,
+   "log_top": 16,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    2,
+    0,
+    17,
+    -2,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 212,
+   "logs": 7,
+   "leaves": 71,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    6,
+    0,
+    16,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 208,
+   "logs": 7,
+   "leaves": 77,
+   "log_top": 15,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    6,
+    0,
+    16,
+    -2,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  }
+ ]
+}

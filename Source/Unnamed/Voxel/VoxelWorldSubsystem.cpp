@@ -95,6 +95,7 @@ void UVoxelWorldSubsystem::Start(AVoxelWorld& InOwner, TSharedRef<const FVoxelBl
     bDecoration = VoxelConsole::CVarDecoration.GetValueOnGameThread();
     bFreezeLast = VoxelConsole::CVarDecorationFreezeLast.GetValueOnGameThread();
     bPlants = VoxelConsole::CVarDecorationPlants.GetValueOnGameThread();
+    bTrees = VoxelConsole::CVarDecorationTrees.GetValueOnGameThread();
     // The terrain read voxel.OreVeins when it was made (VoxelTerrainFactory), this frame.
     bOreVeins = VoxelConsole::CVarOreVeins.GetValueOnGameThread();
     UE_LOG(LogUnnamedVoxel, Display, TEXT("voxel.OreVeins: %s"), bOreVeins ? TEXT("on") : TEXT("off"));
@@ -105,14 +106,15 @@ void UVoxelWorldSubsystem::Start(AVoxelWorld& InOwner, TSharedRef<const FVoxelBl
         FVoxelDecorationOptions Options;
         Options.bFreezeLast = bFreezeLast;
         Options.bPlants = bPlants;
+        Options.bTrees = bTrees;
         FString Error;
         if (Decorator->Initialize(*Terrain->GetFeatures(), *Table, Terrain->GetBiomeSource()->GetTable(),
                 Terrain->GetSeed(), Options, &Error))
         {
             Settings.Decorator = Decorator;
-            UE_LOG(LogUnnamedVoxel, Display, TEXT("voxel.Decoration: %s; freeze pass %s; plants %s"),
+            UE_LOG(LogUnnamedVoxel, Display, TEXT("voxel.Decoration: %s; freeze pass %s; plants %s; trees %s"),
                 *Decorator->Describe(), bFreezeLast ? TEXT("at Finalize") : TEXT("inside the snapshot (S2's order)"),
-                bPlants ? TEXT("on") : TEXT("off"));
+                bPlants ? TEXT("on") : TEXT("off"), bPlants && bTrees ? TEXT("on") : TEXT("off"));
         }
         else
             UE_LOG(LogUnnamedVoxel, Warning, TEXT("voxel.Decoration: no decoration for this terrain (%s)"), *Error);
@@ -194,6 +196,7 @@ void UVoxelWorldSubsystem::Tick(float DeltaTime)
     if ((VoxelConsole::CVarDecoration.GetValueOnGameThread() != bDecoration ||
             VoxelConsole::CVarDecorationFreezeLast.GetValueOnGameThread() != bFreezeLast ||
             VoxelConsole::CVarDecorationPlants.GetValueOnGameThread() != bPlants ||
+            VoxelConsole::CVarDecorationTrees.GetValueOnGameThread() != bTrees ||
             VoxelConsole::CVarOreVeins.GetValueOnGameThread() != bOreVeins) &&
         Owner.IsValid())
     {

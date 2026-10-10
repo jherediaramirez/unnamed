@@ -44,21 +44,24 @@ enum class EHudDataSource : uint8
     Preview,
     Authoritative
 };
-// Original geometric item art; Token is the test double's placeholder.
+// How a slot's item draws: a block item's 3D icon, an item's flat GUI sprite, or the original token placeholder
+// (an item with neither).
 enum class EHudItemIcon : uint8
 {
     Token,
     Block,
-    Pickaxe,
-    Sword
+    Sprite
 };
 
-// How one slot's item draws: icon and tint, durability left (negative: no bar), unlimited supply marker.
+// How one slot's item draws: icon, sprite and tint, damage taken of the max damage (zero max: no bar), unlimited
+// supply marker.
 struct FHudItemView
 {
     EHudItemIcon Icon = EHudItemIcon::Token;
     FLinearColor Tint = FLinearColor::White;
-    double Durability = -1;
+    // The sprite's id ("item/iron_pickaxe"), drawn untinted at 16 x 16.
+    FName Sprite;
+    int32 Damage = 0, MaxDamage = 0;
     bool bInfinite = false;
     // The block a block item places, drawn as its 3D item model; animated textures repaint every tick.
     FName Block;
@@ -112,6 +115,16 @@ struct FHudLayout
     int32 GetAirY(int32 MountRows = 0) const;
 };
 
+// The durability bar under an item: a black 13 x 2 rectangle at the item's (2, 13), then a 1 px fill of Width in
+// Color (Reference/minecraft-hud-26.3/HUD-RESEARCH.md, "Hotbar").
+struct FHudDurabilityBar
+{
+    bool bVisible = false;
+    int32 Width = 0;
+    FColor Color = FColor::Black;
+    bool operator==(const FHudDurabilityBar& Other) const = default;
+};
+
 struct FHudPresentation
 {
     bool bInitialized = false;
@@ -138,6 +151,10 @@ namespace HudModel
     UNNAMED_API int32 GetPairFill(int32 Points, int32 Cell);
     UNNAMED_API int32 GetExperienceWidth(double Progress);
     UNNAMED_API int32 GetAttackWidth(double Strength);
+    // 26.3's bar for Damage of MaxDamage, as ItemStack answers isBarVisible, getBarWidth and getBarColor
+    // (Reference/minecraft-items-26.3/facts/durability_bar.json, every damage value of every max damage): shown once
+    // damaged, 13 px shrinking to 0, hue from green to red by the share left, in single-precision steps.
+    UNNAMED_API FHudDurabilityBar GetDurabilityBar(int32 Damage, int32 MaxDamage);
     UNNAMED_API int32 GetAttackHeight(double Strength);
     UNNAMED_API EHudContext GetContext(
         bool bWaypoints, bool bExperience, bool bRecentXp, bool bJumpable, bool bCharging, bool bCooldown);

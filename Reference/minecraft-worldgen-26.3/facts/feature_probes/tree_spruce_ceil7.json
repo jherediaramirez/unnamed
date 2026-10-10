@@ -1,0 +1,1319 @@
+{
+ "generated_by": "tools/tree_probe.py",
+ "minecraft": "26.3",
+ "probe": "spruce_ceil7",
+ "feature": "minecraft:spruce",
+ "variant": "_ceil7",
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:stone",
+    -63,
+    55
+   ],
+   [
+    "minecraft:dirt",
+    56,
+    58
+   ],
+   [
+    "minecraft:grass_block",
+    59,
+    59
+   ]
+  ],
+  "grid_spacing": 32,
+  "random_tick_speed": 0,
+  "settle_s": 3
+ },
+ "y": 60,
+ "grid": 4,
+ "settled": true,
+ "prep": [
+  [
+   -8,
+   67,
+   -8,
+   8,
+   67,
+   8,
+   "minecraft:stone"
+  ]
+ ],
+ "tries": 16,
+ "responses": {
+  "failed": 12,
+  "placed": 4
+ },
+ "ceiling_dy": 7,
+ "placed_but_empty": 0,
+ "failed_but_changed": 0,
+ "n": {
+  "n": 4,
+  "min": 40,
+  "p5": 40,
+  "p50": 60,
+  "p95": 100,
+  "max": 100,
+  "mean": 65.0
+ },
+ "logs": {
+  "n": 4,
+  "min": 5,
+  "p5": 5,
+  "p50": 5,
+  "p95": 5,
+  "max": 5,
+  "mean": 5.0
+ },
+ "leaves": {
+  "n": 4,
+  "min": 34,
+  "p5": 34,
+  "p50": 54,
+  "p95": 94,
+  "max": 94,
+  "mean": 59.0
+ },
+ "log_top": {
+  "n": 4,
+  "min": 4,
+  "p5": 4,
+  "p50": 4,
+  "p95": 4,
+  "max": 4,
+  "mean": 4.0
+ },
+ "log_bottom": {
+  "n": 4,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "origin_column_logs": {
+  "n": 4,
+  "min": 5,
+  "p5": 5,
+  "p50": 5,
+  "p95": 5,
+  "max": 5,
+  "mean": 5.0
+ },
+ "reach_h": {
+  "n": 4,
+  "min": 2,
+  "p5": 2,
+  "p50": 2,
+  "p95": 3,
+  "max": 3,
+  "mean": 2.25
+ },
+ "log_reach_h": {
+  "n": 4,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "leaf_reach_h": {
+  "n": 4,
+  "min": 2,
+  "p5": 2,
+  "p50": 2,
+  "p95": 3,
+  "max": 3,
+  "mean": 2.25
+ },
+ "leaf_top": {
+  "n": 4,
+  "min": 6,
+  "p5": 6,
+  "p50": 6,
+  "p95": 6,
+  "max": 6,
+  "mean": 6.0
+ },
+ "log_comp6": {
+  "n": 4,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "log_comp26": {
+  "n": 4,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_mismatch": {
+  "n": 4,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "leaf_comp6": {
+  "n": 4,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_pending_tick": {
+  "n": 4,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "leaf_mismatch_no_tick": {
+  "n": 4,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "leaf_bfs7": {
+  "n": 4,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "log_top_hist": {
+  "4": 4
+ },
+ "origin_column_logs_hist": {
+  "5": 4
+ },
+ "log_comp6_hist": {
+  "1": 4
+ },
+ "log_comp26_hist": {
+  "1": 4
+ },
+ "bbox_extremes": {
+  "min_dx": -3,
+  "max_dx": 3,
+  "min_dy": -1,
+  "max_dy": 6,
+  "min_dz": -3,
+  "max_dz": 3
+ },
+ "blocks": {
+  "dirt": {
+   "mean_per_tree": 1.0,
+   "share_of_trees": 1.0,
+   "max_reach_h": 0,
+   "per_tree": {
+    "n": 4,
+    "min": 1,
+    "p5": 1,
+    "p50": 1,
+    "p95": 1,
+    "max": 1,
+    "mean": 1.0
+   }
+  },
+  "spruce_leaves": {
+   "mean_per_tree": 59.0,
+   "share_of_trees": 1.0,
+   "max_reach_h": 3,
+   "per_tree": {
+    "n": 4,
+    "min": 34,
+    "p5": 34,
+    "p50": 54,
+    "p95": 94,
+    "max": 94,
+    "mean": 59.0
+   }
+  },
+  "spruce_log": {
+   "mean_per_tree": 5.0,
+   "share_of_trees": 1.0,
+   "max_reach_h": 0,
+   "per_tree": {
+    "n": 4,
+    "min": 5,
+    "p5": 5,
+    "p50": 5,
+    "p95": 5,
+    "max": 5,
+    "mean": 5.0
+   }
+  }
+ },
+ "leaf_distance": {
+  "1": 64,
+  "2": 80,
+  "3": 72,
+  "4": 12,
+  "5": 8
+ },
+ "leaf_bfs": {
+  "1": 64,
+  "2": 80,
+  "3": 72,
+  "4": 12,
+  "5": 8
+ },
+ "leaf_persistent": {
+  "false": 236
+ },
+ "log_axis": {
+  "y": 20
+ },
+ "max_reach_h_any_cell": 3,
+ "profile": {
+  "n": 4,
+  "log_columns": {
+   "0,0": 1.0
+  },
+  "logs_per_dy": {
+   "0": 1.0,
+   "1": 1.0,
+   "2": 1.0,
+   "3": 1.0,
+   "4": 1.0
+  },
+  "leaf_layers": [
+   {
+    "dy_from_top_log": -3,
+    "mean_per_tree": 18.0,
+    "max_radius": 3,
+    "occupancy": {
+     "-3,-2": 0.25,
+     "-3,-1": 0.25,
+     "-3,0": 0.25,
+     "-3,1": 0.25,
+     "-3,2": 0.25,
+     "-2,-3": 0.25,
+     "-2,-2": 0.25,
+     "-2,-1": 0.5,
+     "-2,0": 0.5,
+     "-2,1": 0.5,
+     "-2,2": 0.25,
+     "-2,3": 0.25,
+     "-1,-3": 0.25,
+     "-1,-2": 0.5,
+     "-1,-1": 0.5,
+     "-1,0": 1.0,
+     "-1,1": 0.5,
+     "-1,2": 0.5,
+     "-1,3": 0.25,
+     "0,-3": 0.25,
+     "0,-2": 0.5,
+     "0,-1": 1.0,
+     "0,1": 1.0,
+     "0,2": 0.5,
+     "0,3": 0.25,
+     "1,-3": 0.25,
+     "1,-2": 0.5,
+     "1,-1": 0.5,
+     "1,0": 1.0,
+     "1,1": 0.5,
+     "1,2": 0.5,
+     "1,3": 0.25,
+     "2,-3": 0.25,
+     "2,-2": 0.25,
+     "2,-1": 0.5,
+     "2,0": 0.5,
+     "2,1": 0.5,
+     "2,2": 0.25,
+     "2,3": 0.25,
+     "3,-2": 0.25,
+     "3,-1": 0.25,
+     "3,0": 0.25,
+     "3,1": 0.25,
+     "3,2": 0.25
+    }
+   },
+   {
+    "dy_from_top_log": -2,
+    "mean_per_tree": 16.0,
+    "max_radius": 2,
+    "occupancy": {
+     "-2,-1": 0.75,
+     "-2,0": 0.75,
+     "-2,1": 0.75,
+     "-1,-2": 0.75,
+     "-1,-1": 0.75,
+     "-1,0": 1.0,
+     "-1,1": 0.75,
+     "-1,2": 0.75,
+     "0,-2": 0.75,
+     "0,-1": 1.0,
+     "0,1": 1.0,
+     "0,2": 0.75,
+     "1,-2": 0.75,
+     "1,-1": 0.75,
+     "1,0": 1.0,
+     "1,1": 0.75,
+     "1,2": 0.75,
+     "2,-1": 0.75,
+     "2,0": 0.75,
+     "2,1": 0.75
+    }
+   },
+   {
+    "dy_from_top_log": -1,
+    "mean_per_tree": 8.0,
+    "max_radius": 2,
+    "occupancy": {
+     "-2,-1": 0.25,
+     "-2,0": 0.25,
+     "-2,1": 0.25,
+     "-1,-2": 0.25,
+     "-1,-1": 0.25,
+     "-1,0": 1.0,
+     "-1,1": 0.25,
+     "-1,2": 0.25,
+     "0,-2": 0.25,
+     "0,-1": 1.0,
+     "0,1": 1.0,
+     "0,2": 0.25,
+     "1,-2": 0.25,
+     "1,-1": 0.25,
+     "1,0": 1.0,
+     "1,1": 0.25,
+     "1,2": 0.25,
+     "2,-1": 0.25,
+     "2,0": 0.25,
+     "2,1": 0.25
+    }
+   },
+   {
+    "dy_from_top_log": 0,
+    "mean_per_tree": 11.0,
+    "max_radius": 2,
+    "occupancy": {
+     "-2,-1": 0.5,
+     "-2,0": 0.5,
+     "-2,1": 0.5,
+     "-1,-2": 0.5,
+     "-1,-1": 0.5,
+     "-1,0": 0.75,
+     "-1,1": 0.5,
+     "-1,2": 0.5,
+     "0,-2": 0.5,
+     "0,-1": 0.75,
+     "0,1": 0.75,
+     "0,2": 0.5,
+     "1,-2": 0.5,
+     "1,-1": 0.5,
+     "1,0": 0.75,
+     "1,1": 0.5,
+     "1,2": 0.5,
+     "2,-1": 0.5,
+     "2,0": 0.5,
+     "2,1": 0.5
+    }
+   },
+   {
+    "dy_from_top_log": 1,
+    "mean_per_tree": 4.0,
+    "max_radius": 1,
+    "occupancy": {
+     "-1,0": 0.75,
+     "0,-1": 0.75,
+     "0,0": 1.0,
+     "0,1": 0.75,
+     "1,0": 0.75
+    }
+   },
+   {
+    "dy_from_top_log": 2,
+    "mean_per_tree": 2.0,
+    "max_radius": 1,
+    "occupancy": {
+     "-1,0": 0.25,
+     "0,-1": 0.25,
+     "0,0": 1.0,
+     "0,1": 0.25,
+     "1,0": 0.25
+    }
+   }
+  ],
+  "decorators": {
+   "dirt": {
+    "total": 4,
+    "per_tree": 1.0,
+    "dy": {
+     "-1": 4
+    },
+    "radius": {
+     "0": 4
+    }
+   }
+  }
+ },
+ "examples": [
+  {
+   "origin": [
+    38000,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -2,
+     1,
+     -1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     1,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     1,
+     1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     -1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     1,
+     -2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     1,
+     -1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     1,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     1,
+     1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     1,
+     2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     -2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     -1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     0,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     1,
+     -2,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     1,
+     -1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     1,
+     1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     1,
+     2,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     2,
+     -1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     2,
+     1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     -2,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     -1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     3,
+     1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     2,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     4,
+     1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     1,
+     -2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     1,
+     -1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     1,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     1,
+     1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     1,
+     2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     -2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     -1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     0,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     1,
+     -1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     1,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     1,
+     1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     -1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ]
+   ]
+  },
+  {
+   "origin": [
+    37904,
+    60,
+    80
+   ],
+   "cells": [
+    [
+     -2,
+     2,
+     -1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     2,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     2,
+     1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     1,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     -2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     -1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     1,
+     -1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     1,
+     1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     2,
+     -2,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     2,
+     -1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     2,
+     1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     2,
+     2,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     -1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     3,
+     1,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:spruce_log"
+    ],
+    [
+     0,
+     5,
+     -1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     1,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     -2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     -1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     1,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     2,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     0,
+     "minecraft:spruce_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     -1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     0,
+     "minecraft:spruce_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     1,
+     "minecraft:spruce_leaves[distance=3,persistent=false,waterlogged=false]"
+    ]
+   ]
+  }
+ ],
+ "per_placement": [
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 60,
+   "logs": 5,
+   "leaves": 54,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    6,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 40,
+   "logs": 5,
+   "leaves": 34,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    6,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 60,
+   "logs": 5,
+   "leaves": 54,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    6,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 100,
+   "logs": 5,
+   "leaves": 94,
+   "log_top": 4,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    6,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  }
+ ]
+}

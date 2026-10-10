@@ -449,3 +449,73 @@ bool HudBlockIcon::IsAnimated(const FFoundationBlockRegistry& Registry, FName Bl
         if (Assets->Textures.IsValidIndex(Quad.Texture) && Assets->Textures[Quad.Texture].IsAnimated()) return true;
     return false;
 }
+
+FString HudTooltip::FormatAmount(double Value)
+{
+    const double Scaled = Value * 100., Floor = FMath::FloorToDouble(Scaled), Fraction = Scaled - Floor;
+    const double Rounded = Fraction > .5 ? Floor + 1
+        : Fraction < .5                  ? Floor
+                                         : Floor + FMath::Fmod(FMath::Abs(Floor), 2.);
+    FString Text = FString::Printf(TEXT("%.2f"), Rounded / 100.);
+    Text.RemoveFromEnd(TEXT("0"));
+    Text.RemoveFromEnd(TEXT("0"));
+    Text.RemoveFromEnd(TEXT("."));
+    return Text;
+}
+
+TArray<FHudTooltipLine> HudTooltip::GetModifierLines(
+    TConstArrayView<FFoundationItemModifierAsset> Modifiers, const TMap<FString, FString>& Lang, bool bPlayer)
+{
+    auto Text = [&Lang](const FString& Key) -> FString
+    {
+        const FString* Found = Lang.Find(Key);
+        return Found ? *Found : Key;
+    };
+    // "%s %s": the amount, then the attribute's name.
+    auto Fill = [](FString Format, const FString& Amount, const FString& Name)
+    {
+        int32 At = Format.Find(TEXT("%s"));
+        if (At != INDEX_NONE) Format = Format.Left(At) + Amount + Format.Mid(At + 2);
+        At = Format.Find(TEXT("%s"), ESearchCase::CaseSensitive, ESearchDir::FromStart, At + Amount.Len());
+        if (At != INDEX_NONE) Format = Format.Left(At) + Name + Format.Mid(At + 2);
+        return Format;
+    };
+    TArray<FName> Slots;
+    for (const FFoundationItemModifierAsset& Modifier : Modifiers)
+        Slots.AddUnique(Modifier.Slot);
+    TArray<FHudTooltipLine> Lines;
+    for (const FName Slot : Slots)
+    {
+        Lines.Add({FString(), White});
+        Lines.Add({Text(TEXT("item.modifiers.") + Slot.ToString()), Gray});
+        for (const FFoundationItemModifierAsset& Modifier : Modifiers)
+        {
+            // Tier A's modifiers all add a value (ItemImportData.py refuses others); the lang keys end in ".0".
+            if (Modifier.Slot != Slot || Modifier.Operation != TEXT("add_value")) continue;
+            const FString Attribute = Modifier.Attribute.ToString(), Name = Text(TEXT("attribute.name.") + Attribute);
+            const double* Base = Attribute == TEXT("attack_damage") ? &BaseAttackDamage
+                : Attribute == TEXT("attack_speed")                 ? &BaseAttackSpeed
+                                                                    : nullptr;
+            if (bPlayer && Base && Modifier.Id.ToString() == TEXT("base_") + Attribute)
+                Lines.Add({TEXT(" ") +
+                        Fill(Text(TEXT("attribute.modifier.equals.0")), FormatAmount(*Base + Modifier.Amount), Name),
+                    DarkGreen});
+            else if (Modifier.Amount != 0)
+                Lines.Add({Fill(Text(Modifier.Amount > 0 ? TEXT("attribute.modifier.plus.0")
+                                                         : TEXT("attribute.modifier.take.0")),
+                               FormatAmount(FMath::Abs(Modifier.Amount)), Name),
+                    Modifier.Amount > 0 ? Blue : Red});
+        }
+    }
+    return Lines;
+}
+
+int32 HudTooltip::GetLineY(int32 Line)
+{
+    return Line <= 0 ? 0 : Line * 10 + 2;
+}
+
+int32 HudTooltip::GetHeight(int32 Lines)
+{
+    return Lines <= 1 ? 8 : Lines * 10;
+}

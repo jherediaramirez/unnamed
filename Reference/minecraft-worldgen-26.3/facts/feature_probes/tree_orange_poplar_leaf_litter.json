@@ -1,0 +1,8007 @@
+{
+ "generated_by": "tools/tree_probe.py",
+ "minecraft": "26.3",
+ "probe": "orange_poplar_leaf_litter",
+ "feature": "minecraft:orange_poplar_leaf_litter",
+ "variant": null,
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:stone",
+    -63,
+    55
+   ],
+   [
+    "minecraft:dirt",
+    56,
+    58
+   ],
+   [
+    "minecraft:grass_block",
+    59,
+    59
+   ]
+  ],
+  "grid_spacing": 32,
+  "random_tick_speed": 0,
+  "settle_s": 3
+ },
+ "y": 60,
+ "grid": 10,
+ "settled": true,
+ "prep": [],
+ "tries": 100,
+ "responses": {
+  "placed": 100
+ },
+ "placed_but_empty": 0,
+ "failed_but_changed": 0,
+ "n": {
+  "n": 100,
+  "min": 164,
+  "p5": 172,
+  "p50": 252,
+  "p95": 486,
+  "max": 614,
+  "mean": 275.65
+ },
+ "logs": {
+  "n": 100,
+  "min": 8,
+  "p5": 10,
+  "p50": 14,
+  "p95": 24,
+  "max": 25,
+  "mean": 14.64
+ },
+ "leaves": {
+  "n": 100,
+  "min": 128,
+  "p5": 134,
+  "p50": 212,
+  "p95": 436,
+  "max": 562,
+  "mean": 232.98
+ },
+ "log_top": {
+  "n": 100,
+  "min": 6,
+  "p5": 6,
+  "p50": 8,
+  "p95": 10,
+  "max": 10,
+  "mean": 8.12
+ },
+ "log_bottom": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "origin_column_logs": {
+  "n": 100,
+  "min": 7,
+  "p5": 7,
+  "p50": 9,
+  "p95": 11,
+  "max": 11,
+  "mean": 9.12
+ },
+ "reach_h": {
+  "n": 100,
+  "min": 4,
+  "p5": 4,
+  "p50": 5,
+  "p95": 7,
+  "max": 7,
+  "mean": 4.77
+ },
+ "log_reach_h": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 3,
+  "max": 3,
+  "mean": 1.25
+ },
+ "leaf_reach_h": {
+  "n": 100,
+  "min": 4,
+  "p5": 4,
+  "p50": 5,
+  "p95": 7,
+  "max": 7,
+  "mean": 4.77
+ },
+ "leaf_top": {
+  "n": 100,
+  "min": 7,
+  "p5": 7,
+  "p50": 10,
+  "p95": 12,
+  "max": 12,
+  "mean": 9.56
+ },
+ "log_comp6": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "log_comp26": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_mismatch": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 34,
+  "max": 47,
+  "mean": 3.27
+ },
+ "leaf_comp6": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_pending_tick": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 10,
+  "max": 35,
+  "mean": 1.04
+ },
+ "leaf_mismatch_no_tick": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 34,
+  "max": 47,
+  "mean": 3.27
+ },
+ "leaf_bfs7": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "log_top_hist": {
+  "6": 20,
+  "7": 15,
+  "8": 21,
+  "9": 21,
+  "10": 23
+ },
+ "origin_column_logs_hist": {
+  "7": 20,
+  "8": 15,
+  "9": 21,
+  "10": 21,
+  "11": 23
+ },
+ "log_comp6_hist": {
+  "1": 100
+ },
+ "log_comp26_hist": {
+  "1": 100
+ },
+ "bbox_extremes": {
+  "min_dx": -7,
+  "max_dx": 7,
+  "min_dy": -1,
+  "max_dy": 12,
+  "min_dz": -7,
+  "max_dz": 7
+ },
+ "blocks": {
+  "dirt": {
+   "mean_per_tree": 1.0,
+   "share_of_trees": 1.0,
+   "max_reach_h": 0,
+   "per_tree": {
+    "n": 100,
+    "min": 1,
+    "p5": 1,
+    "p50": 1,
+    "p95": 1,
+    "max": 1,
+    "mean": 1.0
+   }
+  },
+  "leaf_litter": {
+   "mean_per_tree": 26.49,
+   "share_of_trees": 1.0,
+   "max_reach_h": 4,
+   "per_tree": {
+    "n": 100,
+    "min": 17,
+    "p5": 20,
+    "p50": 27,
+    "p95": 31,
+    "max": 34,
+    "mean": 26.49
+   }
+  },
+  "orange_poplar_leaves": {
+   "mean_per_tree": 232.98,
+   "share_of_trees": 1.0,
+   "max_reach_h": 7,
+   "per_tree": {
+    "n": 100,
+    "min": 128,
+    "p5": 134,
+    "p50": 212,
+    "p95": 436,
+    "max": 562,
+    "mean": 232.98
+   }
+  },
+  "poplar_log": {
+   "mean_per_tree": 14.64,
+   "share_of_trees": 1.0,
+   "max_reach_h": 3,
+   "per_tree": {
+    "n": 100,
+    "min": 8,
+    "p5": 10,
+    "p50": 14,
+    "p95": 24,
+    "max": 25,
+    "mean": 14.64
+   }
+  },
+  "shelf_mushroom": {
+   "mean_per_tree": 0.54,
+   "share_of_trees": 0.33,
+   "max_reach_h": 2,
+   "per_tree": {
+    "n": 100,
+    "min": 0,
+    "p5": 0,
+    "p50": 0,
+    "p95": 2,
+    "max": 3,
+    "mean": 0.54
+   }
+  }
+ },
+ "leaf_distance": {
+  "1": 2943,
+  "2": 4889,
+  "3": 5999,
+  "4": 5867,
+  "5": 2979,
+  "6": 621
+ },
+ "leaf_bfs": {
+  "1": 2979,
+  "2": 4922,
+  "3": 6028,
+  "4": 5859,
+  "5": 2923,
+  "6": 587
+ },
+ "leaf_persistent": {
+  "false": 23298
+ },
+ "log_axis": {
+  "x": 280,
+  "y": 912,
+  "z": 272
+ },
+ "pending_ticks": {
+  "minecraft:orange_poplar_leaves": 104
+ },
+ "max_reach_h_any_cell": 7,
+ "profile": {
+  "n": 100,
+  "log_columns": {
+   "-3,0": 0.09,
+   "-2,0": 0.16,
+   "-1,0": 0.8,
+   "0,-3": 0.09,
+   "0,-2": 0.16,
+   "0,-1": 0.89,
+   "0,0": 1.0,
+   "0,1": 0.8,
+   "0,2": 0.16,
+   "0,3": 0.09,
+   "1,0": 0.82,
+   "2,0": 0.16,
+   "3,0": 0.09
+  },
+  "logs_per_dy": {
+   "0": 1.0,
+   "1": 1.0,
+   "2": 1.46,
+   "3": 1.35,
+   "4": 1.85,
+   "5": 2.14,
+   "6": 2.2,
+   "7": 1.12,
+   "8": 1.49,
+   "9": 0.8,
+   "10": 0.23
+  },
+  "leaf_layers": [
+   {
+    "dy_from_top_log": -4,
+    "mean_per_tree": 12.08,
+    "max_radius": 2,
+    "occupancy": {
+     "-2,-1": 0.38,
+     "-2,0": 0.9,
+     "-2,1": 0.45,
+     "-1,-2": 0.37,
+     "-1,-1": 0.95,
+     "-1,0": 0.38,
+     "-1,1": 0.98,
+     "-1,2": 0.44,
+     "0,-2": 0.8,
+     "0,-1": 0.34,
+     "0,1": 0.48,
+     "0,2": 0.85,
+     "1,-2": 0.47,
+     "1,-1": 0.89,
+     "1,0": 0.36,
+     "1,1": 0.9,
+     "1,2": 0.38,
+     "2,-1": 0.46,
+     "2,0": 0.94,
+     "2,1": 0.36
+    }
+   },
+   {
+    "dy_from_top_log": -3,
+    "mean_per_tree": 42.48,
+    "max_radius": 6,
+    "occupancy": {
+     "-6,-1": 0.05,
+     "-6,0": 0.07,
+     "-6,1": 0.02,
+     "-5,-2": 0.04,
+     "-5,-1": 0.13,
+     "-5,0": 0.14,
+     "-5,1": 0.11,
+     "-5,2": 0.03,
+     "-4,-3": 0.05,
+     "-4,-2": 0.12,
+     "-4,-1": 0.27,
+     "-4,0": 0.46,
+     "-4,1": 0.36,
+     "-4,2": 0.11,
+     "-4,3": 0.04,
+     "-3,-4": 0.05,
+     "-3,-3": 0.12,
+     "-3,-2": 0.26,
+     "-3,-1": 0.67,
+     "-3,0": 0.9,
+     "-3,1": 0.75,
+     "-3,2": 0.31,
+     "-3,3": 0.1,
+     "-3,4": 0.03,
+     "-2,-5": 0.04,
+     "-2,-4": 0.11,
+     "-2,-3": 0.26,
+     "-2,-2": 0.68,
+     "-2,-1": 0.95,
+     "-2,0": 1.0,
+     "-2,1": 0.95,
+     "-2,2": 0.75,
+     "-2,3": 0.34,
+     "-2,4": 0.11,
+     "-2,5": 0.04,
+     "-1,-6": 0.04,
+     "-1,-5": 0.12,
+     "-1,-4": 0.29,
+     "-1,-3": 0.61,
+     "-1,-2": 0.94,
+     "-1,-1": 1.0,
+     "-1,0": 1.0,
+     "-1,1": 1.0,
+     "-1,2": 0.98,
+     "-1,3": 0.71,
+     "-1,4": 0.3,
+     "-1,5": 0.11,
+     "-1,6": 0.04,
+     "0,-6": 0.07,
+     "0,-5": 0.15,
+     "0,-4": 0.47,
+     "0,-3": 0.9,
+     "0,-2": 1.0,
+     "0,-1": 1.0,
+     "0,1": 1.0,
+     "0,2": 1.0,
+     "0,3": 0.95,
+     "0,4": 0.45,
+     "0,5": 0.14,
+     "0,6": 0.08,
+     "1,-6": 0.04,
+     "1,-5": 0.12,
+     "1,-4": 0.37,
+     "1,-3": 0.74,
+     "1,-2": 0.96,
+     "1,-1": 1.0,
+     "1,0": 1.0,
+     "1,1": 1.0,
+     "1,2": 0.95,
+     "1,3": 0.72,
+     "1,4": 0.28,
+     "1,5": 0.13,
+     "1,6": 0.03,
+     "2,-5": 0.03,
+     "2,-4": 0.11,
+     "2,-3": 0.33,
+     "2,-2": 0.72,
+     "2,-1": 0.97,
+     "2,0": 1.0,
+     "2,1": 0.97,
+     "2,2": 0.7,
+     "2,3": 0.28,
+     "2,4": 0.1,
+     "2,5": 0.05,
+     "3,-4": 0.01,
+     "3,-3": 0.11,
+     "3,-2": 0.31,
+     "3,-1": 0.68,
+     "3,0": 0.9,
+     "3,1": 0.69,
+     "3,2": 0.26,
+     "3,3": 0.1,
+     "3,4": 0.05,
+     "4,-3": 0.04,
+     "4,-2": 0.11,
+     "4,-1": 0.36,
+     "4,0": 0.48,
+     "4,1": 0.28,
+     "4,2": 0.13,
+     "4,3": 0.03,
+     "5,-2": 0.02,
+     "5,-1": 0.12,
+     "5,0": 0.13,
+     "5,1": 0.11,
+     "5,2": 0.03,
+     "6,-1": 0.04,
+     "6,0": 0.07,
+     "6,1": 0.05
+    }
+   },
+   {
+    "dy_from_top_log": -2,
+    "mean_per_tree": 61.33,
+    "max_radius": 7,
+    "occupancy": {
+     "-7,-1": 0.05,
+     "-7,0": 0.09,
+     "-7,1": 0.03,
+     "-6,-2": 0.04,
+     "-6,-1": 0.12,
+     "-6,0": 0.14,
+     "-6,1": 0.12,
+     "-6,2": 0.04,
+     "-5,-3": 0.05,
+     "-5,-2": 0.1,
+     "-5,-1": 0.26,
+     "-5,0": 0.44,
+     "-5,1": 0.35,
+     "-5,2": 0.1,
+     "-5,3": 0.04,
+     "-4,-4": 0.05,
+     "-4,-3": 0.13,
+     "-4,-2": 0.25,
+     "-4,-1": 0.67,
+     "-4,0": 0.91,
+     "-4,1": 0.7,
+     "-4,2": 0.34,
+     "-4,3": 0.09,
+     "-4,4": 0.04,
+     "-3,-5": 0.05,
+     "-3,-4": 0.12,
+     "-3,-3": 0.28,
+     "-3,-2": 0.68,
+     "-3,-1": 0.97,
+     "-3,0": 0.95,
+     "-3,1": 0.98,
+     "-3,2": 0.75,
+     "-3,3": 0.34,
+     "-3,4": 0.1,
+     "-3,5": 0.02,
+     "-2,-6": 0.04,
+     "-2,-5": 0.13,
+     "-2,-4": 0.27,
+     "-2,-3": 0.68,
+     "-2,-2": 0.96,
+     "-2,-1": 1.0,
+     "-2,0": 0.93,
+     "-2,1": 1.0,
+     "-2,2": 0.96,
+     "-2,3": 0.72,
+     "-2,4": 0.33,
+     "-2,5": 0.12,
+     "-2,6": 0.03,
+     "-1,-7": 0.03,
+     "-1,-6": 0.11,
+     "-1,-5": 0.29,
+     "-1,-4": 0.66,
+     "-1,-3": 0.93,
+     "-1,-2": 1.0,
+     "-1,-1": 1.0,
+     "-1,0": 0.75,
+     "-1,1": 1.0,
+     "-1,2": 1.0,
+     "-1,3": 0.98,
+     "-1,4": 0.7,
+     "-1,5": 0.35,
+     "-1,6": 0.1,
+     "-1,7": 0.04,
+     "0,-7": 0.08,
+     "0,-6": 0.15,
+     "0,-5": 0.46,
+     "0,-4": 0.97,
+     "0,-3": 0.95,
+     "0,-2": 0.93,
+     "0,-1": 0.75,
+     "0,1": 0.75,
+     "0,2": 0.93,
+     "0,3": 0.95,
+     "0,4": 0.96,
+     "0,5": 0.49,
+     "0,6": 0.14,
+     "0,7": 0.06,
+     "1,-7": 0.04,
+     "1,-6": 0.1,
+     "1,-5": 0.3,
+     "1,-4": 0.7,
+     "1,-3": 0.94,
+     "1,-2": 1.0,
+     "1,-1": 1.0,
+     "1,0": 0.75,
+     "1,1": 1.0,
+     "1,2": 1.0,
+     "1,3": 0.96,
+     "1,4": 0.65,
+     "1,5": 0.27,
+     "1,6": 0.11,
+     "1,7": 0.05,
+     "2,-6": 0.03,
+     "2,-5": 0.11,
+     "2,-4": 0.33,
+     "2,-3": 0.71,
+     "2,-2": 0.97,
+     "2,-1": 1.0,
+     "2,0": 0.93,
+     "2,1": 1.0,
+     "2,2": 0.96,
+     "2,3": 0.67,
+     "2,4": 0.28,
+     "2,5": 0.12,
+     "2,6": 0.04,
+     "3,-5": 0.04,
+     "3,-4": 0.1,
+     "3,-3": 0.34,
+     "3,-2": 0.71,
+     "3,-1": 0.95,
+     "3,0": 0.95,
+     "3,1": 0.97,
+     "3,2": 0.64,
+     "3,3": 0.3,
+     "3,4": 0.11,
+     "3,5": 0.03,
+     "4,-4": 0.04,
+     "4,-3": 0.11,
+     "4,-2": 0.31,
+     "4,-1": 0.71,
+     "4,0": 0.94,
+     "4,1": 0.67,
+     "4,2": 0.26,
+     "4,3": 0.12,
+     "4,4": 0.05,
+     "5,-3": 0.04,
+     "5,-2": 0.11,
+     "5,-1": 0.3,
+     "5,0": 0.42,
+     "5,1": 0.28,
+     "5,2": 0.11,
+     "5,3": 0.03,
+     "6,-2": 0.04,
+     "6,-1": 0.1,
+     "6,0": 0.14,
+     "6,1": 0.12,
+     "6,2": 0.05,
+     "7,-1": 0.02,
+     "7,0": 0.08,
+     "7,1": 0.05
+    }
+   },
+   {
+    "dy_from_top_log": -1,
+    "mean_per_tree": 50.09,
+    "max_radius": 7,
+    "occupancy": {
+     "-7,-1": 0.01,
+     "-7,0": 0.03,
+     "-7,1": 0.03,
+     "-6,-2": 0.01,
+     "-6,-1": 0.1,
+     "-6,0": 0.11,
+     "-6,1": 0.07,
+     "-6,2": 0.03,
+     "-5,-3": 0.01,
+     "-5,-2": 0.09,
+     "-5,-1": 0.2,
+     "-5,0": 0.31,
+     "-5,1": 0.22,
+     "-5,2": 0.08,
+     "-5,3": 0.03,
+     "-4,-3": 0.09,
+     "-4,-2": 0.23,
+     "-4,-1": 0.44,
+     "-4,0": 0.63,
+     "-4,1": 0.49,
+     "-4,2": 0.2,
+     "-4,3": 0.08,
+     "-4,4": 0.03,
+     "-3,-5": 0.01,
+     "-3,-4": 0.1,
+     "-3,-3": 0.21,
+     "-3,-2": 0.39,
+     "-3,-1": 0.78,
+     "-3,0": 0.93,
+     "-3,1": 0.82,
+     "-3,2": 0.53,
+     "-3,3": 0.18,
+     "-3,4": 0.07,
+     "-3,5": 0.03,
+     "-2,-6": 0.01,
+     "-2,-5": 0.09,
+     "-2,-4": 0.22,
+     "-2,-3": 0.41,
+     "-2,-2": 0.77,
+     "-2,-1": 0.96,
+     "-2,0": 0.91,
+     "-2,1": 1.0,
+     "-2,2": 0.79,
+     "-2,3": 0.53,
+     "-2,4": 0.2,
+     "-2,5": 0.07,
+     "-2,6": 0.02,
+     "-1,-7": 0.01,
+     "-1,-6": 0.06,
+     "-1,-5": 0.22,
+     "-1,-4": 0.44,
+     "-1,-3": 0.73,
+     "-1,-2": 0.97,
+     "-1,-1": 1.0,
+     "-1,0": 0.73,
+     "-1,1": 1.0,
+     "-1,2": 1.0,
+     "-1,3": 0.8,
+     "-1,4": 0.48,
+     "-1,5": 0.23,
+     "-1,6": 0.08,
+     "-1,7": 0.03,
+     "0,-7": 0.04,
+     "0,-6": 0.14,
+     "0,-5": 0.32,
+     "0,-4": 0.67,
+     "0,-3": 0.91,
+     "0,-2": 0.91,
+     "0,-1": 0.73,
+     "0,1": 0.73,
+     "0,2": 0.91,
+     "0,3": 0.93,
+     "0,4": 0.65,
+     "0,5": 0.31,
+     "0,6": 0.12,
+     "0,7": 0.04,
+     "1,-7": 0.02,
+     "1,-6": 0.06,
+     "1,-5": 0.22,
+     "1,-4": 0.52,
+     "1,-3": 0.82,
+     "1,-2": 0.95,
+     "1,-1": 1.0,
+     "1,0": 0.73,
+     "1,1": 1.0,
+     "1,2": 0.96,
+     "1,3": 0.77,
+     "1,4": 0.43,
+     "1,5": 0.21,
+     "1,6": 0.09,
+     "2,-6": 0.03,
+     "2,-5": 0.08,
+     "2,-4": 0.22,
+     "2,-3": 0.54,
+     "2,-2": 0.81,
+     "2,-1": 0.98,
+     "2,0": 0.91,
+     "2,1": 0.93,
+     "2,2": 0.77,
+     "2,3": 0.46,
+     "2,4": 0.22,
+     "2,5": 0.1,
+     "3,-5": 0.03,
+     "3,-4": 0.05,
+     "3,-3": 0.22,
+     "3,-2": 0.55,
+     "3,-1": 0.82,
+     "3,0": 0.89,
+     "3,1": 0.78,
+     "3,2": 0.44,
+     "3,3": 0.17,
+     "3,4": 0.09,
+     "4,-4": 0.03,
+     "4,-3": 0.08,
+     "4,-2": 0.21,
+     "4,-1": 0.5,
+     "4,0": 0.65,
+     "4,1": 0.42,
+     "4,2": 0.24,
+     "4,3": 0.09,
+     "5,-3": 0.03,
+     "5,-2": 0.07,
+     "5,-1": 0.19,
+     "5,0": 0.32,
+     "5,1": 0.22,
+     "5,2": 0.08,
+     "5,3": 0.01,
+     "6,-2": 0.03,
+     "6,-1": 0.07,
+     "6,0": 0.08,
+     "6,1": 0.09,
+     "6,2": 0.01,
+     "7,-1": 0.02,
+     "7,0": 0.03,
+     "7,1": 0.01
+    }
+   },
+   {
+    "dy_from_top_log": 0,
+    "mean_per_tree": 35.78,
+    "max_radius": 6,
+    "occupancy": {
+     "-6,-1": 0.01,
+     "-6,0": 0.04,
+     "-6,1": 0.03,
+     "-5,-2": 0.05,
+     "-5,-1": 0.1,
+     "-5,0": 0.11,
+     "-5,1": 0.07,
+     "-5,2": 0.04,
+     "-4,-3": 0.04,
+     "-4,-2": 0.11,
+     "-4,-1": 0.24,
+     "-4,0": 0.32,
+     "-4,1": 0.21,
+     "-4,2": 0.08,
+     "-4,3": 0.04,
+     "-3,-4": 0.05,
+     "-3,-3": 0.09,
+     "-3,-2": 0.26,
+     "-3,-1": 0.41,
+     "-3,0": 0.66,
+     "-3,1": 0.55,
+     "-3,2": 0.34,
+     "-3,3": 0.08,
+     "-3,4": 0.02,
+     "-2,-5": 0.04,
+     "-2,-4": 0.11,
+     "-2,-3": 0.26,
+     "-2,-2": 0.53,
+     "-2,-1": 0.81,
+     "-2,0": 0.98,
+     "-2,1": 0.84,
+     "-2,2": 0.67,
+     "-2,3": 0.36,
+     "-2,4": 0.08,
+     "-2,5": 0.04,
+     "-1,-6": 0.01,
+     "-1,-5": 0.1,
+     "-1,-4": 0.23,
+     "-1,-3": 0.43,
+     "-1,-2": 0.81,
+     "-1,-1": 0.98,
+     "-1,0": 1.0,
+     "-1,1": 0.97,
+     "-1,2": 0.83,
+     "-1,3": 0.54,
+     "-1,4": 0.23,
+     "-1,5": 0.06,
+     "-1,6": 0.03,
+     "0,-6": 0.04,
+     "0,-5": 0.14,
+     "0,-4": 0.3,
+     "0,-3": 0.64,
+     "0,-2": 0.98,
+     "0,-1": 1.0,
+     "0,1": 1.0,
+     "0,2": 0.95,
+     "0,3": 0.62,
+     "0,4": 0.31,
+     "0,5": 0.13,
+     "0,6": 0.03,
+     "1,-6": 0.03,
+     "1,-5": 0.08,
+     "1,-4": 0.2,
+     "1,-3": 0.54,
+     "1,-2": 0.83,
+     "1,-1": 0.98,
+     "1,0": 1.0,
+     "1,1": 0.96,
+     "1,2": 0.81,
+     "1,3": 0.44,
+     "1,4": 0.22,
+     "1,5": 0.09,
+     "1,6": 0.01,
+     "2,-5": 0.02,
+     "2,-4": 0.08,
+     "2,-3": 0.33,
+     "2,-2": 0.64,
+     "2,-1": 0.84,
+     "2,0": 0.98,
+     "2,1": 0.79,
+     "2,2": 0.59,
+     "2,3": 0.29,
+     "2,4": 0.11,
+     "2,5": 0.04,
+     "3,-4": 0.03,
+     "3,-3": 0.06,
+     "3,-2": 0.27,
+     "3,-1": 0.5,
+     "3,0": 0.65,
+     "3,1": 0.46,
+     "3,2": 0.28,
+     "3,3": 0.12,
+     "3,4": 0.04,
+     "4,-3": 0.01,
+     "4,-2": 0.06,
+     "4,-1": 0.23,
+     "4,0": 0.32,
+     "4,1": 0.21,
+     "4,2": 0.11,
+     "4,3": 0.03,
+     "5,-2": 0.04,
+     "5,-1": 0.08,
+     "5,0": 0.13,
+     "5,1": 0.1,
+     "5,2": 0.04,
+     "6,-1": 0.03,
+     "6,0": 0.04,
+     "6,1": 0.01
+    }
+   },
+   {
+    "dy_from_top_log": 1,
+    "mean_per_tree": 23.17,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.01,
+     "-5,-1": 0.01,
+     "-5,0": 0.03,
+     "-5,1": 0.03,
+     "-5,2": 0.02,
+     "-4,-3": 0.01,
+     "-4,-2": 0.06,
+     "-4,-1": 0.1,
+     "-4,0": 0.12,
+     "-4,1": 0.07,
+     "-4,2": 0.07,
+     "-4,3": 0.03,
+     "-3,-4": 0.01,
+     "-3,-3": 0.04,
+     "-3,-2": 0.18,
+     "-3,-1": 0.24,
+     "-3,0": 0.32,
+     "-3,1": 0.23,
+     "-3,2": 0.14,
+     "-3,3": 0.05,
+     "-3,4": 0.03,
+     "-2,-5": 0.01,
+     "-2,-4": 0.06,
+     "-2,-3": 0.18,
+     "-2,-2": 0.33,
+     "-2,-1": 0.46,
+     "-2,0": 0.62,
+     "-2,1": 0.54,
+     "-2,2": 0.44,
+     "-2,3": 0.15,
+     "-2,4": 0.07,
+     "-2,5": 0.03,
+     "-1,-5": 0.01,
+     "-1,-4": 0.1,
+     "-1,-3": 0.22,
+     "-1,-2": 0.43,
+     "-1,-1": 0.82,
+     "-1,0": 0.94,
+     "-1,1": 0.83,
+     "-1,2": 0.55,
+     "-1,3": 0.21,
+     "-1,4": 0.08,
+     "-1,5": 0.03,
+     "0,-5": 0.04,
+     "0,-4": 0.14,
+     "0,-3": 0.3,
+     "0,-2": 0.61,
+     "0,-1": 0.98,
+     "0,0": 1.0,
+     "0,1": 0.97,
+     "0,2": 0.66,
+     "0,3": 0.28,
+     "0,4": 0.14,
+     "0,5": 0.04,
+     "1,-5": 0.03,
+     "1,-4": 0.08,
+     "1,-3": 0.23,
+     "1,-2": 0.56,
+     "1,-1": 0.81,
+     "1,0": 0.99,
+     "1,1": 0.83,
+     "1,2": 0.45,
+     "1,3": 0.24,
+     "1,4": 0.1,
+     "1,5": 0.01,
+     "2,-5": 0.03,
+     "2,-4": 0.07,
+     "2,-3": 0.16,
+     "2,-2": 0.45,
+     "2,-1": 0.52,
+     "2,0": 0.63,
+     "2,1": 0.46,
+     "2,2": 0.36,
+     "2,3": 0.15,
+     "2,4": 0.06,
+     "2,5": 0.01,
+     "3,-4": 0.02,
+     "3,-3": 0.05,
+     "3,-2": 0.18,
+     "3,-1": 0.23,
+     "3,0": 0.33,
+     "3,1": 0.23,
+     "3,2": 0.19,
+     "3,3": 0.05,
+     "3,4": 0.01,
+     "4,-3": 0.03,
+     "4,-2": 0.06,
+     "4,-1": 0.07,
+     "4,0": 0.14,
+     "4,1": 0.1,
+     "4,2": 0.06,
+     "4,3": 0.01,
+     "5,-2": 0.03,
+     "5,-1": 0.03,
+     "5,0": 0.03,
+     "5,1": 0.01,
+     "5,2": 0.01
+    }
+   },
+   {
+    "dy_from_top_log": 2,
+    "mean_per_tree": 8.05,
+    "max_radius": 4,
+    "occupancy": {
+     "-4,-2": 0.01,
+     "-4,-1": 0.01,
+     "-4,0": 0.04,
+     "-4,1": 0.03,
+     "-4,2": 0.03,
+     "-3,-3": 0.01,
+     "-3,-2": 0.03,
+     "-3,-1": 0.05,
+     "-3,0": 0.08,
+     "-3,1": 0.07,
+     "-3,2": 0.05,
+     "-3,3": 0.03,
+     "-2,-4": 0.01,
+     "-2,-3": 0.03,
+     "-2,-2": 0.13,
+     "-2,-1": 0.17,
+     "-2,0": 0.24,
+     "-2,1": 0.19,
+     "-2,2": 0.16,
+     "-2,3": 0.06,
+     "-2,4": 0.03,
+     "-1,-4": 0.01,
+     "-1,-3": 0.06,
+     "-1,-2": 0.16,
+     "-1,-1": 0.32,
+     "-1,0": 0.4,
+     "-1,1": 0.34,
+     "-1,2": 0.19,
+     "-1,3": 0.07,
+     "-1,4": 0.03,
+     "0,-4": 0.03,
+     "0,-3": 0.09,
+     "0,-2": 0.23,
+     "0,-1": 0.4,
+     "0,0": 0.44,
+     "0,1": 0.42,
+     "0,2": 0.25,
+     "0,3": 0.08,
+     "0,4": 0.03,
+     "1,-4": 0.03,
+     "1,-3": 0.07,
+     "1,-2": 0.19,
+     "1,-1": 0.35,
+     "1,0": 0.38,
+     "1,1": 0.32,
+     "1,2": 0.17,
+     "1,3": 0.06,
+     "1,4": 0.01,
+     "2,-4": 0.02,
+     "2,-3": 0.06,
+     "2,-2": 0.17,
+     "2,-1": 0.19,
+     "2,0": 0.24,
+     "2,1": 0.17,
+     "2,2": 0.11,
+     "2,3": 0.03,
+     "2,4": 0.01,
+     "3,-3": 0.03,
+     "3,-2": 0.06,
+     "3,-1": 0.07,
+     "3,0": 0.09,
+     "3,1": 0.06,
+     "3,2": 0.03,
+     "3,3": 0.01,
+     "4,-2": 0.03,
+     "4,-1": 0.03,
+     "4,0": 0.03,
+     "4,1": 0.01,
+     "4,2": 0.01
+    }
+   }
+  ],
+  "decorators": {
+   "dirt": {
+    "total": 100,
+    "per_tree": 1.0,
+    "dy": {
+     "-1": 100
+    },
+    "radius": {
+     "0": 100
+    }
+   },
+   "leaf_litter": {
+    "total": 2649,
+    "per_tree": 26.49,
+    "dy": {
+     "0": 2649
+    },
+    "radius": {
+     "1": 367,
+     "2": 1143,
+     "3": 487,
+     "4": 652
+    }
+   },
+   "shelf_mushroom": {
+    "total": 54,
+    "per_tree": 0.54,
+    "dy": {
+     "0": 17,
+     "1": 14,
+     "2": 14,
+     "3": 9
+    },
+    "radius": {
+     "1": 53,
+     "2": 1
+    }
+   }
+  }
+ },
+ "examples": [
+  {
+   "origin": [
+    13840,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -7,
+     4,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -7,
+     4,
+     0,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -7,
+     5,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -7,
+     5,
+     0,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -6,
+     3,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -6,
+     3,
+     0,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -6,
+     4,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -6,
+     4,
+     0,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -6,
+     4,
+     1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -6,
+     5,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -6,
+     5,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -6,
+     5,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -6,
+     5,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -6,
+     6,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -6,
+     6,
+     0,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     3,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     3,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     3,
+     0,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     3,
+     1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     4,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     4,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     4,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     4,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     4,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     4,
+     2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     5,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     5,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     5,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     5,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     5,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     5,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     6,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     6,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     6,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     6,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     7,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     7,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -5,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     0,
+     -3,
+     "minecraft:leaf_litter[facing=north,segment_amount=3]"
+    ],
+    [
+     -4,
+     0,
+     -2,
+     "minecraft:leaf_litter[facing=south,segment_amount=3]"
+    ],
+    [
+     -4,
+     0,
+     1,
+     "minecraft:leaf_litter[facing=east,segment_amount=2]"
+    ],
+    [
+     -4,
+     3,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     3,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     3,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     3,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     3,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     3,
+     2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     4,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     4,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     4,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     4,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     4,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     4,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     4,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     5,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     5,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     5,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     5,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     5,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     5,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     5,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     6,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     6,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     6,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     6,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     6,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     7,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     7,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     7,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     8,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     0,
+     -3,
+     "minecraft:leaf_litter[facing=west,segment_amount=3]"
+    ],
+    [
+     -3,
+     0,
+     -2,
+     "minecraft:leaf_litter[facing=east,segment_amount=3]"
+    ],
+    [
+     -3,
+     0,
+     1,
+     "minecraft:leaf_litter[facing=north,segment_amount=3]"
+    ],
+    [
+     -3,
+     0,
+     3,
+     "minecraft:leaf_litter[facing=north,segment_amount=3]"
+    ],
+    [
+     -3,
+     3,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     3,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     3,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     3,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     3,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     3,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     3,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     3,
+     3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     0,
+     "minecraft:poplar_log[axis=x]"
+    ],
+    [
+     -3,
+     5,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     7,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     7,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     7,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     7,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     7,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     8,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     8,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     0,
+     -4,
+     "minecraft:leaf_litter[facing=south,segment_amount=3]"
+    ],
+    [
+     -2,
+     0,
+     -3,
+     "minecraft:leaf_litter[facing=east,segment_amount=2]"
+    ],
+    [
+     -2,
+     0,
+     -1,
+     "minecraft:leaf_litter[facing=west,segment_amount=3]"
+    ],
+    [
+     -2,
+     0,
+     1,
+     "minecraft:leaf_litter[facing=north,segment_amount=3]"
+    ],
+    [
+     -2,
+     0,
+     2,
+     "minecraft:leaf_litter[facing=north,segment_amount=2]"
+    ],
+    [
+     -2,
+     2,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     2,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -6,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     5,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -6,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     0,
+     "minecraft:poplar_log[axis=x]"
+    ],
+    [
+     -2,
+     5,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     5,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     0,
+     -2,
+     "minecraft:leaf_litter[facing=west,segment_amount=4]"
+    ],
+    [
+     -1,
+     0,
+     1,
+     "minecraft:leaf_litter[facing=north,segment_amount=3]"
+    ],
+    [
+     -1,
+     0,
+     2,
+     "minecraft:leaf_litter[facing=east,segment_amount=2]"
+    ],
+    [
+     -1,
+     2,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     0,
+     "minecraft:poplar_log[axis=x]"
+    ],
+    [
+     -1,
+     3,
+     -6,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     5,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -7,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -6,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     5,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -7,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -6,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     0,
+     "minecraft:poplar_log[axis=x]"
+    ],
+    [
+     -1,
+     5,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     2,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     3,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     4,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     5,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     6,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -6,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     0,
+     -4,
+     "minecraft:leaf_litter[facing=east,segment_amount=2]"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     0,
+     4,
+     "minecraft:leaf_litter"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     2,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     2,
+     1,
+     "minecraft:poplar_log[axis=z]"
+    ],
+    [
+     0,
+     3,
+     -6,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     3,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     5,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     6,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -7,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -6,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     4,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     2,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     3,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     4,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     5,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     6,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     7,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -7,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -6,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -3,
+     "minecraft:poplar_log[axis=z]"
+    ],
+    [
+     0,
+     5,
+     -2,
+     "minecraft:poplar_log[axis=z]"
+    ],
+    [
+     0,
+     5,
+     -1,
+     "minecraft:poplar_log[axis=z]"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     5,
+     1,
+     "minecraft:poplar_log[axis=z]"
+    ],
+    [
+     0,
+     5,
+     2,
+     "minecraft:poplar_log[axis=z]"
+    ],
+    [
+     0,
+     5,
+     3,
+     "minecraft:poplar_log[axis=z]"
+    ],
+    [
+     0,
+     5,
+     4,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     5,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     6,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     7,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -6,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     2,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     3,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     4,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     5,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     6,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     5,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     0,
+     -4,
+     "minecraft:leaf_litter[facing=south,segment_amount=2]"
+    ],
+    [
+     1,
+     0,
+     -2,
+     "minecraft:leaf_litter[facing=east,segment_amount=4]"
+    ],
+    [
+     1,
+     0,
+     3,
+     "minecraft:leaf_litter[facing=west,segment_amount=2]"
+    ],
+    [
+     1,
+     0,
+     4,
+     "minecraft:leaf_litter[facing=east,segment_amount=1]"
+    ],
+    [
+     1,
+     2,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     0,
+     "minecraft:poplar_log[axis=x]"
+    ],
+    [
+     1,
+     2,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     5,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     6,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     5,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     6,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     7,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -6,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     0,
+     "minecraft:poplar_log[axis=x]"
+    ],
+    [
+     1,
+     5,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     2,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     3,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     4,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     5,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     6,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     5,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     6,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     5,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     0,
+     -1,
+     "minecraft:leaf_litter[facing=north,segment_amount=2]"
+    ],
+    [
+     2,
+     0,
+     1,
+     "minecraft:leaf_litter[facing=south,segment_amount=4]"
+    ],
+    [
+     2,
+     0,
+     3,
+     "minecraft:leaf_litter[facing=south,segment_amount=3]"
+    ],
+    [
+     2,
+     2,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     5,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     5,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     6,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -5,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     0,
+     "minecraft:poplar_log[axis=x]"
+    ],
+    [
+     2,
+     5,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     3,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     4,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     5,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     5,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     4,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     0,
+     1,
+     "minecraft:leaf_litter[facing=west,segment_amount=3]"
+    ],
+    [
+     3,
+     0,
+     3,
+     "minecraft:leaf_litter[facing=south,segment_amount=3]"
+    ],
+    [
+     3,
+     0,
+     4,
+     "minecraft:leaf_litter[facing=north,segment_amount=2]"
+    ],
+    [
+     3,
+     3,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     4,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     5,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     0,
+     "minecraft:poplar_log[axis=x]"
+    ],
+    [
+     3,
+     5,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     4,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     3,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     3,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     3,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     3,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     3,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     3,
+     2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     3,
+     3,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     4,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     3,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     8,
+     2,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     3,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     3,
+     0,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     3,
+     1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     4,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     4,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     4,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     4,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     4,
+     2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     5,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     5,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     5,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     5,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     5,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     5,
+     3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     7,
+     1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     7,
+     2,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     3,
+     0,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     3,
+     1,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     4,
+     0,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     4,
+     1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     4,
+     2,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     5,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     5,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     5,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     5,
+     2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     6,
+     0,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     6,
+     1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     7,
+     4,
+     0,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     7,
+     4,
+     1,
+     "minecraft:orange_poplar_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     7,
+     5,
+     0,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     7,
+     5,
+     1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ]
+   ]
+  },
+  {
+   "origin": [
+    13872,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -4,
+     0,
+     3,
+     "minecraft:leaf_litter[facing=south,segment_amount=2]"
+    ],
+    [
+     -4,
+     0,
+     4,
+     "minecraft:leaf_litter[facing=north,segment_amount=2]"
+    ],
+    [
+     -4,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     9,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     9,
+     0,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     7,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     9,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     9,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     9,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     9,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     10,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     10,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     0,
+     -3,
+     "minecraft:leaf_litter[facing=west,segment_amount=1]"
+    ],
+    [
+     -2,
+     0,
+     -2,
+     "minecraft:leaf_litter"
+    ],
+    [
+     -2,
+     0,
+     -1,
+     "minecraft:leaf_litter[facing=west,segment_amount=4]"
+    ],
+    [
+     -2,
+     0,
+     0,
+     "minecraft:leaf_litter[facing=east,segment_amount=1]"
+    ],
+    [
+     -2,
+     0,
+     1,
+     "minecraft:leaf_litter"
+    ],
+    [
+     -2,
+     0,
+     2,
+     "minecraft:leaf_litter[facing=south,segment_amount=4]"
+    ],
+    [
+     -2,
+     0,
+     4,
+     "minecraft:leaf_litter[facing=west,segment_amount=2]"
+    ],
+    [
+     -2,
+     6,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     9,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     9,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     9,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     9,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     9,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     10,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     10,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     10,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     11,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     11,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     11,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     0,
+     -3,
+     "minecraft:leaf_litter[facing=north,segment_amount=3]"
+    ],
+    [
+     -1,
+     0,
+     -2,
+     "minecraft:leaf_litter[facing=south,segment_amount=1]"
+    ],
+    [
+     -1,
+     0,
+     1,
+     "minecraft:leaf_litter[facing=north,segment_amount=4]"
+    ],
+    [
+     -1,
+     0,
+     2,
+     "minecraft:leaf_litter[facing=north,segment_amount=4]"
+    ],
+    [
+     -1,
+     6,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     0,
+     "minecraft:poplar_log[axis=x]"
+    ],
+    [
+     -1,
+     6,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     9,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     9,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     9,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     9,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     9,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     9,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     9,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     9,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     10,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     10,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     10,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     10,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     10,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     10,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     11,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     11,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     11,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     12,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     0,
+     -2,
+     "minecraft:leaf_litter[facing=north,segment_amount=2]"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     0,
+     2,
+     "minecraft:leaf_litter[facing=west,segment_amount=3]"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     2,
+     -1,
+     "minecraft:shelf_mushroom"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     6,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -1,
+     "minecraft:poplar_log[axis=z]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:poplar_log[axis=z]"
+    ],
+    [
+     0,
+     7,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     7,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     9,
+     -4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     9,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     9,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     9,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     9,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     9,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     9,
+     2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     9,
+     3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     9,
+     4,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     10,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     10,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     10,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     10,
+     0,
+     "minecraft:poplar_log"
+    ],
+    [
+     0,
+     10,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     10,
+     2,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     10,
+     3,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     11,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     11,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     11,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     11,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     11,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     12,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     12,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     12,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     0,
+     -2,
+     "minecraft:leaf_litter[facing=west,segment_amount=1]"
+    ],
+    [
+     1,
+     0,
+     -1,
+     "minecraft:leaf_litter[facing=west,segment_amount=1]"
+    ],
+    [
+     1,
+     0,
+     2,
+     "minecraft:leaf_litter[facing=east,segment_amount=3]"
+    ],
+    [
+     1,
+     0,
+     3,
+     "minecraft:leaf_litter[facing=west,segment_amount=2]"
+    ],
+    [
+     1,
+     6,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     0,
+     "minecraft:poplar_log[axis=x]"
+    ],
+    [
+     1,
+     6,
+     1,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     9,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     9,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     9,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     9,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     9,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     9,
+     3,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     9,
+     4,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     10,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     10,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     10,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     10,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     10,
+     2,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     11,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     11,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     11,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     12,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     12,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     0,
+     -2,
+     "minecraft:leaf_litter[facing=south,segment_amount=4]"
+    ],
+    [
+     2,
+     0,
+     -1,
+     "minecraft:leaf_litter[facing=west,segment_amount=2]"
+    ],
+    [
+     2,
+     0,
+     0,
+     "minecraft:leaf_litter[facing=south,segment_amount=1]"
+    ],
+    [
+     2,
+     0,
+     2,
+     "minecraft:leaf_litter[facing=south,segment_amount=1]"
+    ],
+    [
+     2,
+     6,
+     0,
+     "minecraft:orange_poplar_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     1,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     9,
+     -2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     9,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     9,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     9,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     9,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     9,
+     3,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     10,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     10,
+     0,
+     "minecraft:orange_poplar_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     10,
+     1,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     10,
+     2,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     11,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     11,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     11,
+     2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     9,
+     -1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     9,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     9,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     9,
+     2,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     10,
+     0,
+     "minecraft:orange_poplar_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     10,
+     1,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     0,
+     -3,
+     "minecraft:leaf_litter[facing=west,segment_amount=2]"
+    ],
+    [
+     4,
+     0,
+     0,
+     "minecraft:leaf_litter[facing=west,segment_amount=3]"
+    ],
+    [
+     4,
+     0,
+     4,
+     "minecraft:leaf_litter"
+    ],
+    [
+     4,
+     8,
+     0,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     8,
+     1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     9,
+     0,
+     "minecraft:orange_poplar_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     9,
+     1,
+     "minecraft:orange_poplar_leaves[distance=5,persistent=false,waterlogged=false]"
+    ]
+   ]
+  }
+ ],
+ "per_placement": [
+  {
+   "n": 603,
+   "logs": 22,
+   "leaves": 553,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -7,
+    7,
+    -1,
+    8,
+    -7,
+    7
+   ],
+   "reach_h": 7,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 224,
+   "logs": 15,
+   "leaves": 181,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    12,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 324,
+   "logs": 13,
+   "leaves": 283,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    8,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 225,
+   "logs": 14,
+   "leaves": 179,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    12,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 173,
+   "logs": 11,
+   "leaves": 137,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    9,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 322,
+   "logs": 15,
+   "leaves": 280,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    11,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 170,
+   "logs": 15,
+   "leaves": 134,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    11,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 180,
+   "logs": 10,
+   "leaves": 137,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 330,
+   "logs": 14,
+   "leaves": 287,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    10,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 360,
+   "logs": 21,
+   "leaves": 311,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -6,
+    6,
+    -1,
+    11,
+    -6,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 177,
+   "logs": 10,
+   "leaves": 138,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 186,
+   "logs": 14,
+   "leaves": 140,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    10,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 481,
+   "logs": 25,
+   "leaves": 432,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -7,
+    7,
+    -1,
+    9,
+    -6,
+    7
+   ],
+   "reach_h": 7,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 167,
+   "logs": 12,
+   "leaves": 128,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    11,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 173,
+   "logs": 13,
+   "leaves": 135,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    9,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 258,
+   "logs": 12,
+   "leaves": 215,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    7,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 224,
+   "logs": 12,
+   "leaves": 182,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    11,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 219,
+   "logs": 9,
+   "leaves": 181,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    9,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 451,
+   "logs": 18,
+   "leaves": 405,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -6,
+    6,
+    -1,
+    10,
+    -6,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 322,
+   "logs": 18,
+   "leaves": 276,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    11,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 173,
+   "logs": 13,
+   "leaves": 134,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    9,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 330,
+   "logs": 14,
+   "leaves": 286,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    10,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 614,
+   "logs": 25,
+   "leaves": 562,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -7,
+    7,
+    -1,
+    12,
+    -7,
+    7
+   ],
+   "reach_h": 7,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 251,
+   "logs": 17,
+   "leaves": 214,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    10,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 230,
+   "logs": 12,
+   "leaves": 188,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    12,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 47,
+   "result": "placed"
+  },
+  {
+   "n": 171,
+   "logs": 15,
+   "leaves": 129,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    11,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 45,
+   "result": "placed"
+  },
+  {
+   "n": 265,
+   "logs": 15,
+   "leaves": 218,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    10,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 183,
+   "logs": 12,
+   "leaves": 140,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    11,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 227,
+   "logs": 13,
+   "leaves": 183,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    12,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 46,
+   "result": "placed"
+  },
+  {
+   "n": 259,
+   "logs": 15,
+   "leaves": 220,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 181,
+   "logs": 13,
+   "leaves": 139,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    11,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 178,
+   "logs": 9,
+   "leaves": 136,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 611,
+   "logs": 25,
+   "leaves": 559,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -7,
+    7,
+    -1,
+    11,
+    -7,
+    7
+   ],
+   "reach_h": 7,
+   "log_comp6": 1,
+   "leaf_mismatch": 3,
+   "result": "placed"
+  },
+  {
+   "n": 324,
+   "logs": 12,
+   "leaves": 284,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    8,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 172,
+   "logs": 10,
+   "leaves": 131,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    9,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 480,
+   "logs": 25,
+   "leaves": 431,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -7,
+    7,
+    -1,
+    11,
+    -7,
+    7
+   ],
+   "reach_h": 7,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 164,
+   "logs": 10,
+   "leaves": 128,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 224,
+   "logs": 11,
+   "leaves": 186,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    10,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 181,
+   "logs": 10,
+   "leaves": 140,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 262,
+   "logs": 18,
+   "leaves": 210,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -4,
+    5,
+    -1,
+    10,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 33,
+   "result": "placed"
+  },
+  {
+   "n": 333,
+   "logs": 18,
+   "leaves": 285,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    11,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 323,
+   "logs": 13,
+   "leaves": 282,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 256,
+   "logs": 17,
+   "leaves": 214,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    10,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 258,
+   "logs": 13,
+   "leaves": 214,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -5,
+    4,
+    -1,
+    7,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 479,
+   "logs": 20,
+   "leaves": 434,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -7,
+    7,
+    -1,
+    7,
+    -7,
+    7
+   ],
+   "reach_h": 7,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 169,
+   "logs": 10,
+   "leaves": 132,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 247,
+   "logs": 14,
+   "leaves": 212,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 257,
+   "logs": 14,
+   "leaves": 215,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -5,
+    4,
+    -1,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 173,
+   "logs": 11,
+   "leaves": 134,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 444,
+   "logs": 18,
+   "leaves": 401,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -6,
+    6,
+    -1,
+    8,
+    -6,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 483,
+   "logs": 23,
+   "leaves": 436,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -7,
+    7,
+    -1,
+    9,
+    -7,
+    7
+   ],
+   "reach_h": 7,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 257,
+   "logs": 13,
+   "leaves": 219,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    7,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 176,
+   "logs": 8,
+   "leaves": 137,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 12,
+   "result": "placed"
+  },
+  {
+   "n": 223,
+   "logs": 13,
+   "leaves": 181,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    10,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 14,
+   "result": "placed"
+  },
+  {
+   "n": 256,
+   "logs": 17,
+   "leaves": 218,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 34,
+   "result": "placed"
+  },
+  {
+   "n": 181,
+   "logs": 13,
+   "leaves": 140,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    10,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 183,
+   "logs": 14,
+   "leaves": 139,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    10,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 177,
+   "logs": 10,
+   "leaves": 137,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    9,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 179,
+   "logs": 12,
+   "leaves": 139,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    11,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 337,
+   "logs": 16,
+   "leaves": 285,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 595,
+   "logs": 22,
+   "leaves": 552,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -7,
+    7,
+    -1,
+    8,
+    -7,
+    7
+   ],
+   "reach_h": 7,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 353,
+   "logs": 16,
+   "leaves": 307,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -6,
+    6,
+    -1,
+    7,
+    -6,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 330,
+   "logs": 14,
+   "leaves": 281,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 4,
+   "result": "placed"
+  },
+  {
+   "n": 181,
+   "logs": 12,
+   "leaves": 138,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    10,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 225,
+   "logs": 11,
+   "leaves": 180,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    11,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 215,
+   "logs": 10,
+   "leaves": 178,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 448,
+   "logs": 16,
+   "leaves": 409,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -6,
+    6,
+    -1,
+    8,
+    -6,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 172,
+   "logs": 12,
+   "leaves": 135,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    9,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 257,
+   "logs": 17,
+   "leaves": 210,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -4,
+    5,
+    -1,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 262,
+   "logs": 16,
+   "leaves": 213,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    8,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 175,
+   "logs": 9,
+   "leaves": 139,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 460,
+   "logs": 23,
+   "leaves": 409,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -6,
+    6,
+    -1,
+    12,
+    -6,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 340,
+   "logs": 19,
+   "leaves": 289,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    12,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 176,
+   "logs": 15,
+   "leaves": 134,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    11,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 6,
+   "result": "placed"
+  },
+  {
+   "n": 220,
+   "logs": 11,
+   "leaves": 177,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 217,
+   "logs": 9,
+   "leaves": 182,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    9,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 266,
+   "logs": 17,
+   "leaves": 217,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    11,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 252,
+   "logs": 16,
+   "leaves": 215,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    11,
+    -4,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 257,
+   "logs": 14,
+   "leaves": 217,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    8,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 217,
+   "logs": 11,
+   "leaves": 179,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 322,
+   "logs": 15,
+   "leaves": 278,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    11,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 326,
+   "logs": 19,
+   "leaves": 281,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    12,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 214,
+   "logs": 13,
+   "leaves": 172,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    11,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 43,
+   "result": "placed"
+  },
+  {
+   "n": 172,
+   "logs": 12,
+   "leaves": 137,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    9,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 458,
+   "logs": 22,
+   "leaves": 409,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -6,
+    6,
+    -1,
+    11,
+    -6,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 328,
+   "logs": 16,
+   "leaves": 282,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    11,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 263,
+   "logs": 15,
+   "leaves": 220,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -5,
+    4,
+    -1,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 321,
+   "logs": 17,
+   "leaves": 277,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    11,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 8,
+   "result": "placed"
+  },
+  {
+   "n": 486,
+   "logs": 24,
+   "leaves": 436,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -7,
+    7,
+    -1,
+    11,
+    -7,
+    7
+   ],
+   "reach_h": 7,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 222,
+   "logs": 11,
+   "leaves": 181,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 175,
+   "logs": 11,
+   "leaves": 139,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 215,
+   "logs": 11,
+   "leaves": 179,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    10,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 329,
+   "logs": 18,
+   "leaves": 282,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    12,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 182,
+   "logs": 12,
+   "leaves": 140,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    10,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 256,
+   "logs": 13,
+   "leaves": 219,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    7,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 185,
+   "logs": 14,
+   "leaves": 139,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    11,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 30,
+   "result": "placed"
+  },
+  {
+   "n": 322,
+   "logs": 16,
+   "leaves": 277,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 2,
+   "result": "placed"
+  },
+  {
+   "n": 225,
+   "logs": 14,
+   "leaves": 180,
+   "log_top": 9,
+   "origin_column_logs": 10,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    11,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 327,
+   "logs": 16,
+   "leaves": 283,
+   "log_top": 10,
+   "origin_column_logs": 11,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    12,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 179,
+   "logs": 11,
+   "leaves": 140,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  }
+ ]
+}

@@ -20,7 +20,8 @@
 namespace
 {
     // For manual runs: 0 none, 5 supports_vegetation left out of the survival table, 6 writes no longer raise the
-    // live heightmaps (VoxelDecorationTests.cpp's numbering). With 0, every test must pass.
+    // live heightmaps (VoxelDecorationTests.cpp's numbering), 7 glow lichen's search walks 4 cells instead of 1
+    // (Plants.Multiface). With 0, every test must pass.
     constexpr int32 PlantTestMutation = 0;
 
     bool PlantTestHasBlocks(FAutomationTestBase& Test, const FVoxelBlockTable& Table)
@@ -304,6 +305,116 @@ bool FVoxelPlantColumnsTest::RunTest(const FString& Parameters)
         Distribution.Num() == 3 && FMath::IsNearlyEqual(Distribution[0], 11. / 18, 1e-9) &&
             FMath::IsNearlyEqual(Distribution[1], 5. / 18, 1e-9) &&
             FMath::IsNearlyEqual(Distribution[2], 2. / 18, 1e-9));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelPlantMultifaceTest, "Unnamed.Voxel.Plants.Multiface",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelPlantMultifaceTest::RunTest(const FString& Parameters)
+{
+    // Scout I's room probe (9 x 9 x 9 of air in stone, 50 origins each): from the centre, 4 cells from every face,
+    // glow lichen never placed; from 1 cell short of the east wall it always placed on the cell next to the wall, on
+    // its east face, and 31 of 50 times also on one face-adjacent cell of the same wall (never a diagonal, never more).
+    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+    FVoxelPlantSurvival Survival;
+    if (!PlantTestHasBlocks(*this, *Table) || !MakeSurvival(*this, *Table, Survival)) return false;
+    const TSharedRef<FVoxelColumn> Rock = MakeFlatColumn(*Table, 100, TEXT("stone"), TEXT("stone"));
+    const FVoxelColumn* Around[9];
+    for (const FVoxelColumn*& Column : Around)
+        Column = &*Rock;
+    // glow_lichen as the data has it: walls and ceilings, on stone (the room's only block).
+    FVoxelBlockPredicates Predicates;
+    FVoxelStateProviders Providers;
+    FVoxelBlockSet Stone;
+    Stone.Init(Table->GetBlockLimit(), false);
+    Stone.Add(Table->Get(Table->FindState(TEXT("stone"))).Block);
+    FVoxelPlantFeature Lichen;
+    Lichen.Kind = EVoxelPlantFeature::Multiface;
+    Lichen.Faces = 0b1111 | 1 << int32(EVoxelFace::Up);
+    Lichen.BaseSet = Predicates.AddSet(Stone);
+    Lichen.SpreadChance = 0.5f;
+    Lichen.SearchSteps = PlantTestMutation == 7 ? 4 : 1;
+    const TCHAR* const FaceNames[6] = {
+        TEXT("west"), TEXT("east"), TEXT("north"), TEXT("south"), TEXT("down"), TEXT("up")};
+    for (int32 Face = 0; Face < 6; ++Face)
+    {
+        const int32 Dry = Table->MakeState(TEXT("glow_lichen"), {{FName(FaceNames[Face]), FName(TEXT("true"))}});
+        if (!TestTrue(FString::Printf(TEXT("glow_lichen has a %s face"), FaceNames[Face]), Dry != INDEX_NONE))
+            return false;
+        Lichen.FaceStates[Face][0] = uint16(Dry);
+        Lichen.FaceStates[Face][1] = uint16(Table->WithValue(uint16(Dry), TEXT("waterlogged"), TEXT("true")));
+    }
+    TestEqual(TEXT("an east-face lichen holds only its east face"),
+        Table->GetValue(Lichen.FaceStates[int32(EVoxelFace::East)][0], TEXT("up")), FName(TEXT("false")));
+    const TMap<uint16, uint16> UpperOf;
+    // The room: X and Y 4..12, Z 26..34, filled with Fill; the centre is (8, 8, 30) and the east wall at X 13.
+    const auto Run = [&](const TCHAR* Fill, FIntVector Origin, int32 Count, TArray<TArray<FVoxelPlantWrite>>& Out)
+    {
+        FVoxelDecorationContext Context(FIntPoint(0, 0), Around, &*Table);
+        const uint16 FillState = Table->FindState(Fill);
+        for (int32 Z = 26; Z <= 34; ++Z)
+            for (int32 Y = 4; Y <= 12; ++Y)
+                for (int32 X = 4; X <= 12; ++X)
+                    Context.SetState(X, Y, Z, FillState);
+        Out.SetNum(Count);
+        for (int32 Index = 0; Index < Count; ++Index)
+        {
+            const auto Emit = [&Out, Index](const FVoxelPlantWrite& Write) { Out[Index].Add(Write); };
+            const FVoxelPlantEnvironment Env{*Table, Survival, Predicates, Providers, Context, UpperOf, Emit};
+            FVoxelXoroshiro Random(VoxelRandom::Hash64(263, VoxelRandom::Salt("lichen test"), Index, 0));
+            VoxelPatchFeatures::PlaceMultiface(Lichen, Origin, Random, Env);
+        }
+    };
+    TArray<TArray<FVoxelPlantWrite>> Centre, Wall, Ceiling, Floor, Wet;
+    Run(TEXT("air"), FIntVector(8, 8, 30), 200, Centre);
+    int32 Placed = 0;
+    for (const TArray<FVoxelPlantWrite>& Writes : Centre)
+        Placed += Writes.Num();
+    TestEqual(TEXT("from the room's centre nothing places"), Placed, 0);
+
+    constexpr int32 Origins = 2000;
+    Run(TEXT("air"), FIntVector(11, 8, 30), Origins, Wall);
+    const uint16 East = Lichen.FaceStates[int32(EVoxelFace::East)][0];
+    int32 Seconds = 0, Wrong = 0;
+    for (const TArray<FVoxelPlantWrite>& Writes : Wall)
+    {
+        if (Writes.Num() < 1 || Writes.Num() > 2 || Writes[0].Cell != FIntVector(12, 8, 30))
+        {
+            ++Wrong;
+            continue;
+        }
+        for (const FVoxelPlantWrite& Write : Writes)
+        {
+            const FIntVector Offset = Write.Cell - FIntVector(12, 8, 30);
+            if (Write.State != East || Write.Cell.X != 12 || FMath::Abs(Offset.Y) + FMath::Abs(Offset.Z) > 1 ||
+                Write.Mode != EVoxelWriteMode::IfUnchanged || Write.Argument != 0)
+                ++Wrong;
+        }
+        Seconds += Writes.Num() - 1;
+    }
+    TestEqual(TEXT("beside the wall: one block on the wall-side cell's east face, at most one beside it"), Wrong, 0);
+    // The probe's 31 of 50 has a binomial 99% interval of 0.44 to 0.80; ours spreads with chance_of_spreading (0.5).
+    const double Rate = double(Seconds) / Origins;
+    AddInfo(FString::Printf(TEXT("second blocks: %.3f per origin (probe 0.62 of 50)"), Rate));
+    TestTrue(FString::Printf(TEXT("the second-block rate %.3f lies in the probe's interval 0.44 to 0.80"), Rate),
+        Rate >= 0.44 && Rate <= 0.80);
+
+    Run(TEXT("air"), FIntVector(8, 8, 33), 100, Ceiling);
+    Run(TEXT("air"), FIntVector(8, 8, 27), 100, Floor);
+    Run(TEXT("water"), FIntVector(11, 8, 30), 100, Wet);
+    int32 OnCeiling = 0, OnFloor = 0, WetOk = 0;
+    for (int32 Index = 0; Index < 100; ++Index)
+    {
+        OnCeiling += !Ceiling[Index].IsEmpty() &&
+            Ceiling[Index][0].State == Lichen.FaceStates[int32(EVoxelFace::Up)][0] &&
+            Ceiling[Index][0].Cell == FIntVector(8, 8, 34);
+        OnFloor += Floor[Index].Num();
+        WetOk += !Wet[Index].IsEmpty() && Wet[Index][0].State == Lichen.FaceStates[int32(EVoxelFace::East)][1];
+    }
+    TestEqual(TEXT("under the ceiling: on the ceiling-side cell's up face"), OnCeiling, 100);
+    TestEqual(TEXT("above the floor: nothing (no floor faces)"), OnFloor, 0);
+    TestEqual(TEXT("in water: the waterlogged state"), WetOk, 100);
     return true;
 }
 

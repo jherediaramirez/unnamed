@@ -450,13 +450,18 @@ void UFoundationPanels::OpenCreative(AFoundationLab& Lab)
     AFoundationPawn* Pawn = Controller->GetFoundationPawn();
     FFoundationAuthority& Authority = *Lab.GetAuthority();
     const TSharedRef<const FFoundationBlockRegistry> Registry = Authority.World.GetRegistryRef();
-    // Everything the player could hold: names, stack sizes and the placed block's tags for "#" search.
+    // Everything the player could hold: names, stack sizes, max damage, the 26.3 items' tooltip lines (DA_Items,
+    // with the player's base values) and the placed block's tags for "#" search.
+    const UFoundationItemAssets* ItemAssets = UFoundationItemAssets::LoadDefault();
     FHudCreativeItems Items;
     for (const FFoundationItemDefinition& Item : Authority.Rules.Items)
     {
         FHudCreativeItem& Entry = Items.Add(Item.Id);
         Entry.Name = Item.DisplayName;
         Entry.MaxStack = Item.MaxStack;
+        Entry.MaxDamage = Item.MaxDurability;
+        if (const FFoundationItemAsset* Asset = ItemAssets ? ItemAssets->FindItem(Item.Id) : nullptr)
+            Entry.Details = HudTooltip::GetModifierLines(Asset->Modifiers, ItemAssets->Lang, true);
         if (const FFoundationBlockType* Block = Registry->FindBlock(Item.PlacesBlock))
             for (const FGameplayTag& Tag : Block->Tags)
                 Entry.Tags.Add(VanillaTagName(Tag));
@@ -478,7 +483,10 @@ void UFoundationPanels::OpenCreative(AFoundationLab& Lab)
             const FFoundationPlayer* Player = A.FindPlayer(WeakPawn->Interaction.PlayerId);
             if (!Player) return Stacks;
             auto Stack = [&A](const FFoundationItemInstance& Item)
-            { return Item.IsEmpty() ? FHudCreativeStack() : FHudCreativeStack{A.Rules.GetItem(Item.Item).Id, Item.Count}; };
+            {
+                return Item.IsEmpty() ? FHudCreativeStack()
+                                      : FHudCreativeStack{A.Rules.GetItem(Item.Item).Id, Item.Count, Item.Damage};
+            };
             for (int32 Slot = 0; Slot < FFoundationInventory::HotbarSlots; ++Slot)
                 Stacks[Slot] = Stack(Player->Inventory.Hotbar[Slot]);
             Stacks[FFoundationInventory::HotbarSlots] = Stack(Player->Inventory.Offhand);

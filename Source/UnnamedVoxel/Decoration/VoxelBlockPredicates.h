@@ -89,4 +89,8 @@ namespace VoxelPredicateReading
     UNNAMEDVOXEL_API FIntVector ReadOffset(const FVoxelFeatureGraph& Graph, int32 Node, const TCHAR* Key);
     // A direction name ("up", "north", ...) as an EVoxelFace index, or INDEX_NONE.
     UNNAMEDVOXEL_API int32 ReadFace(FStringView Name);
+    // A blocks field (one id, a "#tag", or a list of ids) as a set over Tags' blocks; ids the table lacks are left
+    // out. False on an unknown tag.
+    UNNAMEDVOXEL_API bool ReadBlockSet(const FVoxelFeatureGraph& Graph, const FVoxelFeatureValue* Value,
+        FVoxelBlockTags& Tags, FVoxelBlockSet& Out, FString* OutError);
 }

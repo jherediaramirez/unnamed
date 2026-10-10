@@ -1,0 +1,2281 @@
+{
+ "generated_by": "tools/tree_probe.py",
+ "minecraft": "26.3",
+ "probe": "bamboo_some_podzol",
+ "feature": "minecraft:bamboo_some_podzol",
+ "variant": null,
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:stone",
+    -63,
+    55
+   ],
+   [
+    "minecraft:dirt",
+    56,
+    58
+   ],
+   [
+    "minecraft:grass_block",
+    59,
+    59
+   ]
+  ],
+  "grid_spacing": 32,
+  "random_tick_speed": 0,
+  "settle_s": 3
+ },
+ "y": 60,
+ "grid": 10,
+ "settled": true,
+ "prep": [],
+ "tries": 100,
+ "responses": {
+  "placed": 100
+ },
+ "placed_but_empty": 0,
+ "failed_but_changed": 0,
+ "n": {
+  "n": 100,
+  "min": 6,
+  "p5": 6,
+  "p50": 13,
+  "p95": 41,
+  "max": 65,
+  "mean": 14.45
+ },
+ "logs": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "leaves": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "reach_h": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 3,
+  "max": 4,
+  "mean": 0.32
+ },
+ "bbox_extremes": {
+  "min_dx": -4,
+  "max_dx": 4,
+  "min_dy": -1,
+  "max_dy": 16,
+  "min_dz": -4,
+  "max_dz": 4
+ },
+ "blocks": {
+  "bamboo": {
+   "mean_per_tree": 11.7,
+   "share_of_trees": 1.0,
+   "max_reach_h": 0,
+   "per_tree": {
+    "n": 100,
+    "min": 6,
+    "p5": 6,
+    "p50": 12,
+    "p95": 17,
+    "max": 17,
+    "mean": 11.7
+   }
+  },
+  "podzol": {
+   "mean_per_tree": 2.75,
+   "share_of_trees": 0.15,
+   "max_reach_h": 4,
+   "per_tree": {
+    "n": 100,
+    "min": 0,
+    "p5": 0,
+    "p50": 0,
+    "p95": 29,
+    "max": 49,
+    "mean": 2.75
+   }
+  }
+ },
+ "max_reach_h_any_cell": 4,
+ "profile": {
+  "n": 100,
+  "log_columns": {},
+  "logs_per_dy": {},
+  "leaf_layers": [],
+  "decorators": {
+   "bamboo": {
+    "total": 1170,
+    "per_tree": 11.7,
+    "dy": {
+     "0": 100,
+     "1": 100,
+     "2": 100,
+     "3": 100,
+     "4": 100,
+     "5": 100,
+     "6": 92,
+     "7": 82,
+     "8": 75,
+     "9": 67,
+     "10": 57,
+     "11": 54,
+     "12": 46,
+     "13": 38,
+     "14": 34,
+     "15": 19,
+     "16": 6
+    },
+    "radius": {
+     "0": 1170
+    }
+   },
+   "podzol": {
+    "total": 275,
+    "per_tree": 2.75,
+    "dy": {
+     "-1": 275
+    },
+    "radius": {
+     "0": 15,
+     "1": 100,
+     "2": 100,
+     "3": 52,
+     "4": 8
+    }
+   }
+  }
+ },
+ "examples": [
+  {
+   "origin": [
+    25104,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     0,
+     0,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     8,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     9,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     10,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     11,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     12,
+     0,
+     "minecraft:bamboo[age=1,leaves=small,stage=0]"
+    ],
+    [
+     0,
+     13,
+     0,
+     "minecraft:bamboo[age=1,leaves=large,stage=0]"
+    ],
+    [
+     0,
+     14,
+     0,
+     "minecraft:bamboo[age=1,leaves=large,stage=1]"
+    ]
+   ]
+  },
+  {
+   "origin": [
+    25136,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -1,
+     -1,
+     0,
+     "minecraft:podzol"
+    ],
+    [
+     0,
+     -1,
+     -1,
+     "minecraft:podzol"
+    ],
+    [
+     0,
+     -1,
+     0,
+     "minecraft:podzol"
+    ],
+    [
+     0,
+     -1,
+     1,
+     "minecraft:podzol"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     8,
+     0,
+     "minecraft:bamboo[age=1,leaves=none,stage=0]"
+    ],
+    [
+     0,
+     9,
+     0,
+     "minecraft:bamboo[age=1,leaves=small,stage=0]"
+    ],
+    [
+     0,
+     10,
+     0,
+     "minecraft:bamboo[age=1,leaves=large,stage=0]"
+    ],
+    [
+     0,
+     11,
+     0,
+     "minecraft:bamboo[age=1,leaves=large,stage=1]"
+    ],
+    [
+     1,
+     -1,
+     0,
+     "minecraft:podzol"
+    ]
+   ]
+  }
+ ],
+ "per_placement": [
+  {
+   "n": 15,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    14,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 17,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    11,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 21,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    15,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 7,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 6,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    5,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 8,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 9,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    8,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 17,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    16,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 12,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    11,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 8,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 8,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 13,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    12,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 28,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    14,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 8,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 7,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 11,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    10,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 6,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    5,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 9,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    8,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 15,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    14,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 12,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    11,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 6,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    5,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 13,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    12,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 17,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    16,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 10,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    9,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 16,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    15,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 15,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    14,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 16,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    15,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 6,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    5,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 17,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    16,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 65,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    15,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 16,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    15,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 11,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    10,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 16,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    15,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 12,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    11,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 7,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 9,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    8,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 15,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    14,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 10,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    9,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 6,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    5,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 10,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    9,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 16,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    15,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 15,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    14,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 7,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 14,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    13,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 17,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    16,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 19,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    13,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 55,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 28,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    14,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 19,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    5,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 7,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 7,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 41,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    11,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 9,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    8,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 15,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    14,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 10,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    9,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 11,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    10,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 10,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    9,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 30,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    16,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 9,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    8,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 12,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    11,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 16,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    15,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 17,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    16,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 10,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    9,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 12,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    11,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 42,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    12,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 7,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 13,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    12,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 13,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    12,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 15,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    14,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 9,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    8,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 16,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    15,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 13,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    7,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 7,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 14,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    13,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 13,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    -1,
+    1,
+    -1,
+    7,
+    -1,
+    1
+   ],
+   "reach_h": 1,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 22,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    -2,
+    2,
+    -1,
+    8,
+    -2,
+    2
+   ],
+   "reach_h": 2,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 44,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    -3,
+    3,
+    -1,
+    14,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 13,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    12,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 16,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    15,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 10,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    9,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 9,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    8,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 13,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    12,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 10,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    9,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 16,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    15,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 7,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 8,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 15,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    14,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 15,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    14,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 13,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    12,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 15,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    14,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 16,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    15,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 16,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    15,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 6,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    5,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 15,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    14,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 12,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    11,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 7,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 10,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    9,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 10,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    9,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 15,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    14,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  },
+  {
+   "n": 14,
+   "logs": 0,
+   "leaves": 0,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": [
+    0,
+    0,
+    0,
+    13,
+    0,
+    0
+   ],
+   "reach_h": 0,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "placed"
+  }
+ ]
+}

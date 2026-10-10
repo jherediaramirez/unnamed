@@ -4,7 +4,7 @@
 
 namespace
 {
-    // Held-item and hotbar tints by tool material, until icons and held meshes come from the sprites.
+    // Held-item tints by tool material, until held meshes come from the sprites (items S4).
     FLinearColor MaterialTint(FName Material)
     {
         if (Material == TEXT("wooden")) return FLinearColor(.55f, .4f, .22f);
@@ -65,7 +65,13 @@ FFoundationItemDefinition UFoundationItemAssets::MakeDefinition(const FFoundatio
     Item.DurabilityPerHit = Asset.DamagePerHit;
     Item.Icon = Asset.Kind == TEXT("pickaxe") || Asset.Kind == TEXT("sword") ? Asset.Kind : NAME_None;
     Item.IconColor = MaterialTint(Asset.Material);
+    Item.Sprite = Asset.Textures.IsEmpty() ? NAME_None : Asset.Textures[0];
     return Item;
+}
+
+const FFoundationItemAsset* UFoundationItemAssets::FindItem(FName Id) const
+{
+    return Items.FindByPredicate([Id](const FFoundationItemAsset& Item) { return Item.Id == Id; });
 }
 
 TArray<FFoundationItemDefinition> UFoundationItemAssets::MakeDefinitions() const

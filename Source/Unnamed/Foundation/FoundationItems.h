@@ -79,12 +79,17 @@ struct FFoundationItemDefinition
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     int32 DurabilityPerHit = 0;
 
-    // Presentation only: which HUD/held-item drawing to use ("block", "pickaxe", "sword") and its tint.
+    // Presentation only: which HUD/held-item drawing to use ("block", "pickaxe", "sword") and its tint. The HUD
+    // draws a block item's 3D icon, else Sprite; the held view still uses Icon for tools until items S4.
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     FName Icon;
 
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     FLinearColor IconColor = FLinearColor::White;
+
+    // The flat GUI sprite under ItemRoot/Gui ("item/iron_pickaxe"); None draws the generic token.
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    FName Sprite;
 
     bool CanPlace() const { return !PlacesBlock.IsNone(); }
     // Speed from the first rule that matches and states one, else the default.

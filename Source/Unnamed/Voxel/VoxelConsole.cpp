@@ -55,6 +55,11 @@ TAutoConsoleVariable<bool> VoxelConsole::CVarDecorationPlants(TEXT("voxel.Decora
     TEXT("With decoration: 1 runs the vegetation features (phase 6, S8: plants, patches, disks) in streamed worlds and "
          "every bench; 0 runs the ores alone, the control that reproduces the goldens and hashes from before S8. A "
          "change rebuilds the world."));
+TAutoConsoleVariable<bool> VoxelConsole::CVarDecorationTrees(TEXT("voxel.Decoration.Trees"), true,
+    TEXT(
+        "With plants: 1 runs the tree feature (phase 6, S9a: trunks, foliage, mangrove roots; S9b's decorators, fallen "
+        "trees and huge mushrooms not yet) in streamed worlds and every bench; 0 skips trees, the control that "
+        "reproduces S8's goldens and hashes. A change rebuilds the world."));
 TAutoConsoleVariable<bool> VoxelConsole::CVarOreVeins(TEXT("voxel.OreVeins"), true,
     TEXT(
         "Ore veins (phase 6, S4): 1 runs 26.3's ore_vein rules in Generate (copper veins in granite from Z 0 to 49, "
@@ -159,6 +164,7 @@ namespace
         Placed.bFreezeLast = bFreezeLast ? *bFreezeLast : VoxelConsole::CVarDecorationFreezeLast.GetValueOnGameThread();
         // And runs the plants as voxel.Decoration.Plants says (a caller may still turn them off).
         Placed.bPlants = Options.bPlants && VoxelConsole::CVarDecorationPlants.GetValueOnGameThread();
+        Placed.bTrees = Options.bTrees && VoxelConsole::CVarDecorationTrees.GetValueOnGameThread();
         if (!Decorator->Initialize(
                 Graph, Table, Terrain.GetBiomeSource()->GetTable(), Terrain.GetSeed(), Placed, &OutError))
             return nullptr;

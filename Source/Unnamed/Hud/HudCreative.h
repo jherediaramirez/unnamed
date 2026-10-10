@@ -2,24 +2,37 @@
 
 #include "CoreMinimal.h"
 #include "Foundation/FoundationBlockAssets.h"
+#include "Foundation/FoundationItemAssets.h"
 
 class FFoundationBlockRegistry;
 
-// One stack as the creative screen holds it: an item id and a count.
+// One stack as the creative screen holds it: an item id, a count and the damage it has taken.
 struct FHudCreativeStack
 {
     FName Item;
     int32 Count = 0;
+    int32 Damage = 0;
 
     bool IsEmpty() const { return Item.IsNone() || Count <= 0; }
     bool operator==(const FHudCreativeStack& Other) const = default;
 };
 
-// What the screen knows about an item: name for the tooltip and search, stack size, search tags.
+// One tooltip line in one colour; an empty text is the blank line.
+struct FHudTooltipLine
+{
+    FString Text;
+    FColor Color = FColor::White;
+    bool operator==(const FHudTooltipLine& Other) const = default;
+};
+
+// What the screen knows about an item: name for the tooltip and search, stack size, max damage (the durability
+// bar), the tooltip lines under the name, search tags.
 struct FHudCreativeItem
 {
     FString Name;
     int32 MaxStack = 64;
+    int32 MaxDamage = 0;
+    TArray<FHudTooltipLine> Details;
     // Lowercase vanilla-style tag names for "#" search ("logs", "mineable/axe").
     TArray<FString> Tags;
 };
@@ -163,4 +176,31 @@ namespace HudBlockIcon
     UNNAMED_API TArray<FQuad> Build(const FFoundationBlockRegistry& Registry, FName Block);
     // True when a drawn face uses an animated texture, so the icon changes with the tick.
     UNNAMED_API bool IsAnimated(const FFoundationBlockRegistry& Registry, FName Block);
+}
+
+// 26.3's item tooltip text (ItemStack.getTooltipLines) and its layout in GUI pixels.
+namespace HudTooltip
+{
+    // Named chat colours (minecraft.wiki "Formatting codes"): the line colours tooltips use.
+    inline const FColor White = FColor(0xFF, 0xFF, 0xFF), Gray = FColor(0xAA, 0xAA, 0xAA),
+                        DarkGreen = FColor(0x00, 0xAA, 0x00), Blue = FColor(0x55, 0x55, 0xFF),
+                        Red = FColor(0xFF, 0x55, 0x55);
+    // The player's base attack damage and attack speed, which its base modifiers add to (minecraft.wiki
+    // "Attribute"; the item reference's attack totals).
+    constexpr double BaseAttackDamage = 1, BaseAttackSpeed = 4;
+
+    // A non-negative amount as tooltips print it: at most two decimals, half to even, no trailing zeros ("1.2",
+    // "2.95", "4"). Callers pass the absolute value; the sign comes from the lang form.
+    UNNAMED_API FString FormatAmount(double Value);
+    // The lines under the item's name for its attribute modifiers: a blank line, the slot header ("When in Main
+    // Hand:", gray), then one line per modifier, with Lang's text (the reference's lang.json). With a player, a base
+    // modifier shows the player's base value added, " 4 Attack Damage" in dark green; without one (the reference's
+    // black-box facts/tooltips.json), every modifier shows its own amount, "+3" in blue or "-2.8" in red, and a zero
+    // amount shows no line. Empty when the item has no modifiers.
+    UNNAMED_API TArray<FHudTooltipLine> GetModifierLines(
+        TConstArrayView<FFoundationItemModifierAsset> Modifiers, const TMap<FString, FString>& Lang, bool bPlayer);
+    // Where line Line starts under the tooltip's top text row, and the text block's height: 10 px per line, plus 2
+    // under the first when there are more (known issue: no vanilla capture confirms these yet, items S3 record).
+    UNNAMED_API int32 GetLineY(int32 Line);
+    UNNAMED_API int32 GetHeight(int32 Lines);
 }
