@@ -85,6 +85,8 @@ namespace
         TMap<int32, int64> TopHist, Comp6Hist, Comp26Hist;
         int32 Reach = 0, TopMax = MIN_int32, OriginLogsMin = MAX_int32, OriginLogsMax = MIN_int32;
         TSet<int32> Blocks;
+        // The blocks of every write but the soil under the trunk (alter_ground's rule in CompareTrees).
+        TSet<int32> NonSoilBlocks;
         TMap<int32, TMap<FIntPoint, int32>> Occupancy;
         // Leaves whose distance is not the BFS from the tree's own logs through its own leaves (1 to 6), or that are
         // persistent.
@@ -477,6 +479,8 @@ namespace
         for (const FVoxelPlantWrite& Write : Writes)
             if (Write.Mode != EVoxelWriteMode::IfReplaceable && Logs.Contains(Write.Cell + FIntVector(0, 0, 1)))
                 ++Ground;
+            else
+                Run.NonSoilBlocks.Add(Table.Get(Write.State).Block);
         const TMap<FIntVector, int32> Bfs = GetBfsDistances(Logs, Leaves);
         for (const FVoxelPlantWrite& Write : Writes)
         {
@@ -670,7 +674,13 @@ namespace
         // Exact rules: the leaves' distance and persistence; the blocks the probe saw; the 26-connected trunk.
         if (Run.BadDistances) Failures.Add(FString::Printf(TEXT("%d leaves off the BFS distance"), Run.BadDistances));
         if (Run.Persistent) Failures.Add(FString::Printf(TEXT("%d persistent leaves"), Run.Persistent));
-        for (const int32 Block : Run.Blocks)
+        // A tree whose alter_ground decorator is left out (until S9c builds it) writes its below-trunk soil where the
+        // probe's decorator then wrote its own block (podzol under the giant trunks), so the probe has no dirt: its
+        // soil under the trunk is checked exactly instead (one per trunk column, scout J's exact rule 6) and left out
+        // of the block set. Every other tree keeps the probe's blocks and dirt (the S9b manager's call).
+        const bool bGroundAltered = Config.SkippedDecorators.ContainsByPredicate(
+            [](const FString& Type) { return Type.EndsWith(TEXT("alter_ground")); });
+        for (const int32 Block : bGroundAltered ? Run.NonSoilBlocks : Run.Blocks)
         {
             bool bSeen = false;
             for (const FString& Id : Probe.Blocks)
@@ -697,8 +707,12 @@ namespace
             CheckMeans(Probe, Run, OutLine, Failures);
             double DirtMean, DirtDeviation;
             MeanAndDeviation(Run.Ground, DirtMean, DirtDeviation);
-            if (FMath::Abs(DirtMean - Probe.Dirt) > 0.05)
-                Failures.Add(FString::Printf(TEXT("soil under the trunk %.2f (probe %.2f)"), DirtMean, Probe.Dirt));
+            const double SoilWanted = bGroundAltered
+                ? double(VoxelTrunkPlacers::GetFootprint(EVoxelTrunkPlacer(Config.Trunk.Type)).Num())
+                : Probe.Dirt;
+            if (FMath::Abs(DirtMean - SoilWanted) > 0.05)
+                Failures.Add(FString::Printf(TEXT("soil under the trunk %.2f (%s %.2f)"), DirtMean,
+                    bGroundAltered ? TEXT("one per trunk column, alter_ground left out:") : TEXT("probe"), SoilWanted));
         }
         // The top-log histogram: a straight trunk's (open sky) is known exactly from the data, so ours and the probe's
         // are each tested against it and only the probe's own sampling counts; elsewhere ours against the probe's.
@@ -1169,10 +1183,10 @@ bool FVoxelTreeShapesTest::RunTest(const FString& Parameters)
     // Every built tree configuration against its probe (scout J's oracles, the fits' harness rules): the leaves'
     // distance and persistence, the probe's blocks, one 26-connected trunk and a straight trunk's height exactly; the
     // means, the top-log histogram, leaf occupancy by an exact binomial test per cell, reach and 6-connected parts as
-    // distributions. Every built configuration runs: 27 probes since S9a.
+    // distributions. Every built configuration runs: 31 probes since S9b (dark oak, pale oak and mega jungle).
     int32 Ran = 0;
     if (!RunTreeProbes(*this, [](const FTreeProbe& Probe) { return Probe.Ceiling == 0; }, Ran)) return false;
-    TestEqual(TEXT("probes run (a placer that stops compiling drops its probes)"), Ran, 27);
+    TestEqual(TEXT("probes run (a placer that stops compiling drops its probes)"), Ran, 31);
     return true;
 }
 
@@ -1182,10 +1196,11 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelTreeFeatureSizeTest, "Unnamed.Voxel.Trees
 bool FVoxelTreeFeatureSizeTest::RunTest(const FString& Parameters)
 {
     // The ceiling probes (a 17 x 17 stone ceiling at dy H, 16 tries): the placed rate, and every placed tree's top log
-    // at H - 3 or lower (H - 2 for trunks other than straight): oak, spruce and fancy oak, 19 probes since S9a.
+    // at H - 3 or lower (H - 2 for trunks other than straight): oak, spruce, fancy oak and dark oak, 26 probes since
+    // S9b.
     int32 Ran = 0;
     if (!RunTreeProbes(*this, [](const FTreeProbe& Probe) { return Probe.Ceiling != 0; }, Ran)) return false;
-    TestEqual(TEXT("ceiling probes run"), Ran, 19);
+    TestEqual(TEXT("ceiling probes run"), Ran, 26);
     return true;
 }
 

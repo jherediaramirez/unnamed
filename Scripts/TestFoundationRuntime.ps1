@@ -7,13 +7,22 @@ param([switch]$Editor,[string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',
     # One map (the Playground) runs every scenario: the movement course and input pipeline, the interaction
     # stations, both, or the screenshot tour (not part of all). Optional placement preset and finite fixture apply to the interaction stations.
     [ValidateSet('movement','interaction','all','tour')][string]$Suite='all',
-    [ValidateSet('VanillaReference','LucidFluid')][string]$Preset,[switch]$Finite)
+    [ValidateSet('VanillaReference','LucidFluid')][string]$Preset,[switch]$Finite,
+    # The break lane's capture pack: the tour suite with -FoundationTourBreak at full-cost rendering, into Playground-break.
+    [switch]$BreakPack)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
-if(-not $OutputDirectory){$OutputDirectory=Join-Path $root ('Tests/Evidence/'+(Get-Date -Format 'yyyy-MM-dd')+"/Playground-$Suite/Runtime-"+(Get-Date -Format 'yyyyMMdd-HHmmss'))}
+if($BreakPack){$Suite='tour';$FullCostRendering=$true}
+if(-not $OutputDirectory){$OutputDirectory=Join-Path $root ('Tests/Evidence/'+(Get-Date -Format 'yyyy-MM-dd')+"/Playground-$(if($BreakPack){'break'}else{$Suite})/Runtime-"+(Get-Date -Format 'yyyyMMdd-HHmmss'))}
 if(Test-Path -LiteralPath $OutputDirectory){throw "Evidence folder exists; choose a fresh output folder: $OutputDirectory"}
 New-Item -ItemType Directory -Path $OutputDirectory | Out-Null
 $OutputDirectory=(Resolve-Path -LiteralPath $OutputDirectory).Path
+if($BreakPack){
+    # The machine state before the run; java or javaw means a game is being played, so the pack does not start.
+    $state=@(Get-Process java,javaw,UnrealEditor* -ErrorAction SilentlyContinue)
+    Set-Content -LiteralPath (Join-Path $OutputDirectory 'machine-state.txt') -Value (("Before run $(Get-Date -Format o): Get-Process java,javaw,UnrealEditor*")+[Environment]::NewLine+$(if($state.Count){$state|Format-Table -AutoSize Name,Id,StartTime|Out-String}else{'(none running)'}))
+    if(@($state|Where-Object{$_.Name -in 'java','javaw'}).Count){throw "java or javaw is running; the break pack was not started: $OutputDirectory"}
+}
 $exe=if($Editor){"$EngineRoot/Engine/Binaries/Win64/UnrealEditor.exe"}else{Join-Path $root "Packages/$PackageName/Windows/Unnamed/Binaries/Win64/Unnamed.exe"}
 foreach($fps in $FrameRates){
     $output=Join-Path $OutputDirectory "runtime-$fps.json"
@@ -22,6 +31,7 @@ foreach($fps in $FrameRates){
     if($Editor){$arguments+=('"'+(Join-Path $root 'Unnamed.uproject')+'"')}
     $arguments+='/Game/Maps/L_Playground'
     $arguments+="-FoundationSuite=$Suite"
+    if($BreakPack){$arguments+='-FoundationTourBreak'}
     if($Preset){$arguments+="-InteractionPreset=$Preset"}
     if($Finite){$arguments+='-InteractionFinite'}
     if($Editor){$arguments+='-game'}

@@ -7,6 +7,7 @@
 
 class AFoundationLab;
 class AFoundationPawn;
+class FFoundationBreakEffects;
 class UInstancedStaticMeshComponent;
 class ULineBatchComponent;
 class UFoundationBlockTextureTable;
@@ -57,8 +58,11 @@ public:
     bool IsPreviewVisible() const { return bPreviewVisible; }
     bool IsHeldItemVisible() const;
     double GetLastViewMs() const { return LastViewMs; }
+    // The breaking effects (foundation.Break.*; null before BeginPlay).
+    FFoundationBreakEffects* GetBreakEffects() const { return BreakEffects.Get(); }
 
 private:
+    friend class FFoundationBreakEffects;
     struct FSectionKey
     {
         FIntVector Section;
@@ -187,4 +191,5 @@ private:
     bool bOutlineVisible = false, bPreviewVisible = false;
     double LastViewMs = 0;
     TWeakObjectPtr<AFoundationPawn> HeldOwner;
+    TSharedPtr<FFoundationBreakEffects> BreakEffects;
 };

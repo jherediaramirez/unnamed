@@ -3,6 +3,7 @@
 usage: uv run --no-project --python 3.13 --with pillow python -I Reference/minecraft-blocks-26.3/tools/verify_reference.py
 The jar comparisons run when the pinned jars are present; everything else needs only this folder.
 """
+import csv
 import hashlib
 import importlib.util
 import json
@@ -35,6 +36,14 @@ for name, digest in sums.items():
     if path.is_file():
         check(hashlib.sha256(path.read_bytes()).hexdigest() == digest, f"hash mismatch: {name}")
 
+def load(name):
+    spec = importlib.util.spec_from_file_location(name, Path(__file__).with_name(f"{name}.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+build = load("build_reference")  # shared constants and sound_files (the build's own rule for the sound file set)
 manifest = json.loads((ROOT / "block_manifest.json").read_text(encoding="utf-8"))
 states = json.loads((ROOT / "block_states.json").read_text(encoding="utf-8"))
 textures = json.loads((ROOT / "textures.json").read_text(encoding="utf-8"))
@@ -46,9 +55,43 @@ if jar_path.exists():
     check(hashlib.sha1(jar_path.read_bytes()).hexdigest() == manifest["client_sha1"], "client jar SHA-1 differs")
     jar = zipfile.ZipFile(jar_path)
     for name in sums:
-        if name.startswith("assets/minecraft/"):
+        if name.startswith("assets/minecraft/") and name != "assets/minecraft/sounds.json" and                 not name.startswith("assets/minecraft/sounds/"):
             jar_checked += 1
             check((ROOT / name).read_bytes() == jar.read(name), f"differs from the jar: {name}")
+
+# Sounds come from the asset index 34 (not the jar): each file's SHA-1 is its object hash, and its size matches. The
+# local index is accepted when its non-lang entries match the official one (the Modrinth copy differs in lang only).
+ASSET_INDEX_NONLANG_SHA1 = build.ASSET_INDEX_NONLANG_SHA1
+# REFERENCE_ASSET_INDEX overrides the index path (tests only).
+index_path = Path(os.environ.get("REFERENCE_ASSET_INDEX") or
+                  Path(os.environ.get("APPDATA", "")) / "ModrinthApp/meta/assets/indexes/34.json")
+sounds_checked = 0
+if not index_path.exists():
+    print(f"SOUNDS NOT CONTENT-CHECKED: asset index 34 not found ({index_path})")
+else:
+    objects = json.loads(index_path.read_text(encoding="utf-8"))["objects"]
+    rest = {k: v for k, v in objects.items() if not k.startswith("minecraft/lang/")}
+    check(hashlib.sha1(json.dumps(rest, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+          == ASSET_INDEX_NONLANG_SHA1, "asset index 34 non-lang entries differ from the pinned ones")
+    if hashlib.sha1(json.dumps(rest, sort_keys=True, separators=(",", ":")).encode()).hexdigest() != ASSET_INDEX_NONLANG_SHA1:
+        print(f"SOUNDS NOT CONTENT-CHECKED: asset index 34 rejected ({index_path})")
+    for name in sums:
+        if name == "assets/minecraft/sounds.json" or name.startswith("assets/minecraft/sounds/"):
+            entry = objects.get(name.removeprefix("assets/"))
+            data = (ROOT / name).read_bytes()
+            check(entry is not None and hashlib.sha1(data).hexdigest() == entry["hash"] and len(data) == entry["size"],
+                  f"differs from the asset index: {name}")
+            sounds_checked += 1
+
+# The sound file set is exactly what block_sounds.csv and sounds.json require (break and hit events, `type: event`
+# entries followed, intentionally_empty skipped), whatever SHA256SUMS.txt lists: catches deleted and extra files.
+sound_rows = list(csv.DictReader(open(ROOT / "facts/block_sounds.csv", encoding="utf-8")))
+sounds_json = json.loads((ROOT / "assets/minecraft/sounds.json").read_text(encoding="utf-8"))
+events = sorted({r[k] for r in sound_rows for k in ("break", "hit")} - {"intentionally_empty"})
+required_sounds = {f"assets/minecraft/sounds/{n}.ogg" for n in build.sound_files(sounds_json, events)}
+present_sounds = {p.relative_to(ROOT).as_posix() for p in (ROOT / "assets/minecraft/sounds").rglob("*") if p.is_file()}
+check(present_sounds == required_sounds, f"sound files differ from the required set: missing "
+      f"{sorted(required_sounds - present_sounds)[:5]}, extra {sorted(present_sounds - required_sounds)[:5]}")
 
 # Counts and state ids: every imported state is in the report with the same id and properties.
 blocks = manifest["blocks"]
@@ -86,6 +129,27 @@ check([b["id"] for b in facts["blocks"]] == [b["id"] for b in sorted(blocks + ma
 fact_states = {s["id"] for b in facts["blocks"] for s in b["states"]}
 check(fact_states == {s["id"] for b in states["blocks"] for s in b["states"]}, "block_state_facts.json: state ids differ")
 
+# Sounds and particles: block_sounds.csv covers the imported blocks in the same order, every break/hit event is
+# defined in sounds.json, and block_particles.json names a texture for every imported block and state.
+check([r["id"] for r in sound_rows] == [b["id"] for b in facts["blocks"]], "block_sounds.csv: ids or order differ from block_state_facts.json")
+check(all(e in sounds_json for e in events), f"sound events missing from sounds.json: {sorted(e for e in events if e not in sounds_json)[:5]}")
+particles = json.loads((ROOT / "block_particles.json").read_text(encoding="utf-8"))
+outside = particles["textures_outside_textures_json"]
+check(list(particles["blocks"]) == [b["id"] for b in blocks + manifest["fluids"]],
+      "block_particles.json: blocks differ from the imported blocks (manifest order)")
+for block in states["blocks"]:
+    entry = particles["blocks"].get(block["id"])
+    if entry is None:
+        continue
+    state_ids = {s["id"] for s in block["states"]}
+    check(set(map(int, entry.get("states", {}))) <= state_ids and block["default_state_id"] in state_ids,
+          f"block_particles.json: state ids: {block['id']}")
+    for texture in [entry["default"], *entry.get("states", {}).values()]:
+        check(texture in texture_names or (texture in outside and
+              (ROOT / f"assets/minecraft/textures/block/{texture}.png").is_file()),
+              f"block_particles.json: texture {texture} of {block['id']} is nowhere")
+check(not set(outside) & texture_names, "block_particles.json: an outside texture is in textures.json")
+
 # Torch support (FactsDump.java): a face mask for every imported state, in registry and state order, and spot checks
 # against minecraft.wiki "Torch": stone and glass hold a torch on top and on every side, leaves on none, an
 # upside-down slab on top; the torch item places the wall torch.
@@ -119,16 +183,8 @@ for item in items:
 check(len(items) == 601 and sum("icon" in i for i in items) == 72, "expected 601 items, 72 with model icons")
 
 
-def load(name):
-    spec = importlib.util.spec_from_file_location(name, Path(__file__).with_name(f"{name}.py"))
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
 # Appended blocks (build_reference.APPENDED_BLOCKS): the textures and models only they use are the last ones, so a
 # later block never moves an earlier texture index, array layer or model index.
-build = load("build_reference")
 appended = set(build.APPENDED_BLOCKS)
 check(appended <= {b["id"] for b in blocks}, "APPENDED_BLOCKS are imported")
 texture_order = [t["name"] for t in textures["textures"]]
@@ -202,7 +258,7 @@ if errors:
     print("REFERENCE FAIL")
     print("\n".join(errors[:40]))
     sys.exit(1)
-print(f"REFERENCE OK: {len(sums)} files hashed, {jar_checked} compared with the jar, {len(blocks)} blocks + water and lava, "
+print(f"REFERENCE OK: {len(sums)} files hashed, {jar_checked} compared with the jar, {sounds_checked} with the asset index, {len(blocks)} blocks + water and lava, "
       f"{state_count} states ({rebaked} model states re-baked), {layers['blocks']} block layers + {layers['water_flow']} "
       f"flow layers; budgets: {len(textures['textures']) + 1} of {TEXTURE_CODES} texture codes, "
       f"{layers['blocks'] + 1} of {ARRAY_SLICES} array slices")

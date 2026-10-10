@@ -62,8 +62,10 @@ namespace VoxelTestBlocks
         Add(SlabTop, TEXT("slab_top"), EVoxelShape::SlabTop, EVoxelLayer::Opaque, 5);
         FVoxelStateInfo Water = Add(WaterSource, TEXT("water"), EVoxelShape::Fluid, EVoxelLayer::Water, 6);
         Water.FluidAmount = 8;
+        Water.Fluid = EVoxelFluid::Water;
         Table.SetState(WaterSource, Water);
         Water.FluidAmount = 5;
+        Water.FluidLevel = 3;
         Table.SetState(WaterFlowing, Water);
         FVoxelStateInfo Snow = Add(Snow3, TEXT("snow"), EVoxelShape::Layers, EVoxelLayer::Opaque, 7);
         Snow.Layers = 3;

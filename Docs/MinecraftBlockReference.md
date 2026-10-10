@@ -108,6 +108,8 @@ The existing project convention (`dummy_block`, with a separate `dummy_block_ite
 
 ## 4. Water
 
+> **Not a source for fluid work.** This section and `research/water_research.md` were written from bytecode method bodies. Don't read or port them; use scout M's black-box probes ([2026-10-10-WaterSky-Scout-M-Fluids.md](Records/2026-10-10-WaterSky-Scout-M-Fluids.md)) or the wiki (water and sky plan, Q18).
+
 Code names are Mojang's real names: the 26.x jar ships unobfuscated. **[B]** = verified in 26.3 bytecode. **[W]** = wiki. **[old]** = known pre-26 behavior, not re-verified.
 
 ### 4.1 Source vs flowing: data model

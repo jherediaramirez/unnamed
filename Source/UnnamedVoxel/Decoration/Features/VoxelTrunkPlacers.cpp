@@ -247,6 +247,124 @@ namespace
             Builder.SetLog(Origin + FIntVector(Order[Arm].X, Order[Arm].Y, BranchZ), HorizontalAxis(Order[Arm]));
         Out.Add({Origin + FIntVector(0, 0, Height), 0, false, Height - BranchZ});
     }
+
+    // The 2 x 2 trunk of giant_trunk_placer and mega_jungle_trunk_placer (ours, fitted to the mega spruce, mega pine
+    // and mega jungle probes; wiki: a "single-block top"): the soil under the four columns, logs at the four columns
+    // from 0 to h - 2, and the origin column alone at h - 1 (every probe tree has 4 (h - 1) + 1 trunk logs).
+    void PlaceTwoByTwo(FVoxelTreeBuilder& Builder)
+    {
+        const FIntVector Origin = Builder.Origin;
+        for (const FIntPoint& Column : TrunkFourColumns)
+            Builder.SetGroundBelow(Origin + FIntVector(Column.X, Column.Y, -1));
+        for (int32 Z = 0; Z < Builder.Height - 1; ++Z)
+            for (const FIntPoint& Column : TrunkFourColumns)
+                Builder.SetLog(Origin + FIntVector(Column.X, Column.Y, Z));
+        Builder.SetLog(Origin + FIntVector(0, 0, Builder.Height - 1));
+    }
+
+    // giant_trunk_placer: the 2 x 2 trunk and one double-trunk attachment above the top log. No random draws.
+    void PlaceGiant(FVoxelTreeBuilder& Builder, TArray<FVoxelFoliageAttachment>& Out)
+    {
+        PlaceTwoByTwo(Builder);
+        Out.Add({Builder.Origin + FIntVector(0, 0, Builder.Height), 0, true});
+    }
+
+    // mega_jungle_trunk_placer's branches (ours, fitted (S9b refit) to the mega jungle probe and its six example
+    // trees): the first branch's last log at h - MegaJungleTopGap - U(0..MegaJungleFirstDrop), the next ones
+    // U(MegaJungleStepMin..MegaJungleStepMax) lower while at h / 2 or above; every branch has MegaJungleBranchSteps
+    // steps, and its canopy gets its bottom layer with chance MegaJungleBottomChance.
+    constexpr int32 MegaJungleTopGap = 3, MegaJungleFirstDrop = 3, MegaJungleStepMin = 2, MegaJungleStepMax = 5,
+                    MegaJungleBranchSteps = 4;
+    constexpr double MegaJungleBottomChance = 0.5;
+
+    // mega_jungle_trunk_placer (ours, fitted; wiki: a giant trunk with branches in its upper half): the 2 x 2 trunk, a
+    // double-trunk attachment above the top log with radius bonus 1, then the branches (ours, fitted (S9b refit)), the
+    // last log of the first at E = h - 3 - U(0..3), going on while E >= h / 2, each E then falling by U(2..5) (drawn
+    // after every branch, the last included, as the fit does). Draws
+    // per branch: an angle a = 2 pi u, then (after its logs) the canopy's bottom layer with chance 1/2. Step
+    // t = 1 .. 4 puts a log at (int)(1.5 + t cos a), (int)(1.5 + t sin a) from the origin, out from the (1, 1)
+    // column's centre and truncated toward zero (so up to 4 logs show toward +X / +Y and 2 toward -X / -Y), and at
+    // z = E - 2 + t / 2 (rising 2 over the 4 steps). A single-trunk attachment with no bonus one above the last log
+    // carries the bottom-layer flag. Every log stands upright: the probe's logs are all axis y.
+    void PlaceMegaJungle(FVoxelTreeBuilder& Builder, TArray<FVoxelFoliageAttachment>& Out)
+    {
+        FVoxelXoroshiro& Random = Builder.Random;
+        const FIntVector Origin = Builder.Origin;
+        const int32 Height = Builder.Height;
+        PlaceTwoByTwo(Builder);
+        Out.Add({Origin + FIntVector(0, 0, Height), 1, true});
+        for (int32 End = Height - MegaJungleTopGap - Random.NextRange(0, MegaJungleFirstDrop); End >= Height / 2;
+            End -= Random.NextRange(MegaJungleStepMin, MegaJungleStepMax))
+        {
+            const double Angle = Random.NextDouble() * 2 * UE_DOUBLE_PI;
+            const double CosA = FMath::Cos(Angle), SinA = FMath::Sin(Angle);
+            FIntVector Last = Origin;
+            for (int32 Step = 1; Step <= MegaJungleBranchSteps; ++Step)
+            {
+                // The cast truncates toward zero on the local offset, before the origin is added (floor fails the
+                // probe); steps inside the 2 x 2 land on its logs.
+                Last = Origin +
+                    FIntVector(static_cast<int32>(1.5 + Step * CosA), static_cast<int32>(1.5 + Step * SinA),
+                        End - MegaJungleBranchSteps / 2 + Step / 2);
+                Builder.SetLog(Last);
+            }
+            const bool bBottomLayer = Random.NextDouble() < MegaJungleBottomChance;
+            Out.Add({Last + FIntVector(0, 0, 1), 0, false, 0, bBottomLayer});
+        }
+    }
+
+    // dark_oak_trunk_placer's constants (ours, fitted to the dark oak and pale oak probes): the chance the trunk's top
+    // leans, the lean length's and the bend depth's maxima, the chance per ring column of a branch column and its
+    // length range (the bend depth and the branch chance and lengths are ours, fitted (S9b refit)), and the ring
+    // around the base 2 x 2 in draw order.
+    constexpr double DarkOakLeanChance = 0.5, DarkOakBranchChance = 0.31;
+    constexpr int32 DarkOakLeanMax = 2, DarkOakBendMax = 2, DarkOakBranchMin = 2, DarkOakBranchMax = 4;
+    const FIntPoint DarkOakRing[12] = {
+        {-1, 0}, {-1, 1}, {2, 0}, {2, 1}, {0, -1}, {1, -1}, {0, 2}, {1, 2}, {-1, -1}, {2, -1}, {-1, 2}, {2, 2}};
+    const FIntPoint DarkOakDirections[4] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+
+    // dark_oak_trunk_placer (ours, fitted; wiki: a 2 x 2 trunk with branch columns in its top blocks): the soil under
+    // the four columns, the 2 x 2 from 0 to h - 1. Draws: a lean (chance 1/2), a direction, a lean length
+    // L = U(1..DarkOakLeanMax) and a bend depth M = U(0..DarkOakBendMax), all four always drawn so the stream does not
+    // depend on the lean. Then per ring column in DarkOakRing's order a branch column (chance DarkOakBranchChance) of
+    // n = U(DarkOakBranchMin..DarkOakBranchMax) logs. One double-trunk attachment above the (shifted) top 2 x 2, no
+    // bonus, then one single-trunk attachment per branch column.
+    void PlaceDarkOak(FVoxelTreeBuilder& Builder, TArray<FVoxelFoliageAttachment>& Out)
+    {
+        FVoxelXoroshiro& Random = Builder.Random;
+        const FIntVector Origin = Builder.Origin;
+        const int32 Height = Builder.Height;
+        for (const FIntPoint& Column : TrunkFourColumns)
+            Builder.SetGroundBelow(Origin + FIntVector(Column.X, Column.Y, -1));
+        const bool bLean = Random.NextDouble() < DarkOakLeanChance;
+        const FIntPoint Direction = DarkOakDirections[Random.NextInt(4)];
+        const int32 Lean = Random.NextRange(1, DarkOakLeanMax);
+        // The bend (ours, fitted (S9b refit)): the trunk moves one block per layer from layer S = h - 1 - M upward
+        // until it has made min(L, M + 1) moves, then goes straight up, so the top layer h - 1 is always fully shifted.
+        const int32 Bend = Random.NextRange(0, DarkOakBendMax);
+        const int32 Steps = bLean ? FMath::Min(Lean, Bend + 1) : 0;
+        const int32 Start = Height - 1 - Bend;
+        const auto Shift = [&](int32 Z)
+        {
+            const int32 Step = FMath::Clamp(Z - Start + 1, 0, Steps);
+            return Origin + FIntVector(Direction.X * Step, Direction.Y * Step, Z);
+        };
+        for (int32 Z = 0; Z < Height; ++Z)
+            for (const FIntPoint& Column : TrunkFourColumns)
+                Builder.SetLog(Shift(Z) + FIntVector(Column.X, Column.Y, 0));
+        Out.Add({Shift(Height - 1) + FIntVector(0, 0, 1), 0, true});
+        // Branch columns (ours, fitted (S9b refit)): they stand on the ring around the base 2 x 2 and never move with
+        // the lean, logs from h - 1 - n to h - 2; each adds a single-trunk attachment one above its top log, where
+        // PlaceDarkOakFoliage puts a branch blob.
+        for (const FIntPoint& Column : DarkOakRing)
+            if (Random.NextDouble() < DarkOakBranchChance)
+            {
+                const int32 Length = Random.NextRange(DarkOakBranchMin, DarkOakBranchMax);
+                for (int32 Z = FMath::Max(0, Height - 1 - Length); Z < Height - 1; ++Z)
+                    Builder.SetLog(Origin + FIntVector(Column.X, Column.Y, Z));
+                Out.Add({Origin + FIntVector(Column.X, Column.Y, Height - 1), 0, false});
+            }
+    }
 }
 
 EVoxelTrunkPlacer VoxelTrunkPlacers::FindType(FStringView Type)
@@ -256,6 +374,10 @@ EVoxelTrunkPlacer VoxelTrunkPlacers::FindType(FStringView Type)
     if (Type == TEXT("minecraft:forking_trunk_placer")) return EVoxelTrunkPlacer::Forking;
     if (Type == TEXT("minecraft:cherry_trunk_placer")) return EVoxelTrunkPlacer::Cherry;
     if (Type == TEXT("minecraft:poplar_trunk_placer")) return EVoxelTrunkPlacer::Poplar;
+    if (Type == TEXT("minecraft:dark_oak_trunk_placer")) return EVoxelTrunkPlacer::DarkOak;
+    if (Type == TEXT("minecraft:mega_jungle_trunk_placer")) return EVoxelTrunkPlacer::MegaJungle;
+    // giant_trunk_placer (PlaceGiant) is written but stays skipped: its trees still fail Trees.Shapes (mega pine's
+    // crown radius rule).
     return EVoxelTrunkPlacer::Count;
 }
 
@@ -278,6 +400,15 @@ void VoxelTrunkPlacers::Place(
         return;
     case EVoxelTrunkPlacer::Poplar:
         PlacePoplar(Trunk, Builder, Out);
+        return;
+    case EVoxelTrunkPlacer::Giant:
+        PlaceGiant(Builder, Out);
+        return;
+    case EVoxelTrunkPlacer::MegaJungle:
+        PlaceMegaJungle(Builder, Out);
+        return;
+    case EVoxelTrunkPlacer::DarkOak:
+        PlaceDarkOak(Builder, Out);
         return;
     default:
         return;
@@ -315,6 +446,16 @@ int32 VoxelTrunkPlacers::GetReach(const FVoxelTreePlacerConfig& Trunk)
     case EVoxelTrunkPlacer::Poplar:
         // The one-log arms.
         return 1;
+    case EVoxelTrunkPlacer::Giant:
+        // The 2 x 2's far columns.
+        return 1;
+    case EVoxelTrunkPlacer::MegaJungle:
+        // A branch's last log, (int)(1.5 + 4) = 5 out at most toward +X / +Y ((int)(1.5 - 4) = -2 toward -X / -Y).
+        return MegaJungleBranchSteps + 1;
+    case EVoxelTrunkPlacer::DarkOak:
+        // The top 2 x 2's far column on a layer shifted DarkOakLeanMax; attachments reach 2 (the shifted top's min
+        // corner, or a branch column, which never shifts).
+        return DarkOakLeanMax + 1;
     default:
         return VoxelConstants::ColumnSize;
     }

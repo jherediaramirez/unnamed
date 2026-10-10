@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Clock/VoxelWorldClock.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationLab.h"
 #include "Random/VoxelSeed.h"
@@ -35,7 +36,8 @@ class UVoxelWorldSubsystem;
 // shows the dev seed. -VoxelSeed=<text> overrides either seed; -VoxelShot=<folder> saves screenshots once the view is
 // on screen, then quits (-VoxelShotEdits first carves and builds across a column corner through the authority and
 // adds an "edits" shot; -VoxelShotView=CX,CY,CZ,TX,TY,TZ adds a "view" shot from a camera to a target, in blocks);
-// -VoxelFlight=<folder> flies phase 3's acceptance flight (FVoxelFlight), then quits.
+// -VoxelFlight=<folder> flies phase 3's acceptance flight (FVoxelFlight), then quits. -VoxelTime=<ticks or marker>
+// pins the world clock's day (FVoxelWorldClock) for shots and flights.
 //
 // The map's height fog becomes the edge fog: clear until 1.5 columns before voxel.ViewRadius and opaque at it, so
 // the edge of the streamed world fades out (until phase 9's far LOD shows what lies beyond). Below the horizon, past
@@ -64,6 +66,8 @@ public:
     virtual void ApplyLogicalOffset(const FVector& Offset) override;
     // A saved world's game mode (Hardcore plays as Survival on Hard), difficulty and natural regeneration rule.
     virtual void ConfigurePlayer(FFoundationVitals& Vitals) const override;
+    // The F3 line: the world clock (FVoxelWorldClock::Describe).
+    virtual FString DescribeDebug() const override;
 
     // The saved world this map opened with ?VoxelWorld=<id>, read on first use; null for the dev seed or when the
     // world could not be read (logged).
@@ -96,6 +100,12 @@ public:
     // The voxel.TorchGlow level the columns are meshed with (the torch models' glow; 14 unless lowered), as read at the
     // last build or voxel.Regenerate.
     int32 GetMeshTorchGlow() const { return MeshTorchGlow; }
+    // The world clock (DN1): the 20 Hz game tick and the day clock, advanced at the top of Tick; voxel.Time drives it.
+    FVoxelWorldClock& GetClock() { return Clock; }
+    const FVoxelWorldClock& GetClock() const { return Clock; }
+    // The saved world's advance_time rule (default on), read at BuildLayout: off stops the day clock, not the game
+    // tick.
+    bool IsTimeAdvancing() const { return bAdvanceTime; }
 
     // World position of cell (0, 0, 0)'s minimum corner; world rebasing moves it.
     FVector OriginCm = FVector::ZeroVector;
@@ -104,6 +114,12 @@ private:
     void LoadMaterials();
     // Rules, registry, bounds, the streamed storage and the saved world's supply rules.
     void SetupAuthority();
+    // The clock's tick length and cap from the pawn's profile, the saved world's clock and advance_time rule, then
+    // -VoxelTime=<ticks or marker>, which pins the day clock (set and paused) for shots and flights.
+    void SetupClock();
+    // Writes the day clock into the saved world's world.json, read afresh so the menu's changes stay; never for the dev
+    // seed or a pinned session.
+    void SaveClock() const;
     // The world box of the water in a cell, or false when it holds none.
     bool GetWaterBox(const FIntVector& Cell, FBox& OutBox) const;
     // The terrain for the current seed (VoxelTerrainFactory::Make). A saved world whose terrain cannot be built gets an
@@ -137,6 +153,10 @@ private:
     int32 MeshTorchGlow = 14;
     TSharedPtr<const IVoxelTerrain> Terrain;
     FFoundationAuthority Authority;
+    FVoxelWorldClock Clock;
+    bool bAdvanceTime = true;
+    // -VoxelTime pinned the day clock: the session never saves its time.
+    bool bTimePinned = false;
     // Per state id: a model state with collision boxes (cactus, bamboo, lily pads, carpets), so GatherCollision passes
     // the others (grass, flowers) with one lookup.
     TArray<bool> ModelCollides;

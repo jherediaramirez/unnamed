@@ -150,6 +150,9 @@ FString VoxelConsole::DescribeInfo(const UWorld* World)
         FModuleManager::Get().IsModuleLoaded(TEXT("RealtimeMeshComponent")) ? TEXT("loaded") : TEXT("not loaded"));
     if (const UVoxelWorldSubsystem* Subsystem = UVoxelWorldSubsystem::Get(World))
         Out += TEXT("\n") + Subsystem->DescribeStages();
+    if (const AVoxelWorld* Voxels = AVoxelWorld::Find(World))
+        Out += FString::Printf(TEXT("\n  World clock: %s | %lld game ticks dropped by the per-frame cap"),
+            *Voxels->GetClock().Describe(Voxels->IsTimeAdvancing()), Voxels->GetClock().GetDroppedTicks());
     return Out;
 }
 
@@ -737,5 +740,22 @@ namespace
                         Total, double(Total) / FMath::Max(1, Area.Columns.Num()));
                 }
                 PrintLines(Output, Report);
+            }));
+}
+
+// The world clock's commands (water and sky DN1), in their own block.
+namespace
+{
+    FAutoConsoleCommandWithWorldArgsAndOutputDevice VoxelTimeCommand(TEXT("voxel.Time"),
+        TEXT("voxel.Time set <time>|day|noon|night|midnight, add <time>, query time|day|gametime, pause, resume, rate "
+             "<rate>: the voxel world's clock, as /time. A time is whole ticks, or a number with d (24,000 ticks), s "
+             "(20) or t. A marker moves the clock forward to its next tick of the day; the rate runs above 0 to 1000."),
+        FConsoleCommandWithWorldArgsAndOutputDeviceDelegate::CreateLambda(
+            [](const TArray<FString>& Args, UWorld* World, FOutputDevice& Output)
+            {
+                AVoxelWorld* Voxels = AVoxelWorld::Find(World);
+                FString Reply = TEXT("voxel.Time: no voxel world is running.");
+                if (Voxels) Voxels->GetClock().RunCommand(Args, Reply);
+                PrintLines(Output, Reply);
             }));
 }
