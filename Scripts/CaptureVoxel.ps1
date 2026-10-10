@@ -14,7 +14,7 @@ param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[in
 # -SpawnAt X,Y starts the spawn search there instead of at the origin, to shoot a chosen place; -SpawnExact checks every
 # column within 32 blocks of it against the real terrain, so low dry ground such as a swamp's counts. -NoSurfaceRules shows
 # the dev seed with the earlier simple dressing instead of the surface rules, to compare looks.
-# -Lights first runs the torch light probe in the cave view (FVoxelLightShots: glowing cubes, then point lights per
+# -Lights first runs the torch light probe in the largest dark cave (FVoxelLightShots: glowing cubes, then point lights per
 # shadow mode): lights.txt, lights.csv and lights-*.png, in a folder ending in -lights; Scripts/SummarizeLightProbe.ps1
 # adds lights-passes.txt from the log's GPU profiles.
 # Evidence is never overwritten.

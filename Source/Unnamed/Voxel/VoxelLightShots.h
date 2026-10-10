@@ -11,7 +11,8 @@ class IConsoleVariable;
 
 // The torch light probe's captures (sessions T0 and T1: -VoxelShotLights with -VoxelShot=<folder>,
 // Scripts/CaptureVoxel.ps1 -Lights; results in Docs/Records/2026-10-10-Torch-Light-Probe.md). It runs once the first
-// view is on screen, before the -VoxelShot shots, in the `cave` view (AVoxelWorld::GetCaveShotViews):
+// view is on screen, before the -VoxelShot shots, in the probe cave (FindProbeView: the largest dark cave near the
+// centre, found from the `cave` view of AVoxelWorld::GetCaveShotViews), except the leak test:
 // - Glowing cubes (T0): glowstone, sea lantern, shroomlight, ochre froglight and jack o'lantern in turn, placed on the
 //   cave floor through the authority's block world. The mean sRGB of wall patches 2, 5 and 10 blocks from the cube,
 //   every frame for 150 frames once the cube is on screen (screenshots at 0, 30 and 120 frames), then an away view
