@@ -18,6 +18,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
   - The creative tooltips gain "When in Main Hand:" with the player's base values, the text from the new `lang.json`.
   - `DA_Items` gains the modifiers, the sprites' array layers, soft references to `T_ItemTextures` and `T_ItemTextures32` (mip 0) for S4, and the lang keys.
   - Known issues: the tooltip pitch, creative clicks dropping damage, the unprobed base-value form, and a heap-corruption episode with hard array references.
+- [Breaking: the first Unreal prototype (record and handoff)](2026-10-10-Breaking-Prototype.md): start here for the break lane. Jesus's picks are built and are the defaults (`foundation.Break.*`, [Docs/Breaking.md](../Breaking.md)); the capture pack, review fixes and measured numbers; C8 carved-geometry cracks researched for a fresh chat; the `ReadItemReference` unity fix.
 - [Breaking handoff: into the first Unreal prototype](2026-10-10-Breaking-Handoff-Prototype.md): start here for the break lane's UE work.
   - Jesus's first-prototype picks, with their exact numbers: a thinner outline (High Contrast from the menu), carved cracks with smooth growth, textured particles with collision and spray (the amount from the menu), vanilla break and hit sounds with pitch variety, synced-hit swing, and the break pop.
   - Also: the build plan, the code map, known issues, open questions and the short prompt.
