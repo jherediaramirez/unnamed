@@ -19,6 +19,33 @@
 #include "Misc/Paths.h"
 #include "UnrealClient.h"
 
+namespace
+{
+    // The block instances the view should hold, counted from the world and the registry rather than the view: one per
+    // cube, slab, layer or fluid cell; one per part of a model state (a vine with no face has none), plus one for the
+    // water a model state holds.
+    int32 CountExpectedBlockInstances(const FFoundationBlockWorld& World)
+    {
+        const FFoundationBlockRegistry& Registry = World.GetRegistry();
+        TArray<TConstArrayView<int32>> Parts;
+        int32 Count = 0;
+        World.GetStorage().ForEachSolid(World.BoundsMin, World.BoundsMax,
+            [&Registry, &Parts, &Count](const FIntVector&, const FFoundationCell& Value)
+            {
+                if (Registry.GetShape(Value.State) != EFoundationBlockShape::Model)
+                {
+                    ++Count;
+                    return;
+                }
+                Registry.GetModelParts(Value.State, Parts);
+                for (const TConstArrayView<int32> Alternatives : Parts)
+                    Count += !Alternatives.IsEmpty();
+                Count += Registry.GetFluid(Value.State).Amount > 0;
+            });
+        return Count;
+    }
+}
+
 // The Playground's interaction scenarios (-FoundationSuite=interaction) in the existing Foundation harness.
 // The stations stand around the world origin, clear of the movement course 60 m to the east; every position
 // below is a world position. Input goes through the real router, controller and Enhanced Input (application-level
@@ -148,11 +175,14 @@ void UFoundationRuntimeProbe::AddInteractionCases()
                 Id(Inventory.Hotbar[0]) == TEXT("stone") && Id(Inventory.Hotbar[1]) == TEXT("iron_pickaxe") &&
                     Id(Inventory.Hotbar[2]) == TEXT("iron_sword") && Inventory.Hotbar[3].IsEmpty(),
                 TEXT("slot 1 Stone, 2 iron pickaxe, 3 iron sword, 4-9 empty hand"));
+            const int32 Expected = CountExpectedBlockInstances(A.World);
             Record(TEXT("seed blocks drawn"),
-                A.World.GetSolidCount() == A.Seed.Num() && Lab->GetView()->GetInstanceCount() == A.Seed.Num() &&
+                A.World.GetSolidCount() == A.Seed.Num() && Lab->GetView()->GetDrawnCellCount() == A.Seed.Num() &&
+                    Lab->GetView()->GetInstanceCount() == Expected &&
                     Lab->GetView()->GetDrawnRevision() == A.World.Revision,
-                FString::Printf(TEXT("solid %d instances %d sections %d"), A.World.GetSolidCount(),
-                    Lab->GetView()->GetInstanceCount(), Lab->GetView()->GetSectionMeshCount()));
+                FString::Printf(TEXT("solid %d cells %d instances %d of %d sections %d"), A.World.GetSolidCount(),
+                    Lab->GetView()->GetDrawnCellCount(), Lab->GetView()->GetInstanceCount(), Expected,
+                    Lab->GetView()->GetSectionMeshCount()));
             const FHudSnapshot& S = Controller->GetHud()->GetPresenter()->GetSnapshot();
             Record(TEXT("HUD items authoritative"),
                 S.Items == EHudDataSource::Authoritative && S.ItemViews.Num() == 9 &&
@@ -215,9 +245,12 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             Record(TEXT("single press places the previewed cell"),
                 Solid({-5, 6, 0}) && Pawn->Interaction.Placed == 1 && Player()->Inventory.Hotbar[0].Count == 64,
                 Pawn->Interaction.Describe());
+            const int32 Expected = CountExpectedBlockInstances(Lab->GetAuthorityState().World);
             Record(TEXT("solid block drawn after its commit"),
-                Lab->GetView()->GetInstanceCount() == Lab->GetAuthorityState().Seed.Num() + 1,
-                FString::Printf(TEXT("instances %d"), Lab->GetView()->GetInstanceCount()));
+                Lab->GetView()->GetDrawnCellCount() == Lab->GetAuthorityState().Seed.Num() + 1 &&
+                    Lab->GetView()->GetInstanceCount() == Expected,
+                FString::Printf(TEXT("cells %d instances %d of %d"), Lab->GetView()->GetDrawnCellCount(),
+                    Lab->GetView()->GetInstanceCount(), Expected));
         });
     AddCase(
         TEXT("preview"), .25, [] {},
@@ -986,7 +1019,8 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         {
             Record(TEXT("4096 cubes built and drawn"),
                 Extra->GetNumberField(TEXT("stress_build_cubes")) == 4096 &&
-                    Lab->GetView()->GetInstanceCount() == Authority().World.GetSolidCount(),
+                    Lab->GetView()->GetDrawnCellCount() == Authority().World.GetSolidCount() &&
+                    Lab->GetView()->GetInstanceCount() == CountExpectedBlockInstances(Authority().World),
                 FString::Printf(TEXT("%0.f cubes in %.2f ms; %d instances in %d section meshes; world %llu bytes"),
                     Extra->GetNumberField(TEXT("stress_build_cubes")), Extra->GetNumberField(TEXT("stress_build_ms")),
                     Lab->GetView()->GetInstanceCount(), Lab->GetView()->GetSectionMeshCount(),
@@ -1059,7 +1093,8 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             Record(TEXT("1000 place/break cycles, bounded"),
                 Extra->GetNumberField(TEXT("stress_cycles")) == 1000 &&
                     Authority().FindPlayer(Id)->Results.Num() <= Authority().Rules.ResultCacheSize &&
-                    Lab->GetView()->GetInstanceCount() == Authority().World.GetSolidCount(),
+                    Lab->GetView()->GetDrawnCellCount() == Authority().World.GetSolidCount() &&
+                    Lab->GetView()->GetInstanceCount() == CountExpectedBlockInstances(Authority().World),
                 FString::Printf(TEXT("%0.f cycles in %.2f ms; memory delta %.2f MB; cache %d"),
                     Extra->GetNumberField(TEXT("stress_cycles")), Extra->GetNumberField(TEXT("stress_cycles_ms")),
                     Extra->GetNumberField(TEXT("stress_cycles_memory_delta_mb")),
@@ -1072,7 +1107,8 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         {
             Record(TEXT("reset after stress restores the seed"),
                 Authority().World.GetSolidCount() == Authority().Seed.Num() &&
-                    Lab->GetView()->GetInstanceCount() == Authority().Seed.Num(),
+                    Lab->GetView()->GetDrawnCellCount() == Authority().Seed.Num() &&
+                    Lab->GetView()->GetInstanceCount() == CountExpectedBlockInstances(Authority().World),
                 FString::Printf(TEXT("%d blocks"), Authority().World.GetSolidCount()));
             // Press-to-commit latency and interaction cost samples.
             TArray<double> Latency = Pawn->Interaction.PressToCommitMs;

@@ -2,6 +2,7 @@
 #include "Biome/VoxelBiomeStorage.h"
 #include "Biome/VoxelBiomeTints.h"
 #include "Blocks/VoxelBlockTable.h"
+#include "Meshing/VoxelOreLooks.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Storage/VoxelColumn.h"
 #include "VoxelConstants.h"
@@ -17,10 +18,11 @@ namespace
     constexpr uint8 OpenCorners = 0xFF;
     constexpr uint8 AllFaces = 0x3F;
 
-    // Greedy-merge keys: the tint above state and corner levels, plus one so 0 means "no face".
-    FORCEINLINE uint64 MakeKey(uint16 State, uint8 Corners, uint32 Tint)
+    // Greedy-merge keys: the ore look's host (VoxelOreLooks::PickHost, 0 without looks) and the 24-bit tint above state
+    // and corner levels, plus one so 0 means "no face".
+    FORCEINLINE uint64 MakeKey(uint16 State, uint8 Corners, uint32 Tint, int32 Host = 0)
     {
-        return uint64(Tint) << 32 | (((uint32(State) << 8) | Corners) + 1);
+        return uint64(Tint | uint32(Host) << 24) << 32 | (((uint32(State) << 8) | Corners) + 1);
     }
 
     // Biome tints for one section, as 26.3's biome blend: a face takes the mean of its source's colour over the
@@ -234,9 +236,10 @@ namespace
 
         // A quad on Face: Plane along the face's axis, [U0, U1] x [V0, V1] across it (section blocks; U and V are the
         // next two axes after it), Cell the section cell whose corner is the UV origin. Corners holds the occlusion
-        // levels at (-,-), (+,-), (+,+), (-,+); Tint is every vertex's packed sRGB colour.
+        // levels at (-,-), (+,-), (+,+), (-,+); Tint is every vertex's packed sRGB colour. A nonzero Look (an ore
+        // look's word, VoxelOreLooks::GetLookWord) takes the overlay code's place.
         void Quad(const FVoxelStateInfo& Info, int32 Face, float Plane, float U0, float U1, float V0, float V1,
-            const FIntVector& Cell, uint8 Corners, uint32 Tint) const
+            const FIntVector& Cell, uint8 Corners, uint32 Tint, uint32 Look = 0) const
         {
             const int32 Axis = VoxelFaces::GetAxis(Face), AxisU = (Axis + 1) % 3, AxisV = (Axis + 2) % 3;
             // Corner order turns against the face normal, which RealtimeMesh draws as the front: positive faces walk
@@ -249,7 +252,7 @@ namespace
             FVoxelMeshLayer& Layer = Out.Layers[int32(Info.Layer)];
             const uint32 First = uint32(Layer.Positions.Num());
             const FVector3f Origin(float(Cell.X), float(Cell.Y), float(Cell.Z));
-            const FVector2f Codes(float(Info.Faces[Face]), float(Info.Faces[VoxelFaces::OverlayIndex]));
+            const FVector2f Codes(float(Info.Faces[Face]), float(Look ? Look : Info.Faces[VoxelFaces::OverlayIndex]));
             const FVector2f TintFace{float(Tint), float(Face)};
             int32 Levels[4];
             for (int32 Corner = 0; Corner < 4; ++Corner)
@@ -549,6 +552,9 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
     const FVoxelColumn* Center = Neighborhood ? Neighborhood->Get(0, 0) : nullptr;
     const FEmitter Emit{Out, VoxelConstants::MinZ + SectionIndex * SectionSize, FaceTints,
         Center ? Center->GetPosition() * VoxelConstants::ColumnSize : FIntPoint::ZeroValue};
+    // Ore looks: hosts are only picked with OreHost on, look words only made with either switch on.
+    const bool bOreHosts = Options.OreHost != 0;
+    const bool bOreLooks = bOreHosts || Options.OreGlint != 0;
     for (int32 Face = 0; Face < VoxelFaces::Count; ++Face)
     {
         const int32 Axis = VoxelFaces::GetAxis(Face), AxisU = (Axis + 1) % 3, AxisV = (Axis + 2) % 3;
@@ -589,7 +595,9 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
                         const uint8 Corners = Options.bAmbientOcclusion
                             ? GetCorners(Casts, Neighbor, AxisStep[AxisU], AxisStep[AxisV])
                             : OpenCorners;
-                        Keys[V * SectionSize + U] = MakeKey(State, Corners, FaceTints.Get(Info, Face, Cell));
+                        // An ore wearing its host rock merges only with faces on the same host.
+                        const int32 Host = bOreHosts && Info.Ore ? VoxelOreLooks::PickHost(Table, States, Index) : 0;
+                        Keys[V * SectionSize + U] = MakeKey(State, Corners, FaceTints.Get(Info, Face, Cell), Host);
                         bAnyKey = true;
                         break;
                     }
@@ -664,8 +672,12 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
                     Coordinates[Axis] = Slice;
                     Coordinates[AxisU] = U;
                     Coordinates[AxisV] = V;
+                    const uint32 Upper = uint32(Key >> 32);
+                    const uint32 Look = bOreLooks && Info.Ore
+                        ? VoxelOreLooks::GetLookWord(Info.Ore, int32(Upper >> 24), Options.OreHost, Options.OreGlint)
+                        : 0;
                     Emit.Quad(Info, Face, Plane, float(U), float(U + Width), float(V), float(V + Height),
-                        FIntVector(Coordinates[0], Coordinates[1], Coordinates[2]), Corners, uint32(Key >> 32));
+                        FIntVector(Coordinates[0], Coordinates[1], Coordinates[2]), Corners, Upper & 0xFFFFFF, Look);
                 }
         }
     }

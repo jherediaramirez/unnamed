@@ -31,6 +31,8 @@ public:
     static inline const FIntVector StateGalleryOrigin{-200, -58, 0};
     static constexpr int32 RegistryGalleryColumns = 24;
     static constexpr int32 StateGalleryColumns = 59;
+    // The showcase row of model blocks (plants), the last row.
+    static constexpr int32 PlantRow = 7;
     // Where a showcase row's first block sits; rows run east, three cells apart.
     static FIntVector GetShowcaseCell(int32 Row, int32 Column)
     {

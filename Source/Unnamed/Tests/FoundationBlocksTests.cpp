@@ -3,15 +3,20 @@
 #include "Engine/Texture2DArray.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlockImport.h"
+#include "Foundation/FoundationBlockMeshes.h"
 #include "Foundation/FoundationBlockMipmaps.h"
 #include "Foundation/FoundationBlockPlacement.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationInteractionSettings.h"
+#include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationTargeting.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "Engine/StaticMesh.h"
+#include "StaticMeshResources.h"
+#include "UObject/Package.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
@@ -942,6 +947,83 @@ bool FFoundationBlocksModelsTest::RunTest(const FString&)
     TestEqual(TEXT("blocks with an icon sprite tile"), TileBlocks, 62);
     TestEqual(TEXT("blocks with an icon model"), ModelIconBlocks, 10);
     TestEqual(TEXT("item icons that differ from items.json"), IconMismatches, 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationBlocksModelMeshesTest, "Unnamed.Foundation.Blocks.ModelMeshes", BlockTestFlags)
+
+// The Playground's model meshes (FoundationBlockMeshes::BuildModel): every baked model but its exact repeats, two
+// triangles per drawn quad, and full-precision UVs that carry the quad's texture UV, shade face and own code exactly.
+bool FFoundationBlocksModelMeshesTest::RunTest(const FString&)
+{
+    using namespace FoundationBlockMeshes;
+    const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();
+    if (!TestTrue(TEXT("baked models"), Registry->GetModelCount() > 0)) return false;
+    // The own code: face code bits the block materials already read, the light above them, the marker, under 2^21.
+    FFoundationModelQuad Probe;
+    Probe.Texture = 1023;
+    Probe.TintIndex = 0;
+    Probe.Light = 15;
+    const uint32 Code = MakeModelCode(Probe);
+    TestEqual(TEXT("code texture"), FoundationBlockFaces::GetTexture(Code), 1023);
+    TestTrue(TEXT("code tinted"), FoundationBlockFaces::IsTinted(Code));
+    TestEqual(TEXT("code transform (none)"), FoundationBlockFaces::GetTransform(Code), 0);
+    TestEqual(TEXT("code light"), int32(Code >> ModelLightShift & 15), 15);
+    TestTrue(TEXT("code marked, under 2^21"), (Code & ModelCodeBit) != 0 && Code < (1u << 21));
+    Probe.Texture = 5;
+    Probe.TintIndex = -1;
+    Probe.Light = 0;
+    TestEqual(TEXT("untinted unlit code"), MakeModelCode(Probe), 5u | ModelCodeBit);
+
+    int32 Quads = 0, Drawn = 0, Triangles = 0, Empty = 0, Mismatches = 0, Lifted = 0;
+    auto Fail = [&](const FString& Message)
+    {
+        if (++Mismatches <= 20) AddError(Message);
+    };
+    for (int32 Model = 0; Model < Registry->GetModelCount(); ++Model)
+    {
+        const TConstArrayView<FFoundationModelQuad> Source = Registry->GetModelQuads(Model);
+        Quads += Source.Num();
+        UStaticMesh* Mesh = BuildModel(GetTransientPackage(), Source);
+        if (!Mesh || !Mesh->GetRenderData() || Mesh->GetRenderData()->LODResources.IsEmpty())
+        {
+            ++Empty;
+            continue;
+        }
+        const FStaticMeshLODResources& LOD = Mesh->GetRenderData()->LODResources[0];
+        const FStaticMeshVertexBuffer& Vertices = LOD.VertexBuffers.StaticMeshVertexBuffer;
+        Triangles += LOD.GetNumTriangles();
+        if (!Vertices.GetUseFullPrecisionUVs()) Fail(FString::Printf(TEXT("model %d: half-precision UVs"), Model));
+        int32 Vertex = 0;
+        for (int32 Index = 0; Index < Source.Num(); ++Index)
+        {
+            if (IsRepeatedQuad(Source, Index)) continue;
+            ++Drawn;
+            const FFoundationModelQuad& Quad = Source[Index];
+            const FVector3f Lift = GetOverlayLift(Source, Index);
+            Lifted += !Lift.IsZero();
+            for (int32 Corner = 0; Corner < 4 && Vertex < LOD.GetNumVertices(); ++Corner, ++Vertex)
+            {
+                const FVector2f Face = Vertices.GetVertexUV(Vertex, 1);
+                const FVector3f Position = LOD.VertexBuffers.PositionVertexBuffer.VertexPosition(Vertex);
+                if (Face != FVector2f(float(int32(Quad.Shade)), float(MakeModelCode(Quad))) ||
+                    Vertices.GetVertexUV(Vertex, 0) != Quad.UVs[Corner] ||
+                    !Position.Equals((Quad.Positions[Corner] + Lift) * float(UFoundationProfile::BlockCm), 1e-3f))
+                    Fail(FString::Printf(TEXT("model %d quad %d corner %d: UV1 (%g, %g), position %s"), Model, Index,
+                        Corner, Face.X, Face.Y, *Position.ToString()));
+            }
+        }
+        if (Vertex != LOD.GetNumVertices())
+            Fail(FString::Printf(TEXT("model %d: %d vertices, %d expected"), Model, LOD.GetNumVertices(), Vertex));
+    }
+    TestEqual(TEXT("baked quads (S5's 2,410 and the torch's 30)"), Quads, 2440);
+    TestEqual(TEXT("quads drawn (16 exact repeats dropped, as the voxel world drops them)"), Drawn, 2424);
+    TestEqual(TEXT("triangles, two per drawn quad"), Triangles, 2 * Drawn);
+    TestEqual(TEXT("models without a mesh"), Empty, 0);
+    // Only the firefly bush's emissive overlay lies on another quad (S6's Mesher.ModelData allows exactly its four).
+    TestEqual(TEXT("overlay quads lifted off the quad beneath"), Lifted, 4);
+    TestEqual(TEXT("vertex mismatches"), Mismatches, 0);
     return true;
 }
 #endif
