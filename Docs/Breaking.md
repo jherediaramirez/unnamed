@@ -1,17 +1,17 @@
 # Breaking
 
-How mining and breaking a block look, sound and feel: the target outline, the crack overlay, break and hit particles, break and hit sounds, the swing's timing and the break pop. Every effect sits behind a `foundation.Break.*` switch whose 0 is the game as it was before the break lane, and every switch defaults to 0 until Jesus confirms the in-game pack. The ideas and their vanilla facts are in the [ideas doc](Records/2026-10-10-Breaking-Feel-Ideas.md); Jesus's picks with their exact numbers are in [the prototype handoff](Records/2026-10-10-Breaking-Handoff-Prototype.md), section 4; the measured vanilla numbers are in [the VP1 record](Records/2026-10-10-Breaking-VP1-Probe.md).
+How mining and breaking a block look, sound and feel: the target outline, the crack overlay, break and hit particles, break and hit sounds, the swing's timing and the break pop. Every effect sits behind a `foundation.Break.*` switch whose 0 is the game as it was before the break lane. The defaults are Jesus's picks, confirmed from the in-game pack on 2026-10-10 (the pack is listed in [the prototype record](Records/2026-10-10-Breaking-Prototype.md)); every other option stays one switch away. The ideas and their vanilla facts are in the [ideas doc](Records/2026-10-10-Breaking-Feel-Ideas.md); Jesus's picks with their exact numbers are in [the prototype handoff](Records/2026-10-10-Breaking-Handoff-Prototype.md), section 4; the measured vanilla numbers are in [the VP1 record](Records/2026-10-10-Breaking-VP1-Probe.md).
 
 The effects are presentation only. They read the authority's events, the block world and the local player's interaction snapshot; they never change gameplay state. They live in the interaction view, so the Playground and generated worlds share them.
 
 ## Switches
 
-| Switch | Values (0 = today) | Jesus's pick |
+| Switch | Values (0 = today) | Default (Jesus's pick) |
 |---|---|---|
 | `foundation.Break.Outline` | 0 the view's lines; 1 vanilla (black 40%, 3 px); 2 thinner (black 30%, 1 px); 3 none. With 1 or 2, the menu's saved `highContrastBlockOutline` draws vanilla's high-contrast look instead: a 3 px rgb(87, 255, 225) core on a 9 px black halo. Widths are constant in screen pixels. | 2 |
 | `foundation.Break.Cracks` | 0 the view's crack lines; 1 vanilla's 10 stages; 2 carved (crack 60, lit side 170, shadow side 90, 2x multiply) | 2 |
 | `foundation.Break.CrackSmooth` | 0/1: the next stage's texels fade in with the stage's fraction | 1 |
-| `foundation.Break.Particles` | 0 the view's cubes; 1 textured break particles (64 per outline box x the menu's Particles amount) and one hit chip per hit (off at Minimal) | 1 |
+| `foundation.Break.Particles` | 0 the view's cubes; 1 textured break particles (64 per outline box x the menu's Particles amount, with a 0.3 blocks/s velocity spread so they do not land in their spawn grid) and one hit chip per hit (off at Minimal) | 1 |
 | `foundation.Break.ParticleCollision` | 0/1: particles land and lie on solid cells | 1 |
 | `foundation.Break.ParticleSpray` | 0/1: break particles get 1.5 blocks/s along the mined face and 0.5 away from the camera; chips leave at 0.6 instead of 0.4 | 1 |
 | `foundation.Break.Sounds` | 0 silent; 1 vanilla break and hit sounds per sound type; 2 the same with +-3% on a hit's pitch and at most two hit voices | 2 |
@@ -30,7 +30,7 @@ The menu's Particles pref (All 1, Decreased 0.67, Minimal 0.33) sets the particl
 | Materials | `M_BreakCracks`, `M_BreakParticle` and `M_BreakOutline`; graphs are code, rebuilt on every run. | `Scripts/Editor/CreateBreakMaterials.py` |
 | Runtime | `FFoundationBreakEffects`, owned by `UFoundationInteractionView`; its pools are made in BeginPlay, hidden, and `/Game/Breaking` loads the first frame a switch is on. | `Source/Unnamed/Foundation/FoundationBreakEffects.*` |
 
-`/Game/Breaking` holds:
+`/Game/Breaking` (`UUnnamedProjectSettings::BreakRoot`; Python `ProjectPaths.break_asset()`) is always cooked. It holds:
 
 - `T_BreakCracks`: 16 x 16 x 20, the carved stages in layers 0-9 and vanilla's own stages in 10-19, uncompressed, nearest, one mip, linear (128 is neutral under the 2x multiply).
 - `Sounds/<dir>/<name>`: the 762 sound waves, named as in `sounds.json` (`dig/stone1`).
@@ -60,7 +60,6 @@ The script paths must be absolute: a relative `-script=` resolves against the en
 
 ## Known issues
 
-- **The `/Game/Breaking` path is a constant** in `FoundationBreakEffects.cpp` and the import scripts, and the folder is not in `DirectoriesToAlwaysCook`, so a packaged build has no break assets (with every switch at 0 nothing needs them). When: the defaults step, with a `BreakRoot` project setting (Jesus's call, as a config change).
 - **The high-contrast core colour goes through the tonemapper:** it reads about rgb(135, 230, 215) instead of vanilla's (87, 255, 225). When: if Jesus wants it exact (a post-tonemap pass).
 - **A state with more parts than any block's default state** loses its extra parts from the crack overlay and the pop (the pools are sized like the held block's).
 - **Vanilla's outline (1)** draws every box of a multi-box shape, as today's lines do; vanilla merges them to the shape's outer edges. On a silhouette edge it measures 4 px, not 3: a square strip seen at an angle projects wider. The thinner outline measures 1 px; the high-contrast one a 4 px core and a 7 px halo (the pack's `pack-summary.md`).

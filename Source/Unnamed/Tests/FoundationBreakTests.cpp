@@ -326,7 +326,7 @@ bool FFoundationBreakParticlesTest::RunTest(const FString&)
                     Cell.GetMin() >= 0 && Cell.GetMax() <= 3 && !Seen.Contains(Cell);
                 Seen.Add(Cell);
                 const FVector Expected = (Spawn.Location - Centre) * 1.5 + FVector(0, 0, 100) + Push;
-                bOk &= (Spawn.Velocity - Expected).GetAbsMax() <= 10 + 1e-9;
+                bOk &= (Spawn.Velocity - Expected).GetAbsMax() <= FoundationBreak::JitterCm + 1e-9;
                 bOk &= Spawn.Life >= 1.5 && Spawn.Life <= 2.3;
                 bOk &= BreakNear(Spawn.Size, 10) && Spawn.PatchU <= 12 && Spawn.PatchV <= 12;
                 Bad += !bOk;

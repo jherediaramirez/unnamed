@@ -122,8 +122,11 @@ namespace FoundationBreak
     };
     constexpr double GravityCm = 1600;
     constexpr double BreakSizeCm = 10, HitSizeCm = 6;
+    // The per-axis velocity spread, 0.3 blocks/s, so the particles do not land in the spawn grid (Jesus, 2026-10-10;
+    // the first spec had 0.1).
+    constexpr double JitterCm = 30;
     // A 4 x 4 x 4 grid inside Box, BreakParticlesPerBox(Amount) of its points picked at random: velocity
-    // (point - centre) x 1.5 + uniform +-0.1, plus 1 up (blocks/s), plus Push (cm/s); life 1.5-2.3 s.
+    // (point - centre) x 1.5 + uniform +-JitterCm, plus 1 up (blocks/s), plus Push (cm/s); life 1.5-2.3 s.
     void SpawnBreakParticles(
         const FBox& Box, double Amount, const FVector& Push, FRandomStream& Random, TArray<FParticleSpawn>& Out);
     // A hit chip at the hit point: 0.4 blocks/s out of the face (0.6 with spray), then gravity.

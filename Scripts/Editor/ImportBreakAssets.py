@@ -27,9 +27,8 @@ sys.dont_write_bytecode = True
 import ProjectPaths  # noqa: E402
 import BreakImportData  # noqa: E402
 
-# The break assets' root. A constant until a BreakRoot project setting exists (UUnnamedProjectSettings); the C++ uses
-# the same constant.
-BREAK_ROOT = "/Game/Breaking"
+# UUnnamedProjectSettings::BreakRoot (/Game/Breaking); the C++ loads from the same setting.
+BREAK_ROOT = ProjectPaths.break_asset("").rstrip("/")
 ROOT = Path(unreal.Paths.project_dir()).resolve()
 TAG = "BreakSourceSha256"
 ATTENUATION_CM = 1600.0  # 16 blocks

@@ -89,6 +89,15 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Items")
     FString ItemRoot = TEXT("/Game/Items");
 
+    // Package of a breaking-effects asset under BreakRoot, e.g. "DA_BreakAssets" or "Sounds/dig/stone1". Written by
+    // Scripts/Editor/ImportBreakAssets.py and CreateBreakMaterials.py (Docs/Breaking.md).
+    UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
+    static FString GetBreakAssetPackage(const FString& AssetName);
+    static FSoftObjectPath GetBreakAssetPath(const FString& AssetName);
+
+    UPROPERTY(Config, EditAnywhere, Category = "Breaking")
+    FString BreakRoot = TEXT("/Game/Breaking");
+
     UPROPERTY(Config, EditAnywhere, Category = "Maps", meta = (AllowedClasses = "/Script/Engine.World"))
     FSoftObjectPath MenuMap;
 

@@ -26,30 +26,31 @@
 #include "Sound/SoundConcurrency.h"
 #include "Sound/SoundWave.h"
 #include "UnnamedLog.h"
+#include "UnnamedProjectSettings.h"
 
 namespace
 {
-    TAutoConsoleVariable<int32> CVarBreakOutline(TEXT("foundation.Break.Outline"), 0,
+    TAutoConsoleVariable<int32> CVarBreakOutline(TEXT("foundation.Break.Outline"), 2,
         TEXT("Target outline: 0 the view's own, 1 vanilla (black 40%, 3 px), 2 thinner (black 30%, 1 px), 3 none."),
         ECVF_Default);
-    TAutoConsoleVariable<int32> CVarBreakCracks(TEXT("foundation.Break.Cracks"), 0,
+    TAutoConsoleVariable<int32> CVarBreakCracks(TEXT("foundation.Break.Cracks"), 2,
         TEXT("Crack overlay: 0 the view's lines, 1 vanilla's stages, 2 carved stages."), ECVF_Default);
-    TAutoConsoleVariable<bool> CVarBreakCrackSmooth(TEXT("foundation.Break.CrackSmooth"), false,
+    TAutoConsoleVariable<bool> CVarBreakCrackSmooth(TEXT("foundation.Break.CrackSmooth"), true,
         TEXT("1 blends the crack toward the next stage as the progress grows."), ECVF_Default);
-    TAutoConsoleVariable<int32> CVarBreakParticles(TEXT("foundation.Break.Particles"), 0,
+    TAutoConsoleVariable<int32> CVarBreakParticles(TEXT("foundation.Break.Particles"), 1,
         TEXT("Break particles and hit chips: 0 the view's cubes, 1 textured."), ECVF_Default);
-    TAutoConsoleVariable<bool> CVarBreakParticleCollision(TEXT("foundation.Break.ParticleCollision"), false,
+    TAutoConsoleVariable<bool> CVarBreakParticleCollision(TEXT("foundation.Break.ParticleCollision"), true,
         TEXT("1 makes particles land on solid blocks."), ECVF_Default);
-    TAutoConsoleVariable<bool> CVarBreakParticleSpray(TEXT("foundation.Break.ParticleSpray"), false,
+    TAutoConsoleVariable<bool> CVarBreakParticleSpray(TEXT("foundation.Break.ParticleSpray"), true,
         TEXT("1 sprays break particles along the mined face and away from the camera."), ECVF_Default);
-    TAutoConsoleVariable<int32> CVarBreakSounds(TEXT("foundation.Break.Sounds"), 0,
+    TAutoConsoleVariable<int32> CVarBreakSounds(TEXT("foundation.Break.Sounds"), 2,
         TEXT("Break and hit sounds: 0 off, 1 vanilla, 2 vanilla with hit pitch variety and two hit voices."),
         ECVF_Default);
-    TAutoConsoleVariable<int32> CVarBreakSwing(TEXT("foundation.Break.Swing"), 0,
+    TAutoConsoleVariable<int32> CVarBreakSwing(TEXT("foundation.Break.Swing"), 2,
         TEXT("Swing: 0 the view's own, 1 a 6-tick swing with hits every 4 steps, 2 hits on each swing's contact tick."),
         ECVF_Default);
     TAutoConsoleVariable<bool> CVarBreakPop(
-        TEXT("foundation.Break.Pop"), false, TEXT("1 shrinks a broken block away over 80 ms."), ECVF_Default);
+        TEXT("foundation.Break.Pop"), true, TEXT("1 shrinks a broken block away over 80 ms."), ECVF_Default);
 
     // The box of Boxes holding a point, or null.
     const FBox* BreakFindBox(const TArray<FBox>& Boxes, const FVector& Point)
@@ -216,7 +217,8 @@ namespace FoundationBreak
                         (Cell / (Divisions * Divisions) + 0.5) / Divisions);
             FParticleSpawn& Spawn = Out.AddDefaulted_GetRef();
             Spawn.Location = Point;
-            const FVector Jitter(Random.FRandRange(-10, 10), Random.FRandRange(-10, 10), Random.FRandRange(-10, 10));
+            const FVector Jitter(Random.FRandRange(-JitterCm, JitterCm), Random.FRandRange(-JitterCm, JitterCm),
+                Random.FRandRange(-JitterCm, JitterCm));
             Spawn.Velocity = (Point - Centre) * 1.5 + Jitter + FVector(0, 0, 100) + Push;
             Spawn.Life = Random.FRandRange(1.5, 2.3);
             Spawn.Size = BreakSizeCm;
@@ -286,9 +288,6 @@ namespace FoundationBreak
 
 namespace
 {
-    // The break assets' folder. It stays a constant until a BreakRoot project setting exists (UUnnamedProjectSettings
-    // holds the other asset roots).
-    const TCHAR* const BreakRoot = TEXT("/Game/Breaking");
     constexpr double BreakEffectsBlockCm = UFoundationProfile::BlockCm;
     // Probes compare runs: every play draws the same particles and sound files.
     constexpr int32 BreakEffectsSeed = 0x0B5EA4;
@@ -302,7 +301,8 @@ namespace
 
     template <typename TAsset> TAsset* LoadBreakAsset(const TCHAR* Name)
     {
-        const FString Path = FString::Printf(TEXT("%s/%s.%s"), BreakRoot, Name, Name);
+        // Under UUnnamedProjectSettings::BreakRoot (/Game/Breaking).
+        const FString Path = UUnnamedProjectSettings::GetBreakAssetPath(Name).ToString();
         return LoadObject<TAsset>(nullptr, *Path, {}, LOAD_NoWarn | LOAD_Quiet);
     }
 
@@ -418,7 +418,7 @@ void FFoundationBreakEffects::LoadAssets(const FFoundationAuthority& Authority)
     if (!Missing.IsEmpty())
         UE_LOG(LogUnnamedFoundation, Warning,
             TEXT("Breaking effects: %s missing under %s; the effects needing them stay off"),
-            *FString::Join(Missing, TEXT(", ")), BreakRoot);
+            *FString::Join(Missing, TEXT(", ")), *UUnnamedProjectSettings::Get().BreakRoot);
 
     Assets = Loaded;
     if (Loaded) View.Owned.Add(Loaded);

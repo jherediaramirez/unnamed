@@ -22,8 +22,8 @@ sys.dont_write_bytecode = True
 import ProjectPaths  # noqa: E402
 
 lib = unreal.MaterialEditingLibrary
-# The break assets' root; the same constant as ImportBreakAssets.py until a BreakRoot project setting exists.
-BREAK_ROOT = "/Game/Breaking"
+# UUnnamedProjectSettings::BreakRoot (/Game/Breaking); the C++ loads from the same setting.
+BREAK_ROOT = ProjectPaths.break_asset("").rstrip("/")
 STAGES = 10
 
 # Cracks: the face under the pixel from the object-space normal's dominant axis, u to the viewer's right on side faces
