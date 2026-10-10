@@ -1,0 +1,592 @@
+{
+ "generated_by": "tools/feature_probe.py",
+ "minecraft": "26.3",
+ "feature": "minecraft:ore_iron",
+ "config": {
+  "size": 9,
+  "discard_chance_on_air_exposure": 0.0
+ },
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:deepslate",
+    -63,
+    -17
+   ],
+   [
+    "minecraft:tuff",
+    -16,
+    15
+   ],
+   [
+    "minecraft:stone",
+    16,
+    83
+   ],
+   [
+    "minecraft:air",
+    84,
+    84
+   ],
+   [
+    "minecraft:stone",
+    85,
+    111
+   ]
+  ],
+  "grid_spacing": 32,
+  "bands": {
+   "deepslate": {
+    "origin_y": -40,
+    "window": [
+     -63,
+     -21
+    ]
+   },
+   "tuff": {
+    "origin_y": 0,
+    "window": [
+     -20,
+     21
+    ]
+   },
+   "stone": {
+    "origin_y": 44,
+    "window": [
+     22,
+     63
+    ]
+   },
+   "air": {
+    "origin_y": 84,
+    "window": [
+     64,
+     111
+    ]
+   }
+  }
+ },
+ "note": "vanilla's random differs per call: compare distributions, not blocks",
+ "bands": {
+  "deepslate": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 6.7,
+     "std": 2.0224,
+     "min": 3,
+     "max": 13,
+     "percentiles": {
+      "5": 4.0,
+      "25": 5.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "3": 2,
+      "4": 15,
+      "5": 10,
+      "6": 28,
+      "7": 6,
+      "8": 24,
+      "9": 2,
+      "10": 11,
+      "11": 1,
+      "13": 1
+     }
+    },
+    "minecraft:deepslate_iron_ore": {
+     "mean": 6.7,
+     "std": 2.0224,
+     "min": 3,
+     "max": 13,
+     "percentiles": {
+      "5": 4.0,
+      "25": 5.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "3": 2,
+      "4": 15,
+      "5": 10,
+      "6": 28,
+      "7": 6,
+      "8": 24,
+      "9": 2,
+      "10": 11,
+      "11": 1,
+      "13": 1
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 84,
+      "3": 14,
+      "4": 2
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 9,
+      "2": 59,
+      "3": 30,
+      "4": 2
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "1": 1,
+      "2": 87,
+      "3": 11,
+      "4": 1
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 5,
+    "-1": 303,
+    "0": 336,
+    "1": 26
+   },
+   "by_dy": {
+    "-3": 77,
+    "-2": 255,
+    "-1": 266,
+    "0": 72
+   },
+   "by_dz": {
+    "-2": 9,
+    "-1": 316,
+    "0": 330,
+    "1": 15
+   },
+   "replaced": {
+    "minecraft:deepslate": 670
+   },
+   "by_y": {
+    "-43": {
+     "minecraft:deepslate_iron_ore": 77
+    },
+    "-42": {
+     "minecraft:deepslate_iron_ore": 255
+    },
+    "-41": {
+     "minecraft:deepslate_iron_ore": 266
+    },
+    "-40": {
+     "minecraft:deepslate_iron_ore": 72
+    }
+   }
+  },
+  "tuff": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 6.71,
+     "std": 1.8182,
+     "min": 2,
+     "max": 10,
+     "percentiles": {
+      "5": 4.0,
+      "25": 5.75,
+      "50": 6.5,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "2": 1,
+      "4": 15,
+      "5": 9,
+      "6": 25,
+      "7": 6,
+      "8": 31,
+      "9": 6,
+      "10": 7
+     }
+    },
+    "minecraft:deepslate_iron_ore": {
+     "mean": 6.14,
+     "std": 1.9392,
+     "min": 2,
+     "max": 10,
+     "percentiles": {
+      "5": 4.0,
+      "25": 4.75,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 9.05
+     },
+     "histogram": {
+      "2": 3,
+      "3": 1,
+      "4": 21,
+      "5": 16,
+      "6": 20,
+      "7": 5,
+      "8": 25,
+      "9": 4,
+      "10": 5
+     }
+    },
+    "minecraft:iron_ore": {
+     "mean": 0.57,
+     "std": 1.0886,
+     "min": 0,
+     "max": 5,
+     "percentiles": {
+      "5": 0.0,
+      "25": 0.0,
+      "50": 0.0,
+      "75": 1.0,
+      "95": 4.0
+     },
+     "histogram": {
+      "0": 68,
+      "1": 21,
+      "2": 4,
+      "3": 1,
+      "4": 5,
+      "5": 1
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "1": 1,
+      "2": 86,
+      "3": 11,
+      "4": 2
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 4,
+      "2": 59,
+      "3": 34,
+      "4": 3
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 82,
+      "3": 16,
+      "4": 2
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 6,
+    "-1": 311,
+    "0": 338,
+    "1": 16
+   },
+   "by_dy": {
+    "-3": 66,
+    "-2": 288,
+    "-1": 260,
+    "0": 57
+   },
+   "by_dz": {
+    "-2": 14,
+    "-1": 315,
+    "0": 325,
+    "1": 17
+   },
+   "replaced": {
+    "minecraft:tuff": 671
+   },
+   "by_y": {
+    "-3": {
+     "minecraft:deepslate_iron_ore": 66
+    },
+    "-2": {
+     "minecraft:deepslate_iron_ore": 288
+    },
+    "-1": {
+     "minecraft:deepslate_iron_ore": 260
+    },
+    "0": {
+     "minecraft:iron_ore": 57
+    }
+   }
+  },
+  "stone": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 6.64,
+     "std": 1.8139,
+     "min": 2,
+     "max": 11,
+     "percentiles": {
+      "5": 4.0,
+      "25": 5.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "2": 1,
+      "4": 14,
+      "5": 11,
+      "6": 25,
+      "7": 10,
+      "8": 30,
+      "9": 2,
+      "10": 4,
+      "11": 3
+     }
+    },
+    "minecraft:iron_ore": {
+     "mean": 6.64,
+     "std": 1.8139,
+     "min": 2,
+     "max": 11,
+     "percentiles": {
+      "5": 4.0,
+      "25": 5.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "2": 1,
+      "4": 14,
+      "5": 11,
+      "6": 25,
+      "7": 10,
+      "8": 30,
+      "9": 2,
+      "10": 4,
+      "11": 3
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 85,
+      "3": 12,
+      "4": 3
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 8,
+      "2": 67,
+      "3": 23,
+      "4": 2
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 85,
+      "3": 14,
+      "4": 1
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 4,
+    "-1": 300,
+    "0": 336,
+    "1": 24
+   },
+   "by_dy": {
+    "-3": 71,
+    "-2": 251,
+    "-1": 263,
+    "0": 79
+   },
+   "by_dz": {
+    "-2": 14,
+    "-1": 320,
+    "0": 317,
+    "1": 13
+   },
+   "replaced": {
+    "minecraft:stone": 664
+   },
+   "by_y": {
+    "41": {
+     "minecraft:iron_ore": 71
+    },
+    "42": {
+     "minecraft:iron_ore": 251
+    },
+    "43": {
+     "minecraft:iron_ore": 263
+    },
+    "44": {
+     "minecraft:iron_ore": 79
+    }
+   }
+  },
+  "air": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 6.13,
+     "std": 2.2435,
+     "min": 2,
+     "max": 12,
+     "percentiles": {
+      "5": 2.95,
+      "25": 4.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "2": 5,
+      "3": 1,
+      "4": 24,
+      "5": 18,
+      "6": 10,
+      "7": 8,
+      "8": 19,
+      "9": 6,
+      "10": 8,
+      "12": 1
+     }
+    },
+    "minecraft:iron_ore": {
+     "mean": 6.13,
+     "std": 2.2435,
+     "min": 2,
+     "max": 12,
+     "percentiles": {
+      "5": 2.95,
+      "25": 4.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "2": 5,
+      "3": 1,
+      "4": 24,
+      "5": 18,
+      "6": 10,
+      "7": 8,
+      "8": 19,
+      "9": 6,
+      "10": 8,
+      "12": 1
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "1": 1,
+      "2": 81,
+      "3": 14,
+      "4": 4
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": -1,
+     "span_histogram": {
+      "1": 25,
+      "2": 57,
+      "3": 18
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "1": 2,
+      "2": 86,
+      "3": 9,
+      "4": 3
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 6,
+    "-1": 281,
+    "0": 301,
+    "1": 25
+   },
+   "by_dy": {
+    "-3": 74,
+    "-2": 264,
+    "-1": 275
+   },
+   "by_dz": {
+    "-2": 8,
+    "-1": 292,
+    "0": 300,
+    "1": 13
+   },
+   "replaced": {
+    "minecraft:stone": 613
+   },
+   "by_y": {
+    "81": {
+     "minecraft:iron_ore": 74
+    },
+    "82": {
+     "minecraft:iron_ore": 264
+    },
+    "83": {
+     "minecraft:iron_ore": 275
+    }
+   }
+  }
+ },
+ "exposure": {
+  "air": {
+   "adjacent": 275,
+   "rest": 338,
+   "plane": 0
+  },
+  "solid": {
+   "adjacent": 263,
+   "rest": 322
+  },
+  "ratio": 0.9961
+ }
+}

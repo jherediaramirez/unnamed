@@ -1,0 +1,598 @@
+{
+ "generated_by": "tools/feature_probe.py",
+ "minecraft": "26.3",
+ "feature": "minecraft:ore_gold",
+ "config": {
+  "size": 9,
+  "discard_chance_on_air_exposure": 0.0
+ },
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:deepslate",
+    -63,
+    -17
+   ],
+   [
+    "minecraft:tuff",
+    -16,
+    15
+   ],
+   [
+    "minecraft:stone",
+    16,
+    83
+   ],
+   [
+    "minecraft:air",
+    84,
+    84
+   ],
+   [
+    "minecraft:stone",
+    85,
+    111
+   ]
+  ],
+  "grid_spacing": 32,
+  "bands": {
+   "deepslate": {
+    "origin_y": -40,
+    "window": [
+     -63,
+     -21
+    ]
+   },
+   "tuff": {
+    "origin_y": 0,
+    "window": [
+     -20,
+     21
+    ]
+   },
+   "stone": {
+    "origin_y": 44,
+    "window": [
+     22,
+     63
+    ]
+   },
+   "air": {
+    "origin_y": 84,
+    "window": [
+     64,
+     111
+    ]
+   }
+  }
+ },
+ "note": "vanilla's random differs per call: compare distributions, not blocks",
+ "bands": {
+  "deepslate": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 6.85,
+     "std": 1.8514,
+     "min": 3,
+     "max": 12,
+     "percentiles": {
+      "5": 4.0,
+      "25": 6.0,
+      "50": 7.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "3": 2,
+      "4": 9,
+      "5": 13,
+      "6": 24,
+      "7": 9,
+      "8": 29,
+      "9": 3,
+      "10": 10,
+      "12": 1
+     }
+    },
+    "minecraft:deepslate_gold_ore": {
+     "mean": 6.85,
+     "std": 1.8514,
+     "min": 3,
+     "max": 12,
+     "percentiles": {
+      "5": 4.0,
+      "25": 6.0,
+      "50": 7.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "3": 2,
+      "4": 9,
+      "5": 13,
+      "6": 24,
+      "7": 9,
+      "8": 29,
+      "9": 3,
+      "10": 10,
+      "12": 1
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 84,
+      "3": 13,
+      "4": 3
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 6,
+      "2": 60,
+      "3": 31,
+      "4": 3
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 85,
+      "3": 14,
+      "4": 1
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 9,
+    "-1": 322,
+    "0": 339,
+    "1": 15
+   },
+   "by_dy": {
+    "-3": 74,
+    "-2": 284,
+    "-1": 262,
+    "0": 65
+   },
+   "by_dz": {
+    "-2": 9,
+    "-1": 326,
+    "0": 336,
+    "1": 14
+   },
+   "replaced": {
+    "minecraft:deepslate": 685
+   },
+   "by_y": {
+    "-43": {
+     "minecraft:deepslate_gold_ore": 74
+    },
+    "-42": {
+     "minecraft:deepslate_gold_ore": 284
+    },
+    "-41": {
+     "minecraft:deepslate_gold_ore": 262
+    },
+    "-40": {
+     "minecraft:deepslate_gold_ore": 65
+    }
+   }
+  },
+  "tuff": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 6.6,
+     "std": 2.005,
+     "min": 3,
+     "max": 11,
+     "percentiles": {
+      "5": 4.0,
+      "25": 5.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "3": 4,
+      "4": 15,
+      "5": 10,
+      "6": 28,
+      "7": 2,
+      "8": 25,
+      "9": 5,
+      "10": 10,
+      "11": 1
+     }
+    },
+    "minecraft:deepslate_gold_ore": {
+     "mean": 5.97,
+     "std": 2.0369,
+     "min": 2,
+     "max": 10,
+     "percentiles": {
+      "5": 3.0,
+      "25": 4.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "2": 3,
+      "3": 4,
+      "4": 21,
+      "5": 18,
+      "6": 22,
+      "7": 2,
+      "8": 17,
+      "9": 7,
+      "10": 6
+     }
+    },
+    "minecraft:gold_ore": {
+     "mean": 0.63,
+     "std": 1.2542,
+     "min": 0,
+     "max": 5,
+     "percentiles": {
+      "5": 0.0,
+      "25": 0.0,
+      "50": 0.0,
+      "75": 1.0,
+      "95": 4.0
+     },
+     "histogram": {
+      "0": 71,
+      "1": 15,
+      "2": 5,
+      "4": 7,
+      "5": 2
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 82,
+      "3": 16,
+      "4": 2
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 8,
+      "2": 56,
+      "3": 35,
+      "4": 1
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "1": 1,
+      "2": 87,
+      "3": 10,
+      "4": 2
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 6,
+    "-1": 310,
+    "0": 316,
+    "1": 28
+   },
+   "by_dy": {
+    "-3": 63,
+    "-2": 275,
+    "-1": 259,
+    "0": 63
+   },
+   "by_dz": {
+    "-2": 7,
+    "-1": 321,
+    "0": 318,
+    "1": 14
+   },
+   "replaced": {
+    "minecraft:tuff": 660
+   },
+   "by_y": {
+    "-3": {
+     "minecraft:deepslate_gold_ore": 63
+    },
+    "-2": {
+     "minecraft:deepslate_gold_ore": 275
+    },
+    "-1": {
+     "minecraft:deepslate_gold_ore": 259
+    },
+    "0": {
+     "minecraft:gold_ore": 63
+    }
+   }
+  },
+  "stone": {
+   "placements": 100,
+   "placed": 99,
+   "failed": 1,
+   "blocks": {
+    "total": {
+     "mean": 6.84,
+     "std": 1.9785,
+     "min": 0,
+     "max": 12,
+     "percentiles": {
+      "5": 4.0,
+      "25": 6.0,
+      "50": 7.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "0": 1,
+      "2": 1,
+      "4": 12,
+      "5": 8,
+      "6": 23,
+      "7": 9,
+      "8": 33,
+      "9": 6,
+      "10": 3,
+      "11": 3,
+      "12": 1
+     }
+    },
+    "minecraft:gold_ore": {
+     "mean": 6.84,
+     "std": 1.9785,
+     "min": 0,
+     "max": 12,
+     "percentiles": {
+      "5": 4.0,
+      "25": 6.0,
+      "50": 7.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "0": 1,
+      "2": 1,
+      "4": 12,
+      "5": 8,
+      "6": 23,
+      "7": 9,
+      "8": 33,
+      "9": 6,
+      "10": 3,
+      "11": 3,
+      "12": 1
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "0": 1,
+      "1": 2,
+      "2": 81,
+      "3": 13,
+      "4": 3
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "0": 1,
+      "1": 7,
+      "2": 58,
+      "3": 32,
+      "4": 2
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "0": 1,
+      "2": 85,
+      "3": 14
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 7,
+    "-1": 315,
+    "0": 340,
+    "1": 22
+   },
+   "by_dy": {
+    "-3": 78,
+    "-2": 269,
+    "-1": 269,
+    "0": 68
+   },
+   "by_dz": {
+    "-2": 11,
+    "-1": 321,
+    "0": 339,
+    "1": 13
+   },
+   "replaced": {
+    "minecraft:stone": 684
+   },
+   "by_y": {
+    "41": {
+     "minecraft:gold_ore": 78
+    },
+    "42": {
+     "minecraft:gold_ore": 269
+    },
+    "43": {
+     "minecraft:gold_ore": 269
+    },
+    "44": {
+     "minecraft:gold_ore": 68
+    }
+   }
+  },
+  "air": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 6.47,
+     "std": 2.2021,
+     "min": 2,
+     "max": 12,
+     "percentiles": {
+      "5": 3.0,
+      "25": 5.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "2": 3,
+      "3": 5,
+      "4": 11,
+      "5": 17,
+      "6": 20,
+      "7": 5,
+      "8": 24,
+      "9": 5,
+      "10": 6,
+      "11": 3,
+      "12": 1
+     }
+    },
+    "minecraft:gold_ore": {
+     "mean": 6.47,
+     "std": 2.2021,
+     "min": 2,
+     "max": 12,
+     "percentiles": {
+      "5": 3.0,
+      "25": 5.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "2": 3,
+      "3": 5,
+      "4": 11,
+      "5": 17,
+      "6": 20,
+      "7": 5,
+      "8": 24,
+      "9": 5,
+      "10": 6,
+      "11": 3,
+      "12": 1
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "1": 1,
+      "2": 80,
+      "3": 12,
+      "4": 7
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": -1,
+     "span_histogram": {
+      "1": 17,
+      "2": 58,
+      "3": 25
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "1": 1,
+      "2": 84,
+      "3": 10,
+      "4": 5
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 12,
+    "-1": 299,
+    "0": 313,
+    "1": 23
+   },
+   "by_dy": {
+    "-3": 84,
+    "-2": 289,
+    "-1": 274
+   },
+   "by_dz": {
+    "-2": 13,
+    "-1": 302,
+    "0": 315,
+    "1": 17
+   },
+   "replaced": {
+    "minecraft:stone": 647
+   },
+   "by_y": {
+    "81": {
+     "minecraft:gold_ore": 84
+    },
+    "82": {
+     "minecraft:gold_ore": 289
+    },
+    "83": {
+     "minecraft:gold_ore": 274
+    }
+   }
+  }
+ },
+ "exposure": {
+  "air": {
+   "adjacent": 274,
+   "rest": 373,
+   "plane": 0
+  },
+  "solid": {
+   "adjacent": 269,
+   "rest": 347
+  },
+  "ratio": 0.9476
+ }
+}

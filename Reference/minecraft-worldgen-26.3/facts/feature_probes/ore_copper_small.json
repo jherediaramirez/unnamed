@@ -1,0 +1,595 @@
+{
+ "generated_by": "tools/feature_probe.py",
+ "minecraft": "26.3",
+ "feature": "minecraft:ore_copper_small",
+ "config": {
+  "size": 10,
+  "discard_chance_on_air_exposure": 0.0
+ },
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:deepslate",
+    -63,
+    -17
+   ],
+   [
+    "minecraft:tuff",
+    -16,
+    15
+   ],
+   [
+    "minecraft:stone",
+    16,
+    83
+   ],
+   [
+    "minecraft:air",
+    84,
+    84
+   ],
+   [
+    "minecraft:stone",
+    85,
+    111
+   ]
+  ],
+  "grid_spacing": 32,
+  "bands": {
+   "deepslate": {
+    "origin_y": -40,
+    "window": [
+     -63,
+     -21
+    ]
+   },
+   "tuff": {
+    "origin_y": 0,
+    "window": [
+     -20,
+     21
+    ]
+   },
+   "stone": {
+    "origin_y": 44,
+    "window": [
+     22,
+     63
+    ]
+   },
+   "air": {
+    "origin_y": 84,
+    "window": [
+     64,
+     111
+    ]
+   }
+  }
+ },
+ "note": "vanilla's random differs per call: compare distributions, not blocks",
+ "bands": {
+  "deepslate": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 8.6,
+     "std": 2.1633,
+     "min": 4,
+     "max": 13,
+     "percentiles": {
+      "5": 4.95,
+      "25": 7.75,
+      "50": 8.0,
+      "75": 10.0,
+      "95": 12.0
+     },
+     "histogram": {
+      "4": 5,
+      "5": 2,
+      "6": 13,
+      "7": 5,
+      "8": 29,
+      "9": 6,
+      "10": 21,
+      "11": 9,
+      "12": 8,
+      "13": 2
+     }
+    },
+    "minecraft:deepslate_copper_ore": {
+     "mean": 8.6,
+     "std": 2.1633,
+     "min": 4,
+     "max": 13,
+     "percentiles": {
+      "5": 4.95,
+      "25": 7.75,
+      "50": 8.0,
+      "75": 10.0,
+      "95": 12.0
+     },
+     "histogram": {
+      "4": 5,
+      "5": 2,
+      "6": 13,
+      "7": 5,
+      "8": 29,
+      "9": 6,
+      "10": 21,
+      "11": 9,
+      "12": 8,
+      "13": 2
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 65,
+      "3": 19,
+      "4": 16
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 2,
+      "2": 47,
+      "3": 45,
+      "4": 6
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 64,
+      "3": 18,
+      "4": 18
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 23,
+    "-1": 366,
+    "0": 405,
+    "1": 66
+   },
+   "by_dy": {
+    "-3": 111,
+    "-2": 344,
+    "-1": 318,
+    "0": 87
+   },
+   "by_dz": {
+    "-2": 38,
+    "-1": 378,
+    "0": 399,
+    "1": 45
+   },
+   "replaced": {
+    "minecraft:deepslate": 860
+   },
+   "by_y": {
+    "-43": {
+     "minecraft:deepslate_copper_ore": 111
+    },
+    "-42": {
+     "minecraft:deepslate_copper_ore": 344
+    },
+    "-41": {
+     "minecraft:deepslate_copper_ore": 318
+    },
+    "-40": {
+     "minecraft:deepslate_copper_ore": 87
+    }
+   }
+  },
+  "tuff": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 8.5,
+     "std": 2.1977,
+     "min": 4,
+     "max": 14,
+     "percentiles": {
+      "5": 5.0,
+      "25": 7.0,
+      "50": 8.0,
+      "75": 10.0,
+      "95": 12.0
+     },
+     "histogram": {
+      "4": 2,
+      "5": 7,
+      "6": 12,
+      "7": 12,
+      "8": 22,
+      "9": 5,
+      "10": 24,
+      "11": 6,
+      "12": 7,
+      "13": 2,
+      "14": 1
+     }
+    },
+    "minecraft:copper_ore": {
+     "mean": 0.84,
+     "std": 1.4541,
+     "min": 0,
+     "max": 6,
+     "percentiles": {
+      "5": 0.0,
+      "25": 0.0,
+      "50": 0.0,
+      "75": 1.0,
+      "95": 5.0
+     },
+     "histogram": {
+      "0": 61,
+      "1": 23,
+      "2": 4,
+      "3": 2,
+      "4": 4,
+      "5": 5,
+      "6": 1
+     }
+    },
+    "minecraft:deepslate_copper_ore": {
+     "mean": 7.66,
+     "std": 2.4134,
+     "min": 2,
+     "max": 14,
+     "percentiles": {
+      "5": 4.0,
+      "25": 6.0,
+      "50": 8.0,
+      "75": 10.0,
+      "95": 11.05
+     },
+     "histogram": {
+      "2": 1,
+      "3": 1,
+      "4": 7,
+      "5": 13,
+      "6": 14,
+      "7": 13,
+      "8": 14,
+      "9": 6,
+      "10": 21,
+      "11": 5,
+      "12": 4,
+      "14": 1
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 54,
+      "3": 32,
+      "4": 14
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 2,
+      "2": 58,
+      "3": 33,
+      "4": 7
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 64,
+      "3": 22,
+      "4": 14
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 32,
+    "-1": 370,
+    "0": 379,
+    "1": 69
+   },
+   "by_dy": {
+    "-3": 104,
+    "-2": 337,
+    "-1": 325,
+    "0": 84
+   },
+   "by_dz": {
+    "-2": 37,
+    "-1": 374,
+    "0": 394,
+    "1": 45
+   },
+   "replaced": {
+    "minecraft:tuff": 850
+   },
+   "by_y": {
+    "-3": {
+     "minecraft:deepslate_copper_ore": 104
+    },
+    "-2": {
+     "minecraft:deepslate_copper_ore": 337
+    },
+    "-1": {
+     "minecraft:deepslate_copper_ore": 325
+    },
+    "0": {
+     "minecraft:copper_ore": 84
+    }
+   }
+  },
+  "stone": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 8.54,
+     "std": 2.0269,
+     "min": 3,
+     "max": 12,
+     "percentiles": {
+      "5": 5.0,
+      "25": 7.75,
+      "50": 9.0,
+      "75": 10.0,
+      "95": 12.0
+     },
+     "histogram": {
+      "3": 1,
+      "4": 2,
+      "5": 6,
+      "6": 10,
+      "7": 6,
+      "8": 22,
+      "9": 15,
+      "10": 26,
+      "11": 4,
+      "12": 8
+     }
+    },
+    "minecraft:copper_ore": {
+     "mean": 8.54,
+     "std": 2.0269,
+     "min": 3,
+     "max": 12,
+     "percentiles": {
+      "5": 5.0,
+      "25": 7.75,
+      "50": 9.0,
+      "75": 10.0,
+      "95": 12.0
+     },
+     "histogram": {
+      "3": 1,
+      "4": 2,
+      "5": 6,
+      "6": 10,
+      "7": 6,
+      "8": 22,
+      "9": 15,
+      "10": 26,
+      "11": 4,
+      "12": 8
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 58,
+      "3": 23,
+      "4": 19
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 4,
+      "2": 52,
+      "3": 38,
+      "4": 6
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 63,
+      "3": 22,
+      "4": 15
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 31,
+    "-1": 365,
+    "0": 389,
+    "1": 69
+   },
+   "by_dy": {
+    "-3": 85,
+    "-2": 341,
+    "-1": 339,
+    "0": 89
+   },
+   "by_dz": {
+    "-2": 46,
+    "-1": 386,
+    "0": 388,
+    "1": 34
+   },
+   "replaced": {
+    "minecraft:stone": 854
+   },
+   "by_y": {
+    "41": {
+     "minecraft:copper_ore": 85
+    },
+    "42": {
+     "minecraft:copper_ore": 341
+    },
+    "43": {
+     "minecraft:copper_ore": 339
+    },
+    "44": {
+     "minecraft:copper_ore": 89
+    }
+   }
+  },
+  "air": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 7.62,
+     "std": 2.3056,
+     "min": 4,
+     "max": 12,
+     "percentiles": {
+      "5": 4.0,
+      "25": 6.0,
+      "50": 8.0,
+      "75": 10.0,
+      "95": 11.0
+     },
+     "histogram": {
+      "4": 8,
+      "5": 15,
+      "6": 17,
+      "7": 8,
+      "8": 15,
+      "9": 8,
+      "10": 18,
+      "11": 7,
+      "12": 4
+     }
+    },
+    "minecraft:copper_ore": {
+     "mean": 7.62,
+     "std": 2.3056,
+     "min": 4,
+     "max": 12,
+     "percentiles": {
+      "5": 4.0,
+      "25": 6.0,
+      "50": 8.0,
+      "75": 10.0,
+      "95": 11.0
+     },
+     "histogram": {
+      "4": 8,
+      "5": 15,
+      "6": 17,
+      "7": 8,
+      "8": 15,
+      "9": 8,
+      "10": 18,
+      "11": 7,
+      "12": 4
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 61,
+      "3": 26,
+      "4": 13
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": -1,
+     "span_histogram": {
+      "1": 19,
+      "2": 44,
+      "3": 37
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 61,
+      "3": 25,
+      "4": 14
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 27,
+    "-1": 334,
+    "0": 357,
+    "1": 44
+   },
+   "by_dy": {
+    "-3": 96,
+    "-2": 359,
+    "-1": 307
+   },
+   "by_dz": {
+    "-2": 37,
+    "-1": 340,
+    "0": 341,
+    "1": 44
+   },
+   "replaced": {
+    "minecraft:stone": 762
+   },
+   "by_y": {
+    "81": {
+     "minecraft:copper_ore": 96
+    },
+    "82": {
+     "minecraft:copper_ore": 359
+    },
+    "83": {
+     "minecraft:copper_ore": 307
+    }
+   }
+  }
+ },
+ "exposure": {
+  "air": {
+   "adjacent": 307,
+   "rest": 455,
+   "plane": 0
+  },
+  "solid": {
+   "adjacent": 339,
+   "rest": 426
+  },
+  "ratio": 0.8479
+ }
+}

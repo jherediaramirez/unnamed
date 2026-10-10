@@ -1,0 +1,582 @@
+{
+ "generated_by": "tools/feature_probe.py",
+ "minecraft": "26.3",
+ "feature": "minecraft:ore_infested",
+ "config": {
+  "size": 9,
+  "discard_chance_on_air_exposure": 0.0
+ },
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:deepslate",
+    -63,
+    -17
+   ],
+   [
+    "minecraft:tuff",
+    -16,
+    15
+   ],
+   [
+    "minecraft:stone",
+    16,
+    83
+   ],
+   [
+    "minecraft:air",
+    84,
+    84
+   ],
+   [
+    "minecraft:stone",
+    85,
+    111
+   ]
+  ],
+  "grid_spacing": 32,
+  "bands": {
+   "deepslate": {
+    "origin_y": -40,
+    "window": [
+     -63,
+     -21
+    ]
+   },
+   "tuff": {
+    "origin_y": 0,
+    "window": [
+     -20,
+     21
+    ]
+   },
+   "stone": {
+    "origin_y": 44,
+    "window": [
+     22,
+     63
+    ]
+   },
+   "air": {
+    "origin_y": 84,
+    "window": [
+     64,
+     111
+    ]
+   }
+  }
+ },
+ "note": "vanilla's random differs per call: compare distributions, not blocks",
+ "bands": {
+  "deepslate": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 6.6,
+     "std": 1.8385,
+     "min": 4,
+     "max": 13,
+     "percentiles": {
+      "5": 4.0,
+      "25": 5.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "4": 13,
+      "5": 17,
+      "6": 26,
+      "7": 9,
+      "8": 23,
+      "9": 3,
+      "10": 8,
+      "13": 1
+     }
+    },
+    "minecraft:infested_deepslate": {
+     "mean": 6.6,
+     "std": 1.8385,
+     "min": 4,
+     "max": 13,
+     "percentiles": {
+      "5": 4.0,
+      "25": 5.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "4": 13,
+      "5": 17,
+      "6": 26,
+      "7": 9,
+      "8": 23,
+      "9": 3,
+      "10": 8,
+      "13": 1
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 79,
+      "3": 17,
+      "4": 4
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 7,
+      "2": 52,
+      "3": 39,
+      "4": 2
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 87,
+      "3": 12,
+      "4": 1
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 8,
+    "-1": 302,
+    "0": 318,
+    "1": 32
+   },
+   "by_dy": {
+    "-3": 57,
+    "-2": 283,
+    "-1": 255,
+    "0": 65
+   },
+   "by_dz": {
+    "-2": 14,
+    "-1": 315,
+    "0": 324,
+    "1": 7
+   },
+   "replaced": {
+    "minecraft:deepslate": 660
+   },
+   "by_y": {
+    "-43": {
+     "minecraft:infested_deepslate": 57
+    },
+    "-42": {
+     "minecraft:infested_deepslate": 283
+    },
+    "-41": {
+     "minecraft:infested_deepslate": 255
+    },
+    "-40": {
+     "minecraft:infested_deepslate": 65
+    }
+   }
+  },
+  "tuff": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 6.72,
+     "std": 1.8713,
+     "min": 2,
+     "max": 10,
+     "percentiles": {
+      "5": 4.0,
+      "25": 5.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "2": 1,
+      "3": 1,
+      "4": 12,
+      "5": 12,
+      "6": 26,
+      "7": 6,
+      "8": 26,
+      "9": 7,
+      "10": 9
+     }
+    },
+    "minecraft:infested_deepslate": {
+     "mean": 6.08,
+     "std": 2.0233,
+     "min": 2,
+     "max": 10,
+     "percentiles": {
+      "5": 3.0,
+      "25": 4.75,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "2": 4,
+      "3": 2,
+      "4": 19,
+      "5": 19,
+      "6": 19,
+      "7": 4,
+      "8": 22,
+      "9": 5,
+      "10": 6
+     }
+    },
+    "minecraft:infested_stone": {
+     "mean": 0.64,
+     "std": 1.2371,
+     "min": 0,
+     "max": 5,
+     "percentiles": {
+      "5": 0.0,
+      "25": 0.0,
+      "50": 0.0,
+      "75": 1.0,
+      "95": 4.0
+     },
+     "histogram": {
+      "0": 70,
+      "1": 16,
+      "2": 4,
+      "3": 1,
+      "4": 8,
+      "5": 1
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 87,
+      "3": 11,
+      "4": 2
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 3,
+      "2": 64,
+      "3": 31,
+      "4": 2
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 87,
+      "3": 13
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 2,
+    "-1": 305,
+    "0": 341,
+    "1": 24
+   },
+   "by_dy": {
+    "-3": 80,
+    "-2": 293,
+    "-1": 235,
+    "0": 64
+   },
+   "by_dz": {
+    "-2": 12,
+    "-1": 320,
+    "0": 331,
+    "1": 9
+   },
+   "replaced": {
+    "minecraft:tuff": 672
+   },
+   "by_y": {
+    "-3": {
+     "minecraft:infested_deepslate": 80
+    },
+    "-2": {
+     "minecraft:infested_deepslate": 293
+    },
+    "-1": {
+     "minecraft:infested_deepslate": 235
+    },
+    "0": {
+     "minecraft:infested_stone": 64
+    }
+   }
+  },
+  "stone": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 6.6,
+     "std": 1.8708,
+     "min": 3,
+     "max": 13,
+     "percentiles": {
+      "5": 4.0,
+      "25": 5.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "3": 1,
+      "4": 13,
+      "5": 14,
+      "6": 28,
+      "7": 9,
+      "8": 24,
+      "9": 3,
+      "10": 5,
+      "11": 2,
+      "13": 1
+     }
+    },
+    "minecraft:infested_stone": {
+     "mean": 6.6,
+     "std": 1.8708,
+     "min": 3,
+     "max": 13,
+     "percentiles": {
+      "5": 4.0,
+      "25": 5.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "3": 1,
+      "4": 13,
+      "5": 14,
+      "6": 28,
+      "7": 9,
+      "8": 24,
+      "9": 3,
+      "10": 5,
+      "11": 2,
+      "13": 1
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 84,
+      "3": 13,
+      "4": 3
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 3,
+      "2": 60,
+      "3": 34,
+      "4": 3
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 85,
+      "3": 15
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 7,
+    "-1": 310,
+    "0": 324,
+    "1": 19
+   },
+   "by_dy": {
+    "-3": 70,
+    "-2": 260,
+    "-1": 267,
+    "0": 63
+   },
+   "by_dz": {
+    "-2": 10,
+    "-1": 323,
+    "0": 315,
+    "1": 12
+   },
+   "replaced": {
+    "minecraft:stone": 660
+   },
+   "by_y": {
+    "41": {
+     "minecraft:infested_stone": 70
+    },
+    "42": {
+     "minecraft:infested_stone": 260
+    },
+    "43": {
+     "minecraft:infested_stone": 267
+    },
+    "44": {
+     "minecraft:infested_stone": 63
+    }
+   }
+  },
+  "air": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 6.37,
+     "std": 1.842,
+     "min": 2,
+     "max": 10,
+     "percentiles": {
+      "5": 3.95,
+      "25": 5.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "2": 1,
+      "3": 4,
+      "4": 12,
+      "5": 18,
+      "6": 19,
+      "7": 12,
+      "8": 25,
+      "9": 3,
+      "10": 6
+     }
+    },
+    "minecraft:infested_stone": {
+     "mean": 6.37,
+     "std": 1.842,
+     "min": 2,
+     "max": 10,
+     "percentiles": {
+      "5": 3.95,
+      "25": 5.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 10.0
+     },
+     "histogram": {
+      "2": 1,
+      "3": 4,
+      "4": 12,
+      "5": 18,
+      "6": 19,
+      "7": 12,
+      "8": 25,
+      "9": 3,
+      "10": 6
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 84,
+      "3": 16
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": -1,
+     "span_histogram": {
+      "1": 17,
+      "2": 65,
+      "3": 18
+     }
+    },
+    "dz": {
+     "min": -2,
+     "max": 1,
+     "span_histogram": {
+      "2": 79,
+      "3": 17,
+      "4": 4
+     }
+    }
+   },
+   "by_dx": {
+    "-2": 1,
+    "-1": 294,
+    "0": 320,
+    "1": 22
+   },
+   "by_dy": {
+    "-3": 84,
+    "-2": 274,
+    "-1": 279
+   },
+   "by_dz": {
+    "-2": 14,
+    "-1": 301,
+    "0": 306,
+    "1": 16
+   },
+   "replaced": {
+    "minecraft:stone": 637
+   },
+   "by_y": {
+    "81": {
+     "minecraft:infested_stone": 84
+    },
+    "82": {
+     "minecraft:infested_stone": 274
+    },
+    "83": {
+     "minecraft:infested_stone": 279
+    }
+   }
+  }
+ },
+ "exposure": {
+  "air": {
+   "adjacent": 279,
+   "rest": 358,
+   "plane": 0
+  },
+  "solid": {
+   "adjacent": 267,
+   "rest": 330
+  },
+  "ratio": 0.9632
+ }
+}

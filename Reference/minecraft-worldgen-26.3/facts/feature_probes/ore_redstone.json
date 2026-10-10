@@ -1,0 +1,543 @@
+{
+ "generated_by": "tools/feature_probe.py",
+ "minecraft": "26.3",
+ "feature": "minecraft:ore_redstone",
+ "config": {
+  "size": 8,
+  "discard_chance_on_air_exposure": 0.0
+ },
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:deepslate",
+    -63,
+    -17
+   ],
+   [
+    "minecraft:tuff",
+    -16,
+    15
+   ],
+   [
+    "minecraft:stone",
+    16,
+    83
+   ],
+   [
+    "minecraft:air",
+    84,
+    84
+   ],
+   [
+    "minecraft:stone",
+    85,
+    111
+   ]
+  ],
+  "grid_spacing": 32,
+  "bands": {
+   "deepslate": {
+    "origin_y": -40,
+    "window": [
+     -63,
+     -21
+    ]
+   },
+   "tuff": {
+    "origin_y": 0,
+    "window": [
+     -20,
+     21
+    ]
+   },
+   "stone": {
+    "origin_y": 44,
+    "window": [
+     22,
+     63
+    ]
+   },
+   "air": {
+    "origin_y": 84,
+    "window": [
+     64,
+     111
+    ]
+   }
+  }
+ },
+ "note": "vanilla's random differs per call: compare distributions, not blocks",
+ "bands": {
+  "deepslate": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 5.75,
+     "std": 1.6696,
+     "min": 2,
+     "max": 9,
+     "percentiles": {
+      "5": 4.0,
+      "25": 4.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 8.0
+     },
+     "histogram": {
+      "2": 2,
+      "3": 1,
+      "4": 28,
+      "5": 16,
+      "6": 23,
+      "7": 3,
+      "8": 26,
+      "9": 1
+     }
+    },
+    "minecraft:deepslate_redstone_ore": {
+     "mean": 5.75,
+     "std": 1.6696,
+     "min": 2,
+     "max": 9,
+     "percentiles": {
+      "5": 4.0,
+      "25": 4.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 8.0
+     },
+     "histogram": {
+      "2": 2,
+      "3": 1,
+      "4": 28,
+      "5": 16,
+      "6": 23,
+      "7": 3,
+      "8": 26,
+      "9": 1
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "2": 100
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 15,
+      "2": 62,
+      "3": 23
+     }
+    },
+    "dz": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "2": 100
+     }
+    }
+   },
+   "by_dx": {
+    "-1": 280,
+    "0": 295
+   },
+   "by_dy": {
+    "-3": 56,
+    "-2": 213,
+    "-1": 240,
+    "0": 66
+   },
+   "by_dz": {
+    "-1": 288,
+    "0": 287
+   },
+   "replaced": {
+    "minecraft:deepslate": 575
+   },
+   "by_y": {
+    "-43": {
+     "minecraft:deepslate_redstone_ore": 56
+    },
+    "-42": {
+     "minecraft:deepslate_redstone_ore": 213
+    },
+    "-41": {
+     "minecraft:deepslate_redstone_ore": 240
+    },
+    "-40": {
+     "minecraft:deepslate_redstone_ore": 66
+    }
+   }
+  },
+  "tuff": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 5.65,
+     "std": 1.6934,
+     "min": 2,
+     "max": 9,
+     "percentiles": {
+      "5": 3.95,
+      "25": 4.0,
+      "50": 5.0,
+      "75": 8.0,
+      "95": 8.0
+     },
+     "histogram": {
+      "2": 1,
+      "3": 4,
+      "4": 27,
+      "5": 20,
+      "6": 22,
+      "8": 23,
+      "9": 3
+     }
+    },
+    "minecraft:deepslate_redstone_ore": {
+     "mean": 4.98,
+     "std": 1.643,
+     "min": 2,
+     "max": 9,
+     "percentiles": {
+      "5": 2.95,
+      "25": 4.0,
+      "50": 5.0,
+      "75": 6.0,
+      "95": 8.0
+     },
+     "histogram": {
+      "2": 5,
+      "3": 6,
+      "4": 37,
+      "5": 23,
+      "6": 13,
+      "8": 15,
+      "9": 1
+     }
+    },
+    "minecraft:redstone_ore": {
+     "mean": 0.67,
+     "std": 1.2732,
+     "min": 0,
+     "max": 4,
+     "percentiles": {
+      "5": 0.0,
+      "25": 0.0,
+      "50": 0.0,
+      "75": 1.0,
+      "95": 4.0
+     },
+     "histogram": {
+      "0": 71,
+      "1": 13,
+      "2": 4,
+      "3": 2,
+      "4": 10
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "1": 1,
+      "2": 99
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 17,
+      "2": 64,
+      "3": 19
+     }
+    },
+    "dz": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "2": 100
+     }
+    }
+   },
+   "by_dx": {
+    "-1": 274,
+    "0": 291
+   },
+   "by_dy": {
+    "-3": 38,
+    "-2": 211,
+    "-1": 249,
+    "0": 67
+   },
+   "by_dz": {
+    "-1": 283,
+    "0": 282
+   },
+   "replaced": {
+    "minecraft:tuff": 565
+   },
+   "by_y": {
+    "-3": {
+     "minecraft:deepslate_redstone_ore": 38
+    },
+    "-2": {
+     "minecraft:deepslate_redstone_ore": 211
+    },
+    "-1": {
+     "minecraft:deepslate_redstone_ore": 249
+    },
+    "0": {
+     "minecraft:redstone_ore": 67
+    }
+   }
+  },
+  "stone": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 5.59,
+     "std": 1.6437,
+     "min": 2,
+     "max": 10,
+     "percentiles": {
+      "5": 4.0,
+      "25": 4.0,
+      "50": 5.0,
+      "75": 6.0,
+      "95": 8.05
+     },
+     "histogram": {
+      "2": 1,
+      "3": 3,
+      "4": 25,
+      "5": 27,
+      "6": 22,
+      "7": 1,
+      "8": 16,
+      "9": 4,
+      "10": 1
+     }
+    },
+    "minecraft:redstone_ore": {
+     "mean": 5.59,
+     "std": 1.6437,
+     "min": 2,
+     "max": 10,
+     "percentiles": {
+      "5": 4.0,
+      "25": 4.0,
+      "50": 5.0,
+      "75": 6.0,
+      "95": 8.05
+     },
+     "histogram": {
+      "2": 1,
+      "3": 3,
+      "4": 25,
+      "5": 27,
+      "6": 22,
+      "7": 1,
+      "8": 16,
+      "9": 4,
+      "10": 1
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "1": 2,
+      "2": 98
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 11,
+      "2": 64,
+      "3": 24,
+      "4": 1
+     }
+    },
+    "dz": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "1": 2,
+      "2": 98
+     }
+    }
+   },
+   "by_dx": {
+    "-1": 275,
+    "0": 284
+   },
+   "by_dy": {
+    "-3": 39,
+    "-2": 215,
+    "-1": 239,
+    "0": 66
+   },
+   "by_dz": {
+    "-1": 275,
+    "0": 284
+   },
+   "replaced": {
+    "minecraft:stone": 559
+   },
+   "by_y": {
+    "41": {
+     "minecraft:redstone_ore": 39
+    },
+    "42": {
+     "minecraft:redstone_ore": 215
+    },
+    "43": {
+     "minecraft:redstone_ore": 239
+    },
+    "44": {
+     "minecraft:redstone_ore": 66
+    }
+   }
+  },
+  "air": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 4.97,
+     "std": 1.6938,
+     "min": 2,
+     "max": 9,
+     "percentiles": {
+      "5": 3.0,
+      "25": 4.0,
+      "50": 4.0,
+      "75": 6.0,
+      "95": 8.0
+     },
+     "histogram": {
+      "2": 3,
+      "3": 9,
+      "4": 43,
+      "5": 15,
+      "6": 12,
+      "8": 17,
+      "9": 1
+     }
+    },
+    "minecraft:redstone_ore": {
+     "mean": 4.97,
+     "std": 1.6938,
+     "min": 2,
+     "max": 9,
+     "percentiles": {
+      "5": 3.0,
+      "25": 4.0,
+      "50": 4.0,
+      "75": 6.0,
+      "95": 8.0
+     },
+     "histogram": {
+      "2": 3,
+      "3": 9,
+      "4": 43,
+      "5": 15,
+      "6": 12,
+      "8": 17,
+      "9": 1
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "2": 100
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": -1,
+     "span_histogram": {
+      "1": 34,
+      "2": 56,
+      "3": 10
+     }
+    },
+    "dz": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "2": 100
+     }
+    }
+   },
+   "by_dx": {
+    "-1": 243,
+    "0": 254
+   },
+   "by_dy": {
+    "-3": 41,
+    "-2": 205,
+    "-1": 251
+   },
+   "by_dz": {
+    "-1": 249,
+    "0": 248
+   },
+   "replaced": {
+    "minecraft:stone": 497
+   },
+   "by_y": {
+    "81": {
+     "minecraft:redstone_ore": 41
+    },
+    "82": {
+     "minecraft:redstone_ore": 205
+    },
+    "83": {
+     "minecraft:redstone_ore": 251
+    }
+   }
+  }
+ },
+ "exposure": {
+  "air": {
+   "adjacent": 251,
+   "rest": 246,
+   "plane": 0
+  },
+  "solid": {
+   "adjacent": 239,
+   "rest": 254
+  },
+  "ratio": 1.0844
+ }
+}

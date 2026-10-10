@@ -394,6 +394,63 @@ bool FVoxelFeaturesOrderTest::RunTest(const FString& Parameters)
     }
     TestEqual(TEXT("features per step"), FString::Join(PerStep, TEXT(" ")), FString(TEXT("0 4 5 4 4 0 34 7 3 109 1")));
     TestEqual(TEXT("top-level placed features"), Listed, 171);
+
+    // Vanilla's own order (facts/feature_order.json: the jar's FeatureSorter over the overworld's biomes). Every pair
+    // the biome lists constrain, directly or through other features, comes in the same order in both. Pairs no list
+    // constrains may differ (our ties go by id, vanilla's by its own walk); their number is reported.
+    const TSharedPtr<FJsonValue> Vanilla =
+        LoadFeatureTestJson(FPaths::Combine(VoxelWorldgen::GetReferenceRoot(), TEXT("facts/feature_order.json")));
+    const TArray<TSharedPtr<FJsonValue>>* VanillaSteps = nullptr;
+    if (!TestTrue(TEXT("vanilla's order reads"),
+            Vanilla.IsValid() && Vanilla->Type == EJson::Object &&
+                Vanilla->AsObject()->TryGetArrayField(TEXT("steps"), VanillaSteps) &&
+                VanillaSteps->Num() == FVoxelFeatureGraph::StepCount))
+        return false;
+    int32 Constrained = 0;
+    int32 Differing = 0;
+    for (int32 Step = 0; Step < FVoxelFeatureGraph::StepCount; ++Step)
+    {
+        const FString StepName = FVoxelFeatureGraph::GetStepName(Step);
+        const TArray<int32>& Ours = Order.Steps[Step];
+        const int32 N = Ours.Num();
+        TMap<int32, int32> OursAt;
+        for (int32 Index = 0; Index < N; ++Index)
+            OursAt.Add(Ours[Index], Index);
+        TArray<int32> VanillaAt;
+        VanillaAt.Init(INDEX_NONE, N);
+        const TArray<TSharedPtr<FJsonValue>>& Ids = (*VanillaSteps)[Step]->AsObject()->GetArrayField(TEXT("features"));
+        for (int32 Index = 0; Index < Ids.Num(); ++Index)
+            if (const int32* At =
+                    OursAt.Find(Graph.FindEntry(EVoxelFeatureRegistry::PlacedFeature, Ids[Index]->AsString())))
+                VanillaAt[*At] = Index;
+        if (!TestTrue(FString::Printf(TEXT("%s: vanilla orders the same features"), *StepName),
+                Ids.Num() == N && !VanillaAt.Contains(INDEX_NONE)))
+            continue;
+        // Must[I * N + J]: ours[I] comes before ours[J] in every order the lists allow, the transitive closure of the
+        // lists' orders. Ours is one such order, so only I < J is set; rows close from the last one up.
+        TArray<bool> Must;
+        Must.Init(false, N * N);
+        for (const FVoxelBiomeDecoration& Biome : Graph.Biomes)
+            for (int32 Index = 1; Index < Biome.Steps[Step].Num(); ++Index)
+                Must[OursAt[Biome.Steps[Step][Index - 1]] * N + OursAt[Biome.Steps[Step][Index]]] = true;
+        for (int32 I = N - 1; I >= 0; --I)
+            for (int32 J = I + 1; J < N; ++J)
+                if (Must[I * N + J])
+                    for (int32 K = J + 1; K < N; ++K)
+                        Must[I * N + K] = Must[I * N + K] || Must[J * N + K];
+        int32 Broken = 0;
+        for (int32 I = 0; I < N; ++I)
+            for (int32 J = I + 1; J < N; ++J)
+            {
+                const bool bAgrees = VanillaAt[I] < VanillaAt[J];
+                Constrained += Must[I * N + J] ? 1 : 0;
+                Broken += Must[I * N + J] && !bAgrees ? 1 : 0;
+                Differing += !Must[I * N + J] && !bAgrees ? 1 : 0;
+            }
+        TestEqual(FString::Printf(TEXT("%s: constrained pairs vanilla orders otherwise"), *StepName), Broken, 0);
+    }
+    AddInfo(FString::Printf(
+        TEXT("Vanilla's order: %d constrained pairs agree; %d unconstrained pairs differ"), Constrained, Differing));
     return true;
 }
 
