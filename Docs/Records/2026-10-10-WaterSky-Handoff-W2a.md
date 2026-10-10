@@ -2,6 +2,13 @@
 
 October 10, 2026. W1 (the fluid core) is done on `feature/water-sky`; its record is [2026-10-10-WaterSky-W1.md](2026-10-10-WaterSky-W1.md). The lane's order (plan section 4) runs **DN1 next**. Its scope and reading list are in the plan (section 5, DN1), so this handoff doesn't repeat them. **W2a** follows after T3 merges and DN1's clock exists. This handoff carries W1's results and what W2a needs.
 
+**Before the lane's next session builds:**
+- `feature/voxel-world` is now `c90be1f` (trees and the torch); the branch is still on `41190e9`.
+- The next session merges it once first (merge, never rebase; the lane rules), then builds with touched sources or `-DisableAdaptiveUnity`.
+- Expected conflicts:
+  - `Scripts/TestVoxel.ps1`'s `$expected`: take main's count plus W1's 10;
+  - `Docs/Records/README.md`: keep every entry from both sides.
+
 ## Reading list (W2a)
 
 1. This file.
@@ -31,6 +38,12 @@ October 10, 2026. W1 (the fluid core) is done on `feature/water-sky`; its record
 - Q9 (a): transients are reported, not pinned. W1's drain exemption covers up to 10 ticks.
 - Q10 (a): the fluid budget is its own 0.5 ms.
 - Q13 (a): no fluids in the Playground.
+- **Jesus's answers** (October 10, recorded in the plan's section 6):
+  - Q2 (a): world.json's optional `clocks` key now, at version 1 (DN1);
+  - Q3 (a): a new hash-checked `Reference/minecraft-sky-26.3/` and its two `CLAUDE.md` lines, which he approved, so DN0 is unblocked;
+  - Q14: sky family B, hybrid (the mock-up and DN2);
+  - Q15 (a): SP1 when he's home (a screen hold, with his monitor on);
+  - Q18: both documents stay, with the warning line W1 added.
 - W1:
   - the core keeps the wiki's neighbour update order (west, east, down, up, north, south);
   - a spreading cell writes its sides in face order (west, east, north, south);
@@ -98,7 +111,11 @@ October 10, 2026. W1 (the fluid core) is done on `feature/water-sky`; its record
 
 ## Tokens
 
-(Filled in at the end of the session.)
+- **W1's lead peaked at about 460k** (measured with `Scripts/MeasureAgentUsage.mjs`):
+  - about 200k went on the system prompt, the plan, scout M's facts and the probe scripts;
+  - the rest on code, two oracle-fix rounds, the drain-order search and the gates.
+- **Subagents:** the two Sonnet 5.5 pre-commit reviewers, the diff split by path at 1,592 lines, peaked at 72k and 74k.
+- **For W2a:** expect about 150k for the reading list.
 
 ## Short prompt (W2a)
 

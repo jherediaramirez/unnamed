@@ -4,7 +4,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 10, 2026
 
-- [Water and sky handoff: W1 done, into W2a (fluid wiring)](2026-10-10-WaterSky-Handoff-W2a.md): start here for the water half after DN1 (lane `feature/water-sky`). It covers the reading list, the settled decisions, a code map of the fluid core with the adapter W2a writes, known issues with when, what worked and failed, two open questions (the drain's same-tick order; waterlogged slabs in the table), and the short prompt.
+- [Water and sky handoff: W1 done, into W2a (fluid wiring)](2026-10-10-WaterSky-Handoff-W2a.md): start here for the water half after DN1 (lane `feature/water-sky`). It covers the reading list, the settled decisions, a code map of the fluid core with the adapter W2a writes, known issues with when, what worked and failed, two open questions (the drain's same-tick order; waterlogged slabs in the table), Jesus's answers to Q2, Q3, Q14, Q15 and Q18 (also recorded in the plan), the merge of `c90be1f` the next session does first, and the short prompt.
 - [Water and sky W1: the fluid core](2026-10-10-WaterSky-W1.md): flowing water and lava as a plain-C++ core with no game wiring.
   - The block table gains the fluid kind, the level and `IsFluidSource()`. Three readers no longer take falling fluid (amount 8) for a source.
   - `Source/UnnamedVoxel/Fluids/`: the rules (re-derive, drop search, down then sideways, lava meeting water), a FIFO due-tick scheduler and a test world.

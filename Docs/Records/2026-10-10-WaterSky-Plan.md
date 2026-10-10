@@ -367,7 +367,14 @@ Both scouts' questions merged, plus six new ones (marked "new"). **Who decides:*
 - **Q17** (a);
 - **Q18** (a) and (b): the warning line goes only in `Docs/MinecraftBlockReference.md`, and the hash-checked `research/water_research.md` stays untouched.
 
-Still Jesus's: Q2, Q3, Q14, Q15 and Q18 (c).
+**Decided by Jesus, 2026-10-10** (relayed by the manager during W1):
+- **Q2** (a): the optional world.json `clocks` key now, keeping version 1.
+- **Q3** (a): a new hash-checked `Reference/minecraft-sky-26.3/`, plus the two `CLAUDE.md` lines (the rules list and Commands), which he approved.
+- **Q14**: sky look family B (hybrid).
+- **Q15** (a): SP1 runs, when he's home (a screen hold, with his monitor on).
+- **Q18**: keep both documents, with the warning line (done in W1). (c) is not taken.
+
+No question is still open for Jesus.
 
 **Shared**
 
@@ -399,7 +406,7 @@ Still Jesus's: Q2, Q3, Q14, Q15 and Q18 (c).
     - a vanilla-dark night;
     - the shared directional light for moon shadows.
 
-    The mock-up opens on these. **Jesus** (the sky look; he picks by feel in MU).
+    The mock-up opens on these. **Jesus** (the sky look; he picks by feel in MU). **Jesus: family B (hybrid), 2026-10-10;** the knobs are still tuned in the mock-up.
 15. **Vanilla screenshots for the mock-up and DN2** (new; scout N risk 4). (a) SP1 on VP1's harness. (b) Jesus takes them himself. (c) None, tuning by memory. **Recommended: (a).** **Jesus:** the client launch needs his go.
 16. **Shots and the Playground's sky** (scout N Q5). **Recommended:**
     - the Playground keeps its fixed rig;
@@ -410,7 +417,7 @@ Still Jesus's: Q2, Q3, Q14, Q15 and Q18 (c).
 17. **The brightness slider** (scout N Q6). (a) Wire `video.gamma` in DN3: Moody to Bright moves the night and cave floor by about ±1 EV. (b) Leave it pending. **Recommended: (a).** Vanilla's slider mostly lifts the dark end. **Manager (away rule): decided as recommended, 2026-10-10.**
 18. **The two bytecode-derived documents** (new; scout M). (a) Leave them, with this plan banning them as sources. (b) Also add a one-line warning at `Docs/MinecraftBlockReference.md` section 4. (c) Remove them: rebuild the blocks reference without `research/water_research.md`, and delete section 4. **Recommended: (a) and (b) now.** **Manager (away rule)** for (a) and (b): decided, 2026-10-10. The warning line goes only in `Docs/MinecraftBlockReference.md`, and the hash-checked `research/water_research.md` stays untouched. **Jesus** only for (c) (deletions).
 
-**For Jesus:** Q2, Q3, Q14 and Q15, plus Q18 (c) only if he wants the deletions. The manager decided the rest under the away rule (above).
+**For Jesus:** Q2, Q3, Q14 and Q15, plus Q18 (c) only if he wants the deletions. The manager decided the rest under the away rule (above). **All answered on October 10** (Q2 (a), Q3 (a), Q14 B, Q15 (a) when he's home, Q18 without (c)): see the list at the top of this section.
 
 ## 7. Short prompts
 
