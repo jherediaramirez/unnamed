@@ -351,27 +351,45 @@ Both scouts' questions merged, plus six new ones (marked "new"). **Who decides:*
 - "Manager (away rule)": Jesus's rule while he's away (October 10): "Go with whatever gets closer to the vanilla style of Minecraft ... If it's easy to correct later down the road ... go with whatever the chat recommends as long as it's not a huge decision. Absolutely huge decision can be relayed to me."
 - "Jesus": saved data, project rules, deletions, anything far from vanilla, and the sky look family (mock-up first; he picks by feel).
 
+**Decided by the manager, under Jesus's away rule, 2026-10-10** (all as recommended):
+- **Q1** (a);
+- **Q4** (b);
+- **Q5** (b) as the default, with (a) behind a switch and flipped later on the main lane;
+- **Q6** (a), the view minus one;
+- **Q7** (a), no drop until item entities exist;
+- **Q8** the probe over the wiki;
+- **Q9** (a);
+- **Q10** (a), its own 0.5 ms;
+- **Q11** (a);
+- **Q12** (a), springs on after W5, on the main lane;
+- **Q13** (a);
+- **Q16** as recommended;
+- **Q17** (a);
+- **Q18** (a) and (b): the warning line goes only in `Docs/MinecraftBlockReference.md`, and the hash-checked `research/water_research.md` stays untouched.
+
+Still Jesus's: Q2, Q3, Q14, Q15 and Q18 (c).
+
 **Shared**
 
-1. **What drives game ticks** (scout M Q3; scout N §6 and risk 7). (a) One world-owned 20 Hz clock in `AVoxelWorld`, built by DN1, with a game tick and a day clock as in 26.3 (section 2). (b) Each half keeps its own counter. (c) The pawn's `Authority.Step`. **Recommended: (a).** It's vanilla's model: fluids flow while the pawn is frozen, and `advance_time` stops only the sky. **Manager (away rule).** Blocks DN1 and W2a.
+1. **What drives game ticks** (scout M Q3; scout N §6 and risk 7). (a) One world-owned 20 Hz clock in `AVoxelWorld`, built by DN1, with a game tick and a day clock as in 26.3 (section 2). (b) Each half keeps its own counter. (c) The pawn's `Authority.Step`. **Recommended: (a).** It's vanilla's model: fluids flow while the pawn is frozen, and `advance_time` stops only the sky. **Manager (away rule): decided as recommended, 2026-10-10.** Blocks DN1 and W2a.
 
 **Day/night**
 
 2. **Saving the time** (scout N Q4). (a) Now, as an optional world.json `clocks` key (`total_ticks`, `paused`, `rate`, defaults left out, as vanilla's `world_clocks.dat` does), saved on leaving the world, keeping version 1. (b) Session-only until phase 10. (c) Now, with a bump to version 2 so older builds refuse the file. **Recommended: (a).** An older dev build just drops the key. **Jesus:** it is saved data, and the project rule asks for a version bump and a migration for layout changes; whether an optional new key counts as one is his call. Blocks only the key part of DN1.
 3. **Where the sky data lives** (new; scout N §3 names a folder). (a) A new hash-checked `Reference/minecraft-sky-26.3/` with its own build and verify tools, plus two `CLAUDE.md` lines (the rules list and Commands), the items reference's pattern. (b) The timelines, dimension types and clocks added to the worldgen reference through its tools, with no rule change; its checksums then also move with the main lane's rebuilds, and the textures wait for DN2. **Recommended: (a):** sky data isn't worldgen, and it keeps clear of the main lane's reference rebuilds. **Jesus** (a project rule). Until he answers, the lane skips DN0.
-4. **Generated water and lava edges** (scout M Q1). (a) Still until the player touches them. (b) Woken when the player comes near, as in vanilla; generation stays identical. (c) Settled during generation, which changes every golden and adds to the 5 ms column. **Recommended: (b),** behind `voxel.Fluids.WakeGenerated`, defaulting on only after W5 measures the edge count. **Manager (away rule).**
+4. **Generated water and lava edges** (scout M Q1). (a) Still until the player touches them. (b) Woken when the player comes near, as in vanilla; generation stays identical. (c) Settled during generation, which changes every golden and adds to the 5 ms column. **Recommended: (b),** behind `voxel.Fluids.WakeGenerated`, defaulting on only after W5 measures the edge count. **Manager (away rule): decided as recommended, 2026-10-10.**
 
 **Water**
 
-5. **The water surface look** (scout M Q2). (a) Vanilla's sloped corners everywhere, shorelines included; `Mesher.Digest` re-recorded. (b) Slopes and side strips only where levels differ; generated water meshes byte-identical. **Recommended: (b) as W3's default, with (a) behind `SlopedTops 2`, a shot pair and the mock-up's lake toggle.** Flipping the default to (a), the vanilla look, is a later look call made on the main lane. **Manager (away rule).** The look call may go to Jesus with the sky mock-up.
-6. **Simulation radius** (scout M Q4). (a) The in-view final columns minus one, as a cvar. (b) A smaller fixed radius, such as 8 columns, to bound floods. **Recommended: (a).** **Manager (away rule).**
-7. **Washed-away plants and torches** (scout M Q5). (a) Pop with no drop, as plant pops do today. (b) Drop items as vanilla does. **Recommended: (a) now, (b) once item entities exist (items S8).** **Manager (away rule).**
-8. **The wiki against the probe** (scout M Q6). No source from "one beside plus one above"; lava's drop search is 3, not the wiki's 4. **Recommended: follow the probe (the jar).** **Manager (away rule).**
-9. **Test fidelity** (scout M Q7). (a) Pin settled states and wave timing exactly, and report transient mismatches. (b) Also pin vanilla's exact transients (the drain checkerboard), which needs vanilla's same-tick order. **Recommended: (a).** **Manager (away rule).**
-10. **The fluid frame budget** (scout M Q8, which left it to Jesus). (a) Its own 0.5 ms allowance. (b) Shared inside `voxel.ApplyBudgetMs`'s 2 ms. **Recommended: (a).** **Manager (away rule):** it's a cvar, easy to change later.
-11. **Fluid tags** (new; scout M risk 7). (a) Add `washed_away_by_fluids` and the fluid tags to the blocks reference through its tools, as T2 appended the torch, in W2b. (b) Hard-code the block list. **Recommended: (a).** **Manager (away rule):** it stays within the reference rule.
-12. **Springs once water flows** (new; phase 6 Q3 was answered "(a) in the data, switched off by default" because water didn't flow). (a) Turn them on after W5, on the main lane, re-recording the Decoration goldens. (b) Keep them off. **Recommended: (a),** as vanilla does. **Manager (away rule).** The re-record is a main-lane session.
-13. **Fluids in the Playground** (new). (a) Fluids only in voxel worlds: the system lives on `AVoxelWorld`, and the Playground's pools and probe scenes stay still. (b) Fluids flow in the Playground too. **Recommended: (a) for now.** W3's mesh parity still lands. **Manager (away rule).**
+5. **The water surface look** (scout M Q2). (a) Vanilla's sloped corners everywhere, shorelines included; `Mesher.Digest` re-recorded. (b) Slopes and side strips only where levels differ; generated water meshes byte-identical. **Recommended: (b) as W3's default, with (a) behind `SlopedTops 2`, a shot pair and the mock-up's lake toggle.** Flipping the default to (a), the vanilla look, is a later look call made on the main lane. **Manager (away rule): decided as recommended, 2026-10-10.** The look call may go to Jesus with the sky mock-up.
+6. **Simulation radius** (scout M Q4). (a) The in-view final columns minus one, as a cvar. (b) A smaller fixed radius, such as 8 columns, to bound floods. **Recommended: (a).** **Manager (away rule): decided as recommended, 2026-10-10.**
+7. **Washed-away plants and torches** (scout M Q5). (a) Pop with no drop, as plant pops do today. (b) Drop items as vanilla does. **Recommended: (a) now, (b) once item entities exist (items S8).** **Manager (away rule): decided as recommended, 2026-10-10.**
+8. **The wiki against the probe** (scout M Q6). No source from "one beside plus one above"; lava's drop search is 3, not the wiki's 4. **Recommended: follow the probe (the jar).** **Manager (away rule): decided as recommended, 2026-10-10.**
+9. **Test fidelity** (scout M Q7). (a) Pin settled states and wave timing exactly, and report transient mismatches. (b) Also pin vanilla's exact transients (the drain checkerboard), which needs vanilla's same-tick order. **Recommended: (a).** **Manager (away rule): decided as recommended, 2026-10-10.**
+10. **The fluid frame budget** (scout M Q8, which left it to Jesus). (a) Its own 0.5 ms allowance. (b) Shared inside `voxel.ApplyBudgetMs`'s 2 ms. **Recommended: (a).** **Manager (away rule): decided as recommended, 2026-10-10;** it's a cvar, easy to change later.
+11. **Fluid tags** (new; scout M risk 7). (a) Add `washed_away_by_fluids` and the fluid tags to the blocks reference through its tools, as T2 appended the torch, in W2b. (b) Hard-code the block list. **Recommended: (a).** **Manager (away rule): decided as recommended, 2026-10-10;** it stays within the reference rule.
+12. **Springs once water flows** (new; phase 6 Q3 was answered "(a) in the data, switched off by default" because water didn't flow). (a) Turn them on after W5, on the main lane, re-recording the Decoration goldens. (b) Keep them off. **Recommended: (a),** as vanilla does. **Manager (away rule): decided as recommended, 2026-10-10.** The re-record is a main-lane session.
+13. **Fluids in the Playground** (new). (a) Fluids only in voxel worlds: the system lives on `AVoxelWorld`, and the Playground's pools and probe scenes stay still. (b) Fluids flow in the Playground too. **Recommended: (a) for now.** W3's mesh parity still lands. **Manager (away rule): decided as recommended, 2026-10-10.**
 
 **Sky look and process**
 
@@ -388,11 +406,11 @@ Both scouts' questions merged, plus six new ones (marked "new"). **Who decides:*
     - shots use the fixed sun until DN2, then `-VoxelTime=6000` (noon) by default;
     - dawn, dusk and midnight shots are added.
 
-    **Manager (away rule).**
-17. **The brightness slider** (scout N Q6). (a) Wire `video.gamma` in DN3: Moody to Bright moves the night and cave floor by about ±1 EV. (b) Leave it pending. **Recommended: (a).** Vanilla's slider mostly lifts the dark end. **Manager (away rule).**
-18. **The two bytecode-derived documents** (new; scout M). (a) Leave them, with this plan banning them as sources. (b) Also add a one-line warning at `Docs/MinecraftBlockReference.md` section 4. (c) Remove them: rebuild the blocks reference without `research/water_research.md`, and delete section 4. **Recommended: (a) and (b) now.** **Manager (away rule)** for (a) and (b); **Jesus** only for (c) (deletions).
+    **Manager (away rule): decided as recommended, 2026-10-10.**
+17. **The brightness slider** (scout N Q6). (a) Wire `video.gamma` in DN3: Moody to Bright moves the night and cave floor by about ±1 EV. (b) Leave it pending. **Recommended: (a).** Vanilla's slider mostly lifts the dark end. **Manager (away rule): decided as recommended, 2026-10-10.**
+18. **The two bytecode-derived documents** (new; scout M). (a) Leave them, with this plan banning them as sources. (b) Also add a one-line warning at `Docs/MinecraftBlockReference.md` section 4. (c) Remove them: rebuild the blocks reference without `research/water_research.md`, and delete section 4. **Recommended: (a) and (b) now.** **Manager (away rule)** for (a) and (b): decided, 2026-10-10. The warning line goes only in `Docs/MinecraftBlockReference.md`, and the hash-checked `research/water_research.md` stays untouched. **Jesus** only for (c) (deletions).
 
-**For Jesus:** Q2, Q3, Q14 and Q15, plus Q18 only if he wants the deletions. The manager can take the rest under the away rule.
+**For Jesus:** Q2, Q3, Q14 and Q15, plus Q18 (c) only if he wants the deletions. The manager decided the rest under the away rule (above).
 
 ## 7. Short prompts
 
