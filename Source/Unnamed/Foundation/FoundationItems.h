@@ -69,6 +69,10 @@ struct FFoundationItemDefinition
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     TArray<FFoundationMiningRule> MiningRules;
 
+    // 26.3's can_destroy_blocks_in_creative: false (swords) makes a creative player's click break nothing.
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    bool bCanDestroyBlocksInCreative = true;
+
     // Durability: zero means the item never wears. Costs apply only when lab tool wear is on.
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     int32 MaxDurability = 0;

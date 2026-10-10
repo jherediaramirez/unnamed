@@ -71,6 +71,13 @@ void UFoundationInteractionSettings::BuildRules(FFoundationRules& Rules) const
     Rules.AirborneMiningMultiplier = AirborneMiningMultiplier;
     Rules.SubmergedMiningMultiplier = SubmergedMiningMultiplier;
     Rules.TargetMaxHealth = TrainingTargetMaxHealth;
+    // The wiki ("Breaking", "Creative"): spears break no blocks in creative either, though 26.3's data gives them no
+    // tool component. Wiki only, not yet black-box verified (items S5); remove this to follow the data alone.
+    Rules.CreativeNoBreakTags.Reset();
+    if (const FGameplayTag Spears = FGameplayTag::RequestGameplayTag(TEXT("Item.Spears"), false); Spears.IsValid())
+        Rules.CreativeNoBreakTags.AddTag(Spears);
+    else
+        UE_LOG(LogUnnamedFoundation, Warning, TEXT("Item.Spears is not registered; spears break blocks in creative"));
 }
 
 int32 UFoundationInteractionSettings::MergeItems(

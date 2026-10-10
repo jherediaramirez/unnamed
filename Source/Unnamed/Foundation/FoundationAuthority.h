@@ -72,6 +72,8 @@ enum class EFoundationReason : uint8
     Released,
     Expired,
     Canceled,
+    // A creative player's item that breaks no blocks in creative (swords, spears).
+    CreativeCannotBreak,
     Count
 };
 
@@ -193,6 +195,9 @@ struct UNNAMED_API FFoundationRules
     float MiningEfficiency = 0, HasteMultiplier = 1, FatigueMultiplier = 1, BlockBreakSpeed = 1;
     // A progressive break completes at 1 within this tolerance, so nominal step counts are exact.
     double CompletionTolerance = 1e-6;
+    // Items carrying any of these break no blocks in creative, whatever their tool component says. BuildRules adds
+    // Item.Spears: the wiki ("Breaking", "Creative") lists spears, which 26.3 gives no tool component.
+    FGameplayTagContainer CreativeNoBreakTags;
     float AttackSampleTicks = .5f, CriticalStrength = .9f, CriticalMultiplier = 1.5f, HitExhaustion = .1f;
     float TargetMaxHealth = 20;
     int32 ResultCacheSize = 128;
@@ -200,6 +205,10 @@ struct UNNAMED_API FFoundationRules
     int32 FindItem(FName Id) const;
     // The definition for an inventory index; an invalid index is the bare hand.
     const FFoundationItemDefinition& GetItem(int32 Index) const;
+    // Whether a progressive break's accumulated progress completes it.
+    bool CompletesBreak(double Progress) const { return Progress >= 1. - CompletionTolerance; }
+    // Whether an item breaks blocks for a creative player: its tool component, then CreativeNoBreakTags.
+    bool CanDestroyInCreative(const FFoundationItemDefinition& Item) const;
 };
 
 struct FFoundationMining
@@ -306,6 +315,8 @@ public:
     EFoundationReason CheckPlacement(const FFoundationPlayer& Player, EFoundationHand Hand, const FFoundationHit& Hit,
         FIntVector& OutDestination, FFoundationBlockState* OutState = nullptr) const;
     double GetMiningDelta(const FFoundationPlayer& Player, const FFoundationBlockType& Block) const;
+    // 26.3's harvest check: the block needs no correct tool, or the tool is correct for its drops.
+    static bool CanHarvest(const FFoundationItemDefinition& Tool, const FFoundationBlockType& Block);
     float GetBlockHardness(const FIntVector& Cell) const;
     FFoundationTrainingTarget* FindTarget(int32 Id);
     const FFoundationItemDefinition& GetHandItem(const FFoundationPlayer& Player, EFoundationHand Hand) const;
@@ -327,14 +338,18 @@ private:
     void AddEvent(FFoundationEvent Event);
     void UseOn(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
     void UseEntity(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
-    void MineStart(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
-    void MineContinue(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
+    void MineStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
+        FFoundationResult& Result);
+    void MineContinue(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
+        FFoundationResult& Result);
     void Attack(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationVitals& Vitals,
         FFoundationResult& Result);
     void Whiff(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationVitals& Vitals,
         FFoundationResult& Result);
-    // Removes a block once: capacity first, then removal, return and wear together.
-    bool BreakBlock(FFoundationPlayer& Player, const FIntVector& Cell, FFoundationResult& Result);
+    // Removes a block once: capacity first, then removal, return and wear together. A creative break returns nothing
+    // and wears nothing.
+    bool BreakBlock(
+        FFoundationPlayer& Player, const FIntVector& Cell, FFoundationResult& Result, bool bCreative = false);
     bool CheckHand(const FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
     // Plants: a placed state that can never hold (a faceless vine), or a double plant without room for its upper half.
     EFoundationReason CheckPlantPlacement(const FIntVector& Destination, FFoundationBlockState Placed) const;

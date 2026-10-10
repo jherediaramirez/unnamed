@@ -44,6 +44,7 @@ FFoundationItemDefinition UFoundationItemAssets::MakeDefinition(const FFoundatio
         Rule.bStatesCorrectForDrops = Source.bStatesCorrectForDrops;
         Rule.bCorrectForDrops = Source.bCorrectForDrops;
     }
+    Item.bCanDestroyBlocksInCreative = Asset.bCanDestroyBlocksInCreative;
     Item.MaxDurability = Asset.MaxDamage;
     Item.DurabilityPerBlock = Asset.DamagePerBlock;
     Item.DurabilityPerHit = Asset.DamagePerHit;

@@ -213,7 +213,13 @@ void FFoundationInteraction::StartMining(FFoundationAuthority& Authority, FFound
     if (Result.IsCommitted())
     {
         LastRejectedMine = {};
-        if (Result.bBroken) return; // the instant path: no accumulation, no post-break delay
+        if (Result.bBroken)
+        {
+            // The instant path: no accumulation and no post-break delay, except in creative (wiki "Creative"), where
+            // holding attack breaks a block every 6 ticks (the delay, then the next start); a fresh click bypasses it.
+            if (Vitals.Mode == EFoundationPlayerMode::Creative) MiningDelay = MiningDelaySteps;
+            return;
+        }
         bMining = true;
         MiningCell = Target.Cell;
         MiningRevision = Target.Revision;
