@@ -419,6 +419,7 @@ namespace
         FVoxelDecorationOptions Options;
         Options.bFreezeLast = VoxelConsole::CVarDecorationFreezeLast.GetValueOnGameThread();
         Options.bPlants = VoxelConsole::CVarDecorationPlants.GetValueOnGameThread();
+        Options.bTrees = VoxelConsole::CVarDecorationTrees.GetValueOnGameThread();
         FVoxelDecorator Decorator;
         if (!Decorator.Initialize(
                 Graph, *Blocks, Terrain.GetBiomeSource()->GetTable(), Terrain.GetSeed(), Options, &Error))

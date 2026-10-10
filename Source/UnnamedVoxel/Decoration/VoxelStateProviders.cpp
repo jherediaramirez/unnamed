@@ -134,9 +134,10 @@ bool FVoxelStateProviders::Compile(const FVoxelFeatureGraph& Graph, const FVoxel
             if (!OutSkip.IsEmpty()) return true;
             Compiled.Add(Pair);
         }
-        if (!Fallback) return StateProviderFail(OutError, TEXT("rule_based without a fallback"));
+        // The fallback is optional (the trees' soil_beneath_tree has none): without it, no rule leaves the cell as it
+        // is.
         int32 FallbackProvider = INDEX_NONE;
-        if (!Compile(Graph, *Fallback, Tags, Predicates, FallbackProvider, OutSkip, OutError)) return false;
+        if (Fallback && !Compile(Graph, *Fallback, Tags, Predicates, FallbackProvider, OutSkip, OutError)) return false;
         if (!OutSkip.IsEmpty()) return true;
         Out.Fallback = FallbackProvider;
         Out.First = Rules.Num();
@@ -266,7 +267,8 @@ uint16 FVoxelStateProviders::Sample(
     case EOp::RuleBased:
         for (int32 Rule = Node.First; Rule < Node.First + Node.Count; ++Rule)
             if (Tests->Test(Rules[Rule].X, Context, Position)) return Sample(Rules[Rule].Y, Random, Position, Context);
-        return Sample(Node.Fallback, Random, Position, Context);
+        return Node.Fallback == INDEX_NONE ? Context.GetState(Position.X, Position.Y, Position.Z)
+                                           : Sample(Node.Fallback, Random, Position, Context);
     case EOp::RandomizedInt:
         return States[Node.First + Node.Values.Sample(Random) - Node.Values.Min];
     case EOp::Noise:
@@ -301,7 +303,7 @@ void FVoxelStateProviders::GetStates(int32 Provider, TArray<uint16>& Out) const
     case EOp::RuleBased:
         for (int32 Rule = Node.First; Rule < Node.First + Node.Count; ++Rule)
             GetStates(Rules[Rule].Y, Out);
-        GetStates(Node.Fallback, Out);
+        if (Node.Fallback != INDEX_NONE) GetStates(Node.Fallback, Out);
         return;
     case EOp::NoiseThreshold:
         Out.AddUnique(Node.State);

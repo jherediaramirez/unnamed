@@ -51,6 +51,8 @@ enum class EVoxelPlantFeature : uint8
     VegetationPatch,
     // multiface_growth (glow lichen).
     Multiface,
+    // tree (S9a): Tree indexes the decorator's tree configurations.
+    Tree,
     // The selectors, sequence and no_op (FVoxelSelectorConfig).
     Selector
 };
@@ -60,6 +62,8 @@ struct FVoxelPlantFeature
     EVoxelPlantFeature Kind = EVoxelPlantFeature::Selector;
     // simple_block's to_place, disk's state_provider, vegetation_patch's ground_state.
     int32 Provider = INDEX_NONE;
+    // tree: an index into the decorator's FVoxelTreeConfig list.
+    int32 Tree = INDEX_NONE;
     // block_column: layers in order along Direction (an EVoxelFace), each cell passing Allowed (a predicate).
     TArray<FVoxelBlockColumnLayer> Layers;
     int32 Direction = 5;

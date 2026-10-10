@@ -91,6 +91,7 @@ namespace
         // Plants (S8) as voxel.Decoration.Plants says, as every bench does.
         FVoxelDecorationOptions DecorationOptions;
         DecorationOptions.bPlants = VoxelConsole::CVarDecorationPlants.GetValueOnGameThread();
+        DecorationOptions.bTrees = VoxelConsole::CVarDecorationTrees.GetValueOnGameThread();
         if (!Terrain->IsValid() ||
             !Decorator.Initialize(
                 Graph, *Table, Terrain->GetBiomeSource()->GetTable(), Terrain->GetSeed(), DecorationOptions, &Error))
