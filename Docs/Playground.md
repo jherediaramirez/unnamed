@@ -31,7 +31,7 @@ Stations around spawn (metres from the origin):
 | Target wall | x 3..7, y 9 | 2.5 m thin wall. |
 | Training target | x -0.3..0.3, y 9.7..10.3 | Damageable, 1.8 m tall. |
 | Target behind wall | x 4.7..5.3, y 9.7..10.3 | Damageable; the wall blocks attacks. |
-| Block showcase | from (16, 14), rows 3 m apart running east | One labelled row each: grass, leaves, translucent, axis and facing, slabs, water levels, animated. |
+| Block showcase | from (16, 14), rows 3 m apart running east | One labelled row each: grass, leaves, translucent, axis and facing, slabs, water levels, animated, plants (model blocks, y 35). |
 | Registry gallery | from (-70, -22), 24 columns, 2 m apart | Every block's default state in registry order. |
 | State gallery | from (-200, -58), 59 columns, 2 m apart | Every block state in state-id order, as Minecraft's debug world. |
 

@@ -39,7 +39,11 @@ public:
     virtual void TickComponent(
         float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+    // Every block instance: one per cube, slab, layer or fluid cell, one per part of a model state plus the water it
+    // holds.
     int32 GetInstanceCount() const;
+    // The cells drawn (a model state with no part, such as a vine with no face, is drawn with no instance).
+    int32 GetDrawnCellCount() const { return DrawnKeys.Num(); }
     int32 GetSectionMeshCount() const { return Sections.Num(); }
     // Block animation: the texture table every block material samples (null until the block assets load).
     UFoundationBlockTextureTable* GetTextureTable() const { return TextureTable; }
@@ -58,7 +62,8 @@ private:
     struct FSectionKey
     {
         FIntVector Section;
-        uint8 Mesh = 0;
+        // A FoundationBlockMeshes kind, or Count + a baked model.
+        uint16 Mesh = 0;
         // EFoundationRenderLayer, or 3 for water.
         uint8 Layer = 0;
         bool operator==(const FSectionKey& Other) const = default;
@@ -70,7 +75,8 @@ private:
     struct FSectionMesh
     {
         UInstancedStaticMeshComponent* Mesh = nullptr;
-        TMap<FIntVector, FPrimitiveInstanceId> Instances;
+        // A cell can hold several instances of one mesh (two parts of a state on the same model).
+        TMultiMap<FIntVector, FPrimitiveInstanceId> Instances;
     };
     struct FParticle
     {
@@ -107,10 +113,14 @@ private:
     void ApplyChanges(FFoundationAuthority& Authority);
     void RebuildBlocks(FFoundationAuthority& Authority);
     void LoadBlockAssets();
-    UInstancedStaticMeshComponent* MakeBlockComponent(USceneComponent* Parent, int32 Mesh, int32 Layer);
+    // A FoundationBlockMeshes kind, or Count + a baked model, built on first use (null for a model with no quad).
+    UStaticMesh* GetBlockMesh(const FFoundationBlockRegistry& Registry, int32 Mesh);
+    UInstancedStaticMeshComponent* MakeBlockComponent(USceneComponent* Parent, UStaticMesh* Mesh, int32 Layer);
     void AddInstance(const FFoundationBlockWorld& World, const FIntVector& Cell, FFoundationBlockState State);
+    void AddPart(const FSectionKey& Key, const FIntVector& Cell, const FTransform& Instance,
+        TArrayView<const float> Data, const FFoundationBlockRegistry& Registry);
     void RemoveInstance(const FIntVector& Cell);
-    // Water draws full height under water; changes above a water cell redraw it.
+    // Water draws full height under water (or under a state holding water); changes above a water cell redraw it.
     void RefreshWaterBelow(const FFoundationBlockWorld& World, const FIntVector& Cell);
     void HandleEvents(const FFoundationAuthority& Authority);
     void Burst(const FVector& Center, FLinearColor Color, int32 Count, double Size, double Speed, uint32 Seed);
@@ -126,9 +136,10 @@ private:
     TMap<FSectionKey, FSectionMesh> Sections;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UInstancedStaticMeshComponent>> SectionComponents;
-    // Which section mesh each drawn cell is in.
-    TMap<FIntVector, FSectionKey> DrawnKeys;
-    // One runtime mesh per FoundationBlockMeshes kind, one material per render layer plus water.
+    // Which section meshes each drawn cell is in: one for cubes, one per part and held water for model states.
+    TMap<FIntVector, TArray<FSectionKey, TInlineAllocator<2>>> DrawnKeys;
+    // One runtime mesh per FoundationBlockMeshes kind and per baked model (built on first use), one material per
+    // render layer plus water.
     UPROPERTY(Transient)
     TArray<TObjectPtr<UStaticMesh>> BlockMeshes;
     UPROPERTY(Transient)
@@ -148,9 +159,10 @@ private:
     // The first-person held item: one pivot with a cube for blocks and simple tool shapes.
     UPROPERTY(Transient)
     TObjectPtr<USceneComponent> HandPivot;
-    // The held block: one textured instance, redrawn when the held state changes.
+    // The held block: one textured instance per part (a cube has one), redrawn when the held state changes. Made
+    // with the pivot, as many as the model blocks' default states have parts.
     UPROPERTY(Transient)
-    TObjectPtr<UInstancedStaticMeshComponent> HeldBlock;
+    TArray<TObjectPtr<UInstancedStaticMeshComponent>> HeldBlocks;
     FFoundationBlockState HeldState;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UStaticMeshComponent>> HeldPickaxe;

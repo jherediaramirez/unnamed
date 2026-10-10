@@ -113,6 +113,13 @@ void AFoundationPlayground::AddBlockGallery()
         {TEXT("ANIMATED: sea lantern, magma, prismarine, crimson stem, command block, lit smoker"),
             {TEXT("sea_lantern"), TEXT("magma_block"), TEXT("prismarine"), TEXT("crimson_stem[axis=y]"),
                 TEXT("command_block[conditional=false,facing=up]"), TEXT("smoker[facing=north,lit=true]")}},
+        {TEXT("PLANTS: grass, poppy, tall grass, pink petals, leaf litter, moss carpet, firefly bush, sea pickles and "
+              "seagrass (holding water), lily pad, bamboo, amethyst cluster"),
+            {TEXT("short_grass"), TEXT("poppy"), TEXT("tall_grass[half=lower]"),
+                TEXT("pink_petals[facing=north,flower_amount=4]"), TEXT("leaf_litter[facing=east,segment_amount=4]"),
+                TEXT("moss_carpet"), TEXT("firefly_bush"), TEXT("sea_pickle[pickles=4,waterlogged=true]"),
+                TEXT("seagrass"), TEXT("lily_pad"), TEXT("bamboo[age=0,leaves=large,stage=0]"),
+                TEXT("amethyst_cluster[facing=up,waterlogged=false]")}},
     };
     for (int32 Row = 0; Row < Rows.Num(); ++Row)
     {
@@ -128,27 +135,25 @@ void AFoundationPlayground::AddBlockGallery()
     // The snowy grass block carries its snow, as it would in the world.
     if (const FFoundationBlockType* Snow = Authority.World.FindBlock(TEXT("snow_block")))
         Seed(GetShowcaseCell(0, 2) + FIntVector(0, 0, 1), Snow->GetDefaultState());
+    // The tall grass's upper half stands on its lower half.
+    check(Rows.Num() == PlantRow + 1);
+    if (const FFoundationBlockState Upper = Parse(TEXT("tall_grass[half=upper]")); !Upper.IsAir())
+        Seed(GetShowcaseCell(PlantRow, 2) + FIntVector(0, 0, 1), Upper);
 
-    // Every block in registry order (its default state), then every state in state-id order. Model blocks wait for
-    // their meshes (phase 6, S6), so the galleries keep their layout until then.
-    auto IsModel = [&Registry](const FFoundationBlockType& Type)
-    { return Registry.GetShape(Type.GetDefaultState()) == EFoundationBlockShape::Model; };
-    int32 Index = 0;
+    // Every block in registry order (its default state), then every state in state-id order.
     for (int32 Block = 1; Block < Registry.GetBlockCount(); ++Block)
     {
-        if (IsModel(Registry.GetBlockAt(Block))) continue;
-        Seed(RegistryGalleryOrigin +
-                FIntVector(Index % RegistryGalleryColumns * 2, Index / RegistryGalleryColumns * 2, 0),
+        const int32 Slot = Block - 1;
+        Seed(
+            RegistryGalleryOrigin + FIntVector(Slot % RegistryGalleryColumns * 2, Slot / RegistryGalleryColumns * 2, 0),
             Registry.GetBlockAt(Block).GetDefaultState());
-        ++Index;
     }
     AddSign(TEXT("BLOCK GALLERY: every block in registry order"),
         CellCenter(RegistryGalleryOrigin, 0) + FVector(-150, 0, 160), 90);
-    Index = 0;
+    int32 Index = 0;
     for (int32 Block = 1; Block < Registry.GetBlockCount(); ++Block)
     {
         const FFoundationBlockType& Type = Registry.GetBlockAt(Block);
-        if (IsModel(Type)) continue;
         for (int32 Local = 0; Local < Type.StateCount; ++Local, ++Index)
             Seed(StateGalleryOrigin + FIntVector(Index % StateGalleryColumns * 2, Index / StateGalleryColumns * 2, 0),
                 {uint16(Type.MinStateId + Local)});

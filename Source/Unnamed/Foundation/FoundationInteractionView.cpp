@@ -1,4 +1,5 @@
 #include "Foundation/FoundationInteractionView.h"
+#include "Blocks/VoxelBlockTable.h"
 #include "Foundation/FoundationBlockMeshes.h"
 #include "Foundation/FoundationBlockTextureTable.h"
 #include "Foundation/FoundationController.h"
@@ -30,6 +31,30 @@ namespace
         return Assets ? Assets->Textures.IndexOfByPredicate(
                             [Name](const FFoundationBlockTextureAsset& Texture) { return Texture.Name == Name; })
                       : INDEX_NONE;
+    }
+
+    // A model state holding water (seagrass, kelp, waterlogged plants).
+    bool IsHeldWater(const FFoundationBlockRegistry& Registry, FFoundationBlockState State)
+    {
+        return Registry.GetShape(State) == EFoundationBlockShape::Model && Registry.GetFluid(State).Amount > 0;
+    }
+    // Water itself, or a state holding it.
+    bool HoldsWater(const FFoundationBlockRegistry& Registry, FFoundationBlockState State)
+    {
+        return Registry.GetBlock(State).IsWater() || IsHeldWater(Registry, State);
+    }
+
+    // A block's position offset at a cell in centimetres, mapped as VoxelBlocks::MakeTable maps it, so the Playground
+    // and the voxel world move a model alike.
+    FVector GetModelOffsetCm(const FFoundationBlockType& Type, const FIntVector& Cell)
+    {
+        FVoxelStateInfo Info;
+        Info.Offset = Type.OffsetKind == EFoundationOffsetKind::XYZ ? EVoxelOffset::HorizontalAndDown
+            : Type.OffsetKind == EFoundationOffsetKind::XZ          ? EVoxelOffset::Horizontal
+                                                                    : EVoxelOffset::None;
+        Info.OffsetHorizontal = Type.OffsetMaxHorizontal;
+        Info.OffsetDown = Type.OffsetKind == EFoundationOffsetKind::XYZ ? Type.OffsetMinVertical : 0.f;
+        return FVector(VoxelModels::GetOffset(Info, Cell.X, Cell.Y)) * InteractionViewBlockCm;
     }
 
     FLinearColor TargetColor(bool bDead)
@@ -228,17 +253,26 @@ void UFoundationInteractionView::MakeCustomData(
     if (const uint32* Codes = Registry.GetFaces(State))
         for (int32 Index = 0; Index < FoundationBlockFaces::CodesPerState; ++Index)
             Out[Index] = float(Codes[Index]);
-    // 24-bit codes and colors are exact in a float.
+    // 24-bit codes and colors are exact in a float. The light is the state's (sea pickles and cave vines vary).
     Out[7] = float(uint32(Type.Tint.R) << 16 | uint32(Type.Tint.G) << 8 | Type.Tint.B);
-    Out[8] = float(Type.LightEmission);
+    Out[8] = float(Registry.GetLightEmission(State));
+}
+
+UStaticMesh* UFoundationInteractionView::GetBlockMesh(const FFoundationBlockRegistry& Registry, int32 Mesh)
+{
+    if (Mesh >= BlockMeshes.Num()) BlockMeshes.SetNum(Mesh + 1);
+    if (!BlockMeshes[Mesh] && Mesh >= FoundationBlockMeshes::Count)
+        BlockMeshes[Mesh] =
+            FoundationBlockMeshes::BuildModel(this, Registry.GetModelQuads(Mesh - FoundationBlockMeshes::Count));
+    return BlockMeshes[Mesh];
 }
 
 UInstancedStaticMeshComponent* UFoundationInteractionView::MakeBlockComponent(
-    USceneComponent* Parent, int32 Mesh, int32 Layer)
+    USceneComponent* Parent, UStaticMesh* Mesh, int32 Layer)
 {
     AActor* Owner = GetOwner();
     auto* Component = NewObject<UInstancedStaticMeshComponent>(Owner);
-    Component->SetStaticMesh(BlockMeshes[Mesh]);
+    Component->SetStaticMesh(Mesh);
     Component->SetMobility(EComponentMobility::Movable);
     // Movement and targeting use the logical grid; the engine needs no collision for these.
     Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -254,45 +288,87 @@ void UFoundationInteractionView::AddInstance(
     const FFoundationBlockWorld& World, const FIntVector& Cell, FFoundationBlockState State)
 {
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
-    // Model states (plants and other baked models) are not drawn here until the model meshes exist (phase 6, S6).
-    if (Registry.GetShape(State) == EFoundationBlockShape::Model) return;
+    const FIntVector Section = FoundationGrid::SectionOf(Cell);
+    // The mesh pivot is the cell's minimum corner.
+    const FVector CellMin = FoundationGrid::CellMin(Cell, World.OriginCm);
+    float Data[CustomDataFloats];
+    DrawnKeys.Add(Cell);
+    if (Registry.GetShape(State) == EFoundationBlockShape::Model)
+    {
+        // One instance per part, each part's alternative picked and the whole state moved as the voxel world's mesher
+        // does (VoxelModels), so the two agree cell for cell. The layer is the block's own (moss carpet is opaque).
+        const FFoundationBlockType& Type = Registry.GetBlock(State);
+        MakeCustomData(Registry, State, Data);
+        const FTransform Moved(CellMin + GetModelOffsetCm(Type, Cell));
+        TArray<TConstArrayView<int32>> Parts;
+        Registry.GetModelParts(State, Parts);
+        for (int32 Part = 0; Part < Parts.Num(); ++Part)
+        {
+            const TConstArrayView<int32> Alternatives = Parts[Part];
+            if (Alternatives.IsEmpty()) continue;
+            const int32 Model =
+                Alternatives[VoxelModels::PickAlternative(Cell.X, Cell.Y, Cell.Z, Part, Alternatives.Num())];
+            AddPart({Section, uint16(FoundationBlockMeshes::Count + Model), uint8(Type.Layer)}, Cell, Moved, Data,
+                Registry);
+        }
+        // Held water is drawn as a water source around the model, as the voxel world draws it.
+        const FFoundationBlockType* Water = IsHeldWater(Registry, State) ? Registry.FindBlock(TEXT("water")) : nullptr;
+        if (!Water) return;
+        State = Water->GetDefaultState();
+    }
     const FFoundationBlockType& Type = Registry.GetBlock(State);
+    const FFoundationBlockState Above = World.Get(Cell + FIntVector(0, 0, 1)).State;
     const bool bFluidAbove =
-        Type.IsFluid() && World.GetBlock(World.Get(Cell + FIntVector(0, 0, 1)).State).Id == Type.Id;
-    const FSectionKey Key{FoundationGrid::SectionOf(Cell),
-        uint8(FoundationBlockMeshes::GetKind(Registry, State, bFluidAbove)),
-        Type.IsWater() ? WaterLayer : uint8(Type.Layer)};
+        Type.IsWater() ? HoldsWater(Registry, Above) : Type.IsFluid() && Registry.GetBlock(Above).Id == Type.Id;
+    MakeCustomData(Registry, State, Data);
+    AddPart({Section, uint16(FoundationBlockMeshes::GetKind(Registry, State, bFluidAbove)),
+                Type.IsWater() ? WaterLayer : uint8(Type.Layer)},
+        Cell, FTransform(CellMin), Data, Registry);
+}
+
+void UFoundationInteractionView::AddPart(const FSectionKey& Key, const FIntVector& Cell, const FTransform& Instance,
+    TArrayView<const float> Data, const FFoundationBlockRegistry& Registry)
+{
+    // A model with no quad left draws nothing (Unnamed.Foundation.Blocks.ModelMeshes finds none).
+    UStaticMesh* Mesh = GetBlockMesh(Registry, Key.Mesh);
+    if (!Mesh) return;
     FSectionMesh& Section = Sections.FindOrAdd(Key);
     if (!Section.Mesh)
     {
-        Section.Mesh = MakeBlockComponent(nullptr, Key.Mesh, Key.Layer);
+        Section.Mesh = MakeBlockComponent(nullptr, Mesh, Key.Layer);
         SectionComponents.Add(Section.Mesh);
     }
-    // The mesh pivot is the cell's minimum corner.
-    const FTransform Instance(
-        FQuat::Identity, FoundationGrid::CellMin(Cell, World.OriginCm) - Section.Mesh->GetComponentLocation());
-    const FPrimitiveInstanceId Id = Section.Mesh->AddInstanceById(Instance, false);
-    float Data[CustomDataFloats];
-    MakeCustomData(Registry, State, Data);
+    FTransform Local = Instance;
+    Local.AddToTranslation(-Section.Mesh->GetComponentLocation());
+    const FPrimitiveInstanceId Id = Section.Mesh->AddInstanceById(Local, false);
     Section.Mesh->SetCustomDataById(Id, Data);
     Section.Instances.Add(Cell, Id);
-    DrawnKeys.Add(Cell, Key);
+    DrawnKeys.FindChecked(Cell).AddUnique(Key);
 }
 
 void UFoundationInteractionView::RemoveInstance(const FIntVector& Cell)
 {
-    FSectionKey Key;
-    if (!DrawnKeys.RemoveAndCopyValue(Cell, Key)) return;
-    FSectionMesh* Section = Sections.Find(Key);
-    FPrimitiveInstanceId Instance;
-    if (Section && Section->Instances.RemoveAndCopyValue(Cell, Instance)) Section->Mesh->RemoveInstanceById(Instance);
+    TArray<FSectionKey, TInlineAllocator<2>> Keys;
+    if (!DrawnKeys.RemoveAndCopyValue(Cell, Keys)) return;
+    TArray<FPrimitiveInstanceId, TInlineAllocator<4>> Ids;
+    for (const FSectionKey& Key : Keys)
+    {
+        FSectionMesh* Section = Sections.Find(Key);
+        if (!Section) continue;
+        Ids.Reset();
+        Section->Instances.MultiFind(Cell, Ids);
+        Section->Instances.Remove(Cell);
+        for (const FPrimitiveInstanceId Id : Ids)
+            Section->Mesh->RemoveInstanceById(Id);
+    }
 }
 
 void UFoundationInteractionView::RefreshWaterBelow(const FFoundationBlockWorld& World, const FIntVector& Cell)
 {
     const FIntVector Below = Cell - FIntVector(0, 0, 1);
     const FFoundationBlockState State = World.Get(Below).State;
-    if (!World.GetBlock(State).IsFluid() || !DrawnKeys.Contains(Below)) return;
+    if (!(World.GetBlock(State).IsFluid() || IsHeldWater(World.GetRegistry(), State)) || !DrawnKeys.Contains(Below))
+        return;
     RemoveInstance(Below);
     AddInstance(World, Below, State);
 }
@@ -635,14 +711,25 @@ void UFoundationInteractionView::UpdateHeldItem(
             Mesh->SetFirstPersonPrimitiveType(EFirstPersonPrimitiveType::FirstPerson);
             return Mesh;
         };
-        HeldBlock = BlockMeshes.IsEmpty() ? nullptr : MakeBlockComponent(HandPivot, FoundationBlockMeshes::Cube, 0);
-        if (HeldBlock)
+        // One component per part of the model default state with the most parts (a cube needs one), drawn anew.
+        HeldBlocks.Reset();
+        HeldState = {MAX_uint16};
+        int32 MostParts = BlockMeshes.IsEmpty() ? 0 : 1;
+        const FFoundationBlockRegistry& Registry = Authority.World.GetRegistry();
+        TArray<TConstArrayView<int32>> Parts;
+        for (int32 Block = 1; MostParts && Block < Registry.GetBlockCount(); ++Block)
+            if (Registry.GetModelParts(Registry.GetBlockAt(Block).GetDefaultState(), Parts))
+                MostParts = FMath::Max(MostParts, Parts.Num());
+        for (int32 Index = 0; Index < MostParts; ++Index)
         {
-            HeldBlock->SetRelativeRotation(FRotator(10, 35, 0));
-            HeldBlock->SetRelativeScale3D(FVector(.11));
-            HeldBlock->SetCastShadow(false);
-            HeldBlock->SetFirstPersonPrimitiveType(EFirstPersonPrimitiveType::FirstPerson);
-            Owned.Add(HeldBlock);
+            UInstancedStaticMeshComponent* Held =
+                MakeBlockComponent(HandPivot, BlockMeshes[FoundationBlockMeshes::Cube], 0);
+            Held->SetRelativeRotation(FRotator(10, 35, 0));
+            Held->SetRelativeScale3D(FVector(.11));
+            Held->SetCastShadow(false);
+            Held->SetFirstPersonPrimitiveType(EFirstPersonPrimitiveType::FirstPerson);
+            Owned.Add(Held);
+            HeldBlocks.Add(Held);
         }
         HeldPickaxe = {Part(FLinearColor(.45f, .3f, .15f), {0, 0, 0}, {2, 2, 30}, FRotator(0, 0, -35)),
             Part(FLinearColor(.78f, .78f, .8f), {0, 6, 13}, {3, 22, 3}, FRotator(0, 0, -35))};
@@ -654,9 +741,10 @@ void UFoundationInteractionView::UpdateHeldItem(
     const FFoundationItemInstance* Main = Player ? &Player->Inventory.GetHand(EFoundationHand::Main) : nullptr;
     const FName Icon = Main && !Main->IsEmpty() ? Authority.Rules.GetItem(Main->Item).Icon : NAME_None;
     const bool bShow = bVisible && Pawn->GetPerspective() == 0 && !Pawn->Vitals.IsDead();
-    if (HeldBlock)
+    if (!HeldBlocks.IsEmpty())
     {
-        // The held block's default state, drawn with its own mesh and layer around the pivot.
+        // The held block's default state, drawn with its own meshes and layer around the pivot: its mesh kind, or one
+        // instance per part of its model (each part's first alternative), centred on what it draws.
         const FFoundationBlockType* Type = Icon == TEXT("block")
             ? Authority.World.FindBlock(Authority.Rules.GetItem(Main->Item).PlacesBlock)
             : nullptr;
@@ -665,20 +753,44 @@ void UFoundationInteractionView::UpdateHeldItem(
         {
             HeldState = State;
             const FFoundationBlockRegistry& Registry = Authority.World.GetRegistry();
-            const int32 Kind = FoundationBlockMeshes::GetKind(Registry, State, false);
-            HeldBlock->ClearInstances();
-            HeldBlock->SetStaticMesh(BlockMeshes[Kind]);
-            HeldBlock->SetMaterial(0,
+            TArray<UStaticMesh*, TInlineAllocator<4>> Meshes;
+            FBox Drawn(ForceInit);
+            TArray<TConstArrayView<int32>> Parts;
+            if (Registry.GetModelParts(State, Parts))
+            {
+                for (const TConstArrayView<int32> Alternatives : Parts)
+                    if (UStaticMesh* Mesh = Alternatives.IsEmpty()
+                            ? nullptr
+                            : GetBlockMesh(Registry, FoundationBlockMeshes::Count + Alternatives[0]))
+                    {
+                        Meshes.Add(Mesh);
+                        Drawn += Mesh->GetBoundingBox();
+                    }
+            }
+            else
+            {
+                const int32 Kind = FoundationBlockMeshes::GetKind(Registry, State, false);
+                const FBox Unit = FoundationBlockMeshes::GetUnitBox(Kind);
+                Meshes.Add(BlockMeshes[Kind]);
+                Drawn = FBox(Unit.Min * InteractionViewBlockCm, Unit.Max * InteractionViewBlockCm);
+            }
+            UMaterialInterface* Material =
                 LayerMaterials[Type && Type->IsWater() ? WaterLayer
-                                                       : uint8(Type ? Type->Layer : EFoundationRenderLayer::Opaque)]);
-            const FPrimitiveInstanceId Id = HeldBlock->AddInstanceById(
-                FTransform(-FoundationBlockMeshes::GetUnitBox(Kind).GetCenter() * InteractionViewBlockCm), false);
+                                                       : uint8(Type ? Type->Layer : EFoundationRenderLayer::Opaque)];
             float Data[CustomDataFloats];
             MakeCustomData(Registry, State, Data);
-            HeldBlock->SetCustomDataById(Id, Data);
+            for (int32 Index = 0; Index < HeldBlocks.Num(); ++Index)
+            {
+                UInstancedStaticMeshComponent* Held = HeldBlocks[Index];
+                Held->ClearInstances();
+                if (!Meshes.IsValidIndex(Index)) continue;
+                Held->SetStaticMesh(Meshes[Index]);
+                Held->SetMaterial(0, Material);
+                Held->SetCustomDataById(Held->AddInstanceById(FTransform(-Drawn.GetCenter()), false), Data);
+            }
         }
-        HeldBlock->SetVisibility(bShow && Type != nullptr &&
-            Authority.World.GetRegistry().GetShape(Type->GetDefaultState()) != EFoundationBlockShape::Model);
+        for (UInstancedStaticMeshComponent* Held : HeldBlocks)
+            Held->SetVisibility(bShow && Type != nullptr && Held->GetInstanceCount() > 0);
     }
     for (UStaticMeshComponent* Mesh : HeldPickaxe)
         Mesh->SetVisibility(bShow && Icon == TEXT("pickaxe"));

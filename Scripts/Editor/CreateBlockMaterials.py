@@ -5,6 +5,9 @@ Each samples the block texture array by layer and reads the current animation fr
 (UFoundationBlockTextureTable).
 - Block materials: per-instance custom data carries the state's six face codes, overlay, tint and light
   (UFoundationInteractionView::MakeCustomData); UV channel 1 holds the face index, so a material picks its face's code.
+  Model meshes (FoundationBlockMeshes::BuildModel) carry each vertex's own code in UV 1's second channel instead
+  (marked by bit 20; cubes keep 0): texture and tint bit, no UV transform, and the element light in bits 16-19, which
+  lights the vertex when brighter than the state's.
 - Chunk materials: each vertex carries its own face (UVoxelChunkComponent::BuildStreams). UV 0 is the block UV,
   continuous across a greedy-merged quad; UV 1 the face and overlay codes; UV 2 the packed tint and face index; the
   vertex color's R the ambient occlusion and G the light. The UV is transformed first, then each block's fraction is
@@ -36,9 +39,11 @@ CHUNK_LIGHT_EMISSIVE = 8000.0
 # Shared unpacking: the face's code, its transformed UV and the plains tint (linear). FoundationBlockFaces in
 # Source/Unnamed/Foundation/FoundationBlockRegistry.h defines the bits; TransformUV the transform.
 UNPACK = r"""
-int face = (int)round(Face);
+int face = (int)round(Face.x);
 float codes[6] = {CD0, CD1, CD2, CD3, CD4, CD5};
 uint code = (uint)round(codes[clamp(face, 0, 5)]);
+uint own = (uint)round(Face.y);
+if (own & (1u << 20)) code = own;
 uint packed = (uint)round(CD7);
 float3 tint = float3((packed >> 16) & 255, (packed >> 8) & 255, packed & 255) / 255.0;
 tint = lerp(tint / 12.92, pow((tint + 0.055) / 1.055, 2.4), step(0.04045, tint));
@@ -61,6 +66,13 @@ if ((overlay & (1u << 15)) && ((overlay >> (16 + face)) & 1))
     color.rgb = lerp(color.rgb, over.rgb, over.a);
 }
 return color;
+"""
+
+# The light a block instance's vertex emits, 0-15: the state's (Light, custom data 8), or the brighter element light a
+# model vertex carries in its own code (Face.y, bits 16-19 under the bit-20 marker).
+BLOCK_LIGHT_HLSL = r"""
+uint own = (uint)round(Face.y);
+return (own & (1u << 20)) ? max(Light, (float)((own >> 16) & 15)) : Light;
 """
 
 # Water: the still texture on top and bottom; the 32x32 flow texture on the sides at half scale, as
@@ -211,14 +223,25 @@ def build(name, spec, block_textures, flow_textures):
             data.append(expr)
             if index < CUSTOM_DATA - 1:
                 link(expr, "", custom, "CD%d" % index)
+        # Both channels: the face index, and a model vertex's own code.
         uv1 = node(unreal.MaterialExpressionTextureCoordinate, -900, 80)
         uv1.set_editor_property("coordinate_index", 1)
-        face = node(unreal.MaterialExpressionComponentMask, -700, 80)
-        face.set_editor_property("r", True)
-        face.set_editor_property("g", False)
-        link(uv1, "", face, "")
-        link(face, "", custom, "Face")
+        link(uv1, "", custom, "Face")
         light_source, light_output, light_divisor = data[CUSTOM_DATA - 1], "", 15.0
+        if not water:
+            # The state's light (custom data 8), or a model vertex's element light where brighter (firefly bush).
+            light_source = node(unreal.MaterialExpressionCustom, -700, 450)
+            light_source.set_editor_property("description", "Block light: the state's, or a model vertex's own")
+            light_source.set_editor_property("output_type", unreal.CustomMaterialOutputType.CMOT_FLOAT1)
+            light_source.set_editor_property("code", BLOCK_LIGHT_HLSL)
+            light_inputs = []
+            for input_name in ("Light", "Face"):
+                item = unreal.CustomInput()
+                item.set_editor_property("input_name", input_name)
+                light_inputs.append(item)
+            light_source.set_editor_property("inputs", light_inputs)
+            link(data[CUSTOM_DATA - 1], "", light_source, "Light")
+            link(uv1, "", light_source, "Face")
     link(texture_parameter("BlockTextures", block_textures, 200), "", custom, "Blocks")
     # The runtime replaces this with the live animation table; the default only satisfies the compiler.
     default_table = unreal.load_asset("/Engine/EngineResources/Black")
