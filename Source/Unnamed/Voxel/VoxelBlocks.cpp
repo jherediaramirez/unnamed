@@ -1,6 +1,7 @@
 #include "Voxel/VoxelBlocks.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "Foundation/FoundationBlockRegistry.h"
+#include "Meshing/VoxelOreLooks.h"
 #include "GameplayTagContainer.h"
 
 // The core repeats the registry's face order and cull bit; they must agree.
@@ -202,6 +203,8 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
         if (Registry.GetValue(Default, TEXT("snowy")) == TEXT("false"))
             Table->SetSnowyState(Default.Id, Registry.WithValue(Default, TEXT("snowy"), TEXT("true")).Id);
     }
+    // Render-only: the ore and rock classes the ore looks read (voxel.Look.OreHost, voxel.Look.OreGlint).
+    VoxelOreLooks::Classify(*Table);
     return Table;
 }
 

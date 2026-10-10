@@ -38,6 +38,7 @@
 #include "Voxel/VoxelBlocks.h"
 #include "Voxel/VoxelConsole.h"
 #include "Voxel/VoxelFlight.h"
+#include "Voxel/VoxelLightShots.h"
 #include "Voxel/VoxelWorldSettings.h"
 #include "Voxel/VoxelWorldSubsystem.h"
 #include "Voxel/VoxelWorldgenReader.h"
@@ -152,6 +153,8 @@ void AVoxelWorld::BuildLayout()
                 {FCString::Atoi(*Parts[Index]), FCString::Atoi(*Parts[Index + 1]), FCString::Atoi(*Parts[Index + 2])});
         bShotVeins = true;
     }
+    if (!ShotFolder.IsEmpty() && FParse::Param(FCommandLine::Get(), TEXT("VoxelShotLights")))
+        LightShots = MakeShared<FVoxelLightShots>(ShotFolder);
     FString FlightFolder;
     if (FParse::Value(FCommandLine::Get(), TEXT("VoxelFlight="), FlightFolder))
     {
@@ -408,7 +411,8 @@ void AVoxelWorld::Tick(float DeltaSeconds)
                 (FPlatformTime::Seconds() - ShotEditSeconds) * 1000., ShotEditFrames);
             UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *ShotEditReport);
         }
-        else
+        // With -VoxelShotLights the light probe runs first (FVoxelLightShots).
+        else if (!LightShots || !LightShots->Tick(*this))
             UpdateShots();
     }
     if (Flight && (Flight->IsStarted() || IsReady()) && !Flight->Tick(*this, DeltaSeconds))
@@ -676,6 +680,12 @@ void AVoxelWorld::ApplyShotEdits()
                 ->GetDefaultState());
     ShotEditReport = FString::Printf(TEXT("  Edits: %d cells in %d columns around the corner (%d, %d)"), Changed,
         Columns.Num(), ShotEditCorner.X, ShotEditCorner.Y);
+}
+
+const TArray<TTuple<FString, FVector, FVector>>& AVoxelWorld::GetCaveShotViews()
+{
+    if (!bShotCavesSearched) FindCaveShots();
+    return ShotCaveViews;
 }
 
 void AVoxelWorld::ApplyShotGarden()

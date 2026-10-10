@@ -56,6 +56,11 @@ struct FVoxelMeshOptions
     // override left unturned by the blockstate rotation would give the multiface blocks (glow lichen, vine, sculk
     // vein).
     bool bModelShadeUnturned = false;
+    // Render-only ore looks (Meshing/VoxelOreLooks.h): voxel.Look.OreHost (0 vanilla, 1 ores on their host rock, 2
+    // the palette swap) and voxel.Look.OreGlint (0 vanilla, 1 ore-aware mips and gloss, 3 the debug mask). At 0 and 0
+    // the mesh is vanilla, vertex for vertex.
+    int32 OreHost = 0;
+    int32 OreGlint = 0;
     static constexpr int32 MaxTintBlend = 8;
 };
 

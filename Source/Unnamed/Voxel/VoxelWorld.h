@@ -9,6 +9,7 @@
 
 class ACameraActor;
 class FVoxelFlight;
+class FVoxelLightShots;
 class UExponentialHeightFogComponent;
 class UStaticMeshComponent;
 class USkyAtmosphereComponent;
@@ -81,6 +82,9 @@ public:
     bool IsReady() const;
     // The seed, then how the first view got on screen (UVoxelWorldSubsystem::GetFirstViewReport).
     FString GetBuildReport() const;
+    // The -VoxelShotCaves views (name, camera and target in cm), searched near the streamed area's centre on first
+    // use; empty when none was found.
+    const TArray<TTuple<FString, FVector, FVector>>& GetCaveShotViews();
 
     // World position of cell (0, 0, 0)'s minimum corner; world rebasing moves it.
     FVector OriginCm = FVector::ZeroVector;
@@ -136,6 +140,8 @@ private:
     TObjectPtr<USkyAtmosphereComponent> Sky;
     bool bEdgeFogVisible = true;
     TSharedPtr<FVoxelFlight> Flight;
+    // -VoxelShotLights: the torch light probe, run before the shots.
+    TSharedPtr<FVoxelLightShots> LightShots;
 
     // -VoxelShot: the shot being taken, frames spent on it, its summed GPU time and the finished shots' means.
     FString ShotFolder;
