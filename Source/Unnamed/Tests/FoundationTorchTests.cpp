@@ -229,11 +229,12 @@ bool FFoundationBlocksTorchTest::RunTest(const FString&)
     TestFalse(TEXT("no wall_torch item"),
         Rules.Items.ContainsByPredicate([](const FFoundationItemDefinition& Item)
             { return Item.Id == TEXT("wall_torch") || Item.PlacesBlock == TEXT("wall_torch"); }));
+    // The torch and the five coral fans (S7b, Jesus's answer to Q7): the reference's standing-and-wall items.
     TestEqual(TEXT("items with a wall block"),
         Rules.Items
             .FilterByPredicate([](const FFoundationItemDefinition& Item) { return !Item.PlacesWallBlock.IsNone(); })
             .Num(),
-        1);
+        6);
 
     // A plain click on stone: the floor torch on top, on a side the wall torch facing the clicked side, away from its
     // wall (whatever the look; Blocks.TorchProbe checks every look).

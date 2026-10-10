@@ -344,7 +344,7 @@ private:
     // A vine, glow lichen or sculk vein without the faces that are no longer held (State when all are).
     FFoundationBlockState TrimPlantFaces(const FIntVector& Cell, FFoundationBlockState State) const;
     // After an edit at Cell replaced Before: a double plant's two halves stay one unit, then the changed cells'
-    // neighbours that no longer survive pop, one level deep (Jesus's answer 6).
+    // neighbours that no longer survive pop, one level deep (Jesus's answer 6), and a stack to its end (Q1).
     void SettlePlants(const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player);
 
     TArray<FFoundationPlayer> Players;

@@ -13,8 +13,8 @@ Generated files (see README.md for the formats):
     block_manifest.json  the research manifest merged with hardness, tints, names, items and creative positions
     block_states.json    every state of every imported block: 26.3 state id, properties, shape and six faces
     textures.json        every texture: size, animation, mipmap strategy, alpha class and its array layers
-    facts/               FactsDump.java's output: hardness, creative tabs, per-state facts, the torch support table and
-                         block_sounds.csv (each block's sound type)
+    facts/               FactsDump.java's output: hardness, creative tabs, per-state facts, the torch support table,
+                         plant_survival.json (which neighbours let each state survive) and block_sounds.csv (each block's sound type)
     block_particles.json each state's particle texture, from the jar's block models
     items.json           block items: name, stack size, GUI tint, creative tab positions
     SHA256SUMS.txt       every file in the folder except itself
@@ -414,7 +414,7 @@ def main():
     shutil.copyfile(research / "out/block_manifest.json", ROOT / "research/block_manifest.research.json")
     (ROOT / "facts").mkdir()
     for name in ("block_facts.csv", "creative_tabs.json", "block_state_facts.json", "block_support.json",
-                 "block_sounds.csv"):
+                 "block_sounds.csv", "plant_survival.json"):
         shutil.copyfile(facts / name, ROOT / "facts" / name)
     (ROOT / "reports").mkdir()
     subset = {f"minecraft:{i}": report[f"minecraft:{i}"] for i in imported}

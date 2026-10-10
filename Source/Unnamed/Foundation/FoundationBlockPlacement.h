@@ -40,8 +40,13 @@ namespace FoundationBlockPlacement
     // the clicked block moved to the front (the rest keep their order) unless the click replaces that block.
     UNNAMED_API TStaticArray<EFoundationFace, 6> GetClickLooks(const FFoundationPlacementContext& Context);
 
-    // BlockState.canBeReplaced(context): replaceable blocks (air, water) always; a single slab only by its own
-    // slab item, and when it is the clicked block only from the side that would make it double.
+    // Whether a placed block takes this state's cell: the block's replaceable flag (the facts'), or a single snow
+    // layer. More layers are not replaced (minecraft.wiki, Snow; Jesus's answer to scout H's Q5), so snow keeps its
+    // own flag false although the facts call every layer replaceable.
+    UNNAMED_API bool IsReplaceable(const FFoundationBlockWorld& World, FFoundationBlockState State);
+    // BlockState.canBeReplaced(context): replaceable states (IsReplaceable: air, water, one snow layer) always, except
+    // a snow layer by snow (stacking layers is not built); a single slab only by its own slab item, and when it is the
+    // clicked block only from the side that would make it double.
     UNNAMED_API bool CanBeReplaced(const FFoundationBlockWorld& World, FFoundationBlockState Existing,
         const FFoundationBlockType& Placing, const FFoundationPlacementContext& Context, bool bReplacingClicked);
     // BlockPlaceContext: the clicked cell when it accepts the block, otherwise the cell beyond the clicked face.
@@ -58,10 +63,15 @@ namespace FoundationBlockPlacement
     UNNAMED_API bool IsTorchSupported(const FFoundationBlockWorld& World, FFoundationBlockState State,
         const FIntVector& Cell, FIntVector* OutSupport = nullptr);
     // StandingAndWallBlockItem (the torch), as measured by probe P3 (Tests/Probes/torch-placement-26.3.json, 64,896
-    // clicks) at the resolved destination. The wall is the first side in the click's looks (GetClickLooks) that holds
-    // WallBlock, which then faces away from it. Walking the looks: up is skipped, down gives Block if the cell below
-    // holds it, any side gives the wall if there is one; the first hit wins. False when nothing holds (nothing is
-    // placed). A plain click on a side or top face that holds a torch therefore always places it on the clicked block.
+    // clicks) at the resolved destination. The wall is the first side in the click's looks (GetClickLooks) where
+    // Holds accepts WallBlock facing away from that side. Walking the looks: up is skipped, down gives Block if Holds
+    // accepts it, any side gives the wall if there is one; the first hit wins. False when nothing holds (nothing is
+    // placed). A plain click on a side or top face that holds the block therefore always places it on the clicked
+    // block. Both states start from their own placement (GetStateForPlacement: a coral fan's waterlogged).
+    UNNAMED_API bool GetStandingOrWallState(const FFoundationBlockWorld& World, const FFoundationBlockType& Block,
+        const FFoundationBlockType& WallBlock, const FFoundationPlacementContext& Context,
+        TFunctionRef<bool(FFoundationBlockState)> Holds, FFoundationBlockState& OutState);
+    // The torch's: GetStandingOrWallState held by the support table (IsTorchSupported).
     UNNAMED_API bool GetTorchState(const FFoundationBlockWorld& World, const FFoundationBlockType& Block,
         const FFoundationBlockType& WallBlock, const FFoundationPlacementContext& Context,
         FFoundationBlockState& OutState);

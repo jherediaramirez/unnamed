@@ -187,7 +187,7 @@ bool FFoundationAuthority::GetDestination(
     if (Hit.Kind == EFoundationHitKind::Block)
     {
         // The clicked cell when it is replaceable, otherwise the cell beyond the clicked face.
-        const bool bReplaceable = World.GetBlock(World.Get(Hit.Cell).State).bReplaceable;
+        const bool bReplaceable = FoundationBlockPlacement::IsReplaceable(World, World.Get(Hit.Cell).State);
         OutDestination = bReplaceable ? Hit.Cell : Hit.Cell + FoundationGrid::FaceOffset(Hit.Face);
         return true;
     }
@@ -263,11 +263,17 @@ EFoundationReason FFoundationAuthority::CheckPlacement(const FFoundationPlayer& 
     if (!bResolved) return Reason;
     if (!World.IsKnown(OutDestination)) return EFoundationReason::OutsideBounds;
     if (!bAccepted) return EFoundationReason::DestinationOccupied;
-    // A standing-and-wall item (the torch) places by look among the faces that hold it, or not at all.
+    // A standing-and-wall item places by look among the faces that hold it, or not at all: the torch by its support
+    // table, a coral fan by the plants' (CheckPlantPlacement).
     FFoundationBlockState Placed;
+    const auto Holds = [this, Placing, &Context](FFoundationBlockState State)
+    {
+        return Placing->bTorchRule ? FoundationBlockPlacement::IsTorchSupported(World, State, Context.Destination)
+                                   : CheckPlantPlacement(Context.Destination, State) == EFoundationReason::None;
+    };
     if (!Wall)
         Placed = FoundationBlockPlacement::GetStateForPlacement(World, *Placing, Context);
-    else if (!FoundationBlockPlacement::GetTorchState(World, *Placing, *Wall, Context, Placed))
+    else if (!FoundationBlockPlacement::GetStandingOrWallState(World, *Placing, *Wall, Context, Holds, Placed))
         return EFoundationReason::CannotSurvive;
     if (OutState) *OutState = Placed;
     if (Placing->bNeedsSupportBelow)
@@ -767,7 +773,8 @@ EFoundationReason FFoundationAuthority::CheckPlantPlacement(
     if (bTwoHalves)
     {
         if (!World.IsKnown(Upper)) return EFoundationReason::OutsideBounds;
-        if (!World.GetBlock(World.Get(Upper).State).bReplaceable) return EFoundationReason::DestinationOccupied;
+        if (!FoundationBlockPlacement::IsReplaceable(World, World.Get(Upper).State))
+            return EFoundationReason::DestinationOccupied;
     }
     if (!PlantSurvival) return EFoundationReason::None;
     // The placed state must survive where it goes, read as the cell is now (the water seagrass goes into), and a
@@ -877,26 +884,50 @@ void FFoundationAuthority::SettlePlants(
         Changed.AddUnique(Upper);
         PopOtherHalf(Upper, UpperBefore);
     }
-    // One level deep: the neighbours of the edited unit are checked, the neighbours of a pop are not.
+    // Settles one cell: a vine, glow lichen or sculk vein loses the faces no longer held while one is left; any other
+    // state that no longer survives pops, with its other half. Whether the cell changed.
+    auto Settle = [this, &Changed, &Pop, &PopOtherHalf](const FIntVector& At, FFoundationBlockState State)
+    {
+        if (State.IsAir()) return false;
+        const FFoundationBlockState Trimmed = TrimPlantFaces(At, State);
+        if (Trimmed.Id != State.Id && !FoundationPlantRules::HasNoFace(World.GetRegistry(), Trimmed))
+        {
+            World.Set(At, Trimmed);
+            Changed.Add(At);
+            return true;
+        }
+        if (CanPlantSurvive(At, State)) return false;
+        Pop(At);
+        PopOtherHalf(At, State);
+        return true;
+    };
+    // A changed segment of a stack, and its stack (FoundationPlantRules::GetStack).
+    TArray<TPair<FIntVector, FName>, TInlineAllocator<8>> Stacks;
+    auto Visit = [this, &Changed, &Settle, &Stacks](const FIntVector& At)
+    {
+        if (Changed.Contains(At) || !World.IsKnown(At)) return;
+        const FFoundationBlockState State = World.Get(At).State;
+        const FName Stack = FoundationPlantRules::GetStack(World.GetBlock(State).Id);
+        if (Settle(At, State) && !Stack.IsNone()) Stacks.Emplace(At, Stack);
+    };
+    // One level deep: the neighbours of the edited unit are checked, the neighbours of a pop are not...
     const int32 Edited = Changed.Num();
     for (int32 Index = 0; Index < Edited; ++Index)
         for (int32 Face = 0; Face < 6; ++Face)
+            Visit(Changed[Index] + FoundationGrid::FaceOffset(EFoundationFace(Face)));
+    // ...except along a stack, which settles to its end (Jesus's answer to scout H's Q1): from each changed segment the
+    // cells of the same stack above and below, while they change. The column bounds it.
+    for (int32 Index = 0; Index < Stacks.Num(); ++Index)
+    {
+        const TPair<FIntVector, FName> Segment = Stacks[Index];
+        for (const int32 Step : {-1, 1})
         {
-            const FIntVector Neighbour = Changed[Index] + FoundationGrid::FaceOffset(EFoundationFace(Face));
-            if (Changed.Contains(Neighbour) || !World.IsKnown(Neighbour)) continue;
-            const FFoundationBlockState State = World.Get(Neighbour).State;
-            if (State.IsAir() || CanPlantSurvive(Neighbour, State)) continue;
-            // A vine, glow lichen or sculk vein loses only the faces no longer held while one is left.
-            const FFoundationBlockState Trimmed = TrimPlantFaces(Neighbour, State);
-            if (Trimmed.Id != State.Id && !FoundationPlantRules::HasNoFace(World.GetRegistry(), Trimmed))
-            {
-                World.Set(Neighbour, Trimmed);
-                Changed.Add(Neighbour);
-                continue;
-            }
-            Pop(Neighbour);
-            PopOtherHalf(Neighbour, State);
+            const FIntVector Next = Segment.Key + FIntVector(0, 0, Step);
+            if (World.IsKnown(Next) &&
+                FoundationPlantRules::GetStack(World.GetBlock(World.Get(Next).State).Id) == Segment.Value)
+                Visit(Next);
         }
+    }
 }
 
 void FFoundationAuthority::Attack(

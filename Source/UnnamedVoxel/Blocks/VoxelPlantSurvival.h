@@ -41,8 +41,8 @@ enum class EVoxelSurvival : uint8
     // The neighbour at Face holds a block of Tag: cocoa toward its facing (jungle logs), a hanging mangrove propagule
     // under mangrove leaves; below: azalea, the propagule, bamboo, big and small dripleaf.
     TagAt,
-    // Every face the state holds (Faces) is held (HoldsFace). A vine's up face is not checked until Jesus decides it
-    // (scout H, Q8).
+    // The faces the state holds (Faces) are held (HoldsFace): every one for glow lichen and sculk vein, any one for a
+    // vine (scout H, T1).
     Multiface,
     // Pointed dripstone and sulfur spike: a sturdy face at Face, or the same block pointing the same way there.
     Pointed,
@@ -57,9 +57,8 @@ struct FVoxelSurvivalRule
     int32 Tag = INDEX_NONE;
     // Attached, TagAt and Pointed: the EVoxelFace toward the support.
     int8 Face = -1;
-    // Multiface: the faces the state holds, one bit per EVoxelFace, and VineUpFace for a vine's up face.
+    // Multiface: the faces the state holds, one bit per EVoxelFace.
     uint8 Faces = 0;
-    static constexpr uint8 VineUpFace = 1 << 6;
 };
 
 // One survival rule per block state, built once and read-only after (any thread may ask).
@@ -118,9 +117,13 @@ public:
             return HoldsAt(State, Rule, GetState(X + Step[0], Y + Step[1], Z + Step[2]));
         }
         case EVoxelSurvival::Multiface:
+        {
+            // A vine stays while any face holds; glow lichen and sculk vein need every face.
+            const bool bAnyFace = Table->Get(State).Block == VineBlock;
             for (int32 Face = 0; Face < 6; ++Face)
-                if ((Rule.Faces >> Face & 1) && !HoldsFace(State, Face, X, Y, Z, GetState)) return false;
-            return Rule.Faces != 0;
+                if ((Rule.Faces >> Face & 1) && HoldsFace(State, Face, X, Y, Z, GetState) == bAnyFace) return bAnyFace;
+            return Rule.Faces != 0 && !bAnyFace;
+        }
         case EVoxelSurvival::DripleafStem:
         {
             const int32 Above = Table->Get(GetState(X, Y, Z + 1)).Block;
@@ -133,14 +136,18 @@ public:
 
     // Whether one face (an EVoxelFace) of a multiface state is held at (X, Y, Z): the neighbour there has a full
     // collision face or a sturdy face toward it, or, for a vine's side face, the vine above holds the same face
-    // (scout H, T1). S7 trims the faces that are no longer held after a neighbour changes.
+    // (scout H, T1). A vine's up face reads the upper face of the block above instead, as measured: a top slab holds
+    // it, a bottom slab does not (Jesus's answer to Q8). S7 trims the faces that are no longer held after a neighbour
+    // changes.
     template <typename FGetState>
     bool HoldsFace(uint16 State, int32 Face, int32 X, int32 Y, int32 Z, FGetState&& GetState) const
     {
         const int8* Step = FaceSteps[Face];
         const uint16 Beside = GetState(X + Step[0], Y + Step[1], Z + Step[2]);
-        if (Table->Get(Beside).Shape == EVoxelShape::Full || (GetSturdyFaces(Beside) >> (Face ^ 1) & 1)) return true;
-        if (Face >= int32(EVoxelFace::Down) || Table->Get(State).Block != VineBlock) return false;
+        const bool bVine = Table->Get(State).Block == VineBlock;
+        const int32 Read = bVine && Face == int32(EVoxelFace::Up) ? Face : Face ^ 1;
+        if (Table->Get(Beside).Shape == EVoxelShape::Full || (GetSturdyFaces(Beside) >> Read & 1)) return true;
+        if (Face >= int32(EVoxelFace::Down) || !bVine) return false;
         const uint16 Above = GetState(X, Y, Z + 1);
         return Table->Get(Above).Block == VineBlock && (GetRule(Above).Faces >> Face & 1) != 0;
     }

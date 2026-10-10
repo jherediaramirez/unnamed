@@ -99,11 +99,15 @@ int32 UFoundationInteractionSettings::MergeItems(
 void UFoundationInteractionSettings::AddBlockItems(
     const FFoundationBlockRegistry& Registry, TArray<FFoundationItemDefinition>& Items)
 {
+    TSet<FName> WallBlocks;
+    for (int32 Index = 0; Index < Registry.GetBlockCount(); ++Index)
+        WallBlocks.Add(Registry.GetBlockAt(Index).ItemWallBlock);
     for (int32 Index = 0; Index < Registry.GetBlockCount(); ++Index)
     {
         const FFoundationBlockType& Block = Registry.GetBlockAt(Index);
-        // A wall block (wall_torch) has no item: it drops its standing block's, which that block makes.
-        if (Block.bTorchRule && Block.Item.IsNone()) continue;
+        // A wall block (wall_torch, the coral wall fans) has no item: it drops its standing block's, which that block
+        // makes.
+        if (WallBlocks.Contains(Block.Id) && Block.Item.IsNone()) continue;
         const FName Id = Block.Item.IsNone() && !Block.DropItem.IsNone() ? Block.DropItem : Block.Item;
         if (Id.IsNone() ||
             Items.ContainsByPredicate([Id](const FFoundationItemDefinition& Item) { return Item.Id == Id; }))
