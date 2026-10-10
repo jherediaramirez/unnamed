@@ -42,6 +42,8 @@ public:
     bool IsEmpty() const { return Bits == 0 && Uniform == 0; }
     int32 GetNonAirCount() const { return NonAir; }
     int32 GetPaletteSize() const { return Bits == 0 ? 1 : Bits == 16 ? 0 : Palette.Num(); }
+    // The palette of a 4- or 8-bit section (empty for uniform and 16-bit sections).
+    TConstArrayView<uint16> GetPalette() const { return Palette; }
     int32 GetBitsPerIndex() const { return Bits; }
     SIZE_T GetAllocatedSize() const { return Palette.GetAllocatedSize() + Words.GetAllocatedSize(); }
 

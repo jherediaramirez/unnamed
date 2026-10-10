@@ -1,6 +1,8 @@
 #include "Misc/AutomationTest.h"
 #include "Dom/JsonObject.h"
+#include "Engine/Texture2DArray.h"
 #include "Foundation/FoundationAuthority.h"
+#include "Foundation/FoundationBlockImport.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationItemAssets.h"
@@ -184,6 +186,21 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
         TestEqual(What + TEXT("swap animation"), Asset.SwapAnimationScale,
             float(Model->GetNumberField(TEXT("swap_animation_scale"))));
         TestTrue(What + TEXT("textures"), Names(Asset.Textures) == Strings(Json, TEXT("textures")));
+        // The attribute modifiers verbatim, namespaces dropped (the tooltip's lines).
+        const TArray<TSharedPtr<FJsonValue>>* Modifiers = nullptr;
+        if (!Attack || !Attack->TryGetArrayField(TEXT("modifiers"), Modifiers)) Modifiers = nullptr;
+        if (TestEqual(What + TEXT("modifiers"), Asset.Modifiers.Num(), Modifiers ? Modifiers->Num() : 0))
+            for (int32 Entry = 0; Entry < Asset.Modifiers.Num(); ++Entry)
+            {
+                const TSharedPtr<FJsonObject> Source = (*Modifiers)[Entry]->AsObject();
+                const FFoundationItemModifierAsset& Modifier = Asset.Modifiers[Entry];
+                TestTrue(What + FString::Printf(TEXT("modifier %d"), Entry),
+                    TEXT("minecraft:") + Modifier.Attribute.ToString() == Source->GetStringField(TEXT("type")) &&
+                        TEXT("minecraft:") + Modifier.Id.ToString() == Source->GetStringField(TEXT("id")) &&
+                        Modifier.Amount == Source->GetNumberField(TEXT("amount")) &&
+                        Modifier.Operation.ToString() == Source->GetStringField(TEXT("operation")) &&
+                        Modifier.Slot.ToString() == Source->GetStringField(TEXT("slot")));
+            }
 
         // The authority's definition carries the same numbers.
         const FFoundationItemDefinition* Definition = Find(Rules, *Id);
@@ -196,7 +213,8 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
                 Definition->DurabilityPerHit == Asset.DamagePerHit &&
                 Definition->DefaultMiningSpeed == Asset.DefaultMiningSpeed &&
                 Definition->MiningRules.Num() == Asset.Rules.Num() && Definition->Tags.Num() == Asset.ItemTags.Num() &&
-                Definition->PlacesBlock.IsNone() && Definition->DisplayName == Asset.DisplayName);
+                Definition->PlacesBlock.IsNone() && Definition->DisplayName == Asset.DisplayName &&
+                !Asset.Textures.IsEmpty() && Definition->Sprite == Asset.Textures[0]);
         for (int32 Rule = 0; Rule < FMath::Min(Definition->MiningRules.Num(), Asset.Rules.Num()); ++Rule)
             TestTrue(What + FString::Printf(TEXT("definition rule %d"), Rule),
                 Definition->MiningRules[Rule].Speed == Asset.Rules[Rule].Speed &&
@@ -218,7 +236,7 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
         TestTrue(TEXT("spears: no tool component, so mining costs nothing"),
             Spear->MiningRules.IsEmpty() && Spear->DurabilityPerBlock == 0 && Spear->DurabilityPerHit == 1 &&
                 Spear->MaxDurability == 250);
-        TestTrue(TEXT("held view and hotbar keep the Icon key by kind until items S3 and S4"),
+        TestTrue(TEXT("the held view keeps the Icon key by kind until items S4 (the HUD draws Sprite)"),
             IronPickaxe->Icon == TEXT("pickaxe") && Find(Rules, TEXT("iron_sword"))->Icon == TEXT("sword") &&
                 Find(Rules, TEXT("iron_axe"))->Icon.IsNone() && Find(Rules, TEXT("stick"))->Icon.IsNone());
         TestTrue(TEXT("netherite sword 8 / 1.6, 2031"),
@@ -270,6 +288,38 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
                     Asset.Height == int32(Json->GetArrayField(TEXT("size"))[1]->AsNumber()) &&
                     Asset.Height == Asset.Mask.Num());
         }
+    // Every sprite is a layer of T_ItemTextures (16 x 16) or T_ItemTextures32, in textures.json order, holding the
+    // jar's pixels.
+    UTexture2DArray* Arrays[2] = {Assets->ItemTextures.LoadSynchronous(), Assets->ItemTextures32.LoadSynchronous()};
+    int32 Layers[2] = {0, 0};
+    for (const FFoundationItemTextureAsset& Asset : Assets->Textures)
+    {
+        const int32 Array = Asset.Width == 32 ? 1 : 0;
+        TestEqual(TEXT("layer of ") + Asset.Name.ToString(), Asset.Layer, Layers[Array]++);
+        if (Arrays[Array])
+            TestEqual(TEXT("layer pixels of ") + Asset.Name.ToString(),
+                UFoundationBlockImport::HashLayer(Arrays[Array], Asset.Layer), Asset.RgbaSha256);
+    }
+    TestTrue(TEXT("63 layers of 16 x 16 and 7 of 32 x 32"), Layers[0] == 63 && Layers[1] == 7);
+    for (int32 Array = 0; Array < 2; ++Array)
+        if (TestNotNull(Array ? TEXT("T_ItemTextures32") : TEXT("T_ItemTextures"), Arrays[Array]))
+        {
+            const UTexture2DArray* Texture = Arrays[Array];
+            const int32 Size = Array ? 32 : 16;
+#if WITH_EDITORONLY_DATA
+            // The source data: -NullRHI runs build no platform data.
+            TestEqual(TEXT("array layers"), Texture->Source.GetNumSlices(), Layers[Array]);
+            TestTrue(TEXT("array size"), Texture->Source.GetSizeX() == Size && Texture->Source.GetSizeY() == Size);
+            TestEqual(TEXT("array mips"), Texture->Source.GetNumMips(), 1);
+#endif
+            TestEqual(TEXT("array filter"), int32(Texture->Filter.GetValue()), int32(TF_Nearest));
+        }
+    // The tooltip's text, verbatim from en_us.json.
+    const TSharedPtr<FJsonObject> LangJson = ReadItemReference(TEXT("lang.json"));
+    const TSharedPtr<FJsonObject> Keys = LangJson ? ObjectOr(LangJson, TEXT("keys")) : nullptr;
+    if (TestNotNull(TEXT("lang.json"), Keys.Get()) && TestEqual(TEXT("6 lang keys"), Assets->Lang.Num(), 6))
+        for (const TPair<FString, TSharedPtr<FJsonValue>>& Key : Keys->Values)
+            TestEqual(TEXT("lang ") + Key.Key, Assets->Lang.FindRef(Key.Key), Key.Value->AsString());
     // Ids: no 26.3 item shares an id with a block or a block item; only air and wheat share a block's id in 26.3
     // without being that block's item, and neither is imported.
     const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();

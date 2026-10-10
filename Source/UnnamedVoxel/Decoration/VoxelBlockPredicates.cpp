@@ -61,6 +61,23 @@ FIntVector VoxelPredicateReading::ReadOffset(const FVoxelFeatureGraph& Graph, in
     return FIntVector(At(0), At(2), At(1));
 }
 
+bool VoxelPredicateReading::ReadBlockSet(const FVoxelFeatureGraph& Graph, const FVoxelFeatureValue* Value,
+    FVoxelBlockTags& Tags, FVoxelBlockSet& Out, FString* OutError)
+{
+    Out.Init(Tags.GetBlockLimit(), false);
+    for (const FStringView Id : ReadStrings(Graph, Value))
+        if (Id.StartsWith(TEXT("#")))
+        {
+            const FVoxelBlockSet* Tag = Tags.Find(Id.RightChop(1), OutError);
+            if (!Tag) return false;
+            for (int32 Word = 0; Word < Out.Words.Num() && Word < Tag->Words.Num(); ++Word)
+                Out.Words[Word] |= Tag->Words[Word];
+        }
+        else if (const int32 Block = Tags.FindBlock(Id); Block != INDEX_NONE)
+            Out.Add(Block);
+    return true;
+}
+
 int32 VoxelPredicateReading::ReadFace(FStringView Name)
 {
     static const TCHAR* const Names[] = {
@@ -152,6 +169,23 @@ bool FVoxelBlockPredicates::Compile(const FVoxelFeatureGraph& Graph, int32 Node,
         const FVoxelFeatureValue* State = Graph.FindField(Node, TEXT("state"));
         Out.Op = EOp::WouldSurvive;
         Out.Argument = State ? ReadState(Graph, *State, *Table) : INDEX_NONE;
+        // Saplings are not in the block table (the block reference has none), yet every tree's placement asks whether
+        // one would survive. A sapling survives where vegetation does (minecraft.wiki, "Sapling": dirt-like blocks and
+        // farmland), so its would_survive tests the block below against supports_vegetation, as the plants' survival
+        // table does (S8).
+        const int32 StateNode = State ? Graph.GetNode(*State) : INDEX_NONE;
+        const FVoxelFeatureValue* StateId = State && State->Type == EVoxelFeatureValueType::String ? State
+            : StateNode != INDEX_NONE ? Graph.FindField(StateNode, TEXT("id"))
+                                      : nullptr;
+        if (Out.Argument == INDEX_NONE && StateId && StateId->Type == EVoxelFeatureValueType::String &&
+            Graph.Strings[StateId->Index].EndsWith(TEXT("_sapling")))
+        {
+            const FVoxelBlockSet* Vegetation = Tags.Find(TEXT("minecraft:supports_vegetation"), OutError);
+            if (!Vegetation) return false;
+            Out.Op = EOp::InSet;
+            Out.Offset.Z -= 1;
+            Out.Argument = AddSet(*Vegetation);
+        }
         if (Out.Argument == INDEX_NONE)
         {
             OutSkip = TEXT("would_survive of a state the table lacks");

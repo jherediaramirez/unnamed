@@ -60,9 +60,12 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
 | `Slab` | 101 slabs | bottom or top from the click height; a matching slab merges to double |
 | `Leaves` | leaves | `persistent=true`, `distance` from neighbouring logs and leaves |
 | `Snowy` | grass block, podzol, mycelium | `snowy` when a `#snow` block is above |
-| `WallAttached` | wall torch | `facing` the clicked side face, away from its wall |
+| `WallAttached` | wall torch | `facing` away from its wall, which the torch item picks by look (below) |
 
-**The torch** (torch session T2). The `torch` item (`PlacesWallBlock`, from the reference's standing-and-wall items) places `torch` on a top face and `wall_torch` on a side face. Either needs a support that holds it: `FFoundationBlockRegistry::GetTorchSupport` gives each state's faces from `facts/block_support.json`, which `FactsDump.java` measures with the torch's own `canSurvive` (leaves and powder snow hold none, every other full cube all five, an upside-down slab a floor torch, a bottom slab nothing). An underside click places nothing until T3 brings vanilla's choice among the other faces. Survival after placement (popping), light and the coral fans' wall fans are later work.
+**The torch** (torch sessions T2 and T3). The `torch` item (`PlacesWallBlock`, from the reference's standing-and-wall items) places `torch` or `wall_torch`, where a support holds it: `FFoundationBlockRegistry::GetTorchSupport` gives each state's faces from `facts/block_support.json`, which `FactsDump.java` measures with the torch's own `canSurvive` (leaves and powder snow hold none, every other full cube all five, an upside-down slab a floor torch, a bottom slab nothing).
+- **Placement by look** (`FoundationBlockPlacement::GetTorchState`), as measured black-box in 26.3 by probe P3 (`Tests/Probes/torch-placement-26.3.json`, 64,896 clicks): the directions nearest the look (`GetNearestLooks`), with the direction into the clicked block first unless the click replaces it (short grass). Up is skipped, down gives the floor torch if the cell below holds one, and a side gives the wall torch against the first side, in that order, that holds one; the first hit wins, and nothing holding places nothing (`CannotSurvive`). So a side or top click on a block that holds a torch always places on it, an underside click places by look, and a click on short grass chooses by look, not by the clicked face. The preview and the placement share the rule.
+- **Survival:** a torch pops through S7's one-level cascade when its support stops holding it (an unknown support cell keeps it). It shares the plants' switch, `Options.bPlantRules`.
+- **Drops:** a broken wall torch drops a `torch`, and pick block on it selects the torch. Its light is in "Light sources" below; the coral fans' wall fans are later work.
 
 **Plants and the other model blocks** (phase 6, S7; `FoundationPlantRules`, `FFoundationAuthority::CheckPlantPlacement` and `SettlePlants`). Behaviour comes from the reference's properties and tags, scout H's black-box support table ([the prep](Records/2026-10-10-Voxel-Phase6-Scout-H-Plant-Interaction.md), T1) and minecraft.wiki.
 - **State from the click**, by property, for model blocks without an asset rule:
@@ -86,9 +89,9 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
 ## Rendering
 
 - **Meshes:** each `(section, mesh, layer)` is one instanced static mesh in `UFoundationInteractionView`. The runtime meshes (`FoundationBlockMeshes`) are a cube, bottom and top slabs, eight water heights and seven snow layer heights, then one per baked model (303), built on first use.
-- **Model meshes** (phase 6 S6b): a model's quads in order, without the 16 that repeat an earlier quad exactly (as the voxel world drops them). Normals and tangents follow each quad's shade face, so crosses are lit as up, as in the voxel world. UV 0 is the quad's texture UV. UV 1 is (shade face, the quad's own code), in full-precision UVs: texture and tint bit as face codes hold them, no UV transform, the element light in bits 16-19, and bit 20 marking it (under 2^21, so interpolation cannot move it past the materials' rounding). The `M_Block*` materials use that code instead of the instance's face code, and emit the brighter of the state's light and the element light (the firefly bush's overlay). The cube meshes keep UV 1's second channel at 0. A quad lying on an earlier quad's four corners (only the firefly bush's emissive overlay, 4 quads) is lifted 1/512 block along its facing. UE 5.8 clips masked materials only in the depth prepass (`r.EarlyZPassOnlyMaterialMasking` defaults to 1), so a coplanar overlay passed the base pass's depth test across the whole bush and drew its transparent black texels: the bush drew black with lit fireflies.
+- **Model meshes** (phase 6 S6b): a model's quads in order, without the 16 that repeat an earlier quad exactly (as the voxel world drops them). Normals and tangents follow each quad's shade face, so crosses are lit as up, as in the voxel world. UV 0 is the quad's texture UV. UV 1 is (shade face, the quad's own code), in full-precision UVs: texture and tint bit as face codes hold them, no UV transform, the element light in bits 16-19, and bit 20 marking it (under 2^21, so interpolation cannot move it past the materials' rounding). The `M_Block*` materials use that code instead of the instance's face code, and emit the brighter of the state's light and the element light (the firefly bush's overlay). The cube meshes keep UV 1's second channel at 0. A quad lying on an earlier quad's four corners (only the firefly bush's emissive overlay, 4 quads) is lifted 1/512 block along its facing. UE 5.8 clips masked materials only in the depth prepass (`r.EarlyZPassOnlyMaterialMasking` defaults to 1), so a coplanar overlay passed the base pass's depth test across the whole bush and drew its transparent black texels: the bush drew black with lit fireflies. Both worlds draw a model's quads through `FoundationBlockMeshes::GetDrawnModelQuads`. It returns the baked quads, except that each quad textured `torch` is cut at UV v = 8/16, the line between torch.png's flame (rows 6-7) and its stick (rows 8-15). The flame piece and the top face carry element light 1; the stick and the bottom keep 0 (torch session T3b; the registry keeps the baked quads).
 - **Model instances:** one per part of a state. Each part draws one alternative (`VoxelModels::PickAlternative`), and the whole state moves by `VoxelModels::GetOffset`, so the Playground and the voxel world agree cell for cell. The layer is the block's own (moss carpet is opaque). A state that holds water also draws a water source in its cell (full height under water), as the voxel world draws held water. `GetDrawnCellCount` counts cells, and `GetInstanceCount` counts instances; a vine with no face has none.
-- **Per-instance data:** nine floats per instance: six face codes, an overlay code, the packed RGB tint and the state's light emission (`GetLightEmission`; sea pickles and cave vines vary by state).
+- **Per-instance data:** nine floats per instance: six face codes, an overlay code, the packed RGB tint and the light the instance glows at (`FoundationBlockMeshes::GetDrawnLight`: the state's light emission, `GetLightEmission`, where sea pickles and cave vines vary by state; torch-rule states at `voxel.TorchGlow`).
 - **Face codes:** texture layer (bits 0-9), UV transform (bits 10-12), tint (bit 13) and cull face (bit 14). The overlay code adds a present bit (15) and a face mask (bits 16-21) for the grass side overlay.
 - **UVs:** `FoundationBlockFaces::GetCanonicalUV` follows vanilla `FaceBakery`.
 - **Layers:**
@@ -103,6 +106,24 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
 
   GUI items use `items/*.json` tints, such as grass `#7CBD6B`. Model blocks' sources come from minecraft.wiki: grass for the tinted crosses, sugar cane and bush (pink petals and wildflowers on their stems only), foliage for vine, the dry foliage colormap for leaf litter (plains `#A37546`), and lily pad `#208030`.
 - **Animation:** `UFoundationBlockTextureTable` holds each animated texture's current layer, next layer and blend, updated at 20 ticks per second from the `.mcmeta` frame list. Interpolated textures blend.
+
+## Light sources (voxel world, torch session T3)
+
+- **Which blocks:** every state whose block light is `voxel.LightMinLevel` (10) or more gets a point light, except lava (`VoxelLightSources`):
+  - the torch and wall torch (14);
+  - glowing cubes: glowstone, sea lantern, shroomlight, the froglights, jack o'lantern, crying obsidian;
+  - emitting models: cave vines with berries, sea pickles of three or more.
+- **Where the light sits:** a torch's light hangs just past its flame. A cube's light sits just outside its open faces; a buried cube gets none.
+- **The pool:** `FVoxelLights`, on `AVoxelWorld`.
+  - It lights the nearest `voxel.LightCount` (64, at most 100) sources within `voxel.LightRadius` (48 blocks). Sources under 2 blocks apart share one light.
+  - The lights are movable `UPointLightComponent`s that cast shadows and allow MegaLights. Their radius is (level - 1) blocks, and their intensity is `voxel.LightIntensity` cd (600) times level / 14. `voxel.LightTemperature` (2,200 K) sets the colour. These defaults are warm A, Jesus's pick in the torch look round (T3b).
+  - With `voxel.LightFalloff` above 0, the falloff is that exponent instead of inverse square, and intensity comes from `voxel.LightBrightness`.
+- **When it is live:** only while `r.MegaLights.EnableForProject` is 1 and `voxel.Lights` is on. Otherwise no light component exists. MegaLights is on for the whole project (`Config/DefaultEngine.ini`, since T3b). With no lights it costs about 0.13 ms of GPU and 1.4 ms of game thread a frame (T3).
+- **When it updates:** when a column's sources change (they are gathered by the column's mesh job), when the camera moves a block, or when a setting changes. A torch edit costs about 0.01 ms of game thread. `voxel.LightsInfo` reports the pool.
+- **The torch's own glow:** `voxel.TorchGlow` (default 1, warm A) is the level the whole torch model glows at: in the voxel world at world build and at `voxel.Regenerate` (or with `-VoxelTorchGlow=N`), and in the Playground as a torch instance is made. 14 is the old white torch. The pool still lights at the real level, 14.
+  - The flame quads carry element light 1 on their own (see "Model meshes" above), so `voxel.TorchGlow 0` leaves only the flame glowing. Jesus asked for that look (the stick in its real brown, no glow). It is not the default yet: in a cave the stick reads black (mean sRGB 9/3/1 against the texture's 110/87/55), because the torch's top face shadows it from its own light. The brown stick needs a glow under level 1 (T3c; see [the T3b record](Records/2026-10-10-Torch-T3b.md)).
+- **The Playground** has no torch lights.
+- **Records:** T3's gates and look captures are in [Records/2026-10-10-Torch-T3.md](Records/2026-10-10-Torch-T3.md).
 
 ## Playground gallery
 
@@ -123,7 +144,7 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
 - **Search:** filters by name or id, and `#` filters by block tag. `T` opens search.
 - **Interaction:** tooltips and the carried stack. Clicks, shift-clicks, number keys, picking up and deleting follow vanilla `slotClicked`.
 - **Rendering:** `FHudCreativeModel` holds the pure tab, scroll and click rules. 3D item icons come from `HudBlockIcon`: top, east and north faces at shades 1.0, 0.68 and 0.44. Model blocks' items draw their item model: 62 flat sprites (an icon atlas tile, tinted like their layer) and 10 block models (cactus, azalea, flowering azalea, the moss carpets, mangrove roots, big and small dripleaf, shelf mushroom, spore blossom) projected from their baked quads under the model's gui transform, back faces culled, far quads first.
-- **Hotbar:** the in-game hotbar draws block items with the same 3D icons.
+- **Hotbar:** the in-game hotbar draws block items with the same 3D icons, and other items with their sprites ([Items](Items.md), "Presentation").
 - **Commits:** every inventory change is the `SetCreativeSlot` authority command (slots 0-8 and 9 for the offhand), gated by `FFoundationLabOptions::bCreativeInventory`.
 
 ## Budgets and known issues
@@ -147,7 +168,8 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
   - `.Faces`: every face resolves to a valid layer, plus the UV transforms.
   - `.Textures`: imported pixels against the jar hashes, plus mipmaps (the strict cutout and biased textures regenerated and compared), and the budgets.
   - `.Placement`: truth tables.
-  - `.Support` and `.Torch`: every state's torch support against the reference; the torch item, the block by clicked face, the wall torch's facing and survival on stone, glass, leaves and slabs.
+  - `.Support` and `.Torch`: every state's torch support against the reference; the torch item, the wall torch's facing and survival on stone, glass, leaves and slabs.
+  - `.TorchProbe`: probe P3's matrix, every look order and all 64,896 entries through the authority's `CheckPlacement`. `.TorchSurvival`: the pop cascade, the wall torch's drop and pick block.
   - `.Shapes`: slab, water, snow layer, powder snow and lava shapes; every model state's boxes, light, water and offset against the facts.
   - `.PlantShapes`: every model state's moved outline and collision boxes at four cells against the voxel table's offset (collision never leaves its cell; a thick bamboo outline reaches at most 1/16 block out, checked at 256 cells), the gathered boxes, and a ray through a dandelion's empty corner.
   - `.PlantPlacement`: the plant states from the click, and the halves of double plants.
@@ -155,6 +177,6 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
   - `.Survival`: about 80 support rows from scout H's table, then the pop pass through the authority (a flower, both halves, one segment of a stack, trimmed vine and lichen faces, a cactus beside a placed block, unknown cells).
   - `Unnamed.Foundation.Interaction.Plants`: both halves through the authority, replacing grass, refusals, pops dropping nothing, instant mining, and the switch.
   - `.Models`: every baked quad and every model state's parts against the reference, with spot checks.
-  - `.ModelMeshes`: the Playground's model meshes: 2,440 baked quads, 2,424 drawn (two triangles each), full-precision UVs, and every vertex's position, texture UV, shade face and own code.
+  - `.ModelMeshes`: the Playground's model meshes: 2,440 baked quads, 2,444 drawn (two triangles each: 16 exact repeats dropped, 20 added by the torch's flame cut), full-precision UVs, and every vertex's position, texture UV, shade face and own code.
   - `Unnamed.Hud.Creative.Tabs`, `.Clicks` and `.Authority`.
 - **Runtime:** `TestFoundationRuntime.ps1 -Suite tour` shots 09-23 cover the gallery and the creative screen (17p and 17q: the plant row). The interaction suite covers stone placement and mining and the hotbar block icon, and checks the drawn cells and the exact instance count (one per part, plus held water) against the world. Its plants group (S7) places a dandelion on grass and mines the grass (the dandelion pops), refuses a dandelion on stone, and places and mines tall grass (both halves go).

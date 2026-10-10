@@ -1,0 +1,11 @@
+{
+ "lang": "en_us",
+ "keys": {
+  "attribute.modifier.equals.0": "%s %s",
+  "attribute.modifier.plus.0": "+%s %s",
+  "attribute.modifier.take.0": "-%s %s",
+  "attribute.name.attack_damage": "Attack Damage",
+  "attribute.name.attack_speed": "Attack Speed",
+  "item.modifiers.mainhand": "When in Main Hand:"
+ }
+}

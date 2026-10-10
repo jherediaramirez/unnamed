@@ -1266,6 +1266,33 @@ void UFoundationRuntimeProbe::AddTourCases()
         UFoundationProfile::BlockCm;
     Gallery(TEXT("19-gallery-states"), States + FVector(0, 7000, 5500) * (StateRows / 59.), States);
 
+    // i2. The hotbar's item sprites and durability bars (items S3): the loadout's iron pickaxe and sword worn to 125
+    // and 200 of 250, kept for the creative shots' hotbar row and repaired after them.
+    auto Wear = [this, Authority](int32 Pickaxe, int32 Sword)
+    {
+        if (FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId))
+        {
+            Player->Inventory.Hotbar[1].Damage = Pickaxe;
+            Player->Inventory.Hotbar[2].Damage = Sword;
+            ++Player->Inventory.Revision;
+        }
+    };
+    AddCase(
+        TEXT("tour hotbar worn"), .6,
+        [this, Wear]
+        {
+            ResetPlayer({0, 0, 0});
+            Wear(125, 200);
+        },
+        [this, Shot, Authority]
+        {
+            const FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
+            Record(TEXT("tour hotbar worn"), Player && Player->Inventory.Hotbar[1].Damage == 125,
+                TEXT("iron pickaxe 125 and iron sword 200 of 250"));
+            Shot(TEXT("19h-hotbar-worn"));
+        });
+    AddCase(TEXT("tour flush hotbar"), .4, [] {}, [] {});
+
     // j. The creative inventory (E): a category tab with a hovered item and its tooltip, the search tab with a
     // query, and the survival inventory tab, each over the darkened world.
     auto Creative = [this](const TCHAR* Name, TFunction<void(SHudCreativeScreen&)> Arrange)
@@ -1325,7 +1352,8 @@ void UFoundationRuntimeProbe::AddTourCases()
                 Screen.GetModel().ScrollRows(Rows);
                 Screen.SetMouse({-200, -200});
             });
-    // The 26.3 items (items S2, DA_Items): their own sprites, hovering the iron pickaxe and the iron sword.
+    // The 26.3 items (items S2, DA_Items): their own sprites, hovering the iron pickaxe and the netherite sword
+    // (items S3: the "When in Main Hand" lines; the hotbar row shows the worn tools' bars).
     Creative(TEXT("22e-creative-tools"),
         [TabIndex](SHudCreativeScreen& Screen)
         {
@@ -1337,7 +1365,7 @@ void UFoundationRuntimeProbe::AddTourCases()
         [TabIndex](SHudCreativeScreen& Screen)
         {
             Screen.GetModel().SelectTab(TabIndex(Screen, TEXT("combat")));
-            Screen.SetMouse(FHudCreativeModel::GetSlotPosition(EHudCreativeHit::Grid, 3) + FIntPoint(8, 8));
+            Screen.SetMouse(FHudCreativeModel::GetSlotPosition(EHudCreativeHit::Grid, 6) + FIntPoint(8, 8));
         });
     Creative(TEXT("23-creative-inventory"),
         [TabIndex](SHudCreativeScreen& Screen)
@@ -1346,6 +1374,13 @@ void UFoundationRuntimeProbe::AddTourCases()
             Screen.GetModel().SelectTab(TabIndex(Screen, TEXT("inventory")));
             Screen.SetMouse(FHudCreativeModel::GetSlotPosition(EHudCreativeHit::Hotbar, 0) + FIntPoint(8, 8));
         });
-    AddCase(TEXT("tour creative close"), .3, [this] { Controller->GetPanels()->Close(); }, [] {});
+    AddCase(
+        TEXT("tour creative close"), .3,
+        [this, Wear]
+        {
+            Controller->GetPanels()->Close();
+            Wear(0, 0);
+        },
+        [] {});
 #endif
 }

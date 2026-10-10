@@ -76,6 +76,17 @@ namespace VoxelLightProbe
     // that leaves too few). A light sits 1 m above its cell's floor. The same view gives the same cells, and the
     // first N of a longer list are the N-light case.
     TArray<FVector> FindFloorLights(const FCells& Cells, const FVector& EyeCm, const FVector& Forward, int32 Count);
+    // The floor cells FindFloorLights puts its lights over, in the same order.
+    TArray<FIntVector> FindFloorLightCells(
+        const FCells& Cells, const FVector& EyeCm, const FVector& Forward, int32 Count);
+
+    // `voxel.LightProbe <N> torches` (session T3): a floor torch on each cell, written through the authority's block
+    // world, so their lights come from the world's light pool (FVoxelLights) rather than the probe's. Takes back the
+    // torches placed before. Returns how many were placed.
+    int32 PlaceTorches(AVoxelWorld& World, const TArray<FIntVector>& FloorCells);
+    // Puts back what each placed torch replaced, where the torch still stands; returns how many. A torch whose column
+    // is unloaded is kept and tried again by the next call (PlaceTorches makes one first).
+    int32 RemoveTorches();
 
     // Shows one light at each position with these settings, owned by the world's actor; the pool grows as needed
     // and its other lights are hidden. Returns how many are shown.

@@ -1,7 +1,9 @@
 #include "Foundation/FoundationBlockMeshes.h"
 #include "Engine/StaticMesh.h"
+#include "Foundation/FoundationBlockAssets.h"
 #include "MeshDescription.h"
 #include "StaticMeshAttributes.h"
+#include "Voxel/VoxelLights.h"
 
 namespace
 {
@@ -32,6 +34,51 @@ namespace
         }
         StaticMesh->BuildFromMeshDescriptions({&Mesh}, Params);
         return StaticMesh;
+    }
+
+    // A torch quad cut at the flame line (FoundationBlockMeshes::TorchFlameV) when the line crosses two opposite
+    // edges, (A, B) and (C, D): one piece keeps corners A and D, the other B and C, each in its corner's slot, so both
+    // keep the quad's winding and corner order. The flame is the piece above the line (smaller v: texture rows grow
+    // down). False, and nothing written, when the line does not cross the quad that way.
+    bool CutAtTorchFlame(
+        const FFoundationModelQuad& Quad, FFoundationModelQuad& OutFlame, FFoundationModelQuad& OutStick)
+    {
+        constexpr float Line = FoundationBlockMeshes::TorchFlameV;
+        auto Crosses = [&Quad](int32 Corner)
+        {
+            const float From = Quad.UVs[Corner].Y - Line, To = Quad.UVs[(Corner + 1) % 4].Y - Line;
+            return (From < 0 && To > 0) || (From > 0 && To < 0);
+        };
+        auto CutEdge = [&Quad](int32 From, int32 To, FVector3f& OutPosition, FVector2f& OutUV)
+        {
+            const float T = (Line - Quad.UVs[From].Y) / (Quad.UVs[To].Y - Quad.UVs[From].Y);
+            OutPosition = FMath::Lerp(Quad.Positions[From], Quad.Positions[To], T);
+            OutUV = FVector2f(FMath::Lerp(Quad.UVs[From].X, Quad.UVs[To].X, T), Line);
+        };
+        for (int32 A = 0; A < 2; ++A)
+        {
+            const int32 B = A + 1, C = A + 2, D = (A + 3) % 4;
+            if (!Crosses(A) || !Crosses(C) || Crosses(B) || Crosses(D)) continue;
+            FVector3f AtB, AtC;
+            FVector2f AtBUV, AtCUV;
+            CutEdge(A, B, AtB, AtBUV);
+            CutEdge(D, C, AtC, AtCUV);
+            FFoundationModelQuad WithA = Quad, WithB = Quad;
+            WithA.Positions[B] = AtB;
+            WithA.UVs[B] = AtBUV;
+            WithA.Positions[C] = AtC;
+            WithA.UVs[C] = AtCUV;
+            WithB.Positions[A] = AtB;
+            WithB.UVs[A] = AtBUV;
+            WithB.Positions[D] = AtC;
+            WithB.UVs[D] = AtCUV;
+            const bool bFlameWithA = Quad.UVs[A].Y < Line;
+            OutFlame = bFlameWithA ? WithA : WithB;
+            OutStick = bFlameWithA ? WithB : WithA;
+            OutFlame.Light = FMath::Max(OutFlame.Light, FoundationBlockMeshes::TorchFlameLight);
+            return true;
+        }
+        return false;
     }
 }
 
@@ -159,6 +206,45 @@ FVector3f FoundationBlockMeshes::GetOverlayLift(TConstArrayView<FFoundationModel
             return FVector3f(FoundationGrid::FaceNormal(Quad.Facing)) * OverlayLift;
     }
     return FVector3f::ZeroVector;
+}
+
+TArray<FFoundationModelQuad> FoundationBlockMeshes::GetDrawnModelQuads(
+    const FFoundationBlockRegistry& Registry, int32 Model)
+{
+    static const FName TorchTexture(TEXT("torch"));
+    const UFoundationBlockAssets* Assets = Registry.GetAssets();
+    const int32 Torch = Assets ? Assets->Textures.IndexOfByPredicate([](const FFoundationBlockTextureAsset& Texture)
+                                     { return Texture.Name == TorchTexture; })
+                               : INDEX_NONE;
+    const TConstArrayView<FFoundationModelQuad> Baked = Registry.GetModelQuads(Model);
+    TArray<FFoundationModelQuad> Quads;
+    Quads.Reserve(Baked.Num());
+    for (const FFoundationModelQuad& Quad : Baked)
+    {
+        FFoundationModelQuad Flame, Stick;
+        if (Torch == INDEX_NONE || Quad.Texture != Torch)
+            Quads.Add(Quad);
+        else if (CutAtTorchFlame(Quad, Flame, Stick))
+        {
+            Quads.Add(Flame);
+            Quads.Add(Stick);
+        }
+        else
+        {
+            // Uncut: a quad wholly above the line (the top face) is flame.
+            FFoundationModelQuad& Whole = Quads.Add_GetRef(Quad);
+            bool bAbove = true;
+            for (const FVector2f& UV : Quad.UVs)
+                bAbove &= UV.Y <= TorchFlameV;
+            if (bAbove) Whole.Light = FMath::Max(Whole.Light, TorchFlameLight);
+        }
+    }
+    return Quads;
+}
+
+int32 FoundationBlockMeshes::GetDrawnLight(const FFoundationBlockRegistry& Registry, FFoundationBlockState State)
+{
+    return Registry.GetBlock(State).bTorchRule ? FVoxelLights::ReadTorchGlow() : Registry.GetLightEmission(State);
 }
 
 UStaticMesh* FoundationBlockMeshes::BuildModel(UObject* Outer, TConstArrayView<FFoundationModelQuad> Quads)

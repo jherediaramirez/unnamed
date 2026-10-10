@@ -251,17 +251,18 @@ void UFoundationInteractionView::MakeCustomData(
     if (const uint32* Codes = Registry.GetFaces(State))
         for (int32 Index = 0; Index < FoundationBlockFaces::CodesPerState; ++Index)
             Out[Index] = float(Codes[Index]);
-    // 24-bit codes and colors are exact in a float. The light is the state's (sea pickles and cave vines vary).
+    // 24-bit codes and colors are exact in a float. The light is the state's (sea pickles and cave vines vary; torches
+    // glow at voxel.TorchGlow, their flames at their element light).
     Out[7] = float(uint32(Type.Tint.R) << 16 | uint32(Type.Tint.G) << 8 | Type.Tint.B);
-    Out[8] = float(Registry.GetLightEmission(State));
+    Out[8] = float(FoundationBlockMeshes::GetDrawnLight(Registry, State));
 }
 
 UStaticMesh* UFoundationInteractionView::GetBlockMesh(const FFoundationBlockRegistry& Registry, int32 Mesh)
 {
     if (Mesh >= BlockMeshes.Num()) BlockMeshes.SetNum(Mesh + 1);
     if (!BlockMeshes[Mesh] && Mesh >= FoundationBlockMeshes::Count)
-        BlockMeshes[Mesh] =
-            FoundationBlockMeshes::BuildModel(this, Registry.GetModelQuads(Mesh - FoundationBlockMeshes::Count));
+        BlockMeshes[Mesh] = FoundationBlockMeshes::BuildModel(
+            this, FoundationBlockMeshes::GetDrawnModelQuads(Registry, Mesh - FoundationBlockMeshes::Count));
     return BlockMeshes[Mesh];
 }
 

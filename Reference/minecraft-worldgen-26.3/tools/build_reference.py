@@ -9,8 +9,8 @@ it. Decoration comes in by reachability from those biomes' features and carvers 
 block state providers and carvers they reach, and the block tags those name, the tags the game's code reads by name
 (CODE_TAGS) and every tag those include. Then it writes manifest.json and SHA256SUMS.txt over the whole folder.
 facts/ comes from tools/WorldgenFacts.java and is only hashed here, so run this again after refreshing the facts.
---probes copies the feature probe facts that tools/feature_probe.py staged into facts/feature_probes/; a file that is
-already there must come out byte-identical.
+--probes copies the feature probe facts that tools/feature_probe.py (<ore>.json) and tools/tree_probe.py
+(tree_<probe>.json) staged into facts/feature_probes/; a file that is already there must come out byte-identical.
 """
 import hashlib
 import json
@@ -182,6 +182,15 @@ staged = sorted(probes.glob("*.json")) if probes else []
 if probes and not staged:
     sys.exit(f"BUILD FAIL: no probe facts in {probes}")
 for path in staged:
+    try:
+        made_by = json.loads(path.read_text(encoding="utf-8")).get("generated_by")
+    except (ValueError, AttributeError):
+        made_by = None
+    # Ore probes are named after their feature; tree probes are tree_<probe>.json, so they sort after the ores.
+    if made_by not in ("tools/feature_probe.py", "tools/tree_probe.py") or \
+            path.name.startswith("tree_") != (made_by == "tools/tree_probe.py"):
+        sys.exit(f"BUILD FAIL: {path} is neither an <ore>.json from tools/feature_probe.py nor a tree_<probe>.json "
+                 f"from tools/tree_probe.py")
     target = ROOT / "facts/feature_probes" / path.name
     if target.exists() and target.read_bytes() != path.read_bytes():
         sys.exit(f"BUILD FAIL: {target.relative_to(ROOT).as_posix()} exists and differs from {path}")

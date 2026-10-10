@@ -102,6 +102,8 @@ void UFoundationInteractionSettings::AddBlockItems(
     for (int32 Index = 0; Index < Registry.GetBlockCount(); ++Index)
     {
         const FFoundationBlockType& Block = Registry.GetBlockAt(Index);
+        // A wall block (wall_torch) has no item: it drops its standing block's, which that block makes.
+        if (Block.bTorchRule && Block.Item.IsNone()) continue;
         const FName Id = Block.Item.IsNone() && !Block.DropItem.IsNone() ? Block.DropItem : Block.Item;
         if (Id.IsNone() ||
             Items.ContainsByPredicate([Id](const FFoundationItemDefinition& Item) { return Item.Id == Id; }))

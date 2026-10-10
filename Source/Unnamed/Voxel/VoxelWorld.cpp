@@ -39,6 +39,8 @@
 #include "Voxel/VoxelConsole.h"
 #include "Voxel/VoxelFlight.h"
 #include "Voxel/VoxelLightShots.h"
+#include "Voxel/VoxelLightSources.h"
+#include "Voxel/VoxelLights.h"
 #include "Voxel/VoxelWorldSettings.h"
 #include "Voxel/VoxelWorldSubsystem.h"
 #include "Voxel/VoxelWorldgenReader.h"
@@ -116,6 +118,15 @@ void AVoxelWorld::BuildLayout()
 {
     // Not the lab's ground and course: this map's ground is the voxel world.
     Table = VoxelBlocks::GetDefault();
+    // The torch models' mesh glow (voxel.TorchGlow) is read at Regenerate, which meshes with Table lowered to it;
+    // captures set it from the start with -VoxelTorchGlow=N.
+    FVoxelLights::SetTorchGlowFromCommandLine();
+    // The torch lights: which states give light, and the pool of point lights around the camera.
+    LightMinLevel = FVoxelLights::ReadMinLevel();
+    LightTable = VoxelLightSources::MakeTable(*FFoundationBlockRegistry::GetDefault(), *Table, LightMinLevel);
+    if (Lights) Lights->Reset();
+    Lights = MakeShared<FVoxelLights>(this, LightComponents);
+    Lights->SetOrigin(OriginCm);
     FVoxelSeed StartSeed = FVoxelSeed::Parse(UVoxelWorldSettings::Get().DevSeed);
     if (const FUnnamedSavedWorld* World = GetSavedWorld())
     {
@@ -303,7 +314,13 @@ void AVoxelWorld::Regenerate(const FVoxelSeed& NewSeed)
     for (UMaterialInterface* Instance : LayerMaterials)
         Materials.Add(Instance);
     const FVector Spawn = GetSafeSpawn(*GetDefault<UFoundationProfile>());
-    Streaming->Start(*this, Table.ToSharedRef(), Terrain.ToSharedRef(), Materials, Spawn);
+    // The torch models glow at voxel.TorchGlow in the mesh; the light table keeps Table's level (14).
+    MeshTorchGlow = FVoxelLights::ReadTorchGlow();
+    MeshTable = VoxelLightSources::MakeTorchGlowTable(
+        *FFoundationBlockRegistry::GetDefault(), Table.ToSharedRef(), MeshTorchGlow);
+    if (MeshTable != Table)
+        UE_LOG(LogUnnamedVoxel, Display, TEXT("Torch models meshed at glow %d (voxel.TorchGlow)."), MeshTorchGlow);
+    Streaming->Start(*this, MeshTable.ToSharedRef(), Terrain.ToSharedRef(), Materials, Spawn);
     // A new session on a new world: nothing is loaded yet, so emptying the block world is free.
     Authority.World.OriginCm = OriginCm;
     Authority.Reset();
@@ -391,6 +408,7 @@ UVoxelWorldSubsystem* AVoxelWorld::GetStreaming() const
 void AVoxelWorld::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     if (UVoxelWorldSubsystem* Streaming = GetStreaming()) Streaming->Stop();
+    if (Lights) Lights->Reset();
     Super::EndPlay(EndPlayReason);
 }
 
@@ -419,6 +437,24 @@ void AVoxelWorld::Tick(float DeltaSeconds)
         ReturnPlayerToSpawn();
     }
     UpdateEdgeFog();
+    if (Lights)
+    {
+        // A new voxel.LightMinLevel gives the meshes a new light table: columns use it from their next mesh.
+        if (const int32 MinLevel = FVoxelLights::ReadMinLevel(); MinLevel != LightMinLevel && Table)
+        {
+            LightMinLevel = MinLevel;
+            LightTable = VoxelLightSources::MakeTable(*FFoundationBlockRegistry::GetDefault(), *Table, LightMinLevel);
+            if (UVoxelWorldSubsystem* Streaming = GetStreaming(); Streaming && Streaming->GetPipeline())
+                Streaming->GetPipeline()->SetLightTable(LightTable);
+        }
+        // The torch lights gather around the camera the streaming follows; switched off, they go with or without one.
+        const FVoxelLights::FSettings LightSettings = FVoxelLights::ReadSettings();
+        const APlayerController* Controller = GetWorld()->GetFirstPlayerController();
+        if (Controller && Controller->PlayerCameraManager)
+            Lights->Update(Controller->PlayerCameraManager->GetCameraLocation(), LightSettings);
+        else if (!LightSettings.bLive)
+            Lights->Update(OriginCm, LightSettings);
+    }
     if (ShotEditStage == 1) ++ShotEditFrames;
     if (!ShotFolder.IsEmpty() && IsReady())
     {
@@ -633,6 +669,7 @@ void AVoxelWorld::ApplyLogicalOffset(const FVector& Offset)
     Super::ApplyLogicalOffset(Offset);
     OriginCm += Offset;
     Authority.World.OriginCm = OriginCm;
+    if (Lights) Lights->SetOrigin(OriginCm);
 }
 
 void AVoxelWorld::ReturnPlayerToSpawn() const

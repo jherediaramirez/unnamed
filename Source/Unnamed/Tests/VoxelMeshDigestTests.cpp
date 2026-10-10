@@ -63,9 +63,10 @@ bool FVoxelMeshDigestTest::RunTest(const FString& Parameters)
     }
     // Plants off: recorded at adee7a6 (before the block models), per preset; models on and off alike.
     constexpr uint64 Golden[3] = {0xa8ba8d0d0a39174full, 0xe49601da349c7c0dull, 0x7f9491318204f4b2ull};
-    // Plants on (S8, the decided change): per preset, models on then off; recorded on S8's first passing run.
-    constexpr uint64 PlantGolden[3][2] = {{0x75602ae1d22e81f3ull, 0x6b673e48bda8a0b7ull},
-        {0x33f1173bd0580659ull, 0x81cbb033a8f2c493ull}, {0x1d96e2fcc34c085eull, 0xa0fbd505d2c267f9ull}};
+    // Plants on (S8, the decided change), trees on (S9a): per preset, models on then off; recorded on S9a's first run
+    // with trees in the world (S8 part B's, trees off: Docs/VoxelWorld.md, "Plants and patches").
+    constexpr uint64 PlantGolden[3][2] = {{0xa2464eaac18b22fdull, 0x7b5243fd5b004f3cull},
+        {0x66086c88ed3ef1edull, 0xd81de3b6e4744f0dull}, {0xf2ca4f1f2aeabd6dull, 0xca664062ca4022dcull}};
     for (const bool bPlants : {false, true})
         for (int32 Preset = 0; Preset < 3; ++Preset)
         {

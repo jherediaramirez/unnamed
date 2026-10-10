@@ -17,6 +17,10 @@ folder's own copies, so the verifier re-derives each file. The folder must hold 
 accepted reference is never overwritten; to rebuild, move the old folder away first. After a README or tool edit,
 --sums-only rewrites only SHA256SUMS.txt.
 
+The two black-box facts files (DUMPED: the durability bar and the tooltip lines, as the server jar's ItemStack
+answers through its public API) come from tools/ItemFacts.java, run after the build; they are only hashed here, so
+run --sums-only after writing them (README.md, "Rebuild").
+
 Data only: the game's code is never read. Rule semantics (component defaults, the break-time formula) come from
 minecraft.wiki ("Data component format", "Breaking"), as listed in README.md.
 """
@@ -63,6 +67,10 @@ WEAPON_DEFAULTS = {"item_damage_per_attack": 1, "disable_blocking_for_seconds": 
 # The player's base attack damage and attack speed; an item's base_attack_* modifiers add to them.
 BASE_ATTACK = {"attack_damage": 1.0, "attack_speed": 4.0}
 DEFINITION_ROOT = {"swap_animation_scale": 1.0, "hand_animation_on_swap": True}
+# Attribute modifier operations in the order of their lang key suffix (attribute.modifier.plus.0 is add_value).
+OPERATIONS = ["add_value", "add_multiplied_base", "add_multiplied_total"]
+# tools/ItemFacts.java's output: written after the build, hashed but not derived.
+DUMPED = ["facts/durability_bar.json", "facts/tooltips.json"]
 BREAK_SAMPLES = ["dirt", "sand", "gravel", "oak_log", "oak_planks", "oak_leaves", "cobweb", "netherrack", "stone",
                  "cobblestone", "deepslate", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "diamond_ore",
                  "deepslate_diamond_ore", "iron_block", "obsidian", "ancient_debris", "bedrock"]
@@ -298,6 +306,16 @@ def derive(src, block_ref=BLOCK_REF):
         })
     if any(r["tints"] for item in items for r in model_refs(src.jar_json(f"{ASSETS}items/{item['id']}.json")["model"])):
         raise SystemExit("Tier A has no tinted layers; add tint handling before importing tinted items")
+    # The tooltip text the items' attribute modifiers need, verbatim from en_us.json: each slot's header ("When in
+    # Main Hand:"), each attribute's name, and each operation's equals, plus and take forms.
+    lang_keys = set()
+    for item in items:
+        for modifier in (item["attack"] or {}).get("modifiers", []):
+            operation = OPERATIONS.index(modifier["operation"])
+            lang_keys |= {f"item.modifiers.{modifier['slot']}", f"attribute.name.{bare(modifier['type'])}"}
+            lang_keys |= {f"attribute.modifier.{form}.{operation}" for form in ("equals", "plus", "take")}
+    if any(key not in lang for key in lang_keys):
+        raise SystemExit(f"lang keys missing from en_us.json: {sorted(k for k in lang_keys if k not in lang)}")
 
     # Tags: every item tag holding a Tier A item, the repair tags, the tool rules' block tags and the tier tags.
     wanted_items = sorted({t for i in items for t in i["item_tags"]} |
@@ -394,6 +412,7 @@ def derive(src, block_ref=BLOCK_REF):
         "models.json": dumps({"models": [models[m] for m in sorted(models)]}),
         "textures.json": dumps({"textures": textures_list}),
         "tags.json": dumps(tags),
+        "lang.json": dumps({"lang": "en_us", "keys": {key: lang[key] for key in sorted(lang_keys)}}),
         "item_index.json": b"{\n \"items\": [\n" + ",\n".join(
             "  " + json.dumps(e) for e in index).encode("utf-8") + b"\n ]\n}\n",
         "facts/break_times.json": ("\n".join(lines) + "\n").encode("utf-8"),
@@ -408,11 +427,13 @@ def derive(src, block_ref=BLOCK_REF):
         "tier_a": TIER_A,
         "counts": {"items": len(items), "registry_items": len(index), "models": len(models),
                    "textures": len(textures), "item_tags": len(tags["item"]), "block_tags": len(tags["block"]),
+                   "lang_keys": len(lang_keys),
                    "break_time_blocks": len(rows), "break_time_tools": len(tools), "break_time_whole_inverse": whole,
                    "definition_kinds": {k: sum(e["definition"] == k for e in index)
                                         for k in ("block_model", "sprite", "special", "other")}},
         "generated": sorted(generated),
         "copied": sorted(copies) + [REGISTRY],
+        "dumped": DUMPED,
     })
     return generated, sorted(copies)
 

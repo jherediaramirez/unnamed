@@ -1,0 +1,6124 @@
+{
+ "generated_by": "tools/tree_probe.py",
+ "minecraft": "26.3",
+ "probe": "pale_oak_creaking",
+ "feature": "minecraft:pale_oak_creaking",
+ "variant": null,
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:stone",
+    -63,
+    55
+   ],
+   [
+    "minecraft:dirt",
+    56,
+    58
+   ],
+   [
+    "minecraft:grass_block",
+    59,
+    59
+   ]
+  ],
+  "grid_spacing": 32,
+  "random_tick_speed": 0,
+  "settle_s": 3
+ },
+ "y": 60,
+ "grid": 10,
+ "settled": true,
+ "prep": [],
+ "tries": 100,
+ "responses": {
+  "placed": 100
+ },
+ "placed_but_empty": 0,
+ "failed_but_changed": 0,
+ "n": {
+  "n": 100,
+  "min": 163,
+  "p5": 172,
+  "p50": 253,
+  "p95": 328,
+  "max": 350,
+  "mean": 246.58
+ },
+ "logs": {
+  "n": 100,
+  "min": 26,
+  "p5": 33,
+  "p50": 42,
+  "p95": 50,
+  "max": 56,
+  "mean": 41.0
+ },
+ "leaves": {
+  "n": 100,
+  "min": 107,
+  "p5": 111,
+  "p50": 120,
+  "p95": 134,
+  "max": 138,
+  "mean": 120.52
+ },
+ "log_top": {
+  "n": 100,
+  "min": 5,
+  "p5": 5,
+  "p50": 7,
+  "p95": 8,
+  "max": 8,
+  "mean": 6.63
+ },
+ "log_bottom": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "origin_column_logs": {
+  "n": 100,
+  "min": 3,
+  "p5": 4,
+  "p50": 7,
+  "p95": 9,
+  "max": 9,
+  "mean": 6.83
+ },
+ "reach_h": {
+  "n": 100,
+  "min": 4,
+  "p5": 4,
+  "p50": 5,
+  "p95": 6,
+  "max": 6,
+  "mean": 4.96
+ },
+ "log_reach_h": {
+  "n": 100,
+  "min": 1,
+  "p5": 2,
+  "p50": 2,
+  "p95": 3,
+  "max": 3,
+  "mean": 2.02
+ },
+ "leaf_reach_h": {
+  "n": 100,
+  "min": 4,
+  "p5": 4,
+  "p50": 4,
+  "p95": 6,
+  "max": 6,
+  "mean": 4.44
+ },
+ "leaf_top": {
+  "n": 100,
+  "min": 6,
+  "p5": 6,
+  "p50": 8,
+  "p95": 10,
+  "max": 10,
+  "mean": 8.13
+ },
+ "log_comp6": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 2,
+  "p95": 3,
+  "max": 4,
+  "mean": 1.63
+ },
+ "log_comp26": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_mismatch": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 1,
+  "max": 18,
+  "mean": 0.24
+ },
+ "leaf_comp6": {
+  "n": 100,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_pending_tick": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "leaf_mismatch_no_tick": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 1,
+  "max": 18,
+  "mean": 0.24
+ },
+ "leaf_bfs7": {
+  "n": 100,
+  "min": 0,
+  "p5": 0,
+  "p50": 0,
+  "p95": 0,
+  "max": 0,
+  "mean": 0.0
+ },
+ "log_top_hist": {
+  "5": 15,
+  "6": 27,
+  "7": 38,
+  "8": 20
+ },
+ "origin_column_logs_hist": {
+  "3": 3,
+  "4": 5,
+  "5": 9,
+  "6": 21,
+  "7": 20,
+  "8": 35,
+  "9": 7
+ },
+ "log_comp6_hist": {
+  "1": 49,
+  "2": 41,
+  "3": 8,
+  "4": 2
+ },
+ "log_comp26_hist": {
+  "1": 100
+ },
+ "bbox_extremes": {
+  "min_dx": -5,
+  "max_dx": 6,
+  "min_dy": -1,
+  "max_dy": 10,
+  "min_dz": -5,
+  "max_dz": 6
+ },
+ "blocks": {
+  "creaking_heart": {
+   "mean_per_tree": 0.31,
+   "share_of_trees": 0.31,
+   "max_reach_h": 1,
+   "per_tree": {
+    "n": 100,
+    "min": 0,
+    "p5": 0,
+    "p50": 0,
+    "p95": 1,
+    "max": 1,
+    "mean": 0.31
+   }
+  },
+  "dirt": {
+   "mean_per_tree": 4.0,
+   "share_of_trees": 1.0,
+   "max_reach_h": 1,
+   "per_tree": {
+    "n": 100,
+    "min": 4,
+    "p5": 4,
+    "p50": 4,
+    "p95": 4,
+    "max": 4,
+    "mean": 4.0
+   }
+  },
+  "pale_hanging_moss": {
+   "mean_per_tree": 17.81,
+   "share_of_trees": 1.0,
+   "max_reach_h": 6,
+   "per_tree": {
+    "n": 100,
+    "min": 5,
+    "p5": 9,
+    "p50": 17,
+    "p95": 31,
+    "max": 35,
+    "mean": 17.81
+   }
+  },
+  "pale_moss_block": {
+   "mean_per_tree": 46.11,
+   "share_of_trees": 0.75,
+   "max_reach_h": 6,
+   "per_tree": {
+    "n": 100,
+    "min": 0,
+    "p5": 0,
+    "p50": 51,
+    "p95": 103,
+    "max": 104,
+    "mean": 46.11
+   }
+  },
+  "pale_moss_carpet": {
+   "mean_per_tree": 6.59,
+   "share_of_trees": 0.75,
+   "max_reach_h": 6,
+   "per_tree": {
+    "n": 100,
+    "min": 0,
+    "p5": 0,
+    "p50": 7,
+    "p95": 16,
+    "max": 21,
+    "mean": 6.59
+   }
+  },
+  "pale_oak_leaves": {
+   "mean_per_tree": 120.52,
+   "share_of_trees": 1.0,
+   "max_reach_h": 6,
+   "per_tree": {
+    "n": 100,
+    "min": 107,
+    "p5": 111,
+    "p50": 120,
+    "p95": 134,
+    "max": 138,
+    "mean": 120.52
+   }
+  },
+  "pale_oak_log": {
+   "mean_per_tree": 41.0,
+   "share_of_trees": 1.0,
+   "max_reach_h": 3,
+   "per_tree": {
+    "n": 100,
+    "min": 26,
+    "p5": 33,
+    "p50": 42,
+    "p95": 50,
+    "max": 56,
+    "mean": 41.0
+   }
+  },
+  "short_grass": {
+   "mean_per_tree": 5.84,
+   "share_of_trees": 0.75,
+   "max_reach_h": 6,
+   "per_tree": {
+    "n": 100,
+    "min": 0,
+    "p5": 0,
+    "p50": 6,
+    "p95": 16,
+    "max": 17,
+    "mean": 5.84
+   }
+  },
+  "tall_grass": {
+   "mean_per_tree": 4.4,
+   "share_of_trees": 0.68,
+   "max_reach_h": 6,
+   "per_tree": {
+    "n": 100,
+    "min": 0,
+    "p5": 0,
+    "p50": 4,
+    "p95": 12,
+    "max": 16,
+    "mean": 4.4
+   }
+  }
+ },
+ "leaf_distance": {
+  "1": 2618,
+  "2": 4129,
+  "3": 3936,
+  "4": 1055,
+  "5": 314
+ },
+ "leaf_bfs": {
+  "1": 2626,
+  "2": 4128,
+  "3": 3936,
+  "4": 1050,
+  "5": 312
+ },
+ "leaf_persistent": {
+  "false": 12052
+ },
+ "log_axis": {
+  "y": 4100
+ },
+ "block_entities": {
+  "minecraft:creaking_heart": 31
+ },
+ "max_reach_h_any_cell": 6,
+ "profile": {
+  "n": 100,
+  "log_columns": {
+   "-2,0": 0.05,
+   "-2,1": 0.05,
+   "-1,-1": 0.27,
+   "-1,0": 0.41,
+   "-1,1": 0.46,
+   "-1,2": 0.26,
+   "0,-2": 0.05,
+   "0,-1": 0.45,
+   "0,0": 1.0,
+   "0,1": 1.0,
+   "0,2": 0.41,
+   "0,3": 0.05,
+   "1,-2": 0.05,
+   "1,-1": 0.35,
+   "1,0": 1.0,
+   "1,1": 1.0,
+   "1,2": 0.44,
+   "1,3": 0.05,
+   "2,-1": 0.32,
+   "2,0": 0.41,
+   "2,1": 0.39,
+   "2,2": 0.39,
+   "3,0": 0.02,
+   "3,1": 0.02
+  },
+  "logs_per_dy": {
+   "0": 4.0,
+   "1": 4.2,
+   "2": 4.69,
+   "3": 5.58,
+   "4": 6.54,
+   "5": 6.76,
+   "6": 5.44,
+   "7": 2.99,
+   "8": 0.8
+  },
+  "leaf_layers": [
+   {
+    "dy_from_top_log": -1,
+    "mean_per_tree": 42.34,
+    "max_radius": 5,
+    "occupancy": {
+     "-4,-2": 0.05,
+     "-4,-1": 0.05,
+     "-4,0": 0.05,
+     "-4,1": 0.05,
+     "-4,2": 0.05,
+     "-4,3": 0.05,
+     "-3,-2": 0.41,
+     "-3,-1": 0.55,
+     "-3,0": 0.74,
+     "-3,1": 0.77,
+     "-3,2": 0.62,
+     "-3,3": 0.38,
+     "-2,-4": 0.05,
+     "-2,-3": 0.36,
+     "-2,-2": 0.9,
+     "-2,-1": 0.97,
+     "-2,0": 0.97,
+     "-2,1": 0.97,
+     "-2,2": 0.99,
+     "-2,3": 0.89,
+     "-2,4": 0.35,
+     "-2,5": 0.05,
+     "-1,-4": 0.05,
+     "-1,-3": 0.58,
+     "-1,-2": 0.94,
+     "-1,-1": 0.72,
+     "-1,0": 0.65,
+     "-1,1": 0.6,
+     "-1,2": 0.74,
+     "-1,3": 0.94,
+     "-1,4": 0.56,
+     "-1,5": 0.05,
+     "0,-4": 0.05,
+     "0,-3": 0.68,
+     "0,-2": 0.94,
+     "0,-1": 0.57,
+     "0,0": 0.22,
+     "0,1": 0.18,
+     "0,2": 0.64,
+     "0,3": 0.92,
+     "0,4": 0.68,
+     "0,5": 0.05,
+     "1,-4": 0.05,
+     "1,-3": 0.74,
+     "1,-2": 0.95,
+     "1,-1": 0.69,
+     "1,0": 0.23,
+     "1,1": 0.19,
+     "1,2": 0.59,
+     "1,3": 0.94,
+     "1,4": 0.75,
+     "1,5": 0.05,
+     "2,-4": 0.05,
+     "2,-3": 0.56,
+     "2,-2": 0.96,
+     "2,-1": 0.66,
+     "2,0": 0.63,
+     "2,1": 0.65,
+     "2,2": 0.6,
+     "2,3": 0.97,
+     "2,4": 0.68,
+     "2,5": 0.05,
+     "3,-4": 0.05,
+     "3,-3": 0.39,
+     "3,-2": 0.87,
+     "3,-1": 0.91,
+     "3,0": 0.96,
+     "3,1": 0.98,
+     "3,2": 0.97,
+     "3,3": 0.92,
+     "3,4": 0.47,
+     "3,5": 0.05,
+     "4,-2": 0.43,
+     "4,-1": 0.6,
+     "4,0": 0.69,
+     "4,1": 0.81,
+     "4,2": 0.64,
+     "4,3": 0.46,
+     "5,-2": 0.02,
+     "5,-1": 0.02,
+     "5,0": 0.02,
+     "5,1": 0.02,
+     "5,2": 0.02,
+     "5,3": 0.02
+    }
+   },
+   {
+    "dy_from_top_log": 0,
+    "mean_per_tree": 52.18,
+    "max_radius": 6,
+    "occupancy": {
+     "-5,-2": 0.05,
+     "-5,-1": 0.05,
+     "-5,0": 0.05,
+     "-5,1": 0.05,
+     "-5,2": 0.05,
+     "-4,-3": 0.05,
+     "-4,-2": 0.18,
+     "-4,-1": 0.18,
+     "-4,0": 0.18,
+     "-4,1": 0.18,
+     "-4,2": 0.18,
+     "-4,3": 0.05,
+     "-4,4": 0.05,
+     "-3,-4": 0.05,
+     "-3,-3": 0.3,
+     "-3,-2": 0.73,
+     "-3,-1": 0.83,
+     "-3,0": 0.88,
+     "-3,1": 0.83,
+     "-3,2": 0.76,
+     "-3,3": 0.33,
+     "-3,4": 0.23,
+     "-2,-5": 0.05,
+     "-2,-4": 0.12,
+     "-2,-3": 0.73,
+     "-2,-2": 0.96,
+     "-2,-1": 0.99,
+     "-2,0": 0.95,
+     "-2,1": 0.95,
+     "-2,2": 0.99,
+     "-2,3": 0.88,
+     "-2,4": 0.76,
+     "-2,5": 0.15,
+     "-2,6": 0.05,
+     "-1,-5": 0.05,
+     "-1,-4": 0.12,
+     "-1,-3": 0.83,
+     "-1,-2": 0.97,
+     "-1,-1": 1.0,
+     "-1,0": 0.82,
+     "-1,1": 0.82,
+     "-1,2": 1.0,
+     "-1,3": 0.96,
+     "-1,4": 0.86,
+     "-1,5": 0.15,
+     "-1,6": 0.05,
+     "0,-5": 0.05,
+     "0,-4": 0.12,
+     "0,-3": 0.85,
+     "0,-2": 0.94,
+     "0,-1": 0.88,
+     "0,0": 0.37,
+     "0,1": 0.34,
+     "0,2": 0.85,
+     "0,3": 0.94,
+     "0,4": 0.88,
+     "0,5": 0.15,
+     "0,6": 0.05,
+     "1,-5": 0.05,
+     "1,-4": 0.12,
+     "1,-3": 0.8,
+     "1,-2": 0.93,
+     "1,-1": 0.88,
+     "1,0": 0.4,
+     "1,1": 0.37,
+     "1,2": 0.85,
+     "1,3": 0.93,
+     "1,4": 0.83,
+     "1,5": 0.15,
+     "1,6": 0.05,
+     "2,-5": 0.05,
+     "2,-4": 0.12,
+     "2,-3": 0.67,
+     "2,-2": 0.97,
+     "2,-1": 1.0,
+     "2,0": 0.88,
+     "2,1": 0.88,
+     "2,2": 1.0,
+     "2,3": 0.93,
+     "2,4": 0.7,
+     "2,5": 0.15,
+     "2,6": 0.05,
+     "3,-4": 0.05,
+     "3,-3": 0.24,
+     "3,-2": 0.87,
+     "3,-1": 0.95,
+     "3,0": 0.97,
+     "3,1": 0.96,
+     "3,2": 0.94,
+     "3,3": 0.54,
+     "3,4": 0.17,
+     "4,-4": 0.05,
+     "4,-3": 0.14,
+     "4,-2": 0.67,
+     "4,-1": 0.77,
+     "4,0": 0.82,
+     "4,1": 0.77,
+     "4,2": 0.7,
+     "4,3": 0.17,
+     "4,4": 0.07,
+     "5,-2": 0.12,
+     "5,-1": 0.12,
+     "5,0": 0.12,
+     "5,1": 0.12,
+     "5,2": 0.12,
+     "6,-2": 0.02,
+     "6,-1": 0.02,
+     "6,0": 0.02,
+     "6,1": 0.02,
+     "6,2": 0.02
+    }
+   },
+   {
+    "dy_from_top_log": 1,
+    "mean_per_tree": 24.0,
+    "max_radius": 5,
+    "occupancy": {
+     "-4,0": 0.05,
+     "-4,1": 0.05,
+     "-3,-1": 0.05,
+     "-3,0": 0.18,
+     "-3,1": 0.18,
+     "-3,2": 0.05,
+     "-2,-2": 0.1,
+     "-2,-1": 0.3,
+     "-2,0": 0.68,
+     "-2,1": 0.71,
+     "-2,2": 0.33,
+     "-2,3": 0.1,
+     "-1,-3": 0.05,
+     "-1,-2": 0.3,
+     "-1,-1": 0.73,
+     "-1,0": 0.93,
+     "-1,1": 0.93,
+     "-1,2": 0.76,
+     "-1,3": 0.33,
+     "-1,4": 0.05,
+     "0,-4": 0.05,
+     "0,-3": 0.12,
+     "0,-2": 0.68,
+     "0,-1": 0.93,
+     "0,0": 1.0,
+     "0,1": 1.0,
+     "0,2": 0.93,
+     "0,3": 0.71,
+     "0,4": 0.15,
+     "0,5": 0.05,
+     "1,-4": 0.05,
+     "1,-3": 0.12,
+     "1,-2": 0.65,
+     "1,-1": 0.9,
+     "1,0": 1.0,
+     "1,1": 1.0,
+     "1,2": 0.9,
+     "1,3": 0.68,
+     "1,4": 0.15,
+     "1,5": 0.05,
+     "2,-3": 0.05,
+     "2,-2": 0.24,
+     "2,-1": 0.67,
+     "2,0": 0.9,
+     "2,1": 0.9,
+     "2,2": 0.7,
+     "2,3": 0.27,
+     "2,4": 0.05,
+     "3,-2": 0.07,
+     "3,-1": 0.24,
+     "3,0": 0.62,
+     "3,1": 0.65,
+     "3,2": 0.27,
+     "3,3": 0.07,
+     "4,-1": 0.02,
+     "4,0": 0.12,
+     "4,1": 0.12,
+     "4,2": 0.02,
+     "5,0": 0.02,
+     "5,1": 0.02
+    }
+   },
+   {
+    "dy_from_top_log": 2,
+    "mean_per_tree": 2.0,
+    "max_radius": 3,
+    "occupancy": {
+     "-1,0": 0.08,
+     "-1,1": 0.08,
+     "0,-2": 0.03,
+     "0,-1": 0.05,
+     "0,0": 0.32,
+     "0,1": 0.36,
+     "0,2": 0.08,
+     "0,3": 0.02,
+     "1,-2": 0.03,
+     "1,-1": 0.05,
+     "1,0": 0.3,
+     "1,1": 0.34,
+     "1,2": 0.08,
+     "1,3": 0.02,
+     "2,0": 0.07,
+     "2,1": 0.07,
+     "3,0": 0.01,
+     "3,1": 0.01
+    }
+   }
+  ],
+  "decorators": {
+   "creaking_heart": {
+    "total": 31,
+    "per_tree": 0.31,
+    "dy": {
+     "3": 7,
+     "4": 8,
+     "5": 10,
+     "6": 5,
+     "7": 1
+    },
+    "radius": {
+     "0": 12,
+     "1": 19
+    }
+   },
+   "dirt": {
+    "total": 400,
+    "per_tree": 4.0,
+    "dy": {
+     "-1": 400
+    },
+    "radius": {
+     "0": 100,
+     "1": 300
+    }
+   },
+   "pale_hanging_moss": {
+    "total": 1781,
+    "per_tree": 17.81,
+    "dy": {
+     "0": 66,
+     "1": 135,
+     "2": 208,
+     "3": 340,
+     "4": 413,
+     "5": 384,
+     "6": 193,
+     "7": 42
+    },
+    "radius": {
+     "0": 4,
+     "1": 259,
+     "2": 566,
+     "3": 546,
+     "4": 345,
+     "5": 55,
+     "6": 6
+    }
+   },
+   "pale_moss_block": {
+    "total": 4611,
+    "per_tree": 46.11,
+    "dy": {
+     "-1": 4611
+    },
+    "radius": {
+     "1": 375,
+     "2": 1171,
+     "3": 1400,
+     "4": 1034,
+     "5": 523,
+     "6": 108
+    }
+   },
+   "pale_moss_carpet": {
+    "total": 659,
+    "per_tree": 6.59,
+    "dy": {
+     "0": 618,
+     "1": 41
+    },
+    "radius": {
+     "1": 77,
+     "2": 167,
+     "3": 184,
+     "4": 143,
+     "5": 74,
+     "6": 14
+    }
+   },
+   "short_grass": {
+    "total": 584,
+    "per_tree": 5.84,
+    "dy": {
+     "0": 584
+    },
+    "radius": {
+     "1": 52,
+     "2": 149,
+     "3": 185,
+     "4": 115,
+     "5": 69,
+     "6": 14
+    }
+   },
+   "tall_grass": {
+    "total": 440,
+    "per_tree": 4.4,
+    "dy": {
+     "0": 220,
+     "1": 220
+    },
+    "radius": {
+     "1": 34,
+     "2": 110,
+     "3": 134,
+     "4": 102,
+     "5": 56,
+     "6": 4
+    }
+   }
+  }
+ },
+ "examples": [
+  {
+   "origin": [
+    14864,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -4,
+     -1,
+     -4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -4,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -4,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -4,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -4,
+     -1,
+     0,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -4,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -4,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -4,
+     -1,
+     4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -4,
+     0,
+     -1,
+     "minecraft:short_grass"
+    ],
+    [
+     -4,
+     0,
+     2,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     -3,
+     -1,
+     -5,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     -4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     0,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     5,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     0,
+     -3,
+     "minecraft:tall_grass"
+    ],
+    [
+     -3,
+     0,
+     2,
+     "minecraft:short_grass"
+    ],
+    [
+     -3,
+     0,
+     4,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     -3,
+     1,
+     -3,
+     "minecraft:tall_grass[half=upper]"
+    ],
+    [
+     -3,
+     4,
+     -1,
+     "minecraft:pale_hanging_moss"
+    ],
+    [
+     -3,
+     5,
+     -1,
+     "minecraft:pale_hanging_moss[tip=false]"
+    ],
+    [
+     -3,
+     5,
+     1,
+     "minecraft:pale_hanging_moss"
+    ],
+    [
+     -3,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     -1,
+     -5,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     -4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     0,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     5,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     0,
+     -4,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     -2,
+     0,
+     -3,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     -2,
+     0,
+     -2,
+     "minecraft:tall_grass"
+    ],
+    [
+     -2,
+     0,
+     -1,
+     "minecraft:tall_grass"
+    ],
+    [
+     -2,
+     0,
+     1,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     -2,
+     0,
+     5,
+     "minecraft:short_grass"
+    ],
+    [
+     -2,
+     1,
+     -2,
+     "minecraft:tall_grass[half=upper]"
+    ],
+    [
+     -2,
+     1,
+     -1,
+     "minecraft:tall_grass[half=upper]"
+    ],
+    [
+     -2,
+     3,
+     -3,
+     "minecraft:pale_hanging_moss"
+    ],
+    [
+     -2,
+     4,
+     -3,
+     "minecraft:pale_hanging_moss[tip=false]"
+    ],
+    [
+     -2,
+     5,
+     -3,
+     "minecraft:pale_hanging_moss[tip=false]"
+    ],
+    [
+     -2,
+     6,
+     -3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     0,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     -1,
+     -5,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     -4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     0,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     5,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     0,
+     -3,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     -1,
+     3,
+     -1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     -1,
+     4,
+     -3,
+     "minecraft:pale_hanging_moss"
+    ],
+    [
+     -1,
+     4,
+     -1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     -1,
+     4,
+     0,
+     "minecraft:pale_hanging_moss"
+    ],
+    [
+     -1,
+     5,
+     -3,
+     "minecraft:pale_hanging_moss[tip=false]"
+    ],
+    [
+     -1,
+     5,
+     -1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     -1,
+     5,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     -1,
+     6,
+     -3,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     -1,
+     6,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     -1,
+     6,
+     1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     0,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -1,
+     -4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     0,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     0,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     0,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     0,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     -1,
+     1,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     0,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     0,
+     -1,
+     4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     0,
+     -1,
+     5,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     0,
+     0,
+     -3,
+     "minecraft:tall_grass"
+    ],
+    [
+     0,
+     0,
+     -1,
+     "minecraft:pale_moss_carpet[bottom=true,east=none,north=none,south=low,west=none]"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     0,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     0,
+     2,
+     "minecraft:pale_moss_carpet[bottom=true,east=none,north=tall,south=none,west=none]"
+    ],
+    [
+     0,
+     1,
+     -3,
+     "minecraft:tall_grass[half=upper]"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     1,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     1,
+     2,
+     "minecraft:pale_moss_carpet[bottom=false,east=none,north=low,south=none,west=none]"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     2,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     3,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     4,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     5,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     6,
+     -3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -3,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     3,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     4,
+     "minecraft:pale_oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     0,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     -1,
+     -5,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     -1,
+     -4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     1,
+     -1,
+     1,
+     "minecraft:dirt"
+    ],
+    [
+     1,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     -1,
+     4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     -1,
+     5,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     0,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     0,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     0,
+     2,
+     "minecraft:tall_grass"
+    ],
+    [
+     1,
+     0,
+     5,
+     "minecraft:tall_grass"
+    ],
+    [
+     1,
+     1,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     1,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     1,
+     2,
+     "minecraft:tall_grass[half=upper]"
+    ],
+    [
+     1,
+     1,
+     5,
+     "minecraft:tall_grass[half=upper]"
+    ],
+    [
+     1,
+     2,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     2,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     3,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     3,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     4,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     5,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     5,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     6,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     3,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -3,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     0,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     4,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     -1,
+     -5,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     -4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     0,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     5,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     0,
+     -4,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     2,
+     0,
+     -3,
+     "minecraft:short_grass"
+    ],
+    [
+     2,
+     0,
+     -1,
+     "minecraft:short_grass"
+    ],
+    [
+     2,
+     0,
+     0,
+     "minecraft:pale_moss_carpet[bottom=true,east=none,north=none,south=none,west=low]"
+    ],
+    [
+     2,
+     0,
+     2,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     2,
+     0,
+     4,
+     "minecraft:short_grass"
+    ],
+    [
+     2,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     2,
+     6,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     2,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     3,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     -3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     -2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     -1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     2,
+     7,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     2,
+     7,
+     2,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     3,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     4,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     -2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     -1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     0,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     9,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     9,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     -1,
+     -5,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     -4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     0,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     5,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     0,
+     -4,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     3,
+     0,
+     -3,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     3,
+     0,
+     3,
+     "minecraft:short_grass"
+    ],
+    [
+     3,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     0,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     -3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     -2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     -1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     3,
+     7,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     3,
+     7,
+     2,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     3,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     4,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     -2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     -1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     0,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     9,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     9,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     -1,
+     -4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     -1,
+     0,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     -1,
+     1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     -1,
+     4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     0,
+     -4,
+     "minecraft:short_grass"
+    ],
+    [
+     4,
+     0,
+     -3,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     4,
+     0,
+     3,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     4,
+     0,
+     4,
+     "minecraft:short_grass"
+    ],
+    [
+     4,
+     5,
+     0,
+     "minecraft:pale_hanging_moss"
+    ],
+    [
+     4,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     3,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     -3,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     -2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     -1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     0,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     4,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     8,
+     -1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     8,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     8,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     8,
+     2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     0,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     3,
+     "minecraft:pale_oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     7,
+     -2,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     7,
+     -1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     7,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     7,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     7,
+     2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     8,
+     0,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     8,
+     1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     7,
+     -2,
+     "minecraft:pale_oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     7,
+     -1,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     7,
+     0,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     7,
+     1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     7,
+     2,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ]
+   ]
+  },
+  {
+   "origin": [
+    14896,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -4,
+     4,
+     0,
+     "minecraft:pale_hanging_moss"
+    ],
+    [
+     -4,
+     5,
+     -2,
+     "minecraft:pale_hanging_moss"
+    ],
+    [
+     -4,
+     5,
+     0,
+     "minecraft:pale_hanging_moss[tip=false]"
+    ],
+    [
+     -4,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     6,
+     0,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     6,
+     1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -4,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     0,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -3,
+     0,
+     -3,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     -3,
+     0,
+     0,
+     "minecraft:short_grass"
+    ],
+    [
+     -3,
+     0,
+     3,
+     "minecraft:tall_grass"
+    ],
+    [
+     -3,
+     1,
+     3,
+     "minecraft:tall_grass[half=upper]"
+    ],
+    [
+     -3,
+     5,
+     -3,
+     "minecraft:pale_hanging_moss"
+    ],
+    [
+     -3,
+     5,
+     -2,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     -1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     3,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     -3,
+     "minecraft:pale_oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     3,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     4,
+     "minecraft:pale_oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     7,
+     0,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     7,
+     1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     -1,
+     -4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     0,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     -1,
+     4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -2,
+     0,
+     3,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     -2,
+     5,
+     -2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     0,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -3,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     0,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     4,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     0,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     -1,
+     4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     -1,
+     0,
+     -3,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     -1,
+     0,
+     3,
+     "minecraft:short_grass"
+    ],
+    [
+     -1,
+     0,
+     4,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     -1,
+     1,
+     1,
+     "minecraft:pale_hanging_moss"
+    ],
+    [
+     -1,
+     2,
+     0,
+     "minecraft:pale_hanging_moss"
+    ],
+    [
+     -1,
+     2,
+     1,
+     "minecraft:pale_hanging_moss[tip=false]"
+    ],
+    [
+     -1,
+     3,
+     0,
+     "minecraft:pale_hanging_moss[tip=false]"
+    ],
+    [
+     -1,
+     3,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     -1,
+     4,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     -1,
+     4,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     -1,
+     5,
+     -3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     -1,
+     5,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     -1,
+     5,
+     2,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     3,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     -1,
+     6,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     -1,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     3,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     4,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     0,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -1,
+     -4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     0,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     0,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     0,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     0,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     -1,
+     1,
+     "minecraft:dirt"
+    ],
+    [
+     0,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     0,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     0,
+     0,
+     -4,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     0,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     0,
+     2,
+     "minecraft:pale_moss_carpet[bottom=true,east=none,north=low,south=none,west=none]"
+    ],
+    [
+     0,
+     1,
+     -1,
+     "minecraft:pale_hanging_moss"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     1,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     2,
+     -1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     2,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     3,
+     -1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     3,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     4,
+     -1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:creaking_heart[axis=y,creaking_heart_state=dormant,natural=true]"
+    ],
+    [
+     0,
+     4,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     5,
+     -3,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -2,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     5,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     5,
+     2,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     3,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     0,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     3,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     4,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     -1,
+     -4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     -1,
+     0,
+     "minecraft:dirt"
+    ],
+    [
+     1,
+     -1,
+     1,
+     "minecraft:dirt"
+    ],
+    [
+     1,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     -1,
+     4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     1,
+     0,
+     -4,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     1,
+     0,
+     -2,
+     "minecraft:tall_grass"
+    ],
+    [
+     1,
+     0,
+     -1,
+     "minecraft:short_grass"
+    ],
+    [
+     1,
+     0,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     0,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     1,
+     -2,
+     "minecraft:tall_grass[half=upper]"
+    ],
+    [
+     1,
+     1,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     1,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     2,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     2,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     3,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     3,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     4,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     5,
+     -3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     0,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     5,
+     1,
+     "minecraft:pale_oak_log"
+    ],
+    [
+     1,
+     5,
+     2,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     3,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -3,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     0,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     4,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     0,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     -1,
+     4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     2,
+     0,
+     1,
+     "minecraft:pale_moss_carpet[bottom=true,east=none,north=none,south=none,west=tall]"
+    ],
+    [
+     2,
+     0,
+     4,
+     "minecraft:short_grass"
+    ],
+    [
+     2,
+     1,
+     1,
+     "minecraft:pale_moss_carpet[bottom=false,east=none,north=none,south=none,west=low]"
+    ],
+    [
+     2,
+     5,
+     -2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     0,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     1,
+     "minecraft:pale_oak_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     2,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     3,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     0,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     1,
+     "minecraft:pale_oak_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     0,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     -1,
+     -4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     0,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     -1,
+     4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     3,
+     0,
+     -4,
+     "minecraft:tall_grass"
+    ],
+    [
+     3,
+     0,
+     -3,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     3,
+     0,
+     3,
+     "minecraft:tall_grass"
+    ],
+    [
+     3,
+     1,
+     -4,
+     "minecraft:tall_grass[half=upper]"
+    ],
+    [
+     3,
+     1,
+     3,
+     "minecraft:tall_grass[half=upper]"
+    ],
+    [
+     3,
+     6,
+     -2,
+     "minecraft:pale_oak_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     -1,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     0,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     1,
+     "minecraft:pale_oak_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     2,
+     "minecraft:pale_oak_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     -1,
+     -4,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     -1,
+     -2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     -1,
+     0,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     -1,
+     1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     -1,
+     3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     4,
+     0,
+     -2,
+     "minecraft:short_grass"
+    ],
+    [
+     4,
+     0,
+     1,
+     "minecraft:pale_moss_carpet"
+    ],
+    [
+     5,
+     -1,
+     -3,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     5,
+     -1,
+     -1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     5,
+     -1,
+     0,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     5,
+     -1,
+     1,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     5,
+     -1,
+     2,
+     "minecraft:pale_moss_block"
+    ],
+    [
+     5,
+     0,
+     2,
+     "minecraft:short_grass"
+    ]
+   ]
+  }
+ ],
+ "per_placement": [
+  {
+   "n": 308,
+   "logs": 38,
+   "leaves": 130,
+   "log_top": 7,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    6,
+    -1,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 253,
+   "logs": 36,
+   "leaves": 111,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    5,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 264,
+   "logs": 44,
+   "leaves": 125,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    5,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 199,
+   "logs": 47,
+   "leaves": 128,
+   "log_top": 7,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    5,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 288,
+   "logs": 45,
+   "leaves": 115,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    6,
+    -1,
+    8,
+    -3,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 297,
+   "logs": 50,
+   "leaves": 134,
+   "log_top": 8,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    6,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 242,
+   "logs": 49,
+   "leaves": 131,
+   "log_top": 8,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    10,
+    -3,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 282,
+   "logs": 48,
+   "leaves": 120,
+   "log_top": 7,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    5,
+    -1,
+    8,
+    -4,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 172,
+   "logs": 42,
+   "leaves": 115,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    6,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 336,
+   "logs": 37,
+   "leaves": 128,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -4,
+    6,
+    -1,
+    6,
+    -4,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 262,
+   "logs": 47,
+   "leaves": 116,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    6,
+    -1,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 190,
+   "logs": 41,
+   "leaves": 121,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 264,
+   "logs": 42,
+   "leaves": 118,
+   "log_top": 8,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    6,
+    -1,
+    10,
+    -3,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 195,
+   "logs": 43,
+   "leaves": 117,
+   "log_top": 7,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 265,
+   "logs": 47,
+   "leaves": 135,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    4,
+    -1,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 175,
+   "logs": 37,
+   "leaves": 123,
+   "log_top": 6,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    5,
+    -1,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 230,
+   "logs": 40,
+   "leaves": 113,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    3,
+    -1,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 267,
+   "logs": 42,
+   "leaves": 116,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    6,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 167,
+   "logs": 35,
+   "leaves": 116,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    5,
+    -1,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 173,
+   "logs": 40,
+   "leaves": 120,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 249,
+   "logs": 49,
+   "leaves": 129,
+   "log_top": 8,
+   "origin_column_logs": 8,
+   "bbox": [
+    -5,
+    4,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 271,
+   "logs": 45,
+   "leaves": 127,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 270,
+   "logs": 35,
+   "leaves": 121,
+   "log_top": 5,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    5,
+    -1,
+    6,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 271,
+   "logs": 41,
+   "leaves": 123,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 241,
+   "logs": 36,
+   "leaves": 111,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    10,
+    -4,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 182,
+   "logs": 36,
+   "leaves": 112,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    8,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 259,
+   "logs": 26,
+   "leaves": 122,
+   "log_top": 5,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    6,
+    -1,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 176,
+   "logs": 34,
+   "leaves": 120,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    6,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 219,
+   "logs": 49,
+   "leaves": 131,
+   "log_top": 8,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    9,
+    -5,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 253,
+   "logs": 42,
+   "leaves": 120,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    8,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 302,
+   "logs": 42,
+   "leaves": 121,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    9,
+    -4,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 296,
+   "logs": 38,
+   "leaves": 116,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 235,
+   "logs": 36,
+   "leaves": 121,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 275,
+   "logs": 48,
+   "leaves": 117,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 175,
+   "logs": 35,
+   "leaves": 126,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 286,
+   "logs": 37,
+   "leaves": 122,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    5,
+    -1,
+    8,
+    -4,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 253,
+   "logs": 43,
+   "leaves": 127,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 259,
+   "logs": 35,
+   "leaves": 118,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    6,
+    -1,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 268,
+   "logs": 36,
+   "leaves": 119,
+   "log_top": 5,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    6,
+    -1,
+    6,
+    -3,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 268,
+   "logs": 43,
+   "leaves": 119,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 252,
+   "logs": 33,
+   "leaves": 129,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 171,
+   "logs": 35,
+   "leaves": 118,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 250,
+   "logs": 40,
+   "leaves": 123,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 304,
+   "logs": 47,
+   "leaves": 122,
+   "log_top": 8,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    6,
+    -1,
+    10,
+    -3,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 224,
+   "logs": 35,
+   "leaves": 120,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 296,
+   "logs": 30,
+   "leaves": 122,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    5,
+    -1,
+    7,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 259,
+   "logs": 42,
+   "leaves": 116,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    6,
+    -1,
+    9,
+    -4,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 328,
+   "logs": 44,
+   "leaves": 125,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    6,
+    -1,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 294,
+   "logs": 46,
+   "leaves": 111,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    5,
+    -1,
+    8,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 2,
+   "result": "placed"
+  },
+  {
+   "n": 264,
+   "logs": 42,
+   "leaves": 119,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    8,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 282,
+   "logs": 46,
+   "leaves": 120,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 317,
+   "logs": 42,
+   "leaves": 113,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    8,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 227,
+   "logs": 37,
+   "leaves": 120,
+   "log_top": 5,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    5,
+    -1,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 177,
+   "logs": 41,
+   "leaves": 108,
+   "log_top": 8,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    9,
+    -4,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 213,
+   "logs": 38,
+   "leaves": 111,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    7,
+    -4,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 1,
+   "result": "placed"
+  },
+  {
+   "n": 223,
+   "logs": 35,
+   "leaves": 120,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    8,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 1,
+   "result": "placed"
+  },
+  {
+   "n": 273,
+   "logs": 41,
+   "leaves": 113,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -4,
+    6,
+    -1,
+    10,
+    -3,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 182,
+   "logs": 44,
+   "leaves": 122,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 271,
+   "logs": 40,
+   "leaves": 138,
+   "log_top": 7,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    5,
+    -1,
+    9,
+    -5,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 4,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 234,
+   "logs": 46,
+   "leaves": 120,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 290,
+   "logs": 47,
+   "leaves": 123,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -4,
+    6,
+    -1,
+    8,
+    -3,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 334,
+   "logs": 50,
+   "leaves": 115,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    9,
+    -4,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 350,
+   "logs": 56,
+   "leaves": 122,
+   "log_top": 8,
+   "origin_column_logs": 7,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    9,
+    -4,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 219,
+   "logs": 40,
+   "leaves": 119,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 255,
+   "logs": 54,
+   "leaves": 117,
+   "log_top": 8,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 268,
+   "logs": 45,
+   "leaves": 118,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 236,
+   "logs": 43,
+   "leaves": 124,
+   "log_top": 7,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    5,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 194,
+   "logs": 42,
+   "leaves": 130,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    7,
+    -3,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 225,
+   "logs": 39,
+   "leaves": 116,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 281,
+   "logs": 33,
+   "leaves": 123,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    8,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 244,
+   "logs": 42,
+   "leaves": 123,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    8,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 247,
+   "logs": 50,
+   "leaves": 119,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 294,
+   "logs": 41,
+   "leaves": 116,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    5,
+    -1,
+    8,
+    -4,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 240,
+   "logs": 36,
+   "leaves": 118,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    5,
+    -1,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 240,
+   "logs": 43,
+   "leaves": 117,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -3,
+    5,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 187,
+   "logs": 41,
+   "leaves": 112,
+   "log_top": 8,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    9,
+    -5,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 254,
+   "logs": 36,
+   "leaves": 113,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 229,
+   "logs": 27,
+   "leaves": 127,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    7,
+    -3,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 312,
+   "logs": 41,
+   "leaves": 136,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    7,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 333,
+   "logs": 42,
+   "leaves": 131,
+   "log_top": 7,
+   "origin_column_logs": 7,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 185,
+   "logs": 42,
+   "leaves": 121,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    9,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 241,
+   "logs": 42,
+   "leaves": 113,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 169,
+   "logs": 36,
+   "leaves": 119,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 222,
+   "logs": 36,
+   "leaves": 113,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 187,
+   "logs": 46,
+   "leaves": 118,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    10,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 18,
+   "result": "placed"
+  },
+  {
+   "n": 287,
+   "logs": 47,
+   "leaves": 120,
+   "log_top": 8,
+   "origin_column_logs": 9,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    10,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 168,
+   "logs": 38,
+   "leaves": 113,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    7,
+    -4,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 196,
+   "logs": 49,
+   "leaves": 121,
+   "log_top": 8,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    10,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 197,
+   "logs": 40,
+   "leaves": 132,
+   "log_top": 6,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 4,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 176,
+   "logs": 42,
+   "leaves": 117,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    6,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 274,
+   "logs": 40,
+   "leaves": 134,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    8,
+    -5,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 250,
+   "logs": 44,
+   "leaves": 119,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    8,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 163,
+   "logs": 29,
+   "leaves": 118,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    3,
+    -1,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 244,
+   "logs": 36,
+   "leaves": 111,
+   "log_top": 5,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    6,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 225,
+   "logs": 30,
+   "leaves": 107,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    7,
+    -3,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 277,
+   "logs": 39,
+   "leaves": 120,
+   "log_top": 7,
+   "origin_column_logs": 8,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 314,
+   "logs": 46,
+   "leaves": 132,
+   "log_top": 8,
+   "origin_column_logs": 7,
+   "bbox": [
+    -5,
+    5,
+    -1,
+    9,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 283,
+   "logs": 47,
+   "leaves": 119,
+   "log_top": 7,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 312,
+   "logs": 42,
+   "leaves": 126,
+   "log_top": 6,
+   "origin_column_logs": 4,
+   "bbox": [
+    -4,
+    4,
+    -1,
+    8,
+    -4,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 178,
+   "logs": 41,
+   "leaves": 116,
+   "log_top": 8,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    4,
+    -1,
+    9,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 2,
+   "result": "placed"
+  }
+ ]
+}

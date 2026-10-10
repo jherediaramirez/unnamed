@@ -924,8 +924,8 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("mutation: a thin plane wound backwards is caught"), SameWay > 0);
     }
     // 2,440 baked quads (S5's 2,410 and the torch's 30), less the 16 exact repeats the copy drops (flowerbed segments
-    // that list a plane twice).
-    TestEqual(TEXT("model quads"), Quads, 2424);
+    // that list a plane twice), plus the 20 the torch's flame cut adds (4 sides in each of its 5 models; T3b).
+    TestEqual(TEXT("model quads"), Quads, 2444);
     TestEqual(TEXT("quads wound like the cube faces"), Wound, Quads);
     TestTrue(FString::Printf(TEXT("zero-thickness planes have both faces (%d pairs)"), Twins), Twins > 100);
     TestEqual(TEXT("each pair faces opposite ways"), BadTwins, 0);

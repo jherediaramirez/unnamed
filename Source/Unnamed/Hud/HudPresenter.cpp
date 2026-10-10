@@ -6,6 +6,7 @@
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationController.h"
 #include "Foundation/FoundationHud.h"
+#include "Foundation/FoundationItemAssets.h"
 #include "Foundation/FoundationPawn.h"
 #include "Menu/MenuBrowserHost.h"
 #include "Menu/MenuPreferences.h"
@@ -57,10 +58,31 @@ TSharedRef<SWidget> UHudPresenter::CreateView()
         Brush.DrawAs = ESlateBrushDrawType::Image;
         Brushes.Add(Entry.Id, Brush);
     }
+    // The items' GUI sprites (ImportItems.py, ItemRoot/Gui), by sprite id ("item/iron_pickaxe").
+    if (const UFoundationItemAssets* Items = UFoundationItemAssets::LoadDefault())
+        for (const FFoundationItemAsset& Item : Items->Items)
+        {
+            if (Item.Textures.IsEmpty() || Brushes.Contains(Item.Textures[0])) continue;
+            UTexture2D* Texture = Cast<UTexture2D>(
+                UUnnamedProjectSettings::GetItemAssetPath(TEXT("Gui/") + Item.Textures[0].ToString()).TryLoad());
+            if (!Texture)
+            {
+                ++MissingTextures;
+                UE_LOG(LogUnnamedHud, Error, TEXT("Missing item sprite: %s"), *Item.Textures[0].ToString());
+                continue;
+            }
+            ItemSprites.Add(Texture);
+            FSlateBrush Brush;
+            Brush.SetResourceObject(Texture);
+            Brush.ImageSize = FVector2D(16, 16);
+            Brush.DrawAs = ESlateBrushDrawType::Image;
+            Brushes.Add(Item.Textures[0], Brush);
+        }
     View->SetBrushes(MoveTemp(Brushes));
     UE_LOG(LogUnnamedHud, Display,
-        TEXT("HUD_READY registry=%d textures=%d missing=%d glyphs=%d; resources from player vitals, items PREVIEW"),
-        Assets->Sprites.Num(), Textures.Num(), MissingTextures, Assets->Glyphs.Num());
+        TEXT("HUD_READY registry=%d textures=%d missing=%d glyphs=%d item_sprites=%d; resources from player vitals, "
+             "items PREVIEW"),
+        Assets->Sprites.Num(), Textures.Num(), MissingTextures, Assets->Glyphs.Num(), ItemSprites.Num());
     return View.ToSharedRef();
 }
 
@@ -116,17 +138,19 @@ void UHudPresenter::ApplyInventory(FHudSnapshot& S, const FFoundationInventory& 
         OutCount = Stack.IsEmpty() ? 0 : Stack.Count;
         if (Stack.IsEmpty()) return Out;
         const FFoundationItemDefinition& Item = Rules.GetItem(Stack.Item);
+        // As vanilla's GUI: blocks as their 3D icon, items as their flat sprite.
         Out.Icon = Item.Icon == TEXT("block") ? EHudItemIcon::Block
-            : Item.Icon == TEXT("pickaxe")    ? EHudItemIcon::Pickaxe
-            : Item.Icon == TEXT("sword")      ? EHudItemIcon::Sword
+            : !Item.Sprite.IsNone()           ? EHudItemIcon::Sprite
                                               : EHudItemIcon::Token;
+        Out.Sprite = Out.Icon == EHudItemIcon::Sprite ? Item.Sprite : NAME_None;
         Out.Tint = Item.IconColor;
         if (Out.Icon == EHudItemIcon::Block && Blocks && Blocks->FindBlock(Item.PlacesBlock))
         {
             Out.Block = Item.PlacesBlock;
             Out.bAnimatedBlock = HudBlockIcon::IsAnimated(*Blocks, Item.PlacesBlock);
         }
-        if (Item.MaxDurability > 0) Out.Durability = 1. - double(Stack.Damage) / Item.MaxDurability;
+        Out.Damage = Stack.Damage;
+        Out.MaxDamage = Item.MaxDurability;
         // Unlimited supply shows a sign instead of a count that never changes.
         Out.bInfinite = Inventory.bInfiniteSupply && Item.CanPlace();
         return Out;

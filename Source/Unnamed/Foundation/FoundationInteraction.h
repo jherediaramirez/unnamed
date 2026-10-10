@@ -136,7 +136,8 @@ struct UNNAMED_API FFoundationInteraction
     // The creative inventory's write: Slot 0-8 is the hotbar, 9 the offhand; a None item or zero count clears it.
     FFoundationResult SetCreativeSlot(
         FFoundationAuthority& Authority, FFoundationVitals& Vitals, int32 Slot, FName Item, int32 Count);
-    // Selects the hotbar slot whose item places the targeted block. False when there is none.
+    // Selects the hotbar slot whose item places the targeted block (or has it as its wall block). False when there is
+    // none.
     bool Pick(FFoundationAuthority& Authority, FFoundationVitals& Vitals);
     // Per frame, after the steps: what a use would do at the current aim.
     void UpdatePreview(const FFoundationAuthority& Authority, const FFoundationPlayerFacts& Facts);

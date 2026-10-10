@@ -747,8 +747,8 @@ void FVoxelColumnPipeline::LaunchMesh(FIntPoint Column, FRecord& Record, uint8 N
     Job.MeshVersion = Record.MeshVersion;
     Job.Neighbors = Neighbors;
     StartJob(Job,
-        [Table = Table, Terrain = Terrain, Options = Settings.MeshOptions, Around, Cached = MoveTemp(Cached),
-            Sections]() -> TSharedPtr<FJobResult>
+        [Table = Table, Terrain = Terrain, LightTable = LightTable, Options = Settings.MeshOptions, Around,
+            Cached = MoveTemp(Cached), Sections, Column]() -> TSharedPtr<FJobResult>
         {
             TRACE_CPUPROFILER_EVENT_SCOPE(VoxelPipeline_Mesh);
             const double Start = FPlatformTime::Seconds();
@@ -788,6 +788,8 @@ void FVoxelColumnPipeline::LaunchMesh(FIntPoint Column, FRecord& Record, uint8 N
                         Mesh.SectionBytes += Layer.GetAllocatedSize();
                 }
             }
+            // The whole column every time, cached sections or not: the light pool replaces the column's sources.
+            if (LightTable) VoxelLightSources::GatherSources(Center, Column, Neighborhood, *LightTable, Mesh.Lights);
             const double StreamsStart = FPlatformTime::Seconds();
             Mesh.MeshMs = (StreamsStart - Start) * 1000.;
             UVoxelChunkComponent::BuildStreams(Present, Mesh.Streams);

@@ -35,11 +35,13 @@ void UFoundationRuntimeProbe::AddHudCases()
                 Controller->GetViewportSize(W, H);
                 const auto& S = Presenter->GetSnapshot();
                 Record(TEXT("HUD ") + Name,
-                    Check() && Presenter->GetMissingTextures() == 0 && Presenter->GetLoadedTextureCount() == 85,
-                    FString::Printf(TEXT("viewport=%dx%d scale=%d slot=%d left=%d visible=%d draws=%d textures=%d; "
-                                         "%s resources; application input"),
+                    Check() && Presenter->GetMissingTextures() == 0 && Presenter->GetLoadedTextureCount() == 85 &&
+                        Presenter->GetItemSpriteCount() == 63,
+                    FString::Printf(
+                        TEXT("viewport=%dx%d scale=%d slot=%d left=%d visible=%d draws=%d textures=%d item sprites=%d; "
+                             "%s resources; application input"),
                         W, H, Presenter->GetGuiScale(), S.SelectedSlot + 1, S.bMainHandLeft, S.bVisible,
-                        Presenter->GetDrawCount(), Presenter->GetLoadedTextureCount(),
+                        Presenter->GetDrawCount(), Presenter->GetLoadedTextureCount(), Presenter->GetItemSpriteCount(),
                         S.Resources == EHudDataSource::Preview ? TEXT("preview") : TEXT("player vitals")));
                 FScreenshotRequest::RequestScreenshot(
                     FPaths::ChangeExtension(Output, TEXT("")) + TEXT("-hud-") + Name + TEXT(".png"), true, false);

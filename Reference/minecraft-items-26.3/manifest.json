@@ -92,6 +92,7 @@
   "textures": 70,
   "item_tags": 43,
   "block_tags": 16,
+  "lang_keys": 6,
   "break_time_blocks": 1286,
   "break_time_tools": 36,
   "break_time_whole_inverse": 35393,
@@ -107,6 +108,7 @@
   "facts/break_times.md",
   "item_index.json",
   "items.json",
+  "lang.json",
   "models.json",
   "tags.json",
   "textures.json"
@@ -382,5 +384,9 @@
   "reports/components/item/wooden_spear.json",
   "reports/components/item/wooden_sword.json",
   "reports/registries-item.json"
+ ],
+ "dumped": [
+  "facts/durability_bar.json",
+  "facts/tooltips.json"
  ]
 }
