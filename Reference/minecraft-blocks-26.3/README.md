@@ -6,12 +6,13 @@ The import input for the block system: every full-cube block and slab of vanilla
 |---|---|
 | Client `%APPDATA%\ModrinthApp\meta\versions\26.3\26.3.jar` (same client as `Reference/minecraft-hud-26.3`) | `e877b6a07acd633fb3bb475002175cec036e7b87` |
 | Official server jar (data-generator reports, runtime facts) | `33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c` |
+| Asset index 34 (the client's `assetIndex`; `sounds.json` and the `.ogg` files) | `abfaa525f923f807df8b4e4d29c1b5e3a104adbe` (official). The local Modrinth copy `%APPDATA%\ModrinthApp\meta\assets\indexes\34.json` differs from the official one only in 142 `minecraft/lang/` entries, so the tools pin the SHA-1 of the other entries (canonical JSON, sorted keys, compact separators): `9ba09e4fc9e2245b7395eee4732096038d9f6e2d`. |
 
 ```powershell
 uv run --no-project --python 3.13 --with pillow python -I Reference/minecraft-blocks-26.3/tools/verify_reference.py
 ```
 
-The verifier checks every file against `SHA256SUMS.txt`, compares every `assets/` file with its jar entry when the jar is present, compares every state id and property set with Mojang's report, and re-decodes every texture frame against its recorded RGBA hash.
+The verifier checks every file against `SHA256SUMS.txt`, compares every `assets/` file with its jar entry when the jar is present (`sounds.json` and `sounds/` instead against the asset index objects: SHA-1 equals the object hash, size matches, when the index is present and its non-lang pin holds), compares every state id and property set with Mojang's report, and re-decodes every texture frame against its recorded RGBA hash.
 
 ## Files
 
@@ -23,7 +24,12 @@ The verifier checks every file against `SHA256SUMS.txt`, compares every `assets/
 | `textures.json` | The 690 textures: size, frame size and count, animation (`frametime`, frame order and times, `interpolate`), `mipmap_strategy`, `alpha_cutoff_bias` when the `.mcmeta` sets it, `alpha` class, PNG SHA-256, the target array and first layer, and the SHA-256 of every frame's RGBA bytes. It also lists the plains tint colors. |
 | `items.json` | The 601 block items (item id = block id): English name, stack size, item model, GUI tint, and positions in every creative tab. Model blocks' items add an `icon`: flat `sprite` layers, or a baked block `model` with its gui display transform. Powder snow has none, because its vanilla item is `powder_snow_bucket`; nor do 12 model blocks: 9 whose vanilla item has another id (cocoa: `cocoa_beans`, the wall fans, ...) and 3 with no item (kelp plant, cave vines plant, tall seagrass). Also the 14 creative tabs: row, column, type, alignment and icon. |
 | `assets/minecraft/` | Jar files, byte for byte: block textures and `.mcmeta`, the grass, foliage and dry foliage colormaps, the creative inventory GUI art, tab icon sprites and the model blocks' item sprites, item definitions, and the `block`/`generated`/`handheld` item display models. |
-| `facts/` | `block_facts.csv` (hardness, blast resistance, correct-tool flag, light, item, English name for all 1,286 blocks) and `creative_tabs.json` (every tab's display and search order), dumped by `tools/FactsDump.java`; and `block_state_facts.json`, per imported state: outline and collision boxes, light, `replaceable`, occluding faces and fluid, plus each block's position offset (see [Shapes and offsets](#shapes-and-offsets)); and `block_support.json`, per imported state the faces that hold a torch (see [Torch support](#torch-support)). |
+| `facts/` | `block_sounds.csv` (each imported block's sound type: volume, pitch and the break, hit, place, step and fall event paths without namespace), `block_facts.csv` (hardness, blast resistance, correct-tool flag, light, item, English name for all 1,286 blocks) and `creative_tabs.json` (every tab's display and search order), dumped by `tools/FactsDump.java`; and `block_state_facts.json`, per imported state: outline and collision boxes, light, `replaceable`, occluding faces and fluid, plus each block's position offset (see [Shapes and offsets](#shapes-and-offsets)); and `block_support.json`, per imported state the faces that hold a torch (see [Torch support](#torch-support)). |
+| `block_particles.json` | Per imported block (registry order), the particle texture of the default state and, only where it differs, of individual state ids; water and lava use their still texture. The top-level `textures_outside_textures_json` lists particle textures that are not in `textures.json` (only `shelf_mushroom_particle`, states 11227-11234 of `shelf_mushroom`); their files are in `assets/minecraft/textures/block/`. |
+| `assets/minecraft/sounds.json` | The client's sound event table (635,867 bytes), from the asset index, not the jar. |
+| `assets/minecraft/sounds/` | 762 `.ogg` files (6,855,474 bytes): the break and hit sounds of the imported blocks' sound types, from the asset index. Step, place and fall sounds are not included, only their event names in `facts/block_sounds.csv` and `sounds.json`. |
+| `assets/minecraft/textures/block/destroy_stage_0.png` to `destroy_stage_9.png` | The ten block-breaking crack overlays (jar files, 1,412 bytes in all); not in `textures.json`. |
+| `assets/minecraft/textures/block/shelf_mushroom_particle.png` | Particle texture of `shelf_mushroom` (jar file, 200 bytes); not in `textures.json`, listed in `block_particles.json`. |
 | `reports/blocks-imported.json` | Mojang's `blocks.json` report entries for the imported blocks: the state-id oracle. |
 | `research/` | The research outputs as generated: the original manifest, `blocks_registry.csv` (all 1,286 blocks), `block_tags.csv` (resolved tags), `edge_cases.txt` (excluded cube-like blocks), water and worldgen notes. |
 | `tools/` | `build_reference.py` (this folder), `bake_models.py` (its model baker), `verify_reference.py`, `FactsDump.java`, and the research generators (`build_manifest.py`, `classify_blocks.py`, `build_blocks.py`, `build_worldgen.py`, `doc_template.md`). |
@@ -32,6 +38,10 @@ The verifier checks every file against `SHA256SUMS.txt`, compares every `assets/
 
 - **Ids and states:** the server's data-generator report. State ids follow Mojang's enumeration: a cartesian product of the properties in report order, last property fastest, values in declared order. `build_reference.py` asserts this for every state, so runtime code can rebuild every id from the property schema.
 - **Hardness, blast resistance, correct tool, light, names, creative tabs:** the 26.3 server's own registries at runtime. `FactsDump.java` loads the vanilla data pack the way a dedicated server does, binding components and tags, then reads `Block.defaultDestroyTime()`, `getExplosionResistance()`, `BlockState.requiresCorrectToolForDrops()` and `CreativeModeTab.buildContents()`. Spot checks: stone 1.5/6.0 needs a tool, obsidian 50/1200, bedrock -1, oak slab 2/3.
+- **Sound types:** the server's own `BlockBehaviour.getSoundType` through the public API, read by `FactsDump.java` into `facts/block_sounds.csv`; it fails unless every state of a block shares the default state's sound type.
+- **Sounds:** asset index 34. `sounds.json` and the break and hit `.ogg` files of the imported blocks' sound types, each checked against the index SHA-1 and size.
+- **Particle textures:** the jar's block models: the `particle` variable of the model each state uses (first applied variant or part, first entry of weighted lists), through parent chains.
+- **Destroy stages:** the jar (`destroy_stage_0` to `destroy_stage_9`).
 - **Faces:** the client's blockstate and model JSON, baked with the rules of 26.3 `FaceBakery` (from javap):
   - vertices from `FaceInfo`;
   - default UVs from `defaultFaceUV`;

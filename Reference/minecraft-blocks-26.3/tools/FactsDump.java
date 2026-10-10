@@ -11,7 +11,7 @@ import net.minecraft.world.level.block.Block;
 // Dumps 26.3 creative tab contents and per-block hardness facts by running the game's own registries. With a
 // second argument (a file of block ids, one per line), also dumps per-state shapes and behaviour for those blocks
 // (block_state_facts.json) and the faces each of their states holds a torch on (block_support.json), measured
-// through public state methods only.
+// through public state methods only, and block_sounds.csv, each of those blocks' sound type.
 public class FactsDump {
     static String q(String s) { return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""; }
 
@@ -84,9 +84,36 @@ public class FactsDump {
         if (args.length > 1) {
             dumpStates(out, Path.of(args[1]));
             dumpSupport(out, Path.of(args[1]));
+            dumpSounds(out, Path.of(args[1]));
         }
         System.out.println("FACTS DUMP OK");
         System.exit(0);
+    }
+
+    static String sound(net.minecraft.sounds.SoundEvent e) {
+        if (!e.location().getNamespace().equals("minecraft")) throw new IllegalStateException("sound outside minecraft: " + e.location());
+        return e.location().getPath();
+    }
+
+    // Per imported block: the default state's SoundType (BlockStateBase.getSoundType): volume, pitch and the five sound
+    // event ids as paths in the minecraft namespace (e.g. block.stone.break). Every state of the block must report the
+    // same sound type; the check fails the dump otherwise.
+    static void dumpSounds(Path out, Path idsFile) throws Exception {
+        try (PrintWriter w = new PrintWriter(Files.newBufferedWriter(out.resolve("block_sounds.csv")))) {
+            w.println("id,volume,pitch,break,hit,place,step,fall");
+            for (String id : Files.readAllLines(idsFile)) {
+                if (id.isBlank()) continue;
+                Block b = BuiltInRegistries.BLOCK.getValue(net.minecraft.resources.Identifier.withDefaultNamespace(id.trim()));
+                var type = b.defaultBlockState().getSoundType();
+                for (var s : b.getStateDefinition().getPossibleStates())
+                    if (s.getSoundType() != type)
+                        throw new IllegalStateException(id.trim() + ": states differ in sound type");
+                w.println(id.trim() + "," + type.getVolume() + "," + type.getPitch() + "," + sound(type.getBreakSound()) + ","
+                    + sound(type.getHitSound()) + "," + sound(type.getPlaceSound()) + "," + sound(type.getStepSound()) + ","
+                    + sound(type.getFallSound()));
+            }
+        }
+        System.out.println("SOUND TYPES UNIFORM per block");
     }
 
     static String boxes(net.minecraft.world.phys.shapes.VoxelShape shape, net.minecraft.world.phys.Vec3 shift) {
