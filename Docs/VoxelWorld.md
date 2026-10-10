@@ -940,7 +940,7 @@ GPU frame at 1600 x 900 on this machine: 2.7 ms before, 2.9 to 3.0 ms after. The
 **Local lights (torch probe T0 + T1, October 10).** Torches will light caves with real point lights. The light probe (`CaptureVoxel.ps1 -Lights`, `voxel.LightProbe <N> [megalights|vsm|none]`; [record](Records/2026-10-10-Torch-Light-Probe.md)) measured what they cost and how they look.
 - **The probe:** in a dark cave of the dev seed at 1600 x 900, lights 1 m over cave floors, attenuation radius 13 blocks.
 - **The look call (Nyx, delegated, 04:20):** one MegaLights point light per torch (ray-traced shadows), for T3.
-- **The project setting:** `r.MegaLights.EnableForProject` stays 0 until T3. The probe turns it on per case at runtime.
+- **The project setting:** `r.MegaLights.EnableForProject` stayed 0 through T3; the probe turned it on per case at runtime. Since T3b it is 1 for the whole project (Jesus; see "Torch lights" below).
 
 | Lights | MegaLights | VSM shadows | Unshadowed |
 |---|---|---|---|
@@ -954,6 +954,16 @@ GPU frame at 1600 x 900 on this machine: 2.7 ms before, 2.9 to 3.0 ms after. The
 - **Glowing cubes** (glowstone and the other light-15 cubes, through emission and Lumen):
   - they lift a cave wall 5 blocks away by 39 to 83/255, at +0.03 to +0.06 ms each;
   - 35 to 43% of that light comes from screen traces, so it fades when the cube leaves the screen (a known limit).
+
+**Torch lights (torch T3 and T3b, October 10).** Torches place, survive and drop as measured in 26.3, and every light source at level 10 or more lights the cave around it ([Blocks](Blocks.md) "Light sources"; records [T3](Records/2026-10-10-Torch-T3.md) and [T3b](Records/2026-10-10-Torch-T3b.md)).
+- **The pool:** `FVoxelLights` on `AVoxelWorld` gives the nearest 64 sources within 48 blocks one MegaLights point light each (at most 100), merging sources under 2 blocks apart. The mesh job gathers each column's sources, so an edit costs about 0.01 ms of game thread.
+- **The look (Jesus, T3b):** warm A (600 cd, 2,200 K, inverse square), with MegaLights on for the whole project.
+  - The torch model glows at level 1 (`voxel.TorchGlow`), not its light level 14.
+  - The flame's quads are cut from the stick, so only the flame glows at `voxel.TorchGlow 0`. That is Jesus's pick, waiting for a stick glow under level 1 (T3c), because the stick reads black without it.
+- **Cost (T3b's quiet window, GPU at 1600 x 900):**
+  - +0.61, +0.87 and +1.40 ms at 1, 10 and 100 torches, the same as T1's probe lights.
+  - With no lights, MegaLights costs +0.13 ms GPU and about 1.5 ms of game thread.
+  - The Playground probe at the 60 cap: 45.03 against 45.31 FPS without it.
 **Edge fog (phase 3).** The view ends at `voxel.ViewRadius`. Instead of a wall or a dark void, the last 1.5 columns fade into the sky, so the land seems to run off into a distance that is too far and foggy to see. `AVoxelWorld` refits the map's `ExponentialHeightFog` from the view radius at runtime:
 
 - **Fog:** clear until 1.5 columns before the radius and 99% opaque at it: density 1000 * ln(100) / 2400, about 1.92, where 2,400 cm is the fade. Height falloff 0.001. Cutoff distance 1e9 cm, so the sky stays clear.
