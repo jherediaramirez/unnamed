@@ -13,7 +13,8 @@ namespace RealtimeMesh
 }
 
 // One column's mesh: a RealtimeMesh with a single buffer set holding every section's geometry and one poly group per
-// layer, drawn with that layer's chunk material (M_ChunkOpaque, M_ChunkCutout, M_ChunkTranslucent, M_ChunkWater).
+// layer, drawn with that layer's chunk material (M_ChunkOpaque, M_ChunkCutout, M_ChunkTranslucent, M_ChunkWater, and
+// M_ChunkCutout again for the model quads, which are never carded).
 // One buffer set rather than one per section: at the pinned RealtimeMesh commit a mesh with several buffer sets draws
 // only the last one created correctly (Docs/VoxelWorld.md), and one set per column is also fewer draws. A changed
 // section rebuilds its column's set from the sections' mesh data. The mesh also carries Lumen cards (BuildCards).

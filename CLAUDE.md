@@ -1,6 +1,6 @@
 # Unnamed - project notes
 
-Unreal Engine 5.8.3 game project with an offline CEF menu generated from an unchanged reference. Two C++ modules: the game module `Unnamed`, and `UnnamedVoxel`, the voxel world's plain C++ core (depends on `Core` only). Read [Docs/Architecture.md](Docs/Architecture.md) for how it fits together and [Docs/NamingConventions.md](Docs/NamingConventions.md) before adding or renaming anything. The voxel world (chunk loader and generator) is built in phases; status and decisions are in [Docs/VoxelWorld.md](Docs/VoxelWorld.md). Picking up that work in a new chat: start with the handoff, [Docs/Records/2026-10-09-Voxel-Handoff-Phase6.md](Docs/Records/2026-10-09-Voxel-Handoff-Phase6.md).
+Unreal Engine 5.8.3 game project with an offline CEF menu generated from an unchanged reference. Two C++ modules: the game module `Unnamed`, and `UnnamedVoxel`, the voxel world's plain C++ core (depends on `Core` only). Read [Docs/Architecture.md](Docs/Architecture.md) for how it fits together and [Docs/NamingConventions.md](Docs/NamingConventions.md) before adding or renaming anything. The voxel world (chunk loader and generator) is built in phases; status and decisions are in [Docs/VoxelWorld.md](Docs/VoxelWorld.md). Picking up that work in a new chat: start with the records index, [Docs/Records/README.md](Docs/Records/README.md), which lists the current handoff.
 
 ## Rules
 

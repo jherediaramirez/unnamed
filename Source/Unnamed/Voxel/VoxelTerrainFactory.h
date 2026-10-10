@@ -35,6 +35,6 @@ namespace VoxelTerrainFactory
     UNNAMED_API bool ReadInputs(const FString& ReferenceRoot, const FString& PresetName, FVoxelTerrainPreset& OutPreset,
         FVoxelBiomeTable& OutBiomes, FVoxelSurfaceInputs& OutSurface, FString& OutError);
 
-    // The block reference's colormaps folder (grass.png, foliage.png), staged with packages.
+    // The block reference's colormaps folder (grass.png, foliage.png, dry_foliage.png), staged with packages.
     UNNAMED_API FString GetColormapRoot();
 } // namespace VoxelTerrainFactory

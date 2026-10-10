@@ -7,6 +7,7 @@ class FVoxelClimateSampler;
 class FVoxelColumn;
 class FVoxelDecorator;
 class FVoxelDensityTerrain;
+class FVoxelOreVeins;
 class IVoxelTerrain;
 struct FVoxelMeshOptions;
 
@@ -83,4 +84,13 @@ namespace VoxelBench
 
     // One line per result: name, nanoseconds per sample, millions per second.
     UNNAMEDVOXEL_API FString Describe(TConstArrayView<FVoxelBenchResult> Results);
+
+    // The ore vein probe of facts/ore_vein_samples.json (tools/WorldgenFacts.java, writeOreVeins) run on our veins,
+    // one compiled vein set per seed: per seed, the first chunk (row-major over 32 x 32 from the origin) whose centre
+    // has toggle >= 0.5 at y 25 and the first other with toggle <= -0.5 at y -34; over both, from y -64 to 56, the
+    // positions with each vein's density above 0 and our blocks there, and the deciles of toggle (and of mask where
+    // |toggle| >= 0.4) over the probe's recorded set (every vein block and one in 64 of the rest). Toggle and Mask are
+    // nodes of each set's graph.
+    UNNAMEDVOXEL_API FString RunVeinProbe(
+        TConstArrayView<const FVoxelOreVeins*> Veins, TConstArrayView<int64> Seeds, int32 Toggle, int32 Mask);
 }

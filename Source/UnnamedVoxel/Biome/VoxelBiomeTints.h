@@ -11,6 +11,8 @@ struct FVoxelBiomeTint
     uint32 Water = 0;
     uint32 Grass = 0;
     uint32 Foliage = 0;
+    // 0 when neither the biome nor a dry foliage colormap gives one (the block keeps its plains tint).
+    uint32 DryFoliage = 0;
     EVoxelGrassColorModifier GrassModifier = EVoxelGrassColorModifier::None;
 };
 
@@ -19,7 +21,8 @@ struct FVoxelBiomeTint
 // - water: the biome's water_color;
 // - grass: grass_color, or the grass colormap at the biome's clamped temperature and downfall; then the modifier:
 //   dark forest blends halfway toward #28340A, swamp gives #4C763C or #6A7039 by the info noise at the block;
-// - foliage: foliage_color, or the foliage colormap.
+// - foliage: foliage_color, or the foliage colormap;
+// - dry foliage (leaf litter): dry_foliage_color, or the dry foliage colormap, read like the others.
 // The base temperature is the biome's own: height, the snow line and the frozen modifier play no part. Immutable; any
 // thread may use it.
 class UNNAMEDVOXEL_API FVoxelTintTable
@@ -37,8 +40,8 @@ public:
     int32 Num() const { return Biomes.Num(); }
     const FVoxelBiomeTint& Get(int32 Biome) const { return Biomes[Biome]; }
 
-    // The colour a block at (X, Y) of the biome takes for Source (grass, foliage or water); INDEX_NONE or another
-    // source gives Fallback.
+    // The colour a block at (X, Y) of the biome takes for Source (grass, foliage, water or dry foliage); INDEX_NONE or
+    // another source gives Fallback.
     uint32 GetColor(EVoxelTintSource Source, int32 Biome, int32 X, int32 Y, uint32 Fallback) const;
     // Whether a source's colour in the biome depends on the block's position (swamp grass).
     bool VariesWithPosition(EVoxelTintSource Source, int32 Biome) const

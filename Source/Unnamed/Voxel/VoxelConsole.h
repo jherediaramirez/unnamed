@@ -22,6 +22,9 @@ namespace VoxelConsole
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarDecoration;
     // With decoration, where the freeze pass runs: at Finalize (on, S3) or inside the snapshot (off, S2's order).
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarDecorationFreezeLast;
+    // Ore veins (phase 6, S4): on, Generate runs the ore_vein rules in streamed worlds and benches; off is the control
+    // that gives the blocks from before S4. Read when a world starts; a change rebuilds it.
+    extern UNNAMED_API TAutoConsoleVariable<bool> CVarOreVeins;
 
     // Tasks in flight when voxel.MaxTasksInFlight is 0: twice the task workers, so workers never idle between
     // finishing one job and the game thread queuing the next.

@@ -111,6 +111,10 @@ private:
     // -VoxelShotEdits: a pit across the corner of four columns east and south of the spawn, and a pillar of stone
     // and glass on a column border, written through the authority's block world.
     void ApplyShotEdits();
+    // -VoxelShotGarden: a flat plot near the spawn with every model block (rows, a pool for the water-holding ones, a
+    // glow lichen overhang, a dripstone column, tall grass across a section border, a patch plot for the distance
+    // shots), and a grass field around a bare clearing, written through the authority's block world.
+    void ApplyShotGarden();
 
     FVoxelSeed Seed;
     mutable TOptional<FUnnamedSavedWorld> SavedWorld;
@@ -159,12 +163,33 @@ private:
     bool bShotCavesSearched = false;
     TArray<TTuple<FString, FVector, FVector>> ShotCaveViews;
     void FindCaveShots();
+    // -VoxelShotVeins: a view per ore vein type (vein-copper, vein-iron) onto one of the four cut faces (the edge
+    // walls), aimed at the 32 x 18 window where that vein's ore and filler mix most. -VoxelShotVeinsAt=F,A,Z,F,A,Z aims
+    // them at fixed windows instead (face 0 west, 1 east, 2 north, 3 south; A along the face; Z): the control run with
+    // veins off reuses the first run's. The windows' block counts go to build.txt.
+    struct FShotVeinTarget
+    {
+        int32 Face = 0;
+        int32 Along = 0;
+        int32 Z = 0;
+    };
+    bool bShotVeins = false;
+    bool bShotVeinsSearched = false;
+    TArray<FShotVeinTarget> ShotVeinTargets;
+    FString ShotVeinReport;
+    void FindVeinShots();
     int32 ShotEditStage = 0;
     FIntPoint ShotEditCorner = FIntPoint::ZeroValue;
     int32 ShotEditTop = 0;
     double ShotEditSeconds = 0;
     int32 ShotEditFrames = 0;
     FString ShotEditReport;
+    // -VoxelShotGarden: the plot's minimum corner (its floor's height as Z), the field's clearing and the section
+    // border the post crosses.
+    bool bShotGarden = false;
+    FIntVector GardenOrigin = FIntVector::ZeroValue;
+    FIntVector GardenClearing = FIntVector::ZeroValue;
+    int32 GardenBorderZ = 0;
     UPROPERTY(Transient)
     TObjectPtr<ACameraActor> ShotCamera;
 };

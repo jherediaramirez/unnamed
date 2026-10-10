@@ -7,6 +7,7 @@
 #include "Misc/AutomationTest.h"
 #include "Random/VoxelRandom.h"
 #include "Tests/VoxelTestBlocks.h"
+#include "Voxel/VoxelBlocks.h"
 #include "Voxel/VoxelChunkComponent.h"
 
 namespace
@@ -444,4 +445,544 @@ bool FVoxelMesherCardsTest::RunTest(const FString& Parameters)
         TEXT("Random blocks: every opaque and cutout face is in a card"), CountUncardedFaces(Random, RandomCards), 0);
     return true;
 }
+namespace
+{
+    // Model states for the model tests, after VoxelTestBlocks' own.
+    enum : uint16
+    {
+        ModelTestCross = VoxelTestBlocks::Count,
+        ModelTestGrass,
+        ModelTestCarpet,
+        ModelTestLily,
+        ModelTestKelp,
+        ModelTestGlow,
+        ModelTestLichen,
+        ModelTestStateCount
+    };
+    constexpr uint32 ModelTestTint = 0x91BD59;
+    constexpr int32 ModelTestZ = 66;
+
+    // A quad through four points, its facing the axis nearest its normal (the side it turns against, as the cube
+    // faces do), shaded as Shade (-1: as its facing).
+    FVoxelModelQuad ModelTestQuad(const FVector3f& A, const FVector3f& B, const FVector3f& C, const FVector3f& D,
+        uint32 Code, int32 Cull = -1, int32 Shade = -1, int32 Light = 0)
+    {
+        FVoxelModelQuad Quad;
+        const FVector3f Points[4] = {A, B, C, D};
+        const FVector2f UVs[4] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+        for (int32 Vertex = 0; Vertex < 4; ++Vertex)
+        {
+            Quad.Positions[Vertex] = Points[Vertex];
+            Quad.UVs[Vertex] = UVs[Vertex];
+        }
+        const FVector3f Normal = -FVector3f::CrossProduct(B - A, C - A);
+        int32 Best = 0;
+        for (int32 Face = 1; Face < 6; ++Face)
+            if ((FVector3f(FoundationGrid::FaceNormal(EFoundationFace(Face))) | Normal) >
+                (FVector3f(FoundationGrid::FaceNormal(EFoundationFace(Best))) | Normal))
+                Best = Face;
+        Quad.Facing = uint8(Best);
+        Quad.Shade = uint8(Shade < 0 ? Best : Shade);
+        Quad.CullFace = int8(Cull);
+        Quad.Code = Code;
+        Quad.Light = uint8(Light);
+        return Quad;
+    }
+
+    // Both sides of a plane through four points.
+    void ModelTestPlane(TArray<FVoxelModelQuad>& Out, const FVector3f& A, const FVector3f& B, const FVector3f& C,
+        const FVector3f& D, uint32 Code, int32 Shade)
+    {
+        Out.Add(ModelTestQuad(A, B, C, D, Code, -1, Shade));
+        Out.Add(ModelTestQuad(A, D, C, B, Code, -1, Shade));
+    }
+
+    // A box face, wound like the mesher's cube faces.
+    FVoxelModelQuad ModelTestBoxFace(
+        const FVector3f& Min, const FVector3f& Max, EVoxelFace Face, uint32 Code, int32 Cull)
+    {
+        const int32 Axis = VoxelFaces::GetAxis(int32(Face)), U = (Axis + 1) % 3, V = (Axis + 2) % 3;
+        FVector3f Corners[4];
+        for (int32 Corner = 0; Corner < 4; ++Corner)
+        {
+            Corners[Corner][Axis] = VoxelFaces::IsPositive(int32(Face)) ? Max[Axis] : Min[Axis];
+            Corners[Corner][U] = Corner == 1 || Corner == 2 ? Max[U] : Min[U];
+            Corners[Corner][V] = Corner >= 2 ? Max[V] : Min[V];
+        }
+        const FVector3f Normal(FoundationGrid::FaceNormal(EFoundationFace(Face)));
+        if ((FVector3f::CrossProduct(Corners[1] - Corners[0], Corners[2] - Corners[0]) | Normal) > 0)
+            Swap(Corners[1], Corners[3]);
+        return ModelTestQuad(Corners[0], Corners[1], Corners[2], Corners[3], Code, Cull);
+    }
+
+    FVoxelBlockTable ModelTestTable()
+    {
+        FVoxelBlockTable Table = VoxelTestBlocks::Make();
+        TArray<FVoxelModelQuad> Quads;
+        // 0: a cross, two crossing planes with both faces, shaded up, tinted.
+        ModelTestPlane(
+            Quads, {0, 0, 0}, {1, 1, 0}, {1, 1, 1}, {0, 0, 1}, 900 | VoxelFaces::TintBit, int32(EVoxelFace::Up));
+        ModelTestPlane(
+            Quads, {1, 0, 0}, {0, 1, 0}, {0, 1, 1}, {1, 0, 1}, 900 | VoxelFaces::TintBit, int32(EVoxelFace::Up));
+        const int32 Cross = Table.AddModel(Quads, false);
+        // 1: a carpet, a box 1/16 high: the bottom and sides cull, the top does not; it takes ambient occlusion.
+        Quads.Reset();
+        for (int32 Face = 0; Face < 6; ++Face)
+            Quads.Add(ModelTestBoxFace(
+                {0, 0, 0}, {1, 1, 1.f / 16}, EVoxelFace(Face), 901, Face == int32(EVoxelFace::Up) ? -1 : Face));
+        const int32 Carpet = Table.AddModel(Quads, true);
+        // 2-5: four lily pad alternatives, told apart by their texture.
+        int32 Lily[4];
+        for (int32 Alternative = 0; Alternative < 4; ++Alternative)
+        {
+            Quads.Reset();
+            Quads.Add(ModelTestBoxFace({0, 0, 0}, {1, 1, 1.f / 64}, EVoxelFace::Up, 910 + Alternative, -1));
+            Lily[Alternative] = Table.AddModel(Quads, false);
+        }
+        // 6: a glowing model: one quad at element light 15, one without.
+        Quads.Reset();
+        Quads.Add(ModelTestBoxFace({0, 0, 0}, {1, 1, .5f}, EVoxelFace::Up, 920, -1));
+        Quads.Last().Light = 15;
+        Quads.Add(ModelTestBoxFace({0, 0, 0}, {1, 1, .5f}, EVoxelFace::Down, 921, -1));
+        const int32 Glow = Table.AddModel(Quads, false);
+        // 7: a ceiling plane facing down, its override turned to south by the blockstate rotation.
+        Quads.Reset();
+        Quads.Add(ModelTestBoxFace({0, 0, .9f}, {1, 1, .9f}, EVoxelFace::Down, 930, -1));
+        Quads.Last().Shade = uint8(EVoxelFace::South);
+        const int32 Lichen = Table.AddModel(Quads, false);
+
+        auto Add = [&Table](uint16 State, FName Name, uint16 Block, TArray<TArray<int32>> Parts)
+        {
+            FVoxelStateInfo Info;
+            Info.Shape = EVoxelShape::Model;
+            Info.Layer = EVoxelLayer::Model;
+            Info.Block = Block;
+            Info.Tint = ModelTestTint;
+            Info.TintSource = EVoxelTintSource::Grass;
+            TArray<TConstArrayView<int32>> Views;
+            for (const TArray<int32>& Part : Parts)
+                Views.Add(Part);
+            Info.ModelParts = Table.AddModelParts(Views);
+            Info.ModelPartCount = uint8(Parts.Num());
+            Table.SetState(State, Info);
+            Table.SetDefaultState(Name, State);
+            return Info;
+        };
+        Add(ModelTestCross, TEXT("cross"), 20, {{Cross}});
+        FVoxelStateInfo Grass = Add(ModelTestGrass, TEXT("short_grass"), 21, {{Cross}});
+        Grass.Offset = EVoxelOffset::HorizontalAndDown;
+        Grass.OffsetHorizontal = .25f;
+        Grass.OffsetDown = -.2f;
+        Table.SetState(ModelTestGrass, Grass);
+        Add(ModelTestCarpet, TEXT("carpet"), 22, {{Carpet}});
+        Add(ModelTestLily, TEXT("lily_pad"), 23, {{Lily[0], Lily[1], Lily[2], Lily[3]}});
+        FVoxelStateInfo Kelp = Add(ModelTestKelp, TEXT("kelp"), 24, {{Cross}});
+        Kelp.HeldFluid = VoxelTestBlocks::WaterSource;
+        Table.SetState(ModelTestKelp, Kelp);
+        FVoxelStateInfo Lit = Add(ModelTestGlow, TEXT("glow"), 25, {{Glow}});
+        Lit.LightEmission = 2;
+        Table.SetState(ModelTestGlow, Lit);
+        Add(ModelTestLichen, TEXT("glow_lichen"), 26, {{Lichen}});
+        return Table;
+    }
+
+    // One column at the origin filled by Fill(X, Y, Z) (local X and Y, world Z), its section at ModelTestZ meshed
+    // alone.
+    template <typename FillType>
+    FVoxelMeshData ModelTestMesh(const FVoxelBlockTable& Table, FillType&& Fill, const FVoxelMeshOptions& Options = {},
+        TSharedPtr<FVoxelColumn>* OutColumn = nullptr)
+    {
+        TSharedRef<FVoxelColumn> Column = VoxelTestBlocks::MakeColumn(Table, {0, 0}, Fill);
+        if (OutColumn) *OutColumn = Column;
+        FVoxelNeighborhood Neighborhood;
+        Neighborhood.Set(0, 0, &Column.Get());
+        const int32 Section = (ModelTestZ - VoxelConstants::MinZ) / VoxelConstants::SectionSize;
+        TUniquePtr<FVoxelPaddedSection> Padded = MakeUnique<FVoxelPaddedSection>();
+        VoxelMesher::GatherPadded(Neighborhood, Section, *Padded);
+        FVoxelMeshData Out;
+        VoxelMesher::MeshSection(Table, *Padded, Section, Options, Out, nullptr, &Neighborhood);
+        return Out;
+    }
+
+    // One state at (8, 8, ModelTestZ) on a stone floor, plus whatever Extra places.
+    auto ModelTestOne(uint16 State, TFunction<uint16(int32, int32, int32)> Extra = nullptr)
+    {
+        return [State, Extra](int32 X, int32 Y, int32 Z) -> uint16
+        {
+            if (Extra)
+                if (const uint16 Placed = Extra(X, Y, Z)) return Placed;
+            if (Z < ModelTestZ) return VoxelTestBlocks::Stone;
+            return X == 8 && Y == 8 && Z == ModelTestZ ? State : VoxelTestBlocks::Air;
+        };
+    }
+
+    const FVoxelMeshLayer& ModelTestLayer(const FVoxelMeshData& Mesh)
+    {
+        return Mesh.Layers[int32(EVoxelLayer::Model)];
+    }
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelMesherModelsTest, "Unnamed.Voxel.Mesher.Models",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelMesherModelsTest::RunTest(const FString& Parameters)
+{
+    const FVoxelBlockTable Table = ModelTestTable();
+
+    // A cross on stone: its four quads, unmoved, in the model layer only, shaded up, open, untinted without biomes.
+    {
+        const FVoxelMeshData Mesh = ModelTestMesh(Table, ModelTestOne(ModelTestCross));
+        const FVoxelMeshLayer& Layer = ModelTestLayer(Mesh);
+        TestEqual(TEXT("cross: four quads"), Layer.GetQuadCount(), 4);
+        TestEqual(
+            TEXT("cross: nothing in the cutout layer"), Mesh.Layers[int32(EVoxelLayer::Cutout)].GetQuadCount(), 0);
+        TestEqual(TEXT("cross: six indices per quad"), Layer.Indices.Num(), 24);
+        const FVoxelModelQuad& First = Table.GetModelQuads(0)[0];
+        TestTrue(TEXT("cross: placed at its cell"),
+            Layer.Positions[0].Equals(FVector3f(8.f, 8.f, float(ModelTestZ)) + First.Positions[0], 1e-5f));
+        bool bShade = true, bOpen = true, bCode = true, bTint = true;
+        for (int32 Vertex = 0; Vertex < Layer.Positions.Num(); ++Vertex)
+        {
+            bShade &= Layer.TintFaces[Vertex].Y == float(EVoxelFace::Up);
+            bTint &= Layer.TintFaces[Vertex].X == float(ModelTestTint);
+            bOpen &= Layer.Colors[Vertex].R == 255 && Layer.Colors[Vertex].G == 0;
+            bCode &= Layer.Codes[Vertex] == FVector2f(float(900 | VoxelFaces::TintBit), 0);
+        }
+        TestTrue(TEXT("cross: every vertex shaded as up (the override)"), bShade);
+        TestTrue(TEXT("cross: the state's plains tint without biomes"), bTint);
+        TestTrue(TEXT("cross: open (no ambient occlusion) and unlit"), bOpen);
+        TestTrue(TEXT("cross: the quad's own code, no overlay"), bCode);
+
+        FVoxelMeshOptions Off;
+        Off.bModels = false;
+        TestTrue(TEXT("voxel.Models 0: no model quads"),
+            ModelTestLayer(ModelTestMesh(Table, ModelTestOne(ModelTestCross), Off)).IsEmpty());
+
+        // Lumen never cards model quads: the stone floor's cards are the same with and without the cross.
+        FMeshCardsBuildData Cards, Bare;
+        const FVoxelMeshData Without = ModelTestMesh(Table, ModelTestOne(ModelTestCross), Off);
+        const FVoxelMeshData* Sections[] = {&Mesh};
+        const FVoxelMeshData* BareSections[] = {&Without};
+        UVoxelChunkComponent::BuildCards(Sections, Cards);
+        UVoxelChunkComponent::BuildCards(BareSections, Bare);
+        bool bSame = Cards.CardBuildData.Num() == Bare.CardBuildData.Num() && Cards.Bounds == Bare.Bounds;
+        for (int32 Card = 0; bSame && Card < Cards.CardBuildData.Num(); ++Card)
+            bSame = Cards.CardBuildData[Card].OBB.Origin == Bare.CardBuildData[Card].OBB.Origin &&
+                Cards.CardBuildData[Card].OBB.Extent == Bare.CardBuildData[Card].OBB.Extent;
+        TestTrue(
+            FString::Printf(TEXT("cross: the model quads add no card (%d cards)"), Cards.CardBuildData.Num()), bSame);
+    }
+
+    // Culling: a carpet on stone with stone to its east loses its bottom and east quads, never its top.
+    {
+        auto East = [](int32 X, int32 Y, int32 Z) -> uint16
+        { return X == 9 && Y == 8 && Z == ModelTestZ ? VoxelTestBlocks::Stone : 0; };
+        TestEqual(TEXT("carpet: six quads in the air above"),
+            ModelTestLayer(ModelTestMesh(Table, [](int32 X, int32 Y, int32 Z) -> uint16
+                               { return X == 8 && Y == 8 && Z == ModelTestZ ? ModelTestCarpet : 0; }))
+                .GetQuadCount(),
+            6);
+        const FVoxelMeshData Mesh = ModelTestMesh(Table, ModelTestOne(ModelTestCarpet, East));
+        const FVoxelMeshLayer& Layer = ModelTestLayer(Mesh);
+        TestEqual(TEXT("carpet: bottom and east culled"), Layer.GetQuadCount(), 4);
+        // Glass covers nothing: the carpet keeps its quad toward it.
+        auto GlassEast = [](int32 X, int32 Y, int32 Z) -> uint16
+        { return X == 9 && Y == 8 && Z == ModelTestZ ? VoxelTestBlocks::Glass : 0; };
+        TestEqual(TEXT("carpet: glass hides nothing"),
+            ModelTestLayer(ModelTestMesh(Table, ModelTestOne(ModelTestCarpet, GlassEast))).GetQuadCount(), 5);
+
+        // Ambient occlusion (R9): the top lies 1/16 above its cell's floor, so it takes the full face there, read
+        // around its own cell: the stone to the east darkens its east corners by one level.
+        int32 Up = INDEX_NONE;
+        for (int32 Quad = 0; Quad < Layer.GetQuadCount(); ++Quad)
+            if (Layer.TintFaces[Quad * 4].Y == float(EVoxelFace::Up)) Up = Quad;
+        if (TestTrue(TEXT("carpet: the top is drawn"), Up != INDEX_NONE))
+            for (int32 Vertex = Up * 4; Vertex < Up * 4 + 4; ++Vertex)
+            {
+                const bool bEast = Layer.Positions[Vertex].X > 8.5f;
+                TestEqual(FString::Printf(TEXT("carpet top corner %d occlusion"), Vertex - Up * 4),
+                    int32(Layer.Colors[Vertex].R), bEast ? 170 : 255);
+            }
+        FVoxelMeshOptions NoOcclusion;
+        NoOcclusion.bAmbientOcclusion = false;
+        const FVoxelMeshLayer Flat =
+            ModelTestLayer(ModelTestMesh(Table, ModelTestOne(ModelTestCarpet, East), NoOcclusion));
+        bool bOpen = Flat.GetQuadCount() == 4;
+        for (const FColor& Color : Flat.Colors)
+            bOpen &= Color.R == 255;
+        TestTrue(TEXT("carpet: ambient occlusion off leaves it open"), bOpen);
+        // Its east side, 1/16 high at the cell's east edge, faces the air beyond when nothing is there: open.
+        TestEqual(TEXT("carpet: the table finds the top's front as its own cell"),
+            int32(Table.GetModelQuads(1)[int32(EVoxelFace::Up)].OcclusionFront), int32(FVoxelModelQuad::OwnCell));
+        TestEqual(TEXT("carpet: a side's front is the cell beyond it"),
+            int32(Table.GetModelQuads(1)[int32(EVoxelFace::East)].OcclusionFront), int32(EVoxelFace::East));
+        TestEqual(TEXT("cross: no ambient occlusion"), int32(Table.GetModelQuads(0)[0].OcclusionFront), -1);
+    }
+
+    // Offsets (R6): a function of X and Y only, within the block's range; the mesher applies it.
+    {
+        const FVoxelStateInfo& Grass = Table.Get(ModelTestGrass);
+        TSet<float> Seen;
+        bool bInRange = true;
+        for (int32 Y = -40; Y < 40; ++Y)
+            for (int32 X = -40; X < 40; ++X)
+            {
+                const FVector3f Offset = VoxelModels::GetOffset(Grass, X, Y);
+                bInRange &= FMath::Abs(Offset.X) <= .25f + 1e-6f && FMath::Abs(Offset.Y) <= .25f + 1e-6f &&
+                    Offset.Z <= 0 && Offset.Z >= -.2f - 1e-6f;
+                Seen.Add(Offset.X);
+            }
+        TestTrue(TEXT("offsets stay within +-0.25 and [-0.2, 0]"), bInRange);
+        TestTrue(FString::Printf(TEXT("offsets vary (%d distinct X offsets)"), Seen.Num()), Seen.Num() >= 12);
+        TestTrue(TEXT("the plain cross has none"),
+            VoxelModels::GetOffset(Table.Get(ModelTestCross), 3, 4) == FVector3f::ZeroVector);
+        // (x, y, z) and (x, y, z + 1): one cell above the other, the same offset.
+        const FVoxelMeshLayer Low = ModelTestLayer(ModelTestMesh(Table, ModelTestOne(ModelTestGrass)));
+        const FVoxelMeshLayer High = ModelTestLayer(ModelTestMesh(Table,
+            [](int32 X, int32 Y, int32 Z) -> uint16
+            {
+                return Z < ModelTestZ + 1                     ? VoxelTestBlocks::Stone
+                    : X == 8 && Y == 8 && Z == ModelTestZ + 1 ? ModelTestGrass
+                                                              : 0;
+            }));
+        if (TestTrue(TEXT("grass drawn in both cells"), Low.GetQuadCount() == 4 && High.GetQuadCount() == 4))
+        {
+            const FVector3f Expected = VoxelModels::GetOffset(Grass, 8, 8);
+            TestTrue(TEXT("the mesher moves the quads by the offset"),
+                (Low.Positions[0] - FVector3f(8.f, 8.f, float(ModelTestZ)) - Table.GetModelQuads(0)[0].Positions[0])
+                    .Equals(Expected, 1e-5f));
+            TestTrue(TEXT("one cell up: the same offset"),
+                (High.Positions[0] - FVector3f(0.f, 0.f, 1.f)).Equals(Low.Positions[0], 1e-5f));
+        }
+    }
+
+    // Alternatives (R7): one per part by position, every one of the four used, the same each time.
+    {
+        auto Field = [](int32 X, int32 Y, int32 Z) -> uint16
+        {
+            return Z < ModelTestZ ? VoxelTestBlocks::Stone : Z == ModelTestZ ? ModelTestLily : 0;
+        };
+        const FVoxelMeshLayer Layer = ModelTestLayer(ModelTestMesh(Table, Field));
+        const FVoxelMeshLayer Again = ModelTestLayer(ModelTestMesh(Table, Field));
+        TestEqual(TEXT("lily pads: one quad each"), Layer.GetQuadCount(), 256);
+        int32 Counts[4] = {};
+        bool bPicked = true;
+        for (int32 Quad = 0; Quad < Layer.GetQuadCount(); ++Quad)
+        {
+            const int32 Alternative = int32(Layer.Codes[Quad * 4].X) - 910;
+            if (Alternative >= 0 && Alternative < 4) ++Counts[Alternative];
+            float MinX = Layer.Positions[Quad * 4].X, MinY = Layer.Positions[Quad * 4].Y;
+            for (int32 Vertex = Quad * 4 + 1; Vertex < Quad * 4 + 4; ++Vertex)
+            {
+                MinX = FMath::Min(MinX, Layer.Positions[Vertex].X);
+                MinY = FMath::Min(MinY, Layer.Positions[Vertex].Y);
+            }
+            const int32 X = FMath::RoundToInt32(MinX), Y = FMath::RoundToInt32(MinY);
+            bPicked &= Alternative == VoxelModels::PickAlternative(X, Y, ModelTestZ, 0, 4);
+        }
+        TestTrue(FString::Printf(TEXT("all four used (%d, %d, %d, %d)"), Counts[0], Counts[1], Counts[2], Counts[3]),
+            Counts[0] > 30 && Counts[1] > 30 && Counts[2] > 30 && Counts[3] > 30);
+        TestTrue(TEXT("each quad is its cell's pick"), bPicked);
+        TestTrue(TEXT("the same pick every time"), Layer.Codes == Again.Codes && Layer.Positions == Again.Positions);
+    }
+
+    // Water around a water-holding state, never against water; the heightmaps count it.
+    {
+        TSharedPtr<FVoxelColumn> Column;
+        const FVoxelMeshData Mesh = ModelTestMesh(Table, ModelTestOne(ModelTestKelp), {}, &Column);
+        TestEqual(
+            TEXT("kelp: its water's top and four sides"), Mesh.Layers[int32(EVoxelLayer::Water)].GetQuadCount(), 5);
+        TestEqual(TEXT("kelp: its cross"), ModelTestLayer(Mesh).GetQuadCount(), 4);
+        TestEqual(TEXT("kelp: motion blocking counts its water"),
+            Column->GetHeight(EVoxelHeightmap::MotionBlocking, 8, 8), ModelTestZ);
+        TestEqual(TEXT("kelp: the ocean floor is the stone below"),
+            Column->GetHeight(EVoxelHeightmap::OceanFloor, 8, 8), ModelTestZ - 1);
+        FVoxelMeshOptions Off;
+        Off.bModels = false;
+        const FVoxelMeshData Bare = ModelTestMesh(Table, ModelTestOne(ModelTestKelp), Off);
+        TestEqual(TEXT("voxel.Models 0: the water stays"), Bare.Layers[int32(EVoxelLayer::Water)].GetQuadCount(), 5);
+        TestEqual(TEXT("voxel.Models 0: no cross"), ModelTestLayer(Bare).GetQuadCount(), 0);
+        // A source to the east: no face between them on either side; the source keeps its top and three sides.
+        auto East = [](int32 X, int32 Y, int32 Z) -> uint16
+        { return X == 9 && Y == 8 && Z == ModelTestZ ? VoxelTestBlocks::WaterSource : 0; };
+        const FVoxelMeshData Beside = ModelTestMesh(Table, ModelTestOne(ModelTestKelp, East));
+        const FVoxelMeshLayer& Water = Beside.Layers[int32(EVoxelLayer::Water)];
+        // The two tops merge into one quad.
+        TestEqual(TEXT("kelp beside water: one top and 3 + 3 sides"), Water.GetQuadCount(), 7);
+        int32 Between = 0;
+        for (int32 Quad = 0; Quad < Water.GetQuadCount(); ++Quad)
+        {
+            bool bOnPlane = true;
+            for (int32 Vertex = Quad * 4; Vertex < Quad * 4 + 4; ++Vertex)
+                bOnPlane &= FMath::IsNearlyEqual(Water.Positions[Vertex].X, 9.f);
+            Between += bOnPlane;
+        }
+        TestEqual(TEXT("kelp beside water: nothing on the plane between"), Between, 0);
+    }
+
+    // Emission: the brighter of the state's light and the element's.
+    {
+        const FVoxelMeshLayer Layer = ModelTestLayer(ModelTestMesh(Table, ModelTestOne(ModelTestGlow)));
+        if (TestEqual(TEXT("glow: two quads"), Layer.GetQuadCount(), 2))
+        {
+            TestEqual(TEXT("glow: the element's light 15"), int32(Layer.Colors[0].G), 255);
+            TestEqual(TEXT("glow: the state's light 2"), int32(Layer.Colors[4].G), 34);
+        }
+    }
+
+    // The look-call switch: a quad shaded other than its facing is shaded as up; the rest keep their shading.
+    {
+        FVoxelMeshOptions Unturned;
+        Unturned.bModelShadeUnturned = true;
+        const FVoxelMeshLayer Turned = ModelTestLayer(ModelTestMesh(Table, ModelTestOne(ModelTestLichen)));
+        const FVoxelMeshLayer Up = ModelTestLayer(ModelTestMesh(Table, ModelTestOne(ModelTestLichen), Unturned));
+        if (TestTrue(TEXT("lichen: one quad both ways"), Turned.GetQuadCount() == 1 && Up.GetQuadCount() == 1))
+        {
+            TestEqual(TEXT("lichen: shaded as its turned override"), Turned.TintFaces[0].Y, float(EVoxelFace::South));
+            TestEqual(TEXT("lichen unturned: shaded as up"), Up.TintFaces[0].Y, float(EVoxelFace::Up));
+        }
+        const FVoxelMeshLayer Carpet = ModelTestLayer(ModelTestMesh(Table, ModelTestOne(ModelTestCarpet)));
+        const FVoxelMeshLayer CarpetUp = ModelTestLayer(ModelTestMesh(Table, ModelTestOne(ModelTestCarpet), Unturned));
+        TestTrue(
+            TEXT("unturned: quads without an override keep their shading"), Carpet.TintFaces == CarpetUp.TintFaces);
+    }
+    return true;
+}
+
+namespace
+{
+    // Quads of one model on the same four corners as an earlier one (thin planes, R3): how many pairs, and how many
+    // face the same way. The one allowed exception: the firefly bush's emissive overlay (model 302, elements 4-7,
+    // light_emission 15 in its model file) lies on the four planes of its cross (elements 0-3), facing the same way,
+    // and draws after them.
+    void ModelDataPairs(FAutomationTestBase& Test, int32 Model, TConstArrayView<FVoxelModelQuad> Quads, int32& OutPairs,
+        int32& OutSameWay)
+    {
+        auto Turn = [](const FVoxelModelQuad& Quad)
+        {
+            return FVector3f::CrossProduct(
+                Quad.Positions[1] - Quad.Positions[0], Quad.Positions[2] - Quad.Positions[0]);
+        };
+        for (int32 Index = 0; Index < Quads.Num(); ++Index)
+            for (int32 Other = Index + 1; Other < Quads.Num(); ++Other)
+            {
+                int32 Shared = 0;
+                for (const FVector3f& A : Quads[Index].Positions)
+                    for (const FVector3f& B : Quads[Other].Positions)
+                        Shared += A.Equals(B, 1e-4f);
+                if (Shared != 4) continue;
+                ++OutPairs;
+                if ((Turn(Quads[Index]) | Turn(Quads[Other])) < 0) continue;
+                const bool bFireflyOverlay = Model == 302 && Index < 4 && Other == Index + 4 &&
+                    Quads[Index].Light == 0 && Quads[Other].Light == 15;
+                if (bFireflyOverlay) continue;
+                Test.AddInfo(FString::Printf(TEXT("same-facing pair: model %d quads %d and %d"), Model, Index, Other));
+                ++OutSameWay;
+            }
+    }
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelMesherModelDataTest, "Unnamed.Voxel.Mesher.ModelData",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
+{
+    // The real block table's copy of the baked models (S5's 303 models).
+    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+    if (!Table->FindState(TEXT("stone")))
+    {
+        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return true;
+    }
+    TestEqual(TEXT("baked models"), Table->GetModelCount(), 303);
+    int32 Quads = 0, Wound = 0, Twins = 0, BadTwins = 0;
+    for (int32 Model = 0; Model < Table->GetModelCount(); ++Model)
+    {
+        const TConstArrayView<FVoxelModelQuad> ModelQuads = Table->GetModelQuads(Model);
+        for (int32 Index = 0; Index < ModelQuads.Num(); ++Index)
+        {
+            const FVoxelModelQuad& Quad = ModelQuads[Index];
+            ++Quads;
+            // The cube faces' convention: Cross(B - A, C - A) opposes the facing normal (Unreal draws clockwise).
+            const FVector3f Normal(FoundationGrid::FaceNormal(EFoundationFace(Quad.Facing)));
+            const FVector3f Turn =
+                FVector3f::CrossProduct(Quad.Positions[1] - Quad.Positions[0], Quad.Positions[2] - Quad.Positions[0]);
+            Wound += (Turn | Normal) < 0;
+        }
+        ModelDataPairs(*this, Model, ModelQuads, Twins, BadTwins);
+    }
+    // The check catches a thin plane turned the wrong way: model 0's first pair, its second quad wound backwards.
+    {
+        TArray<FVoxelModelQuad> Broken(Table->GetModelQuads(0));
+        int32 Pairs = 0, SameWay = 0;
+        for (int32 Other = 1; Other < Broken.Num() && !SameWay; ++Other)
+        {
+            Swap(Broken[Other].Positions[1], Broken[Other].Positions[3]);
+            ModelDataPairs(*this, 0, Broken, Pairs, SameWay);
+            if (!SameWay) Swap(Broken[Other].Positions[1], Broken[Other].Positions[3]);
+        }
+        TestTrue(TEXT("mutation: a thin plane wound backwards is caught"), SameWay > 0);
+    }
+    // S5's 2,410 baked quads, less the 16 exact repeats the copy drops (flowerbed segments that list a plane twice).
+    TestEqual(TEXT("model quads"), Quads, 2394);
+    TestEqual(TEXT("quads wound like the cube faces"), Wound, Quads);
+    TestTrue(FString::Printf(TEXT("zero-thickness planes have both faces (%d pairs)"), Twins), Twins > 100);
+    TestEqual(TEXT("each pair faces opposite ways"), BadTwins, 0);
+
+    int32 ModelStates = 0, BadParts = 0;
+    for (int32 State = 1; State < Table->GetStateCount(); ++State)
+    {
+        const FVoxelStateInfo& Info = Table->Get(uint16(State));
+        if (Info.Shape != EVoxelShape::Model) continue;
+        ++ModelStates;
+        BadParts += Info.Layer != EVoxelLayer::Model || Info.OpaqueFaces != 0 || Info.ModelPartCount == 0;
+        const int32* Part = Table->GetModelParts(Info);
+        for (int32 Index = 0; Index < Info.ModelPartCount; ++Index)
+        {
+            const int32 Alternatives = *Part++;
+            BadParts += Alternatives < 1;
+            for (int32 Alternative = 0; Alternative < Alternatives; ++Alternative)
+                BadParts += Part[Alternative] < 0 || Part[Alternative] >= Table->GetModelCount();
+            Part += Alternatives;
+        }
+    }
+    TestEqual(TEXT("model states (S5's 949)"), ModelStates, 949);
+    TestEqual(TEXT("model states with bad parts, layer or covered faces"), BadParts, 0);
+
+    auto Default = [&Table](const TCHAR* Block) -> const FVoxelStateInfo&
+    { return Table->Get(Table->FindState(Block)); };
+    const FVoxelStateInfo& Lily = Default(TEXT("lily_pad"));
+    TestTrue(
+        TEXT("lily pad: one part of 4 alternatives"), Lily.ModelPartCount == 1 && Table->GetModelParts(Lily)[0] == 4);
+    TestTrue(
+        TEXT("lily pad: the constant #208030"), Lily.TintSource == EVoxelTintSource::Constant && Lily.Tint == 0x208030);
+    TestTrue(TEXT("leaf litter: dry foliage"), Default(TEXT("leaf_litter")).TintSource == EVoxelTintSource::DryFoliage);
+    TestTrue(TEXT("short grass: grass"), Default(TEXT("short_grass")).TintSource == EVoxelTintSource::Grass);
+    TestTrue(TEXT("vine: foliage"), Default(TEXT("vine")).TintSource == EVoxelTintSource::Foliage);
+    TestTrue(TEXT("kelp holds water"), Default(TEXT("kelp")).HeldFluid != 0 && Default(TEXT("kelp")).HoldsFluid());
+    TestTrue(TEXT("a dandelion holds none"), Default(TEXT("dandelion")).HeldFluid == 0);
+    const FVoxelStateInfo& Grass = Default(TEXT("short_grass"));
+    TestTrue(FString::Printf(TEXT("short grass: XYZ offset +-0.25, down to -0.2 (%g, %g)"), Grass.OffsetHorizontal,
+                 Grass.OffsetDown),
+        Grass.Offset == EVoxelOffset::HorizontalAndDown && FMath::IsNearlyEqual(Grass.OffsetHorizontal, .25f, 1e-4f) &&
+            FMath::IsNearlyEqual(Grass.OffsetDown, -.2f, 1e-4f));
+    const FVoxelStateInfo& Dripstone = Default(TEXT("pointed_dripstone"));
+    TestTrue(TEXT("pointed dripstone: XZ offset +-0.125"),
+        Dripstone.Offset == EVoxelOffset::Horizontal && FMath::IsNearlyEqual(Dripstone.OffsetHorizontal, .125f, 1e-4f));
+    // Glow lichen glows 7 wherever it has a face (its default state has none).
+    int32 LichenLight = 0;
+    for (int32 State = 1; State < Table->GetStateCount(); ++State)
+        if (Table->Get(uint16(State)).Block == Default(TEXT("glow_lichen")).Block)
+            LichenLight = FMath::Max<int32>(LichenLight, Table->Get(uint16(State)).LightEmission);
+    TestEqual(TEXT("glow lichen: light 7"), LichenLight, 7);
+    bool bFireflyGlows = false;
+    const FVoxelStateInfo& Firefly = Default(TEXT("firefly_bush"));
+    const int32* Part = Table->GetModelParts(Firefly);
+    for (int32 Alternative = 0; Alternative < Part[0]; ++Alternative)
+        for (const FVoxelModelQuad& Quad : Table->GetModelQuads(Part[1 + Alternative]))
+            bFireflyGlows |= Quad.Light == 15;
+    TestTrue(TEXT("firefly bush: its overlay quads carry light 15"), bFireflyGlows);
+    return true;
+}
+
 #endif

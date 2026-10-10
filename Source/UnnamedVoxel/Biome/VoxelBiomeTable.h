@@ -71,10 +71,12 @@ public:
     TArray<FVoxelBiome> Biomes;
     TArray<FVoxelBiomeParameter> Points;
     // The block reference's grass and foliage colormaps, ColormapSize x ColormapSize colours as 0xRRGGBB, row by row
-    // from the top left; empty when not read (no biome tints).
+    // from the top left; empty when not read (no biome tints). The dry foliage colormap (leaf litter) is optional:
+    // without it, dry foliage keeps its plains tint except where a biome sets dry_foliage_color.
     static constexpr int32 ColormapSize = 256;
     TArray<uint32> GrassColormap;
     TArray<uint32> FoliageColormap;
+    TArray<uint32> DryFoliageColormap;
 
     // A biome's index by full id, or INDEX_NONE.
     int32 FindBiome(FStringView Name) const;

@@ -21,7 +21,10 @@ namespace
 
     // Re-recorded once for the surface rules (phase 5 session 5, a decided change); never update to pass. A changed
     // value means saved worlds changed.
-    constexpr uint64 DensityTestGolden[3] = {0xf7ba992062080de1ull, 0x9cdb8dff3e065521ull, 0xab4971c1b4ee6520ull};
+    // Recorded under the decided change "veins on" (phase 6, S4); veins off must give the values from before S4.
+    constexpr uint64 DensityTestGolden[3] = {0xa4b22a0e3536092full, 0x648c3c2c4627e9d3ull, 0xca86f4c1b74532ceull};
+    constexpr uint64 DensityTestGoldenNoVeins[3] = {
+        0xf7ba992062080de1ull, 0x9cdb8dff3e065521ull, 0xab4971c1b4ee6520ull};
 
     const TCHAR* const DensityTestNoiseJson = TEXT("{'base_octave':-3,'base_amplitude':0.9381732587751005,'octave_"
                                                    "count':4,'amplitude_modifiers':[1.0,1.0,1.0,0.0]}");
@@ -539,6 +542,22 @@ bool FVoxelDensityGoldenTest::RunTest(const FString& Parameters)
             AddError(FString::Printf(TEXT("%s: block hash 0x%016llx, golden 0x%016llx"), PresetName,
                 static_cast<unsigned long long>(Hash),
                 static_cast<unsigned long long>(DensityTestGolden[PresetIndex])));
+
+        // Veins off: the blocks from before S4, exactly.
+        FVoxelDensityTerrainOverrides NoVeins;
+        NoVeins.bOreVeins = false;
+        uint64 NoVeinsHash = 0xcbf29ce484222325ull;
+        for (const FIntPoint& Position : Positions)
+        {
+            FVoxelColumn Column;
+            TArray<uint16> Dense;
+            Terrain.Generate(Position, Column, Dense, nullptr, NoVeins);
+            NoVeinsHash = DensityTestHash(NoVeinsHash, Dense);
+        }
+        if (NoVeinsHash != DensityTestGoldenNoVeins[PresetIndex])
+            AddError(FString::Printf(TEXT("%s: veins off: block hash 0x%016llx, golden 0x%016llx"), PresetName,
+                static_cast<unsigned long long>(NoVeinsHash),
+                static_cast<unsigned long long>(DensityTestGoldenNoVeins[PresetIndex])));
     }
     return true;
 }

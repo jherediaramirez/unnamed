@@ -1732,7 +1732,8 @@ bool FVoxelDecorationOreHistogramTest::RunTest(const FString& Parameters)
             Features += FString::Printf(TEXT(" %s(%.2f tries)"), *Info.Id, Tries);
         }
 
-        // The observation: ore blocks per Z in the final columns.
+        // The observation: ore blocks per Z the features placed in the final columns (ore the generated column already
+        // held, such as an ore vein's since S4, is not theirs).
         const TArray<FColumnPtr> Final = RunStages(*World.Decorator, Snapshots, Radius);
         TArray<double> Observed;
         Observed.Init(0, Height);
@@ -1743,11 +1744,15 @@ bool FVoxelDecorationOreHistogramTest::RunTest(const FString& Parameters)
                 {
                     TArray<double> Local;
                     Local.Init(0, Height);
+                    const FVoxelColumn* Generated = Snapshots.At(Final[Index]->GetPosition());
                     for (int32 Z = VoxelConstants::MinZ; Z <= VoxelConstants::MaxZ; ++Z)
                         for (int32 Y = 0; Y < 16; ++Y)
                             for (int32 X = 0; X < 16; ++X)
-                                if (OreStates.Contains(Final[Index]->GetState(X, Y, Z)))
+                            {
+                                const uint16 State = Final[Index]->GetState(X, Y, Z);
+                                if (OreStates.Contains(State) && State != Generated->GetState(X, Y, Z))
                                     Local[Z - VoxelConstants::MinZ] += 1;
+                            }
                     FScopeLock Scope(&Lock);
                     for (int32 Cell = 0; Cell < Height; ++Cell)
                         Observed[Cell] += Local[Cell];

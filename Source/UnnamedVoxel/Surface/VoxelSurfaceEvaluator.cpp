@@ -59,6 +59,16 @@ TArray<FString> FVoxelSurfaceEvaluator::GetNoiseIds(const FVoxelSurfaceRules& Ru
     return Result;
 }
 
+TArray<FString> FVoxelSurfaceEvaluator::GetVeinFunctionIds(const FVoxelSurfaceRules& Rules)
+{
+    TArray<FString> Result;
+    for (const FVoxelSurfaceRule& Rule : Rules.Rules)
+        if (Rule.Op == EVoxelSurfaceRuleOp::OreVein)
+            for (const int32 Id : {Rule.Density, Rule.Richness, Rule.FillerGap})
+                if (Rules.Strings.IsValidIndex(Id)) Result.AddUnique(Rules.Strings[Id]);
+    return Result;
+}
+
 bool FVoxelSurfaceEvaluator::Compile(const FVoxelSurfaceInputs& Inputs, const FVoxelBlockTable& Table,
     const FVoxelBiomeTable& BiomeTable, uint64 WorldSeed, FString* OutError)
 {
@@ -150,12 +160,41 @@ bool FVoxelSurfaceEvaluator::Compile(const FVoxelSurfaceInputs& Inputs, const FV
         BuildBands(Table, WorldSeed, Error);
         if (!Error.IsEmpty()) return Fail(Error);
     }
+    // Ore veins by rule index: their blocks and their functions' nodes in Inputs.Functions.
+    TMap<int32, FVoxelOreVein> VeinRules;
+    for (int32 Index = 0; Index < Rules.Rules.Num(); ++Index)
+    {
+        const FVoxelSurfaceRule& Rule = Rules.Rules[Index];
+        if (Rule.Op != EVoxelSurfaceRuleOp::OreVein) continue;
+        FVoxelOreVein Vein;
+        for (const TPair<int32, uint16*>& Block :
+            {TPair<int32, uint16*>(Rule.Block, &Vein.Ore), TPair<int32, uint16*>(Rule.RawOreBlock, &Vein.RawOre),
+                TPair<int32, uint16*>(Rule.FillerBlock, &Vein.Filler)})
+        {
+            bool bFound = false;
+            *Block.Value = SurfaceFindBlock(Table, Rules.Strings[Block.Key], bFound);
+            if (!bFound) return Fail(FString::Printf(TEXT("surface rules: no block %s"), *Rules.Strings[Block.Key]));
+        }
+        for (const TPair<int32, int32*>& Function : {TPair<int32, int32*>(Rule.Density, &Vein.Density),
+                 TPair<int32, int32*>(Rule.Richness, &Vein.Richness), TPair<int32, int32*>(Rule.FillerGap, &Vein.Gap)})
+        {
+            *Function.Value = Inputs.Functions.FindFunction(Rules.Strings[Function.Key]);
+            if (*Function.Value == INDEX_NONE)
+                return Fail(FString::Printf(
+                    TEXT("surface rules: no density function %s for an ore vein"), *Rules.Strings[Function.Key]));
+        }
+        Vein.RawOreChance = float(Rule.RawOreChance);
+        VeinRules.Add(Index, Vein);
+    }
+    TArray<FVoxelOreVein> Veins;
 
     // The tree as a linear program: a condition that fails jumps past its rule, and the first block given ends it.
     struct FCompiler
     {
         const FVoxelSurfaceRules& Rules;
         const TArray<int32>& BlockStates;
+        const TMap<int32, FVoxelOreVein>& VeinRules;
+        TArray<FVoxelOreVein>& Veins;
         TArray<FInstruction>& Out;
 
         void Rule(int32 Index)
@@ -201,13 +240,26 @@ bool FVoxelSurfaceEvaluator::Compile(const FVoxelSurfaceInputs& Inputs, const FV
                 Out.Add(Instruction);
                 break;
             }
+            case EVoxelSurfaceRuleOp::OreVein:
+            {
+                // One vein per occurrence, numbered in program order.
+                FInstruction Instruction;
+                Instruction.Op = EOp::Vein;
+                Instruction.State = uint16(Veins.Add(VeinRules.FindChecked(Index)));
+                Out.Add(Instruction);
+                break;
+            }
             default:
-                // Ore veins: phase 6.
                 break;
             }
         }
     };
-    FCompiler{Rules, States, Program}.Rule(Rules.Root);
+    FCompiler{Rules, States, VeinRules, Veins, Program}.Rule(Rules.Root);
+    {
+        FString Reason;
+        if (!OreVeins.Compile(Inputs.Functions, WorldSeed, Veins, &Reason))
+            return Fail(TEXT("surface rules: ") + Reason);
+    }
     // Jumps only go forward, so one pass from the end finds what each instruction can still read.
     const auto ReadsContext = [this](int32 Condition)
     {
@@ -219,9 +271,13 @@ bool FVoxelSurfaceEvaluator::Compile(const FVoxelSurfaceInputs& Inputs, const FV
     };
     // Below the preliminary surface (where only the deep table resumes), above_preliminary_surface is false.
     NeedsContext.Init(false, Program.Num() + 1);
+    VeinsFrom.Init(0, Program.Num() + 1);
     for (int32 Pc = Program.Num() - 1; Pc >= 0; --Pc)
     {
         const FInstruction& Instruction = Program[Pc];
+        VeinsFrom[Pc] = VeinsFrom[Pc + 1] | (Instruction.Op == EOp::Vein ? uint8(1u << Instruction.State) : uint8(0));
+        // A vein that gives nothing goes on to the next instruction.
+        if (Instruction.Op == EOp::Vein) NeedsContext[Pc] = NeedsContext[Pc + 1];
         if (Instruction.Op != EOp::Test) continue;
         if (Conditions[Instruction.Condition].Op == EVoxelSurfaceConditionOp::AbovePreliminarySurface)
             NeedsContext[Pc] = NeedsContext[Instruction.bExpect ? Instruction.Jump : Pc + 1];
@@ -325,13 +381,18 @@ void FVoxelSurfaceEvaluator::GetLayerMask(const FVoxelSurfaceChunk& Chunk, int32
 }
 
 void FVoxelSurfaceEvaluator::PrepareChunk(
-    FVoxelSurfaceChunk& Chunk, const FVoxelBiomeStorage* Biomes, bool bShortcut) const
+    FVoxelSurfaceChunk& Chunk, const FVoxelBiomeStorage* Biomes, bool bShortcut, bool bVeins, bool bVeinShortcut) const
 {
     Chunk.Biomes = Biomes;
     Chunk.bShortcut = bShortcut;
+    Chunk.bVeins = bVeins && OreVeins.Num() > 0;
+    Chunk.bVeinShortcut = bVeinShortcut;
+    Chunk.Veins.bFilled = false;
     Chunk.LayerBiomes.Reset();
     Chunk.DeepStates.Reset();
+    Chunk.DeepVeins.Reset();
     Chunk.InteriorStates.Reset();
+    Chunk.InteriorVeins.Reset();
     Chunk.JitterLayers.Reset();
     Chunk.DeepBlocks = Chunk.InteriorBlocks = Chunk.FullBlocks = Chunk.InteriorRuns = 0;
     Chunk.Steps = 0;
@@ -355,6 +416,7 @@ void FVoxelSurfaceEvaluator::PrepareChunk(
         }
     }
     Chunk.InteriorStates.Init(FVoxelSurfaceChunk::NotComputed, VoxelConstants::Height);
+    Chunk.InteriorVeins.Init(0, VoxelConstants::Height);
     if (Biomes && !Biomes->IsEmpty())
     {
         // Filled a quart layer at a time, before any read of that layer (JitterLayers).
@@ -362,12 +424,13 @@ void FVoxelSurfaceEvaluator::PrepareChunk(
         Chunk.JitterLayers.Init(false, FVoxelBiomeStorage::Layers);
     }
     Chunk.DeepStates.SetNumUninitialized(VoxelConstants::Height);
+    Chunk.DeepVeins.SetNumUninitialized(VoxelConstants::Height);
     uint64 Mask[SurfaceMaxBiomeWords];
     for (int32 Index = 0; Index < VoxelConstants::Height; ++Index)
     {
         const int32 Z = Index + VoxelConstants::MinZ;
         GetLayerMask(Chunk, Z, Mask);
-        Chunk.DeepStates[Index] = RunDeep(Z, Mask);
+        Chunk.DeepStates[Index] = RunDeep(Chunk, Z, Mask, Chunk.DeepVeins[Index]);
     }
     // The stone_depth conditions reachable with the column's biomes: biome tests decided by every layer's biomes.
     uint64 All[SurfaceMaxBiomeWords] = {};
@@ -382,6 +445,7 @@ void FVoxelSurfaceEvaluator::PrepareChunk(
     for (int32 Pc = 0; Pc < Program.Num(); ++Pc)
     {
         const FInstruction& Instruction = Program[Pc];
+        if (Reached[Pc] && Instruction.Op == EOp::Vein) Reached[Pc + 1] = true;
         if (!Reached[Pc] || Instruction.Op != EOp::Test) continue;
         const FCondition& Data = Conditions[Instruction.Condition];
         if (Data.Op == EVoxelSurfaceConditionOp::StoneDepth)
@@ -403,6 +467,38 @@ void FVoxelSurfaceEvaluator::PrepareChunk(
     }
     for (int32 Index = VoxelConstants::Height - 1; Index >= 0; --Index)
         if (Chunk.DeepStates[Index] != NoState) Chunk.ActiveDeep.Add(Index);
+}
+
+void FVoxelSurfaceEvaluator::PrepareVeins(
+    FVoxelSurfaceChunk& Chunk, int32 X0, int32 Y0, TConstArrayView<EVoxelSurfaceKind> Kinds) const
+{
+    if (!Chunk.bVeins) return;
+    OreVeins.Generate(X0, Y0, Kinds, Chunk.bVeinShortcut, Chunk.VeinScratch, Chunk.Veins);
+}
+
+uint32 FVoxelSurfaceEvaluator::GetActiveVeins(const FVoxelSurfaceChunk& Chunk, int32 Z) const
+{
+    if (!Chunk.bVeins) return 0;
+    uint32 Mask = 0;
+    for (int32 Index = 0; Index < OreVeins.Num(); ++Index)
+    {
+        const FVoxelOreVein& Vein = OreVeins.GetVein(Index);
+        if (!Chunk.bVeinShortcut || (Z >= Vein.MinZ && Z <= Vein.MaxZ)) Mask |= 1u << Index;
+    }
+    return Mask;
+}
+
+int32 FVoxelSurfaceEvaluator::GiveVein(const FVoxelSurfaceChunk& Chunk, uint32 Veins, int32 Cell, int32 Z) const
+{
+    // The column mask is part of the vein shortcut: the oracle (shortcut off) asks every block.
+    if (Chunk.bVeinShortcut && !(Chunk.Veins.Columns[Cell >> 6] >> (Cell & 63) & 1)) return NoState;
+    for (; Veins != 0; Veins &= Veins - 1)
+    {
+        const int32 Index = int32(FMath::CountTrailingZeros(Veins));
+        const int32 Given = FVoxelOreVeins::Get(OreVeins.GetVein(Index), Chunk.Veins, Index, Cell, Z);
+        if (Given >= 0) return Given;
+    }
+    return NoState;
 }
 
 int32 FVoxelSurfaceEvaluator::TestPartial(
@@ -443,13 +539,20 @@ int32 FVoxelSurfaceEvaluator::DecideBiome(const FCondition& Data, const uint64* 
     return !bAny ? 0 : bAll ? 1 : -1;
 }
 
-int32 FVoxelSurfaceEvaluator::RunDeep(int32 Z, const uint64* LayerMask) const
+int32 FVoxelSurfaceEvaluator::RunDeep(
+    const FVoxelSurfaceChunk& Chunk, int32 Z, const uint64* LayerMask, uint8& OutVeins) const
 {
+    OutVeins = 0;
+    const uint32 Active = GetActiveVeins(Chunk, Z);
     for (int32 Pc = 0; Pc < Program.Num();)
     {
         const FInstruction& Instruction = Program[Pc];
         switch (Instruction.Op)
         {
+        case EOp::Vein:
+            OutVeins |= uint8(Active & 1u << Instruction.State);
+            ++Pc;
+            break;
         case EOp::Test:
         {
             const int32 Result = TestPartial(Instruction.Condition, Z, LayerMask, false, false);
@@ -467,8 +570,10 @@ int32 FVoxelSurfaceEvaluator::RunDeep(int32 Z, const uint64* LayerMask) const
     return NoState;
 }
 
-int32 FVoxelSurfaceEvaluator::RunInterior(const FVoxelSurfaceChunk& Chunk, int32 Z) const
+int32 FVoxelSurfaceEvaluator::RunInterior(const FVoxelSurfaceChunk& Chunk, int32 Z, uint8& OutVeins) const
 {
+    OutVeins = 0;
+    const uint32 Active = GetActiveVeins(Chunk, Z);
     uint64 Mask[SurfaceMaxBiomeWords];
     GetLayerMask(Chunk, Z, Mask);
     TArray<int32>& Outcomes = Chunk.Outcomes;
@@ -491,21 +596,42 @@ int32 FVoxelSurfaceEvaluator::RunInterior(const FVoxelSurfaceChunk& Chunk, int32
         case EOp::Give:
             Outcomes[Pc] = Instruction.State;
             break;
+        case EOp::Vein:
+            // Its blocks are asked for per block (OutVeins); the table holds what follows when it gives none.
+            Outcomes[Pc] = Outcomes[Pc + 1];
+            break;
         default:
             // Bands need the column's offset.
             Outcomes[Pc] = FVoxelSurfaceChunk::Deep;
             break;
         }
     }
-    if (Outcomes[0] != FVoxelSurfaceChunk::Deep) return Outcomes[0];
-    // Undecided: resume at the first undecided instruction on the decided path.
+    // The decided path, to the first undecided instruction, and the veins on it.
     int32 Pc = 0;
-    while (Program[Pc].Op == EOp::Test)
+    uint8 Veins = 0;
+    while (Pc < Program.Num())
     {
+        if (Program[Pc].Op == EOp::Vein)
+        {
+            Veins |= uint8(Active & 1u << Program[Pc].State);
+            ++Pc;
+            continue;
+        }
+        if (Program[Pc].Op != EOp::Test) break;
         const int32 Result = TestPartial(Program[Pc].Condition, Z, Mask, true, true);
         if (Result < 0) break;
         Pc = (Result != 0) == Program[Pc].bExpect ? Pc + 1 : Program[Pc].Jump;
     }
+    if (Outcomes[0] != FVoxelSurfaceChunk::Deep)
+    {
+        // Decided, but a vein past an undecided test may run on one of its ways: the full tree decides.
+        if (Pc < Program.Num() && Program[Pc].Op == EOp::Test && (VeinsFrom[Pc] & Active) != 0)
+            return FVoxelSurfaceChunk::Deep;
+        OutVeins = Veins;
+        return Outcomes[0];
+    }
+    // Undecided: resume at the first undecided instruction on the decided path.
+    OutVeins = Veins;
     return FVoxelSurfaceChunk::ResumeBase - Pc;
 }
 
@@ -605,6 +731,17 @@ int32 FVoxelSurfaceEvaluator::Evaluate(const FVoxelSurfaceChunk& Chunk, FVoxelSu
             break;
         case EOp::Give:
             return Instruction.State;
+        case EOp::Vein:
+            // Most block columns hold no vein block: the field's column mask skips them first.
+            if (const int32 Cell = LocalY * VoxelConstants::ColumnSize + LocalX;
+                Chunk.bVeins && (!Chunk.bVeinShortcut || (Chunk.Veins.Columns[Cell >> 6] >> (Cell & 63) & 1)))
+            {
+                const int32 Given =
+                    GiveVein(Chunk, 1u << Instruction.State & GetActiveVeins(Chunk, Block.Z), Cell, Block.Z);
+                if (Given != NoState) return Given;
+            }
+            ++Pc;
+            break;
         default:
             if (!Column.bBandOffsetKnown)
             {
@@ -626,6 +763,8 @@ void FVoxelSurfaceEvaluator::ApplyColumn(const FVoxelSurfaceChunk& Chunk, FVoxel
     const EVoxelSurfaceKind* Kind = Kinds.GetData();
     uint16* Out = States.GetData();
     const bool bDeep = Chunk.bShortcut && Chunk.DeepStates.Num() == Height;
+    check(!Chunk.bVeins || Chunk.Veins.bFilled);
+    const int32 Cell = LocalY * VoxelConstants::ColumnSize + LocalX;
     // At and below LowerTop the deep table decides, and nothing left to run reads depths or water: only its active
     // heights are visited.
     const int32 LowerTop =
@@ -668,11 +807,13 @@ void FVoxelSurfaceEvaluator::ApplyColumn(const FVoxelSurfaceChunk& Chunk, FVoxel
         ++DepthAbove;
         const int32 DepthBelow = Index - RunBottom + 1;
         int32 Result = FVoxelSurfaceChunk::Deep;
+        uint8 Veins = 0;
         if (bDeep)
         {
             if (Z < Column.MinSurfaceLevel)
             {
                 Result = Chunk.DeepStates[Index];
+                Veins = Chunk.DeepVeins[Index];
                 Chunk.DeepBlocks += Result >= NoState;
             }
             else if (DepthAbove > Column.FloorReach && DepthBelow > Column.CeilingReach)
@@ -680,11 +821,22 @@ void FVoxelSurfaceEvaluator::ApplyColumn(const FVoxelSurfaceChunk& Chunk, FVoxel
                 int32& Interior = Chunk.InteriorStates[Index];
                 if (Interior == FVoxelSurfaceChunk::NotComputed)
                 {
-                    Interior = RunInterior(Chunk, Z);
+                    Interior = RunInterior(Chunk, Z, Chunk.InteriorVeins[Index]);
                     ++Chunk.InteriorRuns;
                 }
                 Result = Interior;
+                Veins = Chunk.InteriorVeins[Index];
                 Chunk.InteriorBlocks += Result >= NoState;
+            }
+        }
+        // The veins the table passed come first.
+        if (Veins != 0)
+        {
+            const int32 Given = GiveVein(Chunk, Veins, Cell, Z);
+            if (Given != NoState)
+            {
+                Out[Index * Stride] = uint16(Given);
+                continue;
             }
         }
         if (Result < NoState)
@@ -706,6 +858,15 @@ void FVoxelSurfaceEvaluator::ApplyColumn(const FVoxelSurfaceChunk& Chunk, FVoxel
     {
         if (Index > LowerTop || Kind[Index] != EVoxelSurfaceKind::Solid) continue;
         int32 Result = Chunk.DeepStates[Index];
+        if (Chunk.DeepVeins[Index] != 0)
+        {
+            const int32 Given = GiveVein(Chunk, Chunk.DeepVeins[Index], Cell, Index + VoxelConstants::MinZ);
+            if (Given != NoState)
+            {
+                Out[Index * Stride] = uint16(Given);
+                continue;
+            }
+        }
         if (Result >= NoState)
             ++Chunk.DeepBlocks;
         else
@@ -717,5 +878,24 @@ void FVoxelSurfaceEvaluator::ApplyColumn(const FVoxelSurfaceChunk& Chunk, FVoxel
             ++Chunk.FullBlocks;
         }
         if (Result != NoState) Out[Index * Stride] = uint16(Result);
+    }
+    if (!Chunk.bVeins) return;
+    // Heights the deep table leaves as they are (not visited above) but whose veins it passes: only the blocks a vein
+    // gives. The last vein first, so where two give, the first in the program wins.
+    for (int32 VeinIndex = OreVeins.Num() - 1; VeinIndex >= 0; --VeinIndex)
+    {
+        const FVoxelOreVein& Vein = OreVeins.GetVein(VeinIndex);
+        const FVoxelOreVeinField::FSpan& Span = Chunk.Veins.Spans[VeinIndex];
+        const uint64* Words = Chunk.Veins.Bits.GetData() + Span.Offset + Cell * Span.Words * 3;
+        for (int32 Word = 0; Word < Span.Words; ++Word)
+            for (uint64 Bits = Words[Word * 3]; Bits != 0; Bits &= Bits - 1)
+            {
+                const int32 Z = Span.Low + Word * 64 + int32(FMath::CountTrailingZeros64(Bits));
+                const int32 Index = Z - VoxelConstants::MinZ;
+                if (Index > LowerTop || Chunk.DeepStates[Index] != NoState ||
+                    !(Chunk.DeepVeins[Index] >> VeinIndex & 1) || Kind[Index] != EVoxelSurfaceKind::Solid)
+                    continue;
+                Out[Index * Stride] = uint16(FVoxelOreVeins::Get(Vein, Chunk.Veins, VeinIndex, Cell, Z));
+            }
     }
 }

@@ -30,6 +30,9 @@ bool FVoxelTintTable::Initialize(const FVoxelBiomeTable& Table, FString* OutErro
         if (Biome.GrassColorModifier == EVoxelGrassColorModifier::DarkForest) Tint.Grass = ApplyDarkForest(Tint.Grass);
         Tint.Foliage = Biome.FoliageColor != INDEX_NONE ? uint32(Biome.FoliageColor)
                                                         : LookupColormap(Table.FoliageColormap, Temperature, Downfall);
+        Tint.DryFoliage = Biome.DryFoliageColor != INDEX_NONE ? uint32(Biome.DryFoliageColor)
+            : Table.DryFoliageColormap.Num() == Pixels ? LookupColormap(Table.DryFoliageColormap, Temperature, Downfall)
+                                                       : 0;
         Tint.GrassModifier = Biome.GrassColorModifier;
     }
     return true;
@@ -62,6 +65,8 @@ uint32 FVoxelTintTable::GetColor(EVoxelTintSource Source, int32 Biome, int32 X, 
         return Tint.GrassModifier == EVoxelGrassColorModifier::Swamp ? GetSwampGrass(X, Y) : Tint.Grass;
     case EVoxelTintSource::Foliage:
         return Tint.Foliage;
+    case EVoxelTintSource::DryFoliage:
+        return Tint.DryFoliage ? Tint.DryFoliage : Fallback;
     default:
         return Fallback;
     }

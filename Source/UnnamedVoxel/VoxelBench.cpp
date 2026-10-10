@@ -523,6 +523,137 @@ FString VoxelBench::RunColumns(const FVoxelBlockTable& Table, const IVoxelTerrai
     return Report;
 }
 
+FString VoxelBench::RunVeinProbe(
+    TConstArrayView<const FVoxelOreVeins*> VeinSets, TConstArrayView<int64> Seeds, int32 Toggle, int32 Mask)
+{
+    check(VeinSets.Num() == Seeds.Num());
+    FString Report;
+    for (const FVoxelOreVeins* Set : VeinSets)
+        if (Set->Num() < 2 || !Set->GetEvaluator().IsCompiledNode(Toggle) || !Set->GetEvaluator().IsCompiledNode(Mask))
+            return TEXT("The probe needs two veins whose densities read toggle and mask.");
+    TArray<double> Dense[2], Placed[2];
+    TArray<float> Toggles, Masks, GapNoise;
+    for (int32 Index = 0; Index < Seeds.Num(); ++Index)
+    {
+        const FVoxelOreVeins& Veins = *VeinSets[Index];
+        const FVoxelDensityEvaluator& Evaluator = Veins.GetEvaluator();
+        const uint64 Seed = uint64(Seeds[Index]);
+        FVoxelDensityScratch Scratch;
+        const auto ToggleAt = [&](double X, double Y, double Z)
+        {
+            Evaluator.Evaluate(&X, &Y, &Z, 1, Scratch);
+            return Evaluator.GetValues(Scratch, Toggle)[0];
+        };
+        FIntPoint Chunks[2] = {FIntPoint(-1), FIntPoint(-1)};
+        for (int32 I = 0; I < 32 * 32 && (Chunks[0].X < 0 || Chunks[1].X < 0); ++I)
+        {
+            const int32 CX = I % 32, CZ = I / 32;
+            if (Chunks[0].X < 0 && ToggleAt(CX * 16 + 8, 25, CZ * 16 + 8) >= .5f)
+                Chunks[0] = {CX, CZ};
+            else if (Chunks[1].X < 0 && ToggleAt(CX * 16 + 8, -34, CZ * 16 + 8) <= -.5f)
+                Chunks[1] = {CX, CZ};
+        }
+        if (Chunks[0].X < 0 || Chunks[1].X < 0)
+        {
+            Report += FString::Printf(TEXT("seed %lld: no vein chunks found\n"), Seeds[Index]);
+            continue;
+        }
+        int32 Agreement[2][3] = {};
+        TArray<double> X, Y, Z;
+        for (const FIntPoint Chunk : Chunks)
+            for (int32 Height = -64; Height <= 56; ++Height)
+            {
+                X.Reset();
+                Y.Reset();
+                Z.Reset();
+                for (int32 LZ = 0; LZ < 16; ++LZ)
+                    for (int32 LX = 0; LX < 16; ++LX)
+                    {
+                        X.Add(Chunk.X * 16 + LX);
+                        Y.Add(Height);
+                        Z.Add(Chunk.Y * 16 + LZ);
+                    }
+                Evaluator.Evaluate(X.GetData(), Y.GetData(), Z.GetData(), X.Num(), Scratch);
+                for (int32 K = 0; K < X.Num(); ++K)
+                {
+                    bool bVein = false;
+                    for (int32 Vein = 0; Vein < FMath::Min(2, Veins.Num()); ++Vein)
+                    {
+                        const FVoxelOreVein& Data = Veins.GetVein(Vein);
+                        const float Density = Evaluator.GetValues(Scratch, Data.Density)[K];
+                        const FVoxelOreVeins::EOutcome Outcome =
+                            FVoxelOreVeins::ApplyGap(FVoxelOreVeins::Draw(Data, Seed, int32(X[K]), int32(Z[K]), Height,
+                                                         Density, Evaluator.GetValues(Scratch, Data.Richness)[K]),
+                                Evaluator.GetValues(Scratch, Data.Gap)[K]);
+                        const bool bDense = Density > 0, bPlaced = Outcome != FVoxelOreVeins::EOutcome::Nothing;
+                        if (bDense || bPlaced) ++Agreement[Vein][bPlaced ? (bDense ? 0 : 2) : 1];
+                        bVein |= bPlaced;
+                    }
+                    // The probe's uniform sample: one position in 64 of those without a vein block.
+                    if (bVein ||
+                        VoxelRandom::ToIndex(VoxelRandom::Hash64(Seed, VoxelRandom::Salt("vein_probe"), int32(X[K]),
+                                                 int32(Z[K]), Height),
+                            64) != 0)
+                        continue;
+                    const float Value = Evaluator.GetValues(Scratch, Toggle)[K];
+                    Toggles.Add(Value);
+                    // The gap's noise: gap = -0.3 - noise in the data.
+                    GapNoise.Add(-.3f - Evaluator.GetValues(Scratch, Veins.GetVein(0).Gap)[K]);
+                    if (FMath::Abs(Value) >= .4f) Masks.Add(Evaluator.GetValues(Scratch, Mask)[K]);
+                }
+            }
+        for (int32 Vein = 0; Vein < 2; ++Vein)
+        {
+            Dense[Vein].Add(Agreement[Vein][0] + Agreement[Vein][1]);
+            Placed[Vein].Add(Agreement[Vein][0]);
+        }
+        Report += FString::Printf(TEXT("seed %lld: chunks [%d,%d] [%d,%d], copper agreement [%d,%d,%d], iron agreement "
+                                       "[%d,%d,%d]\n"),
+            Seeds[Index], Chunks[0].X, Chunks[0].Y, Chunks[1].X, Chunks[1].Y, Agreement[0][0], Agreement[0][1],
+            Agreement[0][2], Agreement[1][0], Agreement[1][1], Agreement[1][2]);
+    }
+    const auto Summary = [](TArray<double> Values)
+    {
+        if (Values.IsEmpty()) return FString(TEXT("none"));
+        Values.Sort();
+        double Sum = 0, Squares = 0;
+        for (const double Value : Values)
+            Sum += Value, Squares += Value * Value;
+        const double Mean = Sum / Values.Num();
+        return FString::Printf(TEXT("mean %.0f, sd %.0f, min %.0f, median %.0f, max %.0f over %d seeds"), Mean,
+            FMath::Sqrt(FMath::Max(0., Squares / Values.Num() - Mean * Mean)), Values[0], Values[Values.Num() / 2],
+            Values.Last(), Values.Num());
+    };
+    const auto Deciles = [](TArray<float> Values)
+    {
+        if (Values.IsEmpty()) return FString(TEXT("none"));
+        Values.Sort();
+        FString Out;
+        for (int32 Decile = 1; Decile < 10; ++Decile)
+            Out += FString::Printf(TEXT(" %.3f"), Values[Values.Num() * Decile / 10]);
+        return FString::Printf(TEXT("%d values:%s"), Values.Num(), *Out);
+    };
+    Report += FString::Printf(TEXT("Positions with density > 0 per seed (both chunks): copper %s; iron %s\n"),
+        *Summary(Dense[0]), *Summary(Dense[1]));
+    Report +=
+        FString::Printf(TEXT("Vein blocks per seed: copper %s; iron %s\n"), *Summary(Placed[0]), *Summary(Placed[1]));
+    int32 MaskPositive = 0;
+    for (const float Value : Masks)
+        MaskPositive += Value >= 0;
+    Report += FString::Printf(TEXT("Uniform sample (no vein block): toggle deciles, %s; |toggle| >= 0.4 in %.3f\n"),
+        *Deciles(Toggles), double(Masks.Num()) / FMath::Max(1, Toggles.Num()));
+    double GapMean = 0, GapSquares = 0;
+    for (const float Value : GapNoise)
+        GapMean += Value, GapSquares += double(Value) * Value;
+    GapMean /= FMath::Max(1, GapNoise.Num());
+    Report +=
+        FString::Printf(TEXT("Uniform sample: -0.3 - gap (ore_gap's noise) deciles, %s; sd %.4f\n"), *Deciles(GapNoise),
+            FMath::Sqrt(FMath::Max(0., GapSquares / FMath::Max(1, GapNoise.Num()) - GapMean * GapMean)));
+    Report += FString::Printf(TEXT("Uniform sample where |toggle| >= 0.4: mask deciles, %s; mask >= 0 in %.3f\n"),
+        *Deciles(Masks), double(MaskPositive) / FMath::Max(1, Masks.Num()));
+    return Report;
+}
+
 FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius)
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelBench_RunDensity);
@@ -566,6 +697,19 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
         Passes.Add({TEXT("biomes off, rules off"), BiomesOff, bHasRules ? Passes.Num() - 1 : 0,
             TEXT("biomes on and off (rules off)")});
     }
+    // With veins: their shortcut off (every solid block evaluated directly) must give the default's blocks; veins off
+    // is timed, and the blocks the veins change are counted.
+    const bool bHasVeins = bHasRules && Terrain.GetSurfaceRules().GetOreVeins().Num() > 0;
+    int32 VeinsOffPass = INDEX_NONE;
+    if (bHasVeins)
+    {
+        FVoxelDensityTerrainOverrides VeinShortcut;
+        VeinShortcut.bOreVeinShortcut = false;
+        Passes.Add({TEXT("vein shortcut off"), VeinShortcut, 0, TEXT("the vein shortcut on and off")});
+        FVoxelDensityTerrainOverrides VeinsOff;
+        VeinsOff.bOreVeins = false;
+        VeinsOffPass = Passes.Add({TEXT("ore veins off"), VeinsOff, INDEX_NONE, nullptr});
+    }
     FVoxelDensityTerrainOverrides ShareOff;
     ShareOff.bShareCorners = false;
     Passes.Add({TEXT("sharing off"), ShareOff, 0, TEXT("sharing on and off")});
@@ -578,14 +722,15 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
     Kept.SetNum(Passes.Num());
     TArray<int64> Differences;
     Differences.Init(0, Passes.Num());
-    int64 RulesDifferences = 0;
+    int64 RulesDifferences = 0, VeinDifferences = 0;
     for (int32 PassIndex = 0; PassIndex < Passes.Num(); ++PassIndex)
     {
         const FPass& Pass = Passes[PassIndex];
         TArray<double> Total, Density, Aquifer, Biomes, Blocks, Surface, Preliminary, Freeze, Flat, Bounds, Corners,
-            Refine, Cells;
+            Refine, Cells, Veins;
         int64 SolidCells = 0, EmptyCells = 0, RefinedCells = 0, AllCells = 0, CornerCount = 0, SharedCount = 0;
         int64 DeepBlocks = 0, InteriorBlocks = 0, FullBlocks = 0, Steps = 0, InteriorRuns = 0;
+        int64 VeinCells = 0, VeinCorners = 0, VeinBlocks = 0, VeinGaps = 0, VeinGiven = 0;
         // Keep the blocks of every pass another names, and of the default for the rules-off count.
         const bool bKeep = PassIndex == 0 ||
             Passes.ContainsByPredicate([PassIndex](const FPass& Other) { return Other.Compare == PassIndex; });
@@ -604,6 +749,12 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
             Surface.Add(Timings.SurfaceMs);
             Preliminary.Add(Timings.PreliminaryMs);
             Freeze.Add(Timings.FreezeMs);
+            Veins.Add(Timings.VeinMs);
+            VeinCells += Timings.VeinCells;
+            VeinCorners += Timings.VeinCorners;
+            VeinBlocks += Timings.VeinBlocks;
+            VeinGaps += Timings.VeinGaps;
+            VeinGiven += Timings.VeinGiven;
             Flat.Add(Timings.Density.FlatMs);
             Bounds.Add(Timings.Density.BoundsMs);
             Corners.Add(Timings.Density.CornersMs);
@@ -623,7 +774,9 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
             if (bKeep) Kept[PassIndex].Append(Dense);
             const int32 Against = Pass.Compare != INDEX_NONE ? Pass.Compare : (PassIndex > 0 ? 0 : INDEX_NONE);
             if (Against == INDEX_NONE) continue;
-            int64& Count = Pass.Compare != INDEX_NONE ? Differences[PassIndex] : RulesDifferences;
+            int64& Count = Pass.Compare != INDEX_NONE ? Differences[PassIndex]
+                : PassIndex == VeinsOffPass           ? VeinDifferences
+                                                      : RulesDifferences;
             for (int32 Cell = 0; Cell < Dense.Num(); ++Cell)
                 Count += Dense[Cell] != Kept[Against][Index * Dense.Num() + Cell];
         }
@@ -646,6 +799,15 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
         Report += DensityBenchStage(TEXT("    surface"), Surface) + TEXT("\n");
         Report += DensityBenchStage(TEXT("      preliminary"), Preliminary) + TEXT("\n");
         Report += DensityBenchStage(TEXT("      freeze"), Freeze) + TEXT("\n");
+        if (bHasVeins)
+        {
+            Report += DensityBenchStage(TEXT("      ore veins"), Veins) + TEXT("\n");
+            Report +=
+                FString::Printf(TEXT("  ore veins per column: %.1f cells open, %.0f corners, %.0f blocks evaluated, "
+                                     "%.1f gaps, %.1f blocks given\n"),
+                    double(VeinCells) / Columns, double(VeinCorners) / Columns, double(VeinBlocks) / Columns,
+                    double(VeinGaps) / Columns, double(VeinGiven) / Columns);
+        }
         if (FullBlocks > 0)
             Report += FString::Printf(TEXT("  surface blocks per column: %.0f deep, %.0f interior (%.0f heights "
                                            "built), %.0f through the tree (%.1f of %d instructions each)\n"),
@@ -660,6 +822,9 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
     if (bHasRules)
         Report += FString::Printf(TEXT("Blocks the surface rules change (rules on against off): %lld of %lld\n"),
             RulesDifferences, AllBlocks);
+    if (bHasVeins)
+        Report += FString::Printf(
+            TEXT("Blocks the ore veins change (veins on against off): %lld of %lld\n"), VeinDifferences, AllBlocks);
     if (bHasBiomes) Report += CompareBiomeFills(*Terrain.GetBiomeSource(), FMath::Min(Radius, 1)) + TEXT("\n");
     Report += FString::Printf(TEXT("Corner cache %.1f MB\n"), Terrain.GetCornerCacheBytes() / 1048576.);
 
