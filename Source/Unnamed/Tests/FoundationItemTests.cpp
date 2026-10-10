@@ -236,8 +236,8 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
         TestTrue(TEXT("spears: no tool component, so mining costs nothing"),
             Spear->MiningRules.IsEmpty() && Spear->DurabilityPerBlock == 0 && Spear->DurabilityPerHit == 1 &&
                 Spear->MaxDurability == 250);
-        TestTrue(TEXT("the held view keeps the Icon key by kind until items S4 (the HUD draws Sprite)"),
-            IronPickaxe->Icon == TEXT("pickaxe") && Find(Rules, TEXT("iron_sword"))->Icon == TEXT("sword") &&
+        TestTrue(TEXT("items set no Icon: the HUD draws Sprite and the held view the model (items S4)"),
+            IronPickaxe->Icon.IsNone() && Find(Rules, TEXT("iron_sword"))->Icon.IsNone() &&
                 Find(Rules, TEXT("iron_axe"))->Icon.IsNone() && Find(Rules, TEXT("stick"))->Icon.IsNone());
         TestTrue(TEXT("netherite sword 8 / 1.6, 2031"),
             Netherite->AttackDamage == 8 && Netherite->AttacksPerSecond == 1.6f && Netherite->MaxDurability == 2031);

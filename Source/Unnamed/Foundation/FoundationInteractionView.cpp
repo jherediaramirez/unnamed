@@ -5,6 +5,8 @@
 #include "Foundation/FoundationBreakEffects.h"
 #include "Foundation/FoundationController.h"
 #include "Foundation/FoundationHud.h"
+#include "Foundation/FoundationItemAssets.h"
+#include "Foundation/FoundationItemMesh.h"
 #include "Foundation/FoundationPlayground.h"
 #include "Foundation/FoundationPawn.h"
 #include "Camera/CameraComponent.h"
@@ -13,15 +15,24 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Engine/StaticMesh.h"
+#include "Engine/Texture2DArray.h"
 #include "Engine/World.h"
+#include "HAL/IConsoleManager.h"
 #include "GameFramework/PlayerController.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Math/RandomStream.h"
 #include "UObject/ConstructorHelpers.h"
+#include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
 
 namespace
 {
+    TAutoConsoleVariable<float> CVarHeldGlow(TEXT("foundation.Held.Glow"), 16000.f,
+        TEXT("Held items' glow (items S4): emissive = sprite colour x this (nits), so a sprite turned from the "
+             "sun still reads near its own colours, as vanilla lights held items in view space. 16000 brings the "
+             "tour's items to their sprites' luma under the 75,000 lux sun at EV100 14.5. 0: lit by the scene alone."),
+        ECVF_Default);
+
     constexpr double InteractionViewBlockCm = UFoundationProfile::BlockCm;
     constexpr uint8 WaterLayer = 3;
     const TCHAR* LayerMaterialNames[] = {
@@ -695,7 +706,8 @@ void UFoundationInteractionView::UpdateHeldItem(
     if (!Pawn) return;
     if (HeldOwner.Get() != Pawn)
     {
-        // A simple original held item on the player's camera; first-person rendering keeps it out of walls.
+        // The held item on the player's camera; first-person rendering keeps it out of walls. The pivot's rest
+        // (42, 24, -24) is provisional until probe P1 measures vanilla's hand.
         HeldOwner = Pawn;
         UCameraComponent* Camera = Pawn->GetCamera();
         Camera->SetEnableFirstPersonScale(true);
@@ -705,15 +717,6 @@ void UFoundationInteractionView::UpdateHeldItem(
         HandPivot->RegisterComponent();
         HandPivot->SetRelativeLocation(FVector(42, 24, -24));
         Owned.Add(HandPivot);
-        auto Part = [this](FLinearColor Color, FVector Location, FVector Size, FRotator Rotation)
-        {
-            UStaticMeshComponent* Mesh = MakeCube(HandPivot, Color);
-            Mesh->SetRelativeLocationAndRotation(Location, Rotation);
-            Mesh->SetRelativeScale3D(Size / InteractionViewBlockCm);
-            Mesh->SetCastShadow(false);
-            Mesh->SetFirstPersonPrimitiveType(EFirstPersonPrimitiveType::FirstPerson);
-            return Mesh;
-        };
         // One component per part of the model default state with the most parts (a cube needs one), drawn anew.
         HeldBlocks.Reset();
         HeldState = {MAX_uint16};
@@ -734,23 +737,27 @@ void UFoundationInteractionView::UpdateHeldItem(
             Owned.Add(Held);
             HeldBlocks.Add(Held);
         }
-        HeldPickaxe = {Part(FLinearColor(.45f, .3f, .15f), {0, 0, 0}, {2, 2, 30}, FRotator(0, 0, -35)),
-            Part(FLinearColor(.78f, .78f, .8f), {0, 6, 13}, {3, 22, 3}, FRotator(0, 0, -35))};
-        HeldSword = {Part(FLinearColor(.82f, .84f, .88f), {0, 5, 9}, {1.5f, 3, 28}, FRotator(0, 0, -35)),
-            Part(FLinearColor(.3f, .3f, .32f), {0, -1.5f, -2}, {2, 10, 2}, FRotator(0, 0, -35)),
-            Part(FLinearColor(.45f, .3f, .15f), {0, -4, -7}, {2, 2, 8}, FRotator(0, 0, -35))};
+        HeldItem = NewObject<UStaticMeshComponent>(GetOwner());
+        HeldItem->SetMobility(EComponentMobility::Movable);
+        HeldItem->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        HeldItem->SetupAttachment(HandPivot);
+        HeldItem->RegisterComponent();
+        HeldItem->SetCastShadow(false);
+        HeldItem->SetFirstPersonPrimitiveType(EFirstPersonPrimitiveType::FirstPerson);
+        Owned.Add(HeldItem);
+        HeldItemId = HeldSprite = NAME_None;
     }
     const FFoundationPlayer* Player = Authority.FindPlayer(Pawn->Interaction.PlayerId);
     const FFoundationItemInstance* Main = Player ? &Player->Inventory.GetHand(EFoundationHand::Main) : nullptr;
-    const FName Icon = Main && !Main->IsEmpty() ? Authority.Rules.GetItem(Main->Item).Icon : NAME_None;
+    const FFoundationItemDefinition* InHand = Main && !Main->IsEmpty() ? &Authority.Rules.GetItem(Main->Item) : nullptr;
+    const FName Icon = InHand ? InHand->Icon : NAME_None;
     const bool bShow = bVisible && Pawn->GetPerspective() == 0 && !Pawn->Vitals.IsDead();
     if (!HeldBlocks.IsEmpty())
     {
         // The held block's default state, drawn with its own meshes and layer around the pivot: its mesh kind, or one
         // instance per part of its model (each part's first alternative), centred on what it draws.
-        const FFoundationBlockType* Type = Icon == TEXT("block")
-            ? Authority.World.FindBlock(Authority.Rules.GetItem(Main->Item).PlacesBlock)
-            : nullptr;
+        const FFoundationBlockType* Type =
+            Icon == TEXT("block") ? Authority.World.FindBlock(InHand->PlacesBlock) : nullptr;
         const FFoundationBlockState State = Type ? Type->GetDefaultState() : FFoundationBlockState{};
         if (State != HeldState)
         {
@@ -795,10 +802,16 @@ void UFoundationInteractionView::UpdateHeldItem(
         for (UInstancedStaticMeshComponent* Held : HeldBlocks)
             Held->SetVisibility(bShow && Type != nullptr && Held->GetInstanceCount() > 0);
     }
-    for (UStaticMeshComponent* Mesh : HeldPickaxe)
-        Mesh->SetVisibility(bShow && Icon == TEXT("pickaxe"));
-    for (UStaticMeshComponent* Mesh : HeldSword)
-        Mesh->SetVisibility(bShow && Icon == TEXT("sword"));
+    // Any other item: its first-person model from DA_Items.
+    const FName ItemId = InHand && Icon != TEXT("block") ? InHand->Id : NAME_None;
+    if (ItemId != HeldItemId) SetHeldItem(ItemId);
+    if (const float Glow = CVarHeldGlow.GetValueOnGameThread(); Glow != AppliedGlow && !ItemMaterials.IsEmpty())
+    {
+        AppliedGlow = Glow;
+        for (UMaterialInstanceDynamic* Material : ItemMaterials)
+            if (Material) Material->SetScalarParameterValue(TEXT("Glow"), Glow);
+    }
+    HeldItem->SetVisibility(bShow && HeldItem->GetStaticMesh() != nullptr);
     HandPivot->SetVisibility(bShow, false);
     // Swing: a cosmetic prediction on each press, continuous while mining. It decides nothing.
     if (Pawn->Interaction.PressSerial != LastPressSerial)
@@ -815,6 +828,65 @@ void UFoundationInteractionView::UpdateHeldItem(
     if (BreakEffects) BreakEffects->GetSwing(Swing);
     HandPivot->SetRelativeLocationAndRotation(
         FVector(42 + Swing * 6, 24 - Swing * 8, -24 + Swing * 4), FRotator(-55 * Swing, -10 * Swing, 0));
+}
+
+void UFoundationInteractionView::SetHeldItem(FName Id)
+{
+    HeldItemId = Id;
+    HeldSprite = NAME_None;
+    UStaticMesh* Mesh = nullptr;
+    UMaterialInterface* Material = nullptr;
+    FTransform Display;
+    FFoundationItemModelView Model;
+    const UFoundationItemAssets* Items = Id.IsNone() ? nullptr : UFoundationItemAssets::LoadDefault();
+    if (Items && Items->FindModelView(Id, TEXT("firstperson_righthand"), Model))
+    {
+        const FFoundationItemTextureAsset& Texture = *Model.Texture;
+        TObjectPtr<UStaticMesh>& Cached = ItemMeshes.FindOrAdd(Texture.Name);
+        TArray<bool> Opaque;
+        if (!Cached && FoundationItemMesh::ReadMask(Texture, Opaque))
+            Cached = FoundationItemMesh::BuildMesh(this,
+                FoundationItemMesh::BuildQuads(Texture.Width, Texture.Height, Opaque), Texture.Layer, HeldModelBlockCm);
+        Material = Cached ? GetItemMaterial(*Items, Texture.Width == 32) : nullptr;
+        if (Material)
+        {
+            Mesh = Cached;
+            HeldSprite = Texture.Name;
+            if (Model.Display) Display = FoundationItemMesh::MakeDisplayTransform(*Model.Display, HeldModelBlockCm);
+        }
+    }
+    // The mesh first, so the material override lands on its slot.
+    HeldItem->SetStaticMesh(Mesh);
+    if (!Mesh) return;
+    HeldItem->SetMaterial(0, Material);
+    HeldItem->SetRelativeTransform(Display);
+}
+
+UMaterialInterface* UFoundationInteractionView::GetItemMaterial(const UFoundationItemAssets& Items, bool b32)
+{
+    if (ItemMaterials.IsEmpty())
+    {
+        // The arrays are soft references, loaded here: the first time an item is held.
+        ItemMaterials.SetNum(2);
+        const FSoftObjectPath Path = UUnnamedProjectSettings::GetItemAssetPath(TEXT("M_HeldItem"));
+        UMaterialInterface* Base = Cast<UMaterialInterface>(Path.TryLoad());
+        if (!Base)
+            UE_LOG(LogUnnamedFoundation, Warning,
+                TEXT("%s is missing: held items are not drawn. Run CreateItemMaterials.py."), *Path.ToString());
+        for (int32 Index = 0; Base && Index < 2; ++Index)
+        {
+            const TSoftObjectPtr<UTexture2DArray>& Array = Index ? Items.ItemTextures32 : Items.ItemTextures;
+            if (UTexture2DArray* Sprites = Array.LoadSynchronous())
+            {
+                ItemMaterials[Index] = UMaterialInstanceDynamic::Create(Base, this);
+                ItemMaterials[Index]->SetTextureParameterValue(TEXT("Sprites"), Sprites);
+            }
+            else
+                UE_LOG(LogUnnamedFoundation, Warning, TEXT("Item sprite array %s is missing: its items are not drawn."),
+                    *Array.ToString());
+        }
+    }
+    return ItemMaterials[b32 ? 1 : 0];
 }
 
 void UFoundationInteractionView::TickComponent(

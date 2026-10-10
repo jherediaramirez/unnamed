@@ -2,22 +2,6 @@
 #include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
 
-namespace
-{
-    // Held-item tints by tool material, until held meshes come from the sprites (items S4).
-    FLinearColor MaterialTint(FName Material)
-    {
-        if (Material == TEXT("wooden")) return FLinearColor(.55f, .4f, .22f);
-        if (Material == TEXT("stone")) return FLinearColor(.5f, .5f, .5f);
-        if (Material == TEXT("copper")) return FLinearColor(.85f, .5f, .3f);
-        if (Material == TEXT("iron")) return FLinearColor(.78f, .78f, .8f);
-        if (Material == TEXT("golden")) return FLinearColor(.95f, .8f, .25f);
-        if (Material == TEXT("diamond")) return FLinearColor(.4f, .85f, .85f);
-        if (Material == TEXT("netherite")) return FLinearColor(.3f, .27f, .28f);
-        return FLinearColor::White;
-    }
-}
-
 const UFoundationItemAssets* UFoundationItemAssets::LoadDefault()
 {
     static const UFoundationItemAssets* Default = nullptr;
@@ -63,8 +47,6 @@ FFoundationItemDefinition UFoundationItemAssets::MakeDefinition(const FFoundatio
     Item.MaxDurability = Asset.MaxDamage;
     Item.DurabilityPerBlock = Asset.DamagePerBlock;
     Item.DurabilityPerHit = Asset.DamagePerHit;
-    Item.Icon = Asset.Kind == TEXT("pickaxe") || Asset.Kind == TEXT("sword") ? Asset.Kind : NAME_None;
-    Item.IconColor = MaterialTint(Asset.Material);
     Item.Sprite = Asset.Textures.IsEmpty() ? NAME_None : Asset.Textures[0];
     return Item;
 }
@@ -72,6 +54,28 @@ FFoundationItemDefinition UFoundationItemAssets::MakeDefinition(const FFoundatio
 const FFoundationItemAsset* UFoundationItemAssets::FindItem(FName Id) const
 {
     return Items.FindByPredicate([Id](const FFoundationItemAsset& Item) { return Item.Id == Id; });
+}
+
+bool UFoundationItemAssets::FindModelView(FName Id, FName Context, FFoundationItemModelView& View) const
+{
+    View = {};
+    const FFoundationItemAsset* Item = FindItem(Id);
+    if (!Item) return false;
+    const FFoundationItemModelCaseAsset* Case = Item->Models.FindByPredicate(
+        [Context](const FFoundationItemModelCaseAsset& Candidate) { return Candidate.Contexts.Contains(Context); });
+    if (!Case)
+        Case = Item->Models.FindByPredicate(
+            [](const FFoundationItemModelCaseAsset& Candidate) { return Candidate.Contexts.IsEmpty(); });
+    if (!Case) return false;
+    View.Model =
+        Models.FindByPredicate([Case](const FFoundationItemModelAsset& Model) { return Model.Name == Case->Model; });
+    if (!View.Model || View.Model->Layers.IsEmpty()) return false;
+    const FName Layer = View.Model->Layers[0];
+    View.Texture =
+        Textures.FindByPredicate([Layer](const FFoundationItemTextureAsset& Texture) { return Texture.Name == Layer; });
+    View.Display = View.Model->Display.FindByPredicate(
+        [Context](const FFoundationItemDisplayAsset& Display) { return Display.Context == Context; });
+    return View.Texture != nullptr;
 }
 
 TArray<FFoundationItemDefinition> UFoundationItemAssets::MakeDefinitions() const
