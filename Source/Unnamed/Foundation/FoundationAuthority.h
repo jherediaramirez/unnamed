@@ -338,8 +338,8 @@ private:
     bool CheckHand(const FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
     // Plants: a placed state that can never hold (a faceless vine), or a double plant without room for its upper half.
     EFoundationReason CheckPlantPlacement(const FIntVector& Destination, FFoundationBlockState Placed) const;
-    // Whether a state still holds in its cell after a neighbour changed (the plant survival rules). A rule that reads
-    // an unknown cell (outside the bounds, a column not loaded) keeps the plant.
+    // Whether a state still holds in its cell after a neighbour changed (the plant survival rules, and the torch rule
+    // for torches). A rule that reads an unknown cell (outside the bounds, a column not loaded) keeps the plant.
     bool CanPlantSurvive(const FIntVector& Cell, FFoundationBlockState State) const;
     // A vine, glow lichen or sculk vein without the faces that are no longer held (State when all are).
     FFoundationBlockState TrimPlantFaces(const FIntVector& Cell, FFoundationBlockState State) const;

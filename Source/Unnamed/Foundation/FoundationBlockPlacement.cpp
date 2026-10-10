@@ -79,7 +79,7 @@ EFoundationFace FoundationBlockPlacement::GetHorizontalLook(double Yaw)
 TStaticArray<EFoundationFace, 6> FoundationBlockPlacement::GetNearestLooks(double Yaw, double Pitch)
 {
     const float PitchRadians = float(Pitch) * 0.017453292f;
-    const float YawRadians = -float(Yaw) * 0.017453292f;
+    const float YawRadians = -float(Yaw - 360. * FMath::Floor(Yaw / 360.)) * 0.017453292f;
     const float H = TableSin(PitchRadians), I = TableCos(PitchRadians);
     const float J = TableSin(YawRadians), K = TableCos(YawRadians);
     const bool bEast = J > 0, bUp = H < 0, bSouth = K > 0;
@@ -95,6 +95,16 @@ TStaticArray<EFoundationFace, 6> FoundationBlockPlacement::GetNearestLooks(doubl
     }
     if (M > P) return MakeDirectionArray(Y, Z, X);
     return O > M ? MakeDirectionArray(Z, X, Y) : MakeDirectionArray(Z, Y, X);
+}
+
+TStaticArray<EFoundationFace, 6> FoundationBlockPlacement::GetClickLooks(const FFoundationPlacementContext& Context)
+{
+    TStaticArray<EFoundationFace, 6> Looks = GetNearestLooks(Context.Yaw, Context.Pitch);
+    if (Context.bReplaceClicked || Context.ClickedFace == EFoundationFace::None) return Looks;
+    const EFoundationFace Into = GetOpposite(Context.ClickedFace);
+    for (int32 Index = 5; Index > 0; --Index)
+        if (Looks[Index] == Into) Swap(Looks[Index], Looks[Index - 1]);
+    return Looks;
 }
 
 bool FoundationBlockPlacement::CanBeReplaced(const FFoundationBlockWorld& World, FFoundationBlockState Existing,
@@ -218,30 +228,55 @@ FFoundationBlockState FoundationBlockPlacement::GetStateForPlacement(
         Set(TEXT("snowy"), World.GetBlock(Above).Tags.HasTag(FoundationTags::BlockSnow) ? TEXT("true") : TEXT("false"));
         break;
     }
-    case EFoundationPlacementRule::WallAttached:
-        if (IsHorizontal(Context.ClickedFace)) Set(TEXT("facing"), FaceValue(Context.ClickedFace));
-        break;
     default:
         break;
     }
     return State;
 }
 
-FName FoundationBlockPlacement::GetItemBlock(FName Block, FName WallBlock, EFoundationFace ClickedFace)
+bool FoundationBlockPlacement::IsTorchSupported(
+    const FFoundationBlockWorld& World, FFoundationBlockState State, const FIntVector& Cell, FIntVector* OutSupport)
 {
-    return !WallBlock.IsNone() && IsHorizontal(ClickedFace) ? WallBlock : Block;
-}
-
-bool FoundationBlockPlacement::HasTorchSupport(const FFoundationBlockWorld& World, FFoundationBlockState Placed,
-    const FIntVector& Destination, EFoundationFace ClickedFace)
-{
-    if (ClickedFace == EFoundationFace::Down) return false;
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
     // A wall torch hangs on the face its facing points away from; a floor torch stands on the top face below it.
-    const FName Facing = Registry.GetValue(Placed, TEXT("facing"));
+    const FName Facing = Registry.GetValue(State, TEXT("facing"));
     EFoundationFace Face = EFoundationFace::Up;
     for (int32 Side = 0; Side < 4; ++Side)
         if (FaceValue(EFoundationFace(Side)) == Facing) Face = EFoundationFace(Side);
-    const FFoundationBlockState Support = World.Get(Destination - FoundationGrid::FaceOffset(Face)).State;
-    return (Registry.GetTorchSupport(Support) >> int32(Face) & 1) != 0;
+    const FIntVector Support = Cell - FoundationGrid::FaceOffset(Face);
+    if (OutSupport) *OutSupport = Support;
+    return (Registry.GetTorchSupport(World.Get(Support).State) >> int32(Face) & 1) != 0;
+}
+
+bool FoundationBlockPlacement::GetTorchState(const FFoundationBlockWorld& World, const FFoundationBlockType& Block,
+    const FFoundationBlockType& WallBlock, const FFoundationPlacementContext& Context, FFoundationBlockState& OutState)
+{
+    const TStaticArray<EFoundationFace, 6> Looks = GetClickLooks(Context);
+    // The wall: the first side in the looks whose neighbour holds a wall torch facing away from it.
+    FFoundationBlockState Wall;
+    bool bWall = false;
+    for (int32 Index = 0; Index < 6 && !bWall; ++Index)
+        if (IsHorizontal(Looks[Index]))
+        {
+            Wall = World.GetRegistry().WithValue(
+                WallBlock.GetDefaultState(), TEXT("facing"), FaceValue(GetOpposite(Looks[Index])));
+            bWall = IsTorchSupported(World, Wall, Context.Destination);
+        }
+    // Walking the looks: up is skipped, down stands on the cell below if it holds, a side takes the wall.
+    for (const EFoundationFace Look : Looks)
+        if (Look == EFoundationFace::Down)
+        {
+            const FFoundationBlockState Floor = GetStateForPlacement(World, Block, Context);
+            if (IsTorchSupported(World, Floor, Context.Destination))
+            {
+                OutState = Floor;
+                return true;
+            }
+        }
+        else if (Look != EFoundationFace::Up && bWall)
+        {
+            OutState = Wall;
+            return true;
+        }
+    return false;
 }

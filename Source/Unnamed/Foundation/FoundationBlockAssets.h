@@ -82,7 +82,8 @@ enum class EFoundationPlacementRule : uint8
     Leaves,
     // SnowyBlock: snowy when a #snow block is above.
     Snowy,
-    // WallTorchBlock: facing the clicked side face, away from the wall it hangs on.
+    // WallTorchBlock: facing away from the wall it hangs on, which its standing item picks by look
+    // (FoundationBlockPlacement::GetTorchState).
     WallAttached
 };
 

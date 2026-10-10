@@ -457,7 +457,10 @@ bool FFoundationInteraction::Pick(FFoundationAuthority& Authority, FFoundationVi
     for (int32 Slot = 0; Slot < FFoundationInventory::HotbarSlots; ++Slot)
     {
         const FFoundationItemInstance& Stack = Player->Inventory.Hotbar[Slot];
-        if (!Stack.IsEmpty() && Authority.Rules.GetItem(Stack.Item).PlacesBlock == Block)
+        if (Stack.IsEmpty()) continue;
+        // A standing-and-wall item is picked from either block (a wall torch picks the torch).
+        const FFoundationItemDefinition& Item = Authority.Rules.GetItem(Stack.Item);
+        if (Item.PlacesBlock == Block || Item.PlacesWallBlock == Block)
         {
             if (Slot != Player->Inventory.Selected) SelectSlot(Authority, Vitals, Slot);
             return true;

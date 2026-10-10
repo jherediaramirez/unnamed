@@ -60,9 +60,12 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
 | `Slab` | 101 slabs | bottom or top from the click height; a matching slab merges to double |
 | `Leaves` | leaves | `persistent=true`, `distance` from neighbouring logs and leaves |
 | `Snowy` | grass block, podzol, mycelium | `snowy` when a `#snow` block is above |
-| `WallAttached` | wall torch | `facing` the clicked side face, away from its wall |
+| `WallAttached` | wall torch | `facing` away from its wall, which the torch item picks by look (below) |
 
-**The torch** (torch session T2). The `torch` item (`PlacesWallBlock`, from the reference's standing-and-wall items) places `torch` on a top face and `wall_torch` on a side face. Either needs a support that holds it: `FFoundationBlockRegistry::GetTorchSupport` gives each state's faces from `facts/block_support.json`, which `FactsDump.java` measures with the torch's own `canSurvive` (leaves and powder snow hold none, every other full cube all five, an upside-down slab a floor torch, a bottom slab nothing). An underside click places nothing until T3 brings vanilla's choice among the other faces. Survival after placement (popping), light and the coral fans' wall fans are later work.
+**The torch** (torch sessions T2 and T3). The `torch` item (`PlacesWallBlock`, from the reference's standing-and-wall items) places `torch` or `wall_torch`, where a support holds it: `FFoundationBlockRegistry::GetTorchSupport` gives each state's faces from `facts/block_support.json`, which `FactsDump.java` measures with the torch's own `canSurvive` (leaves and powder snow hold none, every other full cube all five, an upside-down slab a floor torch, a bottom slab nothing).
+- **Placement by look** (`FoundationBlockPlacement::GetTorchState`), as measured black-box in 26.3 by probe P3 (`Tests/Probes/torch-placement-26.3.json`, 64,896 clicks): the directions nearest the look (`GetNearestLooks`), with the direction into the clicked block first unless the click replaces it (short grass). Up is skipped, down gives the floor torch if the cell below holds one, and a side gives the wall torch against the first side, in that order, that holds one; the first hit wins, and nothing holding places nothing (`CannotSurvive`). So a side or top click on a block that holds a torch always places on it, an underside click places by look, and a click on short grass chooses by look, not by the clicked face. The preview and the placement share the rule.
+- **Survival:** a torch pops through S7's one-level cascade when its support stops holding it (an unknown support cell keeps it). It shares the plants' switch, `Options.bPlantRules`.
+- **Drops:** a broken wall torch drops a `torch`, and pick block on it selects the torch. Light and the coral fans' wall fans are later work.
 
 **Plants and the other model blocks** (phase 6, S7; `FoundationPlantRules`, `FFoundationAuthority::CheckPlantPlacement` and `SettlePlants`). Behaviour comes from the reference's properties and tags, scout H's black-box support table ([the prep](Records/2026-10-10-Voxel-Phase6-Scout-H-Plant-Interaction.md), T1) and minecraft.wiki.
 - **State from the click**, by property, for model blocks without an asset rule:
@@ -147,7 +150,8 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
   - `.Faces`: every face resolves to a valid layer, plus the UV transforms.
   - `.Textures`: imported pixels against the jar hashes, plus mipmaps (the strict cutout and biased textures regenerated and compared), and the budgets.
   - `.Placement`: truth tables.
-  - `.Support` and `.Torch`: every state's torch support against the reference; the torch item, the block by clicked face, the wall torch's facing and survival on stone, glass, leaves and slabs.
+  - `.Support` and `.Torch`: every state's torch support against the reference; the torch item, the wall torch's facing and survival on stone, glass, leaves and slabs.
+  - `.TorchProbe`: probe P3's matrix, every look order and all 64,896 entries through the authority's `CheckPlacement`. `.TorchSurvival`: the pop cascade, the wall torch's drop and pick block.
   - `.Shapes`: slab, water, snow layer, powder snow and lava shapes; every model state's boxes, light, water and offset against the facts.
   - `.PlantShapes`: every model state's moved outline and collision boxes at four cells against the voxel table's offset (collision never leaves its cell; a thick bamboo outline reaches at most 1/16 block out, checked at 256 cells), the gathered boxes, and a ray through a dandelion's empty corner.
   - `.PlantPlacement`: the plant states from the click, and the halves of double plants.
