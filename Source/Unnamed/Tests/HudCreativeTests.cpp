@@ -9,7 +9,7 @@ namespace
     constexpr EAutomationTestFlags CreativeTestFlags =
         EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
 
-    // The model over the project's items: every block item and the practice tools.
+    // The model over the project's items: every block item and the 26.3 items of DA_Items.
     bool MakeModel(FHudCreativeModel& Model, FFoundationRules& Rules)
     {
         const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();
@@ -41,14 +41,30 @@ bool FHudCreativeTabsTest::RunTest(const FString&)
     FHudCreativeModel Model;
     FFoundationRules Rules;
     if (!TestTrue(TEXT("block registry asset"), MakeModel(Model, Rules))) return false;
-    // Empty category tabs hide (shouldDisplay); hotbar, search and inventory always show.
-    TestEqual(TEXT("tools tab hidden: no vanilla tools here"), FindTab(Model, TEXT("tools_and_utilities")),
-        int32(INDEX_NONE));
-    TestEqual(TEXT("food tab hidden"), FindTab(Model, TEXT("food_and_drinks")), int32(INDEX_NONE));
+    // Empty category tabs hide (shouldDisplay); hotbar, search and inventory always show. DA_Items's 63 items fill
+    // Tools & Utilities, Combat, Food & Drinks and Ingredients, so every tab shows here (spawn eggs: the spawners).
+    FHudCreativeModel Bare;
+    Bare.Build(FFoundationBlockRegistry::GetDefault()->GetAssets()->CreativeTabs, {});
+    TestEqual(TEXT("with no items, category tabs hide"), FindTab(Bare, TEXT("tools_and_utilities")), int32(INDEX_NONE));
+    TestNotEqual(TEXT("with no items, search still shows"), FindTab(Bare, TEXT("search")), int32(INDEX_NONE));
     for (const TCHAR* Id :
         {TEXT("building_blocks"), TEXT("colored_blocks"), TEXT("natural_blocks"), TEXT("functional_blocks"),
-            TEXT("redstone_blocks"), TEXT("hotbar"), TEXT("search"), TEXT("op_blocks"), TEXT("inventory")})
+            TEXT("redstone_blocks"), TEXT("hotbar"), TEXT("search"), TEXT("tools_and_utilities"), TEXT("combat"),
+            TEXT("food_and_drinks"), TEXT("ingredients"), TEXT("spawn_eggs"), TEXT("op_blocks"), TEXT("inventory")})
         TestNotEqual(FString(TEXT("tab shown: ")) + Id, FindTab(Model, Id), int32(INDEX_NONE));
+    if (FindTab(Model, TEXT("tools_and_utilities")) != INDEX_NONE && FindTab(Model, TEXT("combat")) != INDEX_NONE)
+    {
+        Model.SelectTab(FindTab(Model, TEXT("tools_and_utilities")));
+        const TArray<FName>& Tools = Model.GetItems();
+        TestTrue(TEXT("tools: 28 tools and 3 buckets, wooden shovel first"),
+            Tools.Num() == 31 && Tools[0] == TEXT("wooden_shovel") && Tools[1] == TEXT("wooden_pickaxe") &&
+                Tools[4] == TEXT("stone_shovel"));
+        Model.SelectTab(FindTab(Model, TEXT("combat")));
+        TestTrue(TEXT("combat: swords, spears, axes, then TNT"),
+            Model.GetItems().Num() == 22 && Model.GetItems()[0] == TEXT("wooden_sword") &&
+                Model.GetItems()[3] == TEXT("iron_sword") && Model.GetItems()[7] == TEXT("wooden_spear") &&
+                Model.GetItems().Last() == TEXT("tnt"));
+    }
     // 26.3 order within a tab, skipping items that do not exist here (stairs, fences...).
     Model.SelectTab(FindTab(Model, TEXT("building_blocks")));
     const TArray<FName>& Items = Model.GetItems();

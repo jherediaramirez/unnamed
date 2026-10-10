@@ -363,7 +363,7 @@ void UFoundationRuntimeProbe::AddHudCases()
             {
                 if (bReady) return;
                 // World position: two blocks north of the Playground's "Training target" (world (0, 1000)),
-                // facing it, holding the practice sword (slot 3, 1.6 attacks per second, so a 12.5-tick
+                // facing it, holding the iron sword (slot 3, 1.6 attacks per second, so a 12.5-tick
                 // recovery: the held item sets the attack speed). The click is a real authority attack.
                 ResetPlayer({0, 800, 0});
                 Controller->SetControlRotation(FRotator(0, 90, 0));

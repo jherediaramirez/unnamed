@@ -98,3 +98,14 @@ FSoftObjectPath UUnnamedProjectSettings::GetBlockAssetPath(const FString& AssetN
     const FString Package = GetBlockAssetPackage(AssetName);
     return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
 }
+
+FString UUnnamedProjectSettings::GetItemAssetPackage(const FString& AssetName)
+{
+    return Get().ItemRoot / AssetName;
+}
+
+FSoftObjectPath UUnnamedProjectSettings::GetItemAssetPath(const FString& AssetName)
+{
+    const FString Package = GetItemAssetPackage(AssetName);
+    return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
+}

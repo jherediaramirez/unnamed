@@ -9,6 +9,4 @@ namespace FoundationTags
         BlockPreventsNearbyLeafDecay, "Block.PreventsNearbyLeafDecay", "Keeps leaves within 6 blocks alive");
     UE_DEFINE_GAMEPLAY_TAG_COMMENT(BlockSnow, "Block.Snow", "Makes the block below snowy");
     UE_DEFINE_GAMEPLAY_TAG_COMMENT(ItemBlock, "Item.Block", "Places a block");
-    UE_DEFINE_GAMEPLAY_TAG_COMMENT(ItemToolPickaxe, "Item.Tool.Pickaxe", "Pickaxe-class mining tool");
-    UE_DEFINE_GAMEPLAY_TAG_COMMENT(ItemWeaponSword, "Item.Weapon.Sword", "Sword-class melee weapon");
 }

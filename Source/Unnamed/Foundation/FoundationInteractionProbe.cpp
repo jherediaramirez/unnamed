@@ -145,9 +145,9 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             auto Id = [&A](const FFoundationItemInstance& Stack)
             { return Stack.IsEmpty() ? FName(TEXT("empty")) : A.Rules.GetItem(Stack.Item).Id; };
             Record(TEXT("loadout"),
-                Id(Inventory.Hotbar[0]) == TEXT("stone") && Id(Inventory.Hotbar[1]) == TEXT("practice_pickaxe") &&
-                    Id(Inventory.Hotbar[2]) == TEXT("practice_sword") && Inventory.Hotbar[3].IsEmpty(),
-                TEXT("slot 1 Stone, 2 pickaxe, 3 sword, 4-9 empty hand"));
+                Id(Inventory.Hotbar[0]) == TEXT("stone") && Id(Inventory.Hotbar[1]) == TEXT("iron_pickaxe") &&
+                    Id(Inventory.Hotbar[2]) == TEXT("iron_sword") && Inventory.Hotbar[3].IsEmpty(),
+                TEXT("slot 1 Stone, 2 iron pickaxe, 3 iron sword, 4-9 empty hand"));
             Record(TEXT("seed blocks drawn"),
                 A.World.GetSolidCount() == A.Seed.Num() && Lab->GetView()->GetInstanceCount() == A.Seed.Num() &&
                     Lab->GetView()->GetDrawnRevision() == A.World.Revision,
@@ -176,9 +176,9 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         TEXT("select pickaxe"), .2, [this, Click] { Click(EKeys::Two); },
         [this, Player]
         {
-            Record(TEXT("2 selects the practice pickaxe"),
+            Record(TEXT("2 selects the iron pickaxe"),
                 Player()->Inventory.Selected == 1 && Pawn->Vitals.AttackSpeed == 1.2f &&
-                    Controller->GetHud()->GetPresenter()->GetSnapshot().ItemName == TEXT("Practice Pickaxe"),
+                    Controller->GetHud()->GetPresenter()->GetSnapshot().ItemName == TEXT("Iron Pickaxe"),
                 FString::Printf(
                     TEXT("slot %d speed %.2f"), Player()->Inventory.Selected + 1, Pawn->Vitals.AttackSpeed));
         });
@@ -186,7 +186,7 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         TEXT("select sword"), .2, [this, Click] { Click(EKeys::Three); },
         [this, Player]
         {
-            Record(TEXT("3 selects the practice sword"),
+            Record(TEXT("3 selects the iron sword"),
                 Player()->Inventory.Selected == 2 && Pawn->Vitals.AttackSpeed == 1.6f,
                 FString::Printf(
                     TEXT("speed %.2f delay %.2f ticks"), Pawn->Vitals.AttackSpeed, Pawn->Vitals.GetAttackDelay()));
@@ -1006,7 +1006,7 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         {
             FFoundationAuthority& A = Authority();
             const int32 Id = int32(Extra->GetNumberField(TEXT("stress_player")));
-            FFoundationItemDefinition Tool = A.Rules.Items[A.Rules.FindItem(TEXT("practice_pickaxe"))];
+            FFoundationItemDefinition Tool = A.Rules.Items[A.Rules.FindItem(TEXT("iron_pickaxe"))];
             Tool.Id = TEXT("probe_instant_tool");
             for (FFoundationMiningRule& Rule : Tool.MiningRules)
                 if (Rule.Speed > 0) Rule.Speed = 1000;

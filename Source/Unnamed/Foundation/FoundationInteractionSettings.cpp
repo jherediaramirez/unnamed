@@ -1,8 +1,10 @@
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlockRegistry.h"
+#include "Foundation/FoundationItemAssets.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationTags.h"
+#include "UnnamedLog.h"
 
 namespace
 {
@@ -42,39 +44,11 @@ UFoundationInteractionSettings::UFoundationInteractionSettings()
     };
     DefaultPreset = TEXT("VanillaReference");
 
-    // Imported 26.3 blocks and their items (item id = block id) come from the block registry; Blocks only adds
-    // project blocks. Retired ids, never reused: dummy_block, dummy_block_item.
-
-    // Iron-like practice tools: total damage and speed, 250 durability. The pickaxe has the iron pickaxe's
-    // rules: it cannot harvest #incorrect_for_iron_tool (diamond-tier blocks), then mines pickaxe blocks at 6.
-    FFoundationMiningRule IronTier;
-    IronTier.BlockTags = FGameplayTagContainer(FoundationTags::BlockIncorrectForIronTool);
-    IronTier.bStatesCorrectForDrops = true;
-    IronTier.bCorrectForDrops = false;
-    FFoundationMiningRule Pickaxe;
-    Pickaxe.BlockTags = FGameplayTagContainer(FoundationTags::BlockMineablePickaxe);
-    Pickaxe.Speed = 6;
-    Pickaxe.bStatesCorrectForDrops = Pickaxe.bCorrectForDrops = true;
-    FFoundationItemDefinition PickaxeItem =
-        MakeItem(TEXT("practice_pickaxe"), TEXT("Practice Pickaxe"), 4, 1.2f, TEXT("pickaxe"));
-    PickaxeItem.Tags = FGameplayTagContainer(FoundationTags::ItemToolPickaxe);
-    PickaxeItem.MiningRules = {IronTier, Pickaxe};
-    PickaxeItem.MaxDurability = 250;
-    PickaxeItem.DurabilityPerBlock = 1;
-    PickaxeItem.DurabilityPerHit = 2;
-    PickaxeItem.IconColor = FLinearColor(.78f, .78f, .8f);
-
-    // Sword-specific mining (cobwebs, instant plants) is deferred: default speed 1 everywhere.
-    FFoundationItemDefinition Sword = MakeItem(TEXT("practice_sword"), TEXT("Practice Sword"), 6, 1.6f, TEXT("sword"));
-    Sword.Tags = FGameplayTagContainer(FoundationTags::ItemWeaponSword);
-    Sword.MaxDurability = 250;
-    Sword.DurabilityPerBlock = 2;
-    Sword.DurabilityPerHit = 1;
-    Sword.IconColor = FLinearColor(.8f, .82f, .86f);
-    Items = {PickaxeItem, Sword};
-
+    // Imported 26.3 blocks and their items (item id = block id) come from the block registry, the other 26.3 items
+    // from DA_Items; Blocks and Items only add project blocks and items. Retired ids, never reused: dummy_block,
+    // dummy_block_item, practice_pickaxe, practice_sword.
     EmptyHand = MakeItem(TEXT("empty_hand"), TEXT(""), 1, 4, TEXT(""));
-    Loadout = {TEXT("stone"), TEXT("practice_pickaxe"), TEXT("practice_sword")};
+    Loadout = {TEXT("stone"), TEXT("iron_pickaxe"), TEXT("iron_sword")};
 }
 
 const FFoundationPlacementPreset* UFoundationInteractionSettings::FindPreset(FName Name) const
@@ -85,8 +59,11 @@ const FFoundationPlacementPreset* UFoundationInteractionSettings::FindPreset(FNa
 void UFoundationInteractionSettings::BuildRules(FFoundationRules& Rules) const
 {
     const UFoundationProfile& Profile = *GetDefault<UFoundationProfile>();
-    Rules.Items = Items;
+    Rules.Items.Reset();
     AddBlockItems(*FFoundationBlockRegistry::GetDefault(), Rules.Items);
+    if (const UFoundationItemAssets* ItemAssets = UFoundationItemAssets::LoadDefault())
+        MergeItems(Rules.Items, ItemAssets->MakeDefinitions(), TEXT("DA_Items"));
+    MergeItems(Rules.Items, Items, TEXT("UFoundationInteractionSettings::Items"));
     Rules.Hand = EmptyHand;
     Rules.Loadout = Loadout;
     Rules.BlockReachCm = Profile.BlockReachCm;
@@ -94,6 +71,29 @@ void UFoundationInteractionSettings::BuildRules(FFoundationRules& Rules) const
     Rules.AirborneMiningMultiplier = AirborneMiningMultiplier;
     Rules.SubmergedMiningMultiplier = SubmergedMiningMultiplier;
     Rules.TargetMaxHealth = TrainingTargetMaxHealth;
+}
+
+int32 UFoundationInteractionSettings::MergeItems(
+    TArray<FFoundationItemDefinition>& Into, TConstArrayView<FFoundationItemDefinition> Added, const TCHAR* Source)
+{
+    TSet<FName> Ids;
+    for (const FFoundationItemDefinition& Item : Into)
+        Ids.Add(Item.Id);
+    int32 Clashes = 0;
+    for (const FFoundationItemDefinition& Item : Added)
+    {
+        bool bClash = false;
+        Ids.Add(Item.Id, &bClash);
+        if (bClash)
+        {
+            UE_LOG(LogUnnamedFoundation, Error,
+                TEXT("Item id %s from %s is already defined; the later item is skipped"), *Item.Id.ToString(), Source);
+            ++Clashes;
+            continue;
+        }
+        Into.Add(Item);
+    }
+    return Clashes;
 }
 
 void UFoundationInteractionSettings::AddBlockItems(

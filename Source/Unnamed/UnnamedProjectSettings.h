@@ -80,6 +80,15 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Blocks")
     FString BlockRoot = TEXT("/Game/Blocks");
 
+    // Package of a generated item asset under ItemRoot, e.g. "DA_Items" (the registry) or "Gui/item/iron_pickaxe".
+    // Written by Scripts/Editor/ImportItems.py.
+    UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
+    static FString GetItemAssetPackage(const FString& AssetName);
+    static FSoftObjectPath GetItemAssetPath(const FString& AssetName);
+
+    UPROPERTY(Config, EditAnywhere, Category = "Items")
+    FString ItemRoot = TEXT("/Game/Items");
+
     UPROPERTY(Config, EditAnywhere, Category = "Maps", meta = (AllowedClasses = "/Script/Engine.World"))
     FSoftObjectPath MenuMap;
 

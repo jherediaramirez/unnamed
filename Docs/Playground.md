@@ -81,7 +81,7 @@ $project = 'C:\dev\projects\Unnamed\Unnamed.uproject'
 - Menu: `Scripts\LaunchFoundation.ps1`, then **Singleplayer → Playground → Play Selected World**. Double-click and Enter also work.
 - Direct: `Scripts\LaunchFoundation.ps1 -DirectLevel` opens the map in a packaged candidate built after the Playground exists (`BuildFoundation.ps1 -Package -PackageName <FreshName>`, then `-PackageName <FreshName>`). `-Editor -DirectLevel` runs the editor executable with `-game`.
 - Editor: open `Content/Maps/L_Playground` and press Play, or press Play in `L_Menu` and choose Playground. Editor Play uses temporary settings and cannot quit the editor.
-- Blocks: the loadout starts with stone, the practice pickaxe and the practice sword. E opens the creative inventory: pick any block onto the hotbar ([Blocks](Blocks.md#creative-inventory)).
+- Blocks: the loadout starts with stone, the iron pickaxe and the iron sword ([Items](Items.md)). E opens the creative inventory: pick any block onto the hotbar ([Blocks](Blocks.md#creative-inventory)).
 - Controls and HUD: [Foundation README](Foundation/README.md). Interaction rules: [interaction record](Records/2026-10-08-Interaction.md#play).
 
 ## Test
