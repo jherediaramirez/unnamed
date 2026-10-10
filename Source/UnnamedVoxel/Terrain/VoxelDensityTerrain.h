@@ -11,6 +11,7 @@
 #include "Surface/VoxelFreezePass.h"
 #include "Surface/VoxelSurfaceEvaluator.h"
 #include "Terrain/VoxelAquifer.h"
+#include "Terrain/VoxelCarvers.h"
 #include "Terrain/VoxelHeightTerrain.h"
 #include "Terrain/VoxelTerrain.h"
 
@@ -41,6 +42,10 @@ struct FVoxelDensityTerrainSettings
     // The veins' shortcut (exact: only the heights their densities reach, cells their bounds rule out skipped); off
     // evaluates every solid block directly, only to compare against.
     bool bOreVeinShortcut = true;
+    // The carvers (phase 6, S10; voxel.Carvers): with caves, the rules and the decoration data, tunnels and canyons
+    // carved between the surface rules and the freeze, their cells filled by the aquifer. Off (the default until S11)
+    // gives the blocks from before S10 exactly.
+    bool bCarvers = false;
     // Single Biome: this biome everywhere, by full id ("minecraft:desert"). Empty: the multi-noise source.
     FString FixedBiome;
     // The decoration data, held for the decoration stages (phase 6, S2 on); generation does not read it yet.
@@ -60,6 +65,12 @@ struct FVoxelDensityTerrainOverrides
     TOptional<bool> bFreeze;
     TOptional<bool> bOreVeins;
     TOptional<bool> bOreVeinShortcut;
+    // With the carvers compiled: carve (default bCarvers), through the shared path cache (default on; off builds
+    // every path in the column, only to compare against), from starts within this many columns (default
+    // FVoxelCarvers::Reach; the reach tests only).
+    TOptional<bool> bCarvers;
+    TOptional<bool> bCarveCache;
+    TOptional<int32> CarveReach;
 };
 
 // What one column's generation cost, by stage.
@@ -80,6 +91,12 @@ struct FVoxelDensityTerrainTimings
     // instructions run.
     int32 SurfaceDeep = 0, SurfaceInterior = 0, SurfaceFull = 0, SurfaceInteriorRuns = 0;
     int64 SurfaceSteps = 0;
+    // Inside BlocksMs, apart from SurfaceMs: the carvers (S10). Carve holds the mark's split; Candidates are marked
+    // blocks that could be carved (not air, fluid or bedrock), the next three those carved, by what fills them, and
+    // Barriers those the aquifer kept solid.
+    double CarversMs = 0;
+    FVoxelCarveStats Carve;
+    int32 CarveCandidates = 0, CarveAir = 0, CarveWater = 0, CarveLava = 0, CarveBarriers = 0;
     FVoxelColumnDensityStats Density;
 };
 
@@ -138,6 +155,11 @@ public:
     }
     virtual TSharedPtr<const FVoxelFeatureGraph> GetFeatures() const override { return Settings.Features; }
     virtual uint64 GetSeed() const override { return Seed; }
+    // The carvers, compiled when the terrain has caves, the rules and the decoration data (S10), and why not.
+    const FVoxelCarvers& GetCarvers() const { return Carvers; }
+    const FString& GetCarverError() const { return CarverError; }
+    // The path cache's size in bytes (0 without carvers).
+    int64 GetCarveCacheBytes() const { return CarveCache ? CarveCache->GetAllocatedSize() : 0; }
     int32 GetFinalDensity() const { return FinalDensity; }
     // The compiled surface rules; not compiled without rules.
     const FVoxelSurfaceEvaluator& GetSurfaceRules() const { return SurfaceRules; }
@@ -160,6 +182,10 @@ private:
         // Per block column (local Y * 16 + X), bottom-up: what each block holds before the rules.
         TArray<EVoxelSurfaceKind> Kinds;
         FVoxelSurfaceChunk SurfaceChunk;
+        // The carvers: the column's mark, the marked blocks that can be carved, and what fills them.
+        TArray<uint64> CarveMask;
+        TArray<int32> CarveBlocks;
+        TArray<EVoxelAquiferFluid> CarveFluids;
     };
     TUniquePtr<FScratch> TakeScratch() const;
     void ReturnScratch(TUniquePtr<FScratch> Scratch) const;
@@ -168,6 +194,9 @@ private:
     void FillDressed(int32 X0, int32 Z0, TArray<uint16>& Dense, const FScratch& Scratch) const;
     // The rules and the freeze pass over the column's biomes, with their times.
     void FillWithRules(FIntPoint Position, const FVoxelColumn& Out, TArray<uint16>& Dense, FScratch& Scratch,
+        const FVoxelDensityTerrainOverrides& Overrides, FVoxelDensityTerrainTimings& Timings) const;
+    // The carvers' pass over the ruled blocks; Heights stay each block column's highest non-air block.
+    void Carve(FIntPoint Position, TArray<uint16>& Dense, FScratch& Scratch, TArrayView<int32> Heights,
         const FVoxelDensityTerrainOverrides& Overrides, FVoxelDensityTerrainTimings& Timings) const;
 
     uint64 Seed;
@@ -189,6 +218,10 @@ private:
     FVoxelSurfaceEvaluator SurfaceRules;
     FVoxelFreezePass Freeze;
     FVoxelBiomeClimate Climate;
+    FVoxelCarvers Carvers;
+    FString CarverError;
+    // Shared by every worker (it locks itself); null without carvers.
+    TUniquePtr<FVoxelCarvePathCache> CarveCache;
 
     mutable FCriticalSection PoolLock;
     mutable TArray<TUniquePtr<FScratch>> Pool;

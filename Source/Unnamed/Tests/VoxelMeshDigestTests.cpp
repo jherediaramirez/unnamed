@@ -63,13 +63,20 @@ bool FVoxelMeshDigestTest::RunTest(const FString& Parameters)
     }
     // Plants off: recorded at adee7a6 (before the block models), per preset; models on and off alike.
     constexpr uint64 Golden[3] = {0xa8ba8d0d0a39174full, 0xe49601da349c7c0dull, 0x7f9491318204f4b2ull};
-    // Plants on (S8, the decided change), trees on (S9a): per preset, models on then off; recorded on S9a's first run
-    // with trees in the world (S8 part B's, trees off: Docs/VoxelWorld.md, "Plants and patches").
-    constexpr uint64 PlantGolden[3][2] = {{0xa2464eaac18b22fdull, 0x7b5243fd5b004f3cull},
-        {0x66086c88ed3ef1edull, 0xd81de3b6e4744f0dull}, {0xf2ca4f1f2aeabd6dull, 0xca664062ca4022dcull}};
-    for (const bool bPlants : {false, true})
+    // Plants and trees on: per preset, models on then off. Re-recorded in S9b: full-cube faces merge by look
+    // (FVoxelBlockTable::GetLookState), so leaves of different distances merge; the blocks are S9a's
+    // (Decoration.Golden's third case is unchanged) and the trees-off case below is S8 part B's.
+    constexpr uint64 PlantGolden[3][2] = {{0x2d204b0b4cf1abd8ull, 0x6ee399181d5fccd7ull},
+        {0xca80f4d03a73a6f9ull, 0x762f1bf60ca6a7e5ull}, {0x49802047907506c6ull, 0x627b48a897480211ull}};
+    // Plants on, trees off: S8 part B's, which must hold whatever the trees change (Docs/VoxelWorld.md, "Plants and
+    // patches").
+    constexpr uint64 TreelessGolden[3][2] = {{0xd8f3b39ed6d66f5aull, 0x6b673e48bda8a0b7ull},
+        {0xd8c297a251e3c4b1ull, 0x81cbb033a8f2c493ull}, {0x9719bc3f651df81bull, 0xa0fbd505d2c267f9ull}};
+    // Cases: plants off; plants on, trees off; both on.
+    for (int32 Case = 0; Case < 3; ++Case)
         for (int32 Preset = 0; Preset < 3; ++Preset)
         {
+            const bool bPlants = Case > 0, bTrees = Case == 2;
             FString Error;
             FVoxelTerrainPreset TerrainPreset;
             FVoxelBiomeTable Biomes;
@@ -86,6 +93,7 @@ bool FVoxelMeshDigestTest::RunTest(const FString& Parameters)
             FVoxelDecorator Decorator;
             FVoxelDecorationOptions DecorationOptions;
             DecorationOptions.bPlants = bPlants;
+            DecorationOptions.bTrees = bTrees;
             if (!TestTrue(TEXT("the terrain is valid"), Terrain->IsValid()) ||
                 !TestTrue(FString::Printf(TEXT("the decorator compiles (%s)"), *Error),
                     Decorator.Initialize(Graph, *Table, Terrain->GetBiomeSource()->GetTable(), Terrain->GetSeed(),
@@ -100,8 +108,12 @@ bool FVoxelMeshDigestTest::RunTest(const FString& Parameters)
                 int64 Quads = 0;
                 SIZE_T Bytes = 0;
                 const uint64 Digest = MeshDigestOf(Area, Quads, Bytes);
-                const uint64 Want = bPlants ? PlantGolden[Preset][bModels ? 0 : 1] : Golden[Preset];
-                const TCHAR* Side = bPlants ? TEXT("plants on") : TEXT("plants off");
+                const uint64 Want = Case == 2 ? PlantGolden[Preset][bModels ? 0 : 1]
+                    : Case == 1               ? TreelessGolden[Preset][bModels ? 0 : 1]
+                                              : Golden[Preset];
+                const TCHAR* Side = Case == 2 ? TEXT("plants and trees on")
+                    : Case == 1               ? TEXT("plants on, trees off")
+                                              : TEXT("plants off");
                 AddInfo(FString::Printf(TEXT("%s, %s, models %s: mesh digest 0x%016llx, %lld quads, %llu bytes"),
                     MeshDigestPresets[Preset], Side, bModels ? TEXT("on") : TEXT("off"), Digest, Quads, uint64(Bytes)));
                 TestTrue(FString::Printf(TEXT("%s, %s, models %s: mesh digest 0x%016llx is the golden 0x%016llx"),

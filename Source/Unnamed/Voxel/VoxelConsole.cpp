@@ -21,6 +21,7 @@
 #include "Voxel/VoxelTerrainFactory.h"
 #include "Voxel/VoxelWorldgenReader.h"
 #include "VoxelBench.h"
+#include "VoxelCarverBench.h"
 #include "VoxelConstants.h"
 #include "VoxelLog.h"
 
@@ -74,6 +75,13 @@ TAutoConsoleVariable<int32> VoxelConsole::CVarOreGlint(TEXT("voxel.Look.OreGlint
     TEXT("Ore look L2 level 1, render-only: 0 vanilla; 1 ore textures keep their ore pixels' share and colour in the "
          "mips, and metal and gem pixels are glossy (light catches them; no light, no glint); 3 debug, every ore face "
          "flat magenta. A change remeshes every loaded column."));
+
+// The carvers (phase 6, S10), off until S11 turns them on with the re-records.
+TAutoConsoleVariable<bool> VoxelConsole::CVarCarvers(TEXT("voxel.Carvers"), false,
+    TEXT("Carvers (phase 6, S10): 1 cuts 26.3's three carvers (cave, cave_extra_underground, canyon) into Generate, "
+         "between the surface rules and the freeze, their cells filled by the aquifer, in worlds made after the change "
+         "(voxel.Regenerate rebuilds one) and the Columns and Density benches (each takes carvers and nocarvers as "
+         "well); 0, the default, gives the blocks from before S10."));
 
 int32 VoxelConsole::GetTintBlend()
 {
@@ -142,6 +150,9 @@ FString VoxelConsole::DescribeInfo(const UWorld* World)
         FModuleManager::Get().IsModuleLoaded(TEXT("RealtimeMeshComponent")) ? TEXT("loaded") : TEXT("not loaded"));
     if (const UVoxelWorldSubsystem* Subsystem = UVoxelWorldSubsystem::Get(World))
         Out += TEXT("\n") + Subsystem->DescribeStages();
+    if (const AVoxelWorld* Voxels = AVoxelWorld::Find(World))
+        Out += FString::Printf(TEXT("\n  World clock: %s | %lld game ticks dropped by the per-frame cap"),
+            *Voxels->GetClock().Describe(Voxels->IsTimeAdvancing()), Voxels->GetClock().GetDroppedTicks());
     return Out;
 }
 
@@ -175,6 +186,19 @@ namespace
     bool BenchOreVeins(const TArray<FString>& Args)
     {
         return VoxelConsole::CVarOreVeins.GetValueOnGameThread() && !Args.Contains(TEXT("noveins"));
+    }
+
+    // Bench terrains carve as voxel.Carvers says (S10), or as the command's carvers or nocarvers says; carving needs
+    // the decoration data, read here.
+    bool BenchCarvers(FVoxelDensityTerrainSettings& Settings, const TArray<FString>& Args, FString& OutError)
+    {
+        Settings.bCarvers = !Args.Contains(TEXT("nocarvers")) &&
+            (Args.Contains(TEXT("carvers")) || VoxelConsole::CVarCarvers.GetValueOnGameThread());
+        if (!Settings.bCarvers) return true;
+        const TSharedRef<FVoxelFeatureGraph> Features = MakeShared<FVoxelFeatureGraph>();
+        if (!VoxelWorldgen::ReadFeatures(VoxelWorldgen::GetReferenceRoot(), *Features, OutError)) return false;
+        Settings.Features = Features;
+        return true;
     }
 
     // Each line to the console that ran the command and to the log, so headless runs keep the output.
@@ -254,7 +278,10 @@ namespace
              "(default radius 8, preset overworld), on this thread and then on every worker.\n"
              "voxel.Bench Density [radius] [preset] [nocaves]: generates (2 radius + 1)^2 columns of the density "
              "terrain "
-             "(default radius 4, preset overworld) with height-bound skipping on and off, and reports each stage."),
+             "(default radius 4, preset overworld) with height-bound skipping on and off, and reports each stage.\n"
+             "voxel.Bench Carvers [radius] [preset]: generates (2 radius + 1)^2 columns (default radius 4, preset "
+             "overworld) with the carvers off and on, alternating, on this thread; reports the time they add, their "
+             "split and counts, and the blocks that differ with the path cache off (S10's gates)."),
         FConsoleCommandWithArgsAndOutputDeviceDelegate::CreateLambda(
             [](const TArray<FString>& Args, FOutputDevice& Output)
             {
@@ -303,12 +330,22 @@ namespace
                     FVoxelDensityTerrainSettings Settings;
                     Settings.bCaves = !(Args.Num() > 3 && Args[3] == TEXT("nocaves"));
                     Settings.bOreVeins = BenchOreVeins(Args);
+                    if (!BenchCarvers(Settings, Args, Error))
+                    {
+                        PrintLines(Output, Error);
+                        return;
+                    }
                     const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings, &Biomes, &Surface);
                     if (!Terrain.IsValid())
                     {
                         PrintLines(Output, Terrain.GetError());
                         return;
                     }
+                    if (Settings.bCarvers)
+                        PrintLines(Output,
+                            Terrain.GetCarvers().IsInitialized()
+                                ? FString(TEXT("Carvers on (S10)"))
+                                : TEXT("Carvers asked for but off: ") + Terrain.GetCarverError());
                     TSharedPtr<FVoxelDecorator> Decorator;
                     if (VoxelConsole::CVarDecoration.GetValueOnGameThread())
                     {
@@ -326,6 +363,41 @@ namespace
                             *Seed.Describe()) +
                             TEXT("\n") +
                             VoxelBench::RunColumns(*Table, Terrain, &Terrain, Options, Radius, Decorator.Get()));
+                    return;
+                }
+                if (!Args.IsEmpty() && Args[0] == TEXT("Carvers"))
+                {
+                    // The carvers' bench (S10): the same terrain carves or not per call, so both sides share a run. It
+                    // keeps every carved column for the cache-off comparison, so the radius stops at 8 (57 MB).
+                    const int32 Radius = Args.Num() > 1 ? FMath::Clamp(FCString::Atoi(*Args[1]), 0, 8) : 4;
+                    const FString PresetName = Args.Num() > 2 ? Args[2] : TEXT("overworld");
+                    FString Error;
+                    FVoxelTerrainPreset Preset;
+                    FVoxelBiomeTable Biomes;
+                    FVoxelSurfaceInputs Surface;
+                    const TSharedRef<FVoxelFeatureGraph> Features = MakeShared<FVoxelFeatureGraph>();
+                    if (!VoxelClimateDebug::GetSampler(PresetName, Seed.Value, Error) ||
+                        !VoxelTerrainFactory::ReadInputs(
+                            VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Biomes, Surface, Error) ||
+                        !VoxelWorldgen::ReadFeatures(VoxelWorldgen::GetReferenceRoot(), *Features, Error))
+                    {
+                        PrintLines(Output, Error);
+                        return;
+                    }
+                    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+                    FVoxelDensityTerrainSettings Settings;
+                    Settings.bOreVeins = BenchOreVeins(Args);
+                    Settings.Features = Features;
+                    const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings, &Biomes, &Surface);
+                    if (!Terrain.IsValid() || !Terrain.GetCarvers().IsInitialized())
+                    {
+                        PrintLines(Output, Terrain.IsValid() ? Terrain.GetCarverError() : Terrain.GetError());
+                        return;
+                    }
+                    PrintLines(Output,
+                        FString::Printf(TEXT("Voxel carver bench, %s, ore veins %s, seed %s:"), *PresetName,
+                            Settings.bOreVeins ? TEXT("on") : TEXT("off"), *Seed.Describe()) +
+                            TEXT("\n") + VoxelBench::RunCarvers(Terrain, Radius));
                     return;
                 }
                 if (!Args.IsEmpty() && Args[0] == TEXT("Climate"))
@@ -368,12 +440,22 @@ namespace
                     FVoxelDensityTerrainSettings Settings;
                     Settings.bCaves = !(Args.Num() > 3 && Args[3] == TEXT("nocaves"));
                     Settings.bOreVeins = BenchOreVeins(Args);
+                    if (!BenchCarvers(Settings, Args, Error))
+                    {
+                        PrintLines(Output, Error);
+                        return;
+                    }
                     const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings, &Biomes, &Surface);
                     if (!Terrain.IsValid())
                     {
                         PrintLines(Output, Terrain.GetError());
                         return;
                     }
+                    if (Settings.bCarvers)
+                        PrintLines(Output,
+                            Terrain.GetCarvers().IsInitialized()
+                                ? FString(TEXT("Carvers on (S10)"))
+                                : TEXT("Carvers asked for but off: ") + Terrain.GetCarverError());
                     PrintLines(Output,
                         FString::Printf(TEXT("Voxel density bench, %s, caves %s, ore veins %s, seed %s:"), *PresetName,
                             Settings.bCaves ? TEXT("on") : TEXT("off"), Settings.bOreVeins ? TEXT("on") : TEXT("off"),
@@ -658,5 +740,22 @@ namespace
                         Total, double(Total) / FMath::Max(1, Area.Columns.Num()));
                 }
                 PrintLines(Output, Report);
+            }));
+}
+
+// The world clock's commands (water and sky DN1), in their own block.
+namespace
+{
+    FAutoConsoleCommandWithWorldArgsAndOutputDevice VoxelTimeCommand(TEXT("voxel.Time"),
+        TEXT("voxel.Time set <time>|day|noon|night|midnight, add <time>, query time|day|gametime, pause, resume, rate "
+             "<rate>: the voxel world's clock, as /time. A time is whole ticks, or a number with d (24,000 ticks), s "
+             "(20) or t. A marker moves the clock forward to its next tick of the day; the rate runs above 0 to 1000."),
+        FConsoleCommandWithWorldArgsAndOutputDeviceDelegate::CreateLambda(
+            [](const TArray<FString>& Args, UWorld* World, FOutputDevice& Output)
+            {
+                AVoxelWorld* Voxels = AVoxelWorld::Find(World);
+                FString Reply = TEXT("voxel.Time: no voxel world is running.");
+                if (Voxels) Voxels->GetClock().RunCommand(Args, Reply);
+                PrintLines(Output, Reply);
             }));
 }

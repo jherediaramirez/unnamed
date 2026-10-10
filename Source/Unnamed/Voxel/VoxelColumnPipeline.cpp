@@ -803,12 +803,19 @@ void FVoxelColumnPipeline::LaunchMesh(FIntPoint Column, FRecord& Record, uint8 N
 void FVoxelColumnPipeline::SortReady()
 {
     if (bReadySorted) return;
-    // Farthest first, so the nearest pops off the end.
+    // Farthest first, so the nearest pops off the end. A column behind the view sector counts as twice as far, so the
+    // columns the camera faces go first while it turns: the holes a player sees are those (S9b).
+    const FIntPoint Ahead = VoxelStreaming::GetViewSectorDirection(ViewSector);
+    const auto GetPriority = [Center = Rings.Center, Ahead](FIntPoint Column)
+    {
+        const int64 Distance = GetPipelineDistanceSquared(Column, Center);
+        const FIntPoint Offset = Column - Center;
+        return int64(Offset.X) * Ahead.X + int64(Offset.Y) * Ahead.Y < 0 ? 4 * Distance : Distance;
+    };
     ReadyColumns.Sort(
-        [Center = Rings.Center](FIntPoint A, FIntPoint B)
+        [&GetPriority](FIntPoint A, FIntPoint B)
         {
-            const int64 DistanceA = GetPipelineDistanceSquared(A, Center),
-                        DistanceB = GetPipelineDistanceSquared(B, Center);
+            const int64 DistanceA = GetPriority(A), DistanceB = GetPriority(B);
             if (DistanceA != DistanceB) return DistanceA > DistanceB;
             return A.Y != B.Y ? A.Y > B.Y : A.X > B.X;
         });

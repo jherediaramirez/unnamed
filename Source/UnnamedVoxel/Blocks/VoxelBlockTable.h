@@ -117,6 +117,14 @@ struct FVoxelModelQuad
     uint8 Light = 0;
 };
 
+// The fluid a state holds (26.3's water and lava; waterlogged and always-water states hold water).
+enum class EVoxelFluid : uint8
+{
+    None,
+    Water,
+    Lava
+};
+
 // What generation and meshing need to know about one block state.
 struct FVoxelStateInfo
 {
@@ -153,6 +161,10 @@ struct FVoxelStateInfo
     // Model states holding water (kelp, seagrass, corals, waterlogged ones): the fluid state drawn around them, which
     // also counts for the motion-blocking heightmaps; 0 for none.
     uint16 HeldFluid = 0;
+    // The fluid in the state (a fluid, or a state holding one) and its level: 0 a source, 1-7 flowing, 8-15 falling
+    // (amount 8, as a source's). Declared here, they fill padding: the struct keeps its size.
+    EVoxelFluid Fluid = EVoxelFluid::None;
+    uint8 FluidLevel = 0;
     // The block's position offset, in blocks: up to OffsetHorizontal either way along X and Y, and for
     // HorizontalAndDown down to OffsetDown (negative).
     EVoxelOffset Offset = EVoxelOffset::None;
@@ -165,6 +177,8 @@ struct FVoxelStateInfo
     bool HoldsFluid() const { return Shape == EVoxelShape::Fluid || HeldFluid != 0; }
     // The height of a fluid's surface within its cell when no fluid is above (a source fills 8/9).
     float GetFluidHeight() const { return FluidAmount / 9.f; }
+    // A still source: level 0 (waterlogged states included). Falling fluid also has amount 8, but is not one.
+    bool IsFluidSource() const { return Fluid != EVoxelFluid::None && FluidLevel == 0; }
 };
 
 // Baked models' offsets and alternatives: pure functions of the cell, as every random value in the core is. The offset
@@ -196,6 +210,10 @@ public:
     const FVoxelStateInfo& Get(uint16 State) const { return State < States.Num() ? States[State] : States[0]; }
     int32 GetStateCount() const { return States.Num(); }
     void SetState(uint16 State, const FVoxelStateInfo& Info);
+    // The lowest state of State's block whose info equals State's in every field the mesher, the light and decoration
+    // read (IsSameLook in VoxelBlockTable.cpp): states that draw alike, such as leaves of every distance and
+    // persistence. The mesher merges full-cube faces by it. Kept by SetState.
+    uint16 GetLookState(uint16 State) const { return State < LookStates.Num() ? LookStates[State] : 0; }
 
     // A block's default state by id ("stone"); 0 (air) when the block is unknown.
     uint16 FindState(FName Block) const;
@@ -236,7 +254,16 @@ public:
     const int32* GetModelParts(const FVoxelStateInfo& Info) const { return PartData.GetData() + Info.ModelParts; }
 
 private:
+    // Recomputes the look states of Block's states.
+    void UpdateLooks(uint16 Block);
+
     TArray<FVoxelStateInfo> States;
+    // Per state: its look state, and a hash of the fields the look compares.
+    TArray<uint16> LookStates;
+    TArray<uint32> LookHashes;
+    // Per block: its states in ascending order. Bit per state that SetState has set.
+    TArray<TArray<uint16>> BlockStates;
+    TBitArray<> SetStates;
     TArray<FVoxelModelQuad> ModelQuads;
     // Per model: its first quad and quad count.
     TArray<FIntPoint> ModelRanges;

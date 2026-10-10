@@ -1,0 +1,73 @@
+{
+ "minecraft_version": "26.3",
+ "server_sha1": "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c",
+ "server_inner": "META-INF/versions/26.3/server-26.3.jar",
+ "server_inner_sha256": "a362163eec5d1612d520772bc16e5b39c09e3b234fdc045f56bf544284ee8ae6",
+ "client_sha1": "e877b6a07acd633fb3bb475002175cec036e7b87",
+ "report": "data generator --reports, registries.json (minecraft:environment_attribute), from the server jar above",
+ "facts": {
+  "facts/sweep.json": {
+   "sha256": "485a077014b364d65d79c5d9bbcfd9a660d2df1df94f2bbac0f487e724f3da39",
+   "source": "scout N's sweep (sweep_probe.py on a headless 26.3 server; the method is in Docs/Records/2026-10-10-WaterSky-Scout-N-DayNight.md, section 5)"
+  },
+  "facts/colour_scan.json": {
+   "sha256": "63352536c08d9df0d612820ce52f9935d849753f4f9c869ed40d1292741983c2",
+   "source": "DN0's colour probe on scout N's harness (Docs/Records/2026-10-10-WaterSky-DN0.md)"
+  }
+ },
+ "counts": {
+  "timelines": 4,
+  "timeline_tags": 4,
+  "dimension_types": 4,
+  "world_clocks": 2,
+  "environment_attributes": 51,
+  "day_tracks": 18,
+  "moon_phases": 8,
+  "sweep_ticks": 65,
+  "sweep_moon_rows": 16
+ },
+ "files": {
+  "copies": [
+   "assets/minecraft/atlases/celestials.json",
+   "assets/minecraft/textures/environment/celestial/moon/first_quarter.png",
+   "assets/minecraft/textures/environment/celestial/moon/full_moon.png",
+   "assets/minecraft/textures/environment/celestial/moon/new_moon.png",
+   "assets/minecraft/textures/environment/celestial/moon/third_quarter.png",
+   "assets/minecraft/textures/environment/celestial/moon/waning_crescent.png",
+   "assets/minecraft/textures/environment/celestial/moon/waning_gibbous.png",
+   "assets/minecraft/textures/environment/celestial/moon/waxing_crescent.png",
+   "assets/minecraft/textures/environment/celestial/moon/waxing_gibbous.png",
+   "assets/minecraft/textures/environment/celestial/sun.png",
+   "data/minecraft/dimension_type/overworld.json",
+   "data/minecraft/dimension_type/overworld_caves.json",
+   "data/minecraft/dimension_type/the_end.json",
+   "data/minecraft/dimension_type/the_nether.json",
+   "data/minecraft/tags/timeline/in_end.json",
+   "data/minecraft/tags/timeline/in_nether.json",
+   "data/minecraft/tags/timeline/in_overworld.json",
+   "data/minecraft/tags/timeline/universal.json",
+   "data/minecraft/timeline/day.json",
+   "data/minecraft/timeline/early_game.json",
+   "data/minecraft/timeline/moon.json",
+   "data/minecraft/timeline/villager_schedule.json",
+   "data/minecraft/world_clock/overworld.json",
+   "data/minecraft/world_clock/the_end.json"
+  ],
+  "generated": [
+   "attributes.json",
+   "celestial.json",
+   "manifest.json"
+  ],
+  "reports": [
+   "reports/registries-environment_attribute.json"
+  ],
+  "facts": [
+   "facts/colour_scan.json",
+   "facts/sweep.json"
+  ],
+  "tools": [
+   "tools/build_reference.py",
+   "tools/verify_reference.py"
+  ]
+ }
+}

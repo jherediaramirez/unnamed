@@ -70,6 +70,8 @@ public:
     // The world's rules for its player (game mode, difficulty, natural regeneration), applied once when the player
     // arrives; respawning keeps them. The Playground leaves the defaults.
     virtual void ConfigurePlayer(FFoundationVitals&) const {}
+    // A line about the world for the F3 overlay (a voxel world's clock); empty for none.
+    virtual FString DescribeDebug() const { return FString(); }
 
 protected:
     // A lab with an authority aims through it: blocks, statics and targets, as the authority resolves them.

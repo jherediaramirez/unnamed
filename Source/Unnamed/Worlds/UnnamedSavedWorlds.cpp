@@ -225,6 +225,68 @@ namespace
         Out.SetObjectField(TEXT("rules"), World.Rules ? World.Rules : MakeShared<FJsonObject>());
     }
 
+    // world.json's "clocks" key, as vanilla's world_clocks.dat (scout N 5 (f)): an object per clock id, with
+    // total_ticks, paused and rate, each left out at its default. Only the overworld's clock exists here; other ids are
+    // ignored.
+    const TCHAR* const WorldClocksField = TEXT("clocks");
+    const TCHAR* const OverworldClockId = TEXT("minecraft:overworld");
+    // A JSON number holds integers exactly up to 2^53 (FVoxelWorldClock::MaxTotalTicks).
+    constexpr double MaxWorldClockTicks = 9007199254740991.;
+    constexpr double MaxWorldClockRate = 1000.;
+
+    bool ReadWorldClock(const FJsonObject& Source, FUnnamedSavedWorld& Out, FString& OutError)
+    {
+        const TSharedPtr<FJsonValue> Clocks = Source.TryGetField(WorldClocksField);
+        if (!Clocks) return true;
+        const TSharedPtr<FJsonValue> Overworld =
+            Clocks->Type == EJson::Object ? Clocks->AsObject()->TryGetField(OverworldClockId) : nullptr;
+        if (Clocks->Type != EJson::Object || (Overworld && Overworld->Type != EJson::Object))
+            return FailWorld(OutError, TEXT("The world's time could not be read."));
+        if (!Overworld) return true;
+        const FJsonObject& Fields = *Overworld->AsObject();
+        FUnnamedSavedWorld::FClock Clock;
+        const TSharedPtr<FJsonValue> Total = Fields.TryGetField(TEXT("total_ticks"));
+        const TSharedPtr<FJsonValue> Paused = Fields.TryGetField(TEXT("paused"));
+        const TSharedPtr<FJsonValue> Rate = Fields.TryGetField(TEXT("rate"));
+        const double Ticks = Total && Total->Type == EJson::Number ? Total->AsNumber() : 0.;
+        const double Speed = Rate && Rate->Type == EJson::Number ? Rate->AsNumber() : 1.;
+        if ((Total &&
+                (Total->Type != EJson::Number || !FMath::IsFinite(Ticks) || FMath::Frac(Ticks) != 0 || Ticks < 0 ||
+                    Ticks > MaxWorldClockTicks)) ||
+            (Paused && Paused->Type != EJson::Boolean) ||
+            (Rate &&
+                (Rate->Type != EJson::Number || !FMath::IsFinite(Speed) || float(Speed) <= 0.f ||
+                    Speed > MaxWorldClockRate)))
+            return FailWorld(OutError, TEXT("The world's time could not be read."));
+        Clock.TotalTicks = int64(Ticks);
+        Clock.bPaused = Paused && Paused->AsBool();
+        Clock.Rate = float(Speed);
+        Out.Clock = Clock;
+        return true;
+    }
+
+    void WriteWorldClock(const FUnnamedSavedWorld& World, FJsonObject& Out)
+    {
+        if (!World.Clock) return;
+        const TSharedRef<FJsonObject> Fields = MakeShared<FJsonObject>();
+        // Written as their exact digits rather than through a double.
+        if (World.Clock->TotalTicks != 0)
+            Fields->SetField(TEXT("total_ticks"),
+                MakeShared<FJsonValueNumberString>(FString::Printf(TEXT("%lld"), World.Clock->TotalTicks)));
+        if (World.Clock->bPaused) Fields->SetBoolField(TEXT("paused"), true);
+        if (World.Clock->Rate != 1.f)
+        {
+            // The shortest text that reads back as the same float.
+            FString Rate = FString::SanitizeFloat(World.Clock->Rate);
+            if (float(FCString::Atod(*Rate)) != World.Clock->Rate)
+                Rate = FString::Printf(TEXT("%.9g"), World.Clock->Rate);
+            Fields->SetField(TEXT("rate"), MakeShared<FJsonValueNumberString>(Rate));
+        }
+        const TSharedRef<FJsonObject> Clocks = MakeShared<FJsonObject>();
+        Clocks->SetObjectField(OverworldClockId, Fields);
+        Out.SetObjectField(WorldClocksField, Clocks);
+    }
+
     FString PrintWorldJson(const TSharedRef<FJsonObject>& Object)
     {
         FString Text;
@@ -353,6 +415,7 @@ FString UnnamedSavedWorlds::ToJson(const FUnnamedSavedWorld& World)
     Object->SetStringField(TEXT("seedValue"), FString::Printf(TEXT("%lld"), World.Seed));
     Object->SetStringField(TEXT("created"), World.Created.ToIso8601());
     Object->SetStringField(TEXT("lastPlayed"), World.LastPlayed.ToIso8601());
+    WriteWorldClock(World, *Object);
     return PrintWorldJson(Object);
 }
 
@@ -376,7 +439,7 @@ bool UnnamedSavedWorlds::FromJson(const FString& Json, FUnnamedSavedWorld& Out, 
         !ReadWorldString(*Object, TEXT("lastPlayed"), LastPlayed) ||
         !FDateTime::ParseIso8601(*LastPlayed, Out.LastPlayed))
         return FailWorld(OutError, TEXT("world.json's dates could not be read."));
-    return true;
+    return ReadWorldClock(*Object, Out, OutError);
 }
 
 bool UnnamedSavedWorlds::Save(const FUnnamedSavedWorld& World, FString& OutError)

@@ -243,6 +243,8 @@ FString UFoundationHud::BuildSnapshot() const
             if (Settings && Settings->bDebugUnrealCoordinates)
                 Out += FString::Printf(TEXT("UE feet/actor cm %s | camera cm %s\n"), *Simulation.Feet.ToCompactString(),
                     *Pawn->GetCamera()->GetComponentLocation().ToCompactString());
+            if (const AFoundationLab* Lab = Pawn->GetLab())
+                if (const FString WorldLine = Lab->DescribeDebug(); !WorldLine.IsEmpty()) Out += WorldLine + TEXT("\n");
         }
         if (Sections & MovementSection)
             Out += FString::Printf(
