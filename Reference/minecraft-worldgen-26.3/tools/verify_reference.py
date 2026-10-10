@@ -201,9 +201,12 @@ if BLOCK_FACTS.is_file():
     registry_blocks = {line.split(",")[1] for line in BLOCK_FACTS.read_text(encoding="utf-8").splitlines()[1:]}
 check(len(registry_blocks) == 1286, f"{BLOCK_FACTS} lists {len(registry_blocks)} blocks, expected 1286")
 decoration_pending, decoration_reached, decoration_refs, block_refs = [], set(), 0, set()
+step_features = [set() for _ in range(11)]
 for path in (WORLDGEN / "biome").glob("*.json"):
     biome = json.loads(path.read_text(encoding="utf-8"))
     check(len(biome["features"]) == 11, f"{path.stem}: {len(biome['features'])} feature steps")
+    for step, features in zip(step_features, biome["features"]):
+        step.update(features)
     decoration_pending += [("placed_feature", f) for step in biome["features"] for f in step]
     decoration_pending += [("carver", c) for c in biome["carvers"]]
 # build_reference.py's CODE_TAGS: tags the game's code reads by name.
@@ -258,6 +261,45 @@ for entry in facts["splines"]:
     sample_count += len(entry["samples"])
 check(len(facts["splines"]) == 9, "expected 9 splines in the facts")
 
+
+# A provider's use, "feature/ore_iron.targets[0].state", as the value it points at.
+def at_use(use):
+    name, _, path = use.partition(".")
+    value = json.loads((WORLDGEN / (name + ".json")).read_text(encoding="utf-8"))
+    for part in path.replace("[", ".[").split("."):
+        value = value[int(part[1:-1])] if part.startswith("[") else value[part]
+    return value
+
+
+# Facts from the game's registries: vanilla's order holds, per step, exactly the placed features the biomes list; every
+# provider sits where its uses say, with all its samples counted; the vein samples name reference files and blocks; and
+# every probe names a reached feature.
+order = json.loads((ROOT / "facts/feature_order.json").read_text(encoding="utf-8"))
+check({b.removeprefix("minecraft:") for b in order["biomes"]} == biome_files, "feature order biomes differ")
+check(len(order["steps"]) == 11, f"feature order: {len(order['steps'])} steps")
+for entry, listed in zip(order["steps"], step_features):
+    check(sorted(entry["features"]) == sorted(listed), f"feature order {entry['step']}: not the biomes' features")
+providers = json.loads((ROOT / "facts/provider_histograms.json").read_text(encoding="utf-8"))
+for entry in providers["providers"]:
+    counted = sum(c for _, c in entry["counts"]) if "counts" in entry else sum(entry["bins"]) + entry["outside"]
+    check(counted == providers["samples"] and entry.get("outside", 0) == 0, f"provider samples: {entry['provider']}")
+    for use in entry["uses"]:
+        check(at_use(use) == entry["provider"], f"provider use {use} holds something else")
+veins = json.loads((ROOT / "facts/ore_vein_samples.json").read_text(encoding="utf-8"))
+for name in veins["densities"]:
+    check(function_file(name).is_file(), f"ore vein density {name}: no file")
+for block in veins["blocks"]:
+    check(block.removeprefix("minecraft:") in registry_blocks, f"ore vein samples: not a 26.3 block: {block}")
+vein_samples = sum(len(seed["samples"]) for seed in veins["seeds"])
+for seed in veins["seeds"]:
+    for sample in seed["samples"]:
+        check(len(sample) == len(veins["columns"]) and 0 <= sample[3] < len(veins["blocks"]), f"bad vein sample {sample}")
+probes = sorted((ROOT / "facts/feature_probes").glob("*.json"))
+for path in probes:
+    probe = json.loads(path.read_text(encoding="utf-8"))
+    check(probe["generated_by"] == "tools/feature_probe.py" and probe["feature"] == "minecraft:" + path.stem and
+          WORLDGEN / "feature" / path.name in decoration_reached, f"probe {path.name}: not a reached feature")
+
 if errors:
     print("REFERENCE FAIL")
     print("\n".join(errors[:40]))
@@ -267,4 +309,5 @@ print(f"REFERENCE OK: {len(sums)} files hashed, {jar_note}, {len(reached)} refer
       f"{len(facts['splines'])} splines with {sample_count} samples, {len(rule_reached)} rule and condition files "
       f"with {rule_refs} references, {len(parameters['points'])} biome points over {len(parameters['biomes'])} biomes, "
       f"{len(lookups['samples'])} lookup samples, {len(decoration_reached)} decoration files and block tags with "
-      f"{decoration_refs} references and {len(block_refs)} blocks")
+      f"{decoration_refs} references and {len(block_refs)} blocks, vanilla's order over {len(order['biomes'])} biomes, "
+      f"{len(providers['providers'])} provider histograms, {vein_samples} ore vein samples, {len(probes)} feature probes")

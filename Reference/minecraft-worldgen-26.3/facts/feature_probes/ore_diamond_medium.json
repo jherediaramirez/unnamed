@@ -1,0 +1,551 @@
+{
+ "generated_by": "tools/feature_probe.py",
+ "minecraft": "26.3",
+ "feature": "minecraft:ore_diamond_medium",
+ "config": {
+  "size": 8,
+  "discard_chance_on_air_exposure": 0.5
+ },
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:deepslate",
+    -63,
+    -17
+   ],
+   [
+    "minecraft:tuff",
+    -16,
+    15
+   ],
+   [
+    "minecraft:stone",
+    16,
+    83
+   ],
+   [
+    "minecraft:air",
+    84,
+    84
+   ],
+   [
+    "minecraft:stone",
+    85,
+    111
+   ]
+  ],
+  "grid_spacing": 32,
+  "bands": {
+   "deepslate": {
+    "origin_y": -40,
+    "window": [
+     -63,
+     -21
+    ]
+   },
+   "tuff": {
+    "origin_y": 0,
+    "window": [
+     -20,
+     21
+    ]
+   },
+   "stone": {
+    "origin_y": 44,
+    "window": [
+     22,
+     63
+    ]
+   },
+   "air": {
+    "origin_y": 84,
+    "window": [
+     64,
+     111
+    ]
+   }
+  }
+ },
+ "note": "vanilla's random differs per call: compare distributions, not blocks",
+ "bands": {
+  "deepslate": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 5.63,
+     "std": 1.4398,
+     "min": 3,
+     "max": 9,
+     "percentiles": {
+      "5": 4.0,
+      "25": 4.0,
+      "50": 6.0,
+      "75": 6.0,
+      "95": 8.0
+     },
+     "histogram": {
+      "3": 1,
+      "4": 28,
+      "5": 17,
+      "6": 35,
+      "7": 1,
+      "8": 16,
+      "9": 2
+     }
+    },
+    "minecraft:deepslate_diamond_ore": {
+     "mean": 5.63,
+     "std": 1.4398,
+     "min": 3,
+     "max": 9,
+     "percentiles": {
+      "5": 4.0,
+      "25": 4.0,
+      "50": 6.0,
+      "75": 6.0,
+      "95": 8.0
+     },
+     "histogram": {
+      "3": 1,
+      "4": 28,
+      "5": 17,
+      "6": 35,
+      "7": 1,
+      "8": 16,
+      "9": 2
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "2": 100
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 14,
+      "2": 54,
+      "3": 29,
+      "4": 3
+     }
+    },
+    "dz": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "2": 100
+     }
+    }
+   },
+   "by_dx": {
+    "-1": 275,
+    "0": 288
+   },
+   "by_dy": {
+    "-3": 38,
+    "-2": 215,
+    "-1": 250,
+    "0": 60
+   },
+   "by_dz": {
+    "-1": 281,
+    "0": 282
+   },
+   "replaced": {
+    "minecraft:deepslate": 563
+   },
+   "by_y": {
+    "-43": {
+     "minecraft:deepslate_diamond_ore": 38
+    },
+    "-42": {
+     "minecraft:deepslate_diamond_ore": 215
+    },
+    "-41": {
+     "minecraft:deepslate_diamond_ore": 250
+    },
+    "-40": {
+     "minecraft:deepslate_diamond_ore": 60
+    }
+   }
+  },
+  "tuff": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 5.88,
+     "std": 1.6388,
+     "min": 2,
+     "max": 8,
+     "percentiles": {
+      "5": 3.0,
+      "25": 5.0,
+      "50": 6.0,
+      "75": 8.0,
+      "95": 8.0
+     },
+     "histogram": {
+      "2": 2,
+      "3": 5,
+      "4": 15,
+      "5": 18,
+      "6": 29,
+      "7": 3,
+      "8": 28
+     }
+    },
+    "minecraft:deepslate_diamond_ore": {
+     "mean": 5.43,
+     "std": 1.6447,
+     "min": 2,
+     "max": 8,
+     "percentiles": {
+      "5": 3.0,
+      "25": 4.0,
+      "50": 5.0,
+      "75": 6.0,
+      "95": 8.0
+     },
+     "histogram": {
+      "2": 2,
+      "3": 6,
+      "4": 27,
+      "5": 22,
+      "6": 19,
+      "7": 3,
+      "8": 21
+     }
+    },
+    "minecraft:diamond_ore": {
+     "mean": 0.45,
+     "std": 1.0712,
+     "min": 0,
+     "max": 4,
+     "percentiles": {
+      "5": 0.0,
+      "25": 0.0,
+      "50": 0.0,
+      "75": 0.0,
+      "95": 4.0
+     },
+     "histogram": {
+      "0": 78,
+      "1": 14,
+      "3": 1,
+      "4": 7
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "1": 2,
+      "2": 98
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 5,
+      "2": 68,
+      "3": 27
+     }
+    },
+    "dz": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "1": 1,
+      "2": 99
+     }
+    }
+   },
+   "by_dx": {
+    "-1": 280,
+    "0": 308
+   },
+   "by_dy": {
+    "-3": 61,
+    "-2": 248,
+    "-1": 234,
+    "0": 45
+   },
+   "by_dz": {
+    "-1": 292,
+    "0": 296
+   },
+   "replaced": {
+    "minecraft:tuff": 588
+   },
+   "by_y": {
+    "-3": {
+     "minecraft:deepslate_diamond_ore": 61
+    },
+    "-2": {
+     "minecraft:deepslate_diamond_ore": 248
+    },
+    "-1": {
+     "minecraft:deepslate_diamond_ore": 234
+    },
+    "0": {
+     "minecraft:diamond_ore": 45
+    }
+   }
+  },
+  "stone": {
+   "placements": 100,
+   "placed": 100,
+   "failed": 0,
+   "blocks": {
+    "total": {
+     "mean": 5.31,
+     "std": 1.4879,
+     "min": 2,
+     "max": 9,
+     "percentiles": {
+      "5": 3.0,
+      "25": 4.0,
+      "50": 5.0,
+      "75": 6.0,
+      "95": 8.0
+     },
+     "histogram": {
+      "2": 2,
+      "3": 5,
+      "4": 27,
+      "5": 22,
+      "6": 28,
+      "7": 4,
+      "8": 10,
+      "9": 2
+     }
+    },
+    "minecraft:diamond_ore": {
+     "mean": 5.31,
+     "std": 1.4879,
+     "min": 2,
+     "max": 9,
+     "percentiles": {
+      "5": 3.0,
+      "25": 4.0,
+      "50": 5.0,
+      "75": 6.0,
+      "95": 8.0
+     },
+     "histogram": {
+      "2": 2,
+      "3": 5,
+      "4": 27,
+      "5": 22,
+      "6": 28,
+      "7": 4,
+      "8": 10,
+      "9": 2
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "1": 1,
+      "2": 99
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": 0,
+     "span_histogram": {
+      "1": 10,
+      "2": 56,
+      "3": 31,
+      "4": 3
+     }
+    },
+    "dz": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "1": 2,
+      "2": 98
+     }
+    }
+   },
+   "by_dx": {
+    "-1": 258,
+    "0": 273
+   },
+   "by_dy": {
+    "-3": 63,
+    "-2": 231,
+    "-1": 195,
+    "0": 42
+   },
+   "by_dz": {
+    "-1": 260,
+    "0": 271
+   },
+   "replaced": {
+    "minecraft:stone": 531
+   },
+   "by_y": {
+    "41": {
+     "minecraft:diamond_ore": 63
+    },
+    "42": {
+     "minecraft:diamond_ore": 231
+    },
+    "43": {
+     "minecraft:diamond_ore": 195
+    },
+    "44": {
+     "minecraft:diamond_ore": 42
+    }
+   }
+  },
+  "air": {
+   "placements": 100,
+   "placed": 97,
+   "failed": 3,
+   "blocks": {
+    "total": {
+     "mean": 4.15,
+     "std": 2.1278,
+     "min": 0,
+     "max": 9,
+     "percentiles": {
+      "5": 1.0,
+      "25": 2.0,
+      "50": 4.0,
+      "75": 5.0,
+      "95": 8.0
+     },
+     "histogram": {
+      "0": 3,
+      "1": 6,
+      "2": 20,
+      "3": 8,
+      "4": 19,
+      "5": 20,
+      "6": 10,
+      "7": 4,
+      "8": 9,
+      "9": 1
+     }
+    },
+    "minecraft:diamond_ore": {
+     "mean": 4.15,
+     "std": 2.1278,
+     "min": 0,
+     "max": 9,
+     "percentiles": {
+      "5": 1.0,
+      "25": 2.0,
+      "50": 4.0,
+      "75": 5.0,
+      "95": 8.0
+     },
+     "histogram": {
+      "0": 3,
+      "1": 6,
+      "2": 20,
+      "3": 8,
+      "4": 19,
+      "5": 20,
+      "6": 10,
+      "7": 4,
+      "8": 9,
+      "9": 1
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "0": 3,
+      "1": 15,
+      "2": 82
+     }
+    },
+    "dy": {
+     "min": -3,
+     "max": -1,
+     "span_histogram": {
+      "0": 3,
+      "1": 36,
+      "2": 54,
+      "3": 7
+     }
+    },
+    "dz": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "0": 3,
+      "1": 10,
+      "2": 87
+     }
+    }
+   },
+   "by_dx": {
+    "-1": 195,
+    "0": 220
+   },
+   "by_dy": {
+    "-3": 69,
+    "-2": 234,
+    "-1": 112
+   },
+   "by_dz": {
+    "-1": 204,
+    "0": 211
+   },
+   "replaced": {
+    "minecraft:stone": 415
+   },
+   "by_y": {
+    "81": {
+     "minecraft:diamond_ore": 69
+    },
+    "82": {
+     "minecraft:diamond_ore": 234
+    },
+    "83": {
+     "minecraft:diamond_ore": 112
+    }
+   }
+  }
+ },
+ "exposure": {
+  "air": {
+   "adjacent": 112,
+   "rest": 303,
+   "plane": 0
+  },
+  "solid": {
+   "adjacent": 195,
+   "rest": 294
+  },
+  "ratio": 0.5573
+ }
+}

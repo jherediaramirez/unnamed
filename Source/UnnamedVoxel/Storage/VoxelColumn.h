@@ -55,6 +55,10 @@ public:
 
     // Sets one cell (local X and Y, world Z) and that X, Y's heightmaps; a Z outside the world changes nothing.
     void SetState(int32 X, int32 Y, int32 Z, uint16 State, const FVoxelBlockTable& Table);
+    // Replaces one section's states (FVoxelSection::Volume, in FVoxelSection::GetIndex order) and leaves the
+    // heightmaps alone: Finalize calls UpdateHeights for each X, Y where a write changed what the heightmaps count.
+    void SetSectionStates(int32 Section, TConstArrayView<uint16> States);
+    void UpdateHeights(int32 X, int32 Y, const FVoxelBlockTable& Table);
     SIZE_T GetAllocatedSize() const;
 
 private:

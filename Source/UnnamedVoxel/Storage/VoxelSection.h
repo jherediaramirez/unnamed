@@ -21,7 +21,15 @@ public:
     // Compresses Volume dense states into the narrowest form.
     static FVoxelSection FromStates(TConstArrayView<uint16> States);
 
-    uint16 Get(int32 Index) const;
+    uint16 Get(int32 Index) const
+    {
+        if (Bits == 0) return Uniform;
+        // 16 indices per word at 4 bits, 8 at 8, 4 at 16.
+        const int32 Shift = Bits == 4 ? 4 : Bits == 8 ? 3 : 2;
+        const uint32 Raw =
+            uint32(Words.GetData()[Index >> Shift] >> ((Index & ((1 << Shift) - 1)) * Bits)) & ((1u << Bits) - 1);
+        return Bits == 16 ? uint16(Raw) : Palette.GetData()[Raw];
+    }
     uint16 Get(int32 X, int32 Y, int32 Z) const { return Get(GetIndex(X, Y, Z)); }
     // Widens the indices when the palette fills up.
     void Set(int32 Index, uint16 State);
@@ -44,6 +52,9 @@ public:
 private:
     static int32 GetWidthFor(int32 DistinctStates);
     void Encode(TConstArrayView<uint16> States, TConstArrayView<uint16> NewPalette, int32 NewBits);
+    // Encode with every state's palette index already in Lookup's low 16 bits (FromStates' stamp table).
+    void EncodeStamped(
+        TConstArrayView<uint16> States, TConstArrayView<uint16> NewPalette, int32 NewBits, const uint32* Lookup);
     uint32 GetRaw(int32 Index) const;
     void SetRaw(int32 Index, uint32 Value);
 

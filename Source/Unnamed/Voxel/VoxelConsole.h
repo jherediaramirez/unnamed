@@ -17,6 +17,11 @@ namespace VoxelConsole
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarTintBlend;
     // Debug only, not a setting: columns at the edge of the view mesh against air (captures' cut through the world).
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarEdgeWalls;
+    // Decoration (phase 6): on, the bench and gate columns are decorated; off is the control that keeps them as
+    // Generate leaves them. Streaming decorates only through the preview until S3.
+    extern UNNAMED_API TAutoConsoleVariable<bool> CVarDecoration;
+    // Captures only, until S3: streaming builds each column decorated through the oracle. Read when a world starts.
+    extern UNNAMED_API TAutoConsoleVariable<bool> CVarDecorationPreview;
 
     // Tasks in flight when voxel.MaxTasksInFlight is 0: twice the task workers, so workers never idle between
     // finishing one job and the game thread queuing the next.

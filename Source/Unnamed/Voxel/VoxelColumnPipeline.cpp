@@ -1,4 +1,5 @@
 #include "Voxel/VoxelColumnPipeline.h"
+#include "Decoration/VoxelDecorationPreview.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "HAL/PlatformTime.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
@@ -269,14 +270,17 @@ void FVoxelColumnPipeline::LaunchGenerate(FIntPoint Column, FRecord& Record)
     Job.Serial = Record.Serial;
     Job.Task = UE::Tasks::Launch(
         UE_SOURCE_LOCATION,
-        [Terrain = Terrain, Table = Table, Column, Replay = MoveTemp(Replay)]
+        [Terrain = Terrain, Table = Table, Preview = Settings.Preview, Column, Replay = MoveTemp(Replay)]
         {
             TRACE_CPUPROFILER_EVENT_SCOPE(VoxelPipeline_Generate);
             const double Start = FPlatformTime::Seconds();
             // The dense column is scratch, reused by every job on this worker.
             thread_local TArray<uint16> Dense;
             TSharedPtr<FVoxelColumn, ESPMode::ThreadSafe> Built = MakeShared<FVoxelColumn, ESPMode::ThreadSafe>(Column);
-            Terrain->Generate(Column, *Built, Dense);
+            if (Preview)
+                Preview->Build(Column, *Built);
+            else
+                Terrain->Generate(Column, *Built, Dense);
             for (const TPair<int32, uint16>& Edit : Replay)
                 Built->SetState(Edit.Key % VoxelConstants::ColumnSize,
                     Edit.Key / VoxelConstants::ColumnSize % VoxelConstants::ColumnSize,

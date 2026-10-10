@@ -1,0 +1,471 @@
+{
+ "generated_by": "tools/feature_probe.py",
+ "minecraft": "26.3",
+ "feature": "minecraft:ore_emerald",
+ "config": {
+  "size": 3,
+  "discard_chance_on_air_exposure": 0.0
+ },
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:deepslate",
+    -63,
+    -17
+   ],
+   [
+    "minecraft:tuff",
+    -16,
+    15
+   ],
+   [
+    "minecraft:stone",
+    16,
+    83
+   ],
+   [
+    "minecraft:air",
+    84,
+    84
+   ],
+   [
+    "minecraft:stone",
+    85,
+    111
+   ]
+  ],
+  "grid_spacing": 32,
+  "bands": {
+   "deepslate": {
+    "origin_y": -40,
+    "window": [
+     -63,
+     -21
+    ]
+   },
+   "tuff": {
+    "origin_y": 0,
+    "window": [
+     -20,
+     21
+    ]
+   },
+   "stone": {
+    "origin_y": 44,
+    "window": [
+     22,
+     63
+    ]
+   },
+   "air": {
+    "origin_y": 84,
+    "window": [
+     64,
+     111
+    ]
+   }
+  }
+ },
+ "note": "vanilla's random differs per call: compare distributions, not blocks",
+ "bands": {
+  "deepslate": {
+   "placements": 100,
+   "placed": 31,
+   "failed": 69,
+   "blocks": {
+    "total": {
+     "mean": 0.41,
+     "std": 0.6942,
+     "min": 0,
+     "max": 3,
+     "percentiles": {
+      "5": 0.0,
+      "25": 0.0,
+      "50": 0.0,
+      "75": 1.0,
+      "95": 2.0
+     },
+     "histogram": {
+      "0": 69,
+      "1": 23,
+      "2": 6,
+      "3": 2
+     }
+    },
+    "minecraft:deepslate_emerald_ore": {
+     "mean": 0.41,
+     "std": 0.6942,
+     "min": 0,
+     "max": 3,
+     "percentiles": {
+      "5": 0.0,
+      "25": 0.0,
+      "50": 0.0,
+      "75": 1.0,
+      "95": 2.0
+     },
+     "histogram": {
+      "0": 69,
+      "1": 23,
+      "2": 6,
+      "3": 2
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "0": 69,
+      "1": 23,
+      "2": 8
+     }
+    },
+    "dy": {
+     "min": -2,
+     "max": -1,
+     "span_histogram": {
+      "0": 69,
+      "1": 28,
+      "2": 3
+     }
+    },
+    "dz": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "0": 69,
+      "1": 23,
+      "2": 8
+     }
+    }
+   },
+   "by_dx": {
+    "-1": 20,
+    "0": 21
+   },
+   "by_dy": {
+    "-2": 22,
+    "-1": 19
+   },
+   "by_dz": {
+    "-1": 14,
+    "0": 27
+   },
+   "replaced": {
+    "minecraft:deepslate": 41
+   },
+   "by_y": {
+    "-42": {
+     "minecraft:deepslate_emerald_ore": 22
+    },
+    "-41": {
+     "minecraft:deepslate_emerald_ore": 19
+    }
+   }
+  },
+  "tuff": {
+   "placements": 100,
+   "placed": 40,
+   "failed": 60,
+   "blocks": {
+    "total": {
+     "mean": 0.53,
+     "std": 0.7135,
+     "min": 0,
+     "max": 2,
+     "percentiles": {
+      "5": 0.0,
+      "25": 0.0,
+      "50": 0.0,
+      "75": 1.0,
+      "95": 2.0
+     },
+     "histogram": {
+      "0": 60,
+      "1": 27,
+      "2": 13
+     }
+    },
+    "minecraft:deepslate_emerald_ore": {
+     "mean": 0.53,
+     "std": 0.7135,
+     "min": 0,
+     "max": 2,
+     "percentiles": {
+      "5": 0.0,
+      "25": 0.0,
+      "50": 0.0,
+      "75": 1.0,
+      "95": 2.0
+     },
+     "histogram": {
+      "0": 60,
+      "1": 27,
+      "2": 13
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "0": 60,
+      "1": 29,
+      "2": 11
+     }
+    },
+    "dy": {
+     "min": -2,
+     "max": -1,
+     "span_histogram": {
+      "0": 60,
+      "1": 34,
+      "2": 6
+     }
+    },
+    "dz": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "0": 60,
+      "1": 30,
+      "2": 10
+     }
+    }
+   },
+   "by_dx": {
+    "-1": 25,
+    "0": 28
+   },
+   "by_dy": {
+    "-2": 26,
+    "-1": 27
+   },
+   "by_dz": {
+    "-1": 29,
+    "0": 24
+   },
+   "replaced": {
+    "minecraft:tuff": 53
+   },
+   "by_y": {
+    "-2": {
+     "minecraft:deepslate_emerald_ore": 26
+    },
+    "-1": {
+     "minecraft:deepslate_emerald_ore": 27
+    }
+   }
+  },
+  "stone": {
+   "placements": 100,
+   "placed": 27,
+   "failed": 73,
+   "blocks": {
+    "total": {
+     "mean": 0.3,
+     "std": 0.5196,
+     "min": 0,
+     "max": 2,
+     "percentiles": {
+      "5": 0.0,
+      "25": 0.0,
+      "50": 0.0,
+      "75": 1.0,
+      "95": 1.0
+     },
+     "histogram": {
+      "0": 73,
+      "1": 24,
+      "2": 3
+     }
+    },
+    "minecraft:emerald_ore": {
+     "mean": 0.3,
+     "std": 0.5196,
+     "min": 0,
+     "max": 2,
+     "percentiles": {
+      "5": 0.0,
+      "25": 0.0,
+      "50": 0.0,
+      "75": 1.0,
+      "95": 1.0
+     },
+     "histogram": {
+      "0": 73,
+      "1": 24,
+      "2": 3
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "0": 73,
+      "1": 24,
+      "2": 3
+     }
+    },
+    "dy": {
+     "min": -2,
+     "max": -1,
+     "span_histogram": {
+      "0": 73,
+      "1": 26,
+      "2": 1
+     }
+    },
+    "dz": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "0": 73,
+      "1": 24,
+      "2": 3
+     }
+    }
+   },
+   "by_dx": {
+    "-1": 16,
+    "0": 14
+   },
+   "by_dy": {
+    "-2": 10,
+    "-1": 20
+   },
+   "by_dz": {
+    "-1": 13,
+    "0": 17
+   },
+   "replaced": {
+    "minecraft:stone": 30
+   },
+   "by_y": {
+    "42": {
+     "minecraft:emerald_ore": 10
+    },
+    "43": {
+     "minecraft:emerald_ore": 20
+    }
+   }
+  },
+  "air": {
+   "placements": 100,
+   "placed": 28,
+   "failed": 72,
+   "blocks": {
+    "total": {
+     "mean": 0.37,
+     "std": 0.6427,
+     "min": 0,
+     "max": 2,
+     "percentiles": {
+      "5": 0.0,
+      "25": 0.0,
+      "50": 0.0,
+      "75": 1.0,
+      "95": 2.0
+     },
+     "histogram": {
+      "0": 72,
+      "1": 19,
+      "2": 9
+     }
+    },
+    "minecraft:emerald_ore": {
+     "mean": 0.37,
+     "std": 0.6427,
+     "min": 0,
+     "max": 2,
+     "percentiles": {
+      "5": 0.0,
+      "25": 0.0,
+      "50": 0.0,
+      "75": 1.0,
+      "95": 2.0
+     },
+     "histogram": {
+      "0": 72,
+      "1": 19,
+      "2": 9
+     }
+    }
+   },
+   "extent": {
+    "dx": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "0": 72,
+      "1": 21,
+      "2": 7
+     }
+    },
+    "dy": {
+     "min": -2,
+     "max": -1,
+     "span_histogram": {
+      "0": 72,
+      "1": 27,
+      "2": 1
+     }
+    },
+    "dz": {
+     "min": -1,
+     "max": 0,
+     "span_histogram": {
+      "0": 72,
+      "1": 22,
+      "2": 6
+     }
+    }
+   },
+   "by_dx": {
+    "-1": 17,
+    "0": 20
+   },
+   "by_dy": {
+    "-2": 17,
+    "-1": 20
+   },
+   "by_dz": {
+    "-1": 20,
+    "0": 17
+   },
+   "replaced": {
+    "minecraft:stone": 37
+   },
+   "by_y": {
+    "82": {
+     "minecraft:emerald_ore": 17
+    },
+    "83": {
+     "minecraft:emerald_ore": 20
+    }
+   }
+  }
+ },
+ "exposure": {
+  "air": {
+   "adjacent": 20,
+   "rest": 17,
+   "plane": 0
+  },
+  "solid": {
+   "adjacent": 20,
+   "rest": 10
+  },
+  "ratio": 0.5882
+ }
+}

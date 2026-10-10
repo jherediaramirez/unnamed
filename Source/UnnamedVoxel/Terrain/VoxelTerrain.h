@@ -4,6 +4,7 @@
 
 class FVoxelBiomeSource;
 class FVoxelColumn;
+class FVoxelFeatureGraph;
 class FVoxelTintTable;
 
 // A world's column generator: the stand-in height terrain, a flat world, and later phase 4's density terrain. A
@@ -31,4 +32,8 @@ public:
     // The colours its biomes give grass, foliage and water, indexed like the columns' biomes; null without biomes or
     // colormaps (blocks keep their plains tints).
     virtual const FVoxelTintTable* GetTints() const { return nullptr; }
+    // The decoration data its columns are decorated with (phase 6), or null when it has none; and the world seed the
+    // decoration's random streams start from.
+    virtual TSharedPtr<const FVoxelFeatureGraph> GetFeatures() const { return nullptr; }
+    virtual uint64 GetSeed() const { return 0; }
 };

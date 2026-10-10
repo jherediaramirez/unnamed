@@ -8,13 +8,30 @@ namespace
         return Bits == 4 ? 4 : Bits == 8 ? 3 : 2;
     }
 
+    // Per thread, for every state id: the generation that last stamped it (high 16 bits) and its palette index (low
+    // 16 bits). A pass stamps the states it meets with a fresh generation, so nothing has to be cleared between passes.
+    uint32* GetStateTable(uint32& OutGeneration)
+    {
+        thread_local TArray<uint32> Table;
+        thread_local uint32 Generation = 0;
+        if (Table.IsEmpty()) Table.SetNumZeroed(1 << 16);
+        Generation = (Generation + 1) & 0xFFFF;
+        if (Generation == 0)
+        {
+            FMemory::Memzero(Table.GetData(), Table.Num() * sizeof(uint32));
+            Generation = 1;
+        }
+        OutGeneration = Generation << 16;
+        return Table.GetData();
+    }
+
     // Packs Volume states into Words a whole word at a time, as SetRaw would place them: index I at bit
-    // (I % PerWord) * Bits of word I / PerWord. Below 16 bits each state becomes its first index in Palette, which
-    // holds every state. Returns the non-air count.
-    template <int32 Bits> int32 EncodeWords(const uint16* States, const uint16* Palette, uint64* Words)
+    // (I % PerWord) * Bits of word I / PerWord. Below 16 bits each state becomes its palette index from Lookup's low
+    // 16 bits. Returns the non-air count.
+    template <int32 Bits> int32 EncodeWords(const uint16* States, const uint32* Lookup, uint64* Words)
     {
         constexpr int32 PerWord = 64 / Bits;
-        int32 NonAir = 0, Last = 0;
+        int32 NonAir = 0;
         for (int32 Word = 0; Word < FVoxelSection::Volume / PerWord; ++Word)
         {
             uint64 Value = 0;
@@ -22,19 +39,25 @@ namespace
             {
                 const uint16 State = *States++;
                 NonAir += int32(State != 0);
-                uint32 Raw = State;
-                if constexpr (Bits != 16)
-                {
-                    if (Palette[Last] != State)
-                        for (Last = 0; Palette[Last] != State;)
-                            ++Last;
-                    Raw = uint32(Last);
-                }
+                const uint32 Raw = Bits == 16 ? uint32(State) : Lookup[State] & 0xFFFF;
                 Value |= uint64(Raw) << (Slot * Bits);
             }
             *Words++ = Value;
         }
         return NonAir;
+    }
+
+    // The reverse: every index of Words through the palette (below 16 bits) into Out.
+    template <int32 Bits> void ExpandWords(const uint64* Words, const uint16* Palette, uint16* Out)
+    {
+        constexpr int32 PerWord = 64 / Bits;
+        constexpr uint64 Mask = (uint64(1) << Bits) - 1;
+        for (int32 Word = 0; Word < FVoxelSection::Volume / PerWord; ++Word)
+        {
+            uint64 Value = Words[Word];
+            for (int32 Slot = 0; Slot < PerWord; ++Slot, Value >>= Bits)
+                *Out++ = Bits == 16 ? uint16(Value & Mask) : Palette[Value & Mask];
+        }
     }
 }
 
@@ -48,16 +71,15 @@ int32 FVoxelSection::GetWidthFor(int32 DistinctStates)
 FVoxelSection FVoxelSection::FromStates(TConstArrayView<uint16> States)
 {
     check(States.Num() == Volume);
-    // Distinct states in first-seen order. Runs of one state are the norm, so remembering the last one found keeps
-    // the palette search off most cells.
+    // Distinct states in first-seen order, each stamped with its palette index for the encoding.
+    uint32 Generation = 0;
+    uint32* Table = GetStateTable(Generation);
     TArray<uint16, TInlineAllocator<16>> Found;
-    uint16 Last = States[0];
-    Found.Add(Last);
     for (const uint16 State : States)
-        if (State != Last)
+        if ((Table[State] & 0xFFFF0000u) != Generation)
         {
-            Last = State;
-            if (!Found.Contains(State)) Found.Add(State);
+            Table[State] = Generation | uint32(Found.Num());
+            Found.Add(State);
         }
 
     FVoxelSection Section;
@@ -66,11 +88,23 @@ FVoxelSection FVoxelSection::FromStates(TConstArrayView<uint16> States)
         Section = FVoxelSection(Found[0]);
         return Section;
     }
-    Section.Encode(States, Found, GetWidthFor(Found.Num()));
+    Section.EncodeStamped(States, Found, GetWidthFor(Found.Num()), Table);
     return Section;
 }
 
 void FVoxelSection::Encode(TConstArrayView<uint16> States, TConstArrayView<uint16> NewPalette, int32 NewBits)
+{
+    // Each state takes its first index in NewPalette.
+    uint32 Generation = 0;
+    uint32* Table = GetStateTable(Generation);
+    for (int32 Index = 0; Index < NewPalette.Num(); ++Index)
+        if ((Table[NewPalette[Index]] & 0xFFFF0000u) != Generation)
+            Table[NewPalette[Index]] = Generation | uint32(Index);
+    EncodeStamped(States, NewPalette, NewBits, Table);
+}
+
+void FVoxelSection::EncodeStamped(
+    TConstArrayView<uint16> States, TConstArrayView<uint16> NewPalette, int32 NewBits, const uint32* Lookup)
 {
     Bits = uint8(NewBits);
     Uniform = 0;
@@ -79,9 +113,9 @@ void FVoxelSection::Encode(TConstArrayView<uint16> States, TConstArrayView<uint1
     if (Bits != 16) Palette.Append(NewPalette.GetData(), NewPalette.Num());
     Words.Empty(Volume * Bits / 64);
     Words.SetNumUninitialized(Volume * Bits / 64);
-    NonAir = Bits == 4 ? EncodeWords<4>(States.GetData(), Palette.GetData(), Words.GetData())
-        : Bits == 8    ? EncodeWords<8>(States.GetData(), Palette.GetData(), Words.GetData())
-                       : EncodeWords<16>(States.GetData(), Palette.GetData(), Words.GetData());
+    NonAir = Bits == 4 ? EncodeWords<4>(States.GetData(), Lookup, Words.GetData())
+        : Bits == 8    ? EncodeWords<8>(States.GetData(), Lookup, Words.GetData())
+                       : EncodeWords<16>(States.GetData(), Lookup, Words.GetData());
 }
 
 uint32 FVoxelSection::GetRaw(int32 Index) const
@@ -98,13 +132,6 @@ void FVoxelSection::SetRaw(int32 Index, uint32 Value)
     const uint64 Mask = ((1ull << Bits) - 1) << Offset;
     uint64& Word = Words[Index >> Shift];
     Word = (Word & ~Mask) | (uint64(Value) << Offset);
-}
-
-uint16 FVoxelSection::Get(int32 Index) const
-{
-    if (Bits == 0) return Uniform;
-    const uint32 Raw = GetRaw(Index);
-    return Bits == 16 ? uint16(Raw) : Palette[Raw];
 }
 
 void FVoxelSection::Set(int32 Index, uint16 State)
@@ -154,8 +181,12 @@ void FVoxelSection::Expand(TArrayView<uint16> Out) const
             Out[Index] = Uniform;
         return;
     }
-    for (int32 Index = 0; Index < Volume; ++Index)
-        Out[Index] = Get(Index);
+    if (Bits == 4)
+        ExpandWords<4>(Words.GetData(), Palette.GetData(), Out.GetData());
+    else if (Bits == 8)
+        ExpandWords<8>(Words.GetData(), Palette.GetData(), Out.GetData());
+    else
+        ExpandWords<16>(Words.GetData(), Palette.GetData(), Out.GetData());
 }
 
 void FVoxelSection::Compact()

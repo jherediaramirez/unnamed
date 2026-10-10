@@ -2,7 +2,10 @@
 #include "Async/Fundamental/Scheduler.h"
 #include "Biome/VoxelBiomeTable.h"
 #include "Blocks/VoxelBlockTable.h"
+#include "Decoration/VoxelFeatureGraph.h"
 #include "Generation/VoxelArea.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 #include "Modules/ModuleManager.h"
 #include "Random/VoxelSeed.h"
 #include "Streaming/VoxelStreamingPlanner.h"
@@ -37,6 +40,13 @@ TAutoConsoleVariable<int32> VoxelConsole::CVarTintBlend(TEXT("voxel.TintBlend"),
          "biome's colour, -1 keeps every block's plains tint. A change remeshes every loaded column."));
 TAutoConsoleVariable<bool> VoxelConsole::CVarEdgeWalls(TEXT("voxel.Debug.EdgeWalls"), false,
     TEXT("Debug: mesh the columns at the edge of the view against air, showing the cut through the world."));
+TAutoConsoleVariable<bool> VoxelConsole::CVarDecoration(TEXT("voxel.Decoration"), true,
+    TEXT("Decoration (phase 6): 1 decorates the columns of voxel.Bench Columns and the gates (ores since S2); 0 keeps "
+         "them as Generate leaves them, the control for comparisons. Streaming decorates only through "
+         "voxel.Decoration.Preview until S3."));
+TAutoConsoleVariable<bool> VoxelConsole::CVarDecorationPreview(TEXT("voxel.Decoration.Preview"), false,
+    TEXT("Captures only, until S3: streaming builds each column decorated through the oracle (about 9 Decorates per "
+         "column on top of Generate). Read when a world starts."));
 
 int32 VoxelConsole::GetTintBlend()
 {
@@ -91,6 +101,24 @@ FString VoxelConsole::DescribeInfo()
 
 namespace
 {
+    // The decoration data read from the reference and compiled for a bench terrain's biomes.
+    TSharedPtr<FVoxelDecorator> MakeBenchDecorator(const FVoxelDensityTerrain& Terrain, const FVoxelBlockTable& Table,
+        const FVoxelDecorationOptions& Options, FString& OutError)
+    {
+        FVoxelFeatureGraph Graph;
+        if (!Terrain.GetBiomeSource())
+        {
+            OutError = TEXT("decoration needs a terrain with biomes");
+            return nullptr;
+        }
+        if (!VoxelWorldgen::ReadFeatures(VoxelWorldgen::GetReferenceRoot(), Graph, OutError)) return nullptr;
+        TSharedPtr<FVoxelDecorator> Decorator = MakeShared<FVoxelDecorator>();
+        if (!Decorator->Initialize(
+                Graph, Table, Terrain.GetBiomeSource()->GetTable(), Terrain.GetSeed(), Options, &OutError))
+            return nullptr;
+        return Decorator;
+    }
+
     // Each line to the console that ran the command and to the log, so headless runs keep the output.
     void PrintLines(FOutputDevice& Output, const FString& Text)
     {
@@ -218,10 +246,22 @@ namespace
                         PrintLines(Output, Terrain.GetError());
                         return;
                     }
+                    TSharedPtr<FVoxelDecorator> Decorator;
+                    if (VoxelConsole::CVarDecoration.GetValueOnGameThread())
+                    {
+                        Decorator = MakeBenchDecorator(Terrain, *Table, {}, Error);
+                        if (!Decorator)
+                        {
+                            PrintLines(Output, Error);
+                            return;
+                        }
+                    }
                     PrintLines(Output,
-                        FString::Printf(TEXT("Voxel column bench, %s, caves %s, seed %s:"), *PresetName,
-                            Settings.bCaves ? TEXT("on") : TEXT("off"), *Seed.Describe()) +
-                            TEXT("\n") + VoxelBench::RunColumns(*Table, Terrain, &Terrain, Options, Radius));
+                        FString::Printf(TEXT("Voxel column bench, %s, caves %s, decoration %s, seed %s:"), *PresetName,
+                            Settings.bCaves ? TEXT("on") : TEXT("off"), Decorator ? TEXT("on") : TEXT("off"),
+                            *Seed.Describe()) +
+                            TEXT("\n") +
+                            VoxelBench::RunColumns(*Table, Terrain, &Terrain, Options, Radius, Decorator.Get()));
                     return;
                 }
                 if (!Args.IsEmpty() && Args[0] == TEXT("Climate"))
@@ -275,9 +315,159 @@ namespace
                             TEXT("\n") + VoxelBench::RunDensity(Terrain, Radius));
                     return;
                 }
+                if (!Args.IsEmpty() && Args[0] == TEXT("Decorate"))
+                {
+                    if (Args.Num() > 1 && !FCString::IsNumeric(*Args[1]))
+                    {
+                        PrintLines(Output, TEXT("Usage: voxel.Bench Decorate [radius] [preset] [nocaves]"));
+                        return;
+                    }
+                    const int32 Radius = Args.Num() > 1 ? FMath::Clamp(FCString::Atoi(*Args[1]), 0, 16) : 4;
+                    const FString PresetName = Args.Num() > 2 ? Args[2] : TEXT("overworld");
+                    FString Error;
+                    FVoxelTerrainPreset Preset;
+                    FVoxelBiomeTable Biomes;
+                    FVoxelSurfaceInputs Surface;
+                    if (!VoxelClimateDebug::GetSampler(PresetName, Seed.Value, Error) ||
+                        !VoxelTerrainFactory::ReadInputs(
+                            VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Biomes, Surface, Error))
+                    {
+                        PrintLines(Output, Error);
+                        return;
+                    }
+                    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+                    FVoxelDensityTerrainSettings Settings;
+                    Settings.bCaves = !(Args.Num() > 3 && Args[3] == TEXT("nocaves"));
+                    const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings, &Biomes, &Surface);
+                    FVoxelDecorationOptions NoEarlyOut;
+                    NoEarlyOut.bEarlyOut = false;
+                    const TSharedPtr<FVoxelDecorator> Decorator =
+                        Terrain.IsValid() ? MakeBenchDecorator(Terrain, *Table, {}, Error) : nullptr;
+                    const TSharedPtr<FVoxelDecorator> Exhaustive =
+                        Decorator ? MakeBenchDecorator(Terrain, *Table, NoEarlyOut, Error) : nullptr;
+                    if (!Terrain.IsValid() || !Exhaustive)
+                    {
+                        PrintLines(Output, Terrain.IsValid() ? Error : Terrain.GetError());
+                        return;
+                    }
+                    PrintLines(Output,
+                        FString::Printf(TEXT("Voxel decoration bench, %s, caves %s, seed %s:"), *PresetName,
+                            Settings.bCaves ? TEXT("on") : TEXT("off"), *Seed.Describe()) +
+                            TEXT("\n") + VoxelBench::RunDecorate(*Decorator, *Exhaustive, Terrain, Radius));
+                    return;
+                }
                 PrintLines(Output,
                     TEXT("Usage: voxel.Bench Noise [millions] | voxel.Bench Columns [radius] [preset|standin] "
                          "[nocaves] | voxel.Bench "
-                         "Climate [radius] [preset] | voxel.Bench Density [radius] [preset] [nocaves]"));
+                         "Climate [radius] [preset] | voxel.Bench Density [radius] [preset] [nocaves] | voxel.Bench "
+                         "Decorate [radius] [preset] [nocaves]"));
+            }));
+
+    FAutoConsoleCommand VoxelOreHistogramCommand(TEXT("voxel.OreHistogram"),
+        TEXT(
+            "voxel.OreHistogram [radius] [preset] [nocaves] [nodiscard]: decorates (2 radius + 1)^2 columns of the dev "
+            "seed (default radius 8, at most 16; preset overworld) and writes the blocks the ore features placed, per "
+            "Z and per "
+            "state (final minus generated), to "
+            "<project>/Saved/Voxel/OreHistogram-<preset>-r<radius>[-nocaves][-nodiscard].csv "
+            "(Scripts/OreHistogram.py draws it)."),
+        FConsoleCommandWithArgsAndOutputDeviceDelegate::CreateLambda(
+            [](const TArray<FString>& Args, FOutputDevice& Output)
+            {
+                const FVoxelSeed Seed = FVoxelSeed::Parse(UVoxelWorldSettings::Get().DevSeed);
+                // The flags may come anywhere; the radius and the preset are the others, in that order.
+                TArray<FString> Positional;
+                for (const FString& Arg : Args)
+                    if (Arg != TEXT("nocaves") && Arg != TEXT("nodiscard")) Positional.Add(Arg);
+                if (!Positional.IsEmpty() && !FCString::IsNumeric(*Positional[0]))
+                {
+                    PrintLines(Output, TEXT("Usage: voxel.OreHistogram [radius] [preset] [nocaves] [nodiscard]"));
+                    return;
+                }
+                const int32 Radius = !Positional.IsEmpty() ? FMath::Clamp(FCString::Atoi(*Positional[0]), 0, 16) : 8;
+                const FString PresetName = Positional.Num() > 1 ? Positional[1] : TEXT("overworld");
+                const bool bCaves = !Args.Contains(TEXT("nocaves")), bDiscard = !Args.Contains(TEXT("nodiscard"));
+                FString Error;
+                FVoxelTerrainPreset Preset;
+                FVoxelBiomeTable Biomes;
+                FVoxelSurfaceInputs Surface;
+                if (!VoxelClimateDebug::GetSampler(PresetName, Seed.Value, Error) ||
+                    !VoxelTerrainFactory::ReadInputs(
+                        VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Biomes, Surface, Error))
+                {
+                    PrintLines(Output, Error);
+                    return;
+                }
+                const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+                FVoxelDensityTerrainSettings Settings;
+                Settings.bCaves = bCaves;
+                const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings, &Biomes, &Surface);
+                FVoxelDecorationOptions Options;
+                Options.bDiscard = bDiscard;
+                const TSharedPtr<FVoxelDecorator> Decorator =
+                    Terrain.IsValid() ? MakeBenchDecorator(Terrain, *Table, Options, Error) : nullptr;
+                if (!Decorator)
+                {
+                    PrintLines(Output, Terrain.IsValid() ? Error : Terrain.GetError());
+                    return;
+                }
+                FVoxelDecoratedArea Area;
+                FVoxelDecoratedArea::Build(*Decorator, Terrain, FIntPoint::ZeroValue, Radius, true, false, Area);
+                // Placed blocks: each final column against its snapshot, per state and Z.
+                const TArray<TPair<uint16, FString>> States = Decorator->GetOreStates();
+                TArray<int64> Counts;
+                Counts.SetNumZeroed(States.Num() * VoxelConstants::Height);
+                TMap<uint16, int32> StateIndex;
+                for (int32 Index = 0; Index < States.Num(); ++Index)
+                    StateIndex.Add(States[Index].Key, Index);
+                TArray<uint16> Dense;
+                for (const TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>& Final : Area.Columns)
+                {
+                    FVoxelColumn Generated;
+                    Terrain.Generate(Final->GetPosition(), Generated, Dense);
+                    for (int32 Z = VoxelConstants::MinZ; Z <= VoxelConstants::MaxZ; ++Z)
+                        for (int32 Y = 0; Y < VoxelConstants::ColumnSize; ++Y)
+                            for (int32 X = 0; X < VoxelConstants::ColumnSize; ++X)
+                            {
+                                const uint16 After = Final->GetState(X, Y, Z), Before = Generated.GetState(X, Y, Z);
+                                if (After == Before) continue;
+                                const int32 Row = (Z - VoxelConstants::MinZ) * States.Num();
+                                if (const int32* Added = StateIndex.Find(After)) ++Counts[Row + *Added];
+                                if (const int32* Removed = StateIndex.Find(Before)) --Counts[Row + *Removed];
+                            }
+                }
+                FString Csv = TEXT("z");
+                for (const TPair<uint16, FString>& State : States)
+                    Csv += TEXT(",") + State.Value;
+                Csv += TEXT("\n");
+                for (int32 Z = VoxelConstants::MinZ; Z <= VoxelConstants::MaxZ; ++Z)
+                {
+                    Csv += FString::FromInt(Z);
+                    for (int32 Index = 0; Index < States.Num(); ++Index)
+                        Csv +=
+                            FString::Printf(TEXT(",%lld"), Counts[(Z - VoxelConstants::MinZ) * States.Num() + Index]);
+                    Csv += TEXT("\n");
+                }
+                const FString Path = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / TEXT("Saved") /
+                    FString::Printf(TEXT("Voxel/OreHistogram-%s-r%d%s%s.csv"), *PresetName, Radius,
+                        bCaves ? TEXT("") : TEXT("-nocaves"), bDiscard ? TEXT("") : TEXT("-nodiscard")));
+                if (!FFileHelper::SaveStringToFile(Csv, *Path))
+                {
+                    PrintLines(Output, FString::Printf(TEXT("voxel.OreHistogram: cannot write %s"), *Path));
+                    return;
+                }
+                FString Report = FString::Printf(TEXT("Ore histogram, %s, %d columns, caves %s, discard %s, seed %s: "
+                                                      "%s\n"),
+                    *PresetName, Area.Columns.Num(), bCaves ? TEXT("on") : TEXT("off"),
+                    bDiscard ? TEXT("on") : TEXT("off"), *Seed.Describe(), *Path);
+                for (int32 Index = 0; Index < States.Num(); ++Index)
+                {
+                    int64 Total = 0;
+                    for (int32 Z = 0; Z < VoxelConstants::Height; ++Z)
+                        Total += Counts[Z * States.Num() + Index];
+                    Report += FString::Printf(TEXT("  %-32s %9lld blocks, %8.1f per column\n"), *States[Index].Value,
+                        Total, double(Total) / FMath::Max(1, Area.Columns.Num()));
+                }
+                PrintLines(Output, Report);
             }));
 }

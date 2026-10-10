@@ -121,6 +121,11 @@ public:
 
     // A block's default state by id ("stone"); 0 (air) when the block is unknown.
     uint16 FindState(FName Block) const;
+    // A block by id, with or without the "minecraft:" prefix, as its states' Block; INDEX_NONE when the table has no
+    // such block. Air is block 0.
+    int32 FindBlock(FStringView Id) const;
+    // One more than the highest Block of any state: the size of a set over blocks.
+    int32 GetBlockLimit() const { return BlockLimit; }
     void SetDefaultState(FName Block, uint16 State);
     // A state's snowy=true variant (grass block, podzol, mycelium under snow); State itself when it has none.
     uint16 GetSnowyState(uint16 State) const;
@@ -128,6 +133,7 @@ public:
 
 private:
     TArray<FVoxelStateInfo> States;
+    int32 BlockLimit = 1;
     TMap<FName, uint16> DefaultStates;
     TMap<uint16, uint16> SnowyStates;
 };

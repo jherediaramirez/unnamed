@@ -120,6 +120,8 @@ public:
     {
         return Biomes.IsInitialized() && Tints.IsInitialized() ? &Tints : nullptr;
     }
+    virtual TSharedPtr<const FVoxelFeatureGraph> GetFeatures() const override { return Settings.Features; }
+    virtual uint64 GetSeed() const override { return Seed; }
     int32 GetFinalDensity() const { return FinalDensity; }
     // The compiled surface rules; not compiled without rules.
     const FVoxelSurfaceEvaluator& GetSurfaceRules() const { return SurfaceRules; }

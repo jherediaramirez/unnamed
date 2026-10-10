@@ -4,6 +4,8 @@
 
 class FVoxelBlockTable;
 class FVoxelClimateSampler;
+class FVoxelColumn;
+class FVoxelDecorator;
 class FVoxelDensityTerrain;
 class IVoxelTerrain;
 struct FVoxelMeshOptions;
@@ -51,13 +53,26 @@ namespace VoxelBench
         uint64 BiomeForward = 0, BiomeBackward = 0;
         int32 BiomeMismatches = 0;
     };
-    UNNAMEDVOXEL_API FLoadOrderHashes HashLoadOrders(const IVoxelTerrain& Terrain, int32 Radius);
+    // With a decorator, the columns are decorated (FVoxelDecoratedArea): the forward order runs every stage row by
+    // row on the calling thread, the backward order runs each stage from the last column back across every worker.
+    UNNAMEDVOXEL_API FLoadOrderHashes HashLoadOrders(
+        const IVoxelTerrain& Terrain, int32 Radius, const FVoxelDecorator* Decorator = nullptr);
+    // A column's blocks as one hash (CityHash64 of its dense states, as HashLoadOrders hashes generated columns).
+    UNNAMEDVOXEL_API uint64 HashColumnBlocks(const FVoxelColumn& Column);
 
     // voxel.Bench Columns: the area's stages (generate, gather neighbours, mesh) on the calling thread and across every
     // worker; for a density terrain (Density, the same object as Terrain, or null) each generation stage's p50, p95
-    // and mean per column; then the load-order hashes.
+    // and mean per column; then the load-order hashes. With a decorator, the columns are decorated.
     UNNAMEDVOXEL_API FString RunColumns(const FVoxelBlockTable& Table, const IVoxelTerrain& Terrain,
-        const FVoxelDensityTerrain* Density, const FVoxelMeshOptions& Options, int32 Radius);
+        const FVoxelDensityTerrain* Density, const FVoxelMeshOptions& Options, int32 Radius,
+        const FVoxelDecorator* Decorator = nullptr);
+
+    // voxel.Bench Decorate: (2 Radius + 1)^2 final columns on the calling thread (Generate on radius + 2, Decorate on
+    // radius + 1, Finalize on the radius): each stage's p50, p95 and mean per column and the whole column; tries, the
+    // early-out's skips, writes and log bytes per Decorate, working-copy sections, what Finalize replayed; the hash of
+    // the final columns, and the same run with the early-out off (equal hashes: it is exact).
+    UNNAMEDVOXEL_API FString RunDecorate(const FVoxelDecorator& Decorator, const FVoxelDecorator& NoEarlyOut,
+        const IVoxelTerrain& Terrain, int32 Radius);
 
     // One line per result: name, nanoseconds per sample, millions per second.
     UNNAMEDVOXEL_API FString Describe(TConstArrayView<FVoxelBenchResult> Results);
