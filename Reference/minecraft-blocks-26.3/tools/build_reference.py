@@ -19,6 +19,7 @@ Generated files (see README.md for the formats):
 import argparse
 import csv
 import hashlib
+import importlib.util
 import io
 import json
 import os
@@ -44,7 +45,15 @@ TINT_SOURCES = {
     "dark_oak_leaves": ("foliage", None), "mangrove_leaves": ("foliage", None),
     "spruce_leaves": ("constant", -10380959), "birch_leaves": ("constant", -8345771),
     "water": ("water", None),
+    # The model blocks (phase 6), from minecraft.wiki "Tint" (grass, foliage and dry foliage colormaps; the lily pad
+    # among the fixed colors) and "Lily Pad" (placed: #208030). Pink petals and wildflowers tint their stems only
+    # (tintindex 1); a tintindex outside a block's indices renders untinted, like bamboo's.
+    "short_grass": ("grass", None), "fern": ("grass", None), "tall_grass": ("grass", None),
+    "large_fern": ("grass", None), "bush": ("grass", None), "sugar_cane": ("grass", None),
+    "pink_petals": ("grass", None), "wildflowers": ("grass", None), "vine": ("foliage", None),
+    "leaf_litter": ("dry_foliage", None), "lily_pad": ("constant", 0x208030),
 }
+TINT_INDICES = {"pink_petals": frozenset({1}), "wildflowers": frozenset({1})}
 
 # FaceInfo vertex extents per direction (javap of net.minecraft.client.renderer.FaceInfo). (axis, max?) triples.
 FACE_INFO = {
@@ -61,6 +70,7 @@ NORMALS = {"down": (0, -1, 0), "up": (0, 1, 0), "north": (0, 0, -1), "south": (0
 FACE_ORDER = ["west", "east", "north", "south", "down", "up"]
 # 32 x 32 frame textures go to the flow array (still called water_flow), in name order: lava's, then water's.
 FLOW_TEXTURES = {"water_flow", "lava_flow"}
+LARGE_STILL = {"shelf_mushroom_stage0", "shelf_mushroom_stage1"}
 # Drawn as a full cube from a model of six thin face plates (powder snow): each plate's outward face only. The
 # inward faces show from inside the block, which the importer does not draw.
 PLATE_CUBES = {"powder_snow"}
@@ -68,8 +78,11 @@ PLATE_CUBES = {"powder_snow"}
 # layer models add an inverted inner box (from > to) whose face shows from inside; it is skipped like the plates'.
 LAYERED = {"snow"}
 # A block whose vanilla item has another id (powder snow's is powder_snow_bucket). Item id = block id here, so it gets
-# no block item until buckets exist.
+# no block item until buckets exist. Model blocks with another item id (cocoa: cocoa_beans, wall fans: their fans) get
+# none either and record their vanilla item, for the inventory pass that adds those items.
 OTHER_ITEM_BLOCKS = {"powder_snow"}
+# Item models drawn as flat sprites from their layers; any other item model is a block model drawn in 3D.
+SPRITE_PARENTS = {"item/generated", "item/handheld"}
 
 
 def default_uv(f, t, d):
@@ -260,6 +273,9 @@ def main():
     # Rewrites SHA256SUMS.txt only, after a documentation or tool edit; generated data is never rebuilt in place.
     parser.add_argument("--sums-only", action="store_true")
     args = parser.parse_args()
+    spec = importlib.util.spec_from_file_location("bake_models", Path(__file__).with_name("bake_models.py"))
+    bake_models = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bake_models)
     if args.sums_only:
         print(f"SHA256SUMS.txt: {len(write_sums())} files")
         return
@@ -293,7 +309,7 @@ def main():
         shutil.copyfile(research / "out" / name, ROOT / "research" / name)
     shutil.copyfile(research / "out/block_manifest.json", ROOT / "research/block_manifest.research.json")
     (ROOT / "facts").mkdir()
-    for name in ("block_facts.csv", "creative_tabs.json"):
+    for name in ("block_facts.csv", "creative_tabs.json", "block_state_facts.json"):
         shutil.copyfile(facts / name, ROOT / "facts" / name)
     (ROOT / "reports").mkdir()
     subset = {f"minecraft:{i}": report[f"minecraft:{i}"] for i in imported}
@@ -306,7 +322,7 @@ def main():
         if (research / "textures/block" / name).read_bytes() != jar.read(entry):
             raise SystemExit(f"research texture differs from the jar: {name}")
         copy_jar(entry)
-    for name in ("grass.png", "foliage.png"):
+    for name in ("grass.png", "foliage.png", "dry_foliage.png"):
         copy_jar(f"{ASSETS}textures/colormap/{name}")
     # GUI art for the creative inventory, item definitions of imported blocks and the tab icons, and the
     # block item display transform.
@@ -354,13 +370,18 @@ def main():
                       for f in order]
         rgba_frames = [rgba.crop((0, i * fh, fw, (i + 1) * fh)) for i in range(count)]
         water_flow = (fw, fh) == (32, 32)
-        assert water_flow == (stem in FLOW_TEXTURES) and (water_flow or (fw, fh) == (16, 16)), stem
+        # Two still 32 x 32 textures (shelf mushroom stages) stay in the block array; the importer stores their mip 1.
+        water_flow = water_flow and stem in FLOW_TEXTURES
+        assert water_flow == (stem in FLOW_TEXTURES) and (water_flow or (fw, fh) == (16, 16) or (
+            stem in LARGE_STILL and count == 1)), stem
         entry = {"name": stem, "png_sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "size": list(img.size),
                  "frame_size": [fw, fh], "frame_count": count, "array": "water_flow" if water_flow else "blocks",
                  "first_layer": flow_layer if water_flow else layer,
                  "layer_rgba_sha256": [hashlib.sha256(f.tobytes()).hexdigest() for f in rgba_frames],
                  "alpha": alpha_class(rgba),
                  "mipmap_strategy": meta.get("texture", {}).get("mipmap_strategy", "auto")}
+        if "alpha_cutoff_bias" in meta.get("texture", {}):
+            entry["alpha_cutoff_bias"] = meta["texture"]["alpha_cutoff_bias"]
         if anim is not None:
             entry["animation"] = {"frametime": anim.get("frametime", 1), "interpolate": bool(anim.get("interpolate")),
                                   "frames": frames}
@@ -374,7 +395,8 @@ def main():
     # Tints (plains defaults, 26.3 BlockColors) and the block states with their faces.
     colormaps = ROOT / f"{ASSETS}textures/colormap"
     plains = {"grass": colormap(colormaps / "grass.png", *GRASS_PLAINS),
-              "foliage": colormap(colormaps / "foliage.png", *FOLIAGE_PLAINS), "water": WATER_PLAINS}
+              "foliage": colormap(colormaps / "foliage.png", *FOLIAGE_PLAINS), "water": WATER_PLAINS,
+              "dry_foliage": colormap(colormaps / "dry_foliage.png", *FOLIAGE_PLAINS)}
 
     def tint_of(block):
         source = TINT_SOURCES.get(block)
@@ -385,6 +407,8 @@ def main():
                 "note": "plains biome default" if kind != "constant" else "fixed in BlockColors"}
 
     models = Models(jar)
+    baker = bake_models.Baker(sys.modules[__name__], models)
+    model_ids = {b["id"] for b in manifest["blocks"] if b["shape"] == "model"}
     states_out, shapes, randoms = [], {}, []
     for block in manifest["blocks"] + [dict(f) for f in manifest["fluids"]]:
         bid = block["id"]
@@ -409,6 +433,20 @@ def main():
                 entry["states"].append({"id": state["id"], "properties": state["properties"], "shape": "fluid",
                                         "fluid": {"source": level == 0, "falling": level >= 8, "amount": amount}})
             entry["textures"] = block["textures"]
+        elif bid in model_ids:
+            blockstate = json.loads(jar.read(f"{ASSETS}blockstates/{bid}.json"))
+            tints = TINT_INDICES.get(bid, frozenset({0})) if bid in TINT_SOURCES else frozenset()
+            for state in states:
+                parts = baker.bake_state(blockstate, state.get("properties", {}), tints)
+                entry["states"].append({"id": state["id"], "properties": state.get("properties", {}),
+                                        "shape": "model", "model": parts})
+                if any(len(part) > 1 for part in parts) and bid not in randoms:
+                    randoms.append(bid)
+                for part in parts:
+                    for index in part:
+                        for quad in baker.baked[index]["quads"]:
+                            assert quad["t"] in texture_index, (bid, quad["t"])
+            shapes[bid] = ["model"]
         else:
             blockstate = json.loads(jar.read(f"{ASSETS}blockstates/{bid}.json"))
             for state in states:
@@ -429,7 +467,11 @@ def main():
     def material_layer(block, entry):
         if block.get("force_translucent"):
             return "translucent"
-        classes = {texture_index[f["t"]]["alpha"] for s in entry["states"] for f in s["faces"]}
+        if block["shape"] == "model":
+            classes = {texture_index[q["t"]]["alpha"] for s in entry["states"] for part in s["model"] for i in part
+                       for q in baker.baked[i]["quads"]}
+        else:
+            classes = {texture_index[f["t"]]["alpha"] for s in entry["states"] for f in s["faces"]}
         return "translucent" if "translucent" in classes else "cutout" if "cutout" in classes else "opaque"
 
     by_id = {e["id"]: e for e in states_out}
@@ -438,6 +480,27 @@ def main():
         for index, item in enumerate(tab["display"]):
             item_id = (item if isinstance(item, str) else item["id"]).removeprefix("minecraft:")
             creative.setdefault(item_id, []).append({"tab": tab["id"].removeprefix("minecraft:"), "index": index})
+
+    def item_icon(model, tint):
+        """A model block's item icon: flat sprite layers (item/generated, item/handheld) or a baked block model with
+        its gui display transform. Sprite textures under item/ join the assets."""
+        chain, link = [], model
+        while link and link not in SPRITE_PARENTS:
+            chain.append(link)
+            link = models.raw(link).get("parent", "").removeprefix("minecraft:")
+        if link:
+            layers = []
+            for key in sorted(k for k in models.raw(model).get("textures", {}) if k.startswith("layer")):
+                name = models.raw(model)["textures"][key].removeprefix("minecraft:")
+                if name.startswith("item/"):
+                    copy_jar(f"{ASSETS}textures/{name}.png")
+                    assert f"{ASSETS}textures/{name}.png.mcmeta" not in jar.namelist(), name
+                else:
+                    assert name.removeprefix("block/") in texture_index, name
+                layers.append({"texture": name, "tint": tint if key == "layer0" else None})
+            return {"sprite": layers}
+        index, gui = baker.bake_item(model, frozenset({0}) if tint else frozenset())
+        return {"model": index, "gui": gui}
 
     merged_blocks, items = [], []
     for block in manifest["blocks"]:
@@ -453,9 +516,11 @@ def main():
             "tint": tint_of(bid), "material_layer": material_layer(block, by_id[bid]),
             "random_variants": bid in randoms,
         })
+        if block["shape"] == "model":
+            merged["vanilla_item"] = fact["item"].removeprefix("minecraft:") or None
         merged_blocks.append(merged)
         if fact["item"] and fact["item"].removeprefix("minecraft:") != bid:
-            assert bid in OTHER_ITEM_BLOCKS, (bid, fact["item"])
+            assert bid in OTHER_ITEM_BLOCKS or bid in model_ids, (bid, fact["item"])
         elif fact["item"]:
             definition = json.loads(jar.read(f"{ASSETS}items/{bid}.json"))["model"]
             tint = None
@@ -463,10 +528,13 @@ def main():
                 kind = source["type"].removeprefix("minecraft:")
                 tint = argb_hex(source["value"]) if kind == "constant" else colormap(
                     colormaps / f"{kind}.png", source["temperature"], source["downfall"])
-            items.append({"id": fact["item"].removeprefix("minecraft:"), "block": bid,
-                          "name": fact["item_name"], "max_stack": int(fact["item_max_stack"]),
-                          "model": definition.get("model", "").removeprefix("minecraft:"), "gui_tint": tint,
-                          "creative": creative.get(bid, [])})
+            item = {"id": fact["item"].removeprefix("minecraft:"), "block": bid,
+                    "name": fact["item_name"], "max_stack": int(fact["item_max_stack"]),
+                    "model": definition.get("model", "").removeprefix("minecraft:"), "gui_tint": tint,
+                    "creative": creative.get(bid, [])}
+            if bid in model_ids:
+                item["icon"] = item_icon(item["model"], tint)
+            items.append(item)
     fluids = []
     for fluid in manifest["fluids"]:
         merged = dict(fluid)
@@ -490,6 +558,14 @@ def main():
     write("textures.json", {**common, "arrays": {"blocks": {"frame_size": [16, 16], "layers": layer},
                                                  "water_flow": {"frame_size": [32, 32], "layers": flow_layer}},
                             "plains": plains, "textures": textures})
+    write("block_models.json", {**common, "coordinates": "Mojang block space (x east, y up, z south), 0..1 per cell",
+                                  "quad": {"v": "4 vertices in FaceInfo order", "uv": "texture UV per vertex, 0..1",
+                                           "t": "texture", "tint": "tintindex, -1 untinted",
+                                           "cull": "hidden by a full neighbour on this side, or null",
+                                           "facing": "the declared face after the blockstate rotation",
+                                           "shade": "shade_direction_override, else facing",
+                                           "light": "light_emission 0-15"},
+                                  "models": baker.baked})
     write("items.json", {**common, "creative_tabs": [{k: v for k, v in t.items() if k not in ("display", "search")}
                                                      for t in tabs], "items": items})
 
@@ -500,7 +576,7 @@ def main():
     files = write_sums()
     print(f"blocks {len(merged_blocks)} + fluids {fluid_ids}; states {sum(len(e['states']) for e in states_out)}; "
           f"textures {len(textures)} -> {layer} block layers + {flow_layer} flow layers; items {len(items)}; "
-          f"random-variant blocks {len(randoms)}; files {len(files) + 1}")
+          f"random-variant blocks {len(randoms)}; baked models {len(baker.baked)}; files {len(files) + 1}")
 
 
 def write_sums():

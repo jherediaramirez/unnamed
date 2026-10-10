@@ -640,6 +640,32 @@
    ]
   },
   {
+   "id": "mangrove_propagule",
+   "block": "mangrove_propagule",
+   "name": "Mangrove Propagule",
+   "max_stack": 64,
+   "model": "item/mangrove_propagule",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 121
+    },
+    {
+     "tab": "search",
+     "index": 845
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/mangrove_propagule",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
    "id": "bedrock",
    "block": "bedrock",
    "name": "Bedrock",
@@ -1092,6 +1118,44 @@
      "index": 117
     }
    ]
+  },
+  {
+   "id": "mangrove_roots",
+   "block": "mangrove_roots",
+   "name": "Mangrove Roots",
+   "max_stack": 64,
+   "model": "block/mangrove_roots",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 88
+    },
+    {
+     "tab": "search",
+     "index": 817
+    }
+   ],
+   "icon": {
+    "model": 6,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "muddy_mangrove_roots",
@@ -2128,6 +2192,214 @@
    ]
   },
   {
+   "id": "short_grass",
+   "block": "short_grass",
+   "name": "Short Grass",
+   "max_stack": 64,
+   "model": "item/short_grass",
+   "gui_tint": "#7CBD6B",
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 132
+    },
+    {
+     "tab": "search",
+     "index": 856
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/short_grass",
+      "tint": "#7CBD6B"
+     }
+    ]
+   }
+  },
+  {
+   "id": "fern",
+   "block": "fern",
+   "name": "Fern",
+   "max_stack": 64,
+   "model": "item/fern",
+   "gui_tint": "#7CBD6B",
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 133
+    },
+    {
+     "tab": "search",
+     "index": 857
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/fern",
+      "tint": "#7CBD6B"
+     }
+    ]
+   }
+  },
+  {
+   "id": "dead_bush",
+   "block": "dead_bush",
+   "name": "Dead Bush",
+   "max_stack": 64,
+   "model": "item/dead_bush",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 137
+    },
+    {
+     "tab": "search",
+     "index": 861
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/dead_bush",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "bush",
+   "block": "bush",
+   "name": "Bush",
+   "max_stack": 64,
+   "model": "item/bush",
+   "gui_tint": "#7CBD6B",
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 135
+    },
+    {
+     "tab": "search",
+     "index": 859
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/bush",
+      "tint": "#7CBD6B"
+     }
+    ]
+   }
+  },
+  {
+   "id": "red_shrub",
+   "block": "red_shrub",
+   "name": "Red Shrub",
+   "max_stack": 64,
+   "model": "item/red_shrub",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 136
+    },
+    {
+     "tab": "search",
+     "index": 860
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/red_shrub",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "short_dry_grass",
+   "block": "short_dry_grass",
+   "name": "Short Dry Grass",
+   "max_stack": 64,
+   "model": "item/short_dry_grass",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 134
+    },
+    {
+     "tab": "search",
+     "index": 858
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/short_dry_grass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "tall_dry_grass",
+   "block": "tall_dry_grass",
+   "name": "Tall Dry Grass",
+   "max_stack": 64,
+   "model": "item/tall_dry_grass",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 168
+    },
+    {
+     "tab": "search",
+     "index": 892
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/tall_dry_grass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "seagrass",
+   "block": "seagrass",
+   "name": "Seagrass",
+   "max_stack": 64,
+   "model": "item/seagrass",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 198
+    },
+    {
+     "tab": "search",
+     "index": 922
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/seagrass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
    "id": "white_wool",
    "block": "white_wool",
    "name": "White Wool",
@@ -2708,6 +2980,370 @@
    ]
   },
   {
+   "id": "dandelion",
+   "block": "dandelion",
+   "name": "Dandelion",
+   "max_stack": 64,
+   "model": "item/dandelion",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 138
+    },
+    {
+     "tab": "search",
+     "index": 862
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/dandelion",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "poppy",
+   "block": "poppy",
+   "name": "Poppy",
+   "max_stack": 64,
+   "model": "item/poppy",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 139
+    },
+    {
+     "tab": "search",
+     "index": 863
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/poppy",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "blue_orchid",
+   "block": "blue_orchid",
+   "name": "Blue Orchid",
+   "max_stack": 64,
+   "model": "item/blue_orchid",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 140
+    },
+    {
+     "tab": "search",
+     "index": 864
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/blue_orchid",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "allium",
+   "block": "allium",
+   "name": "Allium",
+   "max_stack": 64,
+   "model": "item/allium",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 141
+    },
+    {
+     "tab": "search",
+     "index": 865
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/allium",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "azure_bluet",
+   "block": "azure_bluet",
+   "name": "Azure Bluet",
+   "max_stack": 64,
+   "model": "item/azure_bluet",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 142
+    },
+    {
+     "tab": "search",
+     "index": 866
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/azure_bluet",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "red_tulip",
+   "block": "red_tulip",
+   "name": "Red Tulip",
+   "max_stack": 64,
+   "model": "item/red_tulip",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 143
+    },
+    {
+     "tab": "search",
+     "index": 867
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/red_tulip",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "orange_tulip",
+   "block": "orange_tulip",
+   "name": "Orange Tulip",
+   "max_stack": 64,
+   "model": "item/orange_tulip",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 144
+    },
+    {
+     "tab": "search",
+     "index": 868
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/orange_tulip",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "white_tulip",
+   "block": "white_tulip",
+   "name": "White Tulip",
+   "max_stack": 64,
+   "model": "item/white_tulip",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 145
+    },
+    {
+     "tab": "search",
+     "index": 869
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/white_tulip",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "pink_tulip",
+   "block": "pink_tulip",
+   "name": "Pink Tulip",
+   "max_stack": 64,
+   "model": "item/pink_tulip",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 146
+    },
+    {
+     "tab": "search",
+     "index": 870
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/pink_tulip",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "oxeye_daisy",
+   "block": "oxeye_daisy",
+   "name": "Oxeye Daisy",
+   "max_stack": 64,
+   "model": "item/oxeye_daisy",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 147
+    },
+    {
+     "tab": "search",
+     "index": 871
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/oxeye_daisy",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "cornflower",
+   "block": "cornflower",
+   "name": "Cornflower",
+   "max_stack": 64,
+   "model": "item/cornflower",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 148
+    },
+    {
+     "tab": "search",
+     "index": 872
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/cornflower",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "lily_of_the_valley",
+   "block": "lily_of_the_valley",
+   "name": "Lily of the Valley",
+   "max_stack": 64,
+   "model": "item/lily_of_the_valley",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 149
+    },
+    {
+     "tab": "search",
+     "index": 873
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/lily_of_the_valley",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "brown_mushroom",
+   "block": "brown_mushroom",
+   "name": "Brown Mushroom",
+   "max_stack": 64,
+   "model": "item/brown_mushroom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 127
+    },
+    {
+     "tab": "search",
+     "index": 851
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/brown_mushroom",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "red_mushroom",
+   "block": "red_mushroom",
+   "name": "Red Mushroom",
+   "max_stack": 64,
+   "model": "item/red_mushroom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 128
+    },
+    {
+     "tab": "search",
+     "index": 852
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/red_mushroom",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
    "id": "gold_block",
    "block": "gold_block",
    "name": "Block of Gold",
@@ -3044,6 +3680,70 @@
    ]
   },
   {
+   "id": "cactus",
+   "block": "cactus",
+   "name": "Cactus",
+   "max_stack": 64,
+   "model": "block/cactus",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 162
+    },
+    {
+     "tab": "search",
+     "index": 886
+    }
+   ],
+   "icon": {
+    "model": 31,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "cactus_flower",
+   "block": "cactus_flower",
+   "name": "Cactus Flower",
+   "max_stack": 64,
+   "model": "item/cactus_flower",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 151
+    },
+    {
+     "tab": "search",
+     "index": 875
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/cactus_flower",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
    "id": "clay",
    "block": "clay",
    "name": "Clay",
@@ -3060,6 +3760,32 @@
      "index": 762
     }
    ]
+  },
+  {
+   "id": "sugar_cane",
+   "block": "sugar_cane",
+   "name": "Sugar Cane",
+   "max_stack": 64,
+   "model": "item/sugar_cane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 161
+    },
+    {
+     "tab": "search",
+     "index": 885
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/sugar_cane",
+      "tint": null
+     }
+    ]
+   }
   },
   {
    "id": "jukebox",
@@ -3834,6 +4560,62 @@
    ]
   },
   {
+   "id": "vine",
+   "block": "vine",
+   "name": "Vines",
+   "max_stack": 64,
+   "model": "item/vine",
+   "gui_tint": "#48B518",
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 163
+    },
+    {
+     "tab": "search",
+     "index": 887
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/vine",
+      "tint": "#48B518"
+     }
+    ]
+   }
+  },
+  {
+   "id": "glow_lichen",
+   "block": "glow_lichen",
+   "name": "Glow Lichen",
+   "max_stack": 64,
+   "model": "item/glow_lichen",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 164
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 40
+    },
+    {
+     "tab": "search",
+     "index": 888
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/glow_lichen",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
    "id": "mycelium",
    "block": "mycelium",
    "name": "Mycelium",
@@ -3850,6 +4632,32 @@
      "index": 755
     }
    ]
+  },
+  {
+   "id": "lily_pad",
+   "block": "lily_pad",
+   "name": "Lily Pad",
+   "max_stack": 64,
+   "model": "item/lily_pad",
+   "gui_tint": "#71C35C",
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 197
+    },
+    {
+     "tab": "search",
+     "index": 921
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/lily_pad",
+      "tint": "#71C35C"
+     }
+    ]
+   }
   },
   {
    "id": "resin_block",
@@ -3984,6 +4792,44 @@
      "index": 993
     }
    ]
+  },
+  {
+   "id": "shelf_mushroom",
+   "block": "shelf_mushroom",
+   "name": "Shelf Mushroom",
+   "max_stack": 64,
+   "model": "block/shelf_mushroom_stage0",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 129
+    },
+    {
+     "tab": "search",
+     "index": 853
+    }
+   ],
+   "icon": {
+    "model": 61,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      3.25,
+      -3,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
   },
   {
    "id": "emerald_ore",
@@ -4662,6 +5508,162 @@
      "index": 767
     }
    ]
+  },
+  {
+   "id": "sunflower",
+   "block": "sunflower",
+   "name": "Sunflower",
+   "max_stack": 64,
+   "model": "item/sunflower",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 169
+    },
+    {
+     "tab": "search",
+     "index": 893
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/sunflower_front",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "lilac",
+   "block": "lilac",
+   "name": "Lilac",
+   "max_stack": 64,
+   "model": "item/lilac",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 170
+    },
+    {
+     "tab": "search",
+     "index": 894
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/lilac_top",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "rose_bush",
+   "block": "rose_bush",
+   "name": "Rose Bush",
+   "max_stack": 64,
+   "model": "item/rose_bush",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 171
+    },
+    {
+     "tab": "search",
+     "index": 895
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/rose_bush_top",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "peony",
+   "block": "peony",
+   "name": "Peony",
+   "max_stack": 64,
+   "model": "item/peony",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 172
+    },
+    {
+     "tab": "search",
+     "index": 896
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/peony_top",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "tall_grass",
+   "block": "tall_grass",
+   "name": "Tall Grass",
+   "max_stack": 64,
+   "model": "item/tall_grass",
+   "gui_tint": "#7CBD6B",
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 166
+    },
+    {
+     "tab": "search",
+     "index": 890
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/tall_grass_top",
+      "tint": "#7CBD6B"
+     }
+    ]
+   }
+  },
+  {
+   "id": "large_fern",
+   "block": "large_fern",
+   "name": "Large Fern",
+   "max_stack": 64,
+   "model": "item/large_fern",
+   "gui_tint": "#7CBD6B",
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 167
+    },
+    {
+     "tab": "search",
+     "index": 891
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/large_fern_top",
+      "tint": "#7CBD6B"
+     }
+    ]
+   }
   },
   {
    "id": "red_sandstone",
@@ -6589,6 +7591,32 @@
    ]
   },
   {
+   "id": "kelp",
+   "block": "kelp",
+   "name": "Kelp",
+   "max_stack": 64,
+   "model": "item/kelp",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 200
+    },
+    {
+     "tab": "search",
+     "index": 924
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/kelp",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
    "id": "dried_kelp_block",
    "block": "dried_kelp_block",
    "name": "Dried Kelp Block",
@@ -6787,6 +7815,292 @@
    ]
   },
   {
+   "id": "tube_coral",
+   "block": "tube_coral",
+   "name": "Tube Coral",
+   "max_stack": 64,
+   "model": "item/tube_coral",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 212
+    },
+    {
+     "tab": "search",
+     "index": 936
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/tube_coral",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "brain_coral",
+   "block": "brain_coral",
+   "name": "Brain Coral",
+   "max_stack": 64,
+   "model": "item/brain_coral",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 213
+    },
+    {
+     "tab": "search",
+     "index": 937
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/brain_coral",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "bubble_coral",
+   "block": "bubble_coral",
+   "name": "Bubble Coral",
+   "max_stack": 64,
+   "model": "item/bubble_coral",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 214
+    },
+    {
+     "tab": "search",
+     "index": 938
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/bubble_coral",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "fire_coral",
+   "block": "fire_coral",
+   "name": "Fire Coral",
+   "max_stack": 64,
+   "model": "item/fire_coral",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 215
+    },
+    {
+     "tab": "search",
+     "index": 939
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/fire_coral",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "horn_coral",
+   "block": "horn_coral",
+   "name": "Horn Coral",
+   "max_stack": 64,
+   "model": "item/horn_coral",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 216
+    },
+    {
+     "tab": "search",
+     "index": 940
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/horn_coral",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "tube_coral_fan",
+   "block": "tube_coral_fan",
+   "name": "Tube Coral Fan",
+   "max_stack": 64,
+   "model": "item/tube_coral_fan",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 222
+    },
+    {
+     "tab": "search",
+     "index": 946
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/tube_coral_fan",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "brain_coral_fan",
+   "block": "brain_coral_fan",
+   "name": "Brain Coral Fan",
+   "max_stack": 64,
+   "model": "item/brain_coral_fan",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 223
+    },
+    {
+     "tab": "search",
+     "index": 947
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/brain_coral_fan",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "bubble_coral_fan",
+   "block": "bubble_coral_fan",
+   "name": "Bubble Coral Fan",
+   "max_stack": 64,
+   "model": "item/bubble_coral_fan",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 224
+    },
+    {
+     "tab": "search",
+     "index": 948
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/bubble_coral_fan",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "fire_coral_fan",
+   "block": "fire_coral_fan",
+   "name": "Fire Coral Fan",
+   "max_stack": 64,
+   "model": "item/fire_coral_fan",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 225
+    },
+    {
+     "tab": "search",
+     "index": 949
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/fire_coral_fan",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "horn_coral_fan",
+   "block": "horn_coral_fan",
+   "name": "Horn Coral Fan",
+   "max_stack": 64,
+   "model": "item/horn_coral_fan",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 226
+    },
+    {
+     "tab": "search",
+     "index": 950
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/horn_coral_fan",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "sea_pickle",
+   "block": "sea_pickle",
+   "name": "Sea Pickle",
+   "max_stack": 64,
+   "model": "item/sea_pickle",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 199
+    },
+    {
+     "tab": "search",
+     "index": 923
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/sea_pickle",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
    "id": "blue_ice",
    "block": "blue_ice",
    "name": "Blue Ice",
@@ -6803,6 +8117,32 @@
      "index": 768
     }
    ]
+  },
+  {
+   "id": "bamboo",
+   "block": "bamboo",
+   "name": "Bamboo",
+   "max_stack": 64,
+   "model": "item/bamboo",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 160
+    },
+    {
+     "tab": "search",
+     "index": 884
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/bamboo",
+      "tint": null
+     }
+    ]
+   }
   },
   {
    "id": "polished_granite_slab",
@@ -8003,6 +9343,110 @@
    ]
   },
   {
+   "id": "amethyst_cluster",
+   "block": "amethyst_cluster",
+   "name": "Amethyst Cluster",
+   "max_stack": 64,
+   "model": "item/amethyst_cluster",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 80
+    },
+    {
+     "tab": "search",
+     "index": 816
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/amethyst_cluster",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "large_amethyst_bud",
+   "block": "large_amethyst_bud",
+   "name": "Large Amethyst Bud",
+   "max_stack": 64,
+   "model": "item/large_amethyst_bud",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 79
+    },
+    {
+     "tab": "search",
+     "index": 815
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/large_amethyst_bud",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "medium_amethyst_bud",
+   "block": "medium_amethyst_bud",
+   "name": "Medium Amethyst Bud",
+   "max_stack": 64,
+   "model": "item/medium_amethyst_bud",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 78
+    },
+    {
+     "tab": "search",
+     "index": 814
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/medium_amethyst_bud",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "small_amethyst_bud",
+   "block": "small_amethyst_bud",
+   "name": "Small Amethyst Bud",
+   "max_stack": 64,
+   "model": "item/small_amethyst_bud",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 77
+    },
+    {
+     "tab": "search",
+     "index": 813
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/small_amethyst_bud",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
    "id": "tuff",
    "block": "tuff",
    "name": "Tuff",
@@ -8485,6 +9929,32 @@
      "index": 971
     }
    ]
+  },
+  {
+   "id": "sculk_vein",
+   "block": "sculk_vein",
+   "name": "Sculk Vein",
+   "max_stack": 64,
+   "model": "item/sculk_vein",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 248
+    },
+    {
+     "tab": "search",
+     "index": 972
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/sculk_vein",
+      "tint": null
+     }
+    ]
+   }
   },
   {
    "id": "sculk_catalyst",
@@ -9471,6 +10941,288 @@
    ]
   },
   {
+   "id": "pointed_dripstone",
+   "block": "pointed_dripstone",
+   "name": "Pointed Dripstone",
+   "max_stack": 64,
+   "model": "item/pointed_dripstone",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 33
+    },
+    {
+     "tab": "search",
+     "index": 778
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/pointed_dripstone",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "sulfur_spike",
+   "block": "sulfur_spike",
+   "name": "Sulfur Spike",
+   "max_stack": 64,
+   "model": "item/sulfur_spike",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 37
+    },
+    {
+     "tab": "search",
+     "index": 779
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/sulfur_spike",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "spore_blossom",
+   "block": "spore_blossom",
+   "name": "Spore Blossom",
+   "max_stack": 64,
+   "model": "block/spore_blossom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 158
+    },
+    {
+     "tab": "search",
+     "index": 882
+    }
+   ],
+   "icon": {
+    "model": 213,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "azalea",
+   "block": "azalea",
+   "name": "Azalea",
+   "max_stack": 64,
+   "model": "block/azalea",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 125
+    },
+    {
+     "tab": "search",
+     "index": 849
+    }
+   ],
+   "icon": {
+    "model": 214,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "flowering_azalea",
+   "block": "flowering_azalea",
+   "name": "Flowering Azalea",
+   "max_stack": 64,
+   "model": "block/flowering_azalea",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 126
+    },
+    {
+     "tab": "search",
+     "index": 850
+    }
+   ],
+   "icon": {
+    "model": 215,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "moss_carpet",
+   "block": "moss_carpet",
+   "name": "Moss Carpet",
+   "max_stack": 64,
+   "model": "block/moss_carpet",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 21
+    },
+    {
+     "tab": "search",
+     "index": 772
+    }
+   ],
+   "icon": {
+    "model": 216,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "pink_petals",
+   "block": "pink_petals",
+   "name": "Pink Petals",
+   "max_stack": 64,
+   "model": "item/pink_petals",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 155
+    },
+    {
+     "tab": "search",
+     "index": 879
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/pink_petals",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "wildflowers",
+   "block": "wildflowers",
+   "name": "Wildflowers",
+   "max_stack": 64,
+   "model": "item/wildflowers",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 156
+    },
+    {
+     "tab": "search",
+     "index": 880
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/wildflowers",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "leaf_litter",
+   "block": "leaf_litter",
+   "name": "Leaf Litter",
+   "max_stack": 64,
+   "model": "item/leaf_litter",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 157
+    },
+    {
+     "tab": "search",
+     "index": 881
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/leaf_litter",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
    "id": "moss_block",
    "block": "moss_block",
    "name": "Moss Block",
@@ -9487,6 +11239,112 @@
      "index": 771
     }
    ]
+  },
+  {
+   "id": "big_dripleaf",
+   "block": "big_dripleaf",
+   "name": "Big Dripleaf",
+   "max_stack": 64,
+   "model": "item/big_dripleaf",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 174
+    },
+    {
+     "tab": "redstone_blocks",
+     "index": 67
+    },
+    {
+     "tab": "search",
+     "index": 898
+    }
+   ],
+   "icon": {
+    "model": 265,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      -2,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "small_dripleaf",
+   "block": "small_dripleaf",
+   "name": "Small Dripleaf",
+   "max_stack": 64,
+   "model": "item/small_dripleaf",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 175
+    },
+    {
+     "tab": "search",
+     "index": 899
+    }
+   ],
+   "icon": {
+    "model": 281,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "hanging_roots",
+   "block": "hanging_roots",
+   "name": "Hanging Roots",
+   "max_stack": 64,
+   "model": "item/hanging_roots",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 165
+    },
+    {
+     "tab": "search",
+     "index": 889
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/hanging_roots",
+      "tint": null
+     }
+    ]
+   }
   },
   {
    "id": "rooted_dirt",
@@ -9957,6 +11815,122 @@
      "index": 773
     }
    ]
+  },
+  {
+   "id": "pale_moss_carpet",
+   "block": "pale_moss_carpet",
+   "name": "Pale Moss Carpet",
+   "max_stack": 64,
+   "model": "block/pale_moss_carpet",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 23
+    },
+    {
+     "tab": "search",
+     "index": 774
+    }
+   ],
+   "icon": {
+    "model": 290,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "pale_hanging_moss",
+   "block": "pale_hanging_moss",
+   "name": "Pale Hanging Moss",
+   "max_stack": 64,
+   "model": "item/pale_hanging_moss",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 24
+    },
+    {
+     "tab": "search",
+     "index": 775
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/pale_hanging_moss",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "closed_eyeblossom",
+   "block": "closed_eyeblossom",
+   "name": "Closed Eyeblossom",
+   "max_stack": 64,
+   "model": "item/closed_eyeblossom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 152
+    },
+    {
+     "tab": "search",
+     "index": 876
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/closed_eyeblossom",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "firefly_bush",
+   "block": "firefly_bush",
+   "name": "Firefly Bush",
+   "max_stack": 64,
+   "model": "item/firefly_bush",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 159
+    },
+    {
+     "tab": "search",
+     "index": 883
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/firefly_bush",
+      "tint": null
+     }
+    ]
+   }
   }
  ]
 }

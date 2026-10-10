@@ -2,22 +2,24 @@
 
 As of 2026-10-08. Source of truth: vanilla Java **26.3** (`%APPDATA%\ModrinthApp\meta\versions\26.3\26.3.jar`, plus the official server jar SHA-1 `33680f5f…05f4c` for Mojang's data-generator reports). This sheet is the input for the block/texture import and the research base for the chunk loader. Only water gets behavior; every other block here just needs the correct ID, textures and render flags.
 
-**In scope:** {{N_TOTAL}} blocks ({{N_CUBE}} full cubes + {{N_SLAB}} slabs) out of {{N_REGISTRY}} registered blocks, plus water. A block counts as a full cube when every model it can show is made only of `[0,0,0]→[16,16,16]` boxes. Stairs, fences, plants, chests, tools and items are excluded. Render layers: {{LAYERS}}.
+**In scope:** {{N_TOTAL}} blocks ({{N_CUBE}} full cubes, powder snow among them, + {{N_SLAB}} slabs + snow layers + {{N_MODEL}} model blocks) out of {{N_REGISTRY}} registered blocks, plus water and lava; powder snow and snow layers were added in phase 5 for the world generator. A block counts as a full cube when every model it can show is made only of `[0,0,0]→[16,16,16]` boxes. Stairs, fences, chests, tools and items are excluded. Render layers: {{LAYERS}}.
+
+**Model blocks:** {{N_MODEL}} blocks are drawn from their own baked models rather than as cubes or slabs: plants, flowers, crosses, seagrass, flowerbeds, carpets, multiface and custom models. See `Reference/minecraft-blocks-26.3/README.md` ("Baked models", "Shapes and offsets") for details.
 
 ## Files
 
-All generated files live in `C:\dev\sandbox\mc-26.3-blocks\`. Re-run `scripts\build_manifest.py` to regenerate this doc.
+The research outputs are preserved, hash-listed, in [`Reference/minecraft-blocks-26.3/`](../Reference/minecraft-blocks-26.3/README.md). That folder adds the merged import manifest (hardness, tints, names, items), every state's faces, the texture layer plan and the creative tabs. Paths below are relative to it. The research generators are in its `tools/` (`build_manifest.py` regenerates this doc from a research work folder).
 
 | File | What it is |
 |---|---|
-| `out\block_manifest.json` | **Import input.** One entry per block in registry order. Each entry has: string id, protocol id, state-id range, properties, per-face textures, render layer, tint/animation/rotation flags, tags, and where it is found. Water is listed under `fluids`. |
-| `textures\block\*.png` (+ `.png.mcmeta`) | {{N_TEX}} block textures copied byte-for-byte from the jar, including water still/flow/overlay. |
-| `textures\colormap\grass.png`, `foliage.png` | Biome tint lookup maps for tinted blocks. |
-| `out\blocks_registry.csv` | All 1,286 blocks with protocol id, default/min/max state id, and properties (from `blocks.json`). |
-| `out\block_tags.csv` | Every block's tags, with nested `#tag` references resolved. |
-| `out\worldgen_heights.md` | Every terrain feature's block, vein size and Y distribution (embedded below as Appendix A). |
-| `out\water_research.md` | Full water notes with bytecode evidence markers. |
-| `out\edge_cases.txt` | Cube-like blocks that were rejected, and why. |
+| `block_manifest.json` | **Import input.** One entry per block in registry order. Each entry has: string id, protocol id, state-id range, properties, per-face textures, render layer, tint/animation/rotation flags, tags, and where it is found. Water is listed under `fluids`. The reference version adds hardness, tints, names and material layers; the research original is `research\block_manifest.research.json`. |
+| `assets\minecraft\textures\block\*.png` (+ `.png.mcmeta`) | {{N_TEX}} block textures copied byte-for-byte from the jar, including water still/flow/overlay. |
+| `assets\minecraft\textures\colormap\grass.png`, `foliage.png` | Biome tint lookup maps for tinted blocks. |
+| `research\blocks_registry.csv` | All 1,286 blocks with protocol id, default/min/max state id, and properties (from `blocks.json`). |
+| `research\block_tags.csv` | Every block's tags, with nested `#tag` references resolved. |
+| `research\worldgen_heights.md` | Every terrain feature's block, vein size and Y distribution (embedded below as Appendix A). |
+| `research\water_research.md` | Full water notes with bytecode evidence markers. |
+| `research\edge_cases.txt` | Cube-like blocks that were rejected, and why. |
 
 Vanilla textures are Mojang's copyrighted assets. They are fine for local development builds but must be replaced before anything is distributed.
 
@@ -66,7 +68,7 @@ The existing project convention (`dummy_block`, with a separate `dummy_block_ite
 
 ## 3. Using the table (import notes)
 
-- **Textures** are the default state's faces, given as file names in `textures\block\`. `ends:` / `side:` means a column block (top and bottom share a texture).
+- **Textures** are the default state's faces, given as file names in `assets\minecraft\textures\block\`. `ends:` / `side:` means a column block (top and bottom share a texture).
 - **Axis blocks** (`axis` flag: logs, wood, basalt, bone, hay, purpur pillar, quartz pillar…): the table shows `axis=y`. For `x`/`z`, rotate the cube so the `ends` texture faces east-west or north-south.
 - **Facing blocks** (`facing`/`lit`: furnace, smoker, blast furnace, dispenser, observer, carved pumpkin…): the front texture is on the `facing` side. The manifest lists every state's textures in `all_textures` (e.g. `furnace_front_on`).
 - **`rand-rot`:** the blockstate lists rotated variants (stone, dirt, sand, grass top…). The game picks one with a hash of the block position, so the same spot always looks the same. This is optional polish.
@@ -147,7 +149,7 @@ Per scheduled tick (`FlowingFluid.tick`):
 - **Functional cubes with state-dependent shapes:** piston, sticky_piston, chiseled_bookshelf.
 - **Entity-rendered:** chests, shulker boxes.
 
-See `out\edge_cases.txt` for the full list. The three mushroom blocks *are* included: they are cubes whose six faces switch between the cap/stem texture and `mushroom_block_inside` depending on the `up/down/north/south/east/west` properties.
+See `research\edge_cases.txt` for the full list. The three mushroom blocks *are* included: they are cubes whose six faces switch between the cap/stem texture and `mushroom_block_inside` depending on the `up/down/north/south/east/west` properties.
 
 ## 6. Chunk storage and loading (research base for the chunk loader)
 

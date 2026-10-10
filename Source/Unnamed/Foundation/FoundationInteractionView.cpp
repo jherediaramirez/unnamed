@@ -254,6 +254,8 @@ void UFoundationInteractionView::AddInstance(
     const FFoundationBlockWorld& World, const FIntVector& Cell, FFoundationBlockState State)
 {
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    // Model states (plants and other baked models) are not drawn here until the model meshes exist (phase 6, S6).
+    if (Registry.GetShape(State) == EFoundationBlockShape::Model) return;
     const FFoundationBlockType& Type = Registry.GetBlock(State);
     const bool bFluidAbove =
         Type.IsFluid() && World.GetBlock(World.Get(Cell + FIntVector(0, 0, 1)).State).Id == Type.Id;
@@ -675,7 +677,8 @@ void UFoundationInteractionView::UpdateHeldItem(
             MakeCustomData(Registry, State, Data);
             HeldBlock->SetCustomDataById(Id, Data);
         }
-        HeldBlock->SetVisibility(bShow && Type != nullptr);
+        HeldBlock->SetVisibility(bShow && Type != nullptr &&
+            Authority.World.GetRegistry().GetShape(Type->GetDefaultState()) != EFoundationBlockShape::Model);
     }
     for (UStaticMeshComponent* Mesh : HeldPickaxe)
         Mesh->SetVisibility(bShow && Icon == TEXT("pickaxe"));

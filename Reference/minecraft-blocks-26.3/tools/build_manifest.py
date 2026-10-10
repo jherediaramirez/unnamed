@@ -84,10 +84,91 @@ for bid, (tex, shape, props, count) in GENERATOR_BLOCKS.items():
                    "random_rotation": "false", "tinted": "false", "animated": "false", "model_count": count,
                    "render_layer": "opaque", "tex_size": "16x16"}
 
+# Blocks drawn from their own baked models (phase 6, session 5): every block decoration places that is not a cube,
+# slab or layers block. Groups follow the phase 6 scout's shape groups; chest and spawner (block entities) and
+# sculk_shrieker (ancient cities) stay out. The faces are baked per quad by tools/bake_models.py, so the manifest
+# keeps only the textures, the layer and the flags.
+MODEL_GROUPS = {
+    "cross": "allium azure_bluet blue_orchid brain_coral brown_mushroom bubble_coral cactus_flower cave_vines "
+             "cave_vines_plant closed_eyeblossom cornflower dandelion dead_bush fire_coral firefly_bush hanging_roots "
+             "horn_coral kelp kelp_plant lily_of_the_valley orange_tulip oxeye_daisy pale_hanging_moss pink_tulip poppy "
+             "red_mushroom red_shrub red_tulip short_dry_grass sweet_berry_bush tall_dry_grass tube_coral white_tulip",
+    "cross_facing": "amethyst_cluster large_amethyst_bud medium_amethyst_bud small_amethyst_bud",
+    "tinted_cross": "bush fern large_fern short_grass sugar_cane tall_grass",
+    "double_cross": "lilac peony rose_bush sunflower",
+    "seagrass": "seagrass tall_seagrass",
+    "flowerbed": "leaf_litter pink_petals wildflowers",
+    "carpet": "moss_carpet pale_moss_carpet",
+    "multiface": "glow_lichen sculk_vein vine",
+    "custom": "azalea bamboo big_dripleaf big_dripleaf_stem brain_coral_fan brain_coral_wall_fan bubble_coral_fan "
+              "bubble_coral_wall_fan cactus cocoa fire_coral_fan fire_coral_wall_fan flowering_azalea horn_coral_fan "
+              "horn_coral_wall_fan lily_pad mangrove_propagule mangrove_roots pointed_dripstone sea_pickle "
+              "shelf_mushroom small_dripleaf spore_blossom sulfur_spike tube_coral_fan tube_coral_wall_fan",
+}
+
+
+def model_textures(model, seen=None):
+    """Face textures of a block model (parents resolved), in face order of the elements."""
+    chain, textures, elements = [], {}, None
+    name = model
+    while name:
+        data = json.loads(jar.read(f"assets/minecraft/models/{name.removeprefix('minecraft:')}.json"))
+        for k, v in data.get("textures", {}).items():
+            textures.setdefault(k, v)
+        if elements is None and "elements" in data:
+            elements = data["elements"]
+        name = data.get("parent")
+
+    def resolve(ref):
+        ref = ref["sprite"] if isinstance(ref, dict) else ref
+        return resolve(textures[ref[1:]]) if ref.startswith("#") else ref.removeprefix("minecraft:").removeprefix("block/")
+
+    faces = [face for e in elements or [] for face in e["faces"].values()]
+    return [resolve(face["texture"]) for face in faces], any("tintindex" in face for face in faces)
+
+
+def blockstate_models(data):
+    refs = []
+    for value in list(data.get("variants", {}).values()) + [p["apply"] for p in data.get("multipart", [])]:
+        refs += [v["model"] for v in (value if isinstance(value, list) else [value])]
+    return refs
+
+
+def alpha_of(name):
+    from PIL import Image
+    alphas = set(Image.open(tex_dir / f"{name}.png").convert("RGBA").getchannel("A").get_flattened_data())
+    return "opaque" if alphas == {255} else "cutout" if alphas <= {0, 255} else "translucent"
+
+
+for group, ids in MODEL_GROUPS.items():
+    for bid in ids.split():
+        data = json.loads(jar.read(f"assets/minecraft/blockstates/{bid}.json"))
+        names, tinted = [], False
+        for model in blockstate_models(data):
+            textures, model_tinted = model_textures(model)
+            names += [t for t in dict.fromkeys(textures) if t not in names]
+            tinted |= model_tinted
+        for t in names:
+            for suffix in (".png", ".png.mcmeta"):
+                entry = f"assets/minecraft/textures/block/{t}{suffix}"
+                if not (tex_dir / f"{t}{suffix}").exists() and entry in jar.namelist():
+                    (tex_dir / f"{t}{suffix}").write_bytes(jar.read(entry))
+        classes = {alpha_of(t) for t in names}
+        props = sorted({k.split("=")[0] for key in data.get("variants", {}) for k in key.split(",") if k} |
+                       {k for p in data.get("multipart", []) for k in p.get("when", {}) if k not in ("OR", "AND")})
+        assets[bid] = {"id": bid, "shape": "model", "template": group, "faces": "",
+                       "textures": ";".join(names), "state_props": ",".join(props),
+                       "random_rotation": str(any(isinstance(v, list) and len(v) > 1 for v in
+                                                  list(data.get("variants", {}).values()) +
+                                                  [p["apply"] for p in data.get("multipart", [])])).lower(),
+                       "tinted": str(tinted).lower(), "animated": "false", "model_count": str(len(set(blockstate_models(data)))),
+                       "render_layer": "translucent" if "translucent" in classes else "cutout" if "cutout" in classes
+                       else "opaque", "tex_size": "16x16"}
+
 blocks = []
 for bid, a in assets.items():
     r = registry[bid]
-    faces = {k: tex_name(v) for k, v in (p.split("=", 1) for p in a["faces"].split(";"))}
+    faces = {k: tex_name(v) for k, v in (p.split("=", 1) for p in a["faces"].split(";"))} if a["faces"] else {}
     all_tex = [tex_name(t) for t in a["textures"].split(";")]
     loc = locations.get(bid, {})
     layer = "translucent" if bid in force_translucent else a["render_layer"]
@@ -136,7 +217,9 @@ manifest = {"minecraft_version": "26.3", "source": "26.3.jar models/blockstates 
             "block_count_in_registry": len(registry), "blocks": blocks, "fluids": fluids}
 (out / "block_manifest.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
 
-def faces_short(f):
+def faces_short(f, all_textures):
+    if not f:
+        return " · ".join(all_textures)
     if len(set(f.values())) == 1:
         return f["up"]
     sides = {f[k] for k in ("north", "south", "east", "west")}
@@ -170,7 +253,7 @@ rows = ["| # | Block ID | Shape | Textures (`textures/block/*.png`) | Layer | Fl
 for b in blocks:
     lo, hi = b["state_id_range"]
     sid = str(lo) if lo == hi else f"{lo}–{hi}"
-    rows.append(f"| {b['protocol_id']} | `{b['id']}` | {b['shape'].replace('_', ' ')} | {faces_short(b['faces'])} | "
+    rows.append(f"| {b['protocol_id']} | `{b['id']}` | {b['shape'].replace('_', ' ')} | {faces_short(b['faces'], b['all_textures'])} | "
                 f"{b['render_layer']} | {flags(b)} | {sid} | {found(b).replace('|', '/')} |")
 table = "\n".join(rows)
 
@@ -188,7 +271,7 @@ shape = Counter(b["shape"] for b in blocks)
 layers = Counter(b["render_layer"] for b in blocks)
 doc = template_path.read_text(encoding="utf-8")
 for key, val in {"{{BLOCK_TABLE}}": table, "{{TAG_TABLE}}": "\n".join(tag_rows), "{{WORLDGEN}}": worldgen,
-                 "{{N_CUBE}}": str(shape["full_cube"]), "{{N_SLAB}}": str(shape["slab"]),
+                 "{{N_CUBE}}": str(shape["full_cube"]), "{{N_SLAB}}": str(shape["slab"]), "{{N_MODEL}}": str(shape["model"]),
                  "{{N_TOTAL}}": str(len(blocks)), "{{N_REGISTRY}}": str(len(registry)),
                  "{{N_TEX}}": str(len(list(tex_dir.glob("*.png")))), "{{TRANSLUCENT}}": ", ".join(b["id"] for b in blocks if b["render_layer"] == "translucent" and "stained_glass" not in b["id"]) + ", 16 stained glasses", "{{CUTOUT}}": ", ".join(b["id"] for b in blocks if b["render_layer"] == "cutout"), "{{LAYERS}}": ", ".join(f"{k} {v}" for k, v in layers.most_common())}.items():
     doc = doc.replace(key, val)

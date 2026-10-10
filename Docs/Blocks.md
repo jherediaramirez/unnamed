@@ -1,12 +1,12 @@
 # Blocks
 
-The Playground's block vocabulary: every full-cube block and slab of Minecraft Java 26.3, plus powder snow and snow layers (531 blocks: 428 cubes, 101 slabs, powder snow and snow), plus air, static water and static lava. The registry has 534 blocks with air, 3,470 states and 556 textures. These blocks use the 26.3 protocol and state ids, faces, textures, tints, animation, mining facts and placement rules. Saves store `{id, properties}`, never numbers. The research is in [Minecraft block reference](MinecraftBlockReference.md). Verification, decisions and gaps are in the [blocks record](Records/2026-10-08-Blocks.md).
+The Playground's block vocabulary: every full-cube block and slab of Minecraft Java 26.3, plus powder snow and snow layers, plus the 83 blocks decoration places that are drawn from their own baked models (614 blocks: 428 cubes, 101 slabs, powder snow, snow and 83 model blocks), plus air, static water and static lava. The registry has 617 blocks with air, 4,419 states and 689 textures. These blocks use the 26.3 protocol and state ids, faces, textures, tints, animation, mining facts and placement rules. Saves store `{id, properties}`, never numbers. The research is in [Minecraft block reference](MinecraftBlockReference.md). Verification, decisions and gaps are in the [blocks record](Records/2026-10-08-Blocks.md).
 
 ## Data flow
 
 | Step | What | Where |
 |---|---|---|
-| Reference | Jar files byte for byte, `block_manifest.json`, `block_states.json`, `textures.json`, `items.json`, server facts (hardness, tools, light, creative tabs). Generated, hash-listed, never edited. | `Reference/minecraft-blocks-26.3/` |
+| Reference | Jar files byte for byte, `block_manifest.json`, `block_states.json`, `block_models.json` (baked models), `textures.json`, `items.json`, server facts (hardness, tools, light, creative tabs, per-state shapes and offsets). Generated, hash-listed, never edited. | `Reference/minecraft-blocks-26.3/` |
 | Tags | 202 vanilla block tags as `Block.*` gameplay tags. | `Config/Tags/MinecraftBlockTags.ini` (`BlockImportData.py --write-tags`) |
 | Import | Texture arrays, the GUI icon atlas, the creative-screen textures and the registry asset. | `Scripts/Editor/ImportBlocks.py` → `/Game/Blocks` |
 | Materials | `M_BlockOpaque`, `M_BlockCutout`, `M_BlockTranslucent`, `M_BlockWater`. | `Scripts/Editor/CreateBlockMaterials.py` |
@@ -14,10 +14,10 @@ The Playground's block vocabulary: every full-cube block and slab of Minecraft J
 
 `/Game/Blocks` (`UUnnamedProjectSettings::BlockRoot`; Python `ProjectPaths.block_asset()`) is always cooked. It holds:
 
-- `DA_Blocks` (`UFoundationBlockAssets`): blocks, states, faces, textures, creative tabs and the reference SHA-256.
-- `T_BlockTextures`: 709 layers at 16 x 16, the 708 block frames plus one white layer, with vanilla mipmaps.
+- `DA_Blocks` (`UFoundationBlockAssets`): blocks, states, faces, baked models, textures, creative tabs and the reference SHA-256.
+- `T_BlockTextures`: 945 layers at 16 x 16, the 944 block frames plus one white layer, with vanilla mipmaps (each texture's `mipmap_strategy` and `alpha_cutoff_bias`).
 - `T_WaterFlowTextures`: 48 layers at 32 x 32, lava 16 and then water 32 (alphabetical; the array keeps its name).
-- `T_BlockIcons`: the GUI atlas.
+- `T_BlockIcons`: the GUI atlas: every block layer, then the 12 item sprites (`textures/item`) model blocks' icons use.
 - The materials, and `Gui/` for the creative inventory art.
 
 `ImportBlocks.py` verifies an existing `DA_Blocks` and refuses to replace it when the reference changed. To reimport, move the old assets away deliberately.
@@ -33,14 +33,15 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
 
 - **Block ids:** the vanilla names (`stone`, `oak_slab`, `water`). Protocol ids and state ids match 26.3 exactly. A state's id is the block's first state id plus its properties in mixed radix, last property fastest; air is 0.
 - **Saved form:** `FFoundationSavedState {Id, Properties}`, with `Save`/`Load` and `Parse`/`ToString` (`oak_log[axis=x]`). Numbers are never stored. An unknown block id fails to load. A missing property takes the default value. An unknown property or value keeps the default and adds a warning.
-- **Item ids:** item id = block id (the user's choice). Each block with a vanilla item gets one: 529 block items with the vanilla name, stack size and GUI tint. `AddBlockItems` adds them to the rules. Powder snow has none, because its vanilla item is `powder_snow_bucket`. The `snow` item sits in Natural Blocks at index 19.
+- **Item ids:** item id = block id (the user's choice). Each block whose vanilla item has its own id gets one: 600 block items with the vanilla name, stack size and GUI tint. `AddBlockItems` adds them to the rules. Powder snow has none, because its vanilla item is `powder_snow_bucket`; nor do the 12 model blocks whose vanilla item has another id (cocoa, sweet berry bush, cave vines, big dripleaf stem, the wall fans; kelp plant, cave vines plant and tall seagrass have none). The reference records each model block's `vanilla_item` for the inventory pass that adds those items. The `snow` item sits in Natural Blocks at index 19.
 - **Project blocks:** `UFoundationInteractionSettings::Blocks` (empty by default) appends blocks after the imported ones, from protocol id 1286 and state id 35723. A project block whose id is already imported is skipped with a warning.
 - **Retired, never reused:** `dummy_block` and `dummy_block_item`. Blocks replaced them, and the loadout now starts with `stone`.
 
 ## States and shapes
 
 - **Shapes:** full cubes have one shape. Slabs are bottom, top or double. Snow layers (`snow`, layers 1-8) use `layers_1` to `layers_7` (`EFoundationBlockShape::Layers1..Layers7`), boxes k/8 high, and 8 layers is a full cube. Their collision is one layer lower than the outline, as in 26.3, so 1 layer has none; 8 layers collide as a full cube (26.3 collides at 7/8). Placement gives 1 layer, with no stacking yet. Powder snow is a solid full cube for now, with no sinking. Water has no selection or collision shape. Its surface height is `amount / 9`, so a source is 8/9 tall, and falling water (level 8 and up) is full.
-- **Waterlogging:** `waterlogged` is a real property. Placement always sets it to false.
+- **Model blocks:** `EFoundationBlockShape::Model` states are drawn from baked quads (`FFoundationBlockRegistry::GetModelParts`, `GetModelQuads`): per state a list of parts, each with its alternatives (random variant lists keep every entry: lily pad, sea pickle, bamboo). Quads carry positions, UVs, texture, `tintindex`, cull face, facing, shade direction (`shade_direction_override`) and light; models carry their ambient occlusion flag. Outline and collision boxes, per-state light, water and the position offset (kind, range, and whether the shapes move with it) come from the server facts (`facts/block_state_facts.json`), never from the models. Selection and collision of a model state are the bounds of its boxes. Until the model meshes exist (phase 6, S6) model states draw nothing in the Playground, the galleries skip them, and the voxel world treats them as air; placement gives the default state until S7's rules.
+- **Waterlogging:** `waterlogged` is a real property. Placement always sets it to false. Waterlogged and always-water model states (kelp, seagrass, corals) report water through `GetFluid`.
 - **Still lava:** a fluid like water, now in the block reference, `DA_Blocks` and the registry (states 105-120). It is in the opaque layer with light 15, and has no item, no damage and no flow. It is drawn with its animated `lava_still` on every face, untinted; `lava_flow` is in the flow array for later flowing lava. It still counts as water for the player's movement, as the stand-in did. The stand-in in `VoxelBlocks::MakeTable` is gone.
 - **Mining:** the 26.3 hardness and correct-tool facts plus `Block.Mineable.*` and `Block.IncorrectForTool.*` tags drive mining.
 - **Drops:** a broken block drops itself, and a double slab drops 2. This is a provisional rule, not loot tables.
@@ -76,7 +77,7 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
   - birch `#80A755`;
   - water `#3F76E4`.
 
-  GUI items use `items/*.json` tints, such as grass `#7CBD6B`.
+  GUI items use `items/*.json` tints, such as grass `#7CBD6B`. Model blocks' sources come from minecraft.wiki: grass for the tinted crosses, sugar cane and bush (pink petals and wildflowers on their stems only), foliage for vine, the dry foliage colormap for leaf litter (plains `#A37546`), and lily pad `#208030`.
 - **Animation:** `UFoundationBlockTextureTable` holds each animated texture's current layer, next layer and blend, updated at 20 ticks per second from the `.mcmeta` frame list. Interpolated textures blend.
 
 ## Playground gallery
@@ -97,9 +98,14 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
 - **Tabs:** the vanilla tab order and contents, from `CreativeModeTab.buildContents()`.
 - **Search:** filters by name or id, and `#` filters by block tag. `T` opens search.
 - **Interaction:** tooltips and the carried stack. Clicks, shift-clicks, number keys, picking up and deleting follow vanilla `slotClicked`.
-- **Rendering:** `FHudCreativeModel` holds the pure tab, scroll and click rules. 3D item icons come from `HudBlockIcon`: top, east and north faces at shades 1.0, 0.68 and 0.44.
+- **Rendering:** `FHudCreativeModel` holds the pure tab, scroll and click rules. 3D item icons come from `HudBlockIcon`: top, east and north faces at shades 1.0, 0.68 and 0.44. Model blocks' items draw their item model: 61 flat sprites (an icon atlas tile, tinted like their layer) and 10 block models (cactus, azalea, flowering azalea, the moss carpets, mangrove roots, big and small dripleaf, shelf mushroom, spore blossom) projected from their baked quads under the model's gui transform, back faces culled, far quads first.
 - **Hotbar:** the in-game hotbar draws block items with the same 3D icons.
 - **Commits:** every inventory change is the `SetCreativeSlot` authority command (slots 0-8 and 9 for the offhand), gated by `FFoundationLabOptions::bCreativeInventory`.
+
+## Budgets and known issues
+
+- **Texture codes:** face and quad codes hold a texture index in 10 bits: 690 of 1,024 are used (white included). The block array holds 945 of D3D12's 2,048 slices. Both are asserted by the reference verifier and `.Textures`. Phase 7's blocks must stay inside both, or widen the field.
+- **Shelf mushroom:** its two textures are 32 x 32; the 16 x 16 block array holds their own vanilla mip 1 (S6 decides whether they need more).
 
 ## Tests
 
@@ -107,8 +113,9 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
   - `Unnamed.Foundation.Blocks.Registry`: counts, every protocol id and state range, tags and facts.
   - `.Codec`: round trip of every state.
   - `.Faces`: every face resolves to a valid layer, plus the UV transforms.
-  - `.Textures`: imported pixels against the jar hashes, plus mipmaps.
+  - `.Textures`: imported pixels against the jar hashes, plus mipmaps (the strict cutout and biased textures regenerated and compared), and the budgets.
   - `.Placement`: truth tables.
-  - `.Shapes`: slab, water, snow layer, powder snow and lava shapes.
+  - `.Shapes`: slab, water, snow layer, powder snow and lava shapes; every model state's boxes, light, water and offset against the facts.
+  - `.Models`: every baked quad and every model state's parts against the reference, with spot checks.
   - `Unnamed.Hud.Creative.Tabs`, `.Clicks` and `.Authority`.
 - **Runtime:** `TestFoundationRuntime.ps1 -Suite tour` shots 09-23 cover the gallery and the creative screen. The interaction suite covers stone placement and mining and the hotbar block icon.

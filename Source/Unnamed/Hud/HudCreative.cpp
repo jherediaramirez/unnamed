@@ -308,11 +308,80 @@ TArray<FHudCreativeWrite> FHudCreativeModel::PressNumber(
     return Writes;
 }
 
+namespace
+{
+    // A model item: its baked quads under the model's gui transform (ItemTransform: translate, rotate X then Y then
+    // Z, scale), a block spanning 16 slot pixels with y up. Quads facing away are culled and the rest drawn far to
+    // near; each is shaded by the direction it is lit as, like the cube icon's three faces.
+    TArray<HudBlockIcon::FQuad> BuildModel(const FFoundationBlockRegistry& Registry, const FFoundationBlockType& Block)
+    {
+        using namespace HudBlockIcon;
+        const FVector3d Degrees(Block.ItemIconRotation);
+        const FQuat4d Rotation = FQuat4d(FVector3d::XAxisVector, FMath::DegreesToRadians(Degrees.X)) *
+            FQuat4d(FVector3d::YAxisVector, FMath::DegreesToRadians(Degrees.Y)) *
+            FQuat4d(FVector3d::ZAxisVector, FMath::DegreesToRadians(Degrees.Z));
+        const FVector3d Scale(Block.ItemIconScale), Translation(FVector3d(Block.ItemIconTranslation) / 16.);
+        // Unreal block space (X east, Y south, Z up) to Minecraft (x east, y up, z south), centred, transformed.
+        auto Transform = [&](const FVector3f& P)
+        { return Rotation.RotateVector(FVector3d(P.X - .5, P.Z - .5, P.Y - .5) * Scale) + Translation; };
+        TArray<TPair<double, FQuad>> Sorted;
+        for (const FFoundationModelQuad& Model : Registry.GetModelQuads(Block.ItemIconModel))
+        {
+            FVector3d Points[4];
+            for (int32 Corner = 0; Corner < 4; ++Corner)
+                Points[Corner] = Transform(Model.Positions[Corner]);
+            // FaceInfo order winds counter-clockwise seen from the front; the viewer looks down -z.
+            if (((Points[1] - Points[0]) ^ (Points[2] - Points[0])).Z <= 0) continue;
+            const float Shade = Model.Shade == EFoundationFace::Up                             ? TopShade
+                : Model.Shade == EFoundationFace::East || Model.Shade == EFoundationFace::West ? LeftShade
+                                                                                               : RightShade;
+            FLinearColor Color(Shade, Shade, Shade, 1.f);
+            if (Model.TintIndex >= 0 && Block.ItemTint.A > 0)
+                Color *=
+                    FLinearColor(Block.ItemTint.R / 255.f, Block.ItemTint.G / 255.f, Block.ItemTint.B / 255.f, 1.f);
+            FQuad Quad;
+            Quad.Texture = Model.Texture;
+            Quad.Color = Color.ToFColor(false);
+            double Depth = 0;
+            for (int32 Corner = 0; Corner < 4; ++Corner)
+            {
+                Quad.Corners[Corner] =
+                    FVector2f(float(8. + Points[Corner].X * 16.), float(8. - Points[Corner].Y * 16.));
+                Quad.UVs[Corner] = Model.UVs[Corner];
+                Depth += Points[Corner].Z;
+            }
+            Sorted.Add({Depth, Quad});
+        }
+        Sorted.StableSort([](const auto& A, const auto& B) { return A.Key < B.Key; });
+        TArray<FQuad> Quads;
+        for (const auto& [Depth, Quad] : Sorted)
+            Quads.Add(Quad);
+        return Quads;
+    }
+}
+
 TArray<HudBlockIcon::FQuad> HudBlockIcon::Build(const FFoundationBlockRegistry& Registry, FName BlockId)
 {
     TArray<FQuad> Quads;
     const FFoundationBlockType* Block = Registry.FindBlock(BlockId);
     if (!Block || Block->IsAir()) return Quads;
+    if (Block->ItemIconTile != INDEX_NONE)
+    {
+        // item/generated: the sprite fills the slot, tinted like its layer.
+        FQuad Quad;
+        Quad.Tile = Block->ItemIconTile;
+        Quad.Color =
+            Block->ItemTint.A > 0 ? FColor(Block->ItemTint.R, Block->ItemTint.G, Block->ItemTint.B) : FColor::White;
+        const FVector2f Corners[4] = {{0, 0}, {16, 0}, {16, 16}, {0, 16}};
+        for (int32 Corner = 0; Corner < 4; ++Corner)
+        {
+            Quad.Corners[Corner] = Corners[Corner];
+            Quad.UVs[Corner] = Corners[Corner] / 16.f;
+        }
+        Quads.Add(Quad);
+        return Quads;
+    }
+    if (Block->ItemIconModel != INDEX_NONE) return BuildModel(Registry, *Block);
     const FFoundationBlockState State = Block->GetDefaultState();
     const uint32* Codes = Registry.GetFaces(State);
     FBox Shape;

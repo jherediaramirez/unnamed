@@ -13,7 +13,8 @@ class UTexture2DArray;
 // the asset. FFoundationBlockRegistry turns it into the runtime lookup tables.
 
 // Which mesh and collision a state has. A fluid's height comes from its level. Layers1 to Layers7 are snow layers, a
-// box k/8 high from the cell's floor (8 layers are Full).
+// box k/8 high from the cell's floor (8 layers are Full). Model states are drawn from baked model quads
+// (UFoundationBlockAssets::Models), with outline and collision boxes from the block's per-state facts.
 UENUM()
 enum class EFoundationBlockShape : uint8
 {
@@ -28,7 +29,18 @@ enum class EFoundationBlockShape : uint8
     Layers4,
     Layers5,
     Layers6,
-    Layers7
+    Layers7,
+    Model
+};
+
+// 26.3's position offset (minecraft.wiki "Block offset"): a function of the cell's X and Z only. XYZ also lowers the
+// block, never raises it.
+UENUM()
+enum class EFoundationOffsetKind : uint8
+{
+    None,
+    XZ,
+    XYZ
 };
 
 // k for LayersK, else 0.
@@ -162,6 +174,76 @@ struct FFoundationBlockAsset
 
     UPROPERTY(EditAnywhere, Category = "Block")
     FColor ItemTint = FColor(0, 0, 0, 0);
+
+    // Model blocks only (empty or default for the rest). Per state, in state-id order: the part count, then per part
+    // the alternative count and that many indices into UFoundationBlockAssets::Models (a random variant list has
+    // several alternatives; the mesher picks one by position).
+    UPROPERTY(EditAnywhere, Category = "Block")
+    TArray<int32> StateModels;
+
+    // Per state, two counts (outline boxes, collision boxes); then StateBoxes holds each state's outline boxes and its
+    // collision boxes as (min X, Y, Z, max X, Y, Z) in block units, Unreal axes, without the position offset.
+    UPROPERTY(EditAnywhere, Category = "Block")
+    TArray<int32> StateBoxCounts;
+
+    UPROPERTY(EditAnywhere, Category = "Block")
+    TArray<float> StateBoxes;
+
+    // Per state: light emission, and the water amount it holds (8 for a source; 0 none).
+    UPROPERTY(EditAnywhere, Category = "Block")
+    TArray<int32> StateLight;
+
+    UPROPERTY(EditAnywhere, Category = "Block")
+    TArray<int32> StateWater;
+
+    UPROPERTY(EditAnywhere, Category = "Block")
+    EFoundationOffsetKind OffsetKind = EFoundationOffsetKind::None;
+
+    // The largest horizontal offset (blocks) and the lowest vertical one (XYZ: negative).
+    UPROPERTY(EditAnywhere, Category = "Block")
+    float OffsetMaxHorizontal = 0;
+
+    UPROPERTY(EditAnywhere, Category = "Block")
+    float OffsetMinVertical = 0;
+
+    UPROPERTY(EditAnywhere, Category = "Block")
+    bool bOutlineMovesWithOffset = false;
+
+    UPROPERTY(EditAnywhere, Category = "Block")
+    bool bCollisionMovesWithOffset = false;
+
+    // The item icon of a model block: a flat sprite (an IconAtlas tile, tinted by ItemTint) or a baked model drawn
+    // with its gui display transform (degrees, sixteenths, scale); -1 when unused. Other items draw their cube.
+    UPROPERTY(EditAnywhere, Category = "Block")
+    int32 ItemIconTile = -1;
+
+    UPROPERTY(EditAnywhere, Category = "Block")
+    int32 ItemIconModel = -1;
+
+    UPROPERTY(EditAnywhere, Category = "Block")
+    FVector3f ItemIconRotation = FVector3f::ZeroVector;
+
+    UPROPERTY(EditAnywhere, Category = "Block")
+    FVector3f ItemIconTranslation = FVector3f::ZeroVector;
+
+    UPROPERTY(EditAnywhere, Category = "Block")
+    FVector3f ItemIconScale = FVector3f::OneVector;
+};
+
+// A baked block model (Reference/minecraft-blocks-26.3/block_models.json): a range of quads.
+USTRUCT()
+struct FFoundationBlockModelAsset
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, Category = "Model")
+    int32 FirstQuad = 0;
+
+    UPROPERTY(EditAnywhere, Category = "Model")
+    int32 QuadCount = 0;
+
+    UPROPERTY(EditAnywhere, Category = "Model")
+    bool bAmbientOcclusion = true;
 };
 
 // One texture of the block arrays: its layers and, when animated, the 26.3 .mcmeta frame table.
@@ -255,12 +337,24 @@ public:
     TArray<FFoundationCreativeTabAsset> CreativeTabs;
 
     UPROPERTY(EditAnywhere, Category = "Blocks")
+    TArray<FFoundationBlockModelAsset> Models;
+
+    // Per quad, four vertices of (X, Y, Z, U, V): block units on Unreal axes (X east, Y south, Z up) and the
+    // texture UV, in FaceInfo order. ModelQuadCodes packs each quad's texture and flags (FoundationBlockModels).
+    UPROPERTY(EditAnywhere, Category = "Blocks")
+    TArray<float> ModelQuadVertices;
+
+    UPROPERTY(EditAnywhere, Category = "Blocks")
+    TArray<int32> ModelQuadCodes;
+
+    UPROPERTY(EditAnywhere, Category = "Blocks")
     TObjectPtr<UTexture2DArray> BlockTextures;
 
     UPROPERTY(EditAnywhere, Category = "Blocks")
     TObjectPtr<UTexture2DArray> WaterFlowTextures;
 
-    // Every frame of BlockTextures, mip 0, in a grid of 16x16 tiles for Slate item icons.
+    // Every frame of BlockTextures, mip 0, in a grid of 16x16 tiles for Slate item icons, then the item sprites
+    // model blocks' icons use (textures/item).
     UPROPERTY(EditAnywhere, Category = "Blocks")
     TObjectPtr<UTexture2D> IconAtlas;
 

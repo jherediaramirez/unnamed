@@ -28,6 +28,11 @@ namespace
         }
     }
 
+    FBox MakeBox(const float* P)
+    {
+        return FBox(FVector(P[0], P[1], P[2]), FVector(P[3], P[4], P[5]));
+    }
+
     int32 CountStates(TConstArrayView<FFoundationBlockAssetProperty> Properties)
     {
         int32 Count = 1;
@@ -35,6 +40,24 @@ namespace
             Count *= FMath::Max(1, Property.Values.Num());
         return Count;
     }
+}
+
+FFoundationModelQuad FoundationBlockModels::Decode(int32 Code, const float* Vertices)
+{
+    FFoundationModelQuad Quad;
+    for (int32 Corner = 0; Corner < 4; ++Corner)
+    {
+        const float* V = Vertices + Corner * 5;
+        Quad.Positions[Corner] = FVector3f(V[0], V[1], V[2]);
+        Quad.UVs[Corner] = FVector2f(V[3], V[4]);
+    }
+    Quad.Texture = Code & 0x3FF;
+    Quad.TintIndex = (Code >> 10 & 3) - 1;
+    Quad.CullFace = (Code >> 12 & 7) - 1;
+    Quad.Facing = EFoundationFace(FMath::Min(Code >> 15 & 7, 5));
+    Quad.Shade = EFoundationFace(FMath::Min(Code >> 18 & 7, 5));
+    Quad.Light = Code >> 21 & 15;
+    return Quad;
 }
 
 FVector2f FoundationBlockFaces::GetCanonicalUV(EFoundationFace Face, const FVector3f& P)
@@ -125,6 +148,37 @@ TSharedRef<FFoundationBlockRegistry> FFoundationBlockRegistry::Build(
     const int32 AirFaces[FoundationBlockFaces::CodesPerState] = {};
     Registry->AddBlock(MoveTemp(Air), MakeArrayView(&AirShape, 1), AirFaces);
 
+    if (Assets)
+    {
+        const int32 QuadCount = Assets->ModelQuadCodes.Num();
+        if (Assets->ModelQuadVertices.Num() == QuadCount * FoundationBlockModels::FloatsPerQuad)
+            for (int32 Quad = 0; Quad < QuadCount; ++Quad)
+            {
+                FFoundationModelQuad& Decoded =
+                    Registry->ModelQuads.Add_GetRef(FoundationBlockModels::Decode(Assets->ModelQuadCodes[Quad],
+                        &Assets->ModelQuadVertices[Quad * FoundationBlockModels::FloatsPerQuad]));
+                // A texture outside the asset's list draws white rather than reading past it.
+                if (!Assets->Textures.IsValidIndex(Decoded.Texture))
+                {
+                    UE_LOG(LogUnnamedFoundation, Error, TEXT("Block registry: model quad %d has no texture %d"), Quad,
+                        Decoded.Texture);
+                    Decoded.Texture = 0;
+                }
+            }
+        else
+            UE_LOG(LogUnnamedFoundation, Error, TEXT("Block registry: model quad arrays disagree; models skipped"));
+        for (const FFoundationBlockModelAsset& Model : Assets->Models)
+        {
+            const bool bValid = Model.FirstQuad >= 0 && Model.QuadCount >= 0 &&
+                Model.FirstQuad + Model.QuadCount <= Registry->ModelQuads.Num();
+            if (!bValid)
+                UE_LOG(LogUnnamedFoundation, Error,
+                    TEXT("Block registry: model %d has no valid quad range; drawn empty"), Registry->ModelRanges.Num());
+            Registry->ModelRanges.Add(bValid ? FInt32Vector2(Model.FirstQuad, Model.QuadCount) : FInt32Vector2(0, 0));
+            Registry->ModelOcclusion.Add(Model.bAmbientOcclusion);
+        }
+    }
+
     int32 NextProtocol = 1, NextState = 1;
     if (Assets)
         for (const FFoundationBlockAsset& Source : Assets->Blocks)
@@ -134,7 +188,8 @@ TSharedRef<FFoundationBlockRegistry> FFoundationBlockRegistry::Build(
             if (Source.StateShapes.Num() != States ||
                 Source.StateFaces.Num() != States * FoundationBlockFaces::CodesPerState ||
                 Source.DefaultStateId < Source.MinStateId || Source.DefaultStateId >= Source.MinStateId + States ||
-                Registry->ById.Contains(Source.Id) || Registry->ByProtocol.Contains(Source.ProtocolId))
+                Registry->ById.Contains(Source.Id) || Registry->ByProtocol.Contains(Source.ProtocolId) ||
+                !Registry->IsValidModelData(Source, States))
             {
                 UE_LOG(LogUnnamedFoundation, Error, TEXT("Block registry: skipping malformed or duplicate block %s"),
                     *Source.Id.ToString());
@@ -162,9 +217,21 @@ TSharedRef<FFoundationBlockRegistry> FFoundationBlockRegistry::Build(
             Block.DropItem = Source.Item;
             Block.ItemTint = Source.ItemTint;
             Block.ItemMaxStack = Source.ItemMaxStack;
+            Block.ItemIconTile = Source.ItemIconTile;
+            Block.ItemIconModel = Source.ItemIconModel;
+            Block.ItemIconRotation = Source.ItemIconRotation;
+            Block.ItemIconTranslation = Source.ItemIconTranslation;
+            Block.ItemIconScale = Source.ItemIconScale;
+            Block.OffsetKind = Source.OffsetKind;
+            Block.OffsetMaxHorizontal = Source.OffsetMaxHorizontal;
+            Block.OffsetMinVertical = Source.OffsetMinVertical;
+            Block.bOutlineMovesWithOffset = Source.bOutlineMovesWithOffset;
+            Block.bCollisionMovesWithOffset = Source.bCollisionMovesWithOffset;
             NextProtocol = FMath::Max(NextProtocol, Source.ProtocolId + 1);
             NextState = FMath::Max(NextState, Source.MinStateId + States);
+            const int32 TableOffset = Registry->Shapes.Num();
             Registry->AddBlock(MoveTemp(Block), Source.StateShapes, Source.StateFaces);
+            Registry->AddModelData(Source, TableOffset, States);
         }
 
     // Project blocks number after all of 26.3 (1,286 blocks, 35,723 states), imported or not: one full-cube state
@@ -219,9 +286,150 @@ void FFoundationBlockRegistry::AddBlock(
     }
     for (int32 State = 0; State < Block.StateCount; ++State)
         StateBlocks[Block.MinStateId + State] = Index;
+    for (int32 State = 0; State < BlockShapes.Num(); ++State)
+    {
+        StateModelStart.Add(INDEX_NONE);
+        StateBoxRanges.Add(FIntVector::ZeroValue);
+        StateLight.Add(Block.LightEmission);
+        StateWater.Add(0);
+    }
     ById.Add(Block.Id, Index);
     ByProtocol.Add(Block.ProtocolId, Index);
     Blocks.Add(MoveTemp(Block));
+}
+
+bool FFoundationBlockRegistry::IsValidModelData(const FFoundationBlockAsset& Source, int32 States) const
+{
+    // Every array is empty or covers every state; model parts index existing models; box counts match the boxes.
+    if (!Source.StateLight.IsEmpty() && Source.StateLight.Num() != States) return false;
+    if (!Source.StateWater.IsEmpty() && Source.StateWater.Num() != States) return false;
+    if (!Source.StateBoxCounts.IsEmpty())
+    {
+        if (Source.StateBoxCounts.Num() != States * 2) return false;
+        int32 BoxCount = 0;
+        for (const int32 Count : Source.StateBoxCounts)
+        {
+            if (Count < 0) return false;
+            BoxCount += Count;
+        }
+        if (Source.StateBoxes.Num() != BoxCount * 6) return false;
+    }
+    if (Source.StateModels.IsEmpty()) return true;
+    int32 Read = 0;
+    const auto Next = [&Source, &Read](int32& Out)
+    {
+        if (!Source.StateModels.IsValidIndex(Read)) return false;
+        Out = Source.StateModels[Read++];
+        return true;
+    };
+    for (int32 State = 0; State < States; ++State)
+    {
+        int32 Parts, Alternatives, Model;
+        if (Source.StateShapes[State] != EFoundationBlockShape::Model || !Next(Parts) || Parts < 1) return false;
+        for (int32 Part = 0; Part < Parts; ++Part)
+        {
+            if (!Next(Alternatives) || Alternatives < 1) return false;
+            for (int32 Alternative = 0; Alternative < Alternatives; ++Alternative)
+                if (!Next(Model) || !ModelRanges.IsValidIndex(Model)) return false;
+        }
+    }
+    return Read == Source.StateModels.Num();
+}
+
+void FFoundationBlockRegistry::AddModelData(const FFoundationBlockAsset& Source, int32 TableOffset, int32 States)
+{
+    int32 Read = 0, BoxRead = 0;
+    for (int32 State = 0; State < States; ++State)
+    {
+        const int32 Entry = TableOffset + State;
+        if (!Source.StateModels.IsEmpty())
+        {
+            // Copy this state's encoding: parts, then per part the alternative count and the models.
+            StateModelStart[Entry] = ModelParts.Num();
+            const int32 Parts = Source.StateModels[Read];
+            int32 End = Read + 1;
+            for (int32 Part = 0; Part < Parts; ++Part)
+                End += 1 + Source.StateModels[End];
+            ModelParts.Append(&Source.StateModels[Read], End - Read);
+            Read = End;
+        }
+        if (!Source.StateBoxCounts.IsEmpty())
+        {
+            const int32 Outline = Source.StateBoxCounts[State * 2], Collision = Source.StateBoxCounts[State * 2 + 1];
+            StateBoxRanges[Entry] = FIntVector(Boxes.Num(), Outline, Collision);
+            for (int32 Box = 0; Box < Outline + Collision; ++Box, ++BoxRead)
+                Boxes.Add(MakeBox(&Source.StateBoxes[BoxRead * 6]));
+        }
+        if (!Source.StateLight.IsEmpty()) StateLight[Entry] = Source.StateLight[State];
+        if (!Source.StateWater.IsEmpty()) StateWater[Entry] = Source.StateWater[State];
+    }
+}
+
+bool FFoundationBlockRegistry::GetModelParts(
+    FFoundationBlockState State, TArray<TConstArrayView<int32>>& OutParts) const
+{
+    OutParts.Reset();
+    const FFoundationBlockType* Block;
+    const int32 Local = GetLocalIndex(State, Block);
+    const int32 Start = StateModelStart.IsValidIndex(Block->TableOffset + Local)
+        ? StateModelStart[Block->TableOffset + Local]
+        : INDEX_NONE;
+    if (Start == INDEX_NONE) return false;
+    int32 Read = Start + 1;
+    for (int32 Part = 0; Part < ModelParts[Start]; ++Part)
+    {
+        OutParts.Add(TConstArrayView<int32>(&ModelParts[Read + 1], ModelParts[Read]));
+        Read += 1 + ModelParts[Read];
+    }
+    return true;
+}
+
+TConstArrayView<FFoundationModelQuad> FFoundationBlockRegistry::GetModelQuads(int32 Model) const
+{
+    if (!ModelRanges.IsValidIndex(Model)) return {};
+    return TConstArrayView<FFoundationModelQuad>(ModelQuads.GetData() + ModelRanges[Model].X, ModelRanges[Model].Y);
+}
+
+bool FFoundationBlockRegistry::IsModelAmbientOccluded(int32 Model) const
+{
+    return ModelOcclusion.IsValidIndex(Model) && ModelOcclusion[Model];
+}
+
+void FFoundationBlockRegistry::GetOutlineBoxes(FFoundationBlockState State, TArray<FBox>& OutBoxes) const
+{
+    OutBoxes.Reset();
+    const FFoundationBlockType* Block;
+    const int32 Local = GetLocalIndex(State, Block);
+    const FIntVector Range = StateBoxRanges[Block->TableOffset + Local];
+    if (Range.Y + Range.Z > 0)
+    {
+        OutBoxes.Append(Boxes.GetData() + Range.X, Range.Y);
+        return;
+    }
+    FBox Box;
+    if (GetSelectionShape(State, Box)) OutBoxes.Add(Box);
+}
+
+void FFoundationBlockRegistry::GetCollisionBoxes(FFoundationBlockState State, TArray<FBox>& OutBoxes) const
+{
+    OutBoxes.Reset();
+    const FFoundationBlockType* Block;
+    const int32 Local = GetLocalIndex(State, Block);
+    const FIntVector Range = StateBoxRanges[Block->TableOffset + Local];
+    if (Range.Y + Range.Z > 0)
+    {
+        OutBoxes.Append(Boxes.GetData() + Range.X + Range.Y, Range.Z);
+        return;
+    }
+    FBox Box;
+    if (GetCollisionShape(State, Box)) OutBoxes.Add(Box);
+}
+
+int32 FFoundationBlockRegistry::GetLightEmission(FFoundationBlockState State) const
+{
+    const FFoundationBlockType* Block;
+    const int32 Local = GetLocalIndex(State, Block);
+    return StateLight[Block->TableOffset + Local];
 }
 
 const FFoundationBlockType* FFoundationBlockRegistry::FindBlock(FName Id) const
@@ -336,6 +544,7 @@ EFoundationBlockShape FFoundationBlockRegistry::GetShape(FFoundationBlockState S
 bool FFoundationBlockRegistry::GetSelectionShape(FFoundationBlockState State, FBox& OutBox) const
 {
     const EFoundationBlockShape Shape = GetShape(State);
+    if (Shape == EFoundationBlockShape::Model) return GetModelBounds(State, false, OutBox);
     if (const int32 Layers = GetFoundationShapeLayers(Shape))
     {
         OutBox = FBox(FVector::ZeroVector, FVector(1, 1, Layers / 8.));
@@ -344,9 +553,22 @@ bool FFoundationBlockRegistry::GetSelectionShape(FFoundationBlockState State, FB
     return GetSolidShape(Shape, OutBox);
 }
 
+bool FFoundationBlockRegistry::GetModelBounds(FFoundationBlockState State, bool bCollision, FBox& OutBox) const
+{
+    // A model state's outline or collision boxes as one bounding box, for callers that take a single box.
+    const FFoundationBlockType* Block;
+    const int32 Local = GetLocalIndex(State, Block);
+    const FIntVector Range = StateBoxRanges[Block->TableOffset + Local];
+    OutBox = FBox(ForceInit);
+    for (int32 Box = 0; Box < (bCollision ? Range.Z : Range.Y); ++Box)
+        OutBox += Boxes[Range.X + (bCollision ? Range.Y : 0) + Box];
+    return OutBox.IsValid != 0;
+}
+
 bool FFoundationBlockRegistry::GetCollisionShape(FFoundationBlockState State, FBox& OutBox) const
 {
     const EFoundationBlockShape Shape = GetShape(State);
+    if (Shape == EFoundationBlockShape::Model) return GetModelBounds(State, true, OutBox);
     // Snow layers collide one layer lower than they show, as in 26.3, so a single layer has no collision.
     if (const int32 Layers = GetFoundationShapeLayers(Shape))
     {
@@ -360,7 +582,19 @@ FFoundationFluid FFoundationBlockRegistry::GetFluid(FFoundationBlockState State)
 {
     FFoundationFluid Fluid;
     const FFoundationBlockType& Block = GetBlock(State);
-    if (!Block.IsFluid()) return Fluid;
+    if (!Block.IsFluid())
+    {
+        // Waterlogged and always-water model states (kelp, seagrass) hold water: a source when the amount is 8.
+        const int32 Water = StateWater[Block.TableOffset + (IsKnown(State) ? State.Id - Block.MinStateId : 0)];
+        if (Water > 0)
+        {
+            Fluid.bWater = true;
+            Fluid.bSource = Water == 8;
+            Fluid.Amount = Water;
+            Fluid.Level = Water == 8 ? 0 : 8 - Water;
+        }
+        return Fluid;
+    }
     Fluid.bWater = Block.IsWater();
     Fluid.bLava = Block.IsLava();
     Fluid.Level = State.Id - Block.MinStateId;

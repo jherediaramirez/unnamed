@@ -134,12 +134,13 @@ UTexture2D* UFoundationBlockImport::CreateTexture(const FString& PackageName)
 }
 
 FString UFoundationBlockImport::BuildTextureArray(UTexture2DArray* Array, const TArray<FString>& PngPaths,
-    const TArray<int32>& FrameIndices, const TArray<FString>& MipStrategies, int32 FrameSize, int32 MipCount)
+    const TArray<int32>& FrameIndices, const TArray<FString>& MipStrategies, const TArray<float>& AlphaCutoffBiases,
+    int32 FrameSize, int32 MipCount)
 {
 #if WITH_EDITOR
     const int32 Layers = PngPaths.Num();
-    if (!Array || Layers == 0 || FrameIndices.Num() != Layers || MipStrategies.Num() != Layers || FrameSize <= 0 ||
-        MipCount <= 0 || (FrameSize >> (MipCount - 1)) < 1)
+    if (!Array || Layers == 0 || FrameIndices.Num() != Layers || MipStrategies.Num() != Layers ||
+        AlphaCutoffBiases.Num() != Layers || FrameSize <= 0 || MipCount <= 0 || (FrameSize >> (MipCount - 1)) < 1)
         return TEXT("BuildTextureArray: bad arguments");
     // Mips per layer, generated from each frame's RGBA pixels.
     TArray<TArray<TArray<uint8>>> LayerMips;
@@ -148,6 +149,8 @@ FString UFoundationBlockImport::BuildTextureArray(UTexture2DArray* Array, const 
     {
         TArray<uint8> Frame;
         Frame.SetNumUninitialized(FrameSize * FrameSize * 4);
+        // A still texture twice the frame size gives its layer from its own mip chain, one level down.
+        int32 Scale = 1;
         if (PngPaths[Layer] == TEXT("white"))
             FMemory::Memset(Frame.GetData(), 255, Frame.Num());
         else
@@ -160,15 +163,21 @@ FString UFoundationBlockImport::BuildTextureArray(UTexture2DArray* Array, const 
                 Decoded.Add(PngPaths[Layer], MoveTemp(Image));
             }
             const auto& [Pixels, Width, Height] = Decoded[PngPaths[Layer]];
+            Scale = Width == FrameSize * 2 && Height == Width && FrameIndices[Layer] == 0 ? 2 : 1;
             const int32 Top = FrameIndices[Layer] * FrameSize;
-            if (Width != FrameSize || Top + FrameSize > Height)
+            if (Scale == 2)
+                Frame = Pixels;
+            else if (Width != FrameSize || Top + FrameSize > Height)
                 return FString::Printf(
                     TEXT("%s has no %dx%d frame %d"), *PngPaths[Layer], FrameSize, FrameSize, FrameIndices[Layer]);
-            FMemory::Memcpy(Frame.GetData(), Pixels.GetData() + Top * Width * 4, Frame.Num());
+            else
+                FMemory::Memcpy(Frame.GetData(), Pixels.GetData() + Top * Width * 4, Frame.Num());
         }
-        LayerMips.Add(FoundationBlockMipmaps::Generate(
-            Frame, FrameSize, FrameSize, MipCount, FoundationBlockMipmaps::ParseStrategy(MipStrategies[Layer])));
-        if (LayerMips.Last().Num() != MipCount) return TEXT("mip generation returned the wrong level count");
+        const int32 Levels = MipCount + (Scale == 2 ? 1 : 0);
+        LayerMips.Add(FoundationBlockMipmaps::Generate(Frame, FrameSize * Scale, FrameSize * Scale, Levels,
+            FoundationBlockMipmaps::ParseStrategy(MipStrategies[Layer]), AlphaCutoffBiases[Layer]));
+        if (LayerMips.Last().Num() != Levels) return TEXT("mip generation returned the wrong level count");
+        if (Scale == 2) LayerMips.Last().RemoveAt(0);
     }
     Array->PreEditChange(nullptr);
     Array->Source.Init(FrameSize, FrameSize, Layers, MipCount, TSF_BGRA8);
@@ -223,31 +232,79 @@ bool UFoundationBlockImport::ReadLayer(UTexture2DArray* Array, int32 Layer, TArr
 #endif
 }
 
-FString UFoundationBlockImport::BuildIconAtlas(UTexture2D* Atlas, UTexture2DArray* Array, int32 Columns)
+bool UFoundationBlockImport::ReadLayerMip(UTexture2DArray* Array, int32 Layer, int32 Mip, TArray<uint8>& OutRGBA)
+{
+#if WITH_EDITOR
+    if (!Array || !Array->Source.IsValid() || Layer < 0 || Layer >= Array->Source.GetNumSlices() || Mip < 0 ||
+        Mip >= Array->Source.GetNumMips())
+        return false;
+    TArray64<uint8> Data;
+    if (!Array->Source.GetMipData(Data, 0, 0, Mip)) return false;
+    const int32 Size = FMath::Max(1, Array->Source.GetSizeX() >> Mip) * FMath::Max(1, Array->Source.GetSizeY() >> Mip);
+    if (Data.Num() < int64(Layer + 1) * Size * 4) return false;
+    OutRGBA.SetNumUninitialized(Size * 4);
+    const uint8* Slice = Data.GetData() + int64(Layer) * Size * 4;
+    for (int32 Pixel = 0; Pixel < Size; ++Pixel)
+    {
+        OutRGBA[Pixel * 4 + 0] = Slice[Pixel * 4 + 2];
+        OutRGBA[Pixel * 4 + 1] = Slice[Pixel * 4 + 1];
+        OutRGBA[Pixel * 4 + 2] = Slice[Pixel * 4 + 0];
+        OutRGBA[Pixel * 4 + 3] = Slice[Pixel * 4 + 3];
+    }
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool UFoundationBlockImport::DecodePngFile(
+    const FString& Path, TArray<uint8>& OutRGBA, int32& OutWidth, int32& OutHeight)
+{
+#if WITH_EDITOR
+    return DecodePng(Path, OutRGBA, OutWidth, OutHeight);
+#else
+    return false;
+#endif
+}
+
+FString UFoundationBlockImport::BuildIconAtlas(
+    UTexture2D* Atlas, UTexture2DArray* Array, int32 Columns, const TArray<FString>& SpritePngs)
 {
 #if WITH_EDITOR
     if (!Atlas || !Array || Columns <= 0 || Array->Source.GetSizeX() != 16)
         return TEXT("BuildIconAtlas: bad arguments");
     const int32 Layers = Array->Source.GetNumSlices();
-    const int32 Rows = (Layers + Columns - 1) / Columns;
+    const int32 Rows = (Layers + SpritePngs.Num() + Columns - 1) / Columns;
     const int32 Width = Columns * 16, Height = Rows * 16;
     TArray<uint8> Pixels;
     Pixels.SetNumZeroed(Width * Height * 4);
-    TArray<uint8> Layer;
-    for (int32 Index = 0; Index < Layers; ++Index)
+    // One 16 x 16 RGBA tile into the BGRA atlas.
+    auto CopyTile = [&Pixels, Columns, Width](int32 Index, const TArray<uint8>& Tile)
     {
-        if (!ReadLayer(Array, Index, Layer)) return TEXT("BuildIconAtlas: unreadable layer");
         const int32 X0 = Index % Columns * 16, Y0 = Index / Columns * 16;
         for (int32 Y = 0; Y < 16; ++Y)
             for (int32 X = 0; X < 16; ++X)
             {
-                const uint8* From = &Layer[(Y * 16 + X) * 4];
+                const uint8* From = &Tile[(Y * 16 + X) * 4];
                 uint8* To = &Pixels[((Y0 + Y) * Width + X0 + X) * 4];
                 To[0] = From[2];
                 To[1] = From[1];
                 To[2] = From[0];
                 To[3] = From[3];
             }
+    };
+    TArray<uint8> Layer;
+    for (int32 Index = 0; Index < Layers; ++Index)
+    {
+        if (!ReadLayer(Array, Index, Layer)) return TEXT("BuildIconAtlas: unreadable layer");
+        CopyTile(Index, Layer);
+    }
+    for (int32 Sprite = 0; Sprite < SpritePngs.Num(); ++Sprite)
+    {
+        int32 SpriteWidth, SpriteHeight;
+        if (!DecodePng(SpritePngs[Sprite], Layer, SpriteWidth, SpriteHeight) || SpriteWidth != 16 || SpriteHeight != 16)
+            return TEXT("BuildIconAtlas: not a 16x16 sprite: ") + SpritePngs[Sprite];
+        CopyTile(Layers + Sprite, Layer);
     }
     Atlas->PreEditChange(nullptr);
     Atlas->Source.Init(Width, Height, 1, 1, TSF_BGRA8, Pixels.GetData());

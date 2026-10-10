@@ -94,7 +94,7 @@ for name in ("T_BlockTextures", "T_WaterFlowTextures", "T_BlockIcons"):
 def build_array(name, layers, frame_size, mips):
     array = Import.create_texture_array(ProjectPaths.block_asset(name))
     error = Import.build_texture_array(array, [l[0] for l in layers], [l[1] for l in layers], [l[2] for l in layers],
-                                       frame_size, mips)
+                                       [l[3] for l in layers], frame_size, mips)
     if error:
         fail(name + ": " + error)
     return array
@@ -103,13 +103,16 @@ def build_array(name, layers, frame_size, mips):
 block_textures = build_array("T_BlockTextures", data["block_layers"], 16, BLOCK_MIPS)
 flow_textures = build_array("T_WaterFlowTextures", data["flow_layers"], 32, FLOW_MIPS)
 # Mip 0 must be the jar's pixels: every layer against the hash the reference recorded with an independent decoder.
+# The two still 32 x 32 textures in the 16 x 16 array hold their mip 1 instead (BuildTextureArray).
 for texture in data["textures"][1:]:
     array = flow_textures if texture["water_flow"] else block_textures
+    if texture["frame_size"] != ([32, 32] if texture["water_flow"] else [16, 16]):
+        continue
     for frame, expected in enumerate(texture["layer_rgba_sha256"]):
         if Import.hash_layer(array, texture["first_layer"] + frame) != expected:
             fail("layer pixels differ from the reference: %s frame %d" % (texture["name"], frame))
 icons = Import.create_texture(ProjectPaths.block_asset("T_BlockIcons"))
-error = Import.build_icon_atlas(icons, block_textures, ICON_COLUMNS)
+error = Import.build_icon_atlas(icons, block_textures, ICON_COLUMNS, data["sprite_pngs"])
 if error:
     fail("T_BlockIcons: " + error)
 
@@ -156,7 +159,26 @@ for block in data["blocks"]:
         entry.set_editor_property("item_name", block["item_name"])
         entry.set_editor_property("item_max_stack", block["item_max_stack"])
         entry.set_editor_property("item_tint", rgba(block["item_tint"]))
+    entry.set_editor_property("item_icon_tile", block["item_icon_tile"])
+    entry.set_editor_property("item_icon_model", block["item_icon_model"])
+    for key in ("item_icon_rotation", "item_icon_translation", "item_icon_scale"):
+        if key in block:
+            entry.set_editor_property(key, unreal.Vector3f(*block[key]))
+    if "state_models" in block:
+        for key in ("state_models", "state_box_counts", "state_boxes", "state_light", "state_water",
+                    "offset_max_horizontal", "offset_min_vertical", "outline_moves_with_offset",
+                    "collision_moves_with_offset"):
+            entry.set_editor_property(key, block[key])
+        entry.set_editor_property("offset_kind", enum(unreal.FoundationOffsetKind, block["offset_kind"]))
     block_assets.append(entry)
+
+model_assets = []
+for model in data["models"]:
+    entry = unreal.FoundationBlockModelAsset()
+    entry.set_editor_property("first_quad", model["first_quad"])
+    entry.set_editor_property("quad_count", model["quad_count"])
+    entry.set_editor_property("ambient_occlusion", model["ao"])
+    model_assets.append(entry)
 
 tabs = []
 for tab in data["creative_tabs"]:
@@ -173,6 +195,9 @@ registry.set_editor_property("source_sha256", data["source_sha256"])
 registry.set_editor_property("blocks", block_assets)
 registry.set_editor_property("textures", texture_assets)
 registry.set_editor_property("creative_tabs", tabs)
+registry.set_editor_property("models", model_assets)
+registry.set_editor_property("model_quad_vertices", data["quad_vertices"])
+registry.set_editor_property("model_quad_codes", data["quad_codes"])
 registry.set_editor_property("block_textures", block_textures)
 registry.set_editor_property("water_flow_textures", flow_textures)
 registry.set_editor_property("icon_atlas", icons)
@@ -181,5 +206,7 @@ registry.set_editor_property("water_color", rgba(data["water_color"]))
 for asset in (block_textures, flow_textures, icons, registry):
     if not assets.save_loaded_asset(asset, False):
         fail("save failed: " + asset.get_path_name())
-unreal.log("BLOCK_IMPORT PASS: %d blocks, %d textures, %d + %d layers verified against the reference"
-           % (len(block_assets), len(texture_assets), len(data["block_layers"]), len(data["flow_layers"])))
+unreal.log("BLOCK_IMPORT PASS: %d blocks, %d textures, %d + %d layers verified against the reference, %d models, "
+           "%d quads, %d item sprites" % (len(block_assets), len(texture_assets), len(data["block_layers"]),
+                                          len(data["flow_layers"]), len(model_assets), len(data["quad_codes"]),
+                                          len(data["sprite_pngs"])))

@@ -1378,6 +1378,41 @@
    "y_range": null
   },
   {
+   "id": "mangrove_propagule",
+   "protocol_id": 34,
+   "default_state_id": 51,
+   "state_id_range": [
+    46,
+    85
+   ],
+   "properties": "age=0|1|2|3|4;hanging=true|false;stage=0|1;waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "mangrove_propagule",
+    "mangrove_propagule_hanging"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "age,hanging",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "flowers",
+    "mangrove_logs_can_grow_through",
+    "mangrove_roots_can_grow_through",
+    "saplings",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
    "id": "bedrock",
    "protocol_id": 36,
    "default_state_id": 88,
@@ -2645,6 +2680,49 @@
     "snaps_goat_horn"
    ],
    "where": "Poplar trees in dappled forests (26.3); fallen poplar trees",
+   "dimension": "overworld",
+   "y_range": null
+  },
+  {
+   "id": "mangrove_roots",
+   "protocol_id": 61,
+   "default_state_id": 170,
+   "state_id_range": [
+    169,
+    170
+   ],
+   "properties": "waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "mangrove_roots_side",
+    "mangrove_roots_top"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "blocks_dolphin_jump",
+    "blocks_fluid_flow",
+    "blocks_lava_fire_spread",
+    "blocks_motion",
+    "blocks_motion_in_heightmap",
+    "blocks_motion_in_heightmap_no_leaves",
+    "blocks_motion_no_leaves",
+    "causes_suffocation",
+    "entities_can_teleport_to",
+    "frogs_spawnable_on",
+    "ice_melts_when_destroyed_above",
+    "mangrove_logs_can_grow_through",
+    "mangrove_roots_can_grow_through",
+    "mineable/axe"
+   ],
+   "where": "Roots of mangrove trees in mangrove swamps; some trial chamber entrances",
    "dimension": "overworld",
    "y_range": null
   },
@@ -5640,6 +5718,308 @@
    "y_range": null
   },
   {
+   "id": "short_grass",
+   "protocol_id": 140,
+   "default_state_id": 2363,
+   "state_id_range": [
+    2363,
+    2363
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "tinted_cross",
+   "faces": {},
+   "all_textures": [
+    "short_grass"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": true,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "edible_for_sheep",
+    "enchantment_power_transmitter",
+    "replaceable",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "fern",
+   "protocol_id": 141,
+   "default_state_id": 2364,
+   "state_id_range": [
+    2364,
+    2364
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "tinted_cross",
+   "faces": {},
+   "all_textures": [
+    "fern"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": true,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "edible_for_sheep",
+    "enchantment_power_transmitter",
+    "replaceable",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "dead_bush",
+   "protocol_id": 142,
+   "default_state_id": 2365,
+   "state_id_range": [
+    2365,
+    2365
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "dead_bush"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "enchantment_power_transmitter",
+    "replaceable",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "bush",
+   "protocol_id": 143,
+   "default_state_id": 2366,
+   "state_id_range": [
+    2366,
+    2366
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "tinted_cross",
+   "faces": {},
+   "all_textures": [
+    "bush"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": true,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "enchantment_power_transmitter",
+    "replaceable",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "red_shrub",
+   "protocol_id": 144,
+   "default_state_id": 2367,
+   "state_id_range": [
+    2367,
+    2367
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "red_shrub"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "enchantment_power_transmitter",
+    "replaceable",
+    "replaceable_by_mushrooms",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "short_dry_grass",
+   "protocol_id": 145,
+   "default_state_id": 2368,
+   "state_id_range": [
+    2368,
+    2368
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "short_dry_grass"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "edible_for_sheep",
+    "enchantment_power_transmitter",
+    "replaceable",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "tall_dry_grass",
+   "protocol_id": 146,
+   "default_state_id": 2369,
+   "state_id_range": [
+    2369,
+    2369
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "tall_dry_grass"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "edible_for_sheep",
+    "enchantment_power_transmitter",
+    "replaceable",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "seagrass",
+   "protocol_id": 147,
+   "default_state_id": 2370,
+   "state_id_range": [
+    2370,
+    2370
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "seagrass",
+   "faces": {},
+   "all_textures": [
+    "seagrass"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": true,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "enchantment_power_transmitter",
+    "replaceable",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "underwater_bonemeals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "tall_seagrass",
+   "protocol_id": 148,
+   "default_state_id": 2372,
+   "state_id_range": [
+    2371,
+    2372
+   ],
+   "properties": "half=upper|lower",
+   "shape": "model",
+   "template": "seagrass",
+   "faces": {},
+   "all_textures": [
+    "tall_seagrass_bottom",
+    "tall_seagrass_top"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": true,
+   "random_rotation": false,
+   "rotates_by": "half",
+   "tex_size": "16x16",
+   "tags": [
+    "enchantment_power_transmitter",
+    "replaceable",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
    "id": "white_wool",
    "protocol_id": 151,
    "default_state_id": 2409,
@@ -7209,6 +7589,488 @@
    "y_range": null
   },
   {
+   "id": "dandelion",
+   "protocol_id": 200,
+   "default_state_id": 3813,
+   "state_id_range": [
+    3813,
+    3813
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "dandelion"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "enderman_holdable",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "small_flowers",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "poppy",
+   "protocol_id": 203,
+   "default_state_id": 3816,
+   "state_id_range": [
+    3816,
+    3816
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "poppy"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "enderman_holdable",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "small_flowers",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "blue_orchid",
+   "protocol_id": 204,
+   "default_state_id": 3817,
+   "state_id_range": [
+    3817,
+    3817
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "blue_orchid"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "enderman_holdable",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "small_flowers",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "allium",
+   "protocol_id": 205,
+   "default_state_id": 3818,
+   "state_id_range": [
+    3818,
+    3818
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "allium"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "enderman_holdable",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "small_flowers",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "azure_bluet",
+   "protocol_id": 206,
+   "default_state_id": 3819,
+   "state_id_range": [
+    3819,
+    3819
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "azure_bluet"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "enderman_holdable",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "small_flowers",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "red_tulip",
+   "protocol_id": 207,
+   "default_state_id": 3820,
+   "state_id_range": [
+    3820,
+    3820
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "red_tulip"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "enderman_holdable",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "small_flowers",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "orange_tulip",
+   "protocol_id": 208,
+   "default_state_id": 3821,
+   "state_id_range": [
+    3821,
+    3821
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "orange_tulip"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "enderman_holdable",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "small_flowers",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "white_tulip",
+   "protocol_id": 209,
+   "default_state_id": 3822,
+   "state_id_range": [
+    3822,
+    3822
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "white_tulip"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "enderman_holdable",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "small_flowers",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "pink_tulip",
+   "protocol_id": 210,
+   "default_state_id": 3823,
+   "state_id_range": [
+    3823,
+    3823
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "pink_tulip"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "enderman_holdable",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "small_flowers",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "oxeye_daisy",
+   "protocol_id": 211,
+   "default_state_id": 3824,
+   "state_id_range": [
+    3824,
+    3824
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "oxeye_daisy"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "enderman_holdable",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "small_flowers",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "cornflower",
+   "protocol_id": 212,
+   "default_state_id": 3825,
+   "state_id_range": [
+    3825,
+    3825
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "cornflower"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "enderman_holdable",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "small_flowers",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "lily_of_the_valley",
+   "protocol_id": 214,
+   "default_state_id": 3827,
+   "state_id_range": [
+    3827,
+    3827
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "lily_of_the_valley"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "enderman_holdable",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "small_flowers",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "brown_mushroom",
+   "protocol_id": 215,
+   "default_state_id": 3828,
+   "state_id_range": [
+    3828,
+    3828
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "brown_mushroom"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "enderman_holdable",
+    "replaceable_by_mushrooms",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "red_mushroom",
+   "protocol_id": 216,
+   "default_state_id": 3829,
+   "state_id_range": [
+    3829,
+    3829
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "red_mushroom"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "enderman_holdable",
+    "replaceable_by_mushrooms",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
    "id": "gold_block",
    "protocol_id": 217,
    "default_state_id": 3830,
@@ -8120,6 +8982,85 @@
    "y_range": null
   },
   {
+   "id": "cactus",
+   "protocol_id": 328,
+   "default_state_id": 8599,
+   "state_id_range": [
+    8599,
+    8614
+   ],
+   "properties": "age=0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "cactus_bottom",
+    "cactus_top",
+    "cactus_side"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "blocks_dolphin_jump",
+    "blocks_fluid_flow",
+    "blocks_lava_fire_spread",
+    "blocks_motion",
+    "blocks_motion_in_heightmap",
+    "blocks_motion_in_heightmap_no_leaves",
+    "blocks_motion_no_leaves",
+    "cat_does_not_teleport_to",
+    "causes_suffocation",
+    "dangerous_for_teleportation",
+    "enderman_does_not_teleport_to",
+    "enderman_holdable",
+    "entities_can_teleport_to",
+    "happy_ghast_avoids",
+    "ice_melts_when_destroyed_above",
+    "support_override_cactus_flower"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "cactus_flower",
+   "protocol_id": 329,
+   "default_state_id": 8615,
+   "state_id_range": [
+    8615,
+    8615
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "cactus_flower"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "enderman_holdable",
+    "flowers",
+    "wall_post_override",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
    "id": "clay",
    "protocol_id": 330,
    "default_state_id": 8616,
@@ -8174,6 +9115,33 @@
    "where": "Blobs in lush caves and underwater disks in shallow rivers, lakes and oceans; mason houses in villages",
    "dimension": "overworld",
    "y_range": "-64..256 (lush caves blobs, any height); underwater disks at sea level"
+  },
+  {
+   "id": "sugar_cane",
+   "protocol_id": 331,
+   "default_state_id": 8617,
+   "state_id_range": [
+    8617,
+    8632
+   ],
+   "properties": "age=0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15",
+   "shape": "model",
+   "template": "tinted_cross",
+   "faces": {},
+   "all_textures": [
+    "sugar_cane"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": true,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [],
+   "where": null,
+   "dimension": null,
+   "y_range": null
   },
   {
    "id": "jukebox",
@@ -10165,6 +11133,84 @@
    "y_range": null
   },
   {
+   "id": "vine",
+   "protocol_id": 416,
+   "default_state_id": 10123,
+   "state_id_range": [
+    10092,
+    10123
+   ],
+   "properties": "east=true|false;north=true|false;south=true|false;up=true|false;west=true|false",
+   "shape": "model",
+   "template": "multiface",
+   "faces": {},
+   "all_textures": [
+    "vine"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": true,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "east,north,south,up,west",
+   "tex_size": "16x16",
+   "tags": [
+    "can_glide_through",
+    "climbable",
+    "enchantment_power_transmitter",
+    "fall_damage_resetting",
+    "mangrove_logs_can_grow_through",
+    "mangrove_roots_can_grow_through",
+    "mineable/axe",
+    "replaceable",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "shears_minor_breaking_speed",
+    "sword_efficient",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "glow_lichen",
+   "protocol_id": 417,
+   "default_state_id": 10251,
+   "state_id_range": [
+    10124,
+    10251
+   ],
+   "properties": "down=true|false;east=true|false;north=true|false;south=true|false;up=true|false;waterlogged=true|false;west=true|false",
+   "shape": "model",
+   "template": "multiface",
+   "faces": {},
+   "all_textures": [
+    "glow_lichen"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "down,east,north,south,up,west",
+   "tex_size": "16x16",
+   "tags": [
+    "enchantment_power_transmitter",
+    "inside_step_sound_blocks",
+    "mineable/axe",
+    "replaceable",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "shears_minor_breaking_speed",
+    "sword_efficient",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
    "id": "mycelium",
    "protocol_id": 423,
    "default_state_id": 10653,
@@ -10246,6 +11292,37 @@
    ],
    "where": "Mushroom fields in abundance; single blocks in swamp abandoned camps",
    "dimension": "overworld",
+   "y_range": null
+  },
+  {
+   "id": "lily_pad",
+   "protocol_id": 424,
+   "default_state_id": 10654,
+   "state_id_range": [
+    10654,
+    10654
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "lily_pad"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": true,
+   "animated": false,
+   "random_rotation": true,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "frog_prefer_jump_to",
+    "inside_step_sound_blocks",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
    "y_range": null
   },
   {
@@ -10571,6 +11648,70 @@
     "causes_suffocation",
     "entities_can_teleport_to",
     "ice_melts_when_destroyed_above"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "cocoa",
+   "protocol_id": 446,
+   "default_state_id": 11215,
+   "state_id_range": [
+    11215,
+    11226
+   ],
+   "properties": "age=0|1|2;facing=north|south|west|east",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "cocoa_stage0",
+    "cocoa_stage1",
+    "cocoa_stage2"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "age,facing",
+   "tex_size": "16x16",
+   "tags": [
+    "mineable/axe",
+    "sword_efficient",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "shelf_mushroom",
+   "protocol_id": 447,
+   "default_state_id": 11227,
+   "state_id_range": [
+    11227,
+    11234
+   ],
+   "properties": "age=0|1;facing=north|south|west|east",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "shelf_mushroom_stage0",
+    "shelf_mushroom_stage1"
+   ],
+   "render_layer": "opaque",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "age,facing",
+   "tex_size": "16x16",
+   "tags": [
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
    ],
    "where": null,
    "dimension": null,
@@ -12453,6 +13594,212 @@
    ],
    "where": "Ice spikes, frozen peaks, ice caves, icebergs, igloo windows, some snowy village houses",
    "dimension": "overworld",
+   "y_range": null
+  },
+  {
+   "id": "sunflower",
+   "protocol_id": 611,
+   "default_state_id": 14763,
+   "state_id_range": [
+    14762,
+    14763
+   ],
+   "properties": "half=upper|lower",
+   "shape": "model",
+   "template": "double_cross",
+   "faces": {},
+   "all_textures": [
+    "sunflower_bottom",
+    "sunflower_top",
+    "sunflower_back",
+    "sunflower_front"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "half",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "lilac",
+   "protocol_id": 612,
+   "default_state_id": 14765,
+   "state_id_range": [
+    14764,
+    14765
+   ],
+   "properties": "half=upper|lower",
+   "shape": "model",
+   "template": "double_cross",
+   "faces": {},
+   "all_textures": [
+    "lilac_bottom",
+    "lilac_top"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "half",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "rose_bush",
+   "protocol_id": 613,
+   "default_state_id": 14767,
+   "state_id_range": [
+    14766,
+    14767
+   ],
+   "properties": "half=upper|lower",
+   "shape": "model",
+   "template": "double_cross",
+   "faces": {},
+   "all_textures": [
+    "rose_bush_bottom",
+    "rose_bush_top"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "half",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "peony",
+   "protocol_id": 614,
+   "default_state_id": 14769,
+   "state_id_range": [
+    14768,
+    14769
+   ],
+   "properties": "half=upper|lower",
+   "shape": "model",
+   "template": "double_cross",
+   "faces": {},
+   "all_textures": [
+    "peony_bottom",
+    "peony_top"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "half",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "tall_grass",
+   "protocol_id": 615,
+   "default_state_id": 14771,
+   "state_id_range": [
+    14770,
+    14771
+   ],
+   "properties": "half=upper|lower",
+   "shape": "model",
+   "template": "tinted_cross",
+   "faces": {},
+   "all_textures": [
+    "tall_grass_bottom",
+    "tall_grass_top"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": true,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "half",
+   "tex_size": "16x16",
+   "tags": [
+    "enchantment_power_transmitter",
+    "replaceable",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "large_fern",
+   "protocol_id": 616,
+   "default_state_id": 14773,
+   "state_id_range": [
+    14772,
+    14773
+   ],
+   "properties": "half=upper|lower",
+   "shape": "model",
+   "template": "tinted_cross",
+   "faces": {},
+   "all_textures": [
+    "large_fern_bottom",
+    "large_fern_top"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": true,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "half",
+   "tex_size": "16x16",
+   "tags": [
+    "enchantment_power_transmitter",
+    "replaceable",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
    "y_range": null
   },
   {
@@ -17604,6 +18951,64 @@
    "y_range": null
   },
   {
+   "id": "kelp",
+   "protocol_id": 832,
+   "default_state_id": 18419,
+   "state_id_range": [
+    18419,
+    18444
+   ],
+   "properties": "age=0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "kelp"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": true,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "kelp_plant",
+   "protocol_id": 833,
+   "default_state_id": 18445,
+   "state_id_range": [
+    18445,
+    18445
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "kelp_plant"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": true,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
    "id": "dried_kelp_block",
    "protocol_id": 834,
    "default_state_id": 18446,
@@ -18117,6 +19522,505 @@
    "y_range": null
   },
   {
+   "id": "tube_coral",
+   "protocol_id": 853,
+   "default_state_id": 18514,
+   "state_id_range": [
+    18514,
+    18515
+   ],
+   "properties": "waterlogged=true|false",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "tube_coral"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "coral_plants",
+    "corals",
+    "underwater_bonemeals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "brain_coral",
+   "protocol_id": 854,
+   "default_state_id": 18516,
+   "state_id_range": [
+    18516,
+    18517
+   ],
+   "properties": "waterlogged=true|false",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "brain_coral"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "coral_plants",
+    "corals",
+    "underwater_bonemeals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "bubble_coral",
+   "protocol_id": 855,
+   "default_state_id": 18518,
+   "state_id_range": [
+    18518,
+    18519
+   ],
+   "properties": "waterlogged=true|false",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "bubble_coral"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "coral_plants",
+    "corals",
+    "underwater_bonemeals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "fire_coral",
+   "protocol_id": 856,
+   "default_state_id": 18520,
+   "state_id_range": [
+    18520,
+    18521
+   ],
+   "properties": "waterlogged=true|false",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "fire_coral"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "coral_plants",
+    "corals",
+    "underwater_bonemeals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "horn_coral",
+   "protocol_id": 857,
+   "default_state_id": 18522,
+   "state_id_range": [
+    18522,
+    18523
+   ],
+   "properties": "waterlogged=true|false",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "horn_coral"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "coral_plants",
+    "corals",
+    "underwater_bonemeals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "tube_coral_fan",
+   "protocol_id": 863,
+   "default_state_id": 18534,
+   "state_id_range": [
+    18534,
+    18535
+   ],
+   "properties": "waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "tube_coral_fan"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "corals",
+    "underwater_bonemeals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "brain_coral_fan",
+   "protocol_id": 864,
+   "default_state_id": 18536,
+   "state_id_range": [
+    18536,
+    18537
+   ],
+   "properties": "waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "brain_coral_fan"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "corals",
+    "underwater_bonemeals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "bubble_coral_fan",
+   "protocol_id": 865,
+   "default_state_id": 18538,
+   "state_id_range": [
+    18538,
+    18539
+   ],
+   "properties": "waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "bubble_coral_fan"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "corals",
+    "underwater_bonemeals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "fire_coral_fan",
+   "protocol_id": 866,
+   "default_state_id": 18540,
+   "state_id_range": [
+    18540,
+    18541
+   ],
+   "properties": "waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "fire_coral_fan"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "corals",
+    "underwater_bonemeals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "horn_coral_fan",
+   "protocol_id": 867,
+   "default_state_id": 18542,
+   "state_id_range": [
+    18542,
+    18543
+   ],
+   "properties": "waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "horn_coral_fan"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "corals",
+    "underwater_bonemeals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "tube_coral_wall_fan",
+   "protocol_id": 873,
+   "default_state_id": 18584,
+   "state_id_range": [
+    18584,
+    18591
+   ],
+   "properties": "facing=north|south|west|east;waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "tube_coral_fan"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing",
+   "tex_size": "16x16",
+   "tags": [
+    "underwater_bonemeals",
+    "wall_corals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "brain_coral_wall_fan",
+   "protocol_id": 874,
+   "default_state_id": 18592,
+   "state_id_range": [
+    18592,
+    18599
+   ],
+   "properties": "facing=north|south|west|east;waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "brain_coral_fan"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing",
+   "tex_size": "16x16",
+   "tags": [
+    "underwater_bonemeals",
+    "wall_corals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "bubble_coral_wall_fan",
+   "protocol_id": 875,
+   "default_state_id": 18600,
+   "state_id_range": [
+    18600,
+    18607
+   ],
+   "properties": "facing=north|south|west|east;waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "bubble_coral_fan"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing",
+   "tex_size": "16x16",
+   "tags": [
+    "underwater_bonemeals",
+    "wall_corals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "fire_coral_wall_fan",
+   "protocol_id": 876,
+   "default_state_id": 18608,
+   "state_id_range": [
+    18608,
+    18615
+   ],
+   "properties": "facing=north|south|west|east;waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "fire_coral_fan"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing",
+   "tex_size": "16x16",
+   "tags": [
+    "underwater_bonemeals",
+    "wall_corals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "horn_coral_wall_fan",
+   "protocol_id": 877,
+   "default_state_id": 18616,
+   "state_id_range": [
+    18616,
+    18623
+   ],
+   "properties": "facing=north|south|west|east;waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "horn_coral_fan"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing",
+   "tex_size": "16x16",
+   "tags": [
+    "underwater_bonemeals",
+    "wall_corals",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "sea_pickle",
+   "protocol_id": 878,
+   "default_state_id": 18624,
+   "state_id_range": [
+    18624,
+    18631
+   ],
+   "properties": "pickles=1|2|3|4;waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "sea_pickle"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": true,
+   "rotates_by": "pickles,waterlogged",
+   "tex_size": "16x16",
+   "tags": [
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
    "id": "blue_ice",
    "protocol_id": 879,
    "default_state_id": 18632,
@@ -18163,6 +20067,49 @@
    "where": "Bottoms of icebergs and arches in frozen oceans; piles in snowy village houses; ancient cities",
    "dimension": "overworld",
    "y_range": "30..61 (blue ice placement in frozen oceans)"
+  },
+  {
+   "id": "bamboo",
+   "protocol_id": 882,
+   "default_state_id": 18636,
+   "state_id_range": [
+    18636,
+    18647
+   ],
+   "properties": "age=0|1;leaves=none|small|large;stage=0|1",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "bamboo_stalk",
+    "bamboo_small_leaves",
+    "bamboo_large_leaves"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": true,
+   "animated": false,
+   "random_rotation": true,
+   "rotates_by": "age,leaves",
+   "tex_size": "16x16",
+   "tags": [
+    "blocks_dolphin_jump",
+    "blocks_fluid_flow",
+    "blocks_lava_fire_spread",
+    "blocks_motion",
+    "blocks_motion_in_heightmap",
+    "blocks_motion_in_heightmap_no_leaves",
+    "blocks_motion_no_leaves",
+    "causes_suffocation",
+    "entities_can_teleport_to",
+    "ice_melts_when_destroyed_above",
+    "mineable/axe",
+    "supports_bamboo",
+    "sword_instantly_mines"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
   },
   {
    "id": "polished_granite_slab",
@@ -19116,6 +21063,45 @@
     "entities_can_teleport_to",
     "ice_melts_when_destroyed_above",
     "mineable/axe"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "sweet_berry_bush",
+   "protocol_id": 951,
+   "default_state_id": 24298,
+   "state_id_range": [
+    24298,
+    24301
+   ],
+   "properties": "age=0|1|2|3",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "sweet_berry_bush_stage0",
+    "sweet_berry_bush_stage1",
+    "sweet_berry_bush_stage2",
+    "sweet_berry_bush_stage3"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "age",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_growables",
+    "cat_does_not_teleport_to",
+    "dangerous_for_teleportation",
+    "enderman_does_not_teleport_to",
+    "fall_damage_resetting",
+    "fox_immune_to",
+    "happy_ghast_avoids",
+    "washed_away_by_fluids"
    ],
    "where": null,
    "dimension": null,
@@ -21261,6 +23247,163 @@
    "y_range": "-58..30 (amethyst geodes)"
   },
   {
+   "id": "amethyst_cluster",
+   "protocol_id": 1070,
+   "default_state_id": 26770,
+   "state_id_range": [
+    26761,
+    26772
+   ],
+   "properties": "facing=north|east|south|west|up|down;waterlogged=true|false",
+   "shape": "model",
+   "template": "cross_facing",
+   "faces": {},
+   "all_textures": [
+    "amethyst_cluster"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing",
+   "tex_size": "16x16",
+   "tags": [
+    "blocks_dolphin_jump",
+    "blocks_fluid_flow",
+    "blocks_lava_fire_spread",
+    "blocks_motion",
+    "blocks_motion_in_heightmap",
+    "blocks_motion_in_heightmap_no_leaves",
+    "blocks_motion_no_leaves",
+    "causes_suffocation",
+    "entities_can_teleport_to",
+    "ice_melts_when_destroyed_above",
+    "mineable/pickaxe"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "large_amethyst_bud",
+   "protocol_id": 1071,
+   "default_state_id": 26782,
+   "state_id_range": [
+    26773,
+    26784
+   ],
+   "properties": "facing=north|east|south|west|up|down;waterlogged=true|false",
+   "shape": "model",
+   "template": "cross_facing",
+   "faces": {},
+   "all_textures": [
+    "large_amethyst_bud"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing",
+   "tex_size": "16x16",
+   "tags": [
+    "blocks_dolphin_jump",
+    "blocks_fluid_flow",
+    "blocks_lava_fire_spread",
+    "blocks_motion",
+    "blocks_motion_in_heightmap",
+    "blocks_motion_in_heightmap_no_leaves",
+    "blocks_motion_no_leaves",
+    "causes_suffocation",
+    "entities_can_teleport_to",
+    "ice_melts_when_destroyed_above",
+    "mineable/pickaxe"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "medium_amethyst_bud",
+   "protocol_id": 1072,
+   "default_state_id": 26794,
+   "state_id_range": [
+    26785,
+    26796
+   ],
+   "properties": "facing=north|east|south|west|up|down;waterlogged=true|false",
+   "shape": "model",
+   "template": "cross_facing",
+   "faces": {},
+   "all_textures": [
+    "medium_amethyst_bud"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing",
+   "tex_size": "16x16",
+   "tags": [
+    "blocks_dolphin_jump",
+    "blocks_fluid_flow",
+    "blocks_lava_fire_spread",
+    "blocks_motion",
+    "blocks_motion_in_heightmap",
+    "blocks_motion_in_heightmap_no_leaves",
+    "blocks_motion_no_leaves",
+    "causes_suffocation",
+    "entities_can_teleport_to",
+    "ice_melts_when_destroyed_above",
+    "mineable/pickaxe"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "small_amethyst_bud",
+   "protocol_id": 1073,
+   "default_state_id": 26806,
+   "state_id_range": [
+    26797,
+    26808
+   ],
+   "properties": "facing=north|east|south|west|up|down;waterlogged=true|false",
+   "shape": "model",
+   "template": "cross_facing",
+   "faces": {},
+   "all_textures": [
+    "small_amethyst_bud"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing",
+   "tex_size": "16x16",
+   "tags": [
+    "blocks_dolphin_jump",
+    "blocks_fluid_flow",
+    "blocks_lava_fire_spread",
+    "blocks_motion",
+    "blocks_motion_in_heightmap",
+    "blocks_motion_in_heightmap_no_leaves",
+    "blocks_motion_no_leaves",
+    "causes_suffocation",
+    "entities_can_teleport_to",
+    "ice_melts_when_destroyed_above",
+    "inside_step_sound_blocks",
+    "mineable/pickaxe"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
    "id": "tuff",
    "protocol_id": 1074,
    "default_state_id": 26809,
@@ -22530,6 +24673,46 @@
    "where": "Sculk patches in the deep dark biome, plus sculk veins",
    "dimension": "overworld",
    "y_range": "-64..256 (deep dark sculk patch placement)"
+  },
+  {
+   "id": "sculk_vein",
+   "protocol_id": 1121,
+   "default_state_id": 31128,
+   "state_id_range": [
+    31001,
+    31128
+   ],
+   "properties": "down=true|false;east=true|false;north=true|false;south=true|false;up=true|false;waterlogged=true|false;west=true|false",
+   "shape": "model",
+   "template": "multiface",
+   "faces": {},
+   "all_textures": [
+    "sculk_vein"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": true,
+   "random_rotation": false,
+   "rotates_by": "down,east,north,south,up,west",
+   "tex_size": "16x16",
+   "tags": [
+    "blocks_dolphin_jump",
+    "blocks_fluid_flow",
+    "blocks_lava_fire_spread",
+    "blocks_motion",
+    "blocks_motion_in_heightmap",
+    "blocks_motion_in_heightmap_no_leaves",
+    "blocks_motion_no_leaves",
+    "causes_suffocation",
+    "entities_can_teleport_to",
+    "ice_melts_when_destroyed_above",
+    "inside_step_sound_blocks",
+    "mineable/hoe"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
   },
   {
    "id": "sculk_catalyst",
@@ -25125,6 +27308,414 @@
    "y_range": "-64..256 (cluster placement range; cave-limited)"
   },
   {
+   "id": "pointed_dripstone",
+   "protocol_id": 1223,
+   "default_state_id": 33571,
+   "state_id_range": [
+    33566,
+    33585
+   ],
+   "properties": "thickness=tip_merge|tip|frustum|middle|base;vertical_direction=up|down;waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "pointed_dripstone_down_base",
+    "pointed_dripstone_up_base",
+    "pointed_dripstone_down_frustum",
+    "pointed_dripstone_up_frustum",
+    "pointed_dripstone_down_middle",
+    "pointed_dripstone_up_middle",
+    "pointed_dripstone_down_tip",
+    "pointed_dripstone_up_tip",
+    "pointed_dripstone_down_tip_merge",
+    "pointed_dripstone_up_tip_merge"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "thickness,vertical_direction",
+   "tex_size": "16x16",
+   "tags": [
+    "blocks_dolphin_jump",
+    "blocks_fluid_flow",
+    "blocks_lava_fire_spread",
+    "blocks_motion",
+    "blocks_motion_in_heightmap",
+    "blocks_motion_in_heightmap_no_leaves",
+    "blocks_motion_no_leaves",
+    "cat_does_not_teleport_to",
+    "causes_suffocation",
+    "dangerous_for_teleportation",
+    "enderman_does_not_teleport_to",
+    "entities_can_teleport_to",
+    "happy_ghast_avoids",
+    "ice_melts_when_destroyed_above",
+    "mineable/pickaxe",
+    "speleothems"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "sulfur_spike",
+   "protocol_id": 1224,
+   "default_state_id": 33591,
+   "state_id_range": [
+    33586,
+    33605
+   ],
+   "properties": "thickness=tip_merge|tip|frustum|middle|base;vertical_direction=up|down;waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "sulfur_spike_down_base",
+    "sulfur_spike_up_base",
+    "sulfur_spike_down_frustum",
+    "sulfur_spike_up_frustum",
+    "sulfur_spike_down_middle",
+    "sulfur_spike_up_middle",
+    "sulfur_spike_down_tip",
+    "sulfur_spike_up_tip",
+    "sulfur_spike_down_tip_merge",
+    "sulfur_spike_up_tip_merge"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "thickness,vertical_direction",
+   "tex_size": "16x16",
+   "tags": [
+    "blocks_dolphin_jump",
+    "blocks_fluid_flow",
+    "blocks_lava_fire_spread",
+    "blocks_motion",
+    "blocks_motion_in_heightmap",
+    "blocks_motion_in_heightmap_no_leaves",
+    "blocks_motion_no_leaves",
+    "causes_suffocation",
+    "entities_can_teleport_to",
+    "happy_ghast_avoids",
+    "ice_melts_when_destroyed_above",
+    "mineable/pickaxe",
+    "speleothems"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "cave_vines",
+   "protocol_id": 1225,
+   "default_state_id": 33607,
+   "state_id_range": [
+    33606,
+    33657
+   ],
+   "properties": "age=0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25;berries=true|false",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "cave_vines",
+    "cave_vines_lit"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "berries",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_growables",
+    "can_glide_through",
+    "cave_vines",
+    "climbable",
+    "fall_damage_resetting",
+    "lush_ground_replaceable",
+    "moss_replaceable",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "cave_vines_plant",
+   "protocol_id": 1226,
+   "default_state_id": 33659,
+   "state_id_range": [
+    33658,
+    33659
+   ],
+   "properties": "berries=true|false",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "cave_vines_plant",
+    "cave_vines_plant_lit"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "berries",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_growables",
+    "can_glide_through",
+    "cave_vines",
+    "climbable",
+    "fall_damage_resetting",
+    "lush_ground_replaceable",
+    "moss_replaceable",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "spore_blossom",
+   "protocol_id": 1227,
+   "default_state_id": 33660,
+   "state_id_range": [
+    33660,
+    33660
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "spore_blossom_base",
+    "spore_blossom"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "flowers",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "azalea",
+   "protocol_id": 1228,
+   "default_state_id": 33661,
+   "state_id_range": [
+    33661,
+    33661
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "azalea_top",
+    "azalea_side",
+    "azalea_plant"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "saplings",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "flowering_azalea",
+   "protocol_id": 1229,
+   "default_state_id": 33662,
+   "state_id_range": [
+    33662,
+    33662
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "flowering_azalea_top",
+    "flowering_azalea_side",
+    "azalea_plant"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "flowers",
+    "saplings",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "moss_carpet",
+   "protocol_id": 1230,
+   "default_state_id": 33663,
+   "state_id_range": [
+    33663,
+    33663
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "carpet",
+   "faces": {},
+   "all_textures": [
+    "moss_block"
+   ],
+   "render_layer": "opaque",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "combination_step_sound_blocks",
+    "mangrove_logs_can_grow_through",
+    "mangrove_roots_can_grow_through",
+    "mineable/hoe",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "pink_petals",
+   "protocol_id": 1231,
+   "default_state_id": 33664,
+   "state_id_range": [
+    33664,
+    33679
+   ],
+   "properties": "facing=north|south|west|east;flower_amount=1|2|3|4",
+   "shape": "model",
+   "template": "flowerbed",
+   "faces": {},
+   "all_textures": [
+    "pink_petals",
+    "pink_petals_stem"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": true,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing,flower_amount",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "flowers",
+    "inside_step_sound_blocks",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "wildflowers",
+   "protocol_id": 1232,
+   "default_state_id": 33680,
+   "state_id_range": [
+    33680,
+    33695
+   ],
+   "properties": "facing=north|south|west|east;flower_amount=1|2|3|4",
+   "shape": "model",
+   "template": "flowerbed",
+   "faces": {},
+   "all_textures": [
+    "wildflowers",
+    "wildflowers_stem"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": true,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing,flower_amount",
+   "tex_size": "16x16",
+   "tags": [
+    "bee_attractive",
+    "flowers",
+    "inside_step_sound_blocks",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "leaf_litter",
+   "protocol_id": 1233,
+   "default_state_id": 33696,
+   "state_id_range": [
+    33696,
+    33711
+   ],
+   "properties": "facing=north|south|west|east;segment_amount=1|2|3|4",
+   "shape": "model",
+   "template": "flowerbed",
+   "faces": {},
+   "all_textures": [
+    "leaf_litter"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": true,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing,segment_amount",
+   "tex_size": "16x16",
+   "tags": [
+    "enchantment_power_transmitter",
+    "inside_step_sound_blocks",
+    "replaceable",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
    "id": "moss_block",
    "protocol_id": 1234,
    "default_state_id": 33712,
@@ -25204,6 +27795,137 @@
    "where": "Floor and ceiling of lush caves; trial chambers",
    "dimension": "overworld",
    "y_range": "-64..256 (lush cave vegetation placement)"
+  },
+  {
+   "id": "big_dripleaf",
+   "protocol_id": 1235,
+   "default_state_id": 33714,
+   "state_id_range": [
+    33713,
+    33744
+   ],
+   "properties": "facing=north|south|west|east;tilt=none|unstable|partial|full;waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "big_dripleaf_top",
+    "big_dripleaf_tip",
+    "big_dripleaf_side",
+    "big_dripleaf_stem"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing,tilt",
+   "tex_size": "16x16",
+   "tags": [
+    "frog_prefer_jump_to",
+    "mineable/axe",
+    "sword_efficient",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "big_dripleaf_stem",
+   "protocol_id": 1236,
+   "default_state_id": 33746,
+   "state_id_range": [
+    33745,
+    33752
+   ],
+   "properties": "facing=north|south|west|east;waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "big_dripleaf_stem"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing",
+   "tex_size": "16x16",
+   "tags": [
+    "mineable/axe",
+    "sword_efficient",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "small_dripleaf",
+   "protocol_id": 1237,
+   "default_state_id": 33756,
+   "state_id_range": [
+    33753,
+    33768
+   ],
+   "properties": "facing=north|south|west|east;half=upper|lower;waterlogged=true|false",
+   "shape": "model",
+   "template": "custom",
+   "faces": {},
+   "all_textures": [
+    "small_dripleaf_stem_bottom",
+    "small_dripleaf_top",
+    "small_dripleaf_side",
+    "small_dripleaf_stem_top"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing,half",
+   "tex_size": "16x16",
+   "tags": [
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "hanging_roots",
+   "protocol_id": 1238,
+   "default_state_id": 33770,
+   "state_id_range": [
+    33769,
+    33770
+   ],
+   "properties": "waterlogged=true|false",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "hanging_roots"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "enchantment_power_transmitter",
+    "replaceable",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
   },
   {
    "id": "rooted_dirt",
@@ -26522,6 +29244,137 @@
    ],
    "where": "Moss patches in pale gardens",
    "dimension": "overworld",
+   "y_range": null
+  },
+  {
+   "id": "pale_moss_carpet",
+   "protocol_id": 1279,
+   "default_state_id": 35554,
+   "state_id_range": [
+    35554,
+    35715
+   ],
+   "properties": "bottom=true|false;east=none|low|tall;north=none|low|tall;south=none|low|tall;west=none|low|tall",
+   "shape": "model",
+   "template": "carpet",
+   "faces": {},
+   "all_textures": [
+    "pale_moss_carpet",
+    "pale_moss_carpet_side_tall",
+    "pale_moss_carpet_side_small"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "bottom,east,north,south,west",
+   "tex_size": "16x16",
+   "tags": [
+    "combination_step_sound_blocks",
+    "mineable/hoe",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "pale_hanging_moss",
+   "protocol_id": 1280,
+   "default_state_id": 35716,
+   "state_id_range": [
+    35716,
+    35717
+   ],
+   "properties": "tip=true|false",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "pale_hanging_moss",
+    "pale_hanging_moss_tip"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "tip",
+   "tex_size": "16x16",
+   "tags": [
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "closed_eyeblossom",
+   "protocol_id": 1282,
+   "default_state_id": 35719,
+   "state_id_range": [
+    35719,
+    35719
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "closed_eyeblossom"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "enderman_holdable",
+    "flowers",
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "small_flowers",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null
+  },
+  {
+   "id": "firefly_bush",
+   "protocol_id": 1285,
+   "default_state_id": 35722,
+   "state_id_range": [
+    35722,
+    35722
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "cross",
+   "faces": {},
+   "all_textures": [
+    "firefly_bush",
+    "firefly_bush_emissive"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": true,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "replaceable_by_mushrooms",
+    "replaceable_by_trees",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
    "y_range": null
   }
  ],

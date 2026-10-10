@@ -129,18 +129,26 @@ void AFoundationPlayground::AddBlockGallery()
     if (const FFoundationBlockType* Snow = Authority.World.FindBlock(TEXT("snow_block")))
         Seed(GetShowcaseCell(0, 2) + FIntVector(0, 0, 1), Snow->GetDefaultState());
 
-    // Every block in registry order (its default state), then every state in state-id order.
+    // Every block in registry order (its default state), then every state in state-id order. Model blocks wait for
+    // their meshes (phase 6, S6), so the galleries keep their layout until then.
+    auto IsModel = [&Registry](const FFoundationBlockType& Type)
+    { return Registry.GetShape(Type.GetDefaultState()) == EFoundationBlockShape::Model; };
     int32 Index = 0;
-    for (int32 Block = 1; Block < Registry.GetBlockCount(); ++Block, ++Index)
+    for (int32 Block = 1; Block < Registry.GetBlockCount(); ++Block)
+    {
+        if (IsModel(Registry.GetBlockAt(Block))) continue;
         Seed(RegistryGalleryOrigin +
                 FIntVector(Index % RegistryGalleryColumns * 2, Index / RegistryGalleryColumns * 2, 0),
             Registry.GetBlockAt(Block).GetDefaultState());
+        ++Index;
+    }
     AddSign(TEXT("BLOCK GALLERY: every block in registry order"),
         CellCenter(RegistryGalleryOrigin, 0) + FVector(-150, 0, 160), 90);
     Index = 0;
     for (int32 Block = 1; Block < Registry.GetBlockCount(); ++Block)
     {
         const FFoundationBlockType& Type = Registry.GetBlockAt(Block);
+        if (IsModel(Type)) continue;
         for (int32 Local = 0; Local < Type.StateCount; ++Local, ++Index)
             Seed(StateGalleryOrigin + FIntVector(Index % StateGalleryColumns * 2, Index / StateGalleryColumns * 2, 0),
                 {uint16(Type.MinStateId + Local)});

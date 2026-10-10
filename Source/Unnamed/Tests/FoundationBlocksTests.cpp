@@ -3,6 +3,7 @@
 #include "Engine/Texture2DArray.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlockImport.h"
+#include "Foundation/FoundationBlockMipmaps.h"
 #include "Foundation/FoundationBlockPlacement.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationInteractionSettings.h"
@@ -26,6 +27,56 @@ namespace
         if (FFileHelper::LoadFileToString(Text, *Path))
             FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Json);
         return Json;
+    }
+
+    const TCHAR* const FaceNames[6] = {
+        TEXT("west"), TEXT("east"), TEXT("north"), TEXT("south"), TEXT("down"), TEXT("up")};
+
+    int32 FaceIndex(const FString& Name)
+    {
+        for (int32 Index = 0; Index < 6; ++Index)
+            if (Name == FaceNames[Index]) return Index;
+        return INDEX_NONE;
+    }
+
+    // Mojang block space (x east, y up, z south) to Unreal block space: (x, y, z) -> (x, z, y).
+    FVector3f ToUnreal(const TArray<TSharedPtr<FJsonValue>>& Point)
+    {
+        return FVector3f(Point[0]->AsNumber(), Point[2]->AsNumber(), Point[1]->AsNumber());
+    }
+
+    FBox ToUnrealBox(const TArray<TSharedPtr<FJsonValue>>& Box)
+    {
+        return FBox(FVector(Box[0]->AsNumber(), Box[2]->AsNumber(), Box[1]->AsNumber()),
+            FVector(Box[3]->AsNumber(), Box[5]->AsNumber(), Box[4]->AsNumber()));
+    }
+
+    // Registry boxes equal the facts' boxes, in order.
+    bool BoxesMatch(const TArray<FBox>& Actual, const TArray<TSharedPtr<FJsonValue>>& Expected)
+    {
+        if (Actual.Num() != Expected.Num()) return false;
+        for (int32 Index = 0; Index < Actual.Num(); ++Index)
+        {
+            const FBox Want = ToUnrealBox(Expected[Index]->AsArray());
+            if (!Actual[Index].Min.Equals(Want.Min, 1e-5) || !Actual[Index].Max.Equals(Want.Max, 1e-5)) return false;
+        }
+        return true;
+    }
+
+    // The registry's model states (and blocks), counted from the blocks.
+    int32 CountModelStates(const FFoundationBlockRegistry& Registry, int32* OutBlocks = nullptr)
+    {
+        int32 States = 0, Blocks = 0;
+        for (int32 Index = 1; Index < Registry.GetBlockCount(); ++Index)
+        {
+            const FFoundationBlockType& Block = Registry.GetBlockAt(Index);
+            const int32 Before = States;
+            for (int32 Local = 0; Local < Block.StateCount; ++Local)
+                States += Registry.GetShape({uint16(Block.MinStateId + Local)}) == EFoundationBlockShape::Model;
+            Blocks += States > Before;
+        }
+        if (OutBlocks) *OutBlocks = Blocks;
+        return States;
     }
 
     FName Value(const FFoundationBlockRegistry& Registry, FFoundationBlockState State, const TCHAR* Property)
@@ -90,9 +141,12 @@ bool FFoundationBlocksRegistryTest::RunTest(const FString&)
     if (!TestNotNull(TEXT("registry asset"), Registry->GetAssets()) || !TestValid(TEXT("manifest"), Manifest) ||
         !TestValid(TEXT("report"), Report))
         return false;
-    // 531 blocks (428 cubes, 101 slabs, powder snow and snow layers) plus air, water and lava, and no project blocks
-    // by default.
-    TestEqual(TEXT("air + 531 + water + lava"), Registry->GetBlockCount(), 534);
+    // 614 blocks (429 cubes, 101 slabs, snow layers and 83 model blocks) plus air, water and lava, and no project
+    // blocks by default.
+    TestEqual(TEXT("air + 614 + water + lava"), Registry->GetBlockCount(), 617);
+    int32 ModelBlocks = 0;
+    CountModelStates(*Registry, &ModelBlocks);
+    TestEqual(TEXT("blocks with shape Model"), ModelBlocks, 83);
     TArray<TSharedPtr<FJsonValue>> Blocks = Manifest->GetArrayField(TEXT("blocks"));
     Blocks.Append(Manifest->GetArrayField(TEXT("fluids")));
     int32 States = 0, Mismatches = 0;
@@ -129,7 +183,7 @@ bool FFoundationBlocksRegistryTest::RunTest(const FString&)
             ++States;
         }
     }
-    TestEqual(TEXT("states checked"), States, 3470);
+    TestEqual(TEXT("states checked"), States, 4419);
     TestEqual(TEXT("states whose id or properties differ from the report"), Mismatches, 0);
     TestEqual(TEXT("air is state 0"), Registry->GetBlock({0}).Id, FName(TEXT("air")));
     TestTrue(TEXT("unknown ids resolve to air"),
@@ -167,7 +221,7 @@ bool FFoundationBlocksCodecTest::RunTest(const FString&)
             ++States;
         }
     }
-    TestEqual(TEXT("every imported state"), States, 3470);
+    TestEqual(TEXT("every imported state"), States, 4419);
     TestEqual(TEXT("save/load and text round-trip failures"), Failures, 0);
     // The saved form is ids and properties, never numbers.
     const FFoundationBlockState Slab = Registry->FindBlock(TEXT("oak_slab"))->GetDefaultState();
@@ -216,14 +270,23 @@ bool FFoundationBlocksFacesTest::RunTest(const FString&)
         const FFoundationBlockTextureAsset& Entry = Assets->Textures[Texture];
         return Entry.FirstLayer >= 0 && Entry.FirstLayer + Entry.FrameCount <= (Entry.bWaterFlow ? FlowLayers : Layers);
     };
-    int32 Faces = 0, Invalid = 0;
+    int32 Faces = 0, Invalid = 0, ModelStates = 0, ModelCodes = 0;
     for (int32 Index = 1; Index < Registry->GetBlockCount(); ++Index)
     {
         const FFoundationBlockType& Block = Registry->GetBlockAt(Index);
         if (Block.IsFluid()) continue;
         for (int32 Local = 0; Local < Block.StateCount; ++Local)
         {
-            const uint32* Codes = Registry->GetFaces({uint16(Block.MinStateId + Local)});
+            const FFoundationBlockState State{uint16(Block.MinStateId + Local)};
+            const uint32* Codes = Registry->GetFaces(State);
+            // Model states have no faces: their codes are all 0.
+            if (Registry->GetShape(State) == EFoundationBlockShape::Model)
+            {
+                ++ModelStates;
+                for (int32 Code = 0; Code < FoundationBlockFaces::CodesPerState; ++Code)
+                    ModelCodes += Codes[Code] != 0;
+                continue;
+            }
             for (int32 Face = 0; Face < 6; ++Face, ++Faces)
                 Invalid += !ValidTexture(FoundationBlockFaces::GetTexture(Codes[Face]));
             const uint32 Overlay = Codes[FoundationBlockFaces::OverlayIndex];
@@ -231,8 +294,21 @@ bool FFoundationBlocksFacesTest::RunTest(const FString&)
                 Invalid += !ValidTexture(FoundationBlockFaces::GetTexture(Overlay));
         }
     }
-    TestEqual(TEXT("faces checked (3438 states x 6)"), Faces, 3438 * 6);
+    // 4,387 states without the two fluids, of which the model states have no faces.
+    TestEqual(TEXT("faces checked (non-model states x 6) plus model states x 6"), Faces + ModelStates * 6, 4387 * 6);
+    TestTrue(TEXT("model states exist"), ModelStates > 0);
+    TestEqual(TEXT("model state face codes that are not 0"), ModelCodes, 0);
     TestEqual(TEXT("faces without a valid array layer"), Invalid, 0);
+    // Every model quad shows a real texture (not the importer's white texture 0) with a valid array layer.
+    int32 Quads = 0, InvalidQuads = 0;
+    for (int32 Model = 0; Model < Registry->GetModelCount(); ++Model)
+        for (const FFoundationModelQuad& Quad : Registry->GetModelQuads(Model))
+        {
+            InvalidQuads += Quad.Texture == 0 || !ValidTexture(Quad.Texture);
+            ++Quads;
+        }
+    TestTrue(TEXT("model quads checked"), Quads > 0);
+    TestEqual(TEXT("model quads without a valid texture"), InvalidQuads, 0);
     TestTrue(TEXT("water textures"),
         ValidTexture(Assets->Textures.IndexOfByPredicate(
             [](const FFoundationBlockTextureAsset& T) { return T.Name == TEXT("water_flow"); })));
@@ -307,13 +383,38 @@ bool FFoundationBlocksTexturesTest::RunTest(const FString&)
             Array->CompressionSettings == TC_EditorIcon && Array->SRGB && Array->Filter == TF_Nearest &&
                 Array->MipGenSettings == TMGS_LeaveExistingMips && Array->Source.GetFormat() == TSF_BGRA8 &&
                 Array->Source.GetNumMips() >= 5);
-    // Mip 0 of every layer is the jar PNG's pixels: hashes recorded by an independent decoder (Pillow).
-    int32 Checked = 0, Different = 0;
+    // Mip 0 of every layer is the jar PNG's pixels: hashes recorded by an independent decoder (Pillow). The shelf
+    // mushroom's 32 x 32 textures are the exception: their layer holds their own vanilla mip 1, checked below.
+    int32 Checked = 0, Different = 0, Shelf = 0, ShelfDifferent = 0;
     for (const TSharedPtr<FJsonValue>& Value : Reference->GetArrayField(TEXT("textures")))
     {
         const TSharedPtr<FJsonObject> Texture = Value->AsObject();
         UTexture2DArray* Array = Texture->GetStringField(TEXT("array")) == TEXT("water_flow") ? Flow : Blocks;
         const int32 First = int32(Texture->GetNumberField(TEXT("first_layer")));
+        if (int32(Texture->GetArrayField(TEXT("frame_size"))[0]->AsNumber()) != Array->Source.GetSizeX())
+        {
+            // The layer is level 1 of the 32 x 32 PNG's mip chain.
+            const FString Name = Texture->GetStringField(TEXT("name"));
+            TArray<uint8> Png, Layer;
+            int32 Width = 0, Height = 0;
+            FString Strategy = TEXT("auto");
+            double Bias = FoundationBlockMipmaps::DefaultAlphaCutoffBias;
+            Texture->TryGetStringField(TEXT("mipmap_strategy"), Strategy);
+            Texture->TryGetNumberField(TEXT("alpha_cutoff_bias"), Bias);
+            const FString Path = FPaths::ProjectDir() /
+                TEXT("Reference/minecraft-blocks-26.3/assets/minecraft/textures/block") / (Name + TEXT(".png"));
+            ++Shelf;
+            TArray<TArray<uint8>> Mips;
+            if (UFoundationBlockImport::DecodePngFile(Path, Png, Width, Height))
+                Mips = FoundationBlockMipmaps::Generate(
+                    Png, Width, Height, 2, FoundationBlockMipmaps::ParseStrategy(Strategy), float(Bias));
+            if (Mips.Num() != 2 || !UFoundationBlockImport::ReadLayer(Array, First, Layer) || Layer != Mips[1])
+            {
+                ++ShelfDifferent;
+                AddError(Name + TEXT(" is not level 1 of its 32x32 PNG"));
+            }
+            continue;
+        }
         const TArray<TSharedPtr<FJsonValue>>& Hashes = Texture->GetArrayField(TEXT("layer_rgba_sha256"));
         for (int32 Frame = 0; Frame < Hashes.Num(); ++Frame, ++Checked)
             if (UFoundationBlockImport::HashLayer(Array, First + Frame) != Hashes[Frame]->AsString())
@@ -322,9 +423,63 @@ bool FFoundationBlocksTexturesTest::RunTest(const FString&)
                 AddError(FString::Printf(TEXT("%s frame %d differs"), *Texture->GetStringField(TEXT("name")), Frame));
             }
     }
-    // 708 block frames and 48 flow frames (water 32, lava 16).
-    TestEqual(TEXT("layers checked"), Checked, 756);
+    // 944 block frames and 48 flow frames (water 32, lava 16), less the two shelf mushroom frames.
+    TestEqual(TEXT("layers checked"), Checked, 990);
     TestEqual(TEXT("layers whose pixels differ from the jar"), Different, 0);
+    TestEqual(TEXT("shelf mushroom layers with their own mip 1"), Shelf, 2);
+    TestEqual(TEXT("shelf mushroom layers that differ from level 1 of the 32x32 PNG"), ShelfDifferent, 0);
+
+    // Mips 1-4 of every texture with an alpha cutoff bias or the strict_cutout strategy are 26.3's generated chain
+    // from the asset's own mip 0, with the strategy and bias textures.json records.
+    int32 MipTextures = 0, MipsChecked = 0, MipsDifferent = 0;
+    for (const TSharedPtr<FJsonValue>& Value : Reference->GetArrayField(TEXT("textures")))
+    {
+        const TSharedPtr<FJsonObject> Texture = Value->AsObject();
+        FString Strategy = TEXT("auto");
+        double Bias = FoundationBlockMipmaps::DefaultAlphaCutoffBias;
+        Texture->TryGetStringField(TEXT("mipmap_strategy"), Strategy);
+        const bool bHasBias = Texture->TryGetNumberField(TEXT("alpha_cutoff_bias"), Bias);
+        if (!bHasBias && Strategy != TEXT("strict_cutout")) continue;
+        ++MipTextures;
+        UTexture2DArray* Array = Texture->GetStringField(TEXT("array")) == TEXT("water_flow") ? Flow : Blocks;
+        const int32 Size = Array->Source.GetSizeX();
+        const FString Name = Texture->GetStringField(TEXT("name"));
+        const int32 First = int32(Texture->GetNumberField(TEXT("first_layer")));
+        const int32 Frames = int32(Texture->GetNumberField(TEXT("frame_count")));
+        for (int32 Frame = 0; Frame < Frames; ++Frame)
+        {
+            TArray<uint8> Base;
+            TArray<TArray<uint8>> Expected;
+            if (UFoundationBlockImport::ReadLayerMip(Array, First + Frame, 0, Base))
+                Expected = FoundationBlockMipmaps::Generate(
+                    Base, Size, Size, 5, FoundationBlockMipmaps::ParseStrategy(Strategy), float(Bias));
+            bool bSame = Expected.Num() == 5;
+            for (int32 Mip = 1; bSame && Mip < 5; ++Mip, ++MipsChecked)
+            {
+                TArray<uint8> Actual;
+                bSame =
+                    UFoundationBlockImport::ReadLayerMip(Array, First + Frame, Mip, Actual) && Actual == Expected[Mip];
+            }
+            if (!bSame)
+            {
+                ++MipsDifferent;
+                AddError(FString::Printf(TEXT("%s frame %d: mips differ from the generated chain (%s, bias %g)"), *Name,
+                    Frame, *Strategy, Bias));
+            }
+        }
+    }
+    TestEqual(TEXT("textures with a cutoff bias or strict_cutout"), MipTextures, 25);
+    TestTrue(TEXT("mip levels checked"), MipsChecked > 0);
+    TestEqual(TEXT("frames whose mips differ from the generated chain"), MipsDifferent, 0);
+
+    // Budgets: the face code's 10-bit texture field and D3D12's array slice limit.
+    const int32 TextureCount = Assets->Textures.Num();
+    const int32 TextureLimit = int32(FoundationBlockFaces::TextureMask) + 1;
+    const int32 BlockSlices = Blocks->Source.GetNumSlices();
+    AddInfo(FString::Printf(
+        TEXT("textures %d of %d, block array slices %d of 2048"), TextureCount, TextureLimit, BlockSlices));
+    TestTrue(TEXT("textures fit the face code's texture field"), TextureCount <= TextureLimit);
+    TestTrue(TEXT("block array slices fit D3D12's array limit"), BlockSlices <= 2048);
     return true;
 }
 #endif
@@ -522,6 +677,271 @@ bool FFoundationBlocksShapesTest::RunTest(const FString&)
     B.World.GatherCollision(FBox(FVector(-100, -100, -100), FVector(400, 200, 200)), Boxes);
     TestTrue(
         TEXT("collision: the half slab only, no water"), Boxes.Num() == 1 && FMath::IsNearlyEqual(Boxes[0].Max.Z, 50.));
+
+    // Every block's offset and every model state's boxes, light, fluid and replaceable flag against the facts
+    // (Mojang coordinates, converted to Unreal's).
+    const TSharedPtr<FJsonObject> Facts = ReadReference(TEXT("facts/block_state_facts.json"));
+    if (!TestValid(TEXT("block_state_facts.json"), Facts)) return false;
+    const FFoundationBlockRegistry& Registry = B.R();
+    int32 Mismatches = 0, FactBlocks = 0, ModelStates = 0;
+    auto Fail = [&](const FString& Message)
+    {
+        if (++Mismatches <= 20) AddError(Message);
+    };
+    for (const TSharedPtr<FJsonValue>& BlockValue : Facts->GetArrayField(TEXT("blocks")))
+    {
+        const TSharedPtr<FJsonObject> Entry = BlockValue->AsObject();
+        const FString Id = Entry->GetStringField(TEXT("id"));
+        const FFoundationBlockType* Block = Registry.FindBlock(*Id);
+        ++FactBlocks;
+        if (!Block)
+        {
+            Fail(Id + TEXT(" is not in the registry"));
+            continue;
+        }
+        // Offset: null means none.
+        const TSharedPtr<FJsonObject>* Offset = nullptr;
+        EFoundationOffsetKind Kind = EFoundationOffsetKind::None;
+        double MaxXZ = 0, MinY = 0;
+        bool bOutlineMoves = false, bCollisionMoves = false;
+        if (Entry->TryGetObjectField(TEXT("offset"), Offset))
+        {
+            Kind = (*Offset)->GetStringField(TEXT("kind")) == TEXT("xyz") ? EFoundationOffsetKind::XYZ
+                                                                          : EFoundationOffsetKind::XZ;
+            MaxXZ = (*Offset)->GetNumberField(TEXT("max_xz"));
+            MinY = (*Offset)->GetNumberField(TEXT("min_y"));
+            bOutlineMoves = (*Offset)->GetBoolField(TEXT("outline_moves"));
+            bCollisionMoves = (*Offset)->GetBoolField(TEXT("collision_moves"));
+        }
+        if (Block->OffsetKind != Kind || !FMath::IsNearlyEqual(Block->OffsetMaxHorizontal, float(MaxXZ), 1e-5f) ||
+            !FMath::IsNearlyEqual(Block->OffsetMinVertical, float(MinY), 1e-5f) ||
+            Block->bOutlineMovesWithOffset != bOutlineMoves || Block->bCollisionMovesWithOffset != bCollisionMoves)
+            Fail(Id + TEXT(" offset differs from the facts"));
+        for (const TSharedPtr<FJsonValue>& StateValue : Entry->GetArrayField(TEXT("states")))
+        {
+            const TSharedPtr<FJsonObject> Fact = StateValue->AsObject();
+            const FFoundationBlockState State{uint16(Fact->GetNumberField(TEXT("id")))};
+            if (Registry.GetShape(State) != EFoundationBlockShape::Model) continue;
+            ++ModelStates;
+            const FString Label = FString::Printf(TEXT("%s state %d"), *Id, State.Id);
+            TArray<FBox> Outline, Collision;
+            Registry.GetOutlineBoxes(State, Outline);
+            Registry.GetCollisionBoxes(State, Collision);
+            if (!BoxesMatch(Outline, Fact->GetArrayField(TEXT("outline")))) Fail(Label + TEXT(" outline boxes differ"));
+            if (!BoxesMatch(Collision, Fact->GetArrayField(TEXT("collision"))))
+                Fail(Label + TEXT(" collision boxes differ"));
+            if (Registry.GetLightEmission(State) != int32(Fact->GetNumberField(TEXT("light"))))
+                Fail(Label + TEXT(" light differs"));
+            if (Block->bReplaceable != Fact->GetBoolField(TEXT("replaceable")))
+                Fail(Label + TEXT(" replaceable differs"));
+            const TSharedPtr<FJsonObject>* Fluid = nullptr;
+            const FFoundationFluid Water = Registry.GetFluid(State);
+            if (Fact->TryGetObjectField(TEXT("fluid"), Fluid)
+                    ? !Water.bWater || Water.Amount != int32((*Fluid)->GetNumberField(TEXT("amount")))
+                    : Water.bWater)
+                Fail(Label + TEXT(" fluid differs"));
+        }
+    }
+    TestEqual(TEXT("facts blocks (every imported block)"), FactBlocks, 616);
+    TestEqual(TEXT("model states checked against the facts"), ModelStates, CountModelStates(Registry));
+    TestTrue(TEXT("model states exist"), ModelStates > 0);
+    TestEqual(TEXT("offsets, boxes, light, fluids and replaceable flags that differ from the facts"), Mismatches, 0);
+    return true;
+}
+
+// The baked models and the model states' parts against the reference.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBlocksModelsTest, "Unnamed.Foundation.Blocks.Models", BlockTestFlags)
+
+bool FFoundationBlocksModelsTest::RunTest(const FString&)
+{
+    FBlocks B;
+    const FFoundationBlockRegistry& Registry = B.R();
+    const UFoundationBlockAssets* Assets = Registry.GetAssets();
+    const TSharedPtr<FJsonObject> ModelsJson = ReadReference(TEXT("block_models.json"));
+    const TSharedPtr<FJsonObject> StatesJson = ReadReference(TEXT("block_states.json"));
+    const TSharedPtr<FJsonObject> ItemsJson = ReadReference(TEXT("items.json"));
+    if (!TestNotNull(TEXT("assets"), Assets) || !TestValid(TEXT("block_models.json"), ModelsJson) ||
+        !TestValid(TEXT("block_states.json"), StatesJson) || !TestValid(TEXT("items.json"), ItemsJson))
+        return false;
+    int32 Mismatches = 0;
+    auto Fail = [&](const FString& Message)
+    {
+        if (++Mismatches <= 20) AddError(Message);
+    };
+    // Texture index by name, built once.
+    TMap<FName, int32> TextureIndex;
+    for (int32 Index = 0; Index < Assets->Textures.Num(); ++Index)
+        TextureIndex.FindOrAdd(Assets->Textures[Index].Name, Index);
+
+    // Every model and quad.
+    const TArray<TSharedPtr<FJsonValue>>& Models = ModelsJson->GetArrayField(TEXT("models"));
+    TestEqual(TEXT("reference models"), Models.Num(), 303);
+    TestEqual(TEXT("registry models"), Registry.GetModelCount(), 303);
+    TestEqual(TEXT("registry models equal the reference's"), Registry.GetModelCount(), Models.Num());
+    int32 ReferenceQuads = 0, RegistryQuads = 0;
+    for (int32 Model = 0; Model < Registry.GetModelCount(); ++Model)
+        RegistryQuads += Registry.GetModelQuads(Model).Num();
+    for (int32 Model = 0; Model < Models.Num() && Model < Registry.GetModelCount(); ++Model)
+    {
+        const TSharedPtr<FJsonObject> Entry = Models[Model]->AsObject();
+        const TArray<TSharedPtr<FJsonValue>>& Quads = Entry->GetArrayField(TEXT("quads"));
+        const TConstArrayView<FFoundationModelQuad> Actual = Registry.GetModelQuads(Model);
+        ReferenceQuads += Quads.Num();
+        if (Registry.IsModelAmbientOccluded(Model) != Entry->GetBoolField(TEXT("ao")))
+            Fail(FString::Printf(TEXT("model %d ambient occlusion differs"), Model));
+        if (Actual.Num() != Quads.Num())
+        {
+            Fail(FString::Printf(TEXT("model %d has %d quads, expected %d"), Model, Actual.Num(), Quads.Num()));
+            continue;
+        }
+        for (int32 Index = 0; Index < Quads.Num(); ++Index)
+        {
+            const TSharedPtr<FJsonObject> Quad = Quads[Index]->AsObject();
+            const FFoundationModelQuad& Got = Actual[Index];
+            const TArray<TSharedPtr<FJsonValue>>& Vertices = Quad->GetArrayField(TEXT("v"));
+            const TArray<TSharedPtr<FJsonValue>>& UVs = Quad->GetArrayField(TEXT("uv"));
+            bool bSame = Vertices.Num() == 4 && UVs.Num() == 4;
+            for (int32 Corner = 0; bSame && Corner < 4; ++Corner)
+            {
+                const TArray<TSharedPtr<FJsonValue>>& UV = UVs[Corner]->AsArray();
+                bSame = Got.Positions[Corner].Equals(ToUnreal(Vertices[Corner]->AsArray()), 1e-5f) &&
+                    Got.UVs[Corner].Equals(FVector2f(UV[0]->AsNumber(), UV[1]->AsNumber()), 1e-5f);
+            }
+            const int32* Texture = TextureIndex.Find(FName(*Quad->GetStringField(TEXT("t"))));
+            FString Cull;
+            const int32 CullFace = Quad->TryGetStringField(TEXT("cull"), Cull) ? FaceIndex(Cull) : INDEX_NONE;
+            bSame = bSame && Texture && Got.Texture == *Texture &&
+                Got.TintIndex == int32(Quad->GetNumberField(TEXT("tint"))) && Got.CullFace == CullFace &&
+                int32(Got.Facing) == FaceIndex(Quad->GetStringField(TEXT("facing"))) &&
+                int32(Got.Shade) == FaceIndex(Quad->GetStringField(TEXT("shade"))) &&
+                Got.Light == int32(Quad->GetNumberField(TEXT("light")));
+            if (!bSame) Fail(FString::Printf(TEXT("model %d quad %d differs from the reference"), Model, Index));
+        }
+    }
+    TestEqual(TEXT("reference quads"), ReferenceQuads, 2410);
+    TestEqual(TEXT("registry quads"), RegistryQuads, 2410);
+
+    // Every model state's parts and alternatives.
+    int32 ModelStates = 0;
+    for (const TSharedPtr<FJsonValue>& BlockValue : StatesJson->GetArrayField(TEXT("blocks")))
+    {
+        const TSharedPtr<FJsonObject> Block = BlockValue->AsObject();
+        for (const TSharedPtr<FJsonValue>& StateValue : Block->GetArrayField(TEXT("states")))
+        {
+            const TSharedPtr<FJsonObject> State = StateValue->AsObject();
+            if (State->GetStringField(TEXT("shape")) != TEXT("model")) continue;
+            ++ModelStates;
+            const FFoundationBlockState Id{uint16(State->GetNumberField(TEXT("id")))};
+            TArray<TConstArrayView<int32>> Parts;
+            const TArray<TSharedPtr<FJsonValue>>& Expected = State->GetArrayField(TEXT("model"));
+            bool bSame = Registry.GetModelParts(Id, Parts) && Parts.Num() == Expected.Num();
+            for (int32 Part = 0; bSame && Part < Parts.Num(); ++Part)
+            {
+                const TArray<TSharedPtr<FJsonValue>>& Alternatives = Expected[Part]->AsArray();
+                bSame = Parts[Part].Num() == Alternatives.Num();
+                for (int32 Alternative = 0; bSame && Alternative < Alternatives.Num(); ++Alternative)
+                    bSame = Parts[Part][Alternative] == int32(Alternatives[Alternative]->AsNumber());
+            }
+            if (!bSame)
+                Fail(FString::Printf(
+                    TEXT("%s state %d: model parts differ"), *Block->GetStringField(TEXT("id")), Id.Id));
+        }
+    }
+    TestTrue(TEXT("reference model states"), ModelStates > 0);
+    TestEqual(TEXT("registry model states equal the reference's"), CountModelStates(Registry), ModelStates);
+    TestEqual(TEXT("model data that differs from the reference"), Mismatches, 0);
+
+    // Per-state spot checks: parts, the first part's alternatives, quads of the first alternative of every part.
+    auto Spot = [&](const TCHAR* Text, int32 PartCount, int32 Alternatives, int32 QuadCount)
+    {
+        TArray<TConstArrayView<int32>> Parts;
+        if (!TestTrue(FString(Text) + TEXT(" has model parts"), Registry.GetModelParts(B.State(Text), Parts)) ||
+            Parts.IsEmpty())
+            return;
+        int32 Quads = 0;
+        for (const TConstArrayView<int32>& Part : Parts)
+            Quads += Registry.GetModelQuads(Part[0]).Num();
+        if (PartCount >= 0) TestEqual(FString(Text) + TEXT(" parts"), Parts.Num(), PartCount);
+        if (Alternatives >= 0) TestEqual(FString(Text) + TEXT(" alternatives of part 0"), Parts[0].Num(), Alternatives);
+        if (QuadCount >= 0) TestEqual(FString(Text) + TEXT(" quads"), Quads, QuadCount);
+    };
+    Spot(TEXT("poppy"), 1, 1, 4);
+    Spot(TEXT("seagrass"), -1, -1, 8);
+    Spot(TEXT("tube_coral_fan[waterlogged=true]"), -1, -1, 8);
+    Spot(TEXT("sunflower[half=upper]"), -1, -1, 6);
+    Spot(TEXT("lily_pad"), 1, 4, -1);
+    Spot(TEXT("sea_pickle[pickles=4,waterlogged=true]"), 1, 4, -1);
+    Spot(TEXT("vine[east=true,north=false,south=false,up=false,west=false]"), -1, -1, 2);
+
+    // Hand expectation from the jar's block/coral_fan.json: the first element's up face has uv [0, 0, 16, 16] with
+    // rotation 90, so the quad's UVs turn and its positions follow the element's rotated plane.
+    TArray<TConstArrayView<int32>> CoralParts;
+    if (TestTrue(TEXT("coral fan parts"),
+            Registry.GetModelParts(B.State(TEXT("tube_coral_fan[waterlogged=true]")), CoralParts)) &&
+        TestTrue(TEXT("coral fan has a part"), !CoralParts.IsEmpty() && !CoralParts[0].IsEmpty()))
+    {
+        const TConstArrayView<FFoundationModelQuad> Coral = Registry.GetModelQuads(CoralParts[0][0]);
+        if (TestTrue(TEXT("coral fan model has a second quad"), Coral.Num() > 1))
+        {
+            const FFoundationModelQuad& Quad = Coral[1];
+            const FVector2f ExpectedUV[4] = {{0, 1}, {1, 1}, {1, 0}, {0, 0}};
+            const FVector3f ExpectedPosition[4] = {
+                {0.5f, 0, 0}, {0.5f, 1, 0}, {1.42388f, 1, 0.382683f}, {1.42388f, 0, 0.382683f}};
+            TestEqual(TEXT("coral fan quad 1 faces up"), Quad.Facing, EFoundationFace::Up);
+            for (int32 Corner = 0; Corner < 4; ++Corner)
+            {
+                TestTrue(FString::Printf(TEXT("coral fan quad 1 UV %d"), Corner),
+                    Quad.UVs[Corner].Equals(ExpectedUV[Corner], 1e-4f));
+                TestTrue(FString::Printf(TEXT("coral fan quad 1 position %d"), Corner),
+                    Quad.Positions[Corner].Equals(ExpectedPosition[Corner], 1e-4f));
+            }
+        }
+    }
+
+    // Item icons: a sprite (an IconAtlas tile) or a baked model with its gui transform, never both.
+    int32 IconItems = 0, IconMismatches = 0;
+    for (const TSharedPtr<FJsonValue>& ItemValue : ItemsJson->GetArrayField(TEXT("items")))
+    {
+        const TSharedPtr<FJsonObject> Item = ItemValue->AsObject();
+        const TSharedPtr<FJsonObject>* Icon = nullptr;
+        if (!Item->TryGetObjectField(TEXT("icon"), Icon)) continue;
+        ++IconItems;
+        FString BlockId;
+        if (!Item->TryGetStringField(TEXT("block"), BlockId)) BlockId = Item->GetStringField(TEXT("id"));
+        const FFoundationBlockType* Block = Registry.FindBlock(*BlockId);
+        bool bSame = Block != nullptr;
+        if (bSame && (*Icon)->HasField(TEXT("model")))
+        {
+            const TSharedPtr<FJsonObject> Gui = (*Icon)->GetObjectField(TEXT("gui"));
+            auto Vector = [&Gui](const TCHAR* Name)
+            {
+                const TArray<TSharedPtr<FJsonValue>>& V = Gui->GetArrayField(Name);
+                return FVector3f(V[0]->AsNumber(), V[1]->AsNumber(), V[2]->AsNumber());
+            };
+            bSame = Block->ItemIconModel == int32((*Icon)->GetNumberField(TEXT("model"))) &&
+                Block->ItemIconModel < Registry.GetModelCount() && Block->ItemIconTile == INDEX_NONE &&
+                Block->ItemIconRotation.Equals(Vector(TEXT("rotation")), 1e-4f) &&
+                Block->ItemIconTranslation.Equals(Vector(TEXT("translation")), 1e-4f) &&
+                Block->ItemIconScale.Equals(Vector(TEXT("scale")), 1e-4f);
+        }
+        else if (bSame)
+            bSame = Block->ItemIconTile >= 0 && Block->ItemIconModel == INDEX_NONE;
+        if (!bSame)
+        {
+            ++IconMismatches;
+            if (IconMismatches <= 20) AddError(BlockId + TEXT(" item icon differs from items.json"));
+        }
+    }
+    int32 TileBlocks = 0, ModelIconBlocks = 0;
+    for (int32 Index = 1; Index < Registry.GetBlockCount(); ++Index)
+    {
+        TileBlocks += Registry.GetBlockAt(Index).ItemIconTile >= 0;
+        ModelIconBlocks += Registry.GetBlockAt(Index).ItemIconModel >= 0;
+    }
+    TestEqual(TEXT("items with an icon"), IconItems, 71);
+    TestEqual(TEXT("blocks with an icon sprite tile"), TileBlocks, 61);
+    TestEqual(TEXT("blocks with an icon model"), ModelIconBlocks, 10);
+    TestEqual(TEXT("item icons that differ from items.json"), IconMismatches, 0);
     return true;
 }
 #endif

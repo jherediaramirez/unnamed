@@ -11,7 +11,7 @@
 namespace
 {
     constexpr EFoundationHand Main = EFoundationHand::Main;
-    constexpr EFoundationHand Off = EFoundationHand::Off;
+    constexpr EFoundationHand OffHand = EFoundationHand::Off;
 
     // The interaction mechanics run on a stand-in block with the retired Dummy Block's numbers (hardness 1.5,
     // pickaxe-mineable, no correct tool needed: hand 45 steps, practice pickaxe 8), so their arithmetic stays the
@@ -140,7 +140,7 @@ namespace
         void Hold(int32 Slot) { P().Inventory.Select(Slot); }
     };
 
-    const FVector Down(0, 0, -1);
+    const FVector DownVector(0, 0, -1);
 
     // Steps until a break, mining the targeted block through the command path (start then continues).
     int32 MineSteps(FLab& L, int32 Limit = 2000)
@@ -318,7 +318,7 @@ bool FFoundationInteractionPlacementTest::RunTest(const FString&)
     TestEqual(TEXT("item revision claim"), L.Run(Claim).Reason, EFoundationReason::ItemChanged);
     // Self overlap: contact is fine, penetration is not.
     FLab S;
-    S.Stand({50, 50, 100}, Down);
+    S.Stand({50, 50, 100}, DownVector);
     S.Put({0, 0, -0});
     S.A.World.Set({0, 0, 0}, {});
     S.Stand({250, 50, 0}, FVector(-150, 0, -161));
@@ -349,10 +349,10 @@ bool FFoundationInteractionPlacementTest::RunTest(const FString&)
         EFoundationReason::ObstructedByEntity);
     // The placing player's own body.
     FLab Self;
-    Self.Stand({50, 50, 0}, Down);
+    Self.Stand({50, 50, 0}, DownVector);
     R = Self.Use();
     TestEqual(TEXT("own body blocks the cell it stands in"), R.Reason, EFoundationReason::ObstructedBySelf);
-    Self.Stand({50, 50, 100}, Down);
+    Self.Stand({50, 50, 100}, DownVector);
     TestEqual(TEXT("own feet exactly on the top: allowed"), Self.Use().bPlaced, true);
     // Lab geometry, targets and bounds.
     FLab G;
@@ -414,7 +414,7 @@ bool FFoundationInteractionPlacementTest::RunTest(const FString&)
     O.Hold(2);
     O.Stand({-150, 50, 0}, FVector(150, 0, -161));
     TestEqual(TEXT("sword passes"), O.Use(Main).Outcome, EFoundationOutcome::Pass);
-    TestTrue(TEXT("offhand places"), O.Use(Off).bPlaced);
+    TestTrue(TEXT("offhand places"), O.Use(OffHand).bPlaced);
     // Interactions win, crouch with an item bypasses them, and a reset invalidates the session.
     FLab I;
     I.A.Statics.Add({FBox(FVector(100, 0, 0), FVector(200, 100, 100)), TEXT("reset"), true, TEXT("lab.reset")});
@@ -475,7 +475,7 @@ bool FFoundationInteractionMiningTest::RunTest(const FString&)
     }
     const double Ten = L.P().Mining.Progress;
     TestTrue(TEXT("ten steps of hand progress"), FMath::IsNearlyEqual(Ten, 10. / 45., 1e-9));
-    L.Stand({50, 50, 230}, Down);
+    L.Stand({50, 50, 230}, DownVector);
     TestTrue(TEXT("same cell from above"), L.A.Resolve(L.P().Facts).Face == EFoundationFace::Up);
     FFoundationResult R = L.Run(L.Make(EFoundationCommandType::MineContinue));
     TestTrue(TEXT("face change keeps progress"), R.IsCommitted() && R.Progress > Ten);
@@ -806,7 +806,7 @@ bool FFoundationInteractionStateTest::RunTest(const FString&)
     // The retry: one candidate, fixed expiry, canceled by release or a target change.
     FLab R;
     I = Make(R, TEXT("LucidFluid"));
-    R.Stand({50, 50, 0}, Down);
+    R.Stand({50, 50, 0}, DownVector);
     I.Press(EFoundationInput::Use, 1);
     Step(R, I);
     TestTrue(TEXT("self-blocked candidate captured"), I.Retry.bActive && I.Retry.ExpiresStep == I.Step + 2);
@@ -820,7 +820,7 @@ bool FFoundationInteractionStateTest::RunTest(const FString&)
     TestTrue(TEXT("placed once the body clears"), R.Solid({0, 0, 0}) && I.RetryCommits == 1);
     FLab Cancel;
     I = Make(Cancel, TEXT("LucidFluid"));
-    Cancel.Stand({50, 50, 0}, Down);
+    Cancel.Stand({50, 50, 0}, DownVector);
     I.Press(EFoundationInput::Use, 1);
     Step(Cancel, I);
     I.Release(EFoundationInput::Use);
@@ -834,7 +834,7 @@ bool FFoundationInteractionStateTest::RunTest(const FString&)
     TestFalse(TEXT("release before clearance places nothing"), Cancel.Solid({0, 0, 0}));
     FLab Turn;
     I = Make(Turn, TEXT("LucidFluid"));
-    Turn.Stand({50, 50, 0}, Down);
+    Turn.Stand({50, 50, 0}, DownVector);
     I.Press(EFoundationInput::Use, 1);
     Step(Turn, I);
     Turn.Facts(
@@ -848,14 +848,14 @@ bool FFoundationInteractionStateTest::RunTest(const FString&)
     TestFalse(TEXT("a turned-away candidate never places"), Turn.Solid({0, 0, 0}));
     FLab Late;
     I = Make(Late, TEXT("LucidFluid"));
-    Late.Stand({50, 50, 0}, Down);
+    Late.Stand({50, 50, 0}, DownVector);
     I.Press(EFoundationInput::Use, 1);
     for (int32 Index = 0; Index < 3; ++Index)
         Step(Late, I);
     TestTrue(TEXT("expired and not refreshed by rechecks"), I.RetriesCanceled >= 1 || I.Retry.ExpiresStep > I.Step - 3);
     FLab Vanilla;
     I = Make(Vanilla, TEXT("VanillaReference"));
-    Vanilla.Stand({50, 50, 0}, Down);
+    Vanilla.Stand({50, 50, 0}, DownVector);
     I.Press(EFoundationInput::Use, 1);
     Step(Vanilla, I);
     TestFalse(TEXT("VanillaReference has no retry"), I.Retry.bActive);
@@ -906,7 +906,7 @@ bool FFoundationInteractionStateTest::RunTest(const FString&)
     // Cancel conditions and death.
     FLab D;
     I = Make(D, TEXT("LucidFluid"));
-    D.Stand({50, 50, 0}, Down);
+    D.Stand({50, 50, 0}, DownVector);
     I.Press(EFoundationInput::Use, 1);
     Step(D, I);
     I.CancelAll(D.A, D.Vitals, EFoundationReason::Canceled);
@@ -927,7 +927,7 @@ bool FFoundationInteractionStateTest::RunTest(const FString&)
     // A slot switch cancels the candidate.
     FLab Slot;
     I = Make(Slot, TEXT("LucidFluid"));
-    Slot.Stand({50, 50, 0}, Down);
+    Slot.Stand({50, 50, 0}, DownVector);
     I.Press(EFoundationInput::Use, 1);
     Step(Slot, I);
     I.SelectSlot(Slot.A, Slot.Vitals, 1);
@@ -1171,7 +1171,7 @@ bool FFoundationInteractionStressTest::RunTest(const FString&)
             for (int32 X = -8; X < 8; ++X)
             {
                 // Above the target cell, looking straight down at the cell below it.
-                L.Stand(FVector(X * 100 + 50, Y * 100 + 50, Z * 100 + 120 - 162), Down);
+                L.Stand(FVector(X * 100 + 50, Y * 100 + 50, Z * 100 + 120 - 162), DownVector);
                 L.Facts([](FFoundationPlayerFacts& F) { F.FeetCm.Z += 5000; });
                 Placed += L.Use().bPlaced ? 1 : 0;
             }
@@ -1200,7 +1200,7 @@ bool FFoundationInteractionStressTest::RunTest(const FString&)
     for (int32 Index = 0; Index < 1000; ++Index)
     {
         L.Hold(0);
-        L.Stand(FVector(750, 750, 1620 - 162 + 20), Down);
+        L.Stand(FVector(750, 750, 1620 - 162 + 20), DownVector);
         L.Facts([](FFoundationPlayerFacts& F) { F.FeetCm.Z += 5000; });
         const bool bPlaced = L.Use().bPlaced;
         L.Hold(5);

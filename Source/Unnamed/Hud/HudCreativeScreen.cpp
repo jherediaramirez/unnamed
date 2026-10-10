@@ -47,10 +47,13 @@ bool HudBlockIcon::Paint(FSlateWindowElementList& Elements, int32& LayerId, cons
     const TArray<SlateIndex> Indices = {0, 1, 2, 0, 2, 3};
     for (const FQuad& Quad : Build(Registry, Type->Id))
     {
-        if (!Assets->Textures.IsValidIndex(Quad.Texture)) continue;
-        int32 Layer, Next;
+        int32 Layer = Quad.Tile, Next;
         float Blend;
-        FoundationBlockFaces::GetFrame(Assets->Textures[Quad.Texture], Tick, Layer, Next, Blend);
+        if (Layer == INDEX_NONE)
+        {
+            if (!Assets->Textures.IsValidIndex(Quad.Texture)) continue;
+            FoundationBlockFaces::GetFrame(Assets->Textures[Quad.Texture], Tick, Layer, Next, Blend);
+        }
         const FVector2f Tile(float(Layer % Assets->IconAtlasColumns), float(Layer / Assets->IconAtlasColumns));
         TArray<FSlateVertex> Vertices;
         for (int32 Corner = 0; Corner < 4; ++Corner)

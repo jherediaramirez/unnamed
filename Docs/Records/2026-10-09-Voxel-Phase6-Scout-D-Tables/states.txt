@@ -1,0 +1,84 @@
+blocks 83, states 949
+allium | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+azure_bluet | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+blue_orchid | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+brain_coral | A0 cross | states 2 | quads min 4 max 4 mean 4.0
+brown_mushroom | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+bubble_coral | A0 cross | states 2 | quads min 4 max 4 mean 4.0
+cactus_flower | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+cave_vines | A0 cross | states 52 | quads min 4 max 4 mean 4.0
+cave_vines_plant | A0 cross | states 2 | quads min 4 max 4 mean 4.0
+closed_eyeblossom | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+cornflower | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+dandelion | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+dead_bush | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+fire_coral | A0 cross | states 2 | quads min 4 max 4 mean 4.0
+firefly_bush | A0 cross | states 1 | quads min 8 max 8 mean 8.0
+hanging_roots | A0 cross | states 2 | quads min 4 max 4 mean 4.0
+horn_coral | A0 cross | states 2 | quads min 4 max 4 mean 4.0
+kelp | A0 cross | states 26 | quads min 4 max 4 mean 4.0
+kelp_plant | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+lily_of_the_valley | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+orange_tulip | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+oxeye_daisy | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+pale_hanging_moss | A0 cross | states 2 | quads min 4 max 4 mean 4.0
+pink_tulip | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+poppy | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+red_mushroom | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+red_shrub | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+red_tulip | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+short_dry_grass | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+sweet_berry_bush | A0 cross | states 4 | quads min 4 max 4 mean 4.0
+tall_dry_grass | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+tube_coral | A0 cross | states 2 | quads min 4 max 4 mean 4.0
+white_tulip | A0 cross | states 1 | quads min 4 max 4 mean 4.0
+amethyst_cluster | A0 cross (facing) | states 12 | quads min 4 max 4 mean 4.0
+large_amethyst_bud | A0 cross (facing) | states 12 | quads min 4 max 4 mean 4.0
+medium_amethyst_bud | A0 cross (facing) | states 12 | quads min 4 max 4 mean 4.0
+small_amethyst_bud | A0 cross (facing) | states 12 | quads min 4 max 4 mean 4.0
+bush | A1 cross, tinted | states 1 | quads min 4 max 4 mean 4.0
+fern | A1 cross, tinted | states 1 | quads min 4 max 4 mean 4.0
+large_fern | A1 cross, tinted | states 2 | quads min 4 max 4 mean 4.0
+short_grass | A1 cross, tinted | states 1 | quads min 4 max 4 mean 4.0
+sugar_cane | A1 cross, tinted | states 16 | quads min 4 max 4 mean 4.0
+tall_grass | A1 cross, tinted | states 2 | quads min 4 max 4 mean 4.0
+lilac | A2 double cross | states 2 | quads min 4 max 4 mean 4.0
+peony | A2 double cross | states 2 | quads min 4 max 4 mean 4.0
+rose_bush | A2 double cross | states 2 | quads min 4 max 4 mean 4.0
+sunflower | A2 double cross | states 2 | quads min 4 max 6 mean 5.0
+seagrass | A3 seagrass template | states 1 | quads min 8 max 8 mean 8.0
+tall_seagrass | A3 seagrass template | states 2 | quads min 8 max 8 mean 8.0
+leaf_litter | B1 flowerbed / leaf litter | states 16 | quads min 2 max 4 mean 2.5
+pink_petals | B1 flowerbed / leaf litter | states 16 | quads min 14 max 42 mean 28.5
+wildflowers | B1 flowerbed / leaf litter | states 16 | quads min 14 max 42 mean 28.5
+moss_carpet | B2 carpet | states 1 | quads min 6 max 6 mean 6.0
+pale_moss_carpet | B2 carpet | states 162 | quads min 2 max 14 mean 8.4
+glow_lichen | C multiface | states 128 | quads min 2 max 12 mean 6.2
+sculk_vein | C multiface | states 128 | quads min 2 max 12 mean 6.2
+vine | C multiface | states 32 | quads min 2 max 10 mean 5.3
+azalea | D custom elements | states 1 | quads min 14 max 14 mean 14.0
+bamboo | D custom elements | states 12 | quads min 6 max 10 mean 8.7
+big_dripleaf | D custom elements | states 32 | quads min 12 max 12 mean 12.0
+big_dripleaf_stem | D custom elements | states 8 | quads min 4 max 4 mean 4.0
+brain_coral_fan | D custom elements | states 2 | quads min 8 max 8 mean 8.0
+brain_coral_wall_fan | D custom elements | states 8 | quads min 4 max 4 mean 4.0
+bubble_coral_fan | D custom elements | states 2 | quads min 8 max 8 mean 8.0
+bubble_coral_wall_fan | D custom elements | states 8 | quads min 4 max 4 mean 4.0
+cactus | D custom elements | states 16 | quads min 6 max 6 mean 6.0
+cocoa | D custom elements | states 12 | quads min 8 max 8 mean 8.0
+fire_coral_fan | D custom elements | states 2 | quads min 8 max 8 mean 8.0
+fire_coral_wall_fan | D custom elements | states 8 | quads min 4 max 4 mean 4.0
+flowering_azalea | D custom elements | states 1 | quads min 14 max 14 mean 14.0
+horn_coral_fan | D custom elements | states 2 | quads min 8 max 8 mean 8.0
+horn_coral_wall_fan | D custom elements | states 8 | quads min 4 max 4 mean 4.0
+lily_pad | D custom elements | states 1 | quads min 2 max 2 mean 2.0
+mangrove_propagule | D custom elements | states 40 | quads min 8 max 60 mean 31.0
+mangrove_roots | D custom elements | states 2 | quads min 16 max 16 mean 16.0
+pointed_dripstone | D custom elements | states 20 | quads min 4 max 4 mean 4.0
+sea_pickle | D custom elements | states 8 | quads min 7 max 44 mean 22.5
+shelf_mushroom | D custom elements | states 8 | quads min 12 max 12 mean 12.0
+small_dripleaf | D custom elements | states 16 | quads min 4 max 22 mean 13.0
+spore_blossom | D custom elements | states 1 | quads min 10 max 10 mean 10.0
+sulfur_spike | D custom elements | states 20 | quads min 4 max 4 mean 4.0
+tube_coral_fan | D custom elements | states 2 | quads min 8 max 8 mean 8.0
+tube_coral_wall_fan | D custom elements | states 8 | quads min 4 max 4 mean 4.0

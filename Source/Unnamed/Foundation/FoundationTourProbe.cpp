@@ -355,6 +355,17 @@ void UFoundationRuntimeProbe::AddTourCases()
             Screen.GetModel().Carried = {TEXT("grass_block"), 64};
             Screen.SetMouse({120, 70});
         });
+    // The model blocks' items (phase 6, S5): natural blocks rows 8-22, flat sprites and 3D block models.
+    for (const auto& [Name, Rows] : {TPair<const TCHAR*, int32>{TEXT("22b-creative-natural-plants-a"), 8},
+             {TEXT("22c-creative-natural-plants-b"), 13}, {TEXT("22d-creative-natural-plants-c"), 18}})
+        Creative(Name,
+            [TabIndex, Rows](SHudCreativeScreen& Screen)
+            {
+                Screen.GetModel().Carried = {};
+                Screen.GetModel().SelectTab(TabIndex(Screen, TEXT("natural_blocks")));
+                Screen.GetModel().ScrollRows(Rows);
+                Screen.SetMouse({-200, -200});
+            });
     Creative(TEXT("23-creative-inventory"),
         [TabIndex](SHudCreativeScreen& Screen)
         {

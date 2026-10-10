@@ -1,0 +1,109 @@
+model_keys: {"ambientocclusion": 113, "display": 31, "elements": 152, "gui_light": 31, "parent": 131, "textures": 152}
+element_keys: {"faces": 448, "from": 448, "light_emission": 2, "name": 8, "rotation": 320, "shade_direction_override": 295, "to": 448}
+face_keys: {"cullface": 81, "rotation": 62, "texture": 1210, "tintindex": 116, "uv": 1210}
+rotation: {"x -22.5": 15, "x -22.5 rescale": 5, "x -45": 4, "x 22.5": 11, "x 22.5 rescale": 5, "y -45": 42, "y -45 rescale": 4, "y 0": 9, "y 45": 10, "y 45 rescale": 192, "z -22.5": 11, "z 22.5": 11, "z 22.5 rescale": 1}
+bs_keys: {"model": 333, "uvlock": 37, "x": 30, "y": 153}
+elem_at: {"block/bamboo1_age0": 1, "block/bamboo1_age1": 1, "block/bamboo2_age0": 1, "block/bamboo2_age1": 1, "block/bamboo3_age0": 1, "block/bamboo3_age1": 1, "block/bamboo4_age0": 1, "block/bamboo4_age1": 1, "block/bamboo_large_leaves": 1, "block/bamboo_small_leaves": 1, "block/big_dripleaf": 1, "block/big_dripleaf_full_tilt": 1, "block/big_dripleaf_partial_tilt": 1, "block/big_dripleaf_stem": 1, "block/cactus": 1, "block/carpet": 2, "block/cocoa_stage0": 1, "block/cocoa_stage1": 1, "block/cocoa_stage2": 1, "block/coral_fan": 5, "block/coral_wall_fan": 5, "block/cross": 40, "block/cross_emissive": 1, "block/dead_sea_pickle": 1, "block/flowerbed_1": 2, "block/flowerbed_2": 2, "block/flowerbed_3": 2, "block/flowerbed_4": 2, "block/four_dead_sea_pickles": 1, "block/four_sea_pickles": 1, "block/glow_lichen": 1, "block/lily_pad": 1, "block/mangrove_propagule": 1, "block/mangrove_propagule_hanging_0": 1, "block/mangrove_propagule_hanging_1": 1, "block/mangrove_propagule_hanging_2": 1, "block/mangrove_propagule_hanging_3": 1, "block/mangrove_propagule_hanging_4": 1, "block/mangrove_roots": 1, "block/mossy_carpet_side": 1, "block/pointed_dripstone": 2, "block/sculk_vein": 1, "block/sea_pickle": 1, "block/shelf_mushroom_stage0": 1, "block/shelf_mushroom_stage1": 1, "block/small_dripleaf_bottom": 1, "block/small_dripleaf_top": 1, "block/spore_blossom": 1, "block/sunflower_top": 1, "block/template_azalea": 2, "block/template_leaf_litter_1": 1, "block/template_leaf_litter_2": 1, "block/template_leaf_litter_3": 1, "block/template_leaf_litter_4": 1, "block/template_seagrass": 2, "block/three_dead_sea_pickles": 1, "block/three_sea_pickles": 1, "block/tinted_cross": 6, "block/two_dead_sea_pickles": 1, "block/two_sea_pickles": 1, "block/vine": 1}
+parent_root: {}
+face_uvrot: {"90": 22, "180": 16, "270": 24}
+tintindex: {"0": 52, "1": 64}
+shade_override: {"north": 32, "up": 263}
+light_emission: {"15": 2}
+cullface: {"down": 33, "east": 9, "north": 7, "south": 10, "up": 13, "west": 9}
+ao_false_blocks: 67
+mip_meta: {"{\"alpha_cutoff_bias\": 0.1}": 4, "{\"mipmap_strategy\": \"dark_cutout\"}": 2, "{\"mipmap_strategy\": \"strict_cutout\"}": 21}
+
+unusual:
+  bamboo: weighted variants 2
+  firefly_bush: element light_emission 15
+  glow_lichen: uvlock in 10 refs
+  lily_pad: weighted variants 1
+  pale_moss_carpet: uvlock in 9 refs
+  sculk_vein: uvlock in 10 refs
+  sea_pickle: weighted variants 8
+  vine: uvlock in 8 refs
+
+per block (group | kind variants/parts | roots | quads min-max | tint | ao | rot elems | cullfaces/faces | mip):
+  allium | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  azure_bluet | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  blue_orchid | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  brain_coral | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | [] 
+  brown_mushroom | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  bubble_coral | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | [] 
+  cactus_flower | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  cave_vines | A0 cross | variants 2/0 | block/cross:2 | q4-4 | t[] | ao[False] | {'y 45 rescale': 4} | cf0/8 | [] 
+  cave_vines_plant | A0 cross | variants 2/0 | block/cross:2 | q4-4 | t[] | ao[False] | {'y 45 rescale': 4} | cf0/8 | [] 
+  closed_eyeblossom | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  cornflower | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  dandelion | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  dead_bush | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | [] 
+  fire_coral | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | [] 
+  firefly_bush | A0 cross | variants 1/0 | block/cross_emissive:1 | q8-8 | t[] | ao[False] | {'y 45 rescale': 4} | cf0/8 | [] anim block/firefly_bush_emissive
+  hanging_roots | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | [] 
+  horn_coral | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | [] 
+  kelp | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"alpha_cutoff_bias": 0.1}'] anim block/kelp
+  kelp_plant | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"alpha_cutoff_bias": 0.1}'] anim block/kelp_plant
+  lily_of_the_valley | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  orange_tulip | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  oxeye_daisy | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  pale_hanging_moss | A0 cross | variants 2/0 | block/cross:2 | q4-4 | t[] | ao[False] | {'y 45 rescale': 4} | cf0/8 | [] 
+  pink_tulip | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  poppy | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  red_mushroom | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  red_shrub | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | [] 
+  red_tulip | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  short_dry_grass | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | [] 
+  sweet_berry_bush | A0 cross | variants 4/0 | block/cross:4 | q4-4 | t[] | ao[False] | {'y 45 rescale': 8} | cf0/16 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  tall_dry_grass | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | [] 
+  tube_coral | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | [] 
+  white_tulip | A0 cross | variants 1/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  amethyst_cluster | A0 cross (facing) | variants 6/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  large_amethyst_bud | A0 cross (facing) | variants 6/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  medium_amethyst_bud | A0 cross (facing) | variants 6/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  small_amethyst_bud | A0 cross (facing) | variants 6/0 | block/cross:1 | q4-4 | t[] | ao[False] | {'y 45 rescale': 2} | cf0/4 | ['{"mipmap_strategy": "strict_cutout"}'] 
+  bush | A1 cross, tinted | variants 1/0 | block/tinted_cross:1 | q4-4 | t[0] | ao[False] | {'y 45 rescale': 2} | cf0/4 | [] 
+  fern | A1 cross, tinted | variants 1/0 | block/tinted_cross:1 | q4-4 | t[0] | ao[False] | {'y 45 rescale': 2} | cf0/4 | [] 
+  large_fern | A1 cross, tinted | variants 2/0 | block/tinted_cross:2 | q4-4 | t[0] | ao[False] | {'y 45 rescale': 4} | cf0/8 | [] 
+  short_grass | A1 cross, tinted | variants 1/0 | block/tinted_cross:1 | q4-4 | t[0] | ao[False] | {'y 45 rescale': 2} | cf0/4 | [] 
+  sugar_cane | A1 cross, tinted | variants 1/0 | block/tinted_cross:1 | q4-4 | t[0] | ao[False] | {'y 45 rescale': 2} | cf0/4 | [] 
+  tall_grass | A1 cross, tinted | variants 2/0 | block/tinted_cross:2 | q4-4 | t[0] | ao[False] | {'y 45 rescale': 4} | cf0/8 | [] 
+  lilac | A2 double cross | variants 2/0 | block/cross:2 | q4-4 | t[] | ao[False] | {'y 45 rescale': 4} | cf0/8 | [] 
+  peony | A2 double cross | variants 2/0 | block/cross:2 | q4-4 | t[] | ao[False] | {'y 45 rescale': 4} | cf0/8 | [] 
+  rose_bush | A2 double cross | variants 2/0 | block/cross:2 | q4-4 | t[] | ao[False] | {'y 45 rescale': 4} | cf0/8 | [] 
+  sunflower | A2 double cross | variants 2/0 | block/cross:1,block/sunflower_top:1 | q4-6 | t[] | ao[False] | {'y 45 rescale': 4, 'z 22.5 rescale': 1} | cf0/10 | [] 
+  seagrass | A3 seagrass template | variants 1/0 | block/template_seagrass:1 | q8-8 | t[] | ao[True] | {} | cf0/8 | [] anim block/seagrass
+  tall_seagrass | A3 seagrass template | variants 2/0 | block/template_seagrass:2 | q8-8 | t[] | ao[True] | {} | cf0/16 | [] anim block/tall_seagrass_bottom,block/tall_seagrass_top
+  leaf_litter | B1 flowerbed / leaf litter | multipart 0/16 | block/template_leaf_litter_1:1,block/template_leaf_litter_2:1,block/template_leaf_litter_3:1,block/template_leaf_litter_4:1 | q2-2 all32 | t[0] | ao[False] | {} | cf0/8 | [] 
+  pink_petals | B1 flowerbed / leaf litter | multipart 0/16 | block/flowerbed_1:1,block/flowerbed_2:1,block/flowerbed_3:1,block/flowerbed_4:1 | q6-14 all168 | t[1] | ao[False] | {'y -45': 16} | cf0/42 | [] 
+  wildflowers | B1 flowerbed / leaf litter | multipart 0/16 | block/flowerbed_1:1,block/flowerbed_2:1,block/flowerbed_3:1,block/flowerbed_4:1 | q6-14 all168 | t[1] | ao[False] | {'y -45': 16} | cf0/42 | [] 
+  moss_carpet | B2 carpet | variants 1/0 | block/carpet:1 | q6-6 | t[] | ao[True] | {} | cf5/6 | [] 
+  pale_moss_carpet | B2 carpet | multipart 0/14 | block/carpet:1,block/mossy_carpet_side:2 | q2-6 all36 | t[] | ao[True] | {} | cf5/10 | [] 
+  glow_lichen | C multiface | multipart 0/12 | block/glow_lichen:1 | q2-2 all24 | t[] | ao[False] | {} | cf0/2 | [] 
+  sculk_vein | C multiface | multipart 0/12 | block/sculk_vein:1 | q2-2 all24 | t[] | ao[False] | {} | cf0/2 | [] anim block/sculk_vein
+  vine | C multiface | multipart 0/10 | block/vine:1 | q2-2 all20 | t[0] | ao[False] | {} | cf0/2 | [] 
+  azalea | D custom elements | variants 1/0 | block/template_azalea:1 | q14-14 | t[] | ao[True] | {'y 45 rescale': 2} | cf5/14 | [] 
+  bamboo | D custom elements | multipart 0/4 | block/bamboo1_age0:1,block/bamboo1_age1:1,block/bamboo2_age0:1,block/bamboo2_age1:1,block/bamboo3_age0:1,block/bamboo3_age1:1,block/bamboo4_age0:1,block/bamboo4_age1:1,block/bamboo_large_leaves:1,block/bamboo_small_leaves:1 | q4-6 all20 | t[0] | ao[False, True] | {} | cf16/56 | [] 
+  big_dripleaf | D custom elements | variants 16/0 | block/big_dripleaf:1,block/big_dripleaf_full_tilt:1,block/big_dripleaf_partial_tilt:1 | q12-12 | t[] | ao[True] | {'y 45 rescale': 3, 'y -45 rescale': 3, 'x -45': 4, 'x -22.5': 4} | cf7/36 | [] 
+  big_dripleaf_stem | D custom elements | variants 4/0 | block/big_dripleaf_stem:1 | q4-4 | t[] | ao[True] | {'y 45 rescale': 1, 'y -45 rescale': 1} | cf0/4 | [] 
+  brain_coral_fan | D custom elements | variants 1/0 | block/coral_fan:1 | q8-8 | t[] | ao[False] | {'z 22.5': 1, 'z -22.5': 1, 'x -22.5': 1, 'x 22.5': 1} | cf0/8 | [] 
+  brain_coral_wall_fan | D custom elements | variants 4/0 | block/coral_wall_fan:1 | q4-4 | t[] | ao[False] | {'x 22.5 rescale': 1, 'x -22.5 rescale': 1} | cf0/4 | [] 
+  bubble_coral_fan | D custom elements | variants 1/0 | block/coral_fan:1 | q8-8 | t[] | ao[False] | {'z 22.5': 1, 'z -22.5': 1, 'x -22.5': 1, 'x 22.5': 1} | cf0/8 | [] 
+  bubble_coral_wall_fan | D custom elements | variants 4/0 | block/coral_wall_fan:1 | q4-4 | t[] | ao[False] | {'x 22.5 rescale': 1, 'x -22.5 rescale': 1} | cf0/4 | [] 
+  cactus | D custom elements | variants 1/0 | block/cactus:1 | q6-6 | t[] | ao[True] | {} | cf2/6 | ['{"alpha_cutoff_bias": 0.1}'] 
+  cocoa | D custom elements | variants 12/0 | block/cocoa_stage0:1,block/cocoa_stage1:1,block/cocoa_stage2:1 | q8-8 | t[] | ao[False] | {} | cf0/24 | [] 
+  fire_coral_fan | D custom elements | variants 1/0 | block/coral_fan:1 | q8-8 | t[] | ao[False] | {'z 22.5': 1, 'z -22.5': 1, 'x -22.5': 1, 'x 22.5': 1} | cf0/8 | [] 
+  fire_coral_wall_fan | D custom elements | variants 4/0 | block/coral_wall_fan:1 | q4-4 | t[] | ao[False] | {'x 22.5 rescale': 1, 'x -22.5 rescale': 1} | cf0/4 | [] 
+  flowering_azalea | D custom elements | variants 1/0 | block/template_azalea:1 | q14-14 | t[] | ao[True] | {'y 45 rescale': 2} | cf5/14 | [] 
+  horn_coral_fan | D custom elements | variants 1/0 | block/coral_fan:1 | q8-8 | t[] | ao[False] | {'z 22.5': 1, 'z -22.5': 1, 'x -22.5': 1, 'x 22.5': 1} | cf0/8 | [] 
+  horn_coral_wall_fan | D custom elements | variants 4/0 | block/coral_wall_fan:1 | q4-4 | t[] | ao[False] | {'x 22.5 rescale': 1, 'x -22.5 rescale': 1} | cf0/4 | [] 
+  lily_pad | D custom elements | variants 1/0 | block/lily_pad:1 | q2-2 | t[0] | ao[False] | {} | cf0/2 | [] 
+  mangrove_propagule | D custom elements | variants 10/0 | block/mangrove_propagule:1,block/mangrove_propagule_hanging_0:1,block/mangrove_propagule_hanging_1:1,block/mangrove_propagule_hanging_2:1,block/mangrove_propagule_hanging_3:1,block/mangrove_propagule_hanging_4:1 | q8-60 | t[] | ao[False, True] | {'y 45 rescale': 4, 'x 22.5': 5, 'z -22.5': 5, 'x -22.5': 5, 'z 22.5': 5, 'y 0': 9, 'y -45': 8, 'y 45': 8} | cf0/278 | [] 
+  mangrove_roots | D custom elements | variants 1/0 | block/mangrove_roots:1 | q16-16 | t[] | ao[True] | {} | cf12/16 | ['{"mipmap_strategy": "dark_cutout"}'] 
+  pointed_dripstone | D custom elements | variants 10/0 | block/pointed_dripstone:10 | q4-4 | t[] | ao[True] | {'y 45 rescale': 20} | cf0/40 | [] 
+  sea_pickle | D custom elements | variants 8/0 | block/dead_sea_pickle:1,block/four_dead_sea_pickles:1,block/four_sea_pickles:1,block/sea_pickle:1,block/three_dead_sea_pickles:1,block/three_sea_pickles:1,block/two_dead_sea_pickles:1,block/two_sea_pickles:1 | q7-44 | t[] | ao[True] | {'y 45 rescale': 20} | cf20/180 | [] 
+  shelf_mushroom | D custom elements | variants 8/0 | block/shelf_mushroom_stage0:1,block/shelf_mushroom_stage1:1 | q12-12 | t[] | ao[True] | {} | cf4/24 | [] 
+  small_dripleaf | D custom elements | variants 8/0 | block/small_dripleaf_bottom:1,block/small_dripleaf_top:1 | q4-22 | t[] | ao[True] | {'y 45': 2, 'y -45': 2} | cf0/26 | [] 
+  spore_blossom | D custom elements | variants 1/0 | block/spore_blossom:1 | q10-10 | t[] | ao[True] | {'z -22.5': 1, 'z 22.5': 1, 'x 22.5': 1, 'x -22.5': 1} | cf0/10 | [] 
+  sulfur_spike | D custom elements | variants 10/0 | block/pointed_dripstone:10 | q4-4 | t[] | ao[True] | {'y 45 rescale': 20} | cf0/40 | [] 
+  tube_coral_fan | D custom elements | variants 1/0 | block/coral_fan:1 | q8-8 | t[] | ao[False] | {'z 22.5': 1, 'z -22.5': 1, 'x -22.5': 1, 'x 22.5': 1} | cf0/8 | [] 
+  tube_coral_wall_fan | D custom elements | variants 4/0 | block/coral_wall_fan:1 | q4-4 | t[] | ao[False] | {'x 22.5 rescale': 1, 'x -22.5 rescale': 1} | cf0/4 | [] 

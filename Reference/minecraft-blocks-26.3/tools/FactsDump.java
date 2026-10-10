@@ -8,7 +8,9 @@ import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 
-// Dumps 26.3 creative tab contents and per-block hardness facts by running the game's own registries.
+// Dumps 26.3 creative tab contents and per-block hardness facts by running the game's own registries. With a
+// second argument (a file of block ids, one per line), also dumps per-state shapes and behaviour for those blocks
+// (block_state_facts.json), measured through public state methods only.
 public class FactsDump {
     static String q(String s) { return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""; }
 
@@ -78,7 +80,98 @@ public class FactsDump {
                     + (itemId.isEmpty() ? "" : q(new ItemStack(item).getHoverName().getString())));
             }
         }
+        if (args.length > 1) dumpStates(out, Path.of(args[1]));
         System.out.println("FACTS DUMP OK");
         System.exit(0);
+    }
+
+    static String boxes(net.minecraft.world.phys.shapes.VoxelShape shape, net.minecraft.world.phys.Vec3 shift) {
+        StringBuilder b = new StringBuilder("[");
+        for (var box : shape.toAabbs()) {
+            var m = box.move(shift.reverse());
+            if (b.length() > 1) b.append(",");
+            b.append("[").append(m.minX).append(",").append(m.minY).append(",").append(m.minZ).append(",")
+                .append(m.maxX).append(",").append(m.maxY).append(",").append(m.maxZ).append("]");
+        }
+        return b.append("]").toString();
+    }
+
+    // Per state: outline and collision boxes (in block units, with the position offset taken out when the shape moves
+    // with it), light, replaceable, fluid and the faces whose occlusion shape is a full square. Per block: the offset
+    // kind and range, sampled black-box from getOffset over 4,096 columns, and whether the shapes move with it.
+    static void dumpStates(Path out, Path idsFile) throws Exception {
+        var getter = net.minecraft.world.level.EmptyBlockGetter.INSTANCE;
+        var dirs = new net.minecraft.core.Direction[] {net.minecraft.core.Direction.WEST, net.minecraft.core.Direction.EAST,
+            net.minecraft.core.Direction.NORTH, net.minecraft.core.Direction.SOUTH, net.minecraft.core.Direction.DOWN,
+            net.minecraft.core.Direction.UP};
+        var origin = net.minecraft.core.BlockPos.ZERO;
+        try (PrintWriter w = new PrintWriter(Files.newBufferedWriter(out.resolve("block_state_facts.json")))) {
+            w.println("{\"face_order\":[\"west\",\"east\",\"north\",\"south\",\"down\",\"up\"],\"blocks\":[");
+            boolean firstBlock = true;
+            for (String id : Files.readAllLines(idsFile)) {
+                if (id.isBlank()) continue;
+                Block b = BuiltInRegistries.BLOCK.getValue(net.minecraft.resources.Identifier.withDefaultNamespace(id.trim()));
+                if (!firstBlock) w.println(",");
+                firstBlock = false;
+                var def = b.defaultBlockState();
+                String offset = "null";
+                if (def.hasOffsetFunction()) {
+                    double maxXZ = 0, minY = 0, maxY = 0;
+                    boolean yIndependent = true, shapeMoves = false, collisionMoves = false;
+                    for (int x = 0; x < 64; x++)
+                        for (int z = 0; z < 64; z++) {
+                            var p = new net.minecraft.core.BlockPos(x * 7 - 200, 0, z * 13 - 400);
+                            var o = def.getOffset(p);
+                            maxXZ = Math.max(maxXZ, Math.max(Math.abs(o.x), Math.abs(o.z)));
+                            minY = Math.min(minY, o.y);
+                            maxY = Math.max(maxY, o.y);
+                            if (!o.equals(def.getOffset(p.above(37)))) yIndependent = false;
+                        }
+                    for (var s : b.getStateDefinition().getPossibleStates())
+                        for (int x = 1; x < 9; x++) {
+                            var p = new net.minecraft.core.BlockPos(x * 11, 0, x * 5);
+                            if (!boxes(s.getShape(getter, p), net.minecraft.world.phys.Vec3.ZERO).equals(boxes(s.getShape(getter, origin), net.minecraft.world.phys.Vec3.ZERO))) shapeMoves = true;
+                            if (!boxes(s.getCollisionShape(getter, p), net.minecraft.world.phys.Vec3.ZERO).equals(boxes(s.getCollisionShape(getter, origin), net.minecraft.world.phys.Vec3.ZERO))) collisionMoves = true;
+                        }
+                    offset = "{\"kind\":" + q(minY < 0 || maxY > 0 ? "xyz" : "xz") + ",\"max_xz\":" + maxXZ + ",\"min_y\":" + minY
+                        + ",\"max_y\":" + maxY + ",\"y_independent\":" + yIndependent + ",\"outline_moves\":" + shapeMoves
+                        + ",\"collision_moves\":" + collisionMoves + "}";
+                }
+                w.print("{\"id\":" + q(id.trim()) + ",\"offset\":" + offset + ",\"states\":[");
+                boolean firstState = true;
+                for (var s : b.getStateDefinition().getPossibleStates()) {
+                    var shift = s.hasOffsetFunction() ? s.getOffset(origin) : net.minecraft.world.phys.Vec3.ZERO;
+                    var outline = s.getShape(getter, origin);
+                    var collision = s.getCollisionShape(getter, origin);
+                    // Moving shapes are stored unshifted: compare with the shape at another column, shifted back.
+                    var p = new net.minecraft.core.BlockPos(77, 0, 35);
+                    var shiftP = s.hasOffsetFunction() ? s.getOffset(p) : net.minecraft.world.phys.Vec3.ZERO;
+                    if (s.hasOffsetFunction() && (shiftP.x == shift.x || shiftP.z == shift.z))
+                        throw new IllegalStateException(id + ": pick another probe column, the offsets coincide");
+                    boolean outlineMoves = !boxes(s.getShape(getter, p), net.minecraft.world.phys.Vec3.ZERO).equals(boxes(outline, net.minecraft.world.phys.Vec3.ZERO));
+                    boolean collisionMoves = !boxes(s.getCollisionShape(getter, p), net.minecraft.world.phys.Vec3.ZERO).equals(boxes(collision, net.minecraft.world.phys.Vec3.ZERO));
+                    String outlineText = boxes(outline, outlineMoves ? shift : net.minecraft.world.phys.Vec3.ZERO);
+                    String collisionText = boxes(collision, collisionMoves ? shift : net.minecraft.world.phys.Vec3.ZERO);
+                    if (outlineMoves && !outlineText.equals(boxes(s.getShape(getter, p), shiftP)))
+                        throw new IllegalStateException(id + ": outline moves by more than the offset");
+                    if (collisionMoves && !collisionText.equals(boxes(s.getCollisionShape(getter, p), shiftP)))
+                        throw new IllegalStateException(id + ": collision moves by more than the offset");
+                    int occludes = 0;
+                    if (s.canOcclude())
+                        for (int i = 0; i < 6; i++)
+                            if (Block.isFaceFull(s.getFaceOcclusionShape(dirs[i]), dirs[i])) occludes |= 1 << i;
+                    var fluid = s.getFluidState();
+                    String fluidText = fluid.isEmpty() ? "null" : "{\"fluid\":" + q(String.valueOf(BuiltInRegistries.FLUID.getKey(fluid.getType())))
+                        + ",\"amount\":" + fluid.getAmount() + ",\"source\":" + fluid.isSource() + "}";
+                    if (!firstState) w.print(",");
+                    firstState = false;
+                    w.print("\n {\"id\":" + Block.getId(s) + ",\"outline\":" + outlineText + ",\"collision\":" + collisionText
+                        + ",\"light\":" + s.getLightEmission() + ",\"replaceable\":" + s.canBeReplaced() + ",\"occludes\":" + occludes
+                        + ",\"fluid\":" + fluidText + "}");
+                }
+                w.print("]}");
+            }
+            w.println("\n]}");
+        }
     }
 }

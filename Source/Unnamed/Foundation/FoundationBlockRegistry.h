@@ -77,6 +77,19 @@ struct FFoundationBlockType
     // The item's GUI tint (items/<id>.json; alpha 0: untinted) and stack size.
     FColor ItemTint = FColor(0, 0, 0, 0);
     int32 ItemMaxStack = 64;
+    // Model blocks' item icons (FFoundationBlockAsset): an IconAtlas tile or a baked model with its gui transform.
+    int32 ItemIconTile = INDEX_NONE;
+    int32 ItemIconModel = INDEX_NONE;
+    FVector3f ItemIconRotation = FVector3f::ZeroVector;
+    FVector3f ItemIconTranslation = FVector3f::ZeroVector;
+    FVector3f ItemIconScale = FVector3f::OneVector;
+
+    // 26.3's position offset, a function of X and Z (FFoundationBlockAsset).
+    EFoundationOffsetKind OffsetKind = EFoundationOffsetKind::None;
+    float OffsetMaxHorizontal = 0;
+    float OffsetMinVertical = 0;
+    bool bOutlineMovesWithOffset = false;
+    bool bCollisionMovesWithOffset = false;
 
     bool IsAir() const { return ProtocolId == 0; }
     bool IsWater() const { return Id == TEXT("water"); }
@@ -150,6 +163,33 @@ namespace FoundationBlockFaces
         const FFoundationBlockTextureAsset& Texture, int64 Tick, int32& OutLayer, int32& OutNextLayer, float& OutBlend);
 }
 
+// A baked model quad (Reference/minecraft-blocks-26.3/block_models.json), decoded from UFoundationBlockAssets.
+struct FFoundationModelQuad
+{
+    // Block units from the cell's minimum corner, Unreal axes, in FaceInfo order; the texture UV at each.
+    FVector3f Positions[4];
+    FVector2f UVs[4];
+    // Index into UFoundationBlockAssets::Textures, as face codes hold it.
+    int32 Texture = 0;
+    // The model's tintindex, -1 untinted (the block's Tint colours it).
+    int32 TintIndex = -1;
+    // Hidden by a full neighbour on this side; INDEX_NONE when never culled.
+    int32 CullFace = INDEX_NONE;
+    // The axis nearest the quad's normal, and the direction it is shaded as (shade_direction_override).
+    EFoundationFace Facing = EFoundationFace::Up;
+    EFoundationFace Shade = EFoundationFace::Up;
+    // The element's light_emission, 0-15.
+    int32 Light = 0;
+};
+
+// Model quad codes (UFoundationBlockAssets::ModelQuadCodes): bits 0-9 texture, 10-11 tintindex + 1, 12-14 cull face
+// + 1 (0: never culled), 15-17 facing, 18-20 shade face, 21-24 light. Faces in EFoundationFace order.
+namespace FoundationBlockModels
+{
+    constexpr int32 FloatsPerQuad = 20;
+    UNNAMED_API FFoundationModelQuad Decode(int32 Code, const float* Vertices);
+}
+
 // The block vocabulary: every imported 26.3 block plus project blocks, with lookups by id, protocol id and
 // state id, the state <-> properties mapping, per-state shapes and faces, and the saved-form codec. Immutable
 // once built; the block world and authority share one instance.
@@ -193,6 +233,19 @@ public:
     // Seven face codes (see FoundationBlockFaces); null for air.
     const uint32* GetFaces(FFoundationBlockState State) const;
 
+    // Model states: each part's alternatives (model indices); false for other shapes. A state draws one alternative
+    // of every part.
+    bool GetModelParts(FFoundationBlockState State, TArray<TConstArrayView<int32>>& OutParts) const;
+    int32 GetModelCount() const { return ModelRanges.Num(); }
+    TConstArrayView<FFoundationModelQuad> GetModelQuads(int32 Model) const;
+    bool IsModelAmbientOccluded(int32 Model) const;
+    // Every outline (selection) or collision box of a state, Unreal axes, without the position offset. For cubes,
+    // slabs and layers these are the shape's one box.
+    void GetOutlineBoxes(FFoundationBlockState State, TArray<FBox>& OutBoxes) const;
+    void GetCollisionBoxes(FFoundationBlockState State, TArray<FBox>& OutBoxes) const;
+    // The state's own light (sea pickles and cave vines vary by state); the block's for non-model blocks.
+    int32 GetLightEmission(FFoundationBlockState State) const;
+
     // Saved form: never numbers. Unknown blocks fail; unknown properties or values keep the default and warn,
     // as Minecraft's NbtUtils.readBlockState does.
     FFoundationSavedState Save(FFoundationBlockState State) const;
@@ -206,6 +259,10 @@ private:
     void AddBlock(
         FFoundationBlockType&& Block, TConstArrayView<EFoundationBlockShape> Shapes, TConstArrayView<int32> Faces);
     int32 GetLocalIndex(FFoundationBlockState State, const FFoundationBlockType*& OutBlock) const;
+    // Model blocks' per-state data (FFoundationBlockAsset): checked before the block is added, then copied.
+    bool IsValidModelData(const FFoundationBlockAsset& Source, int32 States) const;
+    void AddModelData(const FFoundationBlockAsset& Source, int32 TableOffset, int32 States);
+    bool GetModelBounds(FFoundationBlockState State, bool bCollision, FBox& OutBox) const;
 
     TArray<FFoundationBlockType> Blocks;
     TMap<FName, int32> ById;
@@ -214,6 +271,18 @@ private:
     TArray<int32> StateBlocks;
     TArray<EFoundationBlockShape> Shapes;
     TArray<uint32> Faces;
+    // Model blocks, per state (indexed like Shapes): the start in ModelParts (INDEX_NONE for other shapes), the boxes
+    // (first outline box in Boxes, outline count, collision count), the light and the water amount.
+    TArray<int32> StateModelStart;
+    TArray<int32> ModelParts;
+    TArray<FIntVector> StateBoxRanges;
+    TArray<FBox> Boxes;
+    TArray<int32> StateLight;
+    TArray<int32> StateWater;
+    // Decoded baked models: quad range and ambient occlusion.
+    TArray<FFoundationModelQuad> ModelQuads;
+    TArray<FInt32Vector2> ModelRanges;
+    TArray<bool> ModelOcclusion;
     // The default registry roots its asset (GetDefault); a registry built in a test is kept alive by its caller.
     TWeakObjectPtr<const UFoundationBlockAssets> Assets;
 };

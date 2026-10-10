@@ -23,16 +23,20 @@ public:
     static UTexture2D* CreateTexture(const FString& PackageName);
 
     // Fills Array: layer i is frame FrameIndices[i] of PngPaths[i] (square frames of FrameSize stacked
-    // vertically), with MipCount levels made by 26.3's MipmapGenerator using MipStrategies[i]. Mip 0 is the
-    // PNG's pixels unchanged. Uncompressed BGRA8, sRGB, nearest filtering, the mips left as built. A path
-    // of "white" makes a plain white layer.
+    // vertically), with MipCount levels made by 26.3's MipmapGenerator using MipStrategies[i] and
+    // AlphaCutoffBiases[i] (the .mcmeta values). Mip 0 is the PNG's pixels unchanged, except a still PNG twice
+    // FrameSize (the shelf mushroom's 32 x 32 textures), whose layer starts at its own mip 1. Uncompressed BGRA8,
+    // sRGB, nearest filtering, the mips left as built. A path of "white" makes a plain white layer.
     UFUNCTION(BlueprintCallable, Category = "Unnamed|Blocks")
     static FString BuildTextureArray(UTexture2DArray* Array, const TArray<FString>& PngPaths,
-        const TArray<int32>& FrameIndices, const TArray<FString>& MipStrategies, int32 FrameSize, int32 MipCount);
+        const TArray<int32>& FrameIndices, const TArray<FString>& MipStrategies, const TArray<float>& AlphaCutoffBiases,
+        int32 FrameSize, int32 MipCount);
 
-    // Every layer's mip 0 of a 16x16 array in a grid of Columns tiles, one mip, for Slate item icons.
+    // Every layer's mip 0 of a 16x16 array in a grid of Columns tiles, one mip, for Slate item icons; then each of
+    // SpritePngs (16 x 16 item sprites), tile Array layers + i.
     UFUNCTION(BlueprintCallable, Category = "Unnamed|Blocks")
-    static FString BuildIconAtlas(UTexture2D* Atlas, UTexture2DArray* Array, int32 Columns);
+    static FString BuildIconAtlas(
+        UTexture2D* Atlas, UTexture2DArray* Array, int32 Columns, const TArray<FString>& SpritePngs);
 
     // SHA-256 (hex) of a layer's mip-0 RGBA bytes, as Reference/minecraft-blocks-26.3/textures.json records them.
     UFUNCTION(BlueprintCallable, Category = "Unnamed|Blocks")
@@ -48,4 +52,10 @@ public:
 
     // Reads a texture array's mip-0 layer as RGBA8 (editor data). False when unavailable.
     static bool ReadLayer(UTexture2DArray* Array, int32 Layer, TArray<uint8>& OutRGBA);
+
+    // The same for mip level Mip (size >> Mip squared); tests compare the generated mips with 26.3's.
+    static bool ReadLayerMip(UTexture2DArray* Array, int32 Layer, int32 Mip, TArray<uint8>& OutRGBA);
+
+    // Decodes a PNG file to RGBA8 (editor only). False when unreadable.
+    static bool DecodePngFile(const FString& Path, TArray<uint8>& OutRGBA, int32& OutWidth, int32& OutHeight);
 };

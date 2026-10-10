@@ -142,7 +142,9 @@ private:
 };
 
 // A block item's GUI icon: the item's model under the 26.3 "gui" display transform (rotation 30, 225, 0;
-// scale 0.625) in a 16 x 16 slot, as three textured quads with fixed face shading.
+// scale 0.625) in a 16 x 16 slot, as three textured quads with fixed face shading. Model blocks' items draw their
+// item model instead: a flat sprite, or their baked block model under its own gui transform (back faces culled,
+// far quads first).
 namespace HudBlockIcon
 {
     struct FQuad
@@ -151,6 +153,8 @@ namespace HudBlockIcon
         FVector2f Corners[4];
         FVector2f UVs[4];
         int32 Texture = 0;
+        // An IconAtlas tile drawn as is (item sprites); INDEX_NONE samples Texture's current frame.
+        int32 Tile = INDEX_NONE;
         // Brightness times the item tint where the face is tinted (alpha 255).
         FColor Color = FColor::White;
     };

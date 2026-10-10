@@ -2,7 +2,9 @@
 
 As of 2026-10-08. Source of truth: vanilla Java **26.3** (`%APPDATA%\ModrinthApp\meta\versions\26.3\26.3.jar`, plus the official server jar SHA-1 `33680f5f…05f4c` for Mojang's data-generator reports). This sheet is the input for the block/texture import and the research base for the chunk loader. Only water gets behavior; every other block here just needs the correct ID, textures and render flags.
 
-**In scope:** 531 blocks (429 full cubes + 101 slabs + snow layers) out of 1286 registered blocks, plus water and lava; powder snow and snow layers were added in phase 5 for the world generator. A block counts as a full cube when every model it can show is made only of `[0,0,0]→[16,16,16]` boxes. Stairs, fences, plants, chests, tools and items are excluded. Render layers: opaque 488, cutout 23, translucent 20.
+**In scope:** 614 blocks (429 full cubes, powder snow among them, + 101 slabs + snow layers + 83 model blocks) out of 1286 registered blocks, plus water and lava; powder snow and snow layers were added in phase 5 for the world generator. A block counts as a full cube when every model it can show is made only of `[0,0,0]→[16,16,16]` boxes. Stairs, fences, chests, tools and items are excluded. Render layers: opaque 490, cutout 104, translucent 20.
+
+**Model blocks:** 83 blocks are drawn from their own baked models rather than as cubes or slabs: plants, flowers, crosses, seagrass, flowerbeds, carpets, multiface and custom models. See `Reference/minecraft-blocks-26.3/README.md` ("Baked models", "Shapes and offsets") for details.
 
 ## Files
 
@@ -11,7 +13,7 @@ The research outputs are preserved, hash-listed, in [`Reference/minecraft-blocks
 | File | What it is |
 |---|---|
 | `block_manifest.json` | **Import input.** One entry per block in registry order. Each entry has: string id, protocol id, state-id range, properties, per-face textures, render layer, tint/animation/rotation flags, tags, and where it is found. Water is listed under `fluids`. The reference version adds hardness, tints, names and material layers; the research original is `research\block_manifest.research.json`. |
-| `assets\minecraft\textures\block\*.png` (+ `.png.mcmeta`) | 556 block textures copied byte-for-byte from the jar, including water still/flow/overlay. |
+| `assets\minecraft\textures\block\*.png` (+ `.png.mcmeta`) | 689 block textures copied byte-for-byte from the jar, including water still/flow/overlay. |
 | `assets\minecraft\textures\colormap\grass.png`, `foliage.png` | Biome tint lookup maps for tinted blocks. |
 | `research\blocks_registry.csv` | All 1,286 blocks with protocol id, default/min/max state id, and properties (from `blocks.json`). |
 | `research\block_tags.csv` | Every block's tags, with nested `#tag` references resolved. |
@@ -57,10 +59,10 @@ The existing project convention (`dummy_block`, with a separate `dummy_block_ite
 
 | Tag | Blocks in this sheet |
 |---|---:|
-| `#minecraft:mineable/pickaxe` | 304 |
-| `#minecraft:mineable/axe` | 97 |
-| `#minecraft:mineable/shovel` | 33 |
-| `#minecraft:mineable/hoe` | 26 |
+| `#minecraft:mineable/pickaxe` | 310 |
+| `#minecraft:mineable/axe` | 104 |
+| `#minecraft:mineable/shovel` | 34 |
+| `#minecraft:mineable/hoe` | 29 |
 | `#minecraft:needs_stone_tool` | 59 |
 | `#minecraft:needs_iron_tool` | 12 |
 | `#minecraft:needs_diamond_tool` | 5 |
@@ -100,7 +102,7 @@ The existing project convention (`dummy_block`, with a separate `dummy_block_ite
   - Leaves use `colormap\foliage.png`. Birch and spruce use fixed colors.
   - Without biomes, use the plains color. Verify the constant colors against `BlockColors` in 26.3 before relying on them.
 - **`anim`:** the PNG is a vertical strip of frames. Its `.png.mcmeta` gives `frametime` (ticks per frame, default 1) and an optional frame order. 16 blocks are animated (prismarine, sea lantern, magma, sculk, crimson/warped stems, lit furnace fronts…).
-- **Layer:** `opaque` / `cutout` (alpha 0 or 255: grass_block, oak_leaves, spruce_leaves, birch_leaves, jungle_leaves, acacia_leaves, cherry_leaves, dark_oak_leaves, pale_oak_leaves, mangrove_leaves, red_poplar_leaves, orange_poplar_leaves, yellow_poplar_leaves, azalea_leaves, flowering_azalea_leaves, copper_grate, exposed_copper_grate, weathered_copper_grate, oxidized_copper_grate, waxed_copper_grate, waxed_exposed_copper_grate, waxed_weathered_copper_grate, waxed_oxidized_copper_grate) / `translucent` (partial alpha or forced: glass, ice, frosted_ice, tinted_glass, 16 stained glasses). In 26.x glass models declare `force_translucent`, so all glass is translucent. Non-opaque blocks must not cull the faces of their neighbors. Exception: `grass_block` is listed as cutout only because of its side overlay; it is a solid occluding block. Leaves render opaque on "fast" graphics.
+- **Layer:** `opaque` / `cutout` (alpha 0 or 255: grass_block, mangrove_propagule, mangrove_roots, oak_leaves, spruce_leaves, birch_leaves, jungle_leaves, acacia_leaves, cherry_leaves, dark_oak_leaves, pale_oak_leaves, mangrove_leaves, red_poplar_leaves, orange_poplar_leaves, yellow_poplar_leaves, azalea_leaves, flowering_azalea_leaves, short_grass, fern, dead_bush, bush, red_shrub, short_dry_grass, tall_dry_grass, seagrass, tall_seagrass, dandelion, poppy, blue_orchid, allium, azure_bluet, red_tulip, orange_tulip, white_tulip, pink_tulip, oxeye_daisy, cornflower, lily_of_the_valley, brown_mushroom, red_mushroom, cactus, cactus_flower, sugar_cane, vine, glow_lichen, lily_pad, cocoa, sunflower, lilac, rose_bush, peony, tall_grass, large_fern, kelp, kelp_plant, tube_coral, brain_coral, bubble_coral, fire_coral, horn_coral, tube_coral_fan, brain_coral_fan, bubble_coral_fan, fire_coral_fan, horn_coral_fan, tube_coral_wall_fan, brain_coral_wall_fan, bubble_coral_wall_fan, fire_coral_wall_fan, horn_coral_wall_fan, sea_pickle, bamboo, sweet_berry_bush, amethyst_cluster, large_amethyst_bud, medium_amethyst_bud, small_amethyst_bud, sculk_vein, copper_grate, exposed_copper_grate, weathered_copper_grate, oxidized_copper_grate, waxed_copper_grate, waxed_exposed_copper_grate, waxed_weathered_copper_grate, waxed_oxidized_copper_grate, pointed_dripstone, sulfur_spike, cave_vines, cave_vines_plant, spore_blossom, azalea, flowering_azalea, pink_petals, wildflowers, leaf_litter, big_dripleaf, big_dripleaf_stem, small_dripleaf, hanging_roots, pale_moss_carpet, pale_hanging_moss, closed_eyeblossom, firefly_bush) / `translucent` (partial alpha or forced: glass, ice, frosted_ice, tinted_glass, 16 stained glasses). In 26.x glass models declare `force_translucent`, so all glass is translucent. Non-opaque blocks must not cull the faces of their neighbors. Exception: `grass_block` is listed as cutout only because of its side overlay; it is a solid occluding block. Leaves render opaque on "fast" graphics.
 - **Slabs** use their base block's textures, half height (bottom: Y 0–8, top: Y 8–16). `smooth_stone_slab` is the one with its own side texture.
 - **Where found:** blank (—) means the block does not generate as terrain. It is crafted, or appears only as building material in some structures. Ore Y-ranges come from the 26.3 `placed_feature` data, not the wiki.
 
@@ -190,6 +192,7 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 23 | `poplar_planks` | full cube | poplar_planks | opaque |  | 27 | — |
 | 24 | `bamboo_planks` | full cube | bamboo_planks | opaque |  | 28 | — |
 | 25 | `bamboo_mosaic` | full cube | bamboo_mosaic | opaque |  | 29 | — |
+| 34 | `mangrove_propagule` | model | mangrove_propagule · mangrove_propagule_hanging | cutout |  | 46–85 | — |
 | 36 | `bedrock` | full cube | bedrock | opaque | rand-rot | 88 | Indestructible layer at the bottom of the overworld and Nether, the Nether roof, End spikes and End gateways — Y -64..-60 (overworld floor, gradient to -59); Nether floor 0..4 and roof near 122..127; End spikes and gateways |
 | 39 | `sand` | full cube | sand | opaque | rand-rot | 121 | Disks in shallow water; deserts and beaches (layers over sandstone) |
 | 40 | `suspicious_sand` | full cube | suspicious_sand_0 | opaque | dusted | 122–125 | Buried rooms under desert pyramids, desert wells, warm ocean ruins |
@@ -213,6 +216,7 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 58 | `pale_oak_log` | full cube | ends: pale_oak_log_top · side: pale_oak_log | opaque | axis | 160–162 | Pale oak trees in pale gardens (creaking hearts inside trunks) |
 | 59 | `mangrove_log` | full cube | ends: mangrove_log_top · side: mangrove_log | opaque | axis | 163–165 | Mangrove trees in mangrove swamps |
 | 60 | `poplar_log` | full cube | ends: poplar_log_top · side: poplar_log | opaque | axis | 166–168 | Poplar trees in dappled forests (26.3); fallen poplar trees |
+| 61 | `mangrove_roots` | model | mangrove_roots_side · mangrove_roots_top | cutout |  | 169–170 | Roots of mangrove trees in mangrove swamps; some trial chamber entrances |
 | 62 | `muddy_mangrove_roots` | full cube | ends: muddy_mangrove_roots_top · side: muddy_mangrove_roots_side | opaque | axis | 171–173 | Where mud meets mangrove roots in mangrove swamps; some trial chamber entrances |
 | 63 | `bamboo_block` | full cube | ends: bamboo_block_top · side: bamboo_block | opaque | axis | 174–176 | — |
 | 64 | `stripped_spruce_log` | full cube | ends: stripped_spruce_log_top · side: stripped_spruce_log | opaque | axis | 177–179 | — |
@@ -270,6 +274,15 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 116 | `chiseled_sandstone` | full cube | ends: sandstone_top · side: chiseled_sandstone | opaque |  | 678 | Desert pyramids, warm ocean ruins, trial chambers |
 | 117 | `cut_sandstone` | full cube | ends: sandstone_top · side: cut_sandstone | opaque |  | 679 | Desert villages, desert pyramids, warm ocean ruins |
 | 118 | `note_block` | full cube | note_block | opaque |  | 680–2029 | — |
+| 140 | `short_grass` | model | short_grass | cutout | tint | 2363 | — |
+| 141 | `fern` | model | fern | cutout | tint | 2364 | — |
+| 142 | `dead_bush` | model | dead_bush | cutout |  | 2365 | — |
+| 143 | `bush` | model | bush | cutout | tint | 2366 | — |
+| 144 | `red_shrub` | model | red_shrub | cutout |  | 2367 | — |
+| 145 | `short_dry_grass` | model | short_dry_grass | cutout |  | 2368 | — |
+| 146 | `tall_dry_grass` | model | tall_dry_grass | cutout |  | 2369 | — |
+| 147 | `seagrass` | model | seagrass | cutout | anim | 2370 | — |
+| 148 | `tall_seagrass` | model | tall_seagrass_bottom · tall_seagrass_top | cutout | anim | 2371–2372 | — |
 | 151 | `white_wool` | full cube | white_wool | opaque |  | 2409 | — |
 | 152 | `orange_wool` | full cube | orange_wool | opaque |  | 2410 | — |
 | 153 | `magenta_wool` | full cube | magenta_wool | opaque |  | 2411 | — |
@@ -302,6 +315,20 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 196 | `green_wool_slab` | slab | green_wool | opaque |  | 3783–3788 | — |
 | 197 | `red_wool_slab` | slab | red_wool | opaque |  | 3789–3794 | — |
 | 198 | `black_wool_slab` | slab | black_wool | opaque |  | 3795–3800 | — |
+| 200 | `dandelion` | model | dandelion | cutout |  | 3813 | — |
+| 203 | `poppy` | model | poppy | cutout |  | 3816 | — |
+| 204 | `blue_orchid` | model | blue_orchid | cutout |  | 3817 | — |
+| 205 | `allium` | model | allium | cutout |  | 3818 | — |
+| 206 | `azure_bluet` | model | azure_bluet | cutout |  | 3819 | — |
+| 207 | `red_tulip` | model | red_tulip | cutout |  | 3820 | — |
+| 208 | `orange_tulip` | model | orange_tulip | cutout |  | 3821 | — |
+| 209 | `white_tulip` | model | white_tulip | cutout |  | 3822 | — |
+| 210 | `pink_tulip` | model | pink_tulip | cutout |  | 3823 | — |
+| 211 | `oxeye_daisy` | model | oxeye_daisy | cutout |  | 3824 | — |
+| 212 | `cornflower` | model | cornflower | cutout |  | 3825 | — |
+| 214 | `lily_of_the_valley` | model | lily_of_the_valley | cutout |  | 3827 | — |
+| 215 | `brown_mushroom` | model | brown_mushroom | cutout |  | 3828 | — |
+| 216 | `red_mushroom` | model | red_mushroom | cutout |  | 3829 | — |
 | 217 | `gold_block` | full cube | gold_block | opaque |  | 3830 | — |
 | 218 | `iron_block` | full cube | iron_block | opaque |  | 3831 | — |
 | 219 | `bricks` | full cube | bricks | opaque |  | 3832 | Ocean ruins, plains village armorer houses, trail ruins |
@@ -317,9 +344,13 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 253 | `furnace` | full cube | down: furnace_top · up: furnace_top · north: furnace_front · south: furnace_side · east: furnace_side · west: furnace_side | opaque | facing,lit | 6883–6890 | — |
 | 320 | `redstone_ore` | full cube | redstone_ore | opaque |  | 8551–8552 | Ore blobs across the overworld — Y -64..15 + -64..-32 (peak -64) |
 | 321 | `deepslate_redstone_ore` | full cube | deepslate_redstone_ore | opaque |  | 8553–8554 | Redstone ore in the deepslate layer — Y -64..15 + -64..-32 (peak -64) (where it replaces deepslate, ~Y<8) |
+| 325 | `snow` | layers | snow | opaque |  | 8589–8596 | — |
 | 326 | `ice` | full cube | ice | translucent |  | 8597 | Freeze-top-layer ice on frozen oceans, frozen rivers, snowy beaches, lakes and exposed aquifers in snowy biomes |
 | 327 | `snow_block` | full cube | snow | opaque |  | 8598 | Ground in ice spikes, groves, snowy slopes and peaks; igloo walls; some abandoned camps |
+| 328 | `cactus` | model | cactus_bottom · cactus_top · cactus_side | cutout |  | 8599–8614 | — |
+| 329 | `cactus_flower` | model | cactus_flower | cutout |  | 8615 | — |
 | 330 | `clay` | full cube | clay | opaque |  | 8616 | Blobs in lush caves and underwater disks in shallow rivers, lakes and oceans; mason houses in villages — Y -64..256 (lush caves blobs, any height); underwater disks at sea level |
+| 331 | `sugar_cane` | model | sugar_cane | cutout | tint | 8617–8632 | — |
 | 332 | `jukebox` | full cube | top: jukebox_top · bottom: jukebox_side · side: jukebox_side | opaque |  | 8633–8634 | — |
 | 334 | `netherrack` | full cube | netherrack | opaque | rand-rot | 8667 | Most of the Nether terrain; ruined portals; bastion remnants — Y 0..127 (nether terrain) |
 | 335 | `soul_sand` | full cube | soul_sand | opaque |  | 8668 | Soul sand valleys surface; Nether ore blobs; fortress nether wart rooms; ancient cities (Overworld) — Y 0..31 (ore blobs in Nether) |
@@ -362,7 +393,10 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 390 | `mushroom_stem` | full cube | mushroom_stem | opaque |  | 9628–9691 | Trunks of huge brown and red mushrooms; dark forest vegetation |
 | 410 | `pumpkin` | full cube | ends: pumpkin_top · side: pumpkin_side | opaque |  | 10066 | Pumpkin patches on clear grass in most overworld biomes; woodland mansions, taiga villages, pillager outposts, abandoned camps |
 | 411 | `melon` | full cube | ends: melon_top · side: melon_side | opaque |  | 10067 | Melon patches in jungle biomes; savanna villages; woodland mansion tillage rooms; abandoned camps |
+| 416 | `vine` | model | vine | cutout | tint | 10092–10123 | — |
+| 417 | `glow_lichen` | model | glow_lichen | cutout |  | 10124–10251 | — |
 | 423 | `mycelium` | full cube | top: mycelium_top · bottom: dirt · side: mycelium_side | opaque | rand-rot, snowy | 10652–10653 | Mushroom fields in abundance; single blocks in swamp abandoned camps |
+| 424 | `lily_pad` | model | lily_pad | cutout | tint, rand-rot | 10654 | — |
 | 425 | `resin_block` | full cube | resin_block | opaque |  | 10655 | Pale garden abandoned camps (per wiki) |
 | 426 | `resin_bricks` | full cube | resin_bricks | opaque |  | 10656 | — |
 | 428 | `resin_brick_slab` | slab | resin_bricks | opaque |  | 10737–10742 | — |
@@ -370,6 +404,8 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 431 | `nether_bricks` | full cube | nether_bricks | opaque |  | 11068 | Walls and pillars of Nether fortresses |
 | 443 | `end_stone` | full cube | end_stone | opaque |  | 11211 | All End islands, main and outer |
 | 445 | `redstone_lamp` | full cube | redstone_lamp | opaque | lit | 11213–11214 | — |
+| 446 | `cocoa` | model | cocoa_stage0 · cocoa_stage1 · cocoa_stage2 | cutout |  | 11215–11226 | — |
+| 447 | `shelf_mushroom` | model | shelf_mushroom_stage0 · shelf_mushroom_stage1 | opaque |  | 11227–11234 | — |
 | 449 | `emerald_ore` | full cube | emerald_ore | opaque |  | 11315 | Single scattered blocks in mountains, windswept hills and windswept forest, meadows, cherry groves, groves, snowy slopes and peaks — Y -16..top (peak 232), mountain biomes |
 | 450 | `deepslate_emerald_ore` | full cube | deepslate_emerald_ore | opaque |  | 11316 | Emerald ore in the deepslate layer of mountain biomes — Y -16..top (peak 232), mountain biomes (where it replaces deepslate, ~Y<8) |
 | 454 | `emerald_block` | full cube | emerald_block | opaque |  | 11469 | — |
@@ -407,6 +443,12 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 608 | `terracotta` | full cube | terracotta | opaque |  | 14759 | Badlands layers; desert and plains village houses and lamps — Y above about 74 (badlands layers) |
 | 609 | `coal_block` | full cube | coal_block | opaque |  | 14760 | — |
 | 610 | `packed_ice` | full cube | packed_ice | opaque |  | 14761 | Ice spikes, frozen peaks, ice caves, icebergs, igloo windows, some snowy village houses |
+| 611 | `sunflower` | model | sunflower_bottom · sunflower_top · sunflower_back · sunflower_front | cutout |  | 14762–14763 | — |
+| 612 | `lilac` | model | lilac_bottom · lilac_top | cutout |  | 14764–14765 | — |
+| 613 | `rose_bush` | model | rose_bush_bottom · rose_bush_top | cutout |  | 14766–14767 | — |
+| 614 | `peony` | model | peony_bottom · peony_top | cutout |  | 14768–14769 | — |
+| 615 | `tall_grass` | model | tall_grass_bottom · tall_grass_top | cutout | tint | 14770–14771 | — |
+| 616 | `large_fern` | model | large_fern_bottom · large_fern_top | cutout | tint | 14772–14773 | — |
 | 649 | `red_sandstone` | full cube | top: red_sandstone_top · bottom: red_sandstone_bottom · side: red_sandstone | opaque |  | 15094 | Floating badlands cave entrances, replacing red sand |
 | 650 | `chiseled_red_sandstone` | full cube | ends: red_sandstone_top · side: chiseled_red_sandstone | opaque |  | 15095 | — |
 | 651 | `cut_red_sandstone` | full cube | ends: red_sandstone_top · side: cut_red_sandstone | opaque |  | 15096 | — |
@@ -515,6 +557,8 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 829 | `green_concrete_powder` | full cube | green_concrete_powder | opaque | rand-rot | 18416 | — |
 | 830 | `red_concrete_powder` | full cube | red_concrete_powder | opaque | rand-rot | 18417 | — |
 | 831 | `black_concrete_powder` | full cube | black_concrete_powder | opaque | rand-rot | 18418 | — |
+| 832 | `kelp` | model | kelp | cutout | anim | 18419–18444 | — |
+| 833 | `kelp_plant` | model | kelp_plant | cutout | anim | 18445 | — |
 | 834 | `dried_kelp_block` | full cube | top: dried_kelp_top · bottom: dried_kelp_bottom · side: dried_kelp_side | opaque |  | 18446 | — |
 | 838 | `dead_tube_coral_block` | full cube | dead_tube_coral_block | opaque |  | 18494 | — |
 | 839 | `dead_brain_coral_block` | full cube | dead_brain_coral_block | opaque |  | 18495 | — |
@@ -526,7 +570,24 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 845 | `bubble_coral_block` | full cube | bubble_coral_block | opaque |  | 18501 | — |
 | 846 | `fire_coral_block` | full cube | fire_coral_block | opaque |  | 18502 | — |
 | 847 | `horn_coral_block` | full cube | horn_coral_block | opaque |  | 18503 | — |
+| 853 | `tube_coral` | model | tube_coral | cutout |  | 18514–18515 | — |
+| 854 | `brain_coral` | model | brain_coral | cutout |  | 18516–18517 | — |
+| 855 | `bubble_coral` | model | bubble_coral | cutout |  | 18518–18519 | — |
+| 856 | `fire_coral` | model | fire_coral | cutout |  | 18520–18521 | — |
+| 857 | `horn_coral` | model | horn_coral | cutout |  | 18522–18523 | — |
+| 863 | `tube_coral_fan` | model | tube_coral_fan | cutout |  | 18534–18535 | — |
+| 864 | `brain_coral_fan` | model | brain_coral_fan | cutout |  | 18536–18537 | — |
+| 865 | `bubble_coral_fan` | model | bubble_coral_fan | cutout |  | 18538–18539 | — |
+| 866 | `fire_coral_fan` | model | fire_coral_fan | cutout |  | 18540–18541 | — |
+| 867 | `horn_coral_fan` | model | horn_coral_fan | cutout |  | 18542–18543 | — |
+| 873 | `tube_coral_wall_fan` | model | tube_coral_fan | cutout |  | 18584–18591 | — |
+| 874 | `brain_coral_wall_fan` | model | brain_coral_fan | cutout |  | 18592–18599 | — |
+| 875 | `bubble_coral_wall_fan` | model | bubble_coral_fan | cutout |  | 18600–18607 | — |
+| 876 | `fire_coral_wall_fan` | model | fire_coral_fan | cutout |  | 18608–18615 | — |
+| 877 | `horn_coral_wall_fan` | model | horn_coral_fan | cutout |  | 18616–18623 | — |
+| 878 | `sea_pickle` | model | sea_pickle | cutout | rand-rot | 18624–18631 | — |
 | 879 | `blue_ice` | full cube | blue_ice | opaque |  | 18632 | Bottoms of icebergs and arches in frozen oceans; piles in snowy village houses; ancient cities — Y 30..61 (blue ice placement in frozen oceans) |
+| 882 | `bamboo` | model | bamboo_stalk · bamboo_small_leaves · bamboo_large_leaves | cutout | tint, rand-rot | 18636–18647 | — |
 | 901 | `polished_granite_slab` | slab | polished_granite | opaque |  | 19773–19778 | — |
 | 902 | `smooth_red_sandstone_slab` | slab | red_sandstone_top | opaque |  | 19779–19784 | — |
 | 903 | `mossy_stone_brick_slab` | slab | mossy_stone_bricks | opaque |  | 19785–19790 | — |
@@ -547,6 +608,7 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 932 | `cartography_table` | full cube | down: dark_oak_planks · up: cartography_table_top · north: cartography_table_side3 · south: cartography_table_side1 · east: cartography_table_side3 · west: cartography_table_side2 | opaque |  | 24127 | — |
 | 933 | `fletching_table` | full cube | down: birch_planks · up: fletching_table_top · north: fletching_table_front · south: fletching_table_front · east: fletching_table_side · west: fletching_table_side | opaque |  | 24128 | — |
 | 936 | `smithing_table` | full cube | down: smithing_table_bottom · up: smithing_table_top · north: smithing_table_front · south: smithing_table_front · east: smithing_table_side · west: smithing_table_side | opaque |  | 24157 | — |
+| 951 | `sweet_berry_bush` | model | sweet_berry_bush_stage0 · sweet_berry_bush_stage1 · sweet_berry_bush_stage2 · sweet_berry_bush_stage3 | cutout |  | 24298–24301 | — |
 | 952 | `warped_stem` | full cube | ends: warped_stem_top · side: warped_stem | opaque | anim, axis | 24302–24304 | Trunks of huge warped fungi in warped forests |
 | 953 | `stripped_warped_stem` | full cube | ends: stripped_warped_stem_top · side: stripped_warped_stem | opaque | axis | 24305–24307 | — |
 | 954 | `warped_hyphae` | full cube | warped_stem | opaque | anim, axis | 24308–24310 | — |
@@ -590,6 +652,10 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 1033 | `quartz_bricks` | full cube | quartz_bricks | opaque |  | 26452 | — |
 | 1068 | `amethyst_block` | full cube | amethyst_block | opaque |  | 26759 | Inner layer of amethyst geodes — Y -58..30 (amethyst geodes) |
 | 1069 | `budding_amethyst` | full cube | budding_amethyst | opaque |  | 26760 | Replaces about 8% of the inner amethyst layer of geodes — Y -58..30 (amethyst geodes) |
+| 1070 | `amethyst_cluster` | model | amethyst_cluster | cutout |  | 26761–26772 | — |
+| 1071 | `large_amethyst_bud` | model | large_amethyst_bud | cutout |  | 26773–26784 | — |
+| 1072 | `medium_amethyst_bud` | model | medium_amethyst_bud | cutout |  | 26785–26796 | — |
+| 1073 | `small_amethyst_bud` | model | small_amethyst_bud | cutout |  | 26797–26808 | — |
 | 1074 | `tuff` | full cube | tuff | opaque |  | 26809 | Ore blobs below Y=0 in all overworld biomes; filler of the iron ore vein; sulfur springs — Y -64..0 (ore blobs) |
 | 1075 | `tuff_slab` | slab | tuff | opaque |  | 26810–26815 | — |
 | 1078 | `polished_tuff` | full cube | polished_tuff | opaque |  | 27220 | Trial chambers (primary ceiling block of many rooms) |
@@ -615,7 +681,9 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 1114 | `chiseled_cinnabar` | full cube | chiseled_cinnabar | opaque |  | 30516 | — |
 | 1115 | `calcite` | full cube | calcite | opaque |  | 30517 | Middle layer of amethyst geodes; striped in stony peaks — Y -58..30 (amethyst geodes); stony peaks surface strips |
 | 1116 | `tinted_glass` | full cube | tinted_glass | translucent |  | 30518 | — |
+| 1117 | `powder_snow` | full cube | powder_snow | opaque |  | 30519 | Strips in groves and snowy slopes; trial chamber rooms |
 | 1120 | `sculk` | full cube | sculk | opaque | anim, rand-rot | 31000 | Sculk patches in the deep dark biome, plus sculk veins — Y -64..256 (deep dark sculk patch placement) |
+| 1121 | `sculk_vein` | model | sculk_vein | cutout | anim | 31001–31128 | — |
 | 1122 | `sculk_catalyst` | full cube | top: sculk_catalyst_top · bottom: sculk_catalyst_bottom · side: sculk_catalyst_side | opaque | anim, bloom | 31129–31130 | Deep dark biome and ancient cities — Y -64..256 (deep dark sculk patch placement) |
 | 1124 | `copper_block` | full cube | copper_block | opaque |  | 31139 | Trial chambers |
 | 1125 | `exposed_copper` | full cube | exposed_copper | opaque |  | 31140 | — |
@@ -668,7 +736,22 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 1196 | `waxed_weathered_copper_bulb` | full cube | weathered_copper_bulb | opaque | lit,powered | 32917–32920 | — |
 | 1197 | `waxed_oxidized_copper_bulb` | full cube | oxidized_copper_bulb | opaque | lit,powered | 32921–32924 | — |
 | 1222 | `dripstone_block` | full cube | dripstone_block | opaque |  | 33565 | Dripstone caves (stalactites, stalagmites, stalagnates) — Y -64..256 (cluster placement range; cave-limited) |
+| 1223 | `pointed_dripstone` | model | pointed_dripstone_down_base · pointed_dripstone_up_base · pointed_dripstone_down_frustum · pointed_dripstone_up_frustum · pointed_dripstone_down_middle · pointed_dripstone_up_middle · pointed_dripstone_down_tip · pointed_dripstone_up_tip · pointed_dripstone_down_tip_merge · pointed_dripstone_up_tip_merge | cutout |  | 33566–33585 | — |
+| 1224 | `sulfur_spike` | model | sulfur_spike_down_base · sulfur_spike_up_base · sulfur_spike_down_frustum · sulfur_spike_up_frustum · sulfur_spike_down_middle · sulfur_spike_up_middle · sulfur_spike_down_tip · sulfur_spike_up_tip · sulfur_spike_down_tip_merge · sulfur_spike_up_tip_merge | cutout |  | 33586–33605 | — |
+| 1225 | `cave_vines` | model | cave_vines · cave_vines_lit | cutout |  | 33606–33657 | — |
+| 1226 | `cave_vines_plant` | model | cave_vines_plant · cave_vines_plant_lit | cutout |  | 33658–33659 | — |
+| 1227 | `spore_blossom` | model | spore_blossom_base · spore_blossom | cutout |  | 33660 | — |
+| 1228 | `azalea` | model | azalea_top · azalea_side · azalea_plant | cutout |  | 33661 | — |
+| 1229 | `flowering_azalea` | model | flowering_azalea_top · flowering_azalea_side · azalea_plant | cutout |  | 33662 | — |
+| 1230 | `moss_carpet` | model | moss_block | opaque |  | 33663 | — |
+| 1231 | `pink_petals` | model | pink_petals · pink_petals_stem | cutout | tint | 33664–33679 | — |
+| 1232 | `wildflowers` | model | wildflowers · wildflowers_stem | cutout | tint | 33680–33695 | — |
+| 1233 | `leaf_litter` | model | leaf_litter | cutout | tint | 33696–33711 | — |
 | 1234 | `moss_block` | full cube | moss_block | opaque |  | 33712 | Floor and ceiling of lush caves; trial chambers — Y -64..256 (lush cave vegetation placement) |
+| 1235 | `big_dripleaf` | model | big_dripleaf_top · big_dripleaf_tip · big_dripleaf_side · big_dripleaf_stem | cutout |  | 33713–33744 | — |
+| 1236 | `big_dripleaf_stem` | model | big_dripleaf_stem | cutout |  | 33745–33752 | — |
+| 1237 | `small_dripleaf` | model | small_dripleaf_stem_bottom · small_dripleaf_top · small_dripleaf_side · small_dripleaf_stem_top | cutout |  | 33753–33768 | — |
+| 1238 | `hanging_roots` | model | hanging_roots | cutout |  | 33769–33770 | — |
 | 1239 | `rooted_dirt` | full cube | rooted_dirt | opaque | rand-rot | 33771 | Roots under azalea trees in lush caves — Y -64..256 (rooted azalea tree placement; extends into lush caves) |
 | 1240 | `mud` | full cube | mud | opaque |  | 33772 | Mangrove swamp terrain; trail ruins; some trial chamber entrance rooms |
 | 1241 | `deepslate` | full cube | ends: deepslate_top · side: deepslate | opaque | rand-rot, axis | 33773–33775 | Main solid rock below Y=0; ancient cities — Y -64..0 (gradient from Y=8 down to Y=0; fully deepslate at Y<=0) |
@@ -694,6 +777,10 @@ Per scheduled tick (`FlowingFluid.tick`):
 | 1272 | `reinforced_deepslate` | full cube | top: reinforced_deepslate_top · bottom: reinforced_deepslate_bottom · side: reinforced_deepslate_side | opaque |  | 35442 | — |
 | 1274 | `crafter` | full cube | down: crafter_bottom · up: crafter_top · north: crafter_north · south: crafter_south · east: crafter_east · west: crafter_west | opaque | crafting,orientation,triggered | 35459–35506 | — |
 | 1278 | `pale_moss_block` | full cube | pale_moss_block | opaque |  | 35553 | Moss patches in pale gardens |
+| 1279 | `pale_moss_carpet` | model | pale_moss_carpet · pale_moss_carpet_side_tall · pale_moss_carpet_side_small | cutout |  | 35554–35715 | — |
+| 1280 | `pale_hanging_moss` | model | pale_hanging_moss · pale_hanging_moss_tip | cutout |  | 35716–35717 | — |
+| 1282 | `closed_eyeblossom` | model | closed_eyeblossom | cutout |  | 35719 | — |
+| 1285 | `firefly_bush` | model | firefly_bush · firefly_bush_emissive | cutout | anim | 35722 | — |
 
 ### Cube-like blocks left out
 
