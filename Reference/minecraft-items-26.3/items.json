@@ -1,0 +1,6335 @@
+{
+ "minecraft_version": "26.3",
+ "tier": "A",
+ "items": [
+  {
+   "id": "redstone",
+   "protocol_id": 824,
+   "group": "material",
+   "material": null,
+   "kind": null,
+   "name": "Redstone Dust",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "provides_trim_material",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "trim_materials"
+   ],
+   "creative": [
+    {
+     "tab": "redstone_blocks",
+     "index": 0
+    },
+    {
+     "tab": "search",
+     "index": 1168
+    },
+    {
+     "tab": "ingredients",
+     "index": 80
+    }
+   ],
+   "model": {
+    "definition": "items/redstone.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/redstone",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/redstone"
+   ]
+  },
+  {
+   "id": "apple",
+   "protocol_id": 1007,
+   "group": "food",
+   "material": null,
+   "kind": null,
+   "name": "Apple",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 4,
+    "saturation": 2.4
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "horse_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1456
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 0
+    }
+   ],
+   "model": {
+    "definition": "items/apple.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/apple",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/apple"
+   ]
+  },
+  {
+   "id": "coal",
+   "protocol_id": 1010,
+   "group": "material",
+   "material": null,
+   "kind": null,
+   "name": "Coal",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "cooking_fuel",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "coals",
+    "furnace_minecart_fuel"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1648
+    },
+    {
+     "tab": "ingredients",
+     "index": 0
+    }
+   ],
+   "model": {
+    "definition": "items/coal.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/coal",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/coal"
+   ]
+  },
+  {
+   "id": "diamond",
+   "protocol_id": 1012,
+   "group": "material",
+   "material": null,
+   "kind": null,
+   "name": "Diamond",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "provides_trim_material",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "beacon_payment_items",
+    "diamond_tool_materials",
+    "repairs_diamond_armor",
+    "trim_materials"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1657
+    },
+    {
+     "tab": "ingredients",
+     "index": 9
+    }
+   ],
+   "model": {
+    "definition": "items/diamond.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/diamond",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/diamond"
+   ]
+  },
+  {
+   "id": "emerald",
+   "protocol_id": 1013,
+   "group": "material",
+   "material": null,
+   "kind": null,
+   "name": "Emerald",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "provides_trim_material",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "beacon_payment_items",
+    "trim_materials"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1650
+    },
+    {
+     "tab": "ingredients",
+     "index": 2
+    }
+   ],
+   "model": {
+    "definition": "items/emerald.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/emerald",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/emerald"
+   ]
+  },
+  {
+   "id": "lapis_lazuli",
+   "protocol_id": 1014,
+   "group": "material",
+   "material": null,
+   "kind": null,
+   "name": "Lapis Lazuli",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "provides_trim_material",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "trim_materials"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1651
+    },
+    {
+     "tab": "ingredients",
+     "index": 3
+    }
+   ],
+   "model": {
+    "definition": "items/lapis_lazuli.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/lapis_lazuli",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/lapis_lazuli"
+   ]
+  },
+  {
+   "id": "quartz",
+   "protocol_id": 1015,
+   "group": "material",
+   "material": null,
+   "kind": null,
+   "name": "Nether Quartz",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "provides_trim_material",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "trim_materials"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1653
+    },
+    {
+     "tab": "ingredients",
+     "index": 5
+    }
+   ],
+   "model": {
+    "definition": "items/quartz.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/quartz",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/quartz"
+   ]
+  },
+  {
+   "id": "raw_iron",
+   "protocol_id": 1017,
+   "group": "material",
+   "material": null,
+   "kind": null,
+   "name": "Raw Iron",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1655
+    },
+    {
+     "tab": "ingredients",
+     "index": 7
+    }
+   ],
+   "model": {
+    "definition": "items/raw_iron.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/raw_iron",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/raw_iron"
+   ]
+  },
+  {
+   "id": "iron_ingot",
+   "protocol_id": 1018,
+   "group": "material",
+   "material": null,
+   "kind": null,
+   "name": "Iron Ingot",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "provides_trim_material",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "beacon_payment_items",
+    "iron_tool_materials",
+    "repairs_chain_armor",
+    "repairs_iron_armor",
+    "trim_materials"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1662
+    },
+    {
+     "tab": "ingredients",
+     "index": 15
+    }
+   ],
+   "model": {
+    "definition": "items/iron_ingot.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/iron_ingot",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/iron_ingot"
+   ]
+  },
+  {
+   "id": "raw_copper",
+   "protocol_id": 1019,
+   "group": "material",
+   "material": null,
+   "kind": null,
+   "name": "Raw Copper",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1654
+    },
+    {
+     "tab": "ingredients",
+     "index": 6
+    }
+   ],
+   "model": {
+    "definition": "items/raw_copper.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/raw_copper",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/raw_copper"
+   ]
+  },
+  {
+   "id": "copper_ingot",
+   "protocol_id": 1020,
+   "group": "material",
+   "material": null,
+   "kind": null,
+   "name": "Copper Ingot",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "provides_trim_material",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "copper_tool_materials",
+    "repairs_copper_armor",
+    "trim_materials"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1661
+    },
+    {
+     "tab": "ingredients",
+     "index": 14
+    }
+   ],
+   "model": {
+    "definition": "items/copper_ingot.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/copper_ingot",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/copper_ingot"
+   ]
+  },
+  {
+   "id": "raw_gold",
+   "protocol_id": 1021,
+   "group": "material",
+   "material": null,
+   "kind": null,
+   "name": "Raw Gold",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "piglin_loved"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1656
+    },
+    {
+     "tab": "ingredients",
+     "index": 8
+    }
+   ],
+   "model": {
+    "definition": "items/raw_gold.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/raw_gold",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/raw_gold"
+   ]
+  },
+  {
+   "id": "gold_ingot",
+   "protocol_id": 1022,
+   "group": "material",
+   "material": null,
+   "kind": null,
+   "name": "Gold Ingot",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "provides_trim_material",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "beacon_payment_items",
+    "gold_tool_materials",
+    "piglin_loved",
+    "repairs_gold_armor",
+    "trim_materials"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1663
+    },
+    {
+     "tab": "ingredients",
+     "index": 16
+    }
+   ],
+   "model": {
+    "definition": "items/gold_ingot.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/gold_ingot",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/gold_ingot"
+   ]
+  },
+  {
+   "id": "netherite_ingot",
+   "protocol_id": 1023,
+   "group": "material",
+   "material": null,
+   "kind": null,
+   "name": "Netherite Ingot",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage_resistant",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "provides_trim_material",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "beacon_payment_items",
+    "netherite_tool_materials",
+    "repairs_netherite_armor",
+    "trim_materials"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1665
+    },
+    {
+     "tab": "ingredients",
+     "index": 18
+    }
+   ],
+   "model": {
+    "definition": "items/netherite_ingot.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/netherite_ingot",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/netherite_ingot"
+   ]
+  },
+  {
+   "id": "netherite_scrap",
+   "protocol_id": 1024,
+   "group": "material",
+   "material": null,
+   "kind": null,
+   "name": "Netherite Scrap",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage_resistant",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1664
+    },
+    {
+     "tab": "ingredients",
+     "index": 17
+    }
+   ],
+   "model": {
+    "definition": "items/netherite_scrap.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/netherite_scrap",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/netherite_scrap"
+   ]
+  },
+  {
+   "id": "wooden_sword",
+   "protocol_id": 1025,
+   "group": "tool",
+   "material": "wooden",
+   "kind": "sword",
+   "name": "Wooden Sword",
+   "max_stack": 1,
+   "max_damage": 59,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:wooden_tool_materials",
+    "resolved": [
+     "acacia_planks",
+     "bamboo_planks",
+     "birch_planks",
+     "cherry_planks",
+     "crimson_planks",
+     "dark_oak_planks",
+     "jungle_planks",
+     "mangrove_planks",
+     "oak_planks",
+     "pale_oak_planks",
+     "poplar_planks",
+     "spruce_planks",
+     "warped_planks"
+    ]
+   },
+   "attack": {
+    "damage": 4.0,
+    "speed": 1.6,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 3.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.4000000953674316,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "minecraft:cobweb",
+      "correct_for_drops": true,
+      "speed": 15.0
+     },
+     {
+      "blocks": "#minecraft:sword_instantly_mines",
+      "speed": 3.4028235e+38
+     },
+     {
+      "blocks": "#minecraft:sword_efficient",
+      "speed": 1.5
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 2,
+    "can_destroy_blocks_in_creative": false
+   },
+   "weapon": {
+    "item_damage_per_attack": 1,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "cooking_fuel",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/fire_aspect",
+    "enchantable/melee_weapon",
+    "enchantable/sharp_weapon",
+    "enchantable/sweeping",
+    "enchantable/vanishing",
+    "enchantable/weapon",
+    "swords"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1343
+    },
+    {
+     "tab": "combat",
+     "index": 0
+    }
+   ],
+   "model": {
+    "definition": "items/wooden_sword.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/wooden_sword",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/wooden_sword"
+   ]
+  },
+  {
+   "id": "wooden_shovel",
+   "protocol_id": 1026,
+   "group": "tool",
+   "material": "wooden",
+   "kind": "shovel",
+   "name": "Wooden Shovel",
+   "max_stack": 1,
+   "max_damage": 59,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:wooden_tool_materials",
+    "resolved": [
+     "acacia_planks",
+     "bamboo_planks",
+     "birch_planks",
+     "cherry_planks",
+     "crimson_planks",
+     "dark_oak_planks",
+     "jungle_planks",
+     "mangrove_planks",
+     "oak_planks",
+     "pale_oak_planks",
+     "poplar_planks",
+     "spruce_planks",
+     "warped_planks"
+    ]
+   },
+   "attack": {
+    "damage": 2.5,
+    "speed": 1.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 1.5,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_wooden_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/shovel",
+      "correct_for_drops": true,
+      "speed": 2.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "cooking_fuel",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "douses_campfires",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "shovels"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1197
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 0
+    }
+   ],
+   "model": {
+    "definition": "items/wooden_shovel.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/wooden_shovel",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/wooden_shovel"
+   ]
+  },
+  {
+   "id": "wooden_pickaxe",
+   "protocol_id": 1027,
+   "group": "tool",
+   "material": "wooden",
+   "kind": "pickaxe",
+   "name": "Wooden Pickaxe",
+   "max_stack": 1,
+   "max_damage": 59,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:wooden_tool_materials",
+    "resolved": [
+     "acacia_planks",
+     "bamboo_planks",
+     "birch_planks",
+     "cherry_planks",
+     "crimson_planks",
+     "dark_oak_planks",
+     "jungle_planks",
+     "mangrove_planks",
+     "oak_planks",
+     "pale_oak_planks",
+     "poplar_planks",
+     "spruce_planks",
+     "warped_planks"
+    ]
+   },
+   "attack": {
+    "damage": 2.0,
+    "speed": 1.2,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 1.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.799999952316284,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_wooden_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/pickaxe",
+      "correct_for_drops": true,
+      "speed": 2.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "cooking_fuel",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "cluster_max_harvestables",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "pickaxes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1198
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 1
+    }
+   ],
+   "model": {
+    "definition": "items/wooden_pickaxe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/wooden_pickaxe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/wooden_pickaxe"
+   ]
+  },
+  {
+   "id": "wooden_axe",
+   "protocol_id": 1028,
+   "group": "tool",
+   "material": "wooden",
+   "kind": "axe",
+   "name": "Wooden Axe",
+   "max_stack": 1,
+   "max_damage": 59,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:wooden_tool_materials",
+    "resolved": [
+     "acacia_planks",
+     "bamboo_planks",
+     "birch_planks",
+     "cherry_planks",
+     "crimson_planks",
+     "dark_oak_planks",
+     "jungle_planks",
+     "mangrove_planks",
+     "oak_planks",
+     "pale_oak_planks",
+     "poplar_planks",
+     "spruce_planks",
+     "warped_planks"
+    ]
+   },
+   "attack": {
+    "damage": 7.0,
+    "speed": 0.8,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 6.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.200000047683716,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_wooden_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/axe",
+      "correct_for_drops": true,
+      "speed": 2.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 5.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "cooking_fuel",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "axes",
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/sharp_weapon",
+    "enchantable/vanishing",
+    "enchantable/weapon"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1199
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 2
+    },
+    {
+     "tab": "combat",
+     "index": 14
+    }
+   ],
+   "model": {
+    "definition": "items/wooden_axe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/wooden_axe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/wooden_axe"
+   ]
+  },
+  {
+   "id": "wooden_hoe",
+   "protocol_id": 1029,
+   "group": "tool",
+   "material": "wooden",
+   "kind": "hoe",
+   "name": "Wooden Hoe",
+   "max_stack": 1,
+   "max_damage": 59,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:wooden_tool_materials",
+    "resolved": [
+     "acacia_planks",
+     "bamboo_planks",
+     "birch_planks",
+     "cherry_planks",
+     "crimson_planks",
+     "dark_oak_planks",
+     "jungle_planks",
+     "mangrove_planks",
+     "oak_planks",
+     "pale_oak_planks",
+     "poplar_planks",
+     "spruce_planks",
+     "warped_planks"
+    ]
+   },
+   "attack": {
+    "damage": 1.0,
+    "speed": 1.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 0.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_wooden_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/hoe",
+      "correct_for_drops": true,
+      "speed": 2.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "cooking_fuel",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "hoes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1200
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 3
+    }
+   ],
+   "model": {
+    "definition": "items/wooden_hoe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/wooden_hoe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/wooden_hoe"
+   ]
+  },
+  {
+   "id": "copper_sword",
+   "protocol_id": 1030,
+   "group": "tool",
+   "material": "copper",
+   "kind": "sword",
+   "name": "Copper Sword",
+   "max_stack": 1,
+   "max_damage": 190,
+   "enchantability": 13,
+   "repair": {
+    "items": "#minecraft:copper_tool_materials",
+    "resolved": [
+     "copper_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 5.0,
+    "speed": 1.6,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 4.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.4000000953674316,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "minecraft:cobweb",
+      "correct_for_drops": true,
+      "speed": 15.0
+     },
+     {
+      "blocks": "#minecraft:sword_instantly_mines",
+      "speed": 3.4028235e+38
+     },
+     {
+      "blocks": "#minecraft:sword_efficient",
+      "speed": 1.5
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 2,
+    "can_destroy_blocks_in_creative": false
+   },
+   "weapon": {
+    "item_damage_per_attack": 1,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/fire_aspect",
+    "enchantable/melee_weapon",
+    "enchantable/sharp_weapon",
+    "enchantable/sweeping",
+    "enchantable/vanishing",
+    "enchantable/weapon",
+    "swords"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1345
+    },
+    {
+     "tab": "combat",
+     "index": 2
+    }
+   ],
+   "model": {
+    "definition": "items/copper_sword.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/copper_sword",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/copper_sword"
+   ]
+  },
+  {
+   "id": "copper_shovel",
+   "protocol_id": 1031,
+   "group": "tool",
+   "material": "copper",
+   "kind": "shovel",
+   "name": "Copper Shovel",
+   "max_stack": 1,
+   "max_damage": 190,
+   "enchantability": 13,
+   "repair": {
+    "items": "#minecraft:copper_tool_materials",
+    "resolved": [
+     "copper_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 3.5,
+    "speed": 1.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 2.5,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_copper_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/shovel",
+      "correct_for_drops": true,
+      "speed": 5.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "douses_campfires",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "shovels"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1205
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 8
+    }
+   ],
+   "model": {
+    "definition": "items/copper_shovel.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/copper_shovel",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/copper_shovel"
+   ]
+  },
+  {
+   "id": "copper_pickaxe",
+   "protocol_id": 1032,
+   "group": "tool",
+   "material": "copper",
+   "kind": "pickaxe",
+   "name": "Copper Pickaxe",
+   "max_stack": 1,
+   "max_damage": 190,
+   "enchantability": 13,
+   "repair": {
+    "items": "#minecraft:copper_tool_materials",
+    "resolved": [
+     "copper_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 3.0,
+    "speed": 1.2,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 2.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.799999952316284,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_copper_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/pickaxe",
+      "correct_for_drops": true,
+      "speed": 5.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "cluster_max_harvestables",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "pickaxes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1206
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 9
+    }
+   ],
+   "model": {
+    "definition": "items/copper_pickaxe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/copper_pickaxe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/copper_pickaxe"
+   ]
+  },
+  {
+   "id": "copper_axe",
+   "protocol_id": 1033,
+   "group": "tool",
+   "material": "copper",
+   "kind": "axe",
+   "name": "Copper Axe",
+   "max_stack": 1,
+   "max_damage": 190,
+   "enchantability": 13,
+   "repair": {
+    "items": "#minecraft:copper_tool_materials",
+    "resolved": [
+     "copper_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 9.0,
+    "speed": 0.8,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 8.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.200000047683716,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_copper_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/axe",
+      "correct_for_drops": true,
+      "speed": 5.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 5.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "axes",
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/sharp_weapon",
+    "enchantable/vanishing",
+    "enchantable/weapon"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1207
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 10
+    },
+    {
+     "tab": "combat",
+     "index": 16
+    }
+   ],
+   "model": {
+    "definition": "items/copper_axe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/copper_axe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/copper_axe"
+   ]
+  },
+  {
+   "id": "copper_hoe",
+   "protocol_id": 1034,
+   "group": "tool",
+   "material": "copper",
+   "kind": "hoe",
+   "name": "Copper Hoe",
+   "max_stack": 1,
+   "max_damage": 190,
+   "enchantability": 13,
+   "repair": {
+    "items": "#minecraft:copper_tool_materials",
+    "resolved": [
+     "copper_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 1.0,
+    "speed": 2.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 0.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_copper_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/hoe",
+      "correct_for_drops": true,
+      "speed": 5.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "hoes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1208
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 11
+    }
+   ],
+   "model": {
+    "definition": "items/copper_hoe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/copper_hoe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/copper_hoe"
+   ]
+  },
+  {
+   "id": "stone_sword",
+   "protocol_id": 1035,
+   "group": "tool",
+   "material": "stone",
+   "kind": "sword",
+   "name": "Stone Sword",
+   "max_stack": 1,
+   "max_damage": 131,
+   "enchantability": 5,
+   "repair": {
+    "items": "#minecraft:stone_tool_materials",
+    "resolved": [
+     "blackstone",
+     "cobbled_deepslate",
+     "cobblestone"
+    ]
+   },
+   "attack": {
+    "damage": 5.0,
+    "speed": 1.6,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 4.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.4000000953674316,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "minecraft:cobweb",
+      "correct_for_drops": true,
+      "speed": 15.0
+     },
+     {
+      "blocks": "#minecraft:sword_instantly_mines",
+      "speed": 3.4028235e+38
+     },
+     {
+      "blocks": "#minecraft:sword_efficient",
+      "speed": 1.5
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 2,
+    "can_destroy_blocks_in_creative": false
+   },
+   "weapon": {
+    "item_damage_per_attack": 1,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/fire_aspect",
+    "enchantable/melee_weapon",
+    "enchantable/sharp_weapon",
+    "enchantable/sweeping",
+    "enchantable/vanishing",
+    "enchantable/weapon",
+    "swords"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1344
+    },
+    {
+     "tab": "combat",
+     "index": 1
+    }
+   ],
+   "model": {
+    "definition": "items/stone_sword.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/stone_sword",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/stone_sword"
+   ]
+  },
+  {
+   "id": "stone_shovel",
+   "protocol_id": 1036,
+   "group": "tool",
+   "material": "stone",
+   "kind": "shovel",
+   "name": "Stone Shovel",
+   "max_stack": 1,
+   "max_damage": 131,
+   "enchantability": 5,
+   "repair": {
+    "items": "#minecraft:stone_tool_materials",
+    "resolved": [
+     "blackstone",
+     "cobbled_deepslate",
+     "cobblestone"
+    ]
+   },
+   "attack": {
+    "damage": 3.5,
+    "speed": 1.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 2.5,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_stone_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/shovel",
+      "correct_for_drops": true,
+      "speed": 4.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "douses_campfires",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "shovels"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1201
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 4
+    }
+   ],
+   "model": {
+    "definition": "items/stone_shovel.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/stone_shovel",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/stone_shovel"
+   ]
+  },
+  {
+   "id": "stone_pickaxe",
+   "protocol_id": 1037,
+   "group": "tool",
+   "material": "stone",
+   "kind": "pickaxe",
+   "name": "Stone Pickaxe",
+   "max_stack": 1,
+   "max_damage": 131,
+   "enchantability": 5,
+   "repair": {
+    "items": "#minecraft:stone_tool_materials",
+    "resolved": [
+     "blackstone",
+     "cobbled_deepslate",
+     "cobblestone"
+    ]
+   },
+   "attack": {
+    "damage": 3.0,
+    "speed": 1.2,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 2.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.799999952316284,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_stone_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/pickaxe",
+      "correct_for_drops": true,
+      "speed": 4.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "cluster_max_harvestables",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "pickaxes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1202
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 5
+    }
+   ],
+   "model": {
+    "definition": "items/stone_pickaxe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/stone_pickaxe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/stone_pickaxe"
+   ]
+  },
+  {
+   "id": "stone_axe",
+   "protocol_id": 1038,
+   "group": "tool",
+   "material": "stone",
+   "kind": "axe",
+   "name": "Stone Axe",
+   "max_stack": 1,
+   "max_damage": 131,
+   "enchantability": 5,
+   "repair": {
+    "items": "#minecraft:stone_tool_materials",
+    "resolved": [
+     "blackstone",
+     "cobbled_deepslate",
+     "cobblestone"
+    ]
+   },
+   "attack": {
+    "damage": 9.0,
+    "speed": 0.8,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 8.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.200000047683716,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_stone_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/axe",
+      "correct_for_drops": true,
+      "speed": 4.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 5.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "axes",
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/sharp_weapon",
+    "enchantable/vanishing",
+    "enchantable/weapon"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1203
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 6
+    },
+    {
+     "tab": "combat",
+     "index": 15
+    }
+   ],
+   "model": {
+    "definition": "items/stone_axe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/stone_axe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/stone_axe"
+   ]
+  },
+  {
+   "id": "stone_hoe",
+   "protocol_id": 1039,
+   "group": "tool",
+   "material": "stone",
+   "kind": "hoe",
+   "name": "Stone Hoe",
+   "max_stack": 1,
+   "max_damage": 131,
+   "enchantability": 5,
+   "repair": {
+    "items": "#minecraft:stone_tool_materials",
+    "resolved": [
+     "blackstone",
+     "cobbled_deepslate",
+     "cobblestone"
+    ]
+   },
+   "attack": {
+    "damage": 1.0,
+    "speed": 2.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 0.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_stone_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/hoe",
+      "correct_for_drops": true,
+      "speed": 4.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "hoes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1204
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 7
+    }
+   ],
+   "model": {
+    "definition": "items/stone_hoe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/stone_hoe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/stone_hoe"
+   ]
+  },
+  {
+   "id": "golden_sword",
+   "protocol_id": 1040,
+   "group": "tool",
+   "material": "golden",
+   "kind": "sword",
+   "name": "Golden Sword",
+   "max_stack": 1,
+   "max_damage": 32,
+   "enchantability": 22,
+   "repair": {
+    "items": "#minecraft:gold_tool_materials",
+    "resolved": [
+     "gold_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 4.0,
+    "speed": 1.6,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 3.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.4000000953674316,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "minecraft:cobweb",
+      "correct_for_drops": true,
+      "speed": 15.0
+     },
+     {
+      "blocks": "#minecraft:sword_instantly_mines",
+      "speed": 3.4028235e+38
+     },
+     {
+      "blocks": "#minecraft:sword_efficient",
+      "speed": 1.5
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 2,
+    "can_destroy_blocks_in_creative": false
+   },
+   "weapon": {
+    "item_damage_per_attack": 1,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/fire_aspect",
+    "enchantable/melee_weapon",
+    "enchantable/sharp_weapon",
+    "enchantable/sweeping",
+    "enchantable/vanishing",
+    "enchantable/weapon",
+    "piglin_loved",
+    "swords"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1347
+    },
+    {
+     "tab": "combat",
+     "index": 4
+    }
+   ],
+   "model": {
+    "definition": "items/golden_sword.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/golden_sword",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/golden_sword"
+   ]
+  },
+  {
+   "id": "golden_shovel",
+   "protocol_id": 1041,
+   "group": "tool",
+   "material": "golden",
+   "kind": "shovel",
+   "name": "Golden Shovel",
+   "max_stack": 1,
+   "max_damage": 32,
+   "enchantability": 22,
+   "repair": {
+    "items": "#minecraft:gold_tool_materials",
+    "resolved": [
+     "gold_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 2.5,
+    "speed": 1.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 1.5,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_gold_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/shovel",
+      "correct_for_drops": true,
+      "speed": 12.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "douses_campfires",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "piglin_loved",
+    "shovels"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1213
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 16
+    }
+   ],
+   "model": {
+    "definition": "items/golden_shovel.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/golden_shovel",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/golden_shovel"
+   ]
+  },
+  {
+   "id": "golden_pickaxe",
+   "protocol_id": 1042,
+   "group": "tool",
+   "material": "golden",
+   "kind": "pickaxe",
+   "name": "Golden Pickaxe",
+   "max_stack": 1,
+   "max_damage": 32,
+   "enchantability": 22,
+   "repair": {
+    "items": "#minecraft:gold_tool_materials",
+    "resolved": [
+     "gold_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 2.0,
+    "speed": 1.2,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 1.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.799999952316284,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_gold_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/pickaxe",
+      "correct_for_drops": true,
+      "speed": 12.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "cluster_max_harvestables",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "pickaxes",
+    "piglin_loved"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1214
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 17
+    }
+   ],
+   "model": {
+    "definition": "items/golden_pickaxe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/golden_pickaxe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/golden_pickaxe"
+   ]
+  },
+  {
+   "id": "golden_axe",
+   "protocol_id": 1043,
+   "group": "tool",
+   "material": "golden",
+   "kind": "axe",
+   "name": "Golden Axe",
+   "max_stack": 1,
+   "max_damage": 32,
+   "enchantability": 22,
+   "repair": {
+    "items": "#minecraft:gold_tool_materials",
+    "resolved": [
+     "gold_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 7.0,
+    "speed": 1.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 6.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_gold_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/axe",
+      "correct_for_drops": true,
+      "speed": 12.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 5.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "axes",
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/sharp_weapon",
+    "enchantable/vanishing",
+    "enchantable/weapon",
+    "piglin_loved"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1215
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 18
+    },
+    {
+     "tab": "combat",
+     "index": 18
+    }
+   ],
+   "model": {
+    "definition": "items/golden_axe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/golden_axe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/golden_axe"
+   ]
+  },
+  {
+   "id": "golden_hoe",
+   "protocol_id": 1044,
+   "group": "tool",
+   "material": "golden",
+   "kind": "hoe",
+   "name": "Golden Hoe",
+   "max_stack": 1,
+   "max_damage": 32,
+   "enchantability": 22,
+   "repair": {
+    "items": "#minecraft:gold_tool_materials",
+    "resolved": [
+     "gold_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 1.0,
+    "speed": 1.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 0.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_gold_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/hoe",
+      "correct_for_drops": true,
+      "speed": 12.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "hoes",
+    "piglin_loved"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1216
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 19
+    }
+   ],
+   "model": {
+    "definition": "items/golden_hoe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/golden_hoe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/golden_hoe"
+   ]
+  },
+  {
+   "id": "iron_sword",
+   "protocol_id": 1045,
+   "group": "tool",
+   "material": "iron",
+   "kind": "sword",
+   "name": "Iron Sword",
+   "max_stack": 1,
+   "max_damage": 250,
+   "enchantability": 14,
+   "repair": {
+    "items": "#minecraft:iron_tool_materials",
+    "resolved": [
+     "iron_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 6.0,
+    "speed": 1.6,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 5.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.4000000953674316,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "minecraft:cobweb",
+      "correct_for_drops": true,
+      "speed": 15.0
+     },
+     {
+      "blocks": "#minecraft:sword_instantly_mines",
+      "speed": 3.4028235e+38
+     },
+     {
+      "blocks": "#minecraft:sword_efficient",
+      "speed": 1.5
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 2,
+    "can_destroy_blocks_in_creative": false
+   },
+   "weapon": {
+    "item_damage_per_attack": 1,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/fire_aspect",
+    "enchantable/melee_weapon",
+    "enchantable/sharp_weapon",
+    "enchantable/sweeping",
+    "enchantable/vanishing",
+    "enchantable/weapon",
+    "swords"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1346
+    },
+    {
+     "tab": "combat",
+     "index": 3
+    }
+   ],
+   "model": {
+    "definition": "items/iron_sword.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/iron_sword",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/iron_sword"
+   ]
+  },
+  {
+   "id": "iron_shovel",
+   "protocol_id": 1046,
+   "group": "tool",
+   "material": "iron",
+   "kind": "shovel",
+   "name": "Iron Shovel",
+   "max_stack": 1,
+   "max_damage": 250,
+   "enchantability": 14,
+   "repair": {
+    "items": "#minecraft:iron_tool_materials",
+    "resolved": [
+     "iron_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 4.5,
+    "speed": 1.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 3.5,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_iron_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/shovel",
+      "correct_for_drops": true,
+      "speed": 6.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "douses_campfires",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "shovels"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1209
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 12
+    }
+   ],
+   "model": {
+    "definition": "items/iron_shovel.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/iron_shovel",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/iron_shovel"
+   ]
+  },
+  {
+   "id": "iron_pickaxe",
+   "protocol_id": 1047,
+   "group": "tool",
+   "material": "iron",
+   "kind": "pickaxe",
+   "name": "Iron Pickaxe",
+   "max_stack": 1,
+   "max_damage": 250,
+   "enchantability": 14,
+   "repair": {
+    "items": "#minecraft:iron_tool_materials",
+    "resolved": [
+     "iron_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 4.0,
+    "speed": 1.2,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 3.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.799999952316284,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_iron_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/pickaxe",
+      "correct_for_drops": true,
+      "speed": 6.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "cluster_max_harvestables",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "pickaxes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1210
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 13
+    }
+   ],
+   "model": {
+    "definition": "items/iron_pickaxe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/iron_pickaxe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/iron_pickaxe"
+   ]
+  },
+  {
+   "id": "iron_axe",
+   "protocol_id": 1048,
+   "group": "tool",
+   "material": "iron",
+   "kind": "axe",
+   "name": "Iron Axe",
+   "max_stack": 1,
+   "max_damage": 250,
+   "enchantability": 14,
+   "repair": {
+    "items": "#minecraft:iron_tool_materials",
+    "resolved": [
+     "iron_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 9.0,
+    "speed": 0.9,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 8.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.0999999046325684,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_iron_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/axe",
+      "correct_for_drops": true,
+      "speed": 6.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 5.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "axes",
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/sharp_weapon",
+    "enchantable/vanishing",
+    "enchantable/weapon"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1211
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 14
+    },
+    {
+     "tab": "combat",
+     "index": 17
+    }
+   ],
+   "model": {
+    "definition": "items/iron_axe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/iron_axe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/iron_axe"
+   ]
+  },
+  {
+   "id": "iron_hoe",
+   "protocol_id": 1049,
+   "group": "tool",
+   "material": "iron",
+   "kind": "hoe",
+   "name": "Iron Hoe",
+   "max_stack": 1,
+   "max_damage": 250,
+   "enchantability": 14,
+   "repair": {
+    "items": "#minecraft:iron_tool_materials",
+    "resolved": [
+     "iron_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 1.0,
+    "speed": 3.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 0.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -1.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_iron_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/hoe",
+      "correct_for_drops": true,
+      "speed": 6.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "hoes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1212
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 15
+    }
+   ],
+   "model": {
+    "definition": "items/iron_hoe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/iron_hoe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/iron_hoe"
+   ]
+  },
+  {
+   "id": "diamond_sword",
+   "protocol_id": 1050,
+   "group": "tool",
+   "material": "diamond",
+   "kind": "sword",
+   "name": "Diamond Sword",
+   "max_stack": 1,
+   "max_damage": 1561,
+   "enchantability": 10,
+   "repair": {
+    "items": "#minecraft:diamond_tool_materials",
+    "resolved": [
+     "diamond"
+    ]
+   },
+   "attack": {
+    "damage": 7.0,
+    "speed": 1.6,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 6.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.4000000953674316,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "minecraft:cobweb",
+      "correct_for_drops": true,
+      "speed": 15.0
+     },
+     {
+      "blocks": "#minecraft:sword_instantly_mines",
+      "speed": 3.4028235e+38
+     },
+     {
+      "blocks": "#minecraft:sword_efficient",
+      "speed": 1.5
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 2,
+    "can_destroy_blocks_in_creative": false
+   },
+   "weapon": {
+    "item_damage_per_attack": 1,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/fire_aspect",
+    "enchantable/melee_weapon",
+    "enchantable/sharp_weapon",
+    "enchantable/sweeping",
+    "enchantable/vanishing",
+    "enchantable/weapon",
+    "swords"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1348
+    },
+    {
+     "tab": "combat",
+     "index": 5
+    }
+   ],
+   "model": {
+    "definition": "items/diamond_sword.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/diamond_sword",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/diamond_sword"
+   ]
+  },
+  {
+   "id": "diamond_shovel",
+   "protocol_id": 1051,
+   "group": "tool",
+   "material": "diamond",
+   "kind": "shovel",
+   "name": "Diamond Shovel",
+   "max_stack": 1,
+   "max_damage": 1561,
+   "enchantability": 10,
+   "repair": {
+    "items": "#minecraft:diamond_tool_materials",
+    "resolved": [
+     "diamond"
+    ]
+   },
+   "attack": {
+    "damage": 5.5,
+    "speed": 1.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 4.5,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_diamond_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/shovel",
+      "correct_for_drops": true,
+      "speed": 8.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "douses_campfires",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "shovels"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1217
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 20
+    }
+   ],
+   "model": {
+    "definition": "items/diamond_shovel.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/diamond_shovel",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/diamond_shovel"
+   ]
+  },
+  {
+   "id": "diamond_pickaxe",
+   "protocol_id": 1052,
+   "group": "tool",
+   "material": "diamond",
+   "kind": "pickaxe",
+   "name": "Diamond Pickaxe",
+   "max_stack": 1,
+   "max_damage": 1561,
+   "enchantability": 10,
+   "repair": {
+    "items": "#minecraft:diamond_tool_materials",
+    "resolved": [
+     "diamond"
+    ]
+   },
+   "attack": {
+    "damage": 5.0,
+    "speed": 1.2,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 4.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.799999952316284,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_diamond_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/pickaxe",
+      "correct_for_drops": true,
+      "speed": 8.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "cluster_max_harvestables",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "pickaxes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1218
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 21
+    }
+   ],
+   "model": {
+    "definition": "items/diamond_pickaxe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/diamond_pickaxe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/diamond_pickaxe"
+   ]
+  },
+  {
+   "id": "diamond_axe",
+   "protocol_id": 1053,
+   "group": "tool",
+   "material": "diamond",
+   "kind": "axe",
+   "name": "Diamond Axe",
+   "max_stack": 1,
+   "max_damage": 1561,
+   "enchantability": 10,
+   "repair": {
+    "items": "#minecraft:diamond_tool_materials",
+    "resolved": [
+     "diamond"
+    ]
+   },
+   "attack": {
+    "damage": 9.0,
+    "speed": 1.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 8.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_diamond_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/axe",
+      "correct_for_drops": true,
+      "speed": 8.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 5.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "axes",
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/sharp_weapon",
+    "enchantable/vanishing",
+    "enchantable/weapon"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1219
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 22
+    },
+    {
+     "tab": "combat",
+     "index": 19
+    }
+   ],
+   "model": {
+    "definition": "items/diamond_axe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/diamond_axe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/diamond_axe"
+   ]
+  },
+  {
+   "id": "diamond_hoe",
+   "protocol_id": 1054,
+   "group": "tool",
+   "material": "diamond",
+   "kind": "hoe",
+   "name": "Diamond Hoe",
+   "max_stack": 1,
+   "max_damage": 1561,
+   "enchantability": 10,
+   "repair": {
+    "items": "#minecraft:diamond_tool_materials",
+    "resolved": [
+     "diamond"
+    ]
+   },
+   "attack": {
+    "damage": 1.0,
+    "speed": 4.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 0.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": 0.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_diamond_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/hoe",
+      "correct_for_drops": true,
+      "speed": 8.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "hoes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1220
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 23
+    }
+   ],
+   "model": {
+    "definition": "items/diamond_hoe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/diamond_hoe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/diamond_hoe"
+   ]
+  },
+  {
+   "id": "netherite_sword",
+   "protocol_id": 1055,
+   "group": "tool",
+   "material": "netherite",
+   "kind": "sword",
+   "name": "Netherite Sword",
+   "max_stack": 1,
+   "max_damage": 2031,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:netherite_tool_materials",
+    "resolved": [
+     "netherite_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 8.0,
+    "speed": 1.6,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 7.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.4000000953674316,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "minecraft:cobweb",
+      "correct_for_drops": true,
+      "speed": 15.0
+     },
+     {
+      "blocks": "#minecraft:sword_instantly_mines",
+      "speed": 3.4028235e+38
+     },
+     {
+      "blocks": "#minecraft:sword_efficient",
+      "speed": 1.5
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 2,
+    "can_destroy_blocks_in_creative": false
+   },
+   "weapon": {
+    "item_damage_per_attack": 1,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "damage_resistant",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/fire_aspect",
+    "enchantable/melee_weapon",
+    "enchantable/sharp_weapon",
+    "enchantable/sweeping",
+    "enchantable/vanishing",
+    "enchantable/weapon",
+    "swords"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1349
+    },
+    {
+     "tab": "combat",
+     "index": 6
+    }
+   ],
+   "model": {
+    "definition": "items/netherite_sword.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/netherite_sword",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/netherite_sword"
+   ]
+  },
+  {
+   "id": "netherite_shovel",
+   "protocol_id": 1056,
+   "group": "tool",
+   "material": "netherite",
+   "kind": "shovel",
+   "name": "Netherite Shovel",
+   "max_stack": 1,
+   "max_damage": 2031,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:netherite_tool_materials",
+    "resolved": [
+     "netherite_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 6.5,
+    "speed": 1.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 5.5,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_netherite_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/shovel",
+      "correct_for_drops": true,
+      "speed": 9.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "damage_resistant",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "douses_campfires",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "shovels"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1221
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 24
+    }
+   ],
+   "model": {
+    "definition": "items/netherite_shovel.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/netherite_shovel",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/netherite_shovel"
+   ]
+  },
+  {
+   "id": "netherite_pickaxe",
+   "protocol_id": 1057,
+   "group": "tool",
+   "material": "netherite",
+   "kind": "pickaxe",
+   "name": "Netherite Pickaxe",
+   "max_stack": 1,
+   "max_damage": 2031,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:netherite_tool_materials",
+    "resolved": [
+     "netherite_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 6.0,
+    "speed": 1.2,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 5.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.799999952316284,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_netherite_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/pickaxe",
+      "correct_for_drops": true,
+      "speed": 9.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "damage_resistant",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "cluster_max_harvestables",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "pickaxes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1222
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 25
+    }
+   ],
+   "model": {
+    "definition": "items/netherite_pickaxe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/netherite_pickaxe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/netherite_pickaxe"
+   ]
+  },
+  {
+   "id": "netherite_axe",
+   "protocol_id": 1058,
+   "group": "tool",
+   "material": "netherite",
+   "kind": "axe",
+   "name": "Netherite Axe",
+   "max_stack": 1,
+   "max_damage": 2031,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:netherite_tool_materials",
+    "resolved": [
+     "netherite_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 10.0,
+    "speed": 1.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 9.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_netherite_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/axe",
+      "correct_for_drops": true,
+      "speed": 9.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 5.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "damage_resistant",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "axes",
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/sharp_weapon",
+    "enchantable/vanishing",
+    "enchantable/weapon"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1223
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 26
+    },
+    {
+     "tab": "combat",
+     "index": 20
+    }
+   ],
+   "model": {
+    "definition": "items/netherite_axe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/netherite_axe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/netherite_axe"
+   ]
+  },
+  {
+   "id": "netherite_hoe",
+   "protocol_id": 1059,
+   "group": "tool",
+   "material": "netherite",
+   "kind": "hoe",
+   "name": "Netherite Hoe",
+   "max_stack": 1,
+   "max_damage": 2031,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:netherite_tool_materials",
+    "resolved": [
+     "netherite_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 1.0,
+    "speed": 4.0,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 0.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": 0.0,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": {
+    "rules": [
+     {
+      "blocks": "#minecraft:incorrect_for_netherite_tool",
+      "correct_for_drops": false
+     },
+     {
+      "blocks": "#minecraft:mineable/hoe",
+      "correct_for_drops": true,
+      "speed": 9.0
+     }
+    ],
+    "default_mining_speed": 1.0,
+    "damage_per_block": 1,
+    "can_destroy_blocks_in_creative": true
+   },
+   "weapon": {
+    "item_damage_per_attack": 2,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "block_transformer",
+    "break_sound",
+    "damage",
+    "damage_resistant",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tool",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "breaks_decorated_pots",
+    "enchantable/durability",
+    "enchantable/mining",
+    "enchantable/mining_loot",
+    "enchantable/vanishing",
+    "hoes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1224
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 27
+    }
+   ],
+   "model": {
+    "definition": "items/netherite_hoe.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/netherite_hoe",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/netherite_hoe"
+   ]
+  },
+  {
+   "id": "stick",
+   "protocol_id": 1060,
+   "group": "stick",
+   "material": null,
+   "kind": null,
+   "name": "Stick",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "cooking_fuel",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1666
+    },
+    {
+     "tab": "ingredients",
+     "index": 19
+    }
+   ],
+   "model": {
+    "definition": "items/stick.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/stick",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/stick"
+   ]
+  },
+  {
+   "id": "bread",
+   "protocol_id": 1067,
+   "group": "food",
+   "material": null,
+   "kind": null,
+   "name": "Bread",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 5,
+    "saturation": 6.0
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects",
+    "villager_food"
+   ],
+   "item_tags": [
+    "villager_picks_up"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1485
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 31
+    }
+   ],
+   "model": {
+    "definition": "items/bread.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/bread",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/bread"
+   ]
+  },
+  {
+   "id": "bucket",
+   "protocol_id": 1128,
+   "group": "bucket",
+   "material": null,
+   "kind": null,
+   "name": "Bucket",
+   "max_stack": 16,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "furnace_fuel_bottom_takeable"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1225
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 28
+    }
+   ],
+   "model": {
+    "definition": "items/bucket.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/bucket",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/bucket"
+   ]
+  },
+  {
+   "id": "water_bucket",
+   "protocol_id": 1129,
+   "group": "bucket",
+   "material": null,
+   "kind": null,
+   "name": "Water Bucket",
+   "max_stack": 1,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "furnace_fuel_bottom_takeable"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1226
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 29
+    }
+   ],
+   "model": {
+    "definition": "items/water_bucket.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/water_bucket",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/water_bucket"
+   ]
+  },
+  {
+   "id": "lava_bucket",
+   "protocol_id": 1130,
+   "group": "bucket",
+   "material": null,
+   "kind": null,
+   "name": "Lava Bucket",
+   "max_stack": 1,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "cooking_fuel",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1234
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 37
+    }
+   ],
+   "model": {
+    "definition": "items/lava_bucket.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/lava_bucket",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/lava_bucket"
+   ]
+  },
+  {
+   "id": "cooked_beef",
+   "protocol_id": 1261,
+   "group": "food",
+   "material": null,
+   "kind": null,
+   "name": "Steak",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 8,
+    "saturation": 12.8
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1470
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 16
+    }
+   ],
+   "model": {
+    "definition": "items/cooked_beef.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/cooked_beef",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/cooked_beef"
+   ]
+  },
+  {
+   "id": "wooden_spear",
+   "protocol_id": 1447,
+   "group": "spear",
+   "material": "wooden",
+   "kind": "spear",
+   "name": "Wooden Spear",
+   "max_stack": 1,
+   "max_damage": 59,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:wooden_tool_materials",
+    "resolved": [
+     "acacia_planks",
+     "bamboo_planks",
+     "birch_planks",
+     "cherry_planks",
+     "crimson_planks",
+     "dark_oak_planks",
+     "jungle_planks",
+     "mangrove_planks",
+     "oak_planks",
+     "pale_oak_planks",
+     "poplar_planks",
+     "spruce_planks",
+     "warped_planks"
+    ]
+   },
+   "attack": {
+    "damage": 1.0,
+    "speed": 1.538462,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 0.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.4615384340286255,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": null,
+   "weapon": {
+    "item_damage_per_attack": 1,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attack_range",
+    "attribute_modifiers",
+    "break_sound",
+    "cooking_fuel",
+    "damage",
+    "damage_type",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "kinetic_weapon",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "minimum_attack_charge",
+    "piercing_weapon",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "enchantable/durability",
+    "enchantable/fire_aspect",
+    "enchantable/lunge",
+    "enchantable/melee_weapon",
+    "enchantable/sharp_weapon",
+    "enchantable/vanishing",
+    "enchantable/weapon",
+    "spears"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1350
+    },
+    {
+     "tab": "combat",
+     "index": 7
+    }
+   ],
+   "model": {
+    "definition": "items/wooden_spear.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/wooden_spear",
+      "when": {
+       "property": "display_context",
+       "is": [
+        "gui",
+        "ground",
+        "fixed",
+        "on_shelf"
+       ]
+      }
+     },
+     {
+      "model": "item/wooden_spear_in_hand",
+      "when": {
+       "property": "display_context",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.95,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/wooden_spear",
+    "item/wooden_spear_in_hand"
+   ]
+  },
+  {
+   "id": "stone_spear",
+   "protocol_id": 1448,
+   "group": "spear",
+   "material": "stone",
+   "kind": "spear",
+   "name": "Stone Spear",
+   "max_stack": 1,
+   "max_damage": 131,
+   "enchantability": 5,
+   "repair": {
+    "items": "#minecraft:stone_tool_materials",
+    "resolved": [
+     "blackstone",
+     "cobbled_deepslate",
+     "cobblestone"
+    ]
+   },
+   "attack": {
+    "damage": 2.0,
+    "speed": 1.333333,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 1.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.666666626930237,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": null,
+   "weapon": {
+    "item_damage_per_attack": 1,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attack_range",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "damage_type",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "kinetic_weapon",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "minimum_attack_charge",
+    "piercing_weapon",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "enchantable/durability",
+    "enchantable/fire_aspect",
+    "enchantable/lunge",
+    "enchantable/melee_weapon",
+    "enchantable/sharp_weapon",
+    "enchantable/vanishing",
+    "enchantable/weapon",
+    "spears"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1351
+    },
+    {
+     "tab": "combat",
+     "index": 8
+    }
+   ],
+   "model": {
+    "definition": "items/stone_spear.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/stone_spear",
+      "when": {
+       "property": "display_context",
+       "is": [
+        "gui",
+        "ground",
+        "fixed",
+        "on_shelf"
+       ]
+      }
+     },
+     {
+      "model": "item/stone_spear_in_hand",
+      "when": {
+       "property": "display_context",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.95,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/stone_spear",
+    "item/stone_spear_in_hand"
+   ]
+  },
+  {
+   "id": "copper_spear",
+   "protocol_id": 1449,
+   "group": "spear",
+   "material": "copper",
+   "kind": "spear",
+   "name": "Copper Spear",
+   "max_stack": 1,
+   "max_damage": 190,
+   "enchantability": 13,
+   "repair": {
+    "items": "#minecraft:copper_tool_materials",
+    "resolved": [
+     "copper_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 2.0,
+    "speed": 1.176471,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 1.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.8235294818878174,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": null,
+   "weapon": {
+    "item_damage_per_attack": 1,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attack_range",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "damage_type",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "kinetic_weapon",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "minimum_attack_charge",
+    "piercing_weapon",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "enchantable/durability",
+    "enchantable/fire_aspect",
+    "enchantable/lunge",
+    "enchantable/melee_weapon",
+    "enchantable/sharp_weapon",
+    "enchantable/vanishing",
+    "enchantable/weapon",
+    "spears"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1352
+    },
+    {
+     "tab": "combat",
+     "index": 9
+    }
+   ],
+   "model": {
+    "definition": "items/copper_spear.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/copper_spear",
+      "when": {
+       "property": "display_context",
+       "is": [
+        "gui",
+        "ground",
+        "fixed",
+        "on_shelf"
+       ]
+      }
+     },
+     {
+      "model": "item/copper_spear_in_hand",
+      "when": {
+       "property": "display_context",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.95,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/copper_spear",
+    "item/copper_spear_in_hand"
+   ]
+  },
+  {
+   "id": "iron_spear",
+   "protocol_id": 1450,
+   "group": "spear",
+   "material": "iron",
+   "kind": "spear",
+   "name": "Iron Spear",
+   "max_stack": 1,
+   "max_damage": 250,
+   "enchantability": 14,
+   "repair": {
+    "items": "#minecraft:iron_tool_materials",
+    "resolved": [
+     "iron_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 3.0,
+    "speed": 1.052632,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 2.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.9473683834075928,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": null,
+   "weapon": {
+    "item_damage_per_attack": 1,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attack_range",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "damage_type",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "kinetic_weapon",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "minimum_attack_charge",
+    "piercing_weapon",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "enchantable/durability",
+    "enchantable/fire_aspect",
+    "enchantable/lunge",
+    "enchantable/melee_weapon",
+    "enchantable/sharp_weapon",
+    "enchantable/vanishing",
+    "enchantable/weapon",
+    "spears"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1353
+    },
+    {
+     "tab": "combat",
+     "index": 10
+    }
+   ],
+   "model": {
+    "definition": "items/iron_spear.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/iron_spear",
+      "when": {
+       "property": "display_context",
+       "is": [
+        "gui",
+        "ground",
+        "fixed",
+        "on_shelf"
+       ]
+      }
+     },
+     {
+      "model": "item/iron_spear_in_hand",
+      "when": {
+       "property": "display_context",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.95,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/iron_spear",
+    "item/iron_spear_in_hand"
+   ]
+  },
+  {
+   "id": "golden_spear",
+   "protocol_id": 1451,
+   "group": "spear",
+   "material": "golden",
+   "kind": "spear",
+   "name": "Golden Spear",
+   "max_stack": 1,
+   "max_damage": 32,
+   "enchantability": 22,
+   "repair": {
+    "items": "#minecraft:gold_tool_materials",
+    "resolved": [
+     "gold_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 1.0,
+    "speed": 1.052632,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 0.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -2.9473683834075928,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": null,
+   "weapon": {
+    "item_damage_per_attack": 1,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attack_range",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "damage_type",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "kinetic_weapon",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "minimum_attack_charge",
+    "piercing_weapon",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "enchantable/durability",
+    "enchantable/fire_aspect",
+    "enchantable/lunge",
+    "enchantable/melee_weapon",
+    "enchantable/sharp_weapon",
+    "enchantable/vanishing",
+    "enchantable/weapon",
+    "piglin_loved",
+    "piglin_preferred_weapons",
+    "spears"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1354
+    },
+    {
+     "tab": "combat",
+     "index": 11
+    }
+   ],
+   "model": {
+    "definition": "items/golden_spear.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/golden_spear",
+      "when": {
+       "property": "display_context",
+       "is": [
+        "gui",
+        "ground",
+        "fixed",
+        "on_shelf"
+       ]
+      }
+     },
+     {
+      "model": "item/golden_spear_in_hand",
+      "when": {
+       "property": "display_context",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.95,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/golden_spear",
+    "item/golden_spear_in_hand"
+   ]
+  },
+  {
+   "id": "diamond_spear",
+   "protocol_id": 1452,
+   "group": "spear",
+   "material": "diamond",
+   "kind": "spear",
+   "name": "Diamond Spear",
+   "max_stack": 1,
+   "max_damage": 1561,
+   "enchantability": 10,
+   "repair": {
+    "items": "#minecraft:diamond_tool_materials",
+    "resolved": [
+     "diamond"
+    ]
+   },
+   "attack": {
+    "damage": 4.0,
+    "speed": 0.952381,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 3.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.0476189851760864,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": null,
+   "weapon": {
+    "item_damage_per_attack": 1,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attack_range",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "damage_type",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "kinetic_weapon",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "minimum_attack_charge",
+    "piercing_weapon",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "enchantable/durability",
+    "enchantable/fire_aspect",
+    "enchantable/lunge",
+    "enchantable/melee_weapon",
+    "enchantable/sharp_weapon",
+    "enchantable/vanishing",
+    "enchantable/weapon",
+    "spears"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1355
+    },
+    {
+     "tab": "combat",
+     "index": 12
+    }
+   ],
+   "model": {
+    "definition": "items/diamond_spear.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/diamond_spear",
+      "when": {
+       "property": "display_context",
+       "is": [
+        "gui",
+        "ground",
+        "fixed",
+        "on_shelf"
+       ]
+      }
+     },
+     {
+      "model": "item/diamond_spear_in_hand",
+      "when": {
+       "property": "display_context",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.95,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/diamond_spear",
+    "item/diamond_spear_in_hand"
+   ]
+  },
+  {
+   "id": "netherite_spear",
+   "protocol_id": 1453,
+   "group": "spear",
+   "material": "netherite",
+   "kind": "spear",
+   "name": "Netherite Spear",
+   "max_stack": 1,
+   "max_damage": 2031,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:netherite_tool_materials",
+    "resolved": [
+     "netherite_ingot"
+    ]
+   },
+   "attack": {
+    "damage": 5.0,
+    "speed": 0.869565,
+    "modifiers": [
+     {
+      "type": "minecraft:attack_damage",
+      "amount": 4.0,
+      "id": "minecraft:base_attack_damage",
+      "operation": "add_value",
+      "slot": "mainhand"
+     },
+     {
+      "type": "minecraft:attack_speed",
+      "amount": -3.13043475151062,
+      "id": "minecraft:base_attack_speed",
+      "operation": "add_value",
+      "slot": "mainhand"
+     }
+    ]
+   },
+   "tool": null,
+   "weapon": {
+    "item_damage_per_attack": 1,
+    "disable_blocking_for_seconds": 0.0
+   },
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attack_range",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "damage_resistant",
+    "damage_type",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "kinetic_weapon",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "minimum_attack_charge",
+    "piercing_weapon",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects",
+    "weapon"
+   ],
+   "item_tags": [
+    "enchantable/durability",
+    "enchantable/fire_aspect",
+    "enchantable/lunge",
+    "enchantable/melee_weapon",
+    "enchantable/sharp_weapon",
+    "enchantable/vanishing",
+    "enchantable/weapon",
+    "spears"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1356
+    },
+    {
+     "tab": "combat",
+     "index": 13
+    }
+   ],
+   "model": {
+    "definition": "items/netherite_spear.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/netherite_spear",
+      "when": {
+       "property": "display_context",
+       "is": [
+        "gui",
+        "ground",
+        "fixed",
+        "on_shelf"
+       ]
+      }
+     },
+     {
+      "model": "item/netherite_spear_in_hand",
+      "when": {
+       "property": "display_context",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.95,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/netherite_spear",
+    "item/netherite_spear_in_hand"
+   ]
+  }
+ ]
+}
