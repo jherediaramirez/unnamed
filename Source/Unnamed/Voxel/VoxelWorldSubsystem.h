@@ -86,6 +86,8 @@ private:
 
     TUniquePtr<FVoxelColumnPipeline> Pipeline;
     TWeakObjectPtr<AVoxelWorld> Owner;
+    // voxel.Decoration.Preview as the pipeline was started with it; a change rebuilds the world.
+    bool bDecorationPreview = false;
     UPROPERTY(Transient)
     TMap<FIntPoint, TObjectPtr<UVoxelChunkComponent>> Chunks;
     UPROPERTY(Transient)

@@ -9,6 +9,7 @@
 
 class FVoxelBlockTable;
 class FVoxelColumn;
+class FVoxelDecorationPreview;
 class IVoxelTerrain;
 
 // A column's finished mesh on its way to the screen: the stream set and Lumen cards UVoxelChunkComponent::SetMesh
@@ -120,6 +121,8 @@ public:
         int32 MeshCacheRadius = 2;
         // Debug: columns at the edge of the view mesh against air, showing the cut through the world (captures).
         bool bEdgeWalls = false;
+        // voxel.Decoration.Preview: columns are built decorated, through the oracle (captures only, until S3).
+        TSharedPtr<const FVoxelDecorationPreview> Preview;
     };
 
     // A finished mesh taken for the screen.

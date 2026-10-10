@@ -1,6 +1,7 @@
 #include "VoxelBench.h"
 #include "Biome/VoxelBiomeStorage.h"
 #include "Biome/VoxelBiomeTints.h"
+#include "Decoration/VoxelDecorator.h"
 #include "Meshing/VoxelMesher.h"
 #include "Async/Fundamental/Scheduler.h"
 #include "Async/ParallelFor.h"
@@ -270,10 +271,51 @@ namespace
     }
 } // namespace
 
-VoxelBench::FLoadOrderHashes VoxelBench::HashLoadOrders(const IVoxelTerrain& Terrain, int32 Radius)
+uint64 VoxelBench::HashColumnBlocks(const FVoxelColumn& Column)
+{
+    TArray<uint16> Dense;
+    Dense.SetNumUninitialized(FVoxelColumn::DenseVolume);
+    for (int32 Section = 0; Section < VoxelConstants::SectionCount; ++Section)
+        Column.GetSection(Section).Expand(
+            TArrayView<uint16>(Dense.GetData() + Section * FVoxelSection::Volume, FVoxelSection::Volume));
+    return CityHash64(reinterpret_cast<const char*>(Dense.GetData()), Dense.Num() * sizeof(uint16));
+}
+
+VoxelBench::FLoadOrderHashes VoxelBench::HashLoadOrders(
+    const IVoxelTerrain& Terrain, int32 Radius, const FVoxelDecorator* Decorator)
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelBench_HashLoadOrders);
     const int32 Side = 2 * Radius + 1, Columns = Side * Side;
+    const auto Combine = [Columns](const TArray<uint64>& Hashes)
+    { return CityHash64(reinterpret_cast<const char*>(Hashes.GetData()), Columns * sizeof(uint64)); };
+    if (Decorator)
+    {
+        TArray<uint64> Hashes[2], Biomes[2];
+        for (int32 Order = 0; Order < 2; ++Order)
+        {
+            Terrain.ResetCaches();
+            FVoxelDecoratedArea Area;
+            FVoxelDecoratedArea::Build(*Decorator, Terrain, FIntPoint::ZeroValue, Radius, Order == 1, Order == 1, Area);
+            for (const TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>& Column : Area.Columns)
+            {
+                Hashes[Order].Add(HashColumnBlocks(*Column));
+                const TConstArrayView<uint8> Quarts = Column->GetBiomes().GetQuarts();
+                Biomes[Order].Add(CityHash64(reinterpret_cast<const char*>(Quarts.GetData()), Quarts.Num()));
+            }
+        }
+        FLoadOrderHashes Result;
+        Result.Columns = Columns;
+        for (int32 Index = 0; Index < Columns; ++Index)
+        {
+            Result.Mismatches += Hashes[0][Index] != Hashes[1][Index];
+            Result.BiomeMismatches += Biomes[0][Index] != Biomes[1][Index];
+        }
+        Result.Forward = Combine(Hashes[0]);
+        Result.Backward = Combine(Hashes[1]);
+        Result.BiomeForward = Combine(Biomes[0]);
+        Result.BiomeBackward = Combine(Biomes[1]);
+        return Result;
+    }
     // A column's block hash and its biome hash.
     const auto HashColumn = [&Terrain, Side, Radius](int32 Index, TArray<uint16>& Dense, uint64& OutBiomes)
     {
@@ -309,8 +351,6 @@ VoxelBench::FLoadOrderHashes VoxelBench::HashLoadOrders(const IVoxelTerrain& Ter
         Result.Mismatches += Forward[Index] != Backward[Index];
         Result.BiomeMismatches += BiomeForward[Index] != BiomeBackward[Index];
     }
-    const auto Combine = [Columns](const TArray<uint64>& Hashes)
-    { return CityHash64(reinterpret_cast<const char*>(Hashes.GetData()), Columns * sizeof(uint64)); };
     Result.Forward = Combine(Forward);
     Result.Backward = Combine(Backward);
     Result.BiomeForward = Combine(BiomeForward);
@@ -394,7 +434,8 @@ namespace
 }
 
 FString VoxelBench::RunColumns(const FVoxelBlockTable& Table, const IVoxelTerrain& Terrain,
-    const FVoxelDensityTerrain* Density, const FVoxelMeshOptions& Options, int32 Radius)
+    const FVoxelDensityTerrain* Density, const FVoxelMeshOptions& Options, int32 Radius,
+    const FVoxelDecorator* Decorator)
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelBench_RunColumns);
     FString Report;
@@ -402,7 +443,7 @@ FString VoxelBench::RunColumns(const FVoxelBlockTable& Table, const IVoxelTerrai
     for (const bool bParallel : {false, true})
     {
         Terrain.ResetCaches();
-        FVoxelArea::Build(Table, Terrain, FIntPoint::ZeroValue, Radius, Options, bParallel, Area);
+        FVoxelArea::Build(Table, Terrain, FIntPoint::ZeroValue, Radius, Options, bParallel, Area, Decorator);
         Report += Area.Describe() + TEXT("\n");
     }
 
@@ -471,7 +512,8 @@ FString VoxelBench::RunColumns(const FVoxelBlockTable& Table, const IVoxelTerrai
         Report += DensityBenchStage(TEXT("    surface"), Surface) + TEXT("\n");
     }
 
-    const FLoadOrderHashes Hashes = HashLoadOrders(Terrain, Radius);
+    const FLoadOrderHashes Hashes = HashLoadOrders(Terrain, Radius, Decorator);
+    if (Decorator) Report += TEXT("Decorated (voxel.Decoration 1). ");
     Report += FString::Printf(TEXT("Block hashes, %d columns: row by row on one thread 0x%016llx, backwards across "
                                    "workers 0x%016llx, %d columns differ"),
         Hashes.Columns, Hashes.Forward, Hashes.Backward, Hashes.Mismatches);
@@ -634,5 +676,84 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
     const double Seconds = FPlatformTime::Seconds() - Start;
     Report += FString::Printf(TEXT("%d columns across %d workers: %.1f ms wall, %.3f ms per column"), Columns, Workers,
         Seconds * 1000, Seconds * 1000 / Columns);
+    return Report;
+}
+
+FString VoxelBench::RunDecorate(
+    const FVoxelDecorator& Decorator, const FVoxelDecorator& NoEarlyOut, const IVoxelTerrain& Terrain, int32 Radius)
+{
+    TRACE_CPUPROFILER_EVENT_SCOPE(VoxelBench_RunDecorate);
+    FString Report = Decorator.Describe() + TEXT("\n");
+    uint64 Hashes[2] = {};
+    // The exhaustive pass first: it warms caches and allocators, so the gate figures come from the second.
+    for (int32 Pass = 1; Pass >= 0; --Pass)
+    {
+        Terrain.ResetCaches();
+        FVoxelDecoratedArea Area;
+        FVoxelDecoratedArea::Build(
+            Pass ? NoEarlyOut : Decorator, Terrain, FIntPoint::ZeroValue, Radius, false, false, Area);
+        TArray<uint64> Columns;
+        for (const TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>& Column : Area.Columns)
+            Columns.Add(HashColumnBlocks(*Column));
+        Hashes[Pass] = CityHash64(reinterpret_cast<const char*>(Columns.GetData()), Columns.Num() * sizeof(uint64));
+        const auto Mean = [](TConstArrayView<double> Values)
+        {
+            double Sum = 0;
+            for (const double Value : Values)
+                Sum += Value;
+            return Values.Num() ? Sum / Values.Num() : 0.;
+        };
+        const double Whole = Mean(Area.GenerateMs) + Mean(Area.DecorateMs) + Mean(Area.FinalizeMs);
+        Report += FString::Printf(TEXT("%s: %d final columns, one thread (early-out %s):\n"),
+            Pass ? TEXT("Early-out off") : TEXT("Decoration stages"), Area.Columns.Num(),
+            Pass ? TEXT("off") : TEXT("on"));
+        Report += DensityBenchStage(TEXT("Generate column"), Area.GenerateMs) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("Decorate column"), Area.DecorateMs) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("Finalize column"), Area.FinalizeMs) + TEXT("\n");
+        Report += FString::Printf(TEXT("  Whole column (means): %.3f ms\n"), Whole);
+        if (Pass) continue;
+
+        // What the stages did, per column.
+        double Features = 0, Tries = 0, Skipped = 0, Placed = 0, Writes = 0, LogBytes = 0, Working = 0;
+        int32 MaxWrites = 0, Dropped = 0;
+        SIZE_T MaxLog = 0, MaxWorking = 0;
+        for (const FVoxelDecorateStats& Stats : Area.Decorates)
+        {
+            Features += Stats.Features;
+            Tries += Stats.Tries;
+            Skipped += Stats.Skipped;
+            Placed += Stats.Placed;
+            Writes += Stats.Writes;
+            LogBytes += Stats.LogBytes;
+            Working += Stats.WorkingBytes;
+            MaxWrites = FMath::Max(MaxWrites, Stats.Writes);
+            MaxWorking = FMath::Max(MaxWorking, Stats.WorkingBytes);
+            MaxLog = FMath::Max(MaxLog, Stats.LogBytes);
+            Dropped += Stats.Dropped;
+        }
+        const double Count = FMath::Max(1, Area.Decorates.Num());
+        double Replayed = 0, Applied = 0, Sections = 0, HeightCells = 0;
+        for (const FVoxelFinalizeStats& Stats : Area.Finalizes)
+        {
+            Replayed += Stats.Writes;
+            Applied += Stats.Applied;
+            Sections += Stats.Sections;
+            HeightCells += Stats.HeightCells;
+        }
+        const double Finals = FMath::Max(1, Area.Finalizes.Num());
+        Report += FString::Printf(
+            TEXT("  Per Decorate: %.1f placed features, %.1f ore tries (%.1f skipped by the early-out), "
+                 "%.0f blocks placed, %.0f writes (max %d), log %.1f KB (max %.1f KB), %d cells "
+                 "dropped outside the 3x3\n"),
+            Features / Count, Tries / Count, Skipped / Count, Placed / Count, Writes / Count, MaxWrites,
+            LogBytes / Count / 1024., double(MaxLog) / 1024., Dropped);
+        Report += FString::Printf(TEXT("  Working copy (the written cells): %.0f KB per Decorate (max %.0f KB)\n"),
+            Working / Count / 1024., double(MaxWorking) / 1024.);
+        Report += FString::Printf(TEXT("  Per Finalize: %.0f writes replayed, %.0f changed a block, %.1f sections "
+                                       "repacked, %.1f heightmap cells updated\n"),
+            Replayed / Finals, Applied / Finals, Sections / Finals, HeightCells / Finals);
+    }
+    Report += FString::Printf(TEXT("Final column hashes: early-out on 0x%016llx, off 0x%016llx (%s)"), Hashes[0],
+        Hashes[1], Hashes[0] == Hashes[1] ? TEXT("equal: the early-out is exact") : TEXT("DIFFER"));
     return Report;
 }

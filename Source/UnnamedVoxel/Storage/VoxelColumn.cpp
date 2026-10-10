@@ -67,6 +67,16 @@ void FVoxelColumn::SetState(int32 X, int32 Y, int32 Z, uint16 State, const FVoxe
     if (Z < VoxelConstants::MinZ || Z > VoxelConstants::MaxZ) return;
     const int32 Local = Z - VoxelConstants::MinZ;
     Sections[Local >> 4].Set(FVoxelSection::GetIndex(X, Y, Local & 15), State);
+    UpdateHeights(X, Y, Table);
+}
+
+void FVoxelColumn::SetSectionStates(int32 Section, TConstArrayView<uint16> States)
+{
+    Sections[Section] = FVoxelSection::FromStates(States);
+}
+
+void FVoxelColumn::UpdateHeights(int32 X, int32 Y, const FVoxelBlockTable& Table)
+{
     uint16 Found[int32(EVoxelHeightmap::Count)];
     FindColumnHeights(
         Table, VoxelConstants::Height - 1,

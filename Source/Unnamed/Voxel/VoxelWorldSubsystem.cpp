@@ -1,7 +1,12 @@
 #include "Voxel/VoxelWorldSubsystem.h"
 #include "Async/Fundamental/Scheduler.h"
+#include "Biome/VoxelBiomeSource.h"
 #include "Camera/PlayerCameraManager.h"
+#include "Decoration/VoxelDecorationPreview.h"
+#include "Decoration/VoxelDecorator.h"
+#include "Decoration/VoxelFeatureGraph.h"
 #include "Engine/World.h"
+#include "Terrain/VoxelTerrain.h"
 #include "Foundation/FoundationProfile.h"
 #include "GameFramework/PlayerController.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
@@ -72,6 +77,24 @@ void UVoxelWorldSubsystem::Start(AVoxelWorld& InOwner, TSharedRef<const FVoxelBl
     Settings.MeshOptions.TintBlend = VoxelConsole::GetTintBlend();
     Settings.MaxTasksInFlight = VoxelConsole::GetMaxTasksInFlight();
     Settings.bEdgeWalls = VoxelConsole::CVarEdgeWalls.GetValueOnGameThread();
+    bDecorationPreview = VoxelConsole::CVarDecorationPreview.GetValueOnGameThread();
+    if (bDecorationPreview)
+    {
+        // Captures only, until S3: columns built decorated through the oracle.
+        const TSharedPtr<const FVoxelFeatureGraph> Features = Terrain->GetFeatures();
+        const TSharedRef<FVoxelDecorator> Decorator = MakeShared<FVoxelDecorator>();
+        FString Error;
+        if (Features && Terrain->GetBiomeSource() &&
+            Decorator->Initialize(
+                *Features, *Table, Terrain->GetBiomeSource()->GetTable(), Terrain->GetSeed(), {}, &Error))
+        {
+            Settings.Preview = MakeShared<FVoxelDecorationPreview>(Terrain, Decorator);
+            UE_LOG(LogUnnamedVoxel, Display, TEXT("voxel.Decoration.Preview: %s"), *Decorator->Describe());
+        }
+        else
+            UE_LOG(LogUnnamedVoxel, Warning, TEXT("voxel.Decoration.Preview: no decoration for this terrain (%s)"),
+                Error.IsEmpty() ? TEXT("no decoration data or biomes") : *Error);
+    }
     Pipeline = MakeUnique<FVoxelColumnPipeline>(MoveTemp(Table), MoveTemp(Terrain), Settings);
     LastFocus = InitialFocus;
     StartSeconds = LogSeconds = FPlatformTime::Seconds();
@@ -137,6 +160,12 @@ void UVoxelWorldSubsystem::Tick(float DeltaTime)
     if (!FirstTickSeconds) FirstTickSeconds = Start;
     if (FirstViewReport.IsEmpty()) ++FirstViewFrames;
 
+    // A preview switched on or off (captures pass it with -ExecCmds, after the world started) rebuilds the world.
+    if (VoxelConsole::CVarDecorationPreview.GetValueOnGameThread() != bDecorationPreview && Owner.IsValid())
+    {
+        Owner->Regenerate(Owner->GetSeed());
+        return;
+    }
     FVoxelStreamingFrame Frame;
     Pipeline->SetMaxTasksInFlight(VoxelConsole::GetMaxTasksInFlight());
     Pipeline->SetEdgeWalls(VoxelConsole::CVarEdgeWalls.GetValueOnGameThread());
