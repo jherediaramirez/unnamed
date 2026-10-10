@@ -137,6 +137,17 @@ void AVoxelWorld::BuildLayout()
     bSpawnExact = FParse::Param(FCommandLine::Get(), TEXT("VoxelSpawnExact"));
     bShotEdits = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotEdits"));
     bShotCaves = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotCaves"));
+    bShotVeins = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotVeins"));
+    FString VeinsAt;
+    if (FParse::Value(FCommandLine::Get(), TEXT("VoxelShotVeinsAt="), VeinsAt, false))
+    {
+        TArray<FString> Parts;
+        VeinsAt.ParseIntoArray(Parts, TEXT(","));
+        for (int32 Index = 0; Index + 2 < Parts.Num(); Index += 3)
+            ShotVeinTargets.Add(
+                {FCString::Atoi(*Parts[Index]), FCString::Atoi(*Parts[Index + 1]), FCString::Atoi(*Parts[Index + 2])});
+        bShotVeins = true;
+    }
     FString FlightFolder;
     if (FParse::Value(FCommandLine::Get(), TEXT("VoxelFlight="), FlightFolder))
     {
@@ -660,6 +671,125 @@ void AVoxelWorld::ApplyShotEdits()
         Columns.Num(), ShotEditCorner.X, ShotEditCorner.Y);
 }
 
+void AVoxelWorld::FindVeinShots()
+{
+    bShotVeinsSearched = true;
+    const UVoxelWorldSubsystem* Streaming = GetStreaming();
+    const FVoxelColumnPipeline* Pipeline = Streaming ? Streaming->GetPipeline() : nullptr;
+    if (!Pipeline || !Table) return;
+    constexpr int32 Size = VoxelConstants::ColumnSize, Wide = 32, High = 18, Zs = VoxelConstants::Height;
+    const FVoxelStreamingRings& Rings = Pipeline->GetRings();
+    // The drawn area reaches one column past the view radius; its four cut faces are its outermost blocks.
+    const int32 Radius = Rings.ViewRadius + 1, Along = (2 * Radius + 1) * Size;
+    const FIntPoint Low = (Rings.Center - FIntPoint(Radius)) * Size;
+    const FIntPoint High2 = (Rings.Center + FIntPoint(Radius)) * Size + FIntPoint(Size - 1);
+    // Face 0 west, 1 east, 2 north, 3 south: the plane's coordinate, and where the camera looks from.
+    const auto Cell = [&](int32 Face, int32 Index) -> FIntPoint
+    {
+        return Face == 0 ? FIntPoint(Low.X, Low.Y + Index)
+            : Face == 1  ? FIntPoint(High2.X, Low.Y + Index)
+            : Face == 2  ? FIntPoint(Low.X + Index, Low.Y)
+                         : FIntPoint(Low.X + Index, High2.Y);
+    };
+    TArray<uint16> Faces;
+    Faces.Init(0, 4 * Along * Zs);
+    for (int32 Face = 0; Face < 4; ++Face)
+        for (int32 Index = 0; Index < Along; ++Index)
+        {
+            const FIntPoint At = Cell(Face, Index);
+            const FIntPoint ColumnAt(
+                FMath::FloorToInt32(double(At.X) / Size), FMath::FloorToInt32(double(At.Y) / Size));
+            if (const FVoxelColumn* Column = Pipeline->FindColumn(ColumnAt))
+                for (int32 Z = 0; Z < Zs; ++Z)
+                    Faces[(Face * Along + Index) * Zs + Z] =
+                        Column->GetState(At.X - ColumnAt.X * Size, At.Y - ColumnAt.Y * Size, Z + VoxelConstants::MinZ);
+        }
+    const auto StateAt = [&](int32 Face, int32 Index, int32 Z)
+    {
+        return Index < 0 || Index >= Along || Z < VoxelConstants::MinZ || Z > VoxelConstants::MaxZ
+            ? uint16(0)
+            : Faces[(Face * Along + Index) * Zs + Z - VoxelConstants::MinZ];
+    };
+    struct FVein
+    {
+        const TCHAR* Name;
+        const TCHAR* Names[3];
+        int32 Bottom, Top;
+    };
+    const FVein Veins[2] = {
+        {TEXT("vein-copper"), {TEXT("copper_ore"), TEXT("raw_copper_block"), TEXT("granite")}, 0, 49},
+        {TEXT("vein-iron"), {TEXT("deepslate_iron_ore"), TEXT("raw_iron_block"), TEXT("tuff")}, -60, -9}};
+    const TCHAR* const Counted[] = {TEXT("copper_ore"), TEXT("raw_copper_block"), TEXT("granite"),
+        TEXT("deepslate_iron_ore"), TEXT("raw_iron_block"), TEXT("tuff"), TEXT("stone"), TEXT("deepslate")};
+    const TCHAR* const FaceNames[] = {TEXT("west"), TEXT("east"), TEXT("north"), TEXT("south")};
+    auto Blocks = [this](double X, double Y, double Z) { return OriginCm + FVector(X, Y, Z) * CellCm; };
+    FString Aim;
+    for (int32 Kind = 0; Kind < 2; ++Kind)
+    {
+        const FVein& Vein = Veins[Kind];
+        const uint16 Ore = Table->FindState(Vein.Names[0]), Raw = Table->FindState(Vein.Names[1]),
+                     Filler = Table->FindState(Vein.Names[2]);
+        // A vein mixes its ore into its filler, which an ore blob in stone or a filler blob does not: ore beside
+        // filler scores, raw ore (only veins make it) scores most.
+        const auto Score = [&](int32 Face, int32 Index, int32 Z)
+        {
+            const uint16 State = StateAt(Face, Index, Z);
+            if (State == Raw) return 10;
+            if (State != Ore && State != Filler) return 0;
+            const uint16 Other = State == Ore ? Filler : Ore;
+            const bool bMixed = StateAt(Face, Index - 1, Z) == Other || StateAt(Face, Index + 1, Z) == Other ||
+                StateAt(Face, Index, Z - 1) == Other || StateAt(Face, Index, Z + 1) == Other;
+            return bMixed ? (State == Ore ? 3 : 1) : 0;
+        };
+        int32 Face = 0, Best = -1;
+        FIntPoint Centre(Along / 2, (Vein.Bottom + Vein.Top) / 2);
+        if (Kind < ShotVeinTargets.Num())
+        {
+            Face = FMath::Clamp(ShotVeinTargets[Kind].Face, 0, 3);
+            Centre = {FMath::Clamp(ShotVeinTargets[Kind].Along, Wide / 2, Along - Wide / 2), ShotVeinTargets[Kind].Z};
+        }
+        else
+            for (int32 Candidate = 0; Candidate < 4; ++Candidate)
+                for (int32 A0 = 0; A0 + Wide <= Along; A0 += 2)
+                    for (int32 Z0 = Vein.Bottom - 4; Z0 + High <= Vein.Top + 5; Z0 += 2)
+                    {
+                        int32 Sum = 0;
+                        for (int32 A = A0; A < A0 + Wide; ++A)
+                            for (int32 Z = Z0; Z < Z0 + High; ++Z)
+                                Sum += Score(Candidate, A, Z);
+                        if (Sum <= Best) continue;
+                        Best = Sum;
+                        Face = Candidate;
+                        Centre = {A0 + Wide / 2, Z0 + High / 2};
+                    }
+        FString Counts;
+        for (const TCHAR* Name : Counted)
+        {
+            const uint16 State = Table->FindState(Name);
+            int32 Count = 0;
+            for (int32 A = Centre.X - Wide / 2; A < Centre.X + Wide / 2; ++A)
+                for (int32 Z = Centre.Y - High / 2; Z < Centre.Y + High / 2; ++Z)
+                    Count += StateAt(Face, A, Z) == State;
+            Counts += FString::Printf(TEXT("%s%s %d"), Counts.IsEmpty() ? TEXT("") : TEXT(", "), Name, Count);
+        }
+        const FIntPoint Target = Cell(Face, Centre.X);
+        ShotVeinReport += FString::Printf(TEXT("  %s: %s cut, window %d x %d centred on block (%d, %d, %d) (%s): %s\n"),
+            Vein.Name, FaceNames[Face], Wide, High, Target.X, Target.Y, Centre.Y,
+            *(Kind < ShotVeinTargets.Num() ? FString(TEXT("fixed")) : FString::Printf(TEXT("found, score %d"), Best)),
+            *Counts);
+        Aim += FString::Printf(TEXT("%s%d,%d,%d"), Aim.IsEmpty() ? TEXT("") : TEXT(","), Face, Centre.X, Centre.Y);
+        // From outside the face, 24 blocks away, looking straight at it.
+        const FIntPoint Out = Face == 0 ? FIntPoint(-24, 0)
+            : Face == 1                 ? FIntPoint(24, 0)
+            : Face == 2                 ? FIntPoint(0, -24)
+                                        : FIntPoint(0, 24);
+        ShotCaveViews.Emplace(Vein.Name, Blocks(Target.X + .5 + Out.X, Target.Y + .5 + Out.Y, Centre.Y + .5),
+            Blocks(Target.X + .5, Target.Y + .5, Centre.Y + .5));
+    }
+    ShotVeinReport += FString::Printf(TEXT("  Vein shots: -VoxelShotVeinsAt=%s\n"), *Aim);
+    UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *ShotVeinReport);
+}
+
 void AVoxelWorld::FindCaveShots()
 {
     bShotCavesSearched = true;
@@ -889,6 +1019,7 @@ void AVoxelWorld::UpdateShots()
             Blocks(ShotEditCorner.X + 1, ShotEditCorner.Y + 2, ShotEditTop - 5), false, true});
 
     if (bShotCaves && !bShotCavesSearched) FindCaveShots();
+    if (bShotVeins && !bShotVeinsSearched) FindVeinShots();
     for (const TTuple<FString, FVector, FVector>& CaveView : ShotCaveViews)
         Shots.Add({*CaveView.Get<0>(), CaveView.Get<1>(), CaveView.Get<2>(), false, true});
 
@@ -960,7 +1091,7 @@ void AVoxelWorld::UpdateShots()
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Gpu);
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *World);
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Player);
-    const FString Edits = ShotEditReport.IsEmpty() ? FString() : ShotEditReport + TEXT("\n");
+    const FString Edits = (ShotEditReport.IsEmpty() ? FString() : ShotEditReport + TEXT("\n")) + ShotVeinReport;
     FFileHelper::SaveStringToFile(GetBuildReport() + TEXT("\n") + Edits + Lighting + TEXT("\n") + Gpu + TEXT("\n") +
             World + TEXT("\n") + Player + TEXT("\n"),
         *FPaths::Combine(ShotFolder, TEXT("build.txt")));

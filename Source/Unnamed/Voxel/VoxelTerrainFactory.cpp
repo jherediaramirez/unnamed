@@ -14,6 +14,7 @@
 #include "Terrain/VoxelFlatTerrain.h"
 #include "Terrain/VoxelHeightTerrain.h"
 #include "Voxel/VoxelBlocks.h"
+#include "Voxel/VoxelConsole.h"
 #include "Voxel/VoxelWorldgenReader.h"
 #include "VoxelLog.h"
 #include "Worlds/UnnamedSavedWorlds.h"
@@ -104,6 +105,8 @@ TSharedPtr<const IVoxelTerrain> VoxelTerrainFactory::Make(const FUnnamedSavedWor
         if (World && World->Type == TEXT("Single Biome")) Settings.FixedBiome = World->Biome;
         // The dev seed can show the earlier dressing instead, to compare looks; saved worlds always keep the rules.
         if (!World && FParse::Param(FCommandLine::Get(), TEXT("VoxelNoSurfaceRules"))) Settings.bSurfaceRules = false;
+        // Ore veins as voxel.OreVeins says when the world starts (the world subsystem rebuilds it on a change).
+        Settings.bOreVeins = VoxelConsole::CVarOreVeins.GetValueOnAnyThread();
         TSharedRef<FVoxelDensityTerrain> Density =
             MakeShared<FVoxelDensityTerrain>(Preset, uint64(Seed), Table, Settings, &Biomes, &Surface);
         if (Density->IsValid()) return Density;

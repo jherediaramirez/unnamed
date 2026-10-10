@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Caves,[int[]]$SpawnAt,[switch]$SpawnExact,[switch]$NoSurfaceRules)
+param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[switch]$NoSurfaceRules)
 # Renders the generated world offscreen (/Game/Maps/L_Generated) and saves AVoxelWorld's screenshots: overview,
 # closeup, ground, lumen-scene and section, plus build.txt with the first view's streaming timings. The rings stay on
 # the player's spawn, and the view's edge is meshed against air (voxel.Debug.EdgeWalls 1; -ExecCmds can turn it off),
@@ -28,6 +28,11 @@ $arguments=@(('"'+(Join-Path $root 'Unnamed.uproject')+'"'),$map,'-game','-windo
 if($Seed){$arguments+=('-VoxelSeed="'+$Seed+'"')}
 if($Edits -and -not $Flight){$arguments+='-VoxelShotEdits'}
 if($Caves -and -not $Flight){$arguments+='-VoxelShotCaves'}
+# -Veins adds vein-copper and vein-iron, views onto the cut faces where each vein's ore and filler mix most; -VeinsAt
+# F,A,Z,F,A,Z aims them at fixed spots (build.txt of a -Veins run names them), for the control run with
+# -ExecCmds 'voxel.OreVeins 0'.
+if($Veins -and -not $Flight){$arguments+='-VoxelShotVeins'}
+if($VeinsAt -and -not $Flight){if($VeinsAt.Count -ne 6){throw '-VeinsAt takes F,A,Z,F,A,Z'};$arguments+=('-VoxelShotVeinsAt='+($VeinsAt -join ','))}
 if($SpawnAt){if($SpawnAt.Count -ne 2){throw '-SpawnAt takes X,Y'};$arguments+=('-VoxelSpawnAt={0},{1}' -f $SpawnAt[0],$SpawnAt[1])}
 if($SpawnExact){$arguments+='-VoxelSpawnExact'}
 if($NoSurfaceRules){$arguments+='-VoxelNoSurfaceRules'}

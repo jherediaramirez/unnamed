@@ -50,6 +50,11 @@ TAutoConsoleVariable<bool> VoxelConsole::CVarDecorationFreezeLast(TEXT("voxel.De
     TEXT("With decoration: 1 runs the freeze pass at Finalize, after the merge, so snow lands on decoration (S3); 0 "
          "runs "
          "it inside the snapshot, before decoration (S2's order, a control). A change rebuilds the world."));
+TAutoConsoleVariable<bool> VoxelConsole::CVarOreVeins(TEXT("voxel.OreVeins"), true,
+    TEXT(
+        "Ore veins (phase 6, S4): 1 runs 26.3's ore_vein rules in Generate (copper veins in granite from Z 0 to 49, "
+        "iron veins in tuff from Z -60 to -9) in streamed worlds and every bench (each takes noveins as well); 0 gives "
+        "the blocks from before S4, the control. A change rebuilds the world."));
 
 int32 VoxelConsole::GetTintBlend()
 {
@@ -130,6 +135,12 @@ namespace
                 Graph, Table, Terrain.GetBiomeSource()->GetTable(), Terrain.GetSeed(), Placed, &OutError))
             return nullptr;
         return Decorator;
+    }
+
+    // Bench terrains run the ore veins as voxel.OreVeins says, unless the command says noveins.
+    bool BenchOreVeins(const TArray<FString>& Args)
+    {
+        return VoxelConsole::CVarOreVeins.GetValueOnGameThread() && !Args.Contains(TEXT("noveins"));
     }
 
     // Each line to the console that ran the command and to the log, so headless runs keep the output.
@@ -255,6 +266,7 @@ namespace
                     }
                     FVoxelDensityTerrainSettings Settings;
                     Settings.bCaves = !(Args.Num() > 3 && Args[3] == TEXT("nocaves"));
+                    Settings.bOreVeins = BenchOreVeins(Args);
                     const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings, &Biomes, &Surface);
                     if (!Terrain.IsValid())
                     {
@@ -272,8 +284,9 @@ namespace
                         }
                     }
                     PrintLines(Output,
-                        FString::Printf(TEXT("Voxel column bench, %s, caves %s, decoration %s, seed %s:"), *PresetName,
-                            Settings.bCaves ? TEXT("on") : TEXT("off"), Decorator ? TEXT("on") : TEXT("off"),
+                        FString::Printf(TEXT("Voxel column bench, %s, caves %s, ore veins %s, decoration %s, seed %s:"),
+                            *PresetName, Settings.bCaves ? TEXT("on") : TEXT("off"),
+                            Settings.bOreVeins ? TEXT("on") : TEXT("off"), Decorator ? TEXT("on") : TEXT("off"),
                             *Seed.Describe()) +
                             TEXT("\n") +
                             VoxelBench::RunColumns(*Table, Terrain, &Terrain, Options, Radius, Decorator.Get()));
@@ -318,6 +331,7 @@ namespace
                     // A fourth argument "nocaves" benches the terrain without caves and aquifers (session 3's).
                     FVoxelDensityTerrainSettings Settings;
                     Settings.bCaves = !(Args.Num() > 3 && Args[3] == TEXT("nocaves"));
+                    Settings.bOreVeins = BenchOreVeins(Args);
                     const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings, &Biomes, &Surface);
                     if (!Terrain.IsValid())
                     {
@@ -325,8 +339,9 @@ namespace
                         return;
                     }
                     PrintLines(Output,
-                        FString::Printf(TEXT("Voxel density bench, %s, caves %s, seed %s:"), *PresetName,
-                            Settings.bCaves ? TEXT("on") : TEXT("off"), *Seed.Describe()) +
+                        FString::Printf(TEXT("Voxel density bench, %s, caves %s, ore veins %s, seed %s:"), *PresetName,
+                            Settings.bCaves ? TEXT("on") : TEXT("off"), Settings.bOreVeins ? TEXT("on") : TEXT("off"),
+                            *Seed.Describe()) +
                             TEXT("\n") + VoxelBench::RunDensity(Terrain, Radius));
                     return;
                 }
@@ -334,7 +349,7 @@ namespace
                 {
                     if (Args.Num() > 1 && !FCString::IsNumeric(*Args[1]))
                     {
-                        PrintLines(Output, TEXT("Usage: voxel.Bench Decorate [radius] [preset] [nocaves]"));
+                        PrintLines(Output, TEXT("Usage: voxel.Bench Decorate [radius] [preset] [nocaves] [noveins]"));
                         return;
                     }
                     const int32 Radius = Args.Num() > 1 ? FMath::Clamp(FCString::Atoi(*Args[1]), 0, 16) : 4;
@@ -353,6 +368,7 @@ namespace
                     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
                     FVoxelDensityTerrainSettings Settings;
                     Settings.bCaves = !(Args.Num() > 3 && Args[3] == TEXT("nocaves"));
+                    Settings.bOreVeins = BenchOreVeins(Args);
                     const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings, &Biomes, &Surface);
                     FVoxelDecorationOptions NoEarlyOut;
                     NoEarlyOut.bEarlyOut = false;
@@ -366,22 +382,65 @@ namespace
                         return;
                     }
                     PrintLines(Output,
-                        FString::Printf(TEXT("Voxel decoration bench, %s, caves %s, seed %s:"), *PresetName,
-                            Settings.bCaves ? TEXT("on") : TEXT("off"), *Seed.Describe()) +
+                        FString::Printf(TEXT("Voxel decoration bench, %s, caves %s, ore veins %s, seed %s:"),
+                            *PresetName, Settings.bCaves ? TEXT("on") : TEXT("off"),
+                            Settings.bOreVeins ? TEXT("on") : TEXT("off"), *Seed.Describe()) +
                             TEXT("\n") + VoxelBench::RunDecorate(*Decorator, *Exhaustive, Terrain, Radius));
+                    return;
+                }
+                if (!Args.IsEmpty() && Args[0] == TEXT("VeinProbe"))
+                {
+                    // The probe's three seeds, then Extra more (1, 2, ...) for our spread.
+                    const int32 Extra = Args.Num() > 1 ? FMath::Clamp(FCString::Atoi(*Args[1]), 0, 200) : 0;
+                    TArray<int64> Seeds = {0, 263, -4000000007ll};
+                    for (int32 Index = 1; Index <= Extra; ++Index)
+                        Seeds.Add(Index);
+                    FString Error;
+                    FVoxelTerrainPreset Preset;
+                    FVoxelBiomeTable Biomes;
+                    FVoxelSurfaceInputs Surface;
+                    if (!VoxelTerrainFactory::ReadInputs(
+                            VoxelWorldgen::GetReferenceRoot(), TEXT("overworld"), Preset, Biomes, Surface, Error))
+                    {
+                        PrintLines(Output, Error);
+                        return;
+                    }
+                    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+                    TArray<TUniquePtr<FVoxelSurfaceEvaluator>> Rules;
+                    TArray<const FVoxelOreVeins*> Veins;
+                    for (const int64 VeinSeed : Seeds)
+                    {
+                        Rules.Add(MakeUnique<FVoxelSurfaceEvaluator>());
+                        if (!Rules.Last()->Compile(Surface, *Table, Biomes, uint64(VeinSeed), &Error))
+                        {
+                            PrintLines(Output, Error);
+                            return;
+                        }
+                        Veins.Add(&Rules.Last()->GetOreVeins());
+                    }
+                    const FVoxelDensityGraph& Graph = Veins[0]->GetEvaluator().GetGraph();
+                    PrintLines(Output,
+                        TEXT("Voxel ore vein probe (facts/ore_vein_samples.json's, on our veins):\n") +
+                            VoxelBench::RunVeinProbe(Veins, Seeds,
+                                Graph.FindFunction(TEXT("minecraft:overworld/ore_vein/toggle")),
+                                Graph.FindFunction(TEXT("minecraft:overworld/ore_vein/mask"))));
                     return;
                 }
                 if (!Args.IsEmpty() && Args[0] == TEXT("FreezeDiff"))
                 {
-                    if ((Args.Num() > 1 && !FCString::IsNumeric(*Args[1])) || Args.Num() == 4)
+                    // noveins may come anywhere; the others are positional.
+                    TArray<FString> Positional = Args;
+                    Positional.Remove(TEXT("noveins"));
+                    if ((Positional.Num() > 1 && !FCString::IsNumeric(*Positional[1])) || Positional.Num() == 4)
                     {
-                        PrintLines(Output, TEXT("Usage: voxel.Bench FreezeDiff [radius] [preset] [x y]"));
+                        PrintLines(Output, TEXT("Usage: voxel.Bench FreezeDiff [radius] [preset] [x y] [noveins]"));
                         return;
                     }
-                    const int32 Radius = Args.Num() > 1 ? FMath::Clamp(FCString::Atoi(*Args[1]), 0, 16) : 4;
-                    const FString PresetName = Args.Num() > 2 ? Args[2] : TEXT("overworld");
-                    const TOptional<FIntPoint> Center = Args.Num() > 4
-                        ? TOptional<FIntPoint>(FIntPoint(FCString::Atoi(*Args[3]), FCString::Atoi(*Args[4])))
+                    const int32 Radius = Positional.Num() > 1 ? FMath::Clamp(FCString::Atoi(*Positional[1]), 0, 16) : 4;
+                    const FString PresetName = Positional.Num() > 2 ? Positional[2] : TEXT("overworld");
+                    const TOptional<FIntPoint> Center = Positional.Num() > 4
+                        ? TOptional<FIntPoint>(
+                              FIntPoint(FCString::Atoi(*Positional[3]), FCString::Atoi(*Positional[4])))
                         : TOptional<FIntPoint>();
                     FString Error;
                     FVoxelTerrainPreset Preset;
@@ -395,7 +454,9 @@ namespace
                         return;
                     }
                     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
-                    const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, {}, &Biomes, &Surface);
+                    FVoxelDensityTerrainSettings Settings;
+                    Settings.bOreVeins = BenchOreVeins(Args);
+                    const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings, &Biomes, &Surface);
                     const bool bLast = true, bFirst = false;
                     const TSharedPtr<FVoxelDecorator> Last =
                         Terrain.IsValid() ? MakeBenchDecorator(Terrain, *Table, {}, Error, &bLast) : nullptr;
@@ -413,19 +474,18 @@ namespace
                 }
                 PrintLines(Output,
                     TEXT("Usage: voxel.Bench Noise [millions] | voxel.Bench Columns [radius] [preset|standin] "
-                         "[nocaves] | voxel.Bench "
-                         "Climate [radius] [preset] | voxel.Bench Density [radius] [preset] [nocaves] | voxel.Bench "
-                         "Decorate [radius] [preset] [nocaves] | voxel.Bench FreezeDiff [radius] [preset] [x y]"));
+                         "[nocaves] [noveins] | voxel.Bench Climate [radius] [preset] | voxel.Bench Density [radius] "
+                         "[preset] [nocaves] [noveins] | voxel.Bench Decorate [radius] [preset] [nocaves] [noveins] | "
+                         "voxel.Bench FreezeDiff [radius] [preset] [x y] [noveins]"));
             }));
 
     FAutoConsoleCommand VoxelOreHistogramCommand(TEXT("voxel.OreHistogram"),
-        TEXT(
-            "voxel.OreHistogram [radius] [preset] [nocaves] [nodiscard]: decorates (2 radius + 1)^2 columns of the dev "
-            "seed (default radius 8, at most 16; preset overworld) and writes the blocks the ore features placed, per "
-            "Z and per "
-            "state (final minus generated), to "
-            "<project>/Saved/Voxel/OreHistogram-<preset>-r<radius>[-nocaves][-nodiscard].csv "
-            "(Scripts/OreHistogram.py draws it)."),
+        TEXT("voxel.OreHistogram [radius] [preset] [nocaves] [nodiscard] [noveins]: decorates (2 radius + 1)^2 columns "
+             "of the dev seed (default radius 8, at most 16; preset overworld) and writes the blocks the ore features "
+             "placed, per Z and per state (final minus generated), and the blocks the ore veins placed, on their own "
+             "(\"vein \" columns: generated with veins minus without), to "
+             "<project>/Saved/Voxel/OreHistogram-<preset>-r<radius>[-nocaves][-nodiscard][-noveins].csv "
+             "(Scripts/OreHistogram.py draws it)."),
         FConsoleCommandWithArgsAndOutputDeviceDelegate::CreateLambda(
             [](const TArray<FString>& Args, FOutputDevice& Output)
             {
@@ -433,10 +493,12 @@ namespace
                 // The flags may come anywhere; the radius and the preset are the others, in that order.
                 TArray<FString> Positional;
                 for (const FString& Arg : Args)
-                    if (Arg != TEXT("nocaves") && Arg != TEXT("nodiscard")) Positional.Add(Arg);
+                    if (Arg != TEXT("nocaves") && Arg != TEXT("nodiscard") && Arg != TEXT("noveins"))
+                        Positional.Add(Arg);
                 if (!Positional.IsEmpty() && !FCString::IsNumeric(*Positional[0]))
                 {
-                    PrintLines(Output, TEXT("Usage: voxel.OreHistogram [radius] [preset] [nocaves] [nodiscard]"));
+                    PrintLines(
+                        Output, TEXT("Usage: voxel.OreHistogram [radius] [preset] [nocaves] [nodiscard] [noveins]"));
                     return;
                 }
                 const int32 Radius = !Positional.IsEmpty() ? FMath::Clamp(FCString::Atoi(*Positional[0]), 0, 16) : 8;
@@ -456,6 +518,7 @@ namespace
                 const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
                 FVoxelDensityTerrainSettings Settings;
                 Settings.bCaves = bCaves;
+                Settings.bOreVeins = BenchOreVeins(Args);
                 const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, Settings, &Biomes, &Surface);
                 FVoxelDecorationOptions Options;
                 Options.bDiscard = bDiscard;
@@ -469,17 +532,49 @@ namespace
                 FVoxelDecoratedArea Area;
                 FVoxelDecoratedArea::Build(*Decorator, Terrain, FIntPoint::ZeroValue, Radius, true, false, Area);
                 // Placed blocks: each final column against its snapshot, per state and Z.
-                const TArray<TPair<uint16, FString>> States = Decorator->GetOreStates();
+                TArray<TPair<uint16, FString>> States = Decorator->GetOreStates();
                 TArray<int64> Counts;
                 Counts.SetNumZeroed(States.Num() * VoxelConstants::Height);
                 TMap<uint16, int32> StateIndex;
                 for (int32 Index = 0; Index < States.Num(); ++Index)
                     StateIndex.Add(States[Index].Key, Index);
+                // The veins' blocks, after the features' columns: each generated column against itself without veins.
+                TMap<uint16, int32> VeinIndex;
+                if (Settings.bOreVeins)
+                    for (const FVoxelSurfaceRule& Rule : Surface.Rules.Rules)
+                    {
+                        if (Rule.Op != EVoxelSurfaceRuleOp::OreVein) continue;
+                        for (const int32 Id : {Rule.Block, Rule.RawOreBlock, Rule.FillerBlock})
+                        {
+                            const FString& Name = Surface.Rules.Strings[Id];
+                            const uint16 State = Table->FindState(FName(Name.RightChop(Name.Find(TEXT(":")) + 1)));
+                            if (State == 0 || VeinIndex.Contains(State)) continue;
+                            VeinIndex.Add(State, States.Num());
+                            States.Add({State, TEXT("vein ") + Name});
+                        }
+                    }
+                Counts.SetNumZeroed(States.Num() * VoxelConstants::Height);
+                FVoxelDensityTerrainOverrides NoVeins;
+                NoVeins.bOreVeins = false;
                 TArray<uint16> Dense;
                 for (const TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>& Final : Area.Columns)
                 {
                     FVoxelColumn Generated;
                     Terrain.Generate(Final->GetPosition(), Generated, Dense);
+                    if (!VeinIndex.IsEmpty())
+                    {
+                        FVoxelColumn Plain;
+                        Terrain.Generate(Final->GetPosition(), Plain, Dense, nullptr, NoVeins);
+                        for (int32 Z = VoxelConstants::MinZ; Z <= VoxelConstants::MaxZ; ++Z)
+                            for (int32 Y = 0; Y < VoxelConstants::ColumnSize; ++Y)
+                                for (int32 X = 0; X < VoxelConstants::ColumnSize; ++X)
+                                {
+                                    const uint16 State = Generated.GetState(X, Y, Z);
+                                    if (State == Plain.GetState(X, Y, Z)) continue;
+                                    if (const int32* Vein = VeinIndex.Find(State))
+                                        ++Counts[(Z - VoxelConstants::MinZ) * States.Num() + *Vein];
+                                }
+                    }
                     for (int32 Z = VoxelConstants::MinZ; Z <= VoxelConstants::MaxZ; ++Z)
                         for (int32 Y = 0; Y < VoxelConstants::ColumnSize; ++Y)
                             for (int32 X = 0; X < VoxelConstants::ColumnSize; ++X)
@@ -504,17 +599,20 @@ namespace
                     Csv += TEXT("\n");
                 }
                 const FString Path = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / TEXT("Saved") /
-                    FString::Printf(TEXT("Voxel/OreHistogram-%s-r%d%s%s.csv"), *PresetName, Radius,
-                        bCaves ? TEXT("") : TEXT("-nocaves"), bDiscard ? TEXT("") : TEXT("-nodiscard")));
+                    FString::Printf(TEXT("Voxel/OreHistogram-%s-r%d%s%s%s.csv"), *PresetName, Radius,
+                        bCaves ? TEXT("") : TEXT("-nocaves"), bDiscard ? TEXT("") : TEXT("-nodiscard"),
+                        Settings.bOreVeins ? TEXT("") : TEXT("-noveins")));
                 if (!FFileHelper::SaveStringToFile(Csv, *Path))
                 {
                     PrintLines(Output, FString::Printf(TEXT("voxel.OreHistogram: cannot write %s"), *Path));
                     return;
                 }
-                FString Report = FString::Printf(TEXT("Ore histogram, %s, %d columns, caves %s, discard %s, seed %s: "
-                                                      "%s\n"),
-                    *PresetName, Area.Columns.Num(), bCaves ? TEXT("on") : TEXT("off"),
-                    bDiscard ? TEXT("on") : TEXT("off"), *Seed.Describe(), *Path);
+                FString Report =
+                    FString::Printf(TEXT("Ore histogram, %s, %d columns, caves %s, discard %s, ore veins %s, seed %s: "
+                                         "%s\n"),
+                        *PresetName, Area.Columns.Num(), bCaves ? TEXT("on") : TEXT("off"),
+                        bDiscard ? TEXT("on") : TEXT("off"), Settings.bOreVeins ? TEXT("on") : TEXT("off"),
+                        *Seed.Describe(), *Path);
                 for (int32 Index = 0; Index < States.Num(); ++Index)
                 {
                     int64 Total = 0;

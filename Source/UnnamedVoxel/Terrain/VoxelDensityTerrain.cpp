@@ -300,8 +300,7 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
         SCOPE_CYCLE_COUNTER(STAT_VoxelFillColumn);
         if (SurfaceRules.IsCompiled() && Overrides.bSurfaceRules.Get(Settings.bSurfaceRules) &&
             !Out.GetBiomes().IsEmpty())
-            FillWithRules(Position, Out, Dense, *Scratch, Overrides.bSurfaceShortcut.Get(Settings.bSurfaceShortcut),
-                Overrides.bFreeze.Get(true), SurfaceTimings);
+            FillWithRules(Position, Out, Dense, *Scratch, Overrides, SurfaceTimings);
         else
             FillDressed(X0, Z0, Dense, *Scratch);
         Out.Build(Dense, Table);
@@ -316,6 +315,12 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
         Timings->SurfaceMs = SurfaceTimings.SurfaceMs;
         Timings->PreliminaryMs = SurfaceTimings.PreliminaryMs;
         Timings->FreezeMs = SurfaceTimings.FreezeMs;
+        Timings->VeinMs = SurfaceTimings.VeinMs;
+        Timings->VeinCells = SurfaceTimings.VeinCells;
+        Timings->VeinCorners = SurfaceTimings.VeinCorners;
+        Timings->VeinBlocks = SurfaceTimings.VeinBlocks;
+        Timings->VeinGaps = SurfaceTimings.VeinGaps;
+        Timings->VeinGiven = SurfaceTimings.VeinGiven;
         Timings->SurfaceDeep = SurfaceTimings.SurfaceDeep;
         Timings->SurfaceInterior = SurfaceTimings.SurfaceInterior;
         Timings->SurfaceFull = SurfaceTimings.SurfaceFull;
@@ -386,8 +391,10 @@ void FVoxelDensityTerrain::FillDressed(int32 X0, int32 Z0, TArray<uint16>& Dense
 }
 
 void FVoxelDensityTerrain::FillWithRules(FIntPoint Position, const FVoxelColumn& Out, TArray<uint16>& Dense,
-    FScratch& Scratch, bool bShortcut, bool bFreeze, FVoxelDensityTerrainTimings& Timings) const
+    FScratch& Scratch, const FVoxelDensityTerrainOverrides& Overrides, FVoxelDensityTerrainTimings& Timings) const
 {
+    const bool bShortcut = Overrides.bSurfaceShortcut.Get(Settings.bSurfaceShortcut);
+    const bool bFreeze = Overrides.bFreeze.Get(true);
     constexpr int32 Size = VoxelConstants::ColumnSize, Height = VoxelConstants::Height;
     const int32 SeaTop = SeaLevel - 1;
     const int32 X0 = Position.X * Size, Y0 = Position.Y * Size;
@@ -451,7 +458,22 @@ void FVoxelDensityTerrain::FillWithRules(FIntPoint Position, const FVoxelColumn&
     }
     const double AfterPreliminary = FPlatformTime::Seconds();
     FVoxelSurfaceChunk& Chunk = Scratch.SurfaceChunk;
-    SurfaceRules.PrepareChunk(Chunk, &Out.GetBiomes(), bShortcut);
+    SurfaceRules.PrepareChunk(Chunk, &Out.GetBiomes(), bShortcut, Overrides.bOreVeins.Get(Settings.bOreVeins),
+        Overrides.bOreVeinShortcut.Get(Settings.bOreVeinShortcut));
+    const double BeforeVeins = FPlatformTime::Seconds();
+    {
+        TRACE_CPUPROFILER_EVENT_SCOPE(Voxel_OreVeins);
+        SurfaceRules.PrepareVeins(Chunk, X0, Y0, Scratch.Kinds);
+    }
+    Timings.VeinMs = (FPlatformTime::Seconds() - BeforeVeins) * 1000;
+    if (Chunk.bVeins)
+    {
+        Timings.VeinCells = Chunk.Veins.OpenCells;
+        Timings.VeinCorners = Chunk.Veins.Corners;
+        Timings.VeinBlocks = Chunk.Veins.Blocks;
+        Timings.VeinGaps = Chunk.Veins.Gaps;
+        Timings.VeinGiven = Chunk.Veins.Given;
+    }
     constexpr int32 Stride = Size * Size;
     for (int32 LocalY = 0; LocalY < Size; ++LocalY)
         for (int32 LocalX = 0; LocalX < Size; ++LocalX)

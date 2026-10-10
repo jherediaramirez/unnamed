@@ -17,12 +17,15 @@ STONE, DEEPSLATE = "#2a78d6", "#eb6834"
 SURFACE, INK, MUTED, GRID = "#fcfcfb", "#1f1f1e", "#6b6a63", "#e6e5df"
 ORES = ["coal", "iron", "copper", "gold", "redstone", "lapis", "diamond", "emerald", "infested"]
 ROCKS = ["granite", "diorite", "andesite", "tuff", "dirt", "gravel", "clay"]
+# The ore veins (phase 6, S4), counted on their own: ore with raw ore, and filler.
+VEINS = [("copper vein", ["copper_ore", "raw_copper_block"], "granite"),
+         ("iron vein", ["deepslate_iron_ore", "raw_iron_block"], "tuff")]
 
 
 def read(path):
     with open(path, newline="", encoding="utf-8") as f:
         rows = list(csv.reader(f))
-    names = [n.removeprefix("minecraft:") for n in rows[0][1:]]
+    names = [n.replace("minecraft:", "") for n in rows[0][1:]]
     z = [int(r[0]) for r in rows[1:]]
     columns = {n: [int(r[i + 1]) for r in rows[1:]] for i, n in enumerate(names)}
     return z, columns
@@ -39,6 +42,11 @@ def panels(columns):
         out.append((ore, [(stone, columns.get(stone), STONE), (deep, columns.get(deep), DEEPSLATE)]))
     for rock in ROCKS:
         out.append((rock, [(rock, columns.get(rock), STONE)]))
+    for title, ores, filler in VEINS:
+        found = [columns[f"vein {o}"] for o in ores if f"vein {o}" in columns]
+        if found:
+            total = [sum(values) for values in zip(*found)]
+            out.append((title, [("ore and raw ore", total, STONE), (filler, columns.get(f"vein {filler}"), DEEPSLATE)]))
     return out
 
 
@@ -81,14 +89,16 @@ def main():
     out = Path(args.out) if args.out else path.with_suffix(".png")
     rows = panels(columns)
 
-    fig, axes = plt.subplots(2, 8, figsize=(20, 8.5), sharey=True, facecolor=SURFACE)
+    across = (len(rows) + 1) // 2
+    fig, axes = plt.subplots(2, across, figsize=(2.5 * across, 8.5), sharey=True, facecolor=SURFACE)
     for ax, (title, series) in zip(axes.flat, rows):
         draw(ax, title, series, z, per_column)
     for ax in axes.flat[len(rows):]:
         ax.set_visible(False)
     for ax in axes[:, 0]:
         ax.set_ylabel("Z (the reference's y)", color=MUTED, fontsize=8)
-    fig.suptitle(f"Blocks the ore features placed, per Z and per column ({per_column} columns): {path.stem}. "
+    fig.suptitle(f"Blocks the ore features (and the ore veins) placed, per Z and per column ({per_column} columns): "
+                 f"{path.stem}. "
                  "Solid line Z 0 (deepslate below), dashed line sea level.", color=INK, fontsize=11, x=0.01, ha="left")
     fig.tight_layout(rect=(0, 0, 1, 0.96))
     fig.savefig(out, dpi=110, facecolor=SURFACE)

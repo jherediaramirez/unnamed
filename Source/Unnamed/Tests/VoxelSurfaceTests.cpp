@@ -1,4 +1,11 @@
 #include "Biome/VoxelBiomeClimate.h"
+#include "Dom/JsonObject.h"
+#include "Dom/JsonValue.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
+#include "Surface/VoxelOreVeins.h"
 #include "Biome/VoxelBiomeStorage.h"
 #include "Biome/VoxelBiomeTable.h"
 #include "Blocks/VoxelBlockTable.h"
@@ -1370,6 +1377,414 @@ bool FVoxelSurfaceExactTest::RunTest(const FString& Parameters)
         TestTrue(FString::Printf(TEXT("%s: at least 90%% of the solid blocks at z -30 are deepslate (%d of %d)"),
                      PresetName, Deepslate30, Solid30),
             Deepslate30 * 10 >= Solid30 * 9);
+    }
+    return true;
+}
+
+namespace
+{
+    // Vein 0 is copper, vein 1 iron (the data's types); Kind 1 filler, 2 ore, 3 raw ore.
+    struct FSurfaceVeinBlockClass
+    {
+        const TCHAR* Name;
+        int32 Type;
+        int32 Kind;
+    };
+
+    constexpr FSurfaceVeinBlockClass SurfaceVeinBlockClasses[] = {{TEXT("minecraft:granite"), 0, 1},
+        {TEXT("minecraft:copper_ore"), 0, 2}, {TEXT("minecraft:raw_copper_block"), 0, 3},
+        {TEXT("minecraft:tuff"), 1, 1}, {TEXT("minecraft:deepslate_iron_ore"), 1, 2},
+        {TEXT("minecraft:raw_iron_block"), 1, 3}};
+
+    // The probe's own cache/uncached difference is up to 2.4e-7.
+    constexpr float SurfaceVeinTolerance = 2.4e-7f;
+
+    // One recorded position, in the reference's axes (y up).
+    struct FSurfaceVeinSample
+    {
+        int32 X = 0, Y = 0, Z = 0, Block = 0;
+        float Toggle = 0, Mask = 0, Density[2] = {}, Richness = 0, Gap = 0;
+    };
+
+    struct FSurfaceVeinSeed
+    {
+        int64 Seed = 0;
+        // Per vein type: vein block and density > 0, no vein block and density > 0, vein block and density <= 0.
+        int64 Agreement[2][3] = {};
+        TArray<FSurfaceVeinSample> Samples;
+    };
+
+    struct FSurfaceVeinShare
+    {
+        int64 Hits = 0, Total = 0;
+        double Sum = 0;
+    };
+
+    bool SurfaceVeinLoad(FAutomationTestBase& Test, TArray<FSurfaceVeinSeed>& OutSeeds, TArray<FString>& OutBlocks)
+    {
+        FString Text;
+        TSharedPtr<FJsonObject> Root;
+        if (!FFileHelper::LoadFileToString(Text,
+                *FPaths::Combine(VoxelWorldgen::GetReferenceRoot(), TEXT("facts"), TEXT("ore_vein_samples.json"))) ||
+            !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Root) || !Root.IsValid())
+        {
+            Test.AddError(TEXT("facts/ore_vein_samples.json cannot be read"));
+            return false;
+        }
+        for (const TSharedPtr<FJsonValue>& Name : Root->GetArrayField(TEXT("blocks")))
+            OutBlocks.Add(Name->AsString());
+        const TCHAR* const TypeNames[2] = {TEXT("copper"), TEXT("iron")};
+        for (const TSharedPtr<FJsonValue>& SeedValue : Root->GetArrayField(TEXT("seeds")))
+        {
+            const TSharedPtr<FJsonObject> SeedObject = SeedValue->AsObject();
+            FSurfaceVeinSeed& Out = OutSeeds.AddDefaulted_GetRef();
+            Out.Seed = int64(SeedObject->GetNumberField(TEXT("seed")));
+            const TSharedPtr<FJsonObject> Agreement = SeedObject->GetObjectField(TEXT("agreement"));
+            for (int32 Type = 0; Type < 2; ++Type)
+            {
+                const TArray<TSharedPtr<FJsonValue>>& Counts = Agreement->GetArrayField(TypeNames[Type]);
+                for (int32 Index = 0; Index < 3; ++Index)
+                    Out.Agreement[Type][Index] = int64(Counts[Index]->AsNumber());
+            }
+            const TArray<TSharedPtr<FJsonValue>>& Rows = SeedObject->GetArrayField(TEXT("samples"));
+            Out.Samples.Reserve(Rows.Num());
+            for (const TSharedPtr<FJsonValue>& RowValue : Rows)
+            {
+                const TArray<TSharedPtr<FJsonValue>>& Row = RowValue->AsArray();
+                if (Row.Num() < 10) continue;
+                FSurfaceVeinSample& Sample = Out.Samples.AddDefaulted_GetRef();
+                Sample.X = int32(Row[0]->AsNumber());
+                Sample.Y = int32(Row[1]->AsNumber());
+                Sample.Z = int32(Row[2]->AsNumber());
+                Sample.Block = int32(Row[3]->AsNumber());
+                Sample.Toggle = float(Row[4]->AsNumber());
+                Sample.Mask = float(Row[5]->AsNumber());
+                Sample.Density[0] = float(Row[6]->AsNumber());
+                Sample.Density[1] = float(Row[7]->AsNumber());
+                Sample.Richness = float(Row[8]->AsNumber());
+                Sample.Gap = float(Row[9]->AsNumber());
+            }
+        }
+        return !OutSeeds.IsEmpty();
+    }
+
+    bool SurfaceVeinDiffers(float Value, float Recorded)
+    {
+        return !(FMath::Abs(Value - Recorded) <= SurfaceVeinTolerance);
+    }
+
+    // The compiled nodes reachable from Roots through what they read, in evaluation order, without passing through
+    // Stops (or, with bStopInterpolated, through interpolated nodes); the stops reached are returned apart.
+    void SurfaceVeinCollect(const FVoxelDensityEvaluator& Evaluator, TConstArrayView<int32> Roots,
+        TConstArrayView<int32> Stops, bool bStopInterpolated, TArray<int32>& OutList, TArray<int32>& OutStops)
+    {
+        const FVoxelDensityGraph& Graph = Evaluator.GetGraph();
+        TSet<int32> Visited;
+        TArray<int32> Pending, Reads;
+        Pending.Append(Roots.GetData(), Roots.Num());
+        while (!Pending.IsEmpty())
+        {
+            const int32 Node = Pending.Pop();
+            if (Visited.Contains(Node)) continue;
+            const bool bStop = Stops.Contains(Node) ||
+                (bStopInterpolated && !Roots.Contains(Node) && Graph.Nodes[Node].Op == EVoxelDensityOp::Interpolated);
+            if (bStop)
+            {
+                OutStops.AddUnique(Node);
+                continue;
+            }
+            Visited.Add(Node);
+            Reads.Reset();
+            Evaluator.GetReads(Node, Reads);
+            Pending.Append(Reads);
+        }
+        for (const int32 Node : Evaluator.GetOrder())
+            if (Visited.Contains(Node)) OutList.Add(Node);
+    }
+
+    void SurfaceVeinCheckShare(FAutomationTestBase& Test, const TCHAR* Label, int64 Hits, int64 Total, double Expected)
+    {
+        if (!Test.TestTrue(FString::Printf(TEXT("%s: there are samples (%lld)"), Label, Total), Total > 0)) return;
+        const double Observed = double(Hits) / double(Total);
+        const double Bound = 4.0 * FMath::Sqrt(Expected * (1.0 - Expected) / double(Total));
+        Test.AddInfo(FString::Printf(
+            TEXT("%s: %lld of %lld = %.4f, expected %.4f, bound %.4f"), Label, Hits, Total, Observed, Expected, Bound));
+        Test.TestTrue(FString::Printf(TEXT("%s: %.4f is within %.4f of %.4f"), Label, Observed, Bound, Expected),
+            FMath::Abs(Observed - Expected) <= Bound);
+    }
+
+    struct FSurfaceVeinColumn
+    {
+        FIntPoint Position;
+        int32 Blocks = 0;
+        bool bEnd = false;
+    };
+} // namespace
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelSurfaceOreVeinTest, "Unnamed.Voxel.Surface.OreVein",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// The ore_vein rule (phase 6, S4) against facts/ore_vein_samples.json, 26.3's own values at 5,575 positions: (a) our
+// compiled density functions give the recorded densities and richness from the recorded toggle and mask, and the mask
+// the recorded -1 where the toggle is small; (b) the recorded rule and ours never place a block where the density is
+// not positive, or ore where the gap is; (c) the shares (fill, ore, raw ore) of the recorded blocks and of our draws
+// sit within 4 standard deviations of the density, the richness and the raw ore chance; our own draws cannot match the
+// jar's block for block; (d) over the columns around the origin, the vein shortcut and the surface shortcut change no
+// block, and every vein block is its vein's, within its heights.
+bool FVoxelSurfaceOreVeinTest::RunTest(const FString& Parameters)
+{
+    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+    if (!Table->FindState(TEXT("stone")))
+    {
+        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return true;
+    }
+    FSurfaceTestWorld World;
+    if (!SurfaceTestRead(*this, TEXT("overworld"), World)) return true;
+    TArray<FSurfaceVeinSeed> SeedData;
+    TArray<FString> BlockNames;
+    if (!SurfaceVeinLoad(*this, SeedData, BlockNames)) return true;
+    // Per recorded block index: its vein type and kind, or -1.
+    TArray<FIntPoint> BlockClasses;
+    for (const FString& BlockName : BlockNames)
+    {
+        FIntPoint Class(-1, 0);
+        for (const FSurfaceVeinBlockClass& Candidate : SurfaceVeinBlockClasses)
+            if (BlockName == Candidate.Name) Class = FIntPoint(Candidate.Type, Candidate.Kind);
+        BlockClasses.Add(Class);
+    }
+
+    int64 Samples = 0, DensityDiffers = 0, RichnessDiffers = 0, MaskBranch = 0, MaskDiffers = 0;
+    int64 VeinBlocks = 0, VeinBlocksNoDensity = 0, OreWithGap = 0, OurBlockNoDensity = 0, OurOreWithGap = 0;
+    FSurfaceVeinShare VanillaFill, VanillaOre, VanillaRaw, OurFill, OurOre, OurRaw;
+    for (const FSurfaceVeinSeed& Data : SeedData)
+    {
+        FVoxelSurfaceEvaluator Rules;
+        FString Error;
+        if (!TestTrue(FString::Printf(TEXT("seed %lld: the rules compile (%s)"), Data.Seed, *Error),
+                Rules.Compile(World.Surface, *Table, World.Biomes, uint64(Data.Seed), &Error)))
+            continue;
+        const FVoxelOreVeins& Veins = Rules.GetOreVeins();
+        int32 VeinOf[2] = {INDEX_NONE, INDEX_NONE};
+        for (int32 Index = 0; Index < Veins.Num(); ++Index)
+        {
+            if (Veins.GetVein(Index).Ore == Table->FindState(TEXT("copper_ore"))) VeinOf[0] = Index;
+            if (Veins.GetVein(Index).Ore == Table->FindState(TEXT("deepslate_iron_ore"))) VeinOf[1] = Index;
+        }
+        if (!TestTrue(FString::Printf(TEXT("seed %lld: the copper and iron veins exist"), Data.Seed),
+                VeinOf[0] != INDEX_NONE && VeinOf[1] != INDEX_NONE))
+            continue;
+        const FVoxelDensityEvaluator& Evaluator = Veins.GetEvaluator();
+        const FVoxelDensityGraph& Graph = Evaluator.GetGraph();
+        const int32 ToggleNode = Graph.FindFunction(TEXT("minecraft:overworld/ore_vein/toggle"));
+        const int32 MaskNode = Graph.FindFunction(TEXT("minecraft:overworld/ore_vein/mask"));
+        if (!TestTrue(TEXT("the toggle and mask functions exist"), ToggleNode != INDEX_NONE && MaskNode != INDEX_NONE))
+            continue;
+        const int32 DensityNodes[2] = {Veins.GetVein(VeinOf[0]).Density, Veins.GetVein(VeinOf[1]).Density};
+        const int32 RichnessNodes[2] = {Veins.GetVein(VeinOf[0]).Richness, Veins.GetVein(VeinOf[1]).Richness};
+
+        TArray<int32> DensityList, DensityStops, MaskList, MaskStops;
+        const int32 DensityRoots[4] = {DensityNodes[0], DensityNodes[1], RichnessNodes[0], RichnessNodes[1]};
+        const int32 DensityStopNodes[2] = {ToggleNode, MaskNode};
+        const int32 MaskRoots[1] = {MaskNode};
+        const int32 MaskStopNodes[1] = {ToggleNode};
+        SurfaceVeinCollect(Evaluator, DensityRoots, DensityStopNodes, false, DensityList, DensityStops);
+        SurfaceVeinCollect(Evaluator, MaskRoots, MaskStopNodes, true, MaskList, MaskStops);
+        FVoxelDensityScratch DensityScratch, MaskScratch;
+        Evaluator.Prepare(DensityScratch, 1);
+        Evaluator.Prepare(MaskScratch, 1);
+
+        for (const FSurfaceVeinSample& Sample : Data.Samples)
+        {
+            ++Samples;
+            // (a) our functions from the recorded toggle and mask (reference axes: x, y up, z).
+            const double X = Sample.X, Y = Sample.Y, Z = Sample.Z;
+            Evaluator.GetMutableValues(DensityScratch, ToggleNode)[0] = Sample.Toggle;
+            Evaluator.GetMutableValues(DensityScratch, MaskNode)[0] = Sample.Mask;
+            Evaluator.EvaluateNodes(DensityList, &X, &Y, &Z, DensityScratch);
+            for (int32 Type = 0; Type < 2; ++Type)
+            {
+                DensityDiffers += SurfaceVeinDiffers(
+                    Evaluator.GetValues(DensityScratch, DensityNodes[Type])[0], Sample.Density[Type]);
+                RichnessDiffers +=
+                    SurfaceVeinDiffers(Evaluator.GetValues(DensityScratch, RichnessNodes[Type])[0], Sample.Richness);
+            }
+            if (Sample.Toggle >= -0.4f && Sample.Toggle < 0.4f)
+            {
+                ++MaskBranch;
+                Evaluator.GetMutableValues(MaskScratch, ToggleNode)[0] = Sample.Toggle;
+                for (const int32 Stop : MaskStops)
+                    if (Stop != ToggleNode && Evaluator.IsCompiledNode(Stop))
+                        Evaluator.GetMutableValues(MaskScratch, Stop)[0] = 0.0f;
+                Evaluator.EvaluateNodes(MaskList, &X, &Y, &Z, MaskScratch);
+                MaskDiffers += Sample.Mask != -1.0f || Evaluator.GetValues(MaskScratch, MaskNode)[0] != -1.0f;
+            }
+
+            // (b) the recorded rule, then ours on the recorded values (our axes: X, Y horizontal, Z up).
+            const FIntPoint Class =
+                BlockClasses.IsValidIndex(Sample.Block) ? BlockClasses[Sample.Block] : FIntPoint(-1, 0);
+            if (Class.X >= 0)
+            {
+                ++VeinBlocks;
+                VeinBlocksNoDensity += !(Sample.Density[Class.X] > 0);
+                OreWithGap += Class.Y >= 2 && Sample.Gap > 0;
+                if (Sample.Gap <= 0)
+                {
+                    ++VanillaOre.Total;
+                    VanillaOre.Hits += Class.Y >= 2;
+                    VanillaOre.Sum += Sample.Richness;
+                }
+                if (Class.Y >= 2)
+                {
+                    ++VanillaRaw.Total;
+                    VanillaRaw.Hits += Class.Y == 3;
+                }
+            }
+            for (int32 Type = 0; Type < 2; ++Type)
+            {
+                const FVoxelOreVein& Vein = Veins.GetVein(VeinOf[Type]);
+                const FVoxelOreVeins::EOutcome Outcome =
+                    FVoxelOreVeins::ApplyGap(FVoxelOreVeins::Draw(Vein, uint64(Data.Seed), Sample.X, Sample.Z, Sample.Y,
+                                                 Sample.Density[Type], Sample.Richness),
+                        Sample.Gap);
+                const bool bOre =
+                    Outcome == FVoxelOreVeins::EOutcome::Ore || Outcome == FVoxelOreVeins::EOutcome::RawOre;
+                OurBlockNoDensity += !(Sample.Density[Type] > 0) && Outcome != FVoxelOreVeins::EOutcome::Nothing;
+                OurOreWithGap += Sample.Gap > 0 && bOre;
+                if (!(Sample.Density[Type] > 0)) continue;
+                // (c) our draws at the samples whose recorded density is positive.
+                ++OurFill.Total;
+                OurFill.Hits += Outcome != FVoxelOreVeins::EOutcome::Nothing;
+                if (Outcome != FVoxelOreVeins::EOutcome::Nothing && Sample.Gap <= 0)
+                {
+                    ++OurOre.Total;
+                    OurOre.Hits += bOre;
+                    OurOre.Sum += Sample.Richness;
+                }
+                if (bOre)
+                {
+                    ++OurRaw.Total;
+                    OurRaw.Hits += Outcome == FVoxelOreVeins::EOutcome::RawOre;
+                }
+            }
+        }
+        for (int32 Type = 0; Type < 2; ++Type)
+        {
+            VanillaFill.Hits += Data.Agreement[Type][0];
+            VanillaFill.Total += Data.Agreement[Type][0] + Data.Agreement[Type][1];
+        }
+    }
+
+    AddInfo(FString::Printf(TEXT("%lld samples, %lld vein blocks, %lld with the toggle in the mask's -1 branch"),
+        Samples, VeinBlocks, MaskBranch));
+    TestEqual(TEXT("recorded samples were read (5575)"), Samples, int64(5575));
+    TestEqual(TEXT("our density functions match the recorded densities"), DensityDiffers, int64(0));
+    TestEqual(TEXT("our richness matches the recorded richness"), RichnessDiffers, int64(0));
+    TestTrue(TEXT("samples in the mask's -1 branch exist"), MaskBranch > 0);
+    TestEqual(TEXT("our mask is -1 where the recorded mask is"), MaskDiffers, int64(0));
+    TestTrue(TEXT("vein blocks were recorded"), VeinBlocks > 0);
+    TestEqual(TEXT("no recorded vein block where the density is not positive"), VeinBlocksNoDensity, int64(0));
+    TestEqual(TEXT("no recorded ore or raw ore where the gap is positive"), OreWithGap, int64(0));
+    TestEqual(TEXT("our draws give no block where the density is not positive"), OurBlockNoDensity, int64(0));
+    TestEqual(TEXT("our draws give no ore or raw ore where the gap is positive"), OurOreWithGap, int64(0));
+
+    SurfaceVeinCheckShare(*this, TEXT("vanilla fill (density 0.7)"), VanillaFill.Hits, VanillaFill.Total, 0.7);
+    SurfaceVeinCheckShare(*this, TEXT("vanilla ore share (mean richness)"), VanillaOre.Hits, VanillaOre.Total,
+        VanillaOre.Total ? VanillaOre.Sum / double(VanillaOre.Total) : 0.5);
+    SurfaceVeinCheckShare(*this, TEXT("vanilla raw share (0.02)"), VanillaRaw.Hits, VanillaRaw.Total, 0.02);
+    SurfaceVeinCheckShare(*this, TEXT("our fill (density 0.7)"), OurFill.Hits, OurFill.Total, 0.7);
+    SurfaceVeinCheckShare(*this, TEXT("our ore share (mean richness)"), OurOre.Hits, OurOre.Total,
+        OurOre.Total ? OurOre.Sum / double(OurOre.Total) : 0.5);
+    SurfaceVeinCheckShare(*this, TEXT("our raw share (0.02)"), OurRaw.Hits, OurRaw.Total, 0.02);
+
+    // (d) columns that hold veins, with the real terrain.
+    const FVoxelDensityTerrain Terrain(
+        World.Preset, SurfaceTestSeed, *Table, FVoxelDensityTerrainSettings(), &World.Biomes, &World.Surface);
+    if (!TestTrue(FString::Printf(TEXT("terrain is valid (%s)"), *Terrain.GetError()), Terrain.IsValid())) return true;
+    const FVoxelOreVeins& TerrainVeins = Terrain.GetSurfaceRules().GetOreVeins();
+    if (!TestTrue(TEXT("the terrain compiled its veins"), TerrainVeins.IsCompiled() && TerrainVeins.Num() > 0))
+        return true;
+    FVoxelDensityTerrainOverrides NoVeins, NoVeinShortcut, NoSurfaceShortcut;
+    NoVeins.bOreVeins = false;
+    NoVeinShortcut.bOreVeinShortcut = false;
+    NoSurfaceShortcut.bSurfaceShortcut = false;
+
+    constexpr int32 ScanRadius = 16;
+    TArray<FSurfaceVeinColumn> Found;
+    int64 WrongBlocks = 0, ScannedVeinBlocks = 0;
+    for (int32 PositionY = -ScanRadius; PositionY <= ScanRadius; ++PositionY)
+    {
+        for (int32 PositionX = -ScanRadius; PositionX <= ScanRadius; ++PositionX)
+        {
+            FVoxelColumn ColumnOn, ColumnOff;
+            TArray<uint16> DenseOn, DenseOff;
+            Terrain.Generate(FIntPoint(PositionX, PositionY), ColumnOn, DenseOn, nullptr);
+            Terrain.Generate(FIntPoint(PositionX, PositionY), ColumnOff, DenseOff, nullptr, NoVeins);
+            if (DenseOn.Num() != DenseOff.Num())
+            {
+                AddError(TEXT("the dense arrays differ in size"));
+                return true;
+            }
+            FSurfaceVeinColumn Column;
+            Column.Position = FIntPoint(PositionX, PositionY);
+            for (int32 Index = 0; Index < DenseOn.Num(); ++Index)
+            {
+                if (DenseOn[Index] == DenseOff[Index]) continue;
+                ++Column.Blocks;
+                const int32 BlockZ =
+                    VoxelConstants::MinZ + Index / (VoxelConstants::ColumnSize * VoxelConstants::ColumnSize);
+                bool bRight = false;
+                for (int32 VeinIndex = 0; VeinIndex < TerrainVeins.Num(); ++VeinIndex)
+                {
+                    const FVoxelOreVein& Vein = TerrainVeins.GetVein(VeinIndex);
+                    const uint16 State = DenseOn[Index];
+                    if (State != Vein.Ore && State != Vein.RawOre && State != Vein.Filler) continue;
+                    if (BlockZ >= Vein.MinZ && BlockZ <= Vein.MaxZ) bRight = true;
+                    Column.bEnd |= BlockZ == Vein.MinZ || BlockZ == Vein.MaxZ;
+                }
+                WrongBlocks += !bRight;
+            }
+            ScannedVeinBlocks += Column.Blocks;
+            if (Column.Blocks > 0) Found.Add(Column);
+        }
+    }
+    AddInfo(FString::Printf(TEXT("%d of %d columns hold vein blocks (%lld in all)"), Found.Num(),
+        (2 * ScanRadius + 1) * (2 * ScanRadius + 1), ScannedVeinBlocks));
+    TestEqual(TEXT("every vein block is its vein's, within the vein's heights"), WrongBlocks, int64(0));
+    TestTrue(TEXT("veins change blocks"), !Found.IsEmpty());
+
+    TArray<FSurfaceVeinColumn> Picked;
+    {
+        TArray<FSurfaceVeinColumn> ByBlocks = Found;
+        ByBlocks.Sort([](const FSurfaceVeinColumn& A, const FSurfaceVeinColumn& B) { return A.Blocks > B.Blocks; });
+        for (int32 Index = 0; Index < FMath::Min(4, ByBlocks.Num()); ++Index)
+            Picked.Add(ByBlocks[Index]);
+        const FSurfaceVeinColumn* End = Found.FindByPredicate([](const FSurfaceVeinColumn& C) { return C.bEnd; });
+        if (TestTrue(TEXT("a column holds a vein block at its vein's lowest or highest height"), End != nullptr))
+            if (!Picked.ContainsByPredicate([End](const FSurfaceVeinColumn& C) { return C.Position == End->Position; }))
+                Picked.Add(*End);
+    }
+    for (const FSurfaceVeinColumn& Column : Picked)
+    {
+        FVoxelColumn ColumnOn, ColumnDirect, ColumnTree;
+        TArray<uint16> DenseOn, DenseDirect, DenseTree;
+        Terrain.Generate(Column.Position, ColumnOn, DenseOn, nullptr);
+        Terrain.Generate(Column.Position, ColumnDirect, DenseDirect, nullptr, NoVeinShortcut);
+        Terrain.Generate(Column.Position, ColumnTree, DenseTree, nullptr, NoSurfaceShortcut);
+        int32 DirectDiffers = 0, TreeDiffers = 0;
+        for (int32 Index = 0; Index < DenseOn.Num(); ++Index)
+        {
+            DirectDiffers += DenseOn[Index] != DenseDirect[Index];
+            TreeDiffers += DenseOn[Index] != DenseTree[Index];
+        }
+        AddInfo(FString::Printf(TEXT("column (%d, %d): %d vein blocks%s"), Column.Position.X, Column.Position.Y,
+            Column.Blocks, Column.bEnd ? TEXT(", one at an end of its vein") : TEXT("")));
+        TestEqual(FString::Printf(TEXT("column (%d, %d): the vein shortcut changes no block"), Column.Position.X,
+                      Column.Position.Y),
+            DirectDiffers, 0);
+        TestEqual(FString::Printf(TEXT("column (%d, %d): the surface shortcut changes no block"), Column.Position.X,
+                      Column.Position.Y),
+            TreeDiffers, 0);
     }
     return true;
 }
