@@ -117,6 +117,12 @@ October 10, 2026. W1 (the fluid core) is done on `feature/water-sky`; its record
 - **Subagents:** the two Sonnet 5.5 pre-commit reviewers, the diff split by path at 1,592 lines, peaked at 72k and 74k.
 - **For W2a:** expect about 150k for the reading list.
 
+## From DN1 (the clock W2a drives)
+
+- DN1 is done ([its record](2026-10-10-WaterSky-DN1.md)), and the branch has merged `c90be1f` (T3 is in). So both of W2a's waits are met; DN0 runs first in the lane order ([DN0's handoff](2026-10-10-WaterSky-Handoff-DN0.md)).
+- **The game tick:** `AVoxelWorld::Tick` takes the frame's ticks at its top (`Clock.TakeTicks`, at most 5 a frame) and calls `Clock.Step(bAdvanceTime)` once per tick. W2a's fluid tick goes right after each `Step`, reading `Clock.GetGameTick()` as the scheduler's tick.
+- The game tick runs while `advance_time` is off, while the day clock is paused, and while the pawn is frozen. It stops only while the game is paused (actor ticks stop). It isn't saved; phase 10 saves it with the pending acts.
+- `Source/UnnamedVoxel/Clock/VoxelWorldClock.h` is the API; `Unnamed.Voxel.Clock.*` pins it.
 ## Short prompt (W2a)
 
 > Water and sky track, session W2a (a parallel lane): fluid wiring and streaming. Work in `C:\dev\projects\Unnamed-water` on `feature/water-sky`, after T3 has merged and DN1's world clock exists (rebase or merge as the manager says). Never touch other worktrees, never push, and make no `CLAUDE.md` edits. Read `Docs/Records/2026-10-10-WaterSky-Handoff-W2a.md` and follow its reading list. Build W2a as in the plan's section 5: the system on `AVoxelWorld`, the `Set` hook, stamped and batched writes, the simulation ring with parking, the stale-mesh fix, the 0.5 ms budget, the game rules and the switches. Keep `Unnamed.Voxel.Fluid.*` green, with goldens and hashes identical. Send the manager a short plan before building.

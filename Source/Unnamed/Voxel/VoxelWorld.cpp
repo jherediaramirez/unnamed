@@ -135,6 +135,7 @@ void AVoxelWorld::BuildLayout()
         StartSeed.Source = World->SeedText.TrimStartAndEnd().IsEmpty() ? EVoxelSeedSource::Random
                                                                        : FVoxelSeed::Parse(World->SeedText).Source;
     }
+    SetupClock();
     FString SeedText;
     if (FParse::Value(FCommandLine::Get(), TEXT("VoxelSeed="), SeedText)) StartSeed = FVoxelSeed::Parse(SeedText);
     FParse::Value(FCommandLine::Get(), TEXT("VoxelShot="), ShotFolder);
@@ -262,6 +263,64 @@ void AVoxelWorld::ConfigurePlayer(FFoundationVitals& Vitals) const
     for (int32 Index = 0; Index < UE_ARRAY_COUNT(Difficulties); ++Index)
         if (World->Difficulty == Difficulties[Index]) Vitals.Difficulty = EFoundationDifficulty(Index);
     Vitals.bNaturalRegeneration = World->GetRule(TEXT("natural_health_regeneration"), true);
+}
+
+void AVoxelWorld::SetupClock()
+{
+    const UFoundationProfile& Profile = *GetDefault<UFoundationProfile>();
+    Clock = FVoxelWorldClock(Profile.TickSeconds, Profile.MaxCatchupSteps);
+    const FUnnamedSavedWorld* World = GetSavedWorld();
+    bAdvanceTime = !World || World->GetRule(TEXT("advance_time"), true);
+    if (World && World->Clock)
+    {
+        FVoxelDayClock Saved;
+        Saved.TotalTicks = World->Clock->TotalTicks;
+        Saved.Rate = World->Clock->Rate;
+        Saved.bPaused = World->Clock->bPaused;
+        Clock.SetDayClock(Saved);
+    }
+    FString Pinned;
+    if (FParse::Value(FCommandLine::Get(), TEXT("VoxelTime="), Pinned))
+    {
+        int64 Ticks = 0;
+        int32 Marker = 0;
+        if (FVoxelWorldClock::FindMarker(Pinned, Marker) || FVoxelWorldClock::ParseTime(Pinned, Ticks))
+        {
+            Clock.SetTotal(FVoxelWorldClock::FindMarker(Pinned, Marker) ? Marker : Ticks);
+            Clock.SetPaused(true);
+            bTimePinned = true;
+        }
+        else
+            UE_LOG(LogUnnamedVoxel, Warning, TEXT("-VoxelTime=%s is not a time or a marker; the clock runs."), *Pinned);
+    }
+    UE_LOG(LogUnnamedVoxel, Display, TEXT("World clock: %s%s"), *Clock.Describe(bAdvanceTime),
+        bTimePinned ? TEXT(" (pinned by -VoxelTime)") : TEXT(""));
+}
+
+void AVoxelWorld::SaveClock() const
+{
+    const FUnnamedSavedWorld* Opened = GetSavedWorld();
+    if (!Opened || bTimePinned) return;
+    FUnnamedSavedWorld World;
+    FString Error;
+    const FVoxelDayClock& Day = Clock.GetDayClock();
+    if (UnnamedSavedWorlds::Load(Opened->Id, World, Error))
+    {
+        World.Clock = FUnnamedSavedWorld::FClock{Day.TotalTicks, Day.Rate, Day.bPaused};
+        if (UnnamedSavedWorlds::Save(World, Error))
+        {
+            UE_LOG(LogUnnamedWorlds, Display, TEXT("Saved world %s's time: %lld ticks%s%s"), *World.Id, Day.TotalTicks,
+                Day.bPaused ? TEXT(", paused") : TEXT(""),
+                Day.Rate != 1.f ? *FString::Printf(TEXT(", rate %s"), *FString::SanitizeFloat(Day.Rate)) : TEXT(""));
+            return;
+        }
+    }
+    UE_LOG(LogUnnamedWorlds, Error, TEXT("World %s's time could not be saved (%s)."), *Opened->Id, *Error);
+}
+
+FString AVoxelWorld::DescribeDebug() const
+{
+    return Clock.Describe(bAdvanceTime);
 }
 
 TSharedRef<const IVoxelTerrain> AVoxelWorld::MakeTerrain() const
@@ -409,6 +468,7 @@ void AVoxelWorld::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     if (UVoxelWorldSubsystem* Streaming = GetStreaming()) Streaming->Stop();
     if (Lights) Lights->Reset();
+    SaveClock();
     Super::EndPlay(EndPlayReason);
 }
 
@@ -428,6 +488,10 @@ FString AVoxelWorld::GetBuildReport() const
 void AVoxelWorld::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    // The world's game ticks for this frame (the water and sky plan, section 2): the day clock steps in each; W2a's
+    // fluids run after each Step.
+    for (int32 Index = 0, Ticks = Clock.TakeTicks(DeltaSeconds); Index < Ticks; ++Index)
+        Clock.Step(bAdvanceTime);
     if (TextureTable)
         TextureTable->SetTick(FMath::FloorToInt64(GetWorld()->GetTimeSeconds() * FoundationBlockFaces::TicksPerSecond));
     // Collision exists once the columns around the spawn do: the player is put there then, once.

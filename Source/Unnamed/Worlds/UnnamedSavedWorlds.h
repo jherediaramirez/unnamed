@@ -44,6 +44,16 @@ struct UNNAMED_API FUnnamedSavedWorld
     // UTC.
     FDateTime Created, LastPlayed;
     int32 Generator = CurrentGenerator;
+    // The overworld's day clock, saved on leaving the world (FVoxelDayClock without the partial tick). world.json's
+    // optional "clocks" key, at version 1: Jesus's decision (the water and sky plan's Q2 (a), 2026-10-10), chosen over
+    // a version bump. Unset in a world never left since DN1, which writes no key; a missing key is a new world's clock.
+    struct FClock
+    {
+        int64 TotalTicks = 0;
+        float Rate = 1;
+        bool bPaused = false;
+    };
+    TOptional<FClock> Clock;
 
     bool IsHardcore() const { return GameMode == TEXT("Hardcore"); }
     bool IsSuperflat() const { return Type == TEXT("Superflat"); }
