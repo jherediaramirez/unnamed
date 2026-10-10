@@ -652,6 +652,7 @@ void UFoundationRuntimeProbe::TickComponent(float Delta, ELevelTick Type, FActor
             PressKey(EKeys::SpaceBar, false);
         }
     }
+    if (Phase >= 0 && bHoldCase && Now - PhaseStarted < MaxHoldSeconds) return;
     if (Phase >= 0 && Now - PhaseStarted < Cases[Phase].Duration) return;
     if (Phase >= 0)
     {
@@ -694,6 +695,7 @@ void UFoundationRuntimeProbe::TickComponent(float Delta, ELevelTick Type, FActor
     PhaseStarted = Now;
     PhaseStartFrame = Frames;
     FrameHook = nullptr;
+    bHoldCase = false;
     FrameSamples.Reset();
     GameSamples.Reset();
     GameMsSum = RenderMsSum = GpuMsSum = 0;
