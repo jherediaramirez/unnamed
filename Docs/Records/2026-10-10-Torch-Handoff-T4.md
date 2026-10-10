@@ -184,3 +184,9 @@ Then:
 
 Report to the manager chat that started you.
 ```
+
+## Short prompt (T3c, the next torch session)
+
+```text
+Torch T3c: the brown stick. Work in the worktree C:\dev\projects\Unnamed-s5 on branch feature/voxel-t3 (merged with feature/voxel-world at 670dc0e), after S9b has committed its VoxelMesher.cpp change; merge feature/voxel-world first. Read Docs/Records/2026-10-10-Torch-Handoff-T4.md in full and section 3 of Docs/Records/2026-10-10-Torch-T3b.md. Goal: Jesus's flame-only look (voxel.TorchGlow 0) with the stick in its real brown, through a stick glow under level 1 (the handoff's T3c route and sweep). Plan first: list every file against the main lane's dirty files, and the pins that would move; it touches VoxelMesher.cpp, the core's FVoxelModelQuad and CreateBlockMaterials.py (M_Block* re-saved), so wait for the go. Send the sweep's pick with captures to the manager as a look call. Report to the manager chat that started you.
+```
