@@ -11,36 +11,54 @@
 //
 // - In view (gap <= ViewRadius): meshed and drawn.
 // - Needed (in view, or beside a column in view): generated, because a section meshes from its 3 x 3 neighbourhood.
-// - Unloaded (gap > ViewRadius + 1 + UnloadMargin): beyond the generated ring plus the margin, as the prompt's
+// - Unloaded (gap > ViewRadius + Stages + UnloadMargin): beyond the generated ring plus the margin, as the prompt's
 //   "unload radius = load radius + 2". Columns between needed and unloaded stay as they are, so moving back and
 //   forth across a column border loads and unloads nothing (hysteresis).
+//
+// With decoration (phase 6, S3) each stage needs the 3 x 3 of the one before it, so the needed set grows by a ring per
+// stage (Stages 3): ring 0 is in view and meshed, ring 1 final, ring 2 decorated and ring 3 generated. Each ring is
+// the one inside it grown by a column on both axes, a dilation, not a circle (scout C: 545, 657, 777 and 905 columns
+// at radius 12). Stages 1 is the needed set without decoration.
 struct UNNAMEDVOXEL_API FVoxelStreamingRings
 {
-    // A needed column's gap is at most ViewRadius + sqrt(2), and a diagonal move adds up to sqrt(2): with less than 2
-    // past the ring, moving back and forth across a border would unload and reload columns at the edge.
+    // A needed column's gap is at most ViewRadius + Stages sqrt(2) (a ring is a dilation on both axes), and a diagonal
+    // move adds up to sqrt(2): with less past the rings, moving back and forth across a border would unload and reload
+    // columns at the corners. Without decoration that is 2 (GetMinUnloadMargin(1)); with it, 3.
     static constexpr int32 MinUnloadMargin = 2;
+    static int32 GetMinUnloadMargin(int32 InStages)
+    {
+        return FMath::CeilToInt32((InStages + 1) * UE_SQRT_2) - InStages;
+    }
+    // Rings past the view: 1 without decoration (generated), 3 with it (final, decorated, generated).
+    static constexpr int32 MaxStages = 3;
 
     FIntPoint Center = FIntPoint::ZeroValue;
     int32 ViewRadius = 0;
     int32 UnloadMargin = MinUnloadMargin;
+    int32 Stages = 1;
 
     FVoxelStreamingRings() = default;
-    // Clamps the radius to at least 0 and the margin to at least MinUnloadMargin.
-    FVoxelStreamingRings(FIntPoint InCenter, int32 InViewRadius, int32 InUnloadMargin);
+    // Clamps the radius to at least 0, the stages to 1..MaxStages and the margin to at least GetMinUnloadMargin.
+    FVoxelStreamingRings(FIntPoint InCenter, int32 InViewRadius, int32 InUnloadMargin, int32 InStages = 1);
 
     // The squared gap in columns between the center column and Column: 0 for the center's 3 x 3.
     int64 GetGapSquared(FIntPoint Column) const;
     bool IsInView(FIntPoint Column) const;
+    // Within Stages rings of the view.
     bool IsNeeded(FIntPoint Column) const;
+    // 0 in view, then the number of columns (on both axes) to the nearest column in view; INDEX_NONE beyond the
+    // needed rings.
+    int32 GetRing(FIntPoint Column) const;
     bool IsBeyondUnload(FIntPoint Column) const;
     // Columns farther than this (as a gap) unload.
-    int32 GetUnloadDistance() const { return ViewRadius + 1 + UnloadMargin; }
+    int32 GetUnloadDistance() const { return ViewRadius + Stages + UnloadMargin; }
     // Every needed column lies within this many columns of the center on both axes.
-    int32 GetNeededExtent() const { return ViewRadius + 2; }
+    int32 GetNeededExtent() const { return ViewRadius + 1 + Stages; }
 
     bool operator==(const FVoxelStreamingRings& Other) const
     {
-        return Center == Other.Center && ViewRadius == Other.ViewRadius && UnloadMargin == Other.UnloadMargin;
+        return Center == Other.Center && ViewRadius == Other.ViewRadius && UnloadMargin == Other.UnloadMargin &&
+            Stages == Other.Stages;
     }
 };
 

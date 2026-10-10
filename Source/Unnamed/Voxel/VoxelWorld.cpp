@@ -5,6 +5,7 @@
 #include "Components/ExponentialHeightFogComponent.h"
 #include "Components/SkyAtmosphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Decoration/VoxelDecorator.h"
 #include "DynamicRHI.h"
 #include "Engine/ExponentialHeightFog.h"
 #include "Engine/GameViewportClient.h"
@@ -747,6 +748,80 @@ void AVoxelWorld::FindCaveShots()
                         }
                     }
                 }
+    // The cave wall (S3; scout E's ore look calls need it): a covered camera with headroom facing a wall 3 to 10 blocks
+    // away, scored by the ores (ids ending in _ore) on the wall's 9 x 5 face (eye level down to the floor's top, not
+    // the floor), doubled when an opening to the sky lies within 16 blocks of the camera (daylight on the stone).
+    TSet<uint16> Ores;
+    if (const FVoxelDecorator* Decorator = Pipeline->GetDecorator())
+        for (const TPair<uint16, FString>& Ore : Decorator->GetOreStates())
+            if (Ore.Value.EndsWith(TEXT("_ore"))) Ores.Add(Ore.Key);
+    int32 BestWall = 0, WallOres = 0, WallDistance = 0;
+    bool bWallLit = false;
+    FIntVector WallCell = FIntVector::ZeroValue;
+    FIntPoint WallDirection = FIntPoint::ZeroValue;
+    if (!Ores.IsEmpty())
+        for (int32 CY = Center.Y - 6; CY <= Center.Y + 6; ++CY)
+            for (int32 CX = Center.X - 6; CX <= Center.X + 6; ++CX)
+                for (int32 LocalY = 0; LocalY < Size; LocalY += 2)
+                    for (int32 LocalX = 0; LocalX < Size; LocalX += 2)
+                    {
+                        const int32 X = CX * Size + LocalX, Y = CY * Size + LocalY;
+                        for (int32 Z = VoxelConstants::MinZ + 6; Z < VoxelConstants::MaxZ - 2; ++Z)
+                        {
+                            if (!Covered(X, Y, Z)) break;
+                            if (Get(X, Y, Z) != 0 || !States.Get(Get(X, Y, Z - 1)).bSolid || !IsOpen(X, Y, Z + 1))
+                                continue;
+                            // Daylight: an open run at eye height reaching a cell under the sky.
+                            bool bLit = false;
+                            for (const FIntPoint& Direction : Directions)
+                                for (int32 Step = 1; Step <= 16 && !bLit; ++Step)
+                                {
+                                    const int32 SX = X + Direction.X * Step, SY = Y + Direction.Y * Step;
+                                    if (!IsOpen(SX, SY, Z + 1)) break;
+                                    bLit = IsSkyOpen(SX, SY, Z + 1);
+                                }
+                            for (const FIntPoint& Direction : Directions)
+                            {
+                                int32 Distance = 1;
+                                while (Distance <= 10 &&
+                                    IsOpen(X + Direction.X * Distance, Y + Direction.Y * Distance, Z + 1))
+                                    ++Distance;
+                                if (Distance < 3 || Distance > 10) continue;
+                                // The first solid cell of each line of sight across the face.
+                                const FIntPoint Across(-Direction.Y, Direction.X);
+                                int32 Found = 0;
+                                for (int32 U = -4; U <= 4; ++U)
+                                    for (int32 V = -1; V <= 3; ++V)
+                                        for (int32 Depth = Distance - 2; Depth <= Distance + 2; ++Depth)
+                                        {
+                                            const int32 WX = X + Direction.X * Depth + Across.X * U,
+                                                        WY = Y + Direction.Y * Depth + Across.Y * U, WZ = Z + 1 + V;
+                                            const uint16 State = Get(WX, WY, WZ);
+                                            if (!States.Get(State).bSolid) continue;
+                                            Found += Ores.Contains(State);
+                                            break;
+                                        }
+                                const int32 Score = Found * (bLit ? 2 : 1);
+                                if (Found >= 2 && Score > BestWall)
+                                {
+                                    BestWall = Score;
+                                    WallOres = Found;
+                                    WallDistance = Distance;
+                                    bWallLit = bLit;
+                                    WallCell = FIntVector(X, Y, Z);
+                                    WallDirection = Direction;
+                                }
+                            }
+                        }
+                    }
+    if (BestWall)
+        ShotCaveViews.Emplace(TEXT("cave-wall"), Blocks(WallCell.X + .5, WallCell.Y + .5, WallCell.Z + 1.6),
+            Blocks(WallCell.X + .5 + WallDirection.X * WallDistance, WallCell.Y + .5 + WallDirection.Y * WallDistance,
+                WallCell.Z + 1.5));
+    UE_LOG(LogUnnamedVoxel, Display, TEXT("Cave wall shot: %s (%d ores on the face, %d blocks away%s, at %s)"),
+        BestWall ? TEXT("found") : TEXT("not found"), WallOres, WallDistance, bWallLit ? TEXT(", daylight") : TEXT(""),
+        *WallCell.ToString());
+
     const int32 Length = BestRun % 100;
     if (Length >= 8)
         ShotCaveViews.Emplace(TEXT("cave"), Blocks(BestCell.X + .5, BestCell.Y + .5, BestCell.Z + 1.5),

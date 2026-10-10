@@ -2,7 +2,6 @@
 #include "Async/Fundamental/Scheduler.h"
 #include "Biome/VoxelBiomeSource.h"
 #include "Camera/PlayerCameraManager.h"
-#include "Decoration/VoxelDecorationPreview.h"
 #include "Decoration/VoxelDecorator.h"
 #include "Decoration/VoxelFeatureGraph.h"
 #include "Engine/World.h"
@@ -77,24 +76,27 @@ void UVoxelWorldSubsystem::Start(AVoxelWorld& InOwner, TSharedRef<const FVoxelBl
     Settings.MeshOptions.TintBlend = VoxelConsole::GetTintBlend();
     Settings.MaxTasksInFlight = VoxelConsole::GetMaxTasksInFlight();
     Settings.bEdgeWalls = VoxelConsole::CVarEdgeWalls.GetValueOnGameThread();
-    bDecorationPreview = VoxelConsole::CVarDecorationPreview.GetValueOnGameThread();
-    if (bDecorationPreview)
+    bDecoration = VoxelConsole::CVarDecoration.GetValueOnGameThread();
+    bFreezeLast = VoxelConsole::CVarDecorationFreezeLast.GetValueOnGameThread();
+    if (bDecoration && Terrain->GetFeatures() && Terrain->GetBiomeSource())
     {
-        // Captures only, until S3: columns built decorated through the oracle.
-        const TSharedPtr<const FVoxelFeatureGraph> Features = Terrain->GetFeatures();
+        // Streaming decorates (phase 6, S3): Generate, Decorate and Finalize before a column meshes.
         const TSharedRef<FVoxelDecorator> Decorator = MakeShared<FVoxelDecorator>();
+        FVoxelDecorationOptions Options;
+        Options.bFreezeLast = bFreezeLast;
         FString Error;
-        if (Features && Terrain->GetBiomeSource() &&
-            Decorator->Initialize(
-                *Features, *Table, Terrain->GetBiomeSource()->GetTable(), Terrain->GetSeed(), {}, &Error))
+        if (Decorator->Initialize(*Terrain->GetFeatures(), *Table, Terrain->GetBiomeSource()->GetTable(),
+                Terrain->GetSeed(), Options, &Error))
         {
-            Settings.Preview = MakeShared<FVoxelDecorationPreview>(Terrain, Decorator);
-            UE_LOG(LogUnnamedVoxel, Display, TEXT("voxel.Decoration.Preview: %s"), *Decorator->Describe());
+            Settings.Decorator = Decorator;
+            UE_LOG(LogUnnamedVoxel, Display, TEXT("voxel.Decoration: %s; freeze pass %s"), *Decorator->Describe(),
+                bFreezeLast ? TEXT("at Finalize") : TEXT("inside the snapshot (S2's order)"));
         }
         else
-            UE_LOG(LogUnnamedVoxel, Warning, TEXT("voxel.Decoration.Preview: no decoration for this terrain (%s)"),
-                Error.IsEmpty() ? TEXT("no decoration data or biomes") : *Error);
+            UE_LOG(LogUnnamedVoxel, Warning, TEXT("voxel.Decoration: no decoration for this terrain (%s)"), *Error);
     }
+    else if (bDecoration)
+        UE_LOG(LogUnnamedVoxel, Display, TEXT("voxel.Decoration: this terrain has no decoration data or biomes"));
     Pipeline = MakeUnique<FVoxelColumnPipeline>(MoveTemp(Table), MoveTemp(Terrain), Settings);
     LastFocus = InitialFocus;
     StartSeconds = LogSeconds = FPlatformTime::Seconds();
@@ -160,8 +162,11 @@ void UVoxelWorldSubsystem::Tick(float DeltaTime)
     if (!FirstTickSeconds) FirstTickSeconds = Start;
     if (FirstViewReport.IsEmpty()) ++FirstViewFrames;
 
-    // A preview switched on or off (captures pass it with -ExecCmds, after the world started) rebuilds the world.
-    if (VoxelConsole::CVarDecorationPreview.GetValueOnGameThread() != bDecorationPreview && Owner.IsValid())
+    // Decoration switched on or off, or the freeze moved (captures pass them with -ExecCmds, after the world started),
+    // rebuilds the world.
+    if ((VoxelConsole::CVarDecoration.GetValueOnGameThread() != bDecoration ||
+            VoxelConsole::CVarDecorationFreezeLast.GetValueOnGameThread() != bFreezeLast) &&
+        Owner.IsValid())
     {
         Owner->Regenerate(Owner->GetSeed());
         return;
@@ -317,7 +322,23 @@ void UVoxelWorldSubsystem::ReportFirstView()
                                           "%d, %u workers, %d jobs in flight\n"),
         Rings.ViewRadius, Stats.InView, Stats.Needed, Rings.GetUnloadDistance(),
         LowLevelTasks::FScheduler::Get().GetNumWorkers(), VoxelConsole::GetMaxTasksInFlight());
+    Report += FString::Printf(TEXT("  Rings: %d in view, %d final, %d decorated, %d generated (decoration %s)\n"),
+        Stats.NeededPerRing[0], Stats.NeededPerRing[1], Stats.NeededPerRing[2], Stats.NeededPerRing[3],
+        Pipeline->IsDecorating() ? (bFreezeLast ? TEXT("on") : TEXT("on, freeze inside the snapshot")) : TEXT("off"));
     Report += DescribeStreamingStage(TEXT("Generate columns"), Stats.Generate);
+    if (Pipeline->IsDecorating())
+    {
+        Report += DescribeStreamingStage(TEXT("Decorate columns"), Stats.Decorate);
+        Report += DescribeStreamingStage(TEXT("Finalize columns"), Stats.Finalize);
+        Report += FString::Printf(TEXT("  Worker time to view: %.0f ms (Generate %.0f, Decorate %.0f, Finalize %.0f, "
+                                       "Mesh %.0f, streams %.0f)\n"),
+            Stats.Generate.TotalMs + Stats.Decorate.TotalMs + Stats.Finalize.TotalMs + Stats.Mesh.TotalMs +
+                Stats.Streams.TotalMs,
+            Stats.Generate.TotalMs, Stats.Decorate.TotalMs, Stats.Finalize.TotalMs, Stats.Mesh.TotalMs,
+            Stats.Streams.TotalMs);
+        Report += FString::Printf(TEXT("  Held: %d snapshots (%.1f MB), %d buckets (%.1f MB)\n"), Stats.Snapshots,
+            double(Stats.SnapshotBytes) / (1024. * 1024.), Stats.Buckets, double(Stats.BucketBytes) / (1024. * 1024.));
+    }
     Report += DescribeStreamingStage(TEXT("Mesh columns"), Stats.Mesh);
     Report += DescribeStreamingStage(TEXT("Stream sets and Lumen cards"), Stats.Streams);
     Report += FString::Printf(
@@ -345,6 +366,34 @@ void UVoxelWorldSubsystem::ReportFirstView()
     FirstViewReport = MoveTemp(Report);
 }
 
+FString UVoxelWorldSubsystem::DescribeStages() const
+{
+    if (!Pipeline) return TEXT("Streaming: no voxel world is running");
+    const FVoxelPipelineStats Stats = Pipeline->GetStats();
+    const FVoxelStreamingRings& Rings = Pipeline->GetRings();
+    FString Out = FString::Printf(TEXT("Streaming: center (%d, %d), decoration %s; rings %d in view, %d final, %d "
+                                       "decorated, %d generated; unload beyond %d\n"),
+        Rings.Center.X, Rings.Center.Y,
+        Pipeline->IsDecorating() ? (bFreezeLast ? TEXT("on") : TEXT("on (freeze inside the snapshot)")) : TEXT("off"),
+        Stats.NeededPerRing[0], Stats.NeededPerRing[1], Stats.NeededPerRing[2], Stats.NeededPerRing[3],
+        Rings.GetUnloadDistance());
+    Out += FString::Printf(TEXT("  Records %d: %d final (%.1f MB), %d snapshots (%.1f MB), %d decorated with %d "
+                                "buckets held (%.1f MB); jobs %d (generating %d, decorating %d, finalizing %d, "
+                                "meshing %d)\n"),
+        Stats.Columns, Stats.Generated, double(Stats.ColumnBytes) / (1024. * 1024.), Stats.Snapshots,
+        double(Stats.SnapshotBytes) / (1024. * 1024.), Stats.Decorated, Stats.Buckets,
+        double(Stats.BucketBytes) / (1024. * 1024.), Pipeline->GetJobCount(), Stats.Generating, Stats.Decorating,
+        Stats.Finalizing, Stats.Meshing);
+    Out += DescribeStreamingStage(TEXT("Generate"), Stats.Generate);
+    Out += DescribeStreamingStage(TEXT("Decorate"), Stats.Decorate);
+    Out += DescribeStreamingStage(TEXT("Finalize"), Stats.Finalize);
+    Out += DescribeStreamingStage(TEXT("Mesh"), Stats.Mesh);
+    Out += FString::Printf(TEXT("  Recompute-on-miss: %lld snapshots regenerated, %lld Decorates run again; %lld "
+                                "buckets aimed at final columns dropped; %lld results dropped, %lld jobs cancelled"),
+        Stats.Regenerated, Stats.Redecorated, Stats.BucketsDropped, Stats.Dropped, Stats.Cancelled);
+    return Out;
+}
+
 void UVoxelWorldSubsystem::UpdateStats()
 {
     const double Now = FPlatformTime::Seconds();
@@ -368,17 +417,25 @@ void UVoxelWorldSubsystem::UpdateStats()
     SET_MEMORY_STAT(STAT_VoxelCacheMemory, Stats.CacheBytes);
     if (!bLog) return;
     // Only while something streams, so a still world keeps the log quiet.
+    // Decoration's stages go at the end, so readers of the earlier fields (the flight) keep working.
+    const FString Stages = Pipeline->IsDecorating()
+        ? FString::Printf(TEXT("; stages: %d snapshots %.1f MB, %d decorated, %d buckets %.1f MB, regenerated %lld, "
+                               "redecorated %lld, buckets dropped %lld, cancelled %lld"),
+              Stats.Snapshots, double(Stats.SnapshotBytes) / (1024. * 1024.), Stats.Decorated, Stats.Buckets,
+              double(Stats.BucketBytes) / (1024. * 1024.), Stats.Regenerated, Stats.Redecorated, Stats.BucketsDropped,
+              Stats.Cancelled)
+        : FString();
     if (LogApplied || Pipeline->GetJobCount() || Stats.Ready)
         UE_LOG(LogUnnamedVoxel, Display,
             TEXT("Streaming: center (%d, %d), %d of %d in view on screen, %d generated (%d needed), %d jobs, %d "
                  "waiting; applied %d in %.2f ms, worst frame %.2f ms (plan %.2f, jobs %.2f, apply %.2f; budget %.1f); "
                  "columns %.1f MB, cache %.1f MB, "
-                 "%lld dropped"),
+                 "%lld dropped%s"),
             Pipeline->GetRings().Center.X, Pipeline->GetRings().Center.Y, Stats.InViewOnScreen, Stats.InView,
             Stats.Generated, Stats.Needed, Pipeline->GetJobCount(), Stats.Ready, LogApplied, LogApplyMs,
             LogWorstFrame.TickMs, LogWorstFrame.PlanMs, LogWorstFrame.JobsMs, LogWorstFrame.ApplyMs,
             VoxelConsole::CVarApplyBudgetMs.GetValueOnGameThread(), double(Stats.ColumnBytes) / (1024. * 1024.),
-            double(Stats.CacheBytes) / (1024. * 1024.), Stats.Dropped);
+            double(Stats.CacheBytes) / (1024. * 1024.), Stats.Dropped, *Stages);
     LogSeconds = Now;
     LogApplied = 0;
     LogApplyMs = 0;

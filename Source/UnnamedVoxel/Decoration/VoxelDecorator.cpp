@@ -5,6 +5,7 @@
 #include "Decoration/VoxelFeatureGraph.h"
 #include "Decoration/VoxelFeatureOrder.h"
 #include "Storage/VoxelColumn.h"
+#include "Terrain/VoxelTerrain.h"
 #include "VoxelConstants.h"
 
 namespace
@@ -398,12 +399,30 @@ void FVoxelDecorator::Finalize(const FVoxelColumn& Snapshot, TConstArrayView<con
     if (Stats) *Stats = Local;
 }
 
-void FVoxelDecorator::DecorateAlone(FIntPoint Column, FGetSnapshot GetSnapshot, FVoxelColumn& Out) const
+void FVoxelDecorator::GenerateSnapshot(
+    const IVoxelTerrain& Terrain, FIntPoint Column, FVoxelColumn& Out, TArray<uint16>& Dense) const
 {
-    TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe> Snapshots[5][5];
+    if (Options.bFreezeLast)
+        Terrain.GenerateSnapshot(Column, Out, Dense);
+    else
+        Terrain.Generate(Column, Out, Dense);
+}
+
+void FVoxelDecorator::FinishColumn(const IVoxelTerrain& Terrain, FVoxelColumn& Column) const
+{
+    if (Options.bFreezeLast) Terrain.FinishColumn(Column);
+}
+
+void FVoxelDecorator::DecorateAlone(const IVoxelTerrain& Terrain, FIntPoint Column, FVoxelColumn& Out) const
+{
+    TUniquePtr<FVoxelColumn> Snapshots[5][5];
+    TArray<uint16> Dense;
     for (int32 DY = -2; DY <= 2; ++DY)
         for (int32 DX = -2; DX <= 2; ++DX)
-            Snapshots[DY + 2][DX + 2] = GetSnapshot(Column + FIntPoint(DX, DY));
+        {
+            Snapshots[DY + 2][DX + 2] = MakeUnique<FVoxelColumn>();
+            GenerateSnapshot(Terrain, Column + FIntPoint(DX, DY), *Snapshots[DY + 2][DX + 2], Dense);
+        }
     FVoxelWriteLog Logs[9];
     const FVoxelWriteBucket* Incoming[9] = {};
     for (int32 DY = -1; DY <= 1; ++DY)
@@ -418,6 +437,7 @@ void FVoxelDecorator::DecorateAlone(FIntPoint Column, FGetSnapshot GetSnapshot, 
             Incoming[FVoxelWriteLog::GetBucket(DX, DY)] = &Log.Buckets[FVoxelWriteLog::GetBucket(-DX, -DY)];
         }
     Finalize(*Snapshots[2][2], Incoming, Out);
+    FinishColumn(Terrain, Out);
 }
 
 FString FVoxelDecorator::Describe() const

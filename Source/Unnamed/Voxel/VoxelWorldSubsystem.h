@@ -60,6 +60,8 @@ public:
     // How the first view got on screen after Start: stage timings, quads, memory, cards and the apply. Empty until
     // then.
     const FString& GetFirstViewReport() const { return FirstViewReport; }
+    // The streaming stages now (voxel.Info): rings, per-stage times and counts, what is held, recompute-on-miss.
+    FString DescribeStages() const;
     int32 GetChunkCount() const { return Chunks.Num(); }
     int32 GetSectionMeshCount() const;
     // This frame's chunk work on the game thread, and the worst frame since Start.
@@ -86,8 +88,10 @@ private:
 
     TUniquePtr<FVoxelColumnPipeline> Pipeline;
     TWeakObjectPtr<AVoxelWorld> Owner;
-    // voxel.Decoration.Preview as the pipeline was started with it; a change rebuilds the world.
-    bool bDecorationPreview = false;
+    // voxel.Decoration and voxel.Decoration.FreezeLast as the pipeline was started with them; a change rebuilds the
+    // world.
+    bool bDecoration = false;
+    bool bFreezeLast = true;
     UPROPERTY(Transient)
     TMap<FIntPoint, TObjectPtr<UVoxelChunkComponent>> Chunks;
     UPROPERTY(Transient)

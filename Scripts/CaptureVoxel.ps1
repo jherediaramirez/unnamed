@@ -6,7 +6,7 @@ param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[in
 # so the outside shots show the cut through the world. Without -World it shows the dev seed; -World <id> opens that
 # saved world from -WorldsDir (default Saved/Worlds). -Flight flies phase 3's acceptance flight instead (FVoxelFlight):
 # flight.csv with every frame, flight.txt per leg and four screenshots, with the edge fog and no edge walls.
-# -Caves adds views inside a cave and onto still lava when the streamed area has them. -FlightSeconds stops it early (a quick look at the fog from the start shot). -Edits first carves a pit across a
+# -Caves adds views inside a cave, onto a cave wall with ores (cave-wall, preferring daylit walls) and onto still lava when the streamed area has them. -FlightSeconds stops it early (a quick look at the fog from the start shot). -Edits first carves a pit across a
 # column corner and builds a pillar through the authority, then adds an "edits" shot of them.
 # -SpawnAt X,Y starts the spawn search there instead of at the origin, to shoot a chosen place; -SpawnExact checks every
 # column within 32 blocks of it against the real terrain, so low dry ground such as a swamp's counts. -NoSurfaceRules shows

@@ -684,6 +684,9 @@ FString VoxelBench::RunDecorate(
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelBench_RunDecorate);
     FString Report = Decorator.Describe() + TEXT("\n");
+    Report += FString::Printf(TEXT("Freeze pass: %s\n"),
+        Decorator.IsFreezeLast() ? TEXT("at Finalize, after the merge (FreezeLast 1)")
+                                 : TEXT("inside the snapshot, S2's order (FreezeLast 0)"));
     uint64 Hashes[2] = {};
     // The exhaustive pass first: it warms caches and allocators, so the gate figures come from the second.
     for (int32 Pass = 1; Pass >= 0; --Pass)
@@ -710,6 +713,7 @@ FString VoxelBench::RunDecorate(
         Report += DensityBenchStage(TEXT("Generate column"), Area.GenerateMs) + TEXT("\n");
         Report += DensityBenchStage(TEXT("Decorate column"), Area.DecorateMs) + TEXT("\n");
         Report += DensityBenchStage(TEXT("Finalize column"), Area.FinalizeMs) + TEXT("\n");
+        Report += DensityBenchStage(TEXT("  of which the freeze"), Area.FinishMs) + TEXT("\n");
         Report += FString::Printf(TEXT("  Whole column (means): %.3f ms\n"), Whole);
         if (Pass) continue;
 
@@ -755,5 +759,147 @@ FString VoxelBench::RunDecorate(
     }
     Report += FString::Printf(TEXT("Final column hashes: early-out on 0x%016llx, off 0x%016llx (%s)"), Hashes[0],
         Hashes[1], Hashes[0] == Hashes[1] ? TEXT("equal: the early-out is exact") : TEXT("DIFFER"));
+    return Report;
+}
+
+FString VoxelBench::RunFreezeDiff(const FVoxelDecorator& Last, const FVoxelDecorator& First,
+    const IVoxelTerrain& Terrain, int32 Radius, TOptional<FIntPoint> Center)
+{
+    TRACE_CPUPROFILER_EVENT_SCOPE(VoxelBench_RunFreezeDiff);
+    const FVoxelBlockTable& Table = Last.GetTable();
+    const uint16 Snow = Table.FindState(TEXT("snow"));
+    FString Report = FString::Printf(TEXT("Freeze pass at Finalize (FreezeLast 1) against inside the snapshot "
+                                          "(FreezeLast 0), radius %d:\n"),
+        Radius);
+    FIntPoint At = Center.Get(FIntPoint::ZeroValue);
+    if (!Center)
+    {
+        // The snowiest column top of a coarse grid near the origin, nearest first on ties.
+        constexpr int32 Step = 8, Reach = 16, Side = 2 * Reach + 1;
+        TArray<int32> Snowy;
+        Snowy.SetNumZeroed(Side * Side);
+        ParallelFor(Side * Side,
+            [&](int32 Index)
+            {
+                FVoxelColumn Column;
+                TArray<uint16> Dense;
+                Terrain.Generate(
+                    FIntPoint((Index % Side - Reach) * Step, (Index / Side - Reach) * Step), Column, Dense);
+                for (int32 Y = 0; Y < VoxelConstants::ColumnSize; ++Y)
+                    for (int32 X = 0; X < VoxelConstants::ColumnSize; ++X)
+                        Snowy[Index] +=
+                            Column.GetState(X, Y, Column.GetHeight(EVoxelHeightmap::WorldSurface, X, Y)) == Snow;
+            });
+        int32 Best = 0;
+        const auto Distance = [](int32 Index)
+        { return FMath::Square(Index % Side - Reach) + FMath::Square(Index / Side - Reach); };
+        for (int32 Index = 1; Index < Side * Side; ++Index)
+            if (Snowy[Index] > Snowy[Best] || (Snowy[Index] == Snowy[Best] && Distance(Index) < Distance(Best)))
+                Best = Index;
+        At = FIntPoint((Best % Side - Reach) * Step, (Best / Side - Reach) * Step);
+        Report +=
+            FString::Printf(TEXT("  Snowiest of %d columns every %d columns within %d of the origin: (%d, %d), %d "
+                                 "snow layers on its top\n"),
+                Side * Side, Step, Reach * Step, At.X, At.Y, Snowy[Best]);
+    }
+    FVoxelDecoratedArea LastArea, FirstArea;
+    FVoxelDecoratedArea::Build(Last, Terrain, At, Radius, true, false, LastArea);
+    FVoxelDecoratedArea::Build(First, Terrain, At, Radius, true, false, FirstArea);
+    const auto HashArea = [](const FVoxelDecoratedArea& Area)
+    {
+        TArray<uint64> Columns;
+        for (const TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>& Column : Area.Columns)
+            Columns.Add(HashColumnBlocks(*Column));
+        return CityHash64(reinterpret_cast<const char*>(Columns.GetData()), Columns.Num() * sizeof(uint64));
+    };
+    TSet<uint16> OreStates;
+    for (const TPair<uint16, FString>& Ore : Last.GetOreStates())
+        OreStates.Add(Ore.Key);
+    const int32 Side = 2 * Radius + 1;
+    // A world cell's state in First's columns, or MAX_uint16 outside the area.
+    const auto FirstAt = [&](int64 X, int64 Y, int32 Z) -> uint16
+    {
+        const int64 CX = FMath::FloorToInt64(double(X) / VoxelConstants::ColumnSize) - At.X + Radius,
+                    CY = FMath::FloorToInt64(double(Y) / VoxelConstants::ColumnSize) - At.Y + Radius;
+        if (CX < 0 || CY < 0 || CX >= Side || CY >= Side) return MAX_uint16;
+        return FirstArea.Columns[CY * Side + CX]->GetState(int32(X & 15), int32(Y & 15), Z);
+    };
+    int64 Differing = 0, Explained = 0, SnowLayers = 0, OnlyLast = 0;
+    TArray<FString> Unexplained;
+    struct FDiffCell
+    {
+        FIntVector Position;
+        uint16 Last = 0, First = 0;
+        bool bSnowBeside = false;
+    };
+    TArray<FDiffCell> Cells;
+    TArray<uint16> LastStates, FirstStates;
+    LastStates.SetNumUninitialized(FVoxelSection::Volume);
+    FirstStates.SetNumUninitialized(FVoxelSection::Volume);
+    for (int32 Index = 0; Index < Side * Side; ++Index)
+    {
+        const FVoxelColumn& LastColumn = *LastArea.Columns[Index];
+        const FVoxelColumn& FirstColumn = *FirstArea.Columns[Index];
+        const FIntPoint Position = FirstColumn.GetPosition();
+        for (int32 Section = 0; Section < VoxelConstants::SectionCount; ++Section)
+        {
+            LastColumn.GetSection(Section).Expand(LastStates);
+            FirstColumn.GetSection(Section).Expand(FirstStates);
+            for (int32 Cell = 0; Cell < FVoxelSection::Volume; ++Cell)
+            {
+                SnowLayers += FirstStates[Cell] == Snow;
+                if (LastStates[Cell] == FirstStates[Cell]) continue;
+                ++Differing;
+                const int32 X = Cell & 15, Y = Cell >> 4 & 15, Z = VoxelConstants::MinZ + Section * 16 + (Cell >> 8);
+                const int64 WX = int64(Position.X) * 16 + X, WY = int64(Position.Y) * 16 + Y;
+                bool bSnowBeside = false;
+                const int32 Faces[6][3] = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+                for (const int32* Face : Faces)
+                    bSnowBeside |= FirstAt(WX + Face[0], WY + Face[1], Z + Face[2]) == Snow;
+                OnlyLast += OreStates.Contains(LastStates[Cell]) && !OreStates.Contains(FirstStates[Cell]);
+                Cells.Add({FIntVector(int32(WX), int32(WY), Z), LastStates[Cell], FirstStates[Cell], bSnowBeside});
+            }
+        }
+    }
+    // Beside a snow layer: Decorate saw air there with the freeze moved after it. In the same blob as such a cell (the
+    // same ore state within 16 blocks): an exposed candidate draws a random number for the discard, so the blob's
+    // later candidates draw differently.
+    const auto IsOre = [&](const FDiffCell& Cell)
+    { return OreStates.Contains(Cell.Last) || OreStates.Contains(Cell.First); };
+    const auto SharesOre = [&](const FDiffCell& A, const FDiffCell& B)
+    {
+        for (const uint16 State : {A.Last, A.First})
+            if (OreStates.Contains(State) && (State == B.Last || State == B.First)) return true;
+        return false;
+    };
+    int64 SameBlob = 0;
+    for (const FDiffCell& Cell : Cells)
+    {
+        if (IsOre(Cell) && Cell.bSnowBeside)
+        {
+            ++Explained;
+            continue;
+        }
+        bool bNear = false;
+        for (const FDiffCell& Other : Cells)
+            bNear |= Other.bSnowBeside && IsOre(Cell) && SharesOre(Cell, Other) &&
+                FMath::Abs(Other.Position.X - Cell.Position.X) <= 16 &&
+                FMath::Abs(Other.Position.Y - Cell.Position.Y) <= 16 &&
+                FMath::Abs(Other.Position.Z - Cell.Position.Z) <= 16;
+        if (bNear)
+            ++SameBlob;
+        else if (Unexplained.Num() < 8)
+            Unexplained.Add(FString::Printf(TEXT("(%d, %d, %d) states %u / %u"), Cell.Position.X, Cell.Position.Y,
+                Cell.Position.Z, uint32(Cell.Last), uint32(Cell.First)));
+    }
+    Report += FString::Printf(
+        TEXT("  Center (%d, %d): %d columns; %lld snow layers (FreezeLast 0)\n"), At.X, At.Y, Side * Side, SnowLayers);
+    Report += FString::Printf(
+        TEXT("  Hashes: FreezeLast 1 0x%016llx, FreezeLast 0 0x%016llx\n"), HashArea(LastArea), HashArea(FirstArea));
+    Report +=
+        FString::Printf(TEXT("  Cells that differ: %lld; an ore or its host beside a snow layer: %lld, in the same "
+                             "blob as one: %lld (ore only with FreezeLast 1: %lld); unexplained: %lld%s%s"),
+            Differing, Explained, SameBlob, OnlyLast, Differing - Explained - SameBlob,
+            Unexplained.IsEmpty() ? TEXT("") : TEXT(": "), *FString::Join(Unexplained, TEXT(", ")));
     return Report;
 }

@@ -17,11 +17,11 @@ namespace VoxelConsole
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarTintBlend;
     // Debug only, not a setting: columns at the edge of the view mesh against air (captures' cut through the world).
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarEdgeWalls;
-    // Decoration (phase 6): on, the bench and gate columns are decorated; off is the control that keeps them as
-    // Generate leaves them. Streaming decorates only through the preview until S3.
+    // Decoration (phase 6): on, streamed, bench and gate columns are decorated; off is the control that keeps them as
+    // Generate leaves them. Read when a world starts; a change rebuilds it.
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarDecoration;
-    // Captures only, until S3: streaming builds each column decorated through the oracle. Read when a world starts.
-    extern UNNAMED_API TAutoConsoleVariable<bool> CVarDecorationPreview;
+    // With decoration, where the freeze pass runs: at Finalize (on, S3) or inside the snapshot (off, S2's order).
+    extern UNNAMED_API TAutoConsoleVariable<bool> CVarDecorationFreezeLast;
 
     // Tasks in flight when voxel.MaxTasksInFlight is 0: twice the task workers, so workers never idle between
     // finishing one job and the game thread queuing the next.
@@ -30,6 +30,6 @@ namespace VoxelConsole
     UNNAMED_API int32 GetTintBlend();
 
     // The text voxel.Info prints: the world range, the dev seed, every voxel.* variable with its value and what set
-    // it, the derived limits and the mesh backend.
-    UNNAMED_API FString DescribeInfo();
+    // it, the derived limits and the mesh backend; with World's voxel world running, its streaming stages too.
+    UNNAMED_API FString DescribeInfo(const UWorld* World = nullptr);
 }

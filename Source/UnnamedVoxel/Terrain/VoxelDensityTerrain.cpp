@@ -229,6 +229,21 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
     Generate(Position, Out, Dense, nullptr);
 }
 
+void FVoxelDensityTerrain::GenerateSnapshot(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const
+{
+    FVoxelDensityTerrainOverrides Overrides;
+    Overrides.bFreeze = false;
+    Generate(Position, Out, Dense, nullptr, Overrides);
+}
+
+void FVoxelDensityTerrain::FinishColumn(FVoxelColumn& Final) const
+{
+    TRACE_CPUPROFILER_EVENT_SCOPE(VoxelDensityTerrain_FinishColumn);
+    // Where Generate runs the freeze pass: with the rules, over the column's biomes.
+    if (IsValid() && SurfaceRules.IsCompiled() && Settings.bSurfaceRules && !Final.GetBiomes().IsEmpty())
+        Freeze.ApplyToColumn(Final, Biomes.GetTable(), Climate, SeaLevel);
+}
+
 void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense,
     FVoxelDensityTerrainTimings* Timings, const FVoxelDensityTerrainOverrides& Overrides) const
 {
@@ -286,7 +301,7 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
         if (SurfaceRules.IsCompiled() && Overrides.bSurfaceRules.Get(Settings.bSurfaceRules) &&
             !Out.GetBiomes().IsEmpty())
             FillWithRules(Position, Out, Dense, *Scratch, Overrides.bSurfaceShortcut.Get(Settings.bSurfaceShortcut),
-                SurfaceTimings);
+                Overrides.bFreeze.Get(true), SurfaceTimings);
         else
             FillDressed(X0, Z0, Dense, *Scratch);
         Out.Build(Dense, Table);
@@ -371,7 +386,7 @@ void FVoxelDensityTerrain::FillDressed(int32 X0, int32 Z0, TArray<uint16>& Dense
 }
 
 void FVoxelDensityTerrain::FillWithRules(FIntPoint Position, const FVoxelColumn& Out, TArray<uint16>& Dense,
-    FScratch& Scratch, bool bShortcut, FVoxelDensityTerrainTimings& Timings) const
+    FScratch& Scratch, bool bShortcut, bool bFreeze, FVoxelDensityTerrainTimings& Timings) const
 {
     constexpr int32 Size = VoxelConstants::ColumnSize, Height = VoxelConstants::Height;
     const int32 SeaTop = SeaLevel - 1;
@@ -452,7 +467,8 @@ void FVoxelDensityTerrain::FillWithRules(FIntPoint Position, const FVoxelColumn&
                 TArrayView<uint16>(&Dense[First], Dense.Num() - First), Stride, Heights[LocalY * Size + LocalX]);
         }
     const double AfterRules = FPlatformTime::Seconds();
-    Freeze.Apply(Position, Dense, Out.GetBiomes(), Biomes.GetTable(), Climate, SeaLevel, MakeArrayView(Heights));
+    if (bFreeze)
+        Freeze.Apply(Position, Dense, Out.GetBiomes(), Biomes.GetTable(), Climate, SeaLevel, MakeArrayView(Heights));
     const double End = FPlatformTime::Seconds();
     Timings.SurfaceMs = (End - Start) * 1000;
     Timings.PreliminaryMs = (AfterPreliminary - Start) * 1000;
