@@ -138,6 +138,22 @@ void AVoxelWorld::BuildLayout()
             UE_LOG(LogUnnamedVoxel, Warning, TEXT("-VoxelSpawnAt=%s is not X,Y; the spawn search starts at the origin"),
                 *SpawnAt);
     }
+    FString ViewText;
+    if (FParse::Value(FCommandLine::Get(), TEXT("VoxelShotView="), ViewText, false))
+    {
+        TArray<FString> Parts;
+        ViewText.ParseIntoArray(Parts, TEXT(","));
+        bool bNumeric = Parts.Num() == 6;
+        for (const FString& Part : Parts)
+            bNumeric = bNumeric && Part.IsNumeric();
+        if (bNumeric)
+            ShotView = TPair<FVector, FVector>(
+                FVector(FCString::Atod(*Parts[0]), FCString::Atod(*Parts[1]), FCString::Atod(*Parts[2])),
+                FVector(FCString::Atod(*Parts[3]), FCString::Atod(*Parts[4]), FCString::Atod(*Parts[5])));
+        else
+            UE_LOG(
+                LogUnnamedVoxel, Warning, TEXT("-VoxelShotView=%s is not CX,CY,CZ,TX,TY,TZ; no view shot"), *ViewText);
+    }
     bSpawnExact = FParse::Param(FCommandLine::Get(), TEXT("VoxelSpawnExact"));
     bShotEdits = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotEdits"));
     bShotGarden = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotGarden"));
@@ -1204,6 +1220,9 @@ void AVoxelWorld::UpdateShots()
     if (bShotEdits)
         Shots.Add({TEXT("edits"), Blocks(ShotEditCorner.X - 7, ShotEditCorner.Y - 7, ShotEditTop + 8),
             Blocks(ShotEditCorner.X + 1, ShotEditCorner.Y + 2, ShotEditTop - 5), false, true});
+    if (ShotView)
+        Shots.Add({TEXT("view"), Blocks(ShotView->Key.X, ShotView->Key.Y, ShotView->Key.Z),
+            Blocks(ShotView->Value.X, ShotView->Value.Y, ShotView->Value.Z), false, true});
 
     if (bShotGarden)
     {
