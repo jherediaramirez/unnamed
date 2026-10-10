@@ -37,12 +37,12 @@ As in [the S6b handoff](2026-10-10-Voxel-Handoff-Phase6-S6b.md), section 2. In s
 
 ## 4. S7b: what to do
 
-Apply Jesus's answers (his morning round). Each answer is small; the "built meanwhile" column of the S7 record, section 4, is what each one replaces:
+**Jesus's answers (October 10, morning round, through the manager): all eight recommendations, (a).** The sturdy-face question (Q2) goes to a small follow-up of its own that measures the bits from the game; S7b applies the other seven. Each answer is small; the "built meanwhile" column of the S7 record, section 4, is what each one replaces:
 
 | Question | If (a), as recommended | Where |
 |---|---|---|
 | Q1 stacks | after the one-level pass, follow same-block vertical chains (sugar cane, cactus, bamboo, kelp, cave vines, dripstone, pale hanging moss, vine under vine, the dripleaf column) to the column's end | `SettlePlants`; a `Blocks.Survival` row (today: "the bottom segment pops, the ones above stay") flips |
-| Q2 sturdy faces | dump the sturdy bits (FULL and CENTER per face) through FactsDump, T2's harness; `GetSturdyFaces` reads them | the blocks reference rebuild, then `VoxelPlantSurvival.cpp` (S8's switch); add the leaves, mud, soul sand and snow-8 rows |
+| Q2 sturdy faces | not in S7b: a small follow-up of its own measures the sturdy bits (FULL and CENTER per face) from the game through FactsDump (T2's harness); then `GetSturdyFaces` reads them | the blocks reference rebuild, then `VoxelPlantSurvival.cpp` (S8's switch); add the leaves, mud, soul sand and snow-8 rows |
 | Q3 oracle | the scout's probe in the reference tools, signatures as a facts file, `Blocks.Survival` over the whole matrix | the reference tools, then the test |
 | Q4 drops | nothing to do | |
 | Q5 snow | `CanBeReplaced` accepts `snow[layers=1]` only; keep `GetDestination` in sync | `FoundationBlockPlacement.cpp`, `FoundationAuthority.cpp:GetDestination`; the snow row in `Blocks.Replaceable` |
@@ -64,7 +64,8 @@ Tests: re-run `Unnamed.Foundation` and `TestVoxel.ps1`, and the radius-8 hashes 
 
 | Issue | Due |
 |---|---|
-| Jesus's questions Q1, Q2, Q3, Q5, Q7, Q8 (S7 record, section 4) | S7b |
+| Jesus's answers Q1, Q3, Q5, Q7, Q8 to apply (all (a); S7 record, section 4) | S7b |
+| Sturdy faces measured from the game (Q2, answered (a)) | Its own small follow-up |
 | Breaking or popping a water-holding plant leaves air, not its water | S7b, or with water flow |
 | Project blocks hold no plant (the survival table covers imported blocks) | When a project block needs to |
 | A thick bamboo outline reaches 1/16 block into the next cell at its largest offsets; a ray through that sliver alone misses it | Later (cosmetic) |
