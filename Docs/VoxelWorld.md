@@ -780,6 +780,23 @@ GPU frame at 1600 x 900 on this machine: 2.7 ms before, 2.9 to 3.0 ms after. The
 - **Lava in a cave clips:** with the eye adapted to the cave, 36% of the `cave-lava` view has a channel at 255, mostly red. The lava reads yellow-orange with its texture still visible, and the walls glow. The knob is `CHUNK_LIGHT_EMISSIVE`. An estimate, not measured: 5000 would give about 0.7 stop less clipping (log2 of 8000 / 5000), with the daylight `cave-lava` view's mean red near 63. That is interpolated in stops between the measured 38.7 at 2000 and 76.4 at 8000.
 - **Evidence:** `Tests/Evidence/2026-10-09/VoxelShots-20261009-104219` (before), `-104748` (emission only, at the daylight exposure), `-105556` (both); HDR overlays `-105247` (new map) and `-105415` (old map); montages and crops in `Tests/Evidence/2026-10-09/CaveBrightness-20261009-3b/` (`look-brightness.png` first).
 
+**Local lights (torch probe T0 + T1, October 10).** Torches will light caves with real point lights. The light probe (`CaptureVoxel.ps1 -Lights`, `voxel.LightProbe <N> [megalights|vsm|none]`; [record](Records/2026-10-10-Torch-Light-Probe.md)) measured what they cost and how they look.
+- **The probe:** in a dark cave of the dev seed at 1600 x 900, lights 1 m over cave floors, attenuation radius 13 blocks.
+- **The look call (Nyx, delegated, 04:20):** one MegaLights point light per torch (ray-traced shadows), for T3.
+- **The project setting:** `r.MegaLights.EnableForProject` stays 0 until T3. The probe turns it on per case at runtime.
+
+| Lights | MegaLights | VSM shadows | Unshadowed |
+|---|---|---|---|
+| 0 | +0.12 ms (MegaLights' floor) | base 3.48 ms | base |
+| 1 | +0.56 | +0.27 | +0.10 |
+| 10 | +0.78 | +1.68 | +0.26 |
+| 100 | +1.39 | +8.95 | +1.42 |
+
+- **Unshadowed lights leak.** A light over three blocks of rock lifts the cave floor below by 31/255. Both shadowed modes stay within 0.15/255.
+- **Edits:** a mined niche is lit correctly once its column is back on screen, with MegaLights after 5 to 11 more frames.
+- **Glowing cubes** (glowstone and the other light-15 cubes, through emission and Lumen):
+  - they lift a cave wall 5 blocks away by 39 to 83/255, at +0.03 to +0.06 ms each;
+  - 35 to 43% of that light comes from screen traces, so it fades when the cube leaves the screen (a known limit).
 **Edge fog (phase 3).** The view ends at `voxel.ViewRadius`. Instead of a wall or a dark void, the last 1.5 columns fade into the sky, so the land seems to run off into a distance that is too far and foggy to see. `AVoxelWorld` refits the map's `ExponentialHeightFog` from the view radius at runtime:
 
 - **Fog:** clear until 1.5 columns before the radius and 99% opaque at it: density 1000 * ln(100) / 2400, about 1.92, where 2,400 cm is the fade. Height falloff 0.001. Cutoff distance 1e9 cm, so the sky stays clear.
