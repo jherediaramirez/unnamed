@@ -25,6 +25,13 @@ namespace
         return Env.Survival.GetRule(State).Kind == EVoxelSurvival::Always ? EVoxelWriteSupport::None
                                                                           : EVoxelWriteSupport::Plant;
     }
+
+    // The first Count items in a random order.
+    void ShuffleFaces(int32* Items, int32 Count, FVoxelXoroshiro& Random)
+    {
+        for (int32 Index = Count - 1; Index > 0; --Index)
+            Swap(Items[Index], Items[Random.NextInt(Index + 1)]);
+    }
 }
 
 bool VoxelPatchFeatures::PlacePlant(const FVoxelPlantEnvironment& Env, FIntVector Cell, uint16 State)
@@ -169,4 +176,84 @@ bool VoxelPatchFeatures::PlaceVegetationPatch(const FVoxelPlantFeature& Feature,
                 OutVegetation.Add(FIntVector(X, Y, Floor + 1));
         }
     return bPlaced;
+}
+
+bool VoxelPatchFeatures::PlaceMultiface(
+    const FVoxelPlantFeature& Feature, FIntVector Position, FVoxelXoroshiro& Random, const FVoxelPlantEnvironment& Env)
+{
+    const FVoxelDecorationContext& Context = Env.Context;
+    const FVoxelBlockSet& Base = Env.Predicates.GetSet(Feature.BaseSet);
+    const auto GetState = [&Context](int32 X, int32 Y, int32 Z) { return Context.GetState(X, Y, Z); };
+    // 0 when Cell is neither air nor a water source (or lies outside the window or the world), else 1 dry, 2 wet.
+    const auto GetFree = [&](FIntVector Cell) -> int32
+    {
+        if (Cell.Z < VoxelConstants::MinZ || Cell.Z > VoxelConstants::MaxZ || !Context.Contains(Cell.X, Cell.Y))
+            return 0;
+        const uint16 State = Context.GetState(Cell.X, Cell.Y, Cell.Z);
+        const FVoxelStateInfo& Info = Env.Table.Get(State);
+        return Info.IsAir() ? 1 : Info.IsFluid() && Env.Survival.IsWaterSource(State) ? 2 : 0;
+    };
+    // The state Cell takes on Face, or 0 when the face does not hold there.
+    const auto GetFaceState = [&](FIntVector Cell, int32 Free, int32 Face) -> uint16
+    {
+        const FIntVector Support = Cell + GetStep(Face);
+        const uint16 State = Feature.FaceStates[Face][Free - 1];
+        return Base.Contains(Env.Table.Get(Context.GetState(Support.X, Support.Y, Support.Z)).Block) &&
+                Env.Survival.HoldsFace(State, Face, Cell.X, Cell.Y, Cell.Z, GetState)
+            ? State
+            : uint16(0);
+    };
+    // Tries a free cell's allowed faces in a random order; returns the state placed (0 for none) and its face.
+    const auto TryCell = [&](FIntVector Cell, int32 Free, int32& OutFace) -> uint16
+    {
+        int32 Faces[6], Count = 0;
+        for (int32 Face = 0; Face < 6; ++Face)
+            if (Feature.Faces >> Face & 1) Faces[Count++] = Face;
+        ShuffleFaces(Faces, Count, Random);
+        for (int32 Index = 0; Index < Count; ++Index)
+            if (const uint16 State = GetFaceState(Cell, Free, Faces[Index]))
+            {
+                OutFace = Faces[Index];
+                return State;
+            }
+        return 0;
+    };
+
+    FIntVector Cell = Position;
+    int32 Face = INDEX_NONE;
+    const int32 OriginFree = GetFree(Cell);
+    uint16 State = OriginFree ? TryCell(Cell, OriginFree, Face) : uint16(0);
+    if (!State)
+    {
+        int32 Directions[6] = {0, 1, 2, 3, 4, 5};
+        ShuffleFaces(Directions, 6, Random);
+        for (int32 Index = 0; Index < 6 && !State; ++Index)
+            for (int32 Steps = 1; Steps <= Feature.SearchSteps && !State; ++Steps)
+            {
+                Cell = Position + GetStep(Directions[Index]) * Steps;
+                const int32 Free = GetFree(Cell);
+                if (!Free) break;
+                State = TryCell(Cell, Free, Face);
+            }
+        if (!State) return false;
+    }
+    // The cell's own support lies beside or above it, often in another column, so the replay checks only that the
+    // cell is unchanged.
+    EmitAt(Env, Cell, State, EVoxelWriteSupport::None);
+    if (Random.NextFloat() < Feature.SpreadChance)
+    {
+        // One of the four directions off the face's axis.
+        int32 Pick = Random.NextInt(4), Direction = 0;
+        for (int32 Side = 0; Side < 6; ++Side)
+            if (VoxelFaces::GetAxis(Side) != VoxelFaces::GetAxis(Face) && Pick-- == 0)
+            {
+                Direction = Side;
+                break;
+            }
+        const FIntVector Next = Cell + GetStep(Direction);
+        if (const int32 Free = GetFree(Next))
+            if (const uint16 Spread = GetFaceState(Next, Free, Face))
+                EmitAt(Env, Next, Spread, EVoxelWriteSupport::None);
+    }
+    return true;
 }

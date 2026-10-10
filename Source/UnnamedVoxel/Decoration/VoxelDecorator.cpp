@@ -510,6 +510,37 @@ bool FVoxelDecorator::CompilePlant(const FVoxelFeatureGraph& Graph, int32 Node, 
             (OutSkip.IsEmpty() && !CompilePlaced(Graph, *Vegetation, Tags, Plant.Vegetation, OutSkip, OutError)))
             return false;
     }
+    else if (Type == TEXT("minecraft:multiface_growth"))
+    {
+        // Glow lichen (sculk vein is one of the later plants). Each face's state has that face alone set.
+        Plant.Kind = EVoxelPlantFeature::Multiface;
+        const FStringView Block = DecoratorString(Graph, Node, TEXT("block"));
+        static const FName FaceNames[6] = {
+            TEXT("west"), TEXT("east"), TEXT("north"), TEXT("south"), TEXT("down"), TEXT("up")};
+        static const FName True(TEXT("true")), Waterlogged(TEXT("waterlogged"));
+        for (int32 Face = 0; Face < 6; ++Face)
+        {
+            const int32 Dry = Table->MakeState(Block, {{FaceNames[Face], True}});
+            const int32 Wet = Dry == INDEX_NONE ? INDEX_NONE : Table->WithValue(uint16(Dry), Waterlogged, True);
+            if (Wet == INDEX_NONE)
+            {
+                OutSkip = FString::Printf(TEXT("multiface_growth of %s"), *FString(Block));
+                return true;
+            }
+            Plant.FaceStates[Face][0] = uint16(Dry);
+            Plant.FaceStates[Face][1] = uint16(Wet);
+        }
+        const bool bWall = DecoratorNumber(Graph, Node, TEXT("can_place_on_wall")) != 0;
+        Plant.Faces = uint8((bWall ? 0b1111 : 0) |
+            (DecoratorNumber(Graph, Node, TEXT("can_place_on_floor")) != 0 ? 1 << int32(EVoxelFace::Down) : 0) |
+            (DecoratorNumber(Graph, Node, TEXT("can_place_on_ceiling")) != 0 ? 1 << int32(EVoxelFace::Up) : 0));
+        FVoxelBlockSet Base;
+        if (!VoxelPredicateReading::ReadBlockSet(
+                Graph, Graph.FindField(Node, TEXT("can_be_placed_on")), Tags, Base, OutError))
+            return false;
+        Plant.BaseSet = Predicates.AddSet(MoveTemp(Base));
+        Plant.SpreadChance = float(DecoratorNumber(Graph, Node, TEXT("chance_of_spreading"), 0.5));
+    }
     else if (Type == TEXT("minecraft:random_selector"))
     {
         Plant.Selector.Op = EVoxelSelectorOp::Random;
@@ -674,6 +705,10 @@ void FVoxelDecorator::PlacePlant(
     case EVoxelPlantFeature::Disk:
         ++Stats.PlantTries;
         VoxelPatchFeatures::PlaceDisk(Plant, Position, Random, Env);
+        return;
+    case EVoxelPlantFeature::Multiface:
+        ++Stats.PlantTries;
+        VoxelPatchFeatures::PlaceMultiface(Plant, Position, Random, Env);
         return;
     case EVoxelPlantFeature::VegetationPatch:
     {

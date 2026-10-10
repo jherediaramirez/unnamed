@@ -61,6 +61,23 @@ FIntVector VoxelPredicateReading::ReadOffset(const FVoxelFeatureGraph& Graph, in
     return FIntVector(At(0), At(2), At(1));
 }
 
+bool VoxelPredicateReading::ReadBlockSet(const FVoxelFeatureGraph& Graph, const FVoxelFeatureValue* Value,
+    FVoxelBlockTags& Tags, FVoxelBlockSet& Out, FString* OutError)
+{
+    Out.Init(Tags.GetBlockLimit(), false);
+    for (const FStringView Id : ReadStrings(Graph, Value))
+        if (Id.StartsWith(TEXT("#")))
+        {
+            const FVoxelBlockSet* Tag = Tags.Find(Id.RightChop(1), OutError);
+            if (!Tag) return false;
+            for (int32 Word = 0; Word < Out.Words.Num() && Word < Tag->Words.Num(); ++Word)
+                Out.Words[Word] |= Tag->Words[Word];
+        }
+        else if (const int32 Block = Tags.FindBlock(Id); Block != INDEX_NONE)
+            Out.Add(Block);
+    return true;
+}
+
 int32 VoxelPredicateReading::ReadFace(FStringView Name)
 {
     static const TCHAR* const Names[] = {

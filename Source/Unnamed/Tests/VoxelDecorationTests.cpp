@@ -1475,6 +1475,9 @@ bool FVoxelDecorationReachTest::RunTest(const FString& Parameters)
         TestEqual(
             FString::Printf(TEXT("%s: %d Decorates"), PresetName, Area.Decorates.Num()), Area.Decorates.Num(), 1089);
         TestEqual(FString::Printf(TEXT("%s: dropped cells"), PresetName), Dropped, int64(0));
+        // Glow lichen's search stays in the window (Jesus's answer to scout I's question 3), so it compiles.
+        TestFalse(FString::Printf(TEXT("%s: multiface_growth compiles"), PresetName),
+            World.Decorator->GetSkipped().Contains(TEXT("minecraft:multiface_growth")));
         AddInfo(FString::Printf(TEXT("%s: %lld writes in %d Decorates"), PresetName, Writes, Area.Decorates.Num()));
     }
     return true;
@@ -1491,9 +1494,9 @@ bool FVoxelDecorationGoldenTest::RunTest(const FString& Parameters)
     // Plants off: recorded on the first passing run with ores on: overworld, large_biomes, amplified.
     constexpr uint64 GoldenHashes[3] = {0xa28113883ba6e7caull, 0xf87e27cd1455c61aull, 0xfc7c6279d46e6b76ull};
     constexpr int64 GoldenWrites[3] = {761145, 768534, 823270};
-    // Plants on: recorded on S8's first passing run.
-    constexpr uint64 PlantHashes[3] = {0x9cce36407bad56b5ull, 0x92fd17ac831fcd42ull, 0x6cdc112a2c9575f6ull};
-    constexpr int64 PlantWrites[3] = {768854, 774466, 829090};
+    // Plants on: recorded on S8 part B's first passing run (S8's plants plus glow lichen).
+    constexpr uint64 PlantHashes[3] = {0xb77656a8d37bde4aull, 0xa290112228773eefull, 0xed3582d140b6c106ull};
+    constexpr int64 PlantWrites[3] = {769195, 774817, 829385};
     for (const bool bPlants : {false, true})
         for (int32 Preset = 0; Preset < 3; ++Preset)
         {

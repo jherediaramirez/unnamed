@@ -49,6 +49,8 @@ enum class EVoxelPlantFeature : uint8
     BlockColumn,
     Disk,
     VegetationPatch,
+    // multiface_growth (glow lichen).
+    Multiface,
     // The selectors, sequence and no_op (FVoxelSelectorConfig).
     Selector
 };
@@ -76,6 +78,14 @@ struct FVoxelPlantFeature
     FVoxelIntProvider Depth;
     float ExtraBottomChance = 0, VegetationChance = 0, ExtraEdgeChance = 0;
     int32 VerticalRange = 0;
+    // multiface_growth: the faces it may attach on (one bit per EVoxelFace), the base blocks (a block set), the
+    // block's state attached on each face (dry, then waterlogged), the spreading chance, and how many cells the search
+    // walks from the origin (ours: 1; see PlaceMultiface).
+    uint8 Faces = 0;
+    int32 BaseSet = INDEX_NONE;
+    uint16 FaceStates[6][2] = {};
+    float SpreadChance = 0;
+    int32 SearchSteps = 1;
     FVoxelSelectorConfig Selector;
 };
 
@@ -102,4 +112,15 @@ namespace VoxelPatchFeatures
     // vertical_range of Position). Adds the cells above new ground that take vegetation.
     UNNAMEDVOXEL_API bool PlaceVegetationPatch(const FVoxelPlantFeature& Feature, FIntVector Position,
         FVoxelXoroshiro& Random, const FVoxelPlantEnvironment& Env, TArray<FIntVector>& OutVegetation);
+    // multiface_growth (ours, fitted to scout I's room probe, where an origin 4 cells from every wall never placed and
+    // one a cell from a wall always placed on the cell toward it, 31 of 50 times with a second block beside it on the
+    // same wall): the origin, then a walk of SearchSteps cells along each of the six directions in a shuffled order,
+    // stopping at a cell that is neither air nor a water source (an origin inside stone still walks: the probe only
+    // tried air origins). The first such cell with an allowed face toward a
+    // base block takes the block on that face (its faces tried in a shuffled order). Then, with SpreadChance, one of
+    // the four cells beside it in the face's plane takes the same face if it can. The data's search_range (20) would
+    // let the centre origin place, so the walk is not that long; it never leaves the 3x3 window (Jesus's answer to
+    // scout I's question 3). Returns whether it placed.
+    UNNAMEDVOXEL_API bool PlaceMultiface(const FVoxelPlantFeature& Feature, FIntVector Position,
+        FVoxelXoroshiro& Random, const FVoxelPlantEnvironment& Env);
 }
