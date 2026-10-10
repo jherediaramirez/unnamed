@@ -98,6 +98,74 @@ bool FVoxelBlocksTableTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelBlocksLookStatesTest, "Unnamed.Voxel.Blocks.LookStates",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelBlocksLookStatesTest::RunTest(const FString& Parameters)
+{
+    // A synthetic table set out of order and then changed: the look state follows.
+    {
+        FVoxelBlockTable Table;
+        FVoxelStateInfo Info;
+        Info.Shape = EVoxelShape::Full;
+        Info.Block = 1;
+        Info.Faces[0] = 7;
+        Table.SetState(5, Info);
+        Table.SetState(3, Info);
+        Table.SetState(4, Info);
+        TestEqual(TEXT("Set out of order, alike states take the lowest"), Table.GetLookState(5), uint16(3));
+        TestEqual(TEXT("A state between them takes the lowest"), Table.GetLookState(4), uint16(3));
+        FVoxelStateInfo Other = Info;
+        Other.Faces[0] = 8;
+        Table.SetState(3, Other);
+        TestEqual(TEXT("The lowest changed: the others take the next alike"), Table.GetLookState(5), uint16(4));
+        TestEqual(TEXT("The changed state is its own look"), Table.GetLookState(3), uint16(3));
+        Info.Block = 2;
+        Table.SetState(6, Info);
+        TestEqual(TEXT("Another block never shares a look"), Table.GetLookState(6), uint16(6));
+        Table.SetState(4, Info);
+        TestEqual(TEXT("A state moved to another block leaves its old block"), Table.GetLookState(5), uint16(5));
+        TestEqual(TEXT("and joins its new block's look"), Table.GetLookState(6), uint16(4));
+    }
+
+    const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();
+    if (!Registry->GetAssets())
+    {
+        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return true;
+    }
+    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+    // Every state's look state is of its block, no higher, and draws alike.
+    int32 Bad = 0, Shared = 0;
+    for (int32 State = 1; State < Table->GetStateCount(); ++State)
+    {
+        const uint16 Look = Table->GetLookState(uint16(State));
+        const FVoxelStateInfo &Info = Table->Get(uint16(State)), &LookInfo = Table->Get(Look);
+        Shared += Look != State;
+        Bad += Look > State || LookInfo.Block != Info.Block || LookInfo.Shape != Info.Shape ||
+            LookInfo.Layer != Info.Layer || LookInfo.Tint != Info.Tint || LookInfo.HeldFluid != Info.HeldFluid ||
+            LookInfo.LightEmission != Info.LightEmission ||
+            FMemory::Memcmp(LookInfo.Faces, Info.Faces, sizeof(Info.Faces)) != 0;
+    }
+    TestEqual(TEXT("Look states of the same block, no higher, drawing alike"), Bad, 0);
+    AddInfo(FString::Printf(TEXT("%d of %d states share an earlier state's look"), Shared, Table->GetStateCount()));
+    // Leaves of every distance and persistence draw alike; snowy grass does not draw as grass.
+    const uint16 Leaves = Table->FindState(TEXT("oak_leaves"));
+    bool bLeavesShare = true;
+    for (const TCHAR* Distance : {TEXT("1"), TEXT("4"), TEXT("7")})
+        for (const TCHAR* Persistent : {TEXT("true"), TEXT("false")})
+        {
+            const int32 State =
+                Table->MakeState(TEXT("oak_leaves"), {{TEXT("distance"), Distance}, {TEXT("persistent"), Persistent}});
+            bLeavesShare &= State != INDEX_NONE && Table->GetLookState(uint16(State)) == Table->GetLookState(Leaves);
+        }
+    TestTrue(TEXT("Oak leaves of every distance and persistence share one look"), bLeavesShare);
+    const uint16 Grass = Table->FindState(TEXT("grass_block"));
+    TestNotEqual(TEXT("Snowy grass has its own look"), Table->GetLookState(Table->GetSnowyState(Grass)),
+        Table->GetLookState(Grass));
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelTerrainTest, "Unnamed.Voxel.Terrain.Generate",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

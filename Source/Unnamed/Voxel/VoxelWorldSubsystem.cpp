@@ -247,13 +247,24 @@ void UVoxelWorldSubsystem::ApplyReady(double BudgetMs, double TickStartSeconds)
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelWorldSubsystem_Apply);
     int32 Applied = 0;
     double FrameApplyMs = 0;
-    while (const FVoxelColumnMesh* Next = Pipeline->PeekReady())
+    FIntPoint Head;
+    while (const FVoxelColumnMesh* Next = Pipeline->PeekReady(&Head))
     {
         const double SpentMs = (FPlatformTime::Seconds() - TickStartSeconds) * 1000.;
         const double Estimate = ApplyCost.Estimate(Next->QuadCount);
         // Stop before the budget, at 85% of it: the rest covers one apply above its estimate and the bookkeeping
-        // after the last. A frame's first column always goes, so no column waits forever, however big.
-        if (Applied > 0 && SpentMs + Estimate > 0.85 * BudgetMs) break;
+        // after the last. A frame's first column goes anyway, so no column waits forever, however big; but a column
+        // that fits the budget alone and that the frame's planning and jobs leave no room for (its estimate would pass
+        // the whole budget) waits one frame, once, and goes first when it heads the queue again.
+        if (SpentMs + Estimate > 0.85 * BudgetMs)
+        {
+            if (Applied > 0) break;
+            if (SpentMs + Estimate > BudgetMs && Estimate <= BudgetMs && !(WaitedColumn && *WaitedColumn == Head))
+            {
+                WaitedColumn = Head;
+                break;
+            }
+        }
         const double ApplyStart = FPlatformTime::Seconds();
         FVoxelColumnPipeline::FReady Ready;
         Pipeline->PopReady(Ready);

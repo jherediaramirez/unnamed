@@ -364,6 +364,7 @@ namespace
     struct FMeshPass
     {
         int64 Quads = 0;
+        int64 LayerQuads[int32(EVoxelLayer::Count)] = {};
         double Ms = 0;
     };
 
@@ -395,6 +396,8 @@ namespace
                 VoxelMesher::MeshSection(Table, *Padded, Section, Options, Data, Tints, &Neighborhood);
                 Pass.Ms += (FPlatformTime::Seconds() - Start) * 1000.;
                 Pass.Quads += Data.GetQuadCount();
+                for (int32 Layer = 0; Layer < int32(EVoxelLayer::Count); ++Layer)
+                    Pass.LayerQuads[Layer] += Data.Layers[Layer].GetQuadCount();
             }
         }
         return Pass;
@@ -480,6 +483,30 @@ FString VoxelBench::RunColumns(const FVoxelBlockTable& Table, const IVoxelTerrai
                 : FString::Printf(
                       TEXT("\nVertex tints that differ with the tint shortcut on and off, blend %d: %lld of %lld"),
                       Blend, Differences, Vertices);
+        }
+        Report += TEXT("\n");
+
+        // Merging by look against merging by state, layer by layer (leaves are most of the cutout layer).
+        FMeshPass Merges[2];
+        for (int32 Index = 0; Index < 2; ++Index)
+        {
+            FVoxelMeshOptions Pass = Options;
+            Pass.bMergeLooks = Index == 1;
+            Merges[Index] = MeshArea(Table, Area, Tints, Pass);
+        }
+        Report += FString::Printf(TEXT("Merging, %d columns meshed on one thread (quads per column: all, then opaque, "
+                                       "cutout, translucent, water, model; mesh ms per column):"),
+            AreaColumns);
+        const TCHAR* MergeLabels[2] = {TEXT("by state"), TEXT("by look")};
+        for (int32 Index = 0; Index < 2; ++Index)
+        {
+            Report += FString::Printf(TEXT("\n  %-8s %8.1f quads (%+.1f%%):"), MergeLabels[Index],
+                double(Merges[Index].Quads) / AreaColumns,
+                100. * (double(Merges[Index].Quads) / FMath::Max<int64>(1, Merges[0].Quads) - 1.));
+            for (const int64 LayerQuads : Merges[Index].LayerQuads)
+                Report += FString::Printf(TEXT(" %.1f"), double(LayerQuads) / AreaColumns);
+            Report += FString::Printf(TEXT("; %.3f ms (%+.1f%%)"), Merges[Index].Ms / AreaColumns,
+                100. * (Merges[Index].Ms / FMath::Max(1e-9, Merges[0].Ms) - 1.));
         }
         Report += TEXT("\n");
     }

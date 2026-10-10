@@ -104,6 +104,9 @@ private:
     TOptional<FVector> FocusOverride;
     FVector LastFocus = FVector::ZeroVector;
     FApplyCost ApplyCost;
+    // The ready column that last waited a frame because the frame's planning and jobs had used the budget; it goes
+    // first when it heads the queue again.
+    TOptional<FIntPoint> WaitedColumn;
 
     double StartSeconds = 0;
     // The first frame after Start, and the frames until the first view was on screen.
