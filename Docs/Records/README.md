@@ -4,6 +4,13 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 10, 2026
 
+- [Water and sky handoff: W1 done, into W2a (fluid wiring)](2026-10-10-WaterSky-Handoff-W2a.md): start here for the water half after DN1 (lane `feature/water-sky`). It covers the reading list, the settled decisions, a code map of the fluid core with the adapter W2a writes, known issues with when, what worked and failed, two open questions (the drain's same-tick order; waterlogged slabs in the table), and the short prompt.
+- [Water and sky W1: the fluid core](2026-10-10-WaterSky-W1.md): flowing water and lava as a plain-C++ core with no game wiring.
+  - The block table gains the fluid kind, the level and `IsFluidSource()`. Three readers no longer take falling fluid (amount 8) for a source.
+  - `Source/UnnamedVoxel/Fluids/`: the rules (re-derive, drop search, down then sideways, lava meeting water), a FIFO due-tick scheduler and a test world.
+  - 10 `Unnamed.Voxel.Fluid.*` tests: all 51 of scout M's probe scenarios match at the probe's own checkpoints, its 13 mutations (15 variants) each fail, and the series and drain transients are reported (Q9 (a)).
+  - Goldens and the six radius-8 hashes are identical.
+- [Scout M: flowing water and lava, facts](2026-10-10-WaterSky-Scout-M-Fluids.md): scout M's prep doc, committed byte-identical (SHA-256 in the W1 record). It has black-box probes of 26.3's water and lava on the server jar, behaviour in our own words, the oracles and mutations, a draft design and questions. Its oracle data lives in `Source/Unnamed/Tests/VoxelFluidOracles.json` (made by `Scripts/MakeFluidOracles.py`).
 - [Water and sky plan: flowing fluids and the day/night cycle](2026-10-10-WaterSky-Plan.md): start here for the water and sky track (lane `feature/water-sky`). Plan only, from scouts M (fluids) and N (day/night): goals and "done", one shared 20 Hz world tick (DN1 owns it), sessions W1 to W5 and DN0 to DN3 with the probe DN-P, the browser mock-up and a vanilla screenshot probe, the order against S9b to S12, T3/T5, breaking, items and phase 10, 18 questions (4 for Jesus, the rest the manager's under his away rule), and the short prompts for W1 and the mock-up. Never use `research/water_research.md` or `MinecraftBlockReference.md` section 4 (bytecode-derived) as sources.
 - [Items handoff: into S4 (held-item rendering)](2026-10-10-Items-Handoff-S4.md): start here for the items phase. It is also the S3 record (icons and tooltips, lane `feature/items-s3`):
   - The hotbar draws each item's own sprite, and the old pickaxe and sword art is gone.

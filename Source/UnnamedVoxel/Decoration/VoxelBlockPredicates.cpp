@@ -101,7 +101,7 @@ uint8 FVoxelBlockPredicates::GetFluidBits(uint16 State) const
     const FVoxelStateInfo& Info = Table->Get(State);
     if (Info.HeldFluid) return WaterSource;
     if (!Info.IsFluid()) return 0;
-    const bool bSource = Info.FluidAmount == 8;
+    const bool bSource = Info.IsFluidSource();
     if (Info.Block == WaterBlock) return bSource ? WaterSource : WaterFlowing;
     if (Info.Block == LavaBlock) return bSource ? LavaSource : LavaFlowing;
     return 0;

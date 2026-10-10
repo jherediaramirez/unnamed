@@ -71,7 +71,7 @@ void FVoxelFreezePass::Apply(FIntPoint Position, TArrayView<uint16> Dense, const
             const int32 Below = Top - 1;
             uint16& BelowState = Dense[FVoxelColumn::GetDenseIndex(LocalX, LocalY, Below)];
             const FVoxelStateInfo& BelowInfo = Table->Get(BelowState);
-            if (BelowInfo.IsFluid() && BelowInfo.Block == WaterBlock && BelowInfo.FluidAmount == 8 &&
+            if (BelowInfo.IsFluid() && BelowInfo.Block == WaterBlock && BelowInfo.IsFluidSource() &&
                 FVoxelBiomeClimate::IsColdEnoughToSnow(Climate.GetTemperature(Data, X, Y, Below, SeaLevel)))
                 BelowState = Ice;
 
@@ -135,7 +135,7 @@ void FVoxelFreezePass::ApplyToColumn(
             const uint16 Original = Column.GetState(LocalX, LocalY, Below);
             uint16 BelowState = Original;
             const FVoxelStateInfo& BelowInfo = Table->Get(BelowState);
-            if (BelowInfo.IsFluid() && BelowInfo.Block == WaterBlock && BelowInfo.FluidAmount == 8 &&
+            if (BelowInfo.IsFluid() && BelowInfo.Block == WaterBlock && BelowInfo.IsFluidSource() &&
                 FVoxelBiomeClimate::IsColdEnoughToSnow(Climate.GetTemperature(Data, X, Y, Below, SeaLevel)))
                 BelowState = Ice;
             if (Top <= VoxelConstants::MaxZ && Column.GetState(LocalX, LocalY, Top) == 0 && CanHoldSnow(BelowState) &&

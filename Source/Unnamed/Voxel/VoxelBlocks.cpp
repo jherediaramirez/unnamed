@@ -195,6 +195,9 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
                     : Info.Shape == EVoxelShape::SlabTop ? uint8(1 << int32(EVoxelFace::Up))
                                                          : 0;
         }
+        const FFoundationFluid Fluid = Registry.GetFluid(State);
+        Info.Fluid = Fluid.bWater ? EVoxelFluid::Water : Fluid.bLava ? EVoxelFluid::Lava : EVoxelFluid::None;
+        Info.FluidLevel = uint8(Fluid.Level);
         Table->SetState(uint16(Id), Info);
     }
     for (int32 Index = 1; Index < Registry.GetBlockCount(); ++Index)

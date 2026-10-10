@@ -117,6 +117,14 @@ struct FVoxelModelQuad
     uint8 Light = 0;
 };
 
+// The fluid a state holds (26.3's water and lava; waterlogged and always-water states hold water).
+enum class EVoxelFluid : uint8
+{
+    None,
+    Water,
+    Lava
+};
+
 // What generation and meshing need to know about one block state.
 struct FVoxelStateInfo
 {
@@ -153,6 +161,10 @@ struct FVoxelStateInfo
     // Model states holding water (kelp, seagrass, corals, waterlogged ones): the fluid state drawn around them, which
     // also counts for the motion-blocking heightmaps; 0 for none.
     uint16 HeldFluid = 0;
+    // The fluid in the state (a fluid, or a state holding one) and its level: 0 a source, 1-7 flowing, 8-15 falling
+    // (amount 8, as a source's). Declared here, they fill padding: the struct keeps its size.
+    EVoxelFluid Fluid = EVoxelFluid::None;
+    uint8 FluidLevel = 0;
     // The block's position offset, in blocks: up to OffsetHorizontal either way along X and Y, and for
     // HorizontalAndDown down to OffsetDown (negative).
     EVoxelOffset Offset = EVoxelOffset::None;
@@ -165,6 +177,8 @@ struct FVoxelStateInfo
     bool HoldsFluid() const { return Shape == EVoxelShape::Fluid || HeldFluid != 0; }
     // The height of a fluid's surface within its cell when no fluid is above (a source fills 8/9).
     float GetFluidHeight() const { return FluidAmount / 9.f; }
+    // A still source: level 0 (waterlogged states included). Falling fluid also has amount 8, but is not one.
+    bool IsFluidSource() const { return Fluid != EVoxelFluid::None && FluidLevel == 0; }
 };
 
 // Baked models' offsets and alternatives: pure functions of the cell, as every random value in the core is. The offset

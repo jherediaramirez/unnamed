@@ -160,7 +160,7 @@ public:
     bool IsWaterSource(uint16 State) const
     {
         const FVoxelStateInfo& Info = Table->Get(State);
-        return Info.HeldFluid != 0 || (Info.IsFluid() && Info.Block == WaterBlock && Info.FluidAmount == 8);
+        return Info.HeldFluid != 0 || (Info.IsFluid() && Info.Block == WaterBlock && Info.IsFluidSource());
     }
 
 private:
