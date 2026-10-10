@@ -376,8 +376,9 @@ EVoxelTrunkPlacer VoxelTrunkPlacers::FindType(FStringView Type)
     if (Type == TEXT("minecraft:poplar_trunk_placer")) return EVoxelTrunkPlacer::Poplar;
     if (Type == TEXT("minecraft:dark_oak_trunk_placer")) return EVoxelTrunkPlacer::DarkOak;
     if (Type == TEXT("minecraft:mega_jungle_trunk_placer")) return EVoxelTrunkPlacer::MegaJungle;
-    // giant_trunk_placer (PlaceGiant) is written but stays skipped: its trees still fail Trees.Shapes (mega pine's
-    // crown radius rule).
+    // giant_trunk_placer was skipped until the S9c refit gave mega_pine_foliage_placer its crown table (MegaPineRadii):
+    // mega spruce and mega pine now pass Trees.Shapes.
+    if (Type == TEXT("minecraft:giant_trunk_placer")) return EVoxelTrunkPlacer::Giant;
     return EVoxelTrunkPlacer::Count;
 }
 
