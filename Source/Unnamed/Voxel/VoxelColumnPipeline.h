@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Core/RealtimeMeshDataStream.h"
+#include "HAL/ThreadSafeBool.h"
 #include "MeshCardBuild.h"
 #include "Meshing/VoxelMesher.h"
 #include "Streaming/VoxelStreamingPlanner.h"
@@ -9,8 +10,9 @@
 
 class FVoxelBlockTable;
 class FVoxelColumn;
-class FVoxelDecorationPreview;
+class FVoxelDecorator;
 class IVoxelTerrain;
+struct FVoxelWriteBucket;
 
 // A column's finished mesh on its way to the screen: the stream set and Lumen cards UVoxelChunkComponent::SetMesh
 // takes, built on a worker from the column's section meshes.
@@ -52,6 +54,7 @@ struct FVoxelStageTimes
 struct FVoxelColumnStatus
 {
     bool bPresent = false;
+    // Its final blocks are loaded: decorated and finished (or, without decoration, generated), edits replayed.
     bool bGenerated = false;
     bool bGenerating = false;
     bool bMeshing = false;
@@ -62,14 +65,25 @@ struct FVoxelColumnStatus
     // Sections waiting to be meshed.
     uint32 DirtySections = 0;
     bool bCached = false;
+    // Decoration's stages: the snapshot is held, the column's Decorate ran since it loaded (some of its buckets may
+    // have been consumed since), and the jobs in flight. HeldBuckets has a bit per bucket still held
+    // (FVoxelWriteLog::GetBucket of the target's offset).
+    bool bSnapshot = false;
+    bool bDecorated = false;
+    bool bDecorating = false;
+    bool bFinalizing = false;
+    uint16 HeldBuckets = 0;
 };
 
 struct FVoxelPipelineStats
 {
-    // Columns with a record: generated, or needed and waiting.
+    // Columns with a record: loaded at some stage, or needed and waiting.
     int32 Columns = 0;
+    // Columns with final blocks.
     int32 Generated = 0;
     int32 Needed = 0;
+    // Needed columns per ring (FVoxelStreamingRings::GetRing): in view, final, decorated, generated.
+    int32 NeededPerRing[FVoxelStreamingRings::MaxStages + 1] = {};
     int32 InView = 0;
     int32 InViewOnScreen = 0;
     int32 Generating = 0;
@@ -89,40 +103,87 @@ struct FVoxelPipelineStats
     FVoxelStageTimes Generate;
     FVoxelStageTimes Mesh;
     FVoxelStageTimes Streams;
+
+    // Decoration's stages (zero without a decorator).
+    // Buckets: those held with writes (an empty bucket is held as a flag alone).
+    int32 Snapshots = 0, Decorated = 0, Buckets = 0;
+    int32 Decorating = 0, Finalizing = 0;
+    SIZE_T SnapshotBytes = 0, BucketBytes = 0;
+    FVoxelStageTimes Decorate;
+    FVoxelStageTimes Finalize;
+    // Recompute-on-miss (scout C, recommendation 1): snapshots generated again for columns that had decorated or
+    // finalized before (their snapshot was freed), and Decorates run again because a Finalize missed a bucket.
+    int64 Regenerated = 0;
+    int64 Redecorated = 0;
+    // Buckets aimed at a column that was already final, dropped and never applied (edits stay as the player left them).
+    int64 BucketsDropped = 0;
+    // Mutation check only: buckets applied to a final column. Zero otherwise.
+    int64 BucketsAppliedToFinal = 0;
+    // Jobs whose column unloaded before they started, skipped without running.
+    int64 Cancelled = 0;
 };
 
-// The voxel world's streaming pipeline (phase 3): a record per column around the camera, and the UE::Tasks jobs that
-// generate and mesh them. Plain C++ with no UObjects, so tests drive it without a world; UVoxelWorldSubsystem runs it
-// every frame and hands the finished meshes to chunk components.
+// Test-only changes that must break the pipeline checks named beside them (S3's targeted mutations).
+enum class EVoxelPipelineMutation : uint8
+{
+    None,
+    // A bucket aimed at a column that is already final is applied to it: Pipeline.ReturnTrip fails (edits undone).
+    ApplyToFinal,
+    // A Finalize missing a source's bucket treats it as empty instead of running the source's Decorate again:
+    // Pipeline.EvictionFuzz fails (final columns differ from the oracle).
+    MissingBucketAsEmpty,
+    // Snapshots are never freed: Pipeline.Stages fails (final columns keep their snapshots at rest).
+    KeepSnapshots
+};
+
+// The voxel world's streaming pipeline (phase 3; decoration's stages since phase 6, S3): a record per column around
+// the camera, and the UE::Tasks jobs that build and mesh them. Plain C++ with no UObjects, so tests drive it without a
+// world; UVoxelWorldSubsystem runs it every frame and hands the finished meshes to chunk components.
 //
 // - Rings: SetFocus moves them. The plan is rebuilt only when the rings or the view sector change. Columns beyond the
-//   unload distance are dropped at once; their jobs' results are thrown away when they arrive.
-// - Jobs: walking the needed columns nearest first, a column in view whose 3 x 3 neighbours are generated gets a mesh
-//   job, and a needed column without blocks gets a generation job, up to MaxTasksInFlight together.
+//   unload distance are dropped at once; their jobs skip their work if they have not started, and their results are
+//   thrown away when they arrive.
+// - Stages: without a decorator, a Generate job gives a column its final blocks. With one (plan 3.1), Generate gives
+//   the snapshot, Decorate (its 3 x 3 snapshots) a write log in 9 buckets, one per target column, and Finalize (its
+//   snapshot and the 9 buckets aimed at it) the final column: the merge, the freeze pass, then the edits. A column
+//   wants the stage its ring asks for (FVoxelStreamingRings::GetRing: mesh in view, final, decorated, generated).
+// - Jobs: walking the needed columns nearest first, each column's wanted stage is required; whatever it misses is
+//   launched as soon as its own inputs exist, up to MaxTasksInFlight together. A column in view whose 3 x 3 is final
+//   gets a mesh job.
+// - Recompute-on-miss (scout C, recommendation 1): snapshots and buckets are caches of pure functions. A Decorate
+//   without a neighbour's snapshot generates it again; a Finalize without a source's bucket runs that source's Decorate
+//   again (at worst 9 Decorates and 25 Generates). A bucket aimed at a column that is already final is dropped, never
+//   applied: applying it again would undo the player's edits.
+// - Lifetimes: a bucket is freed when its target finalizes; a final column's snapshot when its 8 neighbours have
+//   decorated. Everything else goes when its column unloads.
 // - A mesh job gathers and meshes the column's dirty sections (all of them the first time, and whenever the column has
 //   no cache), then builds its stream set and Lumen cards, so the game thread only hands them over.
 // - Stale results are dropped: those of an unloaded column (its record's serial changed) and those whose column was
 //   marked dirty again while the job ran. The column stays dirty and is meshed again.
-// - Edits (SetCell) copy the column and change the copy, so jobs keep reading the column they started with. They mark
-//   exactly the sections whose padded copy holds the cell dirty, and they are kept per column and replayed after
-//   generation, so they survive unloading: for the session, until phase 10 saves them.
+// - Edits (SetCell) copy the final column and change the copy, so jobs keep reading the column they started with. They
+//   mark exactly the sections whose padded copy holds the cell dirty, and they are kept per column and replayed after
+//   generation (with decoration, after Finalize), so they survive unloading: for the session, until phase 10 saves
+//   them.
 //
-// Game thread only. Jobs read shared, immutable columns and write only their own results.
+// Game thread only. Jobs read shared, immutable columns and buckets and write only their own results.
 class FVoxelColumnPipeline
 {
 public:
     struct FSettings
     {
         FVoxelMeshOptions MeshOptions;
-        // Generation and mesh jobs in flight together; at least 1.
+        // Generation, decoration and mesh jobs in flight together; at least 1.
         int32 MaxTasksInFlight = 1;
         // Columns within this many columns of the center on both axes keep their section meshes, so an edit there
         // remeshes only the sections it touched.
         int32 MeshCacheRadius = 2;
         // Debug: columns at the edge of the view mesh against air, showing the cut through the world (captures).
         bool bEdgeWalls = false;
-        // voxel.Decoration.Preview: columns are built decorated, through the oracle (captures only, until S3).
-        TSharedPtr<const FVoxelDecorationPreview> Preview;
+        // voxel.Decoration: columns are decorated before they mesh, with three rings past the view instead of one.
+        TSharedPtr<const FVoxelDecorator> Decorator;
+        // Tests: jobs are queued, not launched; RunJob runs one on the calling thread, in any order.
+        bool bManualJobs = false;
+        EVoxelPipelineMutation Mutation = EVoxelPipelineMutation::None;
     };
 
     // A finished mesh taken for the screen.
@@ -144,13 +205,23 @@ public:
     void SetMaxTasksInFlight(int32 MaxTasks);
     void SetEdgeWalls(bool bEdgeWalls);
     void SetTintBlend(int32 TintBlend);
+    bool IsDecorating() const { return Settings.Decorator.IsValid(); }
+    const FVoxelDecorator* GetDecorator() const { return Settings.Decorator.Get(); }
 
-    // Moves the rings. A new plan is made only when the rings or the view sector change.
+    // Moves the rings (their Stages are the pipeline's: 3 with a decorator, 1 without). A new plan is made only when
+    // the rings or the view sector change.
     void SetFocus(const FVoxelStreamingRings& Rings, int32 ViewSector);
     // Collects finished jobs and launches new ones.
     void Update();
-    // Tests: blocks until every job in flight has finished; the next Update collects them.
+    // Tests: blocks until every job in flight has finished (manual jobs run in order); the next Update collects them.
     void WaitForJobs();
+    // Tests with manual jobs: the jobs not run yet, and running one of them (an index below GetJobCount) here.
+    int32 GetPendingJobCount() const;
+    bool RunJob(int32 Index);
+    // Tests: forget a column's snapshot or its buckets now, whatever the lifetimes say; a stage that needs them
+    // recomputes them. Running jobs keep what they read.
+    void EvictSnapshot(FIntPoint Column);
+    void EvictBuckets(FIntPoint Column);
 
     // The finished mesh nearest the center, without taking it.
     const FVoxelColumnMesh* PeekReady(FIntPoint* OutColumn = nullptr);
@@ -160,26 +231,29 @@ public:
     void TakeUnloaded(TArray<FIntPoint>& Out);
 
     const FVoxelStreamingRings& GetRings() const { return Rings; }
-    // A generated column, or null when it is not loaded.
+    // A column's final blocks, or null when they are not loaded.
     const FVoxelColumn* FindColumn(FIntPoint Column) const;
     bool IsGenerated(FIntPoint Column) const { return FindColumn(Column) != nullptr; }
     void ForEachColumn(TFunctionRef<void(FIntPoint, const FVoxelColumn&)> Visit) const;
+    // Tests: a column's snapshot, or null when it is not held.
+    const FVoxelColumn* FindSnapshot(FIntPoint Column) const;
 
-    // A world cell's state and the stamp of its last edit (0: never edited). False when its column is not generated.
+    // A world cell's state and the stamp of its last edit (0: never edited). False when its column is not final.
     bool GetCell(const FIntVector& Cell, uint16& OutState, int64& OutStamp) const;
-    // Sets a cell of a generated column, keeping Stamp with the edit (the block world's revision). False, changing
-    // nothing, when the column is not generated or the cell lies outside the world's height.
+    // Sets a cell of a final column, keeping Stamp with the edit (the block world's revision). False, changing
+    // nothing, when the column is not final or the cell lies outside the world's height.
     bool SetCell(const FIntVector& Cell, uint16 State, int64 Stamp);
-    // Forgets every edit; loaded columns that had one are generated again.
+    // Forgets every edit; loaded columns that had one are built again.
     void DropEdits();
-    // Every non-air cell of the generated columns inside an inclusive range, with its edit stamp.
+    // Every non-air cell of the final columns inside an inclusive range, with its edit stamp.
     void ForEachNonAir(
         const FIntVector& Min, const FIntVector& Max, TFunctionRef<void(const FIntVector&, uint16, int64)> Visit) const;
     int64 CountNonAir() const;
     SIZE_T GetEditBytes() const;
     FVoxelColumnStatus GetStatus(FIntPoint Column) const;
     int32 GetJobCount() const { return Jobs.Num(); }
-    // Every needed column is generated, every column in view is meshed and every finished mesh has been taken.
+    // Every needed column has reached its ring's stage, every column in view is meshed and every finished mesh has been
+    // taken.
     bool IsViewOnScreen() const;
     // Nothing in flight and nothing left to launch or take.
     bool IsIdle() const;
@@ -191,8 +265,23 @@ private:
         // New every time the column loads, so a job's result can tell whether its column is still the one it started
         // for.
         uint64 Serial = 0;
+        // Set when the column unloads: its jobs that have not started skip their work.
+        TSharedPtr<FThreadSafeBool, ESPMode::ThreadSafe> Cancel;
+        // The final column: decorated, finished and edited (without decoration, generated and edited).
         TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe> Data;
         SIZE_T DataBytes = 0;
+        // Decoration's stages: the snapshot, and the buckets this column's Decorate aimed at each column of its 3 x 3
+        // (null for an empty bucket), with a bit per bucket held.
+        TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe> Snapshot;
+        SIZE_T SnapshotBytes = 0;
+        TSharedPtr<const FVoxelWriteBucket, ESPMode::ThreadSafe> Buckets[9];
+        SIZE_T BucketBytes[9] = {};
+        uint16 HeldBuckets = 0;
+        bool bDecorated = false;
+        bool bDecorating = false;
+        bool bFinalizing = false;
+        // The column has had a snapshot or final blocks since it loaded, so a new Generate is a regeneration.
+        bool bHadSnapshot = false;
         // Sections to mesh: every section until the first mesh, then those edits touch.
         uint32 Dirty = 0;
         // Rises whenever sections become dirty; a mesh job started at an older version is stale.
@@ -210,6 +299,13 @@ private:
         int32 ScreenQuads = 0;
         int32 ScreenCards = 0;
     };
+    enum class EJob : uint8
+    {
+        Generate,
+        Decorate,
+        Finalize,
+        Mesh
+    };
     struct FJob;
     struct FJobResult;
     struct FEdit
@@ -221,13 +317,35 @@ private:
     FRecord& AddRecord(FIntPoint Column);
     void Unload(FIntPoint Column);
     void Collect();
+    void CollectGenerate(const FJob& Job, FJobResult& Result, FRecord& Record);
+    void CollectDecorate(const FJob& Job, FJobResult& Result, FRecord& Record);
+    void CollectFinalize(const FJob& Job, FJobResult& Result, FRecord& Record);
+    void CollectMesh(const FJob& Job, FJobResult& Result, FRecord& Record);
     void LaunchJobs();
+    bool HasRoom() const { return Jobs.Num() < Settings.MaxTasksInFlight; }
+    // Each returns whether the column has the stage, launching what it misses (room permitting) otherwise.
+    bool RequireSnapshot(FIntPoint Column);
+    bool RequireDecorated(FIntPoint Column);
+    bool RequireBucket(FIntPoint Source, FIntPoint Target);
+    bool RequireFinal(FIntPoint Column);
+    void TryMesh(FIntPoint Column, FRecord& Record);
+    FJob& AddJob(EJob Type, FIntPoint Column, const FRecord& Record);
+    void StartJob(FJob& Job, TUniqueFunction<TSharedPtr<FJobResult>()>&& Work);
     void LaunchGenerate(FIntPoint Column, FRecord& Record);
+    void LaunchDecorate(FIntPoint Column, FRecord& Record);
+    void LaunchFinalize(FIntPoint Column, FRecord& Record);
     void LaunchMesh(FIntPoint Column, FRecord& Record, uint8 Neighbors);
+    // The column's edits as (dense index, state), replayed over its final blocks.
+    TArray<TPair<int32, uint16>> GetReplay(FIntPoint Column) const;
+    // Frees a final column's snapshot once its 8 neighbours have decorated.
+    void TryFreeSnapshot(FIntPoint Column);
+    void FreeBucket(FRecord& Record, int32 Bucket);
+    // A stage was lost (a miss, an eviction, an edit dropped): the walk starts again from the first needed column.
+    void Regress();
     // The neighbours a column's mesh reads, a bit per neighbour in FVoxelNeighborhood order (skipping the center):
     // all eight, or with edge walls only those in view.
     uint8 GetMeshNeighbors(FIntPoint Column) const;
-    bool AreGenerated(FIntPoint Column, uint8 Neighbors) const;
+    bool AreFinal(FIntPoint Column, uint8 Neighbors) const;
     bool IsComplete(int32 NeededIndex) const;
     void MarkDirty(FRecord& Record, uint32 Sections);
     void SortReady();
@@ -239,11 +357,15 @@ private:
     FVoxelStreamingRings Rings;
     int32 ViewSector = 0;
     bool bPlanned = false;
-    // The needed columns in priority order, and whether each is in view.
+    // The needed columns in priority order, and the ring of each.
     TArray<FIntPoint> Needed;
-    TBitArray<> NeededInView;
-    // Every needed column before this index is generated and, if in view, meshed.
+    TArray<uint8> NeededRing;
+    // Every needed column before this index has reached its ring's stage.
     int32 FirstIncomplete = 0;
+    // Something changed since the last walk that ended with room to spare, so the next Update walks again.
+    bool bWalk = true;
+    // Set by Regress, so a walk that lost a stage behind its position walks again.
+    bool bRegressed = false;
 
     TMap<FIntPoint, FRecord> Records;
     // Per column, by dense index (FVoxelColumn::GetDenseIndex), every cell edited this session.
@@ -258,5 +380,6 @@ private:
     bool bEdgeWallsUsed = false;
 
     int64 Dropped = 0;
-    FVoxelStageTimes GenerateTimes, MeshTimes, StreamsTimes;
+    int64 Regenerated = 0, Redecorated = 0, BucketsDropped = 0, BucketsAppliedToFinal = 0, Cancelled = 0;
+    FVoxelStageTimes GenerateTimes, DecorateTimes, FinalizeTimes, MeshTimes, StreamsTimes;
 };

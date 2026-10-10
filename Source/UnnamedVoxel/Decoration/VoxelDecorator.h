@@ -10,6 +10,7 @@ class FVoxelBiomeTable;
 class FVoxelBlockTable;
 class FVoxelColumn;
 class FVoxelFeatureGraph;
+class IVoxelTerrain;
 
 // Test-only changes that must break the checks named beside them (scout C, recommendation 3). The other two of the
 // four, a merge in arrival order and a Decorate that reads a neighbour's decorated state, belong to whoever schedules
@@ -31,6 +32,9 @@ struct FVoxelDecorationOptions
     bool bEarlyOut = true;
     // Discard on air exposure; off only for the ore histogram test.
     bool bDiscard = true;
+    // voxel.Decoration.FreezeLast: the freeze pass runs at Finalize, after the merge (S3, plan 3.4), so snow lands on
+    // decoration. Off: S2's order, the freeze inside the snapshot (a control that reproduces S2's hashes).
+    bool bFreezeLast = true;
     // When set, only the placed features it accepts (by full id) run.
     TFunction<bool(FStringView)> Filter;
     EVoxelDecorationMutation Mutation = EVoxelDecorationMutation::None;
@@ -79,10 +83,16 @@ public:
     void Finalize(const FVoxelColumn& Snapshot, TConstArrayView<const FVoxelWriteBucket*> Incoming, FVoxelColumn& Out,
         FVoxelFinalizeStats* Stats = nullptr, TConstArrayView<int32> ArrivalOrder = {}) const;
 
-    // One column decorated alone (design B, the oracle): its 5x5 snapshots from GetSnapshot, its 3x3 decorated, then
-    // finalized. Equal to the column any schedule of the stages gives.
-    using FGetSnapshot = TFunctionRef<TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>(FIntPoint)>;
-    void DecorateAlone(FIntPoint Column, FGetSnapshot GetSnapshot, FVoxelColumn& Out) const;
+    // The snapshot a column's Decorate reads and the pass that finishes a final column after Finalize, in the order
+    // bFreezeLast picks: Terrain's GenerateSnapshot and FinishColumn, or (S2's order) Generate and nothing.
+    void GenerateSnapshot(
+        const IVoxelTerrain& Terrain, FIntPoint Column, FVoxelColumn& Out, TArray<uint16>& Dense) const;
+    void FinishColumn(const IVoxelTerrain& Terrain, FVoxelColumn& Column) const;
+    bool IsFreezeLast() const { return Options.bFreezeLast; }
+
+    // One column decorated alone (design B, the oracle): its 5x5 snapshots generated, its 3x3 decorated, then
+    // finalized and finished. Equal to the column any schedule of the stages gives.
+    void DecorateAlone(const IVoxelTerrain& Terrain, FIntPoint Column, FVoxelColumn& Out) const;
 
     // The placed features compiled, per step, and those skipped by type.
     FString Describe() const;

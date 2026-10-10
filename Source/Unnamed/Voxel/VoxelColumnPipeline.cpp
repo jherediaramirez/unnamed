@@ -1,6 +1,7 @@
 #include "Voxel/VoxelColumnPipeline.h"
-#include "Decoration/VoxelDecorationPreview.h"
 #include "Blocks/VoxelBlockTable.h"
+#include "Decoration/VoxelDecorator.h"
+#include "Decoration/VoxelWriteLog.h"
 #include "HAL/PlatformTime.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Storage/VoxelColumn.h"
@@ -15,6 +16,18 @@ namespace
     // The eight neighbours in FVoxelNeighborhood's row order, skipping the center: bit i of a neighbour mask.
     const FIntPoint PipelineNeighborOffsets[8] = {{-1, -1}, {0, -1}, {1, -1}, {-1, 0}, {1, 0}, {-1, 1}, {0, 1}, {1, 1}};
 
+    // The offset of the column a bucket index (FVoxelWriteLog::GetBucket) names, from the source.
+    FIntPoint GetPipelineBucketOffset(int32 Bucket)
+    {
+        return FIntPoint(Bucket % 3 - 1, Bucket / 3 - 1);
+    }
+
+    // The bucket a source at Source aimed at Target, one of its 3 x 3.
+    int32 GetPipelineBucket(FIntPoint Source, FIntPoint Target)
+    {
+        return FVoxelWriteLog::GetBucket(Target.X - Source.X, Target.Y - Source.Y);
+    }
+
     int64 GetPipelineDistanceSquared(FIntPoint A, FIntPoint B)
     {
         const int64 DX = int64(A.X) - B.X, DY = int64(A.Y) - B.Y;
@@ -25,23 +38,47 @@ namespace
     {
         return FMath::Abs(int64(Column.X) - Center.X) <= Radius && FMath::Abs(int64(Column.Y) - Center.Y) <= Radius;
     }
+
+    void ReplayPipelineEdits(
+        FVoxelColumn& Column, TConstArrayView<TPair<int32, uint16>> Replay, const FVoxelBlockTable& Table)
+    {
+        for (const TPair<int32, uint16>& Edit : Replay)
+            Column.SetState(Edit.Key % VoxelConstants::ColumnSize,
+                Edit.Key / VoxelConstants::ColumnSize % VoxelConstants::ColumnSize,
+                Edit.Key / FVoxelColumn::Area + VoxelConstants::MinZ, Edit.Value, Table);
+    }
 }
 
 struct FVoxelColumnPipeline::FJobResult
 {
     TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe> Column;
+    TUniquePtr<FVoxelWriteLog> Log;
     TUniquePtr<FVoxelColumnMesh> Mesh;
     double Ms = 0;
+    // The column unloaded before the job started, so it did nothing.
+    bool bCancelled = false;
 };
 
 struct FVoxelColumnPipeline::FJob
 {
-    bool bMesh = false;
+    EJob Type = EJob::Generate;
     FIntPoint Column = FIntPoint::ZeroValue;
     uint64 Serial = 0;
     uint32 MeshVersion = 0;
     uint8 Neighbors = 0;
     UE::Tasks::TTask<TSharedPtr<FJobResult>> Task;
+    // Manual jobs (tests): the work until it runs, then its result.
+    TUniqueFunction<TSharedPtr<FJobResult>()> Work;
+    TSharedPtr<FJobResult> Result;
+
+    bool IsCompleted() const { return Work ? false : Result.IsValid() || Task.IsCompleted(); }
+    void Run()
+    {
+        if (!Work) return;
+        Result = Work();
+        Work = TUniqueFunction<TSharedPtr<FJobResult>()>();
+    }
+    TSharedPtr<FJobResult> GetResult() { return Result.IsValid() ? Result : Task.GetResult(); }
 };
 
 FVoxelColumnPipeline::FVoxelColumnPipeline(
@@ -58,7 +95,9 @@ FVoxelColumnPipeline::~FVoxelColumnPipeline()
 
 void FVoxelColumnPipeline::SetMaxTasksInFlight(int32 MaxTasks)
 {
-    Settings.MaxTasksInFlight = FMath::Max(1, MaxTasks);
+    MaxTasks = FMath::Max(1, MaxTasks);
+    if (MaxTasks > Settings.MaxTasksInFlight) bWalk = true;
+    Settings.MaxTasksInFlight = MaxTasks;
 }
 
 void FVoxelColumnPipeline::SetEdgeWalls(bool bEdgeWalls)
@@ -76,23 +115,46 @@ void FVoxelColumnPipeline::SetTintBlend(int32 TintBlend)
     // Every column's colours change. Jobs already running drop their results as stale and mesh again.
     for (TPair<FIntPoint, FRecord>& Pair : Records)
         if (Pair.Value.Data) MarkDirty(Pair.Value, PipelineAllSections);
+    Regress();
 }
 
 void FVoxelColumnPipeline::WaitForJobs()
 {
     for (FJob& Job : Jobs)
-        Job.Task.Wait();
+        if (Job.Work)
+            Job.Run();
+        else if (!Job.Result)
+            Job.Task.Wait();
+}
+
+int32 FVoxelColumnPipeline::GetPendingJobCount() const
+{
+    int32 Count = 0;
+    for (const FJob& Job : Jobs)
+        Count += bool(Job.Work);
+    return Count;
+}
+
+bool FVoxelColumnPipeline::RunJob(int32 Index)
+{
+    if (!Jobs.IsValidIndex(Index) || !Jobs[Index].Work) return false;
+    Jobs[Index].Run();
+    return true;
 }
 
 FVoxelColumnPipeline::FRecord& FVoxelColumnPipeline::AddRecord(FIntPoint Column)
 {
     FRecord& Record = Records.Add(Column);
     Record.Serial = ++NextSerial;
+    Record.Cancel = MakeShared<FThreadSafeBool, ESPMode::ThreadSafe>(false);
     return Record;
 }
 
-void FVoxelColumnPipeline::SetFocus(const FVoxelStreamingRings& NewRings, int32 NewViewSector)
+void FVoxelColumnPipeline::SetFocus(const FVoxelStreamingRings& InRings, int32 NewViewSector)
 {
+    // With decoration each stage needs the 3 x 3 of the one before it: three rings past the view.
+    const FVoxelStreamingRings NewRings(
+        InRings.Center, InRings.ViewRadius, InRings.UnloadMargin, IsDecorating() ? FVoxelStreamingRings::MaxStages : 1);
     if (bPlanned && NewRings == Rings && NewViewSector == ViewSector) return;
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelPipeline_Plan);
     const bool bCenterMoved = !bPlanned || NewRings.Center != Rings.Center;
@@ -100,10 +162,10 @@ void FVoxelColumnPipeline::SetFocus(const FVoxelStreamingRings& NewRings, int32 
     ViewSector = NewViewSector;
     bPlanned = true;
     VoxelStreaming::GetNeededColumns(Rings, ViewSector, Needed);
-    NeededInView.Init(false, Needed.Num());
+    NeededRing.SetNumUninitialized(Needed.Num());
     for (int32 Index = 0; Index < Needed.Num(); ++Index)
     {
-        NeededInView[Index] = Rings.IsInView(Needed[Index]);
+        NeededRing[Index] = uint8(Rings.GetRing(Needed[Index]));
         if (!Records.Contains(Needed[Index])) AddRecord(Needed[Index]);
     }
     TArray<FIntPoint> Present, Unloads;
@@ -124,11 +186,11 @@ void FVoxelColumnPipeline::SetFocus(const FVoxelStreamingRings& NewRings, int32 
         for (int32 Index = 0; Index < Needed.Num(); ++Index)
         {
             FRecord& Record = Records.FindChecked(Needed[Index]);
-            if (!NeededInView[Index] || !Record.Data || (Record.Dirty && !Record.bMeshing)) continue;
+            if (NeededRing[Index] != 0 || !Record.Data || (Record.Dirty && !Record.bMeshing)) continue;
             const uint8 Current = Record.bMeshing ? Record.MeshingNeighbors : Record.MeshedNeighbors;
             if (Current != GetMeshNeighbors(Needed[Index])) MarkDirty(Record, PipelineAllSections);
         }
-    FirstIncomplete = 0;
+    Regress();
     bReadySorted = false;
 }
 
@@ -136,9 +198,17 @@ void FVoxelColumnPipeline::Unload(FIntPoint Column)
 {
     const FRecord* Record = Records.Find(Column);
     if (!Record) return;
+    // Its jobs that have not started skip their work; the others' results are dropped when they arrive.
+    *Record->Cancel = true;
     if (Record->Ready) ReadyColumns.RemoveSingle(Column);
     if (Record->bOnScreen) UnloadedOnScreen.Add(Column);
     Records.Remove(Column);
+}
+
+void FVoxelColumnPipeline::Regress()
+{
+    FirstIncomplete = 0;
+    bWalk = bRegressed = true;
 }
 
 void FVoxelColumnPipeline::Update()
@@ -153,86 +223,333 @@ void FVoxelColumnPipeline::Collect()
     for (int32 Index = 0; Index < Jobs.Num();)
     {
         FJob& Job = Jobs[Index];
-        if (!Job.Task.IsCompleted())
+        if (!Job.IsCompleted())
         {
             ++Index;
             continue;
         }
-        const TSharedPtr<FJobResult> Result = Job.Task.GetResult();
+        const TSharedPtr<FJobResult> Result = Job.GetResult();
         FRecord* Record = Records.Find(Job.Column);
         const bool bCurrent = Record && Record->Serial == Job.Serial;
-        if (!Job.bMesh)
-        {
-            GenerateTimes.Add(Result->Ms);
-            if (bCurrent)
-            {
-                Record->bGenerating = false;
-                Record->Data = Result->Column;
-                Record->DataBytes = Result->Column->GetAllocatedSize();
-                MarkDirty(*Record, PipelineAllSections);
-            }
-            else
-                ++Dropped;
-        }
+        if (Result->bCancelled)
+            ++Cancelled;
         else
-        {
-            MeshTimes.Add(Result->Mesh->MeshMs);
-            StreamsTimes.Add(Result->Mesh->StreamsMs);
-            if (bCurrent) Record->bMeshing = false;
-            if (bCurrent && Record->MeshVersion == Job.MeshVersion)
+            switch (Job.Type)
             {
-                // Nothing became dirty since the job started, so it meshed every dirty section.
-                Record->Dirty = 0;
-                Record->MeshedNeighbors = Job.Neighbors;
-                if (IsPipelineNear(Job.Column, Rings.Center, Settings.MeshCacheRadius))
-                {
-                    Record->Cache = Result->Mesh->Sections;
-                    Record->CacheBytes = Result->Mesh->SectionBytes;
-                }
-                else
-                {
-                    Record->Cache.Reset();
-                    Record->CacheBytes = 0;
-                }
-                if (!Record->Ready)
-                {
-                    ReadyColumns.Add(Job.Column);
-                    bReadySorted = false;
-                }
-                Record->Ready = MoveTemp(Result->Mesh);
+            case EJob::Generate:
+                GenerateTimes.Add(Result->Ms);
+                break;
+            case EJob::Decorate:
+                DecorateTimes.Add(Result->Ms);
+                break;
+            case EJob::Finalize:
+                FinalizeTimes.Add(Result->Ms);
+                break;
+            case EJob::Mesh:
+                MeshTimes.Add(Result->Mesh->MeshMs);
+                StreamsTimes.Add(Result->Mesh->StreamsMs);
+                break;
+            }
+        if (!bCurrent)
+            ++Dropped;
+        else
+            switch (Job.Type)
+            {
+            case EJob::Generate:
+                CollectGenerate(Job, *Result, *Record);
+                break;
+            case EJob::Decorate:
+                CollectDecorate(Job, *Result, *Record);
+                break;
+            case EJob::Finalize:
+                CollectFinalize(Job, *Result, *Record);
+                break;
+            case EJob::Mesh:
+                CollectMesh(Job, *Result, *Record);
+                break;
+            }
+        Jobs.RemoveAtSwap(Index);
+        bWalk = true;
+    }
+}
+
+void FVoxelColumnPipeline::CollectGenerate(const FJob& Job, FJobResult& Result, FRecord& Record)
+{
+    Record.bGenerating = false;
+    Record.bHadSnapshot = true;
+    if (!IsDecorating())
+    {
+        Record.Data = Result.Column;
+        Record.DataBytes = Result.Column->GetAllocatedSize();
+        MarkDirty(Record, PipelineAllSections);
+        return;
+    }
+    Record.Snapshot = Result.Column;
+    Record.SnapshotBytes = Result.Column->GetAllocatedSize();
+}
+
+void FVoxelColumnPipeline::CollectDecorate(const FJob& Job, FJobResult& Result, FRecord& Record)
+{
+    Record.bDecorating = false;
+    Record.bDecorated = true;
+    for (int32 Bucket = 0; Bucket < 9; ++Bucket)
+    {
+        const FIntPoint Target = Job.Column + GetPipelineBucketOffset(Bucket);
+        FVoxelWriteBucket& Writes = Result.Log->Buckets[Bucket];
+        FRecord* TargetRecord = Records.Find(Target);
+        if (TargetRecord && TargetRecord->Data)
+        {
+            // Never applied to a final column: its blocks already hold these writes, and the player's edits since.
+            if (Settings.Mutation == EVoxelPipelineMutation::ApplyToFinal && !Writes.IsEmpty())
+            {
+                const FVoxelWriteBucket* Incoming[9] = {};
+                Incoming[GetPipelineBucket(Target, Job.Column)] = &Writes;
+                TSharedPtr<FVoxelColumn, ESPMode::ThreadSafe> Applied =
+                    MakeShared<FVoxelColumn, ESPMode::ThreadSafe>(Target);
+                Settings.Decorator->Finalize(*TargetRecord->Data, Incoming, *Applied);
+                TargetRecord->Data = Applied;
+                TargetRecord->DataBytes = Applied->GetAllocatedSize();
+                MarkDirty(*TargetRecord, PipelineAllSections);
+                ++BucketsAppliedToFinal;
             }
             else
-                ++Dropped;
+                ++BucketsDropped;
+            continue;
         }
-        Jobs.RemoveAtSwap(Index);
+        FreeBucket(Record, Bucket);
+        if (!Writes.IsEmpty())
+        {
+            Record.Buckets[Bucket] = MakeShared<FVoxelWriteBucket, ESPMode::ThreadSafe>(MoveTemp(Writes));
+            Record.BucketBytes[Bucket] = Record.Buckets[Bucket]->GetAllocatedSize();
+        }
+        Record.HeldBuckets |= uint16(1u << Bucket);
+    }
+    // The final columns of its 3 x 3 may need their snapshots no longer.
+    for (int32 Bucket = 0; Bucket < 9; ++Bucket)
+        TryFreeSnapshot(Job.Column + GetPipelineBucketOffset(Bucket));
+}
+
+void FVoxelColumnPipeline::CollectFinalize(const FJob& Job, FJobResult& Result, FRecord& Record)
+{
+    Record.bFinalizing = false;
+    Record.bHadSnapshot = true;
+    Record.Data = Result.Column;
+    Record.DataBytes = Result.Column->GetAllocatedSize();
+    MarkDirty(Record, PipelineAllSections);
+    // Every bucket aimed at it has been applied: free them.
+    for (int32 Bucket = 0; Bucket < 9; ++Bucket)
+    {
+        const FIntPoint Source = Job.Column + GetPipelineBucketOffset(Bucket);
+        if (FRecord* SourceRecord = Records.Find(Source))
+            FreeBucket(*SourceRecord, GetPipelineBucket(Source, Job.Column));
+    }
+    for (int32 Bucket = 0; Bucket < 9; ++Bucket)
+        TryFreeSnapshot(Job.Column + GetPipelineBucketOffset(Bucket));
+}
+
+void FVoxelColumnPipeline::CollectMesh(const FJob& Job, FJobResult& Result, FRecord& Record)
+{
+    Record.bMeshing = false;
+    if (Record.MeshVersion != Job.MeshVersion)
+    {
+        ++Dropped;
+        return;
+    }
+    // Nothing became dirty since the job started, so it meshed every dirty section.
+    Record.Dirty = 0;
+    Record.MeshedNeighbors = Job.Neighbors;
+    if (IsPipelineNear(Job.Column, Rings.Center, Settings.MeshCacheRadius))
+    {
+        Record.Cache = Result.Mesh->Sections;
+        Record.CacheBytes = Result.Mesh->SectionBytes;
+    }
+    else
+    {
+        Record.Cache.Reset();
+        Record.CacheBytes = 0;
+    }
+    if (!Record.Ready)
+    {
+        ReadyColumns.Add(Job.Column);
+        bReadySorted = false;
+    }
+    Record.Ready = MoveTemp(Result.Mesh);
+}
+
+void FVoxelColumnPipeline::FreeBucket(FRecord& Record, int32 Bucket)
+{
+    Record.Buckets[Bucket].Reset();
+    Record.BucketBytes[Bucket] = 0;
+    Record.HeldBuckets &= uint16(~(1u << Bucket));
+}
+
+void FVoxelColumnPipeline::TryFreeSnapshot(FIntPoint Column)
+{
+    // Kept while a stage may read it: until the column is final and it and its 8 neighbours have decorated. Its
+    // neighbours are its sources, so at rest every final column has freed its snapshot; one regenerated for a
+    // neighbour that reloaded stays until that neighbour decorates.
+    FRecord* Record = Records.Find(Column);
+    if (!Record || !Record->Snapshot || !Record->Data || !Record->bDecorated ||
+        Settings.Mutation == EVoxelPipelineMutation::KeepSnapshots)
+        return;
+    for (const FIntPoint Offset : PipelineNeighborOffsets)
+    {
+        const FRecord* Neighbor = Records.Find(Column + Offset);
+        if (!Neighbor || !Neighbor->bDecorated) return;
+    }
+    Record->Snapshot.Reset();
+    Record->SnapshotBytes = 0;
+}
+
+void FVoxelColumnPipeline::EvictSnapshot(FIntPoint Column)
+{
+    if (FRecord* Record = Records.Find(Column); Record && Record->Snapshot)
+    {
+        Record->Snapshot.Reset();
+        Record->SnapshotBytes = 0;
+        Regress();
+    }
+}
+
+void FVoxelColumnPipeline::EvictBuckets(FIntPoint Column)
+{
+    if (FRecord* Record = Records.Find(Column); Record && Record->HeldBuckets)
+    {
+        for (int32 Bucket = 0; Bucket < 9; ++Bucket)
+            FreeBucket(*Record, Bucket);
+        Regress();
     }
 }
 
 bool FVoxelColumnPipeline::IsComplete(int32 NeededIndex) const
 {
     const FRecord& Record = Records.FindChecked(Needed[NeededIndex]);
-    return Record.Data && (!NeededInView[NeededIndex] || (!Record.Dirty && !Record.bMeshing));
+    switch (IsDecorating() ? NeededRing[NeededIndex] : FMath::Min<int32>(NeededRing[NeededIndex], 1))
+    {
+    case 0:
+        return Record.Data && !Record.Dirty && !Record.bMeshing;
+    case 1:
+        return Record.Data.IsValid();
+    case 2:
+        return Record.bDecorated;
+    default:
+        return Record.Snapshot.IsValid() || Record.Data.IsValid();
+    }
 }
 
 void FVoxelColumnPipeline::LaunchJobs()
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelPipeline_Launch);
+    // Nothing finished and nothing moved since a walk that had room to spare: nothing new can be ready.
+    if (!bWalk) return;
+    bRegressed = false;
     while (FirstIncomplete < Needed.Num() && IsComplete(FirstIncomplete))
         ++FirstIncomplete;
-    // Nearest first: a column's mesh as soon as its neighbours exist, otherwise its blocks.
-    for (int32 Index = FirstIncomplete; Index < Needed.Num() && Jobs.Num() < Settings.MaxTasksInFlight; ++Index)
+    // Nearest first: each column's stage as soon as its inputs exist, otherwise what they miss.
+    for (int32 Index = FirstIncomplete; Index < Needed.Num() && HasRoom(); ++Index)
     {
         const FIntPoint Column = Needed[Index];
-        FRecord& Record = Records.FindChecked(Column);
-        if (!Record.Data)
+        if (!IsDecorating())
         {
-            if (!Record.bGenerating) LaunchGenerate(Column, Record);
+            FRecord& Record = Records.FindChecked(Column);
+            if (!Record.Data)
+            {
+                if (!Record.bGenerating) LaunchGenerate(Column, Record);
+            }
+            else if (NeededRing[Index] == 0)
+                TryMesh(Column, Record);
             continue;
         }
-        if (!NeededInView[Index] || !Record.Dirty || Record.bMeshing) continue;
-        const uint8 Neighbors = GetMeshNeighbors(Column);
-        if (AreGenerated(Column, Neighbors)) LaunchMesh(Column, Record, Neighbors);
+        switch (NeededRing[Index])
+        {
+        case 0:
+            if (RequireFinal(Column)) TryMesh(Column, Records.FindChecked(Column));
+            break;
+        case 1:
+            RequireFinal(Column);
+            break;
+        case 2:
+            RequireDecorated(Column);
+            break;
+        default:
+            // A final column (one the rings moved away from) needs no snapshot of its own.
+            if (!Records.FindChecked(Column).Data) RequireSnapshot(Column);
+            break;
+        }
     }
+    // A walk stopped for room, or one that lost a stage behind it, walks again next time; otherwise the next result or
+    // plan starts one.
+    bWalk = !HasRoom() || bRegressed;
+}
+
+bool FVoxelColumnPipeline::RequireSnapshot(FIntPoint Column)
+{
+    FRecord* Record = Records.Find(Column);
+    if (!Record) return false;
+    if (Record->Snapshot) return true;
+    if (!Record->bGenerating && HasRoom()) LaunchGenerate(Column, *Record);
+    return false;
+}
+
+bool FVoxelColumnPipeline::RequireDecorated(FIntPoint Column)
+{
+    FRecord* Record = Records.Find(Column);
+    if (!Record) return false;
+    if (Record->bDecorated) return true;
+    if (Record->bDecorating) return false;
+    // Every missing snapshot of the 3 x 3 starts now, not one per walk.
+    bool bReady = true;
+    for (int32 Bucket = 0; Bucket < 9; ++Bucket)
+        bReady &= RequireSnapshot(Column + GetPipelineBucketOffset(Bucket));
+    if (bReady && HasRoom()) LaunchDecorate(Column, *Record);
+    return false;
+}
+
+bool FVoxelColumnPipeline::RequireBucket(FIntPoint Source, FIntPoint Target)
+{
+    FRecord* Record = Records.Find(Source);
+    if (!Record) return false;
+    if (Record->HeldBuckets & (1u << GetPipelineBucket(Source, Target))) return true;
+    if (Record->bDecorated)
+    {
+        // Its bucket for Target is gone (applied to Target before it reloaded or lost its edits, dropped while Target
+        // was final, or evicted): Decorate is pure, so it runs again.
+        if (Settings.Mutation == EVoxelPipelineMutation::MissingBucketAsEmpty) return true;
+        Record->bDecorated = false;
+        ++Redecorated;
+        Regress();
+    }
+    RequireDecorated(Source);
+    return false;
+}
+
+bool FVoxelColumnPipeline::RequireFinal(FIntPoint Column)
+{
+    FRecord* Record = Records.Find(Column);
+    if (!Record) return false;
+    if (Record->Data) return true;
+    if (Record->bFinalizing) return false;
+    bool bReady = RequireSnapshot(Column);
+    for (int32 Bucket = 0; Bucket < 9; ++Bucket)
+        bReady &= RequireBucket(Column + GetPipelineBucketOffset(Bucket), Column);
+    // RequireBucket may have added records' jobs, never records, so Record still stands.
+    if (bReady && HasRoom()) LaunchFinalize(Column, *Record);
+    return false;
+}
+
+void FVoxelColumnPipeline::TryMesh(FIntPoint Column, FRecord& Record)
+{
+    if (!Record.Dirty || Record.bMeshing) return;
+    const uint8 Neighbors = GetMeshNeighbors(Column);
+    if (IsDecorating())
+    {
+        // The neighbours' Finalizes first: the view waits on them.
+        bool bReady = true;
+        for (int32 Index = 0; Index < 8; ++Index)
+            if (Neighbors & (1u << Index)) bReady &= RequireFinal(Column + PipelineNeighborOffsets[Index]);
+        if (!bReady || !HasRoom()) return;
+    }
+    if (AreFinal(Column, Neighbors)) LaunchMesh(Column, Record, Neighbors);
 }
 
 uint8 FVoxelColumnPipeline::GetMeshNeighbors(FIntPoint Column) const
@@ -244,7 +561,7 @@ uint8 FVoxelColumnPipeline::GetMeshNeighbors(FIntPoint Column) const
     return Mask;
 }
 
-bool FVoxelColumnPipeline::AreGenerated(FIntPoint Column, uint8 Neighbors) const
+bool FVoxelColumnPipeline::AreFinal(FIntPoint Column, uint8 Neighbors) const
 {
     for (int32 Index = 0; Index < 8; ++Index)
         if ((Neighbors & (1u << Index)) && !FindColumn(Column + PipelineNeighborOffsets[Index])) return false;
@@ -257,40 +574,132 @@ void FVoxelColumnPipeline::MarkDirty(FRecord& Record, uint32 Sections)
     ++Record.MeshVersion;
 }
 
-void FVoxelColumnPipeline::LaunchGenerate(FIntPoint Column, FRecord& Record)
+FVoxelColumnPipeline::FJob& FVoxelColumnPipeline::AddJob(EJob Type, FIntPoint Column, const FRecord& Record)
 {
-    Record.bGenerating = true;
-    // The column's edits, replayed over the terrain: they survive unloading.
+    FJob& Job = Jobs.AddDefaulted_GetRef();
+    Job.Type = Type;
+    Job.Column = Column;
+    Job.Serial = Record.Serial;
+    return Job;
+}
+
+void FVoxelColumnPipeline::StartJob(FJob& Job, TUniqueFunction<TSharedPtr<FJobResult>()>&& Work)
+{
+    if (Settings.bManualJobs)
+        Job.Work = MoveTemp(Work);
+    else
+        Job.Task = UE::Tasks::Launch(UE_SOURCE_LOCATION, MoveTemp(Work), UE::Tasks::ETaskPriority::BackgroundHigh);
+}
+
+TArray<TPair<int32, uint16>> FVoxelColumnPipeline::GetReplay(FIntPoint Column) const
+{
     TArray<TPair<int32, uint16>> Replay;
     if (const TMap<int32, FEdit>* ColumnEdits = Edits.Find(Column))
         for (const TPair<int32, FEdit>& Edit : *ColumnEdits)
             Replay.Add({Edit.Key, Edit.Value.State});
-    FJob& Job = Jobs.AddDefaulted_GetRef();
-    Job.Column = Column;
-    Job.Serial = Record.Serial;
-    Job.Task = UE::Tasks::Launch(
-        UE_SOURCE_LOCATION,
-        [Terrain = Terrain, Table = Table, Preview = Settings.Preview, Column, Replay = MoveTemp(Replay)]
+    return Replay;
+}
+
+void FVoxelColumnPipeline::LaunchGenerate(FIntPoint Column, FRecord& Record)
+{
+    Record.bGenerating = true;
+    if (IsDecorating() && Record.bHadSnapshot) ++Regenerated;
+    // Without decoration the column's edits are replayed over the terrain here: they survive unloading. With it, the
+    // snapshot stays pure and Finalize replays them.
+    TArray<TPair<int32, uint16>> Replay;
+    if (!IsDecorating()) Replay = GetReplay(Column);
+    FJob& Job = AddJob(EJob::Generate, Column, Record);
+    StartJob(Job,
+        [Terrain = Terrain, Table = Table, Decorator = Settings.Decorator, Cancel = Record.Cancel, Column,
+            Replay = MoveTemp(Replay)]() -> TSharedPtr<FJobResult>
         {
+            TSharedPtr<FJobResult> Result = MakeShared<FJobResult>();
+            if (*Cancel)
+            {
+                Result->bCancelled = true;
+                return Result;
+            }
             TRACE_CPUPROFILER_EVENT_SCOPE(VoxelPipeline_Generate);
             const double Start = FPlatformTime::Seconds();
             // The dense column is scratch, reused by every job on this worker.
             thread_local TArray<uint16> Dense;
             TSharedPtr<FVoxelColumn, ESPMode::ThreadSafe> Built = MakeShared<FVoxelColumn, ESPMode::ThreadSafe>(Column);
-            if (Preview)
-                Preview->Build(Column, *Built);
+            if (Decorator)
+                Decorator->GenerateSnapshot(*Terrain, Column, *Built, Dense);
             else
                 Terrain->Generate(Column, *Built, Dense);
-            for (const TPair<int32, uint16>& Edit : Replay)
-                Built->SetState(Edit.Key % VoxelConstants::ColumnSize,
-                    Edit.Key / VoxelConstants::ColumnSize % VoxelConstants::ColumnSize,
-                    Edit.Key / FVoxelColumn::Area + VoxelConstants::MinZ, Edit.Value, *Table);
-            TSharedPtr<FJobResult> Result = MakeShared<FJobResult>();
+            ReplayPipelineEdits(*Built, Replay, *Table);
             Result->Column = Built;
             Result->Ms = (FPlatformTime::Seconds() - Start) * 1000.;
             return Result;
-        },
-        UE::Tasks::ETaskPriority::BackgroundHigh);
+        });
+}
+
+void FVoxelColumnPipeline::LaunchDecorate(FIntPoint Column, FRecord& Record)
+{
+    Record.bDecorating = true;
+    // The 3 x 3 snapshots, by bucket index. Shared pointers keep them alive should they be freed meanwhile.
+    TStaticArray<TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>, 9> Around;
+    for (int32 Bucket = 0; Bucket < 9; ++Bucket)
+        Around[Bucket] = Records.FindChecked(Column + GetPipelineBucketOffset(Bucket)).Snapshot;
+    FJob& Job = AddJob(EJob::Decorate, Column, Record);
+    StartJob(Job,
+        [Decorator = Settings.Decorator, Cancel = Record.Cancel, Column, Around]() -> TSharedPtr<FJobResult>
+        {
+            TSharedPtr<FJobResult> Result = MakeShared<FJobResult>();
+            if (*Cancel)
+            {
+                Result->bCancelled = true;
+                return Result;
+            }
+            TRACE_CPUPROFILER_EVENT_SCOPE(VoxelPipeline_Decorate);
+            const double Start = FPlatformTime::Seconds();
+            const FVoxelColumn* Snapshots[9];
+            for (int32 Bucket = 0; Bucket < 9; ++Bucket)
+                Snapshots[Bucket] = Around[Bucket].Get();
+            Result->Log = MakeUnique<FVoxelWriteLog>();
+            Decorator->Decorate(Column, Snapshots, *Result->Log);
+            Result->Ms = (FPlatformTime::Seconds() - Start) * 1000.;
+            return Result;
+        });
+}
+
+void FVoxelColumnPipeline::LaunchFinalize(FIntPoint Column, FRecord& Record)
+{
+    Record.bFinalizing = true;
+    // The bucket each source of the 3 x 3 aimed at this column, by the source's bucket index from here (null: empty).
+    TStaticArray<TSharedPtr<const FVoxelWriteBucket, ESPMode::ThreadSafe>, 9> Incoming;
+    for (int32 Bucket = 0; Bucket < 9; ++Bucket)
+    {
+        const FIntPoint Source = Column + GetPipelineBucketOffset(Bucket);
+        Incoming[Bucket] = Records.FindChecked(Source).Buckets[GetPipelineBucket(Source, Column)];
+    }
+    FJob& Job = AddJob(EJob::Finalize, Column, Record);
+    StartJob(Job,
+        [Terrain = Terrain, Table = Table, Decorator = Settings.Decorator, Cancel = Record.Cancel,
+            Snapshot = Record.Snapshot, Incoming, Replay = GetReplay(Column)]() -> TSharedPtr<FJobResult>
+        {
+            TSharedPtr<FJobResult> Result = MakeShared<FJobResult>();
+            if (*Cancel)
+            {
+                Result->bCancelled = true;
+                return Result;
+            }
+            TRACE_CPUPROFILER_EVENT_SCOPE(VoxelPipeline_Finalize);
+            const double Start = FPlatformTime::Seconds();
+            const FVoxelWriteBucket* Buckets[9];
+            for (int32 Bucket = 0; Bucket < 9; ++Bucket)
+                Buckets[Bucket] = Incoming[Bucket].Get();
+            // The merge, the freeze pass, then the player's edits (plan 3.1).
+            TSharedPtr<FVoxelColumn, ESPMode::ThreadSafe> Final =
+                MakeShared<FVoxelColumn, ESPMode::ThreadSafe>(Snapshot->GetPosition());
+            Decorator->Finalize(*Snapshot, Buckets, *Final);
+            Decorator->FinishColumn(*Terrain, *Final);
+            ReplayPipelineEdits(*Final, Replay, *Table);
+            Result->Column = Final;
+            Result->Ms = (FPlatformTime::Seconds() - Start) * 1000.;
+            return Result;
+        });
 }
 
 void FVoxelColumnPipeline::LaunchMesh(FIntPoint Column, FRecord& Record, uint8 Neighbors)
@@ -301,12 +710,6 @@ void FVoxelColumnPipeline::LaunchMesh(FIntPoint Column, FRecord& Record, uint8 N
     const bool bUseCache = !Record.Cache.IsEmpty() && Record.MeshedNeighbors == Neighbors;
     const uint32 Sections = bUseCache ? Record.Dirty : PipelineAllSections;
     if (Neighbors != PipelineAllNeighbors) bEdgeWallsUsed = true;
-    FJob& Job = Jobs.AddDefaulted_GetRef();
-    Job.bMesh = true;
-    Job.Column = Column;
-    Job.Serial = Record.Serial;
-    Job.MeshVersion = Record.MeshVersion;
-    Job.Neighbors = Neighbors;
     // The 3 x 3 columns row by row. Shared pointers keep them alive should they unload meanwhile.
     TStaticArray<TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>, 9> Around;
     Around[4] = Record.Data;
@@ -318,9 +721,12 @@ void FVoxelColumnPipeline::LaunchMesh(FIntPoint Column, FRecord& Record, uint8 N
         }
     TArray<TSharedPtr<const FVoxelMeshData, ESPMode::ThreadSafe>> Cached;
     if (bUseCache) Cached = Record.Cache;
-    Job.Task = UE::Tasks::Launch(
-        UE_SOURCE_LOCATION,
-        [Table = Table, Terrain = Terrain, Options = Settings.MeshOptions, Around, Cached = MoveTemp(Cached), Sections]
+    FJob& Job = AddJob(EJob::Mesh, Column, Record);
+    Job.MeshVersion = Record.MeshVersion;
+    Job.Neighbors = Neighbors;
+    StartJob(Job,
+        [Table = Table, Terrain = Terrain, Options = Settings.MeshOptions, Around, Cached = MoveTemp(Cached),
+            Sections]() -> TSharedPtr<FJobResult>
         {
             TRACE_CPUPROFILER_EVENT_SCOPE(VoxelPipeline_Mesh);
             const double Start = FPlatformTime::Seconds();
@@ -367,8 +773,7 @@ void FVoxelColumnPipeline::LaunchMesh(FIntPoint Column, FRecord& Record, uint8 N
             Mesh.LayerMask = UVoxelChunkComponent::GetLayerMask(Present);
             Mesh.StreamsMs = (FPlatformTime::Seconds() - StreamsStart) * 1000.;
             return Result;
-        },
-        UE::Tasks::ETaskPriority::BackgroundHigh);
+        });
 }
 
 void FVoxelColumnPipeline::SortReady()
@@ -419,6 +824,12 @@ const FVoxelColumn* FVoxelColumnPipeline::FindColumn(FIntPoint Column) const
     return Record ? Record->Data.Get() : nullptr;
 }
 
+const FVoxelColumn* FVoxelColumnPipeline::FindSnapshot(FIntPoint Column) const
+{
+    const FRecord* Record = Records.Find(Column);
+    return Record ? Record->Snapshot.Get() : nullptr;
+}
+
 bool FVoxelColumnPipeline::GetCell(const FIntVector& Cell, uint16& OutState, int64& OutStamp) const
 {
     const FIntPoint Column(Cell.X >> 4, Cell.Y >> 4);
@@ -445,13 +856,13 @@ bool FVoxelColumnPipeline::SetCell(const FIntVector& Cell, uint16 State, int64 S
     Record->Data = Copy;
     Record->DataBytes = Copy->GetAllocatedSize();
     Edits.FindOrAdd(Column).Add(FVoxelColumn::GetDenseIndex(X, Y, Cell.Z), {State, Stamp});
-    // Exactly the sections whose padded copy holds the cell; neighbours not generated yet read it when they mesh.
+    // Exactly the sections whose padded copy holds the cell; neighbours not final yet read it when they mesh.
     TArray<FVoxelSectionKey, TInlineAllocator<8>> Touched;
     VoxelMesher::GetSectionsTouching(Cell, Touched);
     for (const FVoxelSectionKey& Key : Touched)
         if (FRecord* Neighbor = Records.Find(Key.Column); Neighbor && Neighbor->Data)
             MarkDirty(*Neighbor, 1u << Key.Section);
-    FirstIncomplete = 0;
+    Regress();
     return true;
 }
 
@@ -460,12 +871,14 @@ void FVoxelColumnPipeline::DropEdits()
     for (const TPair<FIntPoint, TMap<int32, FEdit>>& Column : Edits)
     {
         FRecord* Record = Records.Find(Column.Key);
-        if (!Record || (!Record->Data && !Record->bGenerating)) continue;
-        // Generated again from the terrain alone; whatever is in flight belongs to the edited column.
+        if (!Record || (!Record->Data && !Record->bGenerating && !Record->bFinalizing)) continue;
+        // Built again without the edits; whatever is in flight belongs to the edited column. With decoration the
+        // snapshot and buckets are pure and stay; the buckets aimed at it were freed when it finalized, so its
+        // sources decorate again (recompute-on-miss).
         Record->Serial = ++NextSerial;
         Record->Data.Reset();
         Record->DataBytes = 0;
-        Record->bGenerating = Record->bMeshing = false;
+        Record->bGenerating = Record->bDecorating = Record->bFinalizing = Record->bMeshing = false;
         Record->Cache.Reset();
         Record->CacheBytes = 0;
         if (Record->Ready)
@@ -480,7 +893,7 @@ void FVoxelColumnPipeline::DropEdits()
                     MarkDirty(*Neighbor, PipelineAllSections);
     }
     Edits.Reset();
-    FirstIncomplete = 0;
+    Regress();
 }
 
 void FVoxelColumnPipeline::ForEachNonAir(
@@ -555,6 +968,11 @@ FVoxelColumnStatus FVoxelColumnPipeline::GetStatus(FIntPoint Column) const
     Status.bOnScreen = Record->bOnScreen;
     Status.DirtySections = Record->Dirty;
     Status.bCached = !Record->Cache.IsEmpty();
+    Status.bSnapshot = Record->Snapshot.IsValid();
+    Status.bDecorated = Record->bDecorated;
+    Status.bDecorating = Record->bDecorating;
+    Status.bFinalizing = Record->bFinalizing;
+    Status.HeldBuckets = Record->HeldBuckets;
     return Status;
 }
 
@@ -573,13 +991,22 @@ FVoxelPipelineStats FVoxelColumnPipeline::GetStats() const
     FVoxelPipelineStats Stats;
     Stats.Columns = Records.Num();
     Stats.Needed = Needed.Num();
+    for (const uint8 Ring : NeededRing)
+        ++Stats.NeededPerRing[FMath::Min<int32>(Ring, FVoxelStreamingRings::MaxStages)];
     Stats.Ready = ReadyColumns.Num();
     Stats.Dropped = Dropped;
     for (const TPair<FIntPoint, TMap<int32, FEdit>>& Column : Edits)
         Stats.Edits += Column.Value.Num();
     Stats.Generate = GenerateTimes;
+    Stats.Decorate = DecorateTimes;
+    Stats.Finalize = FinalizeTimes;
     Stats.Mesh = MeshTimes;
     Stats.Streams = StreamsTimes;
+    Stats.Regenerated = Regenerated;
+    Stats.Redecorated = Redecorated;
+    Stats.BucketsDropped = BucketsDropped;
+    Stats.BucketsAppliedToFinal = BucketsAppliedToFinal;
+    Stats.Cancelled = Cancelled;
     for (const TPair<FIntPoint, FRecord>& Pair : Records)
     {
         const FRecord& Record = Pair.Value;
@@ -588,6 +1015,15 @@ FVoxelPipelineStats FVoxelColumnPipeline::GetStats() const
         Stats.Meshing += Record.bMeshing;
         Stats.ColumnBytes += Record.DataBytes;
         Stats.CacheBytes += Record.CacheBytes;
+        Stats.Snapshots += Record.Snapshot.IsValid();
+        Stats.SnapshotBytes += Record.SnapshotBytes;
+        Stats.Decorated += Record.bDecorated;
+        Stats.Decorating += Record.bDecorating;
+        Stats.Finalizing += Record.bFinalizing;
+        for (const TSharedPtr<const FVoxelWriteBucket, ESPMode::ThreadSafe>& Bucket : Record.Buckets)
+            Stats.Buckets += Bucket.IsValid();
+        for (const SIZE_T Bytes : Record.BucketBytes)
+            Stats.BucketBytes += Bytes;
         if (Record.bOnScreen)
         {
             ++Stats.OnScreen;

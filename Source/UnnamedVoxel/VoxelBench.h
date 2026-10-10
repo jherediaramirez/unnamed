@@ -74,6 +74,13 @@ namespace VoxelBench
     UNNAMEDVOXEL_API FString RunDecorate(const FVoxelDecorator& Decorator, const FVoxelDecorator& NoEarlyOut,
         const IVoxelTerrain& Terrain, int32 Radius);
 
+    // The freeze pass at Finalize (Last, S3) against inside the snapshot (First, S2's order): the decorated area of
+    // Radius around Center, or around the snowiest of a coarse search near the origin, built both ways. Reports both
+    // hashes, the snow layers, and every cell that differs, each checked to be an ore or its host with a snow layer on
+    // a face in First's columns (Decorate saw air there when the freeze moved after it); any other is unexplained.
+    UNNAMEDVOXEL_API FString RunFreezeDiff(const FVoxelDecorator& Last, const FVoxelDecorator& First,
+        const IVoxelTerrain& Terrain, int32 Radius, TOptional<FIntPoint> Center);
+
     // One line per result: name, nanoseconds per sample, millions per second.
     UNNAMEDVOXEL_API FString Describe(TConstArrayView<FVoxelBenchResult> Results);
 }

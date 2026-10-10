@@ -56,7 +56,7 @@ void FVoxelDecoratedArea::Build(const FVoxelDecorator& Decorator, const IVoxelTe
         {
             TArray<uint16> Dense;
             Snapshots[Index] = MakeShared<FVoxelColumn, ESPMode::ThreadSafe>();
-            Terrain.Generate(Position, *Snapshots[Index], Dense);
+            Decorator.GenerateSnapshot(Terrain, Position, *Snapshots[Index], Dense);
         });
     const auto SnapshotAt = [&](FIntPoint Position)
     {
@@ -78,6 +78,7 @@ void FVoxelDecoratedArea::Build(const FVoxelDecorator& Decorator, const IVoxelTe
     TArray<TSharedPtr<FVoxelColumn, ESPMode::ThreadSafe>> Final;
     Final.SetNum(FinalSide * FinalSide);
     Out.Finalizes.SetNum(Final.Num());
+    Out.FinishMs.SetNumZeroed(Final.Num());
     Out.FinalizeWallMs = RunStage(TEXT("VoxelDecoratedArea.Finalize"), InRadius, Out.FinalizeMs,
         [&](int32 Index, FIntPoint Position)
         {
@@ -93,6 +94,9 @@ void FVoxelDecoratedArea::Build(const FVoxelDecorator& Decorator, const IVoxelTe
                 }
             Final[Index] = MakeShared<FVoxelColumn, ESPMode::ThreadSafe>();
             Decorator.Finalize(*SnapshotAt(Position), Incoming, *Final[Index], &Out.Finalizes[Index]);
+            const double FinishStart = FPlatformTime::Seconds();
+            Decorator.FinishColumn(Terrain, *Final[Index]);
+            Out.FinishMs[Index] = (FPlatformTime::Seconds() - FinishStart) * 1000.;
         });
     for (const TSharedPtr<FVoxelColumn, ESPMode::ThreadSafe>& Column : Final)
         Out.Columns.Add(Column);

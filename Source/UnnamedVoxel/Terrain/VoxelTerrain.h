@@ -24,6 +24,14 @@ public:
     virtual bool ConfirmDry(int32 X, int32 Y) const { return IsDry(X, Y); }
     // Fills Out with column Position; Dense is scratch, resized to FVoxelColumn::DenseVolume.
     virtual void Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const = 0;
+    // Decoration's snapshot (phase 6, S3): Generate without its last column-wide pass (the freeze pass), which
+    // FinishColumn then runs on the decorated column, so snow lands on what decoration placed (plan 3.4).
+    // FinishColumn(GenerateSnapshot) equals Generate. Terrains without such a pass generate as Generate does.
+    virtual void GenerateSnapshot(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const
+    {
+        Generate(Position, Out, Dense);
+    }
+    virtual void FinishColumn(FVoxelColumn& Column) const {}
     // Forgets work shared between columns (results never depend on it), so a measurement or a load-order check starts
     // cold.
     virtual void ResetCaches() const {}

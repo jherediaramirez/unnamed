@@ -15,11 +15,10 @@ namespace
     }
 }
 
-FVoxelStreamingRings::FVoxelStreamingRings(FIntPoint InCenter, int32 InViewRadius, int32 InUnloadMargin)
-    : Center(InCenter),
-      ViewRadius(FMath::Max(0, InViewRadius)),
-      UnloadMargin(FMath::Max(MinUnloadMargin, InUnloadMargin))
+FVoxelStreamingRings::FVoxelStreamingRings(FIntPoint InCenter, int32 InViewRadius, int32 InUnloadMargin, int32 InStages)
+    : Center(InCenter), ViewRadius(FMath::Max(0, InViewRadius)), Stages(FMath::Clamp(InStages, 1, MaxStages))
 {
+    UnloadMargin = FMath::Max(GetMinUnloadMargin(Stages), InUnloadMargin);
 }
 
 int64 FVoxelStreamingRings::GetGapSquared(FIntPoint Column) const
@@ -35,10 +34,19 @@ bool FVoxelStreamingRings::IsInView(FIntPoint Column) const
 
 bool FVoxelStreamingRings::IsNeeded(FIntPoint Column) const
 {
-    // The neighbour with the smallest gap is one column closer to the center on each axis.
-    const int64 GapX = FMath::Max<int64>(0, GetStreamingAxisGap(Center.X, Column.X) - 1);
-    const int64 GapY = FMath::Max<int64>(0, GetStreamingAxisGap(Center.Y, Column.Y) - 1);
-    return GapX * GapX + GapY * GapY <= int64(ViewRadius) * ViewRadius;
+    return GetRing(Column) != INDEX_NONE;
+}
+
+int32 FVoxelStreamingRings::GetRing(FIntPoint Column) const
+{
+    // The column with the smallest gap within Ring columns on both axes is Ring columns closer to the center on each.
+    const int64 AxisX = GetStreamingAxisGap(Center.X, Column.X), AxisY = GetStreamingAxisGap(Center.Y, Column.Y);
+    for (int32 Ring = 0; Ring <= Stages; ++Ring)
+    {
+        const int64 GapX = FMath::Max<int64>(0, AxisX - Ring), GapY = FMath::Max<int64>(0, AxisY - Ring);
+        if (GapX * GapX + GapY * GapY <= int64(ViewRadius) * ViewRadius) return Ring;
+    }
+    return INDEX_NONE;
 }
 
 bool FVoxelStreamingRings::IsBeyondUnload(FIntPoint Column) const

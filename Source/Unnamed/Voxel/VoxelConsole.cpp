@@ -16,6 +16,7 @@
 #include "Voxel/VoxelFlyCamera.h"
 #include "Voxel/VoxelWorld.h"
 #include "Voxel/VoxelWorldSettings.h"
+#include "Voxel/VoxelWorldSubsystem.h"
 #include "Voxel/VoxelTerrainFactory.h"
 #include "Voxel/VoxelWorldgenReader.h"
 #include "VoxelBench.h"
@@ -41,12 +42,14 @@ TAutoConsoleVariable<int32> VoxelConsole::CVarTintBlend(TEXT("voxel.TintBlend"),
 TAutoConsoleVariable<bool> VoxelConsole::CVarEdgeWalls(TEXT("voxel.Debug.EdgeWalls"), false,
     TEXT("Debug: mesh the columns at the edge of the view against air, showing the cut through the world."));
 TAutoConsoleVariable<bool> VoxelConsole::CVarDecoration(TEXT("voxel.Decoration"), true,
-    TEXT("Decoration (phase 6): 1 decorates the columns of voxel.Bench Columns and the gates (ores since S2); 0 keeps "
-         "them as Generate leaves them, the control for comparisons. Streaming decorates only through "
-         "voxel.Decoration.Preview until S3."));
-TAutoConsoleVariable<bool> VoxelConsole::CVarDecorationPreview(TEXT("voxel.Decoration.Preview"), false,
-    TEXT("Captures only, until S3: streaming builds each column decorated through the oracle (about 9 Decorates per "
-         "column on top of Generate). Read when a world starts."));
+    TEXT(
+        "Decoration (phase 6): 1 decorates streamed columns (Generate, Decorate, Finalize; three rings past the view), "
+        "voxel.Bench Columns and the gates (ores since S2); 0 keeps them as Generate leaves them, the control for "
+        "comparisons. A change rebuilds the world."));
+TAutoConsoleVariable<bool> VoxelConsole::CVarDecorationFreezeLast(TEXT("voxel.Decoration.FreezeLast"), true,
+    TEXT("With decoration: 1 runs the freeze pass at Finalize, after the merge, so snow lands on decoration (S3); 0 "
+         "runs "
+         "it inside the snapshot, before decoration (S2's order, a control). A change rebuilds the world."));
 
 int32 VoxelConsole::GetTintBlend()
 {
@@ -59,7 +62,7 @@ int32 VoxelConsole::GetMaxTasksInFlight()
     return Configured > 0 ? Configured : FMath::Max(2, 2 * int32(LowLevelTasks::FScheduler::Get().GetNumWorkers()));
 }
 
-FString VoxelConsole::DescribeInfo()
+FString VoxelConsole::DescribeInfo(const UWorld* World)
 {
     const UVoxelWorldSettings& Settings = UVoxelWorldSettings::Get();
     FString Out = FString::Printf(TEXT("Voxel world: Z %d..%d in %d sections of %d, sea level %d, columns %d x %d\n"),
@@ -82,20 +85,27 @@ FString VoxelConsole::DescribeInfo()
         Out += FString::Printf(TEXT("  %s = %s (set by %s)\n"), *Variable.Key, *Variable.Value->GetString(),
             GetConsoleVariableSetByName(Variable.Value->GetFlags()));
 
-    // The rings around a camera at the origin (Streaming/VoxelStreamingPlanner.h).
+    // The rings around a camera at the origin (Streaming/VoxelStreamingPlanner.h): with decoration, three past the
+    // view.
     const FVoxelStreamingRings Rings(FIntPoint::ZeroValue, FMath::Clamp(CVarViewRadius.GetValueOnAnyThread(), 1, 64),
-        CVarUnloadMargin.GetValueOnAnyThread());
+        CVarUnloadMargin.GetValueOnAnyThread(),
+        CVarDecoration.GetValueOnAnyThread() ? FVoxelStreamingRings::MaxStages : 1);
     TArray<FIntPoint> Needed;
     VoxelStreaming::GetNeededColumns(Rings, 0, Needed);
-    int32 InView = 0;
+    int32 PerRing[FVoxelStreamingRings::MaxStages + 1] = {};
     for (const FIntPoint Column : Needed)
-        InView += Rings.IsInView(Column);
+        ++PerRing[Rings.GetRing(Column)];
     Out += FString::Printf(TEXT("  View radius %d: %d columns in view, %d generated; unload beyond %d columns\n"),
-        Rings.ViewRadius, InView, Needed.Num(), Rings.GetUnloadDistance());
+        Rings.ViewRadius, PerRing[0], Needed.Num(), Rings.GetUnloadDistance());
+    if (Rings.Stages > 1)
+        Out += FString::Printf(TEXT("  Decoration's rings: %d in view, %d final, %d decorated, %d generated\n"),
+            PerRing[0], PerRing[0] + PerRing[1], PerRing[0] + PerRing[1] + PerRing[2], Needed.Num());
     Out += FString::Printf(TEXT("  Task workers %u, tasks in flight %d\n"),
         LowLevelTasks::FScheduler::Get().GetNumWorkers(), GetMaxTasksInFlight());
     Out += FString::Printf(TEXT("  Mesh backend: RealtimeMeshComponent (%s)"),
         FModuleManager::Get().IsModuleLoaded(TEXT("RealtimeMeshComponent")) ? TEXT("loaded") : TEXT("not loaded"));
+    if (const UVoxelWorldSubsystem* Subsystem = UVoxelWorldSubsystem::Get(World))
+        Out += TEXT("\n") + Subsystem->DescribeStages();
     return Out;
 }
 
@@ -103,7 +113,7 @@ namespace
 {
     // The decoration data read from the reference and compiled for a bench terrain's biomes.
     TSharedPtr<FVoxelDecorator> MakeBenchDecorator(const FVoxelDensityTerrain& Terrain, const FVoxelBlockTable& Table,
-        const FVoxelDecorationOptions& Options, FString& OutError)
+        const FVoxelDecorationOptions& Options, FString& OutError, const bool* bFreezeLast = nullptr)
     {
         FVoxelFeatureGraph Graph;
         if (!Terrain.GetBiomeSource())
@@ -113,8 +123,11 @@ namespace
         }
         if (!VoxelWorldgen::ReadFeatures(VoxelWorldgen::GetReferenceRoot(), Graph, OutError)) return nullptr;
         TSharedPtr<FVoxelDecorator> Decorator = MakeShared<FVoxelDecorator>();
+        // Every bench and gate puts the freeze where voxel.Decoration.FreezeLast says, unless told.
+        FVoxelDecorationOptions Placed = Options;
+        Placed.bFreezeLast = bFreezeLast ? *bFreezeLast : VoxelConsole::CVarDecorationFreezeLast.GetValueOnGameThread();
         if (!Decorator->Initialize(
-                Graph, Table, Terrain.GetBiomeSource()->GetTable(), Terrain.GetSeed(), Options, &OutError))
+                Graph, Table, Terrain.GetBiomeSource()->GetTable(), Terrain.GetSeed(), Placed, &OutError))
             return nullptr;
         return Decorator;
     }
@@ -131,10 +144,12 @@ namespace
         }
     }
 
-    FAutoConsoleCommandWithOutputDevice VoxelInfoCommand(TEXT("voxel.Info"),
-        TEXT("Prints the voxel world's settings, console variables and limits."),
-        FConsoleCommandWithOutputDeviceDelegate::CreateLambda(
-            [](FOutputDevice& Output) { PrintLines(Output, VoxelConsole::DescribeInfo()); }));
+    FAutoConsoleCommandWithWorldArgsAndOutputDevice VoxelInfoCommand(TEXT("voxel.Info"),
+        TEXT("Prints the voxel world's settings, console variables and limits, and, in a voxel world, its streaming "
+             "stages: rings, per-stage times and counts, snapshots and buckets held, regenerations."),
+        FConsoleCommandWithWorldArgsAndOutputDeviceDelegate::CreateLambda(
+            [](const TArray<FString>&, UWorld* World, FOutputDevice& Output)
+            { PrintLines(Output, VoxelConsole::DescribeInfo(World)); }));
 
     FAutoConsoleCommandWithWorldArgsAndOutputDevice VoxelSeedCommand(TEXT("voxel.Seed"),
         TEXT("voxel.Seed [text]: shows the 64-bit world seed a seed text makes (blank: random; whole numbers as "
@@ -356,11 +371,51 @@ namespace
                             TEXT("\n") + VoxelBench::RunDecorate(*Decorator, *Exhaustive, Terrain, Radius));
                     return;
                 }
+                if (!Args.IsEmpty() && Args[0] == TEXT("FreezeDiff"))
+                {
+                    if ((Args.Num() > 1 && !FCString::IsNumeric(*Args[1])) || Args.Num() == 4)
+                    {
+                        PrintLines(Output, TEXT("Usage: voxel.Bench FreezeDiff [radius] [preset] [x y]"));
+                        return;
+                    }
+                    const int32 Radius = Args.Num() > 1 ? FMath::Clamp(FCString::Atoi(*Args[1]), 0, 16) : 4;
+                    const FString PresetName = Args.Num() > 2 ? Args[2] : TEXT("overworld");
+                    const TOptional<FIntPoint> Center = Args.Num() > 4
+                        ? TOptional<FIntPoint>(FIntPoint(FCString::Atoi(*Args[3]), FCString::Atoi(*Args[4])))
+                        : TOptional<FIntPoint>();
+                    FString Error;
+                    FVoxelTerrainPreset Preset;
+                    FVoxelBiomeTable Biomes;
+                    FVoxelSurfaceInputs Surface;
+                    if (!VoxelClimateDebug::GetSampler(PresetName, Seed.Value, Error) ||
+                        !VoxelTerrainFactory::ReadInputs(
+                            VoxelWorldgen::GetReferenceRoot(), PresetName, Preset, Biomes, Surface, Error))
+                    {
+                        PrintLines(Output, Error);
+                        return;
+                    }
+                    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+                    const FVoxelDensityTerrain Terrain(Preset, uint64(Seed.Value), *Table, {}, &Biomes, &Surface);
+                    const bool bLast = true, bFirst = false;
+                    const TSharedPtr<FVoxelDecorator> Last =
+                        Terrain.IsValid() ? MakeBenchDecorator(Terrain, *Table, {}, Error, &bLast) : nullptr;
+                    const TSharedPtr<FVoxelDecorator> First =
+                        Last ? MakeBenchDecorator(Terrain, *Table, {}, Error, &bFirst) : nullptr;
+                    if (!First)
+                    {
+                        PrintLines(Output, Terrain.IsValid() ? Error : Terrain.GetError());
+                        return;
+                    }
+                    PrintLines(Output,
+                        FString::Printf(TEXT("Voxel freeze bench, %s, seed %s:"), *PresetName, *Seed.Describe()) +
+                            TEXT("\n") + VoxelBench::RunFreezeDiff(*Last, *First, Terrain, Radius, Center));
+                    return;
+                }
                 PrintLines(Output,
                     TEXT("Usage: voxel.Bench Noise [millions] | voxel.Bench Columns [radius] [preset|standin] "
                          "[nocaves] | voxel.Bench "
                          "Climate [radius] [preset] | voxel.Bench Density [radius] [preset] [nocaves] | voxel.Bench "
-                         "Decorate [radius] [preset] [nocaves]"));
+                         "Decorate [radius] [preset] [nocaves] | voxel.Bench FreezeDiff [radius] [preset] [x y]"));
             }));
 
     FAutoConsoleCommand VoxelOreHistogramCommand(TEXT("voxel.OreHistogram"),

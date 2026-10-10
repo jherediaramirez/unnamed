@@ -3,7 +3,6 @@
 #include "Biome/VoxelBiomeTable.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "Decoration/VoxelDecorationContext.h"
-#include "Decoration/VoxelDecorationPreview.h"
 #include "Decoration/VoxelDecorator.h"
 #include "Decoration/VoxelFeatureGraph.h"
 #include "Decoration/VoxelFeatureOrder.h"
@@ -15,16 +14,19 @@
 #include "HAL/PlatformProcess.h"
 #include "HAL/PlatformTime.h"
 #include "Hash/CityHash.h"
+#include "Math/RandomStream.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Storage/VoxelColumn.h"
+#include "Streaming/VoxelStreamingPlanner.h"
 #include "Terrain/VoxelDensityTerrain.h"
 #include "VoxelBench.h"
 #include "VoxelTestBlocks.h"
 #include "Voxel/VoxelBlocks.h"
+#include "Voxel/VoxelColumnPipeline.h"
 #include "Voxel/VoxelTerrainFactory.h"
 #include "Voxel/VoxelWorldgenReader.h"
 
@@ -124,7 +126,8 @@ namespace
             {
                 TArray<uint16> Dense;
                 Out.Columns[Index] = MakeShared<FVoxelColumn, ESPMode::ThreadSafe>();
-                Terrain.Generate(Center + FIntPoint(Index % Out.GetSide() - Radius, Index / Out.GetSide() - Radius),
+                Terrain.GenerateSnapshot(
+                    Center + FIntPoint(Index % Out.GetSide() - Radius, Index / Out.GetSide() - Radius),
                     *Out.Columns[Index], Dense);
             });
     }
@@ -308,7 +311,7 @@ namespace
             {
                 TArray<uint16> Dense;
                 Made = MakeShared<FVoxelColumn, ESPMode::ThreadSafe>();
-                Terrain.Generate(Center + FIntPoint(Job.X, Job.Y), *Made, Dense);
+                Decorator.GenerateSnapshot(Terrain, Center + FIntPoint(Job.X, Job.Y), *Made, Dense);
             }
             else if (Job.Kind == 1)
             {
@@ -367,6 +370,7 @@ namespace
                     Arrival.Reset();
                 Made = MakeShared<FVoxelColumn, ESPMode::ThreadSafe>();
                 Decorator.Finalize(*Snapshot(Job.X, Job.Y), Incoming, *Made, nullptr, Arrival);
+                Decorator.FinishColumn(Terrain, *Made);
             }
             FScopeLock Scope(&Lock);
             if (Job.Kind == 0) Generated[Own] = Made;
@@ -1274,17 +1278,7 @@ bool FVoxelDecorationOracleTest::RunTest(const FString& Parameters)
     for (int32 Index = 0; Index < 3; ++Index)
     {
         FVoxelColumn Column;
-        World.Decorator->DecorateAlone(
-            Alone[Index],
-            [&World](FIntPoint Position)
-            {
-                TSharedPtr<FVoxelColumn, ESPMode::ThreadSafe> Generated =
-                    MakeShared<FVoxelColumn, ESPMode::ThreadSafe>();
-                TArray<uint16> Dense;
-                World.Terrain->Generate(Position, *Generated, Dense);
-                return TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>(Generated);
-            },
-            Column);
+        World.Decorator->DecorateAlone(*World.Terrain, Alone[Index], Column);
         const int32 Slot = (Alone[Index].Y + Radius) * 5 + Alone[Index].X + Radius;
         TestTrue(FString::Printf(TEXT("%s column decorated alone equals the scheduler's"), Names[Index]),
             VoxelBench::HashColumnBlocks(Column) == VoxelBench::HashColumnBlocks(*Scheduled[Slot]));
@@ -1297,47 +1291,113 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelDecorationPreviewTest, "Unnamed.Voxel.Dec
 
 bool FVoxelDecorationPreviewTest::RunTest(const FString& Parameters)
 {
-    // The preview's columns equal the decorated area's, for three seeds.
+    // Streaming's final columns equal the decorated area's, in any load order. (The DecorateAlone loop is dropped:
+    // LoadOrder and the area tests cover the oracle.)
     if (!DecorationTestHasBlocks(*this)) return true;
-    const FIntPoint Columns[3] = {{0, 0}, {7, -5}, {-4, 9}};
-    for (const uint64 Seed : {uint64(263), uint64(1), uint64(2026)})
-    {
-        FDecorationTestWorld World;
-        if (!MakeDecorationWorld(*this, TEXT("overworld"), Seed, World, DecorationTestOptions())) continue;
-        const FVoxelDecorationPreview Preview(World.Terrain.ToSharedRef(), World.Decorator.ToSharedRef());
-        int32 Differences = 0;
-        for (const FIntPoint& Position : Columns)
-        {
-            FVoxelColumn Previewed;
-            Preview.Build(Position, Previewed);
-            FVoxelDecoratedArea Area;
-            FVoxelDecoratedArea::Build(*World.Decorator, *World.Terrain, Position, 1, true, false, Area);
-            Differences += VoxelBench::HashColumnBlocks(Previewed) != VoxelBench::HashColumnBlocks(*Area.Columns[4]);
-        }
-        TestEqual(
-            FString::Printf(TEXT("seed %llu: preview columns that differ from the area's"), Seed), Differences, 0);
-    }
-    // The cache under threads and eviction: a 25-column cache, a 3 x 3 of columns built in parallel.
     FDecorationTestWorld World;
-    if (MakeDecorationWorld(*this, TEXT("overworld"), DecorationTestSeed, World, DecorationTestOptions()))
+    if (!MakeDecorationWorld(*this, TEXT("overworld"), DecorationTestSeed, World, FVoxelDecorationOptions()))
+        return true;
+    constexpr int32 AreaRadius = 4, CompareRadius = 3, RoundCap = 2000, ManualRoundCap = 200000;
+    const FIntPoint Centers[2] = {FIntPoint(0, 0), FIntPoint(7, -5)};
+
+    auto MakePipeline = [&World](int32 MaxTasks, bool bManual)
     {
-        const FVoxelDecorationPreview Small(World.Terrain.ToSharedRef(), World.Decorator.ToSharedRef(), 25);
+        FVoxelColumnPipeline::FSettings Settings;
+        Settings.MaxTasksInFlight = MaxTasks;
+        Settings.bManualJobs = bManual;
+        Settings.Decorator = World.Decorator;
+        return MakeUnique<FVoxelColumnPipeline>(World.Table, World.Terrain.ToSharedRef(), Settings);
+    };
+    auto TakeMeshes = [](FVoxelColumnPipeline& Pipeline)
+    {
+        FVoxelColumnPipeline::FReady Ready;
+        while (Pipeline.PopReady(Ready))
+        {
+        }
+    };
+    auto Settle = [&TakeMeshes, RoundCap](FVoxelColumnPipeline& Pipeline)
+    {
+        for (int32 Round = 0; Round < RoundCap; ++Round)
+        {
+            Pipeline.Update();
+            TakeMeshes(Pipeline);
+            if (Pipeline.IsIdle()) return true;
+            Pipeline.WaitForJobs();
+        }
+        return false;
+    };
+
+    for (const FIntPoint& Center : Centers)
+    {
         FVoxelDecoratedArea Area;
-        FVoxelDecoratedArea::Build(*World.Decorator, *World.Terrain, FIntPoint::ZeroValue, 1, true, false, Area);
-        TArray<uint64> Hashes;
-        Hashes.SetNumZeroed(9);
-        ParallelFor(9,
-            [&](int32 Index)
+        FVoxelDecoratedArea::Build(*World.Decorator, *World.Terrain, Center, AreaRadius, true, false, Area);
+        const int32 Side = 2 * AreaRadius + 1;
+        auto Compare = [&](const TCHAR* Name, const FVoxelColumnPipeline& Pipeline)
+        {
+            int32 Compared = 0;
+            FString Differing;
+            for (int32 DY = -CompareRadius; DY <= CompareRadius; ++DY)
+                for (int32 DX = -CompareRadius; DX <= CompareRadius; ++DX)
+                {
+                    const FVoxelColumn* Found = Pipeline.FindColumn(Center + FIntPoint(DX, DY));
+                    if (!Found) continue;
+                    ++Compared;
+                    const FVoxelColumn& Expected = *Area.Columns[(DY + AreaRadius) * Side + DX + AreaRadius];
+                    if (VoxelBench::HashColumnBlocks(*Found) != VoxelBench::HashColumnBlocks(Expected))
+                        Differing += FString::Printf(TEXT(" (%d, %d)"), Center.X + DX, Center.Y + DY);
+                }
+            TestTrue(FString::Printf(TEXT("center (%d, %d), %s: at least 25 columns compared (%d)"), Center.X, Center.Y,
+                         Name, Compared),
+                Compared >= 25);
+            TestTrue(FString::Printf(TEXT("center (%d, %d), %s: columns that differ from the area's:%s"), Center.X,
+                         Center.Y, Name, *Differing),
+                Differing.IsEmpty());
+            AddInfo(FString::Printf(TEXT("center (%d, %d), %s: %d compared, %s"), Center.X, Center.Y, Name, Compared,
+                Differing.IsEmpty() ? TEXT("none differ") : *Differing));
+        };
+
+        // (a) Threaded, wide.
+        {
+            TUniquePtr<FVoxelColumnPipeline> Pipeline = MakePipeline(16, false);
+            Pipeline->SetFocus(FVoxelStreamingRings(Center, 2, 2), 0);
+            TestTrue(TEXT("threaded pipeline settles"), Settle(*Pipeline));
+            Compare(TEXT("threaded"), *Pipeline);
+        }
+        // (b) Threaded, one task at a time, walked in from the west.
+        {
+            TUniquePtr<FVoxelColumnPipeline> Pipeline = MakePipeline(1, false);
+            Pipeline->SetFocus(FVoxelStreamingRings(Center + FIntPoint(-6, 0), 2, 2), 0);
+            bool bSettled = Settle(*Pipeline);
+            for (int32 Step = -5; Step <= 0; ++Step)
             {
-                FVoxelColumn Column;
-                Small.Build(FIntPoint(Index % 3 - 1, Index / 3 - 1), Column);
-                Hashes[Index] = VoxelBench::HashColumnBlocks(Column);
-            });
-        int32 Differences = 0;
-        for (int32 Index = 0; Index < 9; ++Index)
-            Differences += Hashes[Index] != VoxelBench::HashColumnBlocks(*Area.Columns[Index]);
-        TestEqual(
-            TEXT("columns built in parallel through a 25-column cache that differ from the area's"), Differences, 0);
+                Pipeline->SetFocus(FVoxelStreamingRings(Center + FIntPoint(Step, 0), 2, 2), 3);
+                bSettled = Settle(*Pipeline) && bSettled;
+            }
+            TestTrue(TEXT("walked pipeline settles"), bSettled);
+            Compare(TEXT("walked"), *Pipeline);
+        }
+        // (c) Manual jobs in a random order.
+        {
+            TUniquePtr<FVoxelColumnPipeline> Pipeline = MakePipeline(8, true);
+            Pipeline->SetFocus(FVoxelStreamingRings(Center, 2, 2), 0);
+            FRandomStream Random(77);
+            bool bIdle = false;
+            for (int32 Round = 0; Round < ManualRoundCap && !bIdle; ++Round)
+            {
+                const int32 JobCount = Pipeline->GetJobCount();
+                if (Pipeline->GetPendingJobCount() > 0 && JobCount > 0)
+                {
+                    const int32 First = Random.RandHelper(JobCount);
+                    for (int32 Offset = 0; Offset < JobCount; ++Offset)
+                        if (Pipeline->RunJob((First + Offset) % JobCount)) break;
+                }
+                Pipeline->Update();
+                TakeMeshes(*Pipeline);
+                bIdle = Pipeline->IsIdle();
+            }
+            TestTrue(TEXT("manual pipeline settles"), bIdle);
+            Compare(TEXT("manual random order"), *Pipeline);
+        }
     }
     return true;
 }

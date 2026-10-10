@@ -6,6 +6,7 @@ class FVoxelBiomeClimate;
 class FVoxelBiomeStorage;
 class FVoxelBiomeTable;
 class FVoxelBlockTable;
+class FVoxelColumn;
 
 // 26.3's snow-and-freeze step (black-boxed: Docs/Records/2026-10-09-Voxel-Phase5-Scout-Facts.md, section 4), run
 // once per generated column after the surface rules. Per block column it finds the top: the position above the highest
@@ -15,7 +16,9 @@ class FVoxelBlockTable;
 // - the top takes one snow layer when cold, if the block below can hold snow; a grass block, podzol or mycelium
 //   below turns snowy.
 // Block light is taken as 0 (generation has no light yet). Snow blocks and powder snow come only from the rules.
-// When trees arrive, run it after them, so snow lands on leaves. Immutable after Initialize; any thread.
+// With decoration it runs at Finalize, after the merge (phase 6, S3; plan 3.4), so snow lands on every feature, a
+// neighbour's included: vanilla's bare border under leaves (MC-119599) cannot happen. Immutable after Initialize; any
+// thread.
 class UNNAMEDVOXEL_API FVoxelFreezePass
 {
 public:
@@ -31,6 +34,11 @@ public:
     void Apply(FIntPoint Position, TArrayView<uint16> Dense, const FVoxelBiomeStorage& Biomes,
         const FVoxelBiomeTable& BiomeTable, const FVoxelBiomeClimate& Climate, int32 SeaLevel,
         TConstArrayView<int32> Heights = {}) const;
+    // The same pass on a built column (the decorated column at Finalize): equal to Apply on its blocks before Build.
+    // The sections it changes are expanded once and packed again, and the heightmaps of the block columns it changed
+    // are updated.
+    void ApplyToColumn(FVoxelColumn& Column, const FVoxelBiomeTable& BiomeTable, const FVoxelBiomeClimate& Climate,
+        int32 SeaLevel) const;
 
     // Whether a snow layer can rest on State: a full top face, except ice, packed ice, powder snow and barriers; honey,
     // soul sand and mud always.

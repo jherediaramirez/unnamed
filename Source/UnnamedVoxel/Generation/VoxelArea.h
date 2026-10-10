@@ -9,17 +9,18 @@ class FVoxelBlockTable;
 class FVoxelColumn;
 class IVoxelTerrain;
 
-// The decoration stages over a square of columns (phase 6, S2), before streaming has them: Generate on the radius + 2
-// square, Decorate on radius + 1, Finalize on the radius. Each stage runs on one thread or across every worker, its
-// columns in row order or reversed; every write log is kept until the last Finalize.
+// The decoration stages over a square of columns (phase 6, S2): Generate on the radius + 2 square (the decorator's
+// snapshot), Decorate on radius + 1, Finalize on the radius, then the decorator's finishing pass (the freeze). Each
+// stage runs on one thread or across every worker, its columns in row order or reversed; every write log is kept
+// until the last Finalize. Streaming (S3) gives the same final columns.
 struct UNNAMEDVOXEL_API FVoxelDecoratedArea
 {
     FIntPoint Center = FIntPoint::ZeroValue;
     int32 Radius = 0;
     // (2 Radius + 1)^2 final columns, row by row from the minimum corner.
     TArray<TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>> Columns;
-    // Per column of each stage's square, row by row.
-    TArray<double> GenerateMs, DecorateMs, FinalizeMs;
+    // Per column of each stage's square, row by row. FinalizeMs includes FinishMs, the finishing pass.
+    TArray<double> GenerateMs, DecorateMs, FinalizeMs, FinishMs;
     TArray<FVoxelDecorateStats> Decorates;
     TArray<FVoxelFinalizeStats> Finalizes;
     double GenerateWallMs = 0, DecorateWallMs = 0, FinalizeWallMs = 0;

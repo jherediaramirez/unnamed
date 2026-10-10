@@ -50,6 +50,8 @@ struct FVoxelDensityTerrainOverrides
     TOptional<EVoxelBiomeFill> BiomeFill;
     TOptional<bool> bSurfaceRules;
     TOptional<bool> bSurfaceShortcut;
+    // Off for decoration's snapshot: the freeze pass then runs in FinishColumn (default on).
+    TOptional<bool> bFreeze;
 };
 
 // What one column's generation cost, by stage.
@@ -97,6 +99,9 @@ public:
     virtual bool IsDry(int32 X, int32 Y) const override;
     virtual bool ConfirmDry(int32 X, int32 Y) const override;
     virtual void Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const override;
+    // Without the freeze pass, which FinishColumn runs (FVoxelFreezePass::ApplyToColumn) where Generate would.
+    virtual void GenerateSnapshot(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const override;
+    virtual void FinishColumn(FVoxelColumn& Column) const override;
     virtual void ResetCaches() const override;
 
     // The preset's preliminary surface level (its PS view, a find_top_surface): the y of the top 8-block cell whose
@@ -152,7 +157,7 @@ private:
     void FillDressed(int32 X0, int32 Z0, TArray<uint16>& Dense, const FScratch& Scratch) const;
     // The rules and the freeze pass over the column's biomes, with their times.
     void FillWithRules(FIntPoint Position, const FVoxelColumn& Out, TArray<uint16>& Dense, FScratch& Scratch,
-        bool bShortcut, FVoxelDensityTerrainTimings& Timings) const;
+        bool bShortcut, bool bFreeze, FVoxelDensityTerrainTimings& Timings) const;
 
     uint64 Seed;
     const FVoxelBlockTable& Table;
