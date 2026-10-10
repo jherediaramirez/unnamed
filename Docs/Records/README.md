@@ -4,6 +4,12 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 10, 2026
 
+- [Breaking handoff: into the first Unreal prototype](2026-10-10-Breaking-Handoff-Prototype.md): start here for the break lane's UE work.
+  - Jesus's first-prototype picks, with their exact numbers: a thinner outline (High Contrast from the menu), carved cracks with smooth growth, textured particles with collision and spray (the amount from the menu), vanilla break and hit sounds with pitch variety, synced-hit swing, and the break pop.
+  - Also: the build plan, the code map, known issues, open questions and the short prompt.
+- [Breaking: the vanilla client probe VP1](2026-10-10-Breaking-VP1-Probe.md): a black-box run of the 26.3 client measured what the wiki and data don't publish.
+  - Measured: the outline (black at 40%, 2-3 px), High Contrast (a cyan core with black halos), the crack mapping floor(progress × 10) with a 2× multiply blend, particles (about 0.1 block, landing, gone at 1.5-2.3 s) and the hit sound (every 4 ticks).
+  - The harness, its gotchas and the evidence paths.
 - [Breaking: the block reference's sounds, cracks and particle textures](2026-10-10-Breaking-Reference.md): the break lane's reference extension through its own tools.
   - Added: each imported block's sound type (`FactsDump`), the 762 break and hit oggs and `sounds.json` (asset index 34), the 10 destroy stages, and every state's particle texture.
   - No earlier file or index moved. `DA_Blocks` changes only its digest (T3D proof), and the import stays a no-op.
