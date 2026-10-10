@@ -38,7 +38,7 @@ The machine: Jesus may play Minecraft (`javaw`) on this PC and other lanes run s
 The plan's S6 (lines 348 to 379), with scout D's recommendations:
 - **Core shape:** `EVoxelShape::Model` and the quads in the core block table (`FVoxelStateInfo` or a side table), with the parts and alternatives. Keep the core UObject-free: copy the registry's quads in `VoxelBlocks::MakeTable`.
 - **Winding:** Mojang to Unreal swaps Y and Z, which flips handedness: FaceInfo's counter-clockwise order becomes clockwise in Unreal. Check against the existing cube faces (and the RMC winding note in memory) before trusting any quad.
-- **Normals (R1):** from `Shade`, through the existing face-index normal path. S5 turns `shade_direction_override` with the blockstate rotation, as it turns faces; so a ceiling vine, glow lichen or sculk vein (x-rotated) is shaded as south, while wall variants keep up. Whether the override should stay unrotated is our own reading either way (the format does not say): look at a ceiling glow lichen beside a wall one and make it a look call if it matters; the change is one line in `bake_models.py` (`turn(override)` to `override`).
+- **Normals (R1):** from `Shade`, through the existing face-index normal path. S5 turns `shade_direction_override` with the blockstate rotation, as it turns faces; so a ceiling vine, glow lichen or sculk vein (x-rotated) is shaded as south, while wall variants keep up. Whether the override should stay unrotated is our own reading either way (the format does not say). Jesus decided (answer 2): capture a ceiling glow lichen beside a wall one, both ways, and make it a look call; the change is one line in `bake_models.py` (`turn(override)` to `override`).
 - **Thin planes (R3):** every zero-thickness element already has both faces; keep `M_ChunkCutout` one-sided.
 - **Lumen (R4):** never card model quads; decide ray-tracing membership with capture G3.
 - **Own section (R5):** model quads in their own RMC section (same cutout material), `voxel.Models 0` for A/B, and a GPU gate (G2).
@@ -68,16 +68,20 @@ The plan's S6 (lines 348 to 379), with scout D's recommendations:
 | Issue | Due |
 |---|---|
 | Model states draw nothing (Playground, voxel world); galleries skip them | S6 |
-| Shelf mushroom's two textures are 32 x 32; the 16 x 16 array holds their vanilla mip 1 | S6 decides (a 32 x 32 array, or keep) |
+| Shelf mushroom's two textures are 32 x 32; the 16 x 16 array holds their vanilla mip 1 | Kept (Jesus's answer 3); revisit only if it looks wrong up close in S6 |
 | Model blocks place their default state (no support, facing or stacking rules) | S7 |
 | 12 model blocks have no item (vanilla item has another id); 3 none at all | The inventory pass (Jesus's answer 7) |
-| `replaceable` comes from the facts for model blocks only; cubes keep the old rule (water only) | When placement next changes |
+| `replaceable` comes from the facts for model blocks only; cubes keep the old rule (water only) | S7 (Jesus's answer 4) |
 | Sculk vein's icon shows its first animation frame (vanilla animates it) | Later, minor |
 | The others in [the S1b handoff](2026-10-09-Voxel-Handoff-Phase6-S1b.md), section 6 | As listed there |
 
-**Questions for Jesus** (`CLAUDE.md` lines no worker may edit; recommendation first):
-1. **Block count:** `CLAUDE.md` does not count blocks, so nothing there changes for S5. The Commands block's `TestVoxel.ps1` count ("61") is still stale (66); recommend dropping the number.
-2. **Facts path:** the reference rule names `tools/WorldgenFacts.java` for the worldgen facts only; the blocks reference's facts come from `tools/FactsDump.java` and `tools/build_reference.py`, as its README says. Recommend no change.
+**Jesus's answers** (October 9, 2026, by tap, to the S5 chat; settled):
+1. **The `TestVoxel.ps1` count in `CLAUDE.md`** ("61", now 66): drop the number. `CLAUDE.md` stays a manager's or Jesus's edit, not a worker's.
+2. **Ceiling vines, glow lichen and sculk veins:** S6 decides by capture (a ceiling and a wall glow lichen, the override turned and unturned), as a look call, with the other option one line away.
+3. **The shelf mushroom's 32 x 32 textures:** keep vanilla's mip 1 in the 16 x 16 array; revisit only if it looks wrong up close in S6.
+4. **`replaceable` for every block:** S7 switches every block to the facts' flag, with plant placement, and tests it.
+
+`CLAUDE.md` needs no block-count change; the blocks reference's facts path needs no rule change either (its README names `tools/FactsDump.java` and `tools/build_reference.py`).
 
 ## 7. Code map: S5
 
