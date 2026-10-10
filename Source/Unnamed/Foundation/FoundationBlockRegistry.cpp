@@ -9,6 +9,8 @@ namespace
     const FBox FullShape(FVector::ZeroVector, FVector::OneVector);
     const FBox BottomSlabShape(FVector::ZeroVector, FVector(1, 1, .5));
     const FBox TopSlabShape(FVector(0, 0, .5), FVector::OneVector);
+    // A full cube holds a torch on top and on every side (EFoundationFace bits West..South and Up).
+    constexpr uint8 TorchSidesAndTop = 0b101111;
 
     bool GetSolidShape(EFoundationBlockShape Shape, FBox& OutBox)
     {
@@ -217,6 +219,7 @@ TSharedRef<FFoundationBlockRegistry> FFoundationBlockRegistry::Build(
             Block.DropItem = Source.Item;
             Block.ItemTint = Source.ItemTint;
             Block.ItemMaxStack = Source.ItemMaxStack;
+            Block.ItemWallBlock = Source.ItemWallBlock;
             Block.ItemIconTile = Source.ItemIconTile;
             Block.ItemIconModel = Source.ItemIconModel;
             Block.ItemIconRotation = Source.ItemIconRotation;
@@ -292,6 +295,8 @@ void FFoundationBlockRegistry::AddBlock(
         StateBoxRanges.Add(FIntVector::ZeroValue);
         StateLight.Add(Block.LightEmission);
         StateWater.Add(0);
+        // Imported blocks overwrite it from the asset (AddModelData).
+        StateSupport.Add(BlockShapes[State] == EFoundationBlockShape::Full ? TorchSidesAndTop : 0);
     }
     ById.Add(Block.Id, Index);
     ByProtocol.Add(Block.ProtocolId, Index);
@@ -303,6 +308,7 @@ bool FFoundationBlockRegistry::IsValidModelData(const FFoundationBlockAsset& Sou
     // Every array is empty or covers every state; model parts index existing models; box counts match the boxes.
     if (!Source.StateLight.IsEmpty() && Source.StateLight.Num() != States) return false;
     if (!Source.StateWater.IsEmpty() && Source.StateWater.Num() != States) return false;
+    if (!Source.StateSupport.IsEmpty() && Source.StateSupport.Num() != States) return false;
     if (!Source.StateBoxCounts.IsEmpty())
     {
         if (Source.StateBoxCounts.Num() != States * 2) return false;
@@ -362,6 +368,7 @@ void FFoundationBlockRegistry::AddModelData(const FFoundationBlockAsset& Source,
         }
         if (!Source.StateLight.IsEmpty()) StateLight[Entry] = Source.StateLight[State];
         if (!Source.StateWater.IsEmpty()) StateWater[Entry] = Source.StateWater[State];
+        if (!Source.StateSupport.IsEmpty()) StateSupport[Entry] = Source.StateSupport[State];
     }
 }
 
@@ -430,6 +437,13 @@ int32 FFoundationBlockRegistry::GetLightEmission(FFoundationBlockState State) co
     const FFoundationBlockType* Block;
     const int32 Local = GetLocalIndex(State, Block);
     return StateLight[Block->TableOffset + Local];
+}
+
+uint8 FFoundationBlockRegistry::GetTorchSupport(FFoundationBlockState State) const
+{
+    const FFoundationBlockType* Block;
+    const int32 Local = GetLocalIndex(State, Block);
+    return StateSupport[Block->TableOffset + Local];
 }
 
 const FFoundationBlockType* FFoundationBlockRegistry::FindBlock(FName Id) const

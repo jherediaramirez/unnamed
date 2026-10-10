@@ -2325,6 +2325,13 @@
  {"id":4924,"outline":[[0.0,0.0,0.0,1.0,1.0,1.0]],"collision":[[0.0,0.0,0.0,1.0,1.0,1.0]],"light":0,"replaceable":false,"occludes":63,"fluid":null}]},
 {"id":"obsidian","offset":null,"states":[
  {"id":4925,"outline":[[0.0,0.0,0.0,1.0,1.0,1.0]],"collision":[[0.0,0.0,0.0,1.0,1.0,1.0]],"light":0,"replaceable":false,"occludes":63,"fluid":null}]},
+{"id":"torch","offset":null,"states":[
+ {"id":4926,"outline":[[0.375,0.0,0.375,0.625,0.625,0.625]],"collision":[],"light":14,"replaceable":false,"occludes":0,"fluid":null}]},
+{"id":"wall_torch","offset":null,"states":[
+ {"id":4927,"outline":[[0.34375,0.1875,0.6875,0.65625,0.8125,1.0]],"collision":[],"light":14,"replaceable":false,"occludes":0,"fluid":null},
+ {"id":4928,"outline":[[0.34375,0.1875,0.0,0.65625,0.8125,0.3125]],"collision":[],"light":14,"replaceable":false,"occludes":0,"fluid":null},
+ {"id":4929,"outline":[[0.6875,0.1875,0.34375,1.0,0.8125,0.65625]],"collision":[],"light":14,"replaceable":false,"occludes":0,"fluid":null},
+ {"id":4930,"outline":[[0.0,0.1875,0.34375,0.3125,0.8125,0.65625]],"collision":[],"light":14,"replaceable":false,"occludes":0,"fluid":null}]},
 {"id":"creaking_heart","offset":null,"states":[
  {"id":5445,"outline":[[0.0,0.0,0.0,1.0,1.0,1.0]],"collision":[[0.0,0.0,0.0,1.0,1.0,1.0]],"light":0,"replaceable":false,"occludes":63,"fluid":null},
  {"id":5446,"outline":[[0.0,0.0,0.0,1.0,1.0,1.0]],"collision":[[0.0,0.0,0.0,1.0,1.0,1.0]],"light":0,"replaceable":false,"occludes":63,"fluid":null},

@@ -894,7 +894,7 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
         AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
         return true;
     }
-    TestEqual(TEXT("baked models"), Table->GetModelCount(), 303);
+    TestEqual(TEXT("baked models"), Table->GetModelCount(), 308);
     int32 Quads = 0, Wound = 0, Twins = 0, BadTwins = 0;
     for (int32 Model = 0; Model < Table->GetModelCount(); ++Model)
     {
@@ -923,8 +923,9 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
         }
         TestTrue(TEXT("mutation: a thin plane wound backwards is caught"), SameWay > 0);
     }
-    // S5's 2,410 baked quads, less the 16 exact repeats the copy drops (flowerbed segments that list a plane twice).
-    TestEqual(TEXT("model quads"), Quads, 2394);
+    // 2,440 baked quads (S5's 2,410 and the torch's 30), less the 16 exact repeats the copy drops (flowerbed segments
+    // that list a plane twice).
+    TestEqual(TEXT("model quads"), Quads, 2424);
     TestEqual(TEXT("quads wound like the cube faces"), Wound, Quads);
     TestTrue(FString::Printf(TEXT("zero-thickness planes have both faces (%d pairs)"), Twins), Twins > 100);
     TestEqual(TEXT("each pair faces opposite ways"), BadTwins, 0);
@@ -946,7 +947,7 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
             Part += Alternatives;
         }
     }
-    TestEqual(TEXT("model states (S5's 949)"), ModelStates, 949);
+    TestEqual(TEXT("model states (S5's 949 and the torch's 5)"), ModelStates, 954);
     TestEqual(TEXT("model states with bad parts, layer or covered faces"), BadParts, 0);
 
     auto Default = [&Table](const TCHAR* Block) -> const FVoxelStateInfo&

@@ -81,7 +81,9 @@ enum class EFoundationPlacementRule : uint8
     // LeavesBlock: persistent, distance from neighbouring logs and leaves.
     Leaves,
     // SnowyBlock: snowy when a #snow block is above.
-    Snowy
+    Snowy,
+    // WallTorchBlock: facing the clicked side face, away from the wall it hangs on.
+    WallAttached
 };
 
 USTRUCT()
@@ -174,6 +176,15 @@ struct FFoundationBlockAsset
 
     UPROPERTY(EditAnywhere, Category = "Block")
     FColor ItemTint = FColor(0, 0, 0, 0);
+
+    // A standing-and-wall item's wall block, which it places against a side face (torch: wall_torch), or None.
+    UPROPERTY(EditAnywhere, Category = "Block")
+    FName ItemWallBlock;
+
+    // Per state, in state-id order: the faces that hold a torch, a bit per EFoundationFace (the reference's
+    // facts/block_support.json). Up holds a floor torch, a side a wall torch facing away from it; Down never.
+    UPROPERTY(EditAnywhere, Category = "Block")
+    TArray<uint8> StateSupport;
 
     // Model blocks only (empty or default for the rest). Per state, in state-id order: the part count, then per part
     // the alternative count and that many indices into UFoundationBlockAssets::Models (a random variant list has

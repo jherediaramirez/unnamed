@@ -77,6 +77,8 @@ struct FFoundationBlockType
     // The item's GUI tint (items/<id>.json; alpha 0: untinted) and stack size.
     FColor ItemTint = FColor(0, 0, 0, 0);
     int32 ItemMaxStack = 64;
+    // A standing-and-wall item's wall block (torch: wall_torch), placed against a side face; None for the rest.
+    FName ItemWallBlock;
     // Model blocks' item icons (FFoundationBlockAsset): an IconAtlas tile or a baked model with its gui transform.
     int32 ItemIconTile = INDEX_NONE;
     int32 ItemIconModel = INDEX_NONE;
@@ -245,6 +247,9 @@ public:
     void GetCollisionBoxes(FFoundationBlockState State, TArray<FBox>& OutBoxes) const;
     // The state's own light (sea pickles and cave vines vary by state); the block's for non-model blocks.
     int32 GetLightEmission(FFoundationBlockState State) const;
+    // The faces of a state that hold a torch, a bit per EFoundationFace (FFoundationBlockAsset::StateSupport); a
+    // project block's full cube holds one on top and on every side.
+    uint8 GetTorchSupport(FFoundationBlockState State) const;
 
     // Saved form: never numbers. Unknown blocks fail; unknown properties or values keep the default and warn,
     // as Minecraft's NbtUtils.readBlockState does.
@@ -279,6 +284,8 @@ private:
     TArray<FBox> Boxes;
     TArray<int32> StateLight;
     TArray<int32> StateWater;
+    // Every state (indexed like Shapes): the faces that hold a torch.
+    TArray<uint8> StateSupport;
     // Decoded baked models: quad range and ambient occlusion.
     TArray<FFoundationModelQuad> ModelQuads;
     TArray<FInt32Vector2> ModelRanges;

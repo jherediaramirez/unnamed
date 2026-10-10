@@ -10008,6 +10008,85 @@
    "random_variants": false
   },
   {
+   "id": "torch",
+   "protocol_id": 238,
+   "default_state_id": 4926,
+   "state_id_range": [
+    4926,
+    4926
+   ],
+   "properties": "",
+   "shape": "model",
+   "template": "torch",
+   "faces": {},
+   "all_textures": [
+    "torch"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "",
+   "tex_size": "16x16",
+   "tags": [
+    "wall_post_override",
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null,
+   "name": "Torch",
+   "hardness": 0.0,
+   "blast_resistance": 0.0,
+   "requires_correct_tool_for_drops": false,
+   "light_emission": 14,
+   "facts_source": "26.3 server registry at runtime (facts/block_facts.csv, tools/FactsDump.java)",
+   "tint": null,
+   "material_layer": "cutout",
+   "random_variants": false,
+   "vanilla_item": "torch"
+  },
+  {
+   "id": "wall_torch",
+   "protocol_id": 239,
+   "default_state_id": 4927,
+   "state_id_range": [
+    4927,
+    4930
+   ],
+   "properties": "facing=north|south|west|east",
+   "shape": "model",
+   "template": "torch",
+   "faces": {},
+   "all_textures": [
+    "torch"
+   ],
+   "render_layer": "cutout",
+   "force_translucent": false,
+   "tinted": false,
+   "animated": false,
+   "random_rotation": false,
+   "rotates_by": "facing",
+   "tex_size": "16x16",
+   "tags": [
+    "washed_away_by_fluids"
+   ],
+   "where": null,
+   "dimension": null,
+   "y_range": null,
+   "name": "Wall Torch",
+   "hardness": 0.0,
+   "blast_resistance": 0.0,
+   "requires_correct_tool_for_drops": false,
+   "light_emission": 14,
+   "facts_source": "26.3 server registry at runtime (facts/block_facts.csv, tools/FactsDump.java)",
+   "tint": null,
+   "material_layer": "cutout",
+   "random_variants": false,
+   "vanilla_item": "torch"
+  },
+  {
    "id": "creaking_heart",
    "protocol_id": 243,
    "default_state_id": 5452,

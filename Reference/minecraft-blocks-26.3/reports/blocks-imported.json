@@ -17922,6 +17922,51 @@
    }
   ]
  },
+ "minecraft:torch": {
+  "states": [
+   {
+    "default": true,
+    "id": 4926
+   }
+  ]
+ },
+ "minecraft:wall_torch": {
+  "properties": {
+   "facing": [
+    "north",
+    "south",
+    "west",
+    "east"
+   ]
+  },
+  "states": [
+   {
+    "default": true,
+    "id": 4927,
+    "properties": {
+     "facing": "north"
+    }
+   },
+   {
+    "id": 4928,
+    "properties": {
+     "facing": "south"
+    }
+   },
+   {
+    "id": 4929,
+    "properties": {
+     "facing": "west"
+    }
+   },
+   {
+    "id": 4930,
+    "properties": {
+     "facing": "east"
+    }
+   }
+  ]
+ },
  "minecraft:creaking_heart": {
   "properties": {
    "axis": [

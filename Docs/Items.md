@@ -1,6 +1,6 @@
 # Items
 
-The Playground's items: every block's item (600, from [Blocks](Blocks.md)), plus the 63 Tier A items of Minecraft Java 26.3 that are not a block's item: the 35 tools (pickaxe, axe, shovel, hoe and sword in wooden, stone, copper, iron, golden, diamond and netherite), the 7 spears, the 14 ore and tier materials, stick, bucket, water bucket, lava bucket, apple, bread and cooked beef. They carry the 26.3 numbers: stack size, durability, attack totals, tool rules and wear. The research is [scout F's record](Records/2026-10-09-Items-Scout-Research.md); the plan and its decisions are [the items phase plan](Records/2026-10-09-Items-Phase-Plan.md).
+The Playground's items: every block's item (601, from [Blocks](Blocks.md)), plus the 63 Tier A items of Minecraft Java 26.3 that are not a block's item: the 35 tools (pickaxe, axe, shovel, hoe and sword in wooden, stone, copper, iron, golden, diamond and netherite), the 7 spears, the 14 ore and tier materials, stick, bucket, water bucket, lava bucket, apple, bread and cooked beef. They carry the 26.3 numbers: stack size, durability, attack totals, tool rules and wear. The research is [scout F's record](Records/2026-10-09-Items-Scout-Research.md); the plan and its decisions are [the items phase plan](Records/2026-10-09-Items-Phase-Plan.md).
 
 ## Data flow
 

@@ -3474,6 +3474,32 @@
    ]
   },
   {
+   "id": "torch",
+   "block": "torch",
+   "name": "Torch",
+   "max_stack": 64,
+   "model": "item/torch",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "functional_blocks",
+     "index": 0
+    },
+    {
+     "tab": "search",
+     "index": 978
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/torch",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
    "id": "creaking_heart",
    "block": "creaking_heart",
    "name": "Creaking Heart",

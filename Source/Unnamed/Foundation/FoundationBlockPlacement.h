@@ -43,4 +43,12 @@ namespace FoundationBlockPlacement
     // behaviour (and waterlogging) arrives with the chunk loader.
     UNNAMED_API FFoundationBlockState GetStateForPlacement(const FFoundationBlockWorld& World,
         const FFoundationBlockType& Block, const FFoundationPlacementContext& Context);
+    // StandingAndWallBlockItem (the torch): its wall block on a side face, its own block on the top face and the
+    // underside. Items without a wall block always place their block.
+    UNNAMED_API FName GetItemBlock(FName Block, FName WallBlock, EFoundationFace ClickedFace);
+    // A placed torch survives (the reference's support table): a floor torch on a top face that holds one, a wall
+    // torch against a side that holds one behind it. An underside click places nothing until torch session T3 brings
+    // vanilla's choice among the other faces.
+    UNNAMED_API bool HasTorchSupport(const FFoundationBlockWorld& World, FFoundationBlockState Placed,
+        const FIntVector& Destination, EFoundationFace ClickedFace);
 }
