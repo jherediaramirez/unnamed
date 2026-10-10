@@ -31,6 +31,46 @@ namespace
     {
         return Block >> 4;
     }
+
+    // The placed features S8's types complete that S11 and S12 own (scout I's question 1).
+    bool IsLaterPlant(FStringView Id)
+    {
+        static const TCHAR* const Later[] = {TEXT("minecraft:lush_caves_vegetation"),
+            TEXT("minecraft:lush_caves_ceiling_vegetation"), TEXT("minecraft:lush_caves_clay"),
+            TEXT("minecraft:cave_vines"), TEXT("minecraft:spore_blossom"), TEXT("minecraft:sculk_vein"),
+            TEXT("minecraft:ice_patch")};
+        for (const TCHAR* Name : Later)
+            if (Id == Name) return true;
+        return false;
+    }
+
+    bool ReadHeightmap(FStringView Name, EVoxelDecorationHeightmap& Out)
+    {
+        static const TCHAR* const Names[] = {TEXT("WORLD_SURFACE_WG"), TEXT("OCEAN_FLOOR_WG"), TEXT("WORLD_SURFACE"),
+            TEXT("OCEAN_FLOOR"), TEXT("MOTION_BLOCKING"), TEXT("MOTION_BLOCKING_NO_LEAVES")};
+        for (int32 Index = 0; Index < UE_ARRAY_COUNT(Names); ++Index)
+            if (Name == Names[Index])
+            {
+                Out = EVoxelDecorationHeightmap(Index);
+                return true;
+            }
+        return false;
+    }
+
+    double DecoratorNumber(const FVoxelFeatureGraph& Graph, int32 Node, const TCHAR* Key, double Default = 0)
+    {
+        const FVoxelFeatureValue* Value = Graph.FindField(Node, Key);
+        return Value && (Value->Type == EVoxelFeatureValueType::Number || Value->Type == EVoxelFeatureValueType::Bool)
+            ? Value->Number
+            : Default;
+    }
+
+    FStringView DecoratorString(const FVoxelFeatureGraph& Graph, int32 Node, const TCHAR* Key)
+    {
+        const FVoxelFeatureValue* Value = Graph.FindField(Node, Key);
+        return Value && Value->Type == EVoxelFeatureValueType::String ? FStringView(Graph.Strings[Value->Index])
+                                                                      : FStringView();
+    }
 }
 
 FVoxelDecorator::FVoxelDecorator() = default;
@@ -39,13 +79,37 @@ FVoxelDecorator::~FVoxelDecorator() = default;
 bool FVoxelDecorator::Initialize(const FVoxelFeatureGraph& Graph, const FVoxelBlockTable& InTable,
     const FVoxelBiomeTable& Biomes, uint64 InWorldSeed, const FVoxelDecorationOptions& InOptions, FString* OutError)
 {
-    *this = FVoxelDecorator();
+    Table = nullptr;
+    Features.Reset();
+    Ores.Reset();
+    TargetLists.Reset();
+    FeaturesOfBiome.Reset();
+    Skipped.Reset();
+    MissingBlocks.Reset();
+    Plants.Reset();
+    Placed.Reset();
+    UpperOf.Reset();
+    PlantOfNode.Reset();
+    PlacedOfNode.Reset();
     FVoxelFeatureOrder Order;
     if (!Order.Build(Graph, OutError)) return false;
     FVoxelBlockTags Tags(Graph, InTable);
     Table = &InTable;
     WorldSeed = InWorldSeed;
     Options = InOptions;
+    if (Options.bPlants)
+    {
+        const bool bDrop = Options.Mutation == EVoxelDecorationMutation::DroppedSupportTag;
+        if (!Survival.Initialize(InTable, Tags, OutError, bDrop ? TEXT("minecraft:supports_vegetation") : TEXT("")))
+        {
+            Table = nullptr;
+            return false;
+        }
+        Predicates.Initialize(InTable, Survival);
+        Providers.Initialize(InTable, Predicates, WorldSeed);
+        CountNoise =
+            FVoxelGradientNoise(VoxelFeatureSeeds::GetPatternSeed(WorldSeed, VoxelFeatureSeeds::VanillaPatternSeed));
+    }
 
     TMap<int32, int32> FeatureOfEntry;
     for (int32 Step = 0; Step < Order.Steps.Num(); ++Step)
@@ -62,6 +126,11 @@ bool FVoxelDecorator::Initialize(const FVoxelFeatureGraph& Graph, const FVoxelBl
             }
             const FString& Id = Graph.Entries[int32(EVoxelFeatureRegistry::PlacedFeature)][Entry].Id;
             if (Options.Filter && !Options.Filter(Id)) continue;
+            if (Options.bPlants && !Options.bLaterPlants && IsLaterPlant(Id))
+            {
+                ++Skipped.FindOrAdd(TEXT("S11 and S12's placed features (scout I's question 1)"));
+                continue;
+            }
             FFeature Feature;
             Feature.Id = Id;
             Feature.Step = Step;
@@ -113,6 +182,8 @@ bool FVoxelDecorator::Initialize(const FVoxelFeatureGraph& Graph, const FVoxelBl
                 if (const int32* Feature = FeatureOfEntry.Find(Entry)) FeaturesOfBiome[Biome][*Feature] = true;
     }
     MissingBlocks = Tags.GetMissing();
+    PlantOfNode.Empty();
+    PlacedOfNode.Empty();
     return true;
 }
 
@@ -126,7 +197,18 @@ bool FVoxelDecorator::CompileFeature(const FVoxelFeatureGraph& Graph, int32 Entr
     const FStringView Type = Graph.GetType(FeatureNode);
     if (Type != TEXT("minecraft:ore"))
     {
-        OutSkip = FString(Type);
+        if (!Options.bPlants)
+        {
+            OutSkip = FString(Type);
+            return true;
+        }
+        // S8: a vegetation feature, run once every node it reaches is built.
+        int32 Plant = INDEX_NONE;
+        if (!CompilePlant(Graph, FeatureNode, Tags, Plant, OutSkip, OutError)) return false;
+        if (!OutSkip.IsEmpty()) return true;
+        if (!CompileModifiers(Graph, Node, Tags, false, Out.Modifiers, OutSkip, OutError)) return false;
+        if (!OutSkip.IsEmpty()) return true;
+        Out.Plant = Plant;
         return true;
     }
 
@@ -182,6 +264,299 @@ bool FVoxelDecorator::CompileFeature(const FVoxelFeatureGraph& Graph, int32 Entr
     return true;
 }
 
+bool FVoxelDecorator::CompileModifiers(const FVoxelFeatureGraph& Graph, int32 Node, FVoxelBlockTags& Tags, bool bNested,
+    TArray<FModifier>& Out, FString& OutSkip, FString* OutError)
+{
+    const auto Int = [&](int32 ModifierNode, const TCHAR* Key, FVoxelIntProvider& Provider) -> bool
+    {
+        const FVoxelFeatureValue* Value = Graph.FindField(ModifierNode, Key);
+        FString Error;
+        if (Value && VoxelNumberProviders::CompileInt(Graph, *Value, Provider, &Error)) return true;
+        OutSkip = Value ? Error : FString::Printf(TEXT("modifier without %s"), Key);
+        return false;
+    };
+    const FVoxelFeatureValue* Placement = Graph.FindField(Node, TEXT("placement"));
+    for (int32 Item = 0; Placement && Item < Placement->Count; ++Item)
+    {
+        const int32 ModifierNode = Graph.GetNode(Graph.Items[Placement->Index + Item]);
+        const FStringView ModifierType = Graph.GetType(ModifierNode);
+        FModifier Modifier;
+        if (ModifierType == TEXT("minecraft:count"))
+        {
+            Modifier.Type = FModifier::EType::Count;
+            if (!Int(ModifierNode, TEXT("count"), Modifier.Provider)) return true;
+        }
+        else if (ModifierType == TEXT("minecraft:in_square"))
+            Modifier.Type = FModifier::EType::InSquare;
+        else if (ModifierType == TEXT("minecraft:height_range"))
+        {
+            const FVoxelFeatureValue* Height = Graph.FindField(ModifierNode, TEXT("height"));
+            Modifier.Type = FModifier::EType::HeightRange;
+            FString Error;
+            if (!Height || !VoxelNumberProviders::CompileHeight(Graph, *Height, Modifier.Provider, &Error))
+            {
+                OutSkip = Error;
+                return true;
+            }
+        }
+        else if (ModifierType == TEXT("minecraft:rarity_filter"))
+        {
+            Modifier.Type = FModifier::EType::RarityFilter;
+            Modifier.Chance = FMath::Max(1, int32(DecoratorNumber(Graph, ModifierNode, TEXT("chance"), 1)));
+        }
+        else if (ModifierType == TEXT("minecraft:biome") && !bNested)
+            Modifier.Type = FModifier::EType::Biome;
+        else if (ModifierType == TEXT("minecraft:heightmap") ||
+            ModifierType == TEXT("minecraft:surface_relative_threshold_filter"))
+        {
+            Modifier.Type = ModifierType == TEXT("minecraft:heightmap") ? FModifier::EType::Heightmap
+                                                                        : FModifier::EType::SurfaceRelative;
+            if (!ReadHeightmap(DecoratorString(Graph, ModifierNode, TEXT("heightmap")), Modifier.Map))
+                return DecoratorFail(OutError, TEXT("a heightmap modifier without a known heightmap"));
+            Modifier.Below = int32(DecoratorNumber(Graph, ModifierNode, TEXT("min_inclusive"), MIN_int32));
+            Modifier.Above = int32(DecoratorNumber(Graph, ModifierNode, TEXT("max_inclusive"), MAX_int32));
+        }
+        else if (ModifierType == TEXT("minecraft:offset"))
+        {
+            // The reference's x, y (up) and z are our X, Z and Y.
+            Modifier.Type = FModifier::EType::Offset;
+            if (!Int(ModifierNode, TEXT("x"), Modifier.Provider) || !Int(ModifierNode, TEXT("y"), Modifier.OffsetZ) ||
+                !Int(ModifierNode, TEXT("z"), Modifier.OffsetY))
+                return true;
+        }
+        else if (ModifierType == TEXT("minecraft:block_predicate_filter"))
+        {
+            const FVoxelFeatureValue* Predicate = Graph.FindField(ModifierNode, TEXT("predicate"));
+            if (!Predicate) return DecoratorFail(OutError, TEXT("block_predicate_filter without a predicate"));
+            Modifier.Type = FModifier::EType::Filter;
+            if (!Predicates.Compile(Graph, Graph.GetNode(*Predicate), Tags, Modifier.Predicate, OutSkip, OutError))
+                return false;
+            if (!OutSkip.IsEmpty()) return true;
+        }
+        else if (ModifierType == TEXT("minecraft:noise_threshold_count"))
+        {
+            Modifier.Type = FModifier::EType::NoiseThresholdCount;
+            Modifier.Level = DecoratorNumber(Graph, ModifierNode, TEXT("noise_level"));
+            Modifier.Below = int32(DecoratorNumber(Graph, ModifierNode, TEXT("below_noise")));
+            Modifier.Above = int32(DecoratorNumber(Graph, ModifierNode, TEXT("above_noise")));
+        }
+        else if (ModifierType == TEXT("minecraft:noise_based_count"))
+        {
+            Modifier.Type = FModifier::EType::NoiseBasedCount;
+            Modifier.Ratio = DecoratorNumber(Graph, ModifierNode, TEXT("noise_to_count_ratio"));
+            Modifier.Factor = DecoratorNumber(Graph, ModifierNode, TEXT("noise_factor"), 1);
+            Modifier.NoiseOffset = DecoratorNumber(Graph, ModifierNode, TEXT("noise_offset"));
+        }
+        else
+        {
+            OutSkip = bNested && ModifierType == TEXT("minecraft:biome")
+                ? FString(TEXT("biome in a nested placed feature"))
+                : FString::Printf(TEXT("modifier %s"), *FString(ModifierType));
+            return true;
+        }
+        Out.Add(Modifier);
+    }
+    return true;
+}
+
+bool FVoxelDecorator::CompilePlaced(const FVoxelFeatureGraph& Graph, const FVoxelFeatureValue& Value,
+    FVoxelBlockTags& Tags, int32& OutPlaced, FString& OutSkip, FString* OutError)
+{
+    const int32 Node = Graph.GetNode(Value);
+    if (Node == INDEX_NONE || Graph.Nodes[Node].Kind != EVoxelFeatureKind::PlacedFeature)
+        return DecoratorFail(OutError, TEXT("not a placed feature"));
+    if (const int32* Found = PlacedOfNode.Find(Node))
+    {
+        OutPlaced = *Found;
+        return true;
+    }
+    const FVoxelFeatureValue* FeatureValue = Graph.FindField(Node, TEXT("feature"));
+    const int32 FeatureNode = FeatureValue ? Graph.GetNode(*FeatureValue) : INDEX_NONE;
+    if (FeatureNode == INDEX_NONE) return DecoratorFail(OutError, TEXT("no feature"));
+    FPlaced Entry;
+    if (!CompilePlant(Graph, FeatureNode, Tags, Entry.Plant, OutSkip, OutError)) return false;
+    if (!OutSkip.IsEmpty()) return true;
+    if (!CompileModifiers(Graph, Node, Tags, true, Entry.Modifiers, OutSkip, OutError)) return false;
+    if (!OutSkip.IsEmpty()) return true;
+    OutPlaced = Placed.Add(MoveTemp(Entry));
+    PlacedOfNode.Add(Node, OutPlaced);
+    return true;
+}
+
+bool FVoxelDecorator::CompilePlant(const FVoxelFeatureGraph& Graph, int32 Node, FVoxelBlockTags& Tags, int32& OutPlant,
+    FString& OutSkip, FString* OutError)
+{
+    if (const int32* Found = PlantOfNode.Find(Node))
+    {
+        OutPlant = *Found;
+        return true;
+    }
+    const FStringView Type = Graph.GetType(Node);
+    FVoxelPlantFeature Plant;
+    const auto Provider = [&](const TCHAR* Key, int32& Out) -> bool
+    {
+        const FVoxelFeatureValue* Value = Graph.FindField(Node, Key);
+        if (!Value) return DecoratorFail(OutError, FString::Printf(TEXT("%s without %s"), *FString(Type), Key));
+        if (!Providers.Compile(Graph, *Value, Tags, Predicates, Out, OutSkip, OutError)) return false;
+        if (!OutSkip.IsEmpty()) return true;
+        // Two-cell plants place their upper half with their lower.
+        static const FName Half(TEXT("half")), Lower(TEXT("lower")), Upper(TEXT("upper"));
+        TArray<uint16> States;
+        Providers.GetStates(Out, States);
+        for (const uint16 State : States)
+            if (Table->GetValue(State, Half) == Lower)
+                if (const int32 UpperState = Table->WithValue(State, Half, Upper); UpperState != INDEX_NONE)
+                    UpperOf.Add(State, uint16(UpperState));
+        return true;
+    };
+    const auto Predicate = [&](const TCHAR* Key, int32& Out) -> bool
+    {
+        const FVoxelFeatureValue* Value = Graph.FindField(Node, Key);
+        if (!Value) return DecoratorFail(OutError, FString::Printf(TEXT("%s without %s"), *FString(Type), Key));
+        return Predicates.Compile(Graph, Graph.GetNode(*Value), Tags, Out, OutSkip, OutError);
+    };
+    const auto Int = [&](const TCHAR* Key, FVoxelIntProvider& Out) -> bool
+    {
+        const FVoxelFeatureValue* Value = Graph.FindField(Node, Key);
+        FString Error;
+        if (Value && VoxelNumberProviders::CompileInt(Graph, *Value, Out, &Error)) return true;
+        OutSkip = Value ? Error : FString::Printf(TEXT("%s without %s"), *FString(Type), Key);
+        return true;
+    };
+    const auto PlacedList = [&](const FVoxelFeatureValue* List, const TCHAR* Inner) -> bool
+    {
+        for (int32 Item = 0; List && List->Type == EVoxelFeatureValueType::List && Item < List->Count; ++Item)
+        {
+            const FVoxelFeatureValue& Entry = Graph.Items[List->Index + Item];
+            const FVoxelFeatureValue* Value = Inner ? Graph.FindField(Graph.GetNode(Entry), Inner) : &Entry;
+            int32 Index = INDEX_NONE;
+            if (!Value)
+                return DecoratorFail(OutError, FString::Printf(TEXT("%s entry without %s"), *FString(Type), Inner));
+            if (!CompilePlaced(Graph, *Value, Tags, Index, OutSkip, OutError)) return false;
+            if (!OutSkip.IsEmpty()) return true;
+            Plant.Selector.Placed.Add(Index);
+            if (Inner)
+            {
+                const int32 EntryNode = Graph.GetNode(Entry);
+                Plant.Selector.Chances.Add(float(DecoratorNumber(Graph, EntryNode, TEXT("chance"))));
+                const int32 Weight = int32(DecoratorNumber(Graph, EntryNode, TEXT("weight")));
+                Plant.Selector.Weights.Add(Weight);
+                Plant.Selector.TotalWeight += Weight;
+            }
+        }
+        return true;
+    };
+
+    if (Type == TEXT("minecraft:simple_block"))
+    {
+        Plant.Kind = EVoxelPlantFeature::SimpleBlock;
+        if (!Provider(TEXT("to_place"), Plant.Provider)) return false;
+    }
+    else if (Type == TEXT("minecraft:block_column"))
+    {
+        Plant.Kind = EVoxelPlantFeature::BlockColumn;
+        Plant.Direction = VoxelPredicateReading::ReadFace(DecoratorString(Graph, Node, TEXT("direction")));
+        Plant.bPrioritizeTip = DecoratorNumber(Graph, Node, TEXT("prioritize_tip")) != 0;
+        if (Plant.Direction == INDEX_NONE) return DecoratorFail(OutError, TEXT("block_column without a direction"));
+        if (!Predicate(TEXT("allowed_placement"), Plant.Allowed)) return false;
+        const FVoxelFeatureValue* Layers = Graph.FindField(Node, TEXT("layers"));
+        for (int32 Item = 0; OutSkip.IsEmpty() && Layers && Item < Layers->Count; ++Item)
+        {
+            const int32 LayerNode = Graph.GetNode(Graph.Items[Layers->Index + Item]);
+            const FVoxelFeatureValue* Height = Graph.FindField(LayerNode, TEXT("height"));
+            const FVoxelFeatureValue* LayerProvider = Graph.FindField(LayerNode, TEXT("provider"));
+            FVoxelBlockColumnLayer Layer;
+            FString Error;
+            if (!Height || !LayerProvider) return DecoratorFail(OutError, TEXT("block_column layer without height"));
+            if (!VoxelNumberProviders::CompileInt(Graph, *Height, Layer.Height, &Error))
+                OutSkip = Error;
+            else if (!Providers.Compile(Graph, *LayerProvider, Tags, Predicates, Layer.Provider, OutSkip, OutError))
+                return false;
+            Plant.Layers.Add(Layer);
+        }
+    }
+    else if (Type == TEXT("minecraft:disk"))
+    {
+        Plant.Kind = EVoxelPlantFeature::Disk;
+        Plant.HalfHeight = int32(DecoratorNumber(Graph, Node, TEXT("half_height")));
+        if (!Provider(TEXT("state_provider"), Plant.Provider) ||
+            (OutSkip.IsEmpty() && !Predicate(TEXT("target"), Plant.Target)) ||
+            (OutSkip.IsEmpty() && !Int(TEXT("radius"), Plant.Radius)))
+            return false;
+        Plant.TargetSet = OutSkip.IsEmpty() ? Predicates.GetPlainSet(Plant.Target) : INDEX_NONE;
+    }
+    else if (Type == TEXT("minecraft:vegetation_patch"))
+    {
+        Plant.Kind = EVoxelPlantFeature::VegetationPatch;
+        if (DecoratorString(Graph, Node, TEXT("surface")) != TEXT("floor"))
+        {
+            OutSkip = TEXT("vegetation_patch on a ceiling (S11)");
+            return true;
+        }
+        const FStringView Replaceable = DecoratorString(Graph, Node, TEXT("replaceable"));
+        const FVoxelBlockSet* Set =
+            Tags.Find(Replaceable.StartsWith(TEXT("#")) ? Replaceable.RightChop(1) : Replaceable, OutError);
+        if (!Set) return DecoratorFail(OutError, TEXT("vegetation_patch without a replaceable tag"));
+        Plant.ReplaceableSet = Predicates.AddSet(*Set);
+        Plant.ExtraBottomChance = float(DecoratorNumber(Graph, Node, TEXT("extra_bottom_block_chance")));
+        Plant.ExtraEdgeChance = float(DecoratorNumber(Graph, Node, TEXT("extra_edge_column_chance")));
+        Plant.VegetationChance = float(DecoratorNumber(Graph, Node, TEXT("vegetation_chance")));
+        Plant.VerticalRange = int32(DecoratorNumber(Graph, Node, TEXT("vertical_range")));
+        const FVoxelFeatureValue* Vegetation = Graph.FindField(Node, TEXT("vegetation_feature"));
+        if (!Vegetation) return DecoratorFail(OutError, TEXT("vegetation_patch without vegetation"));
+        if (!Provider(TEXT("ground_state"), Plant.Provider) ||
+            (OutSkip.IsEmpty() && !Int(TEXT("depth"), Plant.Depth)) ||
+            (OutSkip.IsEmpty() && !Int(TEXT("xz_radius"), Plant.Radius)) ||
+            (OutSkip.IsEmpty() && !CompilePlaced(Graph, *Vegetation, Tags, Plant.Vegetation, OutSkip, OutError)))
+            return false;
+    }
+    else if (Type == TEXT("minecraft:random_selector"))
+    {
+        Plant.Selector.Op = EVoxelSelectorOp::Random;
+        const FVoxelFeatureValue* Default = Graph.FindField(Node, TEXT("default"));
+        if (!Default) return DecoratorFail(OutError, TEXT("random_selector without a default"));
+        if (!PlacedList(Graph.FindField(Node, TEXT("features")), TEXT("feature")) ||
+            (OutSkip.IsEmpty() && !CompilePlaced(Graph, *Default, Tags, Plant.Selector.Default, OutSkip, OutError)))
+            return false;
+    }
+    else if (Type == TEXT("minecraft:simple_random_selector") || Type == TEXT("minecraft:sequence"))
+    {
+        Plant.Selector.Op =
+            Type == TEXT("minecraft:sequence") ? EVoxelSelectorOp::Sequence : EVoxelSelectorOp::SimpleRandom;
+        if (!PlacedList(Graph.FindField(Node, TEXT("features")), nullptr)) return false;
+    }
+    else if (Type == TEXT("minecraft:weighted_random_selector"))
+    {
+        Plant.Selector.Op = EVoxelSelectorOp::WeightedRandom;
+        if (!PlacedList(Graph.FindField(Node, TEXT("features")), TEXT("data"))) return false;
+        if (OutSkip.IsEmpty() && Plant.Selector.TotalWeight <= 0)
+            return DecoratorFail(OutError, TEXT("weighted_random_selector without weights"));
+    }
+    else if (Type == TEXT("minecraft:random_boolean_selector"))
+    {
+        Plant.Selector.Op = EVoxelSelectorOp::RandomBoolean;
+        for (const TCHAR* Key : {TEXT("feature_true"), TEXT("feature_false")})
+        {
+            const FVoxelFeatureValue* Value = Graph.FindField(Node, Key);
+            int32 Index = INDEX_NONE;
+            if (!Value) return DecoratorFail(OutError, TEXT("random_boolean_selector without both features"));
+            if (OutSkip.IsEmpty() && !CompilePlaced(Graph, *Value, Tags, Index, OutSkip, OutError)) return false;
+            Plant.Selector.Placed.Add(Index);
+        }
+    }
+    else if (Type == TEXT("minecraft:no_op"))
+        Plant.Selector.Op = EVoxelSelectorOp::NoOp;
+    else
+    {
+        OutSkip = FString(Type);
+        return true;
+    }
+    if (!OutSkip.IsEmpty()) return true;
+    OutPlant = Plants.Add(MoveTemp(Plant));
+    PlantOfNode.Add(Node, OutPlant);
+    return true;
+}
+
 bool FVoxelDecorator::IsAboveEverything(
     const FOre& Ore, FIntPoint Column, FIntVector Position, const FVoxelDecorationContext& Context) const
 {
@@ -199,26 +574,56 @@ bool FVoxelDecorator::IsAboveEverything(
 }
 
 template <typename FPrune, typename FVisit>
-void FVoxelDecorator::RunModifiers(const FFeature& Feature, int32 FeatureIndex, int32 Modifier, FIntVector Position,
-    uint64 Seed, const FVoxelDecorationContext& Context, FPrune&& Prune, FVisit&& Visit) const
+void FVoxelDecorator::RunModifiers(TConstArrayView<FModifier> Modifiers, bool bPruneAtBiome, int32 FeatureIndex,
+    int32 Modifier, FIntVector Position, uint64 Seed, const FVoxelDecorationContext& Context, FPrune&& Prune,
+    FVisit&& Visit) const
 {
-    if (Modifier == Feature.Modifiers.Num())
+    if (Modifier == Modifiers.Num())
     {
         Visit(Position, Seed);
         return;
     }
-    const FModifier& Step = Feature.Modifiers[Modifier];
+    const FModifier& Step = Modifiers[Modifier];
     FVoxelXoroshiro Random(Seed);
+    // Each try of a count takes its own stream (TrySalt), as S2's count does.
+    const auto FanOut = [&](int32 Count)
+    {
+        for (int32 Try = 0; Try < Count; ++Try)
+            RunModifiers(Modifiers, bPruneAtBiome, FeatureIndex, Modifier + 1, Position,
+                VoxelRandom::Hash64(Seed, TrySalt, Try, 0), Context, Prune, Visit);
+    };
     switch (Step.Type)
     {
     case FModifier::EType::Count:
-    {
-        const int32 Count = Step.Provider.Sample(Random);
-        for (int32 Try = 0; Try < Count; ++Try)
-            RunModifiers(Feature, FeatureIndex, Modifier + 1, Position, VoxelRandom::Hash64(Seed, TrySalt, Try, 0),
-                Context, Prune, Visit);
+        FanOut(Step.Provider.Sample(Random));
         return;
+    case FModifier::EType::NoiseThresholdCount:
+        // 26.3: the pattern noise at (x / 200, z / 200); below the level gives the below count.
+        FanOut(CountNoise.Sample(Position.X / 200.0, Position.Y / 200.0) < Step.Level ? Step.Below : Step.Above);
+        return;
+    case FModifier::EType::NoiseBasedCount:
+        FanOut(int32(FMath::CeilToDouble(
+            (CountNoise.Sample(Position.X / Step.Factor, Position.Y / Step.Factor) + Step.NoiseOffset) * Step.Ratio)));
+        return;
+    case FModifier::EType::Heightmap:
+        // Vanilla's heightmap value: one above the top block; an empty column gives nothing.
+        Position.Z = Context.GetHeight(Step.Map, Position.X, Position.Y) + 1;
+        if (Position.Z <= VoxelConstants::MinZ) return;
+        break;
+    case FModifier::EType::SurfaceRelative:
+    {
+        const int32 Relative = Position.Z - (Context.GetHeight(Step.Map, Position.X, Position.Y) + 1);
+        if (Relative < Step.Below || Relative > Step.Above) return;
+        break;
     }
+    case FModifier::EType::Offset:
+        Position.X += Step.Provider.Sample(Random);
+        Position.Z += Step.OffsetZ.Sample(Random);
+        Position.Y += Step.OffsetY.Sample(Random);
+        break;
+    case FModifier::EType::Filter:
+        if (!Predicates.Test(Step.Predicate, Context, Position)) return;
+        break;
     case FModifier::EType::InSquare:
         Position.X += Random.NextInt(VoxelConstants::ColumnSize);
         Position.Y += Random.NextInt(VoxelConstants::ColumnSize);
@@ -232,21 +637,74 @@ void FVoxelDecorator::RunModifiers(const FFeature& Feature, int32 FeatureIndex, 
     case FModifier::EType::Biome:
     {
         // The position's own biome must list the feature (the column's 3x3 only decided that it runs).
-        if (Feature.bPruneAtBiome && Prune(Position)) return;
+        if (bPruneAtBiome && Prune(Position)) return;
         const int32 Biome = Context.GetBiome(Position.X, Position.Y, Position.Z);
         if (!FeaturesOfBiome.IsValidIndex(Biome) || !FeaturesOfBiome[Biome][FeatureIndex]) return;
-        RunModifiers(Feature, FeatureIndex, Modifier + 1, Position, Seed, Context, Prune, Visit);
+        RunModifiers(Modifiers, bPruneAtBiome, FeatureIndex, Modifier + 1, Position, Seed, Context, Prune, Visit);
         return;
     }
     }
-    RunModifiers(Feature, FeatureIndex, Modifier + 1, Position, Random.Next(), Context, Prune, Visit);
+    RunModifiers(Modifiers, bPruneAtBiome, FeatureIndex, Modifier + 1, Position, Random.Next(), Context, Prune, Visit);
+}
+
+void FVoxelDecorator::RunPlaced(
+    int32 Index, FIntVector Position, uint64 Seed, const FVoxelPlantEnvironment& Env, FVoxelDecorateStats& Stats) const
+{
+    const FPlaced& Entry = Placed[Index];
+    RunModifiers(
+        Entry.Modifiers, false, INDEX_NONE, 0, Position, Seed, Env.Context, [](FIntVector) { return false; },
+        [&](FIntVector At, uint64 TrySeed) { PlacePlant(Entry.Plant, At, TrySeed, Env, Stats); });
+}
+
+void FVoxelDecorator::PlacePlant(
+    int32 Index, FIntVector Position, uint64 Seed, const FVoxelPlantEnvironment& Env, FVoxelDecorateStats& Stats) const
+{
+    const FVoxelPlantFeature& Plant = Plants[Index];
+    FVoxelXoroshiro Random(Seed);
+    switch (Plant.Kind)
+    {
+    case EVoxelPlantFeature::SimpleBlock:
+        ++Stats.PlantTries;
+        VoxelPatchFeatures::PlaceSimpleBlock(Plant, Position, Random, Env);
+        return;
+    case EVoxelPlantFeature::BlockColumn:
+        ++Stats.PlantTries;
+        VoxelPatchFeatures::PlaceBlockColumn(Plant, Position, Random, Env);
+        return;
+    case EVoxelPlantFeature::Disk:
+        ++Stats.PlantTries;
+        VoxelPatchFeatures::PlaceDisk(Plant, Position, Random, Env);
+        return;
+    case EVoxelPlantFeature::VegetationPatch:
+    {
+        ++Stats.PlantTries;
+        TArray<FIntVector> Vegetation;
+        VoxelPatchFeatures::PlaceVegetationPatch(Plant, Position, Random, Env, Vegetation);
+        // The vegetation goes on once the whole ground is down, each spot with its own stream.
+        for (const FIntVector& Spot : Vegetation)
+            RunPlaced(Plant.Vegetation, Spot, Random.Next(), Env, Stats);
+        return;
+    }
+    case EVoxelPlantFeature::Selector:
+        if (Plant.Selector.Op == EVoxelSelectorOp::Sequence)
+        {
+            for (const int32 Entry : Plant.Selector.Placed)
+                RunPlaced(Entry, Position, Random.Next(), Env, Stats);
+            return;
+        }
+        if (const int32 Entry = VoxelSelectorFeatures::Pick(Plant.Selector, Random); Entry != INDEX_NONE)
+            RunPlaced(Entry, Position, Random.Next(), Env, Stats);
+        return;
+    }
 }
 
 void FVoxelDecorator::Decorate(FIntPoint Column, TConstArrayView<const FVoxelColumn*> Snapshots, FVoxelWriteLog& Out,
     FVoxelDecorateStats* Stats) const
 {
     check(IsInitialized() && Snapshots.Num() == 9);
-    FVoxelDecorationContext Context(Column, Snapshots);
+    // Only plants read the live heightmaps.
+    FVoxelDecorationContext Context(Column, Snapshots, Options.bPlants ? Table : nullptr);
+    if (Options.Mutation == EVoxelDecorationMutation::FrozenHeightmaps) Context.FreezeHeightsForTest();
     for (FVoxelWriteBucket& Bucket : Out.Buckets)
         Bucket = FVoxelWriteBucket();
     Out.Source = Column;
@@ -276,6 +734,27 @@ void FVoxelDecorator::Decorate(FIntPoint Column, TConstArrayView<const FVoxelCol
 
     FVoxelXoroshiro Shared(VoxelRandom::Hash64(WorldSeed, VoxelFeatureSeeds::DecorationSalt, Column.X, Column.Y));
     TArray<FIntVector> Scratch;
+    // Plants (S8): each write goes to its target column's bucket under the running feature's key, and into the
+    // working copy so later tries and features see it. A write outside the 3x3 is dropped and counted; one outside
+    // the world is never made.
+    uint16 CurrentKey = 0;
+    const auto EmitPlant = [&](const FVoxelPlantWrite& Write)
+    {
+        const int32 DX = FloorColumn(Write.Cell.X) - Column.X, DY = FloorColumn(Write.Cell.Y) - Column.Y;
+        if (Write.Cell.Z < VoxelConstants::MinZ || Write.Cell.Z > VoxelConstants::MaxZ) return;
+        if (FMath::Abs(DX) > 1 || FMath::Abs(DY) > 1)
+        {
+            ++Out.Dropped;
+            return;
+        }
+        Out.Buckets[FVoxelWriteLog::GetBucket(DX, DY)].Add(CurrentKey,
+            FVoxelWrite::Make(Write.Cell.X & 15, Write.Cell.Y & 15, Write.Cell.Z, Write.State, Write.Mode,
+                Write.Argument, Write.Support));
+        Context.SetState(Write.Cell.X, Write.Cell.Y, Write.Cell.Z, Write.State);
+        ++Local.Placed;
+        ++Local.PlantBlocks;
+    };
+    const FVoxelPlantEnvironment PlantEnv{*Table, Survival, Predicates, Providers, Context, UpperOf, EmitPlant};
     const FIntVector Start(
         Column.X * VoxelConstants::ColumnSize, Column.Y * VoxelConstants::ColumnSize, VoxelConstants::MinZ);
     for (int32 FeatureIndex = 0; FeatureIndex < Features.Num(); ++FeatureIndex)
@@ -299,9 +778,15 @@ void FVoxelDecorator::Decorate(FIntPoint Column, TConstArrayView<const FVoxelCol
             ++Local.Skipped;
             return true;
         };
-        RunModifiers(Feature, FeatureIndex, 0, Start, Seed, Context, Prune,
+        CurrentKey = Feature.Key;
+        RunModifiers(Feature.Modifiers, Feature.bPruneAtBiome, FeatureIndex, 0, Start, Seed, Context, Prune,
             [&](FIntVector Position, uint64 TrySeed)
             {
+                if (Feature.Plant != INDEX_NONE)
+                {
+                    PlacePlant(Feature.Plant, Position, TrySeed, PlantEnv, Local);
+                    return;
+                }
                 if (Feature.Ore == INDEX_NONE) return;
                 const FOre& Ore = Ores[Feature.Ore];
                 if (!Feature.bPruneAtBiome && Prune(Position)) return;
@@ -341,17 +826,31 @@ void FVoxelDecorator::Finalize(const FVoxelColumn& Snapshot, TConstArrayView<con
     // Sections a write reaches are expanded once, written in place, then packed again.
     TArray<uint16> Dense[VoxelConstants::SectionCount];
     TBitArray<> HeightCells(false, FVoxelColumn::Area);
-    const auto Apply = [&](const FVoxelWrite& Write)
+    const auto CellAt = [&](int32 Index) -> uint16&
     {
-        ++Local.Writes;
-        const int32 Index = Write.GetDenseIndex();
         TArray<uint16>& States = Dense[Index >> 12];
         if (States.IsEmpty())
         {
             States.SetNumUninitialized(FVoxelSection::Volume);
             Out.GetSection(Index >> 12).Expand(States);
         }
-        uint16& Cell = States.GetData()[Index & (FVoxelSection::Volume - 1)];
+        return States.GetData()[Index & (FVoxelSection::Volume - 1)];
+    };
+    const auto SetCell = [&](int32 Index, uint16 State)
+    {
+        uint16& Cell = CellAt(Index);
+        if (GetHeightClass(*Table, State) != GetHeightClass(*Table, Cell)) HeightCells[Index & 255] = true;
+        Cell = State;
+    };
+    // A two-cell plant's lower half is set at once, then undone if its upper half (the next write) is refused.
+    int32 PairIndex = INDEX_NONE;
+    uint16 PairOld = 0;
+    bool bRefuseNext = false;
+    const auto Apply = [&](const FVoxelWrite& Write)
+    {
+        ++Local.Writes;
+        const int32 Index = Write.GetDenseIndex();
+        const uint16 Cell = CellAt(Index);
         uint16 State = Cell;
         switch (Write.GetMode())
         {
@@ -369,14 +868,57 @@ void FVoxelDecorator::Finalize(const FVoxelColumn& Snapshot, TConstArrayView<con
                 }
             break;
         }
+        case EVoxelWriteMode::IfReplaceable:
+            // A disk's target set (S8; trees bring their tag in S9).
+            if (Predicates.GetSet(Write.Argument).Contains(Table->Get(Cell).Block)) State = Write.State;
+            break;
+        case EVoxelWriteMode::IfUnchanged:
+            if (Cell == Write.Argument) State = Write.State;
+            break;
         default:
-            // IfReplaceable arrives with plants and trees (S8, S9).
             break;
         }
-        if (State == Cell) return;
+        // Plants: the support below, as merged so far (the cell below lies in this column).
+        const EVoxelWriteSupport Support = Write.GetSupport();
+        if (State != Cell && Support != EVoxelWriteSupport::None)
+        {
+            const uint16 Below = Write.GetZ() > VoxelConstants::MinZ ? CellAt(Index - FVoxelColumn::Area) : 0;
+            if (!Survival.SurvivesOn(Write.State, Below, Cell)) State = Cell;
+        }
+        const bool bPlant = Write.GetMode() == EVoxelWriteMode::IfUnchanged ||
+            Write.GetMode() == EVoxelWriteMode::IfReplaceable || Support != EVoxelWriteSupport::None;
+        if (bRefuseNext)
+        {
+            // The upper half of a refused lower half.
+            bRefuseNext = false;
+            ++Local.Refused;
+            return;
+        }
+        if (PairIndex != INDEX_NONE)
+        {
+            const int32 Lower = PairIndex;
+            PairIndex = INDEX_NONE;
+            if (State == Cell)
+            {
+                SetCell(Lower, PairOld);
+                --Local.Applied;
+                Local.Refused += 2;
+                return;
+            }
+        }
+        if (State == Cell)
+        {
+            if (bPlant && Write.State != Cell) ++Local.Refused;
+            bRefuseNext = Support == EVoxelWriteSupport::PlantPair;
+            return;
+        }
+        if (Support == EVoxelWriteSupport::PlantPair)
+        {
+            PairIndex = Index;
+            PairOld = Cell;
+        }
         ++Local.Applied;
-        if (GetHeightClass(*Table, State) != GetHeightClass(*Table, Cell)) HeightCells[Index & 255] = true;
-        Cell = State;
+        SetCell(Index, State);
     };
     if (ArrivalOrder.IsEmpty())
         VoxelWriteMerge::Merge(Incoming, Apply);
@@ -385,6 +927,12 @@ void FVoxelDecorator::Finalize(const FVoxelColumn& Snapshot, TConstArrayView<con
             if (Incoming.IsValidIndex(Source) && Incoming[Source])
                 for (const FVoxelWrite& Write : Incoming[Source]->Writes)
                     Apply(Write);
+    if (PairIndex != INDEX_NONE)
+    {
+        // A lower half whose upper half never came (not made by S8's features): undone.
+        SetCell(PairIndex, PairOld);
+        --Local.Applied;
+    }
     for (int32 Section = 0; Section < VoxelConstants::SectionCount; ++Section)
         if (!Dense[Section].IsEmpty())
         {
@@ -454,9 +1002,23 @@ FString FVoxelDecorator::Describe() const
     int32 SkippedCount = 0;
     for (const TPair<FString, int32>& Pair : Skipped)
         SkippedCount += Pair.Value;
-    FString Out = FString::Printf(TEXT("Decoration: %d placed features compiled (%d ores; %s), %d skipped (types not "
-                                       "built yet)"),
-        Features.Num(), Ores.Num(), *Steps, SkippedCount);
+    int32 PlantCount = 0;
+    for (const FFeature& Feature : Features)
+        PlantCount += Feature.Plant != INDEX_NONE;
+    FString Out = FString::Printf(TEXT("Decoration: %d placed features compiled (%d ores, %d plants; %s), %d skipped "
+                                       "(types not built yet)"),
+        Features.Num(), Ores.Num(), PlantCount, *Steps, SkippedCount);
+    if (Options.bPlants)
+    {
+        // Why, most first: the first reached type or modifier not built.
+        TArray<TPair<FString, int32>> Reasons = Skipped.Array();
+        Reasons.Sort([](const TPair<FString, int32>& A, const TPair<FString, int32>& B)
+            { return A.Value != B.Value ? A.Value > B.Value : A.Key < B.Key; });
+        FString List;
+        for (const TPair<FString, int32>& Reason : Reasons)
+            List += FString::Printf(TEXT("%s%s %d"), List.IsEmpty() ? TEXT("") : TEXT(", "), *Reason.Key, Reason.Value);
+        Out += FString::Printf(TEXT(" [%s]"), *List);
+    }
     if (!MissingBlocks.IsEmpty())
         Out += FString::Printf(
             TEXT("; %d block ids not in the table (ores: their targets left out)"), MissingBlocks.Num());

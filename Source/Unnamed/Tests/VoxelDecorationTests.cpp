@@ -37,7 +37,8 @@
 namespace
 {
     // For manual runs: 0 none, 1 merge in arrival order, 2 Decorate reads neighbours' final columns, 3 one shared
-    // stream, 4 swapped order indices. With 0, every test must pass.
+    // stream, 4 swapped order indices, 5 supports_vegetation left out of the survival table, 6 writes no longer raise
+    // the live heightmaps (S8). With 0, every test must pass.
     constexpr int32 DecorationTestMutation = 0;
     constexpr uint64 DecorationTestSeed = 263;
     const TCHAR* const DecorationTestPresets[3] = {TEXT("overworld"), TEXT("large_biomes"), TEXT("amplified")};
@@ -49,6 +50,8 @@ namespace
         FVoxelDecorationOptions Options;
         if (DecorationTestMutation == 3) Options.Mutation = EVoxelDecorationMutation::SharedStream;
         if (DecorationTestMutation == 4) Options.Mutation = EVoxelDecorationMutation::SwappedOrder;
+        if (DecorationTestMutation == 5) Options.Mutation = EVoxelDecorationMutation::DroppedSupportTag;
+        if (DecorationTestMutation == 6) Options.Mutation = EVoxelDecorationMutation::FrozenHeightmaps;
         return Options;
     }
 
@@ -831,9 +834,18 @@ bool FVoxelDecorationDistributionTest::RunTest(const FString& Parameters)
             continue;
         const FString Type = (*Provider)->GetStringField(TEXT("type"));
         const bool bHeight = Kind == TEXT("height");
+        const auto IsSimple = [](const FString& Name)
+        {
+            return Name == TEXT("minecraft:constant") || Name == TEXT("minecraft:uniform") ||
+                Name == TEXT("minecraft:trapezoid");
+        };
+        // S8 adds biased_to_bottom, weighted_list and clamped (over a simple source).
+        const TSharedPtr<FJsonObject>* Source = nullptr;
+        const bool bSimpleSource = !(*Provider)->TryGetObjectField(TEXT("source"), Source) ||
+            IsSimple((*Source)->GetStringField(TEXT("type")));
         const bool bCompiled = bHeight ? Type == TEXT("minecraft:uniform") || Type == TEXT("minecraft:trapezoid")
-                                       : Type == TEXT("minecraft:constant") || Type == TEXT("minecraft:uniform") ||
-                Type == TEXT("minecraft:trapezoid");
+                                       : IsSimple(Type) || Type == TEXT("minecraft:biased_to_bottom") ||
+                Type == TEXT("minecraft:weighted_list") || (Type == TEXT("minecraft:clamped") && bSimpleSource);
         if (!bCompiled)
         {
             ++Skipped;
@@ -930,7 +942,8 @@ bool FVoxelDecorationDistributionTest::RunTest(const FString& Parameters)
         SkippedList.Add(FString::Printf(TEXT("%s x%d"), *Pair.Key, Pair.Value));
     AddInfo(FString::Printf(TEXT("%d providers checked (worst z %.2f at %s), %d skipped by type: %s"), Checked, WorstZ,
         *WorstUse, Skipped, *FString::Join(SkippedList, TEXT("; "))));
-    TestEqual(TEXT("providers of compiled types checked"), Checked, 80);
+    // 80 with S2's types; S8's biased_to_bottom, weighted_list and clamped bring 21 more.
+    TestEqual(TEXT("providers of compiled types checked"), Checked, 101);
     return true;
 }
 
@@ -1472,32 +1485,41 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelDecorationGoldenTest, "Unnamed.Voxel.Deco
 
 bool FVoxelDecorationGoldenTest::RunTest(const FString& Parameters)
 {
-    // The decorated columns of seed 263 are pinned, with ores on (the decided change): the hash of the 81 final
-    // columns and the writes of the 121 Decorates, per preset.
+    // The decorated columns of seed 263 are pinned: the hash of the 81 final columns and the writes of the 121
+    // Decorates, per preset, with plants off (S2 to S6's values, ores only) and on (S8, the decided change).
     if (!DecorationTestHasBlocks(*this)) return true;
-    // Recorded on the first passing run, ores on (the decided change): overworld, large_biomes, amplified.
+    // Plants off: recorded on the first passing run with ores on: overworld, large_biomes, amplified.
     constexpr uint64 GoldenHashes[3] = {0xa28113883ba6e7caull, 0xf87e27cd1455c61aull, 0xfc7c6279d46e6b76ull};
     constexpr int64 GoldenWrites[3] = {761145, 768534, 823270};
-    for (int32 Preset = 0; Preset < 3; ++Preset)
-    {
-        FDecorationTestWorld World;
-        if (!MakeDecorationWorld(
-                *this, DecorationTestPresets[Preset], DecorationTestSeed, World, DecorationTestOptions()))
-            continue;
-        FVoxelDecoratedArea Area;
-        FVoxelDecoratedArea::Build(*World.Decorator, *World.Terrain, FIntPoint::ZeroValue, 4, true, false, Area);
-        int64 Writes = 0;
-        for (const FVoxelDecorateStats& Stats : Area.Decorates)
-            Writes += Stats.Writes;
-        const uint64 Hash = HashColumns(Area.Columns);
-        AddInfo(FString::Printf(TEXT("%s: hash 0x%016llx, writes %lld"), DecorationTestPresets[Preset], Hash, Writes));
-        TestTrue(FString::Printf(TEXT("%s: hash 0x%016llx is the golden 0x%016llx"), DecorationTestPresets[Preset],
-                     Hash, GoldenHashes[Preset]),
-            Hash == GoldenHashes[Preset]);
-        TestTrue(FString::Printf(TEXT("%s: %lld writes are the golden %lld"), DecorationTestPresets[Preset], Writes,
-                     GoldenWrites[Preset]),
-            Writes == GoldenWrites[Preset]);
-    }
+    // Plants on: recorded on S8's first passing run.
+    constexpr uint64 PlantHashes[3] = {0x9cce36407bad56b5ull, 0x92fd17ac831fcd42ull, 0x6cdc112a2c9575f6ull};
+    constexpr int64 PlantWrites[3] = {768854, 774466, 829090};
+    for (const bool bPlants : {false, true})
+        for (int32 Preset = 0; Preset < 3; ++Preset)
+        {
+            FDecorationTestWorld World;
+            FVoxelDecorationOptions Options = DecorationTestOptions();
+            Options.bPlants = bPlants;
+            if (!MakeDecorationWorld(*this, DecorationTestPresets[Preset], DecorationTestSeed, World, Options))
+                continue;
+            FVoxelDecoratedArea Area;
+            FVoxelDecoratedArea::Build(*World.Decorator, *World.Terrain, FIntPoint::ZeroValue, 4, true, false, Area);
+            int64 Writes = 0;
+            for (const FVoxelDecorateStats& Stats : Area.Decorates)
+                Writes += Stats.Writes;
+            const uint64 Hash = HashColumns(Area.Columns);
+            const uint64 WantHash = bPlants ? PlantHashes[Preset] : GoldenHashes[Preset];
+            const int64 WantWrites = bPlants ? PlantWrites[Preset] : GoldenWrites[Preset];
+            const TCHAR* Side = bPlants ? TEXT("plants on") : TEXT("plants off");
+            AddInfo(FString::Printf(
+                TEXT("%s, %s: hash 0x%016llx, writes %lld"), DecorationTestPresets[Preset], Side, Hash, Writes));
+            TestTrue(FString::Printf(TEXT("%s, %s: hash 0x%016llx is the golden 0x%016llx"),
+                         DecorationTestPresets[Preset], Side, Hash, WantHash),
+                Hash == WantHash);
+            TestTrue(FString::Printf(TEXT("%s, %s: %lld writes are the golden %lld"), DecorationTestPresets[Preset],
+                         Side, Writes, WantWrites),
+                Writes == WantWrites);
+        }
     return true;
 }
 

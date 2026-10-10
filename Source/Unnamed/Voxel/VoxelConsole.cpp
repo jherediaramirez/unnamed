@@ -51,6 +51,10 @@ TAutoConsoleVariable<bool> VoxelConsole::CVarDecorationFreezeLast(TEXT("voxel.De
     TEXT("With decoration: 1 runs the freeze pass at Finalize, after the merge, so snow lands on decoration (S3); 0 "
          "runs "
          "it inside the snapshot, before decoration (S2's order, a control). A change rebuilds the world."));
+TAutoConsoleVariable<bool> VoxelConsole::CVarDecorationPlants(TEXT("voxel.Decoration.Plants"), true,
+    TEXT("With decoration: 1 runs the vegetation features (phase 6, S8: plants, patches, disks) in streamed worlds and "
+         "every bench; 0 runs the ores alone, the control that reproduces the goldens and hashes from before S8. A "
+         "change rebuilds the world."));
 TAutoConsoleVariable<bool> VoxelConsole::CVarOreVeins(TEXT("voxel.OreVeins"), true,
     TEXT(
         "Ore veins (phase 6, S4): 1 runs 26.3's ore_vein rules in Generate (copper veins in granite from Z 0 to 49, "
@@ -153,6 +157,8 @@ namespace
         // Every bench and gate puts the freeze where voxel.Decoration.FreezeLast says, unless told.
         FVoxelDecorationOptions Placed = Options;
         Placed.bFreezeLast = bFreezeLast ? *bFreezeLast : VoxelConsole::CVarDecorationFreezeLast.GetValueOnGameThread();
+        // And runs the plants as voxel.Decoration.Plants says (a caller may still turn them off).
+        Placed.bPlants = Options.bPlants && VoxelConsole::CVarDecorationPlants.GetValueOnGameThread();
         if (!Decorator->Initialize(
                 Graph, Table, Terrain.GetBiomeSource()->GetTable(), Terrain.GetSeed(), Placed, &OutError))
             return nullptr;

@@ -92,6 +92,7 @@ private:
     // rebuilds the world.
     bool bDecoration = false;
     bool bFreezeLast = true;
+    bool bPlants = true;
     bool bOreVeins = true;
     UPROPERTY(Transient)
     TMap<FIntPoint, TObjectPtr<UVoxelChunkComponent>> Chunks;

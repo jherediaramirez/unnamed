@@ -12,6 +12,7 @@
 #include "Storage/VoxelColumn.h"
 #include "Terrain/VoxelDensityTerrain.h"
 #include "Voxel/VoxelBlocks.h"
+#include "Voxel/VoxelConsole.h"
 #include "Voxel/VoxelTerrainFactory.h"
 #include "Voxel/VoxelWorldgenReader.h"
 #include "VoxelConstants.h"
@@ -87,9 +88,12 @@ namespace
         const TSharedRef<FVoxelDensityTerrain> Terrain =
             MakeShared<FVoxelDensityTerrain>(Preset, 263, *Table, FVoxelDensityTerrainSettings(), &Biomes, &Surface);
         FVoxelDecorator Decorator;
+        // Plants (S8) as voxel.Decoration.Plants says, as every bench does.
+        FVoxelDecorationOptions DecorationOptions;
+        DecorationOptions.bPlants = VoxelConsole::CVarDecorationPlants.GetValueOnGameThread();
         if (!Terrain->IsValid() ||
-            !Decorator.Initialize(Graph, *Table, Terrain->GetBiomeSource()->GetTable(), Terrain->GetSeed(),
-                FVoxelDecorationOptions(), &Error))
+            !Decorator.Initialize(
+                Graph, *Table, Terrain->GetBiomeSource()->GetTable(), Terrain->GetSeed(), DecorationOptions, &Error))
         {
             Output.Log(TEXT("voxel.BenchModels: ") + (Error.IsEmpty() ? Terrain->GetError() : Error));
             return;

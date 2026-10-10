@@ -61,45 +61,53 @@ bool FVoxelMeshDigestTest::RunTest(const FString& Parameters)
         AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
         return true;
     }
-    // Recorded at adee7a6 (before the block models), per preset.
+    // Plants off: recorded at adee7a6 (before the block models), per preset; models on and off alike.
     constexpr uint64 Golden[3] = {0xa8ba8d0d0a39174full, 0xe49601da349c7c0dull, 0x7f9491318204f4b2ull};
-    for (int32 Preset = 0; Preset < 3; ++Preset)
-    {
-        FString Error;
-        FVoxelTerrainPreset TerrainPreset;
-        FVoxelBiomeTable Biomes;
-        FVoxelSurfaceInputs Surface;
-        FVoxelFeatureGraph Graph;
-        if (!TestTrue(FString::Printf(TEXT("%s inputs read (%s)"), MeshDigestPresets[Preset], *Error),
-                VoxelTerrainFactory::ReadInputs(VoxelWorldgen::GetReferenceRoot(), MeshDigestPresets[Preset],
-                    TerrainPreset, Biomes, Surface, Error)) ||
-            !TestTrue(FString::Printf(TEXT("the decoration data reads (%s)"), *Error),
-                VoxelWorldgen::ReadFeatures(VoxelWorldgen::GetReferenceRoot(), Graph, Error)))
-            continue;
-        const TSharedRef<FVoxelDensityTerrain> Terrain = MakeShared<FVoxelDensityTerrain>(
-            TerrainPreset, 263, *Table, FVoxelDensityTerrainSettings(), &Biomes, &Surface);
-        FVoxelDecorator Decorator;
-        if (!TestTrue(TEXT("the terrain is valid"), Terrain->IsValid()) ||
-            !TestTrue(FString::Printf(TEXT("the decorator compiles (%s)"), *Error),
-                Decorator.Initialize(Graph, *Table, Terrain->GetBiomeSource()->GetTable(), Terrain->GetSeed(),
-                    FVoxelDecorationOptions(), &Error)))
-            continue;
-        for (const bool bModels : {true, false})
+    // Plants on (S8, the decided change): per preset, models on then off; recorded on S8's first passing run.
+    constexpr uint64 PlantGolden[3][2] = {{0x75602ae1d22e81f3ull, 0x6b673e48bda8a0b7ull},
+        {0x33f1173bd0580659ull, 0x81cbb033a8f2c493ull}, {0x1d96e2fcc34c085eull, 0xa0fbd505d2c267f9ull}};
+    for (const bool bPlants : {false, true})
+        for (int32 Preset = 0; Preset < 3; ++Preset)
         {
-            FVoxelMeshOptions Options;
-            Options.bModels = bModels;
-            FVoxelArea Area;
-            FVoxelArea::Build(*Table, *Terrain, FIntPoint::ZeroValue, 4, Options, false, Area, &Decorator);
-            int64 Quads = 0;
-            SIZE_T Bytes = 0;
-            const uint64 Digest = MeshDigestOf(Area, Quads, Bytes);
-            AddInfo(FString::Printf(TEXT("%s, models %s: mesh digest 0x%016llx, %lld quads, %llu bytes"),
-                MeshDigestPresets[Preset], bModels ? TEXT("on") : TEXT("off"), Digest, Quads, uint64(Bytes)));
-            TestTrue(FString::Printf(TEXT("%s, models %s: mesh digest 0x%016llx is the golden 0x%016llx"),
-                         MeshDigestPresets[Preset], bModels ? TEXT("on") : TEXT("off"), Digest, Golden[Preset]),
-                Digest == Golden[Preset]);
+            FString Error;
+            FVoxelTerrainPreset TerrainPreset;
+            FVoxelBiomeTable Biomes;
+            FVoxelSurfaceInputs Surface;
+            FVoxelFeatureGraph Graph;
+            if (!TestTrue(FString::Printf(TEXT("%s inputs read (%s)"), MeshDigestPresets[Preset], *Error),
+                    VoxelTerrainFactory::ReadInputs(VoxelWorldgen::GetReferenceRoot(), MeshDigestPresets[Preset],
+                        TerrainPreset, Biomes, Surface, Error)) ||
+                !TestTrue(FString::Printf(TEXT("the decoration data reads (%s)"), *Error),
+                    VoxelWorldgen::ReadFeatures(VoxelWorldgen::GetReferenceRoot(), Graph, Error)))
+                continue;
+            const TSharedRef<FVoxelDensityTerrain> Terrain = MakeShared<FVoxelDensityTerrain>(
+                TerrainPreset, 263, *Table, FVoxelDensityTerrainSettings(), &Biomes, &Surface);
+            FVoxelDecorator Decorator;
+            FVoxelDecorationOptions DecorationOptions;
+            DecorationOptions.bPlants = bPlants;
+            if (!TestTrue(TEXT("the terrain is valid"), Terrain->IsValid()) ||
+                !TestTrue(FString::Printf(TEXT("the decorator compiles (%s)"), *Error),
+                    Decorator.Initialize(Graph, *Table, Terrain->GetBiomeSource()->GetTable(), Terrain->GetSeed(),
+                        DecorationOptions, &Error)))
+                continue;
+            for (const bool bModels : {true, false})
+            {
+                FVoxelMeshOptions Options;
+                Options.bModels = bModels;
+                FVoxelArea Area;
+                FVoxelArea::Build(*Table, *Terrain, FIntPoint::ZeroValue, 4, Options, false, Area, &Decorator);
+                int64 Quads = 0;
+                SIZE_T Bytes = 0;
+                const uint64 Digest = MeshDigestOf(Area, Quads, Bytes);
+                const uint64 Want = bPlants ? PlantGolden[Preset][bModels ? 0 : 1] : Golden[Preset];
+                const TCHAR* Side = bPlants ? TEXT("plants on") : TEXT("plants off");
+                AddInfo(FString::Printf(TEXT("%s, %s, models %s: mesh digest 0x%016llx, %lld quads, %llu bytes"),
+                    MeshDigestPresets[Preset], Side, bModels ? TEXT("on") : TEXT("off"), Digest, Quads, uint64(Bytes)));
+                TestTrue(FString::Printf(TEXT("%s, %s, models %s: mesh digest 0x%016llx is the golden 0x%016llx"),
+                             MeshDigestPresets[Preset], Side, bModels ? TEXT("on") : TEXT("off"), Digest, Want),
+                    Digest == Want);
+            }
         }
-    }
     return true;
 }
 

@@ -56,6 +56,25 @@ void FVoxelIntProvider::GetDistribution(TArray<double>& Out) const
     Out.SetNumZeroed(Max - Min + 1);
     if (Type == EType::Constant)
         Out[0] = 1;
+    else if (Type == EType::BiasedToBottom)
+        for (int32 Inner1 = 1; Inner1 <= Out.Num(); ++Inner1)
+            for (int32 Value = 0; Value < Inner1; ++Value)
+                Out[Value] += 1. / Out.Num() / Inner1;
+    else if (Type == EType::WeightedList)
+        for (int32 Entry = 0; Entry < Entries.Num(); ++Entry)
+        {
+            TArray<double> Part;
+            Inner[Entry].GetDistribution(Part);
+            for (int32 Index = 0; Index < Part.Num(); ++Index)
+                Out[Inner[Entry].Min + Index - Min] += Part[Index] * Entries[Entry].Y / SpanA;
+        }
+    else if (Type == EType::Clamped)
+    {
+        TArray<double> Source;
+        Inner[0].GetDistribution(Source);
+        for (int32 Index = 0; Index < Source.Num(); ++Index)
+            Out[FMath::Clamp(Inner[0].Min + Index, Min, Max) - Min] += Source[Index];
+    }
     else if (Type == EType::Uniform)
         for (double& P : Out)
             P = 1. / Out.Num();
@@ -98,6 +117,57 @@ bool VoxelNumberProviders::CompileInt(
             !GetInt(Graph, Node, TEXT("plateau"), Plateau, OutError))
             return false;
         Out = FVoxelIntProvider::MakeTrapezoid(Min, Max, Plateau);
+        return true;
+    }
+    if (Type == TEXT("minecraft:biased_to_bottom"))
+    {
+        if (!GetInt(Graph, Node, TEXT("min_inclusive"), Min, OutError) ||
+            !GetInt(Graph, Node, TEXT("max_inclusive"), Max, OutError))
+            return false;
+        Out = FVoxelIntProvider::MakeUniform(Min, Max);
+        if (Max > Min) Out.Type = FVoxelIntProvider::EType::BiasedToBottom;
+        return true;
+    }
+    if (Type == TEXT("minecraft:weighted_list"))
+    {
+        const FVoxelFeatureValue* Distribution = Graph.FindField(Node, TEXT("distribution"));
+        if (!Distribution || Distribution->Type != EVoxelFeatureValueType::List || Distribution->Count == 0)
+            return ProviderFail(OutError, TEXT("weighted_list without a distribution"));
+        Out = FVoxelIntProvider();
+        Out.Type = FVoxelIntProvider::EType::WeightedList;
+        Out.Min = MAX_int32;
+        Out.Max = MIN_int32;
+        for (int32 Item = 0; Item < Distribution->Count; ++Item)
+        {
+            const int32 Entry = Graph.GetNode(Graph.Items[Distribution->Index + Item]);
+            const FVoxelFeatureValue* Data = Graph.FindField(Entry, TEXT("data"));
+            const FVoxelFeatureValue* Weight = Graph.FindField(Entry, TEXT("weight"));
+            FVoxelIntProvider Number;
+            if (!Data || !Weight) return ProviderFail(OutError, TEXT("weighted_list entry without data or weight"));
+            if (!CompileInt(Graph, *Data, Number, OutError)) return false;
+            Out.Entries.Add(FIntPoint(Number.Min, int32(Weight->Number)));
+            Out.SpanA += int32(Weight->Number);
+            Out.Min = FMath::Min(Out.Min, Number.Min);
+            Out.Max = FMath::Max(Out.Max, Number.Max);
+            Out.Inner.Add(MoveTemp(Number));
+        }
+        if (Out.SpanA <= 0) return ProviderFail(OutError, TEXT("weighted_list with no weight"));
+        return true;
+    }
+    if (Type == TEXT("minecraft:clamped"))
+    {
+        const FVoxelFeatureValue* Source = Graph.FindField(Node, TEXT("source"));
+        FVoxelIntProvider Inner;
+        if (!Source || !CompileInt(Graph, *Source, Inner, OutError) ||
+            !GetInt(Graph, Node, TEXT("min_inclusive"), Min, OutError) ||
+            !GetInt(Graph, Node, TEXT("max_inclusive"), Max, OutError))
+            return false;
+        Out = FVoxelIntProvider();
+        Out.Type = FVoxelIntProvider::EType::Clamped;
+        // The values it can give: the source's range clamped.
+        Out.Min = FMath::Clamp(Inner.Min, Min, FMath::Max(Min, Max));
+        Out.Max = FMath::Clamp(Inner.Max, Min, FMath::Max(Min, Max));
+        Out.Inner.Add(MoveTemp(Inner));
         return true;
     }
     return ProviderFail(OutError, FString::Printf(TEXT("int provider %s is not compiled yet"), *FString(Type)));

@@ -44,6 +44,60 @@ void FVoxelBlockTable::SetSnowyState(uint16 State, uint16 Snowy)
     SnowyStates.Add(State, Snowy);
 }
 
+void FVoxelBlockTable::SetBlockProperties(int32 Block, uint16 FirstState, TArray<FVoxelBlockProperty> Properties)
+{
+    FBlockProperties& Entry = BlockProperties.FindOrAdd(Block);
+    Entry.FirstState = FirstState;
+    Entry.Properties = MoveTemp(Properties);
+    Entry.Strides.SetNum(Entry.Properties.Num());
+    int32 Stride = 1;
+    for (int32 Index = Entry.Properties.Num() - 1; Index >= 0; --Index)
+    {
+        Entry.Strides[Index] = Stride;
+        Stride *= FMath::Max(1, Entry.Properties[Index].Values.Num());
+    }
+}
+
+int32 FVoxelBlockTable::WithValue(uint16 State, FName Property, FName Value) const
+{
+    const FBlockProperties* Entry = BlockProperties.Find(Get(State).Block);
+    if (!Entry || State < Entry->FirstState) return INDEX_NONE;
+    for (int32 Index = 0; Index < Entry->Properties.Num(); ++Index)
+    {
+        const FVoxelBlockProperty& P = Entry->Properties[Index];
+        if (P.Name != Property) continue;
+        const int32 Wanted = P.Values.IndexOfByKey(Value);
+        if (Wanted == INDEX_NONE) return INDEX_NONE;
+        const int32 Current = (State - Entry->FirstState) / Entry->Strides[Index] % P.Values.Num();
+        return State + (Wanted - Current) * Entry->Strides[Index];
+    }
+    return INDEX_NONE;
+}
+
+FName FVoxelBlockTable::GetValue(uint16 State, FName Property) const
+{
+    const FBlockProperties* Entry = BlockProperties.Find(Get(State).Block);
+    if (!Entry || State < Entry->FirstState) return NAME_None;
+    for (int32 Index = 0; Index < Entry->Properties.Num(); ++Index)
+        if (Entry->Properties[Index].Name == Property && !Entry->Properties[Index].Values.IsEmpty())
+            return Entry->Properties[Index]
+                .Values[(State - Entry->FirstState) / Entry->Strides[Index] % Entry->Properties[Index].Values.Num()];
+    return NAME_None;
+}
+
+int32 FVoxelBlockTable::MakeState(FStringView Block, TConstArrayView<TPair<FName, FName>> Properties) const
+{
+    if (Block.StartsWith(TEXT("minecraft:"))) Block.RightChopInline(10);
+    int32 State = FindState(FName(Block));
+    if (State == 0 && Block != TEXT("air")) return INDEX_NONE;
+    for (const TPair<FName, FName>& Pair : Properties)
+    {
+        State = WithValue(uint16(State), Pair.Key, Pair.Value);
+        if (State == INDEX_NONE) return INDEX_NONE;
+    }
+    return State;
+}
+
 int32 FVoxelBlockTable::AddModel(TConstArrayView<FVoxelModelQuad> Quads, bool bAmbientOcclusion)
 {
     const int32 First = ModelQuads.Num();
