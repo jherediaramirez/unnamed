@@ -16,8 +16,10 @@ namespace
     // Normal and tangent (the U axis) per EVoxelFace.
     const FVector3f FaceNormals[6] = {{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}};
     const FVector3f FaceTangents[6] = {{0, 1, 0}, {0, 1, 0}, {0, 0, 1}, {0, 0, 1}, {1, 0, 0}, {1, 0, 0}};
-    const TCHAR* const ChunkSlotNames[] = {TEXT("Opaque"), TEXT("Cutout"), TEXT("Translucent"), TEXT("Water")};
+    const TCHAR* const ChunkSlotNames[] = {
+        TEXT("Opaque"), TEXT("Cutout"), TEXT("Translucent"), TEXT("Water"), TEXT("Model")};
     constexpr int32 ChunkLayerCount = UE_ARRAY_COUNT(ChunkSlotNames);
+    static_assert(ChunkLayerCount == int32(EVoxelLayer::Count), "A material slot per EVoxelLayer");
 
     FRealtimeMeshBufferSetKey GetColumnKey()
     {
@@ -27,11 +29,13 @@ namespace
     // How far a card's capture box reaches past its faces, so faces lying on the box's planes are captured.
     constexpr float CardPaddingCm = 10.f;
 
-    // A layer's section: its own material slot. Water casts no shadow.
+    // A layer's section: its own material slot. Water casts no shadow. (A section's own shadow flag counts only while
+    // no other section of the column casts: RealtimeMesh draws one mesh batch per buffer set, its shadow flag the OR
+    // of its sections'. So plants cast shadows at every distance.)
     FRealtimeMeshSectionConfig GetChunkLayerSection(int32 Layer)
     {
         FRealtimeMeshSectionConfig Config(Layer);
-        Config.bCastsShadow = Layer != ChunkLayerCount - 1;
+        Config.bCastsShadow = Layer != int32(EVoxelLayer::Water);
         return Config;
     }
 }

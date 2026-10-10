@@ -107,6 +107,10 @@ private:
     // -VoxelShotEdits: a pit across the corner of four columns east and south of the spawn, and a pillar of stone
     // and glass on a column border, written through the authority's block world.
     void ApplyShotEdits();
+    // -VoxelShotGarden: a flat plot near the spawn with every model block (rows, a pool for the water-holding ones, a
+    // glow lichen overhang, a dripstone column, tall grass across a section border, a patch plot for the distance
+    // shots), and a grass field around a bare clearing, written through the authority's block world.
+    void ApplyShotGarden();
 
     FVoxelSeed Seed;
     mutable TOptional<FUnnamedSavedWorld> SavedWorld;
@@ -159,6 +163,12 @@ private:
     double ShotEditSeconds = 0;
     int32 ShotEditFrames = 0;
     FString ShotEditReport;
+    // -VoxelShotGarden: the plot's minimum corner (its floor's height as Z), the field's clearing and the section
+    // border the post crosses.
+    bool bShotGarden = false;
+    FIntVector GardenOrigin = FIntVector::ZeroValue;
+    FIntVector GardenClearing = FIntVector::ZeroValue;
+    int32 GardenBorderZ = 0;
     UPROPERTY(Transient)
     TObjectPtr<ACameraActor> ShotCamera;
 };

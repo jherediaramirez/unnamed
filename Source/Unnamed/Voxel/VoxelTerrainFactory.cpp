@@ -63,7 +63,8 @@ bool VoxelTerrainFactory::ReadInputs(const FString& ReferenceRoot, const FString
         VoxelWorldgen::ReadBiomeParameters(ReferenceRoot, TEXT("overworld"), OutBiomes, OutError) &&
         VoxelWorldgen::ReadSurface(ReferenceRoot, OutPreset.MaterialRule, OutSurface, OutError) &&
         ReadColormap(GetColormapRoot() / TEXT("grass.png"), OutBiomes.GrassColormap, OutError) &&
-        ReadColormap(GetColormapRoot() / TEXT("foliage.png"), OutBiomes.FoliageColormap, OutError);
+        ReadColormap(GetColormapRoot() / TEXT("foliage.png"), OutBiomes.FoliageColormap, OutError) &&
+        ReadColormap(GetColormapRoot() / TEXT("dry_foliage.png"), OutBiomes.DryFoliageColormap, OutError);
 }
 
 TSharedPtr<const IVoxelTerrain> VoxelTerrainFactory::Make(const FUnnamedSavedWorld* World, int64 Seed,

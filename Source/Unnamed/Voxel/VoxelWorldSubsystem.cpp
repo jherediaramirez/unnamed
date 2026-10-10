@@ -16,6 +16,17 @@
 #include "VoxelLog.h"
 #include "VoxelStats.h"
 
+namespace
+{
+    TAutoConsoleVariable<int32> CVarModels(TEXT("voxel.Models"), 1,
+        TEXT("1 draws model states' baked quads (plants, multiface, custom models); 0 leaves them out (A/B). A change ")
+            TEXT("remeshes every loaded column."));
+    TAutoConsoleVariable<int32> CVarModelShadeUnturned(TEXT("voxel.Debug.ModelShadeUnturned"), 0,
+        TEXT("Look call: 1 shades model quads whose shade direction differs from their facing as up, as an override ")
+            TEXT(
+                "left unturned by the blockstate rotation would (ceiling glow lichen). Remeshes every loaded column."));
+}
+
 DECLARE_CYCLE_STAT(TEXT("Streaming tick"), STAT_VoxelStreamingTick, STATGROUP_Voxel);
 DECLARE_CYCLE_STAT(TEXT("Apply columns"), STAT_VoxelApplyColumns, STATGROUP_Voxel);
 DECLARE_DWORD_COUNTER_STAT(TEXT("Columns generated"), STAT_VoxelColumnsGenerated, STATGROUP_Voxel);
@@ -74,6 +85,8 @@ void UVoxelWorldSubsystem::Start(AVoxelWorld& InOwner, TSharedRef<const FVoxelBl
     Settings.MeshOptions.bGreedy = VoxelConsole::CVarGreedyMeshing.GetValueOnGameThread();
     Settings.MeshOptions.bAmbientOcclusion = VoxelConsole::CVarAmbientOcclusion.GetValueOnGameThread();
     Settings.MeshOptions.TintBlend = VoxelConsole::GetTintBlend();
+    Settings.MeshOptions.bModels = CVarModels.GetValueOnGameThread() != 0;
+    Settings.MeshOptions.bModelShadeUnturned = CVarModelShadeUnturned.GetValueOnGameThread() != 0;
     Settings.MaxTasksInFlight = VoxelConsole::GetMaxTasksInFlight();
     Settings.bEdgeWalls = VoxelConsole::CVarEdgeWalls.GetValueOnGameThread();
     bDecoration = VoxelConsole::CVarDecoration.GetValueOnGameThread();
@@ -175,6 +188,8 @@ void UVoxelWorldSubsystem::Tick(float DeltaTime)
     Pipeline->SetMaxTasksInFlight(VoxelConsole::GetMaxTasksInFlight());
     Pipeline->SetEdgeWalls(VoxelConsole::CVarEdgeWalls.GetValueOnGameThread());
     Pipeline->SetTintBlend(VoxelConsole::GetTintBlend());
+    Pipeline->SetModelOptions(
+        CVarModels.GetValueOnGameThread() != 0, CVarModelShadeUnturned.GetValueOnGameThread() != 0);
     const FVoxelStreamingRings Before = Pipeline->GetRings();
     Pipeline->SetFocus(MakeRings(LastFocus), VoxelStreaming::GetViewSector(Yaw));
     if (!(Pipeline->GetRings() == Before)) UpdateVisibility();

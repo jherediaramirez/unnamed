@@ -52,5 +52,9 @@ bool FVoxelBiomeTable::Validate(FString* OutError) const
         return BiomeTableFail(OutError,
             FString::Printf(TEXT("colormaps need %d colours each (grass %d, foliage %d)"), ColormapPixels,
                 GrassColormap.Num(), FoliageColormap.Num()));
+    if (!DryFoliageColormap.IsEmpty() && DryFoliageColormap.Num() != ColormapPixels)
+        return BiomeTableFail(OutError,
+            FString::Printf(
+                TEXT("the dry foliage colormap needs %d colours, not %d"), ColormapPixels, DryFoliageColormap.Num()));
     return true;
 }

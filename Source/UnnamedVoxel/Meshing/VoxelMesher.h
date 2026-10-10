@@ -50,6 +50,12 @@ struct FVoxelMeshOptions
     int32 TintBlend = 2;
     // Debug and tests: off, every tinted face averages block by block, never taking the uniform-biome shortcut.
     bool bTintShortcut = true;
+    // Model states' quads (voxel.Models); off, they draw nothing, though the water they hold still does.
+    bool bModels = true;
+    // Look-call A/B: model quads whose shade direction differs from their facing are shaded as up, which is what an
+    // override left unturned by the blockstate rotation would give the multiface blocks (glow lichen, vine, sculk
+    // vein).
+    bool bModelShadeUnturned = false;
     static constexpr int32 MaxTintBlend = 8;
 };
 
@@ -57,7 +63,9 @@ struct FVoxelMeshOptions
 // state, ambient-occlusion corners and tint, so a merged quad never blurs different shading or colours. Slabs and water
 // sides, which are partial faces, emit one quad each. A face is hidden when its code carries the cull bit and the
 // neighbour covers that whole square with an opaque surface, or when the neighbour is the same see-through block (glass
-// beside glass); water never draws against water.
+// beside glass); water never draws against water, nor against a model state holding water. Model states append their
+// baked quads, unmerged, to the Model layer: one alternative per part (VoxelModels::PickAlternative), moved by the
+// block's offset, each hidden when its cull face's neighbour covers that side; their water is drawn around them.
 namespace VoxelMesher
 {
     UNNAMEDVOXEL_API void GatherPadded(

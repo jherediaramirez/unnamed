@@ -28,12 +28,16 @@ public class Unnamed : ModuleRules
         RuntimeDependencies.Add("$(ProjectDir)/Reference/minecraft-worldgen-26.3/data/...", StagedFileType.NonUFS);
         RuntimeDependencies.Add(
             "$(ProjectDir)/Reference/minecraft-worldgen-26.3/facts/biome_parameters.json", StagedFileType.NonUFS);
-        // The biome tints read the block reference's grass and foliage colormaps (VoxelTerrainFactory::ReadInputs).
+        // The biome tints read the block reference's grass, foliage and dry foliage colormaps
+        // (VoxelTerrainFactory::ReadInputs).
         RuntimeDependencies.Add(
             "$(ProjectDir)/Reference/minecraft-blocks-26.3/assets/minecraft/textures/colormap/grass.png",
             StagedFileType.NonUFS);
         RuntimeDependencies.Add(
             "$(ProjectDir)/Reference/minecraft-blocks-26.3/assets/minecraft/textures/colormap/foliage.png",
+            StagedFileType.NonUFS);
+        RuntimeDependencies.Add(
+            "$(ProjectDir)/Reference/minecraft-blocks-26.3/assets/minecraft/textures/colormap/dry_foliage.png",
             StagedFileType.NonUFS);
     }
 }

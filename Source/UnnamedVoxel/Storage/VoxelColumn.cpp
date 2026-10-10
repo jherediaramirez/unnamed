@@ -18,7 +18,8 @@ namespace
             const uint16 State = GetLocalState(Local);
             if (State == 0) continue;
             const FVoxelStateInfo& Info = Table.Get(State);
-            const bool bMotion = Info.bSolid || Info.IsFluid();
+            // Fluids count, and so do model states holding water (kelp, seagrass), as 26.3's fluid states do.
+            const bool bMotion = Info.bSolid || Info.HoldsFluid();
             const bool Matches[] = {true, Info.bSolid, bMotion, bMotion && !Info.bLeaves};
             for (int32 Map = 0; Map < int32(EVoxelHeightmap::Count); ++Map)
                 if (!Found[Map] && Matches[Map])

@@ -205,6 +205,9 @@ public:
     void SetMaxTasksInFlight(int32 MaxTasks);
     void SetEdgeWalls(bool bEdgeWalls);
     void SetTintBlend(int32 TintBlend);
+    // Model quads on or off (voxel.Models) and the look-call shading switch (voxel.Debug.ModelShadeUnturned); a change
+    // remeshes every column.
+    void SetModelOptions(bool bModels, bool bShadeUnturned);
     bool IsDecorating() const { return Settings.Decorator.IsValid(); }
     const FVoxelDecorator* GetDecorator() const { return Settings.Decorator.Get(); }
 

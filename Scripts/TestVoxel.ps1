@@ -15,9 +15,11 @@ $code=$LASTEXITCODE
 Remove-Item -LiteralPath $profileDirectory -Recurse -Force -ErrorAction SilentlyContinue
 if(-not(Test-Path "$OutputDirectory/Report/index.json")){throw "Missing voxel report (exit $code)"}
 $report=Get-Content -Raw "$OutputDirectory/Report/index.json" | ConvertFrom-Json
-$expected=84
+# Every voxel test, passing with or without warnings (an editor HTTP timeout lands on whichever test is running).
+$expected=88
+$passed=$report.succeeded+$report.succeededWithWarnings
 # The console commands run before the tests: keep their output (settings, dev seed, timings) next to the report.
 Select-String -Path "$OutputDirectory/native.log" -Pattern 'LogUnnamedVoxel: Display: ' | ForEach-Object { $_.Line -replace '^.*LogUnnamedVoxel: Display: ','' } | Set-Content "$OutputDirectory/voxel-console.txt"
-if($code -ne 0 -or $report.failed -ne 0 -or $report.succeeded -ne $expected){throw "Voxel tests failed ($($report.succeeded) of $expected passed): $OutputDirectory"}
+if($code -ne 0 -or $report.failed -ne 0 -or $passed -ne $expected){throw "Voxel tests failed ($passed of $expected passed): $OutputDirectory"}
 "PASS: $expected voxel suites. $OutputDirectory/Report/index.json"
 Get-Content "$OutputDirectory/voxel-console.txt"

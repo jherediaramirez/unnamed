@@ -561,4 +561,37 @@ bool FVoxelTintMesherTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelTintDryFoliageTest, "Unnamed.Voxel.Tints.DryFoliage",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelTintDryFoliageTest::RunTest(const FString& Parameters)
+{
+    // Leaf litter's colours: the dry_foliage colormap read like grass (plains #A37546, the block reference's README),
+    // and a biome's own dry_foliage_color where it sets one (swamp #7B5334 in its biome file).
+    FTintTestWorld World;
+    if (!TintTestRead(*this, World)) return false;
+    if (!TestEqual(TEXT("dry foliage colormap pixels"), World.Biomes.DryFoliageColormap.Num(), 65536)) return false;
+    TestEqual(TEXT("plains on the colormap"),
+        TintTestHexText(FVoxelTintTable::LookupColormap(World.Biomes.DryFoliageColormap, .8, .4)),
+        TintTestHexText(0xA37546));
+    FVoxelTintTable Tints;
+    FString Error;
+    if (!TestTrue(FString::Printf(TEXT("the tint table builds (%s)"), *Error), Tints.Initialize(World.Biomes, &Error)))
+        return false;
+    const int32 Plains = World.Biomes.FindBiome(TEXT("minecraft:plains"));
+    const int32 Swamp = World.Biomes.FindBiome(TEXT("minecraft:swamp"));
+    if (!TestTrue(TEXT("plains and swamp are in the table"), Plains != INDEX_NONE && Swamp != INDEX_NONE)) return false;
+    TestEqual(TEXT("plains"), TintTestHexText(Tints.GetColor(EVoxelTintSource::DryFoliage, Plains, 0, 0, 0)),
+        TintTestHexText(0xA37546));
+    TestEqual(TEXT("swamp's own colour"), TintTestHexText(Tints.GetColor(EVoxelTintSource::DryFoliage, Swamp, 0, 0, 0)),
+        TintTestHexText(0x7B5334));
+    // Without the colormap, a biome without its own colour keeps the fallback (the block's plains tint).
+    World.Biomes.DryFoliageColormap.Reset();
+    FVoxelTintTable Bare;
+    Bare.Initialize(World.Biomes);
+    TestEqual(TEXT("no colormap: the fallback"), Bare.GetColor(EVoxelTintSource::DryFoliage, Plains, 0, 0, 0x123456),
+        uint32(0x123456));
+    return true;
+}
+
 #endif

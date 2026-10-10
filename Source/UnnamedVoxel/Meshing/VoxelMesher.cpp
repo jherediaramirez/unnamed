@@ -195,9 +195,13 @@ namespace
 
         uint32 Get(const FVoxelStateInfo& Info, int32 Face, const FIntVector& Cell)
         {
-            if (!Table || Info.TintSource < EVoxelTintSource::Grass ||
-                !((Info.Faces[Face] | Info.Faces[VoxelFaces::OverlayIndex]) & VoxelFaces::TintBit))
-                return Info.Tint;
+            return GetForCode(Info, Info.Faces[Face] | Info.Faces[VoxelFaces::OverlayIndex], Cell);
+        }
+
+        // A face or model quad whose codes (or-ed together) are Codes.
+        uint32 GetForCode(const FVoxelStateInfo& Info, uint32 Codes, const FIntVector& Cell)
+        {
+            if (!Table || Info.TintSource < EVoxelTintSource::Grass || !(Codes & VoxelFaces::TintBit)) return Info.Tint;
             if (!Sampler) Sampler.Emplace(*Table, *Neighborhood, SectionIndex, Radius, bShortcut);
             return Sampler->Get(Info.TintSource, Cell, Info.Tint);
         }
@@ -225,6 +229,8 @@ namespace
         // World Z of the section's first block row.
         int32 BaseZ;
         FFaceTints& Tints;
+        // World X and Y of the column's minimum corner: model offsets and alternatives read world cells.
+        FIntPoint ColumnOrigin = FIntPoint::ZeroValue;
 
         // A quad on Face: Plane along the face's axis, [U0, U1] x [V0, V1] across it (section blocks; U and V are the
         // next two axes after it), Cell the section cell whose corner is the UV origin. Corners holds the occlusion
@@ -266,6 +272,84 @@ namespace
                 Layer.Indices.Append({First + 1, First + 2, First + 3, First + 1, First + 3, First});
             else
                 Layer.Indices.Append({First, First + 1, First + 2, First, First + 2, First + 3});
+        }
+
+        // A model state's quads at Cell (section coordinates; Index its padded index): one alternative of each part,
+        // moved by the block's offset. A quad is hidden when its cull face's neighbour covers that side. Normals come
+        // from the shade direction (the face index), light from the state or the element, whichever is brighter; a
+        // quad lying near a cell side, in a model with ambient occlusion, takes the corner occlusion of the full face
+        // there (FVoxelModelQuad::OcclusionFront).
+        void Model(const FVoxelBlockTable& Table, const FVoxelStateInfo& Info, const FVoxelMeshOptions& Options,
+            const uint8* Opaque, const uint8* Casts, int32 Index, const FIntVector& Cell) const
+        {
+            const FIntVector World(ColumnOrigin.X + Cell.X, ColumnOrigin.Y + Cell.Y, BaseZ + Cell.Z);
+            const FVector3f Base = FVector3f(float(Cell.X), float(Cell.Y), float(Cell.Z + BaseZ)) +
+                VoxelModels::GetOffset(Info, World.X, World.Y);
+            FVoxelMeshLayer& Layer = Out.Layers[int32(EVoxelLayer::Model)];
+            // Every tinted quad of the cell takes the same colour: looked up once, on the first.
+            TOptional<uint32> CellTint;
+            const int32* Part = Table.GetModelParts(Info);
+            for (int32 PartIndex = 0; PartIndex < Info.ModelPartCount; ++PartIndex)
+            {
+                const int32 Alternatives = *Part++;
+                const int32 ModelIndex =
+                    Part[VoxelModels::PickAlternative(World.X, World.Y, World.Z, PartIndex, Alternatives)];
+                Part += Alternatives;
+                for (const FVoxelModelQuad& ModelQuad : Table.GetModelQuads(ModelIndex))
+                {
+                    if (ModelQuad.CullFace >= 0)
+                    {
+                        const int32 Axis = VoxelFaces::GetAxis(ModelQuad.CullFace);
+                        const int32 Neighbor =
+                            Index + (VoxelFaces::IsPositive(ModelQuad.CullFace) ? AxisStep[Axis] : -AxisStep[Axis]);
+                        if ((Opaque[Neighbor] >> VoxelFaces::GetOpposite(ModelQuad.CullFace)) & 1) continue;
+                    }
+                    // Occlusion levels 0-3 at the quad's corners, read off the four cell corners of the full face it
+                    // lies on.
+                    float Levels[4] = {3, 3, 3, 3};
+                    if (ModelQuad.OcclusionFront >= 0 && Options.bAmbientOcclusion)
+                    {
+                        const int32 Face = ModelQuad.Facing, Axis = VoxelFaces::GetAxis(Face);
+                        const int32 AxisU = (Axis + 1) % 3, AxisV = (Axis + 2) % 3;
+                        const int32 Front = ModelQuad.OcclusionFront == FVoxelModelQuad::OwnCell
+                            ? Index
+                            : Index + (VoxelFaces::IsPositive(Face) ? AxisStep[Axis] : -AxisStep[Axis]);
+                        const uint8 Corners = GetCorners(Casts, Front, AxisStep[AxisU], AxisStep[AxisV]);
+                        auto Level = [Corners](int32 Corner) { return float((Corners >> (2 * Corner)) & 3); };
+                        for (int32 Vertex = 0; Vertex < 4; ++Vertex)
+                        {
+                            const float U = FMath::Clamp(ModelQuad.Positions[Vertex][AxisU], 0.f, 1.f);
+                            const float V = FMath::Clamp(ModelQuad.Positions[Vertex][AxisV], 0.f, 1.f);
+                            // Corners (-,-), (+,-), (+,+), (-,+) across the face.
+                            Levels[Vertex] =
+                                FMath::Lerp(FMath::Lerp(Level(0), Level(1), U), FMath::Lerp(Level(3), Level(2), U), V);
+                        }
+                    }
+                    const uint8 Shade = Options.bModelShadeUnturned && ModelQuad.Shade != ModelQuad.Facing
+                        ? uint8(EVoxelFace::Up)
+                        : ModelQuad.Shade;
+                    const FVector2f Codes(float(ModelQuad.Code), 0.f);
+                    if ((ModelQuad.Code & VoxelFaces::TintBit) && !CellTint)
+                        CellTint = Tints.GetForCode(Info, ModelQuad.Code, Cell);
+                    const uint32 Tint = ModelQuad.Code & VoxelFaces::TintBit ? *CellTint : Info.Tint;
+                    const FVector2f TintFace{float(Tint), float(Shade)};
+                    const uint8 Light = uint8(FMath::Max<int32>(Info.LightEmission, ModelQuad.Light) * 17);
+                    const uint32 First = uint32(Layer.Positions.Num());
+                    for (int32 Vertex = 0; Vertex < 4; ++Vertex)
+                    {
+                        Layer.Positions.Add(Base + ModelQuad.Positions[Vertex]);
+                        Layer.BlockUVs.Add(ModelQuad.UVs[Vertex]);
+                        Layer.Codes.Add(Codes);
+                        Layer.TintFaces.Add(TintFace);
+                        Layer.Colors.Add(FColor(uint8(FMath::RoundToInt32(Levels[Vertex] * 85)), Light, 255, 255));
+                    }
+                    // FaceInfo order, split along the brighter diagonal as the cube faces are.
+                    if (Levels[0] + Levels[2] < Levels[1] + Levels[3])
+                        Layer.Indices.Append({First + 1, First + 2, First + 3, First + 1, First + 3, First});
+                    else
+                        Layer.Indices.Append({First, First + 1, First + 2, First, First + 2, First + 3});
+                }
+            }
         }
 
         // A face of a partial block: Low and High are the block's vertical extent within the cell (slabs, fluids).
@@ -398,12 +482,19 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
     // Per padded cell: the faces it covers opaquely, and whether it darkens corners. Runs of one state reuse the
     // lookup.
     uint8 Opaque[FVoxelPaddedSection::Volume], Casts[FVoxelPaddedSection::Volume];
+    // Whether any cell (border included) holds a model state, so sections without any skip the model pass.
+    bool bAnyModel = false;
     {
         uint16 Last = States[0];
         const FVoxelStateInfo* Info = &Table.Get(Last);
+        bAnyModel = Info->Shape == EVoxelShape::Model;
         for (int32 Index = 0; Index < FVoxelPaddedSection::Volume; ++Index)
         {
-            if (States[Index] != Last) Info = &Table.Get(Last = States[Index]);
+            if (States[Index] != Last)
+            {
+                Info = &Table.Get(Last = States[Index]);
+                bAnyModel |= Info->Shape == EVoxelShape::Model;
+            }
             Opaque[Index] = Info->OpaqueFaces;
             Casts[Index] = Info->bCastsOcclusion;
         }
@@ -454,7 +545,10 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
         FaceTints.Radius = FMath::Min(Options.TintBlend, FVoxelMeshOptions::MaxTintBlend);
         FaceTints.bShortcut = Options.bTintShortcut;
     }
-    const FEmitter Emit{Out, VoxelConstants::MinZ + SectionIndex * SectionSize, FaceTints};
+    // Model offsets and alternatives read world cells: without a neighbourhood the column counts as the origin's.
+    const FVoxelColumn* Center = Neighborhood ? Neighborhood->Get(0, 0) : nullptr;
+    const FEmitter Emit{Out, VoxelConstants::MinZ + SectionIndex * SectionSize, FaceTints,
+        Center ? Center->GetPosition() * VoxelConstants::ColumnSize : FIntPoint::ZeroValue};
     for (int32 Face = 0; Face < VoxelFaces::Count; ++Face)
     {
         const int32 Axis = VoxelFaces::GetAxis(Face), AxisU = (Axis + 1) % 3, AxisV = (Axis + 2) % 3;
@@ -515,18 +609,24 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
                         break;
                     }
                     case EVoxelShape::Fluid:
+                    case EVoxelShape::Model:
                     {
-                        if (bCovered || Table.Get(States[Neighbor]).IsFluid()) break;
+                        // A model state holding water draws that water around its quads, as the fluid state would.
+                        const uint16 FluidState = Info.Shape == EVoxelShape::Model ? Info.HeldFluid : State;
+                        if (!FluidState) break;
+                        const FVoxelStateInfo& Fluid = Table.Get(FluidState);
+                        if (bCovered || Table.Get(States[Neighbor]).HoldsFluid()) break;
                         // Under more fluid the cell is full; otherwise its surface is at the amount's height.
-                        const bool bFluidAbove = Table.Get(States[Index + AxisStep[2]]).IsFluid();
+                        const bool bFluidAbove = Table.Get(States[Index + AxisStep[2]]).HoldsFluid();
                         if (Axis == 2)
                         {
                             // The top face only shows with no fluid above, so its height follows from the state.
-                            Keys[V * SectionSize + U] = MakeKey(State, OpenCorners, FaceTints.Get(Info, Face, Cell));
+                            Keys[V * SectionSize + U] =
+                                MakeKey(FluidState, OpenCorners, FaceTints.Get(Fluid, Face, Cell));
                             bAnyKey = true;
                         }
                         else
-                            Emit.CellFace(Info, Face, Cell, 0, bFluidAbove ? 1.f : Info.GetFluidHeight());
+                            Emit.CellFace(Fluid, Face, Cell, 0, bFluidAbove ? 1.f : Fluid.GetFluidHeight());
                         break;
                     }
                     default:
@@ -569,4 +669,15 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
                 }
         }
     }
+
+    if (!bAnyModel || !Options.bModels) return;
+    for (int32 Z = 0; Z < SectionSize; ++Z)
+        for (int32 Y = 0; Y < SectionSize; ++Y)
+            for (int32 X = 0; X < SectionSize; ++X)
+            {
+                const int32 Index = FVoxelPaddedSection::GetIndex(X + 1, Y + 1, Z + 1);
+                const FVoxelStateInfo& Info = Table.Get(States[Index]);
+                if (Info.Shape == EVoxelShape::Model)
+                    Emit.Model(Table, Info, Options, Opaque, Casts, Index, FIntVector(X, Y, Z));
+            }
 }

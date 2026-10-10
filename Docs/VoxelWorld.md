@@ -417,13 +417,14 @@ Phase 5 session 5 replaced the stand-in dressing with 26.3's surface rules (`mat
 
 Phase 5 session 6 colours grass, foliage and water by biome, as 26.3's `BlockColors` and biome blend do ([the scout's facts](Records/2026-10-09-Voxel-Phase5-Scout-Facts.md), section 5).
 
-- **Colours per biome** (`Biome/VoxelBiomeTints.h`, `FVoxelTintTable`), built from the biome table:
+- **Colours per biome** (`Biome/VoxelBiomeTints.h`, `FVoxelTintTable`), built from the biome table (dry foliage since phase 6 session 6):
   - water: the biome's `water_color`;
   - grass: `grass_color`, or the block reference's grass colormap at the biome's own temperature and downfall, each clamped to [0, 1] (`dd = d * t`, pixel `(trunc((1 - t) * 255), trunc((1 - dd) * 255))`). Then the modifier: dark forest blends halfway toward `#28340A`; swamp gives `#4C763C` where the info noise at `(x, y) * 0.0225` is below -0.1, else `#6A7039`;
-  - foliage: `foliage_color`, or the foliage colormap.
+  - foliage: `foliage_color`, or the foliage colormap;
+  - dry foliage (leaf litter): `dry_foliage_color` (dark forest, swamp, mangrove swamp, pale garden and dappled forest set one), or the dry foliage colormap, read like the others; plains is `#A37546`.
   - Height, the snow line and the frozen modifier play no part. The swamp pattern uses our own seedless info noise, so it does not match the jar block for block.
 - **Which blocks** (`FVoxelStateInfo::TintSource`): the registry keeps each tint as its plains colour, so `VoxelBlocks.cpp` reads grass `#91BD59` as the grass source (the grass block) and foliage `#77AB2F` as the foliage source (oak, jungle, acacia, dark oak and mangrove leaves). Other tints stay constant (spruce `#619961`, birch `#80A755`), and water takes the water colour.
-- **The colormaps:** `ReadInputs` reads `grass.png` and `foliage.png` from `Reference/minecraft-blocks-26.3/assets/minecraft/textures/colormap/` into the biome table (`VoxelTerrainFactory::GetColormapRoot`). `Unnamed.Build.cs` stages the two files with packages, and a world whose colormaps cannot be read is refused like one whose rules cannot.
+- **The colormaps:** `ReadInputs` reads `grass.png`, `foliage.png` and `dry_foliage.png` from `Reference/minecraft-blocks-26.3/assets/minecraft/textures/colormap/` into the biome table (`VoxelTerrainFactory::GetColormapRoot`). `Unnamed.Build.cs` stages the three files with packages, and a world whose colormaps cannot be read is refused like one whose rules cannot.
 - **In the mesher:** a face's tint is the per-channel integer mean of its source's colour over the (2r + 1)^2 blocks around its block, at the block's height. That is 26.3's biome blend; r is `voxel.TintBlend` (2, vanilla's default).
   - Each block takes its own jittered biome (`FVoxelBiomeStorage::GetBlock`, the lookup the rules use) from whichever of the 3 x 3 columns holds it, with each column's corner jitters cached per section. A face's colour does not depend on which section meshes it.
   - A block in a missing column (a finite area's edge, or the edge-walls view of the shots) takes the biome of the meshed column's nearest block, so the edge shows no stray plains colour. Blocks without biomes keep their plains tint (Superflat, the stand-in). The streamed world meshes a column only once its neighbours exist.
@@ -486,7 +487,7 @@ Phase 6 builds 26.3's decoration from the data in [Worldgen data](#worldgen-data
 
 | Piece | Where | How it works |
 |---|---|---|
-| Block table | `Blocks/VoxelBlockTable.h`, `Voxel/VoxelBlocks.cpp` | One `FVoxelStateInfo` per state id, compiled from the registry on the game thread and shared read-only. It holds the shape (full, bottom or top slab, fluid), the layer (opaque, cutout, translucent, water), the seven face codes, the tint, the light, and three flags: solid, leaves and shades corners. `OpaqueFaces` marks the faces that hide a neighbour: all six for an opaque cube, only the bottom or top for a slab, none for glass or leaves. Water's faces come from its still and flow textures, as the Playground draws it. `VoxelBlocks.cpp` checks that the core's face order and cull bit match the registry's. |
+| Block table | `Blocks/VoxelBlockTable.h`, `Voxel/VoxelBlocks.cpp` | One `FVoxelStateInfo` per state id, compiled from the registry on the game thread and shared read-only. It holds the shape (full, bottom or top slab, fluid, snow layers, model), the layer (opaque, cutout, translucent, water, model), the seven face codes, the tint, the light, and three flags: solid, leaves and shades corners. Model states also hold their parts (each a list of alternative baked models, copied from the registry with their quads), the water they hold and the block's offset ([Block models](#block-models)). `OpaqueFaces` marks the faces that hide a neighbour: all six for an opaque cube, only the bottom or top for a slab, none for glass or leaves. Water's faces come from its still and flow textures, as the Playground draws it. `VoxelBlocks.cpp` checks that the core's face order and cull bit match the registry's. |
 | Sections | `Storage/VoxelSection.h` | 16^3 states, X fastest, then Y, then Z. One state needs no index array; up to 16 states use 4-bit indices; up to 256 use 8-bit; more store 16-bit state ids directly. Widths divide 64, so no index straddles two words. `Set` widens as the palette fills; `Compact` narrows. Allocations are exact. |
 | Columns | `Storage/VoxelColumn.h` | 24 sections plus the four heightmaps (world surface, ocean floor, motion blocking, motion blocking without leaves), stored as Z - MinZ + 1 with 0 for none. Built from a dense column buffer on a worker, then read-only. An edit copies the column, and `SetState` sets one cell and its heightmaps through the helper `Build` shares. A generated column takes about 10 KB; generator 2's also carry their biomes (2.4 KB, [Biomes](#biomes)). |
 | Terrains | `Terrain/VoxelTerrain.h` | `IVoxelTerrain`: a column generator the area builder, the pipeline, the spawn search and the bench all take. Every column is a pure function of the terrain's settings and its position. The dense scratch buffer is reused between columns, so a terrain must set every cell (`Dense.Init`), not rely on zeroes. |
@@ -503,6 +504,7 @@ Mesher rules:
 - **Partial faces:** slab faces and water sides stay one quad per cell.
 - **Ambient occlusion:** per vertex, from the two sides and the diagonal in front of each corner. Each quad is split along its brighter diagonal.
 - **Fast exits:** sections that are all air, or solid with every side covered, return at once.
+- **Model states:** their baked quads go to the model layer, unmerged ([Block models](#block-models)).
 - **Output:** positions are in blocks from the column corner. UV 0 carries the block UV, continuous across a merged quad; UV 1 the face and overlay codes; UV 2 the tint (the biome's colour, [Biome tints](#biome-tints)) and face. Vertex colour R holds occlusion and G holds light.
 
 Rendering:
@@ -511,6 +513,29 @@ Rendering:
 - **Lumen cards:** each column also carries a Lumen card representation, built on the workers with its stream set (`UVoxelChunkComponent::BuildCards`). For each face direction there is a card per section, fitted to that section's opaque and cutout faces in that direction. When a column would exceed Lumen's 32 cards per mesh, the vertically closest cards of its busiest direction merge first. Lumen captures the cards into its surface cache, which is how the terrain bounces light ([Lighting](#lighting)).
 - **Chunk materials:** `M_ChunkOpaque`, `M_ChunkCutout`, `M_ChunkTranslucent` and `M_ChunkWater` reuse the block shader. They transform the continuous UV first, take each block's fraction, and sample with the continuous UV's gradients, so mips never jump at block edges. Texture animation uses the same `UFoundationBlockTextureTable`.
 - **Collision:** none on the meshes. `AVoxelWorld::GatherCollision` returns block boxes (full or half for slabs) from the columns, as the Playground does from its block world. Columns not generated yet count as solid.
+
+### Block models
+
+Phase 6 session 6 draws the 83 model blocks (plants, multiface, custom element models) that S5 imported ([Blocks.md](Blocks.md), "States and shapes"), as scout D recommended ([record](Records/2026-10-09-Voxel-Phase6-Scout-D-Block-Models.md)).
+
+- **The table:** `VoxelBlocks::MakeTable` copies the registry's 303 baked models in its order, dropping 16 quads that repeat an earlier one of their model exactly (flowerbed segments list a plane twice): 2,394 quads. Each model state gets `EVoxelShape::Model`, `EVoxelLayer::Model`, its parts and alternatives, its own light, the water it holds (`HeldFluid`, the water source, for the 286 water-holding states) and the block's offset. `bSolid` stays 26.3's `blocks_motion` tag.
+- **The mesher** (`FEmitter::Model`): one alternative per part by `VoxelModels::PickAlternative` (a hash of the cell and the part; all weights are equal), every quad moved by `VoxelModels::GetOffset` (a hash of X and Y only, in 16 steps up to the block's horizontal range, and down to its vertical range for XYZ kinds, so two-cell plants and dripstone columns stay aligned). A quad with a cull face is hidden when that neighbour covers the side opaquely.
+  - Normal: the quad's shade direction (`shade_direction_override`, turned with the blockstate rotation as S5 bakes it), through the face index, so crosses are lit as up.
+  - Ambient occlusion: models with `ambientocclusion: false` stay open; a quad lying flat within 1/16 of a cell side takes the corner occlusion of the full face there, read around the cell beyond the side it faces (a cactus side) or around its own cell when the side is behind it (a carpet's top). Other quads stay open.
+  - Tint: a quad with a `tintindex` takes the block's tint source with the biome blend (grass, foliage, dry foliage; the lily pad's constant `#208030`).
+  - Light: the brighter of the state's light and the element's `light_emission` (the firefly bush's overlay at 15), in vertex G.
+  - UVs are the baked texture UVs, with no face transform; the code carries the texture and the tint bit, no overlay.
+  - Water: a water-holding state draws its water's faces as a source would, and water never draws a face against it. It also counts for the motion-blocking heightmaps (`HoldsFluid`), and for swimming.
+  - Thin planes already have both faces in the data, so `M_ChunkCutout` stays one-sided.
+- **Rendering:** the model layer is the chunk mesh's fifth section, drawn with `M_ChunkCutout`. It is never in Lumen's cards (cards take the opaque and cutout layers only), but it is in the ray-tracing scene, like the rest of the column (capture G3 below). Plants cast sun shadows at every distance: RealtimeMesh draws one mesh batch per buffer set, with its shadow flag the OR of its sections' (`RealtimeMeshBufferSetProxy.cpp`, `InitializeMeshBatch`), so a section's own `bCastsShadow` is ignored while the column's terrain casts. Keeping plant shadows near the camera only needs the model quads in their own component, or a shadow-pass fade in a model material (a decision for Jesus, in the S6b handoff).
+- **Switches** (cvars in `VoxelWorldSubsystem.cpp`; each change remeshes every loaded column):
+  - `voxel.Models 0` leaves the model quads out (their water stays), for A/B.
+  - `voxel.Debug.ModelShadeUnturned 1` shades quads whose shade direction differs from their facing as up, as an override left unturned by the blockstate rotation would (look call 2 below).
+- **Generated worlds** hold no model state yet (decoration places none), so their mesh is byte-identical with models on and off and to the mesh from before S6 (`Unnamed.Voxel.Mesher.Digest` pins it per preset).
+- **Captures** (`CaptureVoxel -Garden`, `AVoxelWorld::ApplyShotGarden`): a plot with every model block (rows, a pool for the water-holding ones, an overhang with vine, glow lichen and sculk vein, wall-mounted amethyst clusters, a dripstone column, tall grass across a section border), a grass field of about 4,800 plants around a bare 7 x 7 clearing, and a distance plot shot from 8 to 128 blocks.
+- **Look calls** (made by the night manager under Jesus's delegation, October 10, 02:19; numbers in [the S6 record](Records/2026-10-10-Voxel-Phase6-S6.md)):
+  1. **Ray tracing (G3):** plants stay in the ray-tracing scene, one component per column. With exposure fixed, the clearing's ground moved -0.8 / -0.4 / -1.4 per channel with plants, under the 3/255 bar.
+  2. **Shade override:** kept turned with the blockstate rotation (the baked data). Unturned is about 3/255 brighter and flatter on wall-mounted amethyst. In 26.3 only the vine's ceiling part and the amethyst cluster and buds turn an override; glow lichen and sculk vein have none.
 
 Measured on one thread, `voxel.Bench Columns 4` (81 columns, 1,944 sections, seed `Unnamed`):
 

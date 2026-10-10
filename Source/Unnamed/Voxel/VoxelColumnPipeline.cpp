@@ -118,6 +118,17 @@ void FVoxelColumnPipeline::SetTintBlend(int32 TintBlend)
     Regress();
 }
 
+void FVoxelColumnPipeline::SetModelOptions(bool bModels, bool bShadeUnturned)
+{
+    FVoxelMeshOptions& Options = Settings.MeshOptions;
+    if (Options.bModels == bModels && Options.bModelShadeUnturned == bShadeUnturned) return;
+    Options.bModels = bModels;
+    Options.bModelShadeUnturned = bShadeUnturned;
+    for (TPair<FIntPoint, FRecord>& Pair : Records)
+        if (Pair.Value.Data) MarkDirty(Pair.Value, PipelineAllSections);
+    Regress();
+}
+
 void FVoxelColumnPipeline::WaitForJobs()
 {
     for (FJob& Job : Jobs)

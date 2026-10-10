@@ -14,6 +14,7 @@
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationBlockTextureTable.h"
 #include "Foundation/FoundationGrid.h"
+#include "Random/VoxelRandom.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationPawn.h"
@@ -55,8 +56,10 @@ namespace
     // How far away the view radius looks to the sky's aerial perspective, as a multiple of its real distance at
     // radius 12; smaller radii scale it up, so the land is as hazy at the edge whatever the radius.
     constexpr double EdgeAerialScale = 50.;
-    const TCHAR* const ChunkMaterialNames[] = {
-        TEXT("M_ChunkOpaque"), TEXT("M_ChunkCutout"), TEXT("M_ChunkTranslucent"), TEXT("M_ChunkWater")};
+    // One per EVoxelLayer: model quads draw with the cutout material in their own section.
+    const TCHAR* const ChunkMaterialNames[] = {TEXT("M_ChunkOpaque"), TEXT("M_ChunkCutout"), TEXT("M_ChunkTranslucent"),
+        TEXT("M_ChunkWater"), TEXT("M_ChunkCutout")};
+    static_assert(UE_ARRAY_COUNT(ChunkMaterialNames) == int32(EVoxelLayer::Count), "A material per EVoxelLayer");
 
     // Frames each screenshot waits for Lumen and the shadow cache to settle.
     constexpr int32 ShotSettleFrames = 150;
@@ -136,6 +139,7 @@ void AVoxelWorld::BuildLayout()
     }
     bSpawnExact = FParse::Param(FCommandLine::Get(), TEXT("VoxelSpawnExact"));
     bShotEdits = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotEdits"));
+    bShotGarden = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotGarden"));
     bShotCaves = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotCaves"));
     FString FlightFolder;
     if (FParse::Value(FCommandLine::Get(), TEXT("VoxelFlight="), FlightFolder))
@@ -307,9 +311,11 @@ FFoundationTarget AVoxelWorld::TraceTarget(FVector Eye, FVector Direction, const
 bool AVoxelWorld::GetWaterBox(const FIntVector& Cell, FBox& OutBox) const
 {
     if (!Table) return false;
-    const FVoxelStateInfo& Info = Table->Get(GetState(Cell));
-    if (!Info.IsFluid()) return false;
-    const double Top = Table->Get(GetState(Cell + FIntVector(0, 0, 1))).IsFluid() ? 1. : Info.GetFluidHeight();
+    // Model states holding water (kelp, seagrass) are water to swim in.
+    const FVoxelStateInfo& CellInfo = Table->Get(GetState(Cell));
+    if (!CellInfo.HoldsFluid()) return false;
+    const FVoxelStateInfo& Info = CellInfo.HeldFluid ? Table->Get(CellInfo.HeldFluid) : CellInfo;
+    const double Top = Table->Get(GetState(Cell + FIntVector(0, 0, 1))).HoldsFluid() ? 1. : Info.GetFluidHeight();
     const FVector Min = FoundationGrid::CellMin(Cell, OriginCm);
     OutBox = FBox(Min, Min + FVector(CellCm, CellCm, Top * CellCm));
     return true;
@@ -376,10 +382,11 @@ void AVoxelWorld::Tick(float DeltaSeconds)
     if (ShotEditStage == 1) ++ShotEditFrames;
     if (!ShotFolder.IsEmpty() && IsReady())
     {
-        // With -VoxelShotEdits the shots wait until the edited columns are back on screen.
-        if (bShotEdits && ShotEditStage == 0)
+        // With -VoxelShotEdits or -VoxelShotGarden the shots wait until the edited columns are back on screen.
+        if ((bShotEdits || bShotGarden) && ShotEditStage == 0)
         {
-            ApplyShotEdits();
+            if (bShotEdits) ApplyShotEdits();
+            if (bShotGarden) ApplyShotGarden();
             ShotEditStage = 1;
             ShotEditSeconds = FPlatformTime::Seconds();
         }
@@ -660,6 +667,176 @@ void AVoxelWorld::ApplyShotEdits()
         Columns.Num(), ShotEditCorner.X, ShotEditCorner.Y);
 }
 
+void AVoxelWorld::ApplyShotGarden()
+{
+    UVoxelWorldSubsystem* Streaming = GetStreaming();
+    const FVoxelColumnPipeline* Pipeline = Streaming ? Streaming->GetPipeline() : nullptr;
+    FFoundationBlockWorld& World = Authority.World;
+    const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    auto Find = [&World](const TCHAR* Id)
+    {
+        const FFoundationBlockType* Type = World.FindBlock(Id);
+        return Type ? Type->GetDefaultState() : FFoundationBlockState{};
+    };
+    const FFoundationBlockState Grass = Find(TEXT("grass_block")), Dirt = Find(TEXT("dirt")),
+                                Stone = Find(TEXT("stone")), Water = Find(TEXT("water")),
+                                ShortGrass = Find(TEXT("short_grass")), Dandelion = Find(TEXT("dandelion")),
+                                Poppy = Find(TEXT("poppy")), TallGrass = Find(TEXT("tall_grass")),
+                                LeafLitter = Find(TEXT("leaf_litter")), Lichen = Find(TEXT("glow_lichen")),
+                                Dripstone = Find(TEXT("pointed_dripstone")), LilyPad = Find(TEXT("lily_pad")),
+                                Pickle = Find(TEXT("sea_pickle"));
+    if (!Pipeline || !Grass.Id || !Dirt.Id || !Stone.Id || !Water.Id || !ShortGrass.Id || !Lichen.Id) return;
+    constexpr int32 Size = VoxelConstants::ColumnSize;
+    auto Surface = [Pipeline](int32 X, int32 Y)
+    {
+        const FIntPoint Column(FoundationGrid::FloorDivide(X, Size), FoundationGrid::FloorDivide(Y, Size));
+        const FVoxelColumn* Data = Pipeline->FindColumn(Column);
+        return Data ? Data->GetHeight(EVoxelHeightmap::WorldSurface, X - Column.X * Size, Y - Column.Y * Size)
+                    : VoxelConstants::MinZ - 1;
+    };
+    TSet<FIntPoint> Columns;
+    int32 Changed = 0;
+    auto Write = [&World, &Columns, &Changed](const FIntVector& Cell, FFoundationBlockState State)
+    {
+        if (!World.IsKnown(Cell) || World.Get(Cell).State == State) return;
+        World.Set(Cell, State);
+        Columns.Add(FIntPoint(FoundationGrid::FloorDivide(Cell.X, Size), FoundationGrid::FloorDivide(Cell.Y, Size)));
+        ++Changed;
+    };
+    auto With = [&Registry](FFoundationBlockState State, const TCHAR* Property, const TCHAR* Value)
+    { return Registry.WithValue(State, Property, Value); };
+    // A plant and, for a double plant, its upper half above it.
+    auto Plant = [&](const FIntVector& Cell, FFoundationBlockState State)
+    {
+        Write(Cell, State);
+        if (Registry.GetValue(State, TEXT("half")) == TEXT("lower"))
+            Write(Cell + FIntVector(0, 0, 1), With(State, TEXT("half"), TEXT("upper")));
+    };
+
+    // The plot: 72 x 20 cells east and south of the spawn, its rows crossing a column border. Its floor is one above
+    // the highest ground under it, built up from the ground, so no slope walls it in and the distance shots see it.
+    const FIntVector Spawn = GetSpawnCell();
+    GardenOrigin = FIntVector(FoundationGrid::FloorDivide(Spawn.X, Size) * Size + Size - 7, Spawn.Y + 4, 0);
+    int32 Floor = VoxelConstants::MinZ;
+    for (int32 Y = GardenOrigin.Y; Y < GardenOrigin.Y + 20; ++Y)
+        for (int32 X = GardenOrigin.X; X < GardenOrigin.X + 72; ++X)
+            Floor = FMath::Max(Floor, Surface(X, Y) + 1);
+    Floor = FMath::Min(Floor, VoxelConstants::MaxZ - 24);
+    GardenOrigin.Z = Floor;
+    const FIntVector& O = GardenOrigin;
+    for (int32 Y = O.Y; Y < O.Y + 20; ++Y)
+        for (int32 X = O.X; X < O.X + 72; ++X)
+        {
+            for (int32 Z = FMath::Min(Surface(X, Y), Floor - 3); Z < Floor; ++Z)
+                Write({X, Y, Z}, Dirt);
+            Write({X, Y, Floor}, Grass);
+            for (int32 Z = Floor + 1; Z <= Floor + 20; ++Z)
+                Write({X, Y, Z}, FFoundationBlockState{});
+        }
+    // Rows of every model block's default state in registry order, two cells apart; the water-holding ones stand
+    // in the pool along the south edge, with lily pads on it and sea pickles of every count.
+    for (int32 Y = O.Y + 15; Y < O.Y + 19; ++Y)
+        for (int32 X = O.X + 1; X < O.X + 47; ++X)
+        {
+            Write({X, Y, Floor - 2}, Stone);
+            Write({X, Y, Floor - 1}, Water);
+            Write({X, Y, Floor}, Water);
+        }
+    int32 Land = 0, Wet = 0;
+    for (int32 Index = 1; Index < Registry.GetBlockCount(); ++Index)
+    {
+        const FFoundationBlockState State = Registry.GetBlockAt(Index).GetDefaultState();
+        if (Registry.GetShape(State) != EFoundationBlockShape::Model) continue;
+        if (Registry.GetFluid(State).Amount > 0)
+        {
+            Plant(FIntVector(O.X + 2 + Wet % 22 * 2, O.Y + 16 + Wet / 22, Floor - 1), State);
+            ++Wet;
+            continue;
+        }
+        Plant(FIntVector(O.X + 1 + Land % 23 * 2, O.Y + 2 + Land / 23 * 3, Floor + 1), State);
+        ++Land;
+    }
+    for (int32 Index = 0; Index < 12 && LilyPad.Id; ++Index)
+        Write(FIntVector(O.X + 2 + Index * 2, O.Y + 18, Floor + 1), LilyPad);
+    for (int32 Index = 0; Index < 12 && Pickle.Id; ++Index)
+        Write(FIntVector(O.X + 25 + Index * 2, O.Y + 18, Floor - 1),
+            With(Pickle, TEXT("pickles"), *LexToString(1 + Index % 4)));
+    // The multiface overhang: a stone roof and back wall; glow lichen (x 49-50), sculk vein (51-52) and vine (53) on
+    // the ceiling (up), on the wall (south) and on the floor (down, not for vine), so a look call sees the override
+    // turned and unturned side by side, with and without emission.
+    for (int32 X = O.X + 48; X <= O.X + 54; ++X)
+    {
+        for (int32 Y = O.Y + 2; Y <= O.Y + 7; ++Y)
+            Write({X, Y, Floor + 4}, Stone);
+        for (int32 Z = Floor + 1; Z <= Floor + 3; ++Z)
+            Write({X, O.Y + 7, Z}, Stone);
+    }
+    auto Multiface = [&](FFoundationBlockState State, int32 X)
+    {
+        if (!State.Id) return;
+        for (const TCHAR* Face : {TEXT("up"), TEXT("down"), TEXT("north"), TEXT("south"), TEXT("east"), TEXT("west")})
+            if (!Registry.GetValue(State, Face).IsNone()) State = With(State, Face, TEXT("false"));
+        Write({X, O.Y + 4, Floor + 3}, With(State, TEXT("up"), TEXT("true")));
+        Write({X, O.Y + 6, Floor + 2}, With(State, TEXT("south"), TEXT("true")));
+        if (!Registry.GetValue(State, TEXT("down")).IsNone())
+        {
+            Write({X, O.Y + 3, Floor + 1}, With(State, TEXT("down"), TEXT("true")));
+            // And in the sun, in front of the overhang, where the floor variant's shading shows.
+            Write({X, O.Y, Floor + 1}, With(State, TEXT("down"), TEXT("true")));
+        }
+    };
+    for (const int32 X : {49, 50})
+        Multiface(Lichen, O.X + X);
+    for (const int32 X : {51, 52})
+        Multiface(Find(TEXT("sculk_vein")), O.X + X);
+    Multiface(Find(TEXT("vine")), O.X + 53);
+    // Amethyst clusters on the back wall's sunny side, facing south: their cross is shaded as its turned override
+    // (south), or as up with voxel.Debug.ModelShadeUnturned 1.
+    if (const FFoundationBlockState Cluster = Find(TEXT("amethyst_cluster")); Cluster.Id)
+        for (int32 X = O.X + 49; X <= O.X + 53; ++X)
+            Write({X, O.Y + 8, Floor + 2}, With(Cluster, TEXT("facing"), TEXT("south")));
+    // A dripstone column: three stacked on the floor share one offset.
+    for (int32 Z = Floor + 1; Z <= Floor + 3 && Dripstone.Id; ++Z)
+        Write({O.X + 57, O.Y + 4, Z}, Dripstone);
+    // Tall grass across a section border: its lower half in a section's last row, its upper half in the next one's
+    // first, on a stone post.
+    GardenBorderZ = VoxelConstants::MinZ +
+        ((Floor + 3 - VoxelConstants::MinZ) / VoxelConstants::SectionSize + 1) * VoxelConstants::SectionSize;
+    for (int32 Z = Floor + 1; Z <= GardenBorderZ - 2; ++Z)
+        Write({O.X + 60, O.Y + 4, Z}, Stone);
+    if (TallGrass.Id) Plant({O.X + 60, O.Y + 4, GardenBorderZ - 1}, TallGrass);
+    // The distance plot: 3 x 3 patches of short grass, dandelions and leaf litter side by side, for shots from 8 to
+    // 128 blocks away along -X.
+    const FFoundationBlockState Patches[3] = {ShortGrass, Dandelion, LeafLitter};
+    for (int32 Patch = 0; Patch < 3; ++Patch)
+        for (int32 DY = 0; DY < 3; ++DY)
+            for (int32 DX = 0; DX < 3; ++DX)
+                if (Patches[Patch].Id) Write({O.X + 64 + DX, O.Y + 8 + Patch * 4 + DY, Floor + 1}, Patches[Patch]);
+    // The field: plants on every grass block within 36 cells of the clearing, south of the plot; the clearing (7 x 7)
+    // stays bare, so its ground is the same pixels with plants on and off (capture G3).
+    GardenClearing = FIntVector(O.X + 30, O.Y + 60, 0);
+    GardenClearing.Z = Surface(GardenClearing.X, GardenClearing.Y);
+    int32 FieldPlants = 0;
+    for (int32 Y = GardenClearing.Y - 36; Y <= GardenClearing.Y + 36; ++Y)
+        for (int32 X = GardenClearing.X - 36; X <= GardenClearing.X + 36; ++X)
+        {
+            if (FMath::Abs(X - GardenClearing.X) <= 3 && FMath::Abs(Y - GardenClearing.Y) <= 3) continue;
+            if (Y < O.Y + 21) continue;
+            const int32 Top = Surface(X, Y);
+            if (!World.IsKnown({X, Y, Top}) || !World.IsKnown({X, Y, Top + 1})) continue;
+            if (World.Get({X, Y, Top}).State != Grass || !World.Get({X, Y, Top + 1}).State.IsAir()) continue;
+            const uint32 Pick = uint32(VoxelRandom::Hash64(0, VoxelRandom::Salt("shot garden"), X, Y) >> 40) % 100;
+            Plant({X, Y, Top + 1}, Pick < 85 ? ShortGrass : Pick < 90 ? Dandelion : Pick < 95 ? Poppy : TallGrass);
+            ++FieldPlants;
+        }
+    // After the edits' line when both run.
+    ShotEditReport += FString::Printf(
+        TEXT("%s  Garden: %d cells in %d columns from (%d, %d, %d): %d model blocks in rows, ")
+            TEXT("%d in the pool, %d field plants around the clearing (%d, %d, %d), section border at Z %d"),
+        ShotEditReport.IsEmpty() ? TEXT("") : TEXT("\n"), Changed, Columns.Num(), O.X, O.Y, Floor, Land, Wet,
+        FieldPlants, GardenClearing.X, GardenClearing.Y, GardenClearing.Z, GardenBorderZ);
+}
+
 void AVoxelWorld::FindCaveShots()
 {
     bShotCavesSearched = true;
@@ -888,6 +1065,42 @@ void AVoxelWorld::UpdateShots()
         Shots.Add({TEXT("edits"), Blocks(ShotEditCorner.X - 7, ShotEditCorner.Y - 7, ShotEditTop + 8),
             Blocks(ShotEditCorner.X + 1, ShotEditCorner.Y + 2, ShotEditTop - 5), false, true});
 
+    if (bShotGarden)
+    {
+        const FIntVector& O = GardenOrigin;
+        const double F = O.Z;
+        Shots.Append({
+            // The rows from above their west end.
+            {TEXT("garden"), Blocks(O.X + 1, O.Y + 1, F + 9), Blocks(O.X + 16, O.Y + 7, F), false, true},
+            // A cross at a grazing angle, then the first row low down.
+            {TEXT("garden-close"), Blocks(O.X + 0.5, O.Y + 0.4, F + 1.5), Blocks(O.X + 9, O.Y + 3, F + 1.3), false,
+                true},
+            {TEXT("garden-pool"), Blocks(O.X + 14, O.Y + 11, F + 6), Blocks(O.X + 22, O.Y + 17, F), false, true},
+            {TEXT("garden-lichen"), Blocks(O.X + 51.5, O.Y - 7, F + 3), Blocks(O.X + 51.5, O.Y + 6, F + 1.5), false,
+                true},
+            {TEXT("garden-amethyst"), Blocks(O.X + 51.5, O.Y + 13, F + 2.6), Blocks(O.X + 51.5, O.Y + 8, F + 2.3),
+                false, true},
+            {TEXT("garden-border"), Blocks(O.X + 55, O.Y - 2, GardenBorderZ + 1),
+                Blocks(O.X + 59, O.Y + 4.5, GardenBorderZ - 1), false, true},
+            // The field at eye height (GPU), and looking down onto its bare clearing (ground brightness).
+            {TEXT("field"), Blocks(GardenClearing.X - 30.5, GardenClearing.Y - 30.5, GardenClearing.Z + 2.62),
+                Blocks(GardenClearing.X, GardenClearing.Y, GardenClearing.Z + 1), false, true},
+            {TEXT("field-clearing"), Blocks(GardenClearing.X + .5, GardenClearing.Y - 6.5, GardenClearing.Z + 6),
+                Blocks(GardenClearing.X + .5, GardenClearing.Y + .5, GardenClearing.Z + 1), false, true},
+        });
+        // The distance plot from 8 to 128 blocks along -X, 14 degrees down, so its footprint scales with 1 / d^2.
+        static const TCHAR* const DistanceNames[] = {TEXT("distance-008"), TEXT("distance-016"), TEXT("distance-032"),
+            TEXT("distance-064"), TEXT("distance-128")};
+        const FVector Plot = Blocks(O.X + 65.5, O.Y + 13.5, F + 1.3);
+        for (int32 Step = 0; Step < 5; ++Step)
+        {
+            const double Distance = 8 << Step;
+            const FVector Offset =
+                FVector(-FMath::Cos(FMath::DegreesToRadians(14.)), 0, FMath::Sin(FMath::DegreesToRadians(14.))) *
+                Distance * CellCm;
+            Shots.Add({DistanceNames[Step], Plot + Offset, Plot, false, true});
+        }
+    }
     if (bShotCaves && !bShotCavesSearched) FindCaveShots();
     for (const TTuple<FString, FVector, FVector>& CaveView : ShotCaveViews)
         Shots.Add({*CaveView.Get<0>(), CaveView.Get<1>(), CaveView.Get<2>(), false, true});

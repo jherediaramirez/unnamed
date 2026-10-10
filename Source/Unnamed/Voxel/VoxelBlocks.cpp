@@ -28,17 +28,61 @@ namespace
         return uint32(Color.R) << 16 | uint32(Color.G) << 8 | Color.B;
     }
 
-    // The registry keeps every tint as its plains colour (the block reference's README): the grass and foliage
-    // colormaps' plains colours mark the biome tints; any other colour is fixed (spruce and birch leaves).
-    constexpr uint32 PlainsGrass = 0x91BD59, PlainsFoliage = 0x77AB2F;
+    // The registry keeps every tint as its plains colour (the block reference's README): the grass, foliage and dry
+    // foliage colormaps' plains colours mark the biome tints; any other colour is fixed (spruce and birch leaves, the
+    // lily pad).
+    constexpr uint32 PlainsGrass = 0x91BD59, PlainsFoliage = 0x77AB2F, PlainsDryFoliage = 0xA37546;
 
     EVoxelTintSource GetTintSource(FColor Tint)
     {
         if (!Tint.A) return EVoxelTintSource::None;
         const uint32 Packed = PackRgb(Tint);
-        return Packed == PlainsGrass  ? EVoxelTintSource::Grass
-            : Packed == PlainsFoliage ? EVoxelTintSource::Foliage
-                                      : EVoxelTintSource::Constant;
+        return Packed == PlainsGrass     ? EVoxelTintSource::Grass
+            : Packed == PlainsFoliage    ? EVoxelTintSource::Foliage
+            : Packed == PlainsDryFoliage ? EVoxelTintSource::DryFoliage
+                                         : EVoxelTintSource::Constant;
+    }
+
+    bool IsSameQuad(const FVoxelModelQuad& A, const FVoxelModelQuad& B)
+    {
+        for (int32 Vertex = 0; Vertex < 4; ++Vertex)
+            if (A.Positions[Vertex] != B.Positions[Vertex] || A.UVs[Vertex] != B.UVs[Vertex]) return false;
+        return A.Code == B.Code && A.CullFace == B.CullFace && A.Shade == B.Shade && A.Light == B.Light;
+    }
+
+    // The registry's baked models, in its order, so model indices carry over. A quad repeating an earlier one of its
+    // model exactly (some flowerbed segments list a plane twice) is dropped: it would draw the same pixels again.
+    void CopyModels(const FFoundationBlockRegistry& Registry, FVoxelBlockTable& Table)
+    {
+        TArray<FVoxelModelQuad> Quads;
+        for (int32 Model = 0; Model < Registry.GetModelCount(); ++Model)
+        {
+            Quads.Reset();
+            for (const FFoundationModelQuad& Source : Registry.GetModelQuads(Model))
+            {
+                FVoxelModelQuad& Quad = Quads.AddDefaulted_GetRef();
+                for (int32 Vertex = 0; Vertex < 4; ++Vertex)
+                {
+                    Quad.Positions[Vertex] = Source.Positions[Vertex];
+                    Quad.UVs[Vertex] = Source.UVs[Vertex];
+                }
+                // The baked tintindex is -1 wherever the block has no tint source for it.
+                Quad.Code = uint32(Source.Texture) & FoundationBlockFaces::TextureMask;
+                if (Source.TintIndex >= 0) Quad.Code |= FoundationBlockFaces::TintBit;
+                Quad.CullFace = int8(Source.CullFace == INDEX_NONE ? -1 : Source.CullFace);
+                Quad.Shade = uint8(Source.Shade);
+                Quad.Facing = uint8(Source.Facing);
+                Quad.Light = uint8(FMath::Clamp(Source.Light, 0, 15));
+                for (int32 Earlier = 0; Earlier + 1 < Quads.Num(); ++Earlier)
+                    if (IsSameQuad(Quads[Earlier], Quad))
+                    {
+                        Quads.Pop();
+                        break;
+                    }
+            }
+            const int32 Index = Table.AddModel(Quads, Registry.IsModelAmbientOccluded(Model));
+            check(Index == Model);
+        }
     }
 }
 
@@ -51,6 +95,11 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
     const uint32 LavaStill = uint32(FMath::Max(0, FindBlockTexture(Assets, TEXT("lava_still"))));
     const FGameplayTag Leaves = FGameplayTag::RequestGameplayTag(TEXT("Block.Leaves"), false);
     const FGameplayTag BlocksMotion = FGameplayTag::RequestGameplayTag(TEXT("Block.BlocksMotion"), false);
+    CopyModels(Registry, *Table);
+    // The water a water-holding model state is drawn with: water's default state, a source.
+    const FFoundationBlockType* WaterBlock = Registry.FindBlock(TEXT("water"));
+    const uint16 WaterSource = WaterBlock ? uint16(WaterBlock->DefaultStateId) : 0;
+    TArray<TConstArrayView<int32>> Parts;
 
     for (int32 Id = 1; Id < Registry.GetStateLimit(); ++Id)
     {
@@ -113,11 +162,25 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
                     Info.Faces[Index] = Codes[Index];
             // A single snow layer has no collision box (26.3's collision is one layer below the outline).
             Info.bSolid = Info.Shape != EVoxelShape::Air && !(Info.Shape == EVoxelShape::Layers && Info.Layers == 1);
-            // Model states (plants and other baked models) have no voxel shape until their meshes exist (phase 6,
-            // S6), but they block motion, and count for the motion-blocking heightmaps, as 26.3's blocks_motion tag
-            // says (cactus, bamboo, mangrove roots, amethyst ...).
+            // Model states (plants and other baked models) draw their baked quads in their own layer. They block
+            // motion, and count for the motion-blocking heightmaps, as 26.3's blocks_motion tag says (cactus,
+            // bamboo, mangrove roots, amethyst ...); those holding water count through it.
             if (Registry.GetShape(State) == EFoundationBlockShape::Model)
                 Info.bSolid = BlocksMotion.IsValid() && Block.Tags.HasTag(BlocksMotion);
+            if (Registry.GetShape(State) == EFoundationBlockShape::Model && Registry.GetModelParts(State, Parts))
+            {
+                Info.Shape = EVoxelShape::Model;
+                Info.Layer = EVoxelLayer::Model;
+                Info.LightEmission = uint8(FMath::Clamp(Registry.GetLightEmission(State), 0, 15));
+                Info.ModelParts = Table->AddModelParts(Parts);
+                Info.ModelPartCount = uint8(Parts.Num());
+                if (Registry.GetFluid(State).Amount > 0) Info.HeldFluid = WaterSource;
+                Info.Offset = Block.OffsetKind == EFoundationOffsetKind::XYZ ? EVoxelOffset::HorizontalAndDown
+                    : Block.OffsetKind == EFoundationOffsetKind::XZ          ? EVoxelOffset::Horizontal
+                                                                             : EVoxelOffset::None;
+                Info.OffsetHorizontal = Block.OffsetMaxHorizontal;
+                Info.OffsetDown = Block.OffsetKind == EFoundationOffsetKind::XYZ ? Block.OffsetMinVertical : 0.f;
+            }
             Info.bCastsOcclusion = Info.Shape == EVoxelShape::Full && Info.Layer != EVoxelLayer::Translucent;
             // Only opaque surfaces hide a neighbour's face; a slab covers just its bottom or top square, snow layers
             // their bottom.
