@@ -4,6 +4,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 10, 2026
 
+- [Water and sky plan: flowing fluids and the day/night cycle](2026-10-10-WaterSky-Plan.md): start here for the water and sky track (lane `feature/water-sky`). Plan only, from scouts M (fluids) and N (day/night): goals and "done", one shared 20 Hz world tick (DN1 owns it), sessions W1 to W5 and DN0 to DN3 with the probe DN-P, the browser mock-up and a vanilla screenshot probe, the order against S9b to S12, T3/T5, breaking, items and phase 10, 18 questions (4 for Jesus, the rest the manager's under his away rule), and the short prompts for W1 and the mock-up. Never use `research/water_research.md` or `MinecraftBlockReference.md` section 4 (bytecode-derived) as sources.
 - [Items handoff: into S4 (held-item rendering)](2026-10-10-Items-Handoff-S4.md): start here for the items phase. It is also the S3 record (icons and tooltips, lane `feature/items-s3`):
   - The hotbar draws each item's own sprite, and the old pickaxe and sword art is gone.
   - The durability bar matches the server jar's own `ItemStack` answers at all 4,261 damage values (black box, `tools/ItemFacts.java`).
