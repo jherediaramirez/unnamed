@@ -512,6 +512,13 @@ EVoxelTreeDecorator VoxelTreeDecorators::FindType(FStringView Type)
     return EVoxelTreeDecorator::Count;
 }
 
+const TCHAR* VoxelTreeDecorators::GetName(EVoxelTreeDecorator Type)
+{
+    for (const FTreeDecoratorType& Each : TreeDecoratorTypes)
+        if (Each.Type == Type) return Each.Id + FCString::Strlen(TEXT("minecraft:"));
+    return TEXT("?");
+}
+
 bool VoxelTreeDecorators::Compile(const FVoxelFeatureGraph& Graph, int32 Node, EVoxelTreeDecorator Type,
     FVoxelBlockTags& Tags, const FVoxelBlockTable& Table, FVoxelBlockPredicates& Predicates,
     FVoxelStateProviders& Providers, FVoxelTreeDecoratorConfig& Out, FString& OutSkip, FString* OutError)
@@ -707,9 +714,11 @@ int32 VoxelTreeDecorators::GetReach(
     }
 }
 
-void VoxelTreeDecorators::Place(const FVoxelTreeConfig& Config, FVoxelTreeBuilder& Builder)
+void VoxelTreeDecorators::Place(const FVoxelTreeConfig& Config, FVoxelTreeBuilder& Builder, FVoxelTreeTimes* Times)
 {
     for (const FVoxelTreeDecoratorConfig& Decorator : Config.Decorators)
+    {
+        const uint64 Start = Times ? FPlatformTime::Cycles64() : 0;
         switch (Decorator.Type)
         {
         case EVoxelTreeDecorator::AlterGround:
@@ -742,4 +751,9 @@ void VoxelTreeDecorators::Place(const FVoxelTreeConfig& Config, FVoxelTreeBuilde
         default:
             break;
         }
+        if (!Times) continue;
+        const int32 Stage = FVoxelTreeTimes::FirstDecorator + int32(Decorator.Type);
+        Times->Cycles[Stage] += FPlatformTime::Cycles64() - Start;
+        ++Times->Calls[Stage];
+    }
 }

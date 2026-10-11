@@ -110,6 +110,47 @@ double FVoxelTreePlacerConfig::GetNumber(FName Name, double Default) const
     return Default;
 }
 
+void FVoxelTreeCellIndex::Add(FIntVector Cell, int32 Index)
+{
+    // At most half full.
+    if ((Used + 1) * 2 > Keys.Num()) Grow();
+    const uint64 Key = Pack(Cell);
+    uint64* Data = Keys.GetData();
+    const int32 Mask = Keys.Num() - 1;
+    int32 Slot = int32((Key * 0x9E3779B97F4A7C15ull) >> Shift);
+    while (Data[Slot] != Key && Data[Slot] != Empty)
+        Slot = (Slot + 1) & Mask;
+    if (Data[Slot] == Empty)
+    {
+        Data[Slot] = Key;
+        ++Used;
+    }
+    Values.GetData()[Slot] = Index;
+}
+
+void FVoxelTreeCellIndex::Grow()
+{
+    TArray<uint64> OldKeys = MoveTemp(Keys);
+    TArray<int32> OldValues = MoveTemp(Values);
+    const int32 Size = FMath::Max(256, OldKeys.Num() * 2);
+    Keys.Init(Empty, Size);
+    Values.SetNumUninitialized(Size);
+    Shift = 64 - FMath::FloorLog2(uint32(Size));
+    Used = 0;
+    const int32 Mask = Size - 1;
+    // Removed cells are not carried over.
+    for (int32 Old = 0; Old < OldKeys.Num(); ++Old)
+    {
+        if (OldKeys[Old] == Empty || OldValues[Old] == INDEX_NONE) continue;
+        int32 Slot = int32((OldKeys[Old] * 0x9E3779B97F4A7C15ull) >> Shift);
+        while (Keys[Slot] != Empty)
+            Slot = (Slot + 1) & Mask;
+        Keys[Slot] = OldKeys[Old];
+        Values[Slot] = OldValues[Old];
+        ++Used;
+    }
+}
+
 FVoxelTreeBuilder::FVoxelTreeBuilder(
     const FVoxelTreeConfig& InConfig, const FVoxelPlantEnvironment& InEnv, FVoxelXoroshiro& InRandom)
     : Config(InConfig), Env(InEnv), Random(InRandom)
@@ -126,8 +167,14 @@ bool FVoxelTreeBuilder::IsFree(FIntVector Cell) const
 {
     if (Cell.Z < VoxelConstants::MinZ || Cell.Z > VoxelConstants::MaxZ) return false;
     if (const int32* Index = FindCell(Cell)) return Cells[*Index].Kind == ECell::Leaf;
-    return Env.Predicates.GetSet(Config.FreeSet)
-        .Contains(Env.Table.Get(Env.Context.GetState(Cell.X, Cell.Y, Cell.Z)).Block);
+    return IsFreeBelow(Cell);
+}
+
+bool FVoxelTreeBuilder::IsFreeBelow(FIntVector Cell) const
+{
+    return Cell.Z >= VoxelConstants::MinZ && Cell.Z <= VoxelConstants::MaxZ &&
+        Env.Predicates.GetSet(Config.FreeSet)
+            .Contains(Env.Table.Get(Env.Context.GetState(Cell.X, Cell.Y, Cell.Z)).Block);
 }
 
 bool FVoxelTreeBuilder::IsLog(FIntVector Cell) const
@@ -150,21 +197,34 @@ void FVoxelTreeBuilder::Set(FIntVector Cell, uint16 State, ECell Kind)
         Cells[*Index].Kind = Kind;
         return;
     }
-    IndexOf.Add(Cell, Cells.Add({Cell, State, Kind}));
+    Append(Cell, State, Kind);
 }
 
+// SetLog, SetLeaf and SetDecoration look the cell up once (S9d); each keeps the checks it had.
 bool FVoxelTreeBuilder::SetLog(FIntVector Cell, int32 Axis)
 {
-    if (!IsLog(Cell) && !IsFree(Cell)) return false;
-    Set(Cell, Config.LogStates[FMath::Clamp(Axis, 0, 2)], ECell::Log);
+    const uint16 State = Config.LogStates[FMath::Clamp(Axis, 0, 2)];
+    if (int32* Index = FindCell(Cell))
+    {
+        // IsLog, or IsFree on the tree's own leaf.
+        FCell& Own = Cells[*Index];
+        const bool bInside = Cell.Z >= VoxelConstants::MinZ && Cell.Z <= VoxelConstants::MaxZ;
+        if (Own.Kind != ECell::Log && !(bInside && Own.Kind == ECell::Leaf)) return false;
+        Own.State = State;
+        Own.Kind = ECell::Log;
+        return true;
+    }
+    if (!IsFreeBelow(Cell)) return false;
+    Append(Cell, State, ECell::Log);
     return true;
 }
 
 bool FVoxelTreeBuilder::SetLeaf(FIntVector Cell)
 {
-    if (FindCell(Cell) || !IsFree(Cell)) return IsLeaf(Cell);
+    if (const int32* Index = FindCell(Cell)) return Cells[*Index].Kind == ECell::Leaf;
+    if (!IsFreeBelow(Cell)) return false;
     // The state's distance is set when the tree is emitted.
-    Set(Cell, Env.Providers.Sample(Config.FoliageProvider, Random, Cell, Env.Context), ECell::Leaf);
+    Append(Cell, Env.Providers.Sample(Config.FoliageProvider, Random, Cell, Env.Context), ECell::Leaf);
     return true;
 }
 
@@ -204,7 +264,7 @@ bool FVoxelTreeBuilder::SetDecoration(FIntVector Cell, uint16 State)
         Own.State = State;
         return true;
     }
-    Set(Cell, State, ECell::Decoration);
+    Append(Cell, State, ECell::Decoration);
     return true;
 }
 
@@ -222,10 +282,26 @@ void FVoxelTreeBuilder::Drop(int32 Index)
 
 void FVoxelTreeBuilder::GetCells(ECell Kind, TArray<FIntVector>& Out) const
 {
+    // A counting sort by Z: stable, so cells keep their order within a layer, as a stable sort by Z does.
     Out.Reset();
+    int32 MinZ = MAX_int32, MaxZ = MIN_int32, Count = 0;
     for (const FCell& Cell : Cells)
-        if (Cell.Kind == Kind) Out.Add(Cell.Position);
-    Algo::StableSortBy(Out, [](const FIntVector& Cell) { return Cell.Z; });
+        if (Cell.Kind == Kind)
+        {
+            MinZ = FMath::Min(MinZ, Cell.Position.Z);
+            MaxZ = FMath::Max(MaxZ, Cell.Position.Z);
+            ++Count;
+        }
+    if (!Count) return;
+    TArray<int32, TInlineAllocator<128>> Next;
+    Next.Init(0, MaxZ - MinZ + 2);
+    for (const FCell& Cell : Cells)
+        if (Cell.Kind == Kind) ++Next[Cell.Position.Z - MinZ + 1];
+    for (int32 Layer = 1; Layer < Next.Num(); ++Layer)
+        Next[Layer] += Next[Layer - 1];
+    Out.SetNumUninitialized(Count);
+    for (const FCell& Cell : Cells)
+        if (Cell.Kind == Kind) Out[Next[Cell.Position.Z - MinZ]++] = Cell.Position;
 }
 
 bool VoxelTreeFeature::Compile(const FVoxelFeatureGraph& Graph, int32 Node, FVoxelBlockTags& Tags,
@@ -408,9 +484,25 @@ int32 VoxelTreeFeature::GetFreeHeight(const FVoxelTreeConfig& Config, const FVox
         return Layer >= Height - Size.UpperLimit ? Size.UpperSize : Size.MiddleSize;
     };
     const TConstArrayView<FIntPoint> Footprint = VoxelTrunkPlacers::GetFootprint(EVoxelTrunkPlacer(Config.Trunk.Type));
+    // A footprint that fills its box (one column, or 2 x 2): the squares around its columns are together that box
+    // widened, so each cell is checked once (S9d: a 2 x 2 trunk checked most cells four times).
+    FIntPoint Low(MAX_int32, MAX_int32), High(MIN_int32, MIN_int32);
+    for (const FIntPoint& Column : Footprint)
+    {
+        Low = FIntPoint(FMath::Min(Low.X, Column.X), FMath::Min(Low.Y, Column.Y));
+        High = FIntPoint(FMath::Max(High.X, Column.X), FMath::Max(High.Y, Column.Y));
+    }
+    const bool bBox = !Footprint.IsEmpty() && (High.X - Low.X + 1) * (High.Y - Low.Y + 1) == Footprint.Num();
     const auto IsLayerFree = [&](int32 Layer)
     {
         const int32 Width = GetWidth(Layer);
+        if (bBox)
+        {
+            for (int32 Y = Low.Y - Width; Y <= High.Y + Width; ++Y)
+                for (int32 X = Low.X - Width; X <= High.X + Width; ++X)
+                    if (!Builder.IsFree(Builder.Origin + FIntVector(X, Y, Layer))) return false;
+            return true;
+        }
         for (const FIntPoint& Column : Footprint)
             for (int32 DY = -Width; DY <= Width; ++DY)
                 for (int32 DX = -Width; DX <= Width; ++DX)
@@ -430,52 +522,97 @@ void VoxelTreeFeature::GetLeafDistances(const FVoxelTreeBuilder& Builder, TArray
     // A BFS from the tree's own logs through its own face-adjacent leaves, up to 6 steps; 0 marks a leaf to drop.
     using ECell = FVoxelTreeBuilder::ECell;
     const TArray<FVoxelTreeBuilder::FCell>& Cells = Builder.Cells;
-    TMap<FIntVector, int32> Leaves;
-    Leaves.Reserve(Cells.Num());
-    for (int32 Index = 0; Index < Cells.Num(); ++Index)
-        if (Cells[Index].Kind == ECell::Leaf) Leaves.Add(Cells[Index].Position, Index);
+    // The tree's leaf at a position, or INDEX_NONE: a dense grid of leaf indices over the box of its logs and leaves
+    // (S9d: one lookup per step, cheaper than the builder's index at a tree's thousands of steps).
+    FIntVector Low(MAX_int32), High(MIN_int32);
+    for (const FVoxelTreeBuilder::FCell& Cell : Cells)
+        if (Cell.Kind == ECell::Log || Cell.Kind == ECell::Leaf)
+        {
+            Low = FIntVector(FMath::Min(Low.X, Cell.Position.X), FMath::Min(Low.Y, Cell.Position.Y),
+                FMath::Min(Low.Z, Cell.Position.Z));
+            High = FIntVector(FMath::Max(High.X, Cell.Position.X), FMath::Max(High.Y, Cell.Position.Y),
+                FMath::Max(High.Z, Cell.Position.Z));
+        }
     Out.Init(0, Cells.Num());
+    if (Low.X > High.X) return;
+    const FIntVector Extent = High - Low + FIntVector(1);
+    TArray<int32> Grid;
+    Grid.Init(INDEX_NONE, Extent.X * Extent.Y * Extent.Z);
+    for (int32 Index = 0; Index < Cells.Num(); ++Index)
+        if (Cells[Index].Kind == ECell::Leaf)
+        {
+            const FIntVector At = Cells[Index].Position - Low;
+            Grid[(At.Z * Extent.Y + At.Y) * Extent.X + At.X] = Index;
+        }
+    const auto FindLeaf = [&Grid, Low, Extent](FIntVector Position) -> int32
+    {
+        const FIntVector At = Position - Low;
+        if (uint32(At.X) >= uint32(Extent.X) || uint32(At.Y) >= uint32(Extent.Y) || uint32(At.Z) >= uint32(Extent.Z))
+            return INDEX_NONE;
+        return Grid.GetData()[(At.Z * Extent.Y + At.Y) * Extent.X + At.X];
+    };
     TArray<int32> Queue;
-    Queue.Reserve(Leaves.Num());
+    Queue.Reserve(Cells.Num());
     for (const FVoxelTreeBuilder::FCell& Cell : Cells)
         if (Cell.Kind == ECell::Log)
             for (const auto& Step : TreeSteps)
-                if (const int32* Leaf = Leaves.Find(Cell.Position + FIntVector(Step[0], Step[1], Step[2])))
-                    if (!Out[*Leaf])
-                    {
-                        Out[*Leaf] = 1;
-                        Queue.Add(*Leaf);
-                    }
+            {
+                const int32 Leaf = FindLeaf(Cell.Position + FIntVector(Step[0], Step[1], Step[2]));
+                if (Leaf != INDEX_NONE && !Out[Leaf])
+                {
+                    Out[Leaf] = 1;
+                    Queue.Add(Leaf);
+                }
+            }
     for (int32 Head = 0; Head < Queue.Num(); ++Head)
     {
         const int32 Index = Queue[Head];
         if (Out[Index] >= 6) continue;
         for (const auto& Step : TreeSteps)
-            if (const int32* Leaf = Leaves.Find(Cells[Index].Position + FIntVector(Step[0], Step[1], Step[2])))
-                if (!Out[*Leaf])
-                {
-                    Out[*Leaf] = uint8(Out[Index] + 1);
-                    Queue.Add(*Leaf);
-                }
+        {
+            const int32 Leaf = FindLeaf(Cells[Index].Position + FIntVector(Step[0], Step[1], Step[2]));
+            if (Leaf != INDEX_NONE && !Out[Leaf])
+            {
+                Out[Leaf] = uint8(Out[Index] + 1);
+                Queue.Add(Leaf);
+            }
+        }
     }
 }
 
-bool VoxelTreeFeature::Place(
-    const FVoxelTreeConfig& Config, FIntVector Origin, FVoxelXoroshiro& Random, const FVoxelPlantEnvironment& Env)
+bool VoxelTreeFeature::Place(const FVoxelTreeConfig& Config, FIntVector Origin, FVoxelXoroshiro& Random,
+    const FVoxelPlantEnvironment& Env, FVoxelTreeTimes* Times)
 {
     static const FName BaseHeight(TEXT("base_height")), RandA(TEXT("height_rand_a")), RandB(TEXT("height_rand_b"));
+    // Adds the time since the last lap to Stage (only when timed).
+    uint64 Last = Times ? FPlatformTime::Cycles64() : 0;
+    const auto Lap = [Times, &Last](int32 Stage)
+    {
+        if (!Times) return;
+        const uint64 Now = FPlatformTime::Cycles64();
+        Times->Cycles[Stage] += Now - Last;
+        ++Times->Calls[Stage];
+        Last = Now;
+    };
     FVoxelTreeBuilder Builder(Config, Env, Random);
     Builder.Origin = Origin;
     int32 Height = Config.Trunk.SampleInt(BaseHeight, Random);
     Height += Random.NextInt(Config.Trunk.SampleInt(RandA, Random) + 1);
     Height += Random.NextInt(Config.Trunk.SampleInt(RandB, Random) + 1);
-    if (Config.Roots.bEnabled && !VoxelRootPlacers::PlaceMangrove(Config.Roots, Builder)) return false;
+    if (Config.Roots.bEnabled && !VoxelRootPlacers::PlaceMangrove(Config.Roots, Builder))
+    {
+        Lap(FVoxelTreeTimes::Size);
+        return false;
+    }
     Height = GetFreeHeight(Config, Builder, Height);
+    Lap(FVoxelTreeTimes::Size);
     if (Height == INDEX_NONE || Builder.Origin.Z + Height + 1 > VoxelConstants::MaxZ) return false;
     Builder.Height = Height;
     TArray<FVoxelFoliageAttachment> Attachments;
     VoxelTrunkPlacers::Place(Config.Trunk, Builder, Attachments);
+    Lap(FVoxelTreeTimes::Trunk);
     VoxelFoliagePlacers::Place(Config.Foliage, Builder, Attachments);
+    Lap(FVoxelTreeTimes::Foliage);
 
     TArray<uint8> Distances;
     GetLeafDistances(Builder, Distances);
@@ -485,14 +622,23 @@ bool VoxelTreeFeature::Place(
         // The leaves too far from the logs go first, so the decorators see the tree as it is emitted.
         for (int32 Index = 0; Index < Distances.Num(); ++Index)
             if (Builder.Cells[Index].Kind == ECell::Leaf && !Distances[Index]) Builder.Drop(Index);
-        VoxelTreeDecorators::Place(Config, Builder);
+        Lap(FVoxelTreeTimes::Distances);
+        VoxelTreeDecorators::Place(Config, Builder, Times);
+        if (Times) Last = FPlatformTime::Cycles64();
     }
+    else
+        Lap(FVoxelTreeTimes::Distances);
     const FVoxelDecorationContext& Context = Env.Context;
+    // The last foliage state's variants: a tree's leaves mostly share one.
+    uint16 VariantsOf = 0;
+    const TArray<uint16>* Variants = nullptr;
+    bool bVariants = false;
     for (int32 Index = 0; Index < Builder.Cells.Num(); ++Index)
     {
         const FVoxelTreeBuilder::FCell& Cell = Builder.Cells[Index];
         const FIntVector At = Cell.Position;
-        const uint16 Was = Context.GetState(At.X, At.Y, At.Z);
+        // The cell's state before this tree, read only where it is used (S9d).
+        const auto GetWas = [&Context, At] { return Context.GetState(At.X, At.Y, At.Z); };
         switch (Cell.Kind)
         {
         case ECell::Log:
@@ -501,9 +647,14 @@ bool VoxelTreeFeature::Place(
         case ECell::Leaf:
         {
             if (!Distances[Index]) break;
-            const TArray<uint16>* Variants = Config.LeafStates.Find(Cell.State);
+            if (!bVariants || Cell.State != VariantsOf)
+            {
+                Variants = Config.LeafStates.Find(Cell.State);
+                VariantsOf = Cell.State;
+                bVariants = true;
+            }
             // Waterlogged where the cell held water: a source, or a block holding it (seagrass, a waterlogged state).
-            const int32 Wet = Env.Survival.IsWaterSource(Was) ? 1 : 0;
+            const int32 Wet = Env.Survival.IsWaterSource(GetWas()) ? 1 : 0;
             const uint16 State = Variants ? (*Variants)[(Distances[Index] - 1) * 2 + Wet] : Cell.State;
             Env.Emit({At, State, EVoxelWriteMode::IfReplaceable, uint16(Config.FreeSet)});
             break;
@@ -512,11 +663,12 @@ bool VoxelTreeFeature::Place(
         case ECell::Ground:
         case ECell::Decoration:
             // The ground, the roots and the decorations land only where the cell still holds what this Decorate saw.
-            Env.Emit({At, Cell.State, EVoxelWriteMode::IfUnchanged, Was});
+            Env.Emit({At, Cell.State, EVoxelWriteMode::IfUnchanged, GetWas()});
             break;
         case ECell::Dropped:
             break;
         }
     }
+    Lap(FVoxelTreeTimes::Emit);
     return true;
 }
