@@ -90,6 +90,9 @@ void AFoundationPawn::SetSimulationEnabled(bool bEnabled)
     Simulation.bSprinting = false;
     Simulation.bHadForward = false;
     Simulation.SprintTimer = 0;
+    // Pausing keeps flight but forgets a half-finished double tap.
+    Simulation.bHadJump = false;
+    Simulation.FlyTriggerTimer = 0;
     LastIntent = {};
 }
 
@@ -311,12 +314,14 @@ void AFoundationPawn::Tick(float DeltaSeconds)
             if (Authority) SyncInteraction(*Authority);
             Eligibility.bMobile = !Vitals.IsDead();
             Eligibility.bEnoughFood = Vitals.HasEnoughFood();
+            Eligibility.bMayFly = Vitals.Mode == EFoundationPlayerMode::Creative;
             StepCollision.Reset();
             Lab->GatherCollision(GetStepRegion(Simulation, Profile), StepCollision);
             InteractionSeconds += FPlatformTime::Seconds() - GatherStart;
             Simulation.Step(LastIntent, View.Yaw, Profile, StepCollision, Eligibility);
             ++ReferenceSteps;
             StepVitals(Profile);
+            if (Simulation.bFlying) Vitals.ResetFall(); // No fall distance builds while flying.
             if (Authority)
             {
                 const double InteractionStart = FPlatformTime::Seconds();

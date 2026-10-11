@@ -58,6 +58,25 @@ public:
     double MinorCollisionAngleDegrees = 8;
     UPROPERTY(Config, EditAnywhere)
     int32 JumpRepeatTicks = 10;
+    // Creative flight. Steady speeds follow from the air drag model: a * InputDamping / (1 - HorizontalDrag)
+    // horizontally, a / (1 - FlyVerticalDrag) vertically.
+    // Double-tap jump window; vanilla 7 ticks (Flight Window mod listing, secondary source).
+    UPROPERTY(Config, EditAnywhere)
+    int32 FlyToggleWindowTicks = 7;
+    // 5 cm/tick gives 10.89 blocks/s (wiki Flying: 10.92).
+    UPROPERTY(Config, EditAnywhere)
+    double FlyAccelerationCmPerTick = 5;
+    // Sprint-flying 21.78 blocks/s (wiki Flying: 21.6).
+    UPROPERTY(Config, EditAnywhere)
+    double FlySprintMultiplier = 2;
+    // With FlyVerticalDrag, 7.50 blocks/s up or down (wiki Flying: 7.49); the 15 / .6 split is a feel choice.
+    UPROPERTY(Config, EditAnywhere)
+    double FlyVerticalCmPerTick = 15;
+    UPROPERTY(Config, EditAnywhere)
+    double FlyVerticalDrag = .6;
+    // Flying widens the view 10% (wiki Flying), on top of the sprint widening.
+    UPROPERTY(Config, EditAnywhere)
+    double FlyingFovMultiplier = 1.1;
     // Double-tap forward window when the sprintWindow preference is unavailable.
     UPROPERTY(Config, EditAnywhere)
     int32 SprintWindowTicks = 7;

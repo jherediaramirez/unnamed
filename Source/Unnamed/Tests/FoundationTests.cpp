@@ -168,6 +168,172 @@ bool FFoundationMovementTest::RunTest(const FString&)
     TestTrue(TEXT("hitch counted"), S.DroppedSeconds > 1.7);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationFlightTest, "Unnamed.Foundation.Flight",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationFlightTest::RunTest(const FString&)
+{
+    const auto& P = *GetDefault<UFoundationProfile>();
+    const TArray<FBox> Ground = {FBox(FVector(-100000, -100000, -100), FVector(100000, 100000, 0))};
+    FFoundationEligibility Creative;
+    Creative.bMayFly = true;
+    auto Fresh = [&P](FFoundationSimulation& Sim)
+    {
+        Sim.Reset({}, P);
+        Sim.bGrounded = true;
+    };
+    // One-tick jump taps Gap reference ticks apart; the second stays held when the caller holds jump on.
+    auto DoubleTap = [&P, &Ground](FFoundationSimulation& Sim, int32 Gap, const FFoundationEligibility& Allowed)
+    {
+        FFoundationIntent Tap;
+        for (int32 T = 0; T <= Gap; ++T)
+        {
+            Tap.bJump = T == 0 || T == Gap;
+            Sim.Step(Tap, 0, P, Ground, Allowed);
+        }
+    };
+    auto BlocksPerSecond = [&P](double CmPerTick) { return CmPerTick / 100. / P.TickSeconds; };
+    const FFoundationIntent Idle;
+    FFoundationSimulation S;
+
+    // Toggling: Creative only, and the sprint double tap's window (7 ticks: taps up to 6 ticks apart).
+    Fresh(S);
+    bool bEverFlew = false;
+    for (int32 T = 0; T < 40; ++T)
+    {
+        FFoundationIntent Tap;
+        Tap.bJump = T % 3 == 0;
+        S.Step(Tap, 0, P, Ground);
+        bEverFlew |= S.bFlying;
+    }
+    TestFalse(TEXT("without bMayFly taps 3 ticks apart never fly"), bEverFlew);
+    for (int32 Gap : {2, 3, 6, 7, 8})
+    {
+        Fresh(S);
+        DoubleTap(S, Gap, Creative);
+        TestEqual(FString::Printf(TEXT("taps %d ticks apart toggle flight"), Gap), S.bFlying, Gap <= 6);
+    }
+    Fresh(S);
+    DoubleTap(S, 3, Creative);
+    for (int32 T = 0; T < 20; ++T)
+        S.Step(Idle, 0, P, Ground, Creative);
+    TestTrue(TEXT("a double tap during a jump hovers, no gravity"),
+        S.bFlying && S.LastDisplacement.Z == 0 && S.Feet.Z > 100);
+    AddInfo(FString::Printf(TEXT("hover height after taps 3 ticks apart=%.4f blocks"), S.Feet.Z / 100.));
+    DoubleTap(S, 3, Creative);
+    TestFalse(TEXT("another double tap ends flight"), S.bFlying);
+    for (int32 T = 0; T < 60 && !S.bGrounded; ++T)
+        S.Step(Idle, 0, P, Ground, Creative);
+    TestTrue(TEXT("gravity resumes and lands"), S.bGrounded && FMath::Abs(S.Feet.Z) < .001);
+    Fresh(S);
+    DoubleTap(S, 3, Creative);
+    S.Step(Idle, 0, P, Ground);
+    TestTrue(TEXT("losing bMayFly mid-air ends flight"), !S.bFlying && S.Feet.Z > 100);
+    Fresh(S);
+    DoubleTap(S, 3, Creative);
+    FFoundationEligibility Immobile = Creative;
+    Immobile.bMobile = false;
+    S.Step(Idle, 0, P, Ground, Immobile);
+    TestFalse(TEXT("losing mobility ends flight"), S.bFlying);
+
+    // Speeds: wiki 10.92 flying, 21.6 sprint-flying (our drag model: 10.8889 and 21.7778).
+    FFoundationIntent Forward;
+    Forward.Move = {0, 1};
+    for (int32 FPS : {30, 60, 120})
+    {
+        Fresh(S);
+        DoubleTap(S, 3, Creative);
+        const int64 StepsBefore = S.Steps;
+        for (int32 F = 0; F < FPS * 10; ++F)
+            S.Advance(1. / FPS, Forward, 0, P, Ground, Creative);
+        TestEqual(FString::Printf(TEXT("%d FPS tick count"), FPS), S.Steps - StepsBefore, int64(200));
+        TestTrue(FString::Printf(TEXT("%d FPS fly speed within 1%%"), FPS),
+            FMath::IsNearlyEqual(BlocksPerSecond(S.LastDisplacement.Size2D()), 10.8888889, .108889));
+        TestTrue(TEXT("level flight stays flying"), S.bFlying && S.LastDisplacement.Z == 0);
+        TestTrue(TEXT("flying FOV 1.1"), FMath::IsNearlyEqual(S.FovMultiplier, 1.1, 1e-4));
+    }
+    const double DriftStart = S.Feet.X;
+    for (int32 T = 0; T < 200 && (T == 0 || S.LastDisplacement.Size2D() > 0); ++T)
+        S.Step(Idle, 0, P, Ground, Creative);
+    const double DriftBlocks = (S.Feet.X - DriftStart) / 100.;
+    TestTrue(TEXT("release drifts a few blocks"), DriftBlocks > 3 && S.LastDisplacement.Size2D() == 0);
+    AddInfo(FString::Printf(TEXT("fly release drift=%.4f blocks"), DriftBlocks));
+    FFoundationIntent SprintForward = Forward;
+    SprintForward.bSprint = true;
+    for (bool bFood : {true, false})
+    {
+        FFoundationEligibility Allowed = Creative;
+        Allowed.bEnoughFood = bFood;
+        Fresh(S);
+        DoubleTap(S, 3, Allowed);
+        for (int32 T = 0; T < 200; ++T)
+            S.Step(SprintForward, 0, P, Ground, Allowed);
+        TestTrue(FString::Printf(TEXT("sprint-fly speed within 1%% (food %d)"), bFood),
+            S.bSprinting && FMath::IsNearlyEqual(BlocksPerSecond(S.LastDisplacement.Size2D()), 21.7777778, .217778));
+        TestTrue(TEXT("sprint-flying FOV 1.265"), FMath::IsNearlyEqual(S.FovMultiplier, 1.265, 1e-4));
+    }
+
+    // Rise and sink: wiki 7.49 blocks/s (ours 7.50); sneak sinks without crouching; both held hover.
+    Fresh(S);
+    DoubleTap(S, 3, Creative);
+    FFoundationIntent Rise;
+    Rise.bJump = true;
+    for (int32 T = 0; T < 100; ++T)
+        S.Step(Rise, 0, P, Ground, Creative);
+    TestTrue(
+        TEXT("climb 7.50 blocks/s within 1%"), FMath::IsNearlyEqual(BlocksPerSecond(S.LastDisplacement.Z), 7.5, .075));
+    FFoundationIntent Sink;
+    Sink.bCrouch = true;
+    for (int32 T = 0; T < 40; ++T)
+        S.Step(Sink, 0, P, Ground, Creative);
+    TestTrue(
+        TEXT("sink 7.50 blocks/s within 1%"), FMath::IsNearlyEqual(BlocksPerSecond(-S.LastDisplacement.Z), 7.5, .075));
+    TestTrue(TEXT("sinking keeps the standing pose"),
+        S.bFlying && !S.bCrouched && S.HeightCm == 180. && FMath::Abs(S.EyeCm - 162) < .1);
+    FFoundationIntent Both = Rise;
+    Both.bCrouch = true;
+    for (int32 T = 0; T < 30; ++T)
+        S.Step(Both, 0, P, Ground, Creative);
+    const double HeldZ = S.Feet.Z;
+    for (int32 T = 0; T < 20; ++T)
+        S.Step(Both, 0, P, Ground, Creative);
+    TestTrue(TEXT("jump and sneak together hold height"), S.bFlying && !S.bCrouched && S.Feet.Z == HeldZ);
+
+    // Landing: only moving down onto something ends flight; no fall distance builds while flying.
+    Fresh(S);
+    DoubleTap(S, 3, Creative);
+    double MaxFallCm = 0;
+    for (int32 T = 0; T < 100 && S.bFlying; ++T)
+    {
+        S.Step(Sink, 0, P, Ground, Creative);
+        MaxFallCm = FMath::Max(MaxFallCm, S.FallDistanceCm);
+    }
+    TestTrue(TEXT("sinking onto the floor lands"), !S.bFlying && S.bGrounded && FMath::Abs(S.Feet.Z) < .001);
+    TestEqual(TEXT("no fall distance while flying"), MaxFallCm, 0.);
+    S.Reset({0, 0, .0005}, P);
+    S.bFlying = true;
+    for (int32 T = 0; T < 40; ++T)
+        S.Step(Idle, 0, P, Ground, Creative);
+    TestTrue(TEXT("hovering just above the floor stays flying"), S.bFlying && !S.bGrounded && S.Feet.Z == .0005);
+
+    // Collision stays on: a wall stops flight and sprint; a 1.5-block ceiling forces the crouch pose.
+    TArray<FBox> Walled = Ground;
+    Walled.Add(FBox(FVector(500, -1000, -100), FVector(600, 1000, 1000)));
+    S.Reset({0, 0, 200}, P);
+    S.bFlying = true;
+    for (int32 T = 0; T < 40; ++T)
+        S.Step(SprintForward, 0, P, Walled, Creative);
+    TestTrue(TEXT("a wall stops flight"), S.bFlying && FMath::IsNearlyEqual(S.Feet.X, 470., .001));
+    TestFalse(TEXT("a head-on wall ends sprint-flying"), S.bSprinting);
+    TArray<FBox> LowCeiling = Ground;
+    LowCeiling.Add(FBox(FVector(-1000, -1000, 150), FVector(1000, 1000, 250)));
+    S.Reset({}, P);
+    S.bFlying = true;
+    for (int32 T = 0; T < 10; ++T)
+        S.Step(Idle, 0, P, LowCeiling, Creative);
+    TestTrue(TEXT("a 1.5-block ceiling forces the crouch pose"), S.bFlying && S.bCrouched && S.HeightCm == 150.);
+    return true;
+}
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationCollisionTest, "Unnamed.Foundation.Collision",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

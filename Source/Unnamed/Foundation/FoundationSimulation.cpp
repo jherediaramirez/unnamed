@@ -110,13 +110,30 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
     PreviousFovMultiplier = FovMultiplier;
     SprintTimer = FMath::Max(0, SprintTimer - 1);
     JumpCooldown = FMath::Max(0, JumpCooldown - 1);
+    FlyTriggerTimer = FMath::Max(0, FlyTriggerTimer - 1);
+    // Creative flight: a second jump press inside the window toggles it, like the sprint double tap.
+    const bool MayFly = Eligibility.bMayFly && Eligibility.bMobile;
+    if (!MayFly) bFlying = false;
+    if (MayFly && Intent.bJump && !bHadJump)
+    {
+        if (FlyTriggerTimer > 0)
+        {
+            bFlying = !bFlying;
+            FlyTriggerTimer = 0;
+        }
+        else
+            FlyTriggerTimer = P.FlyToggleWindowTicks;
+    }
+    bHadJump = Intent.bJump;
     bHeadroom = Fits(Bounds(Feet, P.StandingHeightCm, P.WidthCm), WorldBoxes);
-    bCrouched = Intent.bCrouch || !bHeadroom;
+    // Sneak sinks a flying player without crouching; a low ceiling still forces the pose.
+    bCrouched = (Intent.bCrouch && !bFlying) || !bHeadroom;
     HeightCm = bCrouched ? P.CrouchingHeightCm : P.StandingHeightCm;
     const double TargetEye = bCrouched ? P.CrouchingEyesCm : P.StandingEyesCm;
     EyeCm += (TargetEye - EyeCm) * P.EyeSmoothingPerTick;
     const bool Forward = Intent.Move.Y > 1e-5;
-    const bool Possible = Eligibility.bMobile && Eligibility.bEnoughFood;
+    const bool EnoughFood = Eligibility.bEnoughFood || bFlying; // Food never limits sprint-flying.
+    const bool Possible = Eligibility.bMobile && EnoughFood;
     const bool CanStart = Possible && Forward && !Eligibility.bItemSlows && !bCrouched;
     if (Intent.bCrouch || Eligibility.bItemSlows || Intent.Move.Y < 0) SprintTimer = 0;
     if (!bSprinting && CanStart)
@@ -133,12 +150,13 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
     if (!Possible || !Forward || bHorizontalCollision) bSprinting = false;
     bHadForward = Forward;
     Rejection = !Eligibility.bMobile ? TEXT("mobility restricted")
-        : !Eligibility.bEnoughFood   ? TEXT("sprint: insufficient food")
+        : !EnoughFood                ? TEXT("sprint: insufficient food")
         : !bHeadroom                 ? TEXT("standing blocked: ceiling")
         : bCrouched                  ? TEXT("sprint start blocked: crouch")
         : !Forward                   ? TEXT("sprint needs forward")
                                      : TEXT("eligible: unhindered fixture");
-    FovMultiplier += ((bSprinting ? P.SprintFovMultiplier : 1.) - FovMultiplier) * P.FovSmoothingPerTick;
+    const double FovTarget = (bFlying ? P.FlyingFovMultiplier : 1.) * (bSprinting ? P.SprintFovMultiplier : 1.);
+    FovMultiplier += (FovTarget - FovMultiplier) * P.FovSmoothingPerTick;
     if (VelocityPerTick.SizeSquared2D() < FMath::Square(P.StopCutoffCmPerTick))
         VelocityPerTick.X = VelocityPerTick.Y = 0;
     if (FMath::Abs(VelocityPerTick.Z) < P.StopCutoffCmPerTick) VelocityPerTick.Z = 0;
@@ -147,7 +165,7 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
     const bool Jump = Intent.bJump || AutoJump;
     const double Yaw = FMath::DegreesToRadians(YawDegrees);
     const FVector ForwardVector(FMath::Cos(Yaw), FMath::Sin(Yaw), 0), RightVector(-FMath::Sin(Yaw), FMath::Cos(Yaw), 0);
-    if (Jump && bGrounded && JumpCooldown == 0 && Eligibility.bMobile)
+    if (Jump && bGrounded && JumpCooldown == 0 && Eligibility.bMobile && !bFlying)
     {
         VelocityPerTick.Z = FMath::Max(P.JumpCmPerTick, VelocityPerTick.Z);
         if (bSprinting) VelocityPerTick += ForwardVector * P.SprintJumpCmPerTick;
@@ -157,15 +175,18 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
     }
     if (!Jump) JumpCooldown = 0;
     const bool WasGrounded = bGrounded;
-    const double Friction = (WasGrounded ? P.GroundFriction : 1.) * P.HorizontalDrag;
+    const double Friction = (WasGrounded && !bFlying ? P.GroundFriction : 1.) * P.HorizontalDrag;
     const FVector2D Input = ResolveInput(
         Eligibility.bMobile ? Intent.Move : FVector2D::ZeroVector, bCrouched ? P.CrouchMultiplier : 1., P.InputDamping);
-    const double Accel = (WasGrounded ? P.GroundAccelerationCmPerTick : P.AirAccelerationCmPerTick) *
-        (bSprinting ? P.SprintMultiplier : 1.);
+    const double Accel = bFlying ? P.FlyAccelerationCmPerTick * (bSprinting ? P.FlySprintMultiplier : 1.)
+                                 : (WasGrounded ? P.GroundAccelerationCmPerTick : P.AirAccelerationCmPerTick) *
+            (bSprinting ? P.SprintMultiplier : 1.);
     VelocityPerTick += (ForwardVector * Input.Y + RightVector * Input.X) * Accel;
+    if (bFlying && Eligibility.bMobile)
+        VelocityPerTick.Z += (int32(Intent.bJump) - int32(Intent.bCrouch)) * P.FlyVerticalCmPerTick;
     FBox Box = Bounds(Feet, HeightCm, P.WidthCm);
     FVector Wanted = VelocityPerTick;
-    if (Intent.bCrouch && Wanted.Z <= 0 &&
+    if (!bFlying && Intent.bCrouch && Wanted.Z <= 0 &&
         (bGrounded || (FallDistanceCm < P.StepCm && Supported(Box, P.StepCm - FallDistanceCm, WorldBoxes))))
     {
         auto Reduce = [&](double V)
@@ -213,14 +234,17 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
         const double Dot = FVector::DotProduct(Wanted.GetSafeNormal2D(), Moved.GetSafeNormal2D());
         if (Dot > FMath::Cos(FMath::DegreesToRadians(P.MinorCollisionAngleDegrees))) bHorizontalCollision = false;
     }
+    // Flying, only moving down onto something counts (hovering at floor height doesn't), and it lands.
     bGrounded = (Wanted.Z < 0 && FMath::Abs(Moved.Z - Wanted.Z) > Epsilon) ||
-        (Wanted.Z <= 0 && Supported(Box.ShiftBy(Moved), .001, WorldBoxes));
+        (!bFlying && Wanted.Z <= 0 && Supported(Box.ShiftBy(Moved), .001, WorldBoxes));
+    if (bGrounded) bFlying = false;
     for (int32 Axis = 0; Axis < 3; ++Axis)
         if (FMath::Abs(Wanted[Axis] - Moved[Axis]) > Epsilon) VelocityPerTick[Axis] = 0;
     Feet += Moved;
     LastDisplacement = Moved;
-    FallDistanceCm = bGrounded ? 0 : FallDistanceCm + FMath::Max(0., -Moved.Z);
-    VelocityPerTick.Z = (VelocityPerTick.Z - P.GravityCmPerTick) * P.VerticalDrag;
+    FallDistanceCm = bGrounded || bFlying ? 0 : FallDistanceCm + FMath::Max(0., -Moved.Z);
+    VelocityPerTick.Z =
+        bFlying ? VelocityPerTick.Z * P.FlyVerticalDrag : (VelocityPerTick.Z - P.GravityCmPerTick) * P.VerticalDrag;
     VelocityPerTick.X *= Friction;
     VelocityPerTick.Y *= Friction;
     if (bSprinting && bHorizontalCollision) bSprinting = false;

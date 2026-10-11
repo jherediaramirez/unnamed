@@ -106,8 +106,8 @@ void UFoundationHud::BeginFrame()
 void UFoundationHud::NoteMotion(const AFoundationPawn& Pawn)
 {
     const FFoundationSimulation& Simulation = Pawn.Simulation;
-    const FString Motion = FString::Printf(TEXT("ground=%d crouch=%d sprint=%d headroom=%d"), Simulation.bGrounded,
-        Simulation.bCrouched, Simulation.bSprinting, Simulation.bHeadroom);
+    const FString Motion = FString::Printf(TEXT("ground=%d crouch=%d sprint=%d headroom=%d fly=%d"),
+        Simulation.bGrounded, Simulation.bCrouched, Simulation.bSprinting, Simulation.bHeadroom, Simulation.bFlying);
     if (Motion == LastMotionState) return;
     LastMotionState = Motion;
     LogEvent(Motion);

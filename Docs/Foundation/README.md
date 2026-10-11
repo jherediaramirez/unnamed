@@ -30,7 +30,7 @@ The Foundation HUD uses the original Java 26.3 sprites and ASCII bitmap text and
 | Input at factory defaults | Result |
 |---|---|
 | W/A/S/D, mouse | Move/look; opposite directions cancel |
-| Space | Jump; holding repeats when the grounded cooldown permits |
+| Space | Jump; holding repeats when the grounded cooldown permits. Creative: double-tap to fly (hold Space to rise, C to sink); landing ends flight |
 | Left Shift + forward, or double-tap current Forward | Start sprint; releasing Shift alone does not end the sprint latch |
 | C | Crouch; lower collision/eyes, lower speed and ledge protection |
 | 1–9 / wheel | Select a diagnostic hotbar slot; wheel wraps |
