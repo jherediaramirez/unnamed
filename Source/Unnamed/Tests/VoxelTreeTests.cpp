@@ -42,7 +42,9 @@ namespace
     // pointing the same way (the direction test must fail; SimulateTrees), 10 and 11 as RunTreeProbes says (S9e: the
     // azalea's leaves and the rooted dirt must fail), 12 and 13 as RunTreeProbes says and 14 as the vines test (S9e
     // part 2: bamboo's height, the forest rock's moves, the vines' face order), 15 as RunTreeProbes says (S9e part 3:
-    // a re-probe pool of its first run alone). With 0, every test must pass.
+    // a re-probe pool of its first run alone), 16 ChiSquareHomogeneity unmerged (S9e part 4: the before table; the
+    // verdicts of S9e part 3) and 17 as ApplyTreeTestMutation says (S9e part 4: the mangroves' branches). With 0,
+    // every test must pass.
     constexpr int32 TreeTestMutation = 0;
     // For manual runs: the number of 100-tree self-samples per configuration that check the distribution rules'
     // calibration (RunTreeProbes); 0 in the suite.
@@ -419,27 +421,59 @@ namespace
     }
 
     // The p value that two histograms come from one distribution (chi-square homogeneity), as the fits' harness; with
-    // OutChi2, the statistic and its degrees of freedom (0 and 0 where there is no test).
+    // OutChi2, the statistic and its degrees of freedom (0 and 0 where there is no test). Sparse bins merge (S9e part
+    // 4, the manager's call (a), Cochran's rule): taken in key order, bins join until both histograms' expected counts
+    // in the group reach 5, and a short last group joins the one before (the unpooled test failed the accepted
+    // mangrove@mudwater's 6-connected parts on 4 probe trees in one bin where 2 of 269 pooled ones sit).
     double ChiSquareHomogeneity(
         const TMap<int32, int64>& A, const TMap<int32, int64>& B, TPair<double, int32>* OutChi2 = nullptr)
     {
-        TSet<int32> Keys;
+        TMap<int32, TPair<double, double>> Bins;
         double CountA = 0, CountB = 0;
         for (const TPair<int32, int64>& Bin : A)
-            Keys.Add(Bin.Key), CountA += Bin.Value;
+            Bins.FindOrAdd(Bin.Key).Key += Bin.Value, CountA += Bin.Value;
         for (const TPair<int32, int64>& Bin : B)
-            Keys.Add(Bin.Key), CountB += Bin.Value;
+            Bins.FindOrAdd(Bin.Key).Value += Bin.Value, CountB += Bin.Value;
         if (OutChi2) *OutChi2 = TPair<double, int32>(0., 0);
-        if (CountA == 0 || CountB == 0 || Keys.Num() < 2) return 1;
-        double Chi2 = 0;
-        for (const int32 Key : Keys)
+        if (CountA == 0 || CountB == 0 || Bins.Num() < 2) return 1;
+        Bins.KeySort(TLess<int32>());
+        const double ShareA = CountA / (CountA + CountB), ShareB = CountB / (CountA + CountB);
+        // The trees a group needs for both expected counts to reach 5 (mutation 16: none, the unmerged test).
+        const double Least = TreeTestMutation == 16 ? 0 : 5 / FMath::Min(ShareA, ShareB);
+        TArray<TPair<double, double>> Groups;
+        TPair<double, double> Open(0., 0.);
+        for (const TPair<int32, TPair<double, double>>& Bin : Bins)
         {
-            const double InA = double(A.FindRef(Key)), InB = double(B.FindRef(Key)), Total = InA + InB;
-            const double ExpectA = Total * CountA / (CountA + CountB), ExpectB = Total * CountB / (CountA + CountB);
-            Chi2 += FMath::Square(InA - ExpectA) / ExpectA + FMath::Square(InB - ExpectB) / ExpectB;
+            Open.Key += Bin.Value.Key;
+            Open.Value += Bin.Value.Value;
+            if (Open.Key + Open.Value < Least) continue;
+            Groups.Add(Open);
+            Open = TPair<double, double>(0., 0.);
         }
-        if (OutChi2) *OutChi2 = TPair<double, int32>(Chi2, Keys.Num() - 1);
-        return UpperGammaQ((Keys.Num() - 1) / 2., Chi2 / 2);
+        if (Open.Key + Open.Value > 0)
+        {
+            if (Groups.IsEmpty()) return 1;
+            Groups.Last().Key += Open.Key;
+            Groups.Last().Value += Open.Value;
+        }
+        if (Groups.Num() < 2) return 1;
+        double Chi2 = 0;
+        for (const TPair<double, double>& Group : Groups)
+        {
+            const double Total = Group.Key + Group.Value, ExpectA = Total * ShareA, ExpectB = Total * ShareB;
+            Chi2 += FMath::Square(Group.Key - ExpectA) / ExpectA + FMath::Square(Group.Value - ExpectB) / ExpectB;
+        }
+        if (OutChi2) *OutChi2 = TPair<double, int32>(Chi2, Groups.Num() - 1);
+        return UpperGammaQ((Groups.Num() - 1) / 2., Chi2 / 2);
+    }
+
+    // A histogram's mean key.
+    double GetHistogramMean(const TMap<int32, int64>& Histogram)
+    {
+        double Sum = 0, Count = 0;
+        for (const TPair<int32, int64>& Bin : Histogram)
+            Sum += double(Bin.Key) * Bin.Value, Count += Bin.Value;
+        return Count ? Sum / Count : 0;
     }
 
     // The p value of a histogram against a known distribution (chi-square goodness of fit); 0 when a count lands where
@@ -1185,7 +1219,7 @@ namespace
         {
             // (A ceiling probe's 2 to 16 trees are too few for a histogram: its exact top-log bound below decides.)
             const double TopP = ChiSquareHomogeneity(Run.TopHist, Probe.TopHist);
-            OutLine += FString::Printf(TEXT(", top p %.2f"), TopP);
+            OutLine += FString::Printf(TEXT(", top p %.3f"), TopP);
             if (TopP < 0.01) Failures.Add(TEXT("top-log histogram"));
         }
         if (Probe.Ceiling)
@@ -1232,14 +1266,15 @@ namespace
                         TEXT("reach of every cell (%.1f%% of trees beyond %d)"), 100 * BeyondShare, Probe.AllReach));
             }
             const double Comp6P = ChiSquareHomogeneity(Run.Comp6Hist, Probe.Comp6Hist);
-            OutLine += FString::Printf(TEXT(", 6-connected parts p %.2f"), Comp6P);
+            OutLine += FString::Printf(TEXT(", 6-connected parts %.2f/%.2f p %.3f"), GetHistogramMean(Run.Comp6Hist),
+                GetHistogramMean(Probe.Comp6Hist), Comp6P);
             if (Comp6P < 0.01) Failures.Add(TEXT("6-connected log parts"));
             // A fallen tree's log directions (S9d part 2, the manager's call Q3): ours against the probe's four bins,
             // shown here; the test is the pooled one over the fallen probes (RunTreeProbes), since one rule draws the
             // direction for all of them and one probe's 100 trees give 25 per bin.
             if (!Probe.SideHist.IsEmpty())
                 OutLine += FString::Printf(
-                    TEXT(", log directions p %.2f"), ChiSquareHomogeneity(Run.SideHist, Probe.SideHist));
+                    TEXT(", log directions p %.3f"), ChiSquareHomogeneity(Run.SideHist, Probe.SideHist));
         }
         return Failures;
     }
@@ -1330,6 +1365,12 @@ namespace
                         }
                     if (!bFound) Decorator.Numbers.Emplace(FName(TEXT("radius")), 4.);
                 }
+        // The merged chi-square's (S9e part 4): upwards_branching's place_branch_per_log_probability 0.8 times, so the
+        // mangroves grow a fifth fewer branches, each its own 6-connected part (must fail "6-connected log parts" on
+        // the mangrove pools).
+        if (TreeTestMutation == 17)
+            for (TPair<FName, double>& Number : Config.Trunk.Numbers)
+                if (Number.Key == FName(TEXT("place_branch_per_log_probability"))) Number.Value *= 0.8;
     }
 
     // An example's cells (relative to the origin, by state name "block[property=value,...]") made in our table, against
@@ -1438,7 +1479,7 @@ namespace
         if (FMath::Abs(Relative) > 0.05 && FMath::Abs(Z) > 3)
             Failures.Add(FString::Printf(TEXT("stems %+.1f%%"), 100 * Relative));
         const double TopP = ChiSquareHomogeneity(Tops, Probe.CapTopHist);
-        OutLine += FString::Printf(TEXT(", cap top p %.2f, reach %d/%d"), TopP, Reach, Probe.AllReach);
+        OutLine += FString::Printf(TEXT(", cap top p %.3f, reach %d/%d"), TopP, Reach, Probe.AllReach);
         if (TopP < 0.01) Failures.Add(TEXT("cap top histogram"));
         if (Reach != Probe.AllReach) Failures.Add(TEXT("reach"));
         for (const int32 Block : Blocks)
@@ -1560,7 +1601,7 @@ namespace
             if (!ByTop.Contains(Top)) ByTop.Add(Top, MoveTemp(Stalk));
         }
         const double TopP = ChiSquareHomogeneity(Tops, Probe.CapTopHist);
-        OutLine += FString::Printf(TEXT(", top p %.2f"), TopP);
+        OutLine += FString::Printf(TEXT(", top p %.3f"), TopP);
         if (TopP < 0.01) Failures.Add(TEXT("stalk top histogram"));
         // The probe's podzol per stalk: its cells less the stalk's (top + 1), on open flat ground.
         TArray<double> TheirPodzols;
@@ -1606,7 +1647,7 @@ namespace
 
     // The forest rock probe (block_blob, S9e part 2, F3b's checks) against TreeTestCount of ours: the placed rate;
     // cells per rock (CheckMeans' rule) and their histogram (chi-square homogeneity in bins of three cells, 24 and more
-    // in one: ChiSquareHomogeneity does not pool, and 100 probe rocks leave bins of one); the box's extremes on every
+    // in one, F3b's bins, kept when ChiSquareHomogeneity began merging sparse bins); the box's extremes on every
     // axis, the reach and the blocks exactly. (F3b matched its two examples by an exhaustive search over the draws.)
     TArray<FString> CompareBlob(
         const FTreeTestKit& Kit, const FVoxelBlockBlobConfig& Config, const FTreeProbe& Probe, FString& OutLine)
@@ -1641,7 +1682,7 @@ namespace
         CompareMeanValues(TEXT("cells"), Cells, Probe.Cells, OutLine, Failures);
         const double CountP = ChiSquareHomogeneity(Counts, TheirCounts);
         OutLine +=
-            FString::Printf(TEXT(", cells p %.2f, box (%d, %d, %d) to (%d, %d, %d) against (%d, %d, %d) to (%d, %d, "
+            FString::Printf(TEXT(", cells p %.3f, box (%d, %d, %d) to (%d, %d, %d) against (%d, %d, %d) to (%d, %d, "
                                  "%d), reach %d/%d"),
                 CountP, Low.X, Low.Y, Low.Z, High.X, High.Y, High.Z, Probe.BoxMin.X, Probe.BoxMin.Y, Probe.BoxMin.Z,
                 Probe.BoxMax.X, Probe.BoxMax.Y, Probe.BoxMax.Z, Reach, Probe.AllReach);
