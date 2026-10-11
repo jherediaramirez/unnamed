@@ -546,6 +546,140 @@ bool FVoxelFluidSchedulerTest::RunTest(const FString& Parameters)
     return TestEqual(TEXT("empty after Reset"), Scheduler.Num(), 0);
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelFluidParkingTest, "Unnamed.Voxel.Fluid.Parking",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelFluidParkingTest::RunTest(const FString& Parameters)
+{
+    // Streaming's parking (W2a): a parked act keeps the delay it had left and stays pending for its cell; Unpark
+    // re-queues it at the unpark tick plus that delay, first scheduled first; outside the ring only the acts waiting
+    // for a column to be known leave; ParkAsleep takes exactly the queued acts of the columns it names; Reset forgets
+    // them.
+    using FAct = FVoxelFluidScheduler::FAct;
+    const FIntPoint Home(0, 0), East(1, 0), West(-1, 0);
+    FAct Act;
+    uint64 Due = 0;
+    {
+        // 6 left of an act due at 10 parked at 4; none of one due at 5 parked at 8.
+        FVoxelFluidScheduler Scheduler;
+        const FIntVector Early(1, 1, 64), Late(2, 1, 64);
+        Scheduler.Park(Home, FAct{10, 0, Early, EVoxelFluid::Water}, 4, false);
+        Scheduler.Park(East, FAct{5, 1, Late, EVoxelFluid::Water}, 8, false);
+        TestTrue(TEXT("two parked, none queued"), Scheduler.GetParkedCount() == 2 && Scheduler.Num() == 0);
+        TestFalse(TEXT("a parked cell stays pending: a second act is dropped"),
+            Scheduler.Schedule(Early, EVoxelFluid::Water, 50));
+        TestTrue(TEXT("IsPending for a parked cell"), Scheduler.IsPending(Early, EVoxelFluid::Water));
+        TestEqual(TEXT("Unpark re-queues the act parked on its column"), Scheduler.Unpark(Home, 20, true), 1);
+        TestTrue(TEXT("due at 20 plus the 6 left"), Scheduler.PeekDue(Due) && Due == 26);
+        TestFalse(TEXT("not due at 25"), Scheduler.PopDue(25, Act));
+        TestTrue(TEXT("due at 26"), Scheduler.PopDue(26, Act) && Act.Cell == Early);
+        TestEqual(TEXT("the overdue act leaves its column"), Scheduler.Unpark(East, 30, true), 1);
+        TestTrue(TEXT("an overdue act is due at the unpark tick"), Scheduler.PeekDue(Due) && Due == 30);
+        TestEqual(TEXT("nothing parked on a column with none"), Scheduler.Unpark(West, 30, true), 0);
+        TestEqual(TEXT("nothing left parked"), Scheduler.GetParkedCount(), 0);
+    }
+    {
+        // First in, first out among the acts unparked to one due tick, whatever order they were parked in.
+        FVoxelFluidScheduler Scheduler;
+        const FIntVector X(1, 1, 64), Y(2, 1, 64), Z(3, 1, 64);
+        for (const FIntVector& Cell : {X, Y, Z})
+            Scheduler.Schedule(Cell, EVoxelFluid::Water, 10);
+        FAct Popped[3];
+        for (FAct& Each : Popped)
+            Scheduler.PopDue(10, Each);
+        Scheduler.Park(Home, Popped[2], 10, false);
+        Scheduler.Park(Home, Popped[0], 10, false);
+        Scheduler.Park(Home, Popped[1], 10, false);
+        Scheduler.Unpark(Home, 20, true);
+        TArray<FIntVector> Order;
+        while (Scheduler.PopDue(20, Act))
+            Order.Add(Act.Cell);
+        TestTrue(TEXT("re-queued in the order first scheduled: X, Y, Z"), Order == TArray<FIntVector>{X, Y, Z});
+        TestFalse(TEXT("X is no longer pending once its act ran"), Scheduler.IsPending(X, EVoxelFluid::Water));
+    }
+    {
+        // The same across columns when they are unparked together: the acts interleave as first scheduled.
+        FVoxelFluidScheduler Scheduler;
+        const FIntVector A(1, 1, 64), B(17, 1, 64), C(2, 1, 64), D(18, 1, 64);
+        for (const FIntVector& Cell : {A, B, C, D})
+            Scheduler.Schedule(Cell, EVoxelFluid::Water, 10);
+        FAct Popped[4];
+        for (FAct& Each : Popped)
+            Scheduler.PopDue(10, Each);
+        for (const int32 Index : {3, 1, 2, 0})
+            Scheduler.Park(FVoxelFluidScheduler::GetColumn(Popped[Index].Cell), Popped[Index], 10, true);
+        TestEqual(TEXT("both columns unpark together"), Scheduler.Unpark(20, [](FIntPoint) { return 2; }), 4);
+        TArray<FIntVector> Order;
+        while (Scheduler.PopDue(20, Act))
+            Order.Add(Act.Cell);
+        TestTrue(TEXT("re-queued across columns in the order first scheduled: A, B, C, D"),
+            Order == TArray<FIntVector>{A, B, C, D});
+    }
+    {
+        // Out of the ring only the act waiting for the column to be known leaves; the asleep one waits for the ring.
+        FVoxelFluidScheduler Scheduler;
+        const FIntVector Sleeper(1, 1, 64), Waiter(2, 1, 64);
+        Scheduler.Park(Home, FAct{10, 0, Sleeper, EVoxelFluid::Water}, 10, true);
+        Scheduler.Park(Home, FAct{12, 1, Waiter, EVoxelFluid::Lava}, 10, false);
+        TestEqual(TEXT("out of the ring, one act leaves"), Scheduler.Unpark(Home, 15, false), 1);
+        TestFalse(TEXT("not due at 16"), Scheduler.PopDue(16, Act));
+        TestTrue(TEXT("the waiting lava act, due at 17"),
+            Scheduler.PopDue(17, Act) && Act.Cell == Waiter && Act.Fluid == EVoxelFluid::Lava);
+        TestEqual(TEXT("the asleep act stays parked"), Scheduler.GetParkedCount(), 1);
+        TestTrue(TEXT("and pending"), Scheduler.IsPending(Sleeper, EVoxelFluid::Water));
+        TestEqual(TEXT("back in the ring it leaves too"), Scheduler.Unpark(Home, 20, true), 1);
+        TestTrue(TEXT("due at 20, with no delay left"), Scheduler.PopDue(20, Act) && Act.Cell == Sleeper);
+        TArray<FIntPoint> Columns;
+        Scheduler.GetParkedColumns(Columns);
+        TestEqual(TEXT("no column holds parked acts"), Columns.Num(), 0);
+    }
+    {
+        // ParkAsleep: exactly the queued acts of the columns the predicate names, with the delays they had left.
+        FVoxelFluidScheduler Scheduler;
+        const FIntVector AtHome(5, 5, 64), AtEast(20, 5, 64), AtWest(-1, 5, 64), AtWestToo(-16, 15, 70),
+            AtNorth(5, 16, 64);
+        Scheduler.Schedule(AtHome, EVoxelFluid::Water, 12);
+        Scheduler.Schedule(AtEast, EVoxelFluid::Water, 15);
+        Scheduler.Schedule(AtWest, EVoxelFluid::Lava, 40);
+        Scheduler.Schedule(AtWestToo, EVoxelFluid::Water, 11);
+        Scheduler.Schedule(AtNorth, EVoxelFluid::Water, 13);
+        const int32 Moved =
+            Scheduler.ParkAsleep(10, [&](FIntPoint Column) { return Column == East || Column == West; });
+        TestEqual(TEXT("the three acts of the east and west columns park"), Moved, 3);
+        TestTrue(TEXT("two queued, three parked"), Scheduler.Num() == 2 && Scheduler.GetParkedCount() == 3);
+        TArray<FIntPoint> Columns;
+        Scheduler.GetParkedColumns(Columns);
+        TestTrue(TEXT("parked on the east and west columns"),
+            Columns.Num() == 2 && Columns.Contains(East) && Columns.Contains(West));
+        TestFalse(TEXT("a parked cell stays pending"), Scheduler.Schedule(AtWest, EVoxelFluid::Lava, 99));
+        TArray<FIntVector> Queued;
+        while (Scheduler.PopDue(100, Act))
+            Queued.Add(Act.Cell);
+        TestTrue(TEXT("the others stay queued"), Queued == TArray<FIntVector>{AtHome, AtNorth});
+        TestEqual(TEXT("asleep acts stay out of the ring"), Scheduler.Unpark(West, 100, false), 0);
+        TestEqual(TEXT("the east act leaves"), Scheduler.Unpark(East, 50, true), 1);
+        TestTrue(TEXT("due at 50 plus the 5 left"), Scheduler.PeekDue(Due) && Due == 55);
+        TestTrue(TEXT("popped at 55"), Scheduler.PopDue(55, Act) && Act.Cell == AtEast);
+        TestEqual(TEXT("the west acts leave"), Scheduler.Unpark(West, 100, true), 2);
+        TestTrue(TEXT("due at 101 (1 left) and 130 (30 left)"),
+            Scheduler.PopDue(101, Act) && Act.Cell == AtWestToo && !Scheduler.PopDue(129, Act) &&
+                Scheduler.PopDue(130, Act) && Act.Cell == AtWest);
+    }
+    {
+        // Reset forgets the parked acts and their cells' pending marks.
+        FVoxelFluidScheduler Scheduler;
+        const FIntVector Cell(1, 1, 64);
+        Scheduler.Park(Home, FAct{10, 0, Cell, EVoxelFluid::Water}, 4, true);
+        Scheduler.Reset();
+        TArray<FIntPoint> Columns;
+        Scheduler.GetParkedColumns(Columns);
+        TestTrue(TEXT("nothing parked after Reset"), Scheduler.GetParkedCount() == 0 && Columns.IsEmpty());
+        TestEqual(TEXT("and Unpark finds nothing"), Scheduler.Unpark(Home, 20, true), 0);
+        TestTrue(TEXT("the cell can be scheduled again"), Scheduler.Schedule(Cell, EVoxelFluid::Water, 30));
+    }
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelFluidRulesTest, "Unnamed.Voxel.Fluid.Rules",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

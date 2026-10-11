@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates,[switch]$TorchRoom,[switch]$TorchLook,[int]$TorchGlow=-1)
+param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates,[switch]$TorchRoom,[switch]$TorchLook,[int]$TorchGlow=-1,[ValidateSet('breach','flood')][string]$Fluids)
 # Renders the generated world offscreen (/Game/Maps/L_Generated) and saves AVoxelWorld's screenshots: overview,
 # closeup, ground, lumen-scene and section, plus build.txt with the first view's streaming timings. The rings stay on
 # the player's spawn, and the view's edge is meshed against air (voxel.Debug.EdgeWalls 1; -ExecCmds can turn it off),
@@ -33,6 +33,10 @@ param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[in
 # voxel.LightsInfo per shot) and look-<view>-ml<0|1>.png, in a folder ending in -look.
 # -TorchGlow <0-15> meshes the torch models at that glow from the start (-VoxelTorchGlow=N, voxel.TorchGlow; the default 1
 # is warm A's whole torch (T3b), 0 leaves only the flame glowing at its own 1, 14 is the old white torch).
+# -Fluids breach|flood first runs a flowing water capture with voxel.Fluids on (FVoxelFluidShots, -VoxelShotFluids): breach
+# mines into a sea from a sealed room under it (breach.txt, breach.csv per second, breach-dry/03s/08s/20s.png); flood
+# places 25 water sources on flat ground and traces 30 s of frames (flood.txt, flood.csv per frame, flood-end.png). In a
+# folder ending in -<scenario>. Not with -Flight.
 # Evidence is never overwritten.
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
@@ -40,6 +44,8 @@ $root=Split-Path $PSScriptRoot -Parent
 if($TorchLook){$TorchRoom=[switch]$true}
 $kind=if($Flight){'VoxelFlight'}else{'VoxelShots'}
 if(($Lights -or $TorchGates -or $TorchRoom) -and -not $Flight){if(-not $OutputDirectory){$OutputDirectory=Join-Path $root ('Tests/Evidence/'+(Get-Date -Format 'yyyy-MM-dd')+'/VoxelShots-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+$(if($TorchLook){'-look'}elseif($TorchRoom){'-room'}elseif($TorchGates){'-torches'}else{'-lights'}))};if(-not $PSBoundParameters.ContainsKey('TimeoutSeconds')){$TimeoutSeconds=2400}}
+if($Fluids -and $Flight){throw '-Fluids runs without -Flight.'}
+if($Fluids -and -not $Flight -and -not $OutputDirectory){$OutputDirectory=Join-Path $root ('Tests/Evidence/'+(Get-Date -Format 'yyyy-MM-dd')+'/VoxelShots-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+"-$Fluids")}
 if(-not $OutputDirectory){$OutputDirectory=Join-Path $root ('Tests/Evidence/'+(Get-Date -Format 'yyyy-MM-dd')+"/$kind-"+(Get-Date -Format 'yyyyMMdd-HHmmss'))}
 if(Test-Path -LiteralPath $OutputDirectory){throw 'Use a fresh evidence directory.'}
 New-Item -ItemType Directory -Path $OutputDirectory | Out-Null
@@ -69,6 +75,7 @@ if(($Lights -or $TorchGates -or $TorchRoom) -and -not $Flight){$arguments+='-Vox
 if($TorchGates -and -not $Flight){$arguments+='-VoxelShotTorchGates'}
 if($TorchRoom -and -not $Flight){$arguments+='-VoxelShotTorchRoom'}
 if($TorchLook -and -not $Flight){$arguments+='-VoxelShotTorchLook'}
+if($Fluids -and -not $Flight){$arguments+="-VoxelShotFluids=$Fluids"}
 if($TorchGlow -ge 0){$arguments+="-VoxelTorchGlow=$TorchGlow"}
 if($Flight -and $FlightSeconds -gt 0){$arguments+="-VoxelFlightSeconds=$FlightSeconds"}
 if($WorldsDir){$arguments+=('-WorldsDir="'+(Resolve-Path -LiteralPath $WorldsDir).Path+'"')}
@@ -94,7 +101,10 @@ $shots=$names | Where-Object { Test-Path (Join-Path $OutputDirectory "$_.png") }
 if($shots.Count -ne $names.Count -or -not(Test-Path (Join-Path $OutputDirectory 'build.txt'))){throw "Missing screenshots ($($shots.Count) of $($names.Count)) after $elapsed s: $OutputDirectory"}
 $lightsReport=if($TorchLook){'look.txt'}elseif($TorchRoom){'room.txt'}elseif($TorchGates){'torches.txt'}else{'lights.txt'}
 if(($Lights -or $TorchGates -or $TorchRoom) -and -not(Test-Path (Join-Path $OutputDirectory $lightsReport))){throw "No $lightsReport after $elapsed s: $OutputDirectory"}
+if($Fluids -and -not(Test-Path (Join-Path $OutputDirectory "$Fluids.txt"))){throw "No $Fluids.txt after $elapsed s: $OutputDirectory"}
+if($Fluids -and (Select-String -LiteralPath (Join-Path $OutputDirectory "$Fluids.txt") -SimpleMatch 'RESULT: FAILED' -Quiet)){throw "The $Fluids capture failed (see $Fluids.txt): $OutputDirectory"}
 "PASS: $($names.Count) screenshots in $elapsed s. $OutputDirectory"
 Get-Content (Join-Path $OutputDirectory 'build.txt')
 if($Lights -or $TorchGates -or $TorchRoom){Get-Content (Join-Path $OutputDirectory $lightsReport)}
+if($Fluids){Get-Content (Join-Path $OutputDirectory "$Fluids.txt")}
 if(($Lights -or $TorchGates) -and -not $TorchRoom){& (Join-Path $PSScriptRoot 'SummarizeLightProbe.ps1') -Folder $OutputDirectory}

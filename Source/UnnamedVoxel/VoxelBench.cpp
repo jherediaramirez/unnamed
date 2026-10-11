@@ -948,6 +948,36 @@ FString VoxelBench::RunDecorate(
         Report += FString::Printf(TEXT("  Per Finalize: %.0f writes replayed, %.0f changed a block, %.1f sections "
                                        "repacked, %.1f heightmap cells updated\n"),
             Replayed / Finals, Applied / Finals, Sections / Finals, HeightCells / Finals);
+
+        // Where the trees' time went (S9d): per Decorate, each stage's ms and its calls.
+        FVoxelTreeTimes Trees;
+        for (const FVoxelDecorateStats& Stats : Area.Decorates)
+            Trees.Add(Stats.TreeTimes);
+        const auto StageMs = [&Trees, Count](int32 Stage)
+        { return FPlatformTime::ToMilliseconds64(Trees.Cycles[Stage]) / Count; };
+        double TreeMs = 0, DecoratorMs = 0;
+        for (int32 Stage = 0; Stage < FVoxelTreeTimes::Num; ++Stage)
+        {
+            TreeMs += StageMs(Stage);
+            if (Stage >= FVoxelTreeTimes::FirstDecorator) DecoratorMs += StageMs(Stage);
+        }
+        Report += FString::Printf(TEXT("  Trees per Decorate: %.3f ms in %.2f tries (%.2f placed): feature size %.3f, "
+                                       "trunk %.3f, foliage %.3f, leaves' distance %.3f, decorators %.3f, "
+                                       "emission %.3f\n"),
+            TreeMs, Trees.Calls[FVoxelTreeTimes::Size] / Count, Trees.Calls[FVoxelTreeTimes::Emit] / Count,
+            StageMs(FVoxelTreeTimes::Size), StageMs(FVoxelTreeTimes::Trunk), StageMs(FVoxelTreeTimes::Foliage),
+            StageMs(FVoxelTreeTimes::Distances), DecoratorMs, StageMs(FVoxelTreeTimes::Emit));
+        FString Decorators;
+        for (int32 Type = 0; Type < int32(EVoxelTreeDecorator::Count); ++Type)
+        {
+            const int32 Stage = FVoxelTreeTimes::FirstDecorator + Type;
+            if (!Trees.Calls[Stage]) continue;
+            Decorators += FString::Printf(TEXT("%s%s %.3f ms (%.2f calls, %.2f us each)"),
+                Decorators.IsEmpty() ? TEXT("") : TEXT(", "), VoxelTreeDecorators::GetName(EVoxelTreeDecorator(Type)),
+                StageMs(Stage), Trees.Calls[Stage] / Count,
+                FPlatformTime::ToMilliseconds64(Trees.Cycles[Stage]) * 1000. / Trees.Calls[Stage]);
+        }
+        if (!Decorators.IsEmpty()) Report += FString::Printf(TEXT("  Tree decorators per Decorate: %s\n"), *Decorators);
     }
     Report += FString::Printf(TEXT("Final column hashes: early-out on 0x%016llx, off 0x%016llx (%s)"), Hashes[0],
         Hashes[1], Hashes[0] == Hashes[1] ? TEXT("equal: the early-out is exact") : TEXT("DIFFER"));

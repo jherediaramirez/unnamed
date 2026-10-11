@@ -10,6 +10,8 @@
 
 class ACameraActor;
 class FVoxelFlight;
+class FVoxelFluidShots;
+class FVoxelFluidSystem;
 class FVoxelLightShots;
 class FVoxelLightTable;
 class FVoxelLights;
@@ -35,7 +37,8 @@ class UVoxelWorldSubsystem;
 // The menu opens a saved world as L_Generated?VoxelWorld=<id>: its seed and type pick the terrain. Without one the map
 // shows the dev seed. -VoxelSeed=<text> overrides either seed; -VoxelShot=<folder> saves screenshots once the view is
 // on screen, then quits (-VoxelShotEdits first carves and builds across a column corner through the authority and
-// adds an "edits" shot; -VoxelShotView=CX,CY,CZ,TX,TY,TZ adds a "view" shot from a camera to a target, in blocks);
+// adds an "edits" shot; -VoxelShotView=CX,CY,CZ,TX,TY,TZ adds a "view" shot from a camera to a target, in blocks;
+// -VoxelShotFluids=breach|flood first runs a flowing water capture, FVoxelFluidShots);
 // -VoxelFlight=<folder> flies phase 3's acceptance flight (FVoxelFlight), then quits. -VoxelTime=<ticks or marker>
 // pins the world clock's day (FVoxelWorldClock) for shots and flights.
 //
@@ -106,6 +109,9 @@ public:
     // The saved world's advance_time rule (default on), read at BuildLayout: off stops the day clock, not the game
     // tick.
     bool IsTimeAdvancing() const { return bAdvanceTime; }
+    // Flowing water and lava (water and sky W2a): they wake up from the authority's block changes and run after the
+    // clock's steps in Tick, while voxel.Fluids is on. Null before BeginPlay.
+    FVoxelFluidSystem* GetFluids() const { return Fluids.Get(); }
 
     // World position of cell (0, 0, 0)'s minimum corner; world rebasing moves it.
     FVector OriginCm = FVector::ZeroVector;
@@ -178,8 +184,11 @@ private:
     TObjectPtr<USkyAtmosphereComponent> Sky;
     bool bEdgeFogVisible = true;
     TSharedPtr<FVoxelFlight> Flight;
+    TSharedPtr<FVoxelFluidSystem> Fluids;
     // -VoxelShotLights: the torch light probe, run before the shots.
     TSharedPtr<FVoxelLightShots> LightShots;
+    // -VoxelShotFluids=breach|flood: the flowing water captures (W2a), run before the shots, after the light probe.
+    TSharedPtr<FVoxelFluidShots> FluidShots;
     // The torch lights: the light table for voxel.LightMinLevel at LightMinLevel, and the pool, whose point lights
     // LightComponents holds for the GC.
     TSharedPtr<const FVoxelLightTable> LightTable;

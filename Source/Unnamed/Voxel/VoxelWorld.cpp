@@ -42,6 +42,8 @@
 #include "Voxel/VoxelLightSources.h"
 #include "Voxel/VoxelLights.h"
 #include "Voxel/VoxelWorldSettings.h"
+#include "Voxel/VoxelFluidShots.h"
+#include "Voxel/VoxelFluidSystem.h"
 #include "Voxel/VoxelWorldSubsystem.h"
 #include "Voxel/VoxelWorldgenReader.h"
 #include "VoxelConstants.h"
@@ -183,6 +185,9 @@ void AVoxelWorld::BuildLayout()
     }
     if (!ShotFolder.IsEmpty() && FParse::Param(FCommandLine::Get(), TEXT("VoxelShotLights")))
         LightShots = MakeShared<FVoxelLightShots>(ShotFolder);
+    FString FluidScenario;
+    if (!ShotFolder.IsEmpty() && FParse::Value(FCommandLine::Get(), TEXT("VoxelShotFluids="), FluidScenario))
+        FluidShots = FVoxelFluidShots::Make(ShotFolder, FluidScenario);
     FString FlightFolder;
     if (FParse::Value(FCommandLine::Get(), TEXT("VoxelFlight="), FlightFolder))
     {
@@ -383,6 +388,8 @@ void AVoxelWorld::Regenerate(const FVoxelSeed& NewSeed)
     // A new session on a new world: nothing is loaded yet, so emptying the block world is free.
     Authority.World.OriginCm = OriginCm;
     Authority.Reset();
+    // The new world's fluids start still.
+    if (Fluids) Fluids->Reset();
     // Shots fly the camera far out; the rings stay around the player.
     if (!ShotFolder.IsEmpty()) Streaming->SetFocusOverride(Spawn);
 }
@@ -417,6 +424,16 @@ void AVoxelWorld::SetupAuthority()
     Authority.Options.bCreativeInventory = bCreative;
     // Survival starts with the loadout's tools and no blocks: blocks come from mining.
     Authority.Options.FiniteBlockCount = Saved ? 0 : Settings.FiniteBlockCount;
+    // Flowing water and lava (water and sky W2a) wake up from the block world's changes, under the saved world's game
+    // rules (26.3's defaults for the dev seed's world).
+    FVoxelFluidOptions FluidOptions;
+    FluidOptions.bWaterSourceConversion = !Saved || Saved->GetRule(TEXT("water_source_conversion"), true);
+    FluidOptions.bLavaSourceConversion = Saved && Saved->GetRule(TEXT("lava_source_conversion"), false);
+    Fluids = MakeShared<FVoxelFluidSystem>();
+    Fluids->Start(
+        Authority.World, Table.ToSharedRef(),
+        [Streaming = TWeakObjectPtr<UVoxelWorldSubsystem>(GetStreaming())]() -> FVoxelColumnPipeline*
+        { return Streaming.IsValid() ? Streaming->GetPipeline() : nullptr; }, FluidOptions, Clock.GetGameTick());
 }
 
 FFoundationTarget AVoxelWorld::TraceTarget(FVector Eye, FVector Direction, const UFoundationProfile& Profile) const
@@ -466,6 +483,7 @@ UVoxelWorldSubsystem* AVoxelWorld::GetStreaming() const
 
 void AVoxelWorld::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    if (Fluids) Fluids->Stop();
     if (UVoxelWorldSubsystem* Streaming = GetStreaming()) Streaming->Stop();
     if (Lights) Lights->Reset();
     SaveClock();
@@ -488,10 +506,12 @@ FString AVoxelWorld::GetBuildReport() const
 void AVoxelWorld::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
-    // The world's game ticks for this frame (the water and sky plan, section 2): the day clock steps in each; W2a's
-    // fluids run after each Step.
-    for (int32 Index = 0, Ticks = Clock.TakeTicks(DeltaSeconds); Index < Ticks; ++Index)
+    // The world's game ticks for this frame (the water and sky plan, section 2): the day clock steps in each, then the
+    // fluids run the same ticks within their own frame budget (W2a).
+    const int32 Ticks = Clock.TakeTicks(DeltaSeconds);
+    for (int32 Index = 0; Index < Ticks; ++Index)
         Clock.Step(bAdvanceTime);
+    if (Fluids) Fluids->Advance(Ticks, FVoxelFluidSystem::FSettings::Read());
     if (TextureTable)
         TextureTable->SetTick(FMath::FloorToInt64(GetWorld()->GetTimeSeconds() * FoundationBlockFaces::TicksPerSecond));
     // Collision exists once the columns around the spawn do: the player is put there then, once.
@@ -537,10 +557,14 @@ void AVoxelWorld::Tick(float DeltaSeconds)
                 (FPlatformTime::Seconds() - ShotEditSeconds) * 1000., ShotEditFrames);
             UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *ShotEditReport);
         }
-        // With -VoxelShotLights the light probe runs first (FVoxelLightShots).
-        else if (!LightShots || !LightShots->Tick(*this))
+        // With -VoxelShotLights the light probe runs first (FVoxelLightShots), then with -VoxelShotFluids the flowing
+        // water capture (FVoxelFluidShots).
+        else if ((!LightShots || !LightShots->Tick(*this)) && (!FluidShots || !FluidShots->Tick(*this)))
             UpdateShots();
     }
+    // A running fluid capture's writes remesh columns, so it also runs while they are off screen.
+    else if (FluidShots && FluidShots->IsRunning())
+        FluidShots->Tick(*this);
     if (Flight && (Flight->IsStarted() || IsReady()) && !Flight->Tick(*this, DeltaSeconds))
     {
         Flight.Reset();
