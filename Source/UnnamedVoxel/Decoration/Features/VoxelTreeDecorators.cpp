@@ -38,6 +38,7 @@ namespace
         {TEXT("minecraft:pale_moss"), EVoxelTreeDecorator::PaleMoss},
         {TEXT("minecraft:creaking_heart"), EVoxelTreeDecorator::CreakingHeart},
         {TEXT("minecraft:shelf_mushroom"), EVoxelTreeDecorator::ShelfMushroom},
+        {TEXT("minecraft:attached_to_logs"), EVoxelTreeDecorator::AttachedToLogs},
     };
 
     // The four horizontal face steps in the Directions order (0 -X west, 1 +X east, 2 -Y north, 3 +Y south), and per
@@ -169,10 +170,16 @@ namespace
         }
     }
 
-    // trunk_vine (wiki: a vine on each side of each trunk block at 75%). Every log counts as trunk (the mega jungle
-    // probe's branch logs carry vines: 10 of their 11 open sides in its examples); the vine goes where the cell is air
-    // and does not grow down (the probes' log-hung runs end over air). Draws: per log from the bottom up (cell order
-    // within a layer), per side west, east, north, south, NextFloat (under 0.75 places). States: the vine per side.
+    // trunk_vine's chance per side: 2/3, measured in S9d part 2 (the wiki says 75%). The fallen oak and jungle stumps
+    // have all four sides open (their log starts 2 or 3 away): 533 vines on 200 stumps, 0.666 per side, where 75%
+    // gives 3.0 per stump (z -5.5).
+    constexpr float TrunkVineChance = 2.f / 3.f;
+
+    // trunk_vine (wiki: a vine on each side of each trunk block, at TrunkVineChance as measured). Every log counts as
+    // trunk (the mega jungle probe's branch logs carry vines: 10 of their 11 open sides in its examples); the vine
+    // goes where the cell is air and does not grow down (the probes' log-hung runs end over air). Draws: per log from
+    // the bottom up (cell order within a layer), per side west, east, north, south, NextFloat (under TrunkVineChance
+    // places). States: the vine per side.
     void PlaceTrunkVine(const FVoxelTreeDecoratorConfig& Decorator, FVoxelTreeBuilder& Builder)
     {
         TArray<FIntVector> Logs;
@@ -180,7 +187,7 @@ namespace
         for (const FIntVector& Log : Logs)
             for (int32 Side = 0; Side < 4; ++Side)
             {
-                if (Builder.Random.NextFloat() >= 0.75f) continue;
+                if (Builder.Random.NextFloat() >= TrunkVineChance) continue;
                 const FIntVector Vine = Log + TreeDecoratorSides[Side];
                 if (Builder.IsAir(Vine)) Builder.SetDecoration(Vine, Decorator.States[Side]);
             }
@@ -275,37 +282,78 @@ namespace
         }
     }
 
-    // shelf_mushroom: a log's chance per side, and how many log layers from the bottom carry them.
-    constexpr float ShelfMushroomChance = 0.09f;
+    // shelf_mushroom: a log's chance, and how many log layers from the bottom carry them.
+    constexpr float ShelfMushroomChance = 0.375f;
     constexpr int32 ShelfMushroomLayers = 4;
 
-    // shelf_mushroom (wiki: grows on the trunk's sides). Ours, fitted to the three poplar probes (0.45 to 0.54 per
-    // tree, 0.51 pooled, on 29 to 33% of trees, at most 3; orange's 17, 14, 14 and 9 at dy 0 to 3 and none higher;
-    // each beside a log, a branch's once, facing away from it, of age 0 or 1): with the probability the tree gets any
-    // (a chance per side alone would put one on 40% of trees); then each log of the 4 lowest log layers, in cell
-    // order, each side west, east, north, south at 9% (our poplars show about 13.8 open sides there, branches taking
-    // the rest: 0.4 x 13.8 x 0.09 = 0.50 per tree, on 29% of trees), where the cell is free and not this tree's leaf
-    // (it replaces the leaf litter: dy 0 holds as many as dy 1) and the mushroom survives (the log behind it). Draws:
-    // NextFloat for the probability, then per log and side NextFloat (under 0.09 places), then NextInt(2) for the age
-    // where the cell is free. States: per age, per side (age * 4 + side).
+    // shelf_mushroom (wiki: "on each trunk block with the specified probability"). Ours, one rule fitted in S9d part 2
+    // to the three poplar probes (0.45 to 0.54 per tree, 0.51 pooled, on 29 to 33% of trees, at most 3; orange's 17,
+    // 14, 14 and 9 at dy 0 to 3 and none higher; each beside a log, a branch's once, facing away from it, of age 0 or
+    // 1) and to fallen poplar's log (1.05 per tree on 65%, at most 4, only on the two sides across the log, never at
+    // its ends): with the probability the tree gets any (a chance per log alone would put one on 42% of the poplars);
+    // then each log of the 4 lowest log layers, in cell order, at ShelfMushroomChance takes one of its bark sides at
+    // random: west, east, north, south on an upright log, the two across a lying one (its axis from its state). The
+    // mushroom goes there where the cell is free and not this tree's leaf (it replaces the leaf litter: dy 0 holds as
+    // many as dy 1) and survives (the log behind it). The model: our poplars' about 4 logs there with 86% of their
+    // sides open give 0.4 x 4 x 0.375 x 0.86 = 0.52 per tree, on 32% of trees; fallen poplar's 3.52 log cells give
+    // 0.8 x 3.52 x 0.375 = 1.06, on 65% (S9c's rule, 9% per open side, gave it 0.65). Draws: NextFloat for the
+    // probability, then per log NextFloat (under ShelfMushroomChance it takes a side), NextInt over its bark sides,
+    // and NextInt(2) for the age where the cell is free. States: per age, per side (age * 4 + side).
     void PlaceShelfMushroom(const FVoxelTreeDecoratorConfig& Decorator, FVoxelTreeBuilder& Builder)
     {
         if (Builder.Random.NextFloat() >= TreeDecoratorProbability(Decorator)) return;
         TArray<FIntVector> Logs;
         Builder.GetCells(FVoxelTreeBuilder::ECell::Log, Logs);
         const auto GetState = [&Builder](int32 X, int32 Y, int32 Z) { return Builder.GetState(FIntVector(X, Y, Z)); };
+        const uint16* LogStates = Builder.Config.LogStates;
         for (const FIntVector& Log : Logs)
         {
             if (Log.Z >= Logs[0].Z + ShelfMushroomLayers) break;
-            for (int32 Side = 0; Side < 4; ++Side)
-            {
-                if (Builder.Random.NextFloat() >= ShelfMushroomChance) continue;
-                const FIntVector Cell = Log + TreeDecoratorSides[Side];
-                if (!Builder.IsFree(Cell) || Builder.IsLeaf(Cell)) continue;
-                const uint16 State = Decorator.States[Builder.Random.NextInt(2) * 4 + Side];
-                if (Builder.Env.Survival.Survives(State, Cell.X, Cell.Y, Cell.Z, GetState))
-                    Builder.SetDecoration(Cell, State);
-            }
+            if (Builder.Random.NextFloat() >= ShelfMushroomChance) continue;
+            // A log along X has its bark north and south, one along Y west and east; an upright log (or a trunk
+            // without an axis) all four.
+            const uint16 LogState = Builder.GetState(Log);
+            const bool bUpright = LogState == LogStates[2] || LogStates[0] == LogStates[2];
+            const int32 Side = bUpright    ? Builder.Random.NextInt(4)
+                : LogState == LogStates[0] ? 2 + Builder.Random.NextInt(2)
+                                           : Builder.Random.NextInt(2);
+            const FIntVector Cell = Log + TreeDecoratorSides[Side];
+            if (!Builder.IsFree(Cell) || Builder.IsLeaf(Cell)) continue;
+            const uint16 State = Decorator.States[Builder.Random.NextInt(2) * 4 + Side];
+            if (Builder.Env.Survival.Survives(State, Cell.X, Cell.Y, Cell.Z, GetState))
+                Builder.SetDecoration(Cell, State);
+        }
+    }
+
+    // The six steps of a decorator's Directions bits (0 -X, 1 +X, 2 -Y, 3 +Y, 4 down, 5 up).
+    const FIntVector TreeDecoratorSteps[6] = {FIntVector(-1, 0, 0), FIntVector(1, 0, 0), FIntVector(0, -1, 0),
+        FIntVector(0, 1, 0), FIntVector(0, 0, -1), FIntVector(0, 0, 1)};
+
+    // attached_to_logs (wiki: "Attaches blocks to exposed faces of all trunk blocks in specified directions", with
+    // the probability). Per log (from the bottom up, cell order within a layer; a fallen tree's log decorators read its
+    // log alone), with the probability one of the data's directions at random, and the provider's state there where
+    // the cell is air, with no survival check (the fallen trees' probes: a mushroom on top of 10% of the log's cells,
+    // 0.35 to 0.61 per tree against 0.1 x their log cells, in full daylight). Draws: per log NextFloat, then where it
+    // passes NextInt over the directions when there are more than one, then the provider's draws where the cell is
+    // air. States: none fixed (the provider's).
+    void PlaceAttachedToLogs(const FVoxelTreeDecoratorConfig& Decorator, FVoxelTreeBuilder& Builder)
+    {
+        if (Decorator.Provider == INDEX_NONE || !Decorator.Directions) return;
+        TArray<int32, TInlineAllocator<6>> Steps;
+        for (int32 Step = 0; Step < 6; ++Step)
+            if (Decorator.Directions & (1 << Step)) Steps.Add(Step);
+        const float Probability = float(TreeDecoratorProbability(Decorator));
+        const FVoxelPlantEnvironment& Env = Builder.Env;
+        TArray<FIntVector> Logs;
+        Builder.GetCells(FVoxelTreeBuilder::ECell::Log, Logs);
+        for (const FIntVector& Log : Logs)
+        {
+            if (Builder.Random.NextFloat() >= Probability) continue;
+            const int32 Step = Steps.Num() > 1 ? Steps[Builder.Random.NextInt(Steps.Num())] : Steps[0];
+            const FIntVector Cell = Log + TreeDecoratorSteps[Step];
+            if (Builder.IsAir(Cell))
+                Builder.SetDecoration(
+                    Cell, Env.Providers.Sample(Decorator.Provider, Builder.Random, Cell, Env.Context));
         }
     }
 
@@ -709,6 +757,9 @@ int32 VoxelTreeDecorators::GetReach(
     case EVoxelTreeDecorator::LeaveVine:
         // A vine beside a leaf.
         return TreeReach + 1;
+    case EVoxelTreeDecorator::AttachedToLogs:
+        // On a log, or beside one in a horizontal direction.
+        return VoxelTrunkPlacers::GetReach(Tree.Trunk) + ((Decorator.Directions & 0b1111) ? 1 : 0);
     default:
         return TreeReach;
     }
@@ -716,7 +767,13 @@ int32 VoxelTreeDecorators::GetReach(
 
 void VoxelTreeDecorators::Place(const FVoxelTreeConfig& Config, FVoxelTreeBuilder& Builder, FVoxelTreeTimes* Times)
 {
-    for (const FVoxelTreeDecoratorConfig& Decorator : Config.Decorators)
+    Place(Config.Decorators, Builder, Times);
+}
+
+void VoxelTreeDecorators::Place(
+    TConstArrayView<FVoxelTreeDecoratorConfig> Decorators, FVoxelTreeBuilder& Builder, FVoxelTreeTimes* Times)
+{
+    for (const FVoxelTreeDecoratorConfig& Decorator : Decorators)
     {
         const uint64 Start = Times ? FPlatformTime::Cycles64() : 0;
         switch (Decorator.Type)
@@ -747,6 +804,9 @@ void VoxelTreeDecorators::Place(const FVoxelTreeConfig& Config, FVoxelTreeBuilde
             break;
         case EVoxelTreeDecorator::CreakingHeart:
             PlaceCreakingHeart(Decorator, Builder);
+            break;
+        case EVoxelTreeDecorator::AttachedToLogs:
+            PlaceAttachedToLogs(Decorator, Builder);
             break;
         default:
             break;

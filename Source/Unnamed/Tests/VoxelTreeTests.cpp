@@ -3,6 +3,7 @@
 #include "Biome/VoxelBiomeTable.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "Blocks/VoxelPlantSurvival.h"
+#include "Decoration/Features/VoxelBigVegetation.h"
 #include "Decoration/Features/VoxelPatchFeatures.h"
 #include "Decoration/Features/VoxelTreeFeature.h"
 #include "Decoration/VoxelBlockPredicates.h"
@@ -35,8 +36,9 @@ namespace
     constexpr int32 TreeTestCount = 2000;
     constexpr uint64 TreeTestSeed = 263;
     // For manual runs: 0 none, 1 base_height one higher, 2 the foliage radius one wider (both on the configurations
-    // RunTreeProbes compiles; Trees.Shapes must fail), 3 to 7 as ApplyTreeTestMutation says. With 0, every test must
-    // pass.
+    // RunTreeProbes compiles; Trees.Shapes must fail), 3 to 7 as ApplyTreeTestMutation says, 8 the fallen log one
+    // longer (scout J's: fallen super birch must then fail its reach of 15 with 16; RunTreeProbes), 9 every fallen log
+    // pointing the same way (the direction test must fail; SimulateTrees). With 0, every test must pass.
     constexpr int32 TreeTestMutation = 0;
     // For manual runs: the number of 100-tree self-samples per configuration that check the distribution rules'
     // calibration (RunTreeProbes); 0 in the suite.
@@ -78,6 +80,14 @@ namespace
         TMap<int32, TMap<FIntPoint, double>> Occupancy;
         // A ceiling probe's dy (variant "_ceil<H>"), or 0.
         int32 Ceiling = 0;
+        // A fallen tree probe's trees per log direction (S9d part 2; 0 west, 1 east, 2 north, 3 south: the side its
+        // per-placement box reaches farthest), else empty.
+        TMap<int32, int64> SideHist;
+        // A huge mushroom probe's (S9d part 2): per placed mushroom its cells, the count of mushrooms per cap top dy
+        // (its box's highest), and its examples' cells (relative to the origin) by state name.
+        TArray<double> Cells;
+        TMap<int32, int64> CapTopHist;
+        TArray<TMap<FIntVector, FString>> Examples;
     };
 
     // A probe of under 50 tries (a ceiling's 16): too few trees for the distribution rules (the means, decorations,
@@ -108,6 +118,8 @@ namespace
         // Leaves whose distance is not the BFS from the tree's own logs through its own leaves (1 to 6), or that are
         // persistent.
         int32 BadDistances = 0, Persistent = 0;
+        // A fallen tree's trees per log direction (FTreeProbe::SideHist).
+        TMap<int32, int64> SideHist;
     };
 
     TSharedPtr<FJsonObject> LoadTreeJson(const FString& File)
@@ -192,7 +204,42 @@ namespace
             if (Placement->GetStringField(TEXT("result")) != TEXT("placed")) continue;
             Out.Logs.Add(Placement->GetNumberField(TEXT("logs")));
             Out.Leaves.Add(Placement->GetNumberField(TEXT("leaves")));
+            double Cells = 0;
+            Placement->TryGetNumberField(TEXT("n"), Cells);
+            Out.Cells.Add(Cells);
+            // A fallen tree's box [x0, x1, y0, y1, z0, z1]: its log lies toward the farthest side (the stump's vines
+            // reach 1, the log at least 3).
+            const TArray<TSharedPtr<FJsonValue>>* Box;
+            if (Out.Name.StartsWith(TEXT("fallen_")) && Placement->TryGetArrayField(TEXT("bbox"), Box) &&
+                Box->Num() == 6)
+            {
+                const double Reach[4] = {
+                    -(*Box)[0]->AsNumber(), (*Box)[1]->AsNumber(), -(*Box)[4]->AsNumber(), (*Box)[5]->AsNumber()};
+                int32 Side = 0;
+                for (int32 Candidate = 1; Candidate < 4; ++Candidate)
+                    if (Reach[Candidate] > Reach[Side]) Side = Candidate;
+                // A stump alone (its vines reach 1) has no direction, as ours (SimulateTrees) counts none.
+                if (Reach[Side] >= 2) ++Out.SideHist.FindOrAdd(Side);
+            }
+            // A huge mushroom's cap top: its box's highest dy.
+            if (Out.Name.StartsWith(TEXT("huge_")) && Placement->TryGetArrayField(TEXT("bbox"), Box) && Box->Num() == 6)
+                ++Out.CapTopHist.FindOrAdd(int32((*Box)[3]->AsNumber()));
         }
+        // A huge mushroom's examples: [dx, dy, dz, state] per cell, in the reference's axes.
+        const TArray<TSharedPtr<FJsonValue>>* Examples;
+        if (Out.Name.StartsWith(TEXT("huge_")) && Json->TryGetArrayField(TEXT("examples"), Examples))
+            for (const TSharedPtr<FJsonValue>& Example : *Examples)
+            {
+                TMap<FIntVector, FString>& Cells = Out.Examples.AddDefaulted_GetRef();
+                for (const TSharedPtr<FJsonValue>& Cell : Example->AsObject()->GetArrayField(TEXT("cells")))
+                {
+                    const TArray<TSharedPtr<FJsonValue>>& Items = Cell->AsArray();
+                    if (Items.Num() == 4)
+                        Cells.Add(FIntVector(int32(Items[0]->AsNumber()), int32(Items[2]->AsNumber()),
+                                      int32(Items[1]->AsNumber())),
+                            StripNamespace(Items[3]->AsString()));
+                }
+            }
         Out.Bfs7 = ReadTreeStat(*Json, TEXT("leaf_bfs7"), TEXT("mean"));
         const TSharedPtr<FJsonObject>* Object;
         if (Json->TryGetObjectField(TEXT("log_top_hist"), Object)) Out.TopHist = ReadTreeCounts(Object);
@@ -269,8 +316,10 @@ namespace
         return FMath::Clamp(std::exp(LogFront) * H, 0., 1.);
     }
 
-    // The p value that two histograms come from one distribution (chi-square homogeneity), as the fits' harness.
-    double ChiSquareHomogeneity(const TMap<int32, int64>& A, const TMap<int32, int64>& B)
+    // The p value that two histograms come from one distribution (chi-square homogeneity), as the fits' harness; with
+    // OutChi2, the statistic and its degrees of freedom (0 and 0 where there is no test).
+    double ChiSquareHomogeneity(
+        const TMap<int32, int64>& A, const TMap<int32, int64>& B, TPair<double, int32>* OutChi2 = nullptr)
     {
         TSet<int32> Keys;
         double CountA = 0, CountB = 0;
@@ -278,6 +327,7 @@ namespace
             Keys.Add(Bin.Key), CountA += Bin.Value;
         for (const TPair<int32, int64>& Bin : B)
             Keys.Add(Bin.Key), CountB += Bin.Value;
+        if (OutChi2) *OutChi2 = TPair<double, int32>(0., 0);
         if (CountA == 0 || CountB == 0 || Keys.Num() < 2) return 1;
         double Chi2 = 0;
         for (const int32 Key : Keys)
@@ -286,6 +336,7 @@ namespace
             const double ExpectA = Total * CountA / (CountA + CountB), ExpectB = Total * CountB / (CountA + CountB);
             Chi2 += FMath::Square(InA - ExpectA) / ExpectA + FMath::Square(InB - ExpectB) / ExpectB;
         }
+        if (OutChi2) *OutChi2 = TPair<double, int32>(Chi2, Keys.Num() - 1);
         return UpperGammaQ((Keys.Num() - 1) / 2., Chi2 / 2);
     }
 
@@ -441,8 +492,13 @@ namespace
             return true;
         }
 
-        // A tree feature (a configured feature id) compiled; false with OutSkip saying why it is not run here.
-        bool Compile(FAutomationTestBase& Test, const FString& Feature, FVoxelTreeConfig& Out, FString& OutSkip)
+        // A tree feature (a configured feature id) compiled; false with OutSkip saying why it is not run here. With
+        // OutFallen, a fallen tree (S9d part 2) compiles into it, and Out is its builder's tree with the stump's and
+        // the log's decorators together (what the block set and the decoration rules read).
+        // With OutMushroom, a huge mushroom compiles into it (Out stays empty).
+        bool Compile(FAutomationTestBase& Test, const FString& Feature, FVoxelTreeConfig& Out, FString& OutSkip,
+            TSharedPtr<FVoxelFallenTreeConfig>* OutFallen = nullptr,
+            TSharedPtr<FVoxelHugeMushroomConfig>* OutMushroom = nullptr)
         {
             int32 Entry = Graph.FindEntry(EVoxelFeatureRegistry::Feature, Feature);
             if (Entry == INDEX_NONE) Entry = Graph.FindEntry(EVoxelFeatureRegistry::Feature, StripNamespace(Feature));
@@ -452,6 +508,40 @@ namespace
             {
                 OutSkip = TEXT("not in the graph");
                 return false;
+            }
+            if (OutFallen && Graph.GetType(Node) == TEXT("minecraft:fallen_tree"))
+            {
+                const TSharedRef<FVoxelFallenTreeConfig> Fallen = MakeShared<FVoxelFallenTreeConfig>();
+                FString Error;
+                if (!Test.TestTrue(FString::Printf(TEXT("%s compiles"), *Feature),
+                        VoxelBigVegetation::CompileFallenTree(
+                            Graph, Node, *Tags, *Table, Predicates, Providers, *Fallen, OutSkip, &Error)))
+                {
+                    Test.AddError(Error);
+                    return false;
+                }
+                if (!OutSkip.IsEmpty()) return false;
+                Out = Fallen->Tree;
+                Out.Decorators.Append(Fallen->LogDecorators);
+                *OutFallen = Fallen;
+                return true;
+            }
+            const FStringView Type = Graph.GetType(Node);
+            if (OutMushroom &&
+                (Type == TEXT("minecraft:huge_red_mushroom") || Type == TEXT("minecraft:huge_brown_mushroom")))
+            {
+                const TSharedRef<FVoxelHugeMushroomConfig> Mushroom = MakeShared<FVoxelHugeMushroomConfig>();
+                FString Error;
+                if (!Test.TestTrue(FString::Printf(TEXT("%s compiles"), *Feature),
+                        VoxelBigVegetation::CompileHugeMushroom(Graph, Node,
+                            Type == TEXT("minecraft:huge_red_mushroom"), *Tags, *Table, Predicates, Providers,
+                            *Mushroom, OutSkip, &Error)))
+                {
+                    Test.AddError(Error);
+                    return false;
+                }
+                *OutMushroom = Mushroom;
+                return OutSkip.IsEmpty();
             }
             if (Graph.GetType(Node) != TEXT("minecraft:tree"))
             {
@@ -556,10 +646,11 @@ namespace
             ++Run.Occupancy.FindOrAdd(Leaf.Z - Top).FindOrAdd(FIntPoint(Leaf.X - Origin.X, Leaf.Y - Origin.Y));
     }
 
-    // Count trees of Config on the probe's column at (8, 8, the probe's y), each from its own stream. The trees only
-    // read the working copy (Emit keeps their writes), so they all see the probe's untouched column.
+    // Count trees of Config (or of Fallen, a fallen tree) on the probe's column at (8, 8, the probe's y), each from its
+    // own stream. The trees only read the working copy (Emit keeps their writes), so they all see the probe's untouched
+    // column.
     void SimulateTrees(const FTreeTestKit& Kit, const FVoxelTreeConfig& Config, const FTreeProbe& Probe, int32 Count,
-        uint64 Seed, FTreeRun& Out)
+        uint64 Seed, FTreeRun& Out, const FVoxelFallenTreeConfig* Fallen = nullptr)
     {
         const FVoxelBlockTable& Table = *Kit.Table;
         const TSharedRef<FVoxelColumn> Column = MakeProbeColumn(Table, Probe);
@@ -585,10 +676,24 @@ namespace
         {
             Writes.Reset();
             FVoxelXoroshiro Random(VoxelRandom::Hash64(Seed, VoxelRandom::Salt("tree test"), Index, 0));
-            if (VoxelTreeFeature::Place(Config, Origin, Random, Env))
+            if (Fallen ? VoxelBigVegetation::PlaceFallenTree(*Fallen, Origin, Random, Env)
+                       : VoxelTreeFeature::Place(Config, Origin, Random, Env))
                 AddTree(Table, Origin, Writes, Out);
             else
                 Out.FailedWrites += Writes.Num() > 0;
+            if (!Fallen || Writes.IsEmpty()) continue;
+            // The log's direction: the side its farthest log cell lies on.
+            int32 Side = INDEX_NONE, Farthest = 0;
+            for (const FVoxelPlantWrite& Write : Writes)
+            {
+                const FIntVector Offset = Write.Cell - Origin;
+                const int32 Reach = FMath::Max(FMath::Abs(Offset.X), FMath::Abs(Offset.Y));
+                if (Write.Mode != EVoxelWriteMode::IfReplaceable || Reach <= Farthest) continue;
+                Farthest = Reach;
+                Side = Offset.X ? (Offset.X < 0 ? 0 : 1) : (Offset.Y < 0 ? 2 : 3);
+            }
+            // Mutation 9 (the manager's): every log measured as pointing east, as though the direction were fixed.
+            if (Side != INDEX_NONE) ++Out.SideHist.FindOrAdd(TreeTestMutation == 9 ? 1 : Side);
         }
     }
 
@@ -940,13 +1045,16 @@ namespace
         }
         if (!bSmall)
         {
-            if (Probe.ProfileCount)
+            // (A fallen tree's probe has no leaf layers to compare.)
+            if (Probe.ProfileCount && !Probe.Occupancy.IsEmpty())
             {
                 FString Worst;
                 const double OccupancyP = GetOccupancyP(Probe, Run, Worst);
                 OutLine += FString::Printf(TEXT(", occupancy p %.3f (%s)"), OccupancyP, *Worst);
                 if (OccupancyP < 0.01) Failures.Add(TEXT("leaf occupancy"));
             }
+            else if (Probe.ProfileCount)
+                OutLine += TEXT(", occupancy skipped (no leaf layers)");
             OutLine += FString::Printf(TEXT(", reach %d/%d"), Run.Reach, Probe.Reach);
             if (Run.Reach > Probe.Reach) Failures.Add(TEXT("reach"));
             // The reach of every cell (the decorators' writes included). Until the S9c review it failed whenever our
@@ -970,6 +1078,12 @@ namespace
             const double Comp6P = ChiSquareHomogeneity(Run.Comp6Hist, Probe.Comp6Hist);
             OutLine += FString::Printf(TEXT(", 6-connected parts p %.2f"), Comp6P);
             if (Comp6P < 0.01) Failures.Add(TEXT("6-connected log parts"));
+            // A fallen tree's log directions (S9d part 2, the manager's call Q3): ours against the probe's four bins,
+            // shown here; the test is the pooled one over the fallen probes (RunTreeProbes), since one rule draws the
+            // direction for all of them and one probe's 100 trees give 25 per bin.
+            if (!Probe.SideHist.IsEmpty())
+                OutLine += FString::Printf(
+                    TEXT(", log directions p %.2f"), ChiSquareHomogeneity(Run.SideHist, Probe.SideHist));
         }
         return Failures;
     }
@@ -1062,6 +1176,128 @@ namespace
                 }
     }
 
+    // A huge mushroom probe (S9d part 2, the manager's call Q3) against TreeTestCount of ours on its column, each from
+    // its own stream: the placed rate; caps exactly 45 per mushroom (scout J's exact rule 6); stems per mushroom (the
+    // probe's cells less 45) by CheckMeans' rule; the cap's top dy histogram (chi-square homogeneity); the reach and
+    // the blocks exactly; and each of the probe's examples cell for cell against our first mushroom of its height (ours
+    // draws nothing but the height). Returns the failures and a summary line.
+    TArray<FString> CompareMushrooms(
+        const FTreeTestKit& Kit, const FVoxelHugeMushroomConfig& Config, const FTreeProbe& Probe, FString& OutLine)
+    {
+        const FVoxelBlockTable& Table = *Kit.Table;
+        const TSharedRef<FVoxelColumn> Column = MakeProbeColumn(Table, Probe);
+        const FVoxelColumn* Around[9];
+        for (const FVoxelColumn*& Each : Around)
+            Each = &*Column;
+        FVoxelDecorationContext Context(FIntPoint(0, 0), Around, &Table);
+        const FIntVector Origin(8, 8, Probe.OriginZ);
+        TArray<FVoxelPlantWrite> Writes;
+        const auto Emit = [&Writes](const FVoxelPlantWrite& Write) { Writes.Add(Write); };
+        const FVoxelPlantEnvironment Env{
+            Table, Kit.Survival, Kit.Predicates, Kit.Providers, Context, Kit.UpperOf, Emit};
+        const int32 CapBlock = Config.Cap.IsEmpty() ? INDEX_NONE : Table.Get(Config.Cap[0].Value).Block;
+        const int32 StemBlock = Table.Get(Config.Stem).Block;
+        int32 Placed = 0, BadCaps = 0, Reach = 0;
+        TArray<double> Stems;
+        TMap<int32, int64> Tops;
+        TSet<int32> Blocks;
+        TMap<int32, TMap<FIntVector, uint16>> ByTop;
+        for (int32 Index = 0; Index < TreeTestCount; ++Index)
+        {
+            Writes.Reset();
+            FVoxelXoroshiro Random(VoxelRandom::Hash64(TreeTestSeed, VoxelRandom::Salt("tree test"), Index, 0));
+            if (!VoxelBigVegetation::PlaceHugeMushroom(Config, Origin, Random, Env)) continue;
+            ++Placed;
+            int32 Caps = 0, StemCount = 0, Top = MIN_int32;
+            TMap<FIntVector, uint16> Cells;
+            for (const FVoxelPlantWrite& Write : Writes)
+            {
+                const int32 Block = Table.Get(Write.State).Block;
+                Blocks.Add(Block);
+                Caps += Block == CapBlock;
+                StemCount += Block == StemBlock;
+                Top = FMath::Max(Top, Write.Cell.Z - Origin.Z);
+                Reach = FMath::Max(
+                    Reach, FMath::Max(FMath::Abs(Write.Cell.X - Origin.X), FMath::Abs(Write.Cell.Y - Origin.Y)));
+                Cells.Add(Write.Cell - Origin, Write.State);
+            }
+            BadCaps += Caps != 45;
+            Stems.Add(StemCount);
+            ++Tops.FindOrAdd(Top);
+            if (!ByTop.Contains(Top)) ByTop.Add(Top, MoveTemp(Cells));
+        }
+        TArray<FString> Failures;
+        const double Rate = double(Placed) / TreeTestCount;
+        const double RateP = BinomialTwoSided(Probe.Placed, Probe.Tries, Rate);
+        OutLine = FString::Printf(TEXT("%s: placed %.0f%%/%.0f%% (p %.2f)"), *Probe.Name, 100 * Rate,
+            100. * Probe.Placed / FMath::Max(Probe.Tries, 1), RateP);
+        if (RateP < 0.01) Failures.Add(TEXT("placed rate"));
+        if (!Placed) return Failures;
+        OutLine += FString::Printf(TEXT(", caps not 45 on %d"), BadCaps);
+        if (BadCaps) Failures.Add(FString::Printf(TEXT("%d mushrooms without exactly 45 caps"), BadCaps));
+        TArray<double> TheirStems;
+        for (const double Cells : Probe.Cells)
+            TheirStems.Add(Cells - 45);
+        double OurMean, OurDeviation, TheirMean, TheirDeviation;
+        MeanAndDeviation(Stems, OurMean, OurDeviation);
+        MeanAndDeviation(TheirStems, TheirMean, TheirDeviation);
+        const double Error = FMath::Sqrt(FMath::Square(TheirDeviation) / FMath::Max(TheirStems.Num(), 1) +
+            FMath::Square(OurDeviation) / FMath::Max(Stems.Num(), 1));
+        const double Z = Error > 0 ? (OurMean - TheirMean) / Error : (OurMean == TheirMean ? 0 : 99);
+        const double Relative = TheirMean ? (OurMean - TheirMean) / TheirMean : 0;
+        OutLine += FString::Printf(TEXT(", stems %.2f/%.2f (%+.1f%%, z %+.1f)"), OurMean, TheirMean, 100 * Relative, Z);
+        if (FMath::Abs(Relative) > 0.05 && FMath::Abs(Z) > 3)
+            Failures.Add(FString::Printf(TEXT("stems %+.1f%%"), 100 * Relative));
+        const double TopP = ChiSquareHomogeneity(Tops, Probe.CapTopHist);
+        OutLine += FString::Printf(TEXT(", cap top p %.2f, reach %d/%d"), TopP, Reach, Probe.AllReach);
+        if (TopP < 0.01) Failures.Add(TEXT("cap top histogram"));
+        if (Reach != Probe.AllReach) Failures.Add(TEXT("reach"));
+        for (const int32 Block : Blocks)
+        {
+            bool bSeen = false;
+            for (const FString& Id : Probe.Blocks)
+                bSeen |= Table.FindBlock(Id) == Block;
+            if (!bSeen) Failures.Add(FString::Printf(TEXT("block %d not in the probe's blocks"), Block));
+        }
+        // The examples: each cell's state name ("block[property=value,...]") made in our table, against ours.
+        int32 Exact = 0;
+        for (const TMap<FIntVector, FString>& Example : Probe.Examples)
+        {
+            int32 Top = MIN_int32;
+            for (const TPair<FIntVector, FString>& Cell : Example)
+                Top = FMath::Max(Top, Cell.Key.Z);
+            const TMap<FIntVector, uint16>* Ours = ByTop.Find(Top);
+            FString Mismatch = Ours ? FString() : FString::Printf(TEXT("none of ours with its top at %d"), Top);
+            if (Ours && Ours->Num() != Example.Num())
+                Mismatch = FString::Printf(TEXT("%d cells against %d"), Ours->Num(), Example.Num());
+            for (const TPair<FIntVector, FString>& Cell : Example)
+            {
+                if (!Mismatch.IsEmpty()) break;
+                FString Block = Cell.Value, Properties;
+                TArray<TPair<FName, FName>> Pairs;
+                if (Cell.Value.Split(TEXT("["), &Block, &Properties))
+                {
+                    TArray<FString> Items;
+                    Properties.LeftChop(1).ParseIntoArray(Items, TEXT(","));
+                    for (const FString& Item : Items)
+                    {
+                        FString Key, Value;
+                        if (Item.Split(TEXT("="), &Key, &Value)) Pairs.Add({FName(*Key), FName(*Value)});
+                    }
+                }
+                const int32 State = Table.MakeState(Block, Pairs);
+                const uint16* Our = Ours->Find(Cell.Key);
+                if (!Our || State == INDEX_NONE || *Our != State)
+                    Mismatch =
+                        FString::Printf(TEXT("(%d, %d, %d) %s"), Cell.Key.X, Cell.Key.Y, Cell.Key.Z, *Cell.Value);
+            }
+            Exact += Mismatch.IsEmpty();
+            if (!Mismatch.IsEmpty()) Failures.Add(FString::Printf(TEXT("an example differs: %s"), *Mismatch));
+        }
+        OutLine += FString::Printf(TEXT(", examples exact %d/%d"), Exact, Probe.Examples.Num());
+        return Failures;
+    }
+
     // Runs every tree probe Filter accepts: compiles each probe's feature, simulates TreeTestCount trees in parallel
     // and compares. Probes of types or placers not built yet are listed as skipped.
     bool RunTreeProbes(FAutomationTestBase& Test, TFunctionRef<bool(const FTreeProbe&)> Filter, int32& OutRun)
@@ -1076,6 +1312,9 @@ namespace
         Test.TestEqual(TEXT("tree probes"), Files.Num(), 82);
         TArray<FTreeProbe> Probes;
         TArray<FVoxelTreeConfig> Configs;
+        // Per probe, its fallen tree (S9d part 2), else null; and the huge mushroom probes compared.
+        TArray<TSharedPtr<FVoxelFallenTreeConfig>> Fallen;
+        int32 Mushrooms = 0;
         TArray<TSet<int32>> DecoratorBlocks;
         TArray<FString> Skipped;
         for (const FString& File : Files)
@@ -1087,22 +1326,47 @@ namespace
                 return false;
             if (!Filter(Probe)) continue;
             FVoxelTreeConfig Config;
+            TSharedPtr<FVoxelFallenTreeConfig> FallenTree;
+            TSharedPtr<FVoxelHugeMushroomConfig> Mushroom;
             FString Skip;
-            if (!Kit.Compile(Test, Probe.Feature, Config, Skip))
+            if (!Kit.Compile(Test, Probe.Feature, Config, Skip, &FallenTree, &Mushroom))
             {
                 if (!Skip.IsEmpty()) Skipped.Add(FString::Printf(TEXT("%s (%s)"), *Probe.Name, *Skip));
                 continue;
             }
+            // A huge mushroom is compared here (CompareMushrooms), not by the tree rules.
+            if (Mushroom)
+            {
+                FString Line;
+                const TArray<FString> Failures = CompareMushrooms(Kit, *Mushroom, Probe, Line);
+                Test.AddInfo(Line);
+                for (const FString& Failure : Failures)
+                    Test.AddError(FString::Printf(TEXT("%s: %s"), *Probe.Name, *Failure));
+                ++Mushrooms;
+                continue;
+            }
             // The built decorators' blocks, read before a mutation changes what one writes (mutation 5).
             DecoratorBlocks.Add(GetDecoratorBlocks(Kit, Config));
+            // Mutations 1 to 7 change Config, which a fallen tree's simulation does not run (it runs FallenTree); they
+            // aim at the standing trees. Mutation 8 changes the fallen tree itself.
             ApplyTreeTestMutation(*Kit.Table, Config);
+            if (TreeTestMutation == 8 && FallenTree)
+            {
+                ++FallenTree->LogLength.Min;
+                ++FallenTree->LogLength.Max;
+            }
             Probes.Add(MoveTemp(Probe));
             Configs.Add(MoveTemp(Config));
+            Fallen.Add(FallenTree);
         }
         TArray<FTreeRun> Runs;
         Runs.SetNum(Probes.Num());
-        ParallelFor(Probes.Num(), [&](int32 Index)
-            { SimulateTrees(Kit, Configs[Index], Probes[Index], TreeTestCount, TreeTestSeed, Runs[Index]); });
+        ParallelFor(Probes.Num(),
+            [&](int32 Index)
+            {
+                SimulateTrees(
+                    Kit, Configs[Index], Probes[Index], TreeTestCount, TreeTestSeed, Runs[Index], Fallen[Index].Get());
+            });
         TArray<TMap<int32, double>> DecorationZ;
         DecorationZ.SetNum(Probes.Num());
         for (int32 Index = 0; Index < Probes.Num(); ++Index)
@@ -1134,6 +1398,28 @@ namespace
                 Test.AddError(FString::Printf(TEXT("pooled decoration %s: combined z %+.2f over %d probes"),
                     *GetName(Block.Key), Block.Value.Value, Block.Value.Key));
         }
+        // The fallen logs' directions over the fallen probes (the manager's call): each probe's chi-square statistic
+        // summed, against the sum of their degrees of freedom, so one skewed probe still counts (CompareTrees shows
+        // each probe's p).
+        double SideChi2 = 0;
+        int32 SideDof = 0, SideProbes = 0;
+        for (int32 Index = 0; Index < Probes.Num(); ++Index)
+        {
+            if (Probes[Index].SideHist.IsEmpty()) continue;
+            TPair<double, int32> Chi2;
+            ChiSquareHomogeneity(Runs[Index].SideHist, Probes[Index].SideHist, &Chi2);
+            SideChi2 += Chi2.Key;
+            SideDof += Chi2.Value;
+            ++SideProbes;
+        }
+        if (SideDof > 0)
+        {
+            const double SideP = UpperGammaQ(SideDof / 2., SideChi2 / 2);
+            Test.AddInfo(FString::Printf(TEXT("fallen log directions over %d probes: chi-square %.2f on %d degrees of "
+                                              "freedom (p %.3f)"),
+                SideProbes, SideChi2, SideDof, SideP));
+            if (SideP < 0.01) Test.AddError(FString::Printf(TEXT("fallen log directions (p %.4f)"), SideP));
+        }
         if (Skipped.Num()) Test.AddInfo(FString::Printf(TEXT("skipped: %s"), *FString::Join(Skipped, TEXT(", "))));
         // For manual runs (TreeTestCalibration > 0): each configuration's own 100-tree samples, scored as probes
         // against its TreeTestCount trees. A correct model must rarely fail the distribution rules this way. The
@@ -1159,7 +1445,7 @@ namespace
                     {
                         FTreeRun Own;
                         SimulateTrees(Kit, Configs[Index], Probes[Index], 100,
-                            TreeTestSeed + 1 + Sample + uint64(Index) * TreeTestCalibration, Own);
+                            TreeTestSeed + 1 + Sample + uint64(Index) * TreeTestCalibration, Own, Fallen[Index].Get());
                         const FTreeProbe AsProbe = MakeSampleProbe(Own, Names);
                         FString Line, Worst;
                         TArray<FString> MeanFailures, DecorationFailures;
@@ -1210,7 +1496,7 @@ namespace
                                               "decoration rule failed in %d of %d, the pooled check in %d"),
                 AnyDecoration, TreeTestCalibration, AnyPooled));
         }
-        OutRun = Probes.Num();
+        OutRun = Probes.Num() + Mushrooms;
         return true;
     }
 
@@ -1522,10 +1808,11 @@ bool FVoxelTreeShapesTest::RunTest(const FString& Parameters)
     // Every built tree configuration against its probe (scout J's oracles, the fits' harness rules): the leaves'
     // distance and persistence, the probe's blocks, one 26-connected trunk and a straight trunk's height exactly; the
     // means, the top-log histogram, leaf occupancy by an exact binomial test per cell, reach and 6-connected parts as
-    // distributions. Every built configuration runs: 33 probes since S9c (mega spruce and mega pine).
+    // distributions. Every built configuration runs: 41 probes since S9d part 2 (S9c's 33, the six fallen trees, which
+    // add their log directions, and the two huge mushrooms, CompareMushrooms).
     int32 Ran = 0;
     if (!RunTreeProbes(*this, [](const FTreeProbe& Probe) { return Probe.Ceiling == 0; }, Ran)) return false;
-    TestEqual(TEXT("probes run (a placer that stops compiling drops its probes)"), Ran, 33);
+    TestEqual(TEXT("probes run (a placer that stops compiling drops its probes)"), Ran, 41);
     return true;
 }
 

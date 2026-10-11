@@ -284,8 +284,10 @@ void FVoxelTreeBuilder::GetCells(ECell Kind, TArray<FIntVector>& Out) const
 {
     // A counting sort by Z: stable, so cells keep their order within a layer, as a stable sort by Z does.
     Out.Reset();
+    const TConstArrayView<FCell> Read = TConstArrayView<FCell>(Cells).Slice(
+        FMath::Min(DecoratedBegin, Cells.Num()), FMath::Max(0, FMath::Min(DecoratedEnd, Cells.Num()) - DecoratedBegin));
     int32 MinZ = MAX_int32, MaxZ = MIN_int32, Count = 0;
-    for (const FCell& Cell : Cells)
+    for (const FCell& Cell : Read)
         if (Cell.Kind == Kind)
         {
             MinZ = FMath::Min(MinZ, Cell.Position.Z);
@@ -295,12 +297,12 @@ void FVoxelTreeBuilder::GetCells(ECell Kind, TArray<FIntVector>& Out) const
     if (!Count) return;
     TArray<int32, TInlineAllocator<128>> Next;
     Next.Init(0, MaxZ - MinZ + 2);
-    for (const FCell& Cell : Cells)
+    for (const FCell& Cell : Read)
         if (Cell.Kind == Kind) ++Next[Cell.Position.Z - MinZ + 1];
     for (int32 Layer = 1; Layer < Next.Num(); ++Layer)
         Next[Layer] += Next[Layer - 1];
     Out.SetNumUninitialized(Count);
-    for (const FCell& Cell : Cells)
+    for (const FCell& Cell : Read)
         if (Cell.Kind == Kind) Out[Next[Cell.Position.Z - MinZ]++] = Cell.Position;
 }
 
@@ -408,17 +410,9 @@ bool VoxelTreeFeature::Compile(const FVoxelFeatureGraph& Graph, int32 Node, FVox
         (OutSkip.IsEmpty() && !Provider(TEXT("below_trunk_provider"), Out.BelowTrunkProvider, false)))
         return false;
     if (!OutSkip.IsEmpty()) return true;
+    if (!SetLogStates(Table, Providers, Out, OutError)) return false;
+    static const FName Distance(TEXT("distance")), Waterlogged(TEXT("waterlogged"));
     TArray<uint16> States;
-    Providers.GetStates(Out.TrunkProvider, States);
-    if (States.IsEmpty()) return TreeFail(OutError, TEXT("tree without a trunk state"));
-    static const FName Axis(TEXT("axis")), Distance(TEXT("distance")), Waterlogged(TEXT("waterlogged"));
-    static const FName AxisNames[3] = {TEXT("x"), TEXT("z"), TEXT("y")};
-    for (int32 Index = 0; Index < 3; ++Index)
-    {
-        const int32 State = Table.WithValue(States[0], Axis, AxisNames[Index]);
-        Out.LogStates[Index] = State == INDEX_NONE ? States[0] : uint16(State);
-    }
-    States.Reset();
     Providers.GetStates(Out.FoliageProvider, States);
     for (const uint16 Leaf : States)
     {
@@ -433,32 +427,11 @@ bool VoxelTreeFeature::Compile(const FVoxelFeatureGraph& Graph, int32 Node, FVox
             }
     }
 
-    // Logs and leaves go into air or replaceable_by_trees.
-    const FVoxelBlockSet* Replaceable = Tags.Find(TEXT("minecraft:replaceable_by_trees"), OutError);
-    if (!Replaceable) return false;
-    FVoxelBlockSet Free = *Replaceable;
-    Free.Add(0);
-    Out.FreeSet = Predicates.AddSet(MoveTemp(Free));
+    if (!SetFreeSet(Tags, Predicates, Out, OutError)) return false;
     Out.bIgnoreVines = TreeInt(Graph, Node, TEXT("ignore_vines"), 0) != 0;
-
-    // The decorators: a type not built yet (or one whose provider is not) is left out and counted.
-    if (const FVoxelFeatureValue* Decorators = Graph.FindField(Node, TEXT("decorators")))
-        for (int32 Item = 0; Decorators->Type == EVoxelFeatureValueType::List && Item < Decorators->Count; ++Item)
-        {
-            const int32 DecoratorNode = Graph.GetNode(Graph.Items[Decorators->Index + Item]);
-            const FStringView DecoratorType = Graph.GetType(DecoratorNode);
-            const EVoxelTreeDecorator Type = VoxelTreeDecorators::FindType(DecoratorType);
-            FVoxelTreeDecoratorConfig Decorator;
-            FString DecoratorSkip;
-            if (Type != EVoxelTreeDecorator::Count &&
-                !VoxelTreeDecorators::Compile(
-                    Graph, DecoratorNode, Type, Tags, Table, Predicates, Providers, Decorator, DecoratorSkip, OutError))
-                return false;
-            if (Type == EVoxelTreeDecorator::Count || !DecoratorSkip.IsEmpty())
-                Out.SkippedDecorators.Add(FString(DecoratorType));
-            else
-                Out.Decorators.Add(MoveTemp(Decorator));
-        }
+    if (!CompileDecorators(Graph, Graph.FindField(Node, TEXT("decorators")), Tags, Table, Predicates, Providers,
+            Out.Decorators, Out.SkippedDecorators, OutError))
+        return false;
 
     const int32 TreeReach =
         FMath::Max(VoxelTrunkPlacers::GetReach(Out.Trunk) + VoxelFoliagePlacers::GetReach(Out.Foliage),
@@ -471,6 +444,59 @@ bool VoxelTreeFeature::Compile(const FVoxelFeatureGraph& Graph, int32 Node, FVox
         return TreeFail(OutError,
             FString::Printf(TEXT("a tree reaching %d blocks, past the 3 x 3's margin of %d"), Out.Reach,
                 VoxelConstants::ColumnSize));
+    return true;
+}
+
+bool VoxelTreeFeature::SetLogStates(
+    const FVoxelBlockTable& Table, const FVoxelStateProviders& Providers, FVoxelTreeConfig& Out, FString* OutError)
+{
+    TArray<uint16> States;
+    Providers.GetStates(Out.TrunkProvider, States);
+    if (States.IsEmpty()) return TreeFail(OutError, TEXT("tree without a trunk state"));
+    static const FName Axis(TEXT("axis"));
+    static const FName AxisNames[3] = {TEXT("x"), TEXT("z"), TEXT("y")};
+    for (int32 Index = 0; Index < 3; ++Index)
+    {
+        const int32 State = Table.WithValue(States[0], Axis, AxisNames[Index]);
+        Out.LogStates[Index] = State == INDEX_NONE ? States[0] : uint16(State);
+    }
+    return true;
+}
+
+bool VoxelTreeFeature::SetFreeSet(
+    FVoxelBlockTags& Tags, FVoxelBlockPredicates& Predicates, FVoxelTreeConfig& Out, FString* OutError)
+{
+    // Logs and leaves go into air or replaceable_by_trees.
+    const FVoxelBlockSet* Replaceable = Tags.Find(TEXT("minecraft:replaceable_by_trees"), OutError);
+    if (!Replaceable) return false;
+    FVoxelBlockSet Free = *Replaceable;
+    Free.Add(0);
+    Out.FreeSet = Predicates.AddSet(MoveTemp(Free));
+    return true;
+}
+
+bool VoxelTreeFeature::CompileDecorators(const FVoxelFeatureGraph& Graph, const FVoxelFeatureValue* List,
+    FVoxelBlockTags& Tags, const FVoxelBlockTable& Table, FVoxelBlockPredicates& Predicates,
+    FVoxelStateProviders& Providers, TArray<FVoxelTreeDecoratorConfig>& Out, TArray<FString>& OutSkipped,
+    FString* OutError)
+{
+    // A type not built yet (or one whose provider is not) is left out and counted.
+    for (int32 Item = 0; List && List->Type == EVoxelFeatureValueType::List && Item < List->Count; ++Item)
+    {
+        const int32 DecoratorNode = Graph.GetNode(Graph.Items[List->Index + Item]);
+        const FStringView DecoratorType = Graph.GetType(DecoratorNode);
+        const EVoxelTreeDecorator Type = VoxelTreeDecorators::FindType(DecoratorType);
+        FVoxelTreeDecoratorConfig Decorator;
+        FString DecoratorSkip;
+        if (Type != EVoxelTreeDecorator::Count &&
+            !VoxelTreeDecorators::Compile(
+                Graph, DecoratorNode, Type, Tags, Table, Predicates, Providers, Decorator, DecoratorSkip, OutError))
+            return false;
+        if (Type == EVoxelTreeDecorator::Count || !DecoratorSkip.IsEmpty())
+            OutSkipped.Add(FString(DecoratorType));
+        else
+            Out.Add(MoveTemp(Decorator));
+    }
     return true;
 }
 
