@@ -1,6 +1,8 @@
 #include "Voxel/VoxelFluidSystem.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "Engine/World.h"
+#include "Foundation/FoundationBlockRegistry.h"
+#include "GameplayTagContainer.h"
 #include "HAL/IConsoleManager.h"
 #include "Storage/VoxelColumn.h"
 #include "Voxel/VoxelColumnPipeline.h"
@@ -73,9 +75,14 @@ bool FVoxelFluidSystem::Start(FFoundationBlockWorld& InWorld, TSharedRef<const F
         Table.Reset();
         return false;
     }
+    // Requested here, after the project's tags load: without it no block washes away (W2b).
+    const FGameplayTag WashedAway = FGameplayTag::RequestGameplayTag(TEXT("Block.WashedAwayByFluids"), false);
+    if (!WashedAway.IsValid())
+        UE_LOG(
+            LogUnnamedVoxel, Error, TEXT("Fluids: the tag Block.WashedAwayByFluids is missing; no block washes away."));
     Cells.SetNum(Table->GetStateCount());
     for (int32 State = 0; State < Cells.Num(); ++State)
-        Cells[State] = MakeCell(uint16(State));
+        Cells[State] = MakeCell(uint16(State), InWorld.GetRegistry(), WashedAway);
 
     World = &InWorld;
     GetPipeline = MoveTemp(InGetPipeline);
@@ -109,35 +116,55 @@ void FVoxelFluidSystem::Reset()
     bHasRing = false;
 }
 
-FVoxelFluidCell FVoxelFluidSystem::MakeCell(uint16 State) const
+FVoxelFluidCell FVoxelFluidSystem::MakeCell(
+    uint16 State, const FFoundationBlockRegistry& Registry, const FGameplayTag& WashedAway) const
 {
+    static const FName Waterlogged(TEXT("waterlogged")), True(TEXT("true"));
     const FVoxelStateInfo& Info = Table->Get(State);
     FVoxelFluidCell Cell;
     Cell.Fluid = Info.Fluid;
     Cell.Level = Info.Fluid == EVoxelFluid::None ? 0 : Info.FluidLevel;
     Cell.bSolid = Info.bSolid;
-    switch (Info.Shape)
+    // Waterloggable blocks hold only a water source and flowing fluid never enters them [P w_slab_wall,
+    // w_waterlogged_bottom]; a waterlogged one is a source [P w_slab]. The table carries a model state's water, a
+    // slab's only its property.
+    Cell.bWaterloggable = Table->WithValue(State, Waterlogged, True) != INDEX_NONE;
+    if (Table->GetValue(State, Waterlogged) == True)
     {
-    case EVoxelShape::Air:
-    case EVoxelShape::Fluid:
-        break;
-    case EVoxelShape::Full:
-        Cell.Walls = 0x3F;
-        break;
-    case EVoxelShape::SlabBottom:
-        Cell.Walls = uint8(1u << int32(EVoxelFace::Down));
-        Cell.bWaterloggable = true;
-        break;
-    case EVoxelShape::SlabTop:
-        Cell.Walls = uint8(1u << int32(EVoxelFace::Up));
-        Cell.bWaterloggable = true;
-        break;
-    default:
-        // Models and snow layers holding no fluid (plants, torches, doors): walls until W2b's washed-away tags, so
-        // fluid never removes a block unseen. Those holding water (kelp, seagrass) are its sources.
-        if (Cell.Fluid == EVoxelFluid::None) Cell.Walls = 0x3F;
-        break;
+        Cell.Fluid = EVoxelFluid::Water;
+        Cell.Level = 0;
     }
+    // In 26.3's washed_away_by_fluids (plants, torches, snow): an open cell that blocks no motion, which fluid
+    // replaces and the block pops [P w_slab_wall: poppy, short grass, oak sapling and torch]. Its shape doesn't
+    // matter (powder snow is a cube).
+    const FFoundationBlockType& Type = Registry.GetBlock(FFoundationBlockState{State});
+    if (Cell.Fluid == EVoxelFluid::None && WashedAway.IsValid() && Type.Tags.HasTag(WashedAway))
+    {
+        Cell.bWashedAway = true;
+        Cell.bSolid = false;
+    }
+    else
+        switch (Info.Shape)
+        {
+        case EVoxelShape::Air:
+        case EVoxelShape::Fluid:
+            break;
+        case EVoxelShape::Full:
+            Cell.Walls = 0x3F;
+            break;
+        case EVoxelShape::SlabBottom:
+            Cell.Walls = uint8(1u << int32(EVoxelFace::Down));
+            break;
+        case EVoxelShape::SlabTop:
+            Cell.Walls = uint8(1u << int32(EVoxelFace::Up));
+            break;
+        default:
+            // The other models and layers holding no fluid are walls: 26.3's blocks_fluid_flow (cactus, bamboo,
+            // dripstone), and sugar cane, in neither tag (not probed). Those holding water (kelp, seagrass,
+            // waterlogged ones) are its sources.
+            if (Cell.Fluid == EVoxelFluid::None) Cell.Walls = 0x3F;
+            break;
+        }
     for (int32 Block = 1; Block < UE_ARRAY_COUNT(FluidBlockNames); ++Block)
         if (State == BlockStates[Block] || Info.Block == Table->Get(BlockStates[Block]).Block)
         {
@@ -331,7 +358,7 @@ void FVoxelFluidSystem::Flush()
     if (OverlayOrder.IsEmpty()) return;
     const uint64 Start = FPlatformTime::Cycles64();
     const int32 Written = OverlayOrder.Num();
-    TArray<TPair<FIntVector, FFoundationBlockState>> Changes;
+    TArray<TPair<FIntVector, FFoundationBlockState>> Changes, Replaced;
     Changes.Reserve(OverlayOrder.Num());
     for (const FIntVector& Cell : OverlayOrder)
     {
@@ -342,7 +369,10 @@ void FVoxelFluidSystem::Flush()
             ++Stats.Lost;
             continue;
         }
-        if (World->Get(Cell).State.Id != State) Changes.Add({Cell, FFoundationBlockState{State}});
+        const FFoundationBlockState Before = World->Get(Cell).State;
+        if (Before.Id == State) continue;
+        Changes.Add({Cell, FFoundationBlockState{State}});
+        if (OnFlushed) Replaced.Add({Cell, Before});
     }
     Overlay.Reset();
     OverlayOrder.Reset();
@@ -351,6 +381,9 @@ void FVoxelFluidSystem::Flush()
     World->SetMany(Changes);
     bFlushing = false;
     bCached = false;
+    // Then the blocks around settle, as after an edit; what they change wakes the fluid through the hook.
+    for (const TPair<FIntVector, FFoundationBlockState>& Change : Replaced)
+        OnFlushed(Change.Key, Change.Value, GetCell(Change.Value.Id).bWashedAway);
     const double PerCell = double(FPlatformTime::Cycles64() - Start) / Written;
     FlushCyclesPerCell = FMath::Max(FlushCyclesPerCell, PerCell);
 }
@@ -358,12 +391,18 @@ void FVoxelFluidSystem::Flush()
 void FVoxelFluidSystem::OnSet(const FIntVector& Cell, FFoundationBlockState Before, FFoundationBlockState After)
 {
     if (bFlushing || !World || !Settings.bEnabled || Before == After) return;
+    // A flush's settling sets cells too, inside Advance: its pipeline stays for the frame.
+    FVoxelColumnPipeline* const Outer = Pipeline;
     Pipeline = GetPipeline();
-    if (!Pipeline) return;
+    if (!Pipeline)
+    {
+        Pipeline = Outer;
+        return;
+    }
     bCached = false;
     VoxelFluidRules::WakeAround(*this, Scheduler, Tick, Cell, Options, true);
     Flush();
-    Pipeline = nullptr;
+    Pipeline = Outer;
     bCached = false;
 }
 

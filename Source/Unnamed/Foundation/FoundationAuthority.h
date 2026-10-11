@@ -293,6 +293,10 @@ public:
     // Called after a committed block interaction, before any requested reset: the owner reacts to
     // interactions the authority does not define itself (lab controls).
     TFunction<void(FName Interaction)> OnInteraction;
+    // After a fluid replaced Before at Cell (the voxel world's FVoxelFluidSystem, water and sky W2b): a washed-away
+    // block pops with no drop (plan Q7), then the plants around settle as after an edit (the other half of a double
+    // plant, a lily pad over drained water).
+    void SettleAfterFluid(const FIntVector& Cell, FFoundationBlockState Before, bool bWashedAway);
 
     // Shared queries: the same code serves previews, caller claims and validation.
     FFoundationHit Resolve(const FFoundationPlayerFacts& Facts) const;

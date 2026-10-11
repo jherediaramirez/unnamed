@@ -6,6 +6,8 @@
 #include "Fluids/VoxelFluidScheduler.h"
 #include "Streaming/VoxelStreamingPlanner.h"
 
+class FFoundationBlockRegistry;
+struct FGameplayTag;
 class FVoxelBlockTable;
 class FVoxelColumn;
 class FVoxelColumnPipeline;
@@ -81,6 +83,10 @@ public:
 
     // The block world's hook: a change wakes the fluid around it.
     void OnSet(const FIntVector& Cell, FFoundationBlockState Before, FFoundationBlockState After);
+    // After a flush, every cell it changed with the state the fluid replaced, and whether that block was washed away
+    // (water and sky W2b): AVoxelWorld's authority pops it with no drop (plan Q7) and settles the plants around it.
+    // Changes made here wake the fluid through the hook, as edits do.
+    TFunction<void(const FIntVector& Cell, FFoundationBlockState Before, bool bWashedAway)> OnFlushed;
 
     // The rules' world (VoxelFluidRules' TWorld). Get reads the overlay, then the final columns (unknown in a column
     // that is not final); Set writes the overlay.
@@ -105,7 +111,8 @@ private:
     void UpdateRing(const FVoxelStreamingRings& Rings);
     // Writes the overlay through the block world.
     void Flush();
-    FVoxelFluidCell MakeCell(uint16 State) const;
+    FVoxelFluidCell MakeCell(
+        uint16 State, const FFoundationBlockRegistry& Registry, const FGameplayTag& WashedAway) const;
 
     struct FOverlayCell
     {

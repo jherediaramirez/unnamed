@@ -1,12 +1,19 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Blocks/VoxelBlockTable.h"
 #include "Clock/VoxelWorldClock.h"
+#include "Dom/JsonObject.h"
 #include "Fluids/VoxelFluidRules.h"
 #include "Fluids/VoxelFluidScheduler.h"
 #include "Fluids/VoxelFluidTestWorld.h"
+#include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationBlocks.h"
+#include "Foundation/FoundationInteractionSettings.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 #include "Storage/VoxelColumn.h"
 #include "Streaming/VoxelStreamingPlanner.h"
 #include "Terrain/VoxelFlatTerrain.h"
@@ -196,8 +203,9 @@ namespace
         }
     };
 
-    // The game's wiring without a world: a pipeline, the block world over its columns (wide bounds,
-    // FVoxelBlockStorage) and the fluids on it, enabled with no budget on the whole ring once started.
+    // The game's wiring without a world: a pipeline, the authority's block world over its columns (wide bounds,
+    // FVoxelBlockStorage) and the fluids on it, enabled with no budget on the whole ring once started. As in
+    // AVoxelWorld, the authority pops what the fluid washes away and settles the plants after its writes (W2b).
     struct FFluidWorldRun
     {
         FFluidWorldRun(const FFluidWorldContext& InContext, bool bManualJobs)
@@ -208,6 +216,7 @@ namespace
             World.BoundsMax = FIntVector(30000000, 30000000, VoxelConstants::MaxZ);
             FVoxelColumnPipeline* Raw = Pipeline.Get();
             World.SetStorage(MakeUnique<FVoxelBlockStorage>([Raw]() { return Raw; }));
+            Authority.PlantSurvival = VoxelBlocks::GetPlantSurvival(World.GetRegistry());
             Settings.bEnabled = true;
             Settings.BudgetMs = 0;
             Settings.SimRadius = -1;
@@ -215,7 +224,8 @@ namespace
 
         const FFluidWorldContext& Context;
         TUniquePtr<FVoxelColumnPipeline> Pipeline;
-        FFoundationBlockWorld World;
+        FFoundationAuthority Authority;
+        FFoundationBlockWorld& World = Authority.World;
         FVoxelFluidSystem Fluids;
         FVoxelFluidSystem::FSettings Settings;
 
@@ -231,8 +241,19 @@ namespace
             FVoxelColumnPipeline* Raw = Pipeline.Get();
             const bool bStarted = Fluids.Start(World, Context.Table, [Raw]() { return Raw; }, FVoxelFluidOptions(), 0);
             if (!Test.TestTrue(TEXT("the fluids start on the default table"), bStarted)) return false;
+            Fluids.OnFlushed = [this](const FIntVector& Cell, FFoundationBlockState Before, bool bWashedAway)
+            { Authority.SettleAfterFluid(Cell, Before, bWashedAway); };
             Fluids.Advance(0, Settings);
             return true;
+        }
+
+        // A player on the project's rules whose inventory takes nothing at the start: a drop would land there.
+        int32 AddPlayer()
+        {
+            UFoundationInteractionSettings::Get().BuildRules(Authority.Rules);
+            Authority.Options.bInfiniteSupply = false;
+            Authority.Options.FiniteBlockCount = 0;
+            return Authority.AddPlayer();
         }
 
         // An edit, as the player makes one: the hook wakes the fluid around it.
@@ -855,6 +876,290 @@ bool FVoxelFluidWorldStaleMeshTest::RunTest(const FString& Parameters)
         bShown ? TEXT("was shown") : TEXT("was not shown"), StaleBefore, StaleAfter, Dirty, TakenC,
         Status.DirtySections == 0 ? TEXT("clean") : TEXT("dirty")));
     return bShown && StaleAfter == StaleBefore + 1 && Status.DirtySections == 0 && TakenC == 2;
+}
+
+namespace
+{
+    // A scout M probe (W1's oracles, Source/Unnamed/Tests/VoxelFluidOracles.json) for the game world (W2b): its setup
+    // and fluid commands as edits of the real blocks, in /fill's order, and its settled cells with the tick each last
+    // changed. The probe's (x, height, z) is the cell (x, z, height); its floor top is the run's.
+    struct FFluidWorldProbe
+    {
+        TArray<TPair<FIntVector, FString>> Edits;
+        TArray<TTuple<FIntVector, FString, int32>> Cells;
+        FFluidWorldBox Box;
+        int32 SettledBy = 0;
+    };
+
+    bool LoadFluidWorldProbe(FAutomationTestBase& Test, const TCHAR* Name, FFluidWorldProbe& Out)
+    {
+        const FString Path = FPaths::ProjectDir() / TEXT("Source/Unnamed/Tests/VoxelFluidOracles.json");
+        FString Text;
+        TSharedPtr<FJsonObject> Root;
+        const TArray<TSharedPtr<FJsonValue>>* Scenarios = nullptr;
+        const TSharedPtr<FJsonObject>* Scenario = nullptr;
+        if (FFileHelper::LoadFileToString(Text, *Path) &&
+            FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Root) && Root.IsValid() &&
+            Root->TryGetArrayField(TEXT("scenarios"), Scenarios))
+            for (const TSharedPtr<FJsonValue>& Value : *Scenarios)
+                if (Value->TryGetObject(Scenario) && (*Scenario)->GetStringField(TEXT("name")) == Name)
+                    break;
+                else
+                    Scenario = nullptr;
+        if (!Scenario)
+        {
+            Test.AddError(FString::Printf(TEXT("%s has no scenario %s"), *Path, Name));
+            return false;
+        }
+        const auto Number = [](const TArray<TSharedPtr<FJsonValue>>& Values, int32 Index)
+        { return int32(Values[Index]->AsNumber()); };
+        const auto Cell = [&Number](const TArray<TSharedPtr<FJsonValue>>& Values, int32 First)
+        { return FIntVector(Number(Values, First), Number(Values, First + 2), Number(Values, First + 1)); };
+        for (const TCHAR* Field : {TEXT("setup"), TEXT("fluids")})
+            for (const TSharedPtr<FJsonValue>& Command : (*Scenario)->GetArrayField(Field))
+            {
+                const TArray<TSharedPtr<FJsonValue>>& Fields = Command->AsArray();
+                const FIntVector From = Cell(Fields, 1);
+                const FIntVector To = Fields[0]->AsString() == TEXT("fill") ? Cell(Fields, 4) : From;
+                // /fill's order: x fastest, then height, then z.
+                for (int32 Y = FMath::Min(From.Y, To.Y); Y <= FMath::Max(From.Y, To.Y); ++Y)
+                    for (int32 Z = FMath::Min(From.Z, To.Z); Z <= FMath::Max(From.Z, To.Z); ++Z)
+                        for (int32 X = FMath::Min(From.X, To.X); X <= FMath::Max(From.X, To.X); ++X)
+                            Out.Edits.Emplace(FIntVector(X, Y, Z), Fields.Last()->AsString());
+            }
+        for (const TSharedPtr<FJsonValue>& Value : (*Scenario)->GetArrayField(TEXT("cells")))
+        {
+            const TArray<TSharedPtr<FJsonValue>>& Fields = Value->AsArray();
+            Out.Cells.Emplace(Cell(Fields, 0), Fields[3]->AsString(), Number(Fields, 4));
+        }
+        // [[x min, max], [height min, max], [z min, max]].
+        const TArray<TSharedPtr<FJsonValue>>& Box = (*Scenario)->GetArrayField(TEXT("box"));
+        const auto Bound = [&Box](int32 Axis, int32 End) { return int32(Box[Axis]->AsArray()[End]->AsNumber()); };
+        Out.Box.Min = FIntVector(Bound(0, 0), Bound(2, 0), Bound(1, 0));
+        Out.Box.Max = FIntVector(Bound(0, 1), Bound(2, 1), Bound(1, 1));
+        Out.SettledBy = int32((*Scenario)->GetNumberField(TEXT("settled_by")));
+        return Test.TestTrue(FString::Printf(TEXT("%s pins cells"), Name), !Out.Cells.IsEmpty());
+    }
+
+    FFoundationBlockState ParseFluidWorldState(
+        FAutomationTestBase& Test, const FFluidWorldRun& Run, const FString& Text)
+    {
+        FFoundationBlockState State;
+        if (!Run.World.GetRegistry().Parse(Text, State))
+            Test.AddError(FString::Printf(TEXT("%s does not parse"), *Text));
+        return State;
+    }
+
+    // Replays the probe Name in Run, streamed and started around the origin, through the block world's edits, and pins
+    // its settled cells with the tick each last changed; the rest of its box is air or stone, which the probe left out.
+    bool RunFluidWorldProbe(FAutomationTestBase& Test, const TCHAR* Name, FFluidWorldRun& Run)
+    {
+        FFluidWorldProbe Probe;
+        if (!LoadFluidWorldProbe(Test, Name, Probe) || !Run.Stream(Test, FIntPoint(0, 0), Name) || !Run.Start(Test))
+            return false;
+        TMap<FIntVector, int32> Changed;
+        for (const TPair<FIntVector, FString>& Edit : Probe.Edits)
+        {
+            // The oak sapling isn't imported: a dandelion, washed away as well, stands in.
+            const FString Block = Edit.Value == TEXT("oak_sapling") ? FString(TEXT("dandelion")) : Edit.Value;
+            Run.World.Set(Edit.Key, ParseFluidWorldState(Test, Run, Block));
+            Changed.Add(Edit.Key, 0);
+        }
+        TArray<FIntVector> Cells;
+        Probe.Box.ForEach([&Cells](const FIntVector& Cell) { Cells.Add(Cell); });
+        TArray<FFoundationBlockState> Last;
+        for (const FIntVector& Cell : Cells)
+            Last.Add(Run.World.Get(Cell).State);
+        for (int32 Tick = 1; Tick <= Probe.SettledBy + 60; ++Tick)
+        {
+            Run.Step();
+            for (int32 Index = 0; Index < Cells.Num(); ++Index)
+            {
+                const FFoundationBlockState Now = Run.World.Get(Cells[Index]).State;
+                if (!(Now == Last[Index])) Changed.Add(Cells[Index], Tick);
+                Last[Index] = Now;
+            }
+        }
+        Test.TestTrue(FString::Printf(TEXT("%s: settled %d ticks after its last change"), Name, 60), Run.IsSettled());
+        const FFoundationBlockRegistry& Registry = Run.World.GetRegistry();
+        TSet<FIntVector> Pinned;
+        int32 Differ = 0;
+        FString First;
+        const auto Report = [&](const FIntVector& Cell, const FString& Expected)
+        {
+            const int32* When = Changed.Find(Cell);
+            if (Differ++ < FluidWorldErrorCap)
+                First += FString::Printf(TEXT(" %s: %s at %d, expected %s;"), *GetFluidWorldCellText(Cell),
+                    *Registry.ToString(Run.World.Get(Cell).State), When ? *When : -1, *Expected);
+        };
+        for (const TTuple<FIntVector, FString, int32>& Expected : Probe.Cells)
+        {
+            const FIntVector& Cell = Expected.Get<0>();
+            Pinned.Add(Cell);
+            const int32* When = Changed.Find(Cell);
+            if (!(Run.World.Get(Cell).State == ParseFluidWorldState(Test, Run, Expected.Get<1>())) || !When ||
+                *When != Expected.Get<2>())
+                Report(Cell, FString::Printf(TEXT("%s at %d"), *Expected.Get<1>(), Expected.Get<2>()));
+        }
+        const FFoundationBlockState Stone = ParseFluidWorldState(Test, Run, TEXT("stone"));
+        for (const FIntVector& Cell : Cells)
+        {
+            const FFoundationBlockState Have = Run.World.Get(Cell).State;
+            if (!Pinned.Contains(Cell) && !Have.IsAir() && !(Have == Stone)) Report(Cell, TEXT("air or stone"));
+        }
+        if (Differ != 0)
+            Test.AddError(FString::Printf(TEXT("%s: %d cells differ from the probe:%s"), Name, Differ, *First));
+        else
+            Test.AddInfo(FString::Printf(
+                TEXT("%s: %d cells and the tick each last changed equal the probe's"), Name, Probe.Cells.Num()));
+        return Differ == 0;
+    }
+
+    // The blocks of the authority's Popped events in Run, sorted, and an error for any other event.
+    FString GetFluidWorldPops(FAutomationTestBase& Test, const FFluidWorldRun& Run)
+    {
+        TArray<FString> Pops;
+        for (const FFoundationEvent& Event : Run.Authority.GetEvents())
+            if (Event.Kind == EFoundationEventKind::Popped)
+                Pops.Add(Run.World.GetRegistry().ToString(Event.State));
+            else
+                Test.AddError(FString::Printf(TEXT("an event of kind %d besides the pops"), int32(Event.Kind)));
+        Pops.Sort();
+        return FString::Join(Pops, TEXT(", "));
+    }
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelFluidWorldSlabTest, "Unnamed.Voxel.Fluid.World.Slab",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelFluidWorldSlabTest::RunTest(const FString& Parameters)
+{
+    // Scout M's w_slab in game (W2b): a waterlogged bottom slab (the property alone; the table reads slabs dry) is a
+    // source, and its flow equals the probe's, cell for cell and tick for tick.
+    if (!HasFluidWorldAssets(*this)) return true;
+    const FFluidWorldContext Context;
+    FFluidWorldRun Run(Context, false);
+    return RunFluidWorldProbe(*this, TEXT("w_slab"), Run);
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelFluidWorldSlabWallTest, "Unnamed.Voxel.Fluid.World.SlabWall",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelFluidWorldSlabWallTest::RunTest(const FString& Parameters)
+{
+    // Scout M's w_slab_wall in game (W2b): flowing water never enters the two slabs, and takes the cells of a poppy, a
+    // short grass, a torch and an oak sapling (a dandelion here). Each pops once with no drop (plan Q7): a player's
+    // inventory is untouched. (On the probe's stone floor, the authority's survival rules may pop a plant as the water
+    // arrives beside it; the water takes its cell on the same tick either way.)
+    if (!HasFluidWorldAssets(*this)) return true;
+    const FFluidWorldContext Context;
+    FFluidWorldRun Run(Context, false);
+    const int32 Player = Run.AddPlayer();
+    const int32 Revision = Run.Authority.FindPlayer(Player)->Inventory.Revision;
+    const bool bProbe = RunFluidWorldProbe(*this, TEXT("w_slab_wall"), Run);
+    TestEqual(TEXT("the four plants pop, each once"), GetFluidWorldPops(*this, Run),
+        FString(TEXT("dandelion, poppy, short_grass, torch")));
+    TestEqual(TEXT("nothing drops"), Run.Authority.FindPlayer(Player)->Inventory.Revision, Revision);
+    return bProbe;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelFluidWorldWaterloggedBottomTest, "Unnamed.Voxel.Fluid.World.WaterloggedBottom",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelFluidWorldWaterloggedBottomTest::RunTest(const FString& Parameters)
+{
+    // Scout M's w_waterlogged_bottom in game (W2b): a water source over a dry bottom slab, walled in, leaves the slab
+    // dry (waterlogged=false), and the rest equals the probe's.
+    if (!HasFluidWorldAssets(*this)) return true;
+    const FFluidWorldContext Context;
+    FFluidWorldRun Run(Context, false);
+    return RunFluidWorldProbe(*this, TEXT("w_waterlogged_bottom"), Run);
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelFluidWorldBreakWaterloggedTest, "Unnamed.Voxel.Fluid.World.BreakWaterlogged",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelFluidWorldBreakWaterloggedTest::RunTest(const FString& Parameters)
+{
+    // What breaking a waterlogged slab leaves (W2b): its remainder, a water source, which the authority writes
+    // (Unnamed.Foundation.Interaction.WaterRemains pins the command path). Walled in on four sides over a one-cell
+    // hole, the waterlogged slab holds still; its remainder falls into the hole, as W1's oracle world does with a
+    // source placed there, at every tick.
+    if (!HasFluidWorldAssets(*this)) return true;
+    const FFluidWorldContext Context;
+    FFluidWorldRun Run(Context, false);
+    if (!Run.Stream(*this, FIntPoint(0, 0), TEXT("break")) || !Run.Start(*this)) return false;
+    FVoxelFluidTestWorld Oracle(FluidWorldFloorTop);
+    const FIntVector Slab(0, 0, 64), Hole(0, 0, 63);
+    const FFoundationBlockState Stone = ParseFluidWorldState(*this, Run, TEXT("stone"));
+    const FFoundationBlockState Wet =
+        ParseFluidWorldState(*this, Run, TEXT("stone_slab[type=bottom,waterlogged=true]"));
+    Run.World.Set(Hole, {});
+    Oracle.Place(Hole, FVoxelFluidCell());
+    for (int32 Face = 0; Face < 4; ++Face)
+    {
+        Run.World.Set(Slab + VoxelFluidRules::GetFaceOffset(Face), Stone);
+        Oracle.Place(Slab + VoxelFluidRules::GetFaceOffset(Face), FVoxelFluidCell::MakeSolid());
+    }
+    FVoxelFluidCell WetSlab = FluidWorldWater;
+    WetSlab.Walls = uint8(1u << int32(EVoxelFace::Down));
+    WetSlab.bSolid = WetSlab.bWaterloggable = true;
+    Run.World.Set(Slab, Wet);
+    Oracle.Place(Slab, WetSlab);
+    const FFluidWorldBox Box = FFluidWorldBox::Around(Slab, 2);
+    if (!StepFluidWorldWithOracle(*this, TEXT("walled in"), Run, Oracle, Box, 30)) return false;
+    TestTrue(TEXT("the walled-in waterlogged slab holds still over the hole"),
+        Run.World.Get(Hole).State.IsAir() && Run.World.Get(Slab).State == Wet && Run.IsSettled());
+    const FFoundationBlockState Left = Run.World.GetRegistry().GetRemainder(Wet);
+    TestEqual(TEXT("a broken waterlogged slab leaves a water source"), Run.World.GetRegistry().ToString(Left),
+        FString(TEXT("water[level=0]")));
+    Run.World.Set(Slab, Left);
+    Oracle.Place(Slab, FluidWorldWater);
+    if (!StepFluidWorldWithOracle(*this, TEXT("broken"), Run, Oracle, Box, 30)) return false;
+    return TestEqual(TEXT("the source fell into the hole"), Run.World.GetRegistry().ToString(Run.World.Get(Hole).State),
+        FString(TEXT("water[level=8]")));
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelFluidWorldWashedAwayTest, "Unnamed.Voxel.Fluid.World.WashedAway",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelFluidWorldWashedAwayTest::RunTest(const FString& Parameters)
+{
+    // Washed away in game (W2b): water spreading over grass reaches a poppy and a tall grass, which survive there until
+    // it does. Both pop with no drop (Q7) and the water takes their cells, as in W1's oracle world at every tick; the
+    // tall grass's upper half pops with its lower half (the authority's settling after the fluid's writes) and stays
+    // air.
+    if (!HasFluidWorldAssets(*this)) return true;
+    const FFluidWorldContext Context;
+    FFluidWorldRun Run(Context, false);
+    const int32 Player = Run.AddPlayer();
+    const int32 Revision = Run.Authority.FindPlayer(Player)->Inventory.Revision;
+    if (!Run.Stream(*this, FIntPoint(0, 0), TEXT("washed away")) || !Run.Start(*this)) return false;
+    FVoxelFluidTestWorld Oracle(FluidWorldFloorTop);
+    const FIntVector Source(0, 0, 64), Poppy(2, 0, 64), Lower(0, 2, 64), Upper(0, 2, 65);
+    FVoxelFluidCell Plant;
+    Plant.bWashedAway = true;
+    for (const FIntVector& Cell : {Poppy, Lower})
+    {
+        Run.World.Set(Cell - FIntVector(0, 0, 1), ParseFluidWorldState(*this, Run, TEXT("grass_block")));
+        Oracle.Place(Cell, Plant);
+    }
+    Run.World.Set(Poppy, ParseFluidWorldState(*this, Run, TEXT("poppy")));
+    Run.World.Set(Lower, ParseFluidWorldState(*this, Run, TEXT("tall_grass[half=lower]")));
+    Run.World.Set(Upper, ParseFluidWorldState(*this, Run, TEXT("tall_grass[half=upper]")));
+    Run.Place(Source, FluidWorldWater);
+    Oracle.Place(Source, FluidWorldWater);
+    if (!StepFluidWorldWithOracle(*this, TEXT("washed away"), Run, Oracle, FFluidWorldBox::Around(Source, 9), 60))
+        return false;
+    const FFoundationBlockRegistry& Registry = Run.World.GetRegistry();
+    TestEqual(TEXT("the water took the poppy's and the lower half's cells, then the upper half was air"),
+        Registry.ToString(Run.World.Get(Poppy).State) + TEXT(" ") + Registry.ToString(Run.World.Get(Lower).State) +
+            TEXT(" ") + Registry.ToString(Run.World.Get(Upper).State),
+        FString(TEXT("water[level=2] water[level=2] air")));
+    TestEqual(TEXT("the three pop, each once"), GetFluidWorldPops(*this, Run),
+        FString(TEXT("poppy, tall_grass[half=lower], tall_grass[half=upper]")));
+    TestEqual(TEXT("nothing drops"), Run.Authority.FindPlayer(Player)->Inventory.Revision, Revision);
+    return true;
 }
 
 #endif

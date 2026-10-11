@@ -434,6 +434,9 @@ void AVoxelWorld::SetupAuthority()
         Authority.World, Table.ToSharedRef(),
         [Streaming = TWeakObjectPtr<UVoxelWorldSubsystem>(GetStreaming())]() -> FVoxelColumnPipeline*
         { return Streaming.IsValid() ? Streaming->GetPipeline() : nullptr; }, FluidOptions, Clock.GetGameTick());
+    // What the fluid replaces pops when washed away, and the plants around it settle (W2b).
+    Fluids->OnFlushed = [this](const FIntVector& Cell, FFoundationBlockState Before, bool bWashedAway)
+    { Authority.SettleAfterFluid(Cell, Before, bWashedAway); };
 }
 
 FFoundationTarget AVoxelWorld::TraceTarget(FVector Eye, FVector Direction, const UFoundationProfile& Profile) const

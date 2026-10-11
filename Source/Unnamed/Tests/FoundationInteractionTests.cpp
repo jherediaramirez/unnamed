@@ -1834,4 +1834,53 @@ bool FFoundationBlocksSurvivalTest::RunTest(const FString& Parameters)
         L.A.CheckPlacement(L.P(), Main, Floor, Destination), EFoundationReason::CannotSurvive);
     return true;
 }
+
+// Breaking or popping a block that holds water leaves its source (water and sky W2b; minecraft.wiki "Waterlogging"),
+// through the command path: a waterlogged slab (the property) and seagrass (always water) broken by hand leave
+// water[level=0], and so does seagrass that pops when the block under it is broken; a dry slab leaves air.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationInteractionWaterRemainsTest, "Unnamed.Foundation.Interaction.WaterRemains",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationInteractionWaterRemainsTest::RunTest(const FString& Parameters)
+{
+    auto Text = [](FLab& L, FIntVector Cell) { return L.A.World.GetRegistry().ToString(L.A.World.Get(Cell).State); };
+    auto Put = [](FLab& L, FIntVector Cell, const TCHAR* State)
+    {
+        FFoundationBlockState Parsed;
+        const bool bParsed = L.A.World.GetRegistry().Parse(State, Parsed);
+        L.A.World.Set(Cell, Parsed);
+        return bParsed;
+    };
+    const FIntVector Ground(0, 0, 0), Above(0, 0, 1);
+    struct FCase
+    {
+        const TCHAR* Block;
+        const TCHAR* Left;
+    };
+    // Mined from above: the eye two cells over the block, looking straight down.
+    const FCase Broken[] = {{TEXT("stone_slab[type=bottom,waterlogged=true]"), TEXT("water[level=0]")},
+        {TEXT("seagrass"), TEXT("water[level=0]")}, {TEXT("stone_slab[type=bottom,waterlogged=false]"), TEXT("air")}};
+    for (const FCase& Case : Broken)
+    {
+        FLab L;
+        if (!TestTrue(FString::Printf(TEXT("%s parses"), Case.Block), Put(L, Ground, Case.Block))) continue;
+        L.Stand(FVector(50, 50, 200), DownVector);
+        TestTrue(FString::Printf(TEXT("%s breaks"), Case.Block), MineSteps(L) >= 0);
+        TestEqual(FString::Printf(TEXT("broken %s leaves"), Case.Block), Text(L, Ground), FString(Case.Left));
+    }
+    // A pop: seagrass on stone, the stone mined from the side (the eye level with the stone's middle).
+    FLab L;
+    Put(L, Ground, TEXT("stone"));
+    Put(L, Above, TEXT("seagrass"));
+    L.Stand(FVector(-150, 50, 50 - 162), FVector(1, 0, 0));
+    const int64 Serial = L.A.GetEventSerial();
+    TestTrue(TEXT("the stone under seagrass breaks"), MineSteps(L) >= 0);
+    int32 Pops = 0;
+    for (const FFoundationEvent& Event : L.A.GetEvents())
+        Pops += Event.Serial > Serial && Event.Kind == EFoundationEventKind::Popped;
+    TestEqual(TEXT("the seagrass pops"), Pops, 1);
+    TestEqual(TEXT("the broken stone leaves air"), Text(L, Ground), FString(TEXT("air")));
+    TestEqual(TEXT("the popped seagrass leaves its water"), Text(L, Above), FString(TEXT("water[level=0]")));
+    return true;
+}
 #endif
