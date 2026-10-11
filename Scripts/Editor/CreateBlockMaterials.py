@@ -78,17 +78,24 @@ uint own = (uint)round(Face.y);
 return (own & (1u << 20)) ? max(Light, (float)((own >> 16) & 15)) : Light;
 """
 
-# Water: the still texture on top and bottom; the 32x32 flow texture on the sides at half scale, as
-# LiquidBlockRenderer samples it (a side of height h shows v (1 - h) / 2 .. 0.5).
-WATER_HLSL = UNPACK + r"""
-float4 color;
-if (face >= 4)
-    color = lerp(Texture2DArraySample(Blocks, BlocksSampler, float3(uv, entry.x)), Texture2DArraySample(Blocks, BlocksSampler, float3(uv, entry.y)), entry.z);
-else
+# Fluids sample the array their face's texture is in, which the table's fourth channel names (1 the 32x32 flow array,
+# FoundationBlockTextureTable.h): the still texture on flat tops and bottoms, the flow texture on the sides and on sloped
+# tops (water and sky W3), at half scale, as LiquidBlockRenderer samples it (a side of height h shows
+# v (1 - h) / 2 .. 0.5; a sloped top's UVs come turned along its flow, Source/UnnamedVoxel/Meshing/VoxelFluidSurface.h).
+FLOW_SAMPLE = r"""float4 color;
+if (entry.w > 0.5)
     color = lerp(Texture2DArraySample(Flow, FlowSampler, float3(uv * 0.5, entry.x)), Texture2DArraySample(Flow, FlowSampler, float3(uv * 0.5, entry.y)), entry.z);
-if (code & (1u << 13)) color.rgb *= tint;
+else
+    color = lerp(Texture2DArraySample(Blocks, BlocksSampler, float3(uv, entry.x)), Texture2DArraySample(Blocks, BlocksSampler, float3(uv, entry.y)), entry.z);
+"""
+WATER_HLSL = UNPACK + FLOW_SAMPLE + r"""if (code & (1u << 13)) color.rgb *= tint;
 return color;
 """
+# Lava's faces are opaque: M_BlockOpaque samples the flow array too (flowing lava's sides, sloped tops).
+BLOCK_SAMPLE = "float4 color = lerp(Texture2DArraySample(Blocks, BlocksSampler, float3(uv, entry.x)), Texture2DArraySample(Blocks, BlocksSampler, float3(uv, entry.y)), entry.z);\n"
+if BLOCK_HLSL.count(BLOCK_SAMPLE) != 1:
+    raise RuntimeError("BLOCK_MATERIALS FAIL: the block sample in BLOCK_HLSL moved")
+BLOCK_FLOW_HLSL = BLOCK_HLSL.replace(BLOCK_SAMPLE, FLOW_SAMPLE)
 
 # Chunk vertices carry their own face: Codes = (code, overlay), FaceTint = (packed tint, face), Shade.r = occlusion.
 CHUNK_UNPACK = r"""
@@ -104,6 +111,9 @@ if (transform & 4) uv.x = 1 - uv.x;
 for (uint turn = 0; turn < (transform & 3); turn++) uv = float2(uv.y, 1 - uv.x);
 float2 dx = ddx(uv);
 float2 dy = ddy(uv);
+// The flow array's faces take their block fraction at half scale (frac(raw * 0.5)), so a sloped top's turned UVs, which
+// stay inside one texture but cross block lines, never wrap.
+float2 raw = uv;
 uv = frac(uv);
 float4 entry = Table.Load(int3(code & 1023, 0, 0));
 float shade = lerp(0.45, 1.0, saturate(Shade.r));
@@ -123,12 +133,23 @@ color.rgb *= shade;
 return color;
 """
 
+# Chunk fluids, as FLOW_SAMPLE: the flow array at half scale from the unwrapped UV.
+CHUNK_FLOW_SAMPLE = r"""float4 color;
+if (entry.w > 0.5)
+    color = lerp(Texture2DArraySampleGrad(Flow, FlowSampler, float3(frac(raw * 0.5), entry.x), dx * 0.5, dy * 0.5), Texture2DArraySampleGrad(Flow, FlowSampler, float3(frac(raw * 0.5), entry.y), dx * 0.5, dy * 0.5), entry.z);
+else
+    color = lerp(Texture2DArraySampleGrad(Blocks, BlocksSampler, float3(uv, entry.x), dx, dy), Texture2DArraySampleGrad(Blocks, BlocksSampler, float3(uv, entry.y), dx, dy), entry.z);
+"""
+CHUNK_BLOCK_SAMPLE = "float4 color = lerp(Texture2DArraySampleGrad(Blocks, BlocksSampler, float3(uv, entry.x), dx, dy), Texture2DArraySampleGrad(Blocks, BlocksSampler, float3(uv, entry.y), dx, dy), entry.z);\n"
+if CHUNK_BLOCK_HLSL.count(CHUNK_BLOCK_SAMPLE) != 1:
+    raise RuntimeError("BLOCK_MATERIALS FAIL: the block sample in CHUNK_BLOCK_HLSL moved")
+
 # M_ChunkOpaque adds the render-only ore looks (Source/UnnamedVoxel/Meshing/VoxelOreLooks.h, Scripts/OreLooks.py): an
 # ore face whose overlay code carries bit 14 without the overlay's bit 15 samples T_OreLooks' layer (bits 0-9) instead
 # of its block texture. Level (bits 10-11) 1 reads the gloss class from that layer's alpha (1 matte, 2/3 metal, 1/3
 # gem) into roughness and specular; 3 is the debug mask, flat magenta. Every other face keeps roughness 1, specular
 # 0.1 and no extra emission.
-CHUNK_OPAQUE_HLSL = CHUNK_BLOCK_HLSL.replace("color.rgb *= shade;", r"""LookRoughness = 1.0;
+CHUNK_OPAQUE_HLSL = CHUNK_BLOCK_HLSL.replace(CHUNK_BLOCK_SAMPLE, CHUNK_FLOW_SAMPLE).replace("color.rgb *= shade;", r"""LookRoughness = 1.0;
 LookSpecular = 0.1;
 LookEmissive = float3(0, 0, 0);
 if ((overlay & (3u << 14)) == (1u << 14))
@@ -154,22 +175,17 @@ LOOK_OUTPUTS = ("LookRoughness", "LookSpecular", "LookEmissive")
 if CHUNK_BLOCK_HLSL.count("color.rgb *= shade;") != 1:
     raise RuntimeError("BLOCK_MATERIALS FAIL: the ore looks' anchor in CHUNK_BLOCK_HLSL moved")
 
-CHUNK_WATER_HLSL = CHUNK_UNPACK + r"""
-float4 color;
-if (face >= 4)
-    color = lerp(Texture2DArraySampleGrad(Blocks, BlocksSampler, float3(uv, entry.x), dx, dy), Texture2DArraySampleGrad(Blocks, BlocksSampler, float3(uv, entry.y), dx, dy), entry.z);
-else
-    color = lerp(Texture2DArraySampleGrad(Flow, FlowSampler, float3(uv * 0.5, entry.x), dx * 0.5, dy * 0.5), Texture2DArraySampleGrad(Flow, FlowSampler, float3(uv * 0.5, entry.y), dx * 0.5, dy * 0.5), entry.z);
-if (code & (1u << 13)) color.rgb *= tint;
+CHUNK_WATER_HLSL = CHUNK_UNPACK + CHUNK_FLOW_SAMPLE + r"""if (code & (1u << 13)) color.rgb *= tint;
 return color;
 """
 
 MATERIALS = {
-    "M_BlockOpaque": {"blend": unreal.BlendMode.BLEND_OPAQUE, "hlsl": BLOCK_HLSL},
+    "M_BlockOpaque": {"blend": unreal.BlendMode.BLEND_OPAQUE, "hlsl": BLOCK_FLOW_HLSL, "flow": True},
     "M_BlockCutout": {"blend": unreal.BlendMode.BLEND_MASKED, "hlsl": BLOCK_HLSL},
     "M_BlockTranslucent": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": BLOCK_HLSL},
     "M_BlockWater": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": WATER_HLSL},
-    "M_ChunkOpaque": {"blend": unreal.BlendMode.BLEND_OPAQUE, "hlsl": CHUNK_OPAQUE_HLSL, "chunk": True, "looks": True},
+    "M_ChunkOpaque": {"blend": unreal.BlendMode.BLEND_OPAQUE, "hlsl": CHUNK_OPAQUE_HLSL, "chunk": True, "looks": True,
+                      "flow": True},
     "M_ChunkCutout": {"blend": unreal.BlendMode.BLEND_MASKED, "hlsl": CHUNK_BLOCK_HLSL, "chunk": True},
     "M_ChunkTranslucent": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": CHUNK_BLOCK_HLSL, "chunk": True},
     "M_ChunkWater": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": CHUNK_WATER_HLSL, "chunk": True},
@@ -228,7 +244,8 @@ def build(name, spec, block_textures, flow_textures):
         inputs = ["UV", "Codes", "FaceTint", "Shade", "Blocks", "Table"]
     else:
         inputs = ["CD%d" % i for i in range(CUSTOM_DATA - 1)] + ["UV", "Face", "Blocks", "Table"]
-    inputs += ["Flow"] if water else []
+    flow = water or spec.get("flow", False)
+    inputs += ["Flow"] if flow else []
     looks = spec.get("looks", False)
     inputs += ["Looks"] if looks else []
     custom = node(unreal.MaterialExpressionCustom, -400, 0)
@@ -291,13 +308,13 @@ def build(name, spec, block_textures, flow_textures):
     # The runtime replaces this with the live animation table; the default only satisfies the compiler.
     default_table = unreal.load_asset("/Engine/EngineResources/Black")
     link(texture_parameter("TextureTable", default_table, 320), "", custom, "Table")
-    if water:
+    if flow:
         link(texture_parameter("WaterFlowTextures", flow_textures, 440), "", custom, "Flow")
     if looks:
         ore_looks = unreal.EditorAssetLibrary.load_asset(ProjectPaths.block_asset("T_OreLooks"))
         if not ore_looks:
             fail("T_OreLooks is missing: run ImportOreLooks.py first")
-        link(texture_parameter("OreLookTextures", ore_looks, 440), "", custom, "Looks")
+        link(texture_parameter("OreLookTextures", ore_looks, 560), "", custom, "Looks")
 
     def mask(channels, y):
         expr = node(unreal.MaterialExpressionComponentMask, -150, y)

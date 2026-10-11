@@ -15,6 +15,7 @@ void UFoundationBlockTextureTable::Initialize(const UFoundationBlockAssets* InAs
     {
         const FFoundationBlockTextureAsset& Entry = InAssets->Textures[Index];
         Rows[Index * 4] = Rows[Index * 4 + 1] = float(Entry.FirstLayer);
+        Rows[Index * 4 + 3] = Entry.bWaterFlow ? 1.f : 0.f;
         if (Entry.IsAnimated()) Animated.Add(Index);
     }
     Texture = UTexture2D::CreateTransient(Count, 1, PF_A32B32G32R32F, TEXT("BlockTextureTable"));

@@ -253,6 +253,11 @@ public:
     // that many model indices.
     const int32* GetModelParts(const FVoxelStateInfo& Info) const { return PartData.GetData() + Info.ModelParts; }
 
+    // Each fluid's flow texture as a face code (water_flow with the tint bit, lava_flow), which sloped fluid tops and
+    // flowing lava's sides draw (Meshing/VoxelFluidSurface.h); 0 until set, when they keep the state's own codes.
+    void SetFlowCode(EVoxelFluid Fluid, uint32 Code) { FlowCodes[int32(Fluid)] = Code; }
+    uint32 GetFlowCode(EVoxelFluid Fluid) const { return FlowCodes[int32(Fluid)]; }
+
 private:
     // Recomputes the look states of Block's states.
     void UpdateLooks(uint16 Block);
@@ -279,4 +284,5 @@ private:
         TArray<int32> Strides;
     };
     TMap<int32, FBlockProperties> BlockProperties;
+    uint32 FlowCodes[3] = {};
 };

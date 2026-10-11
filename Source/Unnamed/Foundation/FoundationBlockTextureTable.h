@@ -7,10 +7,12 @@
 class UFoundationBlockAssets;
 class UTexture2D;
 
-// The per-texture lookup the block materials read: texel i holds (layer, next layer, blend) for texture i of
-// UFoundationBlockAssets::Textures. Static textures never change; animated ones are rewritten each client tick
-// (20 per second) from their 26.3 frame tables. The block materials and a future chunk mesher's materials share
-// it, so animation never touches instance or vertex data.
+// The per-texture lookup the block materials read: texel i holds (layer, next layer, blend, array) for texture i of
+// UFoundationBlockAssets::Textures, the array 1 for the 32x32 flow array (water_flow, lava_flow) and 0 for the block
+// array, so a face samples the array its texture is in whatever side it is (a sloped fluid top draws the flow texture).
+// Static textures never change; animated ones are rewritten each client tick (20 per second) from their 26.3 frame
+// tables. The block materials and a future chunk mesher's materials share it, so animation never touches instance or
+// vertex data.
 UCLASS()
 class UNNAMED_API UFoundationBlockTextureTable : public UObject
 {

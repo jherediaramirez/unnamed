@@ -2,9 +2,14 @@
 
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
+## October 11, 2026
+
+- [Water and sky handoff: W3 part 1 done, into W3b (Playground parity, look shots, the flip)](2026-10-11-WaterSky-Handoff-W3b.md): start here for the water half after W3 part 1 (lane `feature/water-sky`). It covers W3b's reading list (with the vanilla client probe's water shots), the working agreement, the settled decisions (Q2 (a) parity for sloped cells only; the flip in W3b), a code map of the surface rule, mesher, materials and Playground water, known issues with when, three open questions and the short prompt.
+- [Water and sky W3 part 1: fluid surfaces (core, mesher, materials)](2026-10-11-WaterSky-W3-Part1.md): `VoxelFluidSurface` (corners from the four cells meeting there: full, a source's 8/9, else the flowing mean; shared, so tops meet without strips), sloped tops on the flow texture turned downhill, trapezoid sides, flowing lava's `lava_flow` sides, `voxel.Fluids.SlopedTops` 0/1/2 (1 the default, Q5 (b): generated meshes byte-identical), and four regenerated block materials that pick the texture array from the texture table. 3 tests, two mutations, a null and a positive control pair; `voxel.Fluids` stays 0.
+
 ## October 10, 2026
 
-- [Water and sky handoff: W2b done, into W3 (fluid meshing)](2026-10-10-WaterSky-Handoff-W3.md): start here for the water half after W2b (lane `feature/water-sky`). It covers W3's reading list, the working agreement, the settled decisions (W3 flips `voxel.Fluids` to 1 with a capture pair), a code map of the fluid view and the mesher, known issues with when, two open questions and the short prompt.
+- [Water and sky handoff: W2b done, into W3 (fluid meshing)](2026-10-10-WaterSky-Handoff-W3.md): done (W3 part 1); superseded by the W3b handoff above.
 - [Water and sky W2b: waterlogging, washed away, breaking leaves water](2026-10-10-WaterSky-W2b.md): the merge of `e214663` (`50f434a`, `535fd5d`); the fluid view of plants and waterlogged blocks (washed-away blocks pop with no drop, waterlogged states are sources flowing fluid never enters), the authority's settling after fluid writes, and breaking or popping a water-holding block leaving its source. The tags come from `DA_Blocks` (Q11 revised by the manager: no reference change). 6 tests, three mutations.
 - [Water and sky handoff: W2a done, into W2b (waterlogging, washed away, fluid tags)](2026-10-10-WaterSky-Handoff-W2b.md): done; superseded by the W3 handoff above.
 - [Water and sky W2a: fluid wiring and streaming](2026-10-10-WaterSky-W2a.md): `FVoxelFluidSystem` on `AVoxelWorld` (the block world's `OnSet` hook, the fluid tick, the overlay flushed through `SetMany` and `FVoxelColumnPipeline::SetCells`, the simulation ring with parking and remaining delays, the 0.5 ms budget, the game rules, `voxel.Fluids` default 0), the stale-mesh fix, 9 tests against W1's oracle world, and the breach and flood captures.

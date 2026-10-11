@@ -2,6 +2,7 @@
 #include "Biome/VoxelBiomeStorage.h"
 #include "Biome/VoxelBiomeTints.h"
 #include "Blocks/VoxelBlockTable.h"
+#include "Meshing/VoxelFluidSurface.h"
 #include "Meshing/VoxelOreLooks.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Storage/VoxelColumn.h"
@@ -372,7 +373,54 @@ namespace
             Quad(Info, Face, Plane, Min[AxisU], Max[AxisU], Min[AxisV], Max[AxisV], Cell, OpenCorners,
                 Tints.Get(Info, Face, Cell));
         }
+
+        // A fluid face of Cell under a surface (VoxelFluidSurface): the cell's whole face, in Quad's corner order, with
+        // each vertex at the cell's top moved to the surface's corner there. Code is its texture; a top on the flow
+        // texture takes the flow UVs, any other face its block UVs.
+        void FluidFace(const FVoxelStateInfo& Info, int32 Face, const FIntVector& Cell,
+            const VoxelFluidSurface::FSurface& Surface, uint32 Code, bool bFlowUVs) const
+        {
+            const int32 Axis = VoxelFaces::GetAxis(Face), AxisU = (Axis + 1) % 3, AxisV = (Axis + 2) % 3;
+            const bool bPositive = VoxelFaces::IsPositive(Face);
+            const FVector3f Origin(float(Cell.X), float(Cell.Y), float(Cell.Z));
+            const float U0 = Origin[AxisU], U1 = U0 + 1, V0 = Origin[AxisV], V1 = V0 + 1;
+            const float CornerU[4] = {U0, bPositive ? U0 : U1, U1, bPositive ? U1 : U0};
+            const float CornerV[4] = {V0, bPositive ? V1 : V0, V1, bPositive ? V0 : V1};
+            FVector2f FlowUVs[4];
+            if (bFlowUVs) VoxelFluidSurface::GetFlowUVs(Surface.Flow, FlowUVs);
+
+            FVoxelMeshLayer& Layer = Out.Layers[int32(Info.Layer)];
+            const uint32 First = uint32(Layer.Positions.Num());
+            const FVector2f Codes(float(Code), float(Info.Faces[VoxelFaces::OverlayIndex]));
+            const FVector2f TintFace{float(Tints.Get(Info, Face, Cell)), float(Face)};
+            const FColor Color(255, uint8(Info.LightEmission * 17), 255, 255);
+            for (int32 Corner = 0; Corner < 4; ++Corner)
+            {
+                FVector3f Local;
+                Local[Axis] = Origin[Axis] + (bPositive ? 1 : 0);
+                Local[AxisU] = CornerU[Corner];
+                Local[AxisV] = CornerV[Corner];
+                const int32 Top = VoxelFluidSurface::GetCorner(Local.X > Origin.X + .5f, Local.Y > Origin.Y + .5f);
+                if (Local.Z > Origin.Z + .5f) Local.Z = Origin.Z + Surface.Corners[Top];
+                Layer.Positions.Add(FVector3f(Local.X, Local.Y, Local.Z + BaseZ));
+                Layer.BlockUVs.Add(bFlowUVs ? FlowUVs[Top] : VoxelMesher::GetCanonicalUV(Face, Local - Origin));
+                Layer.Codes.Add(Codes);
+                Layer.TintFaces.Add(TintFace);
+                Layer.Colors.Add(Color);
+            }
+            Layer.Indices.Append({First, First + 1, First + 2, First, First + 2, First + 3});
+        }
     };
+
+    // The surface of the fluid cell at a padded index (VoxelFluidSurface::Make), from the packed cells around it.
+    bool MakeFluidSurface(const uint8* FluidCells, int32 Index, int32 Mode, VoxelFluidSurface::FSurface& Out)
+    {
+        uint8 Ring[9];
+        for (int32 DY = -1; DY <= 1; ++DY)
+            for (int32 DX = -1; DX <= 1; ++DX)
+                Ring[(DY + 1) * 3 + DX + 1] = FluidCells[Index + DX * AxisStep[0] + DY * AxisStep[1]];
+        return VoxelFluidSurface::Make(Ring, Mode, Out);
+    }
 
     // Fills a padded region with one state.
     void FillPadded(FVoxelPaddedSection& Out, const int32 Start[3], const int32 Count[3], uint16 State)
@@ -485,23 +533,55 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
     // Per padded cell: the faces it covers opaquely, and whether it darkens corners. Runs of one state reuse the
     // lookup.
     uint8 Opaque[FVoxelPaddedSection::Volume], Casts[FVoxelPaddedSection::Volume];
-    // Whether any cell (border included) holds a model state, so sections without any skip the model pass.
-    bool bAnyModel = false;
+    // Whether any cell (border included) holds a model state, so sections without any skip the model pass, and whether
+    // any holds fluid.
+    bool bAnyModel = false, bAnyFluid = false;
     {
         uint16 Last = States[0];
         const FVoxelStateInfo* Info = &Table.Get(Last);
         bAnyModel = Info->Shape == EVoxelShape::Model;
+        bAnyFluid = Info->HoldsFluid();
         for (int32 Index = 0; Index < FVoxelPaddedSection::Volume; ++Index)
         {
             if (States[Index] != Last)
             {
                 Info = &Table.Get(Last = States[Index]);
                 bAnyModel |= Info->Shape == EVoxelShape::Model;
+                bAnyFluid |= Info->HoldsFluid();
             }
             Opaque[Index] = Info->OpaqueFaces;
             Casts[Index] = Info->bCastsOcclusion;
         }
     }
+    // Per padded cell, its fluid packed for the surfaces (VoxelFluidSurface::Pack), when any surface may slope.
+    uint8 FluidCells[FVoxelPaddedSection::Volume];
+    const bool bSlopes = Options.SlopedTops > 0 && bAnyFluid;
+    if (bSlopes)
+    {
+        uint16 Last = States[0];
+        uint8 Packed = 0;
+        for (int32 Index = 0; Index < FVoxelPaddedSection::Volume; ++Index)
+        {
+            if (Index == 0 || States[Index] != Last)
+            {
+                const FVoxelStateInfo& Info = Table.Get(Last = States[Index]);
+                Packed = Info.HoldsFluid()
+                    ? VoxelFluidSurface::Pack(Info.IsFluid() ? Info : Table.Get(Info.HeldFluid), false)
+                    : 0;
+            }
+            FluidCells[Index] = Packed;
+        }
+        // Drawn full under any fluid, as the faces below are.
+        for (int32 Index = 0; Index + AxisStep[2] < FVoxelPaddedSection::Volume; ++Index)
+            if (FluidCells[Index] && FluidCells[Index + AxisStep[2]]) FluidCells[Index] |= VoxelFluidSurface::FullBit;
+    }
+    // Lava's sides draw the flow texture where it flows (everywhere under SlopedTops 2), as water's always do.
+    auto GetFluidSideCode = [&Table, &Options](const FVoxelStateInfo& Fluid, int32 Face)
+    {
+        const uint32 Flow = Table.GetFlowCode(EVoxelFluid::Lava);
+        const bool bFlowing = Options.SlopedTops >= 2 || (Options.SlopedTops > 0 && !Fluid.IsFluidSource());
+        return Fluid.Fluid == EVoxelFluid::Lava && Flow && bFlowing ? Flow : Fluid.Faces[Face];
+    };
 
     // Quick exits: nothing inside, or a solid block whose every side is covered (most deep sections).
     bool bAnyBlock = false, bSealed = true;
@@ -627,6 +707,30 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
                         if (bCovered || Table.Get(States[Neighbor]).HoldsFluid()) break;
                         // Under more fluid the cell is full; otherwise its surface is at the amount's height.
                         const bool bFluidAbove = Table.Get(States[Index + AxisStep[2]]).HoldsFluid();
+                        // A sloping surface draws its top and outward sides per cell, on the surface's corners; a top
+                        // that runs downhill takes the flow texture along it.
+                        VoxelFluidSurface::FSurface Surface;
+                        if (bSlopes && Face != int32(EVoxelFace::Down) &&
+                            MakeFluidSurface(FluidCells, Index, Options.SlopedTops, Surface))
+                        {
+                            const uint32 FlowCode = Table.GetFlowCode(Fluid.Fluid);
+                            const bool bFlowTop =
+                                Axis == 2 && FlowCode && !Surface.Flow.IsNearlyZero(VoxelFluidSurface::FlatFlow);
+                            Emit.FluidFace(Fluid, Face, Cell, Surface,
+                                bFlowTop        ? FlowCode
+                                    : Axis == 2 ? Fluid.Faces[Face]
+                                                : GetFluidSideCode(Fluid, Face),
+                                bFlowTop);
+                            break;
+                        }
+                        if (Axis != 2 && GetFluidSideCode(Fluid, Face) != Fluid.Faces[Face])
+                        {
+                            // Flowing lava's flat sides, on the flow texture.
+                            const float Height = bFluidAbove ? 1.f : Fluid.GetFluidHeight();
+                            Emit.FluidFace(Fluid, Face, Cell, {{Height, Height, Height, Height}},
+                                GetFluidSideCode(Fluid, Face), false);
+                            break;
+                        }
                         if (Axis == 2)
                         {
                             // The top face only shows with no fluid above, so its height follows from the state.
