@@ -1,4 +1,5 @@
 #include "Decoration/Features/VoxelTreeFeature.h"
+#include "Algo/StableSort.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "Blocks/VoxelPlantSurvival.h"
 #include "Decoration/Features/VoxelPatchFeatures.h"
@@ -181,6 +182,52 @@ void FVoxelTreeBuilder::SetGroundBelow(FIntVector Cell)
     if (State != GetState(Cell)) Set(Cell, State, ECell::Ground);
 }
 
+bool FVoxelTreeBuilder::IsAir(FIntVector Cell) const
+{
+    return Cell.Z >= VoxelConstants::MinZ && Cell.Z <= VoxelConstants::MaxZ && Env.Table.Get(GetState(Cell)).IsAir();
+}
+
+bool FVoxelTreeBuilder::GetKind(FIntVector Cell, ECell& OutKind) const
+{
+    const int32* Index = FindCell(Cell);
+    if (Index) OutKind = Cells[*Index].Kind;
+    return Index != nullptr;
+}
+
+bool FVoxelTreeBuilder::SetDecoration(FIntVector Cell, uint16 State)
+{
+    if (Cell.Z < VoxelConstants::MinZ || Cell.Z > VoxelConstants::MaxZ) return false;
+    if (const int32* Index = FindCell(Cell))
+    {
+        FCell& Own = Cells[*Index];
+        if (Own.Kind != ECell::Ground && Own.Kind != ECell::Decoration) return false;
+        Own.State = State;
+        return true;
+    }
+    Set(Cell, State, ECell::Decoration);
+    return true;
+}
+
+void FVoxelTreeBuilder::ReplaceWithDecoration(int32 Index, uint16 State)
+{
+    Cells[Index].State = State;
+    Cells[Index].Kind = ECell::Decoration;
+}
+
+void FVoxelTreeBuilder::Drop(int32 Index)
+{
+    IndexOf.Remove(Cells[Index].Position);
+    Cells[Index].Kind = ECell::Dropped;
+}
+
+void FVoxelTreeBuilder::GetCells(ECell Kind, TArray<FIntVector>& Out) const
+{
+    Out.Reset();
+    for (const FCell& Cell : Cells)
+        if (Cell.Kind == Kind) Out.Add(Cell.Position);
+    Algo::StableSortBy(Out, [](const FIntVector& Cell) { return Cell.Z; });
+}
+
 bool VoxelTreeFeature::Compile(const FVoxelFeatureGraph& Graph, int32 Node, FVoxelBlockTags& Tags,
     const FVoxelBlockTable& Table, FVoxelBlockPredicates& Predicates, FVoxelStateProviders& Providers,
     FVoxelTreeConfig& Out, FString& OutSkip, FString* OutError)
@@ -318,13 +365,32 @@ bool VoxelTreeFeature::Compile(const FVoxelFeatureGraph& Graph, int32 Node, FVox
     Out.FreeSet = Predicates.AddSet(MoveTemp(Free));
     Out.bIgnoreVines = TreeInt(Graph, Node, TEXT("ignore_vines"), 0) != 0;
 
+    // The decorators: a type not built yet (or one whose provider is not) is left out and counted.
     if (const FVoxelFeatureValue* Decorators = Graph.FindField(Node, TEXT("decorators")))
         for (int32 Item = 0; Decorators->Type == EVoxelFeatureValueType::List && Item < Decorators->Count; ++Item)
-            Out.SkippedDecorators.Add(FString(Graph.GetType(Graph.GetNode(Graph.Items[Decorators->Index + Item]))));
+        {
+            const int32 DecoratorNode = Graph.GetNode(Graph.Items[Decorators->Index + Item]);
+            const FStringView DecoratorType = Graph.GetType(DecoratorNode);
+            const EVoxelTreeDecorator Type = VoxelTreeDecorators::FindType(DecoratorType);
+            FVoxelTreeDecoratorConfig Decorator;
+            FString DecoratorSkip;
+            if (Type != EVoxelTreeDecorator::Count &&
+                !VoxelTreeDecorators::Compile(
+                    Graph, DecoratorNode, Type, Tags, Table, Predicates, Providers, Decorator, DecoratorSkip, OutError))
+                return false;
+            if (Type == EVoxelTreeDecorator::Count || !DecoratorSkip.IsEmpty())
+                Out.SkippedDecorators.Add(FString(DecoratorType));
+            else
+                Out.Decorators.Add(MoveTemp(Decorator));
+        }
 
-    Out.Reach = FMath::Max(VoxelTrunkPlacers::GetReach(Out.Trunk) + VoxelFoliagePlacers::GetReach(Out.Foliage),
-                    Out.Roots.bEnabled ? VoxelRootPlacers::GetReach(Out.Roots) : 0) +
-        1;
+    const int32 TreeReach =
+        FMath::Max(VoxelTrunkPlacers::GetReach(Out.Trunk) + VoxelFoliagePlacers::GetReach(Out.Foliage),
+            Out.Roots.bEnabled ? VoxelRootPlacers::GetReach(Out.Roots) : 0);
+    Out.Reach = TreeReach;
+    for (const FVoxelTreeDecoratorConfig& Decorator : Out.Decorators)
+        Out.Reach = FMath::Max(Out.Reach, VoxelTreeDecorators::GetReach(Decorator, Out, TreeReach));
+    ++Out.Reach;
     if (Out.Reach > VoxelConstants::ColumnSize)
         return TreeFail(OutError,
             FString::Printf(TEXT("a tree reaching %d blocks, past the 3 x 3's margin of %d"), Out.Reach,
@@ -414,6 +480,13 @@ bool VoxelTreeFeature::Place(
     TArray<uint8> Distances;
     GetLeafDistances(Builder, Distances);
     using ECell = FVoxelTreeBuilder::ECell;
+    if (!Config.Decorators.IsEmpty())
+    {
+        // The leaves too far from the logs go first, so the decorators see the tree as it is emitted.
+        for (int32 Index = 0; Index < Distances.Num(); ++Index)
+            if (Builder.Cells[Index].Kind == ECell::Leaf && !Distances[Index]) Builder.Drop(Index);
+        VoxelTreeDecorators::Place(Config, Builder);
+    }
     const FVoxelDecorationContext& Context = Env.Context;
     for (int32 Index = 0; Index < Builder.Cells.Num(); ++Index)
     {
@@ -437,8 +510,11 @@ bool VoxelTreeFeature::Place(
         }
         case ECell::Root:
         case ECell::Ground:
-            // The ground and the roots land only where the cell still holds what this Decorate saw.
+        case ECell::Decoration:
+            // The ground, the roots and the decorations land only where the cell still holds what this Decorate saw.
             Env.Emit({At, Cell.State, EVoxelWriteMode::IfUnchanged, Was});
+            break;
+        case ECell::Dropped:
             break;
         }
     }

@@ -276,15 +276,16 @@ bool FFoundationPlantPlacementTest::RunTest(const FString& Parameters)
         R.GetValue(W.Place(TEXT("pink_petals"), {0, 0, 0}, EFoundationFace::Up, 90), TEXT("facing")),
         FName(TEXT("east")));
 
-    // Multiface: the one face toward the clicked block; a vine has no floor face, and its ceiling face waits for Q8.
+    // Multiface: the one face toward the clicked block; a vine has no floor face, and under a block it holds its up
+    // face (Jesus's answer to Q8).
     Expect(TEXT("vine on a south side"), W.Place(TEXT("vine"), {5, 0, 0}, EFoundationFace::South),
         TEXT("vine[north=true]"));
     Expect(
         TEXT("vine on an east side"), W.Place(TEXT("vine"), {5, 0, 0}, EFoundationFace::East), TEXT("vine[west=true]"));
     TestTrue(TEXT("vine on a top face holds no face"),
         FoundationPlantRules::HasNoFace(R, W.Place(TEXT("vine"), {5, 0, 0}, EFoundationFace::Up)));
-    TestTrue(TEXT("vine on an underside holds no face (Q8)"),
-        FoundationPlantRules::HasNoFace(R, W.Place(TEXT("vine"), {5, 0, 0}, EFoundationFace::Down)));
+    Expect(
+        TEXT("vine on an underside"), W.Place(TEXT("vine"), {5, 0, 0}, EFoundationFace::Down), TEXT("vine[up=true]"));
     Expect(TEXT("glow lichen on a top face"), W.Place(TEXT("glow_lichen"), {5, 0, 0}, EFoundationFace::Up),
         TEXT("glow_lichen[down=true]"));
     Expect(TEXT("glow lichen on an underside"), W.Place(TEXT("glow_lichen"), {5, 0, 0}, EFoundationFace::Down),
@@ -315,11 +316,30 @@ bool FFoundationPlantPlacementTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("glow lichen into water is waterlogged"),
         R.GetValue(W.Place(TEXT("glow_lichen"), {12, 0, 0}, EFoundationFace::Up), TEXT("waterlogged")),
         FName(TEXT("true")));
+
+    // The standing-and-wall pairs are the reference's (facts/block_support.json, "items"), and no other: the torch's
+    // from DA_Blocks, the coral fans' from FoundationPlantRules (Jesus's answer to Q7).
+    FString SupportJson;
+    TSharedPtr<FJsonObject> Support;
+    if (FFileHelper::LoadFileToString(
+            SupportJson, *(FPaths::ProjectDir() / TEXT("Reference/minecraft-blocks-26.3/facts/block_support.json"))))
+        FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(SupportJson), Support);
+    if (!TestValid(TEXT("block_support.json"), Support)) return false;
+    int32 Matched = 0, WithWall = 0;
+    for (const TSharedPtr<FJsonValue>& Value : Support->GetArrayField(TEXT("items")))
+    {
+        const FFoundationBlockType* Standing = W.World.FindBlock(*Value->AsObject()->GetStringField(TEXT("standing")));
+        Matched += Standing && Standing->ItemWallBlock == FName(*Value->AsObject()->GetStringField(TEXT("wall")));
+    }
+    for (int32 Index = 0; Index < R.GetBlockCount(); ++Index)
+        WithWall += !R.GetBlockAt(Index).ItemWallBlock.IsNone();
+    TestEqual(TEXT("the reference's standing-and-wall pairs"), Matched, Support->GetArrayField(TEXT("items")).Num());
+    TestEqual(TEXT("blocks with a wall block"), WithWall, Matched);
     return true;
 }
 
-// Every block takes the facts' replaceable flag (Jesus's answer 4), except snow, which stays as today until Jesus
-// decides its layers (scout H, Q5).
+// Every block takes the facts' replaceable flag (Jesus's answer 4), except snow: one layer only (Jesus's answer to
+// scout H's Q5).
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FFoundationPlantReplaceableTest, "Unnamed.Foundation.Blocks.Replaceable", FoundationPlantTests::PlantTestFlags)
 
@@ -351,7 +371,12 @@ bool FFoundationPlantReplaceableTest::RunTest(const FString& Parameters)
         if (Id == TEXT("snow"))
         {
             TestTrue(TEXT("snow is replaceable in the facts"), bFact);
-            TestFalse(TEXT("snow is pinned as today (Q5)"), Block->bReplaceable);
+            TestFalse(TEXT("snow's own flag stays false"), Block->bReplaceable);
+            for (int32 Layers = 1; Layers <= 8; ++Layers)
+                TestEqual(FString::Printf(TEXT("snow[layers=%d] is replaceable"), Layers),
+                    FoundationBlockPlacement::IsReplaceable(
+                        W.World, W.State(*FString::Printf(TEXT("snow[layers=%d]"), Layers))),
+                    Layers == 1);
             continue;
         }
         if (Block->bReplaceable != bFact && ++Mismatches <= 20)
@@ -361,6 +386,16 @@ bool FFoundationPlantReplaceableTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("replaceable in the facts (water, lava, snow and 15 model blocks)"), Replaceable, 18);
     TestEqual(TEXT("blocks whose flag differs from the facts"), Mismatches, 0);
     TestTrue(TEXT("air is replaceable"), W.World.GetBlock(FFoundationBlockState{}).bReplaceable);
+    // A placed block replaces one snow layer, but snow does not (stacking layers is not built), and two layers stay.
+    const FFoundationPlacementContext Context;
+    const FFoundationBlockType& Stone = *W.World.FindBlock(TEXT("stone"));
+    const FFoundationBlockType& Snow = *W.World.FindBlock(TEXT("snow"));
+    using FoundationBlockPlacement::CanBeReplaced;
+    TestTrue(TEXT("stone replaces one layer"),
+        CanBeReplaced(W.World, W.State(TEXT("snow[layers=1]")), Stone, Context, false));
+    TestFalse(TEXT("snow does not"), CanBeReplaced(W.World, W.State(TEXT("snow[layers=1]")), Snow, Context, false));
+    TestFalse(TEXT("stone does not replace two layers"),
+        CanBeReplaced(W.World, W.State(TEXT("snow[layers=2]")), Stone, Context, false));
     return true;
 }
 #endif

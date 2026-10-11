@@ -360,8 +360,20 @@ namespace
         }
     }
 
-    // mega_pine_foliage_placer's crown (ours, fitted to mega spruce and mega pine): the bottom layer's radius, and how
-    // far the radius falls over the crown's C + 1 layers.
+    // mega_pine_foliage_placer's crown radii (ours, fitted (S9c refit)): no closed form fits, so a table measured
+    // black-box from the mega spruce and mega pine probes (their per-layer ring counts, leaf totals and example trees;
+    // C:\dev\sandbox\phase6s9\s9c\megarefit, REFIT.md). One digit per layer t = 0 .. C (t 0 one above the top log, the
+    // bottom layer t = C always 3); rows C 3..7 then C 13..17; columns the top log's Z parity above the origin, even
+    // then odd. Its 20 (C, parity) rows hold every leaf total of the probes (C 3: 75 and 75 leaves .. C 17: 371 and
+    // 363) and rebuild all 24 example trees leaf for leaf; the widest layer is 4.
+    constexpr const char* MegaPineRadii[10][2] = {{"0123", "0123"}, {"00123", "00123"}, {"001323", "001223"},
+        {"0011223", "0021323"}, {"00112233", "00213243"}, {"01001211232233", "00102121323243"},
+        {"010012112322343", "001021213232433"}, {"0101021213232433", "0010012112322343"},
+        {"01010212112322343", "00100121213232433"}, {"010102121123232433", "001001212132322343"}};
+
+    // The old rule (ours, fitted before the S9c refit), kept only as the fallback for a crown height outside
+    // MegaPineRadii (no 26.3 feature has one: only mega_spruce and mega_pine use the placer): the bottom layer's
+    // radius, and how far the radius falls over the crown's C + 1 layers.
     constexpr int32 MegaPineBase = 3, MegaPineDrop = 4;
 
     // round(Numerator / Denominator) with halves rounding up, for Numerator >= 0 and Denominator > 0.
@@ -370,16 +382,16 @@ namespace
         return (2 * Numerator + Denominator) / (2 * Denominator);
     }
 
-    // The radius of crown layer t (0 at the attachment, C at the bottom) whose Z lies Z above the tree's origin (ours,
-    // fitted). With s = C - t layers under it: the bottom layer (s 0) has MegaPineBase; a layer at an odd Z (a "low"
-    // layer) MegaPineBase - round(MegaPineDrop s / (C + 1)); one at an even Z (a "high" layer) one more than the low
-    // rule taken one layer lower, MegaPineBase + 1 - round(MegaPineDrop (s - 1) / (C + 1)); then at most t (the top
-    // layer is the bare 2 x 2) and at least 0. The probes' leaf counts split by the top log's parity, so the shape
-    // depends on Z's; their origins all lie at an even world Z, so the origin's Z and the world's cannot be told apart
-    // and the origin's is used. Exact on the four example trees, but 7 of the 20 (C, parity) leaf totals miss
-    // (big-report section 4).
-    int32 GetMegaPineRadius(int32 Layer, int32 Crown, int32 Z)
+    // The radius of crown layer t (0 at the attachment, C at the bottom). TopParity is the parity of the top log's Z
+    // above the tree's origin (0 even, 1 odd): the probes' leaf counts split by it, and their origins all lie at an
+    // even world Z, so the origin's Z and the world's cannot be told apart and the origin's is used. C 3..7 and 13..17
+    // read MegaPineRadii; any other C keeps the old rule with Z the layer's Z above the origin: with s = C - t layers
+    // under it, the bottom layer (s 0) has MegaPineBase; a layer at an odd Z MegaPineBase - round(MegaPineDrop s / (C +
+    // 1)); one at an even Z MegaPineBase + 1 - round(MegaPineDrop (s - 1) / (C + 1)); then at most t and at least 0.
+    int32 GetMegaPineRadius(int32 Layer, int32 Crown, int32 TopParity, int32 Z)
     {
+        const int32 Row = Crown >= 3 && Crown <= 7 ? Crown - 3 : Crown >= 13 && Crown <= 17 ? Crown - 8 : -1;
+        if (Row >= 0) return MegaPineRadii[Row][TopParity][Layer] - '0';
         const int32 Above = Crown - Layer;
         const int32 Radius = Above == 0 ? MegaPineBase
             : (Z & 1) != 0              ? MegaPineBase - DivideRoundHalfUp(MegaPineDrop * Above, Crown + 1)
@@ -387,9 +399,10 @@ namespace
         return FMath::Max(0, FMath::Min(Layer, Radius));
     }
 
-    // mega_pine_foliage_placer (ours, fitted; draws radius, offset, crown_height in that order): layers t = 0 .. C
-    // downward from the attachment plus offset, each of radius GetMegaPineRadius + radius + bonus: a folded disc on a
-    // double trunk, else a disc (AbsX^2 + AbsY^2 <= R^2; no probe has a single-trunk mega pine).
+    // mega_pine_foliage_placer (ours, fitted (S9c refit); draws radius, offset, crown_height in that order, nothing
+    // else): layers t = 0 .. C downward from the attachment A plus offset, each of radius GetMegaPineRadius + radius +
+    // bonus, with the top log at A - 1: a folded disc on a double trunk, else a disc (AbsX^2 + AbsY^2 <= R^2; no probe
+    // has a single-trunk mega pine).
     void PlaceMegaPine(const FVoxelTreePlacerConfig& Foliage, FVoxelTreeBuilder& Builder,
         TConstArrayView<FVoxelFoliageAttachment> Attachments)
     {
@@ -401,8 +414,10 @@ namespace
             for (int32 Layer = 0; Layer <= Crown; ++Layer)
             {
                 const FIntVector Center = Attachment.Position + FIntVector(0, 0, Offset - Layer);
-                const int32 LayerRadius = FMath::Max(
-                    0, GetMegaPineRadius(Layer, Crown, Center.Z - Builder.Origin.Z) + Radius + Attachment.RadiusBonus);
+                const int32 TopParity = (Attachment.Position.Z - Builder.Origin.Z - 1) & 1;
+                const int32 LayerRadius = FMath::Max(0,
+                    GetMegaPineRadius(Layer, Crown, TopParity, Center.Z - Builder.Origin.Z) + Radius +
+                        Attachment.RadiusBonus);
                 if (Attachment.bDoubleTrunk)
                     PlaceLayer(Builder, Center, LayerRadius, true, OutsideFoldedDisc);
                 else
@@ -552,7 +567,8 @@ int32 VoxelFoliagePlacers::GetReach(const FVoxelTreePlacerConfig& Foliage)
         // The tree's reach is the two summed (VoxelTreeFeature), which covers it.
         return Foliage.GetMaxInt(FoliageRadius) + Foliage.GetMaxInt(FoliageHeight, 2) + 2;
     case EVoxelFoliagePlacer::MegaPine:
-        // A high layer's MegaPineBase + 1, plus radius, plus one for a radius bonus and one for the 2 x 2's far side.
+        // The widest layer, 4 (MegaPineRadii's, and the old rule's MegaPineBase + 1), plus radius, plus one for a
+        // radius bonus and one for the 2 x 2's far side.
         return MegaPineBase + 1 + Foliage.GetMaxInt(FoliageRadius) + 2;
     case EVoxelFoliagePlacer::DarkOak:
         // The top log's layer, R + bonus + 3, plus one for a radius bonus and one for the 2 x 2's far side (a branch

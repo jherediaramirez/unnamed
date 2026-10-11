@@ -169,6 +169,68 @@ check(all(m & 1 << 5 for s, m in zip(slab["states"], masks["oak_slab"]) if s["pr
 check(all(m & 1 << 4 == 0 for ms in masks.values() for m in ms), "support: no torch hangs from a face")
 check({e["standing"]: e["wall"] for e in support["items"]}.get("torch") == "wall_torch", "support: the torch's wall block")
 
+# Plant survival (FactsDump.java): for every imported state and eight probes, the set of neighbour states that let it
+# survive (a signature id), every block and state present, and spot rows from the vanilla rules: a vine under a bottom
+# slab pops, a glow lichen under a top slab pops, a plant needs soil below, sugar cane needs water beside its sand,
+# a mushroom needs darkness on stone, a wall fan needs its support behind, and a full cube survives anywhere.
+plant = json.loads((ROOT / "facts/plant_survival.json").read_text(encoding="utf-8"))
+check(sorted(plant) == ["face_order", "light", "note", "signatures", "subjects"], "plant_survival.json: keys")
+check(plant["face_order"] == states["face_order"], "plant_survival.json: face order differs from block_states.json")
+check(plant["light"] == 15, "plant_survival.json: light")
+sig_list = plant["signatures"]
+by_id = {b["id"]: b for b in states["blocks"]}
+check(sig_list[0] == {}, "plant_survival.json: signature 0 is not the empty set")
+for number, signature in enumerate(sig_list):
+    for bid, members in signature.items():
+        if bid == "air":
+            check(members == "all", f"plant_survival.json: signature {number} air")
+        elif bid not in by_id:
+            check(False, f"plant_survival.json: signature {number} names unknown block {bid}")
+        elif members != "all":
+            check(isinstance(members, list) and members == sorted(set(members)) and members and 0 <= members[0]
+                  and members[-1] < len(by_id[bid]["states"]), f"plant_survival.json: signature {number} states of {bid}")
+check(list(plant["subjects"]) == [b["id"] for b in sorted(states["blocks"], key=lambda b: b["protocol_id"])],
+      "plant_survival.json: subjects differ from block_states.json (blocks or order)")
+for bid, rows in plant["subjects"].items():
+    check(len(rows) == len(by_id[bid]["states"]), f"plant_survival.json: state count of {bid}")
+    check(all(len(r) == 8 and all(isinstance(i, int) and 0 <= i < len(sig_list) for i in r) for r in rows),
+          f"plant_survival.json: a row of {bid} is not 8 signature ids in range")
+
+PROBES = {"west": 0, "east": 1, "north": 2, "south": 3, "down": 4, "up": 5, "down_water": 6, "down_dark": 7}
+
+
+def state_index(bid, **props):
+    wanted = {k: str(v).lower() for k, v in props.items()}
+    found = [i for i, s in enumerate(by_id[bid]["states"]) if all(s["properties"].get(k) == v for k, v in wanted.items())]
+    check(len(found) == 1, f"plant spot rows: {bid} {props} resolves to {len(found)} states")
+    return found[0] if found else 0
+
+
+def spot(bid, own, probe, other, **candidate):
+    """Does the state of bid with properties `own` survive with the state `candidate` of block `other` at the probed cell?"""
+    entry = sig_list[plant["subjects"][bid][state_index(bid, **own)][PROBES[probe]]].get(other)
+    if entry is None or entry == "all":
+        return entry == "all"
+    return state_index(other, **candidate) in entry
+
+
+vine = dict(up=True, north=False, east=False, south=False, west=False)
+check(not spot("vine", vine, "up", "stone_slab", type="bottom", waterlogged=False) and
+      spot("vine", vine, "up", "stone_slab", type="top", waterlogged=False), "plant spot: vine under a slab")
+lichen = dict(vine, down=False, waterlogged=False)
+check(spot("glow_lichen", lichen, "up", "stone_slab", type="bottom", waterlogged=False) and
+      not spot("glow_lichen", lichen, "up", "stone_slab", type="top", waterlogged=False), "plant spot: lichen under a slab")
+check(spot("dandelion", {}, "down", "grass_block", snowy=False) and not spot("dandelion", {}, "down", "stone"),
+      "plant spot: dandelion needs soil below")
+check(not spot("sugar_cane", dict(age=0), "down", "sand") and spot("sugar_cane", dict(age=0), "down_water", "sand"),
+      "plant spot: sugar cane needs water beside its sand")
+check(not spot("brown_mushroom", {}, "down", "stone") and spot("brown_mushroom", {}, "down_dark", "stone"),
+      "plant spot: a mushroom survives on stone only in the dark")
+fan = dict(facing="north", waterlogged=False)
+check(spot("tube_coral_wall_fan", fan, "south", "stone") and not spot("tube_coral_wall_fan", fan, "north", "stone"),
+      "plant spot: a wall fan needs its support behind")
+check(all(spot("stone", {}, probe, "air") for probe in PROBES), "plant spot: a full cube survives with air everywhere")
+
 # Items: block items for every block whose vanilla item has its id; model blocks' icons resolve.
 items = json.loads((ROOT / "items.json").read_text(encoding="utf-8"))["items"]
 for item in items:

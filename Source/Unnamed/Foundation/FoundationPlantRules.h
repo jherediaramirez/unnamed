@@ -17,8 +17,8 @@ namespace FoundationPlantRules
     // - facing: amethyst cluster and buds, shelf mushroom and coral wall fans point away from the clicked block (wiki:
     //   Amethyst Bud, "facing equals the anchoring face"), cocoa toward it (T1); the other horizontal ones (petals,
     //   leaf litter, dripleaves) face the player (inferred);
-    // - vine, glow lichen and sculk vein: the one face toward the clicked block (wiki: Vines, Glow Lichen). A vine is
-    //   never placed on an underside until Jesus decides its up face (scout H, Q8): that state has no face;
+    // - vine, glow lichen and sculk vein: the one face toward the clicked block (wiki: Vines, Glow Lichen). A vine has
+    //   no floor face; under a block it takes its up face (Jesus's answer to scout H's Q8);
     // - vertical_direction (pointed dripstone, sulfur spike): up on a top face, down on a bottom face, and on a side
     //   against the vertical look (wiki: Pointed Dripstone; the side case inferred);
     // - waterlogged: when the destination holds a water source (wiki: Waterlogging).
@@ -34,4 +34,14 @@ namespace FoundationPlantRules
         const FFoundationBlockRegistry& Registry, FFoundationBlockState State, FFoundationBlockState Other);
     // A vine, glow lichen or sculk vein state without a face: never placed (the click found no face to hold).
     UNNAMED_API bool HasNoFace(const FFoundationBlockRegistry& Registry, FFoundationBlockState State);
+
+    // The stack a block belongs to, named by its first block (Jesus's answer to scout H's Q1, the chains of the prep's
+    // section 4.2): sugar cane, cactus with its flower, bamboo, kelp, cave vines, pointed dripstone, sulfur spike, pale
+    // hanging moss, vine, and big dripleaf with its stem. A stack settles to its end after an edit
+    // (FFoundationAuthority::SettlePlants). None for every other block.
+    UNNAMED_API FName GetStack(FName Block);
+    // The wall block a plant's item places against a side, by look as the torch's item does: the coral fans' wall fans
+    // (the reference's standing-and-wall items, facts/block_support.json; Jesus's answer to Q7). None for every other
+    // block; the torch's pair comes from DA_Blocks.
+    UNNAMED_API FName GetWallBlock(FName Block);
 }

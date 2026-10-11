@@ -31,6 +31,7 @@ public class FactsDump {
                 (resources, reloadable, registries, cookie) -> { reloadable.updateComponentsAndStaticRegistryTags(); return registries; },
             net.minecraft.util.Util.backgroundExecutor(), Runnable::run).get();
         net.minecraft.core.HolderLookup.Provider lookup = layers.compositeAccess();
+        registryAccess = layers.compositeAccess();
         // Bind item default components the way the server does after loading registries.
         // Tabs are built one by one: the painting tab needs data-pack tags, which a bare bootstrap lacks.
         var params = new CreativeModeTab.ItemDisplayParameters(FeatureFlags.DEFAULT_FLAGS, true, lookup);
@@ -85,6 +86,7 @@ public class FactsDump {
             dumpStates(out, Path.of(args[1]));
             dumpSupport(out, Path.of(args[1]));
             dumpSounds(out, Path.of(args[1]));
+            dumpSurvival(out, Path.of(args[1]));
         }
         System.out.println("FACTS DUMP OK");
         System.exit(0);
@@ -290,5 +292,145 @@ public class FactsDump {
             }
             w.println("\n]}");
         }
+    }
+
+    // The survival probe's world: a mutable map of positions to states (everything unset is air) behind a proxy of
+    // the public LevelReader interface. Light answers are the field below; any method not listed fails the dump.
+    static final java.util.Map<net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState> survivalWorld = new java.util.HashMap<>();
+    static int survivalLight = 15;
+    static Object registryAccess;
+
+    static net.minecraft.world.level.LevelReader survivalLevel() {
+        var air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        var type = net.minecraft.world.level.LevelReader.class;
+        return (net.minecraft.world.level.LevelReader) java.lang.reflect.Proxy.newProxyInstance(type.getClassLoader(),
+            new Class<?>[] {type}, (proxy, method, a) -> switch (method.getName()) {
+                case "getBlockState" -> survivalWorld.getOrDefault(a[0], air);
+                case "getFluidState" -> survivalWorld.getOrDefault(a[0], air).getFluidState();
+                case "getBlockEntity" -> null;
+                case "isClientSide" -> false;
+                case "getMinY" -> -64;
+                case "getHeight" -> {
+                    if (a == null || a.length == 0) yield 384;
+                    throw new UnsupportedOperationException(method.toString());
+                }
+                case "getSeaLevel" -> 63;
+                case "getSkyDarken" -> 0;
+                case "getRawBrightness", "getMaxLocalRawBrightness", "getBrightness" -> survivalLight;
+                case "canSeeSky" -> survivalLight >= 15;
+                case "enabledFeatures" -> FeatureFlags.DEFAULT_FLAGS;
+                case "registryAccess" -> registryAccess;
+                case "hashCode" -> System.identityHashCode(proxy);
+                case "equals" -> proxy == a[0];
+                case "toString" -> "survival probe world";
+                default -> {
+                    if (method.isDefault()) yield java.lang.reflect.InvocationHandler.invokeDefault(proxy, method, a);
+                    throw new UnsupportedOperationException(method.toString());
+                }
+            });
+    }
+
+    // Plant survival matrix (plant_survival.json). Subjects: every state of every imported block, in ids order.
+    // Candidates: air, then the same states. For a subject S at the origin cell and a direction D, the set of
+    // candidates X for which S.canSurvive is true with X at the neighbour in direction D and air elsewhere (light 15).
+    // Phase A2: below only, water sources around the support cell. Phase A3: below only, light 0. Identical sets share
+    // a signature id, numbered in order of first appearance (0 = the empty set).
+    static void dumpSurvival(Path out, Path idsFile) throws Exception {
+        var ids = Files.readAllLines(idsFile).stream().filter(s -> !s.isBlank()).map(String::trim).toList();
+        var cands = new java.util.ArrayList<net.minecraft.world.level.block.state.BlockState>();
+        var blockOrder = new java.util.ArrayList<String>();
+        var blockRanges = new java.util.ArrayList<int[]>();
+        var blocks = new java.util.ArrayList<Block>();
+        blockOrder.add("air");
+        blocks.add(net.minecraft.world.level.block.Blocks.AIR);
+        for (String id : ids) {
+            Block b = BuiltInRegistries.BLOCK.getValue(net.minecraft.resources.Identifier.withDefaultNamespace(id));
+            if (b == net.minecraft.world.level.block.Blocks.AIR) throw new IllegalStateException("unknown block " + id);
+            blockOrder.add(id);
+            blocks.add(b);
+        }
+        for (Block b : blocks) {
+            int start = cands.size();
+            cands.addAll(b.getStateDefinition().getPossibleStates());
+            blockRanges.add(new int[] {start, cands.size()});
+        }
+        var dirs = new net.minecraft.core.Direction[] {net.minecraft.core.Direction.WEST, net.minecraft.core.Direction.EAST,
+            net.minecraft.core.Direction.NORTH, net.minecraft.core.Direction.SOUTH, net.minecraft.core.Direction.DOWN,
+            net.minecraft.core.Direction.UP};
+        var level = survivalLevel();
+        var P = new net.minecraft.core.BlockPos(0, 64, 0);
+        var water = net.minecraft.world.level.block.Blocks.WATER.defaultBlockState();
+        var sigs = new java.util.LinkedHashMap<java.util.BitSet, Integer>();
+        var sigList = new java.util.ArrayList<java.util.BitSet>();
+        sigs.put(new java.util.BitSet(), 0);
+        sigList.add(new java.util.BitSet());
+        int subjectCount = 0;
+        StringBuilder subjects = new StringBuilder();
+        for (int bi = 1; bi < blocks.size(); bi++) {
+            int[] range = blockRanges.get(bi);
+            StringBuilder rows = new StringBuilder();
+            for (int si = range[0]; si < range[1]; si++) {
+                var s = cands.get(si);
+                subjectCount++;
+                int[] row = new int[8];
+                for (int phase = 0; phase < 8; phase++) {
+                    var d = phase < 6 ? dirs[phase] : net.minecraft.core.Direction.DOWN;
+                    var n = P.relative(d);
+                    survivalWorld.clear();
+                    survivalWorld.put(P, s);
+                    if (phase == 6) for (var h : net.minecraft.core.Direction.Plane.HORIZONTAL) survivalWorld.put(n.relative(h), water);
+                    survivalLight = phase == 7 ? 0 : 15;
+                    var set = new java.util.BitSet(cands.size());
+                    for (int ci = 0; ci < cands.size(); ci++) {
+                        survivalWorld.put(n, cands.get(ci));
+                        if (s.canSurvive(level, P)) set.set(ci);
+                    }
+                    Integer sig = sigs.get(set);
+                    if (sig == null) { sig = sigList.size(); sigs.put(set, sig); sigList.add(set); }
+                    row[phase] = sig;
+                }
+                survivalWorld.clear();
+                survivalLight = 15;
+                rows.append(rows.length() > 0 ? "," : "").append("[");
+                for (int i = 0; i < 8; i++) rows.append(i > 0 ? "," : "").append(row[i]);
+                rows.append("]");
+            }
+            subjects.append(subjects.length() > 0 ? ",\n " : "").append(q(blockOrder.get(bi))).append(":[").append(rows).append("]");
+        }
+        try (PrintWriter w = new PrintWriter(Files.newBufferedWriter(out.resolve("plant_survival.json")))) {
+            w.print("{\"note\":" + q("Per subject state S (every state of every imported block) and per probe, the set of candidate states X (air plus every state of every imported block) for which "
+                + "S.canSurvive(level, P) is true in a world holding only S at P and X at the probed neighbour cell, air elsewhere, "
+                + "block light and sky light 15. Rows are [west, east, north, south, down, up, down_water, down_dark]: the first six "
+                + "put X at P + that direction; down_water puts X below with water sources at the four horizontal neighbours of that "
+                + "support cell (sugar cane's rule); down_dark puts X below with light 0 (the mushrooms' rule). Each entry is a "
+                + "signature id into signatures; identical sets share one, numbered by first appearance, 0 = no candidate. A "
+                + "signature maps a block id to \"all\" (every state of the block passes) or to the ascending state indices within "
+                + "that block (its state order in block_states.json, 0-based); blocks with no passing state are absent; air is "
+                + "the block id \"air\". Subjects are listed by block id in ids order, one entry per state in state order.")
+                + ",\"face_order\":[\"west\",\"east\",\"north\",\"south\",\"down\",\"up\"],\"light\":15,\"signatures\":[");
+            for (int i = 0; i < sigList.size(); i++) {
+                var set = sigList.get(i);
+                StringBuilder line = new StringBuilder();
+                for (int bi = 0; bi < blocks.size(); bi++) {
+                    int[] range = blockRanges.get(bi);
+                    int count = set.get(range[0], range[1]).cardinality();
+                    if (count == 0) continue;
+                    line.append(line.length() > 0 ? "," : "").append(q(blockOrder.get(bi))).append(":");
+                    if (count == range[1] - range[0]) line.append("\"all\"");
+                    else {
+                        line.append("[");
+                        boolean first = true;
+                        for (int ci = set.nextSetBit(range[0]); ci >= 0 && ci < range[1]; ci = set.nextSetBit(ci + 1)) {
+                            line.append(first ? "" : ",").append(ci - range[0]);
+                            first = false;
+                        }
+                        line.append("]");
+                    }
+                }
+                w.print((i > 0 ? ",\n " : "\n ") + "{" + line + "}");
+            }
+            w.print("\n],\"subjects\":{\n " + subjects + "\n}}\n");
+        }
+        System.out.println("PLANT SURVIVAL: candidates " + cands.size() + ", subjects " + subjectCount + ", signatures " + sigList.size());
     }
 }

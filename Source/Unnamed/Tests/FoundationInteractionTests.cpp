@@ -1,5 +1,6 @@
 #include "Misc/AutomationTest.h"
 #include "Blocks/VoxelPlantSurvival.h"
+#include "Dom/JsonObject.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationInteraction.h"
 #include "Foundation/FoundationInteractionSettings.h"
@@ -7,6 +8,10 @@
 #include "Foundation/FoundationSimulation.h"
 #include "Foundation/FoundationTags.h"
 #include "HAL/PlatformTime.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 #include "Voxel/VoxelBlocks.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -1299,15 +1304,32 @@ bool FFoundationInteractionPlantsTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("the build limit refuses the upper half"), L.A.CheckPlacement(L.P(), Main, Ceiling, Destination),
         EFoundationReason::OutsideBounds);
 
-    // A vine on an underside holds no face (until Jesus decides the vine's up face, Q8).
+    // A vine under a block holds its up face, which needs the upper face of the block above (Jesus's answer to Q8):
+    // stone and a top slab hold it, a bottom slab does not.
+    const FFoundationBlockRegistry& Registry = L.A.World.GetRegistry();
+    auto Named = [&Registry](const TCHAR* Text)
+    {
+        FFoundationBlockState State;
+        Registry.Parse(Text, State);
+        return Registry.ToString(State);
+    };
     TestTrue(TEXT("vine has an item"), Give(L, TEXT("vine")));
     FFoundationHit Underside = Ceiling;
     Underside.Cell = FIntVector(3, 0, 5);
     Underside.Face = EFoundationFace::Down;
     Underside.Point = FoundationGrid::CellBox(Underside.Cell, L.A.World.OriginCm).GetCenter() - FVector(0, 0, 50);
+    FFoundationBlockState Hanging, Support;
+    for (const TCHAR* Above : {TEXT("stone"), TEXT("stone_slab[type=top]"), TEXT("stone_slab[type=bottom]")})
+    {
+        Registry.Parse(Above, Support);
+        L.A.World.Set(Underside.Cell, Support);
+        const bool bHolds = FCString::Strcmp(Above, TEXT("stone_slab[type=bottom]")) != 0;
+        TestEqual(FString::Printf(TEXT("a vine under %s"), Above),
+            L.A.CheckPlacement(L.P(), Main, Underside, Destination, &Hanging),
+            bHolds ? EFoundationReason::None : EFoundationReason::CannotSurvive);
+        if (bHolds) TestEqual(TEXT("holding its up face"), Registry.ToString(Hanging), Named(TEXT("vine[up=true]")));
+    }
     L.Put(Underside.Cell, TEXT("stone"));
-    TestEqual(TEXT("a vine under a block is refused"), L.A.CheckPlacement(L.P(), Main, Underside, Destination),
-        EFoundationReason::CannotSurvive);
     Underside.Face = EFoundationFace::South;
     Underside.Point = FoundationGrid::CellBox(Underside.Cell, L.A.World.OriginCm).GetCenter() + FVector(0, 50, 0);
     FFoundationBlockState Vine;
@@ -1317,6 +1339,24 @@ bool FFoundationInteractionPlantsTest::RunTest(const FString& Parameters)
     L.A.World.GetRegistry().Parse(TEXT("vine[north=true]"), North);
     TestEqual(TEXT("holding the face toward the block"), L.A.World.GetRegistry().ToString(Vine),
         L.A.World.GetRegistry().ToString(North));
+
+    // A coral fan's item places its wall fan on a side, facing away from it, and its floor fan on a top face (Jesus's
+    // answer to Q7); the wall fan has no item of its own and drops the fan's.
+    TestTrue(TEXT("tube coral fan has an item"), Give(L, TEXT("tube_coral_fan")));
+    FFoundationBlockState Fan;
+    TestEqual(TEXT("a coral fan on a side places"), L.A.CheckPlacement(L.P(), Main, Underside, Destination, &Fan),
+        EFoundationReason::None);
+    TestEqual(TEXT("as its wall fan facing away"), Registry.ToString(Fan),
+        Named(TEXT("tube_coral_wall_fan[facing=south,waterlogged=false]")));
+    Underside.Face = EFoundationFace::Up;
+    Underside.Point = FoundationGrid::CellBox(Underside.Cell, L.A.World.OriginCm).GetCenter() + FVector(0, 0, 50);
+    TestEqual(TEXT("a coral fan on a top face places"), L.A.CheckPlacement(L.P(), Main, Underside, Destination, &Fan),
+        EFoundationReason::None);
+    TestEqual(TEXT("as its floor fan"), Registry.ToString(Fan), Named(TEXT("tube_coral_fan[waterlogged=false]")));
+    const FFoundationBlockType* WallFan = L.A.World.FindBlock(TEXT("tube_coral_wall_fan"));
+    TestTrue(TEXT("the wall fan drops the fan's item and has none"),
+        WallFan && WallFan->DropItem == TEXT("tube_coral_fan") &&
+            L.A.Rules.FindItem(TEXT("tube_coral_wall_fan")) == INDEX_NONE);
 
     // Replaceable plants are their own destination; replacing a double plant's half pops the other half.
     FLab Rep;
@@ -1338,6 +1378,31 @@ bool FFoundationInteractionPlantsTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("stone replaces the lower half"),
         R.bPlaced && R.Cell == LowerCell && Text(Rep, LowerCell) == TEXT("stone"));
     TestTrue(TEXT("and the upper half pops"), !Rep.Solid(UpperCell) && Pops(Rep, Mark) == 1);
+    // One snow layer is its own destination, two layers are not (Jesus's answer to Q5).
+    FFoundationHit OnSnow = Ceiling;
+    OnSnow.Cell = UpperCell;
+    EFoundationReason Ignored;
+    for (const int32 Layers : {1, 2})
+    {
+        FFoundationBlockState Snow;
+        Rep.A.World.GetRegistry().Parse(*FString::Printf(TEXT("snow[layers=%d]"), Layers), Snow);
+        Rep.A.World.Set(UpperCell, Snow);
+        TestTrue(FString::Printf(TEXT("the destination on %d snow layers"), Layers),
+            Rep.A.GetDestination(OnSnow, Destination, Ignored) &&
+                Destination == (Layers == 1 ? UpperCell : UpperCell + FIntVector(0, 0, 1)));
+    }
+    // Placing on one layer: stone replaces it, snow goes into the cell above (stacking layers is not built).
+    FFoundationBlockState OneLayer;
+    Rep.A.World.GetRegistry().Parse(TEXT("snow[layers=1]"), OneLayer);
+    Rep.A.World.Set(UpperCell, OneLayer);
+    for (const TCHAR* Placing : {TEXT("stone"), TEXT("snow")})
+    {
+        TestTrue(FString::Printf(TEXT("%s has an item"), Placing), Give(Rep, Placing));
+        const bool bStone = FCString::Strcmp(Placing, TEXT("stone")) == 0;
+        TestTrue(FString::Printf(TEXT("%s on one snow layer"), Placing),
+            Rep.A.CheckPlacement(Rep.P(), Main, OnSnow, Destination) == EFoundationReason::None &&
+                Destination == (bStone ? UpperCell : UpperCell + FIntVector(0, 0, 1)));
+    }
 
     // Pops drop nothing: mining one half returns one item in the finite fixture.
     FLab F(false);
@@ -1366,9 +1431,9 @@ bool FFoundationInteractionPlantsTest::RunTest(const FString& Parameters)
     return true;
 }
 
-// Plant survival (phase 6, S7): rows pinned from scout H's measured support table (T1; none for leaves, mud, soul sand
-// or 8-layer snow until Jesus decides sturdy faces, Q2), then the cascade through the authority: one level deep, a
-// double plant as one unit, multiface blocks trimmed, unknown cells never popping.
+// Plant survival (phase 6, S7; S7b): rows pinned from scout H's measured support table (T1; none for leaves, mud, soul
+// sand or 8-layer snow until the sturdy-face follow-up, Q2), then the cascade through the authority: one level deep, a
+// double plant as one unit, stacks to their end (Q1), multiface blocks trimmed, unknown cells never popping.
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBlocksSurvivalTest, "Unnamed.Foundation.Blocks.Survival",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -1482,12 +1547,20 @@ bool FFoundationBlocksSurvivalTest::RunTest(const FString& Parameters)
         {TEXT("pointed_dripstone[vertical_direction=up]"),
             {{Below, TEXT("pointed_dripstone[vertical_direction=down]")}}, false},
         {TEXT("pointed_dripstone[vertical_direction=down]"), {{Above, TEXT("stone")}}, true},
-        // Multiface: every face held; a vine's side face may hang from the vine above; a vine's up face waits (Q8).
+        // Multiface: glow lichen and sculk vein need every face, a vine any one; a vine's side face may hang from the
+        // vine above, and its up face needs the upper face of the block above (Q8).
         {TEXT("vine[north=true]"), {{North, TEXT("stone")}}, true},
         {TEXT("vine[north=true]"), {}, false},
         {TEXT("vine[north=true]"), {{Above, TEXT("vine[north=true]")}}, true},
-        {TEXT("vine[north=true,east=true]"), {{North, TEXT("stone")}}, false},
-        {TEXT("vine[up=true]"), {}, true},
+        {TEXT("vine[north=true]"), {{Above, TEXT("vine[east=true]")}}, false},
+        {TEXT("vine[north=true,east=true]"), {{North, TEXT("stone")}}, true},
+        {TEXT("vine[north=true,east=true]"), {}, false},
+        {TEXT("vine[up=true]"), {}, false},
+        {TEXT("vine[up=true]"), {{Above, TEXT("stone")}}, true},
+        {TEXT("vine[up=true]"), {{Above, TEXT("stone_slab[type=top]")}}, true},
+        {TEXT("vine[up=true]"), {{Above, TEXT("stone_slab[type=bottom]")}}, false},
+        {TEXT("vine[up=true]"), {{Above, TEXT("oak_leaves")}}, true},
+        {TEXT("glow_lichen[north=true,east=true]"), {{North, TEXT("stone")}}, false},
         {TEXT("glow_lichen[down=true]"), {{Below, TEXT("stone")}}, true},
         {TEXT("glow_lichen[up=true]"), {{Above, TEXT("stone_slab[type=bottom]")}}, true},
         {TEXT("glow_lichen[up=true]"), {{Above, TEXT("stone_slab[type=top]")}}, false},
@@ -1503,6 +1576,151 @@ bool FFoundationBlocksSurvivalTest::RunTest(const FString& Parameters)
                 FString::Printf(TEXT("%s: expected %s"), Row.Plant, Row.bSurvives ? TEXT("survives") : TEXT("pops")));
         }
     TestEqual(TEXT("support rows that differ"), Wrong, 0);
+
+    // The whole matrix (Jesus's answer to scout H's Q3): the reference's facts/plant_survival.json, the game's own
+    // canSurvive for every imported state with one imported state (or air) at one neighbour and air elsewhere, then
+    // below with water sources around that support, then below in the dark. The table reads no light, so the last
+    // probe repeats its answer for the one below. Each difference is counted by its cause.
+    FString Json;
+    TSharedPtr<FJsonObject> Matrix;
+    if (FFileHelper::LoadFileToString(
+            Json, *(FPaths::ProjectDir() / TEXT("Reference/minecraft-blocks-26.3/facts/plant_survival.json"))))
+        FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json), Matrix);
+    if (!TestValid(TEXT("plant_survival.json"), Matrix)) return false;
+    const FVoxelPlantSurvival& Table = *L.A.PlantSurvival;
+    int32 StateLimit = 0, UnknownIds = 0;
+    for (int32 Index = 0; Index < Registry.GetBlockCount(); ++Index)
+        StateLimit =
+            FMath::Max(StateLimit, Registry.GetBlockAt(Index).MinStateId + Registry.GetBlockAt(Index).StateCount);
+    TArray<TBitArray<>> Signatures;
+    for (const TSharedPtr<FJsonValue>& Value : Matrix->GetArrayField(TEXT("signatures")))
+    {
+        TBitArray<>& Set = Signatures.Emplace_GetRef(false, StateLimit);
+        for (const auto& Members : Value->AsObject()->Values)
+        {
+            const FFoundationBlockType* Block = L.A.World.FindBlock(*Members.Key);
+            if (!Block && ++UnknownIds) continue;
+            if (Members.Value->Type == EJson::String)
+                for (int32 Index = 0; Index < Block->StateCount; ++Index)
+                    Set[Block->MinStateId + Index] = true;
+            else
+                for (const TSharedPtr<FJsonValue>& Member : Members.Value->AsArray())
+                {
+                    const int32 Index = int32(Member->AsNumber());
+                    if (Index < 0 || Index >= Block->StateCount)
+                        ++UnknownIds;
+                    else
+                        Set[Block->MinStateId + Index] = true;
+                }
+        }
+    }
+    const auto& Subjects = Matrix->GetObjectField(TEXT("subjects"))->Values;
+    TArray<uint16> Candidates = {0};
+    for (const auto& Subject : Subjects)
+        if (const FFoundationBlockType* Block = L.A.World.FindBlock(*Subject.Key))
+            for (int32 Index = 0; Index < Block->StateCount; ++Index)
+                Candidates.Add(uint16(Block->MinStateId + Index));
+    const TCHAR* const Probes[8] = {
+        TEXT("west"), TEXT("east"), TEXT("north"), TEXT("south"), TEXT("down"), TEXT("up"), TEXT("wet"), TEXT("dark")};
+    const FIntVector Steps[6] = {West, East, North, South, Below, Above};
+    const uint16 Water = Parse(TEXT("water")).Id;
+    // Why the table differs from the game:
+    // - sturdy faces: a rule that reads them, against a support whose faces the follow-up of Q2 measures (leaves,
+    //   mud, soul sand, snow, powder snow, and the model blocks, read here as never sturdy);
+    // - light: the mushrooms at light 15 (the table reads none);
+    // - snow layers: their own rule, not in the table;
+    // - otherwise the rule itself, S7's kinds or S8's.
+    auto Cause = [&](uint16 Subject, int32 Probe, uint16 Candidate) -> FString
+    {
+        const FFoundationBlockType& Support = Registry.GetBlock(FFoundationBlockState{Candidate});
+        const EVoxelSurvival Kind = Table.GetRule(Subject).Kind;
+        if (Kind == EVoxelSurvival::Mushroom && (Probe == 4 || Probe == 6)) return TEXT("light");
+        if (Registry.GetBlock(FFoundationBlockState{Subject}).Id == TEXT("snow")) return TEXT("snow layers");
+        const bool bReadsSturdy = Kind == EVoxelSurvival::SturdyBelow || Kind == EVoxelSurvival::CactusFlower ||
+            Kind == EVoxelSurvival::Underwater || Kind == EVoxelSurvival::Attached || Kind == EVoxelSurvival::Pointed ||
+            Kind == EVoxelSurvival::Multiface;
+        const bool bMeasuredLater =
+            Registry.GetShape(FFoundationBlockState{Candidate}) == EFoundationBlockShape::Model ||
+            Support.Placement == EFoundationPlacementRule::Leaves || Support.Id == TEXT("mud") ||
+            Support.Id == TEXT("soul_sand") || Support.Id == TEXT("snow") || Support.Id == TEXT("powder_snow");
+        if (bReadsSturdy && bMeasuredLater) return TEXT("sturdy faces (Q2)");
+        const bool bS7 = Kind == EVoxelSurvival::Attached || Kind == EVoxelSurvival::TagAt ||
+            Kind == EVoxelSurvival::Multiface || Kind == EVoxelSurvival::Pointed ||
+            Kind == EVoxelSurvival::DripleafStem;
+        return bS7 ? TEXT("S7 rule") : TEXT("S8 rule");
+    };
+    TMap<FString, int32> Differences, Causes;
+    int64 Checked = 0;
+    int32 SubjectStates = 0;
+    for (const auto& Subject : Subjects)
+    {
+        const FFoundationBlockType* Block = L.A.World.FindBlock(*Subject.Key);
+        if (!Block && ++UnknownIds) continue;
+        // The torches: Blocks.Support checks their own table against the reference.
+        if (Block->bTorchRule) continue;
+        const TArray<TSharedPtr<FJsonValue>>& StateRows = Subject.Value->AsArray();
+        TestEqual(FString::Printf(TEXT("%s rows"), *Subject.Key), StateRows.Num(), Block->StateCount);
+        for (int32 Index = 0; Index < FMath::Min(StateRows.Num(), Block->StateCount); ++Index)
+        {
+            const uint16 State = uint16(Block->MinStateId + Index);
+            const TArray<TSharedPtr<FJsonValue>>& Row = StateRows[Index]->AsArray();
+            const bool bAlways = Table.GetRule(State).Kind == EVoxelSurvival::Always;
+            ++SubjectStates;
+            for (int32 Probe = 0; Probe < 8; ++Probe)
+            {
+                const TBitArray<>& Expected = Signatures[int32(Row[Probe]->AsNumber())];
+                const FIntVector At = P + Steps[Probe < 6 ? Probe : 4];
+                for (const uint16 Candidate : Candidates)
+                {
+                    const bool bOurs = bAlways ||
+                        Table.Survives(State, P.X, P.Y, P.Z,
+                            [&](int32 X, int32 Y, int32 Z) -> uint16
+                            {
+                                const FIntVector Cell(X, Y, Z);
+                                if (Cell == P) return State;
+                                if (Cell == At) return Candidate;
+                                const bool bBeside =
+                                    Cell.Z == At.Z && FMath::Abs(Cell.X - At.X) + FMath::Abs(Cell.Y - At.Y) == 1;
+                                return Probe == 6 && bBeside ? Water : uint16(0);
+                            });
+                    ++Checked;
+                    if (bOurs == Expected[Candidate]) continue;
+                    const FString Why = Cause(State, Probe, Candidate);
+                    ++Causes.FindOrAdd(Why);
+                    ++Differences.FindOrAdd(FString::Printf(TEXT("%s: %s %s %s, the table says %s"), *Why, *Subject.Key,
+                        Probes[Probe], *Registry.GetBlock(FFoundationBlockState{Candidate}).Id.ToString(),
+                        bOurs ? TEXT("survives") : TEXT("pops")));
+                }
+            }
+        }
+    }
+    TestEqual(TEXT("matrix block ids or state indices not in the registry"), UnknownIds, 0);
+    Differences.KeySort(TLess<FString>());
+    for (const TPair<FString, int32>& Difference : Differences)
+        AddInfo(FString::Printf(TEXT("%s (%d)"), *Difference.Key, Difference.Value));
+    for (const TPair<FString, int32>& Count : Causes)
+        AddInfo(FString::Printf(TEXT("cause %s: %d"), *Count.Key, Count.Value));
+    AddInfo(FString::Printf(TEXT("matrix: %d subject states, %lld answers"), SubjectStates, Checked));
+    // Pinned (S7b, the manager's calls under Jesus's away rule): S7's kinds agree everywhere; the rest are known
+    // differences, each named in Docs/Blocks.md with when it is due.
+    TestEqual(TEXT("differences from the S7 rules"), Causes.FindRef(TEXT("S7 rule")), 0);
+    TestEqual(TEXT("differences from sturdy faces (Q2's follow-up)"), Causes.FindRef(TEXT("sturdy faces (Q2)")), 20931);
+    TestEqual(TEXT("differences from light (the mushrooms)"), Causes.FindRef(TEXT("light")), 10360);
+    TestEqual(TEXT("differences from snow layers (main lane, with snow)"), Causes.FindRef(TEXT("snow layers")), 205680);
+    // S8's rules (main lane, small fixes): pale moss carpet with bottom=false takes any floor; a lily pad pops on a
+    // water source held in a block; an upper half stands on its own upper half; a mushroom stands on powder snow or a
+    // test instance block in the dark.
+    TMap<FString, int32> S8;
+    for (const TPair<FString, int32>& Difference : Differences)
+        if (Difference.Key.StartsWith(TEXT("S8 rule: ")))
+            S8.FindOrAdd(Difference.Key.Mid(
+                9, Difference.Key.Find(TEXT(" "), ESearchCase::CaseSensitive, ESearchDir::FromStart, 9) - 9)) +=
+                Difference.Value;
+    const TMap<FString, int32> KnownS8 = {{TEXT("pale_moss_carpet"), 1055349}, {TEXT("lily_pad"), 1521},
+        {TEXT("small_dripleaf"), 192}, {TEXT("tall_grass"), 3}, {TEXT("large_fern"), 3}, {TEXT("sunflower"), 3},
+        {TEXT("lilac"), 3}, {TEXT("rose_bush"), 3}, {TEXT("peony"), 3}, {TEXT("tall_seagrass"), 3},
+        {TEXT("brown_mushroom"), 2}, {TEXT("red_mushroom"), 2}};
+    TestTrue(TEXT("differences from the S8 rules: only the known ones"), S8.OrderIndependentCompareEqual(KnownS8));
 
     // The cascade. Dirt (hardness 0.5, 15 steps by hand) is the support that gets mined.
     auto Put = [&L, &Parse](FIntVector Cell, const TCHAR* Text) { L.A.World.Set(Cell, Parse(Text)); };
@@ -1526,20 +1744,44 @@ bool FFoundationBlocksSurvivalTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("dirt under the tall grass mined"), MineSteps(L) > 0);
     TestTrue(TEXT("both halves pop"),
         !L.Solid(Support + FIntVector(0, 0, 1)) && !L.Solid(Support + FIntVector(0, 0, 2)) && L.A.Pops == 3);
-    // One level deep: a sugar cane stack loses only the segment on the mined block (scout H, Q1 open).
+    // A stack pops to its end (Jesus's answer to Q1): sugar cane, and a cactus with its flower, above the mined block.
     Put(Support, TEXT("dirt"));
     Put(Support + FIntVector(0, 1, 0), TEXT("water"));
     for (int32 Z = 1; Z <= 3; ++Z)
         Put(Support + FIntVector(0, 0, Z), TEXT("sugar_cane"));
     L.NextStep();
     L.Stand({-150, 50, 0}, AtCell);
+    int32 PopsBefore = L.A.Pops;
     TestTrue(TEXT("dirt under the cane mined"), MineSteps(L) > 0);
-    TestTrue(TEXT("the bottom segment pops, the ones above stay"),
-        !L.Solid(Support + FIntVector(0, 0, 1)) && L.Solid(Support + FIntVector(0, 0, 2)) &&
-            L.Solid(Support + FIntVector(0, 0, 3)));
-    for (int32 Z = 0; Z <= 3; ++Z)
-        L.A.World.Set(Support + FIntVector(0, 0, Z), {});
+    TestTrue(TEXT("every segment of the cane pops"),
+        !L.Solid(Support + FIntVector(0, 0, 1)) && !L.Solid(Support + FIntVector(0, 0, 2)) &&
+            !L.Solid(Support + FIntVector(0, 0, 3)) && L.A.Pops == PopsBefore + 3);
     L.A.World.Set(Support + FIntVector(0, 1, 0), {});
+    Put(Support, TEXT("sand"));
+    Put(Support + FIntVector(0, 0, 1), TEXT("cactus"));
+    Put(Support + FIntVector(0, 0, 2), TEXT("cactus"));
+    Put(Support + FIntVector(0, 0, 3), TEXT("cactus_flower"));
+    L.NextStep();
+    L.Stand({-150, 50, 0}, AtCell);
+    PopsBefore = L.A.Pops;
+    TestTrue(TEXT("sand under the cactus mined"), MineSteps(L) > 0);
+    TestTrue(TEXT("the cactus and its flower pop"),
+        !L.Solid(Support + FIntVector(0, 0, 1)) && !L.Solid(Support + FIntVector(0, 0, 3)) &&
+            L.A.Pops == PopsBefore + 3);
+    // Down a stack: a vine hanging under a vine goes with it. Kept clear of z 0: a plant there reads the unknown cell
+    // below it and stays.
+    const FIntVector Hanger(0, 0, 2);
+    Put(Hanger, TEXT("dirt"));
+    Put(Hanger + FIntVector(0, 1, 0), TEXT("vine[north=true]"));
+    Put(Hanger + FIntVector(0, 1, -1), TEXT("vine[north=true]"));
+    L.NextStep();
+    // This aim meets the west face of (0, 0, 2).
+    L.Stand({-150, 50, 0}, FVector(200, 0, 88));
+    PopsBefore = L.A.Pops;
+    TestTrue(TEXT("the hanging vine's block mined"), MineSteps(L) > 0 && !L.Solid(Hanger));
+    TestTrue(TEXT("the vine on it and the vine under it pop"),
+        !L.Solid(Hanger + FIntVector(0, 1, 0)) && !L.Solid(Hanger + FIntVector(0, 1, -1)) &&
+            L.A.Pops == PopsBefore + 2);
     // Multiface: a vine on two blocks loses the face of the mined one; glow lichen the same.
     Put(Support, TEXT("dirt"));
     Put(FIntVector(1, 1, 1), TEXT("dirt"));
@@ -1571,7 +1813,7 @@ bool FFoundationBlocksSurvivalTest::RunTest(const FString& Parameters)
     // Unknown cells: the ground below z 0 is outside the bounds. A flower there never pops, and none is placed there.
     Put({9, 1, 0}, TEXT("dandelion"));
     Put({9, 0, 0}, TEXT("dirt"));
-    const int32 PopsBefore = L.A.Pops;
+    PopsBefore = L.A.Pops;
     L.Hold(3);
     L.NextStep();
     L.Stand({750, 50, 0}, FVector(150, 0, -112));

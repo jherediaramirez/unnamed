@@ -175,8 +175,7 @@ bool FVoxelPlantSurvival::Initialize(
         {
             FVoxelSurvivalRule Rule{EVoxelSurvival::Multiface};
             for (int32 Face = 0; Face < 6; ++Face)
-                if (Value(FaceNames[Face]) == True)
-                    Rule.Faces |= Block == VineBlock && Face == Up ? FVoxelSurvivalRule::VineUpFace : uint8(1 << Face);
+                if (Value(FaceNames[Face]) == True) Rule.Faces |= uint8(1 << Face);
             return Rule;
         }
         return {};
