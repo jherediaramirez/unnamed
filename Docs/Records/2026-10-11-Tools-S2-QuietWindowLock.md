@@ -75,7 +75,7 @@ pwsh -NoProfile -File Scripts/QuietWindow.ps1 -Name x && <launch>   # from Bash
 
 All of these ran against sandbox locks (`C:\dev\sandbox\quiet-window-s2\locks\`, `locks-d\`). The real lock was absent before and after every suite. The heavy processes were the fake editor (`UnrealEditor-Fake.exe`, a copy of cmd.exe) and `FakeWorker.exe`, with `-HeavyNames`, so the lanes' real runs didn't count. After the manager's note, fakes name only `dev\projects\Unnamed-fake1/2/3`, never a real worktree. Scripts and outputs are in `C:\dev\sandbox\quiet-window-s2\`.
 
-74 checks, all passing on the final scripts (after the review fixes), 00:54 to 01:02, plus B10 at 01:10. The machine was busy with other lanes' editors and suites throughout, which didn't matter because the tests count only the fakes.
+74 checks, all passing on the final scripts (after the review fixes), 00:54 to 01:02, plus B10 at 01:03. The machine was busy with other lanes' editors and suites throughout, which didn't matter because the tests count only the fakes.
 
 - **A, the gate (`test-helper.ps1`, 26 of 26, `test-helper-final.txt`):**
   - no lock;
@@ -147,12 +147,24 @@ All of these ran against sandbox locks (`C:\dev\sandbox\quiet-window-s2\locks\`,
   - A Bash heredoc ate a regex's `\\`, as the note in quiet_check warns.
 - The first quiet_window test run gave its fakes real worktree names (`Unnamed-items`). Items' RunChecks logged one in its machine state, and verify_lane listed it as that lane's editor. The manager flagged it. The run was stopped and every fake was renamed `Unnamed-fake*`.
 
+## The merge
+
+The manager verified report A and approved the commit, `8593a78`. Then `feature/voxel-world` at `5d6e3a5` was merged once (`0e00c36`, parents `8593a78` + `5d6e3a5`). There were no conflicts: the index kept both dates' lines. 17 incoming paths, of which `Source/Unnamed` Foundation and two test files are code.
+
+**Proof:** `Scripts\RunChecks.ps1 -Profile quick` with no skips and no lock present, so the gate passed straight through with no wait lines.
+- The build took 48 s; the `Unnamed` DLL is from 01:05:50.
+- TestVoxel: 161 voxel suites.
+- Mesher.Digest: the 6 digest hashes equal `expected-hashes-main.txt` (valid at `5d6e3a5`); quick doesn't run the 3 radius-8 hashes.
+- npm: 57 of 57. source-check: passed.
+- The time chain is clean. The machine had other lanes' editors running.
+- GREEN in 3 min: `C:\dev\projects\Unnamed-s5\Tests\Evidence\2026-10-11\Checks-quick-20261011-010551\summary.txt`; suite `VoxelAutomation-20261011-010551`.
+
 ## Usage
 
-- Lead: 238k peak context by MeasureAgentUsage after the final review, before the wrap-up.
+- Lead: 267k peak context by MeasureAgentUsage, after the merge proof.
 - One subagent, the Sonnet review: 57.8k peak, 95.7k processed.
 
 ## Open questions
 
-- The window's watcher is a background task of the manager session, so a stopped task ends the hold within one poll. Is a detached watcher wanted instead (it would survive the session, but its exit would wake no one)? Recommendation: keep it as a task.
 - The fake editor still appears in other lanes' machine-state lines (`UnrealEditor*`) while a test runs. That is harmless, but say so in the fake editor's README.
+- Answered: the watcher stays a background task of the manager session (the manager, 2026-10-11).
