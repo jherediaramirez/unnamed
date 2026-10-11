@@ -7,10 +7,11 @@ uint8 VoxelFluidSurface::Pack(const FVoxelStateInfo& Fluid, bool bFluidAbove)
         uint8(uint8(Fluid.Fluid) << FluidShift) | (bFluidAbove ? FullBit : 0);
 }
 
-bool VoxelFluidSurface::Make(const uint8 Ring[9], int32 Mode, FSurface& Out)
+bool VoxelFluidSurface::Make(const uint8 Ring[9], int32 Mode, FSurface& Out, bool bOpenCorners)
 {
     const uint8 Self = Ring[4];
-    if (Mode <= 0 || !Self || (Self & FullBit)) return false;
+    // Only a fluid cell has a surface (never an open cell, which a batch of edits can briefly put at the centre).
+    if (Mode <= 0 || !(Self & FluidMask) || (Self & FullBit)) return false;
     const float Own = (Self & AmountMask) / 9.f;
     constexpr int32 CornerX[4] = {-1, 1, 1, -1}, CornerY[4] = {-1, -1, 1, 1};
     bool bTilted = false;
@@ -19,9 +20,10 @@ bool VoxelFluidSurface::Make(const uint8 Ring[9], int32 Mode, FSurface& Out)
         const int32 DX = CornerX[Corner], DY = CornerY[Corner] * 3;
         const uint8 Cells[4] = {Self, Ring[4 + DX], Ring[4 + DY], Ring[4 + DX + DY]};
         bool bDiffer = false, bFull = false, bSource = false;
-        int32 Sum = 0, Count = 0;
+        int32 Sum = 0, Count = 0, Open = 0;
         for (const uint8 Cell : Cells)
         {
+            Open += bOpenCorners && Cell == OpenCell;
             if (!Cell || (Cell & FluidMask) != (Self & FluidMask)) continue;
             bDiffer |= (Cell & LevelMask) != (Self & LevelMask);
             bFull |= (Cell & FullBit) != 0;
@@ -30,8 +32,11 @@ bool VoxelFluidSurface::Make(const uint8 Ring[9], int32 Mode, FSurface& Out)
             Sum += Cell & AmountMask;
             ++Count;
         }
+        // Open cells lower only a mean of flowing cells (never a full or source corner, so generated fluid holds).
+        const bool bOpenLowers = Open && !bFull && !bSource;
         float Height = Own;
-        if (Mode >= 2 || bDiffer) Height = bFull ? 1.f : bSource ? 8 / 9.f : Sum / (9.f * Count);
+        if (Mode >= 2 || bDiffer || bOpenLowers)
+            Height = bFull ? 1.f : bSource ? 8 / 9.f : Sum / (9.f * (Count + Open));
         Out.Corners[Corner] = Height;
         bTilted |= Height != Own;
     }

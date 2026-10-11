@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates,[switch]$TorchRoom,[switch]$TorchLook,[int]$TorchGlow=-1,[ValidateSet('breach','flood')][string]$Fluids)
+param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates,[switch]$TorchRoom,[switch]$TorchLook,[int]$TorchGlow=-1,[ValidateSet('breach','flood','scenes')][string]$Fluids)
 # Renders the generated world offscreen (/Game/Maps/L_Generated) and saves AVoxelWorld's screenshots: overview,
 # closeup, ground, lumen-scene and section, plus build.txt with the first view's streaming timings. The rings stay on
 # the player's spawn, and the view's edge is meshed against air (voxel.Debug.EdgeWalls 1; -ExecCmds can turn it off),
@@ -33,10 +33,14 @@ param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[in
 # voxel.LightsInfo per shot) and look-<view>-ml<0|1>.png, in a folder ending in -look.
 # -TorchGlow <0-15> meshes the torch models at that glow from the start (-VoxelTorchGlow=N, voxel.TorchGlow; the default 1
 # is warm A's whole torch (T3b), 0 leaves only the flame glowing at its own 1, 14 is the old white torch).
-# -Fluids breach|flood first runs a flowing water capture with voxel.Fluids on (FVoxelFluidShots, -VoxelShotFluids): breach
+# -Fluids breach|flood|scenes first runs a flowing water capture (FVoxelFluidShots, -VoxelShotFluids; breach and flood
+# switch voxel.Fluids on, scenes runs it as set): breach
 # mines into a sea from a sealed room under it (breach.txt, breach.csv per second, breach-dry/03s/08s/20s.png); flood
 # places 25 water sources on flat ground and traces 30 s of frames (flood.txt, flood.csv per frame, flood-end.png). In a
-# folder ending in -<scenario>. Not with -Flight.
+# folder ending in -<scenario>. scenes (water and sky W3b) builds the vanilla client probe's five water and lava scenes on
+# a Superflat world (-World, with the grass top at y -61; -SpawnAt -65,25 -SpawnExact as the probe stood) and shoots its
+# 20 poses at -Width 1920 -Height 1080 (scenes.txt: the reach checks, each scene's ground as levels; scenes-<pose>.png).
+# Not with -Flight.
 # Evidence is never overwritten.
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent

@@ -217,8 +217,8 @@ public:
     void SetModelOptions(bool bModels, bool bShadeUnturned);
     // The render-only ore looks (voxel.Look.OreHost, voxel.Look.OreGlint); a change remeshes every column.
     void SetOreLooks(int32 OreHost, int32 OreGlint);
-    // Fluid surfaces (voxel.Fluids.SlopedTops, FVoxelMeshOptions::SlopedTops); a change remeshes every column.
-    void SetSlopedTops(int32 SlopedTops);
+    // Fluid surfaces (voxel.Fluids.SlopedTops and OpenCorners, FVoxelMeshOptions); a change remeshes every column.
+    void SetSlopedTops(int32 SlopedTops, bool bOpenCorners);
     // The light table mesh jobs scan their column's light sources with (FVoxelColumnMesh::Lights); null scans none.
     // Jobs launched from now on use it: a column picks a new table up when it next meshes, nothing remeshes for it.
     void SetLightTable(TSharedPtr<const FVoxelLightTable> InLightTable) { LightTable = MoveTemp(InLightTable); }

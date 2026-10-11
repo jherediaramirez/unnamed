@@ -24,6 +24,7 @@
 #include "UObject/ConstructorHelpers.h"
 #include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
+#include "Voxel/VoxelFluidSystem.h"
 
 namespace
 {
@@ -268,13 +269,47 @@ void UFoundationInteractionView::MakeCustomData(
     Out[8] = float(FoundationBlockMeshes::GetDrawnLight(Registry, State));
 }
 
+void UFoundationInteractionView::MakeFluidSurfaceData(const FFoundationBlockRegistry& Registry,
+    FFoundationBlockState State, const VoxelFluidSurface::FSurface& Surface, int32 Mode, TArrayView<float> Out)
+{
+    MakeCustomData(Registry, State, Out);
+    const FFoundationBlockType& Type = Registry.GetBlock(State);
+    const int32 Up = int32(EFoundationFace::Up);
+    const bool bFlowTop = FoundationBlockMeshes::IsFlowTop(Surface);
+    if (Type.IsWater())
+    {
+        // Water's sides already take the flow texture, tinted.
+        if (bFlowTop) Out[Up] = Out[int32(EFoundationFace::West)];
+        return;
+    }
+    const int32 Flow = Type.IsLava() ? FindTexture(Registry.GetAssets(), TEXT("lava_flow")) : INDEX_NONE;
+    if (Flow == INDEX_NONE) return;
+    if (bFlowTop) Out[Up] = float(uint32(Flow));
+    if (Mode >= 2 || Registry.GetFluid(State).Level != 0)
+        for (int32 Face = 0; Face < int32(EFoundationFace::Down); ++Face)
+            Out[Face] = float(uint32(Flow));
+}
+
 UStaticMesh* UFoundationInteractionView::GetBlockMesh(const FFoundationBlockRegistry& Registry, int32 Mesh)
 {
     if (Mesh >= BlockMeshes.Num()) BlockMeshes.SetNum(Mesh + 1);
-    if (!BlockMeshes[Mesh] && Mesh >= FoundationBlockMeshes::Count)
+    if (!BlockMeshes[Mesh] && Mesh >= FoundationBlockMeshes::Count &&
+        Mesh < FoundationBlockMeshes::Count + Registry.GetModelCount())
         BlockMeshes[Mesh] = FoundationBlockMeshes::BuildModel(
             this, FoundationBlockMeshes::GetDrawnModelQuads(Registry, Mesh - FoundationBlockMeshes::Count));
     return BlockMeshes[Mesh];
+}
+
+uint16 UFoundationInteractionView::GetFluidSurfaceMesh(
+    const FFoundationBlockRegistry& Registry, const VoxelFluidSurface::FSurface& Surface)
+{
+    const uint32 Key = FoundationBlockMeshes::GetFluidSurfaceKey(Surface);
+    if (const uint16* Found = FluidSurfaceMeshes.Find(Key)) return *Found;
+    const int32 Mesh = FMath::Max(BlockMeshes.Num(), FoundationBlockMeshes::Count + Registry.GetModelCount());
+    check(Mesh <= MAX_uint16);
+    BlockMeshes.SetNum(Mesh + 1);
+    BlockMeshes[Mesh] = FoundationBlockMeshes::BuildFluidSurface(this, Surface);
+    return FluidSurfaceMeshes.Add(Key, uint16(Mesh));
 }
 
 UInstancedStaticMeshComponent* UFoundationInteractionView::MakeBlockComponent(
@@ -330,6 +365,19 @@ void UFoundationInteractionView::AddInstance(
     const FFoundationBlockState Above = World.Get(Cell + FIntVector(0, 0, 1)).State;
     const bool bFluidAbove =
         Type.IsWater() ? HoldsWater(Registry, Above) : Type.IsFluid() && Registry.GetBlock(Above).Id == Type.Id;
+    // A sloping surface draws the voxel mesher's geometry, on a mesh shared by every surface of the same corners.
+    VoxelFluidSurface::FSurface Surface;
+    const int32 Mode = FVoxelFluidSystem::GetSlopedTops();
+    if (Type.IsFluid() &&
+        FoundationBlockMeshes::MakeFluidSurface(
+            Registry, [&World](const FIntVector& At) { return World.Get(At).State; }, Cell, Mode,
+            FVoxelFluidSystem::GetOpenCorners(), Surface))
+    {
+        MakeFluidSurfaceData(Registry, State, Surface, Mode, Data);
+        AddPart({Section, GetFluidSurfaceMesh(Registry, Surface), Type.IsWater() ? WaterLayer : uint8(Type.Layer)},
+            Cell, FTransform(CellMin), Data, Registry);
+        return;
+    }
     MakeCustomData(Registry, State, Data);
     AddPart({Section, uint16(FoundationBlockMeshes::GetKind(Registry, State, bFluidAbove)),
                 Type.IsWater() ? WaterLayer : uint8(Type.Layer)},
@@ -373,14 +421,19 @@ void UFoundationInteractionView::RemoveInstance(const FIntVector& Cell)
     }
 }
 
-void UFoundationInteractionView::RefreshWaterBelow(const FFoundationBlockWorld& World, const FIntVector& Cell)
+void UFoundationInteractionView::RefreshFluidsAround(const FFoundationBlockWorld& World, const FIntVector& Cell)
 {
-    const FIntVector Below = Cell - FIntVector(0, 0, 1);
-    const FFoundationBlockState State = World.Get(Below).State;
-    if (!(World.GetBlock(State).IsFluid() || IsHeldWater(World.GetRegistry(), State)) || !DrawnKeys.Contains(Below))
-        return;
-    RemoveInstance(Below);
-    AddInstance(World, Below, State);
+    for (int32 DZ = -1; DZ <= 0; ++DZ)
+        for (int32 DY = -1; DY <= 1; ++DY)
+            for (int32 DX = -1; DX <= 1; ++DX)
+            {
+                const FIntVector At = Cell + FIntVector(DX, DY, DZ);
+                if (At == Cell) continue;
+                const FFoundationBlockState State = World.Get(At).State;
+                if (!FoundationBlockMeshes::HoldsFluid(World.GetRegistry(), State) || !DrawnKeys.Contains(At)) continue;
+                RemoveInstance(At);
+                AddInstance(World, At, State);
+            }
 }
 
 void UFoundationInteractionView::RebuildBlocks(FFoundationAuthority& Authority)
@@ -418,9 +471,10 @@ void UFoundationInteractionView::ApplyChanges(FFoundationAuthority& Authority)
     // In order, so each change's "before" is what is drawn now.
     for (const FFoundationBlockChange& Change : World.TakeChanges())
     {
-        if (!Change.Before.IsAir()) RemoveInstance(Change.Cell);
+        // Whatever is drawn there: a neighbour's refresh may have drawn the cell's later state already.
+        RemoveInstance(Change.Cell);
         if (!Change.After.IsAir()) AddInstance(World, Change.Cell, Change.After);
-        RefreshWaterBelow(World, Change.Cell);
+        RefreshFluidsAround(World, Change.Cell);
     }
     DrawnRevision = World.Revision;
 }

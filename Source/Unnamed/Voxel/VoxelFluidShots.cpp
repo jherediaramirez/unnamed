@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlocks.h"
+#include "Foundation/FoundationCoordinates.h"
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationProfile.h"
 #include "HAL/FileManager.h"
@@ -59,6 +60,45 @@ namespace
     constexpr float FluidShotsFieldOfView = 90.f;
     constexpr float FluidShotsExposureSpeed = 50.f;
     constexpr uint8 FluidAllWalls = 0x3F;
+    // Scenes: when the water and the lava poses may start after the build (the probe took its water frames 8-25 s
+    // after the build and its lava frames 35-45 s after it), the frames a pose is on screen before its shot (Lumen and
+    // the exposure), and vanilla's eye height and vertical field of view. The probe set fov 70, but its spectator
+    // camera flies, which widens the view: its frames show the ledge 1/1.138 as wide as a 70 degree camera does
+    // (s2_fall_front45, 290 against 330 px), which is 77 degrees (2 atan(1.138 tan 35)).
+    constexpr double FluidSceneWaterSeconds = 8.;
+    constexpr double FluidSceneLavaSeconds = 35.;
+    constexpr int32 FluidScenePoseFrames = 60;
+    constexpr double FluidSceneEyeHeight = 1.62;
+    constexpr double FluidSceneVerticalFov = 77.;
+    struct FFluidScenePose
+    {
+        const TCHAR* Label;
+        // The probe's /tp: vanilla feet x, y, z, yaw and pitch.
+        double X, Y, Z, Yaw, Pitch;
+        bool bLava;
+    };
+    // facts.md's poses, in its order, the settle pairs by their first frame (_a).
+    const FFluidScenePose FluidScenePoses[] = {{TEXT("s1_spread_above45_a"), -99.5, -51.62, .5, 0, 45, false},
+        {TEXT("s1_spread_low"), -99.5, -60.82, -2.5, 0, 5, false},
+        {TEXT("s6_spread_close_down"), -96.5, -58.62, 10.5, 0, 90, false},
+        {TEXT("s6_spread_close45"), -96.5, -58.62, 7.5, 0, 45, false},
+        {TEXT("s2_fall_front_a"), -77.5, -57.62, 22.5, 180, 5, false},
+        {TEXT("s2_fall_front45"), -77.5, -51.62, 21.5, 180, 45, false},
+        {TEXT("s2_fall_side"), -65.5, -58.62, 11.5, 90, 5, false},
+        {TEXT("s2_fall_lip"), -77.5, -56.12, 13.5, 180, 31, false},
+        {TEXT("s3_terraces_front45_a"), -52.5, -49.62, 15.5, 180, 44, false},
+        {TEXT("s3_terraces_side"), -43.5, -53.62, 5.5, 90, 30, false},
+        {TEXT("s6_terrace_close_down"), -52.5, -55.62, 5.5, 0, 90, false},
+        {TEXT("s6_terrace_close45"), -52.5, -55.62, 2.5, 0, 45, false},
+        {TEXT("s4_pool_above45_a"), -27.5, -52.62, -3.5, 0, 45, false},
+        {TEXT("s4_pool_shore_low"), -19.5, -60.82, 6.5, 90, 8, false},
+        {TEXT("s4_pool_gap45"), -23.5, -59.62, 6.5, 90, 45, false},
+        {TEXT("s5_lava_spread45_a"), -99.5, -54.62, 43.5, 0, 45, true},
+        {TEXT("s5_lava_spread_low"), -99.5, -60.82, 42.5, 0, 5, true},
+        {TEXT("s5_lava_fall_front_a"), -77.5, -57.62, 62.5, 180, 5, true},
+        {TEXT("s5_lava_fall_front45"), -77.5, -51.62, 61.5, 180, 45, true},
+        {TEXT("s5_lava_fall_side"), -65.5, -58.62, 51.5, 90, 5, true}};
+    constexpr int32 FluidScenePoseCount = UE_ARRAY_COUNT(FluidScenePoses);
 
     FIntPoint FluidColumnOf(int32 X, int32 Y)
     {
@@ -140,6 +180,32 @@ namespace
         return true;
     }
 
+    const TCHAR* GetFluidScenarioName(FVoxelFluidShots::EScenario Scenario)
+    {
+        return Scenario == FVoxelFluidShots::EScenario::Breach ? TEXT("breach")
+            : Scenario == FVoxelFluidShots::EScenario::Flood   ? TEXT("flood")
+                                                               : TEXT("scenes");
+    }
+
+    // The fluid cell at a vanilla position (x, y, z: cell (x, z, y)) from the pipeline's final columns; null when its
+    // column is not final.
+    const FVoxelFluidCell* ReadSceneCell(
+        const FVoxelColumnPipeline& Pipeline, const FVoxelFluidSystem& Fluids, int32 X, int32 Y, int32 Z)
+    {
+        FFluidColumnReader Reader(Pipeline);
+        uint16 State = 0;
+        return Reader.Get({X, Z, Y}, State) ? &Fluids.GetCell(State) : nullptr;
+    }
+
+    // A cell as a character: '0' a source, '1'-'7' flowing, 'F' falling, '#' a solid block fluid never crosses, '.'
+    // anything else, '?' not final.
+    TCHAR DescribeSceneCell(const FVoxelFluidCell* Cell)
+    {
+        if (!Cell) return TEXT('?');
+        if (Cell->Fluid != EVoxelFluid::None) return Cell->Level >= 8 ? TEXT('F') : TCHAR(TEXT('0') + Cell->Level);
+        return IsFluidWall(*Cell) ? TEXT('#') : TEXT('.');
+    }
+
     // The value at a share of the sorted values (0.95: the 95th percentile).
     double FluidPercentile(TArray<double> Values, double Share)
     {
@@ -163,7 +229,9 @@ TSharedPtr<FVoxelFluidShots> FVoxelFluidShots::Make(const FString& InFolder, con
         return MakeShared<FVoxelFluidShots>(InFolder, EScenario::Breach);
     if (Name.Equals(TEXT("flood"), ESearchCase::IgnoreCase))
         return MakeShared<FVoxelFluidShots>(InFolder, EScenario::Flood);
-    UE_LOG(LogUnnamedVoxel, Warning, TEXT("-VoxelShotFluids=%s is neither breach nor flood; no fluid shots"), *Name);
+    if (Name.Equals(TEXT("scenes"), ESearchCase::IgnoreCase))
+        return MakeShared<FVoxelFluidShots>(InFolder, EScenario::Scenes);
+    UE_LOG(LogUnnamedVoxel, Warning, TEXT("-VoxelShotFluids=%s is not breach, flood or scenes; no fluid shots"), *Name);
     return nullptr;
 }
 
@@ -203,10 +271,20 @@ bool FVoxelFluidShots::Tick(AVoxelWorld& World)
             Finish(World);
             return false;
         }
-        FluidsVariable->Set(1, ECVF_SetByConsole);
+        // The scenes run as voxel.Fluids is set, so a control run can stop the flow.
+        if (Scenario != EScenario::Scenes) FluidsVariable->Set(1, ECVF_SetByConsole);
+        FieldOfView = FluidShotsFieldOfView;
+        if (Scenario == EScenario::Scenes)
+        {
+            // Vanilla's field of view is vertical.
+            FVector2D Size = FVector2D::ZeroVector;
+            if (UGameViewportClient* Viewport = World.GetWorld()->GetGameViewport()) Viewport->GetViewportSize(Size);
+            if (Size.X <= 0 || Size.Y <= 0) Size = FVector2D(16, 9);
+            FieldOfView = float(FoundationCoordinates::HorizontalFov(FluidSceneVerticalFov, Size.X / Size.Y));
+        }
         ACameraActor* ShotCamera = World.GetWorld()->SpawnActor<ACameraActor>();
         UCameraComponent* Lens = ShotCamera->GetCameraComponent();
-        Lens->SetFieldOfView(FluidShotsFieldOfView);
+        Lens->SetFieldOfView(FieldOfView);
         Lens->bConstrainAspectRatio = false;
         FPostProcessSettings& Post = Lens->PostProcessSettings;
         Post.bOverride_AutoExposureSpeedUp = Post.bOverride_AutoExposureSpeedDown = true;
@@ -228,14 +306,17 @@ bool FVoxelFluidShots::Tick(AVoxelWorld& World)
     {
         // The fluids see the ring from their first Advance with voxel.Fluids on.
         if (!Fluids->IsInRing(Pipeline->GetRings().Center) && StageFrames < 30) return true;
-        const bool bReady = Scenario == EScenario::Breach ? SetupBreach(World) : SetupFlood(World);
+        const bool bReady = Scenario == EScenario::Breach ? SetupBreach(World)
+            : Scenario == EScenario::Flood                ? SetupFlood(World)
+                                                          : SetupScenes(World);
         if (!bReady)
         {
             Finish(World);
             return false;
         }
         Controller->SetViewTarget(Camera.Get());
-        SetStage(EStage::Settle);
+        // The scenes' clock starts at the build, as the probe's did.
+        SetStage(Scenario == EScenario::Scenes ? EStage::Run : EStage::Settle);
         return true;
     }
     case EStage::Settle:
@@ -265,8 +346,10 @@ bool FVoxelFluidShots::Tick(AVoxelWorld& World)
     case EStage::Run:
         if (Scenario == EScenario::Breach)
             TickBreach(World);
-        else
+        else if (Scenario == EScenario::Flood)
             TickFlood(World);
+        else
+            TickScenes(World);
         return true;
     case EStage::Drain:
         if (IsShotPending()) return true;
@@ -669,6 +752,204 @@ FVoxelFluidShots::FCount FVoxelFluidShots::CountWater(
     return Count;
 }
 
+bool FVoxelFluidShots::SetupScenes(AVoxelWorld& World)
+{
+    FFoundationBlockWorld& Blocks = World.GetAuthority()->World;
+    const FFoundationBlockType* Grass = Blocks.FindBlock(TEXT("grass_block"));
+    const FFoundationBlockType* Dirt = Blocks.FindBlock(TEXT("dirt"));
+    const FFoundationBlockType* Stone = Blocks.FindBlock(TEXT("stone"));
+    const FFoundationBlockType* Water = Blocks.FindBlock(TEXT("water"));
+    const FFoundationBlockType* Lava = Blocks.FindBlock(TEXT("lava"));
+    if (!Grass || !Dirt || !Stone || !Water || !Lava)
+    {
+        Line(TEXT("No scenes: grass_block, dirt, stone, water or lava is missing. RESULT: FAILED"));
+        return false;
+    }
+    // Vanilla (x, y, z) is cell (x, z, y).
+    auto At = [](int32 X, int32 Y, int32 Z) { return FIntVector(X, Z, Y); };
+    const FFoundationBlockState Ground = Blocks.Get(At(-100, -61, 10)).State;
+    const FFoundationBlockState Under = Blocks.Get(At(-100, -62, 10)).State;
+    const FFoundationBlockState Over = Blocks.Get(At(-100, -60, 10)).State;
+    if (Blocks.GetBlock(Ground).Id != Grass->Id || Blocks.GetBlock(Under).Id != Dirt->Id || !Over.IsAir())
+    {
+        Line(FString::Printf(TEXT("No scenes: vanilla (-100, -61..-60, 10) holds %s over %s under %s, not VP1's "
+                                  "Superflat (grass_block over dirt, air above): open a Superflat world. RESULT: "
+                                  "FAILED"),
+            *Blocks.GetBlock(Ground).Id.ToString(), *Blocks.GetBlock(Under).Id.ToString(),
+            *Blocks.GetBlock(Over).Id.ToString()));
+        return false;
+    }
+    int32 Changed = 0, Unknown = 0;
+    auto Write = [&Blocks, &Changed, &Unknown, &At](int32 X, int32 Y, int32 Z, FFoundationBlockState State)
+    {
+        const FIntVector Cell = At(X, Y, Z);
+        if (!Blocks.IsKnown(Cell))
+        {
+            ++Unknown;
+            return;
+        }
+        if (Blocks.Get(Cell).State == State) return;
+        // An edit, as the probe's commands are: the block world's hook wakes the fluids.
+        Blocks.Set(Cell, State);
+        ++Changed;
+    };
+    // The probe's /fill: inclusive, in vanilla coordinates.
+    auto Fill = [&Write](int32 X0, int32 Y0, int32 Z0, int32 X1, int32 Y1, int32 Z1, FFoundationBlockState State)
+    {
+        for (int32 Y = Y0; Y <= Y1; ++Y)
+            for (int32 Z = Z0; Z <= Z1; ++Z)
+                for (int32 X = X0; X <= X1; ++X)
+                    Write(X, Y, Z, State);
+    };
+    const FFoundationBlockState Air, GrassState = Grass->GetDefaultState(), StoneState = Stone->GetDefaultState(),
+                                     WaterState = Water->GetDefaultState(), LavaState = Lava->GetDefaultState();
+    // facts.md's setup commands, in order. 1: clear the area.
+    Fill(-110, -61, -6, -15, -61, 66, GrassState);
+    for (const int32 X : {-110, -86, -62, -38})
+        Fill(X, -60, -6, X + 23, -50, 66, Air);
+    // 2: one water source.
+    Write(-100, -60, 10, WaterState);
+    // 3: the waterfall ledge (5 wide, 4 high, 7 deep, top face at y -56).
+    Fill(-80, -60, 4, -76, -57, 10, StoneState);
+    Write(-78, -56, 10, WaterState);
+    // 4: three 1-block terraces in a walled 5-wide channel: the back wall, the terraces, the side walls, the source.
+    Fill(-56, -60, -1, -50, -57, -1, StoneState);
+    Fill(-55, -60, 0, -51, -58, 4, StoneState);
+    Fill(-55, -60, 5, -51, -59, 7, StoneState);
+    Fill(-55, -60, 8, -51, -60, 10, StoneState);
+    Fill(-56, -60, 0, -56, -57, 4, StoneState);
+    Fill(-50, -60, 0, -50, -57, 4, StoneState);
+    Fill(-56, -60, 5, -56, -58, 7, StoneState);
+    Fill(-50, -60, 5, -50, -58, 7, StoneState);
+    Fill(-56, -60, 8, -56, -59, 10, StoneState);
+    Fill(-50, -60, 8, -50, -59, 10, StoneState);
+    Write(-53, -57, 0, WaterState);
+    // 5: the pool, one block into the ground, with one rim gap.
+    Fill(-30, -61, 4, -26, -61, 8, WaterState);
+    Write(-25, -61, 6, Air);
+    // 6: lava, a source and a copy of the ledge 40 blocks south.
+    Write(-100, -60, 50, LavaState);
+    Fill(-80, -60, 44, -76, -57, 50, StoneState);
+    Write(-78, -56, 50, LavaState);
+    if (Unknown)
+    {
+        Line(FString::Printf(TEXT("No scenes: %d cells of the scenes' box are not loaded. RESULT: FAILED"), Unknown));
+        return false;
+    }
+    const FVoxelFluidSystem& Fluids = *World.GetFluids();
+    bool bInRing = true;
+    const FIntPoint Low = FluidColumnOf(-110, -6), High = FluidColumnOf(-15, 66);
+    for (int32 Y = Low.Y; Y <= High.Y; ++Y)
+        for (int32 X = Low.X; X <= High.X; ++X)
+            bInRing &= Fluids.IsInRing({X, Y});
+    const FVoxelPipelineStats Stats = GetFluidShotsPipeline(World)->GetStats();
+    MeshJobsAtBuild = Stats.Mesh.Count;
+    MeshMsAtBuild = Stats.Mesh.TotalMs;
+    Line(FString::Printf(
+        TEXT("Scenes built by facts.md's commands at game tick %llu: %d cells changed; voxel.Fluids "
+             "%d; the scenes' columns (%d..%d, %d..%d) %s the fluid ring. Cells: vanilla (x, y, z) at "
+             "(x, z, y). Camera: field of view %.2f deg horizontal (vanilla's measured 77 vertical), eye at "
+             "the /tp feet + %.2f."),
+        World.GetClock().GetGameTick(), Changed, FluidsAtStart, Low.X, High.X, Low.Y, High.Y,
+        bInRing ? TEXT("all in") : TEXT("not all in"), FieldOfView, FluidSceneEyeHeight));
+    return true;
+}
+
+void FVoxelFluidShots::TickScenes(AVoxelWorld& World)
+{
+    if (IsShotPending()) return;
+    if (ScenePose >= FluidScenePoseCount)
+    {
+        RecordScenes(World);
+        Stage = EStage::Drain;
+        StageFrames = 0;
+        return;
+    }
+    const FFluidScenePose& Pose = FluidScenePoses[ScenePose];
+    const double Seconds = GetSeconds(World) - StageSeconds;
+    if (Seconds < (Pose.bLava ? FluidSceneLavaSeconds : FluidSceneWaterSeconds)) return;
+    if (PoseFrames++ == 0)
+        SetPose(World, FVector(Pose.X, Pose.Z, Pose.Y + FluidSceneEyeHeight),
+            FRotator(
+                FoundationCoordinates::ToUnrealPitch(Pose.Pitch), FoundationCoordinates::ToUnrealYaw(Pose.Yaw), 0));
+    if (PoseFrames < FluidScenePoseFrames) return;
+    Line(FString::Printf(TEXT("Shot %s at %.2f s (%llu game ticks) from /tp %.2f %.2f %.2f %.0f %.0f: camera %s "
+                              "blocks, yaw %.0f, pitch %.0f; fluids %s."),
+        Pose.Label, Seconds, World.GetClock().GetGameTick() - StageTick, Pose.X, Pose.Y, Pose.Z, Pose.Yaw, Pose.Pitch,
+        *CameraBlocks.ToCompactString(), FoundationCoordinates::ToUnrealYaw(Pose.Yaw),
+        FoundationCoordinates::ToUnrealPitch(Pose.Pitch), *DescribeStats(World)));
+    Shoot(Pose.Label);
+    PoseFrames = 0;
+    ++ScenePose;
+}
+
+void FVoxelFluidShots::RecordScenes(AVoxelWorld& World)
+{
+    const FVoxelColumnPipeline& Pipeline = *GetFluidShotsPipeline(World);
+    const FVoxelFluidSystem& Fluids = *World.GetFluids();
+    struct FReach
+    {
+        const TCHAR* What;
+        int32 X, Y, Z;
+        EVoxelFluid Fluid;
+    };
+    // The probe's RCON checks; None: the cell holds no fluid.
+    const FReach Reaches[] = {
+        {TEXT("water reaches 7 cells on flat ground: (-93, -60, 10) holds water"), -93, -60, 10, EVoxelFluid::Water},
+        {TEXT("...and no further: (-92, -60, 10) holds none"), -92, -60, 10, EVoxelFluid::None},
+        {TEXT("overworld lava reaches 3 cells: (-97, -60, 50) holds lava"), -97, -60, 50, EVoxelFluid::Lava},
+        {TEXT("...and no further: (-96, -60, 50) holds none"), -96, -60, 50, EVoxelFluid::None},
+        {TEXT("the waterfall lands: (-78, -60, 11) holds water"), -78, -60, 11, EVoxelFluid::Water},
+        {TEXT("the lava fall lands: (-78, -60, 51) holds lava"), -78, -60, 51, EVoxelFluid::Lava},
+        {TEXT("the terrace runoff reaches the ground: (-53, -60, 13) holds water"), -53, -60, 13, EVoxelFluid::Water},
+        {TEXT("the pool gap fills: (-25, -61, 6) holds water"), -25, -61, 6, EVoxelFluid::Water}};
+    int32 Matches = 0;
+    for (const FReach& Reach : Reaches)
+    {
+        const FVoxelFluidCell* Cell = ReadSceneCell(Pipeline, Fluids, Reach.X, Reach.Y, Reach.Z);
+        const bool bMatch = Cell && Cell->Fluid == Reach.Fluid;
+        Matches += bMatch;
+        Line(FString::Printf(TEXT("Reach: %s: %s (here '%c')."), Reach.What,
+            bMatch ? TEXT("as vanilla") : TEXT("DIFFERS"), DescribeSceneCell(Cell)));
+    }
+    Line(FString::Printf(TEXT("Reach: %d of %d as the vanilla probe."), Matches, int32(UE_ARRAY_COUNT(Reaches))));
+
+    struct FMap
+    {
+        const TCHAR* Name;
+        int32 Y, X0, X1, Z0, Z1;
+    };
+    const FMap Maps[] = {{TEXT("scene 1, one source: the ground (y -60)"), -60, -108, -92, 2, 18},
+        {TEXT("scene 2: the ledge's top (y -56)"), -56, -81, -75, 3, 12},
+        {TEXT("scene 2: the waterfall's ground (y -60)"), -60, -88, -68, 3, 22},
+        {TEXT("scene 3: the top terrace (y -57)"), -57, -57, -49, -2, 12},
+        {TEXT("scene 3: the middle terrace (y -58)"), -58, -57, -49, -2, 12},
+        {TEXT("scene 3: the low terrace (y -59)"), -59, -57, -49, -2, 12},
+        {TEXT("scene 3: the ground (y -60)"), -60, -62, -44, -2, 22},
+        {TEXT("scene 4, the pool (y -61)"), -61, -32, -22, 2, 10},
+        {TEXT("scene 5, the lava source: the ground (y -60)"), -60, -105, -95, 45, 55},
+        {TEXT("scene 5, the lava fall: the ledge's top (y -56)"), -56, -81, -75, 43, 52},
+        {TEXT("scene 5, the lava fall: the ground (y -60)"), -60, -86, -70, 43, 60}};
+    for (const FMap& Map : Maps)
+    {
+        Line(FString::Printf(TEXT("Map, %s: x %d..%d left to right, z %d..%d top to bottom ('0' source, '1'-'7' "
+                                  "flowing, 'F' falling, '#' solid, '.' other)."),
+            Map.Name, Map.X0, Map.X1, Map.Z0, Map.Z1));
+        for (int32 Z = Map.Z0; Z <= Map.Z1; ++Z)
+        {
+            FString Row;
+            for (int32 X = Map.X0; X <= Map.X1; ++X)
+                Row.AppendChar(DescribeSceneCell(ReadSceneCell(Pipeline, Fluids, X, Map.Y, Z)));
+            Line(FString::Printf(TEXT("  z %4d  %s"), Z, *Row));
+        }
+    }
+    const FVoxelPipelineStats Stats = Pipeline.GetStats();
+    const int64 Jobs = Stats.Mesh.Count - MeshJobsAtBuild;
+    Line(FString::Printf(TEXT("Mesh jobs since the build: %lld, %.3f ms mean each (worker time gathering and meshing a "
+                              "column's touched sections; the worst job since the world opened %.3f ms)."),
+        Jobs, Jobs ? (Stats.Mesh.TotalMs - MeshMsAtBuild) / Jobs : 0., Stats.Mesh.WorstMs));
+}
+
 const TCHAR* FVoxelFluidShots::StatsHeader()
 {
     return TEXT("fluid_tick,behind,queued,parked,last_ms,last_acts,acts,writes,worst_ms,over_budget_frames");
@@ -688,12 +969,19 @@ void FVoxelFluidShots::SetView(AVoxelWorld& World, const FVector& Blocks, const 
     if (Camera.IsValid())
         Camera->SetActorLocationAndRotation(World.OriginCm + Blocks * FluidShotsCellCm, (Target - Blocks).Rotation());
     Line(FString::Printf(TEXT("Camera at %s blocks looking at %s (field of view %.0f)."), *Blocks.ToCompactString(),
-        *Target.ToCompactString(), FluidShotsFieldOfView));
+        *Target.ToCompactString(), FieldOfView));
+}
+
+void FVoxelFluidShots::SetPose(AVoxelWorld& World, const FVector& Blocks, const FRotator& Rotation)
+{
+    CameraBlocks = Blocks;
+    TargetBlocks = Blocks + Rotation.Vector();
+    if (Camera.IsValid()) Camera->SetActorLocationAndRotation(World.OriginCm + Blocks * FluidShotsCellCm, Rotation);
 }
 
 void FVoxelFluidShots::Shoot(const FString& Name)
 {
-    const TCHAR* Prefix = Scenario == EScenario::Breach ? TEXT("breach") : TEXT("flood");
+    const TCHAR* Prefix = GetFluidScenarioName(Scenario);
     LastShot = FPaths::Combine(Folder, FString::Printf(TEXT("%s-%s.png"), Prefix, *Name));
     LastShotFrame = GFrameCounter;
     FScreenshotRequest::RequestScreenshot(LastShot, false, false);
@@ -732,7 +1020,7 @@ void FVoxelFluidShots::Finish(AVoxelWorld& World)
     if (APlayerController* Controller = UGameplayStatics::GetPlayerController(&World, 0))
         Controller->SetViewTarget(Controller->GetPawn());
     if (Camera.IsValid()) Camera->Destroy();
-    const FString Name = Scenario == EScenario::Breach ? TEXT("breach") : TEXT("flood");
+    const FString Name = GetFluidScenarioName(Scenario);
     IFileManager::Get().MakeDirectory(*Folder, true);
     FFileHelper::SaveStringToFile(
         FString::Join(Report, TEXT("\n")) + TEXT("\n"), *FPaths::Combine(Folder, Name + TEXT(".txt")));

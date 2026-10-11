@@ -14,6 +14,9 @@
 // sides between two cells of one fluid stay hidden; a side facing out follows its two top corners. Modes
 // (voxel.Fluids.SlopedTops): 0 draws every surface flat at its own height (stepped boxes); 1 applies the rule only at
 // corners whose cells' levels differ, so equal levels (every generated fluid) stay flat; 2 applies it at every corner.
+// With open corners (voxel.Fluids.OpenCorners, water and sky W3b, tuned beside the vanilla probe's shots), an open cell
+// (air) among a corner's cells counts as height 0 in the mean of the flowing cells, so a stream or a spread thins out
+// toward the air beside it; a corner with a full cell or a source is unchanged, and so is every generated fluid.
 namespace VoxelFluidSurface
 {
     // A cell as the surface reads it, in one byte: 0 holds no fluid; else the amount (1-8) in bits 0-3, bit 4 when it
@@ -25,6 +28,9 @@ namespace VoxelFluidSurface
     constexpr uint8 FullBit = 1 << 7;
     // The bits two cells' levels compare by.
     constexpr uint8 LevelMask = AmountMask | FallingBit;
+    // An open cell holding no fluid (air), packed when open corners are on: no fluid bits, so nothing reads it as
+    // fluid.
+    constexpr uint8 OpenCell = 1;
     // Fluid is the fluid state itself (a model's held fluid, not the model).
     UNNAMEDVOXEL_API uint8 Pack(const FVoxelStateInfo& Fluid, bool bFluidAbove);
 
@@ -43,7 +49,7 @@ namespace VoxelFluidSurface
     // The surface of the cell at the centre of Ring, the 3 x 3 packed cells around it at its height, indexed
     // [(DY + 1) * 3 + DX + 1]. False when the cell draws as in mode 0: flat at its own height, or no top at all (fluid
     // above it).
-    UNNAMEDVOXEL_API bool Make(const uint8 Ring[9], int32 Mode, FSurface& Out);
+    UNNAMEDVOXEL_API bool Make(const uint8 Ring[9], int32 Mode, FSurface& Out, bool bOpenCorners = false);
 
     // Which corner (FSurface::Corners) a point of the cell's top lies on, from where it sits in the cell.
     constexpr int32 GetCorner(bool bHighX, bool bHighY)

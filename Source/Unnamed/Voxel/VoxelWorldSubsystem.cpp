@@ -92,6 +92,7 @@ void UVoxelWorldSubsystem::Start(AVoxelWorld& InOwner, TSharedRef<const FVoxelBl
     Settings.MeshOptions.OreHost = VoxelConsole::GetOreHost();
     Settings.MeshOptions.OreGlint = VoxelConsole::GetOreGlint();
     Settings.MeshOptions.SlopedTops = FVoxelFluidSystem::GetSlopedTops();
+    Settings.MeshOptions.bOpenCorners = FVoxelFluidSystem::GetOpenCorners();
     Settings.MaxTasksInFlight = VoxelConsole::GetMaxTasksInFlight();
     Settings.bEdgeWalls = VoxelConsole::CVarEdgeWalls.GetValueOnGameThread();
     bDecoration = VoxelConsole::CVarDecoration.GetValueOnGameThread();
@@ -212,7 +213,7 @@ void UVoxelWorldSubsystem::Tick(float DeltaTime)
     Pipeline->SetModelOptions(
         CVarModels.GetValueOnGameThread() != 0, CVarModelShadeUnturned.GetValueOnGameThread() != 0);
     Pipeline->SetOreLooks(VoxelConsole::GetOreHost(), VoxelConsole::GetOreGlint());
-    Pipeline->SetSlopedTops(FVoxelFluidSystem::GetSlopedTops());
+    Pipeline->SetSlopedTops(FVoxelFluidSystem::GetSlopedTops(), FVoxelFluidSystem::GetOpenCorners());
     const FVoxelStreamingRings Before = Pipeline->GetRings();
     Pipeline->SetFocus(MakeRings(LastFocus), VoxelStreaming::GetViewSector(Yaw));
     if (!(Pipeline->GetRings() == Before)) UpdateVisibility();

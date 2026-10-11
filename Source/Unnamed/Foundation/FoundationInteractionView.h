@@ -16,6 +16,10 @@ class UStaticMesh;
 class USceneComponent;
 class UStaticMeshComponent;
 class UTextRenderComponent;
+namespace VoxelFluidSurface
+{
+    struct FSurface;
+}
 
 // A lab's block-interaction presentation: the Playground's, and a generated world's (AVoxelWorld). It reads the
 // block world's change log, the authority's events and targets and the local player's interaction snapshot; it never
@@ -52,6 +56,11 @@ public:
     static constexpr int32 CustomDataFloats = 9;
     static void MakeCustomData(
         const FFoundationBlockRegistry& Registry, FFoundationBlockState State, TArrayView<float> Out);
+    // A sloped fluid cell's custom data (water and sky W3b), as the voxel mesher codes its faces: MakeCustomData's,
+    // with the flow texture on a top that runs downhill, and on flowing lava's sides (every lava side under
+    // voxel.Fluids.SlopedTops 2).
+    static void MakeFluidSurfaceData(const FFoundationBlockRegistry& Registry, FFoundationBlockState State,
+        const VoxelFluidSurface::FSurface& Surface, int32 Mode, TArrayView<float> Out);
     // The world revision whose changes are all drawn.
     int64 GetDrawnRevision() const { return DrawnRevision; }
     bool IsOutlineVisible() const { return bOutlineVisible; }
@@ -124,15 +133,19 @@ private:
     void ApplyChanges(FFoundationAuthority& Authority);
     void RebuildBlocks(FFoundationAuthority& Authority);
     void LoadBlockAssets();
-    // A FoundationBlockMeshes kind, or Count + a baked model, built on first use (null for a model with no quad).
+    // A FoundationBlockMeshes kind, or Count + a baked model, built on first use (null for a model with no quad), or a
+    // sloped fluid surface's mesh (GetFluidSurfaceMesh).
     UStaticMesh* GetBlockMesh(const FFoundationBlockRegistry& Registry, int32 Mesh);
+    // The mesh index of a sloped fluid surface's mesh, after the kinds and the baked models; built on first use.
+    uint16 GetFluidSurfaceMesh(const FFoundationBlockRegistry& Registry, const VoxelFluidSurface::FSurface& Surface);
     UInstancedStaticMeshComponent* MakeBlockComponent(USceneComponent* Parent, UStaticMesh* Mesh, int32 Layer);
     void AddInstance(const FFoundationBlockWorld& World, const FIntVector& Cell, FFoundationBlockState State);
     void AddPart(const FSectionKey& Key, const FIntVector& Cell, const FTransform& Instance,
         TArrayView<const float> Data, const FFoundationBlockRegistry& Registry);
     void RemoveInstance(const FIntVector& Cell);
-    // Water draws full height under water (or under a state holding water); changes above a water cell redraw it.
-    void RefreshWaterBelow(const FFoundationBlockWorld& World, const FIntVector& Cell);
+    // A fluid cell's look depends on the cell above it (full height under fluid) and, when it slopes, on its 3 x 3
+    // ring and the cells above those: a change redraws the drawn fluid cells around it and below them (3 x 3 x 2).
+    void RefreshFluidsAround(const FFoundationBlockWorld& World, const FIntVector& Cell);
     void HandleEvents(const FFoundationAuthority& Authority);
     void Burst(const FVector& Center, FLinearColor Color, int32 Count, double Size, double Speed, uint32 Seed);
     void ShowNumber(const FVector& Location, const FString& Text, FColor Color);
@@ -157,6 +170,8 @@ private:
     // render layer plus water.
     UPROPERTY(Transient)
     TArray<TObjectPtr<UStaticMesh>> BlockMeshes;
+    // Sloped fluid surfaces' mesh indices in BlockMeshes, by FoundationBlockMeshes::GetFluidSurfaceKey.
+    TMap<uint32, uint16> FluidSurfaceMeshes;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UMaterialInterface>> LayerMaterials;
     UPROPERTY(Transient)

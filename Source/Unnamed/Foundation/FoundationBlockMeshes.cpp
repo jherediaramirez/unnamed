@@ -173,6 +173,148 @@ UStaticMesh* FoundationBlockMeshes::Build(UObject* Outer, int32 Kind)
     return FinishBlockMesh(Outer, Mesh, false);
 }
 
+bool FoundationBlockMeshes::HoldsFluid(const FFoundationBlockRegistry& Registry, FFoundationBlockState State)
+{
+    const EFoundationBlockShape Shape = Registry.GetShape(State);
+    return Shape == EFoundationBlockShape::Fluid ||
+        (Shape == EFoundationBlockShape::Model && Registry.GetFluid(State).Amount > 0);
+}
+
+uint8 FoundationBlockMeshes::PackFluid(
+    const FFoundationBlockRegistry& Registry, FFoundationBlockState State, bool bFluidAbove)
+{
+    const EFoundationBlockShape Shape = Registry.GetShape(State);
+    const FFoundationFluid Fluid = Registry.GetFluid(State);
+    FVoxelStateInfo Info;
+    if (Shape == EFoundationBlockShape::Fluid)
+    {
+        Info.Fluid = Fluid.bLava ? EVoxelFluid::Lava : Fluid.bWater ? EVoxelFluid::Water : EVoxelFluid::None;
+        Info.FluidAmount = uint8(FMath::Clamp(Fluid.Amount, 0, 8));
+        Info.FluidLevel = uint8(FMath::Clamp(Fluid.Level, 0, 15));
+    }
+    else if (Shape == EFoundationBlockShape::Model && Fluid.Amount > 0)
+    {
+        // The water a model holds is a source, as the voxel table's HeldFluid is.
+        Info.Fluid = EVoxelFluid::Water;
+        Info.FluidAmount = 8;
+    }
+    return VoxelFluidSurface::Pack(Info, bFluidAbove);
+}
+
+bool FoundationBlockMeshes::MakeFluidSurface(const FFoundationBlockRegistry& Registry,
+    TFunctionRef<FFoundationBlockState(const FIntVector&)> GetState, const FIntVector& Cell, int32 Mode,
+    bool bOpenCorners, VoxelFluidSurface::FSurface& Out)
+{
+    if (Mode <= 0) return false;
+    uint8 Ring[9];
+    for (int32 DY = -1; DY <= 1; ++DY)
+        for (int32 DX = -1; DX <= 1; ++DX)
+        {
+            const FIntVector At = Cell + FIntVector(DX, DY, 0);
+            const FFoundationBlockState State = GetState(At);
+            // Drawn full under any fluid, as the voxel mesher packs it.
+            Ring[(DY + 1) * 3 + DX + 1] = HoldsFluid(Registry, State)
+                ? PackFluid(Registry, State, HoldsFluid(Registry, GetState(At + FIntVector(0, 0, 1))))
+                : bOpenCorners && State.IsAir() ? VoxelFluidSurface::OpenCell
+                                                : 0;
+        }
+    return VoxelFluidSurface::Make(Ring, Mode, Out, bOpenCorners);
+}
+
+bool FoundationBlockMeshes::IsFlowTop(const VoxelFluidSurface::FSurface& Surface)
+{
+    return !Surface.Flow.IsNearlyZero(VoxelFluidSurface::FlatFlow);
+}
+
+void FoundationBlockMeshes::GetFluidFaces(const VoxelFluidSurface::FSurface& Surface, FFluidFace Out[6])
+{
+    const bool bFlowTop = IsFlowTop(Surface);
+    FVector2f FlowUVs[4];
+    if (bFlowTop) VoxelFluidSurface::GetFlowUVs(Surface.Flow, FlowUVs);
+    for (int32 FaceIndex = 0; FaceIndex < 6; ++FaceIndex)
+    {
+        // VoxelMesher's FluidFace corners in the cell's own space.
+        const int32 Axis = FaceIndex / 2, AxisU = (Axis + 1) % 3, AxisV = (Axis + 2) % 3;
+        const bool bPositive = FaceIndex % 2 != 0;
+        const float CornerU[4] = {0, bPositive ? 0.f : 1.f, 1, bPositive ? 1.f : 0.f};
+        const float CornerV[4] = {0, bPositive ? 1.f : 0.f, 1, bPositive ? 0.f : 1.f};
+        FFluidFace& Face = Out[FaceIndex];
+        for (int32 Corner = 0; Corner < 4; ++Corner)
+        {
+            FVector3f P;
+            P[Axis] = bPositive ? 1.f : 0.f;
+            P[AxisU] = CornerU[Corner];
+            P[AxisV] = CornerV[Corner];
+            const int32 Top = VoxelFluidSurface::GetCorner(P.X > .5f, P.Y > .5f);
+            if (P.Z > .5f) P.Z = Surface.Corners[Top];
+            Face.Positions[Corner] = P;
+            Face.UVs[Corner] = bFlowTop && FaceIndex == int32(EFoundationFace::Up)
+                ? FlowUVs[Top]
+                : FoundationBlockFaces::GetCanonicalUV(EFoundationFace(FaceIndex), P);
+        }
+    }
+}
+
+uint32 FoundationBlockMeshes::GetFluidSurfaceKey(const VoxelFluidSurface::FSurface& Surface)
+{
+    uint32 Key = 0;
+    for (int32 Corner = 0; Corner < 4; ++Corner)
+        Key |= uint32(FMath::Clamp(FMath::RoundToInt32(Surface.Corners[Corner] * 108), 0, 127)) << (7 * Corner);
+    return Key;
+}
+
+UStaticMesh* FoundationBlockMeshes::BuildFluidSurface(UObject* Outer, const VoxelFluidSurface::FSurface& Surface)
+{
+    FFluidFace Faces[6];
+    GetFluidFaces(Surface, Faces);
+    FMeshDescription Mesh;
+    FStaticMeshAttributes Attributes(Mesh);
+    Attributes.Register();
+    TVertexAttributesRef<FVector3f> Positions = Attributes.GetVertexPositions();
+    TVertexInstanceAttributesRef<FVector3f> Normals = Attributes.GetVertexInstanceNormals();
+    TVertexInstanceAttributesRef<FVector3f> Tangents = Attributes.GetVertexInstanceTangents();
+    TVertexInstanceAttributesRef<float> Signs = Attributes.GetVertexInstanceBinormalSigns();
+    TVertexInstanceAttributesRef<FVector2f> UVs = Attributes.GetVertexInstanceUVs();
+    UVs.SetNumChannels(2);
+    const FPolygonGroupID Group = Mesh.CreatePolygonGroup();
+    Attributes.GetPolygonGroupMaterialSlotNames()[Group] = TEXT("Block");
+
+    for (int32 FaceIndex = 0; FaceIndex < 6; ++FaceIndex)
+    {
+        const EFoundationFace Face = EFoundationFace(FaceIndex);
+        // Lit as the face's own normal, as the voxel world lights a sloped top as up.
+        const FVector3f Normal(FoundationGrid::FaceNormal(Face));
+        const FVector3f Tangent = GetBlockMeshTangent(Face);
+        FFluidFace Quad = Faces[FaceIndex];
+        // Unreal draws triangles that wind clockwise seen from outside. Swapping corners 1 and 3 keeps the 0-2
+        // diagonal the voxel mesher splits along.
+        if (FVector3f::CrossProduct(Quad.Positions[1] - Quad.Positions[0], Quad.Positions[2] - Quad.Positions[0])
+                .Dot(Normal) > 0)
+        {
+            Swap(Quad.Positions[1], Quad.Positions[3]);
+            Swap(Quad.UVs[1], Quad.UVs[3]);
+        }
+        FVertexInstanceID Instances[4];
+        for (int32 Corner = 0; Corner < 4; ++Corner)
+        {
+            const FVertexID Vertex = Mesh.CreateVertex();
+            Positions[Vertex] = Quad.Positions[Corner] * float(UFoundationProfile::BlockCm);
+            const FVertexInstanceID Instance = Mesh.CreateVertexInstance(Vertex);
+            Normals[Instance] = Normal;
+            Tangents[Instance] = Tangent;
+            Signs[Instance] = 1.f;
+            UVs.Set(Instance, 0, Quad.UVs[Corner]);
+            UVs.Set(Instance, 1, FVector2f(float(FaceIndex), 0));
+            Instances[Corner] = Instance;
+        }
+        const FVertexInstanceID First[3] = {Instances[0], Instances[1], Instances[2]};
+        const FVertexInstanceID Second[3] = {Instances[0], Instances[2], Instances[3]};
+        Mesh.CreateTriangle(Group, First);
+        Mesh.CreateTriangle(Group, Second);
+    }
+    return FinishBlockMesh(Outer, Mesh, false);
+}
+
 uint32 FoundationBlockMeshes::MakeModelCode(const FFoundationModelQuad& Quad)
 {
     return (uint32(Quad.Texture) & FoundationBlockFaces::TextureMask) |

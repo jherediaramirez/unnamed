@@ -45,6 +45,8 @@ public:
     // voxel.Fluids.SlopedTops as 0, 1 or 2 (FVoxelMeshOptions::SlopedTops); other values read as 1, the default. Both
     // the voxel world's meshes and the Playground's fluid meshes follow it.
     static int32 GetSlopedTops();
+    // voxel.Fluids.OpenCorners (FVoxelMeshOptions::bOpenCorners), for both worlds as GetSlopedTops.
+    static bool GetOpenCorners();
 
     struct FStats
     {

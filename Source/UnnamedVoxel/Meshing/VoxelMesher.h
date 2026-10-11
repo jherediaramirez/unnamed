@@ -68,6 +68,9 @@ struct FVoxelMeshOptions
     // boxes); 1 sloped where neighbouring levels differ, which leaves every generated fluid as 0 draws it; 2 sloped
     // everywhere, with every lava side on the flow texture (the vanilla look; generated meshes change).
     int32 SlopedTops = 1;
+    // Open corners (voxel.Fluids.OpenCorners, VoxelFluidSurface::Make; on by default, the W3b look call): air beside a
+    // sloped surface lowers its corners. Generated fluid meshes the same either way (Mesher.FluidGenerated).
+    bool bOpenCorners = true;
     static constexpr int32 MaxTintBlend = 8;
 };
 

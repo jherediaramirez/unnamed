@@ -12,10 +12,9 @@
 
 namespace
 {
-    TAutoConsoleVariable<int32> CVarFluids(TEXT("voxel.Fluids"), 0,
-        TEXT(
-            "Flowing water and lava in voxel worlds (water and sky W2a). 1 runs them; 0, the default until fluids mesh "
-            "at their levels (W3), stops them and ignores edits (the control)."));
+    TAutoConsoleVariable<int32> CVarFluids(TEXT("voxel.Fluids"), 1,
+        TEXT("Flowing water and lava in voxel worlds (water and sky W2a; on by default since W3b, which meshes them at "
+             "their levels). 1 runs them; 0 stops them and ignores edits (the control)."));
     TAutoConsoleVariable<float> CVarFluidsBudgetMs(TEXT("voxel.Fluids.BudgetMs"), 0.5f,
         TEXT("Game-thread milliseconds a frame's fluid acts may take (plan Q10). Past it the fluids fall behind and "
              "catch up later; 0 or less, no limit."));
@@ -28,6 +27,12 @@ namespace
              "on "
              "the flow texture (the vanilla look; generated meshes change). A change remeshes every loaded column; the "
              "Playground picks it up when it next draws its blocks."));
+    TAutoConsoleVariable<int32> CVarFluidsOpenCorners(TEXT("voxel.Fluids.OpenCorners"), 1,
+        TEXT("Sloped fluid surfaces' corners (water and sky W3b, tuned beside the vanilla probe's shots): 1, the "
+             "default, counts air beside a surface as height 0 in a corner's mean of flowing cells, so streams and "
+             "spreads thin out toward it as vanilla's do; 0 leaves air out. Corners at a source or under fluid, and "
+             "every generated fluid, are the same under both. A change remeshes every loaded column; the Playground "
+             "picks it up when it next draws."));
 
     // The blocks the rules name, by EVoxelFluidBlock.
     const TCHAR* const FluidBlockNames[] = {nullptr, TEXT("soul_soil"), TEXT("blue_ice"), TEXT("obsidian"),
@@ -48,6 +53,11 @@ int32 FVoxelFluidSystem::GetSlopedTops()
 {
     const int32 Value = CVarFluidsSlopedTops.GetValueOnGameThread();
     return Value >= 0 && Value <= 2 ? Value : 1;
+}
+
+bool FVoxelFluidSystem::GetOpenCorners()
+{
+    return CVarFluidsOpenCorners.GetValueOnGameThread() != 0;
 }
 
 FVoxelFluidSystem::~FVoxelFluidSystem()

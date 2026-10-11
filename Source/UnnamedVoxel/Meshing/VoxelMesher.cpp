@@ -413,13 +413,14 @@ namespace
     };
 
     // The surface of the fluid cell at a padded index (VoxelFluidSurface::Make), from the packed cells around it.
-    bool MakeFluidSurface(const uint8* FluidCells, int32 Index, int32 Mode, VoxelFluidSurface::FSurface& Out)
+    bool MakeFluidSurface(
+        const uint8* FluidCells, int32 Index, int32 Mode, bool bOpenCorners, VoxelFluidSurface::FSurface& Out)
     {
         uint8 Ring[9];
         for (int32 DY = -1; DY <= 1; ++DY)
             for (int32 DX = -1; DX <= 1; ++DX)
                 Ring[(DY + 1) * 3 + DX + 1] = FluidCells[Index + DX * AxisStep[0] + DY * AxisStep[1]];
-        return VoxelFluidSurface::Make(Ring, Mode, Out);
+        return VoxelFluidSurface::Make(Ring, Mode, Out, bOpenCorners);
     }
 
     // Fills a padded region with one state.
@@ -567,13 +568,16 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
                 const FVoxelStateInfo& Info = Table.Get(Last = States[Index]);
                 Packed = Info.HoldsFluid()
                     ? VoxelFluidSurface::Pack(Info.IsFluid() ? Info : Table.Get(Info.HeldFluid), false)
-                    : 0;
+                    : Options.bOpenCorners && Info.Shape == EVoxelShape::Air ? VoxelFluidSurface::OpenCell
+                                                                             : 0;
             }
             FluidCells[Index] = Packed;
         }
         // Drawn full under any fluid, as the faces below are.
         for (int32 Index = 0; Index + AxisStep[2] < FVoxelPaddedSection::Volume; ++Index)
-            if (FluidCells[Index] && FluidCells[Index + AxisStep[2]]) FluidCells[Index] |= VoxelFluidSurface::FullBit;
+            if ((FluidCells[Index] & VoxelFluidSurface::FluidMask) &&
+                (FluidCells[Index + AxisStep[2]] & VoxelFluidSurface::FluidMask))
+                FluidCells[Index] |= VoxelFluidSurface::FullBit;
     }
     // Lava's sides draw the flow texture where it flows (everywhere under SlopedTops 2), as water's always do.
     auto GetFluidSideCode = [&Table, &Options](const FVoxelStateInfo& Fluid, int32 Face)
@@ -711,7 +715,7 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
                         // that runs downhill takes the flow texture along it.
                         VoxelFluidSurface::FSurface Surface;
                         if (bSlopes && Face != int32(EVoxelFace::Down) &&
-                            MakeFluidSurface(FluidCells, Index, Options.SlopedTops, Surface))
+                            MakeFluidSurface(FluidCells, Index, Options.SlopedTops, Options.bOpenCorners, Surface))
                         {
                             const uint32 FlowCode = Table.GetFlowCode(Fluid.Fluid);
                             const bool bFlowTop =

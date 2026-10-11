@@ -1,6 +1,8 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Biome/VoxelBiomeSource.h"
 #include "Biome/VoxelBiomeTable.h"
+#include "Foundation/FoundationBlockMeshes.h"
+#include "Foundation/FoundationInteractionView.h"
 #include "Decoration/VoxelDecorator.h"
 #include "Decoration/VoxelFeatureGraph.h"
 #include "Foundation/FoundationGrid.h"
@@ -79,10 +81,15 @@ namespace
     // 3 x 3 columns around the origin filled by a function of world cells; column (0, 0)'s fluid section meshed.
     struct FFluidMeshWorld
     {
-        FVoxelBlockTable Table = MakeFluidMeshTable();
+        FVoxelBlockTable Table;
         TMap<FIntPoint, TSharedRef<FVoxelColumn>> Columns;
 
         explicit FFluidMeshWorld(TFunction<uint16(int32, int32, int32)> Fill)
+            : FFluidMeshWorld(MakeFluidMeshTable(), MoveTemp(Fill))
+        {
+        }
+
+        FFluidMeshWorld(const FVoxelBlockTable& InTable, TFunction<uint16(int32, int32, int32)> Fill) : Table(InTable)
         {
             for (int32 CY = -1; CY <= 1; ++CY)
                 for (int32 CX = -1; CX <= 1; ++CX)
@@ -91,19 +98,25 @@ namespace
                             [&](int32 X, int32 Y, int32 Z) { return Fill(CX * 16 + X, CY * 16 + Y, Z); }));
         }
 
-        FVoxelMeshData Mesh(int32 SlopedTops, bool bGreedy = true) const
+        TUniquePtr<FVoxelPaddedSection> Gather() const
         {
             FVoxelNeighborhood Neighborhood;
             for (int32 DY = -1; DY <= 1; ++DY)
                 for (int32 DX = -1; DX <= 1; ++DX)
                     Neighborhood.Set(DX, DY, &Columns.FindChecked({DX, DY}).Get());
+            TUniquePtr<FVoxelPaddedSection> Padded = MakeUnique<FVoxelPaddedSection>();
+            VoxelMesher::GatherPadded(Neighborhood, FluidMeshSection, *Padded);
+            return Padded;
+        }
+
+        FVoxelMeshData Mesh(int32 SlopedTops, bool bGreedy = true, bool bOpenCorners = false) const
+        {
             FVoxelMeshOptions Options;
             Options.SlopedTops = SlopedTops;
             Options.bGreedy = bGreedy;
-            TUniquePtr<FVoxelPaddedSection> Padded = MakeUnique<FVoxelPaddedSection>();
-            VoxelMesher::GatherPadded(Neighborhood, FluidMeshSection, *Padded);
+            Options.bOpenCorners = bOpenCorners;
             FVoxelMeshData Out;
-            VoxelMesher::MeshSection(Table, *Padded, FluidMeshSection, Options, Out);
+            VoxelMesher::MeshSection(Table, *Gather(), FluidMeshSection, Options, Out);
             return Out;
         }
     };
@@ -255,6 +268,28 @@ bool FVoxelFluidSurfaceTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("...its corners on the source at 8/9"), Out.Corners[0] + Out.Corners[3], 16 / 9.f, Tolerance);
         TestEqual(TEXT("...its corners on level 2 at 6.5/9"), Out.Corners[1] + Out.Corners[2], 13 / 9.f, Tolerance);
     }
+    // Open corners (W3b): air beside a flowing cell counts as height 0 in a corner's mean; a corner at a source or a
+    // full cell is unchanged, so no source slopes for it (nor does any generated fluid).
+    auto Open = [&Table](std::initializer_list<uint16> States, int32 Mode, FSurface& Out)
+    {
+        uint8 Ring[9];
+        int32 Index = 0;
+        for (const uint16 State : States)
+            Ring[Index++] = State ? Pack(Table.Get(State), false) : OpenCell;
+        return VoxelFluidSurface::Make(Ring, Mode, Out, true);
+    };
+    if (TestTrue(TEXT("Open corners: level 1 east of a source, air elsewhere, slopes (mode 1)"),
+            Open({0, 0, 0, S, L1, 0, 0, 0, 0}, 1, Out)))
+    {
+        TestEqual(TEXT("...its corners on the source at 8/9"), Out.Corners[0] + Out.Corners[3], 16 / 9.f, Tolerance);
+        TestEqual(TEXT("...its corners on air at 7/36"), Out.Corners[1] + Out.Corners[2], 14 / 36.f, Tolerance);
+    }
+    if (TestTrue(TEXT("...without open corners"), Surface({0, 0, 0, S, L1, 0, 0, 0, 0}, 1, Out)))
+        TestEqual(
+            TEXT("...its corners on air stay at its own 7/9"), Out.Corners[1] + Out.Corners[2], 14 / 9.f, Tolerance);
+    TestFalse(TEXT("Open corners: a source beside air stays flat (mode 2)"), Open({0, 0, 0, 0, S, 0, 0, 0, 0}, 2, Out));
+    TestFalse(TEXT("...and a pool of sources at its rim (mode 1)"), Open({0, 0, 0, S, S, 0, S, S, 0}, 1, Out));
+
     // Falling water drawn full (more above it) to the south lifts the corners it touches to the full cell.
     if (TestTrue(TEXT("Level 1 beside a full falling cell slopes"),
             Surface({0, F, 0, 0, L1, 0, 0, 0, 0}, 1, Out, {false, true})))
@@ -575,6 +610,225 @@ bool FVoxelFluidGeneratedTest::RunTest(const FString& Parameters)
     }
     TestTrue(TEXT("The area holds water"), FluidQuads[0] > 0);
     TestTrue(TEXT("SlopedTops 1 meshes generated fluid as 0 does, byte for byte"), Digests[1] == Digests[0]);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelFluidPlaygroundTest, "Unnamed.Voxel.Mesher.FluidPlayground",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelFluidPlaygroundTest::RunTest(const FString& Parameters)
+{
+    // The Playground draws a sloped fluid cell (water and sky W3b: FoundationBlockMeshes::MakeFluidSurface and
+    // GetFluidFaces, UFoundationInteractionView::MakeFluidSurfaceData) as the voxel mesher draws it, on the project's
+    // blocks: the same cells slope, and their tops and outward sides have the same corners, UVs and codes.
+    const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();
+    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+    const FFoundationBlockType* WaterType = Registry->FindBlock(TEXT("water"));
+    const FFoundationBlockType* LavaType = Registry->FindBlock(TEXT("lava"));
+    const FFoundationBlockType* StoneType = Registry->FindBlock(TEXT("stone"));
+    const FFoundationBlockType* SeagrassType = Registry->FindBlock(TEXT("seagrass"));
+    if (!WaterType || !LavaType || !StoneType || !SeagrassType)
+    {
+        AddWarning(TEXT("DA_Blocks is missing water, lava, stone or seagrass: run ImportBlocks.py"));
+        return true;
+    }
+    // A fluid's state at a level (its only property).
+    auto Level = [&Registry](const FFoundationBlockType* Type, int32 Value) -> uint16
+    {
+        const uint16 State = uint16(Type->MinStateId + Value);
+        return Registry->GetFluid({State}).Level == Value ? State : uint16(0);
+    };
+    for (const int32 Value : {0, 1, 7, 8, 15})
+        if (!TestTrue(FString::Printf(TEXT("water and lava level %d are their first state + %d"), Value, Value),
+                Level(WaterType, Value) != 0 && Level(LavaType, Value) != 0))
+            return false;
+    const uint16 Stone = StoneType->GetDefaultState().Id, Seagrass = SeagrassType->GetDefaultState().Id;
+    const int32 WaterLayer = int32(EVoxelLayer::Water), OpaqueLayer = int32(EVoxelLayer::Opaque);
+    constexpr float Tolerance = 1e-5f;
+
+    // Scenes at Z 1 on a stone floor; Above, when set, fills the cells over (8, 8) at Z 2 and 3.
+    auto Scene = [Stone](TFunction<uint16(int32, int32)> Place, uint16 Above = 0)
+    {
+        return TFunction<uint16(int32, int32, int32)>(
+            [Place, Above, Stone](int32 X, int32 Y, int32 Z) -> uint16
+            {
+                if (X < 0 || Y < 0 || X > 15 || Y > 15) return 0;
+                if (Z == 0) return Stone;
+                if (Z == FluidMeshZ) return Place(X, Y);
+                return Above && X == 8 && Y == 8 && Z <= FluidMeshZ + 2 ? Above : uint16(0);
+            });
+    };
+    auto Taxicab = [](int32 X, int32 Y) { return FMath::Abs(X - 8) + FMath::Abs(Y - 8); };
+    struct FCase
+    {
+        const TCHAR* Name;
+        TFunction<uint16(int32, int32, int32)> Fill;
+    };
+    const FCase Cases[] = {
+        {TEXT("a 113-cell spread from a source"),
+            Scene([&](int32 X, int32 Y) -> uint16
+                { return Taxicab(X, Y) <= 7 ? Level(WaterType, Taxicab(X, Y)) : uint16(0); })},
+        {TEXT("a waterfall's foot: falling water under more, levels 1-6 around"),
+            Scene(
+                [&](int32 X, int32 Y) -> uint16
+                {
+                    return Taxicab(X, Y) == 0 ? Level(WaterType, 8)
+                        : Taxicab(X, Y) <= 6  ? Level(WaterType, Taxicab(X, Y))
+                                              : uint16(0);
+                },
+                Level(WaterType, 8))},
+        {TEXT("seagrass holding a source, levels 1-3 around"),
+            Scene(
+                [&](int32 X, int32 Y) -> uint16
+                {
+                    return Taxicab(X, Y) == 0 ? Seagrass
+                        : Taxicab(X, Y) <= 3  ? Level(WaterType, Taxicab(X, Y))
+                                              : uint16(0);
+                })},
+        {TEXT("lava: a source, levels 2, 4 and 6 east of it, level 2 south"),
+            Scene(
+                [&](int32 X, int32 Y) -> uint16
+                {
+                    return Y == 8 && X >= 3 && X <= 6 ? Level(LavaType, 2 * (X - 3))
+                        : Y == 9 && X == 3            ? Level(LavaType, 2)
+                                                      : uint16(0);
+                })},
+    };
+    for (const FCase& Case : Cases)
+    {
+        const FFluidMeshWorld World(*Table, Case.Fill);
+        auto GetState = [&Case](const FIntVector& At) { return FFoundationBlockState{Case.Fill(At.X, At.Y, At.Z)}; };
+        for (const int32 Variant : {1, 2, 3})
+        {
+            // Modes 1 and 2, and mode 1 with open corners.
+            const int32 Mode = Variant == 3 ? 1 : Variant;
+            const bool bOpen = Variant == 3;
+            const FVoxelMeshData Mesh = World.Mesh(Mode, false, bOpen);
+            TArray<FFluidMeshQuad> Quads = FluidMeshQuads(Mesh.Layers[WaterLayer]);
+            Quads.Append(FluidMeshQuads(Mesh.Layers[OpaqueLayer]));
+            int32 Sloped = 0, Flat = 0, Faces = 0, Mismatches = 0;
+            FString FirstMismatch;
+            auto Mismatch = [&Mismatches, &FirstMismatch](const FString& What)
+            {
+                if (!Mismatches++) FirstMismatch = What;
+            };
+            for (int32 Y = 0; Y < 16; ++Y)
+                for (int32 X = 0; X < 16; ++X)
+                {
+                    const FIntVector Cell(X, Y, FluidMeshZ);
+                    const FFoundationBlockState State = GetState(Cell);
+                    if (!FoundationBlockMeshes::HoldsFluid(*Registry, State)) continue;
+                    const FFluidMeshQuad* Top = FindFluidMeshQuad(Quads, Cell, EVoxelFace::Up);
+                    VoxelFluidSurface::FSurface Surface;
+                    if (!FoundationBlockMeshes::MakeFluidSurface(*Registry, GetState, Cell, Mode, bOpen, Surface))
+                    {
+                        ++Flat;
+                        for (int32 Corner = 0; Top && Corner < 4; ++Corner)
+                            if (!FMath::IsNearlyEqual(Top->Positions[Corner].Z, Top->Positions[0].Z, Tolerance))
+                                Mismatch(FString::Printf(
+                                    TEXT("%s: the mesher tilts a top the Playground draws flat"), *Cell.ToString()));
+                        continue;
+                    }
+                    ++Sloped;
+                    // A model's water is drawn as the water source, as the view draws it.
+                    const FFoundationBlockState Drawn = Registry->GetShape(State) == EFoundationBlockShape::Model
+                        ? WaterType->GetDefaultState()
+                        : State;
+                    float Data[UFoundationInteractionView::CustomDataFloats];
+                    UFoundationInteractionView::MakeFluidSurfaceData(*Registry, Drawn, Surface, Mode, Data);
+                    FoundationBlockMeshes::FFluidFace Playground[6];
+                    FoundationBlockMeshes::GetFluidFaces(Surface, Playground);
+                    for (int32 Face = 0; Face < VoxelFaces::Count; ++Face)
+                    {
+                        // The floor covers the bottom; sides between cells of one fluid are hidden.
+                        if (Face == int32(EVoxelFace::Down)) continue;
+                        const FFluidMeshQuad* Quad = FindFluidMeshQuad(Quads, Cell, EVoxelFace(Face));
+                        if (!Quad)
+                        {
+                            if (Face == int32(EVoxelFace::Up))
+                                Mismatch(FString::Printf(TEXT("%s: the mesher draws no top"), *Cell.ToString()));
+                            continue;
+                        }
+                        ++Faces;
+                        const FoundationBlockMeshes::FFluidFace& Ours = Playground[Face];
+                        for (int32 Corner = 0; Corner < 4; ++Corner)
+                        {
+                            const FVector3f At = Ours.Positions[Corner] + FVector3f(Cell);
+                            if (!At.Equals(Quad->Positions[Corner], Tolerance) ||
+                                !Ours.UVs[Corner].Equals(Quad->UVs[Corner], Tolerance))
+                                Mismatch(FString::Printf(TEXT("%s face %d corner %d: (%s, uv %s) against the "
+                                                              "mesher's (%s, uv %s)"),
+                                    *Cell.ToString(), Face, Corner, *At.ToString(), *Ours.UVs[Corner].ToString(),
+                                    *Quad->Positions[Corner].ToString(), *Quad->UVs[Corner].ToString()));
+                        }
+                        const uint32 Code = uint32(FMath::RoundToInt32(Data[Face]));
+                        if (Code != Quad->Code)
+                            Mismatch(FString::Printf(TEXT("%s face %d: code %u against the mesher's %u"),
+                                *Cell.ToString(), Face, Code, Quad->Code));
+                    }
+                }
+            const TCHAR* Corners = bOpen ? TEXT(", open corners") : TEXT("");
+            AddInfo(FString::Printf(TEXT("%s, mode %d%s: %d sloped cells (%d faces compared), %d flat"), Case.Name,
+                Mode, Corners, Sloped, Faces, Flat));
+            TestTrue(FString::Printf(TEXT("%s, mode %d%s: cells slope"), Case.Name, Mode, Corners), Sloped > 0);
+            TestEqual(FString::Printf(TEXT("%s, mode %d%s: the Playground draws them as the mesher (first: %s)"),
+                          Case.Name, Mode, Corners, *FirstMismatch),
+                Mismatches, 0);
+        }
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelFluidCostTest, "Unnamed.Voxel.Mesher.FluidCost",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelFluidCostTest::RunTest(const FString& Parameters)
+{
+    // The mesh cost of sloped (unmerged) tops per touched section (water and sky W3b), on the test blocks: a section
+    // holding a 113-cell spread, and one whose 16 x 16 layer of water has a level in every cell that differs from its
+    // neighbours' (every top slopes), each meshed FluidCostRuns times per mode. Logs the median; indicative only (the
+    // machine's load moves it), so no time is asserted.
+    constexpr int32 FluidCostRuns = 41;
+    struct FCase
+    {
+        const TCHAR* Name;
+        TFunction<uint16(int32, int32)> Place;
+    };
+    const FCase Cases[] = {
+        {TEXT("a 113-cell spread"),
+            [](int32 X, int32 Y) -> uint16
+            {
+                const int32 D = FMath::Abs(X - 8) + FMath::Abs(Y - 8);
+                return D <= 7 ? FluidMeshWater(D) : uint16(0);
+            }},
+        {TEXT("256 cells of mixed levels"),
+            [](int32 X, int32 Y) -> uint16 { return FluidMeshWater((X * 3 + Y * 5 + X * Y) % 8); }},
+    };
+    for (const FCase& Case : Cases)
+    {
+        const FFluidMeshWorld World(FluidMeshScene(Case.Place));
+        const TUniquePtr<FVoxelPaddedSection> Padded = World.Gather();
+        for (int32 Mode = 0; Mode < 3; ++Mode)
+        {
+            FVoxelMeshOptions Options;
+            Options.SlopedTops = Mode;
+            TArray<double> Ms;
+            int32 Quads = 0;
+            for (int32 Run = 0; Run < FluidCostRuns; ++Run)
+            {
+                FVoxelMeshData Out;
+                const double Start = FPlatformTime::Seconds();
+                VoxelMesher::MeshSection(World.Table, *Padded, FluidMeshSection, Options, Out);
+                Ms.Add((FPlatformTime::Seconds() - Start) * 1000.);
+                Quads = Out.Layers[int32(EVoxelLayer::Water)].GetQuadCount();
+            }
+            Ms.Sort();
+            AddInfo(FString::Printf(TEXT("%s, SlopedTops %d: median %.3f ms per section (min %.3f, max %.3f, %d "
+                                         "runs), %d water quads"),
+                Case.Name, Mode, Ms[Ms.Num() / 2], Ms[0], Ms.Last(), FluidCostRuns, Quads));
+            TestTrue(FString::Printf(TEXT("%s, SlopedTops %d: water meshed"), Case.Name, Mode), Quads > 0);
+        }
+    }
     return true;
 }
 
