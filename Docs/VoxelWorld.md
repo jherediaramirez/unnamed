@@ -713,6 +713,24 @@ S9d's second part ([the record](Records/2026-10-11-Voxel-Phase6-S9d2.md)) built 
 - **Known gaps:** the terrain rules (the fallen log's support, the mushrooms' space) are ours, since the probes stand on flat ground; the mushrooms write over `replaceable_by_trees` (no `replaceable_by_mushrooms` tag in the reference). Brown huge mushroom caps render pale cream, like the stem texture, though their states are vanilla's: a fault in the shared block render path for brown_mushroom_block (the record's known issues give the numbers and the Playground state-gallery test). No fallen tree is photographed yet.
 - **Evidence:** `Tests/Evidence/2026-10-11/S9d2-BigVegetation/` (darkforest-a with huge mushrooms and its trees-off control; `notes.md`, `contact-sheet.png`).
 
+### Azalea trees and root systems; the mangroves built but off (phase 6, S9e part 1)
+
+S9e's first part ([the record](Records/2026-10-11-Voxel-Phase6-S9e1.md)) put the azalea tree and `root_system` (the rooted azalea of the lush caves) in the world, and built the mangroves without switching them on.
+
+| Piece | Where | How it works |
+|---|---|---|
+| bending trunk | `VoxelTrunkPlacers.cpp` `PlaceBending` | Ours after the wiki's outline: the top two trunk cells move along one direction (the lower at 0.4, the top always), then a log above and `bend_length` more along it at the trunk's height; attachments from `min_height_for_leaves` up and the top row |
+| random_spread foliage | `VoxelFoliagePlacers.cpp` `PlaceRandomSpread` | Ours: `leaf_placement_attempts` triangular tries per attachment (NextInt(r) - NextInt(r) across, NextInt(h) - NextInt(h) up) |
+| root_system | `VoxelBigVegetation.cpp` `PlaceRootSystem`, `FVoxelRootSystemConfig` | Ours, fitted: the tree's spot up the column from the cave ceiling; rooted dirt from two below it down to the cave, 20 triangular tries a layer; 20 hanging roots under the ceiling; then the tree |
+| Mangroves (off) | `PlaceMangrove`, `PlaceUpwardsBranching`, `PlaceAttachedToLeaves`, `FVoxelTreeConfig::LogFreeSet` | Built, fitted alone, but `IsMangroveBuilt()` is false: the mud probes do not pass joined (the record's section 3); S9e part 2 |
+| Timing and benches | `FVoxelTreeTimes::Roots`, `RootSystem`; `voxel.Bench Decorate ... at=X:Y` | The root placers' own time; a bench centred on a chosen column |
+| Finding a state | `voxel.FindBlock birch_log[axis=x]` | A block with property filters (the fallen birches' lying logs) |
+
+- **Tests** (`Trees.Shapes`, 43 probes): azalea_tree and rooted_azalea_tree through the tree rules, the root system's rooted dirt and hanging roots as decorations. Mutations 10 (azalea's leaf tries halved) and 11 (the root tries halved) fail.
+- **Re-records** (trees on): `Decoration.Golden` third case large_biomes `0xff1a7eb180110302` (793,370 writes); `Mesher.Digest` large_biomes models on / off `0x0ea42a420b0a2f83` / `0x8b29db68a9ad618d`; radius 8 overworld `0x1681a6e69daab32e`, large_biomes unchanged, amplified `0xfbb824583b2844c8`.
+- **Cost**: a root system about 64 us a try (its rooted dirt column through the rock); a mangrove swamp column +0.45 ms with the mangroves on (for part 2). **The S9 bench gate missed** (quiet window, medians of 3): overworld Decorate trees on - off +0.548 (trees 0.52 ms, root systems 0.015; the machine 24% slower than S9d part 2's window), large_biomes +0.001, amplified +0.185; S9e part 2 starts with the cost step. The flight passed (holes in 453 frames, at most 34 columns).
+- **Known gaps**: the mangroves (off); root_system's failure paths and level tests are ours and unprobed.
+
 ## Storage and meshing
 
 | Piece | Where | How it works |
