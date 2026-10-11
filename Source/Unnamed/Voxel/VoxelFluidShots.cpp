@@ -486,13 +486,13 @@ bool FVoxelFluidShots::SetupFlood(AVoxelWorld& World)
                 ++Checked;
                 // Each source: the cell nearest its grid point, at most FloodSourceShift away, that is air over a
                 // solid top block.
-                TArray<FIntVector> Sources;
+                TArray<FIntVector> GridSources;
                 for (int32 J = -FloodHalfGrid; J <= FloodHalfGrid; ++J)
                     for (int32 I = -FloodHalfGrid; I <= FloodHalfGrid; ++I)
                     {
-                        const int32 Wanted = Sources.Num() + 1;
+                        const int32 Wanted = GridSources.Num() + 1;
                         const FIntPoint Grid(Center.X + I * FloodSpacing, Center.Y + J * FloodSpacing);
-                        for (int32 Shift = 0; Shift <= FloodSourceShift && Sources.Num() < Wanted; ++Shift)
+                        for (int32 Shift = 0; Shift <= FloodSourceShift && GridSources.Num() < Wanted; ++Shift)
                             ForEachFluidRingPoint(Shift,
                                 [&](FIntPoint Step)
                                 {
@@ -502,10 +502,10 @@ bool FVoxelFluidShots::SetupFlood(AVoxelWorld& World)
                                     if (!Reader.Get({X, Y, Top}, Ground) || !IsFluidWall(Fluids.GetCell(Ground)) ||
                                         !Reader.Get({X, Y, Top + 1}, Above) || Above != 0)
                                         return true;
-                                    Sources.Add({X, Y, Top + 1});
+                                    GridSources.Add({X, Y, Top + 1});
                                     return false;
                                 });
-                        if (Sources.Num() < Wanted)
+                        if (GridSources.Num() < Wanted)
                         {
                             ++NotOpen;
                             return true;
@@ -513,7 +513,7 @@ bool FVoxelFluidShots::SetupFlood(AVoxelWorld& World)
                     }
                 // The box's surface: dry, its height range, its summed height difference from the centre source's
                 // ground, and the top cells covered (plants, snow).
-                const int32 Base = Sources[Sources.Num() / 2].Z - 1;
+                const int32 Base = GridSources[GridSources.Num() / 2].Z - 1;
                 int32 Low = MAX_int32, High = MIN_int32, Deviation = 0, Covered = 0;
                 for (int32 Y = Center.Y - FloodReach; Y <= Center.Y + FloodReach; ++Y)
                     for (int32 X = Center.X - FloodReach; X <= Center.X + FloodReach; ++X)
@@ -540,7 +540,7 @@ bool FVoxelFluidShots::SetupFlood(AVoxelWorld& World)
                     BestHigh = High;
                     BestDeviation = Deviation;
                     BestCovered = Covered;
-                    FloodSources = MoveTemp(Sources);
+                    FloodSources = MoveTemp(GridSources);
                 }
                 return BestScore > FloodGoodScore;
             });

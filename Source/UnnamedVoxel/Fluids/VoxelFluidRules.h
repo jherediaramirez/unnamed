@@ -221,18 +221,18 @@ namespace VoxelFluidRules
     {
         const EVoxelFluidMutation Mutation = Options.Mutation;
         const FVoxelFluidCell Self = Get(Cell);
-        int32 Sources = 0, Most = 0;
+        int32 SourcesBeside = 0, Most = 0;
         for (int32 Face = 0; Face < 4; ++Face)
         {
             const FVoxelFluidCell Side = Get(Cell + GetFaceOffset(Face));
             if (Side.Fluid != Fluid || !IsOpen(Self, Face, Side)) continue;
-            Sources += Side.Level == 0;
+            SourcesBeside += Side.Level == 0;
             Most = FMath::Max(Most, Side.GetAmount());
         }
         const FVoxelFluidCell Above = Get(Cell + GetFaceOffset(Up));
         const bool bAbove = Above.Fluid == Fluid && IsOpen(Self, Up, Above);
-        if (Mutation == EVoxelFluidMutation::SourceAboveCounts && bAbove && Above.Level == 0) ++Sources;
-        if (Params.bConvert && Sources >= 2)
+        if (Mutation == EVoxelFluidMutation::SourceAboveCounts && bAbove && Above.Level == 0) ++SourcesBeside;
+        if (Params.bConvert && SourcesBeside >= 2)
         {
             const FVoxelFluidCell Below = Get(Cell + GetFaceOffset(Down));
             const bool bFloor = Mutation == EVoxelFluidMutation::NoFloorCheck ||
