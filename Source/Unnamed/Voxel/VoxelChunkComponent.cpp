@@ -81,6 +81,20 @@ uint32 UVoxelChunkComponent::GetLayerMask(TConstArrayView<const FVoxelMeshData*>
     return Mask;
 }
 
+void UVoxelChunkComponent::SetFarLook(bool bFar, bool bShadows, UMaterialInterface* DebugMaterial)
+{
+    bFarLook = bFar;
+    const bool bCast = !bFar || bShadows;
+    if (bool(CastShadow) != bCast) SetCastShadow(bCast);
+    if (bool(bVisibleInRayTracing) == bFar) SetVisibleInRayTracing(!bFar);
+    UMaterialInterface* Override = bFar ? DebugMaterial : nullptr;
+    if (Override == LookMaterial) return;
+    LookMaterial = Override;
+    // A null override falls back to the mesh's own slot material.
+    for (int32 Layer = 0; Layer < ChunkLayerCount; ++Layer)
+        SetMaterial(Layer, Override);
+}
+
 void UVoxelChunkComponent::SetMesh(
     FRealtimeMeshStreamSet&& Streams, FMeshCardsBuildData&& Cards, uint32 LayerMask, uint32 SectionMask)
 {

@@ -10,6 +10,11 @@ namespace VoxelConsole
 {
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarViewRadius;
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarUnloadMargin;
+    // Far LOD (phase 9, S1): the far ring's radius, far shadows, the canopy's layer and the debug tint.
+    extern UNNAMED_API TAutoConsoleVariable<int32> CVarFarRadius;
+    extern UNNAMED_API TAutoConsoleVariable<bool> CVarFarShadows;
+    extern UNNAMED_API TAutoConsoleVariable<int32> CVarFarCanopyLayer;
+    extern UNNAMED_API TAutoConsoleVariable<bool> CVarFarTint;
     // The loading screen's look: 1 draws the chunk map under the progress bar (26.3's), 0 leaves it out.
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarLoadingScreenMap;
     extern UNNAMED_API TAutoConsoleVariable<float> CVarApplyBudgetMs;

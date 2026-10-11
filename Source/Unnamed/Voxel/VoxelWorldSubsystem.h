@@ -16,7 +16,11 @@ struct FVoxelStreamingFrame
     double JobsMs = 0;
     double ApplyMs = 0;
     int32 Applied = 0;
+    // Far LOD: far meshes applied this frame and their time (part of Applied and ApplyMs).
+    int32 FarApplied = 0;
+    double FarApplyMs = 0;
 };
+class UMaterialInstanceDynamic;
 class UMaterialInterface;
 class UVoxelChunkComponent;
 
@@ -56,7 +60,8 @@ public:
     const FVoxelColumnPipeline* GetPipeline() const { return Pipeline.Get(); }
     FVoxelColumnPipeline* GetPipeline() { return Pipeline.Get(); }
     // Every column in view is on screen.
-    bool IsViewOnScreen() const { return Pipeline && Pipeline->IsViewOnScreen(); }
+    // The near view: with a far ring, the far columns may still be loading.
+    bool IsViewOnScreen() const { return Pipeline && Pipeline->IsNearViewOnScreen(); }
     // How the first view got on screen after Start: stage timings, quads, memory, cards and the apply. Empty until
     // then.
     const FString& GetFirstViewReport() const { return FirstViewReport; }
@@ -81,6 +86,10 @@ private:
     void ApplyReady(double BudgetMs, double TickStartSeconds);
     // Columns out of view stay loaded (hysteresis) but hidden: the fog covers them.
     void UpdateVisibility();
+    // Far LOD: the debug tint's material while voxel.Debug.FarTint is on (else null), and far looks refreshed on
+    // screen when voxel.Far.Shadows or the tint change.
+    UMaterialInterface* GetFarTintMaterial();
+    void UpdateFarLooks();
     UVoxelChunkComponent* AcquireChunk(FIntPoint Column);
     void ReleaseChunk(FIntPoint Column);
     void ReportFirstView();
@@ -101,9 +110,15 @@ private:
     TArray<TObjectPtr<UVoxelChunkComponent>> Pool;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UMaterialInterface>> Materials;
+    // voxel.Debug.FarTint's material, made when first wanted.
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterialInstanceDynamic> FarTintMaterial;
+    bool bFarShadows = false;
+    bool bFarTint = false;
     TOptional<FVector> FocusOverride;
     FVector LastFocus = FVector::ZeroVector;
     FApplyCost ApplyCost;
+    FApplyCost FarApplyCost;
     // The ready column that last waited a frame because the frame's planning and jobs had used the budget; it goes
     // first when it heads the queue again.
     TOptional<FIntPoint> WaitedColumn;
@@ -124,5 +139,9 @@ private:
     double LogSeconds = 0;
     int32 LogApplied = 0;
     double LogApplyMs = 0;
+    int32 LogFarApplied = 0;
+    double LogFarApplyMs = 0;
+    // When the near view was first on screen (far LOD's first-view split); 0 until then.
+    double NearViewSeconds = 0;
     FVoxelStreamingFrame LogWorstFrame;
 };

@@ -28,24 +28,41 @@ namespace
         return double(Bytes) / (1024. * 1024.);
     }
 
-    // In the frustum and never on screen: holes closer than where the edge fog starts (ViewRadius - 1.5 columns as a
-    // gap), and late columns inside its fade.
+    // In the frustum: holes, columns in view never on screen closer than ViewRadius - 1.5 columns (as a gap; where the
+    // edge fog started before far LOD), and late columns past that. Far LOD adds coarse columns, in view and still
+    // showing their far mesh, and far holes, far columns with nothing on screen closer than where the fog starts now
+    // (D - 1.5).
     void CountFlightHoles(const FVoxelColumnPipeline& Pipeline, const FConvexVolume& Frustum, const FVector& OriginCm,
-        TArray<FIntPoint>& Holes, int32& Late)
+        TArray<FIntPoint>& Holes, int32& Late, int32& Coarse, int32& FarHoles)
     {
         const FVoxelStreamingRings& Rings = Pipeline.GetRings();
         const double Clear = Rings.ViewRadius - 1.5;
+        const int32 Drawn = Rings.GetDrawnRadius();
+        const double FarClear = Drawn - 1.5;
         const FVector Extent(FlightColumnCm / 2, FlightColumnCm / 2, VoxelConstants::Height * FlightBlockCm / 2);
         const double MiddleZ = (VoxelConstants::MinZ + VoxelConstants::Height / 2.) * FlightBlockCm;
-        Late = 0;
-        for (int32 DY = -Rings.ViewRadius - 1; DY <= Rings.ViewRadius + 1; ++DY)
-            for (int32 DX = -Rings.ViewRadius - 1; DX <= Rings.ViewRadius + 1; ++DX)
+        Late = Coarse = FarHoles = 0;
+        for (int32 DY = -Drawn - 1; DY <= Drawn + 1; ++DY)
+            for (int32 DX = -Drawn - 1; DX <= Drawn + 1; ++DX)
             {
                 const FIntPoint Column = Rings.Center + FIntPoint(DX, DY);
-                if (!Rings.IsInView(Column) || Pipeline.GetStatus(Column).bOnScreen) continue;
+                if (!Rings.IsDrawn(Column)) continue;
+                const FVoxelColumnStatus Status = Pipeline.GetStatus(Column);
+                const bool bInView = Rings.IsInView(Column);
+                if (Status.bOnScreen && !(bInView && Status.Shown == EVoxelMeshKind::Far)) continue;
                 const FVector Center =
                     OriginCm + FVector((Column.X + .5) * FlightColumnCm, (Column.Y + .5) * FlightColumnCm, MiddleZ);
                 if (!Frustum.IntersectBox(Center, Extent)) continue;
+                if (!bInView)
+                {
+                    FarHoles += Rings.GetGapSquared(Column) <= FarClear * FarClear;
+                    continue;
+                }
+                if (Status.bOnScreen)
+                {
+                    ++Coarse;
+                    continue;
+                }
                 if (Rings.GetGapSquared(Column) <= Clear * Clear)
                     Holes.Add(Column);
                 else
@@ -89,7 +106,8 @@ void FVoxelFlight::Start(AVoxelWorld& World)
     for (FLeg& Leg : Legs)
         if (Leg.bCircle) Leg.Seconds = 2. * UE_DOUBLE_PI * CircleRadiusCm / (Leg.BlocksPerSecond * FlightBlockCm);
     Rows = TEXT("time_s,x,y,z,speed,leg,center_x,center_y,generated,needed,in_view,in_view_on_screen,jobs,ready,")
-        TEXT("applied,tick_ms,plan_ms,jobs_ms,apply_ms,holes,late,column_mb,cache_mb,process_mb,frame_ms,gpu_ms\n");
+        TEXT("applied,tick_ms,plan_ms,jobs_ms,apply_ms,holes,late,column_mb,cache_mb,process_mb,frame_ms,gpu_ms,")
+            TEXT("coarse,far_holes,far_ms\n");
 }
 
 bool FVoxelFlight::Tick(AVoxelWorld& World, float DeltaSeconds)
@@ -156,8 +174,8 @@ bool FVoxelFlight::Tick(AVoxelWorld& World, float DeltaSeconds)
     const FVoxelPipelineStats Stats = Pipeline.GetStats();
     const FVoxelStreamingFrame& Frame = Streaming->GetLastFrame();
     TArray<FIntPoint> HoleColumns;
-    int32 Late = 0;
-    CountFlightHoles(Pipeline, Frustum, World.OriginCm, HoleColumns, Late);
+    int32 Late = 0, Coarse = 0, FarHoles = 0;
+    CountFlightHoles(Pipeline, Frustum, World.OriginCm, HoleColumns, Late, Coarse, FarHoles);
     const int32 Holes = HoleColumns.Num();
     // The first frames with holes, column by column, for diagnosis.
     if ((Holes || Late) && HoleFramesLogged < 12)
@@ -181,12 +199,12 @@ bool FVoxelFlight::Tick(AVoxelWorld& World, float DeltaSeconds)
     const FVector Blocks = (Location - World.OriginCm) / FlightBlockCm;
     Rows +=
         FString::Printf(TEXT("%.4f,%.1f,%.1f,%.1f,%.0f,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.3f,%.3f,%.3f,%.3f,%d,%d,%.2f,")
-                            TEXT("%.2f,%.1f,%.2f,%.2f\n"),
+                            TEXT("%.2f,%.1f,%.2f,%.2f,%d,%d,%.3f\n"),
             Elapsed, Blocks.X, Blocks.Y, Blocks.Z, Leg.BlocksPerSecond, Leg.Name, Pipeline.GetRings().Center.X,
             Pipeline.GetRings().Center.Y, Stats.Generated, Stats.Needed, Stats.InView, Stats.InViewOnScreen,
             Pipeline.GetJobCount(), Stats.Ready, Frame.Applied, Frame.TickMs, Frame.PlanMs, Frame.JobsMs, Frame.ApplyMs,
             Holes, Late, ColumnMb, CacheMb, ProcessMb, DeltaSeconds * 1000.,
-            FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()));
+            FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()), Coarse, FarHoles, Frame.FarApplyMs);
 
     FLegTotals& Total = Totals[LegIndex];
     if (!Total.Frames)
@@ -204,6 +222,12 @@ bool FVoxelFlight::Tick(AVoxelWorld& World, float DeltaSeconds)
     Total.MostHoles = FMath::Max(Total.MostHoles, Holes);
     Total.FramesWithLate += Late > 0;
     Total.MostLate = FMath::Max(Total.MostLate, Late);
+    Total.FramesWithCoarse += Coarse > 0;
+    Total.MostCoarse = FMath::Max(Total.MostCoarse, Coarse);
+    Total.FramesWithFarHoles += FarHoles > 0;
+    Total.MostFarHoles = FMath::Max(Total.MostFarHoles, FarHoles);
+    Total.FarApplied += Frame.FarApplied;
+    Total.FarApplyMs += Frame.FarApplyMs;
     Total.Applied += Frame.Applied;
     Total.GeneratedAfter = Stats.Generate.Count;
     Total.ProcessMbLast = ProcessMb;
@@ -224,6 +248,8 @@ void FVoxelFlight::Finish(AVoxelWorld& World)
     const double Budget = VoxelConsole::CVarApplyBudgetMs.GetValueOnGameThread();
     FString Summary = World.GetBuildReport() + TEXT("\n");
     int32 Frames = 0, FramesWithHoles = 0, MostHoles = 0, FramesOverBudget = 0, FramesWithLate = 0, MostLate = 0;
+    int32 FramesWithCoarse = 0, MostCoarse = 0, FramesWithFarHoles = 0, MostFarHoles = 0, FarApplied = 0;
+    double FarApplyMs = 0;
     double WorstTickMs = 0;
     const TCHAR* WorstLeg = TEXT("none");
     for (int32 Index = 0; Index < Legs.Num(); ++Index)
@@ -234,6 +260,12 @@ void FVoxelFlight::Finish(AVoxelWorld& World)
         MostHoles = FMath::Max(MostHoles, Total.MostHoles);
         FramesWithLate += Total.FramesWithLate;
         MostLate = FMath::Max(MostLate, Total.MostLate);
+        FramesWithCoarse += Total.FramesWithCoarse;
+        MostCoarse = FMath::Max(MostCoarse, Total.MostCoarse);
+        FramesWithFarHoles += Total.FramesWithFarHoles;
+        MostFarHoles = FMath::Max(MostFarHoles, Total.MostFarHoles);
+        FarApplied += Total.FarApplied;
+        FarApplyMs += Total.FarApplyMs;
         FramesOverBudget += Total.FramesOverBudget;
         if (Total.WorstTickMs > WorstTickMs)
         {
@@ -265,6 +297,14 @@ void FVoxelFlight::Finish(AVoxelWorld& World)
         : FString(TEXT("Holes: none\n"));
     Summary += FString::Printf(
         TEXT("Late columns in the fog's fade: %d frames, at most %d columns\n"), FramesWithLate, MostLate);
+    // Far LOD (phase 9, S1).
+    Summary += FString::Printf(
+        TEXT("Coarse columns (in view, still far): %d frames, at most %d columns\n"), FramesWithCoarse, MostCoarse);
+    Summary += FramesWithFarHoles
+        ? FString::Printf(TEXT("Far holes: %d frames, at most %d columns\n"), FramesWithFarHoles, MostFarHoles)
+        : FString(TEXT("Far holes: none\n"));
+    Summary += FString::Printf(TEXT("Far applies: %d in %.1f ms (%.3f ms per frame)\n"), FarApplied, FarApplyMs,
+        Frames ? FarApplyMs / Frames : 0.);
     Summary += FString::Printf(TEXT("Chunk work: worst %.2f ms (%s), %d of %d frames over the %.1f ms budget\n"),
         WorstTickMs, WorstLeg, FramesOverBudget, Frames, Budget);
     // The first lap fills the circle; laps 2 and 3 fly over ground the rings already left once.

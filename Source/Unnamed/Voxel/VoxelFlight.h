@@ -46,6 +46,12 @@ private:
         int32 MostHoles = 0;
         int32 FramesWithLate = 0;
         int32 MostLate = 0;
+        int32 FramesWithCoarse = 0;
+        int32 MostCoarse = 0;
+        int32 FramesWithFarHoles = 0;
+        int32 MostFarHoles = 0;
+        int32 FarApplied = 0;
+        double FarApplyMs = 0;
         int32 Applied = 0;
         int64 GeneratedBefore = 0;
         int64 GeneratedAfter = 0;

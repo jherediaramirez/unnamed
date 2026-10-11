@@ -39,6 +39,29 @@ namespace
         return FMath::Abs(int64(Column.X) - Center.X) <= Radius && FMath::Abs(int64(Column.Y) - Center.Y) <= Radius;
     }
 
+    // The sections a mesh's geometry spans (positions' world Z), for the component's bounds.
+    uint32 GetPipelineSectionMask(const FVoxelMeshData& Data)
+    {
+        float Low = TNumericLimits<float>::Max(), High = TNumericLimits<float>::Lowest();
+        for (const FVoxelMeshLayer& Layer : Data.Layers)
+            for (const FVector3f& Position : Layer.Positions)
+            {
+                Low = FMath::Min(Low, Position.Z);
+                High = FMath::Max(High, Position.Z);
+            }
+        if (Low > High) return 0;
+        const int32 First =
+            FMath::Clamp(FMath::FloorToInt32((Low - VoxelConstants::MinZ) / VoxelConstants::SectionSize), 0,
+                VoxelConstants::SectionCount - 1);
+        const int32 Last =
+            FMath::Clamp(FMath::CeilToInt32((High - VoxelConstants::MinZ) / VoxelConstants::SectionSize) - 1, First,
+                VoxelConstants::SectionCount - 1);
+        uint32 Mask = 0;
+        for (int32 Section = First; Section <= Last; ++Section)
+            Mask |= 1u << Section;
+        return Mask;
+    }
+
     void ReplayPipelineEdits(
         FVoxelColumn& Column, TConstArrayView<TPair<int32, uint16>> Replay, const FVoxelBlockTable& Table)
     {
@@ -81,7 +104,10 @@ struct FVoxelColumnPipeline::FJob
 
 FVoxelColumnPipeline::FVoxelColumnPipeline(
     TSharedRef<const FVoxelBlockTable> InTable, TSharedRef<const IVoxelTerrain> InTerrain, const FSettings& InSettings)
-    : Table(MoveTemp(InTable)), Terrain(MoveTemp(InTerrain)), Settings(InSettings)
+    : Table(MoveTemp(InTable)),
+      Terrain(MoveTemp(InTerrain)),
+      FarClasses(MakeShared<const FVoxelFarClasses>(*Table)),
+      Settings(InSettings)
 {
     Settings.MaxTasksInFlight = FMath::Max(1, Settings.MaxTasksInFlight);
 }
@@ -124,6 +150,16 @@ void FVoxelColumnPipeline::SetModelOptions(bool bModels, bool bShadeUnturned)
     Options.bModelShadeUnturned = bShadeUnturned;
     for (TPair<FIntPoint, FRecord>& Pair : Records)
         if (Pair.Value.Data) MarkDirty(Pair.Value, PipelineAllSections);
+    Regress();
+}
+
+void FVoxelColumnPipeline::SetFarOptions(const VoxelFarMesher::FOptions& FarOptions)
+{
+    if (Settings.FarOptions.CanopyLayer == FarOptions.CanopyLayer) return;
+    Settings.FarOptions = FarOptions;
+    for (TPair<FIntPoint, FRecord>& Pair : Records)
+        if (Pair.Value.Data && (Pair.Value.MeshedKind == EVoxelMeshKind::Far || Rings.IsFar(Pair.Key)))
+            MarkDirty(Pair.Value, PipelineAllSections);
     Regress();
 }
 
@@ -194,8 +230,8 @@ FVoxelColumnPipeline::FRecord& FVoxelColumnPipeline::AddRecord(FIntPoint Column)
 void FVoxelColumnPipeline::SetFocus(const FVoxelStreamingRings& InRings, int32 NewViewSector)
 {
     // With decoration each stage needs the 3 x 3 of the one before it: three rings past the view.
-    const FVoxelStreamingRings NewRings(
-        InRings.Center, InRings.ViewRadius, InRings.UnloadMargin, IsDecorating() ? FVoxelStreamingRings::MaxStages : 1);
+    const FVoxelStreamingRings NewRings(InRings.Center, InRings.ViewRadius, InRings.UnloadMargin,
+        IsDecorating() ? FVoxelStreamingRings::MaxStages : 1, InRings.FarRadius);
     if (bPlanned && NewRings == Rings && NewViewSector == ViewSector) return;
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelPipeline_Plan);
     const bool bCenterMoved = !bPlanned || NewRings.Center != Rings.Center;
@@ -214,6 +250,19 @@ void FVoxelColumnPipeline::SetFocus(const FVoxelStreamingRings& InRings, int32 N
     VoxelStreaming::GetUnloads(Rings, Present, Unloads);
     for (const FIntPoint Column : Unloads)
         Unload(Column);
+    // Far LOD: a waiting mesh of the kind its drawn column no longer wants goes, as CollectMesh drops a late one, while
+    // the column shows something; the wanted kind meshes again (its MeshedKind no longer matches).
+    for (TArray<FIntPoint>* Queue : {&ReadyColumns, &ReadyFarColumns})
+        for (int32 Index = Queue->Num() - 1; Index >= 0; --Index)
+        {
+            const FIntPoint Column = (*Queue)[Index];
+            FRecord& Record = Records.FindChecked(Column);
+            const EVoxelMeshKind Kind = Record.Ready->bFar ? EVoxelMeshKind::Far : EVoxelMeshKind::Full;
+            if (!Record.bOnScreen || !Rings.IsDrawn(Column) || Kind == GetWantedKind(Column)) continue;
+            Record.Ready.Reset();
+            Queue->RemoveAtSwap(Index);
+            ++Dropped;
+        }
     // Caches live only near the center, where the player can edit; one column of slack avoids churn at the border.
     if (bCenterMoved)
         for (TPair<FIntPoint, FRecord>& Pair : Records)
@@ -241,7 +290,7 @@ void FVoxelColumnPipeline::Unload(FIntPoint Column)
     if (!Record) return;
     // Its jobs that have not started skip their work; the others' results are dropped when they arrive.
     *Record->Cancel = true;
-    if (Record->Ready) ReadyColumns.RemoveSingle(Column);
+    if (Record->Ready) (Record->Ready->bFar ? ReadyFarColumns : ReadyColumns).RemoveSingle(Column);
     if (Record->bOnScreen) UnloadedOnScreen.Add(Column);
     Records.Remove(Column);
 }
@@ -290,6 +339,9 @@ void FVoxelColumnPipeline::Collect()
                 MeshTimes.Add(Result->Mesh->MeshMs);
                 StreamsTimes.Add(Result->Mesh->StreamsMs);
                 break;
+            case EJob::FarMesh:
+                FarMeshTimes.Add(Result->Mesh->MeshMs + Result->Mesh->StreamsMs);
+                break;
             }
         if (!bCurrent)
             ++Dropped;
@@ -306,9 +358,11 @@ void FVoxelColumnPipeline::Collect()
                 CollectFinalize(Job, *Result, *Record);
                 break;
             case EJob::Mesh:
+            case EJob::FarMesh:
                 CollectMesh(Job, *Result, *Record);
                 break;
             }
+        if (Job.Type == EJob::FarMesh) --FarJobs;
         Jobs.RemoveAtSwap(Index);
         bWalk = true;
     }
@@ -391,6 +445,15 @@ void FVoxelColumnPipeline::CollectFinalize(const FJob& Job, FJobResult& Result, 
 void FVoxelColumnPipeline::CollectMesh(const FJob& Job, FJobResult& Result, FRecord& Record)
 {
     Record.bMeshing = false;
+    const bool bFar = Job.Type == EJob::FarMesh;
+    // Far LOD: a drawn column that changed kinds back while the job ran keeps what it shows; the mesh of the kind it
+    // no longer wants is thrown away (a column showing nothing takes it, rather than stay empty).
+    if (Record.bOnScreen && Rings.IsDrawn(Job.Column) &&
+        (bFar ? EVoxelMeshKind::Far : EVoxelMeshKind::Full) != GetWantedKind(Job.Column))
+    {
+        ++Dropped;
+        return;
+    }
     // Marked dirty again while the job ran (water and sky W2a): its mesh is still the newest there is, so it goes to
     // the screen, or a column edited every few frames (flowing water) would show none. The column stays dirty and
     // meshes again. Otherwise nothing became dirty since the job started, so it meshed every dirty section.
@@ -399,7 +462,9 @@ void FVoxelColumnPipeline::CollectMesh(const FJob& Job, FJobResult& Result, FRec
     else
         Record.Dirty = 0;
     Record.MeshedNeighbors = Job.Neighbors;
-    if (IsPipelineNear(Job.Column, Rings.Center, Settings.MeshCacheRadius))
+    Record.MeshedKind = bFar ? EVoxelMeshKind::Far : EVoxelMeshKind::Full;
+    // A far mesh drops the section cache: it took the dirty bits the cache would need.
+    if (!bFar && IsPipelineNear(Job.Column, Rings.Center, Settings.MeshCacheRadius))
     {
         Record.Cache = Result.Mesh->Sections;
         Record.CacheBytes = Result.Mesh->SectionBytes;
@@ -409,9 +474,15 @@ void FVoxelColumnPipeline::CollectMesh(const FJob& Job, FJobResult& Result, FRec
         Record.Cache.Reset();
         Record.CacheBytes = 0;
     }
+    // A waiting mesh of the other kind gives its place in the queues to this one.
+    if (Record.Ready && Record.Ready->bFar != bFar)
+    {
+        (Record.Ready->bFar ? ReadyFarColumns : ReadyColumns).RemoveSingle(Job.Column);
+        Record.Ready.Reset();
+    }
     if (!Record.Ready)
     {
-        ReadyColumns.Add(Job.Column);
+        (bFar ? ReadyFarColumns : ReadyColumns).Add(Job.Column);
         bReadySorted = false;
     }
     Record.Ready = MoveTemp(Result.Mesh);
@@ -468,7 +539,8 @@ bool FVoxelColumnPipeline::IsComplete(int32 NeededIndex) const
     switch (IsDecorating() ? NeededRing[NeededIndex] : FMath::Min<int32>(NeededRing[NeededIndex], 1))
     {
     case 0:
-        return Record.Data && !Record.Dirty && !Record.bMeshing;
+        return Record.Data && !Record.Dirty && !Record.bMeshing &&
+            Record.MeshedKind == GetWantedKind(Needed[NeededIndex]);
     case 1:
         return Record.Data.IsValid();
     case 2:
@@ -580,7 +652,10 @@ bool FVoxelColumnPipeline::RequireFinal(FIntPoint Column)
 
 void FVoxelColumnPipeline::TryMesh(FIntPoint Column, FRecord& Record)
 {
-    if (!Record.Dirty || Record.bMeshing) return;
+    // A drawn column meshes when its sections changed or it wants the other kind of mesh (far LOD).
+    const EVoxelMeshKind Wanted = GetWantedKind(Column);
+    if (Record.bMeshing || (!Record.Dirty && Record.MeshedKind == Wanted)) return;
+    if (Wanted == EVoxelMeshKind::Far && !HasFarRoom()) return;
     const uint8 Neighbors = GetMeshNeighbors(Column);
     if (IsDecorating())
     {
@@ -590,7 +665,11 @@ void FVoxelColumnPipeline::TryMesh(FIntPoint Column, FRecord& Record)
             if (Neighbors & (1u << Index)) bReady &= RequireFinal(Column + PipelineNeighborOffsets[Index]);
         if (!bReady || !HasRoom()) return;
     }
-    if (AreFinal(Column, Neighbors)) LaunchMesh(Column, Record, Neighbors);
+    if (!AreFinal(Column, Neighbors)) return;
+    if (Wanted == EVoxelMeshKind::Far)
+        LaunchFarMesh(Column, Record, Neighbors);
+    else
+        LaunchMesh(Column, Record, Neighbors);
 }
 
 uint8 FVoxelColumnPipeline::GetMeshNeighbors(FIntPoint Column) const
@@ -598,7 +677,7 @@ uint8 FVoxelColumnPipeline::GetMeshNeighbors(FIntPoint Column) const
     if (!Settings.bEdgeWalls) return PipelineAllNeighbors;
     uint8 Mask = 0;
     for (int32 Index = 0; Index < 8; ++Index)
-        if (Rings.IsInView(Column + PipelineNeighborOffsets[Index])) Mask |= uint8(1u << Index);
+        if (Rings.IsDrawn(Column + PipelineNeighborOffsets[Index])) Mask |= uint8(1u << Index);
     return Mask;
 }
 
@@ -819,6 +898,68 @@ void FVoxelColumnPipeline::LaunchMesh(FIntPoint Column, FRecord& Record, uint8 N
         });
 }
 
+void FVoxelColumnPipeline::LaunchFarMesh(FIntPoint Column, FRecord& Record, uint8 Neighbors)
+{
+    Record.bMeshing = true;
+    Record.MeshingNeighbors = Neighbors;
+    if (Neighbors != PipelineAllNeighbors) bEdgeWallsUsed = true;
+    // The 3 x 3 columns row by row, as LaunchMesh takes them: the tints read all of them, the walls the 4 edge ones.
+    TStaticArray<TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>, 9> Around;
+    Around[4] = Record.Data;
+    for (int32 Index = 0; Index < 8; ++Index)
+        if (Neighbors & (1u << Index))
+        {
+            const FIntPoint Offset = PipelineNeighborOffsets[Index];
+            Around[(Offset.Y + 1) * 3 + Offset.X + 1] = Records.FindChecked(Column + Offset).Data;
+        }
+    FJob& Job = AddJob(EJob::FarMesh, Column, Record);
+    Job.MeshVersion = Record.MeshVersion;
+    Job.Neighbors = Neighbors;
+    ++FarJobs;
+    StartJob(Job,
+        [Table = Table, Terrain = Terrain, FarClasses = FarClasses, Options = Settings.MeshOptions,
+            FarOptions = Settings.FarOptions, Around]() -> TSharedPtr<FJobResult>
+        {
+            TRACE_CPUPROFILER_EVENT_SCOPE(VoxelPipeline_FarMesh);
+            const double MeshStart = FPlatformTime::Seconds();
+            TSharedPtr<FJobResult> Result = MakeShared<FJobResult>();
+            Result->Mesh = MakeUnique<FVoxelColumnMesh>();
+            FVoxelColumnMesh& Mesh = *Result->Mesh;
+            Mesh.bFar = true;
+            FVoxelNeighborhood Neighborhood;
+            for (int32 DY = -1; DY <= 1; ++DY)
+                for (int32 DX = -1; DX <= 1; ++DX)
+                    Neighborhood.Set(DX, DY, Around[(DY + 1) * 3 + DX + 1].Get());
+            // The center with its tints, then the edge neighbours West, East, North and South (EVoxelFace order).
+            TArray<FVoxelFarSummary> Summaries;
+            Summaries.SetNum(5);
+            VoxelFarMesher::Summarize(
+                *FarClasses, *Table, *Around[4], Summaries[0], Terrain->GetTints(), &Neighborhood, Options);
+            constexpr int32 EdgeIndices[4] = {3, 5, 1, 7};
+            const FVoxelFarSummary* Edges[4] = {};
+            for (int32 Face = 0; Face < 4; ++Face)
+                if (const FVoxelColumn* Edge = Around[EdgeIndices[Face]].Get())
+                {
+                    VoxelFarMesher::Summarize(*FarClasses, *Table, *Edge, Summaries[Face + 1]);
+                    Edges[Face] = &Summaries[Face + 1];
+                }
+            FVoxelMeshData Data;
+            VoxelFarMesher::Mesh(*Table, Summaries[0], Edges, FarOptions, Data);
+            Mesh.QuadCount = Data.GetQuadCount();
+            const double StreamsStart = FPlatformTime::Seconds();
+            Mesh.MeshMs = (StreamsStart - MeshStart) * 1000.;
+            if (!Data.IsEmpty())
+            {
+                const FVoxelMeshData* Present[1] = {&Data};
+                UVoxelChunkComponent::BuildStreams(Present, Mesh.Streams);
+                Mesh.LayerMask = UVoxelChunkComponent::GetLayerMask(Present);
+                Mesh.SectionMask = GetPipelineSectionMask(Data);
+            }
+            Mesh.StreamsMs = (FPlatformTime::Seconds() - StreamsStart) * 1000.;
+            return Result;
+        });
+}
+
 void FVoxelColumnPipeline::SortReady()
 {
     if (bReadySorted) return;
@@ -831,32 +972,36 @@ void FVoxelColumnPipeline::SortReady()
         const FIntPoint Offset = Column - Center;
         return int64(Offset.X) * Ahead.X + int64(Offset.Y) * Ahead.Y < 0 ? 4 * Distance : Distance;
     };
-    ReadyColumns.Sort(
-        [&GetPriority](FIntPoint A, FIntPoint B)
-        {
-            const int64 DistanceA = GetPriority(A), DistanceB = GetPriority(B);
-            if (DistanceA != DistanceB) return DistanceA > DistanceB;
-            return A.Y != B.Y ? A.Y > B.Y : A.X > B.X;
-        });
+    const auto ByPriority = [&GetPriority](FIntPoint A, FIntPoint B)
+    {
+        const int64 DistanceA = GetPriority(A), DistanceB = GetPriority(B);
+        if (DistanceA != DistanceB) return DistanceA > DistanceB;
+        return A.Y != B.Y ? A.Y > B.Y : A.X > B.X;
+    };
+    ReadyColumns.Sort(ByPriority);
+    ReadyFarColumns.Sort(ByPriority);
     bReadySorted = true;
 }
 
 const FVoxelColumnMesh* FVoxelColumnPipeline::PeekReady(FIntPoint* OutColumn)
 {
-    if (ReadyColumns.IsEmpty()) return nullptr;
+    if (ReadyColumns.IsEmpty() && ReadyFarColumns.IsEmpty()) return nullptr;
     SortReady();
-    if (OutColumn) *OutColumn = ReadyColumns.Last();
-    return Records.FindChecked(ReadyColumns.Last()).Ready.Get();
+    // Far meshes wait while any full mesh does.
+    const TArray<FIntPoint>& Queue = ReadyColumns.IsEmpty() ? ReadyFarColumns : ReadyColumns;
+    if (OutColumn) *OutColumn = Queue.Last();
+    return Records.FindChecked(Queue.Last()).Ready.Get();
 }
 
 bool FVoxelColumnPipeline::PopReady(FReady& Out)
 {
-    if (ReadyColumns.IsEmpty()) return false;
+    if (ReadyColumns.IsEmpty() && ReadyFarColumns.IsEmpty()) return false;
     SortReady();
-    Out.Column = ReadyColumns.Pop(EAllowShrinking::No);
+    Out.Column = (ReadyColumns.IsEmpty() ? ReadyFarColumns : ReadyColumns).Pop(EAllowShrinking::No);
     FRecord& Record = Records.FindChecked(Out.Column);
     Out.Mesh = MoveTemp(Record.Ready);
     Record.bOnScreen = true;
+    Record.ShownKind = Out.Mesh->bFar ? EVoxelMeshKind::Far : EVoxelMeshKind::Full;
     Record.ScreenQuads = Out.Mesh->QuadCount;
     Record.ScreenCards = Out.Mesh->Cards.CardBuildData.Num();
     return true;
@@ -972,8 +1117,8 @@ void FVoxelColumnPipeline::DropEdits()
         Record->CacheBytes = 0;
         if (Record->Ready)
         {
+            (Record->Ready->bFar ? ReadyFarColumns : ReadyColumns).RemoveSingle(Column.Key);
             Record->Ready.Reset();
-            ReadyColumns.RemoveSingle(Column.Key);
         }
         // Its neighbours' borders read the edits too.
         for (int32 DY = -1; DY <= 1; ++DY)
@@ -1055,6 +1200,8 @@ FVoxelColumnStatus FVoxelColumnPipeline::GetStatus(FIntPoint Column) const
     Status.bMeshing = Record->bMeshing;
     Status.bReady = Record->Ready.IsValid();
     Status.bOnScreen = Record->bOnScreen;
+    Status.Shown = Record->ShownKind;
+    Status.Meshed = Record->MeshedKind;
     Status.DirtySections = Record->Dirty;
     Status.bCached = !Record->Cache.IsEmpty();
     Status.bSnapshot = Record->Snapshot.IsValid();
@@ -1067,7 +1214,21 @@ FVoxelColumnStatus FVoxelColumnPipeline::GetStatus(FIntPoint Column) const
 
 bool FVoxelColumnPipeline::IsViewOnScreen() const
 {
-    return bPlanned && ReadyColumns.IsEmpty() && FirstIncomplete >= Needed.Num();
+    return bPlanned && ReadyColumns.IsEmpty() && ReadyFarColumns.IsEmpty() && FirstIncomplete >= Needed.Num();
+}
+
+bool FVoxelColumnPipeline::IsNearViewOnScreen() const
+{
+    // Without a far ring the near view is the whole view, as it was before far LOD.
+    if (Rings.GetDrawnRadius() == Rings.ViewRadius) return IsViewOnScreen();
+    if (!bPlanned || !ReadyColumns.IsEmpty()) return false;
+    for (int32 Index = FirstIncomplete; Index < Needed.Num(); ++Index)
+    {
+        if (NeededRing[Index] != 0 || !Rings.IsInView(Needed[Index])) continue;
+        const FRecord& Record = Records.FindChecked(Needed[Index]);
+        if (!IsComplete(Index) || Record.ShownKind != EVoxelMeshKind::Full) return false;
+    }
+    return true;
 }
 
 bool FVoxelColumnPipeline::IsIdle() const
@@ -1082,7 +1243,10 @@ FVoxelPipelineStats FVoxelColumnPipeline::GetStats() const
     Stats.Needed = Needed.Num();
     for (const uint8 Ring : NeededRing)
         ++Stats.NeededPerRing[FMath::Min<int32>(Ring, FVoxelStreamingRings::MaxStages)];
-    Stats.Ready = ReadyColumns.Num();
+    Stats.Ready = ReadyColumns.Num() + ReadyFarColumns.Num();
+    Stats.FarReady = ReadyFarColumns.Num();
+    Stats.FarMeshing = FarJobs;
+    Stats.FarMesh = FarMeshTimes;
     Stats.Dropped = Dropped;
     Stats.Stale = Stale;
     for (const TPair<FIntPoint, TMap<int32, FEdit>>& Column : Edits)
@@ -1121,9 +1285,20 @@ FVoxelPipelineStats FVoxelColumnPipeline::GetStats() const
             Stats.ScreenCards += Record.ScreenCards;
             Stats.MostCards = FMath::Max(Stats.MostCards, Record.ScreenCards);
         }
-        if (!Rings.IsInView(Pair.Key)) continue;
+        if (Record.bOnScreen && Record.ShownKind == EVoxelMeshKind::Far && Rings.IsDrawn(Pair.Key))
+        {
+            ++Stats.FarOnScreen;
+            Stats.FarQuads += Record.ScreenQuads;
+        }
+        if (!Rings.IsInView(Pair.Key))
+        {
+            Stats.FarWanted += Rings.IsFar(Pair.Key);
+            continue;
+        }
         ++Stats.InView;
-        Stats.InViewOnScreen += Record.bOnScreen && !Record.Dirty && !Record.Ready;
+        Stats.InViewOnScreen +=
+            Record.bOnScreen && Record.ShownKind == EVoxelMeshKind::Full && !Record.Dirty && !Record.Ready;
+        Stats.Coarse += Record.bOnScreen && Record.ShownKind == EVoxelMeshKind::Far;
     }
     return Stats;
 }

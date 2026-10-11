@@ -46,6 +46,12 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Streaming", meta = (ClampMin = 2, ClampMax = 64))
     int32 ViewRadius = 12;
 
+    // voxel.FarRadius (far LOD, phase 9 S1): columns past ViewRadius and up to this radius are drawn as cheap far
+    // meshes (surface tops, walls, leaf canopies and water), and the edge fog moves out to it. 0, or anything up to
+    // ViewRadius, draws none: the world as it was before far LOD.
+    UPROPERTY(Config, EditAnywhere, Category = "Streaming", meta = (ClampMin = 0, ClampMax = 64))
+    int32 FarRadius = 24;
+
     // voxel.UnloadMargin: a column unloads only beyond the generated ring (ViewRadius + 1) plus this, so walking
     // along a border never thrashes. At least 2, which covers moving back and forth across a corner.
     UPROPERTY(Config, EditAnywhere, Category = "Streaming", meta = (ClampMin = 2, ClampMax = 8))

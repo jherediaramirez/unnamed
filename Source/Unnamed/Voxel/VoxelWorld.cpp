@@ -97,10 +97,14 @@ namespace
         };
         return FString::Printf(TEXT("  Lighting: r.DynamicGlobalIlluminationMethod %s, r.ReflectionMethod %s, "
                                     "r.Lumen.HardwareRayTracing %s (ray tracing %s), "
-                                    "r.Lumen.HardwareRayTracing.LightingMode %s"),
+                                    "r.Lumen.HardwareRayTracing.LightingMode %s; "
+                                    "r.RayTracing.UseReferenceBasedResidency %s, "
+                                    "r.RayTracing.ResidentGeometryMemoryPoolSizeInMB %s"),
             *Value(TEXT("r.DynamicGlobalIlluminationMethod")), *Value(TEXT("r.ReflectionMethod")),
             *Value(TEXT("r.Lumen.HardwareRayTracing")), IsRayTracingEnabled() ? TEXT("on") : TEXT("off"),
-            *Value(TEXT("r.Lumen.HardwareRayTracing.LightingMode")));
+            *Value(TEXT("r.Lumen.HardwareRayTracing.LightingMode")),
+            *Value(TEXT("r.RayTracing.UseReferenceBasedResidency")),
+            *Value(TEXT("r.RayTracing.ResidentGeometryMemoryPoolSizeInMB")));
     }
 }
 
@@ -687,14 +691,16 @@ void AVoxelWorld::UpdateEdgeFog()
     }
     if (!EdgeFog || !Streaming || !Streaming->GetPipeline()) return;
     const FVoxelStreamingRings& Rings = Streaming->GetPipeline()->GetRings();
-    if (Rings.ViewRadius == EdgeFogRadius) return;
-    EdgeFogRadius = Rings.ViewRadius;
+    // Far LOD: the fog sits at the drawn radius D, with the same formula.
+    const int32 Drawn = Rings.GetDrawnRadius();
+    if (Drawn == EdgeFogRadius) return;
+    EdgeFogRadius = Drawn;
     constexpr double ColumnCm = VoxelConstants::ColumnSize * CellCm;
     // Clear until 1.5 columns before the view radius, then 99% opaque by it: the density (per 1000 cm, as the
     // engine counts it) times the fade's length is ln 100. Every block within the radius is drawn, so the fog
     // never shows a missing column. Almost no height falloff: the edge fades the same from a mountain top.
     constexpr double FadeCm = 1.5 * ColumnCm;
-    EdgeFog->SetStartDistance(float(FMath::Max(0., Rings.ViewRadius * ColumnCm - FadeCm)));
+    EdgeFog->SetStartDistance(float(FMath::Max(0., Drawn * ColumnCm - FadeCm)));
     EdgeFog->SetFogDensity(float(1000. * FMath::Loge(100.) / FadeCm));
     EdgeFog->SetFogHeightFalloff(0.001f);
     EdgeFog->SetFogMaxOpacity(1.f);
@@ -704,7 +710,7 @@ void AVoxelWorld::UpdateEdgeFog()
     EdgeFog->SetSkyAtmosphereAmbientContributionColorScale(FLinearColor::Black);
     EdgeFog->SetFogInscatteringColor(EdgeHazeLuminance);
     if (Sky && bEdgeFogVisible)
-        Sky->SetAerialPespectiveViewDistanceScale(float(EdgeAerialScale * 12. / FMath::Max(1, Rings.ViewRadius)));
+        Sky->SetAerialPespectiveViewDistanceScale(float(EdgeAerialScale * 12. / FMath::Max(1, Drawn)));
     // Everything but the sky, which lies beyond any distance: the terrain and the fog floor take the fog's color,
     // the sky stays clear.
     EdgeFog->SetFogCutoffDistance(1e9f);

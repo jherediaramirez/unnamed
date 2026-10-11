@@ -9,14 +9,17 @@
 // Wherever the camera stands inside its column, every block within ViewRadius columns of it lies in a column in view,
 // so a fog that ends ViewRadius * 16 blocks away never shows a missing column.
 //
-// - In view (gap <= ViewRadius): meshed and drawn.
-// - Needed (in view, or beside a column in view): generated, because a section meshes from its 3 x 3 neighbourhood.
-// - Unloaded (gap > ViewRadius + Stages + UnloadMargin): beyond the generated ring plus the margin, as the prompt's
+// - In view (gap <= ViewRadius): meshed in full and drawn.
+// - Far (far LOD, phase 9 S1; ViewRadius < gap <= FarRadius): drawn as a far mesh (Meshing/VoxelFarMesher.h). The drawn
+//   radius is D = max(ViewRadius, FarRadius); every drawn column is final, and the stage rings and the unload distance
+//   grow from D. With FarRadius <= ViewRadius every set is exactly what it was without far LOD.
+// - Needed (drawn, or beside a column drawn): generated, because a section meshes from its 3 x 3 neighbourhood.
+// - Unloaded (gap > D + Stages + UnloadMargin): beyond the generated ring plus the margin, as the prompt's
 //   "unload radius = load radius + 2". Columns between needed and unloaded stay as they are, so moving back and
 //   forth across a column border loads and unloads nothing (hysteresis).
 //
 // With decoration (phase 6, S3) each stage needs the 3 x 3 of the one before it, so the needed set grows by a ring per
-// stage (Stages 3): ring 0 is in view and meshed, ring 1 final, ring 2 decorated and ring 3 generated. Each ring is
+// stage (Stages 3): ring 0 is drawn and meshed, ring 1 final, ring 2 decorated and ring 3 generated. Each ring is
 // the one inside it grown by a column on both axes, a dilation, not a circle (scout C: 545, 657, 777 and 905 columns
 // at radius 12). Stages 1 is the needed set without decoration.
 struct UNNAMEDVOXEL_API FVoxelStreamingRings
@@ -36,29 +39,40 @@ struct UNNAMEDVOXEL_API FVoxelStreamingRings
     int32 ViewRadius = 0;
     int32 UnloadMargin = MinUnloadMargin;
     int32 Stages = 1;
+    // Far LOD: columns past ViewRadius and up to FarRadius are drawn as far meshes; 0 (or anything up to ViewRadius)
+    // draws none.
+    int32 FarRadius = 0;
 
     FVoxelStreamingRings() = default;
-    // Clamps the radius to at least 0, the stages to 1..MaxStages and the margin to at least GetMinUnloadMargin.
-    FVoxelStreamingRings(FIntPoint InCenter, int32 InViewRadius, int32 InUnloadMargin, int32 InStages = 1);
+    // Clamps the radii to at least 0, the stages to 1..MaxStages and the margin to at least GetMinUnloadMargin.
+    FVoxelStreamingRings(
+        FIntPoint InCenter, int32 InViewRadius, int32 InUnloadMargin, int32 InStages = 1, int32 InFarRadius = 0);
+
+    // D: every column within it is drawn, in full or as a far mesh.
+    int32 GetDrawnRadius() const { return FMath::Max(ViewRadius, FarRadius); }
 
     // The squared gap in columns between the center column and Column: 0 for the center's 3 x 3.
     int64 GetGapSquared(FIntPoint Column) const;
+    // Meshed in full (gap <= ViewRadius).
     bool IsInView(FIntPoint Column) const;
-    // Within Stages rings of the view.
+    // Drawn (gap <= D), and drawn as a far mesh (ViewRadius < gap <= D).
+    bool IsDrawn(FIntPoint Column) const;
+    bool IsFar(FIntPoint Column) const { return IsDrawn(Column) && !IsInView(Column); }
+    // Within Stages rings of the drawn columns.
     bool IsNeeded(FIntPoint Column) const;
-    // 0 in view, then the number of columns (on both axes) to the nearest column in view; INDEX_NONE beyond the
-    // needed rings.
+    // 0 drawn, then the number of columns (on both axes) to the nearest column drawn; INDEX_NONE beyond the needed
+    // rings.
     int32 GetRing(FIntPoint Column) const;
     bool IsBeyondUnload(FIntPoint Column) const;
     // Columns farther than this (as a gap) unload.
-    int32 GetUnloadDistance() const { return ViewRadius + Stages + UnloadMargin; }
+    int32 GetUnloadDistance() const { return GetDrawnRadius() + Stages + UnloadMargin; }
     // Every needed column lies within this many columns of the center on both axes.
-    int32 GetNeededExtent() const { return ViewRadius + 1 + Stages; }
+    int32 GetNeededExtent() const { return GetDrawnRadius() + 1 + Stages; }
 
     bool operator==(const FVoxelStreamingRings& Other) const
     {
         return Center == Other.Center && ViewRadius == Other.ViewRadius && UnloadMargin == Other.UnloadMargin &&
-            Stages == Other.Stages;
+            Stages == Other.Stages && FarRadius == Other.FarRadius;
     }
 };
 

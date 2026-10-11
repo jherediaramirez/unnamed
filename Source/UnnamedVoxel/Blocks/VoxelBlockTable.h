@@ -223,6 +223,8 @@ public:
     // One more than the highest Block of any state: the size of a set over blocks.
     int32 GetBlockLimit() const { return BlockLimit; }
     void SetDefaultState(FName Block, uint16 State);
+    // Every block's id, as FindState takes it, with its default state.
+    const TMap<FName, uint16>& GetDefaultStates() const { return DefaultStates; }
     // A state's snowy=true variant (grass block, podzol, mycelium under snow); State itself when it has none.
     uint16 GetSnowyState(uint16 State) const;
     void SetSnowyState(uint16 State, uint16 Snowy);

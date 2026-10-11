@@ -190,6 +190,33 @@ namespace
         }
         return FString();
     }
+
+    // Far LOD: a column's ring with Stages stage rings around the columns drawn (gap <= Drawn): 0 drawn, otherwise the
+    // smallest Ring such that a drawn column lies within Ring columns of it on both axes (a dilation of the drawn set);
+    // INDEX_NONE past Stages.
+    int32 StreamingBruteRing(FIntPoint Center, int32 Drawn, int32 Stages, FIntPoint Column)
+    {
+        for (int32 Ring = 0; Ring <= Stages; ++Ring)
+            for (int32 OffsetY = -Ring; OffsetY <= Ring; ++OffsetY)
+                for (int32 OffsetX = -Ring; OffsetX <= Ring; ++OffsetX)
+                    if (StreamingBruteInView(Center, Drawn, FIntPoint(Column.X + OffsetX, Column.Y + OffsetY)))
+                        return Ring;
+        return INDEX_NONE;
+    }
+
+    // Checks that Actual lists exactly Expected's columns in Expected's order.
+    void StreamingExpectSameOrder(FAutomationTestBase& Test, const FString& Rule, TConstArrayView<FIntPoint> Actual,
+        TConstArrayView<FIntPoint> Expected)
+    {
+        FStreamingTally Tally;
+        if (!Tally.Check(Actual.Num() == Expected.Num()))
+            Tally.Describe(FString::Printf(TEXT("%d columns listed, %d expected"), Actual.Num(), Expected.Num()));
+        for (int32 Index = 0; Index < Actual.Num() && Index < Expected.Num(); ++Index)
+            if (!Tally.Check(Actual[Index] == Expected[Index]))
+                Tally.Describe(FString::Printf(TEXT("position %d holds %s, expected %s"), Index,
+                    *StreamingText(Actual[Index]), *StreamingText(Expected[Index])));
+        StreamingReport(Test, Rule, Tally);
+    }
 }
 
 // The streaming planner against brute-force definitions written in this file. Failures in loops report once, naming
@@ -623,6 +650,231 @@ bool FVoxelStreamingPlannerTest::RunTest(const FString& Parameters)
                 TestEqual(Where + TEXT(": columns in view"), StreamingCountInView(Rings), OriginInView);
             }
         }
+    }
+
+    // 11. Far LOD: with a far radius past the view, the columns drawn (gap <= D = max(ViewRadius, FarRadius)) are ring
+    // 0, the stage rings grow from them and the view is still gap <= ViewRadius. The planner against the brute force
+    // for every scanned column; the counts are pinned from the brute force (scripted outside the engine), and the
+    // unload distance is D + Stages + the margin (2, raised to 3 with 3 stages).
+    {
+        struct FFarCase
+        {
+            int32 ViewRadius, FarRadius, Stages, InView, Drawn, Needed, UnloadDistance;
+        };
+        for (const FFarCase Case : {FFarCase{12, 24, 1, 545, 1993, 2201, 27}, FFarCase{12, 24, 3, 545, 1993, 2641, 30},
+                 FFarCase{12, 32, 1, 545, 3473, 3745, 35}, FFarCase{12, 32, 3, 545, 3473, 4313, 38}})
+        {
+            const FIntPoint Center(0, 0);
+            const FVoxelStreamingRings Rings(Center, Case.ViewRadius, 2, Case.Stages, Case.FarRadius);
+            const int32 Drawn = FMath::Max(Case.ViewRadius, Case.FarRadius);
+            const FString Where = FString::Printf(TEXT("R %d, far %d, %d stages at %s"), Case.ViewRadius,
+                Case.FarRadius, Case.Stages, *StreamingText(Center));
+            TestEqual(Where + TEXT(": drawn radius"), Rings.GetDrawnRadius(), Drawn);
+            TestEqual(Where + TEXT(": unload distance"), Rings.GetUnloadDistance(), Case.UnloadDistance);
+            TestEqual(Where + TEXT(": needed extent"), Rings.GetNeededExtent(), Drawn + 1 + Case.Stages);
+            const int32 Half = Drawn + Case.Stages + 5;
+            const int32 Extent = Rings.GetNeededExtent();
+            const int64 UnloadSquared = int64(Case.UnloadDistance) * Case.UnloadDistance;
+            int32 PlannerInView = 0, PlannerDrawn = 0, PlannerFar = 0, PlannerNeeded = 0;
+            int32 BruteInView = 0, BruteDrawn = 0, BruteNeeded = 0;
+            int32 BrutePerRing[FVoxelStreamingRings::MaxStages + 1] = {};
+            TSet<FIntPoint> BruteNeededSet;
+            FStreamingTally InViewTally, DrawnTally, FarTally, RingTally, UnloadTally, ExtentTally;
+            for (int32 Y = -Half; Y <= Half; ++Y)
+                for (int32 X = -Half; X <= Half; ++X)
+                {
+                    const FIntPoint Column(X, Y);
+                    const bool bBruteInView = StreamingBruteInView(Center, Case.ViewRadius, Column);
+                    const bool bBruteDrawn = StreamingBruteInView(Center, Drawn, Column);
+                    const int32 BruteRing = StreamingBruteRing(Center, Drawn, Case.Stages, Column);
+                    const bool bBruteBeyond = StreamingBruteGapSquared(Center, Column) > UnloadSquared;
+                    const bool bInView = Rings.IsInView(Column), bDrawn = Rings.IsDrawn(Column);
+                    const bool bFar = Rings.IsFar(Column);
+                    const int32 Ring = Rings.GetRing(Column);
+                    BruteInView += bBruteInView ? 1 : 0;
+                    BruteDrawn += bBruteDrawn ? 1 : 0;
+                    PlannerInView += bInView ? 1 : 0;
+                    PlannerDrawn += bDrawn ? 1 : 0;
+                    PlannerFar += bFar ? 1 : 0;
+                    PlannerNeeded += Rings.IsNeeded(Column) ? 1 : 0;
+                    if (BruteRing != INDEX_NONE)
+                    {
+                        ++BruteNeeded;
+                        ++BrutePerRing[BruteRing];
+                        BruteNeededSet.Add(Column);
+                    }
+                    if (!InViewTally.Check(bInView == bBruteInView))
+                        InViewTally.Describe(FString::Printf(TEXT("column %s: IsInView is %s, expected %s"),
+                            *StreamingText(Column), StreamingYesNo(bInView), StreamingYesNo(bBruteInView)));
+                    if (!DrawnTally.Check(bDrawn == bBruteDrawn))
+                        DrawnTally.Describe(FString::Printf(TEXT("column %s: IsDrawn is %s, expected %s"),
+                            *StreamingText(Column), StreamingYesNo(bDrawn), StreamingYesNo(bBruteDrawn)));
+                    if (!FarTally.Check(bFar == (bBruteDrawn && !bBruteInView)))
+                        FarTally.Describe(
+                            FString::Printf(TEXT("column %s: IsFar is %s, expected %s"), *StreamingText(Column),
+                                StreamingYesNo(bFar), StreamingYesNo(bBruteDrawn && !bBruteInView)));
+                    if (!RingTally.Check(Ring == BruteRing))
+                        RingTally.Describe(FString::Printf(
+                            TEXT("column %s: GetRing is %d, expected %d"), *StreamingText(Column), Ring, BruteRing));
+                    if (!UnloadTally.Check(Rings.IsBeyondUnload(Column) == bBruteBeyond))
+                        UnloadTally.Describe(FString::Printf(TEXT("column %s: IsBeyondUnload is %s, expected %s"),
+                            *StreamingText(Column), StreamingYesNo(Rings.IsBeyondUnload(Column)),
+                            StreamingYesNo(bBruteBeyond)));
+                    if (BruteRing != INDEX_NONE &&
+                        !ExtentTally.Check(FMath::Abs(X) <= Extent && FMath::Abs(Y) <= Extent))
+                        ExtentTally.Describe(FString::Printf(
+                            TEXT("needed column %s lies beyond the extent %d"), *StreamingText(Column), Extent));
+                }
+            AddInfo(
+                FString::Printf(TEXT("%s, brute force: %d in view, %d drawn (%d far), %d needed (rings %d %d %d %d)"),
+                    *Where, BruteInView, BruteDrawn, BruteDrawn - BruteInView, BruteNeeded, BrutePerRing[0],
+                    BrutePerRing[1], BrutePerRing[2], BrutePerRing[3]));
+            TestEqual(Where + TEXT(": columns in view"), PlannerInView, Case.InView);
+            TestEqual(Where + TEXT(": columns drawn"), PlannerDrawn, Case.Drawn);
+            TestEqual(Where + TEXT(": columns far"), PlannerFar, Case.Drawn - Case.InView);
+            TestEqual(Where + TEXT(": columns needed"), PlannerNeeded, Case.Needed);
+            TestEqual(Where + TEXT(": columns in view by the test's own definition"), BruteInView, Case.InView);
+            TestEqual(Where + TEXT(": columns drawn by the test's own definition"), BruteDrawn, Case.Drawn);
+            TestEqual(Where + TEXT(": columns needed by the test's own definition"), BruteNeeded, Case.Needed);
+            TestEqual(Where + TEXT(": ring 0 is the drawn set"), BrutePerRing[0], Case.Drawn);
+            StreamingReport(*this, Where + TEXT(": IsInView against the brute force"), InViewTally);
+            StreamingReport(*this, Where + TEXT(": IsDrawn against the brute force"), DrawnTally);
+            StreamingReport(*this, Where + TEXT(": IsFar against the brute force"), FarTally);
+            StreamingReport(*this, Where + TEXT(": GetRing against the brute force"), RingTally);
+            StreamingReport(*this, Where + TEXT(": IsBeyondUnload against the brute force"), UnloadTally);
+            StreamingReport(*this, Where + TEXT(": GetNeededExtent bounds every needed column"), ExtentTally);
+
+            TArray<FIntPoint> NeededColumns;
+            VoxelStreaming::GetNeededColumns(Rings, 0, NeededColumns);
+            StreamingExpectColumns(*this, Where + TEXT(": GetNeededColumns"), NeededColumns, BruteNeededSet);
+        }
+    }
+
+    // 12. D drives the stage rings and the unload distance: the rings (12, far 24, 3 stages) have the rings, the needed
+    // list, the unloads, the unload distance and the extent of plain radius 24, while IsInView still means gap <= 12.
+    {
+        const FIntPoint Center(3, -2);
+        const FVoxelStreamingRings FarRings(Center, 12, 2, 3, 24);
+        const FVoxelStreamingRings WideRings(Center, 24, 2, 3);
+        const FString Where = FString::Printf(TEXT("R 12, far 24, 3 stages at %s"), *StreamingText(Center));
+        TestEqual(Where + TEXT(": unload distance equals radius 24's"), FarRings.GetUnloadDistance(),
+            WideRings.GetUnloadDistance());
+        TestEqual(Where + TEXT(": needed extent equals radius 24's"), FarRings.GetNeededExtent(),
+            WideRings.GetNeededExtent());
+        const int32 Half = 24 + 3 + 6;
+        TArray<FIntPoint> PresentColumns;
+        FStreamingTally RingTally, InViewTally, DrawnTally, BeyondTally;
+        for (int32 Y = -Half; Y <= Half; ++Y)
+            for (int32 X = -Half; X <= Half; ++X)
+            {
+                const FIntPoint Column = Center + FIntPoint(X, Y);
+                PresentColumns.Add(Column);
+                const int32 FarRing = FarRings.GetRing(Column), WideRing = WideRings.GetRing(Column);
+                if (!RingTally.Check(FarRing == WideRing))
+                    RingTally.Describe(FString::Printf(TEXT("column %s: GetRing is %d, radius 24's is %d"),
+                        *StreamingText(Column), FarRing, WideRing));
+                const bool bInView = FarRings.IsInView(Column), bBruteInView = StreamingBruteInView(Center, 12, Column);
+                if (!InViewTally.Check(bInView == bBruteInView))
+                    InViewTally.Describe(FString::Printf(TEXT("column %s: IsInView is %s, expected %s"),
+                        *StreamingText(Column), StreamingYesNo(bInView), StreamingYesNo(bBruteInView)));
+                if (!DrawnTally.Check(FarRings.IsDrawn(Column) == WideRings.IsInView(Column)))
+                    DrawnTally.Describe(FString::Printf(TEXT("column %s: IsDrawn is %s, radius 24's IsInView %s"),
+                        *StreamingText(Column), StreamingYesNo(FarRings.IsDrawn(Column)),
+                        StreamingYesNo(WideRings.IsInView(Column))));
+                if (!BeyondTally.Check(FarRings.IsBeyondUnload(Column) == WideRings.IsBeyondUnload(Column)))
+                    BeyondTally.Describe(FString::Printf(TEXT("column %s: IsBeyondUnload is %s, radius 24's %s"),
+                        *StreamingText(Column), StreamingYesNo(FarRings.IsBeyondUnload(Column)),
+                        StreamingYesNo(WideRings.IsBeyondUnload(Column))));
+            }
+        StreamingReport(*this, Where + TEXT(": GetRing equals radius 24's"), RingTally);
+        StreamingReport(*this, Where + TEXT(": IsInView is still gap <= 12"), InViewTally);
+        StreamingReport(*this, Where + TEXT(": IsDrawn equals radius 24's IsInView"), DrawnTally);
+        StreamingReport(*this, Where + TEXT(": IsBeyondUnload equals radius 24's"), BeyondTally);
+        for (const int32 Sector : {0, 3})
+        {
+            TArray<FIntPoint> FarOrder, WideOrder;
+            VoxelStreaming::GetNeededColumns(FarRings, Sector, FarOrder);
+            VoxelStreaming::GetNeededColumns(WideRings, Sector, WideOrder);
+            StreamingExpectSameOrder(*this,
+                FString::Printf(TEXT("%s, sector %d: GetNeededColumns equals radius 24's, same order"), *Where, Sector),
+                FarOrder, WideOrder);
+        }
+        TArray<FIntPoint> FarUnloads, WideUnloads;
+        VoxelStreaming::GetUnloads(FarRings, PresentColumns, FarUnloads);
+        VoxelStreaming::GetUnloads(WideRings, PresentColumns, WideUnloads);
+        TestTrue(Where + TEXT(": some present columns are beyond the unload distance"), WideUnloads.Num() > 0);
+        StreamingExpectSameOrder(*this, Where + TEXT(": GetUnloads equals radius 24's"), FarUnloads, WideUnloads);
+    }
+
+    // 13. A far radius of 0, or any up to the view radius, changes nothing: the needed list (order included, two
+    // sectors), every ring, the unloads against a fixed present set and the unload distance equal those of the rings
+    // without a far radius, and no column is far.
+    {
+        const FIntPoint Center(-5, 7);
+        for (const int32 Radius : {0, 1, 4, 12})
+            for (const int32 Stages : {1, 3})
+            {
+                const FVoxelStreamingRings Plain(Center, Radius, 2, Stages);
+                const int32 Half = Radius + Stages + 6;
+                // Present is in descending order on purpose, so the planner has to sort the result.
+                TArray<FIntPoint> PresentColumns;
+                for (int32 X = Half; X >= -Half; --X)
+                    for (int32 Y = Half; Y >= -Half; --Y)
+                        PresentColumns.Add(Center + FIntPoint(X, Y));
+                TArray<FIntPoint> PlainUnloads, PlainOrders[2];
+                VoxelStreaming::GetUnloads(Plain, PresentColumns, PlainUnloads);
+                const int32 Sectors[2] = {0, 5};
+                for (int32 Index = 0; Index < 2; ++Index)
+                    VoxelStreaming::GetNeededColumns(Plain, Sectors[Index], PlainOrders[Index]);
+                TestTrue(FString::Printf(TEXT("R %d, %d stages: some present columns are beyond the unload distance"),
+                             Radius, Stages),
+                    PlainUnloads.Num() > 0);
+                TArray<int32> FarRadii;
+                for (const int32 Far : {0, 1, Radius - 1, Radius})
+                    if (Far >= 0 && Far <= Radius) FarRadii.AddUnique(Far);
+                for (const int32 Far : FarRadii)
+                {
+                    const FVoxelStreamingRings Rings(Center, Radius, 2, Stages, Far);
+                    const FString Where = FString::Printf(
+                        TEXT("R %d, far %d, %d stages at %s"), Radius, Far, Stages, *StreamingText(Center));
+                    TestEqual(Where + TEXT(": drawn radius is the view radius"), Rings.GetDrawnRadius(), Radius);
+                    TestEqual(Where + TEXT(": unload distance"), Rings.GetUnloadDistance(), Plain.GetUnloadDistance());
+                    TestEqual(Where + TEXT(": needed extent"), Rings.GetNeededExtent(), Plain.GetNeededExtent());
+                    for (int32 Index = 0; Index < 2; ++Index)
+                    {
+                        TArray<FIntPoint> Order;
+                        VoxelStreaming::GetNeededColumns(Rings, Sectors[Index], Order);
+                        StreamingExpectSameOrder(*this,
+                            FString::Printf(TEXT("%s, sector %d: GetNeededColumns equals far 0's, same order"), *Where,
+                                Sectors[Index]),
+                            Order, PlainOrders[Index]);
+                    }
+                    TArray<FIntPoint> Unloads;
+                    VoxelStreaming::GetUnloads(Rings, PresentColumns, Unloads);
+                    StreamingExpectSameOrder(*this, Where + TEXT(": GetUnloads equals far 0's"), Unloads, PlainUnloads);
+                    FStreamingTally RingTally, ViewTally, FarTally;
+                    for (const FIntPoint Column : PresentColumns)
+                    {
+                        const int32 Ring = Rings.GetRing(Column), PlainRing = Plain.GetRing(Column);
+                        if (!RingTally.Check(Ring == PlainRing && Rings.IsNeeded(Column) == Plain.IsNeeded(Column) &&
+                                Rings.IsBeyondUnload(Column) == Plain.IsBeyondUnload(Column)))
+                            RingTally.Describe(FString::Printf(TEXT("column %s: GetRing is %d, far 0's is %d"),
+                                *StreamingText(Column), Ring, PlainRing));
+                        if (!ViewTally.Check(Rings.IsInView(Column) == Plain.IsInView(Column) &&
+                                Rings.IsDrawn(Column) == Plain.IsInView(Column)))
+                            ViewTally.Describe(
+                                FString::Printf(TEXT("column %s: IsInView %s, IsDrawn %s, far 0's IsInView %s"),
+                                    *StreamingText(Column), StreamingYesNo(Rings.IsInView(Column)),
+                                    StreamingYesNo(Rings.IsDrawn(Column)), StreamingYesNo(Plain.IsInView(Column))));
+                        if (!FarTally.Check(!Rings.IsFar(Column)))
+                            FarTally.Describe(FString::Printf(TEXT("column %s is far"), *StreamingText(Column)));
+                    }
+                    StreamingReport(
+                        *this, Where + TEXT(": GetRing, IsNeeded and IsBeyondUnload equal far 0's"), RingTally);
+                    StreamingReport(*this, Where + TEXT(": drawn is exactly in view, as far 0's"), ViewTally);
+                    StreamingReport(*this, Where + TEXT(": no column is far"), FarTally);
+                }
+            }
     }
 
     return true;

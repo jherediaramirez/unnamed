@@ -93,6 +93,28 @@ namespace VoxelMesher
         int32 SectionIndex, const FVoxelMeshOptions& Options, FVoxelMeshData& Out,
         const FVoxelTintTable* Tints = nullptr, const FVoxelNeighborhood* Neighborhood = nullptr);
 
+    // One quad in the mesher's vertex layout, appended to Layer: Plane along Face's axis, [U0, U1] x [V0, V1] across
+    // it (U and V are the next two axes after it), Cell the cell whose corner is the UV origin, BaseZ added to every
+    // position's Z. Corners holds the occlusion levels (0-3) at (-,-), (+,-), (+,+), (-,+); Tint is every vertex's
+    // packed sRGB colour; a nonzero Look (an ore look's word) takes the overlay code's place. MeshSection emits its
+    // faces through it, and so does the far mesher (VoxelFarMesher.h), so the two share one layout.
+    UNNAMEDVOXEL_API void AppendQuad(FVoxelMeshLayer& Layer, const FVoxelStateInfo& Info, int32 Face, float Plane,
+        float U0, float U1, float V0, float V1, const FIntVector& Cell, int32 BaseZ, uint8 Corners, uint32 Tint,
+        uint32 Look = 0);
+
+    // One face whose tint GetFaceTints looks up: Cell is local X and Y (0-15) and world Z in the neighbourhood's
+    // center column.
+    struct FTintQuery
+    {
+        const FVoxelStateInfo* Info = nullptr;
+        int32 Face = 0;
+        FIntVector Cell = FIntVector::ZeroValue;
+    };
+    // Each face's tint as MeshSection gives it (FVoxelMeshOptions::TintBlend and its shortcut), one per query; without
+    // Tints or Neighborhood, or with TintBlend below 0, each takes its state's plains tint.
+    UNNAMEDVOXEL_API void GetFaceTints(const FVoxelTintTable* Tints, const FVoxelNeighborhood* Neighborhood,
+        const FVoxelMeshOptions& Options, TConstArrayView<FTintQuery> Queries, TArrayView<uint32> Out);
+
     // A face's block UV at point P (blocks from the face's first cell): the block registry's canonical UVs
     // (FoundationBlockFaces::GetCanonicalUV), which follow the reference's FaceBakery.
     UNNAMEDVOXEL_API FVector2f GetCanonicalUV(int32 Face, const FVector3f& P);

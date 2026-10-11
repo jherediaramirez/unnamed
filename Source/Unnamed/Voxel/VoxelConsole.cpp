@@ -30,6 +30,16 @@ TAutoConsoleVariable<int32> VoxelConsole::CVarViewRadius(
     TEXT("voxel.ViewRadius"), 12, TEXT("Columns drawn around the camera, as a radius in 16-block columns."));
 TAutoConsoleVariable<int32> VoxelConsole::CVarLoadingScreenMap(TEXT("voxel.LoadingScreenMap"), 1,
     TEXT("The loading screen's look: 1 draws the chunk map under the progress bar (26.3's), 0 leaves it out."));
+TAutoConsoleVariable<int32> VoxelConsole::CVarFarRadius(TEXT("voxel.FarRadius"), 24,
+    TEXT("Far LOD: columns past voxel.ViewRadius and up to this radius (0-64 columns) are drawn as cheap far meshes "
+         "(surface tops, walls, leaf canopies and water); 0, or anything up to the view radius, draws none."));
+TAutoConsoleVariable<bool> VoxelConsole::CVarFarShadows(TEXT("voxel.Far.Shadows"), false,
+    TEXT("Far LOD: far meshes cast sun shadows. Off by default: cheaper, and the virtual shadow maps already warn."));
+TAutoConsoleVariable<int32> VoxelConsole::CVarFarCanopyLayer(TEXT("voxel.Far.CanopyLayer"), 0,
+    TEXT("Far LOD: the far leaf canopies' layer, 0 cutout (as near leaves draw) or 1 opaque. A change remeshes every "
+         "far column."));
+TAutoConsoleVariable<bool> VoxelConsole::CVarFarTint(
+    TEXT("voxel.Debug.FarTint"), false, TEXT("Debug: draw far meshes magenta, for look checks."));
 TAutoConsoleVariable<int32> VoxelConsole::CVarUnloadMargin(
     TEXT("voxel.UnloadMargin"), 2, TEXT("Extra columns beyond the view radius before a column unloads (hysteresis)."));
 TAutoConsoleVariable<float> VoxelConsole::CVarApplyBudgetMs(
@@ -135,14 +145,22 @@ FString VoxelConsole::DescribeInfo(const UWorld* World)
     // view.
     const FVoxelStreamingRings Rings(FIntPoint::ZeroValue, FMath::Clamp(CVarViewRadius.GetValueOnAnyThread(), 1, 64),
         CVarUnloadMargin.GetValueOnAnyThread(),
-        CVarDecoration.GetValueOnAnyThread() ? FVoxelStreamingRings::MaxStages : 1);
+        CVarDecoration.GetValueOnAnyThread() ? FVoxelStreamingRings::MaxStages : 1,
+        FMath::Clamp(CVarFarRadius.GetValueOnAnyThread(), 0, 64));
     TArray<FIntPoint> Needed;
     VoxelStreaming::GetNeededColumns(Rings, 0, Needed);
     int32 PerRing[FVoxelStreamingRings::MaxStages + 1] = {};
+    int32 InView = 0;
     for (const FIntPoint Column : Needed)
+    {
         ++PerRing[Rings.GetRing(Column)];
+        InView += Rings.IsInView(Column);
+    }
     Out += FString::Printf(TEXT("  View radius %d: %d columns in view, %d generated; unload beyond %d columns\n"),
-        Rings.ViewRadius, PerRing[0], Needed.Num(), Rings.GetUnloadDistance());
+        Rings.ViewRadius, InView, Needed.Num(), Rings.GetUnloadDistance());
+    if (Rings.GetDrawnRadius() > Rings.ViewRadius)
+        Out += FString::Printf(
+            TEXT("  Far radius %d: %d far columns (%d drawn)\n"), Rings.FarRadius, PerRing[0] - InView, PerRing[0]);
     if (Rings.Stages > 1)
         Out += FString::Printf(TEXT("  Decoration's rings: %d in view, %d final, %d decorated, %d generated\n"),
             PerRing[0], PerRing[0] + PerRing[1], PerRing[0] + PerRing[1] + PerRing[2], Needed.Num());

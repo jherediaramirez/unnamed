@@ -4,6 +4,7 @@
 #include "Core/RealtimeMeshDataStream.h"
 #include "HAL/ThreadSafeBool.h"
 #include "MeshCardBuild.h"
+#include "Meshing/VoxelFarMesher.h"
 #include "Meshing/VoxelMesher.h"
 #include "Streaming/VoxelStreamingPlanner.h"
 #include "Tasks/Task.h"
@@ -15,10 +16,19 @@ class FVoxelDecorator;
 class IVoxelTerrain;
 struct FVoxelWriteBucket;
 
+// Which mesh a column has: none yet, its full mesh (in view) or its far mesh (far LOD, phase 9 S1).
+enum class EVoxelMeshKind : uint8
+{
+    None,
+    Full,
+    Far
+};
+
 // A column's finished mesh on its way to the screen: the stream set and Lumen cards UVoxelChunkComponent::SetMesh
-// takes, built on a worker from the column's section meshes.
+// takes, built on a worker from the column's section meshes, or from its surface summary for a far mesh (no cards).
 struct FVoxelColumnMesh
 {
+    bool bFar = false;
     RealtimeMesh::FRealtimeMeshStreamSet Streams;
     FMeshCardsBuildData Cards;
     // A bit per layer with triangles and per section with geometry.
@@ -66,6 +76,9 @@ struct FVoxelColumnStatus
     bool bReady = false;
     // The latest finished mesh was taken for the screen.
     bool bOnScreen = false;
+    // The kind of mesh on screen, and of the latest finished one.
+    EVoxelMeshKind Shown = EVoxelMeshKind::None;
+    EVoxelMeshKind Meshed = EVoxelMeshKind::None;
     // Sections waiting to be meshed.
     uint32 DirtySections = 0;
     bool bCached = false;
@@ -89,9 +102,19 @@ struct FVoxelPipelineStats
     // Needed columns per ring (FVoxelStreamingRings::GetRing): in view, final, decorated, generated.
     int32 NeededPerRing[FVoxelStreamingRings::MaxStages + 1] = {};
     int32 InView = 0;
+    // Columns in view whose full mesh is on screen, current and taken.
     int32 InViewOnScreen = 0;
+    // Far LOD: far columns wanted (drawn, beyond the view), far meshes on screen and their quads, far jobs in flight
+    // and far meshes waiting; Coarse counts columns in view still showing their far mesh.
+    int32 FarWanted = 0;
+    int32 FarOnScreen = 0;
+    int64 FarQuads = 0;
+    int32 FarMeshing = 0;
+    int32 FarReady = 0;
+    int32 Coarse = 0;
     int32 Generating = 0;
     int32 Meshing = 0;
+    // Finished meshes waiting to be taken, full and far.
     int32 Ready = 0;
     // Columns whose mesh is on screen, and their quads and Lumen cards.
     int32 OnScreen = 0;
@@ -109,6 +132,8 @@ struct FVoxelPipelineStats
     FVoxelStageTimes Generate;
     FVoxelStageTimes Mesh;
     FVoxelStageTimes Streams;
+    // Far mesh jobs: summaries, mesh and stream set together.
+    FVoxelStageTimes FarMesh;
 
     // Decoration's stages (zero without a decorator).
     // Buckets: those held with writes (an empty bucket is held as a flag alone).
@@ -188,6 +213,8 @@ public:
         bool bEdgeWalls = false;
         // voxel.Decoration: columns are decorated before they mesh, with three rings past the view instead of one.
         TSharedPtr<const FVoxelDecorator> Decorator;
+        // Far meshes' options (voxel.Far.CanopyLayer).
+        VoxelFarMesher::FOptions FarOptions;
         // Tests: jobs are queued, not launched; RunJob runs one on the calling thread, in any order.
         bool bManualJobs = false;
         EVoxelPipelineMutation Mutation = EVoxelPipelineMutation::None;
@@ -215,6 +242,8 @@ public:
     // Model quads on or off (voxel.Models) and the look-call shading switch (voxel.Debug.ModelShadeUnturned); a change
     // remeshes every column.
     void SetModelOptions(bool bModels, bool bShadeUnturned);
+    // Far meshes' options; a change remeshes every far column.
+    void SetFarOptions(const VoxelFarMesher::FOptions& FarOptions);
     // The render-only ore looks (voxel.Look.OreHost, voxel.Look.OreGlint); a change remeshes every column.
     void SetOreLooks(int32 OreHost, int32 OreGlint);
     // Fluid surfaces (voxel.Fluids.SlopedTops and OpenCorners, FVoxelMeshOptions); a change remeshes every column.
@@ -243,9 +272,10 @@ public:
     void EvictSnapshot(FIntPoint Column);
     void EvictBuckets(FIntPoint Column);
 
-    // The finished mesh nearest the center, without taking it.
+    // The finished mesh nearest the center, without taking it: full meshes first, far meshes only when no full mesh
+    // waits.
     const FVoxelColumnMesh* PeekReady(FIntPoint* OutColumn = nullptr);
-    // Takes the finished mesh nearest the center: its column counts as on screen from now on, so the caller applies it.
+    // Takes the mesh PeekReady shows: its column counts as on screen from now on, so the caller applies it.
     bool PopReady(FReady& Out);
     // Columns unloaded since the last call whose meshes had been taken for the screen.
     void TakeUnloaded(TArray<FIntPoint>& Out);
@@ -287,6 +317,8 @@ public:
     // Every needed column has reached its ring's stage, every column in view is meshed and every finished mesh has been
     // taken.
     bool IsViewOnScreen() const;
+    // Every column in view has its current full mesh on screen (the far ring may still be loading).
+    bool IsNearViewOnScreen() const;
     // Nothing in flight and nothing left to launch or take.
     bool IsIdle() const;
     FVoxelPipelineStats GetStats() const;
@@ -324,6 +356,10 @@ private:
         bool bGenerating = false;
         bool bMeshing = false;
         bool bOnScreen = false;
+        // The kind of the latest accepted mesh, and of the mesh on screen: a column whose wanted kind changes keeps
+        // showing what it shows until the other kind's mesh is taken.
+        EVoxelMeshKind MeshedKind = EVoxelMeshKind::None;
+        EVoxelMeshKind ShownKind = EVoxelMeshKind::None;
         TUniquePtr<FVoxelColumnMesh> Ready;
         // Section meshes kept near the center, so an edit remeshes only what it touched; empty elsewhere.
         TArray<TSharedPtr<const FVoxelMeshData, ESPMode::ThreadSafe>> Cache;
@@ -336,7 +372,8 @@ private:
         Generate,
         Decorate,
         Finalize,
-        Mesh
+        Mesh,
+        FarMesh
     };
     struct FJob;
     struct FJobResult;
@@ -355,6 +392,13 @@ private:
     void CollectMesh(const FJob& Job, FJobResult& Result, FRecord& Record);
     void LaunchJobs();
     bool HasRoom() const { return Jobs.Num() < Settings.MaxTasksInFlight; }
+    // Far mesh jobs take at most a third of the slots (at least one).
+    bool HasFarRoom() const { return FarJobs < FMath::Max(1, Settings.MaxTasksInFlight / 3); }
+    // A drawn column's wanted mesh: full in view, far beyond it.
+    EVoxelMeshKind GetWantedKind(FIntPoint Column) const
+    {
+        return Rings.IsInView(Column) ? EVoxelMeshKind::Full : EVoxelMeshKind::Far;
+    }
     // Each returns whether the column has the stage, launching what it misses (room permitting) otherwise.
     bool RequireSnapshot(FIntPoint Column);
     bool RequireDecorated(FIntPoint Column);
@@ -367,6 +411,7 @@ private:
     void LaunchDecorate(FIntPoint Column, FRecord& Record);
     void LaunchFinalize(FIntPoint Column, FRecord& Record);
     void LaunchMesh(FIntPoint Column, FRecord& Record, uint8 Neighbors);
+    void LaunchFarMesh(FIntPoint Column, FRecord& Record, uint8 Neighbors);
     // The column's edits as (dense index, state), replayed over its final blocks.
     TArray<TPair<int32, uint16>> GetReplay(FIntPoint Column) const;
     // Frees a final column's snapshot once its 8 neighbours have decorated.
@@ -375,7 +420,7 @@ private:
     // A stage was lost (a miss, an eviction, an edit dropped): the walk starts again from the first needed column.
     void Regress();
     // The neighbours a column's mesh reads, a bit per neighbour in FVoxelNeighborhood order (skipping the center):
-    // all eight, or with edge walls only those in view.
+    // all eight, or with edge walls only those drawn.
     uint8 GetMeshNeighbors(FIntPoint Column) const;
     bool AreFinal(FIntPoint Column, uint8 Neighbors) const;
     bool IsComplete(int32 NeededIndex) const;
@@ -384,6 +429,7 @@ private:
 
     TSharedRef<const FVoxelBlockTable> Table;
     TSharedRef<const IVoxelTerrain> Terrain;
+    TSharedRef<const FVoxelFarClasses> FarClasses;
     FSettings Settings;
     TSharedPtr<const FVoxelLightTable> LightTable;
 
@@ -405,8 +451,10 @@ private:
     TMap<FIntPoint, TMap<int32, FEdit>> Edits;
     uint64 NextSerial = 0;
     TArray<FJob> Jobs;
-    // Columns with a finished mesh, nearest the center first once sorted.
+    // Columns with a finished full mesh, and with a finished far mesh, nearest the center first once sorted.
     TArray<FIntPoint> ReadyColumns;
+    TArray<FIntPoint> ReadyFarColumns;
+    int32 FarJobs = 0;
     bool bReadySorted = true;
     TArray<FIntPoint> UnloadedOnScreen;
     // Some column was meshed against air at the edge, so later plans check which edges moved.
@@ -414,5 +462,5 @@ private:
 
     int64 Dropped = 0, Stale = 0;
     int64 Regenerated = 0, Redecorated = 0, BucketsDropped = 0, BucketsAppliedToFinal = 0, Cancelled = 0;
-    FVoxelStageTimes GenerateTimes, DecorateTimes, FinalizeTimes, MeshTimes, StreamsTimes;
+    FVoxelStageTimes GenerateTimes, DecorateTimes, FinalizeTimes, MeshTimes, StreamsTimes, FarMeshTimes;
 };

@@ -38,6 +38,11 @@ public:
     void SetMesh(RealtimeMesh::FRealtimeMeshStreamSet&& Streams, FMeshCardsBuildData&& Cards, uint32 LayerMask,
         uint32 SectionMask);
     int32 GetSectionMeshCount() const { return FMath::CountBits(MeshedSections); }
+    // Far LOD (phase 9, S1): a far mesh casts no shadow unless bShadows (voxel.Far.Shadows) and stays out of ray
+    // tracing; with DebugMaterial (voxel.Debug.FarTint) every slot draws in it. A full mesh sets all three back. Each
+    // changes the render state only when it changes.
+    void SetFarLook(bool bFar, bool bShadows, UMaterialInterface* DebugMaterial);
+    bool IsFarLook() const { return bFarLook; }
 
     // Sections' geometry as one RealtimeMesh stream set: positions in centimetres, each face's normal and tangent,
     // the three UV channels the chunk materials read (block UV, codes, tint and face), the vertex color (occlusion,
@@ -58,4 +63,7 @@ private:
     // Bit per section with geometry in the current mesh.
     uint32 MeshedSections = 0;
     bool bHasBufferSet = false;
+    bool bFarLook = false;
+    // The material every slot is overridden with (the debug tint), or null; only compared, the subsystem holds it.
+    UMaterialInterface* LookMaterial = nullptr;
 };

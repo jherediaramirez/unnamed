@@ -8,6 +8,7 @@
 #include "Terrain/VoxelTerrain.h"
 #include "Foundation/FoundationProfile.h"
 #include "GameFramework/PlayerController.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Voxel/VoxelChunkComponent.h"
 #include "Voxel/VoxelConsole.h"
@@ -39,6 +40,11 @@ DECLARE_DWORD_COUNTER_STAT(TEXT("Jobs in flight"), STAT_VoxelJobsInFlight, STATG
 DECLARE_DWORD_COUNTER_STAT(TEXT("Meshes waiting to apply"), STAT_VoxelMeshesWaiting, STATGROUP_Voxel);
 DECLARE_DWORD_COUNTER_STAT(TEXT("Columns applied this frame"), STAT_VoxelColumnsApplied, STATGROUP_Voxel);
 DECLARE_FLOAT_COUNTER_STAT(TEXT("Chunk work this frame (ms)"), STAT_VoxelChunkWorkMs, STATGROUP_Voxel);
+DECLARE_DWORD_COUNTER_STAT(TEXT("Far columns wanted"), STAT_VoxelFarWanted, STATGROUP_Voxel);
+DECLARE_DWORD_COUNTER_STAT(TEXT("Far meshes on screen"), STAT_VoxelFarOnScreen, STATGROUP_Voxel);
+DECLARE_DWORD_COUNTER_STAT(TEXT("Far quads on screen"), STAT_VoxelFarQuads, STATGROUP_Voxel);
+DECLARE_DWORD_COUNTER_STAT(TEXT("Far meshes applied this frame"), STAT_VoxelFarApplied, STATGROUP_Voxel);
+DECLARE_FLOAT_COUNTER_STAT(TEXT("Far apply this frame (ms)"), STAT_VoxelFarApplyMs, STATGROUP_Voxel);
 DECLARE_MEMORY_STAT(TEXT("Column data"), STAT_VoxelColumnMemory, STATGROUP_Voxel);
 DECLARE_MEMORY_STAT(TEXT("Section mesh cache"), STAT_VoxelCacheMemory, STATGROUP_Voxel);
 
@@ -137,6 +143,9 @@ void UVoxelWorldSubsystem::Start(AVoxelWorld& InOwner, TSharedRef<const FVoxelBl
     FirstViewReport.Reset();
     LogApplied = 0;
     LogApplyMs = 0;
+    LogFarApplied = 0;
+    LogFarApplyMs = 0;
+    NearViewSeconds = 0;
     // The nearest columns start now, while the map finishes loading, rather than on the first frame.
     Pipeline->SetFocus(MakeRings(LastFocus), 0);
     Pipeline->Update();
@@ -147,7 +156,8 @@ FVoxelStreamingRings UVoxelWorldSubsystem::MakeRings(const FVector& Focus) const
     const FVector Columns = (Focus - Owner->OriginCm) / StreamingColumnCm;
     return FVoxelStreamingRings(FIntPoint(FMath::FloorToInt32(Columns.X), FMath::FloorToInt32(Columns.Y)),
         FMath::Clamp(VoxelConsole::CVarViewRadius.GetValueOnGameThread(), 1, 64),
-        VoxelConsole::CVarUnloadMargin.GetValueOnGameThread());
+        VoxelConsole::CVarUnloadMargin.GetValueOnGameThread(), 1,
+        FMath::Clamp(VoxelConsole::CVarFarRadius.GetValueOnGameThread(), 0, 64));
 }
 
 void UVoxelWorldSubsystem::Stop()
@@ -214,6 +224,11 @@ void UVoxelWorldSubsystem::Tick(float DeltaTime)
         CVarModels.GetValueOnGameThread() != 0, CVarModelShadeUnturned.GetValueOnGameThread() != 0);
     Pipeline->SetOreLooks(VoxelConsole::GetOreHost(), VoxelConsole::GetOreGlint());
     Pipeline->SetSlopedTops(FVoxelFluidSystem::GetSlopedTops(), FVoxelFluidSystem::GetOpenCorners());
+    VoxelFarMesher::FOptions FarOptions;
+    FarOptions.CanopyLayer =
+        VoxelConsole::CVarFarCanopyLayer.GetValueOnGameThread() == 1 ? EVoxelLayer::Opaque : EVoxelLayer::Cutout;
+    Pipeline->SetFarOptions(FarOptions);
+    UpdateFarLooks();
     const FVoxelStreamingRings Before = Pipeline->GetRings();
     Pipeline->SetFocus(MakeRings(LastFocus), VoxelStreaming::GetViewSector(Yaw));
     if (!(Pipeline->GetRings() == Before)) UpdateVisibility();
@@ -230,10 +245,13 @@ void UVoxelWorldSubsystem::Tick(float DeltaTime)
     Mark = FPlatformTime::Seconds();
     Frame.ApplyMs = (Mark - JobsEnd) * 1000.;
     Frame.Applied = LastFrame.Applied;
+    Frame.FarApplied = LastFrame.FarApplied;
+    Frame.FarApplyMs = LastFrame.FarApplyMs;
     Frame.TickMs = (Mark - Start) * 1000.;
     LastFrame = Frame;
     if (Frame.TickMs > WorstFrame.TickMs) WorstFrame = Frame;
     if (Frame.TickMs > LogWorstFrame.TickMs) LogWorstFrame = Frame;
+    if (!NearViewSeconds && Pipeline->IsNearViewOnScreen()) NearViewSeconds = FPlatformTime::Seconds();
     if (FirstViewReport.IsEmpty() && Pipeline->IsViewOnScreen()) ReportFirstView();
     UpdateStats();
 }
@@ -242,27 +260,55 @@ void UVoxelWorldSubsystem::UpdateVisibility()
 {
     const FVoxelStreamingRings& Rings = Pipeline->GetRings();
     for (const TPair<FIntPoint, TObjectPtr<UVoxelChunkComponent>>& Chunk : Chunks)
-        if (Chunk.Value) Chunk.Value->SetVisibility(Rings.IsInView(Chunk.Key));
+        if (Chunk.Value) Chunk.Value->SetVisibility(Rings.IsDrawn(Chunk.Key));
+}
+
+UMaterialInterface* UVoxelWorldSubsystem::GetFarTintMaterial()
+{
+    if (!VoxelConsole::CVarFarTint.GetValueOnGameThread()) return nullptr;
+    if (!FarTintMaterial)
+        if (UMaterialInterface* Base = LoadObject<UMaterialInterface>(
+                nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial")))
+        {
+            FarTintMaterial = UMaterialInstanceDynamic::Create(Base, this);
+            FarTintMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor(1.f, 0.f, 1.f));
+        }
+    return FarTintMaterial;
+}
+
+void UVoxelWorldSubsystem::UpdateFarLooks()
+{
+    const bool bShadows = VoxelConsole::CVarFarShadows.GetValueOnGameThread();
+    const bool bTint = VoxelConsole::CVarFarTint.GetValueOnGameThread();
+    if (bShadows == bFarShadows && bTint == bFarTint) return;
+    bFarShadows = bShadows;
+    bFarTint = bTint;
+    UMaterialInterface* Tint = GetFarTintMaterial();
+    for (const TPair<FIntPoint, TObjectPtr<UVoxelChunkComponent>>& Chunk : Chunks)
+        if (Chunk.Value && Chunk.Value->IsFarLook()) Chunk.Value->SetFarLook(true, bFarShadows, Tint);
 }
 
 void UVoxelWorldSubsystem::ApplyReady(double BudgetMs, double TickStartSeconds)
 {
     SCOPE_CYCLE_COUNTER(STAT_VoxelApplyColumns);
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelWorldSubsystem_Apply);
-    int32 Applied = 0;
-    double FrameApplyMs = 0;
+    int32 Applied = 0, FarApplied = 0;
+    double FrameApplyMs = 0, FarApplyMs = 0;
     FIntPoint Head;
     while (const FVoxelColumnMesh* Next = Pipeline->PeekReady(&Head))
     {
         const double SpentMs = (FPlatformTime::Seconds() - TickStartSeconds) * 1000.;
-        const double Estimate = ApplyCost.Estimate(Next->QuadCount);
+        // Far meshes (no cards, one stream set) keep their own fit, so neither kind skews the other's estimates.
+        FApplyCost& Cost = Next->bFar ? FarApplyCost : ApplyCost;
+        const double Estimate = Cost.Estimate(Next->QuadCount);
         // Stop before the budget, at 85% of it: the rest covers one apply above its estimate and the bookkeeping
         // after the last. A frame's first column goes anyway, so no column waits forever, however big; but a column
         // that fits the budget alone and that the frame's planning and jobs leave no room for (its estimate would pass
         // the whole budget) waits one frame, once, and goes first when it heads the queue again.
         if (SpentMs + Estimate > 0.85 * BudgetMs)
         {
-            if (Applied > 0) break;
+            // Far meshes go only in the room near ones leave: never first anyway.
+            if (Applied > 0 || Next->bFar) break;
             if (SpentMs + Estimate > BudgetMs && Estimate <= BudgetMs && !(WaitedColumn && *WaitedColumn == Head))
             {
                 WaitedColumn = Head;
@@ -275,10 +321,14 @@ void UVoxelWorldSubsystem::ApplyReady(double BudgetMs, double TickStartSeconds)
         const int32 Quads = Ready.Mesh->QuadCount;
         const uint32 Layers = Ready.Mesh->LayerMask, Sections = Ready.Mesh->SectionMask;
         const bool bReused = Chunks.Contains(Ready.Column), bPooled = !bReused && !Pool.IsEmpty();
+        const bool bFar = Ready.Mesh->bFar;
         if (Ready.Mesh->LayerMask)
-            AcquireChunk(Ready.Column)
-                ->SetMesh(MoveTemp(Ready.Mesh->Streams), MoveTemp(Ready.Mesh->Cards), Ready.Mesh->LayerMask,
-                    Ready.Mesh->SectionMask);
+        {
+            UVoxelChunkComponent* Chunk = AcquireChunk(Ready.Column);
+            Chunk->SetFarLook(bFar, bFarShadows, bFar ? GetFarTintMaterial() : nullptr);
+            Chunk->SetMesh(MoveTemp(Ready.Mesh->Streams), MoveTemp(Ready.Mesh->Cards), Ready.Mesh->LayerMask,
+                Ready.Mesh->SectionMask);
+        }
         else
             ReleaseChunk(Ready.Column);
         // The column's light sources go to the light pool with its mesh (none when the mesh is empty).
@@ -295,11 +345,20 @@ void UVoxelWorldSubsystem::ApplyReady(double BudgetMs, double TickStartSeconds)
                 bReused       ? TEXT("its own component")
                     : bPooled ? TEXT("a pooled component")
                               : TEXT("a new component"));
-        ApplyCost.Add(Quads, Ms);
+        Cost.Add(Quads, Ms);
         FrameApplyMs += Ms;
         ++Applied;
+        if (bFar)
+        {
+            ++FarApplied;
+            FarApplyMs += Ms;
+        }
     }
     LastFrame.Applied = Applied;
+    LastFrame.FarApplied = FarApplied;
+    LastFrame.FarApplyMs = FarApplyMs;
+    LogFarApplied += FarApplied;
+    LogFarApplyMs += FarApplyMs;
     LogApplied += Applied;
     LogApplyMs += FrameApplyMs;
     if (FirstViewReport.IsEmpty() && Applied)
@@ -353,7 +412,7 @@ UVoxelChunkComponent* UVoxelWorldSubsystem::AcquireChunk(FIntPoint Column)
         Chunk->Setup(LayerMaterials);
     }
     Chunk->SetWorldLocation(World->OriginCm + FVector(Column.X, Column.Y, 0) * StreamingColumnCm);
-    Chunk->SetVisibility(Pipeline->GetRings().IsInView(Column));
+    Chunk->SetVisibility(Pipeline->GetRings().IsDrawn(Column));
     Chunks.Add(Column, Chunk);
     return Chunk;
 }
@@ -416,6 +475,18 @@ void UVoxelWorldSubsystem::ReportFirstView()
              "hold %d sections; %lld results dropped"),
         (FPlatformTime::Seconds() - StartSeconds) * 1000., (FPlatformTime::Seconds() - FirstTickSeconds) * 1000.,
         FirstViewFrames, Chunks.Num(), GetSectionMeshCount(), Stats.Dropped);
+    // Far LOD: when the near view was on screen, and the far ring (without one, the near view is the whole view).
+    if (Rings.GetDrawnRadius() > Rings.ViewRadius)
+    {
+        Report += FString::Printf(TEXT("\n  Start to near view on screen: %.0f ms"),
+            ((NearViewSeconds ? NearViewSeconds : FPlatformTime::Seconds()) - StartSeconds) * 1000.);
+        Report += FString::Printf(TEXT("\n  Far ring: radius %d, %d far columns, %d far meshes on screen, %lld quads "
+                                       "(%.0f per far column)\n"),
+            Rings.FarRadius, Stats.FarWanted, Stats.FarOnScreen, Stats.FarQuads,
+            Stats.FarOnScreen ? double(Stats.FarQuads) / Stats.FarOnScreen : 0.);
+        Report += DescribeStreamingStage(TEXT("Far meshes (summaries, mesh and streams)"), Stats.FarMesh);
+        Report.RemoveFromEnd(TEXT("\n"));
+    }
     TArray<FString> Lines;
     Report.ParseIntoArrayLines(Lines);
     for (const FString& Line : Lines)
@@ -445,6 +516,14 @@ FString UVoxelWorldSubsystem::DescribeStages() const
     Out += DescribeStreamingStage(TEXT("Decorate"), Stats.Decorate);
     Out += DescribeStreamingStage(TEXT("Finalize"), Stats.Finalize);
     Out += DescribeStreamingStage(TEXT("Mesh"), Stats.Mesh);
+    if (Rings.GetDrawnRadius() > Rings.ViewRadius)
+    {
+        Out += FString::Printf(TEXT("  Far ring: radius %d (drawn %d), %d far columns wanted, %d far meshes on screen, "
+                                    "%lld far quads, %d in view still coarse, %d far jobs, %d far meshes waiting\n"),
+            Rings.FarRadius, Rings.GetDrawnRadius(), Stats.FarWanted, Stats.FarOnScreen, Stats.FarQuads, Stats.Coarse,
+            Stats.FarMeshing, Stats.FarReady);
+        Out += DescribeStreamingStage(TEXT("Far mesh"), Stats.FarMesh);
+    }
     Out += FString::Printf(TEXT("  Recompute-on-miss: %lld snapshots regenerated, %lld Decorates run again; %lld "
                                 "buckets aimed at final columns dropped; %lld results dropped, %lld jobs cancelled"),
         Stats.Regenerated, Stats.Redecorated, Stats.BucketsDropped, Stats.Dropped, Stats.Cancelled);
@@ -472,6 +551,11 @@ void UVoxelWorldSubsystem::UpdateStats()
     SET_FLOAT_STAT(STAT_VoxelChunkWorkMs, LastFrame.TickMs);
     SET_MEMORY_STAT(STAT_VoxelColumnMemory, Stats.ColumnBytes);
     SET_MEMORY_STAT(STAT_VoxelCacheMemory, Stats.CacheBytes);
+    SET_DWORD_STAT(STAT_VoxelFarWanted, Stats.FarWanted);
+    SET_DWORD_STAT(STAT_VoxelFarOnScreen, Stats.FarOnScreen);
+    SET_DWORD_STAT(STAT_VoxelFarQuads, uint32(Stats.FarQuads));
+    SET_DWORD_STAT(STAT_VoxelFarApplied, LastFrame.FarApplied);
+    SET_FLOAT_STAT(STAT_VoxelFarApplyMs, LastFrame.FarApplyMs);
     if (!bLog) return;
     // Only while something streams, so a still world keeps the log quiet.
     // Decoration's stages go at the end, so readers of the earlier fields (the flight) keep working.
@@ -482,19 +566,28 @@ void UVoxelWorldSubsystem::UpdateStats()
               double(Stats.BucketBytes) / (1024. * 1024.), Stats.Regenerated, Stats.Redecorated, Stats.BucketsDropped,
               Stats.Cancelled)
         : FString();
+    // Far LOD's counters go last, and only with a far ring.
+    const FString Far = Stats.FarWanted || Stats.FarOnScreen
+        ? FString::Printf(TEXT("; far: %d of %d on screen, %lld quads, %d coarse, %d jobs, %d waiting, applied %d in "
+                               "%.2f ms"),
+              Stats.FarOnScreen, Stats.FarWanted, Stats.FarQuads, Stats.Coarse, Stats.FarMeshing, Stats.FarReady,
+              LogFarApplied, LogFarApplyMs)
+        : FString();
     if (LogApplied || Pipeline->GetJobCount() || Stats.Ready)
         UE_LOG(LogUnnamedVoxel, Display,
             TEXT("Streaming: center (%d, %d), %d of %d in view on screen, %d generated (%d needed), %d jobs, %d "
                  "waiting; applied %d in %.2f ms, worst frame %.2f ms (plan %.2f, jobs %.2f, apply %.2f; budget %.1f); "
                  "columns %.1f MB, cache %.1f MB, "
-                 "%lld dropped%s"),
+                 "%lld dropped%s%s"),
             Pipeline->GetRings().Center.X, Pipeline->GetRings().Center.Y, Stats.InViewOnScreen, Stats.InView,
             Stats.Generated, Stats.Needed, Pipeline->GetJobCount(), Stats.Ready, LogApplied, LogApplyMs,
             LogWorstFrame.TickMs, LogWorstFrame.PlanMs, LogWorstFrame.JobsMs, LogWorstFrame.ApplyMs,
             VoxelConsole::CVarApplyBudgetMs.GetValueOnGameThread(), double(Stats.ColumnBytes) / (1024. * 1024.),
-            double(Stats.CacheBytes) / (1024. * 1024.), Stats.Dropped, *Stages);
+            double(Stats.CacheBytes) / (1024. * 1024.), Stats.Dropped, *Stages, *Far);
     LogSeconds = Now;
     LogApplied = 0;
     LogApplyMs = 0;
+    LogFarApplied = 0;
+    LogFarApplyMs = 0;
     LogWorstFrame = FVoxelStreamingFrame();
 }

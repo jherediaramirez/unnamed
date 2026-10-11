@@ -242,40 +242,8 @@ namespace
         void Quad(const FVoxelStateInfo& Info, int32 Face, float Plane, float U0, float U1, float V0, float V1,
             const FIntVector& Cell, uint8 Corners, uint32 Tint, uint32 Look = 0) const
         {
-            const int32 Axis = VoxelFaces::GetAxis(Face), AxisU = (Axis + 1) % 3, AxisV = (Axis + 2) % 3;
-            // Corner order turns against the face normal, which RealtimeMesh draws as the front: positive faces walk
-            // V first, negative faces U first.
-            const bool bPositive = VoxelFaces::IsPositive(Face);
-            const float CornerU[4] = {U0, bPositive ? U0 : U1, U1, bPositive ? U1 : U0};
-            const float CornerV[4] = {V0, bPositive ? V1 : V0, V1, bPositive ? V0 : V1};
-            const int32 Occlusion[4] = {0, bPositive ? 3 : 1, 2, bPositive ? 1 : 3};
-
-            FVoxelMeshLayer& Layer = Out.Layers[int32(Info.Layer)];
-            const uint32 First = uint32(Layer.Positions.Num());
-            const FVector3f Origin(float(Cell.X), float(Cell.Y), float(Cell.Z));
-            const FVector2f Codes(float(Info.Faces[Face]), float(Look ? Look : Info.Faces[VoxelFaces::OverlayIndex]));
-            const FVector2f TintFace{float(Tint), float(Face)};
-            int32 Levels[4];
-            for (int32 Corner = 0; Corner < 4; ++Corner)
-            {
-                float Coordinates[3];
-                Coordinates[Axis] = Plane;
-                Coordinates[AxisU] = CornerU[Corner];
-                Coordinates[AxisV] = CornerV[Corner];
-                const FVector3f Local(Coordinates[0], Coordinates[1], Coordinates[2]);
-                Layer.Positions.Add(FVector3f(Local.X, Local.Y, Local.Z + BaseZ));
-                Layer.BlockUVs.Add(VoxelMesher::GetCanonicalUV(Face, Local - Origin));
-                Layer.Codes.Add(Codes);
-                Layer.TintFaces.Add(TintFace);
-                Levels[Corner] = (Corners >> (2 * Occlusion[Corner])) & 3;
-                Layer.Colors.Add(FColor(uint8(Levels[Corner] * 85), uint8(Info.LightEmission * 17), 255, 255));
-            }
-            // Split along the brighter diagonal, so shading interpolates without a dark streak (both splits keep the
-            // corner order, so the quad still faces the same way).
-            if (Levels[0] + Levels[2] < Levels[1] + Levels[3])
-                Layer.Indices.Append({First + 1, First + 2, First + 3, First + 1, First + 3, First});
-            else
-                Layer.Indices.Append({First, First + 1, First + 2, First, First + 2, First + 3});
+            VoxelMesher::AppendQuad(
+                Out.Layers[int32(Info.Layer)], Info, Face, Plane, U0, U1, V0, V1, Cell, BaseZ, Corners, Tint, Look);
         }
 
         // A model state's quads at Cell (section coordinates; Index its padded index): one alternative of each part,
@@ -472,6 +440,77 @@ FVector2f VoxelMesher::GetCanonicalUV(int32 Face, const FVector3f& P)
         return {1 - P.Y, 1 - P.Z};
     }
     return {0, 0};
+}
+
+void VoxelMesher::AppendQuad(FVoxelMeshLayer& Layer, const FVoxelStateInfo& Info, int32 Face, float Plane, float U0,
+    float U1, float V0, float V1, const FIntVector& Cell, int32 BaseZ, uint8 Corners, uint32 Tint, uint32 Look)
+{
+    const int32 Axis = VoxelFaces::GetAxis(Face), AxisU = (Axis + 1) % 3, AxisV = (Axis + 2) % 3;
+    // Corner order turns against the face normal, which RealtimeMesh draws as the front: positive faces walk
+    // V first, negative faces U first.
+    const bool bPositive = VoxelFaces::IsPositive(Face);
+    const float CornerU[4] = {U0, bPositive ? U0 : U1, U1, bPositive ? U1 : U0};
+    const float CornerV[4] = {V0, bPositive ? V1 : V0, V1, bPositive ? V0 : V1};
+    const int32 Occlusion[4] = {0, bPositive ? 3 : 1, 2, bPositive ? 1 : 3};
+
+    const uint32 First = uint32(Layer.Positions.Num());
+    const FVector3f Origin(float(Cell.X), float(Cell.Y), float(Cell.Z));
+    const FVector2f Codes(float(Info.Faces[Face]), float(Look ? Look : Info.Faces[VoxelFaces::OverlayIndex]));
+    const FVector2f TintFace{float(Tint), float(Face)};
+    int32 Levels[4];
+    for (int32 Corner = 0; Corner < 4; ++Corner)
+    {
+        float Coordinates[3];
+        Coordinates[Axis] = Plane;
+        Coordinates[AxisU] = CornerU[Corner];
+        Coordinates[AxisV] = CornerV[Corner];
+        const FVector3f Local(Coordinates[0], Coordinates[1], Coordinates[2]);
+        Layer.Positions.Add(FVector3f(Local.X, Local.Y, Local.Z + BaseZ));
+        Layer.BlockUVs.Add(VoxelMesher::GetCanonicalUV(Face, Local - Origin));
+        Layer.Codes.Add(Codes);
+        Layer.TintFaces.Add(TintFace);
+        Levels[Corner] = (Corners >> (2 * Occlusion[Corner])) & 3;
+        Layer.Colors.Add(FColor(uint8(Levels[Corner] * 85), uint8(Info.LightEmission * 17), 255, 255));
+    }
+    // Split along the brighter diagonal, so shading interpolates without a dark streak (both splits keep the
+    // corner order, so the quad still faces the same way).
+    if (Levels[0] + Levels[2] < Levels[1] + Levels[3])
+        Layer.Indices.Append({First + 1, First + 2, First + 3, First + 1, First + 3, First});
+    else
+        Layer.Indices.Append({First, First + 1, First + 2, First, First + 2, First + 3});
+}
+
+void VoxelMesher::GetFaceTints(const FVoxelTintTable* Tints, const FVoxelNeighborhood* Neighborhood,
+    const FVoxelMeshOptions& Options, TConstArrayView<FTintQuery> Queries, TArrayView<uint32> Out)
+{
+    check(Out.Num() == Queries.Num());
+    // One FFaceTints per section, set up as MeshSection sets its own, so each face gets the tint its section's mesh
+    // gives it.
+    const bool bTints = Tints && Neighborhood && Options.TintBlend >= 0;
+    TArray<TUniquePtr<FFaceTints>, TInlineAllocator<VoxelConstants::SectionCount>> Sections;
+    Sections.SetNum(VoxelConstants::SectionCount);
+    for (int32 Index = 0; Index < Queries.Num(); ++Index)
+    {
+        const FTintQuery& Query = Queries[Index];
+        const int32 Section = (Query.Cell.Z - VoxelConstants::MinZ) / SectionSize;
+        if (!bTints || Query.Cell.Z < VoxelConstants::MinZ || Section >= VoxelConstants::SectionCount)
+        {
+            Out[Index] = Query.Info->Tint;
+            continue;
+        }
+        TUniquePtr<FFaceTints>& FaceTints = Sections[Section];
+        if (!FaceTints)
+        {
+            FaceTints = MakeUnique<FFaceTints>();
+            FaceTints->Table = Tints;
+            FaceTints->Neighborhood = Neighborhood;
+            FaceTints->SectionIndex = Section;
+            FaceTints->Radius = FMath::Min(Options.TintBlend, FVoxelMeshOptions::MaxTintBlend);
+            FaceTints->bShortcut = Options.bTintShortcut;
+        }
+        const FIntVector Cell(Query.Cell.X, Query.Cell.Y, Query.Cell.Z - VoxelConstants::MinZ - Section * SectionSize);
+        Out[Index] = FaceTints->Get(*Query.Info, Query.Face, Cell);
+    }
 }
 
 void VoxelMesher::GatherPadded(const FVoxelNeighborhood& Neighborhood, int32 SectionIndex, FVoxelPaddedSection& Out)
