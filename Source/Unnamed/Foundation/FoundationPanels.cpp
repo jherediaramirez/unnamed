@@ -496,7 +496,7 @@ void UFoundationPanels::OpenCreative(AFoundationLab& Lab)
         {
             if (WeakLab.IsValid() && WeakPawn.IsValid() && WeakLab->GetAuthority())
                 WeakPawn->Interaction.SetCreativeSlot(*WeakLab->GetAuthority(), WeakPawn->Vitals, Write.Slot,
-                    Write.Stack.Item, Write.Stack.Count);
+                    Write.Stack.Item, Write.Stack.Count, Write.Stack.Damage);
         })
         .OnClose([WeakThis] { if (WeakThis.IsValid()) WeakThis->Close(); });
     // clang-format on

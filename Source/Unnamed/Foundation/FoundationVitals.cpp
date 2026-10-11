@@ -153,7 +153,7 @@ bool FFoundationVitals::Hurt(EFoundationDamage Type, float Amount)
     }
     // During the first half of the 20-tick cooldown a hit deals only what exceeds the last one.
     float Dealt = Damage;
-    if (DamageCooldown > 10)
+    if (IsInHurtWindow())
     {
         if (Damage <= LastHurt) return false;
         Dealt = Damage - LastHurt;

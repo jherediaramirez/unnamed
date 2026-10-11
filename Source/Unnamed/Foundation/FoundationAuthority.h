@@ -72,6 +72,10 @@ enum class EFoundationReason : uint8
     Released,
     Expired,
     Canceled,
+    // A creative player's item that breaks no blocks in creative (swords, spears).
+    CreativeCannotBreak,
+    // A creative write's damage outside 0 to the item's max damage (0 for an item that never wears).
+    InvalidDamage,
     Count
 };
 
@@ -96,9 +100,11 @@ struct FFoundationCommand
     int64 DestinationRevision = 0;
     int32 Slot = 0;
     bool bWholeStack = false;
-    // SetCreativeSlot: the item (None clears the slot) and count.
+    // SetCreativeSlot: the item (None clears the slot), count and damage (the stack's own, as vanilla's creative slot
+    // packet carries the whole stack).
     FName CreativeItem;
     int32 CreativeCount = 0;
+    int32 CreativeDamage = 0;
 };
 
 struct FFoundationResult
@@ -123,6 +129,11 @@ struct FFoundationResult
     int32 EntityId = 0;
     float Damage = 0, DamageApplied = 0, Strength = 0, TargetHealth = 0;
     bool bCritical = false, bTargetDied = false, bChargeReset = false;
+    // Melee (items S7): the hit knocked its target back (a landed hit outside the target's hurt window); a
+    // sprint-knockback attack landed (extra knockback; the attacker's sprint ends); a sweep was performed, and how many
+    // nearby targets it hurt.
+    bool bKnockback = false, bSprintKnockback = false, bSweep = false;
+    int32 SweptTargets = 0;
     bool bItemConsumed = false, bItemReturned = false, bToolWorn = false, bToolBroke = false;
     FName Interaction;
 
@@ -139,6 +150,8 @@ struct FFoundationPlayerFacts
     FVector EyeCm = FVector(0, 0, 162);
     FVector Aim = FVector::ForwardVector;
     double FallDistanceCm = 0;
+    // Horizontal distance moved over the last reference step (the sweep's movement rule).
+    double StepMovedCm = 0;
     bool bGrounded = true, bSprinting = false, bBodyInWater = false, bEyesInWater = false;
     // No ladders, mounts or effects yet; kept so the critical rule reads like the reference.
     bool bClimbing = false, bPassenger = false, bMobilityRestricted = false;
@@ -193,13 +206,31 @@ struct UNNAMED_API FFoundationRules
     float MiningEfficiency = 0, HasteMultiplier = 1, FatigueMultiplier = 1, BlockBreakSpeed = 1;
     // A progressive break completes at 1 within this tolerance, so nominal step counts are exact.
     double CompletionTolerance = 1e-6;
+    // Items carrying any of these break no blocks in creative, whatever their tool component says. BuildRules adds
+    // Item.Spears: the wiki ("Breaking", "Creative") lists spears, which 26.3 gives no tool component.
+    FGameplayTagContainer CreativeNoBreakTags;
+    // CriticalStrength is the 84.8% gate (charge above 0.9) that critical hits, sweeps and sprint-knockback attacks
+    // share.
     float AttackSampleTicks = .5f, CriticalStrength = .9f, CriticalMultiplier = 1.5f, HitExhaustion = .1f;
+    // Sweeps (wiki "Sweep attack"): an item carrying any of SweepItemTags (BuildRules adds Item.Swords), at most
+    // SweepMaxMoveCm moved over the last step (movement_speed, 0.1 blocks per tick), hurts every live target whose box
+    // meets the primary's grown by SweepGrowCm and whose position lies within SweepReachCm of the player's. Each takes
+    // SweepDamage plus SweepingDamageRatio (Sweeping Edge's extension point) times the hit's cooldown-scaled damage,
+    // and is knocked back at SweepKnockback blocks per tick.
+    FGameplayTagContainer SweepItemTags;
+    double SweepMaxMoveCm = 10, SweepReachCm = 300;
+    FVector SweepGrowCm = FVector(100, 100, 25);
+    float SweepDamage = 1, SweepingDamageRatio = 0, SweepKnockback = .4f;
     float TargetMaxHealth = 20;
     int32 ResultCacheSize = 128;
 
     int32 FindItem(FName Id) const;
     // The definition for an inventory index; an invalid index is the bare hand.
     const FFoundationItemDefinition& GetItem(int32 Index) const;
+    // Whether a progressive break's accumulated progress completes it.
+    bool CompletesBreak(double Progress) const { return Progress >= 1. - CompletionTolerance; }
+    // Whether an item breaks blocks for a creative player: its tool component, then CreativeNoBreakTags.
+    bool CanDestroyInCreative(const FFoundationItemDefinition& Item) const;
 };
 
 struct FFoundationMining
@@ -240,6 +271,8 @@ struct FFoundationEvent
     int32 EntityId = 0;
     float Amount = 0;
     bool bCritical = false;
+    // Hit events (items S7): the hit knocked the entity back; a sprint-knockback hit; a sweep's hit on a nearby entity.
+    bool bKnockback = false, bSprintKnockback = false, bSweep = false;
     EFoundationReason Reason = EFoundationReason::None;
     FName Interaction;
     int64 Step = 0;
@@ -310,6 +343,8 @@ public:
     EFoundationReason CheckPlacement(const FFoundationPlayer& Player, EFoundationHand Hand, const FFoundationHit& Hit,
         FIntVector& OutDestination, FFoundationBlockState* OutState = nullptr) const;
     double GetMiningDelta(const FFoundationPlayer& Player, const FFoundationBlockType& Block) const;
+    // 26.3's harvest check: the block needs no correct tool, or the tool is correct for its drops.
+    static bool CanHarvest(const FFoundationItemDefinition& Tool, const FFoundationBlockType& Block);
     float GetBlockHardness(const FIntVector& Cell) const;
     FFoundationTrainingTarget* FindTarget(int32 Id);
     const FFoundationItemDefinition& GetHandItem(const FFoundationPlayer& Player, EFoundationHand Hand) const;
@@ -331,14 +366,18 @@ private:
     void AddEvent(FFoundationEvent Event);
     void UseOn(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
     void UseEntity(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
-    void MineStart(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
-    void MineContinue(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
+    void MineStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
+        FFoundationResult& Result);
+    void MineContinue(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
+        FFoundationResult& Result);
     void Attack(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationVitals& Vitals,
         FFoundationResult& Result);
     void Whiff(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationVitals& Vitals,
         FFoundationResult& Result);
-    // Removes a block once: capacity first, then removal, return and wear together.
-    bool BreakBlock(FFoundationPlayer& Player, const FIntVector& Cell, FFoundationResult& Result);
+    // Removes a block once: capacity first, then removal, return and wear together. A creative break returns nothing
+    // and wears nothing.
+    bool BreakBlock(
+        FFoundationPlayer& Player, const FIntVector& Cell, FFoundationResult& Result, bool bCreative = false);
     bool CheckHand(const FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
     // Plants: a placed state that can never hold (a faceless vine), or a double plant without room for its upper half.
     EFoundationReason CheckPlantPlacement(const FIntVector& Destination, FFoundationBlockState Placed) const;

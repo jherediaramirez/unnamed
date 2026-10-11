@@ -35,7 +35,8 @@ const TCHAR* LexToString(EFoundationReason Reason)
         TEXT("obstructed by an entity"), TEXT("obstructed by the player"), TEXT("one per step"), TEXT("unknown block"),
         TEXT("immutable lab geometry"), TEXT("unbreakable"), TEXT("no mining session"), TEXT("target changed"),
         TEXT("inventory full"), TEXT("target down"), TEXT("target damage cooldown"),
-        TEXT("drop deferred: no item entities"), TEXT("released"), TEXT("expired"), TEXT("canceled")};
+        TEXT("drop deferred: no item entities"), TEXT("released"), TEXT("expired"), TEXT("canceled"),
+        TEXT("cannot break blocks in creative"), TEXT("damage out of range")};
     static_assert(UE_ARRAY_COUNT(Names) == int32(EFoundationReason::Count), "reason names");
     return Names[FMath::Min(int32(Reason), int32(EFoundationReason::Count) - 1)];
 }
@@ -69,6 +70,11 @@ int32 FFoundationRules::FindItem(FName Id) const
 const FFoundationItemDefinition& FFoundationRules::GetItem(int32 Index) const
 {
     return Items.IsValidIndex(Index) ? Items[Index] : Hand;
+}
+
+bool FFoundationRules::CanDestroyInCreative(const FFoundationItemDefinition& Item) const
+{
+    return Item.bCanDestroyBlocksInCreative && !Item.Tags.HasAnyExact(CreativeNoBreakTags);
 }
 
 int32 FFoundationAuthority::AddPlayer()
@@ -315,8 +321,12 @@ double FFoundationAuthority::GetMiningDelta(const FFoundationPlayer& Player, con
     Speed *= Rules.HasteMultiplier * Rules.FatigueMultiplier * Rules.BlockBreakSpeed;
     if (Player.Facts.bEyesInWater) Speed *= Rules.SubmergedMiningMultiplier;
     if (!Player.Facts.bGrounded) Speed *= Rules.AirborneMiningMultiplier;
-    const bool bEligible = !Block.bRequiresCorrectToolForDrops || Tool.IsCorrectForDrops(Block.Tags);
-    return Speed / Block.Hardness / (bEligible ? Rules.EligibleDivisor : Rules.IneligibleDivisor);
+    return Speed / Block.Hardness / (CanHarvest(Tool, Block) ? Rules.EligibleDivisor : Rules.IneligibleDivisor);
+}
+
+bool FFoundationAuthority::CanHarvest(const FFoundationItemDefinition& Tool, const FFoundationBlockType& Block)
+{
+    return !Block.bRequiresCorrectToolForDrops || Tool.IsCorrectForDrops(Block.Tags);
 }
 
 float FFoundationAuthority::GetBlockHardness(const FIntVector& Cell) const
@@ -415,10 +425,10 @@ FFoundationResult FFoundationAuthority::Execute(
         UseEntity(*Player, Command, Result);
         break;
     case EFoundationCommandType::MineStart:
-        MineStart(*Player, Command, Result);
+        MineStart(*Player, Command, Vitals, Result);
         break;
     case EFoundationCommandType::MineContinue:
-        MineContinue(*Player, Command, Result);
+        MineContinue(*Player, Command, Vitals, Result);
         break;
     case EFoundationCommandType::MineAbort:
         if (!Player->Mining.bActive)
@@ -450,11 +460,15 @@ FFoundationResult FFoundationAuthority::Execute(
             Reject(Result, EFoundationReason::InvalidSlot);
         else if (!bClear && (Item == INDEX_NONE || Command.CreativeCount > Rules.Items[Item].MaxStack))
             Reject(Result, EFoundationReason::NoItem);
+        // Damage runs from 0 to the max damage, the durability bar's range (facts/durability_bar.json).
+        else if (!bClear && (Command.CreativeDamage < 0 || Command.CreativeDamage > Rules.Items[Item].MaxDurability))
+            Reject(Result, EFoundationReason::InvalidDamage);
         else
         {
             FFoundationInventory& Inventory = Player->Inventory;
-            const FFoundationItemInstance Stack =
+            FFoundationItemInstance Stack =
                 bClear ? FFoundationItemInstance{} : Inventory.MakeStack(Item, Command.CreativeCount);
+            if (!bClear) Stack.Damage = Command.CreativeDamage;
             if (Command.Slot == FFoundationInventory::HotbarSlots)
             {
                 Inventory.Offhand = Stack;
@@ -600,8 +614,8 @@ void FFoundationAuthority::UseEntity(
         Result.Outcome = EFoundationOutcome::Pass;
 }
 
-void FFoundationAuthority::MineStart(
-    FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result)
+void FFoundationAuthority::MineStart(FFoundationPlayer& Player, const FFoundationCommand& Command,
+    const FFoundationVitals& Vitals, FFoundationResult& Result)
 {
     if (Command.Hand != EFoundationHand::Main)
     {
@@ -634,14 +648,29 @@ void FFoundationAuthority::MineStart(
     }
     // A new target replaces any session elsewhere; like the reference's abort, that alone restarts nothing.
     Player.Mining = {};
+    // Creative (wiki "Creative"): every block breaks at once, bedrock included, without drops or wear; an item that
+    // breaks no blocks in creative (swords, spears) breaks nothing.
+    if (Vitals.Mode == EFoundationPlayerMode::Creative)
+    {
+        if (!Rules.CanDestroyInCreative(GetHandItem(Player, EFoundationHand::Main)))
+        {
+            Reject(Result, EFoundationReason::CreativeCannotBreak);
+            return;
+        }
+        Result.bInstant = true;
+        if (BreakBlock(Player, Hit.Cell, Result, true)) Result.Outcome = EFoundationOutcome::Committed;
+        return;
+    }
     const FFoundationBlockType& Block = World.GetBlock(World.Get(Hit.Cell).State);
     if (Block.Hardness < 0)
     {
         Reject(Result, EFoundationReason::Unbreakable);
         return;
     }
+    // A step that completes the break at once (d = 1 within the tolerance: an iron hoe on leaves, whose float hardness
+    // leaves d a hair under 1) takes the instant path.
     const double Delta = GetMiningDelta(Player, Block);
-    if (Block.Hardness == 0 || Delta >= 1)
+    if (Block.Hardness == 0 || Rules.CompletesBreak(Delta))
     {
         // The instant path: no accumulation and no post-break delay.
         Result.bInstant = true;
@@ -656,8 +685,8 @@ void FFoundationAuthority::MineStart(
     Result.Outcome = EFoundationOutcome::Committed;
 }
 
-void FFoundationAuthority::MineContinue(
-    FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result)
+void FFoundationAuthority::MineContinue(FFoundationPlayer& Player, const FFoundationCommand& Command,
+    const FFoundationVitals& Vitals, FFoundationResult& Result)
 {
     FFoundationMining& Mining = Player.Mining;
     Result.Cell = Mining.Cell;
@@ -696,22 +725,25 @@ void FFoundationAuthority::MineContinue(
     Mining.Progress += GetMiningDelta(Player, World.GetBlock(World.Get(Hit.Cell).State));
     Result.Progress = Mining.Progress;
     Result.MiningSteps = Mining.Steps;
-    if (Mining.Progress < 1. - Rules.CompletionTolerance)
+    if (!Rules.CompletesBreak(Mining.Progress))
     {
         Result.Outcome = EFoundationOutcome::Committed;
         return;
     }
     const FIntVector Cell = Mining.Cell;
     Mining = {};
-    if (BreakBlock(Player, Cell, Result)) Result.Outcome = EFoundationOutcome::Committed;
+    // A break begun in survival that ends after a switch to creative ends as a creative break.
+    if (BreakBlock(Player, Cell, Result, Vitals.Mode == EFoundationPlayerMode::Creative))
+        Result.Outcome = EFoundationOutcome::Committed;
 }
 
-bool FFoundationAuthority::BreakBlock(FFoundationPlayer& Player, const FIntVector& Cell, FFoundationResult& Result)
+bool FFoundationAuthority::BreakBlock(
+    FFoundationPlayer& Player, const FIntVector& Cell, FFoundationResult& Result, bool bCreative)
 {
     const FFoundationBlockState State = World.Get(Cell).State;
     const FFoundationBlockType& Definition = World.GetBlock(State);
     const FFoundationItemDefinition& Tool = GetHandItem(Player, EFoundationHand::Main);
-    const bool bEligible = !Definition.bRequiresCorrectToolForDrops || Tool.IsCorrectForDrops(Definition.Tags);
+    const bool bEligible = !bCreative && CanHarvest(Tool, Definition);
     const int32 Drop = Rules.FindItem(Definition.DropItem);
     // Provisional loot rule, "drops itself": a double slab is two slabs. Loot tables arrive later.
     const int32 DropCount =
@@ -738,8 +770,8 @@ bool FFoundationAuthority::BreakBlock(FFoundationPlayer& Player, const FIntVecto
     Result.Cell = Cell;
     Result.State = State;
     if (bReturn) Result.bItemReturned = Player.Inventory.Add(Drop, DropCount, Rules.Items[Drop].MaxStack) > 0;
-    // Positive-hardness blocks wear the tool once, when tool wear is on.
-    if (Options.bToolWear && Definition.Hardness > 0 && Tool.DurabilityPerBlock > 0 &&
+    // Positive-hardness blocks wear the tool once, when tool wear is on; creative tools never wear.
+    if (!bCreative && Options.bToolWear && Definition.Hardness > 0 && Tool.DurabilityPerBlock > 0 &&
         !Player.Inventory.GetHand(EFoundationHand::Main).IsEmpty())
     {
         Result.bToolWorn = true;
@@ -963,10 +995,18 @@ void FFoundationAuthority::Attack(
     const float Strength = Vitals.GetAttackStrength(Rules.AttackSampleTicks);
     float Damage = Weapon.AttackDamage * (.2f + Strength * Strength * .8f);
     const FFoundationPlayerFacts& Facts = Player.Facts;
-    const bool bCritical = Strength > Rules.CriticalStrength && Facts.FallDistanceCm > 0 && !Facts.bGrounded &&
-        !Facts.bClimbing && !Facts.bBodyInWater && !Facts.bMobilityRestricted && !Facts.bPassenger && !Facts.bSprinting;
+    // Past the 84.8% gate an attack is special (wiki "Damage", "Knockback", "Sweep attack"): sprinting makes it a
+    // sprint-knockback attack, falling a critical, and a sword on the ground, barely moving, a sweep.
+    const bool bStrong = Strength > Rules.CriticalStrength;
+    const bool bSprintKnockback = bStrong && Facts.bSprinting;
+    const bool bCritical = bStrong && Facts.FallDistanceCm > 0 && !Facts.bGrounded && !Facts.bClimbing &&
+        !Facts.bBodyInWater && !Facts.bMobilityRestricted && !Facts.bPassenger && !Facts.bSprinting;
+    const bool bSweep = bStrong && !bCritical && !bSprintKnockback && Facts.bGrounded &&
+        Facts.StepMovedCm <= Rules.SweepMaxMoveCm && Weapon.Tags.HasAny(Rules.SweepItemTags);
     if (bCritical) Damage *= Rules.CriticalMultiplier;
     const float Before = Target->Health.Health;
+    // A hit landing inside the target's hurt window knocks nothing back (wiki "Knockback").
+    const bool bFreshHit = !Target->Health.IsInHurtWindow();
     const bool bAccepted = Target->Health.Hurt(EFoundationDamage::PlayerAttack, Damage);
     // Every issued attack restarts recovery, hit or not.
     Vitals.ResetAttackStrength();
@@ -984,11 +1024,16 @@ void FFoundationAuthority::Attack(
     }
     Result.DamageApplied = Before - Target->Health.Health;
     Result.bTargetDied = Target->Health.IsDead();
+    Result.bKnockback = bFreshHit;
+    Result.bSprintKnockback = bSprintKnockback;
     ++Target->Hits;
     Target->DamageTaken += Result.DamageApplied;
     ++Hits;
     Vitals.AddExhaustion(Rules.HitExhaustion);
-    if (Options.bToolWear && Weapon.DurabilityPerHit > 0 && !Player.Inventory.GetHand(EFoundationHand::Main).IsEmpty())
+    // Accepted hits wear the weapon once, sweep or not, when tool wear is on; creative tools never wear (wiki
+    // "Creative"). The wiki does not say whether a sweep's extra hits wear it.
+    if (Options.bToolWear && Vitals.Mode != EFoundationPlayerMode::Creative && Weapon.DurabilityPerHit > 0 &&
+        !Player.Inventory.GetHand(EFoundationHand::Main).IsEmpty())
     {
         Result.bToolWorn = true;
         Result.bToolBroke = Player.Inventory.Wear(EFoundationHand::Main, Weapon.DurabilityPerHit, Weapon.MaxDurability);
@@ -999,12 +1044,52 @@ void FFoundationAuthority::Attack(
     Event.EntityId = Target->Id;
     Event.Amount = Result.DamageApplied;
     Event.bCritical = bCritical;
+    Event.bKnockback = Result.bKnockback;
+    Event.bSprintKnockback = bSprintKnockback;
     Event.Step = Facts.Step;
     AddEvent(Event);
     if (Result.bTargetDied)
     {
         Event.Kind = EFoundationEventKind::TargetDown;
         AddEvent(Event);
+    }
+    // A sweep follows a landed hit only: the primary's box grown, and positions (the box's bottom centre) within reach
+    // of the player's feet.
+    if (bSweep)
+    {
+        Result.bSweep = true;
+        const FBox Reach = Target->Box.ExpandBy(Rules.SweepGrowCm);
+        // 1 + ratio x the base melee damage, which the cooldown scales (wiki "Sweep attack", "Damage"); never a
+        // critical.
+        const float SweepDamage = Rules.SweepDamage + Rules.SweepingDamageRatio * Damage;
+        for (FFoundationTrainingTarget& Other : Targets)
+        {
+            const FVector Position(Other.Box.GetCenter().X, Other.Box.GetCenter().Y, Other.Box.Min.Z);
+            if (&Other == Target || Other.Health.IsDead() || !Overlaps(Reach, Other.Box) ||
+                FVector::DistSquared(Facts.FeetCm, Position) >= FMath::Square(Rules.SweepReachCm))
+                continue;
+            const float OtherBefore = Other.Health.Health;
+            const bool bOtherFresh = !Other.Health.IsInHurtWindow();
+            if (!Other.Health.Hurt(EFoundationDamage::PlayerAttack, SweepDamage)) continue;
+            FFoundationEvent Swept;
+            Swept.Kind = EFoundationEventKind::Hit;
+            Swept.Player = Player.Id;
+            Swept.EntityId = Other.Id;
+            Swept.Amount = OtherBefore - Other.Health.Health;
+            Swept.bKnockback = bOtherFresh;
+            Swept.bSweep = true;
+            Swept.Step = Facts.Step;
+            ++Other.Hits;
+            Other.DamageTaken += Swept.Amount;
+            ++Hits;
+            ++Result.SweptTargets;
+            AddEvent(Swept);
+            if (Other.Health.IsDead())
+            {
+                Swept.Kind = EFoundationEventKind::TargetDown;
+                AddEvent(Swept);
+            }
+        }
     }
     if (Result.bToolBroke)
     {
