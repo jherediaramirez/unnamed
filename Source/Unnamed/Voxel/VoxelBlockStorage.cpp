@@ -23,6 +23,21 @@ void FVoxelBlockStorage::Set(const FIntVector& Cell, const FFoundationCell& Valu
     ensureMsgf(bSet, TEXT("Voxel cell %s written outside the generated columns"), *Cell.ToString());
 }
 
+void FVoxelBlockStorage::SetMany(TConstArrayView<TPair<FIntVector, FFoundationCell>> Cells)
+{
+    FVoxelColumnPipeline* Pipeline = GetPipeline();
+    TMap<FIntPoint, TArray<FVoxelColumnPipeline::FCellWrite>> ByColumn;
+    for (const TPair<FIntVector, FFoundationCell>& Cell : Cells)
+        ByColumn.FindOrAdd(FIntPoint(Cell.Key.X >> 4, Cell.Key.Y >> 4))
+            .Add({Cell.Key, Cell.Value.State.Id, Cell.Value.Revision});
+    for (const TPair<FIntPoint, TArray<FVoxelColumnPipeline::FCellWrite>>& Column : ByColumn)
+    {
+        const bool bSet = Pipeline && Pipeline->SetCells(Column.Key, Column.Value);
+        ensureMsgf(
+            bSet, TEXT("Voxel column (%d, %d) written outside the generated columns"), Column.Key.X, Column.Key.Y);
+    }
+}
+
 void FVoxelBlockStorage::Empty()
 {
     if (FVoxelColumnPipeline* Pipeline = GetPipeline()) Pipeline->DropEdits();

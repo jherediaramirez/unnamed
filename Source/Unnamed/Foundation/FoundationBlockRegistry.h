@@ -236,6 +236,9 @@ public:
     bool GetSelectionShape(FFoundationBlockState State, FBox& OutBox) const;
     bool GetCollisionShape(FFoundationBlockState State, FBox& OutBox) const;
     FFoundationFluid GetFluid(FFoundationBlockState State) const;
+    // What a block leaves when it is broken or pops (water and sky W2b): a water source when it holds one (waterlogged
+    // states, kelp, seagrass; minecraft.wiki "Waterlogging"), else air.
+    FFoundationBlockState GetRemainder(FFoundationBlockState State) const;
 
     // Seven face codes (see FoundationBlockFaces); null for air.
     const uint32* GetFaces(FFoundationBlockState State) const;

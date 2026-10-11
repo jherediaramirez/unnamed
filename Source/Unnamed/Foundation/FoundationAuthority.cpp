@@ -763,7 +763,8 @@ bool FFoundationAuthority::BreakBlock(
         AddEvent(Event);
         return false;
     }
-    World.Set(Cell, {});
+    // A block holding water leaves its source (W2b).
+    World.Set(Cell, World.GetRegistry().GetRemainder(State));
     ++Breaks;
     Result.bBroken = true;
     Result.Cell = Cell;
@@ -890,7 +891,7 @@ void FFoundationAuthority::SettlePlants(
         Event.Cell = At;
         Event.State = World.Get(At).State;
         Event.Step = Player.Facts.Step;
-        World.Set(At, {});
+        World.Set(At, World.GetRegistry().GetRemainder(Event.State));
         Changed.Add(At);
         ++Pops;
         AddEvent(Event);
@@ -1115,4 +1116,23 @@ void FFoundationAuthority::Whiff(
     Event.Player = Player.Id;
     Event.Step = Player.Facts.Step;
     AddEvent(Event);
+}
+
+void FFoundationAuthority::SettleAfterFluid(const FIntVector& Cell, FFoundationBlockState Before, bool bWashedAway)
+{
+    // No player made the change: player 0, step 0.
+    static const FFoundationPlayer Nobody;
+    if (bWashedAway)
+    {
+        // The fluid already holds the cell; the block pops with no drop, as every pop until item entities exist (plan
+        // Q7).
+        FFoundationEvent Event;
+        Event.Kind = EFoundationEventKind::Popped;
+        Event.Player = Nobody.Id;
+        Event.Cell = Cell;
+        Event.State = Before;
+        ++Pops;
+        AddEvent(Event);
+    }
+    SettlePlants(Cell, Before, Nobody);
 }

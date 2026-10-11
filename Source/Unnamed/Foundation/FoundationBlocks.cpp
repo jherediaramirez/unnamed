@@ -132,7 +132,33 @@ int64 FFoundationBlockWorld::Set(const FIntVector& Cell, FFoundationBlockState S
     Change.Revision = ++Revision;
     Storage->Set(Cell, {State, Revision});
     Record(Change);
-    return Revision;
+    // The hook may set other cells (placed lava meeting water): this change keeps its own revision.
+    if (OnSet) OnSet(Cell, Change.Before, State);
+    return Change.Revision;
+}
+
+void FFoundationBlockWorld::SetMany(TConstArrayView<TPair<FIntVector, FFoundationBlockState>> Cells)
+{
+    TArray<TPair<FIntVector, FFoundationCell>> Writes;
+    TArray<FFoundationBlockChange> Committed;
+    Writes.Reserve(Cells.Num());
+    Committed.Reserve(Cells.Num());
+    for (const TPair<FIntVector, FFoundationBlockState>& Cell : Cells)
+    {
+        check(IsKnown(Cell.Key));
+        FFoundationBlockChange& Change = Committed.AddDefaulted_GetRef();
+        Change.Cell = Cell.Key;
+        Change.Before = Storage->Get(Cell.Key).State;
+        Change.After = Cell.Value;
+        Change.Revision = ++Revision;
+        Writes.Add({Cell.Key, FFoundationCell{Cell.Value, Change.Revision}});
+    }
+    Storage->SetMany(Writes);
+    for (const FFoundationBlockChange& Change : Committed)
+        Record(Change);
+    if (OnSet)
+        for (const FFoundationBlockChange& Change : Committed)
+            OnSet(Change.Cell, Change.Before, Change.After);
 }
 
 void FFoundationBlockWorld::Clear()

@@ -102,8 +102,10 @@ struct FVoxelPipelineStats
     SIZE_T CacheBytes = 0;
     // Edited cells, kept per column whether loaded or not.
     int32 Edits = 0;
-    // Results dropped because their column was unloaded or changed while the job ran.
+    // Results dropped because their column was unloaded while the job ran.
     int64 Dropped = 0;
+    // Mesh results whose column changed while the job ran: shown, and the column meshed again (water and sky W2a).
+    int64 Stale = 0;
     FVoxelStageTimes Generate;
     FVoxelStageTimes Mesh;
     FVoxelStageTimes Streams;
@@ -162,8 +164,9 @@ enum class EVoxelPipelineMutation : uint8
 //   decorated. Everything else goes when its column unloads.
 // - A mesh job gathers and meshes the column's dirty sections (all of them the first time, and whenever the column has
 //   no cache), then builds its stream set and Lumen cards, so the game thread only hands them over.
-// - Stale results are dropped: those of an unloaded column (its record's serial changed) and those whose column was
-//   marked dirty again while the job ran. The column stays dirty and is meshed again.
+// - Stale results: those of an unloaded column (its record's serial changed) are dropped. A mesh whose column was
+//   marked dirty again while the job ran is still shown (water and sky W2a), and the column stays dirty and is meshed
+//   again.
 // - Edits (SetCell) copy the final column and change the copy, so jobs keep reading the column they started with. They
 //   mark exactly the sections whose padded copy holds the cell dirty, and they are kept per column and replayed after
 //   generation (with decoration, after Finalize), so they survive unloading: for the session, until phase 10 saves
@@ -230,6 +233,9 @@ public:
     // Tests with manual jobs: the jobs not run yet, and running one of them (an index below GetJobCount) here.
     int32 GetPendingJobCount() const;
     bool RunJob(int32 Index);
+    // Tests: the column the job at Index (below GetJobCount) works on, and whether it has not run yet.
+    FIntPoint GetJobColumn(int32 Index) const;
+    bool IsJobPending(int32 Index) const;
     // Tests: forget a column's snapshot or its buckets now, whatever the lifetimes say; a stage that needs them
     // recomputes them. Running jobs keep what they read.
     void EvictSnapshot(FIntPoint Column);
@@ -255,6 +261,18 @@ public:
     // Sets a cell of a final column, keeping Stamp with the edit (the block world's revision). False, changing
     // nothing, when the column is not final or the cell lies outside the world's height.
     bool SetCell(const FIntVector& Cell, uint16 State, int64 Stamp);
+    // One cell for SetCells.
+    struct FCellWrite
+    {
+        FIntVector Cell = FIntVector::ZeroValue;
+        uint16 State = 0;
+        int64 Stamp = 0;
+    };
+    // SetCell for many cells of one column at once (a fluid tick's writes, water and sky W2a): one copy of the column,
+    // one heightmap pass, and the union of the sections they touch marked dirty once per column. The same column, edits
+    // and dirty sections as SetCell for each in turn. Cells outside Column or the world's height are skipped; false,
+    // changing nothing, when the column is not final.
+    bool SetCells(FIntPoint Column, TConstArrayView<FCellWrite> Cells);
     // Forgets every edit; loaded columns that had one are built again.
     void DropEdits();
     // Every non-air cell of the final columns inside an inclusive range, with its edit stamp.
@@ -392,7 +410,7 @@ private:
     // Some column was meshed against air at the edge, so later plans check which edges moved.
     bool bEdgeWallsUsed = false;
 
-    int64 Dropped = 0;
+    int64 Dropped = 0, Stale = 0;
     int64 Regenerated = 0, Redecorated = 0, BucketsDropped = 0, BucketsAppliedToFinal = 0, Cancelled = 0;
     FVoxelStageTimes GenerateTimes, DecorateTimes, FinalizeTimes, MeshTimes, StreamsTimes;
 };

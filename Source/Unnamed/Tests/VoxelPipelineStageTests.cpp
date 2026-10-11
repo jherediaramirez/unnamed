@@ -555,8 +555,7 @@ bool FVoxelPipelineReturnTripTest::RunTest(const FString& Parameters)
         World.Decorator->Decorate(N, Views, *Log);
         // F is the snapshot at offset (-1, 0) from N.
         const FVoxelColumn& FSnapshot = *Snapshots[FVoxelWriteLog::GetBucket(-1, 0)];
-        const FVoxelColumn* FFinal = Pipeline.FindColumn(F);
-        if (!TestNotNull(TEXT("F is final"), FFinal)) return false;
+        if (!TestNotNull(TEXT("F is final"), Pipeline.FindColumn(F))) return false;
         const FVoxelWriteBucket& Bucket = Log->Buckets[FVoxelWriteLog::GetBucket(-1, 0)];
         TSet<FIntVector> Seen;
         for (const FVoxelWrite& Write : Bucket.Writes)
@@ -567,7 +566,8 @@ bool FVoxelPipelineReturnTripTest::RunTest(const FString& Parameters)
             if (Seen.Contains(Cell)) continue;
             Seen.Add(Cell);
             const uint16 Snap = FSnapshot.GetState(X, Y, Z);
-            if (FFinal->GetState(X, Y, Z) == Snap) continue;
+            // SetCell replaces F's column (copy on write) and frees the one before, so F is looked up for each write.
+            if (Pipeline.FindColumn(F)->GetState(X, Y, Z) == Snap) continue;
             const int64 Stamp = 1000 + Edits.Num();
             if (Pipeline.SetCell(Cell, Snap, Stamp)) Edits.Add({Cell, Snap, Stamp});
         }

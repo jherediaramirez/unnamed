@@ -641,6 +641,16 @@ FFoundationFluid FFoundationBlockRegistry::GetFluid(FFoundationBlockState State)
     return Fluid;
 }
 
+FFoundationBlockState FFoundationBlockRegistry::GetRemainder(FFoundationBlockState State) const
+{
+    static const FName Waterlogged(TEXT("waterlogged")), True(TEXT("true"));
+    if (!IsKnown(State) || GetBlock(State).IsFluid()) return {};
+    // Model states carry their water in the table; other waterlogged states (slabs) only in the property.
+    if (!GetFluid(State).bSource && GetValue(State, Waterlogged) != True) return {};
+    const FFoundationBlockType* Water = FindBlock(TEXT("water"));
+    return Water ? Water->GetDefaultState() : FFoundationBlockState{};
+}
+
 const uint32* FFoundationBlockRegistry::GetFaces(FFoundationBlockState State) const
 {
     const FFoundationBlockType* Block;
