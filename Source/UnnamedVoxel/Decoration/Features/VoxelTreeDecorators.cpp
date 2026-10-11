@@ -39,6 +39,7 @@ namespace
         {TEXT("minecraft:creaking_heart"), EVoxelTreeDecorator::CreakingHeart},
         {TEXT("minecraft:shelf_mushroom"), EVoxelTreeDecorator::ShelfMushroom},
         {TEXT("minecraft:attached_to_logs"), EVoxelTreeDecorator::AttachedToLogs},
+        {TEXT("minecraft:attached_to_leaves"), EVoxelTreeDecorator::AttachedToLeaves},
     };
 
     // The four horizontal face steps in the Directions order (0 -X west, 1 +X east, 2 -Y north, 3 +Y south), and per
@@ -354,6 +355,53 @@ namespace
             if (Builder.IsAir(Cell))
                 Builder.SetDecoration(
                     Cell, Env.Providers.Sample(Decorator.Provider, Builder.Random, Cell, Env.Context));
+        }
+    }
+
+    const FName AttachedEmptyBlocks(TEXT("required_empty_blocks")), AttachedExclusionXZ(TEXT("exclusion_radius_xz")),
+        AttachedExclusionY(TEXT("exclusion_radius_y"));
+
+    // attached_to_leaves (the wiki: "Attaches blocks to exposed faces of all foliage blocks in specified directions";
+    // exclusion_radius_xz and _y are "the minimum value of the horizontal / vertical distance between two decorations",
+    // required_empty_blocks "the number of empty blocks required by the decoration"). Ours, fitted to the mangrove
+    // probes' propagules by S9e's agent F1 (C:\dev\sandbox\phase6s9\s9e\fit\f1-crown): per leaf (from the bottom up,
+    // cell order within a layer), with the probability one of the data's directions at random; the
+    // required_empty_blocks cells that way must be air (the tree's vines and water block them), and no earlier block of
+    // this decorator may lie within exclusion_radius_xz across and exclusion_radius_y + 1 up or down (the data's 0
+    // alone gave 14 to 21% too many propagules); then the provider's state in the first cell. Draws: per leaf
+    // NextFloat, then where it passes NextInt over the directions when there are more than one, then the provider's
+    // where it places. States: none fixed (the provider's).
+    void PlaceAttachedToLeaves(const FVoxelTreeDecoratorConfig& Decorator, FVoxelTreeBuilder& Builder)
+    {
+        if (Decorator.Provider == INDEX_NONE || !Decorator.Directions) return;
+        TArray<int32, TInlineAllocator<6>> Steps;
+        for (int32 Step = 0; Step < 6; ++Step)
+            if (Decorator.Directions & (1 << Step)) Steps.Add(Step);
+        const float Probability = float(TreeDecoratorProbability(Decorator));
+        const int32 Empty = FMath::Max(1, int32(Decorator.GetNumber(AttachedEmptyBlocks)));
+        const int32 AcrossXY = FMath::Max(0, int32(Decorator.GetNumber(AttachedExclusionXZ)));
+        const int32 UpDown = FMath::Max(0, int32(Decorator.GetNumber(AttachedExclusionY))) + 1;
+        const FVoxelPlantEnvironment& Env = Builder.Env;
+        TArray<FIntVector> Leaves, Placed;
+        Builder.GetCells(FVoxelTreeBuilder::ECell::Leaf, Leaves);
+        for (const FIntVector& Leaf : Leaves)
+        {
+            if (Builder.Random.NextFloat() >= Probability) continue;
+            const FIntVector Step =
+                TreeDecoratorSteps[Steps.Num() > 1 ? Steps[Builder.Random.NextInt(Steps.Num())] : Steps[0]];
+            bool bEmpty = true;
+            for (int32 Index = 1; Index <= Empty && bEmpty; ++Index)
+                bEmpty = Builder.IsAir(Leaf + Step * Index);
+            const FIntVector Cell = Leaf + Step;
+            const auto IsNear = [&Cell, AcrossXY, UpDown](const FIntVector& Other)
+            {
+                return FMath::Abs(Other.X - Cell.X) <= AcrossXY && FMath::Abs(Other.Y - Cell.Y) <= AcrossXY &&
+                    FMath::Abs(Other.Z - Cell.Z) <= UpDown;
+            };
+            if (!bEmpty || Placed.ContainsByPredicate(IsNear)) continue;
+            if (Builder.SetDecoration(
+                    Cell, Env.Providers.Sample(Decorator.Provider, Builder.Random, Cell, Env.Context)))
+                Placed.Add(Cell);
         }
     }
 
@@ -760,6 +808,11 @@ int32 VoxelTreeDecorators::GetReach(
     case EVoxelTreeDecorator::AttachedToLogs:
         // On a log, or beside one in a horizontal direction.
         return VoxelTrunkPlacers::GetReach(Tree.Trunk) + ((Decorator.Directions & 0b1111) ? 1 : 0);
+    case EVoxelTreeDecorator::AttachedToLeaves:
+        // Under or over a leaf, or beside one in a horizontal direction, and the required empty cells it reads that
+        // way.
+        return TreeReach +
+            ((Decorator.Directions & 0b1111) ? FMath::Max(1, int32(Decorator.GetNumber(AttachedEmptyBlocks))) : 0);
     default:
         return TreeReach;
     }
@@ -807,6 +860,9 @@ void VoxelTreeDecorators::Place(
             break;
         case EVoxelTreeDecorator::AttachedToLogs:
             PlaceAttachedToLogs(Decorator, Builder);
+            break;
+        case EVoxelTreeDecorator::AttachedToLeaves:
+            PlaceAttachedToLeaves(Decorator, Builder);
             break;
         default:
             break;

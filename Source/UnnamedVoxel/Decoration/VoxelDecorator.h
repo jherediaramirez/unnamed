@@ -151,6 +151,7 @@ public:
     TConstArrayView<FVoxelTreeConfig> GetTrees() const { return Trees; }
     TConstArrayView<FVoxelFallenTreeConfig> GetFallenTrees() const { return FallenTrees; }
     TConstArrayView<FVoxelHugeMushroomConfig> GetHugeMushrooms() const { return HugeMushrooms; }
+    TConstArrayView<FVoxelRootSystemConfig> GetRootSystems() const { return RootSystems; }
     const TMap<FString, int32>& GetPlaceholders() const { return Placeholders; }
     const TMap<FString, int32>& GetSkippedDecorators() const { return SkippedDecorators; }
     // The noise the count modifiers read (noise_threshold_count at X / 200, Y / 200).
@@ -273,9 +274,10 @@ private:
     // Compile memos: graph node to plant or nested placed feature.
     TMap<int32, int32> PlantOfNode, PlacedOfNode;
 
-    // Trees (S9a), fallen trees and huge mushrooms (S9d part 2).
+    // Trees (S9a), fallen trees and huge mushrooms (S9d part 2), root systems (S9e).
     TArray<FVoxelTreeConfig> Trees;
     TArray<FVoxelFallenTreeConfig> FallenTrees;
     TArray<FVoxelHugeMushroomConfig> HugeMushrooms;
+    TArray<FVoxelRootSystemConfig> RootSystems;
     TMap<FString, int32> Placeholders, SkippedDecorators;
 };

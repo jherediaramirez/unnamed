@@ -372,11 +372,30 @@ namespace
         };
         if (Args.IsEmpty())
         {
-            Print(TEXT("Usage: voxel.FindBlock <block> [X Y] [radius in columns, default 12] [preset=overworld]"));
+            Print(TEXT("Usage: voxel.FindBlock <block>[[property=value,...]] [X Y] [radius in columns, default 12] "
+                       "[preset=overworld]"));
             return;
         }
         FString Id = Args[0].ToLower(), PresetName = TEXT("overworld");
         Id.RemoveFromStart(TEXT("minecraft:"));
+        // An optional state filter, "block[property=value,...]" (S9e: birch_log[axis=x] finds the fallen birches).
+        TArray<TPair<FName, FName>> Properties;
+        FString Block = Id, PropertyList;
+        if (Id.Split(TEXT("["), &Block, &PropertyList))
+        {
+            if (!PropertyList.EndsWith(TEXT("]")))
+            {
+                Print(FString::Printf(TEXT("voxel.FindBlock: %s lacks its closing ]"), *Id));
+                return;
+            }
+            TArray<FString> Items;
+            PropertyList.LeftChop(1).ParseIntoArray(Items, TEXT(","));
+            for (const FString& Item : Items)
+            {
+                FString Key, Value;
+                if (Item.Split(TEXT("="), &Key, &Value)) Properties.Add({FName(*Key), FName(*Value)});
+            }
+        }
         TArray<double> Numbers;
         for (int32 Index = 1; Index < Args.Num(); ++Index)
             if (Args[Index].IsNumeric())
@@ -404,12 +423,19 @@ namespace
             return;
         }
         const TSharedRef<const FVoxelBlockTable> Blocks = VoxelBlocks::GetDefault();
-        const int32 Target = Blocks->FindBlock(Id);
+        const int32 Target = Blocks->FindBlock(Block);
         if (Target == INDEX_NONE)
         {
-            Print(FString::Printf(TEXT("voxel.FindBlock: no block %s"), *Id));
+            Print(FString::Printf(TEXT("voxel.FindBlock: no block %s"), *Block));
             return;
         }
+        const auto Matches = [&](uint16 State)
+        {
+            if (Blocks->Get(State).Block != Target) return false;
+            for (const TPair<FName, FName>& Property : Properties)
+                if (Blocks->GetValue(State, Property.Key) != Property.Value) return false;
+            return true;
+        };
         const FVoxelDensityTerrain Terrain(Preset, Seed, *Blocks, FVoxelDensityTerrainSettings(), &Biomes, &Surface);
         if (!Terrain.IsValid() || !Terrain.GetBiomeSource())
         {
@@ -447,7 +473,7 @@ namespace
                         for (int32 X = 0; X < Size; ++X)
                             for (int32 Z = VoxelConstants::MinZ; Z <= VoxelConstants::MaxZ; ++Z)
                             {
-                                if (Blocks->Get(Column->GetState(X, Y, Z)).Block != Target) continue;
+                                if (!Matches(Column->GetState(X, Y, Z))) continue;
                                 ++Count;
                                 const int32 Distance = FMath::Square(X - Size / 2) + FMath::Square(Y - Size / 2);
                                 if (Distance < BestDistance) BestDistance = Distance, Best = FIntVector(X, Y, Z);
@@ -470,7 +496,8 @@ namespace
     FAutoConsoleCommandWithWorldArgsAndOutputDevice FindBlockCommand(TEXT("voxel.FindBlock"),
         TEXT("voxel.FindBlock <block> [X Y] [radius in columns, default 12] [preset, default overworld]: decorates "
              "columns outward from X, Y (blocks) one at a time and logs the first three that hold the block (kelp or "
-             "minecraft:kelp), as voxel.Decoration.Plants says. Works without a game world."),
+             "minecraft:kelp; birch_log[axis=x] for that state only), as voxel.Decoration.Plants says. Works without a "
+             "game world."),
         FConsoleCommandWithWorldArgsAndOutputDeviceDelegate::CreateStatic(&FindBlockRun));
 
     TAutoConsoleVariable<bool> CVarDebugBiomes(TEXT("voxel.Debug.Biomes"), false,

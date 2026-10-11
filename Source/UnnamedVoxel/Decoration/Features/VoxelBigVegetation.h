@@ -35,6 +35,20 @@ struct UNNAMEDVOXEL_API FVoxelHugeMushroomConfig
     int32 FreeSet = INDEX_NONE;
 };
 
+// root_system's data (S9e: rooted_azalea_tree): the tree it places (feature, compiled as a tree) and its search and
+// roots' numbers by the data's names.
+struct UNNAMEDVOXEL_API FVoxelRootSystemConfig
+{
+    FVoxelTreeConfig Tree;
+    int32 RequiredVerticalSpace = 0, AllowedVerticalWater = 0, RootColumnMaxHeight = 0;
+    int32 RootRadius = 0, RootPlacementAttempts = 0;
+    int32 HangingRootRadius = 0, HangingRootAttempts = 0, HangingRootsVerticalSpan = 0;
+    // allowed_tree_position (a predicate), root_replaceable (a predicate block set), and the state providers of the
+    // roots and the hanging roots.
+    int32 AllowedTreePosition = INDEX_NONE, RootReplaceable = INDEX_NONE;
+    int32 RootProvider = INDEX_NONE, HangingRootProvider = INDEX_NONE;
+};
+
 namespace VoxelBigVegetation
 {
     // A fallen_tree feature node compiled. A trunk provider type not built leaves OutSkip naming it (the feature is
@@ -57,5 +71,16 @@ namespace VoxelBigVegetation
     // Places one huge mushroom at Origin (the stem's bottom cell). Returns whether it placed. Its time goes to Times
     // when given.
     UNNAMEDVOXEL_API bool PlaceHugeMushroom(const FVoxelHugeMushroomConfig& Config, FIntVector Origin,
+        FVoxelXoroshiro& Random, const FVoxelPlantEnvironment& Env, FVoxelTreeTimes* Times = nullptr);
+
+    // A root_system node compiled (S9e), its tree through VoxelTreeFeature::Compile. A type not built (the tree's
+    // placers, a provider or predicate) leaves OutSkip naming it; false on malformed data.
+    UNNAMEDVOXEL_API bool CompileRootSystem(const FVoxelFeatureGraph& Graph, int32 Node, FVoxelBlockTags& Tags,
+        const FVoxelBlockTable& Table, FVoxelBlockPredicates& Predicates, FVoxelStateProviders& Providers,
+        FVoxelRootSystemConfig& Out, FString& OutSkip, FString* OutError);
+    // Places one root system from Origin (the air under a cave ceiling): the tree on the surface found above, then the
+    // roots and hanging roots. Returns whether it placed. Its own time goes to Times when given (the tree's to the
+    // trees' stages).
+    UNNAMEDVOXEL_API bool PlaceRootSystem(const FVoxelRootSystemConfig& Config, FIntVector Origin,
         FVoxelXoroshiro& Random, const FVoxelPlantEnvironment& Env, FVoxelTreeTimes* Times = nullptr);
 }

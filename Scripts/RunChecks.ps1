@@ -19,7 +19,7 @@ param(
 # Profiles:
 #   quick  build; TestVoxel; Mesher.Digest against the expected hashes; npm test; source-check.
 #   final  build -DisableAdaptiveUnity; the full native set (every declared Unnamed test must run; a run that leaves no report is
-#          retried once, and every crash is counted); TestVoxel; the radius-8 hashes and Mesher.Digest against the expected
+#          retried once, every crash is counted, and its UECC folders are kept in <Native folder>\Crashes); TestVoxel; the radius-8 hashes and Mesher.Digest against the expected
 #          hashes; the Playground runtime (all = the probe, interaction, tour; the fps is a figure, not a gate); create-world;
 #          npm test; source-check; the Reference verifiers.
 #   merge  final, plus HEAD's parents and a scan for conflict markers and unmerged files.
@@ -135,6 +135,18 @@ function Step([string]$Name,[scriptblock]$Body){
     Say "-- ${Name}: $($script:results[$Name])"
     if($script:stepBad.Count -and -not $KeepGoing){Finish 1}
 }
+# A crash writes its dump and log under the -UserDir profile (<UserDir>\Saved\Crashes\UECC-*), which the native step deletes:
+# keep them in the suite's folder first. Returns how many crash folders were kept; a failed copy (a locked file, a full disk)
+# warns and returns 0 instead of failing the step.
+function KeepCrashes([string]$UserDir,[string]$Dir){
+    $crashes=Join-Path $UserDir 'Saved\Crashes'
+    $kept=@(Get-ChildItem -LiteralPath $crashes -Directory -ErrorAction SilentlyContinue)
+    if($kept.Count){
+        try{Copy-Item -LiteralPath $crashes -Destination (Join-Path $Dir 'Crashes') -Recurse -Force -ErrorAction Stop}
+        catch{Write-Warning "KeepCrashes: could not keep $crashes ($($_.Exception.Message))"; return 0}
+    }
+    $kept.Count
+}
 function AddHash([string]$Key,[string]$Value){
     if($script:hashes.Contains($Key) -and $script:hashes[$Key] -ne $Value){$script:hashes[$Key]="CONFLICT $($script:hashes[$Key]) / $Value"}else{$script:hashes[$Key]=$Value}
 }
@@ -196,7 +208,8 @@ if($Profile -eq 'merge'){
 Step 'build' {
     Gate 'build'
     $script:buildLog=Join-Path ([IO.Path]::GetTempPath()) "RunChecks-build-$([guid]::NewGuid()).log"
-    $flags=@('-WaitMutex')+@(if($Profile -ne 'quick'){'-DisableAdaptiveUnity'})
+    # -NoHotReloadFromIDE: a running editor's Live Coding (a play session) would otherwise block UBT.
+    $flags=@('-WaitMutex','-NoHotReloadFromIDE')+@(if($Profile -ne 'quick'){'-DisableAdaptiveUnity'})
     & "$EngineRoot\Engine\Build\BatchFiles\Build.bat" UnnamedEditor Win64 Development "-Project=$root\Unnamed.uproject" @flags *> $script:buildLog
     $code=$LASTEXITCODE
     Say "   Build.bat $($flags -join ' '): exit $code; $((Select-String -LiteralPath $script:buildLog -Pattern '^Result: |Target is up to date|Total execution time' | Select-Object -Last 1).Line)"
@@ -218,12 +231,13 @@ if($Profile -ne 'quick'){
             & $editorCmd "$root\Unnamed.uproject" -unattended -nop4 -NullRHI '-ExecCmds=Automation RunTests Unnamed' '-TestExit=Automation Test Queue Empty' `
                 "-ReportExportPath=$dir\Report" "-abslog=$dir\native.log" "-UserDir=$userDir/" @allocatorFlag *> "$dir\console.log"
             $code=$LASTEXITCODE
+            $dumps=KeepCrashes $userDir $dir
             Remove-Item -LiteralPath $userDir -Recurse -Force -ErrorAction SilentlyContinue
             if(Test-Path -LiteralPath "$dir\Report\index.json"){break}
             $crashes++
             $script:others.Add($dir)
             $sign=Select-String -LiteralPath "$dir\native.log" -Pattern 'Critical error|Fatal error|Unhandled Exception|EXCEPTION_|heap corruption' -ErrorAction SilentlyContinue | Select-Object -First 1
-            Say "   CRASH: attempt $attempt left no report (exit $code, $([int]$clock.Elapsed.TotalSeconds) s)$(if($sign){': '+($sign.Line -replace '^.*\]\[\s*\d+\]','')}): $dir"
+            Say "   CRASH: attempt $attempt left no report (exit $code, $([int]$clock.Elapsed.TotalSeconds) s, crash folders kept $dumps)$(if($sign){': '+($sign.Line -replace '^.*\]\[\s*\d+\]','')}): $dir"
         }
         $script:stepNote="; native crashes $crashes"
         if($crashes -ge 2){Bad 'no report after 2 attempts'; return}

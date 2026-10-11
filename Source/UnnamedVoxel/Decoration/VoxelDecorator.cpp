@@ -617,6 +617,18 @@ bool FVoxelDecorator::CompilePlant(const FVoxelFeatureGraph& Graph, int32 Node, 
         if (!OutSkip.IsEmpty()) return true;
         Plant.Tree = HugeMushrooms.Add(MoveTemp(Mushroom));
     }
+    else if (Type == TEXT("minecraft:root_system") && Options.bTrees)
+    {
+        Plant.Kind = EVoxelPlantFeature::RootSystem;
+        FVoxelRootSystemConfig RootSystem;
+        if (!VoxelBigVegetation::CompileRootSystem(
+                Graph, Node, Tags, *Table, Predicates, Providers, RootSystem, OutSkip, OutError))
+            return false;
+        if (!OutSkip.IsEmpty()) return true;
+        for (const FString& Decorator : RootSystem.Tree.SkippedDecorators)
+            ++SkippedDecorators.FindOrAdd(Decorator);
+        Plant.Tree = RootSystems.Add(MoveTemp(RootSystem));
+    }
     else if (Type == TEXT("minecraft:random_selector"))
     {
         Plant.Selector.Op = EVoxelSelectorOp::Random;
@@ -834,6 +846,10 @@ void FVoxelDecorator::PlacePlant(
     case EVoxelPlantFeature::HugeMushroom:
         ++Stats.PlantTries;
         VoxelBigVegetation::PlaceHugeMushroom(HugeMushrooms[Plant.Tree], Position, Random, Env, &Stats.TreeTimes);
+        return;
+    case EVoxelPlantFeature::RootSystem:
+        ++Stats.PlantTries;
+        VoxelBigVegetation::PlaceRootSystem(RootSystems[Plant.Tree], Position, Random, Env, &Stats.TreeTimes);
         return;
     case EVoxelPlantFeature::VegetationPatch:
     {
@@ -1191,9 +1207,10 @@ FString FVoxelDecorator::Describe() const
                 List += FString::Printf(TEXT("%s%s %d"), List.IsEmpty() ? TEXT("") : TEXT(", "), *Pair.Key, Pair.Value);
             return List;
         };
-        Out += FString::Printf(TEXT("; trees (S9a): %d configurations, %d fallen, %d huge mushrooms; selector "
-                                    "entries placing nothing [%s]; tree decorators left out [%s]"),
-            Trees.Num(), FallenTrees.Num(), HugeMushrooms.Num(), *Join(Placeholders), *Join(SkippedDecorators));
+        Out += FString::Printf(TEXT("; trees (S9a): %d configurations, %d fallen, %d huge mushrooms, %d root systems; "
+                                    "selector entries placing nothing [%s]; tree decorators left out [%s]"),
+            Trees.Num(), FallenTrees.Num(), HugeMushrooms.Num(), RootSystems.Num(), *Join(Placeholders),
+            *Join(SkippedDecorators));
     }
     if (!MissingBlocks.IsEmpty())
         Out += FString::Printf(

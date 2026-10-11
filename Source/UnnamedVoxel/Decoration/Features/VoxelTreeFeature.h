@@ -137,6 +137,9 @@ struct UNNAMEDVOXEL_API FVoxelTreeConfig
     // Air plus replaceable_by_trees: where logs, leaves and roots may go (a predicate block set, IfReplaceable's
     // argument).
     int32 FreeSet = INDEX_NONE;
+    // Where logs may go: FreeSet, plus the trunk placer's can_grow_through (S9e: the mangroves'); IfReplaceable's
+    // argument for logs.
+    int32 LogFreeSet = INDEX_NONE;
     bool bIgnoreVines = false;
     // How far a tree's cells can lie from its origin horizontally (Chebyshev), asserted at most 16 at compile.
     int32 Reach = 0;
@@ -234,7 +237,8 @@ public:
     uint16 GetState(FIntVector Cell) const;
     // Air or replaceable_by_trees in the view above (the tree's own leaves included), inside the world.
     bool IsFree(FIntVector Cell) const;
-    // A log along Axis (0 X, 1 Y, 2 Z) where the cell is free or holds this tree's log or leaf.
+    // A log along Axis (0 X, 1 Y, 2 Z) where the cell is in the log free set or holds this tree's log or leaf (or its
+    // root, where the root's block is in the log free set: a mangrove's moss carpet).
     bool SetLog(FIntVector Cell, int32 Axis = 2);
     // A leaf where the cell is free and holds none of this tree's logs or roots.
     bool SetLeaf(FIntVector Cell);
@@ -291,6 +295,8 @@ private:
     void Append(FIntVector Cell, uint16 State, ECell Kind) { IndexOf.Add(Cell, Cells.Add({Cell, State, Kind})); }
     // IsFree where the tree has no cell: inside the world, air or replaceable_by_trees in the working copy.
     bool IsFreeBelow(FIntVector Cell) const;
+    // Inside the world, and the working copy's block in the predicate block set Set.
+    bool IsInSetBelow(FIntVector Cell, int32 Set) const;
     FVoxelTreeCellIndex IndexOf;
 };
 
@@ -331,7 +337,8 @@ namespace VoxelRootPlacers
 // Where the trees' time goes, for voxel.Bench (S9d): cycles (FPlatformTime::Cycles64) and calls per stage, summed over
 // the trees tried. The size is the height, roots and feature size (a tree that fails ends there); each decorator type
 // is its own stage. A fallen tree (S9d part 2) is one stage but its decorators (calls: tries), and so is a huge
-// mushroom.
+// mushroom. A mangrove's root placer (S9e) is its own stage (calls: the trees with roots tried), and so is a root
+// system's own work (calls: tries; the tree it places counts in the trees' stages).
 struct FVoxelTreeTimes
 {
     enum EStage : uint8
@@ -343,6 +350,8 @@ struct FVoxelTreeTimes
         Emit,
         FallenTree,
         HugeMushroom,
+        Roots,
+        RootSystem,
         FirstDecorator
     };
     static constexpr int32 Num = FirstDecorator + int32(EVoxelTreeDecorator::Count);
