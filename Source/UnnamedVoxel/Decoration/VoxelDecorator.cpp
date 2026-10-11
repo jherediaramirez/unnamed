@@ -806,7 +806,7 @@ void FVoxelDecorator::PlacePlant(
         return;
     case EVoxelPlantFeature::Tree:
         ++Stats.PlantTries;
-        VoxelTreeFeature::Place(Trees[Plant.Tree], Position, Random, Env);
+        VoxelTreeFeature::Place(Trees[Plant.Tree], Position, Random, Env, &Stats.TreeTimes);
         return;
     case EVoxelPlantFeature::VegetationPatch:
     {

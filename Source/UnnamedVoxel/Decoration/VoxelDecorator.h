@@ -73,6 +73,8 @@ struct FVoxelDecorateStats
     // Cells in the working copy, its memory, and the log's.
     int32 WorkingCells = 0;
     SIZE_T WorkingBytes = 0, LogBytes = 0;
+    // Where the trees' time went (S9d, voxel.Bench).
+    FVoxelTreeTimes TreeTimes;
 };
 
 struct FVoxelFinalizeStats

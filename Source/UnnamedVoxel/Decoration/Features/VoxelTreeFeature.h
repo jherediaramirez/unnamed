@@ -158,6 +158,57 @@ struct FVoxelFoliageAttachment
     bool bBottomLayer = false;
 };
 
+// A tree's own cells by position (S9d: the TMap it replaces cost about a third of a tree): open addressing with linear
+// probing over a power-of-two table, keyed by each axis's low 21 bits (unique within a tree, which spans far less than
+// 2^21 blocks). A removed cell keeps its key with no index, so adding it again reuses the slot; growing drops such
+// keys.
+class FVoxelTreeCellIndex
+{
+public:
+    const int32* Find(FIntVector Cell) const
+    {
+        const int32 Slot = FindSlot(Pack(Cell));
+        return Slot != INDEX_NONE && Values.GetData()[Slot] != INDEX_NONE ? Values.GetData() + Slot : nullptr;
+    }
+    int32* Find(FIntVector Cell)
+    {
+        return const_cast<int32*>(static_cast<const FVoxelTreeCellIndex*>(this)->Find(Cell));
+    }
+    void Add(FIntVector Cell, int32 Index);
+    void Remove(FIntVector Cell)
+    {
+        const int32 Slot = FindSlot(Pack(Cell));
+        if (Slot != INDEX_NONE) Values.GetData()[Slot] = INDEX_NONE;
+    }
+
+private:
+    static constexpr uint64 Empty = ~0ull;
+    static uint64 Pack(FIntVector Cell)
+    {
+        constexpr uint64 Mask = (1ull << 21) - 1;
+        return (uint64(uint32(Cell.X)) & Mask) << 42 | (uint64(uint32(Cell.Y)) & Mask) << 21 |
+            (uint64(uint32(Cell.Z)) & Mask);
+    }
+    int32 FindSlot(uint64 Key) const
+    {
+        if (Keys.IsEmpty()) return INDEX_NONE;
+        const uint64* Data = Keys.GetData();
+        const int32 Mask = Keys.Num() - 1;
+        for (int32 Slot = int32((Key * 0x9E3779B97F4A7C15ull) >> Shift);; Slot = (Slot + 1) & Mask)
+        {
+            if (Data[Slot] == Key) return Slot;
+            if (Data[Slot] == Empty) return INDEX_NONE;
+        }
+    }
+    void Grow();
+
+    TArray<uint64> Keys;
+    TArray<int32> Values;
+    // Keys in use (removed cells included), and 64 minus the table's size in bits.
+    int32 Used = 0;
+    int32 Shift = 64;
+};
+
 // One tree under construction: its own cells over the working copy, in the order they were set. A cell holds one kind;
 // a log may replace the tree's own leaf, a leaf never replaces the tree's log or root.
 class UNNAMEDVOXEL_API FVoxelTreeBuilder
@@ -230,7 +281,11 @@ private:
     int32* FindCell(FIntVector Cell) { return IndexOf.Find(Cell); }
     const int32* FindCell(FIntVector Cell) const { return IndexOf.Find(Cell); }
     void Set(FIntVector Cell, uint16 State, ECell Kind);
-    TMap<FIntVector, int32> IndexOf;
+    // A new cell, where the tree has none yet.
+    void Append(FIntVector Cell, uint16 State, ECell Kind) { IndexOf.Add(Cell, Cells.Add({Cell, State, Kind})); }
+    // IsFree where the tree has no cell: inside the world, air or replaceable_by_trees in the working copy.
+    bool IsFreeBelow(FIntVector Cell) const;
+    FVoxelTreeCellIndex IndexOf;
 };
 
 namespace VoxelTrunkPlacers
@@ -267,10 +322,40 @@ namespace VoxelRootPlacers
     UNNAMEDVOXEL_API int32 GetReach(const FVoxelMangroveRoots& Roots);
 }
 
+// Where the trees' time goes, for voxel.Bench (S9d): cycles (FPlatformTime::Cycles64) and calls per stage, summed over
+// the trees tried. The size is the height, roots and feature size (a tree that fails ends there); each decorator type
+// is its own stage.
+struct FVoxelTreeTimes
+{
+    enum EStage : uint8
+    {
+        Size,
+        Trunk,
+        Foliage,
+        Distances,
+        Emit,
+        FirstDecorator
+    };
+    static constexpr int32 Num = FirstDecorator + int32(EVoxelTreeDecorator::Count);
+    uint64 Cycles[Num] = {};
+    int32 Calls[Num] = {};
+
+    void Add(const FVoxelTreeTimes& Other)
+    {
+        for (int32 Stage = 0; Stage < Num; ++Stage)
+        {
+            Cycles[Stage] += Other.Cycles[Stage];
+            Calls[Stage] += Other.Calls[Stage];
+        }
+    }
+};
+
 namespace VoxelTreeDecorators
 {
     // The decorator of a data type id ("minecraft:alter_ground"), or Count when not built.
     UNNAMEDVOXEL_API EVoxelTreeDecorator FindType(FStringView Type);
+    // A built decorator's data type id without its namespace ("alter_ground"), for reports.
+    UNNAMEDVOXEL_API const TCHAR* GetName(EVoxelTreeDecorator Type);
     // Compiles a decorator node of a built type. A provider type not built leaves OutSkip naming it (the decorator is
     // then left out); false on malformed data.
     UNNAMEDVOXEL_API bool Compile(const FVoxelFeatureGraph& Graph, int32 Node, EVoxelTreeDecorator Type,
@@ -280,8 +365,10 @@ namespace VoxelTreeDecorators
     // decorators.
     UNNAMEDVOXEL_API int32 GetReach(
         const FVoxelTreeDecoratorConfig& Decorator, const FVoxelTreeConfig& Tree, int32 TreeReach);
-    // Runs the tree's decorators in the data's order on its builder, drawing from the tree's stream.
-    UNNAMEDVOXEL_API void Place(const FVoxelTreeConfig& Config, FVoxelTreeBuilder& Builder);
+    // Runs the tree's decorators in the data's order on its builder, drawing from the tree's stream; each one's time
+    // goes to Times when given.
+    UNNAMEDVOXEL_API void Place(
+        const FVoxelTreeConfig& Config, FVoxelTreeBuilder& Builder, FVoxelTreeTimes* Times = nullptr);
 }
 
 namespace VoxelTreeFeature
@@ -300,9 +387,9 @@ namespace VoxelTreeFeature
 
     // Places one tree at Origin: trunk height, roots, feature size, trunk, foliage, then the leaves' distance (a BFS
     // from the tree's own logs through its own leaves; leaves 7 or more away are dropped, Jesus's answer to scout J's
-    // question 4), and emits every cell. Returns whether it placed.
-    UNNAMEDVOXEL_API bool Place(
-        const FVoxelTreeConfig& Config, FIntVector Origin, FVoxelXoroshiro& Random, const FVoxelPlantEnvironment& Env);
+    // question 4), and emits every cell. Returns whether it placed. Each stage's time goes to Times when given.
+    UNNAMEDVOXEL_API bool Place(const FVoxelTreeConfig& Config, FIntVector Origin, FVoxelXoroshiro& Random,
+        const FVoxelPlantEnvironment& Env, FVoxelTreeTimes* Times = nullptr);
 
     // The leaves' distances for a builder's cells (1..6, 0 for a leaf to drop), in cell order; for the tests.
     UNNAMEDVOXEL_API void GetLeafDistances(const FVoxelTreeBuilder& Builder, TArray<uint8>& Out);
