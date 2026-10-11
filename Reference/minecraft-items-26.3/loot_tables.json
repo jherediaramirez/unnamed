@@ -1,0 +1,686 @@
+{
+ "minecraft_version": "26.3",
+ "format": "Each pool's single entry flattened into ordered candidates; the first candidate whose conditions all pass is taken; count is set_count's inclusive range; bonus and explosion_decay are kept for later (neutral without enchantments or explosions).",
+ "predicates": [
+  {
+   "name": "tool/can_silk_touch",
+   "file": "data/minecraft/predicate/tool/can_silk_touch.json",
+   "type": "match_tool",
+   "items": [],
+   "enchantments": [
+    {
+     "id": "silk_touch",
+     "min_level": 1
+    }
+   ]
+  }
+ ],
+ "tables": [
+  {
+   "block": "coal_ore",
+   "file": "data/minecraft/loot_table/blocks/coal_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "coal_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "coal",
+       "conditions": [],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "deepslate_coal_ore",
+   "file": "data/minecraft/loot_table/blocks/deepslate_coal_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "deepslate_coal_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "coal",
+       "conditions": [],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "copper_ore",
+   "file": "data/minecraft/loot_table/blocks/copper_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "copper_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "raw_copper",
+       "conditions": [],
+       "count": [
+        2,
+        5
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "deepslate_copper_ore",
+   "file": "data/minecraft/loot_table/blocks/deepslate_copper_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "deepslate_copper_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "raw_copper",
+       "conditions": [],
+       "count": [
+        2,
+        5
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "iron_ore",
+   "file": "data/minecraft/loot_table/blocks/iron_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "iron_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "raw_iron",
+       "conditions": [],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "deepslate_iron_ore",
+   "file": "data/minecraft/loot_table/blocks/deepslate_iron_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "deepslate_iron_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "raw_iron",
+       "conditions": [],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "gold_ore",
+   "file": "data/minecraft/loot_table/blocks/gold_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "gold_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "raw_gold",
+       "conditions": [],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "deepslate_gold_ore",
+   "file": "data/minecraft/loot_table/blocks/deepslate_gold_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "deepslate_gold_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "raw_gold",
+       "conditions": [],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "diamond_ore",
+   "file": "data/minecraft/loot_table/blocks/diamond_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "diamond_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "diamond",
+       "conditions": [],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "deepslate_diamond_ore",
+   "file": "data/minecraft/loot_table/blocks/deepslate_diamond_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "deepslate_diamond_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "diamond",
+       "conditions": [],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "emerald_ore",
+   "file": "data/minecraft/loot_table/blocks/emerald_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "emerald_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "emerald",
+       "conditions": [],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "deepslate_emerald_ore",
+   "file": "data/minecraft/loot_table/blocks/deepslate_emerald_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "deepslate_emerald_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "emerald",
+       "conditions": [],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "lapis_ore",
+   "file": "data/minecraft/loot_table/blocks/lapis_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "lapis_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "lapis_lazuli",
+       "conditions": [],
+       "count": [
+        4,
+        9
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "deepslate_lapis_ore",
+   "file": "data/minecraft/loot_table/blocks/deepslate_lapis_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "deepslate_lapis_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "lapis_lazuli",
+       "conditions": [],
+       "count": [
+        4,
+        9
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "redstone_ore",
+   "file": "data/minecraft/loot_table/blocks/redstone_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "redstone_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "redstone",
+       "conditions": [],
+       "count": [
+        4,
+        5
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "uniform_bonus_count",
+        "bonus_multiplier": 1
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "deepslate_redstone_ore",
+   "file": "data/minecraft/loot_table/blocks/deepslate_redstone_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "deepslate_redstone_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "redstone",
+       "conditions": [],
+       "count": [
+        4,
+        5
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "uniform_bonus_count",
+        "bonus_multiplier": 1
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "nether_quartz_ore",
+   "file": "data/minecraft/loot_table/blocks/nether_quartz_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "nether_quartz_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "quartz",
+       "conditions": [],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "block": "nether_gold_ore",
+   "file": "data/minecraft/loot_table/blocks/nether_gold_ore.json",
+   "pools": [
+    {
+     "rolls": 1,
+     "candidates": [
+      {
+       "item": "nether_gold_ore",
+       "conditions": [
+        "tool/can_silk_touch"
+       ],
+       "count": [
+        1,
+        1
+       ],
+       "bonus": null,
+       "explosion_decay": false
+      },
+      {
+       "item": "gold_nugget",
+       "conditions": [],
+       "count": [
+        2,
+        6
+       ],
+       "bonus": {
+        "enchantment": "fortune",
+        "formula": "ore_drops",
+        "bonus_multiplier": 0
+       },
+       "explosion_decay": true
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -61,9 +61,13 @@ void UFoundationInteractionSettings::BuildRules(FFoundationRules& Rules) const
     const UFoundationProfile& Profile = *GetDefault<UFoundationProfile>();
     Rules.Items.Reset();
     AddBlockItems(*FFoundationBlockRegistry::GetDefault(), Rules.Items);
-    if (const UFoundationItemAssets* ItemAssets = UFoundationItemAssets::LoadDefault())
-        MergeItems(Rules.Items, ItemAssets->MakeDefinitions(), TEXT("DA_Items"));
+    const UFoundationItemAssets* ItemAssets = UFoundationItemAssets::LoadDefault();
+    if (ItemAssets) MergeItems(Rules.Items, ItemAssets->MakeDefinitions(), TEXT("DA_Items"));
     MergeItems(Rules.Items, Items, TEXT("UFoundationInteractionSettings::Items"));
+    // Block loot (items S5b), resolved against every item above.
+    Rules.LootTables.Reset();
+    Rules.LootPredicates.Reset();
+    if (ItemAssets) ItemAssets->AddLoot(Rules);
     Rules.Hand = EmptyHand;
     Rules.Loadout = Loadout;
     Rules.BlockReachCm = Profile.BlockReachCm;

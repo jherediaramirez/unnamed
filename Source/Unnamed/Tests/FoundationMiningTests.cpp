@@ -185,10 +185,12 @@ namespace
     };
 
     // Steps until the block at the origin breaks through the command path (a start, then one continue per step):
-    // 0 instant, -1 unbreakable, -2 anything else.
-    int32 MineSteps(FMiningLab& L, int32 Limit)
+    // 0 instant, -1 unbreakable, -2 anything else. Last, when given, receives the final result.
+    int32 MineSteps(FMiningLab& L, int32 Limit, FFoundationResult* Last = nullptr)
     {
-        FFoundationResult R = L.Run(EFoundationCommandType::MineStart);
+        FFoundationResult Discarded;
+        FFoundationResult& R = Last ? *Last : Discarded;
+        R = L.Run(EFoundationCommandType::MineStart);
         if (R.bBroken) return 0;
         if (!R.IsCommitted()) return R.Reason == EFoundationReason::Unbreakable ? -1 : -2;
         for (int32 Step = 1; Step <= Limit; ++Step)
@@ -351,7 +353,7 @@ bool FFoundationMiningScenarioTest::RunTest(const FString&)
     { return Rows.FindByPredicate([Id](const FBreakRow& Row) { return Row.Id == Id; }); };
 
     // Iron ore in the finite lab: a wooden pickaxe mines it at its full speed for nothing, a stone one takes it; both
-    // wear. The return is the block's drop (the provisional drops-itself rule until S5b's loot tables).
+    // wear. The return is iron ore's loot table (items S5b): raw_iron x1, never the ore itself.
     const FBreakRow* Ore = FindRow(TEXT("iron_ore"));
     const int32 Wooden = Tools.IndexOfByKey(TEXT("wooden_pickaxe")), Stone = Tools.IndexOfByKey(TEXT("stone_pickaxe"));
     if (!TestTrue(TEXT("iron ore and both pickaxes in the table"), Ore && Wooden != INDEX_NONE && Stone != INDEX_NONE))
@@ -363,12 +365,20 @@ bool FFoundationMiningScenarioTest::RunTest(const FString&)
         FMiningLab L(false);
         L.Hold(*Tools[Column]);
         L.Put(TEXT("iron_ore"));
-        const FName Drop = L.A.World.FindBlock(TEXT("iron_ore"))->DropItem;
-        const int32 Before = L.Count(Drop);
+        const int32 RawIron = L.A.Rules.FindItem(TEXT("raw_iron"));
+        const int32 OreBefore = L.Count(TEXT("iron_ore")), RawBefore = L.Count(TEXT("raw_iron"));
         const FString What = Tools[Column] + TEXT(" on iron ore: ");
-        TestEqual(What + TEXT("steps"), MineSteps(L, 1000), Ore->Ticks[Column]);
+        FFoundationResult Last;
+        TestEqual(What + TEXT("steps"), MineSteps(L, 1000, &Last), Ore->Ticks[Column]);
         TestFalse(What + TEXT("broken"), L.Solid());
-        TestEqual(What + TEXT("returned"), L.Count(Drop) - Before, Ore->Drops[Column]);
+        if (Ore->Drops[Column])
+            TestTrue(What + TEXT("Drops is raw_iron x1"),
+                RawIron != INDEX_NONE && Last.Drops.Num() == 1 && Last.Drops[0].Item == RawIron &&
+                    Last.Drops[0].Count == 1);
+        else
+            TestTrue(What + TEXT("Drops is empty"), Last.Drops.IsEmpty());
+        TestEqual(What + TEXT("raw_iron returned"), L.Count(TEXT("raw_iron")) - RawBefore, Ore->Drops[Column]);
+        TestEqual(What + TEXT("no iron ore returned"), L.Count(TEXT("iron_ore")) - OreBefore, 0);
         TestEqual(What + TEXT("wear 1"), L.P().Inventory.Hotbar[0].Damage, 1);
     }
 

@@ -1,4 +1,5 @@
 #include "Foundation/FoundationItemAssets.h"
+#include "Foundation/FoundationAuthority.h"
 #include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
 
@@ -87,4 +88,64 @@ TArray<FFoundationItemDefinition> UFoundationItemAssets::MakeDefinitions() const
     for (const FFoundationItemAsset& Asset : Items)
         Definitions.Add(MakeDefinition(Asset));
     return Definitions;
+}
+
+int32 UFoundationItemAssets::AddLoot(FFoundationRules& Rules) const
+{
+    Rules.LootPredicates.Reset();
+    for (const FFoundationLootPredicateAsset& Asset : LootPredicates)
+    {
+        FFoundationLootPredicate& Predicate = Rules.LootPredicates.AddDefaulted_GetRef();
+        Predicate.Name = Asset.Name;
+        Predicate.Items = Asset.Items;
+        // Parallel arrays (ImportItems.py writes both).
+        for (int32 Index = 0; Index < FMath::Min(Asset.Enchantments.Num(), Asset.EnchantmentMinLevels.Num()); ++Index)
+            Predicate.Enchantments.Emplace(Asset.Enchantments[Index], Asset.EnchantmentMinLevels[Index]);
+    }
+    Rules.LootTables.Reset();
+    int32 Skipped = 0;
+    for (const FFoundationLootTableAsset& Asset : LootTables)
+    {
+        FFoundationLootTable Table;
+        FName Missing;
+        for (const FFoundationLootPoolAsset& PoolAsset : Asset.Pools)
+        {
+            FFoundationLootPool& Pool = Table.Pools.AddDefaulted_GetRef();
+            Pool.Rolls = PoolAsset.Rolls;
+            for (const FFoundationLootCandidateAsset& CandidateAsset : PoolAsset.Candidates)
+            {
+                FFoundationLootCandidate& Candidate = Pool.Candidates.AddDefaulted_GetRef();
+                Candidate.Item = Rules.FindItem(CandidateAsset.Item);
+                if (Candidate.Item == INDEX_NONE) Missing = CandidateAsset.Item;
+                for (const FName Condition : CandidateAsset.Conditions)
+                {
+                    const int32 Index = Rules.LootPredicates.IndexOfByPredicate(
+                        [Condition](const FFoundationLootPredicate& Predicate) { return Predicate.Name == Condition; });
+                    if (Index == INDEX_NONE) Missing = Condition;
+                    Candidate.Conditions.Add(Index);
+                }
+                Candidate.CountMin = CandidateAsset.CountMin;
+                Candidate.CountMax = CandidateAsset.CountMax;
+                if (CandidateAsset.BonusFormula == TEXT("ore_drops"))
+                    Candidate.Bonus = EFoundationLootBonus::OreDrops;
+                else if (CandidateAsset.BonusFormula == TEXT("uniform_bonus_count"))
+                    Candidate.Bonus = EFoundationLootBonus::UniformBonusCount;
+                else if (!CandidateAsset.BonusFormula.IsNone())
+                    Missing = CandidateAsset.BonusFormula;
+                Candidate.BonusEnchantment = CandidateAsset.BonusEnchantment;
+                Candidate.BonusMultiplier = CandidateAsset.BonusMultiplier;
+                Candidate.bExplosionDecay = CandidateAsset.bExplosionDecay;
+            }
+        }
+        if (!Missing.IsNone())
+        {
+            UE_LOG(LogUnnamedFoundation, Log,
+                TEXT("The loot table of %s is skipped: %s is not defined; it drops itself"), *Asset.Block.ToString(),
+                *Missing.ToString());
+            ++Skipped;
+            continue;
+        }
+        Rules.LootTables.Add(Asset.Block, MoveTemp(Table));
+    }
+    return Skipped;
 }
