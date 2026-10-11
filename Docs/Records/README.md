@@ -4,6 +4,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 11, 2026
 
+- [Voxel world: the intermittent allocator crash, a test session](2026-10-11-Voxel-CrashHunt.md): read before hunting the ParallelFor allocator crash again. The allocator is Mimalloc (not binned) and the rate about 1 in 9 full runs. No culprit was found: this session's code never crashed in 65 runs. Both recent crashes were the first native run after a merge, which points at derived-data builds on a cold cache, so the next step is the `-ddc=Cold` test (it waits for Jesus's word). RunChecks now keeps the crash dumps (`<Native folder>\Crashes`), and its build step passes `-NoHotReloadFromIDE`.
 - [Tools S2: the quiet-window lock, one switch for every lane](2026-10-11-Tools-S2-QuietWindowLock.md): read before a quiet window or any heavy launch outside RunChecks. `C:\dev\sandbox\locks\quiet-window.lock` now holds every lane, with no HOLD or WINDOW OVER messages. The manager opens and closes a window with `quiet_window.ps1 -Open <lane>` / `-Close` (the owner lane may close its own), every chain calls `Scripts/QuietWindow.ps1` before each heavy launch (RunChecks does it itself), and `quiet_check.ps1 -Guard` ends when the lock goes. A lane on the old RunChecks waits on any lock until it merges this.
 
 ## October 10, 2026
