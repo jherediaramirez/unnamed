@@ -73,15 +73,16 @@ struct FFoundationBlockType
     FColor Tint = FColor(0, 0, 0, 0);
     FLinearColor Color = FLinearColor::White;
 
-    // Provisional loot rule: a block drops its own item, and a wall block without one (wall_torch) its standing
-    // block's. Loot tables are not imported yet.
+    // Provisional loot rule: a block drops its own item, and a wall block without one (wall_torch, the coral wall
+    // fans) its standing block's. Loot tables are not imported yet.
     FName DropItem;
     int32 DropCount = 1;
     FName Item;
     // The item's GUI tint (items/<id>.json; alpha 0: untinted) and stack size.
     FColor ItemTint = FColor(0, 0, 0, 0);
     int32 ItemMaxStack = 64;
-    // A standing-and-wall item's wall block (torch: wall_torch), placed against a side face; None for the rest.
+    // A standing-and-wall item's wall block (torch: wall_torch, from DA_Blocks; a coral fan: its wall fan, from
+    // FoundationPlantRules), placed against a side face; None for the rest.
     FName ItemWallBlock;
     // Model blocks' item icons (FFoundationBlockAsset): an IconAtlas tile or a baked model with its gui transform.
     int32 ItemIconTile = INDEX_NONE;

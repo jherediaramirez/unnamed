@@ -1,5 +1,6 @@
 #include "Terrain/VoxelDensityTerrain.h"
 #include "Blocks/VoxelBlockTable.h"
+#include "Decoration/VoxelFeatureGraph.h"
 #include "HAL/PlatformTime.h"
 #include "Misc/ScopeLock.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
@@ -122,6 +123,20 @@ FVoxelDensityTerrain::FVoxelDensityTerrain(const FVoxelTerrainPreset& Preset, ui
             return;
         }
     }
+    // The carvers (S10) need caves (their fluids come from the aquifer), the rules (they carve the ruled blocks) and
+    // the decoration data; compiled even with bCarvers off, so a per-call override (the bench, tests) can turn them on.
+    if (Settings.Features && Settings.bCaves && SurfaceRules.IsCompiled())
+    {
+        if (Carvers.Initialize(*Settings.Features, Seed, &CarverError))
+            CarveCache = MakeUnique<FVoxelCarvePathCache>();
+        else if (Settings.bCarvers)
+        {
+            Error = Preset.Name + TEXT(": ") + CarverError;
+            return;
+        }
+    }
+    else
+        CarverError = TEXT("the carvers need caves, the surface rules and the decoration data");
     // Sharing only saves work, so a column shape the cache cannot hold just goes without it.
     if (Settings.bShareCorners)
     {
@@ -150,6 +165,7 @@ bool FVoxelDensityTerrain::InitializeBiomes(
 void FVoxelDensityTerrain::ResetCaches() const
 {
     if (CornerCache) CornerCache->Reset();
+    if (CarveCache) CarveCache->Reset();
 }
 
 int64 FVoxelDensityTerrain::GetCornerCacheBytes() const
@@ -326,6 +342,13 @@ void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArra
         Timings->SurfaceFull = SurfaceTimings.SurfaceFull;
         Timings->SurfaceInteriorRuns = SurfaceTimings.SurfaceInteriorRuns;
         Timings->SurfaceSteps = SurfaceTimings.SurfaceSteps;
+        Timings->CarversMs = SurfaceTimings.CarversMs;
+        Timings->Carve = SurfaceTimings.Carve;
+        Timings->CarveCandidates = SurfaceTimings.CarveCandidates;
+        Timings->CarveAir = SurfaceTimings.CarveAir;
+        Timings->CarveWater = SurfaceTimings.CarveWater;
+        Timings->CarveLava = SurfaceTimings.CarveLava;
+        Timings->CarveBarriers = SurfaceTimings.CarveBarriers;
         Timings->Density = Stats;
     }
 }
@@ -489,15 +512,88 @@ void FVoxelDensityTerrain::FillWithRules(FIntPoint Position, const FVoxelColumn&
                 TArrayView<uint16>(&Dense[First], Dense.Num() - First), Stride, Heights[LocalY * Size + LocalX]);
         }
     const double AfterRules = FPlatformTime::Seconds();
+    // The carvers cut the ruled blocks (wiki: carvers run after the surface), before the freeze.
+    if (Fluids && Carvers.IsInitialized() && Overrides.bCarvers.Get(Settings.bCarvers))
+        Carve(Position, Dense, Scratch, MakeArrayView(Heights), Overrides, Timings);
+    const double AfterCarve = FPlatformTime::Seconds();
     if (bFreeze)
         Freeze.Apply(Position, Dense, Out.GetBiomes(), Biomes.GetTable(), Climate, SeaLevel, MakeArrayView(Heights));
     const double End = FPlatformTime::Seconds();
-    Timings.SurfaceMs = (End - Start) * 1000;
+    Timings.CarversMs = (AfterCarve - AfterRules) * 1000;
+    Timings.SurfaceMs = (End - Start) * 1000 - Timings.CarversMs;
     Timings.PreliminaryMs = (AfterPreliminary - Start) * 1000;
-    Timings.FreezeMs = (End - AfterRules) * 1000;
+    Timings.FreezeMs = (End - AfterCarve) * 1000;
     Timings.SurfaceDeep = Chunk.DeepBlocks;
     Timings.SurfaceInterior = Chunk.InteriorBlocks;
     Timings.SurfaceFull = Chunk.FullBlocks;
     Timings.SurfaceInteriorRuns = Chunk.InteriorRuns;
     Timings.SurfaceSteps = Chunk.Steps;
+}
+
+void FVoxelDensityTerrain::Carve(FIntPoint Position, TArray<uint16>& Dense, FScratch& Scratch,
+    TArrayView<int32> Heights, const FVoxelDensityTerrainOverrides& Overrides,
+    FVoxelDensityTerrainTimings& Timings) const
+{
+    TRACE_CPUPROFILER_EVENT_SCOPE(Voxel_Carvers);
+    constexpr int32 Size = VoxelConstants::ColumnSize, Area = Size * Size, Height = VoxelConstants::Height;
+    Scratch.CarveMask.SetNumUninitialized(FVoxelCarvers::MaskWords, EAllowShrinking::No);
+    Carvers.Mark(Position, Scratch.CarveMask, Overrides.bCarveCache.Get(true) ? CarveCache.Get() : nullptr,
+        &Timings.Carve, Overrides.CarveReach.Get(FVoxelCarvers::Reach));
+
+    // The marked blocks that can be carved: 26.3 has no carver tag, and its carvers were never seen to cut air,
+    // fluids or bedrock (scout K's same-seed diff), so everything else is cut.
+    uint16* const States = Dense.GetData();
+    const uint16 Water = Blocks.Water, Lava = Blocks.Lava, Bedrock = Blocks.Bedrock;
+    TArray<int32>& Candidates = Scratch.CarveBlocks;
+    Candidates.Reset();
+    const uint64* const Bits = Scratch.CarveMask.GetData();
+    for (int32 Word = 0; Word < FVoxelCarvers::MaskWords; ++Word)
+        for (uint64 Rest = Bits[Word]; Rest; Rest &= Rest - 1)
+        {
+            const int32 Index = Word * 64 + int32(FMath::CountTrailingZeros64(Rest));
+            const uint16 State = States[Index];
+            if (State != 0 && State != Water && State != Lava && State != Bedrock) Candidates.Add(Index);
+        }
+    Timings.CarveCandidates = Candidates.Num();
+    if (Candidates.IsEmpty()) return;
+
+    // Each block column's highest block of positive density before carving, the top of Fill's sky: the first solid
+    // kind at or below Heights (a barrier never lies under open sky, so the first solid kind is a dense block).
+    int32 SkyTop[Area];
+    const EVoxelSurfaceKind* const Kinds = Scratch.Kinds.GetData();
+    for (int32 Cell = 0; Cell < Area; ++Cell)
+    {
+        int32 Z = Heights[Cell];
+        while (Z >= VoxelConstants::MinZ && Kinds[Cell * Height + Z - VoxelConstants::MinZ] != EVoxelSurfaceKind::Solid)
+            --Z;
+        SkyTop[Cell] = Z;
+    }
+    // What fills each carved block: what the aquifer gives an open block there (S10-Q1 (a)); a barrier stays solid.
+    Aquifer.FillCarved(Position.X * Size, Position.Y * Size, Candidates, Scratch.Density, MakeArrayView(SkyTop),
+        Scratch.Aquifer, Scratch.CarveFluids);
+    for (int32 K = 0; K < Candidates.Num(); ++K)
+        switch (Scratch.CarveFluids[K])
+        {
+        case EVoxelAquiferFluid::Barrier:
+            ++Timings.CarveBarriers;
+            break;
+        case EVoxelAquiferFluid::Water:
+            States[Candidates[K]] = Water;
+            ++Timings.CarveWater;
+            break;
+        case EVoxelAquiferFluid::Lava:
+            States[Candidates[K]] = Lava;
+            ++Timings.CarveLava;
+            break;
+        default:
+            States[Candidates[K]] = 0;
+            ++Timings.CarveAir;
+        }
+    // The freeze starts its search for the top at Heights, so they come down past carved air.
+    for (int32 Cell = 0; Cell < Area; ++Cell)
+    {
+        int32& Top = Heights[Cell];
+        while (Top >= VoxelConstants::MinZ && States[FVoxelColumn::GetDenseIndex(Cell % Size, Cell / Size, Top)] == 0)
+            --Top;
+    }
 }

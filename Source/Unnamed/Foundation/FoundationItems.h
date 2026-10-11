@@ -79,8 +79,8 @@ struct FFoundationItemDefinition
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     int32 DurabilityPerHit = 0;
 
-    // Presentation only: which HUD/held-item drawing to use ("block", "pickaxe", "sword") and its tint. The HUD
-    // draws a block item's 3D icon, else Sprite; the held view still uses Icon for tools until items S4.
+    // Presentation only: "block" draws the block's 3D icon in the HUD (IconColor tints its fallback cube) and the
+    // block in hand; otherwise the HUD draws Sprite and the held view the item's DA_Items model (items S4).
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     FName Icon;
 

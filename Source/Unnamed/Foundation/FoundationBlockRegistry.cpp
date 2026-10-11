@@ -1,6 +1,7 @@
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationInteractionSettings.h"
+#include "Foundation/FoundationPlantRules.h"
 #include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
 
@@ -278,6 +279,17 @@ TSharedRef<FFoundationBlockRegistry> FFoundationBlockRegistry::Build(
         if (!Wall) continue;
         FFoundationBlockType& WallBlock = Registry->Blocks[*Wall];
         Standing.bTorchRule = WallBlock.bTorchRule = true;
+        if (WallBlock.DropItem.IsNone()) WallBlock.DropItem = Standing.DropItem;
+    }
+    // The coral fans' pairs (FoundationPlantRules::GetWallBlock) place the same way but keep the plants' survival
+    // rules; a wall fan drops what its fan drops, as the wall torch does.
+    for (FFoundationBlockType& Standing : Registry->Blocks)
+    {
+        const FName WallId = FoundationPlantRules::GetWallBlock(Standing.Id);
+        const int32* Wall = WallId.IsNone() || !Standing.ItemWallBlock.IsNone() ? nullptr : Registry->ById.Find(WallId);
+        if (!Wall) continue;
+        Standing.ItemWallBlock = WallId;
+        FFoundationBlockType& WallBlock = Registry->Blocks[*Wall];
         if (WallBlock.DropItem.IsNone()) WallBlock.DropItem = Standing.DropItem;
     }
     return Registry;

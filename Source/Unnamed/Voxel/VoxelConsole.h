@@ -32,6 +32,8 @@ namespace VoxelConsole
     // voxel.Look.OreGlint. A change remeshes every loaded column; benches read them too.
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarOreHost;
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarOreGlint;
+    // The carvers (phase 6, S10); off by default until S11.
+    extern UNNAMED_API TAutoConsoleVariable<bool> CVarCarvers;
 
     // Tasks in flight when voxel.MaxTasksInFlight is 0: twice the task workers, so workers never idle between
     // finishing one job and the game thread queuing the next.

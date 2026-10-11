@@ -65,24 +65,25 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
 **The torch** (torch sessions T2 and T3). The `torch` item (`PlacesWallBlock`, from the reference's standing-and-wall items) places `torch` or `wall_torch`, where a support holds it: `FFoundationBlockRegistry::GetTorchSupport` gives each state's faces from `facts/block_support.json`, which `FactsDump.java` measures with the torch's own `canSurvive` (leaves and powder snow hold none, every other full cube all five, an upside-down slab a floor torch, a bottom slab nothing).
 - **Placement by look** (`FoundationBlockPlacement::GetTorchState`), as measured black-box in 26.3 by probe P3 (`Tests/Probes/torch-placement-26.3.json`, 64,896 clicks): the directions nearest the look (`GetNearestLooks`), with the direction into the clicked block first unless the click replaces it (short grass). Up is skipped, down gives the floor torch if the cell below holds one, and a side gives the wall torch against the first side, in that order, that holds one; the first hit wins, and nothing holding places nothing (`CannotSurvive`). So a side or top click on a block that holds a torch always places on it, an underside click places by look, and a click on short grass chooses by look, not by the clicked face. The preview and the placement share the rule.
 - **Survival:** a torch pops through S7's one-level cascade when its support stops holding it (an unknown support cell keeps it). It shares the plants' switch, `Options.bPlantRules`.
-- **Drops:** a broken wall torch drops a `torch`, and pick block on it selects the torch. Its light is in "Light sources" below; the coral fans' wall fans are later work.
+- **Drops:** a broken wall torch drops a `torch`, and pick block on it selects the torch. Its light is in "Light sources" below. The coral fans' items place their wall fans the same way (below).
 
 **Plants and the other model blocks** (phase 6, S7; `FoundationPlantRules`, `FFoundationAuthority::CheckPlantPlacement` and `SettlePlants`). Behaviour comes from the reference's properties and tags, scout H's black-box support table ([the prep](Records/2026-10-10-Voxel-Phase6-Scout-H-Plant-Interaction.md), T1) and minecraft.wiki.
 - **State from the click**, by property, for model blocks without an asset rule:
   - `half`: the lower half, and the authority writes the upper half above it. The upper cell must be replaceable (else `DestinationOccupied`, or `OutsideBounds` at the build limit);
   - `facing`: amethyst, shelf mushroom and coral wall fans point away from the clicked block; cocoa faces it; the others face the player;
-  - vine, glow lichen and sculk vein: the one face toward the clicked block. A vine is never placed on an underside until Jesus decides its up face (Q8), and a state without a face is refused;
+  - vine, glow lichen and sculk vein: the one face toward the clicked block. A vine under a block takes its up face (S7b, Jesus's answer to Q8), and a state without a face is refused;
   - `vertical_direction`: up on a top face, down under a block, and on a side against the vertical look;
   - `waterlogged`: in a water source.
-- **Survival:** the placed state must survive where it goes (`CannotSurvive`), by the voxel core's one table, `FVoxelPlantSurvival` (S8's ground plants plus S7's attached, hanging, multiface and pointed kinds; `VoxelBlocks::GetPlantSurvival`). A rule that reads an unknown cell refuses, so nothing is placed on the Playground's floor, which is not a block. Sturdy faces are S8's `GetSturdyFaces` until Jesus decides Q2. Corals need no water (Q6), and coral fans place only on floors (Q7).
+- **Coral fans** (S7b, Jesus's answer to Q7): the fan's item places its wall fan by look, as the torch's item does (`FoundationBlockPlacement::GetStandingOrWallState`), where the survival table holds it. The five pairs are the reference's standing-and-wall items (`FoundationPlantRules::GetWallBlock`; the torch's pair comes from `DA_Blocks`). A wall fan has no item, drops its fan's, and pick block gives the fan.
+- **Survival:** the placed state must survive where it goes (`CannotSurvive`), by the voxel core's one table, `FVoxelPlantSurvival` (S8's ground plants plus S7's attached, hanging, multiface and pointed kinds; `VoxelBlocks::GetPlantSurvival`). A rule that reads an unknown cell refuses, so nothing is placed on the Playground's floor, which is not a block. Sturdy faces are S8's `GetSturdyFaces` until Q2's follow-up measures them. Corals need no water (Q6). A vine stays while any of its faces holds (glow lichen and sculk vein need every face), and its up face needs the upper face of the block above, as measured: a top slab holds it, a bottom slab does not (S7b, Q8).
 - **After an edit** (a placement or a break), one level deep (Jesus's answer 6):
   - a double plant is one unit, so mining or replacing either half removes the other;
   - each neighbour of the changed cells that no longer survives pops, with its other half;
-  - a vine, glow lichen or sculk vein loses only the faces no longer held while one is left;
-  - a pop's neighbours are not checked, so a stack (sugar cane, cactus, kelp, dripstone) loses only the segment next to the edit (Q1 open);
+  - a vine, glow lichen or sculk vein loses the faces no longer held while one is left;
+  - a pop's neighbours are not checked, except along a stack, which settles to its end (S7b, Jesus's answer to Q1): from each changed segment, the cells of the same stack above and below, while they change. The stacks (`FoundationPlantRules::GetStack`): sugar cane, cactus with its flower, bamboo, kelp, cave vines, pointed dripstone, sulfur spike, pale hanging moss, vine (a vine hanging under a vine) and big dripleaf with its stem;
   - a rule that reads an unknown cell keeps the plant;
   - pops are `Popped` events and drop nothing (Q4).
-- **Replaceable:** every block takes the facts' flag (Jesus's answer 4), except snow, which stays not replaceable until Jesus decides its layers (Q5).
+- **Replaceable:** every block takes the facts' flag (Jesus's answer 4), except snow: one layer is replaced by a placed block, more layers are not (S7b, Jesus's answer to Q5; `FoundationBlockPlacement::IsReplaceable`, which the destination of a click also uses). Snow does not replace a snow layer: stacking layers is not built.
 - **Mining:** hardness 0 breaks at once (68 of the 85 model blocks, the torches included); vines, lichen, cocoa and sculk vein take 0.2.
 - `Options.bPlantRules` switches all of this off, for A/B runs.
 
@@ -154,8 +155,12 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
 - **Plants (S7):**
   - breaking or popping a water-holding plant leaves air, not its water (vanilla leaves the source);
   - project blocks (`UFoundationInteractionSettings`) hold no plant: the survival table knows only the imported blocks;
-  - a stack pops one segment per edit (Q1);
-  - the vine's up face is never checked (Q8);
+  - snow placed on a snow layer goes into the cell above instead of adding a layer (stacking is not built);
+  - the survival table against the game's matrix (`Blocks.Survival`, counted per cause; S7's kinds agree everywhere):
+    - sturdy faces, until Q2's follow-up measures them: 20,931 answers (leaves, mud, soul sand, snow, powder snow and the model blocks as supports);
+    - the mushrooms' light: 10,360 (the table reads no light; the dark probe agrees);
+    - snow layers have no survival rule: 205,680 (main lane, with snow: generation places snow layers);
+    - S8's rules (main lane, small fixes; they move generation): pale moss carpet with `bottom=false` takes any floor instead of a `bottom=true` carpet (1,055,349); a lily pad pops on a water source held in a block, such as a waterlogged slab or leaves (1,521); an upper half stands on its own upper half (213); a mushroom stands on powder snow or a test instance block in the dark (4);
   - the mushrooms ignore light (S8);
   - a thick bamboo stalk's outline reaches 1/16 block into the next cell at its largest offsets, so a ray through that sliver alone misses it (targeting tests one cell at a time).
 - **Shelf mushroom:** its two textures are 32 x 32; the 16 x 16 block array holds their own vanilla mip 1 (S6 decides whether they need more).
@@ -173,9 +178,9 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
   - `.Shapes`: slab, water, snow layer, powder snow and lava shapes; every model state's boxes, light, water and offset against the facts.
   - `.PlantShapes`: every model state's moved outline and collision boxes at four cells against the voxel table's offset (collision never leaves its cell; a thick bamboo outline reaches at most 1/16 block out, checked at 256 cells), the gathered boxes, and a ray through a dandelion's empty corner.
   - `.PlantPlacement`: the plant states from the click, and the halves of double plants.
-  - `.Replaceable`: every block's flag against the facts (snow pinned as today).
-  - `.Survival`: about 80 support rows from scout H's table, then the pop pass through the authority (a flower, both halves, one segment of a stack, trimmed vine and lichen faces, a cactus beside a placed block, unknown cells).
-  - `Unnamed.Foundation.Interaction.Plants`: both halves through the authority, replacing grass, refusals, pops dropping nothing, instant mining, and the switch.
+  - `.Replaceable`: every block's flag against the facts; snow by its layers (one is replaceable), and what replaces a layer.
+  - `.Survival`: about 90 support rows from scout H's table; the whole matrix of `facts/plant_survival.json` (every imported state, eight probes, 4,425 candidates: 156 million answers, each difference counted by its cause and pinned); then the pop pass through the authority (a flower, both halves, stacks to their end up and down, trimmed vine and lichen faces, a cactus beside a placed block, unknown cells).
+  - `Unnamed.Foundation.Interaction.Plants`: both halves through the authority, replacing grass, refusals, a vine under stone and slabs, coral fans on a side and a top face, one snow layer as the destination, pops dropping nothing, instant mining, and the switch.
   - `.Models`: every baked quad and every model state's parts against the reference, with spot checks.
   - `.ModelMeshes`: the Playground's model meshes: 2,440 baked quads, 2,444 drawn (two triangles each: 16 exact repeats dropped, 20 added by the torch's flame cut), full-precision UVs, and every vertex's position, texture UV, shade face and own code.
   - `Unnamed.Hud.Creative.Tabs`, `.Clicks` and `.Authority`.

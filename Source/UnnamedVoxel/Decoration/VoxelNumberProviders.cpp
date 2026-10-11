@@ -78,6 +78,11 @@ void FVoxelIntProvider::GetDistribution(TArray<double>& Out) const
     else if (Type == EType::Uniform)
         for (double& P : Out)
             P = 1. / Out.Num();
+    else if (Type == EType::VeryBiasedToBottom)
+        for (int32 Outer = 1; Outer <= Out.Num(); ++Outer)
+            for (int32 Middle = 1; Middle <= Outer; ++Middle)
+                for (int32 Value = 0; Value < Middle; ++Value)
+                    Out[Value] += 1. / Out.Num() / Outer / Middle;
     else
         for (int32 A = 0; A <= SpanA; ++A)
             for (int32 B = 0; B <= SpanB; ++B)
@@ -126,6 +131,15 @@ bool VoxelNumberProviders::CompileInt(
             return false;
         Out = FVoxelIntProvider::MakeUniform(Min, Max);
         if (Max > Min) Out.Type = FVoxelIntProvider::EType::BiasedToBottom;
+        return true;
+    }
+    if (Type == TEXT("minecraft:very_biased_to_bottom"))
+    {
+        if (!GetInt(Graph, Node, TEXT("min_inclusive"), Min, OutError) ||
+            !GetInt(Graph, Node, TEXT("max_inclusive"), Max, OutError))
+            return false;
+        Out = FVoxelIntProvider::MakeUniform(Min, Max);
+        if (Max > Min) Out.Type = FVoxelIntProvider::EType::VeryBiasedToBottom;
         return true;
     }
     if (Type == TEXT("minecraft:weighted_list"))
@@ -226,4 +240,96 @@ bool VoxelNumberProviders::CompileHeight(
         return true;
     }
     return ProviderFail(OutError, FString::Printf(TEXT("height provider %s is not compiled yet"), *FString(Type)));
+}
+
+FVoxelFloatProvider FVoxelFloatProvider::MakeConstant(float Value)
+{
+    FVoxelFloatProvider Out;
+    Out.Min = Out.Max = Value;
+    return Out;
+}
+
+FVoxelFloatProvider FVoxelFloatProvider::MakeUniform(float InMin, float InMax)
+{
+    if (InMax <= InMin) return MakeConstant(InMin);
+    FVoxelFloatProvider Out;
+    Out.Type = EType::Uniform;
+    Out.Min = InMin;
+    Out.Max = InMax;
+    return Out;
+}
+
+FVoxelFloatProvider FVoxelFloatProvider::MakeTrapezoid(float InMin, float InMax, float Plateau)
+{
+    const float Range = InMax - InMin;
+    if (Plateau >= Range) return MakeUniform(InMin, InMax);
+    FVoxelFloatProvider Out;
+    Out.Type = EType::Trapezoid;
+    Out.Min = InMin;
+    Out.Max = InMax;
+    Out.SpanA = (Range - Plateau) / 2;
+    Out.SpanB = Range - Out.SpanA;
+    return Out;
+}
+
+double FVoxelFloatProvider::GetCdf(double X) const
+{
+    if (Type == EType::Constant) return X > Min ? 1 : 0;
+    if (Type == EType::Uniform) return FMath::Clamp((X - Min) / (double(Max) - Min), 0., 1.);
+    // The sum of U(0, SpanA) and U(0, SpanB): the area of the rectangle's part where A + B < X - Min.
+    const double T = X - Min, A = SpanA, B = SpanB;
+    if (T <= 0) return 0;
+    if (T >= A + B) return 1;
+    if (A <= 0) return FMath::Clamp(T / B, 0., 1.);
+    double Area;
+    if (T <= A)
+        Area = T * T / 2;
+    else if (T <= B)
+        Area = A * A / 2 + (T - A) * A;
+    else
+        Area = A * B - (A + B - T) * (A + B - T) / 2;
+    return Area / (A * B);
+}
+
+bool VoxelNumberProviders::CompileFloat(
+    const FVoxelFeatureGraph& Graph, const FVoxelFeatureValue& Value, FVoxelFloatProvider& Out, FString* OutError)
+{
+    if (Value.Type == EVoxelFeatureValueType::Number)
+    {
+        Out = FVoxelFloatProvider::MakeConstant(float(Value.Number));
+        return true;
+    }
+    const int32 Node = Graph.GetNode(Value);
+    if (Node == INDEX_NONE || Graph.Nodes[Node].Kind != EVoxelFeatureKind::FloatProvider)
+        return ProviderFail(OutError, TEXT("not a float provider"));
+    const FStringView Type = Graph.GetType(Node);
+    const auto GetFloat = [&](const TCHAR* Key, float& OutValue)
+    {
+        const FVoxelFeatureValue* Field = Graph.FindField(Node, Key);
+        if (!Field || Field->Type != EVoxelFeatureValueType::Number)
+            return ProviderFail(OutError, FString::Printf(TEXT("%s: no number %s"), *FString(Type), Key));
+        OutValue = float(Field->Number);
+        return true;
+    };
+    float Min = 0, Max = 0, Plateau = 0;
+    if (Type == TEXT("minecraft:constant"))
+    {
+        if (!GetFloat(TEXT("value"), Min)) return false;
+        Out = FVoxelFloatProvider::MakeConstant(Min);
+        return true;
+    }
+    if (Type == TEXT("minecraft:uniform"))
+    {
+        if (!GetFloat(TEXT("min_inclusive"), Min) || !GetFloat(TEXT("max_exclusive"), Max)) return false;
+        Out = FVoxelFloatProvider::MakeUniform(Min, Max);
+        return true;
+    }
+    if (Type == TEXT("minecraft:trapezoid"))
+    {
+        if (!GetFloat(TEXT("min"), Min) || !GetFloat(TEXT("max"), Max) || !GetFloat(TEXT("plateau"), Plateau))
+            return false;
+        Out = FVoxelFloatProvider::MakeTrapezoid(Min, Max, Plateau);
+        return true;
+    }
+    return ProviderFail(OutError, FString::Printf(TEXT("float provider %s is not compiled yet"), *FString(Type)));
 }

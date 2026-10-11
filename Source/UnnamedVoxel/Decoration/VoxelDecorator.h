@@ -53,9 +53,9 @@ struct FVoxelDecorationOptions
     // blossom, sculk vein, ice patch): off until those sessions (scout I's question 1, recommendation b).
     bool bLaterPlants = false;
     // voxel.Decoration.Trees: the tree feature (S9a) compiles with its modifiers (surface_water_depth_filter,
-    // environment_scan); inside a selector, an entry of a type S9b builds (fallen trees, huge mushrooms) places
-    // nothing, and a tree's decorators are left out, all counted by Describe. Off: trees are skipped as before S9a, so
-    // S8's goldens and hashes reproduce. Needs bPlants.
+    // environment_scan); inside a selector, an entry of a type S9d builds (fallen trees, huge mushrooms) places
+    // nothing, and a tree decorator not built yet is left out, all counted by Describe. Off: trees are skipped as
+    // before S9a, so S8's goldens and hashes reproduce. Needs bPlants.
     bool bTrees = true;
     // When set, only the placed features it accepts (by full id) run.
     TFunction<bool(FStringView)> Filter;
@@ -142,8 +142,8 @@ public:
     const FVoxelStateProviders& GetProviders() const { return Providers; }
     // The skipped placed features' reasons with their counts.
     const TMap<FString, int32>& GetSkipped() const { return Skipped; }
-    // Trees (S9a): the configurations compiled, the selector entries of S9b's types placing nothing, and the tree
-    // decorators left out, by type.
+    // Trees (S9a): the configurations compiled, the selector entries of S9d's types placing nothing, and the tree
+    // decorators not built yet (left out), by type.
     TConstArrayView<FVoxelTreeConfig> GetTrees() const { return Trees; }
     const TMap<FString, int32>& GetPlaceholders() const { return Placeholders; }
     const TMap<FString, int32>& GetSkippedDecorators() const { return SkippedDecorators; }

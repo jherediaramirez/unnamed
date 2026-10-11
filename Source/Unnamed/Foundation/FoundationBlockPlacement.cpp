@@ -107,11 +107,16 @@ TStaticArray<EFoundationFace, 6> FoundationBlockPlacement::GetClickLooks(const F
     return Looks;
 }
 
+bool FoundationBlockPlacement::IsReplaceable(const FFoundationBlockWorld& World, FFoundationBlockState State)
+{
+    return World.GetBlock(State).bReplaceable || World.GetRegistry().GetShape(State) == EFoundationBlockShape::Layers1;
+}
+
 bool FoundationBlockPlacement::CanBeReplaced(const FFoundationBlockWorld& World, FFoundationBlockState Existing,
     const FFoundationBlockType& Placing, const FFoundationPlacementContext& Context, bool bReplacingClicked)
 {
     const FFoundationBlockType& Block = World.GetBlock(Existing);
-    if (Block.bReplaceable) return true;
+    if (IsReplaceable(World, Existing) && (Block.bReplaceable || Block.Id != Placing.Id)) return true;
     if (Block.Placement != EFoundationPlacementRule::Slab) return false;
     // SlabBlock.canBeReplaced.
     const FName Type = World.GetRegistry().GetValue(Existing, TEXT("type"));
@@ -248,26 +253,28 @@ bool FoundationBlockPlacement::IsTorchSupported(
     return (Registry.GetTorchSupport(World.Get(Support).State) >> int32(Face) & 1) != 0;
 }
 
-bool FoundationBlockPlacement::GetTorchState(const FFoundationBlockWorld& World, const FFoundationBlockType& Block,
-    const FFoundationBlockType& WallBlock, const FFoundationPlacementContext& Context, FFoundationBlockState& OutState)
+bool FoundationBlockPlacement::GetStandingOrWallState(const FFoundationBlockWorld& World,
+    const FFoundationBlockType& Block, const FFoundationBlockType& WallBlock,
+    const FFoundationPlacementContext& Context, TFunctionRef<bool(FFoundationBlockState)> Holds,
+    FFoundationBlockState& OutState)
 {
     const TStaticArray<EFoundationFace, 6> Looks = GetClickLooks(Context);
-    // The wall: the first side in the looks whose neighbour holds a wall torch facing away from it.
+    // The wall: the first side in the looks where the wall block facing away from it holds.
+    const FFoundationBlockState WallPlaced = GetStateForPlacement(World, WallBlock, Context);
     FFoundationBlockState Wall;
     bool bWall = false;
     for (int32 Index = 0; Index < 6 && !bWall; ++Index)
         if (IsHorizontal(Looks[Index]))
         {
-            Wall = World.GetRegistry().WithValue(
-                WallBlock.GetDefaultState(), TEXT("facing"), FaceValue(GetOpposite(Looks[Index])));
-            bWall = IsTorchSupported(World, Wall, Context.Destination);
+            Wall = World.GetRegistry().WithValue(WallPlaced, TEXT("facing"), FaceValue(GetOpposite(Looks[Index])));
+            bWall = Holds(Wall);
         }
     // Walking the looks: up is skipped, down stands on the cell below if it holds, a side takes the wall.
     for (const EFoundationFace Look : Looks)
         if (Look == EFoundationFace::Down)
         {
             const FFoundationBlockState Floor = GetStateForPlacement(World, Block, Context);
-            if (IsTorchSupported(World, Floor, Context.Destination))
+            if (Holds(Floor))
             {
                 OutState = Floor;
                 return true;
@@ -279,4 +286,12 @@ bool FoundationBlockPlacement::GetTorchState(const FFoundationBlockWorld& World,
             return true;
         }
     return false;
+}
+
+bool FoundationBlockPlacement::GetTorchState(const FFoundationBlockWorld& World, const FFoundationBlockType& Block,
+    const FFoundationBlockType& WallBlock, const FFoundationPlacementContext& Context, FFoundationBlockState& OutState)
+{
+    return GetStandingOrWallState(
+        World, Block, WallBlock, Context, [&World, &Context](FFoundationBlockState State)
+        { return IsTorchSupported(World, State, Context.Destination); }, OutState);
 }

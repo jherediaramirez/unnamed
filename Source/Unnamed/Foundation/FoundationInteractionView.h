@@ -57,6 +57,13 @@ public:
     bool IsOutlineVisible() const { return bOutlineVisible; }
     bool IsPreviewVisible() const { return bPreviewVisible; }
     bool IsHeldItemVisible() const;
+    // The held item's extruded sprite (items S4): its sprite ("item/iron_pickaxe"; None for blocks and the empty
+    // hand) and component, child of the hand pivot.
+    FName GetHeldSprite() const { return HeldSprite; }
+    const UStaticMeshComponent* GetHeldItem() const { return HeldItem; }
+    // Centimetres per model block (16 pixels) in the hand's space, which is scaled down so the items keep the size of
+    // the old cube tools at the pivot. Provisional, like the pivot: probe P1 fits both.
+    static constexpr double HeldModelBlockCm = 50;
     double GetLastViewMs() const { return LastViewMs; }
     // The breaking effects (foundation.Break.*; null before BeginPlay).
     FFoundationBreakEffects* GetBreakEffects() const { return BreakEffects.Get(); }
@@ -136,6 +143,10 @@ private:
     void DrawBox(const FBox& Box, FLinearColor Color, float Thickness);
     void DrawCracks(const FFoundationAuthority& Authority, const struct FFoundationInteraction& Interaction);
     void UpdateHeldItem(const FFoundationAuthority& Authority, AFoundationPawn* Pawn, bool bVisible, double DeltaTime);
+    // Shows an item's first-person model on the held item component (nothing for None or an item without one).
+    void SetHeldItem(FName Id);
+    // M_HeldItem with the 16 or 32 pixel sprite array, made on first use; null before CreateItemMaterials.py ran.
+    UMaterialInterface* GetItemMaterial(const class UFoundationItemAssets& Items, bool b32);
 
     TMap<FSectionKey, FSectionMesh> Sections;
     UPROPERTY(Transient)
@@ -160,7 +171,7 @@ private:
     TObjectPtr<UMaterialInstanceDynamic> MiningMaterial;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UObject>> Owned;
-    // The first-person held item: one pivot with a cube for blocks and simple tool shapes.
+    // The first-person held item: one pivot with the held block's parts and the held item.
     UPROPERTY(Transient)
     TObjectPtr<USceneComponent> HandPivot;
     // The held block: one textured instance per part (a cube has one), redrawn when the held state changes. Made
@@ -168,10 +179,18 @@ private:
     UPROPERTY(Transient)
     TArray<TObjectPtr<UInstancedStaticMeshComponent>> HeldBlocks;
     FFoundationBlockState HeldState;
+    // Any other item: its sprite extruded (FoundationItemMesh), one mesh per sprite built on first use, placed by
+    // its first-person display transform about the pivot.
     UPROPERTY(Transient)
-    TArray<TObjectPtr<UStaticMeshComponent>> HeldPickaxe;
+    TObjectPtr<UStaticMeshComponent> HeldItem;
+    FName HeldItemId;
+    FName HeldSprite;
+    // foundation.Held.Glow as last set on ItemMaterials.
+    float AppliedGlow = -1;
     UPROPERTY(Transient)
-    TArray<TObjectPtr<UStaticMeshComponent>> HeldSword;
+    TMap<FName, TObjectPtr<UStaticMesh>> ItemMeshes;
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UMaterialInstanceDynamic>> ItemMaterials;
     UPROPERTY(Transient)
     TObjectPtr<UTextRenderComponent> PresetLabel;
     UPROPERTY(Transient)

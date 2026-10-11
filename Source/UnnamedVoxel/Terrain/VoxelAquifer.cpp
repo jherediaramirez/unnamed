@@ -346,3 +346,82 @@ void FVoxelAquifer::Fill(int32 X0, int32 Z0, TConstArrayView<float> Density, FVo
         if (bWall) Out[Item.Block] = EVoxelAquiferFluid::Barrier;
     }
 }
+
+void FVoxelAquifer::FillCarved(int32 X0, int32 Z0, TConstArrayView<int32> Blocks, TConstArrayView<float> Density,
+    TConstArrayView<int32> SkyTop, FVoxelAquiferScratch& Scratch, TArray<EVoxelAquiferFluid>& Out) const
+{
+    // Fill's rules for one block at a time (Carvers.AquiferAgrees checks they agree on every open block).
+    constexpr int32 Size = 16, Area = Size * Size;
+    check(Density.Num() == Area * Height && SkyTop.Num() == Area && Scratch.Statuses.Num() == Layers * 9);
+    const int32 Count = Blocks.Num();
+    Out.SetNumUninitialized(Count, EAllowShrinking::No);
+    Scratch.Pending.Reset();
+    const FIntVector* const Centers = Scratch.Centers.GetData();
+    const FVoxelAquiferStatus* const Statuses = Scratch.Statuses.GetData();
+    for (int32 K = 0; K < Count; ++K)
+    {
+        const int32 Block = Blocks[K], Cell = Block % Area, Y = MinY + Block / Area;
+        EVoxelAquiferFluid& Result = Out[K];
+        if (Y >= SkyTop[Cell] || Y < LavaLine)
+        {
+            Result = GetGlobal(Y).At(Y);
+            continue;
+        }
+        const int32 Layer = LayerOf(Y) - FirstLayer;
+        if (Scratch.Uniform[Layer])
+        {
+            Result = Statuses[Layer * 9].At(Y);
+            continue;
+        }
+        int32 Cells[3] = {INDEX_NONE, INDEX_NONE, INDEX_NONE};
+        int32 Distances[3] = {MAX_int32, MAX_int32, MAX_int32};
+        const FIntVector Position(X0 + Cell % Size, Y, Z0 + Cell / Size);
+        for (int32 Index = (Layer - 1) * 9; Index < (Layer + 2) * 9; ++Index)
+        {
+            const FIntVector Delta = Centers[Index] - Position;
+            const int32 Distance = Delta.X * Delta.X + Delta.Y * Delta.Y + Delta.Z * Delta.Z;
+            if (Distance >= Distances[2]) continue;
+            int32 Slot = 2;
+            for (; Slot > 0 && Distance < Distances[Slot - 1]; --Slot)
+            {
+                Distances[Slot] = Distances[Slot - 1];
+                Cells[Slot] = Cells[Slot - 1];
+            }
+            Distances[Slot] = Distance;
+            Cells[Slot] = Index;
+        }
+        const FVoxelAquiferStatus& Nearest = Statuses[Cells[0]];
+        Result = Nearest.At(Y);
+        const float Near2 = 1 - (Distances[1] - Distances[0]) / AquiferBlend;
+        const float Near3 = 1 - (Distances[2] - Distances[0]) / AquiferBlend;
+        const bool bDiffer2 = Near2 > 0 && !(Statuses[Cells[1]] == Nearest);
+        const bool bDiffer3 = Near3 > 0 && !(Statuses[Cells[2]] == Nearest);
+        // Pending's Block is K here, the slot in Blocks.
+        if (bDiffer2 || bDiffer3) Scratch.Pending.Add({K, {Cells[0], Cells[1], Cells[2]}, {Near2, Near3}});
+    }
+
+    const int32 Walls = Scratch.Pending.Num();
+    if (Walls == 0) return;
+    AquiferPoints(Scratch, Walls);
+    for (int32 K = 0; K < Walls; ++K)
+    {
+        const int32 Block = Blocks[Scratch.Pending[K].Block];
+        Scratch.X[K] = X0 + Block % Size;
+        Scratch.Z[K] = Z0 + Block / Size % Size;
+        Scratch.Y[K] = MinY + Block / Area;
+    }
+    const TConstArrayView<float> Noise = AquiferRun(Barrier, BarrierNode, Scratch, Walls, 5);
+    for (int32 K = 0; K < Walls; ++K)
+    {
+        const FVoxelAquiferScratch::FPending& Item = Scratch.Pending[K];
+        const int32 Y = int32(Scratch.Y[K]);
+        const float Value = FMath::Min(Density[Blocks[Item.Block]], 0.f);
+        const FVoxelAquiferStatus& Nearest = Scratch.Statuses[Item.Cells[0]];
+        const bool bWall =
+            (Item.Weights[0] > 0 &&
+                Value + Item.Weights[0] * GetWall(Nearest, Scratch.Statuses[Item.Cells[1]], Y, Noise[K]) > 0) ||
+            (Item.Weights[1] > 0 &&
+                Value + Item.Weights[1] * GetWall(Nearest, Scratch.Statuses[Item.Cells[2]], Y, Noise[K]) > 0);
+        if (bWall) Out[Item.Block] = EVoxelAquiferFluid::Barrier;
+    }
+}

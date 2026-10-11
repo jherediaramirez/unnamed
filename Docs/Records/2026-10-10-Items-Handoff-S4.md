@@ -1,5 +1,103 @@
 # Items handoff: into S4 (held-item rendering)
 
+## Addendum: items S4a (October 10, afternoon), read this first
+
+S4 started in a chat that only fixed the combat flake (commit `4b3e358`, test-only) and then, on the manager's call, handed S4 to a fresh chat. No S4 code exists yet; everything below the addendum still holds, except where this addendum updates it.
+
+### A1. Where and what was decided
+
+- **Lane:** worktree `C:\dev\projects\Unnamed-items`, branch `feature/items-s4` (created at `0ecd426`, which equals origin `feature/voxel-world`). Main lane S9b works in `C:\dev\projects\Unnamed` (voxel files only); the water and sky lane DN1 adds an F3 line in `FoundationLab.h` and `FoundationHud.cpp`, so keep any hunks there apart.
+- **The plan is approved (manager's call):**
+  - New: `Foundation/FoundationItemMesh.h/.cpp` (pure builder and transient StaticMesh), `Tests/FoundationItemMeshTests.cpp` (`Unnamed.Foundation.Items.Mesh`), `Scripts/Editor/CreateItemMaterials.py` and `Content/Items/M_HeldItem`.
+  - Changed: `FoundationInteractionView.h/.cpp` (the held item), `FoundationItemAssets.h/.cpp` (delete `MaterialTint` and the `Icon` tool cases; add a held-model lookup), `FoundationItems.h` (comment), `FoundationItemTests.cpp` (the `Icon` assertion), `FoundationTourProbe.cpp` (held-item shots for the look call), `FoundationInteractionProbe.cpp` (a held-mesh check), `Docs/Items.md` and the records.
+  - No `CLAUDE.md` edit. No reimport and no reference rebuild, so no hash, golden, digest or saved world moves.
+- **Probe P1 is deferred.** It runs later, batched with Jesus's sky shots (SP1) in one screen hold when he is home with the monitor on (section A5). Build with a **provisional hand anchor**, flag it as a known issue, and record that the look call is provisional.
+- **Held blocks keep their current pose.** Their vanilla pose is a later item: `block/block`'s `firstperson_righthand` (rotation [0, 45, 0], scale 0.4) is only in `Reference/minecraft-blocks-26.3/assets/minecraft/models/block/block.json`, not in `DA_Blocks`, and vanilla draws flowers, torches and saplings in hand as flat generated sprites.
+- **Swing and equip curves stay as they are.** The break lane's `foundation.Break.Swing` hook stays.
+- **Mips:** none for the hand (a texel covers several pixels this close), so the arrays stay mip 0. Dropped items (S8) may need mips.
+
+### A2. Code map additions (tree at `4b3e358`)
+
+- **Held view:** `FoundationInteractionView.cpp`, `UpdateHeldItem` (about line 692).
+  - On first use it creates `HandPivot`, a child of the camera. Its rest position is (42, 24, -24) cm, set again every frame by the swing. The camera has `SetFirstPersonScale(.5f)`. Parts are `FirstPerson` primitives with no shadows.
+  - `HeldBlocks`: one ISM per model part, drawn for `Icon == "block"`.
+  - The cube parts `HeldPickaxe` and `HeldSword` (lines 737-741) are shown by `Icon` "pickaxe" or "sword" (798-801).
+  - The swing (803-817) calls `if (BreakEffects) BreakEffects->GetSwing(Swing)`; keep it. `TickComponent` wraps everything in `BreakEffects->BeginFrame`, `UpdateMining` and `EndFrame`; leave those alone.
+- **`Icon` and `IconColor`:** both are set in `FoundationItemAssets.cpp:66-67` (`MaterialTint` is at line 8). `IconColor` stays: the HUD tints block items with it (`HudPresenter.cpp:146`, `FoundationInteractionSettings.cpp:116`). `HudPresenter.cpp:142` only tests `Icon == "block"`. `FoundationItemTests.cpp:240` asserts the tool `Icon` values.
+- **Runtime StaticMesh precedent:** `FoundationBlockMeshes.cpp`.
+  - `FinishBlockMesh` (lines 18-37) makes a transient `UStaticMesh` with one `FStaticMaterial` slot, then calls `BuildFromMeshDescriptions` with `bFastBuild` and no collision. It sets `PerLODOverrides[0].bUseFullPrecisionUVs`; without it UVs are half precision.
+  - `BuildModel` (250-291) shows the attribute pattern.
+- **Winding rule** (`FoundationBlockMeshes.cpp:154`): Unreal draws triangles that wind clockwise seen from outside, so `Cross(B - A, C - A)` must oppose the normal; otherwise swap corners 1 and 3.
+- **Material script pattern:** `Scripts/Editor/CreateBlockMaterials.py`.
+  - `get_or_create` and `build(name, spec, ...)` set `blend_mode`, `two_sided` False, `used_with_instanced_static_meshes`, and `opacity_mask_clip_value` 0.5 ("26.3 cutout discards alpha below 0.5"); `texture_parameter` is a helper.
+  - Block materials sample their arrays in custom HLSL (`Texture2DArraySample`).
+  - Item sprites are binary alpha: `textures.json` lists all 70 as cutout, alpha 0 or 255.
+- **`DA_Items` model layout:**
+  - `Item.ModelType` is "model" or "select", and `Item.Models[]` holds the cases `{Model, Contexts}`.
+  - Spears are a select: `item/<mat>_spear` for `gui`, `ground`, `fixed` and `on_shelf`, and `item/<mat>_spear_in_hand` as the fallback (empty `Contexts`).
+  - `Models[].Layers[0]` is the texture name (`item/iron_pickaxe`). `Models[].Display[]` holds one entry per context (`firstperson_righthand` and so on), already resolved through the parent chain (`display_from` in `models.json`).
+  - `Textures[]` holds `{Name, Width, Height, Mask, Layer}`. A width of 32 means `ItemTextures32`.
+  - Example, `iron_spear` in hand: 32 x 32, `firstperson_righthand` rotation [-20, 90, -35], translation [3.13, 2, 0.13], scale [1.36, 1.36, 0.68].
+- **Camera FOV:** the Playground camera sets no FOV, so it uses Unreal's default of 90 degrees horizontal. The menu's `fov` preference (70) is not applied there; check this before relying on it. First-person primitives can take their own FOV (`SetEnableFirstPersonFieldOfView`, `SetFirstPersonFieldOfView`). Vanilla's 70 degrees vertical at 16:9 is 102.45 degrees horizontal. Leave it until P1.
+
+### A3. Design worked out (not coded)
+
+- **Axes:** Mojang model and camera space is right-handed: X right (east), Y up, Z back (south). Unreal is X forward, Y right, Z up. The map is P(x, y, z) = (-z, x, y), with determinant -1. Mesh vertices in cm are P((p - 8) / 16) · BlockCm, centred on the model.
+- **A display transform as an `FTransform` on that mesh** (scale, then rotation, then translation, the wiki's order):
+  - scale (s_z, s_x, s_y);
+  - translation P(t / 16) · BlockCm;
+  - rotation: Mojang R = Rx(a) · Ry(b) · Rz(c), so Z is applied first. **This order is provisional until P1.** Conjugated by P, whose determinant -1 flips the angles, it becomes `FQuat(Y, -a) * FQuat(Z, -b) * FQuat(X, c)` (Unreal's `A * B` applies B first).
+  - Pin it with a unit test against direct 3 x 3 math.
+- **`builtin/generated`:**
+  - Front at Z 8.5, back at Z 7.5: one unit deep whatever the sprite size. The spear's in-hand scale (z 0.68 against 1.36) keeps a 32 x 32 texel cubic.
+  - The sprite spans 0-16 in X and Y.
+  - One side face per opaque pixel edge that borders a transparent pixel or the sprite's border.
+  - Side-face UVs inset inside their texel, because nearest filtering bleeds at texel borders.
+- **Planned tests:**
+  - Quad counts: 1 pixel 6, full 16 x 16 66, a 2 x 1 bar 8, a 3 x 3 ring 18, empty 2.
+  - A closed surface: the opaque pixels' front and back squares plus the sides share every edge exactly twice. Run it on the known masks and all 70 `DA_Items` masks.
+  - Front and back mirror; every side UV inside an opaque texel; the transform test above.
+  - Read the masks only; never load the arrays under `-NullRHI` (5e).
+- **Provisional anchor:** the current `HandPivot` rest (42, 24, -24) cm in camera space, with the display transform applied about the model centre there.
+
+### A4. Probe mechanics learned in S4a
+
+- **Case timing:** cases are timed by wall clock. `FrameHook` runs each frame after the pawn (the pawn is the probe's tick prerequisite). The new `bHoldCase` keeps a case open until its hook clears it (10 s failsafe).
+- **Trap: frozen world time loses input.** With world time dilation 0 (the tour's `Freeze`), Enhanced Input never delivered a probe click (`Click` → `UFoundationInputRouter::RouteKey` → `Controller->InputKey`); the hit never happened. When a case needs input, cap the steps instead: `GetMutableDefault<UFoundationProfile>()->MaxCatchupSteps = 1`, restored afterwards.
+- **Steps per frame:** the pawn takes at most `MaxCatchupSteps` (5) reference steps per frame. A press acts on the last step of the next pawn tick that has a step.
+- **4 fps cap (`-FrameRates 4`):** the interaction suite fails about 24 checks there anyway, because most cases are timed by wall clock. The critical cases ("falling full-charge critical deals 9", "an attack while rising is not critical") fail on the old and new builds alike because their jump is timed by wall clock. They are not fixed; the same step cap would fix them if needed.
+- **CEF lock:** wait, don't just check, until `C:\dev\sandbox\locks\cef-e2e.lock` is absent and no other `-game` UnrealEditor runs before any windowed run.
+  - `C:\dev\sandbox\items-s4\gamerun.ps1` (`-OutputDirectory`, `-Suite`, `-FrameRates`) waits for both, logs the machine state, and stops on a `CANCEL` file.
+  - `combat.ps1` prints a report's combat records.
+- **Measuring:** `C:\dev\sandbox\items-s4\measure.sh`; change its `SID`.
+
+### A5. P1, ready for the screen hold (Jesus home, monitor on, hands off)
+
+- **Harness:** copy `C:\dev\sandbox\break-vp1` to `C:\dev\sandbox\items-p1` and add a `held` step to `scripts/run_probe.py` (`STEPS`).
+  - **Options and window:** `options.txt` with `fov:0.0` (70), `bobView:false`, `guiScale:2` and `hudHidden:false`, F1 before each shot. Launch the client at 1920 x 1080 (`--width 1920 --height 1080`) and check the client area; it may need fullscreen if the work area is smaller.
+  - **Scene:** the flat world, the player standing still facing +z at pitch 0, sky and ground behind.
+  - **For each item:**
+    1. `/item replace entity VP1 weapon.mainhand with minecraft:<id>`.
+    2. Wait at least 1 s for the equip dip to end.
+    3. F1, then an F2 shot (the framebuffer; it works with the display off).
+    4. Repeat in `weapon.offhand` with the main hand empty.
+  - **Items:** `iron_pickaxe`, `iron_sword`, `stick`, `apple`, `stone`, `iron_spear`, plus `mace` and `fishing_rod` for later sessions, and one empty-hand shot. Optional: the same in third person (F5, back view).
+- **Command,** from `C:\dev\sandbox\items-p1\scripts`, after the dry run checks out:
+  `uv run --no-project --python 3.13 --with mss --with numpy --with pillow python -I run_probe.py --step held --no-dry-run --accept-eula`
+  The real run refuses to start while a Minecraft java process runs. Check `Get-Process java, javaw, UnrealEditor*` and the CEF lock first.
+- **Use:** fit the camera-space hand anchor, and confirm the rotation order, by projecting the extruded mesh at FOV 70 vertical and 1920 x 1080 onto the shots' silhouettes. Then set Unreal's first-person FOV to match.
+
+### A6. Tokens in S4a
+
+| Agent | Peak context | Notes |
+|---|---|---|
+| Lead (Opus 5.5) | 313k at report A (184k after the reading list, 283k at the 300k case) | The flake took about 130k: an old-build reproduction, a frozen-time attempt that lost input, the step cap, the mutation and five runs. |
+| Pre-commit reviewer (Sonnet 5.5) | 60.4k | Diff only (135 lines); no bugs. Fixed: the restore on teardown, the copied repeat result, a comment. |
+
+### A7. Short prompt for the fresh S4 chat
+
+> Items phase, session 4: held-item rendering (the extruded mesh from each sprite's opacity mask, a cutout material, the display transforms, replacing the cube pickaxe and sword in the held view). Work in `C:\dev\projects\Unnamed-items` on `feature/items-s4`. Read `Docs/Records/2026-10-10-Items-Handoff-S4.md` first, starting with its addendum (the approved plan, the code map, the design worked out, the probe traps; P1 is deferred, so use the provisional hand anchor), then its sections 1-8. Report to the manager chat "Shift manager handover" (session_01Rm6t4pNqopFBUje9vnNw8Q); builds and suites take turns with the main lane, and windowed runs wait for the CEF lock.
+
 Read this first if you are picking up the items phase in a new chat. It is also the record of items S3 (icons and tooltips), a parallel lane next to the voxel chain (`feature/items-s3`, worktree `C:\dev\projects\Unnamed-items`). **S4 is next:** the extruded held-item mesh from each sprite's opacity mask, its material and the display transforms. This was true at the S3 commit; check `git status`, `git log -5` and newer records before trusting it.
 
 ## 1. Read these, and only these

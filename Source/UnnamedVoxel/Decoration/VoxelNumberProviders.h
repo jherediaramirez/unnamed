@@ -22,7 +22,10 @@ struct UNNAMEDVOXEL_API FVoxelIntProvider
         // Weighted: Entries' values by their weights.
         WeightedList,
         // Inner[0]'s value clamped into [Min, Max].
-        Clamped
+        Clamped,
+        // Min + three nested uniform draws, each below the last plus one (the carvers' count, S10; the jar's
+        // histogram: P(Min) = 0.42 for 0..14).
+        VeryBiasedToBottom
     };
 
     EType Type = EType::Constant;
@@ -60,6 +63,8 @@ struct UNNAMEDVOXEL_API FVoxelIntProvider
         }
         case EType::Clamped:
             return FMath::Clamp(Inner[0].Sample(Random), Min, Max);
+        case EType::VeryBiasedToBottom:
+            return Min + Random.NextInt(1 + Random.NextInt(1 + Random.NextInt(Max - Min + 1)));
         default:
             return Min;
         }
@@ -67,6 +72,47 @@ struct UNNAMEDVOXEL_API FVoxelIntProvider
 
     // The exact probability of each value from Min to Max, for the distribution tests.
     void GetDistribution(TArray<double>& Out) const;
+};
+
+// A compiled float provider (the carvers', S10): a constant, a uniform range [Min, Max), or a trapezoid (the sum of
+// two uniform parts, SpanA + SpanB = Max - Min and SpanB - SpanA = the plateau).
+struct UNNAMEDVOXEL_API FVoxelFloatProvider
+{
+    enum class EType : uint8
+    {
+        Constant,
+        Uniform,
+        Trapezoid
+    };
+
+    EType Type = EType::Constant;
+    float Min = 0;
+    float Max = 0;
+    float SpanA = 0;
+    float SpanB = 0;
+
+    static FVoxelFloatProvider MakeConstant(float Value);
+    static FVoxelFloatProvider MakeUniform(float Min, float Max);
+    static FVoxelFloatProvider MakeTrapezoid(float Min, float Max, float Plateau);
+
+    float Sample(FVoxelXoroshiro& Random) const
+    {
+        switch (Type)
+        {
+        case EType::Uniform:
+            return Min + (Max - Min) * Random.NextFloat();
+        case EType::Trapezoid:
+        {
+            const float A = Random.NextFloat();
+            return Min + SpanA * A + SpanB * Random.NextFloat();
+        }
+        default:
+            return Min;
+        }
+    }
+
+    // The exact probability of a value below X, for the distribution tests.
+    double GetCdf(double X) const;
 };
 
 namespace VoxelNumberProviders
@@ -79,4 +125,7 @@ namespace VoxelNumberProviders
     UNNAMEDVOXEL_API bool CompileHeight(
         const FVoxelFeatureGraph& Graph, const FVoxelFeatureValue& Value, FVoxelIntProvider& Out, FString* OutError);
     UNNAMEDVOXEL_API bool ResolveAnchor(const FVoxelFeatureGraph& Graph, int32 Node, int32& OutZ, FString* OutError);
+    // A float field's value: a bare number, or a float provider node (constant, uniform or trapezoid).
+    UNNAMEDVOXEL_API bool CompileFloat(
+        const FVoxelFeatureGraph& Graph, const FVoxelFeatureValue& Value, FVoxelFloatProvider& Out, FString* OutError);
 }
