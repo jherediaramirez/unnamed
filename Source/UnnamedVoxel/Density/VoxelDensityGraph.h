@@ -162,5 +162,15 @@ struct FVoxelTerrainPreset
     };
     TArray<FDebugView> DebugViews;
 
+    // The settings' spawn_target: where a new world's spawn search (FVoxelSpawnFinder) wants its climate. Each target
+    // lists functions with a range in the biome table's quantized units (FVoxelBiomeTable::Quantize); empty for none.
+    struct FSpawnRange
+    {
+        int32 Node = INDEX_NONE;
+        int64 Min = 0;
+        int64 Max = 0;
+    };
+    TArray<TArray<FSpawnRange>> SpawnTargets;
+
     FVoxelDensityGraph Graph;
 };

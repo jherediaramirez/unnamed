@@ -29,6 +29,7 @@
 #include "Terrain/VoxelDensityTerrain.h"
 #include "Terrain/VoxelFlatTerrain.h"
 #include "Terrain/VoxelHeightTerrain.h"
+#include "Terrain/VoxelSpawnFinder.h"
 #include "Voxel/VoxelTerrainFactory.h"
 #include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
@@ -145,6 +146,7 @@ void AVoxelWorld::BuildLayout()
     // Not stopping at the comma between X and Y.
     if (FParse::Value(FCommandLine::Get(), TEXT("VoxelSpawnAt="), SpawnAt, false))
     {
+        bSpawnNearest = true;
         FString X, Y;
         if (SpawnAt.Split(TEXT(","), &X, &Y) && X.IsNumeric() && Y.IsNumeric())
             SpawnSearchCenter = FIntPoint(FCString::Atoi(*X), FCString::Atoi(*Y));
@@ -169,6 +171,7 @@ void AVoxelWorld::BuildLayout()
                 LogUnnamedVoxel, Warning, TEXT("-VoxelShotView=%s is not CX,CY,CZ,TX,TY,TZ; no view shot"), *ViewText);
     }
     bSpawnExact = FParse::Param(FCommandLine::Get(), TEXT("VoxelSpawnExact"));
+    bSpawnNearest = bSpawnNearest || bSpawnExact;
     bShotEdits = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotEdits"));
     bShotGarden = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotGarden"));
     bShotCaves = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotCaves"));
@@ -390,8 +393,9 @@ void AVoxelWorld::Regenerate(const FVoxelSeed& NewSeed)
     Authority.Reset();
     // The new world's fluids start still.
     if (Fluids) Fluids->Reset();
-    // Shots fly the camera far out; the rings stay around the player.
-    if (!ShotFolder.IsEmpty()) Streaming->SetFocusOverride(Spawn);
+    // Shots fly the camera far out; the rings stay around the player. Until the player stands on the spawn they stay
+    // there too: the pawn waits at the map's player start, which can be kilometres from the spawn.
+    Streaming->SetFocusOverride(Spawn);
 }
 
 void AVoxelWorld::SetupAuthority()
@@ -521,7 +525,11 @@ void AVoxelWorld::Tick(float DeltaSeconds)
     if (!bSpawned && AreSpawnColumnsGenerated())
     {
         bSpawned = true;
+        StandOnSpawnBlocks();
         ReturnPlayerToSpawn();
+        // Out of shots, the rings follow the camera from here.
+        if (UVoxelWorldSubsystem* Streaming = GetStreaming(); Streaming && ShotFolder.IsEmpty())
+            Streaming->SetFocusOverride({});
     }
     UpdateEdgeFog();
     if (Lights)
@@ -718,29 +726,56 @@ bool AVoxelWorld::AreSpawnColumnsGenerated() const
 FIntVector AVoxelWorld::GetSpawnCell() const
 {
     if (SpawnCell) return *SpawnCell;
-    // Rings outward from the search centre (the origin unless -VoxelSpawnAt says otherwise); the first column whose top
-    // solid block is dry land wins. Where IsDry is an estimate, a limited number of candidates are confirmed against
-    // the real column.
-    const FIntPoint Center = SpawnSearchCenter;
-    const int32 Reach = FMath::Max(8, VoxelConsole::CVarViewRadius.GetValueOnGameThread() * VoxelConstants::ColumnSize);
-    // -VoxelSpawnExact confirms every column within 32 blocks instead (a few seconds at most).
-    int32 Confirmations = bSpawnExact ? 65 * 65 : 64;
-    for (int32 Ring = 0; Ring <= Reach && Terrain && Confirmations > 0; ++Ring)
-        for (int32 Y = -Ring; Y <= Ring; ++Y)
-            for (int32 X = -Ring; X <= Ring; ++X)
-            {
-                if (FMath::Max(FMath::Abs(X), FMath::Abs(Y)) != Ring ||
-                    (!bSpawnExact && !Terrain->IsDry(Center.X + X, Center.Y + Y)))
-                    continue;
-                if (Confirmations <= 0 || (--Confirmations, !Terrain->ConfirmDry(Center.X + X, Center.Y + Y))) continue;
-                SpawnCell =
-                    FIntVector(Center.X + X, Center.Y + Y, Terrain->GetSurfaceHeight(Center.X + X, Center.Y + Y) + 1);
-                return *SpawnCell;
-            }
-    // All sea: stand on the water surface's floor at the centre.
-    SpawnCell = FIntVector(
-        Center.X, Center.Y, Terrain ? Terrain->GetSurfaceHeight(Center.X, Center.Y) + 1 : VoxelConstants::SeaLevel);
+    bSpawnOnBlocks = false;
+    if (!Terrain)
+    {
+        SpawnCell = FIntVector(SpawnSearchCenter.X, SpawnSearchCenter.Y, VoxelConstants::SeaLevel);
+        return *SpawnCell;
+    }
+    FVoxelSpawnRequest Request;
+    Request.bNearest = bSpawnNearest;
+    Request.Center = SpawnSearchCenter;
+    Request.bExact = bSpawnExact;
+    Request.ViewReach = FMath::Max(8, VoxelConsole::CVarViewRadius.GetValueOnGameThread() * VoxelConstants::ColumnSize);
+    const double Start = FPlatformTime::Seconds();
+    const FVoxelSpawn Spawn = FVoxelSpawnFinder::Find(*Terrain, Request);
+    SpawnCell = Spawn.Cell;
+    bSpawnOnBlocks = Spawn.bStandOnBlocks;
+    UE_LOG(LogUnnamedVoxel, Display, TEXT("Spawn cell %s (%s), %.1f ms"), *Spawn.Cell.ToString(),
+        bSpawnNearest ? TEXT("nearest land, -VoxelSpawnAt or -VoxelSpawnExact") : TEXT("a new world's search"),
+        (FPlatformTime::Seconds() - Start) * 1000);
     return *SpawnCell;
+}
+
+void AVoxelWorld::StandOnSpawnBlocks()
+{
+    FIntVector Cell = GetSpawnCell();
+    if (!bSpawnOnBlocks) return;
+    // The search stood on the terrain's density; the columns now hold their final blocks (trees, carvers).
+    const FIntVector Searched = Cell;
+    TArray<FBox> Boxes;
+    Cell.Z = FVoxelSpawnFinder::GetStandingZ(
+        [this, &Cell, &Boxes](int32 Z)
+        {
+            const FVector Min = FoundationGrid::CellMin({Cell.X, Cell.Y, Z}, OriginCm);
+            Boxes.Reset();
+            GatherCollision(FBox(Min + FVector(1), Min + FVector(CellCm - 1)), Boxes);
+            return !Boxes.IsEmpty();
+        },
+        VoxelConstants::MinZ, VoxelConstants::MaxZ, Cell.Z);
+    const UFoundationProfile& Profile = *GetDefault<UFoundationProfile>();
+    for (; Cell.Z <= VoxelConstants::MaxZ + 1; ++Cell.Z)
+    {
+        const FBox Body =
+            FFoundationSimulation::Bounds(FoundationGrid::CellMin(Cell, OriginCm) + FVector(CellCm / 2, CellCm / 2, 0),
+                Profile.StandingHeightCm, Profile.WidthCm);
+        Boxes.Reset();
+        GatherCollision(Body.ExpandBy(1), Boxes);
+        if (FFoundationSimulation::Fits(Body, Boxes)) break;
+    }
+    SpawnCell = Cell;
+    UE_LOG(LogUnnamedVoxel, Display, TEXT("The player stands on the spawn's blocks: cell %s (searched %s)"),
+        *Cell.ToString(), *Searched.ToString());
 }
 
 FVector AVoxelWorld::GetSafeSpawn(const UFoundationProfile& Profile) const

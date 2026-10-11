@@ -132,13 +132,17 @@ private:
     // empty terrain and leaves for the title screen, with the reason in the log.
     TSharedRef<const IVoxelTerrain> MakeTerrain() const;
     UVoxelWorldSubsystem* GetStreaming() const;
-    // The feet cell of the spawn: the dry surface nearest the origin, from the terrain function, so it is known
-    // before any column exists.
+    // The feet cell of the spawn (FVoxelSpawnFinder::Find): the climate search's dry land, or with -VoxelSpawnAt or
+    // -VoxelSpawnExact the dry surface nearest the search centre, from the terrain function, so it is known before any
+    // column exists. StandOnSpawnBlocks moves the climate search's cell onto the final blocks once they exist.
     FIntVector GetSpawnCell() const;
     bool AreSpawnColumnsGenerated() const;
     // Fits the edge fog to the view radius whenever it changes, and keeps the fog floor under the camera.
     void UpdateEdgeFog();
     void SetEdgeFogVisible(bool bVisible);
+    // On the climate search's dry land: the spawn cell rises or falls to the highest block that collides in its block
+    // column (a treetop counts), then rises until the body fits, as the Playground's spawn does.
+    void StandOnSpawnBlocks();
     void ReturnPlayerToSpawn() const;
     void UpdateShots();
     // -VoxelShotEdits: a pit across the corner of four columns east and south of the spawn, and a pillar of stone
@@ -173,6 +177,8 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UFoundationBlockTextureTable> TextureTable;
     mutable TOptional<FIntVector> SpawnCell;
+    // The spawn cell came from the climate search on dry land (FVoxelSpawn::bStandOnBlocks).
+    mutable bool bSpawnOnBlocks = false;
     // The player was put on the spawn once the columns around it were generated.
     bool bSpawned = false;
     UPROPERTY(Transient)
@@ -202,6 +208,9 @@ private:
     // Where the spawn search starts (-VoxelSpawnAt=X,Y, to shoot a chosen place); the origin by default. It moves only
     // the spawn, never a block.
     FIntPoint SpawnSearchCenter = FIntPoint::ZeroValue;
+    // -VoxelSpawnAt or -VoxelSpawnExact: the nearest-land search from SpawnSearchCenter, as before the climate search,
+    // so captures keep their spawn.
+    bool bSpawnNearest = false;
     // -VoxelSpawnExact (shots): every candidate is checked against its real column instead of the estimate first, so
     // the spawn can land on low dry ground the estimate calls sea, such as a swamp's.
     bool bSpawnExact = false;

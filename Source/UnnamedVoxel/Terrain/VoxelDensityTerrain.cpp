@@ -105,6 +105,7 @@ FVoxelDensityTerrain::FVoxelDensityTerrain(const FVoxelTerrainPreset& Preset, ui
         !SurfaceEvaluator.Compile(Preset.Graph, Seed, {Surface}, &Reason) ||
         !Column.Initialize(Evaluator, FinalDensity, Preset.MinY, Preset.Height, &Reason) ||
         (Settings.bCaves && !Aquifer.Initialize(Preset, Seed, &Reason)) ||
+        !SpawnFinder.Initialize(Preset, Seed, &Reason) ||
         (BiomeTable && !InitializeBiomes(*BiomeTable, Preset, Reason)))
     {
         Error = Preset.Name + TEXT(": ") + Reason;
@@ -238,6 +239,65 @@ int32 FVoxelDensityTerrain::GetSurfaceHeight(int32 X, int32 Y) const
         }
     ReturnScratch(MoveTemp(Scratch));
     return Result;
+}
+
+void FVoxelDensityTerrain::GetSurfaceHeights(FIntPoint Position, TArrayView<int32> Out) const
+{
+    constexpr int32 Size = VoxelConstants::ColumnSize;
+    check(Out.Num() == Size * Size);
+    if (!IsValid())
+    {
+        for (int32& Height : Out)
+            Height = VoxelConstants::MinZ;
+        return;
+    }
+    TUniquePtr<FScratch> Scratch = TakeScratch();
+    Column.Generate(Position.X * Size, Position.Y * Size, Settings.bSkip, Scratch->Column, Scratch->Density, nullptr,
+        {}, CornerCache.Get());
+    const float* Density = Scratch->Density.GetData();
+    for (int32 Index = 0; Index < Size * Size; ++Index)
+    {
+        int32 Result = VoxelConstants::MinZ;
+        for (int32 Z = VoxelConstants::MaxZ; Z >= VoxelConstants::MinZ; --Z)
+            if (Density[(Z - VoxelConstants::MinZ) * Size * Size + Index] > 0)
+            {
+                Result = Z;
+                break;
+            }
+        Out[Index] = Result;
+    }
+    ReturnScratch(MoveTemp(Scratch));
+}
+
+bool FVoxelDensityTerrain::FindSpawn(FIntVector& OutCell, bool& bOutDry) const
+{
+    if (!IsValid()) return false;
+    const FIntPoint Spot = SpawnFinder.FindClimateSpot();
+    constexpr int32 Size = VoxelConstants::ColumnSize;
+    // 26.3 checks the chunks within 5 of the pick's.
+    constexpr int32 Radius = 5;
+    const FIntPoint Center(FMath::FloorToInt32(Spot.X / double(Size)), FMath::FloorToInt32(Spot.Y / double(Size)));
+    int32 Heights[Size * Size];
+    for (int32 Ring = 0; Ring <= Radius; ++Ring)
+        for (int32 DY = -Ring; DY <= Ring; ++DY)
+            for (int32 DX = -Ring; DX <= Ring; ++DX)
+            {
+                if (FMath::Max(FMath::Abs(DX), FMath::Abs(DY)) != Ring) continue;
+                const FIntPoint Position = Center + FIntPoint(DX, DY);
+                GetSurfaceHeights(Position, Heights);
+                for (int32 Index = 0; Index < Size * Size; ++Index)
+                    // Water fills to SeaLevel - 1, so a top block there or higher has air above it.
+                    if (Heights[Index] >= SeaLevel - 1)
+                    {
+                        OutCell = FIntVector(
+                            Position.X * Size + Index % Size, Position.Y * Size + Index / Size, Heights[Index] + 1);
+                        bOutDry = true;
+                        return true;
+                    }
+            }
+    OutCell = FIntVector(Spot.X, Spot.Y, SeaLevel);
+    bOutDry = false;
+    return true;
 }
 
 void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const

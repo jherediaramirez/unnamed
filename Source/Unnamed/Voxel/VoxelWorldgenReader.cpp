@@ -1,5 +1,6 @@
 #include "Voxel/VoxelWorldgenReader.h"
 
+#include "Biome/VoxelBiomeTable.h"
 #include "Density/VoxelDensityGraph.h"
 #include "Voxel/VoxelWorldgenJson.h"
 
@@ -553,8 +554,8 @@ namespace
 
         bool ReadSettings(const FJsonObject& Settings, FVoxelTerrainPreset& Out)
         {
-            // Read here, then left for later phases: spawn targets, mob generation, legacy seeding. The surface rule
-            // tree's id is kept; ReadSurface reads the tree.
+            // Read here, then left for later phases: mob generation, legacy seeding. The surface rule tree's id is
+            // kept; ReadSurface reads the tree.
             static const TCHAR* const Known[] = {TEXT("sea_level"), TEXT("noise"), TEXT("default_block"),
                 TEXT("default_fluid"), TEXT("noise_router"), TEXT("aquifers"), TEXT("debug_functions"),
                 TEXT("material_rule"), TEXT("spawn_target"), TEXT("disable_mob_generation"),
@@ -632,6 +633,43 @@ namespace
                     return false;
                 }
                 Out.DebugViews.Add(MoveTemp(DebugView));
+            }
+
+            // The spawn search's climate targets: each maps function ids to a [min, max] range.
+            const TArray<TSharedPtr<FJsonValue>>* Targets = nullptr;
+            if (Settings.HasField(TEXT("spawn_target")) && !Settings.TryGetArrayField(TEXT("spawn_target"), Targets))
+            {
+                return Fail(TEXT(""), TEXT("spawn_target must be an array"));
+            }
+            for (int32 Index = 0; Targets && Index < Targets->Num(); ++Index)
+            {
+                const FString TargetPath = FString::Printf(TEXT("/spawn_target/%d"), Index);
+                const TSharedPtr<FJsonObject>* Target = nullptr;
+                if (!(*Targets)[Index]->TryGetObject(Target))
+                {
+                    return Fail(TargetPath, TEXT("a spawn target maps function ids to [min, max]"));
+                }
+                TArray<FVoxelTerrainPreset::FSpawnRange>& Ranges = Out.SpawnTargets.AddDefaulted_GetRef();
+                for (const TPair<FString, TSharedPtr<FJsonValue>>& Field : (*Target)->Values)
+                {
+                    const TArray<TSharedPtr<FJsonValue>>* Bounds = nullptr;
+                    if (!Field.Value->TryGetArray(Bounds) || Bounds->Num() != 2 ||
+                        (*Bounds)[0]->Type != EJson::Number || (*Bounds)[1]->Type != EJson::Number ||
+                        (*Bounds)[0]->AsNumber() > (*Bounds)[1]->AsNumber())
+                    {
+                        return Fail(TargetPath + TEXT("/") + Field.Key, TEXT("a range is [min, max]"));
+                    }
+                    FVoxelTerrainPreset::FSpawnRange Range;
+                    Range.Node = ReadFunction(Field.Key);
+                    if (Range.Node == INDEX_NONE)
+                    {
+                        return false;
+                    }
+                    // Quantized as the biome table's ranges are.
+                    Range.Min = FVoxelBiomeTable::Quantize(float((*Bounds)[0]->AsNumber()));
+                    Range.Max = FVoxelBiomeTable::Quantize(float((*Bounds)[1]->AsNumber()));
+                    Ranges.Add(Range);
+                }
             }
             return true;
         }

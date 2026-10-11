@@ -22,6 +22,10 @@ public:
     // A second, exact look where IsDry is an estimate (the density terrain's). Spawning checks it before standing on
     // land.
     virtual bool ConfirmDry(int32 X, int32 Y) const { return IsDry(X, Y); }
+    // A new world's spawn by 26.3's climate search (FVoxelSpawnFinder), or false when the terrain has none (the flat
+    // and stand-in terrains, which take the nearest-land search). OutCell is the feet cell on the first dry top block
+    // near the climate's pick (bOutDry), or, when none is dry, the pick at the water's surface.
+    virtual bool FindSpawn(FIntVector& OutCell, bool& bOutDry) const { return false; }
     // Fills Out with column Position; Dense is scratch, resized to FVoxelColumn::DenseVolume.
     virtual void Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const = 0;
     // Decoration's snapshot (phase 6, S3): Generate without its last column-wide pass (the freeze pass), which

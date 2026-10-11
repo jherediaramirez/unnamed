@@ -13,6 +13,7 @@
 #include "Terrain/VoxelAquifer.h"
 #include "Terrain/VoxelCarvers.h"
 #include "Terrain/VoxelHeightTerrain.h"
+#include "Terrain/VoxelSpawnFinder.h"
 #include "Terrain/VoxelTerrain.h"
 
 class FVoxelBlockTable;
@@ -126,6 +127,9 @@ public:
     // Cheap: the preliminary surface (EstimateSurface) at or above sea level. ConfirmDry checks the real column.
     virtual bool IsDry(int32 X, int32 Y) const override;
     virtual bool ConfirmDry(int32 X, int32 Y) const override;
+    // The climate's pick, then the 11 x 11 columns in square rings around its column, each column's 16 x 16 block
+    // columns from its minimum corner: the first top solid block at or above SeaLevel - 1 (not under water) wins.
+    virtual bool FindSpawn(FIntVector& OutCell, bool& bOutDry) const override;
     virtual void Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const override;
     // Without the freeze pass, which FinishColumn runs (FVoxelFreezePass::ApplyToColumn) where Generate would.
     virtual void GenerateSnapshot(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const override;
@@ -141,6 +145,9 @@ public:
         const FVoxelDensityTerrainOverrides& Overrides = {}) const;
     // The corner cache's size in bytes, 0 without sharing.
     int64 GetCornerCacheBytes() const;
+    // GetSurfaceHeight for each block column of the column at Position (local Y * 16 + local X) from one density.
+    void GetSurfaceHeights(FIntPoint Position, TArrayView<int32> Out) const;
+    const FVoxelSpawnFinder& GetSpawnFinder() const { return SpawnFinder; }
     // The column's density, ((Z - MinZ) * 16 + local Y) * 16 + local X.
     void GenerateDensity(FIntPoint Position, TArray<float>& Out, bool bSkip, FVoxelColumnDensityStats* Stats) const;
 
@@ -212,6 +219,7 @@ private:
     // Shared by every worker (it locks itself); null without bShareCorners.
     TUniquePtr<FVoxelCornerCache> CornerCache;
     FVoxelAquifer Aquifer;
+    FVoxelSpawnFinder SpawnFinder;
     FVoxelBiomeSource Biomes;
     // Built when the biome table carries the colormaps.
     FVoxelTintTable Tints;

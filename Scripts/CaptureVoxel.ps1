@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates,[switch]$TorchRoom,[switch]$TorchLook,[int]$TorchGlow=-1,[ValidateSet('breach','flood','scenes')][string]$Fluids)
+param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[switch]$ClimateSpawn,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates,[switch]$TorchRoom,[switch]$TorchLook,[int]$TorchGlow=-1,[ValidateSet('breach','flood','scenes')][string]$Fluids)
 # Renders the generated world offscreen (/Game/Maps/L_Generated) and saves AVoxelWorld's screenshots: overview,
 # closeup, ground, lumen-scene and section, plus build.txt with the first view's streaming timings. The rings stay on
 # the player's spawn, and the view's edge is meshed against air (voxel.Debug.EdgeWalls 1; -ExecCmds can turn it off),
@@ -12,7 +12,9 @@ param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[in
 # tall grass across a section border, a distance plot) and a grass field around a bare clearing, then adds the garden,
 # field and distance-008 to distance-128 shots (AVoxelWorld::ApplyShotGarden).
 # -SpawnAt X,Y starts the spawn search there instead of at the origin, to shoot a chosen place; -SpawnExact checks every
-# column within 32 blocks of it against the real terrain, so low dry ground such as a swamp's counts. -NoSurfaceRules shows
+# column within 32 blocks of it against the real terrain, so low dry ground such as a swamp's counts. Without -SpawnAt the
+# search starts at 0,0 (-VoxelSpawnAt=0,0), so shots and the flight keep the nearest-land spawn they were framed on;
+# -ClimateSpawn instead shoots the spawn a new world gets (the climate search, FVoxelSpawnFinder). -NoSurfaceRules shows
 # the dev seed with the earlier simple dressing instead of the surface rules, to compare looks.
 # -Lights first runs the torch light probe in the largest dark cave (FVoxelLightShots: glowing cubes, then point lights per
 # shadow mode): lights.txt, lights.csv and lights-*.png, in a folder ending in -lights; Scripts/SummarizeLightProbe.ps1
@@ -69,7 +71,9 @@ if($Caves -and -not $Flight){$arguments+='-VoxelShotCaves'}
 # -ExecCmds 'voxel.OreVeins 0'.
 if($Veins -and -not $Flight){$arguments+='-VoxelShotVeins'}
 if($VeinsAt -and -not $Flight){if($VeinsAt.Count -ne 6){throw '-VeinsAt takes F,A,Z,F,A,Z'};$arguments+=('-VoxelShotVeinsAt='+($VeinsAt -join ','))}
+if($ClimateSpawn -and ($SpawnAt -or $SpawnExact)){throw '-ClimateSpawn takes no -SpawnAt or -SpawnExact.'}
 if($SpawnAt){if($SpawnAt.Count -ne 2){throw '-SpawnAt takes X,Y'};$arguments+=('-VoxelSpawnAt={0},{1}' -f $SpawnAt[0],$SpawnAt[1])}
+elseif(-not $ClimateSpawn){$arguments+='-VoxelSpawnAt=0,0'}
 if($SpawnExact){$arguments+='-VoxelSpawnExact'}
 # -View CX,CY,CZ,TX,TY,TZ adds a "view" shot from a camera to a target, in blocks (a spot -SpawnAt streams), e.g. an
 # ocean floor or the column grid (-ExecCmds 'voxel.Debug.ColumnGrid 1').
