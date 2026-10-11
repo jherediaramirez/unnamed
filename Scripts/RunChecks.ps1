@@ -11,6 +11,8 @@ param(
     [string]$Base,
     [string]$CancelFile,
     [int]$MaxWaitMinutes=120,
+    # The quiet window's lock; tests point it at a sandbox file, never at the real one.
+    [string]$QuietLock='C:\dev\sandbox\locks\quiet-window.lock',
     [string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8')
 # The shared check runner: one command instead of each session's own chain.
 #   & Scripts\RunChecks.ps1 -Profile quick|final|merge [-ExpectedHashes <file>] [-Flight smoke] [-Skip <steps>] [-KeepGoing] [-Allocator stomp|ansi] [-LaunchTimeoutMinutes 60]
@@ -23,9 +25,11 @@ param(
 #   merge  final, plus HEAD's parents and a scan for conflict markers and unmerged files.
 # -Flight smoke adds CaptureVoxel's flight: it completes, with no errors besides the engine's LogPython ones. -Skip leaves steps
 # out (the summary names them); -KeepGoing runs the rest after a failure (by default the first failure stops the run).
-# Before every launch: stop if the cancel file exists (default C:\dev\sandbox\locks\cancel-<worktree folder>.flag), wait while
-# C:\dev\sandbox\locks\quiet-window.lock exists, and log the machine state. Windowed -game runs also wait while the CEF lock
-# (cef-e2e.lock) exists; create-world takes it once no other -game UnrealEditor runs, and removes it afterwards.
+# Before every launch, through Scripts\QuietWindow.ps1 (the gate every chain shares): stop if the cancel file exists (default
+# C:\dev\sandbox\locks\cancel-<worktree folder>.flag), wait while the quiet-window lock (-QuietLock) holds this worktree (another
+# lane's window, or ours while it clears; inside our own open window the launch goes and its line says so), and log the machine
+# state. Windowed -game runs also wait while the CEF lock (cef-e2e.lock) exists; create-world takes it once no other -game
+# UnrealEditor runs, and removes it afterwards.
 # Every suite gets a fresh folder under Tests/Evidence/<today>: <Kind>-yyyyMMdd-HHmmss, the runtime's Playground-<suite>/Runtime-*.
 # The summary (Checks-<profile>-<stamp>/summary.txt, made after the build so it is never older than the DLLs) gives pass or fail per
 # step; the hashes against the expected file (lines '<key> 0x<hash>'; a missing file fails the step; hashes.txt has every hash
@@ -37,7 +41,8 @@ $Skip=@($Skip -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
 $steps='merge','build','native','voxel','hashes','runtime','runtime-all','runtime-interaction','runtime-tour','createworld','flight','npm','sourcecheck','verifiers'
 foreach($name in $Skip){if($name -notin $steps){throw "-Skip takes $($steps -join ', '); not $name"}}
 $root=Split-Path $PSScriptRoot -Parent
-$locks='C:\dev\sandbox\locks'; $quietLock="$locks\quiet-window.lock"; $cefLock="$locks\cef-e2e.lock"
+. (Join-Path $PSScriptRoot 'QuietWindow.ps1')
+$locks='C:\dev\sandbox\locks'; $cefLock="$locks\cef-e2e.lock"
 if(-not(Test-Path -LiteralPath $locks)){New-Item -ItemType Directory -Path $locks | Out-Null}
 if(-not $CancelFile){$CancelFile=Join-Path $locks "cancel-$(Split-Path $root -Leaf).flag"}
 # The lanes' "main" is the branch checked out in the repository's main folder (the first worktree), not the main branch.
@@ -69,7 +74,6 @@ function Machine{
     $list+=@(Get-Process UnrealBuildTool,ShaderCompileWorker -ErrorAction SilentlyContinue | Group-Object Name | ForEach-Object { "$($_.Name) x$($_.Count)" })
     if($list.Count){$list -join ' '}else{'none'}
 }
-function GameRuns{@(Get-CimInstance Win32_Process -Filter "Name like 'UnrealEditor%'" | Where-Object { $_.CommandLine -match '(^|\s)-game(\s|$)' })}
 # A fresh evidence folder name; the suites make their own folders and refuse existing ones.
 function NewSuite([string]$Kind){
     do{$path=Join-Path $evidence "$Kind-$(Get-Date -Format 'yyyyMMdd-HHmmss')"; if(Test-Path -LiteralPath $path){Start-Sleep -Seconds 1}}while(Test-Path -LiteralPath $path)
@@ -90,19 +94,8 @@ function OpenRun{
 }
 # Before every launch: the cancel file, the quiet window, and for -game runs the CEF lock (-Slot: also no other -game run).
 function Gate([string]$Name,[switch]$Game,[switch]$Slot){
-    $deadline=(Get-Date).AddMinutes($MaxWaitMinutes); $reported=''
-    while($true){
-        if(Test-Path -LiteralPath $CancelFile){throw [OperationCanceledException]::new("before ${Name}: $CancelFile")}
-        $why=@(
-            if(Test-Path -LiteralPath $quietLock){'quiet window'}
-            if(($Game -or $Slot) -and (Test-Path -LiteralPath $cefLock)){'CEF lock: '+"$(Get-Content -LiteralPath $cefLock -Raw -ErrorAction SilentlyContinue)".Trim()}
-            if($Slot -and (GameRuns).Count){'another -game UnrealEditor runs'}) -join '; '
-        if(-not $why){break}
-        if($why -ne $reported){Say "   $(T (Get-Date)) waiting before ${Name}: $why"; $reported=$why}
-        if((Get-Date) -gt $deadline){throw "gave up after $MaxWaitMinutes min waiting before ${Name}: $why"}
-        Start-Sleep -Seconds 15
-    }
-    Say "== $Name at $(T (Get-Date)); machine: $(Machine)"
+    $window=Wait-QuietWindow -Name $Name -Lane (Split-Path $root -Leaf) -LockFile $QuietLock -CancelFile $CancelFile -CefLock $cefLock -Game:$Game -Slot:$Slot -MaxWaitMinutes $MaxWaitMinutes -Log {param($Text) Say "   $Text"}
+    Say "== $Name at $(T (Get-Date)); machine: $(Machine)$(if($window){"; $window"})"
     StartWatch $Name
 }
 # Each launch gets -LaunchTimeoutMinutes: then a watchdog stops this worktree's UnrealEditor processes started since the launch
@@ -185,7 +178,7 @@ function Finish([int]$Code){
 }
 
 Say "RunChecks -Profile $Profile, $lane, HEAD $(git -C $root log -1 --format='%h %s'), started $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
-Say "worktree changes: $(@(git -C $root status --porcelain).Count); cancel file $CancelFile; quiet-window lock $quietLock; CEF lock $cefLock"
+Say "worktree changes: $(@(git -C $root status --porcelain).Count); cancel file $CancelFile; quiet-window lock $QuietLock; CEF lock $cefLock"
 Say "expected hashes $ExpectedHashes; flight $Flight; native allocator $Allocator; skip $(if($Skip.Count){$Skip -join ','}else{'none'}); keep going $([bool]$KeepGoing)"
 
 if($Profile -eq 'merge'){

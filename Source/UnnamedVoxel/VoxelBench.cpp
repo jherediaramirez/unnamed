@@ -961,12 +961,24 @@ FString VoxelBench::RunDecorate(
             TreeMs += StageMs(Stage);
             if (Stage >= FVoxelTreeTimes::FirstDecorator) DecoratorMs += StageMs(Stage);
         }
+        // The fallen trees and huge mushrooms (S9d part 2) after the trees' stages, with their microseconds per try;
+        // their decorators count above.
+        const auto StageUs = [&Trees](int32 Stage)
+        {
+            return Trees.Calls[Stage]
+                ? FPlatformTime::ToMilliseconds64(Trees.Cycles[Stage]) * 1000. / Trees.Calls[Stage]
+                : 0.;
+        };
         Report += FString::Printf(TEXT("  Trees per Decorate: %.3f ms in %.2f tries (%.2f placed): feature size %.3f, "
                                        "trunk %.3f, foliage %.3f, leaves' distance %.3f, decorators %.3f, "
-                                       "emission %.3f\n"),
+                                       "emission %.3f; fallen trees %.3f in %.2f tries (%.1f us each), huge mushrooms "
+                                       "%.3f in %.2f tries (%.1f us each)\n"),
             TreeMs, Trees.Calls[FVoxelTreeTimes::Size] / Count, Trees.Calls[FVoxelTreeTimes::Emit] / Count,
             StageMs(FVoxelTreeTimes::Size), StageMs(FVoxelTreeTimes::Trunk), StageMs(FVoxelTreeTimes::Foliage),
-            StageMs(FVoxelTreeTimes::Distances), DecoratorMs, StageMs(FVoxelTreeTimes::Emit));
+            StageMs(FVoxelTreeTimes::Distances), DecoratorMs, StageMs(FVoxelTreeTimes::Emit),
+            StageMs(FVoxelTreeTimes::FallenTree), Trees.Calls[FVoxelTreeTimes::FallenTree] / Count,
+            StageUs(FVoxelTreeTimes::FallenTree), StageMs(FVoxelTreeTimes::HugeMushroom),
+            Trees.Calls[FVoxelTreeTimes::HugeMushroom] / Count, StageUs(FVoxelTreeTimes::HugeMushroom));
         FString Decorators;
         for (int32 Type = 0; Type < int32(EVoxelTreeDecorator::Count); ++Type)
         {

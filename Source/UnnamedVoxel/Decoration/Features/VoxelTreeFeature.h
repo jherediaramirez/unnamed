@@ -9,6 +9,7 @@ class FVoxelBlockTable;
 class FVoxelBlockTags;
 class FVoxelFeatureGraph;
 class FVoxelStateProviders;
+struct FVoxelFeatureValue;
 struct FVoxelPlantEnvironment;
 
 // The tree feature of phase 6's S9a (minecraft.wiki "Tree definition"): trunk, foliage and root placers, feature sizes,
@@ -259,8 +260,13 @@ public:
     void ReplaceWithDecoration(int32 Index, uint16 State);
     // Drops the cell at Index (a leaf too far from the logs), so later steps see the working copy there.
     void Drop(int32 Index);
-    // This tree's cells of one kind from the lowest Z up (in cell order within a layer), as the decorators read them.
+    // This tree's cells of one kind from the lowest Z up (in cell order within a layer), as the decorators read them;
+    // only the cells at indices DecoratedBegin to DecoratedEnd.
     void GetCells(ECell Kind, TArray<FIntVector>& Out) const;
+    // The cells GetCells reads (S9d part 2: a fallen tree's stump decorators read the stump, its log decorators the
+    // log); every cell for a tree.
+    int32 DecoratedBegin = 0;
+    int32 DecoratedEnd = MAX_int32;
 
     const FVoxelTreeConfig& Config;
     const FVoxelPlantEnvironment& Env;
@@ -324,7 +330,8 @@ namespace VoxelRootPlacers
 
 // Where the trees' time goes, for voxel.Bench (S9d): cycles (FPlatformTime::Cycles64) and calls per stage, summed over
 // the trees tried. The size is the height, roots and feature size (a tree that fails ends there); each decorator type
-// is its own stage.
+// is its own stage. A fallen tree (S9d part 2) is one stage but its decorators (calls: tries), and so is a huge
+// mushroom.
 struct FVoxelTreeTimes
 {
     enum EStage : uint8
@@ -334,6 +341,8 @@ struct FVoxelTreeTimes
         Foliage,
         Distances,
         Emit,
+        FallenTree,
+        HugeMushroom,
         FirstDecorator
     };
     static constexpr int32 Num = FirstDecorator + int32(EVoxelTreeDecorator::Count);
@@ -369,6 +378,9 @@ namespace VoxelTreeDecorators
     // goes to Times when given.
     UNNAMEDVOXEL_API void Place(
         const FVoxelTreeConfig& Config, FVoxelTreeBuilder& Builder, FVoxelTreeTimes* Times = nullptr);
+    // The same over a list of decorators (a fallen tree's stump and log decorators).
+    UNNAMEDVOXEL_API void Place(TConstArrayView<FVoxelTreeDecoratorConfig> Decorators, FVoxelTreeBuilder& Builder,
+        FVoxelTreeTimes* Times = nullptr);
 }
 
 namespace VoxelTreeFeature
@@ -378,6 +390,17 @@ namespace VoxelTreeFeature
     UNNAMEDVOXEL_API bool Compile(const FVoxelFeatureGraph& Graph, int32 Node, FVoxelBlockTags& Tags,
         const FVoxelBlockTable& Table, FVoxelBlockPredicates& Predicates, FVoxelStateProviders& Providers,
         FVoxelTreeConfig& Out, FString& OutSkip, FString* OutError);
+    // Compile's parts the fallen trees share (S9d part 2): Out.LogStates from Out.TrunkProvider; Out.FreeSet (air plus
+    // replaceable_by_trees); a decorators list, the types not built yet (or whose provider is not) named in
+    // OutSkipped.
+    UNNAMEDVOXEL_API bool SetLogStates(
+        const FVoxelBlockTable& Table, const FVoxelStateProviders& Providers, FVoxelTreeConfig& Out, FString* OutError);
+    UNNAMEDVOXEL_API bool SetFreeSet(
+        FVoxelBlockTags& Tags, FVoxelBlockPredicates& Predicates, FVoxelTreeConfig& Out, FString* OutError);
+    UNNAMEDVOXEL_API bool CompileDecorators(const FVoxelFeatureGraph& Graph, const FVoxelFeatureValue* List,
+        FVoxelBlockTags& Tags, const FVoxelBlockTable& Table, FVoxelBlockPredicates& Predicates,
+        FVoxelStateProviders& Providers, TArray<FVoxelTreeDecoratorConfig>& Out, TArray<FString>& OutSkipped,
+        FString* OutError);
 
     // The trunk height the feature size allows (Height when every layer is free, a clipped height, or INDEX_NONE when
     // the tree fails): layers 0 to Height + 1 above the origin, each a square of its layer's size around every
