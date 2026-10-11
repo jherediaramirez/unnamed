@@ -69,6 +69,10 @@ struct FFoundationItemDefinition
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     TArray<FFoundationMiningRule> MiningRules;
 
+    // 26.3's can_destroy_blocks_in_creative: false (swords) makes a creative player's click break nothing.
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    bool bCanDestroyBlocksInCreative = true;
+
     // Durability: zero means the item never wears. Costs apply only when lab tool wear is on.
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     int32 MaxDurability = 0;
@@ -78,6 +82,11 @@ struct FFoundationItemDefinition
 
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     int32 DurabilityPerHit = 0;
+
+    // 26.3's weapon.disable_blocking_for_seconds (the axes' 5): how long a hit disables a blocking shield. Data only
+    // until shields exist (items S7).
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    float DisableBlockingSeconds = 0;
 
     // Presentation only: "block" draws the block's 3D icon in the HUD (IconColor tints its fallback cube) and the
     // block in hand; otherwise the HUD draws Sprite and the held view the item's DA_Items model (items S4).

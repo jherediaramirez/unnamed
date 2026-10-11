@@ -1499,9 +1499,10 @@ bool FVoxelDecorationGoldenTest::RunTest(const FString& Parameters)
     constexpr uint64 PlantHashes[3] = {0xb77656a8d37bde4aull, 0xa290112228773eefull, 0xed3582d140b6c106ull};
     constexpr int64 PlantWrites[3] = {769195, 774817, 829385};
     // Plants and trees on: recorded on S9a's first run with trees in the world; S9c re-recorded (tree decorators, mega
-    // spruce and pine).
-    constexpr uint64 TreeHashes[3] = {0x079658c484f2c46full, 0x489b7d9f32c4567cull, 0x0896d92106e14e18ull};
-    constexpr int64 TreeWrites[3] = {822126, 774879, 857228};
+    // spruce and pine); S9d part 2 re-recorded overworld and amplified (fallen trees, huge mushrooms, trunk_vine at 2/3,
+    // the shelf mushrooms' one rule; large_biomes unchanged).
+    constexpr uint64 TreeHashes[3] = {0x95645bbf53f73c12ull, 0x489b7d9f32c4567cull, 0x98ae73a412fa50caull};
+    constexpr int64 TreeWrites[3] = {822150, 774879, 857244};
     for (const int32 Case : {0, 1, 2})
         for (int32 Preset = 0; Preset < 3; ++Preset)
         {

@@ -61,9 +61,13 @@ void UFoundationInteractionSettings::BuildRules(FFoundationRules& Rules) const
     const UFoundationProfile& Profile = *GetDefault<UFoundationProfile>();
     Rules.Items.Reset();
     AddBlockItems(*FFoundationBlockRegistry::GetDefault(), Rules.Items);
-    if (const UFoundationItemAssets* ItemAssets = UFoundationItemAssets::LoadDefault())
-        MergeItems(Rules.Items, ItemAssets->MakeDefinitions(), TEXT("DA_Items"));
+    const UFoundationItemAssets* ItemAssets = UFoundationItemAssets::LoadDefault();
+    if (ItemAssets) MergeItems(Rules.Items, ItemAssets->MakeDefinitions(), TEXT("DA_Items"));
     MergeItems(Rules.Items, Items, TEXT("UFoundationInteractionSettings::Items"));
+    // Block loot (items S5b), resolved against every item above.
+    Rules.LootTables.Reset();
+    Rules.LootPredicates.Reset();
+    if (ItemAssets) ItemAssets->AddLoot(Rules);
     Rules.Hand = EmptyHand;
     Rules.Loadout = Loadout;
     Rules.BlockReachCm = Profile.BlockReachCm;
@@ -71,6 +75,19 @@ void UFoundationInteractionSettings::BuildRules(FFoundationRules& Rules) const
     Rules.AirborneMiningMultiplier = AirborneMiningMultiplier;
     Rules.SubmergedMiningMultiplier = SubmergedMiningMultiplier;
     Rules.TargetMaxHealth = TrainingTargetMaxHealth;
+    // The wiki ("Breaking", "Creative"): spears break no blocks in creative either, though 26.3's data gives them no
+    // tool component. Wiki only, not yet black-box verified (items S5); remove this to follow the data alone.
+    Rules.CreativeNoBreakTags.Reset();
+    if (const FGameplayTag Spears = FGameplayTag::RequestGameplayTag(TEXT("Item.Spears"), false); Spears.IsValid())
+        Rules.CreativeNoBreakTags.AddTag(Spears);
+    else
+        UE_LOG(LogUnnamedFoundation, Warning, TEXT("Item.Spears is not registered; spears break blocks in creative"));
+    // The wiki ("Sweep attack"): only a sword in the main hand sweeps (items S7).
+    Rules.SweepItemTags.Reset();
+    if (const FGameplayTag Swords = FGameplayTag::RequestGameplayTag(TEXT("Item.Swords"), false); Swords.IsValid())
+        Rules.SweepItemTags.AddTag(Swords);
+    else
+        UE_LOG(LogUnnamedFoundation, Warning, TEXT("Item.Swords is not registered; nothing sweeps"));
 }
 
 int32 UFoundationInteractionSettings::MergeItems(

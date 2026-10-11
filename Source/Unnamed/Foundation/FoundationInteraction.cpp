@@ -63,6 +63,7 @@ void FFoundationInteraction::Resync(FFoundationAuthority& Authority)
     LastRejectedMine = {};
     NextUseStep = 0;
     LastPlacementStep = MIN_int64 / 2;
+    bStopSprint = false;
     LastText = TEXT("new lab session");
 }
 
@@ -108,6 +109,7 @@ FFoundationResult FFoundationInteraction::Send(
     Command.Sequence = NextSequence++;
     const FFoundationResult Result = Authority.Execute(PlayerId, Command, Vitals);
     ++Commands;
+    if (Result.bSprintKnockback) bStopSprint = true;
     LastResult = Result;
     History.Add(Result);
     if (History.Num() > 32) History.RemoveAt(0, History.Num() - 32);
@@ -213,7 +215,13 @@ void FFoundationInteraction::StartMining(FFoundationAuthority& Authority, FFound
     if (Result.IsCommitted())
     {
         LastRejectedMine = {};
-        if (Result.bBroken) return; // the instant path: no accumulation, no post-break delay
+        if (Result.bBroken)
+        {
+            // The instant path: no accumulation and no post-break delay, except in creative (wiki "Creative"), where
+            // holding attack breaks a block every 6 ticks (the delay, then the next start); a fresh click bypasses it.
+            if (Vitals.Mode == EFoundationPlayerMode::Creative) MiningDelay = MiningDelaySteps;
+            return;
+        }
         bMining = true;
         MiningCell = Target.Cell;
         MiningRevision = Target.Revision;
@@ -438,12 +446,13 @@ FFoundationResult FFoundationInteraction::Drop(
 }
 
 FFoundationResult FFoundationInteraction::SetCreativeSlot(
-    FFoundationAuthority& Authority, FFoundationVitals& Vitals, int32 Slot, FName Item, int32 Count)
+    FFoundationAuthority& Authority, FFoundationVitals& Vitals, int32 Slot, FName Item, int32 Count, int32 Damage)
 {
     FFoundationCommand Command = MakeCommand(Authority, EFoundationCommandType::SetCreativeSlot, EFoundationHand::Main);
     Command.Slot = Slot;
     Command.CreativeItem = Item;
     Command.CreativeCount = Count;
+    Command.CreativeDamage = Damage;
     if (Retry.bActive) CancelRetry(EFoundationReason::ItemChanged);
     return Send(Authority, Vitals, Command);
 }

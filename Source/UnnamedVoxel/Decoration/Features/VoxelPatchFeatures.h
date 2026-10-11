@@ -53,6 +53,10 @@ enum class EVoxelPlantFeature : uint8
     Multiface,
     // tree (S9a): Tree indexes the decorator's tree configurations.
     Tree,
+    // fallen_tree (S9d part 2): Tree indexes the decorator's fallen tree configurations.
+    FallenTree,
+    // huge_red_mushroom and huge_brown_mushroom (S9d part 2): Tree indexes the decorator's huge mushrooms.
+    HugeMushroom,
     // The selectors, sequence and no_op (FVoxelSelectorConfig).
     Selector
 };
@@ -62,7 +66,8 @@ struct FVoxelPlantFeature
     EVoxelPlantFeature Kind = EVoxelPlantFeature::Selector;
     // simple_block's to_place, disk's state_provider, vegetation_patch's ground_state.
     int32 Provider = INDEX_NONE;
-    // tree: an index into the decorator's FVoxelTreeConfig list.
+    // tree: an index into the decorator's FVoxelTreeConfig list (fallen_tree: its FVoxelFallenTreeConfig list; the huge
+    // mushrooms: its FVoxelHugeMushroomConfig list).
     int32 Tree = INDEX_NONE;
     // block_column: layers in order along Direction (an EVoxelFace), each cell passing Allowed (a predicate).
     TArray<FVoxelBlockColumnLayer> Layers;

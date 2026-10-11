@@ -109,6 +109,7 @@
   "item_index.json",
   "items.json",
   "lang.json",
+  "loot_tables.json",
   "models.json",
   "tags.json",
   "textures.json"
@@ -320,6 +321,25 @@
   "assets/minecraft/textures/item/wooden_spear.png",
   "assets/minecraft/textures/item/wooden_spear_in_hand.png",
   "assets/minecraft/textures/item/wooden_sword.png",
+  "data/minecraft/loot_table/blocks/coal_ore.json",
+  "data/minecraft/loot_table/blocks/copper_ore.json",
+  "data/minecraft/loot_table/blocks/deepslate_coal_ore.json",
+  "data/minecraft/loot_table/blocks/deepslate_copper_ore.json",
+  "data/minecraft/loot_table/blocks/deepslate_diamond_ore.json",
+  "data/minecraft/loot_table/blocks/deepslate_emerald_ore.json",
+  "data/minecraft/loot_table/blocks/deepslate_gold_ore.json",
+  "data/minecraft/loot_table/blocks/deepslate_iron_ore.json",
+  "data/minecraft/loot_table/blocks/deepslate_lapis_ore.json",
+  "data/minecraft/loot_table/blocks/deepslate_redstone_ore.json",
+  "data/minecraft/loot_table/blocks/diamond_ore.json",
+  "data/minecraft/loot_table/blocks/emerald_ore.json",
+  "data/minecraft/loot_table/blocks/gold_ore.json",
+  "data/minecraft/loot_table/blocks/iron_ore.json",
+  "data/minecraft/loot_table/blocks/lapis_ore.json",
+  "data/minecraft/loot_table/blocks/nether_gold_ore.json",
+  "data/minecraft/loot_table/blocks/nether_quartz_ore.json",
+  "data/minecraft/loot_table/blocks/redstone_ore.json",
+  "data/minecraft/predicate/tool/can_silk_touch.json",
   "reports/components/item/apple.json",
   "reports/components/item/bread.json",
   "reports/components/item/bucket.json",
@@ -388,5 +408,31 @@
  "dumped": [
   "facts/durability_bar.json",
   "facts/tooltips.json"
- ]
+ ],
+ "loot": {
+  "blocks": [
+   "coal_ore",
+   "deepslate_coal_ore",
+   "copper_ore",
+   "deepslate_copper_ore",
+   "iron_ore",
+   "deepslate_iron_ore",
+   "gold_ore",
+   "deepslate_gold_ore",
+   "diamond_ore",
+   "deepslate_diamond_ore",
+   "emerald_ore",
+   "deepslate_emerald_ore",
+   "lapis_ore",
+   "deepslate_lapis_ore",
+   "redstone_ore",
+   "deepslate_redstone_ore",
+   "nether_quartz_ore",
+   "nether_gold_ore"
+  ],
+  "tables": 18,
+  "predicates": 1,
+  "candidates": 36,
+  "source": "client jar data/minecraft/loot_table/blocks and data/minecraft/predicate"
+ }
 }

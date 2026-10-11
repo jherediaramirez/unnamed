@@ -108,6 +108,9 @@ struct UNNAMED_API FFoundationInteraction
     int64 LastPlacementStep = MIN_int64 / 2;
     bool bPlacedThisUpdate = false;
     FFoundationRetry Retry;
+    // A landed sprint-knockback attack ends the sprint (wiki "Knockback"): the movement owner stops sprinting and
+    // clears this.
+    bool bStopSprint = false;
 
     // Diagnostics.
     FFoundationResult LastResult;
@@ -133,9 +136,10 @@ struct UNNAMED_API FFoundationInteraction
     FFoundationResult Scroll(FFoundationAuthority& Authority, FFoundationVitals& Vitals, int32 Notches);
     FFoundationResult SwapHands(FFoundationAuthority& Authority, FFoundationVitals& Vitals);
     FFoundationResult Drop(FFoundationAuthority& Authority, FFoundationVitals& Vitals, bool bWholeStack);
-    // The creative inventory's write: Slot 0-8 is the hotbar, 9 the offhand; a None item or zero count clears it.
-    FFoundationResult SetCreativeSlot(
-        FFoundationAuthority& Authority, FFoundationVitals& Vitals, int32 Slot, FName Item, int32 Count);
+    // The creative inventory's write: Slot 0-8 is the hotbar, 9 the offhand; a None item or zero count clears it. The
+    // stack keeps its damage.
+    FFoundationResult SetCreativeSlot(FFoundationAuthority& Authority, FFoundationVitals& Vitals, int32 Slot,
+        FName Item, int32 Count, int32 Damage = 0);
     // Selects the hotbar slot whose item places the targeted block (or has it as its wall block). False when there is
     // none.
     bool Pick(FFoundationAuthority& Authority, FFoundationVitals& Vitals);

@@ -122,6 +122,7 @@ FFoundationPlayerFacts AFoundationPawn::MakeInteractionFacts() const
     Facts.EyeCm = GetEyePosition();
     Facts.Aim = GetControlRotation().Vector();
     Facts.FallDistanceCm = Simulation.FallDistanceCm;
+    Facts.StepMovedCm = Simulation.LastDisplacement.Size2D();
     Facts.bGrounded = Simulation.bGrounded;
     Facts.bSprinting = Simulation.bSprinting;
     Facts.bBodyInWater = bBodyInWater;
@@ -190,6 +191,12 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     Authority.Step();
     Interaction.StepOnce(Authority, Vitals, bLatestStep, NowSeconds);
+    // A landed sprint-knockback hit ends the sprint; held sprint input restarts it by the simulation's own rules.
+    if (Interaction.bStopSprint)
+    {
+        Interaction.bStopSprint = false;
+        Simulation.bSprinting = false;
+    }
 }
 
 void AFoundationPawn::PressInteraction(EFoundationInput Input)

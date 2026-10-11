@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blocks/VoxelPlantSurvival.h"
+#include "Decoration/Features/VoxelBigVegetation.h"
 #include "Decoration/Features/VoxelOreFeature.h"
 #include "Decoration/Features/VoxelPatchFeatures.h"
 #include "Decoration/Features/VoxelTreeFeature.h"
@@ -144,9 +145,12 @@ public:
     const FVoxelStateProviders& GetProviders() const { return Providers; }
     // The skipped placed features' reasons with their counts.
     const TMap<FString, int32>& GetSkipped() const { return Skipped; }
-    // Trees (S9a): the configurations compiled, the selector entries of S9d's types placing nothing, and the tree
-    // decorators not built yet (left out), by type.
+    // Trees (S9a): the configurations compiled (the fallen trees' and huge mushrooms' since S9d part 2), the selector
+    // entries placing nothing (trees whose placer is not built), and the tree decorators not built yet (left out), by
+    // type.
     TConstArrayView<FVoxelTreeConfig> GetTrees() const { return Trees; }
+    TConstArrayView<FVoxelFallenTreeConfig> GetFallenTrees() const { return FallenTrees; }
+    TConstArrayView<FVoxelHugeMushroomConfig> GetHugeMushrooms() const { return HugeMushrooms; }
     const TMap<FString, int32>& GetPlaceholders() const { return Placeholders; }
     const TMap<FString, int32>& GetSkippedDecorators() const { return SkippedDecorators; }
     // The noise the count modifiers read (noise_threshold_count at X / 200, Y / 200).
@@ -269,7 +273,9 @@ private:
     // Compile memos: graph node to plant or nested placed feature.
     TMap<int32, int32> PlantOfNode, PlacedOfNode;
 
-    // Trees (S9a).
+    // Trees (S9a), fallen trees and huge mushrooms (S9d part 2).
     TArray<FVoxelTreeConfig> Trees;
+    TArray<FVoxelFallenTreeConfig> FallenTrees;
+    TArray<FVoxelHugeMushroomConfig> HugeMushrooms;
     TMap<FString, int32> Placeholders, SkippedDecorators;
 };

@@ -73,8 +73,9 @@ struct FFoundationBlockType
     FColor Tint = FColor(0, 0, 0, 0);
     FLinearColor Color = FLinearColor::White;
 
-    // Provisional loot rule: a block drops its own item, and a wall block without one (wall_torch, the coral wall
-    // fans) its standing block's. Loot tables are not imported yet.
+    // Provisional loot rule for blocks without a loot table (FFoundationRules::LootTables; items S5b imports the
+    // ores'): a block drops its own item, and a wall block without one (wall_torch, the coral wall fans) its standing
+    // block's.
     FName DropItem;
     int32 DropCount = 1;
     FName Item;
