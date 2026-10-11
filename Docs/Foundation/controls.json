@@ -100,7 +100,7 @@
       "rebindable": true,
       "persistence": "options.txt key_key.jump:<InputConstants key name>",
       "context": "gameplay; container variants in contract",
-      "contract": "Held jump with 10-reference-tick cooldown; release resets cooldown; grounded eligibility. Creative double tap/flight/riding deferred.",
+      "contract": "Held jump with 10-reference-tick cooldown; release resets cooldown; grounded eligibility. Creative: double tap (7-tick window) toggles flight, held jump rises, landing ends it; riding deferred.",
       "handler": "Enhanced Input / intent / fixed simulation",
       "settings": "existing UUnnamedInputSettings key profile → UMenuInputSettings → existing Controls UI",
       "status": "Implement now",

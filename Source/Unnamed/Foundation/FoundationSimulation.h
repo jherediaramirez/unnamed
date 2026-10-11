@@ -4,11 +4,12 @@
 
 class UFoundationProfile;
 
-// Movement eligibility facts. The pawn supplies death (mobility) and food from FFoundationVitals each
-// step; item slowdown has no owner yet. The simulation itself has no survival rules.
+// Movement eligibility facts. The pawn supplies death (mobility), food and the game mode's flight
+// permission from FFoundationVitals each step; item slowdown has no owner yet. The simulation itself
+// has no survival rules.
 struct FFoundationEligibility
 {
-    bool bMobile = true, bEnoughFood = true, bItemSlows = false;
+    bool bMobile = true, bEnoughFood = true, bItemSlows = false, bMayFly = false;
 };
 
 // One simulation step's request. The pawn builds it from the input layer's FUnnamedInputIntent
@@ -28,9 +29,11 @@ struct UNNAMED_API FFoundationSimulation
     double HeightCm = 0, EyeCm = 0, PreviousEyeCm = 0, FovMultiplier = 1, PreviousFovMultiplier = 1;
     double Accumulator = 0, DroppedSeconds = 0, FallDistanceCm = 0;
     int64 Steps = 0;
-    int32 JumpCooldown = 0, SprintTimer = 0, AutoJumpDelay = 0;
+    int32 JumpCooldown = 0, SprintTimer = 0, AutoJumpDelay = 0, FlyTriggerTimer = 0;
     bool bGrounded = false, bCrouched = false, bSprinting = false, bHeadroom = true, bHorizontalCollision = false,
          bHadForward = false;
+    // Creative flight, toggled by a double tap of jump; bHadJump is the previous step's held jump.
+    bool bFlying = false, bHadJump = false;
     // The last step started a jump, and whether it was a sprint jump (food exhaustion facts).
     bool bJumped = false, bSprintJumped = false;
     FString Rejection = TEXT("unhindered fixture: sufficient food, no effects");
