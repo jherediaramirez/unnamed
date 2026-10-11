@@ -4,6 +4,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 10, 2026
 
+- [Tools S1 + S5: one check runner, and TestVoxel's count from the source](2026-10-10-Tools-S1-S5-CheckRunner.md): read before running checks in any lane. `Scripts/RunChecks.ps1 -Profile quick|final|merge` replaces the sandbox chains, and its summary feeds `verify_lane.ps1`. TestVoxel now expects the declared `Unnamed.Voxel` tests. A lane that set `$expected=<n>` takes main's `TestVoxel.ps1` when merging.
 - [Voxel world phase 6, S7b: Jesus's plant answers, the survival matrix, and the handoff into S7c (sturdy faces)](2026-10-10-Voxel-Phase6-S7b.md): start here for the parallel plant lane (`feature/voxel-s7b`). Stacks settle to their end (Q1), one snow layer is replaceable (Q5), coral fans place their wall fans (Q7), the vine's up face is the measured quirk (Q8), and a vine holds on any face. The blocks reference gained `facts/plant_survival.json` (Q3), and `Blocks.Survival` checks the whole matrix with each difference counted by cause. Section 5 is the pending merge, section 8 the Q2 options. The short prompt is at the top.
 - [Voxel world phase 6, S10: the carvers (side lane), and the handoff into S11's start](2026-10-10-Voxel-Phase6-S10.md): start here when S11 turns the carvers on. The three carvers run as a pull pass in Generate behind `voxel.Carvers`, default 0, so no golden or hash moves until then.
   - A carved cell gets the aquifer's answer for an open cell (S10-Q1 (a)).
