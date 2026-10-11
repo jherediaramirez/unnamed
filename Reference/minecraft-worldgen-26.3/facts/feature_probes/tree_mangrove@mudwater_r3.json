@@ -1,0 +1,7608 @@
+{
+ "generated_by": "tools/tree_probe.py",
+ "minecraft": "26.3",
+ "probe": "mangrove@mudwater_r3",
+ "feature": "minecraft:mangrove",
+ "variant": "@mudwater",
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:stone",
+    -63,
+    55
+   ],
+   [
+    "minecraft:dirt",
+    56,
+    58
+   ],
+   [
+    "minecraft:grass_block",
+    59,
+    59
+   ]
+  ],
+  "grid_spacing": 32,
+  "random_tick_speed": 0,
+  "settle_s": 0,
+  "x_start": 41997,
+  "level_seed": 90210
+ },
+ "y": 60,
+ "grid": 10,
+ "settled": false,
+ "prep": [
+  [
+   -10,
+   56,
+   -10,
+   10,
+   59,
+   10,
+   "minecraft:mud"
+  ],
+  [
+   -10,
+   60,
+   -10,
+   10,
+   61,
+   10,
+   "minecraft:water"
+  ]
+ ],
+ "tries": 100,
+ "responses": {
+  "placed": 94,
+  "failed": 6
+ },
+ "placed_but_empty": 0,
+ "failed_but_changed": 0,
+ "n": {
+  "n": 94,
+  "min": 94,
+  "p5": 111,
+  "p50": 226,
+  "p95": 397,
+  "max": 484,
+  "mean": 238.394
+ },
+ "logs": {
+  "n": 94,
+  "min": 2,
+  "p5": 3,
+  "p50": 7,
+  "p95": 14,
+  "max": 19,
+  "mean": 7.457
+ },
+ "leaves": {
+  "n": 94,
+  "min": 34,
+  "p5": 38,
+  "p50": 122,
+  "p95": 250,
+  "max": 306,
+  "mean": 133.287
+ },
+ "log_top": {
+  "n": 94,
+  "min": 2,
+  "p5": 3,
+  "p50": 6,
+  "p95": 9,
+  "max": 11,
+  "mean": 6.17
+ },
+ "log_bottom": {
+  "n": 94,
+  "min": 1,
+  "p5": 1,
+  "p50": 2,
+  "p95": 3,
+  "max": 3,
+  "mean": 2.0
+ },
+ "origin_column_logs": {
+  "n": 94,
+  "min": 2,
+  "p5": 2,
+  "p50": 5,
+  "p95": 7,
+  "max": 7,
+  "mean": 4.713
+ },
+ "reach_h": {
+  "n": 94,
+  "min": 4,
+  "p5": 4,
+  "p50": 5,
+  "p95": 6,
+  "max": 6,
+  "mean": 5.287
+ },
+ "log_reach_h": {
+  "n": 94,
+  "min": 0,
+  "p5": 0,
+  "p50": 2,
+  "p95": 3,
+  "max": 3,
+  "mean": 1.798
+ },
+ "leaf_reach_h": {
+  "n": 94,
+  "min": 2,
+  "p5": 2,
+  "p50": 4,
+  "p95": 5,
+  "max": 5,
+  "mean": 3.798
+ },
+ "leaf_top": {
+  "n": 94,
+  "min": 4,
+  "p5": 5,
+  "p50": 8,
+  "p95": 11,
+  "max": 13,
+  "mean": 8.17
+ },
+ "log_comp6": {
+  "n": 94,
+  "min": 1,
+  "p5": 1,
+  "p50": 2,
+  "p95": 5,
+  "max": 7,
+  "mean": 2.181
+ },
+ "log_comp26": {
+  "n": 94,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "logroot_comp6": {
+  "n": 94,
+  "min": 1,
+  "p5": 1,
+  "p50": 2,
+  "p95": 5,
+  "max": 7,
+  "mean": 2.181
+ },
+ "logroot_comp26": {
+  "n": 94,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_mismatch": {
+  "n": 94,
+  "min": 0,
+  "p5": 0,
+  "p50": 29,
+  "p95": 82,
+  "max": 162,
+  "mean": 33.904
+ },
+ "leaf_comp6": {
+  "n": 94,
+  "min": 1,
+  "p5": 1,
+  "p50": 2,
+  "p95": 6,
+  "max": 7,
+  "mean": 2.702
+ },
+ "leaf_pending_tick": {
+  "n": 94,
+  "min": 30,
+  "p5": 34,
+  "p50": 89,
+  "p95": 156,
+  "max": 183,
+  "mean": 91.17
+ },
+ "leaf_mismatch_no_tick": {
+  "n": 94,
+  "min": 0,
+  "p5": 0,
+  "p50": 10,
+  "p95": 41,
+  "max": 75,
+  "mean": 13.989
+ },
+ "leaf_bfs7": {
+  "n": 94,
+  "min": 0,
+  "p5": 0,
+  "p50": 1,
+  "p95": 6,
+  "max": 7,
+  "mean": 1.957
+ },
+ "log_top_hist": {
+  "2": 2,
+  "3": 5,
+  "4": 12,
+  "5": 15,
+  "6": 21,
+  "7": 14,
+  "8": 14,
+  "9": 9,
+  "10": 1,
+  "11": 1
+ },
+ "origin_column_logs_hist": {
+  "2": 7,
+  "3": 13,
+  "4": 23,
+  "5": 17,
+  "6": 25,
+  "7": 9
+ },
+ "log_comp6_hist": {
+  "1": 41,
+  "2": 21,
+  "3": 15,
+  "4": 11,
+  "5": 4,
+  "6": 1,
+  "7": 1
+ },
+ "log_comp26_hist": {
+  "1": 94
+ },
+ "bbox_extremes": {
+  "min_dx": -6,
+  "max_dx": 6,
+  "min_dy": -4,
+  "max_dy": 13,
+  "min_dz": -6,
+  "max_dz": 6
+ },
+ "blocks": {
+  "bee_nest": {
+   "mean_per_tree": 0.011,
+   "share_of_trees": 0.011,
+   "max_reach_h": 1,
+   "per_tree": {
+    "n": 94,
+    "min": 0,
+    "p5": 0,
+    "p50": 0,
+    "p95": 0,
+    "max": 1,
+    "mean": 0.011
+   }
+  },
+  "mangrove_leaves": {
+   "mean_per_tree": 133.287,
+   "share_of_trees": 1.0,
+   "max_reach_h": 5,
+   "per_tree": {
+    "n": 94,
+    "min": 34,
+    "p5": 38,
+    "p50": 122,
+    "p95": 250,
+    "max": 306,
+    "mean": 133.287
+   }
+  },
+  "mangrove_log": {
+   "mean_per_tree": 7.457,
+   "share_of_trees": 1.0,
+   "max_reach_h": 3,
+   "per_tree": {
+    "n": 94,
+    "min": 2,
+    "p5": 3,
+    "p50": 7,
+    "p95": 14,
+    "max": 19,
+    "mean": 7.457
+   }
+  },
+  "mangrove_propagule": {
+   "mean_per_tree": 2.043,
+   "share_of_trees": 0.787,
+   "max_reach_h": 5,
+   "per_tree": {
+    "n": 94,
+    "min": 0,
+    "p5": 0,
+    "p50": 2,
+    "p95": 6,
+    "max": 7,
+    "mean": 2.043
+   }
+  },
+  "mangrove_roots": {
+   "mean_per_tree": 19.606,
+   "share_of_trees": 1.0,
+   "max_reach_h": 6,
+   "per_tree": {
+    "n": 94,
+    "min": 10,
+    "p5": 11,
+    "p50": 21,
+    "p95": 27,
+    "max": 35,
+    "mean": 19.606
+   }
+  },
+  "moss_carpet": {
+   "mean_per_tree": 4.245,
+   "share_of_trees": 0.989,
+   "max_reach_h": 6,
+   "per_tree": {
+    "n": 94,
+    "min": 0,
+    "p5": 2,
+    "p50": 4,
+    "p95": 8,
+    "max": 12,
+    "mean": 4.245
+   }
+  },
+  "muddy_mangrove_roots": {
+   "mean_per_tree": 20.947,
+   "share_of_trees": 1.0,
+   "max_reach_h": 6,
+   "per_tree": {
+    "n": 94,
+    "min": 16,
+    "p5": 16,
+    "p50": 21,
+    "p95": 27,
+    "max": 28,
+    "mean": 20.947
+   }
+  },
+  "vine": {
+   "mean_per_tree": 50.798,
+   "share_of_trees": 1.0,
+   "max_reach_h": 6,
+   "per_tree": {
+    "n": 94,
+    "min": 9,
+    "p5": 18,
+    "p50": 48,
+    "p95": 99,
+    "max": 118,
+    "mean": 50.798
+   }
+  }
+ },
+ "leaf_distance": {
+  "1": 1205,
+  "2": 2871,
+  "3": 3815,
+  "4": 3024,
+  "5": 1218,
+  "6": 212,
+  "7": 184
+ },
+ "leaf_bfs": {
+  "1": 1812,
+  "2": 3341,
+  "3": 3717,
+  "4": 2473,
+  "5": 886,
+  "6": 116,
+  "7": 184
+ },
+ "leaf_persistent": {
+  "false": 12529
+ },
+ "log_axis": {
+  "y": 701
+ },
+ "block_entities": {
+  "minecraft:beehive": 1
+ },
+ "pending_ticks": {
+  "minecraft:mangrove_leaves": 8570
+ },
+ "bees_per_hive": {
+  "2": 1
+ },
+ "max_reach_h_any_cell": 6,
+ "profile": {
+  "n": 94,
+  "log_columns": {
+   "-3,0": 0.0532,
+   "-2,0": 0.1277,
+   "-1,0": 0.2447,
+   "0,-3": 0.1596,
+   "0,-2": 0.2766,
+   "0,-1": 0.4043,
+   "0,0": 1.0,
+   "0,1": 0.266,
+   "0,2": 0.1915,
+   "0,3": 0.0745,
+   "1,0": 0.2979,
+   "2,0": 0.2021,
+   "3,0": 0.1489
+  },
+  "logs_per_dy": {
+   "1": 0.3936,
+   "2": 0.7447,
+   "3": 1.2447,
+   "4": 1.4574,
+   "5": 1.3298,
+   "6": 1.0426,
+   "7": 0.6809,
+   "8": 0.3723,
+   "9": 0.1489,
+   "10": 0.0319,
+   "11": 0.0106
+  },
+  "leaf_layers": [
+   {
+    "dy_from_top_log": -8,
+    "mean_per_tree": 0.1277,
+    "max_radius": 3,
+    "occupancy": {
+     "-3,-2": 0.0106,
+     "-3,0": 0.0106,
+     "-2,-2": 0.0106,
+     "-2,-1": 0.0106,
+     "-2,1": 0.0106,
+     "-2,2": 0.0106,
+     "-1,-2": 0.0106,
+     "-1,-1": 0.0106,
+     "-1,1": 0.0106,
+     "-1,2": 0.0106,
+     "0,-2": 0.0106,
+     "0,2": 0.0106
+    }
+   },
+   {
+    "dy_from_top_log": -7,
+    "mean_per_tree": 0.5426,
+    "max_radius": 4,
+    "occupancy": {
+     "-4,-1": 0.0106,
+     "-4,0": 0.0106,
+     "-4,2": 0.0106,
+     "-3,-2": 0.0106,
+     "-3,-1": 0.0106,
+     "-3,0": 0.0106,
+     "-3,1": 0.0106,
+     "-3,2": 0.0106,
+     "-2,-2": 0.0213,
+     "-2,-1": 0.0319,
+     "-2,0": 0.0319,
+     "-2,1": 0.0319,
+     "-2,2": 0.0106,
+     "-1,-2": 0.0319,
+     "-1,-1": 0.0319,
+     "-1,1": 0.0319,
+     "-1,2": 0.0213,
+     "0,-2": 0.0319,
+     "0,-1": 0.0106,
+     "0,1": 0.0213,
+     "1,-2": 0.0213,
+     "1,-1": 0.0106,
+     "1,0": 0.0319,
+     "1,1": 0.0319,
+     "1,2": 0.0106,
+     "2,0": 0.0106,
+     "3,-2": 0.0106,
+     "3,0": 0.0106,
+     "3,1": 0.0106
+    }
+   },
+   {
+    "dy_from_top_log": -6,
+    "mean_per_tree": 1.4681,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.0106,
+     "-5,-1": 0.0106,
+     "-5,0": 0.0106,
+     "-4,-2": 0.0106,
+     "-4,-1": 0.0213,
+     "-4,0": 0.0213,
+     "-4,1": 0.0106,
+     "-4,2": 0.0106,
+     "-3,-2": 0.0213,
+     "-3,-1": 0.0319,
+     "-3,0": 0.0426,
+     "-3,1": 0.0426,
+     "-3,2": 0.0426,
+     "-2,-3": 0.0213,
+     "-2,-2": 0.0319,
+     "-2,-1": 0.0745,
+     "-2,0": 0.0426,
+     "-2,1": 0.0638,
+     "-2,2": 0.0213,
+     "-1,-3": 0.0106,
+     "-1,-2": 0.0745,
+     "-1,-1": 0.0957,
+     "-1,0": 0.0426,
+     "-1,1": 0.0745,
+     "-1,2": 0.0319,
+     "0,-3": 0.0106,
+     "0,-2": 0.0213,
+     "0,-1": 0.0319,
+     "0,1": 0.0426,
+     "0,2": 0.0106,
+     "1,-3": 0.0106,
+     "1,-2": 0.0638,
+     "1,-1": 0.0532,
+     "1,0": 0.0106,
+     "1,1": 0.0426,
+     "1,2": 0.0532,
+     "2,-3": 0.0213,
+     "2,-2": 0.0319,
+     "2,-1": 0.0319,
+     "2,0": 0.0319,
+     "2,1": 0.0213,
+     "2,2": 0.0106,
+     "3,-1": 0.0106,
+     "3,0": 0.0106,
+     "3,1": 0.0106,
+     "3,2": 0.0106,
+     "4,-1": 0.0106,
+     "4,0": 0.0106,
+     "4,1": 0.0106,
+     "4,2": 0.0106,
+     "5,0": 0.0106
+    }
+   },
+   {
+    "dy_from_top_log": -5,
+    "mean_per_tree": 4.0851,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-1": 0.0106,
+     "-5,0": 0.0106,
+     "-5,2": 0.0106,
+     "-4,-2": 0.0213,
+     "-4,-1": 0.0213,
+     "-4,0": 0.0213,
+     "-4,1": 0.0213,
+     "-4,2": 0.0106,
+     "-3,-2": 0.0426,
+     "-3,-1": 0.0426,
+     "-3,0": 0.0532,
+     "-3,1": 0.0745,
+     "-3,2": 0.0426,
+     "-2,-3": 0.0319,
+     "-2,-2": 0.0851,
+     "-2,-1": 0.1277,
+     "-2,0": 0.0851,
+     "-2,1": 0.0957,
+     "-2,2": 0.0851,
+     "-1,-5": 0.0106,
+     "-1,-4": 0.0106,
+     "-1,-3": 0.0532,
+     "-1,-2": 0.1277,
+     "-1,-1": 0.1915,
+     "-1,0": 0.0532,
+     "-1,1": 0.1702,
+     "-1,2": 0.1383,
+     "-1,3": 0.0213,
+     "0,-5": 0.0106,
+     "0,-4": 0.0213,
+     "0,-3": 0.0532,
+     "0,-2": 0.117,
+     "0,-1": 0.0851,
+     "0,1": 0.0957,
+     "0,2": 0.117,
+     "0,3": 0.0319,
+     "1,-4": 0.0106,
+     "1,-3": 0.0532,
+     "1,-2": 0.1489,
+     "1,-1": 0.1915,
+     "1,0": 0.0851,
+     "1,1": 0.1809,
+     "1,2": 0.1383,
+     "1,3": 0.0426,
+     "2,-4": 0.0106,
+     "2,-3": 0.0213,
+     "2,-2": 0.0957,
+     "2,-1": 0.1064,
+     "2,0": 0.117,
+     "2,1": 0.1277,
+     "2,2": 0.1277,
+     "2,3": 0.0213,
+     "3,-2": 0.0213,
+     "3,-1": 0.0745,
+     "3,0": 0.0745,
+     "3,1": 0.0532,
+     "3,2": 0.0213,
+     "4,-2": 0.0213,
+     "4,-1": 0.0426,
+     "4,0": 0.0319,
+     "4,1": 0.0106,
+     "4,2": 0.0213,
+     "5,0": 0.0106,
+     "5,1": 0.0213
+    }
+   },
+   {
+    "dy_from_top_log": -4,
+    "mean_per_tree": 7.9681,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.0213,
+     "-5,-1": 0.0213,
+     "-5,0": 0.0213,
+     "-5,1": 0.0213,
+     "-5,2": 0.0106,
+     "-4,-2": 0.0426,
+     "-4,-1": 0.0213,
+     "-4,0": 0.0213,
+     "-4,1": 0.0426,
+     "-4,2": 0.0319,
+     "-3,-2": 0.0957,
+     "-3,-1": 0.1277,
+     "-3,0": 0.117,
+     "-3,1": 0.0957,
+     "-3,2": 0.0426,
+     "-2,-4": 0.0213,
+     "-2,-3": 0.0638,
+     "-2,-2": 0.1489,
+     "-2,-1": 0.1809,
+     "-2,0": 0.1596,
+     "-2,1": 0.1915,
+     "-2,2": 0.1596,
+     "-2,3": 0.0426,
+     "-2,4": 0.0213,
+     "-2,5": 0.0106,
+     "-1,-5": 0.0106,
+     "-1,-4": 0.0426,
+     "-1,-3": 0.0851,
+     "-1,-2": 0.2128,
+     "-1,-1": 0.3085,
+     "-1,0": 0.1489,
+     "-1,1": 0.3085,
+     "-1,2": 0.2021,
+     "-1,3": 0.0532,
+     "-1,4": 0.0426,
+     "-1,5": 0.0213,
+     "0,-5": 0.0213,
+     "0,-4": 0.0532,
+     "0,-3": 0.0957,
+     "0,-2": 0.2234,
+     "0,-1": 0.1702,
+     "0,1": 0.1809,
+     "0,2": 0.1809,
+     "0,3": 0.0426,
+     "0,4": 0.0426,
+     "0,5": 0.0106,
+     "1,-5": 0.0106,
+     "1,-4": 0.0319,
+     "1,-3": 0.0957,
+     "1,-2": 0.266,
+     "1,-1": 0.3404,
+     "1,0": 0.1702,
+     "1,1": 0.3511,
+     "1,2": 0.2447,
+     "1,3": 0.0638,
+     "1,4": 0.0319,
+     "2,-5": 0.0213,
+     "2,-4": 0.0319,
+     "2,-3": 0.0851,
+     "2,-2": 0.2021,
+     "2,-1": 0.2447,
+     "2,0": 0.1915,
+     "2,1": 0.2447,
+     "2,2": 0.1489,
+     "2,3": 0.0532,
+     "2,4": 0.0213,
+     "3,-2": 0.0957,
+     "3,-1": 0.0957,
+     "3,0": 0.117,
+     "3,1": 0.1277,
+     "3,2": 0.0745,
+     "4,-2": 0.0426,
+     "4,-1": 0.0638,
+     "4,0": 0.0851,
+     "4,1": 0.0745,
+     "4,2": 0.0532,
+     "5,-2": 0.0213,
+     "5,-1": 0.0106,
+     "5,0": 0.0319,
+     "5,1": 0.0213,
+     "5,2": 0.0106
+    }
+   },
+   {
+    "dy_from_top_log": -3,
+    "mean_per_tree": 13.5851,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.0213,
+     "-5,-1": 0.0319,
+     "-5,0": 0.0319,
+     "-5,1": 0.0319,
+     "-5,2": 0.0106,
+     "-4,-2": 0.0426,
+     "-4,-1": 0.0426,
+     "-4,0": 0.0532,
+     "-4,1": 0.0426,
+     "-4,2": 0.0426,
+     "-3,-2": 0.0957,
+     "-3,-1": 0.0957,
+     "-3,0": 0.1383,
+     "-3,1": 0.117,
+     "-3,2": 0.117,
+     "-2,-5": 0.0213,
+     "-2,-4": 0.0532,
+     "-2,-3": 0.1277,
+     "-2,-2": 0.2553,
+     "-2,-1": 0.3617,
+     "-2,0": 0.2766,
+     "-2,1": 0.3404,
+     "-2,2": 0.266,
+     "-2,3": 0.0745,
+     "-2,4": 0.0745,
+     "-2,5": 0.0319,
+     "-1,-5": 0.0426,
+     "-1,-4": 0.0851,
+     "-1,-3": 0.1596,
+     "-1,-2": 0.4362,
+     "-1,-1": 0.5426,
+     "-1,0": 0.383,
+     "-1,1": 0.4362,
+     "-1,2": 0.3404,
+     "-1,3": 0.1489,
+     "-1,4": 0.0426,
+     "-1,5": 0.0213,
+     "0,-5": 0.0319,
+     "0,-4": 0.0745,
+     "0,-3": 0.1489,
+     "0,-2": 0.3936,
+     "0,-1": 0.3085,
+     "0,1": 0.383,
+     "0,2": 0.3191,
+     "0,3": 0.1277,
+     "0,4": 0.0745,
+     "0,5": 0.0319,
+     "1,-5": 0.0319,
+     "1,-4": 0.0851,
+     "1,-3": 0.1915,
+     "1,-2": 0.3404,
+     "1,-1": 0.5532,
+     "1,0": 0.3511,
+     "1,1": 0.4574,
+     "1,2": 0.3617,
+     "1,3": 0.1277,
+     "1,4": 0.0426,
+     "1,5": 0.0426,
+     "2,-5": 0.0106,
+     "2,-4": 0.0426,
+     "2,-3": 0.1383,
+     "2,-2": 0.3617,
+     "2,-1": 0.4149,
+     "2,0": 0.2553,
+     "2,1": 0.3936,
+     "2,2": 0.2447,
+     "2,3": 0.0957,
+     "2,4": 0.0532,
+     "2,5": 0.0106,
+     "3,-2": 0.1596,
+     "3,-1": 0.1915,
+     "3,0": 0.2234,
+     "3,1": 0.1809,
+     "3,2": 0.1596,
+     "4,-2": 0.0745,
+     "4,-1": 0.1383,
+     "4,0": 0.1064,
+     "4,1": 0.1064,
+     "4,2": 0.0851,
+     "5,-2": 0.0532,
+     "5,-1": 0.0426,
+     "5,0": 0.0638,
+     "5,1": 0.0319,
+     "5,2": 0.0319
+    }
+   },
+   {
+    "dy_from_top_log": -2,
+    "mean_per_tree": 20.3298,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.0319,
+     "-5,-1": 0.0213,
+     "-5,0": 0.0426,
+     "-5,1": 0.0426,
+     "-5,2": 0.0213,
+     "-4,-2": 0.0638,
+     "-4,-1": 0.0957,
+     "-4,0": 0.0851,
+     "-4,1": 0.0745,
+     "-4,2": 0.0745,
+     "-3,-2": 0.117,
+     "-3,-1": 0.2021,
+     "-3,0": 0.1596,
+     "-3,1": 0.1809,
+     "-3,2": 0.1489,
+     "-2,-5": 0.0319,
+     "-2,-4": 0.117,
+     "-2,-3": 0.2021,
+     "-2,-2": 0.4362,
+     "-2,-1": 0.5426,
+     "-2,0": 0.4787,
+     "-2,1": 0.4894,
+     "-2,2": 0.3404,
+     "-2,3": 0.2234,
+     "-2,4": 0.0745,
+     "-2,5": 0.0213,
+     "-1,-5": 0.0426,
+     "-1,-4": 0.2234,
+     "-1,-3": 0.3511,
+     "-1,-2": 0.5319,
+     "-1,-1": 0.734,
+     "-1,0": 0.6064,
+     "-1,1": 0.6915,
+     "-1,2": 0.4787,
+     "-1,3": 0.2234,
+     "-1,4": 0.1489,
+     "-1,5": 0.0426,
+     "0,-5": 0.0745,
+     "0,-4": 0.1915,
+     "0,-3": 0.3085,
+     "0,-2": 0.4787,
+     "0,-1": 0.4681,
+     "0,1": 0.4894,
+     "0,2": 0.4468,
+     "0,3": 0.2021,
+     "0,4": 0.1383,
+     "0,5": 0.0638,
+     "1,-5": 0.0851,
+     "1,-4": 0.1702,
+     "1,-3": 0.3191,
+     "1,-2": 0.5106,
+     "1,-1": 0.6596,
+     "1,0": 0.5319,
+     "1,1": 0.6489,
+     "1,2": 0.4255,
+     "1,3": 0.1809,
+     "1,4": 0.117,
+     "1,5": 0.0319,
+     "2,-5": 0.0851,
+     "2,-4": 0.1064,
+     "2,-3": 0.2447,
+     "2,-2": 0.4894,
+     "2,-1": 0.5319,
+     "2,0": 0.4468,
+     "2,1": 0.5106,
+     "2,2": 0.4043,
+     "2,3": 0.1809,
+     "2,4": 0.0851,
+     "2,5": 0.0319,
+     "3,-2": 0.2021,
+     "3,-1": 0.2447,
+     "3,0": 0.2447,
+     "3,1": 0.234,
+     "3,2": 0.2128,
+     "4,-2": 0.1489,
+     "4,-1": 0.1702,
+     "4,0": 0.1702,
+     "4,1": 0.1809,
+     "4,2": 0.117,
+     "5,-2": 0.0213,
+     "5,-1": 0.0532,
+     "5,0": 0.1277,
+     "5,1": 0.0957,
+     "5,2": 0.0532
+    }
+   },
+   {
+    "dy_from_top_log": -1,
+    "mean_per_tree": 23.1489,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-1": 0.0532,
+     "-5,0": 0.0532,
+     "-5,1": 0.0426,
+     "-5,2": 0.0213,
+     "-4,-2": 0.0957,
+     "-4,-1": 0.1064,
+     "-4,0": 0.1277,
+     "-4,1": 0.117,
+     "-4,2": 0.0745,
+     "-3,-2": 0.1489,
+     "-3,-1": 0.1915,
+     "-3,0": 0.1702,
+     "-3,1": 0.1489,
+     "-3,2": 0.117,
+     "-2,-5": 0.0957,
+     "-2,-4": 0.2021,
+     "-2,-3": 0.3085,
+     "-2,-2": 0.5106,
+     "-2,-1": 0.6064,
+     "-2,0": 0.5745,
+     "-2,1": 0.5851,
+     "-2,2": 0.3617,
+     "-2,3": 0.1809,
+     "-2,4": 0.1064,
+     "-2,5": 0.0213,
+     "-1,-5": 0.117,
+     "-1,-4": 0.266,
+     "-1,-3": 0.3617,
+     "-1,-2": 0.617,
+     "-1,-1": 0.7021,
+     "-1,0": 0.6277,
+     "-1,1": 0.7128,
+     "-1,2": 0.4894,
+     "-1,3": 0.2234,
+     "-1,4": 0.1596,
+     "-1,5": 0.0638,
+     "0,-5": 0.1064,
+     "0,-4": 0.234,
+     "0,-3": 0.3404,
+     "0,-2": 0.5213,
+     "0,-1": 0.5745,
+     "0,0": 0.1277,
+     "0,1": 0.6064,
+     "0,2": 0.5106,
+     "0,3": 0.234,
+     "0,4": 0.1596,
+     "0,5": 0.0638,
+     "1,-5": 0.1489,
+     "1,-4": 0.2553,
+     "1,-3": 0.3617,
+     "1,-2": 0.6064,
+     "1,-1": 0.7553,
+     "1,0": 0.6596,
+     "1,1": 0.7128,
+     "1,2": 0.4894,
+     "1,3": 0.2234,
+     "1,4": 0.1489,
+     "1,5": 0.0638,
+     "2,-5": 0.0426,
+     "2,-4": 0.1702,
+     "2,-3": 0.2979,
+     "2,-2": 0.4787,
+     "2,-1": 0.6064,
+     "2,0": 0.5319,
+     "2,1": 0.5851,
+     "2,2": 0.4574,
+     "2,3": 0.1809,
+     "2,4": 0.0957,
+     "2,5": 0.0426,
+     "3,-2": 0.2128,
+     "3,-1": 0.2553,
+     "3,0": 0.2447,
+     "3,1": 0.2553,
+     "3,2": 0.1702,
+     "4,-2": 0.1277,
+     "4,-1": 0.1702,
+     "4,0": 0.1915,
+     "4,1": 0.1809,
+     "4,2": 0.117,
+     "5,-2": 0.0638,
+     "5,-1": 0.1064,
+     "5,0": 0.1277,
+     "5,1": 0.117,
+     "5,2": 0.0532
+    }
+   },
+   {
+    "dy_from_top_log": 0,
+    "mean_per_tree": 25.2872,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.0319,
+     "-5,-1": 0.0426,
+     "-5,0": 0.0426,
+     "-5,1": 0.0319,
+     "-5,2": 0.0213,
+     "-4,-2": 0.0638,
+     "-4,-1": 0.1064,
+     "-4,0": 0.117,
+     "-4,1": 0.0957,
+     "-4,2": 0.0745,
+     "-3,-2": 0.1383,
+     "-3,-1": 0.1277,
+     "-3,0": 0.1383,
+     "-3,1": 0.1915,
+     "-3,2": 0.1277,
+     "-2,-5": 0.117,
+     "-2,-4": 0.1702,
+     "-2,-3": 0.2872,
+     "-2,-2": 0.5106,
+     "-2,-1": 0.6064,
+     "-2,0": 0.6383,
+     "-2,1": 0.7021,
+     "-2,2": 0.4787,
+     "-2,3": 0.1383,
+     "-2,4": 0.0957,
+     "-2,5": 0.0213,
+     "-1,-5": 0.1383,
+     "-1,-4": 0.2128,
+     "-1,-3": 0.2979,
+     "-1,-2": 0.6809,
+     "-1,-1": 0.8617,
+     "-1,0": 0.7979,
+     "-1,1": 0.8936,
+     "-1,2": 0.6383,
+     "-1,3": 0.2234,
+     "-1,4": 0.1489,
+     "-1,5": 0.0638,
+     "0,-5": 0.1277,
+     "0,-4": 0.2128,
+     "0,-3": 0.2021,
+     "0,-2": 0.7128,
+     "0,-1": 0.8191,
+     "0,0": 0.3191,
+     "0,1": 0.7979,
+     "0,2": 0.6915,
+     "0,3": 0.1915,
+     "0,4": 0.1489,
+     "0,5": 0.0426,
+     "1,-5": 0.1064,
+     "1,-4": 0.234,
+     "1,-3": 0.3298,
+     "1,-2": 0.7128,
+     "1,-1": 0.8085,
+     "1,0": 0.8511,
+     "1,1": 0.8191,
+     "1,2": 0.7234,
+     "1,3": 0.2128,
+     "1,4": 0.1702,
+     "1,5": 0.0426,
+     "2,-5": 0.0638,
+     "2,-4": 0.2021,
+     "2,-3": 0.2766,
+     "2,-2": 0.5745,
+     "2,-1": 0.7128,
+     "2,0": 0.7234,
+     "2,1": 0.6489,
+     "2,2": 0.4468,
+     "2,3": 0.1702,
+     "2,4": 0.1277,
+     "2,5": 0.0319,
+     "3,-2": 0.1383,
+     "3,-1": 0.2021,
+     "3,0": 0.1277,
+     "3,1": 0.1915,
+     "3,2": 0.1596,
+     "4,-2": 0.117,
+     "4,-1": 0.1383,
+     "4,0": 0.1596,
+     "4,1": 0.1489,
+     "4,2": 0.1064,
+     "5,-2": 0.0319,
+     "5,-1": 0.1064,
+     "5,0": 0.117,
+     "5,1": 0.1383,
+     "5,2": 0.0745
+    }
+   },
+   {
+    "dy_from_top_log": 1,
+    "mean_per_tree": 23.1489,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.0213,
+     "-5,-1": 0.0319,
+     "-5,0": 0.0213,
+     "-5,1": 0.0213,
+     "-5,2": 0.0213,
+     "-4,-2": 0.0532,
+     "-4,-1": 0.0745,
+     "-4,0": 0.0957,
+     "-4,1": 0.0745,
+     "-4,2": 0.0532,
+     "-3,-2": 0.0851,
+     "-3,-1": 0.117,
+     "-3,0": 0.117,
+     "-3,1": 0.0957,
+     "-3,2": 0.0745,
+     "-2,-5": 0.0745,
+     "-2,-4": 0.1064,
+     "-2,-3": 0.1809,
+     "-2,-2": 0.4574,
+     "-2,-1": 0.5638,
+     "-2,0": 0.734,
+     "-2,1": 0.5532,
+     "-2,2": 0.4681,
+     "-2,3": 0.1064,
+     "-2,4": 0.0532,
+     "-2,5": 0.0213,
+     "-1,-5": 0.0851,
+     "-1,-4": 0.1383,
+     "-1,-3": 0.266,
+     "-1,-2": 0.6702,
+     "-1,-1": 0.8191,
+     "-1,0": 0.8298,
+     "-1,1": 0.7234,
+     "-1,2": 0.5532,
+     "-1,3": 0.1702,
+     "-1,4": 0.0957,
+     "-1,5": 0.0426,
+     "0,-5": 0.1064,
+     "0,-4": 0.1915,
+     "0,-3": 0.2766,
+     "0,-2": 0.7234,
+     "0,-1": 0.9043,
+     "0,0": 0.8298,
+     "0,1": 0.8511,
+     "0,2": 0.7128,
+     "0,3": 0.1596,
+     "0,4": 0.1383,
+     "0,5": 0.0213,
+     "1,-5": 0.0957,
+     "1,-4": 0.1915,
+     "1,-3": 0.2447,
+     "1,-2": 0.7766,
+     "1,-1": 0.8085,
+     "1,0": 0.8936,
+     "1,1": 0.7553,
+     "1,2": 0.5957,
+     "1,3": 0.1383,
+     "1,4": 0.1064,
+     "1,5": 0.0106,
+     "2,-5": 0.0638,
+     "2,-4": 0.1064,
+     "2,-3": 0.2128,
+     "2,-2": 0.4894,
+     "2,-1": 0.6489,
+     "2,0": 0.7766,
+     "2,1": 0.617,
+     "2,2": 0.3617,
+     "2,3": 0.0957,
+     "2,4": 0.0532,
+     "2,5": 0.0213,
+     "3,-2": 0.0957,
+     "3,-1": 0.1809,
+     "3,0": 0.1702,
+     "3,1": 0.1702,
+     "3,2": 0.1383,
+     "4,-2": 0.0638,
+     "4,-1": 0.0957,
+     "4,0": 0.1064,
+     "4,1": 0.1064,
+     "4,2": 0.0638,
+     "5,-2": 0.0426,
+     "5,-1": 0.0851,
+     "5,0": 0.0851,
+     "5,1": 0.0851,
+     "5,2": 0.0106
+    }
+   },
+   {
+    "dy_from_top_log": 2,
+    "mean_per_tree": 13.5957,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.0106,
+     "-5,-1": 0.0213,
+     "-5,0": 0.0319,
+     "-5,1": 0.0213,
+     "-4,-2": 0.0106,
+     "-4,-1": 0.0106,
+     "-4,0": 0.0426,
+     "-4,1": 0.0532,
+     "-4,2": 0.0532,
+     "-3,-2": 0.0213,
+     "-3,-1": 0.0638,
+     "-3,0": 0.0745,
+     "-3,1": 0.0745,
+     "-3,2": 0.0638,
+     "-2,-5": 0.0319,
+     "-2,-4": 0.0638,
+     "-2,-3": 0.0851,
+     "-2,-2": 0.1915,
+     "-2,-1": 0.3723,
+     "-2,0": 0.4362,
+     "-2,1": 0.2872,
+     "-2,2": 0.1809,
+     "-2,3": 0.0319,
+     "-2,5": 0.0106,
+     "-1,-5": 0.0213,
+     "-1,-4": 0.0745,
+     "-1,-3": 0.1702,
+     "-1,-2": 0.3936,
+     "-1,-1": 0.4894,
+     "-1,0": 0.5745,
+     "-1,1": 0.4468,
+     "-1,2": 0.3191,
+     "-1,3": 0.0532,
+     "-1,4": 0.0426,
+     "-1,5": 0.0106,
+     "0,-5": 0.0745,
+     "0,-4": 0.1064,
+     "0,-3": 0.1702,
+     "0,-2": 0.5532,
+     "0,-1": 0.6809,
+     "0,0": 0.6596,
+     "0,1": 0.5745,
+     "0,2": 0.4149,
+     "0,3": 0.117,
+     "0,4": 0.0638,
+     "0,5": 0.0213,
+     "1,-5": 0.0426,
+     "1,-4": 0.0851,
+     "1,-3": 0.117,
+     "1,-2": 0.3511,
+     "1,-1": 0.4787,
+     "1,0": 0.5745,
+     "1,1": 0.6064,
+     "1,2": 0.4043,
+     "1,3": 0.0957,
+     "1,4": 0.0319,
+     "1,5": 0.0106,
+     "2,-5": 0.0426,
+     "2,-4": 0.0638,
+     "2,-3": 0.117,
+     "2,-2": 0.2766,
+     "2,-1": 0.2979,
+     "2,0": 0.4043,
+     "2,1": 0.2447,
+     "2,2": 0.3298,
+     "2,3": 0.0106,
+     "2,4": 0.0426,
+     "3,-2": 0.0532,
+     "3,-1": 0.0851,
+     "3,0": 0.1064,
+     "3,1": 0.0745,
+     "3,2": 0.0638,
+     "4,-2": 0.0319,
+     "4,-1": 0.0319,
+     "4,0": 0.0532,
+     "4,1": 0.0532,
+     "4,2": 0.0213,
+     "5,-2": 0.0106,
+     "5,-1": 0.0106,
+     "5,0": 0.0532,
+     "5,1": 0.0213,
+     "5,2": 0.0213
+    }
+   }
+  ],
+  "decorators": {
+   "bee_nest": {
+    "total": 1,
+    "per_tree": 0.0106,
+    "dy": {
+     "4": 1
+    },
+    "radius": {
+     "1": 1
+    }
+   },
+   "mangrove_propagule": {
+    "total": 192,
+    "per_tree": 2.0426,
+    "dy": {
+     "3": 54,
+     "4": 47,
+     "5": 41,
+     "6": 33,
+     "7": 6,
+     "8": 8,
+     "9": 2,
+     "10": 1
+    },
+    "radius": {
+     "1": 29,
+     "2": 89,
+     "3": 28,
+     "4": 32,
+     "5": 14
+    }
+   },
+   "mangrove_roots": {
+    "total": 1843,
+    "per_tree": 19.6064,
+    "dy": {
+     "0": 572,
+     "1": 610,
+     "2": 415,
+     "3": 246
+    },
+    "radius": {
+     "0": 94,
+     "1": 737,
+     "2": 446,
+     "3": 285,
+     "4": 169,
+     "5": 94,
+     "6": 18
+    }
+   },
+   "moss_carpet": {
+    "total": 399,
+    "per_tree": 4.2447,
+    "dy": {
+     "2": 188,
+     "3": 111,
+     "4": 100
+    },
+    "radius": {
+     "1": 169,
+     "2": 115,
+     "3": 62,
+     "4": 37,
+     "5": 15,
+     "6": 1
+    }
+   },
+   "muddy_mangrove_roots": {
+    "total": 1969,
+    "per_tree": 20.9468,
+    "dy": {
+     "-4": 522,
+     "-3": 489,
+     "-2": 462,
+     "-1": 496
+    },
+    "radius": {
+     "1": 240,
+     "2": 441,
+     "3": 534,
+     "4": 415,
+     "5": 285,
+     "6": 54
+    }
+   },
+   "vine": {
+    "total": 4775,
+    "per_tree": 50.7979,
+    "dy": {
+     "2": 768,
+     "3": 820,
+     "4": 793,
+     "5": 691,
+     "6": 598,
+     "7": 447,
+     "8": 316,
+     "9": 182,
+     "10": 111,
+     "11": 43,
+     "12": 5,
+     "13": 1
+    },
+    "radius": {
+     "0": 7,
+     "1": 242,
+     "2": 1126,
+     "3": 2004,
+     "4": 602,
+     "5": 486,
+     "6": 308
+    }
+   }
+  }
+ },
+ "examples": [
+  {
+   "origin": [
+    60445,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -4,
+     -4,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -4,
+     -3,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -3,
+     -4,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -3,
+     -3,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -3,
+     -2,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -3,
+     2,
+     -4,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     2,
+     1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     2,
+     2,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     3,
+     -4,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     3,
+     1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     3,
+     2,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     4,
+     -4,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     4,
+     1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     4,
+     2,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     5,
+     -4,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     5,
+     1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     -2,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -2,
+     2,
+     -1,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -2,
+     2,
+     1,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     2,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     3,
+     -1,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -2,
+     3,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     1,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     3,
+     2,
+     "minecraft:mangrove_propagule[age=2,hanging=true,stage=0,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     4,
+     -4,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -3,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     5,
+     -5,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -4,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -3,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     2,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     6,
+     -5,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -4,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -3,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -5,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -4,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -3,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     -5,
+     "minecraft:mangrove_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     -4,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     8,
+     -3,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     -2,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -1,
+     -1,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -1,
+     0,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     -1,
+     1,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     -1,
+     1,
+     1,
+     "minecraft:mangrove_leaves[distance=7,persistent=false,waterlogged=true]"
+    ],
+    [
+     -1,
+     2,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     1,
+     "minecraft:mangrove_leaves"
+    ],
+    [
+     -1,
+     2,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     3,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     4,
+     -5,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -4,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -3,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     5,
+     -4,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -3,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -2,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -5,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -4,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -3,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -5,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -4,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -3,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     0,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     8,
+     -5,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -4,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -3,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -4,
+     -3,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -4,
+     4,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -4,
+     5,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -3,
+     -3,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -3,
+     4,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -3,
+     5,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -2,
+     -3,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -2,
+     -2,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -2,
+     4,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -2,
+     5,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -1,
+     -2,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -1,
+     -1,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -1,
+     4,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     0,
+     -1,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     0,
+     4,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     1,
+     -1,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     1,
+     1,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     1,
+     2,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     1,
+     3,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     1,
+     4,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     2,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     0,
+     2,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     0,
+     2,
+     -1,
+     "minecraft:moss_carpet"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     2,
+     1,
+     "minecraft:moss_carpet"
+    ],
+    [
+     0,
+     3,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     0,
+     3,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     0,
+     3,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     -1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     4,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     0,
+     4,
+     -4,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -3,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -2,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -1,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     4,
+     1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -5,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -4,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -3,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -2,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -5,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -4,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -3,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     6,
+     -2,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -5,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -4,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -3,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     0,
+     8,
+     -5,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -4,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -3,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     0,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     1,
+     1,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=true]"
+    ],
+    [
+     1,
+     1,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     1,
+     1,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=true]"
+    ],
+    [
+     1,
+     1,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=true]"
+    ],
+    [
+     1,
+     2,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     -1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     1,
+     2,
+     1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     1,
+     3,
+     -3,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     1,
+     4,
+     -4,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -3,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     1,
+     5,
+     -5,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -4,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -3,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -2,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     1,
+     6,
+     -5,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -4,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -3,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     1,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     1,
+     6,
+     2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     1,
+     7,
+     -5,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -4,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -3,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -5,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -3,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     0,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     2,
+     1,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=true]"
+    ],
+    [
+     2,
+     1,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=true]"
+    ],
+    [
+     2,
+     1,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=true]"
+    ],
+    [
+     2,
+     2,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     2,
+     2,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     2,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     3,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     2,
+     3,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     -1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     2,
+     3,
+     1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     4,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     2,
+     4,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     2,
+     5,
+     -4,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -3,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     2,
+     6,
+     -4,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -3,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -1,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     2,
+     7,
+     -5,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     -3,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     -3,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     -4,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     3,
+     -3,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     3,
+     -2,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     3,
+     -1,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     3,
+     0,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     3,
+     1,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=true]"
+    ],
+    [
+     3,
+     1,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=true]"
+    ],
+    [
+     3,
+     2,
+     -4,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     2,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     2,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     2,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     2,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     -4,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     3,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     3,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     -4,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     4,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     3,
+     4,
+     1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     4,
+     2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     -4,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     5,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     -2,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     3,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     2,
+     -2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     2,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     2,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     2,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     2,
+     2,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     4,
+     3,
+     -2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     3,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     3,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     3,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     3,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     4,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     1,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     4,
+     6,
+     2,
+     "minecraft:mangrove_leaves"
+    ],
+    [
+     5,
+     2,
+     -2,
+     "minecraft:mangrove_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     2,
+     -1,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     2,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     5,
+     2,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     5,
+     3,
+     -2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     3,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     3,
+     2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     3,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     5,
+     4,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     4,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     4,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     4,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     5,
+     2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     6,
+     2,
+     -2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     6,
+     2,
+     -1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     6,
+     2,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     6,
+     3,
+     -2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     6,
+     3,
+     -1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     6,
+     3,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     6,
+     4,
+     -1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ]
+   ]
+  },
+  {
+   "origin": [
+    60509,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -5,
+     -4,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -5,
+     -3,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -4,
+     -4,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -4,
+     -3,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -4,
+     -2,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -4,
+     -1,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -4,
+     0,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     -4,
+     1,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     -4,
+     2,
+     0,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     -4,
+     3,
+     0,
+     "minecraft:moss_carpet"
+    ],
+    [
+     -3,
+     2,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -3,
+     2,
+     -1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     2,
+     0,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     -3,
+     2,
+     2,
+     "minecraft:mangrove_leaves"
+    ],
+    [
+     -3,
+     3,
+     -4,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     3,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -3,
+     3,
+     0,
+     "minecraft:moss_carpet"
+    ],
+    [
+     -3,
+     3,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     -4,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     4,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -3,
+     4,
+     -2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     4,
+     2,
+     "minecraft:mangrove_propagule[age=4,hanging=true,stage=0,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     -4,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     5,
+     2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     -4,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -3,
+     7,
+     -4,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     7,
+     0,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     2,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     2,
+     0,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     -2,
+     2,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -2,
+     3,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -2,
+     4,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     5,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -2,
+     5,
+     -4,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -3,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     6,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -2,
+     6,
+     -4,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -3,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     7,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -2,
+     7,
+     -4,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -3,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     -1,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     0,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     7,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     8,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     -1,
+     "minecraft:mangrove_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     0,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     1,
+     "minecraft:mangrove_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     2,
+     "minecraft:mangrove_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     8,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     2,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     2,
+     -2,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     2,
+     0,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     -1,
+     2,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     3,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     3,
+     -2,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     3,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     0,
+     "minecraft:moss_carpet"
+    ],
+    [
+     -1,
+     3,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     4,
+     -4,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     4,
+     -3,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     -1,
+     4,
+     1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     5,
+     -4,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     5,
+     -3,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -4,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -3,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -2,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -4,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -3,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -4,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     8,
+     -3,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     -1,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     0,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     8,
+     1,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -4,
+     -3,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -4,
+     3,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -4,
+     4,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -3,
+     -3,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -3,
+     3,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -3,
+     4,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -2,
+     -3,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -2,
+     3,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -2,
+     4,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -1,
+     -3,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -1,
+     2,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -1,
+     3,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     0,
+     -3,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     0,
+     -2,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     0,
+     -1,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     0,
+     2,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     1,
+     -1,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     1,
+     2,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     2,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     0,
+     2,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     2,
+     -1,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     2,
+     1,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     0,
+     2,
+     2,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     0,
+     3,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     0,
+     3,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     -1,
+     "minecraft:moss_carpet"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     3,
+     1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     2,
+     "minecraft:moss_carpet"
+    ],
+    [
+     0,
+     4,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     0,
+     4,
+     -4,
+     "minecraft:mangrove_propagule[age=3,hanging=true,stage=0,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -3,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     4,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     0,
+     5,
+     -4,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -3,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -2,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -1,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -4,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -3,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -2,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -4,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -3,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -2,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -4,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -3,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     8,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     0,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     1,
+     1,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     1,
+     2,
+     0,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     1,
+     2,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     0,
+     "minecraft:moss_carpet"
+    ],
+    [
+     1,
+     3,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     1,
+     4,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     1,
+     5,
+     -4,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -3,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     1,
+     6,
+     -3,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     1,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     1,
+     7,
+     -4,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -3,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -5,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     1,
+     8,
+     -4,
+     "minecraft:mangrove_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -3,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     8,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     9,
+     -2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     9,
+     0,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     9,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     9,
+     2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     10,
+     -2,
+     "minecraft:mangrove_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     10,
+     0,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     10,
+     1,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     10,
+     2,
+     "minecraft:mangrove_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     -4,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     2,
+     -3,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     2,
+     -2,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     2,
+     -1,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     2,
+     0,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     2,
+     2,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     2,
+     2,
+     0,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     2,
+     2,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     3,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     2,
+     3,
+     0,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     3,
+     2,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     4,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     2,
+     4,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     0,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     4,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     2,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     5,
+     -3,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     5,
+     2,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     6,
+     -3,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     -4,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     -3,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     -1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     2,
+     7,
+     1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     7,
+     2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     8,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     9,
+     -2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     9,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     9,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     9,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     9,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     10,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     2,
+     -3,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     2,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     3,
+     3,
+     -3,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     3,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     3,
+     4,
+     -3,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     4,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     3,
+     5,
+     -3,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     3,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     2,
+     "minecraft:mangrove_propagule[age=1,hanging=true,stage=0,waterlogged=false]"
+    ],
+    [
+     3,
+     5,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     3,
+     6,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     3,
+     6,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     6,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     3,
+     7,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     3,
+     7,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     7,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     -1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     3,
+     8,
+     1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     8,
+     2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     9,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     9,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     9,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     9,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     9,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     10,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     10,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     10,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     2,
+     0,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     3,
+     0,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     4,
+     0,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     5,
+     0,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     4,
+     6,
+     -2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     7,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     8,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     8,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     8,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     8,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     8,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     9,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     9,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     9,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     9,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     10,
+     -1,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     4,
+     10,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     4,
+     10,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     3,
+     -2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     5,
+     4,
+     -2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     5,
+     4,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     5,
+     5,
+     -2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     5,
+     5,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     5,
+     6,
+     -2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     5,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     2,
+     "minecraft:mangrove_leaves[distance=6,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     6,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     5,
+     7,
+     -2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     5,
+     7,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     7,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     7,
+     2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     5,
+     7,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     5,
+     8,
+     -2,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     5,
+     8,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     8,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     8,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     8,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     8,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     5,
+     9,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     9,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     9,
+     2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     5,
+     10,
+     0,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     5,
+     10,
+     1,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     6,
+     2,
+     0,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     6,
+     2,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     6,
+     3,
+     0,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     6,
+     3,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     6,
+     4,
+     0,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     6,
+     4,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     6,
+     5,
+     0,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     6,
+     5,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     6,
+     6,
+     0,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     6,
+     6,
+     1,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ]
+   ]
+  }
+ ],
+ "per_placement": [
+  {
+   "n": 335,
+   "logs": 10,
+   "leaves": 220,
+   "log_top": 6,
+   "origin_column_logs": 4,
+   "bbox": [
+    -4,
+    6,
+    -4,
+    8,
+    -5,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 5,
+   "leaf_mismatch": 29,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 388,
+   "logs": 11,
+   "leaves": 237,
+   "log_top": 8,
+   "origin_column_logs": 5,
+   "bbox": [
+    -5,
+    6,
+    -4,
+    10,
+    -5,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 83,
+   "result": "placed"
+  },
+  {
+   "n": 252,
+   "logs": 8,
+   "leaves": 138,
+   "log_top": 8,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    6,
+    -4,
+    10,
+    -3,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 3,
+   "result": "placed"
+  },
+  {
+   "n": 255,
+   "logs": 8,
+   "leaves": 113,
+   "log_top": 8,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -4,
+    10,
+    -5,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 32,
+   "result": "placed"
+  },
+  {
+   "n": 251,
+   "logs": 6,
+   "leaves": 141,
+   "log_top": 6,
+   "origin_column_logs": 3,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    8,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 39,
+   "result": "placed"
+  },
+  {
+   "n": 199,
+   "logs": 4,
+   "leaves": 100,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    7,
+    -5,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 2,
+   "result": "placed"
+  },
+  {
+   "n": 197,
+   "logs": 5,
+   "leaves": 98,
+   "log_top": 6,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    8,
+    -4,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 21,
+   "result": "placed"
+  },
+  {
+   "n": 211,
+   "logs": 6,
+   "leaves": 105,
+   "log_top": 6,
+   "origin_column_logs": 4,
+   "bbox": [
+    -6,
+    3,
+    -4,
+    8,
+    -5,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 26,
+   "result": "placed"
+  },
+  {
+   "n": 94,
+   "logs": 2,
+   "leaves": 34,
+   "log_top": 2,
+   "origin_column_logs": 2,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    4,
+    -4,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 111,
+   "logs": 4,
+   "leaves": 43,
+   "log_top": 6,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    8,
+    -2,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 226,
+   "logs": 7,
+   "leaves": 139,
+   "log_top": 5,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -4,
+    7,
+    -4,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 52,
+   "result": "placed"
+  },
+  {
+   "n": 294,
+   "logs": 9,
+   "leaves": 199,
+   "log_top": 4,
+   "origin_column_logs": 4,
+   "bbox": [
+    -4,
+    3,
+    -4,
+    6,
+    -6,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 41,
+   "result": "placed"
+  },
+  {
+   "n": 184,
+   "logs": 7,
+   "leaves": 99,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    3,
+    -4,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 18,
+   "result": "placed"
+  },
+  {
+   "n": 387,
+   "logs": 12,
+   "leaves": 226,
+   "log_top": 9,
+   "origin_column_logs": 7,
+   "bbox": [
+    -5,
+    6,
+    -4,
+    11,
+    -5,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 72,
+   "result": "placed"
+  },
+  {
+   "n": 199,
+   "logs": 6,
+   "leaves": 101,
+   "log_top": 6,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    8,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 26,
+   "result": "placed"
+  },
+  {
+   "n": 206,
+   "logs": 7,
+   "leaves": 127,
+   "log_top": 4,
+   "origin_column_logs": 4,
+   "bbox": [
+    -6,
+    3,
+    -4,
+    6,
+    -3,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 43,
+   "result": "placed"
+  },
+  {
+   "n": 98,
+   "logs": 3,
+   "leaves": 41,
+   "log_top": 3,
+   "origin_column_logs": 3,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    5,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 231,
+   "logs": 6,
+   "leaves": 105,
+   "log_top": 7,
+   "origin_column_logs": 5,
+   "bbox": [
+    -6,
+    5,
+    -4,
+    9,
+    -5,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 14,
+   "result": "placed"
+  },
+  {
+   "n": 172,
+   "logs": 5,
+   "leaves": 102,
+   "log_top": 4,
+   "origin_column_logs": 4,
+   "bbox": [
+    -4,
+    3,
+    -4,
+    6,
+    -4,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 24,
+   "result": "placed"
+  },
+  {
+   "n": 384,
+   "logs": 10,
+   "leaves": 215,
+   "log_top": 9,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    6,
+    -4,
+    11,
+    -4,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 53,
+   "result": "placed"
+  },
+  {
+   "n": 236,
+   "logs": 8,
+   "leaves": 106,
+   "log_top": 9,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    11,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 25,
+   "result": "placed"
+  },
+  {
+   "n": 199,
+   "logs": 6,
+   "leaves": 95,
+   "log_top": 7,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    9,
+    -4,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 36,
+   "result": "placed"
+  },
+  {
+   "n": 117,
+   "logs": 6,
+   "leaves": 34,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    4,
+    -4,
+    8,
+    -4,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 275,
+   "logs": 9,
+   "leaves": 157,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    4,
+    -4,
+    8,
+    -6,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 48,
+   "result": "placed"
+  },
+  {
+   "n": 343,
+   "logs": 9,
+   "leaves": 196,
+   "log_top": 7,
+   "origin_column_logs": 4,
+   "bbox": [
+    -5,
+    6,
+    -4,
+    9,
+    -5,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 38,
+   "result": "placed"
+  },
+  {
+   "n": 113,
+   "logs": 3,
+   "leaves": 39,
+   "log_top": 3,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    3,
+    -4,
+    5,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 212,
+   "logs": 7,
+   "leaves": 104,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    8,
+    -4,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 24,
+   "result": "placed"
+  },
+  {
+   "n": 285,
+   "logs": 10,
+   "leaves": 193,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    5,
+    -4,
+    8,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 68,
+   "result": "placed"
+  },
+  {
+   "n": 161,
+   "logs": 5,
+   "leaves": 99,
+   "log_top": 3,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    3,
+    -4,
+    5,
+    -3,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 239,
+   "logs": 7,
+   "leaves": 145,
+   "log_top": 5,
+   "origin_column_logs": 4,
+   "bbox": [
+    -5,
+    3,
+    -4,
+    7,
+    -6,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 4,
+   "result": "placed"
+  },
+  {
+   "n": 341,
+   "logs": 10,
+   "leaves": 196,
+   "log_top": 8,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    6,
+    -4,
+    10,
+    -3,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 40,
+   "result": "placed"
+  },
+  {
+   "n": 117,
+   "logs": 4,
+   "leaves": 38,
+   "log_top": 5,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    7,
+    -4,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 184,
+   "logs": 5,
+   "leaves": 93,
+   "log_top": 5,
+   "origin_column_logs": 4,
+   "bbox": [
+    -5,
+    3,
+    -4,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 13,
+   "result": "placed"
+  },
+  {
+   "n": 179,
+   "logs": 3,
+   "leaves": 85,
+   "log_top": 4,
+   "origin_column_logs": 2,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    6,
+    -5,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 21,
+   "result": "placed"
+  },
+  {
+   "n": 277,
+   "logs": 9,
+   "leaves": 180,
+   "log_top": 5,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    6,
+    -4,
+    7,
+    -4,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 18,
+   "result": "placed"
+  },
+  {
+   "n": 311,
+   "logs": 11,
+   "leaves": 201,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    6,
+    -4,
+    8,
+    -2,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 54,
+   "result": "placed"
+  },
+  {
+   "n": 112,
+   "logs": 2,
+   "leaves": 37,
+   "log_top": 4,
+   "origin_column_logs": 2,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    6,
+    -4,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 123,
+   "logs": 3,
+   "leaves": 40,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    2,
+    -4,
+    7,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 116,
+   "logs": 3,
+   "leaves": 43,
+   "log_top": 3,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    4,
+    -4,
+    5,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 100,
+   "logs": 4,
+   "leaves": 38,
+   "log_top": 5,
+   "origin_column_logs": 4,
+   "bbox": [
+    -5,
+    4,
+    -4,
+    7,
+    -4,
+    2
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 132,
+   "logs": 3,
+   "leaves": 83,
+   "log_top": 2,
+   "origin_column_logs": 2,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    4,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 23,
+   "result": "placed"
+  },
+  {
+   "n": 166,
+   "logs": 3,
+   "leaves": 86,
+   "log_top": 4,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    5,
+    -4,
+    6,
+    -4,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 26,
+   "result": "placed"
+  },
+  {
+   "n": 311,
+   "logs": 10,
+   "leaves": 197,
+   "log_top": 7,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    9,
+    -4,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 61,
+   "result": "placed"
+  },
+  {
+   "n": 302,
+   "logs": 8,
+   "leaves": 180,
+   "log_top": 7,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -4,
+    9,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 72,
+   "result": "placed"
+  },
+  {
+   "n": 448,
+   "logs": 19,
+   "leaves": 274,
+   "log_top": 11,
+   "origin_column_logs": 7,
+   "bbox": [
+    -6,
+    5,
+    -4,
+    13,
+    -3,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 162,
+   "result": "placed"
+  },
+  {
+   "n": 203,
+   "logs": 7,
+   "leaves": 125,
+   "log_top": 5,
+   "origin_column_logs": 4,
+   "bbox": [
+    -2,
+    3,
+    -4,
+    7,
+    -6,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 16,
+   "result": "placed"
+  },
+  {
+   "n": 484,
+   "logs": 16,
+   "leaves": 305,
+   "log_top": 9,
+   "origin_column_logs": 7,
+   "bbox": [
+    -5,
+    6,
+    -4,
+    11,
+    -6,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 7,
+   "leaf_mismatch": 82,
+   "result": "placed"
+  },
+  {
+   "n": 232,
+   "logs": 6,
+   "leaves": 108,
+   "log_top": 6,
+   "origin_column_logs": 4,
+   "bbox": [
+    -5,
+    4,
+    -4,
+    8,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 34,
+   "result": "placed"
+  },
+  {
+   "n": 228,
+   "logs": 7,
+   "leaves": 152,
+   "log_top": 5,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -4,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 30,
+   "result": "placed"
+  },
+  {
+   "n": 157,
+   "logs": 4,
+   "leaves": 45,
+   "log_top": 6,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    8,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 422,
+   "logs": 14,
+   "leaves": 264,
+   "log_top": 8,
+   "origin_column_logs": 6,
+   "bbox": [
+    -6,
+    5,
+    -4,
+    10,
+    -6,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 102,
+   "result": "placed"
+  },
+  {
+   "n": 362,
+   "logs": 10,
+   "leaves": 222,
+   "log_top": 8,
+   "origin_column_logs": 4,
+   "bbox": [
+    -4,
+    5,
+    -4,
+    10,
+    -6,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 5,
+   "leaf_mismatch": 37,
+   "result": "placed"
+  },
+  {
+   "n": 315,
+   "logs": 10,
+   "leaves": 190,
+   "log_top": 8,
+   "origin_column_logs": 5,
+   "bbox": [
+    -6,
+    3,
+    -4,
+    10,
+    -4,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 46,
+   "result": "placed"
+  },
+  {
+   "n": 210,
+   "logs": 8,
+   "leaves": 105,
+   "log_top": 9,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    11,
+    -3,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 31,
+   "result": "placed"
+  },
+  {
+   "n": 98,
+   "logs": 3,
+   "leaves": 43,
+   "log_top": 3,
+   "origin_column_logs": 3,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    5,
+    -3,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 253,
+   "logs": 9,
+   "leaves": 139,
+   "log_top": 8,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    3,
+    -4,
+    10,
+    -4,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 12,
+   "result": "placed"
+  },
+  {
+   "n": 194,
+   "logs": 7,
+   "leaves": 117,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    4,
+    -4,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 20,
+   "result": "placed"
+  },
+  {
+   "n": 187,
+   "logs": 4,
+   "leaves": 89,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    7,
+    -4,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 32,
+   "result": "placed"
+  },
+  {
+   "n": 238,
+   "logs": 7,
+   "leaves": 127,
+   "log_top": 7,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    3,
+    -4,
+    9,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 50,
+   "result": "placed"
+  },
+  {
+   "n": 252,
+   "logs": 9,
+   "leaves": 148,
+   "log_top": 7,
+   "origin_column_logs": 6,
+   "bbox": [
+    -6,
+    5,
+    -4,
+    9,
+    -4,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 32,
+   "result": "placed"
+  },
+  {
+   "n": 120,
+   "logs": 7,
+   "leaves": 36,
+   "log_top": 9,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    11,
+    -3,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 197,
+   "logs": 6,
+   "leaves": 119,
+   "log_top": 6,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    8,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 34,
+   "result": "placed"
+  },
+  {
+   "n": 167,
+   "logs": 3,
+   "leaves": 91,
+   "log_top": 4,
+   "origin_column_logs": 2,
+   "bbox": [
+    -4,
+    3,
+    -4,
+    6,
+    -3,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 27,
+   "result": "placed"
+  },
+  {
+   "n": 302,
+   "logs": 12,
+   "leaves": 188,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -6,
+    3,
+    -4,
+    8,
+    -3,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 81,
+   "result": "placed"
+  },
+  {
+   "n": 135,
+   "logs": 5,
+   "leaves": 38,
+   "log_top": 7,
+   "origin_column_logs": 5,
+   "bbox": [
+    -5,
+    6,
+    -4,
+    9,
+    -4,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 194,
+   "logs": 5,
+   "leaves": 108,
+   "log_top": 4,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    5,
+    -4,
+    6,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 29,
+   "result": "placed"
+  },
+  {
+   "n": 394,
+   "logs": 14,
+   "leaves": 250,
+   "log_top": 8,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    6,
+    -4,
+    10,
+    -4,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 118,
+   "result": "placed"
+  },
+  {
+   "n": 317,
+   "logs": 10,
+   "leaves": 202,
+   "log_top": 7,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    9,
+    -6,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 65,
+   "result": "placed"
+  },
+  {
+   "n": 217,
+   "logs": 8,
+   "leaves": 122,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    2,
+    -4,
+    8,
+    -4,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 60,
+   "result": "placed"
+  },
+  {
+   "n": 186,
+   "logs": 5,
+   "leaves": 108,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    5,
+    -4,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 3,
+   "result": "placed"
+  },
+  {
+   "n": 212,
+   "logs": 7,
+   "leaves": 121,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    3,
+    -4,
+    8,
+    -5,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 14,
+   "result": "placed"
+  },
+  {
+   "n": 246,
+   "logs": 7,
+   "leaves": 125,
+   "log_top": 8,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    10,
+    -4,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 23,
+   "result": "placed"
+  },
+  {
+   "n": 288,
+   "logs": 9,
+   "leaves": 150,
+   "log_top": 7,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    6,
+    -4,
+    9,
+    -5,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 58,
+   "result": "placed"
+  },
+  {
+   "n": 210,
+   "logs": 6,
+   "leaves": 122,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    3,
+    -4,
+    7,
+    -4,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 43,
+   "result": "placed"
+  },
+  {
+   "n": 120,
+   "logs": 5,
+   "leaves": 42,
+   "log_top": 5,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    2,
+    -4,
+    7,
+    -3,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 345,
+   "logs": 11,
+   "leaves": 208,
+   "log_top": 7,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    9,
+    -5,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 5,
+   "leaf_mismatch": 49,
+   "result": "placed"
+  },
+  {
+   "n": 441,
+   "logs": 16,
+   "leaves": 306,
+   "log_top": 8,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    3,
+    -4,
+    10,
+    -6,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 6,
+   "leaf_mismatch": 81,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 266,
+   "logs": 9,
+   "leaves": 131,
+   "log_top": 8,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    6,
+    -4,
+    10,
+    -3,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 9,
+   "result": "placed"
+  },
+  {
+   "n": 160,
+   "logs": 3,
+   "leaves": 84,
+   "log_top": 4,
+   "origin_column_logs": 2,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    6,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 35,
+   "result": "placed"
+  },
+  {
+   "n": 249,
+   "logs": 8,
+   "leaves": 153,
+   "log_top": 7,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    3,
+    -4,
+    9,
+    -4,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 58,
+   "result": "placed"
+  },
+  {
+   "n": 261,
+   "logs": 7,
+   "leaves": 131,
+   "log_top": 8,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    10,
+    -5,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 22,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 351,
+   "logs": 12,
+   "leaves": 214,
+   "log_top": 9,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    5,
+    -4,
+    11,
+    -6,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 59,
+   "result": "placed"
+  },
+  {
+   "n": 332,
+   "logs": 10,
+   "leaves": 182,
+   "log_top": 10,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    12,
+    -6,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 65,
+   "result": "placed"
+  },
+  {
+   "n": 283,
+   "logs": 12,
+   "leaves": 175,
+   "log_top": 8,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    4,
+    -4,
+    10,
+    -6,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 63,
+   "result": "placed"
+  },
+  {
+   "n": 397,
+   "logs": 12,
+   "leaves": 248,
+   "log_top": 7,
+   "origin_column_logs": 6,
+   "bbox": [
+    -6,
+    3,
+    -4,
+    9,
+    -6,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 5,
+   "leaf_mismatch": 59,
+   "result": "placed"
+  },
+  {
+   "n": 350,
+   "logs": 11,
+   "leaves": 207,
+   "log_top": 7,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    6,
+    -4,
+    9,
+    -4,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 53,
+   "result": "placed"
+  },
+  {
+   "n": 235,
+   "logs": 9,
+   "leaves": 114,
+   "log_top": 9,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    5,
+    -4,
+    11,
+    -3,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 18,
+   "result": "placed"
+  },
+  {
+   "n": 213,
+   "logs": 8,
+   "leaves": 122,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    6,
+    -4,
+    8,
+    -4,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 24,
+   "result": "placed"
+  },
+  {
+   "n": 156,
+   "logs": 5,
+   "leaves": 90,
+   "log_top": 4,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    6,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 36,
+   "result": "placed"
+  },
+  {
+   "n": 334,
+   "logs": 11,
+   "leaves": 173,
+   "log_top": 9,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    6,
+    -4,
+    11,
+    -3,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 67,
+   "result": "placed"
+  },
+  {
+   "n": 226,
+   "logs": 8,
+   "leaves": 119,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    5,
+    -4,
+    8,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 21,
+   "result": "placed"
+  },
+  {
+   "n": 191,
+   "logs": 5,
+   "leaves": 103,
+   "log_top": 4,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    6,
+    -6,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 16,
+   "result": "placed"
+  },
+  {
+   "n": 207,
+   "logs": 6,
+   "leaves": 135,
+   "log_top": 4,
+   "origin_column_logs": 4,
+   "bbox": [
+    -4,
+    3,
+    -4,
+    6,
+    -5,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 45,
+   "result": "placed"
+  },
+  {
+   "n": 199,
+   "logs": 5,
+   "leaves": 111,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -4,
+    4,
+    -4,
+    7,
+    -5,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 17,
+   "result": "placed"
+  }
+ ]
+}

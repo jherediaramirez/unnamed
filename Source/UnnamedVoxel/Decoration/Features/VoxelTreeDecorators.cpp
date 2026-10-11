@@ -367,8 +367,9 @@ namespace
     // probes' propagules by S9e's agent F1 (C:\dev\sandbox\phase6s9\s9e\fit\f1-crown): per leaf (from the bottom up,
     // cell order within a layer), with the probability one of the data's directions at random; the
     // required_empty_blocks cells that way must be air (the tree's vines and water block them), and no earlier block of
-    // this decorator may lie within exclusion_radius_xz across and exclusion_radius_y + 1 up or down (the data's 0
-    // alone gave 14 to 21% too many propagules); then the provider's state in the first cell. Draws: per leaf
+    // this decorator may lie within exclusion_radius_xz across and exclusion_radius_y up or down (F1's + 1 against the
+    // accepted probes left the 300-tree re-probes' tall mangroves 12 to 14% short; S9e part 3's agent F5,
+    // C:\dev\sandbox\phase6s9\s9e3\fit); then the provider's state in the first cell. Draws: per leaf
     // NextFloat, then where it passes NextInt over the directions when there are more than one, then the provider's
     // where it places. States: none fixed (the provider's).
     void PlaceAttachedToLeaves(const FVoxelTreeDecoratorConfig& Decorator, FVoxelTreeBuilder& Builder)
@@ -380,7 +381,7 @@ namespace
         const float Probability = float(TreeDecoratorProbability(Decorator));
         const int32 Empty = FMath::Max(1, int32(Decorator.GetNumber(AttachedEmptyBlocks)));
         const int32 AcrossXY = FMath::Max(0, int32(Decorator.GetNumber(AttachedExclusionXZ)));
-        const int32 UpDown = FMath::Max(0, int32(Decorator.GetNumber(AttachedExclusionY))) + 1;
+        const int32 UpDown = FMath::Max(0, int32(Decorator.GetNumber(AttachedExclusionY)));
         const FVoxelPlantEnvironment& Env = Builder.Env;
         TArray<FIntVector> Leaves, Placed;
         Builder.GetCells(FVoxelTreeBuilder::ECell::Leaf, Leaves);

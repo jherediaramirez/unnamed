@@ -386,8 +386,13 @@ namespace
     // bending: the chance that the second-highest trunk cell moves too (the probe's three-part trunks, 39%).
     constexpr float BendingLowerShiftChance = 0.4f;
     // upwards_branching: the share of the data's place_branch_per_log_probability a log branches at (its 0.5 gave 12 to
-    // 16% too many logs; 0.5 x 0.85 fits all four probes).
-    constexpr double UpwardsBranchScale = 0.85;
+    // 16% too many logs on the accepted probes; S9e part 3's agent F5 refitted 0.5 x 0.9 against the four mangroves'
+    // 300-tree re-probes, whose grass trees carry 8 to 12% more logs and leaves, C:\dev\sandbox\phase6s9\s9e3\fit).
+    constexpr double UpwardsBranchScale = 0.9;
+    // upwards_branching: a branch with logs also takes an attachment below its last log at this chance (ours: the
+    // re-probes' leaves 4 to 7 out at dy -1 and below ran 18 to 54% short without it; agent F6a,
+    // C:\dev\sandbox\phase6s9\s9e3\fit2\a).
+    constexpr float UpwardsEndBelowChance = 0.5f;
 
     // bending_trunk_placer (the wiki: "Places a trunk of the specified height. The topmost 2 blocks have a chance to be
     // moved by one block each. On top of the trunk a straight branch of length bend_length is generated. Foliage is
@@ -430,9 +435,10 @@ namespace
     // place_branch_per_log_probability x UpwardsBranchScale: a direction, S =
     // extra_branch_steps and extra_branch_length (drawn, unused: the probes show no effect), then S - 1 logs climbing
     // diagonally, one out and one up each, every one an attachment, and an attachment above the last (S 1: one out and
-    // one up from the trunk log). Then the trunk's attachment above its top log. No soil under the trunk (a mangrove's
-    // root takes the cell). Draws: per trunk log below the top NextFloat, and on a branch NextInt(4),
-    // extra_branch_steps', extra_branch_length's.
+    // one up from the trunk log), then with UpwardsEndBelowChance one below the last when there is one. Then the
+    // trunk's attachment above its top log. No soil under the trunk (a mangrove's root takes the cell). Draws: per
+    // trunk log below the top NextFloat, and on a branch NextInt(4), extra_branch_steps', extra_branch_length's, then
+    // NextFloat when it has logs.
     void PlaceUpwardsBranching(
         const FVoxelTreePlacerConfig& Trunk, FVoxelTreeBuilder& Builder, TArray<FVoxelFoliageAttachment>& Out)
     {
@@ -455,6 +461,7 @@ namespace
                 Out.Add({End, 0, false});
             }
             Out.Add({Steps == 1 ? End + Step + FIntVector(0, 0, 1) : End + FIntVector(0, 0, 1), 0, false});
+            if (Steps > 1 && Random.NextFloat() < UpwardsEndBelowChance) Out.Add({End - FIntVector(0, 0, 1), 0, false});
         }
         Out.Add({Origin + FIntVector(0, 0, Height), 0, false});
     }
@@ -569,10 +576,11 @@ int32 VoxelTrunkPlacers::GetReach(const FVoxelTreePlacerConfig& Trunk)
     }
 }
 
-// Off until the mangroves pass their probes (S9e part 1: on grass they do, but tall_mangrove@mudwater's 28 survivors
-// are taller and branchier than F1's crown with F2's roots gives, leaves -24%, z -3.2; agent F4 found no joint rule;
-// C:\dev\sandbox\phase6s9\s9e\fit\f4-joint). The root placer, the upwards_branching trunk and attached_to_leaves stay
-// built for S9e part 2; until then the mangroves' selector entries place nothing, as before.
+// Off until the mangroves pass their probes. S9e part 3 refitted them to their 300-tree re-probes (agents F5 and F6a,
+// C:\dev\sandbox\phase6s9\s9e3\fit and fit2\a): the trees' logs, leaves, occupancy and propagules pass, but the moss
+// does not (mangrove@mudwater pooled -13.5%, tall_mangrove pooled +7.5%: where the roots sit, agent F6b, fit2\b), and
+// the accepted mangrove@mudwater's 6-connected parts sit at p 0.01. Until then the mangroves' selector entries place
+// nothing, as before.
 bool VoxelRootPlacers::IsMangroveBuilt()
 {
     return false;
@@ -581,30 +589,33 @@ bool VoxelRootPlacers::IsMangroveBuilt()
 namespace
 {
     // mangrove_root_placer's walk (ours, fitted to scout J's four mangrove probes by S9e's agent F2,
-    // C:\dev\sandbox\phase6s9\s9e\fit\f2-roots): an arm's step goes outward with MangroveOutChance times the ring's
-    // share, a step in the outward band the share refuses is wasted, and a strand under an outward step lands within
-    // MangroveStrandDepth.
-    constexpr float MangroveOutChance = 0.36f;
+    // C:\dev\sandbox\phase6s9\s9e\fit\f2-roots, and refitted to their 300-tree re-probes by S9e part 3's agent F5,
+    // C:\dev\sandbox\phase6s9\s9e3\fit): an arm's step goes outward with MangroveOutChance times the ring's share, or
+    // MangroveLandedOutChance once the arm has landed (the re-probes' roots at radius 4 to 6 ran 30 to 60% longer than
+    // F2's walk gave); a step in the outward band the share refuses is wasted, and a strand under an outward step lands
+    // within MangroveStrandDepth.
+    constexpr float MangroveOutChance = 0.38f, MangroveLandedOutChance = 0.45f;
     constexpr int32 MangroveStrandDepth = 2;
 }
 
 // The root placer (ours, fitted; the data gives its numbers, the wiki no algorithm). The trunk rises by k =
 // trunk_offset_y. A root goes under the bottom log, then four arms (+X, -X, +Y, -Y) start beside it at its height. Each
-// step draws u: under MangroveOutChance it is an outward attempt, which moves one cell out along the arm's axis when u
-// is also under MangroveOutChance * share(r) (share = (W - 2 - r) / (W - 3) clamped to 0..1, W = max_root_width, r the
-// arm's ring) and the cell there can take a root, first drawing whether a strand hangs from the cell it leaves
-// (random_skew_chance); otherwise the attempt is wasted. Any other step goes down where the cell below can take a root,
-// and else ends the arm (it has landed). Every step, moves and wasted ones alike, counts; the tree fails at once when
-// an arm takes more than max_root_length (the probes' placed rates fall with the descent from the bottom log to the
-// ground: 100/100, 91/100 on grass, 89/100 and 28/100 on mud under two water). A strand walks down from below the cell
-// it hangs from through air or replaceable_by_trees (water included, mud not) that holds no root, up to
-// MangroveStrandDepth + 1 cells, and is rooted only when it stops within MangroveStrandDepth. A cell can take a root
-// when it is free (air or replaceable_by_trees) or in can_grow_through, the tree's own roots included; a root over
-// muddy_roots_in is the muddy root state, over water the root state waterlogged. Then above each root, in the order
-// they went down, where the cell is air and holds none of the tree's cells (nor is the bottom log's), a draw places
-// above_root_provider's block at above_root_placement_chance. Draws: trunk_offset_y's, per arm step NextFloat and on a
-// move NextFloat for the strand, each root's provider draws as it goes down, then per moss cell NextFloat and the
-// provider's.
+// step draws u, against c = MangroveOutChance, or MangroveLandedOutChance when the cell below cannot take a root (the
+// arm has landed): under c it is an outward attempt, which moves one cell out along the arm's axis when u is also under
+// c * share(r) (share = (W - 2 - r) / (W - 3) clamped to 0..1, W = max_root_width, r the arm's ring) and the cell there
+// can take a root, first drawing whether a strand hangs from the cell it leaves (random_skew_chance); otherwise the
+// attempt is wasted. Any other step goes down where the cell below can take a root, and else ends the arm. Every step
+// of an arm that has not landed, moves and wasted ones alike, counts; a landed arm's outward attempts do not. The tree
+// fails at once when an arm takes more than max_root_length (the probes' placed rates fall with the descent from the
+// bottom log to the ground: 100/100, 93/100 on grass, 90/100 and 31/100 on mud under two water, the re-probes'). A
+// strand walks down from below the cell it hangs from through air or replaceable_by_trees (water included, mud not)
+// that holds no root, up to MangroveStrandDepth + 1 cells, and is rooted only when it stops within MangroveStrandDepth.
+// A cell can take a root when it is free (air or replaceable_by_trees) or in can_grow_through, the tree's own roots
+// included; a root over muddy_roots_in is the muddy root state, over water the root state waterlogged. Then above each
+// root, in the order they went down, where the cell is air and holds none of the tree's cells (nor is the bottom
+// log's), a draw places above_root_provider's block at above_root_placement_chance. Draws: trunk_offset_y's, per arm
+// step NextFloat and on a move NextFloat for the strand, each root's provider draws as it goes down, then per moss cell
+// NextFloat and the provider's.
 bool VoxelRootPlacers::PlaceMangrove(const FVoxelMangroveRoots& Roots, FVoxelTreeBuilder& Builder)
 {
     const FVoxelPlantEnvironment& Env = Builder.Env;
@@ -654,9 +665,11 @@ bool VoxelRootPlacers::PlaceMangrove(const FVoxelMangroveRoots& Roots, FVoxelTre
         while (true)
         {
             const float U = Random.NextFloat();
-            if (U < MangroveOutChance)
+            const bool bLanded = !CanGrow(At + Down);
+            const float OutChance = bLanded ? MangroveLandedOutChance : MangroveOutChance;
+            if (U < OutChance)
             {
-                if (U < MangroveOutChance * Share(Ring) && CanGrow(At + Step))
+                if (U < OutChance * Share(Ring) && CanGrow(At + Step))
                 {
                     if (Random.NextFloat() < Roots.RandomSkewChance)
                     {
@@ -678,8 +691,9 @@ bool VoxelRootPlacers::PlaceMangrove(const FVoxelMangroveRoots& Roots, FVoxelTre
                     ++Ring;
                     PlaceRoot(At);
                 }
+                if (bLanded) continue;
             }
-            else if (CanGrow(At + Down))
+            else if (!bLanded)
             {
                 At += Down;
                 PlaceRoot(At);

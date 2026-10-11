@@ -41,7 +41,8 @@ namespace
     // longer (scout J's: fallen super birch must then fail its reach of 15 with 16; RunTreeProbes), 9 every fallen log
     // pointing the same way (the direction test must fail; SimulateTrees), 10 and 11 as RunTreeProbes says (S9e: the
     // azalea's leaves and the rooted dirt must fail), 12 and 13 as RunTreeProbes says and 14 as the vines test (S9e
-    // part 2: bamboo's height, the forest rock's moves, the vines' face order). With 0, every test must pass.
+    // part 2: bamboo's height, the forest rock's moves, the vines' face order), 15 as RunTreeProbes says (S9e part 3:
+    // a re-probe pool of its first run alone). With 0, every test must pass.
     constexpr int32 TreeTestMutation = 0;
     // For manual runs: the number of 100-tree self-samples per configuration that check the distribution rules'
     // calibration (RunTreeProbes); 0 in the suite.
@@ -95,6 +96,9 @@ namespace
         // and Examples holds its examples). The forest rock probe's: its boxes' extremes (bbox_extremes) in our axes.
         TArray<double> Tops;
         FIntVector BoxMin = FIntVector::ZeroValue, BoxMax = FIntVector::ZeroValue;
+        // Compared by its placed rate alone (S9e part 3: the accepted tall_mangrove@mudwater, whose survivors' trunk
+        // heights did not reproduce in 300 new trees, C:\dev\sandbox\phase6s9\s9e2\reprobe\reprobe-report.md).
+        bool bPlacedRateOnly = false;
     };
 
     // A probe of under 50 tries (a ceiling's 16): too few trees for the distribution rules (the means, decorations,
@@ -302,6 +306,84 @@ namespace
                 }
         }
         return true;
+    }
+
+    // A re-probe's run number (S9e part 3: tree_<probe>_r<N>.json from tools/tree_probe.py --run-tag) and the probe
+    // it re-runs, or INDEX_NONE.
+    int32 GetProbeRun(const FString& Name, FString& OutBase)
+    {
+        int32 Under;
+        if (!Name.FindLastChar(TEXT('_'), Under) || Name.Len() < Under + 3 || Name[Under + 1] != TEXT('r') ||
+            Name[Under + 2] == TEXT('0'))
+            return INDEX_NONE;
+        for (int32 Index = Under + 2; Index < Name.Len(); ++Index)
+            if (!FChar::IsDigit(Name[Index])) return INDEX_NONE;
+        OutBase = Name.Left(Under);
+        return FCString::Atoi(*Name.RightChop(Under + 2));
+    }
+
+    // One probe's re-probe runs read as one (the manager's call Q1 (a), S9e part 3): the tries, placed trees, their
+    // lists and histograms added; each mean per tree weighted by its run's placed trees and each leaf occupancy share
+    // by its run's profiled trees; the extremes over the runs.
+    FTreeProbe PoolTreeProbes(const TArray<FTreeProbe>& Runs, const FString& Name)
+    {
+        FTreeProbe Out = Runs[0];
+        Out.Name = Name;
+        Out.Bfs7 *= Out.Placed;
+        Out.Dirt *= Out.Placed;
+        for (TPair<FString, double>& Mean : Out.BlockMeans)
+            Mean.Value *= Out.Placed;
+        for (TPair<int32, TMap<FIntPoint, double>>& Layer : Out.Occupancy)
+            for (TPair<FIntPoint, double>& Cell : Layer.Value)
+                Cell.Value *= Out.ProfileCount;
+        const auto AddCounts = [](TMap<int32, int64>& To, const TMap<int32, int64>& From)
+        {
+            for (const TPair<int32, int64>& Bin : From)
+                To.FindOrAdd(Bin.Key) += Bin.Value;
+        };
+        for (int32 Index = 1; Index < Runs.Num(); ++Index)
+        {
+            const FTreeProbe& Run = Runs[Index];
+            Out.Tries += Run.Tries;
+            Out.Placed += Run.Placed;
+            Out.Logs.Append(Run.Logs);
+            Out.Leaves.Append(Run.Leaves);
+            Out.Cells.Append(Run.Cells);
+            Out.Tops.Append(Run.Tops);
+            Out.Examples.Append(Run.Examples);
+            Out.Bfs7 += Run.Bfs7 * Run.Placed;
+            Out.Dirt += Run.Dirt * Run.Placed;
+            AddCounts(Out.TopHist, Run.TopHist);
+            AddCounts(Out.Comp6Hist, Run.Comp6Hist);
+            AddCounts(Out.Comp26Hist, Run.Comp26Hist);
+            AddCounts(Out.SideHist, Run.SideHist);
+            AddCounts(Out.CapTopHist, Run.CapTopHist);
+            Out.Reach = FMath::Max(Out.Reach, Run.Reach);
+            Out.AllReach = FMath::Max(Out.AllReach, Run.AllReach);
+            Out.Comp26Max = FMath::Max(Out.Comp26Max, Run.Comp26Max);
+            Out.OriginLogsMin = FMath::Min(Out.OriginLogsMin, Run.OriginLogsMin);
+            Out.OriginLogsMax = FMath::Max(Out.OriginLogsMax, Run.OriginLogsMax);
+            Out.BoxMin = FIntVector(FMath::Min(Out.BoxMin.X, Run.BoxMin.X), FMath::Min(Out.BoxMin.Y, Run.BoxMin.Y),
+                FMath::Min(Out.BoxMin.Z, Run.BoxMin.Z));
+            Out.BoxMax = FIntVector(FMath::Max(Out.BoxMax.X, Run.BoxMax.X), FMath::Max(Out.BoxMax.Y, Run.BoxMax.Y),
+                FMath::Max(Out.BoxMax.Z, Run.BoxMax.Z));
+            Out.Blocks.Append(Run.Blocks);
+            for (const TPair<FString, double>& Mean : Run.BlockMeans)
+                Out.BlockMeans.FindOrAdd(Mean.Key) += Mean.Value * Run.Placed;
+            for (const TPair<int32, TMap<FIntPoint, double>>& Layer : Run.Occupancy)
+                for (const TPair<FIntPoint, double>& Cell : Layer.Value)
+                    Out.Occupancy.FindOrAdd(Layer.Key).FindOrAdd(Cell.Key) += Cell.Value * Run.ProfileCount;
+            Out.ProfileCount += Run.ProfileCount;
+        }
+        const double Placed = FMath::Max(Out.Placed, 1), Profiled = FMath::Max(Out.ProfileCount, 1);
+        Out.Bfs7 /= Placed;
+        Out.Dirt /= Placed;
+        for (TPair<FString, double>& Mean : Out.BlockMeans)
+            Mean.Value /= Placed;
+        for (TPair<int32, TMap<FIntPoint, double>>& Layer : Out.Occupancy)
+            for (TPair<FIntPoint, double>& Cell : Layer.Value)
+                Cell.Value /= Profiled;
+        return Out;
     }
 
     // Q(A, X), the regularized upper incomplete gamma function (series below A + 1, continued fraction above).
@@ -1026,6 +1108,11 @@ namespace
             100. * Probe.Placed / FMath::Max(Probe.Tries, 1), RateP);
         if (RateP < 0.01) Failures.Add(TEXT("placed rate"));
         if (Run.FailedWrites) Failures.Add(FString::Printf(TEXT("%d failed tries emitted writes"), Run.FailedWrites));
+        if (Probe.bPlacedRateOnly)
+        {
+            OutLine += TEXT(" (placed rate only)");
+            return Failures;
+        }
         // "Placed none against some" failed every probe that placed none while ours placed some, until S9c. That fails
         // a correct model: under mega_spruce_ceil15's ceiling ours places only h 13, 1/45 = 2.2% of its tries, and the
         // probe's 0 of 16 has p (44/45)^16 = 0.70 under that rate; with ours' tries in the thousands, every run places
@@ -1582,7 +1669,39 @@ namespace
         TArray<FString> Files;
         IFileManager::Get().FindFiles(Files, *FPaths::Combine(Folder, TEXT("tree_*.json")), true, false);
         Files.Sort();
-        Test.TestEqual(TEXT("tree probes"), Files.Num(), 82);
+        Test.TestEqual(TEXT("tree probes"), Files.Num(), 94);
+        // Every file, a probe's re-probe runs (S9e part 3: the four mangroves, three runs each) pooled into one probe
+        // after the others. Mutation 15: only each probe's first run (its tries must fail).
+        TArray<FTreeProbe> Read;
+        TMap<FString, TArray<FTreeProbe>> RunsOf;
+        for (const FString& File : Files)
+        {
+            FTreeProbe Probe;
+            FString Error, Base;
+            if (!Test.TestTrue(FString::Printf(TEXT("%s reads (%s)"), *File, *Error),
+                    ReadTreeProbe(FPaths::Combine(Folder, File), Probe, Error)))
+                return false;
+            // The accepted tall_mangrove@mudwater: its placed rate only (FTreeProbe::bPlacedRateOnly).
+            Probe.bPlacedRateOnly = Probe.Name == TEXT("tall_mangrove@mudwater");
+            if (GetProbeRun(Probe.Name, Base) == INDEX_NONE)
+                Read.Add(MoveTemp(Probe));
+            else if (TreeTestMutation != 15 || !RunsOf.Contains(Base))
+                RunsOf.FindOrAdd(Base).Add(MoveTemp(Probe));
+        }
+        RunsOf.KeySort(TLess<FString>());
+        for (const TPair<FString, TArray<FTreeProbe>>& Pool : RunsOf)
+        {
+            const FTreeProbe& First = Pool.Value[0];
+            bool bSameProbe = true;
+            for (const FTreeProbe& Run : Pool.Value)
+                bSameProbe &= Run.Feature == First.Feature && Run.Variant == First.Variant &&
+                    Run.OriginZ == First.OriginZ && Run.Layers.Num() == First.Layers.Num() &&
+                    Run.Prep.Num() == First.Prep.Num();
+            Test.TestTrue(FString::Printf(TEXT("%s's runs are one probe"), *Pool.Key), bSameProbe);
+            Read.Add(PoolTreeProbes(Pool.Value, FString::Printf(TEXT("%s pooled"), *Pool.Key)));
+            Test.TestEqual(FString::Printf(TEXT("%s pooled tries"), *Pool.Key), Read.Last().Tries, 300);
+        }
+        Test.TestEqual(TEXT("re-probed probes"), RunsOf.Num(), 4);
         TArray<FTreeProbe> Probes;
         TArray<FVoxelTreeConfig> Configs;
         // Per probe, its fallen tree (S9d part 2) and its root system (S9e), else null; and the huge mushroom probes
@@ -1592,13 +1711,8 @@ namespace
         int32 ComparedApart = 0;
         TArray<TSet<int32>> DecoratorBlocks;
         TArray<FString> Skipped;
-        for (const FString& File : Files)
+        for (FTreeProbe& Probe : Read)
         {
-            FTreeProbe Probe;
-            FString Error;
-            if (!Test.TestTrue(FString::Printf(TEXT("%s reads (%s)"), *File, *Error),
-                    ReadTreeProbe(FPaths::Combine(Folder, File), Probe, Error)))
-                return false;
             if (!Filter(Probe)) continue;
             FVoxelTreeConfig Config;
             TSharedPtr<FVoxelFallenTreeConfig> FallenTree;
@@ -2116,7 +2230,9 @@ bool FVoxelTreeShapesTest::RunTest(const FString& Parameters)
     // distributions. Every built configuration runs: 46 probes since S9e part 2 (S9c's 33, the six fallen trees, which
     // add their log directions, the two huge mushrooms, CompareMushrooms, the azalea tree and the rooted azalea tree,
     // its root system's roots counted as decorations, the two bamboos and the forest rock, CompareBamboo and
-    // CompareBlob; the four mangroves wait for their re-probe).
+    // CompareBlob). The mangroves skip at their root placer until IsMangroveBuilt(); then the four accepted mangrove
+    // probes (tall_mangrove@mudwater's by its placed rate alone) and the four mangroves' re-probe pools (S9e part 3)
+    // make 54.
     int32 Ran = 0;
     if (!RunTreeProbes(*this, [](const FTreeProbe& Probe) { return Probe.Ceiling == 0; }, Ran)) return false;
     TestEqual(TEXT("probes run (a placer that stops compiling drops its probes)"), Ran, 46);

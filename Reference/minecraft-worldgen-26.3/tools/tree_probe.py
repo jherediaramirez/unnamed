@@ -3,7 +3,8 @@
 statistics JSON per probe.
 
 usage: uv run --no-project --python 3.13 python -I Reference/minecraft-worldgen-26.3/tools/tree_probe.py
-       {run|read|all|list} [--server-dir D] [--staging D] [--port N] [--summary F] [probe ...]
+       {run|read|all|list} [--server-dir D] [--staging D] [--port N] [--summary F]
+       [--x-start X --level-seed S --run-tag r<N>] [probe ...]
 `list` prints the probes: every minecraft:tree feature in data/, mangrove and tall mangrove on mud under water
 (<feature>@mudwater), rooted azalea in an air pocket, the fallen trees, huge mushrooms, bamboo and forest rock, and
 oak, fancy oak, dark oak, spruce and mega spruce under a stone ceiling N blocks above the origin (<feature>_ceilN).
@@ -15,6 +16,9 @@ shape: log columns and logs per dy, leaves (and mushroom cap blocks) per layer c
 (from the origin when it has none) as mean per tree, largest Chebyshev radius and occupancy per (dx,dz) as a fraction
 of the placed trees, and every other block's dy and radius histograms. Changes outside the cells and the timings go to
 run_summary.json, not the probe files.
+A re-probe runs the same probes at another grid start (--x-start, the first strip's x; the accepted probes' 1024) or
+level seed (--level-seed; theirs 263) and needs --run-tag r<N>: it writes tree_<probe>_r<N>.json, whose world records
+x_start and level_seed, so it can never take an accepted probe's name. Give read the run's arguments again.
 """
 import argparse
 import json
@@ -40,6 +44,7 @@ LAYERS = [("minecraft:bedrock", -64, -64), ("minecraft:stone", -63, 55), ("minec
 Y0 = 60
 SPACING = 32
 X_START = 1024
+LEVEL_SEED = 263
 STRIDE = 512
 SEC_LO, SEC_HI = 2, 8  # sections read: Y 32 to 143
 EXAMPLES = 2
@@ -102,12 +107,17 @@ def cell_centre(i, gx, gz):
     return origin_x(i) + SPACING * gx + SPACING // 2, SPACING * gz + SPACING // 2
 
 
+def probe_file_name(name, args):
+    """The probe's name in its file: tree_<name>.json, or tree_<name>_r<N>.json for a re-probe."""
+    return f"{name}_{args.run_tag}" if args.run_tag else name
+
+
 def area_blocks(i, grid):
     x0 = origin_x(i)
     return x0 - 16, -16, x0 + SPACING * grid + 15, SPACING * grid + 15
 
 
-def write_server_files(server_dir, port):
+def write_server_files(server_dir, port, seed):
     server_dir.mkdir(parents=True, exist_ok=True)
     (server_dir / "eula.txt").write_text("eula=true\n")
     gen = {"biome": "minecraft:plains", "features": False, "lakes": False, "structure_overrides": [],
@@ -115,7 +125,7 @@ def write_server_files(server_dir, port):
     props = {"server-ip": "127.0.0.1", "server-port": port, "online-mode": "false", "enable-rcon": "false",
              "enable-query": "false", "max-tick-time": -1, "spawn-protection": 0, "view-distance": 2,
              "simulation-distance": 2, "region-file-compression": "deflate", "generate-structures": "false",
-             "level-seed": 263, "level-name": "world", "level-type": "minecraft\\:flat",
+             "level-seed": seed, "level-name": "world", "level-type": "minecraft\\:flat",
              "generator-settings": json.dumps(gen, separators=(",", ":")), "motd": "tree probe",
              "pause-when-empty-seconds": -1}
     (server_dir / "server.properties").write_text("".join(f"{k}={v}\n" for k, v in props.items()))
@@ -231,12 +241,12 @@ def forceload_cmds(verb, i, grid):
 
 def run(args, todo):
     server_dir = args.server_dir
-    write_server_files(server_dir, args.port)
+    write_server_files(server_dir, args.port, args.level_seed)
     for stale in ("world", "placements.json"):
         if (server_dir / stale).exists():
             fail(f"{server_dir / stale} exists; use a fresh server folder")
     P = probes()
-    summary = {"probes": {}}
+    summary = {"x_start": X_START, "level_seed": args.level_seed, "run_tag": args.run_tag, "probes": {}}
     t0 = time.time()
     server = Server(server_dir)
     placements = []
@@ -599,16 +609,18 @@ def profile(placed):
                            for b in sorted(deco_dy)}}
 
 
-def summarize(name, p, recs):
+def summarize(name, p, recs, args):
     placed = [r for r in recs if r["result"] == "placed"]
-    s = {"generated_by": "tools/tree_probe.py", "minecraft": "26.3", "probe": name, "feature": "minecraft:" + p["feature"],
-         "variant": p["variant"],
+    s = {"generated_by": "tools/tree_probe.py", "minecraft": "26.3", "probe": probe_file_name(name, args),
+         "feature": "minecraft:" + p["feature"], "variant": p["variant"],
          "world": {"layers": [list(layer) for layer in LAYERS], "grid_spacing": SPACING, "random_tick_speed": 0,
                    "settle_s": SETTLE_S if p.get("settle", True) else 0},
          "y": p["y"], "grid": p["grid"], "settled": p.get("settle", True), "prep": p["prep"], "tries": len(recs),
          "responses": dict(Counter(r["result"] for r in recs))}
     if "ceiling" in p:
         s["ceiling_dy"] = p["ceiling"]
+    if args.run_tag:
+        s["world"] |= {"x_start": X_START, "level_seed": args.level_seed}
     m = [r["m"] for r in placed]
     s["placed_but_empty"] = sum(1 for x in m if x["n"] == 0)
     s["failed_but_changed"] = sum(1 for r in recs if r["result"] != "placed" and r["m"]["n"] > 0)
@@ -665,6 +677,8 @@ def read(args, todo):
         recs = [r for r in pl if r["probe"] == name]
         if name not in todo or not recs:
             continue
+        if any(r["x"] != cell_centre(i, r["gx"], r["gz"])[0] for r in recs):
+            fail(f"{name} was placed at another --x-start than {X_START}; give read the run's arguments")
         t0 = time.time()
         changes, bes, ticks = scan(regions, i, p)
         by_cell = defaultdict(dict)
@@ -689,8 +703,8 @@ def read(args, todo):
             r["cells"] = by_cell.get((r["gx"], r["gz"]), {})
             r["m"] = measure(r["cells"], be_cell.get((r["gx"], r["gz"]), []), tick_cell.get((r["gx"], r["gz"])))
             r["m"]["pending_ticks"] = dict(Counter(tick_cell.get((r["gx"], r["gz"]), {}).values()))
-        s = summarize(name, p, recs)
-        (args.staging / f"tree_{name}.json").write_text(json.dumps(s, indent=1) + "\n", encoding="utf-8", newline="\n")
+        s = summarize(name, p, recs, args)
+        (args.staging / f"tree_{s['probe']}.json").write_text(json.dumps(s, indent=1) + "\n", encoding="utf-8", newline="\n")
         reading[name] = {"stray_changes_outside_cells": stray, "read_s": round(time.time() - t0, 1)}
         print(f"{name}: {s['responses']} reach {s['max_reach_h_any_cell']} stray {stray} {reading[name]['read_s']}s",
               flush=True)
@@ -698,6 +712,7 @@ def read(args, todo):
 
 
 def main():
+    global X_START
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("step", choices=("run", "read", "all", "list"))
     ap.add_argument("probes", nargs="*")
@@ -705,7 +720,16 @@ def main():
     ap.add_argument("--staging", type=Path, default=SANDBOX / "staging")
     ap.add_argument("--port", type=int, default=25781)
     ap.add_argument("--summary", type=Path)
+    ap.add_argument("--x-start", type=int, default=X_START)
+    ap.add_argument("--level-seed", type=int, default=LEVEL_SEED)
+    ap.add_argument("--run-tag")
     args = ap.parse_args()
+    rerun = (args.x_start, args.level_seed) != (X_START, LEVEL_SEED)
+    if args.run_tag is not None and not (re.fullmatch(r"r[1-9]\d*", args.run_tag) and rerun):
+        fail("--run-tag is r<N>, for a run at another --x-start or --level-seed")
+    if rerun and not args.run_tag:
+        fail("a run at another --x-start or --level-seed needs --run-tag r<N>, so it cannot take an accepted probe's name")
+    X_START = args.x_start
     names = list(probes())
     if args.step == "list":
         print(len(names), " ".join(names))

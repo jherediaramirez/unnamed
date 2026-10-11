@@ -749,6 +749,21 @@ S9e's second part ([the record](Records/2026-10-11-Voxel-Phase6-S9e2.md)) put th
 - **The mangroves** stay off: a black-box re-probe (300 new trees each) showed the accepted tall_mangrove@mudwater probe is an artefact (its survivors' height selection does not reproduce). S9e part 3 adds the re-probes to the reference and fits against them.
 - **Evidence:** `Tests/Evidence/2026-10-11/S9e2-Bamboo/` (bamboo-on and its trees-off control), `S9e2-ForestRock/` (rock-on4 and rock-off4); `notes.md` in each.
 
+### The mangroves re-probed into the reference and refitted, still off (phase 6, S9e part 3)
+
+S9e's third part ([the record](Records/2026-10-11-Voxel-Phase6-S9e3.md)) put the mangroves' re-probes in the worldgen reference and refitted the mangroves to them. They stay off: two moss lines still fail.
+
+| Piece | Where | How it works |
+|---|---|---|
+| The re-probes | `Reference/minecraft-worldgen-26.3/facts/feature_probes/tree_<probe>_r<N>.json` (12) | The four mangroves, three runs of 100 each (r1 x 9216 seed 263, r2 25600 and 7001, r3 41997 and 90210), from `tools/tree_probe.py --x-start --level-seed --run-tag`; `verify_reference.py` accepts a run suffix only when the file's world records a pair other than the accepted 1024 / 263 |
+| Pooling | `VoxelTreeTests.cpp` `GetProbeRun`, `PoolTreeProbes` | Each probe's three runs read as one 300-tree probe: tries, trees, lists and histograms added, means weighted by placed trees, occupancy by profiled trees |
+| The accepted tall_mangrove@mudwater | `FTreeProbe::bPlacedRateOnly` | Its placed rate alone: its survivors' trunk heights did not reproduce (`C:\dev\sandbox\phase6s9\s9e2\reprobe\reprobe-report.md`) |
+| The refit (ours, agents F5 and F6a) | `VoxelTrunkPlacers.cpp` `UpwardsBranchScale` 0.9, `UpwardsEndBelowChance` 0.5, `MangroveOutChance` 0.38, `MangroveLandedOutChance` 0.45; `VoxelTreeDecorators.cpp` `PlaceAttachedToLeaves` | Branches at 0.5 x 0.9 a log; a branch with logs takes an attachment below its last log half the time; a root arm steps out at 0.38, or 0.45 once landed, and a landed arm's outward attempts do not count toward max_root_length; propagules keep the data's y exclusion of 0 |
+
+- **Tests** (`Trees.Shapes`, 46 probes while the mangroves are off, 54 once on): 94 tree probe files, 4 pools of 300 tries; mutation 15 (a pool of its first run alone) fails.
+- **Where the refit stands** (on, at the test's seed): every log, leaf, occupancy and propagule line passes. Still failing: mangrove@mudwater pooled moss -13.5% (z -4.8), tall_mangrove pooled moss +7.5% (z +3.1): the moss per root is right, the roots sit in the wrong places (agent F6b). The accepted mangrove@mudwater's 6-connected parts p 0.01: a sparse bin, 4 of 89 trees at 6 parts. Part 4 refits the root walk and merges sparse bins in the chi-square (the manager's call), then switches the mangroves on.
+- **No world change:** `IsMangroveBuilt()` is false, so every hash is unchanged (RunChecks final against the main hash file); no re-records, photos or window for this part.
+
 ## Storage and meshing
 
 | Piece | Where | How it works |

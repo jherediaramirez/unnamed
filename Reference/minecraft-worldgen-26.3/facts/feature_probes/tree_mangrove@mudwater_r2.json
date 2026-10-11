@@ -1,0 +1,4446 @@
+{
+ "generated_by": "tools/tree_probe.py",
+ "minecraft": "26.3",
+ "probe": "mangrove@mudwater_r2",
+ "feature": "minecraft:mangrove",
+ "variant": "@mudwater",
+ "world": {
+  "layers": [
+   [
+    "minecraft:bedrock",
+    -64,
+    -64
+   ],
+   [
+    "minecraft:stone",
+    -63,
+    55
+   ],
+   [
+    "minecraft:dirt",
+    56,
+    58
+   ],
+   [
+    "minecraft:grass_block",
+    59,
+    59
+   ]
+  ],
+  "grid_spacing": 32,
+  "random_tick_speed": 0,
+  "settle_s": 0,
+  "x_start": 25600,
+  "level_seed": 7001
+ },
+ "y": 60,
+ "grid": 10,
+ "settled": false,
+ "prep": [
+  [
+   -10,
+   56,
+   -10,
+   10,
+   59,
+   10,
+   "minecraft:mud"
+  ],
+  [
+   -10,
+   60,
+   -10,
+   10,
+   61,
+   10,
+   "minecraft:water"
+  ]
+ ],
+ "tries": 100,
+ "responses": {
+  "placed": 89,
+  "failed": 11
+ },
+ "placed_but_empty": 0,
+ "failed_but_changed": 0,
+ "n": {
+  "n": 89,
+  "min": 83,
+  "p5": 97,
+  "p50": 200,
+  "p95": 406,
+  "max": 457,
+  "mean": 215.337
+ },
+ "logs": {
+  "n": 89,
+  "min": 2,
+  "p5": 2,
+  "p50": 6,
+  "p95": 13,
+  "max": 14,
+  "mean": 6.607
+ },
+ "leaves": {
+  "n": 89,
+  "min": 33,
+  "p5": 34,
+  "p50": 105,
+  "p95": 240,
+  "max": 287,
+  "mean": 118.596
+ },
+ "log_top": {
+  "n": 89,
+  "min": 2,
+  "p5": 2,
+  "p50": 5,
+  "p95": 9,
+  "max": 10,
+  "mean": 5.551
+ },
+ "log_bottom": {
+  "n": 89,
+  "min": 1,
+  "p5": 1,
+  "p50": 2,
+  "p95": 3,
+  "max": 3,
+  "mean": 1.888
+ },
+ "origin_column_logs": {
+  "n": 89,
+  "min": 2,
+  "p5": 2,
+  "p50": 4,
+  "p95": 7,
+  "max": 7,
+  "mean": 4.326
+ },
+ "reach_h": {
+  "n": 89,
+  "min": 3,
+  "p5": 4,
+  "p50": 5,
+  "p95": 6,
+  "max": 7,
+  "mean": 5.191
+ },
+ "log_reach_h": {
+  "n": 89,
+  "min": 0,
+  "p5": 0,
+  "p50": 2,
+  "p95": 3,
+  "max": 3,
+  "mean": 1.562
+ },
+ "leaf_reach_h": {
+  "n": 89,
+  "min": 2,
+  "p5": 2,
+  "p50": 4,
+  "p95": 5,
+  "max": 5,
+  "mean": 3.562
+ },
+ "leaf_top": {
+  "n": 89,
+  "min": 4,
+  "p5": 4,
+  "p50": 7,
+  "p95": 11,
+  "max": 12,
+  "mean": 7.551
+ },
+ "log_comp6": {
+  "n": 89,
+  "min": 1,
+  "p5": 1,
+  "p50": 2,
+  "p95": 5,
+  "max": 6,
+  "mean": 2.022
+ },
+ "log_comp26": {
+  "n": 89,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "logroot_comp6": {
+  "n": 89,
+  "min": 1,
+  "p5": 1,
+  "p50": 2,
+  "p95": 5,
+  "max": 6,
+  "mean": 2.022
+ },
+ "logroot_comp26": {
+  "n": 89,
+  "min": 1,
+  "p5": 1,
+  "p50": 1,
+  "p95": 1,
+  "max": 1,
+  "mean": 1.0
+ },
+ "leaf_mismatch": {
+  "n": 89,
+  "min": 0,
+  "p5": 0,
+  "p50": 24,
+  "p95": 69,
+  "max": 103,
+  "mean": 28.202
+ },
+ "leaf_comp6": {
+  "n": 89,
+  "min": 1,
+  "p5": 1,
+  "p50": 2,
+  "p95": 5,
+  "max": 7,
+  "mean": 2.449
+ },
+ "leaf_pending_tick": {
+  "n": 89,
+  "min": 27,
+  "p5": 31,
+  "p50": 77,
+  "p95": 159,
+  "max": 177,
+  "mean": 83.461
+ },
+ "leaf_mismatch_no_tick": {
+  "n": 89,
+  "min": 0,
+  "p5": 0,
+  "p50": 7,
+  "p95": 29,
+  "max": 44,
+  "mean": 10.685
+ },
+ "leaf_bfs7": {
+  "n": 89,
+  "min": 0,
+  "p5": 0,
+  "p50": 1,
+  "p95": 4,
+  "max": 6,
+  "mean": 1.551
+ },
+ "log_top_hist": {
+  "2": 6,
+  "3": 7,
+  "4": 18,
+  "5": 15,
+  "6": 15,
+  "7": 10,
+  "8": 9,
+  "9": 8,
+  "10": 1
+ },
+ "origin_column_logs_hist": {
+  "2": 12,
+  "3": 20,
+  "4": 18,
+  "5": 14,
+  "6": 16,
+  "7": 9
+ },
+ "log_comp6_hist": {
+  "1": 43,
+  "2": 18,
+  "3": 17,
+  "4": 6,
+  "5": 4,
+  "6": 1
+ },
+ "log_comp26_hist": {
+  "1": 89
+ },
+ "bbox_extremes": {
+  "min_dx": -7,
+  "max_dx": 6,
+  "min_dy": -4,
+  "max_dy": 12,
+  "min_dz": -6,
+  "max_dz": 7
+ },
+ "blocks": {
+  "mangrove_leaves": {
+   "mean_per_tree": 118.596,
+   "share_of_trees": 1.0,
+   "max_reach_h": 5,
+   "per_tree": {
+    "n": 89,
+    "min": 33,
+    "p5": 34,
+    "p50": 105,
+    "p95": 240,
+    "max": 287,
+    "mean": 118.596
+   }
+  },
+  "mangrove_log": {
+   "mean_per_tree": 6.607,
+   "share_of_trees": 1.0,
+   "max_reach_h": 3,
+   "per_tree": {
+    "n": 89,
+    "min": 2,
+    "p5": 2,
+    "p50": 6,
+    "p95": 13,
+    "max": 14,
+    "mean": 6.607
+   }
+  },
+  "mangrove_propagule": {
+   "mean_per_tree": 1.888,
+   "share_of_trees": 0.764,
+   "max_reach_h": 5,
+   "per_tree": {
+    "n": 89,
+    "min": 0,
+    "p5": 0,
+    "p50": 2,
+    "p95": 5,
+    "max": 8,
+    "mean": 1.888
+   }
+  },
+  "mangrove_roots": {
+   "mean_per_tree": 19.124,
+   "share_of_trees": 1.0,
+   "max_reach_h": 6,
+   "per_tree": {
+    "n": 89,
+    "min": 10,
+    "p5": 11,
+    "p50": 19,
+    "p95": 28,
+    "max": 31,
+    "mean": 19.124
+   }
+  },
+  "moss_carpet": {
+   "mean_per_tree": 4.427,
+   "share_of_trees": 0.989,
+   "max_reach_h": 6,
+   "per_tree": {
+    "n": 89,
+    "min": 0,
+    "p5": 1,
+    "p50": 4,
+    "p95": 9,
+    "max": 11,
+    "mean": 4.427
+   }
+  },
+  "muddy_mangrove_roots": {
+   "mean_per_tree": 21.157,
+   "share_of_trees": 1.0,
+   "max_reach_h": 7,
+   "per_tree": {
+    "n": 89,
+    "min": 16,
+    "p5": 16,
+    "p50": 21,
+    "p95": 26,
+    "max": 29,
+    "mean": 21.157
+   }
+  },
+  "vine": {
+   "mean_per_tree": 43.539,
+   "share_of_trees": 1.0,
+   "max_reach_h": 6,
+   "per_tree": {
+    "n": 89,
+    "min": 5,
+    "p5": 12,
+    "p50": 40,
+    "p95": 97,
+    "max": 110,
+    "mean": 43.539
+   }
+  }
+ },
+ "leaf_distance": {
+  "1": 997,
+  "2": 2391,
+  "3": 3219,
+  "4": 2545,
+  "5": 1074,
+  "6": 191,
+  "7": 138
+ },
+ "leaf_bfs": {
+  "1": 1466,
+  "2": 2743,
+  "3": 3160,
+  "4": 2153,
+  "5": 792,
+  "6": 103,
+  "7": 138
+ },
+ "leaf_persistent": {
+  "false": 10555
+ },
+ "log_axis": {
+  "y": 588
+ },
+ "pending_ticks": {
+  "minecraft:mangrove_leaves": 7428
+ },
+ "max_reach_h_any_cell": 7,
+ "profile": {
+  "n": 89,
+  "log_columns": {
+   "-3,0": 0.0674,
+   "-2,0": 0.1348,
+   "-1,0": 0.2921,
+   "0,-3": 0.0787,
+   "0,-2": 0.1798,
+   "0,-1": 0.236,
+   "0,0": 1.0,
+   "0,1": 0.2697,
+   "0,2": 0.2022,
+   "0,3": 0.1124,
+   "1,0": 0.3034,
+   "2,0": 0.1798,
+   "3,0": 0.0899
+  },
+  "logs_per_dy": {
+   "1": 0.3708,
+   "2": 0.8876,
+   "3": 1.2472,
+   "4": 1.2809,
+   "5": 1.0787,
+   "6": 0.8202,
+   "7": 0.5169,
+   "8": 0.2584,
+   "9": 0.1348,
+   "10": 0.0112
+  },
+  "leaf_layers": [
+   {
+    "dy_from_top_log": -8,
+    "mean_per_tree": 0.1348,
+    "max_radius": 3,
+    "occupancy": {
+     "-2,-3": 0.0112,
+     "-2,-1": 0.0112,
+     "-2,1": 0.0112,
+     "-1,-3": 0.0112,
+     "-1,-2": 0.0112,
+     "-1,-1": 0.0112,
+     "-1,1": 0.0112,
+     "1,-3": 0.0112,
+     "1,-2": 0.0112,
+     "1,-1": 0.0112,
+     "1,0": 0.0112,
+     "2,-1": 0.0112
+    }
+   },
+   {
+    "dy_from_top_log": -7,
+    "mean_per_tree": 0.4045,
+    "max_radius": 3,
+    "occupancy": {
+     "-3,-1": 0.0112,
+     "-3,1": 0.0112,
+     "-3,2": 0.0112,
+     "-2,-2": 0.0225,
+     "-2,-1": 0.0225,
+     "-2,0": 0.0225,
+     "-2,1": 0.0112,
+     "-1,-3": 0.0112,
+     "-1,-2": 0.0225,
+     "-1,-1": 0.0112,
+     "-1,0": 0.0112,
+     "-1,1": 0.0337,
+     "-1,2": 0.0225,
+     "0,-3": 0.0112,
+     "0,-2": 0.0337,
+     "1,-2": 0.0225,
+     "1,-1": 0.0449,
+     "1,0": 0.0112,
+     "1,1": 0.0225,
+     "1,2": 0.0112,
+     "2,0": 0.0112,
+     "2,1": 0.0112
+    }
+   },
+   {
+    "dy_from_top_log": -6,
+    "mean_per_tree": 1.3708,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,2": 0.0112,
+     "-4,-1": 0.0112,
+     "-4,0": 0.0112,
+     "-4,2": 0.0112,
+     "-3,-2": 0.0112,
+     "-3,-1": 0.0225,
+     "-3,0": 0.0112,
+     "-3,1": 0.0225,
+     "-3,2": 0.0225,
+     "-2,-4": 0.0112,
+     "-2,-3": 0.0337,
+     "-2,-2": 0.0562,
+     "-2,-1": 0.0449,
+     "-2,0": 0.0337,
+     "-2,1": 0.0337,
+     "-2,2": 0.0112,
+     "-1,-3": 0.0225,
+     "-1,-2": 0.0562,
+     "-1,-1": 0.0787,
+     "-1,0": 0.0112,
+     "-1,1": 0.0337,
+     "-1,2": 0.0337,
+     "-1,3": 0.0112,
+     "-1,4": 0.0112,
+     "0,-3": 0.0225,
+     "0,-2": 0.0787,
+     "0,-1": 0.0112,
+     "0,1": 0.0337,
+     "0,2": 0.0112,
+     "0,3": 0.0112,
+     "0,4": 0.0112,
+     "1,-3": 0.0337,
+     "1,-2": 0.0787,
+     "1,-1": 0.0674,
+     "1,0": 0.0225,
+     "1,1": 0.0674,
+     "1,2": 0.0225,
+     "1,3": 0.0112,
+     "2,-3": 0.0112,
+     "2,-2": 0.0449,
+     "2,-1": 0.0674,
+     "2,0": 0.0225,
+     "2,1": 0.0337,
+     "2,2": 0.0225,
+     "2,3": 0.0112,
+     "3,-2": 0.0112,
+     "3,-1": 0.0112,
+     "3,0": 0.0112,
+     "3,1": 0.0112,
+     "3,2": 0.0112
+    }
+   },
+   {
+    "dy_from_top_log": -5,
+    "mean_per_tree": 3.2809,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.0112,
+     "-5,-1": 0.0112,
+     "-5,1": 0.0112,
+     "-5,2": 0.0112,
+     "-4,-2": 0.0112,
+     "-4,-1": 0.0112,
+     "-4,0": 0.0112,
+     "-4,1": 0.0112,
+     "-4,2": 0.0112,
+     "-3,-2": 0.0225,
+     "-3,-1": 0.0337,
+     "-3,0": 0.0337,
+     "-3,1": 0.0337,
+     "-3,2": 0.0112,
+     "-2,-5": 0.0112,
+     "-2,-4": 0.0225,
+     "-2,-3": 0.0562,
+     "-2,-2": 0.1011,
+     "-2,-1": 0.1236,
+     "-2,0": 0.0899,
+     "-2,1": 0.1011,
+     "-2,2": 0.0562,
+     "-2,3": 0.0225,
+     "-1,-4": 0.0337,
+     "-1,-3": 0.0674,
+     "-1,-2": 0.1124,
+     "-1,-1": 0.1461,
+     "-1,0": 0.1011,
+     "-1,1": 0.1236,
+     "-1,2": 0.1124,
+     "-1,3": 0.0225,
+     "-1,4": 0.0112,
+     "0,-4": 0.0449,
+     "0,-3": 0.0674,
+     "0,-2": 0.1011,
+     "0,-1": 0.0449,
+     "0,1": 0.0562,
+     "0,2": 0.0674,
+     "0,3": 0.0225,
+     "0,4": 0.0112,
+     "1,-5": 0.0225,
+     "1,-4": 0.0225,
+     "1,-3": 0.0562,
+     "1,-2": 0.0899,
+     "1,-1": 0.1236,
+     "1,0": 0.1011,
+     "1,1": 0.1348,
+     "1,2": 0.1124,
+     "1,3": 0.0225,
+     "1,4": 0.0225,
+     "2,-5": 0.0112,
+     "2,-4": 0.0337,
+     "2,-3": 0.0449,
+     "2,-2": 0.0787,
+     "2,-1": 0.0787,
+     "2,0": 0.0787,
+     "2,1": 0.0674,
+     "2,2": 0.0674,
+     "2,3": 0.0225,
+     "3,-2": 0.0112,
+     "3,-1": 0.0225,
+     "3,0": 0.0225,
+     "3,1": 0.0225,
+     "3,2": 0.0112,
+     "4,-1": 0.0112,
+     "4,0": 0.0112,
+     "4,1": 0.0112
+    }
+   },
+   {
+    "dy_from_top_log": -4,
+    "mean_per_tree": 6.2022,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.0112,
+     "-5,-1": 0.0112,
+     "-5,1": 0.0337,
+     "-5,2": 0.0112,
+     "-4,-2": 0.0337,
+     "-4,-1": 0.0225,
+     "-4,0": 0.0449,
+     "-4,1": 0.0562,
+     "-4,2": 0.0337,
+     "-3,-2": 0.0562,
+     "-3,-1": 0.0787,
+     "-3,0": 0.0674,
+     "-3,1": 0.0787,
+     "-3,2": 0.0787,
+     "-2,-5": 0.0225,
+     "-2,-4": 0.0449,
+     "-2,-3": 0.0674,
+     "-2,-2": 0.1461,
+     "-2,-1": 0.1798,
+     "-2,0": 0.1348,
+     "-2,1": 0.191,
+     "-2,2": 0.1011,
+     "-2,3": 0.0449,
+     "-2,4": 0.0337,
+     "-2,5": 0.0112,
+     "-1,-5": 0.0225,
+     "-1,-4": 0.0562,
+     "-1,-3": 0.0674,
+     "-1,-2": 0.1798,
+     "-1,-1": 0.236,
+     "-1,0": 0.1685,
+     "-1,1": 0.2809,
+     "-1,2": 0.1685,
+     "-1,3": 0.0787,
+     "-1,4": 0.0225,
+     "0,-5": 0.0225,
+     "0,-4": 0.0674,
+     "0,-3": 0.0899,
+     "0,-2": 0.1124,
+     "0,-1": 0.1798,
+     "0,1": 0.1798,
+     "0,2": 0.1348,
+     "0,3": 0.0787,
+     "0,4": 0.0225,
+     "1,-5": 0.0337,
+     "1,-4": 0.0337,
+     "1,-3": 0.0674,
+     "1,-2": 0.2022,
+     "1,-1": 0.2472,
+     "1,0": 0.1798,
+     "1,1": 0.191,
+     "1,2": 0.1348,
+     "1,3": 0.0562,
+     "1,4": 0.0112,
+     "1,5": 0.0112,
+     "2,-5": 0.0112,
+     "2,-4": 0.0449,
+     "2,-3": 0.0562,
+     "2,-2": 0.1461,
+     "2,-1": 0.1236,
+     "2,0": 0.1348,
+     "2,1": 0.1573,
+     "2,2": 0.1348,
+     "2,3": 0.0449,
+     "2,4": 0.0225,
+     "3,-2": 0.0449,
+     "3,-1": 0.0337,
+     "3,0": 0.0674,
+     "3,1": 0.0449,
+     "3,2": 0.0337,
+     "4,-2": 0.0225,
+     "4,-1": 0.0337,
+     "4,0": 0.0337,
+     "4,1": 0.0112,
+     "4,2": 0.0337,
+     "5,0": 0.0112,
+     "5,1": 0.0225
+    }
+   },
+   {
+    "dy_from_top_log": -3,
+    "mean_per_tree": 10.3146,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.0225,
+     "-5,-1": 0.0225,
+     "-5,0": 0.0225,
+     "-5,1": 0.0112,
+     "-5,2": 0.0225,
+     "-4,-2": 0.0449,
+     "-4,-1": 0.0449,
+     "-4,0": 0.0674,
+     "-4,1": 0.0562,
+     "-4,2": 0.0449,
+     "-3,-2": 0.0787,
+     "-3,-1": 0.1461,
+     "-3,0": 0.1348,
+     "-3,1": 0.0899,
+     "-3,2": 0.0787,
+     "-2,-5": 0.0112,
+     "-2,-4": 0.0562,
+     "-2,-3": 0.1124,
+     "-2,-2": 0.2472,
+     "-2,-1": 0.3146,
+     "-2,0": 0.2809,
+     "-2,1": 0.2809,
+     "-2,2": 0.2697,
+     "-2,3": 0.0787,
+     "-2,4": 0.0225,
+     "-1,-5": 0.0337,
+     "-1,-4": 0.0674,
+     "-1,-3": 0.1011,
+     "-1,-2": 0.2809,
+     "-1,-1": 0.4831,
+     "-1,0": 0.2472,
+     "-1,1": 0.3708,
+     "-1,2": 0.3258,
+     "-1,3": 0.1124,
+     "-1,4": 0.0562,
+     "-1,5": 0.0112,
+     "0,-5": 0.0225,
+     "0,-4": 0.0899,
+     "0,-3": 0.0562,
+     "0,-2": 0.236,
+     "0,-1": 0.3034,
+     "0,1": 0.2584,
+     "0,2": 0.2135,
+     "0,3": 0.1348,
+     "0,4": 0.0674,
+     "0,5": 0.0337,
+     "1,-5": 0.0225,
+     "1,-4": 0.0449,
+     "1,-3": 0.1124,
+     "1,-2": 0.2584,
+     "1,-1": 0.3483,
+     "1,0": 0.2697,
+     "1,1": 0.3371,
+     "1,2": 0.2697,
+     "1,3": 0.1348,
+     "1,4": 0.0674,
+     "1,5": 0.0112,
+     "2,-5": 0.0112,
+     "2,-4": 0.0449,
+     "2,-3": 0.1011,
+     "2,-2": 0.236,
+     "2,-1": 0.3146,
+     "2,0": 0.236,
+     "2,1": 0.2809,
+     "2,2": 0.2135,
+     "2,3": 0.0899,
+     "2,4": 0.0337,
+     "2,5": 0.0112,
+     "3,-2": 0.0787,
+     "3,-1": 0.1348,
+     "3,0": 0.1236,
+     "3,1": 0.1124,
+     "3,2": 0.0674,
+     "4,-2": 0.0112,
+     "4,-1": 0.0225,
+     "4,0": 0.0562,
+     "4,1": 0.0449,
+     "4,2": 0.0337,
+     "5,-2": 0.0225,
+     "5,-1": 0.0337,
+     "5,0": 0.0225,
+     "5,1": 0.0337
+    }
+   },
+   {
+    "dy_from_top_log": -2,
+    "mean_per_tree": 17.4157,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.0112,
+     "-5,-1": 0.0449,
+     "-5,0": 0.0562,
+     "-5,1": 0.0225,
+     "-5,2": 0.0225,
+     "-4,-2": 0.0674,
+     "-4,-1": 0.0899,
+     "-4,0": 0.1236,
+     "-4,1": 0.0449,
+     "-4,2": 0.0562,
+     "-3,-2": 0.1461,
+     "-3,-1": 0.236,
+     "-3,0": 0.191,
+     "-3,1": 0.1798,
+     "-3,2": 0.1685,
+     "-2,-5": 0.0225,
+     "-2,-4": 0.0787,
+     "-2,-3": 0.1573,
+     "-2,-2": 0.3708,
+     "-2,-1": 0.4944,
+     "-2,0": 0.4045,
+     "-2,1": 0.4944,
+     "-2,2": 0.4045,
+     "-2,3": 0.2135,
+     "-2,4": 0.1236,
+     "-2,5": 0.0337,
+     "-1,-5": 0.0337,
+     "-1,-4": 0.1124,
+     "-1,-3": 0.2135,
+     "-1,-2": 0.4607,
+     "-1,-1": 0.573,
+     "-1,0": 0.3933,
+     "-1,1": 0.618,
+     "-1,2": 0.427,
+     "-1,3": 0.236,
+     "-1,4": 0.1124,
+     "-1,5": 0.0562,
+     "0,-5": 0.0562,
+     "0,-4": 0.1236,
+     "0,-3": 0.191,
+     "0,-2": 0.3483,
+     "0,-1": 0.4494,
+     "0,1": 0.3596,
+     "0,2": 0.3933,
+     "0,3": 0.2247,
+     "0,4": 0.1798,
+     "0,5": 0.0899,
+     "1,-5": 0.0449,
+     "1,-4": 0.1348,
+     "1,-3": 0.191,
+     "1,-2": 0.4157,
+     "1,-1": 0.6292,
+     "1,0": 0.382,
+     "1,1": 0.5955,
+     "1,2": 0.4607,
+     "1,3": 0.2022,
+     "1,4": 0.1573,
+     "1,5": 0.0337,
+     "2,-5": 0.0337,
+     "2,-4": 0.0899,
+     "2,-3": 0.1124,
+     "2,-2": 0.4157,
+     "2,-1": 0.427,
+     "2,0": 0.4045,
+     "2,1": 0.4719,
+     "2,2": 0.3708,
+     "2,3": 0.191,
+     "2,4": 0.1124,
+     "3,-2": 0.1348,
+     "3,-1": 0.2135,
+     "3,0": 0.236,
+     "3,1": 0.2022,
+     "3,2": 0.1348,
+     "4,-2": 0.0562,
+     "4,-1": 0.1461,
+     "4,0": 0.1348,
+     "4,1": 0.1011,
+     "4,2": 0.0674,
+     "5,-2": 0.0225,
+     "5,-1": 0.0449,
+     "5,0": 0.0562,
+     "5,1": 0.0337,
+     "5,2": 0.0449
+    }
+   },
+   {
+    "dy_from_top_log": -1,
+    "mean_per_tree": 19.8652,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.0112,
+     "-5,-1": 0.0225,
+     "-5,0": 0.0562,
+     "-5,1": 0.0449,
+     "-5,2": 0.0112,
+     "-4,-2": 0.0787,
+     "-4,-1": 0.0899,
+     "-4,0": 0.1011,
+     "-4,1": 0.1011,
+     "-4,2": 0.0787,
+     "-3,-2": 0.1798,
+     "-3,-1": 0.2247,
+     "-3,0": 0.236,
+     "-3,1": 0.2247,
+     "-3,2": 0.1685,
+     "-2,-5": 0.0225,
+     "-2,-4": 0.0674,
+     "-2,-3": 0.1798,
+     "-2,-2": 0.3596,
+     "-2,-1": 0.5393,
+     "-2,0": 0.427,
+     "-2,1": 0.5393,
+     "-2,2": 0.4045,
+     "-2,3": 0.191,
+     "-2,4": 0.1573,
+     "-2,5": 0.0337,
+     "-1,-5": 0.0337,
+     "-1,-4": 0.1011,
+     "-1,-3": 0.2022,
+     "-1,-2": 0.5281,
+     "-1,-1": 0.6517,
+     "-1,0": 0.5056,
+     "-1,1": 0.6629,
+     "-1,2": 0.5618,
+     "-1,3": 0.236,
+     "-1,4": 0.1573,
+     "-1,5": 0.0674,
+     "0,-5": 0.0449,
+     "0,-4": 0.1236,
+     "0,-3": 0.1798,
+     "0,-2": 0.4157,
+     "0,-1": 0.4831,
+     "0,0": 0.0899,
+     "0,1": 0.5281,
+     "0,2": 0.4494,
+     "0,3": 0.2135,
+     "0,4": 0.1798,
+     "0,5": 0.1124,
+     "1,-5": 0.0562,
+     "1,-4": 0.1124,
+     "1,-3": 0.1685,
+     "1,-2": 0.5281,
+     "1,-1": 0.6292,
+     "1,0": 0.5169,
+     "1,1": 0.6404,
+     "1,2": 0.5281,
+     "1,3": 0.2472,
+     "1,4": 0.1798,
+     "1,5": 0.0674,
+     "2,-5": 0.0112,
+     "2,-4": 0.1011,
+     "2,-3": 0.1348,
+     "2,-2": 0.427,
+     "2,-1": 0.4944,
+     "2,0": 0.427,
+     "2,1": 0.5169,
+     "2,2": 0.4607,
+     "2,3": 0.2022,
+     "2,4": 0.1573,
+     "2,5": 0.0674,
+     "3,-2": 0.191,
+     "3,-1": 0.2697,
+     "3,0": 0.2584,
+     "3,1": 0.191,
+     "3,2": 0.2247,
+     "4,-2": 0.1011,
+     "4,-1": 0.1685,
+     "4,0": 0.1461,
+     "4,1": 0.1573,
+     "4,2": 0.1348,
+     "5,-2": 0.0225,
+     "5,-1": 0.0674,
+     "5,0": 0.0674,
+     "5,1": 0.0449,
+     "5,2": 0.0674
+    }
+   },
+   {
+    "dy_from_top_log": 0,
+    "mean_per_tree": 22.8427,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.0112,
+     "-5,-1": 0.0449,
+     "-5,0": 0.0337,
+     "-5,1": 0.0562,
+     "-5,2": 0.0112,
+     "-4,-2": 0.0787,
+     "-4,-1": 0.0787,
+     "-4,0": 0.1124,
+     "-4,1": 0.0787,
+     "-4,2": 0.0449,
+     "-3,-2": 0.1461,
+     "-3,-1": 0.236,
+     "-3,0": 0.191,
+     "-3,1": 0.191,
+     "-3,2": 0.1798,
+     "-2,-5": 0.0449,
+     "-2,-4": 0.0899,
+     "-2,-3": 0.1236,
+     "-2,-2": 0.4382,
+     "-2,-1": 0.6629,
+     "-2,0": 0.6517,
+     "-2,1": 0.5955,
+     "-2,2": 0.4831,
+     "-2,3": 0.1685,
+     "-2,4": 0.1461,
+     "-2,5": 0.0337,
+     "-1,-5": 0.0337,
+     "-1,-4": 0.1124,
+     "-1,-3": 0.1461,
+     "-1,-2": 0.5843,
+     "-1,-1": 0.7865,
+     "-1,0": 0.7753,
+     "-1,1": 0.8202,
+     "-1,2": 0.6629,
+     "-1,3": 0.2022,
+     "-1,4": 0.1573,
+     "-1,5": 0.0899,
+     "0,-5": 0.0449,
+     "0,-4": 0.1124,
+     "0,-3": 0.1011,
+     "0,-2": 0.6067,
+     "0,-1": 0.7978,
+     "0,0": 0.2135,
+     "0,1": 0.8427,
+     "0,2": 0.7191,
+     "0,3": 0.1236,
+     "0,4": 0.1685,
+     "0,5": 0.0787,
+     "1,-5": 0.0337,
+     "1,-4": 0.0899,
+     "1,-3": 0.1348,
+     "1,-2": 0.6629,
+     "1,-1": 0.764,
+     "1,0": 0.7753,
+     "1,1": 0.8202,
+     "1,2": 0.6517,
+     "1,3": 0.2247,
+     "1,4": 0.1461,
+     "1,5": 0.0787,
+     "2,-5": 0.0225,
+     "2,-4": 0.0562,
+     "2,-3": 0.1236,
+     "2,-2": 0.4494,
+     "2,-1": 0.618,
+     "2,0": 0.6292,
+     "2,1": 0.6629,
+     "2,2": 0.5056,
+     "2,3": 0.1685,
+     "2,4": 0.1124,
+     "2,5": 0.0449,
+     "3,-2": 0.191,
+     "3,-1": 0.2472,
+     "3,0": 0.2022,
+     "3,1": 0.2135,
+     "3,2": 0.191,
+     "4,-2": 0.0787,
+     "4,-1": 0.1461,
+     "4,0": 0.1573,
+     "4,1": 0.1236,
+     "4,2": 0.1348,
+     "5,-2": 0.0337,
+     "5,-1": 0.0674,
+     "5,0": 0.0674,
+     "5,1": 0.0562,
+     "5,2": 0.0449
+    }
+   },
+   {
+    "dy_from_top_log": 1,
+    "mean_per_tree": 23.0,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.0225,
+     "-5,-1": 0.0337,
+     "-5,0": 0.0225,
+     "-5,1": 0.0337,
+     "-5,2": 0.0112,
+     "-4,-2": 0.0674,
+     "-4,-1": 0.0787,
+     "-4,0": 0.0674,
+     "-4,1": 0.0674,
+     "-4,2": 0.0562,
+     "-3,-2": 0.0899,
+     "-3,-1": 0.1348,
+     "-3,0": 0.1461,
+     "-3,1": 0.1236,
+     "-3,2": 0.1011,
+     "-2,-5": 0.0112,
+     "-2,-4": 0.0562,
+     "-2,-3": 0.0674,
+     "-2,-2": 0.427,
+     "-2,-1": 0.5393,
+     "-2,0": 0.7753,
+     "-2,1": 0.6292,
+     "-2,2": 0.3933,
+     "-2,3": 0.1236,
+     "-2,4": 0.0899,
+     "-2,5": 0.0562,
+     "-1,-5": 0.0225,
+     "-1,-4": 0.0562,
+     "-1,-3": 0.0899,
+     "-1,-2": 0.5955,
+     "-1,-1": 0.8202,
+     "-1,0": 0.8427,
+     "-1,1": 0.7978,
+     "-1,2": 0.7079,
+     "-1,3": 0.1461,
+     "-1,4": 0.1461,
+     "-1,5": 0.0562,
+     "0,-5": 0.0337,
+     "0,-4": 0.1011,
+     "0,-3": 0.1124,
+     "0,-2": 0.764,
+     "0,-1": 0.8315,
+     "0,0": 0.9101,
+     "0,1": 0.9326,
+     "0,2": 0.8202,
+     "0,3": 0.1685,
+     "0,4": 0.1461,
+     "0,5": 0.0787,
+     "1,-5": 0.0337,
+     "1,-4": 0.0787,
+     "1,-3": 0.1124,
+     "1,-2": 0.7079,
+     "1,-1": 0.809,
+     "1,0": 0.8652,
+     "1,1": 0.8315,
+     "1,2": 0.7528,
+     "1,3": 0.1798,
+     "1,4": 0.1348,
+     "1,5": 0.0562,
+     "2,-4": 0.0899,
+     "2,-3": 0.0674,
+     "2,-2": 0.4157,
+     "2,-1": 0.7079,
+     "2,0": 0.764,
+     "2,1": 0.6629,
+     "2,2": 0.4831,
+     "2,3": 0.0899,
+     "2,4": 0.0787,
+     "2,5": 0.0225,
+     "3,-2": 0.1236,
+     "3,-1": 0.1798,
+     "3,0": 0.236,
+     "3,1": 0.2135,
+     "3,2": 0.1573,
+     "4,-2": 0.0899,
+     "4,-1": 0.1124,
+     "4,0": 0.1236,
+     "4,1": 0.1011,
+     "4,2": 0.0562,
+     "5,-2": 0.0674,
+     "5,-1": 0.0562,
+     "5,0": 0.0449,
+     "5,1": 0.0449,
+     "5,2": 0.0449
+    }
+   },
+   {
+    "dy_from_top_log": 2,
+    "mean_per_tree": 13.764,
+    "max_radius": 5,
+    "occupancy": {
+     "-5,-2": 0.0112,
+     "-5,-1": 0.0112,
+     "-5,0": 0.0112,
+     "-5,2": 0.0112,
+     "-4,-2": 0.0225,
+     "-4,-1": 0.0225,
+     "-4,0": 0.0449,
+     "-4,1": 0.0225,
+     "-4,2": 0.0337,
+     "-3,-2": 0.0225,
+     "-3,-1": 0.0899,
+     "-3,0": 0.0899,
+     "-3,1": 0.0562,
+     "-3,2": 0.0337,
+     "-2,-4": 0.0112,
+     "-2,-3": 0.0562,
+     "-2,-2": 0.2135,
+     "-2,-1": 0.3708,
+     "-2,0": 0.4382,
+     "-2,1": 0.4045,
+     "-2,2": 0.2022,
+     "-2,3": 0.0337,
+     "-2,4": 0.0225,
+     "-2,5": 0.0112,
+     "-1,-5": 0.0112,
+     "-1,-4": 0.0562,
+     "-1,-3": 0.0337,
+     "-1,-2": 0.4157,
+     "-1,-1": 0.5281,
+     "-1,0": 0.5955,
+     "-1,1": 0.5056,
+     "-1,2": 0.4607,
+     "-1,3": 0.0899,
+     "-1,4": 0.0674,
+     "-1,5": 0.0225,
+     "0,-4": 0.0225,
+     "0,-3": 0.0674,
+     "0,-2": 0.5618,
+     "0,-1": 0.573,
+     "0,0": 0.7753,
+     "0,1": 0.6742,
+     "0,2": 0.4719,
+     "0,3": 0.1124,
+     "0,4": 0.0674,
+     "0,5": 0.0562,
+     "1,-5": 0.0112,
+     "1,-4": 0.0449,
+     "1,-3": 0.0787,
+     "1,-2": 0.4045,
+     "1,-1": 0.5618,
+     "1,0": 0.5393,
+     "1,1": 0.4831,
+     "1,2": 0.2921,
+     "1,3": 0.1011,
+     "1,4": 0.0674,
+     "1,5": 0.0225,
+     "2,-5": 0.0112,
+     "2,-4": 0.0112,
+     "2,-3": 0.0562,
+     "2,-2": 0.1798,
+     "2,-1": 0.4045,
+     "2,0": 0.4944,
+     "2,1": 0.3258,
+     "2,2": 0.2697,
+     "2,3": 0.0787,
+     "2,4": 0.0674,
+     "3,-2": 0.0562,
+     "3,-1": 0.1011,
+     "3,0": 0.1685,
+     "3,1": 0.1011,
+     "3,2": 0.0674,
+     "4,-2": 0.0562,
+     "4,-1": 0.0674,
+     "4,0": 0.0449,
+     "4,1": 0.0674,
+     "4,2": 0.0337,
+     "5,-1": 0.0225,
+     "5,0": 0.0337,
+     "5,1": 0.0225
+    }
+   }
+  ],
+  "decorators": {
+   "mangrove_propagule": {
+    "total": 168,
+    "per_tree": 1.8876,
+    "dy": {
+     "3": 56,
+     "4": 42,
+     "5": 28,
+     "6": 26,
+     "7": 11,
+     "8": 2,
+     "9": 3
+    },
+    "radius": {
+     "1": 29,
+     "2": 80,
+     "3": 21,
+     "4": 23,
+     "5": 15
+    }
+   },
+   "mangrove_roots": {
+    "total": 1702,
+    "per_tree": 19.1236,
+    "dy": {
+     "0": 539,
+     "1": 584,
+     "2": 410,
+     "3": 169
+    },
+    "radius": {
+     "0": 89,
+     "1": 646,
+     "2": 447,
+     "3": 271,
+     "4": 152,
+     "5": 84,
+     "6": 13
+    }
+   },
+   "moss_carpet": {
+    "total": 394,
+    "per_tree": 4.427,
+    "dy": {
+     "2": 166,
+     "3": 146,
+     "4": 82
+    },
+    "radius": {
+     "1": 174,
+     "2": 109,
+     "3": 64,
+     "4": 30,
+     "5": 14,
+     "6": 3
+    }
+   },
+   "muddy_mangrove_roots": {
+    "total": 1883,
+    "per_tree": 21.1573,
+    "dy": {
+     "-4": 508,
+     "-3": 468,
+     "-2": 461,
+     "-1": 446
+    },
+    "radius": {
+     "1": 208,
+     "2": 443,
+     "3": 548,
+     "4": 386,
+     "5": 231,
+     "6": 60,
+     "7": 7
+    }
+   },
+   "vine": {
+    "total": 3875,
+    "per_tree": 43.5393,
+    "dy": {
+     "2": 654,
+     "3": 704,
+     "4": 689,
+     "5": 584,
+     "6": 487,
+     "7": 323,
+     "8": 206,
+     "9": 126,
+     "10": 74,
+     "11": 23,
+     "12": 5
+    },
+    "radius": {
+     "0": 12,
+     "1": 185,
+     "2": 822,
+     "3": 1753,
+     "4": 471,
+     "5": 433,
+     "6": 199
+    }
+   }
+  }
+ },
+ "examples": [
+  {
+   "origin": [
+    44048,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -3,
+     2,
+     -1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -3,
+     3,
+     -1,
+     "minecraft:vine[east=true,north=false,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     -4,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -2,
+     -3,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -2,
+     -2,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -2,
+     -1,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -2,
+     0,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     -2,
+     1,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     -2,
+     2,
+     0,
+     "minecraft:moss_carpet"
+    ],
+    [
+     -2,
+     2,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     3,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     3,
+     2,
+     "minecraft:mangrove_leaves"
+    ],
+    [
+     -2,
+     3,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -1,
+     1,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     -1,
+     2,
+     0,
+     "minecraft:moss_carpet"
+    ],
+    [
+     -1,
+     2,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     2,
+     2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     -1,
+     3,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     3,
+     2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     -1,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     4,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -4,
+     -5,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -4,
+     -4,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -4,
+     4,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -4,
+     5,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -3,
+     -4,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -3,
+     4,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -3,
+     5,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -2,
+     -4,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -2,
+     4,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -2,
+     5,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -1,
+     -4,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -1,
+     4,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     0,
+     -4,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     0,
+     -3,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     0,
+     -2,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     0,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     0,
+     3,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     0,
+     4,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     1,
+     -2,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     1,
+     -1,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     1,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     1,
+     1,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     1,
+     2,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     1,
+     3,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     2,
+     1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     2,
+     2,
+     "minecraft:moss_carpet"
+    ],
+    [
+     0,
+     3,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     3,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     4,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     -4,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     1,
+     -3,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     1,
+     -2,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     1,
+     -1,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     1,
+     0,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     1,
+     1,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     1,
+     2,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     1,
+     2,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     2,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     -3,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     1,
+     3,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     2,
+     2,
+     -2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     2,
+     2,
+     -1,
+     "minecraft:mangrove_leaves"
+    ],
+    [
+     2,
+     2,
+     0,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     2,
+     2,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     3,
+     -2,
+     "minecraft:vine[east=false,north=false,south=false,up=false,west=true]"
+    ],
+    [
+     2,
+     3,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     -1,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     4,
+     0,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ]
+   ]
+  },
+  {
+   "origin": [
+    44080,
+    60,
+    16
+   ],
+   "cells": [
+    [
+     -4,
+     -4,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -4,
+     -3,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -4,
+     -2,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -4,
+     -1,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     -4,
+     0,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     -4,
+     1,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     -4,
+     2,
+     0,
+     "minecraft:moss_carpet"
+    ],
+    [
+     -3,
+     1,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     -3,
+     2,
+     0,
+     "minecraft:moss_carpet"
+    ],
+    [
+     -2,
+     1,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     -2,
+     2,
+     2,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     3,
+     2,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     4,
+     0,
+     "minecraft:mangrove_propagule[age=0,hanging=true,stage=0,waterlogged=false]"
+    ],
+    [
+     -2,
+     4,
+     2,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     5,
+     2,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     -2,
+     6,
+     2,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     -2,
+     7,
+     1,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     1,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     -1,
+     2,
+     0,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     -1,
+     3,
+     0,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     -1,
+     5,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     5,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     -2,
+     "minecraft:vine[east=false,north=false,south=true,up=false,west=false]"
+    ],
+    [
+     -1,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     -2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     -1,
+     7,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     -4,
+     -6,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -4,
+     -5,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -4,
+     3,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -3,
+     -6,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -3,
+     -5,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -3,
+     3,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -2,
+     -6,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -2,
+     -5,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -2,
+     3,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -1,
+     -6,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -1,
+     -5,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     -1,
+     3,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     0,
+     0,
+     -5,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     0,
+     2,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     0,
+     3,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     1,
+     -5,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     1,
+     2,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     0,
+     2,
+     -5,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     0,
+     2,
+     0,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     0,
+     2,
+     1,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     0,
+     2,
+     2,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     0,
+     3,
+     -5,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     0,
+     3,
+     -4,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     0,
+     3,
+     -3,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     0,
+     3,
+     -2,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     0,
+     3,
+     -1,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     0,
+     3,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     3,
+     1,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     0,
+     3,
+     2,
+     "minecraft:moss_carpet"
+    ],
+    [
+     0,
+     4,
+     -5,
+     "minecraft:moss_carpet"
+    ],
+    [
+     0,
+     4,
+     -3,
+     "minecraft:moss_carpet"
+    ],
+    [
+     0,
+     4,
+     -2,
+     "minecraft:moss_carpet"
+    ],
+    [
+     0,
+     4,
+     -1,
+     "minecraft:moss_carpet"
+    ],
+    [
+     0,
+     4,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     4,
+     1,
+     "minecraft:moss_carpet"
+    ],
+    [
+     0,
+     5,
+     -2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     0,
+     "minecraft:mangrove_log"
+    ],
+    [
+     0,
+     5,
+     1,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     5,
+     2,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     -2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     6,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     0,
+     7,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     3,
+     0,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     1,
+     3,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     1,
+     4,
+     -1,
+     "minecraft:mangrove_propagule[age=1,hanging=true,stage=0,waterlogged=false]"
+    ],
+    [
+     1,
+     4,
+     0,
+     "minecraft:moss_carpet"
+    ],
+    [
+     1,
+     4,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     1,
+     5,
+     -1,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=1,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     2,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     5,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     1,
+     6,
+     -2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     1,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     2,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     6,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     1,
+     7,
+     -2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     0,
+     "minecraft:mangrove_leaves[distance=3,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     1,
+     7,
+     3,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     1,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     2,
+     2,
+     0,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     2,
+     3,
+     0,
+     "minecraft:mangrove_roots"
+    ],
+    [
+     2,
+     4,
+     0,
+     "minecraft:moss_carpet"
+    ],
+    [
+     2,
+     5,
+     0,
+     "minecraft:mangrove_leaves[distance=2,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -2,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     -1,
+     "minecraft:mangrove_leaves[distance=4,persistent=false,waterlogged=false]"
+    ],
+    [
+     2,
+     6,
+     0,
+     "minecraft:vine[east=false,north=true,south=false,up=false,west=false]"
+    ],
+    [
+     2,
+     7,
+     1,
+     "minecraft:mangrove_leaves[distance=5,persistent=false,waterlogged=false]"
+    ],
+    [
+     3,
+     -4,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     3,
+     -3,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     3,
+     -2,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     3,
+     -1,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     3,
+     0,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     3,
+     1,
+     0,
+     "minecraft:mangrove_roots[waterlogged=true]"
+    ],
+    [
+     3,
+     2,
+     0,
+     "minecraft:moss_carpet"
+    ],
+    [
+     4,
+     -4,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     4,
+     -3,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ],
+    [
+     4,
+     -2,
+     0,
+     "minecraft:muddy_mangrove_roots"
+    ]
+   ]
+  }
+ ],
+ "per_placement": [
+  {
+   "n": 87,
+   "logs": 2,
+   "leaves": 34,
+   "log_top": 2,
+   "origin_column_logs": 2,
+   "bbox": [
+    -3,
+    2,
+    -4,
+    4,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 123,
+   "logs": 3,
+   "leaves": 44,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -4,
+    4,
+    -4,
+    7,
+    -6,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 231,
+   "logs": 8,
+   "leaves": 139,
+   "log_top": 7,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    3,
+    -4,
+    9,
+    -6,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 29,
+   "result": "placed"
+  },
+  {
+   "n": 419,
+   "logs": 13,
+   "leaves": 242,
+   "log_top": 9,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    3,
+    -4,
+    11,
+    -6,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 5,
+   "leaf_mismatch": 63,
+   "result": "placed"
+  },
+  {
+   "n": 173,
+   "logs": 3,
+   "leaves": 82,
+   "log_top": 4,
+   "origin_column_logs": 2,
+   "bbox": [
+    -4,
+    4,
+    -4,
+    6,
+    -3,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 17,
+   "result": "placed"
+  },
+  {
+   "n": 186,
+   "logs": 5,
+   "leaves": 102,
+   "log_top": 4,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    6,
+    -4,
+    6,
+    -5,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 22,
+   "result": "placed"
+  },
+  {
+   "n": 251,
+   "logs": 7,
+   "leaves": 156,
+   "log_top": 5,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    7,
+    -4,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 33,
+   "result": "placed"
+  },
+  {
+   "n": 248,
+   "logs": 8,
+   "leaves": 117,
+   "log_top": 8,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    4,
+    -4,
+    10,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 19,
+   "result": "placed"
+  },
+  {
+   "n": 106,
+   "logs": 4,
+   "leaves": 39,
+   "log_top": 4,
+   "origin_column_logs": 4,
+   "bbox": [
+    -5,
+    3,
+    -4,
+    6,
+    -6,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 420,
+   "logs": 13,
+   "leaves": 266,
+   "log_top": 7,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    6,
+    -4,
+    9,
+    -6,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 5,
+   "leaf_mismatch": 82,
+   "result": "placed"
+  },
+  {
+   "n": 139,
+   "logs": 5,
+   "leaves": 38,
+   "log_top": 7,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    9,
+    -2,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 259,
+   "logs": 7,
+   "leaves": 130,
+   "log_top": 6,
+   "origin_column_logs": 4,
+   "bbox": [
+    -6,
+    5,
+    -4,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 11,
+   "result": "placed"
+  },
+  {
+   "n": 270,
+   "logs": 9,
+   "leaves": 175,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -5,
+    2,
+    -4,
+    8,
+    -4,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 63,
+   "result": "placed"
+  },
+  {
+   "n": 203,
+   "logs": 4,
+   "leaves": 96,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    7,
+    -4,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 33,
+   "result": "placed"
+  },
+  {
+   "n": 162,
+   "logs": 5,
+   "leaves": 101,
+   "log_top": 3,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    3,
+    -4,
+    5,
+    -4,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 24,
+   "result": "placed"
+  },
+  {
+   "n": 131,
+   "logs": 6,
+   "leaves": 46,
+   "log_top": 7,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    9,
+    -2,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 300,
+   "logs": 12,
+   "leaves": 186,
+   "log_top": 9,
+   "origin_column_logs": 7,
+   "bbox": [
+    -2,
+    6,
+    -4,
+    11,
+    -5,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 71,
+   "result": "placed"
+  },
+  {
+   "n": 213,
+   "logs": 7,
+   "leaves": 102,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    8,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 2,
+   "leaf_mismatch": 27,
+   "result": "placed"
+  },
+  {
+   "n": 240,
+   "logs": 7,
+   "leaves": 127,
+   "log_top": 8,
+   "origin_column_logs": 4,
+   "bbox": [
+    -4,
+    5,
+    -4,
+    10,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 16,
+   "result": "placed"
+  },
+  {
+   "n": 120,
+   "logs": 3,
+   "leaves": 34,
+   "log_top": 4,
+   "origin_column_logs": 3,
+   "bbox": [
+    -4,
+    5,
+    -4,
+    6,
+    -5,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 363,
+   "logs": 12,
+   "leaves": 227,
+   "log_top": 8,
+   "origin_column_logs": 6,
+   "bbox": [
+    -6,
+    3,
+    -4,
+    10,
+    -3,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 5,
+   "leaf_mismatch": 37,
+   "result": "placed"
+  },
+  {
+   "n": 83,
+   "logs": 2,
+   "leaves": 35,
+   "log_top": 2,
+   "origin_column_logs": 2,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    4,
+    -4,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 221,
+   "logs": 6,
+   "leaves": 140,
+   "log_top": 5,
+   "origin_column_logs": 4,
+   "bbox": [
+    -4,
+    2,
+    -4,
+    7,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 46,
+   "result": "placed"
+  },
+  {
+   "n": 178,
+   "logs": 4,
+   "leaves": 89,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -4,
+    5,
+    -4,
+    7,
+    -4,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 36,
+   "result": "placed"
+  },
+  {
+   "n": 303,
+   "logs": 8,
+   "leaves": 176,
+   "log_top": 7,
+   "origin_column_logs": 4,
+   "bbox": [
+    -5,
+    6,
+    -4,
+    9,
+    -6,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 27,
+   "result": "placed"
+  },
+  {
+   "n": 123,
+   "logs": 3,
+   "leaves": 42,
+   "log_top": 4,
+   "origin_column_logs": 3,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    6,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 107,
+   "logs": 6,
+   "leaves": 40,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    6,
+    -4,
+    8,
+    -3,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 243,
+   "logs": 10,
+   "leaves": 148,
+   "log_top": 5,
+   "origin_column_logs": 5,
+   "bbox": [
+    -5,
+    3,
+    -4,
+    7,
+    -6,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 66,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 194,
+   "logs": 6,
+   "leaves": 102,
+   "log_top": 4,
+   "origin_column_logs": 4,
+   "bbox": [
+    -5,
+    4,
+    -4,
+    6,
+    -5,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 15,
+   "result": "placed"
+  },
+  {
+   "n": 330,
+   "logs": 11,
+   "leaves": 192,
+   "log_top": 7,
+   "origin_column_logs": 7,
+   "bbox": [
+    -5,
+    4,
+    -4,
+    9,
+    -6,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 67,
+   "result": "placed"
+  },
+  {
+   "n": 193,
+   "logs": 4,
+   "leaves": 92,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -4,
+    4,
+    -4,
+    7,
+    -5,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 297,
+   "logs": 10,
+   "leaves": 190,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    6,
+    -4,
+    8,
+    -4,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 58,
+   "result": "placed"
+  },
+  {
+   "n": 97,
+   "logs": 4,
+   "leaves": 42,
+   "log_top": 5,
+   "origin_column_logs": 4,
+   "bbox": [
+    -5,
+    2,
+    -4,
+    7,
+    -3,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 103,
+   "logs": 3,
+   "leaves": 38,
+   "log_top": 3,
+   "origin_column_logs": 3,
+   "bbox": [
+    -4,
+    3,
+    -4,
+    5,
+    -3,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 327,
+   "logs": 11,
+   "leaves": 211,
+   "log_top": 9,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    3,
+    -4,
+    11,
+    -4,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 61,
+   "result": "placed"
+  },
+  {
+   "n": 98,
+   "logs": 3,
+   "leaves": 42,
+   "log_top": 3,
+   "origin_column_logs": 3,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    5,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 109,
+   "logs": 2,
+   "leaves": 34,
+   "log_top": 3,
+   "origin_column_logs": 2,
+   "bbox": [
+    -4,
+    3,
+    -4,
+    5,
+    -5,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 238,
+   "logs": 9,
+   "leaves": 132,
+   "log_top": 9,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    6,
+    -4,
+    11,
+    -3,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 16,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 300,
+   "logs": 10,
+   "leaves": 176,
+   "log_top": 7,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    5,
+    -4,
+    9,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 53,
+   "result": "placed"
+  },
+  {
+   "n": 220,
+   "logs": 6,
+   "leaves": 131,
+   "log_top": 5,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    7,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 35,
+   "result": "placed"
+  },
+  {
+   "n": 214,
+   "logs": 5,
+   "leaves": 105,
+   "log_top": 6,
+   "origin_column_logs": 4,
+   "bbox": [
+    -4,
+    5,
+    -4,
+    8,
+    -4,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 24,
+   "result": "placed"
+  },
+  {
+   "n": 291,
+   "logs": 9,
+   "leaves": 176,
+   "log_top": 8,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    10,
+    -5,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 50,
+   "result": "placed"
+  },
+  {
+   "n": 176,
+   "logs": 5,
+   "leaves": 94,
+   "log_top": 6,
+   "origin_column_logs": 4,
+   "bbox": [
+    -4,
+    3,
+    -4,
+    8,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 37,
+   "result": "placed"
+  },
+  {
+   "n": 457,
+   "logs": 14,
+   "leaves": 287,
+   "log_top": 9,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    6,
+    -4,
+    11,
+    -5,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 6,
+   "leaf_mismatch": 63,
+   "result": "placed"
+  },
+  {
+   "n": 204,
+   "logs": 5,
+   "leaves": 105,
+   "log_top": 4,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    4,
+    -4,
+    6,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 16,
+   "result": "placed"
+  },
+  {
+   "n": 187,
+   "logs": 6,
+   "leaves": 109,
+   "log_top": 4,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    6,
+    -3,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 20,
+   "result": "placed"
+  },
+  {
+   "n": 289,
+   "logs": 10,
+   "leaves": 136,
+   "log_top": 10,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    12,
+    -3,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 7,
+   "result": "placed"
+  },
+  {
+   "n": 338,
+   "logs": 10,
+   "leaves": 172,
+   "log_top": 9,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    3,
+    -4,
+    11,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 52,
+   "result": "placed"
+  },
+  {
+   "n": 242,
+   "logs": 8,
+   "leaves": 117,
+   "log_top": 8,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    4,
+    -4,
+    10,
+    -3,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 29,
+   "result": "placed"
+  },
+  {
+   "n": 151,
+   "logs": 3,
+   "leaves": 85,
+   "log_top": 3,
+   "origin_column_logs": 2,
+   "bbox": [
+    -4,
+    6,
+    -4,
+    5,
+    -4,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 31,
+   "result": "placed"
+  },
+  {
+   "n": 184,
+   "logs": 6,
+   "leaves": 90,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    5,
+    -4,
+    8,
+    -4,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 29,
+   "result": "placed"
+  },
+  {
+   "n": 331,
+   "logs": 11,
+   "leaves": 193,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -4,
+    5,
+    -4,
+    8,
+    -6,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 53,
+   "result": "placed"
+  },
+  {
+   "n": 177,
+   "logs": 5,
+   "leaves": 109,
+   "log_top": 3,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    3,
+    -4,
+    5,
+    -6,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 17,
+   "result": "placed"
+  },
+  {
+   "n": 191,
+   "logs": 5,
+   "leaves": 102,
+   "log_top": 4,
+   "origin_column_logs": 3,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    6,
+    -5,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 13,
+   "result": "placed"
+  },
+  {
+   "n": 264,
+   "logs": 8,
+   "leaves": 157,
+   "log_top": 6,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    8,
+    -5,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 48,
+   "result": "placed"
+  },
+  {
+   "n": 240,
+   "logs": 7,
+   "leaves": 157,
+   "log_top": 4,
+   "origin_column_logs": 3,
+   "bbox": [
+    -5,
+    3,
+    -4,
+    6,
+    -5,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 46,
+   "result": "placed"
+  },
+  {
+   "n": 137,
+   "logs": 4,
+   "leaves": 41,
+   "log_top": 5,
+   "origin_column_logs": 4,
+   "bbox": [
+    -5,
+    3,
+    -4,
+    7,
+    -4,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 115,
+   "logs": 3,
+   "leaves": 44,
+   "log_top": 4,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    6,
+    -4,
+    6,
+    -4,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 109,
+   "logs": 6,
+   "leaves": 39,
+   "log_top": 6,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    3,
+    -4,
+    8,
+    -6,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 406,
+   "logs": 14,
+   "leaves": 239,
+   "log_top": 9,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    6,
+    -4,
+    11,
+    -6,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 103,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 308,
+   "logs": 10,
+   "leaves": 201,
+   "log_top": 7,
+   "origin_column_logs": 5,
+   "bbox": [
+    -5,
+    5,
+    -4,
+    9,
+    -5,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 3,
+   "leaf_mismatch": 54,
+   "result": "placed"
+  },
+  {
+   "n": 260,
+   "logs": 8,
+   "leaves": 188,
+   "log_top": 4,
+   "origin_column_logs": 4,
+   "bbox": [
+    -4,
+    4,
+    -4,
+    6,
+    -5,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 72,
+   "result": "placed"
+  },
+  {
+   "n": 175,
+   "logs": 5,
+   "leaves": 97,
+   "log_top": 4,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    6,
+    -3,
+    7
+   ],
+   "reach_h": 7,
+   "log_comp6": 1,
+   "leaf_mismatch": 28,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 90,
+   "logs": 2,
+   "leaves": 38,
+   "log_top": 2,
+   "origin_column_logs": 2,
+   "bbox": [
+    -2,
+    3,
+    -4,
+    4,
+    -5,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 156,
+   "logs": 4,
+   "leaves": 89,
+   "log_top": 4,
+   "origin_column_logs": 3,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 5,
+   "result": "placed"
+  },
+  {
+   "n": 132,
+   "logs": 3,
+   "leaves": 83,
+   "log_top": 2,
+   "origin_column_logs": 2,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    4,
+    -3,
+    3
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 21,
+   "result": "placed"
+  },
+  {
+   "n": 314,
+   "logs": 12,
+   "leaves": 187,
+   "log_top": 8,
+   "origin_column_logs": 7,
+   "bbox": [
+    -6,
+    6,
+    -4,
+    10,
+    -5,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 65,
+   "result": "placed"
+  },
+  {
+   "n": 150,
+   "logs": 3,
+   "leaves": 78,
+   "log_top": 2,
+   "origin_column_logs": 2,
+   "bbox": [
+    -7,
+    4,
+    -4,
+    4,
+    -4,
+    5
+   ],
+   "reach_h": 7,
+   "log_comp6": 1,
+   "leaf_mismatch": 24,
+   "result": "placed"
+  },
+  {
+   "n": 424,
+   "logs": 13,
+   "leaves": 260,
+   "log_top": 9,
+   "origin_column_logs": 7,
+   "bbox": [
+    -6,
+    4,
+    -4,
+    11,
+    -4,
+    5
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 63,
+   "result": "placed"
+  },
+  {
+   "n": 136,
+   "logs": 3,
+   "leaves": 86,
+   "log_top": 2,
+   "origin_column_logs": 2,
+   "bbox": [
+    -3,
+    4,
+    -4,
+    4,
+    -6,
+    2
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 21,
+   "result": "placed"
+  },
+  {
+   "n": 186,
+   "logs": 6,
+   "leaves": 106,
+   "log_top": 5,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    7,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 36,
+   "result": "placed"
+  },
+  {
+   "n": 89,
+   "logs": 2,
+   "leaves": 33,
+   "log_top": 3,
+   "origin_column_logs": 2,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    5,
+    -3,
+    4
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 225,
+   "logs": 6,
+   "leaves": 151,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -4,
+    5,
+    -4,
+    7,
+    -5,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 48,
+   "result": "placed"
+  },
+  {
+   "n": 0,
+   "logs": null,
+   "leaves": null,
+   "log_top": null,
+   "origin_column_logs": null,
+   "bbox": null,
+   "reach_h": null,
+   "log_comp6": null,
+   "leaf_mismatch": null,
+   "result": "failed"
+  },
+  {
+   "n": 102,
+   "logs": 4,
+   "leaves": 43,
+   "log_top": 5,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    7,
+    -2,
+    2
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 132,
+   "logs": 3,
+   "leaves": 42,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    7,
+    -5,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 110,
+   "logs": 3,
+   "leaves": 34,
+   "log_top": 5,
+   "origin_column_logs": 3,
+   "bbox": [
+    -3,
+    2,
+    -4,
+    7,
+    -3,
+    2
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 116,
+   "logs": 3,
+   "leaves": 39,
+   "log_top": 4,
+   "origin_column_logs": 3,
+   "bbox": [
+    -2,
+    3,
+    -4,
+    6,
+    -6,
+    3
+   ],
+   "reach_h": 6,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 366,
+   "logs": 12,
+   "leaves": 225,
+   "log_top": 8,
+   "origin_column_logs": 6,
+   "bbox": [
+    -5,
+    3,
+    -4,
+    10,
+    -3,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 5,
+   "leaf_mismatch": 38,
+   "result": "placed"
+  },
+  {
+   "n": 192,
+   "logs": 6,
+   "leaves": 103,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    8,
+    -4,
+    3
+   ],
+   "reach_h": 4,
+   "log_comp6": 1,
+   "leaf_mismatch": 30,
+   "result": "placed"
+  },
+  {
+   "n": 200,
+   "logs": 7,
+   "leaves": 114,
+   "log_top": 7,
+   "origin_column_logs": 5,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    9,
+    -5,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 2,
+   "leaf_mismatch": 30,
+   "result": "placed"
+  },
+  {
+   "n": 161,
+   "logs": 3,
+   "leaves": 84,
+   "log_top": 4,
+   "origin_column_logs": 2,
+   "bbox": [
+    -5,
+    4,
+    -4,
+    6,
+    -4,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 20,
+   "result": "placed"
+  },
+  {
+   "n": 172,
+   "logs": 3,
+   "leaves": 80,
+   "log_top": 4,
+   "origin_column_logs": 2,
+   "bbox": [
+    -3,
+    5,
+    -4,
+    6,
+    -4,
+    4
+   ],
+   "reach_h": 5,
+   "log_comp6": 1,
+   "leaf_mismatch": 24,
+   "result": "placed"
+  },
+  {
+   "n": 218,
+   "logs": 7,
+   "leaves": 121,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    5,
+    -4,
+    8,
+    -3,
+    3
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 26,
+   "result": "placed"
+  },
+  {
+   "n": 211,
+   "logs": 7,
+   "leaves": 114,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    4,
+    -4,
+    8,
+    -3,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 13,
+   "result": "placed"
+  },
+  {
+   "n": 376,
+   "logs": 12,
+   "leaves": 240,
+   "log_top": 8,
+   "origin_column_logs": 6,
+   "bbox": [
+    -3,
+    2,
+    -4,
+    10,
+    -4,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 69,
+   "result": "placed"
+  },
+  {
+   "n": 324,
+   "logs": 9,
+   "leaves": 207,
+   "log_top": 6,
+   "origin_column_logs": 5,
+   "bbox": [
+    -4,
+    5,
+    -4,
+    8,
+    -4,
+    5
+   ],
+   "reach_h": 5,
+   "log_comp6": 2,
+   "leaf_mismatch": 62,
+   "result": "placed"
+  },
+  {
+   "n": 266,
+   "logs": 10,
+   "leaves": 148,
+   "log_top": 7,
+   "origin_column_logs": 7,
+   "bbox": [
+    -3,
+    6,
+    -4,
+    9,
+    -4,
+    4
+   ],
+   "reach_h": 6,
+   "log_comp6": 3,
+   "leaf_mismatch": 40,
+   "result": "placed"
+  },
+  {
+   "n": 104,
+   "logs": 4,
+   "leaves": 45,
+   "log_top": 4,
+   "origin_column_logs": 4,
+   "bbox": [
+    -3,
+    3,
+    -4,
+    6,
+    -3,
+    2
+   ],
+   "reach_h": 3,
+   "log_comp6": 1,
+   "leaf_mismatch": 0,
+   "result": "placed"
+  },
+  {
+   "n": 359,
+   "logs": 13,
+   "leaves": 227,
+   "log_top": 8,
+   "origin_column_logs": 7,
+   "bbox": [
+    -4,
+    5,
+    -4,
+    10,
+    -3,
+    6
+   ],
+   "reach_h": 6,
+   "log_comp6": 4,
+   "leaf_mismatch": 56,
+   "result": "placed"
+  }
+ ]
+}

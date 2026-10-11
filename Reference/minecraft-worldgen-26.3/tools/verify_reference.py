@@ -5,6 +5,7 @@ The jar comparison runs when the jar is present; everything else needs only this
 """
 import hashlib
 import json
+import re
 import sys
 import zipfile
 from pathlib import Path
@@ -15,6 +16,8 @@ WORLDGEN = ROOT / "data/minecraft/worldgen"
 BLOCK_TAGS = ROOT / "data/minecraft/tags/block"
 # The blocks reference's list of every block in the 26.3 registry, imported or not.
 BLOCK_FACTS = ROOT.parent / "minecraft-blocks-26.3/facts/block_facts.csv"
+# The accepted tree probes' grid start and level seed (tools/tree_probe.py's X_START and LEVEL_SEED).
+ACCEPTED_PROBE_RUN = (1024, 263)
 errors = []
 
 
@@ -298,14 +301,22 @@ for seed in veins["seeds"]:
 
 def check_tree_probe(path, probe):
     """A tree_<probe>.json from tools/tree_probe.py names a reached feature, alone or with its variant (_ceil<dy>: a
-    stone ceiling dy above the origin; @mudwater: mud under water), and its counts, histograms and profile add up."""
+    stone ceiling dy above the origin; @mudwater: mud under water), and its counts, histograms and profile add up.
+    A re-probe, tree_<probe>_r<N>.json (tree_probe.py --run-tag), is the same probe at another grid start or level
+    seed, which its world records; a probe without the suffix records neither."""
     def bad(what):
         errors.append(f"tree probe {path.name}: {what}")
     name, feature, variant = path.stem.removeprefix("tree_"), probe.get("feature", ""), probe.get("variant")
+    world, rerun = probe.get("world", {}), re.fullmatch(r"(.+)_r[1-9]\d*", name)
+    if rerun and not ("x_start" in world and "level_seed" in world and
+                      (world["x_start"], world["level_seed"]) != ACCEPTED_PROBE_RUN):
+        return bad("a re-probe whose world does not record another grid start or level seed")
+    if not rerun and ("x_start" in world or "level_seed" in world):
+        return bad("a re-probe's world under a probe's own name")
     base = feature.removeprefix("minecraft:")
     if not (probe.get("generated_by") == "tools/tree_probe.py" and probe.get("probe") == name and
             feature.startswith("minecraft:") and WORLDGEN / "feature" / f"{base}.json" in decoration_reached and
-            name == base + (variant or "")):
+            (rerun.group(1) if rerun else name) == base + (variant or "")):
         return bad("not a reached feature with its variant")
     fills = {(f[1], f[4], f[6]) for f in probe["prep"]}
     if variant is None:
