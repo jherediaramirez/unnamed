@@ -185,6 +185,22 @@ bool FVoxelSpawnFallbackTest::RunTest(const FString& Parameters)
             FIntVector(1100, 40, 71));
         TestTrue(TEXT("...stood on its blocks"), Spawn.bStandOnBlocks);
     }
+    // Land 400 blocks east (ring 25, inside the 32-column reach): found at any view radius, stood on blocks.
+    Sea.Land = FIntPoint(1400, 40);
+    for (const int32 ViewRadius : {4, 12})
+    {
+        FVoxelSpawnRequest Request;
+        Request.ViewReach = FMath::Max(8, ViewRadius * VoxelConstants::ColumnSize);
+        const FVoxelSpawn Spawn = FVoxelSpawnFinder::Find(Sea, Request);
+        TestEqual(FString::Printf(TEXT("View radius %d: land 400 blocks east"), ViewRadius), Spawn.Cell,
+            FIntVector(1400, 40, 71));
+        TestTrue(TEXT("...stood on its blocks"), Spawn.bStandOnBlocks);
+    }
+    // Land 600 blocks east (ring 38, beyond the reach): the water's surface over the pick.
+    Sea.Land = FIntPoint(1600, 40);
+    const FVoxelSpawn Beyond = FVoxelSpawnFinder::Find(Sea, {});
+    TestEqual(TEXT("Land beyond the reach: the water's surface over the pick"), Beyond.Cell, FIntVector(1000, 40, 63));
+    TestFalse(TEXT("...not moved onto blocks"), Beyond.bStandOnBlocks);
     // No land anywhere: the water's surface over the pick, not the sea floor.
     Sea.Land.Reset();
     const FVoxelSpawn Wet = FVoxelSpawnFinder::Find(Sea, {});
@@ -303,9 +319,10 @@ bool FVoxelSpawnSeedsTest::RunTest(const FString& Parameters)
 
     AddInfo(FString::Printf(TEXT("Deepest origin: seed %lld, top %d"), OceanSeed.Get(0), OceanTop));
     // Timing, per preset: the dev seed and the deepest origin's seed. When nothing near the pick is dry (rare), the
-    // whole search (Find) includes the nearest-land fallback.
+    // whole search (Find) includes the ring fallback.
     for (const FVoxelTerrainPreset* Preset : {&Overworld, &Large, &Amplified})
-        // large_biomes seed 1: nothing near the pick is dry, so Find falls back to the nearest land.
+        // large_biomes seed 1: nothing near the pick is dry, so Find searches the rings beyond for the first dry
+        // column.
         for (const int64 Seed : {DevSeed, OceanSeed.Get(0), int64(1)})
         {
             const FVoxelDensityTerrain Terrain(*Preset, uint64(Seed), Table);
@@ -323,6 +340,87 @@ bool FVoxelSpawnSeedsTest::RunTest(const FString& Parameters)
                 TestTrue(FString::Printf(TEXT("%s seed %lld: out of the water"), *Preset->Name, Seed),
                     Terrain.GetSurfaceHeight(Spawn.Cell.X, Spawn.Cell.Y) >= 62);
         }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelSpawnLargeBiomesTest, "Unnamed.Voxel.Spawn.LargeBiomes",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelSpawnLargeBiomesTest::RunTest(const FString& Parameters)
+{
+    const FVoxelBlockTable& Table = *VoxelBlocks::GetDefault();
+    FVoxelTerrainPreset Large;
+    FString Error;
+    if (!TestTrue(TEXT("large_biomes reads"), SpawnTestLoad(TEXT("large_biomes"), Large, Error)))
+    {
+        AddError(Error);
+        return false;
+    }
+    constexpr int32 Size = VoxelConstants::ColumnSize;
+    // Seeds whose pick is wet: the fallback finds land beyond the pick's 11 x 11 columns.
+    for (const int64 Seed : {1, 5, 7, 57})
+    {
+        const FVoxelDensityTerrain Terrain(Large, uint64(Seed), Table);
+        if (!TestTrue(TEXT("The terrain builds"), Terrain.IsValid())) return false;
+        FIntVector Pick;
+        bool bPickDry = true;
+        TestTrue(FString::Printf(TEXT("Seed %lld: nothing dry near the pick, so the fallback runs"), Seed),
+            Terrain.FindSpawn(Pick, bPickDry) && !bPickDry);
+        const double Start = FPlatformTime::Seconds();
+        const FVoxelSpawn Spawn = FVoxelSpawnFinder::Find(Terrain, {});
+        const double Ms = (FPlatformTime::Seconds() - Start) * 1000;
+        const int32 Top = Terrain.GetSurfaceHeight(Spawn.Cell.X, Spawn.Cell.Y);
+        AddInfo(FString::Printf(
+            TEXT("large_biomes seed %lld: spawn %s, top %d, Find %.1f ms"), Seed, *Spawn.Cell.ToString(), Top, Ms));
+        TestTrue(FString::Printf(TEXT("Seed %lld: stands on blocks"), Seed), Spawn.bStandOnBlocks);
+        TestTrue(FString::Printf(TEXT("Seed %lld: its top block is out of the water"), Seed),
+            Top >= VoxelConstants::SeaLevel - 1);
+        TestEqual(FString::Printf(TEXT("Seed %lld: the feet are on it"), Seed), Spawn.Cell.Z, Top + 1);
+        if (Seed == 1)
+            // Recorded on the first run (2026-10-11, spawn-131812); never edit to pass a test.
+            TestEqual(TEXT("Seed 1's spawn"), Spawn.Cell, FIntVector(1172, -114, 63));
+    }
+    // The parallel ring search equals a serial walk with the same look.
+    for (const int64 Seed : {1, 5})
+    {
+        const FVoxelDensityTerrain Terrain(Large, uint64(Seed), Table);
+        const FIntPoint Pick = Terrain.GetSpawnFinder().FindClimateSpot();
+        const FIntPoint Column(FMath::FloorToInt32(Pick.X / 16.0), FMath::FloorToInt32(Pick.Y / 16.0));
+        const TOptional<FIntVector> Parallel = Terrain.FindDryRing(Column, 6, 32);
+        const TOptional<FIntVector> Serial = FVoxelSpawnFinder::SearchRings(
+            Column, 6, 32,
+            [&Terrain](FIntPoint Position) -> TOptional<FIntVector>
+            {
+                int32 Heights[Size * Size];
+                Terrain.GetSurfaceHeights(Position, Heights);
+                for (int32 Index = 0; Index < Size * Size; ++Index)
+                    if (Heights[Index] >= VoxelConstants::SeaLevel - 1)
+                        return FIntVector(
+                            Position.X * Size + Index % Size, Position.Y * Size + Index / Size, Heights[Index] + 1);
+                return {};
+            },
+            false);
+        TestTrue(FString::Printf(TEXT("Seed %lld: land found in rings 6 to 32"), Seed), Parallel.IsSet());
+        TestTrue(FString::Printf(TEXT("Seed %lld: parallel equals serial"), Seed),
+            Parallel.IsSet() == Serial.IsSet() && (!Parallel || *Parallel == *Serial));
+    }
+    // Worst case: nothing dry in rings 6 to 32, so every one of the 4104 columns is read.
+    {
+        const FVoxelDensityTerrain Terrain(Large, 1, Table);
+        const double Start = FPlatformTime::Seconds();
+        const TOptional<FIntVector> None = FVoxelSpawnFinder::SearchRings(
+            FIntPoint(5000, 5000), 6, 32,
+            [&Terrain](FIntPoint Position) -> TOptional<FIntVector>
+            {
+                int32 Heights[Size * Size];
+                Terrain.GetSurfaceHeights(Position, Heights);
+                return {};
+            },
+            true);
+        AddInfo(FString::Printf(TEXT("large_biomes seed 1: worst case %.0f ms (rings 6 to 32)"),
+            (FPlatformTime::Seconds() - Start) * 1000));
+        TestFalse(TEXT("The worst case finds nothing"), None.IsSet());
+    }
     return true;
 }
 

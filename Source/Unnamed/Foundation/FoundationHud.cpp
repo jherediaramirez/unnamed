@@ -1,5 +1,11 @@
 #include "Foundation/FoundationHud.h"
 #include "Hud/HudPresenter.h"
+#include "Hud/HudAssets.h"
+#include "Hud/HudLoadingScreen.h"
+#include "Menu/MenuPreferences.h"
+#include "UnnamedProjectSettings.h"
+#include "Dom/JsonValue.h"
+#include "Engine/GameInstance.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationController.h"
 #include "Foundation/FoundationCoordinates.h"
@@ -71,8 +77,39 @@ void UFoundationHud::BeginPlay()
     LogEvent(TEXT("diagnostics ready; reference Java26.3 / UE5.8.3"));
 }
 
+void UFoundationHud::ShowLoadingScreen(const FFoundationLoadState& State)
+{
+    if (LoadingScreen.IsValid() || !GEngine || !GEngine->GameViewport) return;
+    // The menu's background blur (menuBackgroundBlurriness, pixels of standard deviation); the menu's default is 5.
+    double Blur = 5;
+    if (const UGameInstance* Instance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr)
+        if (const UMenuPreferences* Preferences = Instance->GetSubsystem<UMenuPreferences>())
+            if (const auto Value = Preferences->FindPreference(TEXT("menuBackgroundBlurriness"));
+                Value.IsValid() && Value->Type == EJson::Number)
+                Blur = Value->AsNumber();
+    LoadingScreen = SNew(SHudLoadingScreen)
+                        .HudAssets(LoadObject<UHudAssets>(nullptr, *UUnnamedProjectSettings::GetHudRegistryPath()))
+                        .BlurPixels(float(Blur));
+    LoadingScreen->SetState(State);
+    GEngine->GameViewport->AddViewportWidgetContent(LoadingScreen.ToSharedRef(), 300);
+}
+
+void UFoundationHud::UpdateLoadingScreen(const FFoundationLoadState& State)
+{
+    if (LoadingScreen.IsValid()) LoadingScreen->SetState(State);
+}
+
+void UFoundationHud::HideLoadingScreen()
+{
+    if (!LoadingScreen.IsValid()) return;
+    if (GEngine && GEngine->GameViewport)
+        GEngine->GameViewport->RemoveViewportWidgetContent(LoadingScreen.ToSharedRef());
+    LoadingScreen.Reset();
+}
+
 void UFoundationHud::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    HideLoadingScreen();
     if (GEngine && GEngine->GameViewport && OverlayRoot)
         GEngine->GameViewport->RemoveViewportWidgetContent(OverlayRoot.ToSharedRef());
     Super::EndPlay(EndPlayReason);

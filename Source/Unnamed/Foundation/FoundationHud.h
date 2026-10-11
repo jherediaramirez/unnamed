@@ -9,8 +9,10 @@ class AFoundationPawn;
 class FFoundationAuthority;
 class STextBlock;
 class SWidget;
+class SHudLoadingScreen;
 class UHudPresenter;
 struct FFoundationVitals;
+struct FFoundationLoadState;
 
 // The F3 debug overlay, native Hud presenter, recent-event log and debug
 // drawing. Display only: it reads the controller, pawn and router and changes no game state.
@@ -35,6 +37,12 @@ public:
     // F3 text stays at 10 Hz. The separate presentation adapter samples at up to 20 Hz.
     void Refresh();
 
+    // The world's loading screen, above the HUD (Z-order 300; the pause menu's CEF is at 100).
+    void ShowLoadingScreen(const FFoundationLoadState& State);
+    void UpdateLoadingScreen(const FFoundationLoadState& State);
+    void HideLoadingScreen();
+    bool IsLoadingScreenShown() const { return LoadingScreen.IsValid(); }
+
     bool bOverlay = false;
     bool bHideHud = false;
     bool bShowCollision = false;
@@ -49,6 +57,7 @@ private:
     static FString BuildInteractionText(const AFoundationPawn& Pawn, const FFoundationAuthority& Authority);
 
     TSharedPtr<SWidget> OverlayRoot;
+    TSharedPtr<SHudLoadingScreen> LoadingScreen;
     TSharedPtr<STextBlock> DebugText;
     UPROPERTY(Transient)
     TObjectPtr<UHudPresenter> Presenter;

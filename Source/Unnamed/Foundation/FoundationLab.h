@@ -23,6 +23,20 @@ namespace FoundationTint
     inline const FLinearColor Water(.08f, .25f, .85f);
 }
 
+// What the world's loading screen shows (the generated world; other labs are always ready).
+struct FFoundationLoadState
+{
+    // The player stands on the spawn and the view is on screen.
+    bool bReady = true;
+    // The player stands on the spawn.
+    bool bPlayerPlaced = true;
+    float Progress = 1;
+    // The map is MapSize x MapSize colours, rows from the minimum corner; 0: no map in the layout. Map is empty when it
+    // is not to be drawn (the layout keeps its size so the bar and text do not move).
+    int32 MapSize = 0;
+    TArray<FColor> Map;
+};
+
 struct FFoundationPrimitive
 {
     FBox Box;
@@ -70,6 +84,8 @@ public:
     // The world's rules for its player (game mode, difficulty, natural regeneration), applied once when the player
     // arrives; respawning keeps them. The Playground leaves the defaults.
     virtual void ConfigurePlayer(FFoundationVitals&) const {}
+    // The loading screen's state; bWithMap asks for the chunk map too. Labs other than the generated world are ready.
+    virtual void GetLoadState(FFoundationLoadState& Out, bool bWithMap) const {}
     // A line about the world for the F3 overlay (a voxel world's clock); empty for none.
     virtual FString DescribeDebug() const { return FString(); }
 

@@ -142,6 +142,7 @@ void AVoxelWorld::BuildLayout()
     FString SeedText;
     if (FParse::Value(FCommandLine::Get(), TEXT("VoxelSeed="), SeedText)) StartSeed = FVoxelSeed::Parse(SeedText);
     FParse::Value(FCommandLine::Get(), TEXT("VoxelShot="), ShotFolder);
+    FParse::Value(FCommandLine::Get(), TEXT("VoxelLoadingShot="), LoadingShotFolder);
     FString SpawnAt;
     // Not stopping at the comma between X and Y.
     if (FParse::Value(FCommandLine::Get(), TEXT("VoxelSpawnAt="), SpawnAt, false))
@@ -503,6 +504,95 @@ bool AVoxelWorld::IsReady() const
     return bSpawned && Streaming && Streaming->IsViewOnScreen();
 }
 
+namespace
+{
+    // The loading screen's map colours, 26.3's chunk statuses (minecraft.wiki Loading_screen), by the stage a column is
+    // at:
+    //   not present or waiting          Empty     0x545454
+    //   generating, snapshot, decorating Noise     0xD1D1D1
+    //   generated (final blocks)        Features  0x21C600
+    //   meshing, or a mesh ready        Light     0xFFE0A0
+    //   on screen                       Full      0xFFFFFF
+    FColor VoxelLoadingColor(const FVoxelColumnStatus& Status)
+    {
+        if (Status.bOnScreen) return FColor(0xFF, 0xFF, 0xFF);
+        if (Status.bMeshing || Status.bReady) return FColor(0xFF, 0xE0, 0xA0);
+        if (Status.bGenerated) return FColor(0x21, 0xC6, 0x00);
+        if (Status.bGenerating || Status.bSnapshot || Status.bDecorating || Status.bDecorated || Status.bFinalizing)
+            return FColor(0xD1, 0xD1, 0xD1);
+        return FColor(0x54, 0x54, 0x54);
+    }
+}
+
+void AVoxelWorld::GetLoadState(FFoundationLoadState& Out, bool bWithMap) const
+{
+    Out.bReady = IsReady() && (LoadingShotFolder.IsEmpty() || LoadingShotStage >= 5);
+    Out.bPlayerPlaced = bSpawned;
+    const UVoxelWorldSubsystem* Streaming = GetStreaming();
+    const FVoxelColumnPipeline* Pipeline = Streaming ? Streaming->GetPipeline() : nullptr;
+    Out.Progress = 1;
+    if (!IsReady())
+    {
+        Out.Progress = 0;
+        if (Pipeline)
+        {
+            const FVoxelPipelineStats Stats = Pipeline->GetStats();
+            if (Stats.InView > 0) Out.Progress = float(Stats.InViewOnScreen) / float(Stats.InView);
+        }
+    }
+    const int32 Radius = FMath::Clamp(VoxelConsole::CVarViewRadius.GetValueOnGameThread(), 2, 16);
+    Out.MapSize = 2 * Radius + 1;
+    Out.Map.Reset();
+    if (!bWithMap || !Pipeline || VoxelConsole::CVarLoadingScreenMap.GetValueOnGameThread() == 0 || bLoadingShotNoMap)
+        return;
+    const FIntVector Spawn = GetSpawnCell();
+    const FIntPoint Centre(FoundationGrid::FloorDivide(Spawn.X, VoxelConstants::ColumnSize),
+        FoundationGrid::FloorDivide(Spawn.Y, VoxelConstants::ColumnSize));
+    // Rows from the minimum corner: X grows along a row, Y down the rows.
+    for (int32 Y = -Radius; Y <= Radius; ++Y)
+        for (int32 X = -Radius; X <= Radius; ++X)
+            Out.Map.Add(VoxelLoadingColor(Pipeline->GetStatus(Centre + FIntPoint(X, Y))));
+}
+
+void AVoxelWorld::UpdateLoadingShot()
+{
+    if (LoadingShotFolder.IsEmpty() || LoadingShotStage >= 5) return;
+    const FString FileA = LoadingShotFolder / TEXT("loading-a.png");
+    const FString FileB = LoadingShotFolder / TEXT("loading-b.png");
+    FFoundationLoadState State;
+    switch (LoadingShotStage)
+    {
+    case 0:
+        GetLoadState(State, false);
+        // Half way, or ready sooner (the screen stays up for the shots either way).
+        if (State.Progress < .5f && !IsReady()) return;
+        FScreenshotRequest::RequestScreenshot(FileA, true, false);
+        UE_LOG(LogUnnamedVoxel, Display, TEXT("Loading screen shot a (with map): %s"), *FileA);
+        LoadingShotStage = 1;
+        break;
+    case 1:
+        if (IFileManager::Get().FileExists(*FileA)) LoadingShotStage = 2;
+        break;
+    case 2:
+        // The controller reads the state in its Tick, so the map is off for one frame before b is requested.
+        bLoadingShotNoMap = true;
+        LoadingShotStage = 3;
+        break;
+    case 3:
+        FScreenshotRequest::RequestScreenshot(FileB, true, false);
+        UE_LOG(LogUnnamedVoxel, Display, TEXT("Loading screen shot b (no map): %s"), *FileB);
+        LoadingShotStage = 4;
+        break;
+    default:
+        if (IFileManager::Get().FileExists(*FileB))
+        {
+            bLoadingShotNoMap = false;
+            LoadingShotStage = 5;
+        }
+        break;
+    }
+}
+
 FString AVoxelWorld::GetBuildReport() const
 {
     const UVoxelWorldSubsystem* Streaming = GetStreaming();
@@ -531,6 +621,7 @@ void AVoxelWorld::Tick(float DeltaSeconds)
         if (UVoxelWorldSubsystem* Streaming = GetStreaming(); Streaming && ShotFolder.IsEmpty())
             Streaming->SetFocusOverride({});
     }
+    UpdateLoadingShot();
     UpdateEdgeFog();
     if (Lights)
     {

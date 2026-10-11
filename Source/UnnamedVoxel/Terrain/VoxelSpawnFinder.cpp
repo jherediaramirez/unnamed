@@ -1,7 +1,9 @@
 #include "Terrain/VoxelSpawnFinder.h"
 
 #include "Biome/VoxelBiomeTable.h"
+#include "Async/ParallelFor.h"
 #include "Terrain/VoxelTerrain.h"
+#include "VoxelConstants.h"
 
 namespace
 {
@@ -112,8 +114,9 @@ FVoxelSpawn FVoxelSpawnFinder::Find(const IVoxelTerrain& Terrain, const FVoxelSp
     if (!Request.bNearest && Terrain.FindSpawn(Cell, bDry))
     {
         if (bDry) return {Cell, true};
-        // Nothing dry near the climate's pick: the nearest land from it, else its water surface.
-        if (const TOptional<FIntVector> Land = FindNearestDry(Terrain, {Cell.X, Cell.Y}, FallbackReach, false))
+        // Nothing dry near the climate's pick: the first dry column in the rings beyond, else its water surface.
+        const FIntPoint PickColumn(FMath::FloorToInt32(Cell.X / 16.0), FMath::FloorToInt32(Cell.Y / 16.0));
+        if (const TOptional<FIntVector> Land = Terrain.FindDryRing(PickColumn, SpawnRadius + 1, FallbackReach))
             return {*Land, true};
         return {Cell, false};
     }
@@ -122,6 +125,44 @@ FVoxelSpawn FVoxelSpawnFinder::Find(const IVoxelTerrain& Terrain, const FVoxelSp
         return {*Land, false};
     // All sea: stand on the water surface's floor at the centre.
     return {FIntVector(Center.X, Center.Y, Terrain.GetSurfaceHeight(Center.X, Center.Y) + 1), false};
+}
+
+TOptional<FIntVector> FVoxelSpawnFinder::SearchRings(FIntPoint Center, int32 FirstRing, int32 LastRing,
+    TFunctionRef<TOptional<FIntVector>(FIntPoint Column)> Look, bool bParallel)
+{
+    for (int32 Ring = FirstRing; Ring <= LastRing; ++Ring)
+    {
+        TArray<FIntPoint> Columns;
+        for (int32 DY = -Ring; DY <= Ring; ++DY)
+            for (int32 DX = -Ring; DX <= Ring; ++DX)
+                if (FMath::Max(FMath::Abs(DX), FMath::Abs(DY)) == Ring) Columns.Add(Center + FIntPoint(DX, DY));
+        TArray<TOptional<FIntVector>> Found;
+        Found.SetNum(Columns.Num());
+        ParallelFor(
+            Columns.Num(), [&Columns, &Found, &Look](int32 Index) { Found[Index] = Look(Columns[Index]); },
+            bParallel ? EParallelForFlags::None : EParallelForFlags::ForceSingleThread);
+        for (const TOptional<FIntVector>& Hit : Found)
+            if (Hit) return Hit;
+    }
+    return {};
+}
+
+TOptional<FIntVector> IVoxelTerrain::FindDryRing(FIntPoint Column, int32 FirstRing, int32 LastRing) const
+{
+    constexpr int32 Size = VoxelConstants::ColumnSize;
+    return FVoxelSpawnFinder::SearchRings(
+        Column, FirstRing, LastRing,
+        [this](FIntPoint Position) -> TOptional<FIntVector>
+        {
+            for (int32 Index = 0; Index < Size * Size; ++Index)
+            {
+                const int32 X = Position.X * Size + Index % Size;
+                const int32 Y = Position.Y * Size + Index / Size;
+                if (ConfirmDry(X, Y)) return FIntVector(X, Y, GetSurfaceHeight(X, Y) + 1);
+            }
+            return {};
+        },
+        false);
 }
 
 TOptional<FIntVector> FVoxelSpawnFinder::FindNearestDry(

@@ -37,6 +37,7 @@ async function attach() {
   await waitFor(() => { page = browser.contexts().flatMap(c => c.pages()).find(p => !p.isClosed() && p.url().includes('/Menu/Web/index.html')); return !!page; });
   await page.waitForFunction(() => typeof MenuApplication !== 'undefined' && MenuApplication.getState()?.canOpenWorld);
   page.on('pageerror', e => errors.push(String(e)));
+  page.on('console', m => { if (m.text().startsWith('menu-screen ')) shownScreens.push(m.text().slice('menu-screen '.length)); });
 }
 async function start(suffix, shots) {
   const args = editor ? [path.join(root, 'Unnamed.uproject'), '-game'] : [];
@@ -48,10 +49,15 @@ async function start(suffix, shots) {
   exit = new Promise((resolve, reject) => { game.once('error', reject); game.once('exit', (code, signal) => resolve({code, signal})); });
   await attach();
 }
-// The world run ends by itself once its screenshots are saved.
-async function finishWorld(name) {
+// The world run ends by itself once its screenshots are saved. Its loading screen showed from the map's first frame
+// and went once the world was ready, not on its 15 s timeout.
+async function finishWorld(name, suffix) {
   const status = await Promise.race([exit, delay(300000).then(() => null)]);
   check(name + ': the world ran and closed normally', status?.code === 0, JSON.stringify(status));
+  const lines = fs.readFileSync(path.join(output, suffix + '.log'), 'utf8').split('\n').filter(line => line.includes('Loading screen '));
+  check(name + ': the loading screen showed, then went when the world was ready',
+    lines.some(line => line.includes('Loading screen shown')) && lines.some(line => /Loading screen hidden after \d+ ms \(ready\)/.test(line)) &&
+    !lines.some(line => line.includes('(timeout)')), lines.join('\n'));
   await browser.close().catch(() => {}); browser = null;
 }
 async function quit() {
@@ -71,6 +77,20 @@ async function singleplayer() {
   await page.waitForFunction(() => MenuPrototype.getState().screen === 'worlds');
 }
 async function action(key) { return page.getByRole('button', {name: await label(key), exact: true}); }
+// 26.3's message screen shows from the click until the level changes. The page goes with the level, often before a
+// readback, so the page reports each screen on its console (an observer installed before the click; the report leaves
+// within the click's own task) and the capture is best effort.
+const shownScreens = [];
+async function watchScreens() {
+  shownScreens.length = 0;
+  await page.evaluate(() => new MutationObserver(() => console.log('menu-screen ' + MenuPrototype.getState().screen + ' ' +
+    document.querySelector('#screen')?.innerText.trim())).observe(document.querySelector('#screen'), {childList: true}));
+}
+async function preparing(name, text) {
+  await waitFor(() => shownScreens.length > 0, 10000).catch(() => {});
+  check(`${name}: "${text}" shows from the click`, shownScreens.includes('generic ' + text), shownScreens);
+  await page.screenshot({path: path.join(output, `preparing-${name.toLowerCase().replace(/\W+/g, '-')}.png`)}).catch(() => {});
+}
 async function select(id) { await page.locator(`[data-world="${id}"]`).click(); }
 async function createWorld({name, seed, type, mode, difficulty}) {
   await (await action('selectWorld.create')).click();
@@ -85,7 +105,10 @@ async function createWorld({name, seed, type, mode, difficulty}) {
   check(`${name}: the draft holds the choices`, settings.name === name && (!mode || settings.gameMode === mode) &&
     (!difficulty || settings.difficulty === difficulty) && (!type || settings.type === type) && (seed === undefined || settings.seed === seed), settings);
   await page.screenshot({path: path.join(output, `create-${name.toLowerCase().replace(/\W+/g, '-')}.png`)});
+  const text = await label('createWorld.preparing');
+  await watchScreens();
   await page.locator('[data-create-submit]:visible').click();
+  await preparing(name, text);
 }
 
 try {
@@ -95,7 +118,7 @@ try {
   await singleplayer();
   check('A fresh profile lists only the built-in Playground', JSON.stringify(await rowIds()) === '["playground"]', await rowIds());
   await createWorld({name: 'Hello World', seed: 'hello'});
-  await finishWorld('Hello World');
+  await finishWorld('Hello World', 'create-hello');
   const hello = world('hello-world');
   check('world.json: the draft as created', hello.version === 1 && hello.generator === 2 && hello.name === 'Hello World' &&
     hello.seed === 'hello' && hello.gameMode === 'Survival' && hello.difficulty === 'Normal' && hello.type === 'Default' &&
@@ -138,7 +161,7 @@ try {
   check('Edit renames the save natively; its id stays', world('hello-world').name === 'Hello Again' &&
     JSON.stringify(await rowIds()) === '["playground","hello-world"]');
   await createWorld({name: 'Flat Test', type: 'Superflat', mode: 'Creative', difficulty: 'Peaceful'});
-  await finishWorld('Flat Test');
+  await finishWorld('Flat Test', 'list');
   const flat = world('flat-test');
   check('world.json: Superflat with its layers', flat.type === 'Superflat' && flat.gameMode === 'Creative' &&
     flat.difficulty === 'Peaceful' && flat.commands === true && flat.flat.length === 3 && flat.flat[0].block === 'minecraft:grass_block', flat);
@@ -153,8 +176,11 @@ try {
   await singleplayer();
   check('Saves follow the catalog, most recently played first', JSON.stringify(await rowIds()) === '["playground","flat-test","hello-world"]', await rowIds());
   await select('hello-world');
+  const reading = await label('selectWorld.data_read');
+  await watchScreens();
   await (await action('selectWorld.select')).click();
-  await finishWorld('Hello Again');
+  await preparing('Hello Again', reading);
+  await finishWorld('Hello Again', 'play');
   const playReport = report(playShots);
   check('Playing it again builds the same seed', playReport.split('\n').find(line => line.startsWith('Seed ')) === seedLine, playReport);
   check('...under its new name', playReport.includes('World: hello-world "Hello Again", Default, Survival, Normal'), playReport);

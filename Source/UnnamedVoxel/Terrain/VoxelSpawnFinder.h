@@ -31,8 +31,8 @@ struct FVoxelSpawn
 
 // A new world's spawn the way 26.3 picks it (Docs/VoxelWorld.md, Spawn): the climate search scores 66 points out to
 // 2048 blocks, then 862 around the best, by the preset's spawn_target plus a distance penalty, and the terrain checks
-// the 11 x 11 columns around that pick for dry land (IVoxelTerrain::FindSpawn). Pure and deterministic: a function of
-// the preset and the seed. Immutable after Initialize; any thread may search.
+// the columns within SpawnRadius of that pick's for dry land (IVoxelTerrain::FindSpawn). Pure and deterministic: a
+// function of the preset and the seed. Immutable after Initialize; any thread may search.
 class UNNAMEDVOXEL_API FVoxelSpawnFinder
 {
 public:
@@ -58,9 +58,10 @@ public:
     static int64 GetClimateDistance(TConstArrayView<FTarget> Targets, TFunctionRef<int64(int32 Node)> Value);
 
     // The spawn for a request. The climate search asks Terrain->FindSpawn; when nothing near its pick is dry, the
-    // nearest-land search runs from the pick with a fixed reach (FallbackReach), and failing that the player starts at
-    // the water's surface over the pick. Terrains without a climate search (flat, the stand-in) and the bNearest
-    // request take the nearest-land search, whose fallback is the top solid block at the centre (the sea floor).
+    // square rings of columns beyond that (SpawnRadius + 1 to FallbackReach) are searched with real heights
+    // (IVoxelTerrain::FindDryRing), and failing that the player starts at the water's surface over the pick. Terrains
+    // without a climate search (flat, the stand-in) and the bNearest request take the nearest-land search, whose
+    // fallback is the top solid block at the centre (the sea floor).
     static FVoxelSpawn Find(const IVoxelTerrain& Terrain, const FVoxelSpawnRequest& Request);
     // The nearest-land search: square rings outward from Center to Reach; the first column whose top solid block is
     // dry land wins. Unless bExact, IsDry's estimate picks the columns and at most 64 are confirmed against the real
@@ -71,7 +72,17 @@ public:
     // none does.
     static int32 GetStandingZ(TFunctionRef<bool(int32 Z)> Collides, int32 Bottom, int32 Top, int32 Fallback);
 
-    static constexpr int32 FallbackReach = 192;
+    // The square rings of columns around Center from FirstRing to LastRing; Look gives a column's dry spot, if any.
+    // Per ring, Look runs on every column (in parallel when bParallel, so it must be thread-safe), then the first set
+    // result in the ring's order (IVoxelTerrain::FindDryRing) wins, so the answer does not depend on threads. Stops at
+    // the first ring with a hit.
+    static TOptional<FIntVector> SearchRings(FIntPoint Center, int32 FirstRing, int32 LastRing,
+        TFunctionRef<TOptional<FIntVector>(FIntPoint Column)> Look, bool bParallel);
+
+    // 26.3 checks the chunks within 5 of the pick's.
+    static constexpr int32 SpawnRadius = 5;
+    // The fallback's last ring, in columns (512 blocks) around the pick's column.
+    static constexpr int32 FallbackReach = 32;
 
 private:
     // Keeps the candidate with the smallest fitness; ties keep the earlier one (Best first).

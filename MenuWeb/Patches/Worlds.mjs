@@ -28,4 +28,11 @@ export function apply(patch) {
   patch.edit('create(){',
     "()=>message('World creation stops here','No world is generated in this menu prototype. Your name, seed, game rules, and generation settings are kept so you can return and change them.',tr('gui.back'))",
     '()=>void MenuApplication.createWorld(draft)');
+  // 26.3's GenericMessageScreen: one line of text in the middle, no buttons; shown while a world opens.
+  patch.edit('message(){title(current.data.title', 'message(){',
+    'generic(){title(current.data.title,Math.floor(H/2)-4)},message(){');
+  // It cannot be closed (26.3's shouldCloseOnEsc is false): the world is already on its way.
+  patch.edit("document.addEventListener('keydown',e=>{if(!e.repeat)startMenuMusic();",
+    "if(e.key==='Escape'){e.preventDefault();if(current.name==='rules')",
+    "if(e.key==='Escape'){e.preventDefault();if(current.name==='generic')return;if(current.name==='rules')");
 }

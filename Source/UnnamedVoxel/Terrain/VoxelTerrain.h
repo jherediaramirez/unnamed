@@ -24,8 +24,14 @@ public:
     virtual bool ConfirmDry(int32 X, int32 Y) const { return IsDry(X, Y); }
     // A new world's spawn by 26.3's climate search (FVoxelSpawnFinder), or false when the terrain has none (the flat
     // and stand-in terrains, which take the nearest-land search). OutCell is the feet cell on the first dry top block
-    // near the climate's pick (bOutDry), or, when none is dry, the pick at the water's surface.
+    // within FVoxelSpawnFinder::SpawnRadius columns of the climate's pick (bOutDry), or, when none is dry, the pick at
+    // the water's surface.
     virtual bool FindSpawn(FIntVector& OutCell, bool& bOutDry) const { return false; }
+    // The first dry top block, as a feet cell (X, Y, top + 1), on the square rings FirstRing to LastRing of columns
+    // around Column (Chebyshev distance == ring). Each ring's columns go DY outer, DX inner, each from -Ring to Ring;
+    // a column's block columns go by local Y x 16 + local X from its minimum corner. Unset when none is dry. The
+    // default checks ConfirmDry per block column; the density terrain reads whole columns in parallel.
+    virtual TOptional<FIntVector> FindDryRing(FIntPoint Column, int32 FirstRing, int32 LastRing) const;
     // Fills Out with column Position; Dense is scratch, resized to FVoxelColumn::DenseVolume.
     virtual void Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const = 0;
     // Decoration's snapshot (phase 6, S3): Generate without its last column-wide pass (the freeze pass), which

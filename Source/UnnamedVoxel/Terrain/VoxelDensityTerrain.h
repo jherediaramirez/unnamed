@@ -127,9 +127,11 @@ public:
     // Cheap: the preliminary surface (EstimateSurface) at or above sea level. ConfirmDry checks the real column.
     virtual bool IsDry(int32 X, int32 Y) const override;
     virtual bool ConfirmDry(int32 X, int32 Y) const override;
-    // The climate's pick, then the 11 x 11 columns in square rings around its column, each column's 16 x 16 block
-    // columns from its minimum corner: the first top solid block at or above SeaLevel - 1 (not under water) wins.
+    // The climate's pick, then the columns within SpawnRadius in square rings around its column (FindDryRing): the
+    // first top solid block at or above SeaLevel - 1 (not under water) wins.
     virtual bool FindSpawn(FIntVector& OutCell, bool& bOutDry) const override;
+    // Reads each ring's columns in parallel (GetSurfaceHeights), the first dry one in ring order wins.
+    virtual TOptional<FIntVector> FindDryRing(FIntPoint Column, int32 FirstRing, int32 LastRing) const override;
     virtual void Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const override;
     // Without the freeze pass, which FinishColumn runs (FVoxelFreezePass::ApplyToColumn) where Generate would.
     virtual void GenerateSnapshot(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const override;

@@ -28,6 +28,8 @@
 // Defaults match UVoxelWorldSettings; the settings object overwrites them at startup.
 TAutoConsoleVariable<int32> VoxelConsole::CVarViewRadius(
     TEXT("voxel.ViewRadius"), 12, TEXT("Columns drawn around the camera, as a radius in 16-block columns."));
+TAutoConsoleVariable<int32> VoxelConsole::CVarLoadingScreenMap(TEXT("voxel.LoadingScreenMap"), 1,
+    TEXT("The loading screen's look: 1 draws the chunk map under the progress bar (26.3's), 0 leaves it out."));
 TAutoConsoleVariable<int32> VoxelConsole::CVarUnloadMargin(
     TEXT("voxel.UnloadMargin"), 2, TEXT("Extra columns beyond the view radius before a column unloads (hysteresis)."));
 TAutoConsoleVariable<float> VoxelConsole::CVarApplyBudgetMs(

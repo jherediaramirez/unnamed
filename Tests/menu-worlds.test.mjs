@@ -8,7 +8,7 @@ const playground = {id: 'playground', name: 'Playground', summary: '2 km dev gri
   status: 'Playable - Java 26.3 foundation, session only'};
 const helloDraft = {name: 'Hello', seed: 'hello', gameMode: 'Survival', difficulty: 'Normal', type: 'Default'};
 function fixture({canQuit = true, saveFailure = false, createError = ''} = {}) {
-  const calls = [], notices = [], intervals = [];
+  const calls = [], notices = [], intervals = [], screens = [];
   let requested = false;
   // Native's saves, most recently played first.
   let saved = [{id: 'hello', name: 'Hello', summary: 'hello (10/8/26, 4:30 PM)', status: 'Survival Mode', draft: helloDraft}];
@@ -37,7 +37,8 @@ function fixture({canQuit = true, saveFailure = false, createError = ''} = {}) {
     screen: {querySelectorAll: () => []}, clone: structuredClone, console, Date, clearTimeout,
     state: {worlds: []}, current: {name: 'main'}, drawWorlds: () => calls.push('draw'),
     setTimeout: (fn, ms) => setTimeout(fn, ms >= 20000 ? 60 : ms >= 5000 ? 40 : ms), setInterval: fn => intervals.push(fn),
-    message: (...args) => notices.push(args),
+    message: (...args) => notices.push(args), tr: key => key,
+    go: (name, data) => { screens.push([name, data.title]); context.current = {name, data}; }, back: () => screens.push(['back']),
     MenuVideo: {prepareForExit: async () => {calls.push('video'); await new Promise(resolve => setTimeout(resolve, 5)); calls.push('video-saved');}, cancelExit: () => calls.push('video-unlock')},
   });
   for (const name of ['MenuInput', 'MenuPreferences']) context.window[name] = {
@@ -46,7 +47,7 @@ function fixture({canQuit = true, saveFailure = false, createError = ''} = {}) {
   // Script order registers video, input, then preferences.
   vm.runInContext('for (const store of [MenuVideo, window.MenuInput, window.MenuPreferences]) MenuStores.register(store)', context);
   vm.runInContext(read('MenuApplicationRuntime.js'), context);
-  return {api: context.window.MenuApplication, context, calls, notices, intervals, native};
+  return {api: context.window.MenuApplication, context, calls, notices, intervals, native, screens};
 }
 
 test('only listed worlds travel, after all three settings services drain, once', async () => {
@@ -57,6 +58,7 @@ test('only listed worlds travel, after all three settings services drain, once',
   await f.api.openWorld('playground'); await f.api.quit(); await request;
   assert.equal(f.calls.at(-1), 'open:playground');
   assert.equal(f.calls.filter(c => c.startsWith('open:')).length, 1);
+  assert.deepEqual(f.screens, [['generic', 'selectWorld.data_read']], "26.3's message screen from the click");
   assert.ok(f.calls.includes('MenuInput-saved') && f.calls.includes('MenuPreferences-saved') && f.calls.includes('video-saved'));
   assert.equal(f.api.enabled(), false);
   assert.equal(f.api.worldEnabled('playground'), false);
@@ -74,6 +76,7 @@ test('failed save leaves the menu and all setting stores usable', async () => {
   assert.deepEqual(f.calls.slice(-3), ['video-unlock', 'MenuInput-unlock', 'MenuPreferences-unlock']);
   assert.equal(f.api.isLoading(), false); assert.equal(f.api.worldEnabled('playground'), true);
   assert.equal(f.notices.at(-1)[1], 'Save failed.');
+  assert.deepEqual(f.screens, [['generic', 'selectWorld.data_read'], ['back']]);
 });
 
 test('unanswered settings drain never launches late after its deadline', async () => {
@@ -125,14 +128,27 @@ test('Create sends the draft once, after the settings drain, then follows travel
   assert.ok(f.calls.indexOf('create:New World') > f.calls.indexOf('MenuPreferences-saved'));
   assert.equal(f.api.getState().travelIssued, true);
   assert.equal(f.api.isLoading(), true, 'the page stays locked while Unreal travels');
+  assert.deepEqual(f.screens, [['generic', 'createWorld.preparing']]);
   assert.equal(f.context.state.worlds.find(w => w.id === 'new-world').name, 'New World');
   assert.deepEqual(f.notices, []);
+});
+
+test('a world that stops opening after its message screen goes back to the list', async () => {
+  const f = fixture(); await f.api.initialize();
+  const native = f.context.window.ue.menuapplication, accepted = await native.getstate();
+  native.requestopenworld = async () => ({...accepted, pendingWorld: true});
+  native.getstate = async () => ({...accepted, ok: false, error: 'The game is no longer available for map travel.'});
+  await f.api.openWorld('playground');
+  assert.deepEqual(f.screens, [['generic', 'selectWorld.data_read'], ['back']]);
+  assert.equal(f.notices.at(-1)[1], 'The game is no longer available for map travel.');
+  assert.equal(f.api.isLoading(), false);
 });
 
 test("a refused draft shows native's reason and leaves the menu usable", async () => {
   const f = fixture({createError: 'Enter a name for the world.'}); await f.api.initialize();
   await f.api.createWorld({name: ' '});
   assert.deepEqual([...f.notices.at(-1)], ['Create New World', 'Enter a name for the world.']);
+  assert.deepEqual(f.screens, [['generic', 'createWorld.preparing'], ['back']], 'the message screen goes back before the reason shows');
   assert.equal(f.api.isLoading(), false);
   assert.equal(f.api.worldEnabled('playground'), true);
   assert.deepEqual(f.calls.slice(-3), ['video-unlock', 'MenuInput-unlock', 'MenuPreferences-unlock']);

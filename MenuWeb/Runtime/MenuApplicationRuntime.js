@@ -37,12 +37,12 @@ const MenuApplication = (() => {
       stillPending: () => true, failed: 'The game could not close.',
       drain: 'Settings did not finish changing. Please try quitting again.',
       timedOut: 'The game did not finish closing. Please try again.'},
-    world: {title: 'Open World', request: 'RequestOpenWorld', done: reply => reply.travelIssued,
+    world: {title: 'Open World', request: 'RequestOpenWorld', done: reply => reply.travelIssued, preparing: 'selectWorld.data_read',
       stillPending: reply => reply.pendingWorld, failed: 'The selected world could not open.',
       drain: 'Settings did not finish changing. Please try opening the world again.',
       timedOut: 'The selected world did not finish opening. Please try again.'},
     // Native checks and saves the draft, then opens the new world like any other.
-    create: {title: 'Create New World', request: 'CreateWorld', done: reply => reply.travelIssued,
+    create: {title: 'Create New World', request: 'CreateWorld', done: reply => reply.travelIssued, preparing: 'createWorld.preparing',
       stillPending: reply => reply.pendingWorld, failed: 'The world could not be created.',
       drain: 'Settings did not finish changing. Please try creating the world again.',
       timedOut: 'The new world did not finish opening. Please try again.'}
@@ -53,6 +53,8 @@ const MenuApplication = (() => {
     retryAllowed = false;
     revision++;
     refresh();
+    // 26.3's message screen from the click until Unreal changes levels (the world's own loading screen follows).
+    if (exit.preparing) go('generic', {title: tr(exit.preparing)});
     const deadline = Date.now() + MenuBridge.exitTimeout;
     const call = (method, ...callArgs) => {
       const remaining = deadline - Date.now();
@@ -79,6 +81,7 @@ const MenuApplication = (() => {
       retryAllowed = true;
       revision++;
       MenuStores.cancelExit();
+      if (current.name === 'generic') back();
       refresh();
       message(exit.title, error.message);
     }

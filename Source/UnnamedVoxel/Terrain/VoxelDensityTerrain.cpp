@@ -274,30 +274,35 @@ bool FVoxelDensityTerrain::FindSpawn(FIntVector& OutCell, bool& bOutDry) const
     if (!IsValid()) return false;
     const FIntPoint Spot = SpawnFinder.FindClimateSpot();
     constexpr int32 Size = VoxelConstants::ColumnSize;
-    // 26.3 checks the chunks within 5 of the pick's.
-    constexpr int32 Radius = 5;
     const FIntPoint Center(FMath::FloorToInt32(Spot.X / double(Size)), FMath::FloorToInt32(Spot.Y / double(Size)));
-    int32 Heights[Size * Size];
-    for (int32 Ring = 0; Ring <= Radius; ++Ring)
-        for (int32 DY = -Ring; DY <= Ring; ++DY)
-            for (int32 DX = -Ring; DX <= Ring; ++DX)
-            {
-                if (FMath::Max(FMath::Abs(DX), FMath::Abs(DY)) != Ring) continue;
-                const FIntPoint Position = Center + FIntPoint(DX, DY);
-                GetSurfaceHeights(Position, Heights);
-                for (int32 Index = 0; Index < Size * Size; ++Index)
-                    // Water fills to SeaLevel - 1, so a top block there or higher has air above it.
-                    if (Heights[Index] >= SeaLevel - 1)
-                    {
-                        OutCell = FIntVector(
-                            Position.X * Size + Index % Size, Position.Y * Size + Index / Size, Heights[Index] + 1);
-                        bOutDry = true;
-                        return true;
-                    }
-            }
+    if (const TOptional<FIntVector> Land = FindDryRing(Center, 0, FVoxelSpawnFinder::SpawnRadius))
+    {
+        OutCell = *Land;
+        bOutDry = true;
+        return true;
+    }
     OutCell = FIntVector(Spot.X, Spot.Y, SeaLevel);
     bOutDry = false;
     return true;
+}
+
+TOptional<FIntVector> FVoxelDensityTerrain::FindDryRing(FIntPoint Around, int32 FirstRing, int32 LastRing) const
+{
+    constexpr int32 Size = VoxelConstants::ColumnSize;
+    return FVoxelSpawnFinder::SearchRings(
+        Around, FirstRing, LastRing,
+        [this](FIntPoint Position) -> TOptional<FIntVector>
+        {
+            int32 Heights[Size * Size];
+            GetSurfaceHeights(Position, Heights);
+            for (int32 Index = 0; Index < Size * Size; ++Index)
+                // Water fills to SeaLevel - 1, so a top block there or higher has air above it.
+                if (Heights[Index] >= SeaLevel - 1)
+                    return FIntVector(
+                        Position.X * Size + Index % Size, Position.Y * Size + Index / Size, Heights[Index] + 1);
+            return {};
+        },
+        true);
 }
 
 void FVoxelDensityTerrain::Generate(FIntPoint Position, FVoxelColumn& Out, TArray<uint16>& Dense) const

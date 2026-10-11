@@ -10,6 +10,8 @@ namespace VoxelConsole
 {
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarViewRadius;
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarUnloadMargin;
+    // The loading screen's look: 1 draws the chunk map under the progress bar (26.3's), 0 leaves it out.
+    extern UNNAMED_API TAutoConsoleVariable<int32> CVarLoadingScreenMap;
     extern UNNAMED_API TAutoConsoleVariable<float> CVarApplyBudgetMs;
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarMaxTasksInFlight;
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarAmbientOcclusion;

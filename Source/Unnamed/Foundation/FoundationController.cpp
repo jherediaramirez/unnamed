@@ -10,6 +10,9 @@
 #include "Menu/MenuPreferences.h"
 #include "Menu/MenuVideoSettings.h"
 #include "UnnamedProjectSettings.h"
+#include "UnnamedLog.h"
+#include "Foundation/FoundationLab.h"
+#include "Voxel/VoxelFlyCamera.h"
 #include "Dom/JsonValue.h"
 #include "EnhancedInputComponent.h"
 #include "Engine/Engine.h"
@@ -44,7 +47,8 @@ UUnnamedInputSubsystem* AFoundationController::GetInputSubsystem() const
 
 bool AFoundationController::IsGameplay() const
 {
-    return GetFoundationPawn() && !MenuHost->IsOpen() && !Panels->IsOpen() && !InputRouter->IsCapturing();
+    return GetFoundationPawn() && !MenuHost->IsOpen() && !Panels->IsOpen() && !InputRouter->IsCapturing() &&
+        !Hud->IsLoadingScreenShown();
 }
 
 void AFoundationController::BeginPlay()
@@ -76,7 +80,8 @@ void AFoundationController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AFoundationController::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
-    // One fixed order per frame: timing, pawn-driven updates, then the throttled HUD refresh.
+    // One fixed order per frame: the loading screen, timing, pawn-driven updates, then the throttled HUD refresh.
+    UpdateLoadingScreen();
     Hud->BeginFrame();
     if (AFoundationPawn* FoundationPawn = GetFoundationPawn())
     {
@@ -99,6 +104,71 @@ void AFoundationController::Tick(float DeltaSeconds)
         Hud->DrawDebug(*FoundationPawn);
     }
     Hud->Refresh();
+}
+
+void AFoundationController::UpdateLoadingScreen()
+{
+    constexpr double TimeoutSeconds = 15;
+    AFoundationPawn* FoundationPawn = GetFoundationPawn();
+    const AFoundationLab* Lab = FoundationPawn ? FoundationPawn->GetLab() : nullptr;
+    if (!Lab) return;
+    bool bShowing = Hud->IsLoadingScreenShown();
+    FFoundationLoadState State;
+    Lab->GetLoadState(State, bShowing);
+    // After the first load only a world started again (the player no longer placed) shows it: a flight or a moved view
+    // that is merely not on screen yet does not.
+    if (!bLoadingDone && !bShowing && !State.bReady && (!bLoadedOnce || !State.bPlayerPlaced))
+    {
+        // Not ready: show the screen (a world started again by voxel.Seed shows it again) with a fresh timer.
+        Lab->GetLoadState(State, true);
+        Hud->ShowLoadingScreen(State);
+        // No game viewport (a headless run): nothing to show, so nothing is held either.
+        if (!Hud->IsLoadingScreenShown()) return;
+        LoadingStart = FPlatformTime::Seconds();
+        bShowing = true;
+        UE_LOG(LogUnnamedFoundation, Display, TEXT("Loading screen shown"));
+    }
+    if (bShowing)
+    {
+        const double Elapsed = FPlatformTime::Seconds() - LoadingStart;
+        const bool bTimeout = !State.bReady && Elapsed >= TimeoutSeconds;
+        if (State.bReady || bTimeout)
+        {
+            Hud->HideLoadingScreen();
+            bShowing = false;
+            bLoadingDone = true;
+            bLoadedOnce = true;
+            UE_LOG(LogUnnamedFoundation, Display, TEXT("Loading screen hidden after %d ms (%s)"),
+                FMath::RoundToInt(Elapsed * 1000.), State.bReady ? TEXT("ready") : TEXT("timeout"));
+            // A flight's fly camera froze the player and its input itself; the pause menu and panels own theirs.
+            if (!AVoxelFlyCamera::Find(GetWorld()) && !MenuHost->IsOpen() && !Panels->IsOpen()) ResumeFoundation();
+            bHoldForPlacement = !State.bPlayerPlaced;
+        }
+        else
+        {
+            Hud->UpdateLoadingScreen(State);
+            bHoldForPlacement = true;
+        }
+    }
+    else if (State.bReady)
+        bLoadingDone = false;
+    if (bHoldForPlacement)
+    {
+        if (State.bPlayerPlaced && !bShowing)
+        {
+            bHoldForPlacement = false;
+            if (IsGameplay()) FoundationPawn->SetSimulationEnabled(true);
+        }
+        else
+        {
+            // Nothing may act under the screen, or on an unplaced player: input and simulation stay off.
+            if (bShowing)
+                if (UUnnamedInputSubsystem* InputSubsystem = GetInputSubsystem();
+                    InputSubsystem && InputSubsystem->IsGameplayEnabled())
+                    InputSubsystem->SetGameplayInputEnabled(false);
+            FoundationPawn->SetSimulationEnabled(false);
+        }
+    }
 }
 
 void AFoundationController::SetupInputComponent()

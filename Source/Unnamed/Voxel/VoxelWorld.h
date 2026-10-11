@@ -69,6 +69,9 @@ public:
     virtual void ApplyLogicalOffset(const FVector& Offset) override;
     // A saved world's game mode (Hardcore plays as Survival on Hard), difficulty and natural regeneration rule.
     virtual void ConfigurePlayer(FFoundationVitals& Vitals) const override;
+    // The loading screen's state: ready once the player stands on the spawn and the view is on screen; progress is the
+    // columns in view that are on screen; the map colours the columns around the spawn by pipeline stage.
+    virtual void GetLoadState(FFoundationLoadState& Out, bool bWithMap) const override;
     // The F3 line: the world clock (FVoxelWorldClock::Describe).
     virtual FString DescribeDebug() const override;
 
@@ -145,6 +148,8 @@ private:
     void StandOnSpawnBlocks();
     void ReturnPlayerToSpawn() const;
     void UpdateShots();
+    // -VoxelLoadingShot: the loading screen's two looks, saved while it shows (see UpdateLoadingShot's stages).
+    void UpdateLoadingShot();
     // -VoxelShotEdits: a pit across the corner of four columns east and south of the spawn, and a pillar of stone
     // and glass on a column border, written through the authority's block world.
     void ApplyShotEdits();
@@ -205,6 +210,12 @@ private:
 
     // -VoxelShot: the shot being taken, frames spent on it, its summed GPU time and the finished shots' means.
     FString ShotFolder;
+    // -VoxelLoadingShot=<folder>: loading-a.png (with the map), then loading-b.png (map forced off). Stage: 0 waits for
+    // half the view, 1 waits for a's file, 2 forces the map off, 3 requests b with it off, 4 waits for b's file, 5
+    // done. The loading screen does not end before stage 5.
+    FString LoadingShotFolder;
+    int32 LoadingShotStage = 0;
+    bool bLoadingShotNoMap = false;
     // Where the spawn search starts (-VoxelSpawnAt=X,Y, to shoot a chosen place); the origin by default. It moves only
     // the spawn, never a block.
     FIntPoint SpawnSearchCenter = FIntPoint::ZeroValue;

@@ -68,6 +68,10 @@ private:
     bool HandleInteractionAction(AFoundationPawn& FoundationPawn, const FString& Name, bool bDown);
     // Repeats held attack/use once per simulation step for the token fixture (Foundation lab only).
     void UpdateHeldActions(const AFoundationPawn& FoundationPawn);
+    // The world's loading screen (Tick, before the HUD's frame work): shown while the lab is not ready, for at most 15
+    // s; gameplay input and the pawn's simulation stay off under it, and after a timeout the simulation waits for the
+    // player to stand on the spawn.
+    void UpdateLoadingScreen();
     // Logs the interaction authority's committed and rejected outcomes once each.
     void NoteInteraction(const AFoundationPawn& FoundationPawn);
 
@@ -89,4 +93,10 @@ private:
     int64 LastInteractionEvent = 0;
     FString LastInteractionText;
     FString LastLogical = TEXT("none");
+    // Loading screen: when it showed (seconds), done with this load (hidden and not ready since), and the simulation
+    // held off after a timeout until the player is placed.
+    double LoadingStart = 0;
+    bool bLoadingDone = false;
+    bool bLoadedOnce = false;
+    bool bHoldForPlacement = false;
 };
