@@ -1,3 +1,4 @@
+#include "Algo/IndexOf.h"
 #include "Algo/Reverse.h"
 #include "Async/ParallelFor.h"
 #include "Biome/VoxelBiomeTable.h"
@@ -39,7 +40,8 @@ namespace
     // RunTreeProbes compiles; Trees.Shapes must fail), 3 to 7 as ApplyTreeTestMutation says, 8 the fallen log one
     // longer (scout J's: fallen super birch must then fail its reach of 15 with 16; RunTreeProbes), 9 every fallen log
     // pointing the same way (the direction test must fail; SimulateTrees), 10 and 11 as RunTreeProbes says (S9e: the
-    // azalea's leaves and the rooted dirt must fail). With 0, every test must pass.
+    // azalea's leaves and the rooted dirt must fail), 12 and 13 as RunTreeProbes says and 14 as the vines test (S9e
+    // part 2: bamboo's height, the forest rock's moves, the vines' face order). With 0, every test must pass.
     constexpr int32 TreeTestMutation = 0;
     // For manual runs: the number of 100-tree self-samples per configuration that check the distribution rules'
     // calibration (RunTreeProbes); 0 in the suite.
@@ -89,6 +91,10 @@ namespace
         TArray<double> Cells;
         TMap<int32, int64> CapTopHist;
         TArray<TMap<FIntVector, FString>> Examples;
+        // A bamboo probe's (S9e part 2): per placed stalk its box's highest dy (its top; CapTopHist counts them too,
+        // and Examples holds its examples). The forest rock probe's: its boxes' extremes (bbox_extremes) in our axes.
+        TArray<double> Tops;
+        FIntVector BoxMin = FIntVector::ZeroValue, BoxMax = FIntVector::ZeroValue;
     };
 
     // A probe of under 50 tries (a ceiling's 16): too few trees for the distribution rules (the means, decorations,
@@ -222,13 +228,19 @@ namespace
                 // A stump alone (its vines reach 1) has no direction, as ours (SimulateTrees) counts none.
                 if (Reach[Side] >= 2) ++Out.SideHist.FindOrAdd(Side);
             }
-            // A huge mushroom's cap top: its box's highest dy.
-            if (Out.Name.StartsWith(TEXT("huge_")) && Placement->TryGetArrayField(TEXT("bbox"), Box) && Box->Num() == 6)
+            // A huge mushroom's cap top, or a bamboo stalk's top (S9e part 2): its box's highest dy.
+            const bool bBamboo = Out.Name.StartsWith(TEXT("bamboo_"));
+            if ((Out.Name.StartsWith(TEXT("huge_")) || bBamboo) && Placement->TryGetArrayField(TEXT("bbox"), Box) &&
+                Box->Num() == 6)
+            {
                 ++Out.CapTopHist.FindOrAdd(int32((*Box)[3]->AsNumber()));
+                if (bBamboo) Out.Tops.Add((*Box)[3]->AsNumber());
+            }
         }
-        // A huge mushroom's examples: [dx, dy, dz, state] per cell, in the reference's axes.
+        // A huge mushroom's or a bamboo's examples: [dx, dy, dz, state] per cell, in the reference's axes.
         const TArray<TSharedPtr<FJsonValue>>* Examples;
-        if (Out.Name.StartsWith(TEXT("huge_")) && Json->TryGetArrayField(TEXT("examples"), Examples))
+        if ((Out.Name.StartsWith(TEXT("huge_")) || Out.Name.StartsWith(TEXT("bamboo_"))) &&
+            Json->TryGetArrayField(TEXT("examples"), Examples))
             for (const TSharedPtr<FJsonValue>& Example : *Examples)
             {
                 TMap<FIntVector, FString>& Cells = Out.Examples.AddDefaulted_GetRef();
@@ -243,6 +255,13 @@ namespace
             }
         Out.Bfs7 = ReadTreeStat(*Json, TEXT("leaf_bfs7"), TEXT("mean"));
         const TSharedPtr<FJsonObject>* Object;
+        // The boxes' extremes (S9e part 2's forest rock): the reference's x, y (up) and z as ours X, Z and Y.
+        if (Json->TryGetObjectField(TEXT("bbox_extremes"), Object))
+        {
+            const auto Extreme = [&Object](const TCHAR* Key) { return int32((*Object)->GetNumberField(Key)); };
+            Out.BoxMin = FIntVector(Extreme(TEXT("min_dx")), Extreme(TEXT("min_dz")), Extreme(TEXT("min_dy")));
+            Out.BoxMax = FIntVector(Extreme(TEXT("max_dx")), Extreme(TEXT("max_dz")), Extreme(TEXT("max_dy")));
+        }
         if (Json->TryGetObjectField(TEXT("log_top_hist"), Object)) Out.TopHist = ReadTreeCounts(Object);
         if (Json->TryGetObjectField(TEXT("log_comp6_hist"), Object)) Out.Comp6Hist = ReadTreeCounts(Object);
         if (Json->TryGetObjectField(TEXT("log_comp26_hist"), Object)) Out.Comp26Hist = ReadTreeCounts(Object);
@@ -497,11 +516,13 @@ namespace
         // OutFallen, a fallen tree (S9d part 2) compiles into it, and Out is its builder's tree with the stump's and
         // the log's decorators together (what the block set and the decoration rules read).
         // With OutMushroom, a huge mushroom compiles into it (Out stays empty). With OutRootSystem, a root system (S9e)
-        // compiles into it, and Out is its tree.
+        // compiles into it, and Out is its tree. With OutBamboo or OutBlob, a bamboo or a block_blob (S9e part 2)
+        // compiles into it (Out stays empty).
         bool Compile(FAutomationTestBase& Test, const FString& Feature, FVoxelTreeConfig& Out, FString& OutSkip,
             TSharedPtr<FVoxelFallenTreeConfig>* OutFallen = nullptr,
             TSharedPtr<FVoxelHugeMushroomConfig>* OutMushroom = nullptr,
-            TSharedPtr<FVoxelRootSystemConfig>* OutRootSystem = nullptr)
+            TSharedPtr<FVoxelRootSystemConfig>* OutRootSystem = nullptr,
+            TSharedPtr<FVoxelBambooConfig>* OutBamboo = nullptr, TSharedPtr<FVoxelBlockBlobConfig>* OutBlob = nullptr)
         {
             int32 Entry = Graph.FindEntry(EVoxelFeatureRegistry::Feature, Feature);
             if (Entry == INDEX_NONE) Entry = Graph.FindEntry(EVoxelFeatureRegistry::Feature, StripNamespace(Feature));
@@ -561,6 +582,33 @@ namespace
                 Out = RootSystem->Tree;
                 *OutRootSystem = RootSystem;
                 return true;
+            }
+            if (OutBamboo && Type == TEXT("minecraft:bamboo"))
+            {
+                const TSharedRef<FVoxelBambooConfig> Bamboo = MakeShared<FVoxelBambooConfig>();
+                FString Error;
+                if (!Test.TestTrue(FString::Printf(TEXT("%s compiles"), *Feature),
+                        VoxelBigVegetation::CompileBamboo(Graph, Node, *Tags, *Table, Predicates, *Bamboo, &Error)))
+                {
+                    Test.AddError(Error);
+                    return false;
+                }
+                *OutBamboo = Bamboo;
+                return true;
+            }
+            if (OutBlob && Type == TEXT("minecraft:block_blob"))
+            {
+                const TSharedRef<FVoxelBlockBlobConfig> Blob = MakeShared<FVoxelBlockBlobConfig>();
+                FString Error;
+                if (!Test.TestTrue(FString::Printf(TEXT("%s compiles"), *Feature),
+                        VoxelBigVegetation::CompileBlockBlob(
+                            Graph, Node, *Tags, *Table, Predicates, *Blob, OutSkip, &Error)))
+                {
+                    Test.AddError(Error);
+                    return false;
+                }
+                *OutBlob = Blob;
+                return OutSkip.IsEmpty();
             }
             if (Graph.GetType(Node) != TEXT("minecraft:tree"))
             {
@@ -1197,6 +1245,39 @@ namespace
                 }
     }
 
+    // An example's cells (relative to the origin, by state name "block[property=value,...]") made in our table, against
+    // ours (null: none of ours of its height): empty when every cell matches, else the first mismatch.
+    FString MatchExample(
+        const FVoxelBlockTable& Table, const TMap<FIntVector, FString>& Example, const TMap<FIntVector, uint16>* Ours)
+    {
+        int32 Top = MIN_int32;
+        for (const TPair<FIntVector, FString>& Cell : Example)
+            Top = FMath::Max(Top, Cell.Key.Z);
+        if (!Ours) return FString::Printf(TEXT("none of ours with its top at %d"), Top);
+        if (Ours->Num() != Example.Num())
+            return FString::Printf(TEXT("%d cells against %d"), Ours->Num(), Example.Num());
+        for (const TPair<FIntVector, FString>& Cell : Example)
+        {
+            FString Block = Cell.Value, Properties;
+            TArray<TPair<FName, FName>> Pairs;
+            if (Cell.Value.Split(TEXT("["), &Block, &Properties))
+            {
+                TArray<FString> Items;
+                Properties.LeftChop(1).ParseIntoArray(Items, TEXT(","));
+                for (const FString& Item : Items)
+                {
+                    FString Key, Value;
+                    if (Item.Split(TEXT("="), &Key, &Value)) Pairs.Add({FName(*Key), FName(*Value)});
+                }
+            }
+            const int32 State = Table.MakeState(Block, Pairs);
+            const uint16* Our = Ours->Find(Cell.Key);
+            if (!Our || State == INDEX_NONE || *Our != State)
+                return FString::Printf(TEXT("(%d, %d, %d) %s"), Cell.Key.X, Cell.Key.Y, Cell.Key.Z, *Cell.Value);
+        }
+        return FString();
+    }
+
     // A huge mushroom probe (S9d part 2, the manager's call Q3) against TreeTestCount of ours on its column, each from
     // its own stream: the placed rate; caps exactly 45 per mushroom (scout J's exact rule 6); stems per mushroom (the
     // probe's cells less 45) by CheckMeans' rule; the cap's top dy histogram (chi-square homogeneity); the reach and
@@ -1280,42 +1361,213 @@ namespace
                 bSeen |= Table.FindBlock(Id) == Block;
             if (!bSeen) Failures.Add(FString::Printf(TEXT("block %d not in the probe's blocks"), Block));
         }
-        // The examples: each cell's state name ("block[property=value,...]") made in our table, against ours.
+        // The examples: each against our first mushroom of its top (MatchExample).
         int32 Exact = 0;
         for (const TMap<FIntVector, FString>& Example : Probe.Examples)
         {
             int32 Top = MIN_int32;
             for (const TPair<FIntVector, FString>& Cell : Example)
                 Top = FMath::Max(Top, Cell.Key.Z);
-            const TMap<FIntVector, uint16>* Ours = ByTop.Find(Top);
-            FString Mismatch = Ours ? FString() : FString::Printf(TEXT("none of ours with its top at %d"), Top);
-            if (Ours && Ours->Num() != Example.Num())
-                Mismatch = FString::Printf(TEXT("%d cells against %d"), Ours->Num(), Example.Num());
-            for (const TPair<FIntVector, FString>& Cell : Example)
-            {
-                if (!Mismatch.IsEmpty()) break;
-                FString Block = Cell.Value, Properties;
-                TArray<TPair<FName, FName>> Pairs;
-                if (Cell.Value.Split(TEXT("["), &Block, &Properties))
-                {
-                    TArray<FString> Items;
-                    Properties.LeftChop(1).ParseIntoArray(Items, TEXT(","));
-                    for (const FString& Item : Items)
-                    {
-                        FString Key, Value;
-                        if (Item.Split(TEXT("="), &Key, &Value)) Pairs.Add({FName(*Key), FName(*Value)});
-                    }
-                }
-                const int32 State = Table.MakeState(Block, Pairs);
-                const uint16* Our = Ours->Find(Cell.Key);
-                if (!Our || State == INDEX_NONE || *Our != State)
-                    Mismatch =
-                        FString::Printf(TEXT("(%d, %d, %d) %s"), Cell.Key.X, Cell.Key.Y, Cell.Key.Z, *Cell.Value);
-            }
+            const FString Mismatch = MatchExample(Table, Example, ByTop.Find(Top));
             Exact += Mismatch.IsEmpty();
             if (!Mismatch.IsEmpty()) Failures.Add(FString::Printf(TEXT("an example differs: %s"), *Mismatch));
         }
         OutLine += FString::Printf(TEXT(", examples exact %d/%d"), Exact, Probe.Examples.Num());
+        return Failures;
+    }
+
+    // Ours against the probe's per-tree values by CheckMeans' rule (fails when over 5% off and |z| > 3), on the line.
+    void CompareMeanValues(const TCHAR* Name, const TArray<double>& Ours, const TArray<double>& Theirs,
+        FString& OutLine, TArray<FString>& Failures)
+    {
+        double OurMean, OurDeviation, TheirMean, TheirDeviation;
+        MeanAndDeviation(Ours, OurMean, OurDeviation);
+        MeanAndDeviation(Theirs, TheirMean, TheirDeviation);
+        const double Error = FMath::Sqrt(FMath::Square(TheirDeviation) / FMath::Max(Theirs.Num(), 1) +
+            FMath::Square(OurDeviation) / FMath::Max(Ours.Num(), 1));
+        const double Z = Error > 0 ? (OurMean - TheirMean) / Error : (OurMean == TheirMean ? 0 : 99);
+        const double Relative = TheirMean ? (OurMean - TheirMean) / TheirMean : (OurMean ? 1 : 0);
+        OutLine +=
+            FString::Printf(TEXT(", %s %.2f/%.2f (%+.1f%%, z %+.1f)"), Name, OurMean, TheirMean, 100 * Relative, Z);
+        if (FMath::Abs(Relative) > 0.05 && FMath::Abs(Z) > 3)
+            Failures.Add(FString::Printf(TEXT("%s %+.1f%%"), Name, 100 * Relative));
+    }
+
+    // Writes of TreeTestCount bamboo stalks or block blobs (S9e part 2) on the probe's column, each from its own
+    // stream, as CompareMushrooms runs them; per placed one, its writes.
+    TArray<TArray<FVoxelPlantWrite>> SimulatePlants(const FTreeTestKit& Kit, const FTreeProbe& Probe,
+        TFunctionRef<bool(FVoxelXoroshiro&, const FVoxelPlantEnvironment&)> Place)
+    {
+        const FVoxelBlockTable& Table = *Kit.Table;
+        const TSharedRef<FVoxelColumn> Column = MakeProbeColumn(Table, Probe);
+        const FVoxelColumn* Around[9];
+        for (const FVoxelColumn*& Each : Around)
+            Each = &*Column;
+        FVoxelDecorationContext Context(FIntPoint(0, 0), Around, &Table);
+        TArray<FVoxelPlantWrite> Writes;
+        const auto Emit = [&Writes](const FVoxelPlantWrite& Write) { Writes.Add(Write); };
+        const FVoxelPlantEnvironment Env{
+            Table, Kit.Survival, Kit.Predicates, Kit.Providers, Context, Kit.UpperOf, Emit};
+        TArray<TArray<FVoxelPlantWrite>> Placed;
+        for (int32 Index = 0; Index < TreeTestCount; ++Index)
+        {
+            Writes.Reset();
+            FVoxelXoroshiro Random(VoxelRandom::Hash64(TreeTestSeed, VoxelRandom::Salt("tree test"), Index, 0));
+            if (Place(Random, Env)) Placed.Add(Writes);
+        }
+        return Placed;
+    }
+
+    // The placed rate against the probe's (an exact binomial, fails below 0.01), on the line; false when none placed.
+    bool ComparePlaced(const FTreeProbe& Probe, int32 Placed, FString& OutLine, TArray<FString>& Failures)
+    {
+        const double Rate = double(Placed) / TreeTestCount;
+        const double RateP = BinomialTwoSided(Probe.Placed, Probe.Tries, Rate);
+        OutLine = FString::Printf(TEXT("%s: placed %.0f%%/%.0f%% (p %.2f)"), *Probe.Name, 100 * Rate,
+            100. * Probe.Placed / FMath::Max(Probe.Tries, 1), RateP);
+        if (RateP < 0.01) Failures.Add(TEXT("placed rate"));
+        return Placed > 0;
+    }
+
+    // A bamboo probe (S9e part 2, F3b's checks) against TreeTestCount of ours: the placed rate; the stalk's top dy
+    // histogram (chi-square homogeneity); the share of stalks with a podzol disk (an exact binomial, fails below 0.01)
+    // and podzol per stalk (CheckMeans' rule); the reach and the blocks exactly; each example's stalk cell for cell
+    // against our first stalk of its height (its podzol left out: ours draws the disk apart from the height).
+    TArray<FString> CompareBamboo(
+        const FTreeTestKit& Kit, const FVoxelBambooConfig& Config, const FTreeProbe& Probe, FString& OutLine)
+    {
+        const FVoxelBlockTable& Table = *Kit.Table;
+        const FIntVector Origin(8, 8, Probe.OriginZ);
+        const TArray<TArray<FVoxelPlantWrite>> Placed =
+            SimulatePlants(Kit, Probe, [&](FVoxelXoroshiro& Random, const FVoxelPlantEnvironment& Env)
+                { return VoxelBigVegetation::PlaceBamboo(Config, Origin, Random, Env); });
+        TArray<FString> Failures;
+        if (!ComparePlaced(Probe, Placed.Num(), OutLine, Failures)) return Failures;
+        const int32 PodzolBlock = Table.Get(Config.Podzol).Block;
+        int32 Reach = 0, PodzolStalks = 0;
+        TArray<double> Podzols;
+        TMap<int32, int64> Tops;
+        TSet<int32> Blocks;
+        TMap<int32, TMap<FIntVector, uint16>> ByTop;
+        for (const TArray<FVoxelPlantWrite>& Writes : Placed)
+        {
+            int32 Podzol = 0, Top = MIN_int32;
+            TMap<FIntVector, uint16> Stalk;
+            for (const FVoxelPlantWrite& Write : Writes)
+            {
+                const int32 Block = Table.Get(Write.State).Block;
+                Blocks.Add(Block);
+                Reach = FMath::Max(
+                    Reach, FMath::Max(FMath::Abs(Write.Cell.X - Origin.X), FMath::Abs(Write.Cell.Y - Origin.Y)));
+                if (Block == PodzolBlock)
+                {
+                    ++Podzol;
+                    continue;
+                }
+                Top = FMath::Max(Top, Write.Cell.Z - Origin.Z);
+                Stalk.Add(Write.Cell - Origin, Write.State);
+            }
+            Podzols.Add(Podzol);
+            PodzolStalks += Podzol > 0;
+            ++Tops.FindOrAdd(Top);
+            if (!ByTop.Contains(Top)) ByTop.Add(Top, MoveTemp(Stalk));
+        }
+        const double TopP = ChiSquareHomogeneity(Tops, Probe.CapTopHist);
+        OutLine += FString::Printf(TEXT(", top p %.2f"), TopP);
+        if (TopP < 0.01) Failures.Add(TEXT("stalk top histogram"));
+        // The probe's podzol per stalk: its cells less the stalk's (top + 1), on open flat ground.
+        TArray<double> TheirPodzols;
+        int32 TheirPodzolStalks = 0;
+        for (int32 Index = 0; Index < Probe.Cells.Num() && Index < Probe.Tops.Num(); ++Index)
+        {
+            TheirPodzols.Add(Probe.Cells[Index] - (Probe.Tops[Index] + 1));
+            TheirPodzolStalks += TheirPodzols.Last() > 0;
+        }
+        const double ShareP =
+            BinomialTwoSided(TheirPodzolStalks, TheirPodzols.Num(), double(PodzolStalks) / Placed.Num());
+        OutLine += FString::Printf(TEXT(", podzol stalks %.1f%%/%.1f%% (p %.2f)"), 100. * PodzolStalks / Placed.Num(),
+            100. * TheirPodzolStalks / FMath::Max(TheirPodzols.Num(), 1), ShareP);
+        if (ShareP < 0.01) Failures.Add(TEXT("podzol stalks"));
+        CompareMeanValues(TEXT("podzol"), Podzols, TheirPodzols, OutLine, Failures);
+        OutLine += FString::Printf(TEXT(", reach %d/%d"), Reach, Probe.AllReach);
+        if (Reach != Probe.AllReach) Failures.Add(TEXT("reach"));
+        for (const int32 Block : Blocks)
+        {
+            bool bSeen = false;
+            for (const FString& Id : Probe.Blocks)
+                bSeen |= Table.FindBlock(Id) == Block;
+            if (!bSeen) Failures.Add(FString::Printf(TEXT("block %d not in the probe's blocks"), Block));
+        }
+        int32 Exact = 0;
+        for (const TMap<FIntVector, FString>& Example : Probe.Examples)
+        {
+            TMap<FIntVector, FString> Stalk;
+            int32 Top = MIN_int32;
+            for (const TPair<FIntVector, FString>& Cell : Example)
+                if (Cell.Value.StartsWith(TEXT("bamboo")))
+                {
+                    Stalk.Add(Cell.Key, Cell.Value);
+                    Top = FMath::Max(Top, Cell.Key.Z);
+                }
+            const FString Mismatch = MatchExample(Table, Stalk, ByTop.Find(Top));
+            Exact += Mismatch.IsEmpty();
+            if (!Mismatch.IsEmpty()) Failures.Add(FString::Printf(TEXT("an example differs: %s"), *Mismatch));
+        }
+        OutLine += FString::Printf(TEXT(", examples exact %d/%d"), Exact, Probe.Examples.Num());
+        return Failures;
+    }
+
+    // The forest rock probe (block_blob, S9e part 2, F3b's checks) against TreeTestCount of ours: the placed rate;
+    // cells per rock (CheckMeans' rule) and their histogram (chi-square homogeneity in bins of three cells, 24 and more
+    // in one: ChiSquareHomogeneity does not pool, and 100 probe rocks leave bins of one); the box's extremes on every
+    // axis, the reach and the blocks exactly. (F3b matched its two examples by an exhaustive search over the draws.)
+    TArray<FString> CompareBlob(
+        const FTreeTestKit& Kit, const FVoxelBlockBlobConfig& Config, const FTreeProbe& Probe, FString& OutLine)
+    {
+        const FVoxelBlockTable& Table = *Kit.Table;
+        const FIntVector Origin(8, 8, Probe.OriginZ);
+        const TArray<TArray<FVoxelPlantWrite>> Placed =
+            SimulatePlants(Kit, Probe, [&](FVoxelXoroshiro& Random, const FVoxelPlantEnvironment& Env)
+                { return VoxelBigVegetation::PlaceBlockBlob(Config, Origin, Random, Env); });
+        TArray<FString> Failures;
+        if (!ComparePlaced(Probe, Placed.Num(), OutLine, Failures)) return Failures;
+        TArray<double> Cells;
+        TMap<int32, int64> Counts, TheirCounts;
+        FIntVector Low(MAX_int32), High(MIN_int32);
+        int32 Reach = 0;
+        TSet<int32> Blocks;
+        for (const TArray<FVoxelPlantWrite>& Writes : Placed)
+        {
+            Cells.Add(Writes.Num());
+            ++Counts.FindOrAdd(FMath::Min(Writes.Num(), 24) / 3);
+            for (const FVoxelPlantWrite& Write : Writes)
+            {
+                const FIntVector At = Write.Cell - Origin;
+                Low = FIntVector(FMath::Min(Low.X, At.X), FMath::Min(Low.Y, At.Y), FMath::Min(Low.Z, At.Z));
+                High = FIntVector(FMath::Max(High.X, At.X), FMath::Max(High.Y, At.Y), FMath::Max(High.Z, At.Z));
+                Reach = FMath::Max(Reach, FMath::Max(FMath::Abs(At.X), FMath::Abs(At.Y)));
+                Blocks.Add(Table.Get(Write.State).Block);
+            }
+        }
+        for (const double Count : Probe.Cells)
+            ++TheirCounts.FindOrAdd(FMath::Min(int32(Count), 24) / 3);
+        CompareMeanValues(TEXT("cells"), Cells, Probe.Cells, OutLine, Failures);
+        const double CountP = ChiSquareHomogeneity(Counts, TheirCounts);
+        OutLine +=
+            FString::Printf(TEXT(", cells p %.2f, box (%d, %d, %d) to (%d, %d, %d) against (%d, %d, %d) to (%d, %d, "
+                                 "%d), reach %d/%d"),
+                CountP, Low.X, Low.Y, Low.Z, High.X, High.Y, High.Z, Probe.BoxMin.X, Probe.BoxMin.Y, Probe.BoxMin.Z,
+                Probe.BoxMax.X, Probe.BoxMax.Y, Probe.BoxMax.Z, Reach, Probe.AllReach);
+        if (CountP < 0.01) Failures.Add(TEXT("cells histogram"));
+        if (Low != Probe.BoxMin || High != Probe.BoxMax) Failures.Add(TEXT("box extremes"));
+        if (Reach != Probe.AllReach) Failures.Add(TEXT("reach"));
+        for (const int32 Block : Blocks)
+        {
+            bool bSeen = false;
+            for (const FString& Id : Probe.Blocks)
+                bSeen |= Table.FindBlock(Id) == Block;
+            if (!bSeen) Failures.Add(FString::Printf(TEXT("block %d not in the probe's blocks"), Block));
+        }
         return Failures;
     }
 
@@ -1337,7 +1589,7 @@ namespace
         // compared.
         TArray<TSharedPtr<FVoxelFallenTreeConfig>> Fallen;
         TArray<TSharedPtr<FVoxelRootSystemConfig>> RootSystems;
-        int32 Mushrooms = 0;
+        int32 ComparedApart = 0;
         TArray<TSet<int32>> DecoratorBlocks;
         TArray<FString> Skipped;
         for (const FString& File : Files)
@@ -1352,8 +1604,10 @@ namespace
             TSharedPtr<FVoxelFallenTreeConfig> FallenTree;
             TSharedPtr<FVoxelHugeMushroomConfig> Mushroom;
             TSharedPtr<FVoxelRootSystemConfig> RootSystem;
+            TSharedPtr<FVoxelBambooConfig> Bamboo;
+            TSharedPtr<FVoxelBlockBlobConfig> Blob;
             FString Skip;
-            if (!Kit.Compile(Test, Probe.Feature, Config, Skip, &FallenTree, &Mushroom, &RootSystem))
+            if (!Kit.Compile(Test, Probe.Feature, Config, Skip, &FallenTree, &Mushroom, &RootSystem, &Bamboo, &Blob))
             {
                 if (!Skip.IsEmpty()) Skipped.Add(FString::Printf(TEXT("%s (%s)"), *Probe.Name, *Skip));
                 continue;
@@ -1366,7 +1620,23 @@ namespace
                 Test.AddInfo(Line);
                 for (const FString& Failure : Failures)
                     Test.AddError(FString::Printf(TEXT("%s: %s"), *Probe.Name, *Failure));
-                ++Mushrooms;
+                ++ComparedApart;
+                continue;
+            }
+            // Bamboo and the forest rock (S9e part 2) are compared here too (CompareBamboo, CompareBlob). Mutation 12:
+            // every stalk one block taller (the top histogram must fail); 13: the blob's centre never moves (its box
+            // and cells must fail).
+            if (Bamboo || Blob)
+            {
+                if (TreeTestMutation == 12 && Bamboo) ++Bamboo->MinHeight;
+                if (TreeTestMutation == 13 && Blob) Blob->MoveChance = 0;
+                FString Line;
+                const TArray<FString> Failures =
+                    Bamboo ? CompareBamboo(Kit, *Bamboo, Probe, Line) : CompareBlob(Kit, *Blob, Probe, Line);
+                Test.AddInfo(Line);
+                for (const FString& Failure : Failures)
+                    Test.AddError(FString::Printf(TEXT("%s: %s"), *Probe.Name, *Failure));
+                ++ComparedApart;
                 continue;
             }
             // The built decorators' blocks, read before a mutation changes what one writes (mutation 5).
@@ -1531,7 +1801,7 @@ namespace
                                               "decoration rule failed in %d of %d, the pooled check in %d"),
                 AnyDecoration, TreeTestCalibration, AnyPooled));
         }
-        OutRun = Probes.Num() + Mushrooms;
+        OutRun = Probes.Num() + ComparedApart;
         return true;
     }
 
@@ -1843,12 +2113,13 @@ bool FVoxelTreeShapesTest::RunTest(const FString& Parameters)
     // Every built tree configuration against its probe (scout J's oracles, the fits' harness rules): the leaves'
     // distance and persistence, the probe's blocks, one 26-connected trunk and a straight trunk's height exactly; the
     // means, the top-log histogram, leaf occupancy by an exact binomial test per cell, reach and 6-connected parts as
-    // distributions. Every built configuration runs: 43 probes since S9e part 1 (S9c's 33, the six fallen trees, which
+    // distributions. Every built configuration runs: 46 probes since S9e part 2 (S9c's 33, the six fallen trees, which
     // add their log directions, the two huge mushrooms, CompareMushrooms, the azalea tree and the rooted azalea tree,
-    // its root system's roots counted as decorations; the four mangroves wait for S9e part 2).
+    // its root system's roots counted as decorations, the two bamboos and the forest rock, CompareBamboo and
+    // CompareBlob; the four mangroves wait for their re-probe).
     int32 Ran = 0;
     if (!RunTreeProbes(*this, [](const FTreeProbe& Probe) { return Probe.Ceiling == 0; }, Ran)) return false;
-    TestEqual(TEXT("probes run (a placer that stops compiling drops its probes)"), Ran, 43);
+    TestEqual(TEXT("probes run (a placer that stops compiling drops its probes)"), Ran, 46);
     return true;
 }
 
@@ -2325,3 +2596,71 @@ bool FVoxelTreeSaplingTest::RunTest(const FString& Parameters)
 }
 
 #endif
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelTreeVinesTest, "Unnamed.Voxel.Trees.Vines",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelTreeVinesTest::RunTest(const FString& Parameters)
+{
+    // The vines feature (S9e part 2, no probe: F3b's rule and its exact wall cases) on an empty column: each case's
+    // blocks around the position, then the one vine written, or none. The wiki's support ("any block that fills its
+    // whole cube and blocks entity movement") takes leaves (case g; F3b's own rule had them fail).
+    FTreeTestKit Kit;
+    if (!Kit.Initialize(*this)) return true;
+    const FVoxelBlockTable& Table = *Kit.Table;
+    FVoxelVinesConfig Config;
+    FString Error;
+    if (!TestTrue(FString::Printf(TEXT("the vines' states (%s)"), *Error),
+            VoxelBigVegetation::CompileVines(Table, Config, &Error)))
+        return false;
+    // Mutation 14 (S9e part 2): the faces tested in the reverse order (cases c and i must fail).
+    if (TreeTestMutation == 14) Algo::Reverse(Config.Order);
+    const uint16 Stone = Table.FindState(TEXT("stone")), Leaves = Table.FindState(TEXT("oak_leaves"));
+    const uint16 Slab = Table.FindState(TEXT("stone_slab"));
+    const uint16 Vine = Config.FaceStates[int32(EVoxelFace::Up)];
+    FTreeProbe Empty;
+    const TSharedRef<FVoxelColumn> Column = MakeProbeColumn(Table, Empty);
+    const FVoxelColumn* Around[9];
+    for (const FVoxelColumn*& Each : Around)
+        Each = &*Column;
+    const FIntVector At(8, 8, 70);
+    const FIntVector Up(0, 0, 1), North(0, -1, 0), East(1, 0, 0), South(0, 1, 0), West(-1, 0, 0);
+    struct FCase
+    {
+        const TCHAR* Name;
+        TArray<TPair<FIntVector, uint16>> Blocks;
+        // The face written (an EVoxelFace), or -1 for none.
+        int32 Face;
+    };
+    const FCase Cases[] = {
+        {TEXT("a: stone north"), {{North, Stone}}, int32(EVoxelFace::North)},
+        {TEXT("b: stone above"), {{Up, Stone}}, int32(EVoxelFace::Up)},
+        {TEXT("c: stone above, west and north"), {{Up, Stone}, {West, Stone}, {North, Stone}}, int32(EVoxelFace::Up)},
+        {TEXT("d: stone at the position"), {{FIntVector::ZeroValue, Stone}, {North, Stone}}, -1},
+        {TEXT("e: six air neighbours"), {}, -1},
+        {TEXT("f: a vine west"), {{West, Vine}}, -1},
+        {TEXT("g: oak leaves west"), {{West, Leaves}}, int32(EVoxelFace::West)},
+        {TEXT("h: a stone slab west"), {{West, Slab}}, -1},
+        {TEXT("i: stone west and south"), {{West, Stone}, {South, Stone}}, int32(EVoxelFace::South)},
+    };
+    TestTrue(TEXT("the case blocks are in the table"), Stone && Leaves && Slab && Vine);
+    for (const FCase& Case : Cases)
+    {
+        FVoxelDecorationContext Context(FIntPoint(0, 0), Around, &Table);
+        for (const TPair<FIntVector, uint16>& Block : Case.Blocks)
+            Context.SetState(At.X + Block.Key.X, At.Y + Block.Key.Y, At.Z + Block.Key.Z, Block.Value);
+        TArray<FVoxelPlantWrite> Writes;
+        const auto Emit = [&Writes](const FVoxelPlantWrite& Write) { Writes.Add(Write); };
+        const FVoxelPlantEnvironment Env{
+            Table, Kit.Survival, Kit.Predicates, Kit.Providers, Context, Kit.UpperOf, Emit};
+        const bool bPlaced = VoxelBigVegetation::PlaceVine(Config, At, Env);
+        const int32 Face = Writes.Num() == 1 && Writes[0].Cell == At ? Algo::IndexOf(Config.FaceStates, Writes[0].State)
+                                                                     : (Writes.IsEmpty() ? -1 : -2);
+        TestEqual(FString::Printf(TEXT("vines %s: the face written"), Case.Name), Face, Case.Face);
+        TestEqual(FString::Printf(TEXT("vines %s: placed"), Case.Name), bPlaced, Case.Face >= 0);
+        // The decorator's early-out skips a try only where no support can stand (none here but in case e).
+        TestEqual(FString::Printf(TEXT("vines %s: skipped by the early-out"), Case.Name),
+            VoxelBigVegetation::HasNoVineSupport(Config, At, Context), Case.Blocks.IsEmpty());
+    }
+    return true;
+}

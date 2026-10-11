@@ -71,6 +71,14 @@ public:
     // The highest non-air Z of column Bucket in the working copy (MinZ - 1 when empty): nothing above it is anything
     // but air. Writes of air leave it high, so it is a bound, never too low.
     int32 GetTopZ(int32 Bucket) const { return TopZ[Bucket]; }
+    // Whether the working copy's cell is air without reading it (S9e part 2): outside the window, or above its column's
+    // live top. False says nothing.
+    bool IsAboveTop(int32 X, int32 Y, int32 Z) const
+    {
+        const int32 LX = X - MinX, LY = Y - MinY;
+        if (uint32(LX) >= uint32(Window) || uint32(LY) >= uint32(Window)) return true;
+        return Z > TopZ[(LY >> 4) * 3 + (LX >> 4)];
+    }
     // The top Z a heightmap counts at world X, Y (MinZ - 1 for none, or outside the window). Vanilla's heightmap value
     // is one above it.
     int32 GetHeight(EVoxelDecorationHeightmap Map, int32 X, int32 Y) const;

@@ -474,3 +474,219 @@ bool VoxelBigVegetation::PlaceRootSystem(const FVoxelRootSystemConfig& Config, F
     Lap();
     return VoxelTreeFeature::Place(Config.Tree, FIntVector(Origin.X, Origin.Y, Spot), Random, Env, Times);
 }
+
+bool VoxelBigVegetation::CompileBamboo(const FVoxelFeatureGraph& Graph, int32 Node, FVoxelBlockTags& Tags,
+    const FVoxelBlockTable& Table, FVoxelBlockPredicates& Predicates, FVoxelBambooConfig& Out, FString* OutError)
+{
+    const FVoxelFeatureValue* Probability = Graph.FindField(Node, TEXT("probability"));
+    if (!Probability || Probability->Type != EVoxelFeatureValueType::Number)
+        return BigVegetationFail(OutError, TEXT("bamboo without probability"));
+    Out.Probability = float(Probability->Number);
+    static const FName Age(TEXT("age")), Leaves(TEXT("leaves")), Stage(TEXT("stage")), One(TEXT("1")), Zero(TEXT("0"));
+    static const FName LeafSizes[4] = {TEXT("large"), TEXT("large"), TEXT("small"), TEXT("none")};
+    for (int32 Distance = 0; Distance < 4; ++Distance)
+    {
+        const int32 State = Table.MakeState(
+            TEXT("bamboo"), {{Age, One}, {Leaves, LeafSizes[Distance]}, {Stage, Distance ? Zero : One}});
+        if (State == INDEX_NONE) return BigVegetationFail(OutError, TEXT("bamboo's states not in the table"));
+        Out.Stalk[Distance] = uint16(State);
+    }
+    const int32 Podzol = Table.MakeState(TEXT("podzol"), {});
+    if (Podzol == INDEX_NONE) return BigVegetationFail(OutError, TEXT("podzol not in the table"));
+    Out.Podzol = uint16(Podzol);
+    const FVoxelBlockSet* Support = Tags.Find(TEXT("minecraft:supports_bamboo"), OutError);
+    const FVoxelBlockSet* Replaceable =
+        Support ? Tags.Find(TEXT("minecraft:beneath_tree_podzol_replaceable"), OutError) : nullptr;
+    if (!Replaceable) return false;
+    Out.SupportSet = Predicates.AddSet(*Support);
+    Out.PodzolSet = Predicates.AddSet(*Replaceable);
+    return true;
+}
+
+// Ours, after minecraft.wiki ("Bamboo (feature)": a stalk of "between 6 and 17 blocks", "an obstacle in the way cuts it
+// short", a podzol disk under it at the data's probability; the configured feature page: "The disk has a radius of 1 to
+// 4 blocks"), fitted to scout J's two bamboo probes (S9e's F3b, C:\dev\sandbox\phase6s9\s9e\fit\f3b-part2):
+// - It fails, writing nothing, where the origin is not air or the block under it is not in #supports_bamboo.
+// - The stalk grows from the origin while the cell is air, up to its height; each cell's state hangs on its distance
+//   from the stalk's top (the probes' examples: stage 1 and large leaves at the top, large below it, then small, then
+//   none).
+// - The disk: every cell dx^2 + dy^2 <= r^2 one below the origin holding a block of #beneath_tree_podzol_replaceable
+//   becomes podzol (the probes: exactly the lattice disks, at r 1 to 4).
+// Draws: NextInt(span) for the height, NextFloat for the disk, then NextInt(4) for its radius (only when drawn).
+bool VoxelBigVegetation::PlaceBamboo(const FVoxelBambooConfig& Config, FIntVector Origin, FVoxelXoroshiro& Random,
+    const FVoxelPlantEnvironment& Env, FVoxelTreeTimes* Times)
+{
+    const uint64 Start = Times ? FPlatformTime::Cycles64() : 0;
+    // Adds the time since Start to the bamboo's stage (only when timed); returns bPlaced.
+    const auto Done = [Times, Start](bool bPlaced)
+    {
+        if (!Times) return bPlaced;
+        Times->Cycles[FVoxelTreeTimes::Bamboo] += FPlatformTime::Cycles64() - Start;
+        ++Times->Calls[FVoxelTreeTimes::Bamboo];
+        return bPlaced;
+    };
+    const int32 Height = Config.MinHeight + Random.NextInt(Config.HeightSpan);
+    const int32 Radius = Random.NextFloat() < Config.Probability ? 1 + Random.NextInt(4) : 0;
+    const FVoxelDecorationContext& Context = Env.Context;
+    if (Origin.Z - 1 < VoxelConstants::MinZ || Origin.Z > VoxelConstants::MaxZ) return Done(false);
+    const uint16 Below = Context.GetState(Origin.X, Origin.Y, Origin.Z - 1);
+    if (!Env.Predicates.GetSet(Config.SupportSet).Contains(Env.Table.Get(Below).Block)) return Done(false);
+    TArray<uint16, TInlineAllocator<32>> Was;
+    while (Was.Num() < Height && Origin.Z + Was.Num() <= VoxelConstants::MaxZ)
+    {
+        const uint16 State = Context.GetState(Origin.X, Origin.Y, Origin.Z + Was.Num());
+        if (!Env.Table.Get(State).IsAir()) break;
+        Was.Add(State);
+    }
+    if (Was.IsEmpty()) return Done(false);
+    for (int32 Index = 0; Index < Was.Num(); ++Index)
+        Env.Emit({Origin + FIntVector(0, 0, Index), Config.Stalk[FMath::Min(Was.Num() - 1 - Index, 3)],
+            EVoxelWriteMode::IfUnchanged, Was[Index]});
+    const FVoxelBlockSet& Replaceable = Env.Predicates.GetSet(Config.PodzolSet);
+    for (int32 DY = -Radius; DY <= Radius && Radius > 0; ++DY)
+        for (int32 DX = -Radius; DX <= Radius; ++DX)
+        {
+            if (DX * DX + DY * DY > Radius * Radius) continue;
+            const FIntVector Cell = Origin + FIntVector(DX, DY, -1);
+            const uint16 State = Context.GetState(Cell.X, Cell.Y, Cell.Z);
+            if (Replaceable.Contains(Env.Table.Get(State).Block))
+                Env.Emit({Cell, Config.Podzol, EVoxelWriteMode::IfUnchanged, State});
+        }
+    return Done(true);
+}
+
+bool VoxelBigVegetation::CompileBlockBlob(const FVoxelFeatureGraph& Graph, int32 Node, FVoxelBlockTags& Tags,
+    const FVoxelBlockTable& Table, FVoxelBlockPredicates& Predicates, FVoxelBlockBlobConfig& Out, FString& OutSkip,
+    FString* OutError)
+{
+    const FVoxelFeatureValue* State = Graph.FindField(Node, TEXT("state"));
+    const int32 Id = State ? VoxelPredicateReading::ReadState(Graph, *State, Table) : INDEX_NONE;
+    if (Id == INDEX_NONE) return BigVegetationFail(OutError, TEXT("block_blob's state not read"));
+    Out.State = uint16(Id);
+    Out.Bedrock = Table.FindBlock(TEXT("bedrock"));
+    const FVoxelFeatureValue* CanPlaceOn = Graph.FindField(Node, TEXT("can_place_on"));
+    if (!CanPlaceOn) return BigVegetationFail(OutError, TEXT("block_blob without can_place_on"));
+    return Predicates.Compile(Graph, Graph.GetNode(*CanPlaceOn), Tags, Out.CanPlaceOn, OutSkip, OutError);
+}
+
+// Ours, fitted to scout J's forest_rock probe (S9e's F3b; minecraft.wiki "Forest rock": "usually half-buried in the
+// ground", each face "a cross shape or square shape, possibly missing a corner or two", no numbers):
+// - The walk: down from the origin while above MinZ + 3 to the first cell whose block below passes can_place_on; none:
+//   it fails, drawing and writing nothing (leaves and water above the ground are walked through).
+// - Stamps times: three radii, each NextInt(2) (in the reference's x, y, z order: ours X, Z, Y), stamping every cell
+//   within them at a squared distance of at most (0.5 + their sum / 3)^2 (the centre; a plus of 5 in the plane of two
+//   radii of 1; 19 cells without the corners for three); after every stamp but the last the centre moves by -1 or 0 per
+//   axis (NextFloat < MoveChance, the same order). The probe: extents -3 to 1 on every axis, 11.9 cells a rock.
+// - Every stamped cell takes the state, whatever is there (a Force write), but bedrock.
+// Draws: per stamp three NextInt(2), then three NextFloat after every stamp but the last.
+bool VoxelBigVegetation::PlaceBlockBlob(const FVoxelBlockBlobConfig& Config, FIntVector Origin, FVoxelXoroshiro& Random,
+    const FVoxelPlantEnvironment& Env, FVoxelTreeTimes* Times)
+{
+    const uint64 Start = Times ? FPlatformTime::Cycles64() : 0;
+    // Adds the time since Start to the blobs' stage (only when timed); returns bPlaced.
+    const auto Done = [Times, Start](bool bPlaced)
+    {
+        if (!Times) return bPlaced;
+        Times->Cycles[FVoxelTreeTimes::BlockBlob] += FPlatformTime::Cycles64() - Start;
+        ++Times->Calls[FVoxelTreeTimes::BlockBlob];
+        return bPlaced;
+    };
+    FIntVector Center = Origin;
+    while (Center.Z > VoxelConstants::MinZ + 3 &&
+        !Env.Predicates.Test(Config.CanPlaceOn, Env.Context, Center - FIntVector(0, 0, 1)))
+        --Center.Z;
+    if (Center.Z <= VoxelConstants::MinZ + 3) return Done(false);
+    // (0.5 + s / 3)^2 floored, for s radii of 1.
+    static constexpr int32 MaxDistanceSquared[4] = {0, 0, 1, 2};
+    TArray<FIntVector, TInlineAllocator<64>> Cells;
+    for (int32 Stamp = 0; Stamp < Config.Stamps; ++Stamp)
+    {
+        const int32 RX = Random.NextInt(2);
+        const int32 RZ = Random.NextInt(2);
+        const int32 RY = Random.NextInt(2);
+        const int32 Limit = MaxDistanceSquared[RX + RY + RZ];
+        for (int32 DZ = -RZ; DZ <= RZ; ++DZ)
+            for (int32 DY = -RY; DY <= RY; ++DY)
+                for (int32 DX = -RX; DX <= RX; ++DX)
+                    if (DX * DX + DY * DY + DZ * DZ <= Limit) Cells.AddUnique(Center + FIntVector(DX, DY, DZ));
+        if (Stamp + 1 == Config.Stamps) break;
+        const int32 MoveX = Random.NextFloat() < Config.MoveChance ? 1 : 0;
+        const int32 MoveZ = Random.NextFloat() < Config.MoveChance ? 1 : 0;
+        const int32 MoveY = Random.NextFloat() < Config.MoveChance ? 1 : 0;
+        Center -= FIntVector(MoveX, MoveY, MoveZ);
+    }
+    for (const FIntVector& Cell : Cells)
+    {
+        if (Cell.Z < VoxelConstants::MinZ || Cell.Z > VoxelConstants::MaxZ ||
+            Env.Table.Get(Env.Context.GetState(Cell.X, Cell.Y, Cell.Z)).Block == Config.Bedrock)
+            continue;
+        Env.Emit({Cell, Config.State, EVoxelWriteMode::Force, 0});
+    }
+    return Done(true);
+}
+
+bool VoxelBigVegetation::CompileVines(const FVoxelBlockTable& Table, FVoxelVinesConfig& Out, FString* OutError)
+{
+    static const FName Faces[6] = {TEXT("west"), TEXT("east"), TEXT("north"), TEXT("south"), TEXT("down"), TEXT("up")};
+    static const FName True(TEXT("true"));
+    for (int32 Face = 0; Face < 6; ++Face)
+    {
+        if (Face == int32(EVoxelFace::Down)) continue;
+        const int32 State = Table.MakeState(TEXT("vine"), {{Faces[Face], True}});
+        if (State == INDEX_NONE) return BigVegetationFail(OutError, TEXT("vine's states not in the table"));
+        Out.FaceStates[Face] = uint16(State);
+    }
+    return true;
+}
+
+namespace
+{
+    const FIntVector VineSteps[6] = {FIntVector(-1, 0, 0), FIntVector(1, 0, 0), FIntVector(0, -1, 0),
+        FIntVector(0, 1, 0), FIntVector(0, 0, -1), FIntVector(0, 0, 1)};
+}
+
+// Ours (minecraft.wiki "Vines (feature)": "made of a single vines block", with no algorithm; "Vines": a vine goes "on
+// the side of any block that fills its whole cube and blocks entity movement", or under one, "not the bottom side of
+// another vine"): where Position is air, the first face in Config.Order whose neighbour fills its cube (a full shape)
+// and has a collision box gets the vine, with that face alone; none: it fails. A neighbour above its column's live top
+// is air without a read (exact).
+bool VoxelBigVegetation::PlaceVine(
+    const FVoxelVinesConfig& Config, FIntVector Position, const FVoxelPlantEnvironment& Env, FVoxelTreeTimes* Times)
+{
+    const uint64 Start = Times ? FPlatformTime::Cycles64() : 0;
+    // Adds the time since Start to the vines' stage (only when timed); returns bPlaced.
+    const auto Done = [Times, Start](bool bPlaced)
+    {
+        if (!Times) return bPlaced;
+        Times->Cycles[FVoxelTreeTimes::Vines] += FPlatformTime::Cycles64() - Start;
+        ++Times->Calls[FVoxelTreeTimes::Vines];
+        return bPlaced;
+    };
+    const FVoxelDecorationContext& Context = Env.Context;
+    if (Position.Z < VoxelConstants::MinZ || Position.Z > VoxelConstants::MaxZ) return Done(false);
+    const uint16 Here = Context.IsAboveTop(Position.X, Position.Y, Position.Z)
+        ? 0
+        : Context.GetState(Position.X, Position.Y, Position.Z);
+    if (!Env.Table.Get(Here).IsAir()) return Done(false);
+    for (const EVoxelFace Face : Config.Order)
+    {
+        const FIntVector Support = Position + VineSteps[int32(Face)];
+        if (Context.IsAboveTop(Support.X, Support.Y, Support.Z)) continue;
+        const FVoxelStateInfo& Info = Env.Table.Get(Context.GetState(Support.X, Support.Y, Support.Z));
+        if (Info.Shape != EVoxelShape::Full || !Info.bSolid) continue;
+        Env.Emit({Position, Config.FaceStates[int32(Face)], EVoxelWriteMode::IfUnchanged, Here});
+        return Done(true);
+    }
+    return Done(false);
+}
+
+bool VoxelBigVegetation::HasNoVineSupport(
+    const FVoxelVinesConfig& Config, FIntVector Position, const FVoxelDecorationContext& Context)
+{
+    for (const EVoxelFace Face : Config.Order)
+    {
+        const FIntVector Support = Position + VineSteps[int32(Face)];
+        if (!Context.IsAboveTop(Support.X, Support.Y, Support.Z)) return false;
+    }
+    return true;
+}

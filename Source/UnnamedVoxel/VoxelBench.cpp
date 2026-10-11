@@ -999,6 +999,16 @@ FString VoxelBench::RunDecorate(const FVoxelDecorator& Decorator, const FVoxelDe
                 StageMs(FVoxelTreeTimes::Roots), Trees.Calls[FVoxelTreeTimes::Roots] / Count,
                 StageUs(FVoxelTreeTimes::Roots), StageMs(FVoxelTreeTimes::RootSystem),
                 Trees.Calls[FVoxelTreeTimes::RootSystem] / Count, StageUs(FVoxelTreeTimes::RootSystem));
+        // Bamboo, the block blobs (forest rock) and the vines feature (S9e part 2), each with its microseconds per try.
+        Report +=
+            FString::Printf(TEXT("  Big vegetation per Decorate: bamboo %.3f ms in %.2f tries (%.1f us each), forest "
+                                 "rock %.3f ms in %.2f tries (%.1f us each), vines %.3f ms in %.2f tries (%.2f us "
+                                 "each)\n"),
+                StageMs(FVoxelTreeTimes::Bamboo), Trees.Calls[FVoxelTreeTimes::Bamboo] / Count,
+                StageUs(FVoxelTreeTimes::Bamboo), StageMs(FVoxelTreeTimes::BlockBlob),
+                Trees.Calls[FVoxelTreeTimes::BlockBlob] / Count, StageUs(FVoxelTreeTimes::BlockBlob),
+                StageMs(FVoxelTreeTimes::Vines), Trees.Calls[FVoxelTreeTimes::Vines] / Count,
+                StageUs(FVoxelTreeTimes::Vines));
     }
     Report += FString::Printf(TEXT("Final column hashes: early-out on 0x%016llx, off 0x%016llx (%s)"), Hashes[0],
         Hashes[1], Hashes[0] == Hashes[1] ? TEXT("equal: the early-out is exact") : TEXT("DIFFER"));

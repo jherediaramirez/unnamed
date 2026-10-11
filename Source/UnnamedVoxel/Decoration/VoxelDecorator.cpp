@@ -629,6 +629,29 @@ bool FVoxelDecorator::CompilePlant(const FVoxelFeatureGraph& Graph, int32 Node, 
             ++SkippedDecorators.FindOrAdd(Decorator);
         Plant.Tree = RootSystems.Add(MoveTemp(RootSystem));
     }
+    else if (Type == TEXT("minecraft:bamboo") && Options.bTrees)
+    {
+        Plant.Kind = EVoxelPlantFeature::Bamboo;
+        FVoxelBambooConfig Bamboo;
+        if (!VoxelBigVegetation::CompileBamboo(Graph, Node, Tags, *Table, Predicates, Bamboo, OutError)) return false;
+        Plant.Tree = Bamboos.Add(MoveTemp(Bamboo));
+    }
+    else if (Type == TEXT("minecraft:block_blob") && Options.bTrees)
+    {
+        Plant.Kind = EVoxelPlantFeature::BlockBlob;
+        FVoxelBlockBlobConfig Blob;
+        if (!VoxelBigVegetation::CompileBlockBlob(Graph, Node, Tags, *Table, Predicates, Blob, OutSkip, OutError))
+            return false;
+        if (!OutSkip.IsEmpty()) return true;
+        Plant.Tree = BlockBlobs.Add(MoveTemp(Blob));
+    }
+    else if (Type == TEXT("minecraft:vines") && Options.bTrees)
+    {
+        Plant.Kind = EVoxelPlantFeature::Vines;
+        FVoxelVinesConfig Vine;
+        if (!VoxelBigVegetation::CompileVines(*Table, Vine, OutError)) return false;
+        Plant.Tree = Vines.Add(MoveTemp(Vine));
+    }
     else if (Type == TEXT("minecraft:random_selector"))
     {
         Plant.Selector.Op = EVoxelSelectorOp::Random;
@@ -851,6 +874,18 @@ void FVoxelDecorator::PlacePlant(
         ++Stats.PlantTries;
         VoxelBigVegetation::PlaceRootSystem(RootSystems[Plant.Tree], Position, Random, Env, &Stats.TreeTimes);
         return;
+    case EVoxelPlantFeature::Bamboo:
+        ++Stats.PlantTries;
+        VoxelBigVegetation::PlaceBamboo(Bamboos[Plant.Tree], Position, Random, Env, &Stats.TreeTimes);
+        return;
+    case EVoxelPlantFeature::BlockBlob:
+        ++Stats.PlantTries;
+        VoxelBigVegetation::PlaceBlockBlob(BlockBlobs[Plant.Tree], Position, Random, Env, &Stats.TreeTimes);
+        return;
+    case EVoxelPlantFeature::Vines:
+        ++Stats.PlantTries;
+        VoxelBigVegetation::PlaceVine(Vines[Plant.Tree], Position, Env, &Stats.TreeTimes);
+        return;
     case EVoxelPlantFeature::VegetationPatch:
     {
         ++Stats.PlantTries;
@@ -946,8 +981,14 @@ void FVoxelDecorator::Decorate(FIntPoint Column, TConstArrayView<const FVoxelCol
         const FOre* PruneOre = Feature.Ore != INDEX_NONE && Options.bEarlyOut && !Ores[Feature.Ore].bTargetsAir
             ? &Ores[Feature.Ore]
             : nullptr;
+        // A vines try where no support can stand fails without a read (S9e part 2), so it ends there too, exactly.
+        const FVoxelPlantFeature* VinePlant =
+            Options.bEarlyOut && Feature.Plant != INDEX_NONE && Plants[Feature.Plant].Kind == EVoxelPlantFeature::Vines
+            ? &Plants[Feature.Plant]
+            : nullptr;
         const auto Prune = [&](FIntVector Position)
         {
+            if (VinePlant) return VoxelBigVegetation::HasNoVineSupport(Vines[VinePlant->Tree], Position, Context);
             if (!PruneOre) return false;
             ++Local.Tries;
             if (!IsAboveEverything(*PruneOre, Column, Position, Context)) return false;

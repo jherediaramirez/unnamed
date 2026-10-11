@@ -279,5 +279,8 @@ private:
     TArray<FVoxelFallenTreeConfig> FallenTrees;
     TArray<FVoxelHugeMushroomConfig> HugeMushrooms;
     TArray<FVoxelRootSystemConfig> RootSystems;
+    TArray<FVoxelBambooConfig> Bamboos;
+    TArray<FVoxelBlockBlobConfig> BlockBlobs;
+    TArray<FVoxelVinesConfig> Vines;
     TMap<FString, int32> Placeholders, SkippedDecorators;
 };

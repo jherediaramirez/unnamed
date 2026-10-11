@@ -338,7 +338,8 @@ namespace VoxelRootPlacers
 // the trees tried. The size is the height, roots and feature size (a tree that fails ends there); each decorator type
 // is its own stage. A fallen tree (S9d part 2) is one stage but its decorators (calls: tries), and so is a huge
 // mushroom. A mangrove's root placer (S9e) is its own stage (calls: the trees with roots tried), and so is a root
-// system's own work (calls: tries; the tree it places counts in the trees' stages).
+// system's own work (calls: tries; the tree it places counts in the trees' stages). Bamboo, block blobs and vines
+// (S9e part 2) are a stage each (calls: tries).
 struct FVoxelTreeTimes
 {
     enum EStage : uint8
@@ -352,6 +353,9 @@ struct FVoxelTreeTimes
         HugeMushroom,
         Roots,
         RootSystem,
+        Bamboo,
+        BlockBlob,
+        Vines,
         FirstDecorator
     };
     static constexpr int32 Num = FirstDecorator + int32(EVoxelTreeDecorator::Count);

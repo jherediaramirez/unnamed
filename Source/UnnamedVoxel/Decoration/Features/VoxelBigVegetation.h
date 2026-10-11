@@ -1,12 +1,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Blocks/VoxelBlockTable.h"
 #include "Decoration/Features/VoxelTreeFeature.h"
+
+class FVoxelDecorationContext;
 
 // Phase 6's S9d part 2: the fallen trees and the huge mushrooms (minecraft.wiki "Fallen tree", "Huge mushroom"). Where
 // the wiki is silent the shapes are ours, fitted to scout J's probes (facts/feature_probes/tree_fallen_*.json and
 // tree_huge_*.json; Docs/VoxelWorld.md lists the rules). A fallen tree is built on an FVoxelTreeBuilder, so the tree
-// decorators run on it unchanged.
+// decorators run on it unchanged. S9e's root systems and S9e part 2's bamboo, block blobs (forest rock) and vines
+// follow the same pattern.
 
 // fallen_tree's data.
 struct UNNAMEDVOXEL_API FVoxelFallenTreeConfig
@@ -49,6 +53,40 @@ struct UNNAMEDVOXEL_API FVoxelRootSystemConfig
     int32 RootProvider = INDEX_NONE, HangingRootProvider = INDEX_NONE;
 };
 
+// bamboo's data (S9e part 2): probability (the podzol disk's chance), the stalk's states by distance from its top, and
+// the block sets it stands on and the disk replaces.
+struct UNNAMEDVOXEL_API FVoxelBambooConfig
+{
+    float Probability = 0;
+    // The wiki's "between 6 and 17 blocks": MinHeight + NextInt(HeightSpan).
+    int32 MinHeight = 6, HeightSpan = 12;
+    // bamboo[age=1] at 0 (the top: large leaves, stage 1), 1 (large leaves), 2 (small) and 3 or more (none) below the
+    // stalk's top; podzol's default state.
+    uint16 Stalk[4] = {};
+    uint16 Podzol = 0;
+    // #supports_bamboo (the block under the origin) and #beneath_tree_podzol_replaceable (the disk's cells).
+    int32 SupportSet = INDEX_NONE, PodzolSet = INDEX_NONE;
+};
+
+// block_blob's data (S9e part 2: forest_rock): state, can_place_on (a predicate, tested under the walk's cell), and the
+// shape's numbers (ours, fitted: PlaceBlockBlob).
+struct UNNAMEDVOXEL_API FVoxelBlockBlobConfig
+{
+    uint16 State = 0;
+    int32 CanPlaceOn = INDEX_NONE;
+    int32 Bedrock = INDEX_NONE;
+    int32 Stamps = 3;
+    float MoveChance = 0.5f;
+};
+
+// The vines feature (S9e part 2): vine's state with one face true, per EVoxelFace (none down), and the faces in the
+// order a try tests them (ours: up, north, east, south, west).
+struct UNNAMEDVOXEL_API FVoxelVinesConfig
+{
+    uint16 FaceStates[6] = {};
+    EVoxelFace Order[5] = {EVoxelFace::Up, EVoxelFace::North, EVoxelFace::East, EVoxelFace::South, EVoxelFace::West};
+};
+
 namespace VoxelBigVegetation
 {
     // A fallen_tree feature node compiled. A trunk provider type not built leaves OutSkip naming it (the feature is
@@ -83,4 +121,30 @@ namespace VoxelBigVegetation
     // trees' stages).
     UNNAMEDVOXEL_API bool PlaceRootSystem(const FVoxelRootSystemConfig& Config, FIntVector Origin,
         FVoxelXoroshiro& Random, const FVoxelPlantEnvironment& Env, FVoxelTreeTimes* Times = nullptr);
+
+    // A bamboo node compiled (S9e part 2); false on malformed data or states missing from the table.
+    UNNAMEDVOXEL_API bool CompileBamboo(const FVoxelFeatureGraph& Graph, int32 Node, FVoxelBlockTags& Tags,
+        const FVoxelBlockTable& Table, FVoxelBlockPredicates& Predicates, FVoxelBambooConfig& Out, FString* OutError);
+    // Places one bamboo stalk at Origin (its bottom cell), with its podzol disk when drawn. Returns whether it placed.
+    UNNAMEDVOXEL_API bool PlaceBamboo(const FVoxelBambooConfig& Config, FIntVector Origin, FVoxelXoroshiro& Random,
+        const FVoxelPlantEnvironment& Env, FVoxelTreeTimes* Times = nullptr);
+
+    // A block_blob node compiled (S9e part 2). A predicate type not built leaves OutSkip naming it; false on malformed
+    // data.
+    UNNAMEDVOXEL_API bool CompileBlockBlob(const FVoxelFeatureGraph& Graph, int32 Node, FVoxelBlockTags& Tags,
+        const FVoxelBlockTable& Table, FVoxelBlockPredicates& Predicates, FVoxelBlockBlobConfig& Out, FString& OutSkip,
+        FString* OutError);
+    // Places one blob from Origin down to the first cell over can_place_on. Returns whether it placed.
+    UNNAMEDVOXEL_API bool PlaceBlockBlob(const FVoxelBlockBlobConfig& Config, FIntVector Origin,
+        FVoxelXoroshiro& Random, const FVoxelPlantEnvironment& Env, FVoxelTreeTimes* Times = nullptr);
+
+    // The vines feature's states (S9e part 2); false when the table lacks them.
+    UNNAMEDVOXEL_API bool CompileVines(const FVoxelBlockTable& Table, FVoxelVinesConfig& Out, FString* OutError);
+    // Places one vine at Position on its first supported face. Returns whether it placed. Draws nothing.
+    UNNAMEDVOXEL_API bool PlaceVine(const FVoxelVinesConfig& Config, FIntVector Position,
+        const FVoxelPlantEnvironment& Env, FVoxelTreeTimes* Times = nullptr);
+    // Whether every cell a vine at Position could hang on is above its column's live top (air without a read): a try
+    // there fails, so the decorator skips it before its biome lookup (exact).
+    UNNAMEDVOXEL_API bool HasNoVineSupport(
+        const FVoxelVinesConfig& Config, FIntVector Position, const FVoxelDecorationContext& Context);
 }
