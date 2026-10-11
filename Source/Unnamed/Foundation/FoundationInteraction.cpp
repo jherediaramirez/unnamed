@@ -444,12 +444,13 @@ FFoundationResult FFoundationInteraction::Drop(
 }
 
 FFoundationResult FFoundationInteraction::SetCreativeSlot(
-    FFoundationAuthority& Authority, FFoundationVitals& Vitals, int32 Slot, FName Item, int32 Count)
+    FFoundationAuthority& Authority, FFoundationVitals& Vitals, int32 Slot, FName Item, int32 Count, int32 Damage)
 {
     FFoundationCommand Command = MakeCommand(Authority, EFoundationCommandType::SetCreativeSlot, EFoundationHand::Main);
     Command.Slot = Slot;
     Command.CreativeItem = Item;
     Command.CreativeCount = Count;
+    Command.CreativeDamage = Damage;
     if (Retry.bActive) CancelRetry(EFoundationReason::ItemChanged);
     return Send(Authority, Vitals, Command);
 }

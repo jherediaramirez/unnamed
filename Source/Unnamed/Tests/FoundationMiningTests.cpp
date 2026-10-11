@@ -103,7 +103,8 @@ namespace
         uint32 Sequence = 1;
         int64 StepIndex = 0;
 
-        explicit FMiningLab(bool bInfinite)
+        // bTarget adds a training target 1.7 m east of the cell (the combat tests' box).
+        explicit FMiningLab(bool bInfinite, bool bTarget = false)
         {
             UFoundationInteractionSettings::Get().BuildRules(A.Rules);
             A.World.SetRegistry(FFoundationBlockRegistry::GetDefault());
@@ -114,6 +115,13 @@ namespace
             Floor.Label = TEXT("floor");
             Floor.bAnchor = true;
             A.Statics.Add(Floor);
+            if (bTarget)
+            {
+                FFoundationTrainingTarget Target;
+                Target.Id = 1;
+                Target.Box = FBox(FVector(170, 20, 0), FVector(230, 80, 180));
+                A.Targets.Add(Target);
+            }
             A.Options.bInfiniteSupply = bInfinite;
             A.Options.bToolWear = !bInfinite;
             Player = A.AddPlayer();
@@ -128,6 +136,17 @@ namespace
         }
 
         FFoundationPlayer& P() { return *A.FindPlayer(Player); }
+
+        // Stands at Feet with the gameplay eye straight above, aiming along Aim.
+        void Face(FVector Feet, FVector Aim)
+        {
+            FFoundationPlayerFacts Facts = P().Facts;
+            Facts.FeetCm = Feet;
+            Facts.EyeCm = Feet + FVector(0, 0, 162);
+            Facts.Aim = Aim.GetSafeNormal();
+            Facts.Step = ++StepIndex;
+            A.SetFacts(Player, Facts);
+        }
 
         void NextStep()
         {
@@ -548,6 +567,139 @@ bool FFoundationMiningCreativeTest::RunTest(const FString&)
         Breaks(EFoundationPlayerMode::Creative, TEXT("stone"), false, TEXT("iron_sword"), &Starts).IsEmpty();
     TestTrue(FString::Printf(TEXT("creative, held with a sword: no break, one refused start (%d)"), Starts),
         bNone && Starts == 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMiningWearTest, "Unnamed.Foundation.Mining.Wear", MiningTestFlags)
+
+bool FFoundationMiningWearTest::RunTest(const FString&)
+{
+    FString Text;
+    TSharedPtr<FJsonObject> Root;
+    const FString Path = FPaths::ProjectDir() / TEXT("Reference/minecraft-items-26.3/items.json");
+    if (!TestTrue(TEXT("items.json and DA_Items"),
+            FFileHelper::LoadFileToString(Text, *Path) &&
+                FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Root) && Root &&
+                UFoundationItemAssets::LoadDefault()))
+        return false;
+    // Every item that wears (the 35 tools and the 7 spears), against the data: a block of hardness above 0 (dirt) costs
+    // tool.damage_per_block, an instant block (TNT) nothing, an accepted hit weapon.item_damage_per_attack; in creative
+    // none of them costs anything; the last point breaks the item once.
+    auto Broke = [](const FFoundationAuthority& A)
+    {
+        return A.GetEvents().ContainsByPredicate(
+            [](const FFoundationEvent& Event) { return Event.Kind == EFoundationEventKind::ToolBroke; });
+    };
+    int32 Items = 0, Tools = 0;
+    for (const TSharedPtr<FJsonValue>& Value : Root->GetArrayField(TEXT("items")))
+    {
+        const TSharedPtr<FJsonObject> Item = Value->AsObject();
+        double MaxDamage = 0;
+        if (!Item || !Item->TryGetNumberField(TEXT("max_damage"), MaxDamage) || MaxDamage <= 0) continue;
+        const TSharedPtr<FJsonObject>* Tool = nullptr;
+        const TSharedPtr<FJsonObject>* Weapon = nullptr;
+        const bool bTool = Item->TryGetObjectField(TEXT("tool"), Tool);
+        const int32 PerBlock = bTool ? int32((*Tool)->GetNumberField(TEXT("damage_per_block"))) : 0;
+        const int32 PerHit = Item->TryGetObjectField(TEXT("weapon"), Weapon)
+            ? int32((*Weapon)->GetNumberField(TEXT("item_damage_per_attack")))
+            : 0;
+        const FString Id = Item->GetStringField(TEXT("id"));
+        ++Items;
+        Tools += bTool;
+        for (const bool bCreative : {false, true})
+        {
+            FMiningLab L(false, true);
+            L.Vitals.Mode = bCreative ? EFoundationPlayerMode::Creative : EFoundationPlayerMode::Survival;
+            L.Hold(*Id);
+            L.Put(TEXT("dirt"));
+            const int32 DirtSteps = MineSteps(L, 200);
+            const int32 AfterBlock = L.P().Inventory.Hotbar[0].Damage;
+            L.NextStep();
+            L.Put(TEXT("tnt"));
+            const int32 TntSteps = MineSteps(L, 10);
+            const int32 AfterInstant = L.P().Inventory.Hotbar[0].Damage;
+            // Where the blocks stood, facing the target; a full charge.
+            L.Face(FVector(0, 50, 0), FVector(1, 0, 0));
+            L.Vitals.AttackTicker = 100;
+            const FFoundationResult Hit = L.Run(EFoundationCommandType::Attack);
+            const int32 AfterHit = L.P().Inventory.Hotbar[0].Damage;
+            const int32 Block = bCreative ? 0 : PerBlock, Attack = bCreative ? 0 : PerHit;
+            // Swords and spears break no blocks in creative (Mining.Creative): both blocks stay, and the hit still
+            // lands.
+            const bool bBreaks =
+                !bCreative || L.A.Rules.CanDestroyInCreative(L.A.GetHandItem(L.P(), EFoundationHand::Main));
+            TestTrue(
+                FString::Printf(TEXT("%s%s: dirt %d (wear %d, data %d), TNT %d (wear %d), hit %d (wear %d, data %d)"),
+                    *Id, bCreative ? TEXT(" in creative") : TEXT(""), DirtSteps, AfterBlock, Block, TntSteps,
+                    AfterInstant - AfterBlock, Hit.DamageApplied > 0, AfterHit - AfterInstant, Attack),
+                (bBreaks ? DirtSteps >= 0 && TntSteps == 0 : DirtSteps == -2 && TntSteps == -2) && Hit.IsCommitted() &&
+                    Hit.DamageApplied > 0 && AfterBlock == Block && AfterInstant == AfterBlock &&
+                    AfterHit - AfterInstant == Attack && !Broke(L.A));
+        }
+        // The last point: a block for a tool, a hit for a spear.
+        FMiningLab L(false, true);
+        L.Hold(*Id);
+        L.P().Inventory.Hotbar[0].Damage = int32(MaxDamage) - 1;
+        if (PerBlock > 0)
+        {
+            L.Put(TEXT("dirt"));
+            MineSteps(L, 200);
+        }
+        else
+        {
+            L.Face(FVector(0, 50, 0), FVector(1, 0, 0));
+            L.Vitals.AttackTicker = 100;
+            L.Run(EFoundationCommandType::Attack);
+        }
+        TestTrue(Id + TEXT(": the last point breaks it"), L.P().Inventory.Hotbar[0].IsEmpty() && Broke(L.A));
+    }
+    TestEqual(TEXT("42 items wear"), Items, 42);
+    TestEqual(TEXT("35 of them tools"), Tools, 35);
+
+    // Creative writes keep a stack's damage (known issue S3-b), from 0 to the max damage (the durability bar's range);
+    // outside it they are refused. A clearing write ignores the damage, and an unknown item is refused for itself.
+    FMiningLab C(true);
+    auto Write = [&C](const TCHAR* Item, int32 Count, int32 Damage)
+    {
+        C.P().Inventory.SetSlot(4, C.P().Inventory.MakeStack(C.A.Rules.FindItem(TEXT("stone")), 1));
+        FFoundationCommand Command;
+        Command.SessionId = C.A.GetSessionId();
+        Command.Sequence = C.Sequence++;
+        Command.Type = EFoundationCommandType::SetCreativeSlot;
+        Command.Slot = 4;
+        Command.CreativeItem = Item;
+        Command.CreativeCount = Count;
+        Command.CreativeDamage = Damage;
+        return C.A.Execute(C.Player, Command, C.Vitals);
+    };
+    const int32 Stone = C.A.Rules.FindItem(TEXT("stone"));
+    for (const auto& [Item, Damage, bAccepted] : TArray<TTuple<const TCHAR*, int32, bool>>{
+             {TEXT("iron_pickaxe"), 100, true}, {TEXT("iron_pickaxe"), 250, true}, {TEXT("iron_pickaxe"), 251, false},
+             {TEXT("iron_pickaxe"), -1, false}, {TEXT("stick"), 1, false}, {TEXT("stick"), 0, true}})
+    {
+        const FFoundationResult R = Write(Item, 1, Damage);
+        const FFoundationItemInstance& Stack = C.P().Inventory.Hotbar[4];
+        const FString What = FString::Printf(TEXT("creative write: %s at damage %d "), Item, Damage);
+        if (bAccepted)
+            TestTrue(What + TEXT("kept"),
+                R.IsCommitted() && Stack.Item == C.A.Rules.FindItem(Item) && Stack.Damage == Damage);
+        else
+            TestTrue(What + TEXT("refused, the slot unchanged"),
+                R.Reason == EFoundationReason::InvalidDamage && Stack.Item == Stone && Stack.Damage == 0);
+    }
+    TestTrue(TEXT("creative write: a clear at damage 999 clears"),
+        Write(TEXT("iron_pickaxe"), 0, 999).IsCommitted() && C.P().Inventory.Hotbar[4].IsEmpty());
+    TestEqual(TEXT("creative write: an unknown item at damage 5 is refused as no item"),
+        Write(TEXT("no_such_item"), 1, 5).Reason, EFoundationReason::NoItem);
+    FFoundationInteraction I;
+    I.PlayerId = C.Player;
+    I.Resync(C.A);
+    // After the lab's own commands, so the authority does not take it for a retransmission.
+    I.NextSequence = C.Sequence;
+    I.SetCreativeSlot(C.A, C.Vitals, FFoundationInventory::HotbarSlots, TEXT("diamond_sword"), 1, 1561);
+    TestTrue(TEXT("the interaction's write (the creative screen's) keeps the damage, here in the offhand"),
+        C.P().Inventory.Offhand.Item == C.A.Rules.FindItem(TEXT("diamond_sword")) &&
+            C.P().Inventory.Offhand.Damage == 1561);
     return true;
 }
 #endif

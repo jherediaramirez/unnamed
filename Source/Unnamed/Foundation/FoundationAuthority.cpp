@@ -36,7 +36,7 @@ const TCHAR* LexToString(EFoundationReason Reason)
         TEXT("immutable lab geometry"), TEXT("unbreakable"), TEXT("no mining session"), TEXT("target changed"),
         TEXT("inventory full"), TEXT("target down"), TEXT("target damage cooldown"),
         TEXT("drop deferred: no item entities"), TEXT("released"), TEXT("expired"), TEXT("canceled"),
-        TEXT("cannot break blocks in creative")};
+        TEXT("cannot break blocks in creative"), TEXT("damage out of range")};
     static_assert(UE_ARRAY_COUNT(Names) == int32(EFoundationReason::Count), "reason names");
     return Names[FMath::Min(int32(Reason), int32(EFoundationReason::Count) - 1)];
 }
@@ -454,11 +454,15 @@ FFoundationResult FFoundationAuthority::Execute(
             Reject(Result, EFoundationReason::InvalidSlot);
         else if (!bClear && (Item == INDEX_NONE || Command.CreativeCount > Rules.Items[Item].MaxStack))
             Reject(Result, EFoundationReason::NoItem);
+        // Damage runs from 0 to the max damage, the durability bar's range (facts/durability_bar.json).
+        else if (!bClear && (Command.CreativeDamage < 0 || Command.CreativeDamage > Rules.Items[Item].MaxDurability))
+            Reject(Result, EFoundationReason::InvalidDamage);
         else
         {
             FFoundationInventory& Inventory = Player->Inventory;
-            const FFoundationItemInstance Stack =
+            FFoundationItemInstance Stack =
                 bClear ? FFoundationItemInstance{} : Inventory.MakeStack(Item, Command.CreativeCount);
+            if (!bClear) Stack.Damage = Command.CreativeDamage;
             if (Command.Slot == FFoundationInventory::HotbarSlots)
             {
                 Inventory.Offhand = Stack;
@@ -984,7 +988,9 @@ void FFoundationAuthority::Attack(
     Target->DamageTaken += Result.DamageApplied;
     ++Hits;
     Vitals.AddExhaustion(Rules.HitExhaustion);
-    if (Options.bToolWear && Weapon.DurabilityPerHit > 0 && !Player.Inventory.GetHand(EFoundationHand::Main).IsEmpty())
+    // Accepted hits wear the weapon, when tool wear is on; creative tools never wear (wiki "Creative").
+    if (Options.bToolWear && Vitals.Mode != EFoundationPlayerMode::Creative && Weapon.DurabilityPerHit > 0 &&
+        !Player.Inventory.GetHand(EFoundationHand::Main).IsEmpty())
     {
         Result.bToolWorn = true;
         Result.bToolBroke = Player.Inventory.Wear(EFoundationHand::Main, Weapon.DurabilityPerHit, Weapon.MaxDurability);

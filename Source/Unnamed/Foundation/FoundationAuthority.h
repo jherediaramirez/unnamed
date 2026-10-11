@@ -74,6 +74,8 @@ enum class EFoundationReason : uint8
     Canceled,
     // A creative player's item that breaks no blocks in creative (swords, spears).
     CreativeCannotBreak,
+    // A creative write's damage outside 0 to the item's max damage (0 for an item that never wears).
+    InvalidDamage,
     Count
 };
 
@@ -98,9 +100,11 @@ struct FFoundationCommand
     int64 DestinationRevision = 0;
     int32 Slot = 0;
     bool bWholeStack = false;
-    // SetCreativeSlot: the item (None clears the slot) and count.
+    // SetCreativeSlot: the item (None clears the slot), count and damage (the stack's own, as vanilla's creative slot
+    // packet carries the whole stack).
     FName CreativeItem;
     int32 CreativeCount = 0;
+    int32 CreativeDamage = 0;
 };
 
 struct FFoundationResult
