@@ -2,6 +2,10 @@
 
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
+## October 11, 2026
+
+- [Tools S2: the quiet-window lock, one switch for every lane](2026-10-11-Tools-S2-QuietWindowLock.md): read before a quiet window or any heavy launch outside RunChecks. `C:\dev\sandbox\locks\quiet-window.lock` now holds every lane, with no HOLD or WINDOW OVER messages. The manager opens and closes a window with `quiet_window.ps1 -Open <lane>` / `-Close` (the owner lane may close its own), every chain calls `Scripts/QuietWindow.ps1` before each heavy launch (RunChecks does it itself), and `quiet_check.ps1 -Guard` ends when the lock goes. A lane on the old RunChecks waits on any lock until it merges this.
+
 ## October 10, 2026
 
 - [Water and sky handoff: W2b done, into W3 (fluid meshing)](2026-10-10-WaterSky-Handoff-W3.md): start here for the water half after W2b (lane `feature/water-sky`). It covers W3's reading list, the working agreement, the settled decisions (W3 flips `voxel.Fluids` to 1 with a capture pair), a code map of the fluid view and the mesher, known issues with when, two open questions and the short prompt.
