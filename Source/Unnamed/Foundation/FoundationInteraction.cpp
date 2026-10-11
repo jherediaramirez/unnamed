@@ -63,6 +63,7 @@ void FFoundationInteraction::Resync(FFoundationAuthority& Authority)
     LastRejectedMine = {};
     NextUseStep = 0;
     LastPlacementStep = MIN_int64 / 2;
+    bStopSprint = false;
     LastText = TEXT("new lab session");
 }
 
@@ -108,6 +109,7 @@ FFoundationResult FFoundationInteraction::Send(
     Command.Sequence = NextSequence++;
     const FFoundationResult Result = Authority.Execute(PlayerId, Command, Vitals);
     ++Commands;
+    if (Result.bSprintKnockback) bStopSprint = true;
     LastResult = Result;
     History.Add(Result);
     if (History.Num() > 32) History.RemoveAt(0, History.Num() - 32);

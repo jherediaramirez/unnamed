@@ -129,6 +129,11 @@ struct FFoundationResult
     int32 EntityId = 0;
     float Damage = 0, DamageApplied = 0, Strength = 0, TargetHealth = 0;
     bool bCritical = false, bTargetDied = false, bChargeReset = false;
+    // Melee (items S7): the hit knocked its target back (a landed hit outside the target's hurt window); a
+    // sprint-knockback attack landed (extra knockback; the attacker's sprint ends); a sweep was performed, and how many
+    // nearby targets it hurt.
+    bool bKnockback = false, bSprintKnockback = false, bSweep = false;
+    int32 SweptTargets = 0;
     bool bItemConsumed = false, bItemReturned = false, bToolWorn = false, bToolBroke = false;
     FName Interaction;
 
@@ -145,6 +150,8 @@ struct FFoundationPlayerFacts
     FVector EyeCm = FVector(0, 0, 162);
     FVector Aim = FVector::ForwardVector;
     double FallDistanceCm = 0;
+    // Horizontal distance moved over the last reference step (the sweep's movement rule).
+    double StepMovedCm = 0;
     bool bGrounded = true, bSprinting = false, bBodyInWater = false, bEyesInWater = false;
     // No ladders, mounts or effects yet; kept so the critical rule reads like the reference.
     bool bClimbing = false, bPassenger = false, bMobilityRestricted = false;
@@ -202,7 +209,18 @@ struct UNNAMED_API FFoundationRules
     // Items carrying any of these break no blocks in creative, whatever their tool component says. BuildRules adds
     // Item.Spears: the wiki ("Breaking", "Creative") lists spears, which 26.3 gives no tool component.
     FGameplayTagContainer CreativeNoBreakTags;
+    // CriticalStrength is the 84.8% gate (charge above 0.9) that critical hits, sweeps and sprint-knockback attacks
+    // share.
     float AttackSampleTicks = .5f, CriticalStrength = .9f, CriticalMultiplier = 1.5f, HitExhaustion = .1f;
+    // Sweeps (wiki "Sweep attack"): an item carrying any of SweepItemTags (BuildRules adds Item.Swords), at most
+    // SweepMaxMoveCm moved over the last step (movement_speed, 0.1 blocks per tick), hurts every live target whose box
+    // meets the primary's grown by SweepGrowCm and whose position lies within SweepReachCm of the player's. Each takes
+    // SweepDamage plus SweepingDamageRatio (Sweeping Edge's extension point) times the hit's cooldown-scaled damage,
+    // and is knocked back at SweepKnockback blocks per tick.
+    FGameplayTagContainer SweepItemTags;
+    double SweepMaxMoveCm = 10, SweepReachCm = 300;
+    FVector SweepGrowCm = FVector(100, 100, 25);
+    float SweepDamage = 1, SweepingDamageRatio = 0, SweepKnockback = .4f;
     float TargetMaxHealth = 20;
     int32 ResultCacheSize = 128;
 
@@ -253,6 +271,8 @@ struct FFoundationEvent
     int32 EntityId = 0;
     float Amount = 0;
     bool bCritical = false;
+    // Hit events (items S7): the hit knocked the entity back; a sprint-knockback hit; a sweep's hit on a nearby entity.
+    bool bKnockback = false, bSprintKnockback = false, bSweep = false;
     EFoundationReason Reason = EFoundationReason::None;
     FName Interaction;
     int64 Step = 0;

@@ -83,6 +83,11 @@ struct FFoundationItemDefinition
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     int32 DurabilityPerHit = 0;
 
+    // 26.3's weapon.disable_blocking_for_seconds (the axes' 5): how long a hit disables a blocking shield. Data only
+    // until shields exist (items S7).
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    float DisableBlockingSeconds = 0;
+
     // Presentation only: "block" draws the block's 3D icon in the HUD (IconColor tints its fallback cube) and the
     // block in hand; otherwise the HUD draws Sprite and the held view the item's DA_Items model (items S4).
     UPROPERTY(Config, EditAnywhere, Category = "Item")

@@ -100,6 +100,8 @@ struct UNNAMED_API FFoundationVitals
     void Respawn();
 
     bool IsDead() const { return DeathTicks >= 0; }
+    // The first half of the 20-tick damage cooldown: a hit now deals only what exceeds the last one.
+    bool IsInHurtWindow() const { return DamageCooldown > 10; }
     bool ShouldRespawn() const { return DeathTicks >= RespawnTicks; }
     // Creative and Spectator abilities.
     bool IsInvulnerable() const;

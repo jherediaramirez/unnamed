@@ -78,6 +78,12 @@ void UFoundationInteractionSettings::BuildRules(FFoundationRules& Rules) const
         Rules.CreativeNoBreakTags.AddTag(Spears);
     else
         UE_LOG(LogUnnamedFoundation, Warning, TEXT("Item.Spears is not registered; spears break blocks in creative"));
+    // The wiki ("Sweep attack"): only a sword in the main hand sweeps (items S7).
+    Rules.SweepItemTags.Reset();
+    if (const FGameplayTag Swords = FGameplayTag::RequestGameplayTag(TEXT("Item.Swords"), false); Swords.IsValid())
+        Rules.SweepItemTags.AddTag(Swords);
+    else
+        UE_LOG(LogUnnamedFoundation, Warning, TEXT("Item.Swords is not registered; nothing sweeps"));
 }
 
 int32 UFoundationInteractionSettings::MergeItems(

@@ -48,6 +48,7 @@ FFoundationItemDefinition UFoundationItemAssets::MakeDefinition(const FFoundatio
     Item.MaxDurability = Asset.MaxDamage;
     Item.DurabilityPerBlock = Asset.DamagePerBlock;
     Item.DurabilityPerHit = Asset.DamagePerHit;
+    Item.DisableBlockingSeconds = Asset.DisableBlockingSeconds;
     Item.Sprite = Asset.Textures.IsEmpty() ? NAME_None : Asset.Textures[0];
     return Item;
 }

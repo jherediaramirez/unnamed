@@ -108,6 +108,9 @@ struct UNNAMED_API FFoundationInteraction
     int64 LastPlacementStep = MIN_int64 / 2;
     bool bPlacedThisUpdate = false;
     FFoundationRetry Retry;
+    // A landed sprint-knockback attack ends the sprint (wiki "Knockback"): the movement owner stops sprinting and
+    // clears this.
+    bool bStopSprint = false;
 
     // Diagnostics.
     FFoundationResult LastResult;

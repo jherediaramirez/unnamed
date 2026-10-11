@@ -994,10 +994,18 @@ void FFoundationAuthority::Attack(
     const float Strength = Vitals.GetAttackStrength(Rules.AttackSampleTicks);
     float Damage = Weapon.AttackDamage * (.2f + Strength * Strength * .8f);
     const FFoundationPlayerFacts& Facts = Player.Facts;
-    const bool bCritical = Strength > Rules.CriticalStrength && Facts.FallDistanceCm > 0 && !Facts.bGrounded &&
-        !Facts.bClimbing && !Facts.bBodyInWater && !Facts.bMobilityRestricted && !Facts.bPassenger && !Facts.bSprinting;
+    // Past the 84.8% gate an attack is special (wiki "Damage", "Knockback", "Sweep attack"): sprinting makes it a
+    // sprint-knockback attack, falling a critical, and a sword on the ground, barely moving, a sweep.
+    const bool bStrong = Strength > Rules.CriticalStrength;
+    const bool bSprintKnockback = bStrong && Facts.bSprinting;
+    const bool bCritical = bStrong && Facts.FallDistanceCm > 0 && !Facts.bGrounded && !Facts.bClimbing &&
+        !Facts.bBodyInWater && !Facts.bMobilityRestricted && !Facts.bPassenger && !Facts.bSprinting;
+    const bool bSweep = bStrong && !bCritical && !bSprintKnockback && Facts.bGrounded &&
+        Facts.StepMovedCm <= Rules.SweepMaxMoveCm && Weapon.Tags.HasAny(Rules.SweepItemTags);
     if (bCritical) Damage *= Rules.CriticalMultiplier;
     const float Before = Target->Health.Health;
+    // A hit landing inside the target's hurt window knocks nothing back (wiki "Knockback").
+    const bool bFreshHit = !Target->Health.IsInHurtWindow();
     const bool bAccepted = Target->Health.Hurt(EFoundationDamage::PlayerAttack, Damage);
     // Every issued attack restarts recovery, hit or not.
     Vitals.ResetAttackStrength();
@@ -1015,11 +1023,14 @@ void FFoundationAuthority::Attack(
     }
     Result.DamageApplied = Before - Target->Health.Health;
     Result.bTargetDied = Target->Health.IsDead();
+    Result.bKnockback = bFreshHit;
+    Result.bSprintKnockback = bSprintKnockback;
     ++Target->Hits;
     Target->DamageTaken += Result.DamageApplied;
     ++Hits;
     Vitals.AddExhaustion(Rules.HitExhaustion);
-    // Accepted hits wear the weapon, when tool wear is on; creative tools never wear (wiki "Creative").
+    // Accepted hits wear the weapon once, sweep or not, when tool wear is on; creative tools never wear (wiki
+    // "Creative"). The wiki does not say whether a sweep's extra hits wear it.
     if (Options.bToolWear && Vitals.Mode != EFoundationPlayerMode::Creative && Weapon.DurabilityPerHit > 0 &&
         !Player.Inventory.GetHand(EFoundationHand::Main).IsEmpty())
     {
@@ -1032,12 +1043,52 @@ void FFoundationAuthority::Attack(
     Event.EntityId = Target->Id;
     Event.Amount = Result.DamageApplied;
     Event.bCritical = bCritical;
+    Event.bKnockback = Result.bKnockback;
+    Event.bSprintKnockback = bSprintKnockback;
     Event.Step = Facts.Step;
     AddEvent(Event);
     if (Result.bTargetDied)
     {
         Event.Kind = EFoundationEventKind::TargetDown;
         AddEvent(Event);
+    }
+    // A sweep follows a landed hit only: the primary's box grown, and positions (the box's bottom centre) within reach
+    // of the player's feet.
+    if (bSweep)
+    {
+        Result.bSweep = true;
+        const FBox Reach = Target->Box.ExpandBy(Rules.SweepGrowCm);
+        // 1 + ratio x the base melee damage, which the cooldown scales (wiki "Sweep attack", "Damage"); never a
+        // critical.
+        const float SweepDamage = Rules.SweepDamage + Rules.SweepingDamageRatio * Damage;
+        for (FFoundationTrainingTarget& Other : Targets)
+        {
+            const FVector Position(Other.Box.GetCenter().X, Other.Box.GetCenter().Y, Other.Box.Min.Z);
+            if (&Other == Target || Other.Health.IsDead() || !Overlaps(Reach, Other.Box) ||
+                FVector::DistSquared(Facts.FeetCm, Position) >= FMath::Square(Rules.SweepReachCm))
+                continue;
+            const float OtherBefore = Other.Health.Health;
+            const bool bOtherFresh = !Other.Health.IsInHurtWindow();
+            if (!Other.Health.Hurt(EFoundationDamage::PlayerAttack, SweepDamage)) continue;
+            FFoundationEvent Swept;
+            Swept.Kind = EFoundationEventKind::Hit;
+            Swept.Player = Player.Id;
+            Swept.EntityId = Other.Id;
+            Swept.Amount = OtherBefore - Other.Health.Health;
+            Swept.bKnockback = bOtherFresh;
+            Swept.bSweep = true;
+            Swept.Step = Facts.Step;
+            ++Other.Hits;
+            Other.DamageTaken += Swept.Amount;
+            ++Hits;
+            ++Result.SweptTargets;
+            AddEvent(Swept);
+            if (Other.Health.IsDead())
+            {
+                Swept.Kind = EFoundationEventKind::TargetDown;
+                AddEvent(Swept);
+            }
+        }
     }
     if (Result.bToolBroke)
     {
