@@ -1,4 +1,10 @@
 #include "Decoration/Features/VoxelTreeFeature.h"
+#include "Blocks/VoxelBlockTable.h"
+#include "Blocks/VoxelPlantSurvival.h"
+#include "Decoration/Features/VoxelPatchFeatures.h"
+#include "Decoration/VoxelBlockPredicates.h"
+#include "Decoration/VoxelDecorationContext.h"
+#include "Decoration/VoxelStateProviders.h"
 #include "VoxelConstants.h"
 
 // The trunk placers and the root placer (phase 6, S9a). Each shape is ours where minecraft.wiki's "Tree definition" is
@@ -367,8 +373,97 @@ namespace
     }
 }
 
+namespace
+{
+    // S9e's trunks (ours, fitted to scout J's azalea and mangrove probes by S9e's agent F1,
+    // C:\dev\sandbox\phase6s9\s9e\fit\f1-crown; the data gives their numbers, the wiki only bending's outline).
+    const FName BendLength(TEXT("bend_length")), MinHeightForLeaves(TEXT("min_height_for_leaves")),
+        BranchProbability(TEXT("place_branch_per_log_probability")), ExtraBranchSteps(TEXT("extra_branch_steps")),
+        ExtraBranchLength(TEXT("extra_branch_length"));
+    // A bend's or a branch's four directions (0 -X, 1 +X, 2 -Y, 3 +Y).
+    const FIntVector TrunkSteps[4] = {
+        FIntVector(-1, 0, 0), FIntVector(1, 0, 0), FIntVector(0, -1, 0), FIntVector(0, 1, 0)};
+    // bending: the chance that the second-highest trunk cell moves too (the probe's three-part trunks, 39%).
+    constexpr float BendingLowerShiftChance = 0.4f;
+    // upwards_branching: the share of the data's place_branch_per_log_probability a log branches at (its 0.5 gave 12 to
+    // 16% too many logs; 0.5 x 0.85 fits all four probes).
+    constexpr double UpwardsBranchScale = 0.85;
+
+    // bending_trunk_placer (the wiki: "Places a trunk of the specified height. The topmost 2 blocks have a chance to be
+    // moved by one block each. On top of the trunk a straight branch of length bend_length is generated. Foliage is
+    // attached to all block of the top branch and any trunk block that is higher than min_height_for_leaves"). Ours:
+    // logs at the origin's column from 0 to Height - 3; the cell at Height - 2 moved one along the direction with
+    // BendingLowerShiftChance, the one at Height - 1 one further, always (the probe: none of 100 unmoved); then a log
+    // above it and bend_length more along the direction at Height (the top log at Height, as the probe). Attachments:
+    // the trunk's cells from min_height_for_leaves up, then the top row from the inside out, whether or not each log
+    // went down (as the other trunks' attachments). The soil under the bottom log. Draws: NextInt(4) for the direction,
+    // bend_length's, NextFloat for the lower move.
+    void PlaceBending(
+        const FVoxelTreePlacerConfig& Trunk, FVoxelTreeBuilder& Builder, TArray<FVoxelFoliageAttachment>& Out)
+    {
+        FVoxelXoroshiro& Random = Builder.Random;
+        const FIntVector Origin = Builder.Origin;
+        const int32 Height = Builder.Height;
+        const FIntVector Step = TrunkSteps[Random.NextInt(4)];
+        const int32 Bend = FMath::Max(0, Trunk.SampleInt(BendLength, Random, 1));
+        const bool bLower = Random.NextFloat() < BendingLowerShiftChance;
+        const int32 MinLeaves = Trunk.GetMaxInt(MinHeightForLeaves, 1);
+        Builder.SetGroundBelow(Origin - FIntVector(0, 0, 1));
+        FIntVector Shift = FIntVector::ZeroValue;
+        for (int32 Z = 0; Z < Height; ++Z)
+        {
+            if ((Z == Height - 2 && bLower) || Z == Height - 1) Shift += Step;
+            const FIntVector Cell = Origin + Shift + FIntVector(0, 0, Z);
+            Builder.SetLog(Cell);
+            if (Z >= MinLeaves) Out.Add({Cell, 0, false});
+        }
+        for (int32 Index = 0; Index <= Bend; ++Index)
+        {
+            const FIntVector Cell = Origin + Shift + Step * Index + FIntVector(0, 0, Height);
+            Builder.SetLog(Cell);
+            Out.Add({Cell, 0, false});
+        }
+    }
+
+    // upwards_branching_trunk_placer (ours; the wiki gives only the fields): logs at the origin's column from 0 to
+    // Height - 1. From the bottom up, after its log, each trunk log below the top one branches with
+    // place_branch_per_log_probability x UpwardsBranchScale: a direction, S =
+    // extra_branch_steps and extra_branch_length (drawn, unused: the probes show no effect), then S - 1 logs climbing
+    // diagonally, one out and one up each, every one an attachment, and an attachment above the last (S 1: one out and
+    // one up from the trunk log). Then the trunk's attachment above its top log. No soil under the trunk (a mangrove's
+    // root takes the cell). Draws: per trunk log below the top NextFloat, and on a branch NextInt(4),
+    // extra_branch_steps', extra_branch_length's.
+    void PlaceUpwardsBranching(
+        const FVoxelTreePlacerConfig& Trunk, FVoxelTreeBuilder& Builder, TArray<FVoxelFoliageAttachment>& Out)
+    {
+        FVoxelXoroshiro& Random = Builder.Random;
+        const FIntVector Origin = Builder.Origin;
+        const int32 Height = Builder.Height;
+        const float Chance = float(Trunk.GetNumber(BranchProbability) * UpwardsBranchScale);
+        for (int32 Z = 0; Z < Height; ++Z)
+        {
+            Builder.SetLog(Origin + FIntVector(0, 0, Z));
+            if (Z > Height - 2 || Random.NextFloat() >= Chance) continue;
+            const FIntVector Step = TrunkSteps[Random.NextInt(4)];
+            const int32 Steps = FMath::Max(1, Trunk.SampleInt(ExtraBranchSteps, Random, 1));
+            Trunk.SampleInt(ExtraBranchLength, Random, 0);
+            FIntVector End = Origin + FIntVector(0, 0, Z);
+            for (int32 K = 1; K < Steps; ++K)
+            {
+                End = Origin + Step * K + FIntVector(0, 0, Z + K);
+                Builder.SetLog(End);
+                Out.Add({End, 0, false});
+            }
+            Out.Add({Steps == 1 ? End + Step + FIntVector(0, 0, 1) : End + FIntVector(0, 0, 1), 0, false});
+        }
+        Out.Add({Origin + FIntVector(0, 0, Height), 0, false});
+    }
+}
+
 EVoxelTrunkPlacer VoxelTrunkPlacers::FindType(FStringView Type)
 {
+    if (Type == TEXT("minecraft:bending_trunk_placer")) return EVoxelTrunkPlacer::Bending;
+    if (Type == TEXT("minecraft:upwards_branching_trunk_placer")) return EVoxelTrunkPlacer::UpwardsBranching;
     if (Type == TEXT("minecraft:straight_trunk_placer")) return EVoxelTrunkPlacer::Straight;
     if (Type == TEXT("minecraft:fancy_trunk_placer")) return EVoxelTrunkPlacer::Fancy;
     if (Type == TEXT("minecraft:forking_trunk_placer")) return EVoxelTrunkPlacer::Forking;
@@ -410,6 +505,12 @@ void VoxelTrunkPlacers::Place(
         return;
     case EVoxelTrunkPlacer::DarkOak:
         PlaceDarkOak(Builder, Out);
+        return;
+    case EVoxelTrunkPlacer::Bending:
+        PlaceBending(Trunk, Builder, Out);
+        return;
+    case EVoxelTrunkPlacer::UpwardsBranching:
+        PlaceUpwardsBranching(Trunk, Builder, Out);
         return;
     default:
         return;
@@ -457,19 +558,153 @@ int32 VoxelTrunkPlacers::GetReach(const FVoxelTreePlacerConfig& Trunk)
         // The top 2 x 2's far column on a layer shifted DarkOakLeanMax; attachments reach 2 (the shifted top's min
         // corner, or a branch column, which never shifts).
         return DarkOakLeanMax + 1;
+    case EVoxelTrunkPlacer::Bending:
+        // The top row's far end: the trunk's two moves and the bend.
+        return 2 + FMath::Max(0, Trunk.GetMaxInt(BendLength, 1));
+    case EVoxelTrunkPlacer::UpwardsBranching:
+        // A branch's last log (S - 1 out), or a one-step branch's attachment.
+        return FMath::Max(1, Trunk.GetMaxInt(ExtraBranchSteps, 1) - 1);
     default:
         return VoxelConstants::ColumnSize;
     }
 }
 
+// Off until the mangroves pass their probes (S9e part 1: on grass they do, but tall_mangrove@mudwater's 28 survivors
+// are taller and branchier than F1's crown with F2's roots gives, leaves -24%, z -3.2; agent F4 found no joint rule;
+// C:\dev\sandbox\phase6s9\s9e\fit\f4-joint). The root placer, the upwards_branching trunk and attached_to_leaves stay
+// built for S9e part 2; until then the mangroves' selector entries place nothing, as before.
 bool VoxelRootPlacers::IsMangroveBuilt()
 {
     return false;
 }
 
+namespace
+{
+    // mangrove_root_placer's walk (ours, fitted to scout J's four mangrove probes by S9e's agent F2,
+    // C:\dev\sandbox\phase6s9\s9e\fit\f2-roots): an arm's step goes outward with MangroveOutChance times the ring's
+    // share, a step in the outward band the share refuses is wasted, and a strand under an outward step lands within
+    // MangroveStrandDepth.
+    constexpr float MangroveOutChance = 0.36f;
+    constexpr int32 MangroveStrandDepth = 2;
+}
+
+// The root placer (ours, fitted; the data gives its numbers, the wiki no algorithm). The trunk rises by k =
+// trunk_offset_y. A root goes under the bottom log, then four arms (+X, -X, +Y, -Y) start beside it at its height. Each
+// step draws u: under MangroveOutChance it is an outward attempt, which moves one cell out along the arm's axis when u
+// is also under MangroveOutChance * share(r) (share = (W - 2 - r) / (W - 3) clamped to 0..1, W = max_root_width, r the
+// arm's ring) and the cell there can take a root, first drawing whether a strand hangs from the cell it leaves
+// (random_skew_chance); otherwise the attempt is wasted. Any other step goes down where the cell below can take a root,
+// and else ends the arm (it has landed). Every step, moves and wasted ones alike, counts; the tree fails at once when
+// an arm takes more than max_root_length (the probes' placed rates fall with the descent from the bottom log to the
+// ground: 100/100, 91/100 on grass, 89/100 and 28/100 on mud under two water). A strand walks down from below the cell
+// it hangs from through air or replaceable_by_trees (water included, mud not) that holds no root, up to
+// MangroveStrandDepth + 1 cells, and is rooted only when it stops within MangroveStrandDepth. A cell can take a root
+// when it is free (air or replaceable_by_trees) or in can_grow_through, the tree's own roots included; a root over
+// muddy_roots_in is the muddy root state, over water the root state waterlogged. Then above each root, in the order
+// they went down, where the cell is air and holds none of the tree's cells (nor is the bottom log's), a draw places
+// above_root_provider's block at above_root_placement_chance. Draws: trunk_offset_y's, per arm step NextFloat and on a
+// move NextFloat for the strand, each root's provider draws as it goes down, then per moss cell NextFloat and the
+// provider's.
 bool VoxelRootPlacers::PlaceMangrove(const FVoxelMangroveRoots& Roots, FVoxelTreeBuilder& Builder)
 {
-    return false;
+    const FVoxelPlantEnvironment& Env = Builder.Env;
+    FVoxelXoroshiro& Random = Builder.Random;
+    const int32 Rise = FMath::Max(0, Roots.TrunkOffsetY.Sample(Random));
+    const FIntVector Base = Builder.Origin;
+    const FIntVector Trunk = Base + FIntVector(0, 0, Rise);
+    Builder.Origin = Trunk;
+    const FVoxelBlockSet& Free = Env.Predicates.GetSet(Builder.Config.FreeSet);
+    const FVoxelBlockSet& Through = Env.Predicates.GetSet(Roots.CanGrowThroughSet);
+    const FVoxelBlockSet& Muddy = Env.Predicates.GetSet(Roots.MuddyRootsInSet);
+    const auto IsInside = [](const FIntVector& Cell)
+    { return Cell.Z >= VoxelConstants::MinZ && Cell.Z <= VoxelConstants::MaxZ; };
+    const auto CanGrow = [&](const FIntVector& Cell)
+    {
+        if (!IsInside(Cell) || Builder.IsLog(Cell)) return false;
+        const int32 Block = Env.Table.Get(Builder.GetState(Cell)).Block;
+        return Free.Contains(Block) || Through.Contains(Block);
+    };
+    static const FName Waterlogged(TEXT("waterlogged")), True(TEXT("true"));
+    const auto PlaceRoot = [&](const FIntVector& Cell)
+    {
+        const uint16 Was = Builder.GetState(Cell);
+        const int32 Provider = Muddy.Contains(Env.Table.Get(Was).Block) ? Roots.MuddyRootProvider : Roots.RootProvider;
+        uint16 State = Env.Providers.Sample(Provider, Random, Cell, Env.Context);
+        if (Provider == Roots.RootProvider && Env.Survival.IsWaterSource(Was))
+        {
+            const int32 Wet = Env.Table.WithValue(State, Waterlogged, True);
+            if (Wet != INDEX_NONE) State = uint16(Wet);
+        }
+        Builder.SetRoot(Cell, State);
+    };
+    const int32 Width = Roots.MaxRootWidth;
+    const auto Share = [Width](int32 Ring)
+    { return Width > 3 ? FMath::Clamp(float(Width - 2 - Ring) / float(Width - 3), 0.f, 1.f) : 0.f; };
+    const FIntVector Down(0, 0, -1);
+
+    if (CanGrow(Trunk + Down)) PlaceRoot(Trunk + Down);
+    static const FIntVector Arms[4] = {
+        FIntVector(1, 0, 0), FIntVector(-1, 0, 0), FIntVector(0, 1, 0), FIntVector(0, -1, 0)};
+    for (const FIntVector& Step : Arms)
+    {
+        FIntVector At = Trunk + Step;
+        if (!CanGrow(At)) continue;
+        PlaceRoot(At);
+        int32 Ring = 1, Steps = 0;
+        while (true)
+        {
+            const float U = Random.NextFloat();
+            if (U < MangroveOutChance)
+            {
+                if (U < MangroveOutChance * Share(Ring) && CanGrow(At + Step))
+                {
+                    if (Random.NextFloat() < Roots.RandomSkewChance)
+                    {
+                        // A strand under the cell the arm leaves.
+                        TArray<FIntVector, TInlineAllocator<4>> Strand;
+                        for (FIntVector Cell = At + Down; Strand.Num() <= MangroveStrandDepth; Cell += Down)
+                        {
+                            FVoxelTreeBuilder::ECell Kind;
+                            if (!IsInside(Cell) || Builder.GetKind(Cell, Kind) ||
+                                !Free.Contains(Env.Table.Get(Builder.GetState(Cell)).Block))
+                                break;
+                            Strand.Add(Cell);
+                        }
+                        if (Strand.Num() >= 1 && Strand.Num() <= MangroveStrandDepth)
+                            for (const FIntVector& Cell : Strand)
+                                PlaceRoot(Cell);
+                    }
+                    At += Step;
+                    ++Ring;
+                    PlaceRoot(At);
+                }
+            }
+            else if (CanGrow(At + Down))
+            {
+                At += Down;
+                PlaceRoot(At);
+            }
+            else
+                break;
+            if (++Steps > Roots.MaxRootLength) return false;
+        }
+    }
+
+    // The moss over the roots, in the order they went down.
+    if (Roots.AboveRootProvider != INDEX_NONE && Roots.AboveRootChance > 0)
+    {
+        const int32 Count = Builder.Cells.Num();
+        for (int32 Index = 0; Index < Count; ++Index)
+        {
+            if (Builder.Cells[Index].Kind != FVoxelTreeBuilder::ECell::Root) continue;
+            const FIntVector Above = Builder.Cells[Index].Position + FIntVector(0, 0, 1);
+            FVoxelTreeBuilder::ECell Kind;
+            if (Above == Trunk || Builder.GetKind(Above, Kind) || !Builder.IsAir(Above)) continue;
+            if (Random.NextFloat() < Roots.AboveRootChance)
+                Builder.SetRoot(Above, Env.Providers.Sample(Roots.AboveRootProvider, Random, Above, Env.Context));
+        }
+    }
+    return true;
 }
 
 int32 VoxelRootPlacers::GetReach(const FVoxelMangroveRoots& Roots)

@@ -71,9 +71,10 @@ namespace VoxelBench
     // voxel.Bench Decorate: (2 Radius + 1)^2 final columns on the calling thread (Generate on radius + 2, Decorate on
     // radius + 1, Finalize on the radius): each stage's p50, p95 and mean per column and the whole column; tries, the
     // early-out's skips, writes and log bytes per Decorate, working-copy sections, what Finalize replayed; the hash of
-    // the final columns, and the same run with the early-out off (equal hashes: it is exact).
+    // the final columns, and the same run with the early-out off (equal hashes: it is exact). Center is the area's
+    // centre column (S9e: a chosen biome's).
     UNNAMEDVOXEL_API FString RunDecorate(const FVoxelDecorator& Decorator, const FVoxelDecorator& NoEarlyOut,
-        const IVoxelTerrain& Terrain, int32 Radius);
+        const IVoxelTerrain& Terrain, int32 Radius, FIntPoint Center = FIntPoint::ZeroValue);
 
     // The freeze pass at Finalize (Last, S3) against inside the snapshot (First, S2's order): the decorated area of
     // Radius around Center, or around the snowiest of a coarse search near the origin, built both ways. Reports both

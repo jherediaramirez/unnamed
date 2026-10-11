@@ -871,11 +871,14 @@ FString VoxelBench::RunDensity(const FVoxelDensityTerrain& Terrain, int32 Radius
     return Report;
 }
 
-FString VoxelBench::RunDecorate(
-    const FVoxelDecorator& Decorator, const FVoxelDecorator& NoEarlyOut, const IVoxelTerrain& Terrain, int32 Radius)
+FString VoxelBench::RunDecorate(const FVoxelDecorator& Decorator, const FVoxelDecorator& NoEarlyOut,
+    const IVoxelTerrain& Terrain, int32 Radius, FIntPoint Center)
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelBench_RunDecorate);
     FString Report = Decorator.Describe() + TEXT("\n");
+    if (Center != FIntPoint::ZeroValue)
+        Report += FString::Printf(TEXT("Centre column %d,%d (blocks %d,%d)\n"), Center.X, Center.Y,
+            Center.X * VoxelConstants::ColumnSize, Center.Y * VoxelConstants::ColumnSize);
     Report += FString::Printf(TEXT("Freeze pass: %s\n"),
         Decorator.IsFreezeLast() ? TEXT("at Finalize, after the merge (FreezeLast 1)")
                                  : TEXT("inside the snapshot, S2's order (FreezeLast 0)"));
@@ -885,8 +888,7 @@ FString VoxelBench::RunDecorate(
     {
         Terrain.ResetCaches();
         FVoxelDecoratedArea Area;
-        FVoxelDecoratedArea::Build(
-            Pass ? NoEarlyOut : Decorator, Terrain, FIntPoint::ZeroValue, Radius, false, false, Area);
+        FVoxelDecoratedArea::Build(Pass ? NoEarlyOut : Decorator, Terrain, Center, Radius, false, false, Area);
         TArray<uint64> Columns;
         for (const TSharedPtr<const FVoxelColumn, ESPMode::ThreadSafe>& Column : Area.Columns)
             Columns.Add(HashColumnBlocks(*Column));
@@ -990,6 +992,13 @@ FString VoxelBench::RunDecorate(
                 FPlatformTime::ToMilliseconds64(Trees.Cycles[Stage]) * 1000. / Trees.Calls[Stage]);
         }
         if (!Decorators.IsEmpty()) Report += FString::Printf(TEXT("  Tree decorators per Decorate: %s\n"), *Decorators);
+        // The mangroves' root placer and the root systems (S9e), each with its microseconds per call.
+        Report +=
+            FString::Printf(TEXT("  Roots per Decorate: mangrove roots %.3f ms in %.2f trees (%.1f us each), root "
+                                 "systems %.3f ms in %.2f tries (%.1f us each)\n"),
+                StageMs(FVoxelTreeTimes::Roots), Trees.Calls[FVoxelTreeTimes::Roots] / Count,
+                StageUs(FVoxelTreeTimes::Roots), StageMs(FVoxelTreeTimes::RootSystem),
+                Trees.Calls[FVoxelTreeTimes::RootSystem] / Count, StageUs(FVoxelTreeTimes::RootSystem));
     }
     Report += FString::Printf(TEXT("Final column hashes: early-out on 0x%016llx, off 0x%016llx (%s)"), Hashes[0],
         Hashes[1], Hashes[0] == Hashes[1] ? TEXT("equal: the early-out is exact") : TEXT("DIFFER"));

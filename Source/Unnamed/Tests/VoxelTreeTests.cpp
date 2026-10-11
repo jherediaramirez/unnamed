@@ -38,7 +38,8 @@ namespace
     // For manual runs: 0 none, 1 base_height one higher, 2 the foliage radius one wider (both on the configurations
     // RunTreeProbes compiles; Trees.Shapes must fail), 3 to 7 as ApplyTreeTestMutation says, 8 the fallen log one
     // longer (scout J's: fallen super birch must then fail its reach of 15 with 16; RunTreeProbes), 9 every fallen log
-    // pointing the same way (the direction test must fail; SimulateTrees). With 0, every test must pass.
+    // pointing the same way (the direction test must fail; SimulateTrees), 10 and 11 as RunTreeProbes says (S9e: the
+    // azalea's leaves and the rooted dirt must fail). With 0, every test must pass.
     constexpr int32 TreeTestMutation = 0;
     // For manual runs: the number of 100-tree self-samples per configuration that check the distribution rules'
     // calibration (RunTreeProbes); 0 in the suite.
@@ -495,10 +496,12 @@ namespace
         // A tree feature (a configured feature id) compiled; false with OutSkip saying why it is not run here. With
         // OutFallen, a fallen tree (S9d part 2) compiles into it, and Out is its builder's tree with the stump's and
         // the log's decorators together (what the block set and the decoration rules read).
-        // With OutMushroom, a huge mushroom compiles into it (Out stays empty).
+        // With OutMushroom, a huge mushroom compiles into it (Out stays empty). With OutRootSystem, a root system (S9e)
+        // compiles into it, and Out is its tree.
         bool Compile(FAutomationTestBase& Test, const FString& Feature, FVoxelTreeConfig& Out, FString& OutSkip,
             TSharedPtr<FVoxelFallenTreeConfig>* OutFallen = nullptr,
-            TSharedPtr<FVoxelHugeMushroomConfig>* OutMushroom = nullptr)
+            TSharedPtr<FVoxelHugeMushroomConfig>* OutMushroom = nullptr,
+            TSharedPtr<FVoxelRootSystemConfig>* OutRootSystem = nullptr)
         {
             int32 Entry = Graph.FindEntry(EVoxelFeatureRegistry::Feature, Feature);
             if (Entry == INDEX_NONE) Entry = Graph.FindEntry(EVoxelFeatureRegistry::Feature, StripNamespace(Feature));
@@ -542,6 +545,22 @@ namespace
                 }
                 *OutMushroom = Mushroom;
                 return OutSkip.IsEmpty();
+            }
+            if (OutRootSystem && Type == TEXT("minecraft:root_system"))
+            {
+                const TSharedRef<FVoxelRootSystemConfig> RootSystem = MakeShared<FVoxelRootSystemConfig>();
+                FString Error;
+                if (!Test.TestTrue(FString::Printf(TEXT("%s compiles"), *Feature),
+                        VoxelBigVegetation::CompileRootSystem(
+                            Graph, Node, *Tags, *Table, Predicates, Providers, *RootSystem, OutSkip, &Error)))
+                {
+                    Test.AddError(Error);
+                    return false;
+                }
+                if (!OutSkip.IsEmpty()) return false;
+                Out = RootSystem->Tree;
+                *OutRootSystem = RootSystem;
+                return true;
             }
             if (Graph.GetType(Node) != TEXT("minecraft:tree"))
             {
@@ -646,11 +665,12 @@ namespace
             ++Run.Occupancy.FindOrAdd(Leaf.Z - Top).FindOrAdd(FIntPoint(Leaf.X - Origin.X, Leaf.Y - Origin.Y));
     }
 
-    // Count trees of Config (or of Fallen, a fallen tree) on the probe's column at (8, 8, the probe's y), each from its
-    // own stream. The trees only read the working copy (Emit keeps their writes), so they all see the probe's untouched
-    // column.
+    // Count trees of Config (or of Fallen, a fallen tree, or RootSystem, a root system and its tree) on the probe's
+    // column at (8, 8, the probe's y), each from its own stream. The trees only read the working copy (Emit keeps their
+    // writes), so they all see the probe's untouched column.
     void SimulateTrees(const FTreeTestKit& Kit, const FVoxelTreeConfig& Config, const FTreeProbe& Probe, int32 Count,
-        uint64 Seed, FTreeRun& Out, const FVoxelFallenTreeConfig* Fallen = nullptr)
+        uint64 Seed, FTreeRun& Out, const FVoxelFallenTreeConfig* Fallen = nullptr,
+        const FVoxelRootSystemConfig* RootSystem = nullptr)
     {
         const FVoxelBlockTable& Table = *Kit.Table;
         const TSharedRef<FVoxelColumn> Column = MakeProbeColumn(Table, Probe);
@@ -676,8 +696,9 @@ namespace
         {
             Writes.Reset();
             FVoxelXoroshiro Random(VoxelRandom::Hash64(Seed, VoxelRandom::Salt("tree test"), Index, 0));
-            if (Fallen ? VoxelBigVegetation::PlaceFallenTree(*Fallen, Origin, Random, Env)
-                       : VoxelTreeFeature::Place(Config, Origin, Random, Env))
+            if (Fallen           ? VoxelBigVegetation::PlaceFallenTree(*Fallen, Origin, Random, Env)
+                    : RootSystem ? VoxelBigVegetation::PlaceRootSystem(*RootSystem, Origin, Random, Env)
+                                 : VoxelTreeFeature::Place(Config, Origin, Random, Env))
                 AddTree(Table, Origin, Writes, Out);
             else
                 Out.FailedWrites += Writes.Num() > 0;
@@ -1312,8 +1333,10 @@ namespace
         Test.TestEqual(TEXT("tree probes"), Files.Num(), 82);
         TArray<FTreeProbe> Probes;
         TArray<FVoxelTreeConfig> Configs;
-        // Per probe, its fallen tree (S9d part 2), else null; and the huge mushroom probes compared.
+        // Per probe, its fallen tree (S9d part 2) and its root system (S9e), else null; and the huge mushroom probes
+        // compared.
         TArray<TSharedPtr<FVoxelFallenTreeConfig>> Fallen;
+        TArray<TSharedPtr<FVoxelRootSystemConfig>> RootSystems;
         int32 Mushrooms = 0;
         TArray<TSet<int32>> DecoratorBlocks;
         TArray<FString> Skipped;
@@ -1328,8 +1351,9 @@ namespace
             FVoxelTreeConfig Config;
             TSharedPtr<FVoxelFallenTreeConfig> FallenTree;
             TSharedPtr<FVoxelHugeMushroomConfig> Mushroom;
+            TSharedPtr<FVoxelRootSystemConfig> RootSystem;
             FString Skip;
-            if (!Kit.Compile(Test, Probe.Feature, Config, Skip, &FallenTree, &Mushroom))
+            if (!Kit.Compile(Test, Probe.Feature, Config, Skip, &FallenTree, &Mushroom, &RootSystem))
             {
                 if (!Skip.IsEmpty()) Skipped.Add(FString::Printf(TEXT("%s (%s)"), *Probe.Name, *Skip));
                 continue;
@@ -1355,17 +1379,27 @@ namespace
                 ++FallenTree->LogLength.Min;
                 ++FallenTree->LogLength.Max;
             }
+            // Mutation 10 (S9e): random_spread's leaf_placement_attempts halved (azalea and the rooted azalea's tree);
+            // 11: the root system's root_placement_attempts halved (its rooted dirt).
+            if (TreeTestMutation == 10)
+                for (FVoxelTreeConfig* Tree : {&Config, RootSystem ? &RootSystem->Tree : nullptr})
+                    if (Tree && Tree->Foliage.Type == uint8(EVoxelFoliagePlacer::RandomSpread))
+                        for (TPair<FName, FVoxelIntProvider>& Field : Tree->Foliage.Ints)
+                            if (Field.Key == FName(TEXT("leaf_placement_attempts")))
+                                Field.Value = FVoxelIntProvider::MakeConstant(Field.Value.Max / 2);
+            if (TreeTestMutation == 11 && RootSystem) RootSystem->RootPlacementAttempts /= 2;
             Probes.Add(MoveTemp(Probe));
             Configs.Add(MoveTemp(Config));
             Fallen.Add(FallenTree);
+            RootSystems.Add(RootSystem);
         }
         TArray<FTreeRun> Runs;
         Runs.SetNum(Probes.Num());
         ParallelFor(Probes.Num(),
             [&](int32 Index)
             {
-                SimulateTrees(
-                    Kit, Configs[Index], Probes[Index], TreeTestCount, TreeTestSeed, Runs[Index], Fallen[Index].Get());
+                SimulateTrees(Kit, Configs[Index], Probes[Index], TreeTestCount, TreeTestSeed, Runs[Index],
+                    Fallen[Index].Get(), RootSystems[Index].Get());
             });
         TArray<TMap<int32, double>> DecorationZ;
         DecorationZ.SetNum(Probes.Num());
@@ -1445,7 +1479,8 @@ namespace
                     {
                         FTreeRun Own;
                         SimulateTrees(Kit, Configs[Index], Probes[Index], 100,
-                            TreeTestSeed + 1 + Sample + uint64(Index) * TreeTestCalibration, Own, Fallen[Index].Get());
+                            TreeTestSeed + 1 + Sample + uint64(Index) * TreeTestCalibration, Own, Fallen[Index].Get(),
+                            RootSystems[Index].Get());
                         const FTreeProbe AsProbe = MakeSampleProbe(Own, Names);
                         FString Line, Worst;
                         TArray<FString> MeanFailures, DecorationFailures;
@@ -1808,11 +1843,12 @@ bool FVoxelTreeShapesTest::RunTest(const FString& Parameters)
     // Every built tree configuration against its probe (scout J's oracles, the fits' harness rules): the leaves'
     // distance and persistence, the probe's blocks, one 26-connected trunk and a straight trunk's height exactly; the
     // means, the top-log histogram, leaf occupancy by an exact binomial test per cell, reach and 6-connected parts as
-    // distributions. Every built configuration runs: 41 probes since S9d part 2 (S9c's 33, the six fallen trees, which
-    // add their log directions, and the two huge mushrooms, CompareMushrooms).
+    // distributions. Every built configuration runs: 43 probes since S9e part 1 (S9c's 33, the six fallen trees, which
+    // add their log directions, the two huge mushrooms, CompareMushrooms, the azalea tree and the rooted azalea tree,
+    // its root system's roots counted as decorations; the four mangroves wait for S9e part 2).
     int32 Ran = 0;
     if (!RunTreeProbes(*this, [](const FTreeProbe& Probe) { return Probe.Ceiling == 0; }, Ran)) return false;
-    TestEqual(TEXT("probes run (a placer that stops compiling drops its probes)"), Ran, 41);
+    TestEqual(TEXT("probes run (a placer that stops compiling drops its probes)"), Ran, 43);
     return true;
 }
 

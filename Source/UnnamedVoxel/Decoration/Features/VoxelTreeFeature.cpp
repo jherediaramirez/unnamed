@@ -172,9 +172,13 @@ bool FVoxelTreeBuilder::IsFree(FIntVector Cell) const
 
 bool FVoxelTreeBuilder::IsFreeBelow(FIntVector Cell) const
 {
+    return IsInSetBelow(Cell, Config.FreeSet);
+}
+
+bool FVoxelTreeBuilder::IsInSetBelow(FIntVector Cell, int32 Set) const
+{
     return Cell.Z >= VoxelConstants::MinZ && Cell.Z <= VoxelConstants::MaxZ &&
-        Env.Predicates.GetSet(Config.FreeSet)
-            .Contains(Env.Table.Get(Env.Context.GetState(Cell.X, Cell.Y, Cell.Z)).Block);
+        Env.Predicates.GetSet(Set).Contains(Env.Table.Get(Env.Context.GetState(Cell.X, Cell.Y, Cell.Z)).Block);
 }
 
 bool FVoxelTreeBuilder::IsLog(FIntVector Cell) const
@@ -206,15 +210,19 @@ bool FVoxelTreeBuilder::SetLog(FIntVector Cell, int32 Axis)
     const uint16 State = Config.LogStates[FMath::Clamp(Axis, 0, 2)];
     if (int32* Index = FindCell(Cell))
     {
-        // IsLog, or IsFree on the tree's own leaf.
+        // IsLog, or IsFree on the tree's own leaf, or the tree's own root of a block logs go through (S9e).
         FCell& Own = Cells[*Index];
         const bool bInside = Cell.Z >= VoxelConstants::MinZ && Cell.Z <= VoxelConstants::MaxZ;
-        if (Own.Kind != ECell::Log && !(bInside && Own.Kind == ECell::Leaf)) return false;
+        const bool bThrough = Own.Kind == ECell::Root && Config.LogFreeSet != Config.FreeSet &&
+            Env.Predicates.GetSet(Config.LogFreeSet).Contains(Env.Table.Get(Own.State).Block);
+        if (Own.Kind != ECell::Log && !(bInside && Own.Kind == ECell::Leaf) && !bThrough) return false;
         Own.State = State;
         Own.Kind = ECell::Log;
         return true;
     }
-    if (!IsFreeBelow(Cell)) return false;
+    if (Config.LogFreeSet == Config.FreeSet || Config.LogFreeSet == INDEX_NONE ? !IsFreeBelow(Cell)
+                                                                               : !IsInSetBelow(Cell, Config.LogFreeSet))
+        return false;
     Append(Cell, State, ECell::Log);
     return true;
 }
@@ -472,6 +480,17 @@ bool VoxelTreeFeature::SetFreeSet(
     FVoxelBlockSet Free = *Replaceable;
     Free.Add(0);
     Out.FreeSet = Predicates.AddSet(MoveTemp(Free));
+    // Logs also go through the trunk placer's can_grow_through (S9e: the mangroves').
+    Out.LogFreeSet = Out.FreeSet;
+    if (Out.Trunk.BlockSet != INDEX_NONE)
+    {
+        FVoxelBlockSet Logs = Predicates.GetSet(Out.FreeSet);
+        const FVoxelBlockSet& Through = Predicates.GetSet(Out.Trunk.BlockSet);
+        if (Logs.Words.Num() < Through.Words.Num()) Logs.Words.SetNumZeroed(Through.Words.Num());
+        for (int32 Word = 0; Word < Through.Words.Num(); ++Word)
+            Logs.Words[Word] |= Through.Words[Word];
+        Out.LogFreeSet = Predicates.AddSet(MoveTemp(Logs));
+    }
     return true;
 }
 
@@ -625,10 +644,15 @@ bool VoxelTreeFeature::Place(const FVoxelTreeConfig& Config, FIntVector Origin, 
     int32 Height = Config.Trunk.SampleInt(BaseHeight, Random);
     Height += Random.NextInt(Config.Trunk.SampleInt(RandA, Random) + 1);
     Height += Random.NextInt(Config.Trunk.SampleInt(RandB, Random) + 1);
-    if (Config.Roots.bEnabled && !VoxelRootPlacers::PlaceMangrove(Config.Roots, Builder))
+    if (Config.Roots.bEnabled)
     {
-        Lap(FVoxelTreeTimes::Size);
-        return false;
+        const bool bRooted = VoxelRootPlacers::PlaceMangrove(Config.Roots, Builder);
+        Lap(FVoxelTreeTimes::Roots);
+        if (!bRooted)
+        {
+            Lap(FVoxelTreeTimes::Size);
+            return false;
+        }
     }
     Height = GetFreeHeight(Config, Builder, Height);
     Lap(FVoxelTreeTimes::Size);
@@ -668,7 +692,8 @@ bool VoxelTreeFeature::Place(const FVoxelTreeConfig& Config, FIntVector Origin, 
         switch (Cell.Kind)
         {
         case ECell::Log:
-            Env.Emit({At, Cell.State, EVoxelWriteMode::IfReplaceable, uint16(Config.FreeSet)});
+            Env.Emit({At, Cell.State, EVoxelWriteMode::IfReplaceable,
+                uint16(Config.LogFreeSet != INDEX_NONE ? Config.LogFreeSet : Config.FreeSet)});
             break;
         case ECell::Leaf:
         {
