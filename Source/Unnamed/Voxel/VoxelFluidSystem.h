@@ -42,6 +42,10 @@ public:
         static FSettings Read();
     };
 
+    // voxel.Fluids.SlopedTops as 0, 1 or 2 (FVoxelMeshOptions::SlopedTops); other values read as 1, the default. Both
+    // the voxel world's meshes and the Playground's fluid meshes follow it.
+    static int32 GetSlopedTops();
+
     struct FStats
     {
         // The fluid tick, and the game ticks it is behind.

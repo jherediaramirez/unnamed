@@ -66,9 +66,11 @@ bool FVoxelMeshDigestTest::RunTest(const FString& Parameters)
     // Plants and trees on: per preset, models on then off. Re-recorded in S9b: full-cube faces merge by look
     // (FVoxelBlockTable::GetLookState), so leaves of different distances merge; the blocks are S9a's
     // (Decoration.Golden's third case is unchanged) and the trees-off case below is S8 part B's.
-    // S9c re-recorded every pair but large_biomes models off (tree decorators, mega spruce and pine).
-    constexpr uint64 PlantGolden[3][2] = {{0x9c60a0ec50ad7985ull, 0x27dd91e77ccd164bull},
-        {0x112989521b6dc60cull, 0x762f1bf60ca6a7e5ull}, {0x32e2efa3bd031917ull, 0xa6e6109c9bf13ae3ull}};
+    // S9c re-recorded every pair but large_biomes models off (tree decorators, mega spruce and pine); S9d part 2 the
+    // overworld and amplified pairs (fallen trees, huge mushrooms, trunk_vine at 2/3, the shelf mushrooms' one rule);
+    // S9e part 1 the large_biomes pair (azalea trees with their root systems over a lush cave).
+    constexpr uint64 PlantGolden[3][2] = {{0xdc44febc46d1c73aull, 0xa0ea785555d107d2ull},
+        {0x0ea42a420b0a2f83ull, 0x8b29db68a9ad618dull}, {0x61c8745ba36e2004ull, 0x6fd8255fd190e1caull}};
     // Plants on, trees off: S8 part B's, which must hold whatever the trees change (Docs/VoxelWorld.md, "Plants and
     // patches").
     constexpr uint64 TreelessGolden[3][2] = {{0xd8f3b39ed6d66f5aull, 0x6b673e48bda8a0b7ull},

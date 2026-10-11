@@ -66,7 +66,7 @@ if build.CLIENT_JAR.exists():
     check(expected == set(sums), f"files differ from the derivation: +{sorted(set(sums) - expected)[:5]} "
                                  f"-{sorted(expected - set(sums))[:5]}")
     for name in copies:
-        if name.startswith(build.ASSETS):
+        if name.startswith((build.ASSETS, "data/")):
             jar_checked += 1
             check((ROOT / name).is_file() and (ROOT / name).read_bytes() == jar.read(name),
                   f"differs from the jar: {name}")
@@ -185,6 +185,39 @@ for block, tool, ticks, drops in [("stone", "wooden_pickaxe", 23, 1), ("stone", 
     check((rows[block]["ticks"][i], rows[block]["drops"][i]) == (ticks, drops),
           f"break time: {block} with {tool}: {rows[block]['ticks'][i]}, {rows[block]['drops'][i]}")
 
+# 7. Loot tables: the ores' drops against minecraft.wiki's ore pages.
+loot = load("loot_tables.json")
+tables = {t["block"]: t for t in loot["tables"]}
+check(list(tables) == build.LOOT_BLOCKS, "loot tables: one per LOOT_BLOCKS id, in order")
+candidates = sum(len(p["candidates"]) for t in loot["tables"] for p in t["pools"])
+check(manifest["loot"] == {"blocks": build.LOOT_BLOCKS, "tables": 18, "predicates": 1, "candidates": candidates,
+                           "source": "client jar data/minecraft/loot_table/blocks and data/minecraft/predicate"} and
+      list(manifest)[-1] == "loot" and len(loot["predicates"]) == 1, "manifest loot counts")
+DROPS = {"coal": ("coal", 1, 1), "copper": ("raw_copper", 2, 5), "iron": ("raw_iron", 1, 1),
+         "gold": ("raw_gold", 1, 1), "diamond": ("diamond", 1, 1), "emerald": ("emerald", 1, 1),
+         "lapis": ("lapis_lazuli", 4, 9), "redstone": ("redstone", 4, 5)}
+for ore in DROPS:
+    for block in (f"{ore}_ore", f"deepslate_{ore}_ore"):
+        DROPS_EXPECTED = DROPS[ore]
+        t = tables.get(block)
+        check(t is not None and len(t["pools"]) == 1 and len(t["pools"][0]["candidates"]) == 2, f"loot shape: {block}")
+        if t is not None and len(t["pools"][0]["candidates"]) == 2:
+            first, second = t["pools"][0]["candidates"]
+            check(t["pools"][0]["rolls"] == 1 and first["item"] == block and
+                  first["conditions"] == ["tool/can_silk_touch"], f"loot silk touch candidate: {block}")
+            check((second["item"], *second["count"]) == DROPS_EXPECTED and second["conditions"] == [] and
+                  second["explosion_decay"], f"loot drop: {block}")
+            check(second["bonus"] == {"enchantment": "fortune", "formula": "uniform_bonus_count" if ore == "redstone"
+                                      else "ore_drops", "bonus_multiplier": 1 if ore == "redstone" else 0},
+                  f"loot fortune bonus: {block}")
+for block, item, low, high in [("nether_quartz_ore", "quartz", 1, 1), ("nether_gold_ore", "gold_nugget", 2, 6)]:
+    cands = tables[block]["pools"][0]["candidates"]
+    check(len(cands) == 2 and cands[0]["item"] == block and cands[0]["conditions"] == ["tool/can_silk_touch"] and
+          (cands[1]["item"], *cands[1]["count"]) == (item, low, high), f"loot: {block}")
+silk = {p["name"]: p for p in loot["predicates"]}.get("tool/can_silk_touch")
+check(silk is not None and silk["type"] == "match_tool" and silk["items"] == [] and
+      silk["enchantments"] == [{"id": "silk_touch", "min_level": 1}], "can_silk_touch predicate")
+
 if errors:
     print("REFERENCE FAIL")
     print("\n".join(errors[:40]))
@@ -193,4 +226,5 @@ partial = "" if derived else " (PARTIAL: no client jar, nothing re-derived)"
 print(f"REFERENCE OK{partial}: {len(sums)} files hashed, {derived} generated files re-derived, {jar_checked} compared with "
       f"the jar, {report_checked} with the data generator's report; {len(items)} items, {len(index)} registry items, "
       f"{len(textures)} textures, break times for {len(rows)} blocks x {len(tools)} tools; {len(lang)} lang keys, "
-      f"the durability bar at {sum(len(m['width']) for m in bar)} damage values, {len(tips)} tooltips")
+      f"the durability bar at {sum(len(m['width']) for m in bar)} damage values, {len(tips)} tooltips; {len(tables)} loot tables, "
+      f"{len(loot['predicates'])} predicate, {candidates} candidates")

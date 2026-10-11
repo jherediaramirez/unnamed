@@ -22,6 +22,12 @@ namespace
     TAutoConsoleVariable<int32> CVarFluidsSimRadius(TEXT("voxel.Fluids.SimRadius"), -1,
         TEXT("Fluids act at most this many columns from the streaming center on both axes, inside the view less one "
              "column; negative (the default), that whole ring (plan Q6)."));
+    TAutoConsoleVariable<int32> CVarFluidsSlopedTops(TEXT("voxel.Fluids.SlopedTops"), 1,
+        TEXT("Fluid surfaces (water and sky W3, plan Q5): 0 flat at each cell's level (stepped boxes); 1 sloped where "
+             "neighbouring levels differ, which draws generated fluid as 0 does; 2 sloped everywhere, every lava side "
+             "on "
+             "the flow texture (the vanilla look; generated meshes change). A change remeshes every loaded column; the "
+             "Playground picks it up when it next draws its blocks."));
 
     // The blocks the rules name, by EVoxelFluidBlock.
     const TCHAR* const FluidBlockNames[] = {nullptr, TEXT("soul_soil"), TEXT("blue_ice"), TEXT("obsidian"),
@@ -36,6 +42,12 @@ FVoxelFluidSystem::FSettings FVoxelFluidSystem::FSettings::Read()
     Settings.BudgetMs = CVarFluidsBudgetMs.GetValueOnGameThread();
     Settings.SimRadius = CVarFluidsSimRadius.GetValueOnGameThread();
     return Settings;
+}
+
+int32 FVoxelFluidSystem::GetSlopedTops()
+{
+    const int32 Value = CVarFluidsSlopedTops.GetValueOnGameThread();
+    return Value >= 0 && Value <= 2 ? Value : 1;
 }
 
 FVoxelFluidSystem::~FVoxelFluidSystem()

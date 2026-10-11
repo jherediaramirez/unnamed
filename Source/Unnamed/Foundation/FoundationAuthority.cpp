@@ -1,4 +1,5 @@
 #include "Foundation/FoundationAuthority.h"
+#include "Algo/AllOf.h"
 #include "Blocks/VoxelPlantSurvival.h"
 #include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationSimulation.h"
@@ -744,14 +745,28 @@ bool FFoundationAuthority::BreakBlock(
     const FFoundationBlockType& Definition = World.GetBlock(State);
     const FFoundationItemDefinition& Tool = GetHandItem(Player, EFoundationHand::Main);
     const bool bEligible = !bCreative && CanHarvest(Tool, Definition);
-    const int32 Drop = Rules.FindItem(Definition.DropItem);
-    // Provisional loot rule, "drops itself": a double slab is two slabs. Loot tables arrive later.
-    const int32 DropCount =
-        Definition.DropCount * (World.GetRegistry().GetValue(State, TEXT("type")) == TEXT("double") ? 2 : 1);
-    // The finite fixture returns the drop straight to the inventory (a lab stand-in for item entities).
-    // Without room the break is refused and the block stays.
-    const bool bReturn = !Player.Inventory.bInfiniteSupply && bEligible && Drop != INDEX_NONE && DropCount > 0;
-    if (bReturn && Player.Inventory.GetSpaceFor(Drop, Rules.Items[Drop].MaxStack) < DropCount)
+    // The finite fixture returns the drops straight to the inventory (a lab stand-in for item entities).
+    // Without room for all of them the break is refused and the block stays.
+    TArray<FFoundationLootDrop> Drops;
+    if (!Player.Inventory.bInfiniteSupply && bEligible)
+    {
+        if (const FFoundationLootTable* Table = Rules.LootTables.Find(Definition.Id))
+        {
+            // A refused break rolls the same drops again: the break count moves only when a block breaks.
+            FRandomStream Random(FoundationLoot::MakeSeed(Rules.LootSeed, Cell, Breaks));
+            FoundationLoot::Roll(*Table, Rules.LootPredicates, Tool, Random, Drops);
+        }
+        else if (const int32 Drop = Rules.FindItem(Definition.DropItem); Drop != INDEX_NONE)
+        {
+            // Provisional loot rule for blocks without a table, "drops itself": a double slab is two slabs.
+            const int32 DropCount =
+                Definition.DropCount * (World.GetRegistry().GetValue(State, TEXT("type")) == TEXT("double") ? 2 : 1);
+            if (DropCount > 0) Drops.Add({Drop, DropCount});
+        }
+    }
+    FFoundationInventory Trial = Player.Inventory;
+    if (!Algo::AllOf(Drops, [&](const FFoundationLootDrop& Drop)
+            { return Trial.Add(Drop.Item, Drop.Count, Rules.Items[Drop.Item].MaxStack) == Drop.Count; }))
     {
         Reject(Result, EFoundationReason::InventoryFull);
         FFoundationEvent Event;
@@ -769,7 +784,9 @@ bool FFoundationAuthority::BreakBlock(
     Result.bBroken = true;
     Result.Cell = Cell;
     Result.State = State;
-    if (bReturn) Result.bItemReturned = Player.Inventory.Add(Drop, DropCount, Rules.Items[Drop].MaxStack) > 0;
+    for (const FFoundationLootDrop& Drop : Drops)
+        Result.bItemReturned |= Player.Inventory.Add(Drop.Item, Drop.Count, Rules.Items[Drop.Item].MaxStack) > 0;
+    Result.Drops = MoveTemp(Drops);
     // Positive-hardness blocks wear the tool once, when tool wear is on; creative tools never wear.
     if (!bCreative && Options.bToolWear && Definition.Hardness > 0 && Tool.DurabilityPerBlock > 0 &&
         !Player.Inventory.GetHand(EFoundationHand::Main).IsEmpty())

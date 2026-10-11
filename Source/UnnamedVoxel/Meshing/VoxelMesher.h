@@ -64,6 +64,10 @@ struct FVoxelMeshOptions
     // the mesh is vanilla, vertex for vertex.
     int32 OreHost = 0;
     int32 OreGlint = 0;
+    // Fluid surfaces (voxel.Fluids.SlopedTops, Meshing/VoxelFluidSurface.h): 0 flat at each cell's own height (stepped
+    // boxes); 1 sloped where neighbouring levels differ, which leaves every generated fluid as 0 draws it; 2 sloped
+    // everywhere, with every lava side on the flow texture (the vanilla look; generated meshes change).
+    int32 SlopedTops = 1;
     static constexpr int32 MaxTintBlend = 8;
 };
 
@@ -71,9 +75,11 @@ struct FVoxelMeshOptions
 // state, ambient-occlusion corners and tint, so a merged quad never blurs different shading or colours. Slabs and water
 // sides, which are partial faces, emit one quad each. A face is hidden when its code carries the cull bit and the
 // neighbour covers that whole square with an opaque surface, or when the neighbour is the same see-through block (glass
-// beside glass); water never draws against water, nor against a model state holding water. Model states append their
-// baked quads, unmerged, to the Model layer: one alternative per part (VoxelModels::PickAlternative), moved by the
-// block's offset, each hidden when its cull face's neighbour covers that side; their water is drawn around them.
+// beside glass); water never draws against water, nor against a model state holding water. A fluid whose surface
+// slopes (VoxelFluidSurface) draws its top and outward sides per cell, their upper edges on the surface's corners.
+// Model states append their baked quads, unmerged, to the Model layer: one alternative per part
+// (VoxelModels::PickAlternative), moved by the block's offset, each hidden when its cull face's neighbour covers that
+// side; their water is drawn around them.
 namespace VoxelMesher
 {
     UNNAMEDVOXEL_API void GatherPadded(

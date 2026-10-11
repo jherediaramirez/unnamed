@@ -473,8 +473,43 @@ namespace
     }
 }
 
+namespace
+{
+    const FName RandomSpreadHeight(TEXT("foliage_height")), RandomSpreadAttempts(TEXT("leaf_placement_attempts"));
+
+    // random_spread_foliage_placer (ours, fitted to scout J's azalea and mangrove probes by S9e's agent F1,
+    // C:\dev\sandbox\phase6s9\s9e\fit\f1-crown; the data gives the numbers, the wiki no algorithm): per attachment in
+    // order, leaf_placement_attempts tries, each a leaf where the cell is free at the attachment plus (NextInt(r) -
+    // NextInt(r)) across X and Y for r = radius and (NextInt(h) - NextInt(h)) up for h = foliage_height (triangular:
+    // -2..2 and -1..1 at the data's 3 and 2). Draws per try: X's pair, the height's pair, Y's pair (the reference's x,
+    // y, z), then a new leaf's state (azalea's weighted provider: 3 to 1 per leaf, as the probe).
+    void PlaceRandomSpread(const FVoxelTreePlacerConfig& Foliage, FVoxelTreeBuilder& Builder,
+        TConstArrayView<FVoxelFoliageAttachment> Attachments)
+    {
+        FVoxelXoroshiro& Random = Builder.Random;
+        const int32 Radius = FMath::Max(1, Foliage.SampleInt(FoliageRadius, Random, 1));
+        const int32 Height = FMath::Max(1, Foliage.SampleInt(RandomSpreadHeight, Random, 1));
+        const int32 Attempts = FMath::Max(0, Foliage.SampleInt(RandomSpreadAttempts, Random, 0));
+        // One offset from a pair of draws, in order.
+        const auto Spread = [&Random](int32 Range)
+        {
+            const int32 Plus = Random.NextInt(Range);
+            return Plus - Random.NextInt(Range);
+        };
+        for (const FVoxelFoliageAttachment& Attachment : Attachments)
+            for (int32 Try = 0; Try < Attempts; ++Try)
+            {
+                const int32 X = Spread(Radius);
+                const int32 Z = Spread(Height);
+                const int32 Y = Spread(Radius);
+                Builder.SetLeaf(Attachment.Position + FIntVector(X, Y, Z));
+            }
+    }
+}
+
 EVoxelFoliagePlacer VoxelFoliagePlacers::FindType(FStringView Type)
 {
+    if (Type == TEXT("minecraft:random_spread_foliage_placer")) return EVoxelFoliagePlacer::RandomSpread;
     if (Type == TEXT("minecraft:blob_foliage_placer")) return EVoxelFoliagePlacer::Blob;
     if (Type == TEXT("minecraft:bush_foliage_placer")) return EVoxelFoliagePlacer::Bush;
     if (Type == TEXT("minecraft:spruce_foliage_placer")) return EVoxelFoliagePlacer::Spruce;
@@ -518,6 +553,9 @@ void VoxelFoliagePlacers::Place(const FVoxelTreePlacerConfig& Foliage, FVoxelTre
     case EVoxelFoliagePlacer::Poplar:
         PlacePoplarFoliage(Foliage, Builder, Attachments);
         return;
+    case EVoxelFoliagePlacer::RandomSpread:
+        PlaceRandomSpread(Foliage, Builder, Attachments);
+        return;
     case EVoxelFoliagePlacer::Jungle:
         PlaceJungle(Foliage, Builder, Attachments);
         return;
@@ -536,6 +574,9 @@ int32 VoxelFoliagePlacers::GetReach(const FVoxelTreePlacerConfig& Foliage)
 {
     switch (EVoxelFoliagePlacer(Foliage.Type))
     {
+    case EVoxelFoliagePlacer::RandomSpread:
+        // NextInt(r) - NextInt(r) reaches r - 1.
+        return FMath::Max(0, Foliage.GetMaxInt(FoliageRadius, 1) - 1);
     case EVoxelFoliagePlacer::Blob:
         // The widest layer, plus one for a radius bonus.
         return Foliage.GetMaxInt(FoliageRadius) + 1;

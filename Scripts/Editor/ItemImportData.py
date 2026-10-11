@@ -151,9 +151,27 @@ def build(root):
                              "mask": list(texture["mask"]), "layer": len(layers[size[0]])})
         layers[size[0]].append(ref / ASSETS / (texture["name"] + ".png"))
     sprite_pngs = sorted((ref / "assets/minecraft/textures/item").glob("*.png"))
+    loot = json.loads((ref / "loot_tables.json").read_text(encoding="utf-8"))
     return {"source_sha256": source_sha256(root), "items": out_items, "models": out_models,
             "textures": out_textures, "sprite_pngs": sprite_pngs, "tags_ini": tags_ini(root),
-            "array_layers": layers[16], "array_layers32": layers[32], "lang": dict(lang["keys"])}
+            "array_layers": layers[16], "array_layers32": layers[32], "lang": dict(lang["keys"]),
+            "loot_tables": [loot_table(t) for t in loot["tables"]],
+            "loot_predicates": [{"name": p["name"], "items": list(p["items"]),
+                                 "enchantments": [e["id"] for e in p["enchantments"]],
+                                 "enchantment_min_levels": [e["min_level"] for e in p["enchantments"]]}
+                                for p in loot["predicates"]]}
+
+
+def loot_table(table):
+    """loot_tables.json's table -> FFoundationLootTableAsset values (items S5b)."""
+    def candidate(c):
+        bonus = c["bonus"] or {}
+        return {"item": c["item"], "conditions": list(c["conditions"]), "count_min": c["count"][0],
+                "count_max": c["count"][1], "bonus_formula": bonus.get("formula", ""),
+                "bonus_enchantment": bonus.get("enchantment", ""),
+                "bonus_multiplier": float(bonus.get("bonus_multiplier", 0)), "explosion_decay": c["explosion_decay"]}
+    return {"block": table["block"],
+            "pools": [{"rolls": p["rolls"], "candidates": [candidate(c) for c in p["candidates"]]} for p in table["pools"]]}
 
 
 def main():
@@ -168,7 +186,8 @@ def main():
     print(f"{files} reference files match their sums; {len(data['items'])} items, {len(data['models'])} models, "
           f"{len(data['textures'])} textures ({len(data['array_layers'])} + {len(data['array_layers32'])} array layers), "
           f"{len(data['sprite_pngs'])} sprites, {len(data['lang'])} lang keys, "
-          f"{sum(len(i['rules']) for i in data['items'])} tool rules")
+          f"{sum(len(i['rules']) for i in data['items'])} tool rules, {len(data['loot_tables'])} loot tables, "
+          f"{len(data['loot_predicates'])} loot predicates")
 
 
 if __name__ == "__main__":

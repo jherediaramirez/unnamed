@@ -467,11 +467,24 @@ namespace
                 {
                     if (Args.Num() > 1 && !FCString::IsNumeric(*Args[1]))
                     {
-                        PrintLines(Output, TEXT("Usage: voxel.Bench Decorate [radius] [preset] [nocaves] [noveins]"));
+                        PrintLines(
+                            Output, TEXT("Usage: voxel.Bench Decorate [radius] [preset] [nocaves] [noveins] [at=X:Y]"));
                         return;
                     }
                     const int32 Radius = Args.Num() > 1 ? FMath::Clamp(FCString::Atoi(*Args[1]), 0, 16) : 4;
-                    const FString PresetName = Args.Num() > 2 ? Args[2] : TEXT("overworld");
+                    const FString PresetName =
+                        Args.Num() > 2 && !Args[2].StartsWith(TEXT("at=")) ? Args[2] : TEXT("overworld");
+                    // at=X:Y (blocks; a colon, since -ExecCmds splits at commas): the area's centre column instead of
+                    // the origin's (S9e: one biome's columns).
+                    FIntPoint Center = FIntPoint::ZeroValue;
+                    for (const FString& Arg : Args)
+                    {
+                        FString X, Y;
+                        if (Arg.StartsWith(TEXT("at=")) && Arg.Mid(3).Split(TEXT(":"), &X, &Y))
+                            Center =
+                                FIntPoint(FMath::DivideAndRoundDown(FCString::Atoi(*X), VoxelConstants::ColumnSize),
+                                    FMath::DivideAndRoundDown(FCString::Atoi(*Y), VoxelConstants::ColumnSize));
+                    }
                     FString Error;
                     FVoxelTerrainPreset Preset;
                     FVoxelBiomeTable Biomes;
@@ -503,7 +516,7 @@ namespace
                         FString::Printf(TEXT("Voxel decoration bench, %s, caves %s, ore veins %s, seed %s:"),
                             *PresetName, Settings.bCaves ? TEXT("on") : TEXT("off"),
                             Settings.bOreVeins ? TEXT("on") : TEXT("off"), *Seed.Describe()) +
-                            TEXT("\n") + VoxelBench::RunDecorate(*Decorator, *Exhaustive, Terrain, Radius));
+                            TEXT("\n") + VoxelBench::RunDecorate(*Decorator, *Exhaustive, Terrain, Radius, Center));
                     return;
                 }
                 if (!Args.IsEmpty() && Args[0] == TEXT("VeinProbe"))
@@ -593,7 +606,8 @@ namespace
                 PrintLines(Output,
                     TEXT("Usage: voxel.Bench Noise [millions] | voxel.Bench Columns [radius] [preset|standin] "
                          "[nocaves] [noveins] | voxel.Bench Climate [radius] [preset] | voxel.Bench Density [radius] "
-                         "[preset] [nocaves] [noveins] | voxel.Bench Decorate [radius] [preset] [nocaves] [noveins] | "
+                         "[preset] [nocaves] [noveins] | voxel.Bench Decorate [radius] [preset] [nocaves] [noveins] "
+                         "[at=X:Y] | "
                          "voxel.Bench FreezeDiff [radius] [preset] [x y] [noveins]"));
             }));
 

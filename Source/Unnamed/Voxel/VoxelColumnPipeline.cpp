@@ -138,6 +138,16 @@ void FVoxelColumnPipeline::SetOreLooks(int32 OreHost, int32 OreGlint)
     Regress();
 }
 
+void FVoxelColumnPipeline::SetSlopedTops(int32 SlopedTops)
+{
+    FVoxelMeshOptions& Options = Settings.MeshOptions;
+    if (Options.SlopedTops == SlopedTops) return;
+    Options.SlopedTops = SlopedTops;
+    for (TPair<FIntPoint, FRecord>& Pair : Records)
+        if (Pair.Value.Data) MarkDirty(Pair.Value, PipelineAllSections);
+    Regress();
+}
+
 void FVoxelColumnPipeline::WaitForJobs()
 {
     for (FJob& Job : Jobs)

@@ -4,6 +4,7 @@
 #include "Foundation/FoundationBlockPlacement.h"
 #include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationItems.h"
+#include "Foundation/FoundationLoot.h"
 #include "Foundation/FoundationTargeting.h"
 #include "Foundation/FoundationVitals.h"
 
@@ -135,6 +136,8 @@ struct FFoundationResult
     bool bKnockback = false, bSprintKnockback = false, bSweep = false;
     int32 SweptTargets = 0;
     bool bItemConsumed = false, bItemReturned = false, bToolWorn = false, bToolBroke = false;
+    // What a survival break returned to the inventory (items S5b): one entry per stack rolled.
+    TArray<FFoundationLootDrop> Drops;
     FName Interaction;
 
     bool IsCommitted() const { return Outcome == EFoundationOutcome::Committed; }
@@ -223,6 +226,12 @@ struct UNNAMED_API FFoundationRules
     float SweepDamage = 1, SweepingDamageRatio = 0, SweepKnockback = .4f;
     float TargetMaxHealth = 20;
     int32 ResultCacheSize = 128;
+    // Block loot (items S5b): tables by block id and the named tool predicates they use (BuildRules, from DA_Items). A
+    // block without a table keeps the provisional rule, "drops itself". LootSeed is mixed with the cell and the break
+    // count into every roll; 0 until a world's seed is wired in.
+    TMap<FName, FFoundationLootTable> LootTables;
+    TArray<FFoundationLootPredicate> LootPredicates;
+    uint64 LootSeed = 0;
 
     int32 FindItem(FName Id) const;
     // The definition for an inventory index; an invalid index is the bare hand.

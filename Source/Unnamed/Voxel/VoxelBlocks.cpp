@@ -220,6 +220,10 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
     }
     // Render-only: the ore and rock classes the ore looks read (voxel.Look.OreHost, voxel.Look.OreGlint).
     VoxelOreLooks::Classify(*Table);
+    // The flow textures sloped tops and flowing lava's sides draw (both in the flow texture array).
+    Table->SetFlowCode(EVoxelFluid::Water, WaterFlow | FoundationBlockFaces::TintBit);
+    if (const int32 LavaFlow = FindBlockTexture(Assets, TEXT("lava_flow")); LavaFlow >= 0)
+        Table->SetFlowCode(EVoxelFluid::Lava, uint32(LavaFlow));
     return Table;
 }
 

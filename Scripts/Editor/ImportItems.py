@@ -3,12 +3,14 @@ items (T_ItemTextures, 16 x 16, and T_ItemTextures32, the spears' 32 x 32 in-han
 (DA_Items).
 
 Additive and idempotent, like ImportBlocks.py: assets that exist are verified, never rebuilt. An import from
-different reference data refuses to touch existing assets (move them away first, deliberately). Run after the
+different reference data refuses to touch existing assets (move them away first, deliberately); the one exception
+is items S5b's explicit loot migration (UNNAMED_ITEMS_MIGRATE=loot, from the pre-loot reference only). Run after the
 editor target has compiled and with Config/Tags/MinecraftItemTags.ini in place (ItemImportData.py --write-tags):
 
     & 'C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe' Unnamed.uproject
         -run=pythonscript "-script=Scripts\\Editor\\ImportItems.py" -unattended -nop4 -nosplash
 """
+import os
 import sys
 from pathlib import Path
 import unreal
@@ -23,6 +25,8 @@ assets = unreal.EditorAssetLibrary
 Import = unreal.FoundationBlockImport
 ARRAYS = (("T_ItemTextures", "array_layers", 16, "item_textures"), ("T_ItemTextures32", "array_layers32", 32,
                                                                    "item_textures32"))
+# The reference's digest before items S5b added the loot tables (ItemImportData.source_sha256).
+PRE_LOOT_SHA256 = "4b17236f19f25bab4e23320c3a82e69989010fbf35d2c635e7f6e2cb5ffccc39"
 
 
 def fail(message):
@@ -88,13 +92,51 @@ def struct(struct_type, values):
     return entry
 
 
+def loot_structs():
+    """DA_Items' loot tables and predicates (items S5b), from loot_tables.json."""
+    tables = []
+    for table in data["loot_tables"]:
+        pools = [struct(unreal.FoundationLootPoolAsset, {
+            "rolls": pool["rolls"],
+            "candidates": [struct(unreal.FoundationLootCandidateAsset, c) for c in pool["candidates"]]})
+            for pool in table["pools"]]
+        tables.append(struct(unreal.FoundationLootTableAsset, {"block": table["block"], "pools": pools}))
+    return tables, [struct(unreal.FoundationLootPredicateAsset, p) for p in data["loot_predicates"]]
+
+
+LOOT_KEYS = (
+    (unreal.FoundationLootTableAsset, ("block", "pools")),
+    (unreal.FoundationLootPoolAsset, ("rolls", "candidates")),
+    (unreal.FoundationLootCandidateAsset, ("item", "conditions", "count_min", "count_max", "bonus_formula",
+                                           "bonus_enchantment", "bonus_multiplier", "explosion_decay")),
+    (unreal.FoundationLootPredicateAsset, ("name", "items", "enchantments", "enchantment_min_levels")))
+
+
+def loot_view(tables, predicates):
+    """Every loot property as text, so an existing DA_Items' loot compares with loot_structs()' fresh structs."""
+    def plain(value):
+        if isinstance(value, (list, unreal.Array)):
+            return [plain(v) for v in value]
+        for struct_type, keys in LOOT_KEYS:
+            if isinstance(value, struct_type):
+                return [plain(value.get_editor_property(key)) for key in keys]
+        return str(value)
+    return plain(tables), plain(predicates)
+
+
 created = import_sprites()
 
 registry_path = ProjectPaths.item_asset("DA_Items")
 if assets.does_asset_exist(registry_path):
     existing = assets.load_asset(registry_path)
-    if existing.get_editor_property("source_sha256") != data["source_sha256"]:
-        fail("DA_Items was imported from different reference data; preserve it and migrate explicitly")
+    # Items S5b: the S5b rebuild of the reference only added the ores' loot tables (every file DA_Items was imported
+    # from stayed byte-identical), so a DA_Items imported from the reference before it migrates in place when asked:
+    # it is verified as below, then only its loot tables and digest are written.
+    migrate = existing.get_editor_property("source_sha256") == PRE_LOOT_SHA256 and \
+        os.environ.get("UNNAMED_ITEMS_MIGRATE") == "loot" and not existing.get_editor_property("loot_tables")
+    if existing.get_editor_property("source_sha256") != data["source_sha256"] and not migrate:
+        fail("DA_Items was imported from different reference data; preserve it and migrate explicitly (from the "
+             "pre-loot reference: set UNNAMED_ITEMS_MIGRATE=loot)")
     ids = [str(item.get_editor_property("id")) for item in existing.get_editor_property("items")]
     if ids != [item["id"] for item in data["items"]] or \
             len(existing.get_editor_property("models")) != len(data["models"]) or \
@@ -111,8 +153,21 @@ if assets.does_asset_exist(registry_path):
     if [t.get_editor_property("layer") for t in existing.get_editor_property("textures")] !=             [t["layer"] for t in data["textures"]] or dict(existing.get_editor_property("lang")) != data["lang"]:
         fail("DA_Items' texture layers or lang keys differ from the reference; move it away and reimport")
     check_layers(arrays)
-    unreal.log("ITEM_IMPORT PASS: %d reference files match; DA_Items and its arrays match the reference; %d sprites "
-               "created, existing assets were not rebuilt" % (files, created))
+    tables, predicates = loot_structs()
+    if migrate:
+        existing.set_editor_property("loot_tables", tables)
+        existing.set_editor_property("loot_predicates", predicates)
+        existing.set_editor_property("source_sha256", data["source_sha256"])
+        if not assets.save_loaded_asset(existing, False):
+            fail("save failed: " + existing.get_path_name())
+        unreal.log("ITEM_IMPORT PASS: %d reference files match; DA_Items migrated from the pre-loot reference: %d loot "
+                   "tables and %d predicates written, nothing else changed" % (files, len(tables), len(predicates)))
+        sys.exit(0)
+    if loot_view(existing.get_editor_property("loot_tables"), existing.get_editor_property("loot_predicates")) != \
+            loot_view(tables, predicates):
+        fail("DA_Items' loot tables differ from the reference; move it away and reimport")
+    unreal.log("ITEM_IMPORT PASS: %d reference files match; DA_Items (with %d loot tables) and its arrays match the "
+               "reference; %d sprites created, existing assets were not rebuilt" % (files, len(tables), created))
     sys.exit(0)
 
 for name, _, _, _ in ARRAYS:
@@ -159,6 +214,9 @@ registry.set_editor_property("textures", textures)
 registry.set_editor_property("item_textures", arrays[16])
 registry.set_editor_property("item_textures32", arrays[32])
 registry.set_editor_property("lang", data["lang"])
+loot_tables, loot_predicates = loot_structs()
+registry.set_editor_property("loot_tables", loot_tables)
+registry.set_editor_property("loot_predicates", loot_predicates)
 for asset in (arrays[16], arrays[32], registry):
     if not assets.save_loaded_asset(asset, False):
         fail("save failed: " + asset.get_path_name())
