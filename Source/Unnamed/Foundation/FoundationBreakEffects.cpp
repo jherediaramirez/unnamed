@@ -56,6 +56,10 @@ namespace
         TEXT("Place sounds: 0 silent (until 2026-10-11), 1 the placed block's place sound at its break's volume and "
              "pitch, as vanilla (blocks whose place files the block reference lacks play their break sound)."),
         ECVF_Default);
+    TAutoConsoleVariable<bool> CVarSoundTrace(TEXT("foundation.Sound.Trace"), false,
+        TEXT("Debug: logs each break, hit and place sound's play call with its time (FPlatformTime::Seconds), to set "
+             "against a loopback recording of the output (latency checks)."),
+        ECVF_Default);
 
     // The box of Boxes holding a point, or null.
     const FBox* BreakFindBox(const TArray<FBox>& Boxes, const FVector& Point)
@@ -947,6 +951,9 @@ void FFoundationBreakEffects::PlaySound(
     if (SoundLog.Num() > MaxSoundLog) SoundLog.RemoveAt(0, SoundLog.Num() / 2);
     USoundWave* Wave = File.Wave.Get();
     if (!Wave || !World || !World->GetAudioDeviceRaw()) return;
+    if (CVarSoundTrace.GetValueOnGameThread())
+        UE_LOG(LogUnnamedFoundation, Display, TEXT("Sound trace: play %s (%s), frame %llu, t %.4f"),
+            *Event.Name.ToString(), *File.Name.ToString(), uint64(GFrameCounter), FPlatformTime::Seconds());
     // Sounds 2 caps hits at two voices (HitConcurrency).
     UGameplayStatics::SpawnSoundAtLocation(World, Wave, Location, FRotator::ZeroRotator, Play.Volume, Play.Pitch, 0,
         Assets->Attenuation.Get(), bHit && Switches.Sounds == 2 ? Assets->HitConcurrency.Get() : nullptr, true);
