@@ -242,13 +242,20 @@ TArray<FHudCreativeWrite> FHudCreativeModel::Click(
         {
             if (Carried.IsEmpty() && !Stack.IsEmpty())
             {
+                // A copy of the stack, so its damage comes along (ItemStack.split).
                 const int32 Take = (Stack.Count + 1) / 2;
-                Carried = {Stack.Item, Take};
+                Carried = Stack;
+                Carried.Count = Take;
                 Stack.Count -= Take;
             }
             else if (!Carried.IsEmpty() && (Stack.IsEmpty() || Stack.Item == Carried.Item))
             {
-                if (Stack.IsEmpty()) Stack = {Carried.Item, 0};
+                if (Stack.IsEmpty())
+                {
+                    // One of the carried stack, damage included (copyWithCount).
+                    Stack = Carried;
+                    Stack.Count = 0;
+                }
                 if (Stack.Count < Max)
                 {
                     ++Stack.Count;

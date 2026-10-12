@@ -144,6 +144,32 @@ bool FHudCreativeClicksTest::RunTest(const FString&)
     Writes = Model.PressNumber(Log, 4, Inventory);
     TestTrue(TEXT("number key"),
         Writes.Num() == 1 && Writes[0].Slot == 4 && Writes[0].Stack == FHudCreativeStack{TEXT("oak_log"), 64});
+    // A worn tool keeps its damage through right-click moves, as through a left-click swap.
+    const FHudCreativeStack Pickaxe{TEXT("iron_pickaxe"), 1, 37};
+    Inventory[5] = Pickaxe;
+    Writes = Model.Click({EHudCreativeHit::Hotbar, 5}, 1, false, Inventory);
+    TestTrue(TEXT("right-pick carries the tool with its damage"),
+        Writes.Num() == 1 && Writes[0].Stack.IsEmpty() && Model.Carried == Pickaxe);
+    Inventory[5] = {};
+    Writes = Model.Click({EHudCreativeHit::Hotbar, 5}, 1, false, Inventory);
+    TestTrue(TEXT("right-place writes the damage back"),
+        Writes.Num() == 1 && Writes[0].Stack == Pickaxe && Model.Carried.IsEmpty());
+    Inventory[5] = Pickaxe;
+    Writes = Model.Click({EHudCreativeHit::Hotbar, 5}, 0, false, Inventory);
+    TestTrue(TEXT("left-pick carries the tool with its damage"), Writes.Num() == 1 && Model.Carried == Pickaxe);
+    Inventory[5] = {};
+    Writes = Model.Click({EHudCreativeHit::Hotbar, 6}, 1, false, Inventory);
+    TestTrue(TEXT("then right-place into an empty slot writes the damage"),
+        Writes.Num() == 1 && Writes[0].Slot == 6 && Writes[0].Stack == Pickaxe && Model.Carried.IsEmpty());
+    Inventory[6] = {};
+    // A stackable item still splits in half.
+    Inventory[5] = {TEXT("dirt"), 64};
+    Writes = Model.Click({EHudCreativeHit::Hotbar, 5}, 1, false, Inventory);
+    TestTrue(TEXT("right-pick takes half a stack"),
+        Writes.Num() == 1 && Writes[0].Stack == FHudCreativeStack{TEXT("dirt"), 32} &&
+            Model.Carried == FHudCreativeStack{TEXT("dirt"), 32});
+    Model.Carried = {};
+    Inventory[5] = {};
     // The survival tab: the bin deletes the carried stack; shift empties everything.
     Model.SelectTab(FindTab(Model, TEXT("inventory")));
     Model.Carried = {TEXT("stone"), 5};
