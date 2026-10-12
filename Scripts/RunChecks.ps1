@@ -42,6 +42,7 @@ $steps='merge','build','native','voxel','hashes','runtime','runtime-all','runtim
 foreach($name in $Skip){if($name -notin $steps){throw "-Skip takes $($steps -join ', '); not $name"}}
 $root=Split-Path $PSScriptRoot -Parent
 . (Join-Path $PSScriptRoot 'QuietWindow.ps1')
+. (Join-Path $PSScriptRoot 'CrashFolders.ps1')
 $locks='C:\dev\sandbox\locks'; $cefLock="$locks\cef-e2e.lock"
 if(-not(Test-Path -LiteralPath $locks)){New-Item -ItemType Directory -Path $locks | Out-Null}
 if(-not $CancelFile){$CancelFile=Join-Path $locks "cancel-$(Split-Path $root -Leaf).flag"}
@@ -135,18 +136,6 @@ function Step([string]$Name,[scriptblock]$Body){
     Say "-- ${Name}: $($script:results[$Name])"
     if($script:stepBad.Count -and -not $KeepGoing){Finish 1}
 }
-# A crash writes its dump and log under the -UserDir profile (<UserDir>\Saved\Crashes\UECC-*), which the native step deletes:
-# keep them in the suite's folder first. Returns how many crash folders were kept; a failed copy (a locked file, a full disk)
-# warns and returns 0 instead of failing the step.
-function KeepCrashes([string]$UserDir,[string]$Dir){
-    $crashes=Join-Path $UserDir 'Saved\Crashes'
-    $kept=@(Get-ChildItem -LiteralPath $crashes -Directory -ErrorAction SilentlyContinue)
-    if($kept.Count){
-        try{Copy-Item -LiteralPath $crashes -Destination (Join-Path $Dir 'Crashes') -Recurse -Force -ErrorAction Stop}
-        catch{Write-Warning "KeepCrashes: could not keep $crashes ($($_.Exception.Message))"; return 0}
-    }
-    $kept.Count
-}
 function AddHash([string]$Key,[string]$Value){
     if($script:hashes.Contains($Key) -and $script:hashes[$Key] -ne $Value){$script:hashes[$Key]="CONFLICT $($script:hashes[$Key]) / $Value"}else{$script:hashes[$Key]=$Value}
 }
@@ -231,13 +220,13 @@ if($Profile -ne 'quick'){
             & $editorCmd "$root\Unnamed.uproject" -unattended -nop4 -NullRHI '-ExecCmds=Automation RunTests Unnamed' '-TestExit=Automation Test Queue Empty' `
                 "-ReportExportPath=$dir\Report" "-abslog=$dir\native.log" "-UserDir=$userDir/" @allocatorFlag *> "$dir\console.log"
             $code=$LASTEXITCODE
-            $dumps=KeepCrashes $userDir $dir
-            Remove-Item -LiteralPath $userDir -Recurse -Force -ErrorAction SilentlyContinue
+            # A crash's dump and log are under the profile: Close-Profile keeps them in $dir\Crashes before it deletes it.
+            $closed=Close-Profile -UserDir $userDir -Destination $dir
             if(Test-Path -LiteralPath "$dir\Report\index.json"){break}
             $crashes++
             $script:others.Add($dir)
             $sign=Select-String -LiteralPath "$dir\native.log" -Pattern 'Critical error|Fatal error|Unhandled Exception|EXCEPTION_|heap corruption' -ErrorAction SilentlyContinue | Select-Object -First 1
-            Say "   CRASH: attempt $attempt left no report (exit $code, $([int]$clock.Elapsed.TotalSeconds) s, crash folders kept $dumps)$(if($sign){': '+($sign.Line -replace '^.*\]\[\s*\d+\]','')}): $dir"
+            Say "   CRASH: attempt $attempt left no report (exit $code, $([int]$clock.Elapsed.TotalSeconds) s, crash folders kept $($closed.Crashes)$(if($closed.Kept){', profile kept at '+$closed.Kept}))$(if($sign){': '+($sign.Line -replace '^.*\]\[\s*\d+\]','')}): $dir"
         }
         $script:stepNote="; native crashes $crashes"
         if($crashes -ge 2){Bad 'no report after 2 attempts'; return}
@@ -289,8 +278,8 @@ Step 'hashes' {
             }
         }finally{
             $byItself=$process.HasExited
-            if(-not $byItself){Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue}
-            Remove-Item -LiteralPath $userDir -Recurse -Force -ErrorAction SilentlyContinue
+            if(-not $byItself){Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue; $null=$process.WaitForExit(10000)}
+            $closed=Close-Profile -UserDir $userDir -Destination $dir
         }
         $ending=if($byItself){'the editor exited by itself'}elseif($hashesOut){'the runner stopped the editor 30 s after the hashes'}else{'the runner stopped the editor at the 25-min limit'}
         Keep $dir
@@ -303,7 +292,8 @@ Step 'hashes' {
             }
         }
         $radius=@($hashes.Keys | Where-Object { $_ -like 'r8 *' })
-        Say "   radius 8: $(($radius | ForEach-Object { "$($_.Substring(3)) $($hashes[$_])" }) -join ', '); ${ending}: $dir"
+        $crashNote="$(if($closed.Crashes){"; crash folders kept $($closed.Crashes)"})$(if($closed.Kept){"; profile kept at $($closed.Kept)"})"
+        Say "   radius 8: $(($radius | ForEach-Object { "$($_.Substring(3)) $($hashes[$_])" }) -join ', '); ${ending}${crashNote}: $dir"
         if($radius.Count -ne 3){Bad "radius 8 gave $($radius.Count) of 3 presets"}
         foreach($key in $radius){if($hashes[$key] -notmatch '^0x[0-9a-f]{16}$'){Bad "${key}: $($hashes[$key])"}}
     }
