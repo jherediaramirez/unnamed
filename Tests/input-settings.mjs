@@ -15,7 +15,8 @@ const checks=[],delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const packageName=process.argv.find(a=>a.startsWith('--package='))?.slice(10)||'CodeReviewDevelopment20261007';
 if(!/^[A-Za-z0-9_-]+$/.test(packageName))throw Error('Invalid package name');
 const exe=path.join(root,'Packages',packageName,'Windows/Unnamed/Binaries/Win64/Unnamed.exe');
-const htmlSHA256=crypto.createHash('sha256').update(fs.readFileSync(path.join(root,'Content/Menu/Web/index.html'))).digest('hex');
+// The page each profile actually loaded (the package's copy, not the working tree's), as smoke.mjs records it.
+const pages={};
 function check(name,pass,detail){checks.push({name,pass:!!pass,detail});console.log((pass?'PASS ':'FAIL ')+name);if(!pass)throw Error(name);}
 for(const [index,profile] of ['1280x720','1920x1080'].entries()){
   const [width,height]=profile.split('x');
@@ -26,6 +27,7 @@ for(const [index,profile] of ['1280x720','1920x1080'].entries()){
     const deadline=Date.now()+45000;
     while(!browser){try{browser=await chromium.connectOverCDP('http://127.0.0.1:18920');}catch(error){if(Date.now()>deadline||game.exitCode!==null)throw error;await delay(300);}}
     while(!page){page=browser.contexts().flatMap(c=>c.pages()).find(p=>p.url().includes('/Menu/Web/index.html'));if(!page){if(Date.now()>deadline)throw Error('No CEF menu target');await delay(100);}}
+    const htmlPath=fileURLToPath(page.url());pages[profile]={htmlPath,htmlSHA256:crypto.createHash('sha256').update(fs.readFileSync(htmlPath)).digest('hex')};
     await page.waitForFunction(()=>window.MenuInput?.getState()?.ready&&window.MenuApplication?.enabled()&&window.MenuVideo?.getState());
     const state=()=>page.evaluate(()=>MenuInput.getState());
     const settle=()=>page.evaluate(()=>MenuInput.settled().catch(()=>{}));
@@ -98,6 +100,6 @@ for(const [index,profile] of ['1280x720','1920x1080'].entries()){
   }catch(error){checks.push({name:profile+' runtime suite',pass:false,detail:String(error)});console.error(error);}
   finally{if(browser)await browser.close();if(game.exitCode===null){game.kill();await exit;}}
 }
-fs.writeFileSync(path.join(output,'results.json'),JSON.stringify({finished:new Date().toISOString(),htmlSHA256,runtime,exe,checks},null,2)+'\n');
+fs.writeFileSync(path.join(output,'results.json'),JSON.stringify({finished:new Date().toISOString(),pages,runtime,exe,checks},null,2)+'\n');
 console.log('Report: '+path.join(output,'results.json'));
 if(checks.some(c=>!c.pass))process.exitCode=1;

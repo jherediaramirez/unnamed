@@ -38,3 +38,11 @@ test('both E2E drivers make their output folder through freshEvidenceDir before 
     assert.ok(!/mkdirSync\(\s*output/.test(text), `${name} does not make the output folder itself`);
   }
 });
+
+// input-settings.mjs runs a package, so it records the hash of the page the package loaded, not the working tree's copy.
+test('input-settings.mjs hashes the page it loaded', () => {
+  const text = readFileSync(join(testsRoot, 'input-settings.mjs'), 'utf8');
+  assert.ok(!text.includes("'Content/Menu/Web/index.html'"), 'no hash of the working tree page');
+  assert.ok(/htmlPath=fileURLToPath\(page\.url\(\)\)/.test(text), 'the path comes from the loaded page');
+  assert.ok(/update\(fs\.readFileSync\(htmlPath\)\)/.test(text), 'the hash reads that path');
+});
