@@ -1,0 +1,31 @@
+# Poses of the views suite (-FoundationSuite=views) for the dev seed: /Game/Maps/L_Generated opened plainly.
+# Found by the suite's scout (TestFoundationRuntime.ps1 -Suite views -ViewsScout, <report>-views-scout.txt) from the
+# streamed columns around the spawn, then pinned here. Cells are block coordinates in Unreal order (X Y Z, Z up).
+#
+# pose <name> X Y Z yaw pitch   the feet cell (the player stands at its centre) and the look in degrees (yaw 0 is +X,
+#                               90 is +Y; pitch up is positive)
+# pad <name> X Y Z spacing      an outline row: its first target's cell, on the floor; stone, a bottom slab and a plant
+#                               on grass follow every <spacing> cells along +X (the block registry has no stairs yet);
+#                               the player stands on the -Y side (the 4 rows below the targets must be floor too)
+# torch X Y Z                   a torch placed on the floor at this cell for the cave's midnight shot
+#
+# Poses are day-open, forest, water and cave; pads are day and cave. A field that is not a number (whole for cells and
+# spacing), another name or a repeated one fails the run's "views poses file" check, and that line is left out.
+
+# The spawn (16 -32 74) stands in a bamboo thicket that hides the land, so the view is the scout's vista 47 blocks
+# away: the nearest standing column whose view at eye height stays clear for 64 blocks along a 3-wide corridor.
+pose day-open -31 -29 63 135 -5
+# 172 tree columns within 8 blocks, 41 blocks from the spawn; looking toward their centroid.
+pose forest -10 0 64 -161 5
+# A shore 32 blocks from the spawn, 152 water columns within 10; looking toward the water's centroid.
+pose water 29 -61 63 -65 -12
+# A covered room 72 blocks below the surface (deepslate floor and ceiling), looking along its longest open run.
+pose cave 79 -6 -24 135 -5
+
+# The nearest flat 7 x 5 grass floor, 104 blocks from the spawn.
+pad day 90 -100 65 2
+# The cave room's floor.
+pad cave 76 -2 -24 2
+
+torch 77 -4 -24
+torch 81 -5 -24

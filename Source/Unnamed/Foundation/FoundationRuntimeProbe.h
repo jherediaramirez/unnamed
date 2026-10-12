@@ -77,4 +77,6 @@ private:
     void AddInteractionCases();
     // -FoundationSuite=tour: named screenshots of the Playground with the HUD visible (FoundationTourProbe.cpp).
     void AddTourCases();
+    // -FoundationSuite=views: player-view screenshots of the generated world with the HUD (FoundationViewsProbe.cpp).
+    void AddViewsCases();
 };

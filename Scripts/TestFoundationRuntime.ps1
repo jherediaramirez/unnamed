@@ -6,16 +6,25 @@ param([switch]$Editor,[string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',
     [switch]$HudCaptures,[switch]$TraceHud,
     # One map (the Playground) runs every scenario: the movement course and input pipeline, the interaction
     # stations, both, or the screenshot tour (not part of all). Optional placement preset and finite fixture apply to the interaction stations.
-    [ValidateSet('movement','interaction','all','tour')][string]$Suite='all',
+    # 'views' (not part of all either) opens the generated world's dev seed (/Game/Maps/L_Generated) instead: player-view
+    # shots with the HUD, outline and held item at full-cost rendering, posed from Scripts/Views/DevSeed.txt (passed by
+    # path, so a package finds it too); -ViewsScout logs candidate poses instead. Not with -HudCaptures (Playground cases).
+    [ValidateSet('movement','interaction','all','tour','views')][string]$Suite='all',[switch]$ViewsScout,
     [ValidateSet('VanillaReference','LucidFluid')][string]$Preset,[switch]$Finite,
     # The break lane's capture pack: the tour suite with -FoundationTourBreak at full-cost rendering, into Playground-break.
     [switch]$BreakPack,
-    # Extra console commands after the run's own, e.g. -ExecCmds 'foundation.Place.Preview 1'; later ones win.
+    # Extra console commands after the run's own, e.g. -ExecCmds 'foundation.Place.Preview 1'; later ones win. The views
+    # suite sets foundation.Place.Preview, foundation.Break.Outline and the clock (voxel.Time) itself, so -ExecCmds
+    # cannot override those there.
     [string]$ExecCmds)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 if($BreakPack){$Suite='tour';$FullCostRendering=$true}
-if(-not $OutputDirectory){$OutputDirectory=Join-Path $root ('Tests/Evidence/'+(Get-Date -Format 'yyyy-MM-dd')+"/Playground-$(if($BreakPack){'break'}else{$Suite})/Runtime-"+(Get-Date -Format 'yyyyMMdd-HHmmss'))}
+if($Suite -eq 'views'){
+    if($HudCaptures){throw '-HudCaptures cannot run with -Suite views: the HUD cases assume the Playground (L_Playground), and the views suite opens L_Generated.'}
+    $FullCostRendering=$true
+}
+if(-not $OutputDirectory){$OutputDirectory=Join-Path $root ('Tests/Evidence/'+(Get-Date -Format 'yyyy-MM-dd')+"/$(if($Suite -eq 'views'){'Generated'}else{'Playground'})-$(if($BreakPack){'break'}else{$Suite})/Runtime-"+(Get-Date -Format 'yyyyMMdd-HHmmss'))}
 if(Test-Path -LiteralPath $OutputDirectory){throw "Evidence folder exists; choose a fresh output folder: $OutputDirectory"}
 New-Item -ItemType Directory -Path $OutputDirectory | Out-Null
 $OutputDirectory=(Resolve-Path -LiteralPath $OutputDirectory).Path
@@ -31,8 +40,11 @@ foreach($fps in $FrameRates){
     if(Test-Path -LiteralPath $output){throw "Evidence exists; choose a fresh output folder: $output"}
     $arguments=@()
     if($Editor){$arguments+=('"'+(Join-Path $root 'Unnamed.uproject')+'"')}
-    $arguments+='/Game/Maps/L_Playground'
+    $arguments+=$(if($Suite -eq 'views'){'/Game/Maps/L_Generated'}else{'/Game/Maps/L_Playground'})
     $arguments+="-FoundationSuite=$Suite"
+    if($ViewsScout){$arguments+='-FoundationViewsScout'}
+    # A package does not stage Scripts/, so the probe reads the poses from the repository.
+    if($Suite -eq 'views'){$arguments+=('-FoundationViewsPoses="'+(Join-Path $root 'Scripts\Views\DevSeed.txt')+'"')}
     if($BreakPack){$arguments+='-FoundationTourBreak'}
     if($Preset){$arguments+="-InteractionPreset=$Preset"}
     if($Finite){$arguments+='-InteractionFinite'}
@@ -54,7 +66,7 @@ foreach($fps in $FrameRates){
     [pscustomobject]@{Cap=$fps;MeanFPS=$report.observed_mean_fps;Failures=$report.failures;Report=$output}
     if($report.failures -gt 0 -or $process.ExitCode -ne 0){throw "Runtime checks failed (exit $($process.ExitCode)): $output"}
     $captures=@(Get-ChildItem -LiteralPath $OutputDirectory -Filter "runtime-$fps*.png")
-    if($captures.Count -eq 0){throw "Runtime produced no rendered capture: $output"}
+    if($captures.Count -eq 0 -and -not($ViewsScout -and $Suite -eq 'views')){throw "Runtime produced no rendered capture: $output"}
     foreach($capture in $captures){
         $bytes=[IO.File]::ReadAllBytes($capture.FullName)
         $actualWidth=([int]$bytes[16] -shl 24)+([int]$bytes[17] -shl 16)+([int]$bytes[18] -shl 8)+[int]$bytes[19]

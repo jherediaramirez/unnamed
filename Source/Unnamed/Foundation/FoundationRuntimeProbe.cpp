@@ -200,7 +200,9 @@ void UFoundationRuntimeProbe::BeginPlay()
     const bool bInteraction = Suite == TEXT("interaction") || Suite == TEXT("all");
     // The screenshot tour is its own suite and not part of "all".
     const bool bTour = Suite == TEXT("tour");
-    if (!bMovement && !bInteraction && !bTour)
+    // So are the generated world's player views (L_Generated, FoundationViewsProbe.cpp).
+    const bool bViews = Suite == TEXT("views");
+    if (!bMovement && !bInteraction && !bTour && !bViews)
     {
         // A case, so the probe still finishes and reports the failure.
         AddCase(
@@ -208,12 +210,13 @@ void UFoundationRuntimeProbe::BeginPlay()
             [this, Suite]
             {
                 Record(TEXT("known -FoundationSuite"), false,
-                    FString::Printf(TEXT("'%s' is not movement, interaction, tour or all"), *Suite));
+                    FString::Printf(TEXT("'%s' is not movement, interaction, tour, views or all"), *Suite));
             });
     }
     if (bMovement) AddMovementCases();
     if (bInteraction) AddInteractionCases();
     if (bTour) AddTourCases();
+    if (bViews) AddViewsCases();
     if (FParse::Param(FCommandLine::Get(), TEXT("HudCaptures"))) AddHudCases();
     TotalStarted = Started = FPlatformTime::Seconds();
 #else
