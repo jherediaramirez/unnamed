@@ -38,6 +38,10 @@ TAutoConsoleVariable<bool> VoxelConsole::CVarFarShadows(TEXT("voxel.Far.Shadows"
 TAutoConsoleVariable<int32> VoxelConsole::CVarFarCanopyLayer(TEXT("voxel.Far.CanopyLayer"), 0,
     TEXT("Far LOD: the far leaf canopies' layer, 0 cutout (as near leaves draw) or 1 opaque. A change remeshes every "
          "far column."));
+TAutoConsoleVariable<bool> VoxelConsole::CVarFarInnerFirst(TEXT("voxel.Far.InnerFirst"), true,
+    TEXT("Far LOD: a far mesh for a column within two columns of the view that shows nothing yet goes before full "
+         "meshes of columns that already show something, so columns enter the view drawn. 0 keeps far meshes behind "
+         "every full mesh."));
 TAutoConsoleVariable<bool> VoxelConsole::CVarFarTint(
     TEXT("voxel.Debug.FarTint"), false, TEXT("Debug: draw far meshes magenta, for look checks."));
 TAutoConsoleVariable<int32> VoxelConsole::CVarUnloadMargin(

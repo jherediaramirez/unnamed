@@ -173,6 +173,7 @@ void UVoxelWorldSubsystem::Stop()
         if (Chunk) Chunk->DestroyComponent();
     Chunks.Reset();
     Pool.Reset();
+    PendingReleases.Reset();
 }
 
 int32 UVoxelWorldSubsystem::GetSectionMeshCount() const
@@ -228,22 +229,41 @@ void UVoxelWorldSubsystem::Tick(float DeltaTime)
     FarOptions.CanopyLayer =
         VoxelConsole::CVarFarCanopyLayer.GetValueOnGameThread() == 1 ? EVoxelLayer::Opaque : EVoxelLayer::Cutout;
     Pipeline->SetFarOptions(FarOptions);
+    Pipeline->SetFarInnerFirst(VoxelConsole::CVarFarInnerFirst.GetValueOnGameThread());
     UpdateFarLooks();
     const FVoxelStreamingRings Before = Pipeline->GetRings();
+    const double FocusStart = FPlatformTime::Seconds();
     Pipeline->SetFocus(MakeRings(LastFocus), VoxelStreaming::GetViewSector(Yaw));
-    if (!(Pipeline->GetRings() == Before)) UpdateVisibility();
+    const double FocusEnd = FPlatformTime::Seconds();
+    if (!(Pipeline->GetRings() == Before)) UpdateVisibility(Before);
     double Mark = FPlatformTime::Seconds();
+    Frame.FocusMs = (FocusEnd - FocusStart) * 1000.;
+    Frame.VisibilityMs = (Mark - FocusEnd) * 1000.;
     Frame.PlanMs = (Mark - Start) * 1000.;
     Pipeline->Update();
+    Frame.WalkMs = Pipeline->GetLastWalk().Ms;
+    Frame.Walked = Pipeline->GetLastWalk().Visited;
+    const double ReleaseStart = FPlatformTime::Seconds();
     TArray<FIntPoint> Unloaded;
     Pipeline->TakeUnloaded(Unloaded);
+    // Off screen, an unloaded column gives no light, as before. Its component is hidden already (beyond the drawn
+    // radius) and is released in the time the budget leaves.
+    FVoxelLights* Lights = Owner.IsValid() ? Owner->GetLights() : nullptr;
     for (const FIntPoint Column : Unloaded)
-        ReleaseChunk(Column);
+    {
+        if (Lights) Lights->ClearColumn(Column);
+        if (Chunks.Contains(Column)) PendingReleases.Add(Column);
+    }
     const double JobsEnd = FPlatformTime::Seconds();
     Frame.JobsMs = (JobsEnd - Mark) * 1000.;
-    ApplyReady(VoxelConsole::CVarApplyBudgetMs.GetValueOnGameThread(), Start);
+    Frame.ReleaseMs = (JobsEnd - ReleaseStart) * 1000.;
+    const double BudgetMs = VoxelConsole::CVarApplyBudgetMs.GetValueOnGameThread();
+    ApplyReady(BudgetMs, Start);
+    const double ApplyEnd = FPlatformTime::Seconds();
+    Frame.ApplyMs = (ApplyEnd - JobsEnd) * 1000.;
+    ReleasePending(BudgetMs, Start);
     Mark = FPlatformTime::Seconds();
-    Frame.ApplyMs = (Mark - JobsEnd) * 1000.;
+    Frame.PendingMs = (Mark - ApplyEnd) * 1000.;
     Frame.Applied = LastFrame.Applied;
     Frame.FarApplied = LastFrame.FarApplied;
     Frame.FarApplyMs = LastFrame.FarApplyMs;
@@ -256,11 +276,38 @@ void UVoxelWorldSubsystem::Tick(float DeltaTime)
     UpdateStats();
 }
 
-void UVoxelWorldSubsystem::UpdateVisibility()
+void UVoxelWorldSubsystem::UpdateVisibility(const FVoxelStreamingRings& Before)
 {
     const FVoxelStreamingRings& Rings = Pipeline->GetRings();
-    for (const TPair<FIntPoint, TObjectPtr<UVoxelChunkComponent>>& Chunk : Chunks)
-        if (Chunk.Value) Chunk.Value->SetVisibility(Rings.IsDrawn(Chunk.Key));
+    const int32 Drawn = Rings.GetDrawnRadius();
+    // A chunk waiting for release stays hidden, even if its column is drawn again: its old mesh is not the new
+    // record's.
+    const auto IsShown = [this, &Rings](FIntPoint Column)
+    { return Rings.IsDrawn(Column) && !PendingReleases.IsWaiting(Column); };
+    if (Before.GetDrawnRadius() != Drawn)
+    {
+        for (const TPair<FIntPoint, TObjectPtr<UVoxelChunkComponent>>& Chunk : Chunks)
+            if (Chunk.Value) Chunk.Value->SetVisibility(IsShown(Chunk.Key));
+        return;
+    }
+    // Every chunk's visibility matched Before (AcquireChunk sets it, and so does every move): only the columns drawn by
+    // one rings and not the other change.
+    const auto Refresh = [this, &IsShown](FIntPoint Column)
+    {
+        if (const TObjectPtr<UVoxelChunkComponent>* Chunk = Chunks.Find(Column); Chunk && *Chunk)
+            (*Chunk)->SetVisibility(IsShown(Column));
+    };
+    if (Before.Center == Rings.Center) return;
+    VoxelStreaming::ForEachLeft(Before.Center, Rings.Center, Drawn, Refresh);
+    VoxelStreaming::ForEachLeft(Rings.Center, Before.Center, Drawn, Refresh);
+}
+
+void UVoxelWorldSubsystem::ReleasePending(double BudgetMs, double TickStartSeconds)
+{
+    FIntPoint Column;
+    for (int32 Released = 0; (!Released || (FPlatformTime::Seconds() - TickStartSeconds) * 1000. < 0.85 * BudgetMs) &&
+        PendingReleases.Pop(Column);)
+        Released += ReleaseChunk(Column) ? 1 : 0;
 }
 
 UMaterialInterface* UVoxelWorldSubsystem::GetFarTintMaterial()
@@ -398,7 +445,19 @@ double UVoxelWorldSubsystem::FApplyCost::Estimate(int32 QuadCount) const
 
 UVoxelChunkComponent* UVoxelWorldSubsystem::AcquireChunk(FIntPoint Column)
 {
-    if (TObjectPtr<UVoxelChunkComponent>* Found = Chunks.Find(Column)) return *Found;
+    // A column that unloaded and came back before its release keeps its component, hidden while it waited, and no
+    // longer waits; the caller's mesh replaces the old one.
+    const bool bWaited = PendingReleases.IsWaiting(Column);
+    PendingReleases.Remove(Column);
+    if (TObjectPtr<UVoxelChunkComponent>* Found = Chunks.Find(Column))
+    {
+        if (bWaited && *Found) (*Found)->SetVisibility(Pipeline->GetRings().IsDrawn(Column));
+        return *Found;
+    }
+    // With the pool empty, the oldest waiting column gives up its component before a new one is made.
+    FIntPoint Oldest;
+    while (Pool.IsEmpty() && PendingReleases.Pop(Oldest))
+        ReleaseChunk(Oldest);
     AVoxelWorld* World = Owner.Get();
     UVoxelChunkComponent* Chunk = Pool.IsEmpty() ? nullptr : Pool.Pop(EAllowShrinking::No).Get();
     if (!Chunk)
@@ -417,17 +476,19 @@ UVoxelChunkComponent* UVoxelWorldSubsystem::AcquireChunk(FIntPoint Column)
     return Chunk;
 }
 
-void UVoxelWorldSubsystem::ReleaseChunk(FIntPoint Column)
+bool UVoxelWorldSubsystem::ReleaseChunk(FIntPoint Column)
 {
+    PendingReleases.Remove(Column);
     // Off screen, the column gives no light.
     if (AVoxelWorld* World = Owner.Get())
         if (FVoxelLights* Lights = World->GetLights()) Lights->ClearColumn(Column);
     TObjectPtr<UVoxelChunkComponent> Chunk;
-    if (!Chunks.RemoveAndCopyValue(Column, Chunk) || !Chunk) return;
+    if (!Chunks.RemoveAndCopyValue(Column, Chunk) || !Chunk) return false;
     // Empty and hidden until a column needs it again.
     Chunk->SetMesh(RealtimeMesh::FRealtimeMeshStreamSet(), FMeshCardsBuildData(), 0, 0);
     Chunk->SetVisibility(false);
     Pool.Add(Chunk);
+    return true;
 }
 
 void UVoxelWorldSubsystem::ReportFirstView()

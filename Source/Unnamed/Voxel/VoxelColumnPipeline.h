@@ -152,6 +152,9 @@ struct FVoxelPipelineStats
     int64 BucketsAppliedToFinal = 0;
     // Jobs whose column unloaded before they started, skipped without running.
     int64 Cancelled = 0;
+    // Far LOD step 1b: plans made by shifting the cached order, and the needed columns their walks were spared.
+    int64 ShiftedPlans = 0;
+    int64 CarriedColumns = 0;
 };
 
 // Test-only changes that must break the pipeline checks named beside them (S3's targeted mutations).
@@ -173,7 +176,8 @@ enum class EVoxelPipelineMutation : uint8
 //
 // - Rings: SetFocus moves them. The plan is rebuilt only when the rings or the view sector change. Columns beyond the
 //   unload distance are dropped at once; their jobs skip their work if they have not started, and their results are
-//   thrown away when they arrive.
+//   thrown away when they arrive. A move that keeps the rings' shape shifts a cached order (FVoxelNeededOrder), visits
+//   only the columns that crossed a border and keeps the walk's progress (far LOD step 1b), with the same result.
 // - Stages: without a decorator, a Generate job gives a column its final blocks. With one (plan 3.1), Generate gives
 //   the snapshot, Decorate (its 3 x 3 snapshots) a write log in 9 buckets, one per target column, and Finalize (its
 //   snapshot and the 9 buckets aimed at it) the final column: the merge, the freeze pass, then the edits. A column
@@ -215,8 +219,14 @@ public:
         TSharedPtr<const FVoxelDecorator> Decorator;
         // Far meshes' options (voxel.Far.CanopyLayer).
         VoxelFarMesher::FOptions FarOptions;
+        // voxel.Far.InnerFirst (far LOD step 1b): a far mesh for a column within ViewRadius + 2 that shows nothing yet
+        // goes before a full mesh whose column already shows something, and between two such the nearer goes first.
+        bool bFarInnerFirst = false;
         // Tests: jobs are queued, not launched; RunJob runs one on the calling thread, in any order.
         bool bManualJobs = false;
+        // Tests: every plan takes the full path (GetNeededColumns, every record visited, the walk from the first
+        // column), the reference the shift-based plans of far LOD step 1b must match.
+        bool bFullReplan = false;
         EVoxelPipelineMutation Mutation = EVoxelPipelineMutation::None;
     };
 
@@ -244,6 +254,8 @@ public:
     void SetModelOptions(bool bModels, bool bShadeUnturned);
     // Far meshes' options; a change remeshes every far column.
     void SetFarOptions(const VoxelFarMesher::FOptions& FarOptions);
+    // FSettings::bFarInnerFirst; a change only reorders the finished meshes.
+    void SetFarInnerFirst(bool bInnerFirst);
     // The render-only ore looks (voxel.Look.OreHost, voxel.Look.OreGlint); a change remeshes every column.
     void SetOreLooks(int32 OreHost, int32 OreGlint);
     // Fluid surfaces (voxel.Fluids.SlopedTops and OpenCorners, FVoxelMeshOptions); a change remeshes every column.
@@ -322,6 +334,14 @@ public:
     // Nothing in flight and nothing left to launch or take.
     bool IsIdle() const;
     FVoxelPipelineStats GetStats() const;
+    // The latest Update's walk over the needed columns: its time and the columns it visited (both 0 when nothing
+    // called for one).
+    struct FWalk
+    {
+        double Ms = 0;
+        int32 Visited = 0;
+    };
+    const FWalk& GetLastWalk() const { return LastWalk; }
 
 private:
     struct FRecord
@@ -419,6 +439,11 @@ private:
     void FreeBucket(FRecord& Record, int32 Bucket);
     // A stage was lost (a miss, an eviction, an edit dropped): the walk starts again from the first needed column.
     void Regress();
+    // The needed order for these rings' shape and the sector, built the first time it is asked for.
+    const FVoxelNeededOrder& GetOrder(const FVoxelStreamingRings& ForRings, int32 Sector);
+    // After a move that kept the rings' shape: the walk starts after the longest prefix of the new order that is still
+    // complete, instead of at the first column.
+    void CarryProgress(const FVoxelStreamingRings& OldRings, int32 OldSector, int32 OldFirstIncomplete);
     // The neighbours a column's mesh reads, a bit per neighbour in FVoxelNeighborhood order (skipping the center):
     // all eight, or with edge walls only those drawn.
     uint8 GetMeshNeighbors(FIntPoint Column) const;
@@ -426,6 +451,12 @@ private:
     bool IsComplete(int32 NeededIndex) const;
     void MarkDirty(FRecord& Record, uint32 Sections);
     void SortReady();
+    // A ready column's place in its queue: its distance, four times over behind the view sector.
+    int64 GetReadyPriority(FIntPoint Column) const;
+    // With bFarInnerFirst: a ready far mesh for a column within ViewRadius + 2 that shows nothing yet.
+    bool IsUrgentFar(FIntPoint Column) const;
+    // The queue PeekReady and PopReady take from.
+    TArray<FIntPoint>& GetReadyQueue();
 
     TSharedRef<const FVoxelBlockTable> Table;
     TSharedRef<const IVoxelTerrain> Terrain;
@@ -435,16 +466,21 @@ private:
 
     FVoxelStreamingRings Rings;
     int32 ViewSector = 0;
+    // The view sector's direction, which the ready queues favour.
+    FIntPoint ViewAhead = FIntPoint(1, 0);
     bool bPlanned = false;
     // The needed columns in priority order, and the ring of each.
     TArray<FIntPoint> Needed;
     TArray<uint8> NeededRing;
+    // The needed order per view sector for the current shape (far LOD step 1b).
+    FVoxelNeededOrder Orders[VoxelStreaming::ViewSectorCount];
     // Every needed column before this index has reached its ring's stage.
     int32 FirstIncomplete = 0;
     // Something changed since the last walk that ended with room to spare, so the next Update walks again.
     bool bWalk = true;
     // Set by Regress, so a walk that lost a stage behind its position walks again.
     bool bRegressed = false;
+    FWalk LastWalk;
 
     TMap<FIntPoint, FRecord> Records;
     // Per column, by dense index (FVoxelColumn::GetDenseIndex), every cell edited this session.
@@ -462,5 +498,6 @@ private:
 
     int64 Dropped = 0, Stale = 0;
     int64 Regenerated = 0, Redecorated = 0, BucketsDropped = 0, BucketsAppliedToFinal = 0, Cancelled = 0;
+    int64 ShiftedPlans = 0, CarriedColumns = 0;
     FVoxelStageTimes GenerateTimes, DecorateTimes, FinalizeTimes, MeshTimes, StreamsTimes, FarMeshTimes;
 };

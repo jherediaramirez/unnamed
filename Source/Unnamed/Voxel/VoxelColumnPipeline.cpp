@@ -163,6 +163,13 @@ void FVoxelColumnPipeline::SetFarOptions(const VoxelFarMesher::FOptions& FarOpti
     Regress();
 }
 
+void FVoxelColumnPipeline::SetFarInnerFirst(bool bInnerFirst)
+{
+    if (Settings.bFarInnerFirst == bInnerFirst) return;
+    Settings.bFarInnerFirst = bInnerFirst;
+    bReadySorted = false;
+}
+
 void FVoxelColumnPipeline::SetOreLooks(int32 OreHost, int32 OreGlint)
 {
     FVoxelMeshOptions& Options = Settings.MeshOptions;
@@ -235,21 +242,54 @@ void FVoxelColumnPipeline::SetFocus(const FVoxelStreamingRings& InRings, int32 N
     if (bPlanned && NewRings == Rings && NewViewSector == ViewSector) return;
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelPipeline_Plan);
     const bool bCenterMoved = !bPlanned || NewRings.Center != Rings.Center;
+    // Far LOD step 1b: a move of the center or the sector alone keeps the rings' shape, so the plan shifts a cached
+    // order and visits only the columns that crossed a border, with the same result as the full path.
+    const bool bShift = bPlanned && !Settings.bFullReplan && NewRings.ViewRadius == Rings.ViewRadius &&
+        NewRings.FarRadius == Rings.FarRadius && NewRings.Stages == Rings.Stages &&
+        NewRings.UnloadMargin == Rings.UnloadMargin;
+    const FVoxelStreamingRings OldRings = Rings;
+    const int32 OldSector = ViewSector, OldFirstIncomplete = FirstIncomplete;
     Rings = NewRings;
     ViewSector = NewViewSector;
+    ViewAhead = VoxelStreaming::GetViewSectorDirection(ViewSector);
     bPlanned = true;
-    VoxelStreaming::GetNeededColumns(Rings, ViewSector, Needed);
-    NeededRing.SetNumUninitialized(Needed.Num());
-    for (int32 Index = 0; Index < Needed.Num(); ++Index)
+    if (Settings.bFullReplan)
     {
-        NeededRing[Index] = uint8(Rings.GetRing(Needed[Index]));
-        if (!Records.Contains(Needed[Index])) AddRecord(Needed[Index]);
+        VoxelStreaming::GetNeededColumns(Rings, ViewSector, Needed);
+        NeededRing.SetNumUninitialized(Needed.Num());
+        for (int32 Index = 0; Index < Needed.Num(); ++Index)
+            NeededRing[Index] = uint8(Rings.GetRing(Needed[Index]));
     }
-    TArray<FIntPoint> Present, Unloads;
-    Records.GenerateKeyArray(Present);
-    VoxelStreaming::GetUnloads(Rings, Present, Unloads);
-    for (const FIntPoint Column : Unloads)
-        Unload(Column);
+    else
+    {
+        const FVoxelNeededOrder& Order = GetOrder(Rings, ViewSector);
+        Order.GetColumns(Rings.Center, Needed);
+        NeededRing = Order.OffsetRings;
+    }
+    if (!bShift)
+    {
+        for (const FIntPoint Column : Needed)
+            if (!Records.Contains(Column)) AddRecord(Column);
+        TArray<FIntPoint> Present, Unloads;
+        Records.GenerateKeyArray(Present);
+        VoxelStreaming::GetUnloads(Rings, Present, Unloads);
+        for (const FIntPoint Column : Unloads)
+            Unload(Column);
+    }
+    else
+    {
+        // Every column the old rings needed has its record, and every record lies within the old unload distance: only
+        // newly needed columns get one, and only the band the move left beyond the unload distance unloads (in
+        // GetUnloads' order).
+        ++ShiftedPlans;
+        const FVoxelNeededOrder& OldOrder = GetOrder(OldRings, OldSector);
+        for (const FIntPoint Column : Needed)
+            if (OldOrder.FindIndex(Column - OldRings.Center) == INDEX_NONE && !Records.Contains(Column))
+                AddRecord(Column);
+        if (bCenterMoved)
+            VoxelStreaming::ForEachLeft(
+                OldRings.Center, Rings.Center, Rings.GetUnloadDistance(), [this](FIntPoint Column) { Unload(Column); });
+    }
     // Far LOD: a waiting mesh of the kind its drawn column no longer wants goes, as CollectMesh drops a late one, while
     // the column shows something; the wanted kind meshes again (its MeshedKind no longer matches).
     for (TArray<FIntPoint>* Queue : {&ReadyColumns, &ReadyFarColumns})
@@ -264,12 +304,24 @@ void FVoxelColumnPipeline::SetFocus(const FVoxelStreamingRings& InRings, int32 N
             ++Dropped;
         }
     // Caches live only near the center, where the player can edit; one column of slack avoids churn at the border.
-    if (bCenterMoved)
+    const int32 CacheReach = Settings.MeshCacheRadius + 1;
+    const auto DropFarCache = [this, CacheReach](FIntPoint Column, FRecord& Record)
+    {
+        if (Record.Cache.IsEmpty() || IsPipelineNear(Column, Rings.Center, CacheReach)) return;
+        Record.Cache.Reset();
+        Record.CacheBytes = 0;
+    };
+    if (bCenterMoved && !bShift)
         for (TPair<FIntPoint, FRecord>& Pair : Records)
-            if (!Pair.Value.Cache.IsEmpty() && !IsPipelineNear(Pair.Key, Rings.Center, Settings.MeshCacheRadius + 1))
+            DropFarCache(Pair.Key, Pair.Value);
+    else if (bCenterMoved)
+        // Every cache lies within CacheReach of the old center: CollectMesh keeps one only near the center, and every
+        // move drops those beyond it.
+        for (int32 DY = -CacheReach; DY <= CacheReach; ++DY)
+            for (int32 DX = -CacheReach; DX <= CacheReach; ++DX)
             {
-                Pair.Value.Cache.Reset();
-                Pair.Value.CacheBytes = 0;
+                const FIntPoint Column = OldRings.Center + FIntPoint(DX, DY);
+                if (FRecord* Record = Records.Find(Column)) DropFarCache(Column, *Record);
             }
     // With edge walls, a column whose neighbours moved in or out of view meshes again.
     if (Settings.bEdgeWalls || bEdgeWallsUsed)
@@ -280,8 +332,42 @@ void FVoxelColumnPipeline::SetFocus(const FVoxelStreamingRings& InRings, int32 N
             const uint8 Current = Record.bMeshing ? Record.MeshingNeighbors : Record.MeshedNeighbors;
             if (Current != GetMeshNeighbors(Needed[Index])) MarkDirty(Record, PipelineAllSections);
         }
-    Regress();
+    if (bShift && !Settings.bEdgeWalls && !bEdgeWallsUsed)
+        CarryProgress(OldRings, OldSector, OldFirstIncomplete);
+    else
+        Regress();
     bReadySorted = false;
+}
+
+const FVoxelNeededOrder& FVoxelColumnPipeline::GetOrder(const FVoxelStreamingRings& ForRings, int32 Sector)
+{
+    const int32 Slot = ((Sector % VoxelStreaming::ViewSectorCount) + VoxelStreaming::ViewSectorCount) %
+        VoxelStreaming::ViewSectorCount;
+    FVoxelNeededOrder& Order = Orders[Slot];
+    if (!Order.Matches(ForRings, Slot)) Order = FVoxelNeededOrder(ForRings, Slot);
+    return Order;
+}
+
+void FVoxelColumnPipeline::CarryProgress(
+    const FVoxelStreamingRings& OldRings, int32 OldSector, int32 OldFirstIncomplete)
+{
+    // Every column before OldFirstIncomplete had reached its ring's stage. SetFocus changed no record's stage, so a
+    // column that keeps its ring (and, in view or far, its wanted mesh) is still complete: the walk skips the longest
+    // run of those at the head of the new order. Complete columns launch nothing, so the jobs are the full path's.
+    const FVoxelNeededOrder& OldOrder = GetOrder(OldRings, OldSector);
+    int32 Carried = 0;
+    for (; Carried < Needed.Num(); ++Carried)
+    {
+        const FIntPoint Column = Needed[Carried];
+        const int32 OldIndex = OldOrder.FindIndex(Column - OldRings.Center);
+        if (OldIndex == INDEX_NONE || OldIndex >= OldFirstIncomplete ||
+            OldOrder.OffsetRings[OldIndex] != NeededRing[Carried])
+            break;
+        if (NeededRing[Carried] == 0 && OldRings.IsInView(Column) != Rings.IsInView(Column)) break;
+    }
+    FirstIncomplete = Carried;
+    CarriedColumns += Carried;
+    bWalk = bRegressed = true;
 }
 
 void FVoxelColumnPipeline::Unload(FIntPoint Column)
@@ -553,13 +639,17 @@ bool FVoxelColumnPipeline::IsComplete(int32 NeededIndex) const
 void FVoxelColumnPipeline::LaunchJobs()
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelPipeline_Launch);
+    LastWalk = FWalk();
     // Nothing finished and nothing moved since a walk that had room to spare: nothing new can be ready.
     if (!bWalk) return;
+    const double WalkStart = FPlatformTime::Seconds();
+    const int32 WalkFrom = FirstIncomplete;
     bRegressed = false;
     while (FirstIncomplete < Needed.Num() && IsComplete(FirstIncomplete))
         ++FirstIncomplete;
     // Nearest first: each column's stage as soon as its inputs exist, otherwise what they miss.
-    for (int32 Index = FirstIncomplete; Index < Needed.Num() && HasRoom(); ++Index)
+    int32 Index = FirstIncomplete;
+    for (; Index < Needed.Num() && HasRoom(); ++Index)
     {
         const FIntPoint Column = Needed[Index];
         if (!IsDecorating())
@@ -593,6 +683,8 @@ void FVoxelColumnPipeline::LaunchJobs()
     // A walk stopped for room, or one that lost a stage behind it, walks again next time; otherwise the next result or
     // plan starts one.
     bWalk = !HasRoom() || bRegressed;
+    LastWalk.Visited = Index - WalkFrom;
+    LastWalk.Ms = (FPlatformTime::Seconds() - WalkStart) * 1000.;
 }
 
 bool FVoxelColumnPipeline::RequireSnapshot(FIntPoint Column)
@@ -963,32 +1055,64 @@ void FVoxelColumnPipeline::LaunchFarMesh(FIntPoint Column, FRecord& Record, uint
 void FVoxelColumnPipeline::SortReady()
 {
     if (bReadySorted) return;
-    // Farthest first, so the nearest pops off the end. A column behind the view sector counts as twice as far, so the
-    // columns the camera faces go first while it turns: the holes a player sees are those (S9b).
-    const FIntPoint Ahead = VoxelStreaming::GetViewSectorDirection(ViewSector);
-    const auto GetPriority = [Center = Rings.Center, Ahead](FIntPoint Column)
+    // Farthest first, so the nearest pops off the end.
+    const auto ByPriority = [this](FIntPoint A, FIntPoint B)
     {
-        const int64 Distance = GetPipelineDistanceSquared(Column, Center);
-        const FIntPoint Offset = Column - Center;
-        return int64(Offset.X) * Ahead.X + int64(Offset.Y) * Ahead.Y < 0 ? 4 * Distance : Distance;
-    };
-    const auto ByPriority = [&GetPriority](FIntPoint A, FIntPoint B)
-    {
-        const int64 DistanceA = GetPriority(A), DistanceB = GetPriority(B);
+        const int64 DistanceA = GetReadyPriority(A), DistanceB = GetReadyPriority(B);
         if (DistanceA != DistanceB) return DistanceA > DistanceB;
         return A.Y != B.Y ? A.Y > B.Y : A.X > B.X;
     };
     ReadyColumns.Sort(ByPriority);
-    ReadyFarColumns.Sort(ByPriority);
+    if (!Settings.bFarInnerFirst)
+        ReadyFarColumns.Sort(ByPriority);
+    else
+    {
+        // The urgent far meshes pop first, nearest first; each is looked up once per sort.
+        TArray<TPair<bool, FIntPoint>> Keyed;
+        Keyed.Reserve(ReadyFarColumns.Num());
+        for (const FIntPoint Column : ReadyFarColumns)
+            Keyed.Emplace(IsUrgentFar(Column), Column);
+        Keyed.Sort([&ByPriority](const TPair<bool, FIntPoint>& A, const TPair<bool, FIntPoint>& B)
+            { return A.Key != B.Key ? !A.Key : ByPriority(A.Value, B.Value); });
+        for (int32 Index = 0; Index < Keyed.Num(); ++Index)
+            ReadyFarColumns[Index] = Keyed[Index].Value;
+    }
     bReadySorted = true;
+}
+
+int64 FVoxelColumnPipeline::GetReadyPriority(FIntPoint Column) const
+{
+    // A column behind the view sector counts as twice as far, so the columns the camera faces go first while it turns:
+    // the holes a player sees are those (S9b).
+    const int64 Distance = GetPipelineDistanceSquared(Column, Rings.Center);
+    const FIntPoint Offset = Column - Rings.Center;
+    return int64(Offset.X) * ViewAhead.X + int64(Offset.Y) * ViewAhead.Y < 0 ? 4 * Distance : Distance;
+}
+
+bool FVoxelColumnPipeline::IsUrgentFar(FIntPoint Column) const
+{
+    const int64 Band = int64(Rings.ViewRadius) + 2;
+    return Settings.bFarInnerFirst && Rings.GetGapSquared(Column) <= Band * Band &&
+        Records.FindChecked(Column).ShownKind == EVoxelMeshKind::None;
+}
+
+TArray<FIntPoint>& FVoxelColumnPipeline::GetReadyQueue()
+{
+    // Far meshes wait while any full mesh does, except (bFarInnerFirst) an urgent one: it fills a column at the view's
+    // edge before a full mesh refines a column that shows something, and goes first if nearer than a full mesh that
+    // fills one.
+    if (ReadyColumns.IsEmpty()) return ReadyFarColumns;
+    if (ReadyFarColumns.IsEmpty() || !IsUrgentFar(ReadyFarColumns.Last())) return ReadyColumns;
+    const FIntPoint Near = ReadyColumns.Last(), Far = ReadyFarColumns.Last();
+    const bool bNearFills = Records.FindChecked(Near).ShownKind == EVoxelMeshKind::None;
+    return !bNearFills || GetReadyPriority(Far) < GetReadyPriority(Near) ? ReadyFarColumns : ReadyColumns;
 }
 
 const FVoxelColumnMesh* FVoxelColumnPipeline::PeekReady(FIntPoint* OutColumn)
 {
     if (ReadyColumns.IsEmpty() && ReadyFarColumns.IsEmpty()) return nullptr;
     SortReady();
-    // Far meshes wait while any full mesh does.
-    const TArray<FIntPoint>& Queue = ReadyColumns.IsEmpty() ? ReadyFarColumns : ReadyColumns;
+    const TArray<FIntPoint>& Queue = GetReadyQueue();
     if (OutColumn) *OutColumn = Queue.Last();
     return Records.FindChecked(Queue.Last()).Ready.Get();
 }
@@ -997,7 +1121,7 @@ bool FVoxelColumnPipeline::PopReady(FReady& Out)
 {
     if (ReadyColumns.IsEmpty() && ReadyFarColumns.IsEmpty()) return false;
     SortReady();
-    Out.Column = (ReadyColumns.IsEmpty() ? ReadyFarColumns : ReadyColumns).Pop(EAllowShrinking::No);
+    Out.Column = GetReadyQueue().Pop(EAllowShrinking::No);
     FRecord& Record = Records.FindChecked(Out.Column);
     Out.Mesh = MoveTemp(Record.Ready);
     Record.bOnScreen = true;
@@ -1261,6 +1385,8 @@ FVoxelPipelineStats FVoxelColumnPipeline::GetStats() const
     Stats.BucketsDropped = BucketsDropped;
     Stats.BucketsAppliedToFinal = BucketsAppliedToFinal;
     Stats.Cancelled = Cancelled;
+    Stats.ShiftedPlans = ShiftedPlans;
+    Stats.CarriedColumns = CarriedColumns;
     for (const TPair<FIntPoint, FRecord>& Pair : Records)
     {
         const FRecord& Record = Pair.Value;

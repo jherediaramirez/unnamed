@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Voxel/VoxelColumnPipeline.h"
+#include "Voxel/VoxelPendingReleases.h"
 #include "VoxelWorldSubsystem.generated.h"
 
 class AVoxelWorld;
@@ -19,6 +20,15 @@ struct FVoxelStreamingFrame
     // Far LOD: far meshes applied this frame and their time (part of Applied and ApplyMs).
     int32 FarApplied = 0;
     double FarApplyMs = 0;
+    // Planning and jobs split (far LOD step 1b): SetFocus and the chunks' visibility (parts of PlanMs), the pipeline's
+    // walk with the needed columns it visited, and releasing unloaded chunks (parts of JobsMs).
+    double FocusMs = 0;
+    double VisibilityMs = 0;
+    double WalkMs = 0;
+    int32 Walked = 0;
+    double ReleaseMs = 0;
+    // Releasing waiting columns' components after the applies (part of TickMs, not ApplyMs).
+    double PendingMs = 0;
 };
 class UMaterialInstanceDynamic;
 class UMaterialInterface;
@@ -32,7 +42,9 @@ class UVoxelChunkComponent;
 // - Budget: all of this frame's chunk work on the game thread, planning and polling included, stays within
 //   voxel.ApplyBudgetMs. Each column's apply cost is estimated from its quads before it is applied (a line fitted to
 //   measured applies), so a frame stops before the budget rather than after it.
-// - Pooling: an unloaded column's component is emptied, hidden and reused for the next column that needs one.
+// - Pooling: an unloaded column's component is emptied, hidden and reused for the next column that needs one. The
+//   release waits for the time the budget leaves (at least one a frame); a column that gets a mesh again first keeps
+//   its component (TVoxelPendingReleases).
 // - Diagnostics: `stat Voxel` counters, a log line every second while anything streams, and Insights scopes.
 UCLASS()
 class UNNAMED_API UVoxelWorldSubsystem : public UTickableWorldSubsystem
@@ -72,6 +84,9 @@ public:
     // This frame's chunk work on the game thread, and the worst frame since Start.
     const FVoxelStreamingFrame& GetLastFrame() const { return LastFrame; }
     const FVoxelStreamingFrame& GetWorstFrame() const { return WorstFrame; }
+    // Unloaded columns whose components wait to be released, now and at most since Start.
+    int32 GetPendingReleaseCount() const { return PendingReleases.Num(); }
+    int32 GetPendingReleasePeak() const { return PendingReleases.GetPeak(); }
 
 private:
     // A least-squares line through measured applies, weighted toward the latest: ms = Fixed + PerQuad * quads.
@@ -84,14 +99,18 @@ private:
 
     FVoxelStreamingRings MakeRings(const FVector& Focus) const;
     void ApplyReady(double BudgetMs, double TickStartSeconds);
-    // Columns out of view stay loaded (hysteresis) but hidden: the fog covers them.
-    void UpdateVisibility();
+    // Columns out of view stay loaded (hysteresis) but hidden: the fog covers them. After a move that kept the drawn
+    // radius, only the columns that crossed it change (far LOD step 1b).
+    void UpdateVisibility(const FVoxelStreamingRings& Before);
+    // Releases waiting columns' components, oldest first, while the frame is under 85% of the budget (one anyway).
+    void ReleasePending(double BudgetMs, double TickStartSeconds);
     // Far LOD: the debug tint's material while voxel.Debug.FarTint is on (else null), and far looks refreshed on
     // screen when voxel.Far.Shadows or the tint change.
     UMaterialInterface* GetFarTintMaterial();
     void UpdateFarLooks();
     UVoxelChunkComponent* AcquireChunk(FIntPoint Column);
-    void ReleaseChunk(FIntPoint Column);
+    // Empties, hides and pools the column's component; false when it has none.
+    bool ReleaseChunk(FIntPoint Column);
     void ReportFirstView();
     void UpdateStats();
 
@@ -108,6 +127,8 @@ private:
     TMap<FIntPoint, TObjectPtr<UVoxelChunkComponent>> Chunks;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UVoxelChunkComponent>> Pool;
+    // Unloaded columns whose components, still in Chunks, wait to be released.
+    TVoxelPendingReleases<FIntPoint> PendingReleases;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UMaterialInterface>> Materials;
     // voxel.Debug.FarTint's material, made when first wanted.
