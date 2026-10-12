@@ -1,5 +1,6 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Input/UnnamedInputIntent.h"
+#include "Input/UnnamedInputRestore.h"
 #include "Input/UnnamedInputSettings.h"
 #include "Input/UnnamedInputSubsystem.h"
 #include "Menu/MenuInputBridge.h"
@@ -12,10 +13,13 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "HAL/FileManager.h"
 #include "InputKeyEventArgs.h"
 #include "InputMappingContext.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Guid.h"
 #include "Serialization/JsonSerializer.h"
 
 namespace
@@ -183,6 +187,49 @@ bool FInputBindingTest::RunTest(const FString& Parameters)
             Mapping && Mapping->GetCurrentKey() == EKeys::RightShift && Mapping->GetDefaultKey() == EKeys::C);
         TestTrue(TEXT("Hold/toggle policy survives serializer"), Restored->bToggleSprint);
     }
+    // The save itself (WriteSlot, SaveChecked's write): crash-safe, in the slot's own file, and restored from its
+    // backup. A throwaway slot, so the players' slot is never touched.
+    TestEqual(TEXT("The players' slot is the one Enhanced Input saves this player to (GetSaveFilename)"),
+        UUnnamedInputSettings::GetDefaultSlotName(), F.PlayerInput->GetUserSettingsSaveFileName());
+    TestEqual(TEXT("The players' slot name is unchanged"), UUnnamedInputSettings::GetDefaultSlotName(),
+        FString(TEXT("UnnamedInputSettings")));
+    TestNotNull(
+        TEXT("Every game instance restores the slot at startup"), F.Instance->GetSubsystem<UUnnamedInputRestore>());
+    UUnnamedInputSettings* Settings = F.Input->GetSettings();
+    const FString Slot = TEXT("UnnamedInputSettings-Test-") + FGuid::NewGuid().ToString(EGuidFormats::Digits);
+    const FString Path = UUnnamedInputSettings::GetSlotPath(Slot);
+    auto LoadScale = [&Slot]()
+    {
+        const auto* Loaded = Cast<UUnnamedInputSettings>(UGameplayStatics::LoadGameFromSlot(Slot, 0));
+        return Loaded ? Loaded->DebugTextScale : -1.f;
+    };
+    const float Scale = Settings->DebugTextScale;
+    Settings->DebugTextScale = 2;
+    TestTrue(TEXT("Save A"), Settings->WriteSlot(Slot));
+    TArray<uint8> Expected, Written;
+    UGameplayStatics::SaveGameToMemory(Settings, Expected);
+    FFileHelper::LoadFileToArray(Written, *Path);
+    TestTrue(TEXT("The slot holds the bytes SaveGameToSlot writes"), Written.Num() > 0 && Written == Expected);
+    TestEqual(TEXT("LoadGameFromSlot reads what WriteSlot wrote"), LoadScale(), 2.f);
+    Settings->DebugTextScale = 3;
+    IFileManager::Get().MakeDirectory(*(Path + TEXT(".tmp")), true);
+    TestFalse(TEXT("A save that cannot write its temporary file fails"), Settings->WriteSlot(Slot));
+    TestEqual(TEXT("and leaves the last save readable"), LoadScale(), 2.f);
+    IFileManager::Get().DeleteDirectory(*(Path + TEXT(".tmp")), false, true);
+    TestTrue(TEXT("Save B"), Settings->WriteSlot(Slot));
+    TestEqual(TEXT("B loads"), LoadScale(), 3.f);
+    TestFalse(TEXT("No temporary file left"), IFileManager::Get().FileExists(*(Path + TEXT(".tmp"))));
+    TestFalse(TEXT("A present slot is never restored over"), UUnnamedInputSettings::RestoreSlot(Slot));
+    IFileManager::Get().Delete(*Path);
+    TestFalse(TEXT("The slot is gone"), IFileManager::Get().FileExists(*Path));
+    TestTrue(TEXT("A missing slot is restored from its backup"), UUnnamedInputSettings::RestoreSlot(Slot));
+    TestEqual(TEXT("which holds the save before B"), LoadScale(), 2.f);
+    FFileHelper::SaveArrayToFile(TArray<uint8>(), *Path);
+    TestTrue(TEXT("An emptied slot is restored too"), UUnnamedInputSettings::RestoreSlot(Slot));
+    TestEqual(TEXT("from the same backup"), LoadScale(), 2.f);
+    Settings->DebugTextScale = Scale;
+    IFileManager::Get().Delete(*Path);
+    IFileManager::Get().Delete(*(Path + TEXT(".bak")));
     State = Read(F.Bridge->ResetBinding(TEXT("key.sneak")));
     TestEqual(TEXT("Reset one restores C crouch"),
         State->GetObjectField(TEXT("nativeKeys"))->GetStringField(TEXT("key.sneak")), FString(TEXT("C")));

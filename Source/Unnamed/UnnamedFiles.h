@@ -15,7 +15,12 @@ namespace UnnamedFiles
     // Crash-safe replace: writes Filename.tmp, copies the current file to Filename.bak, then moves
     // the temporary file over Filename. An interrupted save leaves the file or its backup readable.
     UNNAMED_API ESaveResult SaveTextAtomically(const FString& Filename, const FString& Text);
+    // The same replace for bytes (the input settings' SaveGame slot).
+    UNNAMED_API ESaveResult SaveBytesAtomically(const FString& Filename, TConstArrayView<uint8> Bytes);
 
     // Filename, or its .bak when a save stopped after backing the file up.
     UNNAMED_API FString ReadablePath(const FString& Filename);
+
+    // Copies Filename.bak back to Filename when Filename is missing or empty and the backup is not. True when it did.
+    UNNAMED_API bool RestoreFromBackup(const FString& Filename);
 }
