@@ -29,7 +29,11 @@ KILL_Z = -10000.0
 
 # Lighting copied from the retired Super Flat map (stable daylight; exposure pinned at EV100 12).
 SUN_INTENSITY = 75000.0
-EXPOSURE_EV100 = 14.5  # sunny-16: a 75,000 lux sun wants ~EV 14-15; 12 washes the pale grid out
+# sunny-16: a 75,000 lux sun wants ~EV 14-15; 12 washes the pale grid out. The Playground follows the generated world's
+# picked look (2026-10-12, Source/Unnamed/Voxel/VoxelLook.h): daylight 0.6 EV darker than 14.5, the sky as bright as
+# before (its luminance factor 2^0.6 x 1.08).
+EXPOSURE_EV100 = 15.1
+SKY_LUMINANCE_FACTOR = 1.637
 # Thin height fog so the 2 km ground edge fades into the haze: roughly a third of the way to opaque at the
 # 1 km edge, nothing within the first 30 m.
 FOG_DENSITY = 0.004
@@ -68,7 +72,7 @@ def create_map():
     sun.light_component.set_mobility(unreal.ComponentMobility.MOVABLE)
     sun.light_component.set_editor_property("intensity", SUN_INTENSITY)
     sun.light_component.set_editor_property("atmosphere_sun_light", True)
-    spawn(unreal.SkyAtmosphere, "Playground - Sky", (0, 0, 0))
+    set_sky_luminance(spawn(unreal.SkyAtmosphere, "Playground - Sky", (0, 0, 0)))
     sky = spawn(unreal.SkyLight, "Playground - Ambient", (0, 0, 1000))
     sky.light_component.set_mobility(unreal.ComponentMobility.MOVABLE)
     sky.light_component.set_editor_property("real_time_capture", True)
@@ -140,7 +144,13 @@ def verify():
             problems.append("sun must be the atmosphere sun light")
         if abs(component.get_editor_property("intensity") - SUN_INTENSITY) > 0.5:
             problems.append("sun intensity is %s, expected %s" % (component.get_editor_property("intensity"), SUN_INTENSITY))
-    exactly_one(of_type(unreal.SkyAtmosphere), "SkyAtmosphere")
+    atmosphere = exactly_one(of_type(unreal.SkyAtmosphere), "SkyAtmosphere")
+    if atmosphere:
+        factor = atmosphere.get_component_by_class(unreal.SkyAtmosphereComponent).get_editor_property(
+            "sky_and_aerial_perspective_luminance_factor")
+        if max(abs(factor.r - SKY_LUMINANCE_FACTOR), abs(factor.g - SKY_LUMINANCE_FACTOR),
+               abs(factor.b - SKY_LUMINANCE_FACTOR)) > 0.0001:
+            problems.append("sky luminance factor is %s, expected %s" % (factor, SKY_LUMINANCE_FACTOR))
     sky = exactly_one(of_type(unreal.SkyLight), "SkyLight")
     if sky:
         if sky.light_component.get_editor_property("mobility") != unreal.ComponentMobility.MOVABLE:
@@ -168,10 +178,46 @@ def verify():
                "kill_z %s, daylight rig and edge fog, no floor mesh" % (MAP, KILL_Z))
 
 
+def set_sky_luminance(sky_actor):
+    """The SkyAtmosphere's sky and aerial perspective luminance factor; True when it changed."""
+    component = sky_actor.get_component_by_class(unreal.SkyAtmosphereComponent)
+    current = component.get_editor_property("sky_and_aerial_perspective_luminance_factor")
+    if max(abs(current.r - SKY_LUMINANCE_FACTOR), abs(current.g - SKY_LUMINANCE_FACTOR),
+           abs(current.b - SKY_LUMINANCE_FACTOR)) <= 0.0001:
+        return False
+    component.set_editor_property("sky_and_aerial_perspective_luminance_factor",
+                                  unreal.LinearColor(SKY_LUMINANCE_FACTOR, SKY_LUMINANCE_FACTOR, SKY_LUMINANCE_FACTOR, 1))
+    return True
+
+
+def apply_look():
+    """The picked look on an existing map: the daylight exposure and the sky's luminance factor; saved on a change."""
+    levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+    if not levels.load_level(MAP):
+        raise RuntimeError("Playground level did not load: " + MAP)
+    changed = False
+    for actor in unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors():
+        if isinstance(actor, unreal.SkyAtmosphere):
+            changed = set_sky_luminance(actor) or changed
+        if isinstance(actor, unreal.PostProcessVolume) and actor.get_editor_property("unbound"):
+            post = actor.get_editor_property("settings")
+            if any(abs(post.get_editor_property(name) - EXPOSURE_EV100) > 0.001
+                   for name in ("auto_exposure_min_brightness", "auto_exposure_max_brightness")):
+                post.set_editor_property("auto_exposure_min_brightness", EXPOSURE_EV100)
+                post.set_editor_property("auto_exposure_max_brightness", EXPOSURE_EV100)
+                actor.set_editor_property("settings", post)
+                changed = True
+    if changed and not levels.save_current_level():
+        raise RuntimeError("Could not save the Playground level")
+    unreal.log("Playground look: EV100 %s, sky luminance %s (%s)"
+               % (EXPOSURE_EV100, SKY_LUMINANCE_FACTOR, "set" if changed else "already"))
+
+
 def main():
     exists = unreal.EditorAssetLibrary.does_asset_exist(MAP)
     if exists:
-        unreal.log("Preserving existing Playground level (verifying only): " + MAP)
+        unreal.log("Preserving existing Playground level (verifying, applying the look): " + MAP)
+        apply_look()
     else:
         create_map()
     verify()

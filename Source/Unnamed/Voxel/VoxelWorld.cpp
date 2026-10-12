@@ -4,11 +4,14 @@
 #include "Camera/CameraComponent.h"
 #include "Components/ExponentialHeightFogComponent.h"
 #include "Components/SkyAtmosphereComponent.h"
+#include "Components/SkyLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Decoration/VoxelDecorator.h"
 #include "DynamicRHI.h"
 #include "Engine/ExponentialHeightFog.h"
 #include "Engine/GameViewportClient.h"
+#include "Engine/PostProcessVolume.h"
+#include "Engine/SkyLight.h"
 #include "Engine/StaticMesh.h"
 #include "EngineUtils.h"
 #include "Foundation/FoundationBlockRegistry.h"
@@ -23,6 +26,7 @@
 #include "HAL/FileManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialParameterCollection.h"
 #include "Misc/FileHelper.h"
 #include "RenderUtils.h"
 #include "Storage/VoxelColumn.h"
@@ -46,6 +50,7 @@
 #include "Voxel/VoxelWorldSettings.h"
 #include "Voxel/VoxelFluidShots.h"
 #include "Voxel/VoxelFluidSystem.h"
+#include "Voxel/VoxelTransitionShots.h"
 #include "Voxel/VoxelWorldSubsystem.h"
 #include "Voxel/VoxelWorldgenReader.h"
 #include "VoxelConstants.h"
@@ -206,6 +211,7 @@ void AVoxelWorld::BuildLayout()
     FString FluidScenario;
     if (!ShotFolder.IsEmpty() && FParse::Value(FCommandLine::Get(), TEXT("VoxelShotFluids="), FluidScenario))
         FluidShots = FVoxelFluidShots::Make(ShotFolder, FluidScenario);
+    TransitionShots = FVoxelTransitionShots::Make(ShotFolder);
     FString FlightFolder;
     if (FParse::Value(FCommandLine::Get(), TEXT("VoxelFlight="), FlightFolder))
     {
@@ -230,6 +236,21 @@ void AVoxelWorld::BuildLayout()
         Sky = It->GetComponent();
         break;
     }
+    // The rig the look dials drive (VoxelLook.h).
+    for (TActorIterator<APostProcessVolume> It(GetWorld()); It; ++It)
+        if (It->bUnbound)
+        {
+            LookVolume = *It;
+            break;
+        }
+    for (TActorIterator<ASkyLight> It(GetWorld()); It; ++It)
+    {
+        SkyFill = It->GetLightComponent();
+        break;
+    }
+    LookCollection = Cast<UMaterialParameterCollection>(
+        UUnnamedProjectSettings::GetBlockAssetPath(VoxelLook::CollectionName).TryLoad());
+    ApplyLook();
     // A plane a thousand kilometres wide under the world's bottom, for the fog to color below the horizon. Fogged
     // through, its own look never shows, so it stays out of shadows, Lumen and ray tracing.
     if (UStaticMesh* Plane = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Plane.Plane")))
@@ -673,6 +694,7 @@ void AVoxelWorld::Tick(float DeltaSeconds)
             Streaming->SetFocusOverride({});
     }
     UpdateLoadingShot();
+    ApplyLook();
     UpdateEdgeFog();
     if (Lights)
     {
@@ -711,8 +733,9 @@ void AVoxelWorld::Tick(float DeltaSeconds)
             UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *ShotEditReport);
         }
         // With -VoxelShotLights the light probe runs first (FVoxelLightShots), then with -VoxelShotFluids the flowing
-        // water capture (FVoxelFluidShots).
-        else if ((!LightShots || !LightShots->Tick(*this)) && (!FluidShots || !FluidShots->Tick(*this)))
+        // water capture (FVoxelFluidShots), then with -VoxelShotTransition the eye adaptation check.
+        else if ((!LightShots || !LightShots->Tick(*this)) && (!FluidShots || !FluidShots->Tick(*this)) &&
+            (!TransitionShots || !TransitionShots->Tick(*this)))
             UpdateShots();
     }
     // A running fluid capture's writes remesh columns, so it also runs while they are off screen.
@@ -734,6 +757,7 @@ void AVoxelWorld::UpdateEdgeFog()
         // Far LOD: the fog sits at the drawn radius D. Step 2's haze replaces the wall while far meshes form the edge.
         FEdgeFogState State;
         State.Drawn = Rings.GetDrawnRadius();
+        State.ColorScale = EdgeFogColorScale;
         State.bHaze =
             VoxelEdgeFog::UsesHaze(VoxelConsole::CVarFogHaze.GetValueOnGameThread(), Rings.ViewRadius, Rings.FarRadius);
         if (State.bHaze)
@@ -760,7 +784,7 @@ void AVoxelWorld::UpdateEdgeFog()
                 // light, which is the blue overhead: the land then fades into the horizon instead of into a darker
                 // band below it. The sun side still brightens it (the map's directional in-scattering).
                 EdgeFog->SetSkyAtmosphereAmbientContributionColorScale(FLinearColor::Black);
-                EdgeFog->SetFogInscatteringColor(EdgeHazeLuminance);
+                EdgeFog->SetFogInscatteringColor(EdgeHazeLuminance * State.ColorScale);
                 FExponentialHeightFogData MapSecondFog;
                 MapSecondFog.FogDensity = MapSecondFogDensity;
                 MapSecondFog.FogHeightFalloff = MapSecondFogFalloff;

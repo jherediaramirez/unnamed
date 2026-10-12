@@ -21,6 +21,10 @@ material plus the edge fade: they fade out between the FarFadeStart and FarFadeE
 to the camera, a cylinder as vanilla's fog), dithered on the masked layers and smooth on water, so the sky shows through
 the drawn radius's last columns. Shadow passes take the unfaded mask.
 
+The look dials' scalars (the brightness pass) come from MPC_VoxelLook, which AVoxelWorld sets from voxel.Look.*: LowGlow
+multiplies the glow of emitters of light level 1 to 7, WaterSpecular is the water's specular. Its defaults draw every
+material as before the dials.
+
 Run after ImportBlocks.py; the graphs are code, so rerunning rebuilds them on the same assets. -Materials=A,B limits
 the run to the named materials:
 
@@ -214,6 +218,16 @@ return Unfaded * fade;
 # Unset parameters draw everything: the fade starts beyond any distance.
 FAR_FADE_DEFAULT_CM = 1.0e9
 
+# The look dials' collection (Source/Unnamed/Voxel/VoxelLook.h) and its scalars' defaults, which are the voxel.Look.*
+# defaults: maps without the voxel world (the Playground) draw with these.
+LOOK_COLLECTION = "MPC_VoxelLook"
+LOOK_PARAMETERS = {"LowGlow": 1.0, "WaterSpecular": 0.5}
+# Light is the level / 15: emitters of level 1 to 7 (glow lichen 7) glow x LowGlow, brighter ones as before.
+LOW_GLOW_HLSL = r"""
+return Light * (Light * 15.0 < 7.5 ? LowGlow : 1.0);
+"""
+_look_collection = []
+
 
 def fail(message):
     raise RuntimeError("BLOCK_MATERIALS FAIL: " + message)
@@ -234,6 +248,48 @@ def get_or_create(name):
     if not material:
         fail("could not create " + path)
     return material
+
+
+def look_collection():
+    """MPC_VoxelLook with LOOK_PARAMETERS' defaults. Created once: materials reference a parameter by its id, so existing
+    parameters keep theirs and only take the default."""
+    if _look_collection:
+        return _look_collection[0]
+    path = ProjectPaths.block_asset(LOOK_COLLECTION)
+    if unreal.EditorAssetLibrary.does_asset_exist(path):
+        collection = unreal.EditorAssetLibrary.load_asset(path)
+    else:
+        folder, short = ProjectPaths.split(path)
+        collection = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+            short, folder, unreal.MaterialParameterCollection, unreal.MaterialParameterCollectionFactoryNew())
+    if not collection:
+        fail("could not create " + path)
+    parameters = list(collection.get_editor_property("scalar_parameters"))
+    names = [str(each.get_editor_property("parameter_name")) for each in parameters]
+    changed = False
+    for parameter_name, default in LOOK_PARAMETERS.items():
+        if parameter_name in names:
+            parameter = parameters[names.index(parameter_name)]
+        else:
+            parameter = unreal.CollectionScalarParameter()
+            parameter.set_editor_property("parameter_name", parameter_name)
+            parameters.append(parameter)
+            changed = True
+        if abs(parameter.get_editor_property("default_value") - default) > 1e-6:
+            parameter.set_editor_property("default_value", default)
+            changed = True
+    # Only a real change is written: each edit gives the collection a new state, which materials not rebuilt in this
+    # run (-Materials=) would recompile for.
+    if changed:
+        collection.set_editor_property("scalar_parameters", parameters)
+        if not unreal.EditorAssetLibrary.save_loaded_asset(collection, False):
+            fail("could not save " + path)
+    found = {str(each.get_editor_property("parameter_name")): each.get_editor_property("default_value")
+             for each in collection.get_editor_property("scalar_parameters")}
+    if any(abs(found.get(key, -1.0) - value) > 1e-6 for key, value in LOOK_PARAMETERS.items()):
+        fail("%s holds %s, expected %s" % (LOOK_COLLECTION, found, LOOK_PARAMETERS))
+    _look_collection.append(collection)
+    return collection
 
 
 def build(name, spec, block_textures, flow_textures):
@@ -264,6 +320,12 @@ def build(name, spec, block_textures, flow_textures):
         expr = node(unreal.MaterialExpressionTextureObjectParameter, -900, y)
         expr.set_editor_property("parameter_name", parameter)
         expr.set_editor_property("texture", texture)
+        return expr
+
+    def look_parameter(parameter, x, y):
+        expr = node(unreal.MaterialExpressionCollectionParameter, x, y)
+        expr.set_editor_property("collection", look_collection())
+        expr.set_editor_property("parameter_name", parameter)
         return expr
 
     if chunk:
@@ -411,8 +473,11 @@ def build(name, spec, block_textures, flow_textures):
         roughness = node(unreal.MaterialExpressionConstant, -150, 240)
         roughness.set_editor_property("r", 0.25 if water else 1.0)
         lib.connect_material_property(roughness, "", unreal.MaterialProperty.MP_ROUGHNESS)
-        specular = node(unreal.MaterialExpressionConstant, -150, 320)
-        specular.set_editor_property("r", 0.5 if water else 0.1)
+        if water:  # voxel.Look.WaterSpecular
+            specular = look_parameter("WaterSpecular", -150, 320)
+        else:
+            specular = node(unreal.MaterialExpressionConstant, -150, 320)
+            specular.set_editor_property("r", 0.1)
         lib.connect_material_property(specular, "", unreal.MaterialProperty.MP_SPECULAR)
     if not water:
         # Light-emitting blocks (sea lantern, glowstone...): color x light / 15 x LightEmissive.
@@ -422,8 +487,21 @@ def build(name, spec, block_textures, flow_textures):
         light = node(unreal.MaterialExpressionDivide, -250, 450)
         link(light_source, light_output, light, "A")
         light.set_editor_property("const_b", light_divisor)
+        # voxel.Look.LowGlow on the dim emitters (LOW_GLOW_HLSL).
+        low = node(unreal.MaterialExpressionCustom, -175, 520)
+        low.set_editor_property("description", "Look: x LowGlow below light level 8")
+        low.set_editor_property("output_type", unreal.CustomMaterialOutputType.CMOT_FLOAT1)
+        low.set_editor_property("code", LOW_GLOW_HLSL)
+        low_inputs = []
+        for input_name in ("Light", "LowGlow"):
+            item = unreal.CustomInput()
+            item.set_editor_property("input_name", input_name)
+            low_inputs.append(item)
+        low.set_editor_property("inputs", low_inputs)
+        link(light, "", low, "Light")
+        link(look_parameter("LowGlow", -400, 520), "", low, "LowGlow")
         amount = node(unreal.MaterialExpressionMultiply, -100, 450)
-        link(light, "", amount, "A")
+        link(low, "", amount, "A")
         link(scale, "", amount, "B")
         emissive = node(unreal.MaterialExpressionMultiply, 50, 400)
         link(rgb, "", emissive, "A")
@@ -457,6 +535,7 @@ def main():
     unknown = selected - set(MATERIALS)
     if unknown:
         fail("unknown materials: " + ", ".join(sorted(unknown)))
+    look_collection()
     for name, spec in MATERIALS.items():
         if name not in selected:
             continue

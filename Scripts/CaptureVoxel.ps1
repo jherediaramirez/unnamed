@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[switch]$ClimateSpawn,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates,[switch]$TorchRoom,[switch]$TorchLook,[int]$TorchGlow=-1,[ValidateSet('breach','flood','scenes')][string]$Fluids)
+param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[switch]$ClimateSpawn,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates,[switch]$TorchRoom,[switch]$TorchLook,[int]$TorchGlow=-1,[ValidateSet('breach','flood','scenes')][string]$Fluids,[double[]]$Transition)
 # Renders the generated world offscreen (/Game/Maps/L_Generated) and saves AVoxelWorld's screenshots: overview,
 # closeup, ground, lumen-scene and section, plus build.txt with the first view's streaming timings. The rings stay on
 # the player's spawn, and the view's edge is meshed against air (voxel.Debug.EdgeWalls 1; -ExecCmds can turn it off),
@@ -43,6 +43,10 @@ param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[in
 # a Superflat world (-World, with the grass top at y -61; -SpawnAt -65,25 -SpawnExact as the probe stood) and shoots its
 # 20 poses at -Width 1920 -Height 1080 (scenes.txt: the reach checks, each scene's ground as levels; scenes-<pose>.png).
 # Not with -Flight.
+# -Transition SX,SY,SZ,STX,STY,STZ,HX,HY,HZ,HTX,HTY,HTZ (blocks: a sun view's camera and target, then a shade view's) first
+# runs the eye adaptation check (FVoxelTransitionShots, -VoxelShotTransition): settled on the sun view, the camera cuts into
+# the shade and back out at the map's own adaptation speeds, with frames 0 to 5 s after each cut (transition.txt,
+# transition-sun-settled.png, transition-<in|out>-<ms>.png). Not with -Flight.
 # Evidence is never overwritten.
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
@@ -78,6 +82,7 @@ if($SpawnExact){$arguments+='-VoxelSpawnExact'}
 # -View CX,CY,CZ,TX,TY,TZ adds a "view" shot from a camera to a target, in blocks (a spot -SpawnAt streams), e.g. an
 # ocean floor or the column grid (-ExecCmds 'voxel.Debug.ColumnGrid 1').
 if($View -and -not $Flight){if($View.Count -ne 6){throw '-View takes CX,CY,CZ,TX,TY,TZ'};$arguments+=('-VoxelShotView='+($View -join ','))}
+if($PSBoundParameters.ContainsKey('Transition')){if($Flight){throw '-Transition runs without -Flight.'};if($Transition.Count -ne 12){throw '-Transition takes a sun camera and target, then a shade camera and target (12 numbers)'};$arguments+=('-VoxelShotTransition='+($Transition -join ','))}
 if($NoSurfaceRules){$arguments+='-VoxelNoSurfaceRules'}
 if(($Lights -or $TorchGates -or $TorchRoom) -and -not $Flight){$arguments+='-VoxelShotLights'}
 if($TorchGates -and -not $Flight){$arguments+='-VoxelShotTorchGates'}

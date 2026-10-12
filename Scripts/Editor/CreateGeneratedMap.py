@@ -60,7 +60,25 @@ EXPOSURE_SETTINGS = {
     "auto_exposure_speed_down": EXPOSURE_SPEED_DOWN,
 }
 
+# The picked look (Jesus, 2026-10-12; Source/Unnamed/Voxel/VoxelLook.h): daylight 0.6 EV darker, pinned while the
+# camera has open sky, and the sky kept as bright as before: its luminance factor is 2^0.6 x 1.08. The darker daylight
+# and the pin are runtime dials (AVoxelWorld::ApplyLook); the volume above keeps the cave state (no open sky), which is
+# today's exposure.
+SKY_LUMINANCE_FACTOR = 1.637
+
 ORIGIN_TOLERANCE = 0.1
+
+
+def set_sky_luminance(sky_actor):
+    """The SkyAtmosphere's sky and aerial perspective luminance factor; True when it changed."""
+    component = sky_actor.get_component_by_class(unreal.SkyAtmosphereComponent)
+    current = component.get_editor_property("sky_and_aerial_perspective_luminance_factor")
+    if max(abs(current.r - SKY_LUMINANCE_FACTOR), abs(current.g - SKY_LUMINANCE_FACTOR),
+           abs(current.b - SKY_LUMINANCE_FACTOR)) <= 0.0001:
+        return False
+    component.set_editor_property("sky_and_aerial_perspective_luminance_factor",
+                                  unreal.LinearColor(SKY_LUMINANCE_FACTOR, SKY_LUMINANCE_FACTOR, SKY_LUMINANCE_FACTOR, 1))
+    return True
 
 
 def native_class(path):
@@ -93,7 +111,7 @@ def create_map():
     sun.light_component.set_mobility(unreal.ComponentMobility.MOVABLE)
     sun.light_component.set_editor_property("intensity", SUN_INTENSITY)
     sun.light_component.set_editor_property("atmosphere_sun_light", True)
-    spawn(unreal.SkyAtmosphere, "Voxel world - Sky", (0, 0, 0))
+    set_sky_luminance(spawn(unreal.SkyAtmosphere, "Voxel world - Sky", (0, 0, 0)))
     sky = spawn(unreal.SkyLight, "Voxel world - Ambient", (0, 0, 1000))
     sky.light_component.set_mobility(unreal.ComponentMobility.MOVABLE)
     sky.light_component.set_editor_property("real_time_capture", True)
@@ -152,7 +170,13 @@ def verify():
     if sun and abs(sun.light_component.get_editor_property("intensity") - SUN_INTENSITY) > 0.5:
         problems.append("sun intensity is %s, expected %s" % (sun.light_component.get_editor_property("intensity"),
                                                               SUN_INTENSITY))
-    exactly_one(of_type(unreal.SkyAtmosphere), "SkyAtmosphere")
+    atmosphere = exactly_one(of_type(unreal.SkyAtmosphere), "SkyAtmosphere")
+    if atmosphere:
+        factor = atmosphere.get_component_by_class(unreal.SkyAtmosphereComponent).get_editor_property(
+            "sky_and_aerial_perspective_luminance_factor")
+        if max(abs(factor.r - SKY_LUMINANCE_FACTOR), abs(factor.g - SKY_LUMINANCE_FACTOR),
+               abs(factor.b - SKY_LUMINANCE_FACTOR)) > 0.0001:
+            problems.append("sky luminance factor is %s, expected %s" % (factor, SKY_LUMINANCE_FACTOR))
     sky = exactly_one(of_type(unreal.SkyLight), "SkyLight")
     if sky and abs(sky.light_component.get_editor_property("intensity") - SKY_LIGHT_INTENSITY) > 0.001:
         problems.append("sky light intensity is %s, expected %s" % (sky.light_component.get_editor_property("intensity"),
@@ -181,9 +205,22 @@ def verify():
                % (MAP, KILL_Z, SKY_LIGHT_INTENSITY, EXPOSURE_MIN_EV100, EXPOSURE_MAX_EV100))
 
 
+def apply_look():
+    """The picked look on an existing map: only the sky's luminance factor; saved only when it changed."""
+    levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+    if not levels.load_level(MAP):
+        raise RuntimeError("Generated world level did not load: " + MAP)
+    changed = [actor for actor in unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors()
+               if isinstance(actor, unreal.SkyAtmosphere) and set_sky_luminance(actor)]
+    if changed and not levels.save_current_level():
+        raise RuntimeError("Could not save the generated world's level")
+    unreal.log("Generated world look: sky luminance %s (%s)" % (SKY_LUMINANCE_FACTOR, "set" if changed else "already"))
+
+
 def main():
     if unreal.EditorAssetLibrary.does_asset_exist(MAP):
-        unreal.log("Preserving existing generated world level (verifying only): " + MAP)
+        unreal.log("Preserving existing generated world level (verifying, applying the look): " + MAP)
+        apply_look()
     else:
         create_map()
     verify()

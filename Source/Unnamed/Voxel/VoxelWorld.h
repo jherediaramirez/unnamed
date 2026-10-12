@@ -6,16 +6,19 @@
 #include "Foundation/FoundationLab.h"
 #include "Random/VoxelSeed.h"
 #include "Voxel/VoxelEdgeFog.h"
+#include "Voxel/VoxelLook.h"
 #include "Worlds/UnnamedSavedWorlds.h"
 #include "VoxelWorld.generated.h"
 
 class ACameraActor;
+class APostProcessVolume;
 class FVoxelFlight;
 class FVoxelFluidShots;
 class FVoxelFluidSystem;
 class FVoxelLightShots;
 class FVoxelLightTable;
 class FVoxelLights;
+class FVoxelTransitionShots;
 class UExponentialHeightFogComponent;
 class UPointLightComponent;
 class UStaticMeshComponent;
@@ -25,6 +28,9 @@ class IVoxelTerrain;
 class UFoundationBlockTextureTable;
 class UFoundationInteractionView;
 class UMaterialInterface;
+class UCurveFloat;
+class UMaterialParameterCollection;
+class USkyLightComponent;
 class UVoxelWorldSubsystem;
 
 // The voxel world's level actor (/Game/Maps/L_Generated) and the map's AFoundationLab. UVoxelWorldSubsystem streams the
@@ -151,6 +157,10 @@ private:
     // The fog floor shows unless the haze's voxel.Fog.FloorDepth is below 0 (a look check without it).
     bool IsFogFloorShown() const;
     void SetEdgeFogVisible(bool bVisible);
+    // The look dials (VoxelLook.h): applies the voxel.Look.* variables to the map's rig when they change.
+    void ApplyLook();
+    // voxel.Look.SkyPin: probes the camera's open sky every VoxelLook::SkyProbeSeconds and eases the pin towards it.
+    double UpdateSkyPin();
     // On the climate search's dry land: the spawn cell rises or falls to the highest block that collides in its block
     // column (a treetop counts), then rises until the body fits, as the Playground's spawn does.
     void StandOnSpawnBlocks();
@@ -207,6 +217,8 @@ private:
         bool bHaze = false;
         VoxelEdgeFog::FHaze Haze;
         double SeaOffsetCm = 0;
+        // x the wall's own colour (voxel.Look.Sky).
+        float ColorScale = 1;
         bool operator==(const FEdgeFogState& Other) const = default;
     };
     FEdgeFogState EdgeFogState;
@@ -220,12 +232,35 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<USkyAtmosphereComponent> Sky;
     bool bEdgeFogVisible = true;
+    // The map's rig the look dials drive (its unbound post-process volume and sky light), MPC_VoxelLook, the look as
+    // last applied and the edge fog colour's scale from it.
+    UPROPERTY(Transient)
+    TObjectPtr<APostProcessVolume> LookVolume;
+    UPROPERTY(Transient)
+    TObjectPtr<USkyLightComponent> SkyFill;
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterialParameterCollection> LookCollection;
+    // The volume's exposure curve while a look needs one (VoxelLook::SolveExposure).
+    UPROPERTY(Transient)
+    TObjectPtr<UCurveFloat> LookCurve;
+    TOptional<FVoxelLook> AppliedLook;
+    double AppliedPin = 0;
+    // SkyPin: the pin now and its target, the next probe's and the last update's time, and the probes' cost.
+    double SkyPinNow = 0;
+    double SkyPinTarget = 0;
+    double SkyProbeDue = 0;
+    double SkyPinSeconds = 0;
+    double SkyProbeMicros = 0;
+    int32 SkyProbes = 0;
+    float EdgeFogColorScale = 1;
     TSharedPtr<FVoxelFlight> Flight;
     TSharedPtr<FVoxelFluidSystem> Fluids;
     // -VoxelShotLights: the torch light probe, run before the shots.
     TSharedPtr<FVoxelLightShots> LightShots;
     // -VoxelShotFluids=breach|flood: the flowing water captures (W2a), run before the shots, after the light probe.
     TSharedPtr<FVoxelFluidShots> FluidShots;
+    // -VoxelShotTransition: the eye adaptation check between sun and shade, after the fluid capture.
+    TSharedPtr<FVoxelTransitionShots> TransitionShots;
     // The torch lights: the light table for voxel.LightMinLevel at LightMinLevel, and the pool, whose point lights
     // LightComponents holds for the GC.
     TSharedPtr<const FVoxelLightTable> LightTable;
