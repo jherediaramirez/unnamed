@@ -58,6 +58,15 @@ Targeting, mining, placing, the HUD and the creative inventory stay the Foundati
 
 Quit and world travel drain every settings store, lock further edits, flush all three native stores, then call Unreal's normal QuitGame or OpenLevel on a later tick. Editor Play cannot quit. Saving is crash-safe: `UnnamedFiles::SaveTextAtomically` writes a temporary file, backs up the previous file and moves the new one into place; loads fall back to the backup. `UnnamedSession::CanSaveSettings()` is the single rule that keeps editor and `-MenuSettingsSessionOnly` runs from saving settings. Saved worlds are the player's content, not settings, and always save; `-WorldsDir=` moves them for tests.
 
+### The pause menu in a world
+
+The Foundation controller reads two switches when a world starts (`AFoundationController::BeginPlay`; change one, then reload the world). Each keeps the behaviour until 2026-10-12 one value away ([record](Records/2026-10-12-Pause-Menu-Flash.md)).
+
+| Switch | Values | Default |
+|---|---|---|
+| `foundation.Pause.Menu` | 0 a fresh opaque browser per ESC that starts on the title screen and is destroyed on resume: about 0.2-0.4 s of black, then a title frame (until 2026-10-12). 1 one browser per world, made at world start on `index.html#pause` (transparent, invisible until its pause screen has painted, then collapsed); ESC shows it and the page reports `MenuShown` within a frame or two; resume collapses it. 2 (diagnostic) a fresh browser per ESC, transparent until painted: no black, the old delay. `IsOpen()` means shown; `HasBrowser()` means it exists. | 1 |
+| `foundation.Pause.Background` | Modes 1 and 2 only. 0 the title screen's blurred panorama (until 2026-10-12). 1 the world behind the menu (`#pause&bg=world`): a transparent page with vanilla's `inworld_menu_background` instead of the panorama, and a Slate `SBackgroundBlur` under the browser (Z 99) at Menu Background Blur x viewport height / 1080 (a chosen mapping; vanilla's strength is unmeasured). | 1 |
+
 ## Project settings and world catalog
 
 `UUnnamedProjectSettings` (Project Settings > Game > Unnamed; C++ defaults, overridable in `DefaultGame.ini`) is the one place for the menu map, the dev grid material, the input mapping contexts and actions, the HUD and block asset roots (`HudRoot`, `BlockRoot`), and the Singleplayer world catalog (ID, map, name, summary, status). The catalog holds one world, `playground`; the retired IDs `foundation`, `super-flat` and `interaction-lab` are never reused. `UMenuApplication::RequestOpenWorld` accepts an exact, case-sensitive catalog ID or a saved world's id. `GetState` sends the catalog (`worlds`) and the saved worlds (`savedWorlds`, most recently played first, each with its settings for Re-Create). The page lists the catalog first, marked built-in, then the saves, and keeps no list of its own. Editor Python reads the same paths through `Scripts/Editor/ProjectPaths.py`. Cooked maps come from `MapsToCook` in `DefaultGame.ini`.

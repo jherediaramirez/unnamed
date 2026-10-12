@@ -4,6 +4,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 12, 2026
 
+- [The ESC flash: a kept-alive pause menu and the world behind it](2026-10-12-Pause-Menu-Flash.md): `foundation.Pause.Menu` 1 (one browser per world, pre-warmed hidden: no black, no title frame, the menu within a frame of ESC; 0 = the old 0.2-0.4 s flash) and `foundation.Pause.Background` 1 (the world behind, blurred and darkened, as Jesus picked); the pause probe (`-FoundationSuite=pause`), measured frames, timings and mutations; open items.
 - [Look handoff: after the brightness pass](2026-10-12-Look-Handoff.md): start here for DN2, W3c, T3c or a retune of the picked look.
 - [The brightness pass: look dials, pinned daylight, the vanilla outline](2026-10-12-Look-Brightness.md): `voxel.Look.*` (DayEV 0.6, SkyPin with 2 stops, Sky 1.637 by Jesus's pick), caves unchanged, mode 1 outline after tone mapping (0.63x), `CaptureVoxel -Transition`; scout T's cap maths corrected; open items for DN2, W3c, T3c.
 - [Review fixes F1-F8: the external review's eight findings](2026-10-12-Review-Fixes.md): crash dumps kept (`Scripts/CrashFolders.ps1`), the menu runners' exit codes, fresh E2E output folders, input-settings' page hash, tool damage through right-click moves, the atomic input save with a `.bak` restore, missing assets failing their tests, and the aquifer centres jittered on all three axes (a decided generator change: new goldens and hashes, before/after table inside).
