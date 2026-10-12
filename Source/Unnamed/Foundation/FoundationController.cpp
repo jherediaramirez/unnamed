@@ -21,9 +21,20 @@
 #include "Engine/LocalPlayer.h"
 #include "Framework/Application/SlateApplication.h"
 #include "GameFramework/PlayerInput.h"
+#include "HAL/IConsoleManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/Paths.h"
 #include "UnrealClient.h"
+
+namespace
+{
+    TAutoConsoleVariable<int32> CVarPauseMenu(TEXT("foundation.Pause.Menu"), 1,
+        TEXT("The ESC menu: 0 a fresh opaque browser per ESC that starts on the title screen (until 2026-10-12: about "
+             "0.2-0.4 s of black, then a title frame); 1 one browser per world, made hidden when the world starts and "
+             "shown at once; 2 a fresh browser per ESC that stays transparent until its pause screen has painted "
+             "(diagnostic). Read when a world starts: change it, then reload the world."),
+        ECVF_Default);
+}
 
 AFoundationController::AFoundationController()
 {
@@ -64,7 +75,12 @@ void AFoundationController::BeginPlay()
     MenuBridge->Initialize(this);
     MenuHost->AddBridge(TEXT("foundationmenu"), MenuBridge);
     MenuHost->GetVideoSettings();
+    MenuHost->SetPauseMode(CVarPauseMenu.GetValueOnGameThread());
+    UE_LOG(LogUnnamedFoundation, Display, TEXT("Pause menu mode %d (foundation.Pause.Menu, read at BeginPlay)"),
+        MenuHost->GetPauseMode());
     ResumeFoundation();
+    // Mode 1: the pause menu loads now, hidden, so ESC shows it at once.
+    MenuHost->Prewarm();
 }
 
 void AFoundationController::EndPlay(const EEndPlayReason::Type EndPlayReason)

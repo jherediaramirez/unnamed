@@ -21,13 +21,43 @@ class UNNAMED_API UMenuBrowserHost : public UActorComponent
 public:
     UMenuBrowserHost();
 
-    // Adds the browser, binds every service and gives it UI-only input with a cursor.
+    // A world's pause menu (AFoundationController, foundation.Pause.Menu); set before Prewarm or Show. 0 (the menu
+    // map's only mode): Show adds a fresh opaque browser and Hide destroys it. 1: one browser for the world session,
+    // made hidden by Prewarm; Show reveals it and Hide collapses it. 2 (diagnostic): a fresh browser per Show, as 0,
+    // but transparent until its pause screen has painted. Modes 1 and 2 open the page as PauseMenuUrl(Base, Mode).
+    void SetPauseMode(int32 Mode);
+    int32 GetPauseMode() const { return PauseMode; }
+    // Mode 1: creates the browser once, on the pause screen, transparent and HitTestInvisible; it collapses when the
+    // page reports its pause screen painted (HandlePageReady). Binds every service but changes no input.
+    void Prewarm();
+
+    // Adds the browser (or, in mode 1, reveals it), binds every service and gives it UI-only input with a cursor.
     void Show();
-    // Removes the browser and its bindings. Restoring game input is the owner's job.
+    // Removes the browser and its bindings (in mode 1, hides it and keeps both). Restoring game input is the owner's
+    // job.
     void Hide();
-    bool IsOpen() const { return Browser.IsValid(); }
+    // True while the menu is shown.
+    bool IsOpen() const { return PauseMode == 1 ? bShown : Browser.IsValid(); }
+    // True while a browser exists, shown or not.
+    bool HasBrowser() const { return Browser.IsValid(); }
     // The page's browser while it exists (the pause probe reads IsLoaded).
     TSharedPtr<SWebBrowser> GetBrowser() const { return Browser; }
+
+    // The page in modes 1 and 2: the base URL at 0, base#pause at 1 and 2.
+    static FString PauseMenuUrl(const FString& Base, int32 Mode);
+
+    // From the page (UFoundationMenuBridge): its pause screen has painted. Collapses a pre-warmed browser that is not
+    // shown; when shown, also calls the page's reveal(). Returns IsOpen(), so a shown page reveals itself either way.
+    bool HandlePageReady();
+    // From the page: the first frame after it was shown. State is the page's own report ({"guiScale": n, "jump": key}).
+    void HandlePageShown(const FString& State);
+    bool IsPageReady() const { return bPageReady; }
+    // FPlatformTime seconds of the last Prewarm or Show, of the page's ready report and of its first shown report
+    // since that Show (0 = none yet).
+    double GetStartSeconds() const { return StartSeconds; }
+    double GetPageReadySeconds() const { return PageReadySeconds; }
+    double GetPageShownSeconds() const { return PageShownSeconds; }
+    const FString& GetPageShownState() const { return PageShownState; }
 
     // Bound under Name every time the page is shown, e.g. a world's pause-menu bridge.
     void AddBridge(const FString& Name, UObject* Bridge);
@@ -41,8 +71,24 @@ public:
 
 private:
     APlayerController* GetPlayerController() const;
+    // file:/// URL of Content/Menu/Web/index.html.
+    static FString GetMenuUrl();
+    // Makes Browser for URL and adds it to the game viewport at Z 100.
+    void CreateBrowser(const FString& MenuURL, bool bTransparent);
+    // Binds menuvideo, menuinput, menupreferences, menuapplication and the extra bridges. bDisableGameplay turns
+    // gameplay input off when the input bridge is made (Show; Prewarm leaves input alone).
+    void BindServices(APlayerController& Player, bool bDisableGameplay);
+    // UI-only input focused on the browser, cursor on, move and look ignored.
+    void FocusBrowser(APlayerController& Player);
+    // Removes the browser and its bindings and releases the services (Hide in modes 0 and 2, EndPlay).
+    void DestroyBrowser();
 
     TSharedPtr<SWebBrowser> Browser;
+    int32 PauseMode = 0;
+    bool bShown = false;
+    bool bPageReady = false;
+    double StartSeconds = 0, PageReadySeconds = 0, PageShownSeconds = 0;
+    FString PageShownState;
     UPROPERTY(Transient)
     TObjectPtr<UMenuVideoSettings> VideoSettings;
     UPROPERTY(Transient)

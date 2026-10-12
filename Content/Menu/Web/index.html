@@ -238,7 +238,9 @@ const MenuStores = (() => {
     // Locks every store and waits for its in-flight saves.
     prepareForExit: () => Promise.all(stores.map(store => store.prepareForExit())),
     cancelExit() { for (const store of stores) store.cancelExit(); },
-    settled: () => Promise.all(stores.map(store => store.settled()))
+    settled: () => Promise.all(stores.map(store => store.settled())),
+    // Re-reads native state where a store can (a kept-alive pause menu shown again); never rejects.
+    reload: () => Promise.all(stores.map(store => store.reload?.()))
   });
 })();
 window.MenuBridge = MenuBridge;
@@ -470,16 +472,20 @@ const MenuVideo = (() => {
       window.location.reload();
     } catch (error) { resetting = false; window.MenuPreferences?.cancelExit(); refreshSettings(); report(error.message + '\nReset did not finish. Some preference groups may already have reset; retry to finish.'); }
   }
-  setInterval(async () => {
-    if (!client.connected || running || polling || resetting) return;
-    polling = true;
+  async function reload() {
+    if (!client.connected || running || resetting) return;
     const ticket = revision;
     try { const reply = await call('GetState'); if (!running && !resetting && ticket === revision) absorb(reply); }
     catch (error) { console.warn('Video settings synchronization: ' + error.message); }
+  }
+  setInterval(async () => {
+    if (!client.connected || running || polling || resetting) return;
+    polling = true;
+    try { await reload(); }
     finally { polling = false; }
   }, 500);
   return {
-    set, initialize, hardReset, getState: cloneState,
+    set, initialize, hardReset, reload, getState: cloneState,
     enabled: id => !resetting && !exitLocked && !!snapshot?.capabilities[id],
     prepareForExit: async () => {
       exitLocked = true;
@@ -595,7 +601,13 @@ const MenuInput = (() => {
     try { absorb(await call('GetState')); }
     catch (error) { console.warn('Input settings: ' + error.message); }
   }
-  return {initialize, enabled, supported, keyFromEvent, captureKey: captureKeyAndReport, capturePointer,
+  // A fresh read while nothing is changing (a kept-alive pause menu shown again).
+  async function reload() {
+    if (!client.connected || running || locked) return;
+    try { absorb(await call('GetState')); }
+    catch (error) { console.warn('Input settings: ' + error.message); }
+  }
+  return {initialize, reload, enabled, supported, keyFromEvent, captureKey: captureKeyAndReport, capturePointer,
     setPolicy: (id, value) => enabled(id) ? submit('ApplyPolicy', id, value) : Promise.resolve(),
     reset: id => enabled(id) ? submit('ResetBinding', id) : Promise.resolve(),
     unbind: id => enabled(id) ? submit('ApplyBinding', id, 'None') : Promise.resolve(),
@@ -765,18 +777,22 @@ const MenuPreferences = (() => {
     })();
     return initializing;
   }
-  setInterval(async () => {
-    if (!client.connected || !snapshot || locked || committing || queue.length || running || polling) return;
-    polling = true;
+  async function reload() {
+    if (!client.connected || !snapshot || locked || committing || queue.length || running) return;
     const ticket = revision;
     try {
       const reply = await call('GetState');
       if (ticket === revision && !locked && !committing && !queue.length) absorb(reply);
     } catch {} // A later edit/read can retry; polling does not stack error dialogs.
+  }
+  setInterval(async () => {
+    if (!client.connected || !snapshot || locked || committing || queue.length || running || polling) return;
+    polling = true;
+    try { await reload(); }
     finally { polling = false; }
   },1000);
   return {
-    initialize, supported, set, setFlag, commit, settled,
+    initialize, supported, set, setFlag, commit, settled, reload,
     enabled: id => supported(id) && available(),
     refreshAdditional: () => {
       for (const node of screen.querySelectorAll('[data-preference-flag]')) {
@@ -962,13 +978,18 @@ void MenuApplication.initialize();
 
 // In the Foundation lab the same menu is the pause menu: no second Controls screen or store.
 // The native "foundationmenu" bridge exists only there; on the menu map this module stays idle.
+// A world's #pause page (foundation.Pause.Menu 1 and 2) starts on the pause screen, invisible and transparent, and
+// reports MenuReady once that screen and the panorama have painted; native answers whether the menu is shown, so a
+// pre-warmed page stays hidden until reveal() and a shown one shows itself. Without #pause nothing here changes.
 const FoundationMenu = (() => {
   const client = MenuBridge.client('foundationmenu', {service: 'Foundation', unavailable: 'The Foundation lab is not running.'});
-  let inLab = false;
+  let inLab = false, connecting = null, ready = false, revealPending = false;
   // Fire-and-forget notifications must never surface as uncaught errors.
   const send = (method, ...args) => client.connected
     ? client.call(method, args).catch(error => console.warn('Foundation menu: ' + error.message))
     : Promise.resolve();
+  const connect = () => connecting ??= client.connect();
+  const pausePage = (window.location?.hash || '').slice(1).split('&').includes('pause');
 
   async function resume(returnToMenu = false) {
     await MenuStores.settled();
@@ -983,7 +1004,7 @@ const FoundationMenu = (() => {
   };
 
   async function initialize() {
-    if (!await client.connect()) return;
+    if (!await connect()) return;
     // While a key binding is captured, the native router must let raw input through.
     MenuInput.setCaptureHooks({beforeStart: () => send('SetCapture', true), afterEnd: () => void send('SetCapture', false)});
     const state = await send('GetState');
@@ -995,6 +1016,52 @@ const FoundationMenu = (() => {
     }
   }
 
+  // Shows the page; its next frame reports MenuShown, with what it shows, once the stores have re-read native state.
+  function show(reloaded) {
+    revealPending = false;
+    document.documentElement.classList.remove('pause-hidden');
+    const shown = () => JSON.stringify({guiScale: state.settings.guiScale, jump: MenuInput.getState?.()?.nativeKeys?.['key.jump'] ?? null});
+    requestAnimationFrame(() => void reloaded.then(() => send('MenuShown', shown())));
+  }
+  async function markReady() {
+    if (!await connect()) return;
+    const reply = await send('MenuReady');
+    ready = true;
+    if (reply?.shown || revealPending) show(MenuStores.reload());
+  }
+  // The pause screen and the panorama (or its fallback) have painted, then two more frames.
+  function waitForPaint() {
+    let painted = 0;
+    const step = () => {
+      if (current.name === 'foundationPause' && (heldPanoramaDrawn || panoramaFallback) && ++painted >= 3) return void markReady();
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  // Native Show on a kept-alive page: the pause screen again, with settings changed while it was hidden.
+  function reveal() {
+    if (!pausePage) return;
+    if (current.name !== 'foundationPause') {
+      current = {name: 'foundationPause', data: {}};
+      stack = [];
+      render();
+    }
+    revealPending = true;
+    const reloaded = MenuStores.reload();
+    if (ready) show(reloaded);
+  }
+  if (pausePage) {
+    // The first render (resize() at the end of the page script) is the pause screen, never the title screen.
+    current = {name: 'foundationPause', data: {}};
+    stack = [];
+    const style = document.createElement('style');
+    style.textContent = 'html.pause-hidden,html.pause-hidden *{visibility:hidden!important}' +
+      'html.pause-hidden,html.pause-hidden body{background:transparent!important}';
+    document.head.appendChild(style);
+    document.documentElement.classList.add('pause-hidden');
+    waitForPaint();
+  }
+
   document.addEventListener('keydown', event => {
     if (inLab && current.name === 'foundationPause' && event.key === 'Escape' && !bindingCapture) {
       event.preventDefault();
@@ -1002,7 +1069,7 @@ const FoundationMenu = (() => {
       void resume();
     }
   }, true);
-  return {initialize};
+  return {initialize, reveal};
 })();
 void FoundationMenu.initialize();
 

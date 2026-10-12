@@ -220,6 +220,7 @@ void UFoundationRuntimeProbe::BeginPlay()
     if (bTour) AddTourCases();
     if (bViews) AddViewsCases();
     if (bPause) AddPauseCases();
+    if (Suite == TEXT("all") || bPause) AddPauseMenuCases();
     if (FParse::Param(FCommandLine::Get(), TEXT("HudCaptures"))) AddHudCases();
     TotalStarted = Started = FPlatformTime::Seconds();
 #else

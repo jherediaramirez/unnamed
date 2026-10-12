@@ -98,7 +98,13 @@ const MenuInput = (() => {
     try { absorb(await call('GetState')); }
     catch (error) { console.warn('Input settings: ' + error.message); }
   }
-  return {initialize, enabled, supported, keyFromEvent, captureKey: captureKeyAndReport, capturePointer,
+  // A fresh read while nothing is changing (a kept-alive pause menu shown again).
+  async function reload() {
+    if (!client.connected || running || locked) return;
+    try { absorb(await call('GetState')); }
+    catch (error) { console.warn('Input settings: ' + error.message); }
+  }
+  return {initialize, reload, enabled, supported, keyFromEvent, captureKey: captureKeyAndReport, capturePointer,
     setPolicy: (id, value) => enabled(id) ? submit('ApplyPolicy', id, value) : Promise.resolve(),
     reset: id => enabled(id) ? submit('ResetBinding', id) : Promise.resolve(),
     unbind: id => enabled(id) ? submit('ApplyBinding', id, 'None') : Promise.resolve(),

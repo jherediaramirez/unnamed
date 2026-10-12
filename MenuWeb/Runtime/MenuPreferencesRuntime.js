@@ -139,18 +139,22 @@ const MenuPreferences = (() => {
     })();
     return initializing;
   }
-  setInterval(async () => {
-    if (!client.connected || !snapshot || locked || committing || queue.length || running || polling) return;
-    polling = true;
+  async function reload() {
+    if (!client.connected || !snapshot || locked || committing || queue.length || running) return;
     const ticket = revision;
     try {
       const reply = await call('GetState');
       if (ticket === revision && !locked && !committing && !queue.length) absorb(reply);
     } catch {} // A later edit/read can retry; polling does not stack error dialogs.
+  }
+  setInterval(async () => {
+    if (!client.connected || !snapshot || locked || committing || queue.length || running || polling) return;
+    polling = true;
+    try { await reload(); }
     finally { polling = false; }
   },1000);
   return {
-    initialize, supported, set, setFlag, commit, settled,
+    initialize, supported, set, setFlag, commit, settled, reload,
     enabled: id => supported(id) && available(),
     refreshAdditional: () => {
       for (const node of screen.querySelectorAll('[data-preference-flag]')) {
