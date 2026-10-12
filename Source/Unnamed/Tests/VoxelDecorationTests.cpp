@@ -1490,21 +1490,22 @@ bool FVoxelDecorationGoldenTest::RunTest(const FString& Parameters)
 {
     // The decorated columns of seed 263 are pinned: the hash of the 81 final columns and the writes of the 121
     // Decorates, per preset, with plants off (S2 to S6's values, ores only), plants on with trees off (S8, the decided
-    // change) and both on (S9a).
+    // change) and both on (S9a). All three cases re-recorded on 2026-10-12 under the decided change F4 (aquifer centres
+    // jittered on all three axes, review fixes; old values in Docs/Records/2026-10-12-Review-Fixes.md).
     if (!DecorationTestHasBlocks(*this)) return true;
     // Plants off: recorded on the first passing run with ores on: overworld, large_biomes, amplified.
-    constexpr uint64 GoldenHashes[3] = {0xa28113883ba6e7caull, 0xf87e27cd1455c61aull, 0xfc7c6279d46e6b76ull};
-    constexpr int64 GoldenWrites[3] = {761145, 768534, 823270};
+    constexpr uint64 GoldenHashes[3] = {0x37d27b0852660ad1ull, 0x2877986febaa1be9ull, 0xf3b8f8fb85546aaaull};
+    constexpr int64 GoldenWrites[3] = {761246, 769062, 823114};
     // Plants on, trees off: recorded on S8 part B's first passing run (S8's plants plus glow lichen).
-    constexpr uint64 PlantHashes[3] = {0xb77656a8d37bde4aull, 0xa290112228773eefull, 0xed3582d140b6c106ull};
-    constexpr int64 PlantWrites[3] = {769195, 774817, 829385};
+    constexpr uint64 PlantHashes[3] = {0x08c6c008411701aaull, 0x855983745971691full, 0xe735ed7621c1f140ull};
+    constexpr int64 PlantWrites[3] = {769297, 775340, 829229};
     // Plants and trees on: recorded on S9a's first run with trees in the world; S9c re-recorded (tree decorators, mega
     // spruce and pine); S9d part 2 re-recorded overworld and amplified (fallen trees, huge mushrooms, trunk_vine at
     // 2/3, the shelf mushrooms' one rule; large_biomes unchanged); S9e part 1 re-recorded large_biomes (azalea trees
     // with their root systems over a lush cave; overworld and amplified unchanged); S9e part 2 re-recorded large_biomes
     // (84 more writes of bamboo or vines, model blocks; overworld and amplified unchanged).
-    constexpr uint64 TreeHashes[3] = {0x95645bbf53f73c12ull, 0x5e72b754b1f20fa6ull, 0x98ae73a412fa50caull};
-    constexpr int64 TreeWrites[3] = {822150, 793454, 857244};
+    constexpr uint64 TreeHashes[3] = {0x91fb1227a4a24fdeull, 0x373ea972a4e47724ull, 0x3387c175962c3a24ull};
+    constexpr int64 TreeWrites[3] = {822252, 793966, 857088};
     for (const int32 Case : {0, 1, 2})
         for (int32 Preset = 0; Preset < 3; ++Preset)
         {
