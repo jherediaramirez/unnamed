@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';
-import {evidencePath} from './evidence.mjs';
+import {evidencePath, freshEvidenceDir} from './evidence.mjs';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,7 +12,7 @@ const packageName=argument('--package','CodeReviewDevelopment20261007');
 const output=path.resolve(argument('--output',evidencePath('Foundation','Menu-'+Date.now())));
 const editor=process.argv.includes('--editor');
 const exe=editor?'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe':path.join(root,`Packages/${packageName}/Windows/Unnamed/Binaries/Win64/Unnamed.exe`);
-fs.mkdirSync(output,{recursive:true});const checks=[],errors=[],delay=ms=>new Promise(r=>setTimeout(r,ms));
+freshEvidenceDir(output);const checks=[],errors=[],delay=ms=>new Promise(r=>setTimeout(r,ms));
 const check=(name,pass,detail='')=>{checks.push({name,pass,detail});console.log(`${pass?'PASS':'FAIL'} ${name}`);if(!pass)throw Error(name);};
 let browser,page,game,exit;
 async function waitFor(fn,limit=60000){const start=Date.now();while(!await fn()){if(Date.now()-start>limit||game?.exitCode!==null)throw Error('Runtime timeout');await delay(150);}}

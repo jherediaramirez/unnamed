@@ -90,8 +90,8 @@ CEF/native menu, capture, save/relaunch and three map round trips:
 
 ```powershell
 Set-Location 'C:\dev\projects\Unnamed'
-node Tests/foundation-menu.mjs --output=C:\dev\tmp\Foundation-New-Menu-Report
+node Tests/foundation-menu.mjs "--output=C:\dev\tmp\Foundation-Menu-Report-$(Get-Date -Format yyyyMMdd-HHmmss)"
 npm --prefix Tests test
 ```
 
-The CEF test uses the installed Playwright dependency and loopback debug port 18944. It creates an isolated user directory, changes only that test profile and normally quits the owned process. Its diagnostic screenshots and JSON are retained. Neither test alters OS permission prompts.
+The CEF test uses the installed Playwright dependency and loopback debug port 18944. `--output` must name a new folder: the driver refuses an existing one, so an earlier run's reports can't mix into this one. It creates an isolated user directory, changes only that test profile and normally quits the owned process. Its diagnostic screenshots and JSON are retained. Neither test alters OS permission prompts.
