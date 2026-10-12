@@ -35,6 +35,7 @@ void SHudLoadingScreen::Construct(const FArguments& Arguments)
 {
     HudAssets = Arguments._HudAssets;
     BlurPixels = Arguments._BlurPixels;
+    RequestedGuiScale = Arguments._RequestedGuiScale;
     Solid = *FCoreStyle::Get().GetBrush(TEXT("WhiteBrush"));
     const FString Path = FPaths::ProjectContentDir() / LoadingScreenPanorama;
     if (UTexture2D* Texture = FImageUtils::ImportFileAsTexture2D(Path))
@@ -52,12 +53,18 @@ void SHudLoadingScreen::Construct(const FArguments& Arguments)
                 }
 }
 
+int32 SHudLoadingScreen::GetScaleFor(FVector2f ViewportPixels) const
+{
+    return SHudCreativeScreen::GetGuiScale(ViewportPixels, RequestedGuiScale.Get());
+}
+
 int32 SHudLoadingScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geometry, const FSlateRect& CullingRect,
     FSlateWindowElementList& Elements, int32 LayerId, const FWidgetStyle& Style, bool bParentEnabled) const
 {
     const float SlateScale = FMath::Max(Geometry.GetAccumulatedLayoutTransform().GetScale(), .01f);
     const FVector2f Pixels = FVector2f(Geometry.GetLocalSize()) * SlateScale;
-    const int32 Scale = SHudCreativeScreen::GetGuiScale(Pixels);
+    const int32 Scale = GetScaleFor(Pixels);
+    LastFrameScale = Scale;
     const float Units = float(Scale) / SlateScale;
     const FIntPoint Gui(int32(Pixels.X) / Scale, int32(Pixels.Y) / Scale);
 

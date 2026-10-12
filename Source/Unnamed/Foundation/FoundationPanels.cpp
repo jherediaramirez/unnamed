@@ -11,6 +11,7 @@
 #include "Input/UnnamedInputSettings.h"
 #include "Input/UnnamedInputSubsystem.h"
 #include "Menu/MenuBrowserHost.h"
+#include "Menu/MenuVideoSettings.h"
 #include "Engine/Engine.h"
 #include "Engine/GameViewportClient.h"
 #include "Framework/Application/SlateApplication.h"
@@ -473,6 +474,14 @@ void UFoundationPanels::OpenCreative(AFoundationLab& Lab)
     Creative = SNew(SHudCreativeScreen)
         .Registry(Registry)
         .HudAssets(LoadObject<UHudAssets>(nullptr, *UUnnamedProjectSettings::GetHudRegistryPath()))
+        // Options > GUI Scale, as the HUD reads it (HudPresenter): the screen follows a change at once.
+        .RequestedGuiScale_Lambda([WeakController = TWeakObjectPtr<AFoundationController>(GetFoundationController())]
+        {
+            const AFoundationController* Controller = WeakController.Get();
+            return Controller && Controller->GetMenuHost()
+                ? Controller->GetMenuHost()->GetVideoSettings()->GetGuiScale()
+                : 0;
+        })
         .Items(MoveTemp(Items))
         .GetInventory([WeakLab, WeakPawn]
         {

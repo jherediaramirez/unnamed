@@ -17,6 +17,7 @@
 #include "Input/UnnamedInputSettings.h"
 #include "Input/UnnamedInputSubsystem.h"
 #include "Menu/MenuBrowserHost.h"
+#include "Menu/MenuVideoSettings.h"
 #include "Camera/CameraComponent.h"
 #include "DrawDebugHelpers.h"
 #include "DynamicRHI.h"
@@ -87,9 +88,18 @@ void UFoundationHud::ShowLoadingScreen(const FFoundationLoadState& State)
             if (const auto Value = Preferences->FindPreference(TEXT("menuBackgroundBlurriness"));
                 Value.IsValid() && Value->Type == EJson::Number)
                 Blur = Value->AsNumber();
+    // Options > GUI Scale, as the HUD and the creative screen read it.
     LoadingScreen = SNew(SHudLoadingScreen)
                         .HudAssets(LoadObject<UHudAssets>(nullptr, *UUnnamedProjectSettings::GetHudRegistryPath()))
-                        .BlurPixels(float(Blur));
+                        .BlurPixels(float(Blur))
+                        .RequestedGuiScale_Lambda(
+                            [WeakController = TWeakObjectPtr<AFoundationController>(GetFoundationController())]
+                            {
+                                const AFoundationController* Controller = WeakController.Get();
+                                return Controller && Controller->GetMenuHost()
+                                    ? Controller->GetMenuHost()->GetVideoSettings()->GetGuiScale()
+                                    : 0;
+                            });
     LoadingScreen->SetState(State);
     GEngine->GameViewport->AddViewportWidgetContent(LoadingScreen.ToSharedRef(), 300);
 }

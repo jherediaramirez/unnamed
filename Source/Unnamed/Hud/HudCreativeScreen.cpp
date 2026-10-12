@@ -169,6 +169,7 @@ struct SHudCreativeScreen::FPainter
 void SHudCreativeScreen::Construct(const FArguments& Arguments)
 {
     Registry = Arguments._Registry;
+    RequestedGuiScale = Arguments._RequestedGuiScale;
     HudAssets = Arguments._HudAssets;
     Items = Arguments._Items;
     GetInventory = Arguments._GetInventory;
@@ -232,13 +233,12 @@ FString SHudCreativeScreen::ItemName(FName Item) const
     return Info && !Info->Name.IsEmpty() ? Info->Name : Item.ToString();
 }
 
-int32 SHudCreativeScreen::GetGuiScale(FVector2f ViewportPixels)
+int32 SHudCreativeScreen::GetGuiScale(FVector2f ViewportPixels, int32 Requested)
 {
-    // Minecraft's automatic GUI scale: the largest that keeps at least 320 x 240 GUI pixels.
-    int32 Scale = 1;
-    while (ViewportPixels.X / (Scale + 1) >= 320 && ViewportPixels.Y / (Scale + 1) >= 240)
-        ++Scale;
-    return Scale;
+    // One rule for every native screen (vanilla's: Options > GUI Scale changes the HUD and every GUI). Flooring the
+    // pixels keeps Auto exactly the old float test against 320 x 240.
+    return HudModel::GetScale(
+        FIntPoint(FMath::FloorToInt32(ViewportPixels.X), FMath::FloorToInt32(ViewportPixels.Y)), Requested);
 }
 
 SHudCreativeScreen::FFrame SHudCreativeScreen::GetFrame(const FGeometry& Geometry) const
@@ -246,7 +246,8 @@ SHudCreativeScreen::FFrame SHudCreativeScreen::GetFrame(const FGeometry& Geometr
     FFrame Frame;
     const float SlateScale = FMath::Max(Geometry.GetAccumulatedLayoutTransform().GetScale(), .01f);
     const FVector2f Pixels = FVector2f(Geometry.GetLocalSize()) * SlateScale;
-    Frame.Scale = GetGuiScale(Pixels);
+    Frame.Scale = GetScaleFor(Pixels);
+    LastFrameScale = Frame.Scale;
     Frame.Units = float(Frame.Scale) / SlateScale;
     // leftPos/topPos: centred in the scaled screen with integer division.
     Frame.Origin = FIntPoint((int32(Pixels.X) / Frame.Scale - FHudCreativeModel::Width) / 2,

@@ -4,6 +4,8 @@
 #include "Foundation/FoundationInputRouter.h"
 #include "Foundation/FoundationPanels.h"
 #include "Foundation/FoundationPawn.h"
+#include "Hud/HudCreativeScreen.h"
+#include "Hud/HudModel.h"
 #include "Hud/HudPresenter.h"
 #include "Menu/MenuBrowserHost.h"
 #include "Menu/MenuPreferences.h"
@@ -233,6 +235,47 @@ void UFoundationRuntimeProbe::AddHudCases()
             Controller->GetMenuHost()->GetVideoSettings()->ApplySetting(TEXT("guiScale"), TEXT("{\"value\":2}"));
         },
         [Presenter] { return Presenter->GetGuiScale() == 2; });
+    // The creative inventory follows the same setting as the HUD (vanilla: one GUI scale for the HUD and every GUI):
+    // at 2, at 3 with the HUD at 3 under it, and at Auto (the viewport's). The pairs are the item 3 captures.
+    auto Creative = [this] { return Controller->GetPanels()->GetCreativeScreen(); };
+    // A requested scale, at most the viewport's Auto (a window under 960 x 720 cannot show 3).
+    auto Expected = [this](int32 Requested)
+    {
+        FIntPoint Viewport;
+        Controller->GetViewportSize(Viewport.X, Viewport.Y);
+        return HudModel::GetScale(Viewport, Requested);
+    };
+    auto SetGuiScale = [this](int32 Scale)
+    {
+        Controller->GetMenuHost()->GetVideoSettings()->ApplySetting(
+            TEXT("guiScale"), FString::Printf(TEXT("{\"value\":%d}"), Scale));
+    };
+    auto OpenCreative = [this]
+    {
+        if (!Controller->GetPanels()->IsInventoryOpen()) Controller->GetPanels()->OpenInventory();
+    };
+    Capture(TEXT("creative-scale2"), OpenCreative,
+        [Creative, Expected] { return Creative().IsValid() && Creative()->GetLastFrameScale() == Expected(2); });
+    Capture(
+        TEXT("creative-scale3"), [SetGuiScale] { SetGuiScale(3); },
+        [Creative, Expected] { return Creative().IsValid() && Creative()->GetLastFrameScale() == Expected(3); });
+    Capture(
+        TEXT("scale3"), [this] { Controller->GetPanels()->Close(); }, [this, Presenter, Expected]
+        { return !Controller->GetPanels()->IsOpen() && Presenter->GetGuiScale() == Expected(3); });
+    Capture(
+        TEXT("creative-auto"),
+        [SetGuiScale, OpenCreative]
+        {
+            SetGuiScale(0);
+            OpenCreative();
+        },
+        [this, Creative]
+        {
+            FIntPoint Viewport;
+            Controller->GetViewportSize(Viewport.X, Viewport.Y);
+            return Creative().IsValid() && Creative()->GetLastFrameScale() == HudModel::GetScale(Viewport, 0);
+        });
+    AddCase(TEXT("hud-creative-close"), .3, [this] { Controller->GetPanels()->Close(); }, [] {});
 
     // Milestone 2: the same HUD over the player's real vitals, driven by movement, the course's water
     // column and a real attack on the Playground's training target. Player positions are course-local

@@ -29,7 +29,7 @@ namespace HudBlockIcon
 class UNNAMED_API SHudCreativeScreen : public SLeafWidget
 {
 public:
-    SLATE_BEGIN_ARGS(SHudCreativeScreen) {}
+    SLATE_BEGIN_ARGS(SHudCreativeScreen) : _RequestedGuiScale(0) {}
     SLATE_ARGUMENT(TSharedPtr<const FFoundationBlockRegistry>, Registry)
     SLATE_ARGUMENT(TWeakObjectPtr<const UHudAssets>, HudAssets)
     // Every item the player could hold (blocks and tools): names, stack sizes, search tags.
@@ -37,6 +37,8 @@ public:
     SLATE_ARGUMENT(FHudCreativeInventory, GetInventory)
     SLATE_ARGUMENT(FHudCreativeWriter, OnWrite)
     SLATE_ARGUMENT(TFunction<void()>, OnClose)
+    // Options > GUI Scale (0 Auto), read every frame so a change in the open menu applies at once.
+    SLATE_ATTRIBUTE(int32, RequestedGuiScale)
     SLATE_END_ARGS()
 
     void Construct(const FArguments& Arguments);
@@ -44,8 +46,12 @@ public:
     FHudCreativeModel& GetModel() { return Model; }
     // The pointer in GUI pixels from the screen's corner (probes place it for hover and tooltip shots).
     void SetMouse(FIntPoint Gui) { Mouse = Gui; }
-    // The GUI scale the screen uses for a viewport size in pixels (vanilla's auto scale, as the HUD's).
-    static int32 GetGuiScale(FVector2f ViewportPixels);
+    // The GUI scale for a viewport size in pixels and Options > GUI Scale (0 Auto): the HUD's, HudModel::GetScale.
+    static int32 GetGuiScale(FVector2f ViewportPixels, int32 Requested);
+    // The scale for a viewport in pixels at the screen's requested GUI scale (what its frames use).
+    int32 GetScaleFor(FVector2f ViewportPixels) const { return GetGuiScale(ViewportPixels, RequestedGuiScale.Get()); }
+    // The scale of the last frame painted or hit-tested (0 before the first), for probes.
+    int32 GetLastFrameScale() const { return LastFrameScale; }
 
     virtual bool SupportsKeyboardFocus() const override { return true; }
     virtual FReply OnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event) override;
@@ -78,6 +84,8 @@ private:
     struct FPainter;
 
     FHudCreativeModel Model;
+    TAttribute<int32> RequestedGuiScale;
+    mutable int32 LastFrameScale = 0;
     TSharedPtr<const FFoundationBlockRegistry> Registry;
     TWeakObjectPtr<const UHudAssets> HudAssets;
     FHudCreativeItems Items;

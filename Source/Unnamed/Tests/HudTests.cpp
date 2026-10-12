@@ -2,6 +2,8 @@
 #include "Foundation/FoundationActions.h"
 #include "Foundation/FoundationVitals.h"
 #include "Hud/HudAssets.h"
+#include "Hud/HudCreativeScreen.h"
+#include "Hud/HudLoadingScreen.h"
 #include "Hud/HudDrawList.h"
 #include "Hud/HudModel.h"
 #include "Hud/HudPresenter.h"
@@ -41,6 +43,30 @@ bool FHudGeometryTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("320-wide HUD rule differs from 416-wide menu"), HudModel::GetScale({1280, 960}, 0), 4);
     TestEqual(TEXT("Requested maximum"), HudModel::GetScale({1920, 1080}, 3), 3);
     TestEqual(TEXT("Small viewport never zero"), HudModel::GetScale({200, 120}, 0), 1);
+    TestEqual(TEXT("1440 requested 3"), HudModel::GetScale({2560, 1440}, 3), 3);
+    TestEqual(TEXT("1440 requested 7 clamps to Auto's 6"), HudModel::GetScale({2560, 1440}, 7), 6);
+    TestEqual(TEXT("1440 requested 0 is Auto"), HudModel::GetScale({2560, 1440}, 0), 6);
+    // Every native screen follows Options > GUI Scale through the same rule (the creative inventory, its tooltip and
+    // the loading screen were Auto-only until 2026-10-11).
+    TestEqual(TEXT("Creative follows the requested scale"), SHudCreativeScreen::GetGuiScale({2560, 1440}, 3), 3);
+    TestEqual(TEXT("Creative Auto at 1440"), SHudCreativeScreen::GetGuiScale({2560, 1440}, 0), 6);
+    TestEqual(TEXT("Creative keeps the 320-wide rule"), SHudCreativeScreen::GetGuiScale({1280, 960}, 0), 4);
+    TestEqual(TEXT("Creative Auto at a 320-wide step"), SHudCreativeScreen::GetGuiScale({1600, 1440}, 0), 5);
+    // The widgets read the setting through their attribute every frame (the owners bind it to Options > GUI Scale).
+    int32 Requested = 3;
+    const TSharedRef<SHudCreativeScreen> CreativeScreen =
+        SNew(SHudCreativeScreen).RequestedGuiScale_Lambda([&Requested] { return Requested; });
+    const TSharedRef<SHudLoadingScreen> LoadingScreen =
+        SNew(SHudLoadingScreen).RequestedGuiScale_Lambda([&Requested] { return Requested; });
+    TestEqual(TEXT("Creative screen at the requested 3"), CreativeScreen->GetScaleFor({2560, 1440}), 3);
+    TestEqual(TEXT("Loading screen at the requested 3"), LoadingScreen->GetScaleFor({2560, 1440}), 3);
+    Requested = 0;
+    TestEqual(TEXT("Creative screen follows a change to Auto"), CreativeScreen->GetScaleFor({2560, 1440}), 6);
+    TestEqual(TEXT("Loading screen follows a change to Auto"), LoadingScreen->GetScaleFor({2560, 1440}), 6);
+    const TSharedRef<SHudLoadingScreen> Unbound = SNew(SHudLoadingScreen);
+    TestEqual(TEXT("Screens default to Auto"), Unbound->GetScaleFor({1920, 1080}), 4);
+    TestEqual(TEXT("Creative Auto floors fractional pixels, as its old float test"),
+        SHudCreativeScreen::GetGuiScale({1599.9f, 1440}, 0), 4);
     TestEqual(TEXT("Ceil logical dimensions"), HudModel::GetLogicalSize({1280, 720}, 3), FIntPoint(427, 240));
     TestEqual(TEXT("Odd framebuffer ceil"), HudModel::GetLogicalSize({1921, 1081}, 4), FIntPoint(481, 271));
     const auto Rows = HudModel::GetHealthGeometry(60, 60, 60, 0);

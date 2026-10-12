@@ -16,14 +16,20 @@ class UTexture2D;
 class UNNAMED_API SHudLoadingScreen : public SLeafWidget
 {
 public:
-    SLATE_BEGIN_ARGS(SHudLoadingScreen) {}
+    SLATE_BEGIN_ARGS(SHudLoadingScreen) : _RequestedGuiScale(0) {}
     SLATE_ARGUMENT(TWeakObjectPtr<const UHudAssets>, HudAssets)
     // Pixels of the Gaussian blur on the panorama (the menu's menuBackgroundBlurriness).
     SLATE_ARGUMENT(float, BlurPixels)
+    // Options > GUI Scale (0 Auto), as the HUD's and the creative screen's.
+    SLATE_ATTRIBUTE(int32, RequestedGuiScale)
     SLATE_END_ARGS()
 
     void Construct(const FArguments& Arguments);
     void SetState(const FFoundationLoadState& InState) { State = InState; }
+    // The scale for a viewport in pixels at the screen's requested GUI scale (what its frames use).
+    int32 GetScaleFor(FVector2f ViewportPixels) const;
+    // The scale of the last frame painted (0 before the first), for probes.
+    int32 GetLastFrameScale() const { return LastFrameScale; }
 
 protected:
     virtual FVector2D ComputeDesiredSize(float) const override { return FVector2D::ZeroVector; }
@@ -34,6 +40,8 @@ protected:
 private:
     TWeakObjectPtr<const UHudAssets> HudAssets;
     float BlurPixels = 5;
+    TAttribute<int32> RequestedGuiScale;
+    mutable int32 LastFrameScale = 0;
     FFoundationLoadState State;
     FSlateBrush Solid;
     FSlateBrush Panorama;
