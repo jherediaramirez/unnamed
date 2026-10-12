@@ -2,6 +2,10 @@
 
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
+## October 12, 2026
+
+- [Feel build B: Render Distance, the sound's delay, the held item at any FOV](2026-10-12-Feel-B.md): Options > Render Distance drives the rings (`voxel.RenderDistance.FromOptions`), smaller audio buffers (256 x 2), the held item at a fixed FOV of 70 and a pose fitted to vanilla's frames (`foundation.Hand.Fit`); view bobbing and hand sway wait for VP2's numbers (the mechanism is saved as a patch).
+
 ## October 11, 2026
 
 - [Voxel world handoff: far LOD step 2 done, into step 3 (tiles and coarser cells, 512+ blocks; apply throughput)](2026-10-11-Voxel-Handoff-Phase9-S3.md): start here for step 3. Measure first with 1b's A/B flight on step 2's code. Then plan one apply per 4 x 4 far columns, the near/far swap by a mask texture, and 2-block cells past 384, keeping step 2's edge fade and `FarRadius 0` unchanged.
