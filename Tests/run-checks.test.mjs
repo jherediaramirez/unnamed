@@ -1,7 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -117,4 +117,24 @@ test('every runner that deletes an editor profile closes it through Close-Profil
   assert.ok(voxel.includes('$closed=Close-Profile -UserDir $profileDirectory -Destination $OutputDirectory'), 'TestVoxel closes its profile');
   assert.ok(!/Remove-Item\s+-LiteralPath\s+\$profileDirectory/.test(voxel), 'TestVoxel deletes no profile by hand');
   assert.ok(voxel.indexOf('Close-Profile -UserDir') < voxel.indexOf('Missing voxel report'), 'TestVoxel closes the profile before it can throw');
+});
+
+// A crash after the report is written (teardown) leaves a passing report and a nonzero exit: every runner that launches the
+// editor with & must read $LASTEXITCODE right after the launch and fail on it (TestFoundationRuntime checks $process.ExitCode).
+test('every Test*.ps1 that launches the editor fails on its exit code', () => {
+  const runners = readdirSync(scripts).filter(name => /^Test.*\.ps1$/.test(name));
+  const checked = [];
+  for (const name of runners) {
+    const lines = readFileSync(join(scripts, name), 'utf8').split('\n');
+    const launch = lines.findIndex(line => /^\s*&\s.*UnrealEditor/.test(line));
+    if (launch < 0) continue;
+    let end = launch;
+    while (lines[end].trimEnd().endsWith('`')) end++;
+    const capture = /^\$(\w+)=\$LASTEXITCODE\s*$/.exec(lines[end + 1] ?? '');
+    assert.ok(capture, `${name} reads $LASTEXITCODE on the line after the launch`);
+    const rest = lines.slice(end + 2).join('\n');
+    assert.ok(rest.includes(`$${capture[1]} -ne 0`), `${name} fails when $${capture[1]} is not 0`);
+    checked.push(name);
+  }
+  assert.deepEqual(checked.sort(), ['TestHud.ps1', 'TestInput.ps1', 'TestMenu.ps1', 'TestVideoSettings.ps1', 'TestVoxel.ps1']);
 });
