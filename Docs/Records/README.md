@@ -2,6 +2,10 @@
 
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
+## October 12, 2026
+
+- [The brightness pass: look dials, pinned daylight, the vanilla outline](2026-10-12-Look-Brightness.md): `voxel.Look.*` (DayEV 0.6, SkyPin with 2 stops, Sky 1.637 by Jesus's pick), caves unchanged, mode 1 outline after tone mapping (0.63x), `CaptureVoxel -Transition`; scout T's cap maths corrected; open items for DN2, W3c, T3c.
+
 ## October 11, 2026
 
 - [Voxel world handoff: far LOD step 2 done, into step 3 (tiles and coarser cells, 512+ blocks; apply throughput)](2026-10-11-Voxel-Handoff-Phase9-S3.md): start here for step 3. Measure first with 1b's A/B flight on step 2's code. Then plan one apply per 4 x 4 far columns, the near/far swap by a mask texture, and 2-block cells past 384, keeping step 2's edge fade and `FarRadius 0` unchanged.
