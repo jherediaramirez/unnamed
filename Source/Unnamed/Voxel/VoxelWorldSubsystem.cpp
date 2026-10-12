@@ -82,13 +82,17 @@ UVoxelWorldSubsystem* UVoxelWorldSubsystem::Get(const UWorld* World)
 
 void UVoxelWorldSubsystem::Start(AVoxelWorld& InOwner, TSharedRef<const FVoxelBlockTable> Table,
     TSharedRef<const IVoxelTerrain> Terrain, TConstArrayView<UMaterialInterface*> LayerMaterials,
-    const FVector& InitialFocus)
+    TConstArrayView<UMaterialInstanceDynamic*> FarLayerMaterials, const FVector& InitialFocus)
 {
     Stop();
     Owner = &InOwner;
     Materials.Reset();
     for (UMaterialInterface* Material : LayerMaterials)
         Materials.Add(Material);
+    FarFadeMaterials.Reset();
+    for (UMaterialInstanceDynamic* Material : FarLayerMaterials)
+        FarFadeMaterials.Add(Material);
+    bFarLookStale = true;
     FVoxelColumnPipeline::FSettings Settings;
     Settings.MeshOptions.bGreedy = VoxelConsole::CVarGreedyMeshing.GetValueOnGameThread();
     Settings.MeshOptions.bAmbientOcclusion = VoxelConsole::CVarAmbientOcclusion.GetValueOnGameThread();
@@ -327,12 +331,37 @@ void UVoxelWorldSubsystem::UpdateFarLooks()
 {
     const bool bShadows = VoxelConsole::CVarFarShadows.GetValueOnGameThread();
     const bool bTint = VoxelConsole::CVarFarTint.GetValueOnGameThread();
-    if (bShadows == bFarShadows && bTint == bFarTint) return;
+    const FVoxelStreamingRings& Rings = Pipeline->GetRings();
+    const bool bFade =
+        VoxelEdgeFog::UsesHaze(VoxelConsole::CVarFogHaze.GetValueOnGameThread(), Rings.ViewRadius, Rings.FarRadius);
+    // Shots from outside the world (the edge fog hidden) see every far mesh whole.
+    const AVoxelWorld* World = Owner.Get();
+    const VoxelEdgeFog::FFade Fade = World && !World->IsEdgeFogVisible()
+        ? VoxelEdgeFog::GetNoFade()
+        : VoxelEdgeFog::GetFarFade(Rings.GetDrawnRadius());
+    if (bFarLookStale || !(Fade == FarFade))
+    {
+        FarFade = Fade;
+        for (UMaterialInstanceDynamic* Material : FarFadeMaterials)
+            if (Material)
+            {
+                Material->SetScalarParameterValue(TEXT("FarFadeStart"), float(Fade.StartCm));
+                Material->SetScalarParameterValue(TEXT("FarFadeEnd"), float(Fade.EndCm));
+            }
+    }
+    if (!bFarLookStale && bShadows == bFarShadows && bTint == bFarTint && bFade == bFarFade) return;
+    bFarLookStale = false;
     bFarShadows = bShadows;
     bFarTint = bTint;
-    UMaterialInterface* Tint = GetFarTintMaterial();
+    bFarFade = bFade;
+    FarLook.Reset();
+    if (UMaterialInterface* Tint = GetFarTintMaterial())
+        FarLook.Init(Tint, int32(EVoxelLayer::Count));
+    else if (bFarFade)
+        for (UMaterialInstanceDynamic* Material : FarFadeMaterials)
+            FarLook.Add(Material);
     for (const TPair<FIntPoint, TObjectPtr<UVoxelChunkComponent>>& Chunk : Chunks)
-        if (Chunk.Value && Chunk.Value->IsFarLook()) Chunk.Value->SetFarLook(true, bFarShadows, Tint);
+        if (Chunk.Value && Chunk.Value->IsFarLook()) Chunk.Value->SetFarLook(true, bFarShadows, FarLook);
 }
 
 void UVoxelWorldSubsystem::ApplyReady(double BudgetMs, double TickStartSeconds)
@@ -372,7 +401,7 @@ void UVoxelWorldSubsystem::ApplyReady(double BudgetMs, double TickStartSeconds)
         if (Ready.Mesh->LayerMask)
         {
             UVoxelChunkComponent* Chunk = AcquireChunk(Ready.Column);
-            Chunk->SetFarLook(bFar, bFarShadows, bFar ? GetFarTintMaterial() : nullptr);
+            Chunk->SetFarLook(bFar, bFarShadows, FarLook);
             Chunk->SetMesh(MoveTemp(Ready.Mesh->Streams), MoveTemp(Ready.Mesh->Cards), Ready.Mesh->LayerMask,
                 Ready.Mesh->SectionMask);
         }

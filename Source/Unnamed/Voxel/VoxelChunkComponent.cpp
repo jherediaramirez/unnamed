@@ -20,6 +20,7 @@ namespace
         TEXT("Opaque"), TEXT("Cutout"), TEXT("Translucent"), TEXT("Water"), TEXT("Model")};
     constexpr int32 ChunkLayerCount = UE_ARRAY_COUNT(ChunkSlotNames);
     static_assert(ChunkLayerCount == int32(EVoxelLayer::Count), "A material slot per EVoxelLayer");
+    static_assert(ChunkLayerCount == 5, "UVoxelChunkComponent::LookMaterials has a slot per layer");
 
     FRealtimeMeshBufferSetKey GetColumnKey()
     {
@@ -81,18 +82,22 @@ uint32 UVoxelChunkComponent::GetLayerMask(TConstArrayView<const FVoxelMeshData*>
     return Mask;
 }
 
-void UVoxelChunkComponent::SetFarLook(bool bFar, bool bShadows, UMaterialInterface* DebugMaterial)
+void UVoxelChunkComponent::SetFarLook(
+    bool bFar, bool bShadows, TConstArrayView<TObjectPtr<UMaterialInterface>> LayerMaterials)
 {
     bFarLook = bFar;
     const bool bCast = !bFar || bShadows;
     if (bool(CastShadow) != bCast) SetCastShadow(bCast);
     if (bool(bVisibleInRayTracing) == bFar) SetVisibleInRayTracing(!bFar);
-    UMaterialInterface* Override = bFar ? DebugMaterial : nullptr;
-    if (Override == LookMaterial) return;
-    LookMaterial = Override;
-    // A null override falls back to the mesh's own slot material.
     for (int32 Layer = 0; Layer < ChunkLayerCount; ++Layer)
+    {
+        UMaterialInterface* Override =
+            bFar && LayerMaterials.IsValidIndex(Layer) ? LayerMaterials[Layer].Get() : nullptr;
+        if (Override == LookMaterials[Layer]) continue;
+        LookMaterials[Layer] = Override;
+        // A null override falls back to the mesh's own slot material.
         SetMaterial(Layer, Override);
+    }
 }
 
 void UVoxelChunkComponent::SetMesh(

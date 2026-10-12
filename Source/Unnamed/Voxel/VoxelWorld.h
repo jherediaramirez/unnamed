@@ -5,6 +5,7 @@
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationLab.h"
 #include "Random/VoxelSeed.h"
+#include "Voxel/VoxelEdgeFog.h"
 #include "Worlds/UnnamedSavedWorlds.h"
 #include "VoxelWorld.generated.h"
 
@@ -94,6 +95,8 @@ public:
     int32 GetBiome(const FIntVector& Cell) const;
     // The player stands on the spawn and every column in view is on screen.
     bool IsReady() const;
+    // The edge fog shows: false while shots look from outside the world (SetEdgeFogVisible).
+    bool IsEdgeFogVisible() const { return bEdgeFogVisible; }
     // The seed, then how the first view got on screen (UVoxelWorldSubsystem::GetFirstViewReport).
     FString GetBuildReport() const;
     // The -VoxelShotCaves views (name, camera and target in cm), searched near the streamed area's centre on first
@@ -140,8 +143,13 @@ private:
     // column exists. StandOnSpawnBlocks moves the climate search's cell onto the final blocks once they exist.
     FIntVector GetSpawnCell() const;
     bool AreSpawnColumnsGenerated() const;
-    // Fits the edge fog to the view radius whenever it changes, and keeps the fog floor under the camera.
+    // Fits the edge fog to the drawn radius and the haze switch whenever they change (far LOD step 2: the haze while
+    // far meshes form the edge, else step 1's wall), and keeps the fog floor under the camera.
     void UpdateEdgeFog();
+    // The sky's aerial perspective distance scale for the edge fog as applied.
+    float GetEdgeAerialScale() const;
+    // The fog floor shows unless the haze's voxel.Fog.FloorDepth is below 0 (a look check without it).
+    bool IsFogFloorShown() const;
     void SetEdgeFogVisible(bool bVisible);
     // On the climate search's dry land: the spawn cell rises or falls to the highest block that collides in its block
     // column (a treetop counts), then rises until the body fits, as the Playground's spawn does.
@@ -179,6 +187,9 @@ private:
     TObjectPtr<UFoundationInteractionView> View;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UMaterialInterface>> LayerMaterials;
+    // Far LOD step 2: per layer, the far fade's material instance (FarMaterialNames), or null.
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UMaterialInstanceDynamic>> FarLayerMaterials;
     UPROPERTY(Transient)
     TObjectPtr<UFoundationBlockTextureTable> TextureTable;
     mutable TOptional<FIntVector> SpawnCell;
@@ -188,7 +199,22 @@ private:
     bool bSpawned = false;
     UPROPERTY(Transient)
     TObjectPtr<UExponentialHeightFogComponent> EdgeFog;
-    int32 EdgeFogRadius = INDEX_NONE;
+    // The edge fog as last applied: the drawn radius, step 2's haze or step 1's wall, the haze's settings and its
+    // layer's height over the fog actor (sea level).
+    struct FEdgeFogState
+    {
+        int32 Drawn = INDEX_NONE;
+        bool bHaze = false;
+        VoxelEdgeFog::FHaze Haze;
+        double SeaOffsetCm = 0;
+        bool operator==(const FEdgeFogState& Other) const = default;
+    };
+    FEdgeFogState EdgeFogState;
+    // The map's own second fog layer and directional in-scattering, which the haze replaces and the wall keeps.
+    float MapSecondFogDensity = 0;
+    float MapSecondFogFalloff = 0;
+    float MapSecondFogOffset = 0;
+    FLinearColor MapDirectionalInscattering = FLinearColor::Black;
     UPROPERTY(Transient)
     TObjectPtr<UStaticMeshComponent> FogFloor;
     UPROPERTY(Transient)

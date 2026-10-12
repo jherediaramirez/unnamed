@@ -16,6 +16,11 @@ Each samples the block texture array by layer and reads the current animation fr
 M_ChunkOpaque also draws the render-only ore looks from T_OreLooks (CHUNK_OPAQUE_HLSL; voxel.Look.OreHost and
 voxel.Look.OreGlint), so ImportOreLooks.py runs first.
 
+The far meshes' materials (far LOD step 2: M_ChunkFarOpaque, M_ChunkFarCutout, M_ChunkFarWater) are their layer's chunk
+material plus the edge fade: they fade out between the FarFadeStart and FarFadeEnd parameters (cm of horizontal distance
+to the camera, a cylinder as vanilla's fog), dithered on the masked layers and smooth on water, so the sky shows through
+the drawn radius's last columns. Shadow passes take the unfaded mask.
+
 Run after ImportBlocks.py; the graphs are code, so rerunning rebuilds them on the same assets. -Materials=A,B limits
 the run to the named materials:
 
@@ -189,7 +194,25 @@ MATERIALS = {
     "M_ChunkCutout": {"blend": unreal.BlendMode.BLEND_MASKED, "hlsl": CHUNK_BLOCK_HLSL, "chunk": True},
     "M_ChunkTranslucent": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": CHUNK_BLOCK_HLSL, "chunk": True},
     "M_ChunkWater": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": CHUNK_WATER_HLSL, "chunk": True},
+    # The far meshes' layers (VoxelFarMesher writes only these three): their near graph plus the edge fade (FAR_FADE_HLSL).
+    "M_ChunkFarOpaque": {"blend": unreal.BlendMode.BLEND_MASKED, "hlsl": CHUNK_OPAQUE_HLSL, "chunk": True,
+                         "looks": True, "flow": True, "far": True},
+    "M_ChunkFarCutout": {"blend": unreal.BlendMode.BLEND_MASKED, "hlsl": CHUNK_BLOCK_HLSL, "chunk": True, "far": True,
+                         "fade_alpha": True},
+    "M_ChunkFarWater": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": CHUNK_WATER_HLSL, "chunk": True,
+                        "far": True},
 }
+
+# The edge fade: 1 inside FarFadeStart, 0 from FarFadeEnd, by horizontal distance to the camera (Rel is the camera-relative
+# world position, cm). Return: the faded mask (the cutout's 26.3 test, alpha >= 0.5, times the fade); Unfaded: the mask
+# alone, for shadow passes, whose view is the light's.
+FAR_FADE_HLSL = r"""
+float fade = saturate((End - length(Rel.xy)) / max(End - Start, 1.0));
+Unfaded = step(0.5, Alpha);
+return Unfaded * fade;
+"""
+# Unset parameters draw everything: the fade starts beyond any distance.
+FAR_FADE_DEFAULT_CM = 1.0e9
 
 
 def fail(message):
@@ -221,8 +244,11 @@ def build(name, spec, block_textures, flow_textures):
     material.set_editor_property("two_sided", False)
     # Chunk meshes use RealtimeMesh's own vertex factory, which needs no usage flag.
     material.set_editor_property("used_with_instanced_static_meshes", not chunk)
+    far = spec.get("far", False)
     if spec["blend"] == unreal.BlendMode.BLEND_MASKED:
         material.set_editor_property("opacity_mask_clip_value", 0.5)  # 26.3 cutout discards alpha below 0.5
+        # The far fade dithers its mask (TSR resolves it); a near material's mask is already 0 or 1 where it matters.
+        material.set_editor_property("dither_opacity_mask", far)
     if spec["blend"] == unreal.BlendMode.BLEND_TRANSLUCENT:
         material.set_editor_property("translucency_lighting_mode",
                                      unreal.TranslucencyLightingMode.TLM_SURFACE_PER_PIXEL_LIGHTING)
@@ -325,10 +351,55 @@ def build(name, spec, block_textures, flow_textures):
 
     rgb = mask("rgb", 0)
     lib.connect_material_property(rgb, "", unreal.MaterialProperty.MP_BASE_COLOR)
+    if far:
+        # The edge fade (FAR_FADE_HLSL). Cutout fades its 26.3 mask; opaque and water fade 1 (water's alpha multiplies
+        # after).
+        fade = node(unreal.MaterialExpressionCustom, -400, 700)
+        fade.set_editor_property("description", "Far edge fade: horizontal distance to the camera")
+        fade.set_editor_property("output_type", unreal.CustomMaterialOutputType.CMOT_FLOAT1)
+        fade.set_editor_property("code", FAR_FADE_HLSL)
+        unfaded = unreal.CustomOutput()
+        unfaded.set_editor_property("output_name", "Unfaded")
+        unfaded.set_editor_property("output_type", unreal.CustomMaterialOutputType.CMOT_FLOAT1)
+        fade.set_editor_property("additional_outputs", [unfaded])
+        fade_inputs = []
+        for input_name in ("Rel", "Start", "End", "Alpha"):
+            item = unreal.CustomInput()
+            item.set_editor_property("input_name", input_name)
+            fade_inputs.append(item)
+        fade.set_editor_property("inputs", fade_inputs)
+        rel = node(unreal.MaterialExpressionWorldPosition, -700, 700)
+        rel.set_editor_property("world_position_shader_offset",
+                                unreal.WorldPositionIncludedOffsets.WPT_CAMERA_RELATIVE)
+        link(rel, "", fade, "Rel")
+        for index, parameter in enumerate(("FarFadeStart", "FarFadeEnd")):
+            expr = node(unreal.MaterialExpressionScalarParameter, -700, 780 + index * 70)
+            expr.set_editor_property("parameter_name", parameter)
+            expr.set_editor_property("default_value", FAR_FADE_DEFAULT_CM * (index + 1))
+            link(expr, "", fade, ("Start", "End")[index])
+        if spec.get("fade_alpha", False):
+            link(mask("a", 120), "", fade, "Alpha")
+        else:
+            one = node(unreal.MaterialExpressionConstant, -700, 920)
+            one.set_editor_property("r", 1.0)
+            link(one, "", fade, "Alpha")
     if spec["blend"] == unreal.BlendMode.BLEND_MASKED:
-        lib.connect_material_property(mask("a", 120), "", unreal.MaterialProperty.MP_OPACITY_MASK)
+        if far:
+            # Shadow passes see the light's view, so they take the mask without the camera's fade.
+            switch = node(unreal.MaterialExpressionShadowReplace, -150, 700)
+            link(fade, "", switch, "Default")
+            link(fade, "Unfaded", switch, "Shadow")
+            lib.connect_material_property(switch, "", unreal.MaterialProperty.MP_OPACITY_MASK)
+        else:
+            lib.connect_material_property(mask("a", 120), "", unreal.MaterialProperty.MP_OPACITY_MASK)
     if spec["blend"] == unreal.BlendMode.BLEND_TRANSLUCENT:
-        lib.connect_material_property(mask("a", 120), "", unreal.MaterialProperty.MP_OPACITY)
+        opacity = mask("a", 120)
+        if far:
+            faded = node(unreal.MaterialExpressionMultiply, -150, 700)
+            link(opacity, "", faded, "A")
+            link(fade, "", faded, "B")
+            opacity = faded
+        lib.connect_material_property(opacity, "", unreal.MaterialProperty.MP_OPACITY)
     # Flat, matte blocks; water keeps a little sheen.
     if looks:
         # The same 1 and 0.1 on every face but a glossy ore look's (CHUNK_OPAQUE_HLSL).

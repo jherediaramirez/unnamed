@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Voxel/VoxelColumnPipeline.h"
+#include "Voxel/VoxelEdgeFog.h"
 #include "Voxel/VoxelPendingReleases.h"
 #include "VoxelWorldSubsystem.generated.h"
 
@@ -59,10 +60,12 @@ public:
 
     static UVoxelWorldSubsystem* Get(const UWorld* World);
 
-    // Starts streaming for Owner: columns from Terrain, meshed with Table and drawn with one material per layer.
+    // Starts streaming for Owner: columns from Terrain, meshed with Table and drawn with one material per layer; far
+    // meshes draw a layer in FarLayerMaterials' entry instead while the haze is on (far LOD step 2), where it has one.
     // InitialFocus stands in for the camera until there is one. Starting again drops everything (voxel.Seed).
     void Start(AVoxelWorld& InOwner, TSharedRef<const FVoxelBlockTable> Table, TSharedRef<const IVoxelTerrain> Terrain,
-        TConstArrayView<UMaterialInterface*> LayerMaterials, const FVector& InitialFocus);
+        TConstArrayView<UMaterialInterface*> LayerMaterials,
+        TConstArrayView<UMaterialInstanceDynamic*> FarLayerMaterials, const FVector& InitialFocus);
     void Stop();
 
     // A world location for the rings to follow instead of the camera (captures pin the player's spawn); unset
@@ -105,7 +108,8 @@ private:
     // Releases waiting columns' components, oldest first, while the frame is under 85% of the budget (one anyway).
     void ReleasePending(double BudgetMs, double TickStartSeconds);
     // Far LOD: the debug tint's material while voxel.Debug.FarTint is on (else null), and far looks refreshed on
-    // screen when voxel.Far.Shadows or the tint change.
+    // screen when voxel.Far.Shadows, the tint or the haze (voxel.Fog.Haze, step 2) change. The fade's distances follow
+    // the drawn radius.
     UMaterialInterface* GetFarTintMaterial();
     void UpdateFarLooks();
     UVoxelChunkComponent* AcquireChunk(FIntPoint Column);
@@ -136,6 +140,16 @@ private:
     TObjectPtr<UMaterialInstanceDynamic> FarTintMaterial;
     bool bFarShadows = false;
     bool bFarTint = false;
+    // Far LOD step 2: the far fade's material per layer (null where a layer keeps its own), and what far meshes draw in
+    // now: the debug tint in every slot, the fade's while the haze is on, or nothing (their own).
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UMaterialInstanceDynamic>> FarFadeMaterials;
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UMaterialInterface>> FarLook;
+    bool bFarFade = false;
+    bool bFarLookStale = true;
+    // The fade's distances as last set on FarFadeMaterials.
+    VoxelEdgeFog::FFade FarFade;
     TOptional<FVector> FocusOverride;
     FVector LastFocus = FVector::ZeroVector;
     FApplyCost ApplyCost;
