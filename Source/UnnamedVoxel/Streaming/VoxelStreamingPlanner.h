@@ -104,4 +104,38 @@ namespace VoxelStreaming
     // Both lists against a set of present columns.
     UNNAMEDVOXEL_API void Plan(
         const FVoxelStreamingRings& Rings, int32 ViewSector, const TSet<FIntPoint>& Present, FVoxelStreamingPlan& Out);
+
+    // Every column within Radius of From (a gap, as IsDrawn and IsBeyondUnload measure it) but not within Radius of To,
+    // by Y, then X: what a move from From to To leaves behind. It visits only those columns, not the whole disk.
+    UNNAMEDVOXEL_API void ForEachLeft(FIntPoint From, FIntPoint To, int32 Radius, TFunctionRef<void(FIntPoint)> Visit);
 }
+
+// GetNeededColumns' order as offsets from the center, with each offset's ring (far LOD step 1b). The order and the
+// rings depend only on the offsets, so one built at center 0 serves every center: shifting it gives exactly what
+// GetNeededColumns gives there, without its scan, its sort or a GetRing per column.
+struct UNNAMEDVOXEL_API FVoxelNeededOrder
+{
+    // What it was built for; ViewRadius -1 is none.
+    int32 ViewRadius = -1;
+    int32 FarRadius = 0;
+    int32 Stages = 1;
+    int32 ViewSector = 0;
+    // The rings' GetNeededExtent: every offset lies within it on both axes.
+    int32 Extent = 0;
+    // The needed columns around center 0, in priority order, and the ring of each.
+    TArray<FIntPoint> Offsets;
+    TArray<uint8> OffsetRings;
+
+    FVoxelNeededOrder() = default;
+    FVoxelNeededOrder(const FVoxelStreamingRings& Rings, int32 InViewSector);
+    // Built for these rings' radii and stages (any center) and this sector.
+    bool Matches(const FVoxelStreamingRings& Rings, int32 InViewSector) const;
+    // An offset's index in Offsets, or INDEX_NONE when that column is not needed.
+    int32 FindIndex(FIntPoint Offset) const;
+    // The needed columns around Center, in priority order.
+    void GetColumns(FIntPoint Center, TArray<FIntPoint>& Out) const;
+
+private:
+    // Per offset within Extent on both axes, row by row: its index in Offsets, or INDEX_NONE.
+    TArray<int32> Indices;
+};

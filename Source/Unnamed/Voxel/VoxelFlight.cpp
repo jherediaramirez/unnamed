@@ -107,7 +107,7 @@ void FVoxelFlight::Start(AVoxelWorld& World)
         if (Leg.bCircle) Leg.Seconds = 2. * UE_DOUBLE_PI * CircleRadiusCm / (Leg.BlocksPerSecond * FlightBlockCm);
     Rows = TEXT("time_s,x,y,z,speed,leg,center_x,center_y,generated,needed,in_view,in_view_on_screen,jobs,ready,")
         TEXT("applied,tick_ms,plan_ms,jobs_ms,apply_ms,holes,late,column_mb,cache_mb,process_mb,frame_ms,gpu_ms,")
-            TEXT("coarse,far_holes,far_ms\n");
+            TEXT("coarse,far_holes,far_ms,focus_ms,vis_ms,walk_ms,walked,release_ms,pending_ms,pending_releases\n");
 }
 
 bool FVoxelFlight::Tick(AVoxelWorld& World, float DeltaSeconds)
@@ -199,12 +199,14 @@ bool FVoxelFlight::Tick(AVoxelWorld& World, float DeltaSeconds)
     const FVector Blocks = (Location - World.OriginCm) / FlightBlockCm;
     Rows +=
         FString::Printf(TEXT("%.4f,%.1f,%.1f,%.1f,%.0f,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.3f,%.3f,%.3f,%.3f,%d,%d,%.2f,")
-                            TEXT("%.2f,%.1f,%.2f,%.2f,%d,%d,%.3f\n"),
+                            TEXT("%.2f,%.1f,%.2f,%.2f,%d,%d,%.3f,%.3f,%.3f,%.3f,%d,%.3f,%.3f,%d\n"),
             Elapsed, Blocks.X, Blocks.Y, Blocks.Z, Leg.BlocksPerSecond, Leg.Name, Pipeline.GetRings().Center.X,
             Pipeline.GetRings().Center.Y, Stats.Generated, Stats.Needed, Stats.InView, Stats.InViewOnScreen,
             Pipeline.GetJobCount(), Stats.Ready, Frame.Applied, Frame.TickMs, Frame.PlanMs, Frame.JobsMs, Frame.ApplyMs,
             Holes, Late, ColumnMb, CacheMb, ProcessMb, DeltaSeconds * 1000.,
-            FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()), Coarse, FarHoles, Frame.FarApplyMs);
+            FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()), Coarse, FarHoles, Frame.FarApplyMs, Frame.FocusMs,
+            Frame.VisibilityMs, Frame.WalkMs, Frame.Walked, Frame.ReleaseMs, Frame.PendingMs,
+            Streaming->GetPendingReleaseCount());
 
     FLegTotals& Total = Totals[LegIndex];
     if (!Total.Frames)
@@ -305,6 +307,10 @@ void FVoxelFlight::Finish(AVoxelWorld& World)
         : FString(TEXT("Far holes: none\n"));
     Summary += FString::Printf(TEXT("Far applies: %d in %.1f ms (%.3f ms per frame)\n"), FarApplied, FarApplyMs,
         Frames ? FarApplyMs / Frames : 0.);
+    // Far LOD step 1b: unloaded columns whose components wait to be released.
+    if (const UVoxelWorldSubsystem* Streaming = UVoxelWorldSubsystem::Get(World.GetWorld()))
+        Summary += FString::Printf(TEXT("Pending releases: peak %d, %d at the end\n"),
+            Streaming->GetPendingReleasePeak(), Streaming->GetPendingReleaseCount());
     Summary += FString::Printf(TEXT("Chunk work: worst %.2f ms (%s), %d of %d frames over the %.1f ms budget\n"),
         WorstTickMs, WorstLeg, FramesOverBudget, Frames, Budget);
     // The first lap fills the circle; laps 2 and 3 fly over ground the rings already left once.

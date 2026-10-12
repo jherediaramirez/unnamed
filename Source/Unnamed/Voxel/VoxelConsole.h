@@ -15,6 +15,10 @@ namespace VoxelConsole
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarFarShadows;
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarFarCanopyLayer;
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarFarTint;
+    // Far LOD step 1b: far meshes of columns at the view's edge that show nothing go before refining full meshes.
+    extern UNNAMED_API TAutoConsoleVariable<bool> CVarFarInnerFirst;
+    // Far LOD step 2: the haze and the far meshes' edge fade while far meshes form the edge, or step 1's fog wall (0).
+    extern UNNAMED_API TAutoConsoleVariable<bool> CVarFogHaze;
     // The loading screen's look: 1 draws the chunk map under the progress bar (26.3's), 0 leaves it out.
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarLoadingScreenMap;
     extern UNNAMED_API TAutoConsoleVariable<float> CVarApplyBudgetMs;

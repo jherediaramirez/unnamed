@@ -877,6 +877,150 @@ bool FVoxelStreamingPlannerTest::RunTest(const FString& Parameters)
             }
     }
 
+    // 14a. FVoxelNeededOrder (far LOD step 1b) shifted to any center equals GetNeededColumns there, order included; its
+    // rings are GetRing's; FindIndex finds exactly the needed offsets; Matches holds only for its own radii, stages and
+    // sector.
+    {
+        struct FOrderCase
+        {
+            int32 View, Far, Stages;
+        };
+        const FOrderCase OrderCases[] = {
+            {12, 0, 1}, {12, 0, 3}, {12, 24, 3}, {3, 6, 1}, {5, 5, 3}, {0, 0, 1}, {2, 9, 3}, {4, 7, 2}};
+        const FIntPoint OrderCenters[] = {
+            {0, 0}, {1, 0}, {-1, -1}, {37, -12}, {-100000, 250000}, {1048576, -1048576}, {1000000000, -1000000000}};
+        FStreamingTally ShiftTally, RingTally, IndexTally, MissTally, MatchTally;
+        for (const FOrderCase& Case : OrderCases)
+            for (int32 Sector = 0; Sector < VoxelStreaming::ViewSectorCount; ++Sector)
+            {
+                const FString Where = FString::Printf(
+                    TEXT("view %d, far %d, %d stages, sector %d"), Case.View, Case.Far, Case.Stages, Sector);
+                const FVoxelStreamingRings Own(FIntPoint::ZeroValue, Case.View, 2, Case.Stages, Case.Far);
+                const FVoxelNeededOrder Order(Own, Sector);
+                for (const FIntPoint OrderCenter : OrderCenters)
+                {
+                    const FVoxelStreamingRings At(OrderCenter, Case.View, 2, Case.Stages, Case.Far);
+                    TArray<FIntPoint> Expected, Shifted;
+                    VoxelStreaming::GetNeededColumns(At, Sector, Expected);
+                    Order.GetColumns(OrderCenter, Shifted);
+                    bool bSame = Expected.Num() == Shifted.Num();
+                    for (int32 Index = 0; bSame && Index < Expected.Num(); ++Index)
+                        bSame = Expected[Index] == Shifted[Index];
+                    if (!ShiftTally.Check(bSame))
+                        ShiftTally.Describe(FString::Printf(
+                            TEXT("%s at %s: %d columns shifted, %d from GetNeededColumns, or the order differs"),
+                            *Where, *StreamingText(OrderCenter), Shifted.Num(), Expected.Num()));
+                }
+                TestEqual(Where + TEXT(": OffsetRings has one ring per offset"), Order.OffsetRings.Num(),
+                    Order.Offsets.Num());
+                TArray<FIntPoint> Expected0;
+                VoxelStreaming::GetNeededColumns(Own, Sector, Expected0);
+                for (int32 Index = 0; Index < Order.Offsets.Num() && Index < Order.OffsetRings.Num(); ++Index)
+                {
+                    const FIntPoint Offset = Order.Offsets[Index];
+                    if (!RingTally.Check(int32(Order.OffsetRings[Index]) == Own.GetRing(Offset)))
+                        RingTally.Describe(FString::Printf(TEXT("%s: offset %s ring %d, GetRing %d"), *Where,
+                            *StreamingText(Offset), int32(Order.OffsetRings[Index]), Own.GetRing(Offset)));
+                    if (!IndexTally.Check(Order.FindIndex(Offset) == Index))
+                        IndexTally.Describe(FString::Printf(TEXT("%s: FindIndex(%s) is %d, expected %d"), *Where,
+                            *StreamingText(Offset), Order.FindIndex(Offset), Index));
+                }
+                const int32 Extent = Own.GetNeededExtent();
+                const TSet<FIntPoint> NeededSet(Expected0);
+                for (int32 DY = -Extent - 2; DY <= Extent + 2; ++DY)
+                    for (int32 DX = -Extent - 2; DX <= Extent + 2; ++DX)
+                    {
+                        const FIntPoint Offset(DX, DY);
+                        if (NeededSet.Contains(Offset)) continue;
+                        if (!MissTally.Check(Order.FindIndex(Offset) == INDEX_NONE))
+                            MissTally.Describe(FString::Printf(TEXT("%s: FindIndex(%s) is %d for a column not needed"),
+                                *Where, *StreamingText(Offset), Order.FindIndex(Offset)));
+                    }
+                for (const FIntPoint Far : {FIntPoint(1048576, 3), FIntPoint(-7, -(1 << 30)), FIntPoint(Extent + 1, 0)})
+                    if (!MissTally.Check(Order.FindIndex(Far) == INDEX_NONE))
+                        MissTally.Describe(FString::Printf(
+                            TEXT("%s: FindIndex(%s) outside the extent is not none"), *Where, *StreamingText(Far)));
+                // Matches: own rings (any center) and sector only.
+                const FVoxelStreamingRings Moved(FIntPoint(5, 9), Case.View, 2, Case.Stages, Case.Far);
+                const FVoxelStreamingRings OtherView(FIntPoint::ZeroValue, Case.View + 1, 2, Case.Stages, Case.Far);
+                const FVoxelStreamingRings OtherFar(FIntPoint::ZeroValue, Case.View, 2, Case.Stages, Case.Far + 1);
+                const FVoxelStreamingRings OtherStages(
+                    FIntPoint::ZeroValue, Case.View, 2, Case.Stages == 1 ? 2 : 1, Case.Far);
+                if (!MatchTally.Check(Order.Matches(Own, Sector) && Order.Matches(Moved, Sector)))
+                    MatchTally.Describe(Where + TEXT(": Matches is false for its own rings"));
+                if (!MatchTally.Check(!Order.Matches(OtherView, Sector)))
+                    MatchTally.Describe(Where + TEXT(": Matches is true for another view radius"));
+                if (!MatchTally.Check(!Order.Matches(OtherFar, Sector)))
+                    MatchTally.Describe(Where + TEXT(": Matches is true for another far radius"));
+                if (!MatchTally.Check(!Order.Matches(OtherStages, Sector)))
+                    MatchTally.Describe(Where + TEXT(": Matches is true for other stages"));
+                if (!MatchTally.Check(!Order.Matches(Own, (Sector + 1) % VoxelStreaming::ViewSectorCount)))
+                    MatchTally.Describe(Where + TEXT(": Matches is true for another sector"));
+            }
+        StreamingReport(
+            *this, TEXT("14. the shifted order equals GetNeededColumns at every center, order included"), ShiftTally);
+        StreamingReport(*this, TEXT("14. OffsetRings equals GetRing of every offset"), RingTally);
+        StreamingReport(*this, TEXT("14. FindIndex gives every offset its index"), IndexTally);
+        StreamingReport(
+            *this, TEXT("14. FindIndex is none for every offset not needed and outside the extent"), MissTally);
+        StreamingReport(*this, TEXT("14. Matches holds only for its own radii, stages and sector"), MatchTally);
+    }
+
+    // 14b. ForEachLeft against a brute force: the columns of the square around From with a gap within R of From and
+    // beyond R of To, by Y then X, each once.
+    {
+        TArray<FIntPoint> Moves;
+        for (int32 DY = -3; DY <= 3; ++DY)
+            for (int32 DX = -3; DX <= 3; ++DX)
+                Moves.Add(FIntPoint(DX, DY));
+        Moves.Add(FIntPoint(40, 0));
+        Moves.Add(FIntPoint(-7, 100));
+        Moves.Add(FIntPoint(0, -61));
+        Moves.Add(FIntPoint(70000, 0));
+        Moves.Add(FIntPoint(0, -100000));
+        FStreamingTally LeftTally, ZeroTally;
+        for (const int32 Radius : {0, 1, 2, 5, 12, 30})
+            for (const FIntPoint From :
+                {FIntPoint(0, 0), FIntPoint(-7, 3), FIntPoint(100000, -250000), FIntPoint(1000000000, -1000000000)})
+                for (const FIntPoint Move : Moves)
+                {
+                    const FIntPoint To = From + Move;
+                    const int64 RadiusSquared = int64(Radius) * Radius;
+                    TArray<FIntPoint> Expected, Visited;
+                    for (int32 Y = From.Y - Radius - 1; Y <= From.Y + Radius + 1; ++Y)
+                        for (int32 X = From.X - Radius - 1; X <= From.X + Radius + 1; ++X)
+                        {
+                            const FIntPoint Column(X, Y);
+                            if (StreamingBruteGapSquared(From, Column) <= RadiusSquared &&
+                                StreamingBruteGapSquared(To, Column) > RadiusSquared)
+                                Expected.Add(Column);
+                        }
+                    VoxelStreaming::ForEachLeft(
+                        From, To, Radius, [&Visited](FIntPoint Column) { Visited.Add(Column); });
+                    bool bSame = Visited.Num() == Expected.Num();
+                    for (int32 Index = 0; bSame && Index < Visited.Num(); ++Index)
+                        bSame = Visited[Index] == Expected[Index];
+                    if (!LeftTally.Check(bSame))
+                        LeftTally.Describe(FString::Printf(
+                            TEXT("R %d from %s to %s: visited %d columns, brute force %d (or another order)"), Radius,
+                            *StreamingText(From), *StreamingText(To), Visited.Num(), Expected.Num()));
+                    TSet<FIntPoint> Unique(Visited);
+                    if (!LeftTally.Check(Unique.Num() == Visited.Num()))
+                        LeftTally.Describe(FString::Printf(TEXT("R %d from %s to %s: a column is visited twice"),
+                            Radius, *StreamingText(From), *StreamingText(To)));
+                }
+        // A zero move leaves nothing behind.
+        for (const int32 Radius : {0, 1, 2, 5, 12, 30})
+        {
+            int32 Count = 0;
+            VoxelStreaming::ForEachLeft(FIntPoint(-7, 3), FIntPoint(-7, 3), Radius, [&Count](FIntPoint) { ++Count; });
+            if (!ZeroTally.Check(Count == 0))
+                ZeroTally.Describe(FString::Printf(TEXT("R %d: a zero move visited %d columns"), Radius, Count));
+        }
+        StreamingReport(*this, TEXT("14. ForEachLeft equals the brute force, in order, once each"), LeftTally);
+        StreamingReport(*this, TEXT("14. ForEachLeft visits nothing for a zero move"), ZeroTally);
+    }
+
     return true;
 }
 #endif

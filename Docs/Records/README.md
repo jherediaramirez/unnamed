@@ -4,6 +4,17 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 11, 2026
 
+- [Voxel world handoff: far LOD step 2 done, into step 3 (tiles and coarser cells, 512+ blocks; apply throughput)](2026-10-11-Voxel-Handoff-Phase9-S3.md): start here for step 3. Measure first with 1b's A/B flight on step 2's code. Then plan one apply per 4 x 4 far columns, the near/far swap by a mask texture, and 2-block cells past 384, keeping step 2's edge fade and `FarRadius 0` unchanged.
+- [Voxel world phase 9, S2: the fog look (far LOD step 2)](2026-10-11-Voxel-Phase9-S2-Fog.md): `voxel.Fog.Haze` (on) replaces the fog wall while far meshes form the edge.
+  - Clear air for 48 blocks, then a light height haze coloured by the sky's own light, fitted to the horizon. Aerial perspective goes to x4.
+  - `M_ChunkFarOpaque`, `M_ChunkFarCutout` and `M_ChunkFarWater` dissolve the far ring's last 2 columns into the sky.
+  - The fog floor lies 2,000 blocks down, so the haze covers it below the horizon.
+  - `Haze 0` and `FarRadius 0` keep the wall. The existing Content is byte-identical; GPU new - old is -0.04 ms.
+- [Voxel world handoff: far LOD step 1b done, into step 2 (the fog look)](2026-10-11-Voxel-Handoff-Phase9-S2.md): start here for step 2, the fog as clear air plus a light haze with the edge fading into the real sky on far meshes only (Jesus's pick). New far materials only through `CreateBlockMaterials.py`. It also carries step 3's notes: apply throughput, and the pooled-mesh deferral that asserted in ray tracing.
+- [Voxel world phase 9, S1b: cheap planning at drawn radius 24, and far meshes at the view's edge first](2026-10-11-Voxel-Phase9-S1b-Planning.md):
+  - A shifted needed order, the walk's progress kept, visibility and unloads by the band that moved, and deferred chunk releases. Center-move frames at 24 went from 2.32 to 1.57 ms, and frames over budget from about 435 to 29.
+  - `voxel.Far.InnerFirst` took near-hole frames at 80 blocks/s from 376 to 0 (FarRadius 0: 96.5).
+  - `Pipeline.ShiftPlan`, `InnerFirst` and `PendingReleases`, with 4 mutations. FarRadius 0's world is unchanged.
 - [Voxel world phase 9, S1: the far ring (far LOD step 1) and the ray tracing crash fix](2026-10-11-Voxel-Phase9-S1-Far-Ring.md): `voxel.FarRadius 24` draws out to 384 blocks as surface meshes (tops, walls, leaf canopies, water) and the edge fog moves to the drawn radius; residency off fixes the radius 24/32 assert. Near holes at the fast flight fail the A/B on planning cost; start at [the step 1b handoff](2026-10-11-Voxel-Handoff-Phase9-S1b.md) (planning cost, then step 2's fog).
 - [World loading screen, and a spawn fallback that always finds land](2026-10-11-Loading-Screen.md): a native `SHudLoadingScreen` (26.3's "Loading terrain...", progress bar, chunk map over the blurred panorama) until the generated world is ready or 15 s, input and pawn off under it; the menu's "Preparing for world creation..." from the click; the climate fallback reads real heights on column rings 6-32 in parallel (large_biomes seed 1 now on land, worst case 0.54 s). Jesus picked look A (with the map)
 - [Creative flight: double-tap Space to fly](2026-10-11-Creative-Flight.md): Java-style Creative flight inside `FFoundationSimulation`. A jump double tap inside 7 ticks toggles it (Creative only), Space rises and Sneak sinks without crouching, 10.89 / 21.78 / 7.50 blocks/s (wiki 10.92 / 21.6 / 7.49), FOV ×1.1, and landing ends it. `Unnamed.Foundation.Flight`, 8 mutations; `voxel.Fly` unchanged.

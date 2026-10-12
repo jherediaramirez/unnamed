@@ -13,6 +13,21 @@ namespace
     {
         return A.Y != B.Y ? A.Y < B.Y : A.X < B.X;
     }
+
+    // How far a row DY columns from the center reaches on X within Radius (a gap): columns up to that many columns
+    // from the center's X lie within it. -1 when the row lies beyond it.
+    int64 GetStreamingRowReach(int64 DY, int64 Radius)
+    {
+        const int64 GapY = FMath::Max<int64>(0, FMath::Abs(DY) - 1);
+        const int64 Room = Radius * Radius - GapY * GapY;
+        if (Room < 0) return -1;
+        int64 GapX = int64(FMath::Sqrt(double(Room)));
+        while (GapX * GapX > Room)
+            --GapX;
+        while ((GapX + 1) * (GapX + 1) <= Room)
+            ++GapX;
+        return GapX + 1;
+    }
 }
 
 FVoxelStreamingRings::FVoxelStreamingRings(
@@ -132,4 +147,68 @@ void VoxelStreaming::Plan(
     for (const FIntPoint Column : Needed)
         if (!Present.Contains(Column)) Out.Loads.Add(Column);
     GetUnloads(Rings, Present.Array(), Out.Unloads);
+}
+
+void VoxelStreaming::ForEachLeft(FIntPoint From, FIntPoint To, int32 Radius, TFunctionRef<void(FIntPoint)> Visit)
+{
+    const int64 Reach = FMath::Max(0, Radius);
+    for (int64 Y = int64(From.Y) - Reach - 1; Y <= int64(From.Y) + Reach + 1; ++Y)
+    {
+        const int64 FromReach = GetStreamingRowReach(Y - From.Y, Reach);
+        if (FromReach < 0) continue;
+        // The part of the row To still reaches is skipped in one step.
+        const int64 ToReach = GetStreamingRowReach(Y - To.Y, Reach);
+        const int64 KeptMin = ToReach < 0 ? MAX_int64 : int64(To.X) - ToReach;
+        const int64 KeptMax = ToReach < 0 ? MIN_int64 : int64(To.X) + ToReach;
+        for (int64 X = int64(From.X) - FromReach; X <= int64(From.X) + FromReach; ++X)
+        {
+            if (X >= KeptMin && X <= KeptMax)
+            {
+                X = KeptMax;
+                continue;
+            }
+            Visit(FIntPoint(int32(X), int32(Y)));
+        }
+    }
+}
+
+FVoxelNeededOrder::FVoxelNeededOrder(const FVoxelStreamingRings& Rings, int32 InViewSector)
+    : ViewRadius(Rings.ViewRadius),
+      FarRadius(Rings.FarRadius),
+      Stages(Rings.Stages),
+      ViewSector(InViewSector),
+      Extent(Rings.GetNeededExtent())
+{
+    TRACE_CPUPROFILER_EVENT_SCOPE(VoxelStreaming_BuildNeededOrder);
+    FVoxelStreamingRings AtOrigin = Rings;
+    AtOrigin.Center = FIntPoint::ZeroValue;
+    VoxelStreaming::GetNeededColumns(AtOrigin, ViewSector, Offsets);
+    const int32 Side = 2 * Extent + 1;
+    Indices.Init(INDEX_NONE, Side * Side);
+    OffsetRings.SetNumUninitialized(Offsets.Num());
+    for (int32 Index = 0; Index < Offsets.Num(); ++Index)
+    {
+        OffsetRings[Index] = uint8(AtOrigin.GetRing(Offsets[Index]));
+        Indices[(Offsets[Index].Y + Extent) * Side + Offsets[Index].X + Extent] = Index;
+    }
+}
+
+bool FVoxelNeededOrder::Matches(const FVoxelStreamingRings& Rings, int32 InViewSector) const
+{
+    return ViewRadius == Rings.ViewRadius && FarRadius == Rings.FarRadius && Stages == Rings.Stages &&
+        ViewSector == InViewSector;
+}
+
+int32 FVoxelNeededOrder::FindIndex(FIntPoint Offset) const
+{
+    if (ViewRadius < 0 || FMath::Abs(int64(Offset.X)) > Extent || FMath::Abs(int64(Offset.Y)) > Extent)
+        return INDEX_NONE;
+    return Indices[(Offset.Y + Extent) * (2 * Extent + 1) + Offset.X + Extent];
+}
+
+void FVoxelNeededOrder::GetColumns(FIntPoint Center, TArray<FIntPoint>& Out) const
+{
+    Out.SetNumUninitialized(Offsets.Num());
+    for (int32 Index = 0; Index < Offsets.Num(); ++Index)
+        Out[Index] = Center + Offsets[Index];
 }

@@ -38,6 +38,7 @@
 #include "Voxel/VoxelBiomeDebug.h"
 #include "Voxel/VoxelBlocks.h"
 #include "Voxel/VoxelConsole.h"
+#include "Voxel/VoxelEdgeFog.h"
 #include "Voxel/VoxelFlight.h"
 #include "Voxel/VoxelLightShots.h"
 #include "Voxel/VoxelLightSources.h"
@@ -66,6 +67,15 @@ namespace
     const TCHAR* const ChunkMaterialNames[] = {TEXT("M_ChunkOpaque"), TEXT("M_ChunkCutout"), TEXT("M_ChunkTranslucent"),
         TEXT("M_ChunkWater"), TEXT("M_ChunkCutout")};
     static_assert(UE_ARRAY_COUNT(ChunkMaterialNames) == int32(EVoxelLayer::Count), "A material per EVoxelLayer");
+    // Far LOD step 2: the far meshes' layers with the edge fade (CreateBlockMaterials.py). The far mesher writes no
+    // translucent quads; model quads would share the cutout's.
+    const TCHAR* const FarMaterialNames[] = {
+        TEXT("M_ChunkFarOpaque"), TEXT("M_ChunkFarCutout"), nullptr, TEXT("M_ChunkFarWater"), TEXT("M_ChunkFarCutout")};
+    static_assert(UE_ARRAY_COUNT(FarMaterialNames) == int32(EVoxelLayer::Count), "A far material per EVoxelLayer");
+    // The fog floor's width, as a multiple of the engine plane's metre: 1,000 km under step 1's wall; with the haze,
+    // lower down, 10,000 km, so its far rim stays within a pixel of the horizon.
+    constexpr double FogFloorScale = 1e6;
+    constexpr double HazeFogFloorScale = 1e7;
 
     // Frames each screenshot waits for Lumen and the shadow cache to settle.
     constexpr int32 ShotSettleFrames = 150;
@@ -208,6 +218,13 @@ void AVoxelWorld::BuildLayout()
         EdgeFog = It->GetComponent();
         break;
     }
+    if (EdgeFog)
+    {
+        MapSecondFogDensity = EdgeFog->SecondFogData.FogDensity;
+        MapSecondFogFalloff = EdgeFog->SecondFogData.FogHeightFalloff;
+        MapSecondFogOffset = EdgeFog->SecondFogData.FogHeightOffset;
+        MapDirectionalInscattering = EdgeFog->DirectionalInscatteringLuminance;
+    }
     for (TActorIterator<ASkyAtmosphere> It(GetWorld()); It; ++It)
     {
         Sky = It->GetComponent();
@@ -228,7 +245,7 @@ void AVoxelWorld::BuildLayout()
         FogFloor->bAffectDistanceFieldLighting = false;
         FogFloor->SetupAttachment(GetRootComponent());
         FogFloor->RegisterComponent();
-        FogFloor->SetWorldScale3D(FVector(1e6, 1e6, 1));
+        FogFloor->SetWorldScale3D(FVector(FogFloorScale, FogFloorScale, 1));
     }
     LoadMaterials();
     SetupAuthority();
@@ -371,6 +388,33 @@ void AVoxelWorld::LoadMaterials()
         Instance->SetTextureParameterValue(TEXT("TextureTable"), TextureTable->GetTexture());
         LayerMaterials.Add(Instance);
     }
+    // One instance per far material; the subsystem sets its fade from the drawn radius.
+    for (int32 Layer = 0; Layer < int32(EVoxelLayer::Count); ++Layer)
+    {
+        const TCHAR* Name = FarMaterialNames[Layer];
+        UMaterialInstanceDynamic* Instance = nullptr;
+        for (int32 Earlier = 0; Name && Earlier < Layer; ++Earlier)
+            if (FarMaterialNames[Earlier] && FCString::Strcmp(FarMaterialNames[Earlier], Name) == 0)
+            {
+                Instance = FarLayerMaterials[Earlier];
+                Name = nullptr;
+            }
+        if (Name)
+        {
+            if (UMaterialInterface* Base =
+                    Cast<UMaterialInterface>(UUnnamedProjectSettings::GetBlockAssetPath(Name).TryLoad()))
+            {
+                Instance = UMaterialInstanceDynamic::Create(Base, this);
+                Instance->SetTextureParameterValue(TEXT("TextureTable"), TextureTable->GetTexture());
+            }
+            else
+                UE_LOG(LogUnnamedVoxel, Warning,
+                    TEXT("Far material %s is missing: run Scripts/Editor/CreateBlockMaterials.py. Far meshes keep "
+                         "their layer's material, with no edge fade."),
+                    Name);
+        }
+        FarLayerMaterials.Add(Instance);
+    }
 }
 
 void AVoxelWorld::Regenerate(const FVoxelSeed& NewSeed)
@@ -385,6 +429,9 @@ void AVoxelWorld::Regenerate(const FVoxelSeed& NewSeed)
     TArray<UMaterialInterface*> Materials;
     for (UMaterialInterface* Instance : LayerMaterials)
         Materials.Add(Instance);
+    TArray<UMaterialInstanceDynamic*> FarMaterials;
+    for (UMaterialInstanceDynamic* Instance : FarLayerMaterials)
+        FarMaterials.Add(Instance);
     const FVector Spawn = GetSafeSpawn(*GetDefault<UFoundationProfile>());
     // The torch models glow at voxel.TorchGlow in the mesh; the light table keeps Table's level (14).
     MeshTorchGlow = FVoxelLights::ReadTorchGlow();
@@ -392,7 +439,7 @@ void AVoxelWorld::Regenerate(const FVoxelSeed& NewSeed)
         *FFoundationBlockRegistry::GetDefault(), Table.ToSharedRef(), MeshTorchGlow);
     if (MeshTable != Table)
         UE_LOG(LogUnnamedVoxel, Display, TEXT("Torch models meshed at glow %d (voxel.TorchGlow)."), MeshTorchGlow);
-    Streaming->Start(*this, MeshTable.ToSharedRef(), Terrain.ToSharedRef(), Materials, Spawn);
+    Streaming->Start(*this, MeshTable.ToSharedRef(), Terrain.ToSharedRef(), Materials, FarMaterials, Spawn);
     // A new session on a new world: nothing is loaded yet, so emptying the block world is free.
     Authority.World.OriginCm = OriginCm;
     Authority.Reset();
@@ -681,50 +728,109 @@ void AVoxelWorld::Tick(float DeltaSeconds)
 void AVoxelWorld::UpdateEdgeFog()
 {
     const UVoxelWorldSubsystem* Streaming = GetStreaming();
+    if (EdgeFog && Streaming && Streaming->GetPipeline())
+    {
+        const FVoxelStreamingRings& Rings = Streaming->GetPipeline()->GetRings();
+        // Far LOD: the fog sits at the drawn radius D. Step 2's haze replaces the wall while far meshes form the edge.
+        FEdgeFogState State;
+        State.Drawn = Rings.GetDrawnRadius();
+        State.bHaze =
+            VoxelEdgeFog::UsesHaze(VoxelConsole::CVarFogHaze.GetValueOnGameThread(), Rings.ViewRadius, Rings.FarRadius);
+        if (State.bHaze)
+        {
+            State.Haze = VoxelEdgeFog::ReadHaze();
+            State.SeaOffsetCm = OriginCm.Z + VoxelConstants::SeaLevel * CellCm - EdgeFog->GetComponentLocation().Z;
+        }
+        if (!(State == EdgeFogState))
+        {
+            EdgeFogState = State;
+            constexpr double ColumnCm = VoxelConstants::ColumnSize * CellCm;
+            if (!State.bHaze)
+            {
+                // Step 1's wall. Clear until 1.5 columns before the drawn radius, then 99% opaque by it: the density
+                // (per 1000 cm, as the engine counts it) times the fade's length is ln 100. Every block within the
+                // radius is drawn, so the fog never shows a missing column. Almost no height falloff: the edge fades
+                // the same from a mountain top.
+                constexpr double FadeCm = 1.5 * ColumnCm;
+                EdgeFog->SetStartDistance(float(FMath::Max(0., State.Drawn * ColumnCm - FadeCm)));
+                EdgeFog->SetFogDensity(float(1000. * FMath::Loge(100.) / FadeCm));
+                EdgeFog->SetFogHeightFalloff(0.001f);
+                EdgeFog->SetFogMaxOpacity(1.f);
+                // Distant haze glows like the sky at the horizon, a pale neutral, rather than like the sky's average
+                // light, which is the blue overhead: the land then fades into the horizon instead of into a darker
+                // band below it. The sun side still brightens it (the map's directional in-scattering).
+                EdgeFog->SetSkyAtmosphereAmbientContributionColorScale(FLinearColor::Black);
+                EdgeFog->SetFogInscatteringColor(EdgeHazeLuminance);
+                FExponentialHeightFogData MapSecondFog;
+                MapSecondFog.FogDensity = MapSecondFogDensity;
+                MapSecondFog.FogHeightFalloff = MapSecondFogFalloff;
+                MapSecondFog.FogHeightOffset = MapSecondFogOffset;
+                EdgeFog->SetSecondFogData(MapSecondFog);
+                EdgeFog->SetDirectionalInscatteringColor(MapDirectionalInscattering);
+            }
+            else
+            {
+                // Step 2's haze: clear air to HazeStart, then a light height fog that halves every 10 / Falloff blocks
+                // up from sea level (the second fog layer, placed there; the first is off), so valleys are hazier
+                // than peaks. It scatters the sky's own ambient light, so its colour follows the sky; no fixed colour
+                // and no directional in-scattering (the sky's aerial perspective carries the sun side). The edge is
+                // the far meshes' fade into the sky (M_ChunkFar*), and the fog floor lies deep enough under the world
+                // for the haze to cover it below the horizon.
+                const VoxelEdgeFog::FHaze& Haze = State.Haze;
+                EdgeFog->SetStartDistance(float(Haze.StartBlocks * CellCm));
+                EdgeFog->SetFogDensity(0.f);
+                EdgeFog->SetFogMaxOpacity(1.f);
+                FExponentialHeightFogData Layer;
+                Layer.FogDensity = Haze.Density;
+                Layer.FogHeightFalloff = Haze.Falloff;
+                Layer.FogHeightOffset = float(State.SeaOffsetCm);
+                EdgeFog->SetSecondFogData(Layer);
+                EdgeFog->SetSkyAtmosphereAmbientContributionColorScale(Haze.Sky);
+                EdgeFog->SetFogInscatteringColor(FLinearColor::Black);
+                EdgeFog->SetDirectionalInscatteringColor(FLinearColor::Black);
+            }
+            if (Sky && bEdgeFogVisible) Sky->SetAerialPespectiveViewDistanceScale(GetEdgeAerialScale());
+            // Everything but the sky, which lies beyond any distance: the terrain and the fog floor take the fog's
+            // color, the sky stays clear.
+            EdgeFog->SetFogCutoffDistance(1e9f);
+            if (FogFloor)
+            {
+                const double Scale = State.bHaze ? HazeFogFloorScale : FogFloorScale;
+                FogFloor->SetWorldScale3D(FVector(Scale, Scale, 1));
+                FogFloor->SetVisibility(bEdgeFogVisible && IsFogFloorShown());
+            }
+        }
+    }
     if (FogFloor)
     {
         const APlayerController* Controller = GetWorld()->GetFirstPlayerController();
         const FVector Camera = Controller && Controller->PlayerCameraManager
             ? Controller->PlayerCameraManager->GetCameraLocation()
             : OriginCm;
-        FogFloor->SetWorldLocation(FVector(Camera.X, Camera.Y, OriginCm.Z + (VoxelConstants::MinZ - 1) * CellCm));
+        const double Depth = EdgeFogState.bHaze ? FMath::Max(0.f, EdgeFogState.Haze.FloorDepthBlocks) : 0.;
+        FogFloor->SetWorldLocation(
+            FVector(Camera.X, Camera.Y, OriginCm.Z + (VoxelConstants::MinZ - 1 - Depth) * CellCm));
     }
-    if (!EdgeFog || !Streaming || !Streaming->GetPipeline()) return;
-    const FVoxelStreamingRings& Rings = Streaming->GetPipeline()->GetRings();
-    // Far LOD: the fog sits at the drawn radius D, with the same formula.
-    const int32 Drawn = Rings.GetDrawnRadius();
-    if (Drawn == EdgeFogRadius) return;
-    EdgeFogRadius = Drawn;
-    constexpr double ColumnCm = VoxelConstants::ColumnSize * CellCm;
-    // Clear until 1.5 columns before the view radius, then 99% opaque by it: the density (per 1000 cm, as the
-    // engine counts it) times the fade's length is ln 100. Every block within the radius is drawn, so the fog
-    // never shows a missing column. Almost no height falloff: the edge fades the same from a mountain top.
-    constexpr double FadeCm = 1.5 * ColumnCm;
-    EdgeFog->SetStartDistance(float(FMath::Max(0., Drawn * ColumnCm - FadeCm)));
-    EdgeFog->SetFogDensity(float(1000. * FMath::Loge(100.) / FadeCm));
-    EdgeFog->SetFogHeightFalloff(0.001f);
-    EdgeFog->SetFogMaxOpacity(1.f);
-    // Distant haze glows like the sky at the horizon, a pale neutral, rather than like the sky's average light,
-    // which is the blue overhead: the land then fades into the horizon instead of into a darker band below it.
-    // The sun side still brightens it (directional in-scattering).
-    EdgeFog->SetSkyAtmosphereAmbientContributionColorScale(FLinearColor::Black);
-    EdgeFog->SetFogInscatteringColor(EdgeHazeLuminance);
-    if (Sky && bEdgeFogVisible)
-        Sky->SetAerialPespectiveViewDistanceScale(float(EdgeAerialScale * 12. / FMath::Max(1, Drawn)));
-    // Everything but the sky, which lies beyond any distance: the terrain and the fog floor take the fog's color,
-    // the sky stays clear.
-    EdgeFog->SetFogCutoffDistance(1e9f);
+}
+
+bool AVoxelWorld::IsFogFloorShown() const
+{
+    return !EdgeFogState.bHaze || EdgeFogState.Haze.FloorDepthBlocks >= 0;
+}
+
+float AVoxelWorld::GetEdgeAerialScale() const
+{
+    return EdgeFogState.bHaze ? EdgeFogState.Haze.AerialScale
+                              : float(EdgeAerialScale * 12. / FMath::Max(1, EdgeFogState.Drawn));
 }
 
 void AVoxelWorld::SetEdgeFogVisible(bool bVisible)
 {
     bEdgeFogVisible = bVisible;
     if (EdgeFog) EdgeFog->SetVisibility(bVisible);
-    if (FogFloor) FogFloor->SetVisibility(bVisible);
+    if (FogFloor) FogFloor->SetVisibility(bVisible && IsFogFloorShown());
     // Shots from outside the world see it at the sky's own scale, as before the fog.
-    if (Sky)
-        Sky->SetAerialPespectiveViewDistanceScale(
-            bVisible ? float(EdgeAerialScale * 12. / FMath::Max(1, EdgeFogRadius)) : 1.f);
+    if (Sky) Sky->SetAerialPespectiveViewDistanceScale(bVisible ? GetEdgeAerialScale() : 1.f);
 }
 
 uint16 AVoxelWorld::GetState(const FIntVector& Cell) const
