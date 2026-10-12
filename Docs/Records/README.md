@@ -4,6 +4,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 12, 2026
 
+- [Review fixes F1-F8: the external review's eight findings](2026-10-12-Review-Fixes.md): crash dumps kept (`Scripts/CrashFolders.ps1`), the menu runners' exit codes, fresh E2E output folders, input-settings' page hash, tool damage through right-click moves, the atomic input save with a `.bak` restore, missing assets failing their tests, and the aquifer centres jittered on all three axes (a decided generator change: new goldens and hashes, before/after table inside).
 - [Feel build B: Render Distance, the sound's delay, the held item at any FOV](2026-10-12-Feel-B.md): Options > Render Distance drives the rings (`voxel.RenderDistance.FromOptions`), smaller audio buffers (256 x 2), the held item at a fixed FOV of 70 and a pose fitted to vanilla's frames (`foundation.Hand.Fit`); view bobbing and hand sway wait for VP2's numbers (the mechanism is saved as a patch).
 
 ## October 11, 2026
