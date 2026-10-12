@@ -32,6 +32,17 @@ namespace FoundationPlace
     UNNAMED_API bool ShouldDrawPreview(int32 Mode, const FFoundationPreview& Preview);
 }
 
+// The held item's switch (foundation.Hand.Fit): 1 placed as vanilla's first-person frames show it (probe P1) and drawn
+// at a fixed FOV whatever Options > FOV says, the default; 0 the provisional pose, drawn at the view's FOV.
+namespace FoundationHand
+{
+    // The held item's vertical FOV under the fit: P1's, so its frames hold at any FOV setting.
+    constexpr double FixedVerticalFov = 70;
+    UNNAMED_API bool IsFitOn();
+    // A held block's transform under the fit: block/block.json's firstperson_righthand display on the cube mesh.
+    UNNAMED_API FTransform MakeHeldBlockDisplay();
+}
+
 // A lab's block-interaction presentation: the Playground's, and a generated world's (AVoxelWorld). It reads the
 // block world's change log, the authority's events and targets and the local player's interaction snapshot; it never
 // changes gameplay state (draining the change log is reading it). A generated world's chunks draw its blocks, so
@@ -214,6 +225,8 @@ private:
     TObjectPtr<UStaticMeshComponent> HeldItem;
     FName HeldItemId;
     FName HeldSprite;
+    // foundation.Hand.Fit as last applied to the pivot and the held blocks (-1: not yet).
+    int32 AppliedHandFit = -1;
     // foundation.Held.Glow as last set on ItemMaterials.
     float AppliedGlow = -1;
     UPROPERTY(Transient)

@@ -827,8 +827,8 @@ bool FVoxelFarMesherTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> BlockTable = VoxelBlocks::GetDefault();
     if (!BlockTable->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py (only the watertight case ran)"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py (only the watertight case ran)"));
+        return false;
     }
     FarMesherTestSummaryRules(*this, *BlockTable);
     FarMesherTestSameLayout(*this, *BlockTable);

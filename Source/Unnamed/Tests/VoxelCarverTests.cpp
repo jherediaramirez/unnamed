@@ -29,17 +29,22 @@ namespace
     constexpr uint64 CarverTestSeed = 263;
     const TCHAR* const CarverTestPresets[3] = {TEXT("overworld"), TEXT("large_biomes"), TEXT("amplified")};
     const FIntPoint CarverTestGoldenPositions[4] = {{0, 0}, {1, 0}, {-3, 7}, {100, -50}};
-    // Aquifer.Golden's values (veins on): the carvers compiled but off must give them exactly.
-    constexpr uint64 CarverTestAquiferGolden[3] = {0x06587391fe15bb98ull, 0x6bef4434e7dee57cull, 0x82816e657968c3f1ull};
+    // Aquifer.Golden's values (veins on): the carvers compiled but off must give them exactly (copied from
+    // Aquifer.Golden when F4 re-recorded it on 2026-10-12).
+    constexpr uint64 CarverTestAquiferGolden[3] = {0xb44ddb192ba22210ull, 0xd259904d82120a3cull, 0xc821a64852f297d0ull};
     // Recorded on 2026-10-10 (phase 6, S10, carvers on), re-recorded the same day after the canyon walker's constants
-    // changed (the same values came out); never edit to pass a test. 0 records.
-    constexpr uint64 CarverTestGolden[3] = {0xe30dd5332a1bcab6ull, 0x884085f14f14e1d5ull, 0xf4915ea9f7dfc5cfull};
+    // changed (the same values came out); re-recorded on 2026-10-12 under the decided change F4 (aquifer centres
+    // jittered on all three axes, review fixes; old values in Docs/Records/2026-10-12-Review-Fixes.md); never edit to
+    // pass a test. 0 records.
+    constexpr uint64 CarverTestGolden[3] = {0xff1aeb8212aee5deull, 0x67f9f23e4aa7f3f8ull, 0x885e712fbf153855ull};
     // The four columns above are canyon-free. Carvers.Reach's canyon start (-16, 24) and the column of its path with
     // the most bits set (every path column voxelized), hard-coded; its carvers-on hash per preset, recorded on
-    // 2026-10-10 (phase 6, S10). Never edit to pass a test. 0 records.
+    // 2026-10-10 (phase 6, S10); overworld and large_biomes re-recorded on 2026-10-12 under the decided change F4
+    // (aquifer centres jittered on all three axes, review fixes; old values in Docs/Records/2026-10-12-Review-Fixes.md)
+    // (amplified unchanged). Never edit to pass a test. 0 records.
     const FIntPoint CarverTestCanyonStart(-16, 24);
     const FIntPoint CarverTestCanyonColumn(-16, 28);
-    constexpr uint64 CarverTestCanyonGolden[3] = {0x223e91dd098ee111ull, 0xa8b562ac46bf299eull, 0xc91686bd6f0b108bull};
+    constexpr uint64 CarverTestCanyonGolden[3] = {0x52cc2bc1c5b80f18ull, 0xd83d32150cce5f0dull, 0xc91686bd6f0b108bull};
 
     FString CarverTestShortId(const FString& Id)
     {
@@ -154,7 +159,7 @@ namespace
     bool CarverTestBlocksReady(FAutomationTestBase& Test, const FVoxelBlockTable& Table)
     {
         if (Table.FindState(TEXT("stone"))) return true;
-        Test.AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        Test.AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
         return false;
     }
 

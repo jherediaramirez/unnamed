@@ -20,10 +20,12 @@ namespace
 
     // Recorded once on 2026-10-09 (caves on, phase 4 session 4), re-recorded once for the surface rules (phase 5
     // session 5, a decided change); never edit to pass a test.
-    // Recorded under the decided change "veins on" (phase 6, S4); veins off must give the values from before S4.
-    constexpr uint64 AquiferTestGolden[3] = {0x06587391fe15bb98ull, 0x6bef4434e7dee57cull, 0x82816e657968c3f1ull};
+    // Recorded under the decided change "veins on" (phase 6, S4); veins off gave the values from before S4.
+    // Both arrays re-recorded on 2026-10-12 under the decided change F4 (aquifer centres jittered on all three axes,
+    // review fixes; old values in Docs/Records/2026-10-12-Review-Fixes.md).
+    constexpr uint64 AquiferTestGolden[3] = {0xb44ddb192ba22210ull, 0xd259904d82120a3cull, 0xc821a64852f297d0ull};
     constexpr uint64 AquiferTestGoldenNoVeins[3] = {
-        0x22523b7400c2f38eull, 0x6b19b1927b73266aull, 0x863f9b8b01468a3full};
+        0xaa680306b5fab08aull, 0xa5bba90d26fbd006ull, 0x4a576591fbb516a4ull};
 
     constexpr int32 AquiferTestMinY = -64;
     constexpr int32 AquiferTestHeight = 384;
@@ -65,8 +67,8 @@ bool FVoxelAquiferDeterminismTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     FVoxelTerrainPreset Preset;
     FString Error;
@@ -146,8 +148,8 @@ bool FVoxelAquiferFluidsTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     FVoxelTerrainPreset Preset;
     FString Error;
@@ -251,6 +253,47 @@ bool FVoxelAquiferFluidsTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelAquiferCentersTest, "Unnamed.Voxel.Aquifer.Centers",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// Every centre is jittered on all three axes, each axis from its own draw (review F4, 2026-10-12: y and z read shifted
+// copies of x's hash and were always 0). Over 24^3 cells and two seeds, each axis takes every offset in its range and
+// the axes pair up freely.
+bool FVoxelAquiferCentersTest::RunTest(const FString& Parameters)
+{
+    for (const uint64 Seed : {AquiferTestSeed, uint64(0x9e3779b97f4a7c15ull)})
+    {
+        TSet<int32> X, Y, Z, PairsXZ, PairsXY;
+        int32 Outside = 0;
+        for (int32 CX = -12; CX < 12; ++CX)
+            for (int32 CL = -12; CL < 12; ++CL)
+                for (int32 CZ = -12; CZ < 12; ++CZ)
+                {
+                    const FIntVector Center = FVoxelAquifer::GetCenter(Seed, CX, CL, CZ);
+                    const int32 OX = Center.X - CX * FVoxelAquifer::CellXZ, OY = Center.Y - CL * FVoxelAquifer::CellY,
+                                OZ = Center.Z - CZ * FVoxelAquifer::CellXZ;
+                    if (OX < 2 || OX > 13 || OY < 1 || OY > 10 || OZ < 2 || OZ > 13) ++Outside;
+                    X.Add(OX);
+                    Y.Add(OY);
+                    Z.Add(OZ);
+                    PairsXZ.Add(OX * 16 + OZ);
+                    PairsXY.Add(OX * 16 + OY);
+                }
+        const FString Name = FString::Printf(TEXT("seed %llu: "), Seed);
+        TestEqual(Name + TEXT("every centre inside its range"), Outside, 0);
+        TestEqual(Name + TEXT("x takes every offset 2..13"), X.Num(), 12);
+        TestEqual(Name + TEXT("y takes every offset 1..10"), Y.Num(), 10);
+        TestEqual(Name + TEXT("z takes every offset 2..13"), Z.Num(), 12);
+        TestTrue(Name + TEXT("(x, z) pairs cover at least 95% of 144"), PairsXZ.Num() >= 137);
+        TestTrue(Name + TEXT("(x, y) pairs cover at least 95% of 120"), PairsXY.Num() >= 114);
+    }
+    TestEqual(TEXT("pure: the same cell gives the same centre"), FVoxelAquifer::GetCenter(263, 5, -3, 7),
+        FVoxelAquifer::GetCenter(263, 5, -3, 7));
+    TestNotEqual(TEXT("another seed moves it"), FVoxelAquifer::GetCenter(263, 5, -3, 7),
+        FVoxelAquifer::GetCenter(264, 5, -3, 7));
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelAquiferGoldenTest, "Unnamed.Voxel.Aquifer.Golden",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -259,8 +302,8 @@ bool FVoxelAquiferGoldenTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     const TCHAR* const StateNames[] = {TEXT("water"), TEXT("lava"), TEXT("stone"), TEXT("deepslate")};
     const FIntPoint Positions[] = {{0, 0}, {1, 0}, {-3, 7}, {100, -50}};
@@ -349,8 +392,8 @@ bool FVoxelDensityLoadOrderTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     for (const TCHAR* Name : {TEXT("overworld"), TEXT("large_biomes"), TEXT("amplified")})
     {

@@ -4,6 +4,7 @@
 #include "Foundation/FoundationLab.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationCoordinates.h"
+#include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationRuntimeProbe.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
@@ -374,6 +375,13 @@ void AFoundationPawn::Tick(float DeltaSeconds)
     const double FovEffect = ReadNumber(TEXT("fovEffectScale"), 1);
     const double VerticalFov = ReadNumber(TEXT("fov"), 110) *
         (1. + (FMath::Lerp(Simulation.PreviousFovMultiplier, Simulation.FovMultiplier, Alpha) - 1.) * FovEffect);
-    Camera->SetFieldOfView(FoundationCoordinates::HorizontalFov(
-        VerticalFov, ViewportHeight > 0 ? double(ViewportWidth) / ViewportHeight : 16. / 9.));
+    const double Aspect = ViewportHeight > 0 ? double(ViewportWidth) / ViewportHeight : 16. / 9.;
+    Camera->SetFieldOfView(FoundationCoordinates::HorizontalFov(VerticalFov, Aspect));
+    // foundation.Hand.Fit: the held item at a fixed FOV, so it keeps its size whatever Options > FOV and the FOV
+    // effects say (first-person primitives, FoundationInteractionView).
+    const bool bHandFit = FoundationHand::IsFitOn();
+    Camera->SetEnableFirstPersonFieldOfView(bHandFit);
+    if (bHandFit)
+        Camera->SetFirstPersonFieldOfView(
+            FoundationCoordinates::HorizontalFov(FoundationHand::FixedVerticalFov, Aspect));
 }

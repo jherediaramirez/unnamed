@@ -58,11 +58,13 @@ bool FVoxelMeshDigestTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
-    // Plants off: recorded at adee7a6 (before the block models), per preset; models on and off alike.
-    constexpr uint64 Golden[3] = {0xa8ba8d0d0a39174full, 0xe49601da349c7c0dull, 0x7f9491318204f4b2ull};
+    // Plants off: recorded at adee7a6 (before the block models), per preset; models on and off alike. Every value in
+    // this test was re-recorded on 2026-10-12 under the decided change F4 (aquifer centres jittered on all three axes,
+    // review fixes; old values in Docs/Records/2026-10-12-Review-Fixes.md).
+    constexpr uint64 Golden[3] = {0xc68ae45d4719463aull, 0x4e14f54cb77a8b07ull, 0xaee5521250bc5f2bull};
     // Plants and trees on: per preset, models on then off. Re-recorded in S9b: full-cube faces merge by look
     // (FVoxelBlockTable::GetLookState), so leaves of different distances merge; the blocks are S9a's
     // (Decoration.Golden's third case is unchanged) and the trees-off case below is S8 part B's.
@@ -70,12 +72,12 @@ bool FVoxelMeshDigestTest::RunTest(const FString& Parameters)
     // overworld and amplified pairs (fallen trees, huge mushrooms, trunk_vine at 2/3, the shelf mushrooms' one rule);
     // S9e part 1 the large_biomes pair (azalea trees with their root systems over a lush cave); S9e part 2 large_biomes
     // models on (bamboo or vines, model blocks; models off unchanged).
-    constexpr uint64 PlantGolden[3][2] = {{0xdc44febc46d1c73aull, 0xa0ea785555d107d2ull},
-        {0x95edc2ccd204faaaull, 0x8b29db68a9ad618dull}, {0x61c8745ba36e2004ull, 0x6fd8255fd190e1caull}};
+    constexpr uint64 PlantGolden[3][2] = {{0x32229dac0d9d6b0dull, 0xef9503a539dd809eull},
+        {0x2e7717221a276877ull, 0x77988bdd559f22efull}, {0xe9b3a94605bb242bull, 0x4e519d9bd4039bc8ull}};
     // Plants on, trees off: S8 part B's, which must hold whatever the trees change (Docs/VoxelWorld.md, "Plants and
-    // patches").
-    constexpr uint64 TreelessGolden[3][2] = {{0xd8f3b39ed6d66f5aull, 0x6b673e48bda8a0b7ull},
-        {0xd8c297a251e3c4b1ull, 0x81cbb033a8f2c493ull}, {0x9719bc3f651df81bull, 0xa0fbd505d2c267f9ull}};
+    // patches"); re-recorded only by F4's generator change.
+    constexpr uint64 TreelessGolden[3][2] = {{0x5f5fb0383c290f6full, 0xfdf117d2df0ca2d7ull},
+        {0xf7b967a9a2651a02ull, 0x89f631f2e707d599ull}, {0xb33de1dab0a58225ull, 0xbfc96349acb68766ull}};
     // Cases: plants off; plants on, trees off; both on.
     for (int32 Case = 0; Case < 3; ++Case)
         for (int32 Preset = 0; Preset < 3; ++Preset)

@@ -21,3 +21,18 @@ export function findEvidence(...parts) {
     ? fs.readdirSync(evidenceBase).filter(day => /^\d{4}-\d{2}-\d{2}$/.test(day)).sort().reverse() : [];
   return days.map(day => path.join(evidenceBase, day, ...parts)).find(candidate => fs.existsSync(candidate));
 }
+
+// A new evidence folder for one run, made before anything launches: its parent if needed, then the folder itself, which
+// must not exist yet. A reused --output would mix the last run's reports (travel.N.json, worlds/, the profile's saves) into
+// this one, so the folder's own mkdir is never recursive.
+export function freshEvidenceDir(dir) {
+  const resolved = path.resolve(dir);
+  fs.mkdirSync(path.dirname(resolved), {recursive: true});
+  try {
+    fs.mkdirSync(resolved);
+  } catch (error) {
+    if (error.code === 'EEXIST') throw Error(`Use a fresh output folder; this one exists: ${resolved}`);
+    throw error;
+  }
+  return resolved;
+}

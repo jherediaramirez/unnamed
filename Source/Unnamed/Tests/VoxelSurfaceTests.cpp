@@ -1168,8 +1168,8 @@ bool FVoxelSurfaceConditionsTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     FSurfaceTestWorld World;
     if (!SurfaceTestRead(*this, TEXT("overworld"), World)) return true;
@@ -1189,8 +1189,8 @@ bool FVoxelSurfaceRulesTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     FSurfaceTestWorld World;
     if (!SurfaceTestRead(*this, TEXT("overworld"), World)) return true;
@@ -1286,8 +1286,8 @@ bool FVoxelSurfaceSnowTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     FSurfaceTestWorld World;
     if (!SurfaceTestRead(*this, TEXT("overworld"), World)) return true;
@@ -1304,8 +1304,8 @@ bool FVoxelSurfaceExactTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     TArray<uint16> SurfaceBlocks;
     for (const TCHAR* Name : {TEXT("grass_block"), TEXT("sand"), TEXT("snow_block"), TEXT("terracotta"),
@@ -1536,8 +1536,8 @@ bool FVoxelSurfaceOreVeinTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     FSurfaceTestWorld World;
     if (!SurfaceTestRead(*this, TEXT("overworld"), World)) return true;

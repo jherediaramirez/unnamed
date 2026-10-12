@@ -872,8 +872,8 @@ bool FVoxelEditRemeshTest::RunTest(const FString& Parameters)
 {
     if (!FFoundationBlockRegistry::GetDefault()->GetAssets())
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     const auto Seed = FVoxelSeed::Parse(TEXT("Unnamed")).Value;
@@ -1299,8 +1299,8 @@ bool FVoxelEditAuthorityTest::RunTest(const FString& Parameters)
 {
     if (!FFoundationBlockRegistry::GetDefault()->GetAssets())
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     const auto Seed = FVoxelSeed::Parse(TEXT("Unnamed")).Value;

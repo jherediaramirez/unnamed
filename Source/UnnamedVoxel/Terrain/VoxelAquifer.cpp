@@ -79,6 +79,19 @@ bool FVoxelAquifer::Initialize(const FVoxelTerrainPreset& Preset, uint64 InSeed,
         AquiferCompile(Surface, Graph, Seed, SurfaceNode, TEXT("surface_level"), OutError);
 }
 
+FIntVector FVoxelAquifer::GetCenter(uint64 Seed, int32 CX, int32 CL, int32 CZ)
+{
+    // ToIndex reads a draw's high 32 bits, so each axis takes a full draw of its own: shifted copies of one hash
+    // (Hash >> 21, Hash >> 42) left y and z at 0 in every cell until the review fix of 2026-10-12, a decided change.
+    FVoxelXoroshiro Random(VoxelRandom::Hash64(Seed, AquiferCenterSalt, CX, CL, CZ));
+    const uint64 DrawX = Random.Next();
+    const uint64 DrawY = Random.Next();
+    const uint64 DrawZ = Random.Next();
+    return FIntVector(CX * CellXZ + 2 + VoxelRandom::ToIndex(DrawX, CellXZ - 4),
+        CL * CellY + 1 + VoxelRandom::ToIndex(DrawY, CellY - 2),
+        CZ * CellXZ + 2 + VoxelRandom::ToIndex(DrawZ, CellXZ - 4));
+}
+
 FVoxelAquiferStatus FVoxelAquifer::GetGlobal(int32 Y) const
 {
     return Y < LavaLine ? FVoxelAquiferStatus{LavaLine, EVoxelAquiferFluid::Lava}
@@ -126,10 +139,7 @@ void FVoxelAquifer::Prepare(int32 X0, int32 Z0, FVoxelAquiferScratch& Scratch) c
     for (int32 Index = 0; Index < Count; ++Index)
     {
         const int32 CX = CX0 + Index % 3, CZ = CZ0 + Index / 3 % 3, CL = FirstLayer + Index / 9;
-        const uint64 Hash = VoxelRandom::Hash64(Seed, AquiferCenterSalt, CX, CL, CZ);
-        const FIntVector Center(CX * CellXZ + 2 + VoxelRandom::ToIndex(Hash, CellXZ - 4),
-            CL * CellY + 1 + VoxelRandom::ToIndex(Hash >> 21, CellY - 2),
-            CZ * CellXZ + 2 + VoxelRandom::ToIndex(Hash >> 42, CellXZ - 4));
+        const FIntVector Center = GetCenter(Seed, CX, CL, CZ);
         Scratch.Centers[Index] = Center;
         if (Center.Y >= FMath::FloorToInt32(Scratch.Surface[Index % 9]) - AquiferSurfaceMargin)
             Scratch.Statuses[Index] = GetGlobal(Center.Y);

@@ -48,7 +48,8 @@ struct FVoxelAquiferScratch
 
 // Aquifers: what fills open space underground. Our own design on 26.3's aquifer inputs (a preset's `aquifers`
 // object) and numbers:
-// - Space is cut into cells of 16 x 12 x 16 blocks, each with a centre jittered inside it by Hash64(seed, salt, cell).
+// - Space is cut into cells of 16 x 12 x 16 blocks, each with a centre jittered inside it on all three axes
+// (GetCenter).
 // - Each centre gets a status. Centres near or above the preliminary surface (surface_level) take the global fluid:
 //   sea water below sea level, lava below y -54. Below it, floodedness decides between the global fluid, a fluid
 //   level of the cell's own (spread, in 40-block bands, quantized to 3 blocks) and dry. Floodedness floods more
@@ -90,6 +91,11 @@ public:
 
     // A status's global fluid at a centre's y.
     FVoxelAquiferStatus GetGlobal(int32 Y) const;
+
+    // The centre of cell (CX, CL, CZ), whose layer CL covers y CL * 12 to CL * 12 + 11: one FVoxelXoroshiro stream on
+    // Hash64(seed, "aquifer/center", cell), one draw per axis, puts it 2..13 blocks into the cell on x and z and 1..10
+    // on y. A pure function of (Seed, cell).
+    static FIntVector GetCenter(uint64 Seed, int32 CX, int32 CL, int32 CZ);
 
 private:
     int32 LayerOf(int32 Y) const { return FMath::FloorToInt32(Y / double(CellY)); }

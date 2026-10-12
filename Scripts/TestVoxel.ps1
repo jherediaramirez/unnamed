@@ -15,8 +15,11 @@ $profileDirectory=Join-Path ([IO.Path]::GetTempPath()) ('UnnamedVoxelProfile-'+[
     '-ExecCmds=voxel.Info,voxel.Seed,voxel.Bench Noise,Automation RunTests Unnamed.Voxel' '-TestExit=Automation Test Queue Empty' `
     "-ReportExportPath=$OutputDirectory/Report" "-abslog=$OutputDirectory/native.log" "-UserDir=$profileDirectory/" *> "$OutputDirectory/console.log"
 $code=$LASTEXITCODE
-Remove-Item -LiteralPath $profileDirectory -Recurse -Force -ErrorAction SilentlyContinue
-if(-not(Test-Path "$OutputDirectory/Report/index.json")){throw "Missing voxel report (exit $code)"}
+# A crash's dump and log are under the profile: keep them in <OutputDirectory>\Crashes before it goes.
+. (Join-Path $PSScriptRoot 'CrashFolders.ps1')
+$closed=Close-Profile -UserDir $profileDirectory -Destination $OutputDirectory
+$crashNote="$(if($closed.Crashes){"; crash folders kept $($closed.Crashes) in $OutputDirectory\Crashes"})$(if($closed.Kept){"; profile kept at $($closed.Kept)"})"
+if(-not(Test-Path "$OutputDirectory/Report/index.json")){throw "Missing voxel report (exit $code$crashNote)"}
 $report=Get-Content -Raw "$OutputDirectory/Report/index.json" | ConvertFrom-Json
 # Every declared voxel test runs and passes, with or without warnings (an editor HTTP timeout lands on whichever test is running).
 $expected=$declared.Count
@@ -26,7 +29,7 @@ $extra=@($ran | Where-Object { $_ -cnotin $declared })
 $passed=$report.succeeded+$report.succeededWithWarnings
 # The console commands run before the tests: keep their output (settings, dev seed, timings) next to the report.
 Select-String -Path "$OutputDirectory/native.log" -Pattern 'LogUnnamedVoxel: Display: ' | ForEach-Object { $_.Line -replace '^.*LogUnnamedVoxel: Display: ','' } | Set-Content "$OutputDirectory/voxel-console.txt"
-if($missing.Count -or $extra.Count){throw "Declared and run voxel tests differ ($expected declared, $($ran.Count) ran)$(if($missing.Count){'; not run: '+($missing -join ', ')})$(if($extra.Count){'; not declared: '+($extra -join ', ')}): $OutputDirectory"}
-if($code -ne 0 -or $report.failed -ne 0 -or $passed -ne $expected){throw "Voxel tests failed ($passed of $expected passed): $OutputDirectory"}
+if($missing.Count -or $extra.Count){throw "Declared and run voxel tests differ ($expected declared, $($ran.Count) ran)$(if($missing.Count){'; not run: '+($missing -join ', ')})$(if($extra.Count){'; not declared: '+($extra -join ', ')})${crashNote}: $OutputDirectory"}
+if($code -ne 0 -or $report.failed -ne 0 -or $passed -ne $expected){throw "Voxel tests failed ($passed of $expected passed, exit $code$crashNote): $OutputDirectory"}
 "PASS: $expected voxel suites. $OutputDirectory/Report/index.json"
 Get-Content "$OutputDirectory/voxel-console.txt"

@@ -172,8 +172,8 @@ bool FVoxelLightsTest::RunTest(const FString& Parameters)
     const FVoxelBlockTable& BlockTable = *BlocksRef;
     if (!BlockTable.FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     int32 Rows = 0, Passed = 0;
     auto Row = [this, &Rows, &Passed](const FString& What, bool bOk)

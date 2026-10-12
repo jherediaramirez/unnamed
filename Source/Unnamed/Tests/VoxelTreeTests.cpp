@@ -607,12 +607,12 @@ namespace
         FVoxelStateProviders Providers;
         TMap<uint16, uint16> UpperOf;
 
-        // False (with a warning) when DA_Blocks is missing, or on a read error.
+        // False (with an error) when DA_Blocks is missing, or on a read error.
         bool Initialize(FAutomationTestBase& Test)
         {
             if (!Table->FindState(TEXT("stone")))
             {
-                Test.AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+                Test.AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
                 return false;
             }
             FString Error;
@@ -1969,13 +1969,13 @@ namespace
         FVoxelBiomeTable Biomes;
         uint8 Plains = 0;
 
-        // Replaced maps a placed feature's name ("trees_plains") to the text read for it. False (with a warning) when
+        // Replaced maps a placed feature's name ("trees_plains") to the text read for it. False (with an error) when
         // DA_Blocks is missing, or on a read error.
         bool Initialize(FAutomationTestBase& Test, const TMap<FString, FString>& Replaced)
         {
             if (!Table->FindState(TEXT("stone")))
             {
-                Test.AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+                Test.AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
                 return false;
             }
             const FString Root = VoxelWorldgen::GetReferenceRoot();

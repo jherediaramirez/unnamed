@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';
-import {evidencePath, testsRoot} from './evidence.mjs';
+import {evidencePath, freshEvidenceDir, testsRoot} from './evidence.mjs';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,7 +23,7 @@ const exe = editor ? 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/U
 const worlds = path.join(output, 'worlds');
 // The editor's per-run user folder is a cache, not evidence: it goes to the ignored Tests/Runtime/.
 const profile = path.join(testsRoot, 'Runtime', 'create-world-' + Date.now(), 'profile');
-fs.mkdirSync(output, {recursive: true});
+freshEvidenceDir(output);
 const checks = [], errors = [], delay = ms => new Promise(r => setTimeout(r, ms));
 const check = (name, pass, detail = '') => { checks.push({name, pass, detail}); console.log(`${pass ? 'PASS' : 'FAIL'} ${name}`); if (!pass) throw Error(name); };
 let browser, page, game, exit;

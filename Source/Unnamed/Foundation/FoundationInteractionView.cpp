@@ -38,6 +38,20 @@ namespace
              "the "
              "placed and rejected flashes (the look until 2026-10-11)."),
         ECVF_Default);
+    TAutoConsoleVariable<int32> CVarHandFit(TEXT("foundation.Hand.Fit"), 1,
+        TEXT(
+            "Held item: 1 placed as vanilla's first-person frames show it (probe P1) and drawn at a fixed FOV of 70 "
+            "whatever Options > FOV says; 0 the provisional pose from before (pivot 42, 24, -24; a block turned 10 and "
+            "35 degrees), drawn at the view's FOV."),
+        ECVF_Default);
+    // foundation.Hand.Fit 1: the pivot (cm, view space) and its scale, fitted to P1's frames at FOV 70 (12 px RMS over
+    // the unclipped edges of an apple, stick, iron pickaxe and sword and a stone; the old pose 150 px; record
+    // Docs/Records/2026-10-12-Feel-B.md). Only pivot / scale is fixed by the frames: scale 2 draws a model block as a
+    // world block. A held block takes block/block.json's firstperson_righthand display (rotation 0 45 0, scale 0.4), as
+    // sprite items take their models'.
+    const FVector HandFitPivot(71.9, 56.2, -52.2);
+    constexpr double HandFitScale = 2;
+    const FVector HandRestPivot(42, 24, -24);
 
     constexpr double InteractionViewBlockCm = UFoundationProfile::BlockCm;
     constexpr uint8 WaterLayer = 3;
@@ -528,6 +542,24 @@ bool FoundationPlace::ShouldDrawPreview(int32 Mode, const FFoundationPreview& Pr
     return Mode == 1 && Preview.bPlacement;
 }
 
+bool FoundationHand::IsFitOn()
+{
+    return CVarHandFit.GetValueOnGameThread() != 0;
+}
+
+FTransform FoundationHand::MakeHeldBlockDisplay()
+{
+    FFoundationItemDisplayAsset Display;
+    Display.Rotation = FVector(0, 45, 0);
+    Display.Scale = FVector(.4);
+    FTransform Transform =
+        FoundationItemMesh::MakeDisplayTransform(Display, UFoundationInteractionView::HeldModelBlockCm);
+    // The display scales model blocks; the cube mesh spans a world block.
+    Transform.SetScale3D(
+        Transform.GetScale3D() * (UFoundationInteractionView::HeldModelBlockCm / InteractionViewBlockCm));
+    return Transform;
+}
+
 void UFoundationInteractionView::AddFlash(const FBox& Box, FLinearColor Color, double Life, bool bCross)
 {
     Flashes.Add({Box, Color, 0, Life, bCross});
@@ -800,6 +832,7 @@ void UFoundationInteractionView::UpdateHeldItem(
         // One component per part of the model default state with the most parts (a cube needs one), drawn anew.
         HeldBlocks.Reset();
         HeldState = {MAX_uint16};
+        AppliedHandFit = -1;
         int32 MostParts = BlockMeshes.IsEmpty() ? 0 : 1;
         const FFoundationBlockRegistry& Registry = Authority.World.GetRegistry();
         TArray<TConstArrayView<int32>> Parts;
@@ -810,8 +843,6 @@ void UFoundationInteractionView::UpdateHeldItem(
         {
             UInstancedStaticMeshComponent* Held =
                 MakeBlockComponent(HandPivot, BlockMeshes[FoundationBlockMeshes::Cube], 0);
-            Held->SetRelativeRotation(FRotator(10, 35, 0));
-            Held->SetRelativeScale3D(FVector(.11));
             Held->SetCastShadow(false);
             Held->SetFirstPersonPrimitiveType(EFirstPersonPrimitiveType::FirstPerson);
             Owned.Add(Held);
@@ -906,8 +937,19 @@ void UFoundationInteractionView::UpdateHeldItem(
                                     : 0.;
     // foundation.Break.Swing: the swing clock's 6-tick swings instead, in today's pose.
     if (BreakEffects) BreakEffects->GetSwing(Swing);
+    // foundation.Hand.Fit: the rest pose, the pivot's scale and the held block's display.
+    const int32 HandFit = FoundationHand::IsFitOn() ? 1 : 0;
+    if (HandFit != AppliedHandFit)
+    {
+        AppliedHandFit = HandFit;
+        HandPivot->SetRelativeScale3D(FVector(HandFit ? HandFitScale : 1.));
+        for (UInstancedStaticMeshComponent* Held : HeldBlocks)
+            Held->SetRelativeTransform(HandFit ? FoundationHand::MakeHeldBlockDisplay()
+                                               : FTransform(FRotator(10, 35, 0), FVector::ZeroVector, FVector(.11)));
+    }
     HandPivot->SetRelativeLocationAndRotation(
-        FVector(42 + Swing * 6, 24 - Swing * 8, -24 + Swing * 4), FRotator(-55 * Swing, -10 * Swing, 0));
+        (HandFit ? HandFitPivot : HandRestPivot) + FVector(Swing * 6, -Swing * 8, Swing * 4),
+        FRotator(-55 * Swing, -10 * Swing, 0));
 }
 
 void UFoundationInteractionView::SetHeldItem(FName Id)

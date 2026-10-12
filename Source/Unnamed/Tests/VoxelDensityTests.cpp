@@ -353,8 +353,8 @@ bool FVoxelDensityTerrainTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     const uint16 Bedrock = Table->FindState(TEXT("bedrock"));
     const uint16 Water = Table->FindState(TEXT("water"));
@@ -489,8 +489,8 @@ bool FVoxelDensityGoldenTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     const TCHAR* const StateNames[] = {TEXT("stone"), TEXT("water"), TEXT("grass_block"), TEXT("sand"), TEXT("gravel"),
         TEXT("bedrock"), TEXT("deepslate")};
@@ -575,8 +575,8 @@ bool FVoxelDensitySharedCornersTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     constexpr int32 Side = 5, Columns = Side * Side;
     TArray<int32> Orders[3];
