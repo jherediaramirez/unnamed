@@ -30,8 +30,9 @@
 
 namespace
 {
-    TAutoConsoleVariable<int32> CVarBreakOutline(TEXT("foundation.Break.Outline"), 2,
-        TEXT("Target outline: 0 the view's own, 1 vanilla (black 40%, 3 px), 2 thinner (black 30%, 1 px), 3 none."),
+    TAutoConsoleVariable<int32> CVarBreakOutline(TEXT("foundation.Break.Outline"), 1,
+        TEXT("Target outline: 0 the view's own, 1 vanilla (black 40%, 3 px at 1920 wide scaled by width/1920, the "
+             "shape's outer edges), 2 thinner (black 30%, 1 px), 3 none."),
         ECVF_Default);
     TAutoConsoleVariable<int32> CVarBreakCracks(TEXT("foundation.Break.Cracks"), 2,
         TEXT("Crack overlay: 0 the view's lines, 1 vanilla's stages, 2 carved stages."), ECVF_Default);
@@ -175,6 +176,112 @@ namespace FoundationBreak
     {
         if (ViewportWidth <= 0 || DepthCm <= 0) return 0;
         return Pixels * 2 * DepthCm * FMath::Tan(FMath::DegreesToRadians(HorizontalFovDegrees * 0.5)) / ViewportWidth;
+    }
+
+    double OutlinePixels(double BasePixels, double ViewportWidth)
+    {
+        return BasePixels * FMath::Max(1., ViewportWidth / OutlineReferenceWidth);
+    }
+
+    TArray<FOutlineEdge> MergeOutlineEdges(TConstArrayView<FBox> Boxes)
+    {
+        TArray<FOutlineEdge> Edges;
+        if (Boxes.IsEmpty()) return Edges;
+        // The grid: every box's distinct coordinates per axis, sorted.
+        constexpr double MergeCm = 1e-3;
+        TArray<double, TInlineAllocator<16>> Lines[3];
+        for (int32 Axis = 0; Axis < 3; ++Axis)
+        {
+            TArray<double, TInlineAllocator<16>>& Line = Lines[Axis];
+            for (const FBox& Box : Boxes)
+            {
+                Line.Add(Box.Min[Axis]);
+                Line.Add(Box.Max[Axis]);
+            }
+            Line.Sort();
+            int32 Kept = 0;
+            for (int32 Index = 0; Index < Line.Num(); ++Index)
+                if (Kept == 0 || Line[Index] - Line[Kept - 1] > MergeCm) Line[Kept++] = Line[Index];
+            Line.SetNum(Kept);
+        }
+        // A cell is solid when its centre is inside a box.
+        const FIntVector Cells(Lines[0].Num() - 1, Lines[1].Num() - 1, Lines[2].Num() - 1);
+        TArray<bool, TInlineAllocator<64>> Solid;
+        Solid.SetNumZeroed(Cells.X * Cells.Y * Cells.Z);
+        for (int32 Z = 0; Z < Cells.Z; ++Z)
+            for (int32 Y = 0; Y < Cells.Y; ++Y)
+                for (int32 X = 0; X < Cells.X; ++X)
+                {
+                    const FVector Centre((Lines[0][X] + Lines[0][X + 1]) / 2, (Lines[1][Y] + Lines[1][Y + 1]) / 2,
+                        (Lines[2][Z] + Lines[2][Z + 1]) / 2);
+                    for (const FBox& Box : Boxes)
+                        if (Box.Min.X < Centre.X && Centre.X < Box.Max.X && Box.Min.Y < Centre.Y &&
+                            Centre.Y < Box.Max.Y && Box.Min.Z < Centre.Z && Centre.Z < Box.Max.Z)
+                        {
+                            Solid[(Z * Cells.Y + Y) * Cells.X + X] = true;
+                            break;
+                        }
+                }
+        auto IsSolid = [&](const FIntVector& Cell)
+        {
+            if (Cell.X < 0 || Cell.Y < 0 || Cell.Z < 0 || Cell.X >= Cells.X || Cell.Y >= Cells.Y || Cell.Z >= Cells.Z)
+                return false;
+            return Solid[(Cell.Z * Cells.Y + Cell.Y) * Cells.X + Cell.X];
+        };
+        // Each grid line along each axis, segment by segment: an edge where the four cells around it (quadrants in
+        // the other two axes' plane) hold 1 or 3 solid ones (convex, concave), or 2 on a diagonal. 0 and 4 are inside
+        // or outside; 2 side by side is a face, or a seam between boxes.
+        for (int32 Axis = 0; Axis < 3; ++Axis)
+        {
+            const int32 U = (Axis + 1) % 3, V = (Axis + 2) % 3;
+            for (int32 LineU = 0; LineU < Lines[U].Num(); ++LineU)
+                for (int32 LineV = 0; LineV < Lines[V].Num(); ++LineV)
+                {
+                    int32 RunStart = INDEX_NONE;
+                    for (int32 Along = 0; Along <= Cells[Axis]; ++Along)
+                    {
+                        bool bEdge = false;
+                        if (Along < Cells[Axis])
+                        {
+                            bool Quadrant[4];
+                            for (int32 Index = 0; Index < 4; ++Index)
+                            {
+                                FIntVector Cell;
+                                Cell[Axis] = Along;
+                                Cell[U] = LineU - 1 + (Index & 1);
+                                Cell[V] = LineV - 1 + (Index >> 1);
+                                Quadrant[Index] = IsSolid(Cell);
+                            }
+                            const int32 Count = Quadrant[0] + Quadrant[1] + Quadrant[2] + Quadrant[3];
+                            bEdge = Count == 1 || Count == 3 || (Count == 2 && Quadrant[0] == Quadrant[3]);
+                        }
+                        if (bEdge && RunStart == INDEX_NONE) RunStart = Along;
+                        if (bEdge || RunStart == INDEX_NONE) continue;
+                        // The run of edge segments ended at this grid line: one edge.
+                        FOutlineEdge& Edge = Edges.AddDefaulted_GetRef();
+                        Edge.A[U] = Edge.B[U] = Lines[U][LineU];
+                        Edge.A[V] = Edge.B[V] = Lines[V][LineV];
+                        Edge.A[Axis] = Lines[Axis][RunStart];
+                        Edge.B[Axis] = Lines[Axis][Along];
+                        RunStart = INDEX_NONE;
+                    }
+                }
+        }
+        return Edges;
+    }
+
+    FTransform OutlineStrip(const FVector& Centre, int32 Axis, double Length, const FVector& Camera,
+        const FVector& Forward, double Pixels, double HorizontalFovDegrees, double ViewportWidth)
+    {
+        const FVector Ray = Centre - Camera;
+        const double Width = PixelsToWorld(
+            Pixels, FMath::Max(1., FVector::DotProduct(Ray, Forward)), HorizontalFovDegrees, ViewportWidth);
+        const int32 U = (Axis + 1) % 3, V = (Axis + 2) % 3;
+        const double Across = FMath::Sqrt(Ray[U] * Ray[U] + Ray[V] * Ray[V]);
+        const double Widening = Across < 1e-6 ? 1 : (FMath::Abs(Ray[U]) + FMath::Abs(Ray[V])) / Across;
+        FVector Scale(Width / Widening);
+        Scale[Axis] = Length;
+        return FTransform(FQuat::Identity, Centre, Scale / OutlineStripMeshCm);
     }
 
     FSoundPlay PickSound(const FFoundationBreakBlock& Block, const FFoundationBreakSoundEvent& Event, bool bHit,
@@ -882,48 +989,91 @@ void FFoundationBreakEffects::DrawOutlineStrips()
         bOutlineVisible = false;
         return;
     }
-    // Vanilla: black 40% at 3 px, or the thinner black 30% at 1 px. High contrast: a 3 px cyan core, opaque, on a
-    // 9 px black halo (3 px each side).
-    const double CorePixels = bHighContrast || Mode == 1 ? 3 : 1;
+    // Vanilla (1): black 40% at 3 px (OutlinePixels) on the shape's merged outer edges. Thinner (2): black 30% at
+    // 1 px on every box's 12 edges, as before 2026-10-11. High contrast: a 3 px cyan core, opaque, on a 9 px black
+    // halo (3 px each side), scaled as the mode's core.
     const FLinearColor CoreColor = bHighContrast ? FLinearColor::FromSRGBColor(FColor(87, 255, 225))
                                                  : FLinearColor(0, 0, 0, Mode == 1 ? .4f : .3f);
     TArray<FTransform> Core, Halo;
-    for (const FBox& Submitted : OutlineBoxes)
+    if (Mode == 1)
     {
-        const FBox Box = Submitted.ExpandBy(OutlineExpandCm);
-        const FVector Size = Box.GetSize();
-        // The 12 edges: four along each axis, at the min/max corners of the other two.
-        for (int32 Axis = 0; Axis < 3; ++Axis)
+        const double CorePixels = FoundationBreak::OutlinePixels(3, ViewportWidth);
+        const double HaloPixels = FoundationBreak::OutlinePixels(OutlineHaloPixels, ViewportWidth);
+        TArray<FBox, TInlineAllocator<8>> Expanded;
+        for (const FBox& Submitted : OutlineBoxes)
+            Expanded.Add(Submitted.ExpandBy(OutlineExpandCm));
+        for (const FoundationBreak::FOutlineEdge& Edge : FoundationBreak::MergeOutlineEdges(Expanded))
         {
-            const int32 U = (Axis + 1) % 3, V = (Axis + 2) % 3;
-            const double Segment = Size[Axis] / OutlineSegments;
-            for (int32 Corner = 0; Corner < 4; ++Corner)
+            // A merged edge runs along one axis only.
+            const FVector Along = Edge.B - Edge.A;
+            const int32 Axis = Along.X != 0 ? 0 : (Along.Y != 0 ? 1 : 2);
+            const double Segment = Along[Axis] / OutlineSegments;
+            for (int32 Piece = 0; Piece < OutlineSegments; ++Piece)
             {
-                FVector Start = Box.Min;
-                Start[U] = (Corner & 1) ? Box.Max[U] : Box.Min[U];
-                Start[V] = (Corner & 2) ? Box.Max[V] : Box.Min[V];
-                for (int32 Piece = 0; Piece < OutlineSegments; ++Piece)
+                FVector Centre = Edge.A;
+                Centre[Axis] += Segment * (Piece + .5);
+                const double Depth = FMath::Max(1., FVector::DotProduct(Centre - CameraLocation, CameraForward));
+                auto Strip = [&](double Pixels)
                 {
-                    FVector Centre = Start;
-                    Centre[Axis] += Segment * (Piece + .5);
-                    // A constant screen width: the strip's world width at its own view depth. The extra width along
-                    // the edge closes the corners.
-                    const double Depth = FMath::Max(1., FVector::DotProduct(Centre - CameraLocation, CameraForward));
-                    auto Strip = [&](double Pixels)
+                    // Square strips sized so the silhouette is Pixels wide. The corners close as Outline 2's do: the
+                    // first and last pieces reach Width/2 (the unscaled width at the piece's depth) past the ends.
+                    const double Width = FoundationBreak::PixelsToWorld(Pixels, Depth, CameraFov, ViewportWidth);
+                    const double Back = Piece == 0 ? Width / 2 : 0;
+                    const double Ahead = Piece == OutlineSegments - 1 ? Width / 2 : 0;
+                    FTransform Transform = FoundationBreak::OutlineStrip(Centre, Axis, Segment + Back + Ahead,
+                        CameraLocation, CameraForward, Pixels, CameraFov, ViewportWidth);
+                    FVector Placed = Centre;
+                    Placed[Axis] += (Ahead - Back) / 2;
+                    Transform.SetTranslation(Placed);
+                    return Transform;
+                };
+                Core.Add(Strip(CorePixels));
+                if (bHighContrast) Halo.Add(Strip(HaloPixels));
+            }
+        }
+    }
+    else
+    {
+        const double CorePixels = bHighContrast ? 3 : 1;
+        for (const FBox& Submitted : OutlineBoxes)
+        {
+            const FBox Box = Submitted.ExpandBy(OutlineExpandCm);
+            const FVector Size = Box.GetSize();
+            // The 12 edges: four along each axis, at the min/max corners of the other two.
+            for (int32 Axis = 0; Axis < 3; ++Axis)
+            {
+                const int32 U = (Axis + 1) % 3, V = (Axis + 2) % 3;
+                const double Segment = Size[Axis] / OutlineSegments;
+                for (int32 Corner = 0; Corner < 4; ++Corner)
+                {
+                    FVector Start = Box.Min;
+                    Start[U] = (Corner & 1) ? Box.Max[U] : Box.Min[U];
+                    Start[V] = (Corner & 2) ? Box.Max[V] : Box.Min[V];
+                    for (int32 Piece = 0; Piece < OutlineSegments; ++Piece)
                     {
-                        const double Width = FoundationBreak::PixelsToWorld(Pixels, Depth, CameraFov, ViewportWidth);
-                        // The pieces tile the edge exactly; only the first and last reach Width/2 past its ends, so
-                        // the translucent core overlaps at the corners alone.
-                        const double Back = Piece == 0 ? Width / 2 : 0;
-                        const double Forward = Piece == OutlineSegments - 1 ? Width / 2 : 0;
-                        FVector Scale(Width);
-                        Scale[Axis] = Segment + Back + Forward;
-                        FVector Placed = Centre;
-                        Placed[Axis] += (Forward - Back) / 2;
-                        return FTransform(FQuat::Identity, Placed, Scale / BreakEffectsBlockCm);
-                    };
-                    Core.Add(Strip(CorePixels));
-                    if (bHighContrast) Halo.Add(Strip(OutlineHaloPixels));
+                        FVector Centre = Start;
+                        Centre[Axis] += Segment * (Piece + .5);
+                        // A constant screen width: the strip's world width at its own view depth. The extra width along
+                        // the edge closes the corners.
+                        const double Depth =
+                            FMath::Max(1., FVector::DotProduct(Centre - CameraLocation, CameraForward));
+                        auto Strip = [&](double Pixels)
+                        {
+                            const double Width =
+                                FoundationBreak::PixelsToWorld(Pixels, Depth, CameraFov, ViewportWidth);
+                            // The pieces tile the edge exactly; only the first and last reach Width/2 past its ends, so
+                            // the translucent core overlaps at the corners alone.
+                            const double Back = Piece == 0 ? Width / 2 : 0;
+                            const double Forward = Piece == OutlineSegments - 1 ? Width / 2 : 0;
+                            FVector Scale(Width);
+                            Scale[Axis] = Segment + Back + Forward;
+                            FVector Placed = Centre;
+                            Placed[Axis] += (Forward - Back) / 2;
+                            return FTransform(FQuat::Identity, Placed, Scale / BreakEffectsBlockCm);
+                        };
+                        Core.Add(Strip(CorePixels));
+                        if (bHighContrast) Halo.Add(Strip(OutlineHaloPixels));
+                    }
                 }
             }
         }

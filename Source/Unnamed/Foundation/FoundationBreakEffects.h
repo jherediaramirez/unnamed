@@ -27,7 +27,8 @@ namespace FoundationBreak
     // The switches, read once per frame.
     struct FSwitches
     {
-        // 0 the view's outline, 1 vanilla (black 40%, 3 px), 2 thinner (black 30%, 1 px), 3 none.
+        // 0 the view's outline, 1 vanilla (black 40%, 3 px at 1920 wide scaled by width/1920, the shape's outer edges),
+        // 2 thinner (black 30%, 1 px, every box's 12 edges), 3 none.
         int32 Outline = 0;
         // 0 the view's crack lines, 1 vanilla's stages, 2 carved.
         int32 Cracks = 0;
@@ -101,6 +102,31 @@ namespace FoundationBreak
 
     // World size of Pixels screen pixels at view depth DepthCm, for a horizontal field of view and a viewport width.
     double PixelsToWorld(double Pixels, double DepthCm, double HorizontalFovDegrees, double ViewportWidth);
+
+    // Outline 1's width rule: BasePixels x max(1, ViewportWidth / 1920). Vanilla measured 3 px at 1920 x 1080 (VP1);
+    // the scaling above 1920 is an assumption until a 1440p vanilla measurement.
+    constexpr double OutlineReferenceWidth = 1920;
+    double OutlinePixels(double BasePixels, double ViewportWidth);
+
+    // One outer edge of a shape, from A to B along one axis (B the larger end).
+    struct FOutlineEdge
+    {
+        FVector A = FVector::ZeroVector, B = FVector::ZeroVector;
+    };
+    // The outer edges of the union of axis-aligned boxes. A grid of every box's distinct coordinates per axis (merged
+    // within 1e-3 cm); a cell is solid when its centre is inside a box. A grid segment is an edge when the four cells
+    // around it hold 1 or 3 solid ones, or 2 on a diagonal; consecutive edge segments on one line join into one edge.
+    // A cube, a slab or two stacked half slabs give 12; a straight stair 18.
+    TArray<FOutlineEdge> MergeOutlineEdges(TConstArrayView<FBox> Boxes);
+
+    // The outline strips' mesh: /Engine/BasicShapes/Cube, 100 cm.
+    constexpr double OutlineStripMeshCm = 100;
+    // An outline strip's instance transform: Length along Axis, a square cross-section across it, centred on Centre.
+    // The square's side is w / k, w = PixelsToWorld(Pixels) at Centre's view depth and k = (|r_U| + |r_V|) / |r_UV|
+    // (r = Centre - Camera, U and V the other two axes): a square seen at angle phi about its axis projects
+    // side x (|cos phi| + |sin phi|) wide, so the drawn silhouette is Pixels wide from any side.
+    FTransform OutlineStrip(const FVector& Centre, int32 Axis, double Length, const FVector& Camera,
+        const FVector& Forward, double Pixels, double HorizontalFovDegrees, double ViewportWidth);
 
     // One play: a file of the event, its volume and pitch. Break: 1.0 and 0.8, hit: 0.25 and 0.5, each times the
     // sound type's own volume and pitch and the file's (sounds.json). Sounds 2 adds +-3% to a hit's pitch.

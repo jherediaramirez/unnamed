@@ -474,6 +474,107 @@ bool FFoundationBreakPixelsTest::RunTest(const FString&)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationBreakOutlineGeometryTest, "Unnamed.Foundation.Break.OutlineGeometry", BreakTestFlags)
+
+bool FFoundationBreakOutlineGeometryTest::RunTest(const FString&)
+{
+    using namespace FoundationBreak;
+    // The width rule: 3 px at 1920 wide, scaled by width / 1920 above it, never below 3.
+    BreakCheckNear(*this, TEXT("3 px at 1920"), OutlinePixels(3, 1920), 3);
+    BreakCheckNear(*this, TEXT("3 px at 2560"), OutlinePixels(3, 2560), 4);
+    BreakCheckNear(*this, TEXT("3 px at 1280"), OutlinePixels(3, 1280), 3);
+    BreakCheckNear(*this, TEXT("3 px at 3840"), OutlinePixels(3, 3840), 6);
+
+    // A strip's place and length; seen along its own axis, its square needs no widening (k = 1).
+    const FTransform Upright =
+        OutlineStrip(FVector(10, 20, 30), 2, 50, FVector(10, 20, -300), FVector::UpVector, 3, 90, 1920);
+    BreakCheckNear(*this, TEXT("strip length"), Upright.GetScale3D().Z * OutlineStripMeshCm, 50);
+    BreakCheckNear(*this, TEXT("strip side on its axis"), Upright.GetScale3D().X * OutlineStripMeshCm,
+        PixelsToWorld(3, 330, 90, 1920));
+    TestTrue(TEXT("strip centred, unrotated"),
+        Upright.GetTranslation().Equals(FVector(10, 20, 30)) && Upright.GetRotation().Equals(FQuat::Identity));
+
+    // The drawn width through a pinhole camera (proto strip.py's measure): the strip's square cross-section at its
+    // centre, its four corners projected and measured across the projected edge. The edge runs along X through the
+    // origin; the camera looks at it from Distance, at Theta to the edge, its ray turned by Phi about the edge.
+    constexpr double Pixels = 3;
+    for (const double Theta : {30., 45., 80.})
+        for (const double Phi : {0., 30., 45., 80.})
+            for (const double Distance : {100., 300.})
+                for (const double Width : {1920., 2560.})
+                    for (const double Fov : {102.4479, 137.0043})
+                    {
+                        const double ThetaRad = FMath::DegreesToRadians(Theta), PhiRad = FMath::DegreesToRadians(Phi);
+                        const FVector Forward(FMath::Cos(ThetaRad), FMath::Sin(ThetaRad) * FMath::Cos(PhiRad),
+                            FMath::Sin(ThetaRad) * FMath::Sin(PhiRad));
+                        const FVector Camera = -Distance * Forward;
+                        const FTransform Strip =
+                            OutlineStrip(FVector::ZeroVector, 0, 100, Camera, Forward, Pixels, Fov, Width);
+                        const double Side = Strip.GetScale3D().Y * OutlineStripMeshCm;
+                        const FVector Right = FVector::CrossProduct(
+                            Forward, FMath::Abs(Forward.Z) < .9 ? FVector::UpVector : FVector::ForwardVector)
+                                                  .GetSafeNormal();
+                        const FVector Up = FVector::CrossProduct(Right, Forward);
+                        const double Focal = Width / (2 * FMath::Tan(FMath::DegreesToRadians(Fov / 2)));
+                        auto Project = [&](const FVector& Point)
+                        {
+                            const FVector Ray = Point - Camera;
+                            const double Depth = FVector::DotProduct(Ray, Forward);
+                            return FVector2D(Focal * FVector::DotProduct(Ray, Right) / Depth,
+                                Focal * FVector::DotProduct(Ray, Up) / Depth);
+                        };
+                        const FVector2D Centre = Project(FVector::ZeroVector);
+                        const FVector2D Along = (Project(FVector(1, 0, 0)) - Centre).GetSafeNormal();
+                        const FVector2D Across(-Along.Y, Along.X);
+                        double Low = UE_DOUBLE_BIG_NUMBER, High = -UE_DOUBLE_BIG_NUMBER;
+                        for (int32 Corner = 0; Corner < 4; ++Corner)
+                        {
+                            const FVector Point(0, ((Corner & 1) ? .5 : -.5) * Side, ((Corner & 2) ? .5 : -.5) * Side);
+                            const double Offset = FVector2D::DotProduct(Project(Point) - Centre, Across);
+                            Low = FMath::Min(Low, Offset);
+                            High = FMath::Max(High, Offset);
+                        }
+                        BreakCheckNear(*this,
+                            *FString::Printf(TEXT("drawn px at theta %g, phi %g, %g cm, %g wide, fov %g"), Theta, Phi,
+                                Distance, Width, Fov),
+                            High - Low, Pixels, .05);
+                    }
+
+    // The merged outer edges: a shape's own outline, without the seams between its boxes.
+    auto Merge = [](std::initializer_list<FBox> Boxes, double ExpandCm = 0)
+    {
+        TArray<FBox> Grown;
+        for (const FBox& Box : Boxes)
+            Grown.Add(Box.ExpandBy(ExpandCm));
+        return MergeOutlineEdges(Grown);
+    };
+    auto TotalLength = [](const TArray<FOutlineEdge>& Edges)
+    {
+        double Sum = 0;
+        for (const FOutlineEdge& Edge : Edges)
+            Sum += FVector::Dist(Edge.A, Edge.B);
+        return Sum;
+    };
+    const FBox Cube(FVector(0.), FVector(100.));
+    const FBox BottomSlab(FVector(0.), FVector(100, 100, 50));
+    const FBox TopSlab(FVector(0, 0, 50), FVector(100.));
+    const FBox StairBack(FVector(0, 50, 50), FVector(100.));
+    const FBox Post(FVector(37.5, 37.5, 0), FVector(62.5, 62.5, 100));
+    const FBox Arm(FVector(43.75, 62.5, 37.5), FVector(56.25, 100, 56.25));
+    BreakCheckInt(*this, TEXT("cube edges"), Merge({Cube}).Num(), 12);
+    BreakCheckNear(*this, TEXT("cube edge length"), TotalLength(Merge({Cube})), 1200);
+    BreakCheckInt(*this, TEXT("bottom slab edges"), Merge({BottomSlab}).Num(), 12);
+    BreakCheckInt(*this, TEXT("stacked slabs edges"), Merge({BottomSlab, TopSlab}).Num(), 12);
+    BreakCheckNear(*this, TEXT("stacked slabs edge length"), TotalLength(Merge({BottomSlab, TopSlab})), 1200);
+    BreakCheckInt(*this, TEXT("stair edges"), Merge({BottomSlab, StairBack}).Num(), 18);
+    BreakCheckInt(*this, TEXT("stair edges, boxes expanded 0.3 cm"), Merge({BottomSlab, StairBack}, .3).Num(), 18);
+    BreakCheckInt(*this, TEXT("fence post edges"), Merge({Post}).Num(), 12);
+    BreakCheckInt(*this, TEXT("fence post and arm edges"), Merge({Post, Arm}).Num(), 24);
+    BreakCheckInt(*this, TEXT("no boxes"), MergeOutlineEdges(TConstArrayView<FBox>()).Num(), 0);
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBreakSoundsTest, "Unnamed.Foundation.Break.Sounds", BreakTestFlags)
 
 bool FFoundationBreakSoundsTest::RunTest(const FString&)
