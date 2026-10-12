@@ -7,6 +7,7 @@
 
 class AFoundationLab;
 class AFoundationPawn;
+struct FFoundationPreview;
 class FFoundationBreakEffects;
 class UInstancedStaticMeshComponent;
 class ULineBatchComponent;
@@ -19,6 +20,16 @@ class UTextRenderComponent;
 namespace VoxelFluidSurface
 {
     struct FSurface;
+}
+
+// The destination preview's switch (foundation.Place.Preview): 0 none, as vanilla, the default; 1 the destination box,
+// its fill and the placed and rejected flashes.
+namespace FoundationPlace
+{
+    constexpr int32 DefaultPreviewMode = 0;
+    UNNAMED_API int32 GetPreviewMode();
+    // Whether the view draws a preview's destination box in a mode (only a placement has one).
+    UNNAMED_API bool ShouldDrawPreview(int32 Mode, const FFoundationPreview& Preview);
 }
 
 // A lab's block-interaction presentation: the Playground's, and a generated world's (AVoxelWorld). It reads the
@@ -65,6 +76,8 @@ public:
     int64 GetDrawnRevision() const { return DrawnRevision; }
     bool IsOutlineVisible() const { return bOutlineVisible; }
     bool IsPreviewVisible() const { return bPreviewVisible; }
+    // Flashes started so far (placed, rejected and interacted boxes); a flash outlives no probe case, so probes count.
+    int32 GetStartedFlashCount() const { return StartedFlashes; }
     bool IsHeldItemVisible() const;
     // The held item's extruded sprite (items S4): its sprite ("item/iron_pickaxe"; None for blocks and the empty
     // hand) and component, child of the hand pivot.
@@ -147,6 +160,7 @@ private:
     // ring and the cells above those: a change redraws the drawn fluid cells around it and below them (3 x 3 x 2).
     void RefreshFluidsAround(const FFoundationBlockWorld& World, const FIntVector& Cell);
     void HandleEvents(const FFoundationAuthority& Authority);
+    void AddFlash(const FBox& Box, FLinearColor Color, double Life, bool bCross = false);
     void Burst(const FVector& Center, FLinearColor Color, int32 Count, double Size, double Speed, uint32 Seed);
     void ShowNumber(const FVector& Location, const FString& Text, FColor Color);
     void UpdateTargets(const FFoundationAuthority& Authority, double DeltaTime);
@@ -217,6 +231,7 @@ private:
     TArray<FParticle> Particles;
     TArray<FFloatingText> Numbers;
     TArray<FFlash> Flashes;
+    int32 StartedFlashes = 0;
     TArray<FTargetVisual> TargetVisuals;
     int64 LastEvent = 0;
     int64 DrawnRevision = 0;

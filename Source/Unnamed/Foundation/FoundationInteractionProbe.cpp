@@ -274,21 +274,28 @@ void UFoundationRuntimeProbe::AddInteractionCases()
                 FString::Printf(TEXT("slot %d"), Player()->Inventory.Selected + 1));
         });
 
-    // 3. One press places one block where the preview showed it; the press-to-commit time is measured.
+    // 3. One press places one block where the preview showed it; the press-to-commit time is measured. The placed
+    // flash and the destination box show only with foundation.Place.Preview 1 (vanilla: the outline alone).
+    const TSharedRef<int32> FlashesAtPress = MakeShared<int32>(0);
     AddCase(
         TEXT("place press"), .45,
-        [this, Click, Look]
+        [this, Click, Look, Lab, FlashesAtPress]
         {
+            *FlashesAtPress = Lab->GetView()->GetStartedFlashCount();
             ResetPlayer({-650, 650, 0});
             Click(EKeys::One);
             Look(FVector(-450, 650, 0));
             Click(EKeys::RightMouseButton);
         },
-        [this, Solid, Player, Lab]
+        [this, Solid, Player, Lab, FlashesAtPress]
         {
             Record(TEXT("single press places the previewed cell"),
                 Solid({-5, 6, 0}) && Pawn->Interaction.Placed == 1 && Player()->Inventory.Hotbar[0].Count == 64,
                 Pawn->Interaction.Describe());
+            const int32 Mode = FoundationPlace::GetPreviewMode();
+            const int32 Flashes = Lab->GetView()->GetStartedFlashCount() - *FlashesAtPress;
+            Record(TEXT("placed flash follows foundation.Place.Preview"), Flashes == (Mode == 1 ? 1 : 0),
+                FString::Printf(TEXT("foundation.Place.Preview %d, %d flashes started"), Mode, Flashes));
             const int32 Expected = CountExpectedBlockInstances(Lab->GetAuthorityState().World);
             Record(TEXT("solid block drawn after its commit"),
                 Lab->GetView()->GetDrawnCellCount() == Lab->GetAuthorityState().Seed.Num() + 1 &&
@@ -300,11 +307,15 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         TEXT("preview"), .25, [] {},
         [this, Lab, Capture]
         {
+            // The preview's data is the same in both modes; only mode 1 draws its box.
             const FFoundationPreview& Preview = Pawn->Interaction.Preview;
+            const int32 Mode = FoundationPlace::GetPreviewMode();
             Record(TEXT("preview shows the next destination"),
                 Preview.bPlacement && Preview.bValid && Preview.Cell == FIntVector(-6, 6, 0) &&
-                    Lab->GetView()->IsPreviewVisible() && Lab->GetView()->IsOutlineVisible(),
-                FoundationTargeting::Describe(Preview.Target));
+                    Lab->GetView()->IsPreviewVisible() == (Mode == 1) && Lab->GetView()->IsOutlineVisible(),
+                FString::Printf(TEXT("foundation.Place.Preview %d, box %s; %s"), Mode,
+                    Lab->GetView()->IsPreviewVisible() ? TEXT("drawn") : TEXT("hidden"),
+                    *FoundationTargeting::Describe(Preview.Target)));
             Capture(TEXT("preview-valid"));
         });
     // 4. Held use repeats every 4 reference steps (VanillaReference; 2 with LucidFluid) until the body obstructs.
@@ -327,12 +338,15 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         });
     AddCase(
         TEXT("obstructed preview"), .3, [] {},
-        [this, Capture]
+        [this, Lab, Capture]
         {
             const FFoundationPreview& Preview = Pawn->Interaction.Preview;
+            const int32 Mode = FoundationPlace::GetPreviewMode();
             Record(TEXT("own body shows as obstructed"),
-                Preview.bPlacement && !Preview.bValid && Preview.Reason == EFoundationReason::ObstructedBySelf,
-                LexToString(Preview.Reason));
+                Preview.bPlacement && !Preview.bValid && Preview.Reason == EFoundationReason::ObstructedBySelf &&
+                    Lab->GetView()->IsPreviewVisible() == (Mode == 1),
+                FString::Printf(TEXT("%s; foundation.Place.Preview %d, face %s"), LexToString(Preview.Reason), Mode,
+                    Lab->GetView()->IsPreviewVisible() ? TEXT("drawn") : TEXT("hidden")));
             Capture(TEXT("preview-self-obstructed"));
         });
 

@@ -9,7 +9,9 @@ param([switch]$Editor,[string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',
     [ValidateSet('movement','interaction','all','tour')][string]$Suite='all',
     [ValidateSet('VanillaReference','LucidFluid')][string]$Preset,[switch]$Finite,
     # The break lane's capture pack: the tour suite with -FoundationTourBreak at full-cost rendering, into Playground-break.
-    [switch]$BreakPack)
+    [switch]$BreakPack,
+    # Extra console commands after the run's own, e.g. -ExecCmds 'foundation.Place.Preview 1'; later ones win.
+    [string]$ExecCmds)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 if($BreakPack){$Suite='tour';$FullCostRendering=$true}
@@ -40,7 +42,10 @@ foreach($fps in $FrameRates){
     if($HudCaptures){$arguments+='-HudCaptures'}
     # Named CPU events include Slate tick/paint timings; retain CPU/GPU/frame trace for Insights.
     if($TraceHud){$arguments+=@('-trace=cpu,gpu,frame','-statnamedevents',('-tracefile="'+(Join-Path $OutputDirectory "runtime-$fps.utrace")+'"'))}
-    if(-not $FullCostRendering){$arguments+='-ExecCmds="sg.GlobalIlluminationQuality 0,sg.ReflectionQuality 0,sg.ShadowQuality 0,sg.AntiAliasingQuality 0,r.ScreenPercentage 50"'}
+    $commands=@()
+    if(-not $FullCostRendering){$commands+='sg.GlobalIlluminationQuality 0,sg.ReflectionQuality 0,sg.ShadowQuality 0,sg.AntiAliasingQuality 0,r.ScreenPercentage 50'}
+    if($ExecCmds){$commands+=$ExecCmds}
+    if($commands){$arguments+=('-ExecCmds="'+($commands -join ',')+'"')}
     $process=Start-Process -FilePath $exe -ArgumentList $arguments -WorkingDirectory $root -WindowStyle Hidden -PassThru
     # The combined suites (and -HudCaptures) run longer than one suite used to.
     if(-not $process.WaitForExit(900000)){throw "Probe did not finish; inspect owned process $($process.Id) and $output.log"}

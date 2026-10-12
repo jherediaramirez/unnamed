@@ -3,6 +3,8 @@
 #include "Dom/JsonObject.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationInteraction.h"
+#include "Foundation/FoundationInteractionView.h"
+#include "HAL/IConsoleManager.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationSimulation.h"
@@ -206,6 +208,31 @@ bool FFoundationInteractionGridTest::RunTest(const FString&)
     Storage.Set({-1, -1, -1}, {{0}, 9});
     TestEqual(TEXT("air keeps its revision"), Storage.Get({-1, -1, -1}).Revision, int64(9));
     TestEqual(TEXT("air is not solid"), Storage.GetSolidCount(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationInteractionPlacePreviewTest, "Unnamed.Foundation.Interaction.PlacePreview",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FFoundationInteractionPlacePreviewTest::RunTest(const FString& Parameters)
+{
+    // Vanilla draws no destination preview (Jesus, 2026-10-11): off unless foundation.Place.Preview is 1.
+    TestEqual(TEXT("default mode"), FoundationPlace::DefaultPreviewMode, 0);
+    const IConsoleVariable* Variable = IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Place.Preview"));
+    if (TestNotNull(TEXT("foundation.Place.Preview exists"), Variable) &&
+        (Variable->GetFlags() & ECVF_SetByMask) == ECVF_SetByConstructor)
+        TestEqual(TEXT("the switch starts at the default"), Variable->GetInt(), 0);
+    FFoundationPreview Placement;
+    Placement.bPlacement = true;
+    FFoundationPreview Other;
+    Other.bInteraction = true;
+    for (const bool bValid : {true, false})
+    {
+        Placement.bValid = bValid;
+        TestFalse(TEXT("mode 0 draws no placement"), FoundationPlace::ShouldDrawPreview(0, Placement));
+        TestTrue(TEXT("mode 1 draws a placement, valid or not"), FoundationPlace::ShouldDrawPreview(1, Placement));
+    }
+    TestFalse(TEXT("mode 1 draws no box without a placement"), FoundationPlace::ShouldDrawPreview(1, Other));
+    TestFalse(TEXT("mode 0 draws no box without a placement"), FoundationPlace::ShouldDrawPreview(0, Other));
     return true;
 }
 

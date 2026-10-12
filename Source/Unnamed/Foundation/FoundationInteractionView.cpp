@@ -33,6 +33,11 @@ namespace
              "sun still reads near its own colours, as vanilla lights held items in view space. 16000 brings the "
              "tour's items to their sprites' luma under the 75,000 lux sun at EV100 14.5. 0: lit by the scene alone."),
         ECVF_Default);
+    TAutoConsoleVariable<int32> CVarPlacePreview(TEXT("foundation.Place.Preview"), FoundationPlace::DefaultPreviewMode,
+        TEXT("Destination preview: 0 none, as vanilla (the target's outline only); 1 the destination box, its fill and "
+             "the "
+             "placed and rejected flashes (the look until 2026-10-11)."),
+        ECVF_Default);
 
     constexpr double InteractionViewBlockCm = UFoundationProfile::BlockCm;
     constexpr uint8 WaterLayer = 3;
@@ -513,8 +518,26 @@ void UFoundationInteractionView::ShowNumber(const FVector& Location, const FStri
     Free->Life = .9;
 }
 
+int32 FoundationPlace::GetPreviewMode()
+{
+    return CVarPlacePreview.GetValueOnGameThread();
+}
+
+bool FoundationPlace::ShouldDrawPreview(int32 Mode, const FFoundationPreview& Preview)
+{
+    return Mode == 1 && Preview.bPlacement;
+}
+
+void UFoundationInteractionView::AddFlash(const FBox& Box, FLinearColor Color, double Life, bool bCross)
+{
+    Flashes.Add({Box, Color, 0, Life, bCross});
+    ++StartedFlashes;
+}
+
 void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Authority)
 {
+    // Placed and rejected flashes belong to the destination preview (foundation.Place.Preview 1); vanilla has neither.
+    const bool bPreviewFlashes = FoundationPlace::GetPreviewMode() == 1;
     const FVector Origin = Authority.World.OriginCm;
     for (const FFoundationEvent& Event : Authority.GetEvents())
     {
@@ -524,7 +547,7 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
         switch (Event.Kind)
         {
         case EFoundationEventKind::Placed:
-            Flashes.Add({Cell.ExpandBy(1), FLinearColor(1, 1, 1), 0, .15});
+            if (bPreviewFlashes) AddFlash(Cell.ExpandBy(1), FLinearColor(1, 1, 1), .15);
             break;
         case EFoundationEventKind::Broken:
         case EFoundationEventKind::Popped:
@@ -532,10 +555,10 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
                 Burst(Cell.GetCenter(), Authority.World.GetBlock(Event.State).Color, 10, 12, 260, uint32(Event.Serial));
             break;
         case EFoundationEventKind::Rejected:
-            Flashes.Add({Cell.ExpandBy(.5), FLinearColor(.95f, .15f, .1f), 0, .3, true});
+            if (bPreviewFlashes) AddFlash(Cell.ExpandBy(.5), FLinearColor(.95f, .15f, .1f), .3, true);
             break;
         case EFoundationEventKind::Interacted:
-            Flashes.Add({Cell.ExpandBy(2), FLinearColor(1, .85f, .2f), 0, .3});
+            AddFlash(Cell.ExpandBy(2), FLinearColor(1, .85f, .2f), .3);
             break;
         case EFoundationEventKind::Hit:
             if (const FFoundationTrainingTarget* Target = Authority.Targets.FindByPredicate(
@@ -683,7 +706,9 @@ void UFoundationInteractionView::DrawSelection(
         for (const FBox& Box : Outlines)
             DrawBox(Box.ExpandBy(.3), OutlineColor, .9f);
     bOutlineVisible = !Outlines.IsEmpty();
-    if (!Preview.bPlacement) return;
+    // The destination preview only with foundation.Place.Preview 1: vanilla shows the target's outline alone. The
+    // preview's data (Interaction.Preview) is kept either way: placement and the F3 line read it.
+    if (!FoundationPlace::ShouldDrawPreview(FoundationPlace::GetPreviewMode(), Preview)) return;
     // Destination preview: white when it would place, orange while only the player's body is in the
     // way, red otherwise. Never solid: the block appears only from the committed change. A valid placement
     // outlines the state it would place (a slab's half).
