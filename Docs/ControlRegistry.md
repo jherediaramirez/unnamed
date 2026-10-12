@@ -207,7 +207,7 @@ Observed 697 distinct controls across 33 source routes and Create tabs. Dynamic 
 | accessibility | accessibility..Scroll | Scroll | scrollbar | 0 | UI_ONLY |
 | accessibility | accessibility..Accessibility_Guide | Accessibility Guide | button | "Not applicable (command)" | UI_ONLY |
 | accessibility | accessibility..Done | Done | button | "Not applicable (command)" | UI_ONLY |
-| options | options.fov | FOV | range | 70 | PREFERENCE_SAVED_EFFECT_PENDING |
+| options | options.fov | FOV | range | 110 | PREFERENCE_SAVED_EFFECT_PENDING |
 | options | options..Online... | Online... | button | "Not applicable (command)" | UI_ONLY |
 | options | options..Skin_Customization... | Skin Customization... | button | "Not applicable (command)" | UI_ONLY |
 | options | options..Music___Sounds... | Music & Sounds... | button | "Not applicable (command)" | UI_ONLY |

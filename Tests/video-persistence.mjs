@@ -56,7 +56,7 @@ try {
   check('Restored GUI and blur affect presentation', await page.evaluate(()=>MenuPrototype.getState().gui.scale===2));
   await page.evaluate(()=>MenuPrototype.prepare('video'));
   check('Restored blur reaches rendered video background', await page.evaluate(()=>getComputedStyle(document.querySelector('#panorama')).filter==='blur(8px)'));
-  check('Unfinished settings remain session-only', await page.evaluate(()=>MenuPrototype.getState().settings.fov===70 && MenuPrototype.getState().settings.sound_master===1));
+  check('Unfinished settings remain session-only', await page.evaluate(()=>MenuPrototype.getState().settings.fov===110 && MenuPrototype.getState().settings.sound_master===1));
   await page.getByRole('button',{name:'Hard Reset',exact:true}).click();
   await page.getByRole('button',{name:'Hard Reset',exact:true}).click();
   await page.waitForFunction(()=>window.MenuVideo?.getState()?.settings.guiScale===0 && MenuPrototype.getState().screen==='main',null,{timeout:15000});

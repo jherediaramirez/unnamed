@@ -102,11 +102,11 @@ for(const [index,profile] of ['1280x720','1920x1080'].entries()){
       await prepare('video');await page.locator('#hard-reset').scrollIntoViewIfNeeded();await click('Hard Reset');await click('Cancel');
       check('Hard Reset Cancel preserves saved choices',(await state()).settings.fov===91);
       await click('Hard Reset');await page.getByRole('button',{name:'Hard Reset',exact:true}).click();
-      await page.waitForFunction(()=>window.MenuPreferences?.available()&&MenuPrototype.getState().screen==='main'&&MenuPreferences.getState().settings.fov===70&&window.MenuApplication?.enabled());
+      await page.waitForFunction(()=>window.MenuPreferences?.available()&&MenuPrototype.getState().screen==='main'&&MenuPreferences.getState().settings.fov===110&&window.MenuApplication?.enabled());
       const defaults=await state();
       check('Confirmed Reset restores all 101 defaults',Object.entries(schema.settings).every(([id,d])=>defaults.settings[id]===d.default));
       check('Confirmed Reset restores locale, packs and flags',defaults.language==='en_us'&&defaults.packs.length===0&&!defaults.skipWarning&&!defaults.telemetryOptInExtra);
-      check('Reset persists defaults',JSON.parse(fs.readFileSync(preferencesFile)).settings.fov===70);
+      check('Reset persists defaults',JSON.parse(fs.readFileSync(preferencesFile)).settings.fov===110);
       check('Reset preserves unrelated progress',fs.readFileSync(sentinel,'utf8')==='preserve-world-progress');
       await prepare('sounds');await page.evaluate(()=>MenuPrototype.freezeFrame());
       await page.screenshot({path:path.join(output,profile+'-preferences.png')});

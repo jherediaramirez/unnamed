@@ -144,12 +144,13 @@ bool FMenuPreferencePersistenceTest::RunTest(const FString& Parameters)
         ReadPreferences(Service(Path, false)->GetState())
             ->GetObjectField(TEXT("settings"))
             ->GetIntegerField(TEXT("fov")),
-        70);
+        110);
     const FString Sentinel = FPaths::GetPath(Path) / TEXT("unrelated-save.sav");
     FFileHelper::SaveStringToFile(TEXT("keep"), *Sentinel);
     TestTrue(TEXT("Explicit reset succeeds"), ReadPreferences(Reloaded->ResetPreferences())->GetBoolField(TEXT("ok")));
     TestEqual(TEXT("Reset persists defaults"),
-        ReadPreferences(Service(Path)->GetState())->GetObjectField(TEXT("settings"))->GetIntegerField(TEXT("fov")), 70);
+        ReadPreferences(Service(Path)->GetState())->GetObjectField(TEXT("settings"))->GetIntegerField(TEXT("fov")),
+        110);
     FFileHelper::LoadFileToString(SavedAfter, *Sentinel);
     TestEqual(TEXT("Unrelated save preserved"), SavedAfter, FString(TEXT("keep")));
     return true;
@@ -195,7 +196,7 @@ bool FMenuPreferenceFailureTest::RunTest(const FString& Parameters)
     const auto Rejected = ReadPreferences(Failed->ApplyChanges(TEXT("{\"settings\":{\"fov\":90}}")));
     TestFalse(TEXT("Unwritable destination never acknowledges saving"), Rejected->GetBoolField(TEXT("ok")));
     TestEqual(TEXT("Failed save retains accepted state"),
-        Rejected->GetObjectField(TEXT("settings"))->GetIntegerField(TEXT("fov")), 70);
+        Rejected->GetObjectField(TEXT("settings"))->GetIntegerField(TEXT("fov")), 110);
     FString Error;
     TestFalse(TEXT("Failed save prevents normal quit"), Failed->FlushForExit(Error));
     TestFalse(TEXT("Failure has useful error"), Error.IsEmpty());

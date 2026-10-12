@@ -44,6 +44,9 @@ bool FFoundationCoordinatesTest::RunTest(const FString&)
     TestEqual(TEXT("up negative pitch"), FoundationCoordinates::Pitch(30), -30.);
     TestTrue(TEXT("vertical70 at16:9"),
         FMath::IsNearlyEqual(FoundationCoordinates::HorizontalFov(70, 16. / 9.), 102.4478578, .0001));
+    // The new players' default (the wiki: 137.0 degrees horizontal at 16:9).
+    TestTrue(TEXT("vertical110 at16:9"),
+        FMath::IsNearlyEqual(FoundationCoordinates::HorizontalFov(110, 16. / 9.), 137.0043386, .0001));
     return true;
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMovementTest, "Unnamed.Foundation.Movement",

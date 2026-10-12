@@ -29,4 +29,7 @@ export function apply(patch) {
   patch.text("consent.setAttribute('aria-label',tr('telemetry_info.opt_in.description'))", "consent.dataset.preferenceFlag='telemetryOptInExtra';consent.setAttribute('aria-label',tr('telemetry_info.opt_in.description'))");
   patch.text("text(tr('options.languageAccuracyWarning'),", "text('Language choice is remembered; translations are planned.',");
   patch.text("text(tr('pack.dropInfo'),", "text(data?tr('pack.dropInfo'):'Pack order is remembered; appearance changes are planned.',");
+
+  // New players start at the slider's maximum, "Quake Pro" (Jesus, 2026-10-11); saved profiles keep their value.
+  patch.data(data => { data.definitions.fov.default = 110; });
 }

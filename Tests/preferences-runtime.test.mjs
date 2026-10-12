@@ -104,7 +104,13 @@ test('Quit drains accepted choices and reset explicitly restores defaults',async
   assert.equal(f.api.getState().settings.fov,84);assert.equal(f.api.getState().skipWarning,true);
   assert.equal(f.api.available(),false);f.api.cancelExit();
   await f.api.reset();
-  assert.equal(f.api.getState().settings.fov,70);assert.equal(f.api.getState().skipWarning,false);
+  assert.equal(f.api.getState().settings.fov,110);assert.equal(f.api.getState().skipWarning,false);
+});
+
+test('New players start at FOV 110, the slider maximum (Preferences patch)',()=>{
+  assert.deepEqual(schema.settings.fov,{default:110,min:30,max:110,step:1});
+  const page=fs.readFileSync(new URL('../Content/Menu/Web/index.html',import.meta.url),'utf8');
+  assert.match(page,/"fov":\{"key":"options\.fov","label":"FOV","kind":"slider","min":30,"max":110,"step":1,"default":110,/);
 });
 
 test('timed out request does not stop later saves or accept a late reply',async()=>{

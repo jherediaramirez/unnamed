@@ -38,7 +38,7 @@ Store underlying values and stable IDs, not translated labels, formatted percent
 
 | Control and stable ID | Default | Allowed stored value | Recommendation |
 |---|---|---|---|
-| FOV `fov` | 70 | 30 to 110; step 1 | Save desired degrees; define the future camera FOV convention before applying. |
+| FOV `fov` | 110 (70 until 2026-10-11, when new players moved to 110 through the Preferences patch) | 30 to 110; step 1 | Save desired degrees; define the future camera FOV convention before applying. |
 
 ### Video
 

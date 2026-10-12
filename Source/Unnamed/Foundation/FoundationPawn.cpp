@@ -372,7 +372,7 @@ void AFoundationPawn::Tick(float DeltaSeconds)
     int32 ViewportWidth = 0, ViewportHeight = 0;
     PlayerController->GetViewportSize(ViewportWidth, ViewportHeight);
     const double FovEffect = ReadNumber(TEXT("fovEffectScale"), 1);
-    const double VerticalFov = ReadNumber(TEXT("fov"), 70) *
+    const double VerticalFov = ReadNumber(TEXT("fov"), 110) *
         (1. + (FMath::Lerp(Simulation.PreviousFovMultiplier, Simulation.FovMultiplier, Alpha) - 1.) * FovEffect);
     Camera->SetFieldOfView(FoundationCoordinates::HorizontalFov(
         VerticalFov, ViewportHeight > 0 ? double(ViewportWidth) / ViewportHeight : 16. / 9.));

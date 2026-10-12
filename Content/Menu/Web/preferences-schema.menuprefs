@@ -388,7 +388,7 @@
       ]
     },
     "fov": {
-      "default": 70,
+      "default": 110,
       "min": 30,
       "max": 110,
       "step": 1
