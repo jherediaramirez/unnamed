@@ -139,6 +139,17 @@ test('a shown page (cold open) or one revealed while painting shows itself once 
   }
 });
 
+test('with &bg=world the page drops the panorama for the in-world background and is ready without it', async () => {
+  const f = pauseFixture({hash: '#pause&bg=world'});
+  assert.ok(f.classes.has('pause-world') && f.classes.has('pause-hidden'));
+  const css = f.styles.join('');
+  assert.ok(css.includes('html.pause-world #panorama') && css.includes('display:none'));
+  assert.ok(css.includes('textures/gui/inworld_menu_background.png') && css.includes('high_contrast/assets/minecraft/textures/gui/inworld_menu_background.png'));
+  for (let i = 0; i < 3; i++) await f.frame();
+  assert.equal(f.calls.filter(c => c === 'ready').length, 1);
+  assert.ok(!pauseFixture().classes.has('pause-world'));
+});
+
 test('without #pause a bound page never hides or reports ready (today\'s page)', async () => {
   const f = pauseFixture({hash: ''});
   f.context.heldPanoramaDrawn = true;

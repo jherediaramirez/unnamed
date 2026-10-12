@@ -199,6 +199,34 @@ void UFoundationRuntimeProbe::AddPauseCases()
         AddCase(TEXT("pause gap"), 2., View, [] {});
         Sequence(TEXT("C"), -5, 45, Escape);
         AddCase(TEXT("pause C resume"), .5, [this] { Controller->ResumeFoundation(); }, [] {});
+        // Named views for the look: the play view, then the settled menu at Menu Background Blur 5 and 0 (each shot
+        // is taken at the end of its case, and a flush case follows so nothing changes in its frame).
+        auto Shot = [Base](const TCHAR* Name)
+        { FScreenshotRequest::RequestScreenshot(Base + TEXT("-pause-view-") + Name + TEXT(".png"), true, false); };
+        auto Flush = [this] { AddCase(TEXT("pause view flush"), .3, [] {}, [] {}); };
+        AddCase(TEXT("pause view play"), 1., View, [Shot] { Shot(TEXT("play")); });
+        Flush();
+        for (int32 Blur : {5, 0})
+        {
+            const FString Value = FString::Printf(TEXT("{\"value\":%d}"), Blur);
+            AddCase(
+                TEXT("pause view menu"), 2.5,
+                [Host, Escape, Value]
+                {
+                    Host->GetVideoSettings()->ApplySetting(TEXT("menuBackgroundBlurriness"), Value);
+                    Escape();
+                },
+                [Shot, Blur] { Shot(Blur ? TEXT("menu-blur5") : TEXT("menu-blur0")); });
+            Flush();
+            AddCase(
+                TEXT("pause view resume"), .5,
+                [this, Host]
+                {
+                    Host->GetVideoSettings()->ApplySetting(TEXT("menuBackgroundBlurriness"), TEXT("{\"value\":5}"));
+                    Controller->ResumeFoundation();
+                },
+                [] {});
+        }
     }
     else
     {

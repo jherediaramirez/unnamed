@@ -18,6 +18,7 @@
 #include "Misc/Parse.h"
 #include "Misc/Paths.h"
 #include "SWebBrowser.h"
+#include "Widgets/Layout/SBackgroundBlur.h"
 
 UMenuBrowserHost::UMenuBrowserHost()
 {
@@ -53,9 +54,41 @@ void UMenuBrowserHost::SetPauseMode(int32 Mode)
     PauseMode = FMath::Clamp(Mode, 0, 2);
 }
 
-FString UMenuBrowserHost::PauseMenuUrl(const FString& Base, int32 Mode)
+void UMenuBrowserHost::SetPauseBackground(int32 Background)
 {
-    return Mode == 1 || Mode == 2 ? Base + TEXT("#pause") : Base;
+    PauseBackground = FMath::Clamp(Background, 0, 1);
+}
+
+FString UMenuBrowserHost::PauseMenuUrl(const FString& Base, int32 Mode, int32 Background)
+{
+    if (Mode != 1 && Mode != 2) return Base;
+    return Base + (Background == 1 ? TEXT("#pause&bg=world") : TEXT("#pause"));
+}
+
+float UMenuBrowserHost::PauseBlurStrength(int32 Setting, float ViewportHeight)
+{
+    return FMath::Clamp(Setting, 0, 10) * FMath::Max(ViewportHeight, 1.f) / 1080.f;
+}
+
+float UMenuBrowserHost::GetBlurStrength() const
+{
+    FVector2D Size(1080, 1080);
+    if (GEngine && GEngine->GameViewport) GEngine->GameViewport->GetViewportSize(Size);
+    return PauseBlurStrength(VideoSettings ? VideoSettings->GetBackgroundBlur() : 0, Size.Y);
+}
+
+void UMenuBrowserHost::ShowBlur(bool bShow)
+{
+    if (bShow && PauseMode != 0 && PauseBackground == 1 && !Blur.IsValid() && GEngine && GEngine->GameViewport)
+    {
+        Blur = SNew(SBackgroundBlur).BlurStrength(GetBlurStrength());
+        GEngine->GameViewport->AddViewportWidgetContent(Blur.ToSharedRef(), 99);
+    }
+    else if (!bShow && Blur.IsValid())
+    {
+        if (GEngine && GEngine->GameViewport) GEngine->GameViewport->RemoveViewportWidgetContent(Blur.ToSharedRef());
+        Blur.Reset();
+    }
 }
 
 FString UMenuBrowserHost::GetMenuUrl()
@@ -143,7 +176,7 @@ void UMenuBrowserHost::Prewarm()
     if (PauseMode != 1 || Browser.IsValid() || !Player || !Player->IsLocalController() || !GEngine ||
         !GEngine->GameViewport || !GEngine->GameViewport->GetGameViewportWidget().IsValid())
         return;
-    const FString MenuURL = PauseMenuUrl(GetMenuUrl(), PauseMode);
+    const FString MenuURL = PauseMenuUrl(GetMenuUrl(), PauseMode, PauseBackground);
     StartSeconds = FPlatformTime::Seconds();
     bPageReady = false;
     PageReadySeconds = PageShownSeconds = 0;
@@ -167,6 +200,7 @@ void UMenuBrowserHost::Show()
         StartSeconds = FPlatformTime::Seconds();
         PageShownSeconds = 0;
         Browser->SetVisibility(EVisibility::Visible);
+        ShowBlur(true);
         Player->GetLocalPlayer()->GetSubsystem<UUnnamedInputSubsystem>()->SetGameplayInputEnabled(false);
         FocusBrowser(*Player);
         // The page shows itself at once, or as soon as it has painted if it is still loading (HandlePageReady).
@@ -175,11 +209,12 @@ void UMenuBrowserHost::Show()
         return;
     }
     if (Browser.IsValid() || !Player || !Player->IsLocalController() || !GEngine || !GEngine->GameViewport) return;
-    const FString MenuURL = PauseMenuUrl(GetMenuUrl(), PauseMode);
+    const FString MenuURL = PauseMenuUrl(GetMenuUrl(), PauseMode, PauseBackground);
     StartSeconds = FPlatformTime::Seconds();
     bPageReady = false;
     PageReadySeconds = PageShownSeconds = 0;
     CreateBrowser(MenuURL, PauseMode == 2);
+    ShowBlur(true);
     BindServices(*Player, true);
     FocusBrowser(*Player);
     UE_LOG(LogUnnamedMenu, Log, TEXT("Offline menu: %s"), *MenuURL);
@@ -194,6 +229,7 @@ void UMenuBrowserHost::Hide()
     }
     if (!Browser.IsValid()) return;
     bShown = false;
+    ShowBlur(false);
     // A page still painting stays in the layout (invisible) to finish; a painted one collapses and stops painting.
     Browser->SetVisibility(bPageReady ? EVisibility::Collapsed : EVisibility::HitTestInvisible);
 }
@@ -202,6 +238,7 @@ void UMenuBrowserHost::DestroyBrowser()
 {
     bShown = false;
     bPageReady = false;
+    ShowBlur(false);
     if (!Browser.IsValid()) return;
     if (GEngine && GEngine->GameViewport) GEngine->GameViewport->RemoveViewportWidgetContent(Browser.ToSharedRef());
     if (VideoSettings) Browser->UnbindUObject(TEXT("menuvideo"), VideoSettings, true);
@@ -241,6 +278,8 @@ void UMenuBrowserHost::TickComponent(
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
     if (VideoSettings) VideoSettings->Tick();
+    // Menu Background Blur changed in Options while the in-world menu is open.
+    if (Blur.IsValid()) Blur->SetBlurStrength(GetBlurStrength());
     if (Application) Application->Tick();
 }
 

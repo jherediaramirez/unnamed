@@ -5,6 +5,7 @@
 #include "MenuBrowserHost.generated.h"
 
 class APlayerController;
+class SBackgroundBlur;
 class SWebBrowser;
 class UMenuApplication;
 class UMenuInputBridge;
@@ -27,6 +28,10 @@ public:
     // but transparent until its pause screen has painted. Modes 1 and 2 open the page as PauseMenuUrl(Base, Mode).
     void SetPauseMode(int32 Mode);
     int32 GetPauseMode() const { return PauseMode; }
+    // foundation.Pause.Background in modes 1 and 2: 0 the page's own panorama; 1 the world behind the page
+    // (#pause&bg=world), blurred by a Slate background blur under the browser (Z 99) while the menu is shown.
+    void SetPauseBackground(int32 Background);
+    int32 GetPauseBackground() const { return PauseBackground; }
     // Mode 1: creates the browser once, on the pause screen, transparent and HitTestInvisible; it collapses when the
     // page reports its pause screen painted (HandlePageReady). Binds every service but changes no input.
     void Prewarm();
@@ -43,8 +48,11 @@ public:
     // The page's browser while it exists (the pause probe reads IsLoaded).
     TSharedPtr<SWebBrowser> GetBrowser() const { return Browser; }
 
-    // The page in modes 1 and 2: the base URL at 0, base#pause at 1 and 2.
-    static FString PauseMenuUrl(const FString& Base, int32 Mode);
+    // The page in modes 1 and 2: the base URL at 0, base#pause at 1 and 2, plus &bg=world for Background 1.
+    static FString PauseMenuUrl(const FString& Base, int32 Mode, int32 Background = 0);
+    // The world-background blur's Slate strength: Menu Background Blur (0-10) x viewport height / 1080. A chosen
+    // mapping: how it compares with vanilla's blur is unmeasured.
+    static float PauseBlurStrength(int32 Setting, float ViewportHeight);
 
     // From the page (UFoundationMenuBridge): its pause screen has painted. Collapses a pre-warmed browser that is not
     // shown; when shown, also calls the page's reveal(). Returns IsOpen(), so a shown page reveals itself either way.
@@ -82,9 +90,14 @@ private:
     void FocusBrowser(APlayerController& Player);
     // Removes the browser and its bindings and releases the services (Hide in modes 0 and 2, EndPlay).
     void DestroyBrowser();
+    // Adds (or removes) the world-background blur under the browser; Background 1 in modes 1 and 2 only.
+    void ShowBlur(bool bShow);
+    float GetBlurStrength() const;
 
     TSharedPtr<SWebBrowser> Browser;
+    TSharedPtr<SBackgroundBlur> Blur;
     int32 PauseMode = 0;
+    int32 PauseBackground = 0;
     bool bShown = false;
     bool bPageReady = false;
     double StartSeconds = 0, PageReadySeconds = 0, PageShownSeconds = 0;

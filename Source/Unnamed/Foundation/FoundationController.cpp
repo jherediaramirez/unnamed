@@ -34,6 +34,13 @@ namespace
              "shown at once; 2 a fresh browser per ESC that stays transparent until its pause screen has painted "
              "(diagnostic). Read when a world starts: change it, then reload the world."),
         ECVF_Default);
+    TAutoConsoleVariable<int32> CVarPauseBackground(TEXT("foundation.Pause.Background"), 1,
+        TEXT(
+            "Behind the ESC menu (foundation.Pause.Menu 1 and 2): 0 the title screen's blurred panorama (until "
+            "2026-10-12); 1 the world, blurred by Menu Background Blur (setting x viewport height / 1080 as Slate blur "
+            "strength; vanilla's strength unmeasured) and darkened by inworld_menu_background, as vanilla. Read when a "
+            "world starts."),
+        ECVF_Default);
 }
 
 AFoundationController::AFoundationController()
@@ -76,8 +83,10 @@ void AFoundationController::BeginPlay()
     MenuHost->AddBridge(TEXT("foundationmenu"), MenuBridge);
     MenuHost->GetVideoSettings();
     MenuHost->SetPauseMode(CVarPauseMenu.GetValueOnGameThread());
-    UE_LOG(LogUnnamedFoundation, Display, TEXT("Pause menu mode %d (foundation.Pause.Menu, read at BeginPlay)"),
-        MenuHost->GetPauseMode());
+    MenuHost->SetPauseBackground(CVarPauseBackground.GetValueOnGameThread());
+    UE_LOG(LogUnnamedFoundation, Display,
+        TEXT("Pause menu mode %d, background %d (foundation.Pause.Menu and .Background, read at BeginPlay)"),
+        MenuHost->GetPauseMode(), MenuHost->GetPauseBackground());
     ResumeFoundation();
     // Mode 1: the pause menu loads now, hidden, so ESC shows it at once.
     MenuHost->Prewarm();

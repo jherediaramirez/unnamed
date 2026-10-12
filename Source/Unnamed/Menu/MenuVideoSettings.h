@@ -26,6 +26,8 @@ public:
 
     // Shared read-only native view; zero is Auto. HUD and menu resolve their own minimum viewport.
     int32 GetGuiScale() const { return GuiScale; }
+    // Menu Background Blur, 0-10 (the in-world pause menu's blur strength).
+    int32 GetBackgroundBlur() const { return BackgroundBlur; }
 
     bool IsReadyForExit() const { return !bWaitingForWindow && !bTransitionPending; }
 

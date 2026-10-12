@@ -2,7 +2,9 @@
 // The native "foundationmenu" bridge exists only there; on the menu map this module stays idle.
 // A world's #pause page (foundation.Pause.Menu 1 and 2) starts on the pause screen, invisible and transparent, and
 // reports MenuReady once that screen and the panorama have painted; native answers whether the menu is shown, so a
-// pre-warmed page stays hidden until reveal() and a shown one shows itself. Without #pause nothing here changes.
+// pre-warmed page stays hidden until reveal() and a shown one shows itself. With &bg=world (foundation.Pause.Background
+// 1) the world is behind it: no panorama, a transparent page and vanilla's in-world menu background; the game blurs the
+// world under the browser. Without #pause nothing here changes.
 const FoundationMenu = (() => {
   const client = MenuBridge.client('foundationmenu', {service: 'Foundation', unavailable: 'The Foundation lab is not running.'});
   let inLab = false, connecting = null, ready = false, revealPending = false;
@@ -11,7 +13,9 @@ const FoundationMenu = (() => {
     ? client.call(method, args).catch(error => console.warn('Foundation menu: ' + error.message))
     : Promise.resolve();
   const connect = () => connecting ??= client.connect();
-  const pausePage = (window.location?.hash || '').slice(1).split('&').includes('pause');
+  const hash = (window.location?.hash || '').slice(1).split('&');
+  const pausePage = hash.includes('pause');
+  const worldBackground = pausePage && hash.includes('bg=world');
 
   async function resume(returnToMenu = false) {
     await MenuStores.settled();
@@ -51,11 +55,12 @@ const FoundationMenu = (() => {
     ready = true;
     if (reply?.shown || revealPending) show(MenuStores.reload());
   }
-  // The pause screen and the panorama (or its fallback) have painted, then two more frames.
+  // The pause screen and the panorama (or its fallback; none with the world behind) have painted, then two more frames.
   function waitForPaint() {
     let painted = 0;
     const step = () => {
-      if (current.name === 'foundationPause' && (heldPanoramaDrawn || panoramaFallback) && ++painted >= 3) return void markReady();
+      const background = worldBackground || heldPanoramaDrawn || panoramaFallback;
+      if (current.name === 'foundationPause' && background && ++painted >= 3) return void markReady();
       requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
@@ -78,9 +83,15 @@ const FoundationMenu = (() => {
     stack = [];
     const style = document.createElement('style');
     style.textContent = 'html.pause-hidden,html.pause-hidden *{visibility:hidden!important}' +
-      'html.pause-hidden,html.pause-hidden body{background:transparent!important}';
+      'html.pause-hidden,html.pause-hidden body{background:transparent!important}' +
+      // The world behind: in-world screens use inworld_menu_background (24w11a), following the page's pack switch.
+      'html.pause-world,html.pause-world body{background:transparent!important}' +
+      'html.pause-world #panorama,html.pause-world #panorama-overlay,html.pause-world #fallback{display:none!important}' +
+      "html.pause-world #surface{background-image:url('assets/minecraft/textures/gui/inworld_menu_background.png')!important}" +
+      "html.pause-world .high-contrast #surface{background-image:url('assets/high_contrast/assets/minecraft/textures/gui/inworld_menu_background.png')!important}";
     document.head.appendChild(style);
     document.documentElement.classList.add('pause-hidden');
+    if (worldBackground) document.documentElement.classList.add('pause-world');
     waitForPaint();
   }
 
