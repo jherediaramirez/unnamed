@@ -3,6 +3,7 @@
 #include "Foundation/FoundationBlockImport.h"
 #include "Foundation/FoundationBreakAssets.h"
 #include "Foundation/FoundationBreakEffects.h"
+#include "HAL/IConsoleManager.h"
 #include "Misc/Paths.h"
 #include "Sound/SoundWave.h"
 
@@ -661,6 +662,48 @@ bool FFoundationBreakSoundsAssetTest::RunTest(const FString&)
     const FFoundationBreakSoundEvent* StoneHit = Event(Stone->HitEvent);
     if (TestNotNull(TEXT("stone hit event"), StoneHit))
         TestTrue(TEXT("stone hit event name"), StoneHit->Name.ToString() == TEXT("block.stone.hit"));
+    // Place sounds (2026-10-11): the block's place event; sounds.json gives stone's the break's files.
+    const FFoundationBreakSoundEvent* StonePlace = Event(Stone->PlaceEvent);
+    if (TestNotNull(TEXT("stone place event"), StonePlace))
+    {
+        TestTrue(TEXT("stone place event name"), StonePlace->Name.ToString() == TEXT("block.stone.place"));
+        if (BreakCheckInt(*this, TEXT("stone place files"), StonePlace->Files.Num(), 4))
+            for (int32 Index = 0; Index < 4; ++Index)
+                TestTrue(TEXT("stone place file name"),
+                    StonePlace->Files[Index].Name.ToString() == FString::Printf(TEXT("dig/stone%d"), Index + 1));
+    }
+    // Glass places with stone's files under its own event.
+    if (const FFoundationBreakBlock* Glass = BreakFindAsset(*Assets, TEXT("glass")))
+    {
+        const FFoundationBreakSoundEvent* GlassPlace = Event(Glass->PlaceEvent);
+        if (TestNotNull(TEXT("glass place event"), GlassPlace))
+            TestTrue(TEXT("glass place event name"), GlassPlace->Name.ToString() == TEXT("block.glass.place"));
+    }
+    else
+        AddError(TEXT("glass is not in DA_BreakAssets"));
+    // The block reference lacks deepslate's place files: its place plays its break event.
+    if (const FFoundationBreakBlock* Deepslate = BreakFindAsset(*Assets, TEXT("deepslate")))
+        BreakCheckInt(
+            *this, TEXT("deepslate places with its break event"), Deepslate->PlaceEvent, Deepslate->BreakEvent);
+    else
+        AddError(TEXT("deepslate is not in DA_BreakAssets"));
+    // Every block: its own place event (550), its break event for want of files (66), or silent (water, lava's 2).
+    int32 OwnPlace = 0, BreakPlace = 0, SilentPlace = 0;
+    for (const FFoundationBreakBlock& Block : Assets->Blocks)
+    {
+        const FFoundationBreakSoundEvent* Place = Event(Block.PlaceEvent);
+        OwnPlace += Place && Place->Name.ToString().EndsWith(TEXT(".place"));
+        BreakPlace += Place && Block.PlaceEvent == Block.BreakEvent;
+        SilentPlace += Block.PlaceEvent == INDEX_NONE;
+    }
+    BreakCheckInt(*this, TEXT("blocks with their own place event"), OwnPlace, 550);
+    BreakCheckInt(*this, TEXT("blocks placing with their break event"), BreakPlace, 66);
+    BreakCheckInt(*this, TEXT("silent places"), SilentPlace, 2);
+    // Vanilla plays a sound on every place: on by default (Jesus, 2026-10-11); 0 keeps the old silence.
+    const IConsoleVariable* PlaceSound = IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Place.Sound"));
+    if (TestNotNull(TEXT("foundation.Place.Sound exists"), PlaceSound) &&
+        (PlaceSound->GetFlags() & ECVF_SetByMask) == ECVF_SetByConstructor)
+        BreakCheckInt(*this, TEXT("place sounds on by default"), PlaceSound->GetInt(), 1);
 
     if (const FFoundationBreakBlock* Gold = BreakFindAsset(*Assets, TEXT("gold_block")))
     {
@@ -676,6 +719,7 @@ bool FFoundationBreakSoundsAssetTest::RunTest(const FString&)
     {
         BreakCheckInt(*this, TEXT("water break event"), Water->BreakEvent, INDEX_NONE);
         BreakCheckInt(*this, TEXT("water hit event"), Water->HitEvent, INDEX_NONE);
+        BreakCheckInt(*this, TEXT("water place event"), Water->PlaceEvent, INDEX_NONE);
     }
     else
         AddError(TEXT("water is not in DA_BreakAssets"));

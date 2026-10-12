@@ -330,9 +330,26 @@ def build_tables():
         tinted_blocks += record["particle_tinted"]
         blocks.append(record)
 
-    needed = sorted({f["name"] for e in events for f in e["files"]})
     disk = sorted(p.relative_to(ASSETS / "sounds").with_suffix("").as_posix()
                   for p in (ASSETS / "sounds").rglob("*.ogg"))
+    # Place sounds: a place plays the block's place event, at the break's volume and pitch (minecraft.wiki's Sounds
+    # tables, e.g. Stone: block.stone.place 1.0 / 0.8 as block.stone.break). The reference carries only the files of
+    # the break and hit events, so a place event with a file it lacks plays the block's break event instead (66 blocks
+    # in 26.3, such as deepslate and amethyst; Docs/KnownDifferences.md). Indexed after the break and hit events so
+    # their indices stay as they were.
+    on_disk = set(disk)
+    place_fallbacks = []
+    for record in blocks:
+        name = rows[record["id"]]["place"]
+        names = [] if name == "intentionally_empty" else [
+            entry if isinstance(entry, str) else entry.get("name") for entry in sounds[name]["sounds"]]
+        if names and all(n in on_disk for n in names):
+            record["place_event"] = event(name)
+        else:
+            record["place_event"] = record["break_event"]
+            if names:
+                place_fallbacks.append(record["id"])
+    needed = sorted({f["name"] for e in events for f in e["files"]})
     if needed != disk:
         raise ValueError("needed sounds and .ogg files on disk differ: %d only needed %s, %d only on disk %s" % (
             len(set(needed) - set(disk)), sorted(set(needed) - set(disk))[:5],
@@ -341,7 +358,7 @@ def build_tables():
     for name in needed:
         total += len(_read(ASSETS / "sounds" / (name + ".ogg")))
     return {"events": events, "blocks": blocks, "sound_files": needed, "sound_bytes": total, "forms": sorted(forms),
-            "silent_blocks": silent, "tinted_blocks": tinted_blocks}
+            "silent_blocks": silent, "tinted_blocks": tinted_blocks, "place_fallbacks": place_fallbacks}
 
 
 def source_digest():
@@ -401,6 +418,9 @@ def main():
         len(t["blocks"]), len(t["events"]), len(t["sound_files"]), t["sound_bytes"], t["silent_blocks"], overrides,
         t["tinted_blocks"]))
     print("entry forms used: " + ", ".join(t["forms"]))
+    print("place events: %d blocks play their own, %d play their break event (files not in the reference): %s" % (
+        sum(b["place_event"] >= 0 for b in t["blocks"]) - len(t["place_fallbacks"]), len(t["place_fallbacks"]),
+        ", ".join(t["place_fallbacks"])))
     print("crack texels per stage: %s; plain greys: %s" % (t["crack_texels"], t["plain_greys"]))
     print("tint flags: " + ", ".join("%s=%s" % (k, by_id[k]["particle_tinted"]) for k in EXPECTED_TINT))
     print("digest " + t["digest"])

@@ -49,6 +49,10 @@ struct FFoundationBreakBlock
     int32 BreakEvent = INDEX_NONE;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Breaking")
     int32 HitEvent = INDEX_NONE;
+    // The place event (block_sounds.csv's place). A block whose place files the block reference lacks has its break
+    // event here instead (66 blocks in 26.3, such as deepslate; BreakImportData.py).
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Breaking")
+    int32 PlaceEvent = INDEX_NONE;
     // The sound type's own volume and pitch (metal's pitch is 1.5).
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Breaking")
     float Volume = 1;

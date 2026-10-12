@@ -42,6 +42,9 @@ namespace FoundationBreak
         // 0 the view's swing, 1 a 6-tick swing with hits every 4 steps, 2 hits on each swing's contact tick.
         int32 Swing = 0;
         bool bPop = false;
+        // foundation.Place.Sound: 0 silent, 1 the placed block's place sound (its break's volume and pitch, as
+        // vanilla).
+        int32 PlaceSound = 0;
 
         bool AnyOn() const;
     };
@@ -180,6 +183,7 @@ namespace FoundationBreak
         float Volume = 0, Pitch = 0;
         FVector Location = FVector::ZeroVector;
         bool bHit = false;
+        bool bPlace = false;
     };
 }
 
@@ -210,6 +214,8 @@ public:
     // A Broken or Popped event: particles, sound and pop. True when the particles can draw, so they replace the view's
     // cube burst.
     bool OnBlockRemoved(const FFoundationAuthority& Authority, const FFoundationEvent& Event);
+    // A Placed event: the placed block's place sound (foundation.Place.Sound).
+    void OnBlockPlaced(const FFoundationAuthority& Authority, const FFoundationEvent& Event);
     // The held item's swing (0-1, today's pose curve sin(phase x pi)) from the swing clock, when Swing is on; false
     // keeps the view's own swing.
     bool GetSwing(double& OutSwing) const;
@@ -256,8 +262,9 @@ private:
         const FFoundationAuthority& Authority, FFoundationBlockState State, float& OutLayer, float& OutTint) const;
     const FFoundationBreakBlock* FindBreakBlock(
         const FFoundationAuthority& Authority, FFoundationBlockState State) const;
-    void PlaySound(
-        const FFoundationAuthority& Authority, FFoundationBlockState State, const FVector& Location, bool bHit);
+    // A block's break, hit or place event (bPlace wins over bHit), logged and played at Location.
+    void PlaySound(const FFoundationAuthority& Authority, FFoundationBlockState State, const FVector& Location,
+        bool bHit, bool bPlace = false);
     void Spawn(const FoundationBreak::FParticleSpawn& Spawn, float Layer, float Tint);
     void UpdateCracks(const FFoundationAuthority& Authority, const FFoundationInteraction& Mining);
     void HideCracks();

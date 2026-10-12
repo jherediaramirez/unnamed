@@ -331,8 +331,8 @@ def fill(asset, cracks, waves, attenuation, concurrency):
     for block in data["blocks"]:
         entry = unreal.FoundationBreakBlock()
         entry.set_editor_property("id", block["id"])
-        for key in ("break_event", "hit_event", "volume", "pitch", "particle", "particle_tinted", "override_states",
-                    "override_particles", "override_tinted"):
+        for key in ("break_event", "hit_event", "place_event", "volume", "pitch", "particle", "particle_tinted",
+                    "override_states", "override_particles", "override_tinted"):
             entry.set_editor_property(key, block[key])
         blocks.append(entry)
     asset.set_editor_property("source_sha256", digest)
@@ -390,6 +390,7 @@ def verify(asset):
         same = (str(entry.get_editor_property("id")) == block["id"] and
                 entry.get_editor_property("break_event") == block["break_event"] and
                 entry.get_editor_property("hit_event") == block["hit_event"] and
+                entry.get_editor_property("place_event") == block["place_event"] and
                 close(entry.get_editor_property("volume"), block["volume"]) and
                 close(entry.get_editor_property("pitch"), block["pitch"]) and
                 str(entry.get_editor_property("particle")) == block["particle"] and

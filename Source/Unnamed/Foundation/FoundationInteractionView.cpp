@@ -548,6 +548,7 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
         {
         case EFoundationEventKind::Placed:
             if (bPreviewFlashes) AddFlash(Cell.ExpandBy(1), FLinearColor(1, 1, 1), .15);
+            if (BreakEffects) BreakEffects->OnBlockPlaced(Authority, Event);
             break;
         case EFoundationEventKind::Broken:
         case EFoundationEventKind::Popped:

@@ -52,6 +52,10 @@ namespace
         ECVF_Default);
     TAutoConsoleVariable<bool> CVarBreakPop(
         TEXT("foundation.Break.Pop"), true, TEXT("1 shrinks a broken block away over 80 ms."), ECVF_Default);
+    TAutoConsoleVariable<int32> CVarPlaceSound(TEXT("foundation.Place.Sound"), 1,
+        TEXT("Place sounds: 0 silent (until 2026-10-11), 1 the placed block's place sound at its break's volume and "
+             "pitch, as vanilla (blocks whose place files the block reference lacks play their break sound)."),
+        ECVF_Default);
 
     // The box of Boxes holding a point, or null.
     const FBox* BreakFindBox(const TArray<FBox>& Boxes, const FVector& Point)
@@ -67,7 +71,7 @@ namespace FoundationBreak
     bool FSwitches::AnyOn() const
     {
         return Outline != 0 || Cracks != 0 || bCrackSmooth || Particles != 0 || bParticleCollision || bParticleSpray ||
-            Sounds != 0 || Swing != 0 || bPop;
+            Sounds != 0 || Swing != 0 || bPop || PlaceSound != 0;
     }
 
     FSwitches ReadSwitches()
@@ -82,6 +86,7 @@ namespace FoundationBreak
         Switches.Sounds = CVarBreakSounds.GetValueOnGameThread();
         Switches.Swing = CVarBreakSwing.GetValueOnGameThread();
         Switches.bPop = CVarBreakPop.GetValueOnGameThread();
+        Switches.PlaceSound = CVarPlaceSound.GetValueOnGameThread();
         return Switches;
     }
 
@@ -905,11 +910,21 @@ void FFoundationBreakEffects::GetParticleLook(
     if (bTinted && Color.A != 0) OutTint = float(uint32(Color.R) << 16 | uint32(Color.G) << 8 | Color.B);
 }
 
+void FFoundationBreakEffects::OnBlockPlaced(const FFoundationAuthority& Authority, const FFoundationEvent& Event)
+{
+    if (Switches.PlaceSound == 0 || !Assets) return;
+    PlaySound(
+        Authority, Event.State, FoundationGrid::CellBox(Event.Cell, Authority.World.OriginCm).GetCenter(), false, true);
+}
+
 void FFoundationBreakEffects::PlaySound(
-    const FFoundationAuthority& Authority, FFoundationBlockState State, const FVector& Location, bool bHit)
+    const FFoundationAuthority& Authority, FFoundationBlockState State, const FVector& Location, bool bHit, bool bPlace)
 {
     const FFoundationBreakBlock* Block = FindBreakBlock(Authority, State);
-    const int32 EventIndex = Block ? (bHit ? Block->HitEvent : Block->BreakEvent) : INDEX_NONE;
+    const int32 EventIndex = !Block ? INDEX_NONE
+        : bPlace                    ? Block->PlaceEvent
+        : bHit                      ? Block->HitEvent
+                                    : Block->BreakEvent;
     // INDEX_NONE is silent (water's intentionally_empty).
     if (!Block || !Assets->Events.IsValidIndex(EventIndex)) return;
     const FFoundationBreakSoundEvent& Event = Assets->Events[EventIndex];
@@ -926,6 +941,7 @@ void FFoundationBreakEffects::PlaySound(
     Entry.Pitch = Play.Pitch;
     Entry.Location = Location;
     Entry.bHit = bHit;
+    Entry.bPlace = bPlace;
     SoundLog.Add(Entry);
     // Past the cap the oldest half goes in one RemoveAt, so the shift is amortised over many sounds.
     if (SoundLog.Num() > MaxSoundLog) SoundLog.RemoveAt(0, SoundLog.Num() / 2);

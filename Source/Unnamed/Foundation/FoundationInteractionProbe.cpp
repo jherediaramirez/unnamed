@@ -1,4 +1,5 @@
 #include "Foundation/FoundationRuntimeProbe.h"
+#include "Foundation/FoundationBreakEffects.h"
 #include "Foundation/FoundationController.h"
 #include "Foundation/FoundationHud.h"
 #include "Foundation/FoundationInputRouter.h"
@@ -277,17 +278,21 @@ void UFoundationRuntimeProbe::AddInteractionCases()
     // 3. One press places one block where the preview showed it; the press-to-commit time is measured. The placed
     // flash and the destination box show only with foundation.Place.Preview 1 (vanilla: the outline alone).
     const TSharedRef<int32> FlashesAtPress = MakeShared<int32>(0);
+    // The place sound (foundation.Place.Sound): the world time of the press (the sound log drops its oldest half when
+    // full, so entries are matched by time, not index).
+    const TSharedRef<double> PressTime = MakeShared<double>(0);
     AddCase(
         TEXT("place press"), .45,
-        [this, Click, Look, Lab, FlashesAtPress]
+        [this, Click, Look, Lab, FlashesAtPress, PressTime]
         {
             *FlashesAtPress = Lab->GetView()->GetStartedFlashCount();
+            *PressTime = GetWorld()->GetTimeSeconds();
             ResetPlayer({-650, 650, 0});
             Click(EKeys::One);
             Look(FVector(-450, 650, 0));
             Click(EKeys::RightMouseButton);
         },
-        [this, Solid, Player, Lab, FlashesAtPress]
+        [this, Solid, Player, Lab, FlashesAtPress, PressTime]
         {
             Record(TEXT("single press places the previewed cell"),
                 Solid({-5, 6, 0}) && Pawn->Interaction.Placed == 1 && Player()->Inventory.Hotbar[0].Count == 64,
@@ -296,6 +301,25 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             const int32 Flashes = Lab->GetView()->GetStartedFlashCount() - *FlashesAtPress;
             Record(TEXT("placed flash follows foundation.Place.Preview"), Flashes == (Mode == 1 ? 1 : 0),
                 FString::Printf(TEXT("foundation.Place.Preview %d, %d flashes started"), Mode, Flashes));
+            // Stone's place event, at its break's volume and pitch (1.0 and 0.8 x the stone type's 1.0 and 1.0).
+            TArray<FString> Places;
+            bool bPlaceOk = true;
+            const FFoundationBreakEffects* Effects = Lab->GetView()->GetBreakEffects();
+            if (Effects)
+                for (const FoundationBreak::FSoundLogEntry& Entry : Effects->GetSoundLog())
+                    if (Entry.bPlace && Entry.Time >= *PressTime)
+                    {
+                        bPlaceOk &= Entry.Event == FName(TEXT("block.stone.place")) &&
+                            FMath::IsNearlyEqual(Entry.Volume, 1.f, 1e-4f) &&
+                            FMath::IsNearlyEqual(Entry.Pitch, .8f, 1e-4f);
+                        Places.Add(FString::Printf(TEXT("%s %s volume %.3f pitch %.3f"), *Entry.Event.ToString(),
+                            *Entry.File.ToString(), Entry.Volume, Entry.Pitch));
+                    }
+            const int32 PlaceSound = Effects ? Effects->GetSwitches().PlaceSound : -1;
+            Record(TEXT("place sound follows foundation.Place.Sound"),
+                Effects && bPlaceOk && Places.Num() == (PlaceSound == 1 ? 1 : 0),
+                FString::Printf(TEXT("foundation.Place.Sound %d: %s"), PlaceSound,
+                    Places.IsEmpty() ? TEXT("no place sound") : *FString::Join(Places, TEXT("; "))));
             const int32 Expected = CountExpectedBlockInstances(Lab->GetAuthorityState().World);
             Record(TEXT("solid block drawn after its commit"),
                 Lab->GetView()->GetDrawnCellCount() == Lab->GetAuthorityState().Seed.Num() + 1 &&

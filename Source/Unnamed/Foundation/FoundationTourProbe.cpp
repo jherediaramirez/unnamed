@@ -52,13 +52,15 @@ namespace
         TourPop,
         // Not a break switch: the destination preview, so the pack's shots and its restore line say which it shows.
         TourPlacePreview,
+        // Nor this: place sounds stay off in the pack's configurations, so its sound log holds breaks and hits only.
+        TourPlaceSound,
         TourSwitchCount
     };
     const TCHAR* const TourBreakSwitches[TourSwitchCount] = {TEXT("foundation.Break.Outline"),
         TEXT("foundation.Break.Cracks"), TEXT("foundation.Break.CrackSmooth"), TEXT("foundation.Break.Particles"),
         TEXT("foundation.Break.ParticleCollision"), TEXT("foundation.Break.ParticleSpray"),
         TEXT("foundation.Break.Sounds"), TEXT("foundation.Break.Swing"), TEXT("foundation.Break.Pop"),
-        TEXT("foundation.Place.Preview")};
+        TEXT("foundation.Place.Preview"), TEXT("foundation.Place.Sound")};
 
     // One configuration: the switches and the menu's "particles" pref (empty keeps the run's own).
     struct FTourBreakConfig
