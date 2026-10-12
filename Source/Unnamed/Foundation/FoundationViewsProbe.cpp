@@ -11,10 +11,13 @@
 #include "Menu/MenuPreferences.h"
 #include "Storage/VoxelColumn.h"
 #include "Voxel/VoxelColumnPipeline.h"
+#include "Voxel/VoxelConsole.h"
+#include "Voxel/VoxelRenderDistance.h"
 #include "Voxel/VoxelWorld.h"
 #include "Voxel/VoxelWorldSubsystem.h"
 #include "VoxelConstants.h"
 #include "UnnamedLog.h"
+#include "Dom/JsonValue.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -977,6 +980,60 @@ void UFoundationRuntimeProbe::AddViewsCases()
     {
         Go(TEXT("water"), PoseStance(*Pose));
         General(TEXT("water-default"), TEXT("noon"), 6000, *Pose);
+    }
+
+    // Options > Render Distance: the day-open view at 4 and 32 chunks, then the default 12, each set through the menu's
+    // preferences as the slider sets it and shot once the new rings are on screen; then the run's own value again. A
+    // radius set above game-override priority (the console, the command line) keeps its value, so its check is skipped.
+    if (const FViewsPose* Pose = FindPose(TEXT("day-open")))
+    {
+        auto SetRenderDistance = [Preferences](int32 Chunks)
+        {
+            if (UMenuPreferences* Found = Preferences())
+                Found->ApplyChanges(FString::Printf(TEXT("{\"settings\":{\"renderDistance\":%d}}"), Chunks));
+        };
+        auto ReadRenderDistance = [Preferences]
+        {
+            const TSharedPtr<const FJsonValue> Value =
+                Preferences() ? Preferences()->FindPreference(TEXT("renderDistance")) : nullptr;
+            return Value.IsValid() && Value->Type == EJson::Number ? FMath::RoundToInt32(Value->AsNumber()) : 0;
+        };
+        const TSharedRef<int32> SavedChunks = MakeShared<int32>(0);
+        AddCase(
+            TEXT("views render-distance save"), .1,
+            [SavedChunks, ReadRenderDistance] { *SavedChunks = ReadRenderDistance(); }, [] {});
+        for (const int32 Chunks : {4, 32, VoxelRenderDistance::DefaultChunks})
+        {
+            const FString Name = FString::Printf(TEXT("render-distance-%d"), Chunks);
+            AddCase(
+                TEXT("views ") + Name + TEXT(" set"), .2, [SetRenderDistance, Chunks] { SetRenderDistance(Chunks); },
+                [this, Chunks, Name]
+                {
+                    const VoxelRenderDistance::FRadii Wanted = VoxelRenderDistance::FromChunks(Chunks);
+                    IConsoleVariable* View = VoxelConsole::CVarViewRadius.AsVariable();
+                    IConsoleVariable* Far = VoxelConsole::CVarFarRadius.AsVariable();
+                    const bool bOverridden = (View->GetFlags() & ECVF_SetByMask) > ECVF_SetByGameOverride ||
+                        (Far->GetFlags() & ECVF_SetByMask) > ECVF_SetByGameOverride;
+                    Record(TEXT("views ") + Name + TEXT(" radii"),
+                        bOverridden || (View->GetInt() == Wanted.ViewRadius && Far->GetInt() == Wanted.FarRadius),
+                        FString::Printf(TEXT("voxel.ViewRadius %d, voxel.FarRadius %d (wanted %d, %d)%s"),
+                            View->GetInt(), Far->GetInt(), Wanted.ViewRadius, Wanted.FarRadius,
+                            bOverridden ? TEXT("; set above game-override priority, check skipped") : TEXT("")));
+                });
+            Go(Name, PoseStance(*Pose));
+            General(Name, TEXT("noon"), 6000, *Pose);
+        }
+        AddCase(
+            TEXT("views render-distance restore"), .2,
+            [SetRenderDistance, SavedChunks]
+            {
+                if (*SavedChunks > 0) SetRenderDistance(*SavedChunks);
+            },
+            [this, ReadRenderDistance, SavedChunks]
+            {
+                Record(TEXT("views render-distance restored"), *SavedChunks > 0 && ReadRenderDistance() == *SavedChunks,
+                    FString::Printf(TEXT("renderDistance %d (saved %d)"), ReadRenderDistance(), *SavedChunks));
+            });
     }
 
     // Targets for the outline rows: the pad's cells are cleared of plants, then the row placed.

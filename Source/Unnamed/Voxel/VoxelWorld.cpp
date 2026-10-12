@@ -43,6 +43,7 @@
 #include "Voxel/VoxelLightShots.h"
 #include "Voxel/VoxelLightSources.h"
 #include "Voxel/VoxelLights.h"
+#include "Voxel/VoxelRenderDistance.h"
 #include "Voxel/VoxelWorldSettings.h"
 #include "Voxel/VoxelFluidShots.h"
 #include "Voxel/VoxelFluidSystem.h"
@@ -439,6 +440,7 @@ void AVoxelWorld::Regenerate(const FVoxelSeed& NewSeed)
         *FFoundationBlockRegistry::GetDefault(), Table.ToSharedRef(), MeshTorchGlow);
     if (MeshTable != Table)
         UE_LOG(LogUnnamedVoxel, Display, TEXT("Torch models meshed at glow %d (voxel.TorchGlow)."), MeshTorchGlow);
+    VoxelRenderDistance::Apply(GetWorld());
     Streaming->Start(*this, MeshTable.ToSharedRef(), Terrain.ToSharedRef(), Materials, FarMaterials, Spawn);
     // A new session on a new world: nothing is loaded yet, so emptying the block world is free.
     Authority.World.OriginCm = OriginCm;
@@ -654,6 +656,7 @@ FString AVoxelWorld::GetBuildReport() const
 void AVoxelWorld::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    VoxelRenderDistance::Apply(GetWorld());
     // The world's game ticks for this frame (the water and sky plan, section 2): the day clock steps in each, then the
     // fluids run the same ticks within their own frame budget (W2a).
     const int32 Ticks = Clock.TakeTicks(DeltaSeconds);

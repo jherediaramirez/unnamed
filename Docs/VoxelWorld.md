@@ -992,6 +992,8 @@ Create New World makes a saved world, and Play opens one. Both go through `UMenu
 
 Runtime code reads the console variables, never the settings object. The settings push their values into the variables at project-setting priority, at startup and on every edit. A console, command-line or ini override wins for the session, for example `voxel.ViewRadius 16`.
 
+Options > Render Distance (the saved `renderDistance`, 2-32 chunks, default 12) sets `voxel.ViewRadius` to the slider and `voxel.FarRadius` to twice that, up to 24 (the far radius the ray tracing crash set proved; from 24 up no far ring draws), at game-override priority: above the project settings, below the console, the command line and a `[ConsoleVariables]` ini (`VoxelRenderDistance`, checked each frame by the voxel world). The default 12 gives the settings' 12 and 24. `voxel.RenderDistance.FromOptions 0` puts back the settings' radii.
+
 | Setting | Console variable | Default | Used from |
 |---|---|---|---|
 | `DevSeed` | (`voxel.Seed` command) | `Unnamed` | 2: the world's seed when the map opens without a saved world (`-VoxelSeed=` overrides it) |
