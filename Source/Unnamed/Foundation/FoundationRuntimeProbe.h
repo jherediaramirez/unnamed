@@ -79,4 +79,6 @@ private:
     void AddTourCases();
     // -FoundationSuite=views: player-view screenshots of the generated world with the HUD (FoundationViewsProbe.cpp).
     void AddViewsCases();
+    // -FoundationSuite=pause: the frames around ESC and Back to Game (FoundationPauseProbe.cpp).
+    void AddPauseCases();
 };

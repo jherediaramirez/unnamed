@@ -26,6 +26,8 @@ public:
     // Removes the browser and its bindings. Restoring game input is the owner's job.
     void Hide();
     bool IsOpen() const { return Browser.IsValid(); }
+    // The page's browser while it exists (the pause probe reads IsLoaded).
+    TSharedPtr<SWebBrowser> GetBrowser() const { return Browser; }
 
     // Bound under Name every time the page is shown, e.g. a world's pause-menu bridge.
     void AddBridge(const FString& Name, UObject* Bridge);

@@ -9,14 +9,18 @@ param([switch]$Editor,[string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',
     # 'views' (not part of all either) opens the generated world's dev seed (/Game/Maps/L_Generated) instead: player-view
     # shots with the HUD, outline and held item at full-cost rendering, posed from Scripts/Views/DevSeed.txt (passed by
     # path, so a package finds it too); -ViewsScout logs candidate poses instead. Not with -HudCaptures (Playground cases).
-    [ValidateSet('movement','interaction','all','tour','views')][string]$Suite='all',[switch]$ViewsScout,
+    # 'pause' (not part of all) records the frames around ESC and Back to Game (FoundationPauseProbe.cpp).
+    [ValidateSet('movement','interaction','all','tour','views','pause')][string]$Suite='all',[switch]$ViewsScout,
     [ValidateSet('VanillaReference','LucidFluid')][string]$Preset,[switch]$Finite,
     # The break lane's capture pack: the tour suite with -FoundationTourBreak at full-cost rendering, into Playground-break.
     [switch]$BreakPack,
     # Extra console commands after the run's own, e.g. -ExecCmds 'foundation.Place.Preview 1'; later ones win. The views
     # suite sets foundation.Place.Preview, foundation.Break.Outline and the clock (voxel.Time) itself, so -ExecCmds
     # cannot override those there.
-    [string]$ExecCmds)
+    [string]$ExecCmds,
+    # Extra command-line arguments, e.g. -ExtraArgs '-nocefaccelpaint' or a switch read at BeginPlay, which -ExecCmds
+    # reaches only after the first world has started: -ExtraArgs '-ini:Engine:[ConsoleVariables]:foundation.Pause.Menu=0'.
+    [string[]]$ExtraArgs)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 if($BreakPack){$Suite='tour';$FullCostRendering=$true}
@@ -52,6 +56,7 @@ foreach($fps in $FrameRates){
     # Offscreen acceptance captures must retain their requested size even above the desktop work area.
     $arguments+=@('-windowed',"-ResX=$Width","-ResY=$Height",'-ForceRes','-RenderOffscreen','-unattended','-nosplash','-nosound','-MenuSettingsSessionOnly',"-FoundationFPS=$fps",('-FoundationProbe="'+$output+'"'),('-abslog="'+(Join-Path $OutputDirectory "runtime-$fps.log")+'"'),('-UserDir="'+(Join-Path $OutputDirectory "profile-$fps")+'"'))
     if($HudCaptures){$arguments+='-HudCaptures'}
+    if($ExtraArgs){$arguments+=$ExtraArgs}
     # Named CPU events include Slate tick/paint timings; retain CPU/GPU/frame trace for Insights.
     if($TraceHud){$arguments+=@('-trace=cpu,gpu,frame','-statnamedevents',('-tracefile="'+(Join-Path $OutputDirectory "runtime-$fps.utrace")+'"'))}
     $commands=@()
