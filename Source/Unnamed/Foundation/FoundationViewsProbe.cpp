@@ -1036,6 +1036,69 @@ void UFoundationRuntimeProbe::AddViewsCases()
             });
     }
 
+    // The held item at FOV 70 and 110 under foundation.Hand.Fit 0 and 1: stone and an iron pickaxe, with the empty hand
+    // as the plate their size is measured against; then the run's FOV, the fit and stone again.
+    if (const FViewsPose* Pose = FindPose(TEXT("day-open")))
+    {
+        const TSharedRef<double> SavedFov = MakeShared<double>(0);
+        auto ReadFov = [Preferences]
+        {
+            const TSharedPtr<const FJsonValue> Value =
+                Preferences() ? Preferences()->FindPreference(TEXT("fov")) : nullptr;
+            return Value.IsValid() && Value->Type == EJson::Number ? Value->AsNumber() : 0.;
+        };
+        auto SetFov = [Preferences](double Fov)
+        {
+            if (Preferences()) Preferences()->ApplyChanges(FString::Printf(TEXT("{\"settings\":{\"fov\":%g}}"), Fov));
+        };
+        Go(TEXT("held-fov"), PoseStance(*Pose));
+        AddCase(TEXT("views held-fov save"), .1, [SavedFov, ReadFov] { *SavedFov = ReadFov(); }, [] {});
+        for (const int32 Fov : {70, 110})
+            for (const TCHAR* Item : {TEXT("empty"), TEXT("stone"), TEXT("iron_pickaxe")})
+                for (const int32 Fit : {0, 1})
+                {
+                    const bool bEmpty = FName(Item) == TEXT("empty");
+                    if (bEmpty && Fit == 1) continue;
+                    Shot(
+                        FString::Printf(TEXT("held-%s-fov%d-fit%d"), Item, Fov, Fit),
+                        [this, Authority, RunCommand, SetFov, Fov, Item, Fit, bEmpty]
+                        {
+                            SetFov(Fov);
+                            RunCommand(FString::Printf(TEXT("foundation.Hand.Fit %d"), Fit));
+                            Pawn->Interaction.SetCreativeSlot(
+                                Authority(), Pawn->Vitals, 0, bEmpty ? NAME_None : FName(Item), bEmpty ? 0 : 1);
+                            Pawn->Interaction.SelectSlot(Authority(), Pawn->Vitals, 0);
+                        },
+                        [this, Authority, Holding, View, ReadFov, Fov, Item, Fit, bEmpty](FString& Detail)
+                        {
+                            const FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
+                            const bool bHand = bEmpty
+                                ? Player && Player->Inventory.GetHand(EFoundationHand::Main).IsEmpty()
+                                : Holding(FName(Item));
+                            const UFoundationInteractionView* Found = View();
+                            Detail = FString::Printf(TEXT("fov %g, foundation.Hand.Fit %d, holding %s %d, drawn %d"),
+                                ReadFov(), int32(FoundationHand::IsFitOn()), Item, int32(bHand),
+                                int32(Found && Found->IsHeldItemVisible()));
+                            return bHand && ReadFov() == Fov && FoundationHand::IsFitOn() == (Fit != 0) &&
+                                (bEmpty || (Found && Found->IsHeldItemVisible()));
+                        });
+                }
+        AddCase(
+            TEXT("views held-fov restore"), .2,
+            [this, Authority, RunCommand, SetFov, SavedFov]
+            {
+                if (*SavedFov > 0) SetFov(*SavedFov);
+                RunCommand(TEXT("foundation.Hand.Fit 1"));
+                Pawn->Interaction.SetCreativeSlot(Authority(), Pawn->Vitals, 0, TEXT("stone"), 64);
+            },
+            [this, ReadFov, SavedFov, Holding]
+            {
+                Record(TEXT("views held-fov restored"),
+                    *SavedFov > 0 && ReadFov() == *SavedFov && FoundationHand::IsFitOn() && Holding(TEXT("stone")),
+                    FString::Printf(TEXT("fov %g (saved %g)"), ReadFov(), *SavedFov));
+            });
+    }
+
     // Targets for the outline rows: the pad's cells are cleared of plants, then the row placed.
     const TArray<FViewsTarget> Targets = {{TEXT("stone"), TEXT("stone"), {1, 3}}, {TEXT("slab"), TEXT("oak_slab"), {2}},
         {TEXT("plant"), TEXT("dandelion"), {2}}};
