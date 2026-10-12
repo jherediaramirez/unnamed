@@ -100,23 +100,29 @@ if($ExecCmds){$commands+=$ExecCmds}
 if($commands){$arguments+=('-ExecCmds="'+($commands -join ',')+'"')}
 $started=Get-Date
 $process=Start-Process -FilePath "$EngineRoot/Engine/Binaries/Win64/UnrealEditor.exe" -ArgumentList $arguments -WorkingDirectory $root -WindowStyle Hidden -PassThru
-if(-not $process.WaitForExit($TimeoutSeconds*1000)){Stop-Process -Id $process.Id -Force; throw "Timed out after $TimeoutSeconds s: $OutputDirectory"}
+$timedOut=-not $process.WaitForExit($TimeoutSeconds*1000)
+# A timed-out run stops its own editor (by PID) and waits for it to let go of the profile.
+if($timedOut){Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue; $process.WaitForExit(30000) | Out-Null}
 $elapsed=[int]((Get-Date)-$started).TotalSeconds
-if(Test-Path -LiteralPath $profileDirectory){Remove-Item -LiteralPath $profileDirectory -Recurse -Force -ErrorAction SilentlyContinue}
+# A crash's dump and log are under the profile: keep them in <OutputDirectory>\Crashes before it goes, on both exits.
+. (Join-Path $PSScriptRoot 'CrashFolders.ps1')
+$closed=Close-Profile -UserDir $profileDirectory -Destination $OutputDirectory
+$crashNote="$(if($closed.Crashes){"; crash folders kept $($closed.Crashes) in $OutputDirectory\Crashes"})$(if($closed.Kept){"; profile kept at $($closed.Kept)"})"
+if($timedOut){throw "Timed out after $TimeoutSeconds s${crashNote}: $OutputDirectory"}
 if($Flight){
-    if(-not(Test-Path (Join-Path $OutputDirectory 'flight.txt')) -or -not(Test-Path (Join-Path $OutputDirectory 'flight.csv'))){throw "No flight report after $elapsed s: $OutputDirectory"}
-    "PASS: flight in $elapsed s. $OutputDirectory"
+    if(-not(Test-Path (Join-Path $OutputDirectory 'flight.txt')) -or -not(Test-Path (Join-Path $OutputDirectory 'flight.csv'))){throw "No flight report after $elapsed s${crashNote}: $OutputDirectory"}
+    "PASS: flight in $elapsed s${crashNote}. $OutputDirectory"
     Get-Content (Join-Path $OutputDirectory 'flight.txt')
     return
 }
 $names=@('overview','closeup','ground','lumen-scene','section')+@(if($Edits){'edits'})+@(if($View){'view'})+@(if($Garden){'garden','garden-close','garden-pool','garden-lichen','garden-amethyst','garden-border','field','field-clearing','distance-008','distance-016','distance-032','distance-064','distance-128'})
 $shots=$names | Where-Object { Test-Path (Join-Path $OutputDirectory "$_.png") }
-if($shots.Count -ne $names.Count -or -not(Test-Path (Join-Path $OutputDirectory 'build.txt'))){throw "Missing screenshots ($($shots.Count) of $($names.Count)) after $elapsed s: $OutputDirectory"}
+if($shots.Count -ne $names.Count -or -not(Test-Path (Join-Path $OutputDirectory 'build.txt'))){throw "Missing screenshots ($($shots.Count) of $($names.Count)) after $elapsed s${crashNote}: $OutputDirectory"}
 $lightsReport=if($TorchLook){'look.txt'}elseif($TorchRoom){'room.txt'}elseif($TorchGates){'torches.txt'}else{'lights.txt'}
-if(($Lights -or $TorchGates -or $TorchRoom) -and -not(Test-Path (Join-Path $OutputDirectory $lightsReport))){throw "No $lightsReport after $elapsed s: $OutputDirectory"}
-if($Fluids -and -not(Test-Path (Join-Path $OutputDirectory "$Fluids.txt"))){throw "No $Fluids.txt after $elapsed s: $OutputDirectory"}
-if($Fluids -and (Select-String -LiteralPath (Join-Path $OutputDirectory "$Fluids.txt") -SimpleMatch 'RESULT: FAILED' -Quiet)){throw "The $Fluids capture failed (see $Fluids.txt): $OutputDirectory"}
-"PASS: $($names.Count) screenshots in $elapsed s. $OutputDirectory"
+if(($Lights -or $TorchGates -or $TorchRoom) -and -not(Test-Path (Join-Path $OutputDirectory $lightsReport))){throw "No $lightsReport after $elapsed s${crashNote}: $OutputDirectory"}
+if($Fluids -and -not(Test-Path (Join-Path $OutputDirectory "$Fluids.txt"))){throw "No $Fluids.txt after $elapsed s${crashNote}: $OutputDirectory"}
+if($Fluids -and (Select-String -LiteralPath (Join-Path $OutputDirectory "$Fluids.txt") -SimpleMatch 'RESULT: FAILED' -Quiet)){throw "The $Fluids capture failed (see $Fluids.txt)${crashNote}: $OutputDirectory"}
+"PASS: $($names.Count) screenshots in $elapsed s${crashNote}. $OutputDirectory"
 Get-Content (Join-Path $OutputDirectory 'build.txt')
 if($Lights -or $TorchGates -or $TorchRoom){Get-Content (Join-Path $OutputDirectory $lightsReport)}
 if($Fluids){Get-Content (Join-Path $OutputDirectory "$Fluids.txt")}

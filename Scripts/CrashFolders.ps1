@@ -1,5 +1,5 @@
 # Crash dumps under an editor's temporary profile: with -UserDir, a crash writes its dump and log to <UserDir>\Saved\Crashes\UECC-*.
-# Every runner that deletes such a profile closes it through here (RunChecks.ps1's native step and radius-8 hashes, TestVoxel.ps1):
+# Every runner that deletes such a profile closes it through here (RunChecks.ps1's native step and radius-8 hashes, TestVoxel.ps1, CaptureVoxel.ps1):
 #   . (Join-Path $PSScriptRoot 'CrashFolders.ps1')
 #   $closed=Close-Profile -UserDir $userDir -Destination $dir   # .Crashes: crash folders kept in $dir\Crashes; .Kept: the profile, if kept
 # The profile is deleted only once every crash file is in <Destination>\Crashes (same relative paths and sizes). When the copy fails
