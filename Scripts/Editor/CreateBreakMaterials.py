@@ -6,6 +6,9 @@
 - M_BreakParticle: a masked, lit, two-sided particle quad from instanced custom data: texture layer, the 4 x 4 texel
   patch, packed tint.
 - M_BreakOutline: a translucent unlit colour from instanced custom data (linear R, G, B and opacity).
+- M_BreakOutlineMask and M_BreakOutlineShade: outline 1 after tone mapping. The strips draw M_BreakOutlineMask into
+  custom depth only; the post-process M_BreakOutlineShade, after tone mapping, darkens the final image by Opacity
+  (vanilla's 40% black) wherever a strip lies in front of the scene, so the outline is as dark under any exposure.
 
 Run after ImportBreakAssets.py (T_BreakCracks); the graphs are code, so rerunning rebuilds them on the same assets:
 
@@ -246,6 +249,44 @@ def build_outline():
     return g.finish()
 
 
+# The final colour under a strip that the scene doesn't hide (custom depth in front of the scene's depth, with a
+# tolerance for depth precision), darkened by Opacity: vanilla blends its outline into the final image. Where no strip
+# drew, custom depth reads as far as the sky does, so a strip counts only within 1 km (the outline is within reach).
+OUTLINE_SHADE_HLSL = r"""
+float shown = Strip < 100000.0 && Strip < Scene + max(1.0, Scene * 0.001) ? 1.0 : 0.0;
+return Color * (1.0 - Opacity * shown);
+"""
+
+
+def build_outline_mask():
+    g = Graph("M_BreakOutlineMask", unreal.BlendMode.BLEND_OPAQUE, unlit=True, instanced=True)
+    g.prop(g.constant(0.0, -150, 0), "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    return g.finish()
+
+
+def build_outline_shade():
+    g = Graph("M_BreakOutlineShade", unreal.BlendMode.BLEND_OPAQUE, unlit=True)
+    g.material.set_editor_property("material_domain", unreal.MaterialDomain.MD_POST_PROCESS)
+    g.material.set_editor_property("blendable_location", unreal.BlendableLocation.BL_SCENE_COLOR_AFTER_TONEMAPPING)
+
+    def scene_texture(texture_id, y):
+        expr = g.node(unreal.MaterialExpressionSceneTexture, -900, y)
+        expr.set_editor_property("scene_texture_id", texture_id)
+        return expr
+
+    color = g.mask(scene_texture(unreal.SceneTextureId.PPI_POST_PROCESS_INPUT0, 0), "rgb", -650, 0)
+    strip = g.mask(scene_texture(unreal.SceneTextureId.PPI_CUSTOM_DEPTH, 120), "r", -650, 120)
+    scene = g.mask(scene_texture(unreal.SceneTextureId.PPI_SCENE_DEPTH, 240), "r", -650, 240)
+    shade = g.custom("Outline 1 after tone mapping", OUTLINE_SHADE_HLSL, unreal.CustomMaterialOutputType.CMOT_FLOAT3,
+                     ("Color", "Strip", "Scene", "Opacity"))
+    g.link(color, "", shade, "Color")
+    g.link(strip, "", shade, "Strip")
+    g.link(scene, "", shade, "Scene")
+    g.link(g.scalar_parameter("Opacity", 0.4, 360), "", shade, "Opacity")
+    g.prop(shade, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    return g.finish()
+
+
 def main():
     registry = unreal.EditorAssetLibrary.load_asset(ProjectPaths.block_asset("DA_Blocks"))
     if not registry:
@@ -253,7 +294,8 @@ def main():
     block_textures = registry.get_editor_property("block_textures")
     cmdline = unreal.SystemLibrary.get_command_line()
     compiled = "AllowCommandletRendering" in cmdline and "NullRHI" not in cmdline
-    materials = [build_cracks(), build_particle(block_textures), build_outline()]
+    materials = [build_cracks(), build_particle(block_textures), build_outline(), build_outline_mask(),
+                 build_outline_shade()]
     for material in materials:
         stats = lib.get_statistics(material)
         unreal.log("BREAK_MATERIALS %s: PS instr %d, samplers %d" % (material.get_name(),

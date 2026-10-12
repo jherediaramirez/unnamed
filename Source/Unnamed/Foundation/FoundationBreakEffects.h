@@ -11,6 +11,7 @@ class UFoundationBreakAssets;
 class UFoundationInteractionView;
 class UInstancedStaticMeshComponent;
 class UMaterialInstanceDynamic;
+class UPostProcessComponent;
 class UStaticMesh;
 class UStaticMeshComponent;
 struct FFoundationBreakBlock;
@@ -288,6 +289,10 @@ private:
     // Outline: halo and core strips (translucent, one instance per strip).
     UInstancedStaticMeshComponent* OutlineHalo = nullptr;
     UInstancedStaticMeshComponent* OutlineCore = nullptr;
+    // Outline 1's after-tone-mapping path (foundation.Break.OutlineTonemapped): the core strips in custom depth only,
+    // and the post-process that darkens the final image where they show (M_BreakOutlineShade).
+    UInstancedStaticMeshComponent* OutlineMask = nullptr;
+    UPostProcessComponent* OutlineShade = nullptr;
     TArray<FBox> OutlineBoxes;
     bool bOutlineSubmitted = false, bOutlineVisible = false, bDrawnHighContrast = false;
     // The colour each strip component last got (NaN: none yet), so the per-instance data is written only on a change.

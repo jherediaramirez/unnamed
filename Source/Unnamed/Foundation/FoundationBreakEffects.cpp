@@ -3,6 +3,7 @@
 #include "Blocks/VoxelBlockTable.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/InstancedStaticMeshComponent.h"
+#include "Components/PostProcessComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Dom/JsonValue.h"
 #include "Engine/Engine.h"
@@ -33,6 +34,12 @@ namespace
     TAutoConsoleVariable<int32> CVarBreakOutline(TEXT("foundation.Break.Outline"), 1,
         TEXT("Target outline: 0 the view's own, 1 vanilla (black 40%, 3 px at 1920 wide scaled by width/1920, the "
              "shape's outer edges), 2 thinner (black 30%, 1 px), 3 none."),
+        ECVF_Default);
+    TAutoConsoleVariable<bool> CVarBreakOutlineTonemapped(TEXT("foundation.Break.OutlineTonemapped"), true,
+        TEXT(
+            "Outline 1 without high contrast: 1 darkens the final image under the strips by its 40%, as vanilla blends "
+            "it, whatever the exposure; 0 blends the strips into the scene before tone mapping (until 2026-10-12, "
+            "about a third as dark by day)."),
         ECVF_Default);
     TAutoConsoleVariable<int32> CVarBreakCracks(TEXT("foundation.Break.Cracks"), 2,
         TEXT("Crack overlay: 0 the view's lines, 1 vanilla's stages, 2 carved stages."), ECVF_Default);
@@ -408,6 +415,8 @@ namespace
     // As today's outline: 0.3 cm past the box, each edge drawn as four strips so each keeps its own depth's width.
     constexpr double OutlineExpandCm = .3;
     constexpr int32 OutlineSegments = 4;
+    // Vanilla's outline: black at 40% (minecraft.wiki).
+    constexpr float VanillaOutlineOpacity = .4f;
     constexpr double OutlineHaloPixels = 9;
     constexpr uint32 BreakUntinted = 0xFFFFFF;
 
@@ -472,6 +481,25 @@ void FFoundationBreakEffects::Initialize(const FFoundationAuthority& Authority)
     OutlineCore = MakeStrips(11);
     View.Owned.Add(OutlineHalo);
     View.Owned.Add(OutlineCore);
+    // Outline 1's after-tone-mapping path: the core strips drawn into custom depth only (no colour, depth, shadow,
+    // Lumen, ray tracing or captures), and an unbound post-process that is on only while they show.
+    OutlineMask = NewObject<UInstancedStaticMeshComponent>(Owner);
+    OutlineMask->SetRenderInMainPass(false);
+    OutlineMask->SetRenderInDepthPass(false);
+    OutlineMask->SetRenderCustomDepth(true);
+    OutlineMask->SetAffectDistanceFieldLighting(false);
+    OutlineMask->SetAffectDynamicIndirectLighting(false);
+    OutlineMask->SetVisibleInRayTracing(false);
+    OutlineMask->bVisibleInReflectionCaptures = false;
+    OutlineMask->bVisibleInRealTimeSkyCaptures = false;
+    RegisterBreakComponent(*OutlineMask, *Owner, CubeMesh, 0);
+    View.Owned.Add(OutlineMask);
+    OutlineShade = NewObject<UPostProcessComponent>(Owner);
+    OutlineShade->bUnbound = true;
+    OutlineShade->bEnabled = false;
+    OutlineShade->SetupAttachment(Owner->GetRootComponent());
+    OutlineShade->RegisterComponent();
+    View.Owned.Add(OutlineShade);
 
     // As many crack overlays and pop parts as the held block's pool: the model default state with the most parts.
     int32 MostParts = 1;
@@ -522,11 +550,15 @@ void FFoundationBreakEffects::LoadAssets(const FFoundationAuthority& Authority)
     UMaterialInterface* CracksBase = LoadBreakAsset<UMaterialInterface>(TEXT("M_BreakCracks"));
     UMaterialInterface* ParticleBase = LoadBreakAsset<UMaterialInterface>(TEXT("M_BreakParticle"));
     UMaterialInterface* OutlineBase = LoadBreakAsset<UMaterialInterface>(TEXT("M_BreakOutline"));
+    UMaterialInterface* OutlineMaskBase = LoadBreakAsset<UMaterialInterface>(TEXT("M_BreakOutlineMask"));
+    UMaterialInterface* OutlineShadeBase = LoadBreakAsset<UMaterialInterface>(TEXT("M_BreakOutlineShade"));
     TArray<FString> Missing;
     if (!Loaded) Missing.Add(TEXT("DA_BreakAssets"));
     if (!CracksBase) Missing.Add(TEXT("M_BreakCracks"));
     if (!ParticleBase) Missing.Add(TEXT("M_BreakParticle"));
     if (!OutlineBase) Missing.Add(TEXT("M_BreakOutline"));
+    if (!OutlineMaskBase) Missing.Add(TEXT("M_BreakOutlineMask"));
+    if (!OutlineShadeBase) Missing.Add(TEXT("M_BreakOutlineShade"));
     if (!Missing.IsEmpty())
         UE_LOG(LogUnnamedFoundation, Warning,
             TEXT("Breaking effects: %s missing under %s; the effects needing them stay off"),
@@ -541,6 +573,16 @@ void FFoundationBreakEffects::LoadAssets(const FFoundationAuthority& Authority)
         OutlineHalo->SetMaterial(0, OutlineBase);
         OutlineCore->SetMaterial(0, OutlineBase);
     }
+    // Outline 1 after tone mapping needs both of its own; without them it blends before tone mapping.
+    if (OutlineMaskBase && OutlineShadeBase && OutlineMask && OutlineShade)
+        if (UMaterialInstanceDynamic* Shade = UMaterialInstanceDynamic::Create(OutlineShadeBase, OutlineShade))
+        {
+            Shade->SetScalarParameterValue(TEXT("Opacity"), VanillaOutlineOpacity);
+            View.Owned.Add(OutlineMaskBase);
+            View.Owned.Add(Shade);
+            OutlineMask->SetMaterial(0, OutlineMaskBase);
+            OutlineShade->Settings.WeightedBlendables.Array.Add(FWeightedBlendable(1.f, Shade));
+        }
     if (ParticleBase && ParticleMesh)
     {
         View.Owned.Add(ParticleBase);
@@ -997,19 +1039,25 @@ void FFoundationBreakEffects::DrawOutlineStrips()
     if (!bDraw)
     {
         if (bOutlineVisible)
-            for (UInstancedStaticMeshComponent* Strips : {OutlineHalo, OutlineCore})
-            {
-                Strips->ClearInstances();
-                Strips->SetVisibility(false);
-            }
+            for (UInstancedStaticMeshComponent* Strips : {OutlineHalo, OutlineCore, OutlineMask})
+                if (Strips)
+                {
+                    Strips->ClearInstances();
+                    Strips->SetVisibility(false);
+                }
+        if (OutlineShade) OutlineShade->bEnabled = false;
         bOutlineVisible = false;
         return;
     }
+    // Outline 1 without high contrast darkens the final image, as vanilla's blend (foundation.Break.OutlineTonemapped):
+    // its core strips go to the custom-depth mask that M_BreakOutlineShade reads, instead of the translucent core.
+    const bool bTonemapped = Mode == 1 && !bHighContrast && CVarBreakOutlineTonemapped.GetValueOnGameThread() &&
+        HasBreakMaterial(OutlineMask) && OutlineShade && !OutlineShade->Settings.WeightedBlendables.Array.IsEmpty();
     // Vanilla (1): black 40% at 3 px (OutlinePixels) on the shape's merged outer edges. Thinner (2): black 30% at
     // 1 px on every box's 12 edges, as before 2026-10-11. High contrast: a 3 px cyan core, opaque, on a 9 px black
     // halo (3 px each side), scaled as the mode's core.
     const FLinearColor CoreColor = bHighContrast ? FLinearColor::FromSRGBColor(FColor(87, 255, 225))
-                                                 : FLinearColor(0, 0, 0, Mode == 1 ? .4f : .3f);
+                                                 : FLinearColor(0, 0, 0, Mode == 1 ? VanillaOutlineOpacity : .3f);
     TArray<FTransform> Core, Halo;
     if (Mode == 1)
     {
@@ -1096,8 +1144,9 @@ void FFoundationBreakEffects::DrawOutlineStrips()
     }
     // The same strip count moves the instances in place; a different one rebuilds them (under 200 per frame).
     // The colour is written only after a rebuild or a change, the last write marking the render state dirty.
+    // A null LastColor: the strips carry no colour (the custom-depth mask).
     auto Apply = [](UInstancedStaticMeshComponent* Strips, const TArray<FTransform>& Transforms, FLinearColor Color,
-                     FLinearColor& LastColor)
+                     FLinearColor* LastColor)
     {
         bool bRebuilt = false;
         if (Strips->GetInstanceCount() != Transforms.Num())
@@ -1108,17 +1157,20 @@ void FFoundationBreakEffects::DrawOutlineStrips()
         }
         else if (!Transforms.IsEmpty())
             Strips->BatchUpdateInstancesTransforms(0, Transforms, true, true, true);
-        if (!Transforms.IsEmpty() && (bRebuilt || !Color.Equals(LastColor, 0.f)))
+        if (LastColor && !Transforms.IsEmpty() && (bRebuilt || !Color.Equals(*LastColor, 0.f)))
         {
             const float Data[4] = {Color.R, Color.G, Color.B, Color.A};
             for (int32 Index = 0; Index < Transforms.Num(); ++Index)
                 Strips->SetCustomData(Index, Data, Index == Transforms.Num() - 1);
-            LastColor = Color;
+            *LastColor = Color;
         }
         Strips->SetVisibility(!Transforms.IsEmpty());
     };
-    Apply(OutlineHalo, Halo, FLinearColor::Black, LastHaloColor);
-    Apply(OutlineCore, Core, CoreColor, LastCoreColor);
+    const TArray<FTransform> None;
+    Apply(OutlineHalo, Halo, FLinearColor::Black, &LastHaloColor);
+    Apply(OutlineCore, bTonemapped ? None : Core, CoreColor, &LastCoreColor);
+    if (OutlineMask) Apply(OutlineMask, bTonemapped ? Core : None, FLinearColor::Black, nullptr);
+    if (OutlineShade) OutlineShade->bEnabled = bTonemapped && !Core.IsEmpty();
     bOutlineVisible = !Core.IsEmpty();
     if (bOutlineVisible) bDrawnHighContrast = bHighContrast;
 }
