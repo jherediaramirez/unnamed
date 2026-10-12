@@ -59,7 +59,7 @@ namespace
     bool DecorationTestHasBlocks(FAutomationTestBase& Test)
     {
         if (VoxelBlocks::GetDefault()->FindState(TEXT("stone"))) return true;
-        Test.AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        Test.AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
         return false;
     }
 

@@ -559,8 +559,8 @@ bool FVoxelFluidGeneratedTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     FString Error;
     FVoxelTerrainPreset TerrainPreset;
@@ -629,8 +629,8 @@ bool FVoxelFluidPlaygroundTest::RunTest(const FString& Parameters)
     const FFoundationBlockType* SeagrassType = Registry->FindBlock(TEXT("seagrass"));
     if (!WaterType || !LavaType || !StoneType || !SeagrassType)
     {
-        AddWarning(TEXT("DA_Blocks is missing water, lava, stone or seagrass: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing water, lava, stone or seagrass: run ImportBlocks.py"));
+        return false;
     }
     // A fluid's state at a level (its only property).
     auto Level = [&Registry](const FFoundationBlockType* Type, int32 Value) -> uint16

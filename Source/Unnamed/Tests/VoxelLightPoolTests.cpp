@@ -334,8 +334,8 @@ bool FVoxelLightPoolTest::RunTest(const FString& Parameters)
         const uint16 Torch = Table->FindState(TEXT("torch"));
         if (!FFoundationBlockRegistry::GetDefault()->GetAssets() || !Torch)
         {
-            AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-            return true;
+            AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+            return false;
         }
         const TSharedRef<const IVoxelTerrain> Terrain =
             MakeShared<FVoxelHeightTerrain>(FVoxelSeed::Parse(TEXT("Unnamed")).Value, *Table);

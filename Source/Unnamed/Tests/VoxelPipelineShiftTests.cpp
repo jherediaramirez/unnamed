@@ -422,8 +422,8 @@ bool FVoxelPipelineShiftTest::RunTest(const FString& Parameters)
 {
     if (!FFoundationBlockRegistry::GetDefault()->GetAssets())
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     FShiftTestWorld World;
     if (!ShiftTestMakeWorld(*this, World)) return false;
@@ -853,8 +853,8 @@ bool FVoxelPipelineInnerFirstTest::RunTest(const FString& Parameters)
 {
     if (!FFoundationBlockRegistry::GetDefault()->GetAssets())
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     FShiftTestWorld World;
     if (!ShiftTestMakeWorld(*this, World)) return false;

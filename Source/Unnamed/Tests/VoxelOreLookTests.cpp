@@ -72,8 +72,8 @@ bool FVoxelOreLookClassesTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     const auto Get = [&Table](const TCHAR* Block) { return Table->Get(Table->FindState(Block)); };
     TestEqual(TEXT("coal_ore: coal on stone"), int32(Get(TEXT("coal_ore")).Ore), 1);
@@ -113,8 +113,8 @@ bool FVoxelOreLookHostTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     const uint16 Ore = Table->FindState(TEXT("iron_ore")), Stone = Table->FindState(TEXT("stone")),
                  Granite = Table->FindState(TEXT("granite")), Diorite = Table->FindState(TEXT("diorite")),
@@ -227,8 +227,8 @@ bool FVoxelOreLookMeshTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     FString Error;
     FVoxelTerrainPreset TerrainPreset;
@@ -350,8 +350,8 @@ bool FVoxelOreLookMergeTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     const uint16 Ore = Table->FindState(TEXT("iron_ore")), Granite = Table->FindState(TEXT("granite")),
                  Diorite = Table->FindState(TEXT("diorite"));

@@ -891,8 +891,8 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     TestEqual(TEXT("baked models"), Table->GetModelCount(), 308);
     int32 Quads = 0, Wound = 0, Twins = 0, BadTwins = 0;

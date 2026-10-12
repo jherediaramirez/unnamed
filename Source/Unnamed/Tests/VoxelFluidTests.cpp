@@ -729,7 +729,7 @@ bool FVoxelFluidStatesTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
         return false;
     }
     const auto State = [&Table](const TCHAR* Block, const TCHAR* Property, const TCHAR* Value)

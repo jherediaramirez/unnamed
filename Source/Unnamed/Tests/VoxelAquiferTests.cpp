@@ -65,8 +65,8 @@ bool FVoxelAquiferDeterminismTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     FVoxelTerrainPreset Preset;
     FString Error;
@@ -146,8 +146,8 @@ bool FVoxelAquiferFluidsTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     FVoxelTerrainPreset Preset;
     FString Error;
@@ -259,8 +259,8 @@ bool FVoxelAquiferGoldenTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     const TCHAR* const StateNames[] = {TEXT("water"), TEXT("lava"), TEXT("stone"), TEXT("deepslate")};
     const FIntPoint Positions[] = {{0, 0}, {1, 0}, {-3, 7}, {100, -50}};
@@ -349,8 +349,8 @@ bool FVoxelDensityLoadOrderTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     for (const TCHAR* Name : {TEXT("overworld"), TEXT("large_biomes"), TEXT("amplified")})
     {

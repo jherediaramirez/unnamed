@@ -30,8 +30,8 @@ bool FVoxelBlocksTableTest::RunTest(const FString& Parameters)
     const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();
     if (!Registry->GetAssets())
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     TestEqual(TEXT("One entry per state id"), Table->GetStateCount(), Registry->GetStateLimit());
@@ -131,8 +131,8 @@ bool FVoxelBlocksLookStatesTest::RunTest(const FString& Parameters)
     const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();
     if (!Registry->GetAssets())
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     // Every state's look state is of its block, no higher, and draws alike.
@@ -174,8 +174,8 @@ bool FVoxelTerrainTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
     if (!Table->FindState(TEXT("stone")))
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     constexpr int64 Seed = -3224043261468865476ll;
     const FVoxelHeightTerrain Terrain(Seed, *Table);
@@ -250,8 +250,8 @@ bool FVoxelFlatTerrainTest::RunTest(const FString& Parameters)
                  Grass = Table->FindState(TEXT("grass_block")), Water = Table->FindState(TEXT("water"));
     if (!Bedrock || !Grass || !Water)
     {
-        AddWarning(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
-        return true;
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
     }
     constexpr int32 Floor = VoxelConstants::MinZ;
 
