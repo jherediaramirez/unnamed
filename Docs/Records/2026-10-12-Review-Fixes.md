@@ -136,6 +136,7 @@ All on 2026-10-12, worktree `C:\dev\projects\Unnamed-qol`. Machine state is logg
 
 ## Open items
 
+- **For the crash hunt: a kept dump of the allocator crash.** It's the first one, kept by F2: `C:\dev\projects\Unnamed-qol\Tests\Evidence\2026-10-12\Native-20261012-045442\Crashes\UECC-Windows-3FD23EDC43FA185AC1C3BF9D372378CE_0000`, with UEMinidump.dmp, CrashContext.runtime-xml and the log. Exit 777004 in `Unnamed.Voxel.Mesher.Digest`, EXCEPTION_ACCESS_VIOLATION reading 0xffffffffffffffff, on the final code's first lane RunChecks run. The folder is under the ignored `Tests/Evidence/`; a copy is in `C:\dev\sandbox\review-fixes\allocator-crash-dump\` in case this worktree goes. When: the next crash-hunt session; the callstack is `2026-10-11-Voxel-CrashHunt.md`'s "cheapest lead".
 - **`Scripts/CaptureVoxel.ps1` still deletes its temporary profile** (`:60`, `:100`) with any crash dump in it. When: after the brightness pass commits; the fix is one `Close-Profile` call at each site.
 - **Left-click on a tool of the same item with different damage does nothing** (`HudCreative.cpp`, `Move = 0`); vanilla swaps them. When: before the creative or survival inventory work reuses `HudCreative`; confirm with a black-box check first.
 - **`Tests/input-settings.mjs`'s checks are stale:** it expects 7 native rows (current code has 35) and defaults to the 2026-10-07 package. Only its hash was fixed (Q5 (a)). When: if Jesus picks Q5 (b) or (c) later.
