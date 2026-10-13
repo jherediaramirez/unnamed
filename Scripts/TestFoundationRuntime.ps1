@@ -10,7 +10,8 @@ param([switch]$Editor,[string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',
     # shots with the HUD, outline and held item at full-cost rendering, posed from Scripts/Views/DevSeed.txt (passed by
     # path, so a package finds it too); -ViewsScout logs candidate poses instead. Not with -HudCaptures (Playground cases).
     # 'pause' (not part of all) records the frames around ESC and Back to Game (FoundationPauseProbe.cpp).
-    [ValidateSet('movement','interaction','all','tour','views','pause')][string]$Suite='all',[switch]$ViewsScout,
+    # 'swim' (not part of all) plays the swimming control pair in the Playground pool (FoundationSwimProbe.cpp).
+    [ValidateSet('movement','interaction','all','tour','views','pause','swim')][string]$Suite='all',[switch]$ViewsScout,
     [ValidateSet('VanillaReference','LucidFluid')][string]$Preset,[switch]$Finite,
     # The break lane's capture pack: the tour suite with -FoundationTourBreak at full-cost rendering, into Playground-break.
     [switch]$BreakPack,
@@ -71,7 +72,7 @@ foreach($fps in $FrameRates){
     [pscustomobject]@{Cap=$fps;MeanFPS=$report.observed_mean_fps;Failures=$report.failures;Report=$output}
     if($report.failures -gt 0 -or $process.ExitCode -ne 0){throw "Runtime checks failed (exit $($process.ExitCode)): $output"}
     $captures=@(Get-ChildItem -LiteralPath $OutputDirectory -Filter "runtime-$fps*.png")
-    if($captures.Count -eq 0 -and -not($ViewsScout -and $Suite -eq 'views')){throw "Runtime produced no rendered capture: $output"}
+    if($captures.Count -eq 0 -and -not($ViewsScout -and $Suite -eq 'views') -and $Suite -ne 'swim'){throw "Runtime produced no rendered capture: $output"}
     foreach($capture in $captures){
         $bytes=[IO.File]::ReadAllBytes($capture.FullName)
         $actualWidth=([int]$bytes[16] -shl 24)+([int]$bytes[17] -shl 16)+([int]$bytes[18] -shl 8)+[int]$bytes[19]

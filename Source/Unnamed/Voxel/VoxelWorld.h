@@ -72,6 +72,9 @@ public:
     // more fluid lies above.
     virtual bool IsInWater(FVector Point) const override;
     virtual bool IsInWater(const FBox& Body) const override;
+    virtual EFoundationFluid GetFluid(FVector Point) const override;
+    virtual EFoundationFluid GetFluid(const FBox& Body) const override;
+    virtual double GetFluidAboveCm(FVector Feet) const override;
     virtual FFoundationAuthority* GetAuthority() override { return &Authority; }
     virtual FVector GetSafeSpawn(const UFoundationProfile& Profile) const override;
     virtual double GetFallOutZ() const override;
@@ -140,8 +143,10 @@ private:
     // Writes the day clock into the saved world's world.json, read afresh so the menu's changes stay; never for the dev
     // seed or a pinned session.
     void SaveClock() const;
-    // The world box of the water in a cell, or false when it holds none.
-    bool GetWaterBox(const FIntVector& Cell, FBox& OutBox) const;
+    // The world box of the fluid in a cell (water or lava: vitals count both as water), or false when it holds none.
+    // OutLava, when given, is set when the fluid is lava.
+    bool GetFluidBox(const FIntVector& Cell, FBox& OutBox, bool* OutLava = nullptr) const;
+    bool GetWaterBox(const FIntVector& Cell, FBox& OutBox) const { return GetFluidBox(Cell, OutBox); }
     // The terrain for the current seed (VoxelTerrainFactory::Make). A saved world whose terrain cannot be built gets an
     // empty terrain and leaves for the title screen, with the reason in the log.
     TSharedRef<const IVoxelTerrain> MakeTerrain() const;

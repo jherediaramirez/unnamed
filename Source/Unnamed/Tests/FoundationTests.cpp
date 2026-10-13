@@ -49,6 +49,180 @@ bool FFoundationCoordinatesTest::RunTest(const FString&)
         FMath::IsNearlyEqual(FoundationCoordinates::HorizontalFov(110, 16. / 9.), 137.0043386, .0001));
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationSwimTest, "Unnamed.Foundation.Swim",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationSwimTest::RunTest(const FString&)
+{
+    // Oracles: scout AA's probe on the 26.3 server (drags, gravities) and the wiki's swim speeds.
+    const auto& P = *GetDefault<UFoundationProfile>();
+    const TArray<FBox> None, Ground = {FBox(FVector(-100000, -100000, -100), FVector(100000, 100000, 0))};
+    auto Deep = [](EFoundationFluid Fluid)
+    {
+        FFoundationEligibility Facts;
+        Facts.Fluid = Fluid;
+        Facts.bEyesInFluid = true;
+        Facts.FluidAtFeetCm = 1000;
+        return Facts;
+    };
+    const FFoundationEligibility Water = Deep(EFoundationFluid::Water), Lava = Deep(EFoundationFluid::Lava);
+    auto BlocksPerSecond = [&P](double CmPerTick) { return CmPerTick / 100. / P.TickSeconds; };
+    const FFoundationIntent Idle;
+    FFoundationSimulation S;
+    auto Run = [&](const FFoundationIntent& Intent, int32 Ticks, const TArray<FBox>& Boxes,
+                   const FFoundationEligibility& Facts)
+    {
+        for (int32 T = 0; T < Ticks; ++T)
+            S.Step(Intent, 0, P, Boxes, Facts);
+    };
+
+    // Sinking at rest: drag, then gravity (probe water_sink, lava_sink).
+    S.Reset({}, P);
+    Run(Idle, 1, None, Water);
+    TestTrue(TEXT("water: Vz after 1 tick -0.5"), FMath::IsNearlyEqual(S.VelocityPerTick.Z, -.5, 1e-9));
+    Run(Idle, 39, None, Water);
+    AddInfo(FString::Printf(TEXT("water rest 40 ticks: dZ=%.4f Vz=%.4f"), S.Feet.Z, S.VelocityPerTick.Z));
+    TestTrue(TEXT("water: dZ(40) -87.50"), FMath::IsNearlyEqual(S.Feet.Z, -87.5, .05));
+    TestTrue(TEXT("water: Vz(40) -2.4997"), FMath::IsNearlyEqual(S.VelocityPerTick.Z, -2.4997, 1e-3));
+    S.Reset({}, P);
+    Run(Idle, 40, None, Lava);
+    AddInfo(FString::Printf(TEXT("lava rest 40 ticks: dZ=%.4f Vz=%.4f"), S.Feet.Z, S.VelocityPerTick.Z));
+    TestTrue(TEXT("lava: dZ(40) -152.0"), FMath::IsNearlyEqual(S.Feet.Z, -152., .05));
+    // A push coasts out (probe water_push: 2.4852 blocks; the stop cutoff ends it).
+    S.Reset({}, P);
+    S.VelocityPerTick.X = 50;
+    Run(Idle, 40, None, Water);
+    AddInfo(FString::Printf(TEXT("water push 50: dX=%.4f"), S.Feet.X));
+    TestTrue(TEXT("water push: dX(40) 248.5"), FMath::IsNearlyEqual(S.Feet.X, 248.5, .5));
+
+    // Speeds on the water's floor: wiki 1.97 swimming, 3.918 sprint-swimming (ours 1.96 and 3.92).
+    FFoundationIntent Forward, Sprint;
+    Forward.Move = Sprint.Move = {0, 1};
+    Sprint.bSprint = true;
+    for (int32 FPS : {30, 60, 120})
+    {
+        S.Reset({}, P);
+        for (int32 F = 0; F < FPS * 10; ++F)
+            S.Advance(1. / FPS, Forward, 0, P, Ground, Water);
+        const double Speed = BlocksPerSecond(S.LastDisplacement.Size2D());
+        AddInfo(FString::Printf(TEXT("%d FPS swim %.4f blocks/s"), FPS, Speed));
+        TestTrue(FString::Printf(TEXT("%d FPS swim speed within 1%% of 1.97"), FPS),
+            FMath::IsNearlyEqual(Speed, 1.97, .0197) && S.Feet.Z == 0);
+    }
+    S.Reset({}, P);
+    Run(Sprint, 200, Ground, Water);
+    const double SprintSpeed = BlocksPerSecond(S.LastDisplacement.Size2D());
+    AddInfo(FString::Printf(TEXT("sprint, eyes in: %.4f blocks/s"), SprintSpeed));
+    TestTrue(TEXT("sprint-swim within 1% of 3.918"), S.bSprinting && FMath::IsNearlyEqual(SprintSpeed, 3.918, .03918));
+    FFoundationEligibility EyesOut = Water;
+    EyesOut.bEyesInFluid = false;
+    S.Reset({}, P);
+    Run(Sprint, 200, Ground, EyesOut);
+    TestTrue(TEXT("sprinting with the eyes out keeps the swim speed"),
+        FMath::IsNearlyEqual(BlocksPerSecond(S.LastDisplacement.Size2D()), 1.96, .0197));
+
+    // No ground jump in deep water, but in shallow; held jump rises, sneak sinks faster than idle.
+    FFoundationIntent Jump, Sneak;
+    Jump.bJump = true;
+    Sneak.bCrouch = true;
+    S.Reset({}, P);
+    S.bGrounded = true;
+    Run(Jump, 1, Ground, Water);
+    TestFalse(TEXT("deep water: no ground jump"), S.bJumped);
+    FFoundationEligibility Shallow = Water;
+    Shallow.FluidAtFeetCm = P.ShallowJumpCm - 1;
+    S.Reset({}, P);
+    S.bGrounded = true;
+    Run(Jump, 1, Ground, Shallow);
+    TestTrue(TEXT("shallow water: ground jump"), S.bJumped);
+    S.Reset({}, P);
+    Run(Jump, 60, None, Water);
+    AddInfo(FString::Printf(TEXT("held jump: Vz=%.4f after 60 ticks"), S.VelocityPerTick.Z));
+    TestTrue(
+        TEXT("held jump rises at 13.5 cm/tick"), S.Feet.Z > 0 && FMath::IsNearlyEqual(S.VelocityPerTick.Z, 13.5, .01));
+    S.Reset({}, P);
+    Run(Sneak, 40, None, Water);
+    AddInfo(FString::Printf(TEXT("sneak: dZ(40)=%.4f Vz=%.4f"), S.Feet.Z, S.VelocityPerTick.Z));
+    TestTrue(TEXT("sneak sinks at 18.5 cm/tick, faster than idle"),
+        S.Feet.Z < -87.5 * 2 && FMath::IsNearlyEqual(S.VelocityPerTick.Z, -18.5, .01));
+
+    // Jumping out: at a 1-block wall flush with the surface, forward and jump climb onto it; a 2-block wall holds.
+    for (double WallTop : {100., 200.})
+    {
+        const FBox Pool(FVector(-1000, -1000, 0), FVector(100, 1000, 100));
+        TArray<FBox> Boxes = Ground;
+        Boxes.Add(FBox(FVector(100, -1000, 0), FVector(100000, 1000, WallTop)));
+        FFoundationIntent Climb = Forward;
+        Climb.bJump = true;
+        S.Reset({0, 0, 0}, P);
+        S.bGrounded = true;
+        for (int32 T = 0; T < 120; ++T)
+        {
+            FFoundationEligibility Facts;
+            const FBox Body = FFoundationSimulation::Bounds(S.Feet, S.HeightCm, P.WidthCm).ExpandBy(-.1);
+            Facts.Fluid = Pool.Intersect(Body) ? EFoundationFluid::Water : EFoundationFluid::None;
+            Facts.bEyesInFluid = Pool.IsInside(S.Feet + FVector(0, 0, S.EyeCm));
+            Facts.FluidAtFeetCm = Pool.IsInside(S.Feet + FVector(0, 0, .1)) ? Pool.Max.Z - S.Feet.Z : 0;
+            Facts.IsFluidFree = [&Pool](const FBox& Box) { return !Pool.Intersect(Box.ExpandBy(-.1)); };
+            Climb.bJump = T < 100; // Then let go and land.
+            S.Step(Climb, 0, P, Boxes, Facts);
+        }
+        AddInfo(FString::Printf(TEXT("wall top %.0f: feet after 120 ticks %s"), WallTop, *S.Feet.ToString()));
+        TestEqual(FString::Printf(TEXT("wall top %.0f: on top only for a 1-block wall"), WallTop),
+            S.bGrounded && S.Feet.X > 100 && FMath::IsNearlyEqual(S.Feet.Z, WallTop, .001), WallTop == 100.);
+    }
+
+    // Creative flight ignores fluids: the flight speed stays 10.89 blocks/s.
+    FFoundationEligibility FlyingInWater = Water;
+    FlyingInWater.bMayFly = true;
+    S.Reset({}, P);
+    S.bFlying = true;
+    Run(Forward, 200, None, FlyingInWater);
+    TestTrue(TEXT("flying in water keeps 10.89 blocks/s"),
+        S.bFlying && S.LastDisplacement.Z == 0 &&
+            FMath::IsNearlyEqual(BlocksPerSecond(S.LastDisplacement.Size2D()), 10.8888889, .001));
+
+    // No fluid: the facts' other fields change nothing (foundation.Swim 0 is today's movement, bit for bit).
+    TArray<FBox> Course = Ground;
+    Course.Add(FBox(FVector(300, -100, 0), FVector(400, 100, 50)));
+    FFoundationEligibility Dry = Water;
+    Dry.Fluid = EFoundationFluid::None;
+    Dry.IsFluidFree = [](const FBox&) { return false; };
+    FFoundationSimulation A, B;
+    A.Reset({}, P);
+    B.Reset({}, P);
+    bool bSame = true;
+    for (int32 T = 0; T < 300; ++T)
+    {
+        FFoundationIntent Mixed;
+        Mixed.Move = {T % 50 < 10 ? .5 : 0., T % 70 < 60 ? 1. : -1.};
+        Mixed.bSprint = T % 90 < 40;
+        Mixed.bJump = T % 23 < 3;
+        Mixed.bCrouch = T % 110 > 95;
+        A.Step(Mixed, T * .7, P, Course);
+        B.Step(Mixed, T * .7, P, Course, Dry);
+        bSame &= A.Feet == B.Feet && A.VelocityPerTick == B.VelocityPerTick && A.bSprinting == B.bSprinting;
+    }
+    AddInfo(FString::Printf(TEXT("dry course end %s"), *A.Feet.ToString()));
+    TestTrue(TEXT("no fluid: identical to the dry simulation"), bSame && A.Feet.Size2D() > 300);
+
+    // The lab's facts: water boxes when swimming, nothing with foundation.Swim 0.
+    FScopedTestWorld TestWorld;
+    auto* Lab = TestWorld.World->SpawnActor<AFoundationLab>();
+    Lab->WaterBoxes.Add(FBox(FVector(-500, -500, 0), FVector(500, 500, 300)));
+    S.Reset({0, 0, 0}, P);
+    FFoundationEligibility Facts;
+    Lab->GetFluidFacts(false, S, P, Facts);
+    TestTrue(TEXT("lab, switch 0: no fluid facts"), Facts.Fluid == EFoundationFluid::None && !Facts.bEyesInFluid);
+    Lab->GetFluidFacts(true, S, P, Facts);
+    TestTrue(TEXT("lab, switch 1: in water, eyes under, 3 blocks at the feet"),
+        Facts.Fluid == EFoundationFluid::Water && Facts.bEyesInFluid &&
+            FMath::IsNearlyEqual(Facts.FluidAtFeetCm, 300.) &&
+            !Facts.IsFluidFree(FBox(FVector(0, 0, 250), FVector(10, 10, 400))) &&
+            Facts.IsFluidFree(FBox(FVector(0, 0, 300), FVector(10, 10, 400))));
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMovementTest, "Unnamed.Foundation.Movement",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

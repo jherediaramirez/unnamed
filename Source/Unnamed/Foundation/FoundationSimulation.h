@@ -7,9 +7,22 @@ class UFoundationProfile;
 // Movement eligibility facts. The pawn supplies death (mobility), food and the game mode's flight
 // permission from FFoundationVitals each step; item slowdown has no owner yet. The simulation itself
 // has no survival rules.
+enum class EFoundationFluid : uint8
+{
+    None,
+    Water,
+    Lava
+};
+
 struct FFoundationEligibility
 {
     bool bMobile = true, bEnoughFood = true, bItemSlows = false, bMayFly = false;
+    // Fluid facts at the pose before the step (foundation.Swim 1; left empty they change nothing). IsFluidFree
+    // answers the jump-out test; unset, every box counts as free.
+    EFoundationFluid Fluid = EFoundationFluid::None;
+    bool bEyesInFluid = false;
+    double FluidAtFeetCm = 0;
+    TFunction<bool(const FBox&)> IsFluidFree;
 };
 
 // One simulation step's request. The pawn builds it from the input layer's FUnnamedInputIntent

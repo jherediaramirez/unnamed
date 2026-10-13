@@ -165,7 +165,10 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
     const bool Jump = Intent.bJump || AutoJump;
     const double Yaw = FMath::DegreesToRadians(YawDegrees);
     const FVector ForwardVector(FMath::Cos(Yaw), FMath::Sin(Yaw), 0), RightVector(-FMath::Sin(Yaw), FMath::Cos(Yaw), 0);
-    if (Jump && bGrounded && JumpCooldown == 0 && Eligibility.bMobile && !bFlying)
+    // Swimming: creative flight ignores fluids. Fluid at the feet no deeper than ShallowJumpCm still allows a jump.
+    const bool InFluid = Eligibility.Fluid != EFoundationFluid::None && !bFlying;
+    if (Jump && bGrounded && JumpCooldown == 0 && Eligibility.bMobile && !bFlying &&
+        (!InFluid || Eligibility.FluidAtFeetCm < P.ShallowJumpCm))
     {
         VelocityPerTick.Z = FMath::Max(P.JumpCmPerTick, VelocityPerTick.Z);
         if (bSprinting) VelocityPerTick += ForwardVector * P.SprintJumpCmPerTick;
@@ -179,11 +182,14 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
     const FVector2D Input = ResolveInput(
         Eligibility.bMobile ? Intent.Move : FVector2D::ZeroVector, bCrouched ? P.CrouchMultiplier : 1., P.InputDamping);
     const double Accel = bFlying ? P.FlyAccelerationCmPerTick * (bSprinting ? P.FlySprintMultiplier : 1.)
+        : InFluid                ? P.SwimAccelerationCmPerTick
                                  : (WasGrounded ? P.GroundAccelerationCmPerTick : P.AirAccelerationCmPerTick) *
             (bSprinting ? P.SprintMultiplier : 1.);
     VelocityPerTick += (ForwardVector * Input.Y + RightVector * Input.X) * Accel;
     if (bFlying && Eligibility.bMobile)
         VelocityPerTick.Z += (int32(Intent.bJump) - int32(Intent.bCrouch)) * P.FlyVerticalCmPerTick;
+    if (InFluid && Eligibility.bMobile)
+        VelocityPerTick.Z += (int32(Intent.bJump) - int32(Intent.bCrouch)) * P.SwimVerticalCmPerTick;
     FBox Box = Bounds(Feet, HeightCm, P.WidthCm);
     FVector Wanted = VelocityPerTick;
     if (!bFlying && Intent.bCrouch && Wanted.Z <= 0 &&
@@ -243,10 +249,28 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
     Feet += Moved;
     LastDisplacement = Moved;
     FallDistanceCm = bGrounded || bFlying ? 0 : FallDistanceCm + FMath::Max(0., -Moved.Z);
-    VelocityPerTick.Z =
-        bFlying ? VelocityPerTick.Z * P.FlyVerticalDrag : (VelocityPerTick.Z - P.GravityCmPerTick) * P.VerticalDrag;
-    VelocityPerTick.X *= Friction;
-    VelocityPerTick.Y *= Friction;
+    if (InFluid)
+    {
+        // Fluid drag on every axis, then the fluid's gravity (the probe's order). Sprinting with the eyes under keeps
+        // more speed. At a wall, a body raised JumpOutRaiseCm that fits out of the fluid jumps out.
+        const bool Lava = Eligibility.Fluid == EFoundationFluid::Lava;
+        VelocityPerTick *= Lava ? P.LavaDrag : bSprinting && Eligibility.bEyesInFluid ? P.WaterSprintDrag : P.WaterDrag;
+        VelocityPerTick.Z -= Lava ? P.LavaGravityCmPerTick : P.WaterGravityCmPerTick;
+        if (bHorizontalCollision)
+        {
+            const FBox Raised =
+                Bounds(Feet, HeightCm, P.WidthCm).ShiftBy(FVector(Wanted.X, Wanted.Y, P.JumpOutRaiseCm));
+            if (Fits(Raised, WorldBoxes) && (!Eligibility.IsFluidFree || Eligibility.IsFluidFree(Raised)))
+                VelocityPerTick.Z = P.JumpOutCmPerTick;
+        }
+    }
+    else
+    {
+        VelocityPerTick.Z =
+            bFlying ? VelocityPerTick.Z * P.FlyVerticalDrag : (VelocityPerTick.Z - P.GravityCmPerTick) * P.VerticalDrag;
+        VelocityPerTick.X *= Friction;
+        VelocityPerTick.Y *= Friction;
+    }
     if (bSprinting && bHorizontalCollision) bSprinting = false;
     if (Intent.bAutoJump && bGrounded && !Intent.bCrouch && !bCrouched && !Input.IsNearlyZero())
     {

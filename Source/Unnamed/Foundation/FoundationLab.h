@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Foundation/FoundationActions.h"
+#include "Foundation/FoundationSimulation.h"
 #include "FoundationLab.generated.h"
 
 class FFoundationAuthority;
@@ -70,6 +71,14 @@ public:
     // The lab's water boxes; generated worlds answer from their blocks.
     virtual bool IsInWater(FVector Point) const;
     virtual bool IsInWater(const FBox& Body) const;
+    // Swimming (foundation.Swim 1): as IsInWater, but telling water from lava (lava wins when both touch the body),
+    // and how deep the fluid stands above the feet (0 when none; at least a block's worth counts as deep).
+    virtual EFoundationFluid GetFluid(FVector Point) const;
+    virtual EFoundationFluid GetFluid(const FBox& Body) const;
+    virtual double GetFluidAboveCm(FVector Feet) const;
+    // The fluid facts one movement step reads, at the pose before it; bSwim false (foundation.Swim 0) clears them.
+    void GetFluidFacts(bool bSwim, const FFoundationSimulation& Simulation, const UFoundationProfile& Profile,
+        FFoundationEligibility& Out) const;
     // The movement collision provider: every box that can touch Region. This lab's immutable cuboids;
     // the Playground adds its committed blocks.
     virtual void GatherCollision(const FBox& Region, TArray<FBox>& Out) const;

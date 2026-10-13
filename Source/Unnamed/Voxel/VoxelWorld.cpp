@@ -524,13 +524,14 @@ FFoundationTarget AVoxelWorld::TraceTarget(FVector Eye, FVector Direction, const
     return TraceAuthority(Authority, Eye, Direction);
 }
 
-bool AVoxelWorld::GetWaterBox(const FIntVector& Cell, FBox& OutBox) const
+bool AVoxelWorld::GetFluidBox(const FIntVector& Cell, FBox& OutBox, bool* OutLava) const
 {
     if (!Table) return false;
     // Model states holding water (kelp, seagrass) are water to swim in.
     const FVoxelStateInfo& CellInfo = Table->Get(GetState(Cell));
     if (!CellInfo.HoldsFluid()) return false;
     const FVoxelStateInfo& Info = CellInfo.HeldFluid ? Table->Get(CellInfo.HeldFluid) : CellInfo;
+    if (OutLava) *OutLava = Info.Block == Table->FindBlock(TEXT("lava"));
     const double Top = Table->Get(GetState(Cell + FIntVector(0, 0, 1))).HoldsFluid() ? 1. : Info.GetFluidHeight();
     const FVector Min = FoundationGrid::CellMin(Cell, OriginCm);
     OutBox = FBox(Min, Min + FVector(CellCm, CellCm, Top * CellCm));
@@ -583,6 +584,45 @@ bool AVoxelWorld::IsInWater(const FBox& Body) const
                 if (GetWaterBox({X, Y, Z}, Water) && Water.Intersect(Inner)) return true;
             }
     return false;
+}
+
+EFoundationFluid AVoxelWorld::GetFluid(FVector Point) const
+{
+    FBox Fluid;
+    bool bLava = false;
+    if (!GetFluidBox(FoundationGrid::CellAt(Point, OriginCm), Fluid, &bLava) || !Fluid.IsInside(Point))
+        return EFoundationFluid::None;
+    return bLava ? EFoundationFluid::Lava : EFoundationFluid::Water;
+}
+
+EFoundationFluid AVoxelWorld::GetFluid(const FBox& Body) const
+{
+    const FBox Inner = Body.ExpandBy(-.1);
+    const FIntVector Low = FoundationGrid::CellAt(Inner.Min, OriginCm),
+                     High = FoundationGrid::CellAt(Inner.Max, OriginCm);
+    EFoundationFluid Result = EFoundationFluid::None;
+    for (int32 Z = Low.Z; Z <= High.Z; ++Z)
+        for (int32 Y = Low.Y; Y <= High.Y; ++Y)
+            for (int32 X = Low.X; X <= High.X; ++X)
+            {
+                FBox Fluid;
+                bool bLava = false;
+                if (!GetFluidBox({X, Y, Z}, Fluid, &bLava) || !Fluid.Intersect(Inner)) continue;
+                if (bLava) return EFoundationFluid::Lava;
+                Result = EFoundationFluid::Water;
+            }
+    return Result;
+}
+
+double AVoxelWorld::GetFluidAboveCm(FVector Feet) const
+{
+    // The feet cell's fluid, plus the cell above when the fluid fills it to the top (enough for the shallow test).
+    const FIntVector Cell = FoundationGrid::CellAt(Feet + FVector(0, 0, .1), OriginCm);
+    FBox Fluid;
+    if (!GetFluidBox(Cell, Fluid)) return 0;
+    double Above = FMath::Max(0., Fluid.Max.Z - Feet.Z);
+    if (GetFluidBox(Cell + FIntVector(0, 0, 1), Fluid)) Above += Fluid.Max.Z - Fluid.Min.Z;
+    return Above;
 }
 
 UVoxelWorldSubsystem* AVoxelWorld::GetStreaming() const

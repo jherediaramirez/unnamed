@@ -3,6 +3,8 @@
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 12, 2026
+- [Swim handoff: swimming step 1 done, into underwater fog/tint](2026-10-12-Swim-Handoff.md): start here for the next swimming/underwater step.
+- [Swimming, step 1: water and lava stop feeling like land](2026-10-12-Swimming.md): `foundation.Swim` 1 by default (drag, sinking, Space/Sneak, jump-out, lava split); the control pair and 5 mutations.
 
 - [Water and sky handoff: W3c done, into W3d (less see-through water, readable streaks, the water fog, a probe step)](2026-10-12-WaterSky-Handoff-W3d.md): start here for the next water session.
 - [Water fog handoff: the surface from below next](2026-10-12-WaterFog-Handoff.md): start here after the water fog (depth on the water materials, then the open items).
