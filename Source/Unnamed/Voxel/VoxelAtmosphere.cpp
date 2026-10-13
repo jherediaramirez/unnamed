@@ -24,6 +24,12 @@ namespace
         TEXT("Atmosphere: how many f-stops brighter views under open sky expose at full night (caves keep theirs)."));
     TAutoConsoleVariable<float> CVarAtmosphereNightSky(TEXT("voxel.Atmosphere.NightSky"), .25f,
         TEXT("Atmosphere: x the sky's and the haze's luminance at full night."));
+    TAutoConsoleVariable<int32> CVarAtmosphereTwilight(TEXT("voxel.Atmosphere.Twilight"), 0,
+        TEXT("Atmosphere, with Cycle 1 and Night 1: a temporary cool open-sky terrain floor and navy sky bridge."));
+    TAutoConsoleVariable<float> CVarAtmosphereTwilightFloor(TEXT("voxel.Atmosphere.TwilightFloor"), 1.5f,
+        TEXT("Atmosphere: maximum temporary terrain floor (0 to 8); caves keep their existing floor."));
+    TAutoConsoleVariable<float> CVarAtmosphereTwilightSky(TEXT("voxel.Atmosphere.TwilightSky"), .2f,
+        TEXT("Atmosphere: exposure-compensated navy backdrop through the light handover (0 to 1)."));
 
     // The moon's light: cool and faint (linear).
     const FLinearColor MoonColor(.62f, .72f, 1.f);
@@ -42,9 +48,11 @@ namespace
                     const FVoxelEnvironment Environment = Voxels->GetEnvironment();
                     const VoxelAtmosphere::FNight Night = VoxelAtmosphere::ReadNight(Environment);
                     Reply = VoxelEnvironment::Describe(Environment) +
-                        FString::Printf(TEXT("\nCycle %d, night %d (applied night %.3f, %.2f stops, sky x%.2f)"),
+                        FString::Printf(TEXT("\nCycle %d, night %d (applied night %.3f, %.2f stops, sky x%.2f); "
+                                             "twilight %d (floor %.3f, sky %.4f)"),
                             CVarAtmosphereCycle.GetValueOnGameThread(), CVarAtmosphereNight.GetValueOnGameThread(),
-                            Night.Night, Night.ExposureStops, Night.SkyScale);
+                            Night.Night, Night.ExposureStops, Night.SkyScale,
+                            CVarAtmosphereTwilight.GetValueOnGameThread(), Night.TwilightFloor, Night.TwilightSky);
                 }
                 TArray<FString> Lines;
                 Reply.ParseIntoArrayLines(Lines);
@@ -64,8 +72,30 @@ VoxelAtmosphere::FNight VoxelAtmosphere::ReadNight(const FVoxelEnvironment& Envi
     if (!IsCycleOn() || CVarAtmosphereNight.GetValueOnGameThread() != 1) return Out;
     Out.Night = FMath::RoundToFloat(Environment.Night * 64.f) / 64.f;
     Out.ExposureStops = FMath::Max(0.f, CVarAtmosphereNightStops.GetValueOnGameThread());
+    if (CVarAtmosphereTwilight.GetValueOnGameThread() == 1)
+    {
+        const float Bridge = FMath::RoundToFloat(TwilightWeight(Environment) * 64.f) / 64.f;
+        const float SkyBridge = FMath::RoundToFloat(TwilightSkyWeight(Environment) * 64.f) / 64.f;
+        Out.TwilightFloor = Bridge * FMath::Clamp(CVarAtmosphereTwilightFloor.GetValueOnGameThread(), 0.f, 8.f);
+        Out.TwilightSky = SkyBridge * FMath::Clamp(CVarAtmosphereTwilightSky.GetValueOnGameThread(), 0.f, 1.f);
+    }
     Out.SkyScale = FMath::Max(0.f, CVarAtmosphereNightSky.GetValueOnGameThread());
     return Out;
+}
+
+float VoxelAtmosphere::TwilightWeight(const FVoxelEnvironment& Environment)
+{
+    // The sun keeps its atmospheric glow. A faint minimum covers the unlit handover, then yields to the moon.
+    // Exposure alone cannot brighten this interval: both directional sources reach zero at the switch.
+    return FMath::Clamp(Environment.Night, 0.f, 1.f) * (1.f - FMath::Clamp(Environment.Moonlight, 0.f, 1.f));
+}
+
+float VoxelAtmosphere::TwilightSkyWeight(const FVoxelEnvironment& Environment)
+{
+    // Full directional intensity arrives while the moon is still low and the atmospheric sky remains dark.
+    // Ease the navy addition over the moon's sine altitude instead, reaching the unchanged sky at midnight.
+    const float Height = FMath::Clamp(float(Environment.MoonDirection.Z), 0.f, 1.f);
+    return FMath::Clamp(Environment.Night, 0.f, 1.f) * (1.f - FMath::SmoothStep(0.f, 1.f, Height));
 }
 
 void VoxelAtmosphere::ComposeNight(VoxelLook::FTargets& Targets, const FNight& Night, double Pin)
@@ -76,6 +106,7 @@ void VoxelAtmosphere::ComposeNight(VoxelLook::FTargets& Targets, const FNight& N
     const float Sky = FMath::Lerp(1.f, Night.SkyScale, Night.Night);
     Targets.SkyLuminance *= Sky;
     Targets.FogColorScale *= Sky;
+    Targets.TwilightFloor = Night.TwilightFloor * float(FMath::Clamp(Pin, 0., 1.));
 }
 
 float VoxelAtmosphere::MoonLux(const FVoxelEnvironment& Environment, float FullLux, float NewMoonShare)

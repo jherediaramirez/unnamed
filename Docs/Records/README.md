@@ -3,6 +3,8 @@
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 13, 2026
+
+- [Atmosphere: twilight and square stars](2026-10-13-Atmosphere-Twilight-Stars.md): local candidate behind `voxel.Atmosphere.Twilight` and `voxel.Atmosphere.Stars` (both 0); a temporary terrain/sky minimum bridges the handover, with deterministic depth-tested stars. Cycle remains 0. Final evidence and local commit approval are tracked in the record.
 - [Atmosphere: a night that is never black](2026-10-13-Atmosphere-Night.md): `voxel.Atmosphere.Night` (with Cycle 1): a moon fill by phase, a navy night sky, open sky exposed for the night (caves unchanged), twilight glow; open: the twilight dip, stars, the round disks, the DN-P run. The [atmosphere handoff](2026-10-13-Atmosphere-Handoff.md) is updated.
 - [Atmosphere: the sun follows the clock](2026-10-13-Atmosphere-Cycle.md): `voxel.Atmosphere.Cycle` (default 0) turns the sun with the world clock through `FVoxelEnvironment`, with `voxel.Atmosphere.Info`; the night is black until the next step; start at [the atmosphere handoff](2026-10-13-Atmosphere-Handoff.md) (night exposure + moon fill, the quiet DN-P p95 run).
 - [Far LOD correctness handoff: A1-A3 done, a far-hole A/B owed](2026-10-13-Voxel-LOD-Correctness-Handoff.md): start here; the smoke flight's far-hole frames rose under load (3,168 to 4,479), and a quiet-window DLL-swap A/B is still owed (skipped for now by Jesus's call).

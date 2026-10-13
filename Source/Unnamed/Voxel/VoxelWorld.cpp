@@ -57,6 +57,8 @@
 #include "Voxel/VoxelTransitionShots.h"
 #include "Voxel/VoxelWorldSubsystem.h"
 #include "Voxel/VoxelWorldgenReader.h"
+#include "Voxel/VoxelStars.h"
+#include "Sky/VoxelEnvironment.h"
 #include "VoxelConstants.h"
 #include "VoxelLog.h"
 
@@ -272,6 +274,7 @@ void AVoxelWorld::BuildLayout()
     LookCollection = Cast<UMaterialParameterCollection>(
         UUnnamedProjectSettings::GetBlockAssetPath(VoxelLook::CollectionName).TryLoad());
     ApplyLook();
+    UpdateStars();
     // A plane a thousand kilometres wide under the world's bottom, for the fog to color below the horizon. Fogged
     // through, its own look never shows, so it stays out of shadows, Lumen and ray tracing.
     if (UStaticMesh* Plane = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Plane.Plane")))
@@ -795,6 +798,7 @@ void AVoxelWorld::Tick(float DeltaSeconds)
     UpdateLoadingShot();
     ApplyCycle();
     ApplyLook();
+    UpdateStars();
     UpdateEdgeFog();
     UpdateWaterFog();
     if (Lights)
@@ -847,6 +851,42 @@ void AVoxelWorld::Tick(float DeltaSeconds)
         Flight.Reset();
         FPlatformMisc::RequestExit(false, TEXT("VoxelFlight"));
     }
+}
+
+void AVoxelWorld::UpdateStars()
+{
+    const VoxelStars::FSettings Settings = VoxelStars::ReadSettings();
+    const FVoxelEnvironment Environment = GetEnvironment();
+    const float TwilightSky = VoxelAtmosphere::ReadNight(Environment).TwilightSky;
+    const bool bWantsStars = Settings.bEnabled && Settings.bCycle && Settings.bNight;
+    if (!Stars && !TwilightBackdrop && !bWantsStars && TwilightSky <= 0.f) return;
+    const APlayerController* Controller = GetWorld()->GetFirstPlayerController();
+    if (!Controller || !Controller->PlayerCameraManager)
+    {
+        if (Stars) Stars->SetVisibility(false);
+        if (TwilightBackdrop) TwilightBackdrop->SetVisibility(false);
+        return;
+    }
+    if (!Stars && bWantsStars)
+    {
+        Stars = NewObject<UVoxelStars>(this, TEXT("AtmosphereStars"));
+        Stars->SetupAttachment(GetRootComponent());
+        Stars->SetAbsolute(true, true, true);
+        Stars->RegisterComponent();
+    }
+    const FVector Eye = Controller->PlayerCameraManager->GetCameraLocation();
+    if (Stars) Stars->Update(Environment, Eye, Settings);
+    if (!TwilightBackdrop && !bTriedTwilightBackdrop && TwilightSky > 0.f)
+    {
+        bTriedTwilightBackdrop = true;
+        TwilightBackdrop = VoxelStars::CreateTwilightBackdrop(this);
+        if (TwilightBackdrop)
+        {
+            TwilightBackdrop->SetupAttachment(GetRootComponent());
+            TwilightBackdrop->RegisterComponent();
+        }
+    }
+    if (TwilightBackdrop) VoxelStars::UpdateTwilightBackdrop(*TwilightBackdrop, Eye, TwilightSky);
 }
 
 void AVoxelWorld::UpdateEdgeFog()

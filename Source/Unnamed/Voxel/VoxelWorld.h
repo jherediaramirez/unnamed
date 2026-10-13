@@ -39,6 +39,7 @@ class USkyLightComponent;
 class UMaterialInstanceDynamic;
 class UPostProcessComponent;
 class UVoxelWorldSubsystem;
+class UVoxelStars;
 
 // The voxel world's level actor (/Game/Maps/L_Generated) and the map's AFoundationLab. UVoxelWorldSubsystem streams the
 // columns around the camera (phase 3); this actor decides what it streams and how it plays: the saved world's seed and
@@ -186,9 +187,12 @@ private:
     // the horizon). The only writer of the sun light; at 0 it puts back the map's rotation and intensity once, and
     // otherwise never touches the light.
     void ApplyCycle();
+    // The optional stars and twilight backdrop: independently switched, camera-centred, reading this environment.
+    void UpdateStars();
     // voxel.Look.CaveFloor: makes its post-process on first use, switches it, and fades the floor with the fog that
     // hides the far scene (the edge fog; with the eye in water, the water fog while voxel.Look.WaterFog is on).
-    void UpdateCaveFloor(float Strength);
+    // The independent twilight minimum shares that range but runs before translucent water and glass.
+    void UpdateCaveFloor(float Strength, float TwilightStrength);
     // On the climate search's dry land: the spawn cell rises or falls to the highest block that collides in its block
     // column (a treetop counts), then rises until the body fits, as the Playground's spawn does.
     void StandOnSpawnBlocks();
@@ -259,6 +263,11 @@ private:
     TObjectPtr<UStaticMeshComponent> FogFloor;
     UPROPERTY(Transient)
     TObjectPtr<USkyAtmosphereComponent> Sky;
+    UPROPERTY(Transient)
+    TObjectPtr<UVoxelStars> Stars;
+    UPROPERTY(Transient)
+    TObjectPtr<UStaticMeshComponent> TwilightBackdrop;
+    bool bTriedTwilightBackdrop = false;
     bool bEdgeFogVisible = true;
     // The map's rig the look dials drive (its unbound post-process volume and sky light), MPC_VoxelLook, the look as
     // last applied and the edge fog colour's scale from it.
@@ -269,6 +278,9 @@ private:
     TObjectPtr<UPostProcessComponent> CaveFloorPost;
     UPROPERTY(Transient)
     TObjectPtr<UMaterialInstanceDynamic> CaveFloorMaterial;
+    UPROPERTY(Transient)
+    TObjectPtr<UPostProcessComponent> TwilightFloorPost;
+    bool bTriedTwilightFloor = false;
     UPROPERTY(Transient)
     TObjectPtr<USkyLightComponent> SkyFill;
     UPROPERTY(Transient)
