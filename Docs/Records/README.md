@@ -3,6 +3,8 @@
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 13, 2026
+- [Cave floor handoff](2026-10-13-Cave-Floor-Handoff.md): start here after the cave floor (the underwater fade, the Brightness slider later, the GPU cost in a quiet window).
+- [The cave floor](2026-10-13-Cave-Floor.md): `voxel.Look.CaveFloor` 0.56 (Jesus's pick, about vanilla's Moody; 0 = black as before, 1 = vanilla Default): vanilla's light-0 ambient after tone mapping (`M_LookCaveFloor`, `CreateLookMaterials.py`), so cave walls no light reaches read dimly instead of black; the held item gets it too.
 - [Held light and glow lichen handoff](2026-10-13-Held-Lichen-Handoff.md): `foundation.Held.Light` 1 (the held item takes the light at the player: dark in caves, warm by torches) and `voxel.Look.LowGlow` 0.03 (glow lichen's soft glow, not white); open: the night term, walls in the block light.
 
 ## October 12, 2026
