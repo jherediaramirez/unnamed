@@ -38,8 +38,8 @@ TAutoConsoleVariable<bool> VoxelConsole::CVarFarShadows(TEXT("voxel.Far.Shadows"
 TAutoConsoleVariable<int32> VoxelConsole::CVarFarCanopyLayer(TEXT("voxel.Far.CanopyLayer"), 0,
     TEXT("Far LOD: the far leaf canopies' layer, 0 cutout (as near leaves draw) or 1 opaque. A change remeshes every "
          "far column."));
-TAutoConsoleVariable<bool> VoxelConsole::CVarFarTrees(TEXT("voxel.Far.Trees"), false,
-    TEXT("Far LOD: retain trunks and every above-ground leaf tier. 0 keeps the original upper-canopy-only mesh. "
+TAutoConsoleVariable<bool> VoxelConsole::CVarFarTrees(TEXT("voxel.Far.Trees"), true,
+    TEXT("Far LOD: retain trunks and every above-ground leaf tier (default 1). 0 keeps the original upper-canopy-only mesh. "
          "A change remeshes far columns while their previous meshes stay visible."));
 TAutoConsoleVariable<bool> VoxelConsole::CVarFarInnerFirst(TEXT("voxel.Far.InnerFirst"), true,
     TEXT("Far LOD: a far mesh for a column within two columns of the view that shows nothing yet goes before full "
