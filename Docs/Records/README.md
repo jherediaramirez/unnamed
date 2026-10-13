@@ -3,6 +3,7 @@
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 13, 2026
+- [Atmosphere: the sun follows the clock](2026-10-13-Atmosphere-Cycle.md): `voxel.Atmosphere.Cycle` (default 0) turns the sun with the world clock through `FVoxelEnvironment`, with `voxel.Atmosphere.Info`; the night is black until the next step; start at [the atmosphere handoff](2026-10-13-Atmosphere-Handoff.md) (night exposure + moon fill, the quiet DN-P p95 run).
 - [Held light and glow lichen handoff](2026-10-13-Held-Lichen-Handoff.md): `foundation.Held.Light` 1 (the held item takes the light at the player: dark in caves, warm by torches) and `voxel.Look.LowGlow` 0.03 (glow lichen's soft glow, not white); open: the night term, walls in the block light.
 
 ## October 12, 2026
