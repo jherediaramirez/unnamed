@@ -107,10 +107,10 @@ bool FVoxelLookTest::RunTest(const FString& Parameters)
     Defaults.SkyPinAdapt = 0;
     const FVoxelLook Picked;
     TestTrue(TEXT("the defaults are Jesus's pick: DayEV 0.6, SkyPin with 2 stops, sky 1.637, water specular 0.25 "
-                  "(W3c), the rest as before"),
+                  "(W3c), low glow 0.03 (held-lichen), the rest as before"),
         Picked.DayEV == .6f && Picked.SkyPin == 1 && Picked.SkyPinAdapt == 2.f && Picked.Sky == 1.637f &&
             Picked.Cap == 12.5f && Picked.SkyFill == 1.f && Picked.LocalExposure == 1 && Picked.Film == 0 &&
-            Picked.LowGlow == 1.f && Picked.WaterSpecular == .25f && Picked.SpeedUp == 2.f);
+            Picked.LowGlow == .03f && Picked.WaterSpecular == .25f && Picked.SpeedUp == 2.f);
     auto With = [&Defaults](TFunctionRef<void(FVoxelLook&)> Change)
     {
         FVoxelLook Look = Defaults;

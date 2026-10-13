@@ -117,6 +117,8 @@ public:
     FVoxelLights* GetLights() const { return Lights.Get(); }
     // The light table the column meshes scan their light sources with (voxel.LightMinLevel); null before BeginPlay.
     TSharedPtr<const FVoxelLightTable> GetLightTable() const { return LightTable; }
+    // The block table the world streams with; null before BeginPlay.
+    TSharedPtr<const FVoxelBlockTable> GetBlockTable() const { return Table; }
     // The voxel.TorchGlow level the columns are meshed with (the torch models' glow; 14 unless lowered), as read at the
     // last build or voxel.Regenerate.
     int32 GetMeshTorchGlow() const { return MeshTorchGlow; }

@@ -43,6 +43,29 @@ namespace FoundationHand
     UNNAMED_API FTransform MakeHeldBlockDisplay();
 }
 
+// The held item's light (foundation.Held.Light): 1, the default, lights it by the light where the player stands, as
+// vanilla's hand takes the light level at the player (block light and sky light, the brighter of the two), so it is
+// dark in a dark cave and partly lit near a torch; 0 the fixed glow foundation.Held.Glow (items S4) whatever the light.
+// Only in a generated world; the Playground keeps the fixed glow.
+namespace FoundationHeldLight
+{
+    constexpr int32 DefaultMode = 1;
+    // How often the level at the eye is probed, and how fast the shown level eases to it (levels per second).
+    constexpr double ProbeSeconds = .25;
+    constexpr double LevelsPerSecond = 30;
+    // Vanilla's rendered brightness (display, 0 to 1) of a light level 0 to 15: the floor plus the curve
+    // f / (4 - 3 f), f = level / 15, scaled to reach 1 at 15. The floor is the wiki's "full darkness is about 5%
+    // brightness" (minecraft.wiki/w/Light, Rendered brightness; Overworld, lowest brightness setting); the curve is
+    // unverified (no published source found; the wiki's anchor puts level 7 slightly above 25%, the curve gives 22%).
+    constexpr double Floor = .05;
+    UNNAMED_API double Brightness(double Level);
+    // The held material's LightGlow for a level: the linear on-screen factor (the display brightness to the power
+    // 2.2) x today's daylight factor (foundation.Held.Glow x the daylight exposure, 2^-(13.5 + DayEV)), so level 15
+    // in daylight draws as the fixed glow did.
+    UNNAMED_API double LightGlow(double Level, double Glow, double DayEV);
+    UNNAMED_API int32 ReadMode();
+}
+
 // A lab's block-interaction presentation: the Playground's, and a generated world's (AVoxelWorld). It reads the
 // block world's change log, the authority's events and targets and the local player's interaction snapshot; it never
 // changes gameplay state (draining the change log is reading it). A generated world's chunks draw its blocks, so
@@ -229,6 +252,13 @@ private:
     int32 AppliedHandFit = -1;
     // foundation.Held.Glow as last set on ItemMaterials.
     float AppliedGlow = -1;
+    // foundation.Held.Light: LightGlow as last set on ItemMaterials, the level at the eye as last probed and as shown
+    // (eased), the next probe's time, and whether the last frame ran it.
+    float AppliedLightGlow = -1;
+    double HeldLevelTarget = 15;
+    double HeldLevel = 15;
+    double HeldProbeDue = 0;
+    bool bHeldLightLive = false;
     UPROPERTY(Transient)
     TMap<FName, TObjectPtr<UStaticMesh>> ItemMeshes;
     UPROPERTY(Transient)

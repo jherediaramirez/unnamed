@@ -9,6 +9,7 @@
 #include "Foundation/FoundationItemMesh.h"
 #include "Foundation/FoundationPlayground.h"
 #include "Foundation/FoundationPawn.h"
+#include "Foundation/FoundationProfile.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/LineBatchComponent.h"
@@ -25,6 +26,9 @@
 #include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
 #include "Voxel/VoxelFluidSystem.h"
+#include "Voxel/VoxelLights.h"
+#include "Voxel/VoxelLook.h"
+#include "Voxel/VoxelWorld.h"
 
 namespace
 {
@@ -32,6 +36,11 @@ namespace
         TEXT("Held items' glow (items S4): emissive = sprite colour x this (nits), so a sprite turned from the "
              "sun still reads near its own colours, as vanilla lights held items in view space. 16000 brings the "
              "tour's items to their sprites' luma under the 75,000 lux sun at EV100 14.5. 0: lit by the scene alone."),
+        ECVF_Default);
+    TAutoConsoleVariable<int32> CVarHeldLight(TEXT("foundation.Held.Light"), FoundationHeldLight::DefaultMode,
+        TEXT("Held items' light in a generated world: 1 by the light at the player (block light from the torch pool, "
+             "sky light from the open sky, the brighter), dark in a dark cave as vanilla; 0 the fixed "
+             "foundation.Held.Glow whatever the light (items S4)."),
         ECVF_Default);
     TAutoConsoleVariable<int32> CVarPlacePreview(TEXT("foundation.Place.Preview"), FoundationPlace::DefaultPreviewMode,
         TEXT("Destination preview: 0 none, as vanilla (the target's outline only); 1 the destination box, its fill and "
@@ -547,6 +556,22 @@ bool FoundationHand::IsFitOn()
     return CVarHandFit.GetValueOnGameThread() != 0;
 }
 
+double FoundationHeldLight::Brightness(double Level)
+{
+    const auto Curve = [](double F) { return F / (4 - 3 * F); };
+    return Floor + (1 - Floor) * Curve(FMath::Clamp(Level, 0., 15.) / 15) / Curve(1);
+}
+
+double FoundationHeldLight::LightGlow(double Level, double Glow, double DayEV)
+{
+    return FMath::Pow(Brightness(Level), 2.2) * Glow * FMath::Pow(2., -(13.5 + DayEV));
+}
+
+int32 FoundationHeldLight::ReadMode()
+{
+    return CVarHeldLight.GetValueOnGameThread();
+}
+
 FTransform FoundationHand::MakeHeldBlockDisplay()
 {
     FFoundationItemDisplayAsset Display;
@@ -916,11 +941,48 @@ void UFoundationInteractionView::UpdateHeldItem(
     // Any other item: its first-person model from DA_Items.
     const FName ItemId = InHand && Icon != TEXT("block") ? InHand->Id : NAME_None;
     if (ItemId != HeldItemId) SetHeldItem(ItemId);
-    if (const float Glow = CVarHeldGlow.GetValueOnGameThread(); Glow != AppliedGlow && !ItemMaterials.IsEmpty())
+    // The glow: fixed (foundation.Held.Glow), or by the light at the eye (foundation.Held.Light 1, generated worlds).
+    float Glow = CVarHeldGlow.GetValueOnGameThread(), LightGlow = 0;
+    const AVoxelWorld* VoxelWorld = FoundationHeldLight::ReadMode() == 1 ? AVoxelWorld::Find(GetWorld()) : nullptr;
+    const TSharedPtr<const FVoxelBlockTable> Table = VoxelWorld ? VoxelWorld->GetBlockTable() : nullptr;
+    if (Table && VoxelWorld->GetLights())
+    {
+        // Entering the mode (or a new world) probes at once and shows the level outright, without easing from a stale
+        // one.
+        const bool bEntered = !bHeldLightLive;
+        bHeldLightLive = true;
+        const double Now = GetWorld()->GetTimeSeconds();
+        if (bEntered || Now >= HeldProbeDue)
+        {
+            HeldProbeDue = Now + FoundationHeldLight::ProbeSeconds;
+            const FVector Eye =
+                (Pawn->GetCamera()->GetComponentLocation() - VoxelWorld->OriginCm) / UFoundationProfile::BlockCm;
+            const FIntVector Cell(FMath::FloorToInt32(Eye.X), FMath::FloorToInt32(Eye.Y), FMath::FloorToInt32(Eye.Z));
+            // Sky light as the exposure reads the open sky (VoxelLook::SkyPinFor), block light from the torch pool. The
+            // sky counts as 15 at any hour: the runtime has no sky_light_level yet (night: the day-night work).
+            const double Sky = 15 *
+                VoxelLook::SkyPinFor(VoxelLook::SkyOpenness(Eye, [VoxelWorld, &Table](const FIntVector& At)
+                    { return VoxelLook::BlocksSky(Table->Get(VoxelWorld->GetState(At))); }));
+            HeldLevelTarget = FMath::Max(Sky, double(VoxelWorld->GetLights()->GetBlockLevel(Cell)));
+            if (bEntered) HeldLevel = HeldLevelTarget;
+        }
+        HeldLevel =
+            FMath::FInterpConstantTo(HeldLevel, HeldLevelTarget, DeltaTime, FoundationHeldLight::LevelsPerSecond);
+        LightGlow = float(FoundationHeldLight::LightGlow(HeldLevel, Glow, FVoxelLook::Read().DayEV));
+        Glow = 0;
+    }
+    else
+        bHeldLightLive = false;
+    if (!ItemMaterials.IsEmpty() && (Glow != AppliedGlow || LightGlow != AppliedLightGlow))
     {
         AppliedGlow = Glow;
+        AppliedLightGlow = LightGlow;
         for (UMaterialInstanceDynamic* Material : ItemMaterials)
-            if (Material) Material->SetScalarParameterValue(TEXT("Glow"), Glow);
+            if (Material)
+            {
+                Material->SetScalarParameterValue(TEXT("Glow"), Glow);
+                Material->SetScalarParameterValue(TEXT("LightGlow"), LightGlow);
+            }
     }
     HeldItem->SetVisibility(bShow && HeldItem->GetStaticMesh() != nullptr);
     HandPivot->SetVisibility(bShow, false);

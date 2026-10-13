@@ -1269,11 +1269,81 @@ void UFoundationRuntimeProbe::AddViewsCases()
             TEXT("views pad day"), .1, [] {},
             [this] { Record(TEXT("views pad day"), false, TEXT("not in the poses file; its shots are skipped")); });
 
+    // -FoundationViewsHeldLight (an extra, off by default): the held light's and the dim emitters' look pairs at the
+    // cave pose, with an iron pickaxe in hand: foundation.Held.Light 0 and 1, then voxel.Look.LowGlow's ladder on glow
+    // lichen (light 7), a sea pickle (6) and an amethyst cluster (5) placed in view; once in the dark cave at noon,
+    // once by the torches at midnight. Each switch goes back to its value from before the run.
+    const bool bHeldLight = FParse::Param(FCommandLine::Get(), TEXT("FoundationViewsHeldLight"));
+    const FString SavedHeldLight = GetViewsCVar(TEXT("foundation.Held.Light"));
+    const FString SavedLowGlow = GetViewsCVar(TEXT("voxel.Look.LowGlow"));
+    auto HeldLightShots = [this, Shot, Authority, Holding, SavedHeldLight, SavedLowGlow](const FString& Where)
+    {
+        for (const TCHAR* Mode : {TEXT("0"), TEXT("1")})
+            Shot(
+                FString::Printf(TEXT("held-light%s-%s"), Mode, *Where),
+                [this, Authority, Mode]
+                {
+                    SetViewsCVar(TEXT("foundation.Held.Light"), Mode);
+                    Pawn->Interaction.SetCreativeSlot(Authority(), Pawn->Vitals, 0, FName(TEXT("iron_pickaxe")), 1);
+                    Pawn->Interaction.SelectSlot(Authority(), Pawn->Vitals, 0);
+                },
+                [Holding, Mode](FString& Detail)
+                {
+                    Detail = FString::Printf(TEXT("foundation.Held.Light %s, holding iron_pickaxe %d"), Mode,
+                        int32(Holding(TEXT("iron_pickaxe"))));
+                    return Holding(TEXT("iron_pickaxe")) &&
+                        GetViewsCVar(TEXT("foundation.Held.Light")) == FString(Mode);
+                });
+        for (const TCHAR* Glow : {TEXT("1"), TEXT("0.3"), TEXT("0.1"), TEXT("0.03")})
+            Shot(
+                FString::Printf(TEXT("lowglow-%s-%s"), Glow, *Where),
+                [Glow] { SetViewsCVar(TEXT("voxel.Look.LowGlow"), Glow); },
+                [Glow](FString& Detail)
+                {
+                    Detail = FString::Printf(TEXT("voxel.Look.LowGlow %s"), *GetViewsCVar(TEXT("voxel.Look.LowGlow")));
+                    return FCString::Atof(*GetViewsCVar(TEXT("voxel.Look.LowGlow"))) == FCString::Atof(Glow);
+                });
+        // Back to the suite's stone and the switches' values from before the run.
+        AddCase(
+            TEXT("views held light restore ") + Where, .1,
+            [this, Authority, SavedHeldLight, SavedLowGlow]
+            {
+                SetViewsCVar(TEXT("foundation.Held.Light"), SavedHeldLight);
+                SetViewsCVar(TEXT("voxel.Look.LowGlow"), SavedLowGlow);
+                Pawn->Interaction.SetCreativeSlot(Authority(), Pawn->Vitals, 0, FName(TEXT("stone")), 1);
+                Pawn->Interaction.SelectSlot(Authority(), Pawn->Vitals, 0);
+            },
+            [] {});
+    };
+
     // The cave: its general view, its row's outlines, then (an extra) the cave at midnight by a torch.
     if (const FViewsPose* Pose = FindPose(TEXT("cave")))
     {
         Go(TEXT("cave"), PoseStance(*Pose));
         General(TEXT("cave-default"), TEXT("noon"), 6000, *Pose);
+        if (bHeldLight)
+        {
+            // The dim emitters on the floor in view, between the pose and the first torch.
+            const TArray<TPair<FIntVector, const TCHAR*>> Dim = {{FIntVector(78, -4, -24), TEXT("glow_lichen")},
+                {FIntVector(78, -3, -24), TEXT("glow_lichen")}, {FIntVector(77, -5, -24), TEXT("glow_lichen")},
+                {FIntVector(79, -3, -24), TEXT("sea_pickle")}, {FIntVector(76, -4, -24), TEXT("amethyst_cluster")}};
+            AddCase(
+                TEXT("views dim emitters"), 1,
+                [Place, HasBlock, Dim]
+                {
+                    for (const auto& Each : Dim)
+                        if (!HasBlock(Each.Key, Each.Value)) Place(Each.Key, Each.Value);
+                },
+                [this, Dim, HasBlock]
+                {
+                    int32 Placed = 0;
+                    for (const auto& Each : Dim)
+                        Placed += HasBlock(Each.Key, Each.Value) ? 1 : 0;
+                    Record(TEXT("views dim emitters placed"), Placed == Dim.Num(),
+                        FString::Printf(TEXT("%d of %d"), Placed, Dim.Num()));
+                });
+            HeldLightShots(TEXT("cave"));
+        }
         if (const FViewsPad* Pad = Poses.Pads.Find(TEXT("cave")))
         {
             PlaceRow(TEXT("cave"), *Pad);
@@ -1307,6 +1377,7 @@ void UFoundationRuntimeProbe::AddViewsCases()
                         FString::Printf(TEXT("%d of %d torches"), Placed, Torches.Num()));
                 });
             General(TEXT("cave-torch"), TEXT("midnight"), 18000, CavePose);
+            if (bHeldLight) HeldLightShots(TEXT("torch"));
         }
     }
     Restore();

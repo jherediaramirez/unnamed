@@ -2,7 +2,8 @@
 
 It samples an item sprite array through its Sprites parameter (T_ItemTextures, 16 x 16, by default; the held view's
 instance for the spears' 32 x 32 in-hand sprites sets T_ItemTextures32) at the layer each held mesh carries in UV 1's X
-(FoundationItemMesh::BuildMesh), and discards texels below alpha 0.5 as 26.3's cutout does. The arrays hold mip 0 with
+(FoundationItemMesh::BuildMesh), and discards texels below alpha 0.5 as 26.3's cutout does. Its emissive is the sprite
+x Glow (nits) plus the sprite x LightGlow on screen (the eye adaptation undone); the held view sets one of them. The arrays hold mip 0 with
 nearest filtering, so the extruded sides, which sample their pixel's centre, take exactly that pixel's colour.
 
 Run after ImportItems.py; the graph is code, so rerunning rebuilds it on the same asset:
@@ -101,7 +102,20 @@ def build(sprites):
     emissive = node(unreal.MaterialExpressionMultiply, 50, 400)
     link(rgb, "", emissive, "A")
     link(glow, "", emissive, "B")
-    lib.connect_material_property(emissive, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    # Plus the light at the player (foundation.Held.Light 1, set by the held view): sprite colour x LightGlow on
+    # screen, the eye adaptation undone, so a dark cave leaves the item dark under any exposure. 0 here: none.
+    light_glow = node(unreal.MaterialExpressionScalarParameter, -150, 520)
+    light_glow.set_editor_property("parameter_name", "LightGlow")
+    light_glow.set_editor_property("default_value", 0.0)
+    lit = node(unreal.MaterialExpressionMultiply, 50, 520)
+    link(rgb, "", lit, "A")
+    link(light_glow, "", lit, "B")
+    shown = node(unreal.MaterialExpressionEyeAdaptationInverse, 200, 520)
+    link(lit, "", shown, "LightValueInput")
+    total = node(unreal.MaterialExpressionAdd, 350, 400)
+    link(emissive, "", total, "A")
+    link(shown, "", total, "B")
+    lib.connect_material_property(total, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
     lib.recompile_material(material)
     if not unreal.EditorAssetLibrary.save_loaded_asset(material):
         fail("could not save " + NAME)
