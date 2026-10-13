@@ -7,6 +7,7 @@
 #include "Menu/MenuInputBridge.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "HAL/IConsoleManager.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/PackageName.h"
@@ -16,6 +17,15 @@
 
 namespace
 {
+    TAutoConsoleVariable<int32> CVarWorldWaitForPaint(TEXT("menu.World.WaitForPaint"), 1,
+        TEXT(
+            "Play Selected World and Create New World: 0 the page asks to travel at once, so its \"Preparing for world "
+            "creation...\" or \"Reading world data...\" screen may never reach the screen before the map load holds "
+            "the frame (until 2026-10-12: the Create screen stayed about 1 s after the click); 1 the page waits two "
+            "frames (at most 250 ms) after showing that screen, then asks, and the travel waits two more game frames "
+            "so that paint has reached the game. Read when the menu map starts."),
+        ECVF_Default);
+
     // The list's second line, as the reference shows a save: its folder and when it was last played, local time.
     FString DescribeSavedWorldPlayed(const FUnnamedSavedWorld& World)
     {
@@ -59,6 +69,9 @@ void UMenuApplication::Initialize(APlayerController* InController, UMenuVideoSet
     // The kept title page's application (menu.Title.Keep) is initialized again on every menu map: nothing pending.
     bQuitPending = bQuitIssued = bWorldPending = bTravelIssued = false;
     LastError.Empty();
+    bWaitForPaint = CVarWorldWaitForPaint.GetValueOnGameThread() != 0;
+    UE_LOG(LogUnnamedMenu, Display, TEXT("Switch menu.World.WaitForPaint = %d (read at BeginPlay)"),
+        bWaitForPaint ? 1 : 0);
     RefreshSavedWorlds();
 }
 
@@ -71,6 +84,7 @@ void UMenuApplication::QueueTravel(const FString& Map, const FString& Options, c
 {
     if (bWorldPending || bTravelIssued) return;
     bWorldPending = true;
+    PaintFramesLeft = bWaitForPaint ? 2 : 0;
     PendingMap = Map;
     PendingOptions = Options;
     WorldDeadline = FPlatformTime::Seconds() + 8.0;
@@ -109,6 +123,8 @@ FString UMenuApplication::GetState()
     State->SetBoolField(TEXT("canOpenWorld"), CanOpenWorld());
     State->SetBoolField(TEXT("pendingWorld"), bWorldPending);
     State->SetBoolField(TEXT("travelIssued"), bTravelIssued);
+    // menu.World.WaitForPaint: the page shows its preparing screen for two frames before asking to travel.
+    State->SetBoolField(TEXT("waitForPaint"), bWaitForPaint);
     State->SetStringField(TEXT("error"), LastError);
     // The page renders and enables exactly these worlds; it keeps no list of its own.
     TArray<TSharedPtr<FJsonValue>> Worlds;
@@ -230,6 +246,11 @@ void UMenuApplication::Tick()
 {
     if (bWorldPending)
     {
+        if (PaintFramesLeft > 0)
+        {
+            --PaintFramesLeft;
+            return;
+        }
         LastError.Empty();
         if (!CanOpenWorld())
             LastError = TEXT("The game is no longer available for map travel.");

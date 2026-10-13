@@ -64,6 +64,10 @@ private:
     double QuitDeadline = 0;
     bool bWorldPending = false;
     bool bTravelIssued = false;
+    // menu.World.WaitForPaint, read by Initialize, and the frames a queued travel still waits so the page's preparing
+    // screen, painted before the request, is on screen when the map load holds the frame.
+    bool bWaitForPaint = false;
+    int32 PaintFramesLeft = 0;
     double WorldDeadline = 0;
     FString PendingMap;
     FString LastError;
