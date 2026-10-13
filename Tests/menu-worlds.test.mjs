@@ -7,14 +7,15 @@ const read = file => fs.readFileSync(new URL('../MenuWeb/Runtime/' + file, impor
 const playground = {id: 'playground', name: 'Playground', summary: '2 km dev grid: movement course, building, mining and combat',
   status: 'Playable - Java 26.3 foundation, session only'};
 const helloDraft = {name: 'Hello', seed: 'hello', gameMode: 'Survival', difficulty: 'Normal', type: 'Default'};
-function fixture({canQuit = true, saveFailure = false, createError = ''} = {}) {
-  const calls = [], notices = [], intervals = [], screens = [];
+function fixture({canQuit = true, saveFailure = false, createError = '', waitForPaint} = {}) {
+  const calls = [], notices = [], intervals = [], screens = [], frames = [];
   let requested = false;
   // Native's saves, most recently played first.
   let saved = [{id: 'hello', name: 'Hello', summary: 'hello (10/8/26, 4:30 PM)', status: 'Survival Mode', draft: helloDraft}];
   const reply = (error = '') => ({ok: !(requested && saveFailure) && !error, canQuit, pendingQuit: false, quitIssued: false,
     canOpenWorld: true, pendingWorld: false, travelIssued: requested && !saveFailure && !error,
-    error: error || (requested && saveFailure ? 'Save failed.' : ''), worlds: [playground], savedWorlds: structuredClone(saved)});
+    error: error || (requested && saveFailure ? 'Save failed.' : ''), worlds: [playground], savedWorlds: structuredClone(saved),
+    ...(waitForPaint === undefined ? {} : {waitForPaint})});
   const native = {
     getstate: async () => reply(),
     requestopenworld: async id => { calls.push('open:' + id); requested = true; return reply(); },
@@ -39,6 +40,7 @@ function fixture({canQuit = true, saveFailure = false, createError = ''} = {}) {
     setTimeout: (fn, ms) => setTimeout(fn, ms >= 20000 ? 60 : ms >= 5000 ? 40 : ms), setInterval: fn => intervals.push(fn),
     message: (...args) => notices.push(args), tr: key => key,
     go: (name, data) => { screens.push([name, data.title]); context.current = {name, data}; }, back: () => screens.push(['back']),
+    requestAnimationFrame: fn => frames.push(fn),
     MenuVideo: {prepareForExit: async () => {calls.push('video'); await new Promise(resolve => setTimeout(resolve, 5)); calls.push('video-saved');}, cancelExit: () => calls.push('video-unlock')},
   });
   for (const name of ['MenuInput', 'MenuPreferences']) context.window[name] = {
@@ -47,7 +49,9 @@ function fixture({canQuit = true, saveFailure = false, createError = ''} = {}) {
   // Script order registers video, input, then preferences.
   vm.runInContext('for (const store of [MenuVideo, window.MenuInput, window.MenuPreferences]) MenuStores.register(store)', context);
   vm.runInContext(read('MenuApplicationRuntime.js'), context);
-  return {api: context.window.MenuApplication, context, calls, notices, intervals, native, screens};
+  // Runs one animation frame (every callback queued before it).
+  const frame = () => { for (const fn of frames.splice(0)) fn(); };
+  return {api: context.window.MenuApplication, context, calls, notices, intervals, native, screens, frame};
 }
 
 test('only listed worlds travel, after all three settings services drain, once', async () => {
@@ -173,4 +177,57 @@ test('delete and rename reach native for saved worlds only, and the reply update
   assert.deepEqual([...f.context.state.worlds.map(w => w.id)], ['playground']);
   assert.equal(f.api.isPlayable('hello'), false);
   assert.deepEqual(f.notices, []);
+});
+
+test('a kept title page back from a world unlocks and can travel again (MenuTitle.reset)', async () => {
+  const f = fixture(); await f.api.initialize();
+  await f.api.openWorld('playground');
+  assert.equal(f.api.isLoading(), true);
+  assert.equal(f.api.worldEnabled('playground'), false);
+  // The next menu map: native's application starts clean (UMenuApplication::Initialize).
+  f.native.getstate = async () => ({ok: true, canQuit: true, pendingQuit: false, quitIssued: false, canOpenWorld: true,
+    pendingWorld: false, travelIssued: false, error: '', worlds: [playground], savedWorlds: []});
+  await f.api.returned();
+  assert.equal(f.api.isLoading(), false);
+  assert.ok(['video-unlock', 'MenuInput-unlock', 'MenuPreferences-unlock'].every(c => f.calls.includes(c)), f.calls.join());
+  assert.equal(f.api.worldEnabled('playground'), true);
+  await f.api.openWorld('playground');
+  assert.equal(f.calls.filter(c => c.startsWith('open:')).length, 2);
+});
+
+// menu.World.WaitForPaint: the native request waits two frames after the preparing screen (at most 250 ms); at 0 (or
+// from a native without the field) it goes at once, as before.
+const settle = () => new Promise(resolve => setTimeout(resolve, 10));
+const requests = f => f.calls.filter(c => c.startsWith('open:') || c.startsWith('create:'));
+test('WaitForPaint 1: Play Selected World asks native two frames after Reading world data', async () => {
+  const f = fixture({waitForPaint: true}); await f.api.initialize();
+  const opening = f.api.openWorld('playground'); await settle();
+  assert.deepEqual(f.screens.at(-1), ['generic', 'selectWorld.data_read']);
+  assert.deepEqual(requests(f), []);
+  assert.ok(!f.calls.includes('video'), 'the stores drain after the screen has painted');
+  f.frame(); await settle();
+  assert.deepEqual(requests(f), [], 'one frame is not enough');
+  f.frame(); await opening;
+  assert.deepEqual(requests(f), ['open:playground']);
+});
+test('WaitForPaint 1: Create New World takes the same path', async () => {
+  const f = fixture({waitForPaint: true}); await f.api.initialize();
+  const creating = f.api.createWorld(helloDraft); await settle();
+  assert.deepEqual(requests(f), []);
+  f.frame(); f.frame(); await creating;
+  assert.deepEqual(requests(f), ['create:Hello']);
+});
+test('WaitForPaint 0 and a native without it: the request goes at once', async () => {
+  for (const waitForPaint of [false, undefined]) {
+    const f = fixture({waitForPaint}); await f.api.initialize();
+    await f.api.openWorld('playground');
+    assert.deepEqual(requests(f), ['open:playground'], String(waitForPaint));
+  }
+});
+test('WaitForPaint 1: a page that never draws asks after 250 ms', async () => {
+  const f = fixture({waitForPaint: true}); await f.api.initialize();
+  const started = Date.now();
+  await f.api.openWorld('playground');
+  assert.deepEqual(requests(f), ['open:playground']);
+  assert.ok(Date.now() - started >= 240, String(Date.now() - started));
 });

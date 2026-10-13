@@ -1,4 +1,5 @@
 #if WITH_DEV_AUTOMATION_TESTS
+#include "Core/RealtimeMeshBuilder.h"
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationProfile.h"
 #include "MeshCardBuild.h"
@@ -620,6 +621,105 @@ namespace
     {
         return Mesh.Layers[int32(EVoxelLayer::Model)];
     }
+}
+
+// The see-through part (water and sky W3c): SplitSeeThrough hands it exactly the see-through layer's vertices and
+// triangles, rebased, and leaves the column every other layer.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelMesherSeeThroughTest, "Unnamed.Voxel.Mesher.SeeThroughPart",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelMesherSeeThroughTest::RunTest(const FString& Parameters)
+{
+    using namespace RealtimeMesh;
+    constexpr int32 LayerCount = int32(EVoxelLayer::Count);
+    constexpr int32 SeeThrough = int32(EVoxelLayer::Translucent);
+    constexpr float BlockCm = float(UFoundationProfile::BlockCm);
+    // Two sections with a quad on every layer, the second with two see-through quads (three in all: six triangles,
+    // padded to eight); a vertex's x is its layer.
+    FVoxelMeshData Meshes[2];
+    int32 Quads[LayerCount] = {};
+    for (int32 MeshIndex = 0; MeshIndex < 2; ++MeshIndex)
+        for (int32 Layer = 0; Layer < LayerCount; ++Layer)
+            for (int32 Quad = 0; Quad < (MeshIndex == 1 && Layer == SeeThrough ? 2 : 1); ++Quad, ++Quads[Layer])
+            {
+                FVoxelMeshLayer& Out = Meshes[MeshIndex].Layers[Layer];
+                const uint32 First = uint32(Out.Positions.Num());
+                for (int32 Corner = 0; Corner < 4; ++Corner)
+                {
+                    Out.Positions.Add(FVector3f(float(Layer), float(Corner & 1), float(Corner >> 1) + Quad));
+                    Out.BlockUVs.Add(FVector2f(float(Corner & 1), float(Corner >> 1)));
+                    Out.Codes.Add(FVector2f(float(Layer), 0));
+                    Out.TintFaces.Add(FVector2f(0, 5));
+                    Out.Colors.Add(FColor::White);
+                }
+                Out.Indices.Append({First, First + 1, First + 2, First, First + 2, First + 3});
+            }
+    const TArray<const FVoxelMeshData*> Sections = {&Meshes[0], &Meshes[1]};
+    FRealtimeMeshStreamSet Streams;
+    UVoxelChunkComponent::BuildStreams(Sections, Streams);
+    const int32 Vertices = Streams.FindChecked(FRealtimeMeshStreams::Position).Num();
+    const int32 Triangles = Streams.FindChecked(FRealtimeMeshStreams::Triangles).Num();
+    // Each layer's triangles, padded to a multiple of four (BuildStreams).
+    const int32 SeeThroughTriangles = Align(Quads[SeeThrough] * 2, 4);
+
+    FRealtimeMeshStreamSet Part;
+    TestTrue(TEXT("The set splits"), UVoxelChunkComponent::SplitSeeThrough(Streams, Part));
+    // Every vertex stream of a set keeps one count; every index stream counts its triangles.
+    auto CheckSet = [this](const TCHAR* What, const FRealtimeMeshStreamSet& Set, int32 WantVertices,
+                        int32 WantTriangles, TFunctionRef<bool(float, uint16)> Belongs)
+    {
+        bool bCounts = true;
+        Set.ForEach([&](const FRealtimeMeshStream& Stream)
+            { bCounts &= Stream.Num() == (Stream.GetStreamKey().IsVertexStream() ? WantVertices : WantTriangles); });
+        TestTrue(FString::Printf(
+                     TEXT("%s: %d vertices and %d triangles in every stream"), What, WantVertices, WantTriangles),
+            bCounts);
+        const FRealtimeMeshStream& Positions = Set.FindChecked(FRealtimeMeshStreams::Position);
+        const FRealtimeMeshStream& TriangleStream = Set.FindChecked(FRealtimeMeshStreams::Triangles);
+        const FRealtimeMeshStream& Groups = Set.FindChecked(FRealtimeMeshStreams::PolyGroups);
+        int32 Outside = 0, Strangers = 0;
+        for (int32 Triangle = 0; Triangle < TriangleStream.Num(); ++Triangle)
+        {
+            const TIndex3<uint32>& Corners = TriangleStream.GetData<TIndex3<uint32>>()[Triangle];
+            for (const uint32 Corner : Corners.Indices)
+            {
+                if (Corner >= uint32(Positions.Num()))
+                {
+                    ++Outside;
+                    continue;
+                }
+                const float Layer = Positions.GetData<FVector3f>()[Corner].X / BlockCm;
+                Strangers += !Belongs(Layer, Groups.GetData<uint16>()[Triangle]);
+            }
+        }
+        TestEqual(FString::Printf(TEXT("%s: every index within its vertices"), What), Outside, 0);
+        TestEqual(FString::Printf(TEXT("%s: every triangle's corners on its own layer"), What), Strangers, 0);
+    };
+    CheckSet(TEXT("The part"), Part, Quads[SeeThrough] * 4, SeeThroughTriangles,
+        [](float Layer, uint16 Group) { return Layer == SeeThrough && Group == SeeThrough; });
+    CheckSet(TEXT("The column"), Streams, Vertices - Quads[SeeThrough] * 4, Triangles - SeeThroughTriangles,
+        [](float Layer, uint16 Group) { return Layer != SeeThrough && Group == uint16(Layer); });
+    // The part's vertices in the sections' order: section 0's quad, then section 1's two.
+    const FRealtimeMeshStream& PartPositions = Part.FindChecked(FRealtimeMeshStreams::Position);
+    bool bOrder = PartPositions.Num() == 12;
+    for (int32 Vertex = 0; bOrder && Vertex < 12; ++Vertex)
+    {
+        const FVoxelMeshLayer& Source = Meshes[Vertex < 4 ? 0 : 1].Layers[SeeThrough];
+        bOrder &=
+            PartPositions.GetData<FVector3f>()[Vertex] == Source.Positions[Vertex < 4 ? Vertex : Vertex - 4] * BlockCm;
+    }
+    TestTrue(TEXT("The part's vertices are the see-through layer's, in order"), bOrder);
+
+    // Without see-through triangles nothing moves.
+    for (FVoxelMeshData& Mesh : Meshes)
+        Mesh.Layers[SeeThrough] = FVoxelMeshLayer();
+    UVoxelChunkComponent::BuildStreams(Sections, Streams);
+    const int32 Before = Streams.FindChecked(FRealtimeMeshStreams::Triangles).Num();
+    FRealtimeMeshStreamSet None;
+    TestFalse(TEXT("No see-through layer: no split"), UVoxelChunkComponent::SplitSeeThrough(Streams, None));
+    TestEqual(TEXT("...and the column keeps its triangles"), Streams.FindChecked(FRealtimeMeshStreams::Triangles).Num(),
+        Before);
+    return true;
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelMesherModelsTest, "Unnamed.Voxel.Mesher.Models",

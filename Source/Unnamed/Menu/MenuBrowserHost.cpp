@@ -1,6 +1,7 @@
 #include "Menu/MenuBrowserHost.h"
 #include "UnnamedLog.h"
 #include "Menu/MenuApplication.h"
+#include "Menu/MenuBrowserSubsystem.h"
 #include "Menu/MenuInputBridge.h"
 #include "Menu/MenuPreferences.h"
 #include "Menu/MenuVideoSettings.h"
@@ -101,9 +102,9 @@ FString UMenuBrowserHost::GetMenuUrl()
             .Replace(TEXT("%3A"), TEXT(":"), ESearchCase::IgnoreCase);
 }
 
-void UMenuBrowserHost::CreateBrowser(const FString& MenuURL, bool bTransparent)
+TSharedRef<SWebBrowser> UMenuBrowserHost::MakeBrowser(const FString& MenuURL, bool bTransparent)
 {
-    Browser =
+    TSharedRef<SWebBrowser> NewBrowser =
         SNew(SWebBrowser)
             .InitialURL(MenuURL)
             .ShowControls(false)
@@ -137,9 +138,20 @@ void UMenuBrowserHost::CreateBrowser(const FString& MenuURL, bool bTransparent)
                     }
                 })
             .OnLoadError_Lambda([] { UE_LOG(LogUnnamedMenu, Error, TEXT("Offline menu document failed to load")); });
-    GEngine->GameViewport->AddViewportWidgetContent(Browser.ToSharedRef(), 100);
-    Browser->SetParentWindow(
+    return NewBrowser;
+}
+
+void UMenuBrowserHost::SetBrowserParentWindow(SWebBrowser& InBrowser)
+{
+    InBrowser.SetParentWindow(
         FSlateApplication::Get().FindWidgetWindow(GEngine->GameViewport->GetGameViewportWidget().ToSharedRef()));
+}
+
+void UMenuBrowserHost::CreateBrowser(const FString& MenuURL, bool bTransparent)
+{
+    Browser = MakeBrowser(MenuURL, bTransparent);
+    GEngine->GameViewport->AddViewportWidgetContent(Browser.ToSharedRef(), 100);
+    SetBrowserParentWindow(*Browser);
 }
 
 void UMenuBrowserHost::BindServices(APlayerController& Player, bool bDisableGameplay)
@@ -159,11 +171,11 @@ void UMenuBrowserHost::BindServices(APlayerController& Player, bool bDisableGame
         Browser->BindUObject(Name, Bridge, true);
 }
 
-void UMenuBrowserHost::FocusBrowser(APlayerController& Player)
+void UMenuBrowserHost::FocusBrowser(APlayerController& Player, const TSharedPtr<SWebBrowser>& InBrowser)
 {
     Player.bShowMouseCursor = true;
     FInputModeUIOnly InputMode;
-    InputMode.SetWidgetToFocus(Browser);
+    InputMode.SetWidgetToFocus(InBrowser);
     InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
     Player.SetInputMode(InputMode);
     Player.SetIgnoreMoveInput(true);
@@ -202,7 +214,7 @@ void UMenuBrowserHost::Show()
         Browser->SetVisibility(EVisibility::Visible);
         ShowBlur(true);
         Player->GetLocalPlayer()->GetSubsystem<UUnnamedInputSubsystem>()->SetGameplayInputEnabled(false);
-        FocusBrowser(*Player);
+        FocusBrowser(*Player, Browser);
         // The page shows itself at once, or as soon as it has painted if it is still loading (HandlePageReady).
         Browser->ExecuteJavascript(TEXT("typeof FoundationMenu!=='undefined'&&FoundationMenu.reveal()"));
         UE_LOG(LogUnnamedMenu, Log, TEXT("Offline menu revealed"));
@@ -216,8 +228,29 @@ void UMenuBrowserHost::Show()
     CreateBrowser(MenuURL, PauseMode == 2);
     ShowBlur(true);
     BindServices(*Player, true);
-    FocusBrowser(*Player);
+    FocusBrowser(*Player, Browser);
     UE_LOG(LogUnnamedMenu, Log, TEXT("Offline menu: %s"), *MenuURL);
+}
+
+void UMenuBrowserHost::ShowTitle(int32 KeepMode)
+{
+    APlayerController* Player = GetPlayerController();
+    if (PauseMode != 0 || Browser.IsValid() || !Player || !Player->IsLocalController() || !GEngine ||
+        !GEngine->GameViewport || !Player->GetGameInstance())
+        return;
+    UMenuBrowserSubsystem* Titles = Player->GetGameInstance()->GetSubsystem<UMenuBrowserSubsystem>();
+    if (!Titles) return;
+    StartSeconds = FPlatformTime::Seconds();
+    bPageReady = false;
+    PageReadySeconds = PageShownSeconds = 0;
+    Browser = Titles->Attach(*Player, KeepMode);
+    bKeptTitle = true;
+    KeptTitles = Titles;
+    // The services tick here while the menu map runs (settings changes, travel, quit).
+    VideoSettings = Titles->GetVideoSettings();
+    Application = Titles->GetApplication();
+    InputBridge = Titles->GetInputBridge();
+    Preferences = Titles->GetPreferences();
 }
 
 void UMenuBrowserHost::Hide()
@@ -240,6 +273,18 @@ void UMenuBrowserHost::DestroyBrowser()
     bPageReady = false;
     ShowBlur(false);
     if (!Browser.IsValid()) return;
+    if (bKeptTitle)
+    {
+        // The kept title browser leaves the viewport but lives on, bound, in its subsystem.
+        if (UMenuBrowserSubsystem* Titles = KeptTitles.Get()) Titles->Detach();
+        bKeptTitle = false;
+        Browser.Reset();
+        VideoSettings = nullptr;
+        Application = nullptr;
+        InputBridge = nullptr;
+        Preferences = nullptr;
+        return;
+    }
     if (GEngine && GEngine->GameViewport) GEngine->GameViewport->RemoveViewportWidgetContent(Browser.ToSharedRef());
     if (VideoSettings) Browser->UnbindUObject(TEXT("menuvideo"), VideoSettings, true);
     if (Application) Browser->UnbindUObject(TEXT("menuapplication"), Application, true);

@@ -8,6 +8,8 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "UnrealClient.h"
+#include "UObject/UObjectIterator.h"
+#include "Voxel/VoxelChunkComponent.h"
 #include "Voxel/VoxelConsole.h"
 #include "Voxel/VoxelFlyCamera.h"
 #include "Voxel/VoxelWorld.h"
@@ -87,9 +89,40 @@ FVoxelFlight::FVoxelFlight(const FString& InFolder, double InEndSeconds) : Folde
     Totals.SetNum(Legs.Num());
 }
 
+namespace
+{
+    // The chunk components of a world (water and sky W3c's leak check): columns, see-through parts, the parts holding
+    // geometry, and those of them hidden (a part with geometry on a pooled or released column would be a leak, though a
+    // column waiting in the pending releases is hidden on purpose).
+    struct FFlightChunkCount
+    {
+        int32 Columns = 0, Parts = 0, PartsMeshed = 0, PartsMeshedHidden = 0;
+    };
+    FFlightChunkCount CountFlightChunks(const UWorld* World)
+    {
+        FFlightChunkCount Count;
+        for (TObjectIterator<UVoxelChunkComponent> It; It; ++It)
+        {
+            if (It->GetWorld() != World || It->IsTemplate() || It->IsBeingDestroyed()) continue;
+            if (!It->IsSeeThroughPart())
+            {
+                ++Count.Columns;
+                continue;
+            }
+            ++Count.Parts;
+            if (!It->GetSectionMeshCount()) continue;
+            ++Count.PartsMeshed;
+            Count.PartsMeshedHidden += !It->IsVisible();
+        }
+        return Count;
+    }
+    FFlightChunkCount FlightChunksAtStart;
+}
+
 void FVoxelFlight::Start(AVoxelWorld& World)
 {
     bStarted = true;
+    FlightChunksAtStart = CountFlightChunks(World.GetWorld());
     AVoxelFlyCamera* Fly = AVoxelFlyCamera::Find(World.GetWorld());
     if (!Fly) Fly = AVoxelFlyCamera::Toggle(World.GetWorld(), 0);
     if (!Fly) return;
@@ -311,6 +344,12 @@ void FVoxelFlight::Finish(AVoxelWorld& World)
     if (const UVoxelWorldSubsystem* Streaming = UVoxelWorldSubsystem::Get(World.GetWorld()))
         Summary += FString::Printf(TEXT("Pending releases: peak %d, %d at the end\n"),
             Streaming->GetPendingReleasePeak(), Streaming->GetPendingReleaseCount());
+    const FFlightChunkCount Chunks = CountFlightChunks(World.GetWorld());
+    Summary += FString::Printf(TEXT("Chunk components: start %d columns, %d see-through parts (%d with geometry, %d "
+                                    "of them hidden); end %d, %d (%d, %d)\n"),
+        FlightChunksAtStart.Columns, FlightChunksAtStart.Parts, FlightChunksAtStart.PartsMeshed,
+        FlightChunksAtStart.PartsMeshedHidden, Chunks.Columns, Chunks.Parts, Chunks.PartsMeshed,
+        Chunks.PartsMeshedHidden);
     Summary += FString::Printf(TEXT("Chunk work: worst %.2f ms (%s), %d of %d frames over the %.1f ms budget\n"),
         WorstTickMs, WorstLeg, FramesOverBudget, Frames, Budget);
     // The first lap fills the circle; laps 2 and 3 fly over ground the rings already left once.

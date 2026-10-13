@@ -896,6 +896,12 @@ const MenuApplication = (() => {
       drain: 'Settings did not finish changing. Please try creating the world again.',
       timedOut: 'The new world did not finish opening. Please try again.'}
   };
+  // Two frames after a screen change, its paint has reached the screen; a page that is not drawing (hidden) stops
+  // waiting after 250 ms.
+  const painted = () => new Promise(resolve => {
+    const timer = setTimeout(resolve, 250);
+    requestAnimationFrame(() => requestAnimationFrame(() => { clearTimeout(timer); resolve(); }));
+  });
   async function leave(kind, ...args) {
     const exit = exits[kind];
     leaving = kind;
@@ -910,6 +916,9 @@ const MenuApplication = (() => {
       if (remaining <= 0) throw Error(exit.timedOut);
       return client.call(method, callArgs, Math.min(MenuBridge.requestTimeout, remaining));
     };
+    // menu.World.WaitForPaint: the preparing screen is on screen before native's world work (Create's save, the map
+    // load) holds the frame.
+    if (exit.preparing && snapshot?.waitForPaint) await painted();
     try {
       await MenuBridge.wait(MenuStores.prepareForExit(), deadline - Date.now(), exit.drain);
       let reply = await call(exit.request, ...args);
@@ -961,6 +970,15 @@ const MenuApplication = (() => {
     try { const reply = await client.call('GetState'); if (ticket === revision) absorb(reply); }
     catch (error) { console.warn('Game application: ' + error.message); }
   }
+  // The kept title page back from a world (MenuTitle.reset): the world it left for is gone, so nothing is leaving any
+  // more and the stores unlock; the saved worlds are read again.
+  function returned() {
+    leaving = null;
+    retryAllowed = false;
+    revision++;
+    MenuStores.cancelExit();
+    return initialize();
+  }
   setInterval(async () => {
     if (!client.connected || leaving || polling) return;
     polling = true;
@@ -970,7 +988,7 @@ const MenuApplication = (() => {
     finally { polling = false; }
   }, 500);
   return {enabled, quit, isPlayable, worldEnabled, openWorld, createWorld, deleteWorld, renameWorld,
-    isLoading: () => leaving === 'world' || leaving === 'create', initialize,
+    isLoading: () => leaving === 'world' || leaving === 'create', initialize, returned,
     defaultWorld: () => saved[0]?.id ?? catalog[0]?.id ?? null, getState: () => snapshot ? clone(snapshot) : null};
 })();
 window.MenuApplication = MenuApplication;
@@ -1083,6 +1101,55 @@ const FoundationMenu = (() => {
   return {initialize, reveal};
 })();
 void FoundationMenu.initialize();
+
+// The kept title page (menu.Title.Keep 1 and 2): one browser for the title screen for the whole game. Native binds
+// "menutitle" only on that browser; elsewhere this module stays idle. The page reports TitleReady once its title screen
+// and the panorama (or its fallback) have painted and two more frames have passed: after loading (token -1), and after
+// native asked it back to the title (reset(token)), which native does, hidden, while each world starts.
+const MenuTitle = (() => {
+  const client = MenuBridge.client('menutitle', {service: 'title screen', unavailable: 'The title screen is not kept.'});
+  let token = -1;
+  const send = (method, ...args) => client.connected
+    ? client.call(method, args).catch(error => console.warn('Title screen: ' + error.message))
+    : Promise.resolve();
+  function waitForPaint(ticket, since) {
+    let painted = 0;
+    const step = () => {
+      if (ticket !== token) return;
+      const panorama = panoramaFallback || panoramaLoaded && lastDraw >= since;
+      if (current.name === 'main' && panorama && ++painted >= 3) return void send('TitleReady', ticket);
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  // Back to the title as a freshly loaded page shows it: no screen history, nothing leaving, the stores and the saved
+  // worlds read again.
+  async function reset(ticket) {
+    token = ticket;
+    const since = performance.now();
+    current = {name: 'main', data: {}};
+    stack = [];
+    chosenWorld = null;
+    bindingCapture = null;
+    scrolls = {};
+    messageAction = null;
+    searches = {worlds: '', language: '', rules: '', biomes: ''};
+    render();
+    await Promise.all([MenuApplication.returned(), MenuStores.reload()]);
+    if (ticket !== token) return;
+    render();
+    waitForPaint(ticket, since);
+  }
+  // Native has revealed the page on a new menu map: its application state now allows world travel again.
+  const shown = () => void MenuApplication.initialize();
+  async function initialize() {
+    if (!await client.connect() || token !== -1) return;
+    waitForPaint(-1, 0);
+  }
+  return {initialize, reset, shown};
+})();
+window.MenuTitle = MenuTitle;
+void MenuTitle.initialize();
 
 resize();loadPanorama();requestAnimationFrame(animate);
 </script>

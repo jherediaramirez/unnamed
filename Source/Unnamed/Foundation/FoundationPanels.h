@@ -6,6 +6,7 @@
 
 class AFoundationController;
 class AFoundationLab;
+class AFoundationPawn;
 class AFoundationPlayground;
 class SHudCreativeScreen;
 class SWidget;
@@ -31,6 +32,11 @@ public:
     // The creative screen's search tab takes typed text: the inventory key types instead of closing.
     bool IsTypingInInventory() const;
     TSharedPtr<SHudCreativeScreen> GetCreativeScreen() const { return Creative; }
+    // foundation.Panels.Preload 1: builds the creative screen before its first open, so its textures load now and the
+    // first open neither builds it nor draws a frame without them. Returns false while the player's lab is not ready
+    // (try again next frame); true once built, or when the lab has no creative inventory.
+    bool PreloadCreative();
+    bool HasPreloadedCreative() const { return PreloadedCreative.IsValid(); }
 
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
@@ -38,9 +44,16 @@ private:
     AFoundationController* GetFoundationController() const;
     void Show(TSharedRef<SWidget> Content);
     void OpenCreative(AFoundationLab& Lab);
+    // The creative screen for the controller's pawn in Lab, not yet shown.
+    TSharedRef<SHudCreativeScreen> MakeCreative(AFoundationLab& Lab);
 
     TSharedPtr<SWidget> Root;
     TSharedPtr<SHudCreativeScreen> Creative;
+    // PreloadCreative's screen and the pawn it was built for; the first open takes it.
+    TSharedPtr<SHudCreativeScreen> PreloadedCreative;
+    TWeakObjectPtr<AFoundationPawn> PreloadedPawn;
+    // The lab's rules it was built from (a world started again builds a new authority); compared, never dereferenced.
+    const void* PreloadedAuthority = nullptr;
     bool bOpen = false;
     bool bTextOpen = false;
     bool bInventoryOpen = false;

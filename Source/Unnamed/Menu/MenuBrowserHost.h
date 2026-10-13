@@ -8,6 +8,7 @@ class APlayerController;
 class SBackgroundBlur;
 class SWebBrowser;
 class UMenuApplication;
+class UMenuBrowserSubsystem;
 class UMenuInputBridge;
 class UMenuPreferences;
 class UMenuVideoSettings;
@@ -38,6 +39,9 @@ public:
 
     // Adds the browser (or, in mode 1, reveals it), binds every service and gives it UI-only input with a cursor.
     void Show();
+    // The menu map at menu.Title.Keep 1 and 2 (mode 0 only): takes the game's kept title browser and its services from
+    // UMenuBrowserSubsystem instead of making them; Hide and EndPlay give it back.
+    void ShowTitle(int32 KeepMode);
     // Removes the browser and its bindings (in mode 1, hides it and keeps both). Restoring game input is the owner's
     // job.
     void Hide();
@@ -73,22 +77,29 @@ public:
     // Video settings live as long as the host so window changes work while the menu is hidden.
     UMenuVideoSettings* GetVideoSettings();
 
+    // file:/// URL of Content/Menu/Web/index.html.
+    static FString GetMenuUrl();
+    // The menu's browser for URL, not yet in the viewport or parented. Transparent: CEF paints nothing (alpha 0) before
+    // the document.
+    static TSharedRef<SWebBrowser> MakeBrowser(const FString& MenuURL, bool bTransparent);
+    // Parents a browser to the game viewport's window (after it is added to the viewport).
+    static void SetBrowserParentWindow(SWebBrowser& InBrowser);
+    // UI-only input focused on the browser, cursor on, move and look ignored.
+    static void FocusBrowser(APlayerController& Player, const TSharedPtr<SWebBrowser>& InBrowser);
+
     virtual void TickComponent(
         float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
     APlayerController* GetPlayerController() const;
-    // file:/// URL of Content/Menu/Web/index.html.
-    static FString GetMenuUrl();
     // Makes Browser for URL and adds it to the game viewport at Z 100.
     void CreateBrowser(const FString& MenuURL, bool bTransparent);
     // Binds menuvideo, menuinput, menupreferences, menuapplication and the extra bridges. bDisableGameplay turns
     // gameplay input off when the input bridge is made (Show; Prewarm leaves input alone).
     void BindServices(APlayerController& Player, bool bDisableGameplay);
-    // UI-only input focused on the browser, cursor on, move and look ignored.
-    void FocusBrowser(APlayerController& Player);
-    // Removes the browser and its bindings and releases the services (Hide in modes 0 and 2, EndPlay).
+    // Removes the browser and its bindings and releases the services (Hide in modes 0 and 2, EndPlay); a kept title
+    // browser only leaves the viewport.
     void DestroyBrowser();
     // Adds (or removes) the world-background blur under the browser; Background 1 in modes 1 and 2 only.
     void ShowBlur(bool bShow);
@@ -100,6 +111,9 @@ private:
     int32 PauseBackground = 0;
     bool bShown = false;
     bool bPageReady = false;
+    // ShowTitle: Browser and the services belong to KeptTitles.
+    bool bKeptTitle = false;
+    TWeakObjectPtr<UMenuBrowserSubsystem> KeptTitles;
     double StartSeconds = 0, PageReadySeconds = 0, PageShownSeconds = 0;
     FString PageShownState;
     UPROPERTY(Transient)

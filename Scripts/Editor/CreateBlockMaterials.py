@@ -221,7 +221,7 @@ FAR_FADE_DEFAULT_CM = 1.0e9
 # The look dials' collection (Source/Unnamed/Voxel/VoxelLook.h) and its scalars' defaults, which are the voxel.Look.*
 # defaults: maps without the voxel world (the Playground) draw with these.
 LOOK_COLLECTION = "MPC_VoxelLook"
-LOOK_PARAMETERS = {"LowGlow": 1.0, "WaterSpecular": 0.5}
+LOOK_PARAMETERS = {"LowGlow": 1.0, "WaterSpecular": 0.25}
 # Light is the level / 15: emitters of level 1 to 7 (glow lichen 7) glow x LowGlow, brighter ones as before.
 LOW_GLOW_HLSL = r"""
 return Light * (Light * 15.0 < 7.5 ? LowGlow : 1.0);

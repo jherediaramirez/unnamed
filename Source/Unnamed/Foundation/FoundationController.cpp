@@ -34,6 +34,20 @@ namespace
              "shown at once; 2 a fresh browser per ESC that stays transparent until its pause screen has painted "
              "(diagnostic). Read when a world starts: change it, then reload the world."),
         ECVF_Default);
+    TAutoConsoleVariable<int32> CVarLoadCover(TEXT("foundation.Load.Cover"), 1,
+        TEXT("A world's first frames: 0 the loading screen only while the world is not ready, so a world that is ready "
+             "at "
+             "once (the Playground) shows its first rendered frame uncovered: dark and unexposed for 66-114 ms (until "
+             "2026-10-12); 1 the loading screen from the world's first frame, hidden 3 rendered frames after the world "
+             "is ready. Read when a world starts."),
+        ECVF_Default);
+    TAutoConsoleVariable<int32> CVarPanelsPreload(TEXT("foundation.Panels.Preload"), 1,
+        TEXT(
+            "The creative inventory's first open in a world: 0 it builds its screen and loads its textures in the open "
+            "frame, a 55-72 ms frame that draws the items without the container background (until 2026-10-12); 1 the "
+            "screen is built (its textures loaded) in the world's first frame with the player in its lab, and the "
+            "first open shows it. Read when a world starts."),
+        ECVF_Default);
     TAutoConsoleVariable<int32> CVarPauseBackground(TEXT("foundation.Pause.Background"), 1,
         TEXT(
             "Behind the ESC menu (foundation.Pause.Menu 1 and 2): 0 the title screen's blurred panorama (until "
@@ -51,6 +65,11 @@ AFoundationController::AFoundationController()
     Panels = CreateDefaultSubobject<UFoundationPanels>(TEXT("Panels"));
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bTickEvenWhenPaused = true;
+}
+
+int32 AFoundationController::GetLoadCoverFrames(int32 Mode)
+{
+    return Mode > 0 ? 3 : 0;
 }
 
 AFoundationPawn* AFoundationController::GetFoundationPawn() const
@@ -87,6 +106,12 @@ void AFoundationController::BeginPlay()
     UE_LOG(LogUnnamedFoundation, Display,
         TEXT("Pause menu mode %d, background %d (foundation.Pause.Menu and .Background, read at BeginPlay)"),
         MenuHost->GetPauseMode(), MenuHost->GetPauseBackground());
+    LoadCoverFrames = GetLoadCoverFrames(CVarLoadCover.GetValueOnGameThread());
+    UE_LOG(LogUnnamedFoundation, Display, TEXT("Switch foundation.Load.Cover = %d (read at BeginPlay)"),
+        LoadCoverFrames > 0 ? 1 : 0);
+    bPreloadPanels = CVarPanelsPreload.GetValueOnGameThread() != 0;
+    UE_LOG(LogUnnamedFoundation, Display, TEXT("Switch foundation.Panels.Preload = %d (read at BeginPlay)"),
+        bPreloadPanels ? 1 : 0);
     ResumeFoundation();
     // Mode 1: the pause menu loads now, hidden, so ESC shows it at once.
     MenuHost->Prewarm();
@@ -107,6 +132,7 @@ void AFoundationController::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
     // One fixed order per frame: the loading screen, timing, pawn-driven updates, then the throttled HUD refresh.
     UpdateLoadingScreen();
+    if (bPreloadPanels && !bPanelsPreloaded) bPanelsPreloaded = Panels->PreloadCreative();
     Hud->BeginFrame();
     if (AFoundationPawn* FoundationPawn = GetFoundationPawn())
     {
@@ -141,8 +167,10 @@ void AFoundationController::UpdateLoadingScreen()
     FFoundationLoadState State;
     Lab->GetLoadState(State, bShowing);
     // After the first load only a world started again (the player no longer placed) shows it: a flight or a moved view
-    // that is merely not on screen yet does not.
-    if (!bLoadingDone && !bShowing && !State.bReady && (!bLoadedOnce || !State.bPlayerPlaced))
+    // that is merely not on screen yet does not. foundation.Load.Cover 1 also shows it over a world's first frames when
+    // the world is ready at once.
+    if (!bLoadingDone && !bShowing && (!State.bReady || (LoadCoverFrames > 0 && !bLoadedOnce)) &&
+        (!bLoadedOnce || !State.bPlayerPlaced))
     {
         // Not ready: show the screen (a world started again by voxel.Seed shows it again) with a fresh timer.
         Lab->GetLoadState(State, true);
@@ -150,6 +178,7 @@ void AFoundationController::UpdateLoadingScreen()
         // No game viewport (a headless run): nothing to show, so nothing is held either.
         if (!Hud->IsLoadingScreenShown()) return;
         LoadingStart = FPlatformTime::Seconds();
+        ReadyFrames = 0;
         bShowing = true;
         UE_LOG(LogUnnamedFoundation, Display, TEXT("Loading screen shown"));
     }
@@ -157,7 +186,8 @@ void AFoundationController::UpdateLoadingScreen()
     {
         const double Elapsed = FPlatformTime::Seconds() - LoadingStart;
         const bool bTimeout = !State.bReady && Elapsed >= TimeoutSeconds;
-        if (State.bReady || bTimeout)
+        ReadyFrames = State.bReady ? ReadyFrames + 1 : 0;
+        if (ShouldHideLoadingScreen(ReadyFrames, LoadCoverFrames) || bTimeout)
         {
             Hud->HideLoadingScreen();
             bShowing = false;

@@ -21,6 +21,7 @@
 namespace
 {
     constexpr const TCHAR* Section = TEXT("MenuVideoSettings");
+    uint32 MenuVideoSaveCount = 0;
 
     bool ValidFrameLimit(int32 Value)
     {
@@ -38,6 +39,36 @@ namespace
 TSharedPtr<SWindow> UMenuVideoSettings::GetWindow() const
 {
     return GEngine && GEngine->GameViewport ? GEngine->GameViewport->GetWindow() : nullptr;
+}
+
+uint32 UMenuVideoSettings::GetSaveCount()
+{
+    return MenuVideoSaveCount;
+}
+
+void UMenuVideoSettings::ResetSavedValues()
+{
+    bLoadedSettings = false;
+    bVSync = MenuVideoDefaults::bVSync;
+    FrameLimit = MenuVideoDefaults::FrameLimit;
+    GuiScale = MenuVideoDefaults::GuiScale;
+    BackgroundBlur = MenuVideoDefaults::BackgroundBlur;
+}
+
+void UMenuVideoSettings::Reinitialize(bool bAllowNativeChanges)
+{
+    ResetSavedValues();
+    bTransitionPending = bTargetFullscreen = bPreviousFullscreen = bSavedFullscreen = false;
+    WindowedSize = FIntPoint(1280, 720);
+    WindowedPosition = FVector2D::ZeroVector;
+    LastError.Empty();
+    Initialize(bAllowNativeChanges);
+}
+
+void UMenuVideoSettings::ReloadSaved()
+{
+    ResetSavedValues();
+    Load();
 }
 
 void UMenuVideoSettings::Initialize(bool bAllowNativeChanges)
@@ -380,5 +411,6 @@ bool UMenuVideoSettings::Save()
         UE_LOG(LogUnnamedMenu, Warning, TEXT("%s"), *LastError);
         return false;
     }
+    ++MenuVideoSaveCount;
     return true;
 }
