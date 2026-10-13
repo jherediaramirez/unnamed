@@ -39,10 +39,10 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelWaterFogSurfaceTest, "Unnamed.Voxel.Water
 
 bool FVoxelWaterFogSurfaceTest::RunTest(const FString& Parameters)
 {
-    // voxel.Look.WaterSurface defaults to 0 (the plain water materials); 1 picks the ones writing depth, which exist.
+    // voxel.Look.WaterSurface defaults to 1 (the materials writing depth, which exist); 0 picks the plain ones.
     IConsoleVariable* Switch = IConsoleManager::Get().FindConsoleVariable(TEXT("voxel.Look.WaterSurface"));
     if (!TestNotNull(TEXT("voxel.Look.WaterSurface exists"), Switch)) return true;
-    TestEqual(TEXT("voxel.Look.WaterSurface's default"), Switch->GetDefaultValue(), FString(TEXT("0")));
+    TestEqual(TEXT("voxel.Look.WaterSurface's default"), Switch->GetDefaultValue(), FString(TEXT("1")));
     const int32 Was = Switch->GetInt();
     Switch->Set(1, ECVF_SetByCode);
     TestTrue(TEXT("IsSurface at 1"), VoxelWaterFog::IsSurface());

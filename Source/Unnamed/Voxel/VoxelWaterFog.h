@@ -55,7 +55,7 @@ namespace VoxelWaterFog
     UNNAMED_API bool IsBright();
     // voxel.Look.WaterSurface, read when the world loads its materials: 1 draws water with the materials that write
     // their depth (M_ChunkDepthWater, M_ChunkFarDepthWater), so from below the fog covers the surface by its own
-    // distance and the surface shows; 0 keeps M_ChunkWater and M_ChunkFarWater, the surface fogged as the sky.
+    // distance and the surface shows (the default); 0 keeps M_ChunkWater and M_ChunkFarWater, the surface fogged as the sky.
     UNNAMED_API bool IsSurface();
     // The water layer's material name, near or far (bFar), for the switch's value.
     UNNAMED_API const TCHAR* GetWaterMaterialName(bool bSurface, bool bFar);

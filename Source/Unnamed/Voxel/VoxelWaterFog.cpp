@@ -17,7 +17,7 @@ namespace
         TEXT("1: the water fog's colour brightened as vanilla draws it at noon (its brightest channel at 241). 0: the "
              "biome's water_fog_color as is (darker)."));
 
-    TAutoConsoleVariable<int32> CVarLookWaterSurface(TEXT("voxel.Look.WaterSurface"), 0,
+    TAutoConsoleVariable<int32> CVarLookWaterSurface(TEXT("voxel.Look.WaterSurface"), 1,
         TEXT("1: water writes its depth, so the fog in water covers the surface by its distance and the surface shows "
              "from below. 0: the surface fogged as the sky (invisible from below). Read when the world loads."));
 
