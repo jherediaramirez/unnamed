@@ -3,6 +3,8 @@
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 12, 2026
+- [Swim handoff: swimming step 1 done, into underwater fog/tint](2026-10-12-Swim-Handoff.md): start here for the next swimming/underwater step.
+- [Swimming, step 1: water and lava stop feeling like land](2026-10-12-Swimming.md): `foundation.Swim` 1 by default (drag, sinking, Space/Sneak, jump-out, lava split); the control pair and 5 mutations.
 
 - [The ESC flash: a kept-alive pause menu and the world behind it](2026-10-12-Pause-Menu-Flash.md): `foundation.Pause.Menu` 1 (one browser per world, pre-warmed hidden: no black, no title frame, the menu within a frame of ESC; 0 = the old 0.2-0.4 s flash) and `foundation.Pause.Background` 1 (the world behind, blurred and darkened, as Jesus picked); the pause probe (`-FoundationSuite=pause`), measured frames, timings and mutations; open items.
 - [Look handoff: after the brightness pass](2026-10-12-Look-Handoff.md): start here for DN2, W3c, T3c or a retune of the picked look.
