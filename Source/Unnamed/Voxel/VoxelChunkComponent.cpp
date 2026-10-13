@@ -2,6 +2,7 @@
 #include "Core/RealtimeMeshBuilder.h"
 #include "Data/RealtimeMeshUpdateBuilder.h"
 #include "Foundation/FoundationProfile.h"
+#include "HAL/IConsoleManager.h"
 #include "Mesh/RealtimeMeshCardRepresentation.h"
 #include "MeshCardBuild.h"
 #include "MeshCardRepresentation.h"
@@ -30,6 +31,21 @@ namespace
     // How far a card's capture box reaches past its faces, so faces lying on the box's planes are captured.
     constexpr float CardPaddingCm = 10.f;
 
+    // BuildStreams' layer order: the see-through layer last, so SplitSeeThrough cuts it off the streams' tail.
+    constexpr EVoxelLayer StreamLayerOrder[] = {
+        EVoxelLayer::Opaque, EVoxelLayer::Cutout, EVoxelLayer::Water, EVoxelLayer::Model, EVoxelLayer::Translucent};
+    static_assert(UE_ARRAY_COUNT(StreamLayerOrder) == ChunkLayerCount, "Every layer once in StreamLayerOrder");
+    constexpr uint32 SeeThroughLayer = uint32(EVoxelLayer::Translucent);
+
+    // How much nearer than its column the see-through part sorts (cm): enough to break the tie, far below the
+    // distance between two columns' bounds.
+    constexpr float SeeThroughSortOffsetCm = -1.f;
+
+    TAutoConsoleVariable<bool> CVarSeeThroughPart(TEXT("voxel.SeeThroughPart"), true,
+        TEXT("1: a column's see-through blocks (ice, glass) draw from their own part, after the column's water. 0: in "
+             "the column's mesh, where their order against the water flips with the view (the control). Applies to "
+             "columns meshed after the change."));
+
     // A layer's section: its own material slot. Water casts no shadow. (A section's own shadow flag counts only while
     // no other section of the column casts: RealtimeMesh draws one mesh batch per buffer set, its shadow flag the OR
     // of its sections'. So plants cast shadows at every distance.)
@@ -49,8 +65,12 @@ UVoxelChunkComponent::UVoxelChunkComponent()
     SetGenerateOverlapEvents(false);
 }
 
+int32 UVoxelChunkComponent::SeeThroughParts = 0;
+int32 UVoxelChunkComponent::SeeThroughPartsMeshed = 0;
+
 void UVoxelChunkComponent::Setup(TConstArrayView<UMaterialInterface*> LayerMaterials)
 {
+    SlotMaterials = TArray<TObjectPtr<UMaterialInterface>>(LayerMaterials);
     URealtimeMeshSimple* Mesh = InitializeRealtimeMesh<URealtimeMeshSimple>();
     for (int32 Layer = 0; Layer < ChunkLayerCount; ++Layer)
         Mesh->SetupMaterialSlot(
@@ -86,6 +106,8 @@ void UVoxelChunkComponent::SetFarLook(
     bool bFar, bool bShadows, TConstArrayView<TObjectPtr<UMaterialInterface>> LayerMaterials)
 {
     bFarLook = bFar;
+    bFarShadows = bShadows;
+    if (SeeThroughPart) SeeThroughPart->SetFarLook(bFar, bShadows, LayerMaterials);
     const bool bCast = !bFar || bShadows;
     if (bool(CastShadow) != bCast) SetCastShadow(bCast);
     if (bool(bVisibleInRayTracing) == bFar) SetVisibleInRayTracing(!bFar);
@@ -105,6 +127,18 @@ void UVoxelChunkComponent::SetMesh(
 {
     URealtimeMeshSimple* Mesh = Cast<URealtimeMeshSimple>(GetRealtimeMesh());
     if (!Mesh) return;
+    // The see-through layer moves to the part, which empties when the column has none (the class comment).
+    if (!bIsSeeThroughPart)
+    {
+        FRealtimeMeshStreamSet SeeThrough;
+        const bool bSplit = (LayerMask >> SeeThroughLayer & 1) && CVarSeeThroughPart.GetValueOnGameThread() &&
+            SplitSeeThrough(Streams, SeeThrough);
+        if (bSplit) LayerMask &= ~(1u << SeeThroughLayer);
+        if (bSplit || (SeeThroughPart && SeeThroughPart->bHasBufferSet))
+            MakeSeeThroughPart()->SetMesh(MoveTemp(SeeThrough), FMeshCardsBuildData(),
+                bSplit ? 1u << SeeThroughLayer : 0, bSplit ? SectionMask : 0);
+    }
+    const bool bHadBufferSet = bHasBufferSet;
     const FRealtimeMeshBufferSetKey Key = GetColumnKey();
     // One RealtimeMesh update for the buffer set, its sections and the cards: each update commits separately, so the
     // calls URealtimeMeshSimple offers would make up to six.
@@ -152,12 +186,103 @@ void UVoxelChunkComponent::SetMesh(
             Data.SetCardRepresentation(Context, FRealtimeMeshCardRepresentation(Representation));
         });
     Update.Commit(Mesh->GetMeshData());
+    if (bIsSeeThroughPart) SeeThroughPartsMeshed += int32(bHasBufferSet) - int32(bHadBufferSet);
     if (MeshedSections != SectionMask)
     {
         MeshedSections = SectionMask;
         UpdateBounds();
         MarkRenderTransformDirty();
     }
+}
+
+UVoxelChunkComponent* UVoxelChunkComponent::MakeSeeThroughPart()
+{
+    if (SeeThroughPart) return SeeThroughPart;
+    UVoxelChunkComponent* Part = NewObject<UVoxelChunkComponent>(GetOwner());
+    Part->bIsSeeThroughPart = true;
+    Part->SetupAttachment(this);
+    Part->RegisterComponent();
+    TArray<UMaterialInterface*, TInlineAllocator<ChunkLayerCount>> Materials;
+    for (UMaterialInterface* Material : SlotMaterials)
+        Materials.Add(Material);
+    Part->Setup(Materials);
+    Part->SetTranslucencySortDistanceOffset(SeeThroughSortOffsetCm);
+    Part->SetVisibility(GetVisibleFlag());
+    TArray<TObjectPtr<UMaterialInterface>, TInlineAllocator<ChunkLayerCount>> Looks;
+    for (UMaterialInterface* Look : LookMaterials)
+        Looks.Add(Look);
+    Part->SetFarLook(bFarLook, bFarShadows, Looks);
+    SeeThroughPart = Part;
+    ++SeeThroughParts;
+    return Part;
+}
+
+void UVoxelChunkComponent::OnVisibilityChanged()
+{
+    Super::OnVisibilityChanged();
+    if (SeeThroughPart) SeeThroughPart->SetVisibility(GetVisibleFlag());
+}
+
+void UVoxelChunkComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+    if (SeeThroughPart && !SeeThroughPart->IsBeingDestroyed()) SeeThroughPart->DestroyComponent();
+    SeeThroughPart = nullptr;
+    if (bIsSeeThroughPart)
+    {
+        --SeeThroughParts;
+        SeeThroughPartsMeshed -= int32(bHasBufferSet);
+        bHasBufferSet = false;
+    }
+    Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+
+bool UVoxelChunkComponent::SplitSeeThrough(FRealtimeMeshStreamSet& Streams, FRealtimeMeshStreamSet& Out)
+{
+    const FRealtimeMeshStream* Groups = Streams.Find(FRealtimeMeshStreams::PolyGroups);
+    const FRealtimeMeshStream* Triangles = Streams.Find(FRealtimeMeshStreams::Triangles);
+    if (!Groups || !Triangles || Groups->Num() != Triangles->Num() || !Groups->Num()) return false;
+    // The streams BuildStreams writes, and no others.
+    bool bKnown = true;
+    Streams.ForEach(
+        [&bKnown](const FRealtimeMeshStream& Stream)
+        {
+            const FRealtimeMeshStreamKey& Key = Stream.GetStreamKey();
+            bKnown &= Key.IsVertexStream() || Key == FRealtimeMeshStreams::Triangles ||
+                Key == FRealtimeMeshStreams::PolyGroups;
+        });
+    if (!bKnown) return false;
+    // The see-through triangles are the tail (StreamLayerOrder), padding included; their vertices are the tail too.
+    const uint16* GroupData = Groups->GetData<uint16>();
+    const int32 TriangleCount = Triangles->Num();
+    int32 FirstTriangle = TriangleCount;
+    while (FirstTriangle > 0 && GroupData[FirstTriangle - 1] == SeeThroughLayer)
+        --FirstTriangle;
+    if (FirstTriangle == TriangleCount) return false;
+    const TIndex3<uint32>* TriangleData = Triangles->GetData<TIndex3<uint32>>();
+    uint32 FirstVertex = MAX_uint32;
+    for (int32 Triangle = FirstTriangle; Triangle < TriangleCount; ++Triangle)
+        FirstVertex = FMath::Min3(
+            FirstVertex, FMath::Min(TriangleData[Triangle].V0, TriangleData[Triangle].V1), TriangleData[Triangle].V2);
+    Out = FRealtimeMeshStreamSet();
+    Streams.ForEach(
+        [&Out, FirstTriangle, FirstVertex](FRealtimeMeshStream& Stream)
+        {
+            const bool bVertex = Stream.GetStreamKey().IsVertexStream();
+            const int32 First = bVertex ? int32(FirstVertex) : FirstTriangle;
+            FRealtimeMeshStream& Tail = Out.AddStream(Stream.GetStreamKey(), Stream.GetLayout());
+            // The same layout: a plain copy.
+            Tail.SetNumUninitialized(Stream.Num() - First);
+            FMemory::Memcpy(Tail.GetData(), Stream.GetDataRawAtVertex(First), SIZE_T(Tail.Num()) * Stream.GetStride());
+            Stream.SetNumUninitialized(First);
+            if (Stream.GetStreamKey() == FRealtimeMeshStreams::Triangles)
+                for (TIndex3<uint32>& Triangle : MakeArrayView(Tail.GetData<TIndex3<uint32>>(), Tail.Num()))
+                {
+                    Triangle.V0 -= FirstVertex;
+                    Triangle.V1 -= FirstVertex;
+                    Triangle.V2 -= FirstVertex;
+                }
+        });
+    return true;
 }
 
 void UVoxelChunkComponent::BuildCards(TConstArrayView<const FVoxelMeshData*> Sections, FMeshCardsBuildData& Out)
@@ -241,9 +366,10 @@ void UVoxelChunkComponent::BuildStreams(TConstArrayView<const FVoxelMeshData*> S
     Builder.ReserveNumVertices(Vertices);
     Builder.ReserveNumTriangles(Indices / 3 + 3 * ChunkLayerCount);
     constexpr float BlockCm = float(UFoundationProfile::BlockCm);
-    // Layer by layer, so each poly group's triangles are one contiguous run of the index buffer.
-    for (int32 LayerIndex = 0; LayerIndex < ChunkLayerCount; ++LayerIndex)
+    // Layer by layer, so each poly group's triangles are one contiguous run of the index buffer; see-through last.
+    for (const EVoxelLayer LayerKind : StreamLayerOrder)
     {
+        const int32 LayerIndex = int32(LayerKind);
         int32 Triangles = 0;
         uint32 LayerFirst = uint32(Builder.NumVertices());
         for (const FVoxelMeshData* Section : Sections)

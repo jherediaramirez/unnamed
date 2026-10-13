@@ -36,8 +36,8 @@ struct UNNAMED_API FVoxelLook
     int32 Film = 0;
     // x the glow of emitters of light level 1 to 7 (glow lichen 7), through MPC_VoxelLook.
     float LowGlow = 1.f;
-    // The water's specular, through MPC_VoxelLook.
-    float WaterSpecular = .5f;
+    // The water's specular, through MPC_VoxelLook: Jesus's pick from the brightness pass's ladder (0.5 before W3c).
+    float WaterSpecular = .25f;
 
     // The voxel.Look.* variables as set now.
     static FVoxelLook Read();
@@ -117,7 +117,7 @@ namespace VoxelLook
         // above already scales).
         float FogColorScale = 1;
         float LowGlow = 1;
-        float WaterSpecular = .5f;
+        float WaterSpecular = .25f;
         float SpeedUp = 2;
     };
     // Pin is SkyPin's, used when Look.SkyPin is 1.

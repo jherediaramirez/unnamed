@@ -20,6 +20,13 @@ namespace RealtimeMesh
 // section rebuilds its column's set from the sections' mesh data. The mesh also carries Lumen cards (BuildCards).
 // Collision stays off: the Foundation pawn collides against block data, not meshes. Game thread only; workers build
 // the streams and cards with BuildStreams and BuildCards.
+// The see-through blocks (the Translucent layer: ice, glass, slime, honey) draw from a child of the same class, the
+// column's see-through part, made when the column first has any (voxel.SeeThroughPart). Two translucent sections of
+// one primitive tie in the engine's translucent sort (one bounds, one priority, and RealtimeMesh gives every section
+// mesh id 0), and its unstable sort then picks their order column by column, anew as the view changes: ice over a
+// frozen lake flickered between ice over the water and water over the ice (water and sky W3c). The part sorts a
+// centimetre nearer than its column, so it draws after the column's water; between columns the distance decides, as
+// before.
 UCLASS(ClassGroup = Voxel)
 class UNNAMED_API UVoxelChunkComponent : public URealtimeMeshComponent
 {
@@ -34,7 +41,7 @@ public:
     // Creates the mesh with one material slot per layer.
     void Setup(TConstArrayView<UMaterialInterface*> LayerMaterials);
     // Replaces the column's geometry and its Lumen cards. LayerMask has a bit per layer with triangles and SectionMask
-    // a bit per section with geometry; no layers removes the mesh.
+    // a bit per section with geometry; no layers removes the mesh. The see-through layer goes to the see-through part.
     void SetMesh(RealtimeMesh::FRealtimeMeshStreamSet&& Streams, FMeshCardsBuildData&& Cards, uint32 LayerMask,
         uint32 SectionMask);
     int32 GetSectionMeshCount() const { return FMath::CountBits(MeshedSections); }
@@ -44,10 +51,18 @@ public:
     // state only when it changes.
     void SetFarLook(bool bFar, bool bShadows, TConstArrayView<TObjectPtr<UMaterialInterface>> LayerMaterials);
     bool IsFarLook() const { return bFarLook; }
+    // The see-through part, or null before the column first had see-through blocks; it follows this component's
+    // visibility, far look and destruction, and holds no geometry while the column has none.
+    const UVoxelChunkComponent* GetSeeThroughPart() const { return SeeThroughPart; }
+    bool IsSeeThroughPart() const { return bIsSeeThroughPart; }
+    // See-through parts alive, and those holding geometry (a flight's leak check).
+    static int32 GetSeeThroughPartCount() { return SeeThroughParts; }
+    static int32 GetSeeThroughPartsMeshed() { return SeeThroughPartsMeshed; }
+    virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
     // Sections' geometry as one RealtimeMesh stream set: positions in centimetres, each face's normal and tangent,
     // the three UV channels the chunk materials read (block UV, codes, tint and face), the vertex color (occlusion,
-    // light) and a poly group per layer. Plain data: any thread.
+    // light) and a poly group per layer, layer by layer with the see-through layer last. Plain data: any thread.
     static void BuildStreams(
         TConstArrayView<const FVoxelMeshData*> Sections, RealtimeMesh::FRealtimeMeshStreamSet& Out);
     static uint32 GetLayerMask(TConstArrayView<const FVoxelMeshData*> Sections);
@@ -60,11 +75,31 @@ public:
     // Lumen looks a mesh's cards up through a 32-bit mask and ignores cards past the 32nd.
     static constexpr int32 MaxCards = 32;
 
+    // Moves the see-through layer's vertices and triangles, the tail of a BuildStreams set, into Out (rebased to its
+    // first vertex); Streams keeps the other layers. False, with both untouched, when the set has no such triangles.
+    static bool SplitSeeThrough(
+        RealtimeMesh::FRealtimeMeshStreamSet& Streams, RealtimeMesh::FRealtimeMeshStreamSet& Out);
+
+protected:
+    virtual void OnVisibilityChanged() override;
+
 private:
+    UVoxelChunkComponent* MakeSeeThroughPart();
+
     // Bit per section with geometry in the current mesh.
     uint32 MeshedSections = 0;
     bool bHasBufferSet = false;
     bool bFarLook = false;
+    bool bFarShadows = false;
+    // This component is a column's see-through part.
+    bool bIsSeeThroughPart = false;
     // Each slot's override (a far material, the debug tint), or null; only compared, the subsystem holds them.
     UMaterialInterface* LookMaterials[5] = {};
+    // Setup's materials, for the see-through part's slots.
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UMaterialInterface>> SlotMaterials;
+    UPROPERTY(Transient)
+    TObjectPtr<UVoxelChunkComponent> SeeThroughPart;
+    static int32 SeeThroughParts;
+    static int32 SeeThroughPartsMeshed;
 };

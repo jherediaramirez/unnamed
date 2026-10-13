@@ -106,10 +106,11 @@ bool FVoxelLookTest::RunTest(const FString& Parameters)
     Defaults.SkyPin = 0;
     Defaults.SkyPinAdapt = 0;
     const FVoxelLook Picked;
-    TestTrue(TEXT("the defaults are Jesus's pick: DayEV 0.6, SkyPin with 2 stops, sky 1.637, the rest as before"),
+    TestTrue(TEXT("the defaults are Jesus's pick: DayEV 0.6, SkyPin with 2 stops, sky 1.637, water specular 0.25 "
+                  "(W3c), the rest as before"),
         Picked.DayEV == .6f && Picked.SkyPin == 1 && Picked.SkyPinAdapt == 2.f && Picked.Sky == 1.637f &&
             Picked.Cap == 12.5f && Picked.SkyFill == 1.f && Picked.LocalExposure == 1 && Picked.Film == 0 &&
-            Picked.LowGlow == 1.f && Picked.WaterSpecular == .5f && Picked.SpeedUp == 2.f);
+            Picked.LowGlow == 1.f && Picked.WaterSpecular == .25f && Picked.SpeedUp == 2.f);
     auto With = [&Defaults](TFunctionRef<void(FVoxelLook&)> Change)
     {
         FVoxelLook Look = Defaults;
@@ -124,7 +125,7 @@ bool FVoxelLookTest::RunTest(const FString& Parameters)
         {With([](FVoxelLook& L) { L.LocalExposure = 0; }), TEXT("local contrast")},
         {With([](FVoxelLook& L) { L.Film = 1; }), TEXT("film")},
         {With([](FVoxelLook& L) { L.LowGlow = .1f; }), TEXT("low glow")},
-        {With([](FVoxelLook& L) { L.WaterSpecular = .25f; }), TEXT("water specular")},
+        {With([](FVoxelLook& L) { L.WaterSpecular = .5f; }), TEXT("water specular")},
         {With([](FVoxelLook& L) { L.SpeedUp = 6.f; }), TEXT("speed up")},
         // SkyPin alone moves nothing until the camera has open sky (the pin; below).
         // SkyPin alone moves nothing until the camera has open sky; SkyPinAdapt only acts with SkyPin (below).
@@ -272,7 +273,7 @@ bool FVoxelLookTest::RunTest(const FString& Parameters)
         {TEXT("voxel.Look.LocalExposure"), TEXT("0"), [](FVoxelLook& L) { L.LocalExposure = 0; }},
         {TEXT("voxel.Look.Film"), TEXT("1"), [](FVoxelLook& L) { L.Film = 1; }},
         {TEXT("voxel.Look.LowGlow"), TEXT("0.1"), [](FVoxelLook& L) { L.LowGlow = .1f; }},
-        {TEXT("voxel.Look.WaterSpecular"), TEXT("0.25"), [](FVoxelLook& L) { L.WaterSpecular = .25f; }},
+        {TEXT("voxel.Look.WaterSpecular"), TEXT("0.5"), [](FVoxelLook& L) { L.WaterSpecular = .5f; }},
         {TEXT("voxel.Look.SkyPin"), TEXT("0"), [](FVoxelLook& L) { L.SkyPin = 0; }},
         {TEXT("voxel.Look.SpeedUp"), TEXT("6"), [](FVoxelLook& L) { L.SpeedUp = 6.f; }},
         {TEXT("voxel.Look.SkyPinAdapt"), TEXT("1"), [](FVoxelLook& L) { L.SkyPinAdapt = 1.f; }}};

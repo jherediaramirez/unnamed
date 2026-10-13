@@ -7,10 +7,10 @@ class AVoxelWorld;
 class FVoxelColumnPipeline;
 class IConsoleVariable;
 
-// The flowing water captures (water and sky W2a and W3b: -VoxelShotFluids=breach|flood|scenes with -VoxelShot=<folder>,
-// Scripts/CaptureVoxel.ps1 -Fluids). It runs once the first view is on screen, before the -VoxelShot shots, with
-// voxel.Fluids on (put back at the end); every write goes through the authority's block world, so the fluids wake up
-// as from the player's edits. The edited cells are not put back.
+// The flowing water captures (water and sky W2a to W3c: -VoxelShotFluids=breach|flood|scenes|ice with
+// -VoxelShot=<folder>, Scripts/CaptureVoxel.ps1 -Fluids). It runs once the first view is on screen, before the
+// -VoxelShot shots, with voxel.Fluids on (put back at the end); every write goes through the authority's block world,
+// so the fluids wake up as from the player's edits. The edited cells are not put back.
 // - breach (the plan's "dig into a sea from a cave; the cave floods"): the sea column nearest the streaming center, in
 //   the fluid simulation ring, whose water sources reach the top water block (62) over a solid seabed. A sealed 7 x 7 x
 //   4 air room is carved under it (its 9 x 9 x 6 shell and the shaft's walls solid full blocks without fluid, or the
@@ -32,6 +32,11 @@ class IConsoleVariable;
 //   from FluidSceneLavaSeconds, as the probe's frames were taken. voxel.Fluids stays as set (a control run sets it to
 //   0). Writes scenes.txt (the reach checks the probe made over RCON, each scene's ground as levels, the mesh jobs
 //   while it ran) and scenes-<pose>.png.
+// - ice (W3c, ice over water): on the same Superflat ground, a frozen pool 48 x 48 (3 x 3 columns) with water two deep
+//   under ice at the grass level, shot as the scenes are (77 degrees vertical, voxel.Fluids as set) from 16 poses
+//   stepping along a line at 45 degrees down, then one from above. Each pose is a new view, so the translucent sort
+//   reorders: a column whose water draws over its ice reads dark (voxel.SeeThroughPart 0 shows it). Writes ice.txt and
+//   ice-<pose>.png.
 class FVoxelFluidShots
 {
 public:
@@ -39,10 +44,11 @@ public:
     {
         Breach,
         Flood,
-        Scenes
+        Scenes,
+        Ice
     };
 
-    // Null, with a warning, when Name is not breach, flood or scenes.
+    // Null, with a warning, when Name is not breach, flood, scenes or ice.
     static TSharedPtr<FVoxelFluidShots> Make(const FString& InFolder, const FString& Name);
     FVoxelFluidShots(const FString& InFolder, EScenario InScenario);
     ~FVoxelFluidShots();
@@ -89,6 +95,7 @@ private:
     // Water in the cells of an inclusive box, read from the pipeline's final columns.
     FCount CountWater(AVoxelWorld& World, const FIntVector& Min, const FIntVector& Max) const;
     // Builds the vanilla scenes; false, with the reason, when the ground is not VP1's Superflat or not loaded.
+    // The scenes or, for ice, the frozen pool.
     bool SetupScenes(AVoxelWorld& World);
     void TickScenes(AVoxelWorld& World);
     // The reach checks, the scenes' ground and the mesh jobs, into the report.

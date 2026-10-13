@@ -98,7 +98,18 @@ namespace
         {TEXT("s5_lava_fall_front_a"), -77.5, -57.62, 62.5, 180, 5, true},
         {TEXT("s5_lava_fall_front45"), -77.5, -51.62, 61.5, 180, 45, true},
         {TEXT("s5_lava_fall_side"), -65.5, -58.62, 51.5, 90, 5, true}};
-    constexpr int32 FluidScenePoseCount = UE_ARRAY_COUNT(FluidScenePoses);
+    // Ice (W3c): the frozen pool's box (vanilla x and z, inclusive; 3 x 3 columns) and its poses: a line along x at
+    // 45 degrees down, 0.75 blocks a step, then the pool from above.
+    constexpr int32 FluidIceMinX = -48, FluidIceMaxX = -1, FluidIceMinZ = 0, FluidIceMaxZ = 47;
+    const FFluidScenePose FluidIcePoses[] = {{TEXT("ice_path_00"), -30.5, -55, 2.5, 0, 45, false},
+        {TEXT("ice_path_01"), -29.75, -55, 2.5, 0, 45, false}, {TEXT("ice_path_02"), -29, -55, 2.5, 0, 45, false},
+        {TEXT("ice_path_03"), -28.25, -55, 2.5, 0, 45, false}, {TEXT("ice_path_04"), -27.5, -55, 2.5, 0, 45, false},
+        {TEXT("ice_path_05"), -26.75, -55, 2.5, 0, 45, false}, {TEXT("ice_path_06"), -26, -55, 2.5, 0, 45, false},
+        {TEXT("ice_path_07"), -25.25, -55, 2.5, 0, 45, false}, {TEXT("ice_path_08"), -24.5, -55, 2.5, 0, 45, false},
+        {TEXT("ice_path_09"), -23.75, -55, 2.5, 0, 45, false}, {TEXT("ice_path_10"), -23, -55, 2.5, 0, 45, false},
+        {TEXT("ice_path_11"), -22.25, -55, 2.5, 0, 45, false}, {TEXT("ice_path_12"), -21.5, -55, 2.5, 0, 45, false},
+        {TEXT("ice_path_13"), -20.75, -55, 2.5, 0, 45, false}, {TEXT("ice_path_14"), -20, -55, 2.5, 0, 45, false},
+        {TEXT("ice_path_15"), -19.25, -55, 2.5, 0, 45, false}, {TEXT("ice_above"), -24.5, -30, 24.5, 0, 90, false}};
 
     FIntPoint FluidColumnOf(int32 X, int32 Y)
     {
@@ -184,7 +195,14 @@ namespace
     {
         return Scenario == FVoxelFluidShots::EScenario::Breach ? TEXT("breach")
             : Scenario == FVoxelFluidShots::EScenario::Flood   ? TEXT("flood")
-                                                               : TEXT("scenes");
+            : Scenario == FVoxelFluidShots::EScenario::Scenes  ? TEXT("scenes")
+                                                               : TEXT("ice");
+    }
+
+    TConstArrayView<FFluidScenePose> GetFluidScenePoses(FVoxelFluidShots::EScenario Scenario)
+    {
+        if (Scenario == FVoxelFluidShots::EScenario::Ice) return FluidIcePoses;
+        return FluidScenePoses;
     }
 
     // The fluid cell at a vanilla position (x, y, z: cell (x, z, y)) from the pipeline's final columns; null when its
@@ -231,7 +249,10 @@ TSharedPtr<FVoxelFluidShots> FVoxelFluidShots::Make(const FString& InFolder, con
         return MakeShared<FVoxelFluidShots>(InFolder, EScenario::Flood);
     if (Name.Equals(TEXT("scenes"), ESearchCase::IgnoreCase))
         return MakeShared<FVoxelFluidShots>(InFolder, EScenario::Scenes);
-    UE_LOG(LogUnnamedVoxel, Warning, TEXT("-VoxelShotFluids=%s is not breach, flood or scenes; no fluid shots"), *Name);
+    if (Name.Equals(TEXT("ice"), ESearchCase::IgnoreCase))
+        return MakeShared<FVoxelFluidShots>(InFolder, EScenario::Ice);
+    UE_LOG(LogUnnamedVoxel, Warning, TEXT("-VoxelShotFluids=%s is not breach, flood, scenes or ice; no fluid shots"),
+        *Name);
     return nullptr;
 }
 
@@ -272,9 +293,10 @@ bool FVoxelFluidShots::Tick(AVoxelWorld& World)
             return false;
         }
         // The scenes run as voxel.Fluids is set, so a control run can stop the flow.
-        if (Scenario != EScenario::Scenes) FluidsVariable->Set(1, ECVF_SetByConsole);
+        const bool bScenes = Scenario == EScenario::Scenes || Scenario == EScenario::Ice;
+        if (!bScenes) FluidsVariable->Set(1, ECVF_SetByConsole);
         FieldOfView = FluidShotsFieldOfView;
-        if (Scenario == EScenario::Scenes)
+        if (bScenes)
         {
             // Vanilla's field of view is vertical.
             FVector2D Size = FVector2D::ZeroVector;
@@ -316,7 +338,7 @@ bool FVoxelFluidShots::Tick(AVoxelWorld& World)
         }
         Controller->SetViewTarget(Camera.Get());
         // The scenes' clock starts at the build, as the probe's did.
-        SetStage(Scenario == EScenario::Scenes ? EStage::Run : EStage::Settle);
+        SetStage(Scenario == EScenario::Scenes || Scenario == EScenario::Ice ? EStage::Run : EStage::Settle);
         return true;
     }
     case EStage::Settle:
@@ -760,9 +782,10 @@ bool FVoxelFluidShots::SetupScenes(AVoxelWorld& World)
     const FFoundationBlockType* Stone = Blocks.FindBlock(TEXT("stone"));
     const FFoundationBlockType* Water = Blocks.FindBlock(TEXT("water"));
     const FFoundationBlockType* Lava = Blocks.FindBlock(TEXT("lava"));
-    if (!Grass || !Dirt || !Stone || !Water || !Lava)
+    const FFoundationBlockType* Ice = Blocks.FindBlock(TEXT("ice"));
+    if (!Grass || !Dirt || !Stone || !Water || !Lava || !Ice)
     {
-        Line(TEXT("No scenes: grass_block, dirt, stone, water or lava is missing. RESULT: FAILED"));
+        Line(TEXT("No scenes: grass_block, dirt, stone, water, lava or ice is missing. RESULT: FAILED"));
         return false;
     }
     // Vanilla (x, y, z) is cell (x, z, y).
@@ -803,34 +826,45 @@ bool FVoxelFluidShots::SetupScenes(AVoxelWorld& World)
     };
     const FFoundationBlockState Air, GrassState = Grass->GetDefaultState(), StoneState = Stone->GetDefaultState(),
                                      WaterState = Water->GetDefaultState(), LavaState = Lava->GetDefaultState();
-    // facts.md's setup commands, in order. 1: clear the area.
-    Fill(-110, -61, -6, -15, -61, 66, GrassState);
-    for (const int32 X : {-110, -86, -62, -38})
-        Fill(X, -60, -6, X + 23, -50, 66, Air);
-    // 2: one water source.
-    Write(-100, -60, 10, WaterState);
-    // 3: the waterfall ledge (5 wide, 4 high, 7 deep, top face at y -56).
-    Fill(-80, -60, 4, -76, -57, 10, StoneState);
-    Write(-78, -56, 10, WaterState);
-    // 4: three 1-block terraces in a walled 5-wide channel: the back wall, the terraces, the side walls, the source.
-    Fill(-56, -60, -1, -50, -57, -1, StoneState);
-    Fill(-55, -60, 0, -51, -58, 4, StoneState);
-    Fill(-55, -60, 5, -51, -59, 7, StoneState);
-    Fill(-55, -60, 8, -51, -60, 10, StoneState);
-    Fill(-56, -60, 0, -56, -57, 4, StoneState);
-    Fill(-50, -60, 0, -50, -57, 4, StoneState);
-    Fill(-56, -60, 5, -56, -58, 7, StoneState);
-    Fill(-50, -60, 5, -50, -58, 7, StoneState);
-    Fill(-56, -60, 8, -56, -59, 10, StoneState);
-    Fill(-50, -60, 8, -50, -59, 10, StoneState);
-    Write(-53, -57, 0, WaterState);
-    // 5: the pool, one block into the ground, with one rim gap.
-    Fill(-30, -61, 4, -26, -61, 8, WaterState);
-    Write(-25, -61, 6, Air);
-    // 6: lava, a source and a copy of the ledge 40 blocks south.
-    Write(-100, -60, 50, LavaState);
-    Fill(-80, -60, 44, -76, -57, 50, StoneState);
-    Write(-78, -56, 50, LavaState);
+    const bool bIce = Scenario == EScenario::Ice;
+    if (bIce)
+    {
+        // The frozen pool: water two deep under ice at the grass level, as a frozen lake's top.
+        Fill(FluidIceMinX, -63, FluidIceMinZ, FluidIceMaxX, -62, FluidIceMaxZ, WaterState);
+        Fill(FluidIceMinX, -61, FluidIceMinZ, FluidIceMaxX, -61, FluidIceMaxZ, Ice->GetDefaultState());
+    }
+    else
+    {
+        // facts.md's setup commands, in order. 1: clear the area.
+        Fill(-110, -61, -6, -15, -61, 66, GrassState);
+        for (const int32 X : {-110, -86, -62, -38})
+            Fill(X, -60, -6, X + 23, -50, 66, Air);
+        // 2: one water source.
+        Write(-100, -60, 10, WaterState);
+        // 3: the waterfall ledge (5 wide, 4 high, 7 deep, top face at y -56).
+        Fill(-80, -60, 4, -76, -57, 10, StoneState);
+        Write(-78, -56, 10, WaterState);
+        // 4: three 1-block terraces in a walled 5-wide channel: the back wall, the terraces, the side walls, the
+        // source.
+        Fill(-56, -60, -1, -50, -57, -1, StoneState);
+        Fill(-55, -60, 0, -51, -58, 4, StoneState);
+        Fill(-55, -60, 5, -51, -59, 7, StoneState);
+        Fill(-55, -60, 8, -51, -60, 10, StoneState);
+        Fill(-56, -60, 0, -56, -57, 4, StoneState);
+        Fill(-50, -60, 0, -50, -57, 4, StoneState);
+        Fill(-56, -60, 5, -56, -58, 7, StoneState);
+        Fill(-50, -60, 5, -50, -58, 7, StoneState);
+        Fill(-56, -60, 8, -56, -59, 10, StoneState);
+        Fill(-50, -60, 8, -50, -59, 10, StoneState);
+        Write(-53, -57, 0, WaterState);
+        // 5: the pool, one block into the ground, with one rim gap.
+        Fill(-30, -61, 4, -26, -61, 8, WaterState);
+        Write(-25, -61, 6, Air);
+        // 6: lava, a source and a copy of the ledge 40 blocks south.
+        Write(-100, -60, 50, LavaState);
+        Fill(-80, -60, 44, -76, -57, 50, StoneState);
+        Write(-78, -56, 50, LavaState);
+    }
     if (Unknown)
     {
         Line(FString::Printf(TEXT("No scenes: %d cells of the scenes' box are not loaded. RESULT: FAILED"), Unknown));
@@ -838,7 +872,9 @@ bool FVoxelFluidShots::SetupScenes(AVoxelWorld& World)
     }
     const FVoxelFluidSystem& Fluids = *World.GetFluids();
     bool bInRing = true;
-    const FIntPoint Low = FluidColumnOf(-110, -6), High = FluidColumnOf(-15, 66);
+    const IConsoleVariable* SeeThroughPart = IConsoleManager::Get().FindConsoleVariable(TEXT("voxel.SeeThroughPart"));
+    const FIntPoint Low = bIce ? FluidColumnOf(FluidIceMinX, FluidIceMinZ) : FluidColumnOf(-110, -6),
+                    High = bIce ? FluidColumnOf(FluidIceMaxX, FluidIceMaxZ) : FluidColumnOf(-15, 66);
     for (int32 Y = Low.Y; Y <= High.Y; ++Y)
         for (int32 X = Low.X; X <= High.X; ++X)
             bInRing &= Fluids.IsInRing({X, Y});
@@ -846,11 +882,13 @@ bool FVoxelFluidShots::SetupScenes(AVoxelWorld& World)
     MeshJobsAtBuild = Stats.Mesh.Count;
     MeshMsAtBuild = Stats.Mesh.TotalMs;
     Line(FString::Printf(
-        TEXT("Scenes built by facts.md's commands at game tick %llu: %d cells changed; voxel.Fluids "
-             "%d; the scenes' columns (%d..%d, %d..%d) %s the fluid ring. Cells: vanilla (x, y, z) at "
-             "(x, z, y). Camera: field of view %.2f deg horizontal (vanilla's measured 77 vertical), eye at "
-             "the /tp feet + %.2f."),
-        World.GetClock().GetGameTick(), Changed, FluidsAtStart, Low.X, High.X, Low.Y, High.Y,
+        TEXT("%s at game tick %llu: %d cells changed; voxel.Fluids %d, voxel.SeeThroughPart %s; the "
+             "scenes' columns (%d..%d, %d..%d) %s the fluid ring. Cells: vanilla (x, y, z) at (x, z, y). Camera: "
+             "field of view %.2f deg horizontal (vanilla's measured 77 vertical), eye at the /tp feet + %.2f."),
+        bIce ? TEXT("The frozen pool built (water y -63..-62 under ice at -61, x -48..-1, z 0..47)")
+             : TEXT("Scenes built by facts.md's commands"),
+        World.GetClock().GetGameTick(), Changed, FluidsAtStart,
+        SeeThroughPart ? *SeeThroughPart->GetString() : TEXT("?"), Low.X, High.X, Low.Y, High.Y,
         bInRing ? TEXT("all in") : TEXT("not all in"), FieldOfView, FluidSceneEyeHeight));
     return true;
 }
@@ -858,14 +896,15 @@ bool FVoxelFluidShots::SetupScenes(AVoxelWorld& World)
 void FVoxelFluidShots::TickScenes(AVoxelWorld& World)
 {
     if (IsShotPending()) return;
-    if (ScenePose >= FluidScenePoseCount)
+    const TConstArrayView<FFluidScenePose> Poses = GetFluidScenePoses(Scenario);
+    if (ScenePose >= Poses.Num())
     {
-        RecordScenes(World);
+        if (Scenario == EScenario::Scenes) RecordScenes(World);
         Stage = EStage::Drain;
         StageFrames = 0;
         return;
     }
-    const FFluidScenePose& Pose = FluidScenePoses[ScenePose];
+    const FFluidScenePose& Pose = Poses[ScenePose];
     const double Seconds = GetSeconds(World) - StageSeconds;
     if (Seconds < (Pose.bLava ? FluidSceneLavaSeconds : FluidSceneWaterSeconds)) return;
     if (PoseFrames++ == 0)
