@@ -2,6 +2,9 @@
 
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
+## October 13, 2026
+- [Held light and glow lichen handoff](2026-10-13-Held-Lichen-Handoff.md): `foundation.Held.Light` 1 (the held item takes the light at the player: dark in caves, warm by torches) and `voxel.Look.LowGlow` 0.03 (glow lichen's soft glow, not white); open: the night term, walls in the block light.
+
 ## October 12, 2026
 - [Swim handoff: swimming step 1 done, into underwater fog/tint](2026-10-12-Swim-Handoff.md): start here for the next swimming/underwater step.
 - [Swimming, step 1: water and lava stop feeling like land](2026-10-12-Swimming.md): `foundation.Swim` 1 by default (drag, sinking, Space/Sneak, jump-out, lava split); the control pair and 5 mutations.
