@@ -34,11 +34,15 @@ struct UNNAMED_API FVoxelLook
     int32 LocalExposure = 1;
     // 0 keeps the engine's filmic curve; 1 near-straight (Slope 1.10, Toe 0.12, Shoulder 0.70, WhiteClip 0.04).
     int32 Film = 0;
-    // x the glow of emitters of light level 1 to 7 (glow lichen 7), through MPC_VoxelLook. 0.03 (held-lichen step): glow
-    // lichen keeps its own grey-green in a dark cave instead of clipping to white (1 before, one switch away).
+    // x the glow of emitters of light level 1 to 7 (glow lichen 7), through MPC_VoxelLook. 0.03 (held-lichen step):
+    // glow lichen keeps its own grey-green in a dark cave instead of clipping to white (1 before, one switch away).
     float LowGlow = .03f;
     // The water's specular, through MPC_VoxelLook: Jesus's pick from the brightness pass's ladder (0.5 before W3c).
     float WaterSpecular = .25f;
+    // The ambient floor after tone mapping at light 0 (M_LookCaveFloor), x vanilla 26.3's at Brightness 50 (Default):
+    // a cave wall no light reaches shows as a dim copy of its texture instead of black. Jesus's pick (2026-10-13):
+    // 0.56, about vanilla's Moody; 0 = off (black, as before), 1 = vanilla's Default.
+    float CaveFloor = .56f;
 
     // The voxel.Look.* variables as set now.
     static FVoxelLook Read();
@@ -73,6 +77,22 @@ namespace VoxelLook
     inline const TCHAR* CollectionName = TEXT("MPC_VoxelLook");
     inline const TCHAR* LowGlowParameter = TEXT("LowGlow");
     inline const TCHAR* WaterSpecularParameter = TEXT("WaterSpecular");
+    // voxel.Look.CaveFloor's material (CreateLookMaterials.py, under the block root) and its scalars.
+    inline const TCHAR* CaveFloorMaterialName = TEXT("M_LookCaveFloor");
+    inline const TCHAR* CaveFloorStrengthParameter = TEXT("Strength");
+    inline const TCHAR* CaveFloorFadeStartParameter = TEXT("FadeStart");
+    inline const TCHAR* CaveFloorFadeEndParameter = TEXT("FadeEnd");
+    // The floor's display sRGB over the texture's sRGB at light 0, vanilla 26.3 at Brightness 50 (scout AB's black-box
+    // frames): the top, the north and south walls (our +-Y), east and west (+-X); the bottom is unmeasured (0.5 / 0.8 x
+    // the north wall's, vanilla's classic face shading). CreateLookMaterials.py holds the same numbers.
+    constexpr float FloorTop = .105f;
+    constexpr float FloorNS = .071f;
+    constexpr float FloorEW = .065f;
+    constexpr float FloorBottom = .05f;
+    // With the eye in water and the water fog on, the floor fades over the underwater fog's range (26.3's -8 to 96
+    // blocks), so it lies under the fog rather than lighting walls the fog hides.
+    constexpr double UnderwaterFadeStartBlocks = -8;
+    constexpr double UnderwaterFadeEndBlocks = 96;
 
     // The eye adaptation for a daylight offset and a pin. The exposure at a metered EV100 E is 2^(Bias + Curve(E) - E)
     // with E clamped to [MinEV, MaxEV] for the last term only (ExposureAt): the map's range and compensation, plus an
@@ -104,6 +124,17 @@ namespace VoxelLook
     // The pin for an open-sky fraction: 0 to SkyPinFrom, 1 from SkyPinFull, smooth between.
     UNNAMED_API double SkyPinFor(double Openness);
 
+    // M_LookCaveFloor's colour, mirrored (display sRGB 0-1): Color is the scene after tone mapping, BaseLinear the
+    // GBuffer's linear base colour, Normal the world normal, DepthCm the scene depth; the floor fades out from
+    // FadeStart to FadeEnd (cm). M_LookCaveFloor draws only above 0: at 0 nothing is drawn, so the look is exactly the
+    // one before.
+    inline bool CaveFloorDrawn(float Strength)
+    {
+        return Strength > 0;
+    }
+    UNNAMED_API FLinearColor CaveFloorDisplay(const FLinearColor& Color, const FLinearColor& BaseLinear,
+        const FVector& Normal, double DepthCm, float Strength, double FadeStartCm, double FadeEndCm);
+
     // Everything ApplyLook writes, for a look.
     struct FTargets
     {
@@ -120,6 +151,8 @@ namespace VoxelLook
         float LowGlow = 1;
         float WaterSpecular = .25f;
         float SpeedUp = 2;
+        // M_LookCaveFloor's Strength; its post-process is on only above 0.
+        float CaveFloor = 0;
     };
     // Pin is SkyPin's, used when Look.SkyPin is 1.
     UNNAMED_API FTargets Solve(const FVoxelLook& Look, double Pin = 0);
