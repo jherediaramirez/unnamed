@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[switch]$ClimateSpawn,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates,[switch]$TorchRoom,[switch]$TorchLook,[int]$TorchGlow=-1,[ValidateSet('breach','flood','scenes','ice')][string]$Fluids,[double[]]$Transition)
+param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[switch]$ClimateSpawn,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates,[switch]$TorchRoom,[switch]$TorchLook,[int]$TorchGlow=-1,[ValidateSet('breach','flood','scenes','ice')][string]$Fluids,[double[]]$Transition,[string]$StartCVars)
 # Renders the generated world offscreen (/Game/Maps/L_Generated) and saves AVoxelWorld's screenshots: overview,
 # closeup, ground, lumen-scene and section, plus build.txt with the first view's streaming timings. The rings stay on
 # the player's spawn, and the view's edge is meshed against air (voxel.Debug.EdgeWalls 1; -ExecCmds can turn it off),
@@ -99,6 +99,8 @@ $commands=@(if(-not $Flight){'voxel.Debug.EdgeWalls 1'})
 if($TorchGates -and -not $Flight){$commands+='voxel.LightCount 100'}
 if($ExecCmds){$commands+=$ExecCmds}
 if($commands){$arguments+=('-ExecCmds="'+($commands -join ',')+'"')}
+# Console variables read before the world loads (-ExecCmds run after), e.g. -StartCVars 'voxel.Look.WaterSurface=1'.
+if($StartCVars){$arguments+=('-DPCVars="'+$StartCVars+'"')}
 $started=Get-Date
 $process=Start-Process -FilePath "$EngineRoot/Engine/Binaries/Win64/UnrealEditor.exe" -ArgumentList $arguments -WorkingDirectory $root -WindowStyle Hidden -PassThru
 $timedOut=-not $process.WaitForExit($TimeoutSeconds*1000)

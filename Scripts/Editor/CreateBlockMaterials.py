@@ -206,6 +206,13 @@ MATERIALS = {
                          "fade_alpha": True},
     "M_ChunkFarWater": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": CHUNK_WATER_HLSL, "chunk": True,
                         "far": True},
+    # voxel.Look.WaterSurface 1 (Source/Unnamed/Voxel/VoxelWaterFog.h): the water layers two-sided and writing their
+    # depth, so from below the surface is drawn and the fog in fluids (a post-process by scene depth) fogs it by its own
+    # distance, not the sky's.
+    "M_ChunkDepthWater": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": CHUNK_WATER_HLSL, "chunk": True,
+                          "depth": True},
+    "M_ChunkFarDepthWater": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": CHUNK_WATER_HLSL, "chunk": True,
+                             "far": True, "depth": True},
     # The fog in fluids (Source/Unnamed/Voxel/VoxelWaterFog.h): a post-process blendable, not a block material.
     "M_WaterFog": {"post": True},
 }
@@ -356,7 +363,8 @@ def build(name, spec, block_textures, flow_textures):
     water = name.endswith("Water")
     chunk = spec.get("chunk", False)
     material.set_editor_property("blend_mode", spec["blend"])
-    material.set_editor_property("two_sided", False)
+    # The surface variants ("depth") draw the water's faces from both sides: from below its top, as vanilla does.
+    material.set_editor_property("two_sided", spec.get("depth", False))
     # Chunk meshes use RealtimeMesh's own vertex factory, which needs no usage flag.
     material.set_editor_property("used_with_instanced_static_meshes", not chunk)
     far = spec.get("far", False)
@@ -367,6 +375,8 @@ def build(name, spec, block_textures, flow_textures):
     if spec["blend"] == unreal.BlendMode.BLEND_TRANSLUCENT:
         material.set_editor_property("translucency_lighting_mode",
                                      unreal.TranslucencyLightingMode.TLM_SURFACE_PER_PIXEL_LIGHTING)
+        # "Output Depth and Velocity": only the surface variants (set either way, as the assets are reused).
+        material.set_editor_property("output_translucent_velocity", spec.get("depth", False))
 
     def node(cls, x, y):
         return lib.create_material_expression(material, cls, x, y)
@@ -573,6 +583,14 @@ def build(name, spec, block_textures, flow_textures):
                 fail(name + ": could not connect LookEmissive")
             emissive = total
         lib.connect_material_property(emissive, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    if spec.get("depth", False):
+        # Back faces lit as the front: from below, the top is lit as from above, as vanilla's up face at full light.
+        normal = node(unreal.MaterialExpressionMultiply, -150, 640)
+        link(node(unreal.MaterialExpressionTwoSidedSign, -300, 620), "", normal, "A")
+        up = node(unreal.MaterialExpressionConstant3Vector, -300, 680)
+        up.set_editor_property("constant", unreal.LinearColor(0, 0, 1, 0))
+        link(up, "", normal, "B")
+        lib.connect_material_property(normal, "", unreal.MaterialProperty.MP_NORMAL)
     lib.recompile_material(material)
     if not unreal.EditorAssetLibrary.save_loaded_asset(material):
         fail("could not save " + name)

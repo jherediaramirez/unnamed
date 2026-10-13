@@ -17,6 +17,10 @@ namespace
         TEXT("1: the water fog's colour brightened as vanilla draws it at noon (its brightest channel at 241). 0: the "
              "biome's water_fog_color as is (darker)."));
 
+    TAutoConsoleVariable<int32> CVarLookWaterSurface(TEXT("voxel.Look.WaterSurface"), 0,
+        TEXT("1: water writes its depth, so the fog in water covers the surface by its distance and the surface shows "
+             "from below. 0: the surface fogged as the sky (invisible from below). Read when the world loads."));
+
     const TCHAR* const MaterialName = TEXT("M_WaterFog");
 
     FLinearColor DisplayColor(int32 Rgb)
@@ -52,6 +56,17 @@ TOptional<VoxelWaterFog::FFog> VoxelWaterFog::GetFog(
 bool VoxelWaterFog::IsBright()
 {
     return CVarLookWaterFogBright.GetValueOnGameThread() != 0;
+}
+
+bool VoxelWaterFog::IsSurface()
+{
+    return CVarLookWaterSurface.GetValueOnGameThread() != 0;
+}
+
+const TCHAR* VoxelWaterFog::GetWaterMaterialName(bool bSurface, bool bFar)
+{
+    if (bFar) return bSurface ? TEXT("M_ChunkFarDepthWater") : TEXT("M_ChunkFarWater");
+    return bSurface ? TEXT("M_ChunkDepthWater") : TEXT("M_ChunkWater");
 }
 
 bool VoxelWaterFog::IsOn()
