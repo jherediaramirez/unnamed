@@ -10,6 +10,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 - [Swimming, step 1: water and lava stop feeling like land](2026-10-12-Swimming.md): `foundation.Swim` 1 by default (drag, sinking, Space/Sneak, jump-out, lava split); the control pair and 5 mutations.
 
 - [Water and sky handoff: W3c done, into W3d (less see-through water, readable streaks, the water fog, a probe step)](2026-10-12-WaterSky-Handoff-W3d.md): start here for the next water session.
+- [Water surface handoff: the ordinary ocean's hue next](2026-10-13-WaterSurface-Handoff.md): start here after the water surface (`voxel.Look.WaterSurface` 1; next the hue with a dated Java frame, then the sheen band).
 - [Water fog handoff: the surface from below next](2026-10-12-WaterFog-Handoff.md): start here after the water fog (depth on the water materials, then the open items).
 - [The water fog](2026-10-12-WaterFog.md): `voxel.Look.WaterFog` 1 (0 = before): with the eye in water, 26.3's underwater fog (the biome's `water_fog_color`, default #050533, -8 to 96 blocks; swamps x0.85), lava's fog in lava; `M_WaterFog` from `CreateBlockMaterials.py`; the surface seen from below is an open look call.
 - [Water and sky W3c: the ice flicker fixed, water shine 0.25](2026-10-12-WaterSky-W3c.md): frozen lakes' column checkerboard was a translucent-sort tie between a column's ice and water sections; the see-through part draws the translucent layer after the water (`voxel.SeeThroughPart`, `CaptureVoxel -Fluids ice`); `voxel.Look.WaterSpecular` 0.25 by Jesus's pick.
