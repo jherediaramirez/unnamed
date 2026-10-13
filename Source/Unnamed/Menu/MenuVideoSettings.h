@@ -23,6 +23,13 @@ class UNNAMED_API UMenuVideoSettings : public UObject
 public:
     void Initialize(bool bAllowNativeChanges);
     void Tick();
+    // The kept title browser's settings (menu.Title.Keep): Reinitialize gives what a fresh object's Initialize would
+    // (the menu map's); ReloadSaved only re-reads the saved values over the defaults, with no window or frame-rate
+    // change, for a title repainted inside a world.
+    void Reinitialize(bool bAllowNativeChanges);
+    void ReloadSaved();
+    // Successful saves by any instance in this process: a world's Options change the kept title's look.
+    static uint32 GetSaveCount();
 
     // Shared read-only native view; zero is Auto. HUD and menu resolve their own minimum viewport.
     int32 GetGuiScale() const { return GuiScale; }
@@ -52,6 +59,8 @@ private:
     bool SetVSync(bool bEnabled);
     void Load();
     bool Save();
+    // The saved values back at their first-run defaults.
+    void ResetSavedValues();
     FString Snapshot(bool bSuccess = true) const;
 
     bool bNativeAllowed = false;

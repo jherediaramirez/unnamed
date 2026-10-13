@@ -8,16 +8,19 @@
 #   & Scripts\TestMenuTransitions.ps1 -Label timing -NoShots -Loops 3  # real-time ms, three trips
 #   & Scripts\TestMenuTransitions.ps1 -Label fixed -FixedStep           # -UseFixedTimeStep -FPS=60
 #   & Scripts\TestMenuTransitions.ps1 -Label today -Switches 'menu.Title.Keep=0;menu.World.WaitForPaint=0'
-param([Parameter(Mandatory)][ValidatePattern('^[A-Za-z0-9_-]+$')][string]$Label,[switch]$NoShots,[ValidateRange(1,10)][int]$Loops=1,
+param([Parameter(Mandatory)][ValidatePattern('^[A-Za-z0-9_-]+$')][string]$Label,[switch]$NoShots,[ValidateRange(1,3)][int]$Loops=1,
     [switch]$FixedStep,
     # Switches read at BeginPlay, as one ';'-separated string of name=value: each becomes -ini:Engine:[ConsoleVariables]:name=value
     # (-ExecCmds runs only after the first map's BeginPlay).
     [string]$Switches='',
     [string[]]$ExtraArgs=@(),[ValidateRange(320,7680)][int]$Width=2560,[ValidateRange(240,4320)][int]$Height=1440,
-    [int]$TimeoutMinutes=15,[string]$OutputDirectory,[switch]$NoCheck)
+    [int]$TimeoutMinutes=15,[string]$OutputDirectory,[switch]$NoCheck,
+    # -OnScreen draws to a real window (no -RenderOffscreen): the video settings then apply natively and, with -Persistent
+    # (no -MenuSettingsSessionOnly), save to the run's profile, as in the shipped game.
+    [switch]$OnScreen,[switch]$Persistent)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
-$out=if($OutputDirectory){$OutputDirectory}else{Join-Path $root "Tests\Evidence\$(Get-Date -Format 'yyyy-MM-dd')\Menu-transitions\$Label-$(Get-Date -Format 'yyyyMMdd-HHmmss')"}
+$out=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{Join-Path $root "Tests\Evidence\$(Get-Date -Format 'yyyy-MM-dd')\Menu-transitions\$Label-$(Get-Date -Format 'yyyyMMdd-HHmmss')"}
 if(Test-Path -LiteralPath $out){throw "Evidence folder exists (never overwritten): $out"}
 New-Item -ItemType Directory -Path $out | Out-Null
 & (Join-Path $PSScriptRoot 'QuietWindow.ps1') -Name "menu-transitions $Label" -Game
@@ -25,8 +28,10 @@ $before=@(Get-Process java,javaw,UnrealEditor*,UnrealBuildTool -ErrorAction Sile
 $state="Before run $(Get-Date -Format o): Get-Process java,javaw,UnrealEditor*,UnrealBuildTool`n"+
     $(if($before.Count){$before|Format-Table -AutoSize Name,Id,StartTime|Out-String}else{"(none running)`n"})
 $arguments=@(('"'+(Join-Path $root 'Unnamed.uproject')+'"'),'-game','-windowed',"-ResX=$Width","-ResY=$Height",'-ForceRes',
-    '-RenderOffscreen','-unattended','-nosplash','-nosound','-MenuSettingsSessionOnly',('-TransitionProbe="'+(Join-Path $out 'tr')+'"'),
+    '-unattended','-nosplash','-nosound',('-TransitionProbe="'+(Join-Path $out 'tr')+'"'),
     ('-abslog="'+(Join-Path $out 'run.log')+'"'),('-UserDir="'+(Join-Path $out 'profile')+'"'),"-TransitionLoops=$Loops")
+if(-not $OnScreen){$arguments+='-RenderOffscreen'}
+if(-not $Persistent){$arguments+='-MenuSettingsSessionOnly'}
 if($NoShots){$arguments+='-TransitionNoShots'}
 if($FixedStep){$arguments+='-UseFixedTimeStep','-FPS=60'}
 foreach($pair in @($Switches -split ';' | Where-Object {$_.Trim()})){
@@ -36,12 +41,15 @@ foreach($pair in @($Switches -split ';' | Where-Object {$_.Trim()})){
 $arguments+=$ExtraArgs
 $started=Get-Date
 $p=Start-Process -FilePath 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe' -ArgumentList $arguments -PassThru -WindowStyle Hidden
+$null=$p.Handle # cached now, so ExitCode is readable after the process ends
 $state+="Started PID $($p.Id) at $($started.ToString('o'))`n"
-if(-not $p.WaitForExit($TimeoutMinutes*60000)){Stop-Process -Id $p.Id -Force; $state+="TIMEOUT: killed PID $($p.Id)`n"}
+$timedOut=$false
+if(-not $p.WaitForExit($TimeoutMinutes*60000)){Stop-Process -Id $p.Id -Force; $null=$p.WaitForExit(10000); $timedOut=$true; $state+="TIMEOUT: killed PID $($p.Id)`n"}
 $ended=Get-Date
 $state+="Exited $($ended.ToString('o')) code $($p.ExitCode); run took $([int]($ended-$started).TotalSeconds) s; args: $($arguments -join ' ')`n"
 $crashes=Join-Path $out 'profile\Saved\Crashes'
-$state+="Crash folders: $(@(Get-ChildItem -LiteralPath $crashes -Directory -ErrorAction SilentlyContinue).Count)`n"
+$crashCount=@(Get-ChildItem -LiteralPath $crashes -Directory -ErrorAction SilentlyContinue).Count
+$state+="Crash folders: $crashCount`n"
 Set-Content -LiteralPath (Join-Path $out 'machine-state.txt') -Value $state
 $log=Join-Path $out 'run.log'
 $webErrors=@(Select-String -LiteralPath $log -Pattern 'LogWebBrowser: Error' -CaseSensitive -ErrorAction SilentlyContinue).Count
@@ -54,7 +62,7 @@ if(-not $NoCheck){
     $verdict=$LASTEXITCODE
     $lines+='',"CheckMenuTransitions.py exit $verdict",$check
 }
-if($p.ExitCode -ne 0 -or $webErrors){$verdict=1}
+if($timedOut -or $p.ExitCode -ne 0 -or $webErrors -or $crashCount){$verdict=1}
 $lines+="OUT $out"
 Set-Content -LiteralPath (Join-Path $out 'summary.txt') -Value $lines
 $lines | Select-Object -Last 60

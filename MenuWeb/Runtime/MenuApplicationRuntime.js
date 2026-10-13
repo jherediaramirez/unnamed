@@ -112,6 +112,15 @@ const MenuApplication = (() => {
     try { const reply = await client.call('GetState'); if (ticket === revision) absorb(reply); }
     catch (error) { console.warn('Game application: ' + error.message); }
   }
+  // The kept title page back from a world (MenuTitle.reset): the world it left for is gone, so nothing is leaving any
+  // more and the stores unlock; the saved worlds are read again.
+  function returned() {
+    leaving = null;
+    retryAllowed = false;
+    revision++;
+    MenuStores.cancelExit();
+    return initialize();
+  }
   setInterval(async () => {
     if (!client.connected || leaving || polling) return;
     polling = true;
@@ -121,7 +130,7 @@ const MenuApplication = (() => {
     finally { polling = false; }
   }, 500);
   return {enabled, quit, isPlayable, worldEnabled, openWorld, createWorld, deleteWorld, renameWorld,
-    isLoading: () => leaving === 'world' || leaving === 'create', initialize,
+    isLoading: () => leaving === 'world' || leaving === 'create', initialize, returned,
     defaultWorld: () => saved[0]?.id ?? catalog[0]?.id ?? null, getState: () => snapshot ? clone(snapshot) : null};
 })();
 window.MenuApplication = MenuApplication;

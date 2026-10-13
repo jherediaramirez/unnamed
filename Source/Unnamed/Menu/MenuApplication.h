@@ -17,7 +17,8 @@ class UNNAMED_API UMenuApplication : public UObject
 {
     GENERATED_BODY()
 public:
-    // Also reads the saved worlds once; the page polls GetState, which lists them from memory.
+    // Also reads the saved worlds once; the page polls GetState, which lists them from memory. Clears any pending quit
+    // or travel (the kept title page's application is initialized again on each menu map).
     void Initialize(APlayerController* InController, UMenuVideoSettings* InVideoSettings,
         UMenuInputBridge* InInputBridge = nullptr, UMenuPreferences* InPreferences = nullptr);
     void Tick();

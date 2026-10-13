@@ -23,7 +23,7 @@ const patches = [Core, Realms, Application, Video, Input, Preferences, SettingsR
 // Concatenated in this order into the page's single script.
 const runtimeFiles = ['MenuBridgeRuntime.js', 'MenuPrototypeRuntime.js', 'MenuDialogRuntime.js', 'MenuVideoRuntime.js',
   'MenuInputRuntime.js', 'MenuPreferencesRuntime.js', 'MenuWorldsRuntime.js', 'MenuApplicationRuntime.js',
-  'FoundationMenuRuntime.js'];
+  'FoundationMenuRuntime.js', 'MenuTitleRuntime.js'];
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const reference = path.join(root, 'Reference/minecraft-menu');

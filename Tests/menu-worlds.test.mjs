@@ -174,3 +174,19 @@ test('delete and rename reach native for saved worlds only, and the reply update
   assert.equal(f.api.isPlayable('hello'), false);
   assert.deepEqual(f.notices, []);
 });
+
+test('a kept title page back from a world unlocks and can travel again (MenuTitle.reset)', async () => {
+  const f = fixture(); await f.api.initialize();
+  await f.api.openWorld('playground');
+  assert.equal(f.api.isLoading(), true);
+  assert.equal(f.api.worldEnabled('playground'), false);
+  // The next menu map: native's application starts clean (UMenuApplication::Initialize).
+  f.native.getstate = async () => ({ok: true, canQuit: true, pendingQuit: false, quitIssued: false, canOpenWorld: true,
+    pendingWorld: false, travelIssued: false, error: '', worlds: [playground], savedWorlds: []});
+  await f.api.returned();
+  assert.equal(f.api.isLoading(), false);
+  assert.ok(['video-unlock', 'MenuInput-unlock', 'MenuPreferences-unlock'].every(c => f.calls.includes(c)), f.calls.join());
+  assert.equal(f.api.worldEnabled('playground'), true);
+  await f.api.openWorld('playground');
+  assert.equal(f.calls.filter(c => c.startsWith('open:')).length, 2);
+});

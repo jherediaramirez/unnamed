@@ -7,6 +7,8 @@
 // ExecuteJavascript) and native ESC/E through the input router. Every recorded frame requests a screenshot
 // (<base>-pause-<SEQ>-f<+/-NNN>.png, the pause tools' names) and appends a row to <base>-pause-frames.csv.
 // -TransitionNoShots: the same script with no screenshots (real-time ms). -TransitionLoops=N repeats G..F N times.
+// -TransitionGuiScale=N adds U: GUI Scale set to N on the world's Video Settings screen. -TransitionIdle=N adds Z: N
+// uncapped frames in the Playground, then X restores the 60 fps cap.
 #include "UnnamedLog.h"
 #include "Foundation/FoundationController.h"
 #include "Foundation/FoundationHud.h"
@@ -14,7 +16,9 @@
 #include "Foundation/FoundationPanels.h"
 #include "Input/UnnamedInputSubsystem.h"
 #include "Menu/MenuBrowserHost.h"
+#include "Menu/MenuBrowserSubsystem.h"
 #include "Menu/MenuPlayerController.h"
+#include "Menu/MenuVideoSettings.h"
 #include "Engine/Engine.h"
 #include "Engine/GameViewportClient.h"
 #include "Engine/World.h"
@@ -38,12 +42,15 @@ namespace
     const TCHAR* ClickJs = TEXT("(l=>{const b=[...document.querySelectorAll('button')].find(e=>e.textContent.trim()."
                                 "startsWith(l));console.log('TRANSITION PROBE click '+l+' '+(b?(b.disabled?'disabled':"
                                 "'ok'):'missing'));b&&!b.disabled&&b.click()})");
-    // Reports the page's screen, panorama drawn and pause-hidden whenever one changes (each animation frame).
+    // Reports the page's screen, panorama drawn and pause-hidden whenever one changes (each animation frame), tagged
+    // with the injection it belongs to. Injecting again (a kept title browser watched again after a world) takes a new
+    // tag and reports the current state at once; reports under an old tag (a hidden page) are ignored.
     const TCHAR* WatchJs = TEXT(
-        "(()=>{if(window.__tp)return;window.__tp=1;let last='';const f=()=>{let s='?',p='?';try{s=current.name;"
-        "p=String(!!(panoramaLoaded||panoramaFallback))}catch(e){}const h=document.documentElement.classList."
-        "contains('pause-hidden');const k=s+' '+p+' '+h;if(k!==last){last=k;console.log('TRANSITION PROBE page '+k)}"
-        "requestAnimationFrame(f)};requestAnimationFrame(f)})()");
+        "(t=>{window.__tpTag=t;window.__tpLast='';if(window.__tp)return;window.__tp=1;const f=()=>{let s='?',p='?';"
+        "try{s=current.name;p=String(!!(panoramaLoaded||panoramaFallback))}catch(e){}const h=document."
+        "documentElement.classList.contains('pause-hidden');const k=s+' '+p+' '+h;if(k!==window.__tpLast){window."
+        "__tpLast=k;console.log('TRANSITION PROBE page '+window.__tpTag+' '+k)}requestAnimationFrame(f)};"
+        "requestAnimationFrame(f)})");
 
     class FTransitionLog final : public FOutputDevice
     {
@@ -55,8 +62,11 @@ namespace
                 ++WebErrors;
             const TCHAR* Page = FCString::Strstr(Text, TEXT("TRANSITION PROBE page "));
             if (!Page) return;
+            FString Tag, State;
+            if (!FString(Page + 22).Split(TEXT(" "), &Tag, &State)) return;
             FScopeLock Lock(&Mutex);
-            PageState = Page + 22;
+            if (Tag != FString::FromInt(WatchTag)) return;
+            PageState = State;
             ++PageReports;
         }
         virtual bool CanBeUsedOnAnyThread() const override { return true; }
@@ -65,12 +75,15 @@ namespace
             FScopeLock Lock(&Mutex);
             return PageState;
         }
-        void ResetPage()
+        // A new watcher: only its reports count from now on.
+        int32 ResetPage()
         {
             FScopeLock Lock(&Mutex);
             PageState.Reset();
+            return ++WatchTag;
         }
         std::atomic<int32> WebErrors{0}, PageReports{0};
+        int32 WatchTag = 0;
 
     private:
         FCriticalSection Mutex;
@@ -95,6 +108,8 @@ namespace
             if (!FParse::Value(FCommandLine::Get(), TEXT("TransitionProbe="), Base)) return;
             bShots = !FParse::Param(FCommandLine::Get(), TEXT("TransitionNoShots"));
             FParse::Value(FCommandLine::Get(), TEXT("TransitionLoops="), Loops);
+            FParse::Value(FCommandLine::Get(), TEXT("TransitionGuiScale="), GuiScale);
+            FParse::Value(FCommandLine::Get(), TEXT("TransitionIdle="), IdleFrames);
             Csv = Base + TEXT("-pause-frames.csv");
             GLog->AddOutputDevice(&Log);
             FWorldDelegates::OnWorldPostActorTick.AddRaw(this, &FTransitionProbe::OnTick);
@@ -114,13 +129,19 @@ namespace
         FString Base, Csv;
         bool bShots = true;
         int32 Loops = 1;
+        // -TransitionGuiScale=N: on the world's Video Settings screen, U sets GUI Scale to N (then Return to Main Menu
+        // shows whether the title follows it).
+        int32 GuiScale = 0;
+        // -TransitionIdle=N: Z records N uncapped frames in the Playground (frame time with the hidden title page).
+        int32 IdleFrames = 0;
         FTransitionLog Log;
         TArray<FStep> Steps;
         int32 StepIndex = 0, Index = 0, DoneAt = -1;
         bool bRecording = false, bHeader = false, bStarted = false;
         double StepEntered = 0, ActSeconds = 0, LastRowSeconds = 0, Started = 0;
         uint64 LastFrame = 0;
-        SWebBrowser* Watched = nullptr;
+        // Weak, so a new browser at a freed one's address still counts as new.
+        TWeakPtr<SWebBrowser> Watched;
         FString ActPage;
 
         static APlayerController* Player()
@@ -144,17 +165,34 @@ namespace
             if (TSharedPtr<SWebBrowser> B = Browser()) B->ExecuteJavascript(Code);
         }
         static void Click(const TCHAR* Label) { Js(FString(ClickJs) + TEXT("('") + Label + TEXT("')")); }
+        static UMenuBrowserSubsystem* Titles()
+        {
+            APlayerController* P = Player();
+            return P && P->GetGameInstance() ? P->GetGameInstance()->GetSubsystem<UMenuBrowserSubsystem>() : nullptr;
+        }
         FString Screen() { return Log.GetPage().Left(Log.GetPage().Find(TEXT(" "))); }
+        // The title with its panorama, usable: no loading overlay over it (menu.Title.Keep).
         bool MenuSettled()
         {
             return Cast<AMenuPlayerController>(Player()) && Browser().IsValid() && Browser()->IsLoaded() &&
-                Log.GetPage().StartsWith(TEXT("main true"));
+                Log.GetPage().StartsWith(TEXT("main true")) && !(Titles() && Titles()->IsOverlayShown());
         }
+        // One small number per browser seen (1 = the first), so the CSV shows whether the menu map's browser survived a
+        // trip. Weak pointers: a freed browser never matches a new one at the same address.
+        int32 BrowserId(const TSharedPtr<SWebBrowser>& B)
+        {
+            if (!B.IsValid()) return 0;
+            for (int32 Seen = 0; Seen < BrowserIds.Num(); ++Seen)
+                if (BrowserIds[Seen].HasSameObject(B.Get()) && BrowserIds[Seen].IsValid()) return Seen + 1;
+            BrowserIds.Add(B);
+            return BrowserIds.Num();
+        }
+        TArray<TWeakPtr<SWebBrowser>> BrowserIds;
         bool PageOn(const TCHAR* Name) { return Log.GetPage().StartsWith(FString(Name) + TEXT(" ")); }
 
         void Event(const FString& What)
         {
-            Append(FString::Printf(TEXT("event,,%llu,%.2f,,,,,,,,,,,,,%s\n"), GFrameCounter,
+            Append(FString::Printf(TEXT("event,,%llu,%.2f,,,,,,,,,,,,,,,,%s\n"), GFrameCounter,
                 (FPlatformTime::Seconds() - ActSeconds) * 1000, *What));
             UE_LOG(LogUnnamedMenu, Display, TEXT("TRANSITION PROBE event %s"), *What);
         }
@@ -165,7 +203,7 @@ namespace
                 bHeader = true;
                 FFileHelper::SaveStringToFile(TEXT("seq,frame,engine_frame,ms,dt_ms,map,browser,visibility,loaded,host_"
                                                    "open,loading_screen,panels_open,gameplay,page,web_errors,uptime_"
-                                                   "ms,note\n"),
+                                                   "ms,browser_id,cover,title_ack,note\n"),
                     *Csv);
             }
             FFileHelper::SaveStringToFile(
@@ -175,7 +213,7 @@ namespace
         void Build()
         {
             auto Gameplay = [] { return Foundation() && Foundation()->IsGameplay(); };
-            Steps.Add({TEXT("S"), 0, 90, 8, 0, [] { return true; }, [] {}, [this] { return MenuSettled(); }});
+            Steps.Add({TEXT("S"), 0, 600, 8, 0, [] { return true; }, [] {}, [this] { return MenuSettled(); }});
             for (int32 Loop = 0; Loop < Loops; ++Loop)
             {
                 const FString N = Loops > 1 ? FString::FromInt(Loop + 1) : TEXT("");
@@ -188,6 +226,15 @@ namespace
                         Click(TEXT("Play Selected World"));
                     },
                     [Gameplay] { return Gameplay(); }});
+                if (IdleFrames > 0)
+                {
+                    Steps.Add({TEXT("Z") + N, 0, IdleFrames, 0, 3., Gameplay,
+                        [] { IConsoleManager::Get().FindConsoleVariable(TEXT("t.MaxFPS"))->Set(0, ECVF_SetByCode); },
+                        [] { return false; }});
+                    Steps.Add({TEXT("X") + N, 0, 0, 0, 0., [] { return true; },
+                        [] { IConsoleManager::Get().FindConsoleVariable(TEXT("t.MaxFPS"))->Set(60, ECVF_SetByCode); },
+                        [] { return true; }});
+                }
                 Steps.Add({TEXT("I") + N, 3, 20, 6, 3., [Gameplay] { return Gameplay() && Host()->IsPageReady(); },
                     [] { Foundation()->HandleAction(TEXT("key.inventory"), true); },
                     [] { return Foundation()->GetPanels()->IsInventoryOpen(); }});
@@ -225,6 +272,10 @@ namespace
                 };
                 Page(*(TEXT("O") + N), TEXT("Options"), TEXT("foundationPause"));
                 Page(*(TEXT("V") + N), TEXT("Video Settings"), TEXT("options"));
+                if (GuiScale > 0)
+                    Steps.Add({TEXT("U") + N, 3, 20, 6, 1.5, [this] { return !Screen().IsEmpty(); },
+                        [this] { Js(FString::Printf(TEXT("MenuVideo.set('guiScale',%d)"), GuiScale)); },
+                        [this] { return Host() && Host()->GetVideoSettings()->GetGuiScale() == GuiScale; }});
                 Page(*(TEXT("W") + N), TEXT("Done"), nullptr);
                 Page(*(TEXT("C") + N), TEXT("Controls"), TEXT("options"));
                 Page(*(TEXT("D") + N), TEXT("Done"), nullptr);
@@ -272,11 +323,11 @@ namespace
             }
             // A new browser (map travel, or a fresh one) gets the page watcher once its document has loaded.
             TSharedPtr<SWebBrowser> B = Browser();
-            if (B.Get() != Watched && (!B.IsValid() || B->IsLoaded()))
+            if (!(Watched.HasSameObject(B.Get()) && Watched.IsValid()) && (!B.IsValid() || B->IsLoaded()))
             {
-                Watched = B.Get();
-                Log.ResetPage();
-                if (B.IsValid()) B->ExecuteJavascript(WatchJs);
+                Watched = B;
+                const int32 Tag = Log.ResetPage();
+                if (B.IsValid()) B->ExecuteJavascript(FString::Printf(TEXT("%s(%d)"), WatchJs, Tag));
             }
             if (Now - Started > 600 || StepIndex >= Steps.Num())
             {
@@ -337,11 +388,14 @@ namespace
             TSharedPtr<SWebBrowser> B = Browser();
             const FString Map = P && P->GetWorld() ? P->GetWorld()->GetMapName() : TEXT("");
             const FString Visibility = B.IsValid() ? B->GetVisibility().ToString() : TEXT("");
-            Append(FString::Printf(TEXT("%s,%d,%llu,%.2f,%.2f,%s,%d,%s,%d,%d,%d,%d,%d,%s,%d,%.1f,\n"), *Seq, Index,
-                GFrameCounter, (Now - ActSeconds) * 1000, LastRowSeconds > 0 ? (Now - LastRowSeconds) * 1000 : 0., *Map,
-                int32(B.IsValid()), *Visibility, int32(B.IsValid() && B->IsLoaded()), int32(H && H->IsOpen()),
+            UMenuBrowserSubsystem* T = Titles();
+            Append(FString::Printf(TEXT("%s,%d,%llu,%.2f,%.2f,%s,%d,%s,%d,%d,%d,%d,%d,%s,%d,%.1f,%d,%d,%d,\n"), *Seq,
+                Index, GFrameCounter, (Now - ActSeconds) * 1000,
+                LastRowSeconds > 0 ? (Now - LastRowSeconds) * 1000 : 0., *Map, int32(B.IsValid()), *Visibility,
+                int32(B.IsValid() && B->IsLoaded()), int32(H && H->IsOpen()),
                 int32(F && F->GetHud()->IsLoadingScreenShown()), int32(F && F->GetPanels()->IsOpen()),
-                int32(F && F->IsGameplay()), *Log.GetPage(), Log.WebErrors.load(), (Now - GStartTime) * 1000));
+                int32(F && F->IsGameplay()), *Log.GetPage(), Log.WebErrors.load(), (Now - GStartTime) * 1000,
+                BrowserId(B), int32(T && T->IsOverlayShown()), int32(T && T->IsTitlePainted())));
             LastRowSeconds = Now;
         }
     };

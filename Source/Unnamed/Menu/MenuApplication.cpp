@@ -56,6 +56,9 @@ void UMenuApplication::Initialize(APlayerController* InController, UMenuVideoSet
     VideoSettings = InVideoSettings;
     InputBridge = InInputBridge;
     Preferences = InPreferences;
+    // The kept title page's application (menu.Title.Keep) is initialized again on every menu map: nothing pending.
+    bQuitPending = bQuitIssued = bWorldPending = bTravelIssued = false;
+    LastError.Empty();
     RefreshSavedWorlds();
 }
 
