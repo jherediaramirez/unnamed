@@ -20,6 +20,8 @@ class FVoxelLightTable;
 class FVoxelLights;
 class FVoxelTransitionShots;
 class UExponentialHeightFogComponent;
+class UMaterialInstanceDynamic;
+enum class EVoxelFluid : uint8;
 class UPointLightComponent;
 class UStaticMeshComponent;
 class USkyAtmosphereComponent;
@@ -152,6 +154,10 @@ private:
     // Fits the edge fog to the drawn radius and the haze switch whenever they change (far LOD step 2: the haze while
     // far meshes form the edge, else step 1's wall), and keeps the fog floor under the camera.
     void UpdateEdgeFog();
+    // The fog in fluids (VoxelWaterFog.h): on while the camera's eye is in water or lava and voxel.Look.WaterFog is 1.
+    void UpdateWaterFog();
+    // The fluid at a point: the cell's fluid where the point is under its surface, else None.
+    EVoxelFluid GetFluidAt(FVector Point) const;
     // The sky's aerial perspective distance scale for the edge fog as applied.
     float GetEdgeAerialScale() const;
     // The fog floor shows unless the haze's voxel.Fog.FloorDepth is below 0 (a look check without it).
@@ -240,6 +246,9 @@ private:
     TObjectPtr<USkyLightComponent> SkyFill;
     UPROPERTY(Transient)
     TObjectPtr<UMaterialParameterCollection> LookCollection;
+    // M_WaterFog's instance on LookVolume, made when the eye first enters a fluid.
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterialInstanceDynamic> WaterFogMaterial;
     // The volume's exposure curve while a look needs one (VoxelLook::SolveExposure).
     UPROPERTY(Transient)
     TObjectPtr<UCurveFloat> LookCurve;

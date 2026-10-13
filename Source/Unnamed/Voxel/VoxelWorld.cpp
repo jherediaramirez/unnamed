@@ -43,6 +43,7 @@
 #include "Voxel/VoxelBlocks.h"
 #include "Voxel/VoxelConsole.h"
 #include "Voxel/VoxelEdgeFog.h"
+#include "Voxel/VoxelWaterFog.h"
 #include "Voxel/VoxelFlight.h"
 #include "Voxel/VoxelLightShots.h"
 #include "Voxel/VoxelLightSources.h"
@@ -542,6 +543,32 @@ bool AVoxelWorld::IsInWater(FVector Point) const
     return GetWaterBox(FoundationGrid::CellAt(Point, OriginCm), Water) && Water.IsInside(Point);
 }
 
+EVoxelFluid AVoxelWorld::GetFluidAt(FVector Point) const
+{
+    // GetWaterBox takes any fluid; this tells water from lava.
+    if (!Table) return EVoxelFluid::None;
+    const FIntVector Cell = FoundationGrid::CellAt(Point, OriginCm);
+    const double Height = (Point.Z - FoundationGrid::CellMin(Cell, OriginCm).Z) / CellCm;
+    return VoxelWaterFog::GetFluidAt(*Table, GetState(Cell), GetState(Cell + FIntVector(0, 0, 1)), Height);
+}
+
+void AVoxelWorld::UpdateWaterFog()
+{
+    if (!LookVolume) return;
+    const APlayerController* Controller = GetWorld()->GetFirstPlayerController();
+    const bool bOn = VoxelWaterFog::IsOn() && Controller && Controller->PlayerCameraManager;
+    const FVector Eye = bOn ? Controller->PlayerCameraManager->GetCameraLocation() : FVector::ZeroVector;
+    const EVoxelFluid AtEye = bOn ? GetFluidAt(Eye) : EVoxelFluid::None;
+    const FVoxelBiome* Biome = nullptr;
+    if (AtEye == EVoxelFluid::Water && Terrain)
+        if (const FVoxelBiomeSource* Source = Terrain->GetBiomeSource())
+        {
+            const int32 Index = GetBiome(FoundationGrid::CellAt(Eye, OriginCm));
+            if (Source->GetTable().Biomes.IsValidIndex(Index)) Biome = &Source->GetTable().Biomes[Index];
+        }
+    VoxelWaterFog::Apply(*LookVolume, WaterFogMaterial, VoxelWaterFog::GetFog(bOn, AtEye, Biome, CellCm));
+}
+
 bool AVoxelWorld::IsInWater(const FBox& Body) const
 {
     // As the lab's water boxes: any water overlapping the body, shrunk a hair so touching a surface is not wading.
@@ -699,6 +726,7 @@ void AVoxelWorld::Tick(float DeltaSeconds)
     UpdateLoadingShot();
     ApplyLook();
     UpdateEdgeFog();
+    UpdateWaterFog();
     if (Lights)
     {
         // A new voxel.LightMinLevel gives the meshes a new light table: columns use it from their next mesh.
