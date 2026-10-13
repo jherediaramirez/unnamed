@@ -25,6 +25,8 @@ enum class EVoxelFluid : uint8;
 class UPointLightComponent;
 class UStaticMeshComponent;
 class USkyAtmosphereComponent;
+class UDirectionalLightComponent;
+struct FVoxelEnvironment;
 class FVoxelBlockTable;
 class IVoxelTerrain;
 class UFoundationBlockTextureTable;
@@ -128,6 +130,9 @@ public:
     // The saved world's advance_time rule (default on), read at BuildLayout: off stops the day clock, not the game
     // tick.
     bool IsTimeAdvancing() const { return bAdvanceTime; }
+    // The environment now (atmosphere step 1): the clock's day and the sun and moon it places, read without changing
+    // the clock.
+    FVoxelEnvironment GetEnvironment() const;
     // Flowing water and lava (water and sky W2a): they wake up from the authority's block changes and run after the
     // clock's steps in Tick, while voxel.Fluids is on. Null before BeginPlay.
     FVoxelFluidSystem* GetFluids() const { return Fluids.Get(); }
@@ -174,6 +179,10 @@ private:
     void ApplyLook();
     // voxel.Look.SkyPin: probes the camera's open sky every VoxelLook::SkyProbeSeconds and eases the pin towards it.
     double UpdateSkyPin();
+    // voxel.Atmosphere.Cycle 1: the map's sun follows the environment's sun (direction, and its light fading out below
+    // the horizon). The only writer of the sun light; at 0 it puts back the map's rotation and intensity once, and
+    // otherwise never touches the light.
+    void ApplyCycle();
     // On the climate search's dry land: the spawn cell rises or falls to the highest block that collides in its block
     // column (a treetop counts), then rises until the body fits, as the Playground's spawn does.
     void StandOnSpawnBlocks();
@@ -261,6 +270,13 @@ private:
     TObjectPtr<UCurveFloat> LookCurve;
     TOptional<FVoxelLook> AppliedLook;
     double AppliedPin = 0;
+    // The map's sun (its one directional light) and its rig as loaded, for voxel.Atmosphere.Cycle 0.
+    UPROPERTY(Transient)
+    TObjectPtr<UDirectionalLightComponent> SunLight;
+    FRotator MapSunRotation = FRotator::ZeroRotator;
+    float MapSunIntensity = 0.f;
+    // The cycle's sun as last applied; unset while the map's rig stands.
+    TOptional<TPair<FRotator, float>> AppliedSun;
     // SkyPin: the pin now and its target, the next probe's and the last update's time, and the probes' cost.
     double SkyPinNow = 0;
     double SkyPinTarget = 0;

@@ -2,12 +2,14 @@
 #include "Blocks/VoxelBlockTable.h"
 #include "Camera/CameraActor.h"
 #include "Camera/CameraComponent.h"
+#include "Components/DirectionalLightComponent.h"
 #include "Components/ExponentialHeightFogComponent.h"
 #include "Components/SkyAtmosphereComponent.h"
 #include "Components/SkyLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Decoration/VoxelDecorator.h"
 #include "DynamicRHI.h"
+#include "Engine/DirectionalLight.h"
 #include "Engine/ExponentialHeightFog.h"
 #include "Engine/GameViewportClient.h"
 #include "Engine/PostProcessVolume.h"
@@ -249,6 +251,22 @@ void AVoxelWorld::BuildLayout()
     {
         SkyFill = It->GetLightComponent();
         break;
+    }
+    // The sun voxel.Atmosphere.Cycle moves (the atmosphere's sun light first), and its rig as the map has it. A light
+    // that can't move leaves the cycle off.
+    for (TActorIterator<ADirectionalLight> It(GetWorld()); It; ++It)
+        if (UDirectionalLightComponent* Light = Cast<UDirectionalLightComponent>(It->GetLightComponent());
+            Light && (!SunLight || (Light->IsUsedAsAtmosphereSunLight() && !SunLight->IsUsedAsAtmosphereSunLight())))
+            SunLight = Light;
+    if (SunLight && SunLight->Mobility != EComponentMobility::Movable)
+    {
+        UE_LOG(LogUnnamedVoxel, Warning, TEXT("Atmosphere: the map's sun can't move; voxel.Atmosphere.Cycle stays off"));
+        SunLight = nullptr;
+    }
+    if (SunLight)
+    {
+        MapSunRotation = SunLight->GetComponentRotation();
+        MapSunIntensity = SunLight->Intensity;
     }
     LookCollection = Cast<UMaterialParameterCollection>(
         UUnnamedProjectSettings::GetBlockAssetPath(VoxelLook::CollectionName).TryLoad());
@@ -764,6 +782,7 @@ void AVoxelWorld::Tick(float DeltaSeconds)
             Streaming->SetFocusOverride({});
     }
     UpdateLoadingShot();
+    ApplyCycle();
     ApplyLook();
     UpdateEdgeFog();
     UpdateWaterFog();
