@@ -202,7 +202,9 @@ void UFoundationRuntimeProbe::BeginPlay()
     const bool bTour = Suite == TEXT("tour");
     // So are the generated world's player views (L_Generated, FoundationViewsProbe.cpp).
     const bool bViews = Suite == TEXT("views");
-    if (!bMovement && !bInteraction && !bTour && !bViews)
+    // And the frames around ESC (FoundationPauseProbe.cpp).
+    const bool bPause = Suite == TEXT("pause");
+    if (!bMovement && !bInteraction && !bTour && !bViews && !bPause)
     {
         // A case, so the probe still finishes and reports the failure.
         AddCase(
@@ -210,13 +212,15 @@ void UFoundationRuntimeProbe::BeginPlay()
             [this, Suite]
             {
                 Record(TEXT("known -FoundationSuite"), false,
-                    FString::Printf(TEXT("'%s' is not movement, interaction, tour, views or all"), *Suite));
+                    FString::Printf(TEXT("'%s' is not movement, interaction, tour, views, pause or all"), *Suite));
             });
     }
     if (bMovement) AddMovementCases();
     if (bInteraction) AddInteractionCases();
     if (bTour) AddTourCases();
     if (bViews) AddViewsCases();
+    if (bPause) AddPauseCases();
+    if (Suite == TEXT("all") || bPause) AddPauseMenuCases();
     if (FParse::Param(FCommandLine::Get(), TEXT("HudCaptures"))) AddHudCases();
     TotalStarted = Started = FPlatformTime::Seconds();
 #else
@@ -617,6 +621,9 @@ void UFoundationRuntimeProbe::TickComponent(float Delta, ELevelTick Type, FActor
 {
     Super::TickComponent(Delta, Type, Function);
     if (bDone || Cases.IsEmpty()) return;
+    // The world's first frames may be under its loading screen (foundation.Load.Cover), which holds gameplay input:
+    // the first case starts once the player could act.
+    if (Phase < 0 && Controller && Controller->GetHud()->IsLoadingScreenShown()) return;
     const double Now = FPlatformTime::Seconds();
     ++Frames;
     if (Phase >= 0)

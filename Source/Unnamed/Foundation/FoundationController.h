@@ -36,6 +36,11 @@ public:
     // True while the possessed pawn plays: no menu, panel or binding capture in front of it.
     bool IsGameplay() const;
 
+    // foundation.Load.Cover: the rendered frames the loading screen stays up once the world is ready (0 or 3).
+    static int32 GetLoadCoverFrames(int32 Mode);
+    // Whether the loading screen hides on the frame that counts ReadyFrames ready frames in a row.
+    static bool ShouldHideLoadingScreen(int32 ReadyFrames, int32 CoverFrames) { return ReadyFrames > CoverFrames; }
+
     // A logical action from Enhanced Input or a debug chord, e.g. "key.attack" or "key.debug.showHitboxes".
     void HandleAction(FName Id, bool bDown);
     void ScrollHotbar(int32 Notches);
@@ -99,4 +104,10 @@ private:
     bool bLoadingDone = false;
     bool bLoadedOnce = false;
     bool bHoldForPlacement = false;
+    // foundation.Load.Cover, read at BeginPlay: frames to keep the screen up once ready, and the ready frames so far.
+    int32 LoadCoverFrames = 0;
+    int32 ReadyFrames = 0;
+    // foundation.Panels.Preload, read at BeginPlay, and whether the creative screen's preload is done.
+    bool bPreloadPanels = false;
+    bool bPanelsPreloaded = false;
 };

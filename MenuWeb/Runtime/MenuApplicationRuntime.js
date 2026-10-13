@@ -47,6 +47,12 @@ const MenuApplication = (() => {
       drain: 'Settings did not finish changing. Please try creating the world again.',
       timedOut: 'The new world did not finish opening. Please try again.'}
   };
+  // Two frames after a screen change, its paint has reached the screen; a page that is not drawing (hidden) stops
+  // waiting after 250 ms.
+  const painted = () => new Promise(resolve => {
+    const timer = setTimeout(resolve, 250);
+    requestAnimationFrame(() => requestAnimationFrame(() => { clearTimeout(timer); resolve(); }));
+  });
   async function leave(kind, ...args) {
     const exit = exits[kind];
     leaving = kind;
@@ -61,6 +67,9 @@ const MenuApplication = (() => {
       if (remaining <= 0) throw Error(exit.timedOut);
       return client.call(method, callArgs, Math.min(MenuBridge.requestTimeout, remaining));
     };
+    // menu.World.WaitForPaint: the preparing screen is on screen before native's world work (Create's save, the map
+    // load) holds the frame.
+    if (exit.preparing && snapshot?.waitForPaint) await painted();
     try {
       await MenuBridge.wait(MenuStores.prepareForExit(), deadline - Date.now(), exit.drain);
       let reply = await call(exit.request, ...args);
@@ -112,6 +121,15 @@ const MenuApplication = (() => {
     try { const reply = await client.call('GetState'); if (ticket === revision) absorb(reply); }
     catch (error) { console.warn('Game application: ' + error.message); }
   }
+  // The kept title page back from a world (MenuTitle.reset): the world it left for is gone, so nothing is leaving any
+  // more and the stores unlock; the saved worlds are read again.
+  function returned() {
+    leaving = null;
+    retryAllowed = false;
+    revision++;
+    MenuStores.cancelExit();
+    return initialize();
+  }
   setInterval(async () => {
     if (!client.connected || leaving || polling) return;
     polling = true;
@@ -121,7 +139,7 @@ const MenuApplication = (() => {
     finally { polling = false; }
   }, 500);
   return {enabled, quit, isPlayable, worldEnabled, openWorld, createWorld, deleteWorld, renameWorld,
-    isLoading: () => leaving === 'world' || leaving === 'create', initialize,
+    isLoading: () => leaving === 'world' || leaving === 'create', initialize, returned,
     defaultWorld: () => saved[0]?.id ?? catalog[0]?.id ?? null, getState: () => snapshot ? clone(snapshot) : null};
 })();
 window.MenuApplication = MenuApplication;

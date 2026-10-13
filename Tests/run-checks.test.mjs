@@ -117,6 +117,28 @@ test('every runner that deletes an editor profile closes it through Close-Profil
   assert.ok(voxel.includes('$closed=Close-Profile -UserDir $profileDirectory -Destination $OutputDirectory'), 'TestVoxel closes its profile');
   assert.ok(!/Remove-Item\s+-LiteralPath\s+\$profileDirectory/.test(voxel), 'TestVoxel deletes no profile by hand');
   assert.ok(voxel.indexOf('Close-Profile -UserDir') < voxel.indexOf('Missing voxel report'), 'TestVoxel closes the profile before it can throw');
+  // CaptureVoxel closes its profile on both exits: a finished editor, and a timed-out one it stopped.
+  const capture = readFileSync(join(scripts, 'CaptureVoxel.ps1'), 'utf8');
+  assert.ok(capture.includes(". (Join-Path $PSScriptRoot 'CrashFolders.ps1')"), 'CaptureVoxel dot-sources CrashFolders.ps1');
+  assert.ok(capture.includes('$closed=Close-Profile -UserDir $profileDirectory -Destination $OutputDirectory'), 'CaptureVoxel closes its profile');
+  assert.ok(!/Remove-Item\s+-LiteralPath\s+\$profileDirectory/.test(capture), 'CaptureVoxel deletes no profile by hand');
+  const closeAt = capture.indexOf('Close-Profile -UserDir');
+  const stopAt = capture.indexOf('Stop-Process -Id $process.Id');
+  assert.ok(stopAt > 0 && stopAt < closeAt, 'a timed-out capture stops its editor before it closes the profile');
+  for (const failure of ['Timed out after', 'No flight report', 'Missing screenshots']) {
+    assert.ok(closeAt < capture.indexOf(failure), `CaptureVoxel closes the profile before "${failure}"`);
+  }
+});
+
+// The HUD and voxel runners expect the tests the source declares, never a pinned count.
+test('TestHud and TestVoxel expect the declared tests', () => {
+  for (const [name, prefix] of [['TestHud.ps1', 'Unnamed.Hud'], ['TestVoxel.ps1', 'Unnamed.Voxel']]) {
+    const text = readFileSync(join(scripts, name), 'utf8');
+    assert.ok(text.includes(`$declared=@(& (Join-Path $PSScriptRoot 'ListAutomationTests.ps1') -Prefix '${prefix}')`), `${name} lists the declared ${prefix} tests`);
+    assert.ok(text.includes('$declared | Where-Object { $_ -cnotin $ran }'), `${name} fails on a declared test that did not run`);
+    assert.ok(text.includes('$passed -ne $expected'), `${name} compares the passed count with the declared one`);
+    assert.ok(!/succeeded(WithWarnings)?\s+-ne\s+\d/.test(text), `${name} pins no count`);
+  }
 });
 
 // A crash after the report is written (teardown) leaves a passing report and a nonzero exit: every runner that launches the

@@ -96,16 +96,20 @@ const MenuVideo = (() => {
       window.location.reload();
     } catch (error) { resetting = false; window.MenuPreferences?.cancelExit(); refreshSettings(); report(error.message + '\nReset did not finish. Some preference groups may already have reset; retry to finish.'); }
   }
-  setInterval(async () => {
-    if (!client.connected || running || polling || resetting) return;
-    polling = true;
+  async function reload() {
+    if (!client.connected || running || resetting) return;
     const ticket = revision;
     try { const reply = await call('GetState'); if (!running && !resetting && ticket === revision) absorb(reply); }
     catch (error) { console.warn('Video settings synchronization: ' + error.message); }
+  }
+  setInterval(async () => {
+    if (!client.connected || running || polling || resetting) return;
+    polling = true;
+    try { await reload(); }
     finally { polling = false; }
   }, 500);
   return {
-    set, initialize, hardReset, getState: cloneState,
+    set, initialize, hardReset, reload, getState: cloneState,
     enabled: id => !resetting && !exitLocked && !!snapshot?.capabilities[id],
     prepareForExit: async () => {
       exitLocked = true;

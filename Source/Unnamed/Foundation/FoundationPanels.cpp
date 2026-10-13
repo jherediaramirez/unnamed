@@ -1,4 +1,5 @@
 #include "Foundation/FoundationPanels.h"
+#include "UnnamedLog.h"
 #include "Foundation/FoundationController.h"
 #include "Foundation/FoundationHud.h"
 #include "Foundation/FoundationPlayground.h"
@@ -254,6 +255,7 @@ void UFoundationPanels::EndPlay(const EEndPlayReason::Type EndPlayReason)
     if (Root && GEngine && GEngine->GameViewport)
         GEngine->GameViewport->RemoveViewportWidgetContent(Root.ToSharedRef());
     Root.Reset();
+    PreloadedCreative.Reset();
     Super::EndPlay(EndPlayReason);
 }
 
@@ -445,10 +447,27 @@ namespace
     }
 }
 
-void UFoundationPanels::OpenCreative(AFoundationLab& Lab)
+bool UFoundationPanels::PreloadCreative()
 {
-    AFoundationController* Controller = GetFoundationController();
-    AFoundationPawn* Pawn = Controller->GetFoundationPawn();
+    const AFoundationController* Controller = GetFoundationController();
+    AFoundationPawn* Pawn = Controller ? Controller->GetFoundationPawn() : nullptr;
+    AFoundationLab* Lab = Pawn ? Pawn->GetLab() : nullptr;
+    // No game viewport (a headless run): nothing will ever open.
+    if (!FSlateApplication::IsInitialized() || !GEngine || !GEngine->GameViewport) return true;
+    if (!Lab || !Lab->GetAuthority()) return false;
+    if (PreloadedCreative.IsValid() || !Lab->GetAuthority()->Options.bCreativeInventory) return true;
+    const double Start = FPlatformTime::Seconds();
+    PreloadedCreative = MakeCreative(*Lab);
+    PreloadedPawn = Pawn;
+    PreloadedAuthority = Lab->GetAuthority();
+    UE_LOG(LogUnnamedFoundation, Display, TEXT("Creative inventory preloaded in %.1f ms"),
+        (FPlatformTime::Seconds() - Start) * 1000);
+    return true;
+}
+
+TSharedRef<SHudCreativeScreen> UFoundationPanels::MakeCreative(AFoundationLab& Lab)
+{
+    AFoundationPawn* Pawn = GetFoundationController()->GetFoundationPawn();
     FFoundationAuthority& Authority = *Lab.GetAuthority();
     const TSharedRef<const FFoundationBlockRegistry> Registry = Authority.World.GetRegistryRef();
     // Everything the player could hold: names, stack sizes, max damage, the 26.3 items' tooltip lines (DA_Items,
@@ -471,7 +490,7 @@ void UFoundationPanels::OpenCreative(AFoundationLab& Lab)
     const TWeakObjectPtr<AFoundationPawn> WeakPawn = Pawn;
     const TWeakObjectPtr<UFoundationPanels> WeakThis = this;
     // clang-format off
-    Creative = SNew(SHudCreativeScreen)
+    return SNew(SHudCreativeScreen)
         .Registry(Registry)
         .HudAssets(LoadObject<UHudAssets>(nullptr, *UUnnamedProjectSettings::GetHudRegistryPath()))
         // Options > GUI Scale, as the HUD reads it (HudPresenter): the screen follows a change at once.
@@ -509,6 +528,17 @@ void UFoundationPanels::OpenCreative(AFoundationLab& Lab)
         })
         .OnClose([WeakThis] { if (WeakThis.IsValid()) WeakThis->Close(); });
     // clang-format on
+}
+
+void UFoundationPanels::OpenCreative(AFoundationLab& Lab)
+{
+    AFoundationController* Controller = GetFoundationController();
+    AFoundationPawn* Pawn = Controller->GetFoundationPawn();
+    // The preloaded screen when it was built for this player (foundation.Panels.Preload), else a new one.
+    Creative = PreloadedCreative.IsValid() && PreloadedPawn.Get() == Pawn && PreloadedAuthority == Lab.GetAuthority()
+        ? PreloadedCreative.ToSharedRef()
+        : MakeCreative(Lab);
+    PreloadedCreative.Reset();
     bOpen = true;
     Controller->CancelActions();
     if (UUnnamedInputSubsystem* InputSubsystem = Controller->GetInputSubsystem())

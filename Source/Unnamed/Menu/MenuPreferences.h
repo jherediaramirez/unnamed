@@ -25,6 +25,8 @@ public:
 
     // Native feature adapters can read their desired value when implemented.
     TSharedPtr<const FJsonValue> FindPreference(const FString& Id) const;
+    // Bumped by every change: the kept title page (menu.Title.Keep) repaints after one made in a world.
+    int32 GetRevision() const { return Revision; }
 
 #if WITH_DEV_AUTOMATION_TESTS
     void InitializeForTesting(const FString& Path, bool bSave);

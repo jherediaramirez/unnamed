@@ -28,6 +28,16 @@ public:
     UFUNCTION()
     void ReturnToMenu();
 
+    // A #pause page (foundation.Pause.Menu 1 and 2): its pause screen and panorama have painted, two frames ago.
+    // {"shown": bool}: whether the menu is shown, so a pre-warmed page stays hidden and a shown one shows itself.
+    UFUNCTION()
+    FString MenuReady();
+
+    // A #pause page: its first frame after being shown, once the settings stores have re-read native state. State is
+    // what the page shows ({"guiScale": n, "jump": the key bound to key.jump}).
+    UFUNCTION()
+    void MenuShown(const FString& State);
+
 private:
     TWeakObjectPtr<AFoundationController> Controller;
 };

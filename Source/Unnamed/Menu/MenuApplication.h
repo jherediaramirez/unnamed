@@ -17,7 +17,8 @@ class UNNAMED_API UMenuApplication : public UObject
 {
     GENERATED_BODY()
 public:
-    // Also reads the saved worlds once; the page polls GetState, which lists them from memory.
+    // Also reads the saved worlds once; the page polls GetState, which lists them from memory. Clears any pending quit
+    // or travel (the kept title page's application is initialized again on each menu map).
     void Initialize(APlayerController* InController, UMenuVideoSettings* InVideoSettings,
         UMenuInputBridge* InInputBridge = nullptr, UMenuPreferences* InPreferences = nullptr);
     void Tick();
@@ -63,6 +64,10 @@ private:
     double QuitDeadline = 0;
     bool bWorldPending = false;
     bool bTravelIssued = false;
+    // menu.World.WaitForPaint, read by Initialize, and the frames a queued travel still waits so the page's preparing
+    // screen, painted before the request, is on screen when the map load holds the frame.
+    bool bWaitForPaint = false;
+    int32 PaintFramesLeft = 0;
     double WorldDeadline = 0;
     FString PendingMap;
     FString LastError;

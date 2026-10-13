@@ -51,7 +51,9 @@ const MenuStores = (() => {
     // Locks every store and waits for its in-flight saves.
     prepareForExit: () => Promise.all(stores.map(store => store.prepareForExit())),
     cancelExit() { for (const store of stores) store.cancelExit(); },
-    settled: () => Promise.all(stores.map(store => store.settled()))
+    settled: () => Promise.all(stores.map(store => store.settled())),
+    // Re-reads native state where a store can (a kept-alive pause menu shown again); never rejects.
+    reload: () => Promise.all(stores.map(store => store.reload?.()))
   });
 })();
 window.MenuBridge = MenuBridge;
