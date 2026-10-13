@@ -2141,6 +2141,673 @@
     "e000",
     "e000"
    ]
+  },
+  {
+   "name": "block/acacia_sapling",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "b90c4c1982194a950b3f70d790d85854f74ed3c228d0271aa6d78e6ea1b4599d",
+   "rgba_sha256": "4be00deb921047d000626406f0e108917cb8cbcaf59837d18b54cdef01ccf534",
+   "alpha": "cutout",
+   "opaque_pixels": 111,
+   "mask": [
+    "0080",
+    "09c0",
+    "1db0",
+    "3ff8",
+    "1ffc",
+    "0ff0",
+    "0ff8",
+    "1ffc",
+    "0ff0",
+    "07e0",
+    "07f0",
+    "1fe0",
+    "0fe0",
+    "03e0",
+    "03c0",
+    "03c0"
+   ]
+  },
+  {
+   "name": "block/birch_sapling",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "53d5061fd3004d1578fb97c20fc91abf4be54961d09ff53709fc100fcda92578",
+   "rgba_sha256": "34d5fd5c5b807cfa96c5c7b0d658a2fec00c70638d4878294f695909d4dfcb6b",
+   "alpha": "cutout",
+   "opaque_pixels": 98,
+   "mask": [
+    "0080",
+    "0180",
+    "01e0",
+    "06f0",
+    "07f8",
+    "0ff0",
+    "0bf8",
+    "03f8",
+    "07fc",
+    "0ffc",
+    "0ff4",
+    "1ff0",
+    "0bd0",
+    "03e0",
+    "01c0",
+    "01c0"
+   ]
+  },
+  {
+   "name": "block/cherry_sapling",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "0d3b30fc9222e2f61316467ad8222359f98a49d44b7d44eeedc9e712325b2982",
+   "rgba_sha256": "4316bb09c5f612730dd4027e7fb56cd527de6256e1000b3a68820d21ed0c9bf2",
+   "alpha": "cutout",
+   "opaque_pixels": 122,
+   "mask": [
+    "0000",
+    "0000",
+    "45b4",
+    "3f38",
+    "3f1e",
+    "7f3e",
+    "fefc",
+    "fcec",
+    "7dde",
+    "3ffe",
+    "7fe0",
+    "3f60",
+    "3f00",
+    "1780",
+    "0380",
+    "0380"
+   ]
+  },
+  {
+   "name": "block/dark_oak_sapling",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "b16c30ee6297777ae6bb9425bb9fab95e17c1758752598c9679b8212a01fec6e",
+   "rgba_sha256": "b1fd81e476811b9e7b7b47faeb38193fd4d3a13d587b076a508f8a342a8c4099",
+   "alpha": "cutout",
+   "opaque_pixels": 110,
+   "mask": [
+    "0000",
+    "0000",
+    "0018",
+    "1e34",
+    "0ffc",
+    "3ffc",
+    "1ff8",
+    "07fc",
+    "0ffc",
+    "1bfe",
+    "07f0",
+    "0fe0",
+    "0fe0",
+    "03e0",
+    "03f0",
+    "07f0"
+   ]
+  },
+  {
+   "name": "block/jungle_sapling",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "411d513c45fe0c9aab5abfc63e6b17cd1bc5a29525d69830ea3d2b180cb07999",
+   "rgba_sha256": "a7294650787cab58638fc0d2ade7ea7bfcb98bbe9e2a16682452265e0b6d0cb1",
+   "alpha": "cutout",
+   "opaque_pixels": 86,
+   "mask": [
+    "0000",
+    "0680",
+    "07e0",
+    "07f0",
+    "0ff0",
+    "07d0",
+    "03c0",
+    "1fe0",
+    "0fe0",
+    "0bf0",
+    "01f0",
+    "03d0",
+    "03c0",
+    "07e0",
+    "03c0",
+    "07e0"
+   ]
+  },
+  {
+   "name": "block/oak_sapling",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "c30b586442aea7e22af3b480360493225a0dd5b85920600845ce73e6ab4ed1fd",
+   "rgba_sha256": "db924a428928e7de4f66fd7295a329320ac0b4924ac15d00f0ebf6e367ba2a48",
+   "alpha": "cutout",
+   "opaque_pixels": 111,
+   "mask": [
+    "0000",
+    "0010",
+    "0130",
+    "0b3c",
+    "0ffc",
+    "3efc",
+    "1f6e",
+    "03c6",
+    "07d8",
+    "1ffc",
+    "3ffe",
+    "77f6",
+    "07e2",
+    "07e0",
+    "01e0",
+    "01c0"
+   ]
+  },
+  {
+   "name": "block/pale_oak_sapling",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "c42486070f5f3ef51a9451cb86185f6109eef7289c702fbef6eba487bb15b126",
+   "rgba_sha256": "094df07a51f0e44534bfcbaf46ca62b6fbc0da6d2b71ecee113a1b89c005f59f",
+   "alpha": "cutout",
+   "opaque_pixels": 103,
+   "mask": [
+    "00c0",
+    "01e0",
+    "00e0",
+    "19e0",
+    "1bd8",
+    "3fd8",
+    "39fc",
+    "3bf8",
+    "33fc",
+    "2178",
+    "137c",
+    "3074",
+    "20e4",
+    "01e8",
+    "03e0",
+    "03e0"
+   ]
+  },
+  {
+   "name": "block/poplar_sapling",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "a966aaf31b57ca6bfaa9884979113e332139c7547e3bfb320f2cb591f6a22b87",
+   "rgba_sha256": "f194e18baadb582d2103d8377d9bbd178600714780fd701ca0e42ecb1fd02aec",
+   "alpha": "cutout",
+   "opaque_pixels": 71,
+   "mask": [
+    "0000",
+    "0000",
+    "0180",
+    "03e0",
+    "03f0",
+    "0e78",
+    "1fc8",
+    "17e0",
+    "02f0",
+    "07f8",
+    "0fe8",
+    "09a0",
+    "0180",
+    "0180",
+    "01c0",
+    "03c0"
+   ]
+  },
+  {
+   "name": "block/spruce_sapling",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "280cf713b9f66d16c7acf0eb3c6a25199165eacb5f2d1e2cacce861d4b9aebb4",
+   "rgba_sha256": "e12a6a1ec212533ad0896aef563514abc81451ab0498dd697021547578ed9aaf",
+   "alpha": "cutout",
+   "opaque_pixels": 83,
+   "mask": [
+    "0000",
+    "0100",
+    "0380",
+    "0380",
+    "07c0",
+    "0fe0",
+    "07e0",
+    "07f0",
+    "0fe0",
+    "0fe0",
+    "07f0",
+    "0ff0",
+    "1fe8",
+    "07f0",
+    "03a0",
+    "0180"
+   ]
+  },
+  {
+   "name": "item/amethyst_shard",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "dc64feb12d553ec59b819534ae57b46e99ac95a3ab61cb71de317a5d7b857584",
+   "rgba_sha256": "c1fa905e159d9c62094cbc7645894fd00df727377c347a8187e56e396ddaa670",
+   "alpha": "cutout",
+   "opaque_pixels": 89,
+   "mask": [
+    "0000",
+    "0000",
+    "007c",
+    "00fc",
+    "01fc",
+    "03fc",
+    "07fc",
+    "0ff8",
+    "1ff0",
+    "3fe0",
+    "3fc0",
+    "3f80",
+    "3f00",
+    "1e00",
+    "0c00",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/book",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "8b851a52e2a5d81fa925774f0df30040bc86411c8c86d3d69495486adcd2a046",
+   "rgba_sha256": "f4e1555f0c2e42f3011638f6e914857676554c92c3cf43ffb0e4b25dbbe6c041",
+   "alpha": "cutout",
+   "opaque_pixels": 152,
+   "mask": [
+    "0000",
+    "00e0",
+    "03f0",
+    "0ff8",
+    "3ffc",
+    "fffe",
+    "ffff",
+    "fffe",
+    "fffe",
+    "ffff",
+    "7fff",
+    "3ffc",
+    "1ff0",
+    "0fc0",
+    "0700",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/clay_ball",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "99d84ef4b14b2fd33474162cce7ed2493ed396bd7d2493385573baa794d18178",
+   "rgba_sha256": "019e43832f5217facd7d7756bd894692ef571ee87c4763ae7d0381a49c098095",
+   "alpha": "cutout",
+   "opaque_pixels": 96,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "03c0",
+    "07e0",
+    "0ff0",
+    "1ff8",
+    "1ff8",
+    "3ffc",
+    "3ffc",
+    "3ffc",
+    "1ff8",
+    "0ff0",
+    "03c0",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/cocoa_beans",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "4a307b814d60baf9ca1142dbb81607e97a35197f7a09e9db779e52b6a9c4627b",
+   "rgba_sha256": "4b9a0c757405bc8f6000b8f5d185f6b4932c4e2763cdfd33ad6f00f952f752d6",
+   "alpha": "cutout",
+   "opaque_pixels": 55,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "0060",
+    "00f0",
+    "0670",
+    "0e20",
+    "0ecc",
+    "05dc",
+    "199c",
+    "1c48",
+    "1ce0",
+    "0de0",
+    "00c0",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/flint",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "6a37210c4ec517b2274f3a3bbdd6862fc0fa7b08c5c1d001e835b110408ff414",
+   "rgba_sha256": "65fe0e5a40cf0304e2138c08ce18396c53d11aaf569d501165ed823e4eed150a",
+   "alpha": "cutout",
+   "opaque_pixels": 116,
+   "mask": [
+    "0000",
+    "0000",
+    "00e0",
+    "01f0",
+    "03f0",
+    "07f8",
+    "0ff8",
+    "1ffc",
+    "3ffc",
+    "3ffe",
+    "3ffe",
+    "3ffc",
+    "1ff8",
+    "0ff0",
+    "07e0",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/glow_berries",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "3a0a4e33d4edca3c72f460583ba5db51e17e77d6f4010790e98b7fb380c15d31",
+   "rgba_sha256": "db437752ce561f3625812eac7ea8bbbb0296b377dece2ac8b3b4c8c27e601398",
+   "alpha": "cutout",
+   "opaque_pixels": 113,
+   "mask": [
+    "0000",
+    "00e0",
+    "01f0",
+    "01f8",
+    "03f8",
+    "06bc",
+    "1e9c",
+    "3f5c",
+    "7fdc",
+    "7fcc",
+    "7fe8",
+    "7ff0",
+    "3ff0",
+    "1ff0",
+    "00e0",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/glowstone_dust",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "00962db45edce6a24fe10364a6408e11af506875a2ffa63a54777c13ccd12989",
+   "rgba_sha256": "605a3c4307f32144ea1cb14640c4a1d8d597e3a5ffd6e9668403ee93a135d994",
+   "alpha": "cutout",
+   "opaque_pixels": 88,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "0180",
+    "03c0",
+    "07e0",
+    "0ff0",
+    "1ff8",
+    "3ffc",
+    "3ffc",
+    "3ffc",
+    "1ff8",
+    "0ff0",
+    "03c0",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/gold_nugget",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "73c9c64b35e15a47366802fa899b115fce6380d1f19bda38dd7ef196182029ca",
+   "rgba_sha256": "0651ae67da1fd4e30e9269025497f5187b5bad35fe725735d5a040ab97529ef1",
+   "alpha": "cutout",
+   "opaque_pixels": 37,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "0000",
+    "0380",
+    "07c0",
+    "07e0",
+    "07e0",
+    "07e0",
+    "03e0",
+    "03c0",
+    "0180",
+    "0000",
+    "0000",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/melon_slice",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "a1630cbe3d88156ebb55bcb5fa957d332d49a54d3d2a225b6cccf22623f17d50",
+   "rgba_sha256": "5f2314d77d0e382cbd4f357c64d6ae4fe52ea1c27925ed5f5bd04e3bd3964dea",
+   "alpha": "cutout",
+   "opaque_pixels": 106,
+   "mask": [
+    "0000",
+    "0000",
+    "0030",
+    "0078",
+    "00fc",
+    "01fc",
+    "03fc",
+    "07fc",
+    "0ffc",
+    "1ffc",
+    "3ff8",
+    "7ff8",
+    "7ff0",
+    "3fe0",
+    "1f80",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/prismarine_crystals",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "f54d54e1fe0886c6a942f8416b7083902630889e6043be4c0fce19f31f4d9452",
+   "rgba_sha256": "3287a4e86b19641e8944a5764d29b784348ed582873e72a64624aae919ff0b82",
+   "alpha": "cutout",
+   "opaque_pixels": 94,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "0380",
+    "07f0",
+    "0ff8",
+    "07f8",
+    "07f0",
+    "0ff8",
+    "1ffc",
+    "3ffe",
+    "3ffc",
+    "3ff8",
+    "3c00",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/resin_clump",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "d2540522d3d04f64bb8ebe73a173e44ec516d27ba1fe375834d77e7bda32758b",
+   "rgba_sha256": "9d190ba87fcfeb5b74a1e0e682ee10c91470518c2de6809b425fa4541a5a46ca",
+   "alpha": "cutout",
+   "opaque_pixels": 138,
+   "mask": [
+    "0000",
+    "0000",
+    "00f8",
+    "03fc",
+    "07fc",
+    "0ffe",
+    "1ffe",
+    "3ffe",
+    "3ffe",
+    "7ffe",
+    "7ffc",
+    "7ffe",
+    "3fff",
+    "007f",
+    "003e",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/snowball",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "4174e71270f6565b8a86483986c570dabe14227312d6bb4222082350b150bdb6",
+   "rgba_sha256": "3943ece1c880ba99c5e747ba31594e0e4d48c3c987759a2b42af9b614d754e05",
+   "alpha": "cutout",
+   "opaque_pixels": 112,
+   "mask": [
+    "0000",
+    "0000",
+    "03c0",
+    "0ff0",
+    "1ff8",
+    "1ff8",
+    "3ffc",
+    "3ffc",
+    "3ffc",
+    "3ffc",
+    "1ff8",
+    "1ff8",
+    "0ff0",
+    "03c0",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/sweet_berries",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "eca8f2ed6069b0312031aa215ffea05c0d63575b5768c99308d7694b6c491093",
+   "rgba_sha256": "b6ccab40e82d54a38902ded9302ea8eca61ae4ddb31a974ebea3812361d9b454",
+   "alpha": "cutout",
+   "opaque_pixels": 93,
+   "mask": [
+    "0000",
+    "0000",
+    "0380",
+    "07c0",
+    "07cc",
+    "37de",
+    "3bbe",
+    "39fc",
+    "3f78",
+    "1fbc",
+    "37dc",
+    "67c0",
+    "47c0",
+    "0380",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/wheat_seeds",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "20f699b7280e39f5d8d58315a5d2659ad67dcf90e4dbdd91aa479fa2dd0e1786",
+   "rgba_sha256": "ccea60c63100eb890f66fb24cd00012040dac55272528302bd4793ace68e7b81",
+   "alpha": "cutout",
+   "opaque_pixels": 30,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "0000",
+    "0410",
+    "0408",
+    "040c",
+    "08cc",
+    "0ac0",
+    "1a00",
+    "1898",
+    "0198",
+    "0180",
+    "0000",
+    "0000",
+    "0000"
+   ]
   }
  ]
 }

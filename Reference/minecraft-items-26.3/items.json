@@ -6330,6 +6330,1429 @@
     "item/netherite_spear",
     "item/netherite_spear_in_hand"
    ]
+  },
+  {
+   "id": "oak_sapling",
+   "protocol_id": 77,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Oak Sapling",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "cooking_fuel",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "saplings"
+   ],
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 115
+    },
+    {
+     "tab": "search",
+     "index": 839
+    }
+   ],
+   "model": {
+    "definition": "items/oak_sapling.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/oak_sapling",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "block/oak_sapling"
+   ]
+  },
+  {
+   "id": "spruce_sapling",
+   "protocol_id": 78,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Spruce Sapling",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "cooking_fuel",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "saplings"
+   ],
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 116
+    },
+    {
+     "tab": "search",
+     "index": 840
+    }
+   ],
+   "model": {
+    "definition": "items/spruce_sapling.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/spruce_sapling",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "block/spruce_sapling"
+   ]
+  },
+  {
+   "id": "birch_sapling",
+   "protocol_id": 79,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Birch Sapling",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "cooking_fuel",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "saplings"
+   ],
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 117
+    },
+    {
+     "tab": "search",
+     "index": 841
+    }
+   ],
+   "model": {
+    "definition": "items/birch_sapling.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/birch_sapling",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "block/birch_sapling"
+   ]
+  },
+  {
+   "id": "jungle_sapling",
+   "protocol_id": 80,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Jungle Sapling",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "cooking_fuel",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "saplings"
+   ],
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 118
+    },
+    {
+     "tab": "search",
+     "index": 842
+    }
+   ],
+   "model": {
+    "definition": "items/jungle_sapling.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/jungle_sapling",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "block/jungle_sapling"
+   ]
+  },
+  {
+   "id": "acacia_sapling",
+   "protocol_id": 81,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Acacia Sapling",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "cooking_fuel",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "saplings"
+   ],
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 119
+    },
+    {
+     "tab": "search",
+     "index": 843
+    }
+   ],
+   "model": {
+    "definition": "items/acacia_sapling.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/acacia_sapling",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "block/acacia_sapling"
+   ]
+  },
+  {
+   "id": "cherry_sapling",
+   "protocol_id": 82,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Cherry Sapling",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "cooking_fuel",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "saplings"
+   ],
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 122
+    },
+    {
+     "tab": "search",
+     "index": 846
+    }
+   ],
+   "model": {
+    "definition": "items/cherry_sapling.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/cherry_sapling",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "block/cherry_sapling"
+   ]
+  },
+  {
+   "id": "dark_oak_sapling",
+   "protocol_id": 83,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Dark Oak Sapling",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "cooking_fuel",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "saplings"
+   ],
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 120
+    },
+    {
+     "tab": "search",
+     "index": 844
+    }
+   ],
+   "model": {
+    "definition": "items/dark_oak_sapling.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/dark_oak_sapling",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "block/dark_oak_sapling"
+   ]
+  },
+  {
+   "id": "pale_oak_sapling",
+   "protocol_id": 84,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Pale Oak Sapling",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "cooking_fuel",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "saplings"
+   ],
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 123
+    },
+    {
+     "tab": "search",
+     "index": 847
+    }
+   ],
+   "model": {
+    "definition": "items/pale_oak_sapling.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/pale_oak_sapling",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "block/pale_oak_sapling"
+   ]
+  },
+  {
+   "id": "poplar_sapling",
+   "protocol_id": 86,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Poplar Sapling",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "cooking_fuel",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "saplings"
+   ],
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 124
+    },
+    {
+     "tab": "search",
+     "index": 848
+    }
+   ],
+   "model": {
+    "definition": "items/poplar_sapling.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/poplar_sapling",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "block/poplar_sapling"
+   ]
+  },
+  {
+   "id": "resin_clump",
+   "protocol_id": 486,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Resin Clump",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1674
+    },
+    {
+     "tab": "ingredients",
+     "index": 33
+    }
+   ],
+   "model": {
+    "definition": "items/resin_clump.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/resin_clump",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/resin_clump"
+   ]
+  },
+  {
+   "id": "amethyst_shard",
+   "protocol_id": 1016,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Amethyst Shard",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "provides_trim_material",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "duplicates_allays",
+    "trim_materials"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1652
+    },
+    {
+     "tab": "ingredients",
+     "index": 4
+    }
+   ],
+   "model": {
+    "definition": "items/amethyst_shard.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/amethyst_shard",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/amethyst_shard"
+   ]
+  },
+  {
+   "id": "wheat_seeds",
+   "protocol_id": 1065,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Wheat Seeds",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "chicken_food",
+    "parrot_food",
+    "villager_picks_up",
+    "villager_plantable_seeds"
+   ],
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 187
+    },
+    {
+     "tab": "search",
+     "index": 911
+    }
+   ],
+   "model": {
+    "definition": "items/wheat_seeds.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/wheat_seeds",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/wheat_seeds"
+   ]
+  },
+  {
+   "id": "flint",
+   "protocol_id": 1096,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Flint",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1667
+    },
+    {
+     "tab": "ingredients",
+     "index": 20
+    }
+   ],
+   "model": {
+    "definition": "items/flint.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/flint",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/flint"
+   ]
+  },
+  {
+   "id": "snowball",
+   "protocol_id": 1132,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Snowball",
+   "max_stack": 16,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "happy_ghast_food",
+    "happy_ghast_tempt_items"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1402
+    },
+    {
+     "tab": "combat",
+     "index": 68
+    },
+    {
+     "tab": "ingredients",
+     "index": 26
+    }
+   ],
+   "model": {
+    "definition": "items/snowball.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/snowball",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/snowball"
+   ]
+  },
+  {
+   "id": "clay_ball",
+   "protocol_id": 1143,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Clay Ball",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1680
+    },
+    {
+     "tab": "ingredients",
+     "index": 39
+    }
+   ],
+   "model": {
+    "definition": "items/clay_ball.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/clay_ball",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/clay_ball"
+   ]
+  },
+  {
+   "id": "book",
+   "protocol_id": 1146,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Book",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": 1,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "bookshelf_books"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1714
+    },
+    {
+     "tab": "ingredients",
+     "index": 76
+    }
+   ],
+   "model": {
+    "definition": "items/book.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/book",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/book"
+   ]
+  },
+  {
+   "id": "glowstone_dust",
+   "protocol_id": 1189,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Glowstone Dust",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1717
+    },
+    {
+     "tab": "ingredients",
+     "index": 81
+    }
+   ],
+   "model": {
+    "definition": "items/glowstone_dust.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/glowstone_dust",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/glowstone_dust"
+   ]
+  },
+  {
+   "id": "cocoa_beans",
+   "protocol_id": 1198,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Cocoa Beans",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 188
+    },
+    {
+     "tab": "search",
+     "index": 912
+    }
+   ],
+   "model": {
+    "definition": "items/cocoa_beans.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/cocoa_beans",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/cocoa_beans"
+   ]
+  },
+  {
+   "id": "melon_slice",
+   "protocol_id": 1256,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Melon Slice",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 2,
+    "saturation": 1.2
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1459
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 3
+    }
+   ],
+   "model": {
+    "definition": "items/melon_slice.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/melon_slice",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/melon_slice"
+   ]
+  },
+  {
+   "id": "gold_nugget",
+   "protocol_id": 1268,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Gold Nugget",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "metal_nuggets"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1660
+    },
+    {
+     "tab": "ingredients",
+     "index": 13
+    }
+   ],
+   "model": {
+    "definition": "items/gold_nugget.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/gold_nugget",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/gold_nugget"
+   ]
+  },
+  {
+   "id": "prismarine_crystals",
+   "protocol_id": 1399,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Prismarine Crystals",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1682
+    },
+    {
+     "tab": "ingredients",
+     "index": 41
+    }
+   ],
+   "model": {
+    "definition": "items/prismarine_crystals.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/prismarine_crystals",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/prismarine_crystals"
+   ]
+  },
+  {
+   "id": "sweet_berries",
+   "protocol_id": 1525,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Sweet Berries",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 2,
+    "saturation": 0.4
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "fox_food"
+   ],
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 195
+    },
+    {
+     "tab": "search",
+     "index": 919
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 4
+    }
+   ],
+   "model": {
+    "definition": "items/sweet_berries.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/sweet_berries",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/sweet_berries"
+   ]
+  },
+  {
+   "id": "glow_berries",
+   "protocol_id": 1526,
+   "group": "drop",
+   "material": null,
+   "kind": null,
+   "name": "Glow Berries",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 2,
+    "saturation": 0.4
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "fox_food"
+   ],
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 194
+    },
+    {
+     "tab": "search",
+     "index": 918
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 5
+    }
+   ],
+   "model": {
+    "definition": "items/glow_berries.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/glow_berries",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/glow_berries"
+   ]
   }
  ]
 }

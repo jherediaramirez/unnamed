@@ -6,6 +6,7 @@
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationItemAssets.h"
 #include "Foundation/FoundationLoot.h"
+#include "Foundation/FoundationPlantRules.h"
 #include "Algo/AllOf.h"
 #include "HAL/IConsoleManager.h"
 #include "Misc/FileHelper.h"
@@ -227,17 +228,11 @@ namespace
     }
 
     // Items the 26.3 loot tables name that this project does not define, and the tables that therefore keep "drops
-    // itself": 11 leaves, the plants and the blocks whose drop is missing (loot step 2a).
+    // itself": none since loot step 2b (the 23 drop items joined the item reference and location_check is evaluated,
+    // so all 602 tables attach).
     const TArray<FName>& LootTests_SkippedPins()
     {
-        static const TArray<FName> Pins = {TEXT("acacia_leaves"), TEXT("birch_leaves"), TEXT("cherry_leaves"),
-            TEXT("dark_oak_leaves"), TEXT("jungle_leaves"), TEXT("oak_leaves"), TEXT("pale_oak_leaves"),
-            TEXT("spruce_leaves"), TEXT("orange_poplar_leaves"), TEXT("red_poplar_leaves"),
-            TEXT("yellow_poplar_leaves"), TEXT("amethyst_cluster"), TEXT("bookshelf"), TEXT("clay"), TEXT("cocoa"),
-            TEXT("gravel"), TEXT("cave_vines"), TEXT("cave_vines_plant"), TEXT("glowstone"), TEXT("gilded_blackstone"),
-            TEXT("nether_gold_ore"), TEXT("melon"), TEXT("sea_lantern"), TEXT("creaking_heart"), TEXT("snow"),
-            TEXT("snow_block"), TEXT("sweet_berry_bush"), TEXT("fern"), TEXT("large_fern"), TEXT("short_grass"),
-            TEXT("tall_grass")};
+        static const TArray<FName> Pins;
         return Pins;
     }
 
@@ -284,12 +279,18 @@ namespace
             {TEXT("table_bonus"), EFoundationLootCondition::TableBonus},
             {TEXT("random_chance"), EFoundationLootCondition::RandomChance},
             {TEXT("match_tool"), EFoundationLootCondition::MatchTool},
-            {TEXT("entity_properties"), EFoundationLootCondition::EntityProperties}};
+            {TEXT("entity_properties"), EFoundationLootCondition::EntityProperties},
+            {TEXT("location_check"), EFoundationLootCondition::LocationCheck}};
         const EFoundationLootCondition* Type = Types.Find(Want.Type);
         if (!Type || Got.Type != *Type || Got.Terms != Want.Terms || Got.Name != Want.Name ||
             Got.Chances != Want.Chances || Got.Items != Want.Items || Got.State.Num() != Want.StateKeys.Num() ||
             Want.StateKeys.Num() != Want.StateValues.Num())
             return false;
+        // The jar's [x, y, z] (y up) is FIntVector(x, z, y) in cells; other kinds keep a zero offset.
+        const FIntVector WantOffset = *Type == EFoundationLootCondition::LocationCheck && Want.Offset.Num() == 3
+            ? FIntVector(Want.Offset[0], Want.Offset[2], Want.Offset[1])
+            : FIntVector::ZeroValue;
+        if (Got.Offset != WantOffset) return false;
         for (int32 Index = 0; Index < Got.State.Num(); ++Index)
             if (Got.State[Index].Key != Want.StateKeys[Index] || Got.State[Index].Value != Want.StateValues[Index])
                 return false;
@@ -677,35 +678,28 @@ bool FFoundationLootTablesTest::RunTest(const FString&)
     FFoundationRules Fresh;
     Fresh.Items = Rules.Items;
     const int32 Skipped = Assets->AddLoot(Fresh);
-    TestEqual(TEXT("AddLoot on the same items skips 31 tables"), Skipped, 31);
-    TestEqual(TEXT("AddLoot on the same items attaches 571 tables"), Fresh.LootTables.Num(), 571);
-    TestEqual(TEXT("BuildRules attaches 571 tables (602 - 31)"), Rules.LootTables.Num(), 571);
-    TestEqual(TEXT("gold_nugget is not an item"), Rules.FindItem(TEXT("gold_nugget")), INDEX_NONE);
+    TestEqual(TEXT("AddLoot on the same items skips 0 tables (loot step 2b)"), Skipped, 0);
+    TestEqual(TEXT("AddLoot on the same items attaches 602 tables"), Fresh.LootTables.Num(), 602);
+    TestEqual(TEXT("BuildRules attaches 602 tables (602 - 0)"), Rules.LootTables.Num(), 602);
+    TestTrue(TEXT("gold_nugget is an item (loot step 2b)"), Rules.FindItem(TEXT("gold_nugget")) != INDEX_NONE);
     TestEqual(TEXT("two predicates in the rules"), Rules.LootPredicates.Num(), 2);
 
-    // The skipped set, derived at runtime and pinned; each skipped table has a cause.
+    // The skipped set, derived at runtime and pinned: empty since loot step 2b.
     TSet<FName> SkippedBlocks;
     for (int32 T = 0; T < Tables.Num(); ++T)
         if (!Rules.LootTables.Contains(Tables[T].Block)) SkippedBlocks.Add(Tables[T].Block);
     const TArray<FName>& Pins = LootTests_SkippedPins();
-    TestEqual(TEXT("31 pins"), Pins.Num(), 31);
-    TestEqual(TEXT("31 skipped blocks"), SkippedBlocks.Num(), 31);
+    TestEqual(TEXT("0 pins"), Pins.Num(), 0);
+    TestEqual(TEXT("0 skipped blocks"), SkippedBlocks.Num(), 0);
     for (const FName Pin : Pins)
         TestTrue(Pin.ToString() + TEXT(" is skipped"), SkippedBlocks.Contains(Pin));
     for (const FName Block : SkippedBlocks)
         TestTrue(Block.ToString() + TEXT(" is pinned as skipped"), Pins.Contains(Block));
-    for (const FFoundationLootTableAsset& Table : Tables)
-    {
-        if (!SkippedBlocks.Contains(Table.Block)) continue;
-        bool bCause = false;
-        for (const FFoundationLootPoolAsset& Pool : Table.Pools)
-            for (const FFoundationLootCandidateAsset& Candidate : Pool.Candidates)
-                bCause |= Rules.FindItem(Candidate.Item) == INDEX_NONE;
-        for (const FFoundationLootConditionAsset& Condition : Table.Conditions)
-            bCause |= Condition.Type == TEXT("location_check");
-        TestTrue(Table.Block.ToString() + TEXT(" names an item the project lacks or a location_check"), bCause);
-    }
+    // The two double plants use location_check and are attached: each runtime table holds exactly two LocationCheck
+    // nodes, the lower half looking one cell up for the upper half and the upper half one cell down for the lower
+    // (the jar's offsets [0, 1, 0] and [0, -1, 0] are FIntVector(0, 0, 1) and (0, 0, -1) in cells).
     for (const FName Block : {FName(TEXT("tall_grass")), FName(TEXT("large_fern"))})
+    {
         TestTrue(Block.ToString() + TEXT(" uses location_check"),
             Tables.ContainsByPredicate(
                 [Block](const FFoundationLootTableAsset& Table)
@@ -714,6 +708,19 @@ bool FFoundationLootTablesTest::RunTest(const FString&)
                         Table.Conditions.ContainsByPredicate([](const FFoundationLootConditionAsset& Condition)
                             { return Condition.Type == TEXT("location_check"); });
                 }));
+        const FFoundationLootTable* Plant = Rules.LootTables.Find(Block);
+        if (!TestNotNull(Block.ToString() + TEXT(" is attached"), Plant)) continue;
+        TArray<const FFoundationLootCondition*> Checks;
+        for (const FFoundationLootCondition& Condition : Plant->Conditions)
+            if (Condition.Type == EFoundationLootCondition::LocationCheck) Checks.Add(&Condition);
+        if (!TestEqual(Block.ToString() + TEXT(": two LocationCheck nodes"), Checks.Num(), 2)) continue;
+        TestTrue(Block.ToString() + TEXT(": one cell up is the upper half"),
+            Checks[0]->Offset == FIntVector(0, 0, 1) && Checks[0]->Name == Block &&
+                Checks[0]->State == TArray<TPair<FName, FName>>{{TEXT("half"), TEXT("upper")}});
+        TestTrue(Block.ToString() + TEXT(": one cell down is the lower half"),
+            Checks[1]->Offset == FIntVector(0, 0, -1) && Checks[1]->Name == Block &&
+                Checks[1]->State == TArray<TPair<FName, FName>>{{TEXT("half"), TEXT("lower")}});
+    }
 
     // The runtime tables: Index is the JSON position; pools, candidates, nodes and modifiers as AddLoot maps them.
     int32 RuntimeWrong = 0, Checked = 0;
@@ -782,7 +789,7 @@ bool FFoundationLootTablesTest::RunTest(const FString&)
             }
         }
     }
-    TestEqual(TEXT("571 runtime tables checked"), Checked, 571);
+    TestEqual(TEXT("602 runtime tables checked"), Checked, 602);
     TestEqual(TEXT("the runtime tables equal the assets"), RuntimeWrong, 0);
 
     // The predicates.
@@ -812,13 +819,12 @@ bool FFoundationLootTablesTest::RunTest(const FString&)
                                  : TEXT("shears is an item: can_shear passes for it"));
 
     // The ores (items S5b, Index < LegacyTables) keep their shape: [the block's own item on Silk Touch; the drop item
-    // unconditioned], except nether_gold_ore, which is skipped (gold_nugget is not an item).
-    TestFalse(TEXT("nether_gold_ore has no table"), Rules.LootTables.Contains(TEXT("nether_gold_ore")));
+    // unconditioned]; nether_gold_ore (table 17) is attached too since loot step 2b (gold_nugget is an item).
+    TestTrue(TEXT("nether_gold_ore has a table"), Rules.LootTables.Contains(TEXT("nether_gold_ore")));
     int32 Attached = 0;
     for (int32 T = 0; T < FoundationLoot::LegacyTables; ++T)
     {
         const FFoundationLootTableAsset& Want = Tables[T];
-        if (Want.Block == TEXT("nether_gold_ore")) continue;
         const FString Block = Want.Block.ToString();
         const FFoundationLootTable* Got = Rules.LootTables.Find(Want.Block);
         if (!TestNotNull(Block + TEXT(" is attached"), Got)) continue;
@@ -842,7 +848,30 @@ bool FFoundationLootTablesTest::RunTest(const FString&)
         TestTrue(Block + TEXT(": the drop's count, bonus and decay as the asset"),
             LootTests_SameOreForm(Drop, WantDrop, Bonus));
     }
-    TestEqual(TEXT("17 attached ore tables checked"), Attached, 17);
+    TestEqual(TEXT("18 attached ore tables checked"), Attached, 18);
+
+    // nether_gold_ore against loot_tables.json: Silk Touch gives itself, otherwise gold_nugget x2-6 with ore_drops
+    // (multiplier 0) and explosion decay.
+    const FFoundationLootTable* NetherGold = Rules.LootTables.Find(TEXT("nether_gold_ore"));
+    if (TestNotNull(TEXT("nether_gold_ore's table"), NetherGold) && NetherGold->Pools.Num() == 1 &&
+        NetherGold->Pools[0].Candidates.Num() == 2)
+    {
+        const FFoundationLootCandidate& Own = NetherGold->Pools[0].Candidates[0];
+        const FFoundationLootCandidate& Nugget = NetherGold->Pools[0].Candidates[1];
+        TestEqual(TEXT("nether_gold_ore is table 17"), NetherGold->Index, 17);
+        TestTrue(TEXT("nether_gold_ore: Silk Touch gives itself"),
+            Own.Item == Rules.FindItem(TEXT("nether_gold_ore")) && Own.Conditions.Num() == 1 &&
+                NetherGold->Conditions[Own.Conditions[0]].Predicate == Silk);
+        TestTrue(TEXT("nether_gold_ore: otherwise gold_nugget without conditions"),
+            Nugget.Item == Rules.FindItem(TEXT("gold_nugget")) && Nugget.Conditions.IsEmpty());
+        TestTrue(TEXT("nether_gold_ore: gold_nugget count 2-6"), LootTests_Range(Nugget) == FIntPoint(2, 6));
+        TestTrue(TEXT("nether_gold_ore: ore_drops multiplier 0, then explosion decay"),
+            Nugget.Modifiers.Num() == 3 && Nugget.Modifiers[1].Bonus == EFoundationLootBonus::OreDrops &&
+                Nugget.Modifiers[1].BonusMultiplier == 0.f &&
+                Nugget.Modifiers[2].Type == EFoundationLootModifier::ExplosionDecay);
+    }
+    else
+        AddError(TEXT("nether_gold_ore is not one pool of two candidates"));
     return true;
 }
 
@@ -878,8 +907,7 @@ bool FFoundationLootDropsTest::RunTest(const FString&)
         FLootLab L(false);
         const FFoundationRules& Rules = L.A.Rules;
         const FFoundationLootTable* Table = Rules.LootTables.Find(Asset.Block);
-        TestTrue(Block + TEXT(" has a table unless nether_gold_ore"),
-            (Table != nullptr) == !(Asset.Block == TEXT("nether_gold_ore")));
+        TestNotNull(Block + TEXT(" has a table (every ore, since loot step 2b)"), Table);
         const FFoundationLootCandidate* Candidate =
             Table && Table->Pools.Num() == 1 && Table->Pools[0].Candidates.Num() == 2 ? &Table->Pools[0].Candidates[1]
                                                                                       : nullptr;
@@ -888,7 +916,7 @@ bool FFoundationLootDropsTest::RunTest(const FString&)
             AddError(Block + TEXT(": not one pool of two candidates"));
             continue;
         }
-        // Without a table the block drops itself: its own item x1.
+        // Every ore has a table now; were one missing, the block would drop itself: its own item x1.
         const int32 Own = Rules.FindItem(Asset.Block);
         const int32 DropItem = Candidate ? Candidate->Item : Own;
         const int32 Min = Candidate ? LootTests_Range(*Candidate).X : 1,
@@ -941,10 +969,12 @@ bool FFoundationLootDropsTest::RunTest(const FString&)
     }
     TestEqual(TEXT("every entry as the table"), Wrong, 0);
 
-    // Pinned from break_times.json and loot_tables.json (18 ores x 36 columns; pickaxes of the ore's tier).
+    // Pinned from break_times.json and loot_tables.json (18 ores x 36 columns; pickaxes of the ore's tier). Since loot
+    // step 2b nether_gold_ore has a table: its 7 eligible entries (the 7 pickaxes) roll gold_nugget, not itself, so the
+    // tally entry is 7 x gold_nugget (derived from its table; the other nine kinds are unchanged, 75 + 7 = 82).
     const TMap<FName, int32> PinnedDrops = {{TEXT("coal"), 14}, {TEXT("raw_copper"), 10}, {TEXT("raw_iron"), 10},
         {TEXT("raw_gold"), 6}, {TEXT("diamond"), 6}, {TEXT("emerald"), 6}, {TEXT("lapis_lazuli"), 10},
-        {TEXT("redstone"), 6}, {TEXT("quartz"), 7}, {TEXT("nether_gold_ore"), 7}};
+        {TEXT("redstone"), 6}, {TEXT("quartz"), 7}, {TEXT("gold_nugget"), 7}};
     TestEqual(TEXT("648 entries"), Entries, 648);
     TestEqual(TEXT("82 eligible entries"), Eligible, 82);
     TestTrue(TEXT("drops per item as pinned"), LootTests_SameTally(DropsPerItem, PinnedDrops));
@@ -964,7 +994,7 @@ bool FFoundationLootCountsTest::RunTest(const FString&)
     int32 Ores = 0;
     for (const TPair<FName, FFoundationLootTable>& Pair : Rules.LootTables)
         Ores += Pair.Value.Index < FoundationLoot::LegacyTables;
-    if (!TestTrue(TEXT("17 ore tables and an iron pickaxe"), Ores == 17 && IronIndex != INDEX_NONE)) return false;
+    if (!TestTrue(TEXT("18 ore tables and an iron pickaxe"), Ores == 18 && IronIndex != INDEX_NONE)) return false;
     const FFoundationItemDefinition& IronPickaxe = Rules.Items[IronIndex];
 
     // Every attached table with a non-silk tool, 6,000 break counts at three cells.
@@ -1016,9 +1046,10 @@ bool FFoundationLootCountsTest::RunTest(const FString&)
                     FMath::Abs(Hits[Value] - Uniform) <= .1 * Uniform);
         }
     }
-    TestTrue(TEXT("ranged counts: raw_copper, lapis_lazuli and redstone only"),
-        Spread.Num() == 3 && Spread.Contains(TEXT("raw_copper")) && Spread.Contains(TEXT("lapis_lazuli")) &&
-            Spread.Contains(TEXT("redstone")));
+    // gold_nugget (nether_gold_ore, x2-6 uniform, 1/5 each at level 0) joined the ranged counts in loot step 2b.
+    TestTrue(TEXT("ranged counts: raw_copper, lapis_lazuli, redstone and gold_nugget only"),
+        Spread.Num() == 4 && Spread.Contains(TEXT("raw_copper")) && Spread.Contains(TEXT("lapis_lazuli")) &&
+            Spread.Contains(TEXT("redstone")) && Spread.Contains(TEXT("gold_nugget")));
 
     // Determinism: a pure function of (LootSeed, cell, break count).
     const FFoundationLootTable* Lapis = Rules.LootTables.Find(TEXT("lapis_ore"));
@@ -1100,7 +1131,7 @@ bool FFoundationLootCountsTest::RunTest(const FString&)
     TestTrue(TEXT("uniform_bonus_count x1 at level 3 on 5 spans [5, 8] (redstone's Fortune III max 8)"),
         Spans(Span(EFoundationLootBonus::UniformBonusCount, 1, 3, 5), 5, 8, 1));
 
-    // Chances over many breaks (loot step 2a): 3 cells x 20,000 break counts per table, within 5 sigma.
+    // Chances over many breaks (loot steps 2a and 2b): 3 cells x 20,000 break counts per table, within 5 sigma.
     {
         constexpr int32 Breaks = 20000;
         const FFoundationItemDefinition& Hand = Rules.Hand;
@@ -1166,6 +1197,45 @@ bool FFoundationLootCountsTest::RunTest(const FString&)
         }
         else
             AddError(TEXT("dead_bush has no table"));
+        // gravel by hand (loot step 2b): exactly one item per roll; flint at table_bonus level 0 (0.1), else gravel.
+        if (const FFoundationLootTable* Gravel = Rules.LootTables.Find(TEXT("gravel")))
+        {
+            const FLootTally Tally = LootTests_Tally(Rules, *Gravel, Hand, Breaks);
+            Near(TEXT("gravel by hand: flint"), Tally.Of(TEXT("flint:1")), Tally.Rolls, 0.1);
+            Near(TEXT("gravel by hand: gravel"), Tally.Of(TEXT("gravel:1")), Tally.Rolls, 0.9);
+            TestEqual(TEXT("gravel by hand: always exactly one item"),
+                Tally.Of(TEXT("flint:1")) + Tally.Of(TEXT("gravel:1")), Tally.Rolls);
+            TestEqual(TEXT("gravel by hand: never nothing"), Tally.Nothing, 0);
+            TestEqual(TEXT("gravel by hand drops only flint and gravel"), Tally.Hits.Num(), 2);
+        }
+        else
+            AddError(TEXT("gravel has no table"));
+        // oak_leaves by hand: the sapling at 0.05, the apple at 0.005 and the stick at 0.02 (x1 or x2, 0.01 each),
+        // apart from the block itself (it needs shears or Silk Touch).
+        if (const FFoundationLootTable* Oak = Rules.LootTables.Find(TEXT("oak_leaves")))
+        {
+            const FLootTally Tally = LootTests_Tally(Rules, *Oak, Hand, Breaks);
+            Near(TEXT("oak_leaves by hand: oak_sapling"), Tally.Of(TEXT("oak_sapling:1")), Tally.Rolls, 0.05);
+            Near(TEXT("oak_leaves by hand: apple"), Tally.Of(TEXT("apple:1")), Tally.Rolls, 0.005);
+            Near(TEXT("oak_leaves by hand: stick x1"), Tally.Of(TEXT("stick:1")), Tally.Rolls, 0.01);
+            Near(TEXT("oak_leaves by hand: stick x2"), Tally.Of(TEXT("stick:2")), Tally.Rolls, 0.01);
+            TestEqual(TEXT("oak_leaves by hand never drops itself"), Tally.Of(TEXT("oak_leaves:1")), 0);
+            TestEqual(TEXT("oak_leaves by hand drops only saplings, apples and sticks"), Tally.Hits.Num(), 4);
+        }
+        else
+            AddError(TEXT("oak_leaves has no table"));
+        // short_grass by hand: wheat_seeds at random_chance 0.125 (uniform_bonus_count adds 0 at level 0), never the
+        // block (it needs shears).
+        if (const FFoundationLootTable* Grass = Rules.LootTables.Find(TEXT("short_grass")))
+        {
+            const FLootTally Tally = LootTests_Tally(Rules, *Grass, Hand, Breaks);
+            Near(TEXT("short_grass by hand: wheat_seeds"), Tally.Of(TEXT("wheat_seeds:1")), Tally.Rolls, 0.125);
+            Near(TEXT("short_grass by hand: nothing"), Tally.Nothing, Tally.Rolls, 0.875);
+            TestEqual(TEXT("short_grass by hand never drops itself"), Tally.Of(TEXT("short_grass:1")), 0);
+            TestEqual(TEXT("short_grass by hand drops only wheat_seeds x1"), Tally.Hits.Num(), 1);
+        }
+        else
+            AddError(TEXT("short_grass has no table"));
     }
 
     // Synthetic tables, built in code.
@@ -1291,6 +1361,56 @@ bool FFoundationLootCountsTest::RunTest(const FString&)
             const int32 NoTool = LootTests_AddCondition(T, E::MatchTool);
             TestFalse(
                 TEXT("match_tool with no items fails"), Passes(T, NoTool, TEXT("stone"), NoState, true, IronPickaxe));
+        }
+
+        // location_check (loot step 2b): the block and state GetBlockAt reports at the condition's offset.
+        {
+            FFoundationLootTable T;
+            using E = EFoundationLootCondition;
+            const int32 Check = LootTests_AddCondition(T, E::LocationCheck, {}, TEXT("tall_grass"));
+            T.Conditions[Check].Offset = FIntVector(0, 0, 1);
+            T.Conditions[Check].State = {{TEXT("half"), TEXT("upper")}};
+            FFoundationLootContext Context{Hand, TEXT("tall_grass"), NoState, true};
+            TestFalse(TEXT("location_check fails with GetBlockAt unset"),
+                FoundationLoot::Test(T, Check, NoPredicates, Context, Dice));
+
+            FIntVector Asked(99, 99, 99);
+            int32 Calls = 0;
+            FName Found = TEXT("tall_grass");
+            TArray<TPair<FName, FName>> FoundState = {{TEXT("half"), TEXT("upper")}};
+            bool bKnown = false;
+            Context.GetBlockAt = [&](const FIntVector& Offset, FName& Block, TArray<TPair<FName, FName>>& State)
+            {
+                Asked = Offset;
+                ++Calls;
+                Block = Found;
+                State = FoundState;
+                return bKnown;
+            };
+            auto Pass = [&] { return FoundationLoot::Test(T, Check, NoPredicates, Context, Dice); };
+            TestFalse(TEXT("location_check fails where GetBlockAt returns false (the right block and state)"), Pass());
+            bKnown = true;
+            Found = TEXT("dirt");
+            TestFalse(TEXT("location_check fails on the wrong block"), Pass());
+            Found = TEXT("tall_grass");
+            FoundState = {{TEXT("half"), TEXT("lower")}};
+            TestFalse(TEXT("location_check fails on the right block with the wrong state"), Pass());
+            FoundState = {};
+            TestFalse(TEXT("location_check fails on the right block with no state"), Pass());
+            FoundState = {{TEXT("half"), TEXT("upper")}};
+            Calls = 0;
+            Asked = FIntVector(99, 99, 99);
+            TestTrue(TEXT("location_check passes on the right block and state"), Pass());
+            TestEqual(TEXT("location_check asks GetBlockAt once"), Calls, 1);
+            TestTrue(TEXT("location_check hands GetBlockAt the condition's offset (0, 0, 1)"),
+                Asked == T.Conditions[Check].Offset && Asked == FIntVector(0, 0, 1));
+            FoundState = {{TEXT("waterlogged"), TEXT("false")}, {TEXT("half"), TEXT("upper")}};
+            TestTrue(TEXT("location_check passes when the state holds the wanted pair among others"), Pass());
+            T.Conditions[Check].Offset = FIntVector(0, 0, -1);
+            T.Conditions[Check].State.Reset();
+            TestTrue(TEXT("location_check with no wanted state passes on the block alone"), Pass());
+            TestTrue(
+                TEXT("location_check hands GetBlockAt the changed offset (0, 0, -1)"), Asked == FIntVector(0, 0, -1));
         }
 
         // random_chance and table_bonus (level 0): the fraction of passes.
@@ -1504,18 +1624,146 @@ bool FFoundationLootBlocksTest::RunTest(const FString&)
     Check(TEXT("bedrock"), TEXT("netherite_pickaxe"), Nothing, NAME_None, NAME_None, true);
     TestTrue(TEXT("budding_amethyst has a table"), Rules.LootTables.Contains(TEXT("budding_amethyst")));
 
-    // The skipped tables (derived at runtime, pinned) keep "drops itself".
+    // The skipped tables (derived at runtime, pinned): none since loot step 2b, so no block keeps "drops itself".
     TSet<FName> Skipped;
     for (const FFoundationLootTableAsset& Table : Assets->LootTables)
         if (!Rules.LootTables.Contains(Table.Block)) Skipped.Add(Table.Block);
     const TArray<FName>& Pins = LootTests_SkippedPins();
-    TestEqual(TEXT("31 skipped tables"), Skipped.Num(), 31);
-    TestTrue(TEXT("the skipped set is the 31 pinned"),
+    TestEqual(TEXT("0 skipped tables"), Skipped.Num(), 0);
+    TestTrue(TEXT("the skipped set is the 0 pinned"),
         Skipped.Num() == Pins.Num() && Algo::AllOf(Pins, [&Skipped](FName Pin) { return Skipped.Contains(Pin); }));
-    Check(TEXT("gravel"), TEXT("iron_shovel"), One(TEXT("gravel")));
-    Check(TEXT("oak_leaves"), NAME_None, One(TEXT("oak_leaves")));
-    Check(TEXT("clay"), TEXT("iron_shovel"), One(TEXT("clay")));
-    Check(TEXT("snow_block"), TEXT("iron_shovel"), One(TEXT("snow_block")));
+
+    // Tables that roll (loot step 2b): clay and the snow block give their drop item, not themselves (Silk Touch never
+    // passes).
+    Check(TEXT("clay"), NAME_None, One(TEXT("clay_ball"), 4));
+    Check(TEXT("clay"), TEXT("iron_shovel"), One(TEXT("clay_ball"), 4));
+    Check(TEXT("snow_block"), TEXT("iron_shovel"), One(TEXT("snowball"), 4));
+    Check(TEXT("snow_block"), NAME_None, Nothing);
+
+    // Mines Block Rounds times with Tool (each round is a new break count, so a new roll) and checks every round's
+    // drops against Allowed (item to its count range, one stack per item, MinStacks to MaxStacks stacks) and the
+    // inventory against the drops. Returns the stacks dropped over all rounds.
+    auto Within = [&](FName Block, FName Tool, const TMap<FName, FIntPoint>& Allowed, int32 MinStacks, int32 MaxStacks,
+                      int32 Rounds)
+    {
+        ++Cases;
+        const FString What =
+            Block.ToString() + TEXT(" with ") + (Tool.IsNone() ? FString(TEXT("the hand")) : Tool.ToString());
+        int32 Stacks = 0, Wrong = 0;
+        if (!TestNotNull(What + TEXT(": the block exists"), L.A.World.FindBlock(Block))) return 0;
+        for (int32 Round = 0; Round < Rounds; ++Round)
+        {
+            L.ClearAndHold(Tool);
+            L.Put(Block);
+            L.NextStep();
+            const TMap<int32, int32> Before = LootTests_Counts(L.P().Inventory);
+            const FFoundationResult R = LootTests_Mine(L, 8000);
+            const TMap<int32, int32> Gains = LootTests_Gains(Before, LootTests_Counts(L.P().Inventory));
+            if (!R.bBroken || L.Solid() || R.Drops.Num() < MinStacks || R.Drops.Num() > MaxStacks ||
+                Gains.Num() != R.Drops.Num())
+            {
+                ++Wrong;
+                continue;
+            }
+            TSet<FName> Seen;
+            for (const FFoundationLootDrop& Drop : R.Drops)
+            {
+                const FName Id = Rules.GetItem(Drop.Item).Id;
+                const FIntPoint* Range = Allowed.Find(Id);
+                Wrong += !Range || Seen.Contains(Id) || Drop.Count < Range->X || Drop.Count > Range->Y ||
+                    Gains.FindRef(Drop.Item) != Drop.Count;
+                Seen.Add(Id);
+            }
+            Stacks += R.Drops.Num();
+        }
+        TestEqual(What + FString::Printf(TEXT(": %d rounds, every drop as the table allows"), Rounds), Wrong, 0);
+        return Stacks;
+    };
+    const int32 GravelStacks = Within(
+        TEXT("gravel"), NAME_None, {{TEXT("gravel"), FIntPoint(1, 1)}, {TEXT("flint"), FIntPoint(1, 1)}}, 1, 1, 40);
+    TestEqual(TEXT("gravel by hand: exactly one stack every round (gravel or flint)"), GravelStacks, 40);
+    Within(TEXT("gravel"), TEXT("iron_shovel"), {{TEXT("gravel"), FIntPoint(1, 1)}, {TEXT("flint"), FIntPoint(1, 1)}},
+        1, 1, 40);
+    // oak_leaves by hand: oak_sapling, stick x1-2 or apple, possibly nothing, never the leaves.
+    Within(TEXT("oak_leaves"), NAME_None,
+        {{TEXT("oak_sapling"), FIntPoint(1, 1)}, {TEXT("stick"), FIntPoint(1, 2)}, {TEXT("apple"), FIntPoint(1, 1)}}, 0,
+        3, 60);
+    // short_grass by hand: nothing or wheat_seeds, never the grass (it needs shears).
+    Within(TEXT("short_grass"), NAME_None, {{TEXT("wheat_seeds"), FIntPoint(1, 1)}}, 0, 1, 60);
+
+    // tall_grass and large_fern (location_check): both halves on a support block at (-1, 0, 0); then one half is
+    // mined by hand through the authority, aimed at. The half
+    // that breaks sees the other through location_check, so it rolls wheat_seeds (1 in 8) and nothing else, and the
+    // other half pops with no drops of its own.
+    {
+        const FIntVector Support(-1, 0, 0), LowerCell(-1, 0, 1), UpperCell(-1, 0, 2);
+        // The lab's cells are 100 cm (its feet at (-150, 50, 0) stand in cell (-2, 0, 0)).
+        constexpr double BlockCm = 100;
+        const FVector LabAim = L.P().Facts.Aim;
+        const int32 Seeds = Rules.FindItem(TEXT("wheat_seeds"));
+        TestTrue(TEXT("wheat_seeds is an item"), Seeds != INDEX_NONE);
+        auto IsHalf = [&](const FIntVector& Cell, FName Block, FName Value)
+        {
+            const FFoundationBlockState State = L.A.World.Get(Cell).State;
+            return L.A.World.GetBlock(State).Id == Block &&
+                L.A.World.GetRegistry().GetProperties(State).Contains(TPair<FName, FName>(TEXT("half"), Value));
+        };
+        // One place-and-break; returns the stacks dropped (0 or 1).
+        auto PlaceAndBreak = [&](FName Block, bool bUpper)
+        {
+            ++Cases;
+            const FString What = Block.ToString() + (bUpper ? TEXT(" upper half") : TEXT(" lower half")) +
+                TEXT(" by hand (break ") + FString::FromInt(L.A.Breaks) + TEXT(")");
+            const FIntVector Mined = bUpper ? UpperCell : LowerCell, Other = bUpper ? LowerCell : UpperCell;
+            L.ClearAndHold(NAME_None);
+            L.A.World.Set(Support, L.A.World.FindBlock(TEXT("grass_block"))->GetDefaultState());
+            // Both halves written as placement writes them (the default state is the lower half; GetOtherHalf gives
+            // the upper); placing double plants is the plant tests' subject.
+            const FFoundationBlockState Lower = L.A.World.FindBlock(Block)->GetDefaultState();
+            FIntVector UpperAt;
+            FFoundationBlockState Upper;
+            L.A.World.Set(LowerCell, Lower);
+            if (FoundationPlantRules::GetOtherHalf(L.A.World, LowerCell, Lower, UpperAt, Upper) && UpperAt == UpperCell)
+                L.A.World.Set(UpperCell, Upper);
+            if (!TestTrue(What + TEXT(": both halves written"),
+                    IsHalf(LowerCell, Block, TEXT("lower")) && IsHalf(UpperCell, Block, TEXT("upper"))))
+                return 0;
+            // Aim at the middle of the half to mine, then back at the lab's cell.
+            FFoundationPlayerFacts Facts = L.P().Facts;
+            Facts.Aim =
+                (FVector((Mined.X + .5) * BlockCm, (Mined.Y + .5) * BlockCm, (Mined.Z + .5) * BlockCm) - Facts.EyeCm)
+                    .GetSafeNormal();
+            Facts.Step = ++L.StepIndex;
+            L.A.SetFacts(L.Player, Facts);
+            L.NextStep();
+            const TMap<int32, int32> Before = LootTests_Counts(L.P().Inventory);
+            const FFoundationResult R = LootTests_Mine(L, 8000);
+            const TMap<int32, int32> Gains = LootTests_Gains(Before, LootTests_Counts(L.P().Inventory));
+            Facts.Aim = LabAim;
+            Facts.Step = ++L.StepIndex;
+            L.A.SetFacts(L.Player, Facts);
+            TestTrue(What + TEXT(": the half broke and the other half is gone"),
+                R.bBroken && L.A.World.Get(Mined).State.IsAir() && L.A.World.Get(Other).State.IsAir());
+            TestTrue(What + TEXT(": drops only wheat_seeds x1, in the inventory too"),
+                R.Drops.Num() <= 1 && Gains.Num() == R.Drops.Num() &&
+                    Algo::AllOf(R.Drops, [&](const FFoundationLootDrop& Drop)
+                        { return Drop.Item == Seeds && Drop.Count == 1 && Gains.FindRef(Seeds) == 1; }));
+            return R.Drops.Num();
+        };
+        // 64 rounds, the lower and the upper half in turn: seeing no wheat_seeds at 1 in 8 has chance (7/8)^64, about
+        // 2e-4 (the rolls are fixed by the cell and the break count, so the outcome is the same every run).
+        for (const FName Block : {FName(TEXT("tall_grass")), FName(TEXT("large_fern"))})
+        {
+            int32 SeedStacks = 0;
+            for (int32 Round = 0; Round < 64; ++Round)
+                SeedStacks += PlaceAndBreak(Block, Round % 2 == 1);
+            AddInfo(
+                FString::Printf(TEXT("%s: wheat_seeds in %d of 64 place-and-breaks"), *Block.ToString(), SeedStacks));
+            TestTrue(
+                Block.ToString() + TEXT(": wheat_seeds dropped at least once in 64 breaks (location_check passes)"),
+                SeedStacks >= 1);
+        }
+    }
     AddInfo(FString::Printf(TEXT("%d block cases through the authority"), Cases));
     return true;
 }
@@ -1637,11 +1885,13 @@ bool FFoundationLootSwitchTest::RunTest(const FString&)
         NotHitNames += Name.ToString() + TEXT(" ");
     AddInfo(NotHitNames);
     TestEqual(TEXT("every entry follows the S5b rule"), Wrong, 0);
-    // Pinned from the first run (loot step 2a); 75 ore rolls = .Drops' 82 eligible minus nether gold ore's 7 (skipped).
+    // Pinned from the first run (loot step 2a), re-derived for loot step 2b: nether_gold_ore is attached now, so the
+    // ore rolls are all of .Drops' 82 eligible entries (75 + nether gold ore's 7 pickaxe entries), and those 7 leave
+    // the drops-itself count: 13,615 - 7 = 13,608. The entries and the 828 not-hit entries do not change.
     TestEqual(TEXT("blocks"), Blocks, 602);
     TestEqual(TEXT("entries"), Entries, 25308);
-    TestEqual(TEXT("ore rolls"), Rolled, 75);
-    TestEqual(TEXT("drops-itself entries"), Itself, 13615);
+    TestEqual(TEXT("ore rolls"), Rolled, 82);
+    TestEqual(TEXT("drops-itself entries"), Itself, 13608);
     TestEqual(TEXT("entries the lab's aim cannot hit"), NotHit, 828);
     TestEqual(TEXT("blocks the lab's aim cannot hit"), NotHitBlocks.Num(), 23);
 

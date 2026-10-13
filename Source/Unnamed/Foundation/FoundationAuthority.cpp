@@ -763,7 +763,17 @@ bool FFoundationAuthority::BreakBlock(
         {
             // A refused break rolls the same drops again: the break count moves only when a block breaks.
             FRandomStream Random(FoundationLoot::MakeSeed(Rules.LootSeed, Cell, Breaks));
-            const FFoundationLootContext Context{Tool, Definition.Id, World.GetRegistry().GetProperties(State)};
+            FFoundationLootContext Context{Tool, Definition.Id, World.GetRegistry().GetProperties(State)};
+            // Before the break: a double plant's other half is still in place (location_check).
+            Context.GetBlockAt = [this, &Cell](
+                                     const FIntVector& Offset, FName& Block, TArray<TPair<FName, FName>>& Props)
+            {
+                if (!World.IsKnown(Cell + Offset)) return false;
+                const FFoundationBlockState At = World.Get(Cell + Offset).State;
+                Block = World.GetBlock(At).Id;
+                Props = World.GetRegistry().GetProperties(At);
+                return true;
+            };
             FoundationLoot::Roll(*Table, Rules.LootPredicates, Context, Random, Drops);
         }
         else if (const int32 Drop = Rules.FindItem(Definition.DropItem); Drop != INDEX_NONE)

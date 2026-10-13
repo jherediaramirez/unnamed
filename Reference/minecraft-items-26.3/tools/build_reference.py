@@ -11,9 +11,10 @@ Inputs:
     Reference/minecraft-blocks-26.3 (hash-checked): facts/block_facts.csv (hardness, correct tool, block items),
         facts/creative_tabs.json (creative positions) and block_manifest.json (which blocks are imported)
 
-Tier A only (the items plan, S1): the 35 tools, the 7 spears, the ore and tier materials, stick, buckets and food.
-Copies are byte for byte; every generated file comes from derive(), which verify_reference.py calls again on the
-folder's own copies, so the verifier re-derives each file. The folder must hold only tools/ and README.md, so an
+Tier A only (the items plan, S1): the 35 tools, the 7 spears, the ore and tier materials, stick, buckets and food;
+then (APPEND_LAST, loot step 2b) the drop items the imported blocks' loot tables name. Copies are byte for byte;
+every generated file comes from derive(), which verify_reference.py calls again on the folder's own copies, so the
+verifier re-derives each file. The folder must hold only tools/ and README.md, so an
 accepted reference is never overwritten; to rebuild, move the old folder away first. After a README or tool edit,
 --sums-only rewrites only SHA256SUMS.txt.
 
@@ -60,7 +61,15 @@ TIER_A = {
     "stick": ["stick"],
     "bucket": ["bucket", "water_bucket", "lava_bucket"],
     "food": ["apple", "bread", "cooked_beef"],
+    # Loot step 2b: the items the imported blocks' loot tables name that no other group holds.
+    "drop": ["oak_sapling", "spruce_sapling", "birch_sapling", "jungle_sapling", "acacia_sapling", "cherry_sapling",
+             "dark_oak_sapling", "pale_oak_sapling", "poplar_sapling", "resin_clump", "amethyst_shard", "wheat_seeds",
+             "flint", "snowball", "clay_ball", "book", "glowstone_dust", "cocoa_beans", "melon_slice", "gold_nugget",
+             "prismarine_crystals", "sweet_berries", "glow_berries"],
 }
+# Groups added after the reference was first imported: their items, and the models and textures they bring, follow
+# the earlier ones (each part sorted as before), so no item, model or texture layer of an earlier build moves.
+APPEND_LAST = ["drop"]
 # Component defaults when a component omits the field (minecraft.wiki "Data component format").
 TOOL_DEFAULTS = {"default_mining_speed": 1.0, "damage_per_block": 1, "can_destroy_blocks_in_creative": True}
 WEAPON_DEFAULTS = {"item_damage_per_attack": 1, "disable_blocking_for_seconds": 0.0}
@@ -582,7 +591,7 @@ def derive(src, block_ref=BLOCK_REF):
     imported = {b["id"] for b in block_manifest["blocks"] + block_manifest["fluids"]}
 
     group_of = {item: group for group, items in TIER_A.items() for item in items}
-    tier_a = sorted(group_of, key=lambda i: protocol[i])
+    tier_a = sorted(group_of, key=lambda i: (group_of[i] in APPEND_LAST, protocol[i]))
     copies, models, textures = set(), {}, {}
     items, tool_tags = [], set()
     for item in tier_a:
@@ -736,10 +745,14 @@ def derive(src, block_ref=BLOCK_REF):
         md.append(f"| {block} | {r['hardness']:g} | {'yes' if r['requires_correct_tool'] else 'no'} | {kind or '-'} | "
                   + " | ".join(text) + f" | {seconds(r['ticks'][s], r['drops'][s])} |")
 
-    textures_list = [textures[t] for t in sorted(textures)]
+    # Models and textures sorted by name, those first used by an APPEND_LAST group after the others.
+    early = [i for i in items if i["group"] not in APPEND_LAST]
+    early_models = {m["model"] for i in early for m in i["model"]["models"]}
+    early_textures = {t for i in early for t in i["textures"]}
+    textures_list = [textures[t] for t in sorted(textures, key=lambda t: (t not in early_textures, t))]
     generated = {
         "items.json": dumps({"minecraft_version": "26.3", "tier": "A", "items": items}),
-        "models.json": dumps({"models": [models[m] for m in sorted(models)]}),
+        "models.json": dumps({"models": [models[m] for m in sorted(models, key=lambda m: (m not in early_models, m))]}),
         "textures.json": dumps({"textures": textures_list}),
         "tags.json": dumps(tags),
         "lang.json": dumps({"lang": "en_us", "keys": {key: lang[key] for key in sorted(lang_keys)}}),

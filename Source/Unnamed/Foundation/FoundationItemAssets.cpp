@@ -134,7 +134,8 @@ int32 UFoundationItemAssets::AddLoot(FFoundationRules& Rules) const
             {TEXT("table_bonus"), EFoundationLootCondition::TableBonus},
             {TEXT("random_chance"), EFoundationLootCondition::RandomChance},
             {TEXT("match_tool"), EFoundationLootCondition::MatchTool},
-            {TEXT("entity_properties"), EFoundationLootCondition::EntityProperties}};
+            {TEXT("entity_properties"), EFoundationLootCondition::EntityProperties},
+            {TEXT("location_check"), EFoundationLootCondition::LocationCheck}};
         for (const FFoundationLootConditionAsset& ConditionAsset : Asset.Conditions)
         {
             FFoundationLootCondition& Condition = Table.Conditions.AddDefaulted_GetRef();
@@ -152,6 +153,15 @@ int32 UFoundationItemAssets::AddLoot(FFoundationRules& Rules) const
                 Condition.State.Emplace(ConditionAsset.StateKeys[Index], ConditionAsset.StateValues[Index]);
             Condition.Chances = ConditionAsset.Chances;
             Condition.Items = ConditionAsset.Items;
+            if (Condition.Type == EFoundationLootCondition::LocationCheck)
+            {
+                // The jar's x, y, z (y up) in cells: X, Z, Y.
+                if (ConditionAsset.Offset.Num() == 3)
+                    Condition.Offset =
+                        FIntVector(ConditionAsset.Offset[0], ConditionAsset.Offset[2], ConditionAsset.Offset[1]);
+                else if (Missing.IsNone())
+                    Missing = ConditionAsset.Type;
+            }
         }
         const auto ToModifiers = [&](TConstArrayView<FFoundationLootModifierAsset> Assets)
         {

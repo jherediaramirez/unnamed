@@ -41,8 +41,9 @@ bool FHudCreativeTabsTest::RunTest(const FString&)
     FHudCreativeModel Model;
     FFoundationRules Rules;
     if (!TestTrue(TEXT("block registry asset"), MakeModel(Model, Rules))) return false;
-    // Empty category tabs hide (shouldDisplay); hotbar, search and inventory always show. DA_Items's 63 items fill
-    // Tools & Utilities, Combat, Food & Drinks and Ingredients, so every tab shows here (spawn eggs: the spawners).
+    // Empty category tabs hide (shouldDisplay); hotbar, search and inventory always show. DA_Items's 86 items fill
+    // Tools & Utilities, Combat, Food & Drinks, Ingredients and Natural Blocks, so every tab shows here (spawn eggs:
+    // the spawners).
     FHudCreativeModel Bare;
     Bare.Build(FFoundationBlockRegistry::GetDefault()->GetAssets()->CreativeTabs, {});
     TestEqual(TEXT("with no items, category tabs hide"), FindTab(Bare, TEXT("tools_and_utilities")), int32(INDEX_NONE));
@@ -60,10 +61,11 @@ bool FHudCreativeTabsTest::RunTest(const FString&)
             Tools.Num() == 31 && Tools[0] == TEXT("wooden_shovel") && Tools[1] == TEXT("wooden_pickaxe") &&
                 Tools[4] == TEXT("stone_shovel"));
         Model.SelectTab(FindTab(Model, TEXT("combat")));
-        TestTrue(TEXT("combat: swords, spears, axes, then TNT"),
-            Model.GetItems().Num() == 22 && Model.GetItems()[0] == TEXT("wooden_sword") &&
+        // 26.3's combat tab keeps the snowball (index 68) after TNT (66).
+        TestTrue(TEXT("combat: swords, spears, axes, TNT, then the snowball"),
+            Model.GetItems().Num() == 23 && Model.GetItems()[0] == TEXT("wooden_sword") &&
                 Model.GetItems()[3] == TEXT("iron_sword") && Model.GetItems()[7] == TEXT("wooden_spear") &&
-                Model.GetItems().Last() == TEXT("tnt"));
+                Model.GetItems()[21] == TEXT("tnt") && Model.GetItems().Last() == TEXT("snowball"));
     }
     // 26.3 order within a tab, skipping items that do not exist here (stairs, fences...).
     Model.SelectTab(FindTab(Model, TEXT("building_blocks")));

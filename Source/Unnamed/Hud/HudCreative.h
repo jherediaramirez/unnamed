@@ -35,6 +35,8 @@ struct FHudCreativeItem
     TArray<FHudTooltipLine> Details;
     // Lowercase vanilla-style tag names for "#" search ("logs", "mineable/axe").
     TArray<FString> Tags;
+    // The flat sprite of an item that is not a block, its first texture ("block/oak_sapling"); empty: "item/<id>".
+    FString Sprite;
 };
 
 // Where a point on the screen lands. Slot indices: Grid 0-44 (visible rows), Hotbar 0-8, Inventory 0-26 (the

@@ -86,6 +86,13 @@ bool FoundationLoot::Test(const FFoundationLootTable& Table, int32 Index,
         return Condition.Items.Contains(Context.Tool.Id);
     case EFoundationLootCondition::EntityProperties:
         return Context.bEntity;
+    case EFoundationLootCondition::LocationCheck:
+    {
+        FName Block;
+        TArray<TPair<FName, FName>> State;
+        return Context.GetBlockAt && Context.GetBlockAt(Condition.Offset, Block, State) && Block == Condition.Name &&
+            Algo::AllOf(Condition.State, [&](const TPair<FName, FName>& Value) { return State.Contains(Value); });
+    }
     }
     return false;
 }

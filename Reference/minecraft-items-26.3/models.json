@@ -9010,6 +9010,2444 @@
     "head": "item/generated",
     "fixed": "item/generated"
    }
+  },
+  {
+   "id": "item/acacia_sapling",
+   "parent": "item/generated",
+   "chain": [
+    "item/acacia_sapling",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "block/acacia_sapling"
+   },
+   "layers": [
+    "block/acacia_sapling"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/amethyst_shard",
+   "parent": "item/generated",
+   "chain": [
+    "item/amethyst_shard",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/amethyst_shard"
+   },
+   "layers": [
+    "item/amethyst_shard"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/birch_sapling",
+   "parent": "item/generated",
+   "chain": [
+    "item/birch_sapling",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "block/birch_sapling"
+   },
+   "layers": [
+    "block/birch_sapling"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/book",
+   "parent": "item/generated",
+   "chain": [
+    "item/book",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/book"
+   },
+   "layers": [
+    "item/book"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/cherry_sapling",
+   "parent": "item/generated",
+   "chain": [
+    "item/cherry_sapling",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "block/cherry_sapling"
+   },
+   "layers": [
+    "block/cherry_sapling"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/clay_ball",
+   "parent": "item/generated",
+   "chain": [
+    "item/clay_ball",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/clay_ball"
+   },
+   "layers": [
+    "item/clay_ball"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/cocoa_beans",
+   "parent": "item/generated",
+   "chain": [
+    "item/cocoa_beans",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/cocoa_beans"
+   },
+   "layers": [
+    "item/cocoa_beans"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/dark_oak_sapling",
+   "parent": "item/generated",
+   "chain": [
+    "item/dark_oak_sapling",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "block/dark_oak_sapling"
+   },
+   "layers": [
+    "block/dark_oak_sapling"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/flint",
+   "parent": "item/generated",
+   "chain": [
+    "item/flint",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/flint"
+   },
+   "layers": [
+    "item/flint"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/glow_berries",
+   "parent": "item/generated",
+   "chain": [
+    "item/glow_berries",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/glow_berries"
+   },
+   "layers": [
+    "item/glow_berries"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/glowstone_dust",
+   "parent": "item/generated",
+   "chain": [
+    "item/glowstone_dust",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/glowstone_dust"
+   },
+   "layers": [
+    "item/glowstone_dust"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/gold_nugget",
+   "parent": "item/generated",
+   "chain": [
+    "item/gold_nugget",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/gold_nugget"
+   },
+   "layers": [
+    "item/gold_nugget"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/jungle_sapling",
+   "parent": "item/generated",
+   "chain": [
+    "item/jungle_sapling",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "block/jungle_sapling"
+   },
+   "layers": [
+    "block/jungle_sapling"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/melon_slice",
+   "parent": "item/generated",
+   "chain": [
+    "item/melon_slice",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/melon_slice"
+   },
+   "layers": [
+    "item/melon_slice"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/oak_sapling",
+   "parent": "item/generated",
+   "chain": [
+    "item/oak_sapling",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "block/oak_sapling"
+   },
+   "layers": [
+    "block/oak_sapling"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/pale_oak_sapling",
+   "parent": "item/generated",
+   "chain": [
+    "item/pale_oak_sapling",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "block/pale_oak_sapling"
+   },
+   "layers": [
+    "block/pale_oak_sapling"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/poplar_sapling",
+   "parent": "item/generated",
+   "chain": [
+    "item/poplar_sapling",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "block/poplar_sapling"
+   },
+   "layers": [
+    "block/poplar_sapling"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/prismarine_crystals",
+   "parent": "item/generated",
+   "chain": [
+    "item/prismarine_crystals",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/prismarine_crystals"
+   },
+   "layers": [
+    "item/prismarine_crystals"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/resin_clump",
+   "parent": "item/generated",
+   "chain": [
+    "item/resin_clump",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/resin_clump"
+   },
+   "layers": [
+    "item/resin_clump"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/snowball",
+   "parent": "item/generated",
+   "chain": [
+    "item/snowball",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/snowball"
+   },
+   "layers": [
+    "item/snowball"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/spruce_sapling",
+   "parent": "item/generated",
+   "chain": [
+    "item/spruce_sapling",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "block/spruce_sapling"
+   },
+   "layers": [
+    "block/spruce_sapling"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/sweet_berries",
+   "parent": "item/generated",
+   "chain": [
+    "item/sweet_berries",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/sweet_berries"
+   },
+   "layers": [
+    "item/sweet_berries"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/wheat_seeds",
+   "parent": "item/generated",
+   "chain": [
+    "item/wheat_seeds",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/wheat_seeds"
+   },
+   "layers": [
+    "item/wheat_seeds"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
   }
  ]
 }

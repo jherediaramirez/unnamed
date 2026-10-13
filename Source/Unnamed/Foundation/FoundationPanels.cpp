@@ -481,7 +481,10 @@ TSharedRef<SHudCreativeScreen> UFoundationPanels::MakeCreative(AFoundationLab& L
         Entry.MaxStack = Item.MaxStack;
         Entry.MaxDamage = Item.MaxDurability;
         if (const FFoundationItemAsset* Asset = ItemAssets ? ItemAssets->FindItem(Item.Id) : nullptr)
+        {
             Entry.Details = HudTooltip::GetModifierLines(Asset->Modifiers, ItemAssets->Lang, true);
+            if (!Asset->Textures.IsEmpty()) Entry.Sprite = Asset->Textures[0].ToString();
+        }
         if (const FFoundationBlockType* Block = Registry->FindBlock(Item.PlacesBlock))
             for (const FGameplayTag& Tag : Block->Tags)
                 Entry.Tags.Add(VanillaTagName(Tag));

@@ -36,6 +36,22 @@
     "netherite_ingot"
    ]
   },
+  "bookshelf_books": {
+   "values": [
+    "minecraft:book",
+    "minecraft:written_book",
+    "minecraft:enchanted_book",
+    "minecraft:writable_book",
+    "minecraft:knowledge_book"
+   ],
+   "resolved": [
+    "book",
+    "enchanted_book",
+    "knowledge_book",
+    "writable_book",
+    "written_book"
+   ]
+  },
   "breaks_decorated_pots": {
    "values": [
     "#minecraft:swords",
@@ -84,6 +100,24 @@
     "wooden_pickaxe",
     "wooden_shovel",
     "wooden_sword"
+   ]
+  },
+  "chicken_food": {
+   "values": [
+    "minecraft:wheat_seeds",
+    "minecraft:melon_seeds",
+    "minecraft:pumpkin_seeds",
+    "minecraft:beetroot_seeds",
+    "minecraft:torchflower_seeds",
+    "minecraft:pitcher_pod"
+   ],
+   "resolved": [
+    "beetroot_seeds",
+    "melon_seeds",
+    "pitcher_pod",
+    "pumpkin_seeds",
+    "torchflower_seeds",
+    "wheat_seeds"
    ]
   },
   "cluster_max_harvestables": {
@@ -144,6 +178,14 @@
     "netherite_shovel",
     "stone_shovel",
     "wooden_shovel"
+   ]
+  },
+  "duplicates_allays": {
+   "values": [
+    "minecraft:amethyst_shard"
+   ],
+   "resolved": [
+    "amethyst_shard"
    ]
   },
   "enchantable/durability": {
@@ -569,6 +611,16 @@
     "wooden_sword"
    ]
   },
+  "fox_food": {
+   "values": [
+    "minecraft:sweet_berries",
+    "minecraft:glow_berries"
+   ],
+   "resolved": [
+    "glow_berries",
+    "sweet_berries"
+   ]
+  },
   "furnace_fuel_bottom_takeable": {
    "values": [
     "minecraft:water_bucket",
@@ -595,6 +647,39 @@
    ],
    "resolved": [
     "gold_ingot"
+   ]
+  },
+  "happy_ghast_food": {
+   "values": [
+    "minecraft:snowball"
+   ],
+   "resolved": [
+    "snowball"
+   ]
+  },
+  "happy_ghast_tempt_items": {
+   "values": [
+    "#minecraft:happy_ghast_food",
+    "#minecraft:harnesses"
+   ],
+   "resolved": [
+    "black_harness",
+    "blue_harness",
+    "brown_harness",
+    "cyan_harness",
+    "gray_harness",
+    "green_harness",
+    "light_blue_harness",
+    "light_gray_harness",
+    "lime_harness",
+    "magenta_harness",
+    "orange_harness",
+    "pink_harness",
+    "purple_harness",
+    "red_harness",
+    "snowball",
+    "white_harness",
+    "yellow_harness"
    ]
   },
   "hoes": {
@@ -675,12 +760,42 @@
     "rotten_flesh"
    ]
   },
+  "metal_nuggets": {
+   "values": [
+    "minecraft:copper_nugget",
+    "minecraft:iron_nugget",
+    "minecraft:gold_nugget"
+   ],
+   "resolved": [
+    "copper_nugget",
+    "gold_nugget",
+    "iron_nugget"
+   ]
+  },
   "netherite_tool_materials": {
    "values": [
     "minecraft:netherite_ingot"
    ],
    "resolved": [
     "netherite_ingot"
+   ]
+  },
+  "parrot_food": {
+   "values": [
+    "minecraft:wheat_seeds",
+    "minecraft:melon_seeds",
+    "minecraft:pumpkin_seeds",
+    "minecraft:beetroot_seeds",
+    "minecraft:torchflower_seeds",
+    "minecraft:pitcher_pod"
+   ],
+   "resolved": [
+    "beetroot_seeds",
+    "melon_seeds",
+    "pitcher_pod",
+    "pumpkin_seeds",
+    "torchflower_seeds",
+    "wheat_seeds"
    ]
   },
   "pickaxes": {
@@ -821,6 +936,36 @@
     "netherite_ingot"
    ]
   },
+  "saplings": {
+   "values": [
+    "minecraft:oak_sapling",
+    "minecraft:spruce_sapling",
+    "minecraft:birch_sapling",
+    "minecraft:jungle_sapling",
+    "minecraft:acacia_sapling",
+    "minecraft:dark_oak_sapling",
+    "minecraft:pale_oak_sapling",
+    "minecraft:azalea",
+    "minecraft:flowering_azalea",
+    "minecraft:mangrove_propagule",
+    "minecraft:cherry_sapling",
+    "minecraft:poplar_sapling"
+   ],
+   "resolved": [
+    "acacia_sapling",
+    "azalea",
+    "birch_sapling",
+    "cherry_sapling",
+    "dark_oak_sapling",
+    "flowering_azalea",
+    "jungle_sapling",
+    "mangrove_propagule",
+    "oak_sapling",
+    "pale_oak_sapling",
+    "poplar_sapling",
+    "spruce_sapling"
+   ]
+  },
   "shovels": {
    "values": [
     "minecraft:diamond_shovel",
@@ -937,6 +1082,24 @@
     "potato",
     "torchflower_seeds",
     "wheat",
+    "wheat_seeds"
+   ]
+  },
+  "villager_plantable_seeds": {
+   "values": [
+    "minecraft:wheat_seeds",
+    "minecraft:potato",
+    "minecraft:carrot",
+    "minecraft:beetroot_seeds",
+    "minecraft:torchflower_seeds",
+    "minecraft:pitcher_pod"
+   ],
+   "resolved": [
+    "beetroot_seeds",
+    "carrot",
+    "pitcher_pod",
+    "potato",
+    "torchflower_seeds",
     "wheat_seeds"
    ]
   },

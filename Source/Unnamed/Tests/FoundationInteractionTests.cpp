@@ -1431,7 +1431,8 @@ bool FFoundationInteractionPlantsTest::RunTest(const FString& Parameters)
                 Destination == (bStone ? UpperCell : UpperCell + FIntVector(0, 0, 1)));
     }
 
-    // Pops drop nothing: mining one half returns one item in the finite fixture.
+    // Pops drop nothing: mining one half rolls tall grass's loot table once (loot step 2b: by hand never the grass,
+    // wheat seeds 1 in 8), and the other half pops without a roll of its own.
     FLab F(false);
     F.Put(Ground, TEXT("grass_block"));
     Give(F, TEXT("tall_grass"));
@@ -1441,7 +1442,10 @@ bool FFoundationInteractionPlantsTest::RunTest(const FString& Parameters)
     F.Stand({-150, 50, 0}, AtUpper);
     R = F.Run(F.Make(EFoundationCommandType::MineStart));
     TestTrue(TEXT("finite upper half breaks"), R.bBroken && !F.Solid(LowerCell));
-    TestEqual(TEXT("one item back, none for the pop"), F.P().Inventory.Hotbar[Slot].Count, 64);
+    const int32 Seeds = F.A.Rules.FindItem(TEXT("wheat_seeds"));
+    TestTrue(TEXT("one roll (no grass back, at most one wheat seed), none for the pop"),
+        F.P().Inventory.Hotbar[Slot].Count == 63 && R.Drops.Num() <= 1 &&
+            (R.Drops.IsEmpty() || (Seeds != INDEX_NONE && R.Drops[0].Item == Seeds && R.Drops[0].Count == 1)));
 
     // Instant mining from the facts: a flower at once, a vine (hardness 0.2) not.
     TestEqual(TEXT("dandelion is instant"), L.A.GetMiningDelta(L.P(), *L.A.World.FindBlock(TEXT("dandelion"))), 1.);

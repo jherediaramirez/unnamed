@@ -91,8 +91,9 @@ def build(root):
     for item in items["items"]:
         tool, weapon, attack, repair = item["tool"], item["weapon"], item["attack"], item["repair"]
         gui = item["model"]["models"][0]["model"]
-        assert item["textures"][0] == "item/" + item["id"] and gui == "item/" + item["id"], \
-            f"{item['id']}: the GUI sprite is not item/<id>"
+        # The GUI sprite: item/<id>, or the block texture a sapling's item model uses (block/<id>).
+        assert gui == "item/" + item["id"] and item["textures"][0] in ("item/" + item["id"], "block/" + item["id"]), \
+            f"{item['id']}: the GUI sprite is not item/<id> or block/<id>"
         rules = []
         for rule in (tool or {}).get("rules", []):
             rules.append({"blocks": rule["blocks"], "block_tag": rule_block_tag(rule["blocks"]),
@@ -150,7 +151,10 @@ def build(root):
                              "opaque_pixels": texture["opaque_pixels"], "rgba_sha256": texture["rgba_sha256"],
                              "mask": list(texture["mask"]), "layer": len(layers[size[0]])})
         layers[size[0]].append(ref / ASSETS / (texture["name"] + ".png"))
-    sprite_pngs = sorted((ref / "assets/minecraft/textures/item").glob("*.png"))
+    # GUI sprites (ImportItems.py, Gui/<folder>/<name>): every item texture, and the block textures an item's model uses
+    # (the saplings' block/<id>_sapling).
+    sprite_pngs = sorted((ref / "assets/minecraft/textures/item").glob("*.png")) + sorted(
+        ref / ASSETS / (t["name"] + ".png") for t in textures["textures"] if t["name"].startswith("block/"))
     loot = json.loads((ref / "loot_tables.json").read_text(encoding="utf-8"))
     return {"source_sha256": source_sha256(root), "items": out_items, "models": out_models,
             "textures": out_textures, "sprite_pngs": sprite_pngs, "tags_ini": tags_ini(root),

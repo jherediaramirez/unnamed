@@ -50,6 +50,8 @@ enum class EFoundationLootCondition : uint8
     MatchTool,
     // An entity broke the block ("this"): the player.
     EntityProperties,
+    // The block at the broken cell plus Offset is Name and has every State value (the other half of a double plant).
+    LocationCheck,
 };
 
 // One node of a table's conditions; trees refer to their terms by index into the table's Conditions.
@@ -60,11 +62,13 @@ struct FFoundationLootCondition
     int32 Predicate = INDEX_NONE;
     // AnyOf, AllOf, Inverted (one term).
     TArray<int32> Terms;
-    // MatchBlock: the block; TableBonus: the enchantment.
+    // MatchBlock, LocationCheck: the block; TableBonus: the enchantment.
     FName Name;
     TArray<TPair<FName, FName>> State;
     TArray<float> Chances;
     TArray<FName> Items;
+    // LocationCheck: in cells (the jar's x, y, z is X, Z, Y here: west -X, north -Y, up +Z).
+    FIntVector Offset = FIntVector::ZeroValue;
 };
 
 // Item modifier kinds (minecraft.wiki "Item modifier").
@@ -123,14 +127,17 @@ struct FFoundationLootTable
     TArray<FFoundationLootModifier> Modifiers;
 };
 
-// What a roll knows of its break (the wiki's loot context): the tool, the broken block and its state, and whether an
-// entity broke it.
+// What a roll knows of its break (the wiki's loot context): the tool, the broken block and its state, whether an
+// entity broke it, and the world around it.
 struct FFoundationLootContext
 {
     const FFoundationItemDefinition& Tool;
     FName Block;
     TArray<TPair<FName, FName>> State;
     bool bEntity = true;
+    // The block and state at the broken cell plus an offset, as the world holds them when the roll happens; false
+    // where it is unknown. Unset (a roll with no world), LocationCheck fails.
+    TFunction<bool(const FIntVector& Offset, FName& Block, TArray<TPair<FName, FName>>& State)> GetBlockAt;
 };
 
 struct FFoundationLootDrop

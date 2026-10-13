@@ -55,7 +55,7 @@ def import_sprites():
                     srgb=True, never_stream=True, power_of_two_mode=unreal.TexturePowerOfTwoSetting.NONE)
     created = 0
     for png in data["sprite_pngs"]:
-        package = ProjectPaths.item_asset("Gui/item/" + png.stem)
+        package = ProjectPaths.item_asset("Gui/%s/%s" % (png.parent.name, png.stem))
         if assets.does_asset_exist(package):
             texture = assets.load_asset(package)
             for key, value in settings.items():

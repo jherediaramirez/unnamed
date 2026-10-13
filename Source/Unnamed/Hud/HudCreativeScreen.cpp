@@ -25,10 +25,12 @@ namespace
         return Brush;
     }
 
-    // Item sprites for items that are not imported blocks: the tab icons and the 26.3 items (DA_Items).
-    FString ItemSprite(FName Item)
+    // Item sprites for items that are not imported blocks: the tab icons and the 26.3 items (DA_Items), by the
+    // item's first texture where it is known (the saplings' "block/oak_sapling").
+    FString ItemSprite(FName Item, const FHudCreativeItems& Items)
     {
         if (Item == TEXT("compass")) return TEXT("item/compass_16");
+        if (const FHudCreativeItem* Info = Items.Find(Item); Info && !Info->Sprite.IsEmpty()) return Info->Sprite;
         return TEXT("item/") + Item.ToString();
     }
 }
@@ -140,7 +142,7 @@ struct SHudCreativeScreen::FPainter
         if (!Screen.Registry ||
             !HudBlockIcon::Paint(Elements, LayerId, Geometry, Screen.Atlas, *Screen.Registry, Item, FVector2f(Position),
                 Units, Screen.Tick))
-            Box(Screen.FindBrush(ItemSprite(Item)), Position, {16, 16});
+            Box(Screen.FindBrush(ItemSprite(Item, Screen.Items)), Position, {16, 16});
     }
 
     void Stack(const FHudCreativeStack& Stack, FIntPoint Position) const
@@ -190,15 +192,15 @@ void SHudCreativeScreen::Construct(const FArguments& Arguments)
             for (int32 Column = 1; Column <= 7; ++Column)
                 Ids.Add(FString::Printf(TEXT("%stab_%s_%s_%d"), CreativeSprites, Row, State, Column));
     for (const FHudCreativeModel::FTab& Tab : Model.GetTabs())
-        Ids.Add(ItemSprite(Tab.Icon));
+        Ids.Add(ItemSprite(Tab.Icon, Items));
     for (const TPair<FName, FHudCreativeItem>& Item : Items)
-        if (!Registry || !Registry->FindBlock(Item.Key)) Ids.AddUnique(ItemSprite(Item.Key));
+        if (!Registry || !Registry->FindBlock(Item.Key)) Ids.AddUnique(ItemSprite(Item.Key, Items));
     for (const FString& Id : Ids)
     {
         // Item sprites come from ImportItems.py (ItemRoot/Gui) where it has them, else from BlockRoot/Gui.
         const FSoftObjectPath ItemPath = UUnnamedProjectSettings::GetItemAssetPath(TEXT("Gui/") + Id);
-        UTexture2D* Texture =
-            Id.StartsWith(TEXT("item/")) && FPackageName::DoesPackageExist(ItemPath.GetLongPackageName())
+        UTexture2D* Texture = (Id.StartsWith(TEXT("item/")) || Id.StartsWith(TEXT("block/"))) &&
+                FPackageName::DoesPackageExist(ItemPath.GetLongPackageName())
             ? Cast<UTexture2D>(ItemPath.TryLoad())
             : nullptr;
         if (!Texture)

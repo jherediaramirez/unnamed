@@ -90,8 +90,22 @@ else:
 # 5. Counts and spot values (scout F's appendix A, and the break-time formula's worked cases).
 items = {i["id"]: i for i in load("items.json")["items"]}
 index = load("item_index.json")["items"]
-check(len(items) == 63 and sum(i["group"] == "tool" for i in items.values()) == 35 and
-      sum(i["group"] == "spear" for i in items.values()) == 7, "expected 63 Tier A items: 35 tools, 7 spears")
+check(len(items) == 86 and sum(i["group"] == "tool" for i in items.values()) == 35 and
+      sum(i["group"] == "spear" for i in items.values()) == 7 and sum(i["group"] == "drop" for i in items.values()) == 23,
+      "expected 86 items: 35 tools, 7 spears, 23 drop items")
+# APPEND_LAST: the drop items, and the models and textures only they use, follow the 63 items, 70 models and 70
+# textures of the build before loot step 2b.
+groups = [i["group"] for i in items.values()]
+late_models = [m["id"] for m in load("models.json")["models"]][70:]
+late_textures = [t["name"] for t in load("textures.json")["textures"]][70:]
+check(groups[63:] == ["drop"] * 23 and "drop" not in groups[:63] and len(late_models) == 23 and
+      len(late_textures) == 23 and
+      not {m["model"] for i in list(items.values())[:63] for m in i["model"]["models"]} & set(late_models) and
+      not {t for i in list(items.values())[:63] for t in i["textures"]} & set(late_textures),
+      "drop items, models and textures are not appended last")
+check([items[i]["textures"] for i in build.TIER_A["drop"] if i.endswith("_sapling")] ==
+      [[f"block/{i}"] for i in build.TIER_A["drop"] if i.endswith("_sapling")] and
+      items["snowball"]["max_stack"] == 16 and items["flint"]["max_stack"] == 64, "drop item spot values")
 check(len(index) == 1658 and len({e["id"] for e in index}) == 1658, "expected 1,658 registry items")
 check(manifest["counts"]["definition_kinds"] == {"block_model": 834, "sprite": 761, "special": 62, "other": 1},
       "definition kinds differ from scout F's count")
@@ -224,6 +238,10 @@ shear = {p["name"]: p for p in loot["predicates"]}.get("tool/can_shear")
 check(shear is not None and shear["items"] == ["shears"] and shear["enchantments"] == [], "can_shear predicate")
 check(silk is not None and silk["type"] == "match_tool" and silk["items"] == [] and
       silk["enchantments"] == [{"id": "silk_touch", "min_level": 1}], "can_silk_touch predicate")
+# Loot step 2b: every item a table drops is an imported block's item or one of the items above.
+imported = {b["id"] for b in json.loads((build.BLOCK_REF / "block_manifest.json").read_text(encoding="utf-8"))["blocks"]}
+undefined = sorted({c["item"] for t in loot["tables"] for p in t["pools"] for c in p["candidates"]} - imported - set(items))
+check(not undefined, f"loot items neither imported blocks nor items: {undefined}")
 
 if errors:
     print("REFERENCE FAIL")

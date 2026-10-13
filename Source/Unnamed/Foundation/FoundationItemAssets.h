@@ -323,8 +323,8 @@ struct FFoundationLootConditionAsset
     UPROPERTY(EditAnywhere, Category = "Loot")
     TArray<FName> Items;
 
-    // location_check (tall grass, large fern; kept as data, the runtime skips its tables): the offset x, y, z of the
-    // block that must be Name with the state above.
+    // location_check (tall grass, large fern): the jar's offset x, y, z (y up) of the block that must be Name with the
+    // state above.
     UPROPERTY(EditAnywhere, Category = "Loot")
     TArray<int32> Offset;
 };
@@ -500,7 +500,7 @@ public:
     TArray<FFoundationItemDefinition> MakeDefinitions() const;
     // Replaces Rules' loot predicates and tables with these, resolving items against Rules.Items (BuildRules calls it
     // after the item merge). A table naming an item or predicate that does not exist is skipped, so its block keeps
-    // "drops itself" until the item does (nether_gold_ore's gold_nugget); returns how many were skipped.
+    // "drops itself" until the item does; returns how many were skipped (none since loot step 2b).
     int32 AddLoot(FFoundationRules& Rules) const;
     const FFoundationItemAsset* FindItem(FName Id) const;
     // The item's model in a display context ("firstperson_righthand"): a select's case that lists the context, else
