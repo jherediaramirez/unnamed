@@ -13,6 +13,10 @@ namespace
         TEXT("1: while the camera's eye is in water, 26.3's water fog (the biome's water_fog_color, -8 to 96 blocks); "
              "in lava, lava's fog. 0: no fog in fluids, the view as before."));
 
+    TAutoConsoleVariable<int32> CVarLookWaterFogBright(TEXT("voxel.Look.WaterFogBright"), 1,
+        TEXT("1: the water fog's colour brightened as vanilla draws it at noon (its brightest channel at 241). 0: the "
+             "biome's water_fog_color as is (darker)."));
+
     const TCHAR* const MaterialName = TEXT("M_WaterFog");
 
     FLinearColor DisplayColor(int32 Rgb)
@@ -31,7 +35,7 @@ EVoxelFluid VoxelWaterFog::GetFluidAt(const FVoxelBlockTable& Table, uint16 Stat
 }
 
 TOptional<VoxelWaterFog::FFog> VoxelWaterFog::GetFog(
-    bool bSwitch, EVoxelFluid AtEye, const FVoxelBiome* Biome, double CellCm)
+    bool bSwitch, EVoxelFluid AtEye, const FVoxelBiome* Biome, double CellCm, bool bBright)
 {
     if (!bSwitch) return {};
     if (AtEye == EVoxelFluid::Lava)
@@ -39,7 +43,15 @@ TOptional<VoxelWaterFog::FFog> VoxelWaterFog::GetFog(
     if (AtEye != EVoxelFluid::Water) return {};
     const int32 Color = Biome && Biome->WaterFogColor != INDEX_NONE ? Biome->WaterFogColor : WaterColor;
     const float EndBlocks = WaterEndBlocks * (Biome ? Biome->WaterFogEndScale : 1.f);
-    return FFog{DisplayColor(Color), float(WaterStartBlocks * CellCm), float(EndBlocks * CellCm)};
+    FLinearColor Shown = DisplayColor(Color);
+    if (const float Brightest = FMath::Max3(Shown.R, Shown.G, Shown.B); bBright && Brightest > 0)
+        Shown = FLinearColor(Shown.R, Shown.G, Shown.B) * (WaterBrightest / Brightest);
+    return FFog{Shown, float(WaterStartBlocks * CellCm), float(EndBlocks * CellCm)};
+}
+
+bool VoxelWaterFog::IsBright()
+{
+    return CVarLookWaterFogBright.GetValueOnGameThread() != 0;
 }
 
 bool VoxelWaterFog::IsOn()

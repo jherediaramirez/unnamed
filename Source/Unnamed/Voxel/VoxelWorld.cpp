@@ -567,7 +567,7 @@ void AVoxelWorld::UpdateWaterFog()
             const int32 Index = GetBiome(FoundationGrid::CellAt(Eye, OriginCm));
             if (Source->GetTable().Biomes.IsValidIndex(Index)) Biome = &Source->GetTable().Biomes[Index];
         }
-    VoxelWaterFog::Apply(*LookVolume, WaterFogMaterial, VoxelWaterFog::GetFog(bOn, AtEye, Biome, CellCm));
+    VoxelWaterFog::Apply(*LookVolume, WaterFogMaterial, VoxelWaterFog::GetFog(bOn, AtEye, Biome, CellCm, VoxelWaterFog::IsBright()));
 }
 
 bool AVoxelWorld::IsInWater(const FBox& Body) const

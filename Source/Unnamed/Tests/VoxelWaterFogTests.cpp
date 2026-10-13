@@ -23,6 +23,9 @@ bool FVoxelWaterFogSwitchTest::RunTest(const FString& Parameters)
     Switch->Set(1, ECVF_SetByCode);
     TestTrue(TEXT("IsOn at voxel.Look.WaterFog 1"), VoxelWaterFog::IsOn());
     Switch->Set(Was, ECVF_SetByCode);
+    IConsoleVariable* Bright = IConsoleManager::Get().FindConsoleVariable(TEXT("voxel.Look.WaterFogBright"));
+    if (TestNotNull(TEXT("voxel.Look.WaterFogBright exists"), Bright))
+        TestEqual(TEXT("voxel.Look.WaterFogBright's default"), Bright->GetDefaultValue(), FString(TEXT("1")));
     TestFalse(TEXT("off in water"), VoxelWaterFog::GetFog(false, EVoxelFluid::Water, nullptr, 100).IsSet());
     TestFalse(TEXT("off in lava"), VoxelWaterFog::GetFog(false, EVoxelFluid::Lava, nullptr, 100).IsSet());
     TestFalse(TEXT("on in air"), VoxelWaterFog::GetFog(true, EVoxelFluid::None, nullptr, 100).IsSet());
@@ -44,8 +47,8 @@ bool FVoxelWaterFogColorsTest::RunTest(const FString& Parameters)
             Fog && (Color.R << 16 | Color.G << 8 | Color.B) == Rgb && FMath::IsNearlyEqual(Fog->StartCm, Start) &&
                 FMath::IsNearlyEqual(Fog->EndCm, End, .01f));
     };
-    Expect(
-        TEXT("water, no biome"), VoxelWaterFog::GetFog(true, EVoxelFluid::Water, nullptr, 100), 0x050533, -800, 9600);
+    Expect(TEXT("water, no biome"), VoxelWaterFog::GetFog(true, EVoxelFluid::Water, nullptr, 100, false), 0x050533,
+        -800, 9600);
 
     const FString Ids[] = {TEXT("minecraft:plains"), TEXT("minecraft:swamp"), TEXT("minecraft:warm_ocean"),
         TEXT("minecraft:mangrove_swamp")};
@@ -54,16 +57,22 @@ bool FVoxelWaterFogColorsTest::RunTest(const FString& Parameters)
     const bool bRead = VoxelWorldgen::ReadBiomes(VoxelWorldgen::GetReferenceRoot(), Ids, Table, Error);
     if (!TestTrue(FString::Printf(TEXT("the biomes read (%s)"), *Error), bRead)) return true;
     const auto Biome = [&Table](const TCHAR* Id) { return &Table.Biomes[Table.FindBiome(Id)]; };
-    Expect(TEXT("plains"), VoxelWaterFog::GetFog(true, EVoxelFluid::Water, Biome(TEXT("minecraft:plains")), 100),
+    Expect(TEXT("plains"), VoxelWaterFog::GetFog(true, EVoxelFluid::Water, Biome(TEXT("minecraft:plains")), 100, false),
         0x050533, -800, 9600);
-    Expect(TEXT("swamp"), VoxelWaterFog::GetFog(true, EVoxelFluid::Water, Biome(TEXT("minecraft:swamp")), 100),
+    Expect(TEXT("swamp"), VoxelWaterFog::GetFog(true, EVoxelFluid::Water, Biome(TEXT("minecraft:swamp")), 100, false),
         0x232317, -800, 9600 * .85f);
     Expect(TEXT("warm ocean"),
-        VoxelWaterFog::GetFog(true, EVoxelFluid::Water, Biome(TEXT("minecraft:warm_ocean")), 100), 0x041f33, -800,
-        9600);
+        VoxelWaterFog::GetFog(true, EVoxelFluid::Water, Biome(TEXT("minecraft:warm_ocean")), 100, false), 0x041f33,
+        -800, 9600);
     Expect(TEXT("mangrove swamp"),
-        VoxelWaterFog::GetFog(true, EVoxelFluid::Water, Biome(TEXT("minecraft:mangrove_swamp")), 100), 0x4d7a60, -800,
-        9600 * .85f);
+        VoxelWaterFog::GetFog(true, EVoxelFluid::Water, Biome(TEXT("minecraft:mangrove_swamp")), 100, false), 0x4d7a60,
+        -800, 9600 * .85f);
+    // Brightened (voxel.Look.WaterFogBright 1): the warm ocean's full fog is the wiki's 1.18 deep warm ocean frame's.
+    Expect(TEXT("warm ocean, bright"),
+        VoxelWaterFog::GetFog(true, EVoxelFluid::Water, Biome(TEXT("minecraft:warm_ocean")), 100), 0x1392f1, -800,
+        9600);
+    Expect(
+        TEXT("no biome, bright"), VoxelWaterFog::GetFog(true, EVoxelFluid::Water, nullptr, 100), 0x1818f1, -800, 9600);
     Expect(TEXT("lava in swamp"), VoxelWaterFog::GetFog(true, EVoxelFluid::Lava, Biome(TEXT("minecraft:swamp")), 100),
         0x991a00, 0, 100);
     return true;

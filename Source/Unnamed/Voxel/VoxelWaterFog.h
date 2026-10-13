@@ -19,6 +19,12 @@ namespace VoxelWaterFog
     constexpr int32 WaterColor = 0x050533;
     constexpr float WaterStartBlocks = -8;
     constexpr float WaterEndBlocks = 96;
+    // Vanilla draws the water fog colour brightened, not as is: in the wiki's 1.18 deep warm ocean frame (noon, open
+    // water) the full fog is #041f33 x 4.73 on every channel, its brightest channel at 241. The attribute is "also
+    // affected by time of day, weather, and potion effects" (minecraft.wiki/w/Environment_attribute), how is not
+    // published; a dark cave frame shows about x2.2. So, with voxel.Look.WaterFogBright 1, the colour is scaled until
+    // its brightest channel reaches this (noon in open water; darker times and places are unverified and not done).
+    constexpr float WaterBrightest = 241.f / 255.f;
     // Lava's fog: colour #991A00, sight about 1 block (minecraft.wiki/w/Fog). The start is unverified: 0.
     constexpr int32 LavaColor = 0x991A00;
     constexpr float LavaStartBlocks = 0;
@@ -40,10 +46,13 @@ namespace VoxelWaterFog
 
     // The fog for the fluid at the eye and the biome there (null: the defaults), or none: the switch is off or the eye
     // is not in a fluid.
-    UNNAMED_API TOptional<FFog> GetFog(bool bSwitch, EVoxelFluid AtEye, const FVoxelBiome* Biome, double CellCm);
+    // bBright: the water colour brightened to WaterBrightest (above); false keeps the attribute's colour as is.
+    UNNAMED_API TOptional<FFog> GetFog(
+        bool bSwitch, EVoxelFluid AtEye, const FVoxelBiome* Biome, double CellCm, bool bBright = true);
 
-    // voxel.Look.WaterFog as read now.
+    // voxel.Look.WaterFog and voxel.Look.WaterFogBright as read now.
     UNNAMED_API bool IsOn();
+    UNNAMED_API bool IsBright();
 
     // Puts the fog on Volume (M_WaterFog as a blendable at weight 1), or takes it off (weight 0). Material holds the
     // dynamic instance between calls; it is made on first use.
