@@ -732,6 +732,77 @@ namespace
     }
 
     // Case 4: the dev seed's decorated 3 x 3 at the origin, far-meshed column by column, every byte pinned.
+    // 5. A neighbour drawn in full across the East edge (review A3). Center: stone through 80. Neighbour, Y < 8: stone
+    // through 60 and a roof at 90 (air 61-89); Y >= 8: stone through 100 but a cave at 30-32. Its ground (90, 100) is
+    // above the center's, so the heightfield rule draws no East wall; with the border the wall shows where the
+    // neighbour's cells are open below 80: 20 unit faces per cell under the roof, 3 by the cave. A neighbour solid
+    // under its ground (stone through 70) changes nothing.
+    void FarMesherTestBorders(FAutomationTestBase& Test, const FVoxelBlockTable& Table)
+    {
+        constexpr int32 East = 1;
+        const uint16 Stone = Table.FindState(TEXT("stone"));
+        const FVoxelFarClasses Classes(Table);
+        const TSharedRef<FVoxelColumn> Center = VoxelTestBlocks::MakeColumn(
+            Table, FIntPoint(0, 0), [Stone](int32, int32, int32 Z) -> uint16 { return Z <= 80 ? Stone : 0; });
+        const TSharedRef<FVoxelColumn> Roofed = VoxelTestBlocks::MakeColumn(Table, FIntPoint(1, 0),
+            [Stone](int32, int32 Y, int32 Z) -> uint16
+            {
+                if (Y < 8) return Z <= 60 || Z == 90 ? Stone : 0;
+                return Z <= 100 && (Z < 30 || Z > 32) ? Stone : 0;
+            });
+        const TSharedRef<FVoxelColumn> Solid = VoxelTestBlocks::MakeColumn(
+            Table, FIntPoint(1, 0), [Stone](int32, int32, int32 Z) -> uint16 { return Z <= 70 ? Stone : 0; });
+        TUniquePtr<FVoxelFarSummary> CenterSummary = MakeUnique<FVoxelFarSummary>();
+        TUniquePtr<FVoxelFarSummary> NeighborSummary = MakeUnique<FVoxelFarSummary>();
+        VoxelFarMesher::Summarize(Classes, Table, *Center, *CenterSummary);
+        TUniquePtr<FVoxelFarBorder> Border = MakeUnique<FVoxelFarBorder>();
+
+        // The East wall's unit faces on the center's edge cells, and the mesh's quads.
+        auto MeshEast = [&](const FVoxelColumn& Neighbor, bool bBorder, int32& OutQuads) -> TSet<int64>
+        {
+            VoxelFarMesher::Summarize(Classes, Table, Neighbor, *NeighborSummary);
+            VoxelFarMesher::SummarizeBorder(Table, Neighbor, East, *Border);
+            const FVoxelFarSummary* Neighbors[4] = {nullptr, NeighborSummary.Get(), nullptr, nullptr};
+            const FVoxelFarBorder* Borders[4] = {nullptr, bBorder ? Border.Get() : nullptr, nullptr, nullptr};
+            FVoxelMeshData Mesh;
+            VoxelFarMesher::Mesh(Table, *CenterSummary, Neighbors, VoxelFarMesher::FOptions(), Mesh, Borders);
+            OutQuads = Mesh.GetQuadCount();
+            TSet<int64> Faces;
+            FarMesherTestRasterize(Mesh.Layers[int32(EVoxelLayer::Opaque)],
+                [&Faces](int32, int32 Side, int32 X, int32 Y, int32 Z)
+                {
+                    if (Side == East && X == 15) Faces.Add(FarMesherTestUnitKey(Side, X, Y, Z));
+                });
+            return Faces;
+        };
+
+        int32 Quads = 0, PlainQuads = 0;
+        const TSet<int64> Plain = MeshEast(*Roofed, false, PlainQuads);
+        Test.TestTrue(
+            TEXT("borders: the border is open under the roof"), Border->IsOpen(0, 61) && Border->IsOpen(7, 89));
+        Test.TestTrue(TEXT("borders: the border is closed in the stone and the roof"),
+            !Border->IsOpen(0, 60) && !Border->IsOpen(7, 90) && !Border->IsOpen(8, 29));
+        Test.TestTrue(TEXT("borders: the border is open in the cave"), Border->IsOpen(8, 30) && Border->IsOpen(15, 32));
+        Test.TestEqual(TEXT("borders: heightfield rule, no East wall under the roof"), Plain.Num(), 0);
+        const TSet<int64> Bordered = MeshEast(*Roofed, true, Quads);
+        TSet<int64> Expected;
+        for (int32 Y = 0; Y < 16; ++Y)
+            for (int32 Z = Y < 8 ? 61 : 30; Z <= (Y < 8 ? 80 : 32); ++Z)
+                Expected.Add(FarMesherTestUnitKey(East, 15, Y, Z));
+        Test.TestEqual(TEXT("borders: East unit faces with the border (8 x 20 + 8 x 3)"), Bordered.Num(), 184);
+        Test.TestTrue(TEXT("borders: exactly the open cells under the center's ground"),
+            Bordered.Num() == Expected.Num() && Bordered.Includes(Expected));
+
+        int32 SolidQuads = 0, SolidBorderedQuads = 0;
+        const TSet<int64> SolidPlain = MeshEast(*Solid, false, SolidQuads);
+        const TSet<int64> SolidBordered = MeshEast(*Solid, true, SolidBorderedQuads);
+        Test.TestEqual(TEXT("borders: solid neighbour, the wall 71-80 either way"), SolidPlain.Num(), 160);
+        Test.TestTrue(TEXT("borders: solid neighbour, the border changes nothing"),
+            SolidBordered.Num() == SolidPlain.Num() && SolidBordered.Includes(SolidPlain) &&
+                SolidBorderedQuads == SolidQuads);
+        Test.AddInfo(FString::Printf(TEXT("borders: %d quads without the border, %d with it"), PlainQuads, Quads));
+    }
+
     void FarMesherTestDigest(FAutomationTestBase& Test, const FVoxelBlockTable& Table)
     {
         FString Error;
@@ -832,6 +903,7 @@ bool FVoxelFarMesherTest::RunTest(const FString& Parameters)
     }
     FarMesherTestSummaryRules(*this, *BlockTable);
     FarMesherTestSameLayout(*this, *BlockTable);
+    FarMesherTestBorders(*this, *BlockTable);
     FarMesherTestDigest(*this, *BlockTable);
     return true;
 }

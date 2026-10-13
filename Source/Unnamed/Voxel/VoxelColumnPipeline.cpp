@@ -15,6 +15,8 @@ namespace
     constexpr uint8 PipelineAllNeighbors = 0xFF;
     // The eight neighbours in FVoxelNeighborhood's row order, skipping the center: bit i of a neighbour mask.
     const FIntPoint PipelineNeighborOffsets[8] = {{-1, -1}, {0, -1}, {1, -1}, {-1, 0}, {1, 0}, {-1, 1}, {0, 1}, {1, 1}};
+    // The edge neighbours in EVoxelFace order: West, East, North, South.
+    const FIntPoint PipelineEdgeOffsets[4] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 
     // The offset of the column a bucket index (FVoxelWriteLog::GetBucket) names, from the source.
     FIntPoint GetPipelineBucketOffset(int32 Bucket)
@@ -87,6 +89,7 @@ struct FVoxelColumnPipeline::FJob
     uint64 Serial = 0;
     uint32 MeshVersion = 0;
     uint8 Neighbors = 0;
+    uint8 CellEdges = 0;
     UE::Tasks::TTask<TSharedPtr<FJobResult>> Task;
     // Manual jobs (tests): the work until it runs, then its result.
     TUniqueFunction<TSharedPtr<FJobResult>()> Work;
@@ -291,7 +294,9 @@ void FVoxelColumnPipeline::SetFocus(const FVoxelStreamingRings& InRings, int32 N
                 OldRings.Center, Rings.Center, Rings.GetUnloadDistance(), [this](FIntPoint Column) { Unload(Column); });
     }
     // Far LOD: a waiting mesh of the kind its drawn column no longer wants goes, as CollectMesh drops a late one, while
-    // the column shows something; the wanted kind meshes again (its MeshedKind no longer matches).
+    // the column shows something; the wanted kind meshes again. MeshedKind goes to None, not the dropped kind: should
+    // the column want that kind again before its next mesh (a quick move back), it must not count as meshed while it
+    // shows the other kind.
     for (TArray<FIntPoint>* Queue : {&ReadyColumns, &ReadyFarColumns})
         for (int32 Index = Queue->Num() - 1; Index >= 0; --Index)
         {
@@ -300,6 +305,7 @@ void FVoxelColumnPipeline::SetFocus(const FVoxelStreamingRings& InRings, int32 N
             const EVoxelMeshKind Kind = Record.Ready->bFar ? EVoxelMeshKind::Far : EVoxelMeshKind::Full;
             if (!Record.bOnScreen || !Rings.IsDrawn(Column) || Kind == GetWantedKind(Column)) continue;
             Record.Ready.Reset();
+            Record.MeshedKind = EVoxelMeshKind::None;
             Queue->RemoveAtSwap(Index);
             ++Dropped;
         }
@@ -333,7 +339,25 @@ void FVoxelColumnPipeline::SetFocus(const FVoxelStreamingRings& InRings, int32 N
             if (Current != GetMeshNeighbors(Needed[Index])) MarkDirty(Record, PipelineAllSections);
         }
     if (bShift && !Settings.bEdgeWalls && !bEdgeWallsUsed)
+    {
         CarryProgress(OldRings, OldSector, OldFirstIncomplete);
+        // A far column beside one that came into view keeps its ring and kind, but its far mesh may now be out of date
+        // (NeedsMesh, review A3): the walk starts no later than the first of them.
+        if (bCenterMoved && Rings.GetDrawnRadius() > Rings.ViewRadius)
+        {
+            const FVoxelNeededOrder& Order = GetOrder(Rings, ViewSector);
+            VoxelStreaming::ForEachLeft(Rings.Center, OldRings.Center, Rings.ViewRadius,
+                [this, &Order](FIntPoint Entered)
+                {
+                    for (const FIntPoint Offset : PipelineEdgeOffsets)
+                        if (Rings.IsFar(Entered + Offset))
+                        {
+                            const int32 Index = Order.FindIndex(Entered + Offset - Rings.Center);
+                            if (Index != INDEX_NONE) FirstIncomplete = FMath::Min(FirstIncomplete, Index);
+                        }
+                });
+        }
+    }
     else
         Regress();
     bReadySorted = false;
@@ -548,6 +572,7 @@ void FVoxelColumnPipeline::CollectMesh(const FJob& Job, FJobResult& Result, FRec
     else
         Record.Dirty = 0;
     Record.MeshedNeighbors = Job.Neighbors;
+    Record.MeshedCellEdges = Job.CellEdges;
     Record.MeshedKind = bFar ? EVoxelMeshKind::Far : EVoxelMeshKind::Full;
     // A far mesh drops the section cache: it took the dirty bits the cache would need.
     if (!bFar && IsPipelineNear(Job.Column, Rings.Center, Settings.MeshCacheRadius))
@@ -625,8 +650,8 @@ bool FVoxelColumnPipeline::IsComplete(int32 NeededIndex) const
     switch (IsDecorating() ? NeededRing[NeededIndex] : FMath::Min<int32>(NeededRing[NeededIndex], 1))
     {
     case 0:
-        return Record.Data && !Record.Dirty && !Record.bMeshing &&
-            Record.MeshedKind == GetWantedKind(Needed[NeededIndex]);
+        return Record.Data && !Record.bMeshing &&
+            !NeedsMesh(Needed[NeededIndex], Record, GetWantedKind(Needed[NeededIndex]));
     case 1:
         return Record.Data.IsValid();
     case 2:
@@ -746,7 +771,7 @@ void FVoxelColumnPipeline::TryMesh(FIntPoint Column, FRecord& Record)
 {
     // A drawn column meshes when its sections changed or it wants the other kind of mesh (far LOD).
     const EVoxelMeshKind Wanted = GetWantedKind(Column);
-    if (Record.bMeshing || (!Record.Dirty && Record.MeshedKind == Wanted)) return;
+    if (Record.bMeshing || !NeedsMesh(Column, Record, Wanted)) return;
     if (Wanted == EVoxelMeshKind::Far && !HasFarRoom()) return;
     const uint8 Neighbors = GetMeshNeighbors(Column);
     if (IsDecorating())
@@ -762,6 +787,20 @@ void FVoxelColumnPipeline::TryMesh(FIntPoint Column, FRecord& Record)
         LaunchFarMesh(Column, Record, Neighbors);
     else
         LaunchMesh(Column, Record, Neighbors);
+}
+
+uint8 FVoxelColumnPipeline::GetFullEdges(FIntPoint Column) const
+{
+    uint8 Mask = 0;
+    for (int32 Face = 0; Face < 4; ++Face)
+        if (Rings.IsInView(Column + PipelineEdgeOffsets[Face])) Mask |= uint8(1u << Face);
+    return Mask;
+}
+
+bool FVoxelColumnPipeline::NeedsMesh(FIntPoint Column, const FRecord& Record, EVoxelMeshKind Wanted) const
+{
+    if (Record.Dirty || Record.MeshedKind != Wanted) return true;
+    return Wanted == EVoxelMeshKind::Far && (GetFullEdges(Column) & ~Record.MeshedCellEdges);
 }
 
 uint8 FVoxelColumnPipeline::GetMeshNeighbors(FIntPoint Column) const
@@ -936,6 +975,7 @@ void FVoxelColumnPipeline::LaunchMesh(FIntPoint Column, FRecord& Record, uint8 N
     FJob& Job = AddJob(EJob::Mesh, Column, Record);
     Job.MeshVersion = Record.MeshVersion;
     Job.Neighbors = Neighbors;
+    Job.CellEdges = 0xF;
     StartJob(Job,
         [Table = Table, Terrain = Terrain, LightTable = LightTable, Options = Settings.MeshOptions, Around,
             Cached = MoveTemp(Cached), Sections, Column]() -> TSharedPtr<FJobResult>
@@ -1007,10 +1047,13 @@ void FVoxelColumnPipeline::LaunchFarMesh(FIntPoint Column, FRecord& Record, uint
     FJob& Job = AddJob(EJob::FarMesh, Column, Record);
     Job.MeshVersion = Record.MeshVersion;
     Job.Neighbors = Neighbors;
+    // Edges toward neighbours drawn in full read their cells (review A3).
+    const uint8 CellEdges = GetFullEdges(Column);
+    Job.CellEdges = CellEdges;
     ++FarJobs;
     StartJob(Job,
         [Table = Table, Terrain = Terrain, FarClasses = FarClasses, Options = Settings.MeshOptions,
-            FarOptions = Settings.FarOptions, Around]() -> TSharedPtr<FJobResult>
+            FarOptions = Settings.FarOptions, Around, CellEdges]() -> TSharedPtr<FJobResult>
         {
             TRACE_CPUPROFILER_EVENT_SCOPE(VoxelPipeline_FarMesh);
             const double MeshStart = FPlatformTime::Seconds();
@@ -1029,14 +1072,19 @@ void FVoxelColumnPipeline::LaunchFarMesh(FIntPoint Column, FRecord& Record, uint
                 *FarClasses, *Table, *Around[4], Summaries[0], Terrain->GetTints(), &Neighborhood, Options);
             constexpr int32 EdgeIndices[4] = {3, 5, 1, 7};
             const FVoxelFarSummary* Edges[4] = {};
+            FVoxelFarBorder Borders[4];
+            const FVoxelFarBorder* BorderOf[4] = {};
             for (int32 Face = 0; Face < 4; ++Face)
                 if (const FVoxelColumn* Edge = Around[EdgeIndices[Face]].Get())
                 {
                     VoxelFarMesher::Summarize(*FarClasses, *Table, *Edge, Summaries[Face + 1]);
                     Edges[Face] = &Summaries[Face + 1];
+                    if (!(CellEdges & (1u << Face))) continue;
+                    VoxelFarMesher::SummarizeBorder(*Table, *Edge, Face, Borders[Face]);
+                    BorderOf[Face] = &Borders[Face];
                 }
             FVoxelMeshData Data;
-            VoxelFarMesher::Mesh(*Table, Summaries[0], Edges, FarOptions, Data);
+            VoxelFarMesher::Mesh(*Table, Summaries[0], Edges, FarOptions, Data, BorderOf);
             Mesh.QuadCount = Data.GetQuadCount();
             const double StreamsStart = FPlatformTime::Seconds();
             Mesh.MeshMs = (StreamsStart - MeshStart) * 1000.;
@@ -1096,8 +1144,9 @@ bool FVoxelColumnPipeline::IsUrgentFar(FIntPoint Column) const
         Records.FindChecked(Column).ShownKind == EVoxelMeshKind::None;
 }
 
-TArray<FIntPoint>& FVoxelColumnPipeline::GetReadyQueue()
+TArray<FIntPoint>& FVoxelColumnPipeline::GetReadyQueue(bool bNearOnly)
 {
+    if (bNearOnly) return ReadyColumns;
     // Far meshes wait while any full mesh does, except (bFarInnerFirst) an urgent one: it fills a column at the view's
     // edge before a full mesh refines a column that shows something, and goes first if nearer than a full mesh that
     // fills one.
@@ -1108,20 +1157,20 @@ TArray<FIntPoint>& FVoxelColumnPipeline::GetReadyQueue()
     return !bNearFills || GetReadyPriority(Far) < GetReadyPriority(Near) ? ReadyFarColumns : ReadyColumns;
 }
 
-const FVoxelColumnMesh* FVoxelColumnPipeline::PeekReady(FIntPoint* OutColumn)
+const FVoxelColumnMesh* FVoxelColumnPipeline::PeekReady(FIntPoint* OutColumn, bool bNearOnly)
 {
-    if (ReadyColumns.IsEmpty() && ReadyFarColumns.IsEmpty()) return nullptr;
+    if (ReadyColumns.IsEmpty() && (bNearOnly || ReadyFarColumns.IsEmpty())) return nullptr;
     SortReady();
-    const TArray<FIntPoint>& Queue = GetReadyQueue();
+    const TArray<FIntPoint>& Queue = GetReadyQueue(bNearOnly);
     if (OutColumn) *OutColumn = Queue.Last();
     return Records.FindChecked(Queue.Last()).Ready.Get();
 }
 
-bool FVoxelColumnPipeline::PopReady(FReady& Out)
+bool FVoxelColumnPipeline::PopReady(FReady& Out, bool bNearOnly)
 {
-    if (ReadyColumns.IsEmpty() && ReadyFarColumns.IsEmpty()) return false;
+    if (ReadyColumns.IsEmpty() && (bNearOnly || ReadyFarColumns.IsEmpty())) return false;
     SortReady();
-    Out.Column = GetReadyQueue().Pop(EAllowShrinking::No);
+    Out.Column = GetReadyQueue(bNearOnly).Pop(EAllowShrinking::No);
     FRecord& Record = Records.FindChecked(Out.Column);
     Out.Mesh = MoveTemp(Record.Ready);
     Record.bOnScreen = true;
@@ -1326,6 +1375,7 @@ FVoxelColumnStatus FVoxelColumnPipeline::GetStatus(FIntPoint Column) const
     Status.bOnScreen = Record->bOnScreen;
     Status.Shown = Record->ShownKind;
     Status.Meshed = Record->MeshedKind;
+    Status.CellEdges = Record->MeshedCellEdges;
     Status.DirtySections = Record->Dirty;
     Status.bCached = !Record->Cache.IsEmpty();
     Status.bSnapshot = Record->Snapshot.IsValid();

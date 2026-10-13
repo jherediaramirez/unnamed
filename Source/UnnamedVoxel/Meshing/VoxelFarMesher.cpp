@@ -278,8 +278,30 @@ void VoxelFarMesher::Summarize(const FVoxelFarClasses& Classes, const FVoxelBloc
         *TargetData[Index] = ResultData[Index];
 }
 
+void VoxelFarMesher::SummarizeBorder(
+    const FVoxelBlockTable& Table, const FVoxelColumn& Neighbor, int32 Face, FVoxelFarBorder& Out)
+{
+    using namespace FarDetail;
+    TRACE_CPUPROFILER_EVENT_SCOPE(VoxelFarMesher_SummarizeBorder);
+
+    const bool bAlongY = VoxelFaces::GetAxis(Face) == 0;
+    // The neighbour's line of cells touching Center: its last one when it lies on Center's negative side.
+    const int32 Edge = VoxelFaces::IsPositive(Face) ? 0 : Size - 1;
+    const int32 Toward = VoxelFaces::GetOpposite(Face);
+    FMemory::Memzero(Out.Open);
+    for (int32 Along = 0; Along < Size; ++Along)
+    {
+        const int32 X = bAlongY ? Edge : Along, Y = bAlongY ? Along : Edge;
+        uint64* const Open = Out.Open[Along];
+        for (int32 Local = 0; Local < VoxelConstants::Height; ++Local)
+            if (!((Table.Get(GetState(Neighbor, X, Y, Local + VoxelConstants::MinZ)).OpaqueFaces >> Toward) & 1))
+                Open[Local >> 6] |= uint64(1) << (Local & 63);
+    }
+}
+
 void VoxelFarMesher::Mesh(const FVoxelBlockTable& Table, const FVoxelFarSummary& Center,
-    const FVoxelFarSummary* const Neighbors[4], const FOptions& Options, FVoxelMeshData& Out)
+    const FVoxelFarSummary* const Neighbors[4], const FOptions& Options, FVoxelMeshData& Out,
+    const FVoxelFarBorder* const Borders[4])
 {
     using namespace FarDetail;
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelFarMesher_Mesh);
@@ -402,6 +424,27 @@ void VoxelFarMesher::Mesh(const FVoxelBlockTable& Table, const FVoxelFarSummary&
                         if (GroundZ - 1 > NextZ)
                             Offer(NextZ + 1, GroundZ - 1, GetDrawState(Table, Cell.FillState), OpaqueLayer,
                                 Cell.FillTint);
+                        // Across the edge, a neighbour drawn in full leaves the wall open below its ground where its
+                        // cells are open: each open run up to what the walls above cover, in this cell alone.
+                        const bool bAcross = X + StepX < 0 || X + StepX >= Size || Y + StepY < 0 || Y + StepY >= Size;
+                        if (const FVoxelFarBorder* Border = bAcross && Borders ? Borders[Face] : nullptr)
+                        {
+                            const int32 Top = FMath::Min(GroundZ, NextZ);
+                            for (int32 Z = VoxelConstants::MinZ; Z <= Top; ++Z)
+                            {
+                                if (!Border->IsOpen(Along, Z)) continue;
+                                int32 End = Z;
+                                while (End < Top && Border->IsOpen(Along, End + 1))
+                                    ++End;
+                                if (End == GroundZ)
+                                    Flush({GroundZ, GroundZ, GetDrawState(Table, Cell.SideState), OpaqueLayer,
+                                        Cell.SideTint, Along, Along + 1});
+                                if (Z <= FMath::Min(End, GroundZ - 1))
+                                    Flush({Z, FMath::Min(End, GroundZ - 1), GetDrawState(Table, Cell.FillState),
+                                        OpaqueLayer, Cell.FillTint, Along, Along + 1});
+                                Z = End;
+                            }
+                        }
                     }
                     if (Cell.HasCanopy())
                     {

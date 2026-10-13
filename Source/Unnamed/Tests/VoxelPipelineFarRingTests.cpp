@@ -7,11 +7,13 @@
 #include "Terrain/VoxelHeightTerrain.h"
 #include "Voxel/VoxelBlocks.h"
 #include "Voxel/VoxelColumnPipeline.h"
+#include "Voxel/VoxelWorldSubsystem.h"
 
 // Far LOD step 1 (phase 9 S1): the pipeline's far ring, with manual jobs and small radii. A far column gets a far mesh
 // and never a full one; moving swaps kinds without a frame showing nothing; full meshes are taken before far ones; far
-// jobs keep to a third of the slots; without a far ring the pipeline runs today's jobs; and a mesh waiting when the
-// rings move is dropped if its column now wants the other kind.
+// jobs keep to a third of the slots; without a far ring the pipeline runs today's jobs; a mesh waiting when the
+// rings move is dropped if its column now wants the other kind; and a quick move back after such a drop still
+// converges.
 namespace
 {
     constexpr int32 FarRingTestMargin = 2;
@@ -169,6 +171,39 @@ namespace
         return false;
     }
 
+    // The edges toward columns in view (EVoxelFace order: West, East, North, South).
+    uint8 FarRingTestFullEdges(const FVoxelStreamingRings& At, FIntPoint Column)
+    {
+        const FIntPoint Steps[4] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+        uint8 Mask = 0;
+        for (int32 Face = 0; Face < 4; ++Face)
+            if (At.IsInView(Column + Steps[Face])) Mask |= uint8(1u << Face);
+        return Mask;
+    }
+
+    // Far columns beside one that came into view (stayed far, the neighbour was not in view before).
+    TSet<FIntPoint> FarRingTestEdged(const FVoxelStreamingRings& From, const FVoxelStreamingRings& To)
+    {
+        TSet<FIntPoint> Out;
+        for (const FIntPoint Column :
+            FarRingTestColumns([&](FIntPoint Candidate) { return From.IsFar(Candidate) && To.IsFar(Candidate); }))
+            if (FarRingTestFullEdges(To, Column) & ~FarRingTestFullEdges(From, Column)) Out.Add(Column);
+        return Out;
+    }
+
+    // At idle (review A3): every far column's mesh read each edge toward a column in view cell by cell.
+    void FarRingTestCheckEdges(FFarRingTestReport& Report, const FVoxelColumnPipeline& Pipeline, const FString& Where)
+    {
+        const FVoxelStreamingRings& At = Pipeline.GetRings();
+        for (const FIntPoint Column : FarRingTestColumns([&At](FIntPoint Candidate) { return At.IsFar(Candidate); }))
+        {
+            const uint8 Wanted = FarRingTestFullEdges(At, Column), Read = Pipeline.GetStatus(Column).CellEdges;
+            if (Wanted & ~Read)
+                Report.Fail(FString::Printf(TEXT("%s: far column (%d, %d) read edges %x cell by cell, wanted %x"),
+                    *Where, Column.X, Column.Y, Read, Wanted));
+        }
+    }
+
     // At idle: every drawn column has meshed and shows its wanted kind, the view is on screen and the counts add up.
     void FarRingTestCheckIdle(FFarRingTestReport& Report, const FVoxelColumnPipeline& Pipeline, const FString& Where,
         int32 ExpectFar, int32 ExpectNeeded)
@@ -186,6 +221,7 @@ namespace
                     FarRingTestKindName(Wanted)));
         }
         FAutomationTestBase& Test = Report.Test;
+        FarRingTestCheckEdges(Report, Pipeline, Where);
         Test.TestEqual(*(Where + TEXT(": columns in view")), InView, FarRingTestInView);
         Test.TestEqual(*(Where + TEXT(": far columns")), Far, ExpectFar);
         Test.TestTrue(*(Where + TEXT(": IsViewOnScreen")), Pipeline.IsViewOnScreen());
@@ -265,8 +301,10 @@ namespace
 
     // 2. One move from idle, one job at a time: every column drawn before and after keeps showing something, and its
     // kind changes only when its own mesh of the new kind is taken; at idle the kinds match the new rings and only the
-    // columns that changed kind were meshed (once). With bBounce the rings move back once meshes of both kinds are in
-    // flight for columns that changed kind (and at least one took its new kind): those results are dropped on arrival.
+    // columns that changed kind were meshed (once), and those that stayed far beside one that came into view at most
+    // once (when the mesh shown did not read that edge cell by cell: review A3; CheckIdle checks they all do). With
+    // bBounce the rings move back once meshes of both kinds are in flight for columns that changed kind (and at least
+    // one took its new kind): those results are dropped on arrival.
     void FarRingTestMove(FFarRingTestReport& Report, FVoxelColumnPipeline& Pipeline, FIntPoint To, const FString& Where,
         EFarRingTestJobs JobMode, bool bBounce)
     {
@@ -274,6 +312,7 @@ namespace
         const FVoxelStreamingRings Next = FarRingTestRings(To, From.ViewRadius, From.FarRadius);
         TMap<FIntPoint, EVoxelMeshKind> Shown;
         TSet<FIntPoint> Changed;
+        const TSet<FIntPoint> Edged = FarRingTestEdged(From, Next);
         int32 ToView = 0, ToFar = 0;
         for (const FIntPoint Column :
             FarRingTestColumns([&](FIntPoint Candidate) { return From.IsDrawn(Candidate) && Next.IsDrawn(Candidate); }))
@@ -380,14 +419,18 @@ namespace
             for (const TPair<FIntPoint, EVoxelMeshKind>& Pair : Shown)
             {
                 const int32 Expected = Changed.Contains(Pair.Key) ? 1 : 0, Actual = Takes.FindRef(Pair.Key);
-                if (Actual != Expected)
+                if (Actual != Expected && !(Edged.Contains(Pair.Key) && Actual == 1))
                     Report.Fail(FString::Printf(TEXT("%s: column (%d, %d) took %d meshes, expected %d"), *Where,
                         Pair.Key.X, Pair.Key.Y, Actual, Expected));
             }
         }
-        Report.Test.AddInfo(FString::Printf(TEXT("%s: %d far to in view, %d in view to far; idle after %d steps and %d "
-                                                 "takes, %lld results dropped"),
-            *Where, ToView, ToFar, Steps, TakeCount, Dropped));
+        if (!bBounce)
+            Report.Test.TestTrue(
+                *FString::Printf(TEXT("%s: far columns beside new view columns (%d)"), *Where, Edged.Num()),
+                Edged.Num() > 0);
+        Report.Test.AddInfo(FString::Printf(TEXT("%s: %d far to in view, %d in view to far, %d far beside new view "
+                                                 "columns; idle after %d steps and %d takes, %lld results dropped"),
+            *Where, ToView, ToFar, Edged.Num(), Steps, TakeCount, Dropped));
     }
 
     // 2. V1/F3 settled at (0, 0), then to (3, 0) and back, then a bounce, with the given job order.
@@ -598,9 +641,13 @@ namespace
     {
         // Pinned by the first run: meshes waiting at (3, 0) (all, far) and the ones SetFocus (0, 0) drops (the 10
         // columns going far to in view and the 10 going in view to far).
-        constexpr int32 ExpectAwayReady = 47, ExpectAwayFarReady = 32, ExpectPurged = 20;
+        // Far columns beside a column that comes into view mesh again too (review A3): computed, on top of the pins.
+        constexpr int32 PinnedAwayReady = 47, PinnedAwayFarReady = 32, ExpectPurged = 20;
         const TUniquePtr<FVoxelColumnPipeline> Pipeline = FarRingTestMakePipeline(World, 6);
         const FVoxelStreamingRings Home = FarRingTestRings(FIntPoint::ZeroValue, 1, 3);
+        const int32 Edged = FarRingTestEdged(Home, FarRingTestRings(FIntPoint(3, 0), 1, 3)).Num();
+        const int32 ExpectAwayReady = PinnedAwayReady + Edged, ExpectAwayFarReady = PinnedAwayFarReady + Edged;
+        Report.Test.TestEqual(TEXT("6. far columns beside new view columns at (3, 0)"), Edged, 4);
         const auto Never = [] { return false; };
         Pipeline->SetFocus(Home, 0);
         if (!FarRingTestDrive(
@@ -693,6 +740,86 @@ namespace
                                           "drawn), idle after %d steps"),
             Away.Ready, Away.FarReady, Stale.Num(), Purged, FirstTakes, TakeCount, UndrawnTakes, Steps));
     }
+
+    // 7. A quick move back after a drop (review A1): V1/F3 settled at (0, 0), every job of the move to (3, 0) run with
+    // nothing taken, then (0, 0) drops the waiting meshes and (3, 0) comes back before any job runs. The dropped meshes
+    // were never shown, so each column whose mesh was dropped meshes its kind again and shows it at idle, both ways.
+    void FarRingTestQuickReturn(FFarRingTestReport& Report, const FFarRingTestWorld& World)
+    {
+        const TUniquePtr<FVoxelColumnPipeline> Pipeline = FarRingTestMakePipeline(World, 6);
+        const FVoxelStreamingRings Home = FarRingTestRings(FIntPoint::ZeroValue, 1, 3);
+        const FVoxelStreamingRings Away = FarRingTestRings(FIntPoint(3, 0), 1, 3);
+        const auto Never = [] { return false; };
+        const auto NoCheck = [](bool) {};
+        const auto NoTake = [](const FVoxelColumnPipeline::FReady&) {};
+        Pipeline->SetFocus(Home, 0);
+        if (!FarRingTestDrive(*Pipeline, EFarRingTestJobs::All, true, NoCheck, NoTake, Never))
+        {
+            Report.Fail(TEXT("7. not idle at (0, 0) after the step cap"));
+            return;
+        }
+        Pipeline->SetFocus(Away, 0);
+        if (!FarRingTestDrive(*Pipeline, EFarRingTestJobs::All, false, NoCheck, NoTake, Never))
+        {
+            Report.Fail(TEXT("7. jobs left at (3, 0) after the step cap"));
+            return;
+        }
+        const int64 DroppedBefore = Pipeline->GetStats().Dropped;
+        Pipeline->SetFocus(Home, 0);
+        const int64 Dropped = Pipeline->GetStats().Dropped - DroppedBefore;
+        Report.Test.TestTrue(
+            *FString::Printf(TEXT("7. SetFocus (0, 0) drops waiting meshes (%lld)"), Dropped), Dropped > 0);
+        Pipeline->SetFocus(Away, 0);
+        if (!FarRingTestDrive(*Pipeline, EFarRingTestJobs::All, true, NoCheck, NoTake, Never))
+        {
+            Report.Fail(TEXT("7. not idle back at (3, 0) after the step cap"));
+            return;
+        }
+        FarRingTestCheckIdle(Report, *Pipeline, TEXT("7. idle back at (3, 0)"), FarRingTestFar3, FarRingTestNeeded3);
+    }
+
+    // 8. Near meshes only (review A2: the apply loop's way past a far mesh it turned down): with inner-first, the move
+    // of 6 leaves an urgent far mesh heading the ready queue before full meshes that refine; near-only peeks and takes
+    // show and take every full mesh and nothing else, then none, the far meshes still waiting.
+    void FarRingTestNearOnly(FFarRingTestReport& Report, const FFarRingTestWorld& World)
+    {
+        const TUniquePtr<FVoxelColumnPipeline> Pipeline = FarRingTestMakePipeline(World, 6);
+        const auto Never = [] { return false; };
+        const auto NoCheck = [](bool) {};
+        const auto NoTake = [](const FVoxelColumnPipeline::FReady&) {};
+        Pipeline->SetFocus(FarRingTestRings(FIntPoint::ZeroValue, 1, 3), 0);
+        if (!FarRingTestDrive(*Pipeline, EFarRingTestJobs::All, true, NoCheck, NoTake, Never))
+        {
+            Report.Fail(TEXT("8. not idle at (0, 0) after the step cap"));
+            return;
+        }
+        Pipeline->SetFocus(FarRingTestRings(FIntPoint(3, 0), 1, 3), 0);
+        if (!FarRingTestDrive(*Pipeline, EFarRingTestJobs::All, false, NoCheck, NoTake, Never))
+        {
+            Report.Fail(TEXT("8. jobs left at (3, 0) after the step cap"));
+            return;
+        }
+        Pipeline->SetFarInnerFirst(true);
+        FAutomationTestBase& Test = Report.Test;
+        const FVoxelPipelineStats Waiting = Pipeline->GetStats();
+        const FVoxelColumnMesh* Head = Pipeline->PeekReady();
+        Test.TestTrue(TEXT("8. a far mesh heads the ready queue"), Head && Head->bFar);
+        int32 FullTaken = 0;
+        while (const FVoxelColumnMesh* Peeked = Pipeline->PeekReady(nullptr, true))
+        {
+            FVoxelColumnPipeline::FReady Taken;
+            if (!Pipeline->PopReady(Taken, true) || Taken.Mesh.Get() != Peeked || Taken.Mesh->bFar)
+            {
+                Report.Fail(FString::Printf(TEXT("8. near-only take %d: not the full mesh peeked"), FullTaken));
+                return;
+            }
+            ++FullTaken;
+        }
+        FVoxelColumnPipeline::FReady None;
+        Test.TestFalse(TEXT("8. near-only take with only far meshes waiting"), Pipeline->PopReady(None, true));
+        Test.TestEqual(TEXT("8. full meshes taken near-only"), FullTaken, Waiting.Ready - Waiting.FarReady);
+        Test.TestEqual(TEXT("8. far meshes still waiting"), Pipeline->GetStats().Ready, Waiting.FarReady);
+    }
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelPipelineFarRingTest, "Unnamed.Voxel.Pipeline.FarRing",
@@ -717,6 +844,39 @@ bool FVoxelPipelineFarRingTest::RunTest(const FString& Parameters)
     FarRingTestFarCap(Report, World);
     FarRingTestNoFarRing(Report, World);
     FarRingTestWaitingKinds(Report, World);
+    FarRingTestQuickReturn(Report, World);
+    FarRingTestNearOnly(Report, World);
+    return true;
+}
+
+// The apply loop's budget steps (review A2), at the default 2 ms budget. A 1,601-quad far mesh's first estimate
+// (0.1 + 0.001 x quads = 1.701 ms) passes 85% of it even as the frame's first apply.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelApplyStepTest, "Unnamed.Voxel.Pipeline.ApplyStep",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelApplyStepTest::RunTest(const FString& Parameters)
+{
+    constexpr double Budget = 2, Big = 1.701;
+    const auto Expect = [this](const TCHAR* What, EVoxelApplyStep Actual, EVoxelApplyStep Expected)
+    { TestEqual(What, int32(Actual), int32(Expected)); };
+    Expect(TEXT("far mesh that fits"), GetVoxelApplyStep(0.5, 0.5, Budget, 3, true, false), EVoxelApplyStep::Apply);
+    Expect(TEXT("big far mesh first: near meshes go, it waits"), GetVoxelApplyStep(0, Big, Budget, 0, true, false),
+        EVoxelApplyStep::SkipFar);
+    Expect(TEXT("big far mesh first after its wait: goes"), GetVoxelApplyStep(0, Big, Budget, 0, true, true),
+        EVoxelApplyStep::Apply);
+    Expect(TEXT("big far mesh after near ones: skipped, even after its wait"),
+        GetVoxelApplyStep(0.5, Big, Budget, 2, true, true), EVoxelApplyStep::SkipFar);
+    Expect(TEXT("near mesh that fits"), GetVoxelApplyStep(0.5, 0.5, Budget, 3, false, false), EVoxelApplyStep::Apply);
+    Expect(TEXT("near mesh past the room after others"), GetVoxelApplyStep(0.5, Big, Budget, 2, false, false),
+        EVoxelApplyStep::Stop);
+    Expect(TEXT("big near mesh first, within the budget"), GetVoxelApplyStep(0, Big, Budget, 0, false, false),
+        EVoxelApplyStep::Apply);
+    Expect(TEXT("near mesh first, no room left by planning"), GetVoxelApplyStep(1, 1.5, Budget, 0, false, false),
+        EVoxelApplyStep::Wait);
+    Expect(TEXT("near mesh first, no room, after its wait"), GetVoxelApplyStep(1, 1.5, Budget, 0, false, true),
+        EVoxelApplyStep::Apply);
+    Expect(TEXT("near mesh first, above the whole budget"), GetVoxelApplyStep(1, 3, Budget, 0, false, false),
+        EVoxelApplyStep::Apply);
     return true;
 }
 #endif
