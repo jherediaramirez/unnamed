@@ -291,7 +291,9 @@ void FVoxelColumnPipeline::SetFocus(const FVoxelStreamingRings& InRings, int32 N
                 OldRings.Center, Rings.Center, Rings.GetUnloadDistance(), [this](FIntPoint Column) { Unload(Column); });
     }
     // Far LOD: a waiting mesh of the kind its drawn column no longer wants goes, as CollectMesh drops a late one, while
-    // the column shows something; the wanted kind meshes again (its MeshedKind no longer matches).
+    // the column shows something; the wanted kind meshes again. MeshedKind goes to None, not the dropped kind: should
+    // the column want that kind again before its next mesh (a quick move back), it must not count as meshed while it
+    // shows the other kind.
     for (TArray<FIntPoint>* Queue : {&ReadyColumns, &ReadyFarColumns})
         for (int32 Index = Queue->Num() - 1; Index >= 0; --Index)
         {
@@ -300,6 +302,7 @@ void FVoxelColumnPipeline::SetFocus(const FVoxelStreamingRings& InRings, int32 N
             const EVoxelMeshKind Kind = Record.Ready->bFar ? EVoxelMeshKind::Far : EVoxelMeshKind::Full;
             if (!Record.bOnScreen || !Rings.IsDrawn(Column) || Kind == GetWantedKind(Column)) continue;
             Record.Ready.Reset();
+            Record.MeshedKind = EVoxelMeshKind::None;
             Queue->RemoveAtSwap(Index);
             ++Dropped;
         }

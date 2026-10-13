@@ -10,8 +10,9 @@
 
 // Far LOD step 1 (phase 9 S1): the pipeline's far ring, with manual jobs and small radii. A far column gets a far mesh
 // and never a full one; moving swaps kinds without a frame showing nothing; full meshes are taken before far ones; far
-// jobs keep to a third of the slots; without a far ring the pipeline runs today's jobs; and a mesh waiting when the
-// rings move is dropped if its column now wants the other kind.
+// jobs keep to a third of the slots; without a far ring the pipeline runs today's jobs; a mesh waiting when the
+// rings move is dropped if its column now wants the other kind; and a quick move back after such a drop still
+// converges.
 namespace
 {
     constexpr int32 FarRingTestMargin = 2;
@@ -693,6 +694,43 @@ namespace
                                           "drawn), idle after %d steps"),
             Away.Ready, Away.FarReady, Stale.Num(), Purged, FirstTakes, TakeCount, UndrawnTakes, Steps));
     }
+    // 7. A quick move back after a drop (review A1): V1/F3 settled at (0, 0), every job of the move to (3, 0) run with
+    // nothing taken, then (0, 0) drops the waiting meshes and (3, 0) comes back before any job runs. The dropped meshes
+    // were never shown, so each column whose mesh was dropped meshes its kind again and shows it at idle, both ways.
+    void FarRingTestQuickReturn(FFarRingTestReport& Report, const FFarRingTestWorld& World)
+    {
+        const TUniquePtr<FVoxelColumnPipeline> Pipeline = FarRingTestMakePipeline(World, 6);
+        const FVoxelStreamingRings Home = FarRingTestRings(FIntPoint::ZeroValue, 1, 3);
+        const FVoxelStreamingRings Away = FarRingTestRings(FIntPoint(3, 0), 1, 3);
+        const auto Never = [] { return false; };
+        const auto NoCheck = [](bool) {};
+        const auto NoTake = [](const FVoxelColumnPipeline::FReady&) {};
+        Pipeline->SetFocus(Home, 0);
+        if (!FarRingTestDrive(*Pipeline, EFarRingTestJobs::All, true, NoCheck, NoTake, Never))
+        {
+            Report.Fail(TEXT("7. not idle at (0, 0) after the step cap"));
+            return;
+        }
+        Pipeline->SetFocus(Away, 0);
+        if (!FarRingTestDrive(*Pipeline, EFarRingTestJobs::All, false, NoCheck, NoTake, Never))
+        {
+            Report.Fail(TEXT("7. jobs left at (3, 0) after the step cap"));
+            return;
+        }
+        const int64 DroppedBefore = Pipeline->GetStats().Dropped;
+        Pipeline->SetFocus(Home, 0);
+        const int64 Dropped = Pipeline->GetStats().Dropped - DroppedBefore;
+        Report.Test.TestTrue(
+            *FString::Printf(TEXT("7. SetFocus (0, 0) drops waiting meshes (%lld)"), Dropped), Dropped > 0);
+        Pipeline->SetFocus(Away, 0);
+        if (!FarRingTestDrive(*Pipeline, EFarRingTestJobs::All, true, NoCheck, NoTake, Never))
+        {
+            Report.Fail(TEXT("7. not idle back at (3, 0) after the step cap"));
+            return;
+        }
+        FarRingTestCheckIdle(Report, *Pipeline, TEXT("7. idle back at (3, 0)"), FarRingTestFar3, FarRingTestNeeded3);
+    }
+
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelPipelineFarRingTest, "Unnamed.Voxel.Pipeline.FarRing",
@@ -717,6 +755,7 @@ bool FVoxelPipelineFarRingTest::RunTest(const FString& Parameters)
     FarRingTestFarCap(Report, World);
     FarRingTestNoFarRing(Report, World);
     FarRingTestWaitingKinds(Report, World);
+    FarRingTestQuickReturn(Report, World);
     return true;
 }
 #endif
