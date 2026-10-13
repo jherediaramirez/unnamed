@@ -95,6 +95,179 @@ namespace VoxelFarMesher::FarDetail
         uint32 Tint;
         int32 Start, End;
     };
+
+    struct FTreeHorizontal
+    {
+        int32 Plane, Cell;
+        uint16 State;
+        uint32 Tint;
+        uint8 Face, Layer;
+    };
+
+    // The tree path is separate from the original canopy path so Trees=0 keeps its mesh bytes and merge order.
+    void MeshTrees(const FVoxelBlockTable& Table, const FVoxelFarSummary& Center,
+        const FVoxelFarSummary* const Neighbors[4], const VoxelFarMesher::FOptions& Options,
+        const FVoxelFarBorder* const Borders[4], TArray<FQuad, TInlineAllocator<256>>& Quads)
+    {
+        TRACE_CPUPROFILER_EVENT_SCOPE(VoxelFarMesher_Trees);
+        const uint8 LeafLayer = uint8(Options.CanopyLayer), WoodLayer = uint8(EVoxelLayer::Opaque);
+        const bool bOpaqueLeaves = Options.CanopyLayer == EVoxelLayer::Opaque;
+        TArray<FTreeHorizontal> HorizontalFaces;
+        HorizontalFaces.Reserve(Center.TreeRuns.Num() * 2);
+        for (int32 CellIndex = 0; CellIndex < Area; ++CellIndex)
+        {
+            const FVoxelFarCell& Cell = Center.Cells[CellIndex];
+            for (int32 Index = 0; Index < Cell.TreeRunCount; ++Index)
+            {
+                const FVoxelFarTreeRun& Run = Center.TreeRuns[Cell.TreeRunStart + Index];
+                const uint8 Layer = Run.bLeaves ? LeafLayer : WoodLayer;
+                auto Covers = [&Run, bOpaqueLeaves](const FVoxelFarTreeRun& Other)
+                { return Run.bLeaves || !Other.bLeaves || bOpaqueLeaves; };
+                const FVoxelFarTreeRun* Above = Index ? &Center.TreeRuns[Cell.TreeRunStart + Index - 1] : nullptr;
+                const FVoxelFarTreeRun* Below =
+                    Index + 1 < Cell.TreeRunCount ? &Center.TreeRuns[Cell.TreeRunStart + Index + 1] : nullptr;
+                if (!Above || Above->Bottom != Run.Top + 1 || !Covers(*Above))
+                    HorizontalFaces.Add(
+                        {Run.Top + 1, CellIndex, Run.TopState, Run.TopTint, uint8(EVoxelFace::Up), Layer});
+                const bool bGroundUnder = Cell.HasGround() && Cell.GroundZ == Run.Bottom - 1;
+                if (!bGroundUnder && (!Below || Below->Top != Run.Bottom - 1 || !Covers(*Below)))
+                    HorizontalFaces.Add(
+                        {Run.Bottom, CellIndex, Run.State, Run.BottomTint, uint8(EVoxelFace::Down), Layer});
+            }
+        }
+        HorizontalFaces.Sort(
+            [](const FTreeHorizontal& A, const FTreeHorizontal& B)
+            {
+                if (A.Face != B.Face) return A.Face < B.Face;
+                if (A.Layer != B.Layer) return A.Layer < B.Layer;
+                if (A.Plane != B.Plane) return A.Plane < B.Plane;
+                return A.Cell < B.Cell;
+            });
+        uint64 Keys[Area];
+        for (int32 Start = 0; Start < HorizontalFaces.Num();)
+        {
+            const FTreeHorizontal First = HorizontalFaces[Start];
+            FMemory::Memzero(Keys);
+            int32 End = Start;
+            while (End < HorizontalFaces.Num())
+            {
+                const FTreeHorizontal& Face = HorizontalFaces[End];
+                if (Face.Face != First.Face || Face.Layer != First.Layer || Face.Plane != First.Plane) break;
+                Keys[Face.Cell] = MakeKey(Face.Plane, GetDrawState(Table, Face.State), Face.Tint);
+                ++End;
+            }
+            MergeGreedy(Keys,
+                [&Table, &Quads, First](uint64 Key, int32 U, int32 V, int32 Width, int32 Height)
+                {
+                    FQuad& Quad = Quads.AddDefaulted_GetRef();
+                    Quad.Info = &Table.Get(GetKeyState(Key));
+                    Quad.Plane = float(First.Plane);
+                    Quad.U0 = float(U);
+                    Quad.U1 = float(U + Width);
+                    Quad.V0 = float(V);
+                    Quad.V1 = float(V + Height);
+                    Quad.Cell = FIntVector(U, V, First.Plane - (First.Face == uint8(EVoxelFace::Up) ? 1 : 0));
+                    Quad.Tint = GetKeyTint(Key);
+                    Quad.Face = First.Face;
+                    Quad.Layer = First.Layer;
+                });
+            Start = End;
+        }
+
+        for (int32 Face = 0; Face < 4; ++Face)
+        {
+            const bool bAlongY = VoxelFaces::GetAxis(Face) == 0, bPositive = VoxelFaces::IsPositive(Face);
+            const int32 Step = bPositive ? 1 : -1;
+            for (int32 Line = 0; Line < Size; ++Line)
+            {
+                // Unlike the single-canopy path, any number of disjoint tiers can reach this line.
+                TArray<FWallRun, TInlineAllocator<16>> Pending;
+                auto Flush = [&Table, &Quads, Face, Line, bPositive, bAlongY](const FWallRun& Run)
+                {
+                    FQuad& Quad = Quads.AddDefaulted_GetRef();
+                    Quad.Info = &Table.Get(Run.State);
+                    Quad.Plane = float(Line + (bPositive ? 1 : 0));
+                    Quad.U0 = float(bAlongY ? Run.Start : Run.Z0);
+                    Quad.U1 = float(bAlongY ? Run.End : Run.Z1 + 1);
+                    Quad.V0 = float(bAlongY ? Run.Z0 : Run.Start);
+                    Quad.V1 = float(bAlongY ? Run.Z1 + 1 : Run.End);
+                    Quad.Cell = bAlongY ? FIntVector(Line, Run.Start, Run.Z0) : FIntVector(Run.Start, Line, Run.Z0);
+                    Quad.Tint = Run.Tint;
+                    Quad.Face = uint8(Face);
+                    Quad.Layer = Run.Layer;
+                };
+                for (int32 Along = 0; Along < Size; ++Along)
+                {
+                    const int32 X = bAlongY ? Line : Along, Y = bAlongY ? Along : Line;
+                    const int32 NX = X + (bAlongY ? Step : 0), NY = Y + (bAlongY ? 0 : Step);
+                    const bool bAcross = NX < 0 || NX >= Size || NY < 0 || NY >= Size;
+                    const FVoxelFarSummary* NextSummary = bAcross ? (Neighbors ? Neighbors[Face] : nullptr) : &Center;
+                    const FVoxelFarCell* Next =
+                        NextSummary ? &NextSummary->Get(NX & (Size - 1), NY & (Size - 1)) : nullptr;
+                    const FVoxelFarBorder* Border = bAcross && Borders ? Borders[Face] : nullptr;
+                    const FVoxelFarCell& Cell = Center.Get(X, Y);
+                    if (Cell.TreeRunCount)
+                    {
+                        // Bits: opaque coverage (1), leaf-shell coverage (2). A world-height mask avoids quadratic
+                        // interval subtraction on pathological edited columns without imposing a tier limit.
+                        uint8 Covered[VoxelConstants::Height] = {};
+                        if (Next)
+                        {
+                            if (Next->HasGround())
+                                for (int32 Z = VoxelConstants::MinZ; Z <= Next->GroundZ; ++Z)
+                                    if (!Border || !Border->IsOpen(Along, Z)) Covered[Z - VoxelConstants::MinZ] = 1;
+                            if (bAcross)
+                            {
+                                // A wanted-near neighbour may still display an old far mesh. Its actual wood and
+                                // lower tiers therefore cannot hide a boundary face yet. The legacy upper canopy
+                                // exists in both far modes; leaves can still join it without adding a visible seam.
+                                if (Next->HasCanopy())
+                                    for (int32 Z = Next->CanopyBottom; Z <= Next->CanopyTop; ++Z)
+                                        Covered[Z - VoxelConstants::MinZ] |= 2;
+                            }
+                            else
+                                for (const FVoxelFarTreeRun& Run : NextSummary->GetTreeRuns(NX, NY))
+                                    for (int32 Z = Run.Bottom; Z <= Run.Top; ++Z)
+                                        Covered[Z - VoxelConstants::MinZ] |= Run.bLeaves ? (bOpaqueLeaves ? 3 : 2) : 1;
+                        }
+                        auto Offer = [&Pending, Along](
+                                         const FVoxelFarTreeRun& TreeRun, int32 Bottom, int32 Top, uint8 Layer)
+                        {
+                            for (FWallRun& Run : Pending)
+                                if (Run.End == Along && Run.Z0 == Bottom && Run.Z1 == Top &&
+                                    Run.State == TreeRun.State && Run.Layer == Layer && Run.Tint == TreeRun.Tint)
+                                {
+                                    Run.End = Along + 1;
+                                    return;
+                                }
+                            Pending.Add({Bottom, Top, TreeRun.State, Layer, TreeRun.Tint, Along, Along + 1});
+                        };
+                        for (const FVoxelFarTreeRun& Run : Center.GetTreeRuns(X, Y))
+                        {
+                            const uint8 Mask = Run.bLeaves ? 3 : 1, Layer = Run.bLeaves ? LeafLayer : WoodLayer;
+                            for (int32 Z = Run.Bottom; Z <= Run.Top; ++Z)
+                            {
+                                if (Covered[Z - VoxelConstants::MinZ] & Mask) continue;
+                                const int32 Bottom = Z;
+                                while (Z < Run.Top && !(Covered[Z + 1 - VoxelConstants::MinZ] & Mask))
+                                    ++Z;
+                                Offer(Run, Bottom, Z, Layer);
+                            }
+                        }
+                    }
+                    int32 Kept = 0;
+                    for (const FWallRun& Run : Pending)
+                        if (Run.End == Along + 1)
+                            Pending[Kept++] = Run;
+                        else
+                            Flush(Run);
+                    Pending.SetNum(Kept, EAllowShrinking::No);
+                }
+                for (const FWallRun& Run : Pending)
+                    Flush(Run);
+            }
+        }
+    }
 }
 
 FVoxelFarClasses::FVoxelFarClasses(const FVoxelBlockTable& Table)
@@ -109,10 +282,14 @@ FVoxelFarClasses::FVoxelFarClasses(const FVoxelBlockTable& Table)
         }
 
     Classes.SetNumUninitialized(Table.GetStateCount());
+    Logs.Init(false, Table.GetStateCount());
     EVoxelFarClass* Data = Classes.GetData();
     for (int32 State = 0; State < Table.GetStateCount(); ++State)
     {
         const FVoxelStateInfo& Info = Table.Get(uint16(State));
+        // The suffix also matches crop stems (baked models). Only full wood cubes belong in tree runs; keep the
+        // broader legacy skip rule below unchanged.
+        Logs[State] = Info.Shape == EVoxelShape::Full && Info.Block < LogBlocks.Num() && LogBlocks[Info.Block];
         EVoxelFarClass Class = EVoxelFarClass::Ground;
         if (Info.Shape == EVoxelShape::Air || (Info.Block < LogBlocks.Num() && LogBlocks[Info.Block]))
             Class = EVoxelFarClass::Skip;
@@ -142,13 +319,15 @@ bool FVoxelFarClasses::IsLogId(FStringView Id)
 
 void VoxelFarMesher::Summarize(const FVoxelFarClasses& Classes, const FVoxelBlockTable& Table,
     const FVoxelColumn& Column, FVoxelFarSummary& Out, const FVoxelTintTable* Tints,
-    const FVoxelNeighborhood* Neighborhood, const FVoxelMeshOptions& MeshOptions)
+    const FVoxelNeighborhood* Neighborhood, const FVoxelMeshOptions& MeshOptions, bool bTrees)
 {
     using namespace FarDetail;
     TRACE_CPUPROFILER_EVENT_SCOPE(VoxelFarMesher_Summarize);
 
     Out.Position = Column.GetPosition();
     Out.LowestGround = FVoxelFarCell::NoZ;
+    Out.bTrees = bTrees;
+    Out.TreeRuns.Reset();
     FVoxelFarCell* const Cells = Out.Cells;
     int32 Lowest = MAX_int32;
     for (int32 Y = 0; Y < Size; ++Y)
@@ -156,6 +335,7 @@ void VoxelFarMesher::Summarize(const FVoxelFarClasses& Classes, const FVoxelBloc
         {
             FVoxelFarCell& Cell = Cells[Y * Size + X];
             Cell = FVoxelFarCell();
+            Cell.TreeRunStart = Out.TreeRuns.Num();
             // The last snow layer seen: it tops the leaves or ground cell right under it.
             int32 SnowZ = MIN_int32;
             uint16 SnowState = 0;
@@ -166,6 +346,22 @@ void VoxelFarMesher::Summarize(const FVoxelFarClasses& Classes, const FVoxelBloc
             {
                 const uint16 State = GetState(Column, X, Y, Z);
                 const EVoxelFarClass Class = Classes.Get(State);
+                if (bTrees && (Class == EVoxelFarClass::Leaves || Classes.IsLog(State)))
+                {
+                    const uint16 DrawState = GetDrawState(Table, State);
+                    FVoxelFarTreeRun* Previous = Cell.TreeRunCount ? &Out.TreeRuns.Last() : nullptr;
+                    if (Previous && Previous->Bottom == Z + 1 && Previous->State == DrawState)
+                        Previous->Bottom = int16(Z);
+                    else
+                    {
+                        FVoxelFarTreeRun& Run = Out.TreeRuns.AddDefaulted_GetRef();
+                        Run.Bottom = Run.Top = int16(Z);
+                        Run.State = DrawState;
+                        Run.TopState = SnowZ == Z + 1 ? SnowState : DrawState;
+                        Run.bLeaves = Class == EVoxelFarClass::Leaves;
+                        ++Cell.TreeRunCount;
+                    }
+                }
                 if (bInCanopy && Class != EVoxelFarClass::Leaves)
                 {
                     bInCanopy = false;
@@ -233,6 +429,11 @@ void VoxelFarMesher::Summarize(const FVoxelFarClasses& Classes, const FVoxelBloc
             }
             if (Cell.HasFluid()) Cell.FluidTint = Table.Get(Cell.FluidState).Tint;
         }
+        for (FVoxelFarTreeRun& Run : Out.TreeRuns)
+        {
+            Run.Tint = Run.BottomTint = Table.Get(Run.State).Tint;
+            Run.TopTint = Table.Get(Run.TopState).Tint;
+        }
         return;
     }
 
@@ -268,6 +469,13 @@ void VoxelFarMesher::Summarize(const FVoxelFarClasses& Classes, const FVoxelBloc
                 Ask(Cell.CanopyTopState, EVoxelFace::Up, X, Y, TopZ, Cell.CanopyTopTint);
             }
             if (Cell.HasFluid()) Ask(Cell.FluidState, EVoxelFace::Up, X, Y, Cell.FluidZ, Cell.FluidTint);
+            for (int32 Index = Cell.TreeRunStart; Index < Cell.TreeRunStart + Cell.TreeRunCount; ++Index)
+            {
+                FVoxelFarTreeRun& Run = Out.TreeRuns[Index];
+                Ask(Run.State, EVoxelFace::West, X, Y, Run.Top, Run.Tint);
+                Ask(Run.State, EVoxelFace::Down, X, Y, Run.Bottom, Run.BottomTint);
+                Ask(Run.TopState, EVoxelFace::Up, X, Y, Run.TopState != Run.State ? Run.Top + 1 : Run.Top, Run.TopTint);
+            }
         }
     TArray<uint32> Results;
     Results.SetNumUninitialized(Queries.Num());
@@ -446,7 +654,7 @@ void VoxelFarMesher::Mesh(const FVoxelBlockTable& Table, const FVoxelFarSummary&
                             }
                         }
                     }
-                    if (Cell.HasCanopy())
+                    if (!Options.bTrees && Cell.HasCanopy())
                     {
                         // [Bottom, Top] minus what the neighbour's ground and canopy cover; a missing one covers
                         // nothing.
@@ -484,24 +692,31 @@ void VoxelFarMesher::Mesh(const FVoxelBlockTable& Table, const FVoxelFarSummary&
         }
     }
 
-    // Canopy tops, and bottoms unless ground lies right under them.
-    for (int32 Index = 0; Index < Area; ++Index)
+    if (Options.bTrees)
     {
-        const FVoxelFarCell& Cell = Cells[Index];
-        Keys[Index] = Cell.HasCanopy()
-            ? MakeKey(Cell.CanopyTop, GetDrawState(Table, Cell.CanopyTopState), Cell.CanopyTopTint)
-            : 0;
+        MeshTrees(Table, Center, Neighbors, Options, Borders, Quads);
     }
-    Horizontal(EVoxelFace::Up, 1, CanopyLayer);
-    for (int32 Index = 0; Index < Area; ++Index)
+    else
     {
-        const FVoxelFarCell& Cell = Cells[Index];
-        const bool bGroundUnder = Cell.HasGround() && Cell.GroundZ == Cell.CanopyBottom - 1;
-        Keys[Index] = Cell.HasCanopy() && !bGroundUnder
-            ? MakeKey(Cell.CanopyBottom, GetDrawState(Table, Cell.CanopyState), Cell.CanopyTint)
-            : 0;
+        // Legacy canopy tops, and bottoms unless ground lies right under them.
+        for (int32 Index = 0; Index < Area; ++Index)
+        {
+            const FVoxelFarCell& Cell = Cells[Index];
+            Keys[Index] = Cell.HasCanopy()
+                ? MakeKey(Cell.CanopyTop, GetDrawState(Table, Cell.CanopyTopState), Cell.CanopyTopTint)
+                : 0;
+        }
+        Horizontal(EVoxelFace::Up, 1, CanopyLayer);
+        for (int32 Index = 0; Index < Area; ++Index)
+        {
+            const FVoxelFarCell& Cell = Cells[Index];
+            const bool bGroundUnder = Cell.HasGround() && Cell.GroundZ == Cell.CanopyBottom - 1;
+            Keys[Index] = Cell.HasCanopy() && !bGroundUnder
+                ? MakeKey(Cell.CanopyBottom, GetDrawState(Table, Cell.CanopyState), Cell.CanopyTint)
+                : 0;
+        }
+        Horizontal(EVoxelFace::Down, 0, CanopyLayer);
     }
-    Horizontal(EVoxelFace::Down, 0, CanopyLayer);
 
     // Fluid tops, on each fluid's own layer.
     for (int32 Index = 0; Index < Area; ++Index)

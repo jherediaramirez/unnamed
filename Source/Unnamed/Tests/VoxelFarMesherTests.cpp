@@ -212,6 +212,398 @@ namespace
         }
     }
 
+    // Tree coverage is checked against the input voxels, not the run list or the mesher's culling helpers. Keys
+    // identify an oriented unit face by its owning world cell, so opposing internal border caps are distinguishable
+    // from a duplicate external face. This fixture stays within [-256, 255] in X/Y and the normal world Z range.
+    uint64 FarTreeTestFaceKey(const FIntVector& Cell, int32 Face)
+    {
+        return ((uint64(Face) * 512 + Cell.X + 256) * 512 + Cell.Y + 256) * 512 + Cell.Z + 64;
+    }
+
+    void FarMesherTestTrees(FAutomationTestBase& Test)
+    {
+        FVoxelBlockTable Table = VoxelTestBlocks::Make();
+        constexpr uint16 LogY = VoxelTestBlocks::Count, LogX = LogY + 1, LogZ = LogY + 2, OtherLeaves = LogY + 3,
+                         CropStem = LogY + 4, AttachedStem = LogY + 5;
+        for (uint16 State : {LogY, LogX, LogZ})
+        {
+            FVoxelStateInfo Info = Table.Get(VoxelTestBlocks::Stone);
+            Info.Block = 8;
+            Info.Tint = 0x102030 + State * 0x010101;
+            for (int32 Face = 0; Face < 6; ++Face)
+                Info.Faces[Face] = uint32(State * 8 + Face) | VoxelFaces::CullBit;
+            Table.SetState(State, Info);
+        }
+        // Three states of one log block stand in for its three axes; every face code is different.
+        Table.SetDefaultState(TEXT("oak_log"), LogY);
+        FVoxelStateInfo Leaves = Table.Get(VoxelTestBlocks::Leaves);
+        Leaves.Tint = 0x246824;
+        Table.SetState(VoxelTestBlocks::Leaves, Leaves);
+        Leaves.Block = 9;
+        Leaves.Tint = 0xA84B26;
+        for (int32 Face = 0; Face < 6; ++Face)
+            Leaves.Faces[Face] = uint32(OtherLeaves * 8 + Face) | VoxelFaces::CullBit;
+        Table.SetState(OtherLeaves, Leaves);
+        Table.SetDefaultState(TEXT("birch_leaves"), OtherLeaves);
+        FVoxelStateInfo Snow = Table.Get(VoxelTestBlocks::Snow3);
+        Snow.Tint = 0xE1F0FE;
+        Table.SetState(VoxelTestBlocks::Snow3, Snow);
+        // A suffix alone does not make vegetation into wood: crop stems are models, not full trunk cubes.
+        for (uint16 State : {CropStem, AttachedStem})
+        {
+            FVoxelStateInfo Model;
+            Model.Shape = EVoxelShape::Model;
+            Model.Layer = EVoxelLayer::Model;
+            Model.Block = State == CropStem ? 10 : 11;
+            for (int32 Face = 0; Face < 6; ++Face)
+                Model.Faces[Face] = uint32(State * 8 + Face);
+            Table.SetState(State, Model);
+        }
+        Table.SetDefaultState(TEXT("minecraft:pumpkin_stem"), CropStem);
+        Table.SetDefaultState(TEXT("minecraft:attached_melon_stem"), AttachedStem);
+        const FVoxelFarClasses Classes(Table);
+        Test.TestTrue(TEXT("trees: all three states of a log block are recognized"),
+            Classes.IsLog(LogY) && Classes.IsLog(LogX) && Classes.IsLog(LogZ));
+        Test.TestTrue(TEXT("trees: log recognition leaves legacy classification unchanged"),
+            Classes.Get(LogY) == EVoxelFarClass::Skip && Classes.Get(LogX) == EVoxelFarClass::Skip &&
+                Classes.Get(LogZ) == EVoxelFarClass::Skip);
+        Test.TestFalse(TEXT("trees: a pumpkin crop stem model is not full-cube wood"), Classes.IsLog(CropStem));
+        Test.TestFalse(TEXT("trees: an attached melon stem model is not full-cube wood"), Classes.IsLog(AttachedStem));
+        Test.TestTrue(TEXT("trees: crop stem legacy skip classification is preserved"),
+            Classes.Get(CropStem) == EVoxelFarClass::Skip && Classes.Get(AttachedStem) == EVoxelFarClass::Skip);
+
+        // Center (-2, -3): trees cross each of its four sides and its southeast corner. The last two crowns
+        // overlap, but the voxel field has one owner per occupied cell. All coordinates are deliberately negative.
+        const FIntPoint Center(-2, -3);
+        const FIntVector Origin(Center.X * 16, Center.Y * 16, 0);
+        const FIntPoint Roots[] = {{0, 7}, {15, 7}, {7, 0}, {7, 15}, {15, 15}, {4, 5}, {7, 5}};
+        TMap<FIntVector, uint16> Voxels;
+        auto Put = [&Voxels, &Origin](int32 X, int32 Y, int32 Z, uint16 State)
+        { Voxels.Add(Origin + FIntVector(X, Y, Z), State); };
+        for (int32 RootIndex = 0; RootIndex < UE_ARRAY_COUNT(Roots); ++RootIndex)
+        {
+            const FIntPoint Root = Roots[RootIndex];
+            for (int32 Tier = 0; Tier < 3; ++Tier)
+                for (int32 DY = -2; DY <= 2; ++DY)
+                    for (int32 DX = -2; DX <= 2; ++DX)
+                        for (int32 DZ = 0; DZ < 2; ++DZ)
+                            Put(Root.X + DX, Root.Y + DY, 68 + RootIndex % 5 + Tier * 4 + DZ,
+                                Tier == 1 ? OtherLeaves : uint16(VoxelTestBlocks::Leaves));
+        }
+        for (int32 RootIndex = 0; RootIndex < UE_ARRAY_COUNT(Roots); ++RootIndex)
+        {
+            const FIntPoint Root = Roots[RootIndex];
+            for (int32 Z = 65; Z <= 77 + RootIndex % 5; ++Z)
+                Put(Root.X, Root.Y, Z, LogY);
+            for (int32 DX = -2; DX <= 2; ++DX)
+                Put(Root.X + DX, Root.Y, 72 + RootIndex % 5, LogX);
+            for (int32 DY = -2; DY <= 2; ++DY)
+                Put(Root.X, Root.Y + DY, 76 + RootIndex % 5, LogZ);
+        }
+        // Twelve separate leaf runs defeat a fixed eight-run representation. They are far above the other crowns.
+        for (int32 Run = 0; Run < 12; ++Run)
+            Put(11, 11, 90 + Run * 3, Run & 1 ? OtherLeaves : uint16(VoxelTestBlocks::Leaves));
+        // Snow changes only the exposed top's state/tint. Also exercise a bare stem and adjacent axis transitions.
+        Put(2, 11, 68, VoxelTestBlocks::Leaves);
+        Put(2, 11, 69, VoxelTestBlocks::Snow3);
+        Put(3, 11, 68, OtherLeaves);
+        Put(3, 11, 69, VoxelTestBlocks::Snow3);
+        Put(4, 11, 65, LogY);
+        Put(4, 11, 66, LogX);
+        Put(4, 11, 67, LogZ);
+        Put(4, 11, 68, VoxelTestBlocks::Snow3);
+        // The independent output checker rejects any tree box emitted for either model.
+        Put(5, 11, 65, CropStem);
+        Put(6, 11, 65, AttachedStem);
+        auto StateAt = [&Voxels](const FIntVector& Cell) -> uint16
+        {
+            if (Cell.Z <= 64) return VoxelTestBlocks::Stone;
+            const uint16* State = Voxels.Find(Cell);
+            return State ? *State : uint16(0);
+        };
+        auto IsTree = [=](uint16 State)
+        {
+            return State == LogY || State == LogX || State == LogZ || State == VoxelTestBlocks::Leaves ||
+                State == OtherLeaves;
+        };
+        auto IsLeaf = [=](uint16 State) { return State == VoxelTestBlocks::Leaves || State == OtherLeaves; };
+        const FIntVector Steps[6] = {{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}};
+        TArray<TSharedRef<FVoxelColumn>> Columns;
+        TArray<FVoxelFarSummary> Summaries;
+        TArray<FVoxelFarSummary> LegacySummaries;
+        Summaries.SetNum(9);
+        LegacySummaries.SetNum(9);
+        for (int32 DY = -1; DY <= 1; ++DY)
+            for (int32 DX = -1; DX <= 1; ++DX)
+            {
+                const FIntPoint Position = Center + FIntPoint(DX, DY);
+                Columns.Add(VoxelTestBlocks::MakeColumn(Table, Position, [=, &StateAt](int32 X, int32 Y, int32 Z)
+                    { return StateAt(FIntVector(Position.X * 16 + X, Position.Y * 16 + Y, Z)); }));
+                VoxelFarMesher::Summarize(Classes, Table, Columns.Last().Get(), Summaries[(DY + 1) * 3 + DX + 1],
+                    nullptr, nullptr, FVoxelMeshOptions(), true);
+                VoxelFarMesher::Summarize(Classes, Table, Columns.Last().Get(), LegacySummaries[(DY + 1) * 3 + DX + 1]);
+            }
+        // This is supplementary storage validation; the output coverage assertions below remain independent.
+        Test.TestEqual(TEXT("trees: all twelve separated crown tiers survive the summary"),
+            Summaries[4].GetTreeRuns(11, 11).Num(), 12);
+        Test.TestTrue(TEXT("trees: model crop stems produce no wood runs"),
+            Summaries[4].GetTreeRuns(5, 11).IsEmpty() && Summaries[4].GetTreeRuns(6, 11).IsEmpty());
+        TUniquePtr<FVoxelFarSummary> Reused = MakeUnique<FVoxelFarSummary>();
+        VoxelFarMesher::Summarize(
+            Classes, Table, Columns[4].Get(), *Reused, nullptr, nullptr, FVoxelMeshOptions(), true);
+        VoxelFarMesher::Summarize(Classes, Table, Columns[4].Get(), *Reused);
+        Test.TestTrue(TEXT("trees: summarizing with the switch off clears previously collected tree runs"),
+            !Reused->bTrees && Reused->TreeRuns.IsEmpty() && Reused->GetTreeRuns(11, 11).IsEmpty());
+
+        // With unavailable neighbours, internal border caps are deliberately conservative. They may also exist
+        // with summaries: a far column cannot assume the neighbour currently displays the same representation.
+        uint64 NewNeighborHash[2] = {}, LegacyCenterHash[2] = {};
+        const TCHAR* NeighborNames[] = {TEXT("tree1"), TEXT("tree0"), TEXT("mixed tree0/tree1"), TEXT("missing")};
+        for (const bool bOpaqueLeaves : {false, true})
+            for (int32 NeighborMode = 0; NeighborMode < 4; ++NeighborMode)
+            {
+                VoxelFarMesher::FOptions Options;
+                Options.bTrees = true;
+                Options.CanopyLayer = bOpaqueLeaves ? EVoxelLayer::Opaque : EVoxelLayer::Cutout;
+                const FString Scenario = FString::Printf(TEXT("trees %s %s neighbours"),
+                    bOpaqueLeaves ? TEXT("opaque") : TEXT("cutout"), NeighborNames[NeighborMode]);
+                uint64 MeshHash = 0, LegacyHash = 0;
+                TMap<uint64, int32> Counts;
+                int32 Wrong = 0, Duplicate = 0, Missing = 0, Internal = 0, Quads = 0;
+                FString FirstWrong;
+                auto Fail = [&Wrong, &FirstWrong](const FString& Reason)
+                {
+                    if (!Wrong++) FirstWrong = Reason;
+                };
+                for (int32 DY = -1; DY <= 1; ++DY)
+                    for (int32 DX = -1; DX <= 1; ++DX)
+                    {
+                        const FVoxelFarSummary* Neighbors[4] = {};
+                        for (int32 Face = 0; Face < 4; ++Face)
+                        {
+                            const int32 NX = DX + Steps[Face].X, NY = DY + Steps[Face].Y;
+                            if (NeighborMode < 3 && FMath::Abs(NX) <= 1 && FMath::Abs(NY) <= 1)
+                            {
+                                const int32 Index = (NY + 1) * 3 + NX + 1;
+                                const bool bLegacy = NeighborMode == 1 || (NeighborMode == 2 && (Index & 1));
+                                Neighbors[Face] = bLegacy ? &LegacySummaries[Index] : &Summaries[Index];
+                            }
+                        }
+                        FVoxelMeshData Mesh;
+                        VoxelFarMesher::Mesh(Table, Summaries[(DY + 1) * 3 + DX + 1], Neighbors, Options, Mesh);
+                        FarMesherTestHash(Mesh, (DY + 1) * 3 + DX + 1, MeshHash);
+                        VoxelFarMesher::FOptions LegacyOptions = Options;
+                        LegacyOptions.bTrees = false;
+                        FVoxelMeshData LegacyMesh;
+                        VoxelFarMesher::Mesh(
+                            Table, LegacySummaries[(DY + 1) * 3 + DX + 1], Neighbors, LegacyOptions, LegacyMesh);
+                        FarMesherTestHash(LegacyMesh, (DY + 1) * 3 + DX + 1, LegacyHash);
+                        Quads += Mesh.GetQuadCount();
+                        const FIntPoint Position = Center + FIntPoint(DX, DY);
+                        for (int32 LayerIndex = 0; LayerIndex < int32(EVoxelLayer::Count); ++LayerIndex)
+                        {
+                            const FVoxelMeshLayer& Layer = Mesh.Layers[LayerIndex];
+                            for (int32 Quad = 0; Quad < Layer.GetQuadCount(); ++Quad)
+                            {
+                                const int32 Face = int32(Layer.TintFaces[Quad * 4].Y);
+                                if (Face < 0 || Face >= 6)
+                                {
+                                    Fail(TEXT("face direction outside 0..5"));
+                                    continue;
+                                }
+                                const int32 Axis = Face / 2, U = (Axis + 1) % 3, V = (Axis + 2) % 3;
+                                FVector3f Min = Layer.Positions[Quad * 4], Max = Min;
+                                for (int32 Corner = 1; Corner < 4; ++Corner)
+                                {
+                                    Min = Min.ComponentMin(Layer.Positions[Quad * 4 + Corner]);
+                                    Max = Max.ComponentMax(Layer.Positions[Quad * 4 + Corner]);
+                                }
+                                const int32 Plane = FMath::RoundToInt(Min[Axis]);
+                                const bool bUnitAligned = Min[Axis] == Max[Axis] && Min[Axis] == float(Plane) &&
+                                    Min[U] == float(FMath::RoundToInt(Min[U])) &&
+                                    Max[U] == float(FMath::RoundToInt(Max[U])) &&
+                                    Min[V] == float(FMath::RoundToInt(Min[V])) &&
+                                    Max[V] == float(FMath::RoundToInt(Max[V]));
+                                if (!bUnitAligned)
+                                    Fail(TEXT("tree/ground quad not axis aligned to unit cell boundaries"));
+                                for (int32 B = FMath::RoundToInt(Min[V]); B < FMath::RoundToInt(Max[V]); ++B)
+                                    for (int32 A = FMath::RoundToInt(Min[U]); A < FMath::RoundToInt(Max[U]); ++A)
+                                    {
+                                        FIntVector Local;
+                                        Local[Axis] = Plane - (Face & 1);
+                                        Local[U] = A;
+                                        Local[V] = B;
+                                        if (Local.Z <= 64) continue; // The unchanged heightfield's ground.
+                                        const FIntVector World =
+                                            Local + FIntVector(Position.X * 16, Position.Y * 16, 0);
+                                        const uint16 State = StateAt(World);
+                                        if (Local.X < 0 || Local.X >= 16 || Local.Y < 0 || Local.Y >= 16 ||
+                                            !IsTree(State))
+                                        {
+                                            Fail(FString::Printf(TEXT("quad has no owned tree cell at %s face %d"),
+                                                *World.ToString(), Face));
+                                            continue;
+                                        }
+                                        ++Counts.FindOrAdd(FarTreeTestFaceKey(World, Face));
+                                        const uint16 Above = StateAt(World + Steps[5]);
+                                        const uint16 Draw =
+                                            Face == 5 && Above == VoxelTestBlocks::Snow3 ? Above : State;
+                                        const FVoxelStateInfo& Info = Table.Get(Draw);
+                                        const int32 WantedLayer =
+                                            int32(IsLeaf(State) ? Options.CanopyLayer : EVoxelLayer::Opaque);
+                                        bool bSame = LayerIndex == WantedLayer;
+                                        for (int32 Corner = 0; Corner < 4; ++Corner)
+                                        {
+                                            const int32 Vertex = Quad * 4 + Corner;
+                                            bSame = bSame && uint32(Layer.Codes[Vertex].X) == Info.Faces[Face] &&
+                                                uint32(Layer.TintFaces[Vertex].X) == Info.Tint &&
+                                                int32(Layer.TintFaces[Vertex].Y) == Face &&
+                                                Layer.Colors[Vertex].R == 255;
+                                        }
+                                        if (!bSame)
+                                            Fail(FString::Printf(
+                                                TEXT("state/axis/tint/layer mismatch at %s face %d state %d"),
+                                                *World.ToString(), Face, Draw));
+                                    }
+                            }
+                        }
+                    }
+                int32 Required = 0;
+                for (const TPair<FIntVector, uint16>& Pair : Voxels)
+                {
+                    if (!IsTree(Pair.Value)) continue;
+                    for (int32 Face = 0; Face < 6; ++Face)
+                    {
+                        const uint16 Next = StateAt(Pair.Key + Steps[Face]);
+                        const bool bCovered = Next == VoxelTestBlocks::Stone ||
+                            (IsTree(Next) && (IsLeaf(Pair.Value) || !IsLeaf(Next) || bOpaqueLeaves));
+                        const int32 LocalX = ((Pair.Key.X % 16) + 16) % 16;
+                        const int32 LocalY = ((Pair.Key.Y % 16) + 16) % 16;
+                        const bool bBoundary = Face == 0 ? LocalX == 0
+                            : Face == 1                  ? LocalX == 15
+                            : Face == 2                  ? LocalY == 0
+                            : Face == 3                  ? LocalY == 15
+                                                         : false;
+                        const int32 Count = Counts.FindRef(FarTreeTestFaceKey(Pair.Key, Face));
+                        Duplicate += Count > 1;
+                        if (!bCovered)
+                        {
+                            ++Required;
+                            if (!Count)
+                            {
+                                ++Missing;
+                                if (FirstWrong.IsEmpty())
+                                    FirstWrong = FString::Printf(TEXT("missing exterior face at %s face %d state %d"),
+                                        *Pair.Key.ToString(), Face, Pair.Value);
+                            }
+                        }
+                        else if (Count && bBoundary && IsTree(Next))
+                            Internal += Count;
+                        else if (Count)
+                            Fail(FString::Printf(
+                                TEXT("unexpected internal face at %s face %d"), *Pair.Key.ToString(), Face));
+                    }
+                }
+                Test.TestEqual(Scenario + TEXT(": missing required exterior faces"), Missing, 0);
+                Test.TestEqual(Scenario + TEXT(": duplicated unit faces"), Duplicate, 0);
+                Test.TestEqual(Scenario + TEXT(": wrong faces, state, axes, tint or layer"), Wrong, 0);
+                const int32 Look = bOpaqueLeaves ? 1 : 0;
+                if (NeighborMode == 0)
+                {
+                    NewNeighborHash[Look] = MeshHash;
+                    LegacyCenterHash[Look] = LegacyHash;
+                }
+                else if (NeighborMode < 3)
+                {
+                    Test.TestEqual(Scenario + TEXT(": candidate output unchanged across mixed switch handoff"),
+                        MeshHash, NewNeighborHash[Look]);
+                    Test.TestEqual(Scenario + TEXT(": legacy output unchanged across mixed switch handoff"), LegacyHash,
+                        LegacyCenterHash[Look]);
+                }
+                if (!FirstWrong.IsEmpty()) Test.AddInfo(Scenario + TEXT(": ") + FirstWrong);
+                Test.AddInfo(
+                    FString::Printf(TEXT("%s: %d required unit faces, %d conservative internal border caps, %d quads"),
+                        *Scenario, Required, Internal, Quads));
+            }
+
+        // An actually displayed near neighbour has a roof above the trees and an asymmetric stone screen under
+        // it. Its heightfield alone hides the entire border; its actual cells must reveal wood and every leaf tier
+        // through the openings. Expected coverage reads those raw cells, independently of SummarizeBorder's mask.
+        for (int32 Side = 0; Side < 4; ++Side)
+        {
+            const bool bAlongY = Side < 2;
+            const int32 FacingEdge = (Side & 1) ? 0 : 15;
+            const FIntPoint NearPosition = Center + FIntPoint(Steps[Side].X, Steps[Side].Y);
+            const TSharedRef<FVoxelColumn> NearColumn = VoxelTestBlocks::MakeColumn(Table, NearPosition,
+                [=](int32 X, int32 Y, int32 Z) -> uint16
+                {
+                    const int32 Edge = bAlongY ? X : Y, Along = bAlongY ? Y : X;
+                    const bool bScreen = Edge == FacingEdge && (Along + Side) % 3 == 0 && Z >= 70 && Z <= 72;
+                    return Z <= 64 || Z == 86 || bScreen ? uint16(VoxelTestBlocks::Stone) : uint16(0);
+                });
+            TUniquePtr<FVoxelFarSummary> NearSummary = MakeUnique<FVoxelFarSummary>();
+            VoxelFarMesher::Summarize(Classes, Table, *NearColumn, *NearSummary);
+            TUniquePtr<FVoxelFarBorder> NearBorder = MakeUnique<FVoxelFarBorder>();
+            VoxelFarMesher::SummarizeBorder(Table, *NearColumn, Side, *NearBorder);
+            const FVoxelFarSummary* Neighbors[4] = {};
+            Neighbors[Side] = NearSummary.Get();
+            for (const bool bOpaqueLeaves : {false, true})
+                for (const bool bActualBorder : {false, true})
+                {
+                    VoxelFarMesher::FOptions Options;
+                    Options.bTrees = true;
+                    Options.CanopyLayer = bOpaqueLeaves ? EVoxelLayer::Opaque : EVoxelLayer::Cutout;
+                    const FVoxelFarBorder* Borders[4] = {};
+                    Borders[Side] = bActualBorder ? NearBorder.Get() : nullptr;
+                    FVoxelMeshData Mesh;
+                    VoxelFarMesher::Mesh(Table, Summaries[4], Neighbors, Options, Mesh, Borders);
+                    TMap<int64, int32> Counts;
+                    int32 WrongState = 0;
+                    for (int32 LayerIndex = 0; LayerIndex < int32(EVoxelLayer::Count); ++LayerIndex)
+                    {
+                        const FVoxelMeshLayer& Layer = Mesh.Layers[LayerIndex];
+                        FarMesherTestRasterize(Layer,
+                            [&](int32 Quad, int32 Face, int32 X, int32 Y, int32 Z)
+                            {
+                                if (Face != Side || (bAlongY ? X : Y) != ((Side & 1) ? 15 : 0) || Z < 65) return;
+                                ++Counts.FindOrAdd(FarMesherTestUnitKey(Face, X, Y, Z));
+                                const uint16 State = StateAt(Origin + FIntVector(X, Y, Z));
+                                const int32 WantedLayer =
+                                    int32(IsLeaf(State) ? Options.CanopyLayer : EVoxelLayer::Opaque);
+                                WrongState += !IsTree(State) || LayerIndex != WantedLayer ||
+                                    uint32(Layer.Codes[Quad * 4].X) != Table.Get(State).Faces[Face];
+                            });
+                    }
+                    int32 Missing = 0, Extra = 0, Duplicate = 0, WoodOpen = 0, LeavesOpen = 0;
+                    for (int32 Along = 0; Along < 16; ++Along)
+                        for (int32 Z = 65; Z < 86; ++Z)
+                        {
+                            const int32 OwnEdge = (Side & 1) ? 15 : 0;
+                            const int32 X = bAlongY ? OwnEdge : Along, Y = bAlongY ? Along : OwnEdge;
+                            const uint16 State = StateAt(Origin + FIntVector(X, Y, Z));
+                            const uint16 Next =
+                                NearColumn->GetState(bAlongY ? FacingEdge : Along, bAlongY ? Along : FacingEdge, Z);
+                            const bool bExpected = IsTree(State) && bActualBorder && Next == 0;
+                            const int32 Count = Counts.FindRef(FarMesherTestUnitKey(Side, X, Y, Z));
+                            Missing += bExpected && !Count;
+                            Extra += !bExpected && Count;
+                            Duplicate += Count > 1;
+                            WoodOpen += bExpected && !IsLeaf(State);
+                            LeavesOpen += bExpected && IsLeaf(State);
+                        }
+                    const FString What = FString::Printf(TEXT("trees near roof side %d %s %s border"), Side,
+                        bOpaqueLeaves ? TEXT("opaque") : TEXT("cutout"), bActualBorder ? TEXT("actual") : TEXT("no"));
+                    Test.TestEqual(What + TEXT(": missing exposed wood/crown faces"), Missing, 0);
+                    Test.TestEqual(What + TEXT(": unexpected covered faces"), Extra, 0);
+                    Test.TestEqual(What + TEXT(": duplicate faces"), Duplicate, 0);
+                    Test.TestEqual(What + TEXT(": wrong owner/state/layer"), WrongState, 0);
+                    if (bActualBorder)
+                        Test.TestTrue(
+                            What + TEXT(": fixture exposes both wood and crown"), WoodOpen > 0 && LeavesOpen > 0);
+                }
+        }
+    }
+
     // The first quad of a layer that is an up face at height Z, or INDEX_NONE.
     int32 FarMesherTestFindTop(const FVoxelMeshLayer& Layer, float Z)
     {
@@ -838,16 +1230,42 @@ namespace
         // Neighbours' summaries need only heights and states: untinted.
         const FVoxelFarClasses Classes(Table);
         TArray<FVoxelFarSummary> Plain;
+        TArray<FVoxelFarSummary> TreePlain;
         Plain.SetNum(Area.Columns.Num());
+        TreePlain.SetNum(Area.Columns.Num());
         for (int32 Index = 0; Index < Area.Columns.Num(); ++Index)
+        {
             VoxelFarMesher::Summarize(Classes, Table, *Area.Columns[Index], Plain[Index]);
+            VoxelFarMesher::Summarize(
+                Classes, Table, *Area.Columns[Index], TreePlain[Index], nullptr, nullptr, FVoxelMeshOptions(), true);
+        }
 
         TUniquePtr<FVoxelFarSummary> Tinted = MakeUnique<FVoxelFarSummary>();
+        TUniquePtr<FVoxelFarSummary> TreeTinted = MakeUnique<FVoxelFarSummary>();
+        TUniquePtr<FVoxelFarSummary> RepeatTinted = MakeUnique<FVoxelFarSummary>();
         const FVoxelMeshOptions MeshOptions;
+        VoxelFarMesher::FOptions TreeOptions;
+        TreeOptions.bTrees = true;
+        // Logical upload payload from BuildStreams: 4 * 48 vertex bytes + 2 * 14 triangle bytes per quad;
+        // each nonempty layer pads its triangle count to a multiple of four. Excludes allocator/driver overhead.
+        auto StreamBytes = [](const FVoxelMeshData& Mesh)
+        {
+            int64 Bytes = 0;
+            for (const FVoxelMeshLayer& Layer : Mesh.Layers)
+            {
+                const int64 Quads = Layer.GetQuadCount();
+                Bytes += 220 * Quads + 28 * (Quads & 1);
+            }
+            return Bytes;
+        };
         uint64 Hash = 0;
+        uint64 TreeHash = 0, RepeatHash = 0;
         int32 MaxQuads = 0, Meshed = 0;
+        int32 MinQuads = MAX_int32, TreeMinQuads = MAX_int32, TreeMaxQuads = 0, TreeRunCount = 0;
         int64 AllQuads = 0;
+        int64 TreeAllQuads = 0, AllBytes = 0, TreeAllBytes = 0, MaxBytes = 0, TreeMaxBytes = 0;
         double AllMs = 0, MaxMs = 0;
+        double TreeAllMs = 0, TreeMaxMs = 0;
         for (int32 CY = -1; CY <= 1; ++CY)
             for (int32 CX = -1; CX <= 1; ++CX)
             {
@@ -869,14 +1287,56 @@ namespace
                 FarMesherTestHash(FarMesh, Meshed, Hash);
                 const int32 Quads = FarMesh.GetQuadCount();
                 AllQuads += Quads;
+                MinQuads = FMath::Min(MinQuads, Quads);
                 MaxQuads = FMath::Max(MaxQuads, Quads);
+                const int64 Bytes = StreamBytes(FarMesh);
+                AllBytes += Bytes;
+                MaxBytes = FMath::Max(MaxBytes, Bytes);
                 AllMs += Ms;
                 MaxMs = FMath::Max(MaxMs, Ms);
+                const FVoxelFarSummary* TreeNeighbors[4];
+                for (int32 Side = 0; Side < 4; ++Side)
+                    TreeNeighbors[Side] =
+                        &TreePlain[IndexOf(CX + FarMesherTestStepX[Side], CY + FarMesherTestStepY[Side])];
+                FVoxelMeshData TreeMesh;
+                const double TreeBegan = FPlatformTime::Seconds();
+                VoxelFarMesher::Summarize(Classes, Table, *Area.Columns[IndexOf(CX, CY)], *TreeTinted,
+                    Terrain->GetTints(), &Hood, MeshOptions, true);
+                VoxelFarMesher::Mesh(Table, *TreeTinted, TreeNeighbors, TreeOptions, TreeMesh);
+                const double TreeMs = (FPlatformTime::Seconds() - TreeBegan) * 1000.0;
+                FarMesherTestHash(TreeMesh, Meshed, TreeHash);
+                TreeRunCount += TreeTinted->TreeRuns.Num();
+                const int32 TreeQuads = TreeMesh.GetQuadCount();
+                TreeAllQuads += TreeQuads;
+                TreeMinQuads = FMath::Min(TreeMinQuads, TreeQuads);
+                TreeMaxQuads = FMath::Max(TreeMaxQuads, TreeQuads);
+                const int64 TreeBytes = StreamBytes(TreeMesh);
+                TreeAllBytes += TreeBytes;
+                TreeMaxBytes = FMath::Max(TreeMaxBytes, TreeBytes);
+                TreeAllMs += TreeMs;
+                TreeMaxMs = FMath::Max(TreeMaxMs, TreeMs);
+                FVoxelMeshData RepeatMesh;
+                VoxelFarMesher::Summarize(Classes, Table, *Area.Columns[IndexOf(CX, CY)], *RepeatTinted,
+                    Terrain->GetTints(), &Hood, MeshOptions, true);
+                VoxelFarMesher::Mesh(Table, *RepeatTinted, TreeNeighbors, TreeOptions, RepeatMesh);
+                FarMesherTestHash(RepeatMesh, Meshed, RepeatHash);
                 ++Meshed;
             }
         Test.AddInfo(FString::Printf(TEXT("digest: %d columns, quads per column mean %.1f, max %d; summary + mesh per "
                                           "column mean %.3f ms, max %.3f ms"),
             Meshed, double(AllQuads) / Meshed, MaxQuads, AllMs / Meshed, MaxMs));
+        Test.TestTrue(TEXT("trees natural seed263: fixture contains tree runs"), TreeRunCount > 0);
+        Test.TestEqual(
+            TEXT("trees natural seed263: repeated summary and mesh are byte deterministic"), TreeHash, RepeatHash);
+        Test.AddInfo(
+            FString::Printf(TEXT("trees natural seed263: %d final columns, legacy quads min/mean/max %d/%.1f/%d, "
+                                 "trees %d/%.1f/%d; logical payload bytes mean/max %lld/%lld -> %lld/%lld; "
+                                 "tree digest 0x%016llx (informational, not pinned)"),
+                Meshed, MinQuads, double(AllQuads) / Meshed, MaxQuads, TreeMinQuads, double(TreeAllQuads) / Meshed,
+                TreeMaxQuads, AllBytes / Meshed, MaxBytes, TreeAllBytes / Meshed, TreeMaxBytes, TreeHash));
+        Test.AddInfo(FString::Printf(TEXT("trees natural seed263: indicative summary+mesh ms mean/max %.3f/%.3f -> "
+                                          "%.3f/%.3f; loaded automation timing is not quiet throughput evidence"),
+            AllMs / Meshed, MaxMs, TreeAllMs / Meshed, TreeMaxMs));
         // Pinned from the first run (2026-10-11, far LOD step 1); 0 would fail with the value to pin.
         constexpr uint64 FarMesherExpectedDigest = 0x21cb3f5108dbe83bull;
         const bool bPinned = FarMesherExpectedDigest != 0 && Hash == FarMesherExpectedDigest;
@@ -905,6 +1365,15 @@ bool FVoxelFarMesherTest::RunTest(const FString& Parameters)
     FarMesherTestSameLayout(*this, *BlockTable);
     FarMesherTestBorders(*this, *BlockTable);
     FarMesherTestDigest(*this, *BlockTable);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelFarTreesTest, "Unnamed.Voxel.FarTrees",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelFarTreesTest::RunTest(const FString& Parameters)
+{
+    FarMesherTestTrees(*this);
     return true;
 }
 

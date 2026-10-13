@@ -230,6 +230,7 @@ void UVoxelWorldSubsystem::Tick(float DeltaTime)
     Pipeline->SetOreLooks(VoxelConsole::GetOreHost(), VoxelConsole::GetOreGlint());
     Pipeline->SetSlopedTops(FVoxelFluidSystem::GetSlopedTops(), FVoxelFluidSystem::GetOpenCorners());
     VoxelFarMesher::FOptions FarOptions;
+    FarOptions.bTrees = VoxelConsole::CVarFarTrees.GetValueOnGameThread();
     FarOptions.CanopyLayer =
         VoxelConsole::CVarFarCanopyLayer.GetValueOnGameThread() == 1 ? EVoxelLayer::Opaque : EVoxelLayer::Cutout;
     Pipeline->SetFarOptions(FarOptions);

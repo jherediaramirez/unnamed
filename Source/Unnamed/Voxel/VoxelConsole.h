@@ -14,6 +14,7 @@ namespace VoxelConsole
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarFarRadius;
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarFarShadows;
     extern UNNAMED_API TAutoConsoleVariable<int32> CVarFarCanopyLayer;
+    extern UNNAMED_API TAutoConsoleVariable<bool> CVarFarTrees;
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarFarTint;
     // Far LOD step 1b: far meshes of columns at the view's edge that show nothing go before refining full meshes.
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarFarInnerFirst;

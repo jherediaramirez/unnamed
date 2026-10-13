@@ -12,7 +12,8 @@ class FVoxelTintTable;
 // meshes. A far mesh is built from the column's surface summary, one block per cell: blocky ground tops merged
 // greedily, side walls down to each lower neighbour cell, leaf-canopy boxes and fluid tops. It uses the full mesher's
 // vertex layout (VoxelMesher::AppendQuad) and tints (VoxelMesher::GetFaceTints), so the chunk materials colour it as
-// they colour the near land. It has no plants, logs, underground faces, ambient occlusion or Lumen cards.
+// they colour the near land. Optional tree runs retain wood and every above-ground crown tier. It has no plants,
+// underground faces, ambient occlusion or Lumen cards.
 
 // What a state is to the surface summary.
 enum class EVoxelFarClass : uint8
@@ -34,13 +35,28 @@ class UNNAMEDVOXEL_API FVoxelFarClasses
 public:
     explicit FVoxelFarClasses(const FVoxelBlockTable& Table);
     EVoxelFarClass Get(uint16 State) const { return State < Classes.Num() ? Classes[State] : EVoxelFarClass::Skip; }
+    // Full woody cubes only: crop stems are model states and must not become tree boxes. Kept separately so Get and
+    // the legacy surface summary remain unchanged.
+    bool IsLog(uint16 State) const { return State < Logs.Num() && Logs[State]; }
     // Logs and stems, by block id (FVoxelBlockTable::GetDefaultStates; the table carries no tags): the suffixes _log,
     // _wood, _stem and _hyphae. They cover 26.3's #minecraft:logs (logs_that_burn, crimson_stems and warped_stems, the
-    // stripped variants included) and the mushroom stem.
+    // stripped variants included) and the mushroom stem. This name-only filter also matches crop stems; IsLog
+    // additionally requires the state's full-cube shape.
     static bool IsLogId(FStringView Id);
 
 private:
     TArray<EVoxelFarClass> Classes;
+    TBitArray<> Logs;
+};
+
+// An actual vertical run of wood or leaves above the heightfield ground, inclusive world Z. Runs are stored from
+// top to bottom, split at air gaps and changes of draw state. No fixed tier limit; a column's height bounds the count.
+struct FVoxelFarTreeRun
+{
+    int16 Bottom = 0, Top = 0;
+    uint16 State = 0, TopState = 0;
+    uint32 Tint = 0, TopTint = 0, BottomTint = 0;
+    bool bLeaves = false;
 };
 
 // One cell (local X, Y) of a column's surface. Z values are world Z; NoZ marks a part the cell lacks.
@@ -67,6 +83,8 @@ struct FVoxelFarCell
     int16 FluidZ = NoZ;
     uint16 FluidState = 0;
     uint32 FluidTint = 0;
+    // Optional runs in FVoxelFarSummary::TreeRuns. Empty for the legacy summary.
+    int32 TreeRunStart = 0, TreeRunCount = 0;
 
     bool HasGround() const { return GroundZ != NoZ; }
     bool HasCanopy() const { return CanopyTop != NoZ; }
@@ -81,9 +99,16 @@ struct FVoxelFarSummary
     FVoxelFarCell Cells[VoxelConstants::ColumnSize * VoxelConstants::ColumnSize];
     // The lowest GroundZ of any cell: a missing neighbour's skirt reaches down to it. NoZ without ground.
     int16 LowestGround = FVoxelFarCell::NoZ;
+    bool bTrees = false;
+    TArray<FVoxelFarTreeRun> TreeRuns;
 
     const FVoxelFarCell& Get(int32 X, int32 Y) const { return Cells[Y * VoxelConstants::ColumnSize + X]; }
     FVoxelFarCell& Get(int32 X, int32 Y) { return Cells[Y * VoxelConstants::ColumnSize + X]; }
+    TConstArrayView<FVoxelFarTreeRun> GetTreeRuns(int32 X, int32 Y) const
+    {
+        const FVoxelFarCell& Cell = Get(X, Y);
+        return MakeArrayView(TreeRuns).Slice(Cell.TreeRunStart, Cell.TreeRunCount);
+    }
 };
 
 // A neighbour drawn in full, along the edge it shares with a far column (review A3): which of its edge cells leave the
@@ -111,6 +136,8 @@ namespace VoxelFarMesher
     {
         // The canopy boxes' material layer: Cutout, as near leaves draw, or Opaque (voxel.Far.CanopyLayer).
         EVoxelLayer CanopyLayer = EVoxelLayer::Cutout;
+        // voxel.Far.Trees: actual wood and all crown tiers. False preserves the original mesh byte for byte.
+        bool bTrees = false;
     };
 
     // Summarizes a final column, scanning each cell down from its WorldSurface height. With Tints and Neighborhood (the
@@ -120,7 +147,8 @@ namespace VoxelFarMesher
     // (neighbours' summaries only need heights and states). Pure: the same inputs always give the same summary.
     UNNAMEDVOXEL_API void Summarize(const FVoxelFarClasses& Classes, const FVoxelBlockTable& Table,
         const FVoxelColumn& Column, FVoxelFarSummary& Out, const FVoxelTintTable* Tints = nullptr,
-        const FVoxelNeighborhood* Neighborhood = nullptr, const FVoxelMeshOptions& MeshOptions = FVoxelMeshOptions());
+        const FVoxelNeighborhood* Neighborhood = nullptr, const FVoxelMeshOptions& MeshOptions = FVoxelMeshOptions(),
+        bool bTrees = false);
 
     // The edge cells of Neighbor, the column across Center's Face (EVoxelFace: West, East, North or South), as a far
     // border: a cell is open unless its state's OpaqueFaces covers the face toward Center, as the full mesher culls.
@@ -138,6 +166,9 @@ namespace VoxelFarMesher
     // - Canopy boxes: the top (CanopyTopState), the bottom unless ground lies right under it, and the sides, each
     //   minus what a neighbour cell's canopy or ground covers, on Options.CanopyLayer.
     // - Fluid tops at FluidZ plus the fluid's surface height, merged greedily, on the fluid state's own layer.
+    // With Options.bTrees, tree runs replace canopy boxes: wood on opaque, leaves on CanopyLayer, with exposed faces
+    // merged. Across column edges wood and lower tiers stay capped against vegetation the legacy mode omits; the
+    // extra opposing internal caps avoid open tree portions during asynchronous mode changes and near handoffs.
     // Ground tops and walls go on the opaque layer whatever the state's own layer. No ambient occlusion: every corner
     // is open. Light is the state's emission, as the full mesher writes it.
     UNNAMEDVOXEL_API void Mesh(const FVoxelBlockTable& Table, const FVoxelFarSummary& Center,
