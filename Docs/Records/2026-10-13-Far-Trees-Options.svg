@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="590" viewBox="0 0 1200 590">
+<defs>
+  <pattern id="leafholes" width="20" height="20" patternUnits="userSpaceOnUse"><rect width="20" height="20" fill="white"/><rect x="3" y="3" width="5" height="5" fill="black"/><rect x="12" y="12" width="4" height="4" fill="black"/></pattern>
+  <mask id="cutout"><rect width="1200" height="590" fill="url(#leafholes)"/></mask>
+  <g id="treewood"><path d="M255 178h30v240h-30z M230 256h90v17h-90z M202 330h126v15H202z" fill="#796045"/><path d="M277 178h8v240h-8z" fill="#584330"/></g>
+  <g id="crown"><path d="M237 153h66v46h-66z M211 224h118v48H211z M184 303h172v51H184z" fill="#397442"/><path d="M237 183h66v16h-66z M211 256h118v16H211z M184 338h172v16H184z" fill="#28552e"/><path d="M237 153h66v8h-66z M211 224h118v8H211z M184 303h172v8H184z" fill="#569055"/></g>
+</defs>
+<rect width="1200" height="590" fill="#f6f4ee"/>
+<g font-family="Segoe UI, Arial, sans-serif" fill="#20332e">
+<text x="32" y="44" font-size="27" font-weight="700">Far trees: retain support and crown tiers</text>
+<text x="32" y="73" font-size="16" fill="#61716a">Planning illustration only — not an Unreal render or measured result</text>
+<rect x="28" y="96" width="558" height="414" rx="12" fill="#dfeaf0" stroke="#bdcfcc"/>
+<rect x="614" y="96" width="558" height="414" rx="12" fill="#dfeaf0" stroke="#bdcfcc"/>
+<g transform="translate(40 0)">
+<text x="12" y="132" font-size="22" font-weight="700">A · Cutout crowns</text>
+<text x="12" y="157" font-size="15" fill="#53655d">Recommended first · current leaf material</text>
+<g transform="translate(0 14)"><use href="#treewood"/><use href="#crown" mask="url(#cutout)"/></g>
+<rect x="12" y="432" width="506" height="16" fill="#7e9865"/>
+<rect x="12" y="448" width="506" height="16" fill="#958266"/>
+<text x="12" y="489" font-size="16">voxel.Far.Trees 1 · CanopyLayer 0</text>
+</g>
+<g transform="translate(626 0)">
+<text x="12" y="132" font-size="22" font-weight="700">B · Opaque crowns</text>
+<text x="12" y="157" font-size="15" fill="#53655d">Existing alternative · solid leaf surfaces</text>
+<g transform="translate(0 14)"><use href="#treewood"/><use href="#crown"/></g>
+<rect x="12" y="432" width="506" height="16" fill="#7e9865"/>
+<rect x="12" y="448" width="506" height="16" fill="#958266"/>
+<text x="12" y="489" font-size="16">voxel.Far.Trees 1 · CanopyLayer 1</text>
+</g>
+<text x="32" y="545" font-size="18">Both: actual wood, retained air gaps, all tiers, each column owns its part.</text>
+<text x="32" y="571" font-size="16" fill="#61716a">Trees 0 restores today's geometry. Final appearance and cost require matched game captures.</text>
+</g>
+</svg>

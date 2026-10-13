@@ -219,7 +219,7 @@ public:
         bool bEdgeWalls = false;
         // voxel.Decoration: columns are decorated before they mesh, with three rings past the view instead of one.
         TSharedPtr<const FVoxelDecorator> Decorator;
-        // Far meshes' options (voxel.Far.CanopyLayer).
+        // Far meshes' options (voxel.Far.CanopyLayer and voxel.Far.Trees).
         VoxelFarMesher::FOptions FarOptions;
         // voxel.Far.InnerFirst (far LOD step 1b): a far mesh for a column within ViewRadius + 2 that shows nothing yet
         // goes before a full mesh whose column already shows something, and between two such the nearer goes first.
@@ -254,7 +254,8 @@ public:
     // Model quads on or off (voxel.Models) and the look-call shading switch (voxel.Debug.ModelShadeUnturned); a change
     // remeshes every column.
     void SetModelOptions(bool bModels, bool bShadeUnturned);
-    // Far meshes' options; a change remeshes every far column.
+    // Far meshes' options; a change remeshes every far column, discarding queued and in-flight results of the old
+    // options. Displayed meshes stay until their replacements are taken.
     void SetFarOptions(const VoxelFarMesher::FOptions& FarOptions);
     // FSettings::bFarInnerFirst; a change only reorders the finished meshes.
     void SetFarInnerFirst(bool bInnerFirst);
@@ -473,6 +474,8 @@ private:
     TSharedRef<const IVoxelTerrain> Terrain;
     TSharedRef<const FVoxelFarClasses> FarClasses;
     FSettings Settings;
+    // Unlike ordinary edits, an old far look must never be installed after its switch changes, even after 0->1->0.
+    uint64 FarOptionsVersion = 0;
     TSharedPtr<const FVoxelLightTable> LightTable;
 
     FVoxelStreamingRings Rings;

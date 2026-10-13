@@ -3,6 +3,7 @@
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Misc/AutomationTest.h"
 #include "Random/VoxelSeed.h"
+#include "Storage/VoxelColumn.h"
 #include "Streaming/VoxelStreamingPlanner.h"
 #include "Terrain/VoxelHeightTerrain.h"
 #include "Voxel/VoxelBlocks.h"
@@ -820,6 +821,235 @@ namespace
         Test.TestEqual(TEXT("8. full meshes taken near-only"), FullTaken, Waiting.Ready - Waiting.FarReady);
         Test.TestEqual(TEXT("8. far meshes still waiting"), Pipeline->GetStats().Ready, Waiting.FarReady);
     }
+
+    // Flip while the first far meshes are in flight: there is no displayed mesh to fall back on. Option staleness
+    // still rejects those results, and the replacement jobs must fill every initially empty far column.
+    void FarRingTestColdTreeOptions(FFarRingTestReport& Report, const FFarRingTestWorld& World, bool bReverse)
+    {
+        FAutomationTestBase& Test = Report.Test;
+        const FString Where = bReverse ? TEXT("trees cold reverse") : TEXT("trees cold forward");
+        const auto Pipeline = FarRingTestMakePipeline(World, 6);
+        const FVoxelStreamingRings Home = FarRingTestRings(FIntPoint::ZeroValue, 1, 3);
+        const auto NoCheck = [](bool) {};
+        const auto NoTake = [](const FVoxelColumnPipeline::FReady&) {};
+        Pipeline->SetFocus(Home, 0);
+        if (!FarRingTestDrive(*Pipeline, EFarRingTestJobs::All, false, NoCheck, NoTake,
+                [&] { return Pipeline->GetStats().FarMeshing > 0; }))
+        {
+            Report.Fail(Where + TEXT(": no first far jobs before the step cap"));
+            return;
+        }
+        TArray<int32> OldJobs;
+        TArray<FIntPoint> OldColumns;
+        for (int32 Index = 0; Index < Pipeline->GetJobCount(); ++Index)
+        {
+            const FIntPoint Column = Pipeline->GetJobColumn(Index);
+            if (Home.IsFar(Column) && Pipeline->GetStatus(Column).bMeshing && Pipeline->IsJobPending(Index))
+            {
+                OldJobs.Add(Index);
+                OldColumns.Add(Column);
+            }
+        }
+        if (!Test.TestTrue(*(Where + TEXT(": initial old-option far jobs are pending")), !OldJobs.IsEmpty())) return;
+        Test.TestEqual(*(Where + TEXT(": no far mesh has ever been displayed")), Pipeline->GetStats().FarOnScreen, 0);
+        Test.TestEqual(*(Where + TEXT(": no far result has completed yet")), Pipeline->GetStats().FarReady, 0);
+        for (const FIntPoint Column : OldColumns)
+            Test.TestTrue(*(Where + TEXT(": initial far job has no shown mesh")),
+                Pipeline->GetStatus(Column).Shown == EVoxelMeshKind::None && !Pipeline->GetStatus(Column).bOnScreen);
+
+        VoxelFarMesher::FOptions Trees;
+        Trees.bTrees = true;
+        const int64 BeforeDrop = Pipeline->GetStats().Dropped;
+        Pipeline->SetFarOptions(Trees);
+        for (int32 Index = 0; Index < OldJobs.Num(); ++Index)
+            Pipeline->RunJob(OldJobs[bReverse ? OldJobs.Num() - Index - 1 : Index]);
+        Pipeline->Update();
+        Test.TestEqual(*(Where + TEXT(": obsolete first-arrival results are dropped")),
+            Pipeline->GetStats().Dropped - BeforeDrop, int64(OldJobs.Num()));
+        Test.TestEqual(
+            *(Where + TEXT(": obsolete results cannot enter the ready queue")), Pipeline->GetStats().FarReady, 0);
+        for (const FIntPoint Column : OldColumns)
+        {
+            const FVoxelColumnStatus Status = Pipeline->GetStatus(Column);
+            Test.TestTrue(*(Where + TEXT(": rejected first arrival stays unshown and eligible for replacement")),
+                Status.Shown == EVoxelMeshKind::None && !Status.bOnScreen && !Status.bReady &&
+                    Status.DirtySections != 0);
+        }
+        TSet<FIntPoint> FarTaken;
+        const auto OnTake = [&](const FVoxelColumnPipeline::FReady& Taken)
+        {
+            if (Taken.Mesh->bFar) FarTaken.Add(Taken.Column);
+        };
+        const EFarRingTestJobs Order = bReverse ? EFarRingTestJobs::Lowest : EFarRingTestJobs::Oldest;
+        if (!FarRingTestDrive(*Pipeline, Order, true, NoCheck, OnTake, [] { return false; }))
+        {
+            Report.Fail(Where + TEXT(": new-option first arrivals did not converge"));
+            return;
+        }
+        Test.TestEqual(
+            *(Where + TEXT(": replacements fill every initially empty far column")), FarTaken.Num(), FarRingTestFar3);
+        FarRingTestCheckIdle(Report, *Pipeline, Where, FarRingTestFar3, FarRingTestNeeded3);
+    }
+
+    // Far-tree look changes must not install an old option's queued or in-flight mesh. Ordinary edit-stale meshes
+    // still install while a replacement is being built. Run both job completion orders, with a real split tree so
+    // restoring the option also checks the geometry passed through the pipeline, not just its state bookkeeping.
+    void FarRingTestTreeOptions(FFarRingTestReport& Report, const FFarRingTestWorld& World, bool bReverse)
+    {
+        FAutomationTestBase& Test = Report.Test;
+        const FString Where = bReverse ? TEXT("trees reverse") : TEXT("trees forward");
+        const auto Pipeline = FarRingTestMakePipeline(World, 6);
+        const FVoxelStreamingRings Home = FarRingTestRings(FIntPoint::ZeroValue, 1, 3);
+        const auto Never = [] { return false; };
+        const auto NoTake = [](const FVoxelColumnPipeline::FReady&) {};
+        const EFarRingTestJobs Order = bReverse ? EFarRingTestJobs::Lowest : EFarRingTestJobs::Oldest;
+        Pipeline->SetFocus(Home, 0);
+        if (!FarRingTestDrive(*Pipeline, Order, true, [](bool) {}, NoTake, Never))
+        {
+            Report.Fail(Where + TEXT(": initial view did not settle"));
+            return;
+        }
+        const TArray<FIntPoint> FarColumns = FarRingTestColumns([&](FIntPoint C) { return Home.IsFar(C); });
+        const auto CheckShown = [&](bool)
+        {
+            for (const FIntPoint Column : FarColumns)
+            {
+                const FVoxelColumnStatus Status = Pipeline->GetStatus(Column);
+                if (!Status.bOnScreen || Status.Shown != EVoxelMeshKind::Far)
+                    Report.Fail(Where + TEXT(": a shown far mesh vanished before replacement"));
+            }
+        };
+        const FIntPoint TreeColumn(3, 0), NeighborColumn(4, 0);
+        const int32 X = TreeColumn.X * 16 + 15, Y = 8;
+        const int32 Ground =
+            FMath::Max(Pipeline->FindColumn(TreeColumn)->GetHeight(EVoxelHeightmap::WorldSurface, 15, Y),
+                Pipeline->FindColumn(NeighborColumn)->GetHeight(EVoxelHeightmap::WorldSurface, 0, Y));
+        const uint16 Log = World.BlockTable->FindState(TEXT("oak_log"));
+        const uint16 Leaves = World.BlockTable->FindState(TEXT("oak_leaves"));
+        if (!Log || !Leaves || Ground + 7 > VoxelConstants::MaxZ)
+        {
+            Report.Fail(Where + TEXT(": split-tree fixture is unavailable"));
+            return;
+        }
+        for (int32 Z = Ground + 1; Z <= Ground + 5; ++Z)
+            Pipeline->SetCell(FIntVector(X, Y, Z), Log, Z);
+        Pipeline->SetCell(FIntVector(X, Y, Ground + 6), Leaves, 1);
+        Pipeline->SetCell(FIntVector(X + 1, Y, Ground + 6), Leaves, 1);
+        TMap<FIntPoint, int32> LegacyQuads;
+        const auto SaveLegacy = [&](const FVoxelColumnPipeline::FReady& Taken)
+        { LegacyQuads.Add(Taken.Column, Taken.Mesh->QuadCount); };
+        if (!FarRingTestDrive(*Pipeline, Order, true, CheckShown, SaveLegacy, Never))
+        {
+            Report.Fail(Where + TEXT(": legacy fixture did not settle"));
+            return;
+        }
+        if (!LegacyQuads.Contains(TreeColumn) || !LegacyQuads.Contains(NeighborColumn))
+        {
+            Report.Fail(Where + TEXT(": the border edit did not remesh both tree columns"));
+            return;
+        }
+        const int64 FullJobs = Pipeline->GetStats().Mesh.Count;
+        VoxelFarMesher::FOptions Trees, Legacy;
+        Trees.bTrees = true;
+
+        // All new-option results wait, then rollback removes them without replacing what is already displayed.
+        Pipeline->SetFarOptions(Trees);
+        if (!FarRingTestDrive(*Pipeline, Order, false, CheckShown, NoTake, Never))
+        {
+            Report.Fail(Where + TEXT(": enabled meshes did not finish"));
+            return;
+        }
+        Test.TestEqual(*(Where + TEXT(": enabled far meshes queued")), Pipeline->GetStats().FarReady, FarColumns.Num());
+        const int64 BeforePurge = Pipeline->GetStats().Dropped;
+        Pipeline->SetFarOptions(Legacy);
+        Test.TestEqual(*(Where + TEXT(": rollback purges every far result")), Pipeline->GetStats().FarReady, 0);
+        Test.TestEqual(*(Where + TEXT(": queued drops counted")), Pipeline->GetStats().Dropped - BeforePurge,
+            int64(FarColumns.Num()));
+        Test.TestNull(*(Where + TEXT(": no obsolete far result can be taken")), Pipeline->PeekReady());
+        for (const FIntPoint Column : FarColumns)
+        {
+            const FVoxelColumnStatus Status = Pipeline->GetStatus(Column);
+            Test.TestTrue(*(Where + TEXT(": discarded kind cannot count as complete")),
+                Status.Meshed == EVoxelMeshKind::None && Status.DirtySections != 0);
+        }
+        const auto CheckLegacy = [&](const FVoxelColumnPipeline::FReady& Taken)
+        {
+            if (const int32* Expected = LegacyQuads.Find(Taken.Column))
+                Test.TestEqual(*(Where + TEXT(": rollback restores legacy quads")), Taken.Mesh->QuadCount, *Expected);
+        };
+        if (!FarRingTestDrive(*Pipeline, Order, true, CheckShown, CheckLegacy, Never))
+        {
+            Report.Fail(Where + TEXT(": queued rollback did not converge"));
+            return;
+        }
+
+        // Start legacy jobs with a same-value border edit, then 0->1->0 before they finish. Even though their option
+        // value matches again, these results belong to an obsolete revision and must not install.
+        Pipeline->SetCell(FIntVector(X, Y, Ground + 1), Log, 2);
+        Test.TestTrue(*(Where + TEXT(": border tree edit invalidates the adjoining far mesh")),
+            Pipeline->GetStatus(NeighborColumn).DirtySections != 0);
+        Pipeline->Update();
+        const int32 OldJobs = Pipeline->GetJobCount();
+        if (!Test.TestTrue(*(Where + TEXT(": old-option jobs are in flight")), OldJobs > 0)) return;
+        const int64 BeforeLate = Pipeline->GetStats().Dropped;
+        Pipeline->SetFarOptions(Trees);
+        Pipeline->SetFarOptions(Legacy);
+        for (int32 I = 0; I < OldJobs; ++I)
+            Pipeline->RunJob(bReverse ? OldJobs - I - 1 : I);
+        Pipeline->Update();
+        Test.TestEqual(*(Where + TEXT(": all obsolete in-flight results dropped")),
+            Pipeline->GetStats().Dropped - BeforeLate, int64(OldJobs));
+        Test.TestEqual(
+            *(Where + TEXT(": no obsolete result entered the ready queue")), Pipeline->GetStats().FarReady, 0);
+        if (!FarRingTestDrive(*Pipeline, Order, true, CheckShown, CheckLegacy, Never))
+        {
+            Report.Fail(Where + TEXT(": in-flight rollback did not converge"));
+            return;
+        }
+
+        // A completed switch really retains the trunk. Repeating the setting must not launch more work.
+        int32 TreeQuads = 0;
+        Pipeline->SetFarOptions(Trees);
+        if (!FarRingTestDrive(
+                *Pipeline, Order, true, CheckShown,
+                [&](const FVoxelColumnPipeline::FReady& Taken)
+                {
+                    if (Taken.Column == TreeColumn) TreeQuads = Taken.Mesh->QuadCount;
+                },
+                Never))
+        {
+            Report.Fail(Where + TEXT(": enabled trees did not converge"));
+            return;
+        }
+        Test.TestTrue(*(Where + TEXT(": enabled tree retains additional trunk geometry")),
+            TreeQuads > LegacyQuads.FindChecked(TreeColumn));
+        const int64 FarJobs = Pipeline->GetStats().FarMesh.Count;
+        Pipeline->SetFarOptions(Trees);
+        Pipeline->Update();
+        Test.TestTrue(*(Where + TEXT(": unchanged option leaves the pipeline idle")), Pipeline->IsIdle());
+        Test.TestEqual(
+            *(Where + TEXT(": unchanged option launches no far jobs")), Pipeline->GetStats().FarMesh.Count, FarJobs);
+
+        // Edit staleness is different: accept the best available result, keep it dirty, and converge again.
+        Pipeline->SetCell(FIntVector(X, Y, Ground + 1), 0, 3);
+        Pipeline->Update();
+        Pipeline->SetCell(FIntVector(X, Y, Ground + 2), 0, 4);
+        const int64 BeforeStale = Pipeline->GetStats().Stale;
+        const int32 EditJobs = Pipeline->GetJobCount();
+        for (int32 I = 0; I < EditJobs; ++I)
+            Pipeline->RunJob(bReverse ? EditJobs - I - 1 : I);
+        Pipeline->Update();
+        Test.TestTrue(*(Where + TEXT(": ordinary edit-stale results are still accepted")),
+            Pipeline->GetStats().Stale > BeforeStale && Pipeline->GetStats().FarReady > 0);
+        if (!FarRingTestDrive(*Pipeline, Order, true, CheckShown, NoTake, Never))
+        {
+            Report.Fail(Where + TEXT(": edited trees did not converge"));
+            return;
+        }
+        FarRingTestCheckIdle(Report, *Pipeline, Where, FarRingTestFar3, FarRingTestNeeded3);
+        Test.TestEqual(*(Where + TEXT(": far options and border edits leave full meshes alone")),
+            Pipeline->GetStats().Mesh.Count, FullJobs);
+    }
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelPipelineFarRingTest, "Unnamed.Voxel.Pipeline.FarRing",
@@ -846,6 +1076,27 @@ bool FVoxelPipelineFarRingTest::RunTest(const FString& Parameters)
     FarRingTestWaitingKinds(Report, World);
     FarRingTestQuickReturn(Report, World);
     FarRingTestNearOnly(Report, World);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelPipelineFarTreeOptionsTest, "Unnamed.Voxel.Pipeline.FarTreeOptions",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelPipelineFarTreeOptionsTest::RunTest(const FString& Parameters)
+{
+    if (!FFoundationBlockRegistry::GetDefault()->GetAssets())
+    {
+        AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
+        return false;
+    }
+    const TSharedRef<const FVoxelBlockTable> BlockTable = VoxelBlocks::GetDefault();
+    const auto Seed = FVoxelSeed::Parse(TEXT("Unnamed")).Value;
+    const FFarRingTestWorld World{BlockTable, MakeShared<FVoxelHeightTerrain>(Seed, *BlockTable)};
+    FFarRingTestReport Report(*this);
+    FarRingTestColdTreeOptions(Report, World, false);
+    FarRingTestColdTreeOptions(Report, World, true);
+    FarRingTestTreeOptions(Report, World, false);
+    FarRingTestTreeOptions(Report, World, true);
     return true;
 }
 

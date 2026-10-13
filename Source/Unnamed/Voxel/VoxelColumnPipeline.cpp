@@ -88,6 +88,7 @@ struct FVoxelColumnPipeline::FJob
     FIntPoint Column = FIntPoint::ZeroValue;
     uint64 Serial = 0;
     uint32 MeshVersion = 0;
+    uint64 FarOptionsVersion = 0;
     uint8 Neighbors = 0;
     uint8 CellEdges = 0;
     UE::Tasks::TTask<TSharedPtr<FJobResult>> Task;
@@ -158,11 +159,23 @@ void FVoxelColumnPipeline::SetModelOptions(bool bModels, bool bShadeUnturned)
 
 void FVoxelColumnPipeline::SetFarOptions(const VoxelFarMesher::FOptions& FarOptions)
 {
-    if (Settings.FarOptions.CanopyLayer == FarOptions.CanopyLayer) return;
+    if (Settings.FarOptions.CanopyLayer == FarOptions.CanopyLayer && Settings.FarOptions.bTrees == FarOptions.bTrees)
+        return;
     Settings.FarOptions = FarOptions;
+    ++FarOptionsVersion;
     for (TPair<FIntPoint, FRecord>& Pair : Records)
+    {
         if (Pair.Value.Data && (Pair.Value.MeshedKind == EVoxelMeshKind::Far || Rings.IsFar(Pair.Key)))
             MarkDirty(Pair.Value, PipelineAllSections);
+        if (Pair.Value.Ready && Pair.Value.Ready->bFar)
+        {
+            Pair.Value.Ready.Reset();
+            // As on a ring-change discard (A1), no queued mesh means its kind cannot count as completed.
+            Pair.Value.MeshedKind = EVoxelMeshKind::None;
+            ++Dropped;
+        }
+    }
+    ReadyFarColumns.Reset();
     Regress();
 }
 
@@ -556,6 +569,13 @@ void FVoxelColumnPipeline::CollectMesh(const FJob& Job, FJobResult& Result, FRec
 {
     Record.bMeshing = false;
     const bool bFar = Job.Type == EJob::FarMesh;
+    // Option changes replace the look, so they must not briefly install an obsolete mesh. Ordinary edit-stale
+    // results still follow the acceptance policy below, which keeps frequently edited columns visible.
+    if (bFar && Job.FarOptionsVersion != FarOptionsVersion)
+    {
+        ++Dropped;
+        return;
+    }
     // Far LOD: a drawn column that changed kinds back while the job ran keeps what it shows; the mesh of the kind it
     // no longer wants is thrown away (a column showing nothing takes it, rather than stay empty).
     if (Record.bOnScreen && Rings.IsDrawn(Job.Column) &&
@@ -1046,6 +1066,7 @@ void FVoxelColumnPipeline::LaunchFarMesh(FIntPoint Column, FRecord& Record, uint
         }
     FJob& Job = AddJob(EJob::FarMesh, Column, Record);
     Job.MeshVersion = Record.MeshVersion;
+    Job.FarOptionsVersion = FarOptionsVersion;
     Job.Neighbors = Neighbors;
     // Edges toward neighbours drawn in full read their cells (review A3).
     const uint8 CellEdges = GetFullEdges(Column);
@@ -1069,7 +1090,8 @@ void FVoxelColumnPipeline::LaunchFarMesh(FIntPoint Column, FRecord& Record, uint
             TArray<FVoxelFarSummary> Summaries;
             Summaries.SetNum(5);
             VoxelFarMesher::Summarize(
-                *FarClasses, *Table, *Around[4], Summaries[0], Terrain->GetTints(), &Neighborhood, Options);
+                *FarClasses, *Table, *Around[4], Summaries[0], Terrain->GetTints(), &Neighborhood, Options,
+                FarOptions.bTrees);
             constexpr int32 EdgeIndices[4] = {3, 5, 1, 7};
             const FVoxelFarSummary* Edges[4] = {};
             FVoxelFarBorder Borders[4];
@@ -1077,6 +1099,7 @@ void FVoxelColumnPipeline::LaunchFarMesh(FIntPoint Column, FRecord& Record, uint
             for (int32 Face = 0; Face < 4; ++Face)
                 if (const FVoxelColumn* Edge = Around[EdgeIndices[Face]].Get())
                 {
+                    // Tree borders keep conservative caps and read only legacy neighbor coverage, not TreeRuns.
                     VoxelFarMesher::Summarize(*FarClasses, *Table, *Edge, Summaries[Face + 1]);
                     Edges[Face] = &Summaries[Face + 1];
                     if (!(CellEdges & (1u << Face))) continue;
