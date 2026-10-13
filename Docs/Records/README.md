@@ -3,6 +3,7 @@
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 13, 2026
+- [Atmosphere: a night that is never black](2026-10-13-Atmosphere-Night.md): `voxel.Atmosphere.Night` (with Cycle 1): a moon fill by phase, a navy night sky, open sky exposed for the night (caves unchanged), twilight glow; open: the twilight dip, stars, the round disks, the DN-P run. The [atmosphere handoff](2026-10-13-Atmosphere-Handoff.md) is updated.
 - [Atmosphere: the sun follows the clock](2026-10-13-Atmosphere-Cycle.md): `voxel.Atmosphere.Cycle` (default 0) turns the sun with the world clock through `FVoxelEnvironment`, with `voxel.Atmosphere.Info`; the night is black until the next step; start at [the atmosphere handoff](2026-10-13-Atmosphere-Handoff.md) (night exposure + moon fill, the quiet DN-P p95 run).
 - [Cave floor handoff](2026-10-13-Cave-Floor-Handoff.md): start here after the cave floor (the underwater fade, the Brightness slider later, the GPU cost in a quiet window).
 - [The cave floor](2026-10-13-Cave-Floor.md): `voxel.Look.CaveFloor` 0.56 (Jesus's pick, about vanilla's Moody; 0 = black as before, 1 = vanilla Default): vanilla's light-0 ambient after tone mapping (`M_LookCaveFloor`, `CreateLookMaterials.py`), so cave walls no light reaches read dimly instead of black; the held item gets it too.
