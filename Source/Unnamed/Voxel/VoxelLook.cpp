@@ -1,6 +1,7 @@
 #include "Voxel/VoxelLook.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "Camera/PlayerCameraManager.h"
+#include "Components/PostProcessComponent.h"
 #include "Components/SkyAtmosphereComponent.h"
 #include "Components/SkyLightComponent.h"
 #include "Curves/CurveFloat.h"
@@ -8,7 +9,9 @@
 #include "Engine/World.h"
 #include "Foundation/FoundationProfile.h"
 #include "GameFramework/PlayerController.h"
+#include "UnnamedProjectSettings.h"
 #include "HAL/IConsoleManager.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialParameterCollection.h"
 #include "Materials/MaterialParameterCollectionInstance.h"
 #include "Foundation/FoundationGrid.h"
@@ -50,6 +53,10 @@ namespace
              "may still adapt; 0 pins it fully."));
     TAutoConsoleVariable<float> CVarLookSpeedUp(TEXT("voxel.Look.SpeedUp"), FVoxelLook().SpeedUp,
         TEXT("Look: eye adaptation towards a brighter view (leaving a cave or a canopy), in f-stops per second."));
+    TAutoConsoleVariable<float> CVarLookCaveFloor(TEXT("voxel.Look.CaveFloor"), FVoxelLook().CaveFloor,
+        TEXT("Look: the ambient floor after tone mapping at light 0, x vanilla 26.3's at Brightness 50 (0.56 about "
+             "Moody, 1 Default): a wall no light reaches shows as a dim copy of its texture; 0 off (black, as "
+             "before)."));
 }
 
 FVoxelLook FVoxelLook::Read()
@@ -66,6 +73,7 @@ FVoxelLook FVoxelLook::Read()
     Look.SkyPin = CVarLookSkyPin.GetValueOnGameThread();
     Look.SpeedUp = CVarLookSpeedUp.GetValueOnGameThread();
     Look.SkyPinAdapt = CVarLookSkyPinAdapt.GetValueOnGameThread();
+    Look.CaveFloor = CVarLookCaveFloor.GetValueOnGameThread();
     return Look;
 }
 
@@ -152,6 +160,23 @@ double VoxelLook::SkyPinFor(double Openness)
     return FMath::SmoothStep(SkyPinFrom, SkyPinFull, Openness);
 }
 
+FLinearColor VoxelLook::CaveFloorDisplay(const FLinearColor& Color, const FLinearColor& BaseLinear,
+    const FVector& Normal, double DepthCm, float Strength, double FadeStartCm, double FadeEndCm)
+{
+    const FVector N = Normal.GetSafeNormal();
+    const FVector A = N.GetAbs();
+    const double Face = A.Z * (N.Z > 0 ? FloorTop : FloorBottom) + A.Y * FloorNS + A.X * FloorEW;
+    const double Fade = 1 - FMath::Clamp((DepthCm - FadeStartCm) / FMath::Max(FadeEndCm - FadeStartCm, 1.), 0., 1.);
+    auto Channel = [&](float Scene, float Base)
+    {
+        const double B = FMath::Clamp(double(Base), 0., 1.);
+        const double Srgb = B < .0031308 ? B * 12.92 : 1.055 * FMath::Pow(B, 1 / 2.4) - .055;
+        return float(FMath::Max(double(Scene), Strength * Face * Fade * Srgb));
+    };
+    return FLinearColor(
+        Channel(Color.R, BaseLinear.R), Channel(Color.G, BaseLinear.G), Channel(Color.B, BaseLinear.B), Color.A);
+}
+
 VoxelLook::FTargets VoxelLook::Solve(const FVoxelLook& Look, double Pin)
 {
     FTargets Targets;
@@ -165,6 +190,7 @@ VoxelLook::FTargets VoxelLook::Solve(const FVoxelLook& Look, double Pin)
     Targets.FogColorScale = Look.Sky;
     Targets.LowGlow = Look.LowGlow;
     Targets.WaterSpecular = Look.WaterSpecular;
+    Targets.CaveFloor = FMath::Max(0.f, Look.CaveFloor);
     return Targets;
 }
 
@@ -243,9 +269,65 @@ double AVoxelWorld::UpdateSkyPin()
     return SkyPinNow;
 }
 
+void AVoxelWorld::UpdateCaveFloor(float Strength)
+{
+    if (!VoxelLook::CaveFloorDrawn(Strength) && !CaveFloorPost) return;
+    if (!CaveFloorPost)
+    {
+        UMaterialInterface* Base = Cast<UMaterialInterface>(
+            UUnnamedProjectSettings::GetBlockAssetPath(VoxelLook::CaveFloorMaterialName).TryLoad());
+        if (!Base)
+        {
+            UE_LOG(LogUnnamedVoxel, Warning, TEXT("Look: %s is missing (run CreateLookMaterials.py); no cave floor"),
+                VoxelLook::CaveFloorMaterialName);
+            CaveFloorPost = NewObject<UPostProcessComponent>(this, TEXT("CaveFloorPost"));
+            CaveFloorPost->bEnabled = false;
+            return;
+        }
+        CaveFloorPost = NewObject<UPostProcessComponent>(this, TEXT("CaveFloorPost"));
+        CaveFloorPost->bUnbound = true;
+        CaveFloorPost->SetupAttachment(GetRootComponent());
+        CaveFloorPost->RegisterComponent();
+        CaveFloorMaterial = UMaterialInstanceDynamic::Create(Base, CaveFloorPost);
+        CaveFloorPost->Settings.WeightedBlendables.Array.Add(FWeightedBlendable(1.f, CaveFloorMaterial));
+    }
+    CaveFloorPost->bEnabled = VoxelLook::CaveFloorDrawn(Strength) && CaveFloorMaterial;
+    if (!CaveFloorPost->bEnabled) return;
+    // The edge fog's wall: clear to 1.5 columns before the drawn radius, opaque at it (UpdateEdgeFog). The haze keeps
+    // the same drawn edge, where the far meshes fade into the sky.
+    double FadeStart = 1e6, FadeEnd = 1.1e6;
+    const UVoxelWorldSubsystem* Streaming = GetStreaming();
+    if (Streaming && Streaming->GetPipeline())
+    {
+        constexpr double ColumnCm = VoxelConstants::ColumnSize * UFoundationProfile::BlockCm;
+        FadeEnd = Streaming->GetPipeline()->GetRings().GetDrawnRadius() * ColumnCm;
+        FadeStart = FMath::Max(0., FadeEnd - 1.5 * ColumnCm);
+    }
+    // With the eye in water and the water fog on (its own session's voxel.Look.WaterFog), the floor lies under that
+    // fog: it fades over the fog's range, as vanilla fogs its lightmapped walls.
+    static const IConsoleVariable* WaterFog = IConsoleManager::Get().FindConsoleVariable(TEXT("voxel.Look.WaterFog"));
+    const APlayerController* Controller = GetWorld()->GetFirstPlayerController();
+    if (WaterFog && WaterFog->GetInt() == 1 && Controller && Controller->PlayerCameraManager &&
+        IsInWater(Controller->PlayerCameraManager->GetCameraLocation()))
+    {
+        FadeStart = VoxelLook::UnderwaterFadeStartBlocks * UFoundationProfile::BlockCm;
+        FadeEnd = VoxelLook::UnderwaterFadeEndBlocks * UFoundationProfile::BlockCm;
+    }
+    const TPair<const TCHAR*, float> Values[] = {{VoxelLook::CaveFloorStrengthParameter, Strength},
+        {VoxelLook::CaveFloorFadeStartParameter, float(FadeStart)},
+        {VoxelLook::CaveFloorFadeEndParameter, float(FadeEnd)}};
+    for (const TPair<const TCHAR*, float>& Value : Values)
+    {
+        float Now = 0;
+        if (!CaveFloorMaterial->GetScalarParameterValue(FName(Value.Key), Now) || Now != Value.Value)
+            CaveFloorMaterial->SetScalarParameterValue(Value.Key, Value.Value);
+    }
+}
+
 void AVoxelWorld::ApplyLook()
 {
     const FVoxelLook Look = FVoxelLook::Read();
+    UpdateCaveFloor(VoxelLook::Solve(Look).CaveFloor);
     const double Pin = Look.SkyPin == 1 ? UpdateSkyPin() : 0;
     const bool bLookChanged = !AppliedLook || !(*AppliedLook == Look);
     // A pin step under 0.005 waits, but the pin's end (its target) is always applied, so caves land on today's exactly.
@@ -280,11 +362,12 @@ void AVoxelWorld::ApplyLook()
     UE_LOG(LogUnnamedVoxel, Log,
         TEXT("Look: DayEV %.3f, cap %.3f, sky pin %d, speed up %.2f, sky %.3f, sky fill %.3f, local exposure %d, film "
              "%d, low glow %.3f, water "
-             "specular %.3f; exposure bias %.3f, EV100 %.3f to %.3f, local grey bias %.3f, curve %s (volume %d, sky "
+             "specular %.3f, cave floor %.2f; exposure bias %.3f, EV100 %.3f to %.3f, local grey bias %.3f, curve %s "
+             "(volume %d, sky "
              "light %d, atmosphere %d, collection %d)"),
         Look.DayEV, Look.Cap, Look.SkyPin, Look.SpeedUp, Look.Sky, Look.SkyFill, Look.LocalExposure, Look.Film,
-        Look.LowGlow, Look.WaterSpecular, Targets.Exposure.Bias, Targets.Exposure.MinEV, Targets.Exposure.MaxEV,
-        Targets.Exposure.LocalGreyBias,
+        Look.LowGlow, Look.WaterSpecular, Look.CaveFloor, Targets.Exposure.Bias, Targets.Exposure.MinEV,
+        Targets.Exposure.MaxEV, Targets.Exposure.LocalGreyBias,
         Targets.Exposure.Curve.IsEmpty() ? TEXT("none")
                                          : *FString::JoinBy(Targets.Exposure.Curve, TEXT(" "), [](const FVector2D& Key)
                                                { return FString::Printf(TEXT("(%.2f, %.3f)"), Key.X, Key.Y); }),

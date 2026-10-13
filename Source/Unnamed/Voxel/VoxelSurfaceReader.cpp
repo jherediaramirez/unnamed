@@ -214,6 +214,35 @@ namespace
             else if (!IsWorldgenKey(Modifier, TEXT("none")))
                 return Context.Fail(TEXT("effects.grass_color_modifier"), Modifier + TEXT(" is not a known modifier"));
         }
+        // The water fog's attributes (VoxelWaterFog.h): a colour, and the end distance as a multiplier on the default.
+        if (FindSurfaceField(*Object, TEXT("attributes")))
+        {
+            const FJsonObject* Attributes =
+                Context.AsObject(Context.Field(*Object, TEXT(""), TEXT("attributes")), TEXT("attributes"));
+            if (!Attributes) return false;
+            const TCHAR* const ColorKey = TEXT("minecraft:visual/water_fog_color");
+            if (FindSurfaceField(*Attributes, ColorKey))
+            {
+                FString Text;
+                if (!Context.String(*Attributes, TEXT("attributes"), ColorKey, Text)) return false;
+                if (!ParseBiomeColor(Text, Out.WaterFogColor))
+                    return Context.Fail(JoinSurfacePath(TEXT("attributes"), ColorKey), Text + TEXT(" is not #rrggbb"));
+            }
+            const TCHAR* const EndKey = TEXT("minecraft:visual/water_fog_end_distance");
+            if (FindSurfaceField(*Attributes, EndKey))
+            {
+                const FString EndPath = JoinSurfacePath(TEXT("attributes"), EndKey);
+                const FJsonObject* End =
+                    Context.AsObject(Context.Field(*Attributes, TEXT("attributes"), EndKey), EndPath);
+                FString Modifier;
+                double Argument = 1;
+                if (!End || !Context.String(*End, EndPath, TEXT("modifier"), Modifier) ||
+                    !Context.Number(*End, EndPath, TEXT("argument"), Argument))
+                    return false;
+                if (Modifier != TEXT("multiply")) return Context.Fail(EndPath, Modifier + TEXT(" is not multiply"));
+                Out.WaterFogEndScale = float(Argument);
+            }
+        }
         return true;
     }
 

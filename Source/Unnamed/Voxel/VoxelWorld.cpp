@@ -43,6 +43,7 @@
 #include "Voxel/VoxelBlocks.h"
 #include "Voxel/VoxelConsole.h"
 #include "Voxel/VoxelEdgeFog.h"
+#include "Voxel/VoxelWaterFog.h"
 #include "Voxel/VoxelFlight.h"
 #include "Voxel/VoxelLightShots.h"
 #include "Voxel/VoxelLightSources.h"
@@ -395,8 +396,15 @@ void AVoxelWorld::LoadMaterials()
     const UFoundationBlockAssets* Assets = FFoundationBlockRegistry::GetDefault()->GetAssets();
     TextureTable = NewObject<UFoundationBlockTextureTable>(this);
     TextureTable->Initialize(Assets);
-    for (const TCHAR* Name : ChunkMaterialNames)
+    // voxel.Look.WaterSurface picks the water layer's materials (VoxelWaterFog.h).
+    const bool bWaterSurface = VoxelWaterFog::IsSurface();
+    UE_LOG(LogUnnamedVoxel, Log, TEXT("Water materials: %s"),
+        bWaterSurface ? TEXT("depth (voxel.Look.WaterSurface 1)") : TEXT("plain"));
+    for (int32 Layer = 0; Layer < int32(EVoxelLayer::Count); ++Layer)
     {
+        const TCHAR* Name = Layer == int32(EVoxelLayer::Water)
+            ? VoxelWaterFog::GetWaterMaterialName(bWaterSurface, false)
+            : ChunkMaterialNames[Layer];
         UMaterialInterface* Base = Cast<UMaterialInterface>(UUnnamedProjectSettings::GetBlockAssetPath(Name).TryLoad());
         if (!Base)
         {
@@ -413,7 +421,9 @@ void AVoxelWorld::LoadMaterials()
     // One instance per far material; the subsystem sets its fade from the drawn radius.
     for (int32 Layer = 0; Layer < int32(EVoxelLayer::Count); ++Layer)
     {
-        const TCHAR* Name = FarMaterialNames[Layer];
+        const TCHAR* Name = Layer == int32(EVoxelLayer::Water)
+            ? VoxelWaterFog::GetWaterMaterialName(bWaterSurface, true)
+            : FarMaterialNames[Layer];
         UMaterialInstanceDynamic* Instance = nullptr;
         for (int32 Earlier = 0; Name && Earlier < Layer; ++Earlier)
             if (FarMaterialNames[Earlier] && FCString::Strcmp(FarMaterialNames[Earlier], Name) == 0)
@@ -541,6 +551,33 @@ bool AVoxelWorld::IsInWater(FVector Point) const
 {
     FBox Water;
     return GetWaterBox(FoundationGrid::CellAt(Point, OriginCm), Water) && Water.IsInside(Point);
+}
+
+EVoxelFluid AVoxelWorld::GetFluidAt(FVector Point) const
+{
+    // GetWaterBox takes any fluid; this tells water from lava.
+    if (!Table) return EVoxelFluid::None;
+    const FIntVector Cell = FoundationGrid::CellAt(Point, OriginCm);
+    const double Height = (Point.Z - FoundationGrid::CellMin(Cell, OriginCm).Z) / CellCm;
+    return VoxelWaterFog::GetFluidAt(*Table, GetState(Cell), GetState(Cell + FIntVector(0, 0, 1)), Height);
+}
+
+void AVoxelWorld::UpdateWaterFog()
+{
+    if (!LookVolume) return;
+    const APlayerController* Controller = GetWorld()->GetFirstPlayerController();
+    const bool bOn = VoxelWaterFog::IsOn() && Controller && Controller->PlayerCameraManager;
+    const FVector Eye = bOn ? Controller->PlayerCameraManager->GetCameraLocation() : FVector::ZeroVector;
+    const EVoxelFluid AtEye = bOn ? GetFluidAt(Eye) : EVoxelFluid::None;
+    const FVoxelBiome* Biome = nullptr;
+    if (AtEye == EVoxelFluid::Water && Terrain)
+        if (const FVoxelBiomeSource* Source = Terrain->GetBiomeSource())
+        {
+            const int32 Index = GetBiome(FoundationGrid::CellAt(Eye, OriginCm));
+            if (Source->GetTable().Biomes.IsValidIndex(Index)) Biome = &Source->GetTable().Biomes[Index];
+        }
+    VoxelWaterFog::Apply(
+        *LookVolume, WaterFogMaterial, VoxelWaterFog::GetFog(bOn, AtEye, Biome, CellCm, VoxelWaterFog::IsBright()));
 }
 
 bool AVoxelWorld::IsInWater(const FBox& Body) const
@@ -739,6 +776,7 @@ void AVoxelWorld::Tick(float DeltaSeconds)
     UpdateLoadingShot();
     ApplyLook();
     UpdateEdgeFog();
+    UpdateWaterFog();
     if (Lights)
     {
         // A new voxel.LightMinLevel gives the meshes a new light table: columns use it from their next mesh.

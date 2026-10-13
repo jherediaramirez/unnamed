@@ -8,6 +8,9 @@
 #include "Engine/SkyLight.h"
 #include "Engine/World.h"
 #include "HAL/IConsoleManager.h"
+#include "Materials/Material.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 #include "Materials/MaterialParameterCollection.h"
 #include "Math/RandomStream.h"
 #include "Misc/AutomationTest.h"
@@ -35,7 +38,8 @@ namespace
             {TEXT("local contrast"), Targets.LocalContrast.Get(-1.f)}, {TEXT("film"), double(Targets.bFilm)},
             {TEXT("sky light"), Targets.SkyLightIntensity}, {TEXT("sky luminance"), Targets.SkyLuminance},
             {TEXT("fog colour"), Targets.FogColorScale}, {TEXT("low glow"), Targets.LowGlow},
-            {TEXT("water specular"), Targets.WaterSpecular}, {TEXT("speed up"), Targets.SpeedUp}};
+            {TEXT("water specular"), Targets.WaterSpecular}, {TEXT("speed up"), Targets.SpeedUp},
+            {TEXT("cave floor"), Targets.CaveFloor}};
     }
 
     // The targets that differ between two looks, joined.
@@ -105,12 +109,14 @@ bool FVoxelLookTest::RunTest(const FString& Parameters)
     Defaults.Sky = 1;
     Defaults.SkyPin = 0;
     Defaults.SkyPinAdapt = 0;
+    Defaults.CaveFloor = 0;
     const FVoxelLook Picked;
     TestTrue(TEXT("the defaults are Jesus's pick: DayEV 0.6, SkyPin with 2 stops, sky 1.637, water specular 0.25 "
-                  "(W3c), low glow 0.03 (held-lichen), the rest as before"),
+                  "(W3c), low glow 0.03 (held-lichen), cave floor 0.56 (Moody), the rest as before"),
         Picked.DayEV == .6f && Picked.SkyPin == 1 && Picked.SkyPinAdapt == 2.f && Picked.Sky == 1.637f &&
             Picked.Cap == 12.5f && Picked.SkyFill == 1.f && Picked.LocalExposure == 1 && Picked.Film == 0 &&
-            Picked.LowGlow == .03f && Picked.WaterSpecular == .25f && Picked.SpeedUp == 2.f);
+            Picked.LowGlow == .03f && Picked.WaterSpecular == .25f && Picked.SpeedUp == 2.f &&
+            Picked.CaveFloor == .56f);
     auto With = [&Defaults](TFunctionRef<void(FVoxelLook&)> Change)
     {
         FVoxelLook Look = Defaults;
@@ -127,6 +133,7 @@ bool FVoxelLookTest::RunTest(const FString& Parameters)
         {With([](FVoxelLook& L) { L.LowGlow = .1f; }), TEXT("low glow")},
         {With([](FVoxelLook& L) { L.WaterSpecular = .5f; }), TEXT("water specular")},
         {With([](FVoxelLook& L) { L.SpeedUp = 6.f; }), TEXT("speed up")},
+        {With([](FVoxelLook& L) { L.CaveFloor = .56f; }), TEXT("cave floor")},
         // SkyPin alone moves nothing until the camera has open sky (the pin; below).
         // SkyPin alone moves nothing until the camera has open sky; SkyPinAdapt only acts with SkyPin (below).
         {With([](FVoxelLook& L) { L.SkyPin = 1; }), TEXT("")},
@@ -346,6 +353,56 @@ bool FVoxelLookTest::RunTest(const FString& Parameters)
             Targets.LowGlow);
         TestEqual(TEXT("MPC_VoxelLook's WaterSpecular is the default look's"),
             Default(VoxelLook::WaterSpecularParameter), Targets.WaterSpecular);
+    }
+    // voxel.Look.CaveFloor (scout AB's oracles O2-O4, O6): stone (texture sRGB 125.5) at light 0 reads as vanilla 26.3
+    // at Brightness 50, N/S 8.9, E/W 8.2, top 13.2 (+-15%); linear in the dial; a max, so a lit pixel keeps its colour;
+    // faded out past the fog; drawn only above 0.
+    {
+        const float StoneLinear = FMath::Pow((125.5f / 255.f + .055f) / 1.055f, 2.4f);
+        const FLinearColor Base(StoneLinear, StoneLinear, StoneLinear), Black(0, 0, 0);
+        auto Floor = [&](const FVector& Normal, float Strength, const FLinearColor& Scene = FLinearColor(0, 0, 0),
+                         double Depth = 500)
+        { return 255 * VoxelLook::CaveFloorDisplay(Scene, Base, Normal, Depth, Strength, 6000, 8000).R; };
+        auto Near = [](double Value, double Expected) { return FMath::Abs(Value - Expected) <= .15 * Expected; };
+        TestTrue(TEXT("cave floor 1: N/S 8.9, E/W 8.2, top 13.2, bottom 6.3"),
+            Near(Floor(FVector(0, 1, 0), 1), 8.9) && Near(Floor(FVector(0, -1, 0), 1), 8.9) &&
+                Near(Floor(FVector(1, 0, 0), 1), 8.2) && Near(Floor(FVector(0, 0, 1), 1), 13.2) &&
+                Near(Floor(FVector(0, 0, -1), 1), 6.3));
+        TestTrue(TEXT("cave floor 0.56 and 1.6: N/S 5.0 and 14.2"),
+            Near(Floor(FVector(0, 1, 0), .56f), 5.0) && Near(Floor(FVector(0, 1, 0), 1.6f), 14.2));
+        TestTrue(TEXT("cave floor: a lit pixel above the floor keeps its value; the floor fades out past the fog"),
+            FMath::IsNearlyEqual(Floor(FVector(0, 1, 0), 1, FLinearColor(.16f, .16f, .16f)), 255 * .16f, 1e-3) &&
+                Floor(FVector(0, 1, 0), 1, Black, 8000) == 0 && Floor(FVector(0, 1, 0), 1, Black, 7000) > 3);
+        TestTrue(TEXT("cave floor 0 draws nothing"),
+            !VoxelLook::CaveFloorDrawn(0) && VoxelLook::CaveFloorDrawn(.56f) && Floor(FVector(0, 1, 0), 0) == 0);
+        // The material's script holds the same numbers and formula, after tone mapping.
+        FString Script;
+        const bool bScript = FFileHelper::LoadFileToString(
+            Script, *(FPaths::ProjectDir() / TEXT("Scripts/Editor/CreateLookMaterials.py")));
+        auto Constant = [&Script](const TCHAR* Name)
+        {
+            const FString Key = FString(Name) + TEXT(" = ");
+            const int32 At = Script.Find(Key, ESearchCase::CaseSensitive);
+            return At == INDEX_NONE ? -1.f : FCString::Atof(*Script.Mid(At + Key.Len(), 12));
+        };
+        TestTrue(TEXT("CreateLookMaterials.py's face factors are VoxelLook's"),
+            bScript && Constant(TEXT("FLOOR_TOP")) == VoxelLook::FloorTop &&
+                Constant(TEXT("FLOOR_NS")) == VoxelLook::FloorNS && Constant(TEXT("FLOOR_EW")) == VoxelLook::FloorEW &&
+                Constant(TEXT("FLOOR_BOTTOM")) == VoxelLook::FloorBottom);
+        const TCHAR* Lines[] = {
+            TEXT("float face = a.z * (N.z > 0 ? %(top)s : %(bottom)s) + a.y * %(ns)s + a.x * %(ew)s;"),
+            TEXT("float fade = 1.0 - saturate((Depth - FadeStart) / max(FadeEnd - FadeStart, 1.0));"),
+            TEXT("float3 tex = lerp(b * 12.92, 1.055 * pow(b, 1.0 / 2.4) - 0.055, step(0.0031308, b));"),
+            TEXT("return max(Color, Strength * face * fade * tex);"),
+            TEXT("\"blendable_location\", unreal.BlendableLocation.BL_SCENE_COLOR_AFTER_TONEMAPPING)")};
+        for (const TCHAR* Line : Lines)
+            TestTrue(FString::Printf(TEXT("CreateLookMaterials.py has: %s"), Line),
+                Script.Contains(Line, ESearchCase::CaseSensitive));
+        const auto* Material =
+            Cast<UMaterial>(UUnnamedProjectSettings::GetBlockAssetPath(VoxelLook::CaveFloorMaterialName).TryLoad());
+        TestTrue(TEXT("M_LookCaveFloor is a post-process material after tone mapping"),
+            Material && Material->MaterialDomain == MD_PostProcess &&
+                Material->BlendableLocation == BL_SceneColorAfterTonemapping);
     }
     const IConsoleVariable* DefaultBias =
         IConsoleManager::Get().FindConsoleVariable(TEXT("r.DefaultFeature.AutoExposure.Bias"));

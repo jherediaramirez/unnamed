@@ -20,6 +20,8 @@ class FVoxelLightTable;
 class FVoxelLights;
 class FVoxelTransitionShots;
 class UExponentialHeightFogComponent;
+class UMaterialInstanceDynamic;
+enum class EVoxelFluid : uint8;
 class UPointLightComponent;
 class UStaticMeshComponent;
 class USkyAtmosphereComponent;
@@ -31,6 +33,8 @@ class UMaterialInterface;
 class UCurveFloat;
 class UMaterialParameterCollection;
 class USkyLightComponent;
+class UMaterialInstanceDynamic;
+class UPostProcessComponent;
 class UVoxelWorldSubsystem;
 
 // The voxel world's level actor (/Game/Maps/L_Generated) and the map's AFoundationLab. UVoxelWorldSubsystem streams the
@@ -159,6 +163,10 @@ private:
     // Fits the edge fog to the drawn radius and the haze switch whenever they change (far LOD step 2: the haze while
     // far meshes form the edge, else step 1's wall), and keeps the fog floor under the camera.
     void UpdateEdgeFog();
+    // The fog in fluids (VoxelWaterFog.h): on while the camera's eye is in water or lava and voxel.Look.WaterFog is 1.
+    void UpdateWaterFog();
+    // The fluid at a point: the cell's fluid where the point is under its surface, else None.
+    EVoxelFluid GetFluidAt(FVector Point) const;
     // The sky's aerial perspective distance scale for the edge fog as applied.
     float GetEdgeAerialScale() const;
     // The fog floor shows unless the haze's voxel.Fog.FloorDepth is below 0 (a look check without it).
@@ -168,6 +176,9 @@ private:
     void ApplyLook();
     // voxel.Look.SkyPin: probes the camera's open sky every VoxelLook::SkyProbeSeconds and eases the pin towards it.
     double UpdateSkyPin();
+    // voxel.Look.CaveFloor: makes its post-process on first use, switches it, and fades the floor with the fog that
+    // hides the far scene (the edge fog; with the eye in water, the water fog while voxel.Look.WaterFog is on).
+    void UpdateCaveFloor(float Strength);
     // On the climate search's dry land: the spawn cell rises or falls to the highest block that collides in its block
     // column (a treetop counts), then rises until the body fits, as the Playground's spawn does.
     void StandOnSpawnBlocks();
@@ -243,10 +254,18 @@ private:
     // last applied and the edge fog colour's scale from it.
     UPROPERTY(Transient)
     TObjectPtr<APostProcessVolume> LookVolume;
+    // voxel.Look.CaveFloor: the unbound post-process that draws M_LookCaveFloor, on only while the dial is above 0.
+    UPROPERTY(Transient)
+    TObjectPtr<UPostProcessComponent> CaveFloorPost;
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterialInstanceDynamic> CaveFloorMaterial;
     UPROPERTY(Transient)
     TObjectPtr<USkyLightComponent> SkyFill;
     UPROPERTY(Transient)
     TObjectPtr<UMaterialParameterCollection> LookCollection;
+    // M_WaterFog's instance on LookVolume, made when the eye first enters a fluid.
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterialInstanceDynamic> WaterFogMaterial;
     // The volume's exposure curve while a look needs one (VoxelLook::SolveExposure).
     UPROPERTY(Transient)
     TObjectPtr<UCurveFloat> LookCurve;
