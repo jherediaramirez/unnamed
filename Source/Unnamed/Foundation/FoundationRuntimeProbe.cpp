@@ -621,6 +621,9 @@ void UFoundationRuntimeProbe::TickComponent(float Delta, ELevelTick Type, FActor
 {
     Super::TickComponent(Delta, Type, Function);
     if (bDone || Cases.IsEmpty()) return;
+    // The world's first frames may be under its loading screen (foundation.Load.Cover), which holds gameplay input:
+    // the first case starts once the player could act.
+    if (Phase < 0 && Controller && Controller->GetHud()->IsLoadingScreenShown()) return;
     const double Now = FPlatformTime::Seconds();
     ++Frames;
     if (Phase >= 0)
