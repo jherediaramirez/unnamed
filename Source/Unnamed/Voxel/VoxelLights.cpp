@@ -1,5 +1,6 @@
 #include "Voxel/VoxelLights.h"
 #include "Components/PointLightComponent.h"
+#include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationProfile.h"
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformTime.h"
@@ -373,6 +374,24 @@ TArray<TOptional<uint64>> FVoxelLights::GetSlotKeys() const
     for (const FSlot& Slot : Slots)
         Keys.Add(Slot.bUsed ? TOptional<uint64>(Slot.Key) : TOptional<uint64>());
     return Keys;
+}
+
+int32 FVoxelLights::GetBlockLevel(const FIntVector& Cell) const
+{
+    // A level-15 source reaches 14 cells: the cell's column and its eight neighbours cover it.
+    static_assert(VoxelConstants::ColumnSize >= 14);
+    const FIntPoint Home(FoundationGrid::FloorDivide(Cell.X, VoxelConstants::ColumnSize),
+        FoundationGrid::FloorDivide(Cell.Y, VoxelConstants::ColumnSize));
+    int32 Level = 0;
+    for (int32 DY = -1; DY <= 1; ++DY)
+        for (int32 DX = -1; DX <= 1; ++DX)
+            if (const TArray<FVoxelLightSource>* Near = Columns.Find(Home + FIntPoint(DX, DY)))
+                for (const FVoxelLightSource& Source : *Near)
+                {
+                    const FIntVector D = Source.Cell - Cell;
+                    Level = FMath::Max(Level, Source.Level - FMath::Abs(D.X) - FMath::Abs(D.Y) - FMath::Abs(D.Z));
+                }
+    return Level;
 }
 
 int32 FVoxelLights::GetComponentCount() const

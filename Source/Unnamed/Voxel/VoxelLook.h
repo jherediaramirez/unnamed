@@ -34,8 +34,9 @@ struct UNNAMED_API FVoxelLook
     int32 LocalExposure = 1;
     // 0 keeps the engine's filmic curve; 1 near-straight (Slope 1.10, Toe 0.12, Shoulder 0.70, WhiteClip 0.04).
     int32 Film = 0;
-    // x the glow of emitters of light level 1 to 7 (glow lichen 7), through MPC_VoxelLook.
-    float LowGlow = 1.f;
+    // x the glow of emitters of light level 1 to 7 (glow lichen 7), through MPC_VoxelLook. 0.03 (held-lichen step): glow
+    // lichen keeps its own grey-green in a dark cave instead of clipping to white (1 before, one switch away).
+    float LowGlow = .03f;
     // The water's specular, through MPC_VoxelLook: Jesus's pick from the brightness pass's ladder (0.5 before W3c).
     float WaterSpecular = .25f;
 

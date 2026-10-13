@@ -2,6 +2,7 @@
 #include "Blocks/VoxelBlockTable.h"
 #include "Components/PointLightComponent.h"
 #include "Foundation/FoundationBlockRegistry.h"
+#include "Foundation/FoundationInteractionView.h"
 #include "GameFramework/Actor.h"
 #include "HAL/IConsoleManager.h"
 #include "Misc/AutomationTest.h"
@@ -391,6 +392,40 @@ bool FVoxelLightPoolTest::RunTest(const FString& Parameters)
     }
 
     AddInfo(FString::Printf(TEXT("Unnamed.Voxel.LightPool: %d of %d rows pass"), Passed, Rows));
+    return true;
+}
+
+// The held light (foundation.Held.Light): its switch's default, vanilla's brightness curve with the wiki's floor, the
+// daylight factor that keeps today's glow at level 15, and the pool's block light at a cell.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelHeldLightTest, "Unnamed.Voxel.HeldLight",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelHeldLightTest::RunTest(const FString& Parameters)
+{
+    IConsoleVariable* Mode = IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Held.Light"));
+    TestTrue(TEXT("foundation.Held.Light defaults to 1, lit by the light at the player"),
+        FoundationHeldLight::DefaultMode == 1 && Mode && Mode->GetDefaultValue() == FString(TEXT("1")));
+    TestEqual(TEXT("level 0 is the wiki's 5% floor"), FoundationHeldLight::Brightness(0), .05, 1e-9);
+    TestEqual(TEXT("level 15 is full brightness"), FoundationHeldLight::Brightness(15), 1., 1e-9);
+    TestEqual(TEXT("level 7: 0.05 + 0.95 x 0.18"), FoundationHeldLight::Brightness(7),
+        .05 + .95 * (7. / 15) / (4 - 3 * 7. / 15), 1e-9);
+    bool bRising = true;
+    for (int32 Level = 1; Level <= 15; ++Level)
+        bRising &= FoundationHeldLight::Brightness(Level) > FoundationHeldLight::Brightness(Level - 1);
+    TestTrue(TEXT("brightness rises with the level"), bRising);
+    TestEqual(TEXT("level 15 in daylight draws as the fixed glow: 16000 x 2^-14.1"),
+        FoundationHeldLight::LightGlow(15, 16000, .6), 16000 * FMath::Pow(2., -14.1), 1e-9);
+    TestEqual(TEXT("a dark cave keeps 0.05^2.2 of it"), FoundationHeldLight::LightGlow(0, 16000, .6),
+        FMath::Pow(.05, 2.2) * 16000 * FMath::Pow(2., -14.1), 1e-9);
+
+    TArray<TObjectPtr<UPointLightComponent>> Components;
+    FVoxelLights Pool(nullptr, Components);
+    TArray<FVoxelLightSource> Sources = {MakePoolTestSource(FIntVector(1, 2, 64))};
+    Pool.SetColumn(FIntPoint(0, 0), MoveTemp(Sources));
+    TestEqual(TEXT("the torch's own cell: 14"), Pool.GetBlockLevel(FIntVector(1, 2, 64)), 14);
+    TestEqual(TEXT("3 cells by taxicab: 11"), Pool.GetBlockLevel(FIntVector(2, 3, 65)), 11);
+    TestEqual(TEXT("from the next column west: 14 - 4"), Pool.GetBlockLevel(FIntVector(-3, 2, 64)), 10);
+    TestEqual(TEXT("14 cells away: 0"), Pool.GetBlockLevel(FIntVector(15, 2, 64)), 0);
     return true;
 }
 #endif

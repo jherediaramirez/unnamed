@@ -22,8 +22,8 @@ to the camera, a cylinder as vanilla's fog), dithered on the masked layers and s
 the drawn radius's last columns. Shadow passes take the unfaded mask.
 
 The look dials' scalars (the brightness pass) come from MPC_VoxelLook, which AVoxelWorld sets from voxel.Look.*: LowGlow
-multiplies the glow of emitters of light level 1 to 7, WaterSpecular is the water's specular. Its defaults draw every
-material as before the dials.
+multiplies the glow of emitters of light level 1 to 7 (0.03: glow lichen's soft glow), WaterSpecular is the water's
+specular.
 
 Run after ImportBlocks.py; the graphs are code, so rerunning rebuilds them on the same assets. -Materials=A,B limits
 the run to the named materials:
@@ -221,7 +221,7 @@ FAR_FADE_DEFAULT_CM = 1.0e9
 # The look dials' collection (Source/Unnamed/Voxel/VoxelLook.h) and its scalars' defaults, which are the voxel.Look.*
 # defaults: maps without the voxel world (the Playground) draw with these.
 LOOK_COLLECTION = "MPC_VoxelLook"
-LOOK_PARAMETERS = {"LowGlow": 1.0, "WaterSpecular": 0.25}
+LOOK_PARAMETERS = {"LowGlow": 0.03, "WaterSpecular": 0.25}
 # Light is the level / 15: emitters of level 1 to 7 (glow lichen 7) glow x LowGlow, brighter ones as before.
 LOW_GLOW_HLSL = r"""
 return Light * (Light * 15.0 < 7.5 ? LowGlow : 1.0);

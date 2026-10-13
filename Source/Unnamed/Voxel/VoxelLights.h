@@ -83,6 +83,10 @@ public:
     bool IsLive() const { return bLive; }
     int32 GetColumnCount() const { return Columns.Num(); }
     int32 GetSourceCount() const { return SourceCount; }
+    // The block light a cell gets from the known sources (the held view's light, foundation.Held.Light): the best of a
+    // source's level less its taxicab distance in cells, as vanilla's light spreads through open cells, walls ignored.
+    // Only states with a point light count (voxel.LightMinLevel). 0 with no source in reach.
+    int32 GetBlockLevel(const FIntVector& Cell) const;
     // The last pick, nearest the camera first.
     TConstArrayView<FVoxelLightPick> GetPicks() const { return Picks; }
     // Per slot (component, when there is an owner): the key of the pick it shows, or unset while free.
