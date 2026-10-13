@@ -4,6 +4,8 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 12, 2026
 
+- [Water and sky handoff: W3c done, into W3d (less see-through water, readable streaks, the water fog, a probe step)](2026-10-12-WaterSky-Handoff-W3d.md): start here for the next water session.
+- [Water and sky W3c: the ice flicker fixed, water shine 0.25](2026-10-12-WaterSky-W3c.md): frozen lakes' column checkerboard was a translucent-sort tie between a column's ice and water sections; the see-through part draws the translucent layer after the water (`voxel.SeeThroughPart`, `CaptureVoxel -Fluids ice`); `voxel.Look.WaterSpecular` 0.25 by Jesus's pick.
 - [Look handoff: after the brightness pass](2026-10-12-Look-Handoff.md): start here for DN2, W3c, T3c or a retune of the picked look.
 - [The brightness pass: look dials, pinned daylight, the vanilla outline](2026-10-12-Look-Brightness.md): `voxel.Look.*` (DayEV 0.6, SkyPin with 2 stops, Sky 1.637 by Jesus's pick), caves unchanged, mode 1 outline after tone mapping (0.63x), `CaptureVoxel -Transition`; scout T's cap maths corrected; open items for DN2, W3c, T3c.
 - [Review fixes F1-F8: the external review's eight findings](2026-10-12-Review-Fixes.md): crash dumps kept (`Scripts/CrashFolders.ps1`), the menu runners' exit codes, fresh E2E output folders, input-settings' page hash, tool damage through right-click moves, the atomic input save with a `.bak` restore, missing assets failing their tests, and the aquifer centres jittered on all three axes (a decided generator change: new goldens and hashes, before/after table inside).
