@@ -153,6 +153,41 @@ bool AFoundationLab::IsInWater(const FBox& Body) const
     return WaterBoxes.ContainsByPredicate([&Inner](const FBox& Water) { return Water.Intersect(Inner); });
 }
 
+EFoundationFluid AFoundationLab::GetFluid(FVector Point) const
+{
+    return IsInWater(Point) ? EFoundationFluid::Water : EFoundationFluid::None;
+}
+
+EFoundationFluid AFoundationLab::GetFluid(const FBox& Body) const
+{
+    return IsInWater(Body) ? EFoundationFluid::Water : EFoundationFluid::None;
+}
+
+void AFoundationLab::GetFluidFacts(bool bSwim, const FFoundationSimulation& Simulation,
+    const UFoundationProfile& Profile, FFoundationEligibility& Out) const
+{
+    Out.Fluid = EFoundationFluid::None;
+    Out.bEyesInFluid = false;
+    Out.FluidAtFeetCm = 0;
+    Out.IsFluidFree = nullptr;
+    if (!bSwim) return;
+    Out.Fluid = GetFluid(FFoundationSimulation::Bounds(Simulation.Feet, Simulation.HeightCm, Profile.WidthCm));
+    Out.bEyesInFluid = GetFluid(Simulation.Feet +
+                           FVector(0, 0, Simulation.bCrouched ? Profile.CrouchingEyesCm : Profile.StandingEyesCm)) !=
+        EFoundationFluid::None;
+    Out.FluidAtFeetCm = GetFluidAboveCm(Simulation.Feet);
+    Out.IsFluidFree = [this](const FBox& Box) { return GetFluid(Box) == EFoundationFluid::None; };
+}
+
+double AFoundationLab::GetFluidAboveCm(FVector Feet) const
+{
+    const FVector Point = Feet + FVector(0, 0, .1);
+    double Above = 0;
+    for (const FBox& Water : WaterBoxes)
+        if (Water.IsInside(Point)) Above = FMath::Max(Above, Water.Max.Z - Feet.Z);
+    return Above;
+}
+
 FFoundationTarget AFoundationLab::TraceAuthority(const FFoundationAuthority& Authority, FVector Eye, FVector Direction)
 {
     FFoundationPlayerFacts Facts;

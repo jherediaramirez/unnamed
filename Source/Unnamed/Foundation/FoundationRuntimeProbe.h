@@ -81,6 +81,8 @@ private:
     void AddViewsCases();
     // -FoundationSuite=pause: the frames around ESC and Back to Game (FoundationPauseProbe.cpp).
     void AddPauseCases();
+    // -FoundationSuite=swim: the swimming control pair in the Playground pool (FoundationSwimProbe.cpp).
+    void AddSwimCases();
     // The pause menu's life in the world's foundation.Pause.Menu mode, in the all and pause suites
     // (FoundationPauseProbe.cpp).
     void AddPauseMenuCases();

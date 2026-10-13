@@ -204,7 +204,9 @@ void UFoundationRuntimeProbe::BeginPlay()
     const bool bViews = Suite == TEXT("views");
     // And the frames around ESC (FoundationPauseProbe.cpp).
     const bool bPause = Suite == TEXT("pause");
-    if (!bMovement && !bInteraction && !bTour && !bViews && !bPause)
+    // And the swimming control pair (FoundationSwimProbe.cpp).
+    const bool bSwim = Suite == TEXT("swim");
+    if (!bMovement && !bInteraction && !bTour && !bViews && !bPause && !bSwim)
     {
         // A case, so the probe still finishes and reports the failure.
         AddCase(
@@ -212,7 +214,8 @@ void UFoundationRuntimeProbe::BeginPlay()
             [this, Suite]
             {
                 Record(TEXT("known -FoundationSuite"), false,
-                    FString::Printf(TEXT("'%s' is not movement, interaction, tour, views, pause or all"), *Suite));
+                    FString::Printf(
+                        TEXT("'%s' is not movement, interaction, tour, views, pause, swim or all"), *Suite));
             });
     }
     if (bMovement) AddMovementCases();
@@ -220,6 +223,7 @@ void UFoundationRuntimeProbe::BeginPlay()
     if (bTour) AddTourCases();
     if (bViews) AddViewsCases();
     if (bPause) AddPauseCases();
+    if (bSwim) AddSwimCases();
     if (Suite == TEXT("all") || bPause) AddPauseMenuCases();
     if (FParse::Param(FCommandLine::Get(), TEXT("HudCaptures"))) AddHudCases();
     TotalStarted = Started = FPlatformTime::Seconds();

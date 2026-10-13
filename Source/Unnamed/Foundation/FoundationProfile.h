@@ -77,6 +77,32 @@ public:
     // Flying widens the view 10% (wiki Flying), on top of the sprint widening.
     UPROPERTY(Config, EditAnywhere)
     double FlyingFovMultiplier = 1.1;
+    // Swimming (foundation.Swim 1). Steady speed a * InputDamping / (1 - drag): 1.96 blocks/s in water (wiki
+    // Swimming: 1.97), 3.92 sprinting with eyes under (wiki: 3.918). Drags and gravities: scout AA's probe on the
+    // 26.3 server (velocity times drag, then gravity, every tick).
+    UPROPERTY(Config, EditAnywhere)
+    double SwimAccelerationCmPerTick = 2;
+    UPROPERTY(Config, EditAnywhere)
+    double WaterDrag = .8;
+    UPROPERTY(Config, EditAnywhere)
+    double WaterSprintDrag = .9;
+    UPROPERTY(Config, EditAnywhere)
+    double WaterGravityCmPerTick = .5;
+    UPROPERTY(Config, EditAnywhere)
+    double LavaDrag = .5;
+    UPROPERTY(Config, EditAnywhere)
+    double LavaGravityCmPerTick = 2;
+    // Unverified feel values: held jump rises and sneak sinks by this each tick; a ground jump still works in fluid
+    // shallower than ShallowJumpCm at the feet; at a wall, a body raised JumpOutRaiseCm that fits out of the fluid
+    // jumps out at JumpOutCmPerTick.
+    UPROPERTY(Config, EditAnywhere)
+    double SwimVerticalCmPerTick = 4;
+    UPROPERTY(Config, EditAnywhere)
+    double ShallowJumpCm = 40;
+    UPROPERTY(Config, EditAnywhere)
+    double JumpOutRaiseCm = 60;
+    UPROPERTY(Config, EditAnywhere)
+    double JumpOutCmPerTick = 30;
     // Double-tap forward window when the sprintWindow preference is unavailable.
     UPROPERTY(Config, EditAnywhere)
     int32 SprintWindowTicks = 7;

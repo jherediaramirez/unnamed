@@ -21,6 +21,11 @@
 
 namespace
 {
+    TAutoConsoleVariable<int32> CVarSwim(TEXT("foundation.Swim"), 1,
+        TEXT("Swimming: 0 walks through fluids as on land (vitals still count lava as water), 1 swims (water and lava "
+             "drag, sinking, jump to rise, sneak to sink, jump out at walls; lava no longer counts as water)."),
+        ECVF_Default);
+
     // FUnnamedInputIntent is the input layer's request; the simulation takes its own struct so it
     // never depends on input or preference systems.
     FFoundationIntent MakeSimulationIntent(const FUnnamedInputIntent& Input, bool bAutoJump, int32 SprintWindowTicks)
@@ -161,9 +166,12 @@ void AFoundationPawn::StepVitals(const UFoundationProfile& Profile)
     Facts.bSprinting = Simulation.bSprinting;
     Facts.bJumped = Simulation.bJumped;
     Facts.bSprintJumped = Simulation.bSprintJumped;
-    Facts.bBodyInWater = bBodyInWater =
-        Lab->IsInWater(FFoundationSimulation::Bounds(Simulation.Feet, Simulation.HeightCm, Profile.WidthCm));
-    Facts.bEyesInWater = bEyesInWater = Lab->IsInWater(GetEyePosition());
+    const FBox Body = FFoundationSimulation::Bounds(Simulation.Feet, Simulation.HeightCm, Profile.WidthCm);
+    // Swimming tells lava from water; without it lava counts as water, as before.
+    const bool bSwim = CVarSwim.GetValueOnGameThread() != 0;
+    Facts.bBodyInWater = bBodyInWater = bSwim ? Lab->GetFluid(Body) == EFoundationFluid::Water : Lab->IsInWater(Body);
+    Facts.bEyesInWater = bEyesInWater =
+        bSwim ? Lab->GetFluid(GetEyePosition()) == EFoundationFluid::Water : Lab->IsInWater(GetEyePosition());
     Vitals.Step(Facts);
     if (Vitals.ShouldRespawn()) Respawn();
 }
@@ -318,6 +326,7 @@ void AFoundationPawn::Tick(float DeltaSeconds)
             Eligibility.bMayFly = Vitals.Mode == EFoundationPlayerMode::Creative;
             StepCollision.Reset();
             Lab->GatherCollision(GetStepRegion(Simulation, Profile), StepCollision);
+            Lab->GetFluidFacts(CVarSwim.GetValueOnGameThread() != 0, Simulation, Profile, Eligibility);
             InteractionSeconds += FPlatformTime::Seconds() - GatherStart;
             Simulation.Step(LastIntent, View.Yaw, Profile, StepCollision, Eligibility);
             ++ReferenceSteps;
