@@ -3,6 +3,8 @@
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 13, 2026
+- [Far LOD correctness handoff: A1-A3 done, the far-hole A/B next](2026-10-13-Voxel-LOD-Correctness-Handoff.md): start here; the merge of `feature/voxel-world` waits for the quiet-window A/B of the smoke flight's far-hole rise.
+- [Far LOD correctness: three review findings fixed (A1-A3)](2026-10-13-Voxel-LOD-Correctness.md): a dropped mesh no longer strands a column in the wrong kind; a far mesh over the budget lets near meshes go and goes alone after one frame (`GetVoxelApplyStep`); far walls show under near overhangs (`FVoxelFarBorder`, `NeedsMesh`); tests, mutations and one untested guard.
 - [Held light and glow lichen handoff](2026-10-13-Held-Lichen-Handoff.md): `foundation.Held.Light` 1 (the held item takes the light at the player: dark in caves, warm by torches) and `voxel.Look.LowGlow` 0.03 (glow lichen's soft glow, not white); open: the night term, walls in the block light.
 
 ## October 12, 2026
