@@ -1,7 +1,9 @@
 #include "Biome/VoxelBiomeTable.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "HAL/IConsoleManager.h"
+#include "Materials/Material.h"
 #include "Misc/AutomationTest.h"
+#include "UnnamedProjectSettings.h"
 #include "Voxel/VoxelBlocks.h"
 #include "Voxel/VoxelWaterFog.h"
 #include "Voxel/VoxelWorldgenReader.h"
@@ -29,6 +31,49 @@ bool FVoxelWaterFogSwitchTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("off in water"), VoxelWaterFog::GetFog(false, EVoxelFluid::Water, nullptr, 100).IsSet());
     TestFalse(TEXT("off in lava"), VoxelWaterFog::GetFog(false, EVoxelFluid::Lava, nullptr, 100).IsSet());
     TestFalse(TEXT("on in air"), VoxelWaterFog::GetFog(true, EVoxelFluid::None, nullptr, 100).IsSet());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelWaterFogSurfaceTest, "Unnamed.Voxel.WaterFog.Surface",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelWaterFogSurfaceTest::RunTest(const FString& Parameters)
+{
+    // voxel.Look.WaterSurface defaults to 1 (the materials writing depth, which exist); 0 picks the plain ones.
+    IConsoleVariable* Switch = IConsoleManager::Get().FindConsoleVariable(TEXT("voxel.Look.WaterSurface"));
+    if (!TestNotNull(TEXT("voxel.Look.WaterSurface exists"), Switch)) return true;
+    TestEqual(TEXT("voxel.Look.WaterSurface's default"), Switch->GetDefaultValue(), FString(TEXT("1")));
+    const int32 Was = Switch->GetInt();
+    Switch->Set(1, ECVF_SetByCode);
+    TestTrue(TEXT("IsSurface at 1"), VoxelWaterFog::IsSurface());
+    Switch->Set(0, ECVF_SetByCode);
+    TestFalse(TEXT("IsSurface at 0"), VoxelWaterFog::IsSurface());
+    Switch->Set(Was, ECVF_SetByCode);
+    TestEqual(
+        TEXT("near, off"), FString(VoxelWaterFog::GetWaterMaterialName(false, false)), FString(TEXT("M_ChunkWater")));
+    TestEqual(
+        TEXT("far, off"), FString(VoxelWaterFog::GetWaterMaterialName(false, true)), FString(TEXT("M_ChunkFarWater")));
+    for (const bool bFar : {false, true})
+    {
+        const TCHAR* Name = VoxelWaterFog::GetWaterMaterialName(true, bFar);
+        const UMaterial* Material = Cast<UMaterial>(UUnnamedProjectSettings::GetBlockAssetPath(Name).TryLoad());
+        if (TestNotNull(FString::Printf(TEXT("%s exists"), Name), Material))
+        {
+            TestTrue(FString::Printf(TEXT("%s writes its depth"), Name), Material->bOutputTranslucentVelocity != 0);
+            TestTrue(FString::Printf(TEXT("%s is two-sided"), Name), Material->IsTwoSided());
+        }
+    }
+    // The plain ones stay as they were: one-sided, no depth.
+    for (const bool bFar : {false, true})
+    {
+        const TCHAR* Name = VoxelWaterFog::GetWaterMaterialName(false, bFar);
+        const UMaterial* Material = Cast<UMaterial>(UUnnamedProjectSettings::GetBlockAssetPath(Name).TryLoad());
+        if (TestNotNull(FString::Printf(TEXT("%s exists"), Name), Material))
+        {
+            TestFalse(FString::Printf(TEXT("%s writes no depth"), Name), Material->bOutputTranslucentVelocity != 0);
+            TestFalse(FString::Printf(TEXT("%s is one-sided"), Name), Material->IsTwoSided());
+        }
+    }
     return true;
 }
 

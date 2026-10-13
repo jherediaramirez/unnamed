@@ -35,6 +35,8 @@ class UMaterialInterface;
 class UCurveFloat;
 class UMaterialParameterCollection;
 class USkyLightComponent;
+class UMaterialInstanceDynamic;
+class UPostProcessComponent;
 class UVoxelWorldSubsystem;
 
 // The voxel world's level actor (/Game/Maps/L_Generated) and the map's AFoundationLab. UVoxelWorldSubsystem streams the
@@ -183,6 +185,9 @@ private:
     // the horizon). The only writer of the sun light; at 0 it puts back the map's rotation and intensity once, and
     // otherwise never touches the light.
     void ApplyCycle();
+    // voxel.Look.CaveFloor: makes its post-process on first use, switches it, and fades the floor with the fog that
+    // hides the far scene (the edge fog; with the eye in water, the water fog while voxel.Look.WaterFog is on).
+    void UpdateCaveFloor(float Strength);
     // On the climate search's dry land: the spawn cell rises or falls to the highest block that collides in its block
     // column (a treetop counts), then rises until the body fits, as the Playground's spawn does.
     void StandOnSpawnBlocks();
@@ -258,6 +263,11 @@ private:
     // last applied and the edge fog colour's scale from it.
     UPROPERTY(Transient)
     TObjectPtr<APostProcessVolume> LookVolume;
+    // voxel.Look.CaveFloor: the unbound post-process that draws M_LookCaveFloor, on only while the dial is above 0.
+    UPROPERTY(Transient)
+    TObjectPtr<UPostProcessComponent> CaveFloorPost;
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterialInstanceDynamic> CaveFloorMaterial;
     UPROPERTY(Transient)
     TObjectPtr<USkyLightComponent> SkyFill;
     UPROPERTY(Transient)

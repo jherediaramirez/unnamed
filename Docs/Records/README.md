@@ -4,6 +4,8 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 13, 2026
 - [Atmosphere: the sun follows the clock](2026-10-13-Atmosphere-Cycle.md): `voxel.Atmosphere.Cycle` (default 0) turns the sun with the world clock through `FVoxelEnvironment`, with `voxel.Atmosphere.Info`; the night is black until the next step; start at [the atmosphere handoff](2026-10-13-Atmosphere-Handoff.md) (night exposure + moon fill, the quiet DN-P p95 run).
+- [Cave floor handoff](2026-10-13-Cave-Floor-Handoff.md): start here after the cave floor (the underwater fade, the Brightness slider later, the GPU cost in a quiet window).
+- [The cave floor](2026-10-13-Cave-Floor.md): `voxel.Look.CaveFloor` 0.56 (Jesus's pick, about vanilla's Moody; 0 = black as before, 1 = vanilla Default): vanilla's light-0 ambient after tone mapping (`M_LookCaveFloor`, `CreateLookMaterials.py`), so cave walls no light reaches read dimly instead of black; the held item gets it too.
 - [Held light and glow lichen handoff](2026-10-13-Held-Lichen-Handoff.md): `foundation.Held.Light` 1 (the held item takes the light at the player: dark in caves, warm by torches) and `voxel.Look.LowGlow` 0.03 (glow lichen's soft glow, not white); open: the night term, walls in the block light.
 
 ## October 12, 2026
@@ -11,6 +13,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 - [Swimming, step 1: water and lava stop feeling like land](2026-10-12-Swimming.md): `foundation.Swim` 1 by default (drag, sinking, Space/Sneak, jump-out, lava split); the control pair and 5 mutations.
 
 - [Water and sky handoff: W3c done, into W3d (less see-through water, readable streaks, the water fog, a probe step)](2026-10-12-WaterSky-Handoff-W3d.md): start here for the next water session.
+- [Water surface handoff: the ordinary ocean's hue next](2026-10-13-WaterSurface-Handoff.md): start here after the water surface (`voxel.Look.WaterSurface` 1; next the hue with a dated Java frame, then the sheen band).
 - [Water fog handoff: the surface from below next](2026-10-12-WaterFog-Handoff.md): start here after the water fog (depth on the water materials, then the open items).
 - [The water fog](2026-10-12-WaterFog.md): `voxel.Look.WaterFog` 1 (0 = before): with the eye in water, 26.3's underwater fog (the biome's `water_fog_color`, default #050533, -8 to 96 blocks; swamps x0.85), lava's fog in lava; `M_WaterFog` from `CreateBlockMaterials.py`; the surface seen from below is an open look call.
 - [Water and sky W3c: the ice flicker fixed, water shine 0.25](2026-10-12-WaterSky-W3c.md): frozen lakes' column checkerboard was a translucent-sort tie between a column's ice and water sections; the see-through part draws the translucent layer after the water (`voxel.SeeThroughPart`, `CaptureVoxel -Fluids ice`); `voxel.Look.WaterSpecular` 0.25 by Jesus's pick.

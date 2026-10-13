@@ -414,8 +414,15 @@ void AVoxelWorld::LoadMaterials()
     const UFoundationBlockAssets* Assets = FFoundationBlockRegistry::GetDefault()->GetAssets();
     TextureTable = NewObject<UFoundationBlockTextureTable>(this);
     TextureTable->Initialize(Assets);
-    for (const TCHAR* Name : ChunkMaterialNames)
+    // voxel.Look.WaterSurface picks the water layer's materials (VoxelWaterFog.h).
+    const bool bWaterSurface = VoxelWaterFog::IsSurface();
+    UE_LOG(LogUnnamedVoxel, Log, TEXT("Water materials: %s"),
+        bWaterSurface ? TEXT("depth (voxel.Look.WaterSurface 1)") : TEXT("plain"));
+    for (int32 Layer = 0; Layer < int32(EVoxelLayer::Count); ++Layer)
     {
+        const TCHAR* Name = Layer == int32(EVoxelLayer::Water)
+            ? VoxelWaterFog::GetWaterMaterialName(bWaterSurface, false)
+            : ChunkMaterialNames[Layer];
         UMaterialInterface* Base = Cast<UMaterialInterface>(UUnnamedProjectSettings::GetBlockAssetPath(Name).TryLoad());
         if (!Base)
         {
@@ -432,7 +439,9 @@ void AVoxelWorld::LoadMaterials()
     // One instance per far material; the subsystem sets its fade from the drawn radius.
     for (int32 Layer = 0; Layer < int32(EVoxelLayer::Count); ++Layer)
     {
-        const TCHAR* Name = FarMaterialNames[Layer];
+        const TCHAR* Name = Layer == int32(EVoxelLayer::Water)
+            ? VoxelWaterFog::GetWaterMaterialName(bWaterSurface, true)
+            : FarMaterialNames[Layer];
         UMaterialInstanceDynamic* Instance = nullptr;
         for (int32 Earlier = 0; Name && Earlier < Layer; ++Earlier)
             if (FarMaterialNames[Earlier] && FCString::Strcmp(FarMaterialNames[Earlier], Name) == 0)
@@ -585,7 +594,8 @@ void AVoxelWorld::UpdateWaterFog()
             const int32 Index = GetBiome(FoundationGrid::CellAt(Eye, OriginCm));
             if (Source->GetTable().Biomes.IsValidIndex(Index)) Biome = &Source->GetTable().Biomes[Index];
         }
-    VoxelWaterFog::Apply(*LookVolume, WaterFogMaterial, VoxelWaterFog::GetFog(bOn, AtEye, Biome, CellCm, VoxelWaterFog::IsBright()));
+    VoxelWaterFog::Apply(
+        *LookVolume, WaterFogMaterial, VoxelWaterFog::GetFog(bOn, AtEye, Biome, CellCm, VoxelWaterFog::IsBright()));
 }
 
 bool AVoxelWorld::IsInWater(const FBox& Body) const
