@@ -79,6 +79,8 @@ struct FVoxelColumnStatus
     // The kind of mesh on screen, and of the latest finished one.
     EVoxelMeshKind Shown = EVoxelMeshKind::None;
     EVoxelMeshKind Meshed = EVoxelMeshKind::None;
+    // The edges (EVoxelFace order) whose neighbour cells the latest finished mesh read one by one (review A3).
+    uint8 CellEdges = 0;
     // Sections waiting to be meshed.
     uint32 DirtySections = 0;
     bool bCached = false;
@@ -373,6 +375,10 @@ private:
         // The neighbours the latest accepted mesh read, and those the job in flight reads (edge walls leave some out).
         uint8 MeshedNeighbors = 0;
         uint8 MeshingNeighbors = 0;
+        // The edges (bits in EVoxelFace order: West, East, North, South) whose neighbour cells the latest accepted mesh
+        // read one by one: all four for a full mesh, those toward neighbours drawn in full for a far mesh (review A3).
+        // A far mesh that missed one now drawn in full is out of date (NeedsMesh).
+        uint8 MeshedCellEdges = 0;
         bool bGenerating = false;
         bool bMeshing = false;
         bool bOnScreen = false;
@@ -447,6 +453,11 @@ private:
     // The neighbours a column's mesh reads, a bit per neighbour in FVoxelNeighborhood order (skipping the center):
     // all eight, or with edge walls only those drawn.
     uint8 GetMeshNeighbors(FIntPoint Column) const;
+    // The edges (EVoxelFace order) toward neighbours drawn in full, which a far mesh reads cell by cell.
+    uint8 GetFullEdges(FIntPoint Column) const;
+    // A drawn column needs a mesh of Wanted kind: dirty sections, the other kind (or none), or a far mesh that read an
+    // edge toward a neighbour now drawn in full as a heightfield.
+    bool NeedsMesh(FIntPoint Column, const FRecord& Record, EVoxelMeshKind Wanted) const;
     bool AreFinal(FIntPoint Column, uint8 Neighbors) const;
     bool IsComplete(int32 NeededIndex) const;
     void MarkDirty(FRecord& Record, uint32 Sections);

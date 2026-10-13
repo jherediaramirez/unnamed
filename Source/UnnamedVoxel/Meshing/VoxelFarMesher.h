@@ -86,6 +86,25 @@ struct FVoxelFarSummary
     FVoxelFarCell& Get(int32 X, int32 Y) { return Cells[Y * VoxelConstants::ColumnSize + X]; }
 };
 
+// A neighbour drawn in full, along the edge it shares with a far column (review A3): which of its edge cells leave the
+// far column's side open, by height. The near mesher draws only its own cells' faces, so where such a cell lies below
+// the neighbour's ground (under an overhang or a roof, in a cave), the far column's wall must show.
+struct FVoxelFarBorder
+{
+    static constexpr int32 Words = VoxelConstants::Height / 64;
+    static_assert(VoxelConstants::Height % 64 == 0, "Whole words of heights");
+
+    // Along the edge (Y for West and East, X for North and South), then (Z - MinZ): bit set where the cell does not
+    // cover the face it shows the far column.
+    uint64 Open[VoxelConstants::ColumnSize][Words];
+
+    bool IsOpen(int32 Along, int32 Z) const
+    {
+        const int32 Local = Z - VoxelConstants::MinZ;
+        return (Open[Along][Local >> 6] >> (Local & 63)) & 1;
+    }
+};
+
 namespace VoxelFarMesher
 {
     struct FOptions
@@ -103,18 +122,25 @@ namespace VoxelFarMesher
         const FVoxelColumn& Column, FVoxelFarSummary& Out, const FVoxelTintTable* Tints = nullptr,
         const FVoxelNeighborhood* Neighborhood = nullptr, const FVoxelMeshOptions& MeshOptions = FVoxelMeshOptions());
 
+    // The edge cells of Neighbor, the column across Center's Face (EVoxelFace: West, East, North or South), as a far
+    // border: a cell is open unless its state's OpaqueFaces covers the face toward Center, as the full mesher culls.
+    UNNAMEDVOXEL_API void SummarizeBorder(
+        const FVoxelBlockTable& Table, const FVoxelColumn& Neighbor, int32 Face, FVoxelFarBorder& Out);
+
     // Center's far mesh, appended to Out: positions in blocks from the column's minimum corner, Z the world height, in
     // the full mesher's layout.
     // - Ground tops (TopState's up face, one block above GroundZ), merged greedily by height, state and tint.
     // - Ground walls toward every neighbour cell whose ground is lower, down to it: the wall's top block shows
     //   SideState's side face, the rest FillState's, merged vertically. Across the column's edges the neighbour cell is
     //   in Neighbors[Face] (EVoxelFace order: West, East, North, South); a null neighbour counts as ground at
-    //   Center.LowestGround - 1, a skirt.
+    //   Center.LowestGround - 1, a skirt. With Borders[Face] (a neighbour drawn in full), the wall also shows below
+    //   that wherever the border is open, cell by cell, as SideState at GroundZ and FillState below it.
     // - Canopy boxes: the top (CanopyTopState), the bottom unless ground lies right under it, and the sides, each
     //   minus what a neighbour cell's canopy or ground covers, on Options.CanopyLayer.
     // - Fluid tops at FluidZ plus the fluid's surface height, merged greedily, on the fluid state's own layer.
     // Ground tops and walls go on the opaque layer whatever the state's own layer. No ambient occlusion: every corner
     // is open. Light is the state's emission, as the full mesher writes it.
     UNNAMEDVOXEL_API void Mesh(const FVoxelBlockTable& Table, const FVoxelFarSummary& Center,
-        const FVoxelFarSummary* const Neighbors[4], const FOptions& Options, FVoxelMeshData& Out);
+        const FVoxelFarSummary* const Neighbors[4], const FOptions& Options, FVoxelMeshData& Out,
+        const FVoxelFarBorder* const Borders[4] = nullptr);
 }
