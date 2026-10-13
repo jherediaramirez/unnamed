@@ -24,7 +24,26 @@ FRotator VoxelEnvironment::LightRotation(const FVector3f& TowardsBody)
 
 float VoxelEnvironment::DaylightAt(float SunElevation)
 {
-    return float(FMath::SmoothStep(0., double(DaylightFullElevation), double(SunElevation)));
+    return float(
+        FMath::SmoothStep(-double(DaylightFullElevation), double(DaylightFullElevation), double(SunElevation)));
+}
+
+float VoxelEnvironment::NightAt(float SunElevation)
+{
+    return 1 - DaylightAt(SunElevation);
+}
+
+float VoxelEnvironment::MoonlightAt(float MoonElevation)
+{
+    return float(
+        FMath::SmoothStep(double(DaylightFullElevation), 2 * double(DaylightFullElevation), double(MoonElevation)));
+}
+
+float VoxelEnvironment::MoonIlluminationAt(int32 MoonPhase)
+{
+    const int32 Phase =
+        ((MoonPhase % FVoxelWorldClock::MoonPhases) + FVoxelWorldClock::MoonPhases) % FVoxelWorldClock::MoonPhases;
+    return float((1 + FMath::Cos(Phase * UE_DOUBLE_TWO_PI / FVoxelWorldClock::MoonPhases)) / 2);
 }
 
 FVoxelEnvironment VoxelEnvironment::Evaluate(const FVoxelWorldClock& Clock, bool bAdvanceTime)
@@ -45,6 +64,10 @@ FVoxelEnvironment VoxelEnvironment::Evaluate(const FVoxelWorldClock& Clock, bool
     Out.MoonDirection = VoxelSky::DirectionFromAngle(Out.MoonAngle);
     Out.SunElevation = float(FMath::RadiansToDegrees(FMath::Asin(FMath::Clamp(double(Out.SunDirection.Z), -1., 1.))));
     Out.Daylight = DaylightAt(Out.SunElevation);
+    Out.MoonElevation = -Out.SunElevation;
+    Out.Moonlight = MoonlightAt(Out.MoonElevation);
+    Out.MoonIllumination = MoonIlluminationAt(Out.MoonPhase);
+    Out.Night = NightAt(Out.SunElevation);
     return Out;
 }
 
@@ -52,11 +75,12 @@ FString VoxelEnvironment::Describe(const FVoxelEnvironment& Environment)
 {
     return FString::Printf(TEXT("Day %lld, time %d (total %lld, smooth %.3f), rate %g%s%s, moon phase %d (%s)\n"
                                 "Sun angle %.3f, elevation %.3f, direction (%.4f, %.4f, %.4f), daylight %.3f; moon "
-                                "angle %.3f"),
+                                "angle %.3f, elevation %.3f, moonlight %.3f, lit %.3f; night %.3f"),
         Environment.DayNumber, Environment.TimeOfDay, Environment.TotalTicks, Environment.SmoothTicks, Environment.Rate,
         Environment.bPaused ? TEXT(", paused") : TEXT(""),
         Environment.bAdvancing ? TEXT("") : TEXT(", advance_time off"), Environment.MoonPhase,
         FVoxelWorldClock::GetMoonPhaseName(Environment.MoonPhase), Environment.SunAngle, Environment.SunElevation,
         Environment.SunDirection.X, Environment.SunDirection.Y, Environment.SunDirection.Z, Environment.Daylight,
-        Environment.MoonAngle);
+        Environment.MoonAngle, Environment.MoonElevation, Environment.Moonlight, Environment.MoonIllumination,
+        Environment.Night);
 }

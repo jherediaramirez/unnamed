@@ -15,6 +15,7 @@
 #include "Materials/MaterialParameterCollection.h"
 #include "Materials/MaterialParameterCollectionInstance.h"
 #include "Foundation/FoundationGrid.h"
+#include "Sky/VoxelEnvironment.h"
 #include "Voxel/VoxelColumnPipeline.h"
 #include "Voxel/VoxelWorld.h"
 #include "Voxel/VoxelWorldSubsystem.h"
@@ -329,12 +330,19 @@ void AVoxelWorld::ApplyLook()
     const FVoxelLook Look = FVoxelLook::Read();
     UpdateCaveFloor(VoxelLook::Solve(Look).CaveFloor);
     const double Pin = Look.SkyPin == 1 ? UpdateSkyPin() : 0;
-    const bool bLookChanged = !AppliedLook || !(*AppliedLook == Look);
+    // The atmosphere's night (VoxelAtmosphere.h) composes onto the look: zero by day and with the cycle off. With
+    // SkyPin 0 the pin is 0, so only the sky darkens, not the exposure.
+    const VoxelAtmosphere::FNight Night =
+        VoxelAtmosphere::IsCycleOn() ? VoxelAtmosphere::ReadNight(GetEnvironment()) : VoxelAtmosphere::FNight();
+    const bool bLookChanged = !AppliedLook || !(*AppliedLook == Look) || !(AppliedNight == Night);
     // A pin step under 0.005 waits, but the pin's end (its target) is always applied, so caves land on today's exactly.
     if (!bLookChanged && (Pin == AppliedPin || (FMath::Abs(Pin - AppliedPin) < .005 && Pin != SkyPinTarget))) return;
+    const bool bDayLookChanged = !AppliedLook || !(*AppliedLook == Look);
     AppliedLook = Look;
     AppliedPin = Pin;
-    const VoxelLook::FTargets Targets = VoxelLook::Solve(Look, Pin);
+    AppliedNight = Night;
+    VoxelLook::FTargets Targets = VoxelLook::Solve(Look, Pin);
+    VoxelAtmosphere::ComposeNight(Targets, Night, Pin);
     // A pin step moves the exposure only.
     if (!bLookChanged)
     {
@@ -358,7 +366,7 @@ void AVoxelWorld::ApplyLook()
         Collection->SetScalarParameterValue(VoxelLook::LowGlowParameter, Targets.LowGlow);
         Collection->SetScalarParameterValue(VoxelLook::WaterSpecularParameter, Targets.WaterSpecular);
     }
-    if (!bLookChanged) return;
+    if (!bDayLookChanged) return;
     UE_LOG(LogUnnamedVoxel, Log,
         TEXT("Look: DayEV %.3f, cap %.3f, sky pin %d, speed up %.2f, sky %.3f, sky fill %.3f, local exposure %d, film "
              "%d, low glow %.3f, water "

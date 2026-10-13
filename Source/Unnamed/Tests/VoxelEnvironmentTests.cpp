@@ -3,6 +3,8 @@
 #include "Misc/AutomationTest.h"
 #include "Sky/VoxelEnvironment.h"
 #include "Sky/VoxelTimeline.h"
+#include "Voxel/VoxelAtmosphere.h"
+#include "Voxel/VoxelLook.h"
 #include "Voxel/VoxelSkyReference.h"
 
 // The environment snapshot (atmosphere step 1): its orbit against the reference's minecraft:day timeline, and its
@@ -95,7 +97,12 @@ bool FVoxelEnvironmentDaylightTest::RunTest(const FString& Parameters)
     const FVoxelEnvironment Midnight = VoxelEnvironment::Evaluate(EnvironmentClockAt(18000), true);
     TestNearlyEqual(TEXT("midnight: sun straight down"), double(Midnight.SunElevation), -90., 1e-3);
     TestEqual(TEXT("midnight: no sun light"), Midnight.Daylight, 0.f);
-    TestEqual(TEXT("on the horizon: none"), VoxelEnvironment::DaylightAt(0.f), 0.f);
+    TestNearlyEqual(TEXT("on the horizon: half"), double(VoxelEnvironment::DaylightAt(0.f)), .5, 1e-6);
+    TestEqual(TEXT("as far below: none"), VoxelEnvironment::DaylightAt(-VoxelEnvironment::DaylightFullElevation), 0.f);
+    TestEqual(TEXT("moon: none until the sun is out"),
+        VoxelEnvironment::MoonlightAt(VoxelEnvironment::DaylightFullElevation), 0.f);
+    TestEqual(TEXT("moon: all at twice that"),
+        VoxelEnvironment::MoonlightAt(2 * VoxelEnvironment::DaylightFullElevation), 1.f);
     TestEqual(
         TEXT("at the full elevation: all"), VoxelEnvironment::DaylightAt(VoxelEnvironment::DaylightFullElevation), 1.f);
     // Through the evening the sun sinks and its light only falls, reaching none before midnight.
@@ -179,6 +186,67 @@ bool FVoxelEnvironmentClockTest::RunTest(const FString& Parameters)
             EnvironmentAngleDelta(AtTwo.SunAngle, VoxelEnvironment::SunAngle(12000.)) >
                 1.9 * EnvironmentAngleDelta(AtOne.SunAngle, VoxelEnvironment::SunAngle(12000.)));
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelEnvironmentNightTest, "Unnamed.Voxel.Atmosphere.Night",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelEnvironmentNightTest::RunTest(const FString& Parameters)
+{
+    // The night eases across twilight: none with the sun 6 degrees up, half at the horizon, full 6 below.
+    TestEqual(TEXT("day: no night"), VoxelEnvironment::NightAt(6.f), 0.f);
+    TestNearlyEqual(TEXT("horizon: half"), double(VoxelEnvironment::NightAt(0.f)), .5, 1e-6);
+    TestEqual(TEXT("6 below: full night"), VoxelEnvironment::NightAt(-6.f), 1.f);
+    // The moon's lit part by phase: full, quarter, new, and wrapping.
+    TestNearlyEqual(TEXT("full moon lit"), double(VoxelEnvironment::MoonIlluminationAt(0)), 1., 1e-6);
+    TestNearlyEqual(TEXT("third quarter half lit"), double(VoxelEnvironment::MoonIlluminationAt(2)), .5, 1e-6);
+    TestNearlyEqual(TEXT("new moon dark"), double(VoxelEnvironment::MoonIlluminationAt(4)), 0., 1e-6);
+    TestNearlyEqual(TEXT("phase 8 is full again"), double(VoxelEnvironment::MoonIlluminationAt(8)), 1., 1e-6);
+    // Midnight of day 0 (full moon) and of day 4 (new moon): the moon straight up, full night.
+    const FVoxelEnvironment Full = VoxelEnvironment::Evaluate(EnvironmentClockAt(18000), true);
+    const FVoxelEnvironment New = VoxelEnvironment::Evaluate(EnvironmentClockAt(4 * 24000 + 18000), true);
+    TestNearlyEqual(TEXT("midnight: moon straight up"), double(Full.MoonElevation), 90., 1e-3);
+    TestEqual(TEXT("midnight: full moonlight"), Full.Moonlight, 1.f);
+    TestEqual(TEXT("midnight: full night"), Full.Night, 1.f);
+    const FVoxelEnvironment Noon = VoxelEnvironment::Evaluate(EnvironmentClockAt(6000), true);
+    TestEqual(TEXT("noon: no moonlight"), Noon.Moonlight, 0.f);
+    TestEqual(TEXT("noon: no night"), Noon.Night, 0.f);
+    // The moon light: the full lux at a high full moon, the new moon's share at a new one, none with it set.
+    TestNearlyEqual(TEXT("full moon lux"), double(VoxelAtmosphere::MoonLux(Full, 300.f, .35f)), 300., 1e-3);
+    TestNearlyEqual(TEXT("new moon lux"), double(VoxelAtmosphere::MoonLux(New, 300.f, .35f)), 105., 1e-3);
+    TestEqual(TEXT("no moon by day"), VoxelAtmosphere::MoonLux(Noon, 300.f, .35f), 0.f);
+
+    // The night composed onto the day look: nothing changes without a night.
+    const VoxelLook::FTargets Day = VoxelLook::Solve(FVoxelLook(), 1.);
+    VoxelLook::FTargets Same = Day;
+    VoxelAtmosphere::ComposeNight(Same, VoxelAtmosphere::FNight(), 1.);
+    TestEqual(TEXT("no night: same min"), Same.Exposure.MinEV, Day.Exposure.MinEV);
+    TestEqual(TEXT("no night: same max"), Same.Exposure.MaxEV, Day.Exposure.MaxEV);
+    TestEqual(TEXT("no night: same sky"), Same.SkyLuminance, Day.SkyLuminance);
+    VoxelAtmosphere::FNight Night;
+    Night.Night = 1.f;
+    Night.ExposureStops = 3.f;
+    Night.SkyScale = .5f;
+    // Under open sky the exposure range moves 3 stops down and the sky halves.
+    VoxelLook::FTargets Open = Day;
+    VoxelAtmosphere::ComposeNight(Open, Night, 1.);
+    TestNearlyEqual(TEXT("open sky: min 3 stops down"), Open.Exposure.MinEV, Day.Exposure.MinEV - 3, 1e-9);
+    TestNearlyEqual(TEXT("open sky: max 3 stops down"), Open.Exposure.MaxEV, Day.Exposure.MaxEV - 3, 1e-9);
+    TestNearlyEqual(TEXT("open sky: bias kept"), Open.Exposure.Bias, Day.Exposure.Bias, 1e-9);
+    TestNearlyEqual(TEXT("sky halved"), double(Open.SkyLuminance), double(Day.SkyLuminance) * .5, 1e-6);
+    TestNearlyEqual(TEXT("haze halved"), double(Open.FogColorScale), double(Day.FogColorScale) * .5, 1e-6);
+    // A cave (pin 0) keeps its exposure at night.
+    const VoxelLook::FTargets CaveDay = VoxelLook::Solve(FVoxelLook(), 0.);
+    VoxelLook::FTargets Cave = CaveDay;
+    VoxelAtmosphere::ComposeNight(Cave, Night, 0.);
+    TestEqual(TEXT("cave: same min"), Cave.Exposure.MinEV, CaveDay.Exposure.MinEV);
+    TestEqual(TEXT("cave: same max"), Cave.Exposure.MaxEV, CaveDay.Exposure.MaxEV);
+    // Half way into twilight, half the stops.
+    Night.Night = .5f;
+    VoxelLook::FTargets Dusk = Day;
+    VoxelAtmosphere::ComposeNight(Dusk, Night, 1.);
+    TestNearlyEqual(TEXT("dusk: 1.5 stops down"), Dusk.Exposure.MinEV, Day.Exposure.MinEV - 1.5, 1e-9);
     return true;
 }
 #endif

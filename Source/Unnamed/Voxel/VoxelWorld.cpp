@@ -267,6 +267,7 @@ void AVoxelWorld::BuildLayout()
     {
         MapSunRotation = SunLight->GetComponentRotation();
         MapSunIntensity = SunLight->Intensity;
+        MapSunColor = SunLight->GetLightColor();
     }
     LookCollection = Cast<UMaterialParameterCollection>(
         UUnnamedProjectSettings::GetBlockAssetPath(VoxelLook::CollectionName).TryLoad());

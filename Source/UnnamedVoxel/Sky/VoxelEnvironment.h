@@ -31,8 +31,18 @@ struct FVoxelEnvironment
     FVector3f MoonDirection = FVector3f::ZeroVector;
     // The sun's height above the horizon, -90 to 90 degrees.
     float SunElevation = 0.f;
-    // The sun light's share: 0 with the sun below the horizon, easing to 1 at DaylightFullElevation.
+    // The sun light's share: 1 with the sun DaylightFullElevation up, easing across twilight to 0 with it as far below
+    // the horizon. Below the horizon the sky's atmosphere keeps the light off the ground (the planet's shadow) and
+    // still glows with it, which is the twilight.
     float Daylight = 0.f;
+    // The moon's height above the horizon, and its light's share: 0 until DaylightFullElevation up (the sun is as far
+    // down, its light out), easing to 1 at twice that.
+    float MoonElevation = 0.f;
+    float Moonlight = 0.f;
+    // The moon's lit part, 1 full to 0 new (from MoonPhase).
+    float MoonIllumination = 1.f;
+    // How far into the night, what the night look follows: 1 - Daylight.
+    float Night = 0.f;
 };
 
 namespace VoxelEnvironment
@@ -47,6 +57,12 @@ namespace VoxelEnvironment
     UNNAMEDVOXEL_API FRotator LightRotation(const FVector3f& TowardsBody);
     // The sun light's share at a sun elevation in degrees (FVoxelEnvironment::Daylight).
     UNNAMEDVOXEL_API float DaylightAt(float SunElevation);
+    // FVoxelEnvironment::Night at a sun elevation in degrees.
+    UNNAMEDVOXEL_API float NightAt(float SunElevation);
+    // FVoxelEnvironment::Moonlight at a moon elevation in degrees.
+    UNNAMEDVOXEL_API float MoonlightAt(float MoonElevation);
+    // The lit part of the moon at a phase (0 full, 4 new), 0 to 1.
+    UNNAMEDVOXEL_API float MoonIlluminationAt(int32 MoonPhase);
     UNNAMEDVOXEL_API FVoxelEnvironment Evaluate(const FVoxelWorldClock& Clock, bool bAdvanceTime);
     // voxel.Atmosphere.Info's lines.
     UNNAMEDVOXEL_API FString Describe(const FVoxelEnvironment& Environment);

@@ -5,6 +5,7 @@
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationLab.h"
 #include "Random/VoxelSeed.h"
+#include "Voxel/VoxelAtmosphere.h"
 #include "Voxel/VoxelEdgeFog.h"
 #include "Voxel/VoxelLook.h"
 #include "Worlds/UnnamedSavedWorlds.h"
@@ -285,8 +286,19 @@ private:
     TObjectPtr<UDirectionalLightComponent> SunLight;
     FRotator MapSunRotation = FRotator::ZeroRotator;
     float MapSunIntensity = 0.f;
-    // The cycle's sun as last applied; unset while the map's rig stands.
-    TOptional<TPair<FRotator, float>> AppliedSun;
+    FLinearColor MapSunColor = FLinearColor::White;
+    // The cycle's light (the sun's, or the moon's at night) as last applied; unset while the map's rig stands.
+    struct FAppliedSun
+    {
+        FRotator Rotation;
+        float Intensity = 0.f;
+        FLinearColor Color;
+
+        bool operator==(const FAppliedSun& Other) const = default;
+    };
+    TOptional<FAppliedSun> AppliedSun;
+    // The night look as ApplyLook last composed it; all zero by day and with the cycle off.
+    VoxelAtmosphere::FNight AppliedNight;
     // SkyPin: the pin now and its target, the next probe's and the last update's time, and the probes' cost.
     double SkyPinNow = 0;
     double SkyPinTarget = 0;
