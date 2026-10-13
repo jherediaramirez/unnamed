@@ -57,5 +57,6 @@ the action plan are in `C:\dev\sandbox\lod-review` (`review.md`, `action-plan.md
 ## Open
 - **Far-hole frames rose in the smoke flight**: 3,168 to 4,479, with coarse frames 4,353 to 4,872. The worst frame is
   5.47 to 5.35 ms and near holes are none in both.
-- These two flights ran on a loaded machine. A quiet-window A/B (f0fde83's DLL against this one, ABABAB) decides whether
-  A3's extra far meshes explain it; see the handoff.
+- These two flights ran on a loaded machine. Jesus skipped the A/B for now ("maybe just my computer"), so it is still
+  owed: a quiet-window DLL swap, f0fde83 against A3, ABABAB. It decides whether A3's extra far meshes explain the rise;
+  see the handoff.

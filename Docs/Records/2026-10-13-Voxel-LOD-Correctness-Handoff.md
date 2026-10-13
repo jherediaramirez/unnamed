@@ -1,12 +1,15 @@
-# Far LOD correctness handoff: A1-A3 done, the far-hole A/B next
+# Far LOD correctness handoff: A1-A3 done, a far-hole A/B owed
 
 2026-10-13 · `feature/voxel-lod3`. Record: [Far LOD correctness](2026-10-13-Voxel-LOD-Correctness.md).
 
 ## State
 - A1, A2 and A3 are committed, one commit each. The checks are green and the hashes equal.
-- The merge of `feature/voxel-world` waits for the far-hole A/B.
+- Merged with `feature/voxel-world` on the manager's go. The far-hole A/B was skipped for now, by Jesus's call
+  ("maybe just my computer").
 
-## Next: the A/B
+## Open: the A/B
+- **Why.** Under load, the smoke flight's far-hole frames rose from 3,168 to 4,479. A3's extra far meshes may explain it;
+  so may the load.
 - Compare f0fde83's DLLs with A3's, the same smoke flight (`CaptureVoxel.ps1 -Flight`), alternated ABABAB in one
   quiet-window-gated chain.
 - Per run, report:
