@@ -18,6 +18,10 @@ namespace VoxelAtmosphere
         float Night = 0.f;
         // voxel.Atmosphere.NightStops: how many f-stops brighter open-sky views expose at full night.
         float ExposureStops = 0.f;
+        // Temporary minimum while neither directional source reaches the ground. The terrain share is pinned to
+        // open sky in ComposeNight; the navy backdrop is drawn behind terrain and translucent surfaces.
+        float TwilightFloor = 0.f;
+        float TwilightSky = 0.f;
         // voxel.Atmosphere.NightSky: x the sky's and haze's luminance at full night.
         float SkyScale = 1.f;
 
@@ -26,7 +30,11 @@ namespace VoxelAtmosphere
 
     UNNAMED_API bool IsCycleOn();
     UNNAMED_API FNight ReadNight(const FVoxelEnvironment& Environment);
-    // The day look's targets at night: the open-sky exposure range (both ends) moves down by ExposureStops x Night x
+    // Bounded bridge from the existing environment, zero by day and once the moon's fill is full.
+    UNNAMED_API float TwilightWeight(const FVoxelEnvironment& Environment);
+    // The sky fades more slowly, with the moon's sine altitude; zero by day and at midnight.
+    UNNAMED_API float TwilightSkyWeight(const FVoxelEnvironment& Environment);
+    // The day look's targets at night: both exposure bounds move down by ExposureStops x Night x
     // Pin, and the sky and haze luminance by SkyScale's share. Pin 0 (a cave, or SkyPin 0) keeps today's exposure.
     UNNAMED_API void ComposeNight(VoxelLook::FTargets& Targets, const FNight& Night, double Pin);
 

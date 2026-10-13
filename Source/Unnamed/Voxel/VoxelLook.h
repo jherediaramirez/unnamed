@@ -153,6 +153,8 @@ namespace VoxelLook
         float SpeedUp = 2;
         // M_LookCaveFloor's Strength; its post-process is on only above 0.
         float CaveFloor = 0;
+        // Temporary cool minimum during the directional lights' handover, weighted by the open-sky pin.
+        float TwilightFloor = 0;
     };
     // Pin is SkyPin's, used when Look.SkyPin is 1.
     UNNAMED_API FTargets Solve(const FVoxelLook& Look, double Pin = 0);

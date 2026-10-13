@@ -17,6 +17,7 @@
 #include "Foundation/FoundationGrid.h"
 #include "Sky/VoxelEnvironment.h"
 #include "Voxel/VoxelColumnPipeline.h"
+#include "Voxel/VoxelTwilight.h"
 #include "Voxel/VoxelWorld.h"
 #include "Voxel/VoxelWorldSubsystem.h"
 #include "VoxelConstants.h"
@@ -270,9 +271,10 @@ double AVoxelWorld::UpdateSkyPin()
     return SkyPinNow;
 }
 
-void AVoxelWorld::UpdateCaveFloor(float Strength)
+void AVoxelWorld::UpdateCaveFloor(float Strength, float TwilightStrength)
 {
-    if (!VoxelLook::CaveFloorDrawn(Strength) && !CaveFloorPost) return;
+    const bool bDraw = VoxelLook::CaveFloorDrawn(Strength) || TwilightStrength > 0.f;
+    if (!bDraw && !CaveFloorPost && !TwilightFloorPost) return;
     if (!CaveFloorPost)
     {
         UMaterialInterface* Base = Cast<UMaterialInterface>(
@@ -293,7 +295,17 @@ void AVoxelWorld::UpdateCaveFloor(float Strength)
         CaveFloorPost->Settings.WeightedBlendables.Array.Add(FWeightedBlendable(1.f, CaveFloorMaterial));
     }
     CaveFloorPost->bEnabled = VoxelLook::CaveFloorDrawn(Strength) && CaveFloorMaterial;
-    if (!CaveFloorPost->bEnabled) return;
+    if (TwilightStrength > 0.f && !TwilightFloorPost && !bTriedTwilightFloor)
+    {
+        bTriedTwilightFloor = true;
+        TwilightFloorPost = VoxelTwilight::CreateFloor(this);
+        if (TwilightFloorPost)
+        {
+            TwilightFloorPost->SetupAttachment(GetRootComponent());
+            TwilightFloorPost->RegisterComponent();
+        }
+    }
+    if (!CaveFloorPost->bEnabled && !TwilightFloorPost) return;
     // The edge fog's wall: clear to 1.5 columns before the drawn radius, opaque at it (UpdateEdgeFog). The haze keeps
     // the same drawn edge, where the far meshes fade into the sky.
     double FadeStart = 1e6, FadeEnd = 1.1e6;
@@ -317,23 +329,29 @@ void AVoxelWorld::UpdateCaveFloor(float Strength)
     const TPair<const TCHAR*, float> Values[] = {{VoxelLook::CaveFloorStrengthParameter, Strength},
         {VoxelLook::CaveFloorFadeStartParameter, float(FadeStart)},
         {VoxelLook::CaveFloorFadeEndParameter, float(FadeEnd)}};
-    for (const TPair<const TCHAR*, float>& Value : Values)
-    {
-        float Now = 0;
-        if (!CaveFloorMaterial->GetScalarParameterValue(FName(Value.Key), Now) || Now != Value.Value)
-            CaveFloorMaterial->SetScalarParameterValue(Value.Key, Value.Value);
-    }
+    if (CaveFloorPost->bEnabled)
+        for (const TPair<const TCHAR*, float>& Value : Values)
+        {
+            float Now = 0;
+            if (!CaveFloorMaterial->GetScalarParameterValue(FName(Value.Key), Now) || Now != Value.Value)
+                CaveFloorMaterial->SetScalarParameterValue(Value.Key, Value.Value);
+        }
+    if (TwilightFloorPost)
+        VoxelTwilight::UpdateFloor(*TwilightFloorPost, TwilightStrength, float(FadeStart), float(FadeEnd));
 }
 
 void AVoxelWorld::ApplyLook()
 {
     const FVoxelLook Look = FVoxelLook::Read();
-    UpdateCaveFloor(VoxelLook::Solve(Look).CaveFloor);
     const double Pin = Look.SkyPin == 1 ? UpdateSkyPin() : 0;
     // The atmosphere's night (VoxelAtmosphere.h) composes onto the look: zero by day and with the cycle off. With
     // SkyPin 0 the pin is 0, so only the sky darkens, not the exposure.
     const VoxelAtmosphere::FNight Night =
         VoxelAtmosphere::IsCycleOn() ? VoxelAtmosphere::ReadNight(GetEnvironment()) : VoxelAtmosphere::FNight();
+    VoxelLook::FTargets Targets = VoxelLook::Solve(Look, Pin);
+    VoxelAtmosphere::ComposeNight(Targets, Night, Pin);
+    // The floor still refreshes its distance/underwater fade every frame, even when the look targets are unchanged.
+    UpdateCaveFloor(Targets.CaveFloor, Targets.TwilightFloor);
     const bool bLookChanged = !AppliedLook || !(*AppliedLook == Look) || !(AppliedNight == Night);
     // A pin step under 0.005 waits, but the pin's end (its target) is always applied, so caves land on today's exactly.
     if (!bLookChanged && (Pin == AppliedPin || (FMath::Abs(Pin - AppliedPin) < .005 && Pin != SkyPinTarget))) return;
@@ -341,8 +359,6 @@ void AVoxelWorld::ApplyLook()
     AppliedLook = Look;
     AppliedPin = Pin;
     AppliedNight = Night;
-    VoxelLook::FTargets Targets = VoxelLook::Solve(Look, Pin);
-    VoxelAtmosphere::ComposeNight(Targets, Night, Pin);
     // A pin step moves the exposure only.
     if (!bLookChanged)
     {
