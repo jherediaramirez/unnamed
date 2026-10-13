@@ -285,10 +285,10 @@ public:
     void EvictBuckets(FIntPoint Column);
 
     // The finished mesh nearest the center, without taking it: full meshes first, far meshes only when no full mesh
-    // waits.
-    const FVoxelColumnMesh* PeekReady(FIntPoint* OutColumn = nullptr);
+    // waits. With bNearOnly only full meshes (the apply loop after it turned a far mesh down).
+    const FVoxelColumnMesh* PeekReady(FIntPoint* OutColumn = nullptr, bool bNearOnly = false);
     // Takes the mesh PeekReady shows: its column counts as on screen from now on, so the caller applies it.
-    bool PopReady(FReady& Out);
+    bool PopReady(FReady& Out, bool bNearOnly = false);
     // Columns unloaded since the last call whose meshes had been taken for the screen.
     void TakeUnloaded(TArray<FIntPoint>& Out);
 
@@ -456,7 +456,7 @@ private:
     // With bFarInnerFirst: a ready far mesh for a column within ViewRadius + 2 that shows nothing yet.
     bool IsUrgentFar(FIntPoint Column) const;
     // The queue PeekReady and PopReady take from.
-    TArray<FIntPoint>& GetReadyQueue();
+    TArray<FIntPoint>& GetReadyQueue(bool bNearOnly);
 
     TSharedRef<const FVoxelBlockTable> Table;
     TSharedRef<const IVoxelTerrain> Terrain;

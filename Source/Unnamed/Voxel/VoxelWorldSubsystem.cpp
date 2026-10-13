@@ -364,6 +364,24 @@ void UVoxelWorldSubsystem::UpdateFarLooks()
         if (Chunk.Value && Chunk.Value->IsFarLook()) Chunk.Value->SetFarLook(true, bFarShadows, FarLook);
 }
 
+EVoxelApplyStep GetVoxelApplyStep(
+    double SpentMs, double EstimateMs, double BudgetMs, int32 Applied, bool bFar, bool bWaited)
+{
+    // Stop before the budget, at 85% of it: the rest covers one apply above its estimate and the bookkeeping after the
+    // last.
+    if (SpentMs + EstimateMs <= 0.85 * BudgetMs) return EVoxelApplyStep::Apply;
+    // Far meshes go only in the room near ones leave, except one turned down as a frame's first apply: after one
+    // frame's wait it goes first, whatever its estimate (an estimate above 85% of the budget would otherwise hold it,
+    // and the near meshes behind it, forever).
+    if (bFar) return Applied == 0 && bWaited ? EVoxelApplyStep::Apply : EVoxelApplyStep::SkipFar;
+    if (Applied > 0) return EVoxelApplyStep::Stop;
+    // A frame's first near column goes anyway, so none waits forever, however big; but one that fits the budget alone
+    // and that the frame's planning and jobs leave no room for waits one frame, once, and goes first when it heads the
+    // queue again.
+    if (SpentMs + EstimateMs > BudgetMs && EstimateMs <= BudgetMs && !bWaited) return EVoxelApplyStep::Wait;
+    return EVoxelApplyStep::Apply;
+}
+
 void UVoxelWorldSubsystem::ApplyReady(double BudgetMs, double TickStartSeconds)
 {
     SCOPE_CYCLE_COUNTER(STAT_VoxelApplyColumns);
@@ -371,29 +389,33 @@ void UVoxelWorldSubsystem::ApplyReady(double BudgetMs, double TickStartSeconds)
     int32 Applied = 0, FarApplied = 0;
     double FrameApplyMs = 0, FarApplyMs = 0;
     FIntPoint Head;
-    while (const FVoxelColumnMesh* Next = Pipeline->PeekReady(&Head))
+    // Set once a far mesh is turned down: the rest of the frame takes near meshes only, so a far mesh heading the
+    // queue (an urgent one goes before near meshes) never holds them back.
+    bool bNearOnly = false;
+    while (const FVoxelColumnMesh* Next = Pipeline->PeekReady(&Head, bNearOnly))
     {
         const double SpentMs = (FPlatformTime::Seconds() - TickStartSeconds) * 1000.;
         // Far meshes (no cards, one stream set) keep their own fit, so neither kind skews the other's estimates.
         FApplyCost& Cost = Next->bFar ? FarApplyCost : ApplyCost;
         const double Estimate = Cost.Estimate(Next->QuadCount);
-        // Stop before the budget, at 85% of it: the rest covers one apply above its estimate and the bookkeeping
-        // after the last. A frame's first column goes anyway, so no column waits forever, however big; but a column
-        // that fits the budget alone and that the frame's planning and jobs leave no room for (its estimate would pass
-        // the whole budget) waits one frame, once, and goes first when it heads the queue again.
-        if (SpentMs + Estimate > 0.85 * BudgetMs)
+        const TOptional<FIntPoint>& Waited = Next->bFar ? WaitedFarColumn : WaitedColumn;
+        const EVoxelApplyStep Step =
+            GetVoxelApplyStep(SpentMs, Estimate, BudgetMs, Applied, Next->bFar, Waited && *Waited == Head);
+        if (Step == EVoxelApplyStep::Stop) break;
+        if (Step == EVoxelApplyStep::Wait)
         {
-            // Far meshes go only in the room near ones leave: never first anyway.
-            if (Applied > 0 || Next->bFar) break;
-            if (SpentMs + Estimate > BudgetMs && Estimate <= BudgetMs && !(WaitedColumn && *WaitedColumn == Head))
-            {
-                WaitedColumn = Head;
-                break;
-            }
+            WaitedColumn = Head;
+            break;
+        }
+        if (Step == EVoxelApplyStep::SkipFar)
+        {
+            if (Applied == 0) WaitedFarColumn = Head;
+            bNearOnly = true;
+            continue;
         }
         const double ApplyStart = FPlatformTime::Seconds();
         FVoxelColumnPipeline::FReady Ready;
-        Pipeline->PopReady(Ready);
+        Pipeline->PopReady(Ready, bNearOnly);
         const int32 Quads = Ready.Mesh->QuadCount;
         const uint32 Layers = Ready.Mesh->LayerMask, Sections = Ready.Mesh->SectionMask;
         const bool bReused = Chunks.Contains(Ready.Column), bPooled = !bReused && !Pool.IsEmpty();

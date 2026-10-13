@@ -31,6 +31,21 @@ struct FVoxelStreamingFrame
     // Releasing waiting columns' components after the applies (part of TickMs, not ApplyMs).
     double PendingMs = 0;
 };
+// What the apply loop does with the mesh heading the ready queue, from the frame's time spent, the mesh's estimate and
+// the budget (in ms), the columns applied this frame and whether this mesh already waited a frame.
+enum class EVoxelApplyStep : uint8
+{
+    Apply,
+    // A near mesh that fits the budget alone but not this frame's room waits one frame, once.
+    Wait,
+    // A far mesh that does not fit: near meshes may still go this frame. Turned down as the frame's first apply, it
+    // waits one frame, once, then goes alone, so no far mesh waits forever (review A2).
+    SkipFar,
+    Stop
+};
+EVoxelApplyStep GetVoxelApplyStep(
+    double SpentMs, double EstimateMs, double BudgetMs, int32 Applied, bool bFar, bool bWaited);
+
 class UMaterialInstanceDynamic;
 class UMaterialInterface;
 class UVoxelChunkComponent;
@@ -157,6 +172,8 @@ private:
     // The ready column that last waited a frame because the frame's planning and jobs had used the budget; it goes
     // first when it heads the queue again.
     TOptional<FIntPoint> WaitedColumn;
+    // The far mesh last turned down as a frame's first apply; it goes alone when it heads the queue again.
+    TOptional<FIntPoint> WaitedFarColumn;
 
     double StartSeconds = 0;
     // The first frame after Start, and the frames until the first view was on screen.

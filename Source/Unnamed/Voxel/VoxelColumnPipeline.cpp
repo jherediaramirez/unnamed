@@ -1099,8 +1099,9 @@ bool FVoxelColumnPipeline::IsUrgentFar(FIntPoint Column) const
         Records.FindChecked(Column).ShownKind == EVoxelMeshKind::None;
 }
 
-TArray<FIntPoint>& FVoxelColumnPipeline::GetReadyQueue()
+TArray<FIntPoint>& FVoxelColumnPipeline::GetReadyQueue(bool bNearOnly)
 {
+    if (bNearOnly) return ReadyColumns;
     // Far meshes wait while any full mesh does, except (bFarInnerFirst) an urgent one: it fills a column at the view's
     // edge before a full mesh refines a column that shows something, and goes first if nearer than a full mesh that
     // fills one.
@@ -1111,20 +1112,20 @@ TArray<FIntPoint>& FVoxelColumnPipeline::GetReadyQueue()
     return !bNearFills || GetReadyPriority(Far) < GetReadyPriority(Near) ? ReadyFarColumns : ReadyColumns;
 }
 
-const FVoxelColumnMesh* FVoxelColumnPipeline::PeekReady(FIntPoint* OutColumn)
+const FVoxelColumnMesh* FVoxelColumnPipeline::PeekReady(FIntPoint* OutColumn, bool bNearOnly)
 {
-    if (ReadyColumns.IsEmpty() && ReadyFarColumns.IsEmpty()) return nullptr;
+    if (ReadyColumns.IsEmpty() && (bNearOnly || ReadyFarColumns.IsEmpty())) return nullptr;
     SortReady();
-    const TArray<FIntPoint>& Queue = GetReadyQueue();
+    const TArray<FIntPoint>& Queue = GetReadyQueue(bNearOnly);
     if (OutColumn) *OutColumn = Queue.Last();
     return Records.FindChecked(Queue.Last()).Ready.Get();
 }
 
-bool FVoxelColumnPipeline::PopReady(FReady& Out)
+bool FVoxelColumnPipeline::PopReady(FReady& Out, bool bNearOnly)
 {
-    if (ReadyColumns.IsEmpty() && ReadyFarColumns.IsEmpty()) return false;
+    if (ReadyColumns.IsEmpty() && (bNearOnly || ReadyFarColumns.IsEmpty())) return false;
     SortReady();
-    Out.Column = GetReadyQueue().Pop(EAllowShrinking::No);
+    Out.Column = GetReadyQueue(bNearOnly).Pop(EAllowShrinking::No);
     FRecord& Record = Records.FindChecked(Out.Column);
     Out.Mesh = MoveTemp(Record.Ready);
     Record.bOnScreen = true;

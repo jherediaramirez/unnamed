@@ -7,6 +7,7 @@
 #include "Terrain/VoxelHeightTerrain.h"
 #include "Voxel/VoxelBlocks.h"
 #include "Voxel/VoxelColumnPipeline.h"
+#include "Voxel/VoxelWorldSubsystem.h"
 
 // Far LOD step 1 (phase 9 S1): the pipeline's far ring, with manual jobs and small radii. A far column gets a far mesh
 // and never a full one; moving swaps kinds without a frame showing nothing; full meshes are taken before far ones; far
@@ -731,6 +732,48 @@ namespace
         FarRingTestCheckIdle(Report, *Pipeline, TEXT("7. idle back at (3, 0)"), FarRingTestFar3, FarRingTestNeeded3);
     }
 
+    // 8. Near meshes only (review A2: the apply loop's way past a far mesh it turned down): with inner-first, the move
+    // of 6 leaves an urgent far mesh heading the ready queue before full meshes that refine; near-only peeks and takes
+    // show and take every full mesh and nothing else, then none, the far meshes still waiting.
+    void FarRingTestNearOnly(FFarRingTestReport& Report, const FFarRingTestWorld& World)
+    {
+        const TUniquePtr<FVoxelColumnPipeline> Pipeline = FarRingTestMakePipeline(World, 6);
+        const auto Never = [] { return false; };
+        const auto NoCheck = [](bool) {};
+        const auto NoTake = [](const FVoxelColumnPipeline::FReady&) {};
+        Pipeline->SetFocus(FarRingTestRings(FIntPoint::ZeroValue, 1, 3), 0);
+        if (!FarRingTestDrive(*Pipeline, EFarRingTestJobs::All, true, NoCheck, NoTake, Never))
+        {
+            Report.Fail(TEXT("8. not idle at (0, 0) after the step cap"));
+            return;
+        }
+        Pipeline->SetFocus(FarRingTestRings(FIntPoint(3, 0), 1, 3), 0);
+        if (!FarRingTestDrive(*Pipeline, EFarRingTestJobs::All, false, NoCheck, NoTake, Never))
+        {
+            Report.Fail(TEXT("8. jobs left at (3, 0) after the step cap"));
+            return;
+        }
+        Pipeline->SetFarInnerFirst(true);
+        FAutomationTestBase& Test = Report.Test;
+        const FVoxelPipelineStats Waiting = Pipeline->GetStats();
+        const FVoxelColumnMesh* Head = Pipeline->PeekReady();
+        Test.TestTrue(TEXT("8. a far mesh heads the ready queue"), Head && Head->bFar);
+        int32 FullTaken = 0;
+        while (const FVoxelColumnMesh* Peeked = Pipeline->PeekReady(nullptr, true))
+        {
+            FVoxelColumnPipeline::FReady Taken;
+            if (!Pipeline->PopReady(Taken, true) || Taken.Mesh.Get() != Peeked || Taken.Mesh->bFar)
+            {
+                Report.Fail(FString::Printf(TEXT("8. near-only take %d: not the full mesh peeked"), FullTaken));
+                return;
+            }
+            ++FullTaken;
+        }
+        FVoxelColumnPipeline::FReady None;
+        Test.TestFalse(TEXT("8. near-only take with only far meshes waiting"), Pipeline->PopReady(None, true));
+        Test.TestEqual(TEXT("8. full meshes taken near-only"), FullTaken, Waiting.Ready - Waiting.FarReady);
+        Test.TestEqual(TEXT("8. far meshes still waiting"), Pipeline->GetStats().Ready, Waiting.FarReady);
+    }
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelPipelineFarRingTest, "Unnamed.Voxel.Pipeline.FarRing",
@@ -756,6 +799,38 @@ bool FVoxelPipelineFarRingTest::RunTest(const FString& Parameters)
     FarRingTestNoFarRing(Report, World);
     FarRingTestWaitingKinds(Report, World);
     FarRingTestQuickReturn(Report, World);
+    FarRingTestNearOnly(Report, World);
+    return true;
+}
+
+// The apply loop's budget steps (review A2), at the default 2 ms budget. A 1,601-quad far mesh's first estimate
+// (0.1 + 0.001 x quads = 1.701 ms) passes 85% of it even as the frame's first apply.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelApplyStepTest, "Unnamed.Voxel.Pipeline.ApplyStep",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelApplyStepTest::RunTest(const FString& Parameters)
+{
+    constexpr double Budget = 2, Big = 1.701;
+    const auto Expect = [this](const TCHAR* What, EVoxelApplyStep Actual, EVoxelApplyStep Expected)
+    { TestEqual(What, int32(Actual), int32(Expected)); };
+    Expect(TEXT("far mesh that fits"), GetVoxelApplyStep(0.5, 0.5, Budget, 3, true, false), EVoxelApplyStep::Apply);
+    Expect(TEXT("big far mesh first: near meshes go, it waits"), GetVoxelApplyStep(0, Big, Budget, 0, true, false),
+        EVoxelApplyStep::SkipFar);
+    Expect(TEXT("big far mesh first after its wait: goes"), GetVoxelApplyStep(0, Big, Budget, 0, true, true),
+        EVoxelApplyStep::Apply);
+    Expect(TEXT("big far mesh after near ones: skipped, even after its wait"),
+        GetVoxelApplyStep(0.5, Big, Budget, 2, true, true), EVoxelApplyStep::SkipFar);
+    Expect(TEXT("near mesh that fits"), GetVoxelApplyStep(0.5, 0.5, Budget, 3, false, false), EVoxelApplyStep::Apply);
+    Expect(TEXT("near mesh past the room after others"), GetVoxelApplyStep(0.5, Big, Budget, 2, false, false),
+        EVoxelApplyStep::Stop);
+    Expect(TEXT("big near mesh first, within the budget"), GetVoxelApplyStep(0, Big, Budget, 0, false, false),
+        EVoxelApplyStep::Apply);
+    Expect(TEXT("near mesh first, no room left by planning"), GetVoxelApplyStep(1, 1.5, Budget, 0, false, false),
+        EVoxelApplyStep::Wait);
+    Expect(TEXT("near mesh first, no room, after its wait"), GetVoxelApplyStep(1, 1.5, Budget, 0, false, true),
+        EVoxelApplyStep::Apply);
+    Expect(TEXT("near mesh first, above the whole budget"), GetVoxelApplyStep(1, 3, Budget, 0, false, false),
+        EVoxelApplyStep::Apply);
     return true;
 }
 #endif
