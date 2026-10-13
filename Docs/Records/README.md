@@ -4,6 +4,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 12, 2026
 
+- [No black or stale screens around the menu](2026-10-12-Menu-Transitions.md): `menu.Title.Keep` 1 (one title browser for the game: Return to Main Menu shows the title in its first frame, game start a Mojang Studios overlay instead of black), `menu.World.WaitForPaint`, `foundation.Load.Cover` and `foundation.Panels.Preload` (each 0 = the behaviour until 2026-10-12); `Scripts/TestMenuTransitions.ps1` records every menu transition.
 - [The ESC flash: a kept-alive pause menu and the world behind it](2026-10-12-Pause-Menu-Flash.md): `foundation.Pause.Menu` 1 (one browser per world, pre-warmed hidden: no black, no title frame, the menu within a frame of ESC; 0 = the old 0.2-0.4 s flash) and `foundation.Pause.Background` 1 (the world behind, blurred and darkened, as Jesus picked); the pause probe (`-FoundationSuite=pause`), measured frames, timings and mutations; open items.
 - [Look handoff: after the brightness pass](2026-10-12-Look-Handoff.md): start here for DN2, W3c, T3c or a retune of the picked look.
 - [The brightness pass: look dials, pinned daylight, the vanilla outline](2026-10-12-Look-Brightness.md): `voxel.Look.*` (DayEV 0.6, SkyPin with 2 stops, Sky 1.637 by Jesus's pick), caves unchanged, mode 1 outline after tone mapping (0.63x), `CaptureVoxel -Transition`; scout T's cap maths corrected; open items for DN2, W3c, T3c.
