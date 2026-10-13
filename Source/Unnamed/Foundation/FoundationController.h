@@ -107,4 +107,7 @@ private:
     // foundation.Load.Cover, read at BeginPlay: frames to keep the screen up once ready, and the ready frames so far.
     int32 LoadCoverFrames = 0;
     int32 ReadyFrames = 0;
+    // foundation.Panels.Preload, read at BeginPlay, and whether the creative screen's preload is done.
+    bool bPreloadPanels = false;
+    bool bPanelsPreloaded = false;
 };

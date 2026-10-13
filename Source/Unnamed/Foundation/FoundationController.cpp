@@ -41,6 +41,13 @@ namespace
              "2026-10-12); 1 the loading screen from the world's first frame, hidden 3 rendered frames after the world "
              "is ready. Read when a world starts."),
         ECVF_Default);
+    TAutoConsoleVariable<int32> CVarPanelsPreload(TEXT("foundation.Panels.Preload"), 1,
+        TEXT(
+            "The creative inventory's first open in a world: 0 it builds its screen and loads its textures in the open "
+            "frame, a 55-72 ms frame that draws the items without the container background (until 2026-10-12); 1 the "
+            "screen is built (its textures loaded) in the world's first frame with the player in its lab, and the "
+            "first open shows it. Read when a world starts."),
+        ECVF_Default);
     TAutoConsoleVariable<int32> CVarPauseBackground(TEXT("foundation.Pause.Background"), 1,
         TEXT(
             "Behind the ESC menu (foundation.Pause.Menu 1 and 2): 0 the title screen's blurred panorama (until "
@@ -102,6 +109,9 @@ void AFoundationController::BeginPlay()
     LoadCoverFrames = GetLoadCoverFrames(CVarLoadCover.GetValueOnGameThread());
     UE_LOG(LogUnnamedFoundation, Display, TEXT("Switch foundation.Load.Cover = %d (read at BeginPlay)"),
         LoadCoverFrames > 0 ? 1 : 0);
+    bPreloadPanels = CVarPanelsPreload.GetValueOnGameThread() != 0;
+    UE_LOG(LogUnnamedFoundation, Display, TEXT("Switch foundation.Panels.Preload = %d (read at BeginPlay)"),
+        bPreloadPanels ? 1 : 0);
     ResumeFoundation();
     // Mode 1: the pause menu loads now, hidden, so ESC shows it at once.
     MenuHost->Prewarm();
@@ -122,6 +132,7 @@ void AFoundationController::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
     // One fixed order per frame: the loading screen, timing, pawn-driven updates, then the throttled HUD refresh.
     UpdateLoadingScreen();
+    if (bPreloadPanels && !bPanelsPreloaded) bPanelsPreloaded = Panels->PreloadCreative();
     Hud->BeginFrame();
     if (AFoundationPawn* FoundationPawn = GetFoundationPawn())
     {
