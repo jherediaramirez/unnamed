@@ -29,8 +29,8 @@ enum class EVoxelClimateAxis : uint8
     Count
 };
 
-// One biome from the reference's biome files: the numbers and colours generation and tinting read. Spawns, sounds,
-// sky and fog (the file's attributes), features and carvers are not read.
+// One biome from the reference's biome files: the numbers and colours generation and tinting read, and the water fog.
+// Spawns, sounds, the other attributes, features and carvers are not read.
 struct FVoxelBiome
 {
     // The full id, "minecraft:plains".
@@ -45,6 +45,10 @@ struct FVoxelBiome
     int32 FoliageColor = INDEX_NONE;
     int32 DryFoliageColor = INDEX_NONE;
     EVoxelGrassColorModifier GrassColorModifier = EVoxelGrassColorModifier::None;
+    // From the file's attributes: minecraft:visual/water_fog_color as 0xRRGGBB, INDEX_NONE when unset (the default
+    // applies, VoxelWaterFog.h), and water_fog_end_distance's multiplier (swamps 0.85), 1 when unset.
+    int32 WaterFogColor = INDEX_NONE;
+    float WaterFogEndScale = 1;
 };
 
 // One point of a biome parameter list: a box over the six climate parameters plus an offset, in the jar's quantized

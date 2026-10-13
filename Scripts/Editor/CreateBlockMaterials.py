@@ -1,5 +1,6 @@
 """Author the block materials (M_BlockOpaque, M_BlockCutout, M_BlockTranslucent, M_BlockWater) and the voxel chunk
-materials (M_ChunkOpaque, M_ChunkCutout, M_ChunkTranslucent, M_ChunkWater).
+materials (M_ChunkOpaque, M_ChunkCutout, M_ChunkTranslucent, M_ChunkWater), and M_WaterFog, the post-process fog while
+the camera's eye is in a fluid (WATER_FOG_HLSL).
 
 Each samples the block texture array by layer and reads the current animation frame from the TextureTable parameter
 (UFoundationBlockTextureTable).
@@ -205,7 +206,16 @@ MATERIALS = {
                          "fade_alpha": True},
     "M_ChunkFarWater": {"blend": unreal.BlendMode.BLEND_TRANSLUCENT, "hlsl": CHUNK_WATER_HLSL, "chunk": True,
                         "far": True},
+    # The fog in fluids (Source/Unnamed/Voxel/VoxelWaterFog.h): a post-process blendable, not a block material.
+    "M_WaterFog": {"post": True},
 }
+
+# The fog in fluids, after the tonemapper so Color mixes as the display value vanilla's fog colour is: linear fog by
+# distance to the camera, 0 at Start and full at End (cm; Start may be negative), as vanilla's linear fog.
+WATER_FOG_HLSL = r"""
+float fog = saturate((Distance - Start) / max(End - Start, 1.0));
+return lerp(Scene, Color, fog);
+"""
 
 # The edge fade: 1 inside FarFadeStart, 0 from FarFadeEnd, by horizontal distance to the camera (Rel is the camera-relative
 # world position, cm). Return: the faded mask (the cutout's 26.3 test, alpha >= 0.5, times the fade); Unfaded: the mask
@@ -292,7 +302,56 @@ def look_collection():
     return collection
 
 
+def build_water_fog(name):
+    material = get_or_create(name)
+    material.set_editor_property("material_domain", unreal.MaterialDomain.MD_POST_PROCESS)
+    location = getattr(unreal.BlendableLocation, "BL_SCENE_COLOR_AFTER_TONEMAPPING", None) or         unreal.BlendableLocation.BL_AFTER_TONEMAPPING
+    material.set_editor_property("blendable_location", location)
+
+    def node(cls, x, y):
+        return lib.create_material_expression(material, cls, x, y)
+
+    def link(source, output, target, input_name):
+        if not lib.connect_material_expressions(source, output, target, input_name):
+            fail("%s: could not connect to %s" % (name, input_name))
+
+    scene = node(unreal.MaterialExpressionSceneTexture, -700, 0)
+    scene.set_editor_property("scene_texture_id", unreal.SceneTextureId.PPI_POST_PROCESS_INPUT0)
+    # In a post-process material the world position is the scene depth's.
+    distance = node(unreal.MaterialExpressionDistance, -450, 150)
+    link(node(unreal.MaterialExpressionWorldPosition, -700, 120), "", distance, "A")
+    link(node(unreal.MaterialExpressionCameraPositionWS, -700, 200), "", distance, "B")
+    color = node(unreal.MaterialExpressionVectorParameter, -700, 300)
+    color.set_editor_property("parameter_name", "Color")
+    custom = node(unreal.MaterialExpressionCustom, -200, 150)
+    custom.set_editor_property("description", "Water fog: linear by distance, Start to End")
+    custom.set_editor_property("output_type", unreal.CustomMaterialOutputType.CMOT_FLOAT3)
+    custom.set_editor_property("code", WATER_FOG_HLSL)
+    inputs = []
+    for input_name in ("Scene", "Distance", "Color", "Start", "End"):
+        item = unreal.CustomInput()
+        item.set_editor_property("input_name", input_name)
+        inputs.append(item)
+    custom.set_editor_property("inputs", inputs)
+    link(scene, "Color", custom, "Scene")
+    link(distance, "", custom, "Distance")
+    link(color, "", custom, "Color")
+    # Unset, the fog never reaches the view (the C++ sets both while it is on).
+    for index, parameter in enumerate(("Start", "End")):
+        expr = node(unreal.MaterialExpressionScalarParameter, -700, 400 + 80 * index)
+        expr.set_editor_property("parameter_name", parameter)
+        expr.set_editor_property("default_value", FAR_FADE_DEFAULT_CM * (index + 1))
+        link(expr, "", custom, parameter)
+    lib.connect_material_property(custom, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    lib.recompile_material(material)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(material):
+        fail("could not save " + name)
+    return material
+
+
 def build(name, spec, block_textures, flow_textures):
+    if spec.get("post", False):
+        return build_water_fog(name)
     material = get_or_create(name)
     water = name.endswith("Water")
     chunk = spec.get("chunk", False)
