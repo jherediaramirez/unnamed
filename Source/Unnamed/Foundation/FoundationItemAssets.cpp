@@ -104,39 +104,131 @@ int32 UFoundationItemAssets::AddLoot(FFoundationRules& Rules) const
     }
     Rules.LootTables.Reset();
     int32 Skipped = 0;
-    for (const FFoundationLootTableAsset& Asset : LootTables)
+    for (int32 TableIndex = 0; TableIndex < LootTables.Num(); ++TableIndex)
     {
+        const FFoundationLootTableAsset& Asset = LootTables[TableIndex];
         FFoundationLootTable Table;
+        Table.Index = TableIndex;
+        // The first unknown item, predicate or kind skips the table.
         FName Missing;
+        const auto FindPredicate = [&](FName Name)
+        {
+            const int32 Index = Rules.LootPredicates.IndexOfByPredicate(
+                [Name](const FFoundationLootPredicate& Predicate) { return Predicate.Name == Name; });
+            if (Index == INDEX_NONE && Missing.IsNone()) Missing = Name;
+            return Index;
+        };
+        const auto FindBonus = [&](FName Formula)
+        {
+            if (Formula == TEXT("ore_drops")) return EFoundationLootBonus::OreDrops;
+            if (Formula == TEXT("uniform_bonus_count")) return EFoundationLootBonus::UniformBonusCount;
+            if (!Formula.IsNone() && Missing.IsNone()) Missing = Formula;
+            return EFoundationLootBonus::None;
+        };
+        static const TMap<FName, EFoundationLootCondition> ConditionTypes = {
+            {TEXT("predicate"), EFoundationLootCondition::Predicate},
+            {TEXT("survives_explosion"), EFoundationLootCondition::SurvivesExplosion},
+            {TEXT("match_block"), EFoundationLootCondition::MatchBlock},
+            {TEXT("any_of"), EFoundationLootCondition::AnyOf}, {TEXT("all_of"), EFoundationLootCondition::AllOf},
+            {TEXT("inverted"), EFoundationLootCondition::Inverted},
+            {TEXT("table_bonus"), EFoundationLootCondition::TableBonus},
+            {TEXT("random_chance"), EFoundationLootCondition::RandomChance},
+            {TEXT("match_tool"), EFoundationLootCondition::MatchTool},
+            {TEXT("entity_properties"), EFoundationLootCondition::EntityProperties}};
+        for (const FFoundationLootConditionAsset& ConditionAsset : Asset.Conditions)
+        {
+            FFoundationLootCondition& Condition = Table.Conditions.AddDefaulted_GetRef();
+            if (const EFoundationLootCondition* Type = ConditionTypes.Find(ConditionAsset.Type))
+                Condition.Type = *Type;
+            else if (Missing.IsNone())
+                Missing = ConditionAsset.Type;
+            if (Condition.Type == EFoundationLootCondition::Predicate)
+                Condition.Predicate = FindPredicate(ConditionAsset.Name);
+            Condition.Terms = ConditionAsset.Terms;
+            Condition.Name = ConditionAsset.Name;
+            // Parallel arrays (ImportItems.py writes both).
+            for (int32 Index = 0; Index < FMath::Min(ConditionAsset.StateKeys.Num(), ConditionAsset.StateValues.Num());
+                ++Index)
+                Condition.State.Emplace(ConditionAsset.StateKeys[Index], ConditionAsset.StateValues[Index]);
+            Condition.Chances = ConditionAsset.Chances;
+            Condition.Items = ConditionAsset.Items;
+        }
+        const auto ToModifiers = [&](TConstArrayView<FFoundationLootModifierAsset> Assets)
+        {
+            static const TMap<FName, EFoundationLootModifier> ModifierTypes = {
+                {TEXT("set_count"), EFoundationLootModifier::SetCount},
+                {TEXT("apply_bonus"), EFoundationLootModifier::ApplyBonus},
+                {TEXT("limit_count"), EFoundationLootModifier::LimitCount},
+                {TEXT("explosion_decay"), EFoundationLootModifier::ExplosionDecay},
+                {TEXT("copy_components"), EFoundationLootModifier::Copy},
+                {TEXT("copy_state"), EFoundationLootModifier::Copy}};
+            TArray<FFoundationLootModifier> Modifiers;
+            for (const FFoundationLootModifierAsset& ModifierAsset : Assets)
+            {
+                FFoundationLootModifier& Modifier = Modifiers.AddDefaulted_GetRef();
+                if (const EFoundationLootModifier* Type = ModifierTypes.Find(ModifierAsset.Type))
+                    Modifier.Type = *Type;
+                else if (Missing.IsNone())
+                    Missing = ModifierAsset.Type;
+                Modifier.Conditions = ModifierAsset.Tests;
+                Modifier.Min = Modifier.Type == EFoundationLootModifier::LimitCount && !ModifierAsset.bHasMin
+                    ? MIN_int32
+                    : ModifierAsset.Min;
+                Modifier.Max = Modifier.Type == EFoundationLootModifier::LimitCount && !ModifierAsset.bHasMax
+                    ? MAX_int32
+                    : ModifierAsset.Max;
+                Modifier.bAdd = ModifierAsset.bAdd;
+                Modifier.Bonus = FindBonus(ModifierAsset.BonusFormula);
+                Modifier.BonusEnchantment = ModifierAsset.BonusEnchantment;
+                Modifier.BonusMultiplier = ModifierAsset.BonusMultiplier;
+            }
+            return Modifiers;
+        };
         for (const FFoundationLootPoolAsset& PoolAsset : Asset.Pools)
         {
             FFoundationLootPool& Pool = Table.Pools.AddDefaulted_GetRef();
             Pool.Rolls = PoolAsset.Rolls;
+            Pool.Conditions = PoolAsset.Tests;
+            Pool.Modifiers = ToModifiers(PoolAsset.Modifiers);
             for (const FFoundationLootCandidateAsset& CandidateAsset : PoolAsset.Candidates)
             {
                 FFoundationLootCandidate& Candidate = Pool.Candidates.AddDefaulted_GetRef();
                 Candidate.Item = Rules.FindItem(CandidateAsset.Item);
-                if (Candidate.Item == INDEX_NONE) Missing = CandidateAsset.Item;
+                if (Candidate.Item == INDEX_NONE && Missing.IsNone()) Missing = CandidateAsset.Item;
+                // Predicate names become nodes after the asset's, then the condition objects follow them.
                 for (const FName Condition : CandidateAsset.Conditions)
                 {
-                    const int32 Index = Rules.LootPredicates.IndexOfByPredicate(
-                        [Condition](const FFoundationLootPredicate& Predicate) { return Predicate.Name == Condition; });
-                    if (Index == INDEX_NONE) Missing = Condition;
-                    Candidate.Conditions.Add(Index);
+                    FFoundationLootCondition& Node = Table.Conditions.AddDefaulted_GetRef();
+                    Node.Type = EFoundationLootCondition::Predicate;
+                    Node.Name = Condition;
+                    Node.Predicate = FindPredicate(Condition);
+                    Candidate.Conditions.Add(Table.Conditions.Num() - 1);
                 }
-                Candidate.CountMin = CandidateAsset.CountMin;
-                Candidate.CountMax = CandidateAsset.CountMax;
-                if (CandidateAsset.BonusFormula == TEXT("ore_drops"))
-                    Candidate.Bonus = EFoundationLootBonus::OreDrops;
-                else if (CandidateAsset.BonusFormula == TEXT("uniform_bonus_count"))
-                    Candidate.Bonus = EFoundationLootBonus::UniformBonusCount;
-                else if (!CandidateAsset.BonusFormula.IsNone())
-                    Missing = CandidateAsset.BonusFormula;
-                Candidate.BonusEnchantment = CandidateAsset.BonusEnchantment;
-                Candidate.BonusMultiplier = CandidateAsset.BonusMultiplier;
-                Candidate.bExplosionDecay = CandidateAsset.bExplosionDecay;
+                Candidate.Conditions.Append(CandidateAsset.Tests);
+                if (!CandidateAsset.Modifiers.IsEmpty())
+                {
+                    Candidate.Modifiers = ToModifiers(CandidateAsset.Modifiers);
+                    continue;
+                }
+                // The ore form (items S5b): set_count's range, then the bonus and the decay. The range is always
+                // drawn, as S5b drew it, so the ores' rolls stay the same.
+                FFoundationLootModifier& Count = Candidate.Modifiers.AddDefaulted_GetRef();
+                Count.Min = CandidateAsset.CountMin;
+                Count.Max = CandidateAsset.CountMax;
+                if (const EFoundationLootBonus Bonus = FindBonus(CandidateAsset.BonusFormula);
+                    Bonus != EFoundationLootBonus::None)
+                {
+                    FFoundationLootModifier& Modifier = Candidate.Modifiers.AddDefaulted_GetRef();
+                    Modifier.Type = EFoundationLootModifier::ApplyBonus;
+                    Modifier.Bonus = Bonus;
+                    Modifier.BonusEnchantment = CandidateAsset.BonusEnchantment;
+                    Modifier.BonusMultiplier = CandidateAsset.BonusMultiplier;
+                }
+                if (CandidateAsset.bExplosionDecay)
+                    Candidate.Modifiers.AddDefaulted_GetRef().Type = EFoundationLootModifier::ExplosionDecay;
             }
         }
+        Table.Modifiers = ToModifiers(Asset.Modifiers);
         if (!Missing.IsNone())
         {
             UE_LOG(LogUnnamedFoundation, Log,

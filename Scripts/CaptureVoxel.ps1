@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[switch]$ClimateSpawn,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates,[switch]$TorchRoom,[switch]$TorchLook,[int]$TorchGlow=-1,[ValidateSet('breach','flood','scenes','ice')][string]$Fluids,[double[]]$Transition,[string]$StartCVars)
+param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$MineProbe,[switch]$Garden,[switch]$Caves,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[switch]$ClimateSpawn,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates,[switch]$TorchRoom,[switch]$TorchLook,[int]$TorchGlow=-1,[ValidateSet('breach','flood','scenes','ice')][string]$Fluids,[double[]]$Transition,[string]$StartCVars)
 # Renders the generated world offscreen (/Game/Maps/L_Generated) and saves AVoxelWorld's screenshots: overview,
 # closeup, ground, lumen-scene and section, plus build.txt with the first view's streaming timings. The rings stay on
 # the player's spawn, and the view's edge is meshed against air (voxel.Debug.EdgeWalls 1; -ExecCmds can turn it off),
@@ -8,6 +8,8 @@ param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[in
 # flight.csv with every frame, flight.txt per leg and four screenshots, with the edge fog and no edge walls.
 # -Caves adds views inside a cave, onto a cave wall with ores (cave-wall, preferring daylit walls) and onto still lava when the streamed area has them. -FlightSeconds stops it early (a quick look at the fog from the start shot). -Edits first carves a pit across a
 # column corner and builds a pillar through the authority, then adds an "edits" shot of them.
+# -MineProbe (opt-in; loot step 2a): a probe player mines a stone block beside the spawn with a stone pickaxe through the
+# authority, under the world's game mode, and build.txt gets its hotbar ("Mine probe:"; AVoxelWorld::RunMineProbe).
 # -Garden builds a plot of every model block near the spawn (rows, a pool, a glow lichen overhang, a dripstone column,
 # tall grass across a section border, a distance plot) and a grass field around a bare clearing, then adds the garden,
 # field and distance-008 to distance-128 shots (AVoxelWorld::ApplyShotGarden).
@@ -69,6 +71,7 @@ if($World){$map+='?VoxelWorld='+$World;if(-not $WorldsDir){$WorldsDir=Join-Path 
 $arguments=@(('"'+(Join-Path $root 'Unnamed.uproject')+'"'),$map,'-game','-windowed',"-ResX=$Width","-ResY=$Height",'-ForceRes','-RenderOffscreen','-unattended','-nosplash','-nosound','-MenuSettingsSessionOnly',('-'+$(if($Flight){'VoxelFlight'}else{'VoxelShot'})+'="'+$OutputDirectory+'"'),('-abslog="'+(Join-Path $OutputDirectory 'game.log')+'"'),('-UserDir="'+$profileDirectory+'"'))
 if($Seed){$arguments+=('-VoxelSeed="'+$Seed+'"')}
 if($Edits -and -not $Flight){$arguments+='-VoxelShotEdits'}
+if($MineProbe -and -not $Flight){$arguments+='-VoxelMineProbe'}
 if($Garden -and -not $Flight){$arguments+='-VoxelShotGarden'}
 if($Caves -and -not $Flight){$arguments+='-VoxelShotCaves'}
 # -Veins adds vein-copper and vein-iron, views onto the cut faces where each vein's ore and filler mix most; -VeinsAt

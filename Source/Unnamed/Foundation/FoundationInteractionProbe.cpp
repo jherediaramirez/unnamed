@@ -1011,14 +1011,20 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             Look(FVector(-450, 650, 50));
             PressKey(EKeys::LeftMouseButton, true);
         },
-        [this, Player, Solid, Capture]
+        [this, Authority, Player, Solid, Capture]
         {
             PressKey(EKeys::LeftMouseButton, false);
             const FFoundationInventory& Inventory = Player()->Inventory;
-            Record(TEXT("break returns the block once and the last durability point breaks the pickaxe"),
-                !Solid({-5, 6, 0}) && Inventory.Hotbar[0].Count == 64 && Inventory.Hotbar[1].IsEmpty(),
-                FString::Printf(
-                    TEXT("count %d pickaxe empty %d"), Inventory.Hotbar[0].Count, Inventory.Hotbar[1].IsEmpty()));
+            // Stone's loot table returns cobblestone (loot step 2a; foundation.Loot.AllBlocks 0 returned stone).
+            const int32 Cobblestone = Authority().Rules.FindItem(TEXT("cobblestone"));
+            int32 Cobblestones = 0;
+            for (const FFoundationItemInstance& Stack : Inventory.Hotbar)
+                Cobblestones += !Stack.IsEmpty() && Stack.Item == Cobblestone ? Stack.Count : 0;
+            Record(TEXT("break returns the block's loot once and the last durability point breaks the pickaxe"),
+                !Solid({-5, 6, 0}) && Inventory.Hotbar[0].Count == 63 && Cobblestones == 1 &&
+                    Inventory.Hotbar[1].IsEmpty(),
+                FString::Printf(TEXT("stone %d cobblestone %d pickaxe empty %d"), Inventory.Hotbar[0].Count,
+                    Cobblestones, Inventory.Hotbar[1].IsEmpty()));
             Capture(TEXT("finite-hud"));
         });
 

@@ -82,6 +82,17 @@ LOOT_PREDICATE = "data/minecraft/predicate/"
 LOOT_FORMAT = ("Each pool's single entry flattened into ordered candidates; the first candidate whose conditions all "
                "pass is taken; count is set_count's inclusive range; bonus and explosion_decay are kept for later "
                "(neutral without enchantments or explosions).")
+LOOT_EXTENSIONS = (
+    "Tables: `modifiers` (the table's modifier list) only when the jar table has one; a table without pools has "
+    "`pools: []`. Pools: `conditions` (the pool's condition) and `modifiers` only when present. Candidates: the ore "
+    "form (item, conditions, count, bonus, explosion_decay) when the entry's modifiers are, in order, at most one "
+    "each of set_count (no add, no condition), apply_bonus and explosion_decay (no condition); otherwise "
+    "(item, conditions, modifiers) with modifiers an ordered list of set_count {count [min, max], add}, apply_bonus "
+    "{enchantment, formula, bonus_multiplier}, limit_count {min, max}, explosion_decay, copy_components {source, "
+    "include}, copy_state {block, properties}, each with a last key `conditions` when it has a condition. A "
+    "conditions list holds predicate names (strings) or objects: survives_explosion, match_block {block, state}, "
+    "any_of/all_of {terms}, inverted {term}, table_bonus {enchantment, chances}, random_chance {chance}, match_tool "
+    "{tag or null, items resolved}, entity_properties {entity}, location_check {offset [x, y, z], block, state}. Predicates are listed in order of first use.")
 BREAK_SAMPLES = ["dirt", "sand", "gravel", "oak_log", "oak_planks", "oak_leaves", "cobweb", "netherrack", "stone",
                  "cobblestone", "deepslate", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "diamond_ore",
                  "deepslate_diamond_ore", "iron_block", "obsidian", "ancient_debris", "bedrock"]
@@ -255,12 +266,99 @@ def loot_fail(block, why):
     raise SystemExit(f"loot table {block}: {why}")
 
 
-def loot_conditions(block, value):
-    """A condition: one "minecraft:<path>" predicate reference, or a list of them (all must pass)."""
-    values = value if isinstance(value, list) else [value]
-    if not values or not all(isinstance(v, str) and v.startswith("minecraft:") for v in values):
+RANDOM_CONDITIONS = ("random_chance", "table_bonus")
+
+
+def loot_has_random(element):
+    """Whether a condition (as loot_condition returns it) holds a random one anywhere in its tree."""
+    if not isinstance(element, dict):
+        return False
+    if element["type"] in RANDOM_CONDITIONS:
+        return True
+    return any(loot_has_random(t) for t in element.get("terms", [])) or loot_has_random(element.get("term"))
+
+
+def loot_condition(block, value, item_tags):
+    """One condition: a "minecraft:<path>" predicate reference (-> the bare path) or an object (see `extensions`)."""
+    if isinstance(value, str):
+        if not value.startswith("minecraft:"):
+            loot_fail(block, f"unsupported condition {value!r}")
+        return value[len("minecraft:"):]
+    if not isinstance(value, dict):
         loot_fail(block, f"unsupported condition {value!r}")
-    return [v[len("minecraft:"):] for v in values]
+    kind, keys = bare(value.get("type", "")), set(value)
+
+    def need(allowed, required):
+        if not keys <= allowed | {"type"} or not required <= keys:
+            loot_fail(block, f"unsupported {kind} condition {value!r}")
+
+    if kind == "survives_explosion":
+        need(set(), set())
+        return {"type": kind}
+    if kind == "match_block":
+        need({"blocks", "state"}, {"blocks"})
+        state = value.get("state", {})
+        if not isinstance(value["blocks"], str) or not isinstance(state, dict) or \
+                not all(isinstance(k, str) and isinstance(v, str) for k, v in state.items()):
+            loot_fail(block, f"unsupported match_block {value!r}")
+        return {"type": kind, "block": bare(value["blocks"]), "state": state}
+    if kind in ("any_of", "all_of"):
+        need({"terms"}, {"terms"})
+        if not isinstance(value["terms"], list) or not value["terms"]:
+            loot_fail(block, f"unsupported {kind} {value!r}")
+        return {"type": kind, "terms": [loot_condition(block, t, item_tags) for t in value["terms"]]}
+    if kind == "inverted":
+        need({"term"}, {"term"})
+        return {"type": kind, "term": loot_condition(block, value["term"], item_tags)}
+    if kind == "table_bonus":
+        need({"enchantment", "chances"}, {"enchantment", "chances"})
+        chances = value["chances"]
+        if value["enchantment"] != "minecraft:fortune" or not isinstance(chances, list) or not chances or not all(
+                isinstance(c, (int, float)) and not isinstance(c, bool) for c in chances):
+            loot_fail(block, f"unsupported table_bonus {value!r}")
+        return {"type": kind, "enchantment": "fortune", "chances": chances}
+    if kind == "random_chance":
+        need({"chance"}, {"chance"})
+        if not isinstance(value["chance"], (int, float)) or isinstance(value["chance"], bool):
+            loot_fail(block, f"unsupported random_chance {value!r}")
+        return {"type": kind, "chance": value["chance"]}
+    if kind == "match_tool":
+        need({"predicate"}, {"predicate"})
+        predicate = value["predicate"]
+        if not isinstance(predicate, dict) or set(predicate) != {"items"}:
+            loot_fail(block, f"unsupported match_tool predicate {predicate!r}")
+        items = predicate["items"]
+        if isinstance(items, str) and items.startswith("#"):
+            tag = bare(items[1:])
+            if tag not in item_tags.all:
+                loot_fail(block, f"unresolvable item tag {items!r}")
+            return {"type": kind, "tag": tag, "items": sorted(item_tags.resolve(tag))}
+        listed = items if isinstance(items, list) else [items]
+        if not listed or not all(isinstance(i, str) and not i.startswith("#") for i in listed):
+            loot_fail(block, f"unsupported match_tool items {items!r}")
+        return {"type": kind, "tag": None, "items": [bare(i) for i in listed]}
+    if kind == "entity_properties":
+        need({"entity", "predicate"}, {"entity", "predicate"})
+        if value["entity"] != "this" or value["predicate"] != {}:
+            loot_fail(block, f"unsupported entity_properties {value!r}")
+        return {"type": kind, "entity": "this"}
+    if kind == "location_check":
+        need({"offsetX", "offsetY", "offsetZ", "predicate"}, {"predicate"})
+        predicate = value["predicate"]
+        offset = [value.get(k, 0) for k in ("offsetX", "offsetY", "offsetZ")]
+        inner = predicate.get("block") if isinstance(predicate, dict) else None
+        if set(predicate) != {"block"} or not isinstance(inner, dict) or not set(inner) <= {"blocks", "state"} or                 not isinstance(inner.get("blocks"), str) or not isinstance(inner.get("state", {}), dict) or                 not all(isinstance(v, int) and not isinstance(v, bool) for v in offset):
+            loot_fail(block, f"unsupported location_check {value!r}")
+        return {"type": kind, "offset": offset, "block": bare(inner["blocks"]), "state": inner.get("state", {})}
+    return loot_fail(block, f"unsupported condition type {kind!r}")
+
+
+def loot_conditions(block, value, item_tags):
+    """A `condition` value (one condition or a list; all must pass) as a list."""
+    values = value if isinstance(value, list) else [value]
+    if not values:
+        loot_fail(block, "empty condition list")
+    return [loot_condition(block, v, item_tags) for v in values]
 
 
 def loot_count(block, count):
@@ -280,27 +378,28 @@ def loot_count(block, count):
     return [int(low), int(high)]
 
 
-def loot_candidate(block, entry, conditions):
-    count, bonus, decay, last = [1, 1], None, False, -1
-    modifiers = entry.get("modifier", [])
-    if not isinstance(modifiers, list):
-        loot_fail(block, "modifier is not a list")
-    for modifier in modifiers:
-        kind = bare(modifier.get("type", ""))
-        rank = ["set_count", "apply_bonus", "explosion_decay"].index(kind) if kind in (
-            "set_count", "apply_bonus", "explosion_decay") else loot_fail(block, f"unsupported modifier {kind!r}")
-        if rank <= last:
-            loot_fail(block, "modifiers out of order or repeated")
-        last = rank
+def loot_modifiers(block, value, item_tags):
+    """A `modifier` value (one modifier or a list) as the ordered list of modifier objects."""
+    values = value if isinstance(value, list) else [value]
+    out = []
+    for modifier in values:
+        if not isinstance(modifier, dict):
+            loot_fail(block, f"unsupported modifier {modifier!r}")
+        kind, keys = bare(modifier.get("type", "")), set(modifier)
+
+        def need(allowed, required):
+            if not keys <= allowed | {"type", "condition"} or not required <= keys:
+                loot_fail(block, f"unsupported {kind} {modifier!r}")
+
         if kind == "set_count":
-            if not set(modifier) <= {"type", "count", "add"} or "count" not in modifier or modifier.get("add", False):
+            need({"count", "add"}, {"count"})
+            if not isinstance(modifier.get("add", False), bool):
                 loot_fail(block, f"unsupported set_count {modifier!r}")
-            count = loot_count(block, modifier["count"])
+            result = {"type": kind, "count": loot_count(block, modifier["count"]), "add": modifier.get("add", False)}
         elif kind == "apply_bonus":
-            formula = bare(modifier.get("formula", ""))
-            if not set(modifier) <= {"type", "enchantment", "formula", "parameters"} or \
-                    modifier.get("enchantment") != "minecraft:fortune" or \
-                    formula not in ("ore_drops", "uniform_bonus_count"):
+            need({"enchantment", "formula", "parameters"}, {"enchantment", "formula"})
+            formula = bare(modifier["formula"]) if isinstance(modifier["formula"], str) else None
+            if modifier["enchantment"] != "minecraft:fortune" or formula not in ("ore_drops", "uniform_bonus_count"):
                 loot_fail(block, f"unsupported apply_bonus {modifier!r}")
             multiplier = 0
             if formula == "uniform_bonus_count":
@@ -311,28 +410,73 @@ def loot_candidate(block, entry, conditions):
                 multiplier = parameters["bonusMultiplier"]
             elif "parameters" in modifier:
                 loot_fail(block, "ore_drops with parameters")
-            bonus = {"enchantment": "fortune", "formula": formula, "bonus_multiplier": multiplier}
+            result = {"type": kind, "enchantment": "fortune", "formula": formula, "bonus_multiplier": multiplier}
+        elif kind == "limit_count":
+            need({"limit"}, {"limit"})
+            limit = modifier["limit"]
+            if not isinstance(limit, dict) or not limit or not set(limit) <= {"min", "max"} or not all(
+                    isinstance(v, int) and not isinstance(v, bool) for v in limit.values()):
+                loot_fail(block, f"unsupported limit_count {modifier!r}")
+            result = {"type": kind, "min": limit.get("min"), "max": limit.get("max")}
+        elif kind == "explosion_decay":
+            need(set(), set())
+            result = {"type": kind}
+        elif kind == "copy_components":
+            need({"source", "include"}, {"source", "include"})
+            if not isinstance(modifier["source"], str) or not isinstance(modifier["include"], list) or not all(
+                    isinstance(i, str) for i in modifier["include"]):
+                loot_fail(block, f"unsupported copy_components {modifier!r}")
+            result = {"type": kind, "source": modifier["source"], "include": [bare(i) for i in modifier["include"]]}
+        elif kind == "copy_state":
+            need({"block", "properties"}, {"block", "properties"})
+            if not isinstance(modifier["block"], str) or not isinstance(modifier["properties"], list) or not all(
+                    isinstance(i, str) for i in modifier["properties"]):
+                loot_fail(block, f"unsupported copy_state {modifier!r}")
+            result = {"type": kind, "block": bare(modifier["block"]), "properties": modifier["properties"]}
         else:
-            if set(modifier) != {"type"}:
-                loot_fail(block, f"unsupported explosion_decay {modifier!r}")
-            decay = True
-    return {"item": bare(entry["name"]), "conditions": conditions, "count": count, "bonus": bonus,
-            "explosion_decay": decay}
+            return loot_fail(block, f"unsupported modifier {kind!r}")
+        if "condition" in modifier:
+            result["conditions"] = loot_conditions(block, modifier["condition"], item_tags)
+        out.append(result)
+    return out
 
 
-def loot_flatten(block, entry, inherited):
+def loot_candidate(block, entry, conditions, item_tags):
+    """The ore form (item, conditions, count, bonus, explosion_decay) when the modifiers are the ores' own, else the
+    general form (item, conditions, modifiers)."""
+    modifiers = loot_modifiers(block, entry["modifier"], item_tags) if "modifier" in entry else []
+    order = ["set_count", "apply_bonus", "explosion_decay"]
+    ranks = [order.index(m["type"]) if m["type"] in order else -1 for m in modifiers]
+    if -1 not in ranks and ranks == sorted(set(ranks)) and not any("conditions" in m or m.get("add") for m in modifiers):
+        count, bonus, decay = [1, 1], None, False
+        for m in modifiers:
+            if m["type"] == "set_count":
+                count = m["count"]
+            elif m["type"] == "apply_bonus":
+                bonus = {k: v for k, v in m.items() if k != "type"}
+            else:
+                decay = True
+        return {"item": bare(entry["name"]), "conditions": conditions, "count": count, "bonus": bonus,
+                "explosion_decay": decay}
+    return {"item": bare(entry["name"]), "conditions": conditions, "modifiers": modifiers}
+
+
+def loot_flatten(block, entry, inherited, item_tags):
     if not isinstance(entry, dict) or not set(entry) <= {"type", "name", "children", "condition", "modifier"}:
         loot_fail(block, f"unsupported entry keys {sorted(entry) if isinstance(entry, dict) else entry!r}")
-    conditions = inherited + (loot_conditions(block, entry["condition"]) if "condition" in entry else [])
+    own = loot_conditions(block, entry["condition"], item_tags) if "condition" in entry else []
+    conditions = inherited + own
     kind = bare(entry.get("type", ""))
     if kind == "item":
         if "children" in entry or not isinstance(entry.get("name"), str):
             loot_fail(block, "malformed item entry")
-        return [loot_candidate(block, entry, conditions)]
+        return [loot_candidate(block, entry, conditions, item_tags)]
     if kind == "alternatives":
         if "name" in entry or "modifier" in entry or not entry.get("children"):
             loot_fail(block, "malformed alternatives entry")
-        return [c for child in entry["children"] for c in loot_flatten(block, child, conditions)]
+        if any(loot_has_random(c) for c in own):
+            loot_fail(block, "random condition on an alternatives entry (flattening would re-roll it per child)")
+        return [c for child in entry["children"] for c in loot_flatten(block, child, conditions, item_tags)]
     return loot_fail(block, f"unsupported entry type {kind!r}")
 
 
@@ -358,38 +502,71 @@ def loot_predicate(name, data):
             "enchantments": enchantments}
 
 
-def derive_loot(src):
+def loot_blocks(src, block_manifest):
+    """LOOT_BLOCKS, then every other imported block (in block_manifest.json's order) with a loot table in the jar."""
+    return LOOT_BLOCKS + [b["id"] for b in block_manifest["blocks"]
+                          if b["id"] not in LOOT_BLOCKS and f"{LOOT_TABLE}{b['id']}.json" in src.names]
+
+
+def loot_names(node, names):
+    """Predicate names in first-use order, walking conditions depth-first through a derived structure."""
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key in ("conditions", "terms") and isinstance(value, list):
+                for element in value:
+                    if isinstance(element, str):
+                        names.setdefault(element)
+                    else:
+                        loot_names(element, names)
+            elif key == "term" and isinstance(value, str):
+                names.setdefault(value)
+            else:
+                loot_names(value, names)
+    elif isinstance(node, list):
+        for value in node:
+            loot_names(value, names)
+
+
+def derive_loot(src, blocks, item_tags):
     """loot_tables.json's content, and the jar files (tables, predicates) it is read from."""
-    tables, names, files = [], set(), set()
-    for block in LOOT_BLOCKS:
+    tables, names, files = [], {}, set()
+    for block in blocks:
         file = f"{LOOT_TABLE}{block}.json"
         table = src.jar_json(file)
         if table is None:
             loot_fail(block, "not in the jar")
-        if bare(table.get("type", "")) != "block" or not set(table) <= {"type", "pools", "random_sequence"} or \
-                not table.get("pools"):
+        if bare(table.get("type", "")) != "block" or not set(table) <= {"type", "pools", "random_sequence", "modifier"} \
+                or not isinstance(table.get("pools", []), list):
             loot_fail(block, f"unsupported table keys {sorted(table)}")
         files.add(file)
         pools = []
-        for pool in table["pools"]:
-            if not set(pool) <= {"rolls", "entries", "bonus_rolls"} or not isinstance(pool.get("rolls"), int) or \
+        for pool in table.get("pools", []):
+            if not set(pool) <= {"rolls", "entries", "bonus_rolls", "condition", "modifier"} or \
+                    not isinstance(pool.get("rolls"), int) or \
                     isinstance(pool["rolls"], bool) or pool.get("bonus_rolls", 0) != 0 or \
                     not isinstance(pool.get("entries"), list) or len(pool["entries"]) != 1:
                 loot_fail(block, f"unsupported pool {sorted(pool)}")
-            candidates = loot_flatten(block, pool["entries"][0], [])
-            for c in candidates:
-                names |= set(c["conditions"])
-            pools.append({"rolls": pool["rolls"], "candidates": candidates})
-        tables.append({"block": block, "file": file, "pools": pools})
+            made = {"rolls": pool["rolls"], "candidates": loot_flatten(block, pool["entries"][0], [], item_tags)}
+            if "condition" in pool:
+                made["conditions"] = loot_conditions(block, pool["condition"], item_tags)
+            if "modifier" in pool:
+                made["modifiers"] = loot_modifiers(block, pool["modifier"], item_tags)
+            pools.append(made)
+        made = {"block": block, "file": file, "pools": pools}
+        if "modifier" in table:
+            made["modifiers"] = loot_modifiers(block, table["modifier"], item_tags)
+        loot_names(made, names)
+        tables.append(made)
     predicates = []
-    for name in sorted(names):
+    for name in names:
         file = f"{LOOT_PREDICATE}{name}.json"
         data = src.jar_json(file)
         if data is None:
             raise SystemExit(f"predicate {name}: not in the jar")
         files.add(file)
         predicates.append(loot_predicate(name, data))
-    loot = {"minecraft_version": "26.3", "format": LOOT_FORMAT, "predicates": predicates, "tables": tables}
+    loot = {"minecraft_version": "26.3", "format": LOOT_FORMAT, "predicates": predicates, "tables": tables,
+            "extensions": LOOT_EXTENSIONS}
     return dumps(loot), files, sum(len(p["candidates"]) for t in tables for p in t["pools"]), len(predicates)
 
 
@@ -572,7 +749,9 @@ def derive(src, block_ref=BLOCK_REF):
         "facts/break_times.md": ("\n".join(md) + "\n").encode("utf-8"),
     }
     copies |= {COMPONENTS + f"{i}.json" for i in tier_a}
-    generated["loot_tables.json"], loot_files, loot_candidates, loot_predicates = derive_loot(src)
+    loot_list = loot_blocks(src, block_manifest)
+    generated["loot_tables.json"], loot_files, loot_candidates, loot_predicates = derive_loot(
+        src, loot_list, item_tags)
     copies |= loot_files
     generated["manifest.json"] = dumps({
         "minecraft_version": "26.3", "client_sha1": CLIENT_SHA1, "server_sha1": SERVER_SHA1,
@@ -589,7 +768,7 @@ def derive(src, block_ref=BLOCK_REF):
         "generated": sorted(generated),
         "copied": sorted(copies) + [REGISTRY],
         "dumped": DUMPED,
-        "loot": {"blocks": LOOT_BLOCKS, "tables": len(LOOT_BLOCKS), "predicates": loot_predicates,
+        "loot": {"blocks": loot_list, "tables": len(loot_list), "predicates": loot_predicates,
                  "candidates": loot_candidates,
                  "source": "client jar data/minecraft/loot_table/blocks and data/minecraft/predicate"},
     })

@@ -188,11 +188,15 @@ for block, tool, ticks, drops in [("stone", "wooden_pickaxe", 23, 1), ("stone", 
 # 7. Loot tables: the ores' drops against minecraft.wiki's ore pages.
 loot = load("loot_tables.json")
 tables = {t["block"]: t for t in loot["tables"]}
-check(list(tables) == build.LOOT_BLOCKS, "loot tables: one per LOOT_BLOCKS id, in order")
+full = build.loot_blocks(src, json.loads((build.BLOCK_REF / "block_manifest.json").read_text(
+    encoding="utf-8"))) if derived else list(tables)
+check(list(tables) == full and full[:18] == build.LOOT_BLOCKS and len(full) == 602 and len(set(full)) == 602,
+      "loot tables: the 18 ores, then every other imported block with a table, in order")
+check(list(loot)[-1] == "extensions" and isinstance(loot["extensions"], str), "loot extensions key last")
 candidates = sum(len(p["candidates"]) for t in loot["tables"] for p in t["pools"])
-check(manifest["loot"] == {"blocks": build.LOOT_BLOCKS, "tables": 18, "predicates": 1, "candidates": candidates,
+check(manifest["loot"] == {"blocks": full, "tables": 602, "predicates": 2, "candidates": candidates,
                            "source": "client jar data/minecraft/loot_table/blocks and data/minecraft/predicate"} and
-      list(manifest)[-1] == "loot" and len(loot["predicates"]) == 1, "manifest loot counts")
+      list(manifest)[-1] == "loot" and len(loot["predicates"]) == 2, "manifest loot counts")
 DROPS = {"coal": ("coal", 1, 1), "copper": ("raw_copper", 2, 5), "iron": ("raw_iron", 1, 1),
          "gold": ("raw_gold", 1, 1), "diamond": ("diamond", 1, 1), "emerald": ("emerald", 1, 1),
          "lapis": ("lapis_lazuli", 4, 9), "redstone": ("redstone", 4, 5)}
@@ -215,6 +219,9 @@ for block, item, low, high in [("nether_quartz_ore", "quartz", 1, 1), ("nether_g
     check(len(cands) == 2 and cands[0]["item"] == block and cands[0]["conditions"] == ["tool/can_silk_touch"] and
           (cands[1]["item"], *cands[1]["count"]) == (item, low, high), f"loot: {block}")
 silk = {p["name"]: p for p in loot["predicates"]}.get("tool/can_silk_touch")
+check([p["name"] for p in loot["predicates"]] == ["tool/can_silk_touch", "tool/can_shear"], "predicates in first-use order")
+shear = {p["name"]: p for p in loot["predicates"]}.get("tool/can_shear")
+check(shear is not None and shear["items"] == ["shears"] and shear["enchantments"] == [], "can_shear predicate")
 check(silk is not None and silk["type"] == "match_tool" and silk["items"] == [] and
       silk["enchantments"] == [{"id": "silk_touch", "min_level": 1}], "can_silk_touch predicate")
 
@@ -227,4 +234,4 @@ print(f"REFERENCE OK{partial}: {len(sums)} files hashed, {derived} generated fil
       f"the jar, {report_checked} with the data generator's report; {len(items)} items, {len(index)} registry items, "
       f"{len(textures)} textures, break times for {len(rows)} blocks x {len(tools)} tools; {len(lang)} lang keys, "
       f"the durability bar at {sum(len(m['width']) for m in bar)} damage values, {len(tips)} tooltips; {len(tables)} loot tables, "
-      f"{len(loot['predicates'])} predicate, {candidates} candidates")
+      f"{len(loot['predicates'])} predicates, {candidates} candidates")

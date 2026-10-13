@@ -3,9 +3,14 @@
 #include "Blocks/VoxelPlantSurvival.h"
 #include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationSimulation.h"
+#include "HAL/IConsoleManager.h"
 
 namespace
 {
+    TAutoConsoleVariable<int32> CVarLootAllBlocks(TEXT("foundation.Loot.AllBlocks"), 1,
+        TEXT("1: a survival break rolls the block's 26.3 loot table, for every block that has one (loot step 2a). 0: "
+             "only the 18 ores roll (items S5b) and every other block drops itself."));
+
     // The movement solver's contact tolerance (FoundationSimulation.cpp): touching is contact, only
     // positive-volume overlap obstructs. No extra clearance margin.
     constexpr double ContactCm = 1e-6;
@@ -750,11 +755,16 @@ bool FFoundationAuthority::BreakBlock(
     TArray<FFoundationLootDrop> Drops;
     if (!Player.Inventory.bInfiniteSupply && bEligible)
     {
-        if (const FFoundationLootTable* Table = Rules.LootTables.Find(Definition.Id))
+        const FFoundationLootTable* Table = Rules.LootTables.Find(Definition.Id);
+        // foundation.Loot.AllBlocks 0: only items S5b's ore tables roll.
+        if (Table && Table->Index >= FoundationLoot::LegacyTables && CVarLootAllBlocks.GetValueOnAnyThread() == 0)
+            Table = nullptr;
+        if (Table)
         {
             // A refused break rolls the same drops again: the break count moves only when a block breaks.
             FRandomStream Random(FoundationLoot::MakeSeed(Rules.LootSeed, Cell, Breaks));
-            FoundationLoot::Roll(*Table, Rules.LootPredicates, Tool, Random, Drops);
+            const FFoundationLootContext Context{Tool, Definition.Id, World.GetRegistry().GetProperties(State)};
+            FoundationLoot::Roll(*Table, Rules.LootPredicates, Context, Random, Drops);
         }
         else if (const int32 Drop = Rules.FindItem(Definition.DropItem); Drop != INDEX_NONE)
         {

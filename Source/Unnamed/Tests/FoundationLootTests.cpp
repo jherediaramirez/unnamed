@@ -6,6 +6,8 @@
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationItemAssets.h"
 #include "Foundation/FoundationLoot.h"
+#include "Algo/AllOf.h"
+#include "HAL/IConsoleManager.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
@@ -17,7 +19,166 @@ namespace
     constexpr EAutomationTestFlags LootTestFlags =
         EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
 
-    // Reference/minecraft-items-26.3/loot_tables.json in DA_Items' shape: JSON null or "" is None.
+    // Reference/minecraft-items-26.3/loot_tables.json in DA_Items' shape, built the way
+    // Scripts/Editor/ItemImportData.py function loot_table does (condition nodes parent first, depth first; a
+    // candidate's tests before its modifiers; a pool's candidates, then its tests, then its modifiers; a table's pools,
+    // then its modifiers). JSON null or "" is None.
+    FName LootTests_Name(const TSharedPtr<FJsonObject>& Object, const TCHAR* Field)
+    {
+        FString Text;
+        return Object->TryGetStringField(Field, Text) ? FName(*Text) : FName();
+    }
+
+    TArray<FName> LootTests_Names(const TArray<TSharedPtr<FJsonValue>>& Values)
+    {
+        TArray<FName> Names;
+        for (const TSharedPtr<FJsonValue>& Value : Values)
+            Names.Add(FName(*Value->AsString()));
+        return Names;
+    }
+
+    struct FLootBuilder
+    {
+        FFoundationLootTableAsset& Table;
+
+        int32 Node(const TSharedPtr<FJsonValue>& Value)
+        {
+            const int32 Index = Table.Conditions.Num();
+            FFoundationLootConditionAsset Made;
+            FString Predicate;
+            if (Value->TryGetString(Predicate))
+            {
+                Made.Type = TEXT("predicate");
+                Made.Name = FName(*Predicate);
+                Table.Conditions.Add(Made);
+                return Index;
+            }
+            const TSharedPtr<FJsonObject> C = Value->AsObject();
+            const FString Type = C->GetStringField(TEXT("type"));
+            Made.Type = FName(*Type);
+            Table.Conditions.Add(Made);
+            if (Type == TEXT("any_of") || Type == TEXT("all_of"))
+            {
+                for (const TSharedPtr<FJsonValue>& Term : C->GetArrayField(TEXT("terms")))
+                {
+                    const int32 Child = Node(Term);
+                    Made.Terms.Add(Child);
+                }
+            }
+            else if (Type == TEXT("inverted"))
+            {
+                const int32 Child = Node(C->TryGetField(TEXT("term")));
+                Made.Terms.Add(Child);
+            }
+            else if (Type == TEXT("match_block") || Type == TEXT("location_check"))
+            {
+                Made.Name = LootTests_Name(C, TEXT("block"));
+                for (const TPair<FString, TSharedPtr<FJsonValue>>& State : C->GetObjectField(TEXT("state"))->Values)
+                {
+                    Made.StateKeys.Add(FName(*State.Key));
+                    Made.StateValues.Add(FName(*State.Value->AsString()));
+                }
+                if (Type == TEXT("location_check"))
+                    for (const TSharedPtr<FJsonValue>& Offset : C->GetArrayField(TEXT("offset")))
+                        Made.Offset.Add(int32(Offset->AsNumber()));
+            }
+            else if (Type == TEXT("table_bonus"))
+            {
+                Made.Name = LootTests_Name(C, TEXT("enchantment"));
+                for (const TSharedPtr<FJsonValue>& Chance : C->GetArrayField(TEXT("chances")))
+                    Made.Chances.Add(float(Chance->AsNumber()));
+            }
+            else if (Type == TEXT("random_chance"))
+                Made.Chances.Add(float(C->GetNumberField(TEXT("chance"))));
+            else if (Type == TEXT("match_tool"))
+            {
+                Made.Name = LootTests_Name(C, TEXT("tag"));
+                Made.Items = LootTests_Names(C->GetArrayField(TEXT("items")));
+            }
+            else if (Type == TEXT("entity_properties"))
+                Made.Name = LootTests_Name(C, TEXT("entity"));
+            // The children went in after this node's slot; the slot takes the finished node.
+            Table.Conditions[Index] = Made;
+            return Index;
+        }
+
+        FFoundationLootModifierAsset Modifier(const TSharedPtr<FJsonObject>& M)
+        {
+            FFoundationLootModifierAsset Out;
+            Out.Type = LootTests_Name(M, TEXT("type"));
+            const TArray<TSharedPtr<FJsonValue>>* Conditions = nullptr;
+            if (M->TryGetArrayField(TEXT("conditions"), Conditions))
+                for (const TSharedPtr<FJsonValue>& Condition : *Conditions)
+                    Out.Tests.Add(Node(Condition));
+            const FString Type = Out.Type.ToString();
+            if (Type == TEXT("set_count"))
+            {
+                const TArray<TSharedPtr<FJsonValue>>& Count = M->GetArrayField(TEXT("count"));
+                Out.Min = int32(Count[0]->AsNumber());
+                Out.Max = int32(Count[1]->AsNumber());
+                Out.bAdd = M->GetBoolField(TEXT("add"));
+            }
+            else if (Type == TEXT("limit_count"))
+            {
+                Out.bHasMin = M->HasTypedField<EJson::Number>(TEXT("min"));
+                Out.bHasMax = M->HasTypedField<EJson::Number>(TEXT("max"));
+                Out.Min = Out.bHasMin ? int32(M->GetNumberField(TEXT("min"))) : 0;
+                Out.Max = Out.bHasMax ? int32(M->GetNumberField(TEXT("max"))) : 0;
+            }
+            else if (Type == TEXT("apply_bonus"))
+            {
+                Out.BonusFormula = LootTests_Name(M, TEXT("formula"));
+                Out.BonusEnchantment = LootTests_Name(M, TEXT("enchantment"));
+                Out.BonusMultiplier = float(M->GetNumberField(TEXT("bonus_multiplier")));
+            }
+            return Out;
+        }
+
+        TArray<FFoundationLootModifierAsset> Modifiers(const TSharedPtr<FJsonObject>& Owner)
+        {
+            TArray<FFoundationLootModifierAsset> Out;
+            const TArray<TSharedPtr<FJsonValue>>* Values = nullptr;
+            if (Owner->TryGetArrayField(TEXT("modifiers"), Values))
+                for (const TSharedPtr<FJsonValue>& Value : *Values)
+                    Out.Add(Modifier(Value->AsObject()));
+            return Out;
+        }
+
+        FFoundationLootCandidateAsset Candidate(const TSharedPtr<FJsonObject>& Entry)
+        {
+            FFoundationLootCandidateAsset Out;
+            Out.Item = LootTests_Name(Entry, TEXT("item"));
+            const TArray<TSharedPtr<FJsonValue>>* Count = nullptr;
+            if (Entry->TryGetArrayField(TEXT("count"), Count))
+            {
+                Out.CountMin = int32((*Count)[0]->AsNumber());
+                Out.CountMax = int32((*Count)[1]->AsNumber());
+            }
+            if (Entry->HasTypedField<EJson::Object>(TEXT("bonus")))
+            {
+                const TSharedPtr<FJsonObject> Bonus = Entry->GetObjectField(TEXT("bonus"));
+                Out.BonusFormula = LootTests_Name(Bonus, TEXT("formula"));
+                Out.BonusEnchantment = LootTests_Name(Bonus, TEXT("enchantment"));
+                Out.BonusMultiplier = float(Bonus->GetNumberField(TEXT("bonus_multiplier")));
+            }
+            bool bDecay = false;
+            Out.bExplosionDecay = Entry->TryGetBoolField(TEXT("explosion_decay"), bDecay) && bDecay;
+            const TArray<TSharedPtr<FJsonValue>>& Conditions = Entry->GetArrayField(TEXT("conditions"));
+            for (const TSharedPtr<FJsonValue>& Condition : Conditions)
+            {
+                FString Name;
+                if (Condition->TryGetString(Name)) Out.Conditions.Add(FName(*Name));
+            }
+            for (const TSharedPtr<FJsonValue>& Condition : Conditions)
+            {
+                FString Name;
+                if (!Condition->TryGetString(Name)) Out.Tests.Add(Node(Condition));
+            }
+            Out.Modifiers = Modifiers(Entry);
+            return Out;
+        }
+    };
+
     bool LootTests_ReadTables(
         TArray<FFoundationLootTableAsset>& OutTables, TArray<FFoundationLootPredicateAsset>& OutPredicates)
     {
@@ -44,34 +205,174 @@ namespace
         {
             const TSharedPtr<FJsonObject> Object = Value->AsObject();
             FFoundationLootTableAsset& Table = OutTables.AddDefaulted_GetRef();
+            FLootBuilder Builder{Table};
             Table.Block = FName(*Object->GetStringField(TEXT("block")));
             for (const TSharedPtr<FJsonValue>& PoolValue : Object->GetArrayField(TEXT("pools")))
             {
-                FFoundationLootPoolAsset& Pool = Table.Pools.AddDefaulted_GetRef();
-                Pool.Rolls = int32(PoolValue->AsObject()->GetNumberField(TEXT("rolls")));
-                for (const TSharedPtr<FJsonValue>& CandidateValue :
-                    PoolValue->AsObject()->GetArrayField(TEXT("candidates")))
-                {
-                    const TSharedPtr<FJsonObject> Entry = CandidateValue->AsObject();
-                    FFoundationLootCandidateAsset& Candidate = Pool.Candidates.AddDefaulted_GetRef();
-                    Candidate.Item = FName(*Entry->GetStringField(TEXT("item")));
-                    for (const TSharedPtr<FJsonValue>& Condition : Entry->GetArrayField(TEXT("conditions")))
-                        Candidate.Conditions.Add(FName(*Condition->AsString()));
-                    const TArray<TSharedPtr<FJsonValue>>& CountRange = Entry->GetArrayField(TEXT("count"));
-                    Candidate.CountMin = int32(CountRange[0]->AsNumber());
-                    Candidate.CountMax = int32(CountRange[1]->AsNumber());
-                    if (Entry->HasTypedField<EJson::Object>(TEXT("bonus")))
-                    {
-                        const TSharedPtr<FJsonObject> Bonus = Entry->GetObjectField(TEXT("bonus"));
-                        Candidate.BonusFormula = FName(*Bonus->GetStringField(TEXT("formula")));
-                        Candidate.BonusEnchantment = FName(*Bonus->GetStringField(TEXT("enchantment")));
-                        Candidate.BonusMultiplier = float(Bonus->GetNumberField(TEXT("bonus_multiplier")));
-                    }
-                    Candidate.bExplosionDecay = Entry->GetBoolField(TEXT("explosion_decay"));
-                }
+                const TSharedPtr<FJsonObject> PoolObject = PoolValue->AsObject();
+                FFoundationLootPoolAsset Pool;
+                Pool.Rolls = int32(PoolObject->GetNumberField(TEXT("rolls")));
+                for (const TSharedPtr<FJsonValue>& CandidateValue : PoolObject->GetArrayField(TEXT("candidates")))
+                    Pool.Candidates.Add(Builder.Candidate(CandidateValue->AsObject()));
+                const TArray<TSharedPtr<FJsonValue>>* Conditions = nullptr;
+                if (PoolObject->TryGetArrayField(TEXT("conditions"), Conditions))
+                    for (const TSharedPtr<FJsonValue>& Condition : *Conditions)
+                        Pool.Tests.Add(Builder.Node(Condition));
+                Pool.Modifiers = Builder.Modifiers(PoolObject);
+                Table.Pools.Add(MoveTemp(Pool));
             }
+            Table.Modifiers = Builder.Modifiers(Object);
         }
         return true;
+    }
+
+    // Items the 26.3 loot tables name that this project does not define, and the tables that therefore keep "drops
+    // itself": 11 leaves, the plants and the blocks whose drop is missing (loot step 2a).
+    const TArray<FName>& LootTests_SkippedPins()
+    {
+        static const TArray<FName> Pins = {TEXT("acacia_leaves"), TEXT("birch_leaves"), TEXT("cherry_leaves"),
+            TEXT("dark_oak_leaves"), TEXT("jungle_leaves"), TEXT("oak_leaves"), TEXT("pale_oak_leaves"),
+            TEXT("spruce_leaves"), TEXT("orange_poplar_leaves"), TEXT("red_poplar_leaves"),
+            TEXT("yellow_poplar_leaves"), TEXT("amethyst_cluster"), TEXT("bookshelf"), TEXT("clay"), TEXT("cocoa"),
+            TEXT("gravel"), TEXT("cave_vines"), TEXT("cave_vines_plant"), TEXT("glowstone"), TEXT("gilded_blackstone"),
+            TEXT("nether_gold_ore"), TEXT("melon"), TEXT("sea_lantern"), TEXT("creaking_heart"), TEXT("snow"),
+            TEXT("snow_block"), TEXT("sweet_berry_bush"), TEXT("fern"), TEXT("large_fern"), TEXT("short_grass"),
+            TEXT("tall_grass")};
+        return Pins;
+    }
+
+    // The runtime's modifiers against an asset's (AddLoot's mapping).
+    bool LootTests_SameModifiers(
+        const TArray<FFoundationLootModifier>& Got, const TArray<FFoundationLootModifierAsset>& Want)
+    {
+        static const TMap<FName, EFoundationLootModifier> Types = {
+            {TEXT("set_count"), EFoundationLootModifier::SetCount},
+            {TEXT("apply_bonus"), EFoundationLootModifier::ApplyBonus},
+            {TEXT("limit_count"), EFoundationLootModifier::LimitCount},
+            {TEXT("explosion_decay"), EFoundationLootModifier::ExplosionDecay},
+            {TEXT("copy_components"), EFoundationLootModifier::Copy},
+            {TEXT("copy_state"), EFoundationLootModifier::Copy}};
+        if (Got.Num() != Want.Num()) return false;
+        for (int32 Index = 0; Index < Got.Num(); ++Index)
+        {
+            const FFoundationLootModifier& A = Got[Index];
+            const FFoundationLootModifierAsset& B = Want[Index];
+            const EFoundationLootModifier* Type = Types.Find(B.Type);
+            const bool bLimit = B.Type == TEXT("limit_count");
+            const EFoundationLootBonus Bonus = B.BonusFormula == TEXT("ore_drops") ? EFoundationLootBonus::OreDrops
+                : B.BonusFormula == TEXT("uniform_bonus_count") ? EFoundationLootBonus::UniformBonusCount
+                                                                : EFoundationLootBonus::None;
+            if (!Type || A.Type != *Type || A.Conditions != B.Tests ||
+                A.Min != (bLimit && !B.bHasMin ? MIN_int32 : B.Min) ||
+                A.Max != (bLimit && !B.bHasMax ? MAX_int32 : B.Max) || A.bAdd != B.bAdd || A.Bonus != Bonus ||
+                A.BonusEnchantment != B.BonusEnchantment || A.BonusMultiplier != B.BonusMultiplier)
+                return false;
+        }
+        return true;
+    }
+
+    // One asset condition node against the runtime's.
+    bool LootTests_SameCondition(const FFoundationLootCondition& Got, const FFoundationLootConditionAsset& Want,
+        const TArray<FFoundationLootPredicate>& Predicates)
+    {
+        static const TMap<FName, EFoundationLootCondition> Types = {
+            {TEXT("predicate"), EFoundationLootCondition::Predicate},
+            {TEXT("survives_explosion"), EFoundationLootCondition::SurvivesExplosion},
+            {TEXT("match_block"), EFoundationLootCondition::MatchBlock},
+            {TEXT("any_of"), EFoundationLootCondition::AnyOf}, {TEXT("all_of"), EFoundationLootCondition::AllOf},
+            {TEXT("inverted"), EFoundationLootCondition::Inverted},
+            {TEXT("table_bonus"), EFoundationLootCondition::TableBonus},
+            {TEXT("random_chance"), EFoundationLootCondition::RandomChance},
+            {TEXT("match_tool"), EFoundationLootCondition::MatchTool},
+            {TEXT("entity_properties"), EFoundationLootCondition::EntityProperties}};
+        const EFoundationLootCondition* Type = Types.Find(Want.Type);
+        if (!Type || Got.Type != *Type || Got.Terms != Want.Terms || Got.Name != Want.Name ||
+            Got.Chances != Want.Chances || Got.Items != Want.Items || Got.State.Num() != Want.StateKeys.Num() ||
+            Want.StateKeys.Num() != Want.StateValues.Num())
+            return false;
+        for (int32 Index = 0; Index < Got.State.Num(); ++Index)
+            if (Got.State[Index].Key != Want.StateKeys[Index] || Got.State[Index].Value != Want.StateValues[Index])
+                return false;
+        return *Type != EFoundationLootCondition::Predicate ||
+            (Predicates.IsValidIndex(Got.Predicate) && Predicates[Got.Predicate].Name == Want.Name);
+    }
+
+    // Two assets, field by field.
+    bool LootTests_SameConditionAsset(const FFoundationLootConditionAsset& A, const FFoundationLootConditionAsset& B)
+    {
+        return A.Type == B.Type && A.Name == B.Name && A.Terms == B.Terms && A.StateKeys == B.StateKeys &&
+            A.StateValues == B.StateValues && A.Chances == B.Chances && A.Items == B.Items && A.Offset == B.Offset;
+    }
+
+    bool LootTests_SameModifierAsset(const FFoundationLootModifierAsset& A, const FFoundationLootModifierAsset& B)
+    {
+        return A.Type == B.Type && A.Tests == B.Tests && A.Min == B.Min && A.Max == B.Max && A.bAdd == B.bAdd &&
+            A.bHasMin == B.bHasMin && A.bHasMax == B.bHasMax && A.BonusFormula == B.BonusFormula &&
+            A.BonusEnchantment == B.BonusEnchantment && A.BonusMultiplier == B.BonusMultiplier;
+    }
+
+    // A tally of what Table rolls for Tool: "item:count" to the number of rolls that dropped it, plus the rolls that
+    // dropped nothing. Seeds are MakeSeed(LootSeed, cell, break) over three cells.
+    struct FLootTally
+    {
+        int32 Rolls = 0;
+        int32 Nothing = 0;
+        TMap<FString, int32> Hits;
+        int32 Of(const FString& Key) const { return Hits.FindRef(Key); }
+    };
+
+    FLootTally LootTests_Tally(const FFoundationRules& Rules, const FFoundationLootTable& Table,
+        const FFoundationItemDefinition& Tool, int32 BreakCounts)
+    {
+        const FIntVector Cells[] = {FIntVector(0, 0, 0), FIntVector(5, -3, 12), FIntVector(-17, 40, -60)};
+        FLootTally Tally;
+        TArray<FFoundationLootDrop> Drops;
+        for (const FIntVector& Cell : Cells)
+            for (int32 Break = 0; Break < BreakCounts; ++Break)
+            {
+                FRandomStream Random(FoundationLoot::MakeSeed(Rules.LootSeed, Cell, Break));
+                Drops.Reset();
+                FoundationLoot::Roll(Table, Rules.LootPredicates, Tool, Random, Drops);
+                ++Tally.Rolls;
+                Tally.Nothing += Drops.IsEmpty();
+                for (const FFoundationLootDrop& Drop : Drops)
+                    ++Tally.Hits.FindOrAdd(
+                        FString::Printf(TEXT("%s:%d"), *Rules.GetItem(Drop.Item).Id.ToString(), Drop.Count));
+            }
+        return Tally;
+    }
+
+    // A synthetic one-pool table whose one candidate (item index 7) takes Modifiers and Conditions.
+    FFoundationLootTable LootTests_Synth(TArray<FFoundationLootModifier> Modifiers, TArray<int32> Conditions = {})
+    {
+        FFoundationLootTable Table;
+        FFoundationLootCandidate& Candidate = Table.Pools.AddDefaulted_GetRef().Candidates.AddDefaulted_GetRef();
+        Candidate.Item = 7;
+        Candidate.Modifiers = MoveTemp(Modifiers);
+        Candidate.Conditions = MoveTemp(Conditions);
+        return Table;
+    }
+
+    int32 LootTests_AddCondition(
+        FFoundationLootTable& Table, EFoundationLootCondition Type, TArray<int32> Terms = {}, FName Name = NAME_None)
+    {
+        FFoundationLootCondition& Condition = Table.Conditions.AddDefaulted_GetRef();
+        Condition.Type = Type;
+        Condition.Terms = MoveTemp(Terms);
+        Condition.Name = Name;
+        return Table.Conditions.Num() - 1;
+    }
+
+    FFoundationLootModifier LootTests_Modifier(
+        EFoundationLootModifier Type, int32 Min, int32 Max, bool bAdd = false, TArray<int32> Conditions = {})
+    {
+        FFoundationLootModifier Modifier;
+        Modifier.Type = Type;
+        Modifier.Min = Min;
+        Modifier.Max = Max;
+        Modifier.bAdd = bAdd;
+        Modifier.Conditions = MoveTemp(Conditions);
+        return Modifier;
     }
 
     // One row of Reference/minecraft-items-26.3/facts/break_times.json: the drops flag for the hand and the 35 tools.
@@ -79,6 +380,8 @@ namespace
     {
         FString Id;
         TArray<int32> Drops;
+        // Survival break time per column in ticks; -1 never breaks.
+        TArray<int32> Ticks;
     };
 
     bool LootTests_ReadRows(TArray<FString>& OutTools, TArray<FLootBreakRow>& OutRows)
@@ -101,6 +404,8 @@ namespace
             Row.Id = Block->GetStringField(TEXT("id"));
             for (const TSharedPtr<FJsonValue>& Drop : Block->GetArrayField(TEXT("drops")))
                 Row.Drops.Add(int32(Drop->AsNumber()));
+            for (const TSharedPtr<FJsonValue>& Tick : Block->GetArrayField(TEXT("ticks")))
+                Row.Ticks.Add(int32(Tick->AsNumber()));
         }
         return true;
     }
@@ -124,6 +429,45 @@ namespace
         for (const TPair<int32, int32>& Pair : Before)
             if (!After.Contains(Pair.Key)) Gains.Add(Pair.Key, -Pair.Value);
         return Gains;
+    }
+
+    // An ore-form candidate's set_count range: AddLoot puts it first (loot step 2a).
+    FIntPoint LootTests_Range(const FFoundationLootCandidate& Candidate)
+    {
+        if (Candidate.Modifiers.IsEmpty() || Candidate.Modifiers[0].Type != EFoundationLootModifier::SetCount)
+            return FIntPoint(1, 1);
+        return FIntPoint(Candidate.Modifiers[0].Min, Candidate.Modifiers[0].Max);
+    }
+
+    // AddLoot's modifiers for an ore-form candidate: set_count's range, then the bonus and the decay when the asset has
+    // them.
+    bool LootTests_SameOreForm(
+        const FFoundationLootCandidate& Got, const FFoundationLootCandidateAsset& Want, EFoundationLootBonus Bonus)
+    {
+        TArray<FFoundationLootModifier> Expected;
+        Expected.AddDefaulted();
+        Expected[0].Min = Want.CountMin;
+        Expected[0].Max = Want.CountMax;
+        if (Bonus != EFoundationLootBonus::None)
+        {
+            FFoundationLootModifier& Modifier = Expected.AddDefaulted_GetRef();
+            Modifier.Type = EFoundationLootModifier::ApplyBonus;
+            Modifier.Bonus = Bonus;
+            Modifier.BonusEnchantment = Want.BonusEnchantment;
+            Modifier.BonusMultiplier = Want.BonusMultiplier;
+        }
+        if (Want.bExplosionDecay) Expected.AddDefaulted_GetRef().Type = EFoundationLootModifier::ExplosionDecay;
+        if (Got.Modifiers.Num() != Expected.Num()) return false;
+        for (int32 Index = 0; Index < Expected.Num(); ++Index)
+        {
+            const FFoundationLootModifier& A = Got.Modifiers[Index];
+            const FFoundationLootModifier& B = Expected[Index];
+            if (A.Type != B.Type || A.Min != B.Min || A.Max != B.Max || A.bAdd || !A.Conditions.IsEmpty() ||
+                A.Bonus != B.Bonus || A.BonusEnchantment != B.BonusEnchantment ||
+                A.BonusMultiplier != B.BonusMultiplier)
+                return false;
+        }
+        return true;
     }
 
     bool LootTests_Same(const TArray<FFoundationLootDrop>& A, const TArray<FFoundationLootDrop>& B)
@@ -209,7 +553,13 @@ namespace
             Inventory.Select(0);
         }
 
-        void Put(FName Block) { A.World.Set(FIntVector::ZeroValue, A.World.FindBlock(Block)->GetDefaultState()); }
+        // The block's default state at the origin, with one property set when Property is given.
+        void Put(FName Block, FName Property = NAME_None, FName Value = NAME_None)
+        {
+            FFoundationBlockState State = A.World.FindBlock(Block)->GetDefaultState();
+            if (!Property.IsNone()) State = A.World.GetRegistry().WithValue(State, Property, Value);
+            A.World.Set(FIntVector::ZeroValue, State);
+        }
         bool Solid() const { return !A.World.Get(FIntVector::ZeroValue).State.IsAir(); }
         int32 Count(FName Item) { return LootTests_Counts(P().Inventory).FindRef(A.Rules.FindItem(Item)); }
     };
@@ -239,13 +589,14 @@ bool FFoundationLootTablesTest::RunTest(const FString&)
     const UFoundationItemAssets* Assets = UFoundationItemAssets::LoadDefault();
     if (!TestTrue(TEXT("loot_tables.json and DA_Items"), LootTests_ReadTables(Tables, Predicates) && Assets))
         return false;
-    TestEqual(TEXT("loot_tables.json: 18 tables"), Tables.Num(), 18);
-    TestEqual(TEXT("loot_tables.json: 1 predicate"), Predicates.Num(), 1);
+    TestEqual(TEXT("loot_tables.json: 602 tables"), Tables.Num(), 602);
+    TestEqual(TEXT("loot_tables.json: 2 predicates"), Predicates.Num(), 2);
 
     // DA_Items against the reference, in order and field by field.
-    int32 Wrong = 0;
-    auto Expect = [this, &Wrong](bool bSame, const FString& What)
+    int32 Wrong = 0, Fields = 0;
+    auto Expect = [this, &Wrong, &Fields](bool bSame, const FString& What)
     {
+        ++Fields;
         if (!bSame && Wrong++ < 30) AddError(What);
     };
     Expect(Assets->LootTables.Num() == Tables.Num(), TEXT("DA_Items: table count"));
@@ -258,15 +609,23 @@ bool FFoundationLootTablesTest::RunTest(const FString&)
         Expect(Got.Pools.Num() == Want.Pools.Num(), Where + TEXT(": pool count"));
         for (int32 P = 0; P < FMath::Min(Got.Pools.Num(), Want.Pools.Num()); ++P)
         {
-            Expect(Got.Pools[P].Rolls == Want.Pools[P].Rolls, Where + TEXT(": rolls"));
-            const TArray<FFoundationLootCandidateAsset>& GotCandidates = Got.Pools[P].Candidates;
-            const TArray<FFoundationLootCandidateAsset>& WantCandidates = Want.Pools[P].Candidates;
-            Expect(GotCandidates.Num() == WantCandidates.Num(), Where + TEXT(": candidate count"));
+            const FFoundationLootPoolAsset& GotPool = Got.Pools[P];
+            const FFoundationLootPoolAsset& WantPool = Want.Pools[P];
+            const FString InPool = Where + FString::Printf(TEXT(" pool %d: "), P);
+            Expect(GotPool.Rolls == WantPool.Rolls, InPool + TEXT("rolls"));
+            Expect(GotPool.Tests == WantPool.Tests, InPool + TEXT("tests"));
+            Expect(GotPool.Modifiers.Num() == WantPool.Modifiers.Num(), InPool + TEXT("modifier count"));
+            for (int32 M = 0; M < FMath::Min(GotPool.Modifiers.Num(), WantPool.Modifiers.Num()); ++M)
+                Expect(LootTests_SameModifierAsset(GotPool.Modifiers[M], WantPool.Modifiers[M]),
+                    InPool + FString::Printf(TEXT("modifier %d"), M));
+            const TArray<FFoundationLootCandidateAsset>& GotCandidates = GotPool.Candidates;
+            const TArray<FFoundationLootCandidateAsset>& WantCandidates = WantPool.Candidates;
+            Expect(GotCandidates.Num() == WantCandidates.Num(), InPool + TEXT("candidate count"));
             for (int32 C = 0; C < FMath::Min(GotCandidates.Num(), WantCandidates.Num()); ++C)
             {
                 const FFoundationLootCandidateAsset& G = GotCandidates[C];
                 const FFoundationLootCandidateAsset& W = WantCandidates[C];
-                const FString At = Where + FString::Printf(TEXT(" candidate %d: "), C);
+                const FString At = InPool + FString::Printf(TEXT("candidate %d: "), C);
                 Expect(G.Item == W.Item, At + TEXT("item ") + G.Item.ToString());
                 Expect(G.Conditions == W.Conditions, At + TEXT("conditions"));
                 Expect(G.CountMin == W.CountMin && G.CountMax == W.CountMax,
@@ -276,8 +635,21 @@ bool FFoundationLootTablesTest::RunTest(const FString&)
                     At + TEXT("bonus enchantment ") + G.BonusEnchantment.ToString());
                 Expect(G.BonusMultiplier == W.BonusMultiplier, At + TEXT("bonus multiplier"));
                 Expect(G.bExplosionDecay == W.bExplosionDecay, At + TEXT("explosion decay"));
+                Expect(G.Tests == W.Tests, At + TEXT("tests"));
+                Expect(G.Modifiers.Num() == W.Modifiers.Num(), At + TEXT("modifier count"));
+                for (int32 M = 0; M < FMath::Min(G.Modifiers.Num(), W.Modifiers.Num()); ++M)
+                    Expect(LootTests_SameModifierAsset(G.Modifiers[M], W.Modifiers[M]),
+                        At + FString::Printf(TEXT("modifier %d"), M));
             }
         }
+        Expect(Got.Conditions.Num() == Want.Conditions.Num(), Where + TEXT(": condition node count"));
+        for (int32 N = 0; N < FMath::Min(Got.Conditions.Num(), Want.Conditions.Num()); ++N)
+            Expect(LootTests_SameConditionAsset(Got.Conditions[N], Want.Conditions[N]),
+                Where + FString::Printf(TEXT(": condition node %d (%s)"), N, *Want.Conditions[N].Type.ToString()));
+        Expect(Got.Modifiers.Num() == Want.Modifiers.Num(), Where + TEXT(": table modifier count"));
+        for (int32 M = 0; M < FMath::Min(Got.Modifiers.Num(), Want.Modifiers.Num()); ++M)
+            Expect(LootTests_SameModifierAsset(Got.Modifiers[M], Want.Modifiers[M]),
+                Where + FString::Printf(TEXT(": table modifier %d"), M));
     }
     Expect(Assets->LootPredicates.Num() == Predicates.Num(), TEXT("DA_Items: predicate count"));
     for (int32 P = 0; P < FMath::Min(Assets->LootPredicates.Num(), Predicates.Num()); ++P)
@@ -291,38 +663,167 @@ bool FFoundationLootTablesTest::RunTest(const FString&)
         Expect(G.EnchantmentMinLevels == W.EnchantmentMinLevels, At + TEXT("enchantment min levels"));
     }
     TestEqual(TEXT("DA_Items' loot equals loot_tables.json"), Wrong, 0);
+    AddInfo(FString::Printf(TEXT("DA_Items vs the reference: %d fields compared"), Fields));
+    TestTrue(TEXT("the predicates are tool/can_silk_touch and tool/can_shear"),
+        Predicates.Num() == 2 && Predicates[0].Name == TEXT("tool/can_silk_touch") &&
+            Predicates[1].Name == TEXT("tool/can_shear"));
+    TestTrue(TEXT("can_shear: shears, no enchantments"),
+        Predicates.Num() == 2 && Predicates[1].Items == TArray<FName>{TEXT("shears")} &&
+            Predicates[1].Enchantments.IsEmpty());
 
-    // BuildRules: every table but nether_gold_ore's (gold_nugget is not an item).
+    // BuildRules: every table whose items, predicates and condition kinds the project defines.
     FFoundationRules Rules;
     GetDefault<UFoundationInteractionSettings>()->BuildRules(Rules);
-    TestEqual(TEXT("BuildRules attaches 17 tables"), Rules.LootTables.Num(), 17);
-    TestEqual(TEXT("gold_nugget is not an item"), Rules.FindItem(TEXT("gold_nugget")), INDEX_NONE);
-    TestFalse(TEXT("nether_gold_ore has no table"), Rules.LootTables.Contains(TEXT("nether_gold_ore")));
     FFoundationRules Fresh;
     Fresh.Items = Rules.Items;
-    TestEqual(TEXT("AddLoot on the same items skips 1 table"), Assets->AddLoot(Fresh), 1);
-    TestEqual(TEXT("AddLoot on the same items attaches 17 tables"), Fresh.LootTables.Num(), 17);
+    const int32 Skipped = Assets->AddLoot(Fresh);
+    TestEqual(TEXT("AddLoot on the same items skips 31 tables"), Skipped, 31);
+    TestEqual(TEXT("AddLoot on the same items attaches 571 tables"), Fresh.LootTables.Num(), 571);
+    TestEqual(TEXT("BuildRules attaches 571 tables (602 - 31)"), Rules.LootTables.Num(), 571);
+    TestEqual(TEXT("gold_nugget is not an item"), Rules.FindItem(TEXT("gold_nugget")), INDEX_NONE);
+    TestEqual(TEXT("two predicates in the rules"), Rules.LootPredicates.Num(), 2);
 
-    // The one predicate: Silk Touch I or more, any item.
+    // The skipped set, derived at runtime and pinned; each skipped table has a cause.
+    TSet<FName> SkippedBlocks;
+    for (int32 T = 0; T < Tables.Num(); ++T)
+        if (!Rules.LootTables.Contains(Tables[T].Block)) SkippedBlocks.Add(Tables[T].Block);
+    const TArray<FName>& Pins = LootTests_SkippedPins();
+    TestEqual(TEXT("31 pins"), Pins.Num(), 31);
+    TestEqual(TEXT("31 skipped blocks"), SkippedBlocks.Num(), 31);
+    for (const FName Pin : Pins)
+        TestTrue(Pin.ToString() + TEXT(" is skipped"), SkippedBlocks.Contains(Pin));
+    for (const FName Block : SkippedBlocks)
+        TestTrue(Block.ToString() + TEXT(" is pinned as skipped"), Pins.Contains(Block));
+    for (const FFoundationLootTableAsset& Table : Tables)
+    {
+        if (!SkippedBlocks.Contains(Table.Block)) continue;
+        bool bCause = false;
+        for (const FFoundationLootPoolAsset& Pool : Table.Pools)
+            for (const FFoundationLootCandidateAsset& Candidate : Pool.Candidates)
+                bCause |= Rules.FindItem(Candidate.Item) == INDEX_NONE;
+        for (const FFoundationLootConditionAsset& Condition : Table.Conditions)
+            bCause |= Condition.Type == TEXT("location_check");
+        TestTrue(Table.Block.ToString() + TEXT(" names an item the project lacks or a location_check"), bCause);
+    }
+    for (const FName Block : {FName(TEXT("tall_grass")), FName(TEXT("large_fern"))})
+        TestTrue(Block.ToString() + TEXT(" uses location_check"),
+            Tables.ContainsByPredicate(
+                [Block](const FFoundationLootTableAsset& Table)
+                {
+                    return Table.Block == Block &&
+                        Table.Conditions.ContainsByPredicate([](const FFoundationLootConditionAsset& Condition)
+                            { return Condition.Type == TEXT("location_check"); });
+                }));
+
+    // The runtime tables: Index is the JSON position; pools, candidates, nodes and modifiers as AddLoot maps them.
+    int32 RuntimeWrong = 0, Checked = 0;
+    auto Same = [this, &RuntimeWrong](bool bSame, const FString& What)
+    {
+        if (!bSame && RuntimeWrong++ < 30) AddError(What);
+    };
+    for (int32 T = 0; T < Tables.Num(); ++T)
+    {
+        const FFoundationLootTableAsset& Want = Tables[T];
+        const FFoundationLootTable* Got = Rules.LootTables.Find(Want.Block);
+        if (!Got) continue;
+        ++Checked;
+        const FString Where = FString::Printf(TEXT("runtime table %d (%s): "), T, *Want.Block.ToString());
+        Same(Got->Index == T, Where + FString::Printf(TEXT("Index %d"), Got->Index));
+        Same(Got->Pools.Num() == Want.Pools.Num(), Where + TEXT("pool count"));
+        int32 Names = 0;
+        for (const FFoundationLootPoolAsset& Pool : Want.Pools)
+            for (const FFoundationLootCandidateAsset& Candidate : Pool.Candidates)
+                Names += Candidate.Conditions.Num();
+        Same(Got->Conditions.Num() == Want.Conditions.Num() + Names, Where + TEXT("node count"));
+        for (int32 N = 0; N < FMath::Min(Got->Conditions.Num(), Want.Conditions.Num()); ++N)
+            Same(LootTests_SameCondition(Got->Conditions[N], Want.Conditions[N], Rules.LootPredicates),
+                Where + FString::Printf(TEXT("node %d (%s)"), N, *Want.Conditions[N].Type.ToString()));
+        Same(LootTests_SameModifiers(Got->Modifiers, Want.Modifiers), Where + TEXT("table modifiers"));
+        int32 NextName = Want.Conditions.Num();
+        for (int32 P = 0; P < FMath::Min(Got->Pools.Num(), Want.Pools.Num()); ++P)
+        {
+            const FFoundationLootPool& GotPool = Got->Pools[P];
+            const FFoundationLootPoolAsset& WantPool = Want.Pools[P];
+            const FString InPool = Where + FString::Printf(TEXT("pool %d: "), P);
+            Same(GotPool.Rolls == WantPool.Rolls, InPool + TEXT("rolls"));
+            Same(GotPool.Conditions == WantPool.Tests, InPool + TEXT("conditions"));
+            Same(LootTests_SameModifiers(GotPool.Modifiers, WantPool.Modifiers), InPool + TEXT("modifiers"));
+            Same(GotPool.Candidates.Num() == WantPool.Candidates.Num(), InPool + TEXT("candidate count"));
+            for (int32 C = 0; C < FMath::Min(GotPool.Candidates.Num(), WantPool.Candidates.Num()); ++C)
+            {
+                const FFoundationLootCandidate& G = GotPool.Candidates[C];
+                const FFoundationLootCandidateAsset& W = WantPool.Candidates[C];
+                const FString At = InPool + FString::Printf(TEXT("candidate %d: "), C);
+                Same(G.Item != INDEX_NONE && G.Item == Rules.FindItem(W.Item), At + TEXT("item ") + W.Item.ToString());
+                TArray<int32> WantConditions;
+                for (const FName Name : W.Conditions)
+                {
+                    WantConditions.Add(NextName);
+                    Same(Got->Conditions.IsValidIndex(NextName) &&
+                            Got->Conditions[NextName].Type == EFoundationLootCondition::Predicate &&
+                            Got->Conditions[NextName].Name == Name &&
+                            Rules.LootPredicates.IsValidIndex(Got->Conditions[NextName].Predicate) &&
+                            Rules.LootPredicates[Got->Conditions[NextName].Predicate].Name == Name,
+                        At + TEXT("predicate node ") + Name.ToString());
+                    ++NextName;
+                }
+                WantConditions.Append(W.Tests);
+                Same(G.Conditions == WantConditions, At + TEXT("conditions"));
+                if (!W.Modifiers.IsEmpty())
+                    Same(LootTests_SameModifiers(G.Modifiers, W.Modifiers), At + TEXT("modifiers"));
+                else
+                {
+                    const EFoundationLootBonus Bonus = W.BonusFormula == TEXT("ore_drops")
+                        ? EFoundationLootBonus::OreDrops
+                        : W.BonusFormula == TEXT("uniform_bonus_count") ? EFoundationLootBonus::UniformBonusCount
+                                                                        : EFoundationLootBonus::None;
+                    Same(LootTests_SameOreForm(G, W, Bonus), At + TEXT("ore-form modifiers"));
+                }
+            }
+        }
+    }
+    TestEqual(TEXT("571 runtime tables checked"), Checked, 571);
+    TestEqual(TEXT("the runtime tables equal the assets"), RuntimeWrong, 0);
+
+    // The predicates.
     const int32 Silk = Rules.LootPredicates.IndexOfByPredicate(
         [](const FFoundationLootPredicate& Predicate) { return Predicate.Name == TEXT("tool/can_silk_touch"); });
-    if (!TestTrue(TEXT("the rules hold tool/can_silk_touch"), Silk != INDEX_NONE)) return false;
+    const int32 Shear = Rules.LootPredicates.IndexOfByPredicate(
+        [](const FFoundationLootPredicate& Predicate) { return Predicate.Name == TEXT("tool/can_shear"); });
+    if (!TestTrue(
+            TEXT("the rules hold tool/can_silk_touch and tool/can_shear"), Silk != INDEX_NONE && Shear != INDEX_NONE))
+        return false;
     const FFoundationLootPredicate& SilkTouch = Rules.LootPredicates[Silk];
-    TestEqual(TEXT("one predicate in the rules"), Rules.LootPredicates.Num(), 1);
     TestTrue(TEXT("can_silk_touch lists no items"), SilkTouch.Items.IsEmpty());
     TestTrue(TEXT("can_silk_touch requires silk_touch at level 1 or more"),
         SilkTouch.Enchantments.Num() == 1 && SilkTouch.Enchantments[0].Key == TEXT("silk_touch") &&
             SilkTouch.Enchantments[0].Value == 1);
+    TestTrue(TEXT("can_shear lists shears and no enchantments"),
+        Rules.LootPredicates[Shear].Items == TArray<FName>{TEXT("shears")} &&
+            Rules.LootPredicates[Shear].Enchantments.IsEmpty());
+    const int32 Shears = Rules.FindItem(TEXT("shears"));
+    // shears may not be an item yet: then nothing passes can_shear.
+    int32 ShearPasses = FoundationLoot::Passes(Rules.LootPredicates[Shear], Rules.Hand);
+    for (const FFoundationItemDefinition& Item : Rules.Items)
+        ShearPasses += FoundationLoot::Passes(Rules.LootPredicates[Shear], Item);
+    TestEqual(TEXT("can_shear passes for the shears item only (once, or never when it is not defined)"), ShearPasses,
+        Shears == INDEX_NONE ? 0 : 1);
+    AddInfo(Shears == INDEX_NONE ? TEXT("shears is not an item yet: can_shear never passes")
+                                 : TEXT("shears is an item: can_shear passes for it"));
 
-    // Each attached table: [the block's own item on Silk Touch; the drop item unconditioned].
+    // The ores (items S5b, Index < LegacyTables) keep their shape: [the block's own item on Silk Touch; the drop item
+    // unconditioned], except nether_gold_ore, which is skipped (gold_nugget is not an item).
+    TestFalse(TEXT("nether_gold_ore has no table"), Rules.LootTables.Contains(TEXT("nether_gold_ore")));
     int32 Attached = 0;
-    for (const FFoundationLootTableAsset& Want : Tables)
+    for (int32 T = 0; T < FoundationLoot::LegacyTables; ++T)
     {
+        const FFoundationLootTableAsset& Want = Tables[T];
         if (Want.Block == TEXT("nether_gold_ore")) continue;
         const FString Block = Want.Block.ToString();
         const FFoundationLootTable* Got = Rules.LootTables.Find(Want.Block);
         if (!TestNotNull(Block + TEXT(" is attached"), Got)) continue;
         ++Attached;
+        TestEqual(Block + TEXT(": Index is its position"), Got->Index, T);
         if (!TestTrue(Block + TEXT(": one pool of one roll with two candidates"),
                 Got->Pools.Num() == 1 && Got->Pools[0].Rolls == 1 && Got->Pools[0].Candidates.Num() == 2 &&
                     Want.Pools.Num() == 1 && Want.Pools[0].Candidates.Num() == 2))
@@ -331,18 +832,17 @@ bool FFoundationLootTablesTest::RunTest(const FString&)
         const FFoundationLootCandidate& Drop = Got->Pools[0].Candidates[1];
         const FFoundationLootCandidateAsset& WantDrop = Want.Pools[0].Candidates[1];
         TestTrue(Block + TEXT(": candidate 0 is its own item on can_silk_touch"),
-            Own.Item != INDEX_NONE && Own.Item == Rules.FindItem(Want.Block) && Own.Conditions == TArray<int32>{Silk});
+            Own.Item != INDEX_NONE && Own.Item == Rules.FindItem(Want.Block) && Own.Conditions.Num() == 1 &&
+                Got->Conditions[Own.Conditions[0]].Predicate == Silk);
         TestTrue(Block + TEXT(": candidate 1 is ") + WantDrop.Item.ToString() + TEXT(" without conditions"),
             Drop.Item != INDEX_NONE && Drop.Item == Rules.FindItem(WantDrop.Item) && Drop.Conditions.IsEmpty());
         const EFoundationLootBonus Bonus = WantDrop.BonusFormula == TEXT("ore_drops") ? EFoundationLootBonus::OreDrops
             : WantDrop.BonusFormula == TEXT("uniform_bonus_count") ? EFoundationLootBonus::UniformBonusCount
                                                                    : EFoundationLootBonus::None;
         TestTrue(Block + TEXT(": the drop's count, bonus and decay as the asset"),
-            Drop.CountMin == WantDrop.CountMin && Drop.CountMax == WantDrop.CountMax && Drop.Bonus == Bonus &&
-                Drop.BonusEnchantment == WantDrop.BonusEnchantment &&
-                Drop.BonusMultiplier == WantDrop.BonusMultiplier && Drop.bExplosionDecay == WantDrop.bExplosionDecay);
+            LootTests_SameOreForm(Drop, WantDrop, Bonus));
     }
-    TestEqual(TEXT("17 attached tables checked"), Attached, 17);
+    TestEqual(TEXT("17 attached ore tables checked"), Attached, 17);
     return true;
 }
 
@@ -354,7 +854,7 @@ bool FFoundationLootDropsTest::RunTest(const FString&)
     TArray<FLootBreakRow> Rows;
     const UFoundationItemAssets* Assets = UFoundationItemAssets::LoadDefault();
     if (!TestTrue(TEXT("break_times.json and DA_Items' 18 tables"),
-            LootTests_ReadRows(Tools, Rows) && Assets && Assets->LootTables.Num() == 18))
+            LootTests_ReadRows(Tools, Rows) && Assets && Assets->LootTables.Num() >= FoundationLoot::LegacyTables))
         return false;
     TestEqual(TEXT("the hand and 35 tools"), Tools.Num(), 36);
 
@@ -365,7 +865,9 @@ bool FFoundationLootDropsTest::RunTest(const FString&)
     {
         if (Wrong++ < 30) AddError(What);
     };
-    for (const FFoundationLootTableAsset& Asset : Assets->LootTables)
+    // Items S5b's ores: the tables before LegacyTables (the pins below are theirs).
+    for (const FFoundationLootTableAsset& Asset :
+        TConstArrayView<FFoundationLootTableAsset>(Assets->LootTables.GetData(), FoundationLoot::LegacyTables))
     {
         const FString Block = Asset.Block.ToString();
         const FLootBreakRow* Row =
@@ -389,7 +891,8 @@ bool FFoundationLootDropsTest::RunTest(const FString&)
         // Without a table the block drops itself: its own item x1.
         const int32 Own = Rules.FindItem(Asset.Block);
         const int32 DropItem = Candidate ? Candidate->Item : Own;
-        const int32 Min = Candidate ? Candidate->CountMin : 1, Max = Candidate ? Candidate->CountMax : 1;
+        const int32 Min = Candidate ? LootTests_Range(*Candidate).X : 1,
+                    Max = Candidate ? LootTests_Range(*Candidate).Y : 1;
         if (!TestTrue(Block + TEXT(": its item and its drop exist"), Own != INDEX_NONE && DropItem != INDEX_NONE))
             continue;
         const FName DropName = Rules.Items[DropItem].Id;
@@ -458,8 +961,10 @@ bool FFoundationLootCountsTest::RunTest(const FString&)
     FFoundationRules Rules;
     GetDefault<UFoundationInteractionSettings>()->BuildRules(Rules);
     const int32 IronIndex = Rules.FindItem(TEXT("iron_pickaxe"));
-    if (!TestTrue(TEXT("17 tables and an iron pickaxe"), Rules.LootTables.Num() == 17 && IronIndex != INDEX_NONE))
-        return false;
+    int32 Ores = 0;
+    for (const TPair<FName, FFoundationLootTable>& Pair : Rules.LootTables)
+        Ores += Pair.Value.Index < FoundationLoot::LegacyTables;
+    if (!TestTrue(TEXT("17 ore tables and an iron pickaxe"), Ores == 17 && IronIndex != INDEX_NONE)) return false;
     const FFoundationItemDefinition& IronPickaxe = Rules.Items[IronIndex];
 
     // Every attached table with a non-silk tool, 6,000 break counts at three cells.
@@ -469,6 +974,7 @@ bool FFoundationLootCountsTest::RunTest(const FString&)
     TArray<FFoundationLootDrop> Drops;
     for (const TPair<FName, FFoundationLootTable>& Pair : Rules.LootTables)
     {
+        if (Pair.Value.Index >= FoundationLoot::LegacyTables) continue;
         const FString Block = Pair.Key.ToString();
         if (!TestTrue(Block + TEXT(": one pool of two candidates"),
                 Pair.Value.Pools.Num() == 1 && Pair.Value.Pools[0].Candidates.Num() == 2))
@@ -476,7 +982,8 @@ bool FFoundationLootCountsTest::RunTest(const FString&)
         const FFoundationLootCandidate& Drop = Pair.Value.Pools[0].Candidates[1];
         const FName Item = Rules.GetItem(Drop.Item).Id;
         TArray<int32> Hits;
-        Hits.SetNumZeroed(FMath::Max(1, Drop.CountMax - Drop.CountMin + 1));
+        const FIntPoint Range = LootTests_Range(Drop);
+        Hits.SetNumZeroed(FMath::Max(1, Range.Y - Range.X + 1));
         int32 Total = 0, WrongItem = 0, Outside = 0;
         for (const FIntVector& Cell : Cells)
             for (int32 Break = 0; Break < BreakCounts; ++Break)
@@ -487,22 +994,22 @@ bool FFoundationLootCountsTest::RunTest(const FString&)
                 ++Total;
                 if (Drops.Num() != 1 || Drops[0].Item != Drop.Item)
                     ++WrongItem;
-                else if (Drops[0].Count < Drop.CountMin || Drops[0].Count > Drop.CountMax)
+                else if (Drops[0].Count < Range.X || Drops[0].Count > Range.Y)
                     ++Outside;
                 else
-                    ++Hits[Drops[0].Count - Drop.CountMin];
+                    ++Hits[Drops[0].Count - Range.X];
             }
         const FString What = Block + TEXT(" (") + Item.ToString() + TEXT(")");
         TestEqual(What + TEXT(": one stack of the drop per roll"), WrongItem, 0);
         TestEqual(What + TEXT(": no count outside the range"), Outside, 0);
-        if (Drop.CountMax > Drop.CountMin)
+        if (Range.Y > Range.X)
             Spread.Add(Item);
         else
-            TestTrue(What + TEXT(": always 1"), Drop.CountMin == 1 && Drop.CountMax == 1 && Hits[0] == Total);
+            TestTrue(What + TEXT(": always 1"), Range == FIntPoint(1, 1) && Hits[0] == Total);
         const double Uniform = double(Total) / Hits.Num();
         for (int32 Value = 0; Value < Hits.Num(); ++Value)
         {
-            const FString Count = FString::Printf(TEXT(": x%d"), Drop.CountMin + Value);
+            const FString Count = FString::Printf(TEXT(": x%d"), Range.X + Value);
             TestTrue(What + Count + TEXT(" reached"), Hits[Value] > 0);
             if (Hits.Num() > 1)
                 TestTrue(What + Count + FString::Printf(TEXT(" %d of %d within 10%% of uniform"), Hits[Value], Total),
@@ -592,6 +1099,567 @@ bool FFoundationLootCountsTest::RunTest(const FString&)
         Spans(Span(EFoundationLootBonus::OreDrops, 0, 3, 9), 9, 36, 9));
     TestTrue(TEXT("uniform_bonus_count x1 at level 3 on 5 spans [5, 8] (redstone's Fortune III max 8)"),
         Spans(Span(EFoundationLootBonus::UniformBonusCount, 1, 3, 5), 5, 8, 1));
+
+    // Chances over many breaks (loot step 2a): 3 cells x 20,000 break counts per table, within 5 sigma.
+    {
+        constexpr int32 Breaks = 20000;
+        const FFoundationItemDefinition& Hand = Rules.Hand;
+        auto Near = [this](const FString& What, int32 Hits, int32 N, double P)
+        {
+            const double Sigma = FMath::Sqrt(N * P * (1 - P));
+            AddInfo(FString::Printf(TEXT("%s: %d of %d = %.5f, expected %.5f"), *What, Hits, N, double(Hits) / N, P));
+            TestTrue(What +
+                    FString::Printf(
+                        TEXT(" within 5 sigma (%d of %d, expected %.1f +- %.1f)"), Hits, N, N * P, 5 * Sigma),
+                FMath::Abs(Hits - N * P) <= 5 * Sigma + 1e-6);
+        };
+        // azalea_leaves by hand: the azalea at table_bonus 0.05 and the stick at 0.02, one or two, apart from the
+        // block itself (it needs shears or Silk Touch).
+        if (const FFoundationLootTable* Azalea = Rules.LootTables.Find(TEXT("azalea_leaves")))
+        {
+            const FLootTally Tally = LootTests_Tally(Rules, *Azalea, Hand, Breaks);
+            Near(TEXT("azalea_leaves by hand: azalea"), Tally.Of(TEXT("azalea:1")), Tally.Rolls, 0.05);
+            Near(TEXT("azalea_leaves by hand: stick x1"), Tally.Of(TEXT("stick:1")), Tally.Rolls, 0.01);
+            Near(TEXT("azalea_leaves by hand: stick x2"), Tally.Of(TEXT("stick:2")), Tally.Rolls, 0.01);
+            TestEqual(TEXT("azalea_leaves by hand never drops itself"), Tally.Of(TEXT("azalea_leaves:1")), 0);
+            TestEqual(TEXT("azalea_leaves by hand drops only azalea and sticks"), Tally.Hits.Num(), 3);
+            if (const int32 Shears = Rules.FindItem(TEXT("shears")); Shears != INDEX_NONE)
+            {
+                const FLootTally Sheared = LootTests_Tally(Rules, *Azalea, Rules.Items[Shears], 2000);
+                TestEqual(TEXT("azalea_leaves with shears: itself every time, nothing else"),
+                    Sheared.Of(TEXT("azalea_leaves:1")), Sheared.Rolls);
+                TestEqual(TEXT("azalea_leaves with shears: one kind of drop"), Sheared.Hits.Num(), 1);
+            }
+        }
+        else
+            AddError(TEXT("azalea_leaves has no table"));
+        if (const FFoundationLootTable* Mangrove = Rules.LootTables.Find(TEXT("mangrove_leaves")))
+        {
+            const FLootTally Tally = LootTests_Tally(Rules, *Mangrove, Hand, Breaks);
+            Near(TEXT("mangrove_leaves by hand: stick x1"), Tally.Of(TEXT("stick:1")), Tally.Rolls, 0.01);
+            Near(TEXT("mangrove_leaves by hand: stick x2"), Tally.Of(TEXT("stick:2")), Tally.Rolls, 0.01);
+            TestEqual(TEXT("mangrove_leaves by hand drops only sticks"), Tally.Hits.Num(), 2);
+        }
+        else
+            AddError(TEXT("mangrove_leaves has no attached table"));
+        // brown_mushroom_block by hand: set_count uniform in [-6, 2], then limit_count min 0.
+        if (const FFoundationLootTable* Mushroom = Rules.LootTables.Find(TEXT("brown_mushroom_block")))
+        {
+            const FLootTally Tally = LootTests_Tally(Rules, *Mushroom, Hand, Breaks);
+            Near(TEXT("brown_mushroom_block by hand: brown_mushroom x1"), Tally.Of(TEXT("brown_mushroom:1")),
+                Tally.Rolls, 1. / 9);
+            Near(TEXT("brown_mushroom_block by hand: brown_mushroom x2"), Tally.Of(TEXT("brown_mushroom:2")),
+                Tally.Rolls, 1. / 9);
+            Near(TEXT("brown_mushroom_block by hand: nothing"), Tally.Nothing, Tally.Rolls, 7. / 9);
+            TestEqual(TEXT("brown_mushroom_block by hand drops only mushrooms x1-2"), Tally.Hits.Num(), 2);
+        }
+        else
+            AddError(TEXT("brown_mushroom_block has no table"));
+        // dead_bush by hand: sticks, set_count 0 to 2.
+        if (const FFoundationLootTable* Bush = Rules.LootTables.Find(TEXT("dead_bush")))
+        {
+            const FLootTally Tally = LootTests_Tally(Rules, *Bush, Hand, Breaks);
+            Near(TEXT("dead_bush by hand: stick x1"), Tally.Of(TEXT("stick:1")), Tally.Rolls, 1. / 3);
+            Near(TEXT("dead_bush by hand: stick x2"), Tally.Of(TEXT("stick:2")), Tally.Rolls, 1. / 3);
+            Near(TEXT("dead_bush by hand: nothing"), Tally.Nothing, Tally.Rolls, 1. / 3);
+            TestEqual(TEXT("dead_bush by hand drops only sticks"), Tally.Hits.Num(), 2);
+        }
+        else
+            AddError(TEXT("dead_bush has no table"));
+    }
+
+    // Synthetic tables, built in code.
+    {
+        const FFoundationItemDefinition& Hand = Rules.Hand;
+        const TArray<FFoundationLootPredicate> NoPredicates;
+        const TArray<TPair<FName, FName>> NoState;
+        FRandomStream Dice(1);
+        auto Near = [this](const FString& What, int32 Hits, int32 N, double P)
+        {
+            const double Sigma = FMath::Sqrt(N * P * (1 - P));
+            TestTrue(What +
+                    FString::Printf(
+                        TEXT(" within 5 sigma (%d of %d, expected %.1f +- %.1f)"), Hits, N, N * P, 5 * Sigma),
+                FMath::Abs(Hits - N * P) <= 5 * Sigma + 1e-6);
+        };
+        auto Roll = [&](const FFoundationLootTable& Table, FName Block, const TArray<TPair<FName, FName>>& State,
+                        bool bEntity, const FFoundationItemDefinition& Tool, int32 Seed)
+        {
+            TArray<FFoundationLootDrop> Out;
+            FRandomStream Random(Seed);
+            FoundationLoot::Roll(Table, NoPredicates, FFoundationLootContext{Tool, Block, State, bEntity}, Random, Out);
+            return Out;
+        };
+        auto Passes = [&](const FFoundationLootTable& Table, int32 Index, FName Block,
+                          const TArray<TPair<FName, FName>>& State, bool bEntity, const FFoundationItemDefinition& Tool)
+        {
+            return FoundationLoot::Test(
+                Table, Index, NoPredicates, FFoundationLootContext{Tool, Block, State, bEntity}, Dice);
+        };
+
+        // inverted, any_of and all_of: truth tables over true (survives_explosion) and false (its inversion).
+        {
+            FFoundationLootTable T;
+            using E = EFoundationLootCondition;
+            const int32 True = LootTests_AddCondition(T, E::SurvivesExplosion);
+            const int32 False = LootTests_AddCondition(T, E::Inverted, {True});
+            const int32 AnyNone = LootTests_AddCondition(T, E::AnyOf);
+            const int32 AllNone = LootTests_AddCondition(T, E::AllOf);
+            const int32 AnyFT = LootTests_AddCondition(T, E::AnyOf, {False, True});
+            const int32 AnyFF = LootTests_AddCondition(T, E::AnyOf, {False, False});
+            const int32 AllTF = LootTests_AddCondition(T, E::AllOf, {True, False});
+            const int32 AllTT = LootTests_AddCondition(T, E::AllOf, {True, True});
+            const int32 InvNone = LootTests_AddCondition(T, E::Inverted);
+            const int32 InvTwo = LootTests_AddCondition(T, E::Inverted, {False, False});
+            const int32 InvAnyFT = LootTests_AddCondition(T, E::Inverted, {AnyFT});
+            const int32 InvAnyFF = LootTests_AddCondition(T, E::Inverted, {AnyFF});
+            const int32 InvInvTrue = LootTests_AddCondition(T, E::Inverted, {False});
+            const int32 Nested = LootTests_AddCondition(T, E::AllOf, {AnyFT, InvAnyFF, InvInvTrue});
+            const int32 BadTerm = LootTests_AddCondition(T, E::AnyOf, {99});
+            const TPair<int32, bool> Table[] = {{True, true}, {False, false}, {AnyNone, false}, {AllNone, true},
+                {AnyFT, true}, {AnyFF, false}, {AllTF, false}, {AllTT, true}, {InvNone, false}, {InvTwo, false},
+                {InvAnyFT, false}, {InvAnyFF, true}, {InvInvTrue, true}, {Nested, true}, {BadTerm, false}, {99, false},
+                {-1, false}};
+            int32 Mismatch = 0;
+            for (const TPair<int32, bool>& Row : Table)
+                if (Passes(T, Row.Key, TEXT("stone"), NoState, true, Hand) != Row.Value)
+                {
+                    ++Mismatch;
+                    AddError(FString::Printf(
+                        TEXT("truth table: node %d should be %s"), Row.Key, Row.Value ? TEXT("true") : TEXT("false")));
+                }
+            TestEqual(TEXT("truth table mismatches"), Mismatch, 0);
+        }
+
+        // match_block with and without state; entity_properties; match_tool.
+        {
+            FFoundationLootTable T;
+            using E = EFoundationLootCondition;
+            const int32 Stone = LootTests_AddCondition(T, E::MatchBlock, {}, TEXT("stone"));
+            const int32 StoneDouble = LootTests_AddCondition(T, E::MatchBlock, {}, TEXT("stone"));
+            T.Conditions[StoneDouble].State = {{TEXT("type"), TEXT("double")}};
+            const int32 StoneBoth = LootTests_AddCondition(T, E::MatchBlock, {}, TEXT("stone"));
+            T.Conditions[StoneBoth].State = {{TEXT("type"), TEXT("double")}, {TEXT("waterlogged"), TEXT("true")}};
+            const int32 Dirt = LootTests_AddCondition(T, E::MatchBlock, {}, TEXT("dirt"));
+            const TArray<TPair<FName, FName>> Double = {{TEXT("type"), TEXT("double")}};
+            const TArray<TPair<FName, FName>> Bottom = {{TEXT("type"), TEXT("bottom")}};
+            const TArray<TPair<FName, FName>> Wet = {
+                {TEXT("waterlogged"), TEXT("true")}, {TEXT("type"), TEXT("double")}};
+            // Rows: stone with no state, double, bottom, double and waterlogged; then dirt.
+            struct FRow
+            {
+                const TArray<TPair<FName, FName>>* State;
+                FName Block;
+                bool bStone, bDouble, bBoth, bDirt;
+            };
+            const FRow Rows[] = {{&NoState, TEXT("stone"), true, false, false, false},
+                {&Double, TEXT("stone"), true, true, false, false}, {&Bottom, TEXT("stone"), true, false, false, false},
+                {&Wet, TEXT("stone"), true, true, true, false}, {&Double, TEXT("dirt"), false, false, false, true},
+                {&NoState, TEXT("dirt"), false, false, false, true}};
+            int32 Mismatch = 0;
+            for (const FRow& Row : Rows)
+            {
+                const bool Got[] = {Passes(T, Stone, Row.Block, *Row.State, true, Hand),
+                    Passes(T, StoneDouble, Row.Block, *Row.State, true, Hand),
+                    Passes(T, StoneBoth, Row.Block, *Row.State, true, Hand),
+                    Passes(T, Dirt, Row.Block, *Row.State, true, Hand)};
+                const bool Want[] = {Row.bStone, Row.bDouble, Row.bBoth, Row.bDirt};
+                for (int32 Index = 0; Index < 4; ++Index)
+                    if (Got[Index] != Want[Index])
+                    {
+                        ++Mismatch;
+                        AddError(FString::Printf(TEXT("match_block row %s %d: node %d should be %d"),
+                            *Row.Block.ToString(), int32(Row.State->Num()), Index, int32(Want[Index])));
+                    }
+            }
+            TestEqual(TEXT("match_block: 24 cells, with and without state"), Mismatch, 0);
+
+            const int32 Entity = LootTests_AddCondition(T, E::EntityProperties, {}, TEXT("this"));
+            TestTrue(
+                TEXT("entity_properties passes for an entity"), Passes(T, Entity, TEXT("stone"), NoState, true, Hand));
+            TestFalse(
+                TEXT("entity_properties fails without one"), Passes(T, Entity, TEXT("stone"), NoState, false, Hand));
+
+            const int32 Tool = LootTests_AddCondition(T, E::MatchTool);
+            T.Conditions[Tool].Items = {TEXT("iron_pickaxe")};
+            const int32 Stone2 = Rules.FindItem(TEXT("stone_pickaxe"));
+            TestTrue(TEXT("match_tool passes for a listed tool"),
+                Passes(T, Tool, TEXT("stone"), NoState, true, IronPickaxe));
+            TestFalse(TEXT("match_tool fails for the hand"), Passes(T, Tool, TEXT("stone"), NoState, true, Hand));
+            TestTrue(TEXT("match_tool fails for another tool"),
+                Stone2 != INDEX_NONE && !Passes(T, Tool, TEXT("stone"), NoState, true, Rules.Items[Stone2]));
+            const int32 NoTool = LootTests_AddCondition(T, E::MatchTool);
+            TestFalse(
+                TEXT("match_tool with no items fails"), Passes(T, NoTool, TEXT("stone"), NoState, true, IronPickaxe));
+        }
+
+        // random_chance and table_bonus (level 0): the fraction of passes.
+        {
+            FFoundationLootTable T;
+            using E = EFoundationLootCondition;
+            const int32 Eighth = LootTests_AddCondition(T, E::RandomChance);
+            T.Conditions[Eighth].Chances = {0.125f};
+            const int32 Never = LootTests_AddCondition(T, E::RandomChance);
+            T.Conditions[Never].Chances = {0.f};
+            const int32 Always = LootTests_AddCondition(T, E::RandomChance);
+            T.Conditions[Always].Chances = {1.f};
+            const int32 Bonus = LootTests_AddCondition(T, E::TableBonus, {}, TEXT("fortune"));
+            T.Conditions[Bonus].Chances = {0.25f, 0.5f};
+            int32 EighthHits = 0, NeverHits = 0, AlwaysHits = 0, BonusHits = 0;
+            constexpr int32 N = 60000;
+            for (int32 Break = 0; Break < N; ++Break)
+            {
+                FRandomStream Stream(FoundationLoot::MakeSeed(0, FIntVector(2, 3, 4), Break));
+                const FFoundationLootContext Context{Hand, TEXT("stone"), {}, true};
+                EighthHits += FoundationLoot::Test(T, Eighth, NoPredicates, Context, Stream);
+                NeverHits += FoundationLoot::Test(T, Never, NoPredicates, Context, Stream);
+                AlwaysHits += FoundationLoot::Test(T, Always, NoPredicates, Context, Stream);
+                BonusHits += FoundationLoot::Test(T, Bonus, NoPredicates, Context, Stream);
+            }
+            AddInfo(FString::Printf(TEXT("random_chance 0.125: %d of %d = %.5f; table_bonus level 0 (0.25): %d = %.5f"),
+                EighthHits, N, double(EighthHits) / N, BonusHits, double(BonusHits) / N));
+            Near(TEXT("random_chance 0.125"), EighthHits, N, 0.125);
+            Near(TEXT("table_bonus at level 0 takes the first chance (0.25)"), BonusHits, N, 0.25);
+            TestEqual(TEXT("random_chance 0 never passes"), NeverHits, 0);
+            TestEqual(TEXT("random_chance 1 always passes"), AlwaysHits, N);
+
+            // As a candidate's condition: the drop follows the chance.
+            FFoundationLootTable Candidate = LootTests_Synth({}, {Eighth});
+            Candidate.Conditions = T.Conditions;
+            int32 Dropped = 0;
+            for (int32 Break = 0; Break < N; ++Break)
+                Dropped += !Roll(Candidate, TEXT("stone"), NoState, true, Hand, Break).IsEmpty();
+            Near(TEXT("a candidate on random_chance 0.125 drops"), Dropped, N, 0.125);
+        }
+
+        // set_count add (+1 per matching match_block, then -1), through the candidate, pool and table modifiers.
+        {
+            FFoundationLootTable T = LootTests_Synth({});
+            using E = EFoundationLootCondition;
+            const int32 Stone = LootTests_AddCondition(T, E::MatchBlock, {}, TEXT("stone"));
+            T.Pools[0].Candidates[0].Modifiers = {
+                LootTests_Modifier(EFoundationLootModifier::SetCount, 1, 1, true, {Stone}),
+                LootTests_Modifier(EFoundationLootModifier::SetCount, 1, 1, true, {Stone}),
+                LootTests_Modifier(EFoundationLootModifier::SetCount, -1, -1, true)};
+            TArray<FFoundationLootDrop> Out = Roll(T, TEXT("stone"), NoState, true, Hand, 5);
+            TestTrue(TEXT("1 + 1 + 1 - 1 = 2 on a match"), Out.Num() == 1 && Out[0].Item == 7 && Out[0].Count == 2);
+            TestTrue(
+                TEXT("1 - 1 = 0 drops nothing off a match"), Roll(T, TEXT("dirt"), NoState, true, Hand, 5).IsEmpty());
+            // The pool's modifiers follow the candidate's, then the table's: 2 + 10 = 12, clamped to 11.
+            T.Pools[0].Modifiers = {LootTests_Modifier(EFoundationLootModifier::SetCount, 10, 10, true)};
+            T.Modifiers = {LootTests_Modifier(EFoundationLootModifier::LimitCount, MIN_int32, 11)};
+            Out = Roll(T, TEXT("stone"), NoState, true, Hand, 5);
+            TestTrue(TEXT("pool +10 then table limit 11: 2 -> 12 -> 11"), Out.Num() == 1 && Out[0].Count == 11);
+            Out = Roll(T, TEXT("dirt"), NoState, true, Hand, 5);
+            TestTrue(TEXT("pool +10 then table limit 11: 0 -> 10"), Out.Num() == 1 && Out[0].Count == 10);
+            // Rolls repeat the pool.
+            T.Pools[0].Rolls = 3;
+            T.Pools[0].Modifiers.Reset();
+            T.Modifiers.Reset();
+            Out = Roll(T, TEXT("stone"), NoState, true, Hand, 5);
+            TestTrue(TEXT("3 rolls: three stacks of 2"), Out.Num() == 3 && Out[0].Count == 2 && Out[2].Count == 2);
+        }
+
+        // limit_count: both bounds, only a minimum, only a maximum, over a uniform [-5, 10] (16 values).
+        {
+            constexpr int32 N = 48000;
+            auto Run = [&](int32 Min, int32 Max)
+            {
+                const FFoundationLootTable T =
+                    LootTests_Synth({LootTests_Modifier(EFoundationLootModifier::SetCount, -5, 10),
+                        LootTests_Modifier(EFoundationLootModifier::LimitCount, Min, Max)});
+                FLootTally Tally;
+                for (int32 Break = 0; Break < N; ++Break)
+                {
+                    const TArray<FFoundationLootDrop> Out = Roll(T, TEXT("stone"), NoState, true, Hand, 1000 + Break);
+                    ++Tally.Rolls;
+                    Tally.Nothing += Out.IsEmpty();
+                    for (const FFoundationLootDrop& Drop : Out)
+                        ++Tally.Hits.FindOrAdd(FString::FromInt(Drop.Count));
+                }
+                return Tally;
+            };
+            const FLootTally Both = Run(2, 4);
+            Near(TEXT("limit_count 2..4: 2"), Both.Of(TEXT("2")), N, 8. / 16);
+            Near(TEXT("limit_count 2..4: 3"), Both.Of(TEXT("3")), N, 1. / 16);
+            Near(TEXT("limit_count 2..4: 4"), Both.Of(TEXT("4")), N, 7. / 16);
+            TestTrue(TEXT("limit_count 2..4: never nothing, never outside"), Both.Nothing == 0 && Both.Hits.Num() == 3);
+            const FLootTally Min = Run(0, MAX_int32);
+            Near(TEXT("limit_count min 0: nothing"), Min.Nothing, N, 6. / 16);
+            Near(TEXT("limit_count min 0: 10"), Min.Of(TEXT("10")), N, 1. / 16);
+            TestEqual(TEXT("limit_count min 0: counts 1..10"), Min.Hits.Num(), 10);
+            const FLootTally Max = Run(MIN_int32, 3);
+            Near(TEXT("limit_count max 3: nothing (values <= 0)"), Max.Nothing, N, 6. / 16);
+            Near(TEXT("limit_count max 3: 1"), Max.Of(TEXT("1")), N, 1. / 16);
+            Near(TEXT("limit_count max 3: 3"), Max.Of(TEXT("3")), N, 8. / 16);
+            TestEqual(TEXT("limit_count max 3: counts 1..3"), Max.Hits.Num(), 3);
+        }
+
+        // Determinism: the same seed rolls the same drops, a random table too.
+        {
+            FFoundationLootTable T = LootTests_Synth({LootTests_Modifier(EFoundationLootModifier::SetCount, 1, 9)});
+            const int32 Chance = LootTests_AddCondition(T, EFoundationLootCondition::RandomChance);
+            T.Conditions[Chance].Chances = {0.5f};
+            T.Pools[0].Candidates[0].Conditions = {Chance};
+            T.Pools[0].Rolls = 4;
+            int32 SameRolls = 0, NextDiffers = 0;
+            for (int32 Seed = 0; Seed < 200; ++Seed)
+            {
+                const TArray<FFoundationLootDrop> A = Roll(T, TEXT("stone"), NoState, true, Hand, Seed);
+                SameRolls += LootTests_Same(A, Roll(T, TEXT("stone"), NoState, true, Hand, Seed));
+                NextDiffers += !LootTests_Same(A, Roll(T, TEXT("stone"), NoState, true, Hand, Seed + 1));
+            }
+            TestEqual(TEXT("the same seed rolls the same drops, 200 times"), SameRolls, 200);
+            TestTrue(TEXT("the next seed differs in most of 200 rolls"), NextDiffers > 100);
+        }
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationLootBlocksTest, "Unnamed.Foundation.Loot.Blocks", LootTestFlags)
+
+bool FFoundationLootBlocksTest::RunTest(const FString&)
+{
+    const UFoundationItemAssets* Assets = UFoundationItemAssets::LoadDefault();
+    IConsoleVariable* AllBlocks = IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Loot.AllBlocks"));
+    if (!TestTrue(TEXT("DA_Items and foundation.Loot.AllBlocks"), Assets && AllBlocks)) return false;
+    TestEqual(TEXT("foundation.Loot.AllBlocks is 1 (all tables roll)"), AllBlocks->GetInt(), 1);
+    FLootLab L(false);
+    const FFoundationRules& Rules = L.A.Rules;
+    int32 Cases = 0;
+
+    // Mines Block (in State's property) with Tool through the authority and checks the drops, in the result and the
+    // inventory, against Want (item to count), or that the block stays when bStays.
+    auto Check = [&](FName Block, FName Tool, const TMap<FName, int32>& Want, FName Property = NAME_None,
+                     FName Value = NAME_None, bool bStays = false)
+    {
+        ++Cases;
+        const FString What = Block.ToString() +
+            (Property.IsNone() ? FString()
+                               : TEXT(" (") + Property.ToString() + TEXT("=") + Value.ToString() + TEXT(")")) +
+            TEXT(" with ") + (Tool.IsNone() ? FString(TEXT("the hand")) : Tool.ToString());
+        if (!TestNotNull(What + TEXT(": the block exists"), L.A.World.FindBlock(Block))) return;
+        if (!Tool.IsNone() && !TestTrue(What + TEXT(": the tool exists"), Rules.FindItem(Tool) != INDEX_NONE)) return;
+        L.ClearAndHold(Tool);
+        L.Put(Block, Property, Value);
+        L.NextStep();
+        const TMap<int32, int32> Before = LootTests_Counts(L.P().Inventory);
+        const FFoundationResult R = LootTests_Mine(L, 8000);
+        const TMap<int32, int32> Gains = LootTests_Gains(Before, LootTests_Counts(L.P().Inventory));
+        if (bStays)
+        {
+            TestTrue(What + TEXT(": never breaks in survival"), !R.bBroken && L.Solid() && R.Drops.IsEmpty());
+            return;
+        }
+        if (!TestTrue(What + FString::Printf(TEXT(": broken (%s)"), LexToString(R.Reason)), R.bBroken && !L.Solid()))
+            return;
+        TMap<FName, int32> Dropped, Gained;
+        for (const FFoundationLootDrop& Drop : R.Drops)
+            Dropped.FindOrAdd(Rules.GetItem(Drop.Item).Id) += Drop.Count;
+        for (const TPair<int32, int32>& Pair : Gains)
+            Gained.Add(Rules.GetItem(Pair.Key).Id, Pair.Value);
+        // Shovels and pickaxes wear nothing into the counts; only items move.
+        TestTrue(
+            What + FString::Printf(TEXT(": drops (%d stacks) are as wanted (%d kinds)"), R.Drops.Num(), Want.Num()),
+            LootTests_SameTally(Dropped, Want));
+        TestTrue(What + TEXT(": the inventory gains the drops"), LootTests_SameTally(Gained, Want));
+    };
+    const TMap<FName, int32> Nothing;
+    auto One = [](FName Item, int32 Count = 1) { return TMap<FName, int32>{{Item, Count}}; };
+
+    // Stone: cobblestone with each pickaxe; by hand it breaks and gives nothing.
+    for (const TCHAR* Pickaxe : {TEXT("wooden_pickaxe"), TEXT("stone_pickaxe"), TEXT("copper_pickaxe"),
+             TEXT("iron_pickaxe"), TEXT("golden_pickaxe"), TEXT("diamond_pickaxe"), TEXT("netherite_pickaxe")})
+        Check(TEXT("stone"), Pickaxe, One(TEXT("cobblestone")));
+    Check(TEXT("stone"), NAME_None, Nothing);
+    Check(TEXT("deepslate"), TEXT("iron_pickaxe"), One(TEXT("cobbled_deepslate")));
+    Check(TEXT("deepslate"), NAME_None, Nothing);
+
+    // Dirt from the grassy blocks, by hand and with a shovel.
+    for (const TCHAR* Block : {TEXT("grass_block"), TEXT("podzol"), TEXT("mycelium")})
+    {
+        Check(Block, NAME_None, One(TEXT("dirt")));
+        Check(Block, TEXT("iron_shovel"), One(TEXT("dirt")));
+    }
+
+    // Silk-Touch-only blocks give nothing without it.
+    for (const TCHAR* Block : {TEXT("glass"), TEXT("white_stained_glass"), TEXT("ice")})
+    {
+        Check(Block, NAME_None, Nothing);
+        Check(Block, TEXT("iron_pickaxe"), Nothing);
+    }
+
+    // Slabs: one, or two when double.
+    for (const TCHAR* Slab : {TEXT("stone_slab"), TEXT("oak_slab")})
+    {
+        const FName Tool = FName(Slab) == TEXT("stone_slab") ? FName(TEXT("iron_pickaxe")) : NAME_None;
+        Check(Slab, Tool, One(Slab), TEXT("type"), TEXT("bottom"));
+        Check(Slab, Tool, One(Slab), TEXT("type"), TEXT("top"));
+        Check(Slab, Tool, One(Slab, 2), TEXT("type"), TEXT("double"));
+    }
+
+    // Indestructible or nothing to give.
+    Check(TEXT("budding_amethyst"), TEXT("iron_pickaxe"), Nothing);
+    Check(TEXT("bedrock"), NAME_None, Nothing, NAME_None, NAME_None, true);
+    Check(TEXT("bedrock"), TEXT("netherite_pickaxe"), Nothing, NAME_None, NAME_None, true);
+    TestTrue(TEXT("budding_amethyst has a table"), Rules.LootTables.Contains(TEXT("budding_amethyst")));
+
+    // The skipped tables (derived at runtime, pinned) keep "drops itself".
+    TSet<FName> Skipped;
+    for (const FFoundationLootTableAsset& Table : Assets->LootTables)
+        if (!Rules.LootTables.Contains(Table.Block)) Skipped.Add(Table.Block);
+    const TArray<FName>& Pins = LootTests_SkippedPins();
+    TestEqual(TEXT("31 skipped tables"), Skipped.Num(), 31);
+    TestTrue(TEXT("the skipped set is the 31 pinned"),
+        Skipped.Num() == Pins.Num() && Algo::AllOf(Pins, [&Skipped](FName Pin) { return Skipped.Contains(Pin); }));
+    Check(TEXT("gravel"), TEXT("iron_shovel"), One(TEXT("gravel")));
+    Check(TEXT("oak_leaves"), NAME_None, One(TEXT("oak_leaves")));
+    Check(TEXT("clay"), TEXT("iron_shovel"), One(TEXT("clay")));
+    Check(TEXT("snow_block"), TEXT("iron_shovel"), One(TEXT("snow_block")));
+    AddInfo(FString::Printf(TEXT("%d block cases through the authority"), Cases));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationLootSwitchTest, "Unnamed.Foundation.Loot.Switch", LootTestFlags)
+
+bool FFoundationLootSwitchTest::RunTest(const FString&)
+{
+    TArray<FString> Tools;
+    TArray<FLootBreakRow> Rows;
+    const UFoundationItemAssets* Assets = UFoundationItemAssets::LoadDefault();
+    IConsoleVariable* AllBlocks = IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Loot.AllBlocks"));
+    if (!TestTrue(TEXT("break_times.json, DA_Items and foundation.Loot.AllBlocks"),
+            LootTests_ReadRows(Tools, Rows) && Assets && AllBlocks && Assets->LootTables.Num() == 602))
+        return false;
+    // Restores the variable however this test ends.
+    struct FRestore
+    {
+        IConsoleVariable* Variable;
+        int32 Previous;
+        ~FRestore() { Variable->Set(Previous, ECVF_SetByCode); }
+    } Restore{AllBlocks, AllBlocks->GetInt()};
+    AllBlocks->Set(0, ECVF_SetByCode);
+    if (!TestEqual(TEXT("foundation.Loot.AllBlocks set to 0"), AllBlocks->GetInt(), 0)) return false;
+
+    FLootLab L(false);
+    const FFoundationRules& Rules = L.A.Rules;
+    int32 Entries = 0, Rolled = 0, Itself = 0, Unbreakable = 0, Wrong = 0, Blocks = 0;
+    // One error per failing block (the first), so a block that fails everywhere reads as one line.
+    FName CurrentBlock;
+    TSet<FName> Reported, NotHitBlocks;
+    int32 NotHit = 0;
+    auto Fail = [this, &Wrong, &CurrentBlock, &Reported](const FString& What)
+    {
+        ++Wrong;
+        if (Reported.Num() < 60 && !Reported.Contains(CurrentBlock))
+        {
+            Reported.Add(CurrentBlock);
+            AddError(What);
+        }
+    };
+    for (int32 T = 0; T < Assets->LootTables.Num(); ++T)
+    {
+        const FName Block = Assets->LootTables[T].Block;
+        CurrentBlock = Block;
+        const FLootBreakRow* Row =
+            Rows.FindByPredicate([&Block](const FLootBreakRow& Each) { return Each.Id == Block.ToString(); });
+        const FFoundationBlockType* Type = L.A.World.FindBlock(Block);
+        if (!Row || !Type || Row->Drops.Num() != Tools.Num() || Row->Ticks.Num() != Tools.Num()) continue;
+        ++Blocks;
+        const FFoundationLootTable* Table = Rules.LootTables.Find(Block);
+        const bool bLegacy = Table && Table->Index < FoundationLoot::LegacyTables;
+        const int32 DropItem = Rules.FindItem(Type->DropItem);
+        // The default state, and the double state of a block that has one.
+        const FFoundationBlockState Default = Type->GetDefaultState();
+        const FFoundationBlockState Double = L.A.World.GetRegistry().WithValue(Default, TEXT("type"), TEXT("double"));
+        for (int32 Variant = 0; Variant < (Double.Id != Default.Id ? 2 : 1); ++Variant)
+        {
+            const bool bDouble = Variant == 1;
+            for (int32 Column = 0; Column < Tools.Num(); ++Column)
+            {
+                const FString What =
+                    Block.ToString() + (bDouble ? TEXT(" (double)") : TEXT("")) + TEXT(" with ") + Tools[Column];
+                L.ClearAndHold(Column == 0 ? NAME_None : FName(*Tools[Column]));
+                L.Put(Block, bDouble ? FName(TEXT("type")) : NAME_None, bDouble ? FName(TEXT("double")) : NAME_None);
+                L.NextStep();
+                ++Entries;
+                if (Row->Ticks[Column] < 0)
+                {
+                    ++Unbreakable;
+                    const FFoundationResult R = LootTests_Mine(L, 6);
+                    if (R.bBroken || !L.Solid()) Fail(What + TEXT(": breaks, but break_times.json says never"));
+                    continue;
+                }
+                const FFoundationResult R = LootTests_Mine(L, Row->Ticks[Column] + 20);
+                if (!R.bBroken || L.Solid())
+                {
+                    // Small or waterlogged plants the lab's aim line does not hit (or that cannot stand there).
+                    ++NotHit;
+                    NotHitBlocks.Add(Block);
+                    continue;
+                }
+                if (!Row->Drops[Column])
+                {
+                    if (!R.Drops.IsEmpty())
+                        Fail(What + FString::Printf(TEXT(": %d drops; not harvestable"), R.Drops.Num()));
+                    continue;
+                }
+                if (bLegacy)
+                {
+                    ++Rolled;
+                    const FFoundationLootCandidate& Candidate = Table->Pools[0].Candidates[1];
+                    const FIntPoint Range = LootTests_Range(Candidate);
+                    if (R.Drops.Num() != 1 || R.Drops[0].Item != Candidate.Item || R.Drops[0].Count < Range.X ||
+                        R.Drops[0].Count > Range.Y)
+                        Fail(What +
+                            FString::Printf(TEXT(": %d drops; want the ore roll (%s x%d-%d)"), R.Drops.Num(),
+                                *Rules.GetItem(Candidate.Item).Id.ToString(), Range.X, Range.Y));
+                    continue;
+                }
+                ++Itself;
+                const int32 Count = Type->DropCount * (bDouble ? 2 : 1);
+                const bool bWant = DropItem != INDEX_NONE && Count > 0;
+                if (bWant ? (R.Drops.Num() != 1 || R.Drops[0].Item != DropItem || R.Drops[0].Count != Count)
+                          : !R.Drops.IsEmpty())
+                    Fail(What +
+                        FString::Printf(TEXT(": %d drops (first %s x%d); want %s x%d"), R.Drops.Num(),
+                            R.Drops.IsEmpty() ? TEXT("none") : *Rules.GetItem(R.Drops[0].Item).Id.ToString(),
+                            R.Drops.IsEmpty() ? 0 : R.Drops[0].Count, *Type->DropItem.ToString(), bWant ? Count : 0));
+            }
+        }
+    }
+    AddInfo(FString::Printf(TEXT("%d blocks, %d entries: %d ore rolls, %d drops-itself, %d unbreakable"), Blocks,
+        Entries, Rolled, Itself, Unbreakable));
+    AddInfo(FString::Printf(
+        TEXT("%d entries not hit by the lab's aim line (%d blocks, left unchecked)"), NotHit, NotHitBlocks.Num()));
+    FString NotHitNames;
+    for (const FName Name : NotHitBlocks)
+        NotHitNames += Name.ToString() + TEXT(" ");
+    AddInfo(NotHitNames);
+    TestEqual(TEXT("every entry follows the S5b rule"), Wrong, 0);
+    // Pinned from the first run (loot step 2a); 75 ore rolls = .Drops' 82 eligible minus nether gold ore's 7 (skipped).
+    TestEqual(TEXT("blocks"), Blocks, 602);
+    TestEqual(TEXT("entries"), Entries, 25308);
+    TestEqual(TEXT("ore rolls"), Rolled, 75);
+    TestEqual(TEXT("drops-itself entries"), Itself, 13615);
+    TestEqual(TEXT("entries the lab's aim cannot hit"), NotHit, 828);
+    TestEqual(TEXT("blocks the lab's aim cannot hit"), NotHitBlocks.Num(), 23);
+
+    // At 1 stone gives cobblestone again, at 0 it gives itself (no pickaxe table).
+    L.ClearAndHold(TEXT("iron_pickaxe"));
+    L.Put(TEXT("stone"));
+    L.NextStep();
+    FFoundationResult R = LootTests_Mine(L, 1000);
+    const FName StoneDrop = L.A.World.FindBlock(TEXT("stone"))->DropItem;
+    TestTrue(TEXT("at 0, stone with a pickaxe drops its own DropItem ") + StoneDrop.ToString(),
+        R.bBroken && R.Drops.Num() == 1 && Rules.GetItem(R.Drops[0].Item).Id == StoneDrop);
+    AllBlocks->Set(1, ECVF_SetByCode);
+    L.ClearAndHold(TEXT("iron_pickaxe"));
+    L.Put(TEXT("stone"));
+    L.NextStep();
+    R = LootTests_Mine(L, 1000);
+    TestTrue(TEXT("at 1, stone with a pickaxe drops cobblestone"),
+        R.bBroken && R.Drops.Num() == 1 && Rules.GetItem(R.Drops[0].Item).Id == TEXT("cobblestone"));
     return true;
 }
 

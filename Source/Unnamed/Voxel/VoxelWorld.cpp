@@ -197,6 +197,7 @@ void AVoxelWorld::BuildLayout()
     bSpawnExact = FParse::Param(FCommandLine::Get(), TEXT("VoxelSpawnExact"));
     bSpawnNearest = bSpawnNearest || bSpawnExact;
     bShotEdits = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotEdits"));
+    bMineProbe = FParse::Param(FCommandLine::Get(), TEXT("VoxelMineProbe"));
     bShotGarden = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotGarden"));
     bShotCaves = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotCaves"));
     bShotVeins = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotVeins"));
@@ -818,6 +819,7 @@ void AVoxelWorld::Tick(float DeltaSeconds)
     if (ShotEditStage == 1) ++ShotEditFrames;
     if (!ShotFolder.IsEmpty() && IsReady())
     {
+        if (bMineProbe && MineProbeReport.IsEmpty()) RunMineProbe();
         // With -VoxelShotEdits or -VoxelShotGarden the shots wait until the edited columns are back on screen.
         if ((bShotEdits || bShotGarden) && ShotEditStage == 0)
         {
@@ -1130,6 +1132,74 @@ void AVoxelWorld::ReturnPlayerToSpawn() const
 {
     AFoundationPawn* Pawn = Cast<AFoundationPawn>(UGameplayStatics::GetPlayerPawn(this, 0));
     if (Pawn && Pawn->GetLab() == this) Pawn->Respawn();
+}
+
+void AVoxelWorld::RunMineProbe()
+{
+    FFoundationBlockWorld& World = Authority.World;
+    const FFoundationBlockType* Stone = World.FindBlock(TEXT("stone"));
+    const FFoundationBlockType* Air = World.FindBlock(TEXT("air"));
+    const int32 Pickaxe = Authority.Rules.FindItem(TEXT("stone_pickaxe"));
+    MineProbeReport = TEXT("  Mine probe: ");
+    if (!Stone || !Air || Pickaxe == INDEX_NONE)
+    {
+        MineProbeReport += TEXT("stone, air or stone_pickaxe is not defined");
+        UE_LOG(LogUnnamedVoxel, Warning, TEXT("%s"), *MineProbeReport);
+        return;
+    }
+    FFoundationVitals Vitals;
+    ConfigurePlayer(Vitals);
+    // A probe player of its own, so the pawn's player and inventory stay as they are: a stone pickaxe in slot 1 and an
+    // empty hotbar otherwise.
+    const int32 Id = Authority.AddPlayer();
+    FFoundationPlayer& Player = *Authority.FindPlayer(Id);
+    for (int32 Slot = 0; Slot < FFoundationInventory::HotbarSlots; ++Slot)
+        Player.Inventory.SetSlot(Slot, FFoundationItemInstance());
+    Player.Inventory.SetSlot(0, Player.Inventory.MakeStack(Pickaxe, 1));
+    Player.Inventory.Select(0);
+    // Stone at eye height two blocks east of the spawn, with air between, written like the shot edits.
+    const FIntVector Spawn = GetSpawnCell();
+    const FIntVector Target = Spawn + FIntVector(2, 0, 1);
+    World.Set(Spawn + FIntVector(1, 0, 1), Air->GetDefaultState());
+    World.Set(Target, Stone->GetDefaultState());
+    FFoundationPlayerFacts Facts;
+    Facts.FeetCm = FoundationGrid::CellMin(Spawn, World.OriginCm) + FVector(50, 50, 0);
+    Facts.EyeCm = Facts.FeetCm + FVector(0, 0, 162);
+    Facts.Aim = (FoundationGrid::CellBox(Target, World.OriginCm).GetCenter() - Facts.EyeCm).GetSafeNormal();
+    int64 Step = 1;
+    Facts.Step = Step;
+    Authority.SetFacts(Id, Facts);
+    uint32 Sequence = 1;
+    const auto Run = [&](EFoundationCommandType Type)
+    {
+        FFoundationCommand Command;
+        Command.SessionId = Authority.GetSessionId();
+        Command.Sequence = Sequence++;
+        Command.Type = Type;
+        Command.Item = Player.Inventory.GetHand(EFoundationHand::Main).GetRef();
+        Command.Target = Authority.Resolve(Facts);
+        return Authority.Execute(Id, Command, Vitals);
+    };
+    FFoundationResult Result = Run(EFoundationCommandType::MineStart);
+    int32 Steps = 0;
+    while (!Result.bBroken && Result.IsCommitted() && Steps < 400)
+    {
+        Facts.Step = ++Step;
+        Authority.SetFacts(Id, Facts);
+        Authority.Step();
+        Result = Run(EFoundationCommandType::MineContinue);
+        ++Steps;
+    }
+    FString Hotbar;
+    for (int32 Slot = 0; Slot < FFoundationInventory::HotbarSlots; ++Slot)
+        if (const FFoundationItemInstance& Stack = Player.Inventory.Hotbar[Slot]; !Stack.IsEmpty())
+            Hotbar += FString::Printf(TEXT("%s[%d] %s x%d"), Hotbar.IsEmpty() ? TEXT("") : TEXT(", "), Slot + 1,
+                *Authority.Rules.GetItem(Stack.Item).Id.ToString(), Stack.Count);
+    MineProbeReport += FString::Printf(TEXT("%s, stone at %s with a stone pickaxe: %s after %d steps; hotbar: %s"),
+        Vitals.Mode == EFoundationPlayerMode::Survival ? TEXT("survival") : TEXT("creative"),
+        *FoundationGrid::DescribeCell(Target), Result.bBroken ? TEXT("broken") : TEXT("not broken"), Steps, *Hotbar);
+    UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *MineProbeReport);
+    Authority.RemovePlayer(Id);
 }
 
 void AVoxelWorld::ApplyShotEdits()
@@ -1842,7 +1912,8 @@ void AVoxelWorld::UpdateShots()
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Gpu);
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *World);
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Player);
-    const FString Edits = (ShotEditReport.IsEmpty() ? FString() : ShotEditReport + TEXT("\n")) + ShotVeinReport;
+    const FString Edits = (ShotEditReport.IsEmpty() ? FString() : ShotEditReport + TEXT("\n")) + ShotVeinReport +
+        (MineProbeReport.IsEmpty() ? FString() : MineProbeReport + TEXT("\n"));
     FFileHelper::SaveStringToFile(GetBuildReport() + TEXT("\n") + Edits + Lighting + TEXT("\n") + Gpu + TEXT("\n") +
             World + TEXT("\n") + Player + TEXT("\n"),
         *FPaths::Combine(ShotFolder, TEXT("build.txt")));

@@ -375,6 +375,12 @@ private:
     double ShotEditSeconds = 0;
     int32 ShotEditFrames = 0;
     FString ShotEditReport;
+    // -VoxelMineProbe (loot step 2a): once the world is ready, a probe player mines a stone block beside the spawn
+    // with a stone pickaxe through the authority, under the saved world's game mode (survival without one), and its
+    // hotbar goes to the log and build.txt.
+    bool bMineProbe = false;
+    FString MineProbeReport;
+    void RunMineProbe();
     // -VoxelShotGarden: the plot's minimum corner (its floor's height as Z), the field's clearing and the section
     // border the post crosses.
     bool bShotGarden = false;

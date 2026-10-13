@@ -163,15 +163,63 @@ def build(root):
 
 
 def loot_table(table):
-    """loot_tables.json's table -> FFoundationLootTableAsset values (items S5b)."""
+    """loot_tables.json's table -> FFoundationLootTableAsset values (items S5b). Loot step 2a: condition objects
+    become the table's condition nodes (a tree names its terms by index), a candidate's predicate names stay in
+    "conditions", and the "modifiers" lists keep their order."""
+    nodes = []
+
+    def node(c):
+        index = len(nodes)
+        if isinstance(c, str):
+            nodes.append({"type": "predicate", "name": c})
+            return index
+        n = {"type": c["type"]}
+        nodes.append(n)
+        if c["type"] in ("any_of", "all_of"):
+            n["terms"] = [node(t) for t in c["terms"]]
+        elif c["type"] == "inverted":
+            n["terms"] = [node(c["term"])]
+        elif c["type"] in ("match_block", "location_check"):
+            n.update(name=c["block"], state_keys=list(c["state"]), state_values=list(c["state"].values()))
+            if c["type"] == "location_check":
+                n["offset"] = list(c["offset"])
+        elif c["type"] == "table_bonus":
+            n.update(name=c["enchantment"], chances=[float(x) for x in c["chances"]])
+        elif c["type"] == "random_chance":
+            n["chances"] = [float(c["chance"])]
+        elif c["type"] == "match_tool":
+            n.update(name=c["tag"] or "", items=list(c["items"]))
+        elif c["type"] == "entity_properties":
+            n["name"] = c["entity"]
+        return index
+
+    def modifier(m):
+        out = {"type": m["type"], "tests": [node(c) for c in m.get("conditions", [])]}
+        if m["type"] == "set_count":
+            out.update(min=m["count"][0], max=m["count"][1], add=m["add"])
+        elif m["type"] == "limit_count":
+            out.update(min=m["min"] or 0, max=m["max"] or 0, has_min=m["min"] is not None,
+                       has_max=m["max"] is not None)
+        elif m["type"] == "apply_bonus":
+            out.update(bonus_formula=m["formula"], bonus_enchantment=m["enchantment"],
+                       bonus_multiplier=float(m["bonus_multiplier"]))
+        return out
+
     def candidate(c):
-        bonus = c["bonus"] or {}
-        return {"item": c["item"], "conditions": list(c["conditions"]), "count_min": c["count"][0],
-                "count_max": c["count"][1], "bonus_formula": bonus.get("formula", ""),
+        bonus = c.get("bonus") or {}
+        count = c.get("count", [1, 1])
+        return {"item": c["item"], "conditions": [x for x in c["conditions"] if isinstance(x, str)],
+                "count_min": count[0], "count_max": count[1], "bonus_formula": bonus.get("formula", ""),
                 "bonus_enchantment": bonus.get("enchantment", ""),
-                "bonus_multiplier": float(bonus.get("bonus_multiplier", 0)), "explosion_decay": c["explosion_decay"]}
-    return {"block": table["block"],
-            "pools": [{"rolls": p["rolls"], "candidates": [candidate(c) for c in p["candidates"]]} for p in table["pools"]]}
+                "bonus_multiplier": float(bonus.get("bonus_multiplier", 0)),
+                "explosion_decay": c.get("explosion_decay", False),
+                "tests": [node(x) for x in c["conditions"] if not isinstance(x, str)],
+                "modifiers": [modifier(m) for m in c.get("modifiers", [])]}
+    pools = [{"rolls": p["rolls"], "candidates": [candidate(c) for c in p["candidates"]],
+              "tests": [node(c) for c in p.get("conditions", [])],
+              "modifiers": [modifier(m) for m in p.get("modifiers", [])]} for p in table["pools"]]
+    return {"block": table["block"], "pools": pools, "modifiers": [modifier(m) for m in table.get("modifiers", [])],
+            "conditions": nodes}
 
 
 def main():

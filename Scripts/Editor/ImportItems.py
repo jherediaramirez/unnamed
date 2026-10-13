@@ -4,7 +4,8 @@ items (T_ItemTextures, 16 x 16, and T_ItemTextures32, the spears' 32 x 32 in-han
 
 Additive and idempotent, like ImportBlocks.py: assets that exist are verified, never rebuilt. An import from
 different reference data refuses to touch existing assets (move them away first, deliberately); the one exception
-is items S5b's explicit loot migration (UNNAMED_ITEMS_MIGRATE=loot, from the pre-loot reference only). Run after the
+is the explicit loot migrations (UNNAMED_ITEMS_MIGRATE=loot from the pre-loot reference, items S5b; =loot2 from the
+S5b reference, loot step 2a). Run after the
 editor target has compiled and with Config/Tags/MinecraftItemTags.ini in place (ItemImportData.py --write-tags):
 
     & 'C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe' Unnamed.uproject
@@ -27,6 +28,8 @@ ARRAYS = (("T_ItemTextures", "array_layers", 16, "item_textures"), ("T_ItemTextu
                                                                    "item_textures32"))
 # The reference's digest before items S5b added the loot tables (ItemImportData.source_sha256).
 PRE_LOOT_SHA256 = "4b17236f19f25bab4e23320c3a82e69989010fbf35d2c635e7f6e2cb5ffccc39"
+# The reference's digest before loot step 2a added every imported block's loot table (the 18 ores' S5b reference).
+PRE_LOOT2_SHA256 = "8d33db5560fe97bf2fbb744035c6e063d3c41ab2220f709efd6aa81a07664129"
 
 
 def fail(message):
@@ -93,22 +96,33 @@ def struct(struct_type, values):
 
 
 def loot_structs():
-    """DA_Items' loot tables and predicates (items S5b), from loot_tables.json."""
+    """DA_Items' loot tables and predicates (items S5b; loot step 2a's condition nodes and modifiers), from
+    loot_tables.json."""
+    def modifiers(values):
+        return [struct(unreal.FoundationLootModifierAsset, m) for m in values]
     tables = []
     for table in data["loot_tables"]:
         pools = [struct(unreal.FoundationLootPoolAsset, {
-            "rolls": pool["rolls"],
-            "candidates": [struct(unreal.FoundationLootCandidateAsset, c) for c in pool["candidates"]]})
+            "rolls": pool["rolls"], "tests": pool["tests"], "modifiers": modifiers(pool["modifiers"]),
+            "candidates": [struct(unreal.FoundationLootCandidateAsset, dict(c, modifiers=modifiers(c["modifiers"])))
+                           for c in pool["candidates"]]})
             for pool in table["pools"]]
-        tables.append(struct(unreal.FoundationLootTableAsset, {"block": table["block"], "pools": pools}))
+        tables.append(struct(unreal.FoundationLootTableAsset, {
+            "block": table["block"], "pools": pools, "modifiers": modifiers(table["modifiers"]),
+            "conditions": [struct(unreal.FoundationLootConditionAsset, n) for n in table["conditions"]]}))
     return tables, [struct(unreal.FoundationLootPredicateAsset, p) for p in data["loot_predicates"]]
 
 
 LOOT_KEYS = (
-    (unreal.FoundationLootTableAsset, ("block", "pools")),
-    (unreal.FoundationLootPoolAsset, ("rolls", "candidates")),
+    (unreal.FoundationLootTableAsset, ("block", "pools", "conditions", "modifiers")),
+    (unreal.FoundationLootPoolAsset, ("rolls", "candidates", "tests", "modifiers")),
     (unreal.FoundationLootCandidateAsset, ("item", "conditions", "count_min", "count_max", "bonus_formula",
-                                           "bonus_enchantment", "bonus_multiplier", "explosion_decay")),
+                                           "bonus_enchantment", "bonus_multiplier", "explosion_decay", "tests",
+                                           "modifiers")),
+    (unreal.FoundationLootConditionAsset, ("type", "name", "terms", "state_keys", "state_values", "chances", "items",
+                                           "offset")),
+    (unreal.FoundationLootModifierAsset, ("type", "tests", "min", "max", "add", "has_min", "has_max", "bonus_formula",
+                                          "bonus_enchantment", "bonus_multiplier")),
     (unreal.FoundationLootPredicateAsset, ("name", "items", "enchantments", "enchantment_min_levels")))
 
 
@@ -132,11 +146,16 @@ if assets.does_asset_exist(registry_path):
     # Items S5b: the S5b rebuild of the reference only added the ores' loot tables (every file DA_Items was imported
     # from stayed byte-identical), so a DA_Items imported from the reference before it migrates in place when asked:
     # it is verified as below, then only its loot tables and digest are written.
-    migrate = existing.get_editor_property("source_sha256") == PRE_LOOT_SHA256 and \
+    # Loot step 2a: its rebuild only appended loot tables and a predicate the same way, so a DA_Items imported from
+    # the S5b reference migrates when asked (UNNAMED_ITEMS_MIGRATE=loot2): verified as below, its 18 loot tables and
+    # predicate against the new reference's first ones, then only its loot tables, predicates and digest are written.
+    source = existing.get_editor_property("source_sha256")
+    migrate = source == PRE_LOOT_SHA256 and \
         os.environ.get("UNNAMED_ITEMS_MIGRATE") == "loot" and not existing.get_editor_property("loot_tables")
-    if existing.get_editor_property("source_sha256") != data["source_sha256"] and not migrate:
+    migrate2 = source == PRE_LOOT2_SHA256 and os.environ.get("UNNAMED_ITEMS_MIGRATE") == "loot2"
+    if source != data["source_sha256"] and not migrate and not migrate2:
         fail("DA_Items was imported from different reference data; preserve it and migrate explicitly (from the "
-             "pre-loot reference: set UNNAMED_ITEMS_MIGRATE=loot)")
+             "pre-loot reference: set UNNAMED_ITEMS_MIGRATE=loot; from the S5b reference: loot2)")
     ids = [str(item.get_editor_property("id")) for item in existing.get_editor_property("items")]
     if ids != [item["id"] for item in data["items"]] or \
             len(existing.get_editor_property("models")) != len(data["models"]) or \
@@ -154,14 +173,21 @@ if assets.does_asset_exist(registry_path):
         fail("DA_Items' texture layers or lang keys differ from the reference; move it away and reimport")
     check_layers(arrays)
     tables, predicates = loot_structs()
-    if migrate:
+    if migrate2:
+        held_tables, held_predicates = existing.get_editor_property("loot_tables"), \
+            existing.get_editor_property("loot_predicates")
+        if len(held_tables) != 18 or len(held_predicates) != 1 or \
+                loot_view(held_tables, held_predicates) != loot_view(tables[:18], predicates[:1]):
+            fail("DA_Items' S5b loot tables differ from the reference's first 18; move it away and reimport")
+    if migrate or migrate2:
         existing.set_editor_property("loot_tables", tables)
         existing.set_editor_property("loot_predicates", predicates)
         existing.set_editor_property("source_sha256", data["source_sha256"])
         if not assets.save_loaded_asset(existing, False):
             fail("save failed: " + existing.get_path_name())
-        unreal.log("ITEM_IMPORT PASS: %d reference files match; DA_Items migrated from the pre-loot reference: %d loot "
-                   "tables and %d predicates written, nothing else changed" % (files, len(tables), len(predicates)))
+        unreal.log("ITEM_IMPORT PASS: %d reference files match; DA_Items migrated from the %s reference: %d loot "
+                   "tables and %d predicates written, nothing else changed"
+                   % (files, "S5b" if migrate2 else "pre-loot", len(tables), len(predicates)))
         sys.exit(0)
     if loot_view(existing.get_editor_property("loot_tables"), existing.get_editor_property("loot_predicates")) != \
             loot_view(tables, predicates):

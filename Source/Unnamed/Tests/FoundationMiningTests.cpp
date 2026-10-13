@@ -1,4 +1,5 @@
 #include "Misc/AutomationTest.h"
+#include "HAL/IConsoleManager.h"
 #include "Dom/JsonObject.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlockRegistry.h"
@@ -438,14 +439,17 @@ bool FFoundationMiningCreativeTest::RunTest(const FString&)
     TestEqual(TEXT("the flag copied for all 63"), Copied, 63);
     TestEqual(TEXT("7 swords and 7 spears break nothing in creative"), NoBreak, 14);
 
-    // The control: in survival an iron pickaxe takes stone in 8 steps, returns it and wears.
+    // The control: in survival an iron pickaxe takes stone in 8 steps, returns its loot (cobblestone; loot step 2a) and
+    // wears.
     FMiningLab S(false);
     S.Hold(TEXT("iron_pickaxe"));
     S.Put(TEXT("stone"));
-    const int32 Stones = S.Count(TEXT("stone"));
+    const IConsoleVariable* AllBlocks = IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Loot.AllBlocks"));
+    TestTrue(TEXT("foundation.Loot.AllBlocks is 1"), AllBlocks && AllBlocks->GetInt() == 1);
+    const int32 Cobblestones = S.Count(TEXT("cobblestone"));
     TestEqual(TEXT("survival: 8 steps"), MineSteps(S, 100), 8);
     TestTrue(TEXT("survival: returned and worn"),
-        S.Count(TEXT("stone")) == Stones + 1 && S.P().Inventory.Hotbar[0].Damage == 1);
+        S.Count(TEXT("cobblestone")) == Cobblestones + 1 && S.P().Inventory.Hotbar[0].Damage == 1);
     // Creative: at once, with no return and no wear (the same finite lab, tool wear on).
     FMiningLab L(false);
     L.Vitals.Mode = EFoundationPlayerMode::Creative;
