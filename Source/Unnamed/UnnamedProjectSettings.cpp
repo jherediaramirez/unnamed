@@ -110,6 +110,17 @@ FSoftObjectPath UUnnamedProjectSettings::GetItemAssetPath(const FString& AssetNa
     return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
 }
 
+FString UUnnamedProjectSettings::GetGuiAssetPackage(const FString& AssetName)
+{
+    return Get().GuiRoot / AssetName;
+}
+
+FSoftObjectPath UUnnamedProjectSettings::GetGuiAssetPath(const FString& AssetName)
+{
+    const FString Package = GetGuiAssetPackage(AssetName);
+    return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
+}
+
 FString UUnnamedProjectSettings::GetBreakAssetPackage(const FString& AssetName)
 {
     return Get().BreakRoot / AssetName;

@@ -17,6 +17,10 @@ spec = importlib.util.spec_from_file_location("build_reference", Path(__file__).
 build = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(build)
 errors = []
+# The accepted first build (2026-10-13): its 193 events and 477 file entries, as SHA-256 of their canonical JSON (sorted
+# keys, compact separators). Later builds only append (README, "Appending").
+FIRST_BUILD = {"events": (193, "aab08a074aaf3b232ccdda33bc99e43356ae5d8cb6ba209af9157e8219a88d40"),
+               "files": (477, "4633c998a2b405e75d9f7b9c73107d72ac0ede55e9ec2cd60be4c63e026ff366")}
 
 
 def check(condition, message):
@@ -49,8 +53,10 @@ events_path = ROOT / "sound_events.json"
 data = json.loads(events_path.read_text(encoding="utf-8"))
 source = build.source_object(build.sha1(block_sounds), block_csv)
 check(data["source"] == source, "source object differs from the pins and the block reference's inputs")
+frozen = build.read_own_files()
+check(frozen is not None, f"{build.OWN_FILES} is missing")
 try:
-    derived = build.derive(block_sounds, block_csv, block_files, lambda name: own_files[name], source)
+    derived = build.derive(block_sounds, block_csv, block_files, lambda name: own_files[name], source, frozen or ())
     check(events_path.read_bytes() == derived, "re-derived sound_events.json differs")
 except (SystemExit, OSError, KeyError, ValueError) as error:
     errors.append(f"re-derivation failed: {error!r}")
@@ -71,6 +77,14 @@ for entry in files:
     if entry["home"] == build.BLOCK_HOME:
         check(block_files.get(entry["name"]) == (entry["sha1"], entry["size"]),
               f"blocks-homed file differs from the block reference: {entry['name']}")
+
+# The first build's entries are unchanged; tools/own_files.txt is a prefix of the names homed here, in order.
+for key, (count, digest) in FIRST_BUILD.items():
+    canonical = json.dumps(data[key][:count], sort_keys=True, separators=(",", ":")).encode()
+    check(len(data[key]) >= count and hashlib.sha256(canonical).hexdigest() == digest,
+          f"the first build's {count} {key} entries changed")
+own_order = [f["name"] for f in files if f["home"] == build.OWN]
+check(frozen is not None and own_order[:len(frozen)] == frozen, f"{build.OWN_FILES} is not a prefix of the own files")
 
 # 4. The asset index.
 index_checked = 0
@@ -96,10 +110,16 @@ else:
 events = data["events"]
 by_name = {e["name"]: e for e in events}
 check(len(by_name) == len(events), "repeated event names")
-check([e["name"] for e in events if e["group"] == "named"] == build.NAMED and
-      [e["name"] for e in events[:21]] == build.NAMED, "the 21 named events differ or are out of order")
+named = build.NAMED + build.APPENDED_NAMED
+check([e["name"] for e in events if e["group"] == "named"] == named and
+      [e["name"] for e in events[:21]] == build.NAMED and [e["name"] for e in events[193:193 + len(
+          build.APPENDED_NAMED)]] == build.APPENDED_NAMED, "the named events differ or are out of order")
+check(len(build.APPENDED_NAMED) == 133 and len(set(named)) == len(named), "APPENDED_NAMED is not 133 new events")
+pattern = build.re.compile(build.T5_PATTERN)
+check(build.APPENDED_T5[:-4] == sorted(n for n in json.loads(block_sounds) if pattern.match(n)) and
+      len(build.APPENDED_T5) == 58, "APPENDED_T5 differs from the events T5_PATTERN matches in sounds.json")
 counts = {g: sum(e["group"] == g for e in events) for g in ("named", "step", "fall")}
-check(counts == {"named": 21, "step": 86, "fall": 86}, f"group counts differ: {counts}")
+check(counts == {"named": 154, "step": 86, "fall": 86}, f"group counts differ: {counts}")
 check(by_name["entity.item.pickup"]["sounds"] == ["random/pop"], "entity.item.pickup does not play only random/pop")
 for name in ("block.chest.open", "block.chest.close"):
     check(all(isinstance(s, dict) and s.get("attenuation_distance") == 12 for s in by_name[name]["sounds"]),

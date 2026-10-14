@@ -15,24 +15,6 @@ namespace
     const TCHAR* CreativeGui = TEXT("gui/container/creative_inventory/");
     const TCHAR* CreativeSprites = TEXT("gui/sprites/container/creative_inventory/");
     const FLinearColor TitleColor = FLinearColor(FColor(0x40, 0x40, 0x40));
-
-    FSlateBrush MakeBrush(UTexture2D* Texture)
-    {
-        FSlateBrush Brush;
-        Brush.SetResourceObject(Texture);
-        Brush.ImageSize = FVector2D(Texture->GetSizeX(), Texture->GetSizeY());
-        Brush.DrawAs = ESlateBrushDrawType::Image;
-        return Brush;
-    }
-
-    // Item sprites for items that are not imported blocks: the tab icons and the 26.3 items (DA_Items), by the
-    // item's first texture where it is known (the saplings' "block/oak_sapling").
-    FString ItemSprite(FName Item, const FHudCreativeItems& Items)
-    {
-        if (Item == TEXT("compass")) return TEXT("item/compass_16");
-        if (const FHudCreativeItem* Info = Items.Find(Item); Info && !Info->Sprite.IsEmpty()) return Info->Sprite;
-        return TEXT("item/") + Item.ToString();
-    }
 }
 
 bool HudBlockIcon::Paint(FSlateWindowElementList& Elements, int32& LayerId, const FGeometry& Geometry,
@@ -66,122 +48,16 @@ bool HudBlockIcon::Paint(FSlateWindowElementList& Elements, int32& LayerId, cons
     return true;
 }
 
-// Draws in GUI pixels relative to the viewport's top-left (the screen's own corner is Frame.Origin).
-struct SHudCreativeScreen::FPainter
-{
-    const SHudCreativeScreen& Screen;
-    const FGeometry& Geometry;
-    FSlateWindowElementList& Elements;
-    int32& LayerId;
-    float Units;
-
-    void Box(const FSlateBrush* Brush, FIntPoint Position, FIntPoint Size,
-        FBox2f UV = FBox2f(FVector2f(0), FVector2f(1)), FLinearColor Color = FLinearColor::White) const
-    {
-        if (!Brush) return;
-        FSlateBrush Copy = *Brush;
-        Copy.SetUVRegion(FBox2D(FVector2D(UV.Min), FVector2D(UV.Max)));
-        FSlateDrawElement::MakeBox(Elements, ++LayerId,
-            Geometry.ToPaintGeometry(FVector2f(Size) * Units, FSlateLayoutTransform(FVector2f(Position) * Units)),
-            &Copy, ESlateDrawEffect::None, Color);
-    }
-
-    // A nine-slice GUI sprite (tooltip background and frame): Border texels of a 100 x 100 sprite.
-    void NineSlice(const FSlateBrush* Brush, FIntPoint Position, FIntPoint Size, float Border) const
-    {
-        if (!Brush) return;
-        FSlateBrush Copy = *Brush;
-        Copy.DrawAs = ESlateBrushDrawType::Box;
-        Copy.Margin = FMargin(Border / 100.f);
-        Copy.ImageSize = FVector2D(100 * Units);
-        FSlateDrawElement::MakeBox(Elements, ++LayerId,
-            Geometry.ToPaintGeometry(FVector2f(Size) * Units, FSlateLayoutTransform(FVector2f(Position) * Units)),
-            &Copy);
-    }
-
-    int32 Measure(const FString& Text) const
-    {
-        int32 Width = 0;
-        if (const UHudAssets* Assets = Screen.HudAssets.Get())
-            for (const TCHAR Character : Text)
-                if (const FHudGlyph* Glyph = Assets->Glyphs.FindByPredicate(
-                        [Character](const FHudGlyph& G) { return G.Code == int32(Character); }))
-                    Width += Glyph->Advance;
-        return Width;
-    }
-
-    // The default font's ASCII page, as the HUD draws it; the shadow is a quarter-bright copy one pixel down-right.
-    void Text(const FString& Text, FIntPoint Point, FLinearColor Color, bool bShadow) const
-    {
-        const UHudAssets* Assets = Screen.HudAssets.Get();
-        const FSlateBrush* Font = Screen.FindBrush(TEXT("font/ascii"));
-        if (!Assets || !Font) return;
-        if (bShadow)
-        {
-            // As HudDrawList: Java quarters the encoded RGB bytes (white's shadow is 63, not linear quarter's 137).
-            const FColor Encoded = Color.ToFColorSRGB();
-            FLinearColor Shadow(FColor(Encoded.R / 4, Encoded.G / 4, Encoded.B / 4));
-            Shadow.A = Color.A;
-            this->Text(Text, Point + FIntPoint(1, 1), Shadow, false);
-        }
-        for (const TCHAR Character : Text)
-            if (const FHudGlyph* Glyph = Assets->Glyphs.FindByPredicate(
-                    [Character](const FHudGlyph& G) { return G.Code == int32(Character); }))
-            {
-                if (Glyph->InkWidth > 0)
-                    Box(Font, Point, {8, 8},
-                        FBox2f(FVector2f(Glyph->Origin) / 128.f, FVector2f(Glyph->Origin + FIntPoint(8, 8)) / 128.f),
-                        Color);
-                Point.X += Glyph->Advance;
-            }
-    }
-
-    // An item in a 16 x 16 slot area: a block as its 3D model, anything else as its flat sprite.
-    void Item(FName Item, FIntPoint Position) const
-    {
-        if (!Screen.Registry ||
-            !HudBlockIcon::Paint(Elements, LayerId, Geometry, Screen.Atlas, *Screen.Registry, Item, FVector2f(Position),
-                Units, Screen.Tick))
-            Box(Screen.FindBrush(ItemSprite(Item, Screen.Items)), Position, {16, 16});
-    }
-
-    void Stack(const FHudCreativeStack& Stack, FIntPoint Position) const
-    {
-        if (Stack.IsEmpty()) return;
-        Item(Stack.Item, Position);
-        // The durability bar, as the HUD's hotbar draws it.
-        const FHudCreativeItem* Info = Screen.Items.Find(Stack.Item);
-        if (const FHudDurabilityBar Bar = HudModel::GetDurabilityBar(Stack.Damage, Info ? Info->MaxDamage : 0);
-            Bar.bVisible)
-        {
-            const FBox2f Whole(FVector2f(0), FVector2f(1));
-            Box(&Screen.Solid, Position + FIntPoint(2, 13), {13, 2}, Whole, FLinearColor::Black);
-            if (Bar.Width > 0)
-                Box(&Screen.Solid, Position + FIntPoint(2, 13), {Bar.Width, 1}, Whole, FLinearColor(Bar.Color));
-        }
-        if (Stack.Count > 1)
-        {
-            // ItemDecorations: the count at the slot's bottom right, white with a shadow.
-            const FString Count = FString::FromInt(Stack.Count);
-            Text(Count, Position + FIntPoint(17 - Measure(Count), 9), FLinearColor::White, true);
-        }
-    }
-};
-
 void SHudCreativeScreen::Construct(const FArguments& Arguments)
 {
-    Registry = Arguments._Registry;
     RequestedGuiScale = Arguments._RequestedGuiScale;
-    HudAssets = Arguments._HudAssets;
-    Items = Arguments._Items;
     GetInventory = Arguments._GetInventory;
     OnWrite = Arguments._OnWrite;
     OnClose = Arguments._OnClose;
-    Solid = *FCoreStyle::Get().GetBrush(TEXT("WhiteBrush"));
     FocusTime = FPlatformTime::Seconds();
-    const UFoundationBlockAssets* Assets = Registry ? Registry->GetAssets() : nullptr;
+    Art.Init(Arguments._Registry, Arguments._HudAssets, Arguments._Items);
+    const UFoundationBlockAssets* Assets = Art.Registry ? Art.Registry->GetAssets() : nullptr;
     if (Assets) Model.Build(Assets->CreativeTabs, Arguments._Items);
-    if (Assets && Assets->IconAtlas) Atlas = MakeBrush(Assets->IconAtlas);
     // The screen's art (ImportBlocks.py, BlockRoot/Gui) and the HUD's font and tooltip sprites.
     TArray<FString> Ids = {FString(CreativeGui) + TEXT("tab_items"), FString(CreativeGui) + TEXT("tab_item_search"),
         FString(CreativeGui) + TEXT("tab_inventory"), FString(CreativeSprites) + TEXT("scroller"),
@@ -192,47 +68,11 @@ void SHudCreativeScreen::Construct(const FArguments& Arguments)
             for (int32 Column = 1; Column <= 7; ++Column)
                 Ids.Add(FString::Printf(TEXT("%stab_%s_%s_%d"), CreativeSprites, Row, State, Column));
     for (const FHudCreativeModel::FTab& Tab : Model.GetTabs())
-        Ids.Add(ItemSprite(Tab.Icon, Items));
-    for (const TPair<FName, FHudCreativeItem>& Item : Items)
-        if (!Registry || !Registry->FindBlock(Item.Key)) Ids.AddUnique(ItemSprite(Item.Key, Items));
+        Ids.Add(FHudGuiArt::ItemSprite(Tab.Icon, Art.Items));
     for (const FString& Id : Ids)
-    {
-        // Item sprites come from ImportItems.py (ItemRoot/Gui) where it has them, else from BlockRoot/Gui.
-        const FSoftObjectPath ItemPath = UUnnamedProjectSettings::GetItemAssetPath(TEXT("Gui/") + Id);
-        UTexture2D* Texture = (Id.StartsWith(TEXT("item/")) || Id.StartsWith(TEXT("block/"))) &&
-                FPackageName::DoesPackageExist(ItemPath.GetLongPackageName())
-            ? Cast<UTexture2D>(ItemPath.TryLoad())
-            : nullptr;
-        if (!Texture)
-            Texture = Cast<UTexture2D>(UUnnamedProjectSettings::GetBlockAssetPath(TEXT("Gui/") + Id).TryLoad());
-        if (Texture)
-        {
-            Brushes.Add(Id, MakeBrush(Texture));
-            BrushTextures.Emplace(Texture);
-        }
-    }
-    if (const UHudAssets* Hud = HudAssets.Get())
-        for (const FHudSpriteAsset& Sprite : Hud->Sprites)
-        {
-            const FString Id = Sprite.Id.ToString();
-            if (Id == TEXT("font/ascii") || Id.StartsWith(TEXT("gui/sprites/tooltip/")))
-                if (UTexture2D* Texture = Sprite.Texture.LoadSynchronous())
-                {
-                    Brushes.Add(Id, MakeBrush(Texture));
-                    BrushTextures.Emplace(Texture);
-                }
-        }
-}
-
-const FSlateBrush* SHudCreativeScreen::FindBrush(const FString& Id) const
-{
-    return Brushes.Find(Id);
-}
-
-FString SHudCreativeScreen::ItemName(FName Item) const
-{
-    const FHudCreativeItem* Info = Items.Find(Item);
-    return Info && !Info->Name.IsEmpty() ? Info->Name : Item.ToString();
+        Art.LoadBlockGui(Id);
+    Art.LoadItemSprites();
+    Art.LoadHudSprites();
 }
 
 int32 SHudCreativeScreen::GetGuiScale(FVector2f ViewportPixels, int32 Requested)
@@ -362,14 +202,14 @@ FReply SHudCreativeScreen::OnKeyChar(const FGeometry& Geometry, const FCharacter
 int32 SHudCreativeScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geometry, const FSlateRect& CullingRect,
     FSlateWindowElementList& Elements, int32 LayerId, const FWidgetStyle& Style, bool bParentEnabled) const
 {
-    Tick = FMath::FloorToInt64(FPlatformTime::Seconds() * FoundationBlockFaces::TicksPerSecond);
+    Art.Tick = FMath::FloorToInt64(FPlatformTime::Seconds() * FoundationBlockFaces::TicksPerSecond);
     const FFrame Frame = GetFrame(Geometry);
-    const FPainter Paint{*this, Geometry, Elements, LayerId, Frame.Units};
+    const FHudGuiPainter Paint{Art, Geometry, Elements, LayerId, Frame.Units};
     const FIntPoint O = Frame.Origin;
     // renderTransparentBackground: the world darkened behind the container.
     const FVector2f Pixels = FVector2f(Geometry.GetLocalSize()) / Frame.Units;
-    Paint.Box(&Solid, {0, 0}, FIntPoint(int32(Pixels.X) + 1, int32(Pixels.Y) + 1), FBox2f(FVector2f(0), FVector2f(1)),
-        FLinearColor(.0627f, .0627f, .0627f, .784f));
+    Paint.Box(&Art.Solid, {0, 0}, FIntPoint(int32(Pixels.X) + 1, int32(Pixels.Y) + 1),
+        FBox2f(FVector2f(0), FVector2f(1)), FLinearColor(.0627f, .0627f, .0627f, .784f));
     const TArray<FHudCreativeStack> Inventory = GetInventory ? GetInventory() : TArray<FHudCreativeStack>();
     auto Tab = [&](int32 Index, bool bSelected)
     {
@@ -453,8 +293,8 @@ int32 SHudCreativeScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geome
         TArray<FHudTooltipLine> Lines;
         auto ForItem = [this, &Lines](FName Item)
         {
-            Lines.Add({ItemName(Item), HudTooltip::White});
-            if (const FHudCreativeItem* Info = Items.Find(Item)) Lines.Append(Info->Details);
+            Lines.Add({Art.ItemName(Item), HudTooltip::White});
+            if (const FHudCreativeItem* Info = Art.Items.Find(Item)) Lines.Append(Info->Details);
         };
         if (Hover.Kind == EHudCreativeHit::Tab)
             Lines.Add({Model.GetTabs()[Hover.Index].Title, HudTooltip::White});
@@ -464,22 +304,7 @@ int32 SHudCreativeScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geome
             Inventory.IsValidIndex(HoverSlot) && !Inventory[HoverSlot].IsEmpty() &&
             (Hover.Kind == EHudCreativeHit::Hotbar || FoundationInventory::IsFull()))
             ForItem(Inventory[HoverSlot].Item);
-        if (!Lines.IsEmpty())
-        {
-            // TooltipRenderingUtil: 12 right and 12 up of the cursor, 3 pixels of padding, nine-sliced sprites.
-            const FIntPoint At = O + Mouse + FIntPoint(12, -12);
-            int32 Width = 0;
-            for (const FHudTooltipLine& Line : Lines)
-                Width = FMath::Max(Width, Paint.Measure(Line.Text));
-            const FIntPoint Size(Width, HudTooltip::GetHeight(Lines.Num()));
-            Paint.NineSlice(
-                FindBrush(TEXT("gui/sprites/tooltip/background")), At - FIntPoint(12, 12), Size + FIntPoint(24, 24), 9);
-            Paint.NineSlice(
-                FindBrush(TEXT("gui/sprites/tooltip/frame")), At - FIntPoint(12, 12), Size + FIntPoint(24, 24), 10);
-            for (int32 Line = 0; Line < Lines.Num(); ++Line)
-                Paint.Text(Lines[Line].Text, At + FIntPoint(0, HudTooltip::GetLineY(Line)),
-                    FLinearColor(Lines[Line].Color), true);
-        }
+        Paint.Tooltip(Lines, O + Mouse);
     }
     return LayerId;
 }

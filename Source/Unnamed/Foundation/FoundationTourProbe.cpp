@@ -6,6 +6,7 @@
 #include "Foundation/FoundationPlayground.h"
 #include "Foundation/FoundationPanels.h"
 #include "Foundation/FoundationPawn.h"
+#include "Hud/HudContainerScreen.h"
 #include "Hud/HudCreativeScreen.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationBreakAssets.h"
@@ -1597,6 +1598,88 @@ void UFoundationRuntimeProbe::AddTourCases()
         {
             Controller->GetPanels()->Close();
             Wear(0, 0);
+        },
+        [] {});
+
+    // k. The survival inventory (E outside creative, survival step 5b; the probe opens it in the creative Playground):
+    // stacks in the main grid with a hovered hotbar item's tooltip and the empty armor and offhand silhouettes, then a
+    // left drag in progress over four slots. The player's inventory is put back after.
+    const TSharedRef<FFoundationInventory> SavedInventory = MakeShared<FFoundationInventory>();
+    auto Survival = [this, Lab, Authority](
+                        const TCHAR* Name, TFunction<void(SHudContainerScreen&, FFoundationInventory&)> Arrange)
+    {
+        AddCase(
+            FString(TEXT("tour survival ")) + Name, .8,
+            [this, Lab, Authority, Arrange]
+            {
+                ResetPlayer({0, 0, 0});
+                FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
+                if (!Player) return;
+                if (!Controller->GetPanels()->GetSurvivalScreen()) Controller->GetPanels()->OpenSurvivalInventory(*Lab);
+                if (TSharedPtr<SHudContainerScreen> Screen = Controller->GetPanels()->GetSurvivalScreen())
+                    Arrange(*Screen, Player->Inventory);
+                CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
+            },
+            [this, Name]
+            {
+                const TSharedPtr<SHudContainerScreen> Screen = Controller->GetPanels()->GetSurvivalScreen();
+                Record(FString(TEXT("tour survival open: ")) + Name, Screen.IsValid() && Screen->HasArt(),
+                    TEXT("the survival inventory screen opens with its imported art (ImportContainerGui.py)"));
+                FScreenshotRequest::RequestScreenshot(
+                    FPaths::ChangeExtension(Output, TEXT("")) + TEXT("-tour-") + Name + TEXT(".png"), true, false);
+            });
+        AddCase(FString(TEXT("tour flush ")) + Name, .4, [] {}, [] {});
+    };
+    auto Put = [Authority](
+                   FFoundationInventory& Inventory, int32 Slot, const TCHAR* Item, int32 Count, int32 Damage = 0)
+    {
+        const int32 Index = Authority().Rules.FindItem(Item);
+        if (Index == INDEX_NONE) return;
+        FFoundationItemInstance Stack = Inventory.MakeStack(Index, Count);
+        Stack.Damage = Damage;
+        Inventory.SetSlot(Slot, Stack);
+    };
+    Survival(TEXT("24-survival-inventory"),
+        [SavedInventory, Put](SHudContainerScreen& Screen, FFoundationInventory& Inventory)
+        {
+            *SavedInventory = Inventory;
+            Put(Inventory, 9, TEXT("stone"), 64);
+            Put(Inventory, 10, TEXT("dirt"), 23);
+            Put(Inventory, 19, TEXT("oak_log"), 7);
+            Put(Inventory, 35, TEXT("iron_pickaxe"), 1, 120);
+            ++Inventory.Revision;
+            Screen.GetModel().Reset();
+            Screen.SetMouse(FHudContainerModel::GetSlotPosition(FFoundationContainerMenu::FirstMain) + FIntPoint(8, 8));
+        });
+    Survival(TEXT("24b-survival-drag"),
+        [Authority](SHudContainerScreen& Screen, FFoundationInventory& Inventory)
+        {
+            const int32 Stone = Authority().Rules.FindItem(TEXT("stone"));
+            if (Stone == INDEX_NONE) return;
+            Inventory.Carried = Inventory.MakeStack(Stone, 30);
+            ++Inventory.Revision;
+            // A left drag pressed on main slot 18 and moved over three more: the preview splits 30 into 7s.
+            Screen.GetModel().Reset();
+            const int32 First = FFoundationContainerMenu::FirstMain + 18;
+            Screen.Press(FHudContainerModel::GetSlotPosition(First) + FIntPoint(8, 8), 0, false, 0);
+            for (int32 Slot = First + 1; Slot <= First + 3; ++Slot)
+                Screen.Move(FHudContainerModel::GetSlotPosition(Slot) + FIntPoint(8, 8));
+        });
+    AddCase(
+        TEXT("tour survival close"), .3,
+        [this, Authority, SavedInventory]
+        {
+            if (TSharedPtr<SHudContainerScreen> Screen = Controller->GetPanels()->GetSurvivalScreen())
+                Screen->GetModel().Reset();
+            if (FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId))
+                Player->Inventory.Carried = {};
+            Controller->GetPanels()->Close();
+            if (FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId))
+            {
+                const int32 Revision = Player->Inventory.Revision;
+                Player->Inventory = *SavedInventory;
+                Player->Inventory.Revision = Revision + 1;
+            }
         },
         [] {});
 #endif
