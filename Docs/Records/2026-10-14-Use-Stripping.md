@@ -1,6 +1,6 @@
 # Use step 14: axe stripping (record)
 
-Lane `feature/survival-use` (worktree `Unnamed-use`), from `5efbf6c`. Survival program track T3, scout AC's plan step 14 (`C:\dev\sandbox\scout-player\plan.md`, line 226). Next on this lane: step 17 (buckets), then 16 (survival fixes); the handoff is [2026-10-14-Use-Handoff-Step17.md](2026-10-14-Use-Handoff-Step17.md).
+Lane `feature/survival-use` (worktree `Unnamed-use`), from `5efbf6c`. Survival program track T3, scout AC's plan step 14 (`C:\dev\sandbox\scout-player\plan.md`, line 226). Next on this lane: step 10b (eating polish), then 17 (buckets) and 16 (survival fixes); the handoff is [2026-10-14-Use-Handoff-Step10b.md](2026-10-14-Use-Handoff-Step10b.md).
 
 ## 1. What was built
 
