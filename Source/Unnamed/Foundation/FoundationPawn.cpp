@@ -569,3 +569,14 @@ void AFoundationPawn::Tick(float DeltaSeconds)
         Camera->SetFirstPersonFieldOfView(
             FoundationCoordinates::HorizontalFov(FoundationHand::FixedVerticalFov, Aspect));
 }
+
+void AFoundationPawn::TeleportFeet(const FVector& FeetCm)
+{
+    Simulation.Feet = Simulation.PreviousFeet = FeetCm;
+    Simulation.VelocityPerTick = Simulation.LastDisplacement = FVector::ZeroVector;
+    Simulation.FallDistanceCm = 0;
+    Simulation.bGrounded = false;
+    Vitals.ResetFall();
+    SetActorLocation(FeetCm);
+    ResetBody();
+}

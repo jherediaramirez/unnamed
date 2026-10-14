@@ -69,6 +69,22 @@ struct FHudItemView
     bool operator==(const FHudItemView& Other) const = default;
 };
 
+// One run of a chat message in one colour (FFoundationChat, step 15).
+struct FHudChatRun
+{
+    FString Text;
+    FLinearColor Color = FLinearColor::White;
+    bool operator==(const FHudChatRun& Other) const = default;
+};
+
+// One chat message as the HUD draws it; Alpha is its fade (1 while the chat is open).
+struct FHudChatLine
+{
+    TArray<FHudChatRun> Runs;
+    float Alpha = 1;
+    bool operator==(const FHudChatLine& Other) const = default;
+};
+
 // One coherent adapter snapshot. No field implies a gameplay backend exists.
 struct FHudSnapshot
 {
@@ -91,6 +107,11 @@ struct FHudSnapshot
     FString ItemName;
     double NotificationTime = 1;
     EHudAttack AttackIndicator = EHudAttack::Crosshair;
+    // The chat's messages, oldest first, and whether the chat is open (more rows show).
+    TArray<FHudChatLine> Chat;
+    bool bChatOpen = false;
+    // The open chat's typed line, drawn in vanilla's input bar.
+    FString ChatInput;
 
     bool CanHurt() const { return Mode == EHudMode::Survival || Mode == EHudMode::Adventure; }
     bool HasExperience() const { return CanHurt(); }

@@ -2,6 +2,10 @@
 
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
+## October 14, 2026
+
+- [Chat commands: /gamemode, /give, /tp, /time, /kill](2026-10-14-Commands.md): survival step 15, lane `feature/survival-feel`; start the next step at [the step-11 handoff](2026-10-14-Feel-Handoff-Step11.md). `foundation.Chat.Commands 1`: commands typed in the chat run with vanilla's syntax and 26.3's feedback and error lines (every string pinned to `en_us.json`), and the chat lines and vanilla's input bar draw on the HUD in its font ([Docs/Commands.md](../Commands.md)); 0 = the old local fixture.
+
 ## October 13, 2026
 
 - [The player body: Better Steve in F5, and a spring-arm preview](2026-10-13-Player-Body.md): record and handoff, lane `feature/player-body`. Better Steve (`/Game/Characters/BetterSteve`, `Scripts/Editor/ImportBetterSteve.py`) walks, sprints, crouches, jumps and looks around in F5's back and front views with planted feet, driven in C++ (`FFoundationBodyAnimator`, `UFoundationBodyAnimInstance`, no Animation Blueprint); `foundation.Body.Yaw` (1 vanilla) and the third-person preview `foundation.View.SpringArm` (0) are Jesus's taste calls; `-Suite body` shoots every pose.

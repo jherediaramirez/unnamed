@@ -61,6 +61,10 @@ private:
     FIntPoint LastViewport = FIntPoint::ZeroValue;
     int64 HudTick = 0;
     int64 LastSampleTick = -1;
+    // The chat lines last taken from the controller's chat, its revision then and the fade step (-1 when no fade).
+    TArray<FHudChatLine> ChatLines;
+    int32 ChatRevision = -1;
+    int64 LastChatStep = -1;
     int64 LastDrawTick = -1;
     FIntPoint LastDrawViewport = FIntPoint::ZeroValue;
     int32 LastDrawScale = 0;

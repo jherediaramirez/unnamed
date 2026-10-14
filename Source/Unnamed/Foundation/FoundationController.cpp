@@ -4,7 +4,10 @@
 #include "Foundation/FoundationMenuBridge.h"
 #include "Foundation/FoundationPanels.h"
 #include "Foundation/FoundationAuthority.h"
+#include "Foundation/FoundationCommands.h"
 #include "Foundation/FoundationPawn.h"
+#include "Foundation/FoundationProfile.h"
+#include "Voxel/VoxelWorld.h"
 #include "Input/UnnamedInputSubsystem.h"
 #include "Menu/MenuBrowserHost.h"
 #include "Menu/MenuPreferences.h"
@@ -254,6 +257,7 @@ bool AFoundationController::HandleInterfaceAction(const FString& Name)
     else if (Name == TEXT("key.debug.clearChat"))
     {
         Hud->ClearEvents();
+        if (FoundationChat::AreCommandsEnabled()) Chat.Clear();
         Hud->LogEvent(TEXT("local history cleared"));
     }
     else if (Name == TEXT("key.debug.copyLocation"))
@@ -456,6 +460,41 @@ void AFoundationController::CancelActions()
     InputRouter->BlockHeldKeys();
     LastActionStep = 0;
     Hud->LogEvent(TEXT("input cancelled; release held keys to resume"));
+}
+
+void AFoundationController::SubmitChat(const FString& Text)
+{
+    const double Now = FPlatformTime::Seconds();
+    // Vanilla trims the line and collapses runs of spaces (StringUtil.normalizeSpace); an empty line sends nothing.
+    FString Line = Text.TrimStartAndEnd().Left(256);
+    while (Line.ReplaceInline(TEXT("  "), TEXT(" ")))
+        ;
+    if (Line.IsEmpty()) return;
+    FFoundationCommandContext Context;
+    if (!Line.StartsWith(TEXT("/")))
+    {
+        Chat.AddText(FoundationCommands::Format(TEXT("chat.type.text"), {Context.PlayerName, Line}),
+            FoundationChat::White(), Now);
+        return;
+    }
+    AFoundationPawn* FoundationPawn = GetFoundationPawn();
+    Context.Authority = FoundationPawn ? FoundationPawn->GetAuthority() : nullptr;
+    Context.PlayerId = FoundationPawn ? FoundationPawn->Interaction.PlayerId : 0;
+    Context.Vitals = FoundationPawn ? &FoundationPawn->Vitals : nullptr;
+    if (FoundationPawn)
+    {
+        Context.FeetCm = FoundationPawn->Simulation.Feet;
+        Context.MinecraftOriginCm = GetDefault<UFoundationProfile>()->MinecraftOriginCm;
+        Context.RebaseCm = GetWorld()->OriginLocation;
+        Context.Teleport = [WeakPawn = TWeakObjectPtr<AFoundationPawn>(FoundationPawn)](const FVector& FeetCm)
+        {
+            if (WeakPawn.IsValid()) WeakPawn->TeleportFeet(FeetCm);
+        };
+    }
+    if (AVoxelWorld* Voxels = AVoxelWorld::Find(GetWorld())) Context.Clock = &Voxels->GetClock();
+    for (TArray<FHudChatRun>& Runs : FoundationCommands::Run(Line, Context))
+        Chat.Add(MoveTemp(Runs), Now);
+    Hud->LogEvent(TEXT("command: ") + Line);
 }
 
 void AFoundationController::HandleFocusChanged(bool bActive)

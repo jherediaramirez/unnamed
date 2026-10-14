@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "Foundation/FoundationActions.h"
+#include "Foundation/FoundationChat.h"
 #include "FoundationController.generated.h"
 
 class AFoundationPawn;
@@ -54,6 +55,12 @@ public:
 
     const FString& GetLastLogical() const { return LastLogical; }
 
+    // A line typed in the chat (step 15, foundation.Chat.Commands 1): '/' runs a command and shows its feedback,
+    // other text shows as "<Player> text". Times are FPlatformTime seconds.
+    void SubmitChat(const FString& Text);
+    const FFoundationChat& GetChat() const { return Chat; }
+    void ClearChat() { Chat.Clear(); }
+
     // Typed action test double: hotbar tokens, break/use state, last result. The Foundation lab's
     // receiver; the Playground sends the same actions to the pawn's interaction instead.
     FFoundationActions Actions;
@@ -91,6 +98,7 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UFoundationMenuBridge> MenuBridge;
 
+    FFoundationChat Chat;
     TSet<FName> HeldActions;
     int64 NextUseStep = 0;
     int64 LastActionStep = 0;
