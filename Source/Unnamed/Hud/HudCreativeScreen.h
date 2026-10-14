@@ -2,15 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "Hud/HudCreative.h"
-#include "Styling/SlateBrush.h"
-#include "UObject/StrongObjectPtr.h"
+#include "Hud/HudGuiPainter.h"
 #include "Widgets/SLeafWidget.h"
 
 class FFoundationBlockRegistry;
 class UHudAssets;
-class UTexture2D;
 
-using FHudCreativeItems = TMap<FName, FHudCreativeItem>;
 using FHudCreativeInventory = TFunction<TArray<FHudCreativeStack>()>;
 using FHudCreativeWriter = TFunction<void(const FHudCreativeWrite&)>;
 
@@ -78,29 +75,17 @@ private:
     FFrame GetFrame(const FGeometry& Geometry) const;
     FIntPoint ToGui(const FGeometry& Geometry, const FPointerEvent& Event) const;
     void Write(const TArray<FHudCreativeWrite>& Writes);
-    const FSlateBrush* FindBrush(const FString& Id) const;
-    FString ItemName(FName Item) const;
-
-    struct FPainter;
+    const FSlateBrush* FindBrush(const FString& Id) const { return Art.Find(Id); }
 
     FHudCreativeModel Model;
     TAttribute<int32> RequestedGuiScale;
     mutable int32 LastFrameScale = 0;
-    TSharedPtr<const FFoundationBlockRegistry> Registry;
-    TWeakObjectPtr<const UHudAssets> HudAssets;
-    FHudCreativeItems Items;
+    // The registry, the HUD assets, the items and the screen's brushes (HudGuiPainter).
+    FHudGuiArt Art;
     FHudCreativeInventory GetInventory;
     FHudCreativeWriter OnWrite;
     TFunction<void()> OnClose;
-    TMap<FString, FSlateBrush> Brushes;
-    // A brush does not keep its texture alive; these do, so a garbage collection while the screen is open cannot
-    // free them (it did once the held-item shots made the tour longer).
-    TArray<TStrongObjectPtr<UTexture2D>> BrushTextures;
-    FSlateBrush Atlas;
-    FSlateBrush Solid;
     FIntPoint Mouse = FIntPoint(-1000, -1000);
     bool bDraggingScroller = false;
-    // Block animation tick for icons, from the clock at each paint (20 per second).
-    mutable int64 Tick = 0;
     double FocusTime = 0;
 };

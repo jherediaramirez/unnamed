@@ -42,6 +42,8 @@ struct FHudCreativeItem
     FString Sprite;
 };
 
+using FHudCreativeItems = TMap<FName, FHudCreativeItem>;
+
 // Where a point on the screen lands. Slot indices: Grid 0-44 (visible rows), Hotbar 0-8, Inventory 0-26 (the
 // survival tab's main slots), Armor 0-3 (head, chest, legs, feet), Tab = index into GetTabs().
 enum class EHudCreativeHit : uint8
