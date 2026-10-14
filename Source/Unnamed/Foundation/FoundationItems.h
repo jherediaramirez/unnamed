@@ -27,6 +27,28 @@ struct FFoundationMiningRule
     bool bCorrectForDrops = false;
 };
 
+// What eating an item gives (26.3's food component) and how long it takes (its consumable component's
+// consume_seconds, in reference ticks; `consumable: {}` is the default 1.6 s, 32 ticks).
+struct FFoundationConsumable
+{
+    int32 Nutrition = 0;
+    float Saturation = 0;
+    int32 ConsumeTicks = 0;
+
+    bool IsValid() const { return ConsumeTicks > 0; }
+};
+
+namespace FoundationConsumables
+{
+    // The default consume time, 1.6 s (wiki "Food"; items.json's `consumable: {}`).
+    constexpr int32 DefaultTicks = 32;
+    // The 26.3 reference's food for an item id, copied from Reference/minecraft-items-26.3/items.json (food and
+    // consumable) for the foods this project has; a test pins every row against items.json. Null for others. A native
+    // table until DA_Items carries the food fields (a later importer migration; known issue).
+    UNNAMED_API const FFoundationConsumable* FindReference(FName Id);
+    UNNAMED_API TConstArrayView<TPair<FName, FFoundationConsumable>> GetReferenceTable();
+}
+
 // An authorable item type. Capabilities are independent optional fields, so one item can place, mine and
 // fight; rules read capabilities and tags, never names.
 USTRUCT()
@@ -100,7 +122,13 @@ struct FFoundationItemDefinition
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     FName Sprite;
 
+    // Consumable capability (step 10, eating). Unset (0 ticks) here, the 26.3 reference's food for this Id applies
+    // (FoundationConsumables::FindReference); tests author their own.
+    FFoundationConsumable Consumable;
+
     bool CanPlace() const { return !PlacesBlock.IsNone(); }
+    // The definition's own consumable, else the reference's for its Id, else none (0 ticks).
+    FFoundationConsumable GetConsumable() const;
     // Speed from the first rule that matches and states one, else the default.
     float GetMiningSpeed(const FGameplayTagContainer& BlockTags) const;
     // Drop correctness from the first matching rule that states it, else false.

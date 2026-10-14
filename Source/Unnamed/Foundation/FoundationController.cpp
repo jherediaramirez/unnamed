@@ -376,8 +376,8 @@ void AFoundationController::NoteInteraction(const AFoundationPawn& FoundationPaw
     if (!Authority) return;
     static const TCHAR* Kinds[] = {TEXT("placed"), TEXT("broke"), TEXT("hit"), TEXT("whiff"), TEXT("rejected"),
         TEXT("interacted"), TEXT("tool broke"), TEXT("target down"), TEXT("lab reset"), TEXT("popped"),
-        TEXT("picked up")};
-    static_assert(UE_ARRAY_COUNT(Kinds) == int32(EFoundationEventKind::PickedUp) + 1, "one name per event kind");
+        TEXT("picked up"), TEXT("eating"), TEXT("ate")};
+    static_assert(UE_ARRAY_COUNT(Kinds) == int32(EFoundationEventKind::Ate) + 1, "one name per event kind");
     for (const FFoundationEvent& Event : Authority->GetEvents())
     {
         if (Event.Serial <= LastInteractionEvent) continue;
@@ -391,6 +391,10 @@ void AFoundationController::NoteInteraction(const AFoundationPawn& FoundationPaw
             Text += FString(TEXT(": ")) + LexToString(Event.Reason);
         else if (Event.Kind == EFoundationEventKind::Interacted)
             Text += TEXT(" ") + Event.Interaction.ToString();
+        else if (Event.Kind == EFoundationEventKind::Eating)
+            continue; // Every fourth step of a meal: too chatty for the event log.
+        else if (Event.Kind == EFoundationEventKind::Ate)
+            Text = FString::Printf(TEXT("ate %s"), *Authority->Rules.GetItem(Event.Item).Id.ToString());
         else if (Event.Kind == EFoundationEventKind::PickedUp)
             Text = FString::Printf(
                 TEXT("picked up %d %s"), Event.Count, *Authority->Rules.GetItem(Event.Item).Id.ToString());

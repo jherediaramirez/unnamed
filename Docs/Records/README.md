@@ -2,6 +2,10 @@
 
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
+## October 14, 2026
+
+- [Use step 10: eating](2026-10-14-Use-Eating.md): record and handoff, lane `feature/survival-use`. `foundation.Items.Use 1`: hold use with food to eat it over 32 steps (hunger and saturation from items.json's food, capped saturation, full hunger refuses, release or a slot change cancels, 20% slowdown, eat and burp sounds, a provisional eating pose); 0 lets food pass as before. Next: step 14, axe stripping.
+
 ## October 13, 2026
 
 - [The player body: Better Steve in F5, and a spring-arm preview](2026-10-13-Player-Body.md): record and handoff, lane `feature/player-body`. Better Steve (`/Game/Characters/BetterSteve`, `Scripts/Editor/ImportBetterSteve.py`) walks, sprints, crouches, jumps and looks around in F5's back and front views with planted feet, driven in C++ (`FFoundationBodyAnimator`, `UFoundationBodyAnimInstance`, no Animation Blueprint); `foundation.Body.Yaw` (1 vanilla) and the third-person preview `foundation.View.SpringArm` (0) are Jesus's taste calls; `-Suite body` shoots every pose.
