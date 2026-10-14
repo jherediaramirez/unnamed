@@ -9,6 +9,7 @@
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationItemAssets.h"
+#include "Foundation/FoundationExperienceOrbView.h"
 #include "Foundation/FoundationItemEntityView.h"
 #include "Foundation/FoundationItemMesh.h"
 #include "Foundation/FoundationPawn.h"
@@ -1168,6 +1169,137 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             Capture(TEXT("drops-off"));
         });
     AddCase(TEXT("drop capture off hold"), .2, [] {}, [SetItemEntities] { SetItemEntities(1); });
+
+    // 13d. Experience orbs (survival step 12, foundation.Items.Xp 1): a mined diamond ore pays 3 to 7 points in orbs
+    // that fly to the player and fill the XP bar. Shot as xp-on just after the break (the orbs popping out), and the
+    // control xp-off: the same break with the switch at 0 pays no orbs.
+    auto SetXp = [](int32 Value)
+    { IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Items.Xp"))->Set(Value, ECVF_SetByCode); };
+    struct FXpState
+    {
+        int32 Total = 0, Spawned = 0, Picked = 0, Sounds = 0;
+    };
+    TSharedRef<FXpState> Xp = MakeShared<FXpState>();
+    auto MineOre = [this, Lab, Authority, Click, Look, Xp]
+    {
+        ResetPlayer({-750, 650, 0});
+        FFoundationAuthority& A = Authority();
+        A.World.Set({-5, 6, 0}, A.World.FindBlock(TEXT("diamond_ore"))->GetDefaultState());
+        Xp->Total = Pawn->Vitals.TotalExperience;
+        Xp->Spawned = A.OrbsSpawned;
+        Xp->Picked = A.OrbsPickedUp;
+        const FFoundationExperienceOrbView* OrbView = Lab->GetView()->GetExperienceOrbView();
+        Xp->Sounds = OrbView ? OrbView->PickupSounds : 0;
+        Click(EKeys::Two);
+        Look(FVector(-450, 650, 50));
+        PressKey(EKeys::LeftMouseButton, true);
+    };
+    Prepare(TEXT("xp"), true);
+    AddCase(
+        TEXT("xp mine"), .95,
+        [SetXp, MineOre]
+        {
+            SetXp(1);
+            MineOre();
+        },
+        [this, Lab, Authority, Solid, Capture, Xp]
+        {
+            PressKey(EKeys::LeftMouseButton, false);
+            const FFoundationAuthority& A = Authority();
+            const FFoundationExperienceOrbView* View = Lab->GetView()->GetExperienceOrbView();
+            Record(TEXT("a mined diamond ore pays orbs, drawn"),
+                !Solid({-5, 6, 0}) && A.OrbsSpawned > Xp->Spawned && View && View->GetDrawnCount() > 0,
+                FString::Printf(TEXT("broken %d, orbs spawned %d, drawn %d"), !Solid({-5, 6, 0}),
+                    A.OrbsSpawned - Xp->Spawned, View ? View->GetDrawnCount() : -1));
+            Capture(TEXT("xp-on"));
+        });
+    AddCase(
+        TEXT("xp fly in"), 2.,
+        [this, Lab]
+        {
+            if (FFoundationBreakEffects* Effects = Lab->GetView()->GetBreakEffects()) Effects->ClearSoundLog();
+        },
+        [this, Lab, Authority, Xp]
+        {
+            const FFoundationAuthority& A = Authority();
+            int32 Points = 0, Events = 0;
+            for (const FFoundationEvent& Event : A.GetEvents())
+                if (Event.Kind == EFoundationEventKind::ExperiencePickedUp &&
+                    Event.Player == Pawn->Interaction.PlayerId)
+                {
+                    Points += Event.Count;
+                    ++Events;
+                }
+            const FFoundationVitals& V = Pawn->Vitals;
+            const FHudSnapshot& S = Controller->GetHud()->GetPresenter()->GetSnapshot();
+            const int32 Gained = V.TotalExperience - Xp->Total;
+            Record(TEXT("the orbs fly in and their 3 to 7 points reach the vitals"),
+                A.GetExperienceOrbs().IsEmpty() && A.OrbsPickedUp - Xp->Picked == Events && Gained == Points &&
+                    Gained >= 3 && Gained <= 7,
+                FString::Printf(TEXT("orbs left %d, picked %d, events %d, points %d, gained %d"),
+                    A.GetExperienceOrbs().Num(), A.OrbsPickedUp - Xp->Picked, Events, Points, Gained));
+            Record(TEXT("the XP bar moves: the HUD shows the vitals' level and progress"),
+                S.Level == V.Level && FMath::IsNearlyEqual(S.Experience, double(V.Progress)) &&
+                    (S.Level > 0 || HudModel::GetExperienceWidth(S.Experience) > 0),
+                FString::Printf(TEXT("level %d, progress %.4f, bar width %d"), S.Level, S.Experience,
+                    HudModel::GetExperienceWidth(S.Experience)));
+            const FFoundationExperienceOrbView* View = Lab->GetView()->GetExperienceOrbView();
+            Record(TEXT("each pickup calls the pickup sound hook"),
+                View && View->PickupSounds - Xp->Sounds == Events && Events > 0,
+                FString::Printf(
+                    TEXT("hook calls %d, pickups %d"), View ? View->PickupSounds - Xp->Sounds : -1, Events));
+        });
+    AddCase(
+        TEXT("xp icons"), 1.,
+        [this, Authority, Look]
+        {
+            // The eleven icons (values at each threshold) 9 blocks ahead, beyond the 8-block follow range, so they
+            // rest.
+            FFoundationAuthority& A = Authority();
+            int32 Seed = 1;
+            for (const int32 Value : FoundationExperienceOrbs::IconThresholds)
+            {
+                A.SpawnExperience(FVector(150, 400 + 50 * Seed, 50) - A.World.OriginCm, Value, Seed);
+                ++Seed;
+            }
+            Look(FVector(150, 650, 0));
+        },
+        [this, Lab, Authority, Capture]
+        {
+            const FFoundationExperienceOrbView* View = Lab->GetView()->GetExperienceOrbView();
+            TArray<int32> Icons;
+            if (View)
+                for (int32 Index = 0; Index < View->GetDrawnData().Num();
+                    Index += FFoundationExperienceOrbView::DataFloats)
+                    Icons.AddUnique(FMath::RoundToInt(View->GetDrawnData()[Index]));
+            Record(TEXT("the eleven orb icons are drawn"),
+                Authority().GetExperienceOrbs().Num() == 11 && View && View->GetDrawnCount() == 11 && Icons.Num() == 11,
+                FString::Printf(TEXT("orbs %d, drawn %d, icons %d; %s"), Authority().GetExperienceOrbs().Num(),
+                    View ? View->GetDrawnCount() : -1, Icons.Num(), View ? *View->Describe() : TEXT("")));
+            Capture(TEXT("xp-icons"));
+        });
+    // The next case resets the lab in this tick; the shot is taken at the frame's end.
+    AddCase(TEXT("xp icons hold"), .2, [] {}, [] {});
+    Prepare(TEXT("xp control"), true);
+    AddCase(
+        TEXT("xp mine off"), 1.1,
+        [SetXp, MineOre]
+        {
+            SetXp(0);
+            MineOre();
+        },
+        [this, Lab, Authority, Solid, Capture, Xp]
+        {
+            PressKey(EKeys::LeftMouseButton, false);
+            const FFoundationAuthority& A = Authority();
+            const FFoundationExperienceOrbView* View = Lab->GetView()->GetExperienceOrbView();
+            Record(TEXT("the control pays no orbs"),
+                !Solid({-5, 6, 0}) && A.OrbsSpawned == Xp->Spawned && View && View->GetDrawnCount() == 0,
+                FString::Printf(TEXT("broken %d, orbs spawned %d, drawn %d"), !Solid({-5, 6, 0}),
+                    A.OrbsSpawned - Xp->Spawned, View ? View->GetDrawnCount() : -1));
+            Capture(TEXT("xp-off"));
+        });
+    AddCase(TEXT("xp control hold"), .2, [] {}, [SetXp] { SetXp(1); });
 
     // 13c. Eating (step 10, foundation.Items.Use 1): holding use with apples at hunger 10 eats one in 1.6 s (hunger
     // 14, one apple fewer, the eat and burp sounds); letting go mid-way eats nothing. Then the capture pair: eating

@@ -79,6 +79,11 @@ def sound_asset(asset_name):
     return _settings.get_sound_asset_package(asset_name)
 
 
+def entity_asset(asset_name):
+    """Package of an entity asset under UUnnamedProjectSettings::EntityRoot, e.g. entity_asset("T_ExperienceOrb")."""
+    return _settings.get_entity_asset_package(asset_name)
+
+
 def player_body_asset(asset_name):
     """Package of a player body asset under UUnnamedProjectSettings::PlayerBodyRoot, e.g. player_body_asset("BS_Idle")."""
     return _settings.get_player_body_asset_package(asset_name)

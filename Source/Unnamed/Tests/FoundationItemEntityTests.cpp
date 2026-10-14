@@ -938,8 +938,9 @@ bool FFoundationItemEntityMergeTest::RunTest(const FString&)
         TestEqual(*FString::Printf(TEXT("sideways %.0f cm"), Case.Get<0>()), L.A.GetItemEntities().Num(),
             Case.Get<1>() ? 1 : 2);
     }
-    // And 0.25 up: an item on a shelf 49 cm up merges, 50 cm (touching) does not.
-    for (const TTuple<double, bool>& Case : TArray<TTuple<double, bool>>{{49., true}, {50., false}})
+    // Not grown up or down [items.merge_boundary_stationary]: an item on a shelf 24 cm up (its box still overlaps)
+    // merges, 25 cm (touching) does not.
+    for (const TTuple<double, bool>& Case : TArray<TTuple<double, bool>>{{24., true}, {25., false}})
     {
         FEntityLab L(false);
         FFoundationStatic Shelf;
@@ -950,6 +951,22 @@ bool FFoundationItemEntityMergeTest::RunTest(const FString&)
         L.Steps(80);
         TestEqual(
             *FString::Printf(TEXT("up %.0f cm"), Case.Get<0>()), L.A.GetItemEntities().Num(), Case.Get<1>() ? 1 : 2);
+    }
+    {
+        // [items.physics] an item whose integer block cell changed this step seeks every 2 steps of its age: A falls
+        // from 105 cm (101 after step 1, 93.08 after step 2, a new cell on its 2nd step) beside B resting on a shelf
+        // 90 cm up, and merges into it on step 2, not step 1.
+        FEntityLab L(false);
+        FFoundationStatic Shelf;
+        Shelf.Box = FBox(FVector(20, -50, -10), FVector(80, 50, 90));
+        Shelf.Label = TEXT("shelf");
+        L.A.Statics.Add(Shelf);
+        const TPair<int32, int32> Ids = SpawnPair(L, FVector(0, 0, 105), 3, FVector(40, 0, 90), 5);
+        L.NextStep();
+        TestEqual(TEXT("moving: not merged on step 1"), L.A.GetItemEntities().Num(), 2);
+        L.NextStep();
+        TestTrue(TEXT("moving: merged on step 2"),
+            L.A.GetItemEntities().Num() == 1 && L.Find(Ids.Value) && L.Find(Ids.Value)->Count == 8);
     }
     {
         // Up to the max stack: 40 + 40 is 64 + 16, and stays so.

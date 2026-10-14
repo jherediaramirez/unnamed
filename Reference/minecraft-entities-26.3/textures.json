@@ -1,0 +1,14 @@
+{
+ "source": {
+  "client_jar_sha1": "e877b6a07acd633fb3bb475002175cec036e7b87"
+ },
+ "textures": [
+  {
+   "name": "entity/experience/experience_orb.png",
+   "sha1": "763f7173c56685564185bcea633d0f733b13b2b8",
+   "size": 415,
+   "width": 64,
+   "height": 64
+  }
+ ]
+}

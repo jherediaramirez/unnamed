@@ -362,8 +362,11 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.Options.bItemEntities = FoundationItemEntities::IsOn();
     Authority.Options.bFullInventory = FoundationInventory::IsFull();
     Authority.Options.bItemUse = FoundationItemUse::IsOn();
+    Authority.Options.bExperienceOrbs = FoundationExperienceOrbs::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     Authority.Step();
+    // Step 12: the orbs this player took this step fill its XP bar.
+    if (const int32 Points = Authority.TakeExperience(Interaction.PlayerId)) Vitals.AddExperience(Points);
     Interaction.StepOnce(Authority, Vitals, bLatestStep, NowSeconds);
     // A landed sprint-knockback hit ends the sprint; held sprint input restarts it by the simulation's own rules.
     if (Interaction.bStopSprint)
