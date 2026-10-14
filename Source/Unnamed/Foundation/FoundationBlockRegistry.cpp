@@ -2,11 +2,18 @@
 #include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationPlantRules.h"
+#include "HAL/IConsoleManager.h"
 #include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
 
 namespace
 {
+    TAutoConsoleVariable<int32> CVarBlocksFamilies(TEXT("foundation.Blocks.Families"), 1,
+        TEXT("1: survival B1's block families (stairs, doors, beds, chests and the rest, DA_Blocks' bAppendedFamily) "
+             "are in the creative inventory and the Playground galleries' tails, and place their default state. 0: "
+             "they are absent and refuse placing, as before they were imported."),
+        ECVF_Default);
+
     const FBox FullShape(FVector::ZeroVector, FVector::OneVector);
     const FBox BottomSlabShape(FVector::ZeroVector, FVector(1, 1, .5));
     const FBox TopSlabShape(FVector(0, 0, .5), FVector::OneVector);
@@ -43,6 +50,16 @@ namespace
             Count *= FMath::Max(1, Property.Values.Num());
         return Count;
     }
+}
+
+bool FoundationBlockFamilies::AreEnabled()
+{
+    return CVarBlocksFamilies.GetValueOnAnyThread() != 0;
+}
+
+bool FoundationBlockFamilies::IsHidden(const FFoundationBlockType* Block)
+{
+    return Block && Block->bAppendedFamily && !AreEnabled();
 }
 
 FFoundationModelQuad FoundationBlockModels::Decode(int32 Code, const float* Vertices)
@@ -231,6 +248,7 @@ TSharedRef<FFoundationBlockRegistry> FFoundationBlockRegistry::Build(
             Block.OffsetMinVertical = Source.OffsetMinVertical;
             Block.bOutlineMovesWithOffset = Source.bOutlineMovesWithOffset;
             Block.bCollisionMovesWithOffset = Source.bCollisionMovesWithOffset;
+            Block.bAppendedFamily = Source.bAppendedFamily;
             NextProtocol = FMath::Max(NextProtocol, Source.ProtocolId + 1);
             NextState = FMath::Max(NextState, Source.MinStateId + States);
             const int32 TableOffset = Registry->Shapes.Num();

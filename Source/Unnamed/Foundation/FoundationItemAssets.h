@@ -181,6 +181,10 @@ struct FFoundationItemAsset
     // Sprite names ("item/iron_pickaxe"); the first is the GUI sprite.
     UPROPERTY(EditAnywhere, Category = "Item")
     TArray<FName> Textures;
+
+    // The block it places (item id = block id), or None: the saplings once DA_Blocks holds them (survival B1).
+    UPROPERTY(EditAnywhere, Category = "Item")
+    FName PlacesBlock;
 };
 
 // One display context's transform, verbatim in Mojang model units (rotation degrees, translation pixels).

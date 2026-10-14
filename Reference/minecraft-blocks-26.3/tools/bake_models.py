@@ -13,7 +13,9 @@ rotation with rescale). Conventions this baker fixes, each our own reading of th
   it each face's cullface and shade direction.
 - uvlock keeps every face's texture aligned with the world. A face's UV in model space is one of the 8 transforms of
   the canonical UV (build_reference.canonical_uv, transform_uv); after the blockstate rotation it shows the same
-  transform of the canonical UV of its final direction. Faces of rotated elements never use it.
+  transform of the canonical UV of its final direction. Faces of rotated elements never use it. A face UV that is no
+  such transform (fence and wall bars, stairs, buttons: blocks session B1) turns its UV rectangle with the face: the
+  transform taking the face's canonical UV in model space to that of its final direction applies to its UV.
 - Random variant lists bake every entry (all equal weight in the 83 blocks); multipart states are the sum of their
   parts. A state is therefore a list of parts, each a list of alternatives, each a baked model index.
 """
@@ -98,8 +100,17 @@ class Baker:
                     canon = [r.canonical_uv(face_dir, p) for p in local]
                     code = next((c for c in range(8) if all(abs(a - b) < 1e-6 for p, q in zip(uv, canon)
                                                            for a, b in zip(p, r.transform_uv(c, *q)))), None)
-                    assert code is not None, (variant, face_dir, "uvlock needs a whole-face mapping")
-                    uv = [r.transform_uv(code, *r.canonical_uv(world, p)) for p in verts]
+                    if code is not None:
+                        uv = [r.transform_uv(code, *r.canonical_uv(world, p)) for p in verts]
+                    else:
+                        # A UV that is no transform of the canonical one (fence and wall bars, stairs, buttons:
+                        # blocks session B1): the UV rectangle turns with the face, i.e. the one transform taking the
+                        # canonical UV of the model-space face to that of its final direction applies to its UV.
+                        frame = next((c for c in range(8) if all(
+                            abs(a - b) < 1e-6 for p, q in zip(verts, canon)
+                            for a, b in zip(r.canonical_uv(world, p), r.transform_uv(c, *q)))), None)
+                        assert frame is not None, (variant, face_dir, "no uvlock frame")
+                        uv = [r.transform_uv(frame, *p) for p in uv]
                 # Faces of a flat element along its own thin axis have no area (the mangrove propagule's): skipped.
                 a, b, c = verts[0], verts[1], verts[2]
                 u, v = [b[i] - a[i] for i in range(3)], [c[i] - a[i] for i in range(3)]

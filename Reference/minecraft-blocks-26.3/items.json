@@ -2192,6 +2192,678 @@
    ]
   },
   {
+   "id": "white_bed",
+   "block": "white_bed",
+   "name": "White Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 213
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 207
+    },
+    {
+     "tab": "search",
+     "index": 688
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "id": "orange_bed",
+   "block": "orange_bed",
+   "name": "Orange Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 219
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 213
+    },
+    {
+     "tab": "search",
+     "index": 694
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "id": "magenta_bed",
+   "block": "magenta_bed",
+   "name": "Magenta Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 227
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 221
+    },
+    {
+     "tab": "search",
+     "index": 702
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "id": "light_blue_bed",
+   "block": "light_blue_bed",
+   "name": "Light Blue Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 224
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 218
+    },
+    {
+     "tab": "search",
+     "index": 699
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "id": "yellow_bed",
+   "block": "yellow_bed",
+   "name": "Yellow Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 220
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 214
+    },
+    {
+     "tab": "search",
+     "index": 695
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "id": "lime_bed",
+   "block": "lime_bed",
+   "name": "Lime Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 221
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 215
+    },
+    {
+     "tab": "search",
+     "index": 696
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "id": "pink_bed",
+   "block": "pink_bed",
+   "name": "Pink Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 228
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 222
+    },
+    {
+     "tab": "search",
+     "index": 703
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "id": "gray_bed",
+   "block": "gray_bed",
+   "name": "Gray Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 215
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 209
+    },
+    {
+     "tab": "search",
+     "index": 690
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "id": "light_gray_bed",
+   "block": "light_gray_bed",
+   "name": "Light Gray Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 214
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 208
+    },
+    {
+     "tab": "search",
+     "index": 689
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "id": "cyan_bed",
+   "block": "cyan_bed",
+   "name": "Cyan Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 223
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 217
+    },
+    {
+     "tab": "search",
+     "index": 698
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "id": "purple_bed",
+   "block": "purple_bed",
+   "name": "Purple Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 226
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 220
+    },
+    {
+     "tab": "search",
+     "index": 701
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "id": "blue_bed",
+   "block": "blue_bed",
+   "name": "Blue Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 225
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 219
+    },
+    {
+     "tab": "search",
+     "index": 700
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "id": "brown_bed",
+   "block": "brown_bed",
+   "name": "Brown Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 217
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 211
+    },
+    {
+     "tab": "search",
+     "index": 692
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "id": "green_bed",
+   "block": "green_bed",
+   "name": "Green Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 222
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 216
+    },
+    {
+     "tab": "search",
+     "index": 697
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "id": "red_bed",
+   "block": "red_bed",
+   "name": "Red Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 218
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 212
+    },
+    {
+     "tab": "search",
+     "index": 693
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "id": "black_bed",
+   "block": "black_bed",
+   "name": "Black Bed",
+   "max_stack": 1,
+   "model": "",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 216
+    },
+    {
+     "tab": "functional_blocks",
+     "index": 210
+    },
+    {
+     "tab": "search",
+     "index": 691
+    }
+   ],
+   "icon": {
+    "model": 4851,
+    "gui": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
    "id": "short_grass",
    "block": "short_grass",
    "name": "Short Grass",
@@ -2690,6 +3362,614 @@
      "index": 478
     }
    ]
+  },
+  {
+   "id": "white_wool_stairs",
+   "block": "white_wool_stairs",
+   "name": "White Wool Stairs",
+   "max_stack": 64,
+   "model": "block/white_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 16
+    },
+    {
+     "tab": "search",
+     "index": 491
+    }
+   ],
+   "icon": {
+    "model": 331,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "orange_wool_stairs",
+   "block": "orange_wool_stairs",
+   "name": "Orange Wool Stairs",
+   "max_stack": 64,
+   "model": "block/orange_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 22
+    },
+    {
+     "tab": "search",
+     "index": 497
+    }
+   ],
+   "icon": {
+    "model": 355,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "magenta_wool_stairs",
+   "block": "magenta_wool_stairs",
+   "name": "Magenta Wool Stairs",
+   "max_stack": 64,
+   "model": "block/magenta_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 30
+    },
+    {
+     "tab": "search",
+     "index": 505
+    }
+   ],
+   "icon": {
+    "model": 379,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "light_blue_wool_stairs",
+   "block": "light_blue_wool_stairs",
+   "name": "Light Blue Wool Stairs",
+   "max_stack": 64,
+   "model": "block/light_blue_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 27
+    },
+    {
+     "tab": "search",
+     "index": 502
+    }
+   ],
+   "icon": {
+    "model": 403,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "yellow_wool_stairs",
+   "block": "yellow_wool_stairs",
+   "name": "Yellow Wool Stairs",
+   "max_stack": 64,
+   "model": "block/yellow_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 23
+    },
+    {
+     "tab": "search",
+     "index": 498
+    }
+   ],
+   "icon": {
+    "model": 427,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "lime_wool_stairs",
+   "block": "lime_wool_stairs",
+   "name": "Lime Wool Stairs",
+   "max_stack": 64,
+   "model": "block/lime_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 24
+    },
+    {
+     "tab": "search",
+     "index": 499
+    }
+   ],
+   "icon": {
+    "model": 451,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "pink_wool_stairs",
+   "block": "pink_wool_stairs",
+   "name": "Pink Wool Stairs",
+   "max_stack": 64,
+   "model": "block/pink_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 31
+    },
+    {
+     "tab": "search",
+     "index": 506
+    }
+   ],
+   "icon": {
+    "model": 475,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "gray_wool_stairs",
+   "block": "gray_wool_stairs",
+   "name": "Gray Wool Stairs",
+   "max_stack": 64,
+   "model": "block/gray_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 18
+    },
+    {
+     "tab": "search",
+     "index": 493
+    }
+   ],
+   "icon": {
+    "model": 499,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "light_gray_wool_stairs",
+   "block": "light_gray_wool_stairs",
+   "name": "Light Gray Wool Stairs",
+   "max_stack": 64,
+   "model": "block/light_gray_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 17
+    },
+    {
+     "tab": "search",
+     "index": 492
+    }
+   ],
+   "icon": {
+    "model": 523,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "cyan_wool_stairs",
+   "block": "cyan_wool_stairs",
+   "name": "Cyan Wool Stairs",
+   "max_stack": 64,
+   "model": "block/cyan_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 26
+    },
+    {
+     "tab": "search",
+     "index": 501
+    }
+   ],
+   "icon": {
+    "model": 547,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "purple_wool_stairs",
+   "block": "purple_wool_stairs",
+   "name": "Purple Wool Stairs",
+   "max_stack": 64,
+   "model": "block/purple_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 29
+    },
+    {
+     "tab": "search",
+     "index": 504
+    }
+   ],
+   "icon": {
+    "model": 571,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "blue_wool_stairs",
+   "block": "blue_wool_stairs",
+   "name": "Blue Wool Stairs",
+   "max_stack": 64,
+   "model": "block/blue_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 28
+    },
+    {
+     "tab": "search",
+     "index": 503
+    }
+   ],
+   "icon": {
+    "model": 595,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "brown_wool_stairs",
+   "block": "brown_wool_stairs",
+   "name": "Brown Wool Stairs",
+   "max_stack": 64,
+   "model": "block/brown_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 20
+    },
+    {
+     "tab": "search",
+     "index": 495
+    }
+   ],
+   "icon": {
+    "model": 619,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "green_wool_stairs",
+   "block": "green_wool_stairs",
+   "name": "Green Wool Stairs",
+   "max_stack": 64,
+   "model": "block/green_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 25
+    },
+    {
+     "tab": "search",
+     "index": 500
+    }
+   ],
+   "icon": {
+    "model": 643,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "red_wool_stairs",
+   "block": "red_wool_stairs",
+   "name": "Red Wool Stairs",
+   "max_stack": 64,
+   "model": "block/red_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 21
+    },
+    {
+     "tab": "search",
+     "index": 496
+    }
+   ],
+   "icon": {
+    "model": 667,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "black_wool_stairs",
+   "block": "black_wool_stairs",
+   "name": "Black Wool Stairs",
+   "max_stack": 64,
+   "model": "block/black_wool_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 19
+    },
+    {
+     "tab": "search",
+     "index": 494
+    }
+   ],
+   "icon": {
+    "model": 691,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "white_wool_slab",
@@ -3518,6 +4798,86 @@
    ]
   },
   {
+   "id": "oak_stairs",
+   "block": "oak_stairs",
+   "name": "Oak Stairs",
+   "max_stack": 64,
+   "model": "block/oak_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 5
+    },
+    {
+     "tab": "search",
+     "index": 5
+    }
+   ],
+   "icon": {
+    "model": 715,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "chest",
+   "block": "chest",
+   "name": "Chest",
+   "max_stack": 64,
+   "model": "unnamed:stand_in/chest_normal",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "functional_blocks",
+     "index": 178
+    },
+    {
+     "tab": "redstone_blocks",
+     "index": 35
+    },
+    {
+     "tab": "search",
+     "index": 1128
+    }
+   ],
+   "icon": {
+    "model": 4657,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "diamond_ore",
    "block": "diamond_ore",
    "name": "Diamond Ore",
@@ -3590,6 +4950,44 @@
    ]
   },
   {
+   "id": "farmland",
+   "block": "farmland",
+   "name": "Farmland",
+   "max_stack": 64,
+   "model": "block/farmland",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 7
+    },
+    {
+     "tab": "search",
+     "index": 760
+    }
+   ],
+   "icon": {
+    "model": 4669,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "furnace",
    "block": "furnace",
    "name": "Furnace",
@@ -3610,6 +5008,620 @@
      "index": 1001
     }
    ]
+  },
+  {
+   "id": "oak_door",
+   "block": "oak_door",
+   "name": "Oak Door",
+   "max_stack": 64,
+   "model": "item/oak_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 9
+    },
+    {
+     "tab": "redstone_blocks",
+     "index": 59
+    },
+    {
+     "tab": "search",
+     "index": 9
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/oak_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "ladder",
+   "block": "ladder",
+   "name": "Ladder",
+   "max_stack": 64,
+   "model": "item/ladder",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "functional_blocks",
+     "index": 68
+    },
+    {
+     "tab": "search",
+     "index": 1020
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/ladder",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "cobblestone_stairs",
+   "block": "cobblestone_stairs",
+   "name": "Cobblestone Stairs",
+   "max_stack": 64,
+   "model": "block/cobblestone_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 176
+    },
+    {
+     "tab": "search",
+     "index": 176
+    }
+   ],
+   "icon": {
+    "model": 739,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "lever",
+   "block": "lever",
+   "name": "Lever",
+   "max_stack": 64,
+   "model": "item/lever",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "redstone_blocks",
+     "index": 10
+    },
+    {
+     "tab": "search",
+     "index": 1172
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/lever",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "stone_pressure_plate",
+   "block": "stone_pressure_plate",
+   "name": "Stone Pressure Plate",
+   "max_stack": 64,
+   "model": "block/stone_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 173
+    },
+    {
+     "tab": "redstone_blocks",
+     "index": 14
+    },
+    {
+     "tab": "search",
+     "index": 173
+    }
+   ],
+   "icon": {
+    "model": 4488,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "iron_door",
+   "block": "iron_door",
+   "name": "Iron Door",
+   "max_stack": 64,
+   "model": "item/iron_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 379
+    },
+    {
+     "tab": "redstone_blocks",
+     "index": 60
+    },
+    {
+     "tab": "search",
+     "index": 379
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/iron_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "oak_pressure_plate",
+   "block": "oak_pressure_plate",
+   "name": "Oak Pressure Plate",
+   "max_stack": 64,
+   "model": "block/oak_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 11
+    },
+    {
+     "tab": "redstone_blocks",
+     "index": 13
+    },
+    {
+     "tab": "search",
+     "index": 11
+    }
+   ],
+   "icon": {
+    "model": 4490,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "spruce_pressure_plate",
+   "block": "spruce_pressure_plate",
+   "name": "Spruce Pressure Plate",
+   "max_stack": 64,
+   "model": "block/spruce_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 24
+    },
+    {
+     "tab": "search",
+     "index": 24
+    }
+   ],
+   "icon": {
+    "model": 4492,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "birch_pressure_plate",
+   "block": "birch_pressure_plate",
+   "name": "Birch Pressure Plate",
+   "max_stack": 64,
+   "model": "block/birch_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 37
+    },
+    {
+     "tab": "search",
+     "index": 37
+    }
+   ],
+   "icon": {
+    "model": 4494,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "jungle_pressure_plate",
+   "block": "jungle_pressure_plate",
+   "name": "Jungle Pressure Plate",
+   "max_stack": 64,
+   "model": "block/jungle_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 50
+    },
+    {
+     "tab": "search",
+     "index": 50
+    }
+   ],
+   "icon": {
+    "model": 4496,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "acacia_pressure_plate",
+   "block": "acacia_pressure_plate",
+   "name": "Acacia Pressure Plate",
+   "max_stack": 64,
+   "model": "block/acacia_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 63
+    },
+    {
+     "tab": "search",
+     "index": 63
+    }
+   ],
+   "icon": {
+    "model": 4498,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "cherry_pressure_plate",
+   "block": "cherry_pressure_plate",
+   "name": "Cherry Pressure Plate",
+   "max_stack": 64,
+   "model": "block/cherry_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 102
+    },
+    {
+     "tab": "search",
+     "index": 102
+    }
+   ],
+   "icon": {
+    "model": 4500,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "dark_oak_pressure_plate",
+   "block": "dark_oak_pressure_plate",
+   "name": "Dark Oak Pressure Plate",
+   "max_stack": 64,
+   "model": "block/dark_oak_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 76
+    },
+    {
+     "tab": "search",
+     "index": 76
+    }
+   ],
+   "icon": {
+    "model": 4502,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "pale_oak_pressure_plate",
+   "block": "pale_oak_pressure_plate",
+   "name": "Pale Oak Pressure Plate",
+   "max_stack": 64,
+   "model": "block/pale_oak_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 115
+    },
+    {
+     "tab": "search",
+     "index": 115
+    }
+   ],
+   "icon": {
+    "model": 4504,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "mangrove_pressure_plate",
+   "block": "mangrove_pressure_plate",
+   "name": "Mangrove Pressure Plate",
+   "max_stack": 64,
+   "model": "block/mangrove_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 89
+    },
+    {
+     "tab": "search",
+     "index": 89
+    }
+   ],
+   "icon": {
+    "model": 4506,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "poplar_pressure_plate",
+   "block": "poplar_pressure_plate",
+   "name": "Poplar Pressure Plate",
+   "max_stack": 64,
+   "model": "block/poplar_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 128
+    },
+    {
+     "tab": "search",
+     "index": 128
+    }
+   ],
+   "icon": {
+    "model": 4508,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "bamboo_pressure_plate",
+   "block": "bamboo_pressure_plate",
+   "name": "Bamboo Pressure Plate",
+   "max_stack": 64,
+   "model": "block/bamboo_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 142
+    },
+    {
+     "tab": "search",
+     "index": 142
+    }
+   ],
+   "icon": {
+    "model": 4510,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "redstone_ore",
@@ -3650,6 +5662,48 @@
      "index": 796
     }
    ]
+  },
+  {
+   "id": "stone_button",
+   "block": "stone_button",
+   "name": "Stone Button",
+   "max_stack": 64,
+   "model": "block/stone_button_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 174
+    },
+    {
+     "tab": "redstone_blocks",
+     "index": 12
+    },
+    {
+     "tab": "search",
+     "index": 174
+    }
+   ],
+   "icon": {
+    "model": 4836,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "snow",
@@ -3834,6 +5888,44 @@
      "index": 1011
     }
    ]
+  },
+  {
+   "id": "oak_fence",
+   "block": "oak_fence",
+   "name": "Oak Fence",
+   "max_stack": 64,
+   "model": "block/oak_fence_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 7
+    },
+    {
+     "tab": "search",
+     "index": 7
+    }
+   ],
+   "icon": {
+    "model": 4790,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "netherrack",
@@ -4280,6 +6372,428 @@
    ]
   },
   {
+   "id": "oak_trapdoor",
+   "block": "oak_trapdoor",
+   "name": "Oak Trapdoor",
+   "max_stack": 64,
+   "model": "block/oak_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 10
+    },
+    {
+     "tab": "redstone_blocks",
+     "index": 62
+    },
+    {
+     "tab": "search",
+     "index": 10
+    }
+   ],
+   "icon": {
+    "model": 3887,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "spruce_trapdoor",
+   "block": "spruce_trapdoor",
+   "name": "Spruce Trapdoor",
+   "max_stack": 64,
+   "model": "block/spruce_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 23
+    },
+    {
+     "tab": "search",
+     "index": 23
+    }
+   ],
+   "icon": {
+    "model": 3894,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "birch_trapdoor",
+   "block": "birch_trapdoor",
+   "name": "Birch Trapdoor",
+   "max_stack": 64,
+   "model": "block/birch_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 36
+    },
+    {
+     "tab": "search",
+     "index": 36
+    }
+   ],
+   "icon": {
+    "model": 3910,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "jungle_trapdoor",
+   "block": "jungle_trapdoor",
+   "name": "Jungle Trapdoor",
+   "max_stack": 64,
+   "model": "block/jungle_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 49
+    },
+    {
+     "tab": "search",
+     "index": 49
+    }
+   ],
+   "icon": {
+    "model": 3926,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "acacia_trapdoor",
+   "block": "acacia_trapdoor",
+   "name": "Acacia Trapdoor",
+   "max_stack": 64,
+   "model": "block/acacia_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 62
+    },
+    {
+     "tab": "search",
+     "index": 62
+    }
+   ],
+   "icon": {
+    "model": 3942,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "cherry_trapdoor",
+   "block": "cherry_trapdoor",
+   "name": "Cherry Trapdoor",
+   "max_stack": 64,
+   "model": "block/cherry_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 101
+    },
+    {
+     "tab": "search",
+     "index": 101
+    }
+   ],
+   "icon": {
+    "model": 3958,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "dark_oak_trapdoor",
+   "block": "dark_oak_trapdoor",
+   "name": "Dark Oak Trapdoor",
+   "max_stack": 64,
+   "model": "block/dark_oak_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 75
+    },
+    {
+     "tab": "search",
+     "index": 75
+    }
+   ],
+   "icon": {
+    "model": 3973,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "pale_oak_trapdoor",
+   "block": "pale_oak_trapdoor",
+   "name": "Pale Oak Trapdoor",
+   "max_stack": 64,
+   "model": "block/pale_oak_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 114
+    },
+    {
+     "tab": "search",
+     "index": 114
+    }
+   ],
+   "icon": {
+    "model": 3980,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "mangrove_trapdoor",
+   "block": "mangrove_trapdoor",
+   "name": "Mangrove Trapdoor",
+   "max_stack": 64,
+   "model": "block/mangrove_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 88
+    },
+    {
+     "tab": "search",
+     "index": 88
+    }
+   ],
+   "icon": {
+    "model": 3996,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "poplar_trapdoor",
+   "block": "poplar_trapdoor",
+   "name": "Poplar Trapdoor",
+   "max_stack": 64,
+   "model": "block/poplar_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 127
+    },
+    {
+     "tab": "search",
+     "index": 127
+    }
+   ],
+   "icon": {
+    "model": 4012,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "bamboo_trapdoor",
+   "block": "bamboo_trapdoor",
+   "name": "Bamboo Trapdoor",
+   "max_stack": 64,
+   "model": "block/bamboo_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 141
+    },
+    {
+     "tab": "search",
+     "index": 141
+    }
+   ],
+   "icon": {
+    "model": 4028,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "stone_bricks",
    "block": "stone_bricks",
    "name": "Stone Bricks",
@@ -4550,6 +7064,266 @@
    ]
   },
   {
+   "id": "iron_bars",
+   "block": "iron_bars",
+   "name": "Iron Bars",
+   "max_stack": 64,
+   "model": "item/iron_bars",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 378
+    },
+    {
+     "tab": "search",
+     "index": 378
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/iron_bars",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "copper_bars",
+   "block": "copper_bars",
+   "name": "Copper Bars",
+   "max_stack": 64,
+   "model": "item/copper_bars",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 411
+    },
+    {
+     "tab": "search",
+     "index": 411
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/copper_bars",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "exposed_copper_bars",
+   "block": "exposed_copper_bars",
+   "name": "Exposed Copper Bars",
+   "max_stack": 64,
+   "model": "item/exposed_copper_bars",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 412
+    },
+    {
+     "tab": "search",
+     "index": 412
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/exposed_copper_bars",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "weathered_copper_bars",
+   "block": "weathered_copper_bars",
+   "name": "Weathered Copper Bars",
+   "max_stack": 64,
+   "model": "item/weathered_copper_bars",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 413
+    },
+    {
+     "tab": "search",
+     "index": 413
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/weathered_copper_bars",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "oxidized_copper_bars",
+   "block": "oxidized_copper_bars",
+   "name": "Oxidized Copper Bars",
+   "max_stack": 64,
+   "model": "item/oxidized_copper_bars",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 414
+    },
+    {
+     "tab": "search",
+     "index": 414
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/oxidized_copper_bars",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "waxed_copper_bars",
+   "block": "waxed_copper_bars",
+   "name": "Waxed Copper Bars",
+   "max_stack": 64,
+   "model": "item/copper_bars",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 455
+    },
+    {
+     "tab": "search",
+     "index": 455
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/copper_bars",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "waxed_exposed_copper_bars",
+   "block": "waxed_exposed_copper_bars",
+   "name": "Waxed Exposed Copper Bars",
+   "max_stack": 64,
+   "model": "item/exposed_copper_bars",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 456
+    },
+    {
+     "tab": "search",
+     "index": 456
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/exposed_copper_bars",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "waxed_weathered_copper_bars",
+   "block": "waxed_weathered_copper_bars",
+   "name": "Waxed Weathered Copper Bars",
+   "max_stack": 64,
+   "model": "item/weathered_copper_bars",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 457
+    },
+    {
+     "tab": "search",
+     "index": 457
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/weathered_copper_bars",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "waxed_oxidized_copper_bars",
+   "block": "waxed_oxidized_copper_bars",
+   "name": "Waxed Oxidized Copper Bars",
+   "max_stack": 64,
+   "model": "item/oxidized_copper_bars",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 458
+    },
+    {
+     "tab": "search",
+     "index": 458
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/oxidized_copper_bars",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "glass_pane",
+   "block": "glass_pane",
+   "name": "Glass Pane",
+   "max_stack": 64,
+   "model": "item/glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 179
+    },
+    {
+     "tab": "search",
+     "index": 654
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
    "id": "pumpkin",
    "block": "pumpkin",
    "name": "Pumpkin",
@@ -4642,6 +7416,162 @@
    }
   },
   {
+   "id": "oak_fence_gate",
+   "block": "oak_fence_gate",
+   "name": "Oak Fence Gate",
+   "max_stack": 64,
+   "model": "block/oak_fence_gate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 8
+    },
+    {
+     "tab": "redstone_blocks",
+     "index": 61
+    },
+    {
+     "tab": "search",
+     "index": 8
+    }
+   ],
+   "icon": {
+    "model": 2617,
+    "gui": {
+     "rotation": [
+      30,
+      45,
+      0
+     ],
+     "translation": [
+      0,
+      -1,
+      0
+     ],
+     "scale": [
+      0.8,
+      0.8,
+      0.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "brick_stairs",
+   "block": "brick_stairs",
+   "name": "Brick Stairs",
+   "max_stack": 64,
+   "model": "block/brick_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 252
+    },
+    {
+     "tab": "search",
+     "index": 252
+    }
+   ],
+   "icon": {
+    "model": 763,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "stone_brick_stairs",
+   "block": "stone_brick_stairs",
+   "name": "Stone Brick Stairs",
+   "max_stack": 64,
+   "model": "block/stone_brick_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 187
+    },
+    {
+     "tab": "search",
+     "index": 187
+    }
+   ],
+   "icon": {
+    "model": 787,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "mud_brick_stairs",
+   "block": "mud_brick_stairs",
+   "name": "Mud Brick Stairs",
+   "max_stack": 64,
+   "model": "block/mud_brick_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 257
+    },
+    {
+     "tab": "search",
+     "index": 257
+    }
+   ],
+   "icon": {
+    "model": 811,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "mycelium",
    "block": "mycelium",
    "name": "Mycelium",
@@ -4722,6 +7652,44 @@
    ]
   },
   {
+   "id": "resin_brick_stairs",
+   "block": "resin_brick_stairs",
+   "name": "Resin Brick Stairs",
+   "max_stack": 64,
+   "model": "block/resin_brick_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 261
+    },
+    {
+     "tab": "search",
+     "index": 261
+    }
+   ],
+   "icon": {
+    "model": 835,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "resin_brick_slab",
    "block": "resin_brick_slab",
    "name": "Resin Brick Slab",
@@ -4738,6 +7706,44 @@
      "index": 262
     }
    ]
+  },
+  {
+   "id": "resin_brick_wall",
+   "block": "resin_brick_wall",
+   "name": "Resin Brick Wall",
+   "max_stack": 64,
+   "model": "block/resin_brick_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 263
+    },
+    {
+     "tab": "search",
+     "index": 263
+    }
+   ],
+   "icon": {
+    "model": 4804,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "chiseled_resin_bricks",
@@ -4774,6 +7780,112 @@
      "index": 323
     }
    ]
+  },
+  {
+   "id": "nether_brick_fence",
+   "block": "nether_brick_fence",
+   "name": "Nether Brick Fence",
+   "max_stack": 64,
+   "model": "block/nether_brick_fence_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 328
+    },
+    {
+     "tab": "search",
+     "index": 328
+    }
+   ],
+   "icon": {
+    "model": 4791,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "nether_brick_stairs",
+   "block": "nether_brick_stairs",
+   "name": "Nether Brick Stairs",
+   "max_stack": 64,
+   "model": "block/nether_brick_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 325
+    },
+    {
+     "tab": "search",
+     "index": 325
+    }
+   ],
+   "icon": {
+    "model": 859,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "cauldron",
+   "block": "cauldron",
+   "name": "Cauldron",
+   "max_stack": 64,
+   "model": "item/cauldron",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "functional_blocks",
+     "index": 63
+    },
+    {
+     "tab": "redstone_blocks",
+     "index": 47
+    },
+    {
+     "tab": "search",
+     "index": 1015
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/cauldron",
+      "tint": null
+     }
+    ]
+   }
   },
   {
    "id": "end_stone",
@@ -4858,6 +7970,44 @@
    }
   },
   {
+   "id": "sandstone_stairs",
+   "block": "sandstone_stairs",
+   "name": "Sandstone Stairs",
+   "max_stack": 64,
+   "model": "block/sandstone_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 266
+    },
+    {
+     "tab": "search",
+     "index": 266
+    }
+   ],
+   "icon": {
+    "model": 883,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "emerald_ore",
    "block": "emerald_ore",
    "name": "Emerald Ore",
@@ -4894,6 +8044,44 @@
    ]
   },
   {
+   "id": "ender_chest",
+   "block": "ender_chest",
+   "name": "Ender Chest",
+   "max_stack": 64,
+   "model": "unnamed:stand_in/chest_ender",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "functional_blocks",
+     "index": 188
+    },
+    {
+     "tab": "search",
+     "index": 1138
+    }
+   ],
+   "icon": {
+    "model": 4661,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "emerald_block",
    "block": "emerald_block",
    "name": "Block of Emerald",
@@ -4912,6 +8100,120 @@
    ]
   },
   {
+   "id": "spruce_stairs",
+   "block": "spruce_stairs",
+   "name": "Spruce Stairs",
+   "max_stack": 64,
+   "model": "block/spruce_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 18
+    },
+    {
+     "tab": "search",
+     "index": 18
+    }
+   ],
+   "icon": {
+    "model": 907,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "birch_stairs",
+   "block": "birch_stairs",
+   "name": "Birch Stairs",
+   "max_stack": 64,
+   "model": "block/birch_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 31
+    },
+    {
+     "tab": "search",
+     "index": 31
+    }
+   ],
+   "icon": {
+    "model": 931,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "jungle_stairs",
+   "block": "jungle_stairs",
+   "name": "Jungle Stairs",
+   "max_stack": 64,
+   "model": "block/jungle_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 44
+    },
+    {
+     "tab": "search",
+     "index": 44
+    }
+   ],
+   "icon": {
+    "model": 955,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "command_block",
    "block": "command_block",
    "name": "Command Block",
@@ -4928,6 +8230,626 @@
      "index": 0
     }
    ]
+  },
+  {
+   "id": "cobblestone_wall",
+   "block": "cobblestone_wall",
+   "name": "Cobblestone Wall",
+   "max_stack": 64,
+   "model": "block/cobblestone_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 178
+    },
+    {
+     "tab": "search",
+     "index": 178
+    }
+   ],
+   "icon": {
+    "model": 4805,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "mossy_cobblestone_wall",
+   "block": "mossy_cobblestone_wall",
+   "name": "Mossy Cobblestone Wall",
+   "max_stack": 64,
+   "model": "block/mossy_cobblestone_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 182
+    },
+    {
+     "tab": "search",
+     "index": 182
+    }
+   ],
+   "icon": {
+    "model": 4806,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "oak_button",
+   "block": "oak_button",
+   "name": "Oak Button",
+   "max_stack": 64,
+   "model": "block/oak_button_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 12
+    },
+    {
+     "tab": "redstone_blocks",
+     "index": 11
+    },
+    {
+     "tab": "search",
+     "index": 12
+    }
+   ],
+   "icon": {
+    "model": 4837,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "spruce_button",
+   "block": "spruce_button",
+   "name": "Spruce Button",
+   "max_stack": 64,
+   "model": "block/spruce_button_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 25
+    },
+    {
+     "tab": "search",
+     "index": 25
+    }
+   ],
+   "icon": {
+    "model": 4838,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "birch_button",
+   "block": "birch_button",
+   "name": "Birch Button",
+   "max_stack": 64,
+   "model": "block/birch_button_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 38
+    },
+    {
+     "tab": "search",
+     "index": 38
+    }
+   ],
+   "icon": {
+    "model": 4839,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "jungle_button",
+   "block": "jungle_button",
+   "name": "Jungle Button",
+   "max_stack": 64,
+   "model": "block/jungle_button_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 51
+    },
+    {
+     "tab": "search",
+     "index": 51
+    }
+   ],
+   "icon": {
+    "model": 4840,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "acacia_button",
+   "block": "acacia_button",
+   "name": "Acacia Button",
+   "max_stack": 64,
+   "model": "block/acacia_button_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 64
+    },
+    {
+     "tab": "search",
+     "index": 64
+    }
+   ],
+   "icon": {
+    "model": 4841,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "cherry_button",
+   "block": "cherry_button",
+   "name": "Cherry Button",
+   "max_stack": 64,
+   "model": "block/cherry_button_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 103
+    },
+    {
+     "tab": "search",
+     "index": 103
+    }
+   ],
+   "icon": {
+    "model": 4842,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "dark_oak_button",
+   "block": "dark_oak_button",
+   "name": "Dark Oak Button",
+   "max_stack": 64,
+   "model": "block/dark_oak_button_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 77
+    },
+    {
+     "tab": "search",
+     "index": 77
+    }
+   ],
+   "icon": {
+    "model": 4843,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "pale_oak_button",
+   "block": "pale_oak_button",
+   "name": "Pale Oak Button",
+   "max_stack": 64,
+   "model": "block/pale_oak_button_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 116
+    },
+    {
+     "tab": "search",
+     "index": 116
+    }
+   ],
+   "icon": {
+    "model": 4844,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "mangrove_button",
+   "block": "mangrove_button",
+   "name": "Mangrove Button",
+   "max_stack": 64,
+   "model": "block/mangrove_button_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 90
+    },
+    {
+     "tab": "search",
+     "index": 90
+    }
+   ],
+   "icon": {
+    "model": 4845,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "poplar_button",
+   "block": "poplar_button",
+   "name": "Poplar Button",
+   "max_stack": 64,
+   "model": "block/poplar_button_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 129
+    },
+    {
+     "tab": "search",
+     "index": 129
+    }
+   ],
+   "icon": {
+    "model": 4846,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "bamboo_button",
+   "block": "bamboo_button",
+   "name": "Bamboo Button",
+   "max_stack": 64,
+   "model": "block/bamboo_button_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 143
+    },
+    {
+     "tab": "search",
+     "index": 143
+    }
+   ],
+   "icon": {
+    "model": 4847,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "trapped_chest",
+   "block": "trapped_chest",
+   "name": "Trapped Chest",
+   "max_stack": 64,
+   "model": "unnamed:stand_in/chest_trapped",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "redstone_blocks",
+     "index": 41
+    },
+    {
+     "tab": "search",
+     "index": 1183
+    }
+   ],
+   "icon": {
+    "model": 4665,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "light_weighted_pressure_plate",
+   "block": "light_weighted_pressure_plate",
+   "name": "Light Weighted Pressure Plate",
+   "max_stack": 64,
+   "model": "block/light_weighted_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 384
+    },
+    {
+     "tab": "redstone_blocks",
+     "index": 15
+    },
+    {
+     "tab": "search",
+     "index": 384
+    }
+   ],
+   "icon": {
+    "model": 4511,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "heavy_weighted_pressure_plate",
+   "block": "heavy_weighted_pressure_plate",
+   "name": "Heavy Weighted Pressure Plate",
+   "max_stack": 64,
+   "model": "block/heavy_weighted_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 381
+    },
+    {
+     "tab": "redstone_blocks",
+     "index": 16
+    },
+    {
+     "tab": "search",
+     "index": 381
+    }
+   ],
+   "icon": {
+    "model": 4513,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "redstone_block",
@@ -5022,6 +8944,44 @@
      "index": 373
     }
    ]
+  },
+  {
+   "id": "quartz_stairs",
+   "block": "quartz_stairs",
+   "name": "Quartz Stairs",
+   "max_stack": 64,
+   "model": "block/quartz_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 369
+    },
+    {
+     "tab": "search",
+     "index": 369
+    }
+   ],
+   "icon": {
+    "model": 979,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "dropper",
@@ -5330,6 +9290,768 @@
    ]
   },
   {
+   "id": "white_stained_glass_pane",
+   "block": "white_stained_glass_pane",
+   "name": "White Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/white_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 180
+    },
+    {
+     "tab": "search",
+     "index": 655
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/white_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "orange_stained_glass_pane",
+   "block": "orange_stained_glass_pane",
+   "name": "Orange Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/orange_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 186
+    },
+    {
+     "tab": "search",
+     "index": 661
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/orange_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "magenta_stained_glass_pane",
+   "block": "magenta_stained_glass_pane",
+   "name": "Magenta Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/magenta_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 194
+    },
+    {
+     "tab": "search",
+     "index": 669
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/magenta_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "light_blue_stained_glass_pane",
+   "block": "light_blue_stained_glass_pane",
+   "name": "Light Blue Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/light_blue_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 191
+    },
+    {
+     "tab": "search",
+     "index": 666
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/light_blue_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "yellow_stained_glass_pane",
+   "block": "yellow_stained_glass_pane",
+   "name": "Yellow Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/yellow_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 187
+    },
+    {
+     "tab": "search",
+     "index": 662
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/yellow_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "lime_stained_glass_pane",
+   "block": "lime_stained_glass_pane",
+   "name": "Lime Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/lime_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 188
+    },
+    {
+     "tab": "search",
+     "index": 663
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/lime_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "pink_stained_glass_pane",
+   "block": "pink_stained_glass_pane",
+   "name": "Pink Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/pink_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 195
+    },
+    {
+     "tab": "search",
+     "index": 670
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/pink_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "gray_stained_glass_pane",
+   "block": "gray_stained_glass_pane",
+   "name": "Gray Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/gray_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 182
+    },
+    {
+     "tab": "search",
+     "index": 657
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/gray_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "light_gray_stained_glass_pane",
+   "block": "light_gray_stained_glass_pane",
+   "name": "Light Gray Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/light_gray_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 181
+    },
+    {
+     "tab": "search",
+     "index": 656
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/light_gray_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "cyan_stained_glass_pane",
+   "block": "cyan_stained_glass_pane",
+   "name": "Cyan Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/cyan_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 190
+    },
+    {
+     "tab": "search",
+     "index": 665
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/cyan_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "purple_stained_glass_pane",
+   "block": "purple_stained_glass_pane",
+   "name": "Purple Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/purple_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 193
+    },
+    {
+     "tab": "search",
+     "index": 668
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/purple_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "blue_stained_glass_pane",
+   "block": "blue_stained_glass_pane",
+   "name": "Blue Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/blue_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 192
+    },
+    {
+     "tab": "search",
+     "index": 667
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/blue_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "brown_stained_glass_pane",
+   "block": "brown_stained_glass_pane",
+   "name": "Brown Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/brown_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 184
+    },
+    {
+     "tab": "search",
+     "index": 659
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/brown_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "green_stained_glass_pane",
+   "block": "green_stained_glass_pane",
+   "name": "Green Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/green_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 189
+    },
+    {
+     "tab": "search",
+     "index": 664
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/green_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "red_stained_glass_pane",
+   "block": "red_stained_glass_pane",
+   "name": "Red Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/red_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 185
+    },
+    {
+     "tab": "search",
+     "index": 660
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/red_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "black_stained_glass_pane",
+   "block": "black_stained_glass_pane",
+   "name": "Black Stained Glass Pane",
+   "max_stack": 64,
+   "model": "item/black_stained_glass_pane",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 183
+    },
+    {
+     "tab": "search",
+     "index": 658
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/black_stained_glass",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "acacia_stairs",
+   "block": "acacia_stairs",
+   "name": "Acacia Stairs",
+   "max_stack": 64,
+   "model": "block/acacia_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 57
+    },
+    {
+     "tab": "search",
+     "index": 57
+    }
+   ],
+   "icon": {
+    "model": 1003,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "cherry_stairs",
+   "block": "cherry_stairs",
+   "name": "Cherry Stairs",
+   "max_stack": 64,
+   "model": "block/cherry_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 96
+    },
+    {
+     "tab": "search",
+     "index": 96
+    }
+   ],
+   "icon": {
+    "model": 1027,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "dark_oak_stairs",
+   "block": "dark_oak_stairs",
+   "name": "Dark Oak Stairs",
+   "max_stack": 64,
+   "model": "block/dark_oak_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 70
+    },
+    {
+     "tab": "search",
+     "index": 70
+    }
+   ],
+   "icon": {
+    "model": 1051,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "pale_oak_stairs",
+   "block": "pale_oak_stairs",
+   "name": "Pale Oak Stairs",
+   "max_stack": 64,
+   "model": "block/pale_oak_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 109
+    },
+    {
+     "tab": "search",
+     "index": 109
+    }
+   ],
+   "icon": {
+    "model": 1075,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "mangrove_stairs",
+   "block": "mangrove_stairs",
+   "name": "Mangrove Stairs",
+   "max_stack": 64,
+   "model": "block/mangrove_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 83
+    },
+    {
+     "tab": "search",
+     "index": 83
+    }
+   ],
+   "icon": {
+    "model": 1099,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "poplar_stairs",
+   "block": "poplar_stairs",
+   "name": "Poplar Stairs",
+   "max_stack": 64,
+   "model": "block/poplar_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 122
+    },
+    {
+     "tab": "search",
+     "index": 122
+    }
+   ],
+   "icon": {
+    "model": 1123,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "bamboo_stairs",
+   "block": "bamboo_stairs",
+   "name": "Bamboo Stairs",
+   "max_stack": 64,
+   "model": "block/bamboo_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 134
+    },
+    {
+     "tab": "search",
+     "index": 134
+    }
+   ],
+   "icon": {
+    "model": 1147,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "bamboo_mosaic_stairs",
+   "block": "bamboo_mosaic_stairs",
+   "name": "Bamboo Mosaic Stairs",
+   "max_stack": 64,
+   "model": "block/bamboo_mosaic_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 135
+    },
+    {
+     "tab": "search",
+     "index": 135
+    }
+   ],
+   "icon": {
+    "model": 1171,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "iron_trapdoor",
+   "block": "iron_trapdoor",
+   "name": "Iron Trapdoor",
+   "max_stack": 64,
+   "model": "block/iron_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 380
+    },
+    {
+     "tab": "redstone_blocks",
+     "index": 63
+    },
+    {
+     "tab": "search",
+     "index": 380
+    }
+   ],
+   "icon": {
+    "model": 4043,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "prismarine",
    "block": "prismarine",
    "name": "Prismarine",
@@ -5386,6 +10108,120 @@
      "index": 319
     }
    ]
+  },
+  {
+   "id": "prismarine_stairs",
+   "block": "prismarine_stairs",
+   "name": "Prismarine Stairs",
+   "max_stack": 64,
+   "model": "block/prismarine_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 313
+    },
+    {
+     "tab": "search",
+     "index": 313
+    }
+   ],
+   "icon": {
+    "model": 1195,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "prismarine_brick_stairs",
+   "block": "prismarine_brick_stairs",
+   "name": "Prismarine Brick Stairs",
+   "max_stack": 64,
+   "model": "block/prismarine_brick_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 317
+    },
+    {
+     "tab": "search",
+     "index": 317
+    }
+   ],
+   "icon": {
+    "model": 1219,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "dark_prismarine_stairs",
+   "block": "dark_prismarine_stairs",
+   "name": "Dark Prismarine Stairs",
+   "max_stack": 64,
+   "model": "block/dark_prismarine_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 320
+    },
+    {
+     "tab": "search",
+     "index": 320
+    }
+   ],
+   "icon": {
+    "model": 1243,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "prismarine_slab",
@@ -5748,6 +10584,44 @@
      "index": 283
     }
    ]
+  },
+  {
+   "id": "red_sandstone_stairs",
+   "block": "red_sandstone_stairs",
+   "name": "Red Sandstone Stairs",
+   "max_stack": 64,
+   "model": "block/red_sandstone_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 276
+    },
+    {
+     "tab": "search",
+     "index": 276
+    }
+   ],
+   "icon": {
+    "model": 1267,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "oak_slab",
@@ -6263,6 +11137,1026 @@
    ]
   },
   {
+   "id": "spruce_fence_gate",
+   "block": "spruce_fence_gate",
+   "name": "Spruce Fence Gate",
+   "max_stack": 64,
+   "model": "block/spruce_fence_gate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 21
+    },
+    {
+     "tab": "search",
+     "index": 21
+    }
+   ],
+   "icon": {
+    "model": 2633,
+    "gui": {
+     "rotation": [
+      30,
+      45,
+      0
+     ],
+     "translation": [
+      0,
+      -1,
+      0
+     ],
+     "scale": [
+      0.8,
+      0.8,
+      0.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "birch_fence_gate",
+   "block": "birch_fence_gate",
+   "name": "Birch Fence Gate",
+   "max_stack": 64,
+   "model": "block/birch_fence_gate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 34
+    },
+    {
+     "tab": "search",
+     "index": 34
+    }
+   ],
+   "icon": {
+    "model": 2649,
+    "gui": {
+     "rotation": [
+      30,
+      45,
+      0
+     ],
+     "translation": [
+      0,
+      -1,
+      0
+     ],
+     "scale": [
+      0.8,
+      0.8,
+      0.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "jungle_fence_gate",
+   "block": "jungle_fence_gate",
+   "name": "Jungle Fence Gate",
+   "max_stack": 64,
+   "model": "block/jungle_fence_gate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 47
+    },
+    {
+     "tab": "search",
+     "index": 47
+    }
+   ],
+   "icon": {
+    "model": 2665,
+    "gui": {
+     "rotation": [
+      30,
+      45,
+      0
+     ],
+     "translation": [
+      0,
+      -1,
+      0
+     ],
+     "scale": [
+      0.8,
+      0.8,
+      0.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "acacia_fence_gate",
+   "block": "acacia_fence_gate",
+   "name": "Acacia Fence Gate",
+   "max_stack": 64,
+   "model": "block/acacia_fence_gate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 60
+    },
+    {
+     "tab": "search",
+     "index": 60
+    }
+   ],
+   "icon": {
+    "model": 2681,
+    "gui": {
+     "rotation": [
+      30,
+      45,
+      0
+     ],
+     "translation": [
+      0,
+      -1,
+      0
+     ],
+     "scale": [
+      0.8,
+      0.8,
+      0.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "cherry_fence_gate",
+   "block": "cherry_fence_gate",
+   "name": "Cherry Fence Gate",
+   "max_stack": 64,
+   "model": "block/cherry_fence_gate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 99
+    },
+    {
+     "tab": "search",
+     "index": 99
+    }
+   ],
+   "icon": {
+    "model": 2697,
+    "gui": {
+     "rotation": [
+      30,
+      45,
+      0
+     ],
+     "translation": [
+      0,
+      -1,
+      0
+     ],
+     "scale": [
+      0.8,
+      0.8,
+      0.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "dark_oak_fence_gate",
+   "block": "dark_oak_fence_gate",
+   "name": "Dark Oak Fence Gate",
+   "max_stack": 64,
+   "model": "block/dark_oak_fence_gate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 73
+    },
+    {
+     "tab": "search",
+     "index": 73
+    }
+   ],
+   "icon": {
+    "model": 2713,
+    "gui": {
+     "rotation": [
+      30,
+      45,
+      0
+     ],
+     "translation": [
+      0,
+      -1,
+      0
+     ],
+     "scale": [
+      0.8,
+      0.8,
+      0.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "pale_oak_fence_gate",
+   "block": "pale_oak_fence_gate",
+   "name": "Pale Oak Fence Gate",
+   "max_stack": 64,
+   "model": "block/pale_oak_fence_gate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 112
+    },
+    {
+     "tab": "search",
+     "index": 112
+    }
+   ],
+   "icon": {
+    "model": 2729,
+    "gui": {
+     "rotation": [
+      30,
+      45,
+      0
+     ],
+     "translation": [
+      0,
+      -1,
+      0
+     ],
+     "scale": [
+      0.8,
+      0.8,
+      0.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "mangrove_fence_gate",
+   "block": "mangrove_fence_gate",
+   "name": "Mangrove Fence Gate",
+   "max_stack": 64,
+   "model": "block/mangrove_fence_gate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 86
+    },
+    {
+     "tab": "search",
+     "index": 86
+    }
+   ],
+   "icon": {
+    "model": 2745,
+    "gui": {
+     "rotation": [
+      30,
+      45,
+      0
+     ],
+     "translation": [
+      0,
+      -1,
+      0
+     ],
+     "scale": [
+      0.8,
+      0.8,
+      0.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "poplar_fence_gate",
+   "block": "poplar_fence_gate",
+   "name": "Poplar Fence Gate",
+   "max_stack": 64,
+   "model": "block/poplar_fence_gate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 125
+    },
+    {
+     "tab": "search",
+     "index": 125
+    }
+   ],
+   "icon": {
+    "model": 2761,
+    "gui": {
+     "rotation": [
+      30,
+      45,
+      0
+     ],
+     "translation": [
+      0,
+      -1,
+      0
+     ],
+     "scale": [
+      0.8,
+      0.8,
+      0.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "bamboo_fence_gate",
+   "block": "bamboo_fence_gate",
+   "name": "Bamboo Fence Gate",
+   "max_stack": 64,
+   "model": "block/bamboo_fence_gate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 139
+    },
+    {
+     "tab": "search",
+     "index": 139
+    }
+   ],
+   "icon": {
+    "model": 2777,
+    "gui": {
+     "rotation": [
+      30,
+      45,
+      0
+     ],
+     "translation": [
+      0,
+      -1,
+      0
+     ],
+     "scale": [
+      0.8,
+      0.8,
+      0.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "spruce_fence",
+   "block": "spruce_fence",
+   "name": "Spruce Fence",
+   "max_stack": 64,
+   "model": "block/spruce_fence_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 20
+    },
+    {
+     "tab": "search",
+     "index": 20
+    }
+   ],
+   "icon": {
+    "model": 4792,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "birch_fence",
+   "block": "birch_fence",
+   "name": "Birch Fence",
+   "max_stack": 64,
+   "model": "block/birch_fence_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 33
+    },
+    {
+     "tab": "search",
+     "index": 33
+    }
+   ],
+   "icon": {
+    "model": 4793,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "jungle_fence",
+   "block": "jungle_fence",
+   "name": "Jungle Fence",
+   "max_stack": 64,
+   "model": "block/jungle_fence_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 46
+    },
+    {
+     "tab": "search",
+     "index": 46
+    }
+   ],
+   "icon": {
+    "model": 4794,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "acacia_fence",
+   "block": "acacia_fence",
+   "name": "Acacia Fence",
+   "max_stack": 64,
+   "model": "block/acacia_fence_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 59
+    },
+    {
+     "tab": "search",
+     "index": 59
+    }
+   ],
+   "icon": {
+    "model": 4795,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "cherry_fence",
+   "block": "cherry_fence",
+   "name": "Cherry Fence",
+   "max_stack": 64,
+   "model": "block/cherry_fence_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 98
+    },
+    {
+     "tab": "search",
+     "index": 98
+    }
+   ],
+   "icon": {
+    "model": 4796,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "dark_oak_fence",
+   "block": "dark_oak_fence",
+   "name": "Dark Oak Fence",
+   "max_stack": 64,
+   "model": "block/dark_oak_fence_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 72
+    },
+    {
+     "tab": "search",
+     "index": 72
+    }
+   ],
+   "icon": {
+    "model": 4797,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "pale_oak_fence",
+   "block": "pale_oak_fence",
+   "name": "Pale Oak Fence",
+   "max_stack": 64,
+   "model": "block/pale_oak_fence_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 111
+    },
+    {
+     "tab": "search",
+     "index": 111
+    }
+   ],
+   "icon": {
+    "model": 4798,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "mangrove_fence",
+   "block": "mangrove_fence",
+   "name": "Mangrove Fence",
+   "max_stack": 64,
+   "model": "block/mangrove_fence_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 85
+    },
+    {
+     "tab": "search",
+     "index": 85
+    }
+   ],
+   "icon": {
+    "model": 4799,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "poplar_fence",
+   "block": "poplar_fence",
+   "name": "Poplar Fence",
+   "max_stack": 64,
+   "model": "block/poplar_fence_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 124
+    },
+    {
+     "tab": "search",
+     "index": 124
+    }
+   ],
+   "icon": {
+    "model": 4800,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "bamboo_fence",
+   "block": "bamboo_fence",
+   "name": "Bamboo Fence",
+   "max_stack": 64,
+   "model": "block/bamboo_fence_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 138
+    },
+    {
+     "tab": "search",
+     "index": 138
+    }
+   ],
+   "icon": {
+    "model": 4801,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "spruce_door",
+   "block": "spruce_door",
+   "name": "Spruce Door",
+   "max_stack": 64,
+   "model": "item/spruce_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 22
+    },
+    {
+     "tab": "search",
+     "index": 22
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/spruce_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "birch_door",
+   "block": "birch_door",
+   "name": "Birch Door",
+   "max_stack": 64,
+   "model": "item/birch_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 35
+    },
+    {
+     "tab": "search",
+     "index": 35
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/birch_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "jungle_door",
+   "block": "jungle_door",
+   "name": "Jungle Door",
+   "max_stack": 64,
+   "model": "item/jungle_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 48
+    },
+    {
+     "tab": "search",
+     "index": 48
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/jungle_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "acacia_door",
+   "block": "acacia_door",
+   "name": "Acacia Door",
+   "max_stack": 64,
+   "model": "item/acacia_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 61
+    },
+    {
+     "tab": "search",
+     "index": 61
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/acacia_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "cherry_door",
+   "block": "cherry_door",
+   "name": "Cherry Door",
+   "max_stack": 64,
+   "model": "item/cherry_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 100
+    },
+    {
+     "tab": "search",
+     "index": 100
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/cherry_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "dark_oak_door",
+   "block": "dark_oak_door",
+   "name": "Dark Oak Door",
+   "max_stack": 64,
+   "model": "item/dark_oak_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 74
+    },
+    {
+     "tab": "search",
+     "index": 74
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/dark_oak_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "pale_oak_door",
+   "block": "pale_oak_door",
+   "name": "Pale Oak Door",
+   "max_stack": 64,
+   "model": "item/pale_oak_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 113
+    },
+    {
+     "tab": "search",
+     "index": 113
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/pale_oak_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "mangrove_door",
+   "block": "mangrove_door",
+   "name": "Mangrove Door",
+   "max_stack": 64,
+   "model": "item/mangrove_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 87
+    },
+    {
+     "tab": "search",
+     "index": 87
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/mangrove_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "poplar_door",
+   "block": "poplar_door",
+   "name": "Poplar Door",
+   "max_stack": 64,
+   "model": "item/poplar_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 126
+    },
+    {
+     "tab": "search",
+     "index": 126
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/poplar_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "bamboo_door",
+   "block": "bamboo_door",
+   "name": "Bamboo Door",
+   "max_stack": 64,
+   "model": "item/bamboo_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 140
+    },
+    {
+     "tab": "search",
+     "index": 140
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/bamboo_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
    "id": "purpur_block",
    "block": "purpur_block",
    "name": "Purpur Block",
@@ -6317,6 +12211,44 @@
    ]
   },
   {
+   "id": "purpur_stairs",
+   "block": "purpur_stairs",
+   "name": "Purpur Stairs",
+   "max_stack": 64,
+   "model": "block/purpur_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 361
+    },
+    {
+     "tab": "search",
+     "index": 361
+    }
+   ],
+   "icon": {
+    "model": 1291,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "end_stone_bricks",
    "block": "end_stone_bricks",
    "name": "End Stone Bricks",
@@ -6333,6 +12265,44 @@
      "index": 355
     }
    ]
+  },
+  {
+   "id": "dirt_path",
+   "block": "dirt_path",
+   "name": "Dirt Path",
+   "max_stack": 64,
+   "model": "block/dirt_path",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 3
+    },
+    {
+     "tab": "search",
+     "index": 756
+    }
+   ],
+   "icon": {
+    "model": 4671,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "repeating_command_block",
@@ -7039,6 +13009,614 @@
      "index": 559
     }
    ]
+  },
+  {
+   "id": "white_concrete_stairs",
+   "block": "white_concrete_stairs",
+   "name": "White Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/white_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 97
+    },
+    {
+     "tab": "search",
+     "index": 572
+    }
+   ],
+   "icon": {
+    "model": 1315,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "orange_concrete_stairs",
+   "block": "orange_concrete_stairs",
+   "name": "Orange Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/orange_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 103
+    },
+    {
+     "tab": "search",
+     "index": 578
+    }
+   ],
+   "icon": {
+    "model": 1339,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "magenta_concrete_stairs",
+   "block": "magenta_concrete_stairs",
+   "name": "Magenta Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/magenta_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 111
+    },
+    {
+     "tab": "search",
+     "index": 586
+    }
+   ],
+   "icon": {
+    "model": 1363,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "light_blue_concrete_stairs",
+   "block": "light_blue_concrete_stairs",
+   "name": "Light Blue Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/light_blue_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 108
+    },
+    {
+     "tab": "search",
+     "index": 583
+    }
+   ],
+   "icon": {
+    "model": 1387,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "yellow_concrete_stairs",
+   "block": "yellow_concrete_stairs",
+   "name": "Yellow Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/yellow_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 104
+    },
+    {
+     "tab": "search",
+     "index": 579
+    }
+   ],
+   "icon": {
+    "model": 1411,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "lime_concrete_stairs",
+   "block": "lime_concrete_stairs",
+   "name": "Lime Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/lime_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 105
+    },
+    {
+     "tab": "search",
+     "index": 580
+    }
+   ],
+   "icon": {
+    "model": 1435,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "pink_concrete_stairs",
+   "block": "pink_concrete_stairs",
+   "name": "Pink Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/pink_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 112
+    },
+    {
+     "tab": "search",
+     "index": 587
+    }
+   ],
+   "icon": {
+    "model": 1459,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "gray_concrete_stairs",
+   "block": "gray_concrete_stairs",
+   "name": "Gray Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/gray_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 99
+    },
+    {
+     "tab": "search",
+     "index": 574
+    }
+   ],
+   "icon": {
+    "model": 1483,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "light_gray_concrete_stairs",
+   "block": "light_gray_concrete_stairs",
+   "name": "Light Gray Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/light_gray_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 98
+    },
+    {
+     "tab": "search",
+     "index": 573
+    }
+   ],
+   "icon": {
+    "model": 1507,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "cyan_concrete_stairs",
+   "block": "cyan_concrete_stairs",
+   "name": "Cyan Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/cyan_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 107
+    },
+    {
+     "tab": "search",
+     "index": 582
+    }
+   ],
+   "icon": {
+    "model": 1531,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "purple_concrete_stairs",
+   "block": "purple_concrete_stairs",
+   "name": "Purple Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/purple_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 110
+    },
+    {
+     "tab": "search",
+     "index": 585
+    }
+   ],
+   "icon": {
+    "model": 1555,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "blue_concrete_stairs",
+   "block": "blue_concrete_stairs",
+   "name": "Blue Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/blue_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 109
+    },
+    {
+     "tab": "search",
+     "index": 584
+    }
+   ],
+   "icon": {
+    "model": 1579,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "brown_concrete_stairs",
+   "block": "brown_concrete_stairs",
+   "name": "Brown Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/brown_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 101
+    },
+    {
+     "tab": "search",
+     "index": 576
+    }
+   ],
+   "icon": {
+    "model": 1603,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "green_concrete_stairs",
+   "block": "green_concrete_stairs",
+   "name": "Green Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/green_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 106
+    },
+    {
+     "tab": "search",
+     "index": 581
+    }
+   ],
+   "icon": {
+    "model": 1627,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "red_concrete_stairs",
+   "block": "red_concrete_stairs",
+   "name": "Red Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/red_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 102
+    },
+    {
+     "tab": "search",
+     "index": 577
+    }
+   ],
+   "icon": {
+    "model": 1651,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "black_concrete_stairs",
+   "block": "black_concrete_stairs",
+   "name": "Black Concrete Stairs",
+   "max_stack": 64,
+   "model": "block/black_concrete_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "colored_blocks",
+     "index": 100
+    },
+    {
+     "tab": "search",
+     "index": 575
+    }
+   ],
+   "icon": {
+    "model": 1675,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "white_concrete_slab",
@@ -8171,6 +14749,538 @@
    }
   },
   {
+   "id": "polished_granite_stairs",
+   "block": "polished_granite_stairs",
+   "name": "Polished Granite Stairs",
+   "max_stack": 64,
+   "model": "block/polished_granite_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 200
+    },
+    {
+     "tab": "search",
+     "index": 200
+    }
+   ],
+   "icon": {
+    "model": 1699,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "smooth_red_sandstone_stairs",
+   "block": "smooth_red_sandstone_stairs",
+   "name": "Smooth Red Sandstone Stairs",
+   "max_stack": 64,
+   "model": "block/smooth_red_sandstone_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 281
+    },
+    {
+     "tab": "search",
+     "index": 281
+    }
+   ],
+   "icon": {
+    "model": 1723,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "mossy_stone_brick_stairs",
+   "block": "mossy_stone_brick_stairs",
+   "name": "Mossy Stone Brick Stairs",
+   "max_stack": 64,
+   "model": "block/mossy_stone_brick_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 192
+    },
+    {
+     "tab": "search",
+     "index": 192
+    }
+   ],
+   "icon": {
+    "model": 1747,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "polished_diorite_stairs",
+   "block": "polished_diorite_stairs",
+   "name": "Polished Diorite Stairs",
+   "max_stack": 64,
+   "model": "block/polished_diorite_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 207
+    },
+    {
+     "tab": "search",
+     "index": 207
+    }
+   ],
+   "icon": {
+    "model": 1771,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "mossy_cobblestone_stairs",
+   "block": "mossy_cobblestone_stairs",
+   "name": "Mossy Cobblestone Stairs",
+   "max_stack": 64,
+   "model": "block/mossy_cobblestone_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 180
+    },
+    {
+     "tab": "search",
+     "index": 180
+    }
+   ],
+   "icon": {
+    "model": 1795,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "end_stone_brick_stairs",
+   "block": "end_stone_brick_stairs",
+   "name": "End Stone Brick Stairs",
+   "max_stack": 64,
+   "model": "block/end_stone_brick_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 356
+    },
+    {
+     "tab": "search",
+     "index": 356
+    }
+   ],
+   "icon": {
+    "model": 1819,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "stone_stairs",
+   "block": "stone_stairs",
+   "name": "Stone Stairs",
+   "max_stack": 64,
+   "model": "block/stone_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 171
+    },
+    {
+     "tab": "search",
+     "index": 171
+    }
+   ],
+   "icon": {
+    "model": 1843,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "smooth_sandstone_stairs",
+   "block": "smooth_sandstone_stairs",
+   "name": "Smooth Sandstone Stairs",
+   "max_stack": 64,
+   "model": "block/smooth_sandstone_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 271
+    },
+    {
+     "tab": "search",
+     "index": 271
+    }
+   ],
+   "icon": {
+    "model": 1867,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "smooth_quartz_stairs",
+   "block": "smooth_quartz_stairs",
+   "name": "Smooth Quartz Stairs",
+   "max_stack": 64,
+   "model": "block/smooth_quartz_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 375
+    },
+    {
+     "tab": "search",
+     "index": 375
+    }
+   ],
+   "icon": {
+    "model": 1891,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "granite_stairs",
+   "block": "granite_stairs",
+   "name": "Granite Stairs",
+   "max_stack": 64,
+   "model": "block/granite_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 196
+    },
+    {
+     "tab": "search",
+     "index": 196
+    }
+   ],
+   "icon": {
+    "model": 1915,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "andesite_stairs",
+   "block": "andesite_stairs",
+   "name": "Andesite Stairs",
+   "max_stack": 64,
+   "model": "block/andesite_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 210
+    },
+    {
+     "tab": "search",
+     "index": 210
+    }
+   ],
+   "icon": {
+    "model": 1939,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "red_nether_brick_stairs",
+   "block": "red_nether_brick_stairs",
+   "name": "Red Nether Brick Stairs",
+   "max_stack": 64,
+   "model": "block/red_nether_brick_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 331
+    },
+    {
+     "tab": "search",
+     "index": 331
+    }
+   ],
+   "icon": {
+    "model": 1963,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "polished_andesite_stairs",
+   "block": "polished_andesite_stairs",
+   "name": "Polished Andesite Stairs",
+   "max_stack": 64,
+   "model": "block/polished_andesite_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 214
+    },
+    {
+     "tab": "search",
+     "index": 214
+    }
+   ],
+   "icon": {
+    "model": 1987,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "diorite_stairs",
+   "block": "diorite_stairs",
+   "name": "Diorite Stairs",
+   "max_stack": 64,
+   "model": "block/diorite_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 203
+    },
+    {
+     "tab": "search",
+     "index": 203
+    }
+   ],
+   "icon": {
+    "model": 2011,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "polished_granite_slab",
    "block": "polished_granite_slab",
    "name": "Polished Granite Slab",
@@ -8405,6 +15515,500 @@
    ]
   },
   {
+   "id": "brick_wall",
+   "block": "brick_wall",
+   "name": "Brick Wall",
+   "max_stack": 64,
+   "model": "block/brick_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 254
+    },
+    {
+     "tab": "search",
+     "index": 254
+    }
+   ],
+   "icon": {
+    "model": 4807,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "prismarine_wall",
+   "block": "prismarine_wall",
+   "name": "Prismarine Wall",
+   "max_stack": 64,
+   "model": "block/prismarine_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 315
+    },
+    {
+     "tab": "search",
+     "index": 315
+    }
+   ],
+   "icon": {
+    "model": 4808,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "red_sandstone_wall",
+   "block": "red_sandstone_wall",
+   "name": "Red Sandstone Wall",
+   "max_stack": 64,
+   "model": "block/red_sandstone_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 278
+    },
+    {
+     "tab": "search",
+     "index": 278
+    }
+   ],
+   "icon": {
+    "model": 4809,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "mossy_stone_brick_wall",
+   "block": "mossy_stone_brick_wall",
+   "name": "Mossy Stone Brick Wall",
+   "max_stack": 64,
+   "model": "block/mossy_stone_brick_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 194
+    },
+    {
+     "tab": "search",
+     "index": 194
+    }
+   ],
+   "icon": {
+    "model": 4810,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "granite_wall",
+   "block": "granite_wall",
+   "name": "Granite Wall",
+   "max_stack": 64,
+   "model": "block/granite_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 198
+    },
+    {
+     "tab": "search",
+     "index": 198
+    }
+   ],
+   "icon": {
+    "model": 4811,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "stone_brick_wall",
+   "block": "stone_brick_wall",
+   "name": "Stone Brick Wall",
+   "max_stack": 64,
+   "model": "block/stone_brick_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 189
+    },
+    {
+     "tab": "search",
+     "index": 189
+    }
+   ],
+   "icon": {
+    "model": 4812,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "mud_brick_wall",
+   "block": "mud_brick_wall",
+   "name": "Mud Brick Wall",
+   "max_stack": 64,
+   "model": "block/mud_brick_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 259
+    },
+    {
+     "tab": "search",
+     "index": 259
+    }
+   ],
+   "icon": {
+    "model": 4813,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "nether_brick_wall",
+   "block": "nether_brick_wall",
+   "name": "Nether Brick Wall",
+   "max_stack": 64,
+   "model": "block/nether_brick_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 327
+    },
+    {
+     "tab": "search",
+     "index": 327
+    }
+   ],
+   "icon": {
+    "model": 4814,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "andesite_wall",
+   "block": "andesite_wall",
+   "name": "Andesite Wall",
+   "max_stack": 64,
+   "model": "block/andesite_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 212
+    },
+    {
+     "tab": "search",
+     "index": 212
+    }
+   ],
+   "icon": {
+    "model": 4815,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "red_nether_brick_wall",
+   "block": "red_nether_brick_wall",
+   "name": "Red Nether Brick Wall",
+   "max_stack": 64,
+   "model": "block/red_nether_brick_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 333
+    },
+    {
+     "tab": "search",
+     "index": 333
+    }
+   ],
+   "icon": {
+    "model": 4816,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "sandstone_wall",
+   "block": "sandstone_wall",
+   "name": "Sandstone Wall",
+   "max_stack": 64,
+   "model": "block/sandstone_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 268
+    },
+    {
+     "tab": "search",
+     "index": 268
+    }
+   ],
+   "icon": {
+    "model": 4817,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "end_stone_brick_wall",
+   "block": "end_stone_brick_wall",
+   "name": "End Stone Brick Wall",
+   "max_stack": 64,
+   "model": "block/end_stone_brick_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 358
+    },
+    {
+     "tab": "search",
+     "index": 358
+    }
+   ],
+   "icon": {
+    "model": 4818,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "diorite_wall",
+   "block": "diorite_wall",
+   "name": "Diorite Wall",
+   "max_stack": 64,
+   "model": "block/diorite_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 205
+    },
+    {
+     "tab": "search",
+     "index": 205
+    }
+   ],
+   "icon": {
+    "model": 4819,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "loom",
    "block": "loom",
    "name": "Loom",
@@ -8533,6 +16137,58 @@
      "index": 998
     }
    ]
+  },
+  {
+   "id": "campfire",
+   "block": "campfire",
+   "name": "Campfire",
+   "max_stack": 64,
+   "model": "item/campfire",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "functional_blocks",
+     "index": 52
+    },
+    {
+     "tab": "search",
+     "index": 1004
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/campfire",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "soul_campfire",
+   "block": "soul_campfire",
+   "name": "Soul Campfire",
+   "max_stack": 64,
+   "model": "item/soul_campfire",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "functional_blocks",
+     "index": 53
+    },
+    {
+     "tab": "search",
+     "index": 1005
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/soul_campfire",
+      "tint": null
+     }
+    ]
+   }
   },
   {
    "id": "warped_stem",
@@ -8763,6 +16419,58 @@
    ]
   },
   {
+   "id": "weeping_vines",
+   "block": "weeping_vines",
+   "name": "Weeping Vines",
+   "max_stack": 64,
+   "model": "item/weeping_vines",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 179
+    },
+    {
+     "tab": "search",
+     "index": 903
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/weeping_vines_plant",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "twisting_vines",
+   "block": "twisting_vines",
+   "name": "Twisting Vines",
+   "max_stack": 64,
+   "model": "item/twisting_vines",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "natural_blocks",
+     "index": 180
+    },
+    {
+     "tab": "search",
+     "index": 904
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "block/twisting_vines_plant",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
    "id": "crimson_planks",
    "block": "crimson_planks",
    "name": "Crimson Planks",
@@ -8833,6 +16541,514 @@
      "index": 163
     }
    ]
+  },
+  {
+   "id": "crimson_pressure_plate",
+   "block": "crimson_pressure_plate",
+   "name": "Crimson Pressure Plate",
+   "max_stack": 64,
+   "model": "block/crimson_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 155
+    },
+    {
+     "tab": "search",
+     "index": 155
+    }
+   ],
+   "icon": {
+    "model": 4516,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "warped_pressure_plate",
+   "block": "warped_pressure_plate",
+   "name": "Warped Pressure Plate",
+   "max_stack": 64,
+   "model": "block/warped_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 168
+    },
+    {
+     "tab": "search",
+     "index": 168
+    }
+   ],
+   "icon": {
+    "model": 4518,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "crimson_fence",
+   "block": "crimson_fence",
+   "name": "Crimson Fence",
+   "max_stack": 64,
+   "model": "block/crimson_fence_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 151
+    },
+    {
+     "tab": "search",
+     "index": 151
+    }
+   ],
+   "icon": {
+    "model": 4802,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "warped_fence",
+   "block": "warped_fence",
+   "name": "Warped Fence",
+   "max_stack": 64,
+   "model": "block/warped_fence_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 164
+    },
+    {
+     "tab": "search",
+     "index": 164
+    }
+   ],
+   "icon": {
+    "model": 4803,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "crimson_trapdoor",
+   "block": "crimson_trapdoor",
+   "name": "Crimson Trapdoor",
+   "max_stack": 64,
+   "model": "block/crimson_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 154
+    },
+    {
+     "tab": "search",
+     "index": 154
+    }
+   ],
+   "icon": {
+    "model": 4050,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "warped_trapdoor",
+   "block": "warped_trapdoor",
+   "name": "Warped Trapdoor",
+   "max_stack": 64,
+   "model": "block/warped_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 167
+    },
+    {
+     "tab": "search",
+     "index": 167
+    }
+   ],
+   "icon": {
+    "model": 4066,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "crimson_fence_gate",
+   "block": "crimson_fence_gate",
+   "name": "Crimson Fence Gate",
+   "max_stack": 64,
+   "model": "block/crimson_fence_gate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 152
+    },
+    {
+     "tab": "search",
+     "index": 152
+    }
+   ],
+   "icon": {
+    "model": 2793,
+    "gui": {
+     "rotation": [
+      30,
+      45,
+      0
+     ],
+     "translation": [
+      0,
+      -1,
+      0
+     ],
+     "scale": [
+      0.8,
+      0.8,
+      0.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "warped_fence_gate",
+   "block": "warped_fence_gate",
+   "name": "Warped Fence Gate",
+   "max_stack": 64,
+   "model": "block/warped_fence_gate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 165
+    },
+    {
+     "tab": "search",
+     "index": 165
+    }
+   ],
+   "icon": {
+    "model": 2809,
+    "gui": {
+     "rotation": [
+      30,
+      45,
+      0
+     ],
+     "translation": [
+      0,
+      -1,
+      0
+     ],
+     "scale": [
+      0.8,
+      0.8,
+      0.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "crimson_stairs",
+   "block": "crimson_stairs",
+   "name": "Crimson Stairs",
+   "max_stack": 64,
+   "model": "block/crimson_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 149
+    },
+    {
+     "tab": "search",
+     "index": 149
+    }
+   ],
+   "icon": {
+    "model": 2035,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "warped_stairs",
+   "block": "warped_stairs",
+   "name": "Warped Stairs",
+   "max_stack": 64,
+   "model": "block/warped_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 162
+    },
+    {
+     "tab": "search",
+     "index": 162
+    }
+   ],
+   "icon": {
+    "model": 2059,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "crimson_button",
+   "block": "crimson_button",
+   "name": "Crimson Button",
+   "max_stack": 64,
+   "model": "block/crimson_button_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 156
+    },
+    {
+     "tab": "search",
+     "index": 156
+    }
+   ],
+   "icon": {
+    "model": 4848,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "warped_button",
+   "block": "warped_button",
+   "name": "Warped Button",
+   "max_stack": 64,
+   "model": "block/warped_button_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 169
+    },
+    {
+     "tab": "search",
+     "index": 169
+    }
+   ],
+   "icon": {
+    "model": 4849,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "crimson_door",
+   "block": "crimson_door",
+   "name": "Crimson Door",
+   "max_stack": 64,
+   "model": "item/crimson_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 153
+    },
+    {
+     "tab": "search",
+     "index": 153
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/crimson_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "warped_door",
+   "block": "warped_door",
+   "name": "Warped Door",
+   "max_stack": 64,
+   "model": "item/warped_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 166
+    },
+    {
+     "tab": "search",
+     "index": 166
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/warped_door",
+      "tint": null
+     }
+    ]
+   }
   },
   {
    "id": "structure_block",
@@ -9127,6 +17343,82 @@
    ]
   },
   {
+   "id": "blackstone_stairs",
+   "block": "blackstone_stairs",
+   "name": "Blackstone Stairs",
+   "max_stack": 64,
+   "model": "block/blackstone_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 339
+    },
+    {
+     "tab": "search",
+     "index": 339
+    }
+   ],
+   "icon": {
+    "model": 2083,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "blackstone_wall",
+   "block": "blackstone_wall",
+   "name": "Blackstone Wall",
+   "max_stack": 64,
+   "model": "block/blackstone_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 341
+    },
+    {
+     "tab": "search",
+     "index": 341
+    }
+   ],
+   "icon": {
+    "model": 4820,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "blackstone_slab",
    "block": "blackstone_slab",
    "name": "Blackstone Slab",
@@ -9235,6 +17527,82 @@
    ]
   },
   {
+   "id": "polished_blackstone_brick_stairs",
+   "block": "polished_blackstone_brick_stairs",
+   "name": "Polished Blackstone Brick Stairs",
+   "max_stack": 64,
+   "model": "block/polished_blackstone_brick_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 351
+    },
+    {
+     "tab": "search",
+     "index": 351
+    }
+   ],
+   "icon": {
+    "model": 2107,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "polished_blackstone_brick_wall",
+   "block": "polished_blackstone_brick_wall",
+   "name": "Polished Blackstone Brick Wall",
+   "max_stack": 64,
+   "model": "block/polished_blackstone_brick_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 353
+    },
+    {
+     "tab": "search",
+     "index": 353
+    }
+   ],
+   "icon": {
+    "model": 4821,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "gilded_blackstone",
    "block": "gilded_blackstone",
    "name": "Gilded Blackstone",
@@ -9253,6 +17621,44 @@
    ]
   },
   {
+   "id": "polished_blackstone_stairs",
+   "block": "polished_blackstone_stairs",
+   "name": "Polished Blackstone Stairs",
+   "max_stack": 64,
+   "model": "block/polished_blackstone_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 344
+    },
+    {
+     "tab": "search",
+     "index": 344
+    }
+   ],
+   "icon": {
+    "model": 2131,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "polished_blackstone_slab",
    "block": "polished_blackstone_slab",
    "name": "Polished Blackstone Slab",
@@ -9269,6 +17675,120 @@
      "index": 345
     }
    ]
+  },
+  {
+   "id": "polished_blackstone_pressure_plate",
+   "block": "polished_blackstone_pressure_plate",
+   "name": "Polished Blackstone Pressure Plate",
+   "max_stack": 64,
+   "model": "block/polished_blackstone_pressure_plate",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 347
+    },
+    {
+     "tab": "search",
+     "index": 347
+    }
+   ],
+   "icon": {
+    "model": 4520,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "polished_blackstone_button",
+   "block": "polished_blackstone_button",
+   "name": "Polished Blackstone Button",
+   "max_stack": 64,
+   "model": "block/polished_blackstone_button_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 348
+    },
+    {
+     "tab": "search",
+     "index": 348
+    }
+   ],
+   "icon": {
+    "model": 4850,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "polished_blackstone_wall",
+   "block": "polished_blackstone_wall",
+   "name": "Polished Blackstone Wall",
+   "max_stack": 64,
+   "model": "block/polished_blackstone_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 346
+    },
+    {
+     "tab": "search",
+     "index": 346
+    }
+   ],
+   "icon": {
+    "model": 4822,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "chiseled_nether_bricks",
@@ -9513,6 +18033,82 @@
    ]
   },
   {
+   "id": "tuff_stairs",
+   "block": "tuff_stairs",
+   "name": "Tuff Stairs",
+   "max_stack": 64,
+   "model": "block/tuff_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 238
+    },
+    {
+     "tab": "search",
+     "index": 238
+    }
+   ],
+   "icon": {
+    "model": 2155,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "tuff_wall",
+   "block": "tuff_wall",
+   "name": "Tuff Wall",
+   "max_stack": 64,
+   "model": "block/tuff_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 240
+    },
+    {
+     "tab": "search",
+     "index": 240
+    }
+   ],
+   "icon": {
+    "model": 4823,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "polished_tuff",
    "block": "polished_tuff",
    "name": "Polished Tuff",
@@ -9547,6 +18143,82 @@
      "index": 244
     }
    ]
+  },
+  {
+   "id": "polished_tuff_stairs",
+   "block": "polished_tuff_stairs",
+   "name": "Polished Tuff Stairs",
+   "max_stack": 64,
+   "model": "block/polished_tuff_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 243
+    },
+    {
+     "tab": "search",
+     "index": 243
+    }
+   ],
+   "icon": {
+    "model": 2179,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "polished_tuff_wall",
+   "block": "polished_tuff_wall",
+   "name": "Polished Tuff Wall",
+   "max_stack": 64,
+   "model": "block/polished_tuff_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 245
+    },
+    {
+     "tab": "search",
+     "index": 245
+    }
+   ],
+   "icon": {
+    "model": 4824,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "chiseled_tuff",
@@ -9601,6 +18273,82 @@
      "index": 248
     }
    ]
+  },
+  {
+   "id": "tuff_brick_stairs",
+   "block": "tuff_brick_stairs",
+   "name": "Tuff Brick Stairs",
+   "max_stack": 64,
+   "model": "block/tuff_brick_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 247
+    },
+    {
+     "tab": "search",
+     "index": 247
+    }
+   ],
+   "icon": {
+    "model": 2203,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "tuff_brick_wall",
+   "block": "tuff_brick_wall",
+   "name": "Tuff Brick Wall",
+   "max_stack": 64,
+   "model": "block/tuff_brick_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 249
+    },
+    {
+     "tab": "search",
+     "index": 249
+    }
+   ],
+   "icon": {
+    "model": 4825,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "chiseled_tuff_bricks",
@@ -9679,6 +18427,82 @@
    ]
   },
   {
+   "id": "sulfur_stairs",
+   "block": "sulfur_stairs",
+   "name": "Sulfur Stairs",
+   "max_stack": 64,
+   "model": "block/sulfur_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 299
+    },
+    {
+     "tab": "search",
+     "index": 299
+    }
+   ],
+   "icon": {
+    "model": 2227,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "sulfur_wall",
+   "block": "sulfur_wall",
+   "name": "Sulfur Wall",
+   "max_stack": 64,
+   "model": "block/sulfur_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 301
+    },
+    {
+     "tab": "search",
+     "index": 301
+    }
+   ],
+   "icon": {
+    "model": 4826,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "polished_sulfur",
    "block": "polished_sulfur",
    "name": "Polished Sulfur",
@@ -9715,6 +18539,82 @@
    ]
   },
   {
+   "id": "polished_sulfur_stairs",
+   "block": "polished_sulfur_stairs",
+   "name": "Polished Sulfur Stairs",
+   "max_stack": 64,
+   "model": "block/polished_sulfur_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 304
+    },
+    {
+     "tab": "search",
+     "index": 304
+    }
+   ],
+   "icon": {
+    "model": 2251,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "polished_sulfur_wall",
+   "block": "polished_sulfur_wall",
+   "name": "Polished Sulfur Wall",
+   "max_stack": 64,
+   "model": "block/polished_sulfur_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 306
+    },
+    {
+     "tab": "search",
+     "index": 306
+    }
+   ],
+   "icon": {
+    "model": 4827,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "sulfur_bricks",
    "block": "sulfur_bricks",
    "name": "Sulfur Bricks",
@@ -9749,6 +18649,82 @@
      "index": 309
     }
    ]
+  },
+  {
+   "id": "sulfur_brick_stairs",
+   "block": "sulfur_brick_stairs",
+   "name": "Sulfur Brick Stairs",
+   "max_stack": 64,
+   "model": "block/sulfur_brick_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 308
+    },
+    {
+     "tab": "search",
+     "index": 308
+    }
+   ],
+   "icon": {
+    "model": 2275,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "sulfur_brick_wall",
+   "block": "sulfur_brick_wall",
+   "name": "Sulfur Brick Wall",
+   "max_stack": 64,
+   "model": "block/sulfur_brick_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 310
+    },
+    {
+     "tab": "search",
+     "index": 310
+    }
+   ],
+   "icon": {
+    "model": 4828,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "chiseled_sulfur",
@@ -9809,6 +18785,82 @@
    ]
   },
   {
+   "id": "cinnabar_stairs",
+   "block": "cinnabar_stairs",
+   "name": "Cinnabar Stairs",
+   "max_stack": 64,
+   "model": "block/cinnabar_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 286
+    },
+    {
+     "tab": "search",
+     "index": 286
+    }
+   ],
+   "icon": {
+    "model": 2299,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "cinnabar_wall",
+   "block": "cinnabar_wall",
+   "name": "Cinnabar Wall",
+   "max_stack": 64,
+   "model": "block/cinnabar_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 288
+    },
+    {
+     "tab": "search",
+     "index": 288
+    }
+   ],
+   "icon": {
+    "model": 4829,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "polished_cinnabar",
    "block": "polished_cinnabar",
    "name": "Polished Cinnabar",
@@ -9845,6 +18897,82 @@
    ]
   },
   {
+   "id": "polished_cinnabar_stairs",
+   "block": "polished_cinnabar_stairs",
+   "name": "Polished Cinnabar Stairs",
+   "max_stack": 64,
+   "model": "block/polished_cinnabar_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 291
+    },
+    {
+     "tab": "search",
+     "index": 291
+    }
+   ],
+   "icon": {
+    "model": 2323,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "polished_cinnabar_wall",
+   "block": "polished_cinnabar_wall",
+   "name": "Polished Cinnabar Wall",
+   "max_stack": 64,
+   "model": "block/polished_cinnabar_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 293
+    },
+    {
+     "tab": "search",
+     "index": 293
+    }
+   ],
+   "icon": {
+    "model": 4830,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "cinnabar_bricks",
    "block": "cinnabar_bricks",
    "name": "Cinnabar Bricks",
@@ -9879,6 +19007,82 @@
      "index": 296
     }
    ]
+  },
+  {
+   "id": "cinnabar_brick_stairs",
+   "block": "cinnabar_brick_stairs",
+   "name": "Cinnabar Brick Stairs",
+   "max_stack": 64,
+   "model": "block/cinnabar_brick_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 295
+    },
+    {
+     "tab": "search",
+     "index": 295
+    }
+   ],
+   "icon": {
+    "model": 2347,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "cinnabar_brick_wall",
+   "block": "cinnabar_brick_wall",
+   "name": "Cinnabar Brick Wall",
+   "max_stack": 64,
+   "model": "block/cinnabar_brick_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 297
+    },
+    {
+     "tab": "search",
+     "index": 297
+    }
+   ],
+   "icon": {
+    "model": 4831,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "chiseled_cinnabar",
@@ -10469,6 +19673,310 @@
    ]
   },
   {
+   "id": "cut_copper_stairs",
+   "block": "cut_copper_stairs",
+   "name": "Cut Copper Stairs",
+   "max_stack": 64,
+   "model": "block/cut_copper_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 403
+    },
+    {
+     "tab": "search",
+     "index": 403
+    }
+   ],
+   "icon": {
+    "model": 2371,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "exposed_cut_copper_stairs",
+   "block": "exposed_cut_copper_stairs",
+   "name": "Exposed Cut Copper Stairs",
+   "max_stack": 64,
+   "model": "block/exposed_cut_copper_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 404
+    },
+    {
+     "tab": "search",
+     "index": 404
+    }
+   ],
+   "icon": {
+    "model": 2395,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "weathered_cut_copper_stairs",
+   "block": "weathered_cut_copper_stairs",
+   "name": "Weathered Cut Copper Stairs",
+   "max_stack": 64,
+   "model": "block/weathered_cut_copper_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 405
+    },
+    {
+     "tab": "search",
+     "index": 405
+    }
+   ],
+   "icon": {
+    "model": 2419,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "oxidized_cut_copper_stairs",
+   "block": "oxidized_cut_copper_stairs",
+   "name": "Oxidized Cut Copper Stairs",
+   "max_stack": 64,
+   "model": "block/oxidized_cut_copper_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 406
+    },
+    {
+     "tab": "search",
+     "index": 406
+    }
+   ],
+   "icon": {
+    "model": 2443,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "waxed_cut_copper_stairs",
+   "block": "waxed_cut_copper_stairs",
+   "name": "Waxed Cut Copper Stairs",
+   "max_stack": 64,
+   "model": "block/cut_copper_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 447
+    },
+    {
+     "tab": "search",
+     "index": 447
+    }
+   ],
+   "icon": {
+    "model": 2371,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "waxed_exposed_cut_copper_stairs",
+   "block": "waxed_exposed_cut_copper_stairs",
+   "name": "Waxed Exposed Cut Copper Stairs",
+   "max_stack": 64,
+   "model": "block/exposed_cut_copper_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 448
+    },
+    {
+     "tab": "search",
+     "index": 448
+    }
+   ],
+   "icon": {
+    "model": 2395,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "waxed_weathered_cut_copper_stairs",
+   "block": "waxed_weathered_cut_copper_stairs",
+   "name": "Waxed Weathered Cut Copper Stairs",
+   "max_stack": 64,
+   "model": "block/weathered_cut_copper_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 449
+    },
+    {
+     "tab": "search",
+     "index": 449
+    }
+   ],
+   "icon": {
+    "model": 2419,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "waxed_oxidized_cut_copper_stairs",
+   "block": "waxed_oxidized_cut_copper_stairs",
+   "name": "Waxed Oxidized Cut Copper Stairs",
+   "max_stack": 64,
+   "model": "block/oxidized_cut_copper_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 450
+    },
+    {
+     "tab": "search",
+     "index": 450
+    }
+   ],
+   "icon": {
+    "model": 2443,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "cut_copper_slab",
    "block": "cut_copper_slab",
    "name": "Cut Copper Slab",
@@ -10611,6 +20119,518 @@
      "index": 454
     }
    ]
+  },
+  {
+   "id": "copper_door",
+   "block": "copper_door",
+   "name": "Copper Door",
+   "max_stack": 64,
+   "model": "item/copper_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 415
+    },
+    {
+     "tab": "search",
+     "index": 415
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/copper_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "exposed_copper_door",
+   "block": "exposed_copper_door",
+   "name": "Exposed Copper Door",
+   "max_stack": 64,
+   "model": "item/exposed_copper_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 416
+    },
+    {
+     "tab": "search",
+     "index": 416
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/exposed_copper_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "weathered_copper_door",
+   "block": "weathered_copper_door",
+   "name": "Weathered Copper Door",
+   "max_stack": 64,
+   "model": "item/weathered_copper_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 417
+    },
+    {
+     "tab": "search",
+     "index": 417
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/weathered_copper_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "oxidized_copper_door",
+   "block": "oxidized_copper_door",
+   "name": "Oxidized Copper Door",
+   "max_stack": 64,
+   "model": "item/oxidized_copper_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 418
+    },
+    {
+     "tab": "search",
+     "index": 418
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/oxidized_copper_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "waxed_copper_door",
+   "block": "waxed_copper_door",
+   "name": "Waxed Copper Door",
+   "max_stack": 64,
+   "model": "item/copper_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 459
+    },
+    {
+     "tab": "search",
+     "index": 459
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/copper_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "waxed_exposed_copper_door",
+   "block": "waxed_exposed_copper_door",
+   "name": "Waxed Exposed Copper Door",
+   "max_stack": 64,
+   "model": "item/exposed_copper_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 460
+    },
+    {
+     "tab": "search",
+     "index": 460
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/exposed_copper_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "waxed_weathered_copper_door",
+   "block": "waxed_weathered_copper_door",
+   "name": "Waxed Weathered Copper Door",
+   "max_stack": 64,
+   "model": "item/weathered_copper_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 461
+    },
+    {
+     "tab": "search",
+     "index": 461
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/weathered_copper_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "waxed_oxidized_copper_door",
+   "block": "waxed_oxidized_copper_door",
+   "name": "Waxed Oxidized Copper Door",
+   "max_stack": 64,
+   "model": "item/oxidized_copper_door",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 462
+    },
+    {
+     "tab": "search",
+     "index": 462
+    }
+   ],
+   "icon": {
+    "sprite": [
+     {
+      "texture": "item/oxidized_copper_door",
+      "tint": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "copper_trapdoor",
+   "block": "copper_trapdoor",
+   "name": "Copper Trapdoor",
+   "max_stack": 64,
+   "model": "block/copper_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 419
+    },
+    {
+     "tab": "search",
+     "index": 419
+    }
+   ],
+   "icon": {
+    "model": 4081,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "exposed_copper_trapdoor",
+   "block": "exposed_copper_trapdoor",
+   "name": "Exposed Copper Trapdoor",
+   "max_stack": 64,
+   "model": "block/exposed_copper_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 420
+    },
+    {
+     "tab": "search",
+     "index": 420
+    }
+   ],
+   "icon": {
+    "model": 4087,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "weathered_copper_trapdoor",
+   "block": "weathered_copper_trapdoor",
+   "name": "Weathered Copper Trapdoor",
+   "max_stack": 64,
+   "model": "block/weathered_copper_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 421
+    },
+    {
+     "tab": "search",
+     "index": 421
+    }
+   ],
+   "icon": {
+    "model": 4093,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "oxidized_copper_trapdoor",
+   "block": "oxidized_copper_trapdoor",
+   "name": "Oxidized Copper Trapdoor",
+   "max_stack": 64,
+   "model": "block/oxidized_copper_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 422
+    },
+    {
+     "tab": "search",
+     "index": 422
+    }
+   ],
+   "icon": {
+    "model": 4099,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "waxed_copper_trapdoor",
+   "block": "waxed_copper_trapdoor",
+   "name": "Waxed Copper Trapdoor",
+   "max_stack": 64,
+   "model": "block/copper_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 463
+    },
+    {
+     "tab": "search",
+     "index": 463
+    }
+   ],
+   "icon": {
+    "model": 4081,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "waxed_exposed_copper_trapdoor",
+   "block": "waxed_exposed_copper_trapdoor",
+   "name": "Waxed Exposed Copper Trapdoor",
+   "max_stack": 64,
+   "model": "block/exposed_copper_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 464
+    },
+    {
+     "tab": "search",
+     "index": 464
+    }
+   ],
+   "icon": {
+    "model": 4087,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "waxed_weathered_copper_trapdoor",
+   "block": "waxed_weathered_copper_trapdoor",
+   "name": "Waxed Weathered Copper Trapdoor",
+   "max_stack": 64,
+   "model": "block/weathered_copper_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 465
+    },
+    {
+     "tab": "search",
+     "index": 465
+    }
+   ],
+   "icon": {
+    "model": 4093,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
+   "id": "waxed_oxidized_copper_trapdoor",
+   "block": "waxed_oxidized_copper_trapdoor",
+   "name": "Waxed Oxidized Copper Trapdoor",
+   "max_stack": 64,
+   "model": "block/oxidized_copper_trapdoor_bottom",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 466
+    },
+    {
+     "tab": "search",
+     "index": 466
+    }
+   ],
+   "icon": {
+    "model": 4099,
+    "gui": {
+     "rotation": [
+      30,
+      225,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "copper_grate",
@@ -11449,6 +21469,44 @@
    ]
   },
   {
+   "id": "cobbled_deepslate_stairs",
+   "block": "cobbled_deepslate_stairs",
+   "name": "Cobbled Deepslate Stairs",
+   "max_stack": 64,
+   "model": "block/cobbled_deepslate_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 218
+    },
+    {
+     "tab": "search",
+     "index": 218
+    }
+   ],
+   "icon": {
+    "model": 2467,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "cobbled_deepslate_slab",
    "block": "cobbled_deepslate_slab",
    "name": "Cobbled Deepslate Slab",
@@ -11465,6 +21523,44 @@
      "index": 219
     }
    ]
+  },
+  {
+   "id": "cobbled_deepslate_wall",
+   "block": "cobbled_deepslate_wall",
+   "name": "Cobbled Deepslate Wall",
+   "max_stack": 64,
+   "model": "block/cobbled_deepslate_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 220
+    },
+    {
+     "tab": "search",
+     "index": 220
+    }
+   ],
+   "icon": {
+    "model": 4832,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "polished_deepslate",
@@ -11485,6 +21581,44 @@
    ]
   },
   {
+   "id": "polished_deepslate_stairs",
+   "block": "polished_deepslate_stairs",
+   "name": "Polished Deepslate Stairs",
+   "max_stack": 64,
+   "model": "block/polished_deepslate_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 223
+    },
+    {
+     "tab": "search",
+     "index": 223
+    }
+   ],
+   "icon": {
+    "model": 2491,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "polished_deepslate_slab",
    "block": "polished_deepslate_slab",
    "name": "Polished Deepslate Slab",
@@ -11501,6 +21635,44 @@
      "index": 224
     }
    ]
+  },
+  {
+   "id": "polished_deepslate_wall",
+   "block": "polished_deepslate_wall",
+   "name": "Polished Deepslate Wall",
+   "max_stack": 64,
+   "model": "block/polished_deepslate_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 225
+    },
+    {
+     "tab": "search",
+     "index": 225
+    }
+   ],
+   "icon": {
+    "model": 4833,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "deepslate_tiles",
@@ -11521,6 +21693,44 @@
    ]
   },
   {
+   "id": "deepslate_tile_stairs",
+   "block": "deepslate_tile_stairs",
+   "name": "Deepslate Tile Stairs",
+   "max_stack": 64,
+   "model": "block/deepslate_tile_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 233
+    },
+    {
+     "tab": "search",
+     "index": 233
+    }
+   ],
+   "icon": {
+    "model": 2515,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "deepslate_tile_slab",
    "block": "deepslate_tile_slab",
    "name": "Deepslate Tile Slab",
@@ -11537,6 +21747,44 @@
      "index": 234
     }
    ]
+  },
+  {
+   "id": "deepslate_tile_wall",
+   "block": "deepslate_tile_wall",
+   "name": "Deepslate Tile Wall",
+   "max_stack": 64,
+   "model": "block/deepslate_tile_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 235
+    },
+    {
+     "tab": "search",
+     "index": 235
+    }
+   ],
+   "icon": {
+    "model": 4834,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "deepslate_bricks",
@@ -11557,6 +21805,44 @@
    ]
   },
   {
+   "id": "deepslate_brick_stairs",
+   "block": "deepslate_brick_stairs",
+   "name": "Deepslate Brick Stairs",
+   "max_stack": 64,
+   "model": "block/deepslate_brick_stairs",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 228
+    },
+    {
+     "tab": "search",
+     "index": 228
+    }
+   ],
+   "icon": {
+    "model": 2539,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
+  },
+  {
    "id": "deepslate_brick_slab",
    "block": "deepslate_brick_slab",
    "name": "Deepslate Brick Slab",
@@ -11573,6 +21859,44 @@
      "index": 229
     }
    ]
+  },
+  {
+   "id": "deepslate_brick_wall",
+   "block": "deepslate_brick_wall",
+   "name": "Deepslate Brick Wall",
+   "max_stack": 64,
+   "model": "block/deepslate_brick_wall_inventory",
+   "gui_tint": null,
+   "creative": [
+    {
+     "tab": "building_blocks",
+     "index": 230
+    },
+    {
+     "tab": "search",
+     "index": 230
+    }
+   ],
+   "icon": {
+    "model": 4835,
+    "gui": {
+     "rotation": [
+      30,
+      135,
+      0
+     ],
+     "translation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      0.625,
+      0.625,
+      0.625
+     ]
+    }
+   }
   },
   {
    "id": "chiseled_deepslate",

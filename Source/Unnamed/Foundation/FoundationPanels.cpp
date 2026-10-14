@@ -508,6 +508,8 @@ TSharedRef<SHudCreativeScreen> UFoundationPanels::MakeCreative(AFoundationLab& L
     FHudCreativeItems Items;
     for (const FFoundationItemDefinition& Item : Authority.Rules.Items)
     {
+        // foundation.Blocks.Families 0: items placing a B1 family block (saplings included) stay out of the grid.
+        if (FoundationBlockFamilies::IsHidden(Registry->FindBlock(Item.PlacesBlock))) continue;
         FHudCreativeItem& Entry = Items.Add(Item.Id);
         Entry.Name = Item.DisplayName;
         Entry.MaxStack = Item.MaxStack;

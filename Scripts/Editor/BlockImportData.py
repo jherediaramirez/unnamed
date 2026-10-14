@@ -262,6 +262,8 @@ def build(root):
             "item_wall_block": wall_blocks.get(bid) if item else None, "state_support": support_by_id[bid],
             "item_max_stack": item["max_stack"] if item else 64, "item_tint": color(item["gui_tint"] if item else None),
             **icon_fields(item), **(model_fields(block, entry) if model else {}),
+            # Survival B1's family blocks (the manifest's added: "survival-B1"), behind foundation.Blocks.Families.
+            "appended_family": block.get("added") == "survival-B1",
         })
     creative = []
     meta = {t["id"]: t for t in items["creative_tabs"]}

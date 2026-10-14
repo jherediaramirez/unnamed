@@ -8,7 +8,7 @@
     16,
     16
    ],
-   "layers": 945
+   "layers": 1364
   },
   "water_flow": {
    "frame_size": [
@@ -15827,6 +15827,6702 @@
    ],
    "alpha": "cutout",
    "mipmap_strategy": "auto"
+  },
+  {
+   "name": "bamboo_fence",
+   "png_sha256": "a87792a033d194247b9aa81579ad6d7dba6b01201b7c34d0537446abfff6f0f8",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 945,
+   "layer_rgba_sha256": [
+    "85e123464266a9d15aeaa03ae083ac140b477822e6c00f321806239ee2aafead"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "bamboo_fence_gate",
+   "png_sha256": "05a3b0a43e3843359e2e16f0c44e6a4625676d09de9e74e618f33baf6445ca0a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 946,
+   "layer_rgba_sha256": [
+    "a02cfc0ba615aa5a5d28870092984a285830027a0cff40fee87d743ce71eb4d6"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "iron_bars",
+   "png_sha256": "55c60ab25a9ef48ece153a10f6195cdc890dbb3a1c667362e323e1f8ea08bfce",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 947,
+   "layer_rgba_sha256": [
+    "8b157322fbdb0b5c8f737832fc2b0c0b98a582f24791e6a3b21594df41584e7a"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "copper_bars",
+   "png_sha256": "95e69974724ef49e429e18b42373b81c0f0fec6ae9b189b654ffee56766fe16d",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 948,
+   "layer_rgba_sha256": [
+    "69131bb0d2fbc4920bee1cdd2531e3daa4b95914ebe1bc571a92d4cb9c91a7cc"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "exposed_copper_bars",
+   "png_sha256": "6066e806d887d7b490da3e1778f5b0dab319a59d3242b60c503f8d5889a39468",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 949,
+   "layer_rgba_sha256": [
+    "4999c08f0050f512de64efbc0f533b05bf03a87ab306d446a5edad12d956888c"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "weathered_copper_bars",
+   "png_sha256": "1ccf5ba060aafae58ed10ce5414ef6fa4ab606979f0995491f1a2387a0dc3ab3",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 950,
+   "layer_rgba_sha256": [
+    "bafd64e36001de32902cee7a9e76352b9c4eee450814e153479c4f3e3110ff02"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "oxidized_copper_bars",
+   "png_sha256": "875ae589bb9e0c9780b89d684976f9bc6321601b8d304f3c955814e3cc0c806a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 951,
+   "layer_rgba_sha256": [
+    "91f9d077915b277c1aff61d5396a08a71e30a81f1605e1f3dfd5bba43fcfda1e"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "glass_pane_top",
+   "png_sha256": "9473b8b4dcd8d9a54f54ddc1df4d049fef9a6f4662f8a9b15fa06cc3e2d285b6",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 952,
+   "layer_rgba_sha256": [
+    "f01c657141534cc89eb099eb640e7963baedfbc5623f7eca9c3e5a169d3d8ec7"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "white_stained_glass_pane_top",
+   "png_sha256": "713189b7085306fb5ba4a1be48f52931a78091084fea09db993f850b2c1212c9",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 953,
+   "layer_rgba_sha256": [
+    "281d9200747b61021c96bb6677e13ca747e80627f04ecd9332cfcb4b1872fc69"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "orange_stained_glass_pane_top",
+   "png_sha256": "26daefd0a1bbf7e5e6f4d4d720064b5829c815e826c04e90367a25fe9e4101cc",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 954,
+   "layer_rgba_sha256": [
+    "43770fa782e9a0d8c0a0b7824d84c1e5c38f0f0a2eefbf977d7642d6939102d0"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "magenta_stained_glass_pane_top",
+   "png_sha256": "67d5320f618c3c8a316f71dac347896b3ca450dcdb522db18003a5716d9c6828",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 955,
+   "layer_rgba_sha256": [
+    "9d9bd9e1d2714ed7b492199356991c87e33e1f58276bcc503bb923d6d60adfaf"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_blue_stained_glass_pane_top",
+   "png_sha256": "90f865d6e06d6f0e8eb683622f656ee46a673beb362422f1abded38ea230eda5",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 956,
+   "layer_rgba_sha256": [
+    "7d78273e576b5232ce8387e917fda05d2af7c7dfa0c0c1543182ee3d6bcb3558"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "yellow_stained_glass_pane_top",
+   "png_sha256": "ae558d8e6ba2986272ed70a1e3f7c5f5a883b57b6ca478d56c0d9255e13a8199",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 957,
+   "layer_rgba_sha256": [
+    "c155883bba5b13d06fed59e367e1a7fbad28eee6a8fd17629c8aba6a0c9998bb"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "lime_stained_glass_pane_top",
+   "png_sha256": "229770c98188f1d545d5822f7b4274f7d1ab87054c222e6f566cad4859a38a55",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 958,
+   "layer_rgba_sha256": [
+    "2e441e72dd0500ff39b763fd67b3a38d8ce9f744699c8ce7aa48dadac9aaa4fd"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pink_stained_glass_pane_top",
+   "png_sha256": "c8ff9701d09b74d55430595e73a0cd04dde7691791d4a8beaf9060116407a564",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 959,
+   "layer_rgba_sha256": [
+    "81ca88600ea95a9bd1fa28a8cdaa7433cdc9a28f040fc0a92c86841607d57062"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "gray_stained_glass_pane_top",
+   "png_sha256": "6bb179383dac91d8a9985530f9ddb8cf621ed98741e716d3891314699fa4818b",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 960,
+   "layer_rgba_sha256": [
+    "9906a52e8f67ccbee8d8ef112c47bdbd97eab139d431c62adcb8e802fec5942a"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_gray_stained_glass_pane_top",
+   "png_sha256": "3dfe2cb571a911930d2446f11c47f5d502561515087fae6cff75814d64e362af",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 961,
+   "layer_rgba_sha256": [
+    "299263afbfe208410f5d1c32427e92fd03b06291df557fc0139af2aaca1031f0"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cyan_stained_glass_pane_top",
+   "png_sha256": "21e22a31c98baa43adb264e52db4db7aea8f9092ee8bed0434ea27cf46aee210",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 962,
+   "layer_rgba_sha256": [
+    "0d2ad6a2313fd7980b63178d75cb5302fb40abd47acb233607f46d37284d99d4"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "purple_stained_glass_pane_top",
+   "png_sha256": "8e39ad5e4f2cfa8ac2dcc89f8bb1680bee0c0a91000736654788f2a055896b4e",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 963,
+   "layer_rgba_sha256": [
+    "6ea82ee0e3476e4d5f8fe5517c1c0ed7dc6f7544332ae852cdf1f4f214565e72"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "blue_stained_glass_pane_top",
+   "png_sha256": "174206483bb73da9d657b341ed27cab16e019d8391c5b460d1651f15240e7979",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 964,
+   "layer_rgba_sha256": [
+    "321ba85f319f8103f021da3392c080582a69a11c89b30efaead96ab4a7f08f49"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "brown_stained_glass_pane_top",
+   "png_sha256": "d2ff4fa371397877927718d509dcb0f4a5cdebdb6248baff2b9eb01876f7039d",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 965,
+   "layer_rgba_sha256": [
+    "9159239cb8074841b2bb13ca1f61b2acc5dd0feebd06561452f89c78147060ee"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "green_stained_glass_pane_top",
+   "png_sha256": "cc73cc240f32e24fd72d368772b286424e18d73643d33839a312c373445ee12a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 966,
+   "layer_rgba_sha256": [
+    "48a9daa9c5bfda8b0d4485e48bb088c553048c45c271917cacba60f4025a4190"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "red_stained_glass_pane_top",
+   "png_sha256": "2da8bf72b780aef0a60ce5051ce92c5d99b58761d8930675caa59793e9917e40",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 967,
+   "layer_rgba_sha256": [
+    "ae5c53146a65ec5ed02cdeea857fd4957d9dbc94cfc89f179169fd55188b00b0"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "black_stained_glass_pane_top",
+   "png_sha256": "4d1ee0872f2233599df282cbff991455399dc726b1e98bba6f06b5836aa21eb2",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 968,
+   "layer_rgba_sha256": [
+    "842bbe9af25c024b853e59853df2904f21ef076ba579d8080977e47198ff29a5"
+   ],
+   "alpha": "translucent",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "oak_door_bottom",
+   "png_sha256": "a209e7e8611d56d211445d5df23a50c31185a293c51f4e03f3cb691209a49df4",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 969,
+   "layer_rgba_sha256": [
+    "a76bf4063693151586693f1d45df6b9e654f87f3adc0c2a1708597b75acf9d90"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "oak_door_top",
+   "png_sha256": "0cdc592715a8145d1837f551adf774227dedf7650569e7a50f6cb831c7c0a6c6",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 970,
+   "layer_rgba_sha256": [
+    "066a95d65b982c2a5f19fa8b094c159338a75ee7be5237abd424f4e369b60302"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "iron_door_bottom",
+   "png_sha256": "e9d6c7dc182ca275a3d455ba28a8df325d1ad0c1539aace4ee11d0359f6fc83a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 971,
+   "layer_rgba_sha256": [
+    "12aacf3b0f10b86c3ea9a8bb1178a0c4d8ee4bc345b0f90db80b0aa290d7f284"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "iron_door_top",
+   "png_sha256": "54930bb1139268de1855ea03ce5b95097717e25307cbfa1ecce6e665e6da8d88",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 972,
+   "layer_rgba_sha256": [
+    "7d99718c487e644ee9968ecc0ec29873c331e6282dc49d08e0729531faa9b728"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "spruce_door_bottom",
+   "png_sha256": "5684f6fa01b213babc2ee0a07d8a5b1803fc652fe1bfbf461ff973cb07dffd89",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 973,
+   "layer_rgba_sha256": [
+    "413a7bb2e357cbaeaa121c7b0d2e91081d6394348bf3c665d8be68ccd8d48973"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "spruce_door_top",
+   "png_sha256": "53be462544fd88a451bba74eb699c113c506773fee0243f2c79983cee66acb7d",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 974,
+   "layer_rgba_sha256": [
+    "28c58cd637cd8772de6f8c9dc7fe26ef654d0feb6a864d78e8d1a894f0274ace"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "birch_door_bottom",
+   "png_sha256": "7bd6636532ffc21e9ecc7aa5fc8d975e9d5b4f2e2d32db2cb3c4d00115c29c70",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 975,
+   "layer_rgba_sha256": [
+    "2525f2b1e508cca50d8b31b1d2464fb0c1b893d09ac78df82a372ff0ec39f97f"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "birch_door_top",
+   "png_sha256": "48b63883ce9a4b4c72b437d5eb5c712f6b2b465ef1bbcb37a52dee9e30d0a4ea",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 976,
+   "layer_rgba_sha256": [
+    "a7171c2dc5a41fa1227b35a9275d5ffa36fb57e476bce9e04c63a69095fbf409"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "jungle_door_bottom",
+   "png_sha256": "950163d50f24987a7138d639a645fca91f07fe1be9873c0b50e1b30474f71c78",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 977,
+   "layer_rgba_sha256": [
+    "8afdffee3653f6fd3cdbdcc58bd4d5d8a89d518a1b960d4f8f2e3337af6fa44c"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "jungle_door_top",
+   "png_sha256": "b16b363c0a645e1f5b5520e15fc8c708ceffa0a5d3a523a294d2e22106d32077",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 978,
+   "layer_rgba_sha256": [
+    "97558738bae202637b6bbe484fec4c284f185c6187a53d6f4cf035ea5f4aa9cd"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "acacia_door_bottom",
+   "png_sha256": "b38b2d097cac0b7b08efa43045bba368abc4a3b190ccb2e594862766c5e1e8c2",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 979,
+   "layer_rgba_sha256": [
+    "5a04298e92aa1c8fc8d11793306119c347eea69f66143c9ffe23a30db14ce12e"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "acacia_door_top",
+   "png_sha256": "2552920fee394ac3b6d165d5638bc84d2223374d8974bdd668bced3be16e5f3c",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 980,
+   "layer_rgba_sha256": [
+    "25cf0b71d2258e6c92ce56041f7038b8172c56eaa5b04b5e04f947b488d3209e"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cherry_door_bottom",
+   "png_sha256": "08bb521c3bbbe6e5a1891554b4a8dbd6025b563dfc7ffb3dc6e14be75f5042aa",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 981,
+   "layer_rgba_sha256": [
+    "f8a365db278c3e79a08d81db9c4715c9a2db99180ac8d46d986171daee259a02"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cherry_door_top",
+   "png_sha256": "9f81189ffe46f5a3fb31b89f5ae22b15c895920ee297fcce0bbc0e3f0654b47b",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 982,
+   "layer_rgba_sha256": [
+    "ead286f47ce889f68ed95f35d63d879db53f9836d9927ca55f51ece99d1621c5"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "dark_oak_door_bottom",
+   "png_sha256": "ebc0a45241cf261b382e20398e477f26803124382d20fbbdb764706401706ece",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 983,
+   "layer_rgba_sha256": [
+    "ff49b99d6bde9a7dfc9499b581834fe6abc40d1388e5215a17dbb4a41276b499"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "dark_oak_door_top",
+   "png_sha256": "68c26c4b6c54d9deb639b248cdd3fdf4823bd043be0d8f6b1494c815a75cbb84",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 984,
+   "layer_rgba_sha256": [
+    "42002a3bd7cab4c133bb4eeebf7c14cd3be38a200610240cab79837340d7af79"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pale_oak_door_bottom",
+   "png_sha256": "c8809e32d3bb3f86ce5c2d267bcc4c11b1a9c3a830d05e5e0aa7a529c2b95973",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 985,
+   "layer_rgba_sha256": [
+    "9ab052b355bb77851cd14945b843a06ff074437c7e2b17bf0fe3ded3d5196082"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pale_oak_door_top",
+   "png_sha256": "858dd3cb031848ed8b64544a87614e04f0924a4e1253f182c2c0a5286039b6b8",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 986,
+   "layer_rgba_sha256": [
+    "4e865d0d6624f296c871d38a96f43b5e6a5625d8073da35c0305fba1969799b5"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "mangrove_door_bottom",
+   "png_sha256": "aa84032ae9968b58dfb347ab4062695caaea4e793ed2b6c20f9f5f909bc145af",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 987,
+   "layer_rgba_sha256": [
+    "575e2305d6e2077e3d5fbfce2905ec72fdf8b7b92545584059489400298d961d"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "mangrove_door_top",
+   "png_sha256": "50a7be61312a2f7ab4ee61e037e5ef7c1b1878a215d50616445c16378927bf1c",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 988,
+   "layer_rgba_sha256": [
+    "f2ad46d4d2814e374b222d2c96819653922fb4311f891a918803559a7bc872ab"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "poplar_door_bottom",
+   "png_sha256": "26442cf24c1005459abfe4370a0639c24379b6ab41d9565f6b4b61847be046af",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 989,
+   "layer_rgba_sha256": [
+    "56d33b0ed0c969579fafd6460e9d0636cefdc353f49dc301e082a202c5df1d31"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "poplar_door_top",
+   "png_sha256": "b84a1501aef96b3c6f39548943870096e0ac92f97da1b347393f56739ca0089d",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 990,
+   "layer_rgba_sha256": [
+    "b2a2a42e94eb8458dd66fad14d8887388fbd8e1e7fa87e2aa05e500367ed1e02"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "bamboo_door_bottom",
+   "png_sha256": "07a38a693f5efaf6a28d1d924ccffe60d453ac55056088c5796777b82e73644c",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 991,
+   "layer_rgba_sha256": [
+    "ccc9e6d76a26791a7dd93dc9a664994ee8dec4475fc68f59b03c34eb4929bc4e"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "bamboo_door_top",
+   "png_sha256": "90f8ca7ab7ade430a96fc176de2cfc4294a86136646fb82f24d2159997cfb2b6",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 992,
+   "layer_rgba_sha256": [
+    "d0d23def62af381d61b45cae561c4bf4991132c679470ff2cacb315e483638e3"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "crimson_door_bottom",
+   "png_sha256": "d62a34aa5330f27eee2735375749e2210b3f807cdf54b73586e4fe8efaf7c0cb",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 993,
+   "layer_rgba_sha256": [
+    "677021fd69992efad06b946dfa57dd1e443ef77e6f3916a15308e833df6952b6"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "crimson_door_top",
+   "png_sha256": "9cb68d510d0cbdd796023c432d0d61ca0c0f8660225d2468913fd4b7809a2b7b",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 994,
+   "layer_rgba_sha256": [
+    "4f0bb26f45f9fdf137461f39665425247d5ed411080aa5c17e38eff8fa412874"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "warped_door_bottom",
+   "png_sha256": "921e11c27b58133141ee47b2975f10d6dac7478dda9dafb118c16320d38d79ef",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 995,
+   "layer_rgba_sha256": [
+    "5616e6be1092a85da3dab491ea7f5eca5794e99db6d96773d387f0eed3798365"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "warped_door_top",
+   "png_sha256": "b6fa96907b5c871abba269da8876832428acc2e66cf84cc27b9fbf2007e4d5f0",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 996,
+   "layer_rgba_sha256": [
+    "f181451135600bd3f47bf47dd05527ebe0d2cf4957d94b7491f72a3780977d9b"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "copper_door_bottom",
+   "png_sha256": "fa09b2b5b1714df602607a8c6356e625f136d0f1989c45b542520a9c5b709e16",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 997,
+   "layer_rgba_sha256": [
+    "7e9d9c290ebd834a39b34575914c4adcb02dd4c73db765a6ea428e27dea59206"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "copper_door_top",
+   "png_sha256": "d9babd455d4714ff303f1bd09173404d5a8f916c0d0c59753aea50cd2ef8d252",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 998,
+   "layer_rgba_sha256": [
+    "ba5b9c5bad52c6ecff28dc95c9bcdfebc151fce8a35358135f52e9d498106307"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "exposed_copper_door_bottom",
+   "png_sha256": "41947087655dcca40858faa8812846db3153dac88b2cd44cc7c6e1d8ada84480",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 999,
+   "layer_rgba_sha256": [
+    "11e71d4ca8a06f286d4e759d584fc741d82e1c92f157433a827bb3265eeda461"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "exposed_copper_door_top",
+   "png_sha256": "fd200347e8c55b9c86969994b034e073edb142fadc9cf5786dcbab39ac2b7b8d",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1000,
+   "layer_rgba_sha256": [
+    "a5c812a1885c9f4e99966d29af50dd5bb0ffbec9fdfbf0c3b8bb437441347693"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "weathered_copper_door_bottom",
+   "png_sha256": "a2c2d610756fcc7a8892e1886a899d079a0093bf588808c657291e1f38ee5f0a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1001,
+   "layer_rgba_sha256": [
+    "d6f405471c08334c23813e541f1c719e4781014e0824618241699d208a7c1d5f"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "weathered_copper_door_top",
+   "png_sha256": "4a5de133f06ec4d717e5901f4752dd756d0236cf90e67ccc167ffbc578fbc23f",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1002,
+   "layer_rgba_sha256": [
+    "6aa422a88627dbab90fb1ccf963de1d205d911a8948ee6310f1b0d9387013db7"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "oxidized_copper_door_bottom",
+   "png_sha256": "13eb5e8bf92a75d01cbd88c055a6bd1231ea3ecd1ebd17308ac66de7e6cddfe1",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1003,
+   "layer_rgba_sha256": [
+    "1a44b8a4a07bc207b3a8bbb15983e18a47c3926d3aa007c1b90f13b6da78b781"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "oxidized_copper_door_top",
+   "png_sha256": "f0cba81f0cd46492fa1ac8671962f6c610e667e53f62c2a36fb01cd6eafdad21",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1004,
+   "layer_rgba_sha256": [
+    "7f9a009e946cdd1bdee079f65708016fba46d31f1f4adcb68c67fc80af773479"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "oak_trapdoor",
+   "png_sha256": "7f2d78c69dcfb71d4900b974d40f6e334065f4e4c72aa36fe37ce034df9a2abd",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1005,
+   "layer_rgba_sha256": [
+    "d34730d19b1b0b488a291f667ef55bfa7aa04a57202b613b8b3f683171752891"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "spruce_trapdoor",
+   "png_sha256": "b22c847ef0810ba5ed6546de8484ad17bc72ea894a42078ca9221aa3c23d8fdf",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1006,
+   "layer_rgba_sha256": [
+    "bd64d363d8364a3652afb3ea8858bacda2e12c3fec477403542193c2a79214a5"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "birch_trapdoor",
+   "png_sha256": "48e96dc1f95daee99412dc0724411c3671ab529658f00ca0aa66227ae30a3092",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1007,
+   "layer_rgba_sha256": [
+    "84d11946ea5b2a056237b5170cfe65f8e5e693d97aeae91661758c9bd8d5e9fb"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "jungle_trapdoor",
+   "png_sha256": "cf12b835daed7c1d7e666144c85ff78e94bc41ddc45bbb49c130f89493e51244",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1008,
+   "layer_rgba_sha256": [
+    "3c1406c30304b15e7fc3fc0baa52973d24cd44166437c5a59774cbe78cd2e660"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "acacia_trapdoor",
+   "png_sha256": "9d8aebedce220ba31aea5b2c67e6180d4eec1e7dbabefc334d341e0a49ee668b",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1009,
+   "layer_rgba_sha256": [
+    "f689435ada1109b51229e08e8de0f6d532e26cb0a8bd1fbbca9552389aba6395"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cherry_trapdoor",
+   "png_sha256": "21180e8d199bc79d8bf95ae72af08dc4df3ae02519818b13b78ba91af580dc27",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1010,
+   "layer_rgba_sha256": [
+    "e1d99de1c85277e861a5aed31d5a1961d086e3946b7009e5cb5174da5c22a0c5"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "dark_oak_trapdoor",
+   "png_sha256": "b56fddb418e82004eb6371e85acf9dc7cac608f5230049543159b2ddcc3196ed",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1011,
+   "layer_rgba_sha256": [
+    "9bbefa61e6423fca7fa42b09a54dcf857122fab0cf5897c7b6a009016b2c207f"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pale_oak_trapdoor",
+   "png_sha256": "5eafb6cfd036b128aea6daca3dba44f9fb3521aacb7f682d774be8c1c9c72c8a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1012,
+   "layer_rgba_sha256": [
+    "b07b511fac8ce8339c6fb9fd907791229256f29dfa29f8de673225bf310dd3b9"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "mangrove_trapdoor",
+   "png_sha256": "65087166442d0a5d9edf1c467d44ab3b4f9969f1bd851c5d9ffa82259b90f1fc",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1013,
+   "layer_rgba_sha256": [
+    "7402e235918158265ad07b4580602311d7b0611f0e2287782c24217f02212af6"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "poplar_trapdoor",
+   "png_sha256": "fcdc12ded798868790c3eaa97968845f9ef5f2431c217130331aae05ca36ea84",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1014,
+   "layer_rgba_sha256": [
+    "3425ce65ca4a77744322d4316d5cab75c85e57d011df65a6bc23e91d3e02cf5d"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "bamboo_trapdoor",
+   "png_sha256": "4b3fc966d9f9c5021a387519a1cee3fd53814d5605e5623b9aacb5930453f3dd",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1015,
+   "layer_rgba_sha256": [
+    "b1889ebfdf967e61b2140f6fa70093cd7f7b0cba3437270ef041efde4bc8b21e"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "iron_trapdoor",
+   "png_sha256": "ca84a5c288bcfe8c9a53f066536175f50effa21e85cfb933094805527c5894ba",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1016,
+   "layer_rgba_sha256": [
+    "abd4a5092085fc7f7069fa2d701d3c297e34d0c3b795e67937ab470f7eaf83a8"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "crimson_trapdoor",
+   "png_sha256": "654f72862b0f2c7b84ad11ff53d4b0a7e85d538af1a4d4a568e1cbb34b2fd5cf",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1017,
+   "layer_rgba_sha256": [
+    "051aead0f381517f9a1efd105517afd04b2012c3701c2f82ee05b7f0bfddfba8"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "warped_trapdoor",
+   "png_sha256": "23b02d0bfb47a73c6b8de98520d95f6e598bac2a47ef244c44e2aa122a79c7b1",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1018,
+   "layer_rgba_sha256": [
+    "eba7337a9750af1d5337ce7c88ce30da354f1e7396a60a75a49588217c8452d1"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "copper_trapdoor",
+   "png_sha256": "d992e097952d4cb7f84529ed0546a4c8ec9bacc18c5f59b870811844db59f2f0",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1019,
+   "layer_rgba_sha256": [
+    "c021f29242cedc8e5aa11cef6f30def84d9c1e734d930bc5afa2c39c5a3d186e"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "exposed_copper_trapdoor",
+   "png_sha256": "eec72d91f424738a11dc9ffbd158723f576adaa68d0478d58c41ccb057eb6eb3",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1020,
+   "layer_rgba_sha256": [
+    "bad395b43808669c7baa8214a867418c0496f488f9def50d9bf66bc5689c47ba"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "weathered_copper_trapdoor",
+   "png_sha256": "12c98b697150ac5bc7fc0be9f37f8eb99d01344a21f2a3a67f9c944e0901bf70",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1021,
+   "layer_rgba_sha256": [
+    "3074e5b158e8bf24071b44145b63f46d653a694840e453a5a49d16d691f749bc"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "oxidized_copper_trapdoor",
+   "png_sha256": "6f21de25314c6ee8edde41492d71be0ac90b033e9bd76a2f0c9161f68f21ed04",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1022,
+   "layer_rgba_sha256": [
+    "57772d04aa79e164b94305db5c290ed0386680661a8c37cfd68bc6ee0d52182d"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "lever",
+   "png_sha256": "0ee6f47a1b5b86c8277dc2248d0a717b92e656f8f8d6d9cb89e6c2cb0f39d5c7",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1023,
+   "layer_rgba_sha256": [
+    "9c47b914fa00b9212934104da9f76a9515d7e51c2b56bd80bc8ea20ad8f84e26"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "ladder",
+   "png_sha256": "04ee25413328caf2421a1f4e484b519a21c49827b18cd5fd46314ca00075f412",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1024,
+   "layer_rgba_sha256": [
+    "dab18ee1dbc20abb203be330be47f0bc19c34e0a1195cf770d1b1f552e582f55"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "weeping_vines",
+   "png_sha256": "ba76d2a8ea6171592cacfb9ba85e4125d28d4df9aa8e31aee697d70489af9ee3",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1025,
+   "layer_rgba_sha256": [
+    "8b36dbe189b066e908c9ef51e65533391f0808aaff8dd95e15197024105acd11"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "weeping_vines_plant",
+   "png_sha256": "f434e87b2cf7d483988684133d1ed4194c197e700ae295e425f22c1cd22602da",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1026,
+   "layer_rgba_sha256": [
+    "6d10fa34de1a955349032e59e5c8fb8a197cdf962373cce5b81803f2ff3d1d69"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "twisting_vines",
+   "png_sha256": "9c757fa27380982489130980a1ded90184c762860d28396ec0e70298e3e36784",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1027,
+   "layer_rgba_sha256": [
+    "cb0c633134f3f3cf85c45b27a61982737979b322643730fac350be104117372a"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "twisting_vines_plant",
+   "png_sha256": "912b2a65846286da106b3076fbe8955c6a72d9700ab02fb7998abadbf4988889",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1028,
+   "layer_rgba_sha256": [
+    "55d4bc0b9c018c485d6ea722cd65bdb0e698b70bc3633cec2801d800f1ff914e"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "bed_down",
+   "png_sha256": "af9f78610304fa7fff972dc66fe4b232bc705a19b4a46a99d3417b7e2dd1503d",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1029,
+   "layer_rgba_sha256": [
+    "9bfe67544c81e4292fdbd5ba17abaedece2f932503608fc332939c72b28b7815"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "white_bed_foot_up",
+   "png_sha256": "ec3a2849a4909a8a3bd29c154e86576c1b0c7b514c6c021a0c3c7ec5768f5a99",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1030,
+   "layer_rgba_sha256": [
+    "59ae50330722cc3386f50e47b3f98562ca43bdd5ff83dee5f6d9a8d8b53e06b7"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "white_bed_foot_south",
+   "png_sha256": "604921407e7d37515488111b2420feecec7ce098069daf5ed8108ba28c1d128f",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1031,
+   "layer_rgba_sha256": [
+    "fa423a388879335329fa68d278eb25c0560fbb1e707de8c9be31cc7c97595c85"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "white_bed_foot_west",
+   "png_sha256": "8babbde664ba89c87788d3f9b5fecdd99178db746f647eede98a5c1701d36138",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1032,
+   "layer_rgba_sha256": [
+    "bfb67b39fdf2b3fea29c53affc5729ce1e032a562f155c02aa49c6309a91f0be"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "white_bed_foot_east",
+   "png_sha256": "3bac904663909ab6435636f19611473f535f70cfce793142435f8a57041cd1a9",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1033,
+   "layer_rgba_sha256": [
+    "3f09990aee4fd7d1ef3ffda8b7a61786282f24eb31b82c3b178e7b5dfdd727a5"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "white_bed_head_up",
+   "png_sha256": "b2ddaf70b4e457f0c18d5fbd4f6995488cf364138b920c9de7a3486410e51b53",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1034,
+   "layer_rgba_sha256": [
+    "a1f933ff0a84f2494754b7a3cbebc9a338505835d254ac1a68a5dda092103749"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "bed_head_north",
+   "png_sha256": "225941d86bfd694f6f77ba6e2506cf8a7ad73c5a9385660244956daa5e753024",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1035,
+   "layer_rgba_sha256": [
+    "4255e4f00351489b89d453050acb4bc04a5c5cfcbfc30215f8cea8e00dfdcd0a"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "white_bed_head_west",
+   "png_sha256": "24c8750317a710d1fca976e4bfa2f9345a54c97bab14022b6426002bdfd48434",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1036,
+   "layer_rgba_sha256": [
+    "56f5c34faae63825c24ca10b64c482a2cda4066626d57c0afba07ca7cc652f6a"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "white_bed_head_east",
+   "png_sha256": "6d7736a52d13a51ebd15d1adf9ca4f965ba4168cf4b06d4d7268973a3aeae7d3",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1037,
+   "layer_rgba_sha256": [
+    "f4d15a306d27e2e2c294b5dda913e84459ce655461863921da2296b50c3a1449"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "orange_bed_foot_up",
+   "png_sha256": "fce04bbad8bfdcc1ca81fa8157364d90769cc126cd8d6173de134811552085e9",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1038,
+   "layer_rgba_sha256": [
+    "8937b9f92b1420528b6c3cd2f5d94ae84bc6ee4663a2fe302de382c1872ebebb"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "orange_bed_foot_south",
+   "png_sha256": "aea9b887b1a90eed2166c4e251d5d3da6879aace4d021299797003268be7abf4",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1039,
+   "layer_rgba_sha256": [
+    "998f991c8d93b2383fe64a6d90caf673ac73a814b65ab7e1032fa7f1005b913a"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "orange_bed_foot_west",
+   "png_sha256": "3dfec151f05e243eccf24a4caa3cbce5b13e2fa39eaff7dc844db149f091e916",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1040,
+   "layer_rgba_sha256": [
+    "27389e91175edadc4d5ef7af21f5552c018aa5d6359af3b810a41ed7f46af154"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "orange_bed_foot_east",
+   "png_sha256": "59ab4f2028765e16cc99ad724d186c5de2a16f9901b48bb8f6ca512a86286681",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1041,
+   "layer_rgba_sha256": [
+    "cccefd790a1c63aedd55919a3d83df5dc409d258d2f058b9465c4f95a772036c"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "orange_bed_head_up",
+   "png_sha256": "70ae92a637b5921fdd0d8e8c0aaebe9fd238c3d9da8497bc6a3572000c976170",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1042,
+   "layer_rgba_sha256": [
+    "501c8ed41a796bb13055f4b6770381a7e6a708c9f1e10a415888b22e0028ffe7"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "orange_bed_head_west",
+   "png_sha256": "8f3e6c518944c6b22c38332dc9a95b9ba318e77cc23a602465dbceda37b859be",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1043,
+   "layer_rgba_sha256": [
+    "c1de702c7aa80c6555919cebdec8d9117a9d5e22971fa71795c3467273be3b9c"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "orange_bed_head_east",
+   "png_sha256": "a7993edb5aa465f6ec82a6bd3262f3fd351c66aee17062a9b8766b6702decc70",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1044,
+   "layer_rgba_sha256": [
+    "fc6c2b2a3e78a21a882bc2aa1e530c7c526c65b7ccc45b186faa0777c7347491"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "magenta_bed_foot_up",
+   "png_sha256": "79c972a5335b3c48f819bd7c027bdec246f6df8502aed71f968581b843306af4",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1045,
+   "layer_rgba_sha256": [
+    "24aca2f1f31563b911d2cf417665036d575882037187600a733b47398d4c9c9b"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "magenta_bed_foot_south",
+   "png_sha256": "6211b5fe4587a1fdf89c64565e922aea4391903786390423899930c0521df6d8",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1046,
+   "layer_rgba_sha256": [
+    "7d0ad6b2b1821d3fa6daf7d328fefee12b57c764e100dc5fe2d77e78f9f6a458"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "magenta_bed_foot_west",
+   "png_sha256": "5a507fb013fe7534188f80f6cedaff05145a205084b0de4a3d52a00e09e5fdc8",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1047,
+   "layer_rgba_sha256": [
+    "7b40c6088c7ec591e386bfd45f730ce7fb16478117adb123e53edf3a3b5a205d"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "magenta_bed_foot_east",
+   "png_sha256": "caaee25587334852ad43db238630a3d1d53e9d9f2513e2386b24bddb4f9bf4f5",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1048,
+   "layer_rgba_sha256": [
+    "464ffb6985fcf596ed01b212a215c6d6178b7cf824c9857db25f9874c435baf4"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "magenta_bed_head_up",
+   "png_sha256": "fe7e8c192e8c121daa59ac0394b605b6edeb83726346573181c02be136897cf2",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1049,
+   "layer_rgba_sha256": [
+    "da1b3ba8f9fc67850cac08becd32e065e8c741bb9ce1cccfa57474c60845c223"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "magenta_bed_head_west",
+   "png_sha256": "4d26563c72abcb8c8d60ca9e8b98dfe3fdb9ab21f3b6ca2d73579c5b0e534bc9",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1050,
+   "layer_rgba_sha256": [
+    "90264961965236ad77c8bd2239ae47b41f881b48a2e32f28184b842229e0538a"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "magenta_bed_head_east",
+   "png_sha256": "b44c5debcc114ab8d8516d5f27cd2fee683e73f443427e92d6595fd709e3d344",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1051,
+   "layer_rgba_sha256": [
+    "1a8df239dadff23f9c7e1f8dc6503fbf7b898811374fa4f864e95ac36696460d"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_blue_bed_foot_up",
+   "png_sha256": "8171bab45044b6b07c427167a2bb13fc2fd1ee6250baa5d4fb5c9ee75c824526",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1052,
+   "layer_rgba_sha256": [
+    "5228c87c7ef99ee4ea293ce194bfcd145dba1a9149dcddcc5a5ddd16f95a6568"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_blue_bed_foot_south",
+   "png_sha256": "c588ee381a62e571431371412b906783cc77960adc75df3d9162c51af7a1aa5f",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1053,
+   "layer_rgba_sha256": [
+    "10b298af5723f0a5d6bd6a8f549297286ee9f87f8e14501bc07e99e21785705b"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_blue_bed_foot_west",
+   "png_sha256": "870af33b7a3f353f8490092c5c016ec3609271cacb1af4fbb913b23442c6dd38",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1054,
+   "layer_rgba_sha256": [
+    "787aa79993e5144b2a7009b79aaaa8190540be6de9be4d745d3b40b2ecbb9181"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_blue_bed_foot_east",
+   "png_sha256": "74aaa60b448b9240e7919151c097d1158653ba7a7fbfed27ece5039f4de60433",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1055,
+   "layer_rgba_sha256": [
+    "7799c3425698bf055ee5adaacf4d1c687287bed05f767d1fda998fdcb5151739"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_blue_bed_head_up",
+   "png_sha256": "97f133baa3eb57ffb7e0eead050db86ab376351044043114cfa90269d208e3db",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1056,
+   "layer_rgba_sha256": [
+    "f1c9793079b6f9a730c541ba31cb8a3a7c4609ae29f8938dc0278562fbb4caac"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_blue_bed_head_west",
+   "png_sha256": "87c11f2fb1d844220401bcec4a3751700bd54ee311414d6bbd1003411b6f5aae",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1057,
+   "layer_rgba_sha256": [
+    "0540f53935364870c02479efa47364d5fecd11cffe2e503c5f15a428900584f1"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_blue_bed_head_east",
+   "png_sha256": "f59ea9b44d48786b0ea3772c6f92d269f8cd0db3e974b965464aca3caed75143",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1058,
+   "layer_rgba_sha256": [
+    "99a3b493c190544d87000717c2aa37e32b2df8ed7846ed92630a82a7680aef91"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "yellow_bed_foot_up",
+   "png_sha256": "bfc7b8851c8c2777faa2e03d9debd5270d6c0df3286a6283de42b82392a87086",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1059,
+   "layer_rgba_sha256": [
+    "09af644675a07692bb3074813e7f99d4b0b17cab8c0a1e360e198cacca2220a7"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "yellow_bed_foot_south",
+   "png_sha256": "111ebfbfa71ad7a54e47567ff919ab6230c6a8cf349d458083a7e5c7a08bccb1",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1060,
+   "layer_rgba_sha256": [
+    "f4d84c98e0769bf9bdfd9a35820770d4aa2742e4908d16d4ce1bf8d95cb675e6"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "yellow_bed_foot_west",
+   "png_sha256": "b9494a4cc995b4bdc074fdf6ffa26b4f6f9c5e34d8b74083cf6d52ae7e31a831",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1061,
+   "layer_rgba_sha256": [
+    "f443226b1f6a1f1e811e6d300ed549f4147dad390e09646bc8196b52518da8b7"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "yellow_bed_foot_east",
+   "png_sha256": "d6f4c1e0cb286631874efd9675b46bcd44218ca3fe8812761ccb1cefa335f215",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1062,
+   "layer_rgba_sha256": [
+    "3afe8d2e978b35ba4e4ce18c07f6c83e3c8f1db61f95eca4b677106a2616bb05"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "yellow_bed_head_up",
+   "png_sha256": "4c0c7291f619b86934ce28116e31f394665f4d948f642853a136b60e8ca8d500",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1063,
+   "layer_rgba_sha256": [
+    "6d63f374f3d3bd5a2bf5a29d68a6742afa5966890d6dec797f0d07fa654c4df0"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "yellow_bed_head_west",
+   "png_sha256": "344b29c4b8945be20964f956f5ba0f15e422577eae67555448a5123b1d62ff92",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1064,
+   "layer_rgba_sha256": [
+    "4cedbec7d6957b27e41c060135edf2660066f65926fb4ce3f37ef1334bb3b824"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "yellow_bed_head_east",
+   "png_sha256": "e31b6d958518edbeaba7fd1d04d1406e13c2a4ccaf1b668d69f133d17a4ed2bf",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1065,
+   "layer_rgba_sha256": [
+    "ccfa47ab617346ae4706c2a400edbf5f474d015619b6fe8aefbbd0e0436bcba2"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "lime_bed_foot_up",
+   "png_sha256": "bb1985c85da044cfc46101bf23a013c85688d33e5dd1520e4d7fe8c57ddf8148",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1066,
+   "layer_rgba_sha256": [
+    "d1bb44ef4215a151bf764410f10b028155084242aedc377937727a4fd08e9f14"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "lime_bed_foot_south",
+   "png_sha256": "d8f30ad67c4da808758dcc5ac8522bc2a8b98ab8f2144c01e67177c92c1e07ba",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1067,
+   "layer_rgba_sha256": [
+    "ba0ab6dd7860cbb1c1b042f7fe6e5ec544cdb1f71bf4b42ce5fa09020c80f4d5"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "lime_bed_foot_west",
+   "png_sha256": "6be0413ef610d31891e7d103232d2a08bc194302ca72142d32ef9c61df3e6fda",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1068,
+   "layer_rgba_sha256": [
+    "a62ae201f1d25b9e4655387bee25635ecd0606bfdc948e501a65482c6fb0e292"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "lime_bed_foot_east",
+   "png_sha256": "2cc2545fc44a6d21fe853a35f6622cee41323d085faefe44560ed3b6cf938a2a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1069,
+   "layer_rgba_sha256": [
+    "c6aba8ced7ddf56cd8995f3e94130cbba9a64a0f7910915d1d2de380f3f49e7e"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "lime_bed_head_up",
+   "png_sha256": "d383a0c656b4d4f0672052fd8521b60adee3cee85f493ee47af0c5c33d45de1c",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1070,
+   "layer_rgba_sha256": [
+    "b9fef54a6bd9010783d7ce43b34dc636b23c4b9dfb2f7e27998dfcd561014074"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "lime_bed_head_west",
+   "png_sha256": "e67caed4f5a23de4f77e313a4299588044f67f2b37f549f306e136b8f3bff2fd",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1071,
+   "layer_rgba_sha256": [
+    "f69b00ccb05e888546cbe395dd9aaa66667720de0d6a53214c7cc9c8558c80dd"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "lime_bed_head_east",
+   "png_sha256": "36d5c2547fac5b500c784a11bf8783d26380406e789b3298d926b190ced0ac85",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1072,
+   "layer_rgba_sha256": [
+    "90ff1e0ebd8c304762845e0883204d8f83ef42974fd7f933ee27cf7ef1a3091b"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pink_bed_foot_up",
+   "png_sha256": "772e103387b013d732e02bb2b641e7def9d0f07efc450e06e45b1bbcc1dde682",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1073,
+   "layer_rgba_sha256": [
+    "73ddefcacfcc6a032f091cf09447c5b668018a125354129b732ec66df10ffe50"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pink_bed_foot_south",
+   "png_sha256": "b9a3215613d1de9e56112d4deb463e837274321daee787b0f177473e7aad3024",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1074,
+   "layer_rgba_sha256": [
+    "8ed25df5708f4669e004c93832f5463ecf4b0bff5ab941986cb48a41f9f6349c"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pink_bed_foot_west",
+   "png_sha256": "d6a4110f43555bbf13c76f24ee4b1131f90d9294f99e54b7c621604ece77e973",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1075,
+   "layer_rgba_sha256": [
+    "a5e6949dbfb3ee2671ae18aaafa204139627f14af5ca9d778cb62531999f95f3"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pink_bed_foot_east",
+   "png_sha256": "32996506c134afd00ee1788545e63195b31e70a1be6ca94eab17b2b05b9a8158",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1076,
+   "layer_rgba_sha256": [
+    "8c230afa0de1fdf627edca6699fcb806a2a59b7c456b26c52521c229cd6d4ccf"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pink_bed_head_up",
+   "png_sha256": "c4640e3f88fddcccfcbffa8154d29bd2253b8da857625bcb16680d66c28aeb2c",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1077,
+   "layer_rgba_sha256": [
+    "6e7abaed082f382070dccea6ac7b3d872e4ed0182ff44dffca63441e3d2bb040"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pink_bed_head_west",
+   "png_sha256": "fb4fcdde918a1e28a1fb133f655eaf17971b9296de888fc446d0b5f8bc852b59",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1078,
+   "layer_rgba_sha256": [
+    "b025aabd23c088ab408c09ab6b222c6f6bc34f150e7b2eb81f48f1e67c30c683"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pink_bed_head_east",
+   "png_sha256": "4cc9fbd40e877918a1d5dce1e847e29ec9f9c6e1933c716dd7baafe45caa78a1",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1079,
+   "layer_rgba_sha256": [
+    "e7f5464e18b4ae8f847c93fbec6a64d6959e1421fac06b1a52835efca87af0e1"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "gray_bed_foot_up",
+   "png_sha256": "07ffb259c6cb3fa1005ddce6b5fddc93ca21e920bba09e9aff041dd94a86e9ca",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1080,
+   "layer_rgba_sha256": [
+    "da7f7266f38162d7916fdc4670ea43ebed8de9c34ef572483878249b201ccabc"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "gray_bed_foot_south",
+   "png_sha256": "9bf95d448992ff52b12068ffd2789b1d2656fe0ace7ec3bed8772ec0e8efea31",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1081,
+   "layer_rgba_sha256": [
+    "5327fcf004e9442ddceb56942f3fe2eb8f59d9ec4c04f489362f1c80fe583ac5"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "gray_bed_foot_west",
+   "png_sha256": "7a58233299fc0209e2b30303cdbd00d54ea3e38caf6dc6dd20887a7959f24db0",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1082,
+   "layer_rgba_sha256": [
+    "0ae61b3f59938e908ae9898f1612b26bca3e820641005bae7ff1b3349ec458d6"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "gray_bed_foot_east",
+   "png_sha256": "0399fd3025a5a2658ce830af8aa2f0d0ea3b4023e2386b41e90359a592ec7de4",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1083,
+   "layer_rgba_sha256": [
+    "0ffd961a918254a98bfc1887e6196e3037435a7bbb54b3050e27f4afd0f2c255"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "gray_bed_head_up",
+   "png_sha256": "881e29e06392de2328a5e4f93017ebe4b6b4da421a0a9d4fbf748766cce4d2ec",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1084,
+   "layer_rgba_sha256": [
+    "8faed981e6f0b9cf1dee3bb92f3021049c9fb45303ff55ef9bd63099f77e7e68"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "gray_bed_head_west",
+   "png_sha256": "a603d0c344c840a33ec805180b03558f9cbc864d10effb46a66feb60cc634ae2",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1085,
+   "layer_rgba_sha256": [
+    "919c6c42182730d7e59acdeef0ac68f9ee453a4ecebe5a06f35ea060436213e5"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "gray_bed_head_east",
+   "png_sha256": "ea074ddd004767e09bbb640418ab39aeec9edec9aaf59e0b5cc6b59d1c474e3e",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1086,
+   "layer_rgba_sha256": [
+    "253f8b1dc7182adcbfc5a2aa28f741cc8daeacb5711a38db0773e70159169a65"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_gray_bed_foot_up",
+   "png_sha256": "1eeb9fdd032207891dd67ad0f08b9f1cdf71d33cfd4899ec99f3cfaaaa40ba29",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1087,
+   "layer_rgba_sha256": [
+    "01d25d3c7881d4e4196edb41465390ee86891d713b4a6c78dc060d0684896ce1"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_gray_bed_foot_south",
+   "png_sha256": "24a0983ef31252d688cf2aaf3f3036649b145e09dd5f7a59f684753e24d31744",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1088,
+   "layer_rgba_sha256": [
+    "52452dbc1806496f1f2411352c01859c2090cb0ab113b3d868739cb6cd7d7861"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_gray_bed_foot_west",
+   "png_sha256": "4497fde1d03cf427e55e29567bc8453e564bcd084ce7723d0fdfc3a54e9ec6fa",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1089,
+   "layer_rgba_sha256": [
+    "3fa4b8731b01b80aae54844a6ef8b479abea6abf223070d131b06854346901fe"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_gray_bed_foot_east",
+   "png_sha256": "1cc5385bf1c9ba1f2f6693c07110fd30785818415c9855b8db93e616f5747a8b",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1090,
+   "layer_rgba_sha256": [
+    "bf9cab577e51080eea4fc4df02c755382754db4b9944509fa61ccd6a0e4732e3"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_gray_bed_head_up",
+   "png_sha256": "0f14ef5b974d3f02e65ef2804a36022b09f467fa6b1e28a837e465f1e3ca34e2",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1091,
+   "layer_rgba_sha256": [
+    "426632152c17947d77f8f68be1a8e723f5a5e807ffd97ae9f0b64f5a8bbbffac"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_gray_bed_head_west",
+   "png_sha256": "fde4e94550b990618ee11cad3450229ac2f519354916b1a2589627b71545d5ac",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1092,
+   "layer_rgba_sha256": [
+    "56efad012746090798e6b47f07f9359e4bb1141b426cf8b456779ec607540531"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "light_gray_bed_head_east",
+   "png_sha256": "75607aaf31939f3e2a0b24f6e34f459907ed06220492aa5d6ff321d66e4ce099",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1093,
+   "layer_rgba_sha256": [
+    "bb6e1e3b4376f6c07b07d7c441dfa9c07120d3bb314bb38e3599c989aca8180c"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cyan_bed_foot_up",
+   "png_sha256": "d36d9ad34f08951cd7712f4068835ac4e39e5d9e1e02a08fcd8b4d08f32d886a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1094,
+   "layer_rgba_sha256": [
+    "030e56cb5e67776b5866551a03bc8590833e4044e2a69849d0ca37044b23d7de"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cyan_bed_foot_south",
+   "png_sha256": "bca2aaa31e5dfe17453addf8a8280c874e904fd843e9b2ba0bd709087362a050",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1095,
+   "layer_rgba_sha256": [
+    "d17416b812c4fcd1f2b4eee72f63a66a4b579729eb54534d4c1eca0c5f1997e6"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cyan_bed_foot_west",
+   "png_sha256": "1b0f255c138e03d249dcfc7d5a9e82f1b2c8ed4081339a3a67c69d07118bfca8",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1096,
+   "layer_rgba_sha256": [
+    "4999b111286563afab21ae4cd63a46d9891a22a155c3ad0fa0e758381e319209"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cyan_bed_foot_east",
+   "png_sha256": "edc282d90346220a005b179d9fe7104edf6beb5d80d26f35cc9e1faccafcd8a8",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1097,
+   "layer_rgba_sha256": [
+    "68a7092d65f4faac32493486043a51c5dcdcb386727e97f44748fa4378598e5a"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cyan_bed_head_up",
+   "png_sha256": "60492a814d2f7ed4a617fe6c62ad7f453d098d38aaf0574036906c0c073f4a6c",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1098,
+   "layer_rgba_sha256": [
+    "68cb95742e4e95e7971e829352512783af986d396fec8911da9145f5bfb13b2d"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cyan_bed_head_west",
+   "png_sha256": "92e14abd4c2120758d213628f73bdd78d2b23083e804258a704606e783dec826",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1099,
+   "layer_rgba_sha256": [
+    "aaebcea11daca41e416af37421dae32ea2a31a6de2ff87bcbca645fa25c8b61c"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cyan_bed_head_east",
+   "png_sha256": "84df40dee6fad42067dc57232880ec532976126f0b7ecbc86fd277108734ac86",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1100,
+   "layer_rgba_sha256": [
+    "2595ec454e86d7f397462bc7b8ced1c6b8fe592ee8ffac4ec97a3792c3a50a39"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "purple_bed_foot_up",
+   "png_sha256": "c87890068cfc94588770dd2ab3cb1cf21e86a68f5d6c4e15802f620385038113",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1101,
+   "layer_rgba_sha256": [
+    "9849cd582b9e258b7e5e5107caf5948f1099453df7a38c45ccca15bf920fa25d"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "purple_bed_foot_south",
+   "png_sha256": "e216eee6700103f01749318c548b71abaa408b11c8fe078a73574beb8e93eb35",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1102,
+   "layer_rgba_sha256": [
+    "bb7614256fb2e789e5cc909979390517417f0f0b30ac06cda57be3402624c252"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "purple_bed_foot_west",
+   "png_sha256": "be4c86193f179e0e920ecafa50cacbfacf2b767384251cff9b1d49ae62779e87",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1103,
+   "layer_rgba_sha256": [
+    "b978f872dbafb895f9166cade9a00a6dc7e971813d613005e9b6104b8722b506"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "purple_bed_foot_east",
+   "png_sha256": "1373e356395ef9a2ddf4c022e05d4b23a07f65abc77d53ca6fddffd351041ad1",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1104,
+   "layer_rgba_sha256": [
+    "5e259730f070dae18505f338463ece9c310d2efa466d451f07198b2ad173561a"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "purple_bed_head_up",
+   "png_sha256": "61374ddfdbbf8e72b022ad48f4a707166f0e83696448161c2ac3de8793fabc0a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1105,
+   "layer_rgba_sha256": [
+    "199bcfeb6139815dea27f9b3e94b99fe8e3cea9fa5b70cabeaab5d08cf9f6846"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "purple_bed_head_west",
+   "png_sha256": "f20c6d875cfd02a74240de5a96b27fd2a99736106da27975bab7da31d3147187",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1106,
+   "layer_rgba_sha256": [
+    "fbd2726fd79cecd0c9027502f8a7ea87f60b95293458847b3d1e5fc5eca8d362"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "purple_bed_head_east",
+   "png_sha256": "ad46fe7907801f4562b32269c145c9ab602610a0827762e71ff761d7b440f196",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1107,
+   "layer_rgba_sha256": [
+    "2c0fd90d0c10eef3abe1eb4aadcb96f7fb0696af997293b9fd7ae7a2b88972d7"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "blue_bed_foot_up",
+   "png_sha256": "894508a7ef08937e2ee78140bff6ebd3e1207efd196c0493d9bba48b5c9b4237",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1108,
+   "layer_rgba_sha256": [
+    "4fdbe5afcdb4e47448bd61f3e12b787cb180ec6591885387924f79237fb44261"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "blue_bed_foot_south",
+   "png_sha256": "1cbe9901281b8876ccdd227a11f8ab039f119f113354f3bcb67a558588bd0a71",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1109,
+   "layer_rgba_sha256": [
+    "aa31746b3830bd8b021849b3a83c4fca4bc95be28b41998931876dd16d065042"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "blue_bed_foot_west",
+   "png_sha256": "8202339c195d292dcffa48ddef1e97cb153d835699072556860bae981c2b200c",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1110,
+   "layer_rgba_sha256": [
+    "871dd88639e8c068e0e4790f7c235fe6dfef303ce54632993b7efb178cc0ff35"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "blue_bed_foot_east",
+   "png_sha256": "8e8fe917bbd6df93bde2c11beba41b88e4fa7a960e5eb3ea5a8a9592986fca1e",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1111,
+   "layer_rgba_sha256": [
+    "11ad8f1a10e9fbc5aef50fe21a6248e20dfce643bcb605d8ca2680366aa13488"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "blue_bed_head_up",
+   "png_sha256": "29b7d24f97c8fb2d605b8b6ff28579049f70017021c299decb70934e43c0360e",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1112,
+   "layer_rgba_sha256": [
+    "cf1180f9053edef65301190e235c24557b0b63775676b6f041817666fc76615a"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "blue_bed_head_west",
+   "png_sha256": "f166138c9cfaffafcec280d8d596722d7ee36d8be320d21503b28333f7be2445",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1113,
+   "layer_rgba_sha256": [
+    "242027666be68118b826a65d59f77497199cad438dd6e2b65c69feace5fc4ffd"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "blue_bed_head_east",
+   "png_sha256": "03d414826d358b76a78be8f608540252333015eaa6f3bae17128a1ae7e07b087",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1114,
+   "layer_rgba_sha256": [
+    "6584d1940a4d626d68ba4892a28141851bb368e651cd9da598c6aba1be6e5838"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "brown_bed_foot_up",
+   "png_sha256": "ba1d6bda28014bab470a4913e5b06202e9690ec5aa17d089a75305f42323349a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1115,
+   "layer_rgba_sha256": [
+    "ca16f30564b274f4ddc4a3291b005e7b7719c9ce9c8c9c7afe53ea30e2dfb6d2"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "brown_bed_foot_south",
+   "png_sha256": "76660bac830e3469b92c7210e24b60167d2b2477d1da2162f1c052712d883a1c",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1116,
+   "layer_rgba_sha256": [
+    "567617caea9cd8309a144a65ae611c301f3e74793cce1ab6b78c8781e8630747"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "brown_bed_foot_west",
+   "png_sha256": "0d611973f6c361a363f454454a8a931cd84c073380b54d48dae5dc62ffcf844b",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1117,
+   "layer_rgba_sha256": [
+    "d6d5f7ed5572f6e47500af1b82e05e6bc7b2edef2cf087d69c88fae12f704a6b"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "brown_bed_foot_east",
+   "png_sha256": "0c07331a6f56192320431738c18b7870216eb4aa8ba611bff819f8fefd978b5b",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1118,
+   "layer_rgba_sha256": [
+    "f5d85e01182933dd44cfebe39ace26aaa31b92df1f71dbff33e1a1b3553a7dee"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "brown_bed_head_up",
+   "png_sha256": "56ef6ad90019968c9bc3d15c2ad5de23095b1273ce8ccf87eab9f6a54aff059e",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1119,
+   "layer_rgba_sha256": [
+    "1320ce3cf7b7dea9efa75ae61e94d0b430244d96dbb37ed3720999159376c046"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "brown_bed_head_west",
+   "png_sha256": "e0b7382d6b17518fb8390b152bc156e40b0a234effc15ceb9a2e9c2f85196d93",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1120,
+   "layer_rgba_sha256": [
+    "2c06f6b41a135608bff38c553b439ee45d43d8df77689060dc3f4f43b70d359a"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "brown_bed_head_east",
+   "png_sha256": "447c471ddae0e5b69b1fe780d8c30f34c8c026b8770a0fbfac63ed0fc902dad4",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1121,
+   "layer_rgba_sha256": [
+    "1481c77e39d3a00dea8eacda6f325ae4b58d0f3722ca2d74164d38ac1dd51145"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "green_bed_foot_up",
+   "png_sha256": "c56ef282776968dc1368dd89ce603affbb7e64944e743350ca203f548c2a25ad",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1122,
+   "layer_rgba_sha256": [
+    "989a5d2d4281062decd53d4d78f23ac6fdd8c58f6b9bd264c988a9a8c2ad0459"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "green_bed_foot_south",
+   "png_sha256": "1d4665d71106421dad1c990df2b30014234ce34d6c86fd569b57007c3d74d159",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1123,
+   "layer_rgba_sha256": [
+    "f464c80ea0bb7e32f50eeb0967bd7e506cccf4a6ef19532cc108759a7d9d62bd"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "green_bed_foot_west",
+   "png_sha256": "392733c4cdd3289f2c3e4b1aeed6ba943742ae2f7994cb9e611e5d3f1a7202e5",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1124,
+   "layer_rgba_sha256": [
+    "dbedbc1dc7eba163cb23bd2d1b551d780c4d269dfaf413772a47713e77111b62"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "green_bed_foot_east",
+   "png_sha256": "f26a0c5d5005c8ab61f10cf0cece179ec8b5384a1cb5b72fb01a13c0132f5cf5",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1125,
+   "layer_rgba_sha256": [
+    "aed66669d0a78304eb68a193b928dbe0dc2c536968969c2c60864e51ed6ff7c2"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "green_bed_head_up",
+   "png_sha256": "b791f8d108d34461df2bfee87e542a12c3023f68114eb5711cfb2876ee2b5618",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1126,
+   "layer_rgba_sha256": [
+    "a9ef720a20601d78fc0643687ba9e6cdaf865541577f43cc0903b6039f314293"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "green_bed_head_west",
+   "png_sha256": "8b79264a878bb17879c10f8906548c5de227629b9a82a2e44a53c892795e0d4f",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1127,
+   "layer_rgba_sha256": [
+    "b144613f144e08f47439f4e02b32c81da830934b26efc795e82e3c5f16f359b0"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "green_bed_head_east",
+   "png_sha256": "08ccfb4bcd1843e4d6c52bf4af0948cd28c587fb4efa7c977dbef1125665aee0",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1128,
+   "layer_rgba_sha256": [
+    "b3360eba28c00170b6c85c7073075fa09598b49ddf578924ae057edda20dae99"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "red_bed_foot_up",
+   "png_sha256": "bed301c65cd46d0cb08f8c769e5096851736eab4dbf0d97d1e60b43cd745a76b",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1129,
+   "layer_rgba_sha256": [
+    "b9b743695f29723c8596ec7dac24f081d3258cd538a678f3c43807a52e6341a8"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "red_bed_foot_south",
+   "png_sha256": "03fb5bc06fdd7de155102fcc2941f30b728847b2b33270f10960d1fd7af7747e",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1130,
+   "layer_rgba_sha256": [
+    "273f393637c10f291c6f83fec06041ec927ccacb1527f6b65de542e028cc5109"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "red_bed_foot_west",
+   "png_sha256": "6fef48b40e07aebbc5b890b05f3f2653de44553d5a57368e64d4a4eb87a6f561",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1131,
+   "layer_rgba_sha256": [
+    "9845b9c7f607b0da17d11905b7baed16f36043a8eb731c20f55d8e5df708a174"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "red_bed_foot_east",
+   "png_sha256": "fdd9059e128bef088f4a45bfe35ecc14bc9703d4e9ba8c91cea27d0e7d141cd3",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1132,
+   "layer_rgba_sha256": [
+    "f6df8db57072dbb8074eba6b6782a65bcd7e9d8d2c055319ea938643f50a3a65"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "red_bed_head_up",
+   "png_sha256": "37438018b483e2ddabeaf5ecaf615fab18fe13c06c89784891d1ac6735384c42",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1133,
+   "layer_rgba_sha256": [
+    "c34b605e21cbf54c4e1f5785c129f8c2f2bd5b90b278f0718e8f6c5c84b95d58"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "red_bed_head_west",
+   "png_sha256": "36820900a4fe770587fc7dac2d1296dcbdfe9ba7b538980cf75281555d4c0cc3",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1134,
+   "layer_rgba_sha256": [
+    "99b48e9fe30dea6e5e5595991fa20b5590accb7c4d3b6c9d7e31b8780a9c5ac5"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "red_bed_head_east",
+   "png_sha256": "c766cac98bd79ab2014a7d3d3b542a2486f6943c78facb6b24138c759e2927d4",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1135,
+   "layer_rgba_sha256": [
+    "f66e43ddea9be8eb328c0602b1599b5dcac4e177b09a710d89ab581ae2417ae4"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "black_bed_foot_up",
+   "png_sha256": "2ddc3b557046eff6816bd51ab887796d94cb157d9deaee53ee1445a9afce1166",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1136,
+   "layer_rgba_sha256": [
+    "1266852e5bd0964ffcac7ea7ad29503c7f663be6433f1f5ad6427e57ce67b8cb"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "black_bed_foot_south",
+   "png_sha256": "491ac8f3234f2ea67af745e96dd7d3eef433266b5fea82fbe8ec8959f355554d",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1137,
+   "layer_rgba_sha256": [
+    "f9550ec7ec8cf4487542dc9cd0b9fab7dce2f16c3722b60653239c8669f44ed6"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "black_bed_foot_west",
+   "png_sha256": "77f9e577753516ba088a6c37dc3363f3d1a265dda1c8ceac23db5433b8255fa4",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1138,
+   "layer_rgba_sha256": [
+    "c8f41402126d7720c3623c4931f52e5fad526b408d4068c98684d3324d0d6dd2"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "black_bed_foot_east",
+   "png_sha256": "f9fb5eb952bac7a7a6de9dc72b40e2d57493b3b917d1f2efe18ebc86017960d3",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1139,
+   "layer_rgba_sha256": [
+    "d2bdc238297a0d2aa54e55e07ad64efef3d2233d5cc91aea38b5def4528db940"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "black_bed_head_up",
+   "png_sha256": "5ef1080191989bf3de629aa382a6ea5108d48e729d762b63ca4758354e5e0318",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1140,
+   "layer_rgba_sha256": [
+    "86d040605b736cd86f924be92b872a6db7b42961e2da7826d29395435a45d3cb"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "black_bed_head_west",
+   "png_sha256": "2f3c4449862a9765e49fd0750a912f564a7612a05d58b2796bb2a590c04d0411",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1141,
+   "layer_rgba_sha256": [
+    "0418abdd378fbd2fb5166ec2abf784a6607a4a4b30a01871daa9378fdcd736b7"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "black_bed_head_east",
+   "png_sha256": "2943fe30914996371af19abd06ae10119549e6ea6e4e5a5234547d5385d44b4b",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1142,
+   "layer_rgba_sha256": [
+    "67debe6e715d29e8582251dca3d0a324eb537ced67493577bbdf63ff9a6edf98"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "chest_normal_down",
+   "png_sha256": "2280ae42c37e9a89ef2e8d0fb2a707e77ca70c53d1c7ea819d043c3347b9fe2a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1143,
+   "layer_rgba_sha256": [
+    "9ac4a6519b7e023ae49db2582184389a460ed27a8516d6fde214b552105938f4"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_normal_down.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/normal.png",
+    "crops": [
+     [
+      14,
+      19,
+      28,
+      33
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_normal_up",
+   "png_sha256": "2280ae42c37e9a89ef2e8d0fb2a707e77ca70c53d1c7ea819d043c3347b9fe2a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1144,
+   "layer_rgba_sha256": [
+    "9ac4a6519b7e023ae49db2582184389a460ed27a8516d6fde214b552105938f4"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_normal_up.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/normal.png",
+    "crops": [
+     [
+      28,
+      0,
+      42,
+      14
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_normal_north",
+   "png_sha256": "bb6e6b9fe79f77e0baa3486afefb8abe3668720115d42fe79817ef4cd78922d2",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1145,
+   "layer_rgba_sha256": [
+    "41b1fe632763b0452d836489661e667dd62cc7031f50164b6f232ed8ab148942"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_normal_north.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/normal.png",
+    "crops": [
+     [
+      42,
+      14,
+      56,
+      19
+     ],
+     [
+      42,
+      33,
+      56,
+      42
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_normal_south",
+   "png_sha256": "bd2729164e5c31b33702ab88fc7914e488920fbce903303649060698b15cd9ce",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1146,
+   "layer_rgba_sha256": [
+    "e7ac93cf941f7c2022806e95acc0aee172a9028f1cb9cd25a5da1011cba1f7fc"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_normal_south.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/normal.png",
+    "crops": [
+     [
+      14,
+      14,
+      28,
+      19
+     ],
+     [
+      14,
+      33,
+      28,
+      42
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_normal_west",
+   "png_sha256": "1c56ef0160a5b78c2b819e4185bef63b7720a997f8936688a1b187f621dffda4",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1147,
+   "layer_rgba_sha256": [
+    "c0b8d573baebb7399e5004f62dcf93d228674244816cd2a9cd27ac1dae657924"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_normal_west.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/normal.png",
+    "crops": [
+     [
+      0,
+      14,
+      14,
+      19
+     ],
+     [
+      0,
+      33,
+      14,
+      42
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_normal_east",
+   "png_sha256": "bd2729164e5c31b33702ab88fc7914e488920fbce903303649060698b15cd9ce",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1148,
+   "layer_rgba_sha256": [
+    "e7ac93cf941f7c2022806e95acc0aee172a9028f1cb9cd25a5da1011cba1f7fc"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_normal_east.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/normal.png",
+    "crops": [
+     [
+      28,
+      14,
+      42,
+      19
+     ],
+     [
+      28,
+      33,
+      42,
+      42
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_ender_down",
+   "png_sha256": "26d66d48f9b11509b93129278417b7b7906827ebb26d7985b08a9a59a3d8b5b7",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1149,
+   "layer_rgba_sha256": [
+    "63136075f1da1e28db9d222855900088fb149bfa35b3b1040ff24fcc67e8f428"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_ender_down.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/ender.png",
+    "crops": [
+     [
+      14,
+      19,
+      28,
+      33
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_ender_up",
+   "png_sha256": "35eb07e08a96de9986394984edfe82594c323a65624675febfdbc4a64e00f277",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1150,
+   "layer_rgba_sha256": [
+    "f0767f34a37745340d2eb4a577d408f87f23b4f386a436bb27a7398a74e729c3"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_ender_up.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/ender.png",
+    "crops": [
+     [
+      28,
+      0,
+      42,
+      14
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_ender_north",
+   "png_sha256": "f8246f9d14335f4114404f3c91ec14140e615c791f3496993ea2fd23a0b2d4a4",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1151,
+   "layer_rgba_sha256": [
+    "281ed9a20ddb56c775d62e856b239d13e7743917ed26cccc62692a483837f0f3"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_ender_north.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/ender.png",
+    "crops": [
+     [
+      42,
+      14,
+      56,
+      19
+     ],
+     [
+      42,
+      33,
+      56,
+      42
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_ender_south",
+   "png_sha256": "36741dcb5de48e5da0cb8080d8e9177b3f1926599dfa28e273317d4c60ea37db",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1152,
+   "layer_rgba_sha256": [
+    "d74d7c8e8fefa228a2395903e8ed0ab6e866e6122196702d02e316ed004aaa01"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_ender_south.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/ender.png",
+    "crops": [
+     [
+      14,
+      14,
+      28,
+      19
+     ],
+     [
+      14,
+      33,
+      28,
+      42
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_ender_west",
+   "png_sha256": "0431841b5f6a33ee24080e1c4216ed1a1156234ce4f3a6557c73ee6616526ec1",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1153,
+   "layer_rgba_sha256": [
+    "608e21211da7eaec648afb368363d3a73ad4f50714d7bf3f90f29c2ae845d74d"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_ender_west.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/ender.png",
+    "crops": [
+     [
+      0,
+      14,
+      14,
+      19
+     ],
+     [
+      0,
+      33,
+      14,
+      42
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_ender_east",
+   "png_sha256": "9ee4a4148f3e2fb70f8baf6fa6307a149767c30f95e22d42990c02ffee79207a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1154,
+   "layer_rgba_sha256": [
+    "b518036482c8a4d0b03668d7e0861c4a020acd0d077d87f71ef3a00033048931"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_ender_east.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/ender.png",
+    "crops": [
+     [
+      28,
+      14,
+      42,
+      19
+     ],
+     [
+      28,
+      33,
+      42,
+      42
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_trapped_down",
+   "png_sha256": "2280ae42c37e9a89ef2e8d0fb2a707e77ca70c53d1c7ea819d043c3347b9fe2a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1155,
+   "layer_rgba_sha256": [
+    "9ac4a6519b7e023ae49db2582184389a460ed27a8516d6fde214b552105938f4"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_trapped_down.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/trapped.png",
+    "crops": [
+     [
+      14,
+      19,
+      28,
+      33
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_trapped_up",
+   "png_sha256": "2280ae42c37e9a89ef2e8d0fb2a707e77ca70c53d1c7ea819d043c3347b9fe2a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1156,
+   "layer_rgba_sha256": [
+    "9ac4a6519b7e023ae49db2582184389a460ed27a8516d6fde214b552105938f4"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_trapped_up.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/trapped.png",
+    "crops": [
+     [
+      28,
+      0,
+      42,
+      14
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_trapped_north",
+   "png_sha256": "8980733f24c8c6ba0629309d702d40de0a1b638004e2f3f798a29c5203f4f325",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1157,
+   "layer_rgba_sha256": [
+    "bfdf836f5570753f0c40fe057548cbad54146b22e3fb9185f0e76959894cc708"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_trapped_north.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/trapped.png",
+    "crops": [
+     [
+      42,
+      14,
+      56,
+      19
+     ],
+     [
+      42,
+      33,
+      56,
+      42
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_trapped_south",
+   "png_sha256": "bd2729164e5c31b33702ab88fc7914e488920fbce903303649060698b15cd9ce",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1158,
+   "layer_rgba_sha256": [
+    "e7ac93cf941f7c2022806e95acc0aee172a9028f1cb9cd25a5da1011cba1f7fc"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_trapped_south.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/trapped.png",
+    "crops": [
+     [
+      14,
+      14,
+      28,
+      19
+     ],
+     [
+      14,
+      33,
+      28,
+      42
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_trapped_west",
+   "png_sha256": "1c56ef0160a5b78c2b819e4185bef63b7720a997f8936688a1b187f621dffda4",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1159,
+   "layer_rgba_sha256": [
+    "c0b8d573baebb7399e5004f62dcf93d228674244816cd2a9cd27ac1dae657924"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_trapped_west.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/trapped.png",
+    "crops": [
+     [
+      0,
+      14,
+      14,
+      19
+     ],
+     [
+      0,
+      33,
+      14,
+      42
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "chest_trapped_east",
+   "png_sha256": "bd2729164e5c31b33702ab88fc7914e488920fbce903303649060698b15cd9ce",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1160,
+   "layer_rgba_sha256": [
+    "e7ac93cf941f7c2022806e95acc0aee172a9028f1cb9cd25a5da1011cba1f7fc"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "file": "stand_ins/chest_trapped_east.png",
+   "derived_from": {
+    "jar_entry": "assets/minecraft/textures/entity/chest/trapped.png",
+    "crops": [
+     [
+      28,
+      14,
+      42,
+      19
+     ],
+     [
+      28,
+      33,
+      42,
+      42
+     ]
+    ],
+    "flip": "each crop top to bottom, stacked in list order",
+    "placed_at": [
+     1,
+     1
+    ],
+    "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"
+   }
+  },
+  {
+   "name": "farmland",
+   "png_sha256": "bce8e5bdaccdcb5d76e2f5a2b6b6449d7b056566bbeee7769795255b6c187b15",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1161,
+   "layer_rgba_sha256": [
+    "15c498691cb17a2375969c187bdec4ae3c6ff87bd468d9f5599c263dd0e1028a"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "farmland_moist",
+   "png_sha256": "28d754ebc6e3aa0c7c8680dc8f3ce18304152cd2d2374a574a66237f4b5b9ecf",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1162,
+   "layer_rgba_sha256": [
+    "c549ccee138cbdb18c0b4218a766f8d4e58d15df5e193c1b2a00c1856984de73"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "dirt_path_top",
+   "png_sha256": "653ab9be45372827da221f787435e2ad5adddc6257c29d45fe56947963784ac3",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1163,
+   "layer_rgba_sha256": [
+    "62e02777a69bb0dc69082870cc25f73be2644f37dba434124b3d38f69e93fe8b"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "dirt_path_side",
+   "png_sha256": "10a6c00835541537a0254f4210acc944b603ff7239dc1b458ddc5fae00686830",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1164,
+   "layer_rgba_sha256": [
+    "693ed0e4afb333eb2ca5f2a9ae6f75661b87024799ecfc42bfa70c48308bea11"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "wheat_stage0",
+   "png_sha256": "bd7aaf9666e414ca277c1aa33f491e48b0c2a0031a095bb7838a6ac3a0fd69cf",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1165,
+   "layer_rgba_sha256": [
+    "c73ee0cce36de3742cdda19b8e8c5492d2e2f22d93ae55703c4b26328fe793e3"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "wheat_stage1",
+   "png_sha256": "d8936a7633dd4c0e0be59b27c5feeddf70e8d9d17ece920a139edb31c11e4db4",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1166,
+   "layer_rgba_sha256": [
+    "d37503a5abcb12387c2b3fb295d9675203b4cf0323eb584e26e6a050c0b5da67"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "wheat_stage2",
+   "png_sha256": "921141204c89497a95a5536d8f9a93b25982e071ef1d21bef201700b95bdc0b5",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1167,
+   "layer_rgba_sha256": [
+    "7e597cdf2944fc3ba40bb3ba5eab54faaf2c1e6cfb9328629f8ba794d69eb93a"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "wheat_stage3",
+   "png_sha256": "66edb2d8235093965eb167837a2f48ca9e2c7ea1cc1a7cf5d48651760a7b8f0c",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1168,
+   "layer_rgba_sha256": [
+    "6b429f3de10a0a8f493af03bd3029d9ba062bf8fe4b1e1b4f36cb596b2999e11"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "wheat_stage4",
+   "png_sha256": "b017099bd8533461595c4654b4b23f52649d18caa899b6969023a33099ee66fb",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1169,
+   "layer_rgba_sha256": [
+    "f96516d74b96a83e385b7fe9855a2824f6690c4b2ac5d2374a6fe1fe8f7979a7"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "wheat_stage5",
+   "png_sha256": "5e787055f2026ed89824f05c298fcc60ea4601cc956fa2d36855938e8d56f967",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1170,
+   "layer_rgba_sha256": [
+    "7cf1bc65a04d8c94442a4260e4438dc3068e7204aad1e4de2709a9f296e1ebfc"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "wheat_stage6",
+   "png_sha256": "105a5fe7ad8ec6a27f45ae0ef128773837e8aeeaccbf360ffb4d9fb0e4bba29e",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1171,
+   "layer_rgba_sha256": [
+    "f20d8ea63e71e17b3b65482d7748c2e7aae10f9099abc5e0f089d9642b468a09"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "wheat_stage7",
+   "png_sha256": "4227ffd999af30ace7264ae92e50e396a4ecac5479d3c62b5647213acf9c9de6",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1172,
+   "layer_rgba_sha256": [
+    "ac872bc6b345a2423fac9f564d489a425062a7829f4109358f8dd1c7f6923360"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pumpkin_stem",
+   "png_sha256": "ca5015f8b47df4159f6d60747022069c8c969f0ac317f3251f590e76d7cef1e7",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1173,
+   "layer_rgba_sha256": [
+    "a7a5b0bf5d8a914b5560b5bde46760406d238da09d6b03c0538cb47a343da584"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "melon_stem",
+   "png_sha256": "30089ec094672cb4bcc59b1491e915dcfdc90e02c1d823e1769b1b0fd2cb32ef",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1174,
+   "layer_rgba_sha256": [
+    "4723415fe243c45117873eb945470215edb2a7eaaa13899371fb983f7fdb2072"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "carrots_stage0",
+   "png_sha256": "7e9c88b561c38562a84f115d30a0b9f91956b12b8a27f9c558609415a33e0ba0",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1175,
+   "layer_rgba_sha256": [
+    "cc0b406470b4a3491000a33ebe7171e7a0fc57a9c391e2e329e1fb01adf66a28"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "carrots_stage1",
+   "png_sha256": "9274d1fc569b56024d29492b6f8daf6546c80149afb417c1c2208586ad41dbcc",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1176,
+   "layer_rgba_sha256": [
+    "41e4de278d08de7bff880fc3454aaa891b34309125cf74e98b690b8ee0b7266d"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "carrots_stage2",
+   "png_sha256": "24997077ba0832205292227a9699e867a8e26b37f61515b7308ebec13e3aa052",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1177,
+   "layer_rgba_sha256": [
+    "d503bca3d33e7276c4a71cbc1cd0892638b264b7afd7f9c5434c4e56eab87f21"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "carrots_stage3",
+   "png_sha256": "89606fd0ea1495d99019afc0a2557a160b2e740c61f814d35639f9211f5c9f37",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1178,
+   "layer_rgba_sha256": [
+    "4612028c6043f209430251f8693c136253834ad67d54f968fbc3138f84854d47"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "potatoes_stage0",
+   "png_sha256": "1f993a15fc46a2333645f776fcdb7f5157915b61d28e6290b71cb2c2caf5d14a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1179,
+   "layer_rgba_sha256": [
+    "94dda91ddc63e08d77c67d90a97ea8bbbe7d45b12ca5d69fce998079dc5f40e8"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "potatoes_stage1",
+   "png_sha256": "9fffe9363411d30d270d9af1b59de14b2766224709f4089e4c05fd51796106a0",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1180,
+   "layer_rgba_sha256": [
+    "37f9098d6fddde3d4bff351ffb6b1922a1ce9230151d1111e31f37b15cfb439e"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "potatoes_stage2",
+   "png_sha256": "fdf05bc79f08706cf99cf1307a36fb512e15c42bfabecb53daa739e2a52b1e0a",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1181,
+   "layer_rgba_sha256": [
+    "e0f87cf3251805fe27dd646f83b0b87114956c251145e6c83f72ed105037e4d8"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "potatoes_stage3",
+   "png_sha256": "6a10c0b7aba77d82035af692f03cc6e63f1068eb92ab8a10f00f688d6410ba32",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1182,
+   "layer_rgba_sha256": [
+    "dca1edc9262ba83b6f7d1de04c8b1164b1c1e77e1e2f1471f05e1a10796b35e4"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "torchflower_crop_stage0",
+   "png_sha256": "18b34552ac4e742d3ffdf0ef5ce0ca4d12e95a518fd7eb7f4ad27924c05884d1",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1183,
+   "layer_rgba_sha256": [
+    "7f198ccbe90ce795a93e3abb22c49ff00603e464a7b935585f76ad4c8db77d04"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "torchflower_crop_stage1",
+   "png_sha256": "19daa63c16cb65c75204161de06fbbc89e692c677aee0b477cce88cebf4a8264",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1184,
+   "layer_rgba_sha256": [
+    "2c2953560e30b959060f8e8687ef47bd0e0eb6904d791e40cc137f2a80e63d04"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pitcher_crop_side",
+   "png_sha256": "e7db4e69658c79b789af84a924c9d65988bac9e4d14b66af4a64f2e77e61ba5b",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1185,
+   "layer_rgba_sha256": [
+    "537a3c29a2a30632217e29609db06caf25a7aa2cd01828718da9b6429b3a2aa9"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pitcher_crop_top",
+   "png_sha256": "7fb4f2933f6bc448117dd7e93ebf3d42fe7020cd47ccb59d1126d686901f4f86",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1186,
+   "layer_rgba_sha256": [
+    "8430355c31462a6e1cb140c7cf78c07d0af5c2ab655044de33396311ef5b6a07"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pitcher_crop_bottom",
+   "png_sha256": "2a65555805a621dc9d6c1bcf316af6e90276a02e730b32c47af75180e521855d",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1187,
+   "layer_rgba_sha256": [
+    "e4dd150e980ea3be747d0d5d48777697c3a85376408e308484f1f3f060ce9680"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pitcher_crop_bottom_stage_1",
+   "png_sha256": "742624fb48437956534f1cf439e34d69452cc68fe3a28c602ba380d611664114",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1188,
+   "layer_rgba_sha256": [
+    "b1e311d97aa8d847dba55be1de7d2445b91b899aa4f4c92608369af685d5c080"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pitcher_crop_bottom_stage_2",
+   "png_sha256": "a744d838ad06fc393b8a2eaecf68aa11ff8ce81320a6c32ad505b53dacdea3d2",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1189,
+   "layer_rgba_sha256": [
+    "23aadfe9a11582ab4567c23a2175a469d7679629bcb2ca2f93bd3a41b4ef6ac2"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pitcher_crop_bottom_stage_3",
+   "png_sha256": "8f6c1675cb36afdb87819198fb74da4b0eb4cb19ef40041edfcc4858cf7a4574",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1190,
+   "layer_rgba_sha256": [
+    "36dfe15e8a9d1b95f8cb771343048f175159062b828ebb89c8fbc81f5c45da7a"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pitcher_crop_top_stage_3",
+   "png_sha256": "e1a0ae727d727d842f56840d462482a2397ceed373bdda821ff9f7a99b59ff83",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1191,
+   "layer_rgba_sha256": [
+    "7036b68298088bcbbebe238cc382890df596f5de145834e36554fef1cf9882ef"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pitcher_crop_bottom_stage_4",
+   "png_sha256": "5725adc012008104490a4eba29b3bcaf2737b34947b6e6a290fbdb8e687a2703",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1192,
+   "layer_rgba_sha256": [
+    "2038819e8eba4ef7df9544a5543da818c0d3427d773ba69bac6373d66e38595b"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pitcher_crop_top_stage_4",
+   "png_sha256": "0a69b2e2d7cd5ab41c8eefd317aafb6ff8f24d5aebfa9acc184d0c7930e90669",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1193,
+   "layer_rgba_sha256": [
+    "9f3e30d3739f8ec4e03f775198713e2286cd4e5631c9aa11d27094b70a129369"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "beetroots_stage0",
+   "png_sha256": "4549bb303e3db9a21771425c6e0103fcd754ed7918e5f8fb6f18d4bec30a13c8",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1194,
+   "layer_rgba_sha256": [
+    "9c5ca492cb31037447fa14083b6f1b912cd059df44d48e5fc44767647e049f0b"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "beetroots_stage1",
+   "png_sha256": "539314c990c72c644501683ad1fed92da0c76e70f5974cec86451cde34020ebf",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1195,
+   "layer_rgba_sha256": [
+    "759b92a41512824c36c31e3ece65b10c226ec0be1b4ddb83573cc6dc7981f1fd"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "beetroots_stage2",
+   "png_sha256": "51770ca5e0a0cc78ca68fc07034b404f22644aa6bc17de97f5b92103e64874d9",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1196,
+   "layer_rgba_sha256": [
+    "834f2b1feb79d65f5573f3ee23abff75f29faf3b42e77e5dac529c08b5dd5f7b"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "beetroots_stage3",
+   "png_sha256": "5c881406a15001174fcbdadd89a342be02985333438420d18b7cdc1b1f493cec",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1197,
+   "layer_rgba_sha256": [
+    "6fec696c18a6fafeaacbfd9fbac15e00f6c5d560f7686ed98f9f56f3b1b4a0c7"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "oak_sapling",
+   "png_sha256": "c30b586442aea7e22af3b480360493225a0dd5b85920600845ce73e6ab4ed1fd",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1198,
+   "layer_rgba_sha256": [
+    "db924a428928e7de4f66fd7295a329320ac0b4924ac15d00f0ebf6e367ba2a48"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "spruce_sapling",
+   "png_sha256": "280cf713b9f66d16c7acf0eb3c6a25199165eacb5f2d1e2cacce861d4b9aebb4",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1199,
+   "layer_rgba_sha256": [
+    "e12a6a1ec212533ad0896aef563514abc81451ab0498dd697021547578ed9aaf"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "birch_sapling",
+   "png_sha256": "53d5061fd3004d1578fb97c20fc91abf4be54961d09ff53709fc100fcda92578",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1200,
+   "layer_rgba_sha256": [
+    "34d5fd5c5b807cfa96c5c7b0d658a2fec00c70638d4878294f695909d4dfcb6b"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "jungle_sapling",
+   "png_sha256": "411d513c45fe0c9aab5abfc63e6b17cd1bc5a29525d69830ea3d2b180cb07999",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1201,
+   "layer_rgba_sha256": [
+    "a7294650787cab58638fc0d2ade7ea7bfcb98bbe9e2a16682452265e0b6d0cb1"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "acacia_sapling",
+   "png_sha256": "b90c4c1982194a950b3f70d790d85854f74ed3c228d0271aa6d78e6ea1b4599d",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1202,
+   "layer_rgba_sha256": [
+    "4be00deb921047d000626406f0e108917cb8cbcaf59837d18b54cdef01ccf534"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cherry_sapling",
+   "png_sha256": "0d3b30fc9222e2f61316467ad8222359f98a49d44b7d44eeedc9e712325b2982",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1203,
+   "layer_rgba_sha256": [
+    "4316bb09c5f612730dd4027e7fb56cd527de6256e1000b3a68820d21ed0c9bf2"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "dark_oak_sapling",
+   "png_sha256": "b16c30ee6297777ae6bb9425bb9fab95e17c1758752598c9679b8212a01fec6e",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1204,
+   "layer_rgba_sha256": [
+    "b1fd81e476811b9e7b7b47faeb38193fd4d3a13d587b076a508f8a342a8c4099"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "pale_oak_sapling",
+   "png_sha256": "c42486070f5f3ef51a9451cb86185f6109eef7289c702fbef6eba487bb15b126",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1205,
+   "layer_rgba_sha256": [
+    "094df07a51f0e44534bfcbaf46ca62b6fbc0da6d2b71ecee113a1b89c005f59f"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "poplar_sapling",
+   "png_sha256": "a966aaf31b57ca6bfaa9884979113e332139c7547e3bfb320f2cb591f6a22b87",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1206,
+   "layer_rgba_sha256": [
+    "f194e18baadb582d2103d8377d9bbd178600714780fd701ca0e42ecb1fd02aec"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cauldron_side",
+   "png_sha256": "242bbae92fffcc53261ce31777d5bd1c800e31834ffc2fefd5a75330287890ec",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1207,
+   "layer_rgba_sha256": [
+    "d094caaede3ee5f181717216d1ee253fd1f9510690639561a197b5375c6c0aea"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cauldron_top",
+   "png_sha256": "ca88e285e0903f6df2532975aafea261be19c638a6c5049bbc57b331ce8a7a9d",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1208,
+   "layer_rgba_sha256": [
+    "a97d9eb07a77f04b82bd2c2cc54987097c990e3a0df87e9908be12f3e5750962"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cauldron_inner",
+   "png_sha256": "28bc729c234075ad5c375bd2bf9681f9a6f217119223a8910fd7b2b20e4a07eb",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1209,
+   "layer_rgba_sha256": [
+    "67c699449fc981db98e9a5f3e888071984866b11725fd5f8e8e603286fab074d"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "cauldron_bottom",
+   "png_sha256": "42b6a5e3db3eaabd522c1e8a596573d0ba02d69b5618d9fe55b64536ab94f114",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1210,
+   "layer_rgba_sha256": [
+    "a4c672d00cf96761268f641a06a7d34b401d4460e50182f95aea333ec09eeb07"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "fire_0",
+   "png_sha256": "00cd7ff06026f0261b9d8dc4dc492e9e8abebc50b057738d0f3e4a39a3df7a09",
+   "size": [
+    16,
+    512
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 32,
+   "array": "blocks",
+   "first_layer": 1211,
+   "layer_rgba_sha256": [
+    "737393c374a3ae09b5764f4ac317cde6bf4e911bf6f3efa000e2664dd9228c0d",
+    "27afe21779fca7e5b04197419efeb834cf78b3f275b5046b79ff99316c7576ee",
+    "f522b67f1b6d15b8586715508284410ea3fd96577e2b7dd9311aee104af14b24",
+    "42abe12e4f0a396e673653f85345037f2030d841070fe776184cd9476ab3ff9b",
+    "01707ce8b3e64c9ae9e6f9b2a843a954758c566f9ad1b633517e259af540fd7b",
+    "b4f3f8f8be6bee89945927e4f1356898fe7f280e31293c4f4d90b35e6bb2efd7",
+    "7ba53932757c01477fb83b4593c0984e721aa15bc42c3f23dbebf997d93c49df",
+    "c9020cb33e20e51163958214291f017d7da4768ee9de3a4c486064182d8cc10a",
+    "8a768386bda237c96ca30d5a32991ceb9cce5e7d711346708e9d27f4d5efd7d6",
+    "7081c024f20d01b42c043738ce3c200aa849036140b7adf7eba76647774c9dd0",
+    "5ba9d9a05bdcf87d7cf1084cc8f642d5c8569e1c44e1b98d2328409e9d5b391b",
+    "24682b7e779743e9ca0b9d2bd090c55ca35a4f87575b2c0fc64c22305a1ae04d",
+    "6ad945151fe947232f341464aa4899600515b65856f32a4ca22ba6ded886b2bb",
+    "591513e6e6914cc8d6238d260fa7763c516a370b8095b31394c41bf81d704986",
+    "a98b2165bacf320b14acd3b82c84e57965c42b5d4148df34ee0e4e15fc572102",
+    "7f0c791bf8acc6daa96fb46f1236e1a4f8ad6e8d86ed398fa10b81b3f0fbd5df",
+    "1ca2e03bc1c5f2955d3f7bd5670b9bcf5019621d16a3c46cfc32748bbba4b747",
+    "b6b748a0457437aa4056b9ff07e3136a6392db66b76f98c95501fb85ed4c217c",
+    "849389d05652c20c19542e5b9c11b3c1574fe60bffc01fdd4ad4044842481c45",
+    "59d58de7f9a8dc123a57a6f70715eb2df56099a971b49c9ae8d6d54ceee465c1",
+    "c882c45db0f3286ee74719075f7ce15287a77907cc330c38c0453384ada8ed20",
+    "f517153d9c0aebe5530a7d3fe245120511622cee2d03bf16abf92a34b56ba183",
+    "d99fb2054e109afdd1c42864c020dff49d5dbaf126c9696aa067bd89f1dfaafa",
+    "11655df4dc11119c29d61dc1eba26354fd158254e64b478af437712c526593fa",
+    "fa571622212fc48f21141e53ef39269310d90c44cfcbf6ab7a2fe669b58da7be",
+    "0448eb40d466a082a8f92becdee7da20a181b9b1a19cd6334cbb6a44cc0fec42",
+    "3613ea07d1013e8d84814d9eef1196246ecf8ec3a74ebff2a0728405dc0d831f",
+    "a8a89b5cc0bac72188eeb6eeec4ea0dc7f1fa1cc84f51ee54fa61287cf156817",
+    "eb90f1fc718557af34fe904646446cacde850f7b93288c604a7dc614136f7829",
+    "1a4abda792e744bec4e345a18c8ad637ffeec9dc67858c22d2ecb4c0a9157fd7",
+    "e348ea4b82695227762ede2010175b3721a93ae505ca0e83e3b8d310b5fc111e",
+    "412e5b63f339e8f902498a9adcc6dc410f39006e73babde47f6443cbd7baa2ed"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto",
+   "animation": {
+    "frametime": 1,
+    "interpolate": false,
+    "frames": [
+     {
+      "index": 16,
+      "time": 1
+     },
+     {
+      "index": 17,
+      "time": 1
+     },
+     {
+      "index": 18,
+      "time": 1
+     },
+     {
+      "index": 19,
+      "time": 1
+     },
+     {
+      "index": 20,
+      "time": 1
+     },
+     {
+      "index": 21,
+      "time": 1
+     },
+     {
+      "index": 22,
+      "time": 1
+     },
+     {
+      "index": 23,
+      "time": 1
+     },
+     {
+      "index": 24,
+      "time": 1
+     },
+     {
+      "index": 25,
+      "time": 1
+     },
+     {
+      "index": 26,
+      "time": 1
+     },
+     {
+      "index": 27,
+      "time": 1
+     },
+     {
+      "index": 28,
+      "time": 1
+     },
+     {
+      "index": 29,
+      "time": 1
+     },
+     {
+      "index": 30,
+      "time": 1
+     },
+     {
+      "index": 31,
+      "time": 1
+     },
+     {
+      "index": 0,
+      "time": 1
+     },
+     {
+      "index": 1,
+      "time": 1
+     },
+     {
+      "index": 2,
+      "time": 1
+     },
+     {
+      "index": 3,
+      "time": 1
+     },
+     {
+      "index": 4,
+      "time": 1
+     },
+     {
+      "index": 5,
+      "time": 1
+     },
+     {
+      "index": 6,
+      "time": 1
+     },
+     {
+      "index": 7,
+      "time": 1
+     },
+     {
+      "index": 8,
+      "time": 1
+     },
+     {
+      "index": 9,
+      "time": 1
+     },
+     {
+      "index": 10,
+      "time": 1
+     },
+     {
+      "index": 11,
+      "time": 1
+     },
+     {
+      "index": 12,
+      "time": 1
+     },
+     {
+      "index": 13,
+      "time": 1
+     },
+     {
+      "index": 14,
+      "time": 1
+     },
+     {
+      "index": 15,
+      "time": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "fire_1",
+   "png_sha256": "14f2aff3b724d5c0e015536b591d21735f4954bc04241f34f2fc2cbce2f263ec",
+   "size": [
+    16,
+    512
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 32,
+   "array": "blocks",
+   "first_layer": 1243,
+   "layer_rgba_sha256": [
+    "fb5924a2825aedc06af1a14307a997d799190c87c739466e2eb000fa54ba05fd",
+    "ba81a33e481f85a0208081d3e38e646b91c4a10df84a26326aaf9e311472d081",
+    "8f54b146d02bf725d22955f1b09ae1dbe07cf100915f076ba63297569e15172a",
+    "c25fd84080a4a1356acbb6fb4838824002714f84df12f1d4a6382e0359d63782",
+    "d8ae8ac63fe6d058d46a8b25b892b702b98ff43486aecf85325a8dd5ba78a13d",
+    "863dd6197d7fe5894504d505f1a0c41f2d12f9c208faeecb591fbea5fa3af865",
+    "294feb50f69935bf8dfe5b29de090063f4e5efc7576658d6e60aee8fd8446f8d",
+    "45d296261ed4f62b6183ed3069584e8d069d4894f87997a2be6a37a75bdc0da5",
+    "8ced6aa9a1af5448c8c082c8dc462ec2b0925757a1db253cf35164febac9a177",
+    "19ad0369f4f5c1a049fc57d584eec44db20cd8e20d418cb35e9063488494ec65",
+    "a3359a6f427a28c33fb2a1a83f760a5580cb6dd518c718bc7aecc86eb65b5776",
+    "65769576e5eb0f3ff51ce98843b78e2a90c1977b54dfb101b8a69bc44dd541b1",
+    "4364b5a39c99c371c11a92f74db0f6c2b10ab477fcd781372011daad2e0bdb16",
+    "1997bd724c595612bb2b31fb2067e7c8f4170872e04b19537acaccc5f57b6282",
+    "ed58de1f4f90bbd54cd2047ab1a0421dade66445c43717a43e3bd85c4671426c",
+    "f78c04ceca41c3e03bb7484967efcf34eb60c7b27809d88037a2dc3f5bbd428b",
+    "eddf5ad7d0e38c54a0a3a0bfb0f4539188a5823084c98c46daf8bf36634fdd11",
+    "85e654122b7727d1c214ed06becbf7c188c083bf078dd5a9c13ebbb2c763010e",
+    "7920ed44ebfa6669f0cb99880aeda4e03cb687ee1abb764ce05c151c5836a315",
+    "bb863a0077e087c15f88c66388c61837e8275156d5d1904d8a7bd3cda88e40c9",
+    "56c3e0faf9a8bf6483d61fc0c6b011e27bab1792153e7774e8c8b79f4dc924d2",
+    "b21d707879459d8a0e09dd8c042ba90fd8090198788d57981578f81fa4ab3edd",
+    "6d41da1116a332bbfdf9a5c47bca9235229836f269e4a2aee7d5565f5519b785",
+    "39e08208b9236ba98e3d14004bdb87d56652fc0c2a6913a99bb232c580ef8bfa",
+    "667aedb255dce17c8bb35030e83225f6b8cbe659bc22d85e730717659d09b8dd",
+    "9aa2a06f429ac8e0a2440de25b17bfb971b50b4fd8ef12b0ea80c2a7a4532418",
+    "b70be2408c78d294ec25906f06fdda2760b45d83da9ad72be86d9e5aa93b480c",
+    "e2607f07799f212d06daca5d28f4576686ea486aef9f3bbda3e31843ee8919ee",
+    "bd9992d38704d5efa6db4bd3333034aa2680b205a99926236798e5c177b42f38",
+    "1f997e2f2268a1b0f29cf0a9aa7914e6d511ec105e88d2617970b9f1311400f7",
+    "f45f24aa95f1f5ef533d1b50dce9638a90fc2a0f7db57ff3f248804f092bf2bf",
+    "bb96d9b5667f73c3da7737464bbd84d29b34c7a80e6e5635731266e18386ba17"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto",
+   "animation": {
+    "frametime": 1,
+    "interpolate": false,
+    "frames": [
+     {
+      "index": 0,
+      "time": 1
+     },
+     {
+      "index": 1,
+      "time": 1
+     },
+     {
+      "index": 2,
+      "time": 1
+     },
+     {
+      "index": 3,
+      "time": 1
+     },
+     {
+      "index": 4,
+      "time": 1
+     },
+     {
+      "index": 5,
+      "time": 1
+     },
+     {
+      "index": 6,
+      "time": 1
+     },
+     {
+      "index": 7,
+      "time": 1
+     },
+     {
+      "index": 8,
+      "time": 1
+     },
+     {
+      "index": 9,
+      "time": 1
+     },
+     {
+      "index": 10,
+      "time": 1
+     },
+     {
+      "index": 11,
+      "time": 1
+     },
+     {
+      "index": 12,
+      "time": 1
+     },
+     {
+      "index": 13,
+      "time": 1
+     },
+     {
+      "index": 14,
+      "time": 1
+     },
+     {
+      "index": 15,
+      "time": 1
+     },
+     {
+      "index": 16,
+      "time": 1
+     },
+     {
+      "index": 17,
+      "time": 1
+     },
+     {
+      "index": 18,
+      "time": 1
+     },
+     {
+      "index": 19,
+      "time": 1
+     },
+     {
+      "index": 20,
+      "time": 1
+     },
+     {
+      "index": 21,
+      "time": 1
+     },
+     {
+      "index": 22,
+      "time": 1
+     },
+     {
+      "index": 23,
+      "time": 1
+     },
+     {
+      "index": 24,
+      "time": 1
+     },
+     {
+      "index": 25,
+      "time": 1
+     },
+     {
+      "index": 26,
+      "time": 1
+     },
+     {
+      "index": 27,
+      "time": 1
+     },
+     {
+      "index": 28,
+      "time": 1
+     },
+     {
+      "index": 29,
+      "time": 1
+     },
+     {
+      "index": 30,
+      "time": 1
+     },
+     {
+      "index": 31,
+      "time": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "soul_fire_0",
+   "png_sha256": "1a756cde9d9ca7b0753ce3856bebea12887032abc2f6ee5784f7de5fdcf30e70",
+   "size": [
+    16,
+    512
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 32,
+   "array": "blocks",
+   "first_layer": 1275,
+   "layer_rgba_sha256": [
+    "cdb2288fa1ad3ac00d670052f8cd0267659cd685a1650eff12ba35fa64d86f7a",
+    "3f30e860c35ea2b16fa578108acbc4db2a2affebdd26ba4142ea587f20cdbc31",
+    "eebd8e2137b5b946effef416d4c00b2f19e2f9c24ae38e1aa2ed5ab3f51ba24c",
+    "489854e0c4f21ede38368d7fe64ff8c52074ef55fa8826efe4e151ac941142e0",
+    "842c836128ea41b58d0582f283d2543f82aa587c8621383b0b4f26322ed68511",
+    "79a8094e58ad3b8a6b45b8436ade5983bc9fad6da842d2aaba157a4e5840a966",
+    "aa3ff673a232dc3afc63d7681f34cab1c49da484e055dd89b8f02c39bd293c73",
+    "2e70b3cd8043076e5640eb9c65c8be0186baddee59e1c43b9a3c801c03322c86",
+    "19a7bf235267df6f679364262e904cfdd38d8ecbeef14328de306d1b247e3b9b",
+    "f2d4bee4f8b5e34756e7dccebe40a9954d8508bf0d115345101dd7653719fa2d",
+    "6fce4ae080ff64ea8e176d3b72dae940b22d7825094dfdbe94072f39f3d31374",
+    "72ea496eb65e669743e8f05f4cc070b0fea65371c775148491cc55a65238d429",
+    "13f40fd927fa979c09050616b5b9a3e37e37e14b380dbc02ccf876aabf966480",
+    "c373f1448e59be76303a2dcab05ff9c39f0ce350e2c9cd15b64a1b1d90c7c89c",
+    "d6f670b57f851f8b5e0e57905f2b51216ee7b3a1daa3def8c4e567f25118e4c9",
+    "ece993eeab5b810f4f25dd6b1ddf1038503173a1a8d4f506f28592525592b25e",
+    "7bac953bbf7db4f4092ab0093b4f2b1dcf6c391285288e8ff7686dc44ee36f46",
+    "530b41938ec45276d3fa49dd2fdd1b515cb57b00b198bcaae302e74b1439808c",
+    "d0f2ea3b3715b8f589c490fb63839f5a8a7332362c903e058e87c9304f964c6b",
+    "b220ce4323485f3e47fd1eb62891e22fee456768c8c46e8cf48940a5de51664a",
+    "219d322bd82f4b67be71c89c2f508f81589a69e34b6c550b51416b8260c2057e",
+    "818d51e60ffacff810dcd037c5cb3cd18835cb2134b6af43aa3550ec35170752",
+    "d7f2479be6776110b9a7dc9daf2052cad70e625e29a11ffd9e566040131b249b",
+    "fbf84c48b49090497a2000f7c52434b940cd6c3681bbdf031b358f02ca3b693e",
+    "80b42da71b14679f1b10bc97e3b40b0b9aba000769d658692bc421baf5f76c31",
+    "b8054a2d8adea363e362be9a191b2908eb7ee3b633f84b065f731fe1fab353bf",
+    "80b08eb08c2e34975489e0ac633f96d5e2fa00d28daa63a05cd672b3c79eaaf9",
+    "41b3b7e28439b00ee52f4afcf6aed92106a7600102d1794dcd2748b1008cea0e",
+    "37faf7d39defa0f06a08fb511dee468bf05d20bdef028c197318abbdb90f2678",
+    "f7f5d8443125ef9283fc642bb3c3fc04d7ef76d27abf8943053a1d338e50a64b",
+    "328f7112cbee523a62c7aa8c2e4601e55d1b18c21f5ef375356fbb13427a147e",
+    "024bce8daf0baa7662136fd5970d49e9c737f4cb1d58be626006684e7f072456"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto",
+   "animation": {
+    "frametime": 1,
+    "interpolate": false,
+    "frames": [
+     {
+      "index": 16,
+      "time": 1
+     },
+     {
+      "index": 17,
+      "time": 1
+     },
+     {
+      "index": 18,
+      "time": 1
+     },
+     {
+      "index": 19,
+      "time": 1
+     },
+     {
+      "index": 20,
+      "time": 1
+     },
+     {
+      "index": 21,
+      "time": 1
+     },
+     {
+      "index": 22,
+      "time": 1
+     },
+     {
+      "index": 23,
+      "time": 1
+     },
+     {
+      "index": 24,
+      "time": 1
+     },
+     {
+      "index": 25,
+      "time": 1
+     },
+     {
+      "index": 26,
+      "time": 1
+     },
+     {
+      "index": 27,
+      "time": 1
+     },
+     {
+      "index": 28,
+      "time": 1
+     },
+     {
+      "index": 29,
+      "time": 1
+     },
+     {
+      "index": 30,
+      "time": 1
+     },
+     {
+      "index": 31,
+      "time": 1
+     },
+     {
+      "index": 0,
+      "time": 1
+     },
+     {
+      "index": 1,
+      "time": 1
+     },
+     {
+      "index": 2,
+      "time": 1
+     },
+     {
+      "index": 3,
+      "time": 1
+     },
+     {
+      "index": 4,
+      "time": 1
+     },
+     {
+      "index": 5,
+      "time": 1
+     },
+     {
+      "index": 6,
+      "time": 1
+     },
+     {
+      "index": 7,
+      "time": 1
+     },
+     {
+      "index": 8,
+      "time": 1
+     },
+     {
+      "index": 9,
+      "time": 1
+     },
+     {
+      "index": 10,
+      "time": 1
+     },
+     {
+      "index": 11,
+      "time": 1
+     },
+     {
+      "index": 12,
+      "time": 1
+     },
+     {
+      "index": 13,
+      "time": 1
+     },
+     {
+      "index": 14,
+      "time": 1
+     },
+     {
+      "index": 15,
+      "time": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "soul_fire_1",
+   "png_sha256": "4274ed846e0ef1acf888ed40bfd20794a859f83032bbdba8c19f3ed871e74a2d",
+   "size": [
+    16,
+    512
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 32,
+   "array": "blocks",
+   "first_layer": 1307,
+   "layer_rgba_sha256": [
+    "f376bb1f8760798b11a0274ca1dbf89dc354e8931424b73ee40264d5c5a253f8",
+    "3c84f02b5f0ae71eb68780bafe85755a9c87025e964361e324177444345a2479",
+    "fa2efea4439cb6ef0db5bec443d1598d9b1599526a4f10c16ca84ccfde030f60",
+    "cea684004d79b3baee4439286e4fc557abfd00fd711647c0915613262dad3789",
+    "6901917564e69749fb85df9982df70c5ccf7970bab4b5749d80ef6e9219d6913",
+    "d925004a6a221cec478f829ef2623a0d706c178e72ce23d3ee0b9902a14d5efe",
+    "1474dd89b7f71404565418e10a66b267054000acd21f189b891e3fd68b878779",
+    "8a078f03bf9bc4f0e4fa0d1ec70dc2bbc106a6d2128e8e6b4e1ff2dd97f32937",
+    "db797df4f28ccaf56bcee05d18abc2c3f3bcee11fb6656018e49689a139bf64e",
+    "e954f98fcafa36e48e836253a413c20612b011ad1df647ca34bd81a8648cd951",
+    "e433f1457850734827c00fe5c3d997ae832130fa225a8482bdcbb4baf49594a3",
+    "b9e3aa9199edbb8920948954a8c88da03706933cf2cc7176c647051f52867c6b",
+    "289406041265c395ade78f5078e6d391df274f70717dc2a247b990aee2a5db5f",
+    "9afbefa2655fc4da418f63a9d5d4836926a1692ebac74e31a28039aa606d0a2a",
+    "5bd559a1b6d13edcd63ed96d4bb40b8898e08baab9f7ed80492e5a27498d7092",
+    "1a19cbc4920d7c4d2dc6c55bbf2490e369642b762179f171815b3452f74ca636",
+    "6ee667669fb1fad329f4a82f31489bc99d38492a2caf9ca88f4b2559b2b4017c",
+    "35190332ec24e0837142ca963f77c2216d12a2803cb1102756527ab195178972",
+    "fce81b599cbeffba5b289e065240a3aeeb9b438f6a66450a0d41eed66af7924c",
+    "0c457156a49c828e0b1e26cff93d09cac998a0a538c348575cbdacac3830fc31",
+    "310b19a4580e88608cb5891cf8d52556f40b86f168c9c19b387492535acec50b",
+    "3380101f7dcc2631e2c6a0f6fa6994e187c18ea81a4d3ccacbf8904fc4dbb666",
+    "b79784d5c4040d0d0f3236236d8e3d634036730b417cc674e154949d948157d4",
+    "0b9e444d4fd598c44dd33ef910fdd5662032215df0f0041ce37bb9a752c4ee3a",
+    "df59cc86b9b11cb085cfa319ddc40d1593972e9b3372fbc887669aff4ce80340",
+    "2447cdf8aaf9998a5e853d702fd8614d99f45ddb74b0f52c26e2dc74565e6e0e",
+    "4eba52fd5e02fccd2c33f631cedb828df150721055b7f95854c75828293d8f6c",
+    "b4eeb10393cc252c70d239c868b17a40ecd46063652271be05489c483aefa11d",
+    "9c00cfe626dc6b4f9c33bb6229f59700721fb0b6c69035cb1ba14b350f53e424",
+    "424678fc48ffd547c2d1493d916b2a895e7677f18532f122b82b8af29144b98d",
+    "a21dabfab21bdccdfedfa366e92c8dac8a5afd0d1ddaee60d9babcdc04152608",
+    "675230356376798a3592228553ec842349835f906ac90f723a034fc78fb7e43c"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto",
+   "animation": {
+    "frametime": 1,
+    "interpolate": false,
+    "frames": [
+     {
+      "index": 0,
+      "time": 1
+     },
+     {
+      "index": 1,
+      "time": 1
+     },
+     {
+      "index": 2,
+      "time": 1
+     },
+     {
+      "index": 3,
+      "time": 1
+     },
+     {
+      "index": 4,
+      "time": 1
+     },
+     {
+      "index": 5,
+      "time": 1
+     },
+     {
+      "index": 6,
+      "time": 1
+     },
+     {
+      "index": 7,
+      "time": 1
+     },
+     {
+      "index": 8,
+      "time": 1
+     },
+     {
+      "index": 9,
+      "time": 1
+     },
+     {
+      "index": 10,
+      "time": 1
+     },
+     {
+      "index": 11,
+      "time": 1
+     },
+     {
+      "index": 12,
+      "time": 1
+     },
+     {
+      "index": 13,
+      "time": 1
+     },
+     {
+      "index": 14,
+      "time": 1
+     },
+     {
+      "index": 15,
+      "time": 1
+     },
+     {
+      "index": 16,
+      "time": 1
+     },
+     {
+      "index": 17,
+      "time": 1
+     },
+     {
+      "index": 18,
+      "time": 1
+     },
+     {
+      "index": 19,
+      "time": 1
+     },
+     {
+      "index": 20,
+      "time": 1
+     },
+     {
+      "index": 21,
+      "time": 1
+     },
+     {
+      "index": 22,
+      "time": 1
+     },
+     {
+      "index": 23,
+      "time": 1
+     },
+     {
+      "index": 24,
+      "time": 1
+     },
+     {
+      "index": 25,
+      "time": 1
+     },
+     {
+      "index": 26,
+      "time": 1
+     },
+     {
+      "index": 27,
+      "time": 1
+     },
+     {
+      "index": 28,
+      "time": 1
+     },
+     {
+      "index": 29,
+      "time": 1
+     },
+     {
+      "index": 30,
+      "time": 1
+     },
+     {
+      "index": 31,
+      "time": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "campfire_log",
+   "png_sha256": "f4975ec634736b79a21088c1f2b4cadd62d091a8f41b9c4fab309f7e8d5b2acc",
+   "size": [
+    16,
+    16
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 1,
+   "array": "blocks",
+   "first_layer": 1339,
+   "layer_rgba_sha256": [
+    "f4ca6db266dd097d02e972997bb29e8d9b230b5e451528d88652d69112afc5f5"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto"
+  },
+  {
+   "name": "campfire_log_lit",
+   "png_sha256": "a870a5a9cb003ae390a6bb8121e8e183c2d6d703cefe120e74bfaac3029d993d",
+   "size": [
+    16,
+    64
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 4,
+   "array": "blocks",
+   "first_layer": 1340,
+   "layer_rgba_sha256": [
+    "a47cbf143606682591c48d84446f3f4dc1dd91af13583d1112165ee154730104",
+    "d6a32e2aa2fa6c0e9aa22ce6a967072a9058dbfb0bd07f27a2617cdebdb82b31",
+    "0922e88b1c3fcdf510216cc39c2eeeff52b02709cf6707eafd61dba802110500",
+    "ad00008e515d8b77ce0b34baad4f26429cf250690b5b85df8641b85a42e5885e"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "animation": {
+    "frametime": 20,
+    "interpolate": true,
+    "frames": [
+     {
+      "index": 0,
+      "time": 20
+     },
+     {
+      "index": 1,
+      "time": 20
+     },
+     {
+      "index": 2,
+      "time": 20
+     },
+     {
+      "index": 3,
+      "time": 20
+     }
+    ]
+   }
+  },
+  {
+   "name": "campfire_fire",
+   "png_sha256": "7ffc0f0108876a0182e975cf268c389495bbcec13f0bb0608366c78c67c44b67",
+   "size": [
+    16,
+    128
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 8,
+   "array": "blocks",
+   "first_layer": 1344,
+   "layer_rgba_sha256": [
+    "7d9c8122a1648dfdde283564e17402a9d3bed87a61ac4584d89f83dcabc75f61",
+    "f26b50d86ff5bccb08a4e2744100a7a1b17023ebb86e7b2bab2a9d8f28431823",
+    "5ae96b5345705055ec7c192ae180ac7fc4685d6cbabff1ce0ac698175c1f66b8",
+    "f3ad933d69efe2948dfd904ff61dc40583306aa422d13129f0ea61011e0162b3",
+    "89a7a2ad750ffbb8444a208c1e76ab6754dd131e14076574c146c9a694a79fc7",
+    "79bdc9492b4a63489147e379978cac1f4b3b9285ea7c15e4f3b57015e32f0f07",
+    "89aee7a440c3d380b4b031f679f132ec79c466778373cf56c0673ea1a5c98867",
+    "8c10a83fffc0a71beaf11e0446d4528e9b2a26ef43ebb42f6ac4aca11e49bf90"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto",
+   "animation": {
+    "frametime": 2,
+    "interpolate": false,
+    "frames": [
+     {
+      "index": 0,
+      "time": 2
+     },
+     {
+      "index": 1,
+      "time": 2
+     },
+     {
+      "index": 2,
+      "time": 2
+     },
+     {
+      "index": 3,
+      "time": 2
+     },
+     {
+      "index": 4,
+      "time": 2
+     },
+     {
+      "index": 5,
+      "time": 2
+     },
+     {
+      "index": 6,
+      "time": 2
+     },
+     {
+      "index": 7,
+      "time": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "soul_campfire_log_lit",
+   "png_sha256": "9941fb51759a95e6476e900a991b01abc73724151df9e601e737c5b9f68aa5c4",
+   "size": [
+    16,
+    64
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 4,
+   "array": "blocks",
+   "first_layer": 1352,
+   "layer_rgba_sha256": [
+    "db041aa52060acf6d742c02615ce1da7f6064837a08366c96ac490d71728f57b",
+    "a3c0a20eb63b788e634d612c02c04bf4d6c247611f90e89cb288a80fac6656ba",
+    "4b9ff42bf58ae3134c009767c9d97e611fada88697ba3d62386c8450dc66455a",
+    "8762890fcab20080ce220a43dff38215e7e0d6a7ffafce811415493172bec1c7"
+   ],
+   "alpha": "opaque",
+   "mipmap_strategy": "auto",
+   "animation": {
+    "frametime": 20,
+    "interpolate": true,
+    "frames": [
+     {
+      "index": 0,
+      "time": 20
+     },
+     {
+      "index": 1,
+      "time": 20
+     },
+     {
+      "index": 2,
+      "time": 20
+     },
+     {
+      "index": 3,
+      "time": 20
+     }
+    ]
+   }
+  },
+  {
+   "name": "soul_campfire_fire",
+   "png_sha256": "9d83397f31d9419015a2abbb35b674fcc33364c27a170c66cebccd3e0288ebbf",
+   "size": [
+    16,
+    128
+   ],
+   "frame_size": [
+    16,
+    16
+   ],
+   "frame_count": 8,
+   "array": "blocks",
+   "first_layer": 1356,
+   "layer_rgba_sha256": [
+    "93f4dce774d983464c3145aa815182c929236fa2e5e91f799d9bb3d66a5a7853",
+    "3cd064ea1c76ff675684b2fa5cbf5058bfbaa9025c03ff9ab655d5bf9af86f84",
+    "14e3c474ac42655dca19c8e80121b847462d9ace8263a84c9204667ac9d69b63",
+    "d271c47fdc70e0d276c0593fef9be93f8951ced85ebbc7582b04ffae75a2989e",
+    "7c8c14479bdf694ddc27708a9ceaafeeb8d50d582aa6d09e28c0769f91fdbc5c",
+    "864a76ccd87615e07a468cafa0413baba14a901f1112a723858dceade7b11dca",
+    "cc763acbb4b4e3bd2603788affbdb6549b6ddeff1965475982b8f4f1448fd975",
+    "c8bd6de260bcb266c41d1af271dcba3b79d88713e5275ee635430c89ee78bbf4"
+   ],
+   "alpha": "cutout",
+   "mipmap_strategy": "auto",
+   "animation": {
+    "frametime": 2,
+    "interpolate": false,
+    "frames": [
+     {
+      "index": 0,
+      "time": 2
+     },
+     {
+      "index": 1,
+      "time": 2
+     },
+     {
+      "index": 2,
+      "time": 2
+     },
+     {
+      "index": 3,
+      "time": 2
+     },
+     {
+      "index": 4,
+      "time": 2
+     },
+     {
+      "index": 5,
+      "time": 2
+     },
+     {
+      "index": 6,
+      "time": 2
+     },
+     {
+      "index": 7,
+      "time": 2
+     }
+    ]
+   }
   }
  ]
 }

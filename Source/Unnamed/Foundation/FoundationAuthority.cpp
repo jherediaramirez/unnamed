@@ -412,6 +412,8 @@ EFoundationReason FFoundationAuthority::CheckPlacement(const FFoundationPlayer& 
     const FFoundationBlockType* Wall = Item.PlacesWallBlock.IsNone() ? nullptr : World.FindBlock(Item.PlacesWallBlock);
     if (!Item.CanPlace() || !Placing || (!Item.PlacesWallBlock.IsNone() && !Wall))
         return EFoundationReason::UnknownBlock;
+    // foundation.Blocks.Families 0: a B1 family block is refused as when it was not imported.
+    if (FoundationBlockFamilies::IsHidden(Placing)) return EFoundationReason::UnknownBlock;
     if (!Hit.IsBlockLike()) return EFoundationReason::NoTarget;
     if (!Hit.bInRange) return EFoundationReason::OutOfRange;
     FFoundationPlacementContext Context;
