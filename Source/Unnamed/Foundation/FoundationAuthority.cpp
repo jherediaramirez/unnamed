@@ -58,7 +58,7 @@ const TCHAR* LexToString(EFoundationCommandType Type)
 {
     static const TCHAR* Names[] = {TEXT("select"), TEXT("swap"), TEXT("drop"), TEXT("use-on"), TEXT("use-entity"),
         TEXT("mine-start"), TEXT("mine-continue"), TEXT("mine-abort"), TEXT("attack"), TEXT("whiff"),
-        TEXT("creative-slot")};
+        TEXT("creative-slot"), TEXT("container-click"), TEXT("container-close")};
     return Names[int32(Type)];
 }
 
@@ -126,6 +126,15 @@ const FFoundationItemDefinition& FFoundationAuthority::GetHandItem(
 {
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Hand);
     return Stack.IsEmpty() ? Rules.Hand : Rules.GetItem(Stack.Item);
+}
+
+FFoundationContainerRules FFoundationAuthority::MakeContainerRules() const
+{
+    FFoundationContainerRules Out;
+    Out.GetMaxStack = [this](int32 Item) { return Rules.Items.IsValidIndex(Item) ? Rules.Items[Item].MaxStack : 64; };
+    Out.GetEquipment = [this](int32 Item)
+    { return Rules.Items.IsValidIndex(Item) ? Rules.Items[Item].Equipment : EFoundationEquipmentSlot::None; };
+    return Out;
 }
 
 FFoundationInventory FFoundationAuthority::MakeLoadout()
@@ -261,6 +270,7 @@ void FFoundationAuthority::StepItemEntities()
     for (FFoundationPlayer& Player : Players)
     {
         if (!Player.bHasFacts || !Player.Facts.bAlive) continue;
+        Player.Inventory.bFull = Options.bFullInventory;
         const FBox Reach = GetPickupBox(Player.Facts.GetBody());
         for (int32 Index = 0; Index < ItemEntities.Num();)
         {
@@ -521,6 +531,7 @@ FFoundationResult FFoundationAuthority::Execute(
     // Evicted or never valid: its effect cannot be known, so it must not apply now.
     if (Command.Sequence == 0 || Command.Sequence <= Player->HighestEvicted)
         return Reject(Result, EFoundationReason::ExpiredSequence);
+    Player->Inventory.bFull = Options.bFullInventory;
 
     switch (Command.Type)
     {
@@ -578,7 +589,7 @@ FFoundationResult FFoundationAuthority::Execute(
         const bool bClear = Command.CreativeItem.IsNone() || Command.CreativeCount <= 0;
         if (!Options.bCreativeInventory)
             Reject(Result, EFoundationReason::InvalidSlot);
-        else if (Command.Slot < 0 || Command.Slot > FFoundationInventory::HotbarSlots)
+        else if (!Player->Inventory.GetSlot(Command.Slot))
             Reject(Result, EFoundationReason::InvalidSlot);
         else if (!bClear && (Item == INDEX_NONE || Command.CreativeCount > Rules.Items[Item].MaxStack))
             Reject(Result, EFoundationReason::NoItem);
@@ -591,13 +602,45 @@ FFoundationResult FFoundationAuthority::Execute(
             FFoundationItemInstance Stack =
                 bClear ? FFoundationItemInstance{} : Inventory.MakeStack(Item, Command.CreativeCount);
             if (!bClear) Stack.Damage = Command.CreativeDamage;
-            if (Command.Slot == FFoundationInventory::HotbarSlots)
-            {
-                Inventory.Offhand = Stack;
-                ++Inventory.Revision;
-            }
-            else
-                Inventory.SetSlot(Command.Slot, Stack);
+            Inventory.SetSlot(Command.Slot, Stack);
+            Result.Outcome = EFoundationOutcome::Committed;
+        }
+        break;
+    }
+    case EFoundationCommandType::ContainerClick:
+    {
+        // The click runs on a copy, which commits only when it throws nothing: throwing waits for survival step 4.
+        FFoundationInventory Trial = Player->Inventory;
+        const FFoundationContainerRules ClickRules = MakeContainerRules();
+        FFoundationContainerMenu Menu(Trial, ClickRules, Vitals.Mode == EFoundationPlayerMode::Creative);
+        const FFoundationClickResult Click = Command.ContainerId == FFoundationContainerMenu::PlayerContainer
+            ? Menu.Click(Command.Slot, Command.Button, Command.ClickType)
+            : FFoundationClickResult{false};
+        if (!Click.bValid)
+            Reject(Result, EFoundationReason::InvalidSlot);
+        else if (!Click.Thrown.IsEmpty())
+            Reject(Result, EFoundationReason::DropDeferred);
+        else
+        {
+            Player->Inventory = MoveTemp(Trial);
+            Result.Outcome = EFoundationOutcome::Committed;
+        }
+        break;
+    }
+    case EFoundationCommandType::ContainerClose:
+    {
+        // The cursor stack goes back into the inventory; what would not fit would be thrown, which waits for step 4.
+        // The stack keeps its damage and identity (FFoundationInventory::Return).
+        FFoundationInventory Trial = Player->Inventory;
+        const FFoundationItemInstance Carried = Trial.Carried;
+        Trial.Carried = {};
+        Trial.QuickCraft = {};
+        if (!Carried.IsEmpty() && !Trial.Return(Carried, Rules.Items[Carried.Item].MaxStack).IsEmpty())
+            Reject(Result, EFoundationReason::DropDeferred);
+        else
+        {
+            ++Trial.Revision;
+            Player->Inventory = MoveTemp(Trial);
             Result.Outcome = EFoundationOutcome::Committed;
         }
         break;

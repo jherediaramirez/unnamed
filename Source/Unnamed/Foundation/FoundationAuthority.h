@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Foundation/FoundationBlockPlacement.h"
 #include "Foundation/FoundationBlocks.h"
+#include "Foundation/FoundationContainer.h"
 #include "Foundation/FoundationItemEntities.h"
 #include "Foundation/FoundationItems.h"
 #include "Foundation/FoundationLoot.h"
@@ -24,9 +25,15 @@ enum class EFoundationCommandType : uint8
     Attack,
     // An attack at nothing in reach: it still restarts attack recovery.
     Whiff,
-    // The creative inventory writes a stack into a hotbar slot or the offhand (Slot 9), as vanilla's
-    // ServerboundSetCreativeModeSlotPacket does. Allowed only while the lab's creative inventory rule is on.
-    SetCreativeSlot
+    // The creative inventory writes a stack into an inventory slot (Slot: the Inventory number, 0-8 the hotbar, 9-35
+    // the main grid, 36-39 the armor, 40 the offhand), as vanilla's ServerboundSetCreativeModeSlotPacket does.
+    // Allowed only while the lab's creative inventory rule is on.
+    SetCreativeSlot,
+    // A click in an open container (vanilla's container click): ContainerId, Slot (the menu's slot number, -999
+    // outside the window), Button and ClickType, run by FFoundationContainerMenu with the player's cursor stack.
+    ContainerClick,
+    // The container screen closes: the cursor stack goes back into the inventory.
+    ContainerClose
 };
 
 // Pass lets the caller continue (next hand); Committed changed authoritative state; Rejected changed
@@ -107,6 +114,10 @@ struct FFoundationCommand
     FName CreativeItem;
     int32 CreativeCount = 0;
     int32 CreativeDamage = 0;
+    // ContainerClick: the container (0 the player's own menu), the button and the click type; Slot is the menu slot.
+    int32 ContainerId = 0;
+    int32 Button = 0;
+    EFoundationClickType ClickType = EFoundationClickType::Pickup;
 };
 
 struct FFoundationResult
@@ -197,6 +208,10 @@ struct FFoundationLabOptions
     // refuses it. Off, the loot goes straight to the inventory, as before. The pawn copies foundation.Items.Entities
     // in before each step; tests set it themselves.
     bool bItemEntities = false;
+    // The full inventory (survival step 5a): 27 main and 4 armor slots besides the hotbar and offhand. Off, the lab
+    // inventory, the hotbar and offhand only. The pawn copies foundation.Inventory.Full in before each step; tests
+    // set it themselves.
+    bool bFullInventory = false;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -389,6 +404,8 @@ public:
 
 private:
     FFoundationInventory MakeLoadout();
+    // The item facts container clicks read (max stack, equipment slot).
+    FFoundationContainerRules MakeContainerRules() const;
     // The placement context for a hit (statics must be anchors); false with a reason when nothing can be placed.
     bool MakePlacementContext(const FFoundationPlayer& Player, const FFoundationHit& Hit,
         const FFoundationBlockType& Placing, FFoundationPlacementContext& OutContext, bool& bOutAccepted,

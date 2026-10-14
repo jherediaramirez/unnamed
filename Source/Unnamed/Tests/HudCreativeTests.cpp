@@ -116,7 +116,7 @@ bool FHudCreativeClicksTest::RunTest(const FString&)
     if (!TestTrue(TEXT("block registry asset"), MakeModel(Model, Rules))) return false;
     Model.SelectTab(FindTab(Model, TEXT("building_blocks")));
     TArray<FHudCreativeStack> Inventory;
-    Inventory.SetNum(10);
+    Inventory.SetNum(FFoundationInventory::Slots);
     const FHudCreativeHit Log{EHudCreativeHit::Grid, 0}, Wood{EHudCreativeHit::Grid, 1};
     // The picker (slotClicked): one item, +1, shift fills, right takes one away, elsewhere deletes.
     Model.Click(Log, 0, false, Inventory);
@@ -176,12 +176,76 @@ bool FHudCreativeClicksTest::RunTest(const FString&)
     Model.SelectTab(FindTab(Model, TEXT("inventory")));
     Model.Carried = {TEXT("stone"), 5};
     Inventory[0] = {TEXT("stone"), 64};
-    Inventory[9] = {TEXT("glass"), 3};
+    Inventory[FFoundationInventory::OffhandSlot] = {TEXT("glass"), 3};
     Model.Click({EHudCreativeHit::Destroy, 0}, 0, false, Inventory);
     TestTrue(TEXT("bin"), Model.Carried.IsEmpty());
     Writes = Model.Click({EHudCreativeHit::Destroy, 0}, 0, true, Inventory);
     TestEqual(TEXT("shift on the bin clears the hotbar and offhand"), Writes.Num(), 2);
     TestEqual(TEXT("offhand slot is the survival tab's"), Model.HitTest({36, 21}).Kind, EHudCreativeHit::Offhand);
+    // The survival tab's main and armor slots are real with the full inventory: clicks write their Inventory numbers.
+    Inventory[0] = {TEXT("stone"), 64};
+    Writes = Model.Click({EHudCreativeHit::Hotbar, 0}, 0, true, Inventory);
+    TestTrue(TEXT("shift in the survival tab moves hotbar to main"),
+        Writes.Num() == 2 && Writes[0].Slot == 0 && Writes[0].Stack.IsEmpty() && Writes[1].Slot == 9 &&
+            Writes[1].Stack == FHudCreativeStack{TEXT("stone"), 64});
+    Inventory[0] = {};
+    Inventory[9] = {TEXT("stone"), 64};
+    Writes = Model.Click({EHudCreativeHit::Inventory, 0}, 1, false, Inventory);
+    TestTrue(TEXT("right on a main slot takes half"),
+        Writes.Num() == 1 && Writes[0].Slot == 9 && Writes[0].Stack.Count == 32 &&
+            Model.Carried == FHudCreativeStack{TEXT("stone"), 32});
+    Inventory[9] = Writes[0].Stack;
+    Writes = Model.Click({EHudCreativeHit::Armor, 0}, 0, false, Inventory);
+    TestTrue(TEXT("the head slot refuses stone"), Writes.IsEmpty() && Model.Carried.Count == 32);
+    Inventory[3] = {TEXT("dirt"), 5};
+    Writes = Model.PressNumber({EHudCreativeHit::Inventory, 0}, 3, Inventory);
+    TestTrue(TEXT("a number key over a main slot swaps with the hotbar"),
+        Writes.Num() == 2 && Writes[0].Slot == 3 && Writes[0].Stack == FHudCreativeStack{TEXT("stone"), 32} &&
+            Writes[1].Slot == 9 && Writes[1].Stack == FHudCreativeStack{TEXT("dirt"), 5});
+    Inventory[3] = {};
+    // The switch at 0: the main and armor slots stay inert, as before step 5a.
+    Model.bFullInventory = false;
+    Writes = Model.Click({EHudCreativeHit::Inventory, 0}, 0, false, Inventory);
+    TestTrue(TEXT("switch 0: a main slot does nothing"), Writes.IsEmpty() && Model.Carried.Count == 32);
+    TestTrue(TEXT("switch 0: no number key over a main or armor slot"),
+        Model.PressNumber({EHudCreativeHit::Inventory, 0}, 3, Inventory).IsEmpty() &&
+            Model.PressNumber({EHudCreativeHit::Armor, 0}, 3, Inventory).IsEmpty());
+    Inventory[2] = {TEXT("dirt"), 5};
+    TestTrue(TEXT("switch 0: shift and middle on the hotbar do nothing in the survival tab"),
+        Model.Click({EHudCreativeHit::Hotbar, 2}, 0, true, Inventory).IsEmpty() &&
+            Model.Click({EHudCreativeHit::Hotbar, 2}, 2, false, Inventory).IsEmpty() && Model.Carried.Count == 32);
+    Inventory[2] = {};
+    Writes = Model.Click({EHudCreativeHit::Hotbar, 1}, 0, false, Inventory);
+    TestTrue(TEXT("switch 0: the hotbar still takes the cursor"),
+        Writes.Num() == 1 && Writes[0].Slot == 1 && Model.Carried.IsEmpty());
+    Model.bFullInventory = true;
+    Model.Carried = {};
+    // The armor slots run head (index 0, Inventory 39) to feet (3, Inventory 36) and take only their own items,
+    // through the item's Equipment.
+    {
+        FHudCreativeModel Armor;
+        TMap<FName, FHudCreativeItem> ArmorItems;
+        ArmorItems.Add(TEXT("stone")).MaxStack = 64;
+        FHudCreativeItem& Helmet = ArmorItems.Add(TEXT("test_helmet"));
+        Helmet.MaxStack = 1;
+        Helmet.Equipment = EFoundationEquipmentSlot::Head;
+        FHudCreativeItem& Boots = ArmorItems.Add(TEXT("test_boots"));
+        Boots.MaxStack = 1;
+        Boots.Equipment = EFoundationEquipmentSlot::Feet;
+        Armor.Build(FFoundationBlockRegistry::GetDefault()->GetAssets()->CreativeTabs, ArmorItems);
+        Armor.SelectTab(FindTab(Armor, TEXT("inventory")));
+        TArray<FHudCreativeStack> Slots;
+        Slots.SetNum(FFoundationInventory::Slots);
+        Armor.Carried = {TEXT("test_helmet"), 1};
+        Writes = Armor.Click({EHudCreativeHit::Armor, 3}, 0, false, Slots);
+        TestTrue(TEXT("the feet slot refuses a helmet"), Writes.IsEmpty() && !Armor.Carried.IsEmpty());
+        Writes = Armor.Click({EHudCreativeHit::Armor, 0}, 0, false, Slots);
+        TestTrue(TEXT("a helmet goes on the head slot, Inventory 39"),
+            Writes.Num() == 1 && Writes[0].Slot == 39 && Writes[0].Stack == FHudCreativeStack{TEXT("test_helmet"), 1});
+        Armor.Carried = {TEXT("test_boots"), 1};
+        Writes = Armor.Click({EHudCreativeHit::Armor, 3}, 0, false, Slots);
+        TestTrue(TEXT("boots go on the feet slot, Inventory 36"), Writes.Num() == 1 && Writes[0].Slot == 36);
+    }
     // Block icons: the gui display transform shows the top, east (left) and north (right) faces.
     const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();
     const TArray<HudBlockIcon::FQuad> Grass = HudBlockIcon::Build(*Registry, TEXT("grass_block"));
@@ -236,9 +300,19 @@ bool FHudCreativeAuthorityTest::RunTest(const FString&)
     TestTrue(TEXT("hotbar write"),
         Write(4, TEXT("oak_slab"), 64).IsCommitted() &&
             A.Rules.GetItem(Inventory.Hotbar[4].Item).Id == TEXT("oak_slab") && Inventory.Hotbar[4].Count == 64);
-    TestTrue(TEXT("offhand write"), Write(9, TEXT("glass"), 3).IsCommitted() && Inventory.Offhand.Count == 3);
+    TestTrue(TEXT("offhand write"),
+        Write(FFoundationInventory::OffhandSlot, TEXT("glass"), 3).IsCommitted() && Inventory.Offhand.Count == 3);
     TestTrue(TEXT("clear"), Write(4, NAME_None, 0).IsCommitted() && Inventory.Hotbar[4].IsEmpty());
-    TestEqual(TEXT("bad slot"), Write(10, TEXT("stone"), 1).Reason, EFoundationReason::InvalidSlot);
+    TestEqual(
+        TEXT("the lab inventory has no main slots"), Write(9, TEXT("stone"), 1).Reason, EFoundationReason::InvalidSlot);
+    TestEqual(
+        TEXT("bad slot"), Write(FFoundationInventory::Slots, TEXT("stone"), 1).Reason, EFoundationReason::InvalidSlot);
+    // The full inventory: every one of the 41 slots takes a creative write.
+    A.Options.bFullInventory = true;
+    TestTrue(TEXT("main write"), Write(35, TEXT("dirt"), 7).IsCommitted() && Inventory.Main[26].Count == 7);
+    TestTrue(TEXT("armor write (creative writes are not filtered)"),
+        Write(39, TEXT("glass"), 1).IsCommitted() && Inventory.Armor[3].Count == 1);
+    TestEqual(TEXT("past the offhand"), Write(41, TEXT("stone"), 1).Reason, EFoundationReason::InvalidSlot);
     TestEqual(TEXT("over the stack size"), Write(0, TEXT("stone"), 65).Reason, EFoundationReason::NoItem);
     TestEqual(TEXT("unknown item"), Write(0, TEXT("dummy_block_item"), 1).Reason, EFoundationReason::NoItem);
     A.Options.bCreativeInventory = false;

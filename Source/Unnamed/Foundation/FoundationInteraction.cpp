@@ -457,6 +457,23 @@ FFoundationResult FFoundationInteraction::SetCreativeSlot(
     return Send(Authority, Vitals, Command);
 }
 
+FFoundationResult FFoundationInteraction::ContainerClick(FFoundationAuthority& Authority, FFoundationVitals& Vitals,
+    int32 ContainerId, int32 Slot, int32 Button, EFoundationClickType Type)
+{
+    FFoundationCommand Command = MakeCommand(Authority, EFoundationCommandType::ContainerClick, EFoundationHand::Main);
+    Command.ContainerId = ContainerId;
+    Command.Slot = Slot;
+    Command.Button = Button;
+    Command.ClickType = Type;
+    if (Retry.bActive) CancelRetry(EFoundationReason::ItemChanged);
+    return Send(Authority, Vitals, Command);
+}
+
+FFoundationResult FFoundationInteraction::ContainerClose(FFoundationAuthority& Authority, FFoundationVitals& Vitals)
+{
+    return Send(
+        Authority, Vitals, MakeCommand(Authority, EFoundationCommandType::ContainerClose, EFoundationHand::Main));
+}
 bool FFoundationInteraction::Pick(FFoundationAuthority& Authority, FFoundationVitals& Vitals)
 {
     const FFoundationHit& Hit = Preview.Target.Kind != EFoundationHitKind::None ? Preview.Target : Target;
