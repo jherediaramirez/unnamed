@@ -1,0 +1,6 @@
+{
+ "fbx": "SK_BetterSteve.fbx",
+ "fbx_sha256": "bf6662453a0f3e8145217ac1f4108dce0e5de5ae8bd4cfcff4f9f9b5f27b6b7b",
+ "source": "C:/dev/projects/better-steve/export/SK_BetterSteve.fbx, written by that project's scripts/export_ue.py (adventurer style, 2026-10-13); T_BetterSteve.png is embedded",
+ "facts": "187.5 cm tall, 56 bones (UE Mannequin names), faces +Y, rooted at root; 43 actions, in place, 30 fps (better-steve README: Locomotion, Look poses)"
+}

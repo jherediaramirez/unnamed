@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Foundation/FoundationActions.h"
+#include "Foundation/FoundationBody.h"
 #include "Foundation/FoundationInteraction.h"
 #include "Foundation/FoundationSimulation.h"
 #include "Foundation/FoundationVitals.h"
@@ -11,6 +12,7 @@
 class AFoundationLab;
 class UBoxComponent;
 class UCameraComponent;
+class USkeletalMeshComponent;
 
 UCLASS()
 class UNNAMED_API AFoundationPawn : public APawn
@@ -41,6 +43,19 @@ public:
     int32 GetPerspective() const { return Perspective; }
 
     UCameraComponent* GetCamera() const { return Camera; }
+
+    // The player body (Better Steve), drawn in the third-person views; null when its assets are missing.
+    USkeletalMeshComponent* GetBodyMesh() const { return BodyMesh; }
+    bool IsBodyShown() const;
+    // foundation.Body.Yaw.
+    static EFoundationBodyYaw GetBodyYawMode();
+    // foundation.View.SpringArm: the back view is the over-the-shoulder spring arm (a third-person preview).
+    bool IsSpringArmView() const;
+    // Where the body faces (stepped with the simulation) and which clips it plays (advanced per frame).
+    FFoundationBodyTurn BodyTurn;
+    FFoundationBodyAnimator BodyAnimator;
+    // After a respawn, lab reset or teleport: the body stands facing the view, no jump or landing pending.
+    void ResetBody();
 
     AFoundationLab* GetLab() const { return Lab.Get(); }
 
@@ -73,11 +88,27 @@ private:
     void StepInteraction(FFoundationAuthority& Authority, bool bLatestStep, double NowSeconds);
     // Registers with the lab's authority, adopts its preset and returns to spawn after a lab reset.
     void SyncInteraction(FFoundationAuthority& Authority);
+    // Adds the body when its mesh and clips exist (UUnnamedProjectSettings::PlayerBodyRoot).
+    void CreateBody();
+    // Places, poses and shows or hides the body for this frame (Eye: the rendered eyes; CameraLocation: the camera).
+    void UpdateBody(
+        double Alpha, double Seconds, const FRotator& Control, const FVector& Eye, const FVector& CameraLocation);
+    // The spring arm's camera location for this frame; View becomes its (lagged) rotation.
+    FVector PlaceSpringArm(const FVector& Eye, FRotator& View, double Seconds);
 
     UPROPERTY()
     TObjectPtr<UBoxComponent> Collision;
     UPROPERTY()
     TObjectPtr<UCameraComponent> Camera;
+    UPROPERTY()
+    TObjectPtr<USkeletalMeshComponent> BodyMesh;
+    // Jumps the simulation started since the body's last frame.
+    int32 BodyJumps = 0;
+    bool bBodyTurnStarted = false;
+    // The spring arm's lagged pivot and rotation, while its view is on.
+    FVector ArmPivot = FVector::ZeroVector;
+    FQuat ArmRotation = FQuat::Identity;
+    bool bArmPlaced = false;
     TWeakObjectPtr<AFoundationLab> Lab;
     // Reused per step: the collision provider's boxes near the player.
     TArray<FBox> StepCollision;

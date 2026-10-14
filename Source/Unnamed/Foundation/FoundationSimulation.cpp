@@ -3,11 +3,12 @@
 
 namespace
 {
-    constexpr double Epsilon = 1e-6;
+    // Named for this file: unity builds merge it with engine headers that take an "Epsilon" parameter.
+    constexpr double SimulationEpsilon = 1e-6;
 
     bool Overlap(double A0, double A1, double B0, double B1)
     {
-        return A1 > B0 + Epsilon && A0 < B1 - Epsilon;
+        return A1 > B0 + SimulationEpsilon && A0 < B1 - SimulationEpsilon;
     }
 
     double ClipAxis(const FBox& Box, double Delta, int32 Axis, const TArray<FBox>& Obstacles)
@@ -18,9 +19,9 @@ namespace
             if (!Overlap(Box.Min[A], Box.Max[A], Other.Min[A], Other.Max[A]) ||
                 !Overlap(Box.Min[B], Box.Max[B], Other.Min[B], Other.Max[B]))
                 continue;
-            if (Delta > 0 && Box.Max[Axis] <= Other.Min[Axis] + Epsilon)
+            if (Delta > 0 && Box.Max[Axis] <= Other.Min[Axis] + SimulationEpsilon)
                 Delta = FMath::Min(Delta, FMath::Max(0., Other.Min[Axis] - Box.Max[Axis]));
-            if (Delta < 0 && Box.Min[Axis] >= Other.Max[Axis] - Epsilon)
+            if (Delta < 0 && Box.Min[Axis] >= Other.Max[Axis] - SimulationEpsilon)
                 Delta = FMath::Max(Delta, FMath::Min(0., Other.Max[Axis] - Box.Min[Axis]));
         }
         return Delta;
@@ -28,7 +29,7 @@ namespace
 
     bool Supported(const FBox& Box, double Depth, const TArray<FBox>& Obstacles)
     {
-        return ClipAxis(Box, -Depth, 2, Obstacles) > -Depth + Epsilon;
+        return ClipAxis(Box, -Depth, 2, Obstacles) > -Depth + SimulationEpsilon;
     }
 }
 
@@ -209,43 +210,44 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
         }
     }
     FVector Moved = Clip(Box, Wanted, WorldBoxes);
-    const bool HitDown = Wanted.Z < 0 && !FMath::IsNearlyEqual(Wanted.Z, Moved.Z, Epsilon);
+    const bool HitDown = Wanted.Z < 0 && !FMath::IsNearlyEqual(Wanted.Z, Moved.Z, SimulationEpsilon);
     if ((WasGrounded || HitDown) &&
-        (FMath::Abs(Moved.X - Wanted.X) > Epsilon || FMath::Abs(Moved.Y - Wanted.Y) > Epsilon))
+        (FMath::Abs(Moved.X - Wanted.X) > SimulationEpsilon || FMath::Abs(Moved.Y - Wanted.Y) > SimulationEpsilon))
     {
         TArray<double> Candidates;
         for (const FBox& B : WorldBoxes)
         {
             const double H = B.Max.Z - Feet.Z;
-            if (H > 0 && H <= P.StepCm + Epsilon) Candidates.AddUnique(H);
+            if (H > 0 && H <= P.StepCm + SimulationEpsilon) Candidates.AddUnique(H);
         }
         Candidates.Sort();
         for (double H : Candidates)
         {
             const FVector Trial = Clip(Box, FVector(Wanted.X, Wanted.Y, H), WorldBoxes);
-            if (Trial.Z + Epsilon < H) continue;
+            if (Trial.Z + SimulationEpsilon < H) continue;
             FVector Settled =
                 Trial + Clip(Box.ShiftBy(Trial), FVector(0, 0, FMath::Min(0., Wanted.Z) - Trial.Z), WorldBoxes);
-            if (Settled.SizeSquared2D() > Moved.SizeSquared2D() + Epsilon)
+            if (Settled.SizeSquared2D() > Moved.SizeSquared2D() + SimulationEpsilon)
             {
                 Moved = Settled;
                 break;
             }
         }
     }
-    bHorizontalCollision = FMath::Abs(Wanted.X - Moved.X) > Epsilon || FMath::Abs(Wanted.Y - Moved.Y) > Epsilon;
+    bHorizontalCollision =
+        FMath::Abs(Wanted.X - Moved.X) > SimulationEpsilon || FMath::Abs(Wanted.Y - Moved.Y) > SimulationEpsilon;
     // Vanilla ignores sufficiently shallow glancing collisions for stopping sprint.
-    if (bHorizontalCollision && Wanted.SizeSquared2D() > Epsilon && Moved.SizeSquared2D() > Epsilon)
+    if (bHorizontalCollision && Wanted.SizeSquared2D() > SimulationEpsilon && Moved.SizeSquared2D() > SimulationEpsilon)
     {
         const double Dot = FVector::DotProduct(Wanted.GetSafeNormal2D(), Moved.GetSafeNormal2D());
         if (Dot > FMath::Cos(FMath::DegreesToRadians(P.MinorCollisionAngleDegrees))) bHorizontalCollision = false;
     }
     // Flying, only moving down onto something counts (hovering at floor height doesn't), and it lands.
-    bGrounded = (Wanted.Z < 0 && FMath::Abs(Moved.Z - Wanted.Z) > Epsilon) ||
+    bGrounded = (Wanted.Z < 0 && FMath::Abs(Moved.Z - Wanted.Z) > SimulationEpsilon) ||
         (!bFlying && Wanted.Z <= 0 && Supported(Box.ShiftBy(Moved), .001, WorldBoxes));
     if (bGrounded) bFlying = false;
     for (int32 Axis = 0; Axis < 3; ++Axis)
-        if (FMath::Abs(Wanted[Axis] - Moved[Axis]) > Epsilon) VelocityPerTick[Axis] = 0;
+        if (FMath::Abs(Wanted[Axis] - Moved[Axis]) > SimulationEpsilon) VelocityPerTick[Axis] = 0;
     Feet += Moved;
     LastDisplacement = Moved;
     FallDistanceCm = bGrounded || bFlying ? 0 : FallDistanceCm + FMath::Max(0., -Moved.Z);

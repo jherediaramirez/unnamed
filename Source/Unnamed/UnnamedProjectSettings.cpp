@@ -131,3 +131,14 @@ FSoftObjectPath UUnnamedProjectSettings::GetSoundAssetPath(const FString& AssetN
     const FString Package = GetSoundAssetPackage(AssetName);
     return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
 }
+
+FString UUnnamedProjectSettings::GetPlayerBodyAssetPackage(const FString& AssetName)
+{
+    return Get().PlayerBodyRoot / AssetName;
+}
+
+FSoftObjectPath UUnnamedProjectSettings::GetPlayerBodyAssetPath(const FString& AssetName)
+{
+    const FString Package = GetPlayerBodyAssetPackage(AssetName);
+    return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
+}

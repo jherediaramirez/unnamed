@@ -177,7 +177,8 @@ void UFoundationHud::NoteVitals(const FFoundationVitals& Vitals)
 void UFoundationHud::DrawDebug(const AFoundationPawn& Pawn) const
 {
     const FFoundationSimulation& Simulation = Pawn.Simulation;
-    if (Pawn.GetPerspective())
+    // The hitbox outline stands in for the body in the third-person views (or shows with the collision boxes).
+    if (Pawn.GetPerspective() && (!Pawn.IsBodyShown() || bShowCollision))
     {
         const UFoundationProfile& Profile = *GetDefault<UFoundationProfile>();
         DrawDebugBox(GetWorld(), Simulation.Feet + FVector(0, 0, Simulation.HeightCm / 2),

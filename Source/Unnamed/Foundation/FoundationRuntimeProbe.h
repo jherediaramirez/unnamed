@@ -83,6 +83,8 @@ private:
     void AddPauseCases();
     // -FoundationSuite=swim: the swimming control pair in the Playground pool (FoundationSwimProbe.cpp).
     void AddSwimCases();
+    // -FoundationSuite=body: the player body and the spring arm preview, with shots (FoundationBodyProbe.cpp).
+    void AddBodyCases();
     // The pause menu's life in the world's foundation.Pause.Menu mode, in the all and pause suites
     // (FoundationPauseProbe.cpp).
     void AddPauseMenuCases();

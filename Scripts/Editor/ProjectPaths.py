@@ -71,3 +71,8 @@ def break_asset(asset_name):
 def sound_asset(asset_name):
     """Package of a sound asset under UUnnamedProjectSettings::SoundRoot, e.g. sound_asset("DA_Sounds")."""
     return _settings.get_sound_asset_package(asset_name)
+
+
+def player_body_asset(asset_name):
+    """Package of a player body asset under UUnnamedProjectSettings::PlayerBodyRoot, e.g. player_body_asset("BS_Idle")."""
+    return _settings.get_player_body_asset_package(asset_name)

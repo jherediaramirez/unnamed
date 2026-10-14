@@ -206,7 +206,9 @@ void UFoundationRuntimeProbe::BeginPlay()
     const bool bPause = Suite == TEXT("pause");
     // And the swimming control pair (FoundationSwimProbe.cpp).
     const bool bSwim = Suite == TEXT("swim");
-    if (!bMovement && !bInteraction && !bTour && !bViews && !bPause && !bSwim)
+    // And the player body in the third-person views, with the spring arm preview (FoundationBodyProbe.cpp).
+    const bool bBody = Suite == TEXT("body");
+    if (!bMovement && !bInteraction && !bTour && !bViews && !bPause && !bSwim && !bBody)
     {
         // A case, so the probe still finishes and reports the failure.
         AddCase(
@@ -215,7 +217,7 @@ void UFoundationRuntimeProbe::BeginPlay()
             {
                 Record(TEXT("known -FoundationSuite"), false,
                     FString::Printf(
-                        TEXT("'%s' is not movement, interaction, tour, views, pause, swim or all"), *Suite));
+                        TEXT("'%s' is not movement, interaction, tour, views, pause, swim, body or all"), *Suite));
             });
     }
     if (bMovement) AddMovementCases();
@@ -224,6 +226,7 @@ void UFoundationRuntimeProbe::BeginPlay()
     if (bViews) AddViewsCases();
     if (bPause) AddPauseCases();
     if (bSwim) AddSwimCases();
+    if (bBody) AddBodyCases();
     if (Suite == TEXT("all") || bPause) AddPauseMenuCases();
     if (FParse::Param(FCommandLine::Get(), TEXT("HudCaptures"))) AddHudCases();
     TotalStarted = Started = FPlatformTime::Seconds();

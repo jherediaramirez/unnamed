@@ -107,6 +107,15 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Sounds")
     FString SoundRoot = TEXT("/Game/Sounds");
 
+    // Package of a player body asset under PlayerBodyRoot, e.g. "SK_BetterSteve" or "BS_Walk_F". Written by
+    // Scripts/Editor/ImportBetterSteve.py from Art/Characters/BetterSteve (Docs/Foundation/Architecture.md).
+    UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
+    static FString GetPlayerBodyAssetPackage(const FString& AssetName);
+    static FSoftObjectPath GetPlayerBodyAssetPath(const FString& AssetName);
+
+    UPROPERTY(Config, EditAnywhere, Category = "Player Body")
+    FString PlayerBodyRoot = TEXT("/Game/Characters/BetterSteve");
+
     UPROPERTY(Config, EditAnywhere, Category = "Maps", meta = (AllowedClasses = "/Script/Engine.World"))
     FSoftObjectPath MenuMap;
 
