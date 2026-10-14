@@ -995,7 +995,7 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
         AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
         return false;
     }
-    TestEqual(TEXT("baked models (block_models.json's 4,852)"), Table->GetModelCount(), 4852);
+    TestEqual(TEXT("baked models (block_models.json's 4,867)"), Table->GetModelCount(), 4867);
     int32 Quads = 0, Wound = 0, Twins = 0, BadTwins = 0;
     for (int32 Model = 0; Model < Table->GetModelCount(); ++Model)
     {
@@ -1024,9 +1024,10 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
         }
         TestTrue(TEXT("mutation: a thin plane wound backwards is caught"), SameWay > 0);
     }
-    // 52,261 baked quads (block_models.json), less the 16 exact repeats the copy drops (flowerbed segments that list a
-    // plane twice), plus the 20 the torch's flame cut adds (4 sides in each of its 5 models; T3b).
-    TestEqual(TEXT("model quads"), Quads, 52265);
+    // 52,741 baked quads (block_models.json: 52,261 + the 16 bed item models' 30 each), less the 16 exact repeats the
+    // copy drops (flowerbed segments that list a plane twice), plus the 20 the torch's flame cut adds (4 sides in each
+    // of its 5 models; T3b).
+    TestEqual(TEXT("model quads"), Quads, 52745);
     TestEqual(TEXT("quads wound like the cube faces"), Wound, Quads);
     TestTrue(FString::Printf(TEXT("zero-thickness planes have both faces (%d pairs)"), Twins), Twins > 100);
     // The bars' side models (iron_bars and the four copper bars: models 3109-3110, 3119-3120, 3129-3130, 3139-3140,

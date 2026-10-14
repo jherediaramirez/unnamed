@@ -313,4 +313,35 @@ bool FFoundationFamiliesItemIdsTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("sapling items placing their block"), Saplings, 9);
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationFamiliesBedIconsTest, "Unnamed.Foundation.Blocks.Families.BedIcons", FamilyTestFlags)
+// The 16 bed items draw vanilla's composite bed item model (block_models.json's models 4851-4866, 30 quads each):
+// each bed's item icon is a baked model that has quads, so its slot is never blank.
+bool FFoundationFamiliesBedIconsTest::RunTest(const FString& Parameters)
+{
+    static const TCHAR* const Colors[] = {TEXT("white"), TEXT("orange"), TEXT("magenta"), TEXT("light_blue"),
+        TEXT("yellow"), TEXT("lime"), TEXT("pink"), TEXT("gray"), TEXT("light_gray"), TEXT("cyan"), TEXT("purple"),
+        TEXT("blue"), TEXT("brown"), TEXT("green"), TEXT("red"), TEXT("black")};
+    const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();
+    int32 Drawn = 0;
+    for (const TCHAR* Color : Colors)
+    {
+        const FName Id(FString::Printf(TEXT("%s_bed"), Color));
+        const FFoundationBlockType* Block = Registry->FindBlock(Id);
+        if (!Block || Block->Item != Id)
+        {
+            AddError(FString::Printf(TEXT("%s: no bed block with its item"), *Id.ToString()));
+            continue;
+        }
+        const int32 Model = Block->ItemIconModel;
+        const int32 Quads = Model >= 0 && Model < Registry->GetModelCount() ? Registry->GetModelQuads(Model).Num() : 0;
+        if (Quads > 0)
+            ++Drawn;
+        else
+            AddError(FString::Printf(TEXT("%s: item icon model %d has no quads"), *Id.ToString(), Model));
+    }
+    TestEqual(TEXT("bed items whose icon model has quads"), Drawn, 16);
+    return true;
+}
 #endif

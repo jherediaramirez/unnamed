@@ -782,8 +782,8 @@ bool FFoundationBlocksModelsTest::RunTest(const FString&)
 
     // Every model and quad.
     const TArray<TSharedPtr<FJsonValue>>& Models = ModelsJson->GetArrayField(TEXT("models"));
-    TestEqual(TEXT("reference models"), Models.Num(), 4852);
-    TestEqual(TEXT("registry models"), Registry.GetModelCount(), 4852);
+    TestEqual(TEXT("reference models (4,852 + 15 bed item models)"), Models.Num(), 4867);
+    TestEqual(TEXT("registry models"), Registry.GetModelCount(), 4867);
     TestEqual(TEXT("registry models equal the reference's"), Registry.GetModelCount(), Models.Num());
     int32 ReferenceQuads = 0, RegistryQuads = 0;
     for (int32 Model = 0; Model < Registry.GetModelCount(); ++Model)
@@ -825,8 +825,8 @@ bool FFoundationBlocksModelsTest::RunTest(const FString&)
             if (!bSame) Fail(FString::Printf(TEXT("model %d quad %d differs from the reference"), Model, Index));
         }
     }
-    TestEqual(TEXT("reference quads"), ReferenceQuads, 52261);
-    TestEqual(TEXT("registry quads"), RegistryQuads, 52261);
+    TestEqual(TEXT("reference quads (52,261 + 16 bed item models x 30)"), ReferenceQuads, 52741);
+    TestEqual(TEXT("registry quads"), RegistryQuads, 52741);
 
     // Every model state's parts and alternatives.
     int32 ModelStates = 0;
@@ -1023,13 +1023,13 @@ bool FFoundationBlocksModelMeshesTest::RunTest(const FString&)
         if (Vertex != LOD.GetNumVertices())
             Fail(FString::Printf(TEXT("model %d: %d vertices, %d expected"), Model, LOD.GetNumVertices(), Vertex));
     }
-    TestEqual(TEXT("baked quads (block_models.json's 52,261)"), Quads, 52261);
+    TestEqual(TEXT("baked quads (block_models.json's 52,741: 52,261 + the 16 bed item models' 30 each)"), Quads, 52741);
     TestEqual(TEXT("quads the torch's flame cut adds (4 sides in each of its 5 models)"), Cut, 20);
     TestEqual(TEXT("quads drawn (16 exact repeats dropped, as the voxel world drops them; 20 flame cuts added)"), Drawn,
-        52265);
+        52745);
     TestEqual(TEXT("triangles, two per drawn quad"), Triangles, 2 * Drawn);
     // The pitcher crop's top before stage 3 is empty in vanilla (no top texture until pitcher_crop_top_stage_3):
-    // block_models.json's model 4709 has no quads.
+    // block_models.json's model 4709 has no quads. The 16 bed item models (4851-4866) all have quads.
     TestEqual(TEXT("models without a mesh"), Empty, 1);
     // Only the firefly bush's emissive overlay lies on another quad (S6's Mesher.ModelData allows exactly its four).
     TestEqual(TEXT("overlay quads lifted off the quad beneath"), Lifted, 4);
