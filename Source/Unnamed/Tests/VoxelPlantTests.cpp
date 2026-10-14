@@ -200,6 +200,64 @@ bool FVoxelPlantSurvivalTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelPlantSaplingRuleTest, "Unnamed.Voxel.Plants.SaplingRule",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelPlantSaplingRuleTest::RunTest(const FString& Parameters)
+{
+    // Plan 2.8's control: with the nine saplings in the table, a tree's would_survive compiles to EOp::WouldSurvive,
+    // which asks the survival table (FVoxelPlantSurvival::Survives). Before, it compiled to InSet supports_vegetation
+    // on the block below. For every sapling state and every state of the table below it (air in the cell and around),
+    // both answers must agree, so the change moves no tree.
+    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+    if (!PlantTestHasBlocks(*this, *Table)) return true;
+    FVoxelFeatureGraph Graph;
+    FString Error;
+    if (!TestTrue(FString::Printf(TEXT("the decoration data reads (%s)"), *Error),
+            VoxelWorldgen::ReadFeatures(VoxelWorldgen::GetReferenceRoot(), Graph, Error)))
+        return false;
+    FVoxelBlockTags Tags(Graph, *Table);
+    FVoxelPlantSurvival Survival;
+    if (!TestTrue(
+            FString::Printf(TEXT("the survival table builds (%s)"), *Error), Survival.Initialize(*Table, Tags, &Error)))
+        return false;
+    const FVoxelBlockSet* Vegetation = Tags.Find(TEXT("minecraft:supports_vegetation"), &Error);
+    if (!TestNotNull(TEXT("supports_vegetation"), Vegetation)) return false;
+    const TCHAR* const Saplings[] = {TEXT("oak_sapling"), TEXT("spruce_sapling"), TEXT("birch_sapling"),
+        TEXT("jungle_sapling"), TEXT("acacia_sapling"), TEXT("cherry_sapling"), TEXT("dark_oak_sapling"),
+        TEXT("pale_oak_sapling"), TEXT("poplar_sapling")};
+    const int32 StateCount = Table->GetStateCount();
+    for (const TCHAR* Sapling : Saplings)
+    {
+        const int32 Block = Table->FindBlock(Sapling);
+        // A sapling the table lacks would still compile to the InSet fallback: the control needs all nine present.
+        if (!TestTrue(FString::Printf(TEXT("%s is in the block table"), Sapling), Block != INDEX_NONE)) continue;
+        int32 SaplingStates = 0, Checked = 0, Supported = 0, Differ = 0;
+        FString FirstDiffer;
+        for (int32 State = 1; State < StateCount; ++State)
+        {
+            if (Table->Get(uint16(State)).Block != Block) continue;
+            ++SaplingStates;
+            for (int32 Below = 0; Below < StateCount; ++Below)
+            {
+                const bool bOld = Vegetation->Contains(Table->Get(uint16(Below)).Block);
+                const bool bNew = Survival.Survives(uint16(State), 0, 0, 0,
+                    [Below](int32 X, int32 Y, int32 Z) -> uint16 { return X == 0 && Y == 0 && Z == -1 ? Below : 0; });
+                ++Checked;
+                Supported += bOld;
+                if (bOld != bNew && Differ++ == 0)
+                    FirstDiffer = FString::Printf(TEXT("state %d below: InSet %d, WouldSurvive %d"), Below, bOld, bNew);
+            }
+        }
+        TestTrue(FString::Printf(TEXT("%s has states"), Sapling), SaplingStates > 0);
+        TestTrue(FString::Printf(TEXT("%s: some states below support it"), Sapling), Supported > 0);
+        TestEqual(FString::Printf(TEXT("%s: WouldSurvive equals InSet supports_vegetation over %d pairs (%s)"), Sapling,
+                      Checked, *FirstDiffer),
+            Differ, 0);
+    }
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelPlantLiveHeightmapsTest, "Unnamed.Voxel.Plants.LiveHeightmaps",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

@@ -70,6 +70,18 @@ class Baker:
     def bake_variant(self, variant, tints=frozenset()):
         """One blockstate model reference (model, x, y, uvlock) as a baked model index. Face tintindex values outside
         tints (the block's registered tint indices) are dropped to -1: such faces render untinted."""
+        return self.register(*self.variant_quads(variant, tints))
+
+    def register(self, ao, quads):
+        """A baked model's index, equal models sharing one."""
+        key = json.dumps([ao, quads], sort_keys=True)
+        if key not in self.index:
+            self.index[key] = len(self.baked)
+            self.baked.append({"ao": ao, "quads": quads})
+        return self.index[key]
+
+    def variant_quads(self, variant, tints=frozenset()):
+        """(ambient occlusion, quads) of one blockstate model reference, not registered."""
         r = self.ref
         texture, elements, ao, _ = self.model_info(variant["model"])
         xr, yr, uvlock = variant.get("x", 0), variant.get("y", 0), variant.get("uvlock", False)
@@ -131,11 +143,7 @@ class Baker:
                     "shade": turn(override) if override else facing,
                     "light": element.get("light_emission", 0),
                 })
-        key = json.dumps([ao, quads], sort_keys=True)
-        if key not in self.index:
-            self.index[key] = len(self.baked)
-            self.baked.append({"ao": ao, "quads": quads})
-        return self.index[key]
+        return ao, quads
 
     def bake_state(self, blockstate, props, tints=frozenset()):
         """A state's parts: each a list of alternative baked models (one unless the blockstate lists several)."""
@@ -162,3 +170,25 @@ class Baker:
         gui = self.model_info(model)[3] or {}
         return index, {"rotation": gui.get("rotation", [0, 0, 0]), "translation": gui.get("translation", [0, 0, 0]),
                        "scale": gui.get("scale", [1, 1, 1])}
+
+    def bake_composite(self, parts, tints=frozenset()):
+        """A `minecraft:composite` item (the beds: head, and foot translated one block south) as one baked model: the
+        union of its sub-models' quads, each moved by its transformation's translation (in blocks; rotations and
+        scale are identity here), drawn at the one gui display transform its sub-models share."""
+        quads, aos, guis = [], set(), set()
+        for model, transformation in parts:
+            transformation = transformation or {}
+            assert transformation.get("left_rotation", [0, 0, 0, 1]) == [0, 0, 0, 1], transformation
+            assert transformation.get("right_rotation", [0, 0, 0, 1]) == [0, 0, 0, 1], transformation
+            assert transformation.get("scale", [1, 1, 1]) == [1, 1, 1], transformation
+            shift = transformation.get("translation", [0, 0, 0])
+            ao, sub = self.variant_quads({"model": model}, tints)
+            aos.add(ao)
+            guis.add(json.dumps(self.model_info(model)[3] or {}, sort_keys=True))
+            for quad in sub:
+                quads.append(dict(quad, v=[[round(c + s, 6) for c, s in zip(p, shift)] for p in quad["v"]]))
+        assert len(aos) == 1 and len(guis) == 1, (parts, aos, guis)
+        gui = json.loads(guis.pop())
+        return self.register(aos.pop(), quads), {
+            "rotation": gui.get("rotation", [0, 0, 0]), "translation": gui.get("translation", [0, 0, 0]),
+            "scale": gui.get("scale", [1, 1, 1])}

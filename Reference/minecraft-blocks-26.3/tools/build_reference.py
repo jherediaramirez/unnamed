@@ -846,7 +846,13 @@ def main():
                         "name": fact["item_name"], "max_stack": int(fact["item_max_stack"]),
                         "model": definition.get("model", "").removeprefix("minecraft:"), "gui_tint": tint,
                         "creative": creative.get(bid, [])}
-                if bid in model_ids:
+                if definition.get("type") == "minecraft:composite":  # the beds: head + foot, one icon of both
+                    assert bid in model_ids and tint is None and all(
+                        m["type"] == "minecraft:model" and not m.get("tints") for m in definition["models"]), bid
+                    index, gui = baker.bake_composite(
+                        [(m["model"].removeprefix("minecraft:"), m.get("transformation")) for m in definition["models"]])
+                    item["icon"] = {"model": index, "gui": gui}
+                elif bid in model_ids:
                     item["icon"] = item_icon(item["model"], tint)
                 items.append(item)
 

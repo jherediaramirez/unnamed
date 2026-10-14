@@ -102,10 +102,14 @@ check(sum(b["shape"] == "full_cube" for b in blocks) == 429 and sum(b["shape"] =
       "expected 429 cubes (powder snow among them), 101 slabs, 1 layered, 395 model blocks")
 models = json.loads((ROOT / "block_models.json").read_text(encoding="utf-8"))["models"]
 texture_names = {t["name"] for t in textures["textures"]}
-for model in models:
+# The beds' item icons (vanilla `minecraft:composite`: head, and foot one block south) reach z = 2.
+bed_icons = {i["icon"]["model"] for i in json.loads((ROOT / "items.json").read_text(encoding="utf-8"))["items"]
+             if i["id"].endswith("_bed")}
+for index, model in enumerate(models):
     for quad in model["quads"]:
         check(quad["t"] in texture_names and len(quad["v"]) == 4 and len(quad["uv"]) == 4 and
-              all(-.5 <= c <= 1.5 for p in quad["v"] for c in p), f"baked quad: {quad}")
+              all(-.5 <= c <= (2.5 if index in bed_icons and axis == 2 else 1.5)
+                  for p in quad["v"] for axis, c in enumerate(p)), f"baked quad: {quad}")
 state_count = 0
 for block in states["blocks"]:
     entry = report["minecraft:" + block["id"]]
@@ -285,6 +289,12 @@ for item in items:
                   name.removeprefix("block/") in texture_names, f"icon sprite: {item['id']} {name}")
     elif icon:
         check(0 <= icon["model"] < len(models), f"icon model: {item['id']}")
+# Each of the 16 bed icons is its own model: 30 quads, one block wide, two long (head north, foot south), 9/16 high.
+beds = [i for i in items if i["id"].endswith("_bed")]
+check(len(beds) == 16 and len({i["icon"]["model"] for i in beds}) == 16 and all(
+    len(models[i["icon"]["model"]]["quads"]) == 30 and
+    [[f(c[a] for q in models[i["icon"]["model"]]["quads"] for c in q["v"]) for f in (min, max)] for a in range(3)] ==
+    [[0, 1], [0, .5625], [0, 2]] for i in beds), "bed icons: 16 models of 30 quads spanning [0,1]x[0,9/16]x[0,2]")
 check(len(items) == 887 and sum("model" in i.get("icon", {}) for i in items) == 241 and
       sum("sprite" in i.get("icon", {}) for i in items) == 117, "expected 887 items, 241 3D icons, 117 sprite icons")
 # Items the item reference owns (build_reference.ITEMS_REFERENCE_ITEMS: the nine saplings) are not here: no item id is
