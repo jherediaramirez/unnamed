@@ -25,7 +25,7 @@ public:
 
     // Draws this frame's drops; Alpha is the fraction of a reference step since the last one.
     void Update(const FFoundationAuthority& Authority, const AFoundationPawn* Pawn, double Alpha, double DeltaTime);
-    // A PickedUp event (the view's HandleEvents).
+    // A PickedUp event (the view's HandleEvents): the pickup sound, and a whole stack's flight.
     void OnPickedUp(const FFoundationEvent& Event, const AFoundationPawn* Pawn);
     // Drops drawn this frame, and visuals flying to the player (probes).
     int32 GetDrawnCount() const { return Drawn; }

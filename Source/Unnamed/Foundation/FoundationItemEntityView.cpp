@@ -1,5 +1,6 @@
 #include "Foundation/FoundationItemEntityView.h"
 #include "Algo/Count.h"
+#include "Foundation/FoundationBreakEffects.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -83,7 +84,10 @@ void FFoundationItemEntityView::Update(
 
 void FFoundationItemEntityView::OnPickedUp(const FFoundationEvent& Event, const AFoundationPawn* Pawn)
 {
-    // The pickup sound (entity.item.pickup, volume 0.2, pitch 1.6 to 3.4) plays here once the sound reference has it.
+    // The pickup sound at the drop, every pickup (foundation.Sound.Events): vanilla's call-site volume 0.2 and
+    // pitch 1.6 to 3.4 (facts section 2; drawn uniformly here, provisional).
+    if (FFoundationBreakEffects* Effects = View.GetBreakEffects())
+        Effects->PlayEvent(TEXT("entity.item.pickup"), Event.LocationCm, .2f, FMath::FRandRange(1.6f, 3.4f));
     const int32* Found = ByEntity.Find(Event.EntityId);
     if (!Found || !Event.bWholeStack) return;
     FVisual& Visual = Visuals[*Found];

@@ -1084,8 +1084,9 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         });
     AddCase(
         TEXT("drop walk over"), 1.,
-        [this, Authority]
+        [this, Lab, Authority]
         {
+            if (FFoundationBreakEffects* Effects = Lab->GetView()->GetBreakEffects()) Effects->ClearSoundLog();
             const TArray<FFoundationItemEntity>& Drops = Authority().GetItemEntities();
             if (!Drops.IsEmpty())
             {
@@ -1094,7 +1095,7 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             }
             PressKey(EKeys::W, true);
         },
-        [this, Authority, CountItem]
+        [this, Lab, Authority, CountItem]
         {
             PressKey(EKeys::W, false);
             const FFoundationAuthority& A = Authority();
@@ -1107,6 +1108,17 @@ void UFoundationRuntimeProbe::AddInteractionCases()
                     Picked->Count == 1 && Picked->Item == Cobblestone && Picked->Player == Pawn->Interaction.PlayerId,
                 FString::Printf(TEXT("drops %d, cobblestone %d, picked up %d, feet %s"), A.GetItemEntities().Num(),
                     CountItem(Cobblestone), Picked ? Picked->Count : 0, *Pawn->Simulation.Feet.ToCompactString()));
+            // The pickup sound (foundation.Sound.Events 1, the default): logged at the drop with vanilla's call values.
+            const FFoundationBreakEffects* Effects = Lab->GetView()->GetBreakEffects();
+            const FoundationBreak::FSoundLogEntry* Sound = nullptr;
+            for (const FoundationBreak::FSoundLogEntry& Entry :
+                Effects ? Effects->GetSoundLog() : TConstArrayView<FoundationBreak::FSoundLogEntry>())
+                if (Entry.Event == TEXT("entity.item.pickup")) Sound = &Entry;
+            Record(TEXT("the pickup plays entity.item.pickup at the drop"),
+                Sound && Picked && Sound->Location.Equals(Picked->LocationCm, .01),
+                Sound ? FString::Printf(TEXT("%s volume %.3f pitch %.3f at %s"), *Sound->File.ToString(), Sound->Volume,
+                            Sound->Pitch, *Sound->Location.ToCompactString())
+                      : FString(TEXT("no pickup sound logged")));
         });
     Prepare(TEXT("drops capture"), true);
     AddCase(
