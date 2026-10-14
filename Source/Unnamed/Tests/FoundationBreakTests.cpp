@@ -794,4 +794,99 @@ bool FFoundationBreakCollisionTest::RunTest(const FString&)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBreakSupportTest, "Unnamed.Foundation.Break.Support", BreakTestFlags)
+
+bool FFoundationBreakSupportTest::RunTest(const FString&)
+{
+    using namespace FoundationBreak;
+    // Two stacked unit blocks at cells (0,0,0) and (0,0,1); the upper one can be broken.
+    bool bUpper = true;
+    const auto Solid = [&bUpper](const FVector& Point, TArray<FBox>& OutBoxes)
+    {
+        if (Point.X < 0 || Point.X >= 100 || Point.Y < 0 || Point.Y >= 100) return;
+        if (Point.Z >= 0 && Point.Z < 100) OutBoxes.Add(FBox(FVector(0), FVector(100)));
+        if (bUpper && Point.Z >= 100 && Point.Z < 200) OutBoxes.Add(FBox(FVector(0, 0, 100), FVector(100, 100, 200)));
+    };
+    constexpr double Dt = 1. / 60;
+    for (const bool bSupport : {false, true})
+    {
+        const FString Name = bSupport ? TEXT("support 1") : TEXT("support 0");
+        bUpper = true;
+        FParticleState Particle;
+        Particle.Location = FVector(50, 50, 250);
+        for (int32 Step = 0; Step < 120 && !Particle.bResting; ++Step)
+            StepParticle(Particle, Dt, true, Solid, bSupport);
+        TestTrue(
+            *(Name + TEXT(": rests on the upper block")), Particle.bResting && BreakNear(Particle.Location.Z, 200.01));
+        for (int32 Step = 0; Step < 10; ++Step)
+            StepParticle(Particle, Dt, true, Solid, bSupport);
+        TestTrue(*(Name + TEXT(": stays while the block stands")),
+            Particle.bResting && BreakNear(Particle.Location.Z, 200.01));
+
+        // The upper block is broken.
+        bUpper = false;
+        StepParticle(Particle, Dt, true, Solid, bSupport);
+        if (!bSupport)
+        {
+            TestTrue(
+                TEXT("support 0: hangs where it landed"), Particle.bResting && BreakNear(Particle.Location.Z, 200.01));
+            continue;
+        }
+        TestTrue(TEXT("support 1: falls the step its block goes"), !Particle.bResting && Particle.Location.Z < 200);
+        for (int32 Step = 0; Step < 120 && !Particle.bResting; ++Step)
+            StepParticle(Particle, Dt, true, Solid, bSupport);
+        TestTrue(TEXT("support 1: lands on the lower block"),
+            Particle.bResting && BreakNear(Particle.Location.Z, 100.01) && BreakNear(Particle.Location.X, 50));
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBreakLifeTest, "Unnamed.Foundation.Break.Life", BreakTestFlags)
+
+bool FFoundationBreakLifeTest::RunTest(const FString&)
+{
+    using namespace FoundationBreak;
+    // Every mode takes one draw: mode 0's lives and the draws after them are what they were before the modes.
+    FRandomStream Old(99), New(99);
+    for (int32 Index = 0; Index < 100; ++Index)
+        if (!BreakNear(ParticleLife(0, New), Old.FRandRange(1.5, 2.3)))
+            return TestTrue(TEXT("mode 0 is the old draw"), false);
+    for (const int32 Mode : {1, 2})
+    {
+        FRandomStream Drawn(3), OneDraw(3);
+        ParticleLife(Mode, Drawn);
+        OneDraw.FRand();
+        TestTrue(
+            *FString::Printf(TEXT("mode %d takes one draw"), Mode), Drawn.GetCurrentSeed() == OneDraw.GetCurrentSeed());
+        FRandomStream Random(42);
+        constexpr int32 Draws = 60000;
+        int32 Outside = 0, Past08 = 0, Past05 = 0;
+        for (int32 Index = 0; Index < Draws; ++Index)
+        {
+            const double Life = ParticleLife(Mode, Random);
+            Outside += Life < .2 || Life > 2. + 1e-9;
+            Past08 += Life > .8;
+            Past05 += Life > .5;
+        }
+        const FString Name = FString::Printf(TEXT("mode %d"), Mode);
+        BreakCheckInt(*this, *(Name + TEXT(" lives outside 0.2-2.0 s")), Outside, 0);
+        // P(life > 0.8 s) = 1/6, P(life > 0.5 s) = 1/3.
+        TestTrue(*(Name + TEXT(" 1 in 6 past 0.8 s")), FMath::Abs(Past08 / double(Draws) - 1. / 6) < .01);
+        TestTrue(*(Name + TEXT(" 1 in 3 past 0.5 s")), FMath::Abs(Past05 / double(Draws) - 1. / 3) < .01);
+    }
+    BreakCheckNear(*this, TEXT("shrink, early"), LifeScale(1, .5, 1), 1);
+    BreakCheckNear(*this, TEXT("shrink, at the last 0.1 s"), LifeScale(1, .9, 1), 1);
+    BreakCheckNear(*this, TEXT("shrink, halfway"), LifeScale(1, .95, 1), .5);
+    BreakCheckNear(*this, TEXT("shrink, at the end"), LifeScale(1, 1, 1), 0);
+    BreakCheckNear(*this, TEXT("mode 0 pops"), LifeScale(0, .99, 1), 1);
+    BreakCheckNear(*this, TEXT("mode 2 pops"), LifeScale(2, .99, 1), 1);
+    FRandomStream Random(5);
+    TArray<FParticleSpawn> Spawns;
+    SpawnBreakParticles(FBox(FVector(0), FVector(100)), 1, FVector::ZeroVector, Random, Spawns, 1);
+    TestTrue(TEXT("break particles take the mode"),
+        !Spawns.ContainsByPredicate([](const FParticleSpawn& Spawn) { return Spawn.Life < .2 || Spawn.Life > 2; }) &&
+            Spawns.ContainsByPredicate([](const FParticleSpawn& Spawn) { return Spawn.Life < 1.5; }));
+    return true;
+}
+
 #endif

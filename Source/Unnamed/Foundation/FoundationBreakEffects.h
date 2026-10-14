@@ -40,6 +40,10 @@ namespace FoundationBreak
         int32 Particles = 0;
         bool bParticleCollision = false;
         bool bParticleSpray = false;
+        // A resting particle falls again when its support turns to air. Particles 1 only, so not in AnyOn.
+        bool bParticleSupport = false;
+        // The particles' life (ParticleLife below). Particles 1 only, so not in AnyOn.
+        int32 ParticleLife = 0;
         // 0 silent, 1 vanilla, 2 vanilla with hit pitch variety and at most two hit voices.
         int32 Sounds = 0;
         // 0 the view's swing, 1 a 6-tick swing with hits every 4 steps, 2 hits on each swing's contact tick.
@@ -160,17 +164,28 @@ namespace FoundationBreak
     // The per-axis velocity spread, 0.3 blocks/s, so the particles do not land in the spawn grid (Jesus, 2026-10-10;
     // the first spec had 0.1).
     constexpr double JitterCm = 30;
+    // A particle's life (foundation.Break.ParticleLife), one draw of Random in every mode. 0: 1.5-2.3 s uniform (until
+    // 2026-10-13). 1 and 2: 0.2 s / (0.1 + 0.9u), so 0.2-2.0 s, median 0.36 s, 1 in 6 past 0.8 s: a fit to VP1's
+    // black-box counts (9 fragments left at 0.8 s at All, the last gone at about 2 s), unverified, since VP1 could not
+    // measure the spawn count or single lives.
+    double ParticleLife(int32 LifeMode, FRandomStream& Random);
+    // The quad's scale at Age: life 1 shrinks it to 0 over the last ShrinkSeconds; 0 and 2 pop out at full size, as
+    // vanilla.
+    constexpr double ShrinkSeconds = .1;
+    double LifeScale(int32 LifeMode, double Age, double Life);
     // A 4 x 4 x 4 grid inside Box, BreakParticlesPerBox(Amount) of its points picked at random: velocity
-    // (point - centre) x 1.5 + uniform +-JitterCm, plus 1 up (blocks/s), plus Push (cm/s); life 1.5-2.3 s.
-    void SpawnBreakParticles(
-        const FBox& Box, double Amount, const FVector& Push, FRandomStream& Random, TArray<FParticleSpawn>& Out);
+    // (point - centre) x 1.5 + uniform +-JitterCm, plus 1 up (blocks/s), plus Push (cm/s); ParticleLife(LifeMode).
+    void SpawnBreakParticles(const FBox& Box, double Amount, const FVector& Push, FRandomStream& Random,
+        TArray<FParticleSpawn>& Out, int32 LifeMode = 0);
     // A hit chip at the hit point: 0.4 blocks/s out of the face (0.6 with spray), then gravity.
-    FParticleSpawn SpawnHitChip(const FVector& Point, const FVector& Normal, bool bSpray, FRandomStream& Random);
+    FParticleSpawn SpawnHitChip(
+        const FVector& Point, const FVector& Normal, bool bSpray, FRandomStream& Random, int32 LifeMode = 0);
     // P4's push for a break: 1.5 blocks/s along the mined face's normal (none for a pop) and 0.5 away from the camera.
     FVector SprayPush(const FVector& FaceNormal, const FVector& AwayFromCamera);
 
     // One particle's flight for DeltaTime: gravity, and with collision it lands on a solid box and lies there.
-    // Solid returns the collision boxes (world centimetres) of the cell holding a point.
+    // Solid returns the collision boxes (world centimetres) of the cell holding a point. With bSupport a resting
+    // particle checks the point just under it every step and falls again once no box holds it (its block was broken).
     struct FParticleState
     {
         FVector Location = FVector::ZeroVector;
@@ -178,7 +193,7 @@ namespace FoundationBreak
         bool bResting = false;
     };
     void StepParticle(FParticleState& Particle, double DeltaTime, bool bCollision,
-        TFunctionRef<void(const FVector& Point, TArray<FBox>& OutBoxes)> Solid);
+        TFunctionRef<void(const FVector& Point, TArray<FBox>& OutBoxes)> Solid, bool bSupport = false);
 
     // What a sound would play, for tests and probes (the probes run with -nosound).
     struct FSoundLogEntry
@@ -238,6 +253,8 @@ public:
     TConstArrayView<FoundationBreak::FSoundLogEntry> GetSoundLog() const { return SoundLog; }
     void ClearSoundLog() { SoundLog.Reset(); }
     int32 GetLiveParticleCount() const;
+    // Live particles inside Box (the probe's count of the ones left on a broken block's top face).
+    int32 CountLiveParticles(const FBox& Box) const;
     bool IsCrackVisible() const { return bCrackVisible; }
     bool IsOutlineVisible() const { return bOutlineVisible; }
     bool IsPopVisible() const;

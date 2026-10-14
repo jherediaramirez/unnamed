@@ -50,6 +50,10 @@ namespace
         TourSounds,
         TourSwing,
         TourPop,
+        // The pack's configurations keep both at 0 (their frames as before 2026-10-13); -FoundationTourBreakFall sets
+        // them.
+        TourSupport,
+        TourLife,
         // Not a break switch: the destination preview, so the pack's shots and its restore line say which it shows.
         TourPlacePreview,
         // Nor this: place sounds stay off in the pack's configurations, so its sound log holds breaks and hits only.
@@ -60,6 +64,7 @@ namespace
         TEXT("foundation.Break.Cracks"), TEXT("foundation.Break.CrackSmooth"), TEXT("foundation.Break.Particles"),
         TEXT("foundation.Break.ParticleCollision"), TEXT("foundation.Break.ParticleSpray"),
         TEXT("foundation.Break.Sounds"), TEXT("foundation.Break.Swing"), TEXT("foundation.Break.Pop"),
+        TEXT("foundation.Break.ParticleSupport"), TEXT("foundation.Break.ParticleLife"),
         TEXT("foundation.Place.Preview"), TEXT("foundation.Place.Sound")};
 
     // One configuration: the switches and the menu's "particles" pref (empty keeps the run's own).
@@ -511,6 +516,170 @@ void UFoundationRuntimeProbe::AddTourCases()
             Script(TEXT("tour break setup"), 30, MoveTemp(Steps), Cleanup);
         }
 
+        // The last case: restore every cvar and pref the pack changed, the time and the tick order.
+        auto Restore = [this, Lab, Run, SetPrefs, Script, Do, Cleanup](int32 ExpectedShots, FString Expected)
+        {
+            Script(TEXT("tour break restore"), 10,
+                {Do(
+                    [this, Lab, Run, SetPrefs, ExpectedShots, Expected]
+                    {
+                        PressKey(EKeys::LeftMouseButton, false);
+                        for (int32 Switch = 0; Switch < TourSwitchCount; ++Switch)
+                            SetTourCVar(TourBreakSwitches[Switch], Run->SavedSwitches[Switch]);
+                        SetTourCVar(TEXT("r.AntiAliasingMethod"), Run->SavedAntiAliasing);
+                        SetTourCVar(TEXT("r.ScreenPercentage"), Run->SavedScreenPercentage);
+                        SetPrefs(Run->SavedParticles, Run->bSavedHighContrast);
+                        AWorldSettings* Settings = GetWorld()->GetWorldSettings();
+                        Settings->SetTimeDilation(Run->SavedDilation);
+                        Settings->MinGlobalTimeDilation = Run->SavedMinDilation;
+                        if (Lab->GetView()) RemoveTickPrerequisiteComponent(Lab->GetView());
+                        Controller->GetHud()->bHideHud = Run->bSavedHideHud;
+                        Controller->GetHud()->bOverlay = Run->bSavedOverlay;
+                        Controller->GetHud()->bShowCollision = Run->bSavedShowCollision;
+                        Record(TEXT("break cvar names found"), TourCVarMisses.IsEmpty(),
+                            FString::Printf(TEXT("unknown console variables: %s"),
+                                TourCVarMisses.IsEmpty() ? TEXT("none") : *FString::Join(TourCVarMisses, TEXT(", "))));
+                        bool bRestored = GetTourCVar(TEXT("r.AntiAliasingMethod")) == Run->SavedAntiAliasing &&
+                            GetTourCVar(TEXT("r.ScreenPercentage")) == Run->SavedScreenPercentage &&
+                            Settings->TimeDilation == Run->SavedDilation &&
+                            Settings->MinGlobalTimeDilation == Run->SavedMinDilation;
+                        for (int32 Switch = 0; Switch < TourSwitchCount; ++Switch)
+                            bRestored &= GetTourCVar(TourBreakSwitches[Switch]) == Run->SavedSwitches[Switch];
+                        Record(TEXT("break cvars and prefs restored"), bRestored,
+                            FString::Printf(
+                                TEXT("foundation.Break.* %s, r.AntiAliasingMethod %s, r.ScreenPercentage %s, "
+                                     "time dilation %.2f, particles %s, high contrast %s"),
+                                *FString::Join(TArrayView<const FString>(Run->SavedSwitches), TEXT("/")),
+                                *Run->SavedAntiAliasing, *Run->SavedScreenPercentage, Run->SavedDilation,
+                                *Run->SavedParticles, Run->bSavedHighContrast ? TEXT("on") : TEXT("off")));
+                        Record(TEXT("break prefs applied"), Run->PrefFailures == 0,
+                            FString::Printf(TEXT("%d pref changes did not read back"), Run->PrefFailures));
+                        Record(TEXT("break blocks re-placed"), Run->PlaceFailures == 0,
+                            FString::Printf(TEXT("%d placements failed"), Run->PlaceFailures));
+                        Record(TEXT("break shots taken"), Run->Shots.Num() == ExpectedShots,
+                            FString::Printf(
+                                TEXT("%d shots (expected %d: %s)"), Run->Shots.Num(), ExpectedShots, *Expected));
+                        if (!Extra) Extra = MakeShared<FJsonObject>();
+                        Extra->SetArrayField(TEXT("break_shots"), Run->Shots);
+                    })},
+                Cleanup);
+        };
+
+        // -FoundationTourBreakFall: only the fall frames (Docs/Breaking.md). Two dirt blocks stacked east of the row;
+        // the player mines the upper one and, holding on, the one under it as soon as the upper one goes (Jesus's
+        // case, 2026-10-13). Frozen shots at +50, +150, +300 and +600 ms after the second break, particles All, for
+        // "old" (support 0, life 0: what lay on the lower block hangs), "support" (1, 0) and "new" (1, 1).
+        // <report>-tour-brk-fall-<config>-<age>ms-<aa|noaa>.png.
+        if (FParse::Param(FCommandLine::Get(), TEXT("FoundationTourBreakFall")))
+        {
+            const FIntVector Lower(12 + 8 * 8, -30, 0), Upper = Lower + FIntVector(0, 0, 1);
+            const int32 FallAges[] = {50, 150, 300, 600};
+            // The particles on the lower block's top face: within 1 cm of it, over its footprint.
+            auto OnTop = [Effects, Authority, Lower]
+            {
+                const FBox Cell = FoundationGrid::CellBox(Lower, Authority().World.OriginCm);
+                const FBox Top(
+                    FVector(Cell.Min.X, Cell.Min.Y, Cell.Max.Z - 1), FVector(Cell.Max.X, Cell.Max.Y, Cell.Max.Z + 1));
+                return Effects() ? Effects()->CountLiveParticles(Top) : -1;
+            };
+            auto Aim = [this, Authority](const FIntVector& Cell)
+            {
+                const FVector Target = FoundationGrid::CellBox(Cell, Authority().World.OriginCm).GetCenter();
+                Controller->SetControlRotation((Target - Pawn->GetEyePosition()).Rotation());
+            };
+            struct FFall
+            {
+                const TCHAR* Name;
+                int32 Support, Life;
+            };
+            for (const FFall& Fall : {FFall{TEXT("old"), 0, 0}, FFall{TEXT("support"), 1, 0}, FFall{TEXT("new"), 1, 1}})
+            {
+                FTourBreakConfig Config = ConfigC;
+                Config.Name = Fall.Name;
+                Config.Switch[TourSupport] = Fall.Support;
+                Config.Switch[TourLife] = Fall.Life;
+                const FString Name = Fall.Name;
+                TSharedRef<TArray<int32>> Counts = MakeShared<TArray<int32>>();
+                TArray<FStep> Steps;
+                Steps.Add(Do(
+                    [this, Run, Apply, Place, HasBlock, Click, Aim, Config, Lower, Upper]
+                    {
+                        Apply(Config);
+                        if (!HasBlock(Lower, TEXT("dirt"))) Place(Lower, TEXT("dirt"));
+                        if (!HasBlock(Upper, TEXT("dirt"))) Place(Upper, TEXT("dirt"));
+                        Run->PlaceFailures += HasBlock(Lower, TEXT("dirt")) && HasBlock(Upper, TEXT("dirt")) ? 0 : 1;
+                        ResetPlayer(FVector(Lower.X * 100 + 50, Lower.Y * 100 + 50 + 250, 0));
+                        Click(EKeys::Four);
+                        Aim(Upper);
+                        Run->Notes.Reset();
+                        Run->BreakTime = 0;
+                        Run->Live = 0;
+                    }));
+                // The last configuration's particles and pop are gone.
+                Steps.Add(WaitSeconds(1.5));
+                Steps.Add([Live, PopVisible] { return Live() <= 0 && !PopVisible(); });
+                Steps.Add(Wait(30));
+                Steps.Add(Do([this] { PressKey(EKeys::LeftMouseButton, true); }));
+                Steps.Add(
+                    [this, Run, Authority, Aim, Upper, Lower]
+                    {
+                        if (!Authority().World.Get(Upper).State.IsAir()) return false;
+                        Run->Boundary = GetWorld()->GetTimeSeconds();
+                        Aim(Lower);
+                        return true;
+                    });
+                Steps.Add(
+                    [this, Run, Authority, Live, OnTop, Counts, Lower]
+                    {
+                        // The frame before the break counts what lies on the top face (in the break frame the
+                        // particles have already moved).
+                        if (!Authority().World.Get(Lower).State.IsAir())
+                        {
+                            Run->Live = OnTop();
+                            return false;
+                        }
+                        Run->BreakTime = GetWorld()->GetTimeSeconds();
+                        Run->BreakDelta = GetWorld()->GetDeltaSeconds();
+                        PressKey(EKeys::LeftMouseButton, false);
+                        Counts->Add(Run->Live);
+                        Run->Notes.Add(FString::Printf(TEXT("second break %.0f ms after the first: %d live, %d on its "
+                                                            "top face the frame before"),
+                            (Run->BreakTime - Run->Boundary) * 1000, Live(), (*Counts)[0]));
+                        return true;
+                    });
+                for (const int32 Age : FallAges)
+                {
+                    Steps.Add(
+                        [this, Run, Steer, Live, OnTop, Counts, Age]
+                        {
+                            // The effects were born at the start of the break frame.
+                            if (!Steer(Run->BreakTime - Run->BreakDelta + Age / 1000.)) return false;
+                            Counts->Add(OnTop());
+                            Run->Notes.Add(FString::Printf(
+                                TEXT("+%d ms: %d live, %d on the gone block's top face"), Age, Live(), Counts->Last()));
+                            return true;
+                        });
+                    AddShots(Steps, FString::Printf(TEXT("brk-fall-%s-%03dms"), *Name, Age), {FSetting{}});
+                    Steps.Add(Do([Freeze] { Freeze(false); }));
+                }
+                Steps.Add(Do(
+                    [this, Run, Counts, Name, Fall]
+                    {
+                        // Counts: at the break, then at each age. Old: what lay there still hangs at +300 ms. Support
+                        // and new: nothing is left on the gone block's top face from +150 ms.
+                        const bool bOk = Counts->Num() == 5 &&
+                            (Fall.Support == 0 ? (*Counts)[0] > 0 && (*Counts)[3] > 0
+                                               : (Fall.Life != 0 || (*Counts)[0] > 0) && (*Counts)[2] == 0 &&
+                                        (*Counts)[3] == 0 && (*Counts)[4] == 0);
+                        Record(TEXT("break fall: ") + Name, bOk, FString::Join(Run->Notes, TEXT("; ")));
+                        Run->BreakTime = 0;
+                    }));
+                Script(TEXT("tour break fall ") + Name, 60, MoveTemp(Steps), Cleanup);
+            }
+            Restore(24, TEXT("fall: 3 configurations x 4 ages x 2 passes"));
+            return;
+        }
+
         // Mining frames, and the outline frames for stone and the slab at 0.35 (with Cracks 2).
         const double Points[] = {.05, .35, .65, .95};
         const TCHAR* const PointNames[] = {TEXT("p05"), TEXT("p35"), TEXT("p65"), TEXT("p95")};
@@ -958,50 +1127,7 @@ void UFoundationRuntimeProbe::AddTourCases()
             Script(TEXT("tour break cost"), 60, MoveTemp(Steps), Cleanup);
         }
 
-        // Restore every cvar and pref the pack changed, the time and the tick order.
-        Script(TEXT("tour break restore"), 10,
-            {Do(
-                [this, Lab, Run, SetPrefs]
-                {
-                    PressKey(EKeys::LeftMouseButton, false);
-                    for (int32 Switch = 0; Switch < TourSwitchCount; ++Switch)
-                        SetTourCVar(TourBreakSwitches[Switch], Run->SavedSwitches[Switch]);
-                    SetTourCVar(TEXT("r.AntiAliasingMethod"), Run->SavedAntiAliasing);
-                    SetTourCVar(TEXT("r.ScreenPercentage"), Run->SavedScreenPercentage);
-                    SetPrefs(Run->SavedParticles, Run->bSavedHighContrast);
-                    AWorldSettings* Settings = GetWorld()->GetWorldSettings();
-                    Settings->SetTimeDilation(Run->SavedDilation);
-                    Settings->MinGlobalTimeDilation = Run->SavedMinDilation;
-                    if (Lab->GetView()) RemoveTickPrerequisiteComponent(Lab->GetView());
-                    Controller->GetHud()->bHideHud = Run->bSavedHideHud;
-                    Controller->GetHud()->bOverlay = Run->bSavedOverlay;
-                    Controller->GetHud()->bShowCollision = Run->bSavedShowCollision;
-                    Record(TEXT("break cvar names found"), TourCVarMisses.IsEmpty(),
-                        FString::Printf(TEXT("unknown console variables: %s"),
-                            TourCVarMisses.IsEmpty() ? TEXT("none") : *FString::Join(TourCVarMisses, TEXT(", "))));
-                    bool bRestored = GetTourCVar(TEXT("r.AntiAliasingMethod")) == Run->SavedAntiAliasing &&
-                        GetTourCVar(TEXT("r.ScreenPercentage")) == Run->SavedScreenPercentage &&
-                        Settings->TimeDilation == Run->SavedDilation &&
-                        Settings->MinGlobalTimeDilation == Run->SavedMinDilation;
-                    for (int32 Switch = 0; Switch < TourSwitchCount; ++Switch)
-                        bRestored &= GetTourCVar(TourBreakSwitches[Switch]) == Run->SavedSwitches[Switch];
-                    Record(TEXT("break cvars and prefs restored"), bRestored,
-                        FString::Printf(TEXT("foundation.Break.* %s, r.AntiAliasingMethod %s, r.ScreenPercentage %s, "
-                                             "time dilation %.2f, particles %s, high contrast %s"),
-                            *FString::Join(TArrayView<const FString>(Run->SavedSwitches), TEXT("/")),
-                            *Run->SavedAntiAliasing, *Run->SavedScreenPercentage, Run->SavedDilation,
-                            *Run->SavedParticles, Run->bSavedHighContrast ? TEXT("on") : TEXT("off")));
-                    Record(TEXT("break prefs applied"), Run->PrefFailures == 0,
-                        FString::Printf(TEXT("%d pref changes did not read back"), Run->PrefFailures));
-                    Record(TEXT("break blocks re-placed"), Run->PlaceFailures == 0,
-                        FString::Printf(TEXT("%d placements failed"), Run->PlaceFailures));
-                    Record(TEXT("break shots taken"), Run->Shots.Num() == 340,
-                        FString::Printf(
-                            TEXT("%d shots (expected 340: mining 224, outline 20, break 96)"), Run->Shots.Num()));
-                    if (!Extra) Extra = MakeShared<FJsonObject>();
-                    Extra->SetArrayField(TEXT("break_shots"), Run->Shots);
-                })},
-            Cleanup);
+        Restore(340, TEXT("mining 224, outline 20, break 96"));
         return;
     }
 
