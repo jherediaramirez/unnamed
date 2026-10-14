@@ -33,7 +33,13 @@ enum class EFoundationCommandType : uint8
     // outside the window), Button and ClickType, run by FFoundationContainerMenu with the player's cursor stack.
     ContainerClick,
     // The container screen closes: the cursor stack goes back into the inventory.
-    ContainerClose
+    ContainerClose,
+    // Hold-to-use (step 10, eating; foundation.Items.Use): start using the hand's consumable, advance it one reference
+    // step, or let go. A release, a slot or hand change, death or a step without a continue cancels it; nothing is
+    // consumed until it finishes.
+    UseItemStart,
+    UseItemContinue,
+    UseItemRelease
 };
 
 // Pass lets the caller continue (next hand); Committed changed authoritative state; Rejected changed
@@ -85,6 +91,10 @@ enum class EFoundationReason : uint8
     CreativeCannotBreak,
     // A creative write's damage outside 0 to the item's max damage (0 for an item that never wears).
     InvalidDamage,
+    // Eating at full hunger (wiki "Food"); invulnerable modes may always eat.
+    NotHungry,
+    // A continue or release without an item use in progress.
+    NotUsing,
     Count
 };
 
@@ -148,6 +158,9 @@ struct FFoundationResult
     bool bKnockback = false, bSprintKnockback = false, bSweep = false;
     int32 SweptTargets = 0;
     bool bItemConsumed = false, bItemReturned = false, bToolWorn = false, bToolBroke = false;
+    // Item use (step 10): the reference steps used so far and the item's total; bAte when this result finished eating.
+    int32 UseTicks = 0, UseDuration = 0;
+    bool bAte = false;
     // What a survival break returned to the inventory (items S5b): one entry per stack rolled.
     TArray<FFoundationLootDrop> Drops;
     FName Interaction;
@@ -200,6 +213,9 @@ struct FFoundationLabOptions
     int32 FiniteBlockCount = 64;
     // The placement timing preset players adopt (input pacing only; validation never reads it).
     FName PlacementPreset;
+    // Hold-to-use items (step 10, eating): food starts, continues and finishes through the UseItem commands. Off, they
+    // pass, as before. The pawn copies foundation.Items.Use in before each step; tests set it themselves.
+    bool bItemUse = false;
     // The creative inventory may write any item into the hotbar and offhand (the Playground's block picker).
     bool bCreativeInventory = true;
     // Plant rules (phase 6, S7): double plants as one unit, and pops after an edit. Off only for A/B runs.
@@ -288,7 +304,11 @@ enum class EFoundationEventKind : uint8
     // A plant (or another model block) lost its support after an edit and was removed (FoundationPlantRules).
     Popped,
     // A player picked up (part of) an item entity (items S8a): Item, Count, LocationCm, bWholeStack.
-    PickedUp
+    PickedUp,
+    // Item use (step 10): Eating on the steps that make the eating sound and particles (Item, LocationCm at the eye);
+    // Ate when it finished (Item, Amount = the nutrition).
+    Eating,
+    Ate
 };
 
 // A committed (or rejected) outcome for presentation: effects fire once from these.
@@ -314,6 +334,28 @@ struct FFoundationEvent
     bool bWholeStack = false;
 };
 
+// A hold-to-use in progress: which hand and stack (by instance, so its count may change), how far.
+struct FFoundationItemUse
+{
+    bool bActive = false;
+    EFoundationHand Hand = EFoundationHand::Main;
+    int32 InstanceId = 0;
+    int32 Item = INDEX_NONE;
+    int32 Ticks = 0, Duration = 0;
+    int64 LastStep = -1;
+};
+
+namespace FoundationItemUse
+{
+    // foundation.Items.Use: 1 food is eaten by holding use (step 10); 0 it passes, as before. Steps 14 and 17 (axe
+    // stripping, buckets) hang off the same switch.
+    UNNAMED_API bool IsOn();
+    // The eating sound and particles fire on these steps (Ticks of a use): every 4th from the 8th. The project's own,
+    // provisional until a vanilla capture.
+    constexpr int32 EffectsFirstTick = 8, EffectsEveryTicks = 4;
+    UNNAMED_API bool IsEffectTick(int32 Ticks);
+}
+
 struct FFoundationPlayer
 {
     int32 Id = 0;
@@ -321,6 +363,7 @@ struct FFoundationPlayer
     bool bHasFacts = false;
     FFoundationInventory Inventory;
     FFoundationMining Mining;
+    FFoundationItemUse Use;
     int64 LastPlacementStep = MIN_int64;
     // Results by sequence for retransmissions; bounded, oldest evicted first.
     TMap<uint32, FFoundationResult> Results;
@@ -400,7 +443,7 @@ public:
 
     // Diagnostics.
     int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
-    int32 ItemsSpawned = 0, ItemsPickedUp = 0;
+    int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsEaten = 0;
 
 private:
     FFoundationInventory MakeLoadout();
@@ -423,6 +466,12 @@ private:
         FFoundationResult& Result);
     void Whiff(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationVitals& Vitals,
         FFoundationResult& Result);
+    void UseItemStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
+        FFoundationResult& Result);
+    void UseItemContinue(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationVitals& Vitals,
+        FFoundationResult& Result);
+    // Ends a use in progress (nothing consumed); true when one was active.
+    bool CancelUse(FFoundationPlayer& Player);
     // Removes a block once: capacity first (unless the loot drops into the world), then removal, return and wear
     // together. A creative break returns nothing and wears nothing.
     bool BreakBlock(

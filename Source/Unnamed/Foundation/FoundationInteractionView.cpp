@@ -637,6 +637,21 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
         case EFoundationEventKind::PickedUp:
             if (ItemEntityView) ItemEntityView->OnPickedUp(Event, GetLocalPawn());
             break;
+        case EFoundationEventKind::Eating:
+        case EFoundationEventKind::Ate:
+            // Eating (step 10): entity.generic.eat at volume 0.5-1.0 and pitch 0.8-1.2, every effect step and once more
+            // at the end, then entity.player.burp at 0.5 and 0.9-1.0 (the burp at the end: wiki "Food"; the volumes and
+            // pitches are provisional, unverified, to check against the wiki's Sounds.json table). No crumbs yet: the
+            // break particles draw block textures only (known issue).
+            if (BreakEffects)
+            {
+                BreakEffects->PlayEvent(TEXT("entity.generic.eat"), Event.LocationCm, .5f + .5f * FMath::FRand(),
+                    (FMath::FRand() - FMath::FRand()) * .2f + 1.f);
+                if (Event.Kind == EFoundationEventKind::Ate)
+                    BreakEffects->PlayEvent(
+                        TEXT("entity.player.burp"), Event.LocationCm, .5f, FMath::FRand() * .1f + .9f);
+            }
+            break;
         case EFoundationEventKind::ToolBroke:
             if (const AFoundationPawn* Pawn = GetLocalPawn())
                 Burst(Pawn->GetEyePosition() + Pawn->GetControlRotation().Vector() * 60, FLinearColor(.7f, .7f, .72f),
@@ -984,6 +999,13 @@ void UFoundationInteractionView::UpdateHeldItem(
                                     : 0.;
     // foundation.Break.Swing: the swing clock's 6-tick swings instead, in today's pose.
     if (BreakEffects) BreakEffects->GetSwing(Swing);
+    // Eating (step 10): the main-hand item eases toward the mouth in 0.1 s and bobs once per effect step (4 ticks).
+    // The project's own motion, provisional until a vanilla capture; it replaces the swing while it shows.
+    const bool bEating = Pawn->Interaction.bUsingItem && Pawn->Interaction.UseHand == EFoundationHand::Main;
+    EatBlend = FMath::Clamp(EatBlend + (bEating ? DeltaTime : -DeltaTime) / .1, 0., 1.);
+    EatAge = bEating ? EatAge + DeltaTime : 0;
+    const double Bob = FMath::Abs(FMath::Sin(EatAge / .2 * PI));
+    Swing *= 1 - EatBlend;
     // foundation.Hand.Fit: the rest pose, the pivot's scale and the held block's display.
     const int32 HandFit = FoundationHand::IsFitOn() ? 1 : 0;
     if (HandFit != AppliedHandFit)
@@ -994,9 +1016,9 @@ void UFoundationInteractionView::UpdateHeldItem(
             Held->SetRelativeTransform(HandFit ? FoundationHand::MakeHeldBlockDisplay()
                                                : FTransform(FRotator(10, 35, 0), FVector::ZeroVector, FVector(.11)));
     }
-    HandPivot->SetRelativeLocationAndRotation(
-        (HandFit ? HandFitPivot : HandRestPivot) + FVector(Swing * 6, -Swing * 8, Swing * 4),
-        FRotator(-55 * Swing, -10 * Swing, 0));
+    HandPivot->SetRelativeLocationAndRotation((HandFit ? HandFitPivot : HandRestPivot) +
+            FVector(Swing * 6, -Swing * 8, Swing * 4) + FVector(-3, -10, 5 - 2.5 * Bob) * EatBlend,
+        FRotator(-55 * Swing - 15 * EatBlend, -10 * Swing - 35 * EatBlend, 0));
 }
 
 void UFoundationInteractionView::SetHeldItem(FName Id)

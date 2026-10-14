@@ -5,6 +5,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 ## October 14, 2026
 
 - [Survival step 5a: the full player inventory and container clicks](2026-10-14-Inventory-5a.md): record and handoff to step 5b, lane `feature/survival-containers`. `foundation.Inventory.Full 1`: 27 main and 4 armor slots besides the hotbar and offhand, in vanilla's numbering (the offhand is `SetCreativeSlot` slot 40 now); pickups fill main after the hotbar (provisional until P3); `FFoundationContainerMenu` runs vanilla's seven click types (QUICK_CRAFT drags included) for the authority's new `ContainerClick`/`ContainerClose` and for the creative screen, whose survival tab now uses all 41 slots; throws wait for step 4 (`DropDeferred`). 0 = the lab inventory as before. Next: the survival screen on E (5b).
+- [Use step 10: eating](2026-10-14-Use-Eating.md): record and handoff, lane `feature/survival-use`. `foundation.Items.Use 1`: hold use with food to eat it over 32 steps (hunger and saturation from items.json's food, capped saturation, full hunger refuses, release or a slot change cancels, 20% slowdown, eat and burp sounds, a provisional eating pose); 0 lets food pass as before. Next: step 14, axe stripping; start from its handoff, [2026-10-14-Use-Handoff-Step14.md](2026-10-14-Use-Handoff-Step14.md).
 
 ## October 13, 2026
 

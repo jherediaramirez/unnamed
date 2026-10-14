@@ -15,6 +15,34 @@ bool FFoundationItemDefinition::IsCorrectForDrops(const FGameplayTagContainer& B
     return false;
 }
 
+FFoundationConsumable FFoundationItemDefinition::GetConsumable() const
+{
+    if (Consumable.IsValid()) return Consumable;
+    const FFoundationConsumable* Reference = FoundationConsumables::FindReference(Id);
+    return Reference ? *Reference : FFoundationConsumable{};
+}
+
+TConstArrayView<TPair<FName, FFoundationConsumable>> FoundationConsumables::GetReferenceTable()
+{
+    // items.json's food (nutrition, saturation) and `consumable: {}` (the default time) for every row that has them.
+    static const TPair<FName, FFoundationConsumable> Table[] = {
+        TPair<FName, FFoundationConsumable>(TEXT("apple"), FFoundationConsumable{4, 2.4f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("bread"), FFoundationConsumable{5, 6.f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("cooked_beef"), FFoundationConsumable{8, 12.8f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("melon_slice"), FFoundationConsumable{2, 1.2f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("sweet_berries"), FFoundationConsumable{2, .4f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("glow_berries"), FFoundationConsumable{2, .4f, DefaultTicks}),
+    };
+    return Table;
+}
+
+const FFoundationConsumable* FoundationConsumables::FindReference(FName Id)
+{
+    for (const TPair<FName, FFoundationConsumable>& Row : GetReferenceTable())
+        if (Row.Key == Id) return &Row.Value;
+    return nullptr;
+}
+
 FFoundationInventory::FFoundationInventory()
 {
     Hotbar.SetNum(HotbarSlots);

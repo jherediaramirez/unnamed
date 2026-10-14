@@ -102,6 +102,11 @@ struct UNNAMED_API FFoundationInteraction
     int32 MiningDelay = 0;
     bool bAttackNeedsRelease = false;
     FFoundationHit LastRejectedMine;
+    // Mirror of the authority's item use (step 10, eating) for continuation and presentation: the hand, the steps
+    // used and the total.
+    bool bUsingItem = false;
+    EFoundationHand UseHand = EFoundationHand::Main;
+    int32 UseTicks = 0, UseDuration = 0;
     // Use timing.
     int64 Step = 0;
     int64 NextUseStep = 0;
@@ -169,4 +174,9 @@ private:
     void CancelRetry(EFoundationReason Reason);
     bool IsCadenceOpen() const;
     void ClearMining();
+    // Ends the item use in progress at the authority (a release) and here.
+    void ReleaseItemUse(FFoundationAuthority& Authority, FFoundationVitals& Vitals);
+    void StepItemUse(FFoundationAuthority& Authority, FFoundationVitals& Vitals);
+    // One hand's use against the target: UseOn (its interaction, then the place capability) or UseEntity.
+    FFoundationResult UseTarget(FFoundationAuthority& Authority, FFoundationVitals& Vitals, EFoundationHand Hand);
 };
