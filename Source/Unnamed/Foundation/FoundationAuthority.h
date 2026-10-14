@@ -15,7 +15,8 @@ enum class EFoundationCommandType : uint8
     SelectSlot,
     SwapHands,
     Drop,
-    // Use against a block-like target: its interaction, then the hand item's place capability.
+    // Use against a block-like target: its interaction, then the hand item's use on it (an axe strips; step 14), then
+    // its place capability.
     UseOn,
     // Use against an entity: its interaction (the training targets have none).
     UseEntity,
@@ -161,6 +162,8 @@ struct FFoundationResult
     // Item use (step 10): the reference steps used so far and the item's total; bAte when this result finished eating.
     int32 UseTicks = 0, UseDuration = 0;
     bool bAte = false;
+    // An axe stripped the block at Cell (step 14); State is the stripped state.
+    bool bStripped = false;
     // What a survival break returned to the inventory (items S5b): one entry per stack rolled.
     TArray<FFoundationLootDrop> Drops;
     FName Interaction;
@@ -222,7 +225,7 @@ struct FFoundationLabOptions
     bool bPlantRules = true;
     // Item entities (items S8a): a survival break drops its loot into the world, and a full inventory no longer
     // refuses it. Off, the loot goes straight to the inventory, as before. The pawn copies foundation.Items.Entities
-    // in before each step; tests set it themselves.
+    // in before each step; tests set it themselves. Items S8b: on, Q and Ctrl+Q throw, and stacks merge and despawn.
     bool bItemEntities = false;
     // The full inventory (survival step 5a): 27 main and 4 armor slots besides the hotbar and offhand. Off, the lab
     // inventory, the hotbar and offhand only. The pawn copies foundation.Inventory.Full in before each step; tests
@@ -308,7 +311,9 @@ enum class EFoundationEventKind : uint8
     // Item use (step 10): Eating on the steps that make the eating sound and particles (Item, LocationCm at the eye);
     // Ate when it finished (Item, Amount = the nutrition).
     Eating,
-    Ate
+    Ate,
+    // An axe stripped a block (step 14): Cell, State (the stripped state), Item (the axe).
+    Stripped
 };
 
 // A committed (or rejected) outcome for presentation: effects fire once from these.
@@ -436,14 +441,16 @@ public:
     // Item entities (items S8a), oldest first; Reset clears them.
     const TArray<FFoundationItemEntity>& GetItemEntities() const { return ItemEntities; }
     // Adds an item entity at a position (cm from the block world's origin); its id, or 0 for an invalid item or count.
-    int32 SpawnItem(int32 Item, int32 Count, const FVector& LocalCm, const FVector& VelocityCm, int32 PickupDelay);
+    int32 SpawnItem(int32 Item, int32 Count, const FVector& LocalCm, const FVector& VelocityCm, int32 PickupDelay,
+        int32 Damage = 0);
 
     const TArray<FFoundationEvent>& GetEvents() const { return Events; }
     int64 GetEventSerial() const { return EventSerial; }
 
     // Diagnostics.
     int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
-    int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsEaten = 0;
+    int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsThrown = 0, ItemsMerged = 0, ItemsDespawned = 0, ItemsEaten = 0,
+          Strips = 0;
 
 private:
     FFoundationInventory MakeLoadout();
@@ -456,7 +463,10 @@ private:
     void Remember(FFoundationPlayer& Player, const FFoundationResult& Result);
     FFoundationResult& Reject(FFoundationResult& Result, EFoundationReason Reason);
     void AddEvent(FFoundationEvent Event);
-    void UseOn(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
+    void UseOn(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result, bool bCreative);
+    // Axe stripping (step 14): true when the hand's axe stripped the hit block (Result filled).
+    bool StripOn(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationHit& Hit,
+        FFoundationResult& Result, bool bCreative);
     void UseEntity(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
     void MineStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
         FFoundationResult& Result);
@@ -490,6 +500,10 @@ private:
     // A broken block's loot as item entities, split into stacks that fit (provisional spread and speed).
     void SpawnDrops(const FIntVector& Cell, TConstArrayView<FFoundationLootDrop> Drops, int32 RandomSeed);
     void StepItemEntities();
+    // Q and Ctrl+Q (items S8b): one item or the selected stack thrown from the eye along the look.
+    void Drop(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
+    // Every MergeTicks of its age, an item takes in same-item stacks inside its merge box (items S8b).
+    void MergeItemEntities();
 
     TArray<FFoundationPlayer> Players;
     TArray<FFoundationEvent> Events;

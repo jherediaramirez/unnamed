@@ -126,12 +126,14 @@ int32 FFoundationInventory::GetSpaceFor(int32 Item, int32 MaxStack) const
     return Space;
 }
 
-int32 FFoundationInventory::Add(int32 Item, int32 Count, int32 MaxStack, bool bTouchStacks)
+int32 FFoundationInventory::Add(int32 Item, int32 Count, int32 MaxStack, bool bTouchStacks, int32 Damage)
 {
     int32 Added = 0;
     auto Merge = [&](FFoundationItemInstance& Stack)
     {
-        if (Added >= Count || Stack.IsEmpty() || Stack.Item != Item || Stack.Count >= MaxStack) return;
+        if (Added >= Count || Stack.IsEmpty() || Stack.Item != Item || Stack.Damage != Damage ||
+            Stack.Count >= MaxStack)
+            return;
         const int32 Amount = FMath::Min(Count - Added, MaxStack - Stack.Count);
         Stack.Count += Amount;
         Added += Amount;
@@ -145,6 +147,7 @@ int32 FFoundationInventory::Add(int32 Item, int32 Count, int32 MaxStack, bool bT
         if (Added >= Count || !Stack.IsEmpty()) return;
         const int32 Amount = FMath::Min(Count - Added, MaxStack);
         Stack = MakeStack(Item, Amount);
+        Stack.Damage = Damage;
         Added += Amount;
         ++Revision;
     };
@@ -163,6 +166,7 @@ int32 FFoundationInventory::Add(int32 Item, int32 Count, int32 MaxStack, bool bT
             Fill(Stack);
     return Added;
 }
+
 FFoundationItemInstance FFoundationInventory::Return(FFoundationItemInstance Stack, int32 MaxStack)
 {
     auto Merge = [&](FFoundationItemInstance& Into)
