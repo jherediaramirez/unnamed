@@ -24,6 +24,9 @@ public:
     SLATE_ARGUMENT(TFunction<FHudContainerView()>, GetView)
     SLATE_ARGUMENT(TFunction<void(const FHudContainerClick&)>, OnClick)
     SLATE_ARGUMENT(TFunction<void()>, OnClose)
+    // The player's current key for a binding id (key.inventory, key.hotbar.1-9, key.swapOffhand, key.drop). Unset,
+    // the default keys (E, 1-9, F, Q).
+    SLATE_ARGUMENT(TFunction<FKey(FName)>, GetKey)
     // Options > GUI Scale (0 Auto), read every frame.
     SLATE_ATTRIBUTE(int32, RequestedGuiScale)
     SLATE_END_ARGS()
@@ -76,5 +79,10 @@ private:
     TFunction<FHudContainerView()> GetView;
     TFunction<void(const FHudContainerClick&)> OnClick;
     TFunction<void()> OnClose;
+    TFunction<FKey(FName)> GetKey;
     FIntPoint Mouse = FIntPoint(-1000, -1000);
+    // Set when the screen's own button release lets the capture go: that capture loss keeps the double-click state.
+    bool bReleasingCapture = false;
+
+    FKey GetBoundKey(const TCHAR* Id, const FKey& Default) const;
 };

@@ -37,7 +37,8 @@ public:
     static constexpr int32 TitleX = 97;
     static constexpr int32 TitleY = 8;
     // The recipe-book button: leftPos + 104, height / 2 - 22, 20 x 18, which is 61 below topPos for any height
-    // (topPos is (height - 166) / 2). Provisional (minecraft.wiki); inert until the recipe book exists.
+    // (topPos is (height - 166) / 2). Measured (value report SURVIVAL-FINDINGS R8, survival.r8.recipe_book: the book
+    // open puts it at 413,158 with the menu at 309,97); inert until the recipe book exists.
     static constexpr int32 RecipeButtonX = 104;
     static constexpr int32 RecipeButtonY = 61;
     static constexpr int32 RecipeButtonWidth = 20;
@@ -51,8 +52,8 @@ public:
     // The menu slot under Point; FFoundationContainerMenu::Outside outside the window; INDEX_NONE inside it but on no
     // slot. Without the full inventory (bFullInventory off) the main and armor slots are not slots.
     int32 HitTest(FIntPoint Point) const;
-    // The crafting slots (0-4) highlight but do nothing until survival step 6.
-    static bool IsClickable(int32 Slot) { return Slot == FFoundationContainerMenu::Outside || Slot >= 5; }
+    // Every slot, the crafting grid and its result included (survival step 6), and outside the window.
+    static bool IsClickable(int32 Slot) { return Slot == FFoundationContainerMenu::Outside || Slot >= 0; }
     static bool IsInRecipeButton(FIntPoint Point);
 
     // Button 0 left, 1 right, 2 middle; Time in seconds from any fixed clock.
@@ -64,8 +65,10 @@ public:
     TArray<FHudContainerClick> PressSwap(FIntPoint Point, int32 Button, const FHudContainerView& View) const;
     // Q over a slot with an empty cursor: THROW one, with control the whole stack.
     TArray<FHudContainerClick> PressDrop(FIntPoint Point, bool bControl, const FHudContainerView& View) const;
-    // Forgets a drag and the last click (the screen closed).
+    // Forgets a drag and the last click (the screen closed, or the mouse capture lost to another window).
     void Reset();
+    // Forgets a drag only, keeping the last click for a double-click (the screen let the capture go itself).
+    void ResetDrag();
 
     bool IsDragging() const { return DragButton != INDEX_NONE; }
     const TArray<int32>& GetDragSlots() const { return DragSlots; }

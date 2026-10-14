@@ -1671,6 +1671,32 @@ void UFoundationRuntimeProbe::AddTourCases()
             for (int32 Slot = First + 1; Slot <= First + 3; ++Slot)
                 Screen.Move(FHudContainerModel::GetSlotPosition(Slot) + FIntPoint(8, 8));
         });
+    // Survival step 6: an oak log in the crafting grid makes 4 oak planks in the result slot, hovered for its tooltip.
+    Survival(TEXT("24c-survival-crafting"),
+        [Authority](SHudContainerScreen& Screen, FFoundationInventory& Inventory)
+        {
+            const int32 Log = Authority().Rules.FindItem(TEXT("oak_log"));
+            Screen.GetModel().Reset();
+            Inventory.Carried = {};
+            if (Log != INDEX_NONE && Inventory.Craft.IsValidIndex(1)) Inventory.Craft[1] = Inventory.MakeStack(Log, 3);
+            ++Inventory.Revision;
+            Screen.SetMouse(
+                FHudContainerModel::GetSlotPosition(FFoundationContainerMenu::ResultSlot) + FIntPoint(8, 8));
+        });
+    AddCase(
+        TEXT("tour survival crafting result"), .1, [] {},
+        [this, Authority]
+        {
+            const FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
+            const int32 Planks = Authority().Rules.FindItem(TEXT("oak_planks"));
+            const FFoundationItemInstance Result = Player
+                ? Authority().GetPlayerMenu(*Player)[FFoundationContainerMenu::ResultSlot]
+                : FFoundationItemInstance();
+            Record(TEXT("tour survival crafting: the result"),
+                !Result.IsEmpty() && Result.Item == Planks && Result.Count == 4,
+                FString::Printf(TEXT("an oak log in the grid shows 4 oak planks in the result (item %d, count %d)"),
+                    Result.Item, Result.Count));
+        });
     AddCase(
         TEXT("tour survival close"), .3,
         [this, Authority, SavedInventory]

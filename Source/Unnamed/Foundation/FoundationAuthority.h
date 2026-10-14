@@ -8,6 +8,7 @@
 #include "Foundation/FoundationItemEntities.h"
 #include "Foundation/FoundationItems.h"
 #include "Foundation/FoundationLoot.h"
+#include "Foundation/FoundationRecipes.h"
 #include "Foundation/FoundationTargeting.h"
 #include "Foundation/FoundationVitals.h"
 
@@ -97,6 +98,8 @@ enum class EFoundationReason : uint8
     NotHungry,
     // A continue or release without an item use in progress.
     NotUsing,
+    // A use in progress ended because foundation.Items.Use turned 0.
+    ItemUseOff,
     Count
 };
 
@@ -232,6 +235,9 @@ struct FFoundationLabOptions
     // inventory, the hotbar and offhand only. The pawn copies foundation.Inventory.Full in before each step; tests
     // set it themselves.
     bool bFullInventory = false;
+    // Crafting (survival step 6): the crafting grid's result slot. Off, the grid takes and holds items and the result
+    // stays empty. The pawn copies foundation.Crafting in before each step.
+    bool bCrafting = true;
     // Experience orbs (survival step 12): a survival break of an ore pays orbs. Off, none spawn, as before. The pawn
     // copies foundation.Items.Xp in before each step; tests set it themselves.
     bool bExperienceOrbs = false;
@@ -275,6 +281,8 @@ struct UNNAMED_API FFoundationRules
     TMap<FName, FFoundationLootTable> LootTables;
     TArray<FFoundationLootPredicate> LootPredicates;
     uint64 LootSeed = 0;
+    // Crafting recipes (survival step 6; BuildRules, from DA_Recipes), resolved against Items.
+    FFoundationRecipeBook Recipes;
 
     int32 FindItem(FName Id) const;
     // The definition for an inventory index; an invalid index is the bare hand.
@@ -362,10 +370,13 @@ namespace FoundationItemUse
     // foundation.Items.Use: 1 food is eaten by holding use (step 10); 0 it passes, as before. Steps 14 and 17 (axe
     // stripping, buckets) hang off the same switch.
     UNNAMED_API bool IsOn();
-    // The eating sound and particles fire on these steps (Ticks of a use): every 4th from the 8th. The project's own,
-    // provisional until a vanilla capture.
-    constexpr int32 EffectsFirstTick = 8, EffectsEveryTicks = 4;
-    UNNAMED_API bool IsEffectTick(int32 Ticks);
+    // The periodic eating effect (sound and crumbs) fires on step Ticks of a Duration-step use when the elapsed steps
+    // pass floor(Duration x 0.21875) and the remaining steps are a multiple of 4, before the last step (value report,
+    // Eating / Crumb particles and duration, eating.crumbs): 8, 12, ..., 28 for 32. The last step has the completion
+    // effect only (Ate).
+    constexpr double EffectsDelayFraction = .21875;
+    constexpr int32 EffectsEveryTicks = 4;
+    UNNAMED_API bool IsEffectTick(int32 Ticks, int32 Duration);
 }
 
 struct FFoundationPlayer
@@ -411,6 +422,9 @@ public:
     void RemovePlayer(int32 Id);
     FFoundationPlayer* FindPlayer(int32 Id);
     const FFoundationPlayer* FindPlayer(int32 Id) const;
+    // The player's container 0 as its menu shows it, by menu slot (46: the result the grid makes now, the grid, the
+    // armor, the main grid, the hotbar, the offhand), for the screen's view.
+    TArray<FFoundationItemInstance> GetPlayerMenu(const FFoundationPlayer& Player) const;
     void SetFacts(int32 Player, const FFoundationPlayerFacts& Facts);
 
     FFoundationResult Execute(int32 Player, const FFoundationCommand& Command, FFoundationVitals& Vitals);
@@ -482,10 +496,11 @@ private:
     void Remember(FFoundationPlayer& Player, const FFoundationResult& Result);
     FFoundationResult& Reject(FFoundationResult& Result, EFoundationReason Reason);
     void AddEvent(FFoundationEvent Event);
-    void UseOn(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result, bool bCreative);
-    // Axe stripping (step 14): true when the hand's axe stripped the hit block (Result filled).
+    void UseOn(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result,
+        EFoundationPlayerMode Mode);
+    // Axe stripping (step 14): true when the hand's axe stripped the hit block (Result filled). Adventure passes.
     bool StripOn(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationHit& Hit,
-        FFoundationResult& Result, bool bCreative);
+        FFoundationResult& Result, EFoundationPlayerMode Mode);
     void UseEntity(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
     void MineStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
         FFoundationResult& Result);

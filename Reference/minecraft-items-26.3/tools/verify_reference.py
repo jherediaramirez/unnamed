@@ -253,6 +253,24 @@ imported = {b["id"] for b in json.loads((build.BLOCK_REF / "block_manifest.json"
 undefined = sorted({c["item"] for t in loot["tables"] for p in t["pools"] for c in p["candidates"]} - imported - set(items))
 check(not undefined, f"loot items neither imported blocks nor items: {undefined}")
 
+# Recipes (survival step 6): spot values.
+if (ROOT / "recipes.json").is_file():
+    recipes = {r["id"]: r for r in json.loads((ROOT / "recipes.json").read_text(encoding="utf-8"))["recipes"]}
+    planks = recipes.get("oak_planks")
+    check(planks is not None and planks["type"] == "shapeless" and len(planks["ingredients"]) == 1 and
+          planks["ingredients"][0]["tag"] == "oak_logs" and planks["result"] == {"item": "oak_planks", "count": 4},
+          "recipe: oak_planks shapeless, one oak_logs tag, makes 4")
+    stick = recipes.get("stick")
+    check(stick is not None and stick["type"] == "shaped" and (stick["width"], stick["height"]) == (1, 2) and
+          len(stick["cells"]) == 2 and all(c and c["tag"] == "planks" for c in stick["cells"]) and
+          stick["result"] == {"item": "stick", "count": 4}, "recipe: stick shaped 1x2 of the planks tag, makes 4")
+    table = recipes.get("crafting_table")
+    check(table is not None and table["type"] == "shaped" and (table["width"], table["height"]) == (2, 2) and
+          len(table["cells"]) == 4 and all(c and c["tag"] == "planks" for c in table["cells"]) and
+          table["result"] == {"item": "crafting_table", "count": 1}, "recipe: crafting_table shaped 2x2 of planks, makes 1")
+else:
+    check(False, "recipes.json missing")
+
 if errors:
     print("REFERENCE FAIL")
     print("\n".join(errors[:40]))

@@ -16,6 +16,7 @@
 #include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationInteraction.h"
 #include "Foundation/FoundationInteractionView.h"
+#include "Foundation/FoundationItemAssets.h"
 #include "Foundation/FoundationSoundAssets.h"
 #include "GameFramework/PlayerController.h"
 #include "HAL/IConsoleManager.h"
@@ -401,6 +402,25 @@ namespace FoundationBreak
         return Spawn;
     }
 
+    FParticleSpawn SpawnCrumb(const FVector& EyeCm, const FRotator& View, FRandomStream& Random, int32 LifeMode)
+    {
+        // Blocks per step to cm/s, and the view's (across, up, forward) to Unreal's (forward, right, up).
+        constexpr double PerStepCm = 100 / StepSeconds;
+        const FVector Across(0, Random.FRand() - .5, 0);
+        const double Up = Random.FRand();
+        FParticleSpawn Spawn;
+        Spawn.Velocity = View.RotateVector(FVector(0, Across.Y * .1, Up * .1 + .1)) * PerStepCm;
+        Spawn.Velocity.Z += .05 * PerStepCm;
+        const double OffsetAcross = Random.FRand() - .5, OffsetDown = Random.FRand();
+        Spawn.Location =
+            EyeCm + View.RotateVector(FVector(CrumbForwardBlocks, OffsetAcross * .3, -OffsetDown * .6 - .3) * 100);
+        Spawn.Life = ParticleLife(LifeMode, Random);
+        Spawn.Size = CrumbSizeCm;
+        Spawn.PatchU = uint8(Random.RandRange(0, 12));
+        Spawn.PatchV = uint8(Random.RandRange(0, 12));
+        return Spawn;
+    }
+
     FVector SprayPush(const FVector& FaceNormal, const FVector& AwayFromCamera)
     {
         return FaceNormal * 150 + AwayFromCamera.GetSafeNormal() * 50;
@@ -463,6 +483,7 @@ namespace
     // Probes compare runs: every play draws the same particles and sound files.
     constexpr int32 BreakEffectsSeed = 0x0B5EA4;
     constexpr int32 SoundEventsSeed = 0x50E7E5;
+    constexpr int32 CrumbsSeed = 0xC2B5;
     // The crack overlay sits just outside what it cracks, scaled about the drawn box's centre.
     constexpr double CrackInflate = 1.002;
     // As today's outline: 0.3 cm past the box, each edge drawn as four strips so each keeps its own depth's width.
@@ -518,6 +539,7 @@ void FFoundationBreakEffects::Initialize(const FFoundationAuthority& Authority)
 {
     Random.Initialize(BreakEffectsSeed);
     EventRandom.Initialize(SoundEventsSeed);
+    CrumbRandom.Initialize(CrumbsSeed);
     AActor* Owner = View.GetOwner();
     if (!Owner || !Owner->GetRootComponent()) return;
     UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
@@ -579,6 +601,13 @@ void FFoundationBreakEffects::Initialize(const FFoundationAuthority& Authority)
     Hidden.Init(FTransform(FQuat::Identity, FVector::ZeroVector, FVector::ZeroVector), MaxParticles);
     ParticleIds = ParticleMesh->AddInstancesById(Hidden, false, false);
     Particles.SetNum(MaxParticles);
+    CrumbMesh = NewObject<UInstancedStaticMeshComponent>(Owner);
+    CrumbMesh->SetNumCustomDataFloats(3);
+    RegisterBreakComponent(*CrumbMesh, *Owner, PlaneMesh, 0);
+    View.Owned.Add(CrumbMesh);
+    Hidden.Init(FTransform(FQuat::Identity, FVector::ZeroVector, FVector::ZeroVector), MaxCrumbs);
+    CrumbIds = CrumbMesh->AddInstancesById(Hidden, false, false);
+    Crumbs.SetNum(MaxCrumbs);
 
     // Pops draw with the block materials, so they need the view's block assets.
     if (!View.BlockMeshes.IsValidIndex(FoundationBlockMeshes::Cube) || View.LayerMaterials.IsEmpty()) return;
@@ -641,6 +670,7 @@ void FFoundationBreakEffects::LoadAssets(const FFoundationAuthority& Authority)
     {
         View.Owned.Add(ParticleBase);
         ParticleMesh->SetMaterial(0, ParticleBase);
+        ParticleBaseMaterial = ParticleBase;
     }
     if (CracksBase && Loaded)
     {
@@ -1101,11 +1131,55 @@ void FFoundationBreakEffects::PlayEvent(FName EventName, const FVector& Location
 
 void FFoundationBreakEffects::Spawn(const FoundationBreak::FParticleSpawn& New, float Layer, float Tint)
 {
-    if (!ParticleMesh || !ParticleIds.IsValidIndex(NextParticle) || !Particles.IsValidIndex(NextParticle)) return;
+    if (ParticleMesh) SpawnInto(*ParticleMesh, Particles, ParticleIds, NextParticle, New, Layer, Tint);
+}
+
+bool FFoundationBreakEffects::SpawnCrumbs(FName Item, const FVector& EyeCm, const FRotator& ViewRotation, int32 Count)
+{
+    if (!CrumbMesh || Item.IsNone() || Count <= 0) return false;
+    const UFoundationItemAssets* Items = UFoundationItemAssets::LoadDefault();
+    if (!Items) return false;
+    if (!bTriedCrumbMaterial && ParticleBaseMaterial)
+    {
+        bTriedCrumbMaterial = true;
+        UTexture2DArray* Sprites = Items->ItemTextures.LoadSynchronous();
+        UMaterialInstanceDynamic* Material =
+            Sprites ? UMaterialInstanceDynamic::Create(ParticleBaseMaterial, &View) : nullptr;
+        if (Material)
+        {
+            Material->SetTextureParameterValue(TEXT("BlockTextures"), Sprites);
+            View.Owned.Add(Material);
+            CrumbMesh->SetMaterial(0, Material);
+            bCrumbMaterial = true;
+        }
+    }
+    if (!bCrumbMaterial) return false;
+    int32* Layer = CrumbLayers.Find(Item);
+    if (!Layer)
+    {
+        FFoundationItemModelView Model;
+        const bool bSprite = Items->FindModelView(Item, TEXT("firstperson_righthand"), Model) && Model.Texture &&
+            Model.Texture->Width == 16;
+        Layer = &CrumbLayers.Add(Item, bSprite ? Model.Texture->Layer : INDEX_NONE);
+    }
+    if (*Layer == INDEX_NONE) return false;
+    for (int32 Index = 0; Index < Count; ++Index)
+        SpawnInto(*CrumbMesh, Crumbs, CrumbIds, NextCrumb,
+            FoundationBreak::SpawnCrumb(EyeCm, ViewRotation, CrumbRandom, Switches.ParticleLife), float(*Layer),
+            0xFFFFFF);
+    CrumbsSpawned += Count;
+    return true;
+}
+
+void FFoundationBreakEffects::SpawnInto(UInstancedStaticMeshComponent& Mesh, TArray<FParticle>& Pool,
+    TConstArrayView<FPrimitiveInstanceId> Ids, int32& Next, const FoundationBreak::FParticleSpawn& New, float Layer,
+    float Tint)
+{
+    if (!Ids.IsValidIndex(Next) || !Pool.IsValidIndex(Next)) return;
     // A ring: when the pool is full the oldest spawn gives way.
-    const int32 Index = NextParticle;
-    NextParticle = (NextParticle + 1) % Particles.Num();
-    FParticle& Particle = Particles[Index];
+    const int32 Index = Next;
+    Next = (Next + 1) % Pool.Num();
+    FParticle& Particle = Pool[Index];
     Particle.State.Location = New.Location;
     Particle.State.Velocity = New.Velocity;
     Particle.State.bResting = false;
@@ -1115,9 +1189,9 @@ void FFoundationBreakEffects::Spawn(const FoundationBreak::FParticleSpawn& New, 
     Particle.bLive = true;
     // Exact in a float: the layer, the 4 x 4 patch's texel offset (u | v << 4) and the packed tint.
     const float Data[3] = {Layer, float(uint32(New.PatchU) | uint32(New.PatchV) << 4), Tint};
-    ParticleMesh->SetCustomDataById(ParticleIds[Index], Data);
+    Mesh.SetCustomDataById(Ids[Index], Data);
     // UpdateParticles places it this frame; the component stays hidden while no particle lives.
-    ParticleMesh->SetVisibility(true);
+    Mesh.SetVisibility(true);
 }
 
 bool FFoundationBreakEffects::GetSwing(double& OutSwing) const
@@ -1282,8 +1356,15 @@ void FFoundationBreakEffects::DrawOutlineStrips()
 
 void FFoundationBreakEffects::UpdateParticles(const FFoundationAuthority& Authority, double DeltaTime)
 {
+    UpdatePool(ParticleMesh, Particles, ParticleIds, Authority, DeltaTime);
+    UpdatePool(CrumbMesh, Crumbs, CrumbIds, Authority, DeltaTime, FoundationBreak::CrumbNearCm);
+}
+
+void FFoundationBreakEffects::UpdatePool(UInstancedStaticMeshComponent* Mesh, TArray<FParticle>& Pool,
+    TConstArrayView<FPrimitiveInstanceId> Ids, const FFoundationAuthority& Authority, double DeltaTime, double NearCm)
+{
     // Hidden means no particle lives (Spawn shows the component, the last death hides it): nothing to do.
-    if (!ParticleMesh || !ParticleMesh->GetVisibleFlag()) return;
+    if (!Mesh || !Mesh->GetVisibleFlag()) return;
     // Both worlds keep their blocks in the authority's block world.
     const FFoundationBlockWorld& Blocks = Authority.World;
     auto Solid = [&Blocks](const FVector& Point, TArray<FBox>& OutBoxes)
@@ -1295,27 +1376,29 @@ void FFoundationBreakEffects::UpdateParticles(const FFoundationAuthority& Author
     // Camera-facing quads: the plane's +Z normal toward the camera.
     const FQuat Facing = FRotationMatrix::MakeFromZ(-CameraForward).ToQuat();
     int32 Live = 0;
-    for (int32 Index = 0; Index < Particles.Num(); ++Index)
+    for (int32 Index = 0; Index < Pool.Num(); ++Index)
     {
-        FParticle& Particle = Particles[Index];
+        FParticle& Particle = Pool[Index];
         if (!Particle.bLive) continue;
         Particle.Age += DeltaTime;
         if (Particle.Age >= Particle.Life)
         {
             Particle.bLive = false;
-            ParticleMesh->UpdateInstanceTransformById(
-                ParticleIds[Index], FTransform(FQuat::Identity, Particle.State.Location, FVector::ZeroVector), true);
+            Mesh->UpdateInstanceTransformById(
+                Ids[Index], FTransform(FQuat::Identity, Particle.State.Location, FVector::ZeroVector), true);
             continue;
         }
         FoundationBreak::StepParticle(
             Particle.State, DeltaTime, Switches.bParticleCollision, Solid, Switches.bParticleSupport);
-        const double Scale = FoundationBreak::LifeScale(Switches.ParticleLife, Particle.Age, Particle.Life);
-        ParticleMesh->UpdateInstanceTransformById(ParticleIds[Index],
+        const double Scale = FVector::DistSquared(Particle.State.Location, CameraLocation) < NearCm * NearCm
+            ? 0.
+            : FoundationBreak::LifeScale(Switches.ParticleLife, Particle.Age, Particle.Life);
+        Mesh->UpdateInstanceTransformById(Ids[Index],
             FTransform(Facing, Particle.State.Location, FVector(Particle.Size * Scale / BreakEffectsBlockCm)), true);
         ++Live;
     }
     // The id updates mark only the changed instances: one incremental upload at the end of the frame.
-    if (Live == 0) ParticleMesh->SetVisibility(false);
+    if (Live == 0) Mesh->SetVisibility(false);
 }
 
 void FFoundationBreakEffects::UpdatePops(double DeltaTime)
@@ -1342,6 +1425,14 @@ int32 FFoundationBreakEffects::GetLiveParticleCount() const
 {
     int32 Count = 0;
     for (const FParticle& Particle : Particles)
+        Count += Particle.bLive ? 1 : 0;
+    return Count;
+}
+
+int32 FFoundationBreakEffects::GetLiveCrumbCount() const
+{
+    int32 Count = 0;
+    for (const FParticle& Particle : Crumbs)
         Count += Particle.bLive ? 1 : 0;
     return Count;
 }

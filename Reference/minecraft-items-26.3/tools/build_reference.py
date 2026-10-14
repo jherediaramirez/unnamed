@@ -588,6 +588,74 @@ def derive_loot(src, blocks, item_tags):
     return dumps(loot), files, sum(len(p["candidates"]) for t in tables for p in t["pools"]), len(predicates)
 
 
+RECIPE_DIR = "data/minecraft/recipe/"
+RECIPE_TYPES = {"minecraft:crafting_shaped": "shaped", "minecraft:crafting_shapeless": "shapeless"}
+RECIPE_SOURCE = "client jar data/minecraft/recipe (crafting_shaped, crafting_shapeless) and data/minecraft/tags/item"
+
+
+def tag_closure(tags, name, seen):
+    """name and every tag nested in it, added to seen."""
+    if name in seen:
+        return
+    seen.add(name)
+    for value in tags.values(name):
+        value = value["id"] if isinstance(value, dict) else value
+        if value.startswith("#"):
+            tag_closure(tags, bare(value[1:]), seen)
+
+
+def derive_recipes(src, item_tags):
+    """recipes.json's bytes, the jar entries it copies (recipe files and item tag files) and the manifest's recipes."""
+    names = sorted(n for n in src.names if n.startswith(RECIPE_DIR) and n.endswith(".json"))
+    used_tags, copies, skipped, out = set(), set(), {}, []
+
+    def ingredient(value):
+        values = value if isinstance(value, list) else [value]
+        tag = None
+        items = set()
+        for v in values:
+            if v.startswith("#"):
+                tag = bare(v[1:]) if len(values) == 1 else tag
+                tag_closure(item_tags, bare(v[1:]), used_tags)
+                items |= item_tags.resolve(bare(v[1:]))
+            else:
+                items.add(bare(v))
+        return {"tag": tag, "items": sorted(items)}
+
+    for name in names:
+        data = src.jar_json(name)
+        kind = RECIPE_TYPES.get(data["type"]) if "/" not in name[len(RECIPE_DIR):] else None  # crafting recipes are top-level files
+        if kind is None:
+            skipped[data["type"]] = skipped.get(data["type"], 0) + 1
+            continue
+        copies.add(name)
+        result = {"item": bare(data["result"]["id"]), "count": data["result"].get("count", 1)}
+        if "components" in data["result"]:
+            result["components"] = data["result"]["components"]
+        entry = {"id": name[len(RECIPE_DIR):-5], "type": kind, "category": data.get("category"),
+                 "group": data.get("group")}
+        if kind == "shaped":
+            pattern = data["pattern"]
+            width, height = max(len(r) for r in pattern), len(pattern)
+            keys = {k: ingredient(v) for k, v in data["key"].items()}
+            entry |= {"width": width, "height": height,
+                      "cells": [keys[row[x]] if x < len(row) and row[x] != " " else None
+                                for row in pattern for x in range(width)]}
+        else:
+            entry |= {"width": 0, "height": 0, "ingredients": [ingredient(v) for v in data["ingredients"]]}
+        entry["result"] = result
+        out.append(entry)
+    copies |= {f"data/minecraft/tags/item/{t}.json" for t in used_tags}
+    listed = lambda e: [e["ingredients"]] if e["type"] == "shapeless" else [e["cells"]]
+    manifest = {"source": RECIPE_SOURCE, "included": len(out),
+                "shaped": sum(e["type"] == "shaped" for e in out), "shapeless": sum(e["type"] == "shapeless" for e in out),
+                "with_result_components": [e["id"] for e in out if "components" in e["result"]],
+                "with_bucket_ingredient": [e["id"] for e in out if any(
+                    i and any(x.endswith("_bucket") for x in i["items"]) for i in listed(e)[0])],
+                "skipped_types": dict(sorted(skipped.items()))}
+    return dumps({"minecraft_version": "26.3", "recipes": out}), copies, manifest
+
+
 def derive(src, block_ref=BLOCK_REF):
     """Every generated file of the reference, plus the jar entries it copies. Pure: same inputs, same bytes."""
     lang = src.jar_json(f"{ASSETS}lang/en_us.json")
@@ -775,6 +843,8 @@ def derive(src, block_ref=BLOCK_REF):
     generated["loot_tables.json"], loot_files, loot_candidates, loot_predicates = derive_loot(
         src, loot_list, item_tags)
     copies |= loot_files
+    generated["recipes.json"], recipe_copies, recipes_manifest = derive_recipes(src, item_tags)
+    copies |= recipe_copies
     generated["manifest.json"] = dumps({
         "minecraft_version": "26.3", "client_sha1": CLIENT_SHA1, "server_sha1": SERVER_SHA1,
         "report": "data generator --reports, minecraft/components/item (Default Components) and registries.json, "
@@ -790,6 +860,7 @@ def derive(src, block_ref=BLOCK_REF):
         "generated": sorted(generated),
         "copied": sorted(copies) + [REGISTRY],
         "dumped": DUMPED,
+        "recipes": recipes_manifest,
         "loot": {"blocks": loot_list, "tables": len(loot_list), "predicates": loot_predicates,
                  "candidates": loot_candidates,
                  "source": "client jar data/minecraft/loot_table/blocks and data/minecraft/predicate"},

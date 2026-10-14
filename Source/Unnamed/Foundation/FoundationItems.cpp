@@ -48,6 +48,7 @@ FFoundationInventory::FFoundationInventory()
     Hotbar.SetNum(HotbarSlots);
     Main.SetNum(MainSlots);
     Armor.SetNum(ArmorSlots);
+    Craft.SetNum(CraftSlots);
 }
 
 FFoundationItemInstance& FFoundationInventory::GetHand(EFoundationHand Hand)
