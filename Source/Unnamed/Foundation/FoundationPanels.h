@@ -8,13 +8,14 @@ class AFoundationController;
 class AFoundationLab;
 class AFoundationPawn;
 class AFoundationPlayground;
+class SHudContainerScreen;
 class SHudCreativeScreen;
 class SWidget;
 
 // Blocking native panels over gameplay: Debug Options (F3+F6), the local chat/command text
-// fixture and the inventory: in the Playground the creative inventory screen (SHudCreativeScreen),
-// elsewhere the inventory routing fixture. Opening one stops gameplay input and the simulation;
-// closing it resumes play unless the pause menu is open.
+// fixture and the inventory: in a creative lab the creative inventory screen (SHudCreativeScreen), elsewhere
+// the survival inventory screen (SHudContainerScreen; foundation.Inventory.Screen 0: the inventory routing fixture).
+// Opening one stops gameplay input and the simulation; closing it resumes play unless the pause menu is open.
 UCLASS(ClassGroup = Foundation)
 class UNNAMED_API UFoundationPanels : public UActorComponent
 {
@@ -32,6 +33,10 @@ public:
     // The creative screen's search tab takes typed text: the inventory key types instead of closing.
     bool IsTypingInInventory() const;
     TSharedPtr<SHudCreativeScreen> GetCreativeScreen() const { return Creative; }
+    TSharedPtr<SHudContainerScreen> GetSurvivalScreen() const { return Survival; }
+    // The survival inventory screen (foundation.Inventory.Screen 1, outside creative). Public for probes, which open
+    // it in the creative Playground too.
+    void OpenSurvivalInventory(AFoundationLab& Lab);
     // foundation.Panels.Preload 1: builds the creative screen before its first open, so its textures load now and the
     // first open neither builds it nor draws a frame without them. Returns false while the player's lab is not ready
     // (try again next frame); true once built, or when the lab has no creative inventory.
@@ -49,6 +54,9 @@ private:
 
     TSharedPtr<SWidget> Root;
     TSharedPtr<SHudCreativeScreen> Creative;
+    TSharedPtr<SHudContainerScreen> Survival;
+    // The player the survival screen sends its clicks for; Close sends its ContainerClose.
+    TWeakObjectPtr<AFoundationPawn> SurvivalPawn;
     // PreloadCreative's screen and the pawn it was built for; the first open takes it.
     TSharedPtr<SHudCreativeScreen> PreloadedCreative;
     TWeakObjectPtr<AFoundationPawn> PreloadedPawn;

@@ -34,6 +34,19 @@ namespace
         Health.MaxHealth = Health.Health = MaxHealth;
         return Health;
     }
+
+    // foundation.Inventory.Full onto a player's inventory. A change ends a drag in progress: its stored slots may not
+    // exist under the other layout.
+    void SetFullInventory(FFoundationInventory& Inventory, bool bFull)
+    {
+        if (Inventory.bFull == bFull) return;
+        Inventory.bFull = bFull;
+        if (Inventory.QuickCraft.Status != 0 || !Inventory.QuickCraft.Slots.IsEmpty())
+        {
+            Inventory.QuickCraft = {};
+            ++Inventory.Revision;
+        }
+    }
 }
 
 const TCHAR* LexToString(EFoundationReason Reason)
@@ -291,7 +304,7 @@ void FFoundationAuthority::StepItemEntities()
     for (FFoundationPlayer& Player : Players)
     {
         if (!Player.bHasFacts || !Player.Facts.bAlive) continue;
-        Player.Inventory.bFull = Options.bFullInventory;
+        SetFullInventory(Player.Inventory, Options.bFullInventory);
         const FBox Reach = GetPickupBox(Player.Facts.GetBody());
         for (int32 Index = 0; Index < ItemEntities.Num();)
         {
@@ -552,7 +565,7 @@ FFoundationResult FFoundationAuthority::Execute(
     // Evicted or never valid: its effect cannot be known, so it must not apply now.
     if (Command.Sequence == 0 || Command.Sequence <= Player->HighestEvicted)
         return Reject(Result, EFoundationReason::ExpiredSequence);
-    Player->Inventory.bFull = Options.bFullInventory;
+    SetFullInventory(Player->Inventory, Options.bFullInventory);
 
     switch (Command.Type)
     {
@@ -633,6 +646,8 @@ FFoundationResult FFoundationAuthority::Execute(
     }
     case EFoundationCommandType::ContainerClick:
     {
+        // A container click or close ends an item use in progress, as a slot change does.
+        CancelUse(*Player);
         // The click runs on a copy, which commits only when it throws nothing: throwing waits for survival step 4.
         FFoundationInventory Trial = Player->Inventory;
         const FFoundationContainerRules ClickRules = MakeContainerRules();
@@ -653,6 +668,7 @@ FFoundationResult FFoundationAuthority::Execute(
     }
     case EFoundationCommandType::ContainerClose:
     {
+        CancelUse(*Player);
         // The cursor stack goes back into the inventory; what would not fit would be thrown, which waits for step 4.
         // The stack keeps its damage and identity (FFoundationInventory::Return).
         FFoundationInventory Trial = Player->Inventory;
