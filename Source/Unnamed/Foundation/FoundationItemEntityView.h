@@ -29,6 +29,9 @@ public:
     void OnPickedUp(const FFoundationEvent& Event, const AFoundationPawn* Pawn);
     // Drops drawn this frame, and visuals flying to the player (probes).
     int32 GetDrawnCount() const { return Drawn; }
+    // The copies an entity is drawn with (items S8b), counted from what draws: its block's instances or its visible
+    // sprites; 0 when it is not drawn.
+    int32 GetDrawnCopies(int32 EntityId) const;
     int32 GetFlyingCount() const;
     // Each drawn drop's visible parts: their world bounds and meshes (probes).
     FString Describe() const;
@@ -45,6 +48,15 @@ private:
         // One instance per part of the block's model (a cube has one), or the sprite.
         TArray<UInstancedStaticMeshComponent*> Blocks;
         UStaticMeshComponent* Sprite = nullptr;
+        // Items S8b: the copies drawn (GetCopies; 0 until set), the sprite's extra copies, and what SetCopies places:
+        // the block mesh's centre, its custom data and its display; the sprite's transform.
+        int32 Copies = 0;
+        bool bBlock = false;
+        int32 BlockParts = 0;
+        TArray<UStaticMeshComponent*> SpriteCopies;
+        FVector BlockCenter = FVector::ZeroVector;
+        TArray<float> BlockData;
+        FTransform Display, SpriteTransform;
         // The item shown (INDEX_NONE: none yet), and whether it draws anything.
         int32 Item = INDEX_NONE;
         bool bDrawn = false;
@@ -61,6 +73,9 @@ private:
     // Shows an item on a visual, its parts visible; false when it has nothing to draw (no model, the assets not
     // loaded).
     bool SetItem(FVisual& Visual, const FFoundationAuthority& Authority, int32 Item);
+    // Draws Copies copies of the visual's item, each after the first moved by a small offset fixed by its entity
+    // (provisional look, P3).
+    void SetCopies(FVisual& Visual, int32 Copies);
 
     UFoundationInteractionView& View;
     TArray<FVisual> Visuals;

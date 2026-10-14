@@ -7,6 +7,7 @@
 #include "Foundation/FoundationController.h"
 #include "Foundation/FoundationHud.h"
 #include "Foundation/FoundationItemAssets.h"
+#include "Foundation/FoundationPanels.h"
 #include "Foundation/FoundationPawn.h"
 #include "Menu/MenuBrowserHost.h"
 #include "Menu/MenuPreferences.h"
@@ -190,9 +191,27 @@ void UHudPresenter::Refresh(AFoundationController& Controller, double Now)
     }
     FIntPoint Viewport;
     Controller.GetViewportSize(Viewport.X, Viewport.Y);
-    const bool bVisible = bGameplay && !Controller.GetHud()->bHideHud;
+    // The chat (step 15): the HUD stays up under the open chat, which shows every message.
+    const bool bChatOn = FoundationChat::AreCommandsEnabled();
+    const bool bChatOpen = bChatOn && Controller.GetPanels()->IsTextOpen();
+    const bool bVisible = (bGameplay || bChatOpen) && !Controller.GetHud()->bHideHud;
     const bool bVisibilityChanged = Snapshot.bVisible != bVisible;
-    if (HudTick == LastSampleTick && Viewport == LastViewport && !bVisibilityChanged) return;
+    // The lines are rebuilt only when the chat changes, opens or closes, or a closed chat's line fades (per 1/20 s).
+    const FFoundationChat& Chat = Controller.GetChat();
+    const int64 ChatStep = bChatOn && bVisible && !bChatOpen && (Chat.HasRecent(Now) || !ChatLines.IsEmpty())
+        ? FMath::FloorToInt64(Now * 20)
+        : -1;
+    const FString ChatInput = bChatOpen ? Controller.GetPanels()->GetTypedText() : FString();
+    const bool bChatChanged = bChatOpen != Snapshot.bChatOpen || Chat.GetRevision() != ChatRevision ||
+        ChatStep != LastChatStep || !ChatInput.Equals(Snapshot.ChatInput, ESearchCase::CaseSensitive);
+    if (bChatChanged)
+    {
+        ChatLines.Reset();
+        if (bChatOn && bVisible) ChatLines = Chat.GetVisible(Now, bChatOpen);
+        ChatRevision = Chat.GetRevision();
+        LastChatStep = ChatStep;
+    }
+    if (HudTick == LastSampleTick && Viewport == LastViewport && !bVisibilityChanged && !bChatChanged) return;
     LastSampleTick = HudTick;
     LastViewport = Viewport;
 
@@ -205,6 +224,9 @@ void UHudPresenter::Refresh(AFoundationController& Controller, double Now)
         ApplyVitals(Snapshot, Pawn->Vitals, Pawn->TraceTarget());
     }
     Snapshot.bVisible = bVisible;
+    Snapshot.Chat = ChatLines;
+    Snapshot.ChatInput = ChatInput;
+    Snapshot.bChatOpen = bChatOpen;
     Snapshot.bFirstPerson = Pawn && Pawn->GetPerspective() == 0;
     const FFoundationAuthority* Authority = Pawn ? Pawn->GetAuthority() : nullptr;
     const FFoundationPlayer* Player = Authority ? Authority->FindPlayer(Pawn->Interaction.PlayerId) : nullptr;

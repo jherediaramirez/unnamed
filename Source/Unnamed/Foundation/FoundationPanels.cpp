@@ -260,7 +260,7 @@ void UFoundationPanels::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
-void UFoundationPanels::Show(TSharedRef<SWidget> Content)
+void UFoundationPanels::Show(TSharedRef<SWidget> Content, bool bBare)
 {
     if (bOpen) Close();
     bOpen = true;
@@ -270,13 +270,20 @@ void UFoundationPanels::Show(TSharedRef<SWidget> Content)
         InputSubsystem->SetGameplayInputEnabled(false);
     if (AFoundationPawn* Pawn = Controller->GetFoundationPawn()) Pawn->SetSimulationEnabled(false);
     // clang-format off
-    Root = SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center)
-    [
-        SNew(SBorder).Padding(20).BorderBackgroundColor(FLinearColor(.02f, .03f, .04f, 1.f))
+    if (bBare)
+    {
+        Root = SNew(SBox).HAlign(HAlign_Fill).VAlign(VAlign_Bottom)[Content];
+    }
+    else
+    {
+        Root = SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center)
         [
-            Content
-        ]
-    ];
+            SNew(SBorder).Padding(20).BorderBackgroundColor(FLinearColor(.02f, .03f, .04f, 1.f))
+            [
+                Content
+            ]
+        ];
+    }
     // clang-format on
     GEngine->GameViewport->AddViewportWidgetContent(Root.ToSharedRef(), 300);
     Controller->bShowMouseCursor = true;
@@ -300,6 +307,7 @@ void UFoundationPanels::Close()
         SurvivalPawn.Reset();
     }
     bOpen = bTextOpen = bInventoryOpen = false;
+    TextBox.Reset();
     AFoundationController* Controller = GetFoundationController();
     if (Controller && !Controller->GetMenuHost()->IsOpen()) Controller->ResumeFoundation();
 }
@@ -411,16 +419,40 @@ void UFoundationPanels::OpenText(bool bCommand)
             .OnTextCommitted_Lambda([WeakThis](const FText& Text, ETextCommit::Type Type)
             {
                 if (Type != ETextCommit::OnEnter || !WeakThis.IsValid()) return;
-                // Recorded locally only: no chat network and no command execution.
-                WeakThis->GetFoundationController()->GetHud()->LogEvent(
-                    TEXT("local text (no network/command execution): ") + Text.ToString().Left(256));
+                // foundation.Chat.Commands 1: the controller runs commands and shows the chat (step 15). 0: recorded
+                // locally only, no chat network and no command execution.
+                if (FoundationChat::AreCommandsEnabled())
+                {
+                    WeakThis->GetFoundationController()->SubmitChat(Text.ToString());
+                }
+                else
+                {
+                    WeakThis->GetFoundationController()->GetHud()->LogEvent(
+                        TEXT("local text (no network/command execution): ") + Text.ToString().Left(256));
+                }
                 WeakThis->Close();
             })
     ];
     // clang-format on
-    Show(List);
+    if (FoundationChat::AreCommandsEnabled())
+    {
+        // Vanilla's input bar is the HUD's (FHudSnapshot::ChatInput); the box only takes the keys, unseen.
+        List->RemoveSlot(Edit.ToSharedRef());
+        Edit->SetRenderOpacity(0);
+        Show(Edit.ToSharedRef(), true);
+    }
+    else
+        Show(List);
     bTextOpen = true;
+    TextBox = Edit;
     FSlateApplication::Get().SetKeyboardFocus(Edit);
+    // Typing goes after a prefilled "/", where the HUD draws its caret.
+    Edit->GoTo(ETextLocation::EndOfDocument);
+}
+
+FString UFoundationPanels::GetTypedText() const
+{
+    return bTextOpen && TextBox ? TextBox->GetText().ToString() : FString();
 }
 
 bool UFoundationPanels::IsTypingInInventory() const

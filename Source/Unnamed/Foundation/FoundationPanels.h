@@ -29,6 +29,8 @@ public:
 
     bool IsOpen() const { return bOpen; }
     bool IsTextOpen() const { return bTextOpen; }
+    // The open chat's typed line (step 15: the HUD draws it in vanilla's input bar); empty when closed.
+    FString GetTypedText() const;
     bool IsInventoryOpen() const { return bInventoryOpen; }
     // The creative screen's search tab takes typed text: the inventory key types instead of closing.
     bool IsTypingInInventory() const;
@@ -47,7 +49,8 @@ public:
 
 private:
     AFoundationController* GetFoundationController() const;
-    void Show(TSharedRef<SWidget> Content);
+    // Bare: no centred dark frame (the chat's invisible input; the HUD draws the bar).
+    void Show(TSharedRef<SWidget> Content, bool bBare = false);
     void OpenCreative(AFoundationLab& Lab);
     // The creative screen for the controller's pawn in Lab, not yet shown.
     TSharedRef<SHudCreativeScreen> MakeCreative(AFoundationLab& Lab);
@@ -64,5 +67,6 @@ private:
     const void* PreloadedAuthority = nullptr;
     bool bOpen = false;
     bool bTextOpen = false;
+    TSharedPtr<SEditableTextBox> TextBox;
     bool bInventoryOpen = false;
 };
