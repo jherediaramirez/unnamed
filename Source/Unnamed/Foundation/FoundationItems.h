@@ -158,8 +158,9 @@ struct UNNAMED_API FFoundationInventory
     int32 GetSpaceFor(int32 Item, int32 MaxStack) const;
     // Adds up to Count; returns how many fit. bTouchStacks false leaves the merged stacks' own revisions (their item
     // refs) as they are and bumps only the inventory's: an item entity's pickup changes a count, and a break in
-    // progress with that stack goes on, as vanilla's compares the item, not the count.
-    int32 Add(int32 Item, int32 Count, int32 MaxStack, bool bTouchStacks = true);
+    // progress with that stack goes on, as vanilla's compares the item, not the count. Damage is the added stack's wear
+    // (a thrown tool picked up again); it merges only into stacks with the same damage.
+    int32 Add(int32 Item, int32 Count, int32 MaxStack, bool bTouchStacks = true, int32 Damage = 0);
     // Removes one from a hand's stack (a placement); an emptied slot loses its identity.
     void ConsumeOne(EFoundationHand Hand);
     // Wears a hand's tool. True when this call used its last point and broke it.

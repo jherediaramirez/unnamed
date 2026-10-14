@@ -195,7 +195,7 @@ struct FFoundationLabOptions
     bool bPlantRules = true;
     // Item entities (items S8a): a survival break drops its loot into the world, and a full inventory no longer
     // refuses it. Off, the loot goes straight to the inventory, as before. The pawn copies foundation.Items.Entities
-    // in before each step; tests set it themselves.
+    // in before each step; tests set it themselves. Items S8b: on, Q and Ctrl+Q throw, and stacks merge and despawn.
     bool bItemEntities = false;
 };
 
@@ -378,14 +378,15 @@ public:
     // Item entities (items S8a), oldest first; Reset clears them.
     const TArray<FFoundationItemEntity>& GetItemEntities() const { return ItemEntities; }
     // Adds an item entity at a position (cm from the block world's origin); its id, or 0 for an invalid item or count.
-    int32 SpawnItem(int32 Item, int32 Count, const FVector& LocalCm, const FVector& VelocityCm, int32 PickupDelay);
+    int32 SpawnItem(int32 Item, int32 Count, const FVector& LocalCm, const FVector& VelocityCm, int32 PickupDelay,
+        int32 Damage = 0);
 
     const TArray<FFoundationEvent>& GetEvents() const { return Events; }
     int64 GetEventSerial() const { return EventSerial; }
 
     // Diagnostics.
     int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
-    int32 ItemsSpawned = 0, ItemsPickedUp = 0;
+    int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsThrown = 0, ItemsMerged = 0, ItemsDespawned = 0;
 
 private:
     FFoundationInventory MakeLoadout();
@@ -424,6 +425,10 @@ private:
     // A broken block's loot as item entities, split into stacks that fit (provisional spread and speed).
     void SpawnDrops(const FIntVector& Cell, TConstArrayView<FFoundationLootDrop> Drops, int32 RandomSeed);
     void StepItemEntities();
+    // Q and Ctrl+Q (items S8b): one item or the selected stack thrown from the eye along the look.
+    void Drop(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
+    // Every MergeTicks of its age, an item takes in same-item stacks inside its merge box (items S8b).
+    void MergeItemEntities();
 
     TArray<FFoundationPlayer> Players;
     TArray<FFoundationEvent> Events;

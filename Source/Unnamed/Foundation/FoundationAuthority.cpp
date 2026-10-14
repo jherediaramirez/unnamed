@@ -183,13 +183,14 @@ void FFoundationAuthority::Step()
 }
 
 int32 FFoundationAuthority::SpawnItem(
-    int32 Item, int32 Count, const FVector& LocalCm, const FVector& VelocityCm, int32 PickupDelay)
+    int32 Item, int32 Count, const FVector& LocalCm, const FVector& VelocityCm, int32 PickupDelay, int32 Damage)
 {
     if (!Rules.Items.IsValidIndex(Item) || Count <= 0) return 0;
     FFoundationItemEntity& Entity = ItemEntities.AddDefaulted_GetRef();
     Entity.Id = NextItemEntityId++;
     Entity.Item = Item;
     Entity.Count = Count;
+    Entity.Damage = Damage;
     Entity.LocalCm = Entity.PreviousLocalCm = LocalCm;
     Entity.VelocityCm = VelocityCm;
     Entity.PickupDelay = PickupDelay;
@@ -253,11 +254,15 @@ void FFoundationAuthority::StepItemEntities()
         Move(Entity, Origin, Boxes);
         ++Entity.Age;
         if (Entity.PickupDelay > 0) --Entity.PickupDelay;
-        if (Entity.LocalCm.Z < VoidCm)
+        // Items S8b: an item despawns at DespawnAge (its age does not count while frozen).
+        const bool bDespawn = Entity.Age >= DespawnAge && Options.bItemEntities;
+        ItemsDespawned += bDespawn ? 1 : 0;
+        if (Entity.LocalCm.Z < VoidCm || bDespawn)
             ItemEntities.RemoveAt(Index);
         else
             ++Index;
     }
+    if (Options.bItemEntities) MergeItemEntities();
     for (FFoundationPlayer& Player : Players)
     {
         if (!Player.bHasFacts || !Player.Facts.bAlive) continue;
@@ -267,7 +272,8 @@ void FFoundationAuthority::StepItemEntities()
             FFoundationItemEntity& Entity = ItemEntities[Index];
             const FVector Location = Origin + Entity.LocalCm;
             const int32 Taken = !Entity.bFrozen && Entity.PickupDelay <= 0 && Overlaps(Reach, GetBox(Location))
-                ? Player.Inventory.Add(Entity.Item, Entity.Count, Rules.Items[Entity.Item].MaxStack, false)
+                ? Player.Inventory.Add(
+                      Entity.Item, Entity.Count, Rules.Items[Entity.Item].MaxStack, false, Entity.Damage)
                 : 0;
             if (Taken <= 0)
             {
@@ -291,6 +297,91 @@ void FFoundationAuthority::StepItemEntities()
                 ItemEntities.RemoveAt(Index);
             else
                 ++Index;
+        }
+    }
+}
+
+void FFoundationAuthority::Drop(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result)
+{
+    using namespace FoundationItemEntities;
+    // foundation.Items.Entities 0: refused, as before items S8b.
+    if (!Options.bItemEntities)
+    {
+        Reject(Result, EFoundationReason::DropDeferred);
+        return;
+    }
+    FFoundationItemInstance& Stack = Player.Inventory.GetHand(EFoundationHand::Main);
+    if (Stack.IsEmpty())
+    {
+        Reject(Result, EFoundationReason::NoSupply);
+        return;
+    }
+    // Survival and creative alike take the thrown items from the stack (vanilla's creative Q does too).
+    const int32 Count = Command.bWholeStack ? Stack.Count : 1;
+    const FFoundationPlayerFacts Facts = Player.bHasFacts ? Player.Facts : FFoundationPlayerFacts();
+    FRandomStream Random(int32(HashCombine(GetTypeHash(Player.Id), GetTypeHash(NextItemEntityId))));
+    const double Angle = Random.FRandRange(0, 2 * UE_PI), Spread = Random.FRand() * ThrowSpreadCm;
+    const FVector Velocity = Facts.Aim.GetSafeNormal() * ThrowSpeedCm +
+        FVector(FMath::Cos(Angle) * Spread, FMath::Sin(Angle) * Spread,
+            ThrowUpCm + (Random.FRand() - Random.FRand()) * ThrowSpreadUpCm);
+    if (!SpawnItem(Stack.Item, Count, Facts.EyeCm - FVector(0, 0, ThrowBelowEyeCm) - World.OriginCm, Velocity,
+            ThrowPickupDelay, Stack.Damage))
+    {
+        Reject(Result, EFoundationReason::NoSupply);
+        return;
+    }
+    ++ItemsThrown;
+    if (Count >= Stack.Count)
+    {
+        Stack = {};
+        ++Player.Inventory.Revision;
+    }
+    else
+    {
+        Stack.Count -= Count;
+        Player.Inventory.Touch(Stack);
+    }
+    Result.Outcome = EFoundationOutcome::Committed;
+}
+
+void FFoundationAuthority::MergeItemEntities()
+{
+    using namespace FoundationItemEntities;
+    const FVector& Origin = World.OriginCm;
+    for (int32 Index = 0; Index < ItemEntities.Num(); ++Index)
+    {
+        // Provisional (P3): every MergeTicks of the item's own age, moving or not.
+        const FFoundationItemEntity& Seeker = ItemEntities[Index];
+        if (Seeker.bFrozen || Seeker.Age % MergeTicks != 0) continue;
+        const int32 MaxStack = FMath::Max(1, Rules.Items[Seeker.Item].MaxStack);
+        const FBox Reach = GetMergeBox(Origin + Seeker.LocalCm);
+        for (int32 Other = 0; Other < ItemEntities.Num() && ItemEntities[Index].Count < MaxStack; ++Other)
+        {
+            FFoundationItemEntity& A = ItemEntities[Index];
+            FFoundationItemEntity& B = ItemEntities[Other];
+            if (Other == Index || B.bFrozen || B.Item != A.Item || B.Damage != A.Damage || B.Count >= MaxStack ||
+                !Overlaps(Reach, GetBox(Origin + B.LocalCm)))
+                continue;
+            // Provisional (P3): the smaller stack moves into the larger (into the seeker on a tie); the result keeps
+            // the longer pickup delay and the younger age.
+            FFoundationItemEntity& Into = B.Count > A.Count ? B : A;
+            FFoundationItemEntity& From = B.Count > A.Count ? A : B;
+            const int32 Moved = FMath::Min(From.Count, MaxStack - Into.Count);
+            Into.Count += Moved;
+            From.Count -= Moved;
+            Into.PickupDelay = FMath::Max(Into.PickupDelay, From.PickupDelay);
+            Into.Age = FMath::Min(Into.Age, From.Age);
+            ++ItemsMerged;
+            if (From.Count > 0) continue;
+            const bool bSeekerGone = &From == &A;
+            ItemEntities.RemoveAt(bSeekerGone ? Index : Other);
+            if (bSeekerGone)
+            {
+                --Index;
+                break;
+            }
+            if (Other < Index) --Index;
+            --Other;
         }
     }
 }
@@ -538,7 +629,7 @@ FFoundationResult FFoundationAuthority::Execute(
         Result.Outcome = EFoundationOutcome::Committed;
         break;
     case EFoundationCommandType::Drop:
-        Reject(Result, EFoundationReason::DropDeferred);
+        Drop(*Player, Command, Result);
         break;
     case EFoundationCommandType::UseOn:
         UseOn(*Player, Command, Result);

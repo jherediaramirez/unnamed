@@ -57,6 +57,8 @@ void FFoundationItemEntityView::Update(
             Visual.Item = INDEX_NONE;
             continue;
         }
+        if (const int32 Copies = FoundationItemEntities::GetCopies(Entity.Count); Copies != Visual.Copies)
+            SetCopies(Visual, Copies);
         // Drawn between the last two steps; the look's clock runs with them.
         const double Age = Entity.Age - 1 + Alpha;
         const double Bob = BobCm * FMath::Sin(Age / BobTicks + Entity.BobOffset) + BobCm;
@@ -103,6 +105,16 @@ void FFoundationItemEntityView::OnPickedUp(const FFoundationEvent& Event, const 
     Visual.FlyFrom = Visual.Root->GetComponentLocation();
 }
 
+int32 FFoundationItemEntityView::GetDrawnCopies(int32 EntityId) const
+{
+    const int32* Found = ByEntity.Find(EntityId);
+    if (!Found || !Visuals[*Found].bDrawn) return 0;
+    const FVisual& Visual = Visuals[*Found];
+    if (Visual.bBlock) return Visual.BlockParts > 0 ? Visual.Blocks[0]->GetInstanceCount() : 0;
+    return Algo::CountIf(Visual.SpriteCopies, [](const UStaticMeshComponent* Copy) { return Copy->IsVisible(); }) +
+        (Visual.Sprite && Visual.Sprite->IsVisible() ? 1 : 0);
+}
+
 int32 FFoundationItemEntityView::GetFlyingCount() const
 {
     return Algo::CountIf(Visuals, [](const FVisual& Visual) { return Visual.bUsed && Visual.FlyAge >= 0; });
@@ -118,6 +130,7 @@ FString FFoundationItemEntityView::Describe() const
             *Visual.Root->GetComponentLocation().ToCompactString(), Visual.Root->IsVisible());
         TArray<const UStaticMeshComponent*, TInlineAllocator<4>> Parts(Visual.Blocks);
         if (Visual.Sprite) Parts.Add(Visual.Sprite);
+        Parts.Append(Visual.SpriteCopies);
         for (const UStaticMeshComponent* Part : Parts)
             if (Part->IsVisible())
                 Text += FString::Printf(TEXT(" %s %s %s"), *GetNameSafe(Part->GetStaticMesh()),
@@ -161,6 +174,7 @@ void FFoundationItemEntityView::Release(FVisual& Visual)
     Visual.bUsed = Visual.bDrawn = false;
     Visual.EntityId = 0;
     Visual.Item = INDEX_NONE;
+    Visual.Copies = 0;
     Visual.FlyAge = -1;
     // Hides its parts; SetItem shows the ones the next item uses.
     Visual.Root->SetVisibility(false, true);
@@ -169,9 +183,12 @@ void FFoundationItemEntityView::Release(FVisual& Visual)
 bool FFoundationItemEntityView::SetItem(FVisual& Visual, const FFoundationAuthority& Authority, int32 Item)
 {
     Visual.Item = Item;
+    Visual.Copies = 0;
     for (UInstancedStaticMeshComponent* Block : Visual.Blocks)
         Block->SetVisibility(false);
     if (Visual.Sprite) Visual.Sprite->SetVisibility(false);
+    for (UStaticMeshComponent* Copy : Visual.SpriteCopies)
+        Copy->SetVisibility(false);
     const FFoundationItemDefinition& Definition = Authority.Rules.GetItem(Item);
     if (Definition.Icon == TEXT("block"))
     {
@@ -203,10 +220,14 @@ bool FFoundationItemEntityView::SetItem(FVisual& Visual, const FFoundationAuthor
             Block->ClearInstances();
             Block->SetStaticMesh(Meshes[Index]);
             Block->SetMaterial(0, Material);
-            Block->SetCustomDataById(Block->AddInstanceById(FTransform(-Box.GetCenter()), false), Data);
             Block->SetRelativeTransform(Display);
             Block->SetVisibility(true);
         }
+        Visual.bBlock = true;
+        Visual.BlockParts = Meshes.Num();
+        Visual.BlockCenter = Box.GetCenter();
+        Visual.BlockData = TArray<float>(Data, UE_ARRAY_COUNT(Data));
+        Visual.Display = Display;
         Visual.LiftCm = .25 * Ground.Scale.Y * UFoundationProfile::BlockCm;
         return true;
     }
@@ -241,11 +262,58 @@ bool FFoundationItemEntityView::SetItem(FVisual& Visual, const FFoundationAuthor
     const FTransform Display = Model.Display
         ? FoundationItemMesh::MakeDisplayTransform(*Model.Display, UFoundationProfile::BlockCm)
         : FTransform::Identity;
-    Visual.Sprite->SetRelativeTransform(
-        FTransform(FQuat::Identity, FVector::ZeroVector,
-            FVector(UFoundationProfile::BlockCm / UFoundationInteractionView::HeldModelBlockCm)) *
-        Display);
+    Visual.bBlock = false;
+    Visual.SpriteTransform = FTransform(FQuat::Identity, FVector::ZeroVector,
+                                 FVector(UFoundationProfile::BlockCm / UFoundationInteractionView::HeldModelBlockCm)) *
+        Display;
+    Visual.Sprite->SetRelativeTransform(Visual.SpriteTransform);
     Visual.Sprite->SetVisibility(true);
     Visual.LiftCm = .25 * (Model.Display ? Model.Display->Scale.Y : 1.) * UFoundationProfile::BlockCm;
     return true;
+}
+
+void FFoundationItemEntityView::SetCopies(FVisual& Visual, int32 Copies)
+{
+    using namespace FoundationItemEntities;
+    Visual.Copies = Copies;
+    // Offsets in the root's space: none for the first copy, then fixed by the entity.
+    FRandomStream Random(int32(GetTypeHash(Visual.EntityId)));
+    TArray<FVector, TInlineAllocator<5>> Offsets{FVector::ZeroVector};
+    const double Spread = Visual.bBlock ? CopySpreadCm : CopySpreadCm * .5;
+    while (Offsets.Num() < Copies)
+        Offsets.Add(FVector(Random.FRandRange(-1, 1), Random.FRandRange(-1, 1), Random.FRandRange(-1, 1)) * Spread);
+    if (Visual.bBlock)
+    {
+        for (int32 Part = 0; Part < Visual.BlockParts; ++Part)
+        {
+            UInstancedStaticMeshComponent* Block = Visual.Blocks[Part];
+            Block->ClearInstances();
+            for (const FVector& Offset : Offsets)
+                Block->SetCustomDataById(
+                    Block->AddInstanceById(
+                        FTransform(Visual.Display.InverseTransformVector(Offset) - Visual.BlockCenter), false),
+                    Visual.BlockData);
+        }
+        return;
+    }
+    while (Visual.SpriteCopies.Num() < Copies - 1)
+    {
+        UStaticMeshComponent* Copy = NewObject<UStaticMeshComponent>(View.GetOwner());
+        Copy->SetMobility(EComponentMobility::Movable);
+        Copy->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        Copy->SetupAttachment(Visual.Root);
+        Copy->RegisterComponent();
+        View.Owned.Add(Copy);
+        Visual.SpriteCopies.Add(Copy);
+    }
+    for (int32 Index = 0; Index < Visual.SpriteCopies.Num(); ++Index)
+    {
+        UStaticMeshComponent* Copy = Visual.SpriteCopies[Index];
+        const bool bShown = Index + 1 < Copies;
+        Copy->SetVisibility(bShown);
+        if (!bShown) continue;
+        Copy->SetStaticMesh(Visual.Sprite->GetStaticMesh());
+        Copy->SetMaterial(0, Visual.Sprite->GetMaterial(0));
+        Copy->SetRelativeTransform(Visual.SpriteTransform * FTransform(Offsets[Index + 1]));
+    }
 }
