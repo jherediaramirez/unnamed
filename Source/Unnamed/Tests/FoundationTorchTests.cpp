@@ -208,7 +208,7 @@ bool FFoundationBlocksSupportTest::RunTest(const FString&)
                     int32(Masks[Index]->AsNumber())));
         }
     }
-    TestEqual(TEXT("every imported state"), States, 4424);
+    TestEqual(TEXT("every imported state (block_support.json's 28,552 masks)"), States, 28552);
     TestEqual(TEXT("states whose support differs"), Different, 0);
     return true;
 }

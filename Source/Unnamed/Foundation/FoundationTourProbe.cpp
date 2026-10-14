@@ -1381,21 +1381,27 @@ void UFoundationRuntimeProbe::AddTourCases()
     Gallery(TEXT("17p-plants"), Plants + FVector(0, 1100, 650), Plants);
     Gallery(TEXT("17q-plants-near"), Plants + FVector(12 * 60. * .6, 260, 230), Plants);
     // The galleries from above their middle, backed off with their row count (23 and 59 rows before the model blocks
-    // joined them).
-    const FFoundationBlockRegistry& Blocks = *FFoundationBlockRegistry::GetDefault();
-    int32 StateCount = 0;
-    for (int32 Block = 1; Block < Blocks.GetBlockCount(); ++Block)
-        StateCount += Blocks.GetBlockAt(Block).StateCount;
-    const int32 RegistryRows =
-        FMath::DivideAndRoundUp(Blocks.GetBlockCount() - 1, AFoundationPlayground::RegistryGalleryColumns);
-    const int32 StateRows = FMath::DivideAndRoundUp(StateCount, AFoundationPlayground::StateGalleryColumns);
-    const FVector Registry = (FVector(AFoundationPlayground::RegistryGalleryOrigin) +
-                                 FVector(AFoundationPlayground::RegistryGalleryColumns, RegistryRows - 1, 0)) *
-        UFoundationProfile::BlockCm;
+    // joined them). Framed from the layout the Playground builds (GetGalleryCells), so the family tails count when the
+    // switch shows them: their rows hold only default states.
+    TArray<AFoundationPlayground::FGalleryCell> RegistryCells, StateCells;
+    AFoundationPlayground::GetGalleryCells(*FFoundationBlockRegistry::GetDefault(), RegistryCells, StateCells);
+    auto Frame = [](const TArray<AFoundationPlayground::FGalleryCell>& Cells, int32& OutRows)
+    {
+        FIntVector Min(MAX_int32), Max(MIN_int32);
+        for (const AFoundationPlayground::FGalleryCell& Cell : Cells)
+        {
+            Min = Min.ComponentMin(Cell.Cell);
+            Max = Max.ComponentMax(Cell.Cell);
+        }
+        // Cells sit two apart: a row every second cell.
+        OutRows = Cells.IsEmpty() ? 1 : (Max.Y - Min.Y) / 2 + 1;
+        return Cells.IsEmpty() ? FVector::ZeroVector
+                               : (FVector(Min + Max) / 2 + FVector(.5, .5, 0)) * UFoundationProfile::BlockCm;
+    };
+    int32 RegistryRows = 1, StateRows = 1;
+    const FVector Registry = Frame(RegistryCells, RegistryRows);
     Gallery(TEXT("18-gallery-registry"), Registry + FVector(0, 3200, 2600) * (RegistryRows / 23.), Registry);
-    const FVector States = (FVector(AFoundationPlayground::StateGalleryOrigin) +
-                               FVector(AFoundationPlayground::StateGalleryColumns, StateRows - 1, 0)) *
-        UFoundationProfile::BlockCm;
+    const FVector States = Frame(StateCells, StateRows);
     Gallery(TEXT("19-gallery-states"), States + FVector(0, 7000, 5500) * (StateRows / 59.), States);
 
     // i2. The hotbar's item sprites and durability bars (items S3): the loadout's iron pickaxe and sword worn to 125

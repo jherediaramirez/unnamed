@@ -146,12 +146,12 @@ bool FFoundationBlocksRegistryTest::RunTest(const FString&)
     if (!TestNotNull(TEXT("registry asset"), Registry->GetAssets()) || !TestValid(TEXT("manifest"), Manifest) ||
         !TestValid(TEXT("report"), Report))
         return false;
-    // 614 blocks (429 cubes, 101 slabs, snow layers and 83 model blocks) plus air, water and lava, and no project
-    // blocks by default.
-    TestEqual(TEXT("air + 616 + water + lava"), Registry->GetBlockCount(), 619);
+    // block_manifest.json's 926 blocks (429 cubes, 101 slabs, snow layers and 395 model blocks, B1's 310 families
+    // included) plus air, water and lava, and no project blocks by default.
+    TestEqual(TEXT("air + 926 + water + lava"), Registry->GetBlockCount(), 929);
     int32 ModelBlocks = 0;
     CountModelStates(*Registry, &ModelBlocks);
-    TestEqual(TEXT("blocks with shape Model"), ModelBlocks, 85);
+    TestEqual(TEXT("blocks with shape Model"), ModelBlocks, 395);
     TArray<TSharedPtr<FJsonValue>> Blocks = Manifest->GetArrayField(TEXT("blocks"));
     Blocks.Append(Manifest->GetArrayField(TEXT("fluids")));
     int32 States = 0, Mismatches = 0;
@@ -188,11 +188,12 @@ bool FFoundationBlocksRegistryTest::RunTest(const FString&)
             ++States;
         }
     }
-    TestEqual(TEXT("states checked"), States, 4424);
+    TestEqual(TEXT("states checked (block_manifest.json's state ranges)"), States, 28552);
     TestEqual(TEXT("states whose id or properties differ from the report"), Mismatches, 0);
     TestEqual(TEXT("air is state 0"), Registry->GetBlock({0}).Id, FName(TEXT("air")));
     TestTrue(TEXT("unknown ids resolve to air"),
-        Registry->GetBlock({2}).Id == TEXT("granite") && !Registry->IsKnown({30}) && Registry->GetBlock({30}).IsAir());
+        Registry->GetBlock({2}).Id == TEXT("granite") && !Registry->IsKnown({2286}) &&
+            Registry->GetBlock({2286}).IsAir());
     // Spot checks named in the reference doc.
     TestEqual(TEXT("stone = 1"), Registry->FindBlock(TEXT("stone"))->DefaultStateId, 1);
     TestTrue(TEXT("water 37, states 89-104"),
@@ -226,7 +227,7 @@ bool FFoundationBlocksCodecTest::RunTest(const FString&)
             ++States;
         }
     }
-    TestEqual(TEXT("every imported state"), States, 4424);
+    TestEqual(TEXT("every imported state"), States, 28552);
     TestEqual(TEXT("save/load and text round-trip failures"), Failures, 0);
     // The saved form is ids and properties, never numbers.
     const FFoundationBlockState Slab = Registry->FindBlock(TEXT("oak_slab"))->GetDefaultState();
@@ -299,8 +300,8 @@ bool FFoundationBlocksFacesTest::RunTest(const FString&)
                 Invalid += !ValidTexture(FoundationBlockFaces::GetTexture(Overlay));
         }
     }
-    // 4,392 states without the two fluids, of which the model states have no faces.
-    TestEqual(TEXT("faces checked (non-model states x 6) plus model states x 6"), Faces + ModelStates * 6, 4392 * 6);
+    // 28,520 states without the two fluids' 32, of which the model states have no faces.
+    TestEqual(TEXT("faces checked (non-model states x 6) plus model states x 6"), Faces + ModelStates * 6, 28520 * 6);
     TestTrue(TEXT("model states exist"), ModelStates > 0);
     TestEqual(TEXT("model state face codes that are not 0"), ModelCodes, 0);
     TestEqual(TEXT("faces without a valid array layer"), Invalid, 0);
@@ -428,8 +429,9 @@ bool FFoundationBlocksTexturesTest::RunTest(const FString&)
                 AddError(FString::Printf(TEXT("%s frame %d differs"), *Texture->GetStringField(TEXT("name")), Frame));
             }
     }
-    // 945 block frames and 48 flow frames (water 32, lava 16), less the two shelf mushroom frames.
-    TestEqual(TEXT("layers checked"), Checked, 991);
+    // textures.json's frames: 1,364 block frames and 48 flow frames (water 32, lava 16), less the two shelf mushroom
+    // frames.
+    TestEqual(TEXT("layers checked"), Checked, 1410);
     TestEqual(TEXT("layers whose pixels differ from the jar"), Different, 0);
     TestEqual(TEXT("shelf mushroom layers with their own mip 1"), Shelf, 2);
     TestEqual(TEXT("shelf mushroom layers that differ from level 1 of the 32x32 PNG"), ShelfDifferent, 0);
@@ -747,7 +749,7 @@ bool FFoundationBlocksShapesTest::RunTest(const FString&)
                 Fail(Label + TEXT(" fluid differs"));
         }
     }
-    TestEqual(TEXT("facts blocks (every imported block)"), FactBlocks, 618);
+    TestEqual(TEXT("facts blocks (every imported block)"), FactBlocks, 928);
     TestEqual(TEXT("model states checked against the facts"), ModelStates, CountModelStates(Registry));
     TestTrue(TEXT("model states exist"), ModelStates > 0);
     TestEqual(TEXT("offsets, boxes, light, fluids and replaceable flags that differ from the facts"), Mismatches, 0);
@@ -780,8 +782,8 @@ bool FFoundationBlocksModelsTest::RunTest(const FString&)
 
     // Every model and quad.
     const TArray<TSharedPtr<FJsonValue>>& Models = ModelsJson->GetArrayField(TEXT("models"));
-    TestEqual(TEXT("reference models"), Models.Num(), 308);
-    TestEqual(TEXT("registry models"), Registry.GetModelCount(), 308);
+    TestEqual(TEXT("reference models"), Models.Num(), 4852);
+    TestEqual(TEXT("registry models"), Registry.GetModelCount(), 4852);
     TestEqual(TEXT("registry models equal the reference's"), Registry.GetModelCount(), Models.Num());
     int32 ReferenceQuads = 0, RegistryQuads = 0;
     for (int32 Model = 0; Model < Registry.GetModelCount(); ++Model)
@@ -823,8 +825,8 @@ bool FFoundationBlocksModelsTest::RunTest(const FString&)
             if (!bSame) Fail(FString::Printf(TEXT("model %d quad %d differs from the reference"), Model, Index));
         }
     }
-    TestEqual(TEXT("reference quads"), ReferenceQuads, 2440);
-    TestEqual(TEXT("registry quads"), RegistryQuads, 2440);
+    TestEqual(TEXT("reference quads"), ReferenceQuads, 52261);
+    TestEqual(TEXT("registry quads"), RegistryQuads, 52261);
 
     // Every model state's parts and alternatives.
     int32 ModelStates = 0;
@@ -943,9 +945,10 @@ bool FFoundationBlocksModelsTest::RunTest(const FString&)
         TileBlocks += Registry.GetBlockAt(Index).ItemIconTile >= 0;
         ModelIconBlocks += Registry.GetBlockAt(Index).ItemIconModel >= 0;
     }
-    TestEqual(TEXT("items with an icon"), IconItems, 72);
-    TestEqual(TEXT("blocks with an icon sprite tile"), TileBlocks, 62);
-    TestEqual(TEXT("blocks with an icon model"), ModelIconBlocks, 10);
+    // items.json: 358 icons, 241 of them a model.
+    TestEqual(TEXT("items with an icon"), IconItems, 358);
+    TestEqual(TEXT("blocks with an icon sprite tile"), TileBlocks, 117);
+    TestEqual(TEXT("blocks with an icon model"), ModelIconBlocks, 241);
     TestEqual(TEXT("item icons that differ from items.json"), IconMismatches, 0);
     return true;
 }
@@ -1020,12 +1023,14 @@ bool FFoundationBlocksModelMeshesTest::RunTest(const FString&)
         if (Vertex != LOD.GetNumVertices())
             Fail(FString::Printf(TEXT("model %d: %d vertices, %d expected"), Model, LOD.GetNumVertices(), Vertex));
     }
-    TestEqual(TEXT("baked quads (S5's 2,410 and the torch's 30)"), Quads, 2440);
+    TestEqual(TEXT("baked quads (block_models.json's 52,261)"), Quads, 52261);
     TestEqual(TEXT("quads the torch's flame cut adds (4 sides in each of its 5 models)"), Cut, 20);
     TestEqual(TEXT("quads drawn (16 exact repeats dropped, as the voxel world drops them; 20 flame cuts added)"), Drawn,
-        2444);
+        52265);
     TestEqual(TEXT("triangles, two per drawn quad"), Triangles, 2 * Drawn);
-    TestEqual(TEXT("models without a mesh"), Empty, 0);
+    // The pitcher crop's top before stage 3 is empty in vanilla (no top texture until pitcher_crop_top_stage_3):
+    // block_models.json's model 4709 has no quads.
+    TestEqual(TEXT("models without a mesh"), Empty, 1);
     // Only the firefly bush's emissive overlay lies on another quad (S6's Mesher.ModelData allows exactly its four).
     TestEqual(TEXT("overlay quads lifted off the quad beneath"), Lifted, 4);
     TestEqual(TEXT("vertex mismatches"), Mismatches, 0);

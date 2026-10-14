@@ -213,7 +213,7 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
                 Definition->DurabilityPerHit == Asset.DamagePerHit &&
                 Definition->DefaultMiningSpeed == Asset.DefaultMiningSpeed &&
                 Definition->MiningRules.Num() == Asset.Rules.Num() && Definition->Tags.Num() == Asset.ItemTags.Num() &&
-                Definition->PlacesBlock.IsNone() && Definition->DisplayName == Asset.DisplayName &&
+                Definition->PlacesBlock == Asset.PlacesBlock && Definition->DisplayName == Asset.DisplayName &&
                 !Asset.Textures.IsEmpty() && Definition->Sprite == Asset.Textures[0]);
         for (int32 Rule = 0; Rule < FMath::Min(Definition->MiningRules.Num(), Asset.Rules.Num()); ++Rule)
             TestTrue(What + FString::Printf(TEXT("definition rule %d"), Rule),
@@ -320,16 +320,29 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
     if (TestNotNull(TEXT("lang.json"), Keys.Get()) && TestEqual(TEXT("6 lang keys"), Assets->Lang.Num(), 6))
         for (const TPair<FString, TSharedPtr<FJsonValue>>& Key : Keys->Values)
             TestEqual(TEXT("lang ") + Key.Key, Assets->Lang.FindRef(Key.Key), Key.Value->AsString());
-    // Ids: no 26.3 item shares an id with a block or a block item; only air and wheat share a block's id in 26.3
-    // without being that block's item, and neither is imported.
+    // Ids: no 26.3 item shares an id with a block item. Only the 9 saplings share a block's id: they are DA_Items items
+    // that place their own block (the blocks plan 2.6), and DA_Blocks gives that block no item. Air and wheat share a
+    // block's id in 26.3 without being that block's item, and neither is imported.
     const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();
     TArray<FFoundationItemDefinition> BlockItems;
     UFoundationInteractionSettings::AddBlockItems(*Registry, BlockItems);
+    int32 Saplings = 0;
     for (const FFoundationItemAsset& Asset : Assets->Items)
-        TestTrue(TEXT("no block or block item named ") + Asset.Id.ToString(),
-            !Registry->FindBlock(Asset.Id) &&
-                !BlockItems.ContainsByPredicate(
-                    [&Asset](const FFoundationItemDefinition& Item) { return Item.Id == Asset.Id; }));
+    {
+        const FFoundationBlockType* Block = Registry->FindBlock(Asset.Id);
+        const bool bSapling = Asset.Id.ToString().EndsWith(TEXT("_sapling"));
+        Saplings += bSapling;
+        TestTrue(TEXT("no block item named ") + Asset.Id.ToString(),
+            !BlockItems.ContainsByPredicate(
+                [&Asset](const FFoundationItemDefinition& Item) { return Item.Id == Asset.Id; }));
+        if (bSapling)
+            TestTrue(Asset.Id.ToString() + TEXT(" places its own block, which has no item"),
+                Asset.PlacesBlock == Asset.Id && Block && Block->Item.IsNone());
+        else
+            TestTrue(TEXT("no block named ") + Asset.Id.ToString() + TEXT(", and no placed block"),
+                !Block && Asset.PlacesBlock.IsNone());
+    }
+    TestEqual(TEXT("saplings in DA_Items (items.json's 9 saplings)"), Saplings, 9);
     TestEqual(TEXT("block items, then DA_Items, then project items"), Rules.Items.Num(),
         BlockItems.Num() + Assets->Items.Num() + UFoundationInteractionSettings::Get().Items.Num());
     if (Rules.Items.IsValidIndex(BlockItems.Num()))

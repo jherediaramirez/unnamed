@@ -372,7 +372,8 @@ bool FFoundationBlockRegistry::IsValidModelData(const FFoundationBlockAsset& Sou
     for (int32 State = 0; State < States; ++State)
     {
         int32 Parts, Alternatives, Model;
-        if (Source.StateShapes[State] != EFoundationBlockShape::Model || !Next(Parts) || Parts < 1) return false;
+        // Zero parts is a state vanilla draws nothing for (a wall with no post and no sides).
+        if (Source.StateShapes[State] != EFoundationBlockShape::Model || !Next(Parts) || Parts < 0) return false;
         for (int32 Part = 0; Part < Parts; ++Part)
         {
             if (!Next(Alternatives) || Alternatives < 1) return false;

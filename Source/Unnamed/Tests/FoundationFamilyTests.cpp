@@ -163,7 +163,9 @@ bool FFoundationFamiliesPlaceTest::RunTest(const FString& Parameters)
             ++NoItem;
             continue;
         }
-        if (Reason == EFoundationReason::None && State == Block.GetDefaultState())
+        // Oriented blocks (stairs, doors, beds...) take their facing from the placement, so the state is checked by its
+        // block, not as the default state.
+        if (Reason == EFoundationReason::None && &Registry.GetBlock(State) == &Block)
             ++Placed;
         else
             AddError(FString::Printf(TEXT("%s with the switch on: reason %d, placed %s"), *Block.Id.ToString(),
@@ -175,7 +177,7 @@ bool FFoundationFamiliesPlaceTest::RunTest(const FString& Parameters)
         else
             AddError(FString::Printf(TEXT("%s with the switch off: reason %d"), *Block.Id.ToString(), int32(Reason)));
     }
-    AddInfo(FString::Printf(TEXT("%d family blocks: %d placed their default state with the switch on, %d refused "
+    AddInfo(FString::Printf(TEXT("%d family blocks: %d placed with the switch on, %d refused "
                                  "with it off, %d have no item"),
         Families, Placed, Refused, NoItem));
     TestEqual(TEXT("family blocks in the registry"), Families, B1Blocks);
