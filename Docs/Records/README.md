@@ -2,6 +2,10 @@
 
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
+## October 14, 2026
+
+- [Blocks plan: survival track T5, B0-B7](2026-10-14-Blocks-Plan.md): plan only, lane `feature/survival-blocks`. B0 the program-wide sound batch (sound reference made append-safe, `DA_Sounds` once), B1 the reference extension (302 family blocks plus cauldrons, fires and campfires: 926 blocks, 28,552 states, 968 of 1,024 texture codes; the chest stand-in box; `poplar_sapling` gated on the radius-8 hashes), then shapes, interactive blocks, climbing, farming, random ticks and beds, with what each waits on.
+
 ## October 13, 2026
 
 - [The player body: Better Steve in F5, and a spring-arm preview](2026-10-13-Player-Body.md): record and handoff, lane `feature/player-body`. Better Steve (`/Game/Characters/BetterSteve`, `Scripts/Editor/ImportBetterSteve.py`) walks, sprints, crouches, jumps and looks around in F5's back and front views with planted feet, driven in C++ (`FFoundationBodyAnimator`, `UFoundationBodyAnimInstance`, no Animation Blueprint); `foundation.Body.Yaw` (1 vanilla) and the third-person preview `foundation.View.SpringArm` (0) are Jesus's taste calls; `-Suite body` shoots every pose.
