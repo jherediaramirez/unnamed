@@ -50,15 +50,22 @@ FBox FoundationItemEntities::GetStepRegion(const FFoundationItemEntity& Entity, 
 
 void FoundationItemEntities::Move(FFoundationItemEntity& Entity, const FVector& OriginCm, const TArray<FBox>& Boxes)
 {
-    Entity.PreviousLocalCm = Entity.LocalCm;
-    FVector& Velocity = Entity.VelocityCm;
-    Velocity.Z -= GravityCm;
-    const FVector Moved = FFoundationSimulation::Clip(GetBox(OriginCm + Entity.LocalCm), Velocity, Boxes);
-    Entity.LocalCm += Moved;
-    Entity.bOnGround = Velocity.Z < 0 && Moved.Z != Velocity.Z;
+    MoveBox(Entity.LocalCm, Entity.PreviousLocalCm, Entity.VelocityCm, Entity.bOnGround,
+        GetBox(OriginCm + Entity.LocalCm), Boxes, GravityCm, FVector::ZeroVector);
+}
+
+void FoundationItemEntities::MoveBox(FVector& LocalCm, FVector& PreviousLocalCm, FVector& Velocity, bool& bOnGround,
+    const FBox& Box, const TArray<FBox>& Boxes, double Gravity, const FVector& PushCm)
+{
+    PreviousLocalCm = LocalCm;
+    Velocity.Z -= Gravity;
+    Velocity += PushCm;
+    const FVector Moved = FFoundationSimulation::Clip(Box, Velocity, Boxes);
+    LocalCm += Moved;
+    bOnGround = Velocity.Z < 0 && Moved.Z != Velocity.Z;
     for (int32 Axis = 0; Axis < 3; ++Axis)
         if (Moved[Axis] != Velocity[Axis]) Velocity[Axis] = 0;
-    const double Sideways = Entity.bOnGround ? GroundFriction * Drag : Drag;
+    const double Sideways = bOnGround ? GroundFriction * Drag : Drag;
     Velocity.X *= Sideways;
     Velocity.Y *= Sideways;
     Velocity.Z *= Drag;
