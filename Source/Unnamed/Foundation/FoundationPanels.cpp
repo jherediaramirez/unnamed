@@ -512,6 +512,7 @@ TSharedRef<SHudCreativeScreen> UFoundationPanels::MakeCreative(AFoundationLab& L
         Entry.Name = Item.DisplayName;
         Entry.MaxStack = Item.MaxStack;
         Entry.MaxDamage = Item.MaxDurability;
+        Entry.Equipment = Item.Equipment;
         if (const FFoundationItemAsset* Asset = ItemAssets ? ItemAssets->FindItem(Item.Id) : nullptr)
         {
             Entry.Details = HudTooltip::GetModifierLines(Asset->Modifiers, ItemAssets->Lang, true);
@@ -540,7 +541,7 @@ TSharedRef<SHudCreativeScreen> UFoundationPanels::MakeCreative(AFoundationLab& L
         .GetInventory([WeakLab, WeakPawn]
         {
             TArray<FHudCreativeStack> Stacks;
-            Stacks.SetNum(FFoundationInventory::HotbarSlots + 1);
+            Stacks.SetNum(FFoundationInventory::Slots);
             if (!WeakLab.IsValid() || !WeakPawn.IsValid() || !WeakLab->GetAuthority()) return Stacks;
             const FFoundationAuthority& A = *WeakLab->GetAuthority();
             const FFoundationPlayer* Player = A.FindPlayer(WeakPawn->Interaction.PlayerId);
@@ -550,9 +551,9 @@ TSharedRef<SHudCreativeScreen> UFoundationPanels::MakeCreative(AFoundationLab& L
                 return Item.IsEmpty() ? FHudCreativeStack()
                                       : FHudCreativeStack{A.Rules.GetItem(Item.Item).Id, Item.Count, Item.Damage};
             };
-            for (int32 Slot = 0; Slot < FFoundationInventory::HotbarSlots; ++Slot)
-                Stacks[Slot] = Stack(Player->Inventory.Hotbar[Slot]);
-            Stacks[FFoundationInventory::HotbarSlots] = Stack(Player->Inventory.Offhand);
+            // Every slot by its Inventory number; with the lab inventory, GetSlot leaves main and armor empty.
+            for (int32 Slot = 0; Slot < FFoundationInventory::Slots; ++Slot)
+                if (const FFoundationItemInstance* Item = Player->Inventory.GetSlot(Slot)) Stacks[Slot] = Stack(*Item);
             return Stacks;
         })
         .OnWrite([WeakLab, WeakPawn](const FHudCreativeWrite& Write)
