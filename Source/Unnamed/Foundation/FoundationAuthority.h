@@ -7,6 +7,7 @@
 #include "Foundation/FoundationItemEntities.h"
 #include "Foundation/FoundationItems.h"
 #include "Foundation/FoundationLoot.h"
+#include "Foundation/FoundationRecipes.h"
 #include "Foundation/FoundationTargeting.h"
 #include "Foundation/FoundationVitals.h"
 
@@ -231,6 +232,9 @@ struct FFoundationLabOptions
     // inventory, the hotbar and offhand only. The pawn copies foundation.Inventory.Full in before each step; tests
     // set it themselves.
     bool bFullInventory = false;
+    // Crafting (survival step 6): the crafting grid's result slot. Off, the grid takes and holds items and the result
+    // stays empty. The pawn copies foundation.Crafting in before each step.
+    bool bCrafting = true;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -271,6 +275,8 @@ struct UNNAMED_API FFoundationRules
     TMap<FName, FFoundationLootTable> LootTables;
     TArray<FFoundationLootPredicate> LootPredicates;
     uint64 LootSeed = 0;
+    // Crafting recipes (survival step 6; BuildRules, from DA_Recipes), resolved against Items.
+    FFoundationRecipeBook Recipes;
 
     int32 FindItem(FName Id) const;
     // The definition for an inventory index; an invalid index is the bare hand.
@@ -401,6 +407,9 @@ public:
     void RemovePlayer(int32 Id);
     FFoundationPlayer* FindPlayer(int32 Id);
     const FFoundationPlayer* FindPlayer(int32 Id) const;
+    // The player's container 0 as its menu shows it, by menu slot (46: the result the grid makes now, the grid, the
+    // armor, the main grid, the hotbar, the offhand), for the screen's view.
+    TArray<FFoundationItemInstance> GetPlayerMenu(const FFoundationPlayer& Player) const;
     void SetFacts(int32 Player, const FFoundationPlayerFacts& Facts);
 
     FFoundationResult Execute(int32 Player, const FFoundationCommand& Command, FFoundationVitals& Vitals);

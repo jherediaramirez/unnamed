@@ -361,6 +361,7 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     // The authority sees this step's pose; targets' damage cooldowns and item entities step once per reference step.
     Authority.Options.bItemEntities = FoundationItemEntities::IsOn();
     Authority.Options.bFullInventory = FoundationInventory::IsFull();
+    Authority.Options.bCrafting = FoundationCrafting::IsEnabled();
     Authority.Options.bItemUse = FoundationItemUse::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     Authority.Step();

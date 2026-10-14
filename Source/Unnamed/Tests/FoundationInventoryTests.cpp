@@ -215,9 +215,11 @@ bool FFoundationInventoryPickupTest::RunTest(const FString&)
     TestTrue(TEXT("left takes all"), HoldsStack(I.Carried, InvStone, 32) && I.Main[0].IsEmpty());
     I.SetSlot(10, I.MakeStack(InvDirt, 3));
     Menu.Click(MainMenuSlot(1), 0, EFoundationClickType::Pickup);
-    Menu.Click(MainMenuSlot(1), 0, EFoundationClickType::Pickup);
+    // Checked after the first click, so a no-op cannot pass (Codex 5a finding 5).
     TestTrue(
-        TEXT("left on another item swaps"), HoldsStack(I.Main[1], InvDirt, 3) && HoldsStack(I.Carried, InvStone, 32));
+        TEXT("left on another item swaps"), HoldsStack(I.Main[1], InvStone, 32) && HoldsStack(I.Carried, InvDirt, 3));
+    Menu.Click(MainMenuSlot(1), 0, EFoundationClickType::Pickup);
+    TestTrue(TEXT("and swaps back"), HoldsStack(I.Main[1], InvDirt, 3) && HoldsStack(I.Carried, InvStone, 32));
     // Armor slots take only their own slot's items, one at a time.
     FFoundationClickResult R = Menu.Click(HeadMenuSlot, 0, EFoundationClickType::Pickup);
     TestTrue(TEXT("stone refused by the head slot"), !R.bChanged && I.Armor[3].IsEmpty());
@@ -230,8 +232,9 @@ bool FFoundationInventoryPickupTest::RunTest(const FString&)
     TestTrue(TEXT("right outside throws one"), HoldsStack(R.Thrown, InvDirt, 1) && HoldsStack(I.Carried, InvDirt, 4));
     R = Menu.Click(FFoundationContainerMenu::Outside, 0, EFoundationClickType::Pickup);
     TestTrue(TEXT("left outside throws the stack"), HoldsStack(R.Thrown, InvDirt, 4) && I.Carried.IsEmpty());
-    TestFalse(TEXT("menu slot 0 (the crafting result) waits for step 6"),
-        Menu.Click(0, 0, EFoundationClickType::Pickup).bValid);
+    // Menu slot 0 is the crafting result (survival step 6): a slot, empty without a recipe, which never takes.
+    R = Menu.Click(FFoundationContainerMenu::ResultSlot, 0, EFoundationClickType::Pickup);
+    TestTrue(TEXT("menu slot 0 (the crafting result) is a slot"), R.bValid && !R.bChanged);
     return true;
 }
 
@@ -308,10 +311,13 @@ bool FFoundationInventoryQuickCraftTest::RunTest(const FString&)
     TestTrue(TEXT("no more slots than items"),
         HoldsStack(I.Main[5], InvDirt, 1) && HoldsStack(I.Main[6], InvStone, 1) && HoldsStack(I.Main[7], InvStone, 1) &&
             I.Carried.IsEmpty());
-    // Middle: creative only, a full stack in each, the cursor kept.
-    I.Carried = I.MakeStack(InvStone, 1);
+    // Middle: creative only, a full stack in each, and the cursor ends empty (value report, survival.r7.creative: a
+    // cursor of 64 stone over 3 empty slots; survival changes nothing and keeps the 64).
+    I.Carried = I.MakeStack(InvStone, 64);
     Drag(2, {MainMenuSlot(8), MainMenuSlot(9)});
-    TestTrue(TEXT("no middle drag in survival"), I.Main[8].IsEmpty() && HoldsStack(I.Carried, InvStone, 1));
+    TestTrue(TEXT("no middle drag in survival"),
+        I.Main[8].IsEmpty() && I.Main[9].IsEmpty() && HoldsStack(I.Carried, InvStone, 64));
+    I.Carried = I.MakeStack(InvStone, 1);
     FFoundationContainerMenu Creative(I, Rules, true);
     Creative.Click(FFoundationContainerMenu::Outside, FFoundationContainerMenu::QuickCraftButton(0, 2),
         EFoundationClickType::QuickCraft);
@@ -319,9 +325,9 @@ bool FFoundationInventoryQuickCraftTest::RunTest(const FString&)
     Creative.Click(MainMenuSlot(9), FFoundationContainerMenu::QuickCraftButton(1, 2), EFoundationClickType::QuickCraft);
     Creative.Click(FFoundationContainerMenu::Outside, FFoundationContainerMenu::QuickCraftButton(2, 2),
         EFoundationClickType::QuickCraft);
-    TestTrue(TEXT("creative middle drag: full stacks"),
-        HoldsStack(I.Main[8], InvStone, 64) && HoldsStack(I.Main[9], InvStone, 64) &&
-            HoldsStack(I.Carried, InvStone, 1));
+    TestTrue(TEXT("creative middle drag: full stacks, the cursor empty"),
+        HoldsStack(I.Main[8], InvStone, 64) && HoldsStack(I.Main[9], InvStone, 64) && I.Carried.IsEmpty());
+    I.Carried = I.MakeStack(InvStone, 1);
     // One slot is a plain click; another click type ends a drag and does nothing else.
     I.Carried.Count = 6;
     Drag(0, {MainMenuSlot(10)});

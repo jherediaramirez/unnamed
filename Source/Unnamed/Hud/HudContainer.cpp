@@ -52,10 +52,11 @@ int32 FHudContainerModel::GetMaxStack(FName Item) const
 
 bool FHudContainerModel::CanDragTo(int32 Slot, const FHudContainerView& View) const
 {
-    if (Slot < FContainerModelMenu::FirstArmor || Slot >= FContainerModelMenu::PlayerMenuSlots ||
+    // Never the result slot (it only gives); the crafting grid takes a drag like any slot.
+    if (Slot < FContainerModelMenu::FirstCraft || Slot >= FContainerModelMenu::PlayerMenuSlots ||
         View.Carried.IsEmpty())
         return false;
-    if (Slot < FContainerModelMenu::FirstMain)
+    if (Slot >= FContainerModelMenu::FirstArmor && Slot < FContainerModelMenu::FirstMain)
     {
         // The armor slots, head to feet, take only their own slot's items.
         static const EFoundationEquipmentSlot Order[] = {EFoundationEquipmentSlot::Head,
@@ -147,7 +148,9 @@ TArray<FHudContainerClick> FHudContainerModel::MouseUp(FIntPoint Point, int32 Bu
             EFoundationClickType::QuickCraft});
     }
     else
-        Clicks.Add({PressSlot, DragButton, EFoundationClickType::Pickup});
+        // One collected slot is a plain click there (vanilla turns a one-slot QUICK_CRAFT into a PICKUP of it); with
+        // none, the press slot (Codex 5b finding 2).
+        Clicks.Add({DragSlots.Num() == 1 ? DragSlots[0] : PressSlot, DragButton, EFoundationClickType::Pickup});
     DragButton = PressSlot = INDEX_NONE;
     DragSlots.Reset();
     return Clicks;
@@ -173,10 +176,16 @@ TArray<FHudContainerClick> FHudContainerModel::PressDrop(
     return {{Slot, bControl ? 1 : 0, EFoundationClickType::Throw}};
 }
 
+void FHudContainerModel::ResetDrag()
+{
+    DragButton = PressSlot = INDEX_NONE;
+    DragSlots.Reset();
+}
+
 void FHudContainerModel::Reset()
 {
-    DragButton = PressSlot = LastSlot = INDEX_NONE;
-    DragSlots.Reset();
+    ResetDrag();
+    LastSlot = INDEX_NONE;
     bDoubleClick = bShiftDoubleClick = false;
     LastTime = -1000;
     LastQuickMoved = {};

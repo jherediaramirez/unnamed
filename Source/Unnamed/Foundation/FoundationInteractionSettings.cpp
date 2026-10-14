@@ -3,6 +3,7 @@
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationItemAssets.h"
 #include "Foundation/FoundationProfile.h"
+#include "Foundation/FoundationRecipeAssets.h"
 #include "Foundation/FoundationTags.h"
 #include "UnnamedLog.h"
 
@@ -68,6 +69,11 @@ void UFoundationInteractionSettings::BuildRules(FFoundationRules& Rules) const
     Rules.LootTables.Reset();
     Rules.LootPredicates.Reset();
     if (ItemAssets) ItemAssets->AddLoot(Rules);
+    // Crafting recipes (survival step 6), resolved against every item above; those naming an item that does not exist
+    // yet wait for it.
+    Rules.Recipes.Recipes.Reset();
+    if (const UFoundationRecipeAssets* RecipeAssets = UFoundationRecipeAssets::LoadDefault())
+        RecipeAssets->AddRecipes(Rules);
     Rules.Hand = EmptyHand;
     Rules.Loadout = Loadout;
     Rules.BlockReachCm = Profile.BlockReachCm;
