@@ -9,7 +9,7 @@ Inputs (read-only): asset index 34 (pinned below; sounds.json and the .ogg objec
 files it already has are referenced ("home": "minecraft-blocks-26.3"). sounds.json is not duplicated here.
 
 The folder must hold only tools/ and README.md, so an accepted reference is never overwritten; to rebuild, move the old
-folder away first (keep tools/own_files.txt). Every generated file comes from derive(), which verify_reference.py runs again without the asset index.
+folder away first (keep tools/, with own_files.txt and frozen_events.txt). Every generated file comes from derive(), which verify_reference.py runs again without the asset index.
 Data only: the game code is never read.
 """
 import csv
@@ -104,15 +104,21 @@ APPENDED_BATCH = ["block.smoker.smoke", "entity.experience_orb.pickup", "entity.
                   "entity.sheep.shear", "entity.cow.milk", "entity.generic.splash", "entity.generic.swim"]
 # T5's events are exactly the sounds.json events this pattern matches (sorted), then four by name.
 T5_PATTERN = r"^block\.([a-z_]+_)?(door|trapdoor|fence_gate|button|pressure_plate)\.(open|close|click_on|click_off)$"
-# B0, the program's sound batch (2026-10-14): T5's events, then the program's sounds-batch.md
-# in its order (block.blast_furnace.fire_crackle has no sounds.json entry: silent in 26.3, left out).
-APPENDED_NAMED = APPENDED_T5 + APPENDED_BATCH
+# B0, the program's sound batch (2026-10-14): T5's events, then the program's sounds-batch.md in its order. Then,
+# after the frozen events, later additions (B1, 2026-10-14: the blast furnace, which the batch named
+# "block.blast_furnace.fire_crackle"; 26.3's event is block.blastfurnace.fire_crackle).
+APPENDED_LATER = ["block.blastfurnace.fire_crackle"]
+APPENDED_NAMED = APPENDED_T5 + APPENDED_BATCH + APPENDED_LATER
 # Files homed here stay homed here even if the block reference later gains a copy (written by the first build that
 # lacks it, then an input).
 OWN_FILES = "tools/own_files.txt"
+# The event order of the last accepted build (one name per line): event_order() emits it first, then every event it
+# lacks in the computed order, so a later APPENDED_NAMED entry never lands in front of accepted step or fall events.
+# Extend it with each accepted build's new events (README, "Appending").
+FROZEN_EVENTS = "tools/frozen_events.txt"
 ENTRY_KEYS = {"name", "volume", "pitch", "attenuation_distance"}
 GENERATED = ["sound_events.json"]
-TOOLS = ["tools/build_reference.py", "tools/verify_reference.py", OWN_FILES]
+TOOLS = ["tools/build_reference.py", "tools/verify_reference.py", OWN_FILES, FROZEN_EVENTS]
 
 
 def dumps(value):
@@ -172,8 +178,9 @@ def event_files(event, sounds):
     return names
 
 
-def event_order(sounds_json, csv_bytes):
-    """[(event, group)]: NAMED, the base step and fall events, APPENDED_NAMED, then step and fall events of new types."""
+def event_order(sounds_json, csv_bytes, frozen_events=()):
+    """[(event, group)]: the frozen events (tools/frozen_events.txt) in their order, then the rest of the computed order
+    (NAMED, the base step and fall events, APPENDED_NAMED, then step and fall events of new types)."""
     rows = list(csv.DictReader(io.StringIO(csv_bytes.decode("utf-8"), newline="")))
     order = [(n, "named") for n in NAMED]
     added = []
@@ -187,16 +194,24 @@ def event_order(sounds_json, csv_bytes):
     pattern = re.compile(T5_PATTERN)
     if APPENDED_T5[:-4] != sorted(k for k in sounds_json if pattern.match(k)):
         raise SystemExit("APPENDED_T5 differs from the sounds.json events T5_PATTERN matches")
-    return order + [(n, "named") for n in APPENDED_NAMED] + added
+    order += [(n, "named") for n in APPENDED_NAMED] + added
+    groups = dict(order)
+    if len(groups) != len(order):
+        raise SystemExit("repeated event in the computed order")
+    lost = [n for n in frozen_events if n not in groups]
+    if lost or len(set(frozen_events)) != len(frozen_events):
+        raise SystemExit(f"{FROZEN_EVENTS}: repeated names or events the build no longer has: {lost[:5]}")
+    frozen = set(frozen_events)
+    return [(n, groups[n]) for n in frozen_events] + [(n, g) for n, g in order if n not in frozen]
 
 
-def derive(sounds_json_bytes, csv_bytes, blocks_oggs, own_info, source, frozen_own=()):
+def derive(sounds_json_bytes, csv_bytes, blocks_oggs, own_info, source, frozen_own=(), frozen_events=()):
     """sound_events.json's bytes. `blocks_oggs` is {name: (sha1, size)} of the block reference's files, `own_info(name)`
     returns (sha1, size) of a file homed here, `source` is the `source` object (pins and hashes), `frozen_own` the names
-    in tools/own_files.txt (homed here whatever the block reference holds)."""
+    in tools/own_files.txt (homed here whatever the block reference holds), `frozen_events` tools/frozen_events.txt's."""
     sounds_json = json.loads(sounds_json_bytes)
     events, files, seen = [], [], set()
-    for name, group in event_order(sounds_json, csv_bytes):
+    for name, group in event_order(sounds_json, csv_bytes, frozen_events):
         if name not in sounds_json:
             raise SystemExit(f"sounds.json has no event {name}")
         sounds = sounds_json[name]["sounds"]
@@ -221,6 +236,12 @@ def read_own_files(root=ROOT):
     """tools/own_files.txt's names in order, or None when absent."""
     path = root / OWN_FILES
     return path.read_text(encoding="utf-8").splitlines() if path.is_file() else None
+
+
+def read_frozen_events(root=ROOT):
+    """tools/frozen_events.txt's names in order (empty when absent: the computed order alone)."""
+    path = root / FROZEN_EVENTS
+    return path.read_text(encoding="utf-8").splitlines() if path.is_file() else []
 
 
 def own_names(events_bytes):
@@ -258,7 +279,7 @@ def main():
         return sha1(data), len(data)
 
     out = derive(sounds_bytes, csv_bytes, blocks, own_info, source_object(objects[SOUNDS_JSON]["hash"], csv_bytes),
-                 frozen or ())
+                 frozen or (), read_frozen_events())
     if frozen is None:
         (ROOT / OWN_FILES).write_text("".join(f"{n}\n" for n in own_names(out)), encoding="utf-8", newline="\n")
         print(f"{OWN_FILES}: written ({len(own_names(out))} names)")

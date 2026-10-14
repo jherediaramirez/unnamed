@@ -4706,6 +4706,18 @@
     "block/roots/break5",
     "block/roots/break6"
    ]
+  },
+  {
+   "name": "block.blastfurnace.fire_crackle",
+   "group": "named",
+   "subtitle": "subtitles.block.blastfurnace.fire_crackle",
+   "sounds": [
+    "block/blastfurnace/blastfurnace1",
+    "block/blastfurnace/blastfurnace2",
+    "block/blastfurnace/blastfurnace3",
+    "block/blastfurnace/blastfurnace4",
+    "block/blastfurnace/blastfurnace5"
+   ]
   }
  ],
  "files": [
@@ -9364,6 +9376,36 @@
    "sha1": "bafb15c3d188e1425c0b6428551a14d16b320d9c",
    "size": 9017,
    "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "block/blastfurnace/blastfurnace1",
+   "sha1": "a11636025bd4e85fec2f40ced585ac7028ee6046",
+   "size": 46102,
+   "home": "minecraft-sounds-26.3"
+  },
+  {
+   "name": "block/blastfurnace/blastfurnace2",
+   "sha1": "ca0c39fca7ab5b2dead37f6842a1d4ed4be1d621",
+   "size": 47784,
+   "home": "minecraft-sounds-26.3"
+  },
+  {
+   "name": "block/blastfurnace/blastfurnace3",
+   "sha1": "428e0d0e7c25d8ca12f1839d7e8623465e745a35",
+   "size": 52973,
+   "home": "minecraft-sounds-26.3"
+  },
+  {
+   "name": "block/blastfurnace/blastfurnace4",
+   "sha1": "2e9a2ad93404bf022c96f9fc944519ca21c14122",
+   "size": 49874,
+   "home": "minecraft-sounds-26.3"
+  },
+  {
+   "name": "block/blastfurnace/blastfurnace5",
+   "sha1": "15fe7b6d1e021b98fba3db61cb6770a9c9fd4b54",
+   "size": 53944,
+   "home": "minecraft-sounds-26.3"
   }
  ]
 }

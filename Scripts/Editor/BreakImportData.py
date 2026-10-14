@@ -29,9 +29,11 @@ SIZE = 16
 NEUTRAL, CRACK, LIT, SHADOW = 128, 60, 170, 90
 # Vanilla's cumulative crack texel counts per destroy stage (self-check).
 EXPECTED_CRACK_TEXELS = [4, 10, 18, 28, 41, 55, 70, 100, 129, 145]
-# block_particles.json lists shelf_mushroom_particle as outside textures.json; the block texture array has no layer
-# for it, so the particle falls back to the mushroom's first texture.
-OUTSIDE_FALLBACK = "shelf_mushroom_stage0"
+# block_particles.json lists particle textures outside textures.json; the block texture array has no layer for them,
+# so each falls back to a texture of its block: the mushroom's first texture, and bamboo planks for the bamboo fence
+# and fence gate (survival B1; their particle sprites show the same planks).
+OUTSIDE_FALLBACKS = {"shelf_mushroom_particle": "shelf_mushroom_stage0", "bamboo_fence_particle": "bamboo_planks",
+                     "bamboo_fence_gate_particle": "bamboo_planks"}
 # Tint flags every run must reproduce (block id -> default state's particle is on a tinted face).
 EXPECTED_TINT = {"grass_block": False, "oak_leaves": True, "short_grass": True, "stone": False, "dandelion": False}
 
@@ -267,13 +269,14 @@ def build_tables():
     if ids != [b["id"] for b in states["blocks"]] or ids != list(particles["blocks"]) or set(ids) != set(rows):
         raise ValueError("manifest, block_states, block_particles and block_sounds disagree on the block list")
     outside = set(particles["textures_outside_textures_json"])
-    if outside != {"shelf_mushroom_particle"}:
+    if outside != set(OUTSIDE_FALLBACKS):
         raise ValueError("unexpected textures outside textures.json: %s" % sorted(outside))
-    if OUTSIDE_FALLBACK not in textures:
-        raise ValueError(OUTSIDE_FALLBACK + " is not in textures.json")
+    for fallback in OUTSIDE_FALLBACKS.values():
+        if fallback not in textures:
+            raise ValueError(fallback + " is not in textures.json")
 
     def resolve(name):
-        name = OUTSIDE_FALLBACK if name in outside else name
+        name = OUTSIDE_FALLBACKS.get(name, name)
         if name not in textures:
             raise ValueError("particle texture %s is not in textures.json" % name)
         return name
