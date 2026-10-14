@@ -4,6 +4,7 @@
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationSimulation.h"
+#include "Foundation/FoundationStripping.h"
 #include "HAL/IConsoleManager.h"
 
 namespace
@@ -33,6 +34,19 @@ namespace
         Health.bNaturalRegeneration = false;
         Health.MaxHealth = Health.Health = MaxHealth;
         return Health;
+    }
+
+    // foundation.Inventory.Full onto a player's inventory. A change ends a drag in progress: its stored slots may not
+    // exist under the other layout.
+    void SetFullInventory(FFoundationInventory& Inventory, bool bFull)
+    {
+        if (Inventory.bFull == bFull) return;
+        Inventory.bFull = bFull;
+        if (Inventory.QuickCraft.Status != 0 || !Inventory.QuickCraft.Slots.IsEmpty())
+        {
+            Inventory.QuickCraft = {};
+            ++Inventory.Revision;
+        }
     }
 }
 
@@ -213,13 +227,14 @@ void FFoundationAuthority::Step()
 }
 
 int32 FFoundationAuthority::SpawnItem(
-    int32 Item, int32 Count, const FVector& LocalCm, const FVector& VelocityCm, int32 PickupDelay)
+    int32 Item, int32 Count, const FVector& LocalCm, const FVector& VelocityCm, int32 PickupDelay, int32 Damage)
 {
     if (!Rules.Items.IsValidIndex(Item) || Count <= 0) return 0;
     FFoundationItemEntity& Entity = ItemEntities.AddDefaulted_GetRef();
     Entity.Id = NextItemEntityId++;
     Entity.Item = Item;
     Entity.Count = Count;
+    Entity.Damage = Damage;
     Entity.LocalCm = Entity.PreviousLocalCm = LocalCm;
     Entity.VelocityCm = VelocityCm;
     Entity.PickupDelay = PickupDelay;
@@ -283,22 +298,27 @@ void FFoundationAuthority::StepItemEntities()
         Move(Entity, Origin, Boxes);
         ++Entity.Age;
         if (Entity.PickupDelay > 0) --Entity.PickupDelay;
-        if (Entity.LocalCm.Z < VoidCm)
+        // Items S8b: an item despawns at DespawnAge (its age does not count while frozen).
+        const bool bDespawn = Entity.Age >= DespawnAge && Options.bItemEntities;
+        ItemsDespawned += bDespawn ? 1 : 0;
+        if (Entity.LocalCm.Z < VoidCm || bDespawn)
             ItemEntities.RemoveAt(Index);
         else
             ++Index;
     }
+    if (Options.bItemEntities) MergeItemEntities();
     for (FFoundationPlayer& Player : Players)
     {
         if (!Player.bHasFacts || !Player.Facts.bAlive) continue;
-        Player.Inventory.bFull = Options.bFullInventory;
+        SetFullInventory(Player.Inventory, Options.bFullInventory);
         const FBox Reach = GetPickupBox(Player.Facts.GetBody());
         for (int32 Index = 0; Index < ItemEntities.Num();)
         {
             FFoundationItemEntity& Entity = ItemEntities[Index];
             const FVector Location = Origin + Entity.LocalCm;
             const int32 Taken = !Entity.bFrozen && Entity.PickupDelay <= 0 && Overlaps(Reach, GetBox(Location))
-                ? Player.Inventory.Add(Entity.Item, Entity.Count, Rules.Items[Entity.Item].MaxStack, false)
+                ? Player.Inventory.Add(
+                      Entity.Item, Entity.Count, Rules.Items[Entity.Item].MaxStack, false, Entity.Damage)
                 : 0;
             if (Taken <= 0)
             {
@@ -322,6 +342,91 @@ void FFoundationAuthority::StepItemEntities()
                 ItemEntities.RemoveAt(Index);
             else
                 ++Index;
+        }
+    }
+}
+
+void FFoundationAuthority::Drop(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result)
+{
+    using namespace FoundationItemEntities;
+    // foundation.Items.Entities 0: refused, as before items S8b.
+    if (!Options.bItemEntities)
+    {
+        Reject(Result, EFoundationReason::DropDeferred);
+        return;
+    }
+    FFoundationItemInstance& Stack = Player.Inventory.GetHand(EFoundationHand::Main);
+    if (Stack.IsEmpty())
+    {
+        Reject(Result, EFoundationReason::NoSupply);
+        return;
+    }
+    // Survival and creative alike take the thrown items from the stack (vanilla's creative Q does too).
+    const int32 Count = Command.bWholeStack ? Stack.Count : 1;
+    const FFoundationPlayerFacts Facts = Player.bHasFacts ? Player.Facts : FFoundationPlayerFacts();
+    FRandomStream Random(int32(HashCombine(GetTypeHash(Player.Id), GetTypeHash(NextItemEntityId))));
+    const double Angle = Random.FRandRange(0, 2 * UE_PI), Spread = Random.FRand() * ThrowSpreadCm;
+    const FVector Velocity = Facts.Aim.GetSafeNormal() * ThrowSpeedCm +
+        FVector(FMath::Cos(Angle) * Spread, FMath::Sin(Angle) * Spread,
+            ThrowUpCm + (Random.FRand() - Random.FRand()) * ThrowSpreadUpCm);
+    if (!SpawnItem(Stack.Item, Count, Facts.EyeCm - FVector(0, 0, ThrowBelowEyeCm) - World.OriginCm, Velocity,
+            ThrowPickupDelay, Stack.Damage))
+    {
+        Reject(Result, EFoundationReason::NoSupply);
+        return;
+    }
+    ++ItemsThrown;
+    if (Count >= Stack.Count)
+    {
+        Stack = {};
+        ++Player.Inventory.Revision;
+    }
+    else
+    {
+        Stack.Count -= Count;
+        Player.Inventory.Touch(Stack);
+    }
+    Result.Outcome = EFoundationOutcome::Committed;
+}
+
+void FFoundationAuthority::MergeItemEntities()
+{
+    using namespace FoundationItemEntities;
+    const FVector& Origin = World.OriginCm;
+    for (int32 Index = 0; Index < ItemEntities.Num(); ++Index)
+    {
+        // Provisional (P3): every MergeTicks of the item's own age, moving or not.
+        const FFoundationItemEntity& Seeker = ItemEntities[Index];
+        if (Seeker.bFrozen || Seeker.Age % MergeTicks != 0) continue;
+        const int32 MaxStack = FMath::Max(1, Rules.Items[Seeker.Item].MaxStack);
+        const FBox Reach = GetMergeBox(Origin + Seeker.LocalCm);
+        for (int32 Other = 0; Other < ItemEntities.Num() && ItemEntities[Index].Count < MaxStack; ++Other)
+        {
+            FFoundationItemEntity& A = ItemEntities[Index];
+            FFoundationItemEntity& B = ItemEntities[Other];
+            if (Other == Index || B.bFrozen || B.Item != A.Item || B.Damage != A.Damage || B.Count >= MaxStack ||
+                !Overlaps(Reach, GetBox(Origin + B.LocalCm)))
+                continue;
+            // Provisional (P3): the smaller stack moves into the larger (into the seeker on a tie); the result keeps
+            // the longer pickup delay and the younger age.
+            FFoundationItemEntity& Into = B.Count > A.Count ? B : A;
+            FFoundationItemEntity& From = B.Count > A.Count ? A : B;
+            const int32 Moved = FMath::Min(From.Count, MaxStack - Into.Count);
+            Into.Count += Moved;
+            From.Count -= Moved;
+            Into.PickupDelay = FMath::Max(Into.PickupDelay, From.PickupDelay);
+            Into.Age = FMath::Min(Into.Age, From.Age);
+            ++ItemsMerged;
+            if (From.Count > 0) continue;
+            const bool bSeekerGone = &From == &A;
+            ItemEntities.RemoveAt(bSeekerGone ? Index : Other);
+            if (bSeekerGone)
+            {
+                --Index;
+                break;
+            }
+            if (Other < Index) --Index;
+            --Other;
         }
     }
 }
@@ -552,7 +657,7 @@ FFoundationResult FFoundationAuthority::Execute(
     // Evicted or never valid: its effect cannot be known, so it must not apply now.
     if (Command.Sequence == 0 || Command.Sequence <= Player->HighestEvicted)
         return Reject(Result, EFoundationReason::ExpiredSequence);
-    Player->Inventory.bFull = Options.bFullInventory;
+    SetFullInventory(Player->Inventory, Options.bFullInventory);
 
     switch (Command.Type)
     {
@@ -573,10 +678,10 @@ FFoundationResult FFoundationAuthority::Execute(
         Result.Outcome = EFoundationOutcome::Committed;
         break;
     case EFoundationCommandType::Drop:
-        Reject(Result, EFoundationReason::DropDeferred);
+        Drop(*Player, Command, Result);
         break;
     case EFoundationCommandType::UseOn:
-        UseOn(*Player, Command, Result);
+        UseOn(*Player, Command, Result, Vitals.Mode == EFoundationPlayerMode::Creative);
         break;
     case EFoundationCommandType::UseEntity:
         UseEntity(*Player, Command, Result);
@@ -633,6 +738,8 @@ FFoundationResult FFoundationAuthority::Execute(
     }
     case EFoundationCommandType::ContainerClick:
     {
+        // A container click or close ends an item use in progress, as a slot change does.
+        CancelUse(*Player);
         // The click runs on a copy, which commits only when it throws nothing: throwing waits for survival step 4.
         FFoundationInventory Trial = Player->Inventory;
         const FFoundationContainerRules ClickRules = MakeContainerRules();
@@ -653,6 +760,7 @@ FFoundationResult FFoundationAuthority::Execute(
     }
     case EFoundationCommandType::ContainerClose:
     {
+        CancelUse(*Player);
         // The cursor stack goes back into the inventory; what would not fit would be thrown, which waits for step 4.
         // The stack keeps its damage and identity (FFoundationInventory::Return).
         FFoundationInventory Trial = Player->Inventory;
@@ -701,7 +809,7 @@ FFoundationResult FFoundationAuthority::Execute(
 }
 
 void FFoundationAuthority::UseOn(
-    FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result)
+    FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result, bool bCreative)
 {
     if (!CheckHand(Player, Command, Result)) return;
     const FFoundationHit Hit = Resolve(Player.Facts);
@@ -742,7 +850,9 @@ void FFoundationAuthority::UseOn(
         AddEvent(Event);
         return;
     }
-    // 2. The hand item's place capability; without one the use passes to the next hand.
+    // 2. The hand item's use on the block (foundation.Items.Use): an axe strips.
+    if (StripOn(Player, Command, Hit, Result, bCreative)) return;
+    // 3. The hand item's place capability; without one the use passes to the next hand.
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
     if (Stack.IsEmpty() || !Rules.GetItem(Stack.Item).CanPlace())
     {
@@ -804,6 +914,50 @@ void FFoundationAuthority::UseOn(
     Event.Step = Player.Facts.Step;
     AddEvent(Event);
     SettlePlants(Destination, Replaced, Player);
+}
+
+bool FFoundationAuthority::StripOn(FFoundationPlayer& Player, const FFoundationCommand& Command,
+    const FFoundationHit& Hit, FFoundationResult& Result, bool bCreative)
+{
+    const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
+    if (!Options.bItemUse || Stack.IsEmpty() || Hit.Kind != EFoundationHitKind::Block) return false;
+    const int32 AxeItem = Stack.Item;
+    const FFoundationItemDefinition& Axe = Rules.GetItem(AxeItem);
+    const FGameplayTag AxesTag = FoundationStripping::GetAxesTag();
+    if (!AxesTag.IsValid() || !Axe.Tags.HasTagExact(AxesTag)) return false;
+    const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    const FFoundationBlockState State = World.Get(Hit.Cell).State;
+    // The stripped block keeps the properties (the axis): the saved form with the other id.
+    FFoundationSavedState Saved = Registry.Save(State);
+    Saved.Id = FoundationStripping::FindStripped(Saved.Id);
+    FFoundationBlockState Stripped;
+    if (Saved.Id.IsNone() || !Registry.Load(Saved, Stripped)) return false;
+    World.Set(Hit.Cell, Stripped);
+    ++Strips;
+    Result.Outcome = EFoundationOutcome::Committed;
+    Result.bStripped = true;
+    Result.Cell = Hit.Cell;
+    Result.State = Stripped;
+    // One point of wear (wiki "Axe"), when tool wear is on; creative tools never wear.
+    if (!bCreative && Options.bToolWear && Axe.MaxDurability > 0)
+    {
+        Result.bToolWorn = true;
+        Result.bToolBroke = Player.Inventory.Wear(Command.Hand, FoundationStripping::WearPerStrip, Axe.MaxDurability);
+    }
+    FFoundationEvent Event;
+    Event.Kind = EFoundationEventKind::Stripped;
+    Event.Player = Player.Id;
+    Event.Cell = Hit.Cell;
+    Event.State = Stripped;
+    Event.Item = AxeItem;
+    Event.Step = Player.Facts.Step;
+    AddEvent(Event);
+    if (Result.bToolBroke)
+    {
+        Event.Kind = EFoundationEventKind::ToolBroke;
+        AddEvent(Event);
+    }
+    return true;
 }
 
 void FFoundationAuthority::UseItemStart(FFoundationPlayer& Player, const FFoundationCommand& Command,

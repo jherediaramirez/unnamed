@@ -135,7 +135,10 @@ void FFoundationContainerMenu::Pickup(int32 Slot, int32 Button, FFoundationClick
         if (!Carried.IsEmpty()) Result.Thrown = Split(Carried, Button == 0 ? Carried.Count : 1);
         return;
     }
-    FFoundationItemInstance& Stack = *GetSlot(Slot);
+    // A drag's stored slot skips Click's check: the slot may be gone (the full inventory switched off mid-drag).
+    FFoundationItemInstance* Target = GetSlot(Slot);
+    if (!Target) return;
+    FFoundationItemInstance& Stack = *Target;
     if (Stack.IsEmpty())
     {
         // Left places all that fits, right one.
@@ -175,8 +178,9 @@ void FFoundationContainerMenu::Pickup(int32 Slot, int32 Button, FFoundationClick
 
 void FFoundationContainerMenu::QuickMove(int32 Slot)
 {
-    FFoundationItemInstance& Stack = *GetSlot(Slot);
-    if (Stack.IsEmpty()) return;
+    FFoundationItemInstance* Source = GetSlot(Slot);
+    if (!Source || Source->IsEmpty()) return;
+    FFoundationItemInstance& Stack = *Source;
     const EFoundationEquipmentSlot Equipment =
         Rules.GetEquipment ? Rules.GetEquipment(Stack.Item) : EFoundationEquipmentSlot::None;
     // vanilla's InventoryMenu routing (minecraft.wiki "Inventory"): armor goes back to the main grid and hotbar; a
@@ -191,7 +195,7 @@ void FFoundationContainerMenu::QuickMove(int32 Slot)
         MoveInto(Stack, FirstMain, OffhandSlot);
     else if (ArmorSlot != INDEX_NONE && GetSlot(ArmorSlot) && GetSlot(ArmorSlot)->IsEmpty())
         MoveInto(Stack, ArmorSlot, ArmorSlot + 1);
-    else if (Equipment == EFoundationEquipmentSlot::Offhand && GetSlot(OffhandSlot)->IsEmpty())
+    else if (Equipment == EFoundationEquipmentSlot::Offhand && GetSlot(OffhandSlot) && GetSlot(OffhandSlot)->IsEmpty())
         MoveInto(Stack, OffhandSlot, OffhandSlot + 1);
     else if (Slot >= FirstMain && Slot < FirstHotbar)
         MoveInto(Stack, FirstHotbar, OffhandSlot);
@@ -204,8 +208,11 @@ void FFoundationContainerMenu::QuickMove(int32 Slot)
 void FFoundationContainerMenu::SwapWith(int32 Slot, int32 Button)
 {
     // Number keys 1-9 are buttons 0-8 (the hotbar), F is 40 (the offhand).
-    FFoundationItemInstance& Stack = *GetSlot(Slot);
-    FFoundationItemInstance& Other = *Inventory.GetSlot(Button);
+    FFoundationItemInstance* Target = GetSlot(Slot);
+    FFoundationItemInstance* Source = Inventory.GetSlot(Button);
+    if (!Target || !Source) return;
+    FFoundationItemInstance& Stack = *Target;
+    FFoundationItemInstance& Other = *Source;
     if (&Stack == &Other || (Stack.IsEmpty() && Other.IsEmpty())) return;
     if (Other.IsEmpty())
         Swap(Stack, Other);
@@ -290,8 +297,8 @@ void FFoundationContainerMenu::PickupAll(int32 Slot, int32 Button)
     // A double-click collects matching stacks into the cursor up to a full stack: non-full stacks first, then full
     // ones, from the first slot (left) or the last.
     FFoundationItemInstance& Carried = Inventory.Carried;
-    const FFoundationItemInstance& Clicked = *GetSlot(Slot);
-    if (Carried.IsEmpty() || !Clicked.IsEmpty()) return;
+    const FFoundationItemInstance* Clicked = GetSlot(Slot);
+    if (!Clicked || Carried.IsEmpty() || !Clicked->IsEmpty()) return;
     const int32 Max = GetMaxStack(Carried);
     for (int32 Pass = 0; Pass < 2; ++Pass)
         for (int32 Index = 0; Index < PlayerMenuSlots && Carried.Count < Max; ++Index)

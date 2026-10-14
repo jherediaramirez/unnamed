@@ -652,6 +652,11 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
                         TEXT("entity.player.burp"), Event.LocationCm, .5f, FMath::FRand() * .1f + .9f);
             }
             break;
+        case EFoundationEventKind::Stripped:
+            // Axe stripping (step 14): item.axe.strip from the block, volume 1 and pitch 1 (provisional until a vanilla
+            // capture).
+            if (BreakEffects) BreakEffects->PlayEvent(TEXT("item.axe.strip"), Cell.GetCenter(), 1.f, 1.f);
+            break;
         case EFoundationEventKind::ToolBroke:
             if (const AFoundationPawn* Pawn = GetLocalPawn())
                 Burst(Pawn->GetEyePosition() + Pawn->GetControlRotation().Vector() * 60, FLinearColor(.7f, .7f, .72f),

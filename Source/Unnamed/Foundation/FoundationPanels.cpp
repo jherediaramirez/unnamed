@@ -5,6 +5,7 @@
 #include "Foundation/FoundationPlayground.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Hud/HudAssets.h"
+#include "Hud/HudContainerScreen.h"
 #include "Hud/HudCreativeScreen.h"
 #include "Hud/HudPresenter.h"
 #include "UnnamedProjectSettings.h"
@@ -296,6 +297,15 @@ void UFoundationPanels::Close()
         GEngine->GameViewport->RemoveViewportWidgetContent(Root.ToSharedRef());
     Root.Reset();
     Creative.Reset();
+    if (Survival.IsValid())
+    {
+        // Closing the survival screen returns the cursor stack (ContainerClose).
+        Survival.Reset();
+        AFoundationPawn* Pawn = SurvivalPawn.Get();
+        AFoundationLab* Lab = Pawn ? Pawn->GetLab() : nullptr;
+        if (Lab && Lab->GetAuthority()) Pawn->Interaction.ContainerClose(*Lab->GetAuthority(), Pawn->Vitals);
+        SurvivalPawn.Reset();
+    }
     bOpen = bTextOpen = bInventoryOpen = false;
     TextBox.Reset();
     AFoundationController* Controller = GetFoundationController();
@@ -452,6 +462,10 @@ bool UFoundationPanels::IsTypingInInventory() const
 
 namespace
 {
+    TAutoConsoleVariable<int32> CVarInventoryScreen(TEXT("foundation.Inventory.Screen"), 1,
+        TEXT("1 (default): E opens the survival inventory screen (container/inventory.png) outside creative; 0: the "
+             "inventory text fixture."));
+
     // Block.Mineable.Pickaxe -> "mineable/pickaxe": the vanilla name BlockImportData.tag_name mapped from, for
     // the creative search's "#" queries.
     FString VanillaTagName(const FGameplayTag& Tag)
@@ -497,31 +511,54 @@ bool UFoundationPanels::PreloadCreative()
     return true;
 }
 
+namespace
+{
+    // Everything the player could hold: names, stack sizes, max damage, equipment, the 26.3 items' tooltip lines
+    // (DA_Items, with the player's base values) and the placed block's tags for "#" search.
+    FHudCreativeItems MakeScreenItems(const FFoundationAuthority& Authority)
+    {
+        const TSharedRef<const FFoundationBlockRegistry> Registry = Authority.World.GetRegistryRef();
+        const UFoundationItemAssets* ItemAssets = UFoundationItemAssets::LoadDefault();
+        FHudCreativeItems Items;
+        for (const FFoundationItemDefinition& Item : Authority.Rules.Items)
+        {
+            FHudCreativeItem& Entry = Items.Add(Item.Id);
+            Entry.Name = Item.DisplayName;
+            Entry.MaxStack = Item.MaxStack;
+            Entry.MaxDamage = Item.MaxDurability;
+            Entry.Equipment = Item.Equipment;
+            if (const FFoundationItemAsset* Asset = ItemAssets ? ItemAssets->FindItem(Item.Id) : nullptr)
+            {
+                Entry.Details = HudTooltip::GetModifierLines(Asset->Modifiers, ItemAssets->Lang, true);
+                if (!Asset->Textures.IsEmpty()) Entry.Sprite = Asset->Textures[0].ToString();
+            }
+            if (const FFoundationBlockType* Block = Registry->FindBlock(Item.PlacesBlock))
+                for (const FGameplayTag& Tag : Block->Tags)
+                    Entry.Tags.Add(VanillaTagName(Tag));
+        }
+        return Items;
+    }
+
+    // Options > GUI Scale, as the HUD reads it (HudPresenter): a screen follows a change at once.
+    TAttribute<int32> MakeGuiScale(AFoundationController* Controller)
+    {
+        return TAttribute<int32>::CreateLambda(
+            [WeakController = TWeakObjectPtr<AFoundationController>(Controller)]
+            {
+                const AFoundationController* Controller = WeakController.Get();
+                return Controller && Controller->GetMenuHost()
+                    ? Controller->GetMenuHost()->GetVideoSettings()->GetGuiScale()
+                    : 0;
+            });
+    }
+}
+
 TSharedRef<SHudCreativeScreen> UFoundationPanels::MakeCreative(AFoundationLab& Lab)
 {
     AFoundationPawn* Pawn = GetFoundationController()->GetFoundationPawn();
     FFoundationAuthority& Authority = *Lab.GetAuthority();
     const TSharedRef<const FFoundationBlockRegistry> Registry = Authority.World.GetRegistryRef();
-    // Everything the player could hold: names, stack sizes, max damage, the 26.3 items' tooltip lines (DA_Items,
-    // with the player's base values) and the placed block's tags for "#" search.
-    const UFoundationItemAssets* ItemAssets = UFoundationItemAssets::LoadDefault();
-    FHudCreativeItems Items;
-    for (const FFoundationItemDefinition& Item : Authority.Rules.Items)
-    {
-        FHudCreativeItem& Entry = Items.Add(Item.Id);
-        Entry.Name = Item.DisplayName;
-        Entry.MaxStack = Item.MaxStack;
-        Entry.MaxDamage = Item.MaxDurability;
-        Entry.Equipment = Item.Equipment;
-        if (const FFoundationItemAsset* Asset = ItemAssets ? ItemAssets->FindItem(Item.Id) : nullptr)
-        {
-            Entry.Details = HudTooltip::GetModifierLines(Asset->Modifiers, ItemAssets->Lang, true);
-            if (!Asset->Textures.IsEmpty()) Entry.Sprite = Asset->Textures[0].ToString();
-        }
-        if (const FFoundationBlockType* Block = Registry->FindBlock(Item.PlacesBlock))
-            for (const FGameplayTag& Tag : Block->Tags)
-                Entry.Tags.Add(VanillaTagName(Tag));
-    }
+    FHudCreativeItems Items = MakeScreenItems(Authority);
     const TWeakObjectPtr<AFoundationLab> WeakLab = &Lab;
     const TWeakObjectPtr<AFoundationPawn> WeakPawn = Pawn;
     const TWeakObjectPtr<UFoundationPanels> WeakThis = this;
@@ -529,14 +566,7 @@ TSharedRef<SHudCreativeScreen> UFoundationPanels::MakeCreative(AFoundationLab& L
     return SNew(SHudCreativeScreen)
         .Registry(Registry)
         .HudAssets(LoadObject<UHudAssets>(nullptr, *UUnnamedProjectSettings::GetHudRegistryPath()))
-        // Options > GUI Scale, as the HUD reads it (HudPresenter): the screen follows a change at once.
-        .RequestedGuiScale_Lambda([WeakController = TWeakObjectPtr<AFoundationController>(GetFoundationController())]
-        {
-            const AFoundationController* Controller = WeakController.Get();
-            return Controller && Controller->GetMenuHost()
-                ? Controller->GetMenuHost()->GetVideoSettings()->GetGuiScale()
-                : 0;
-        })
+        .RequestedGuiScale(MakeGuiScale(GetFoundationController()))
         .Items(MoveTemp(Items))
         .GetInventory([WeakLab, WeakPawn]
         {
@@ -591,6 +621,69 @@ void UFoundationPanels::OpenCreative(AFoundationLab& Lab)
     bInventoryOpen = true;
 }
 
+void UFoundationPanels::OpenSurvivalInventory(AFoundationLab& Lab)
+{
+    if (bOpen) Close();
+    AFoundationController* Controller = GetFoundationController();
+    AFoundationPawn* Pawn = Controller->GetFoundationPawn();
+    if (!Pawn || !Lab.GetAuthority()) return;
+    FFoundationAuthority& Authority = *Lab.GetAuthority();
+    const TWeakObjectPtr<AFoundationLab> WeakLab = &Lab;
+    const TWeakObjectPtr<AFoundationPawn> WeakPawn = Pawn;
+    const TWeakObjectPtr<UFoundationPanels> WeakThis = this;
+    // clang-format off
+    Survival = SNew(SHudContainerScreen)
+        .Registry(Authority.World.GetRegistryRef())
+        .HudAssets(LoadObject<UHudAssets>(nullptr, *UUnnamedProjectSettings::GetHudRegistryPath()))
+        .RequestedGuiScale(MakeGuiScale(Controller))
+        .Items(MakeScreenItems(Authority))
+        .GetView([WeakLab, WeakPawn]
+        {
+            FHudContainerView View;
+            View.Slots.SetNum(FFoundationContainerMenu::PlayerMenuSlots);
+            if (!WeakLab.IsValid() || !WeakPawn.IsValid() || !WeakLab->GetAuthority()) return View;
+            const FFoundationAuthority& A = *WeakLab->GetAuthority();
+            const FFoundationPlayer* Player = A.FindPlayer(WeakPawn->Interaction.PlayerId);
+            if (!Player) return View;
+            auto Stack = [&A](const FFoundationItemInstance* Item)
+            {
+                return !Item || Item->IsEmpty()
+                    ? FHudCreativeStack()
+                    : FHudCreativeStack{A.Rules.GetItem(Item->Item).Id, Item->Count, Item->Damage};
+            };
+            // Menu slots by their Inventory number; the crafting slots (0-4) stay empty until survival step 6.
+            for (int32 Slot = 0; Slot < FFoundationContainerMenu::PlayerMenuSlots; ++Slot)
+                if (const int32 Index = FFoundationContainerMenu::ToInventorySlot(Slot); Index != INDEX_NONE)
+                    View.Slots[Slot] = Stack(Player->Inventory.GetSlot(Index));
+            View.Carried = Stack(&Player->Inventory.Carried);
+            return View;
+        })
+        .OnClick([WeakLab, WeakPawn](const FHudContainerClick& Click)
+        {
+            if (WeakLab.IsValid() && WeakPawn.IsValid() && WeakLab->GetAuthority())
+                WeakPawn->Interaction.ContainerClick(*WeakLab->GetAuthority(), WeakPawn->Vitals,
+                    FFoundationContainerMenu::PlayerContainer, Click.Slot, Click.Button, Click.Type);
+        })
+        .OnClose([WeakThis] { if (WeakThis.IsValid()) WeakThis->Close(); });
+    // clang-format on
+    SurvivalPawn = Pawn;
+    bOpen = true;
+    // Opening ends what the player was doing (mining, eating), as the creative screen does.
+    Controller->CancelActions();
+    if (UUnnamedInputSubsystem* InputSubsystem = Controller->GetInputSubsystem())
+        InputSubsystem->SetGameplayInputEnabled(false);
+    Pawn->SetSimulationEnabled(false);
+    Root = Survival;
+    GEngine->GameViewport->AddViewportWidgetContent(Root.ToSharedRef(), 300);
+    Controller->bShowMouseCursor = true;
+    FInputModeUIOnly Mode;
+    Mode.SetWidgetToFocus(Survival);
+    Controller->SetInputMode(Mode);
+    FSlateApplication::Get().SetKeyboardFocus(Survival);
+    Controller->GetHud()->LogEvent(TEXT("survival inventory"));
+    bInventoryOpen = true;
+}
+
 void UFoundationPanels::OpenInventory()
 {
     FFoundationActionRequest Request;
@@ -603,6 +696,13 @@ void UFoundationPanels::OpenInventory()
             Lab && Lab->GetAuthority() && Lab->GetAuthority()->Options.bCreativeInventory)
         {
             OpenCreative(*Lab);
+            return;
+        }
+    if (AFoundationPawn* Pawn = GetFoundationController()->GetFoundationPawn())
+        if (AFoundationLab* Lab = Pawn->GetLab();
+            CVarInventoryScreen.GetValueOnGameThread() != 0 && Lab && Lab->GetAuthority() && Pawn->HasInteraction())
+        {
+            OpenSurvivalInventory(*Lab);
             return;
         }
     const TWeakObjectPtr<UFoundationPanels> WeakThis = this;

@@ -741,4 +741,334 @@ bool FFoundationItemEntitySwitchTest::RunTest(const FString&)
     }
     return true;
 }
+
+// Items S8b: Q throws one item, Ctrl+Q the stack (40-tick pickup delay); stacks merge every 40 ticks in the merge box;
+// items despawn at 6,000 ticks of age (paused while frozen); 1 to 5 copies are drawn.
+namespace ItemEntityTestsLocal
+{
+    // A lab with the switch on, the player at Feet looking along +X, slot 0 holding Count lab blocks.
+    void MakeThrowLab(FEntityLab& L, int32 Count, FVector Feet = FVector::ZeroVector)
+    {
+        L.A.Options.bItemEntities = true;
+        L.P().Inventory.SetSlot(0, L.P().Inventory.MakeStack(L.LabItem(), Count));
+        L.P().Inventory.Select(0);
+        L.Stand(Feet);
+    }
+
+    FFoundationResult Throw(FEntityLab& L, bool bWholeStack)
+    {
+        FFoundationCommand Command = L.Make(EFoundationCommandType::Drop);
+        Command.bWholeStack = bWholeStack;
+        return L.Run(Command);
+    }
+
+    // Steps until the entity is picked up, standing on it each step; the step it went, or -1 within Limit.
+    int32 StepsToPickup(FEntityLab& L, int32 Id, int32 Limit = 200)
+    {
+        for (int32 Step = 1; Step <= Limit; ++Step)
+        {
+            const FFoundationItemEntity* E = L.Find(Id);
+            if (!E) return -1;
+            L.Stand(FVector(E->LocalCm.X, E->LocalCm.Y, 0));
+            L.A.Step();
+            if (!L.Find(Id)) return Step;
+        }
+        return -1;
+    }
+
+    // Two resting stacks of the lab block (no velocity), the player far away; their ids.
+    TPair<int32, int32> SpawnPair(FEntityLab& L, FVector APos, int32 ACount, FVector BPos, int32 BCount)
+    {
+        L.A.Options.bItemEntities = true;
+        L.Stand(FVector(-1500, -1500, 0));
+        const int32 A = L.A.SpawnItem(L.LabItem(), ACount, APos, FVector::ZeroVector, 0);
+        const int32 B = L.A.SpawnItem(L.LabItem(), BCount, BPos, FVector::ZeroVector, 0);
+        return {A, B};
+    }
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationItemEntityThrowTest, "Unnamed.Foundation.Items.Entities.Throw",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationItemEntityThrowTest::RunTest(const FString&)
+{
+    using namespace ItemEntityTestsLocal;
+    using namespace FoundationItemEntities;
+    {
+        // Off: refused as before items S8b.
+        FEntityLab L(false);
+        MakeThrowLab(L, 10);
+        L.A.Options.bItemEntities = false;
+        const FFoundationResult R = Throw(L, false);
+        TestEqual(TEXT("off: refused"), R.Reason, EFoundationReason::DropDeferred);
+        TestTrue(TEXT("off: nothing thrown"),
+            L.P().Inventory.Hotbar[0].Count == 10 && L.A.GetItemEntities().IsEmpty() && L.A.ItemsThrown == 0);
+    }
+    {
+        // On: one item from the eye along the look, delay 40.
+        FEntityLab L(false);
+        MakeThrowLab(L, 10);
+        const FFoundationResult R = Throw(L, false);
+        TestTrue(TEXT("committed"), R.IsCommitted());
+        TestEqual(TEXT("one taken"), L.P().Inventory.Hotbar[0].Count, 9);
+        if (L.A.GetItemEntities().Num() != 1) return false;
+        const FFoundationItemEntity E = L.A.GetItemEntities()[0];
+        TestTrue(TEXT("one lab block, delay 40"), E.Item == L.LabItem() && E.Count == 1 && E.PickupDelay == 40);
+        TestTrue(TEXT("from 0.3 below the eye"), E.LocalCm.Equals(FVector(0, 0, 162 - 30), 1e-9));
+        TestTrue(TEXT("0.3 along the look, 0.1 up, small spread"),
+            FMath::Abs(E.VelocityCm.X - 30) <= 2 + 1e-9 && FMath::Abs(E.VelocityCm.Y) <= 2 + 1e-9 &&
+                FMath::Abs(E.VelocityCm.Z - 10) <= 10 + 1e-9);
+        TestEqual(TEXT("ItemsThrown"), L.A.ItemsThrown, 1);
+        // Picked up on the 40th step, not before.
+        TestEqual(TEXT("picked up on step 40"), StepsToPickup(L, E.Id), 40);
+        TestEqual(TEXT("back in the stack"), L.P().Inventory.Hotbar[0].Count, 10);
+    }
+    {
+        // Looking up: thrown upward; the last item empties the slot.
+        FEntityLab L(false);
+        MakeThrowLab(L, 1);
+        L.Stand(FVector::ZeroVector, FVector(0, 0, 1));
+        Throw(L, false);
+        if (L.A.GetItemEntities().Num() != 1) return false;
+        TestTrue(TEXT("looking up: 0.4 up"), FMath::Abs(L.A.GetItemEntities()[0].VelocityCm.Z - 40) <= 10 + 1e-9);
+        TestTrue(TEXT("last item: the slot empties"), L.P().Inventory.Hotbar[0].IsEmpty());
+    }
+    {
+        // An empty hand throws nothing.
+        FEntityLab L(false);
+        MakeThrowLab(L, 1);
+        L.P().Inventory.SetSlot(0, {});
+        TestEqual(TEXT("empty hand: refused"), Throw(L, false).Reason, EFoundationReason::NoSupply);
+        TestTrue(TEXT("empty hand: nothing thrown"), L.A.GetItemEntities().IsEmpty());
+    }
+    {
+        // Creative (infinite supply) throws from the stack too, as vanilla's Q does.
+        FEntityLab L(true);
+        MakeThrowLab(L, 10);
+        TestTrue(TEXT("creative: committed"), Throw(L, false).IsCommitted());
+        TestTrue(TEXT("creative: one taken"), L.P().Inventory.Hotbar[0].Count == 9 && L.A.GetItemEntities().Num() == 1);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationItemEntityThrowStackTest, "Unnamed.Foundation.Items.Entities.ThrowStack",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationItemEntityThrowStackTest::RunTest(const FString&)
+{
+    using namespace ItemEntityTestsLocal;
+    FEntityLab L(false);
+    MakeThrowLab(L, 37);
+    const FFoundationResult R = Throw(L, true);
+    TestTrue(TEXT("committed"), R.IsCommitted());
+    TestTrue(TEXT("the slot empties"), L.P().Inventory.Hotbar[0].IsEmpty());
+    if (L.A.GetItemEntities().Num() != 1) return false;
+    const FFoundationItemEntity E = L.A.GetItemEntities()[0];
+    TestTrue(TEXT("one entity of 37, delay 40"), E.Count == 37 && E.PickupDelay == 40);
+    TestEqual(TEXT("picked up on step 40"), StepsToPickup(L, E.Id), 40);
+    TestEqual(TEXT("all 37 back"), CountItem(L, L.LabItem()), 37);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationItemEntityThrowToolTest, "Unnamed.Foundation.Items.Entities.ThrowTool",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationItemEntityThrowToolTest::RunTest(const FString&)
+{
+    using namespace ItemEntityTestsLocal;
+    FEntityLab L(false);
+    L.A.Options.bItemEntities = true;
+    const int32 Pickaxe = L.A.Rules.FindItem(TEXT("iron_pickaxe"));
+    if (!TestTrue(TEXT("iron_pickaxe wears"), Pickaxe != INDEX_NONE && L.A.Rules.Items[Pickaxe].MaxDurability > 0))
+        return false;
+    for (int32 Slot = 0; Slot < FFoundationInventory::HotbarSlots; ++Slot)
+        L.P().Inventory.SetSlot(Slot, {});
+    FFoundationItemInstance Tool = L.P().Inventory.MakeStack(Pickaxe, 1);
+    Tool.Damage = 57;
+    L.P().Inventory.SetSlot(4, Tool);
+    L.P().Inventory.Select(4);
+    L.Stand(FVector::ZeroVector);
+    Throw(L, false);
+    if (L.A.GetItemEntities().Num() != 1) return false;
+    const FFoundationItemEntity E = L.A.GetItemEntities()[0];
+    TestTrue(TEXT("the entity keeps the damage"), E.Item == Pickaxe && E.Damage == 57);
+    TestTrue(TEXT("the slot empties"), L.P().Inventory.Hotbar[4].IsEmpty());
+    TestTrue(TEXT("picked up"), StepsToPickup(L, E.Id) > 0);
+    const FFoundationItemInstance* Back = L.P().Inventory.Hotbar.FindByPredicate(
+        [Pickaxe](const FFoundationItemInstance& S) { return !S.IsEmpty() && S.Item == Pickaxe; });
+    TestTrue(TEXT("back with damage 57"), Back && Back->Damage == 57 && Back->Count == 1);
+    // Inventory::Add merges only into stacks of the same damage (and its default, 0, merges as before).
+    FFoundationInventory Inventory;
+    for (int32 Slot = 0; Slot < FFoundationInventory::HotbarSlots; ++Slot)
+        Inventory.SetSlot(Slot, {});
+    Inventory.Select(0);
+    Inventory.SetSlot(0, Inventory.MakeStack(L.LabItem(), 5));
+    TestEqual(TEXT("default damage merges"), Inventory.Add(L.LabItem(), 3, 64), 3);
+    TestEqual(TEXT("merged into slot 0"), Inventory.Hotbar[0].Count, 8);
+    TestEqual(TEXT("a damaged add"), Inventory.Add(L.LabItem(), 2, 64, true, 7), 2);
+    TestTrue(TEXT("goes to a new stack with its damage"),
+        Inventory.Hotbar[0].Count == 8 && Inventory.Hotbar[1].Count == 2 && Inventory.Hotbar[1].Damage == 7);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationItemEntityMergeTest, "Unnamed.Foundation.Items.Entities.Merge",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationItemEntityMergeTest::RunTest(const FString&)
+{
+    using namespace ItemEntityTestsLocal;
+    using namespace FoundationItemEntities;
+    {
+        // Inside the box: merged on the 40th step of age, into the larger stack, not before.
+        FEntityLab L(false);
+        const TPair<int32, int32> Ids = SpawnPair(L, FVector(0, 0, 0), 3, FVector(60, 0, 0), 5);
+        L.Steps(39);
+        TestEqual(TEXT("not merged before step 40"), L.A.GetItemEntities().Num(), 2);
+        L.NextStep();
+        TestTrue(TEXT("merged on step 40 into the larger"),
+            L.A.GetItemEntities().Num() == 1 && L.Find(Ids.Value) && L.Find(Ids.Value)->Count == 8 && !L.Find(Ids.Key));
+        TestEqual(TEXT("ItemsMerged"), L.A.ItemsMerged, 1);
+    }
+    // The box's edge (an item's box grown 0.5 sideways): 74 cm apart merge, 75 (touching) do not.
+    for (const TTuple<double, bool>& Case : TArray<TTuple<double, bool>>{{74., true}, {75., false}})
+    {
+        FEntityLab L(false);
+        SpawnPair(L, FVector(0, 0, 0), 3, FVector(Case.Get<0>(), 0, 0), 5);
+        L.Steps(80);
+        TestEqual(*FString::Printf(TEXT("sideways %.0f cm"), Case.Get<0>()), L.A.GetItemEntities().Num(),
+            Case.Get<1>() ? 1 : 2);
+    }
+    // And 0.25 up: an item on a shelf 49 cm up merges, 50 cm (touching) does not.
+    for (const TTuple<double, bool>& Case : TArray<TTuple<double, bool>>{{49., true}, {50., false}})
+    {
+        FEntityLab L(false);
+        FFoundationStatic Shelf;
+        Shelf.Box = FBox(FVector(20, -50, -10), FVector(80, 50, Case.Get<0>()));
+        Shelf.Label = TEXT("shelf");
+        L.A.Statics.Add(Shelf);
+        SpawnPair(L, FVector(0, 0, 0), 3, FVector(40, 0, Case.Get<0>()), 5);
+        L.Steps(80);
+        TestEqual(
+            *FString::Printf(TEXT("up %.0f cm"), Case.Get<0>()), L.A.GetItemEntities().Num(), Case.Get<1>() ? 1 : 2);
+    }
+    {
+        // Up to the max stack: 40 + 40 is 64 + 16, and stays so.
+        FEntityLab L(false);
+        SpawnPair(L, FVector(0, 0, 0), 40, FVector(30, 0, 0), 40);
+        L.Steps(120);
+        const TArray<FFoundationItemEntity>& Es = L.A.GetItemEntities();
+        TestTrue(TEXT("64 and 16"),
+            Es.Num() == 2 && Es[0].Count + Es[1].Count == 80 && FMath::Max(Es[0].Count, Es[1].Count) == 64);
+    }
+    {
+        // Different damage never merges.
+        FEntityLab L(false);
+        L.A.Options.bItemEntities = true;
+        L.Stand(FVector(-1500, -1500, 0));
+        const int32 Pickaxe = L.A.Rules.FindItem(TEXT("iron_pickaxe"));
+        L.A.Rules.Items[Pickaxe].MaxStack = 64;
+        L.A.SpawnItem(Pickaxe, 1, FVector(0, 0, 0), FVector::ZeroVector, 0, 4);
+        L.A.SpawnItem(Pickaxe, 1, FVector(30, 0, 0), FVector::ZeroVector, 0, 5);
+        L.Steps(80);
+        TestEqual(TEXT("different damage: not merged"), L.A.GetItemEntities().Num(), 2);
+    }
+    {
+        // Off: nothing merges.
+        FEntityLab L(false);
+        SpawnPair(L, FVector(0, 0, 0), 3, FVector(30, 0, 0), 5);
+        L.A.Options.bItemEntities = false;
+        L.Steps(80);
+        TestEqual(TEXT("off: not merged"), L.A.GetItemEntities().Num(), 2);
+    }
+    {
+        // A frozen stack neither merges nor is merged into.
+        FEntityLab L(false);
+        TUniquePtr<FColumnStorage> Storage = MakeUnique<FColumnStorage>();
+        FColumnStorage* Columns = Storage.Get();
+        L.A.World.SetStorage(MoveTemp(Storage));
+        SpawnPair(L, FVector(-10, 50, 0), 3, FVector(10, 50, 0), 5);
+        Columns->Unloaded.Add(FIntPoint(-1, 0));
+        L.Steps(80);
+        TestEqual(TEXT("frozen: not merged"), L.A.GetItemEntities().Num(), 2);
+    }
+    {
+        // A tie goes into the seeker (the first to reach a multiple of 40), which keeps the longer delay and the
+        // younger age: A (delay 0) seeks on its 40th step; B, spawned 10 steps later with delay 50, has age 30 and
+        // delay 20.
+        FEntityLab L(false);
+        L.A.Options.bItemEntities = true;
+        L.Stand(FVector(-1500, -1500, 0));
+        const int32 A = L.A.SpawnItem(L.LabItem(), 3, FVector(0, 0, 0), FVector::ZeroVector, 0);
+        L.Steps(10);
+        const int32 B = L.A.SpawnItem(L.LabItem(), 3, FVector(30, 0, 0), FVector::ZeroVector, 50);
+        L.Steps(30);
+        const FFoundationItemEntity* Into = L.Find(A);
+        TestTrue(TEXT("tie: into the seeker"), Into && !L.Find(B) && Into->Count == 6);
+        TestTrue(TEXT("tie: the longer delay, the younger age"), Into && Into->PickupDelay == 20 && Into->Age == 30);
+    }
+    {
+        // A chain: three single items 30 cm apart, all within the first's merge box, end as one stack of 3.
+        FEntityLab L(false);
+        L.A.Options.bItemEntities = true;
+        L.Stand(FVector(-1500, -1500, 0));
+        for (const double X : {0., 30., 60.})
+            L.A.SpawnItem(L.LabItem(), 1, FVector(X, 0, 0), FVector::ZeroVector, 0);
+        L.Steps(40);
+        TestTrue(TEXT("chain: one stack of 3"),
+            L.A.GetItemEntities().Num() == 1 && L.A.GetItemEntities()[0].Count == 3 && L.A.ItemsMerged == 2);
+    }
+    // The copies drawn: 1 for 1, then 2, 3, 4 and 5 from 2, 17, 33 and 49 (minecraft.wiki).
+    for (const TTuple<int32, int32>& Case :
+        TArray<TTuple<int32, int32>>{{1, 1}, {2, 2}, {16, 2}, {17, 3}, {32, 3}, {33, 4}, {48, 4}, {49, 5}, {64, 5}})
+        TestEqual(*FString::Printf(TEXT("copies for %d"), Case.Get<0>()), GetCopies(Case.Get<0>()), Case.Get<1>());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationItemEntityDespawnTest, "Unnamed.Foundation.Items.Entities.Despawn",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationItemEntityDespawnTest::RunTest(const FString&)
+{
+    using namespace ItemEntityTestsLocal;
+    using namespace FoundationItemEntities;
+    {
+        // Gone on step 6,000 of age, not before.
+        FEntityLab L(false);
+        L.A.Options.bItemEntities = true;
+        L.Stand(FVector(-1500, -1500, 0));
+        const int32 Id = L.A.SpawnItem(L.LabItem(), 1, FVector(0, 0, 0), FVector::ZeroVector, 0);
+        L.Steps(5999);
+        TestNotNull(TEXT("present at age 5,999"), L.Find(Id));
+        L.NextStep();
+        TestNull(TEXT("gone at age 6,000"), L.Find(Id));
+        TestEqual(TEXT("ItemsDespawned"), L.A.ItemsDespawned, 1);
+    }
+    {
+        // The age pauses while frozen: 100 frozen steps put the despawn 100 steps later.
+        FEntityLab L(false);
+        L.A.Options.bItemEntities = true;
+        TUniquePtr<FColumnStorage> Storage = MakeUnique<FColumnStorage>();
+        FColumnStorage* Columns = Storage.Get();
+        L.A.World.SetStorage(MoveTemp(Storage));
+        L.Stand(FVector(-1500, -1500, 0));
+        const int32 Id = L.A.SpawnItem(L.LabItem(), 1, FVector(50, 50, 0), FVector::ZeroVector, 0);
+        L.Steps(1000);
+        Columns->Unloaded.Add(FIntPoint(0, 0));
+        L.Steps(100);
+        Columns->Unloaded.Reset();
+        L.Steps(4999);
+        TestNotNull(TEXT("frozen: present at 6,099 steps"), L.Find(Id));
+        L.NextStep();
+        TestNull(TEXT("frozen: gone at 6,100 steps"), L.Find(Id));
+    }
+    {
+        // Off: no despawn.
+        FEntityLab L(false);
+        L.Stand(FVector(-1500, -1500, 0));
+        const int32 Id = L.A.SpawnItem(L.LabItem(), 1, FVector(0, 0, 0), FVector::ZeroVector, 0);
+        L.Steps(6010);
+        TestNotNull(TEXT("off: still present"), L.Find(Id));
+    }
+    return true;
+}
 #endif

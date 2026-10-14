@@ -89,6 +89,15 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Items")
     FString ItemRoot = TEXT("/Game/Items");
 
+    // Package of a container screen texture under GuiRoot, e.g. "Container/gui/container/inventory". Written by
+    // Scripts/Editor/ImportContainerGui.py.
+    UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
+    static FString GetGuiAssetPackage(const FString& AssetName);
+    static FSoftObjectPath GetGuiAssetPath(const FString& AssetName);
+
+    UPROPERTY(Config, EditAnywhere, Category = "Gui")
+    FString GuiRoot = TEXT("/Game/Gui");
+
     // Package of a breaking-effects asset under BreakRoot, e.g. "DA_BreakAssets" or "Sounds/dig/stone1". Written by
     // Scripts/Editor/ImportBreakAssets.py and CreateBreakMaterials.py (Docs/Breaking.md).
     UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")

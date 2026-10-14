@@ -236,8 +236,9 @@ struct UNNAMED_API FFoundationInventory
     // stack, the offhand, then the hotbar and the main grid merge; then the first empty slot, hotbar before main.
     // Returns how many fit. bTouchStacks false leaves the merged stacks' own revisions (their item
     // refs) as they are and bumps only the inventory's: an item entity's pickup changes a count, and a break in
-    // progress with that stack goes on, as vanilla's compares the item, not the count.
-    int32 Add(int32 Item, int32 Count, int32 MaxStack, bool bTouchStacks = true);
+    // progress with that stack goes on, as vanilla's compares the item, not the count. Damage is the added stack's wear
+    // (a thrown tool picked up again); it merges only into stacks with the same damage.
+    int32 Add(int32 Item, int32 Count, int32 MaxStack, bool bTouchStacks = true, int32 Damage = 0);
     // Puts a whole stack back (the cursor when a container closes) in Add's order, keeping its damage: merges only
     // into stacks of the same item and damage, and the rest keeps its identity in the first free slot. Returns what
     // did not fit (empty when it all did).
