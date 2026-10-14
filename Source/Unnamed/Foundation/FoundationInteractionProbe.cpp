@@ -1,6 +1,7 @@
 #include "Foundation/FoundationRuntimeProbe.h"
 #include "Foundation/FoundationBreakEffects.h"
 #include "Foundation/FoundationController.h"
+#include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationHud.h"
 #include "Foundation/FoundationInputRouter.h"
 #include "Foundation/FoundationPlayground.h"
@@ -1261,6 +1262,66 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             PressKey(EKeys::RightMouseButton, false);
             SetItemUse(1);
         });
+
+    // 13d. Axe stripping (step 14, foundation.Items.Use 1): a right click on an oak log (axis x) with an iron axe
+    // strips it (axis kept, 1 wear, item.axe.strip); the capture pair is the stripped log and the same click with the
+    // switch at 0 (the control: the log stays).
+    const FIntVector StripCell(-6, 6, 0);
+    auto StartStrip = [this, Authority, Look, Click, StripCell]
+    {
+        ResetPlayer({-750, 650, 0});
+        FFoundationAuthority& A = Authority();
+        A.World.Set(StripCell,
+            A.World.GetRegistry().WithValue(
+                A.World.FindBlock(TEXT("oak_log"))->GetDefaultState(), TEXT("axis"), TEXT("x")));
+        Pawn->Interaction.SetCreativeSlot(A, Pawn->Vitals, 0, TEXT("iron_axe"), 1);
+        PressKey(EKeys::One, true);
+        PressKey(EKeys::One, false);
+        Look(FoundationGrid::CellBox(StripCell, A.World.OriginCm).GetCenter());
+        Click(EKeys::RightMouseButton);
+    };
+    Prepare(TEXT("stripping"), true);
+    AddCase(
+        TEXT("strip capture on"), .6,
+        [Lab, SetItemUse, StartStrip]
+        {
+            SetItemUse(1);
+            if (FFoundationBreakEffects* Effects = Lab->GetView()->GetBreakEffects()) Effects->ClearSoundLog();
+            StartStrip();
+        },
+        [this, Lab, Player, BlockAt, Drawn, Capture, StripCell]
+        {
+            const int32 Damage = Player()->Inventory.Hotbar[0].Damage;
+            Record(TEXT("an axe strips an oak log, keeps its axis and wears 1"),
+                BlockAt(StripCell) == TEXT("stripped_oak_log[axis=x]") && Damage == 1,
+                FString::Printf(TEXT("%s, damage %d"), *BlockAt(StripCell), Damage));
+            int32 Strips = 0;
+            const FFoundationBreakEffects* Effects = Lab->GetView()->GetBreakEffects();
+            for (const FoundationBreak::FSoundLogEntry& Entry :
+                Effects ? Effects->GetSoundLog() : TConstArrayView<FoundationBreak::FSoundLogEntry>())
+                Strips += Entry.Event == TEXT("item.axe.strip");
+            Record(TEXT("stripping plays item.axe.strip once"), Strips == 1, FString::Printf(TEXT("%d"), Strips));
+            Drawn(TEXT("the stripped log is drawn"));
+            Capture(TEXT("stripping-on"));
+        });
+    AddCase(TEXT("strip capture on hold"), .2, [] {}, [] {});
+    Prepare(TEXT("stripping control"), true);
+    AddCase(
+        TEXT("strip capture off"), .6,
+        [SetItemUse, StartStrip]
+        {
+            SetItemUse(0);
+            StartStrip();
+        },
+        [this, Player, BlockAt, Capture, StripCell]
+        {
+            const int32 Damage = Player()->Inventory.Hotbar[0].Damage;
+            Record(TEXT("the control (switch 0) leaves the log"),
+                BlockAt(StripCell) == TEXT("oak_log[axis=x]") && Damage == 0,
+                FString::Printf(TEXT("%s, damage %d"), *BlockAt(StripCell), Damage));
+            Capture(TEXT("stripping-off"));
+        });
+    AddCase(TEXT("strip capture off hold"), .2, [] {}, [SetItemUse] { SetItemUse(1); });
 
     // 13b. Hands and items: pick block, drop (no item entities here), offhand fallback, Toggle use, water.
     Prepare(TEXT("hands"), false);

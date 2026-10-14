@@ -4,6 +4,7 @@
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationSimulation.h"
+#include "Foundation/FoundationStripping.h"
 #include "HAL/IConsoleManager.h"
 
 namespace
@@ -564,7 +565,7 @@ FFoundationResult FFoundationAuthority::Execute(
         Reject(Result, EFoundationReason::DropDeferred);
         break;
     case EFoundationCommandType::UseOn:
-        UseOn(*Player, Command, Result);
+        UseOn(*Player, Command, Result, Vitals.Mode == EFoundationPlayerMode::Creative);
         break;
     case EFoundationCommandType::UseEntity:
         UseEntity(*Player, Command, Result);
@@ -657,7 +658,7 @@ FFoundationResult FFoundationAuthority::Execute(
 }
 
 void FFoundationAuthority::UseOn(
-    FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result)
+    FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result, bool bCreative)
 {
     if (!CheckHand(Player, Command, Result)) return;
     const FFoundationHit Hit = Resolve(Player.Facts);
@@ -698,7 +699,9 @@ void FFoundationAuthority::UseOn(
         AddEvent(Event);
         return;
     }
-    // 2. The hand item's place capability; without one the use passes to the next hand.
+    // 2. The hand item's use on the block (foundation.Items.Use): an axe strips.
+    if (StripOn(Player, Command, Hit, Result, bCreative)) return;
+    // 3. The hand item's place capability; without one the use passes to the next hand.
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
     if (Stack.IsEmpty() || !Rules.GetItem(Stack.Item).CanPlace())
     {
@@ -760,6 +763,50 @@ void FFoundationAuthority::UseOn(
     Event.Step = Player.Facts.Step;
     AddEvent(Event);
     SettlePlants(Destination, Replaced, Player);
+}
+
+bool FFoundationAuthority::StripOn(FFoundationPlayer& Player, const FFoundationCommand& Command,
+    const FFoundationHit& Hit, FFoundationResult& Result, bool bCreative)
+{
+    const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
+    if (!Options.bItemUse || Stack.IsEmpty() || Hit.Kind != EFoundationHitKind::Block) return false;
+    const int32 AxeItem = Stack.Item;
+    const FFoundationItemDefinition& Axe = Rules.GetItem(AxeItem);
+    const FGameplayTag AxesTag = FoundationStripping::GetAxesTag();
+    if (!AxesTag.IsValid() || !Axe.Tags.HasTagExact(AxesTag)) return false;
+    const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    const FFoundationBlockState State = World.Get(Hit.Cell).State;
+    // The stripped block keeps the properties (the axis): the saved form with the other id.
+    FFoundationSavedState Saved = Registry.Save(State);
+    Saved.Id = FoundationStripping::FindStripped(Saved.Id);
+    FFoundationBlockState Stripped;
+    if (Saved.Id.IsNone() || !Registry.Load(Saved, Stripped)) return false;
+    World.Set(Hit.Cell, Stripped);
+    ++Strips;
+    Result.Outcome = EFoundationOutcome::Committed;
+    Result.bStripped = true;
+    Result.Cell = Hit.Cell;
+    Result.State = Stripped;
+    // One point of wear (wiki "Axe"), when tool wear is on; creative tools never wear.
+    if (!bCreative && Options.bToolWear && Axe.MaxDurability > 0)
+    {
+        Result.bToolWorn = true;
+        Result.bToolBroke = Player.Inventory.Wear(Command.Hand, FoundationStripping::WearPerStrip, Axe.MaxDurability);
+    }
+    FFoundationEvent Event;
+    Event.Kind = EFoundationEventKind::Stripped;
+    Event.Player = Player.Id;
+    Event.Cell = Hit.Cell;
+    Event.State = Stripped;
+    Event.Item = AxeItem;
+    Event.Step = Player.Facts.Step;
+    AddEvent(Event);
+    if (Result.bToolBroke)
+    {
+        Event.Kind = EFoundationEventKind::ToolBroke;
+        AddEvent(Event);
+    }
+    return true;
 }
 
 void FFoundationAuthority::UseItemStart(FFoundationPlayer& Player, const FFoundationCommand& Command,

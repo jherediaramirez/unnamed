@@ -14,7 +14,8 @@ enum class EFoundationCommandType : uint8
     SelectSlot,
     SwapHands,
     Drop,
-    // Use against a block-like target: its interaction, then the hand item's place capability.
+    // Use against a block-like target: its interaction, then the hand item's use on it (an axe strips; step 14), then
+    // its place capability.
     UseOn,
     // Use against an entity: its interaction (the training targets have none).
     UseEntity,
@@ -150,6 +151,8 @@ struct FFoundationResult
     // Item use (step 10): the reference steps used so far and the item's total; bAte when this result finished eating.
     int32 UseTicks = 0, UseDuration = 0;
     bool bAte = false;
+    // An axe stripped the block at Cell (step 14); State is the stripped state.
+    bool bStripped = false;
     // What a survival break returned to the inventory (items S5b): one entry per stack rolled.
     TArray<FFoundationLootDrop> Drops;
     FName Interaction;
@@ -293,7 +296,9 @@ enum class EFoundationEventKind : uint8
     // Item use (step 10): Eating on the steps that make the eating sound and particles (Item, LocationCm at the eye);
     // Ate when it finished (Item, Amount = the nutrition).
     Eating,
-    Ate
+    Ate,
+    // An axe stripped a block (step 14): Cell, State (the stripped state), Item (the axe).
+    Stripped
 };
 
 // A committed (or rejected) outcome for presentation: effects fire once from these.
@@ -428,7 +433,7 @@ public:
 
     // Diagnostics.
     int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
-    int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsEaten = 0;
+    int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsEaten = 0, Strips = 0;
 
 private:
     FFoundationInventory MakeLoadout();
@@ -439,7 +444,10 @@ private:
     void Remember(FFoundationPlayer& Player, const FFoundationResult& Result);
     FFoundationResult& Reject(FFoundationResult& Result, EFoundationReason Reason);
     void AddEvent(FFoundationEvent Event);
-    void UseOn(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
+    void UseOn(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result, bool bCreative);
+    // Axe stripping (step 14): true when the hand's axe stripped the hit block (Result filled).
+    bool StripOn(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationHit& Hit,
+        FFoundationResult& Result, bool bCreative);
     void UseEntity(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
     void MineStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
         FFoundationResult& Result);

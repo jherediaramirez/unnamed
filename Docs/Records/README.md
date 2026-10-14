@@ -4,6 +4,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 14, 2026
 
+- [Use step 14: axe stripping](2026-10-14-Use-Stripping.md): record, lane `feature/survival-use`. `foundation.Items.Use 1`: right-click a log, wood, stem, hyphae or bamboo block with an axe to strip it (axis kept, 1 wear, `item.axe.strip`), through `UseOn`; a native strip table pinned against the block reference's 25 `stripped_*` blocks. Next: step 17, buckets; start from [2026-10-14-Use-Handoff-Step17.md](2026-10-14-Use-Handoff-Step17.md).
 - [Use step 10: eating](2026-10-14-Use-Eating.md): record and handoff, lane `feature/survival-use`. `foundation.Items.Use 1`: hold use with food to eat it over 32 steps (hunger and saturation from items.json's food, capped saturation, full hunger refuses, release or a slot change cancels, 20% slowdown, eat and burp sounds, a provisional eating pose); 0 lets food pass as before. Next: step 14, axe stripping; start from its handoff, [2026-10-14-Use-Handoff-Step14.md](2026-10-14-Use-Handoff-Step14.md).
 
 ## October 13, 2026

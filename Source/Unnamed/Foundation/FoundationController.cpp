@@ -376,8 +376,8 @@ void AFoundationController::NoteInteraction(const AFoundationPawn& FoundationPaw
     if (!Authority) return;
     static const TCHAR* Kinds[] = {TEXT("placed"), TEXT("broke"), TEXT("hit"), TEXT("whiff"), TEXT("rejected"),
         TEXT("interacted"), TEXT("tool broke"), TEXT("target down"), TEXT("lab reset"), TEXT("popped"),
-        TEXT("picked up"), TEXT("eating"), TEXT("ate")};
-    static_assert(UE_ARRAY_COUNT(Kinds) == int32(EFoundationEventKind::Ate) + 1, "one name per event kind");
+        TEXT("picked up"), TEXT("eating"), TEXT("ate"), TEXT("stripped")};
+    static_assert(UE_ARRAY_COUNT(Kinds) == int32(EFoundationEventKind::Stripped) + 1, "one name per event kind");
     for (const FFoundationEvent& Event : Authority->GetEvents())
     {
         if (Event.Serial <= LastInteractionEvent) continue;
