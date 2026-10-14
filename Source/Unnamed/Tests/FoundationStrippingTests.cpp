@@ -223,6 +223,17 @@ bool FFoundationItemsStripTest::RunTest(const FString&)
         TestEqual(TEXT("stripped_bamboo_block"), Lab.BlockAt(), FName(TEXT("stripped_bamboo_block")));
     }
     {
+        // Adventure: a plain axe passes and the log stays (survival.r1.modes).
+        FStripLab Lab;
+        Lab.Vitals.Mode = EFoundationPlayerMode::Adventure;
+        Lab.Put(TEXT("oak_log"));
+        const FFoundationResult Result = Lab.Use();
+        TestTrue(TEXT("adventure passes"), Result.Outcome == EFoundationOutcome::Pass && !Result.bStripped);
+        TestEqual(TEXT("adventure: the log stays"), Lab.BlockAt(), FName(TEXT("oak_log")));
+        TestEqual(TEXT("adventure: no wear"), Lab.Damage(), 0);
+        TestEqual(TEXT("adventure: no strips"), Lab.A.Strips, 0);
+    }
+    {
         // No wear in creative or with tool wear off; the last point breaks the axe once.
         FStripLab Lab;
         Lab.Vitals.Mode = EFoundationPlayerMode::Creative;

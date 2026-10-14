@@ -54,6 +54,11 @@ namespace
             "whatever Options > FOV says; 0 the provisional pose from before (pivot 42, 24, -24; a block turned 10 and "
             "35 degrees), drawn at the view's FOV."),
         ECVF_Default);
+    TAutoConsoleVariable<int32> CVarHandEatMotion(TEXT("foundation.Hand.EatMotion"), 1,
+        TEXT("Held item while eating: 1 vanilla's eat transform (an early jiggle, then the exponent-27 approach to the "
+             "mouth; value report eating.hand_transform); 0 the step 10 ease (a fixed pose in 0.1 s and a bob every 4 "
+             "steps)."),
+        ECVF_Default);
     // foundation.Hand.Fit 1: the pivot (cm, view space) and its scale, fitted to P1's frames at FOV 70 (12 px RMS over
     // the unclipped edges of an apple, stick, iron pickaxe and sword and a stone; the old pose 150 px; record
     // Docs/Records/2026-10-12-Feel-B.md). Only pivot / scale is fixed by the frames: scale 2 draws a model block as a
@@ -558,6 +563,70 @@ bool FoundationHand::IsFitOn()
     return CVarHandFit.GetValueOnGameThread() != 0;
 }
 
+int32 FoundationHand::GetEatMotion()
+{
+    return CVarHandEatMotion.GetValueOnGameThread();
+}
+
+FMatrix FoundationHand::MakeEatMatrix(double Remaining, int32 Duration)
+{
+    const double F = Remaining + 1;
+    const double P = F / FMath::Max(Duration, 1);
+    const double Jiggle = P < .8 ? .1 * FMath::Abs(FMath::Cos(F / 4 * UE_DOUBLE_PI)) : 0.;
+    const double S = 1 - FMath::Pow(P, 27.);
+    // Column-vector rotations in a right-handed space about x (0), y (1) or z (2).
+    const auto Rotation = [](int32 Axis, double Degrees)
+    {
+        double Sin, Cos;
+        FMath::SinCos(&Sin, &Cos, FMath::DegreesToRadians(Degrees));
+        FMatrix R = FMatrix::Identity;
+        const int32 A = (Axis + 1) % 3, B = (Axis + 2) % 3;
+        R.M[A][A] = Cos;
+        R.M[A][B] = -Sin;
+        R.M[B][A] = Sin;
+        R.M[B][B] = Cos;
+        return R;
+    };
+    // Column-vector products: Left x Right applies Right first.
+    const auto Times = [](const FMatrix& Left, const FMatrix& Right)
+    {
+        FMatrix Out;
+        for (int32 I = 0; I < 4; ++I)
+            for (int32 J = 0; J < 4; ++J)
+            {
+                double Sum = 0;
+                for (int32 K = 0; K < 4; ++K)
+                    Sum += Left.M[I][K] * Right.M[K][J];
+                Out.M[I][J] = Sum;
+            }
+        return Out;
+    };
+    FMatrix M = Times(Times(Rotation(1, 90 * S), Rotation(0, 10 * S)), Rotation(2, 30 * S));
+    M.M[0][3] = .6 * S;
+    M.M[1][3] = -.5 * S + Jiggle;
+    M.M[2][3] = 0;
+    return M;
+}
+
+FTransform FoundationHand::MakeEatPivot(const FVector& PivotCm, double Remaining, int32 Duration)
+{
+    const FMatrix M = MakeEatMatrix(Remaining, Duration);
+    // Unreal view space (x forward, y right, z up, cm) against vanilla's (x right, y up, z back, blocks).
+    const auto ToVanilla = [](const FVector& V) { return FVector(V.Y, V.Z, -V.X); };
+    const auto ToUnreal = [](const FVector& V) { return FVector(-V.Z, V.X, V.Y); };
+    const auto Apply = [&M](const FVector& V, double W)
+    {
+        return FVector(M.M[0][0] * V.X + M.M[0][1] * V.Y + M.M[0][2] * V.Z + M.M[0][3] * W,
+            M.M[1][0] * V.X + M.M[1][1] * V.Y + M.M[1][2] * V.Z + M.M[1][3] * W,
+            M.M[2][0] * V.X + M.M[2][1] * V.Y + M.M[2][2] * V.Z + M.M[2][3] * W);
+    };
+    const FVector Location = ToUnreal(Apply(ToVanilla(PivotCm / 100), 1)) * 100;
+    const FMatrix Axes(ToUnreal(Apply(ToVanilla(FVector::XAxisVector), 0)),
+        ToUnreal(Apply(ToVanilla(FVector::YAxisVector), 0)), ToUnreal(Apply(ToVanilla(FVector::ZAxisVector), 0)),
+        FVector::ZeroVector);
+    return FTransform(Axes.ToQuat(), Location);
+}
+
 double FoundationHeldLight::Brightness(double Level)
 {
     const auto Curve = [](double F) { return F / (4 - 3 * F); };
@@ -639,14 +708,19 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
             break;
         case EFoundationEventKind::Eating:
         case EFoundationEventKind::Ate:
-            // Eating (step 10): entity.generic.eat at volume 0.5-1.0 and pitch 0.8-1.2, every effect step and once more
-            // at the end, then entity.player.burp at 0.5 and 0.9-1.0 (the burp at the end: wiki "Food"; the volumes and
-            // pitches are provisional, unverified, to check against the wiki's Sounds.json table). No crumbs yet: the
-            // break particles draw block textures only (known issue).
+            // Eating (step 10): entity.generic.eat at volume 0.5 or 1 (equal odds) and pitch 1 + 0.2 (U - V), every
+            // effect step and once more at the end (SURVIVAL-FINDINGS, R5, survival.r5.rules), then entity.player.burp
+            // at 0.5 and 0.9-1.0 (wiki "Food"; confirmed by survival.r7.creative). Crumbs (step 10b): 5 item particles
+            // per effect step, 16 at the end (value report, eating.crumbs).
             if (BreakEffects)
             {
-                BreakEffects->PlayEvent(TEXT("entity.generic.eat"), Event.LocationCm, .5f + .5f * FMath::FRand(),
+                BreakEffects->PlayEvent(TEXT("entity.generic.eat"), Event.LocationCm, FMath::RandBool() ? 1.f : .5f,
                     (FMath::FRand() - FMath::FRand()) * .2f + 1.f);
+                const AFoundationPawn* Local = GetLocalPawn();
+                BreakEffects->SpawnCrumbs(Authority.Rules.GetItem(Event.Item).Id, Event.LocationCm,
+                    Local && Local->GetCamera() ? Local->GetCamera()->GetComponentRotation() : FRotator::ZeroRotator,
+                    Event.Kind == EFoundationEventKind::Ate ? FoundationBreak::CrumbsAtCompletion
+                                                            : FoundationBreak::CrumbsPerEffect);
                 if (Event.Kind == EFoundationEventKind::Ate)
                     BreakEffects->PlayEvent(
                         TEXT("entity.player.burp"), Event.LocationCm, .5f, FMath::FRand() * .1f + .9f);
@@ -1004,10 +1078,17 @@ void UFoundationInteractionView::UpdateHeldItem(
                                     : 0.;
     // foundation.Break.Swing: the swing clock's 6-tick swings instead, in today's pose.
     if (BreakEffects) BreakEffects->GetSwing(Swing);
-    // Eating (step 10): the main-hand item eases toward the mouth in 0.1 s and bobs once per effect step (4 ticks).
-    // The project's own motion, provisional until a vanilla capture; it replaces the swing while it shows.
+    // Eating: the main-hand item's motion replaces the swing while it shows. EatMotion 1 (step 10b): vanilla's eat
+    // transform, at once; 0 (step 10): an ease toward the mouth in 0.1 s and a bob once per effect step (4 steps).
     const bool bEating = Pawn->Interaction.bUsingItem && Pawn->Interaction.UseHand == EFoundationHand::Main;
-    EatBlend = FMath::Clamp(EatBlend + (bEating ? DeltaTime : -DeltaTime) / .1, 0., 1.);
+    const bool bEatMotion = FoundationHand::GetEatMotion() == 1;
+    if (!bEating || Pawn->Interaction.UseTicks != EatTicks)
+        EatTickAge = 0;
+    else
+        EatTickAge += DeltaTime;
+    EatTicks = bEating ? Pawn->Interaction.UseTicks : -1;
+    EatBlend =
+        bEatMotion ? (bEating ? 1. : 0.) : FMath::Clamp(EatBlend + (bEating ? DeltaTime : -DeltaTime) / .1, 0., 1.);
     EatAge = bEating ? EatAge + DeltaTime : 0;
     const double Bob = FMath::Abs(FMath::Sin(EatAge / .2 * PI));
     Swing *= 1 - EatBlend;
@@ -1021,8 +1102,22 @@ void UFoundationInteractionView::UpdateHeldItem(
             Held->SetRelativeTransform(HandFit ? FoundationHand::MakeHeldBlockDisplay()
                                                : FTransform(FRotator(10, 35, 0), FVector::ZeroVector, FVector(.11)));
     }
-    HandPivot->SetRelativeLocationAndRotation((HandFit ? HandFitPivot : HandRestPivot) +
-            FVector(Swing * 6, -Swing * 8, Swing * 4) + FVector(-3, -10, 5 - 2.5 * Bob) * EatBlend,
+    const FVector Pivot = HandFit ? HandFitPivot : HandRestPivot;
+    const int32 UseDuration = Pawn->Interaction.UseDuration;
+    if (bEatMotion && bEating && UseDuration > 0)
+    {
+        // Remaining steps less the partial step, held at most Duration - 1: the start step's overshoot (the report's
+        // remaining-32 sample, s = -1.3) is not drawn, as vanilla's client counts its first step down before it
+        // draws (provisional, unverified).
+        const double Partial = FMath::Min(EatTickAge / FoundationBreak::StepSeconds, .999);
+        const double Remaining =
+            FMath::Min(double(UseDuration - Pawn->Interaction.UseTicks) - Partial, double(UseDuration - 1));
+        const FTransform Eat = FoundationHand::MakeEatPivot(Pivot, Remaining, UseDuration);
+        HandPivot->SetRelativeLocationAndRotation(Eat.GetLocation(), Eat.GetRotation());
+        return;
+    }
+    HandPivot->SetRelativeLocationAndRotation(
+        Pivot + FVector(Swing * 6, -Swing * 8, Swing * 4) + FVector(-3, -10, 5 - 2.5 * Bob) * EatBlend,
         FRotator(-55 * Swing - 15 * EatBlend, -10 * Swing - 35 * EatBlend, 0));
 }
 

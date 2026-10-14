@@ -49,7 +49,7 @@ const TCHAR* LexToString(EFoundationReason Reason)
         TEXT("inventory full"), TEXT("target down"), TEXT("target damage cooldown"),
         TEXT("drop deferred: no item entities"), TEXT("released"), TEXT("expired"), TEXT("canceled"),
         TEXT("cannot break blocks in creative"), TEXT("damage out of range"), TEXT("not hungry"),
-        TEXT("no item in use")};
+        TEXT("no item in use"), TEXT("item use switched off")};
     static_assert(UE_ARRAY_COUNT(Names) == int32(EFoundationReason::Count), "reason names");
     return Names[FMath::Min(int32(Reason), int32(EFoundationReason::Count) - 1)];
 }
@@ -75,9 +75,10 @@ bool FoundationItemUse::IsOn()
     return CVarItemUse.GetValueOnAnyThread() != 0;
 }
 
-bool FoundationItemUse::IsEffectTick(int32 Ticks)
+bool FoundationItemUse::IsEffectTick(int32 Ticks, int32 Duration)
 {
-    return Ticks >= EffectsFirstTick && (Ticks - EffectsFirstTick) % EffectsEveryTicks == 0;
+    return Ticks < Duration && Ticks > FMath::FloorToInt32(Duration * EffectsDelayFraction) &&
+        (Duration - Ticks) % EffectsEveryTicks == 0;
 }
 
 FBox FFoundationPlayerFacts::GetBody() const
@@ -668,7 +669,7 @@ FFoundationResult FFoundationAuthority::Execute(
         Drop(*Player, Command, Result);
         break;
     case EFoundationCommandType::UseOn:
-        UseOn(*Player, Command, Result, Vitals.Mode == EFoundationPlayerMode::Creative);
+        UseOn(*Player, Command, Result, Vitals.Mode);
         break;
     case EFoundationCommandType::UseEntity:
         UseEntity(*Player, Command, Result);
@@ -793,8 +794,9 @@ FFoundationResult FFoundationAuthority::Execute(
 }
 
 void FFoundationAuthority::UseOn(
-    FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result, bool bCreative)
+    FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result, EFoundationPlayerMode Mode)
 {
+    const bool bCreative = Mode == EFoundationPlayerMode::Creative;
     if (!CheckHand(Player, Command, Result)) return;
     const FFoundationHit Hit = Resolve(Player.Facts);
     if (!Hit.IsBlockLike() || !Hit.SameTarget(Command.Target))
@@ -835,7 +837,7 @@ void FFoundationAuthority::UseOn(
         return;
     }
     // 2. The hand item's use on the block (foundation.Items.Use): an axe strips.
-    if (StripOn(Player, Command, Hit, Result, bCreative)) return;
+    if (StripOn(Player, Command, Hit, Result, Mode)) return;
     // 3. The hand item's place capability; without one the use passes to the next hand.
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
     if (Stack.IsEmpty() || !Rules.GetItem(Stack.Item).CanPlace())
@@ -901,10 +903,15 @@ void FFoundationAuthority::UseOn(
 }
 
 bool FFoundationAuthority::StripOn(FFoundationPlayer& Player, const FFoundationCommand& Command,
-    const FFoundationHit& Hit, FFoundationResult& Result, bool bCreative)
+    const FFoundationHit& Hit, FFoundationResult& Result, EFoundationPlayerMode Mode)
 {
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
-    if (!Options.bItemUse || Stack.IsEmpty() || Hit.Kind != EFoundationHitKind::Block) return false;
+    // A plain axe in Adventure passes and the block stays (SURVIVAL-FINDINGS, R1, survival.r1.modes); items with
+    // Adventure permission components are not modelled.
+    const bool bCreative = Mode == EFoundationPlayerMode::Creative;
+    if (!Options.bItemUse || Mode == EFoundationPlayerMode::Adventure || Stack.IsEmpty() ||
+        Hit.Kind != EFoundationHitKind::Block)
+        return false;
     const int32 AxeItem = Stack.Item;
     const FFoundationItemDefinition& Axe = Rules.GetItem(AxeItem);
     const FGameplayTag AxesTag = FoundationStripping::GetAxesTag();
@@ -987,6 +994,14 @@ void FFoundationAuthority::UseItemContinue(
     }
     Result.UseDuration = Use.Duration;
     Result.UseTicks = Use.Ticks;
+    // foundation.Items.Use turned 0 mid-use: the use ends, nothing eaten (Codex review 1, finding 1).
+    if (!Options.bItemUse)
+    {
+        CancelUse(Player);
+        Result.Outcome = EFoundationOutcome::Canceled;
+        Result.Reason = EFoundationReason::ItemUseOff;
+        return;
+    }
     // The same stack by instance: its count may change (a pickup); another stack or an empty hand ends the use.
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Use.Hand);
     const EFoundationReason Cancel = !Player.Facts.bAlive       ? EFoundationReason::Dead
@@ -1015,7 +1030,7 @@ void FFoundationAuthority::UseItemContinue(
     Event.Step = Player.Facts.Step;
     if (Use.Ticks < Use.Duration)
     {
-        if (FoundationItemUse::IsEffectTick(Use.Ticks))
+        if (FoundationItemUse::IsEffectTick(Use.Ticks, Use.Duration))
         {
             Event.Kind = EFoundationEventKind::Eating;
             AddEvent(Event);
