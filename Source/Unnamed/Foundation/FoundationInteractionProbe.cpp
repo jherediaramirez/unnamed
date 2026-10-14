@@ -1316,10 +1316,16 @@ void UFoundationRuntimeProbe::AddInteractionCases()
     AddCase(TEXT("xp control hold"), .2, [] {}, [SetXp] { SetXp(1); });
 
     // 13c. Eating (step 10, foundation.Items.Use 1): holding use with apples at hunger 10 eats one in 1.6 s (hunger
-    // 14, one apple fewer, the eat and burp sounds); letting go mid-way eats nothing. Then the capture pair: eating
-    // mid-way, and the same hold with the switch at 0 (the control: no eating pose).
+    // 14, one apple fewer, the eat and burp sounds, 46 crumbs: 6 effect steps of 5 and 16 at the end); letting go
+    // mid-way eats nothing, checked past the meal's deadline. Then the captures: eating mid-way
+    // (foundation.Hand.EatMotion 1, vanilla's eat transform), the same with EatMotion 0 (step 10's ease), and the same
+    // hold with the switch at 0 (the control: no eating pose).
     auto SetItemUse = [](int32 Value)
     { IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Items.Use"))->Set(Value, ECVF_SetByCode); };
+    auto SetEatMotion = [](int32 Value)
+    { IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Hand.EatMotion"))->Set(Value, ECVF_SetByCode); };
+    const TSharedRef<int32> CrumbsBefore = MakeShared<int32>(0), EatenAtRelease = MakeShared<int32>(0);
+    const TSharedRef<bool> bWasEatingAtRelease = MakeShared<bool>(false);
     auto StartEating = [this, Authority](int32 Food)
     {
         ResetPlayer({-750, 650, 0});
@@ -1335,13 +1341,17 @@ void UFoundationRuntimeProbe::AddInteractionCases()
     Prepare(TEXT("eating"), true);
     AddCase(
         TEXT("eat hold"), 2.,
-        [Lab, SetItemUse, StartEating]
+        [Lab, SetItemUse, StartEating, CrumbsBefore]
         {
             SetItemUse(1);
-            if (FFoundationBreakEffects* Effects = Lab->GetView()->GetBreakEffects()) Effects->ClearSoundLog();
+            if (FFoundationBreakEffects* Effects = Lab->GetView()->GetBreakEffects())
+            {
+                Effects->ClearSoundLog();
+                *CrumbsBefore = Effects->GetCrumbsSpawned();
+            }
             StartEating(10);
         },
-        [this, Lab, Authority, CountItem]
+        [this, Lab, Authority, CountItem, CrumbsBefore]
         {
             PressKey(EKeys::RightMouseButton, false);
             const FFoundationAuthority& A = Authority();
@@ -1364,18 +1374,30 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             }
             Record(TEXT("eating plays entity.generic.eat, then one entity.player.burp"), Eats >= 7 && Burps == 1,
                 FString::Printf(TEXT("eat sounds %d, burps %d"), Eats, Burps));
+            const int32 Crumbs = Effects ? Effects->GetCrumbsSpawned() - *CrumbsBefore : 0;
+            Record(TEXT("eating sheds 46 crumbs: 5 per effect step, 16 at the end"), Crumbs == 46,
+                FString::Printf(TEXT("crumbs %d"), Crumbs));
         });
     AddCase(
         TEXT("eat release"), .6, [StartEating] { StartEating(14); },
-        [this, Authority, CountItem]
+        [this, Authority, EatenAtRelease, bWasEatingAtRelease]
         {
-            const bool bWasEating = Pawn->Interaction.bUsingItem;
+            *bWasEatingAtRelease = Pawn->Interaction.bUsingItem;
+            *EatenAtRelease = Authority().ItemsEaten;
             PressKey(EKeys::RightMouseButton, false);
+        });
+    // Past the meal's deadline (1.0 s were left at the release): a meal that kept running would have finished.
+    AddCase(
+        TEXT("eat release wait"), 1.2, [] {},
+        [this, Authority, CountItem, Player, EatenAtRelease, bWasEatingAtRelease]
+        {
             const int32 Apple = Authority().Rules.FindItem(TEXT("apple"));
+            const bool bActive = Player() && Player()->Use.bActive;
+            const int32 Eaten = Authority().ItemsEaten - *EatenAtRelease;
             Record(TEXT("letting go mid-way eats nothing"),
-                bWasEating && Pawn->Vitals.Food == 14 && CountItem(Apple) == 3,
-                FString::Printf(
-                    TEXT("was eating %d, hunger %d, apples %d"), bWasEating, Pawn->Vitals.Food, CountItem(Apple)));
+                *bWasEatingAtRelease && !bActive && Eaten == 0 && Pawn->Vitals.Food == 14 && CountItem(Apple) == 3,
+                FString::Printf(TEXT("was eating %d, still using %d, eaten since %d, hunger %d, apples %d"),
+                    *bWasEatingAtRelease, bActive, Eaten, Pawn->Vitals.Food, CountItem(Apple)));
         });
     AddCase(
         TEXT("eat capture on"), .8, [StartEating] { StartEating(10); },
@@ -1389,6 +1411,28 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             Capture(TEXT("eating-on"));
         });
     AddCase(TEXT("eat capture on hold"), .2, [] {}, [this] { PressKey(EKeys::RightMouseButton, false); });
+    AddCase(
+        TEXT("eat capture ease"), .8,
+        [SetEatMotion, StartEating]
+        {
+            SetEatMotion(0);
+            StartEating(10);
+        },
+        [this, Lab, Capture]
+        {
+            const double Blend = Lab->GetView()->GetEatBlend();
+            Record(TEXT("EatMotion 0: the step 10 ease shows mid-way"), Pawn->Interaction.bUsingItem && Blend > .99,
+                FString::Printf(TEXT("using %d, ticks %d, blend %.2f"), Pawn->Interaction.bUsingItem,
+                    Pawn->Interaction.UseTicks, Blend));
+            Capture(TEXT("eating-ease"));
+        });
+    AddCase(
+        TEXT("eat capture ease hold"), .2, [] {},
+        [this, SetEatMotion]
+        {
+            PressKey(EKeys::RightMouseButton, false);
+            SetEatMotion(1);
+        });
     Prepare(TEXT("eating control"), true);
     AddCase(
         TEXT("eat capture off"), .8,

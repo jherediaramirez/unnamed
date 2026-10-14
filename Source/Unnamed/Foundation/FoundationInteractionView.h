@@ -43,6 +43,21 @@ namespace FoundationHand
     UNNAMED_API bool IsFitOn();
     // A held block's transform under the fit: block/block.json's firstperson_righthand display on the cube mesh.
     UNNAMED_API FTransform MakeHeldBlockDisplay();
+
+    // The held item's eating motion (foundation.Hand.EatMotion): 1, the default, vanilla's eat transform below; 0 the
+    // project's ease from step 10 (into a fixed pose in 0.1 s, a bob every 4 steps).
+    UNNAMED_API int32 GetEatMotion();
+    // Vanilla's eat transform of the main hand (value report, Eating / Hand motion, eating.hand_transform) as a
+    // column-vector matrix in its view space (x right, y up, z toward the viewer; 1 is a block): M[i][j] is row i,
+    // column j (the report's column-major element j x 4 + i). With f = Remaining + 1 (Remaining: the use's remaining
+    // steps less the partial step) and p = f / Duration, an early jiggle 0.1 |cos(f pi / 4)| up while p < 0.8, then
+    // the exponent-27 approach s = 1 - p^27: moved (0.6 s, -0.5 s, 0), turned 90 s about y, 10 s about x and 30 s
+    // about z. A closed form fitted to the report's 33 right-hand matrices (within 2.1e-4, float rounding).
+    UNNAMED_API FMatrix MakeEatMatrix(double Remaining, int32 Duration);
+    // The hand pivot's view-space transform (cm, Unreal axes) while eating: the eat transform applied outside the
+    // pivot, as vanilla's arm transform sits inside it (100 cm per unit, as the fitted pivot 71.9, 56.2, -52.2 is
+    // vanilla's 0.72, 0.56, -0.52).
+    UNNAMED_API FTransform MakeEatPivot(const FVector& PivotCm, double Remaining, int32 Duration);
 }
 
 // The held item's light (foundation.Held.Light): 1, the default, lights it by the light where the player stands, as
@@ -300,8 +315,11 @@ private:
     int64 DrawnRevision = 0;
     uint32 LastPressSerial = 0;
     double SwingAge = 10, MiningSwing = 0;
-    // The held item's eating motion (step 10): 0-1 into the pose, and the bob's clock.
+    // The held item's eating motion (step 10): 0-1 into the pose, and the bob's clock (EatMotion 0); the use step
+    // last seen and the time since it changed, for the partial step (EatMotion 1).
     double EatBlend = 0, EatAge = 0;
+    int32 EatTicks = -1;
+    double EatTickAge = 0;
     bool bOutlineVisible = false, bPreviewVisible = false;
     double LastViewMs = 0;
     TWeakObjectPtr<AFoundationPawn> HeldOwner;

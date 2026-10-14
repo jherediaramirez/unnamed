@@ -40,6 +40,7 @@ void SHudContainerScreen::Construct(const FArguments& Arguments)
     GetView = Arguments._GetView;
     OnClick = Arguments._OnClick;
     OnClose = Arguments._OnClose;
+    GetKey = Arguments._GetKey;
     Model.Items = Arguments._Items;
     Model.bFullInventory = FoundationInventory::IsFull();
     Art.Init(Arguments._Registry, Arguments._HudAssets, Arguments._Items);
@@ -122,6 +123,7 @@ FReply SHudContainerScreen::OnMouseButtonDown(const FGeometry& Geometry, const F
 {
     const int32 Button = GetButton(Event);
     if (Button < 0) return FReply::Unhandled();
+    bReleasingCapture = false;
     Press(ToGui(Geometry, Event.GetScreenSpacePosition()), Button, Event.IsShiftDown(), FPlatformTime::Seconds());
     return FReply::Handled().CaptureMouse(SharedThis(this));
 }
@@ -136,8 +138,11 @@ FReply SHudContainerScreen::OnMouseButtonUp(const FGeometry& Geometry, const FPo
 {
     const int32 Button = GetButton(Event);
     if (Button >= 0) Release(ToGui(Geometry, Event.GetScreenSpacePosition()), Button);
-    // The capture lasts while any button is down (a right tap during a left drag keeps it).
-    return Event.GetPressedButtons().IsEmpty() ? FReply::Handled().ReleaseMouseCapture() : FReply::Handled();
+    // The capture lasts while any button is down (a right tap during a left drag keeps it). Letting it go makes Slate
+    // report a capture loss, which must not forget the click a double-click needs (Codex 5b finding 1).
+    if (!Event.GetPressedButtons().IsEmpty()) return FReply::Handled();
+    bReleasingCapture = true;
+    return FReply::Handled().ReleaseMouseCapture();
 }
 
 FReply SHudContainerScreen::OnMouseMove(const FGeometry& Geometry, const FPointerEvent& Event)
@@ -148,14 +153,21 @@ FReply SHudContainerScreen::OnMouseMove(const FGeometry& Geometry, const FPointe
 
 void SHudContainerScreen::OnMouseCaptureLost(const FCaptureLostEvent& Event)
 {
-    // A drag or a double-click whose release will never come (focus lost, alt-tab) ends without a click.
-    Model.Reset();
+    // Our own release: only a drag (already ended by the release) is forgotten. Otherwise a drag or a double-click
+    // whose release will never come (focus lost, alt-tab) ends without a click.
+    if (bReleasingCapture)
+        Model.ResetDrag();
+    else
+        Model.Reset();
+    bReleasingCapture = false;
 }
 
 FReply SHudContainerScreen::OnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
 {
     const FKey Key = Event.GetKey();
-    if (Key == EKeys::Escape || Key == EKeys::E)
+    // Escape, or the player's inventory key, closes; the hotbar, offhand and drop keys are the player's bindings
+    // (Codex 5b finding 3).
+    if (Key == EKeys::Escape || Key == GetBoundKey(TEXT("key.inventory"), EKeys::E))
     {
         Model.Reset();
         if (OnClose) OnClose();
@@ -167,11 +179,19 @@ FReply SHudContainerScreen::OnKeyDown(const FGeometry& Geometry, const FKeyEvent
     static const FKey Numbers[] = {EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four, EKeys::Five, EKeys::Six,
         EKeys::Seven, EKeys::Eight, EKeys::Nine};
     for (int32 Number = 0; Number < 9; ++Number)
-        if (Key == Numbers[Number]) Send(Model.PressSwap(Mouse, Number, GetCurrentView()));
-    // F swaps with the offhand (Inventory number 40), Q throws.
-    if (Key == EKeys::F) Send(Model.PressSwap(Mouse, FFoundationInventory::OffhandSlot, GetCurrentView()));
-    if (Key == EKeys::Q) Send(Model.PressDrop(Mouse, Event.IsControlDown(), GetCurrentView()));
+        if (Key == GetBoundKey(*FString::Printf(TEXT("key.hotbar.%d"), Number + 1), Numbers[Number]))
+            Send(Model.PressSwap(Mouse, Number, GetCurrentView()));
+    // The offhand key swaps with the offhand (Inventory number 40), the drop key throws.
+    if (Key == GetBoundKey(TEXT("key.swapOffhand"), EKeys::F))
+        Send(Model.PressSwap(Mouse, FFoundationInventory::OffhandSlot, GetCurrentView()));
+    if (Key == GetBoundKey(TEXT("key.drop"), EKeys::Q))
+        Send(Model.PressDrop(Mouse, Event.IsControlDown(), GetCurrentView()));
     return FReply::Handled();
+}
+
+FKey SHudContainerScreen::GetBoundKey(const TCHAR* Id, const FKey& Default) const
+{
+    return GetKey ? GetKey(FName(Id)) : Default;
 }
 
 int32 SHudContainerScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geometry, const FSlateRect& CullingRect,

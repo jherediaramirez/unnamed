@@ -651,10 +651,10 @@ void UFoundationPanels::OpenSurvivalInventory(AFoundationLab& Lab)
                     ? FHudCreativeStack()
                     : FHudCreativeStack{A.Rules.GetItem(Item->Item).Id, Item->Count, Item->Damage};
             };
-            // Menu slots by their Inventory number; the crafting slots (0-4) stay empty until survival step 6.
+            // The menu's slots, the crafting grid and its result included (survival step 6).
+            const TArray<FFoundationItemInstance> Menu = A.GetPlayerMenu(*Player);
             for (int32 Slot = 0; Slot < FFoundationContainerMenu::PlayerMenuSlots; ++Slot)
-                if (const int32 Index = FFoundationContainerMenu::ToInventorySlot(Slot); Index != INDEX_NONE)
-                    View.Slots[Slot] = Stack(Player->Inventory.GetSlot(Index));
+                View.Slots[Slot] = Stack(&Menu[Slot]);
             View.Carried = Stack(&Player->Inventory.Carried);
             return View;
         })
@@ -664,7 +664,11 @@ void UFoundationPanels::OpenSurvivalInventory(AFoundationLab& Lab)
                 WeakPawn->Interaction.ContainerClick(*WeakLab->GetAuthority(), WeakPawn->Vitals,
                     FFoundationContainerMenu::PlayerContainer, Click.Slot, Click.Button, Click.Type);
         })
-        .OnClose([WeakThis] { if (WeakThis.IsValid()) WeakThis->Close(); });
+        .OnClose([WeakThis] { if (WeakThis.IsValid()) WeakThis->Close(); })
+        .GetKey([WeakInput = TWeakObjectPtr<UUnnamedInputSubsystem>(Controller->GetInputSubsystem())](FName Id)
+        {
+            return WeakInput.IsValid() ? WeakInput->GetCurrentKey(Id) : FKey();
+        });
     // clang-format on
     SurvivalPawn = Pawn;
     bOpen = true;

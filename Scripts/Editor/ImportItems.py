@@ -30,6 +30,9 @@ ARRAYS = (("T_ItemTextures", "array_layers", 16, "item_textures"), ("T_ItemTextu
 PRE_LOOT_SHA256 = "4b17236f19f25bab4e23320c3a82e69989010fbf35d2c635e7f6e2cb5ffccc39"
 # The reference's digest before loot step 2a added every imported block's loot table (the 18 ores' S5b reference).
 PRE_LOOT2_SHA256 = "8d33db5560fe97bf2fbb744035c6e063d3c41ab2220f709efd6aa81a07664129"
+# The reference's digest before survival step 6 added the recipes (new files only; every file DA_Items is imported
+# from stayed byte-identical): a DA_Items imported from it is verified as below and left as it is.
+PRE_RECIPES_SHA256 = "e97651c71fc169051dadfc6c0b5063c231065e1beeb7bb549dc1fd2fc4c1f2b3"
 
 
 def fail(message):
@@ -153,7 +156,7 @@ if assets.does_asset_exist(registry_path):
     migrate = source == PRE_LOOT_SHA256 and \
         os.environ.get("UNNAMED_ITEMS_MIGRATE") == "loot" and not existing.get_editor_property("loot_tables")
     migrate2 = source == PRE_LOOT2_SHA256 and os.environ.get("UNNAMED_ITEMS_MIGRATE") == "loot2"
-    if source != data["source_sha256"] and not migrate and not migrate2:
+    if source not in (data["source_sha256"], PRE_RECIPES_SHA256) and not migrate and not migrate2:
         fail("DA_Items was imported from different reference data; preserve it and migrate explicitly (from the "
              "pre-loot reference: set UNNAMED_ITEMS_MIGRATE=loot; from the S5b reference: loot2)")
     ids = [str(item.get_editor_property("id")) for item in existing.get_editor_property("items")]

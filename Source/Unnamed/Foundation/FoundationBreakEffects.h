@@ -182,6 +182,14 @@ namespace FoundationBreak
         const FVector& Point, const FVector& Normal, bool bSpray, FRandomStream& Random, int32 LifeMode = 0);
     // P4's push for a break: 1.5 blocks/s along the mined face's normal (none for a pop) and 0.5 away from the camera.
     FVector SprayPush(const FVector& FaceNormal, const FVector& AwayFromCamera);
+    // Eating crumbs (step 10b; value report, Eating / Crumb particles and duration, eating.crumbs): 5 item particles
+    // per periodic effect, 16 at completion, with velocity ((U - 0.5) x 0.1, U x 0.1 + 0.1, 0) blocks per step in the
+    // view's space (across, up, forward), turned with the view, then 0.05 up. Provisional (the report gives none): the
+    // spawn point, 0.8 blocks ahead of the eye, (U - 0.5) x 0.3 across and 0.3 to 0.9 below, turned with the view; half
+    // a hit chip's size; a hit chip's life (ParticleLife); none drawn nearer the camera than CrumbNearCm.
+    constexpr int32 CrumbsPerEffect = 5, CrumbsAtCompletion = 16;
+    constexpr double CrumbSizeCm = HitSizeCm / 2, CrumbForwardBlocks = .8, CrumbNearCm = 40;
+    FParticleSpawn SpawnCrumb(const FVector& EyeCm, const FRotator& View, FRandomStream& Random, int32 LifeMode = 0);
 
     // One particle's flight for DeltaTime: gravity, and with collision it lands on a solid box and lies there.
     // Solid returns the collision boxes (world centimetres) of the cell holding a point. With bSupport a resting
@@ -242,6 +250,9 @@ public:
     // event's attenuation, logged like the block sounds. DA_Sounds loads on the first call. Silent for an unknown event
     // or with foundation.Sound.Events 0.
     void PlayEvent(FName Event, const FVector& Location, float Volume = 1, float Pitch = 1);
+    // Eating crumbs (FoundationBreak::SpawnCrumb): Count particles of Item's sprite (T_ItemTextures) from the eye,
+    // turned with View. False when they cannot draw (no M_BreakParticle, item sprites or 16 x 16 sprite for Item).
+    bool SpawnCrumbs(FName Item, const FVector& EyeCm, const FRotator& View, int32 Count);
     // The held item's swing (0-1, today's pose curve sin(phase x pi)) from the swing clock, when Swing is on; false
     // keeps the view's own swing.
     bool GetSwing(double& OutSwing) const;
@@ -253,6 +264,9 @@ public:
     TConstArrayView<FoundationBreak::FSoundLogEntry> GetSoundLog() const { return SoundLog; }
     void ClearSoundLog() { SoundLog.Reset(); }
     int32 GetLiveParticleCount() const;
+    // Eating crumbs alive now, and spawned since the effects began.
+    int32 GetLiveCrumbCount() const;
+    int32 GetCrumbsSpawned() const { return CrumbsSpawned; }
     // Live particles inside Box (the probe's count of the ones left on a broken block's top face).
     int32 CountLiveParticles(const FBox& Box) const;
     bool IsCrackVisible() const { return bCrackVisible; }
@@ -294,6 +308,14 @@ private:
     void PlaySound(const FFoundationAuthority& Authority, FFoundationBlockState State, const FVector& Location,
         bool bHit, bool bPlace = false);
     void Spawn(const FoundationBreak::FParticleSpawn& Spawn, float Layer, float Tint);
+    // A particle into a pool (the chips' or the crumbs'), and one frame of a pool's flight.
+    static void SpawnInto(UInstancedStaticMeshComponent& Mesh, TArray<FParticle>& Pool,
+        TConstArrayView<FPrimitiveInstanceId> Ids, int32& Next, const FoundationBreak::FParticleSpawn& New, float Layer,
+        float Tint);
+    // NearCm: a live particle nearer the camera than this is drawn at zero scale.
+    void UpdatePool(UInstancedStaticMeshComponent* Mesh, TArray<FParticle>& Pool,
+        TConstArrayView<FPrimitiveInstanceId> Ids, const FFoundationAuthority& Authority, double DeltaTime,
+        double NearCm = 0);
     void UpdateCracks(const FFoundationAuthority& Authority, const FFoundationInteraction& Mining);
     void HideCracks();
     void DrawOutlineStrips();
@@ -350,6 +372,18 @@ private:
     TArray<FParticle> Particles;
     TArray<FPrimitiveInstanceId> ParticleIds;
     int32 NextParticle = 0;
+    // Eating crumbs: M_BreakParticle with the item sprites (T_ItemTextures) for its BlockTextures, a pool of their own;
+    // the material is made on the first crumb. Each item's sprite layer (INDEX_NONE: none) once looked up.
+    static constexpr int32 MaxCrumbs = 256;
+    UMaterialInterface* ParticleBaseMaterial = nullptr;
+    UInstancedStaticMeshComponent* CrumbMesh = nullptr;
+    TArray<FParticle> Crumbs;
+    TArray<FPrimitiveInstanceId> CrumbIds;
+    int32 NextCrumb = 0, CrumbsSpawned = 0;
+    bool bTriedCrumbMaterial = false, bCrumbMaterial = false;
+    TMap<FName, int32> CrumbLayers;
+    // Its own stream, so crumbs never shift the chips' draws.
+    FRandomStream CrumbRandom;
 
     // Pops: two slots, each with as many parts as the held block's pool.
     static constexpr int32 PopSlots = 2;
