@@ -360,6 +360,8 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
 {
     // The authority sees this step's pose; targets' damage cooldowns and item entities step once per reference step.
     Authority.Options.bItemEntities = FoundationItemEntities::IsOn();
+    Authority.Options.bFullInventory = FoundationInventory::IsFull();
+    Authority.Options.bItemUse = FoundationItemUse::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     Authority.Step();
     Interaction.StepOnce(Authority, Vitals, bLatestStep, NowSeconds);
@@ -484,6 +486,9 @@ void AFoundationPawn::Tick(float DeltaSeconds)
             Eligibility.bMobile = !Vitals.IsDead();
             Eligibility.bEnoughFood = Vitals.HasEnoughFood();
             Eligibility.bMayFly = Vitals.Mode == EFoundationPlayerMode::Creative;
+            // An item in use (eating) slows the player and stops sprint starts, from the authority's state.
+            const FFoundationPlayer* UsePlayer = Authority ? Authority->FindPlayer(Interaction.PlayerId) : nullptr;
+            Eligibility.bItemSlows = UsePlayer && UsePlayer->Use.bActive;
             StepCollision.Reset();
             Lab->GatherCollision(GetStepRegion(Simulation, Profile), StepCollision);
             Lab->GetFluidFacts(CVarSwim.GetValueOnGameThread() != 0, Simulation, Profile, Eligibility);
@@ -568,4 +573,15 @@ void AFoundationPawn::Tick(float DeltaSeconds)
     if (bHandFit)
         Camera->SetFirstPersonFieldOfView(
             FoundationCoordinates::HorizontalFov(FoundationHand::FixedVerticalFov, Aspect));
+}
+
+void AFoundationPawn::TeleportFeet(const FVector& FeetCm)
+{
+    Simulation.Feet = Simulation.PreviousFeet = FeetCm;
+    Simulation.VelocityPerTick = Simulation.LastDisplacement = FVector::ZeroVector;
+    Simulation.FallDistanceCm = 0;
+    Simulation.bGrounded = false;
+    Vitals.ResetFall();
+    SetActorLocation(FeetCm);
+    ResetBody();
 }

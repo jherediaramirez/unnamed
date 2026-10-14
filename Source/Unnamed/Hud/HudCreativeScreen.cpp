@@ -289,8 +289,11 @@ FReply SHudCreativeScreen::OnMouseButtonDown(const FGeometry& Geometry, const FP
         Model.SetScroll((Mouse.Y - FHudCreativeModel::ScrollerY - 7.5f) / (FHudCreativeModel::ScrollerHeight - 15.f));
     }
     else
+    {
+        Model.bFullInventory = FoundationInventory::IsFull();
         Write(
             Model.Click(Hit, Index, Event.IsShiftDown(), GetInventory ? GetInventory() : TArray<FHudCreativeStack>()));
+    }
     return FReply::Handled().CaptureMouse(SharedThis(this));
 }
 
@@ -341,6 +344,7 @@ FReply SHudCreativeScreen::OnKeyDown(const FGeometry& Geometry, const FKeyEvent&
     for (int32 Number = 0; Number < 9; ++Number)
         if (Key == Numbers[Number])
         {
+            Model.bFullInventory = FoundationInventory::IsFull();
             Write(Model.PressNumber(
                 Model.HitTest(Mouse), Number, GetInventory ? GetInventory() : TArray<FHudCreativeStack>()));
             return FReply::Handled();
@@ -425,11 +429,19 @@ int32 SHudCreativeScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geome
         Slot(EHudCreativeHit::Hotbar, Index, Inventory.IsValidIndex(Index) ? Inventory[Index] : FHudCreativeStack());
     if (Model.IsInventory())
     {
-        Slot(EHudCreativeHit::Offhand, 0, Inventory.IsValidIndex(9) ? Inventory[9] : FHudCreativeStack());
+        // Without the full inventory (foundation.Inventory.Full 0), the main and armor slots draw empty.
+        const bool bFull = FoundationInventory::IsFull();
+        auto Get = [&Inventory, bFull](const FHudCreativeHit& Hit)
+        {
+            const int32 Index = FHudCreativeModel::GetInventorySlot(Hit);
+            const bool bLab = Hit.Kind == EHudCreativeHit::Hotbar || Hit.Kind == EHudCreativeHit::Offhand;
+            return (bFull || bLab) && Inventory.IsValidIndex(Index) ? Inventory[Index] : FHudCreativeStack();
+        };
+        Slot(EHudCreativeHit::Offhand, 0, Get({EHudCreativeHit::Offhand, 0}));
         for (int32 Index = 0; Index < 27; ++Index)
-            Slot(EHudCreativeHit::Inventory, Index, {});
+            Slot(EHudCreativeHit::Inventory, Index, Get({EHudCreativeHit::Inventory, Index}));
         for (int32 Index = 0; Index < 4; ++Index)
-            Slot(EHudCreativeHit::Armor, Index, {});
+            Slot(EHudCreativeHit::Armor, Index, Get({EHudCreativeHit::Armor, Index}));
         Slot(EHudCreativeHit::Destroy, 0, {});
     }
     // The carried stack follows the mouse; without one, the hovered item or tab shows its name.
@@ -448,9 +460,10 @@ int32 SHudCreativeScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geome
             Lines.Add({Model.GetTabs()[Hover.Index].Title, HudTooltip::White});
         else if (Hover.Kind == EHudCreativeHit::Grid && !Model.GetGridItem(Hover.Index).IsNone())
             ForItem(Model.GetGridItem(Hover.Index));
-        else if (Hover.Kind == EHudCreativeHit::Hotbar && Inventory.IsValidIndex(Hover.Index) &&
-            !Inventory[Hover.Index].IsEmpty())
-            ForItem(Inventory[Hover.Index].Item);
+        else if (const int32 HoverSlot = FHudCreativeModel::GetInventorySlot(Hover);
+            Inventory.IsValidIndex(HoverSlot) && !Inventory[HoverSlot].IsEmpty() &&
+            (Hover.Kind == EHudCreativeHit::Hotbar || FoundationInventory::IsFull()))
+            ForItem(Inventory[HoverSlot].Item);
         if (!Lines.IsEmpty())
         {
             // TooltipRenderingUtil: 12 right and 12 up of the cursor, 3 pixels of padding, nine-sliced sprites.

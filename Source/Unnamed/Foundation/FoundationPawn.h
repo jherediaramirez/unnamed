@@ -37,6 +37,8 @@ public:
     void SetSimulationEnabled(bool bEnabled);
     // Restores fresh vitals at the lab's spawn (death respawn, also used by the probe).
     void Respawn();
+    // Moves the feet to a world position (cm), as /tp: motion and fall distance reset, flight and pose kept.
+    void TeleportFeet(const FVector& FeetCm);
 
     void SetPerspective(int32 Value) { Perspective = Value; }
 

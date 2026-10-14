@@ -146,7 +146,7 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
 - **Interaction:** tooltips and the carried stack. Clicks, shift-clicks, number keys, picking up and deleting follow vanilla `slotClicked`.
 - **Rendering:** `FHudCreativeModel` holds the pure tab, scroll and click rules. 3D item icons come from `HudBlockIcon`: top, east and north faces at shades 1.0, 0.68 and 0.44. Model blocks' items draw their item model: 62 flat sprites (an icon atlas tile, tinted like their layer) and 10 block models (cactus, azalea, flowering azalea, the moss carpets, mangrove roots, big and small dripleaf, shelf mushroom, spore blossom) projected from their baked quads under the model's gui transform, back faces culled, far quads first.
 - **Hotbar:** the in-game hotbar draws block items with the same 3D icons, and other items with their sprites ([Items](Items.md), "Presentation").
-- **Commits:** every inventory change is the `SetCreativeSlot` authority command (slots 0-8 and 9 for the offhand), gated by `FFoundationLabOptions::bCreativeInventory`.
+- **Commits:** every inventory change is the `SetCreativeSlot` authority command (Inventory numbers: 0-8 the hotbar, 9-35 the main grid, 36-39 the armor, 40 the offhand; see Items.md, survival step 5a), gated by `FFoundationLabOptions::bCreativeInventory`.
 
 ## Budgets and known issues
 

@@ -118,6 +118,8 @@ public:
     // hand) and component, child of the hand pivot.
     FName GetHeldSprite() const { return HeldSprite; }
     const UStaticMeshComponent* GetHeldItem() const { return HeldItem; }
+    // The held item's eating pose, 0 (rest) to 1 (at the mouth), for probes.
+    double GetEatBlend() const { return EatBlend; }
     // Centimetres per model block (16 pixels) in the hand's space, which is scaled down so the items keep the size of
     // the old cube tools at the pivot. Provisional, like the pivot: probe P1 fits both.
     static constexpr double HeldModelBlockCm = 50;
@@ -294,6 +296,8 @@ private:
     int64 DrawnRevision = 0;
     uint32 LastPressSerial = 0;
     double SwingAge = 10, MiningSwing = 0;
+    // The held item's eating motion (step 10): 0-1 into the pose, and the bob's clock.
+    double EatBlend = 0, EatAge = 0;
     bool bOutlineVisible = false, bPreviewVisible = false;
     double LastViewMs = 0;
     TWeakObjectPtr<AFoundationPawn> HeldOwner;

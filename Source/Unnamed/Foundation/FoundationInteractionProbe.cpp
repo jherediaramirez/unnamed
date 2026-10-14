@@ -1168,6 +1168,105 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         });
     AddCase(TEXT("drop capture off hold"), .2, [] {}, [SetItemEntities] { SetItemEntities(1); });
 
+    // 13c. Eating (step 10, foundation.Items.Use 1): holding use with apples at hunger 10 eats one in 1.6 s (hunger
+    // 14, one apple fewer, the eat and burp sounds); letting go mid-way eats nothing. Then the capture pair: eating
+    // mid-way, and the same hold with the switch at 0 (the control: no eating pose).
+    auto SetItemUse = [](int32 Value)
+    { IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Items.Use"))->Set(Value, ECVF_SetByCode); };
+    auto StartEating = [this, Authority](int32 Food)
+    {
+        ResetPlayer({-750, 650, 0});
+        Pawn->Interaction.SetCreativeSlot(Authority(), Pawn->Vitals, 0, TEXT("apple"), 3);
+        PressKey(EKeys::One, true);
+        PressKey(EKeys::One, false);
+        Pawn->Vitals.Food = Food;
+        Pawn->Vitals.Saturation = 0;
+        // Up into the open sky: nothing in reach, so the use goes to the item.
+        Controller->SetControlRotation(FRotator(30, 0, 0));
+        PressKey(EKeys::RightMouseButton, true);
+    };
+    Prepare(TEXT("eating"), true);
+    AddCase(
+        TEXT("eat hold"), 2.,
+        [Lab, SetItemUse, StartEating]
+        {
+            SetItemUse(1);
+            if (FFoundationBreakEffects* Effects = Lab->GetView()->GetBreakEffects()) Effects->ClearSoundLog();
+            StartEating(10);
+        },
+        [this, Lab, Authority, CountItem]
+        {
+            PressKey(EKeys::RightMouseButton, false);
+            const FFoundationAuthority& A = Authority();
+            const int32 Apple = A.Rules.FindItem(TEXT("apple"));
+            int32 Ate = 0;
+            for (const FFoundationEvent& Event : A.GetEvents())
+                Ate += Event.Kind == EFoundationEventKind::Ate && Event.Item == Apple;
+            Record(TEXT("holding use eats an apple: hunger 10 to 14, one apple fewer"),
+                Ate == 1 && Pawn->Vitals.Food == 14 && FMath::IsNearlyEqual(Pawn->Vitals.Saturation, 2.4f) &&
+                    CountItem(Apple) == 2,
+                FString::Printf(TEXT("ate %d, hunger %d saturation %.2f, apples %d, eaten %d"), Ate, Pawn->Vitals.Food,
+                    Pawn->Vitals.Saturation, CountItem(Apple), A.ItemsEaten));
+            int32 Eats = 0, Burps = 0;
+            const FFoundationBreakEffects* Effects = Lab->GetView()->GetBreakEffects();
+            for (const FoundationBreak::FSoundLogEntry& Entry :
+                Effects ? Effects->GetSoundLog() : TConstArrayView<FoundationBreak::FSoundLogEntry>())
+            {
+                Eats += Entry.Event == TEXT("entity.generic.eat");
+                Burps += Entry.Event == TEXT("entity.player.burp");
+            }
+            Record(TEXT("eating plays entity.generic.eat, then one entity.player.burp"), Eats >= 7 && Burps == 1,
+                FString::Printf(TEXT("eat sounds %d, burps %d"), Eats, Burps));
+        });
+    AddCase(
+        TEXT("eat release"), .6, [StartEating] { StartEating(14); },
+        [this, Authority, CountItem]
+        {
+            const bool bWasEating = Pawn->Interaction.bUsingItem;
+            PressKey(EKeys::RightMouseButton, false);
+            const int32 Apple = Authority().Rules.FindItem(TEXT("apple"));
+            Record(TEXT("letting go mid-way eats nothing"),
+                bWasEating && Pawn->Vitals.Food == 14 && CountItem(Apple) == 3,
+                FString::Printf(
+                    TEXT("was eating %d, hunger %d, apples %d"), bWasEating, Pawn->Vitals.Food, CountItem(Apple)));
+        });
+    AddCase(
+        TEXT("eat capture on"), .8, [StartEating] { StartEating(10); },
+        [this, Lab, Capture, Player]
+        {
+            const double Blend = Lab->GetView()->GetEatBlend();
+            Record(TEXT("mid-way: the held apple is in its eating pose"),
+                Pawn->Interaction.bUsingItem && Blend > .99 && Player() && Player()->Use.bActive,
+                FString::Printf(TEXT("using %d, ticks %d of %d, blend %.2f"), Pawn->Interaction.bUsingItem,
+                    Pawn->Interaction.UseTicks, Pawn->Interaction.UseDuration, Blend));
+            Capture(TEXT("eating-on"));
+        });
+    AddCase(TEXT("eat capture on hold"), .2, [] {}, [this] { PressKey(EKeys::RightMouseButton, false); });
+    Prepare(TEXT("eating control"), true);
+    AddCase(
+        TEXT("eat capture off"), .8,
+        [SetItemUse, StartEating]
+        {
+            SetItemUse(0);
+            StartEating(10);
+        },
+        [this, Lab, Capture]
+        {
+            const double Blend = Lab->GetView()->GetEatBlend();
+            Record(TEXT("the control (switch 0) does not eat"),
+                !Pawn->Interaction.bUsingItem && Blend == 0 && Pawn->Vitals.Food == 10,
+                FString::Printf(
+                    TEXT("using %d, blend %.2f, hunger %d"), Pawn->Interaction.bUsingItem, Blend, Pawn->Vitals.Food));
+            Capture(TEXT("eating-off"));
+        });
+    AddCase(
+        TEXT("eat capture off hold"), .2, [] {},
+        [this, SetItemUse]
+        {
+            PressKey(EKeys::RightMouseButton, false);
+            SetItemUse(1);
+        });
+
     // 13b. Hands and items: pick block, drop (items S8b: throw, re-pickup, the stack, the switch-0 control), offhand
     // fallback, Toggle use, water.
     Prepare(TEXT("hands"), false);

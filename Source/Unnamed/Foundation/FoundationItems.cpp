@@ -15,9 +15,39 @@ bool FFoundationItemDefinition::IsCorrectForDrops(const FGameplayTagContainer& B
     return false;
 }
 
+FFoundationConsumable FFoundationItemDefinition::GetConsumable() const
+{
+    if (Consumable.IsValid()) return Consumable;
+    const FFoundationConsumable* Reference = FoundationConsumables::FindReference(Id);
+    return Reference ? *Reference : FFoundationConsumable{};
+}
+
+TConstArrayView<TPair<FName, FFoundationConsumable>> FoundationConsumables::GetReferenceTable()
+{
+    // items.json's food (nutrition, saturation) and `consumable: {}` (the default time) for every row that has them.
+    static const TPair<FName, FFoundationConsumable> Table[] = {
+        TPair<FName, FFoundationConsumable>(TEXT("apple"), FFoundationConsumable{4, 2.4f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("bread"), FFoundationConsumable{5, 6.f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("cooked_beef"), FFoundationConsumable{8, 12.8f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("melon_slice"), FFoundationConsumable{2, 1.2f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("sweet_berries"), FFoundationConsumable{2, .4f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("glow_berries"), FFoundationConsumable{2, .4f, DefaultTicks}),
+    };
+    return Table;
+}
+
+const FFoundationConsumable* FoundationConsumables::FindReference(FName Id)
+{
+    for (const TPair<FName, FFoundationConsumable>& Row : GetReferenceTable())
+        if (Row.Key == Id) return &Row.Value;
+    return nullptr;
+}
+
 FFoundationInventory::FFoundationInventory()
 {
     Hotbar.SetNum(HotbarSlots);
+    Main.SetNum(MainSlots);
+    Armor.SetNum(ArmorSlots);
 }
 
 FFoundationItemInstance& FFoundationInventory::GetHand(EFoundationHand Hand)
@@ -28,6 +58,21 @@ FFoundationItemInstance& FFoundationInventory::GetHand(EFoundationHand Hand)
 const FFoundationItemInstance& FFoundationInventory::GetHand(EFoundationHand Hand) const
 {
     return Hand == EFoundationHand::Off ? Offhand : Hotbar[Selected];
+}
+
+FFoundationItemInstance* FFoundationInventory::GetSlot(int32 Slot)
+{
+    return const_cast<FFoundationItemInstance*>(static_cast<const FFoundationInventory*>(this)->GetSlot(Slot));
+}
+
+const FFoundationItemInstance* FFoundationInventory::GetSlot(int32 Slot) const
+{
+    if (Slot >= 0 && Slot < HotbarSlots) return &Hotbar[Slot];
+    if (Slot == OffhandSlot) return &Offhand;
+    if (!bFull) return nullptr;
+    if (Slot >= FirstMain && Slot < FirstMain + MainSlots) return &Main[Slot - FirstMain];
+    if (Slot >= FirstArmor && Slot < FirstArmor + ArmorSlots) return &Armor[Slot - FirstArmor];
+    return nullptr;
 }
 
 FFoundationItemInstance FFoundationInventory::MakeStack(int32 Item, int32 Count)
@@ -43,8 +88,9 @@ FFoundationItemInstance FFoundationInventory::MakeStack(int32 Item, int32 Count)
 
 void FFoundationInventory::SetSlot(int32 Slot, const FFoundationItemInstance& Stack)
 {
-    if (!Hotbar.IsValidIndex(Slot)) return;
-    Hotbar[Slot] = Stack;
+    FFoundationItemInstance* Target = GetSlot(Slot);
+    if (!Target) return;
+    *Target = Stack;
     ++Revision;
 }
 
@@ -72,6 +118,9 @@ int32 FFoundationInventory::GetSpaceFor(int32 Item, int32 MaxStack) const
     };
     for (const FFoundationItemInstance& Stack : Hotbar)
         Count(Stack);
+    if (bFull)
+        for (const FFoundationItemInstance& Stack : Main)
+            Count(Stack);
     // The offhand only takes merges, never a new stack.
     if (!Offhand.IsEmpty() && Offhand.Item == Item) Space += FMath::Max(0, MaxStack - Offhand.Count);
     return Space;
@@ -93,21 +142,63 @@ int32 FFoundationInventory::Add(int32 Item, int32 Count, int32 MaxStack, bool bT
         else
             ++Revision;
     };
-    // Same order as the reference inventory: selected stack, offhand, then the hotbar; then free slots.
+    auto Fill = [&](FFoundationItemInstance& Stack)
+    {
+        if (Added >= Count || !Stack.IsEmpty()) return;
+        const int32 Amount = FMath::Min(Count - Added, MaxStack);
+        Stack = MakeStack(Item, Amount);
+        Stack.Damage = Damage;
+        Added += Amount;
+        ++Revision;
+    };
+    // Vanilla's order: the selected stack, the offhand, then slots 0-35 merge; then the first free slot of 0-35.
     Merge(Hotbar[Selected]);
     Merge(Offhand);
     for (FFoundationItemInstance& Stack : Hotbar)
         Merge(Stack);
+    if (bFull)
+        for (FFoundationItemInstance& Stack : Main)
+            Merge(Stack);
     for (FFoundationItemInstance& Stack : Hotbar)
-        if (Added < Count && Stack.IsEmpty())
-        {
-            const int32 Amount = FMath::Min(Count - Added, MaxStack);
-            Stack = MakeStack(Item, Amount);
-            Stack.Damage = Damage;
-            Added += Amount;
-            ++Revision;
-        }
+        Fill(Stack);
+    if (bFull)
+        for (FFoundationItemInstance& Stack : Main)
+            Fill(Stack);
     return Added;
+}
+
+FFoundationItemInstance FFoundationInventory::Return(FFoundationItemInstance Stack, int32 MaxStack)
+{
+    auto Merge = [&](FFoundationItemInstance& Into)
+    {
+        if (Stack.IsEmpty() || Into.IsEmpty() || Into.Item != Stack.Item || Into.Damage != Stack.Damage) return;
+        const int32 Amount = FMath::Min(Stack.Count, MaxStack - Into.Count);
+        if (Amount <= 0) return;
+        Into.Count += Amount;
+        Stack.Count -= Amount;
+        if (Stack.Count <= 0) Stack = {};
+        Touch(Into);
+    };
+    auto Place = [&](FFoundationItemInstance& Into)
+    {
+        if (Stack.IsEmpty() || !Into.IsEmpty()) return;
+        Into = Stack;
+        Stack = {};
+        ++Revision;
+    };
+    Merge(Hotbar[Selected]);
+    Merge(Offhand);
+    for (FFoundationItemInstance& Into : Hotbar)
+        Merge(Into);
+    if (bFull)
+        for (FFoundationItemInstance& Into : Main)
+            Merge(Into);
+    for (FFoundationItemInstance& Into : Hotbar)
+        Place(Into);
+    if (bFull)
+        for (FFoundationItemInstance& Into : Main)
+            Place(Into);
+    return Stack;
 }
 
 void FFoundationInventory::ConsumeOne(EFoundationHand Hand)
