@@ -48,7 +48,12 @@ Lane `feature/survival-containers` (worktree `Unnamed-inv`), from `9822d24`. Sur
 
 **Open questions for Jesus (via the manager):** probe P3 (a vanilla client run) to confirm the fill order and the creative middle drag; the push of `feature/survival-containers` (never pushed by a worker).
 
+**Short prompt for step 5b:**
+
+> Survival program, track T1 Containers, step 5b: the survival inventory screen on E. Worktree C:\dev\projects\Unnamed-inv, branch feature/survival-containers (merge feature/survival first if your SM says it moved). Start with Docs/Records/2026-10-14-Inventory-5a.md section 5 (reading list, settled decisions, code map), then plan.md lines 120-133. Build a vanilla screen from `container/inventory.png` that sends `ContainerClick` (container 0, InventoryMenu slots) and `ContainerClose`, with the drag and double-click gestures, behind `foundation.Inventory.Screen` (0 = the text fixture). Asset imports need your SM's lock first. Diff the hot files against feature/survival, send the plan to your SM and wait for the go.
+
 ## 6. Evidence and token use
 
 - Final checks (after the review fixes): `Tests/Evidence/2026-10-14/Checks-final-20261014-124800/summary.txt`, GREEN in 36 min: native 337 of 337, 207 voxel suites, radius-8 hashes 9 of 9 equal, the Playground runtime (all, interaction, tour), create-world, the smoke flight, npm, source-check, the reference verifiers. The first final run stopped at the build: `-DisableAdaptiveUnity` put the new test file in a unity blob with another test's anonymous-namespace `Main`, so its helpers got unique names. Suite logs: `C:\dev\sandbox\inv5a\tests1.log`, `tests3.log` (after the review fixes); mutation logs `C:\dev\sandbox\inv5a\mut-*.log`.
-- Lead context: 193k at the review fixes (measured from the transcript). Subagents: two Sonnet reviewers, 80k and 89k.
+- Merge: 45c5473 (feature/survival 5efbf6c, T3 eating; six additive conflicts kept both sides), `Tests/Evidence/2026-10-14/Checks-merge-20261014-132740/summary.txt` GREEN (native 339 of 339, hashes 9 of 9).
+- Lead context: about 200k at the merge (measured from the transcript). Subagents: two Sonnet reviewers, 80k and 89k.
