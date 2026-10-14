@@ -1,6 +1,7 @@
 #include "Foundation/FoundationAuthority.h"
 #include "Algo/AllOf.h"
 #include "Blocks/VoxelPlantSurvival.h"
+#include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationSimulation.h"
 #include "HAL/IConsoleManager.h"
@@ -168,6 +169,7 @@ void FFoundationAuthority::Reset()
         Target.Hits = 0;
         Target.DamageTaken = 0;
     }
+    ItemEntities.Empty();
     FFoundationEvent Event;
     Event.Kind = EFoundationEventKind::Reset;
     AddEvent(Event);
@@ -177,6 +179,120 @@ void FFoundationAuthority::Step()
 {
     for (FFoundationTrainingTarget& Target : Targets)
         Target.Health.StepDamageCooldown();
+    StepItemEntities();
+}
+
+int32 FFoundationAuthority::SpawnItem(
+    int32 Item, int32 Count, const FVector& LocalCm, const FVector& VelocityCm, int32 PickupDelay)
+{
+    if (!Rules.Items.IsValidIndex(Item) || Count <= 0) return 0;
+    FFoundationItemEntity& Entity = ItemEntities.AddDefaulted_GetRef();
+    Entity.Id = NextItemEntityId++;
+    Entity.Item = Item;
+    Entity.Count = Count;
+    Entity.LocalCm = Entity.PreviousLocalCm = LocalCm;
+    Entity.VelocityCm = VelocityCm;
+    Entity.PickupDelay = PickupDelay;
+    // The look's phase from the id: deterministic, and different for neighbours.
+    Entity.BobOffset = float(FRandomStream(int32(GetTypeHash(Entity.Id))).FRandRange(0, 2 * UE_PI));
+    ++ItemsSpawned;
+    return Entity.Id;
+}
+
+void FFoundationAuthority::SpawnDrops(
+    const FIntVector& Cell, TConstArrayView<FFoundationLootDrop> Drops, int32 RandomSeed)
+{
+    using namespace FoundationItemEntities;
+    FRandomStream Random(RandomSeed);
+    const FVector Center = (FVector(Cell) + FVector(.5)) * UFoundationProfile::BlockCm - FVector(0, 0, BoxCm * .5);
+    for (const FFoundationLootDrop& Drop : Drops)
+    {
+        if (!Rules.Items.IsValidIndex(Drop.Item)) continue;
+        const int32 MaxStack = FMath::Max(1, Rules.Items[Drop.Item].MaxStack);
+        for (int32 Left = Drop.Count; Left > 0; Left -= MaxStack)
+        {
+            const FVector Spread(Random.FRandRange(-SpawnSpreadCm, SpawnSpreadCm),
+                Random.FRandRange(-SpawnSpreadCm, SpawnSpreadCm), Random.FRandRange(-SpawnSpreadCm, SpawnSpreadCm));
+            const FVector Velocity(Random.FRandRange(-SpawnSidewaysCm, SpawnSidewaysCm),
+                Random.FRandRange(-SpawnSidewaysCm, SpawnSidewaysCm), SpawnUpCm);
+            SpawnItem(Drop.Item, FMath::Min(Left, MaxStack), Center + Spread, Velocity, BlockDropPickupDelay);
+        }
+    }
+}
+
+void FFoundationAuthority::StepItemEntities()
+{
+    using namespace FoundationItemEntities;
+    if (ItemEntities.IsEmpty()) return;
+    const FVector& Origin = World.OriginCm;
+    const double VoidCm = double(World.BoundsMin.Z - VoidDepthCells) * UFoundationProfile::BlockCm;
+    TArray<FBox> Boxes;
+    for (int32 Index = 0; Index < ItemEntities.Num();)
+    {
+        FFoundationItemEntity& Entity = ItemEntities[Index];
+        const FIntVector Cell(FoundationGrid::FloorToCell(Entity.LocalCm.X),
+            FoundationGrid::FloorToCell(Entity.LocalCm.Y), FoundationGrid::FloorToCell(Entity.LocalCm.Z));
+        // An item in a column that is not loaded stays as it is (vanilla's entities do not tick in an unloaded chunk).
+        Entity.bFrozen = !World.GetStorage().IsLoaded(Cell);
+        if (Entity.bFrozen)
+        {
+            Entity.PreviousLocalCm = Entity.LocalCm;
+            ++Index;
+            continue;
+        }
+        Boxes.Reset();
+        const FBox Region = GetStepRegion(Entity, Origin);
+        if (GatherCollision)
+            GatherCollision(Region, Boxes);
+        else
+        {
+            World.GatherCollision(Region, Boxes);
+            for (const FFoundationStatic& Static : Statics)
+                if (Static.Box.Intersect(Region)) Boxes.Add(Static.Box);
+        }
+        Move(Entity, Origin, Boxes);
+        ++Entity.Age;
+        if (Entity.PickupDelay > 0) --Entity.PickupDelay;
+        if (Entity.LocalCm.Z < VoidCm)
+            ItemEntities.RemoveAt(Index);
+        else
+            ++Index;
+    }
+    for (FFoundationPlayer& Player : Players)
+    {
+        if (!Player.bHasFacts || !Player.Facts.bAlive) continue;
+        const FBox Reach = GetPickupBox(Player.Facts.GetBody());
+        for (int32 Index = 0; Index < ItemEntities.Num();)
+        {
+            FFoundationItemEntity& Entity = ItemEntities[Index];
+            const FVector Location = Origin + Entity.LocalCm;
+            const int32 Taken = !Entity.bFrozen && Entity.PickupDelay <= 0 && Overlaps(Reach, GetBox(Location))
+                ? Player.Inventory.Add(Entity.Item, Entity.Count, Rules.Items[Entity.Item].MaxStack, false)
+                : 0;
+            if (Taken <= 0)
+            {
+                ++Index;
+                continue;
+            }
+            // Only what fits transfers; the rest stays in the world.
+            Entity.Count -= Taken;
+            ++ItemsPickedUp;
+            FFoundationEvent Event;
+            Event.Kind = EFoundationEventKind::PickedUp;
+            Event.Player = Player.Id;
+            Event.EntityId = Entity.Id;
+            Event.Item = Entity.Item;
+            Event.Count = Taken;
+            Event.LocationCm = Location;
+            Event.bWholeStack = Entity.Count <= 0;
+            Event.Step = Player.Facts.Step;
+            AddEvent(Event);
+            if (Entity.Count <= 0)
+                ItemEntities.RemoveAt(Index);
+            else
+                ++Index;
+        }
+    }
 }
 
 FFoundationHit FFoundationAuthority::Resolve(const FFoundationPlayerFacts& Facts) const
@@ -750,8 +866,9 @@ bool FFoundationAuthority::BreakBlock(
     const FFoundationBlockType& Definition = World.GetBlock(State);
     const FFoundationItemDefinition& Tool = GetHandItem(Player, EFoundationHand::Main);
     const bool bEligible = !bCreative && CanHarvest(Tool, Definition);
-    // The finite fixture returns the drops straight to the inventory (a lab stand-in for item entities).
-    // Without room for all of them the break is refused and the block stays.
+    // The finite fixture drops the loot into the world as item entities (Options.bItemEntities), or returns it straight
+    // to the inventory (the lab's stand-in before items S8a); then, without room for all of it, the break is refused
+    // and the block stays.
     TArray<FFoundationLootDrop> Drops;
     if (!Player.Inventory.bInfiniteSupply && bEligible)
     {
@@ -785,7 +902,8 @@ bool FFoundationAuthority::BreakBlock(
         }
     }
     FFoundationInventory Trial = Player.Inventory;
-    if (!Algo::AllOf(Drops, [&](const FFoundationLootDrop& Drop)
+    if (!Options.bItemEntities &&
+        !Algo::AllOf(Drops, [&](const FFoundationLootDrop& Drop)
             { return Trial.Add(Drop.Item, Drop.Count, Rules.Items[Drop.Item].MaxStack) == Drop.Count; }))
     {
         Reject(Result, EFoundationReason::InventoryFull);
@@ -798,14 +916,19 @@ bool FFoundationAuthority::BreakBlock(
         AddEvent(Event);
         return false;
     }
+    // The drops' spread and speed: seeded like the roll, from another stream.
+    const int32 DropSeed = FoundationLoot::MakeSeed(~Rules.LootSeed, Cell, Breaks);
     // A block holding water leaves its source (W2b).
     World.Set(Cell, World.GetRegistry().GetRemainder(State));
     ++Breaks;
     Result.bBroken = true;
     Result.Cell = Cell;
     Result.State = State;
-    for (const FFoundationLootDrop& Drop : Drops)
-        Result.bItemReturned |= Player.Inventory.Add(Drop.Item, Drop.Count, Rules.Items[Drop.Item].MaxStack) > 0;
+    if (Options.bItemEntities)
+        SpawnDrops(Cell, Drops, DropSeed);
+    else
+        for (const FFoundationLootDrop& Drop : Drops)
+            Result.bItemReturned |= Player.Inventory.Add(Drop.Item, Drop.Count, Rules.Items[Drop.Item].MaxStack) > 0;
     Result.Drops = MoveTemp(Drops);
     // Positive-hardness blocks wear the tool once, when tool wear is on; creative tools never wear.
     if (!bCreative && Options.bToolWear && Definition.Hardness > 0 && Tool.DurabilityPerBlock > 0 &&

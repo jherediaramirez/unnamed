@@ -77,7 +77,7 @@ int32 FFoundationInventory::GetSpaceFor(int32 Item, int32 MaxStack) const
     return Space;
 }
 
-int32 FFoundationInventory::Add(int32 Item, int32 Count, int32 MaxStack)
+int32 FFoundationInventory::Add(int32 Item, int32 Count, int32 MaxStack, bool bTouchStacks)
 {
     int32 Added = 0;
     auto Merge = [&](FFoundationItemInstance& Stack)
@@ -86,7 +86,10 @@ int32 FFoundationInventory::Add(int32 Item, int32 Count, int32 MaxStack)
         const int32 Amount = FMath::Min(Count - Added, MaxStack - Stack.Count);
         Stack.Count += Amount;
         Added += Amount;
-        Touch(Stack);
+        if (bTouchStacks)
+            Touch(Stack);
+        else
+            ++Revision;
     };
     // Same order as the reference inventory: selected stack, offhand, then the hotbar; then free slots.
     Merge(Hotbar[Selected]);

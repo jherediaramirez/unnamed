@@ -363,6 +363,8 @@ private:
     // -VoxelShotCaves: views inside a cave and onto still lava, searched once near the center (names, camera and target
     // in cm); empty when none was found.
     bool bShotCaves = false;
+    // -VoxelShotDrops (items S8a): a block drop and an item drop fall to the floor before each cave view's camera.
+    bool bShotDrops = false;
     bool bShotCavesSearched = false;
     TArray<TTuple<FString, FVector, FVector>> ShotCaveViews;
     void FindCaveShots();
