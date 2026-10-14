@@ -1,4 +1,5 @@
 #include "Foundation/FoundationRuntimeProbe.h"
+#include "Algo/AllOf.h"
 #include "Foundation/FoundationBreakEffects.h"
 #include "Foundation/FoundationController.h"
 #include "Foundation/FoundationGrid.h"
@@ -1136,10 +1137,14 @@ void UFoundationRuntimeProbe::AddInteractionCases()
                 FVector::ZeroVector, FoundationItemEntities::BlockDropPickupDelay);
             Look(FVector(-560, 655, 0));
         },
-        [this, Lab, Capture]
+        [this, Lab, Authority, Capture]
         {
             const FFoundationItemEntityView* View = Lab->GetView()->GetItemEntityView();
-            Record(TEXT("a block drop and an item drop are drawn"), View && View->GetDrawnCount() == 2,
+            // Each drawn as one copy (items S8b: a block's instances or the sprites that draw).
+            const bool bOneCopyEach = View &&
+                Algo::AllOf(Authority().GetItemEntities(),
+                    [View](const FFoundationItemEntity& Entity) { return View->GetDrawnCopies(Entity.Id) == 1; });
+            Record(TEXT("a block drop and an item drop are drawn"), View && View->GetDrawnCount() == 2 && bOneCopyEach,
                 FString::Printf(
                     TEXT("drawn %d %s"), View ? View->GetDrawnCount() : -1, View ? *View->Describe() : TEXT("")));
             Capture(TEXT("drops-on"));
@@ -1323,7 +1328,8 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         });
     AddCase(TEXT("strip capture off hold"), .2, [] {}, [SetItemUse] { SetItemUse(1); });
 
-    // 13b. Hands and items: pick block, drop (no item entities here), offhand fallback, Toggle use, water.
+    // 13b. Hands and items: pick block, drop (items S8b: throw, re-pickup, the stack, the switch-0 control), offhand
+    // fallback, Toggle use, water.
     Prepare(TEXT("hands"), false);
     AddCase(
         TEXT("pick block"), .3,
@@ -1340,15 +1346,104 @@ void UFoundationRuntimeProbe::AddInteractionCases()
                 FString::Printf(TEXT("slot %d"), Player()->Inventory.Selected + 1));
             Click(EKeys::Q);
         });
+    // Items S8b (foundation.Items.Entities 1): Q throws one stone from the stack (creative too), picked up again once
+    // its 40-tick delay is over; Ctrl+Q throws the whole stack, drawn as 5 copies (the capture pair's "on" frame); with
+    // the switch at 0, Q is refused and nothing is thrown (the control).
+    const TSharedRef<FVector> ThrowLook = MakeShared<FVector>(FVector(350, 50, 0));
+    auto Thrown = [Authority](int32 Index) -> const FFoundationItemEntity*
+    {
+        const TArray<FFoundationItemEntity>& Entities = Authority().GetItemEntities();
+        return Entities.IsValidIndex(Index) ? &Entities[Index] : nullptr;
+    };
     AddCase(
         TEXT("drop"), .2, [] {},
-        [this, Player]
+        [this, Player, Authority, Thrown]
         {
+            const FFoundationItemEntity* Stone = Thrown(0);
+            Record(TEXT("Q throws one stone with a 40-tick pickup delay"),
+                Pawn->Interaction.LastResult.IsCommitted() && Player()->Inventory.Hotbar[0].Count == 63 &&
+                    Authority().GetItemEntities().Num() == 1 && Stone &&
+                    Stone->Item == Authority().Rules.FindItem(TEXT("stone")) && Stone->Count == 1 &&
+                    Stone->PickupDelay > 0 && Stone->PickupDelay <= 40,
+                FString::Printf(TEXT("%s; stone %d, thrown %d, delay %d"), *Pawn->Interaction.LastText,
+                    Player()->Inventory.Hotbar[0].Count, Authority().GetItemEntities().Num(),
+                    Stone ? Stone->PickupDelay : -1));
+        });
+    AddCase(TEXT("drop settle"), 1., [] {}, [] {});
+    AddCase(
+        TEXT("drop re-pickup"), 1.5,
+        [this, Authority, Thrown]
+        {
+            // Standing just short of the thrown stone (it may rest against the block): it comes back once its delay is
+            // over.
+            if (const FFoundationItemEntity* Stone = Thrown(0))
+                ResetPlayer(Authority().World.OriginCm + Stone->LocalCm - FVector(80, 0, 0));
+        },
+        [this, Player, Authority]
+        {
+            const FFoundationEvent* Picked = nullptr;
+            for (const FFoundationEvent& Event : Authority().GetEvents())
+                if (Event.Kind == EFoundationEventKind::PickedUp) Picked = &Event;
+            Record(TEXT("the thrown stone is picked up again"),
+                Authority().GetItemEntities().IsEmpty() && Player()->Inventory.Hotbar[0].Count == 64 && Picked &&
+                    Picked->Item == Authority().Rules.FindItem(TEXT("stone")) && Picked->Count == 1,
+                FString::Printf(TEXT("thrown %d, stone %d, picked up %d"), Authority().GetItemEntities().Num(),
+                    Player()->Inventory.Hotbar[0].Count, Picked ? Picked->Count : 0));
+        });
+    AddCase(
+        TEXT("drop stack ctrl"), .1,
+        [this, Click, Look]
+        {
+            // Toward open floor (-Y), so the stack rests in the open for the capture.
+            ResetPlayer({150, 50, 0});
+            Look(FVector(150, -250, 50));
+            PressKey(EKeys::LeftControl, true);
+        },
+        [Click] { Click(EKeys::Q); });
+    AddCase(
+        TEXT("drop stack"), 1.2, [] {},
+        [this, Player, Lab, Thrown, Authority, ThrowLook]
+        {
+            PressKey(EKeys::LeftControl, false);
+            const FFoundationItemEntity* Stack = Thrown(0);
+            const FFoundationItemEntityView* View = Lab->GetView()->GetItemEntityView();
+            const int32 Copies = View && Stack ? View->GetDrawnCopies(Stack->Id) : 0;
+            Record(TEXT("Ctrl+Q throws the whole stack, drawn as 5 copies"),
+                Player()->Inventory.Hotbar[0].IsEmpty() && Authority().GetItemEntities().Num() == 1 && Stack &&
+                    Stack->Count == 64 && Stack->bOnGround && Copies == 5,
+                FString::Printf(TEXT("slot 1 %d, thrown %d of %d at %s, copies %d"),
+                    Player()->Inventory.Hotbar[0].Count, Authority().GetItemEntities().Num(), Stack ? Stack->Count : 0,
+                    Stack ? *Stack->LocalCm.ToCompactString() : TEXT("-"), Copies));
+            if (Stack) *ThrowLook = Authority().World.OriginCm + Stack->LocalCm;
+        });
+    AddCase(
+        TEXT("throw capture on"), .3, [Look, ThrowLook] { Look(*ThrowLook); },
+        [Capture] { Capture(TEXT("throws-on")); });
+    AddCase(TEXT("throw capture on hold"), .2, [] {}, [] {});
+    Prepare(TEXT("hands control"), false);
+    AddCase(
+        TEXT("throw capture off"), .6,
+        [this, Look, SetItemEntities, ThrowLook]
+        {
+            SetItemEntities(0);
+            ResetPlayer({150, 50, 0});
+            Look(*ThrowLook);
+        },
+        // Q a frame after the switch, once the pawn has copied it into the authority's options.
+        [Click] { Click(EKeys::Q); });
+    AddCase(
+        TEXT("throw capture off check"), .3, [] {},
+        [this, Player, Lab, Authority, Capture]
+        {
+            const FFoundationItemEntityView* View = Lab->GetView()->GetItemEntityView();
             Record(TEXT("drop is refused without item entities"),
                 Pawn->Interaction.LastResult.Reason == EFoundationReason::DropDeferred &&
-                    Player()->Inventory.Hotbar[0].Count == 64,
-                Pawn->Interaction.LastText);
+                    Player()->Inventory.Hotbar[0].Count == 64 && Authority().GetItemEntities().IsEmpty() && View &&
+                    View->GetDrawnCount() == 0,
+                FString::Printf(TEXT("%s; drawn %d"), *Pawn->Interaction.LastText, View ? View->GetDrawnCount() : -1));
+            Capture(TEXT("throws-off"));
         });
+    AddCase(TEXT("throw capture off hold"), .2, [] {}, [SetItemEntities] { SetItemEntities(1); });
     // One input per frame: Enhanced Input fires same-frame actions in mapping order, not key order.
     AddCase(
         TEXT("offhand swap"), .2,

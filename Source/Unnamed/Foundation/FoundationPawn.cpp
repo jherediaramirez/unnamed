@@ -360,6 +360,7 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
 {
     // The authority sees this step's pose; targets' damage cooldowns and item entities step once per reference step.
     Authority.Options.bItemEntities = FoundationItemEntities::IsOn();
+    Authority.Options.bFullInventory = FoundationInventory::IsFull();
     Authority.Options.bItemUse = FoundationItemUse::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     Authority.Step();
@@ -572,4 +573,15 @@ void AFoundationPawn::Tick(float DeltaSeconds)
     if (bHandFit)
         Camera->SetFirstPersonFieldOfView(
             FoundationCoordinates::HorizontalFov(FoundationHand::FixedVerticalFov, Aspect));
+}
+
+void AFoundationPawn::TeleportFeet(const FVector& FeetCm)
+{
+    Simulation.Feet = Simulation.PreviousFeet = FeetCm;
+    Simulation.VelocityPerTick = Simulation.LastDisplacement = FVector::ZeroVector;
+    Simulation.FallDistanceCm = 0;
+    Simulation.bGrounded = false;
+    Vitals.ResetFall();
+    SetActorLocation(FeetCm);
+    ResetBody();
 }

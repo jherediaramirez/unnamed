@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Foundation/FoundationBlockPlacement.h"
 #include "Foundation/FoundationBlocks.h"
+#include "Foundation/FoundationContainer.h"
 #include "Foundation/FoundationItemEntities.h"
 #include "Foundation/FoundationItems.h"
 #include "Foundation/FoundationLoot.h"
@@ -25,9 +26,15 @@ enum class EFoundationCommandType : uint8
     Attack,
     // An attack at nothing in reach: it still restarts attack recovery.
     Whiff,
-    // The creative inventory writes a stack into a hotbar slot or the offhand (Slot 9), as vanilla's
-    // ServerboundSetCreativeModeSlotPacket does. Allowed only while the lab's creative inventory rule is on.
+    // The creative inventory writes a stack into an inventory slot (Slot: the Inventory number, 0-8 the hotbar, 9-35
+    // the main grid, 36-39 the armor, 40 the offhand), as vanilla's ServerboundSetCreativeModeSlotPacket does.
+    // Allowed only while the lab's creative inventory rule is on.
     SetCreativeSlot,
+    // A click in an open container (vanilla's container click): ContainerId, Slot (the menu's slot number, -999
+    // outside the window), Button and ClickType, run by FFoundationContainerMenu with the player's cursor stack.
+    ContainerClick,
+    // The container screen closes: the cursor stack goes back into the inventory.
+    ContainerClose,
     // Hold-to-use (step 10, eating; foundation.Items.Use): start using the hand's consumable, advance it one reference
     // step, or let go. A release, a slot or hand change, death or a step without a continue cancels it; nothing is
     // consumed until it finishes.
@@ -118,6 +125,10 @@ struct FFoundationCommand
     FName CreativeItem;
     int32 CreativeCount = 0;
     int32 CreativeDamage = 0;
+    // ContainerClick: the container (0 the player's own menu), the button and the click type; Slot is the menu slot.
+    int32 ContainerId = 0;
+    int32 Button = 0;
+    EFoundationClickType ClickType = EFoundationClickType::Pickup;
 };
 
 struct FFoundationResult
@@ -214,8 +225,12 @@ struct FFoundationLabOptions
     bool bPlantRules = true;
     // Item entities (items S8a): a survival break drops its loot into the world, and a full inventory no longer
     // refuses it. Off, the loot goes straight to the inventory, as before. The pawn copies foundation.Items.Entities
-    // in before each step; tests set it themselves.
+    // in before each step; tests set it themselves. Items S8b: on, Q and Ctrl+Q throw, and stacks merge and despawn.
     bool bItemEntities = false;
+    // The full inventory (survival step 5a): 27 main and 4 armor slots besides the hotbar and offhand. Off, the lab
+    // inventory, the hotbar and offhand only. The pawn copies foundation.Inventory.Full in before each step; tests
+    // set it themselves.
+    bool bFullInventory = false;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -426,17 +441,21 @@ public:
     // Item entities (items S8a), oldest first; Reset clears them.
     const TArray<FFoundationItemEntity>& GetItemEntities() const { return ItemEntities; }
     // Adds an item entity at a position (cm from the block world's origin); its id, or 0 for an invalid item or count.
-    int32 SpawnItem(int32 Item, int32 Count, const FVector& LocalCm, const FVector& VelocityCm, int32 PickupDelay);
+    int32 SpawnItem(int32 Item, int32 Count, const FVector& LocalCm, const FVector& VelocityCm, int32 PickupDelay,
+        int32 Damage = 0);
 
     const TArray<FFoundationEvent>& GetEvents() const { return Events; }
     int64 GetEventSerial() const { return EventSerial; }
 
     // Diagnostics.
     int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
-    int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsEaten = 0, Strips = 0;
+    int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsThrown = 0, ItemsMerged = 0, ItemsDespawned = 0, ItemsEaten = 0,
+          Strips = 0;
 
 private:
     FFoundationInventory MakeLoadout();
+    // The item facts container clicks read (max stack, equipment slot).
+    FFoundationContainerRules MakeContainerRules() const;
     // The placement context for a hit (statics must be anchors); false with a reason when nothing can be placed.
     bool MakePlacementContext(const FFoundationPlayer& Player, const FFoundationHit& Hit,
         const FFoundationBlockType& Placing, FFoundationPlacementContext& OutContext, bool& bOutAccepted,
@@ -481,6 +500,10 @@ private:
     // A broken block's loot as item entities, split into stacks that fit (provisional spread and speed).
     void SpawnDrops(const FIntVector& Cell, TConstArrayView<FFoundationLootDrop> Drops, int32 RandomSeed);
     void StepItemEntities();
+    // Q and Ctrl+Q (items S8b): one item or the selected stack thrown from the eye along the look.
+    void Drop(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
+    // Every MergeTicks of its age, an item takes in same-item stacks inside its merge box (items S8b).
+    void MergeItemEntities();
 
     TArray<FFoundationPlayer> Players;
     TArray<FFoundationEvent> Events;
