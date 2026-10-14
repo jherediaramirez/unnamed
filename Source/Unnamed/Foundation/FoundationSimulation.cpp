@@ -3,7 +3,6 @@
 
 namespace
 {
-    // Named for this file: unity builds merge it with engine headers that take an "Epsilon" parameter.
     constexpr double SimulationEpsilon = 1e-6;
 
     bool Overlap(double A0, double A1, double B0, double B1)

@@ -358,7 +358,8 @@ void AFoundationPawn::SyncInteraction(FFoundationAuthority& Authority)
 
 void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLatestStep, double NowSeconds)
 {
-    // The authority sees this step's pose; targets' damage cooldowns count once per reference step.
+    // The authority sees this step's pose; targets' damage cooldowns and item entities step once per reference step.
+    Authority.Options.bItemEntities = FoundationItemEntities::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     Authority.Step();
     Interaction.StepOnce(Authority, Vitals, bLatestStep, NowSeconds);

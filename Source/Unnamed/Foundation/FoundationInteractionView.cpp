@@ -1,4 +1,5 @@
 #include "Foundation/FoundationInteractionView.h"
+#include "Foundation/FoundationItemEntityView.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "Foundation/FoundationBlockMeshes.h"
 #include "Foundation/FoundationBlockTextureTable.h"
@@ -222,6 +223,7 @@ void UFoundationInteractionView::BeginPlay()
     // The breaking effects' pools (foundation.Break.*), hidden until a switch turns one on.
     BreakEffects = MakeShared<FFoundationBreakEffects>(*this);
     BreakEffects->Initialize(*Lab->GetAuthority());
+    ItemEntityView = MakeShared<FFoundationItemEntityView>(*this);
     RebuildBlocks(*Lab->GetAuthority());
 }
 
@@ -632,6 +634,9 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
                     Burst(Top - FVector(0, 0, 40), FLinearColor(1, .85f, .2f), 8, 5, 320, uint32(Event.Serial));
             }
             break;
+        case EFoundationEventKind::PickedUp:
+            if (ItemEntityView) ItemEntityView->OnPickedUp(Event, GetLocalPawn());
+            break;
         case EFoundationEventKind::ToolBroke:
             if (const AFoundationPawn* Pawn = GetLocalPawn())
                 Burst(Pawn->GetEyePosition() + Pawn->GetControlRotation().Vector() * 60, FLinearColor(.7f, .7f, .72f),
@@ -901,28 +906,8 @@ void UFoundationInteractionView::UpdateHeldItem(
             const FFoundationBlockRegistry& Registry = Authority.World.GetRegistry();
             TArray<UStaticMesh*, TInlineAllocator<4>> Meshes;
             FBox Drawn(ForceInit);
-            TArray<TConstArrayView<int32>> Parts;
-            if (Registry.GetModelParts(State, Parts))
-            {
-                for (const TConstArrayView<int32> Alternatives : Parts)
-                    if (UStaticMesh* Mesh = Alternatives.IsEmpty()
-                            ? nullptr
-                            : GetBlockMesh(Registry, FoundationBlockMeshes::Count + Alternatives[0]))
-                    {
-                        Meshes.Add(Mesh);
-                        Drawn += Mesh->GetBoundingBox();
-                    }
-            }
-            else
-            {
-                const int32 Kind = FoundationBlockMeshes::GetKind(Registry, State, false);
-                const FBox Unit = FoundationBlockMeshes::GetUnitBox(Kind);
-                Meshes.Add(BlockMeshes[Kind]);
-                Drawn = FBox(Unit.Min * InteractionViewBlockCm, Unit.Max * InteractionViewBlockCm);
-            }
-            UMaterialInterface* Material =
-                LayerMaterials[Type && Type->IsWater() ? WaterLayer
-                                                       : uint8(Type ? Type->Layer : EFoundationRenderLayer::Opaque)];
+            GetStateMeshes(Registry, State, Meshes, Drawn);
+            UMaterialInterface* Material = GetLayerMaterial(Type);
             float Data[CustomDataFloats];
             MakeCustomData(Registry, State, Data);
             for (int32 Index = 0; Index < HeldBlocks.Num(); ++Index)
@@ -1026,11 +1011,7 @@ void UFoundationInteractionView::SetHeldItem(FName Id)
     if (Items && Items->FindModelView(Id, TEXT("firstperson_righthand"), Model))
     {
         const FFoundationItemTextureAsset& Texture = *Model.Texture;
-        TObjectPtr<UStaticMesh>& Cached = ItemMeshes.FindOrAdd(Texture.Name);
-        TArray<bool> Opaque;
-        if (!Cached && FoundationItemMesh::ReadMask(Texture, Opaque))
-            Cached = FoundationItemMesh::BuildMesh(this,
-                FoundationItemMesh::BuildQuads(Texture.Width, Texture.Height, Opaque), Texture.Layer, HeldModelBlockCm);
+        UStaticMesh* Cached = GetItemMesh(Texture);
         Material = Cached ? GetItemMaterial(*Items, Texture.Width == 32) : nullptr;
         if (Material)
         {
@@ -1046,31 +1027,78 @@ void UFoundationInteractionView::SetHeldItem(FName Id)
     HeldItem->SetRelativeTransform(Display);
 }
 
+void UFoundationInteractionView::GetStateMeshes(const FFoundationBlockRegistry& Registry, FFoundationBlockState State,
+    TArray<UStaticMesh*, TInlineAllocator<4>>& OutMeshes, FBox& OutDrawn)
+{
+    OutDrawn = FBox(ForceInit);
+    TArray<TConstArrayView<int32>> Parts;
+    if (Registry.GetModelParts(State, Parts))
+    {
+        for (const TConstArrayView<int32> Alternatives : Parts)
+            if (UStaticMesh* Mesh = Alternatives.IsEmpty()
+                    ? nullptr
+                    : GetBlockMesh(Registry, FoundationBlockMeshes::Count + Alternatives[0]))
+            {
+                OutMeshes.Add(Mesh);
+                OutDrawn += Mesh->GetBoundingBox();
+            }
+        return;
+    }
+    const int32 Kind = FoundationBlockMeshes::GetKind(Registry, State, false);
+    const FBox Unit = FoundationBlockMeshes::GetUnitBox(Kind);
+    OutMeshes.Add(BlockMeshes[Kind]);
+    OutDrawn = FBox(Unit.Min * InteractionViewBlockCm, Unit.Max * InteractionViewBlockCm);
+}
+
+UMaterialInterface* UFoundationInteractionView::GetLayerMaterial(const FFoundationBlockType* Type) const
+{
+    return LayerMaterials[Type && Type->IsWater() ? WaterLayer
+                                                  : uint8(Type ? Type->Layer : EFoundationRenderLayer::Opaque)];
+}
+
+UStaticMesh* UFoundationInteractionView::GetItemMesh(const FFoundationItemTextureAsset& Texture)
+{
+    TObjectPtr<UStaticMesh>& Cached = ItemMeshes.FindOrAdd(Texture.Name);
+    TArray<bool> Opaque;
+    if (!Cached && FoundationItemMesh::ReadMask(Texture, Opaque))
+        Cached = FoundationItemMesh::BuildMesh(this,
+            FoundationItemMesh::BuildQuads(Texture.Width, Texture.Height, Opaque), Texture.Layer, HeldModelBlockCm);
+    return Cached;
+}
+
 UMaterialInterface* UFoundationInteractionView::GetItemMaterial(const UFoundationItemAssets& Items, bool b32)
 {
     if (ItemMaterials.IsEmpty())
     {
         // The arrays are soft references, loaded here: the first time an item is held.
         ItemMaterials.SetNum(2);
-        const FSoftObjectPath Path = UUnnamedProjectSettings::GetItemAssetPath(TEXT("M_HeldItem"));
-        UMaterialInterface* Base = Cast<UMaterialInterface>(Path.TryLoad());
-        if (!Base)
-            UE_LOG(LogUnnamedFoundation, Warning,
-                TEXT("%s is missing: held items are not drawn. Run CreateItemMaterials.py."), *Path.ToString());
-        for (int32 Index = 0; Base && Index < 2; ++Index)
-        {
-            const TSoftObjectPtr<UTexture2DArray>& Array = Index ? Items.ItemTextures32 : Items.ItemTextures;
-            if (UTexture2DArray* Sprites = Array.LoadSynchronous())
-            {
-                ItemMaterials[Index] = UMaterialInstanceDynamic::Create(Base, this);
-                ItemMaterials[Index]->SetTextureParameterValue(TEXT("Sprites"), Sprites);
-            }
-            else
-                UE_LOG(LogUnnamedFoundation, Warning, TEXT("Item sprite array %s is missing: its items are not drawn."),
-                    *Array.ToString());
-        }
+        for (int32 Index = 0; Index < 2; ++Index)
+            ItemMaterials[Index] = MakeItemMaterial(Items, Index == 1);
     }
     return ItemMaterials[b32 ? 1 : 0];
+}
+
+UMaterialInstanceDynamic* UFoundationInteractionView::MakeItemMaterial(const UFoundationItemAssets& Items, bool b32)
+{
+    const FSoftObjectPath Path = UUnnamedProjectSettings::GetItemAssetPath(TEXT("M_HeldItem"));
+    UMaterialInterface* Base = Cast<UMaterialInterface>(Path.TryLoad());
+    if (!Base)
+    {
+        UE_LOG(LogUnnamedFoundation, Warning,
+            TEXT("%s is missing: held items are not drawn. Run CreateItemMaterials.py."), *Path.ToString());
+        return nullptr;
+    }
+    const TSoftObjectPtr<UTexture2DArray>& Array = b32 ? Items.ItemTextures32 : Items.ItemTextures;
+    UTexture2DArray* Sprites = Array.LoadSynchronous();
+    if (!Sprites)
+    {
+        UE_LOG(LogUnnamedFoundation, Warning, TEXT("Item sprite array %s is missing: its items are not drawn."),
+            *Array.ToString());
+        return nullptr;
+    }
+    UMaterialInstanceDynamic* Material = UMaterialInstanceDynamic::Create(Base, this);
+    Material->SetTextureParameterValue(TEXT("Sprites"), Sprites);
+    return Material;
 }
 
 void UFoundationInteractionView::TickComponent(
@@ -1119,6 +1147,12 @@ void UFoundationInteractionView::TickComponent(
         if (!bBreakCracks) DrawCracks(Authority, Interaction);
     }
     if (Pawn && Pawn->HasInteraction()) UpdateHeldItem(Authority, Pawn, bVisible, DeltaTime);
+    // Item entities draw between the last two reference steps, as the camera does.
+    if (ItemEntityView)
+        ItemEntityView->Update(Authority, Pawn,
+            Pawn ? FMath::Clamp(Pawn->Simulation.Accumulator / GetDefault<UFoundationProfile>()->TickSeconds, 0., 1.)
+                 : 1.,
+            DeltaTime);
     if (BreakEffects) BreakEffects->EndFrame(Authority, DeltaTime);
     LastViewMs = (FPlatformTime::Seconds() - Start) * 1000.;
 }

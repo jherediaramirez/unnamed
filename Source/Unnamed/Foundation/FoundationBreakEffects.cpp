@@ -52,6 +52,14 @@ namespace
         TEXT("1 makes particles land on solid blocks."), ECVF_Default);
     TAutoConsoleVariable<bool> CVarBreakParticleSpray(TEXT("foundation.Break.ParticleSpray"), true,
         TEXT("1 sprays break particles along the mined face and away from the camera."), ECVF_Default);
+    TAutoConsoleVariable<bool> CVarBreakParticleSupport(TEXT("foundation.Break.ParticleSupport"), true,
+        TEXT("1 lets a resting particle fall again when the block under it is gone; 0 leaves it where it landed (until "
+             "2026-10-13)."),
+        ECVF_Default);
+    TAutoConsoleVariable<int32> CVarBreakParticleLife(TEXT("foundation.Break.ParticleLife"), 1,
+        TEXT("Particle life: 0 1.5-2.3 s (until 2026-10-13); 1 0.2-2.0 s, most gone within 0.5 s (fitted to vanilla's "
+             "counts), shrinking away over the last 0.1 s; 2 the same lives popping out at full size, as vanilla."),
+        ECVF_Default);
     TAutoConsoleVariable<int32> CVarBreakSounds(TEXT("foundation.Break.Sounds"), 2,
         TEXT("Break and hit sounds: 0 off, 1 vanilla, 2 vanilla with hit pitch variety and two hit voices."),
         ECVF_Default);
@@ -65,8 +73,9 @@ namespace
              "pitch, as vanilla (blocks whose place files the block reference lacks play their break sound)."),
         ECVF_Default);
     TAutoConsoleVariable<bool> CVarSoundTrace(TEXT("foundation.Sound.Trace"), false,
-        TEXT("Debug: logs each break, hit, place and event sound's play call with its time (FPlatformTime::Seconds), to "
-             "set against a loopback recording of the output (latency checks)."),
+        TEXT(
+            "Debug: logs each break, hit, place and event sound's play call with its time (FPlatformTime::Seconds), to "
+            "set against a loopback recording of the output (latency checks)."),
         ECVF_Default);
     TAutoConsoleVariable<int32> CVarSoundEvents(TEXT("foundation.Sound.Events"), 1,
         TEXT("Sound events of DA_Sounds (pickup, eating, player damage, containers, water, footsteps; "
@@ -99,6 +108,8 @@ namespace FoundationBreak
         Switches.Particles = CVarBreakParticles.GetValueOnGameThread();
         Switches.bParticleCollision = CVarBreakParticleCollision.GetValueOnGameThread();
         Switches.bParticleSpray = CVarBreakParticleSpray.GetValueOnGameThread();
+        Switches.bParticleSupport = CVarBreakParticleSupport.GetValueOnGameThread();
+        Switches.ParticleLife = CVarBreakParticleLife.GetValueOnGameThread();
         Switches.Sounds = CVarBreakSounds.GetValueOnGameThread();
         Switches.Swing = CVarBreakSwing.GetValueOnGameThread();
         Switches.bPop = CVarBreakPop.GetValueOnGameThread();
@@ -332,8 +343,19 @@ namespace FoundationBreak
         return Play;
     }
 
-    void SpawnBreakParticles(
-        const FBox& Box, double Amount, const FVector& Push, FRandomStream& Random, TArray<FParticleSpawn>& Out)
+    double ParticleLife(int32 LifeMode, FRandomStream& Random)
+    {
+        if (LifeMode != 1 && LifeMode != 2) return Random.FRandRange(1.5, 2.3);
+        return .2 / (.1 + .9 * Random.FRand());
+    }
+
+    double LifeScale(int32 LifeMode, double Age, double Life)
+    {
+        return LifeMode == 1 ? FMath::Clamp((Life - Age) / ShrinkSeconds, 0., 1.) : 1.;
+    }
+
+    void SpawnBreakParticles(const FBox& Box, double Amount, const FVector& Push, FRandomStream& Random,
+        TArray<FParticleSpawn>& Out, int32 LifeMode)
     {
         constexpr int32 Divisions = 4;
         constexpr int32 Points = Divisions * Divisions * Divisions;
@@ -359,19 +381,20 @@ namespace FoundationBreak
             const FVector Jitter(Random.FRandRange(-JitterCm, JitterCm), Random.FRandRange(-JitterCm, JitterCm),
                 Random.FRandRange(-JitterCm, JitterCm));
             Spawn.Velocity = (Point - Centre) * 1.5 + Jitter + FVector(0, 0, 100) + Push;
-            Spawn.Life = Random.FRandRange(1.5, 2.3);
+            Spawn.Life = ParticleLife(LifeMode, Random);
             Spawn.Size = BreakSizeCm;
             Spawn.PatchU = uint8(Random.RandRange(0, 12));
             Spawn.PatchV = uint8(Random.RandRange(0, 12));
         }
     }
 
-    FParticleSpawn SpawnHitChip(const FVector& Point, const FVector& Normal, bool bSpray, FRandomStream& Random)
+    FParticleSpawn SpawnHitChip(
+        const FVector& Point, const FVector& Normal, bool bSpray, FRandomStream& Random, int32 LifeMode)
     {
         FParticleSpawn Spawn;
         Spawn.Location = Point + Normal;
         Spawn.Velocity = Normal * (bSpray ? 60 : 40);
-        Spawn.Life = Random.FRandRange(1.5, 2.3);
+        Spawn.Life = ParticleLife(LifeMode, Random);
         Spawn.Size = HitSizeCm;
         Spawn.PatchU = uint8(Random.RandRange(0, 12));
         Spawn.PatchV = uint8(Random.RandRange(0, 12));
@@ -384,9 +407,19 @@ namespace FoundationBreak
     }
 
     void StepParticle(FParticleState& Particle, double DeltaTime, bool bCollision,
-        TFunctionRef<void(const FVector& Point, TArray<FBox>& OutBoxes)> Solid)
+        TFunctionRef<void(const FVector& Point, TArray<FBox>& OutBoxes)> Solid, bool bSupport)
     {
-        if (Particle.bResting) return;
+        TArray<FBox> Boxes;
+        if (Particle.bResting)
+        {
+            if (!bSupport) return;
+            // It lies 0.01 cm above its box: the point 0.02 cm under it is inside that box while the box stands.
+            const FVector Under = Particle.Location - FVector(0, 0, .02);
+            Solid(Under, Boxes);
+            if (BreakFindBox(Boxes, Under)) return;
+            Particle.bResting = false;
+            Boxes.Reset();
+        }
         Particle.Velocity.Z -= GravityCm * DeltaTime;
         const FVector Next = Particle.Location + Particle.Velocity * DeltaTime;
         if (!bCollision)
@@ -395,7 +428,6 @@ namespace FoundationBreak
             return;
         }
 
-        TArray<FBox> Boxes;
         Solid(Particle.Location, Boxes);
         // A particle already inside a box (spawned in one) flies free, or it would never leave.
         const bool bInside = BreakFindBox(Boxes, Particle.Location) != nullptr;
@@ -756,7 +788,8 @@ bool FFoundationBreakEffects::UpdateMining(
                 {
                     if (Switches.Sounds != 0) PlaySound(Authority, State, Centre, true);
                     if (bChip)
-                        Spawn(FoundationBreak::SpawnHitChip(ChipPoint, ChipNormal, Switches.bParticleSpray, Random),
+                        Spawn(FoundationBreak::SpawnHitChip(
+                                  ChipPoint, ChipNormal, Switches.bParticleSpray, Random, Switches.ParticleLife),
                             Layer, Tint);
                 }
             }
@@ -887,7 +920,7 @@ bool FFoundationBreakEffects::OnBlockRemoved(const FFoundationAuthority& Authori
         for (const FBox& Box : Boxes)
         {
             Spawns.Reset();
-            FoundationBreak::SpawnBreakParticles(Box, Amount, Push, Random, Spawns);
+            FoundationBreak::SpawnBreakParticles(Box, Amount, Push, Random, Spawns, Switches.ParticleLife);
             for (const FoundationBreak::FParticleSpawn& New : Spawns)
                 Spawn(New, Layer, Tint);
             LastBreakSpawnCount += Spawns.Num();
@@ -1274,9 +1307,11 @@ void FFoundationBreakEffects::UpdateParticles(const FFoundationAuthority& Author
                 ParticleIds[Index], FTransform(FQuat::Identity, Particle.State.Location, FVector::ZeroVector), true);
             continue;
         }
-        FoundationBreak::StepParticle(Particle.State, DeltaTime, Switches.bParticleCollision, Solid);
+        FoundationBreak::StepParticle(
+            Particle.State, DeltaTime, Switches.bParticleCollision, Solid, Switches.bParticleSupport);
+        const double Scale = FoundationBreak::LifeScale(Switches.ParticleLife, Particle.Age, Particle.Life);
         ParticleMesh->UpdateInstanceTransformById(ParticleIds[Index],
-            FTransform(Facing, Particle.State.Location, FVector(Particle.Size / BreakEffectsBlockCm)), true);
+            FTransform(Facing, Particle.State.Location, FVector(Particle.Size * Scale / BreakEffectsBlockCm)), true);
         ++Live;
     }
     // The id updates mark only the changed instances: one incremental upload at the end of the frame.
@@ -1308,6 +1343,14 @@ int32 FFoundationBreakEffects::GetLiveParticleCount() const
     int32 Count = 0;
     for (const FParticle& Particle : Particles)
         Count += Particle.bLive ? 1 : 0;
+    return Count;
+}
+
+int32 FFoundationBreakEffects::CountLiveParticles(const FBox& Box) const
+{
+    int32 Count = 0;
+    for (const FParticle& Particle : Particles)
+        Count += Particle.bLive && Box.IsInsideOrOn(Particle.State.Location) ? 1 : 0;
     return Count;
 }
 

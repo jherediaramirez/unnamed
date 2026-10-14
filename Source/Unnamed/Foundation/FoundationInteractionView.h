@@ -9,6 +9,7 @@ class AFoundationLab;
 class AFoundationPawn;
 struct FFoundationPreview;
 class FFoundationBreakEffects;
+class FFoundationItemEntityView;
 class UInstancedStaticMeshComponent;
 class ULineBatchComponent;
 class UFoundationBlockTextureTable;
@@ -123,9 +124,12 @@ public:
     double GetLastViewMs() const { return LastViewMs; }
     // The breaking effects (foundation.Break.*; null before BeginPlay).
     FFoundationBreakEffects* GetBreakEffects() const { return BreakEffects.Get(); }
+    // The item entities' look (items S8a; null before BeginPlay).
+    FFoundationItemEntityView* GetItemEntityView() const { return ItemEntityView.Get(); }
 
 private:
     friend class FFoundationBreakEffects;
+    friend class FFoundationItemEntityView;
     struct FSectionKey
     {
         FIntVector Section;
@@ -206,8 +210,18 @@ private:
     void UpdateHeldItem(const FFoundationAuthority& Authority, AFoundationPawn* Pawn, bool bVisible, double DeltaTime);
     // Shows an item's first-person model on the held item component (nothing for None or an item without one).
     void SetHeldItem(FName Id);
+    // The meshes that draw a block state (its mesh kind, or one per part of its model, each part's first alternative)
+    // and the box they draw in mesh space: the held block and item entities.
+    void GetStateMeshes(const FFoundationBlockRegistry& Registry, FFoundationBlockState State,
+        TArray<UStaticMesh*, TInlineAllocator<4>>& OutMeshes, FBox& OutDrawn);
+    // The block material of a block's render layer (water's for water; opaque for none).
+    UMaterialInterface* GetLayerMaterial(const FFoundationBlockType* Type) const;
+    // A sprite's extruded mesh at HeldModelBlockCm per model block, built on first use; null without an opacity mask.
+    UStaticMesh* GetItemMesh(const struct FFoundationItemTextureAsset& Texture);
     // M_HeldItem with the 16 or 32 pixel sprite array, made on first use; null before CreateItemMaterials.py ran.
     UMaterialInterface* GetItemMaterial(const class UFoundationItemAssets& Items, bool b32);
+    // A new M_HeldItem instance on the 16 or 32 pixel sprite array (logged and null when either is missing).
+    UMaterialInstanceDynamic* MakeItemMaterial(const class UFoundationItemAssets& Items, bool b32);
 
     TMap<FSectionKey, FSectionMesh> Sections;
     UPROPERTY(Transient)
@@ -284,4 +298,5 @@ private:
     double LastViewMs = 0;
     TWeakObjectPtr<AFoundationPawn> HeldOwner;
     TSharedPtr<FFoundationBreakEffects> BreakEffects;
+    TSharedPtr<FFoundationItemEntityView> ItemEntityView;
 };
