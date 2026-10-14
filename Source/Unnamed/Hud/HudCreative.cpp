@@ -4,7 +4,6 @@
 
 namespace
 {
-    constexpr int32 OffhandSlot = 9;
     const FIntPoint ArmorSlots[4] = {{54, 6}, {54, 33}, {108, 6}, {108, 33}};
 
     bool Inside(FIntPoint Point, FIntPoint Origin, FIntPoint Size)
@@ -210,64 +209,30 @@ TArray<FHudCreativeWrite> FHudCreativeModel::Click(
     }
     case EHudCreativeHit::Hotbar:
     case EHudCreativeHit::Offhand:
+    case EHudCreativeHit::Inventory:
+    case EHudCreativeHit::Armor:
     {
-        // An ordinary container slot (AbstractContainerMenu.doClick, PICKUP); shift in the picker tabs deletes
-        // the stack (ItemPickerMenu.quickMoveStack).
-        const int32 Slot = Hit.Kind == EHudCreativeHit::Offhand ? OffhandSlot : Hit.Index;
-        if (!Inventory.IsValidIndex(Slot)) break;
-        FHudCreativeStack Stack = Inventory[Slot];
+        // Ordinary container slots (AbstractContainerMenu.doClick). Without the full inventory, the survival tab's
+        // main and armor slots stay empty and do nothing.
+        const int32 Slot = GetInventorySlot(Hit);
+        const bool bLab = Hit.Kind == EHudCreativeHit::Inventory || Hit.Kind == EHudCreativeHit::Armor;
+        if (!Inventory.IsValidIndex(Slot) || (bLab && !bFullInventory)) break;
         if (bShift)
         {
-            if (!IsInventory() && !Stack.IsEmpty()) Writes.Add({Slot, {}});
-            break;
+            // The picker tabs delete the stack (ItemPickerMenu.quickMoveStack); the survival tab moves it.
+            if (!IsInventory())
+            {
+                if (!Inventory[Slot].IsEmpty()) Writes.Add({Slot, {}});
+            }
+            else if (bFullInventory)
+                Writes = ClickMenu(Slot, 0, EFoundationClickType::QuickMove, Inventory);
         }
-        const int32 Max =
-            Stack.IsEmpty() ? (Carried.IsEmpty() ? 64 : GetMaxStack(Carried.Item)) : GetMaxStack(Stack.Item);
-        if (Button == 0)
+        else if (Button == 2)
         {
-            if (Carried.IsEmpty())
-                Swap(Carried, Stack);
-            else if (Stack.IsEmpty())
-                Swap(Carried, Stack);
-            else if (Stack.Item == Carried.Item)
-            {
-                const int32 Move = FMath::Min(Max - Stack.Count, Carried.Count);
-                Stack.Count += Move;
-                Carried.Count -= Move;
-            }
-            else
-                Swap(Carried, Stack);
+            if (bFullInventory) Writes = ClickMenu(Slot, 2, EFoundationClickType::Clone, Inventory);
         }
-        else if (Button == 1)
-        {
-            if (Carried.IsEmpty() && !Stack.IsEmpty())
-            {
-                // A copy of the stack, so its damage comes along (ItemStack.split).
-                const int32 Take = (Stack.Count + 1) / 2;
-                Carried = Stack;
-                Carried.Count = Take;
-                Stack.Count -= Take;
-            }
-            else if (!Carried.IsEmpty() && (Stack.IsEmpty() || Stack.Item == Carried.Item))
-            {
-                if (Stack.IsEmpty())
-                {
-                    // One of the carried stack, damage included (copyWithCount).
-                    Stack = Carried;
-                    Stack.Count = 0;
-                }
-                if (Stack.Count < Max)
-                {
-                    ++Stack.Count;
-                    --Carried.Count;
-                }
-            }
-            else if (!Carried.IsEmpty())
-                Swap(Carried, Stack);
-        }
-        if (Carried.Count <= 0) Carried = {};
-        if (Stack.Count <= 0) Stack = {};
-        if (!(Stack == Inventory[Slot])) Writes.Add({Slot, Stack});
+        else
+            Writes = ClickMenu(Slot, Button, EFoundationClickType::Pickup, Inventory);
         break;
     }
     case EHudCreativeHit::Destroy:
@@ -286,32 +251,81 @@ TArray<FHudCreativeWrite> FHudCreativeModel::Click(
         }
         break;
     default:
-        // The survival tab's main and armor slots: this lab inventory has none, so they stay empty.
         break;
     }
     return Writes;
 }
 
 TArray<FHudCreativeWrite> FHudCreativeModel::PressNumber(
-    const FHudCreativeHit& Hit, int32 Number, TConstArrayView<FHudCreativeStack> Inventory) const
+    const FHudCreativeHit& Hit, int32 Number, TConstArrayView<FHudCreativeStack> Inventory)
 {
     TArray<FHudCreativeWrite> Writes;
     if (Number < 0 || Number >= Columns) return Writes;
+    const int32 Slot = GetInventorySlot(Hit);
     if (Hit.Kind == EHudCreativeHit::Grid)
     {
         const FName Item = GetGridItem(Hit.Index);
         if (!Item.IsNone()) Writes.Add({Number, {Item, GetMaxStack(Item)}});
     }
-    else if ((Hit.Kind == EHudCreativeHit::Hotbar || Hit.Kind == EHudCreativeHit::Offhand) &&
-        Inventory.Num() > OffhandSlot)
+    else if (Inventory.IsValidIndex(Slot) &&
+        (bFullInventory || Hit.Kind == EHudCreativeHit::Hotbar || Hit.Kind == EHudCreativeHit::Offhand))
+        Writes = ClickMenu(Slot, Number, EFoundationClickType::Swap, Inventory);
+    return Writes;
+}
+
+int32 FHudCreativeModel::GetInventorySlot(const FHudCreativeHit& Hit)
+{
+    switch (Hit.Kind)
     {
-        const int32 Slot = Hit.Kind == EHudCreativeHit::Offhand ? OffhandSlot : Hit.Index;
-        if (Slot != Number && !(Inventory[Slot] == Inventory[Number]))
-        {
-            Writes.Add({Slot, Inventory[Number]});
-            Writes.Add({Number, Inventory[Slot]});
-        }
+    case EHudCreativeHit::Hotbar:
+        return Hit.Index;
+    case EHudCreativeHit::Offhand:
+        return FFoundationInventory::OffhandSlot;
+    case EHudCreativeHit::Inventory:
+        return FFoundationInventory::FirstMain + Hit.Index;
+    case EHudCreativeHit::Armor:
+        // The survival tab shows the armor head to feet, the menu's slots 5-8.
+        return FFoundationContainerMenu::ToInventorySlot(FFoundationContainerMenu::FirstArmor + Hit.Index);
+    default:
+        return INDEX_NONE;
     }
+}
+
+TArray<FHudCreativeWrite> FHudCreativeModel::ClickMenu(
+    int32 Slot, int32 Button, EFoundationClickType Type, TConstArrayView<FHudCreativeStack> Inventory)
+{
+    // Items get indices local to this click.
+    TArray<FName> Names;
+    FFoundationInventory Copy;
+    Copy.bFull = bFullInventory;
+    auto ToInstance = [&Names, &Copy](const FHudCreativeStack& Stack)
+    {
+        if (Stack.IsEmpty()) return FFoundationItemInstance();
+        FFoundationItemInstance Instance = Copy.MakeStack(Names.AddUnique(Stack.Item), Stack.Count);
+        Instance.Damage = Stack.Damage;
+        return Instance;
+    };
+    auto ToStack = [&Names](const FFoundationItemInstance& Instance)
+    {
+        return Instance.IsEmpty() ? FHudCreativeStack()
+                                  : FHudCreativeStack{Names[Instance.Item], Instance.Count, Instance.Damage};
+    };
+    for (int32 Index = 0; Index < Inventory.Num(); ++Index)
+        if (FFoundationItemInstance* Stack = Copy.GetSlot(Index)) *Stack = ToInstance(Inventory[Index]);
+    Copy.Carried = ToInstance(Carried);
+    FFoundationContainerRules Rules;
+    Rules.GetMaxStack = [this, &Names](int32 Item) { return GetMaxStack(Names[Item]); };
+    Rules.GetEquipment = [this, &Names](int32 Item)
+    {
+        const FHudCreativeItem* Info = Known.Find(Names[Item]);
+        return Info ? Info->Equipment : EFoundationEquipmentSlot::None;
+    };
+    FFoundationContainerMenu(Copy, Rules, true).Click(FFoundationContainerMenu::ToMenuSlot(Slot), Button, Type);
+    TArray<FHudCreativeWrite> Writes;
+    for (int32 Index = 0; Index < Inventory.Num(); ++Index)
+        if (const FFoundationItemInstance* Stack = Copy.GetSlot(Index))
+            if (!(ToStack(*Stack) == Inventory[Index])) Writes.Add({Index, ToStack(*Stack)});
+    Carried = ToStack(Copy.Carried);
     return Writes;
 }
 

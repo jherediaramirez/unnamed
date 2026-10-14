@@ -102,6 +102,11 @@ struct UNNAMED_API FFoundationInteraction
     int32 MiningDelay = 0;
     bool bAttackNeedsRelease = false;
     FFoundationHit LastRejectedMine;
+    // Mirror of the authority's item use (step 10, eating) for continuation and presentation: the hand, the steps
+    // used and the total.
+    bool bUsingItem = false;
+    EFoundationHand UseHand = EFoundationHand::Main;
+    int32 UseTicks = 0, UseDuration = 0;
     // Use timing.
     int64 Step = 0;
     int64 NextUseStep = 0;
@@ -136,10 +141,14 @@ struct UNNAMED_API FFoundationInteraction
     FFoundationResult Scroll(FFoundationAuthority& Authority, FFoundationVitals& Vitals, int32 Notches);
     FFoundationResult SwapHands(FFoundationAuthority& Authority, FFoundationVitals& Vitals);
     FFoundationResult Drop(FFoundationAuthority& Authority, FFoundationVitals& Vitals, bool bWholeStack);
-    // The creative inventory's write: Slot 0-8 is the hotbar, 9 the offhand; a None item or zero count clears it. The
-    // stack keeps its damage.
+    // The creative inventory's write: Slot is the Inventory number (0-8 the hotbar, 9-35 the main grid, 36-39 the
+    // armor, 40 the offhand); a None item or zero count clears it. The stack keeps its damage.
     FFoundationResult SetCreativeSlot(FFoundationAuthority& Authority, FFoundationVitals& Vitals, int32 Slot,
         FName Item, int32 Count, int32 Damage = 0);
+    // A click in an open container (FFoundationContainerMenu's slot numbers), and its closing.
+    FFoundationResult ContainerClick(FFoundationAuthority& Authority, FFoundationVitals& Vitals, int32 ContainerId,
+        int32 Slot, int32 Button, EFoundationClickType Type);
+    FFoundationResult ContainerClose(FFoundationAuthority& Authority, FFoundationVitals& Vitals);
     // Selects the hotbar slot whose item places the targeted block (or has it as its wall block). False when there is
     // none.
     bool Pick(FFoundationAuthority& Authority, FFoundationVitals& Vitals);
@@ -165,4 +174,9 @@ private:
     void CancelRetry(EFoundationReason Reason);
     bool IsCadenceOpen() const;
     void ClearMining();
+    // Ends the item use in progress at the authority (a release) and here.
+    void ReleaseItemUse(FFoundationAuthority& Authority, FFoundationVitals& Vitals);
+    void StepItemUse(FFoundationAuthority& Authority, FFoundationVitals& Vitals);
+    // One hand's use against the target: UseOn (its interaction, then the place capability) or UseEntity.
+    FFoundationResult UseTarget(FFoundationAuthority& Authority, FFoundationVitals& Vitals, EFoundationHand Hand);
 };

@@ -11,6 +11,10 @@ namespace
     TAutoConsoleVariable<int32> CVarLootAllBlocks(TEXT("foundation.Loot.AllBlocks"), 1,
         TEXT("1: a survival break rolls the block's 26.3 loot table, for every block that has one (loot step 2a). 0: "
              "only the 18 ores roll (items S5b) and every other block drops itself."));
+    TAutoConsoleVariable<int32> CVarItemUse(TEXT("foundation.Items.Use"), 1,
+        TEXT(
+            "1: hold use to eat food (step 10: apple, bread, cooked beef and the reference's other foods, 1.6 s each). "
+            "0: food passes, as before. Axe stripping and buckets (steps 14 and 17) will hang off this switch."));
 
     // The movement solver's contact tolerance (FoundationSimulation.cpp): touching is contact, only
     // positive-volume overlap obstructs. No extra clearance margin.
@@ -43,7 +47,8 @@ const TCHAR* LexToString(EFoundationReason Reason)
         TEXT("immutable lab geometry"), TEXT("unbreakable"), TEXT("no mining session"), TEXT("target changed"),
         TEXT("inventory full"), TEXT("target down"), TEXT("target damage cooldown"),
         TEXT("drop deferred: no item entities"), TEXT("released"), TEXT("expired"), TEXT("canceled"),
-        TEXT("cannot break blocks in creative"), TEXT("damage out of range")};
+        TEXT("cannot break blocks in creative"), TEXT("damage out of range"), TEXT("not hungry"),
+        TEXT("no item in use")};
     static_assert(UE_ARRAY_COUNT(Names) == int32(EFoundationReason::Count), "reason names");
     return Names[FMath::Min(int32(Reason), int32(EFoundationReason::Count) - 1)];
 }
@@ -58,8 +63,20 @@ const TCHAR* LexToString(EFoundationCommandType Type)
 {
     static const TCHAR* Names[] = {TEXT("select"), TEXT("swap"), TEXT("drop"), TEXT("use-on"), TEXT("use-entity"),
         TEXT("mine-start"), TEXT("mine-continue"), TEXT("mine-abort"), TEXT("attack"), TEXT("whiff"),
-        TEXT("creative-slot")};
+        TEXT("creative-slot"), TEXT("container-click"), TEXT("container-close"), TEXT("use-item-start"),
+        TEXT("use-item-continue"), TEXT("use-item-release")};
+    static_assert(UE_ARRAY_COUNT(Names) == int32(EFoundationCommandType::UseItemRelease) + 1, "command names");
     return Names[int32(Type)];
+}
+
+bool FoundationItemUse::IsOn()
+{
+    return CVarItemUse.GetValueOnAnyThread() != 0;
+}
+
+bool FoundationItemUse::IsEffectTick(int32 Ticks)
+{
+    return Ticks >= EffectsFirstTick && (Ticks - EffectsFirstTick) % EffectsEveryTicks == 0;
 }
 
 FBox FFoundationPlayerFacts::GetBody() const
@@ -128,6 +145,15 @@ const FFoundationItemDefinition& FFoundationAuthority::GetHandItem(
     return Stack.IsEmpty() ? Rules.Hand : Rules.GetItem(Stack.Item);
 }
 
+FFoundationContainerRules FFoundationAuthority::MakeContainerRules() const
+{
+    FFoundationContainerRules Out;
+    Out.GetMaxStack = [this](int32 Item) { return Rules.Items.IsValidIndex(Item) ? Rules.Items[Item].MaxStack : 64; };
+    Out.GetEquipment = [this](int32 Item)
+    { return Rules.Items.IsValidIndex(Item) ? Rules.Items[Item].Equipment : EFoundationEquipmentSlot::None; };
+    return Out;
+}
+
 FFoundationInventory FFoundationAuthority::MakeLoadout()
 {
     FFoundationInventory Inventory;
@@ -158,6 +184,7 @@ void FFoundationAuthority::Reset()
     {
         Player.Inventory = MakeLoadout();
         Player.Mining = {};
+        Player.Use = {};
         Player.LastPlacementStep = MIN_int64;
         Player.Results.Empty();
         Player.ResultOrder.Empty();
@@ -179,6 +206,9 @@ void FFoundationAuthority::Step()
 {
     for (FFoundationTrainingTarget& Target : Targets)
         Target.Health.StepDamageCooldown();
+    // A use nobody continued last step has been let go (its owner stopped stepping it).
+    for (FFoundationPlayer& Player : Players)
+        if (Player.Use.bActive && Player.Facts.Step - Player.Use.LastStep > 1) CancelUse(Player);
     StepItemEntities();
 }
 
@@ -261,6 +291,7 @@ void FFoundationAuthority::StepItemEntities()
     for (FFoundationPlayer& Player : Players)
     {
         if (!Player.bHasFacts || !Player.Facts.bAlive) continue;
+        Player.Inventory.bFull = Options.bFullInventory;
         const FBox Reach = GetPickupBox(Player.Facts.GetBody());
         for (int32 Index = 0; Index < ItemEntities.Num();)
         {
@@ -521,6 +552,7 @@ FFoundationResult FFoundationAuthority::Execute(
     // Evicted or never valid: its effect cannot be known, so it must not apply now.
     if (Command.Sequence == 0 || Command.Sequence <= Player->HighestEvicted)
         return Reject(Result, EFoundationReason::ExpiredSequence);
+    Player->Inventory.bFull = Options.bFullInventory;
 
     switch (Command.Type)
     {
@@ -529,11 +561,14 @@ FFoundationResult FFoundationAuthority::Execute(
             Reject(Result, EFoundationReason::InvalidSlot);
         else
         {
+            // A slot change ends a use in progress (a re-select of the same slot keeps it).
+            if (Command.Slot != Player->Inventory.Selected) CancelUse(*Player);
             Player->Inventory.Select(Command.Slot);
             Result.Outcome = EFoundationOutcome::Committed;
         }
         break;
     case EFoundationCommandType::SwapHands:
+        CancelUse(*Player);
         Player->Inventory.SwapHands();
         Result.Outcome = EFoundationOutcome::Committed;
         break;
@@ -578,7 +613,7 @@ FFoundationResult FFoundationAuthority::Execute(
         const bool bClear = Command.CreativeItem.IsNone() || Command.CreativeCount <= 0;
         if (!Options.bCreativeInventory)
             Reject(Result, EFoundationReason::InvalidSlot);
-        else if (Command.Slot < 0 || Command.Slot > FFoundationInventory::HotbarSlots)
+        else if (!Player->Inventory.GetSlot(Command.Slot))
             Reject(Result, EFoundationReason::InvalidSlot);
         else if (!bClear && (Item == INDEX_NONE || Command.CreativeCount > Rules.Items[Item].MaxStack))
             Reject(Result, EFoundationReason::NoItem);
@@ -591,17 +626,66 @@ FFoundationResult FFoundationAuthority::Execute(
             FFoundationItemInstance Stack =
                 bClear ? FFoundationItemInstance{} : Inventory.MakeStack(Item, Command.CreativeCount);
             if (!bClear) Stack.Damage = Command.CreativeDamage;
-            if (Command.Slot == FFoundationInventory::HotbarSlots)
-            {
-                Inventory.Offhand = Stack;
-                ++Inventory.Revision;
-            }
-            else
-                Inventory.SetSlot(Command.Slot, Stack);
+            Inventory.SetSlot(Command.Slot, Stack);
             Result.Outcome = EFoundationOutcome::Committed;
         }
         break;
     }
+    case EFoundationCommandType::ContainerClick:
+    {
+        // The click runs on a copy, which commits only when it throws nothing: throwing waits for survival step 4.
+        FFoundationInventory Trial = Player->Inventory;
+        const FFoundationContainerRules ClickRules = MakeContainerRules();
+        FFoundationContainerMenu Menu(Trial, ClickRules, Vitals.Mode == EFoundationPlayerMode::Creative);
+        const FFoundationClickResult Click = Command.ContainerId == FFoundationContainerMenu::PlayerContainer
+            ? Menu.Click(Command.Slot, Command.Button, Command.ClickType)
+            : FFoundationClickResult{false};
+        if (!Click.bValid)
+            Reject(Result, EFoundationReason::InvalidSlot);
+        else if (!Click.Thrown.IsEmpty())
+            Reject(Result, EFoundationReason::DropDeferred);
+        else
+        {
+            Player->Inventory = MoveTemp(Trial);
+            Result.Outcome = EFoundationOutcome::Committed;
+        }
+        break;
+    }
+    case EFoundationCommandType::ContainerClose:
+    {
+        // The cursor stack goes back into the inventory; what would not fit would be thrown, which waits for step 4.
+        // The stack keeps its damage and identity (FFoundationInventory::Return).
+        FFoundationInventory Trial = Player->Inventory;
+        const FFoundationItemInstance Carried = Trial.Carried;
+        Trial.Carried = {};
+        Trial.QuickCraft = {};
+        if (!Carried.IsEmpty() && !Trial.Return(Carried, Rules.Items[Carried.Item].MaxStack).IsEmpty())
+            Reject(Result, EFoundationReason::DropDeferred);
+        else
+        {
+            ++Trial.Revision;
+            Player->Inventory = MoveTemp(Trial);
+            Result.Outcome = EFoundationOutcome::Committed;
+        }
+        break;
+    }
+    case EFoundationCommandType::UseItemStart:
+        UseItemStart(*Player, Command, Vitals, Result);
+        break;
+    case EFoundationCommandType::UseItemContinue:
+        UseItemContinue(*Player, Command, Vitals, Result);
+        break;
+    case EFoundationCommandType::UseItemRelease:
+        Result.UseTicks = Player->Use.Ticks;
+        Result.UseDuration = Player->Use.Duration;
+        if (!CancelUse(*Player))
+            Reject(Result, EFoundationReason::NotUsing);
+        else
+        {
+            Result.Outcome = EFoundationOutcome::Canceled;
+            Result.Reason = EFoundationReason::Released;
+        }
+        break;
     }
     if (Result.Outcome == EFoundationOutcome::Rejected) ++Rejections;
     Result.WorldRevision = World.Revision;
@@ -720,6 +804,107 @@ void FFoundationAuthority::UseOn(
     Event.Step = Player.Facts.Step;
     AddEvent(Event);
     SettlePlants(Destination, Replaced, Player);
+}
+
+void FFoundationAuthority::UseItemStart(FFoundationPlayer& Player, const FFoundationCommand& Command,
+    const FFoundationVitals& Vitals, FFoundationResult& Result)
+{
+    if (!CheckHand(Player, Command, Result)) return;
+    const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
+    const FFoundationConsumable Food =
+        Stack.IsEmpty() ? FFoundationConsumable{} : Rules.GetItem(Stack.Item).GetConsumable();
+    // Without the switch or a consumable the use passes to the next hand, as before.
+    if (!Options.bItemUse || !Food.IsValid())
+    {
+        Result.Outcome = EFoundationOutcome::Pass;
+        return;
+    }
+    // Full hunger refuses (wiki "Food"); the refusal stops the other hand too. Invulnerable modes may always eat
+    // (provisional: the wiki's creative note, unverified).
+    if (Vitals.Food >= 20 && !Vitals.IsInvulnerable())
+    {
+        Reject(Result, EFoundationReason::NotHungry);
+        return;
+    }
+    CancelUse(Player);
+    Player.Use.bActive = true;
+    Player.Use.Hand = Command.Hand;
+    Player.Use.InstanceId = Stack.InstanceId;
+    Player.Use.Item = Stack.Item;
+    Player.Use.Ticks = 0;
+    Player.Use.Duration = Food.ConsumeTicks;
+    Player.Use.LastStep = Player.Facts.Step;
+    Result.Outcome = EFoundationOutcome::Committed;
+    Result.UseDuration = Food.ConsumeTicks;
+}
+
+void FFoundationAuthority::UseItemContinue(
+    FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationVitals& Vitals, FFoundationResult& Result)
+{
+    FFoundationItemUse& Use = Player.Use;
+    if (!Use.bActive || Use.Hand != Command.Hand)
+    {
+        Reject(Result, EFoundationReason::NotUsing);
+        return;
+    }
+    Result.UseDuration = Use.Duration;
+    Result.UseTicks = Use.Ticks;
+    // The same stack by instance: its count may change (a pickup); another stack or an empty hand ends the use.
+    const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Use.Hand);
+    const EFoundationReason Cancel = !Player.Facts.bAlive       ? EFoundationReason::Dead
+        : Stack.IsEmpty() || Stack.InstanceId != Use.InstanceId ? EFoundationReason::ItemChanged
+                                                                : EFoundationReason::None;
+    if (Cancel != EFoundationReason::None)
+    {
+        CancelUse(Player);
+        Result.Outcome = EFoundationOutcome::Canceled;
+        Result.Reason = Cancel;
+        return;
+    }
+    // One tick per reference step.
+    if (Use.LastStep == Player.Facts.Step)
+    {
+        Reject(Result, EFoundationReason::StepLimit);
+        return;
+    }
+    Use.LastStep = Player.Facts.Step;
+    Result.UseTicks = ++Use.Ticks;
+    Result.Outcome = EFoundationOutcome::Committed;
+    FFoundationEvent Event;
+    Event.Player = Player.Id;
+    Event.Item = Use.Item;
+    Event.LocationCm = Player.Facts.EyeCm;
+    Event.Step = Player.Facts.Step;
+    if (Use.Ticks < Use.Duration)
+    {
+        if (FoundationItemUse::IsEffectTick(Use.Ticks))
+        {
+            Event.Kind = EFoundationEventKind::Eating;
+            AddEvent(Event);
+        }
+        return;
+    }
+    // Finished: the food (Eat caps saturation at the new hunger), then one item from the stack.
+    const FFoundationConsumable Food = Rules.GetItem(Use.Item).GetConsumable();
+    Vitals.Eat(Food.Nutrition, Food.Saturation);
+    if (!Player.Inventory.bInfiniteSupply)
+    {
+        Player.Inventory.ConsumeOne(Use.Hand);
+        Result.bItemConsumed = true;
+    }
+    Use = {};
+    ++ItemsEaten;
+    Result.bAte = true;
+    Event.Kind = EFoundationEventKind::Ate;
+    Event.Amount = float(Food.Nutrition);
+    AddEvent(Event);
+}
+
+bool FFoundationAuthority::CancelUse(FFoundationPlayer& Player)
+{
+    const bool bWasActive = Player.Use.bActive;
+    Player.Use = {};
+    return bWasActive;
 }
 
 void FFoundationAuthority::UseEntity(

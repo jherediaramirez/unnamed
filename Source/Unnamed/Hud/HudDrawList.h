@@ -21,6 +21,13 @@ struct FHudDraw
 namespace HudDrawList
 {
     UNNAMED_API int32 MeasureText(const FString& Text, const TArray<FHudGlyph>& Glyphs);
+    // The chat's layout in GUI pixels (minecraft.wiki "Options", chat settings: width 320, focused height 180 and
+    // unfocused 90, 9 px per line; the bottom offset is provisional): rows above the hotbar, 10 while closed and 20
+    // while open.
+    constexpr int32 ChatWidth = 320, ChatLineHeight = 9, ChatClosedRows = 10, ChatOpenRows = 20, ChatBottomOffset = 40;
+    // Each message word-wrapped to ChatWidth, oldest row first; a row keeps its runs' colours.
+    UNNAMED_API TArray<TArray<FHudChatRun>> WrapChat(
+        const TArray<FHudChatLine>& Lines, const TArray<FHudGlyph>& Glyphs);
     UNNAMED_API TArray<FHudDraw> Build(const FHudSnapshot& Snapshot, const FHudPresentation& Presentation,
         const FHudLayout& Layout, int64 Tick, const TArray<FHudGlyph>& Glyphs);
 }

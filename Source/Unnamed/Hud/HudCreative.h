@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Foundation/FoundationBlockAssets.h"
+#include "Foundation/FoundationContainer.h"
 #include "Foundation/FoundationItemAssets.h"
 
 class FFoundationBlockRegistry;
@@ -32,6 +33,8 @@ struct FHudCreativeItem
     FString Name;
     int32 MaxStack = 64;
     int32 MaxDamage = 0;
+    // Where it may be worn: the survival tab's armor slots take only their own slot's items.
+    EFoundationEquipmentSlot Equipment = EFoundationEquipmentSlot::None;
     TArray<FHudTooltipLine> Details;
     // Lowercase vanilla-style tag names for "#" search ("logs", "mineable/axe").
     TArray<FString> Tags;
@@ -40,7 +43,7 @@ struct FHudCreativeItem
 };
 
 // Where a point on the screen lands. Slot indices: Grid 0-44 (visible rows), Hotbar 0-8, Inventory 0-26 (the
-// survival tab's main slots), Armor 0-3, Tab = index into GetTabs().
+// survival tab's main slots), Armor 0-3 (head, chest, legs, feet), Tab = index into GetTabs().
 enum class EHudCreativeHit : uint8
 {
     None,
@@ -69,7 +72,7 @@ struct FHudCreativeHit
 };
 
 // A write into the player's inventory the screen asks the authority for (vanilla's creative slot packet).
-// Slot 0-8 is the hotbar, 9 the offhand.
+// Slot is the Inventory number: 0-8 the hotbar, 9-35 the main grid, 36-39 the armor (feet to head), 40 the offhand.
 struct FHudCreativeWrite
 {
     int32 Slot = 0;
@@ -136,17 +139,27 @@ public:
     static FIntPoint GetSlotPosition(EHudCreativeHit Kind, int32 Index);
     FHudCreativeHit HitTest(FIntPoint Point) const;
 
-    // Clicks (slotClicked): Button 0 left, 1 right, 2 middle. Inventory is the hotbar (0-8) then the offhand.
+    // Clicks (slotClicked): Button 0 left, 1 right, 2 middle. Inventory is indexed by Inventory number (0-40, see
+    // FHudCreativeWrite). The player's slots run FFoundationContainerMenu's rules on a copy, as vanilla's creative
+    // screen clicks its own menu and sends each changed slot; shift is QUICK_MOVE in the survival tab and deletes in
+    // the picker tabs.
     TArray<FHudCreativeWrite> Click(
         const FHudCreativeHit& Hit, int32 Button, bool bShift, TConstArrayView<FHudCreativeStack> Inventory);
-    // A number key over a slot (SWAP): a grid item fills hotbar slot Number as a full stack; a hotbar slot swaps.
+    // A number key over a slot (SWAP): a grid item fills hotbar slot Number as a full stack; a player slot swaps.
     TArray<FHudCreativeWrite> PressNumber(
-        const FHudCreativeHit& Hit, int32 Number, TConstArrayView<FHudCreativeStack> Inventory) const;
+        const FHudCreativeHit& Hit, int32 Number, TConstArrayView<FHudCreativeStack> Inventory);
+    // A player slot's Inventory number (0-40), or INDEX_NONE.
+    static int32 GetInventorySlot(const FHudCreativeHit& Hit);
 
     FHudCreativeStack Carried;
+    // foundation.Inventory.Full: off, the survival tab's main and armor slots stay empty and inert (the lab inventory).
+    bool bFullInventory = true;
 
 private:
     int32 GetMaxStack(FName Item) const;
+    // One click of the player's menu on a copy of Inventory; the slots it changed come back as writes.
+    TArray<FHudCreativeWrite> ClickMenu(
+        int32 Slot, int32 Button, EFoundationClickType Type, TConstArrayView<FHudCreativeStack> Inventory);
     void Filter();
     TArray<FTab> Tabs;
     TMap<FName, FHudCreativeItem> Known;

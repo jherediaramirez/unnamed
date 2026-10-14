@@ -710,7 +710,7 @@ bool FFoundationMiningWearTest::RunTest(const FString&)
     I.Resync(C.A);
     // After the lab's own commands, so the authority does not take it for a retransmission.
     I.NextSequence = C.Sequence;
-    I.SetCreativeSlot(C.A, C.Vitals, FFoundationInventory::HotbarSlots, TEXT("diamond_sword"), 1, 1561);
+    I.SetCreativeSlot(C.A, C.Vitals, FFoundationInventory::OffhandSlot, TEXT("diamond_sword"), 1, 1561);
     TestTrue(TEXT("the interaction's write (the creative screen's) keeps the damage, here in the offhand"),
         C.P().Inventory.Offhand.Item == C.A.Rules.FindItem(TEXT("diamond_sword")) &&
             C.P().Inventory.Offhand.Damage == 1561);

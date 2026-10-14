@@ -134,6 +134,51 @@ int32 HudDrawList::MeasureText(const FString& Text, const TArray<FHudGlyph>& Gly
     return Width;
 }
 
+namespace
+{
+    // One message's rows: characters with their colours; a row breaks after the last space that fits (the space
+    // that breaks is dropped), or mid-word when none does. An empty message keeps one empty row.
+    void WrapLine(const FHudChatLine& Line, const TArray<FHudGlyph>& Glyphs, TArray<TArray<FHudChatRun>>& Rows)
+    {
+        TArray<TPair<TCHAR, FLinearColor>> Characters;
+        for (const FHudChatRun& Run : Line.Runs)
+            for (TCHAR Character : Run.Text)
+                Characters.Add({Character, Run.Color});
+        int32 Start = 0;
+        do
+        {
+            int32 End = Start, Width = 0, LastSpace = INDEX_NONE;
+            while (End < Characters.Num())
+            {
+                const FHudGlyph* Glyph = FindGlyph(Glyphs, Characters[End].Key);
+                const int32 Advance = Glyph ? Glyph->Advance : 0;
+                if (Width + Advance > HudDrawList::ChatWidth && End > Start) break;
+                if (Characters[End].Key == TEXT(' ')) LastSpace = End;
+                Width += Advance;
+                ++End;
+            }
+            if (End < Characters.Num() && LastSpace > Start) End = LastSpace + 1;
+            TArray<FHudChatRun>& Row = Rows.AddDefaulted_GetRef();
+            for (int32 Index = Start; Index < End; ++Index)
+            {
+                if (Row.IsEmpty() || Row.Last().Color != Characters[Index].Value)
+                    Row.Add({FString(), Characters[Index].Value});
+                Row.Last().Text.AppendChar(Characters[Index].Key);
+            }
+            Start = End;
+            if (Start > 0 && Start < Characters.Num() && Characters[Start].Key == TEXT(' ')) ++Start;
+        } while (Start < Characters.Num());
+    }
+}
+
+TArray<TArray<FHudChatRun>> HudDrawList::WrapChat(const TArray<FHudChatLine>& Lines, const TArray<FHudGlyph>& Glyphs)
+{
+    TArray<TArray<FHudChatRun>> Rows;
+    for (const FHudChatLine& Line : Lines)
+        WrapLine(Line, Glyphs, Rows);
+    return Rows;
+}
+
 TArray<FHudDraw> HudDrawList::Build(
     const FHudSnapshot& S, const FHudPresentation& P, const FHudLayout& L, int64 Tick, const TArray<FHudGlyph>& Glyphs)
 {
@@ -247,7 +292,43 @@ TArray<FHudDraw> HudDrawList::Build(
     if (S.Mode != EHudMode::Spectator && !S.ItemName.IsEmpty() && P.GetNameAlpha(Tick) > 0)
         B.Text(S.ItemName, {(L.Size.X - MeasureText(S.ItemName, Glyphs)) / 2, L.Size.Y - (S.CanHurt() ? 59 : 45)},
             FLinearColor(1, 1, 1, P.GetNameAlpha(Tick)));
+    // The chat (step 15), bottom-left: the newest rows that fit, each on a black band at half its opacity.
+    TArray<TArray<FHudChatRun>> Rows;
+    TArray<float> RowAlpha;
+    for (const FHudChatLine& Line : S.Chat)
+    {
+        WrapLine(Line, Glyphs, Rows);
+        while (RowAlpha.Num() < Rows.Num())
+            RowAlpha.Add(Line.Alpha);
+    }
+    const int32 Shown = FMath::Min(Rows.Num(), S.bChatOpen ? HudDrawList::ChatOpenRows : HudDrawList::ChatClosedRows);
+    for (int32 Index = 0; Index < Shown; ++Index)
+    {
+        const int32 Row = Rows.Num() - 1 - Index;
+        const int32 Bottom = L.Size.Y - HudDrawList::ChatBottomOffset - Index * HudDrawList::ChatLineHeight;
+        B.Rect({0, Bottom - HudDrawList::ChatLineHeight}, {HudDrawList::ChatWidth + 8, HudDrawList::ChatLineHeight},
+            FLinearColor(0, 0, 0, .5f * RowAlpha[Row]));
+        FIntPoint Point(4, Bottom - 8);
+        for (const FHudChatRun& Run : Rows[Row])
+        {
+            B.Text(Run.Text, Point, FLinearColor(Run.Color.R, Run.Color.G, Run.Color.B, RowAlpha[Row]));
+            Point.X += MeasureText(Run.Text, Glyphs);
+        }
+    }
+    // The open chat's input bar (minecraft.wiki, provisional): 2 px from the sides, 14 px from the bottom, 12 px tall,
+    // half-opaque black; the typed line at (4, height - 12) with vanilla's "_" caret at its end.
+    if (S.bChatOpen)
+    {
+        B.Rect({2, L.Size.Y - 14}, {L.Size.X - 4, 12}, FLinearColor(0, 0, 0, .5f));
+        // A line longer than the bar shows its end (vanilla scrolls with the cursor; the caret here is always last).
+        FString Typed = S.ChatInput + TEXT("_");
+        while (Typed.Len() > 1 && MeasureText(Typed, Glyphs) > L.Size.X - 8)
+            Typed.RightChopInline(1);
+        B.Text(Typed, {4, L.Size.Y - 12}, FLinearColor(FColor(0xE0, 0xE0, 0xE0)));
+    }
     // Fixture data is always labelled: the whole cluster, or only the token hotbar beside real vitals.
+    // The open chat's input bar takes their place.
+    if (S.bChatOpen) return MoveTemp(B.Draws);
     if (S.Resources == EHudDataSource::Preview)
         B.Text(TEXT("PREVIEW"), {4, L.Size.Y - 12}, FLinearColor(FColor(255, 223, 138)));
     else if (S.Items == EHudDataSource::Preview)

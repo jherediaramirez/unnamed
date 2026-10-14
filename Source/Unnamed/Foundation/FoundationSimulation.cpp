@@ -4,6 +4,8 @@
 namespace
 {
     constexpr double SimulationEpsilon = 1e-6;
+    // The input scale while an item is in use (step 10, eating): about 20% (facts.md section 5, unverified).
+    constexpr double ItemUseInputMultiplier = .2;
 
     bool Overlap(double A0, double A1, double B0, double B1)
     {
@@ -179,8 +181,9 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
     if (!Jump) JumpCooldown = 0;
     const bool WasGrounded = bGrounded;
     const double Friction = (WasGrounded && !bFlying ? P.GroundFriction : 1.) * P.HorizontalDrag;
-    const FVector2D Input = ResolveInput(
-        Eligibility.bMobile ? Intent.Move : FVector2D::ZeroVector, bCrouched ? P.CrouchMultiplier : 1., P.InputDamping);
+    // Using an item (eating) scales the input to 20% (step 10; provisional: the wiki's "slows", value unverified).
+    const FVector2D Input = ResolveInput(Eligibility.bMobile ? Intent.Move : FVector2D::ZeroVector,
+        (bCrouched ? P.CrouchMultiplier : 1.) * (Eligibility.bItemSlows ? ItemUseInputMultiplier : 1.), P.InputDamping);
     const double Accel = bFlying ? P.FlyAccelerationCmPerTick * (bSprinting ? P.FlySprintMultiplier : 1.)
         : InFluid                ? P.SwimAccelerationCmPerTick
                                  : (WasGrounded ? P.GroundAccelerationCmPerTick : P.AirAccelerationCmPerTick) *

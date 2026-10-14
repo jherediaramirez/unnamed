@@ -85,6 +85,8 @@ private:
     void AddSwimCases();
     // -FoundationSuite=body: the player body and the spring arm preview, with shots (FoundationBodyProbe.cpp).
     void AddBodyCases();
+    // The chat commands (step 15), in the interaction and views suites (FoundationCommandsProbe.cpp).
+    void AddCommandsCases();
     // The pause menu's life in the world's foundation.Pause.Menu mode, in the all and pause suites
     // (FoundationPauseProbe.cpp).
     void AddPauseMenuCases();

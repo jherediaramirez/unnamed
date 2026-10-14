@@ -49,6 +49,8 @@ void FFoundationInteraction::CancelAll(
     if (Retry.bActive) CancelRetry(Reason);
     if (bMining && SessionId == Authority.GetSessionId()) AbortMining(Authority, Vitals);
     ClearMining();
+    if (bUsingItem && SessionId == Authority.GetSessionId()) ReleaseItemUse(Authority, Vitals);
+    bUsingItem = false;
 }
 
 void FFoundationInteraction::Resync(FFoundationAuthority& Authority)
@@ -56,6 +58,7 @@ void FFoundationInteraction::Resync(FFoundationAuthority& Authority)
     SessionId = Authority.GetSessionId();
     NextSequence = 1;
     ClearMining();
+    bUsingItem = false;
     MiningDelay = 0;
     Retry = {};
     AttackPresses = UsePresses = 0;
@@ -133,12 +136,14 @@ void FFoundationInteraction::StepOnce(
         // Death disables actions; nothing waits to act after the respawn.
         if (bMining) AbortMining(Authority, Vitals);
         if (Retry.bActive) CancelRetry(EFoundationReason::Dead);
+        bUsingItem = false;
         AttackPresses = UsePresses = 0;
         return;
     }
     const bool bFreshAttack = bLatestStep && AttackPresses > 0;
     if (bFreshAttack) AttackPresses = 0;
-    StepAttack(Authority, Vitals, bFreshAttack);
+    // Attack does nothing while an item is in use (eating).
+    if (!bUsingItem) StepAttack(Authority, Vitals, bFreshAttack);
     // A target interaction may have reset the lab; the new session starts clean next step.
     if (SessionId != Authority.GetSessionId()) return;
     StepUse(Authority, Vitals, bLatestStep, NowSeconds);
@@ -274,6 +279,13 @@ void FFoundationInteraction::AbortMining(FFoundationAuthority& Authority, FFound
 void FFoundationInteraction::StepUse(
     FFoundationAuthority& Authority, FFoundationVitals& Vitals, bool bLatestStep, double NowSeconds)
 {
+    if (bUsingItem)
+    {
+        // A use in progress takes the use input: its presses are spent, letting go releases it.
+        UsePresses = 0;
+        StepItemUse(Authority, Vitals);
+        return;
+    }
     if (bMining)
     {
         // Active mining wins: use never places during a live break, and its clicks are spent.
@@ -293,6 +305,37 @@ void FFoundationInteraction::StepUse(
     // A hold that began with a still-pending press acts from its press onward, never on earlier catch-up steps.
     if (bUseHeld && UsePresses == 0 && Step >= NextUseStep && !bPlacedThisUpdate && IsCadenceOpen())
         Attempt(Authority, Vitals, 0, NowSeconds);
+}
+
+void FFoundationInteraction::StepItemUse(FFoundationAuthority& Authority, FFoundationVitals& Vitals)
+{
+    if (!bUseHeld)
+    {
+        ReleaseItemUse(Authority, Vitals);
+        return;
+    }
+    // A slot change or swap already ended the use at the authority: end it here quietly, with no command.
+    const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId);
+    if (!Player || !Player->Use.bActive || Player->Use.Hand != UseHand)
+    {
+        bUsingItem = false;
+        NextUseStep = Step + HeldRepeatSteps;
+        return;
+    }
+    const FFoundationResult Result =
+        Send(Authority, Vitals, MakeCommand(Authority, EFoundationCommandType::UseItemContinue, UseHand));
+    UseTicks = Result.UseTicks;
+    // A second continue in one step leaves the use running.
+    if ((Result.IsCommitted() && !Result.bAte) || Result.Reason == EFoundationReason::StepLimit) return;
+    // Finished or canceled. Still holding, the next use waits the held repeat, then eats again.
+    bUsingItem = false;
+    NextUseStep = Step + HeldRepeatSteps;
+}
+
+void FFoundationInteraction::ReleaseItemUse(FFoundationAuthority& Authority, FFoundationVitals& Vitals)
+{
+    Send(Authority, Vitals, MakeCommand(Authority, EFoundationCommandType::UseItemRelease, UseHand));
+    bUsingItem = false;
 }
 
 bool FFoundationInteraction::StepRetry(FFoundationAuthority& Authority, FFoundationVitals& Vitals, double NowSeconds)
@@ -342,6 +385,8 @@ void FFoundationInteraction::Attempt(
     // so after a non-placing attempt holding may try again next step.
     NextUseStep = Step + (Preset.bCommitCadence ? 1 : HeldRepeatSteps);
     const FFoundationResult Result = UsePipeline(Authority, Vitals);
+    // Full hunger asks again only after the held repeat, whatever the cadence.
+    if (Result.Reason == EFoundationReason::NotHungry) NextUseStep = Step + HeldRepeatSteps;
     if (Result.bPlaced)
     {
         OnPlaced(PressTime, NowSeconds);
@@ -367,11 +412,42 @@ FFoundationResult FFoundationInteraction::UsePipeline(FFoundationAuthority& Auth
 {
     FFoundationResult Result;
     Result.Outcome = EFoundationOutcome::Pass;
-    // A ray miss never places: there is no anchor at the ray's end.
-    if (!Target.bInRange || Target.Kind == EFoundationHitKind::None) return Result;
-    // The target's interaction (inside UseOn), then the item, then the offhand only after a pass.
-    // An explicit failure stops; no item here has a use in the air.
+    // A ray miss never places: there is no anchor at the ray's end. Hold-to-use items (foundation.Items.Use) still
+    // start in the air.
+    const bool bTargeted = Target.bInRange && Target.Kind != EFoundationHitKind::None;
+    const bool bItemUse = Authority.Options.bItemUse;
+    if (!bTargeted && !bItemUse) return Result;
+    // Per hand: the target's interaction (inside UseOn), then the item's place capability, then its use; the offhand
+    // only after a pass. An explicit failure stops.
     for (const EFoundationHand Hand : {EFoundationHand::Main, EFoundationHand::Off})
+    {
+        if (bTargeted)
+        {
+            Result = UseTarget(Authority, Vitals, Hand);
+            if (Result.Outcome != EFoundationOutcome::Pass) return Result;
+        }
+        // Only a hand holding a consumable asks the authority, so other items send nothing new.
+        const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId);
+        const FFoundationItemInstance* Stack = Player ? &Player->Inventory.GetHand(Hand) : nullptr;
+        if (!bItemUse || !Stack || Stack->IsEmpty() || !Authority.Rules.GetItem(Stack->Item).GetConsumable().IsValid())
+            continue;
+        Result = Send(Authority, Vitals, MakeCommand(Authority, EFoundationCommandType::UseItemStart, Hand));
+        if (Result.IsCommitted())
+        {
+            bUsingItem = true;
+            UseHand = Hand;
+            UseTicks = 0;
+            UseDuration = Result.UseDuration;
+        }
+        if (Result.Outcome != EFoundationOutcome::Pass) return Result;
+    }
+    return Result;
+}
+
+FFoundationResult FFoundationInteraction::UseTarget(
+    FFoundationAuthority& Authority, FFoundationVitals& Vitals, EFoundationHand Hand)
+{
+    FFoundationResult Result;
     {
         const bool bEntity = Target.Kind == EFoundationHitKind::Entity;
         FFoundationCommand Command =
@@ -387,7 +463,6 @@ FFoundationResult FFoundationInteraction::UsePipeline(FFoundationAuthority& Auth
             Command.DestinationRevision = Authority.World.Get(Destination).Revision;
         }
         Result = Send(Authority, Vitals, Command);
-        if (Result.Outcome != EFoundationOutcome::Pass) return Result;
     }
     return Result;
 }
@@ -457,6 +532,23 @@ FFoundationResult FFoundationInteraction::SetCreativeSlot(
     return Send(Authority, Vitals, Command);
 }
 
+FFoundationResult FFoundationInteraction::ContainerClick(FFoundationAuthority& Authority, FFoundationVitals& Vitals,
+    int32 ContainerId, int32 Slot, int32 Button, EFoundationClickType Type)
+{
+    FFoundationCommand Command = MakeCommand(Authority, EFoundationCommandType::ContainerClick, EFoundationHand::Main);
+    Command.ContainerId = ContainerId;
+    Command.Slot = Slot;
+    Command.Button = Button;
+    Command.ClickType = Type;
+    if (Retry.bActive) CancelRetry(EFoundationReason::ItemChanged);
+    return Send(Authority, Vitals, Command);
+}
+
+FFoundationResult FFoundationInteraction::ContainerClose(FFoundationAuthority& Authority, FFoundationVitals& Vitals)
+{
+    return Send(
+        Authority, Vitals, MakeCommand(Authority, EFoundationCommandType::ContainerClose, EFoundationHand::Main));
+}
 bool FFoundationInteraction::Pick(FFoundationAuthority& Authority, FFoundationVitals& Vitals)
 {
     const FFoundationHit& Hit = Preview.Target.Kind != EFoundationHitKind::None ? Preview.Target : Target;
