@@ -1,4 +1,5 @@
 #include "Foundation/FoundationInteractionView.h"
+#include "Foundation/FoundationExperienceOrbView.h"
 #include "Foundation/FoundationItemEntityView.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "Foundation/FoundationBlockMeshes.h"
@@ -229,6 +230,8 @@ void UFoundationInteractionView::BeginPlay()
     BreakEffects = MakeShared<FFoundationBreakEffects>(*this);
     BreakEffects->Initialize(*Lab->GetAuthority());
     ItemEntityView = MakeShared<FFoundationItemEntityView>(*this);
+    ExperienceOrbView = MakeShared<FFoundationExperienceOrbView>(*this);
+    ExperienceOrbView->Prepare();
     RebuildBlocks(*Lab->GetAuthority());
 }
 
@@ -705,6 +708,9 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
             break;
         case EFoundationEventKind::PickedUp:
             if (ItemEntityView) ItemEntityView->OnPickedUp(Event, GetLocalPawn());
+            break;
+        case EFoundationEventKind::ExperiencePickedUp:
+            if (ExperienceOrbView) ExperienceOrbView->OnPickedUp(Event);
             break;
         case EFoundationEventKind::Eating:
         case EFoundationEventKind::Ate:
@@ -1269,12 +1275,11 @@ void UFoundationInteractionView::TickComponent(
         if (!bBreakCracks) DrawCracks(Authority, Interaction);
     }
     if (Pawn && Pawn->HasInteraction()) UpdateHeldItem(Authority, Pawn, bVisible, DeltaTime);
-    // Item entities draw between the last two reference steps, as the camera does.
-    if (ItemEntityView)
-        ItemEntityView->Update(Authority, Pawn,
-            Pawn ? FMath::Clamp(Pawn->Simulation.Accumulator / GetDefault<UFoundationProfile>()->TickSeconds, 0., 1.)
-                 : 1.,
-            DeltaTime);
+    // Item entities and experience orbs draw between the last two reference steps, as the camera does.
+    const double StepAlpha =
+        Pawn ? FMath::Clamp(Pawn->Simulation.Accumulator / GetDefault<UFoundationProfile>()->TickSeconds, 0., 1.) : 1.;
+    if (ItemEntityView) ItemEntityView->Update(Authority, Pawn, StepAlpha, DeltaTime);
+    if (ExperienceOrbView) ExperienceOrbView->Update(Authority, Pawn, StepAlpha);
     if (BreakEffects) BreakEffects->EndFrame(Authority, DeltaTime);
     LastViewMs = (FPlatformTime::Seconds() - Start) * 1000.;
 }

@@ -45,18 +45,21 @@ namespace FoundationItemEntities
     constexpr double Drag = .98;
     // Below the world's lowest cell minus this many, an item vanishes at once.
     constexpr int32 VoidDepthCells = 64;
-    // Items S8b, sourced (minecraft.wiki "Item (entity)"): a thrown item's pickup delay, the age at which an item
-    // despawns (5 minutes), the merge box (an item's box grown 0.5 blocks sideways and 0.25 up and down) and the
-    // 40-tick merge period, and the stack sizes from which 2, 3, 4 and 5 copies are drawn. Provisional (P3): the period
-    // counted on the item's own age for moving and resting items alike (vanilla checks moving items more often).
+    // Items S8b, sourced (the value report, C:\dev\projects\value-holder\MINECRAFT-26.3-VALUES.md, evidence ids in
+    // brackets): a thrown item's pickup delay [items.throw]; the age at which an item despawns [items.despawn]; the
+    // merge box, an item's box grown 0.5 blocks sideways and not up or down (a centre gap of 0.749 merges, 0.750 not)
+    // [items.merge_boundary_stationary]; the merge period on the item's own age, 2 ticks when its integer block cell
+    // changed that step, else 40 [items.physics]; the stack sizes from which 2, 3, 4 and 5 copies are drawn
+    // [items.rendered_copies].
     constexpr int32 ThrowPickupDelay = 40;
     constexpr int32 DespawnAge = 6000;
-    constexpr double MergeGrowCm = 50, MergeGrowUpCm = 25;
-    constexpr int32 MergeTicks = 40;
+    constexpr double MergeGrowCm = 50, MergeGrowUpCm = 0;
+    constexpr int32 MergeTicks = 40, MovingMergeTicks = 2;
     constexpr int32 CopyCounts[] = {2, 17, 33, 49};
 
-    // Provisional (code-only values, not on the wiki; P3): a thrown item leaves 0.3 blocks below the eye at 0.3 blocks
-    // per tick along the look, 0.1 up, plus up to 0.02 sideways in a random direction and up to 0.1 up or down.
+    // Sourced [items.throw, items.drop.from_hand]: a thrown item leaves 0.3 blocks below the eye at 0.3 blocks per tick
+    // along the look, 0.1 up, plus 0.02 x U sideways in a random direction and (U - U) x 0.1 up or down (each U a
+    // separate uniform draw).
     constexpr double ThrowBelowEyeCm = 30, ThrowSpeedCm = 30, ThrowUpCm = 10, ThrowSpreadCm = 2, ThrowSpreadUpCm = 10;
 
     // Provisional: on the ground the horizontal drag is also scaled by the block's friction, the wiki's default 0.6
@@ -86,4 +89,8 @@ namespace FoundationItemEntities
     // One step of motion against world boxes (cm): gravity, the move clipped as the player's is (vertical first), a
     // blocked axis stops, then the drag (and the ground friction sideways on the ground).
     UNNAMED_API void Move(FFoundationItemEntity& Entity, const FVector& OriginCm, const TArray<FBox>& Boxes);
+    // The step Move runs, shared with the experience orbs: gravity, then a push (an orb's attraction), the move of Box
+    // (the body's world box now) clipped against Boxes, a blocked axis stopping, then the drag and ground friction.
+    UNNAMED_API void MoveBox(FVector& LocalCm, FVector& PreviousLocalCm, FVector& VelocityCm, bool& bOnGround,
+        const FBox& Box, const TArray<FBox>& Boxes, double GravityCm, const FVector& PushCm);
 }

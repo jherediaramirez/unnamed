@@ -63,6 +63,12 @@ def item_asset(asset_name):
     return _settings.get_item_asset_package(asset_name)
 
 
+def gui_asset(asset_name):
+    """Package of a container screen texture under UUnnamedProjectSettings::GuiRoot, e.g.
+    gui_asset("Container/gui/container/inventory")."""
+    return _settings.get_gui_asset_package(asset_name)
+
+
 def break_asset(asset_name):
     """Package of a breaking-effects asset under UUnnamedProjectSettings::BreakRoot, e.g. break_asset("DA_BreakAssets")."""
     return _settings.get_break_asset_package(asset_name)
@@ -71,6 +77,11 @@ def break_asset(asset_name):
 def sound_asset(asset_name):
     """Package of a sound asset under UUnnamedProjectSettings::SoundRoot, e.g. sound_asset("DA_Sounds")."""
     return _settings.get_sound_asset_package(asset_name)
+
+
+def entity_asset(asset_name):
+    """Package of an entity asset under UUnnamedProjectSettings::EntityRoot, e.g. entity_asset("T_ExperienceOrb")."""
+    return _settings.get_entity_asset_package(asset_name)
 
 
 def player_body_asset(asset_name):

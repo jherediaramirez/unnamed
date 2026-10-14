@@ -89,6 +89,15 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Items")
     FString ItemRoot = TEXT("/Game/Items");
 
+    // Package of a container screen texture under GuiRoot, e.g. "Container/gui/container/inventory". Written by
+    // Scripts/Editor/ImportContainerGui.py.
+    UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
+    static FString GetGuiAssetPackage(const FString& AssetName);
+    static FSoftObjectPath GetGuiAssetPath(const FString& AssetName);
+
+    UPROPERTY(Config, EditAnywhere, Category = "Gui")
+    FString GuiRoot = TEXT("/Game/Gui");
+
     // Package of a breaking-effects asset under BreakRoot, e.g. "DA_BreakAssets" or "Sounds/dig/stone1". Written by
     // Scripts/Editor/ImportBreakAssets.py and CreateBreakMaterials.py (Docs/Breaking.md).
     UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
@@ -106,6 +115,15 @@ public:
 
     UPROPERTY(Config, EditAnywhere, Category = "Sounds")
     FString SoundRoot = TEXT("/Game/Sounds");
+
+    // Package of an entity asset under EntityRoot, e.g. "T_ExperienceOrb" or "M_ExperienceOrb". Written by
+    // Scripts/Editor/CreateEntityAssets.py from Reference/minecraft-entities-26.3 (Docs/Items.md, "Experience orbs").
+    UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
+    static FString GetEntityAssetPackage(const FString& AssetName);
+    static FSoftObjectPath GetEntityAssetPath(const FString& AssetName);
+
+    UPROPERTY(Config, EditAnywhere, Category = "Entities")
+    FString EntityRoot = TEXT("/Game/Entities");
 
     // Package of a player body asset under PlayerBodyRoot, e.g. "SK_BetterSteve" or "BS_Walk_F". Written by
     // Scripts/Editor/ImportBetterSteve.py from Art/Characters/BetterSteve (Docs/Foundation/Architecture.md).

@@ -110,6 +110,17 @@ FSoftObjectPath UUnnamedProjectSettings::GetItemAssetPath(const FString& AssetNa
     return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
 }
 
+FString UUnnamedProjectSettings::GetGuiAssetPackage(const FString& AssetName)
+{
+    return Get().GuiRoot / AssetName;
+}
+
+FSoftObjectPath UUnnamedProjectSettings::GetGuiAssetPath(const FString& AssetName)
+{
+    const FString Package = GetGuiAssetPackage(AssetName);
+    return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
+}
+
 FString UUnnamedProjectSettings::GetBreakAssetPackage(const FString& AssetName)
 {
     return Get().BreakRoot / AssetName;
@@ -129,6 +140,17 @@ FString UUnnamedProjectSettings::GetSoundAssetPackage(const FString& AssetName)
 FSoftObjectPath UUnnamedProjectSettings::GetSoundAssetPath(const FString& AssetName)
 {
     const FString Package = GetSoundAssetPackage(AssetName);
+    return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
+}
+
+FString UUnnamedProjectSettings::GetEntityAssetPackage(const FString& AssetName)
+{
+    return Get().EntityRoot / AssetName;
+}
+
+FSoftObjectPath UUnnamedProjectSettings::GetEntityAssetPath(const FString& AssetName)
+{
+    const FString Package = GetEntityAssetPackage(AssetName);
     return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
 }
 
