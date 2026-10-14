@@ -57,15 +57,16 @@ The script paths must be absolute: a relative `-script=` resolves against the en
 
 The sounds beyond breaking and placing (2026-10-13) come from their own hash-checked reference, `Reference/minecraft-sounds-26.3/` (its README has the event list and the rules). A separate reference keeps the block reference and `/Game/Breaking` byte-identical: `BreakImportData.py` requires the block reference's `sounds/` to hold exactly the break, hit and place files.
 
-- **Events (193):** 21 named events, then the 86 step and 86 fall events of the imported blocks' sound types (`facts/block_sounds.csv`).
+- **Events (326):** 21 named events, then the 86 step and 86 fall events of the imported blocks' sound types (`facts/block_sounds.csv`), then the survival program's batch (B0, 2026-10-14): 133 named events appended last, so no earlier index moves. Nothing plays them until a step calls `PlayEvent`; the list is in the reference's README (`block.blast_furnace.fire_crackle` is not one: 26.3 has no `sounds.json` entry for it, so the blast furnace stays silent).
   - Items: `entity.item.pickup`, `entity.item.break`, `item.axe.strip`.
   - Eating: `entity.generic.eat`, `entity.player.burp`.
   - Player damage: `entity.player.hurt` and its drown, freeze, on-fire and sweet-berry-bush variants, `.death`, `.small_fall`, `.big_fall`.
   - Containers: `block.furnace.fire_crackle`, `block.barrel.open` and `.close`, `block.chest.open` and `.close`.
   - Water: `entity.player.splash`, `.splash.high_speed`, `entity.player.swim`.
-- **Files:** 111 `.ogg` files live in the sound reference. The other 366, mostly footsteps, already are the block hit sounds' files: they stay in the block reference, and `DA_Sounds` points at their `/Game/Breaking/Sounds` waves.
-- **Import:** `Scripts/Editor/SoundImportData.py` (standard library; digest) and `Scripts/Editor/ImportSounds.py` → `/Game/Sounds` (`UUnnamedProjectSettings::SoundRoot`; Python `ProjectPaths.sound_asset()`; always cooked). It is additive like the break import, never saves anything under `/Game/Breaking`, and refuses a `DA_BreakAssets` whose block order differs. It makes:
-  - `Sounds/<dir>/<name>`, the 111 waves;
+  - The batch: doors, trapdoors, fence gates, buttons, pressure plates, lever, hoe, shovel, crop planting (T5); smoker (T1); experience, armor, shield, arrows (T2); buckets, drink, fire and lava (T3); the first mobs, player attacks and generic entity sounds (T6).
+- **Files:** 389 `.ogg` files live in the sound reference (278 of them the batch's). The other 366, mostly footsteps, already are the block hit sounds' files: they stay in the block reference, and `DA_Sounds` points at their `/Game/Breaking/Sounds` waves.
+- **Import:** `Scripts/Editor/SoundImportData.py` (standard library; digest) and `Scripts/Editor/ImportSounds.py` → `/Game/Sounds` (`UUnnamedProjectSettings::SoundRoot`; Python `ProjectPaths.sound_asset()`; always cooked). It is additive like the break import, never saves anything under `/Game/Breaking`, and refuses a `DA_BreakAssets` whose block order differs. A `DA_Sounds` from older sound data is refused unless its events are an exact prefix of the new data and its blocks equal it; then only the new waves are imported and the new events appended. It makes:
+  - `Sounds/<dir>/<name>`, the 389 waves;
   - `SA_Sound16` and `SA_Sound12` (linear over 16 blocks, and 12 for the chest's `attenuation_distance`);
   - `DA_Sounds` (`UFoundationSoundAssets`, `FoundationSoundAssets.h`): the events with their files' volume and pitch and their attenuation, and per block (DA_BreakAssets' order) its step and fall events.
 - **Play:** `FFoundationBreakEffects::PlayEvent(Event, Location, Volume, Pitch)`, reached through `UFoundationInteractionView::GetBreakEffects()`. The caller passes vanilla's call-site volume and pitch (pickup: 0.2 and 1.6-3.4), each times the file's own. It picks a file from its own random stream, so the block sounds' draws never shift, and logs like the block sounds. `DA_Sounds` loads on the first call.

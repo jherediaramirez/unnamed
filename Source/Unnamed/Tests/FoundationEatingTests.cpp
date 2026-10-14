@@ -1,8 +1,10 @@
 #include "Misc/AutomationTest.h"
 #include "Dom/JsonObject.h"
 #include "Foundation/FoundationAuthority.h"
+#include "Foundation/FoundationBreakEffects.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationInteraction.h"
+#include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationItemAssets.h"
 #include "Misc/FileHelper.h"
@@ -320,6 +322,212 @@ bool FFoundationItemsEatTest::RunTest(const FString&)
         Lab.I.StepOnce(Lab.A, Lab.Vitals, true, 0);
         TestTrue(TEXT("a slot change ends the client's meal"), !Lab.I.bUsingItem && !Lab.P().Use.bActive);
         TestEqual(TEXT("with no refused command"), Lab.A.Rejections, Rejections);
+    }
+    return true;
+}
+
+namespace
+{
+    // The value report's eat transform samples (value-holder reports/reference/data/client.json, eating.hand_transform,
+    // arm RIGHT: native applyEatTransform, a 32-tick use, partial tick 0): remaining ticks, column-major 4 x 4.
+    struct FEatSample
+    {
+        int32 Remaining;
+        double Matrix[16];
+    };
+    const FEatSample EatSamples[] = {
+        {32,
+            {-0.4740932, -0.6114166, 0.63356566, 0.0, -0.124524966, 0.75890106, 0.6391891, 0.0, -0.87162447, 0.22414045,
+                -0.43592644, 0.0, -0.77714044, 0.647617, -0.0, 1.0}},
+        {31, {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.0, 0.0, 1.0}},
+        {30,
+            {0.6138119, 0.29537335, -0.732113, 0.0, -0.10827053, 0.9501021, 0.2925465, 0.0, 0.7819926, -0.10030228,
+                0.6151643, 0.0, 0.34539464, -0.28782886, 0.0, 1.0}},
+        {29,
+            {0.30442134, 0.41429263, -0.85772324, 0.0, 0.011727035, 0.8987631, 0.4382776, 0.0, 0.95246524, -0.14347963,
+                0.26874426, 0.0, 0.49495494, -0.41246244, 0.0, 1.0}},
+        {28,
+            {0.1722618, 0.46173638, -0.87012947, 0.0, 0.09053054, 0.87217486, 0.48074436, 0.0, 0.9808823, -0.1615872,
+                0.10844119, 0.0, 0.5579421, -0.46495172, 0.0, 1.0}},
+        {27,
+            {0.11958145, 0.48061404, -0.86874074, 0.0, 0.1265787, 0.8604985, 0.49347764, 0.0, 0.9847224, -0.16897485,
+                0.04206416, 0.0, 0.5836932, -0.486411, 0.0, 1.0}},
+        {26,
+            {0.09903419, 0.48800272, -0.8672056, 0.0, 0.14138357, 0.8557478, 0.497701, 0.0, 0.9849888, -0.17189805,
+                0.01575272, 0.0, 0.5938917, -0.4949097, 0.0, 1.0}},
+        {25,
+            {0.091227286, 0.49081734, -0.86647326, 0.0, 0.14712127, 0.8539108, 0.49919102, 0.0, 0.9849025, -0.1730165,
+                0.0056902925, 0.0, 0.5977951, -0.4981626, 0.0, 1.0}},
+        {24,
+            {0.08835831, 0.49185392, -0.86618274, 0.0, 0.14924608, 0.85323036, 0.49972346, 0.0, 0.9848444, -0.17342912,
+                0.0019827273, 0.0, 0.59923536, -0.42865208, 0.0, 1.0}},
+        {23,
+            {0.08735246, 0.49222127, -0.8660761, 0.0, 0.14999478, 0.8529888, 0.49991173, 0.0, 0.98482037, -0.17357542,
+                0.0006800521, 0.0, 0.59974605, -0.39978835, 0.0, 1.0}},
+        {22,
+            {0.08680199, 0.49234596, -0.86606055, 0.0, 0.15036987, 0.85290664, 0.49993914, 0.0, 0.9848118, -0.17362511,
+                0.0, 0.0, 0.5999195, -0.42922902, 0.0, 1.0}},
+        {21,
+            {0.08681743, 0.4923864, -0.866036, 0.0, 0.15037955, 0.85288, 0.49998164, 0.0, 0.984809, -0.17364123, 0.0,
+                0.0, 0.59997576, -0.4999798, 0.0, 1.0}},
+        {20,
+            {0.08682219, 0.49239892, -0.8660284, 0.0, 0.15038255, 0.8528718, 0.49999478, 0.0, 0.9848081, -0.1736462,
+                0.0, 0.0, 0.5999931, -0.42928356, 0.0, 1.0}},
+        {19,
+            {0.08682358, 0.49240252, -0.8660262, 0.0, 0.15038343, 0.85286945, 0.49999857, 0.0, 0.98480785, -0.17364766,
+                0.0, 0.0, 0.5999982, -0.39999846, 0.0, 1.0}},
+        {18,
+            {0.08682396, 0.49240354, -0.8660256, 0.0, 0.15038365, 0.8528688, 0.49999964, 0.0, 0.9848078, -0.17364804,
+                0.0, 0.0, 0.59999955, -0.42928892, 0.0, 1.0}},
+        {17,
+            {0.08682406, 0.49240378, -0.86602545, 0.0, 0.15038371, 0.85286856, 0.4999999, 0.0, 0.9848077, -0.17364815,
+                0.0, 0.0, 0.5999999, -0.4999999, 0.0, 1.0}},
+        {16,
+            {0.086824074, 0.49240384, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.49999997, 0.0, 0.9848077, -0.17364816,
+                0.0, 0.0, 0.59999996, -0.42928928, 0.0, 1.0}},
+        {15,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.4, 0.0, 1.0}},
+        {14,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.4292893, 0.0, 1.0}},
+        {13,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.5, 0.0, 1.0}},
+        {12,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.4292893, 0.0, 1.0}},
+        {11,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.4, 0.0, 1.0}},
+        {10,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.4292893, 0.0, 1.0}},
+        {9,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.5, 0.0, 1.0}},
+        {8,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.4292893, 0.0, 1.0}},
+        {7,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.4, 0.0, 1.0}},
+        {6,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.4292893, 0.0, 1.0}},
+        {5,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.5, 0.0, 1.0}},
+        {4,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.4292893, 0.0, 1.0}},
+        {3,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.4, 0.0, 1.0}},
+        {2,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.4292893, 0.0, 1.0}},
+        {1,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.5, 0.0, 1.0}},
+        {0,
+            {0.08682409, 0.49240386, -0.8660254, 0.0, 0.15038373, 0.8528685, 0.5, 0.0, 0.9848077, -0.17364818, -0.0,
+                0.0, 0.6, -0.4292893, 0.0, 1.0}},
+    };
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationItemsEatPolishTest, "Unnamed.Foundation.Items.EatPolish", EatingTestFlags)
+
+bool FFoundationItemsEatPolishTest::RunTest(const FString&)
+{
+    {
+        // The periodic effect: elapsed > floor(duration x 0.21875), remaining a multiple of 4, before the last step
+        // (eating.crumbs). 32: 8, 12, ..., 28; 20 (floor 4, so not 4): 8, 12, 16; 16: 4, 8, 12.
+        const auto Ticks = [](int32 Duration)
+        {
+            TArray<int32> Out;
+            for (int32 Tick = 0; Tick <= Duration + 4; ++Tick)
+                if (FoundationItemUse::IsEffectTick(Tick, Duration)) Out.Add(Tick);
+            return Out;
+        };
+        TestEqual(TEXT("32: 8 to 28"), Ticks(32), TArray<int32>{8, 12, 16, 20, 24, 28});
+        TestEqual(TEXT("20: 8, 12, 16"), Ticks(20), TArray<int32>{8, 12, 16});
+        TestEqual(TEXT("16: 4, 8, 12"), Ticks(16), TArray<int32>{4, 8, 12});
+    }
+    {
+        // The eat transform's closed form against all 33 main-hand samples.
+        double Worst = 0;
+        int32 WorstRemaining = -1;
+        for (const FEatSample& Sample : EatSamples)
+        {
+            const FMatrix M = FoundationHand::MakeEatMatrix(Sample.Remaining, 32);
+            for (int32 Column = 0; Column < 4; ++Column)
+                for (int32 Row = 0; Row < 4; ++Row)
+                {
+                    const double Error = FMath::Abs(M.M[Row][Column] - Sample.Matrix[Column * 4 + Row]);
+                    if (Error > Worst)
+                    {
+                        Worst = Error;
+                        WorstRemaining = Sample.Remaining;
+                    }
+                }
+        }
+        TestTrue(FString::Printf(TEXT("33 samples within 5e-4 (worst %.2e at remaining %d)"), Worst, WorstRemaining),
+            Worst < 5e-4);
+        TestEqual(TEXT("33 samples"), int32(UE_ARRAY_COUNT(EatSamples)), 33);
+        // In the scene: settled (remaining 9: the jiggle at 0), the fitted pivot lands below the view's centre, ahead
+        // and slightly left.
+        const FTransform Settled = FoundationHand::MakeEatPivot(FVector(71.9, 56.2, -52.2), 9, 32);
+        TestTrue(FString::Printf(TEXT("settled pivot %s"), *Settled.GetLocation().ToString()),
+            Settled.GetLocation().Equals(FVector(74.8, -13.8, -54.4), .5));
+        TestTrue(TEXT("at the end of the approach the pivot is untouched"),
+            FoundationHand::MakeEatPivot(FVector(71.9, 56.2, -52.2), 31, 32)
+                .Equals(FTransform(FVector(71.9, 56.2, -52.2)), 1e-3));
+    }
+    {
+        // Crumbs: velocity ((U - 0.5) x 0.1, U x 0.1 + 0.1, 0) blocks per step, view-turned, then +0.05 up; spawned 0.8
+        // blocks ahead, 3 cm (provisional).
+        FRandomStream Random(7);
+        bool bLevelInRange = true, bTurned = true;
+        for (int32 Index = 0; Index < 200; ++Index)
+        {
+            const FoundationBreak::FParticleSpawn Level =
+                FoundationBreak::SpawnCrumb(FVector(0, 0, 162), FRotator::ZeroRotator, Random);
+            // Looking along x: across is y (+-1 block/s), up 3 to 5 blocks/s, none forward.
+            bLevelInRange &= FMath::IsNearlyZero(Level.Velocity.X, 1e-3) && FMath::Abs(Level.Velocity.Y) <= 100 &&
+                Level.Velocity.Z >= 300 - 1e-3 && Level.Velocity.Z <= 500 + 1e-3 &&
+                FMath::IsNearlyEqual(Level.Location.X, 80., 1e-3) && Level.Size == 3;
+            // Looking straight down: the view's up turns to forward (x); only the +0.05 stays up.
+            const FoundationBreak::FParticleSpawn Down =
+                FoundationBreak::SpawnCrumb(FVector(0, 0, 162), FRotator(-90, 0, 0), Random);
+            bTurned &= Down.Velocity.X >= 200 - 1e-3 && Down.Velocity.X <= 400 + 1e-3 &&
+                FMath::IsNearlyEqual(Down.Velocity.Z, 100., 1e-3);
+        }
+        TestTrue(TEXT("level view: across +-1, up 3-5 blocks/s"), bLevelInRange);
+        TestTrue(TEXT("down view: the view's up turned forward, 1 block/s up"), bTurned);
+        TestEqual(TEXT("5 per effect, 16 at completion"),
+            FoundationBreak::CrumbsPerEffect * 100 + FoundationBreak::CrumbsAtCompletion, 516);
+    }
+    {
+        // Codex review 1, finding 1: foundation.Items.Use 0 mid-meal ends it; nothing is eaten.
+        FEatingLab Lab;
+        Lab.Eat(10);
+        TestTrue(TEXT("eating"), Lab.P().Use.bActive);
+        Lab.A.Options.bItemUse = false;
+        Lab.NextStep();
+        const FFoundationResult Off = Lab.Exec(EFoundationCommandType::UseItemContinue);
+        TestTrue(TEXT("switch 0: the continue cancels"),
+            Off.Outcome == EFoundationOutcome::Canceled && Off.Reason == EFoundationReason::ItemUseOff);
+        TestFalse(TEXT("the use ended"), Lab.P().Use.bActive);
+        // More continues than a whole meal: one that survived the switch would be eaten.
+        for (int32 Step = 0; Step < 40; ++Step)
+        {
+            Lab.NextStep();
+            Lab.Exec(EFoundationCommandType::UseItemContinue);
+        }
+        TestEqual(TEXT("hunger still 10"), Lab.Vitals.Food, 10);
+        TestEqual(TEXT("still 5 apples"), Lab.Count(0), 5);
+        TestEqual(TEXT("none eaten"), Lab.A.ItemsEaten, 0);
     }
     return true;
 }

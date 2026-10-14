@@ -62,7 +62,7 @@ const TCHAR* LexToString(EFoundationReason Reason)
         TEXT("inventory full"), TEXT("target down"), TEXT("target damage cooldown"),
         TEXT("drop deferred: no item entities"), TEXT("released"), TEXT("expired"), TEXT("canceled"),
         TEXT("cannot break blocks in creative"), TEXT("damage out of range"), TEXT("not hungry"),
-        TEXT("no item in use")};
+        TEXT("no item in use"), TEXT("item use switched off")};
     static_assert(UE_ARRAY_COUNT(Names) == int32(EFoundationReason::Count), "reason names");
     return Names[FMath::Min(int32(Reason), int32(EFoundationReason::Count) - 1)];
 }
@@ -88,9 +88,10 @@ bool FoundationItemUse::IsOn()
     return CVarItemUse.GetValueOnAnyThread() != 0;
 }
 
-bool FoundationItemUse::IsEffectTick(int32 Ticks)
+bool FoundationItemUse::IsEffectTick(int32 Ticks, int32 Duration)
 {
-    return Ticks >= EffectsFirstTick && (Ticks - EffectsFirstTick) % EffectsEveryTicks == 0;
+    return Ticks < Duration && Ticks > FMath::FloorToInt32(Duration * EffectsDelayFraction) &&
+        (Duration - Ticks) % EffectsEveryTicks == 0;
 }
 
 FBox FFoundationPlayerFacts::GetBody() const
@@ -219,6 +220,7 @@ void FFoundationAuthority::Reset()
         Player.Results.Empty();
         Player.ResultOrder.Empty();
         Player.HighestEvicted = 0;
+        Player.ExperienceDelay = Player.PendingExperience = 0;
     }
     for (FFoundationTrainingTarget& Target : Targets)
     {
@@ -227,6 +229,7 @@ void FFoundationAuthority::Reset()
         Target.DamageTaken = 0;
     }
     ItemEntities.Empty();
+    ExperienceOrbs.Empty();
     FFoundationEvent Event;
     Event.Kind = EFoundationEventKind::Reset;
     AddEvent(Event);
@@ -240,6 +243,7 @@ void FFoundationAuthority::Step()
     for (FFoundationPlayer& Player : Players)
         if (Player.Use.bActive && Player.Facts.Step - Player.Use.LastStep > 1) CancelUse(Player);
     StepItemEntities();
+    StepExperienceOrbs();
 }
 
 int32 FFoundationAuthority::SpawnItem(
@@ -411,9 +415,16 @@ void FFoundationAuthority::MergeItemEntities()
     const FVector& Origin = World.OriginCm;
     for (int32 Index = 0; Index < ItemEntities.Num(); ++Index)
     {
-        // Provisional (P3): every MergeTicks of the item's own age, moving or not.
+        // [items.physics] every MovingMergeTicks of the item's own age when its integer block cell changed this step,
+        // else every MergeTicks.
         const FFoundationItemEntity& Seeker = ItemEntities[Index];
-        if (Seeker.bFrozen || Seeker.Age % MergeTicks != 0) continue;
+        const auto CellOf = [](const FVector& At)
+        {
+            return FIntVector(FoundationGrid::FloorToCell(At.X), FoundationGrid::FloorToCell(At.Y),
+                FoundationGrid::FloorToCell(At.Z));
+        };
+        const bool bMovedCell = CellOf(Seeker.PreviousLocalCm) != CellOf(Seeker.LocalCm);
+        if (Seeker.bFrozen || Seeker.Age % (bMovedCell ? MovingMergeTicks : MergeTicks) != 0) continue;
         const int32 MaxStack = FMath::Max(1, Rules.Items[Seeker.Item].MaxStack);
         const FBox Reach = GetMergeBox(Origin + Seeker.LocalCm);
         for (int32 Other = 0; Other < ItemEntities.Num() && ItemEntities[Index].Count < MaxStack; ++Other)
@@ -444,6 +455,142 @@ void FFoundationAuthority::MergeItemEntities()
             if (Other < Index) --Index;
             --Other;
         }
+    }
+}
+
+int32 FFoundationAuthority::SpawnExperience(const FVector& LocalCm, int32 Total, int32 RandomSeed)
+{
+    using namespace FoundationItemEntities;
+    FRandomStream Random(RandomSeed);
+    // LocalCm is the orbs' centre: each stands half its box lower, with the block drop's spread and speed.
+    const FVector Center = LocalCm - FVector(0, 0, FoundationExperienceOrbs::BoxCm * .5);
+    int32 Spawned = 0;
+    for (int32 Left = Total; Left > 0; ++Spawned)
+    {
+        FFoundationExperienceOrb& Orb = ExperienceOrbs.AddDefaulted_GetRef();
+        Orb.Id = NextOrbId++;
+        Orb.Value = FoundationExperienceOrbs::GetSplitValue(Left);
+        Left -= Orb.Value;
+        Orb.LocalCm = Orb.PreviousLocalCm = Center +
+            FVector(Random.FRandRange(-SpawnSpreadCm, SpawnSpreadCm), Random.FRandRange(-SpawnSpreadCm, SpawnSpreadCm),
+                Random.FRandRange(-SpawnSpreadCm, SpawnSpreadCm));
+        Orb.VelocityCm = FVector(Random.FRandRange(-SpawnSidewaysCm, SpawnSidewaysCm),
+            Random.FRandRange(-SpawnSidewaysCm, SpawnSidewaysCm), SpawnUpCm);
+    }
+    OrbsSpawned += Spawned;
+    return Spawned;
+}
+
+int32 FFoundationAuthority::TakeExperience(int32 PlayerId)
+{
+    FFoundationPlayer* Player = FindPlayer(PlayerId);
+    if (!Player) return 0;
+    const int32 Points = Player->PendingExperience;
+    Player->PendingExperience = 0;
+    return Points;
+}
+
+void FFoundationAuthority::StepExperienceOrbs()
+{
+    using namespace FoundationExperienceOrbs;
+    for (FFoundationPlayer& Player : Players)
+        if (Player.ExperienceDelay > 0) --Player.ExperienceDelay;
+    if (ExperienceOrbs.IsEmpty()) return;
+    const FVector& Origin = World.OriginCm;
+    const double VoidCm =
+        double(World.BoundsMin.Z - FoundationItemEntities::VoidDepthCells) * UFoundationProfile::BlockCm;
+    TArray<FBox> Boxes;
+    for (int32 Index = 0; Index < ExperienceOrbs.Num();)
+    {
+        FFoundationExperienceOrb& Orb = ExperienceOrbs[Index];
+        const FIntVector Cell(FoundationGrid::FloorToCell(Orb.LocalCm.X), FoundationGrid::FloorToCell(Orb.LocalCm.Y),
+            FoundationGrid::FloorToCell(Orb.LocalCm.Z));
+        Orb.bFrozen = !World.GetStorage().IsLoaded(Cell);
+        if (Orb.bFrozen)
+        {
+            Orb.PreviousLocalCm = Orb.LocalCm;
+            ++Index;
+            continue;
+        }
+        // [xp.attraction] the nearest live player whose position is within FollowCm; the pull aims at its position plus
+        // half its eye height.
+        const FVector Position = Origin + Orb.LocalCm;
+        const FFoundationPlayer* Target = nullptr;
+        double Nearest = FollowCm * FollowCm;
+        for (const FFoundationPlayer& Player : Players)
+        {
+            const double Distance =
+                Player.bHasFacts && Player.Facts.bAlive ? FVector::DistSquared(Player.Facts.FeetCm, Position) : Nearest;
+            if (Distance < Nearest)
+            {
+                Nearest = Distance;
+                Target = &Player;
+            }
+        }
+        const FVector Push = Target
+            ? GetAttraction(
+                  Position, Target->Facts.FeetCm + FVector(0, 0, (Target->Facts.EyeCm.Z - Target->Facts.FeetCm.Z) * .5))
+            : FVector::ZeroVector;
+        Boxes.Reset();
+        const FBox Region = GetStepRegion(Orb, Origin, Push);
+        if (GatherCollision)
+            GatherCollision(Region, Boxes);
+        else
+        {
+            World.GatherCollision(Region, Boxes);
+            for (const FFoundationStatic& Static : Statics)
+                if (Static.Box.Intersect(Region)) Boxes.Add(Static.Box);
+        }
+        Move(Orb, Origin, Boxes, Push);
+        ++Orb.Age;
+        const bool bDespawn = Orb.Age >= DespawnAge;
+        OrbsDespawned += bDespawn ? 1 : 0;
+        if (Orb.LocalCm.Z < VoidCm || bDespawn)
+            ExperienceOrbs.RemoveAt(Index);
+        else
+            ++Index;
+    }
+    // Provisional (wiki): every MergeTicks of its age, an orb takes in same-value orbs inside its merge box.
+    for (int32 Index = 0; Index < ExperienceOrbs.Num(); ++Index)
+    {
+        if (ExperienceOrbs[Index].bFrozen || ExperienceOrbs[Index].Age % MergeTicks != 0) continue;
+        const FBox Reach = GetMergeBox(Origin + ExperienceOrbs[Index].LocalCm);
+        for (int32 Other = ExperienceOrbs.Num() - 1; Other >= 0; --Other)
+        {
+            FFoundationExperienceOrb& Into = ExperienceOrbs[Index];
+            const FFoundationExperienceOrb& From = ExperienceOrbs[Other];
+            if (Other == Index || From.bFrozen || From.Value != Into.Value ||
+                !Overlaps(Reach, GetBox(Origin + From.LocalCm)))
+                continue;
+            Into.Count += From.Count;
+            Into.Age = FMath::Min(Into.Age, From.Age);
+            ++OrbsMerged;
+            ExperienceOrbs.RemoveAt(Other);
+            if (Other < Index) --Index;
+        }
+    }
+    // A live player takes one orb (one point-value of its count) every PickupEveryTicks, oldest first.
+    for (FFoundationPlayer& Player : Players)
+    {
+        if (!Player.bHasFacts || !Player.Facts.bAlive || Player.ExperienceDelay > 0) continue;
+        const FBox Reach = FoundationItemEntities::GetPickupBox(Player.Facts.GetBody());
+        const int32 Index = ExperienceOrbs.IndexOfByPredicate([&](const FFoundationExperienceOrb& Orb)
+            { return !Orb.bFrozen && Overlaps(Reach, GetBox(Origin + Orb.LocalCm)); });
+        if (Index == INDEX_NONE) continue;
+        FFoundationExperienceOrb& Orb = ExperienceOrbs[Index];
+        Player.ExperienceDelay = PickupEveryTicks;
+        Player.PendingExperience += Orb.Value;
+        ++OrbsPickedUp;
+        FFoundationEvent Event;
+        Event.Kind = EFoundationEventKind::ExperiencePickedUp;
+        Event.Player = Player.Id;
+        Event.EntityId = Orb.Id;
+        Event.Count = Orb.Value;
+        Event.LocationCm = Origin + Orb.LocalCm;
+        Event.bWholeStack = --Orb.Count <= 0;
+        Event.Step = Player.Facts.Step;
+        AddEvent(Event);
+        if (Event.bWholeStack) ExperienceOrbs.RemoveAt(Index);
     }
 }
 
@@ -697,7 +844,7 @@ FFoundationResult FFoundationAuthority::Execute(
         Drop(*Player, Command, Result);
         break;
     case EFoundationCommandType::UseOn:
-        UseOn(*Player, Command, Result, Vitals.Mode == EFoundationPlayerMode::Creative);
+        UseOn(*Player, Command, Result, Vitals.Mode);
         break;
     case EFoundationCommandType::UseEntity:
         UseEntity(*Player, Command, Result);
@@ -832,8 +979,9 @@ FFoundationResult FFoundationAuthority::Execute(
 }
 
 void FFoundationAuthority::UseOn(
-    FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result, bool bCreative)
+    FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result, EFoundationPlayerMode Mode)
 {
+    const bool bCreative = Mode == EFoundationPlayerMode::Creative;
     if (!CheckHand(Player, Command, Result)) return;
     const FFoundationHit Hit = Resolve(Player.Facts);
     if (!Hit.IsBlockLike() || !Hit.SameTarget(Command.Target))
@@ -874,7 +1022,7 @@ void FFoundationAuthority::UseOn(
         return;
     }
     // 2. The hand item's use on the block (foundation.Items.Use): an axe strips.
-    if (StripOn(Player, Command, Hit, Result, bCreative)) return;
+    if (StripOn(Player, Command, Hit, Result, Mode)) return;
     // 3. The hand item's place capability; without one the use passes to the next hand.
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
     if (Stack.IsEmpty() || !Rules.GetItem(Stack.Item).CanPlace())
@@ -940,10 +1088,15 @@ void FFoundationAuthority::UseOn(
 }
 
 bool FFoundationAuthority::StripOn(FFoundationPlayer& Player, const FFoundationCommand& Command,
-    const FFoundationHit& Hit, FFoundationResult& Result, bool bCreative)
+    const FFoundationHit& Hit, FFoundationResult& Result, EFoundationPlayerMode Mode)
 {
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
-    if (!Options.bItemUse || Stack.IsEmpty() || Hit.Kind != EFoundationHitKind::Block) return false;
+    // A plain axe in Adventure passes and the block stays (SURVIVAL-FINDINGS, R1, survival.r1.modes); items with
+    // Adventure permission components are not modelled.
+    const bool bCreative = Mode == EFoundationPlayerMode::Creative;
+    if (!Options.bItemUse || Mode == EFoundationPlayerMode::Adventure || Stack.IsEmpty() ||
+        Hit.Kind != EFoundationHitKind::Block)
+        return false;
     const int32 AxeItem = Stack.Item;
     const FFoundationItemDefinition& Axe = Rules.GetItem(AxeItem);
     const FGameplayTag AxesTag = FoundationStripping::GetAxesTag();
@@ -1026,6 +1179,14 @@ void FFoundationAuthority::UseItemContinue(
     }
     Result.UseDuration = Use.Duration;
     Result.UseTicks = Use.Ticks;
+    // foundation.Items.Use turned 0 mid-use: the use ends, nothing eaten (Codex review 1, finding 1).
+    if (!Options.bItemUse)
+    {
+        CancelUse(Player);
+        Result.Outcome = EFoundationOutcome::Canceled;
+        Result.Reason = EFoundationReason::ItemUseOff;
+        return;
+    }
     // The same stack by instance: its count may change (a pickup); another stack or an empty hand ends the use.
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Use.Hand);
     const EFoundationReason Cancel = !Player.Facts.bAlive       ? EFoundationReason::Dead
@@ -1054,7 +1215,7 @@ void FFoundationAuthority::UseItemContinue(
     Event.Step = Player.Facts.Step;
     if (Use.Ticks < Use.Duration)
     {
-        if (FoundationItemUse::IsEffectTick(Use.Ticks))
+        if (FoundationItemUse::IsEffectTick(Use.Ticks, Use.Duration))
         {
             Event.Kind = EFoundationEventKind::Eating;
             AddEvent(Event);
@@ -1286,6 +1447,15 @@ bool FFoundationAuthority::BreakBlock(
     Result.bBroken = true;
     Result.Cell = Cell;
     Result.State = State;
+    // Step 12: an ore pays experience orbs on the same terms as its loot (a survival break that can harvest it).
+    int32 MinXp = 0, MaxXp = 0;
+    if (Options.bExperienceOrbs && !Player.Inventory.bInfiniteSupply && bEligible &&
+        FoundationExperienceOrbs::GetBlockExperience(Definition.Id, MinXp, MaxXp))
+    {
+        FRandomStream Random(int32(HashCombine(uint32(DropSeed), 0x58500u)));
+        SpawnExperience((FVector(Cell) + FVector(.5)) * UFoundationProfile::BlockCm, Random.RandRange(MinXp, MaxXp),
+            Random.GetCurrentSeed());
+    }
     if (Options.bItemEntities)
         SpawnDrops(Cell, Drops, DropSeed);
     else

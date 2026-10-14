@@ -4,6 +4,7 @@
 #include "Foundation/FoundationBlockPlacement.h"
 #include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationContainer.h"
+#include "Foundation/FoundationExperienceOrbs.h"
 #include "Foundation/FoundationItemEntities.h"
 #include "Foundation/FoundationItems.h"
 #include "Foundation/FoundationLoot.h"
@@ -97,6 +98,8 @@ enum class EFoundationReason : uint8
     NotHungry,
     // A continue or release without an item use in progress.
     NotUsing,
+    // A use in progress ended because foundation.Items.Use turned 0.
+    ItemUseOff,
     Count
 };
 
@@ -235,6 +238,9 @@ struct FFoundationLabOptions
     // Crafting (survival step 6): the crafting grid's result slot. Off, the grid takes and holds items and the result
     // stays empty. The pawn copies foundation.Crafting in before each step.
     bool bCrafting = true;
+    // Experience orbs (survival step 12): a survival break of an ore pays orbs. Off, none spawn, as before. The pawn
+    // copies foundation.Items.Xp in before each step; tests set it themselves.
+    bool bExperienceOrbs = false;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -319,7 +325,10 @@ enum class EFoundationEventKind : uint8
     Eating,
     Ate,
     // An axe stripped a block (step 14): Cell, State (the stripped state), Item (the axe).
-    Stripped
+    Stripped,
+    // A player took an experience orb (step 12): EntityId the orb, Count its points, LocationCm where it stood (world
+    // cm), bWholeStack whether that was its last (the orb is gone).
+    ExperiencePickedUp
 };
 
 // A committed (or rejected) outcome for presentation: effects fire once from these.
@@ -361,10 +370,13 @@ namespace FoundationItemUse
     // foundation.Items.Use: 1 food is eaten by holding use (step 10); 0 it passes, as before. Steps 14 and 17 (axe
     // stripping, buckets) hang off the same switch.
     UNNAMED_API bool IsOn();
-    // The eating sound and particles fire on these steps (Ticks of a use): every 4th from the 8th. The project's own,
-    // provisional until a vanilla capture.
-    constexpr int32 EffectsFirstTick = 8, EffectsEveryTicks = 4;
-    UNNAMED_API bool IsEffectTick(int32 Ticks);
+    // The periodic eating effect (sound and crumbs) fires on step Ticks of a Duration-step use when the elapsed steps
+    // pass floor(Duration x 0.21875) and the remaining steps are a multiple of 4, before the last step (value report,
+    // Eating / Crumb particles and duration, eating.crumbs): 8, 12, ..., 28 for 32. The last step has the completion
+    // effect only (Ate).
+    constexpr double EffectsDelayFraction = .21875;
+    constexpr int32 EffectsEveryTicks = 4;
+    UNNAMED_API bool IsEffectTick(int32 Ticks, int32 Duration);
 }
 
 struct FFoundationPlayer
@@ -376,6 +388,9 @@ struct FFoundationPlayer
     FFoundationMining Mining;
     FFoundationItemUse Use;
     int64 LastPlacementStep = MIN_int64;
+    // Experience orbs (step 12): steps until the next orb can be taken, and points taken but not yet claimed by the
+    // player's vitals (TakeExperience).
+    int32 ExperienceDelay = 0, PendingExperience = 0;
     // Results by sequence for retransmissions; bounded, oldest evicted first.
     TMap<uint32, FFoundationResult> Results;
     TArray<uint32> ResultOrder;
@@ -452,6 +467,14 @@ public:
     // Adds an item entity at a position (cm from the block world's origin); its id, or 0 for an invalid item or count.
     int32 SpawnItem(int32 Item, int32 Count, const FVector& LocalCm, const FVector& VelocityCm, int32 PickupDelay,
         int32 Damage = 0);
+    // Experience orbs (step 12), oldest first; Reset clears them.
+    const TArray<FFoundationExperienceOrb>& GetExperienceOrbs() const { return ExperienceOrbs; }
+    // Spawns orbs worth Total points around a point (cm from the block world's origin), split by the orb values, with
+    // the block drop's spread seeded by RandomSeed; how many orbs. Ores call it on a break; a furnace (T1 step 8a)
+    // calls it when its output is taken.
+    int32 SpawnExperience(const FVector& LocalCm, int32 Total, int32 RandomSeed);
+    // The points a player has taken since the last call (its owner adds them to its vitals after each step).
+    int32 TakeExperience(int32 Player);
 
     const TArray<FFoundationEvent>& GetEvents() const { return Events; }
     int64 GetEventSerial() const { return EventSerial; }
@@ -460,6 +483,7 @@ public:
     int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
     int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsThrown = 0, ItemsMerged = 0, ItemsDespawned = 0, ItemsEaten = 0,
           Strips = 0;
+    int32 OrbsSpawned = 0, OrbsPickedUp = 0, OrbsMerged = 0, OrbsDespawned = 0;
 
 private:
     FFoundationInventory MakeLoadout();
@@ -472,10 +496,11 @@ private:
     void Remember(FFoundationPlayer& Player, const FFoundationResult& Result);
     FFoundationResult& Reject(FFoundationResult& Result, EFoundationReason Reason);
     void AddEvent(FFoundationEvent Event);
-    void UseOn(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result, bool bCreative);
-    // Axe stripping (step 14): true when the hand's axe stripped the hit block (Result filled).
+    void UseOn(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result,
+        EFoundationPlayerMode Mode);
+    // Axe stripping (step 14): true when the hand's axe stripped the hit block (Result filled). Adventure passes.
     bool StripOn(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationHit& Hit,
-        FFoundationResult& Result, bool bCreative);
+        FFoundationResult& Result, EFoundationPlayerMode Mode);
     void UseEntity(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
     void MineStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
         FFoundationResult& Result);
@@ -513,11 +538,14 @@ private:
     void Drop(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
     // Every MergeTicks of its age, an item takes in same-item stacks inside its merge box (items S8b).
     void MergeItemEntities();
+    // Step 12: the orbs' motion toward the nearest player, despawn and merges, then every live player's pickups.
+    void StepExperienceOrbs();
 
     TArray<FFoundationPlayer> Players;
     TArray<FFoundationEvent> Events;
     TArray<FFoundationItemEntity> ItemEntities;
-    int32 NextItemEntityId = 1;
+    TArray<FFoundationExperienceOrb> ExperienceOrbs;
+    int32 NextItemEntityId = 1, NextOrbId = 1;
     int64 EventSerial = 0;
     int32 SessionId = 1;
     int32 NextPlayerId = 1;
