@@ -16,6 +16,7 @@
 #include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationInteraction.h"
 #include "Foundation/FoundationInteractionView.h"
+#include "Foundation/FoundationSoundAssets.h"
 #include "GameFramework/PlayerController.h"
 #include "HAL/IConsoleManager.h"
 #include "Kismet/GameplayStatics.h"
@@ -64,8 +65,12 @@ namespace
              "pitch, as vanilla (blocks whose place files the block reference lacks play their break sound)."),
         ECVF_Default);
     TAutoConsoleVariable<bool> CVarSoundTrace(TEXT("foundation.Sound.Trace"), false,
-        TEXT("Debug: logs each break, hit and place sound's play call with its time (FPlatformTime::Seconds), to set "
-             "against a loopback recording of the output (latency checks)."),
+        TEXT("Debug: logs each break, hit, place and event sound's play call with its time (FPlatformTime::Seconds), to "
+             "set against a loopback recording of the output (latency checks)."),
+        ECVF_Default);
+    TAutoConsoleVariable<int32> CVarSoundEvents(TEXT("foundation.Sound.Events"), 1,
+        TEXT("Sound events of DA_Sounds (pickup, eating, player damage, containers, water, footsteps; "
+             "Reference/minecraft-sounds-26.3) through PlayEvent: 0 silent (until 2026-10-13), 1 played."),
         ECVF_Default);
 
     // The box of Boxes holding a point, or null.
@@ -316,6 +321,17 @@ namespace FoundationBreak
         return Play;
     }
 
+    FSoundPlay PickEventSound(const FFoundationSoundEvent& Event, float Volume, float Pitch, FRandomStream& Random)
+    {
+        FSoundPlay Play;
+        if (Event.Files.IsEmpty()) return Play;
+        Play.File = Random.RandRange(0, Event.Files.Num() - 1);
+        const FFoundationBreakSoundFile& File = Event.Files[Play.File];
+        Play.Volume = Volume * File.Volume;
+        Play.Pitch = Pitch * File.Pitch;
+        return Play;
+    }
+
     void SpawnBreakParticles(
         const FBox& Box, double Amount, const FVector& Push, FRandomStream& Random, TArray<FParticleSpawn>& Out)
     {
@@ -414,6 +430,7 @@ namespace
     constexpr double BreakEffectsBlockCm = UFoundationProfile::BlockCm;
     // Probes compare runs: every play draws the same particles and sound files.
     constexpr int32 BreakEffectsSeed = 0x0B5EA4;
+    constexpr int32 SoundEventsSeed = 0x50E7E5;
     // The crack overlay sits just outside what it cracks, scaled about the drawn box's centre.
     constexpr double CrackInflate = 1.002;
     // As today's outline: 0.3 cm past the box, each edge drawn as four strips so each keeps its own depth's width.
@@ -468,6 +485,7 @@ UWorld* FFoundationBreakEffects::GetWorld() const
 void FFoundationBreakEffects::Initialize(const FFoundationAuthority& Authority)
 {
     Random.Initialize(BreakEffectsSeed);
+    EventRandom.Initialize(SoundEventsSeed);
     AActor* Owner = View.GetOwner();
     if (!Owner || !Owner->GetRootComponent()) return;
     UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
@@ -999,6 +1017,53 @@ void FFoundationBreakEffects::PlaySound(
     // Sounds 2 caps hits at two voices (HitConcurrency).
     UGameplayStatics::SpawnSoundAtLocation(World, Wave, Location, FRotator::ZeroRotator, Play.Volume, Play.Pitch, 0,
         Assets->Attenuation.Get(), bHit && Switches.Sounds == 2 ? Assets->HitConcurrency.Get() : nullptr, true);
+}
+
+void FFoundationBreakEffects::PlayEvent(FName EventName, const FVector& Location, float Volume, float Pitch)
+{
+    if (CVarSoundEvents.GetValueOnGameThread() == 0) return;
+    if (!bTriedSoundAssets)
+    {
+        bTriedSoundAssets = true;
+        // Under UUnnamedProjectSettings::SoundRoot (/Game/Sounds).
+        const FString Path = UUnnamedProjectSettings::GetSoundAssetPath(TEXT("DA_Sounds")).ToString();
+        UFoundationSoundAssets* Loaded =
+            LoadObject<UFoundationSoundAssets>(nullptr, *Path, {}, LOAD_NoWarn | LOAD_Quiet);
+        SoundAssets = Loaded;
+        if (Loaded)
+        {
+            View.Owned.Add(Loaded);
+            for (int32 Index = 0; Index < Loaded->Events.Num(); ++Index)
+                SoundEventIndex.Add(Loaded->Events[Index].Name, Index);
+        }
+        else
+            UE_LOG(LogUnnamedFoundation, Warning, TEXT("Sound events: DA_Sounds missing under %s; events stay silent"),
+                *UUnnamedProjectSettings::Get().SoundRoot);
+    }
+    const int32* Index = SoundEventIndex.Find(EventName);
+    if (!SoundAssets || !Index) return;
+    const FFoundationSoundEvent& Event = SoundAssets->Events[*Index];
+    const FoundationBreak::FSoundPlay Play = FoundationBreak::PickEventSound(Event, Volume, Pitch, EventRandom);
+    if (!Event.Files.IsValidIndex(Play.File)) return;
+    const FFoundationBreakSoundFile& File = Event.Files[Play.File];
+    UWorld* World = GetWorld();
+    // Logged even when nothing can play, as the block sounds.
+    FoundationBreak::FSoundLogEntry Entry;
+    Entry.Time = World ? World->GetTimeSeconds() : 0;
+    Entry.Event = Event.Name;
+    Entry.File = File.Name;
+    Entry.Volume = Play.Volume;
+    Entry.Pitch = Play.Pitch;
+    Entry.Location = Location;
+    SoundLog.Add(Entry);
+    if (SoundLog.Num() > MaxSoundLog) SoundLog.RemoveAt(0, SoundLog.Num() / 2);
+    USoundWave* Wave = File.Wave.Get();
+    if (!Wave || !World || !World->GetAudioDeviceRaw()) return;
+    if (CVarSoundTrace.GetValueOnGameThread())
+        UE_LOG(LogUnnamedFoundation, Display, TEXT("Sound trace: play %s (%s), frame %llu, t %.4f"),
+            *Event.Name.ToString(), *File.Name.ToString(), uint64(GFrameCounter), FPlatformTime::Seconds());
+    UGameplayStatics::SpawnSoundAtLocation(World, Wave, Location, FRotator::ZeroRotator, Play.Volume, Play.Pitch, 0,
+        Event.Attenuation.Get(), nullptr, true);
 }
 
 void FFoundationBreakEffects::Spawn(const FoundationBreak::FParticleSpawn& New, float Layer, float Tint)

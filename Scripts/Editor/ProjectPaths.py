@@ -66,3 +66,8 @@ def item_asset(asset_name):
 def break_asset(asset_name):
     """Package of a breaking-effects asset under UUnnamedProjectSettings::BreakRoot, e.g. break_asset("DA_BreakAssets")."""
     return _settings.get_break_asset_package(asset_name)
+
+
+def sound_asset(asset_name):
+    """Package of a sound asset under UUnnamedProjectSettings::SoundRoot, e.g. sound_asset("DA_Sounds")."""
+    return _settings.get_sound_asset_package(asset_name)

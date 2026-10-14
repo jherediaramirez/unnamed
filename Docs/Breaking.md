@@ -19,7 +19,8 @@ The effects are presentation only. They read the authority's events, the block w
 | `foundation.Break.Pop` | 0/1: at the break, a copy of the block shrinks (scale 1 - t^2) over 80 ms | 1 |
 | `foundation.Place.Sound` | Not a break switch: the place sound. 0 silent, the behaviour until 2026-10-11. 1 a place plays the placed block's place event at its break's volume and pitch (1.0 and 0.8 x the sound type's, as minecraft.wiki's Sounds tables list for both, e.g. Stone). The block reference carries only the break and hit events' files, so 66 blocks (28 place events, such as deepslate, amethyst, calcite, sculk and the copper bulbs) play their break event instead (Docs/KnownDifferences.md). Independent of `foundation.Break.Sounds` (break and hit sounds only). Logged in the sound log with `bPlace`; the tour's break pack turns it off. | 1 (2026-10-11) |
 | `foundation.Place.Preview` | Not a break switch; the placing side of the same feel. 0 none, as vanilla: only the target's outline shows. 1 the destination box, its fill, the self-obstructed face square and the placed (white) and rejected (red X) flashes, the look until 2026-10-11. The preview's data (`FFoundationInteraction::Preview`, the F3 `place` line) is kept in both modes; the interacted flash on lab fixtures always shows. | 0 (2026-10-11) |
-| `foundation.Sound.Trace` | Debug, not a look switch: 1 logs each break, hit and place sound's play call with its time (`FPlatformTime::Seconds`, Windows' QPC clock + 16777216), to set against a loopback recording of the output | 0 |
+| `foundation.Sound.Events` | Not a break switch: the sound events of `DA_Sounds` played through `FFoundationBreakEffects::PlayEvent` (see [Other sound events](#other-sound-events)). 0 silent, the behaviour until 2026-10-13; 1 played and logged in the sound log (neither `bHit` nor `bPlace`). Nothing calls it yet: the item-entity, eating, damage, container and footstep steps wire their own events. | 1 (2026-10-13) |
+| `foundation.Sound.Trace` | Debug, not a look switch: 1 logs each break, hit, place and event sound's play call with its time (`FPlatformTime::Seconds`, Windows' QPC clock + 16777216), to set against a loopback recording of the output | 0 |
 
 The menu's Particles pref (All 1, Decreased 0.67, Minimal 0.33) sets the particle amount; Jesus chose Minimal in the mock-up, and whether Minimal becomes the menu's default is his call (the prefs are read with `UMenuPreferences::FindPreference`; no menu file changes). Hits and the swing count reference steps (`FFoundationInteraction::Step`, 20 per second), never frame time, so they hold at any frame rate. The swing clock (`FoundationBreak::FSwingClock`: start step, duration, phase) is the interface the held-item renderer (items S4) reads; the pose itself stays the view's.
 
@@ -50,6 +51,29 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BreakImportData.py   
 
 The script paths must be absolute: a relative `-script=` resolves against the engine's binaries folder.
 
+## Other sound events
+
+The sounds beyond breaking and placing (2026-10-13) come from their own hash-checked reference, `Reference/minecraft-sounds-26.3/` (its README has the event list and the rules). A separate reference keeps the block reference and `/Game/Breaking` byte-identical: `BreakImportData.py` requires the block reference's `sounds/` to hold exactly the break, hit and place files.
+
+- **Events (193):** 21 named events, then the 86 step and 86 fall events of the imported blocks' sound types (`facts/block_sounds.csv`).
+  - Items: `entity.item.pickup`, `entity.item.break`, `item.axe.strip`.
+  - Eating: `entity.generic.eat`, `entity.player.burp`.
+  - Player damage: `entity.player.hurt` and its drown, freeze, on-fire and sweet-berry-bush variants, `.death`, `.small_fall`, `.big_fall`.
+  - Containers: `block.furnace.fire_crackle`, `block.barrel.open` and `.close`, `block.chest.open` and `.close`.
+  - Water: `entity.player.splash`, `.splash.high_speed`, `entity.player.swim`.
+- **Files:** 111 `.ogg` files live in the sound reference. The other 366, mostly footsteps, already are the block hit sounds' files: they stay in the block reference, and `DA_Sounds` points at their `/Game/Breaking/Sounds` waves.
+- **Import:** `Scripts/Editor/SoundImportData.py` (standard library; digest) and `Scripts/Editor/ImportSounds.py` → `/Game/Sounds` (`UUnnamedProjectSettings::SoundRoot`; Python `ProjectPaths.sound_asset()`; always cooked). It is additive like the break import, never saves anything under `/Game/Breaking`, and refuses a `DA_BreakAssets` whose block order differs. It makes:
+  - `Sounds/<dir>/<name>`, the 111 waves;
+  - `SA_Sound16` and `SA_Sound12` (linear over 16 blocks, and 12 for the chest's `attenuation_distance`);
+  - `DA_Sounds` (`UFoundationSoundAssets`, `FoundationSoundAssets.h`): the events with their files' volume and pitch and their attenuation, and per block (DA_BreakAssets' order) its step and fall events.
+- **Play:** `FFoundationBreakEffects::PlayEvent(Event, Location, Volume, Pitch)`, reached through `UFoundationInteractionView::GetBreakEffects()`. The caller passes vanilla's call-site volume and pitch (pickup: 0.2 and 1.6-3.4), each times the file's own. It picks a file from its own random stream, so the block sounds' draws never shift, and logs like the block sounds. `DA_Sounds` loads on the first call.
+
+```powershell
+uv run --no-project --python 3.13 --with pillow python -I Reference/minecraft-sounds-26.3/tools/verify_reference.py
+uv run --no-project --python 3.13 python -I Scripts/Editor/SoundImportData.py   # self-check and summary
+& 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' "$PWD\Unnamed.uproject" -run=pythonscript "-script=$PWD\Scripts\Editor\ImportSounds.py" -unattended -nop4 -nosplash
+```
+
 ## How it draws
 
 - **Outline:** translucent strips in two instanced components (halo, core), one per edge quarter, widths recomputed per frame from each strip's view depth. Outline 1 first merges the target's boxes (each 0.3 cm larger) to the shape's outer edges (`FoundationBreak::MergeOutlineEdges`: no seams between boxes, concave edges kept, so a stair has 18), and sizes each square strip so its silhouette is the asked px from any side (`OutlineStrip`: side w / k, k = (|r_U| + |r_V|) / |r_UV|). Outline 2 draws every box's 12 edges with strips w wide, as before. Width rule (2026-10-11): vanilla measured 3 px at 1920 x 1080 (VP1); outline 1 draws 3 px x max(1, width / 1920), so 4 px at 2560 and 6 px at 3840, an assumption until a 1440p vanilla measurement. Only block targets use it; statics and entities keep the view's lines. The unlit colour goes through an eye-adaptation inverse, or the cyan core reads black in daylight.
@@ -61,6 +85,7 @@ The script paths must be absolute: a relative `-script=` resolves against the en
 ## Checks
 
 - `Unnamed.Foundation.Break.*` (14 tests): the stage mapping, the carved rule on hand-made masks and on the reference's PNGs, `T_BreakCracks` against the rule, particle counts and spawn bounds, hit chips, the hit cadence at 30, 60 and 144 FPS and through a hitch, the swing clock, the pop curve, pixel widths, outline 1's geometry (merged edge counts, the width rule, each strip's silhouette 3 px within 0.05 through a pinhole projection), sound selection and `DA_BreakAssets` spot values, particle collision.
+- `Unnamed.Foundation.Sound.*` (2 tests): `Pick` (an event's file, volume and pitch) and `Assets` (every `DA_Sounds` event resolves to waves with a length under `/Game/Sounds` or `/Game/Breaking`, the attenuations, spot values, the block order against `DA_BreakAssets`).
 - The capture pack: `& Scripts\TestFoundationRuntime.ps1 -Editor -BreakPack -FrameRates 60` runs the tour suite with `-FoundationTourBreak` (the break cases only; the normal tour is unchanged without it). A row of 8 blocks (stone, grass block, oak log, glass, oak leaves, sand, bottom oak slab, dandelion), each seen alone from 2.5 blocks; mining frames frozen at progress 0.05, 0.35, 0.65 and 0.95 per crack setting, outline frames per outline setting, break frames at +16, +50, +150 and +400 ms for today and the picks, each with TAA on and off; the sound log as CSV; `LastViewMs` over 10 s of mining. It refuses to start while `java` or `javaw` runs (Jesus playing), logs the machine state, and writes to `Tests/Evidence/<date>/Playground-break/`.
 
 ## Known issues
