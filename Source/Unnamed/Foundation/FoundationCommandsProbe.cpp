@@ -37,6 +37,8 @@ void UFoundationRuntimeProbe::AddCommandsCases()
         int32 Count = Player->Inventory.Offhand.Item == Apple ? Player->Inventory.Offhand.Count : 0;
         for (const FFoundationItemInstance& Stack : Player->Inventory.Hotbar)
             if (Stack.Item == Apple) Count += Stack.Count;
+        for (const FFoundationItemInstance& Stack : Player->Inventory.Main)
+            if (Stack.Item == Apple) Count += Stack.Count;
         return Count;
     };
     auto LastLines = [this](int32 Count)

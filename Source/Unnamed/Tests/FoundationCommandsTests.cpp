@@ -76,6 +76,8 @@ namespace CommandsTestsLocal
             int32 Total = Inventory.Offhand.Item == Index ? Inventory.Offhand.Count : 0;
             for (const FFoundationItemInstance& Stack : Inventory.Hotbar)
                 if (Stack.Item == Index) Total += Stack.Count;
+            for (const FFoundationItemInstance& Stack : Inventory.Main)
+                if (Stack.Item == Index) Total += Stack.Count;
             return Total;
         }
         int32 DroppedCount(FName Item) const
