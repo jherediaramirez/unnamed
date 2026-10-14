@@ -86,6 +86,7 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
     const FIntVector Cells[] = {{3, -7, 2}, {-11, 5, 0}, {0, 0, 1}, {17, 12, -4}};
     int32 ModelStates = 0, Mismatches = 0, MovedBoxes = 0, Outside = 0, OffsetBlocks = 0;
     TMap<FName, int32> OutsideBlocks;
+    TSet<FName> OutsideFamilies;
     auto Fail = [&](const FString& Message)
     {
         if (++Mismatches <= 20) AddError(Message);
@@ -136,6 +137,7 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
                             !(bCollision ? CellBox : CellBox.ExpandBy(PlantBlockCm / 16)).IsInside(Boxes[Box]);
                         Outside += bOutside;
                         if (bOutside) ++OutsideBlocks.FindOrAdd(Block.Id);
+                        if (bOutside && Block.bAppendedFamily) OutsideFamilies.Add(Block.Id);
                         MovedBoxes += bMoves && !Offset.IsNearlyZero();
                         Bounds += Boxes[Box];
                     }
@@ -156,8 +158,9 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
     for (const TPair<FName, int32>& Pair : OutsideBlocks)
     {
         const FString Id = Pair.Key.ToString();
-        if (!Id.EndsWith(TEXT("_fence")) && !Id.EndsWith(TEXT("_wall")) && !Id.EndsWith(TEXT("_fence_gate")) &&
-            Id != TEXT("pitcher_crop"))
+        if (!OutsideFamilies.Contains(Pair.Key) ||
+            (!Id.EndsWith(TEXT("_fence")) && !Id.EndsWith(TEXT("_wall")) && !Id.EndsWith(TEXT("_fence_gate")) &&
+                Id != TEXT("pitcher_crop")))
             AddError(FString::Printf(TEXT("%s: %d boxes leave their cell"), *Id, Pair.Value));
     }
     AddInfo(FString::Printf(TEXT("%d blocks with boxes outside their cell"), OutsideBlocks.Num()));

@@ -728,8 +728,10 @@ def main():
                 return True
 
             # The report lists properties in another order than the enumeration for some blocks (chest, trapped
-            # chest: facing, type, waterlogged); `properties` then takes the enumeration's order.
+            # chest: facing, type, waterlogged); `properties` then takes the enumeration's order. Only those two may;
+            # any other block must enumerate in the report's order.
             if not enumerated(props):
+                assert bid in ("chest", "trapped_chest"), (bid, "states are not enumerated in the report's property order")
                 props = next(list(p) for p in itertools.permutations(props) if enumerated(p))
             entry = {"id": bid, "protocol_id": block["protocol_id"], "min_state_id": base,
                      "default_state_id": next(s["id"] for s in states if s.get("default")),

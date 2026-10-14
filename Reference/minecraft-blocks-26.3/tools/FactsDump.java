@@ -128,8 +128,10 @@ public class FactsDump {
     // The BlockSetType (doors, trapdoors, buttons, pressure plates) or WoodType (fence gates) a block is made of,
     // found by name among the public values(): the block id without its family suffix, without the waxed and
     // oxidation prefixes (the four copper stages share one set), heavy/light weighted plates being iron and gold.
-    // Doors expose their type publicly (DoorBlock.type()), which checks the rule; every other block is checked by
-    // its sound type against the set's.
+    // Doors expose their type publicly (DoorBlock.type()), which checks the rule; in 26.3 TrapDoorBlock, ButtonBlock,
+    // BasePressurePlateBlock/PressurePlateBlock/WeightedPressurePlateBlock and FenceGateBlock have no public type
+    // accessor (javap -public), so every other block is checked by its sound type against the set's. Either check
+    // failing throws.
     static String material(String id, String suffix) {
         String m = id.substring(0, id.length() - suffix.length());
         for (String p : new String[] {"waxed_", "exposed_", "weathered_", "oxidized_"}) if (m.startsWith(p)) m = m.substring(p.length());
@@ -194,6 +196,8 @@ public class FactsDump {
         }
         System.out.println("USE SOUNDS: rows " + rows + ", door types checked " + doorChecks + ", sound type checks " + soundChecks
             + ", sound type differs from the set's: " + soundMismatch);
+        // The by-name match is only trusted when the block's sound type is its set's; any difference fails the dump.
+        if (!soundMismatch.isEmpty()) throw new IllegalStateException("sound type differs from the matched set's: " + soundMismatch);
     }
 
     static String boxes(net.minecraft.world.phys.shapes.VoxelShape shape, net.minecraft.world.phys.Vec3 shift) {

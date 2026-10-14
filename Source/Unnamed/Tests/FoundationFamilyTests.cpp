@@ -147,6 +147,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FFoundationFamiliesPlaceTest::RunTest(const FString& Parameters)
 {
     FFamiliesSwitch Switch;
+    if (!TestNotNull(TEXT("foundation.Blocks.Families exists"), Switch.Variable)) return false;
     FFamilyLab L;
     const FFoundationBlockRegistry& Registry = L.A.World.GetRegistry();
     int32 Families = 0, Placed = 0, Refused = 0, NoItem = 0;
@@ -181,6 +182,9 @@ bool FFoundationFamiliesPlaceTest::RunTest(const FString& Parameters)
                                  "with it off, %d have no item"),
         Families, Placed, Refused, NoItem));
     TestEqual(TEXT("family blocks in the registry"), Families, B1Blocks);
+    // 310 minus the reference's 286 block items and the 9 sapling items (DA_Items): crops, the vine plants, the filled
+    // cauldrons and the fires have no item of their own.
+    TestEqual(TEXT("family blocks without an item"), NoItem, 15);
     TestTrue(TEXT("every family block with an item placed"), Placed == Families - NoItem && Refused == Placed);
     return true;
 }

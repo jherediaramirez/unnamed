@@ -203,6 +203,14 @@ registry_order = [b["id"] for b in sorted(states["blocks"], key=lambda b: b["pro
 check(list(plant["subjects"]) == base_ids, "plant_survival.json: subjects differ from tools/survival_base_ids.txt")
 check(base_ids == [b for b in registry_order if b in set(base_ids)] and set(base_ids) <= set(by_id),
       "survival_base_ids.txt: not imported blocks in registry order")
+# Pinned: the base list is exactly the manifest's blocks and fluids in registry order without the blocks appended after
+# the torch (APPENDED_BLOCKS[2:], session B1); torch and wall_torch stay base.
+later_ids = set(build.APPENDED_BLOCKS[2:])
+check(later_ids == {b["id"] for b in manifest["blocks"] if b.get("added") == "survival-B1"},
+      "APPENDED_BLOCKS[2:] differ from the manifest's survival-B1 blocks")
+check(base_ids == [e["id"] for e in sorted(manifest["blocks"] + manifest["fluids"], key=lambda e: e["protocol_id"])
+                   if e["id"] not in later_ids],
+      "survival_base_ids.txt: not the manifest's blocks and fluids without APPENDED_BLOCKS[2:], in registry order")
 for bid, rows in plant["subjects"].items():
     check(len(rows) == len(by_id[bid]["states"]), f"plant_survival.json: state count of {bid}")
     check(all(len(r) == 8 and all(isinstance(i, int) and 0 <= i < len(sig_list) for i in r) for r in rows),

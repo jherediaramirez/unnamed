@@ -518,6 +518,9 @@ def loot_blocks(src, block_manifest):
     """LOOT_BLOCKS, then every other imported block (in block_manifest.json's order) with a loot table in the jar,
     except the blocks listed in tools/loot_later.txt (their tables wait for their own sessions, appended last)."""
     later = set((ROOT / LOOT_LATER).read_text(encoding="utf-8").split())
+    unknown = sorted(later - {b["id"] for b in block_manifest["blocks"]})
+    if unknown:
+        raise ValueError(f"{LOOT_LATER} lists ids that are not blocks of block_manifest.json: {unknown}")
     return LOOT_BLOCKS + [b["id"] for b in block_manifest["blocks"]
                           if b["id"] not in LOOT_BLOCKS and b["id"] not in later and
                           f"{LOOT_TABLE}{b['id']}.json" in src.names]

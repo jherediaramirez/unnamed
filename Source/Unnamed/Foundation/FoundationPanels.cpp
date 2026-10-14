@@ -559,9 +559,13 @@ TSharedRef<SHudCreativeScreen> UFoundationPanels::MakeCreative(AFoundationLab& L
     FFoundationAuthority& Authority = *Lab.GetAuthority();
     const TSharedRef<const FFoundationBlockRegistry> Registry = Authority.World.GetRegistryRef();
     FHudCreativeItems Items = MakeScreenItems(Authority);
-    // foundation.Blocks.Families 0: items placing a B1 family block (saplings included) stay out of the grid.
+    // foundation.Blocks.Families 0: the B1 family blocks' own items stay out of the grid. DA_Items' saplings stay, as
+    // before B1 (placing them is refused).
+    const UFoundationItemAssets* ItemAssets = UFoundationItemAssets::LoadDefault();
     for (const FFoundationItemDefinition& Item : Authority.Rules.Items)
-        if (FoundationBlockFamilies::IsHidden(Registry->FindBlock(Item.PlacesBlock))) Items.Remove(Item.Id);
+        if (!(ItemAssets && ItemAssets->FindItem(Item.Id)) &&
+            FoundationBlockFamilies::IsHidden(Registry->FindBlock(Item.PlacesBlock)))
+            Items.Remove(Item.Id);
     const TWeakObjectPtr<AFoundationLab> WeakLab = &Lab;
     const TWeakObjectPtr<AFoundationPawn> WeakPawn = Pawn;
     const TWeakObjectPtr<UFoundationPanels> WeakThis = this;
