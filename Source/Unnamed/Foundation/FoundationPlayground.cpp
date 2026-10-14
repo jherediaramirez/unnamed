@@ -169,6 +169,8 @@ void AFoundationPlayground::BuildLayout()
     Settings.BuildRules(Authority.Rules);
     Authority.World.SetRegistry(FFoundationBlockRegistry::GetDefault());
     Authority.PlantSurvival = VoxelBlocks::GetPlantSurvival(Authority.World.GetRegistry());
+    // Item entities collide with what the player does: the lab's fixtures and the blocks.
+    Authority.GatherCollision = [this](const FBox& Region, TArray<FBox>& Out) { this->GatherCollision(Region, Out); };
     Authority.World.OriginCm = FVector::ZeroVector;
     // The whole ground is buildable: 2000 x 2000 cells, BuildHeightCells high.
     const int32 HalfCells = int32(GroundHalfExtentCm / UFoundationProfile::BlockCm);

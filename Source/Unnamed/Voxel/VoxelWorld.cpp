@@ -202,6 +202,7 @@ void AVoxelWorld::BuildLayout()
     bMineProbe = FParse::Param(FCommandLine::Get(), TEXT("VoxelMineProbe"));
     bShotGarden = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotGarden"));
     bShotCaves = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotCaves"));
+    bShotDrops = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotDrops"));
     bShotVeins = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotVeins"));
     FString VeinsAt;
     if (FParse::Value(FCommandLine::Get(), TEXT("VoxelShotVeinsAt="), VeinsAt, false))
@@ -512,6 +513,8 @@ void AVoxelWorld::SetupAuthority()
     Settings.BuildRules(Authority.Rules);
     Authority.World.SetRegistry(FFoundationBlockRegistry::GetDefault());
     Authority.PlantSurvival = VoxelBlocks::GetPlantSurvival(Authority.World.GetRegistry());
+    // Item entities collide with what the player does: the blocks, and ungenerated columns as solid.
+    Authority.GatherCollision = [this](const FBox& Region, TArray<FBox>& Out) { this->GatherCollision(Region, Out); };
     const FFoundationBlockRegistry& Registry = Authority.World.GetRegistry();
     ModelCollides.Init(false, Registry.GetStateLimit());
     TArray<FBox> Boxes;
@@ -1904,6 +1907,20 @@ void AVoxelWorld::UpdateShots()
     {
         ShotCamera->SetActorLocation(Shot.Location);
         ShotCamera->SetActorRotation((Shot.Target - Shot.Location).Rotation());
+        if (bShotDrops && FString(Shot.Name).StartsWith(TEXT("cave")))
+        {
+            // Cobblestone and coal 2.5 blocks ahead, just below the eye: they fall to the floor while the shot settles,
+            // and the view looks down at where a floor 1.5 blocks below the eye would hold them. Nobody stands near to
+            // pick them up.
+            const FVector Ahead = (Shot.Target - Shot.Location).GetSafeNormal2D();
+            const FVector Side(-Ahead.Y, Ahead.X, 0);
+            const FVector Base = Shot.Location + Ahead * 250 - FVector(0, 0, 20) - Authority.World.OriginCm;
+            Authority.SpawnItem(Authority.Rules.FindItem(TEXT("cobblestone")), 1, Base - Side * 30, FVector::ZeroVector,
+                FoundationItemEntities::BlockDropPickupDelay);
+            Authority.SpawnItem(Authority.Rules.FindItem(TEXT("coal")), 1, Base + Side * 30, FVector::ZeroVector,
+                FoundationItemEntities::BlockDropPickupDelay);
+            ShotCamera->SetActorRotation((Ahead * 250 - FVector(0, 0, 150)).Rotation());
+        }
         Controller->SetViewTarget(ShotCamera);
         Controller->ConsoleCommand(Shot.bLumenScene ? TEXT("r.Lumen.Visualize 3") : TEXT("r.Lumen.Visualize 0"));
         Controller->ConsoleCommand(

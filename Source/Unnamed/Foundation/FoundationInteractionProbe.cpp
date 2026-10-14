@@ -7,6 +7,7 @@
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationItemAssets.h"
+#include "Foundation/FoundationItemEntityView.h"
 #include "Foundation/FoundationItemMesh.h"
 #include "Foundation/FoundationPawn.h"
 #include "Foundation/FoundationProfile.h"
@@ -19,6 +20,7 @@
 #include "Engine/Texture2DArray.h"
 #include "StaticMeshResources.h"
 #include "Dom/JsonObject.h"
+#include "HAL/IConsoleManager.h"
 #include "HAL/PlatformMemory.h"
 #include "HAL/PlatformProcess.h"
 #include "InputKeyEventArgs.h"
@@ -130,6 +132,17 @@ void UFoundationRuntimeProbe::AddInteractionCases()
                 FSoftObjectPath(Sprites) == Array.ToSoftObjectPath(),
             FString::Printf(TEXT("sprite %s, %d of %d triangles, sprites %s"), *View->GetHeldSprite().ToString(),
                 Triangles, Expected, Sprites ? *Sprites->GetName() : TEXT("none")));
+    };
+    // foundation.Items.Entities (items S8a): the finite scenarios that count returns pin 0; the drop scenario sets 1.
+    auto SetItemEntities = [](int32 Value)
+    { IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Items.Entities"))->Set(Value, ECVF_SetByCode); };
+    auto CountItem = [Player](int32 Item)
+    {
+        const FFoundationInventory& Inventory = Player()->Inventory;
+        int32 Count = !Inventory.Offhand.IsEmpty() && Inventory.Offhand.Item == Item ? Inventory.Offhand.Count : 0;
+        for (const FFoundationItemInstance& Stack : Inventory.Hotbar)
+            Count += !Stack.IsEmpty() && Stack.Item == Item ? Stack.Count : 0;
+        return Count;
     };
     // Preset is used only by the A/B cases; the others take the scenario preset.
     auto Prepare = [this, Lab](const TCHAR* Name, bool bFinite, const TCHAR* Preset = nullptr)
@@ -989,8 +1002,10 @@ void UFoundationRuntimeProbe::AddInteractionCases()
     Prepare(TEXT("finite"), true);
     AddCase(
         TEXT("finite place"), .45,
-        [this, Click, Look]
+        [this, Click, Look, SetItemEntities]
         {
+            // The break below returns straight to the inventory (foundation.Items.Entities 0, as before items S8a).
+            SetItemEntities(0);
             ResetPlayer({-650, 650, 0});
             Click(EKeys::One);
             Look(FVector(-450, 650, 0));
@@ -1027,6 +1042,114 @@ void UFoundationRuntimeProbe::AddInteractionCases()
                     Cobblestones, Inventory.Hotbar[1].IsEmpty()));
             Capture(TEXT("finite-hud"));
         });
+
+    // 13a. Item entities (items S8a): a mined block pops out as a drop that lands on the ground and is pulled into the
+    // inventory when the player walks over it (foundation.Items.Entities 1). Then the capture pair: a block drop and an
+    // item drop at rest before the camera, and the same view with the switch at 0 (the control: no drops).
+    Prepare(TEXT("drops"), true);
+    AddCase(
+        TEXT("drop place"), .45,
+        [this, Click, Look, SetItemEntities]
+        {
+            SetItemEntities(1);
+            // Three blocks back, so the drop lands outside the pickup box (the body grown by a block).
+            ResetPlayer({-750, 650, 0});
+            Click(EKeys::One);
+            Look(FVector(-450, 650, 0));
+            Click(EKeys::RightMouseButton);
+        },
+        [this, Solid] { Record(TEXT("drop scenario: stone placed"), Solid({-5, 6, 0}), Pawn->Interaction.LastText); });
+    AddCase(
+        TEXT("drop mine"), 1.6,
+        [this, Click, Look]
+        {
+            Click(EKeys::Two);
+            Look(FVector(-450, 650, 50));
+            PressKey(EKeys::LeftMouseButton, true);
+        },
+        [this, Lab, Authority, Solid, CountItem]
+        {
+            PressKey(EKeys::LeftMouseButton, false);
+            const TArray<FFoundationItemEntity>& Drops = Authority().GetItemEntities();
+            const int32 Cobblestone = Authority().Rules.FindItem(TEXT("cobblestone"));
+            const FFoundationItemEntityView* View = Lab->GetView()->GetItemEntityView();
+            Record(TEXT("a mined block pops out as a drop resting on the ground, not in the inventory"),
+                !Solid({-5, 6, 0}) && Drops.Num() == 1 && Drops[0].Item == Cobblestone && Drops[0].Count == 1 &&
+                    Drops[0].bOnGround && FMath::Abs(Drops[0].LocalCm.Z) < .01 && CountItem(Cobblestone) == 0 && View &&
+                    View->GetDrawnCount() == 1,
+                Drops.IsEmpty() ? FString(TEXT("no drop"))
+                                : FString::Printf(TEXT("drops %d at %s, cobblestone in inventory %d, drawn %d"),
+                                      Drops.Num(), *Drops[0].LocalCm.ToCompactString(), CountItem(Cobblestone),
+                                      View ? View->GetDrawnCount() : -1));
+        });
+    AddCase(
+        TEXT("drop walk over"), 1.,
+        [this, Authority]
+        {
+            const TArray<FFoundationItemEntity>& Drops = Authority().GetItemEntities();
+            if (!Drops.IsEmpty())
+            {
+                const FVector Drop = Authority().World.OriginCm + Drops[0].LocalCm;
+                Controller->SetControlRotation(FRotator(0, (Drop - Pawn->Simulation.Feet).Rotation().Yaw, 0));
+            }
+            PressKey(EKeys::W, true);
+        },
+        [this, Authority, CountItem]
+        {
+            PressKey(EKeys::W, false);
+            const FFoundationAuthority& A = Authority();
+            const FFoundationEvent* Picked = nullptr;
+            for (const FFoundationEvent& Event : A.GetEvents())
+                if (Event.Kind == EFoundationEventKind::PickedUp) Picked = &Event;
+            const int32 Cobblestone = A.Rules.FindItem(TEXT("cobblestone"));
+            Record(TEXT("walking over the drop pulls it into the inventory"),
+                A.GetItemEntities().IsEmpty() && CountItem(Cobblestone) == 1 && Picked && Picked->bWholeStack &&
+                    Picked->Count == 1 && Picked->Item == Cobblestone && Picked->Player == Pawn->Interaction.PlayerId,
+                FString::Printf(TEXT("drops %d, cobblestone %d, picked up %d, feet %s"), A.GetItemEntities().Num(),
+                    CountItem(Cobblestone), Picked ? Picked->Count : 0, *Pawn->Simulation.Feet.ToCompactString()));
+        });
+    Prepare(TEXT("drops capture"), true);
+    AddCase(
+        TEXT("drop capture on"), 1.,
+        [this, Authority, Look]
+        {
+            // A block drop (cobblestone, the block's ground display) and an item drop (coal, its extruded sprite), at
+            // rest after their fall, the camera standing 2 m away.
+            ResetPlayer({-750, 650, 0});
+            FFoundationAuthority& A = Authority();
+            A.SpawnItem(A.Rules.FindItem(TEXT("cobblestone")), 1, FVector(-560, 625, 0) - A.World.OriginCm,
+                FVector::ZeroVector, FoundationItemEntities::BlockDropPickupDelay);
+            A.SpawnItem(A.Rules.FindItem(TEXT("coal")), 1, FVector(-560, 685, 0) - A.World.OriginCm,
+                FVector::ZeroVector, FoundationItemEntities::BlockDropPickupDelay);
+            Look(FVector(-560, 655, 0));
+        },
+        [this, Lab, Capture]
+        {
+            const FFoundationItemEntityView* View = Lab->GetView()->GetItemEntityView();
+            Record(TEXT("a block drop and an item drop are drawn"), View && View->GetDrawnCount() == 2,
+                FString::Printf(
+                    TEXT("drawn %d %s"), View ? View->GetDrawnCount() : -1, View ? *View->Describe() : TEXT("")));
+            Capture(TEXT("drops-on"));
+        });
+    // The next case resets the lab in this tick; the shot is taken at the frame's end.
+    AddCase(TEXT("drop capture on hold"), .2, [] {}, [] {});
+    Prepare(TEXT("drops control"), true);
+    AddCase(
+        TEXT("drop capture off"), .6,
+        [this, Look, SetItemEntities]
+        {
+            SetItemEntities(0);
+            ResetPlayer({-750, 650, 0});
+            Look(FVector(-560, 655, 0));
+        },
+        [this, Lab, Capture, SetItemEntities]
+        {
+            const FFoundationItemEntityView* View = Lab->GetView()->GetItemEntityView();
+            Record(TEXT("the control draws no drops"), View && View->GetDrawnCount() == 0,
+                FString::Printf(TEXT("drawn %d"), View ? View->GetDrawnCount() : -1));
+            Capture(TEXT("drops-off"));
+        });
+    AddCase(TEXT("drop capture off hold"), .2, [] {}, [SetItemEntities] { SetItemEntities(1); });
 
     // 13b. Hands and items: pick block, drop (no item entities here), offhand fallback, Toggle use, water.
     Prepare(TEXT("hands"), false);

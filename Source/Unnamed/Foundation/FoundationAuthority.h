@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Foundation/FoundationBlockPlacement.h"
 #include "Foundation/FoundationBlocks.h"
+#include "Foundation/FoundationItemEntities.h"
 #include "Foundation/FoundationItems.h"
 #include "Foundation/FoundationLoot.h"
 #include "Foundation/FoundationTargeting.h"
@@ -192,6 +193,10 @@ struct FFoundationLabOptions
     bool bCreativeInventory = true;
     // Plant rules (phase 6, S7): double plants as one unit, and pops after an edit. Off only for A/B runs.
     bool bPlantRules = true;
+    // Item entities (items S8a): a survival break drops its loot into the world, and a full inventory no longer
+    // refuses it. Off, the loot goes straight to the inventory, as before. The pawn copies foundation.Items.Entities
+    // in before each step; tests set it themselves.
+    bool bItemEntities = false;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -266,7 +271,9 @@ enum class EFoundationEventKind : uint8
     TargetDown,
     Reset,
     // A plant (or another model block) lost its support after an edit and was removed (FoundationPlantRules).
-    Popped
+    Popped,
+    // A player picked up (part of) an item entity (items S8a): Item, Count, LocationCm, bWholeStack.
+    PickedUp
 };
 
 // A committed (or rejected) outcome for presentation: effects fire once from these.
@@ -285,6 +292,11 @@ struct FFoundationEvent
     EFoundationReason Reason = EFoundationReason::None;
     FName Interaction;
     int64 Step = 0;
+    // PickedUp: the item (a FFoundationRules::Items index) and how many; where the entity stood (world cm); whether
+    // that took the whole stack (the entity is gone).
+    int32 Item = INDEX_NONE, Count = 0;
+    FVector LocationCm = FVector::ZeroVector;
+    bool bWholeStack = false;
 };
 
 struct FFoundationPlayer
@@ -311,6 +323,10 @@ public:
     // The plant survival rules (VoxelBlocks::GetPlantSurvival), set by the world's owner. Without them plants keep
     // only their two halves together.
     TSharedPtr<const FVoxelPlantSurvival> PlantSurvival;
+    // The collision item entities move against (world cm), set by the world's owner to the query its player moves
+    // against (the lab's fixtures and the blocks; a generated world's ungenerated columns are solid). Unset, the block
+    // world's own and the statics.
+    TFunction<void(const FBox& Region, TArray<FBox>& Out)> GatherCollision;
     FFoundationRules Rules;
     FFoundationLabOptions Options;
     TArray<FFoundationStatic> Statics;
@@ -325,7 +341,8 @@ public:
     void SetFacts(int32 Player, const FFoundationPlayerFacts& Facts);
 
     FFoundationResult Execute(int32 Player, const FFoundationCommand& Command, FFoundationVitals& Vitals);
-    // One reference step of authority-owned state (the targets' damage cooldowns).
+    // One reference step of authority-owned state: the targets' damage cooldowns, then the item entities (their
+    // motion and pickup delays, then every live player's pickups).
     void Step();
     // A new session: old commands become stale, the seed blocks, loadouts and targets come back.
     void Reset();
@@ -358,11 +375,17 @@ public:
     FFoundationTrainingTarget* FindTarget(int32 Id);
     const FFoundationItemDefinition& GetHandItem(const FFoundationPlayer& Player, EFoundationHand Hand) const;
 
+    // Item entities (items S8a), oldest first; Reset clears them.
+    const TArray<FFoundationItemEntity>& GetItemEntities() const { return ItemEntities; }
+    // Adds an item entity at a position (cm from the block world's origin); its id, or 0 for an invalid item or count.
+    int32 SpawnItem(int32 Item, int32 Count, const FVector& LocalCm, const FVector& VelocityCm, int32 PickupDelay);
+
     const TArray<FFoundationEvent>& GetEvents() const { return Events; }
     int64 GetEventSerial() const { return EventSerial; }
 
     // Diagnostics.
     int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
+    int32 ItemsSpawned = 0, ItemsPickedUp = 0;
 
 private:
     FFoundationInventory MakeLoadout();
@@ -383,8 +406,8 @@ private:
         FFoundationResult& Result);
     void Whiff(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationVitals& Vitals,
         FFoundationResult& Result);
-    // Removes a block once: capacity first, then removal, return and wear together. A creative break returns nothing
-    // and wears nothing.
+    // Removes a block once: capacity first (unless the loot drops into the world), then removal, return and wear
+    // together. A creative break returns nothing and wears nothing.
     bool BreakBlock(
         FFoundationPlayer& Player, const FIntVector& Cell, FFoundationResult& Result, bool bCreative = false);
     bool CheckHand(const FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
@@ -398,9 +421,14 @@ private:
     // After an edit at Cell replaced Before: a double plant's two halves stay one unit, then the changed cells'
     // neighbours that no longer survive pop, one level deep (Jesus's answer 6), and a stack to its end (Q1).
     void SettlePlants(const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player);
+    // A broken block's loot as item entities, split into stacks that fit (provisional spread and speed).
+    void SpawnDrops(const FIntVector& Cell, TConstArrayView<FFoundationLootDrop> Drops, int32 RandomSeed);
+    void StepItemEntities();
 
     TArray<FFoundationPlayer> Players;
     TArray<FFoundationEvent> Events;
+    TArray<FFoundationItemEntity> ItemEntities;
+    int32 NextItemEntityId = 1;
     int64 EventSerial = 0;
     int32 SessionId = 1;
     int32 NextPlayerId = 1;
