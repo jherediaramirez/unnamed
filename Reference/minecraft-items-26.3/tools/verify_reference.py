@@ -62,7 +62,8 @@ if build.CLIENT_JAR.exists():
         check((ROOT / name).is_file() and (ROOT / name).read_bytes() == data, f"re-derived file differs: {name}")
         derived += 1
     expected = set(generated) | set(copies) | set(build.DUMPED) | {
-        build.REGISTRY, "README.md", "tools/build_reference.py", "tools/verify_reference.py", "tools/ItemFacts.java"}
+        build.REGISTRY, "README.md", "tools/build_reference.py", "tools/verify_reference.py", "tools/ItemFacts.java",
+        build.LOOT_LATER}
     check(expected == set(sums), f"files differ from the derivation: +{sorted(set(sums) - expected)[:5]} "
                                  f"-{sorted(expected - set(sums))[:5]}")
     for name in copies:

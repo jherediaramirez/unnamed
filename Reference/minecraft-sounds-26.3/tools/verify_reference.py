@@ -119,7 +119,11 @@ pattern = build.re.compile(build.T5_PATTERN)
 check(build.APPENDED_T5[:-4] == sorted(n for n in json.loads(block_sounds) if pattern.match(n)) and
       len(build.APPENDED_T5) == 58, "APPENDED_T5 differs from the events T5_PATTERN matches in sounds.json")
 counts = {g: sum(e["group"] == g for e in events) for g in ("named", "step", "fall")}
-check(counts == {"named": 154, "step": 86, "fall": 86}, f"group counts differ: {counts}")
+check(counts == {"named": 154, "step": 89, "fall": 89}, f"group counts differ: {counts}")
+# Survival B1 (2026-10-14): block_sounds.csv's 3 new sound types append their step, then fall events after the 326.
+B1_TYPES = ["block.cherry_sapling", "block.ladder", "block.weeping_vines"]
+check([(e["name"], e["group"]) for e in events[326:]] == [(f"{t}.{g}", g) for g in ("step", "fall") for t in B1_TYPES],
+      "B1's step and fall events are not the last 6 in order")
 check(by_name["entity.item.pickup"]["sounds"] == ["random/pop"], "entity.item.pickup does not play only random/pop")
 for name in ("block.chest.open", "block.chest.close"):
     check(all(isinstance(s, dict) and s.get("attenuation_distance") == 12 for s in by_name[name]["sounds"]),

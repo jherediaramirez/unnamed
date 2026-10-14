@@ -135,7 +135,9 @@ def build(root):
                              "frame_indices": [f["index"] for f in anim["frames"]] if anim else [],
                              "frame_ticks": [f["time"] for f in anim["frames"]] if anim else [],
                              "interpolate": bool(anim and anim["interpolate"]),
-                             "png": str(ref / f"assets/minecraft/textures/block/{t['name']}.png"),
+                             # Stand-in tiles (the chests') are derived files outside assets/: textures.json names them.
+                             "png": str(ref / t["file"]) if "file" in t else
+                                    str(ref / f"assets/minecraft/textures/block/{t['name']}.png"),
                              "mipmap_strategy": t["mipmap_strategy"], "alpha_cutoff_bias": t.get("alpha_cutoff_bias", 0.0),
                              "layer_rgba_sha256": t["layer_rgba_sha256"], "frame_size": t["frame_size"]})
     index = {t["name"]: i for i, t in enumerate(texture_list)}

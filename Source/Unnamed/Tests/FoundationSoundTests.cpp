@@ -13,7 +13,8 @@ namespace
         EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
 
     // Reference/minecraft-sounds-26.3's named events, in its order; the step and fall events follow (86 each), then the
-    // appended named events of B0's batch (133; Reference/minecraft-sounds-26.3/README.md, "Events").
+    // appended named events of B0's batch (133), then the step and fall events of the sound types survival B1 added (3
+    // each; Reference/minecraft-sounds-26.3/README.md, "Events").
     const TCHAR* const SoundNamedEvents[] = {TEXT("entity.item.pickup"), TEXT("entity.item.break"),
         TEXT("entity.generic.eat"), TEXT("entity.player.burp"), TEXT("entity.player.hurt"),
         TEXT("entity.player.hurt_drown"), TEXT("entity.player.hurt_freeze"), TEXT("entity.player.hurt_on_fire"),
@@ -22,6 +23,7 @@ namespace
         TEXT("block.barrel.open"), TEXT("block.barrel.close"), TEXT("block.chest.open"), TEXT("block.chest.close"),
         TEXT("entity.player.splash"), TEXT("entity.player.splash.high_speed"), TEXT("entity.player.swim")};
     constexpr int32 SoundStepEvents = 86, SoundFallEvents = 86, SoundAppendedEvents = 133;
+    constexpr int32 SoundAppendedStepEvents = 3, SoundAppendedFallEvents = 3;
 
     FString SoundPackageOf(const UObject* Object)
     {
@@ -89,7 +91,9 @@ bool FFoundationSoundAssetsTest::RunTest(const FString&)
     // attenuation, 12 blocks for the chest and 16 otherwise.
     const int32 Named = UE_ARRAY_COUNT(SoundNamedEvents);
     const int32 Appended = Named + SoundStepEvents + SoundFallEvents;
-    TestEqual(TEXT("event count"), Assets->Events.Num(), Appended + SoundAppendedEvents);
+    const int32 AppendedTypes = Appended + SoundAppendedEvents;
+    TestEqual(
+        TEXT("event count"), Assets->Events.Num(), AppendedTypes + SoundAppendedStepEvents + SoundAppendedFallEvents);
     for (int32 Index = 0; Index < Assets->Events.Num(); ++Index)
     {
         const FFoundationSoundEvent& Event = Assets->Events[Index];
@@ -99,6 +103,9 @@ bool FFoundationSoundAssetsTest::RunTest(const FString&)
         else if (Index < Appended)
             TestTrue(FString::Printf(TEXT("%s is a step or fall event"), *Name),
                 Name.EndsWith(Index < Named + SoundStepEvents ? TEXT(".step") : TEXT(".fall")));
+        else if (Index >= AppendedTypes)
+            TestTrue(FString::Printf(TEXT("%s is an appended step or fall event"), *Name),
+                Name.EndsWith(Index < AppendedTypes + SoundAppendedStepEvents ? TEXT(".step") : TEXT(".fall")));
         TestTrue(FString::Printf(TEXT("%s has files"), *Name), !Event.Files.IsEmpty());
         for (const FFoundationBreakSoundFile& File : Event.Files)
         {
@@ -125,6 +132,10 @@ bool FFoundationSoundAssetsTest::RunTest(const FString&)
     TestEqual(TEXT("first appended event"), EventAt(Appended), FString(TEXT("block.bamboo_wood_button.click_off")));
     TestEqual(TEXT("last appended event"), EventAt(Appended + SoundAppendedEvents - 1),
         FString(TEXT("entity.generic.swim")));
+    TestEqual(TEXT("first appended step event"), EventAt(AppendedTypes), FString(TEXT("block.cherry_sapling.step")));
+    TestEqual(TEXT("last appended fall event"),
+        EventAt(AppendedTypes + SoundAppendedStepEvents + SoundAppendedFallEvents - 1),
+        FString(TEXT("block.weeping_vines.fall")));
 
     // Spot values from sounds.json.
     if (const FFoundationSoundEvent* Pickup = SoundFindEvent(*Assets, TEXT("entity.item.pickup")))

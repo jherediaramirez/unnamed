@@ -1,6 +1,6 @@
 # Java 26.3 sound reference
 
-The sound events the game plays beyond block break, hit and place: 21 named player, item and container events, the 86 footstep events and the 86 fall events of the block sound types, then 133 events appended for the survival program (B0, 2026-10-14), with their `sounds.json` entries verbatim and the `.ogg` files they play. This folder is generated, hash-listed and never edited by hand.
+The sound events the game plays beyond block break, hit and place: 21 named player, item and container events, the 86 footstep events and the 86 fall events of the block sound types, then 133 events appended for the survival program (B0, 2026-10-14) and the step and fall events of the 3 block sound types survival B1 added (2026-10-14), with their `sounds.json` entries verbatim and the `.ogg` files they play. This folder is generated, hash-listed and never edited by hand.
 
 It is separate from [`minecraft-blocks-26.3`](../minecraft-blocks-26.3/README.md) because the block import requires that reference's `assets/minecraft/sounds/` to equal exactly its break, hit and place files; adding files there would invalidate the committed break assets.
 
@@ -21,7 +21,7 @@ The verifier checks every file against `SHA256SUMS.txt`, re-derives `sound_event
 | Path | What it is |
 |---|---|
 | `sound_events.json` | `source` (index pins, `sounds.json` SHA-1, `block_sounds.csv` SHA-256), `events` and `files`. Each event has `name`, `group` (`named`, `step` or `fall`), `subtitle` (or null) and `sounds`, the event's `sounds.json` list verbatim (strings or objects with `name`, `volume`, `pitch`, `attenuation_distance`). Each file has `name` (path under `sounds/`, no extension), `sha1`, `size` and `home`. |
-| `assets/minecraft/sounds/` | The 389 `.ogg` files (3,887,049 bytes) homed here, byte for byte from the asset index. |
+| `assets/minecraft/sounds/` | The 394 `.ogg` files (3,924,037 bytes) homed here, byte for byte from the asset index. |
 | `tools/build_reference.py`, `tools/verify_reference.py` | Build from the asset index and block reference; verify and re-derive. |
 | `tools/own_files.txt` | The files homed here, in `files` order: an input from B0 on (see Home rule). |
 | `SHA256SUMS.txt` | SHA-256 of every other file. |
@@ -30,7 +30,7 @@ The verifier checks every file against `SHA256SUMS.txt`, re-derives `sound_event
 
 ## Events
 
-Fixed order; 326 events.
+Fixed order; 332 events.
 
 - `named` (21): `entity.item.pickup`, `entity.item.break`, `entity.generic.eat`, `entity.player.burp`, `entity.player.hurt`, `entity.player.hurt_drown`, `entity.player.hurt_freeze`, `entity.player.hurt_on_fire`, `entity.player.hurt_sweet_berry_bush`, `entity.player.death`, `entity.player.small_fall`, `entity.player.big_fall`, `item.axe.strip`, `block.furnace.fire_crackle`, `block.barrel.open`, `block.barrel.close`, `block.chest.open`, `block.chest.close`, `entity.player.splash`, `entity.player.splash.high_speed`, `entity.player.swim`.
 - `step` (86): the sorted unique `step` values of `block_sounds.csv`, without `intentionally_empty`.
@@ -39,7 +39,7 @@ Fixed order; 326 events.
   - T5's 58 (`APPENDED_T5`): the 54 `sounds.json` events `T5_PATTERN` matches (door, trapdoor, fence gate, button and pressure plate open, close and clicks), sorted, then `block.lever.click`, `item.hoe.till`, `item.shovel.flatten`, `item.crop.plant`.
   - The program's batch, 75 (`APPENDED_BATCH`, in its file's order): T1 `block.smoker.smoke`; T2 experience and level up, the 8 armor equips, shield, arrows; T3 buckets, drink, fire and lava; T6 the cow, pig, sheep, chicken, zombie, spider, creeper and skeleton events, player attacks, the generic hurt, death, falls, explode, splash and swim. `block.blast_furnace.fire_crackle` was asked for but has no `sounds.json` entry in 26.3 (silent in vanilla), so it is not here.
 
-The step and fall events of the first build are frozen (`SOUND_TYPE_BASE`, 86 sound types): sound types that `block_sounds.csv` gains later get their step and fall events after every earlier event (step, then fall, each sorted), never sorted in among the old ones. The verifier pins the first build's 193 events and 477 file entries by SHA-256.
+The step and fall events of the first build are frozen (`SOUND_TYPE_BASE`, 86 sound types): sound types that `block_sounds.csv` gains later get their step and fall events after every earlier event (step, then fall, each sorted), never sorted in among the old ones. Survival B1 added 3 (`block.cherry_sapling`, `block.ladder`, `block.weeping_vines`; its crop and hard crop types reuse `block.grass` and `block.wood`): events 326-328 are their step events, 329-331 their fall events. The verifier pins the first build's 193 events and 477 file entries by SHA-256.
 
 ## Home rule
 
@@ -51,8 +51,10 @@ The step and fall events of the first build are frozen (`SOUND_TYPE_BASE`, 86 so
 | step | 390 | 45 | 345 (the block hit sounds' files) |
 | fall | 29 | 8 | 21 |
 | named, appended | 278 | 278 | 0 |
+| step, appended (B1) | 15 | 5 (`block/roots/step1`-`5`, first played by `block.weeping_vines.step`) | 10 |
+| fall, appended (B1) | 6 | 0 | 6 |
 
-Total: 755 files, 389 here and 366 in the block reference.
+Total: 776 files, 394 here and 382 in the block reference.
 
 From B0 on the rule is frozen for the files already homed here: `tools/own_files.txt` lists them (in `files` order), and a listed file stays homed here even if the block reference later gains a copy. Later files follow the rule above. The build writes the list when it is absent; otherwise it reads it, and the verifier checks it is a prefix of the files homed here.
 
