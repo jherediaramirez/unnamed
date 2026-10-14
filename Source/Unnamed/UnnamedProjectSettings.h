@@ -98,6 +98,15 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Breaking")
     FString BreakRoot = TEXT("/Game/Breaking");
 
+    // Package of a sound asset under SoundRoot, e.g. "DA_Sounds" or "Sounds/random/pop". Written by
+    // Scripts/Editor/ImportSounds.py from Reference/minecraft-sounds-26.3 (Docs/Breaking.md).
+    UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
+    static FString GetSoundAssetPackage(const FString& AssetName);
+    static FSoftObjectPath GetSoundAssetPath(const FString& AssetName);
+
+    UPROPERTY(Config, EditAnywhere, Category = "Sounds")
+    FString SoundRoot = TEXT("/Game/Sounds");
+
     UPROPERTY(Config, EditAnywhere, Category = "Maps", meta = (AllowedClasses = "/Script/Engine.World"))
     FSoftObjectPath MenuMap;
 

@@ -9,6 +9,7 @@
 
 class UFoundationBreakAssets;
 class UFoundationInteractionView;
+class UFoundationSoundAssets;
 class UInstancedStaticMeshComponent;
 class UMaterialInstanceDynamic;
 class UPostProcessComponent;
@@ -17,6 +18,7 @@ class UStaticMeshComponent;
 struct FFoundationBreakBlock;
 struct FFoundationBreakSoundEvent;
 struct FFoundationInteraction;
+struct FFoundationSoundEvent;
 
 // The breaking feel (Docs/Breaking.md): the target outline, the crack overlay, textured break and hit particles,
 // break and hit sounds, the swing clock and the break pop. Presentation only, like the view that owns it: it reads
@@ -141,6 +143,9 @@ namespace FoundationBreak
     };
     FSoundPlay PickSound(const FFoundationBreakBlock& Block, const FFoundationBreakSoundEvent& Event, bool bHit,
         int32 SoundsMode, FRandomStream& Random);
+    // One play of a sound event (DA_Sounds): a file at random (every entry of the reference weighs 1), the caller's
+    // volume and pitch times the file's own (sounds.json).
+    FSoundPlay PickEventSound(const FFoundationSoundEvent& Event, float Volume, float Pitch, FRandomStream& Random);
 
     // A spawned particle, in centimetres and seconds. Patch: the texel offset (0-12) of its 4 x 4 patch.
     struct FParticleSpawn
@@ -217,6 +222,11 @@ public:
     bool OnBlockRemoved(const FFoundationAuthority& Authority, const FFoundationEvent& Event);
     // A Placed event: the placed block's place sound (foundation.Place.Sound).
     void OnBlockPlaced(const FFoundationAuthority& Authority, const FFoundationEvent& Event);
+    // A sound event of DA_Sounds (/Game/Sounds, Reference/minecraft-sounds-26.3), such as "entity.item.pickup", at
+    // Location with the caller's Volume and Pitch (vanilla's call-site values; pickup: 0.2 and a random 1.6-3.4), the
+    // event's attenuation, logged like the block sounds. DA_Sounds loads on the first call. Silent for an unknown event
+    // or with foundation.Sound.Events 0.
+    void PlayEvent(FName Event, const FVector& Location, float Volume = 1, float Pitch = 1);
     // The held item's swing (0-1, today's pose curve sin(phase x pi)) from the swing clock, when Swing is on; false
     // keeps the view's own swing.
     bool GetSwing(double& OutSwing) const;
@@ -329,6 +339,11 @@ private:
     TArray<FPop> Pops;
 
     FRandomStream Random;
+    // DA_Sounds and its event names -> indices; its own stream, so playing events never shifts the block sounds' draws.
+    const UFoundationSoundAssets* SoundAssets = nullptr;
+    bool bTriedSoundAssets = false;
+    TMap<FName, int32> SoundEventIndex;
+    FRandomStream EventRandom;
     TArray<FoundationBreak::FSoundLogEntry> SoundLog;
     static constexpr int32 MaxSoundLog = 4096;
 };

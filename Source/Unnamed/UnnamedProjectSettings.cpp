@@ -120,3 +120,14 @@ FSoftObjectPath UUnnamedProjectSettings::GetBreakAssetPath(const FString& AssetN
     const FString Package = GetBreakAssetPackage(AssetName);
     return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
 }
+
+FString UUnnamedProjectSettings::GetSoundAssetPackage(const FString& AssetName)
+{
+    return Get().SoundRoot / AssetName;
+}
+
+FSoftObjectPath UUnnamedProjectSettings::GetSoundAssetPath(const FString& AssetName)
+{
+    const FString Package = GetSoundAssetPackage(AssetName);
+    return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
+}
