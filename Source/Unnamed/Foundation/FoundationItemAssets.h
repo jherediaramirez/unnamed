@@ -6,6 +6,7 @@
 #include "FoundationItemAssets.generated.h"
 
 class UTexture2DArray;
+struct FFoundationLootTable;
 struct FFoundationRules;
 
 // One ordered rule of a 26.3 tool component, as the data states it.
@@ -372,6 +373,10 @@ struct FFoundationLootModifierAsset
 
     UPROPERTY(EditAnywhere, Category = "Loot")
     float BonusMultiplier = 0;
+
+    // furnace_smelt (entity loot, survival T6 20a): the item's furnace result, resolved by ImportMobs.py.
+    UPROPERTY(EditAnywhere, Category = "Loot")
+    FName ResultItem;
 };
 
 // One candidate of a flattened pool: the first whose conditions all pass drops.
@@ -511,3 +516,12 @@ public:
     // its fallback (the case with no contexts). False when the item, its model or the model's first layer is missing.
     bool FindModelView(FName Id, FName Context, FFoundationItemModelView& View) const;
 };
+
+namespace FoundationLootAssets
+{
+    // One table asset as the authority's table, items resolved against Rules.Items and predicates against
+    // Rules.LootPredicates; returns the first unknown item, predicate or kind (None when the table is whole). DA_Items'
+    // block tables (AddLoot) and DA_Mobs' entity tables share it.
+    UNNAMED_API FName MakeTable(
+        const FFoundationLootTableAsset& Asset, int32 TableIndex, const FFoundationRules& Rules, FFoundationLootTable& Table);
+}

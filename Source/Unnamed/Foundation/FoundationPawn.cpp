@@ -366,6 +366,7 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.Options.bItemUse = FoundationItemUse::IsOn();
     Authority.Options.bExperienceOrbs = FoundationExperienceOrbs::IsOn();
     Authority.Options.bBlockUse = FoundationBlockUse::IsOn();
+    Authority.Options.bMobs = FoundationMobs::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     Authority.Step();
     // Step 12: the orbs this player took this step fill its XP bar.

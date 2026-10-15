@@ -32,6 +32,18 @@ TConstArrayView<TPair<FName, FFoundationConsumable>> FoundationConsumables::GetR
         TPair<FName, FFoundationConsumable>(TEXT("melon_slice"), FFoundationConsumable{2, 1.2f, DefaultTicks}),
         TPair<FName, FFoundationConsumable>(TEXT("sweet_berries"), FFoundationConsumable{2, .4f, DefaultTicks}),
         TPair<FName, FFoundationConsumable>(TEXT("glow_berries"), FFoundationConsumable{2, .4f, DefaultTicks}),
+        // Survival 20a: the mob drops (their on-consume effects, hunger and poison, wait for status effects).
+        TPair<FName, FFoundationConsumable>(TEXT("porkchop"), FFoundationConsumable{3, 1.8000001f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("cooked_porkchop"), FFoundationConsumable{8, 12.8f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("beef"), FFoundationConsumable{3, 1.8000001f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("chicken"), FFoundationConsumable{2, 1.2f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("cooked_chicken"), FFoundationConsumable{6, 7.2000003f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("rotten_flesh"), FFoundationConsumable{4, .8f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("spider_eye"), FFoundationConsumable{2, 3.2f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("carrot"), FFoundationConsumable{3, 3.6000001f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("potato"), FFoundationConsumable{1, .6f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("mutton"), FFoundationConsumable{2, 1.2f, DefaultTicks}),
+        TPair<FName, FFoundationConsumable>(TEXT("cooked_mutton"), FFoundationConsumable{6, 9.6f, DefaultTicks}),
     };
     return Table;
 }

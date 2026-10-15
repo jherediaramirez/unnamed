@@ -2,6 +2,10 @@
 
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
+## October 15, 2026
+
+- [Survival 20a: the mob framework and the cow](2026-10-15-Mobs-20a.md): record, lane `feature/survival-mobs`. `foundation.Mobs 1`: `foundation.Mobs.Summon cow` spawns a vanilla-box cow that strolls, looks at the player, panics when hit, is knocked back and dies into beef, leather and experience; the entities reference holds the eight mobs' textures, models, attributes and loot tables, and `DA_Items` the 18 mob drops. Next: [the 20b handoff](2026-10-15-Mobs-Handoff-20b.md).
+
 ## October 14, 2026
 
 - [Use step 16 handoff: survival fixes](2026-10-14-Use-Handoff-Step16.md): the next step on lane `feature/survival-use` (base e65229c0 plus the step-17 landing merge): lava and burning damage, the swim pose's hitbox, fall rounding, pick block from the main inventory, Codex review 9, the bucket held-repeat test.

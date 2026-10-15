@@ -12,7 +12,7 @@ param([switch]$Editor,[string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',
     # 'pause' (not part of all) records the frames around ESC and Back to Game (FoundationPauseProbe.cpp).
     # 'swim' (not part of all) plays the swimming control pair in the Playground pool (FoundationSwimProbe.cpp).
     # 'body' (not part of all) poses the player body in F5's back and front views and the spring arm preview, with shots (FoundationBodyProbe.cpp).
-    [ValidateSet('movement','interaction','all','tour','views','pause','swim','body')][string]$Suite='all',[switch]$ViewsScout,
+    [ValidateSet('movement','interaction','all','tour','views','pause','swim','body','mobs')][string]$Suite='all',[switch]$ViewsScout,
     [ValidateSet('VanillaReference','LucidFluid')][string]$Preset,[switch]$Finite,
     # The break lane's capture pack: the tour suite with -FoundationTourBreak at full-cost rendering, into Playground-break.
     [switch]$BreakPack,
