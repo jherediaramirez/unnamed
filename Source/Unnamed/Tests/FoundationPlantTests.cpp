@@ -85,6 +85,8 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::MakeTable(Registry);
     const FIntVector Cells[] = {{3, -7, 2}, {-11, 5, 0}, {0, 0, 1}, {17, 12, -4}};
     int32 ModelStates = 0, Mismatches = 0, MovedBoxes = 0, Outside = 0, OffsetBlocks = 0;
+    TMap<FName, int32> OutsideBlocks;
+    TSet<FName> OutsideFamilies;
     auto Fail = [&](const FString& Message)
     {
         if (++Mismatches <= 20) AddError(Message);
@@ -131,7 +133,11 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
                             Fail(Label + TEXT(" box differs"));
                         // Collision stays in its cell; a thick bamboo outline reaches 1/16 into the next one at
                         // the largest offsets.
-                        Outside += !(bCollision ? CellBox : CellBox.ExpandBy(PlantBlockCm / 16)).IsInside(Boxes[Box]);
+                        const bool bOutside =
+                            !(bCollision ? CellBox : CellBox.ExpandBy(PlantBlockCm / 16)).IsInside(Boxes[Box]);
+                        Outside += bOutside;
+                        if (bOutside) ++OutsideBlocks.FindOrAdd(Block.Id);
+                        if (bOutside && Block.bAppendedFamily) OutsideFamilies.Add(Block.Id);
                         MovedBoxes += bMoves && !Offset.IsNearlyZero();
                         Bounds += Boxes[Box];
                     }
@@ -144,9 +150,21 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
             }
         }
     }
-    TestEqual(TEXT("model states (S5's 949, the torch and four wall torches)"), ModelStates, 954);
+    TestEqual(TEXT("model states (block_states.json's 25,082, B1's families included)"), ModelStates, 25082);
     TestEqual(TEXT("moved boxes and their bounds that differ"), Mismatches, 0);
-    TestEqual(TEXT("collision boxes outside their cell, outline boxes beyond 1/16 of it"), Outside, 0);
+    // B1's fences, walls and fence gates collide 1.5 blocks tall (vanilla), and the pitcher crop's lower half
+    // reaches into its upper cell: those leave the cell, and stay in-cell gathered until B2. B2 widens the gather.
+    // Every other block stays inside.
+    for (const TPair<FName, int32>& Pair : OutsideBlocks)
+    {
+        const FString Id = Pair.Key.ToString();
+        if (!OutsideFamilies.Contains(Pair.Key) ||
+            (!Id.EndsWith(TEXT("_fence")) && !Id.EndsWith(TEXT("_wall")) && !Id.EndsWith(TEXT("_fence_gate")) &&
+                Id != TEXT("pitcher_crop")))
+            AddError(FString::Printf(TEXT("%s: %d boxes leave their cell"), *Id, Pair.Value));
+    }
+    AddInfo(FString::Printf(TEXT("%d blocks with boxes outside their cell"), OutsideBlocks.Num()));
+    TestEqual(TEXT("collision boxes outside their cell, outline boxes beyond 1/16 of it"), Outside, 127524);
     TestTrue(TEXT("boxes moved by an offset"), MovedBoxes > 0);
     // Bamboo at 256 cells: its outline leaves the cell by at most 1/16, its moved collision never.
     int32 BambooOutside = 0;
@@ -382,8 +400,9 @@ bool FFoundationPlantReplaceableTest::RunTest(const FString& Parameters)
         if (Block->bReplaceable != bFact && ++Mismatches <= 20)
             AddError(Id + TEXT(" replaceable differs from the facts"));
     }
-    TestEqual(TEXT("facts blocks (with the two torches)"), Blocks, 618);
-    TestEqual(TEXT("replaceable in the facts (water, lava, snow and 15 model blocks)"), Replaceable, 18);
+    TestEqual(TEXT("facts blocks (block_state_facts.json, B1's families included)"), Blocks, 928);
+    TestEqual(TEXT("replaceable in the facts (water, lava, snow and 17 model blocks with B1's fire and soul fire)"),
+        Replaceable, 20);
     TestEqual(TEXT("blocks whose flag differs from the facts"), Mismatches, 0);
     TestTrue(TEXT("air is replaceable"), W.World.GetBlock(FFoundationBlockState{}).bReplaceable);
     // A placed block replaces one snow layer, but snow does not (stacking layers is not built), and two layers stay.

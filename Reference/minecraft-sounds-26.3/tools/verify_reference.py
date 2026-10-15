@@ -55,8 +55,11 @@ source = build.source_object(build.sha1(block_sounds), block_csv)
 check(data["source"] == source, "source object differs from the pins and the block reference's inputs")
 frozen = build.read_own_files()
 check(frozen is not None, f"{build.OWN_FILES} is missing")
+frozen_events = build.read_frozen_events()
+check(len(frozen_events) >= 332, f"{build.FROZEN_EVENTS} is missing or shorter than survival B1's 332 events")
 try:
-    derived = build.derive(block_sounds, block_csv, block_files, lambda name: own_files[name], source, frozen or ())
+    derived = build.derive(block_sounds, block_csv, block_files, lambda name: own_files[name], source, frozen or (),
+                           frozen_events)
     check(events_path.read_bytes() == derived, "re-derived sound_events.json differs")
 except (SystemExit, OSError, KeyError, ValueError) as error:
     errors.append(f"re-derivation failed: {error!r}")
@@ -72,7 +75,10 @@ check(all(f["home"] in (build.OWN, build.BLOCK_HOME) for f in files), "unknown h
 check(set(own_entries) == set(own_files), "own .ogg set on disk differs from the own-homed entries")
 for name, entry in own_entries.items():
     check(own_files.get(name) == (entry["sha1"], entry["size"]), f"own file differs from its entry: {name}")
-    check(name not in block_files, f"own file also in the block reference: {name}")
+    if name in block_files:  # allowed only for tools/own_files.txt's names, and only as a byte-equal copy
+        check(name in (frozen or ()) and (ROOT / build.SOUNDS / f"{name}.ogg").read_bytes() ==
+              (build.BLOCKS / build.SOUNDS / f"{name}.ogg").read_bytes(),
+              f"own file also in the block reference (not in {build.OWN_FILES}, or not byte-equal): {name}")
 for entry in files:
     if entry["home"] == build.BLOCK_HOME:
         check(block_files.get(entry["name"]) == (entry["sha1"], entry["size"]),
@@ -85,6 +91,23 @@ for key, (count, digest) in FIRST_BUILD.items():
           f"the first build's {count} {key} entries changed")
 own_order = [f["name"] for f in files if f["home"] == build.OWN]
 check(frozen is not None and own_order[:len(frozen)] == frozen, f"{build.OWN_FILES} is not a prefix of the own files")
+check([e["name"] for e in data["events"][:len(frozen_events)]] == frozen_events,
+      f"{build.FROZEN_EVENTS} is not a prefix of the events")
+# The freeze holds: one more APPENDED_NAMED event (a dummy, in memory) goes last and leaves every earlier event and
+# file entry byte-identical.
+DUMMY = "unnamed.verify.dummy"
+dummy_sounds = dict(json.loads(block_sounds), **{DUMMY: {"sounds": ["random/pop"]}})
+saved = build.APPENDED_NAMED
+build.APPENDED_NAMED = saved + [DUMMY]
+try:
+    with_dummy = json.loads(build.derive(json.dumps(dummy_sounds).encode(), block_csv, block_files,
+                                         lambda name: own_files[name], source, frozen or (), frozen_events))
+    check(with_dummy["events"][:-1] == data["events"] and with_dummy["events"][-1]["name"] == DUMMY and
+          with_dummy["files"] == data["files"], "an appended named event does not go last (the freeze is broken)")
+except (SystemExit, KeyError, ValueError) as error:
+    errors.append(f"dummy append failed: {error!r}")
+finally:
+    build.APPENDED_NAMED = saved
 
 # 4. The asset index.
 index_checked = 0
@@ -112,14 +135,23 @@ by_name = {e["name"]: e for e in events}
 check(len(by_name) == len(events), "repeated event names")
 named = build.NAMED + build.APPENDED_NAMED
 check([e["name"] for e in events if e["group"] == "named"] == named and
-      [e["name"] for e in events[:21]] == build.NAMED and [e["name"] for e in events[193:193 + len(
-          build.APPENDED_NAMED)]] == build.APPENDED_NAMED, "the named events differ or are out of order")
-check(len(build.APPENDED_NAMED) == 133 and len(set(named)) == len(named), "APPENDED_NAMED is not 133 new events")
+      [e["name"] for e in events[:21]] == build.NAMED and [e["name"] for e in events[193:326]] ==
+      build.APPENDED_NAMED[:133] and [e["name"] for e in events[332:]] == build.APPENDED_LATER,
+      "the named events differ or are out of order")
+check(len(build.APPENDED_NAMED) == 134 and len(set(named)) == len(named) and
+      build.APPENDED_NAMED[133:] == build.APPENDED_LATER, "APPENDED_NAMED is not B0's 133 and 1 later new events")
 pattern = build.re.compile(build.T5_PATTERN)
 check(build.APPENDED_T5[:-4] == sorted(n for n in json.loads(block_sounds) if pattern.match(n)) and
       len(build.APPENDED_T5) == 58, "APPENDED_T5 differs from the events T5_PATTERN matches in sounds.json")
 counts = {g: sum(e["group"] == g for e in events) for g in ("named", "step", "fall")}
-check(counts == {"named": 154, "step": 86, "fall": 86}, f"group counts differ: {counts}")
+check(counts == {"named": 155, "step": 89, "fall": 89}, f"group counts differ: {counts}")
+# Survival B1 (2026-10-14): block_sounds.csv's 3 new sound types append their step, then fall events after the 326.
+B1_TYPES = ["block.cherry_sapling", "block.ladder", "block.weeping_vines"]
+check([(e["name"], e["group"]) for e in events[326:332]] == [(f"{t}.{g}", g) for g in ("step", "fall") for t in B1_TYPES],
+      "B1's step and fall events are not events 326-331 in order")
+# Then B1's appended named event: the blast furnace (26.3's name has no underscore).
+check(by_name.get("block.blastfurnace.fire_crackle", {}).get("sounds") ==
+      [f"block/blastfurnace/blastfurnace{i}" for i in range(1, 6)], "block.blastfurnace.fire_crackle files differ")
 check(by_name["entity.item.pickup"]["sounds"] == ["random/pop"], "entity.item.pickup does not play only random/pop")
 for name in ("block.chest.open", "block.chest.close"):
     check(all(isinstance(s, dict) and s.get("attenuation_distance") == 12 for s in by_name[name]["sounds"]),

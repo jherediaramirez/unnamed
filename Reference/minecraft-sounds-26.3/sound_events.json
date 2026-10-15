@@ -4,7 +4,7 @@
   "asset_index_sha1": "abfaa525f923f807df8b4e4d29c1b5e3a104adbe",
   "asset_index_nonlang_sha1": "9ba09e4fc9e2245b7395eee4732096038d9f6e2d",
   "sounds_json_sha1": "7975165ad4a3c0cb3c05078b914eac0f2c3b5f5f",
-  "block_sounds_csv_sha256": "edbfe06788cdc0ec11f40859c8464c64c4eafa8bcde28ab5504629b1d8d0b817"
+  "block_sounds_csv_sha256": "2c6b55b25d088fe47c870b76e26439b0b357fc8252ff0f36caef4fbca47125b8"
  },
  "events": [
   {
@@ -4633,6 +4633,91 @@
     "liquid/swim3",
     "liquid/swim4"
    ]
+  },
+  {
+   "name": "block.cherry_sapling.step",
+   "group": "step",
+   "subtitle": "subtitles.block.generic.footsteps",
+   "sounds": [
+    "block/bamboo/sapling_hit1",
+    "block/bamboo/sapling_hit2",
+    "block/bamboo/sapling_hit3",
+    "block/bamboo/sapling_hit4",
+    "block/bamboo/sapling_hit5"
+   ]
+  },
+  {
+   "name": "block.ladder.step",
+   "group": "step",
+   "subtitle": "subtitles.block.generic.footsteps",
+   "sounds": [
+    "step/ladder1",
+    "step/ladder2",
+    "step/ladder3",
+    "step/ladder4",
+    "step/ladder5"
+   ]
+  },
+  {
+   "name": "block.weeping_vines.step",
+   "group": "step",
+   "subtitle": "subtitles.block.generic.footsteps",
+   "sounds": [
+    "block/roots/step1",
+    "block/roots/step2",
+    "block/roots/step3",
+    "block/roots/step4",
+    "block/roots/step5"
+   ]
+  },
+  {
+   "name": "block.cherry_sapling.fall",
+   "group": "fall",
+   "subtitle": "subtitles.block.generic.fall",
+   "sounds": [
+    "block/bamboo/sapling_hit1",
+    "block/bamboo/sapling_hit2",
+    "block/bamboo/sapling_hit3",
+    "block/bamboo/sapling_hit4",
+    "block/bamboo/sapling_hit5"
+   ]
+  },
+  {
+   "name": "block.ladder.fall",
+   "group": "fall",
+   "subtitle": "subtitles.block.generic.fall",
+   "sounds": [
+    "step/ladder1",
+    "step/ladder2",
+    "step/ladder3",
+    "step/ladder4",
+    "step/ladder5"
+   ]
+  },
+  {
+   "name": "block.weeping_vines.fall",
+   "group": "fall",
+   "subtitle": "subtitles.block.generic.fall",
+   "sounds": [
+    "block/roots/break1",
+    "block/roots/break2",
+    "block/roots/break3",
+    "block/roots/break4",
+    "block/roots/break5",
+    "block/roots/break6"
+   ]
+  },
+  {
+   "name": "block.blastfurnace.fire_crackle",
+   "group": "named",
+   "subtitle": "subtitles.block.blastfurnace.fire_crackle",
+   "sounds": [
+    "block/blastfurnace/blastfurnace1",
+    "block/blastfurnace/blastfurnace2",
+    "block/blastfurnace/blastfurnace3",
+    "block/blastfurnace/blastfurnace4",
+    "block/blastfurnace/blastfurnace5"
+   ]
   }
  ],
  "files": [
@@ -9164,6 +9249,162 @@
    "name": "liquid/swim4",
    "sha1": "d53da5fdbf67c4bb4597ed0e212a252920692459",
    "size": 8271,
+   "home": "minecraft-sounds-26.3"
+  },
+  {
+   "name": "block/bamboo/sapling_hit1",
+   "sha1": "c740cd0075574d1a6f07835e890fe1b584f6a81b",
+   "size": 6209,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "block/bamboo/sapling_hit2",
+   "sha1": "c1ac1e175c6455070b4540ff9d16a1d5f84dd7d8",
+   "size": 7233,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "block/bamboo/sapling_hit3",
+   "sha1": "16b67f7a0c3a03b60d6fbe8ae7ad6906c4b4fb11",
+   "size": 6140,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "block/bamboo/sapling_hit4",
+   "sha1": "ffc27e79f6d191154702610ec056e106bc051208",
+   "size": 6584,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "block/bamboo/sapling_hit5",
+   "sha1": "47b6a0b93c447b07f0be50ef331df0db97662c64",
+   "size": 6932,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "step/ladder1",
+   "sha1": "3fdd5aa55541d43545c6f0a32a46bcfcbddb5275",
+   "size": 6571,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "step/ladder2",
+   "sha1": "12735079a45c835d19ca8bd415fc76027b525973",
+   "size": 6692,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "step/ladder3",
+   "sha1": "d1c7aa522ea479249af889356d5a3166fc08a407",
+   "size": 6879,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "step/ladder4",
+   "sha1": "3ffc1f0a10482ab25ef24d0a618aba0289dbb827",
+   "size": 6885,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "step/ladder5",
+   "sha1": "929a486c3d4b8c67cde7a04c6a9f1966864c772d",
+   "size": 6923,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "block/roots/step1",
+   "sha1": "0a11f0f24ea5c41821023ec829100194cc6c8ae0",
+   "size": 7387,
+   "home": "minecraft-sounds-26.3"
+  },
+  {
+   "name": "block/roots/step2",
+   "sha1": "11a807d88209d0f4f2e81763c9369c093923fad7",
+   "size": 7029,
+   "home": "minecraft-sounds-26.3"
+  },
+  {
+   "name": "block/roots/step3",
+   "sha1": "4540a415cc3e1413a09b54fbfcf9cb1c3c48a357",
+   "size": 7838,
+   "home": "minecraft-sounds-26.3"
+  },
+  {
+   "name": "block/roots/step4",
+   "sha1": "2a3535b318a9132b00a1ecb2a3216c8bf237f279",
+   "size": 7712,
+   "home": "minecraft-sounds-26.3"
+  },
+  {
+   "name": "block/roots/step5",
+   "sha1": "8711b18848546a66c88aa8d92400ee9e7ee861c1",
+   "size": 7022,
+   "home": "minecraft-sounds-26.3"
+  },
+  {
+   "name": "block/roots/break1",
+   "sha1": "074bf1f2406289d81e600c80862c0267550e4a8e",
+   "size": 11923,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "block/roots/break2",
+   "sha1": "381bd8590b65134d8c2f31a443cb37752145d353",
+   "size": 8990,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "block/roots/break3",
+   "sha1": "9bc2d810f802f87c64287edb6f3257c78e10ecae",
+   "size": 9841,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "block/roots/break4",
+   "sha1": "0c1bb4bac0a42c0c444238a0a89da29dc459aa27",
+   "size": 8384,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "block/roots/break5",
+   "sha1": "b12d1119fb5401538fd56ea7aeba89c80546a2ec",
+   "size": 7951,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "block/roots/break6",
+   "sha1": "bafb15c3d188e1425c0b6428551a14d16b320d9c",
+   "size": 9017,
+   "home": "minecraft-blocks-26.3"
+  },
+  {
+   "name": "block/blastfurnace/blastfurnace1",
+   "sha1": "a11636025bd4e85fec2f40ced585ac7028ee6046",
+   "size": 46102,
+   "home": "minecraft-sounds-26.3"
+  },
+  {
+   "name": "block/blastfurnace/blastfurnace2",
+   "sha1": "ca0c39fca7ab5b2dead37f6842a1d4ed4be1d621",
+   "size": 47784,
+   "home": "minecraft-sounds-26.3"
+  },
+  {
+   "name": "block/blastfurnace/blastfurnace3",
+   "sha1": "428e0d0e7c25d8ca12f1839d7e8623465e745a35",
+   "size": 52973,
+   "home": "minecraft-sounds-26.3"
+  },
+  {
+   "name": "block/blastfurnace/blastfurnace4",
+   "sha1": "2e9a2ad93404bf022c96f9fc944519ca21c14122",
+   "size": 49874,
+   "home": "minecraft-sounds-26.3"
+  },
+  {
+   "name": "block/blastfurnace/blastfurnace5",
+   "sha1": "15fe7b6d1e021b98fba3db61cb6770a9c9fd4b54",
+   "size": 53944,
    "home": "minecraft-sounds-26.3"
   }
  ]

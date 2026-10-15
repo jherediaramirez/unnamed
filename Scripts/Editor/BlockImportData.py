@@ -135,7 +135,9 @@ def build(root):
                              "frame_indices": [f["index"] for f in anim["frames"]] if anim else [],
                              "frame_ticks": [f["time"] for f in anim["frames"]] if anim else [],
                              "interpolate": bool(anim and anim["interpolate"]),
-                             "png": str(ref / f"assets/minecraft/textures/block/{t['name']}.png"),
+                             # Stand-in tiles (the chests') are derived files outside assets/: textures.json names them.
+                             "png": str(ref / t["file"]) if "file" in t else
+                                    str(ref / f"assets/minecraft/textures/block/{t['name']}.png"),
                              "mipmap_strategy": t["mipmap_strategy"], "alpha_cutoff_bias": t.get("alpha_cutoff_bias", 0.0),
                              "layer_rgba_sha256": t["layer_rgba_sha256"], "frame_size": t["frame_size"]})
     index = {t["name"]: i for i, t in enumerate(texture_list)}
@@ -262,6 +264,8 @@ def build(root):
             "item_wall_block": wall_blocks.get(bid) if item else None, "state_support": support_by_id[bid],
             "item_max_stack": item["max_stack"] if item else 64, "item_tint": color(item["gui_tint"] if item else None),
             **icon_fields(item), **(model_fields(block, entry) if model else {}),
+            # Survival B1's family blocks (the manifest's added: "survival-B1"), behind foundation.Blocks.Families.
+            "appended_family": block.get("added") == "survival-B1",
         })
     creative = []
     meta = {t["id"]: t for t in items["creative_tabs"]}

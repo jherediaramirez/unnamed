@@ -141,26 +141,50 @@ void AFoundationPlayground::AddBlockGallery()
     if (const FFoundationBlockState Upper = Parse(TEXT("tall_grass[half=upper]")); !Upper.IsAir())
         Seed(GetShowcaseCell(PlantRow, 2) + FIntVector(0, 0, 1), Upper);
 
-    // Every block in registry order (its default state), then every state in state-id order.
-    for (int32 Block = 1; Block < Registry.GetBlockCount(); ++Block)
-    {
-        const int32 Slot = Block - 1;
-        Seed(
-            RegistryGalleryOrigin + FIntVector(Slot % RegistryGalleryColumns * 2, Slot / RegistryGalleryColumns * 2, 0),
-            Registry.GetBlockAt(Block).GetDefaultState());
-    }
+    // Every block in registry order (its default state), then every state in state-id order; the B1 tails after them.
+    TArray<FGalleryCell> RegistryCells, StateCells;
+    GetGalleryCells(Registry, RegistryCells, StateCells);
+    for (const TArray<FGalleryCell>* Cells : {&RegistryCells, &StateCells})
+        for (const FGalleryCell& Cell : *Cells)
+            Seed(Cell.Cell, Cell.State);
     AddSign(TEXT("BLOCK GALLERY: every block in registry order"),
         CellCenter(RegistryGalleryOrigin, 0) + FVector(-150, 0, 160), 90);
-    int32 Index = 0;
+    AddSign(TEXT("EVERY STATE (as the debug world): state-id order"),
+        CellCenter(StateGalleryOrigin, 0) + FVector(-150, 0, 160), 90);
+    for (const TArray<FGalleryCell>* Cells : {&RegistryCells, &StateCells})
+        if (const FGalleryCell* First = Cells->FindByPredicate([](const FGalleryCell& Cell) { return Cell.bTail; }))
+            AddSign(TEXT("BLOCK FAMILIES (survival B1): default states"),
+                CellCenter(First->Cell, 0) + FVector(-150, 0, 160), 90);
+}
+
+void AFoundationPlayground::GetGalleryCells(
+    const FFoundationBlockRegistry& Registry, TArray<FGalleryCell>& OutRegistry, TArray<FGalleryCell>& OutStates)
+{
+    OutRegistry.Reset();
+    OutStates.Reset();
+    auto Add = [](TArray<FGalleryCell>& Out, const FIntVector& Origin, int32 Columns, int32 Index,
+                   FFoundationBlockState State, bool bTail)
+    { Out.Add({Origin + FIntVector(Index % Columns * 2, Index / Columns * 2, 0), State, bTail}); };
+    int32 Slot = 0, Index = 0;
     for (int32 Block = 1; Block < Registry.GetBlockCount(); ++Block)
     {
         const FFoundationBlockType& Type = Registry.GetBlockAt(Block);
-        for (int32 Local = 0; Local < Type.StateCount; ++Local, ++Index)
-            Seed(StateGalleryOrigin + FIntVector(Index % StateGalleryColumns * 2, Index / StateGalleryColumns * 2, 0),
-                {uint16(Type.MinStateId + Local)});
+        if (Type.bAppendedFamily) continue;
+        Add(OutRegistry, RegistryGalleryOrigin, RegistryGalleryColumns, Slot++, Type.GetDefaultState(), false);
+        for (int32 Local = 0; Local < Type.StateCount; ++Local)
+            Add(OutStates, StateGalleryOrigin, StateGalleryColumns, Index++, {uint16(Type.MinStateId + Local)}, false);
     }
-    AddSign(TEXT("EVERY STATE (as the debug world): state-id order"),
-        CellCenter(StateGalleryOrigin, 0) + FVector(-150, 0, 160), 90);
+    if (!FoundationBlockFamilies::AreEnabled()) return;
+    // The tails start a fresh row; the state gallery holds a family block's default state only, not its states.
+    Slot = FMath::DivideAndRoundUp(Slot, RegistryGalleryColumns) * RegistryGalleryColumns;
+    Index = FMath::DivideAndRoundUp(Index, StateGalleryColumns) * StateGalleryColumns;
+    for (int32 Block = 1; Block < Registry.GetBlockCount(); ++Block)
+    {
+        const FFoundationBlockType& Type = Registry.GetBlockAt(Block);
+        if (!Type.bAppendedFamily) continue;
+        Add(OutRegistry, RegistryGalleryOrigin, RegistryGalleryColumns, Slot++, Type.GetDefaultState(), true);
+        Add(OutStates, StateGalleryOrigin, StateGalleryColumns, Index++, Type.GetDefaultState(), true);
+    }
 }
 
 void AFoundationPlayground::BuildLayout()

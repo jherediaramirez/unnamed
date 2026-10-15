@@ -11,7 +11,9 @@ import net.minecraft.world.level.block.Block;
 // Dumps 26.3 creative tab contents and per-block hardness facts by running the game's own registries. With a
 // second argument (a file of block ids, one per line), also dumps per-state shapes and behaviour for those blocks
 // (block_state_facts.json) and the faces each of their states holds a torch on (block_support.json), measured
-// through public state methods only, and block_sounds.csv, each of those blocks' sound type.
+// through public state methods only, and block_sounds.csv, each of those blocks' sound type. Survival B1 added
+// block_use_sounds.csv (door, trapdoor, gate, button, plate and lever use events) and family_survival.json (the
+// survival probes over every imported block); plant_survival.json keeps the frozen base list (third argument).
 public class FactsDump {
     static String q(String s) { return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""; }
 
@@ -83,10 +85,15 @@ public class FactsDump {
             }
         }
         if (args.length > 1) {
+            // Third argument: the frozen survival base list (tools/survival_base_ids.txt), the subjects and candidates
+            // of plant_survival.json, so that file does not change when blocks are added.
+            if (args.length < 3) throw new IllegalArgumentException("usage: FactsDump <out> <ids> <survival_base_ids>");
             dumpStates(out, Path.of(args[1]));
             dumpSupport(out, Path.of(args[1]));
             dumpSounds(out, Path.of(args[1]));
-            dumpSurvival(out, Path.of(args[1]));
+            dumpUseSounds(out, Path.of(args[1]));
+            dumpSurvival(out, Path.of(args[2]));
+            dumpFamilySurvival(out, Path.of(args[1]));
         }
         System.out.println("FACTS DUMP OK");
         System.exit(0);
@@ -116,6 +123,81 @@ public class FactsDump {
             }
         }
         System.out.println("SOUND TYPES UNIFORM per block");
+    }
+
+    // The BlockSetType (doors, trapdoors, buttons, pressure plates) or WoodType (fence gates) a block is made of,
+    // found by name among the public values(): the block id without its family suffix, without the waxed and
+    // oxidation prefixes (the four copper stages share one set), heavy/light weighted plates being iron and gold.
+    // Doors expose their type publicly (DoorBlock.type()), which checks the rule; in 26.3 TrapDoorBlock, ButtonBlock,
+    // BasePressurePlateBlock/PressurePlateBlock/WeightedPressurePlateBlock and FenceGateBlock have no public type
+    // accessor (javap -public), so every other block is checked by its sound type against the set's. Either check
+    // failing throws.
+    static String material(String id, String suffix) {
+        String m = id.substring(0, id.length() - suffix.length());
+        for (String p : new String[] {"waxed_", "exposed_", "weathered_", "oxidized_"}) if (m.startsWith(p)) m = m.substring(p.length());
+        if (m.equals("heavy_weighted")) m = "iron";
+        if (m.equals("light_weighted")) m = "gold";
+        return m;
+    }
+
+    static net.minecraft.world.level.block.state.properties.BlockSetType setType(String id, String suffix) {
+        String m = material(id, suffix);
+        var found = net.minecraft.world.level.block.state.properties.BlockSetType.values()
+            .filter(t -> t.name().equals(m) || t.name().equals("minecraft:" + m)).toList();
+        if (found.size() != 1) throw new IllegalStateException(id + ": block set type " + m + " matches " + found.size());
+        return found.get(0);
+    }
+
+    // Per imported door, trapdoor, fence gate, button, pressure plate and lever: the events it plays when used, as
+    // paths in the minecraft namespace, from the public BlockSetType / WoodType accessors (the lever: its public
+    // SoundEvents constant). open/close for doors, trapdoors and gates; click_on/click_off for buttons, plates, lever.
+    static void dumpUseSounds(Path out, Path idsFile) throws Exception {
+        int rows = 0, doorChecks = 0, soundChecks = 0;
+        var soundMismatch = new java.util.ArrayList<String>();
+        try (PrintWriter w = new PrintWriter(Files.newBufferedWriter(out.resolve("block_use_sounds.csv")))) {
+            w.println("id,kind,set_type,open,close,click_on,click_off");
+            for (String line : Files.readAllLines(idsFile)) {
+                if (line.isBlank()) continue;
+                String id = line.trim();
+                Block b = BuiltInRegistries.BLOCK.getValue(net.minecraft.resources.Identifier.withDefaultNamespace(id));
+                String kind, type, open = "", close = "", on = "", off = "";
+                net.minecraft.world.level.block.SoundType expected = null;
+                if (b instanceof net.minecraft.world.level.block.DoorBlock door) {
+                    var t = setType(id, "_door");
+                    if (door.type() != t) throw new IllegalStateException(id + ": DoorBlock.type() is " + door.type().name() + ", not " + t.name());
+                    doorChecks++;
+                    kind = "door"; type = t.name(); open = sound(t.doorOpen()); close = sound(t.doorClose()); expected = t.soundType();
+                } else if (b instanceof net.minecraft.world.level.block.TrapDoorBlock) {
+                    var t = setType(id, "_trapdoor");
+                    kind = "trapdoor"; type = t.name(); open = sound(t.trapdoorOpen()); close = sound(t.trapdoorClose()); expected = t.soundType();
+                } else if (b instanceof net.minecraft.world.level.block.ButtonBlock) {
+                    var t = setType(id, "_button");
+                    kind = "button"; type = t.name(); on = sound(t.buttonClickOn()); off = sound(t.buttonClickOff()); expected = t.soundType();
+                } else if (b instanceof net.minecraft.world.level.block.BasePressurePlateBlock) {
+                    var t = setType(id, "_pressure_plate");
+                    kind = "pressure_plate"; type = t.name(); on = sound(t.pressurePlateClickOn()); off = sound(t.pressurePlateClickOff()); expected = t.soundType();
+                } else if (b instanceof net.minecraft.world.level.block.FenceGateBlock) {
+                    String m = material(id, "_fence_gate");
+                    var found = net.minecraft.world.level.block.state.properties.WoodType.values()
+                        .filter(t -> t.name().equals(m) || t.name().equals("minecraft:" + m)).toList();
+                    if (found.size() != 1) throw new IllegalStateException(id + ": wood type " + m + " matches " + found.size());
+                    var t = found.get(0);
+                    kind = "fence_gate"; type = t.name(); open = sound(t.fenceGateOpen()); close = sound(t.fenceGateClose()); expected = t.soundType();
+                } else if (b instanceof net.minecraft.world.level.block.LeverBlock) {
+                    kind = "lever"; type = ""; on = sound(net.minecraft.sounds.SoundEvents.LEVER_CLICK); off = on;
+                } else continue;
+                if (expected != null) {
+                    soundChecks++;
+                    if (b.defaultBlockState().getSoundType() != expected) soundMismatch.add(id);
+                }
+                w.println(id + "," + kind + "," + type + "," + open + "," + close + "," + on + "," + off);
+                rows++;
+            }
+        }
+        System.out.println("USE SOUNDS: rows " + rows + ", door types checked " + doorChecks + ", sound type checks " + soundChecks
+            + ", sound type differs from the set's: " + soundMismatch);
+        // The by-name match is only trusted when the block's sound type is its set's; any difference fails the dump.
+        if (!soundMismatch.isEmpty()) throw new IllegalStateException("sound type differs from the matched set's: " + soundMismatch);
     }
 
     static String boxes(net.minecraft.world.phys.shapes.VoxelShape shape, net.minecraft.world.phys.Vec3 shift) {
@@ -330,13 +412,47 @@ public class FactsDump {
             });
     }
 
-    // Plant survival matrix (plant_survival.json). Subjects: every state of every imported block, in ids order.
-    // Candidates: air, then the same states. For a subject S at the origin cell and a direction D, the set of
-    // candidates X for which S.canSurvive is true with X at the neighbour in direction D and air elsewhere (light 15).
-    // Phase A2: below only, water sources around the support cell. Phase A3: below only, light 0. Identical sets share
-    // a signature id, numbered in order of first appearance (0 = the empty set).
-    static void dumpSurvival(Path out, Path idsFile) throws Exception {
+    // Plant survival matrix (plant_survival.json). Subjects: every state of every block of the frozen base list
+    // (tools/survival_base_ids.txt), in its order. Candidates: air, then the same states. For a subject S at the origin
+    // cell and a direction D, the set of candidates X for which S.canSurvive is true with X at the neighbour in
+    // direction D and air elsewhere (light 15). Phase A2: below only, water sources around the support cell. Phase A3:
+    // below only, light 0. Identical sets share a signature id, numbered in order of first appearance (0 = the empty set).
+    static void dumpSurvival(Path out, Path baseIdsFile) throws Exception {
+        var ids = Files.readAllLines(baseIdsFile).stream().filter(s -> !s.isBlank()).map(String::trim).toList();
+        survivalMatrix(out.resolve("plant_survival.json"), ids, false, "PLANT SURVIVAL", "Per subject state S (every state of every imported block) and per probe, the set of candidate states X (air plus every state of every imported block) for which ");
+    }
+
+    // family_survival.json: the same probes over every imported block (the full ids list), subjects narrowed to the
+    // rule-bearing states (ruleBearing below), candidates air plus every imported state.
+    static void dumpFamilySurvival(Path out, Path idsFile) throws Exception {
         var ids = Files.readAllLines(idsFile).stream().filter(s -> !s.isBlank()).map(String::trim).toList();
+        survivalMatrix(out.resolve("family_survival.json"), ids, true, "FAMILY SURVIVAL", "Per subject state S (every rule-bearing state of every imported block: a state for which "
+            + "S.canSurvive is false in a world holding only S, or holding only S and a stone block at one of its six neighbours; "
+            + "every other state's row is null, and blocks with no rule-bearing state are absent) and per probe, the set of candidate "
+            + "states X (air plus every state of every imported block) for which ");
+    }
+
+    // A state with a survival rule: it fails alone (air on all sides), or next to a full stone cube on some side
+    // (farmland and dirt path under a solid block).
+    static boolean ruleBearing(net.minecraft.world.level.LevelReader level, net.minecraft.core.BlockPos at,
+            net.minecraft.world.level.block.state.BlockState s) {
+        var stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
+        survivalWorld.clear();
+        survivalLight = 15;
+        survivalWorld.put(at, s);
+        boolean rule = !s.canSurvive(level, at);
+        for (var d : net.minecraft.core.Direction.values()) {
+            if (rule) break;
+            survivalWorld.put(at.relative(d), stone);
+            rule = !s.canSurvive(level, at);
+            survivalWorld.remove(at.relative(d));
+        }
+        survivalWorld.clear();
+        return rule;
+    }
+
+    static void survivalMatrix(Path file, java.util.List<String> ids, boolean ruleOnly, String label, String notePrefix) throws Exception {
+        long started = System.nanoTime();
         var cands = new java.util.ArrayList<net.minecraft.world.level.block.state.BlockState>();
         var blockOrder = new java.util.ArrayList<String>();
         var blockRanges = new java.util.ArrayList<int[]>();
@@ -369,8 +485,14 @@ public class FactsDump {
         for (int bi = 1; bi < blocks.size(); bi++) {
             int[] range = blockRanges.get(bi);
             StringBuilder rows = new StringBuilder();
+            boolean anyRule = false;
             for (int si = range[0]; si < range[1]; si++) {
                 var s = cands.get(si);
+                if (ruleOnly && !ruleBearing(level, P, s)) {
+                    rows.append(rows.length() > 0 ? "," : "").append("null");
+                    continue;
+                }
+                anyRule = true;
                 subjectCount++;
                 int[] row = new int[8];
                 for (int phase = 0; phase < 8; phase++) {
@@ -395,10 +517,14 @@ public class FactsDump {
                 for (int i = 0; i < 8; i++) rows.append(i > 0 ? "," : "").append(row[i]);
                 rows.append("]");
             }
-            subjects.append(subjects.length() > 0 ? ",\n " : "").append(q(blockOrder.get(bi))).append(":[").append(rows).append("]");
+            if (ruleOnly && bi % 100 == 0)
+                System.out.println(label + ": block " + bi + " of " + (blocks.size() - 1) + ", subjects " + subjectCount + ", seconds "
+                    + (System.nanoTime() - started) / 1_000_000_000.0);
+            if (!ruleOnly || anyRule)
+                subjects.append(subjects.length() > 0 ? ",\n " : "").append(q(blockOrder.get(bi))).append(":[").append(rows).append("]");
         }
-        try (PrintWriter w = new PrintWriter(Files.newBufferedWriter(out.resolve("plant_survival.json")))) {
-            w.print("{\"note\":" + q("Per subject state S (every state of every imported block) and per probe, the set of candidate states X (air plus every state of every imported block) for which "
+        try (PrintWriter w = new PrintWriter(Files.newBufferedWriter(file))) {
+            w.print("{\"note\":" + q(notePrefix
                 + "S.canSurvive(level, P) is true in a world holding only S at P and X at the probed neighbour cell, air elsewhere, "
                 + "block light and sky light 15. Rows are [west, east, north, south, down, up, down_water, down_dark]: the first six "
                 + "put X at P + that direction; down_water puts X below with water sources at the four horizontal neighbours of that "
@@ -431,6 +557,7 @@ public class FactsDump {
             }
             w.print("\n],\"subjects\":{\n " + subjects + "\n}}\n");
         }
-        System.out.println("PLANT SURVIVAL: candidates " + cands.size() + ", subjects " + subjectCount + ", signatures " + sigList.size());
+        System.out.println(label + ": candidates " + cands.size() + ", subjects " + subjectCount + ", signatures " + sigList.size()
+            + ", seconds " + (System.nanoTime() - started) / 1_000_000_000.0);
     }
 }

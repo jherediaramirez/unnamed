@@ -8,9 +8,10 @@ SoundImportData.py; Docs/Breaking.md, "Other sound events"):
   (loaded read-only; nothing under the break root is ever saved, renamed or modified).
 
 Additive, like ImportBreakAssets.py: existing assets are verified, never rebuilt. A DA_Sounds made from other sound
-data is refused (move it away deliberately), except an exact prefix: when the reference only appended events (its
-"Appending" rule) and the blocks are unchanged, the new waves are imported and the new events appended; the old entries
-are left as they are. Run after ImportBreakAssets.py:
+data is refused (move it away deliberately), except an append: when the reference only appended events (its
+"Appending" rule) and every old block entry is still there unchanged and in order (survival B1 adds block families),
+the new waves are imported, the new events appended and the new blocks inserted at their places in the data's order;
+the old entries are left as they are. Run after ImportBreakAssets.py:
 
     & 'C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe' Unnamed.uproject
         -run=pythonscript "-script=Scripts\\Editor\\ImportSounds.py" -unattended -nop4 -nosplash
@@ -237,16 +238,17 @@ def make_events(expected_events, waves, attenuations):
 
 def fill(asset, waves, attenuations):
     events = make_events(data["events"], waves, attenuations)
-    blocks = []
-    for block in data["blocks"]:
-        entry = unreal.FoundationSoundBlock()
-        entry.set_editor_property("id", block["id"])
-        entry.set_editor_property("step_event", block["step_event"])
-        entry.set_editor_property("fall_event", block["fall_event"])
-        blocks.append(entry)
     asset.set_editor_property("source_sha256", digest)
     asset.set_editor_property("events", events)
-    asset.set_editor_property("blocks", blocks)
+    asset.set_editor_property("blocks", [make_block(block) for block in data["blocks"]])
+
+
+def make_block(block):
+    entry = unreal.FoundationSoundBlock()
+    entry.set_editor_property("id", block["id"])
+    entry.set_editor_property("step_event", block["step_event"])
+    entry.set_editor_property("fall_event", block["fall_event"])
+    return entry
 
 
 def close(a, b):
@@ -303,26 +305,45 @@ def check_blocks(asset):
     if len(blocks) != len(data["blocks"]):
         fail("DA_Sounds has %d blocks, expected %d" % (len(blocks), len(data["blocks"])))
     for entry, block in zip(blocks, data["blocks"]):
-        same = (str(entry.get_editor_property("id")) == block["id"] and
-                entry.get_editor_property("step_event") == block["step_event"] and
-                entry.get_editor_property("fall_event") == block["fall_event"])
-        if not same:
+        if not same_block(entry, block):
             fail("block entry %s differs from the sound data" % block["id"])
 
 
+def same_block(entry, block):
+    return (str(entry.get_editor_property("id")) == block["id"] and
+            entry.get_editor_property("step_event") == block["step_event"] and
+            entry.get_editor_property("fall_event") == block["fall_event"])
+
+
 def append(asset):
-    """Appends the new events to a DA_Sounds whose events are an exact prefix of the sound data and whose blocks equal
-    it; refuses anything else. Returns (old event count, waves imported)."""
+    """Appends to a DA_Sounds made from earlier sound data: its events must be an exact prefix of the data's, and its
+    blocks an ordered subsequence of the data's blocks (manifest blocks, then fluids), each unchanged. The new events go
+    last; the new blocks go in at their places in the data's order. Equal events with more blocks is an append too;
+    anything else is refused. Returns (old event count, waves imported)."""
     old = list(asset.get_editor_property("events"))
-    if len(old) >= len(data["events"]):
+    old_blocks = list(asset.get_editor_property("blocks"))
+    if len(old) > len(data["events"]) or (len(old) == len(data["events"]) and len(old_blocks) >= len(data["blocks"])):
         fail("DA_Sounds was made from other sound data (not a prefix); move it away deliberately and rerun")
     for event, expected in zip(old, data["events"]):
         check_event(event, expected)  # fails on any difference
-    check_blocks(asset)
+    # Walk the data's blocks: each old entry turns up in order and unchanged (ids are unique); the rest are new.
+    blocks, kept = [], 0
+    for block in data["blocks"]:
+        if kept < len(old_blocks) and str(old_blocks[kept].get_editor_property("id")) == block["id"]:
+            if not same_block(old_blocks[kept], block):
+                fail("block entry %s differs from the sound data" % block["id"])
+            blocks.append(old_blocks[kept])
+            kept += 1
+        else:
+            blocks.append(make_block(block))
+    if kept != len(old_blocks):
+        fail("DA_Sounds' block %s is not in the sound data's blocks in order; move it away deliberately and rerun"
+             % old_blocks[kept].get_editor_property("id"))
     imported = ensure_waves()
     waves = verify_waves()
     attenuations = {d: ensure_attenuation(d) for d in data["attenuations"]}
     asset.set_editor_property("events", old + make_events(data["events"][len(old):], waves, attenuations))
+    asset.set_editor_property("blocks", blocks)
     asset.set_editor_property("source_sha256", digest)
     return len(old), imported
 

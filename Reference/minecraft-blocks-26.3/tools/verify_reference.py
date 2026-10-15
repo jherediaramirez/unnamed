@@ -95,17 +95,21 @@ check(present_sounds == required_sounds, f"sound files differ from the required 
 
 # Counts and state ids: every imported state is in the report with the same id and properties.
 blocks = manifest["blocks"]
-check(len(blocks) == 616 and [f["id"] for f in manifest["fluids"]] == ["water", "lava"],
-      "expected 616 blocks + water and lava")
+check(len(blocks) == 926 and [f["id"] for f in manifest["fluids"]] == ["water", "lava"],
+      "expected 926 blocks + water and lava")
 check(sum(b["shape"] == "full_cube" for b in blocks) == 429 and sum(b["shape"] == "slab" for b in blocks) == 101 and
-      sum(b["shape"] == "layers" for b in blocks) == 1 and sum(b["shape"] == "model" for b in blocks) == 85,
-      "expected 429 cubes (powder snow among them), 101 slabs, 1 layered, 85 model blocks")
+      sum(b["shape"] == "layers" for b in blocks) == 1 and sum(b["shape"] == "model" for b in blocks) == 395,
+      "expected 429 cubes (powder snow among them), 101 slabs, 1 layered, 395 model blocks")
 models = json.loads((ROOT / "block_models.json").read_text(encoding="utf-8"))["models"]
 texture_names = {t["name"] for t in textures["textures"]}
-for model in models:
+# The beds' item icons (vanilla `minecraft:composite`: head, and foot one block south) reach z = 2.
+bed_icons = {i["icon"]["model"] for i in json.loads((ROOT / "items.json").read_text(encoding="utf-8"))["items"]
+             if i["id"].endswith("_bed")}
+for index, model in enumerate(models):
     for quad in model["quads"]:
         check(quad["t"] in texture_names and len(quad["v"]) == 4 and len(quad["uv"]) == 4 and
-              all(-.5 <= c <= 1.5 for p in quad["v"] for c in p), f"baked quad: {quad}")
+              all(-.5 <= c <= (2.5 if index in bed_icons and axis == 2 else 1.5)
+                  for p in quad["v"] for axis, c in enumerate(p)), f"baked quad: {quad}")
 state_count = 0
 for block in states["blocks"]:
     entry = report["minecraft:" + block["id"]]
@@ -115,12 +119,15 @@ for block in states["blocks"]:
     state_count += len(got)
     for state in block.get("states", []):
         if state.get("shape") == "model":
-            check("faces" not in state and state["model"] and all(
+            # A wall with no post and no side draws nothing in vanilla (no multipart case applies): an empty model.
+            empty_wall = block["id"].endswith("_wall") and state["properties"].get("up") == "false" and all(
+                state["properties"].get(d) == "none" for d in ("north", "east", "south", "west"))
+            check("faces" not in state and (state["model"] or empty_wall) and all(
                 part and all(0 <= i < len(models) for i in part) for part in state["model"]),
                 f"model parts: {block['id']} {state['id']}")
         else:
             check(len(state.get("faces", [None] * 6)) == 6, f"face count: {block['id']} {state['id']}")
-check(state_count == 4424, f"expected 4424 states, found {state_count}")
+check(state_count == 28552, f"expected 28552 states, found {state_count}")
 
 # Per-state facts (FactsDump.java): every imported block and state, in registry order.
 facts = json.loads((ROOT / "facts/block_state_facts.json").read_text(encoding="utf-8"))
@@ -189,8 +196,21 @@ for number, signature in enumerate(sig_list):
         elif members != "all":
             check(isinstance(members, list) and members == sorted(set(members)) and members and 0 <= members[0]
                   and members[-1] < len(by_id[bid]["states"]), f"plant_survival.json: signature {number} states of {bid}")
-check(list(plant["subjects"]) == [b["id"] for b in sorted(states["blocks"], key=lambda b: b["protocol_id"])],
-      "plant_survival.json: subjects differ from block_states.json (blocks or order)")
+# The subjects are the frozen base list (tools/survival_base_ids.txt, FactsDump's third argument); the later blocks
+# are in family_survival.json.
+base_ids = Path(__file__).with_name("survival_base_ids.txt").read_text(encoding="utf-8").split()
+registry_order = [b["id"] for b in sorted(states["blocks"], key=lambda b: b["protocol_id"])]
+check(list(plant["subjects"]) == base_ids, "plant_survival.json: subjects differ from tools/survival_base_ids.txt")
+check(base_ids == [b for b in registry_order if b in set(base_ids)] and set(base_ids) <= set(by_id),
+      "survival_base_ids.txt: not imported blocks in registry order")
+# Pinned: the base list is exactly the manifest's blocks and fluids in registry order without the blocks appended after
+# the torch (APPENDED_BLOCKS[2:], session B1); torch and wall_torch stay base.
+later_ids = set(build.APPENDED_BLOCKS[2:])
+check(later_ids == {b["id"] for b in manifest["blocks"] if b.get("added") == "survival-B1"},
+      "APPENDED_BLOCKS[2:] differ from the manifest's survival-B1 blocks")
+check(base_ids == [e["id"] for e in sorted(manifest["blocks"] + manifest["fluids"], key=lambda e: e["protocol_id"])
+                   if e["id"] not in later_ids],
+      "survival_base_ids.txt: not the manifest's blocks and fluids without APPENDED_BLOCKS[2:], in registry order")
 for bid, rows in plant["subjects"].items():
     check(len(rows) == len(by_id[bid]["states"]), f"plant_survival.json: state count of {bid}")
     check(all(len(r) == 8 and all(isinstance(i, int) and 0 <= i < len(sig_list) for i in r) for r in rows),
@@ -231,6 +251,41 @@ check(spot("tube_coral_wall_fan", fan, "south", "stone") and not spot("tube_cora
       "plant spot: a wall fan needs its support behind")
 check(all(spot("stone", {}, probe, "air") for probe in PROBES), "plant spot: a full cube survives with air everywhere")
 
+# Family survival (FactsDump.java): the same rows for the rule-bearing states of every imported block (a null row is a
+# state that survives alone and with stone at each neighbour), candidates = air + every imported state. Projected onto
+# the base subjects and base candidates it equals plant_survival.json; a base state with a null row passes every probe
+# with every base candidate there.
+family = json.loads((ROOT / "facts/family_survival.json").read_text(encoding="utf-8"))
+check(sorted(family) == ["face_order", "light", "note", "signatures", "subjects"] and
+      family["face_order"] == states["face_order"] and family["light"] == 15 and family["signatures"][0] == {},
+      "family_survival.json: keys, face order, light or signature 0")
+fam_sigs = family["signatures"]
+for number, signature in enumerate(fam_sigs):
+    for bid, members in signature.items():
+        check(bid == "air" and members == "all" or bid in by_id and (members == "all" or (
+              isinstance(members, list) and members == sorted(set(members)) and members and 0 <= members[0]
+              and members[-1] < len(by_id[bid]["states"]))), f"family_survival.json: signature {number} entry {bid}")
+check(list(family["subjects"]) == [b for b in registry_order if b in family["subjects"]],
+      "family_survival.json: subjects are not imported blocks in registry order")
+family_states = 0
+for bid, rows in family["subjects"].items():
+    check(bid in by_id and len(rows) == len(by_id[bid]["states"]) and any(r is not None for r in rows) and all(
+          r is None or len(r) == 8 and all(isinstance(i, int) and 0 <= i < len(fam_sigs) for i in r) for r in rows),
+          f"family_survival.json: rows of {bid}")
+    family_states += sum(r is not None for r in rows)
+check(family_states == 3472, f"family_survival.json: expected 3472 subject states, found {family_states}")
+base_candidates = {"air", *base_ids}
+everything = {b: "all" for b in base_candidates}
+for bid, rows in plant["subjects"].items():
+    frows = family["subjects"].get(bid) or [None] * len(rows)
+    for index, (row, frow) in enumerate(zip(rows, frows)):
+        if frow is None:
+            check(all(sig_list[i] == everything for i in row),
+                  f"family_survival.json: {bid}[{index}] has a null row but rules in plant_survival.json")
+        else:
+            check(all({b: v for b, v in fam_sigs[f].items() if b in base_candidates} == sig_list[p]
+                      for f, p in zip(frow, row)), f"family_survival.json: {bid}[{index}] differs from plant_survival.json")
+
 # Items: block items for every block whose vanilla item has its id; model blocks' icons resolve.
 items = json.loads((ROOT / "items.json").read_text(encoding="utf-8"))["items"]
 for item in items:
@@ -242,7 +297,33 @@ for item in items:
                   name.removeprefix("block/") in texture_names, f"icon sprite: {item['id']} {name}")
     elif icon:
         check(0 <= icon["model"] < len(models), f"icon model: {item['id']}")
-check(len(items) == 601 and sum("icon" in i for i in items) == 72, "expected 601 items, 72 with model icons")
+# Each of the 16 bed icons is its own model: 30 quads, one block wide, two long (head north, foot south), 9/16 high.
+beds = [i for i in items if i["id"].endswith("_bed")]
+check(len(beds) == 16 and len({i["icon"]["model"] for i in beds}) == 16 and all(
+    len(models[i["icon"]["model"]]["quads"]) == 30 and
+    [[f(c[a] for q in models[i["icon"]["model"]]["quads"] for c in q["v"]) for f in (min, max)] for a in range(3)] ==
+    [[0, 1], [0, .5625], [0, 2]] for i in beds), "bed icons: 16 models of 30 quads spanning [0,1]x[0,9/16]x[0,2]")
+check(len(items) == 887 and sum("model" in i.get("icon", {}) for i in items) == 241 and
+      sum("sprite" in i.get("icon", {}) for i in items) == 117, "expected 887 items, 241 3D icons, 117 sprite icons")
+# Items the item reference owns (build_reference.ITEMS_REFERENCE_ITEMS: the nine saplings) are not here: no item id is
+# in both references.
+items_ref_ids = {i["id"] for i in json.loads((ROOT.parent / "minecraft-items-26.3/items.json").read_text(
+    encoding="utf-8"))["items"]}
+shared = sorted(items_ref_ids & {i["id"] for i in items})
+check(not shared, f"items.json: ids also in the item reference: {shared[:5]}")
+check(build.ITEMS_REFERENCE_ITEMS <= items_ref_ids and len(build.ITEMS_REFERENCE_ITEMS) == 9,
+      "ITEMS_REFERENCE_ITEMS: not nine items of the item reference")
+
+# Use sounds (FactsDump.java): every door, trapdoor, button, pressure plate, fence gate and the lever names events
+# defined in sounds.json (open/close or click_on/click_off).
+use_rows = list(csv.DictReader(open(ROOT / "facts/block_use_sounds.csv", encoding="utf-8")))
+check(len(use_rows) == 90 and len({r["id"] for r in use_rows}) == 90 and all(r["id"] in by_id for r in use_rows),
+      "block_use_sounds.csv: expected 90 distinct imported blocks")
+use_events = {r[k] for r in use_rows for k in ("open", "close", "click_on", "click_off") if r[k]}
+check(use_events <= set(sounds_json), f"block_use_sounds.csv: events missing from sounds.json: "
+                                      f"{sorted(use_events - set(sounds_json))[:5]}")
+check(all(bool(r["open"]) == bool(r["close"]) != bool(r["click_on"]) == bool(r["click_off"]) for r in use_rows),
+      "block_use_sounds.csv: a row needs either open and close or click_on and click_off")
 
 
 # Appended blocks (build_reference.APPENDED_BLOCKS): the textures and models only they use are the last ones, so a
@@ -266,7 +347,8 @@ def used_by(ids):
         if item["block"] in ids and "model" in item.get("icon", {}):
             indices.add(item["icon"]["model"])
         if item["block"] in ids:
-            names |= {l["texture"].removeprefix("block/") for l in item.get("icon", {}).get("sprite", [])}
+            names |= {l["texture"].removeprefix("block/") for l in item.get("icon", {}).get("sprite", [])
+                      if l["texture"].startswith("block/")}
     for b in manifest["fluids"]:
         if b["id"] in ids:
             names |= set(b["textures"].values())
@@ -286,12 +368,15 @@ check(sorted(new_models) == list(range(len(models) - len(new_models), len(models
 rebaked = 0
 if jar_path.exists():
     bake = load("bake_models")
-    baker = bake.Baker(build, build.Models(jar))
+    jar_models = build.Models(jar)
+    build.stand_in_models(jar_models)  # the chests' stand-in boxes
+    baker = bake.Baker(build, jar_models)
     model_ids = {b["id"] for b in blocks if b["shape"] == "model"}
     for block in states["blocks"]:
         if block["id"] not in model_ids:
             continue
-        blockstate = json.loads(jar.read(f"assets/minecraft/blockstates/{block['id']}.json"))
+        blockstate = build.stand_in_blockstate(block["id"]) if block["id"] in build.STAND_IN_SHEETS else json.loads(
+            jar.read(f"assets/minecraft/blockstates/{block['id']}.json"))
         tints = build.TINT_INDICES.get(block["id"], frozenset({0})) if block["id"] in build.TINT_SOURCES else frozenset()
         for state in block["states"]:
             parts = baker.bake_state(blockstate, state["properties"], tints)
@@ -299,10 +384,26 @@ if jar_path.exists():
                   [[models[i] for i in part] for part in state["model"]], f"re-bake differs: {block['id']} {state['id']}")
             rebaked += 1
 
+# Chest stand-ins: the 18 tiles under stand_ins/ are hashed, one per textures.json entry with a `file`, and (with the
+# client jar) re-deriving each from the chest entity sheets (build_reference.stand_in_pixels) gives the same pixels and
+# the same derivation record.
+derived = {t["name"]: t for t in textures["textures"] if "file" in t}
+check(len(derived) == 18 and {n for n in sums if n.startswith("stand_ins/")} == {t["file"] for t in derived.values()}
+      and all(t["file"] == f"stand_ins/{n}.png" and build.stand_in_tile(n) for n, t in derived.items()),
+      "stand_ins/: files differ from the textures.json entries with `file`")
+stand_ins_checked = 0
+if jar_path.exists():
+    for name, texture in derived.items():
+        tile, record = build.stand_in_pixels(jar, *build.stand_in_tile(name))
+        saved = Image.open(ROOT / texture["file"]).convert("RGBA")
+        check(tile.size == saved.size and tile.tobytes() == saved.tobytes() and
+              json.loads(json.dumps(record)) == texture["derived_from"], f"stand-in re-derivation differs: {name}")
+        stand_ins_checked += 1
+
 # Texture layers: decoding every PNG reproduces the recorded per-frame RGBA hashes.
 layers = {"blocks": 0, "water_flow": 0}
 for texture in textures["textures"]:
-    img = Image.open(ROOT / f"assets/minecraft/textures/block/{texture['name']}.png").convert("RGBA")
+    img = Image.open(ROOT / texture.get("file", f"assets/minecraft/textures/block/{texture['name']}.png")).convert("RGBA")
     fw, fh = texture["frame_size"]
     for index, digest in enumerate(texture["layer_rgba_sha256"]):
         frame = img.crop((0, index * fh, fw, (index + 1) * fh))
@@ -320,7 +421,7 @@ if errors:
     print("REFERENCE FAIL")
     print("\n".join(errors[:40]))
     sys.exit(1)
-print(f"REFERENCE OK: {len(sums)} files hashed, {jar_checked} compared with the jar, {sounds_checked} with the asset index, {len(blocks)} blocks + water and lava, "
+print(f"REFERENCE OK: {len(sums)} files hashed, {jar_checked} compared with the jar, {stand_ins_checked} stand-ins re-derived, {sounds_checked} with the asset index, {len(blocks)} blocks + water and lava, "
       f"{state_count} states ({rebaked} model states re-baked), {layers['blocks']} block layers + {layers['water_flow']} "
       f"flow layers; budgets: {len(textures['textures']) + 1} of {TEXTURE_CODES} texture codes, "
       f"{layers['blocks'] + 1} of {ARRAY_SLICES} array slices")
