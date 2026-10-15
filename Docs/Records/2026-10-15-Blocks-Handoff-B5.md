@@ -24,9 +24,10 @@ trampling if T4's landing hook is one line. **First person only, no hands.**
   `FoundationInteraction.cpp`, `FoundationPanels.cpp`, `Hud/*`, `Docs/Items.md`, `Docs/Records/README.md`, and T4's
   `FoundationSimulation.cpp`/`FoundationVitals.cpp` if trampling is in); hashes, goldens, saved worlds; the test plan.
   Wait for the go.
-- **Checks:** `Scripts\RunChecks.ps1 -Profile quick|final` (`-Flight smoke` for the final). Pass
-  `-ExpectedHashes C:\dev\sandbox\b4a-blocks\hashes\expected-hashes-b4a.txt` until SM-Blocks says B4a landed and the
-  shared file moved. Don't edit sources or docs in the tree while RunChecks runs (draft in the sandbox); clang-format
+- **Checks:** `Scripts\RunChecks.ps1 -Profile quick|final` (`-Flight smoke` for the final), always with
+  `-ExpectedHashes C:\dev\tools\shift-managers\survival\expected-hashes-survival.txt` (PM 5's survival file, r8 amplified
+  `0xdbc9e9ea53ee788b` since B4a; main's file stays for `feature/voxel-world`). The merge profile also runs
+  `Scripts/CheckTestGuards.mjs` (every test inside its `WITH_DEV_AUTOMATION_TESTS` guard). Don't edit sources or docs in the tree while RunChecks runs (draft in the sandbox); clang-format
   before the final run.
 - **Pre-commit review:** Sonnet 5.5 on the diff only (split over about 1,500 lines); re-run what fixes touch.
 - **Mutations:** a scripted apply/revert (`C:\dev\sandbox\b4b-blocks\scripts\mutate.py` is a template: backups,
