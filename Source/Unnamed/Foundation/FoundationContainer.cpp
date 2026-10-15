@@ -38,7 +38,9 @@ const FFoundationMenuLayout& FFoundationMenuLayout::Get(EFoundationMenuKind Kind
         Menu::CraftHeight, Menu::FirstArmor, Menu::FirstMain, Menu::FirstHotbar, Menu::OffhandSlot};
     // value-swaps.md, "Crafting table (menu 1-9)" and "player rows (menu 10-36 main, 37-45 hotbar)".
     static const FFoundationMenuLayout Crafting{46, 1, 3, 3, INDEX_NONE, 10, 37, INDEX_NONE};
-    return Kind == EFoundationMenuKind::Crafting ? Crafting : Player;
+    // value-swaps.md, "FurnaceScreen" (input 0, fuel 1, result 2; menu 3-29 main, 30-38 hotbar).
+    static const FFoundationMenuLayout Furnace{39, INDEX_NONE, 0, 0, INDEX_NONE, 3, 30, INDEX_NONE, 0, 3, 2, 1};
+    return Kind == EFoundationMenuKind::Crafting ? Crafting : Kind == EFoundationMenuKind::Furnace ? Furnace : Player;
 }
 
 int32 FFoundationMenuLayout::ToInventorySlot(int32 MenuSlot) const
@@ -98,8 +100,11 @@ int32 FFoundationContainerMenu::ToMenuSlot(int32 InventorySlot)
 
 FFoundationItemInstance* FFoundationContainerMenu::GetSlot(int32 MenuSlot) const
 {
+    // A container's own slots (a furnace's) are the caller's.
+    if (Layout.IsContainer(MenuSlot))
+        return Grid.IsValidIndex(MenuSlot - Layout.FirstContainer) ? &Grid[MenuSlot - Layout.FirstContainer] : nullptr;
     // Crafting off: the grid and the result are inert, as before step 6.
-    if (MenuSlot == ResultSlot) return Rules.bCrafting ? &ResultStack : nullptr;
+    if (MenuSlot == ResultSlot && Layout.HasCraftResult()) return Rules.bCrafting ? &ResultStack : nullptr;
     if (Layout.IsCraft(MenuSlot))
         return Rules.bCrafting && Grid.IsValidIndex(MenuSlot - Layout.FirstCraft) ? &Grid[MenuSlot - Layout.FirstCraft]
                                                                                   : nullptr;
@@ -109,8 +114,13 @@ FFoundationItemInstance* FFoundationContainerMenu::GetSlot(int32 MenuSlot) const
 
 bool FFoundationContainerMenu::MayPlace(int32 MenuSlot, const FFoundationItemInstance& Stack) const
 {
-    // The result slot only gives (ResultSlot.mayPlace).
-    if (MenuSlot == ResultSlot) return false;
+    // The result slot only gives (ResultSlot.mayPlace), as does a furnace's (FurnaceResultSlot).
+    if ((MenuSlot == ResultSlot && Layout.HasCraftResult()) ||
+        (Layout.TakeOnly != INDEX_NONE && MenuSlot == Layout.TakeOnly))
+        return false;
+    // A furnace's fuel slot takes fuel or an empty bucket (FurnaceFuelSlot; minecraft.wiki "Furnace").
+    if (Layout.FuelSlot != INDEX_NONE && MenuSlot == Layout.FuelSlot)
+        return !Stack.IsEmpty() && ((Rules.IsFuel && Rules.IsFuel(Stack.Item)) || Stack.Item == Rules.Bucket);
     if (!Layout.IsArmor(MenuSlot)) return true;
     // Head, chest, legs, feet; only an item equippable there (ArmorSlot.mayPlace).
     static const EFoundationEquipmentSlot Wanted[] = {EFoundationEquipmentSlot::Head, EFoundationEquipmentSlot::Chest,
@@ -126,8 +136,12 @@ int32 FFoundationContainerMenu::GetMaxStack(const FFoundationItemInstance& Stack
 
 int32 FFoundationContainerMenu::GetSlotMax(int32 MenuSlot, const FFoundationItemInstance& Stack) const
 {
-    // An armor slot holds one item.
-    const int32 SlotMax = Layout.IsArmor(MenuSlot) ? 1 : 64;
+    // An armor slot holds one item, as a furnace's fuel slot holds one bucket.
+    const int32 SlotMax = Layout.IsArmor(MenuSlot) ||
+            (Layout.FuelSlot != INDEX_NONE && MenuSlot == Layout.FuelSlot && !Stack.IsEmpty() &&
+                Stack.Item == Rules.Bucket)
+        ? 1
+        : 64;
     return FMath::Min(SlotMax, GetMaxStack(Stack));
 }
 
@@ -192,12 +206,13 @@ int32 FFoundationContainerMenu::GetRoom(const FFoundationItemInstance& Stack, in
 
 void FFoundationContainerMenu::UpdateResult()
 {
+    ResultStack = {};
+    if (!Layout.HasCraftResult()) return;
     TArray<int32, TInlineAllocator<9>> Items;
     for (int32 Index = 0; Index < Layout.CraftWidth * Layout.CraftHeight; ++Index)
         Items.Add(Grid.IsValidIndex(Index) && !Grid[Index].IsEmpty() ? Grid[Index].Item : INDEX_NONE);
     const FFoundationRecipeResult Made =
         Rules.Craft ? Rules.Craft(Items, Layout.CraftWidth, Layout.CraftHeight) : FFoundationRecipeResult();
-    ResultStack = {};
     if (Made.IsEmpty()) return;
     // A stack for the view and the clicks; taking it makes a real instance (TakeResult). -1 is never an inventory
     // instance id.
@@ -318,6 +333,23 @@ void FFoundationContainerMenu::QuickMove(int32 Slot)
     const EFoundationEquipmentSlot Equipment =
         Rules.GetEquipment ? Rules.GetEquipment(Stack.Item) : EFoundationEquipmentSlot::None;
     const int32 Main = Layout.FirstMain, Hotbar = Layout.FirstHotbar, End = Layout.GetHotbarEnd();
+    if (Layout.FirstContainer != INDEX_NONE)
+    {
+        // vanilla's furnace routing (survival.r3.shift_click): the result goes to the main grid and hotbar from the
+        // hotbar's last slot, the input and fuel from the first; from the player's slots an item the furnace cooks goes
+        // to the input (before fuel: an oak log), else fuel to the fuel slot, else the main grid and hotbar trade.
+        if (Layout.IsContainer(Slot))
+            MoveInto(Stack, Main, End, Slot == Layout.TakeOnly);
+        else if (Rules.IsCookable && Rules.IsCookable(Stack.Item))
+            MoveInto(Stack, Layout.FirstContainer, Layout.FirstContainer + 1);
+        else if (Rules.IsFuel && Rules.IsFuel(Stack.Item) && Layout.FuelSlot != INDEX_NONE)
+            MoveInto(Stack, Layout.FuelSlot, Layout.FuelSlot + 1);
+        else if (Layout.IsMain(Slot))
+            MoveInto(Stack, Hotbar, End);
+        else if (Layout.IsHotbar(Slot))
+            MoveInto(Stack, Main, Hotbar);
+        return;
+    }
     if (Layout.FirstArmor == INDEX_NONE)
     {
         // vanilla's CraftingMenu routing (provisional: minecraft.wiki "Crafting Table"; the value report measures
@@ -464,7 +496,8 @@ void FFoundationContainerMenu::PickupAll(int32 Slot, int32 Button)
         for (int32 Index = 0; Index < Layout.Slots && Carried.Count < Max; ++Index)
         {
             const int32 Menu = Button == 0 ? Index : Layout.Slots - 1 - Index;
-            FFoundationItemInstance* Stack = Menu == ResultSlot ? nullptr : GetSlot(Menu);
+            // A crafting result never joins; a furnace's result does (vanilla's canTakeItemForPickAll).
+            FFoundationItemInstance* Stack = Menu == ResultSlot && Layout.HasCraftResult() ? nullptr : GetSlot(Menu);
             if (!Stack || !SameItem(*Stack, Carried) || (Pass == 0 && Stack->Count >= GetMaxStack(*Stack))) continue;
             const int32 Move = FMath::Min(Stack->Count, Max - Carried.Count);
             Carried.Count += Move;
@@ -494,7 +527,7 @@ FFoundationClickResult FFoundationContainerMenu::Click(int32 Slot, int32 Button,
     else if (Inventory.QuickCraft.Status != 0)
         // Any other click ends a drag and does nothing else.
         Inventory.QuickCraft = {};
-    else if (Slot == ResultSlot)
+    else if (Slot == ResultSlot && Layout.HasCraftResult())
     {
         if (Type != EFoundationClickType::Swap || Button == FFoundationInventory::OffhandSlot ||
             (Button >= 0 && Button < FFoundationInventory::HotbarSlots))
@@ -544,7 +577,7 @@ FFoundationClickResult FFoundationContainerMenu::Click(int32 Slot, int32 Button,
         if (Now.InstanceId == Then.InstanceId) ++Now.Revision;
         return true;
     };
-    for (int32 Index = Layout.FirstCraft; Index < Layout.Slots; ++Index)
+    for (int32 Index = Layout.HasCraftResult() ? Layout.FirstCraft : 0; Index < Layout.Slots; ++Index)
         if (FFoundationItemInstance* Stack = GetSlot(Index))
             Result.bChanged |= Touched(*Stack, Before[Index]) || (Stack->IsEmpty() && !Before[Index].IsEmpty());
     Result.bChanged |= Touched(Inventory.Carried, CarriedBefore) ||

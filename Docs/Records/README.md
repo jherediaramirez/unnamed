@@ -2,6 +2,11 @@
 
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
+## October 15, 2026
+
+- [Survival step 8a1: the furnace's store, tick and fuel](2026-10-15-Inventory-8a1.md): record, lane `feature/survival-containers`. `foundation.Furnace 1`: furnaces keep their slots in a block-entity store keyed by cell (`FoundationContainers.*`) and smelt whether open or not (generated cooking data: the 26.3 jar's recipes and `survival.r3.fuels`); XP on take and on break; Codex review 12 #1-#7 (open menus close past reach or when their block breaks; survival screens no longer pause the simulation; `WouldUse`; spectators). No furnace screen until 8a2.
+- [Survival step 8a plan draft](2026-10-15-Inventory-8a-Plan-Draft.md): the 8a plan and its 8a1/8a2 split (8a1 done above).
+
 ## October 14, 2026
 
 - [Survival step 8a handoff: the furnace](2026-10-14-Inventory-Handoff-Step8a.md): start here for T1's next step (lane `feature/survival-containers`): reading list (value-swaps furnace rows, T2's orb API, the menu layout table, the no-auto-close issue), settled decisions, code map, short prompt.
