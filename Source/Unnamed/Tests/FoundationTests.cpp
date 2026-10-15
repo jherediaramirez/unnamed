@@ -663,4 +663,89 @@ bool FFoundationActionsTest::RunTest(const FString&)
     TestFalse(TEXT("inventory cancels actions"), A.bUsing || A.bBreaking);
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationSwimPoseTest, "Unnamed.Foundation.SwimPose",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationSwimPoseTest::RunTest(const FString&)
+{
+    // player.pose_dimensions: swimming is 0.6 x 0.6 with the eyes at 0.4.
+    const auto& P = *GetDefault<UFoundationProfile>();
+    TestEqual(TEXT("swimming height 60 cm"), P.SwimmingHeightCm, 60.);
+    TestEqual(TEXT("swimming eyes 40 cm"), P.SwimmingEyesCm, 40.);
+    const TArray<FBox> Ground = {FBox(FVector(-100000, -100000, -100), FVector(100000, 100000, 0))};
+    auto Water = [](bool bEyes, bool bPose)
+    {
+        FFoundationEligibility Facts;
+        Facts.Fluid = EFoundationFluid::Water;
+        Facts.bEyesInFluid = bEyes;
+        Facts.FluidAtFeetCm = 1000;
+        Facts.bSwimPose = bPose;
+        return Facts;
+    };
+    FFoundationIntent Sprint;
+    Sprint.Move = {0, 1};
+    Sprint.bSprint = true;
+    FFoundationSimulation S;
+    auto Run = [&](const FFoundationIntent& Intent, int32 Ticks, const TArray<FBox>& Boxes,
+                   const FFoundationEligibility& Facts)
+    {
+        for (int32 T = 0; T < Ticks; ++T)
+            S.Step(Intent, 0, P, Boxes, Facts);
+    };
+
+    // Sprinting with the eyes in water swims (from the step after the sprint starts) in the low box.
+    S.Reset({}, P);
+    Run(Sprint, 2, Ground, Water(true, true));
+    TestTrue(TEXT("sprinting under water swims"), S.bSwimming && S.bLowPose);
+    TestEqual(TEXT("in the 60 cm box"), S.HeightCm, P.SwimmingHeightCm);
+    TestEqual(TEXT("with the eyes at 40 cm"), S.GetPoseEyesCm(P), P.SwimmingEyesCm);
+    Run(Sprint, 40, Ground, Water(true, true));
+    TestTrue(TEXT("the eye settles at 40 cm"), FMath::IsNearlyEqual(S.EyeCm, P.SwimmingEyesCm, .5));
+    // Kept while sprinting with only the body in water; a sprint with the eyes out never starts it.
+    Run(Sprint, 5, Ground, Water(false, true));
+    TestTrue(TEXT("kept with the eyes out"), S.bSwimming);
+    S.Reset({}, P);
+    Run(Sprint, 5, Ground, Water(false, true));
+    TestFalse(TEXT("wading never starts it"), S.bSwimming || S.bLowPose);
+    TestEqual(TEXT("wading stands"), S.HeightCm, P.StandingHeightCm);
+
+    // Ending the sprint stands up where the standing box fits.
+    S.Reset({}, P);
+    Run(Sprint, 2, Ground, Water(true, true));
+    // The step after the sprint ends (swimming reads the last step's sprint).
+    Run(FFoundationIntent{}, 2, Ground, Water(true, true));
+    TestFalse(TEXT("no sprint, no swim"), S.bSwimming || S.bLowPose);
+    TestEqual(TEXT("stood up"), S.HeightCm, P.StandingHeightCm);
+
+    // A ceiling closing over the swimmer: at 100 cm neither box fits, so the low box stays until one does; at 160 cm
+    // the crouching box fits.
+    for (const double CeilingCm : {100., 160.})
+    {
+        TArray<FBox> Low = Ground;
+        Low.Add(FBox(FVector(-100000, -100000, CeilingCm), FVector(100000, 100000, CeilingCm + 100)));
+        S.Reset({}, P);
+        Run(Sprint, 2, Ground, Water(true, true));
+        Run(Sprint, 2, Low, Water(true, true));
+        TestTrue(TEXT("swimming under the ceiling"), S.bSwimming);
+        Run(FFoundationIntent{}, 3, Low, Water(true, true));
+        TestFalse(TEXT("the swim ends"), S.bSwimming);
+        if (CeilingCm < P.CrouchingHeightCm)
+        {
+            TestTrue(TEXT("no box fits: the low box stays"), S.bLowPose && S.HeightCm == P.SwimmingHeightCm);
+            Run(FFoundationIntent{}, 1, Ground, Water(true, true));
+            TestEqual(TEXT("stands once the ceiling is gone"), S.HeightCm, P.StandingHeightCm);
+        }
+        else
+            TestTrue(TEXT("the crouching box fits"), !S.bLowPose && S.bCrouched && S.HeightCm == P.CrouchingHeightCm);
+    }
+
+    // foundation.SwimPose 0: the standing box as before.
+    S.Reset({}, P);
+    Run(Sprint, 10, Ground, Water(true, false));
+    TestFalse(TEXT("switch 0 never swims"), S.bSwimming || S.bLowPose);
+    TestEqual(TEXT("switch 0 stands"), S.HeightCm, P.StandingHeightCm);
+    TestEqual(TEXT("switch 0 eyes"), S.GetPoseEyesCm(P), P.StandingEyesCm);
+    return true;
+}
 #endif

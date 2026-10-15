@@ -84,7 +84,7 @@ namespace
     // A model state holding water (seagrass, kelp, waterlogged plants).
     bool IsHeldWater(const FFoundationBlockRegistry& Registry, FFoundationBlockState State)
     {
-        return Registry.GetShape(State) == EFoundationBlockShape::Model && Registry.GetFluid(State).Amount > 0;
+        return Registry.GetShape(State) != EFoundationBlockShape::Fluid && Registry.GetFluid(State).Amount > 0;
     }
     // Water itself, or a state holding it.
     bool HoldsWater(const FFoundationBlockRegistry& Registry, FFoundationBlockState State)
@@ -396,6 +396,17 @@ void UFoundationInteractionView::AddInstance(
         }
         // Held water is drawn as a water source around the model, as the voxel world draws it.
         const FFoundationBlockType* Water = IsHeldWater(Registry, State) ? Registry.FindBlock(TEXT("water")) : nullptr;
+        if (!Water) return;
+        State = Water->GetDefaultState();
+    }
+    else if (IsHeldWater(Registry, State))
+    {
+        // A waterlogged slab or stair draws itself, then its water as a source (the voxel mesher's held fluid).
+        const FFoundationBlockType* Water = Registry.FindBlock(TEXT("water"));
+        MakeCustomData(Registry, State, Data);
+        AddPart({Section, uint16(FoundationBlockMeshes::GetKind(Registry, State, false)),
+                    uint8(Registry.GetBlock(State).Layer)},
+            Cell, FTransform(CellMin), Data, Registry);
         if (!Water) return;
         State = Water->GetDefaultState();
     }
@@ -1251,6 +1262,37 @@ UMaterialInstanceDynamic* UFoundationInteractionView::MakeItemMaterial(const UFo
     return Material;
 }
 
+void UFoundationInteractionView::PlayFireSounds(const AFoundationPawn* Pawn)
+{
+    if (!Pawn) return;
+    const FFoundationVitals& Vitals = Pawn->Vitals;
+    // A new pawn starts from its own counts: nothing it took before plays now.
+    if (FireSoundOwner.Get() != Pawn)
+    {
+        FireSoundOwner = Pawn;
+        HeardLavaHurts = Vitals.LavaHurts;
+        HeardBurnHurts = Vitals.BurnHurts;
+        HeardExtinguishes = Vitals.Extinguishes;
+    }
+    // Wiki values (provisional): a fire hurt plays entity.player.hurt_on_fire at volume 1, pitch 1 +- 0.2; lava's
+    // hit adds entity.generic.burn at 0.4, pitch 2 to 2.4; water putting it out plays entity.generic.extinguish_fire
+    // at 0.7, pitch 1.6 to 2.4.
+    const bool bLava = Vitals.LavaHurts != HeardLavaHurts, bBurn = Vitals.BurnHurts != HeardBurnHurts;
+    const bool bOut = Vitals.Extinguishes != HeardExtinguishes;
+    HeardLavaHurts = Vitals.LavaHurts;
+    HeardBurnHurts = Vitals.BurnHurts;
+    HeardExtinguishes = Vitals.Extinguishes;
+    if (!BreakEffects) return;
+    const FVector At = Pawn->GetActorLocation();
+    if (bLava || bBurn)
+        BreakEffects->PlayEvent(
+            TEXT("entity.player.hurt_on_fire"), At, 1.f, (FMath::FRand() - FMath::FRand()) * .2f + 1.f);
+    if (bLava) BreakEffects->PlayEvent(TEXT("entity.generic.burn"), At, .4f, 2.f + FMath::FRand() * .4f);
+    if (bOut)
+        BreakEffects->PlayEvent(
+            TEXT("entity.generic.extinguish_fire"), At, .7f, 1.6f + (FMath::FRand() - FMath::FRand()) * .4f);
+}
+
 void UFoundationInteractionView::TickComponent(
     float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
@@ -1268,6 +1310,7 @@ void UFoundationInteractionView::TickComponent(
     UpdateLabels(Authority);
     UpdateEffects(DeltaTime);
     AFoundationPawn* Pawn = GetLocalPawn();
+    PlayFireSounds(Pawn);
     const auto* Controller = Pawn ? Cast<AFoundationController>(Pawn->GetController()) : nullptr;
     // F1 hides the outline, preview and hand with the HUD; the menu hides them while paused.
     const bool bVisible = Controller && Controller->IsGameplay() && !Controller->GetHud()->bHideHud;

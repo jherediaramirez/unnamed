@@ -172,9 +172,8 @@ void AFoundationLab::GetFluidFacts(bool bSwim, const FFoundationSimulation& Simu
     Out.IsFluidFree = nullptr;
     if (!bSwim) return;
     Out.Fluid = GetFluid(FFoundationSimulation::Bounds(Simulation.Feet, Simulation.HeightCm, Profile.WidthCm));
-    Out.bEyesInFluid = GetFluid(Simulation.Feet +
-                           FVector(0, 0, Simulation.bCrouched ? Profile.CrouchingEyesCm : Profile.StandingEyesCm)) !=
-        EFoundationFluid::None;
+    Out.bEyesInFluid =
+        GetFluid(Simulation.Feet + FVector(0, 0, Simulation.GetPoseEyesCm(Profile))) != EFoundationFluid::None;
     Out.FluidAtFeetCm = GetFluidAboveCm(Simulation.Feet);
     Out.IsFluidFree = [this](const FBox& Box) { return GetFluid(Box) == EFoundationFluid::None; };
 }

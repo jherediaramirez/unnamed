@@ -131,6 +131,8 @@ void UFoundationInteractionSettings::AddBlockItems(
         // A wall block (wall_torch, the coral wall fans) has no item: it drops its standing block's, which that block
         // makes.
         if (WallBlocks.Contains(Block.Id) && Block.Item.IsNone()) continue;
+        // A block that drops its DA_Items item (the saplings) leaves that item to DA_Items.
+        if (Block.bDropsPlacingItem) continue;
         const FName Id = Block.Item.IsNone() && !Block.DropItem.IsNone() ? Block.DropItem : Block.Item;
         if (Id.IsNone() ||
             Items.ContainsByPredicate([Id](const FFoundationItemDefinition& Item) { return Item.Id == Id; }))

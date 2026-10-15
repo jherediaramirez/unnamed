@@ -219,6 +219,8 @@ private:
     // ring and the cells above those: a change redraws the drawn fluid cells around it and below them (3 x 3 x 2).
     void RefreshFluidsAround(const FFoundationBlockWorld& World, const FIntVector& Cell);
     void HandleEvents(const FFoundationAuthority& Authority);
+    // Lava and burning sounds (step 16) from the local pawn's fire counters.
+    void PlayFireSounds(const AFoundationPawn* Pawn);
     void AddFlash(const FBox& Box, FLinearColor Color, double Life, bool bCross = false);
     void Burst(const FVector& Center, FLinearColor Color, int32 Count, double Size, double Speed, uint32 Seed);
     void ShowNumber(const FVector& Location, const FString& Text, FColor Color);
@@ -323,6 +325,9 @@ private:
     bool bOutlineVisible = false, bPreviewVisible = false;
     double LastViewMs = 0;
     TWeakObjectPtr<AFoundationPawn> HeldOwner;
+    // The fire counters last heard, and whose.
+    TWeakObjectPtr<const AFoundationPawn> FireSoundOwner;
+    int32 HeardLavaHurts = 0, HeardBurnHurts = 0, HeardExtinguishes = 0;
     TSharedPtr<FFoundationBreakEffects> BreakEffects;
     TSharedPtr<FFoundationItemEntityView> ItemEntityView;
     TSharedPtr<FFoundationExperienceOrbView> ExperienceOrbView;

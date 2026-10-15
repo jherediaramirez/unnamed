@@ -1738,19 +1738,20 @@ bool FFoundationBlocksSurvivalTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("differences from sturdy faces (Q2's follow-up)"), Causes.FindRef(TEXT("sturdy faces (Q2)")), 20931);
     TestEqual(TEXT("differences from light (the mushrooms)"), Causes.FindRef(TEXT("light")), 10360);
     TestEqual(TEXT("differences from snow layers (main lane, with snow)"), Causes.FindRef(TEXT("snow layers")), 205680);
-    // S8's rules (main lane, small fixes): pale moss carpet with bottom=false takes any floor; a lily pad pops on a
-    // water source held in a block; an upper half stands on its own upper half; a mushroom stands on powder snow or a
-    // test instance block in the dark.
+    // S8's rules (main lane, small fixes): pale moss carpet with bottom=false takes any floor; an upper half stands on
+    // its own upper half; a mushroom stands on powder snow or a test instance block in the dark. The lily pad's (on a
+    // water source held in a block, 1,521) went to 0 with Codex review 13 #1 (every waterlogged state holds water;
+    // matrix run Tests/Evidence/2026-10-15/Native-20261015-020856).
     TMap<FString, int32> S8;
     for (const TPair<FString, int32>& Difference : Differences)
         if (Difference.Key.StartsWith(TEXT("S8 rule: ")))
             S8.FindOrAdd(Difference.Key.Mid(
                 9, Difference.Key.Find(TEXT(" "), ESearchCase::CaseSensitive, ESearchDir::FromStart, 9) - 9)) +=
                 Difference.Value;
-    const TMap<FString, int32> KnownS8 = {{TEXT("pale_moss_carpet"), 1055349}, {TEXT("lily_pad"), 1521},
-        {TEXT("small_dripleaf"), 192}, {TEXT("tall_grass"), 3}, {TEXT("large_fern"), 3}, {TEXT("sunflower"), 3},
-        {TEXT("lilac"), 3}, {TEXT("rose_bush"), 3}, {TEXT("peony"), 3}, {TEXT("tall_seagrass"), 3},
-        {TEXT("brown_mushroom"), 2}, {TEXT("red_mushroom"), 2}};
+    const TMap<FString, int32> KnownS8 = {{TEXT("pale_moss_carpet"), 1055349}, {TEXT("small_dripleaf"), 192},
+        {TEXT("tall_grass"), 3}, {TEXT("large_fern"), 3}, {TEXT("sunflower"), 3}, {TEXT("lilac"), 3},
+        {TEXT("rose_bush"), 3}, {TEXT("peony"), 3}, {TEXT("tall_seagrass"), 3}, {TEXT("brown_mushroom"), 2},
+        {TEXT("red_mushroom"), 2}};
     TestTrue(TEXT("differences from the S8 rules: only the known ones"), S8.OrderIndependentCompareEqual(KnownS8));
 
     // The cascade. Dirt (hardness 0.5, 15 steps by hand) is the support that gets mined.

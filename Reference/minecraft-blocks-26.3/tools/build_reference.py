@@ -2,7 +2,7 @@
 
 usage (from the repository root):
     uv run --no-project --python 3.13 --with pillow python -I Reference/minecraft-blocks-26.3/tools/build_reference.py
-        [--research C:/dev/sandbox/mc-26.3-blocks] [--facts C:/dev/sandbox/mc-26.3-creative/facts]
+        [--research C:/dev/sandbox/b1-blocks/research] [--facts C:/dev/sandbox/mc-26.3-creative/facts]
 
 Inputs: the client and server jars and the 26.3 asset index (SHA-1 pinned below), the research work folder (manifest, CSVs, notes,
 textures, Mojang's blocks.json report) and the facts dumped by tools/FactsDump.java (creative tabs, hardness).
@@ -14,7 +14,8 @@ Generated files (see README.md for the formats):
     block_states.json    every state of every imported block: 26.3 state id, properties, shape and six faces
     textures.json        every texture: size, animation, mipmap strategy, alpha class and its array layers
     facts/               FactsDump.java's output: hardness, creative tabs, per-state facts, the torch support table,
-                         plant_survival.json (which neighbours let each state survive) and block_sounds.csv (each block's sound type)
+                         plant_survival.json (which neighbours let each state survive), block_sounds.csv (each block's sound type)
+                         and shape_updates.json (BlockState.updateShape answers for stairs, fences, walls, gates, panes and bars)
     block_particles.json each state's particle texture, from the jar's block models
     items.json           block items: name, stack size, GUI tint, creative tab positions
     SHA256SUMS.txt       every file in the folder except itself
@@ -175,6 +176,13 @@ APPENDED_BLOCKS = ["torch", "wall_torch",
                        "oak", "spruce", "birch", "jungle", "acacia", "cherry", "dark_oak", "pale_oak", "poplar")),
                    "cauldron", "water_cauldron", "lava_cauldron", "powder_snow_cauldron", "fire", "soul_fire",
                    "campfire", "soul_campfire"]
+# The first block of each batch of APPENDED_BLOCKS, in order. A batch's state models and then its item icons are baked
+# before the next batch starts, so a later batch never moves an earlier batch's item-icon models (Codex review 15 #3).
+# A session that appends blocks adds its first block here. Torch and B1 were accepted as one batch.
+APPENDED_BATCH_STARTS = ["torch"]
+# One sha256 per accepted baked model (model_digest), in index order: the build and verify_reference.py require these
+# models unchanged at their indices. Written once from block_models.json at survival B2a (4,867 models).
+FROZEN_MODELS = "tools/frozen_models.txt"
 # Blocks whose block item belongs to the items reference (its loot `drop` group): no item here, `vanilla_item` only,
 # so no item id is in both DA_Items and DA_Blocks.
 ITEMS_REFERENCE_ITEMS = frozenset(f"{w}_sapling" for w in (
@@ -507,7 +515,7 @@ def resolve_particles(jar, models, report, manifest):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--research", default="C:/dev/sandbox/mc-26.3-blocks")
+    parser.add_argument("--research", default="C:/dev/sandbox/b1-blocks/research")
     parser.add_argument("--facts", default="C:/dev/sandbox/mc-26.3-creative/facts")
     # Rewrites SHA256SUMS.txt only, after a documentation or tool edit; generated data is never rebuilt in place.
     parser.add_argument("--sums-only", action="store_true")
@@ -569,7 +577,8 @@ def main():
     shutil.copyfile(research / "out/block_manifest.json", ROOT / "research/block_manifest.research.json")
     (ROOT / "facts").mkdir()
     for name in ("block_facts.csv", "creative_tabs.json", "block_state_facts.json", "block_support.json",
-                 "block_sounds.csv", "plant_survival.json", "family_survival.json", "block_use_sounds.csv"):
+                 "block_sounds.csv", "plant_survival.json", "family_survival.json", "block_use_sounds.csv",
+                 "shape_updates.json"):
         shutil.copyfile(facts / name, ROOT / "facts" / name)
     (ROOT / "reports").mkdir()
     subset = {f"minecraft:{i}": report[f"minecraft:{i}"] for i in imported}
@@ -858,14 +867,23 @@ def main():
                     item["icon"] = item_icon(item["model"], tint)
                 items.append(item)
 
-    # Earlier blocks and their item icons first, then APPENDED_BLOCKS, so every new model follows every earlier one;
-    # the outputs return to registry order.
+    # Earlier blocks and their item icons first, then each batch of APPENDED_BLOCKS with its item icons, so every new
+    # model follows every earlier one; the outputs return to registry order.
     base_blocks = [b for b in manifest["blocks"] if b["id"] not in APPENDED_BLOCKS]
-    appended_blocks = [by_manifest[bid] for bid in APPENDED_BLOCKS]
     bake(base_blocks + [dict(f) for f in manifest["fluids"]])
     merge(base_blocks)
-    bake(appended_blocks)
-    merge(appended_blocks)
+    starts = [APPENDED_BLOCKS.index(bid) for bid in APPENDED_BATCH_STARTS] + [len(APPENDED_BLOCKS)]
+    assert starts == sorted(set(starts)) and starts[0] == 0, APPENDED_BATCH_STARTS
+    for first, end in zip(starts, starts[1:]):
+        batch = [by_manifest[bid] for bid in APPENDED_BLOCKS[first:end]]
+        bake(batch)
+        merge(batch)
+    frozen = read_frozen_models()
+    if len(frozen) < 4867:
+        raise SystemExit(f"{FROZEN_MODELS} is missing or shorter than survival B1's 4,867 models")
+    lost = [i for i, digest in enumerate(frozen) if i >= len(baker.baked) or model_digest(baker.baked[i]) != digest]
+    if lost:
+        raise SystemExit(f"{FROZEN_MODELS}: accepted models changed or moved, first indices {lost[:5]}")
     order = {b["id"]: i for i, b in enumerate(manifest["blocks"] + manifest["fluids"])}
     states_out.sort(key=lambda e: order[e["id"]])
     merged_blocks.sort(key=lambda b: order[b["id"]])
@@ -929,6 +947,18 @@ def main():
     print(f"blocks {len(merged_blocks)} + fluids {fluid_ids}; states {sum(len(e['states']) for e in states_out)}; "
           f"textures {len(textures)} -> {layer} block layers + {flow_layer} flow layers; items {len(items)}; "
           f"random-variant blocks {len(randoms)}; baked models {len(baker.baked)}; files {len(files) + 1}")
+
+
+def model_digest(model):
+    """A baked model's sha256 over its canonical JSON (sorted keys, compact separators), as tools/frozen_models.txt
+    lists them."""
+    return hashlib.sha256(json.dumps(model, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def read_frozen_models(root=ROOT):
+    """tools/frozen_models.txt's digests in index order (empty when absent)."""
+    path = root / FROZEN_MODELS
+    return path.read_text(encoding="utf-8").split() if path.exists() else []
 
 
 def write_sums():

@@ -649,6 +649,9 @@ private:
     // After an edit at Cell replaced Before: a double plant's two halves stay one unit, then the changed cells'
     // neighbours that no longer survive pop, one level deep (Jesus's answer 6), and a stack to its end (Q1).
     void SettlePlants(const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player);
+    // A block's loot for Tool, rolled before it goes: its table, else "drops itself" (a double slab is two).
+    void RollBlockDrops(const FIntVector& Cell, FFoundationBlockState State, const FFoundationItemDefinition& Tool,
+        int32 RandomSeed, TArray<FFoundationLootDrop>& Out) const;
     // A broken block's loot as item entities, split into stacks that fit (provisional spread and speed).
     void SpawnDrops(const FIntVector& Cell, TConstArrayView<FFoundationLootDrop> Drops, int32 RandomSeed);
     void StepItemEntities();

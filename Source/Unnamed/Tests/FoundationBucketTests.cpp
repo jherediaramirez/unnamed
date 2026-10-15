@@ -363,6 +363,56 @@ bool FFoundationItemsBucketBlockUseTest::RunTest(const FString&)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationItemsBucketReplaceTest, "Unnamed.Foundation.Items.BucketReplace", BucketTestFlags)
+
+bool FFoundationItemsBucketReplaceTest::RunTest(const FString&)
+{
+    // Codex review 13 #2: water replaces a block fluids wash away (a torch, a flower), which pops its drop as an item
+    // entity (minecraft.wiki "Water Bucket"); without item entities it goes without one, as before.
+    for (const FName Block : {FName(TEXT("torch")), FName(TEXT("dandelion"))})
+        for (const bool bEntities : {true, false})
+        {
+            FBucketLab Lab;
+            if (!TestNotNull(*Block.ToString(), Lab.A.World.FindBlock(Block))) return false;
+            Lab.A.Options.bItemEntities = bEntities;
+            Lab.Put(FIntVector(Lab.Aimed.X, Lab.Aimed.Y, Lab.Aimed.Z - 1), TEXT("stone"));
+            Lab.Put(Lab.Aimed, Block);
+            Lab.Give(0, TEXT("water_bucket"));
+            const FFoundationResult Result = Lab.Use();
+            TestTrue(FString::Printf(TEXT("water replaces the %s"), *Block.ToString()),
+                Result.bEmptied && Result.Cell == Lab.Aimed && Lab.IsSource(Lab.Aimed, false));
+            const TArray<FFoundationItemEntity>& Items = Lab.A.GetItemEntities();
+            const bool bDropped =
+                Items.Num() == 1 && Lab.A.Rules.GetItem(Items[0].Item).Id == Block && Items[0].Count == 1;
+            if (bEntities)
+                TestTrue(FString::Printf(TEXT("the %s pops its drop"), *Block.ToString()), bDropped);
+            else
+                TestEqual(TEXT("without item entities, no drop"), Items.Num(), 0);
+        }
+    {
+        // Codex review 13 #3: a double slab takes no water (minecraft.wiki "Slab"); the water goes beside it.
+        FBucketLab Lab;
+        Lab.Give(0, TEXT("water_bucket"));
+        Lab.Put(Lab.Aimed, TEXT("oak_slab"), TEXT("type"), TEXT("double"));
+        const FFoundationResult Result = Lab.Use();
+        TestTrue(TEXT("poured beside the double slab"),
+            Result.bEmptied && Result.Cell == Lab.Beside && Lab.IsSource(Lab.Beside, false));
+        TestEqual(TEXT("the double slab stays dry"), Lab.Value(Lab.Aimed, TEXT("waterlogged")), FName(TEXT("false")));
+        TestEqual(TEXT("and double"), Lab.Value(Lab.Aimed, TEXT("type")), FName(TEXT("double")));
+    }
+    {
+        // Codex review 13 #1: the poured bottom slab holds a water source, as the voxel table and meshes read it.
+        FBucketLab Lab;
+        Lab.Give(0, TEXT("water_bucket"));
+        Lab.Put(Lab.Aimed, TEXT("oak_slab"), TEXT("type"), TEXT("bottom"));
+        TestTrue(TEXT("the slab takes the water"), Lab.Use().bEmptied);
+        const FFoundationFluid Fluid = Lab.Registry().GetFluid(Lab.A.World.Get(Lab.Aimed).State);
+        TestTrue(TEXT("the waterlogged bottom slab holds a water source"), Fluid.bWater && Fluid.bSource);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FFoundationItemsBucketWaterlogTest, "Unnamed.Foundation.Items.BucketWaterlog", BucketTestFlags)
 
 bool FFoundationItemsBucketWaterlogTest::RunTest(const FString&)
