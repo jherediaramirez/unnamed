@@ -1,6 +1,7 @@
 #include "Foundation/FoundationAuthority.h"
 #include "Algo/AllOf.h"
 #include "Blocks/VoxelPlantSurvival.h"
+#include "Foundation/FoundationBlockFamilies.h"
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationSimulation.h"
@@ -1849,6 +1850,8 @@ FFoundationBlockState FFoundationAuthority::TrimPlantFaces(const FIntVector& Cel
 void FFoundationAuthority::SettlePlants(
     const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player)
 {
+    // Stairs, fences, walls, panes and gates beside the edit (survival B2b, foundation.Blocks.Shapes).
+    FoundationBlockFamilies::UpdateNeighbourShapes(World, Cell);
     if (!Options.bPlantRules) return;
     // Pops drop nothing until item entities exist (scout H, Q4).
     TArray<FIntVector, TInlineAllocator<8>> Changed = {Cell};
