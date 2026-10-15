@@ -57,7 +57,6 @@ As in 8b1 and 8b2a:
 
 ### Known issues
 
-- Light 13 (T5 B3a).
 - The furnace ambience scheduling.
 - The creative screen pausing.
 - The focus loss under a survival screen.
