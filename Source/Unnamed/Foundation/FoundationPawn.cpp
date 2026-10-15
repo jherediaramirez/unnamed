@@ -3,6 +3,7 @@
 #include "Foundation/FoundationController.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationLab.h"
+#include "Foundation/FoundationPanels.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationCoordinates.h"
 #include "Foundation/FoundationInteractionView.h"
@@ -364,11 +365,23 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.Options.bCrafting = FoundationCrafting::IsEnabled();
     Authority.Options.bItemUse = FoundationItemUse::IsOn();
     Authority.Options.bExperienceOrbs = FoundationExperienceOrbs::IsOn();
+    Authority.Options.bBlockUse = FoundationBlockUse::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     Authority.Step();
     // Step 12: the orbs this player took this step fill its XP bar.
     if (const int32 Points = Authority.TakeExperience(Interaction.PlayerId)) Vitals.AddExperience(Points);
     Interaction.StepOnce(Authority, Vitals, bLatestStep, NowSeconds);
+    // A block's use opened a container (survival step 7): its screen opens; without a screen to show it, it closes.
+    if (const int32 Container = Interaction.OpenedContainer)
+    {
+        Interaction.OpenedContainer = 0;
+        const AFoundationController* PlayerController = Cast<AFoundationController>(GetController());
+        UFoundationPanels* Panels = PlayerController ? PlayerController->GetPanels() : nullptr;
+        if (Panels && GetLab())
+            Panels->OpenContainerScreen(*GetLab(), Interaction.OpenedMenu, Container);
+        else
+            Interaction.ContainerClose(Authority, Vitals);
+    }
     // A landed sprint-knockback hit ends the sprint; held sprint input restarts it by the simulation's own rules.
     if (Interaction.bStopSprint)
     {

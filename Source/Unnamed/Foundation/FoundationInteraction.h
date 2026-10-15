@@ -116,6 +116,10 @@ struct UNNAMED_API FFoundationInteraction
     // A landed sprint-knockback attack ends the sprint (wiki "Knockback"): the movement owner stops sprinting and
     // clears this.
     bool bStopSprint = false;
+    // A block's use opened a container (survival step 7): its id and menu; the pawn's owner opens the screen and
+    // clears these.
+    int32 OpenedContainer = 0;
+    EFoundationMenuKind OpenedMenu = EFoundationMenuKind::Inventory;
 
     // Diagnostics.
     FFoundationResult LastResult;

@@ -630,6 +630,11 @@ void UFoundationPanels::OpenCreative(AFoundationLab& Lab)
 
 void UFoundationPanels::OpenSurvivalInventory(AFoundationLab& Lab)
 {
+    OpenContainerScreen(Lab, EFoundationMenuKind::Inventory, FFoundationContainerMenu::PlayerContainer);
+}
+
+void UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenuKind Kind, int32 ContainerId)
+{
     if (bOpen) Close();
     AFoundationController* Controller = GetFoundationController();
     AFoundationPawn* Pawn = Controller->GetFoundationPawn();
@@ -643,8 +648,9 @@ void UFoundationPanels::OpenSurvivalInventory(AFoundationLab& Lab)
         .Registry(Authority.World.GetRegistryRef())
         .HudAssets(LoadObject<UHudAssets>(nullptr, *UUnnamedProjectSettings::GetHudRegistryPath()))
         .RequestedGuiScale(MakeGuiScale(Controller))
+        .Kind(Kind)
         .Items(MakeScreenItems(Authority))
-        .GetView([WeakLab, WeakPawn]
+        .GetView([WeakLab, WeakPawn, ContainerId]
         {
             FHudContainerView View;
             View.Slots.SetNum(FFoundationContainerMenu::PlayerMenuSlots);
@@ -658,18 +664,23 @@ void UFoundationPanels::OpenSurvivalInventory(AFoundationLab& Lab)
                     ? FHudCreativeStack()
                     : FHudCreativeStack{A.Rules.GetItem(Item->Item).Id, Item->Count, Item->Damage};
             };
-            // The menu's slots, the crafting grid and its result included (survival step 6).
-            const TArray<FFoundationItemInstance> Menu = A.GetPlayerMenu(*Player);
-            for (int32 Slot = 0; Slot < FFoundationContainerMenu::PlayerMenuSlots; ++Slot)
+            // The menu's slots, the crafting grid and its result included (survival step 6); a crafting table's
+            // while it is the open container (survival step 7).
+            const TArray<FFoundationItemInstance> Menu = ContainerId == FFoundationContainerMenu::PlayerContainer
+                ? A.GetPlayerMenu(*Player)
+                : Player->OpenMenu.ContainerId == ContainerId ? A.GetOpenMenu(*Player)
+                                                              : TArray<FFoundationItemInstance>();
+            View.Slots.SetNum(FMath::Max(View.Slots.Num(), Menu.Num()));
+            for (int32 Slot = 0; Slot < Menu.Num(); ++Slot)
                 View.Slots[Slot] = Stack(&Menu[Slot]);
             View.Carried = Stack(&Player->Inventory.Carried);
             return View;
         })
-        .OnClick([WeakLab, WeakPawn](const FHudContainerClick& Click)
+        .OnClick([WeakLab, WeakPawn, ContainerId](const FHudContainerClick& Click)
         {
             if (WeakLab.IsValid() && WeakPawn.IsValid() && WeakLab->GetAuthority())
-                WeakPawn->Interaction.ContainerClick(*WeakLab->GetAuthority(), WeakPawn->Vitals,
-                    FFoundationContainerMenu::PlayerContainer, Click.Slot, Click.Button, Click.Type);
+                WeakPawn->Interaction.ContainerClick(*WeakLab->GetAuthority(), WeakPawn->Vitals, ContainerId,
+                    Click.Slot, Click.Button, Click.Type);
         })
         .OnClose([WeakThis] { if (WeakThis.IsValid()) WeakThis->Close(); })
         .GetKey([WeakInput = TWeakObjectPtr<UUnnamedInputSubsystem>(Controller->GetInputSubsystem())](FName Id)
@@ -691,7 +702,8 @@ void UFoundationPanels::OpenSurvivalInventory(AFoundationLab& Lab)
     Mode.SetWidgetToFocus(Survival);
     Controller->SetInputMode(Mode);
     FSlateApplication::Get().SetKeyboardFocus(Survival);
-    Controller->GetHud()->LogEvent(TEXT("survival inventory"));
+    Controller->GetHud()->LogEvent(
+        Kind == EFoundationMenuKind::Crafting ? TEXT("crafting table") : TEXT("survival inventory"));
     bInventoryOpen = true;
 }
 
