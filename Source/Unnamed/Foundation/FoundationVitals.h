@@ -106,6 +106,9 @@ struct UNNAMED_API FFoundationVitals
 
     // One reference tick: timers, movement exhaustion and falls, air, then food.
     void Step(const FFoundationVitalsStep& Facts);
+    // Step's falls and fire alone (mobs, survival T6 20b2: no food, air or regeneration): landing damage (none when
+    // bFallImmune), water putting the fire out, burning and lava.
+    void StepHazards(const FFoundationVitalsStep& Facts, bool bFallImmune = false);
     // The whole hurt path: invulnerability, difficulty, damage cooldown, armor, absorption, exhaustion, death.
     bool Hurt(EFoundationDamage Type, float Amount);
     void Heal(float Amount);

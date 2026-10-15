@@ -379,6 +379,8 @@ void FFoundationAuthority::Reset()
     ItemEntities.Empty();
     ExperienceOrbs.Empty();
     Mobs.Empty();
+    MobSpawnColumns.Empty();
+    PathStart = 0;
     FFoundationEvent Event;
     Event.Kind = EFoundationEventKind::Reset;
     AddEvent(Event);
@@ -393,6 +395,7 @@ void FFoundationAuthority::Step()
         if (Player.Use.bActive && Player.Facts.Step - Player.Use.LastStep > 1) CancelUse(Player);
     StepItemEntities();
     StepMobs();
+    StepMobSpawns();
     StepExperienceOrbs();
     StepOpenMenus();
     StepFurnaces();
@@ -1070,7 +1073,7 @@ void FFoundationAuthority::StepMobs()
         if (const FFoundationPathCell* Known = PathCells.Find(Cell)) return *Known;
         return PathCells.Add(Cell, GetPathCell(Cell));
     };
-    int32 Paths = 0;
+    int32 Paths = 0, LastPlanned = PathStart;
     TArray<FBox> Boxes;
     for (int32 Index = 0; Index < Mobs.Num();)
     {
@@ -1097,22 +1100,25 @@ void FFoundationAuthority::StepMobs()
         if (Mob.HurtTime > 0) --Mob.HurtTime;
         if (!Mob.IsAlive() && ++Mob.DeathTime >= RemoveAtDeathTime)
         {
-            DropMobLoot(Mob);
             Mobs.RemoveAt(Index);
             continue;
         }
         Think(Mob, Origin, Near, Mob.Type == EFoundationMobType::Sheep && Mob.GrazeTicks == 0 && CanGraze(Mob));
         if (Mob.bEatNow) EatGrass(Mob);
-        if (Mob.bNeedPath && Paths < PathsPerStep)
+        // The budget goes first to the mobs after the one that planned last when it ran out (PathStart; 0: none
+        // waited), then, after the loop, to the others.
+        if (Mob.bNeedPath && Paths < PathsPerStep && Mob.Id > PathStart)
         {
             PlanPath(Mob, Query);
             ++Paths;
             ++MobPaths;
+            LastPlanned = Mob.Id;
         }
         bool bJump = false;
         const FVector2D Input = Steer(Mob, Origin, bJump);
         GatherEntityCollision(GetStepRegion(Mob, Origin), GetBox(Mob.Type, Origin + Mob.LocalCm), Boxes);
         Move(Mob, Origin, Boxes, Input, bJump);
+        StepMobHazards(Mob);
         Animate(Mob);
         if (Mob.IsAlive())
         {
@@ -1153,6 +1159,167 @@ void FFoundationAuthority::StepMobs()
         else
             ++Index;
     }
+    bool bWaiting = false;
+    for (FFoundationMob& Mob : Mobs)
+    {
+        if (!Mob.bNeedPath || Mob.bFrozen || !Mob.IsAlive()) continue;
+        if (Paths < PathsPerStep && Mob.Id <= PathStart)
+        {
+            PlanPath(Mob, Query);
+            ++Paths;
+            ++MobPaths;
+            LastPlanned = Mob.Id;
+        }
+        else
+            bWaiting = true;
+    }
+    PathStart = bWaiting ? LastPlanned : 0;
+}
+
+bool FFoundationAuthority::IsMobInFluid(const FBox& Body, bool bLava) const
+{
+    // As the generated world's GetFluid: a fluid's surface box (amount / 9 of the cell, full under the same fluid)
+    // overlapping the body shrunk a hair.
+    const FBox Inner = Body.ExpandBy(-.1);
+    const FIntVector Low = FoundationGrid::CellAt(Inner.Min, World.OriginCm),
+                     High = FoundationGrid::CellAt(Inner.Max, World.OriginCm);
+    const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    const double Block = UFoundationProfile::BlockCm;
+    for (int32 Z = Low.Z; Z <= High.Z; ++Z)
+        for (int32 Y = Low.Y; Y <= High.Y; ++Y)
+            for (int32 X = Low.X; X <= High.X; ++X)
+            {
+                const FIntVector Cell(X, Y, Z);
+                if (!World.IsKnown(Cell)) continue;
+                const FFoundationFluid Fluid = Registry.GetFluid(World.Get(Cell).State);
+                if (!(bLava ? Fluid.bLava : Fluid.bWater)) continue;
+                const FIntVector Up = Cell + FIntVector(0, 0, 1);
+                const FFoundationFluid Above =
+                    World.IsKnown(Up) ? Registry.GetFluid(World.Get(Up).State) : FFoundationFluid();
+                const bool bSameAbove = bLava ? Above.bLava : Above.bWater;
+                const FVector Bottom = World.OriginCm + FVector(Cell) * Block;
+                const FBox Surface(Bottom, Bottom + FVector(Block, Block, Fluid.GetHeight(bSameAbove) * Block));
+                if (Surface.Intersect(Inner)) return true;
+            }
+    return false;
+}
+
+void FFoundationAuthority::StepMobHazards(FFoundationMob& Mob)
+{
+    using namespace FoundationMobs;
+    if (!Mob.IsAlive()) return;
+    // [fall.damage_thresholds V:324, hurt.lava_contact V:289] the player's rules: landing damage past 3 blocks, lava
+    // 4 per tick (through the damage cooldown) and 15 s of fire, burning 1 every 20 ticks, water puts it out. Lava and
+    // fire only with Options.bFire (foundation.Fire), as the pawn. The chicken takes no fall damage (Codex T6 C).
+    const FBox Body = GetBox(Mob.Type, World.OriginCm + Mob.LocalCm);
+    FFoundationVitalsStep Facts;
+    Facts.DisplacementCm = Mob.LocalCm - Mob.PreviousLocalCm;
+    Facts.bGrounded = Mob.bOnGround;
+    Facts.bBodyInWater = IsMobInFluid(Body, false);
+    Facts.bBodyInLava = Options.bFire && IsMobInFluid(Body, true);
+    const float Before = Mob.Health.Health;
+    Mob.Health.StepHazards(Facts, Mob.Type == EFoundationMobType::Chicken);
+    if (Mob.Health.Health >= Before) return;
+    // Provisional: a hazard's hit shows the hurt overlay and plays the hurt or death sound like a player's, without
+    // knockback or panic.
+    Mob.HurtTime = HurtTicks;
+    AddMobSound(Mob, Mob.IsAlive() ? TEXT("hurt") : TEXT("death"), GetKind(Mob.Type).Volume);
+    if (!Mob.IsAlive()) DropMobLoot(Mob);
+}
+
+void FFoundationAuthority::StepMobSpawns()
+{
+    using namespace FoundationMobs;
+    if (!Options.bMobs || !Options.bMobSpawn || !GetBiomeId || Rules.BiomeSpawns.IsEmpty()) return;
+    for (const FFoundationPlayer& Player : Players)
+    {
+        if (!Player.bHasFacts) continue;
+        const FIntVector Feet = FoundationGrid::CellAt(Player.Facts.FeetCm, World.OriginCm);
+        const FIntPoint Center(FoundationGrid::FloorDivide(Feet.X, SpawnColumnCells),
+            FoundationGrid::FloorDivide(Feet.Y, SpawnColumnCells));
+        // Nearest rings first; at most SpawnColumnsPerStep new columns a step (the rest wait for the next).
+        int32 Rolled = 0;
+        for (int32 Ring = 0; Ring <= SpawnRingColumns && Rolled < SpawnColumnsPerStep; ++Ring)
+            for (int32 DY = -Ring; DY <= Ring && Rolled < SpawnColumnsPerStep; ++DY)
+                for (int32 DX = -Ring; DX <= Ring && Rolled < SpawnColumnsPerStep; ++DX)
+                {
+                    if (FMath::Max(FMath::Abs(DX), FMath::Abs(DY)) != Ring) continue;
+                    const FIntPoint Column = Center + FIntPoint(DX, DY);
+                    const FIntVector Corner(Column.X * SpawnColumnCells, Column.Y * SpawnColumnCells, 0);
+                    if (MobSpawnColumns.Contains(Column) || !World.GetStorage().IsLoaded(Corner)) continue;
+                    MobSpawnColumns.Add(Column);
+                    ++MobColumnsSeen;
+                    ++Rolled;
+                    SpawnPack(Column);
+                }
+    }
+}
+
+int32 FFoundationAuthority::SpawnPack(const FIntPoint& Column)
+{
+    using namespace FoundationMobs;
+    // Deterministic from the world seed and the column alone (never the order columns load in).
+    FRandomStream Random(FoundationLoot::MakeSeed(MobSpawnSeed ^ 0x6d6f6273, FIntVector(Column.X, Column.Y, 0), 20));
+    const int32 MinX = Column.X * SpawnColumnCells, MinY = Column.Y * SpawnColumnCells;
+    const int32 X = MinX + Random.RandHelper(SpawnColumnCells);
+    const int32 Y = MinY + Random.RandHelper(SpawnColumnCells);
+    const float Roll = Random.GetFraction();
+    // The biome above the top block of the pack's column.
+    FIntVector Top(X, Y, World.BoundsMax.Z);
+    while (Top.Z > World.BoundsMin.Z && World.IsKnown(Top) && World.Get(Top).State.IsAir())
+        --Top.Z;
+    const FFoundationBiomeSpawns* Biome = Rules.BiomeSpawns.Find(GetBiomeId(Top + FIntVector(0, 0, 1)));
+    if (!Biome || Roll >= Biome->Chance) return 0;
+    const FFoundationMobSpawn* Entry = PickSpawn(*Biome, Random);
+    if (!Entry) return 0;
+    const int32 Count = RollPackSize(*Entry, Random);
+    const double Block = UFoundationProfile::BlockCm;
+    int32 Spawned = 0;
+    for (int32 Member = 0; Member < Count; ++Member)
+    {
+        const int32 OffsetX = RollPackOffset(Random);
+        const int32 OffsetY = RollPackOffset(Random);
+        const float Yaw = Random.FRandRange(0, 360);
+        const int32 MemberX = FMath::Clamp(X + OffsetX, MinX, MinX + SpawnColumnCells - 1);
+        const int32 MemberY = FMath::Clamp(Y + OffsetY, MinY, MinY + SpawnColumnCells - 1);
+        FIntVector Feet;
+        if (!FindPackCell(Entry->Type, MemberX, MemberY, Feet)) continue;
+        if (SpawnMob(Entry->Type, FVector(Feet.X + .5, Feet.Y + .5, Feet.Z) * Block, Yaw)) ++Spawned;
+    }
+    if (Spawned > 0) ++MobPacks;
+    MobsPackSpawned += Spawned;
+    return Spawned;
+}
+
+bool FFoundationAuthority::FindPackCell(EFoundationMobType Type, int32 X, int32 Y, FIntVector& OutFeet)
+{
+    using namespace FoundationMobs;
+    // The top motion-blocking block: the highest with a collision box or a fluid (plants and air are skipped).
+    FIntVector Cell(X, Y, World.BoundsMax.Z);
+    for (; Cell.Z >= World.BoundsMin.Z; --Cell.Z)
+    {
+        if (!World.IsKnown(Cell)) return false;
+        if (World.Get(Cell).State.IsAir()) continue;
+        const FFoundationPathCell Path = GetPathCell(Cell);
+        if (Path.bAvoid || Path.Solid > 0) break;
+    }
+    if (Cell.Z < World.BoundsMin.Z || World.GetBlock(World.Get(Cell).State).Id != TEXT("grass_block")) return false;
+    // Above the motion-blocking top the sky light proxy is 15 (scout Q1 (a)).
+    if (SkyLightProxy < PassiveMinLight) return false;
+    OutFeet = Cell + FIntVector(0, 0, 1);
+    // Room for the box: no collision and no fluid in it (shrunk a hair off the floor).
+    const double Block = UFoundationProfile::BlockCm;
+    const FBox Body =
+        GetBox(Type, World.OriginCm + FVector(OutFeet.X + .5, OutFeet.Y + .5, OutFeet.Z) * Block).ExpandBy(-.1);
+    TArray<FBox>& Boxes = PathBoxes;
+    Boxes.Reset();
+    if (GatherCollision)
+        GatherCollision(Body, Boxes);
+    else
+        World.GatherCollision(Body, Boxes);
+    for (const FBox& Box : Boxes)
+        if (Box.Intersect(Body)) return false;
+    return !IsMobInFluid(Body, false) && !IsMobInFluid(Body, true);
 }
 
 void FFoundationAuthority::DropMobLoot(const FFoundationMob& Mob)
@@ -1163,12 +1330,14 @@ void FFoundationAuthority::DropMobLoot(const FFoundationMob& Mob)
     const FIntVector Cell(FoundationGrid::FloorToCell(Mob.LocalCm.X), FoundationGrid::FloorToCell(Mob.LocalCm.Y),
         FoundationGrid::FloorToCell(Mob.LocalCm.Z));
     FRandomStream Random(FoundationLoot::MakeSeed(~Rules.LootSeed, Cell, Mob.Id));
-    // [loot_table/entities/<id>.json] rolled with killed_by_player for a player kill; no enchantments and nothing on
-    // fire yet. Provisional: the drops leave the corpse's feet with the block drops' spread and speed.
+    // [loot_table/entities/<id>.json] rolled with killed_by_player for a player kill and is_on_fire while it burns
+    // (cooked meat); no enchantments yet. Provisional: the drops leave the corpse's feet with the block drops' spread
+    // and speed.
     if (const FFoundationLootTable* Table = Rules.EntityLootTables.Find(Kind.Id))
     {
         FFoundationLootContext Context{Rules.Hand};
         Context.bKilledByPlayer = Mob.bKilledByPlayer;
+        Context.bOnFire = Mob.Health.IsOnFire();
         TArray<FFoundationLootDrop> Drops;
         FoundationLoot::Roll(*Table, Rules.LootPredicates, Context, Random, Drops);
         for (const FFoundationLootDrop& Drop : Drops)
@@ -2549,6 +2718,7 @@ void FFoundationAuthority::Attack(
         // sprint-knockback bonus waits for 20c. [survival.r5.play_calls] the hurt or the death sound.
         FoundationMobs::OnHurt(*Mob, World.OriginCm, Facts.FeetCm, bFreshHit, true, Player.Id);
         AddMobSound(*Mob, Result.bTargetDied ? TEXT("death") : TEXT("hurt"), FoundationMobs::GetKind(Mob->Type).Volume);
+        if (Result.bTargetDied) DropMobLoot(*Mob);
     }
     ++Hits;
     Vitals.AddExhaustion(Rules.HitExhaustion);

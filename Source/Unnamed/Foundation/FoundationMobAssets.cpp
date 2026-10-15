@@ -60,3 +60,20 @@ int32 UFoundationMobAssets::AddLoot(FFoundationRules& Rules) const
     }
     return Skipped;
 }
+
+void UFoundationMobAssets::AddSpawns(FFoundationRules& Rules) const
+{
+    Rules.BiomeSpawns.Reset();
+    for (const FFoundationBiomeSpawnAsset& Biome : BiomeSpawns)
+    {
+        FFoundationBiomeSpawns& Out = Rules.BiomeSpawns.Add(Biome.Biome);
+        Out.Chance = Biome.Chance;
+        for (const FFoundationMobSpawnAsset& Entry : Biome.Creatures)
+        {
+            EFoundationMobType Type;
+            if (Entry.Weight > 0 && FoundationMobs::FindType(Entry.Mob, Type) &&
+                FoundationMobs::GetKind(Type).bSpawnable)
+                Out.Creatures.Add({Type, Entry.Weight, Entry.MinCount, FMath::Max(Entry.MinCount, Entry.MaxCount)});
+        }
+    }
+}

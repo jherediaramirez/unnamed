@@ -17,6 +17,11 @@ REPO = Path(__file__).resolve().parents[2]
 REF = REPO / "Reference/minecraft-entities-26.3"
 LOOT = REF / "data/minecraft/loot_table/entities"
 RECIPES = REF / "data/minecraft/recipe"
+# Read only (survival T6 20b2): the biomes' natural_mob_spawns and creature_world_gen_spawn_probability attributes.
+WORLDGEN = REPO / "Reference/minecraft-worldgen-26.3"
+BIOMES = WORLDGEN / "data/minecraft/worldgen/biome"
+# The chunk-generation creature chance of a biome without the attribute (minecraft.wiki "Mob spawning"; the scout O11).
+DEFAULT_GEN_CHANCE = 0.1
 TEXTURES = "assets/minecraft/textures/"
 # The eight mobs (FoundationMobs' EFoundationMobType order) and the texture each draws with.
 MOBS = {
@@ -47,6 +52,38 @@ def verify_hashes():
         if hashlib.sha256((REF / name).read_bytes()).hexdigest() != digest:
             raise SystemExit(f"MOB_IMPORT FAIL: {name} differs from the reference's SHA256SUMS.txt")
     return hashlib.sha256(sums).hexdigest()
+
+
+def biome_spawns():
+    """Each biome's creature spawn entries and chunk-generation chance, every entity kept (the game skips the mobs it
+    has not built), after checking the biome files against the worldgen reference's SHA256SUMS.txt. Returns
+    (biomes, digest of the worldgen SHA256SUMS.txt)."""
+    sums = (WORLDGEN / "SHA256SUMS.txt").read_bytes()
+    listed = {}
+    for line in sums.decode("utf-8").splitlines():
+        digest, _, name = line.partition("  ")
+        listed[name] = digest
+    biomes = []
+    for path in sorted(BIOMES.glob("*.json")):
+        name = path.relative_to(WORLDGEN).as_posix()
+        if listed.get(name) != hashlib.sha256(path.read_bytes()).hexdigest():
+            raise SystemExit(f"MOB_IMPORT FAIL: {name} differs from the worldgen reference's SHA256SUMS.txt")
+        attributes = json.loads(path.read_text(encoding="utf-8")).get("attributes", {})
+        spawns = attributes.get("minecraft:gameplay/natural_mob_spawns", {}).get("argument", {})
+        creatures = []
+        for entry in spawns.get("spawns_by_category", {}).get("creature", []):
+            count = entry["count"]
+            if isinstance(count, int):
+                low = high = count
+            elif count.get("type") == "minecraft:uniform":
+                low, high = count["min_inclusive"], count["max_inclusive"]
+            else:
+                raise SystemExit(f"MOB_IMPORT FAIL: {name}: count {count}")
+            creatures.append({"mob": bare(entry["type"]), "weight": entry["weight"], "min_count": low,
+                              "max_count": high})
+        chance = attributes.get("minecraft:gameplay/creature_world_gen_spawn_probability", DEFAULT_GEN_CHANCE)
+        biomes.append({"biome": "minecraft:" + path.stem, "chance": float(chance), "creatures": creatures})
+    return biomes, hashlib.sha256(sums).hexdigest()
 
 
 # Layers drawn over a mob's main layer, listed after the eight main models (20b: the sheep's wool, white; its undercoat
@@ -252,3 +289,8 @@ if __name__ == "__main__":
         print(table["block"], [[(c["item"], [m["type"] for m in c["modifiers"]]) for c in p["candidates"]]
                                for p in table["pools"]], len(table["conditions"]), "nodes")
     print("left out:", left_out)
+    biomes, worldgen = biome_spawns()
+    print("worldgen digest", worldgen[:12], len(biomes), "biomes")
+    for biome in biomes:
+        if biome["biome"] in ("minecraft:plains", "minecraft:snowy_plains", "minecraft:badlands"):
+            print(biome)

@@ -26,6 +26,8 @@ namespace MobTestsLocal
         int32 Player = 0;
         uint32 Sequence = 1;
         int64 StepIndex = 0;
+        // Mobs as they spawned (the Packs test records them).
+        TArray<FFoundationMob> Spawned;
 
         FMobLab()
         {
@@ -325,7 +327,8 @@ bool FFoundationMobHurtWindowTest::RunTest(const FString&)
 }
 
 // [survival.r10.death_roll] the roll 0, 0, 25.455844, 36, 44.090818, 50.911694 degrees at death ticks 0-5, 90 from
-// tick 14; [hurt.overlay] red while dying; the corpse stays to death tick 19 and goes at 20 (provisional). Mutation:
+// tick 14; [hurt.overlay] red while dying; [survival2.r20.mob_death] the loot and experience drop on the killing hit,
+// the corpse stays to death tick 19 and goes at 20. Mutation:
 // the roll without its -1 (sqrt(deathTime x 1.6 / 20)).
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobDeathTest, "Unnamed.Foundation.Mobs.Death",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -355,6 +358,9 @@ bool FFoundationMobDeathTest::RunTest(const FString&)
     TestTrue(TEXT("killed"), Kill.bTargetDied);
     const FFoundationMob* Mob = L.A.FindMob(Id);
     TestTrue(TEXT("killed by the player"), Mob && Mob->bKilledByPlayer);
+    TestEqual(TEXT("the loot drops on the killing hit"), L.A.MobsKilled, 1);
+    TestTrue(TEXT("as item entities"), L.A.GetItemEntities().Num() > 0);
+    TestTrue(TEXT("with its experience"), L.A.GetExperienceOrbs().Num() > 0);
     // A corpse still stops the aim until it is removed; hits on it are refused.
     TestEqual(TEXT("a dying cow is still aimed at"), L.A.Resolve(L.P().Facts).EntityId, Id);
     TestEqual(TEXT("and refuses hits"), L.Attack().Reason, EFoundationReason::TargetDead);
@@ -410,12 +416,12 @@ bool FFoundationMobLootTest::RunTest(const FString&)
         TestTrue(TEXT("on fire: cooked beef"),
             Drops.ContainsByPredicate([Cooked](const FFoundationLootDrop& Drop) { return Drop.Item == Cooked; }));
     }
-    // A player's kill in the lab: items and orbs.
+    // A player's kill in the lab: items and orbs, on the killing hit [survival2.r20.mob_death] (later the player
+    // picks them up).
     const int32 Id = L.Cow().Id;
     L.A.FindMob(Id)->Health.Health = 1;
     L.Hold(NAME_None);
     L.Attack();
-    L.Steps(20);
     int32 BeefDropped = 0;
     for (const FFoundationItemEntity& Entity : L.A.GetItemEntities())
         BeefDropped += Entity.Item == Beef ? Entity.Count : 0;
@@ -777,6 +783,370 @@ bool FFoundationMobGrazeTest::RunTest(const FString&)
     L.Steps(36);
     TestEqual(TEXT("the short grass is eaten"), BlockAt(L, Tuft), FName(TEXT("air")));
     TestEqual(TEXT("the block below stays"), BlockAt(L, Grass), FName(TEXT("grass_block")));
+    return true;
+}
+// Codex review 19 #3 [movement.knockback_resistance V:512; survival2.r20.mob_physics: 0.4 up from rest]: a grounded
+// mob's vertical velocity after a hit is min(0.4, vy / 2 + power), whatever the power. Mutation: min(power, ...).
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobKnockbackCapTest, "Unnamed.Foundation.Mobs.KnockbackCap",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobKnockbackCapTest::RunTest(const FString&)
+{
+    FVector Rest(0, 0, 0);
+    FoundationMobs::ApplyKnockback(Rest, FVector2D(-1, 0), true, 40);
+    TestEqual(TEXT("from vy 0: (-0.4, 0.4) (R20)"), Rest, FVector(-40, 0, 40));
+    FVector Rising(0, 0, 30);
+    FoundationMobs::ApplyKnockback(Rising, FVector2D(1, 0), true, 20);
+    TestEqual(TEXT("half power, rising 0.3: 0.35"), Rising.Z, 35.);
+    FVector Fast(0, 0, 100);
+    FoundationMobs::ApplyKnockback(Fast, FVector2D(1, 0), true, 20);
+    TestEqual(TEXT("capped at 0.4"), Fast.Z, 40.);
+    FVector Airborne(0, 0, -20);
+    FoundationMobs::ApplyKnockback(Airborne, FVector2D(1, 0), false, 40);
+    TestEqual(TEXT("airborne keeps vy"), Airborne.Z, -20.);
+    return true;
+}
+
+// Codex review 19 #1: mobs take the player's fall, lava and burning damage [fall.damage_thresholds V:324,
+// hurt.lava_contact V:289]; the chicken takes no fall damage; water puts a fire out; a mob that dies burning drops
+// cooked meat (is_on_fire); the loot drops on the killing blow [survival2.r20.mob_death]. Mutation: drop the chicken's
+// immunity.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobHazardsTest, "Unnamed.Foundation.Mobs.Hazards",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobHazardsTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    {
+        // A 10-block fall: 10 - 3 = 7 damage.
+        FMobLab L;
+        const int32 Cow = L.A.SpawnMob(EFoundationMobType::Cow, FVector(0, 0, 1000));
+        const int32 Chicken = L.A.SpawnMob(EFoundationMobType::Chicken, FVector(300, 300, 1000));
+        L.Steps(200);
+        const FFoundationMob* C = L.A.FindMob(Cow);
+        const FFoundationMob* K = L.A.FindMob(Chicken);
+        if (!TestNotNull(TEXT("cow"), C) || !TestNotNull(TEXT("chicken"), K)) return false;
+        TestTrue(TEXT("both landed"), C->bOnGround && K->bOnGround);
+        TestEqual(TEXT("the cow took 7"), C->Health.Health, 3.f);
+        TestEqual(TEXT("the chicken took none"), K->Health.Health, 4.f);
+    }
+    {
+        // Lava: 4 on contact and 300 ticks of fire, only with foundation.Fire.
+        FMobLab L;
+        const FIntVector Lava = SetBlock(L, FIntVector(0, 0, 0), TEXT("lava"));
+        TestEqual(TEXT("lava placed"), BlockAt(L, Lava), FName(TEXT("lava")));
+        const int32 Id = L.A.SpawnMob(EFoundationMobType::Pig, FVector(50, 50, 0));
+        L.A.Options.bFire = false;
+        L.Steps(1);
+        TestEqual(TEXT("no fire: no damage"), L.A.FindMob(Id)->Health.Health, 10.f);
+        L.A.Options.bFire = true;
+        L.Steps(1);
+        const FFoundationMob* Pig = L.A.FindMob(Id);
+        TestEqual(TEXT("lava hurts 4"), Pig->Health.Health, 6.f);
+        TestTrue(TEXT("and sets it on fire"), Pig->Health.FireTicks >= 299);
+        TestEqual(TEXT("the hurt overlay"), Pig->HurtTime, FoundationMobs::HurtTicks);
+    }
+    {
+        // Burning to death: cooked beef, at the death itself.
+        FMobLab L;
+        L.A.Options.bFire = true;
+        const int32 Id = L.A.SpawnMob(EFoundationMobType::Cow, FVector::ZeroVector);
+        FFoundationMob& Cow = *L.A.FindMob(Id);
+        Cow.Health.Health = 1;
+        Cow.Health.FireTicks = 21;
+        L.Steps(1);
+        TestTrue(TEXT("alive at fire 20"), L.A.FindMob(Id) && L.A.FindMob(Id)->IsAlive());
+        L.Steps(1);
+        TestTrue(TEXT("burnt at fire 20"), L.A.FindMob(Id) && !L.A.FindMob(Id)->IsAlive());
+        TestEqual(TEXT("dropped at the death"), L.A.MobsKilled, 1);
+        const int32 Raw = L.A.Rules.FindItem(TEXT("beef")), Cooked = L.A.Rules.FindItem(TEXT("cooked_beef"));
+        int32 RawCount = 0, CookedCount = 0;
+        for (const FFoundationItemEntity& Entity : L.A.GetItemEntities())
+        {
+            RawCount += Entity.Item == Raw ? Entity.Count : 0;
+            CookedCount += Entity.Item == Cooked ? Entity.Count : 0;
+        }
+        TestEqual(TEXT("no raw beef"), RawCount, 0);
+        TestTrue(TEXT("cooked beef"), CookedCount >= 1);
+    }
+    {
+        // Water puts the fire out.
+        FMobLab L;
+        L.A.Options.bFire = true;
+        SetBlock(L, FIntVector(0, 0, 0), TEXT("water"));
+        const int32 Id = L.A.SpawnMob(EFoundationMobType::Sheep, FVector(50, 50, 0));
+        L.A.FindMob(Id)->Health.FireTicks = 100;
+        L.Steps(1);
+        TestEqual(TEXT("water puts it out"), L.A.FindMob(Id)->Health.FireTicks, 0);
+    }
+    return true;
+}
+
+// O9-O11 and Codex 02 B from DA_Mobs (the worldgen reference's natural_mob_spawns): plains keeps sheep 12, pig 10,
+// chicken 10, cow 8 of its six entries (horse and donkey are not built), packs of 4; cherry grove pig 1-2, sheep 2-4;
+// the chunk-generation chance 0.1 by default, snowy plains 0.07, badlands 0.03, wooded badlands 0.04; with our RNG the
+// pick over 40,000 draws is each weight / 40 +- 0.01. Mutation: pick by entry count instead of weight.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobSpawnTableTest, "Unnamed.Foundation.Mobs.SpawnTable",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobSpawnTableTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    FMobLab L;
+    const TMap<FName, FFoundationBiomeSpawns>& Spawns = L.A.Rules.BiomeSpawns;
+    const FFoundationBiomeSpawns* Plains = Spawns.Find(TEXT("minecraft:plains"));
+    if (!TestNotNull(TEXT("plains (run ImportMobs.py)"), Plains)) return false;
+    const EFoundationMobType Order[] = {
+        EFoundationMobType::Sheep, EFoundationMobType::Pig, EFoundationMobType::Chicken, EFoundationMobType::Cow};
+    const int32 Weights[] = {12, 10, 10, 8};
+    if (!TestEqual(TEXT("plains: four built entries"), Plains->Creatures.Num(), 4)) return false;
+    for (int32 Index = 0; Index < 4; ++Index)
+    {
+        const FFoundationMobSpawn& Entry = Plains->Creatures[Index];
+        TestEqual(*FString::Printf(TEXT("plains entry %d type"), Index), Entry.Type, Order[Index]);
+        TestEqual(*FString::Printf(TEXT("plains entry %d weight"), Index), Entry.Weight, Weights[Index]);
+        TestTrue(*FString::Printf(TEXT("plains entry %d pack 4"), Index), Entry.MinCount == 4 && Entry.MaxCount == 4);
+    }
+    TestEqual(TEXT("plains chance"), Plains->Chance, .1f);
+    const auto Chance = [&Spawns](const TCHAR* Biome)
+    {
+        const FFoundationBiomeSpawns* Found = Spawns.Find(Biome);
+        return Found ? Found->Chance : -1.f;
+    };
+    TestEqual(TEXT("snowy plains 0.07"), Chance(TEXT("minecraft:snowy_plains")), .07f);
+    TestEqual(TEXT("badlands 0.03"), Chance(TEXT("minecraft:badlands")), .03f);
+    TestEqual(TEXT("wooded badlands 0.04"), Chance(TEXT("minecraft:wooded_badlands")), .04f);
+    TestEqual(TEXT("forest 0.1"), Chance(TEXT("minecraft:forest")), .1f);
+    TestEqual(TEXT("snowy plains has no built creature"),
+        Spawns.Contains(TEXT("minecraft:snowy_plains")) ? Spawns[TEXT("minecraft:snowy_plains")].Creatures.Num() : -1,
+        0);
+    if (const FFoundationBiomeSpawns* Cherry = Spawns.Find(TEXT("minecraft:cherry_grove")))
+    {
+        const FFoundationMobSpawn* Pig = Cherry->Creatures.FindByPredicate(
+            [](const FFoundationMobSpawn& Entry) { return Entry.Type == EFoundationMobType::Pig; });
+        const FFoundationMobSpawn* Sheep = Cherry->Creatures.FindByPredicate(
+            [](const FFoundationMobSpawn& Entry) { return Entry.Type == EFoundationMobType::Sheep; });
+        TestTrue(TEXT("cherry grove pig 1-2"), Pig && Pig->MinCount == 1 && Pig->MaxCount == 2);
+        TestTrue(TEXT("cherry grove sheep 2-4"), Sheep && Sheep->MinCount == 2 && Sheep->MaxCount == 4);
+        FRandomStream Random(7);
+        TSet<int32> Sizes;
+        for (int32 Draw = 0; Draw < 200; ++Draw)
+            Sizes.Add(FoundationMobs::RollPackSize(*Sheep, Random));
+        TestTrue(TEXT("sheep packs 2, 3 and 4 only"), Sizes.Num() == 3 && Sizes.Contains(2) && Sizes.Contains(4));
+    }
+    else
+        AddError(TEXT("cherry grove missing"));
+    FRandomStream Random(20262);
+    int32 Counts[4] = {};
+    constexpr int32 Draws = 40000;
+    for (int32 Draw = 0; Draw < Draws; ++Draw)
+        if (const FFoundationMobSpawn* Entry = FoundationMobs::PickSpawn(*Plains, Random))
+            ++Counts[Entry - Plains->Creatures.GetData()];
+    for (int32 Index = 0; Index < 4; ++Index)
+        TestEqual(
+            *FString::Printf(TEXT("pick share %d"), Index), double(Counts[Index]) / Draws, Weights[Index] / 40., .01);
+    // The member offsets: -5 to 5 on each axis, triangular (0 the most common).
+    int32 Offsets[11] = {};
+    for (int32 Draw = 0; Draw < Draws; ++Draw)
+        ++Offsets[FoundationMobs::RollPackOffset(Random) + 5];
+    TestTrue(TEXT("offsets reach -5 and 5"), Offsets[0] > 0 && Offsets[10] > 0);
+    TestTrue(TEXT("0 the most common"), Offsets[5] > Offsets[4] && Offsets[5] > Offsets[6]);
+    return true;
+}
+
+namespace MobTestsLocal
+{
+    // A lab of columns -2..1 on each axis (cells -32..31) whose blocks are a grass floor (cells z 0) over the statics'
+    // floor, with plains everywhere.
+    void MakeGrassLab(FMobLab& L, uint64 Seed, const TCHAR* Top = TEXT("grass_block"))
+    {
+        L.A.World.BoundsMin = FIntVector(-32, -32, 0);
+        L.A.World.BoundsMax = FIntVector(31, 31, 15);
+        const FFoundationBlockType* Block = L.A.World.FindBlock(Top);
+        for (int32 Y = L.A.World.BoundsMin.Y; Y <= L.A.World.BoundsMax.Y; ++Y)
+            for (int32 X = L.A.World.BoundsMin.X; X <= L.A.World.BoundsMax.X; ++X)
+                L.A.World.Set(FIntVector(X, Y, 0), Block->GetDefaultState());
+        L.A.GetBiomeId = [](const FIntVector&) { return FName(TEXT("minecraft:plains")); };
+        L.A.MobSpawnSeed = Seed;
+        L.A.Options.bMobSpawn = true;
+    }
+
+    FString DescribeMobs(const FMobLab& L)
+    {
+        FString Text;
+        for (const FFoundationMob& Mob : L.Spawned)
+            Text += FString::Printf(TEXT("%d@%s "), int32(Mob.Type), *Mob.LocalCm.ToString());
+        return Text;
+    }
+}
+
+// Chunk-generation packs: each column (16 x 16) first seen loaded rolls once; with chance 1 every column of the lab
+// spawns one pack of 4 inside itself, standing on the grass (feet at z 100); the same seed gives the same mobs, another
+// seed others; chance 0, foundation.Mobs.Spawn 0, a biome without built creatures, stone instead of grass, or a roof
+// over the grass spawn none. Mutation: skip the grass test.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobPacksTest, "Unnamed.Foundation.Mobs.Packs",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobPacksTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    const auto Run = [](uint64 Seed, float Chance, TFunctionRef<void(FMobLab&)> Setup)
+    {
+        TUniquePtr<FMobLab> L = MakeUnique<FMobLab>();
+        MakeGrassLab(*L, Seed);
+        if (FFoundationBiomeSpawns* Plains = L->A.Rules.BiomeSpawns.Find(TEXT("minecraft:plains")))
+            Plains->Chance = Chance;
+        Setup(*L);
+        // 16 new columns a step: the ring's 441 are all seen within 28 steps. Each mob as it spawned (its first step
+        // has not run yet: Age 0), before it strolls.
+        for (int32 Step = 0; Step < 30; ++Step)
+        {
+            L->Steps(1);
+            for (const FFoundationMob& Mob : L->A.GetMobs())
+                if (Mob.Age == 0) L->Spawned.Add(Mob);
+        }
+        return L;
+    };
+    TUniquePtr<FMobLab> L = Run(1, 1, [](FMobLab&) {});
+    TestEqual(TEXT("16 lab columns, 4 packs each"), L->A.MobsPackSpawned, 64);
+    TestEqual(TEXT("16 packs"), L->A.MobPacks, 16);
+    TestEqual(TEXT("the ring's 21 x 21 columns seen"), L->A.MobColumnsSeen, 441);
+    {
+        FMobLab One;
+        MakeGrassLab(One, 1);
+        One.Steps(1);
+        TestEqual(TEXT("16 new columns a step"), One.A.MobColumnsSeen, 16);
+    }
+    TMap<FIntPoint, int32> PerColumn;
+    bool bOnGrass = true, bBuilt = true;
+    TestEqual(TEXT("every mob recorded at its spawn"), L->Spawned.Num(), 64);
+    for (const FFoundationMob& Mob : L->Spawned)
+    {
+        ++PerColumn.FindOrAdd(FIntPoint(FoundationGrid::FloorDivide(FoundationGrid::FloorToCell(Mob.LocalCm.X), 16),
+            FoundationGrid::FloorDivide(FoundationGrid::FloorToCell(Mob.LocalCm.Y), 16)));
+        bOnGrass &= FMath::IsNearlyEqual(Mob.LocalCm.Z, 100., 1.);
+        bBuilt &= int32(Mob.Type) <= int32(EFoundationMobType::Chicken);
+    }
+    TestEqual(TEXT("in 16 columns"), PerColumn.Num(), 16);
+    for (const TPair<FIntPoint, int32>& Column : PerColumn)
+        TestEqual(*FString::Printf(TEXT("4 in column %s"), *Column.Key.ToString()), Column.Value, 4);
+    TestTrue(TEXT("standing on the grass"), bOnGrass);
+    TestTrue(TEXT("farm animals only"), bBuilt);
+    const FString First = DescribeMobs(*L);
+    L->Steps(5);
+    TestEqual(TEXT("each column rolls once"), L->A.MobPacks, 16);
+    TestEqual(TEXT("the same seed, the same mobs"), DescribeMobs(*Run(1, 1, [](FMobLab&) {})), First);
+    TestNotEqual(TEXT("another seed, other mobs"), DescribeMobs(*Run(2, 1, [](FMobLab&) {})), First);
+    TestEqual(TEXT("chance 0"), Run(1, 0, [](FMobLab&) {})->A.GetMobs().Num(), 0);
+    TestEqual(
+        TEXT("spawning off"), Run(1, 1, [](FMobLab& Lab) { Lab.A.Options.bMobSpawn = false; })->A.GetMobs().Num(), 0);
+    TestEqual(TEXT("snowy plains: no built creature"),
+        Run(1, 1, [](FMobLab& Lab)
+            { Lab.A.GetBiomeId = [](const FIntVector&) { return FName(TEXT("minecraft:snowy_plains")); }; })
+            ->A.GetMobs()
+            .Num(),
+        0);
+    TestEqual(TEXT("stone: none"),
+        Run(1, 1, [](FMobLab& Lab) { MakeGrassLab(Lab, 1, TEXT("stone")); })->A.GetMobs().Num(), 0);
+    TestEqual(TEXT("under a roof (no sky): none"),
+        Run(1, 1,
+            [](FMobLab& Lab)
+            {
+                const FFoundationBlockType* Stone = Lab.A.World.FindBlock(TEXT("stone"));
+                for (int32 Y = Lab.A.World.BoundsMin.Y; Y <= Lab.A.World.BoundsMax.Y; ++Y)
+                    for (int32 X = Lab.A.World.BoundsMin.X; X <= Lab.A.World.BoundsMax.X; ++X)
+                        Lab.A.World.Set(FIntVector(X, Y, 5), Stone->GetDefaultState());
+            })
+            ->A.GetMobs()
+            .Num(),
+        0);
+    return true;
+}
+
+// The A* budget rotates (20b1 fold): six mobs that all need a path get the four searches of the first step, then the
+// two left first on the next. Mutation: no rotation (PathStart stays 0).
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobPathBudgetTest, "Unnamed.Foundation.Mobs.PathBudget",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobPathBudgetTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    FMobLab L;
+    TArray<int32> Ids;
+    for (int32 Index = 0; Index < 6; ++Index)
+        Ids.Add(L.A.SpawnMob(EFoundationMobType::Cow, FVector(0, -500 + Index * 200, 0)));
+    L.Steps(2);
+    const auto NeedAll = [&L, &Ids]
+    {
+        for (const int32 Id : Ids)
+        {
+            FFoundationMob& Mob = *L.A.FindMob(Id);
+            Mob.bMoving = true;
+            Mob.TargetCm = Mob.LocalCm + FVector(600, 0, 0);
+            Mob.bNeedPath = true;
+            Mob.MoveTicks = 0;
+        }
+    };
+    NeedAll();
+    L.Steps(1);
+    const auto Waiting = [&L, &Ids]
+    {
+        TArray<int32> Out;
+        for (int32 Index = 0; Index < Ids.Num(); ++Index)
+            if (L.A.FindMob(Ids[Index])->bNeedPath) Out.Add(Index);
+        return Out;
+    };
+    TestEqual(TEXT("the first four planned"), Waiting(), TArray<int32>({4, 5}));
+    // Everyone asks again: the two that waited go first.
+    NeedAll();
+    L.Steps(1);
+    TestEqual(TEXT("then the two that waited and the first two"), Waiting(), TArray<int32>({2, 3}));
+    return true;
+}
+
+// A ledge and a turn (20b1 fold): a cow walking to the far corner of a one-block ledge climbs it and turns, passing
+// each waypoint within 0.5 block horizontally (heights ignored), and stops on the ledge. Mutation: ArriveCm 0 (the
+// waypoints are never reached).
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobLedgeTest, "Unnamed.Foundation.Mobs.Ledge",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobLedgeTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    FMobLab L;
+    for (int32 Y = 0; Y <= 5; ++Y)
+        for (int32 X = 3; X <= 5; ++X)
+            SetBlock(L, FIntVector(X, Y, 0), TEXT("stone"));
+    const int32 Id = L.A.SpawnMob(EFoundationMobType::Cow, FVector(50, 50, 0));
+    L.Steps(2);
+    FFoundationMob& Mob = *L.A.FindMob(Id);
+    Mob.bMoving = true;
+    Mob.TargetCm = FVector(450, 550, 100);
+    Mob.SpeedModifier = 1;
+    Mob.bNeedPath = true;
+    Mob.MoveTicks = 0;
+    L.Steps(1);
+    const TArray<FIntVector> Path = L.A.FindMob(Id)->Path;
+    if (!TestTrue(TEXT("a path"), Path.Num() >= 3)) return false;
+    TestTrue(TEXT("it climbs"), Path.Last().Z == 1);
+    TArray<double> Nearest;
+    Nearest.Init(1e9, Path.Num());
+    for (int32 Step = 0; Step < 300 && L.A.FindMob(Id)->bMoving; ++Step)
+    {
+        L.Steps(1);
+        const FVector At = L.A.FindMob(Id)->LocalCm;
+        for (int32 Index = 0; Index < Path.Num(); ++Index)
+            Nearest[Index] = FMath::Min(
+                Nearest[Index], FVector2D(At.X - (Path[Index].X + .5) * 100, At.Y - (Path[Index].Y + .5) * 100).Size());
+    }
+    for (int32 Index = 0; Index < Path.Num(); ++Index)
+        TestTrue(*FString::Printf(
+                     TEXT("waypoint %d %s within 0.5 block (%.1f cm)"), Index, *Path[Index].ToString(), Nearest[Index]),
+            Nearest[Index] <= 50);
+    const FFoundationMob& Done = *L.A.FindMob(Id);
+    TestFalse(TEXT("navigation done"), Done.bMoving);
+    TestEqual(TEXT("on the ledge"), Done.LocalCm.Z, 100., 1.);
+    TestTrue(TEXT("near the corner"), FVector2D(Done.LocalCm.X - 450, Done.LocalCm.Y - 550).Size() < 100);
     return true;
 }
 #endif
