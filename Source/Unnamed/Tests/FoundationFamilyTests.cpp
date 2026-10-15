@@ -351,6 +351,63 @@ bool FFoundationFamiliesBedIconsTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationFamiliesOffhandTest, "Unnamed.Foundation.Blocks.Families.Offhand", FamilyTestFlags)
+bool FFoundationFamiliesOffhandTest::RunTest(const FString& Parameters)
+{
+    // Codex review 15 #1: with the switch at 0 a sapling in the main hand places nothing and the use passes (as before
+    // B1, when no sapling item placed), so the offhand's stone is placed; with the switch on the sapling is placed.
+    FFamiliesSwitch Switch;
+    if (!TestNotNull(TEXT("foundation.Blocks.Families exists"), Switch.Variable)) return false;
+    for (const int32 Value : {0, 1})
+    {
+        Switch.Set(Value);
+        FFamilyLab L;
+        FFoundationPlayer& P = *L.A.FindPlayer(L.Player);
+        FFoundationPlayerFacts Facts = P.Facts;
+        Facts.FeetCm = FVector(-150, 50, 100);
+        Facts.EyeCm = Facts.FeetCm + FVector(0, 0, 162);
+        Facts.Aim = FVector(200, 0, -162 - 50).GetSafeNormal();
+        Facts.Step = 2;
+        L.A.SetFacts(L.Player, Facts);
+        FFoundationBlockState Grass;
+        L.A.World.GetRegistry().Parse(TEXT("grass_block[snowy=false]"), Grass);
+        L.A.World.Set(FIntVector(0, 0, 0), Grass);
+        P.Inventory.SetSlot(3, P.Inventory.MakeStack(L.A.Rules.FindItem(TEXT("oak_sapling")), 1));
+        P.Inventory.Offhand = P.Inventory.MakeStack(L.A.Rules.FindItem(TEXT("stone")), 1);
+        FFoundationVitals Vitals;
+        uint32 Sequence = 1;
+        auto Use = [&](EFoundationHand Hand)
+        {
+            FFoundationCommand Command;
+            Command.SessionId = L.A.GetSessionId();
+            Command.Sequence = Sequence++;
+            Command.Type = EFoundationCommandType::UseOn;
+            Command.Hand = Hand;
+            Command.Item = P.Inventory.GetHand(Hand).GetRef();
+            Command.Target = L.A.Resolve(P.Facts);
+            FIntVector Destination;
+            L.A.CheckPlacement(P, Hand, Command.Target, Destination);
+            Command.Destination = Destination;
+            Command.DestinationRevision = L.A.World.Get(Destination).Revision;
+            return L.A.Execute(L.Player, Command, Vitals);
+        };
+        const FFoundationResult Main = Use(EFoundationHand::Main);
+        const FIntVector Above(0, 0, 1);
+        if (Value == 0)
+        {
+            TestEqual(TEXT("switch 0: the sapling's use passes"), int32(Main.Outcome), int32(EFoundationOutcome::Pass));
+            const FFoundationResult Off = Use(EFoundationHand::Off);
+            TestTrue(TEXT("switch 0: the offhand places its stone on the grass"),
+                Off.bPlaced && L.A.World.GetBlock(L.A.World.Get(Above).State).Id == TEXT("stone"));
+        }
+        else
+            TestTrue(TEXT("switch 1: the sapling is placed"),
+                Main.bPlaced && L.A.World.GetBlock(L.A.World.Get(Above).State).Id == TEXT("oak_sapling"));
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FFoundationFamiliesCraftTest, "Unnamed.Foundation.Blocks.Families.Craft", FamilyTestFlags)
 bool FFoundationFamiliesCraftTest::RunTest(const FString& Parameters)
 {

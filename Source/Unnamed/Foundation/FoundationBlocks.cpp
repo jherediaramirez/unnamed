@@ -257,14 +257,42 @@ bool FFoundationBlockWorld::GetCollisionBoxes(
 
 void FFoundationBlockWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
 {
-    // Cells whose unit box can touch the region; collision shapes stay inside their cell, moved ones too (bamboo,
-    // dripstone and sulfur spike move theirs; Blocks.PlantShapes checks it).
-    FIntVector Low = FoundationGrid::CellAt(Region.Min, OriginCm), High = FoundationGrid::CellAt(Region.Max, OriginCm);
-    Low = FIntVector(FMath::Max(Low.X, BoundsMin.X), FMath::Max(Low.Y, BoundsMin.Y), FMath::Max(Low.Z, BoundsMin.Z));
-    High =
-        FIntVector(FMath::Min(High.X, BoundsMax.X), FMath::Min(High.Y, BoundsMax.Y), FMath::Min(High.Z, BoundsMax.Z));
-    Storage->ForEachSolid(Low, High, [this, &Out](const FIntVector& Cell, const FFoundationCell& Value)
-        { GetCollisionBoxes(Cell, Value.State, Out); });
+    // Cells whose unit box can touch the region; collision shapes stay inside their cell horizontally, moved ones too
+    // (bamboo, dripstone and sulfur spike move theirs; Blocks.PlantShapes checks it). With foundation.Blocks.Shapes the
+    // cells just below and above add the boxes that leave them vertically into the region.
+    const FIntVector First = FoundationGrid::CellAt(Region.Min, OriginCm),
+                     Last = FoundationGrid::CellAt(Region.Max, OriginCm);
+    const int32 Outer = FoundationBlockFamilies::AreShapesEnabled() ? 1 : 0;
+    const FIntVector Low(
+        FMath::Max(First.X, BoundsMin.X), FMath::Max(First.Y, BoundsMin.Y), FMath::Max(First.Z - Outer, BoundsMin.Z));
+    const FIntVector High(
+        FMath::Min(Last.X, BoundsMax.X), FMath::Min(Last.Y, BoundsMax.Y), FMath::Min(Last.Z + Outer, BoundsMax.Z));
+    Storage->ForEachSolid(Low, High,
+        [this, &Out, &Region, &First, &Last](const FIntVector& Cell, const FFoundationCell& Value)
+        {
+            const int32 Before = Out.Num();
+            GetCollisionBoxes(Cell, Value.State, Out);
+            if (Cell.Z < First.Z || Cell.Z > Last.Z)
+                FoundationCollisionGather::KeepLeaving(Region, FoundationGrid::CellMin(Cell, OriginCm).Z,
+                    FoundationGrid::CellMin(Cell + FIntVector(0, 0, 1), OriginCm).Z, Out, Before);
+        });
+}
+
+void FoundationCollisionGather::KeepLeaving(
+    const FBox& Region, double CellBottom, double CellTop, TArray<FBox>& Out, int32 First)
+{
+    // Within 1e-3 cm of the cell counts as inside (the boxes are block fractions scaled to cm).
+    constexpr double Tolerance = 1e-3;
+    int32 Kept = First;
+    for (int32 Index = First; Index < Out.Num(); ++Index)
+    {
+        const FBox& Box = Out[Index];
+        const bool bLeaves = Box.Min.Z < CellBottom - Tolerance || Box.Max.Z > CellTop + Tolerance;
+        const bool bOverlaps = Box.Min.X < Region.Max.X && Box.Max.X > Region.Min.X && Box.Min.Y < Region.Max.Y &&
+            Box.Max.Y > Region.Min.Y && Box.Min.Z < Region.Max.Z && Box.Max.Z > Region.Min.Z;
+        if (bLeaves && bOverlaps) Out[Kept++] = Box;
+    }
+    Out.SetNum(Kept, EAllowShrinking::No);
 }
 
 int32 FFoundationBlockWorld::GetSolidCount() const

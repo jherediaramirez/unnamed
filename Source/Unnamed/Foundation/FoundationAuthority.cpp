@@ -1166,9 +1166,11 @@ void FFoundationAuthority::UseOn(
         }
     // 2. The hand item's use on the block (foundation.Items.Use): an axe strips.
     if (StripOn(Player, Command, Hit, Result, Mode)) return;
-    // 3. The hand item's place capability; without one the use passes to the next hand.
+    // 3. The hand item's place capability; without one the use passes to the next hand. A hidden B1 family block
+    // (foundation.Blocks.Families 0) counts as none, as before B1 (a sapling in hand passes to the offhand).
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
-    if (Stack.IsEmpty() || !Rules.GetItem(Stack.Item).CanPlace())
+    if (Stack.IsEmpty() || !Rules.GetItem(Stack.Item).CanPlace() ||
+        FoundationBlockFamilies::IsHidden(World.FindBlock(Rules.GetItem(Stack.Item).PlacesBlock)))
     {
         Result.Outcome = EFoundationOutcome::Pass;
         return;

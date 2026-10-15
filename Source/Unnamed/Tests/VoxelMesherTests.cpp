@@ -1053,8 +1053,11 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
         const FVoxelStateInfo& Info = Table->Get(uint16(State));
         if (Info.Shape != EVoxelShape::Model) continue;
         ++ModelStates;
-        BadParts += Info.Layer != EVoxelLayer::Model || Info.OpaqueFaces != 0 ||
-            (Info.ModelPartCount == 0 && !IsBareWall(uint16(State)));
+        // Model states draw in the model section, a translucent block's (the panes) in the translucent one.
+        const bool bTranslucent =
+            Registry->GetBlock(FFoundationBlockState{uint16(State)}).Layer == EFoundationRenderLayer::Translucent;
+        BadParts += Info.Layer != (bTranslucent ? EVoxelLayer::Translucent : EVoxelLayer::Model) ||
+            Info.OpaqueFaces != 0 || (Info.ModelPartCount == 0 && !IsBareWall(uint16(State)));
         BareWalls += Info.ModelPartCount == 0 && IsBareWall(uint16(State));
         const int32* Part = Table->GetModelParts(Info);
         for (int32 Index = 0; Index < Info.ModelPartCount; ++Index)
@@ -1083,6 +1086,20 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("vine: foliage"), Default(TEXT("vine")).TintSource == EVoxelTintSource::Foliage);
     TestTrue(TEXT("kelp holds water"), Default(TEXT("kelp")).HeldFluid != 0 && Default(TEXT("kelp")).HoldsFluid());
     TestTrue(TEXT("a dandelion holds none"), Default(TEXT("dandelion")).HeldFluid == 0);
+    // Codex review 15 #2: a stained glass pane's model draws in the translucent section, keeping its half-transparent
+    // pixels, not in the cutout model section.
+    {
+        const uint16 Pane = Table->FindState(TEXT("white_stained_glass_pane"));
+        const uint16 Floor = Table->FindState(TEXT("stone"));
+        const FVoxelMeshData PaneMesh = ModelTestMesh(*Table, [Pane, Floor](int32 X, int32 Y, int32 Z) -> uint16
+            { return Z < ModelTestZ                     ? Floor
+                  : X == 8 && Y == 8 && Z == ModelTestZ ? Pane
+                                                        : uint16(0); });
+        TestTrue(TEXT("a stained glass pane draws in the translucent section"),
+            Pane != 0 && Table->Get(Pane).Layer == EVoxelLayer::Translucent &&
+                PaneMesh.Layers[int32(EVoxelLayer::Translucent)].GetQuadCount() > 0 &&
+                ModelTestLayer(PaneMesh).IsEmpty());
+    }
     const FVoxelStateInfo& Grass = Default(TEXT("short_grass"));
     TestTrue(FString::Printf(TEXT("short grass: XYZ offset +-0.25, down to -0.2 (%g, %g)"), Grass.OffsetHorizontal,
                  Grass.OffsetDown),
