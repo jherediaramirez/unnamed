@@ -642,6 +642,21 @@ void AFoundationPawn::Tick(float DeltaSeconds)
             if (Simulation.bJumped) ++BodyJumps;
             StepVitals(Profile);
             if (Simulation.bFlying) Vitals.ResetFall(); // No fall distance builds while flying.
+            // Footsteps (step 13a2): the interaction view plays each one counted here.
+            if (FoundationFootsteps::IsOn() && !Vitals.IsDead() && Vitals.Mode != EFoundationPlayerMode::Spectator)
+            {
+                FoundationFootsteps::FFacts Step;
+                Step.HorizontalCm = Simulation.LastDisplacement.Size2D();
+                Step.bGrounded = Simulation.bGrounded;
+                Step.bSneaking = Simulation.bCrouched;
+                Step.bFlying = Simulation.bFlying;
+                Step.bInWater = bBodyInWater;
+                if (FoundationFootsteps::Advance(Footsteps, Step) == FoundationFootsteps::EStep::Play)
+                {
+                    ++FootstepCount;
+                    LastFootstepFeet = Simulation.Feet;
+                }
+            }
             if (Authority)
             {
                 const double InteractionStart = FPlatformTime::Seconds();

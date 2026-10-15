@@ -6,6 +6,7 @@
 #include "Foundation/FoundationBody.h"
 #include "Foundation/FoundationDeath.h"
 #include "Foundation/FoundationExperienceOrbs.h"
+#include "Foundation/FoundationFootsteps.h"
 #include "Foundation/FoundationInteraction.h"
 #include "Foundation/FoundationSimulation.h"
 #include "Foundation/FoundationVitals.h"
@@ -37,6 +38,11 @@ public:
     TArray<FFoundationLevelGain> LevelGains;
     int32 LevelGainSerial = 0;
     static constexpr int32 MaxLevelGains = 16;
+    // Footsteps (step 13a2): the walked-distance cadence, the steps counted so far and the feet at the latest one; the
+    // interaction view plays each new count (one per frame at most; a step is 1/0.6 blocks apart).
+    FoundationFootsteps::FState Footsteps;
+    int32 FootstepCount = 0;
+    FVector LastFootstepFeet = FVector::ZeroVector;
     // Place/mine/attack intent and timing, in a lab with an interaction authority (the Playground).
     FFoundationInteraction Interaction;
     FVector GetEyePosition() const;

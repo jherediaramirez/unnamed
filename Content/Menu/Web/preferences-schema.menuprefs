@@ -634,6 +634,12 @@
       "max": 1,
       "step": 0.01
     },
+    "sound_bass": {
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01
+    },
     "skin_cape": {
       "default": true,
       "values": [

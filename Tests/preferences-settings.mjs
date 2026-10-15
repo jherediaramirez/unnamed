@@ -43,7 +43,7 @@ for(const [index,profile] of ['1280x720','1920x1080'].entries()){
       // Pack arrows appear only while the parent row has hover or keyboard focus.
       await control.locator('..').focus();await control.click();
     };
-    check(profile+' persistent native service ready',(await state()).persistent&&Object.keys((await state()).settings).length===101);
+    check(profile+' persistent native service ready',(await state()).persistent&&Object.keys((await state()).settings).length===102);
     if(index===0){
       const videoBefore=await page.evaluate(()=>MenuVideo.getState().settings);
       const inputBefore=await page.evaluate(()=>MenuInput.getState().nativeKeys);
@@ -57,8 +57,8 @@ for(const [index,profile] of ['1280x720','1920x1080'].entries()){
         return outcomes;
       },schema);
       for(const o of outcomes)check('Native/browser round trip '+o.id,o.value===o.native&&o.value===o.display,o);
-      check('101 preferences leave live video unchanged',JSON.stringify(await page.evaluate(()=>MenuVideo.getState().settings))===JSON.stringify(videoBefore));
-      check('101 preferences leave movement keys unchanged',JSON.stringify(await page.evaluate(()=>MenuInput.getState().nativeKeys))===JSON.stringify(inputBefore));
+      check('102 preferences leave live video unchanged',JSON.stringify(await page.evaluate(()=>MenuVideo.getState().settings))===JSON.stringify(videoBefore));
+      check('102 preferences leave movement keys unchanged',JSON.stringify(await page.evaluate(()=>MenuInput.getState().nativeKeys))===JSON.stringify(inputBefore));
       await prepare('sounds');
       check('Saved-only tooltip is visible in control metadata',(await page.locator('[data-setting="sound_master"]').getAttribute('data-tooltip')).includes('Saved for later'));
       await page.evaluate(()=>MenuPreferences.set('showSubtitles',false));
