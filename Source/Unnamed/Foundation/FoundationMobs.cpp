@@ -179,6 +179,16 @@ int32 FoundationMobs::RollPackOffset(FRandomStream& Random)
     return Plus - Random.RandRange(0, PackSpreadCells);
 }
 
+bool FoundationMobs::IsCreature(EFoundationMobType Type)
+{
+    return Type < EFoundationMobType::Zombie;
+}
+
+int32 FoundationMobs::GetCreatureCap(int32 EligibleColumns)
+{
+    return CreatureBaseCap * FMath::Max(0, EligibleColumns) / CapChunks;
+}
+
 void FoundationMobs::OnHurt(FFoundationMob& Mob, const FVector& OriginCm, const FVector& AttackerWorldCm,
     bool bFreshHit, bool bByPlayer, int32 Player)
 {

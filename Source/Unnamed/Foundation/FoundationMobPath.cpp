@@ -187,7 +187,14 @@ namespace FoundationMobPath
                                     }
                                 }
                             }
-                            break;
+                            // Too high to climb (a bottom slab at head height): keep scanning down for the floor the
+                            // mob can walk under (GetStand checks the headroom from the lower feet). Codex review 23
+                            // #1.
+                            if (Rise <= JumpRise)
+                            {
+                                break;
+                            }
+                            continue;
                         }
                         if (DZ <= 0 && Query(Next).Solid > 0)
                         {

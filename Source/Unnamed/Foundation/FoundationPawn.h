@@ -42,6 +42,8 @@ public:
     FVector GetEyePosition() const;
     FFoundationTarget TraceTarget() const;
     void SetSimulationEnabled(bool bEnabled);
+    // False while paused (the pause menu); a survival screen keeps it on (SetScreenInput).
+    bool IsSimulationEnabled() const { return bSimulate; }
     // A survival screen (the inventory, a container) is open: the simulation keeps running (vitals, item entities,
     // orbs, furnaces) with the player's movement and look input zeroed (Codex review 12, finding 2).
     void SetScreenInput(bool bScreen);

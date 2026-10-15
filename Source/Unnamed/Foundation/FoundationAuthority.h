@@ -543,8 +543,8 @@ public:
     FFoundationBlockEntities BlockEntities;
     // The generated cooking recipes and fuels, resolved against Rules.Items on first use.
     const FFoundationCooking& GetCooking() const;
-    // An open container closes past this distance from the player's eye to its block (Codex review 12, finding 1;
-    // provisional: minecraft.wiki, the interaction range plus 4 blocks).
+    // An open container closes at this distance past the interaction range, from the player's eye to its block's box
+    // (Codex review 12, finding 1; survival2.r23.container_rule: the range plus 4 blocks, measured to the box).
     double ContainerReachExtraCm = 400;
     void SetFacts(int32 Player, const FFoundationPlayerFacts& Facts);
 
@@ -612,6 +612,10 @@ public:
     const TArray<FFoundationMob>& GetMobs() const { return Mobs; }
     int32 SpawnMob(EFoundationMobType Type, const FVector& LocalCm, float Yaw = 0);
     FFoundationMob* FindMob(int32 Id);
+    // Survival T6 20b2b: the creature cycle (every CreatureCycleTicks steps), and one eligible column's group rounds
+    // (PlayerCells: the live players' feet, in cells); how many mobs the column spawned.
+    void RunCreatureCycle();
+    int32 SpawnCycleColumn(const FIntPoint& Column, TConstArrayView<FVector> PlayerCells, int64 Cycle);
     // Removes every mob, without loot; how many.
     int32 ClearMobs();
     // A cell as the mobs' A* sees it (survival T6 20b): the top of the collision boxes that start in it, and whether it
@@ -641,6 +645,11 @@ public:
     int32 MobsSpawned = 0, MobsKilled = 0, MobPaths = 0, MobEggs = 0, MobGrazes = 0;
     // Passive spawning: columns seen loaded, packs spawned, the mobs in them.
     int32 MobColumnsSeen = 0, MobPacks = 0, MobsPackSpawned = 0;
+    // The creature cycle (20b2b): cycles run (under the cap), the mobs they spawned.
+    int32 MobCycles = 0, MobsCycleSpawned = 0;
+    // The last cycle considered: its eligible columns, the creatures counted in them and the cap.
+    int32 MobCycleEligible = 0, MobCycleCount = 0, MobCycleCap = 0;
+    int64 GetMobCycleStep() const { return MobCycleStep; }
 
 private:
     FFoundationInventory MakeLoadout();
@@ -760,9 +769,10 @@ private:
     // motion-blocking block, which must be a grass block, with room for the box; false when there is none.
     bool FindPackCell(EFoundationMobType Type, int32 X, int32 Y, FIntVector& OutFeet);
     void AddMobSound(const FFoundationMob& Mob, const TCHAR* Sound, float Volume);
-    // Survival T6 20b: a sheep standing in short grass or on a grass block; eating it (the grass goes, or the block
-    // turns to dirt).
+    // Survival T6 20b: a sheep standing in a plant it eats (IsSheepFood) or on a grass block; eating it (the plant
+    // goes, or the block turns to dirt).
     bool CanGraze(const FFoundationMob& Mob) const;
+    bool IsSheepFood(const FIntVector& Cell) const;
     void EatGrass(const FFoundationMob& Mob);
     // GetPathCell's scratch boxes, kept between calls.
     TArray<FBox> PathBoxes;
@@ -770,6 +780,8 @@ private:
     int32 PathStart = 0;
     // Columns (SpawnColumnCells square) already seen loaded: each rolls its chunk-generation pack once per session.
     TSet<FIntPoint> MobSpawnColumns;
+    // Steps since the last reset: the creature cycle runs when it is a multiple of CreatureCycleTicks.
+    int64 MobCycleStep = 0;
 
     TArray<FFoundationPlayer> Players;
     TArray<FFoundationEvent> Events;

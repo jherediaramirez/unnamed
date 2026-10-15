@@ -120,6 +120,11 @@ namespace FoundationFurnace
     UNNAMED_API bool IsOn();
     // foundation.Furnace.Ambience: 1 a lit furnace, smoker or blast furnace plays its sound (T1 step 8b); 0 silent.
     UNNAMED_API bool IsAmbienceOn();
+    // The ambience's 20 Hz clock (UFoundationInteractionView::PlayFurnaceSounds): adds DeltaTime and gives the ticks
+    // to roll this frame, at most 4. Paused (bRunning false: the pawn's simulation is off, as in the pause menu; a
+    // container screen keeps it on) it rolls none and starts over (Codex review 25, finding 1; vanilla stops sounds
+    // while paused, MC-118081).
+    UNNAMED_API int32 StepAmbienceClock(float& Clock, float DeltaTime, bool bRunning);
 
     // What a block cooks: the smoker Smoking, the blast furnace Blasting, anything else (the furnace) Smelting.
     UNNAMED_API EFoundationCookingKind GetCookingKind(FName Block);
