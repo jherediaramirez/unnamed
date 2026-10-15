@@ -517,6 +517,7 @@ void FFoundationAuthority::Reset()
     }
     ItemEntities.Empty();
     ExperienceOrbs.Empty();
+    Arrows.Empty();
     BlockTicks.Empty();
     Mobs.Empty();
     MobSpawnColumns.Empty();
@@ -538,6 +539,8 @@ void FFoundationAuthority::Step()
     StepItemEntities();
     StepMobs();
     StepMobSpawns();
+    // Arrows after the mobs (they hit where the mobs stand this step), before the orbs.
+    StepArrows();
     StepExperienceOrbs();
     StepOpenMenus();
     StepFurnaces();
@@ -948,6 +951,280 @@ int32 FFoundationAuthority::RemoveItemEntities()
     const int32 Count = ItemEntities.Num();
     ItemEntities.Reset();
     return Count;
+}
+
+TArray<FFoundationAttack> FFoundationAuthority::TakeArrowHits(int32 PlayerId)
+{
+    FFoundationPlayer* Player = FindPlayer(PlayerId);
+    return Player ? MoveTemp(Player->ArrowHits) : TArray<FFoundationAttack>();
+}
+
+int32 FFoundationAuthority::RemoveArrows()
+{
+    const int32 Count = Arrows.Num();
+    Arrows.Reset();
+    return Count;
+}
+
+int32 FFoundationAuthority::ShootArrow(const FFoundationArrowShot& Shot)
+{
+    if (!FoundationBow::IsOn()) return 0;
+    FFoundationArrow& Arrow = Arrows.AddDefaulted_GetRef();
+    Arrow.Id = NextArrowId++;
+    Arrow.LocalCm = Arrow.PreviousLocalCm = Shot.FromCm - World.OriginCm;
+    // Not the shooter's own velocity (vanilla adds it; provisional, R24).
+    Arrow.VelocityCm = FoundationArrows::Launch(Shot.Direction, Shot.SpeedBlocks, Shot.Inaccuracy, ArrowRandom);
+    FoundationArrows::Face(Arrow.VelocityCm, Arrow.Yaw, Arrow.Pitch);
+    Arrow.OwnerId = Shot.OwnerId;
+    Arrow.bOwnerIsMob = Shot.bOwnerIsMob;
+    Arrow.Attacker = Shot.Attacker;
+    Arrow.Pickup = Shot.Pickup;
+    Arrow.bCrit = Shot.bCrit;
+    ++ArrowsShot;
+    // A player's shot plays entity.arrow.shoot (a skeleton has its own call, T6 20d).
+    if (!Shot.bOwnerIsMob)
+        AddArrowSound(Arrow, TEXT("entity.arrow.shoot"), 1.f,
+            FoundationBow::GetShootPitch(Shot.SpeedBlocks / FoundationBow::FullSpeedBlocks, ArrowRandom.GetFraction()));
+    return Arrow.Id;
+}
+
+void FFoundationAuthority::AddArrowSound(const FFoundationArrow& Arrow, const TCHAR* Sound, float Volume, float Pitch)
+{
+    FFoundationEvent Event;
+    Event.Kind = EFoundationEventKind::ArrowSound;
+    Event.EntityId = Arrow.Id;
+    Event.Interaction = FName(Sound);
+    Event.LocationCm = World.OriginCm + Arrow.LocalCm;
+    Event.Amount = Volume;
+    Event.Pitch = Pitch;
+    AddEvent(Event);
+}
+
+int32 FFoundationAuthority::FindArrowSlot(const FFoundationPlayer& Player) const
+{
+    const int32 Arrow = Rules.FindItem(TEXT("arrow"));
+    if (Arrow == INDEX_NONE) return INDEX_NONE;
+    const FFoundationInventory& Inventory = Player.Inventory;
+    auto Holds = [&Inventory, Arrow](int32 Slot)
+    {
+        const FFoundationItemInstance* Stack = Inventory.GetSlot(Slot);
+        return Stack && !Stack->IsEmpty() && Stack->Item == Arrow;
+    };
+    if (Holds(FFoundationInventory::OffhandSlot)) return FFoundationInventory::OffhandSlot;
+    if (Holds(Inventory.Selected)) return Inventory.Selected;
+    for (int32 Slot = 0; Slot < FFoundationInventory::FirstArmor; ++Slot)
+        if (Holds(Slot)) return Slot;
+    return INDEX_NONE;
+}
+
+void FFoundationAuthority::ReleaseBow(FFoundationPlayer& Player, int32 UseTicks, const FFoundationVitals& Vitals)
+{
+    // Too short a draw shoots nothing (power below 0.1; minecraft.wiki "Bow", provisional).
+    const float Power = FoundationBow::GetPower(UseTicks);
+    if (!FoundationBow::IsOn() || !Options.bItemUse || Power < FoundationBow::MinPower || !Player.Facts.bAlive) return;
+    // Only the drawn bow itself, still in its hand (a hand change before the next continue shoots nothing).
+    const FFoundationItemInstance& Held = Player.Inventory.GetHand(Player.Use.Hand);
+    if (Held.IsEmpty() || Held.InstanceId != Player.Use.InstanceId) return;
+    const bool bCreative = Vitals.Mode == EFoundationPlayerMode::Creative;
+    const int32 Slot = FindArrowSlot(Player);
+    if (!bCreative && Slot == INDEX_NONE) return;
+    // From the eye less 0.1 block, along the look, power x 3 blocks per tick, inaccuracy 1, critical at full power
+    // (bow.flight); a creative player's arrow is CreativeOnly (survival2.r18.arrow_rule).
+    FFoundationArrowShot Shot;
+    Shot.FromCm = Player.Facts.EyeCm - FVector(0, 0, 10);
+    Shot.Direction = Player.Facts.Aim;
+    Shot.SpeedBlocks = Power * FoundationBow::FullSpeedBlocks;
+    Shot.bCrit = Power >= 1.f;
+    Shot.OwnerId = Player.Id;
+    // An arrow nobody paid for (creative, the lab's infinite supply) cannot be picked up as an item.
+    Shot.Pickup = bCreative || Player.Inventory.bInfiniteSupply ? EFoundationArrowPickup::CreativeOnly
+                                                                : EFoundationArrowPickup::Allowed;
+    if (ShootArrow(Shot) == 0) return;
+    // One arrow from the slot (not in creative or with the lab's infinite supply), one durability from the bow (under
+    // lab tool wear, not in creative).
+    FFoundationInventory& Inventory = Player.Inventory;
+    if (!bCreative && !Inventory.bInfiniteSupply && Slot != INDEX_NONE)
+        if (FFoundationItemInstance* Stack = Inventory.GetSlot(Slot))
+        {
+            if (Stack->Count > 1)
+            {
+                --Stack->Count;
+                Inventory.Touch(*Stack);
+            }
+            else
+                Inventory.SetSlot(Slot, FFoundationItemInstance());
+        }
+    const FFoundationItemDefinition& Bow = Rules.GetItem(Player.Use.Item);
+    if (Options.bToolWear && !bCreative && Bow.MaxDurability > 0 &&
+        Inventory.Wear(Player.Use.Hand, 1, Bow.MaxDurability))
+    {
+        FFoundationEvent Event;
+        Event.Kind = EFoundationEventKind::ToolBroke;
+        Event.Player = Player.Id;
+        Event.Item = Player.Use.Item;
+        Event.LocationCm = Player.Facts.FeetCm;
+        Event.Step = Player.Facts.Step;
+        AddEvent(Event);
+    }
+}
+
+void FFoundationAuthority::StepArrows()
+{
+    using namespace FoundationArrows;
+    // Hits are taken by the player's owner after each step; ones nobody took are dropped (as the mobs').
+    for (FFoundationPlayer& Player : Players)
+        Player.ArrowHits.Reset();
+    if (Arrows.IsEmpty()) return;
+    const FVector& Origin = World.OriginCm;
+    const double VoidCm =
+        double(World.BoundsMin.Z - FoundationItemEntities::VoidDepthCells) * UFoundationProfile::BlockCm;
+    const int32 ArrowItem = Rules.FindItem(TEXT("arrow"));
+    TArray<FBox> Boxes;
+    for (int32 Index = 0; Index < Arrows.Num();)
+    {
+        FFoundationArrow& Arrow = Arrows[Index];
+        Arrow.PreviousLocalCm = Arrow.LocalCm;
+        const FIntVector Cell(FoundationGrid::FloorToCell(Arrow.LocalCm.X),
+            FoundationGrid::FloorToCell(Arrow.LocalCm.Y), FoundationGrid::FloorToCell(Arrow.LocalCm.Z));
+        // In a column that is not loaded it waits, as the item entities.
+        if (!World.GetStorage().IsLoaded(Cell))
+        {
+            ++Index;
+            continue;
+        }
+        ++Arrow.Age;
+        const FVector From = Origin + Arrow.LocalCm;
+        if (Arrow.bInGround)
+        {
+            // Still held by a block's box at its tip; else it falls again (minecraft.wiki "Arrow"; provisional).
+            const FBox Tip(From - FVector(1), From + FVector(1));
+            Boxes.Reset();
+            GatherMobBoxes(Tip, Boxes);
+            if (Boxes.ContainsByPredicate([&Tip](const FBox& Box) { return Box.Intersect(Tip); }))
+            {
+                bool bTaken = false;
+                const FBox Body(From - FVector(HalfSizeCm), From + FVector(HalfSizeCm));
+                for (FFoundationPlayer& Player : Players)
+                {
+                    if (bTaken || !Player.bHasFacts || !Player.Facts.bAlive ||
+                        Player.Facts.Mode == EFoundationPlayerMode::Spectator ||
+                        !FoundationItemEntities::GetPickupBox(Player.Facts.GetBody()).Intersect(Body))
+                        continue;
+                    // ALLOWED gives an arrow in any mode; CREATIVE_ONLY takes it in creative without one; DISALLOWED
+                    // never (survival2.r18.arrow_rule).
+                    const bool bCreative = Player.Facts.Mode == EFoundationPlayerMode::Creative;
+                    int32 Added = 0;
+                    if (Arrow.Pickup == EFoundationArrowPickup::Allowed && ArrowItem != INDEX_NONE)
+                        Added = Player.Inventory.Add(ArrowItem, 1, Rules.Items[ArrowItem].MaxStack);
+                    bTaken = Added > 0 || (Arrow.Pickup == EFoundationArrowPickup::CreativeOnly && bCreative);
+                    if (!bTaken) continue;
+                    ++ArrowsPickedUp;
+                    if (Added <= 0) continue;
+                    FFoundationEvent Event;
+                    Event.Kind = EFoundationEventKind::PickedUp;
+                    Event.Player = Player.Id;
+                    Event.Item = ArrowItem;
+                    Event.Count = Added;
+                    Event.LocationCm = From;
+                    Event.Step = Player.Facts.Step;
+                    AddEvent(Event);
+                }
+                if (bTaken || ++Arrow.InGroundTicks >= DespawnTicks)
+                    Arrows.RemoveAt(Index);
+                else
+                    ++Index;
+                continue;
+            }
+            Arrow.bInGround = false;
+            Arrow.InGroundTicks = 0;
+        }
+        // The step's segment: the first block box it enters ends it.
+        const FVector To = From + Arrow.VelocityCm;
+        Boxes.Reset();
+        GatherMobBoxes(FBox(From.ComponentMin(To), From.ComponentMax(To)).ExpandBy(1), Boxes);
+        double BlockTime = 1;
+        const bool bBlock = Sweep(From, To, Boxes, BlockTime);
+        const FVector End = From + (To - From) * (bBlock ? BlockTime : 1.);
+        // Then the first mob or player box (grown by HitInflateCm) on From..End; its shooter only past the grace.
+        double HitTime = 2;
+        FFoundationMob* HitMob = nullptr;
+        FFoundationPlayer* HitPlayer = nullptr;
+        auto Try = [&From, &End, &HitTime](const FBox& Box)
+        {
+            const FBox Grown = Box.ExpandBy(HitInflateCm);
+            double Time = 0;
+            if (!Sweep(From, End, MakeArrayView(&Grown, 1), Time) || Time >= HitTime) return false;
+            HitTime = Time;
+            return true;
+        };
+        for (FFoundationMob& Mob : Mobs)
+            if (!Mob.Health.IsDead() &&
+                !(Arrow.bOwnerIsMob && Mob.Id == Arrow.OwnerId && Arrow.Age < OwnerGraceTicks) &&
+                Try(FoundationMobs::GetBox(Mob.Type, Origin + Mob.LocalCm)))
+                HitMob = &Mob;
+        for (FFoundationPlayer& Player : Players)
+            if (Player.bHasFacts && Player.Facts.bAlive && Player.Facts.Mode != EFoundationPlayerMode::Spectator &&
+                !(!Arrow.bOwnerIsMob && Player.Id == Arrow.OwnerId && Arrow.Age < OwnerGraceTicks) &&
+                Try(Player.Facts.GetBody()))
+            {
+                HitPlayer = &Player;
+                HitMob = nullptr;
+            }
+        if (HitMob || HitPlayer)
+        {
+            // ceil(speed x 2), the speed this step's velocity (blocks per tick), plus a critical's bonus
+            // (survival2.r18.arrow_rule); the arrow goes (a refused hit removes it too: provisional).
+            const FVector At = From + (End - From) * HitTime;
+            const float Damage = float(GetDamage(float(Arrow.VelocityCm.Size() / BlockCm), Arrow.bCrit, ArrowRandom));
+            ++ArrowHits;
+            Arrow.LocalCm = At - Origin;
+            AddArrowSound(Arrow, TEXT("entity.arrow.hit"), 1.f, GetHitPitch(ArrowRandom.GetFraction()));
+            if (HitMob)
+            {
+                const bool bFresh = !HitMob->Health.IsInHurtWindow();
+                if (HitMob->Health.Hurt(EFoundationDamage::Arrow, Damage, Arrow.Attacker))
+                {
+                    // Knocked back along the arrow's flight, from where it came.
+                    const bool bByPlayer = !Arrow.bOwnerIsMob && Arrow.OwnerId != INDEX_NONE;
+                    FoundationMobs::OnHurt(
+                        *HitMob, Origin, At - Arrow.VelocityCm, bFresh, bByPlayer, bByPlayer ? Arrow.OwnerId : 0);
+                    const bool bDied = HitMob->Health.IsDead();
+                    AddMobSound(
+                        *HitMob, bDied ? TEXT("death") : TEXT("hurt"), FoundationMobs::GetKind(HitMob->Type).Volume);
+                    if (bDied) DropMobLoot(*HitMob);
+                }
+            }
+            else
+            {
+                FFoundationAttack Attack;
+                Attack.Type = EFoundationDamage::Arrow;
+                Attack.Amount = Damage;
+                Attack.SourceCm = At;
+                Attack.Attacker = Arrow.Attacker;
+                HitPlayer->ArrowHits.Add(Attack);
+            }
+            Arrows.RemoveAt(Index);
+            continue;
+        }
+        if (bBlock)
+        {
+            // Stuck where it entered the box, still facing its flight (entity.arrow.hit).
+            Arrow.LocalCm = End - Origin;
+            Arrow.VelocityCm = FVector::ZeroVector;
+            Arrow.bInGround = true;
+            Arrow.InGroundTicks = 0;
+            AddArrowSound(Arrow, TEXT("entity.arrow.hit"), 1.f, GetHitPitch(ArrowRandom.GetFraction()));
+            ++Index;
+            continue;
+        }
+        Arrow.LocalCm = To - Origin;
+        Integrate(Arrow.VelocityCm, IsMobInFluid(FBox(To - FVector(HalfSizeCm), To + FVector(HalfSizeCm)), false));
+        Face(Arrow.VelocityCm, Arrow.Yaw, Arrow.Pitch);
+        if (Arrow.LocalCm.Z < VoidCm)
+            Arrows.RemoveAt(Index);
+        else
+            ++Index;
+    }
 }
 
 int32 FFoundationAuthority::RemoveExperienceOrbs()
@@ -1409,8 +1686,8 @@ void FFoundationAuthority::StepMobs()
                 ItemId(EFoundationHand::Main), ItemId(EFoundationHand::Off)});
             Seen.WidthCm = Player.Facts.WidthCm;
             Seen.HeightCm = Player.Facts.HeightCm;
-            Seen.bTargetable =
-                Player.Facts.Mode == EFoundationPlayerMode::Survival || Player.Facts.Mode == EFoundationPlayerMode::Adventure;
+            Seen.bTargetable = Player.Facts.Mode == EFoundationPlayerMode::Survival ||
+                Player.Facts.Mode == EFoundationPlayerMode::Adventure;
         }
     // Hits are taken by the player's owner after each step; ones nobody took are dropped.
     for (FFoundationPlayer& Player : Players)
@@ -2337,6 +2614,8 @@ FFoundationResult FFoundationAuthority::Execute(
     case EFoundationCommandType::UseItemRelease:
         Result.UseTicks = Player->Use.Ticks;
         Result.UseDuration = Player->Use.Duration;
+        // A drawn bow shoots on its release (step 19c), before the use ends.
+        if (Player->Use.bActive && Player->Use.bDraws) ReleaseBow(*Player, Player->Use.Ticks, Vitals);
         if (!CancelUse(*Player))
             Reject(Result, EFoundationReason::NotUsing);
         else
@@ -2709,6 +2988,27 @@ void FFoundationAuthority::UseItemStart(FFoundationPlayer& Player, const FFounda
         Result.UseDuration = Player.Use.Duration;
         return;
     }
+    // The bow (survival step 19c): drawn while held, with an arrow to shoot or in creative; the release shoots
+    // (ReleaseBow). Its use lasts 72000 ticks (minecraft.wiki "Bow"; provisional). Without an arrow it passes.
+    if (Options.bItemUse && FoundationBow::IsOn() && !Stack.IsEmpty() && Rules.GetItem(Stack.Item).Id == TEXT("bow"))
+    {
+        if (Vitals.Mode != EFoundationPlayerMode::Creative && FindArrowSlot(Player) == INDEX_NONE)
+        {
+            Result.Outcome = EFoundationOutcome::Pass;
+            return;
+        }
+        CancelUse(Player);
+        Player.Use.bActive = Player.Use.bDraws = true;
+        Player.Use.Hand = Command.Hand;
+        Player.Use.InstanceId = Stack.InstanceId;
+        Player.Use.Item = Stack.Item;
+        Player.Use.Ticks = 0;
+        Player.Use.Duration = FoundationBow::UseDuration;
+        Player.Use.LastStep = Player.Facts.Step;
+        Result.Outcome = EFoundationOutcome::Committed;
+        Result.UseDuration = Player.Use.Duration;
+        return;
+    }
     const FFoundationConsumable Food =
         Stack.IsEmpty() ? FFoundationConsumable{} : Rules.GetItem(Stack.Item).GetConsumable();
     // Without the switch or a consumable the use passes to the next hand, as before.
@@ -2776,8 +3076,8 @@ void FFoundationAuthority::UseItemContinue(
     Use.LastStep = Player.Facts.Step;
     Result.UseTicks = ++Use.Ticks;
     Result.Outcome = EFoundationOutcome::Committed;
-    // A raised shield only counts its ticks (IsBlocking reads them).
-    if (Use.bBlocks) return;
+    // A raised shield only counts its ticks (IsBlocking reads them); so does a drawn bow (the release reads them).
+    if (Use.bBlocks || Use.bDraws) return;
     FFoundationEvent Event;
     Event.Player = Player.Id;
     Event.Item = Use.Item;
@@ -2822,13 +3122,13 @@ bool FFoundationAuthority::IsBlocking(int32 PlayerId) const
 bool FFoundationAuthority::HurtPlayer(int32 PlayerId, FFoundationVitals& Vitals, const FFoundationAttack& Attack)
 {
     FFoundationPlayer* Player = FindPlayer(PlayerId);
-    // Only hits with a source can be blocked: a mob's or a player's attack. Every damage type in 26.3's
-    // #minecraft:bypasses_shield (data/minecraft/tags/damage_type/bypasses_shield.json: #bypasses_armor, cactus,
-    // campfire, in_fire, lava, ...) reaches the player some other way, without a source.
-    const bool bBlockable =
-        Attack.Type == EFoundationDamage::MobAttack || Attack.Type == EFoundationDamage::PlayerAttack;
+    // Only hits with a source can be blocked: a mob's or a player's attack, an arrow (step 19c). Every damage type
+    // in 26.3's #minecraft:bypasses_shield (data/minecraft/tags/damage_type/bypasses_shield.json: #bypasses_armor,
+    // cactus, campfire, in_fire, lava, ...) reaches the player some other way, without a source.
+    const bool bBlockable = Attack.Type == EFoundationDamage::MobAttack ||
+        Attack.Type == EFoundationDamage::PlayerAttack || Attack.Type == EFoundationDamage::Arrow;
     if (!Player || !bBlockable || !IsBlocking(PlayerId) || Vitals.IsDead() || !(Attack.Amount > 0.f))
-        return Vitals.Hurt(Attack.Type, Attack.Amount);
+        return Vitals.Hurt(Attack.Type, Attack.Amount, Attack.Attacker);
     // The default damage reduction's horizontal_blocking_angle (90): the angle between the look and the direction to
     // the source, both horizontal (minecraft.wiki "Data component format/blocks_attacks"; the edge counts,
     // provisional).
@@ -2839,7 +3139,7 @@ bool FFoundationAuthority::HurtPlayer(int32 PlayerId, FFoundationVitals& Vitals,
     const double Angle = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(Look | ToSource, -1.0, 1.0)));
     // Looking straight up or down, or a source at the feet, leaves no horizontal direction: not blocked (provisional).
     if (Look.IsZero() || ToSource.IsZero() || Angle > Blocks.AngleDegrees + 1e-4)
-        return Vitals.Hurt(Attack.Type, Attack.Amount);
+        return Vitals.Hurt(Attack.Type, Attack.Amount, Attack.Attacker);
     const float Blocked = FMath::Clamp(Blocks.Base + Blocks.Factor * Attack.Amount, 0.f, Attack.Amount);
     ++AttacksBlocked;
     FFoundationEvent Event;
@@ -2881,7 +3181,7 @@ bool FFoundationAuthority::HurtPlayer(int32 PlayerId, FFoundationVitals& Vitals,
         CancelUse(*Player);
     }
     const float Rest = Attack.Amount - Blocked;
-    return Rest > 0.f && Vitals.Hurt(Attack.Type, Rest);
+    return Rest > 0.f && Vitals.Hurt(Attack.Type, Rest, Attack.Attacker);
 }
 
 bool FFoundationAuthority::CancelUse(FFoundationPlayer& Player)

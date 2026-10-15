@@ -169,7 +169,8 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
         : bCrouched                  ? TEXT("sprint start blocked: crouch")
         : !Forward                   ? TEXT("sprint needs forward")
                                      : TEXT("eligible: unhindered fixture");
-    const double FovTarget = (bFlying ? P.FlyingFovMultiplier : 1.) * (bSprinting ? P.SprintFovMultiplier : 1.);
+    const double FovTarget =
+        (bFlying ? P.FlyingFovMultiplier : 1.) * (bSprinting ? P.SprintFovMultiplier : 1.) * Intent.ItemFovMultiplier;
     FovMultiplier += (FovTarget - FovMultiplier) * P.FovSmoothingPerTick;
     if (VelocityPerTick.SizeSquared2D() < FMath::Square(P.StopCutoffCmPerTick))
         VelocityPerTick.X = VelocityPerTick.Y = 0;
