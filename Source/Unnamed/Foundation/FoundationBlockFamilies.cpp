@@ -1,8 +1,11 @@
 #include "Foundation/FoundationBlockFamilies.h"
 
 #include "Algo/Find.h"
+#include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlocks.h"
+#include "Foundation/FoundationProfile.h"
 #include "GameplayTagContainer.h"
+#include "HAL/IConsoleManager.h"
 
 namespace
 {
@@ -18,6 +21,8 @@ namespace
         FGameplayTag FenceGates = FGameplayTag::RequestGameplayTag(TEXT("Block.FenceGates"), false);
         FGameplayTag WallPostOverride = FGameplayTag::RequestGameplayTag(TEXT("Block.WallPostOverride"), false);
         FGameplayTag Leaves = FGameplayTag::RequestGameplayTag(TEXT("Block.Leaves"), false);
+        FGameplayTag Doors = FGameplayTag::RequestGameplayTag(TEXT("Block.Doors"), false);
+        FGameplayTag Trapdoors = FGameplayTag::RequestGameplayTag(TEXT("Block.Trapdoors"), false);
     };
 
     const FFamilyTags& GetTags()
@@ -255,6 +260,64 @@ namespace
     {
         return HasTag(Registry.GetBlock(State), GetTags().Walls);
     }
+
+    TAutoConsoleVariable<int32> CVarBlocksInteract(TEXT("foundation.Blocks.Interact"), 1,
+        TEXT("1: doors, trapdoors and fence gates place by their own rules and open by hand (survival B3a); a door "
+             "needs "
+             "a sturdy block below. 0: no hand use, and doors and trapdoors place as before B3a."));
+
+    const TCHAR* OpenValueName(bool bValue)
+    {
+        return bValue ? TEXT("true") : TEXT("false");
+    }
+
+    bool IsDoorHalf(const FFoundationBlockRegistry& Registry, FFoundationBlockState State, const TCHAR* Half)
+    {
+        return GetStateFamily(Registry, State) == EFoundationBlockFamily::Door &&
+            Registry.GetValue(State, TEXT("half")) == Half;
+    }
+
+    // A full-block collision shape (isCollisionShapeFullBlock): what the door hinge counts beside a door. Measured by
+    // Tests/Probes/door-hinge-26.3.json: stone, glass and leaves count; a bottom slab, a fence and air do not.
+    bool HasFullBlockCollision(const FFoundationBlockRegistry& Registry, FFoundationBlockState State)
+    {
+        TArray<FBox> Boxes;
+        Registry.GetCollisionBoxes(State, Boxes);
+        constexpr double Epsilon = 1e-6;
+        return Boxes.ContainsByPredicate(
+            [](const FBox& Box) { return Box.Min.GetMax() < Epsilon && Box.Max.GetMin() > 1 - Epsilon; });
+    }
+
+    // The door hinge for a lower half at Cell facing Facing, as measured (Tests/Probes/door-hinge-26.3.json, 11,100
+    // placements; VALUES "Door hinges"). Left and right are the player's as they look along Facing; the full-block
+    // cells beside the door (its lower and its upper cell each count one) are counted per side. The hinge goes right
+    // with a door's lower half on the left only, or with more full cells on the right; else left with a door's lower
+    // half on the right only, or more full cells on the left; else on the half of the cell the click hit, the left on
+    // the centre line (the probe's parts D and E: the rule is not symmetric).
+    const TCHAR* GetDoorHingeSide(const FFoundationBlockWorld& World, const FIntVector& Cell, EFoundationFace Facing,
+        const FFoundationPlacementContext& Context)
+    {
+        const FFoundationBlockRegistry& Registry = World.GetRegistry();
+        const EFoundationFace Left = GetCounterClockWise(Facing), Right = GetClockWise(Facing);
+        auto Read = [&World](const FIntVector& At)
+        { return World.IsKnown(At) ? World.Get(At).State : FFoundationBlockState(); };
+        auto CountFull = [&](EFoundationFace Side)
+        {
+            const FIntVector At = Cell + FoundationGrid::FaceOffset(Side);
+            return int32(HasFullBlockCollision(Registry, Read(At))) +
+                int32(HasFullBlockCollision(Registry, Read(At + FIntVector(0, 0, 1))));
+        };
+        const bool bDoorLeft = IsDoorHalf(Registry, Read(Cell + FoundationGrid::FaceOffset(Left)), TEXT("lower"));
+        const bool bDoorRight = IsDoorHalf(Registry, Read(Cell + FoundationGrid::FaceOffset(Right)), TEXT("lower"));
+        const int32 FullLeft = CountFull(Left), FullRight = CountFull(Right);
+        if ((bDoorLeft && !bDoorRight) || FullRight > FullLeft) return TEXT("right");
+        if ((bDoorRight && !bDoorLeft) || FullLeft > FullRight) return TEXT("left");
+        const FVector Local =
+            (Context.ClickPointCm - FoundationGrid::CellMin(Cell, World.OriginCm)) / UFoundationProfile::BlockCm -
+            FVector(.5);
+        return FVector::DotProduct(Local, FVector(FoundationGrid::FaceOffset(Left))) >= 0 ? TEXT("left")
+                                                                                          : TEXT("right");
+    }
 }
 
 EFoundationBlockFamily FoundationBlockFamilies::GetFamily(const FFoundationBlockType& Block)
@@ -264,6 +327,8 @@ EFoundationBlockFamily FoundationBlockFamilies::GetFamily(const FFoundationBlock
     if (HasTag(Block, Tags.Fences)) return EFoundationBlockFamily::Fence;
     if (HasTag(Block, Tags.Walls)) return EFoundationBlockFamily::Wall;
     if (HasTag(Block, Tags.FenceGates)) return EFoundationBlockFamily::FenceGate;
+    if (HasTag(Block, Tags.Doors)) return EFoundationBlockFamily::Door;
+    if (HasTag(Block, Tags.Trapdoors)) return EFoundationBlockFamily::Trapdoor;
     // Panes and bars: exactly north, east, south, west and waterlogged, as a fence without the tag.
     if (Block.Properties.Num() == 5)
     {
@@ -357,8 +422,26 @@ FFoundationBlockState FoundationBlockFamilies::GetStateForPlacement(const FFound
     const EFoundationFace Look = FoundationBlockPlacement::GetHorizontalLook(Context.Yaw);
     if (Family == EFoundationBlockFamily::Stairs || Family == EFoundationBlockFamily::FenceGate)
         State = Registry.WithValue(State, TEXT("facing"), SideName(Look));
-    if (Family == EFoundationBlockFamily::Stairs)
+    if (Family == EFoundationBlockFamily::Stairs || Family == EFoundationBlockFamily::Trapdoor)
         State = Registry.WithValue(State, TEXT("half"), bTopHalf ? TEXT("top") : TEXT("bottom"));
+    if (Family == EFoundationBlockFamily::Door)
+    {
+        State = Registry.WithValue(State, TEXT("facing"), SideName(Look));
+        State = Registry.WithValue(State, TEXT("half"), TEXT("lower"));
+        State = Registry.WithValue(State, TEXT("hinge"), GetDoorHingeSide(World, Context.Destination, Look, Context));
+    }
+    // A trapdoor faces the clicked side face with the half from the click height, or away from the player on a top or
+    // bottom face (minecraft.wiki "Trapdoor"); a click that replaces the clicked block (short grass) counts as the
+    // latter, the half top unless the click was on a top face.
+    if (Family == EFoundationBlockFamily::Trapdoor)
+    {
+        const bool bOnSide = IsSide(Context.ClickedFace) && !Context.bReplaceClicked;
+        State = Registry.WithValue(State, TEXT("facing"),
+            SideName(bOnSide ? Context.ClickedFace : FoundationBlockPlacement::GetOpposite(Look)));
+        if (Context.bReplaceClicked)
+            State = Registry.WithValue(
+                State, TEXT("half"), Context.ClickedFace == EFoundationFace::Up ? TEXT("bottom") : TEXT("top"));
+    }
     if (Block.FindProperty(TEXT("waterlogged")) != INDEX_NONE)
     {
         const FFoundationFluid Fluid = Registry.GetFluid(World.Get(Context.Destination).State);
@@ -392,4 +475,106 @@ void FoundationBlockFamilies::UpdateNeighbourShapes(FFoundationBlockWorld& World
     for (const EFoundationFace Side : {EFoundationFace::North, EFoundationFace::South, EFoundationFace::West,
              EFoundationFace::East, EFoundationFace::Down})
         Update(Side);
+}
+
+bool FoundationBlockFamilies::IsInteractOn()
+{
+    return CVarBlocksInteract.GetValueOnAnyThread() != 0;
+}
+
+bool FoundationBlockFamilies::UsesFamilyPlacement(const FFoundationBlockType& Block)
+{
+    const EFoundationBlockFamily Family = GetFamily(Block);
+    if (Family == EFoundationBlockFamily::Door || Family == EFoundationBlockFamily::Trapdoor) return IsInteractOn();
+    return Family != EFoundationBlockFamily::None;
+}
+
+bool FoundationBlockFamilies::IsUsable(const FFoundationBlockType& Block)
+{
+    switch (GetFamily(Block))
+    {
+    case EFoundationBlockFamily::Door:
+    case EFoundationBlockFamily::Trapdoor:
+        return Block.Id != TEXT("iron_door") && Block.Id != TEXT("iron_trapdoor");
+    case EFoundationBlockFamily::FenceGate:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool FoundationBlockFamilies::Use(
+    FFoundationAuthority& Authority, FFoundationPlayer& Player, const FFoundationHit& Hit, FFoundationResult& Result)
+{
+    const FFoundationBlockWorld& World = Authority.World;
+    const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    const FFoundationBlockState State = World.Get(Hit.Cell).State;
+    const FFoundationBlockType& Block = Registry.GetBlock(State);
+    if (!IsUsable(Block)) return false;
+    const bool bOpen = Registry.GetValue(State, TEXT("open")) != TEXT("true");
+    FFoundationBlockState Used = Registry.WithValue(State, TEXT("open"), OpenValueName(bOpen));
+    TArray<TPair<FIntVector, FFoundationBlockState>, TInlineAllocator<2>> Writes;
+    if (GetFamily(Block) == EFoundationBlockFamily::FenceGate && bOpen)
+    {
+        // An opening gate that faces the player first turns to the player's look, so it swings away
+        // (survival.r9.switches; VALUES "Fence gates").
+        double Yaw, Pitch;
+        FoundationBlockPlacement::GetYawPitch(Player.Facts.Aim, Yaw, Pitch);
+        const EFoundationFace Look = FoundationBlockPlacement::GetHorizontalLook(Yaw);
+        if (GetFacing(Registry, State) == FoundationBlockPlacement::GetOpposite(Look))
+            Used = Registry.WithValue(Used, TEXT("facing"), SideName(Look));
+    }
+    Writes.Emplace(Hit.Cell, Used);
+    // Both door halves open in the one use (survival.r9.switches); a lone half (a world saved before B3a) alone.
+    if (GetFamily(Block) == EFoundationBlockFamily::Door)
+    {
+        const bool bLower = Registry.GetValue(State, TEXT("half")) == TEXT("lower");
+        const FIntVector Other = Hit.Cell + FIntVector(0, 0, bLower ? 1 : -1);
+        // Its other half unknown (the edge of the streamed world): the click is consumed, nothing written.
+        if (!World.IsKnown(Other))
+        {
+            Result.Outcome = EFoundationOutcome::Rejected;
+            Result.Reason = EFoundationReason::OutsideBounds;
+            return true;
+        }
+        if (IsDoorHalf(Registry, World.Get(Other).State, bLower ? TEXT("upper") : TEXT("lower")))
+            Writes.Emplace(Other, Registry.WithValue(World.Get(Other).State, TEXT("open"), OpenValueName(bOpen)));
+    }
+    Authority.CommitBlockUse(Player, Hit.Cell, Writes, GetUseSound(Block, bOpen), Result);
+    return true;
+}
+
+FName FoundationBlockFamilies::GetUseSound(const FFoundationBlockType& Block, bool bOpen)
+{
+    const EFoundationBlockFamily Family = GetFamily(Block);
+    const TCHAR* Kind = Family == EFoundationBlockFamily::Door ? TEXT("door")
+        : Family == EFoundationBlockFamily::Trapdoor           ? TEXT("trapdoor")
+        : Family == EFoundationBlockFamily::FenceGate          ? TEXT("fence_gate")
+                                                               : nullptr;
+    if (!Kind) return NAME_None;
+    const FString Id = Block.Id.ToString();
+    // The set types' sounds; the other woods share wooden_door, wooden_trapdoor and fence_gate.
+    const TCHAR* Set = Id.Contains(TEXT("copper"))                          ? TEXT("copper_")
+        : Id.StartsWith(TEXT("iron_"))                                      ? TEXT("iron_")
+        : Id.StartsWith(TEXT("cherry_"))                                    ? TEXT("cherry_wood_")
+        : Id.StartsWith(TEXT("bamboo_"))                                    ? TEXT("bamboo_wood_")
+        : Id.StartsWith(TEXT("crimson_")) || Id.StartsWith(TEXT("warped_")) ? TEXT("nether_wood_")
+        : Family == EFoundationBlockFamily::FenceGate                       ? TEXT("")
+                                                                            : TEXT("wooden_");
+    return FName(FString::Printf(TEXT("block.%s%s.%s"), Set, Kind, bOpen ? TEXT("open") : TEXT("close")));
+}
+
+EFoundationFamilySurvival FoundationBlockFamilies::GetSurvival(
+    const FFoundationBlockWorld& World, const FIntVector& Cell, FFoundationBlockState State)
+{
+    const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    if (!IsInteractOn() || GetStateFamily(Registry, State) != EFoundationBlockFamily::Door)
+        return EFoundationFamilySurvival::NoRule;
+    const FIntVector Below = Cell - FIntVector(0, 0, 1);
+    if (!World.IsKnown(Below)) return EFoundationFamilySurvival::Unknown;
+    const FFoundationBlockState Support = World.Get(Below).State;
+    const bool bSurvives = Registry.GetValue(State, TEXT("half")) == TEXT("upper")
+        ? Registry.GetBlock(State).Contains(Support)
+        : IsFaceSturdy(Registry, Support, EFoundationFace::Up);
+    return bSurvives ? EFoundationFamilySurvival::Survives : EFoundationFamilySurvival::Fails;
 }

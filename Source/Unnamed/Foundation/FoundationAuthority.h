@@ -360,7 +360,10 @@ enum class EFoundationEventKind : uint8
     ContainerOpened,
     // A mob's sound (survival T6 20a): Interaction the sound event, LocationCm where (world cm), Amount the volume,
     // EntityId the mob.
-    MobSound
+    MobSound,
+    // A block's hand use changed it (survival B3a: a door, trapdoor or gate opened or closed): Cell the used block,
+    // State its new state, Interaction the sound event (FoundationBlockFamilies::GetUseSound).
+    BlockUsed
 };
 
 // A committed (or rejected) outcome for presentation: effects fire once from these.
@@ -508,6 +511,11 @@ public:
     using FBlockWouldUse = TFunction<bool(
         const FFoundationAuthority& Authority, const FFoundationPlayer& Player, const FFoundationHit& Hit)>;
     void RegisterBlockUse(FName BlockId, FBlockUse Use, FBlockWouldUse WouldUse = nullptr);
+    // Writes a block use's states (survival B3a, FoundationBlockFamilies::Use: both door halves at once), each cell
+    // settled as an edit (survival, the neighbour shapes), and adds a BlockUsed event with Sound; Result is Committed
+    // and bInteracted, Cell the used block. A write to a cell nobody knows rejects it all (OutsideBounds), unwritten.
+    void CommitBlockUse(FFoundationPlayer& Player, const FIntVector& Cell,
+        TConstArrayView<TPair<FIntVector, FFoundationBlockState>> Writes, FName Sound, FFoundationResult& Result);
     // Whether the block in Cell has a use handler.
     bool HasBlockUse(const FIntVector& Cell) const;
     // Whether Player's use on Hit would be the block's (previews show no placement for it): a handler, and its

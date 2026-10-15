@@ -378,10 +378,26 @@ check(all(a <= b for a, b in shape_runs) and all(i in valid_ids for a, b in shap
 check(len(shapes["single_neighbour"]) == 7 and len(shapes["cross_family"]["samples"]) == 195 and
       len(shapes["wall_up"]) == 32 and len(shapes["stairs"]["single"]) == 8 and len(shapes["stairs"]["pairs"]) == 512 and
       len(shapes["gates_in_wall"]) == 72, "shape_updates.json: section sizes (7, 195, 32, 8, 512, 72)")
+def expand_runs(runs):
+    """The state ids of [[first, last], ...] runs, as FactsDump writes both "r" and "m"."""
+    return [i for a, b in runs for i in range(a, b + 1)]
+
+
+def covers_once(group, ids):
+    """A single-neighbour group's "r" runs cover `ids` exactly once, and its "m" runs (the cases that needed a second
+    changing pass) lie within them."""
+    covered = [i for runs in group["r"].values() for i in expand_runs(runs)]
+    return len(covered) == len(ids) and set(covered) == ids and set(expand_runs(group["m"])) <= ids
+
+
+# Self-test on synthetic groups (Codex review 16, #1): a non-empty "m" is expanded as "r" is, not hashed as lists.
+check(covers_once({"r": {"0": [[0, 1]], "5": [[2, 3]]}, "m": [[1, 2]]}, {0, 1, 2, 3}) and
+      not covers_once({"r": {"0": [[0, 3]]}, "m": [[3, 4]]}, {0, 1, 2, 3}) and
+      not covers_once({"r": {"0": [[0, 2]], "5": [[2, 3]]}, "m": []}, {0, 1, 2, 3}),
+      "verify_reference.py: the single-neighbour coverage self-test fails")
 for rep, entry in shapes["single_neighbour"].items():
     for d in shapes["direction_order"]:
-        covered = [i for runs in entry[d]["r"].values() for a, b in runs for i in range(a, b + 1)]
-        check(len(covered) == len(valid_ids) and set(covered) == valid_ids and set(entry[d]["m"]) <= valid_ids,
+        check(covers_once(entry[d], valid_ids),
               f"shape_updates.json: single_neighbour {rep} {d} does not cover air and every state exactly once")
 
 

@@ -256,7 +256,42 @@ const FFoundationAuthority::FBlockUseEntry* FFoundationAuthority::FindBlockUse(F
     static const TMap<FName, FBlockUseEntry> BuiltIn{{TEXT("crafting_table"), {FBlockUse(&UseCraftingTable), nullptr}},
         {TEXT("furnace"), {FBlockUse(&UseFurnace), nullptr}}};
     if (const FBlockUseEntry* Use = BlockUses.Find(BlockId)) return Use;
-    return BuiltIn.Find(BlockId);
+    if (const FBlockUseEntry* Use = BuiltIn.Find(BlockId)) return Use;
+    // Doors, trapdoors and fence gates (survival B3a, foundation.Blocks.Interact), by family; iron has none.
+    static const FBlockUseEntry FamilyUse{FBlockUse(&FoundationBlockFamilies::Use), nullptr};
+    const FFoundationBlockType* Block = World.FindBlock(BlockId);
+    return FoundationBlockFamilies::IsInteractOn() && Block && FoundationBlockFamilies::IsUsable(*Block) ? &FamilyUse
+                                                                                                         : nullptr;
+}
+
+void FFoundationAuthority::CommitBlockUse(FFoundationPlayer& Player, const FIntVector& Cell,
+    TConstArrayView<TPair<FIntVector, FFoundationBlockState>> Writes, FName Sound, FFoundationResult& Result)
+{
+    if (!Algo::AllOf(
+            Writes, [this](const TPair<FIntVector, FFoundationBlockState>& Write) { return World.IsKnown(Write.Key); }))
+    {
+        Reject(Result, EFoundationReason::OutsideBounds);
+        return;
+    }
+    TArray<FFoundationBlockState, TInlineAllocator<2>> Before;
+    for (const TPair<FIntVector, FFoundationBlockState>& Write : Writes)
+        Before.Add(World.Get(Write.Key).State);
+    World.SetMany(Writes);
+    for (int32 Index = 0; Index < Writes.Num(); ++Index)
+        SettlePlants(Writes[Index].Key, Before[Index], Player);
+    Result.Outcome = EFoundationOutcome::Committed;
+    Result.bInteracted = true;
+    Result.Cell = Cell;
+    Result.State = World.Get(Cell).State;
+    Result.Interaction = Sound;
+    FFoundationEvent Event;
+    Event.Kind = EFoundationEventKind::BlockUsed;
+    Event.Player = Player.Id;
+    Event.Cell = Cell;
+    Event.State = Result.State;
+    Event.Interaction = Sound;
+    Event.Step = Player.Facts.Step;
+    AddEvent(Event);
 }
 
 bool FFoundationAuthority::HasBlockUse(const FIntVector& Cell) const
@@ -2221,6 +2256,10 @@ EFoundationReason FFoundationAuthority::CheckPlantPlacement(
         if (!FoundationBlockPlacement::IsReplaceable(World, World.Get(Upper).State))
             return EFoundationReason::DestinationOccupied;
     }
+    // A door's lower half needs a sturdy top below it (survival B3a); an unknown cell below refuses.
+    if (const EFoundationFamilySurvival Family = FoundationBlockFamilies::GetSurvival(World, Destination, Placed);
+        Family == EFoundationFamilySurvival::Fails || Family == EFoundationFamilySurvival::Unknown)
+        return EFoundationReason::CannotSurvive;
     if (!PlantSurvival) return EFoundationReason::None;
     // The placed state must survive where it goes, read as the cell is now (the water seagrass goes into), and a
     // double plant's upper half on its lower half. A rule that reads an unknown cell refuses.
@@ -2250,6 +2289,10 @@ bool FFoundationAuthority::CanPlantSurvive(const FIntVector& Cell, FFoundationBl
         FIntVector Support;
         return FoundationBlockPlacement::IsTorchSupported(World, State, Cell, &Support) || !World.IsKnown(Support);
     }
+    // Door halves (survival B3a): an unknown support keeps them.
+    if (const EFoundationFamilySurvival Family = FoundationBlockFamilies::GetSurvival(World, Cell, State);
+        Family != EFoundationFamilySurvival::NoRule)
+        return Family != EFoundationFamilySurvival::Fails;
     if (!PlantSurvival) return true;
     bool bUnknown = false;
     const bool bSurvives = PlantSurvival->Survives(State.Id, Cell.X, Cell.Y, Cell.Z,
@@ -2315,8 +2358,10 @@ void FFoundationAuthority::SettlePlants(
     {
         FIntVector Other;
         FFoundationBlockState Ignored;
+        // A half that still pairs with it (a door opened by hand, a double plant replaced by its own kind) keeps it.
         if (FoundationPlantRules::GetOtherHalf(World, At, Old, Other, Ignored) && World.IsKnown(Other) &&
-            FoundationPlantRules::IsOtherHalf(World.GetRegistry(), Old, World.Get(Other).State))
+            FoundationPlantRules::IsOtherHalf(World.GetRegistry(), Old, World.Get(Other).State) &&
+            !FoundationPlantRules::IsOtherHalf(World.GetRegistry(), World.Get(At).State, World.Get(Other).State))
             Pop(Other);
     };
     PopOtherHalf(Cell, Before);
@@ -2375,6 +2420,9 @@ void FFoundationAuthority::SettlePlants(
                 Visit(Next);
         }
     }
+    // The family shapes beside every other changed cell too: a written upper half, a pop (survival B3a).
+    for (int32 Index = 1; Index < Changed.Num(); ++Index)
+        FoundationBlockFamilies::UpdateNeighbourShapes(World, Changed[Index]);
 }
 
 void FFoundationAuthority::Attack(

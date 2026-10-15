@@ -43,6 +43,7 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
 - **Model blocks:** `EFoundationBlockShape::Model` states are drawn from baked quads (`FFoundationBlockRegistry::GetModelParts`, `GetModelQuads`): per state a list of parts, each with its alternatives (random variant lists keep every entry: lily pad, sea pickle, bamboo). Quads carry positions, UVs, texture, `tintindex`, cull face, facing, shade direction (`shade_direction_override`) and light; models carry their ambient occlusion flag. Outline and collision boxes, per-state light, water and the position offset (kind, range, and whether the shapes move with it) come from the server facts (`facts/block_state_facts.json`), never from the models. Since phase 6 S7 a model state's outline and collision are its own boxes (`FFoundationBlockWorld::GetOutlineBoxes`, `GetCollisionBoxes`), moved by the block's offset where the facts move them, with the mapping the renderers use (`FoundationBlockOffsets`). Targeting tests each box, the outline draws each, and collision gathers each, in the Playground and in generated worlds. The single-box getters (`GetSelectionBox`, `GetCollisionBox`) give their bounds, which the preview, the mining overlay and the placement obstruction check use. The voxel world draws model states since phase 6 S6, in their own chunk section ([Block models](VoxelWorld.md#block-models)), and the Playground since S6b (Rendering, below); placement follows the plant rules (Placement, below).
 - **Waterlogging:** `waterlogged` is a real property. Placement sets it to false, except that a model block placed into a water source is waterlogged (S7). Waterlogged and always-water model states (kelp, seagrass, corals) report water through `GetFluid`. Breaking or popping a block that holds a water source (waterlogged, kelp, seagrass) leaves `water[level=0]` (`FFoundationBlockRegistry::GetRemainder`, water and sky W2b; minecraft.wiki "Waterlogging"), in the Playground too, where it stays still (fluids flow only in voxel worlds).
 - **Still lava:** a fluid like water, now in the block reference, `DA_Blocks` and the registry (states 105-120). It is in the opaque layer with light 15, and has no item, no damage and no flow. It is drawn with its animated `lava_still` on every face, untinted; `lava_flow` is in the flow array: flowing lava's sides and sloped tops draw it, and every lava side under `voxel.Fluids.SlopedTops 2` (water and sky W3; `Docs/VoxelWorld.md`, "Fluid surfaces"). It still counts as water for the player's movement, as the stand-in did. The stand-in in `VoxelBlocks::MakeTable` is gone.
+- **Light:** each state's own light from the facts (`GetLightEmission`), full cubes too since B3a: a lit furnace, smoker or blast furnace 13, lit redstone ore 9, a lit redstone lamp 15, the copper bulbs and the respawn anchor by state (`StateLight` in `DA_Blocks` for the 15 full-cube blocks whose states differ).
 - **Mining:** the 26.3 hardness and correct-tool facts plus `Block.Mineable.*` and `Block.IncorrectForTool.*` tags drive mining.
 - **Drops:** a broken block drops itself, and a double slab drops 2. This is a provisional rule, not loot tables.
 
@@ -80,7 +81,7 @@ Survival B1 (track T5) brought in 310 blocks as data. They are in the manifest u
 Known gaps:
 
 - Nothing connects and every B1 block places its default state (B2b).
-- Doors are one lower half.
+- Doors saved before B3a as one lower half stay one half (no migration); a use opens that half alone.
 - Stems use their age-0 tint for every state (per-state tint in B6).
 - The water cauldron imports as one translucent block, because `water_still` has partial alpha: a known look issue. Lava and powder snow cauldrons are untinted.
 - Campfires draw no cooking items.
@@ -154,6 +155,41 @@ when placed and when a neighbour changes. Logic in `FoundationBlockFamilies.h/.c
   72 gates-in-wall rows.
 - **Voxel gather:** `AVoxelWorld::GatherColumns` is `GatherCollision`'s part over the streamed columns, callable with any
   pipeline (`Unnamed.Voxel.World.ShapesGather`).
+## Doors, trapdoors and gates (B3a)
+
+Survival B3a (track T5): doors, trapdoors and fence gates place by their own rules and open by hand. Logic in
+`FoundationBlockFamilies.h/.cpp`, under `foundation.Blocks.Interact` (default 1; 0: no hand use, no door survival,
+and doors and trapdoors place as before B3a). `foundation.Blocks.Shapes` 0 also turns door and trapdoor placement off, as it does B2b's families'.
+
+- **Families:** `Door` (`#minecraft:doors`, 22) and `Trapdoor` (`#minecraft:trapdoors`, 22) join `GetFamily`. They take
+  no `updateShape` of their own.
+- **Door placement:** the lower half faces the player's horizontal look, and the authority writes the upper half (the
+  plant rules' pairing: an occupied upper cell refuses with `DestinationOccupied`, one beyond the world with
+  `OutsideBounds`). The hinge, as measured by the headless probe `Tests/Probes/door-hinge-26.3.json` (11,100
+  `useOn` placements; VALUES "Door hinges"), counting the full-block-collision cells beside the door per side (its
+  lower and its upper cell each count; stone, glass and leaves count, a bottom slab and a fence do not): right with a
+  door's lower half on the left only, or with more full cells on the right; else left with a door's lower half on the
+  right only, or more full cells on the left; else the half of the cell the click hit, left on the centre line. The
+  rule is not symmetric: a door on the left wins over the counts, a door on the right does not (probe part D).
+- **Door survival** (`FoundationBlockFamilies::GetSurvival`, in `CheckPlantPlacement` and `CanPlantSurvive`): the
+  lower half needs a sturdy top below it (`IsFaceSturdy`), the upper half the same door below. Checked against every
+  candidate state of `facts/family_survival.json`'s down probe. Losing the support pops both halves; mining either
+  half removes both and yields one door (the mined half drops it, the popped half nothing).
+- **Trapdoor placement:** on a side face it faces that face, the half from the click height (the slab rule); on a top
+  or bottom face, or a click that replaces the clicked block, its facing is opposite the player's look (minecraft.wiki
+  "Trapdoor"), the top half unless the click was on a top face.
+- **Use** (`FoundationBlockFamilies::Use`, the fallback of `FFoundationAuthority::FindBlockUse`): flips `open`, both door
+  halves in the one command; a gate that faces the player turns to the player's look as it opens (survival.r9.switches,
+  F 5071-5135, all 57 door, trapdoor and gate rows tested). `iron_door` and `iron_trapdoor` have no use: a click passes
+  to the held item, and the preview shows the placement. `FFoundationAuthority::CommitBlockUse` writes the states,
+  settles each cell as an edit and adds a `BlockUsed` event.
+- **Sounds:** `BlockUsed` carries the set's event (`GetUseSound`: wooden, cherry wood, bamboo wood, nether wood,
+  copper; checked against `facts/block_use_sounds.csv`), played at volume 1 and pitch 0.9 + 0.1U (R5,
+  survival.r5.play_calls).
+- **Neighbour pass:** since B3a `SettlePlants` also rings every other cell it changed (a written upper half, a pop), so
+  a fence beside a door's upper half joins it. A double-plant half that still pairs with its partner (a door opened,
+  tall grass replaced by tall grass) keeps it: no `Popped` event, the same world.
+- **Collision:** from the states' facts (B1): an open gate has none, an open door's slab is on its hinge side.
 ## Placement
 
 `FoundationBlockPlacement` ports `BlockPlaceContext` and each family's `getStateForPlacement`: clicked face, `Direction.orderedByNearest` (with Minecraft's sine table) and `fromYRot`. Every placement goes through `FFoundationAuthority`.
@@ -170,6 +206,7 @@ when placed and when a neighbour changes. Logic in `FoundationBlockFamilies.h/.c
 | `Snowy` | grass block, podzol, mycelium | `snowy` when a `#snow` block is above |
 | `WallAttached` | wall torch | `facing` away from its wall, which the torch item picks by look (below) |
 | families (B2b) | stairs, fences, walls, panes, bars, fence gates | facing, half, connections and shape (above, "Shapes and connections (B2b)") |
+| families (B3a) | doors, trapdoors | a door's two halves and hinge, a trapdoor's facing and half (above, "Doors, trapdoors and gates (B3a)") |
 
 **The torch** (torch sessions T2 and T3). The `torch` item (`PlacesWallBlock`, from the reference's standing-and-wall items) places `torch` or `wall_torch`, where a support holds it: `FFoundationBlockRegistry::GetTorchSupport` gives each state's faces from `facts/block_support.json`, which `FactsDump.java` measures with the torch's own `canSurvive` (leaves and powder snow hold none, every other full cube all five, an upside-down slab a floor torch, a bottom slab nothing).
 - **Placement by look** (`FoundationBlockPlacement::GetTorchState`), as measured black-box in 26.3 by probe P3 (`Tests/Probes/torch-placement-26.3.json`, 64,896 clicks): the directions nearest the look (`GetNearestLooks`), with the direction into the clicked block first unless the click replaces it (short grass). Up is skipped, down gives the floor torch if the cell below holds one, and a side gives the wall torch against the first side, in that order, that holds one; the first hit wins, and nothing holding places nothing (`CannotSurvive`). So a side or top click on a block that holds a torch always places on it, an underside click places by look, and a click on short grass chooses by look, not by the clicked face. The preview and the placement share the rule.
@@ -294,4 +331,5 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
   - `.ModelMeshes`: the Playground's model meshes: 2,440 baked quads, 2,444 drawn (two triangles each: 16 exact repeats dropped, 20 added by the torch's flame cut), full-precision UVs, and every vertex's position, texture UV, shade face and own code.
   - `Unnamed.Hud.Creative.Tabs`, `.Clicks` and `.Authority`.
   - `Unnamed.Foundation.Shapes.*` (B2b): `.Families`, `.SingleNeighbour`, `.CrossFamily`, `.WallUp`, `.Stairs`, `.GatesInWall` against every row of `shape_updates.json`; `.Placement` (facing, half, corners, connections, `in_wall`, switch 0); `.Neighbours` (placing and mining through the authority, one ring, a wall under a new block, switch 0). `Unnamed.Voxel.World.ShapesGather`: the voxel gather's outer layers on a streamed column.
+  - `Unnamed.Foundation.Interact.*` (B3a): `.Families` (tags, the iron exceptions, every csv sound), `.Switches` (the 57 rows of F 5071-5135, both halves in one command), `.Gates` (re-facing, collision), `.Placement` (facing, hinge samples, refusals, trapdoor half and facing, switch 0), `.Hand` (sneak, off hand, iron passes, the preview), `.Survival` (the rows and every candidate of `family_survival.json`), `.Hinge` (every probe case), `.Edits` (one item from either half, the ring, tall grass replaced).
 - **Runtime:** `TestFoundationRuntime.ps1 -Suite tour` shots 09-23 cover the gallery and the creative screen (17p and 17q: the plant row). The interaction suite covers stone placement and mining and the hotbar block icon, and checks the drawn cells and the exact instance count (one per part, plus held water) against the world. Its plants group (S7) places a dandelion on grass and mines the grass (the dandelion pops), refuses a dandelion on stone, and places and mines tall grass (both halves go).

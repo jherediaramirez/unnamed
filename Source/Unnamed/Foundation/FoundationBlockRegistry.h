@@ -273,7 +273,7 @@ public:
     // slabs and layers these are the shape's one box.
     void GetOutlineBoxes(FFoundationBlockState State, TArray<FBox>& OutBoxes) const;
     void GetCollisionBoxes(FFoundationBlockState State, TArray<FBox>& OutBoxes) const;
-    // The state's own light (sea pickles and cave vines vary by state); the block's for non-model blocks.
+    // The state's own light (sea pickles, cave vines, a lit furnace or redstone ore vary by state).
     int32 GetLightEmission(FFoundationBlockState State) const;
     // The faces of a state that hold a torch, a bit per EFoundationFace (FFoundationBlockAsset::StateSupport); a
     // project block's full cube holds one on top and on every side.
