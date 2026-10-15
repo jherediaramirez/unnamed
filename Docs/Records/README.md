@@ -4,6 +4,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 15, 2026
 
+- [Atmosphere T7a, parked](2026-10-15-Atmosphere-T7a-Parked.md): lane `feature/survival-atmosphere`, WIP `4bd81710`, deferred until after QC. Day/night defaults on in source, twilight haze tint for the horizon band, stars after motion blur with a scene-depth mask; dusk water stays a known issue; remaining T7a checks, then T7b.
 - [Handoff: survival step 19b, the shield](2026-10-15-Shield-Handoff-Step19b.md): the current T2 handoff (lane `feature/survival-entities`): the held leather tint look call (A-5) first, the shield item (DA_Items lock), blocking per R18, first-person held-item motion only.
 - [Survival step 19a2: the armor pieces' data](2026-10-15-Armor-19a2.md): record, lane `feature/survival-entities`. The item reference's `armor` group (29 pieces, additions only, proven) and `DA_Items` (DA_Items lock), the leather tint, the pumpkin blur, R23's orb bounce, scan phase and reward box, Codex review 27's two fixes.
 - [Survival step 9 handoff: the barrel, then 8b2b's particles](2026-10-15-Inventory-Handoff-Step9.md): start here for T1's next step (lane `feature/survival-containers`): section A, step 9's barrel (27 slots, generic_54, R16's `open` state and sounds on the 8a store); section B, 8b2b's settled particle design (after 18-chest).
