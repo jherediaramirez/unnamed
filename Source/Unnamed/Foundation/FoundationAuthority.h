@@ -199,6 +199,8 @@ struct FFoundationPlayerFacts
     // No ladders, mounts or effects yet; kept so the critical rule reads like the reference.
     bool bClimbing = false, bPassenger = false, bMobilityRestricted = false;
     bool bAlive = true;
+    // The game mode (survival T6 20c: monsters target Survival and Adventure players only).
+    EFoundationPlayerMode Mode = EFoundationPlayerMode::Survival;
     // Crouch intent: with something in hand it bypasses block interactions.
     bool bSecondaryUse = false;
     int64 Step = 0;
@@ -268,6 +270,10 @@ struct FFoundationLabOptions
     // Barrels (T1 step 9): a right-click opens the block's 27-slot menu and the block is open while viewed. Off, as
     // before: no menu (the click passes on and places). The pawn copies foundation.Barrel in before each step.
     bool bBarrel = false;
+    // Chests and trapped chests (T1 step 18-chest): a right-click opens the 27-slot menu (54 over a double chest) and
+    // plays the open and close sounds. Off, as before: no menu (the click passes on and places). The pawn copies
+    // foundation.Chest in before each step.
+    bool bChest = false;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -276,7 +282,8 @@ struct UNNAMED_API FFoundationRules
     TArray<FFoundationItemDefinition> Items;
     // The bare hand's melee and mining profile (an empty slot).
     FFoundationItemDefinition Hand;
-    // Hotbar contents from slot 1; None leaves a slot empty.
+    // Hotbar contents from slot 1 for a new player and a reset; None leaves a slot empty. Empty in the game: a player
+    // starts with nothing, as in vanilla survival (step 19b); only tests set it.
     TArray<FName> Loadout;
     double BlockReachCm = 450, EntityReachCm = 300;
     float EligibleDivisor = 30, IneligibleDivisor = 100;
@@ -379,7 +386,13 @@ enum class EFoundationEventKind : uint8
     // (FoundationBlockFamilies::GetUseSound), Amount its play volume and Pitch its pitch (0: the view's 0.9 + 0.1U).
     // A barrel's open state changed (T1 step 9): the same, with Amount the volume and LocationCm where it plays (world
     // cm); with no LocationCm (zero) it plays at the cell's centre.
-    BlockUsed
+    BlockUsed,
+    // A raised shield blocked a hit (survival step 19b): Item the shield, LocationCm the player's feet (world cm),
+    // Interaction its block sound, Amount the damage blocked.
+    Blocked,
+    // An axe hit disabled a raised shield (step 19b): Item the shield, LocationCm the feet, Interaction its disabled
+    // sound, Amount the cooldown in ticks.
+    BlockingDisabled
 };
 
 // What a scheduled block tick does (FFoundationAuthority::ScheduleBlockTick; survival B3b).
@@ -423,6 +436,18 @@ struct FFoundationItemUse
     int32 Item = INDEX_NONE;
     int32 Ticks = 0, Duration = 0;
     int64 LastStep = -1;
+    // A blocks_attacks use (the shield, step 19b): raised, not eaten; no effects and no finish.
+    bool bBlocks = false;
+};
+
+// A hit with a source on a player (survival step 19b): where it came from (world cm, the block world's frame) and the
+// attacker's weapon's disable_blocking_for_seconds (the axes' 5). FFoundationAuthority::HurtPlayer judges blocking.
+struct FFoundationAttack
+{
+    EFoundationDamage Type = EFoundationDamage::MobAttack;
+    float Amount = 0;
+    FVector SourceCm = FVector::ZeroVector;
+    float DisableBlockingSeconds = 0;
 };
 
 namespace FoundationBucket
@@ -446,6 +471,8 @@ namespace FoundationItemUse
     constexpr double EffectsDelayFraction = .21875;
     constexpr int32 EffectsEveryTicks = 4;
     UNNAMED_API bool IsEffectTick(int32 Ticks, int32 Duration);
+    // A raised shield's use duration in ticks (step 19b; minecraft.wiki "Shield", provisional).
+    constexpr int32 BlockingUseTicks = 72000;
 }
 
 // A container menu open besides the player's own (survival step 7): vanilla's containerId, the menu, the block it
@@ -457,6 +484,8 @@ struct FFoundationOpenMenu
     FIntVector Cell = FIntVector::ZeroValue;
     FName Block;
     TArray<FFoundationItemInstance> Grid;
+    // A double chest's other half when it opened (T1 step 18-chest), so its viewers update when it no longer pairs.
+    TOptional<FIntVector> Partner;
 
     bool IsOpen() const { return ContainerId != 0; }
 };
@@ -468,6 +497,16 @@ namespace FoundationBlockUse
     UNNAMED_API bool IsOn();
 }
 
+// A mob's melee hit on a player (survival T6 20c), for the player's owner to apply to its vitals: the mob, its attack
+// damage (before difficulty), its name for the death message, and where it stood (world cm: the knockback's source).
+struct FFoundationMobHit
+{
+    int32 Mob = 0;
+    float Damage = 0;
+    FString Attacker;
+    FVector FromCm = FVector::ZeroVector;
+};
+
 struct FFoundationPlayer
 {
     int32 Id = 0;
@@ -476,10 +515,15 @@ struct FFoundationPlayer
     FFoundationInventory Inventory;
     FFoundationMining Mining;
     FFoundationItemUse Use;
+    // An axe hit's disable (step 19b): the blocks_attacks item and the step its cooldown ends; INDEX_NONE without one.
+    int32 BlockingDisabledItem = INDEX_NONE;
+    int64 BlockingDisabledUntilStep = 0;
     int64 LastPlacementStep = MIN_int64;
     // Experience orbs (step 12): steps until the next orb can be taken, and points taken but not yet claimed by the
     // player's vitals (TakeExperience).
     int32 ExperienceDelay = 0, PendingExperience = 0;
+    // Mob hits since its owner last took them (TakeMobHits).
+    TArray<FFoundationMobHit> MobHits;
     // The container open besides the inventory (survival step 7); its last id (vanilla counts 1-100, then wraps).
     FFoundationOpenMenu OpenMenu;
     int32 LastContainerId = 0;
@@ -511,6 +555,9 @@ public:
     // passive spawning.
     TFunction<FName(const FIntVector& Cell)> GetBiomeId;
     uint64 MobSpawnSeed = 0;
+    // The day's sky facts (survival T6 20c), set by a generated world's owner from the sky reference's day timeline:
+    // gameplay/sky_light_level (0-15) and gameplay/monsters_burn now. Unset (the Playground): 15 and no burning.
+    TFunction<void(float& OutSkyLightLevel, bool& bOutMonstersBurn)> GetSkyFacts;
     FFoundationRules Rules;
     FFoundationLabOptions Options;
     TArray<FFoundationStatic> Statics;
@@ -576,8 +623,11 @@ public:
     // motion and pickup delays, then every live player's pickups), the orbs, the open containers' validity (a menu
     // whose block is gone or out of reach closes) and the furnaces.
     void Step();
-    // A new session: old commands become stale, the seed blocks, loadouts and targets come back.
+    // A new session: old commands become stale, the seed blocks and targets come back, and the
+    // inventories restart from Rules.Loadout (empty in the game).
     void Reset();
+    // Restarts one player's inventory from Rules.Loadout: how tests and probes give themselves items (step 19b).
+    void ResetInventory(int32 PlayerId);
     int32 GetSessionId() const { return SessionId; }
     // Resets once the current command finishes (or at once outside a command).
     void RequestReset() { bResetRequested = true; }
@@ -624,12 +674,22 @@ public:
     int32 RemoveExperienceOrbs();
     // The points a player has taken since the last call (its owner adds them to its vitals after each step).
     int32 TakeExperience(int32 Player);
+    // The mob hits on a player since the last call (survival T6 20c; its owner hurts its vitals with each).
+    TArray<FFoundationMobHit> TakeMobHits(int32 Player);
     // Armor (survival step 19a): the worn pieces' armor and toughness (each piece counts only in its own slot; none
     // with foundation.Inventory.Full 0, which has no armor slots). Its owner sets them on its vitals every step.
     void GetWornArmor(int32 Player, int32& OutArmor, float& OutToughness) const;
     // The wear a player's hurts owe (FFoundationVitals::PendingArmorWear) on every worn piece that wears, with lab
-    // tool wear on and not in creative; a piece worn out breaks (a ToolBroke event). How many broke.
-    int32 WearArmor(int32 Player, int32 Amount, EFoundationPlayerMode Mode);
+    // tool wear on and not in creative; a piece worn out breaks (a ToolBroke event). FireAmount is the part fire damage
+    // owes (FFoundationVitals::PendingFireArmorWear), which fire-resistant pieces skip. How many broke.
+    int32 WearArmor(int32 Player, int32 Amount, EFoundationPlayerMode Mode, int32 FireAmount = 0);
+    // Blocking (survival step 19b): whether the player holds a blocks_attacks item up past its delay (R18,
+    // survival2.r18.shield_delay: from the 5th use tick) and not disabled.
+    bool IsBlocking(int32 Player) const;
+    // A hit with a source on the player: a raised shield facing it blocks it (and wears, plays its sound, may be
+    // disabled by the attacker's weapon); the rest goes to Vitals.Hurt. False when nothing hurt the player (a full
+    // block takes no damage and opens no hurt window: provisional, SM-Player 19b Q3).
+    bool HurtPlayer(int32 Player, FFoundationVitals& Vitals, const FFoundationAttack& Attack);
     // Mobs (survival T6 20a), oldest first; Reset clears them. SpawnMob adds one standing at a position (cm from the
     // block world's origin) facing Yaw: its id, or 0 with Options.bMobs off.
     const TArray<FFoundationMob>& GetMobs() const { return Mobs; }
@@ -663,13 +723,15 @@ public:
     // Diagnostics.
     int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
     int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsThrown = 0, ItemsMerged = 0, ItemsDespawned = 0, ItemsEaten = 0,
-          Strips = 0, BucketUses = 0;
+          Strips = 0, BucketUses = 0, AttacksBlocked = 0;
     int32 OrbsSpawned = 0, OrbsPickedUp = 0, OrbsMerged = 0, OrbsDespawned = 0;
     int32 MobsSpawned = 0, MobsKilled = 0, MobPaths = 0, MobEggs = 0, MobGrazes = 0;
     // Passive spawning: columns seen loaded, packs spawned, the mobs in them.
     int32 MobColumnsSeen = 0, MobPacks = 0, MobsPackSpawned = 0;
     // The creature cycle (20b2b): cycles run (under the cap), the mobs they spawned.
     int32 MobCycles = 0, MobsCycleSpawned = 0;
+    // Survival T6 20c: melee hits monsters landed on players; sun ignitions.
+    int32 MobMeleeHits = 0, MobSunBurns = 0;
     // The last cycle considered: its eligible columns, the creatures counted in them and the cap.
     int32 MobCycleEligible = 0, MobCycleCount = 0, MobCycleCap = 0;
     int64 GetMobCycleStep() const { return MobCycleStep; }
@@ -687,6 +749,9 @@ private:
     const FBlockUseEntry* FindBlockUse(FName BlockId) const;
     // The open menu's container slots: the crafting table's grid, or its block entity's (a copy).
     TArray<FFoundationItemInstance> GetMenuGrid(const FFoundationPlayer& Player) const;
+    // The cells whose block entities hold an open menu's container slots, in menu order: its own cell, or a double
+    // chest's type=right then type=left half. False when a double chest's halves are no longer paired.
+    bool GetMenuCells(const FFoundationOpenMenu& Open, TArray<FIntVector, TInlineAllocator<2>>& OutCells) const;
     // Whether the player's open menu still has its block (and its block entity) at its cell, within reach.
     bool IsMenuValid(const FFoundationPlayer& Player) const;
     // Closes the open menu (ContainerClose): the cursor, the crafting grid, then the 2x2 back into the inventory, the
@@ -710,8 +775,14 @@ private:
     // A barrel's open state follows its viewers (T1 step 9; SURVIVAL-RUN2-FINDINGS R16,
     // survival2.r16.animation_and_viewers): the first opens it and plays block.barrel.open, the last one leaving closes
     // it and plays block.barrel.close, as a plain state change (no place event). Nothing for a cell that is no barrel
-    // (broken while viewed: vanilla's removed block entity plays nothing).
-    void UpdateBarrelOpen(const FIntVector& Cell);
+    // (broken while viewed: vanilla's removed block entity plays nothing). A chest's goes to UpdateChestOpen.
+    void UpdateContainerOpen(const FIntVector& Cell);
+    // After a barrel or chest menu went away (closed, replaced, its player removed): its block's viewers, and a double
+    // chest's other half's.
+    void UpdateViewers(const FFoundationOpenMenu& Left);
+    // A chest's viewers (T1 step 18-chest; it has no open state): the count of the pair, kept on its halves' entities;
+    // the first viewer plays block.chest.open and the last one leaving block.chest.close, once per double chest.
+    void UpdateChestOpen(const FIntVector& Cell);
     FFoundationFurnaceRules MakeFurnaceRules() const;
     // Pays a furnace's stored XP as orbs at LocalCm (its output taken, or the furnace broken) and clears it.
     void PayFurnaceExperience(FFoundationBlockEntity& Furnace, const FVector& LocalCm, int32 RandomSeed);
@@ -803,6 +874,17 @@ private:
     // damage); the fluid its box touches.
     void StepMobHazards(FFoundationMob& Mob);
     bool IsMobInFluid(const FBox& WorldBody, bool bLava) const;
+    // Survival T6 20c: a monster's targeting and melee (ThinkHostile; a hit queues on its player), and the zombie's
+    // sun burn.
+    void StepMonster(FFoundationMob& Mob, TConstArrayView<FFoundationMobPlayer> Near);
+    void StepSunBurn(FFoundationMob& Mob);
+    // No collision box crosses the segment between two world points (vanilla's COLLIDER line of sight; GatherMobBoxes,
+    // so a generated world's ungenerated columns block it).
+    bool HasMobLineOfSight(const FVector& FromCm, const FVector& ToCm);
+    // No motion-blocking block (a collision box or a fluid) above the cell up to the world's top: the sky light proxy.
+    bool IsSkyVisible(const FIntVector& Cell);
+    // The world and static boxes in a region, as the mobs move against them.
+    void GatherMobBoxes(const FBox& Region, TArray<FBox>& Out);
     // Survival T6 20b2: chunk-generation packs for the columns around the live players first seen loaded.
     void StepMobSpawns();
     // One column's chunk-generation roll and pack; how many mobs it spawned.

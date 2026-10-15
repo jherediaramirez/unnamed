@@ -72,7 +72,7 @@ Survival B1 (track T5) brought in 310 blocks as data. They are in the manifest u
 - **Items:** 887 block items (286 new). The 9 sapling items (oak, spruce, birch, jungle, acacia, cherry, dark oak, pale oak, poplar) place their sapling block ([Items](Items.md)).
 - **Placement:** each B1 block places its default state only. Shapes, connections, the doors' two halves and use come in B2 to B7.
 - **Switch:** `foundation.Blocks.Families` (int, default 1; listed in [Breaking](Breaking.md)). 0 hides the B1 blocks' own items from the creative inventory and the B1 blocks from the Playground gallery tails, and refuses to place one (`UnknownBlock`); the 9 sapling items stay in the inventory, as before B1, and placing them is refused; recipes whose result is a B1 block's item craft nothing (`FFoundationAuthority::MakeContainerRules`). The cvar is in `FoundationBlockRegistry.cpp`, the placement guard in `FoundationAuthority.cpp` (`CheckPlacement`), the creative filter in `FoundationPanels.cpp`. The creative screen is cached, so flipping the cvar mid-session does not rebuild it: set it at launch.
-- **Chest stand-in:** the three chests draw a 14/16 box, [1,0,1] to [15,14,15], turned by `facing`. Left and right halves of a double chest draw two single boxes until T1's chest step. The faces are 16 x 16 tiles cropped (and flipped) from `textures/entity/chest/normal.png`, `trapped.png` and `ender.png` in the 26.3 client jar, stored in `Reference/minecraft-blocks-26.3/stand_ins/chest_<kind>_<face>.png` (`textures.json` `file` and `derived_from`). The item icon is the baked box. See [Stand-ins](StandIns.md).
+- **Chest stand-in:** the three chests draw a 14/16 box, [1,0,1] to [15,14,15], turned by `facing`. Chests and trapped chests pair into double chests (T1 step 18-chest, see [Items](Items.md) "The chest"); the two halves still draw two single boxes until the lid work (T5 B4's render-shape change, then R16 and R17), deferred until after QC. The faces are 16 x 16 tiles cropped (and flipped) from `textures/entity/chest/normal.png`, `trapped.png` and `ender.png` in the 26.3 client jar, stored in `Reference/minecraft-blocks-26.3/stand_ins/chest_<kind>_<face>.png` (`textures.json` `file` and `derived_from`). The item icon is the baked box. See [Stand-ins](StandIns.md).
 - **Plants:** `poplar_sapling` joined `VegetationBlocks` in `Source/UnnamedVoxel/Blocks/VoxelPlantSurvival.cpp`, so the voxel core's plant survival (see "Plants" above) covers it.
 - **Facts:** `facts/family_survival.json` holds the rule-bearing states of every imported block against air, and every state. `facts/plant_survival.json` stays frozen on `tools/survival_base_ids.txt`. `facts/block_use_sounds.csv` (90 rows) maps doors, trapdoors, gates, buttons, plates and the lever to their open, close and click events, for B3 and B5.
 - **Sounds:** the sound reference now has 332 events (3 new step and 3 new fall events appended: `cherry_sapling`, `ladder`, `weeping_vines`). `DA_Sounds` is appended: `ImportSounds.py` accepts the old block entries as an ordered subsequence. `DA_BreakAssets` was rebuilt from the extended reference. It has no append path, is self-contained and is looked up by id.
@@ -224,6 +224,37 @@ Survival B3b (track T5), the same switch (`foundation.Blocks.Interact`; 0: no us
   them. They are not saved (block edits are not saved yet; VoxelWorld.md "Edits").
 - **Arrow-held wooden buttons** wait for arrows (T2 19c; `survival.r9.arrow_button`).
 
+## Pop drops and the firefly bush (B4a)
+
+Survival B4a (track T5), from Jesus's play bugs.
+
+- **Pop drops** (`FFoundationAuthority::SettlePlants`' `Pop`, `SettleAfterFluid`): a block that pops (a stack above a
+  broken segment, a plant or torch whose support went, a door's other half) or is washed away drops what an empty hand
+  breaking that block alone drops: `RollBlockDrops` with `Rules.Hand`, rolled before the block goes, spawned as item
+  entities (`Options.bItemEntities`; off, pops stay silent and nothing returns to the inventory). Seeds:
+  `FoundationLoot::MakeSeed(LootSeed, cell, Pops)`. A 3-tall sugar cane drops 3. R12's `block_drops` and
+  `break_totals` measure only stone and coal ore, so each oracle is that block's own hand break: its 26.3 table (a
+  vine's needs shears, so a popped vine drops nothing whatever the player holds), or "drops itself" without one
+  (provisional until B8's tables). A two-half block drops once: under a 26.3 table both halves roll and the table's
+  `half=lower` condition picks one (sunflower); without a table (doors) the other half does not roll.
+- **Firefly bush removed** (beyond vanilla, Jesus via PM 4: "Stop generating, hide it"): worldgen places `short_grass`
+  wherever 26.3 places `firefly_bush` (its three patches, `patch_firefly_bush_near_water`, `_near_water_swamp`,
+  `_swamp`, in about 50 overworld biomes), with the same tries, offsets and predicates, `would_survive` tested against
+  short grass: `FVoxelDecorationOptions::bFireflyBushAsShortGrass` swaps the state in the compiled providers and
+  `would_survive` tests (`ReplaceState`; firefly_bush is placed by those patches alone, and every feature keeps its
+  salt, so no random stream moves; a later feature may still see replaceable short grass where it saw a bush). Switch `voxel.Decoration.FireflyBushAsGrass` (default 1; 0 places firefly bushes
+  again, the control that reproduces the hashes from before B4a; streamed worlds and every bench, so the radius-8
+  hashes follow it). `Mesher.Digest` keeps 26.3's decoration whatever the switch says: it guards the mesher, not
+  worldgen.
+  The creative inventory and its search no longer list it (`HudCreative.cpp`). The block and item stay defined (saved
+  ids, `DA_Blocks`, the frozen order) and still draw where placed, black, as before: the voxel table has no overlay
+  lift (the Playground does), so fixing it waits for the bush's return. Fireflies may come back later as an ambient
+  effect. No other model has the bug: only model 302 (the bush) has emissive quads, and the only other model with two
+  textures on one plane, the sunflower head (model 69), puts them on opposite faces
+  (`C:\dev\sandbox\b4a-blocks\firefly\two-layer-models.txt`).
+- **Chests keep drawing their block mesh:** T1's chest no-mesh ask is deferred with the lid animation (feature
+  freeze, after QC).
+
 ## Placement
 
 `FoundationBlockPlacement` ports `BlockPlaceContext` and each family's `getStateForPlacement`: clicked face, `Direction.orderedByNearest` (with Minecraft's sine table) and `fromYRot`. Every placement goes through `FFoundationAuthority`.
@@ -263,7 +294,7 @@ Survival B3b (track T5), the same switch (`foundation.Blocks.Interact`; 0: no us
   - a vine, glow lichen or sculk vein loses the faces no longer held while one is left;
   - a pop's neighbours are not checked, except along a stack, which settles to its end (S7b, Jesus's answer to Q1): from each changed segment, the cells of the same stack above and below, while they change. The stacks (`FoundationPlantRules::GetStack`): sugar cane, cactus with its flower, bamboo, kelp, cave vines, pointed dripstone, sulfur spike, pale hanging moss, vine (a vine hanging under a vine) and big dripleaf with its stem;
   - a rule that reads an unknown cell keeps the plant;
-  - pops are `Popped` events and drop nothing (Q4).
+  - pops are `Popped` events; they drop what an empty hand would (B4a, "Pop drops and the firefly bush").
 - **Replaceable:** every block takes the facts' flag (Jesus's answer 4), except snow: one layer is replaced by a placed block, more layers are not (S7b, Jesus's answer to Q5; `FoundationBlockPlacement::IsReplaceable`, which the destination of a click also uses). Snow does not replace a snow layer: stacking layers is not built.
 - **Mining:** hardness 0 breaks at once (68 of the 85 model blocks, the torches included); vines, lichen, cocoa and sculk vein take 0.2.
 - `Options.bPlantRules` switches all of this off, for A/B runs.
@@ -322,7 +353,8 @@ Built by `AFoundationPlayground::AddBlockGallery` and restored by every reset, l
 In the Playground, the inventory key (E) opens a reproduction of the 26.3 creative inventory, `SHudCreativeScreen` in `Source/Unnamed/Hud/`. It replaces the routing fixture, which other maps still use.
 
 - **Layout:** the vanilla screen at the GUI scale, using vanilla art. Tabs, grid, scroller and hotbar use the 26.3 coordinates.
-- **Tabs:** the vanilla tab order and contents, from `CreativeModeTab.buildContents()`.
+- **Tabs:** the vanilla tab order and contents, from `CreativeModeTab.buildContents()`, without `firefly_bush` (B4a;
+  hidden from every tab and search).
 - **Search:** filters by name or id, and `#` filters by block tag. `T` opens search.
 - **Interaction:** tooltips and the carried stack. Clicks, shift-clicks, number keys, picking up and deleting follow vanilla `slotClicked`.
 - **Rendering:** `FHudCreativeModel` holds the pure tab, scroll and click rules. 3D item icons come from `HudBlockIcon`: top, east and north faces at shades 1.0, 0.68 and 0.44. Model blocks' items draw their item model: 62 flat sprites (an icon atlas tile, tinted like their layer) and 10 block models (cactus, azalea, flowering azalea, the moss carpets, mangrove roots, big and small dripleaf, shelf mushroom, spore blossom) projected from their baked quads under the model's gui transform, back faces culled, far quads first.

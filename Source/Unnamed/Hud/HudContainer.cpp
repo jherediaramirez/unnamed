@@ -29,13 +29,17 @@ FIntPoint FHudContainerModel::GetSlotPosition(EFoundationMenuKind Kind, int32 Sl
     // The crafting table: result 124,35; the 3x3 from 30,17. The furnace: input 56,17, fuel 56,53, result 116,35. Both:
     // the main grid from 8,84; the hotbar at y 142.
     const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
-    if (Kind == EFoundationMenuKind::Barrel)
+    // The barrel, the chest and the double chest (ContainerScreen): rows of 9 from 8,18.
+    if (HasViewers(Kind))
     {
+        const bool bLarge = Kind == EFoundationMenuKind::LargeChest;
         if (Layout.IsContainer(Slot))
             return {8 + (Slot - Layout.FirstContainer) % 9 * 18, 18 + (Slot - Layout.FirstContainer) / 9 * 18};
         if (Layout.IsMain(Slot))
-            return {8 + (Slot - Layout.FirstMain) % 9 * 18, BarrelPlayerY + (Slot - Layout.FirstMain) / 9 * 18};
-        if (Layout.IsHotbar(Slot)) return {8 + (Slot - Layout.FirstHotbar) * 18, BarrelHotbarY};
+            return {8 + (Slot - Layout.FirstMain) % 9 * 18,
+                (bLarge ? LargeChestPlayerY : BarrelPlayerY) + (Slot - Layout.FirstMain) / 9 * 18};
+        if (Layout.IsHotbar(Slot))
+            return {8 + (Slot - Layout.FirstHotbar) * 18, bLarge ? LargeChestHotbarY : BarrelHotbarY};
         return {-1000, -1000};
     }
     if (Layout.IsContainer(Slot))

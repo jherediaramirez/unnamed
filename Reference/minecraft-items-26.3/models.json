@@ -17535,6 +17535,274 @@
     "firstperson_righthand": "item/generated",
     "fixed": "item/generated"
    }
+  },
+  {
+   "id": "item/shield",
+   "parent": null,
+   "chain": [
+    "item/shield"
+   ],
+   "textures": {
+    "particle": "block/dark_oak_planks"
+   },
+   "layers": [],
+   "generator": null,
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      90,
+      0
+     ],
+     "translation": [
+      10,
+      6,
+      -4
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      0
+     ],
+     "translation": [
+      10,
+      6,
+      12
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      180,
+      5
+     ],
+     "translation": [
+      -10,
+      1.75,
+      -10
+     ],
+     "scale": [
+      1.25,
+      1.25,
+      1.25
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      180,
+      5
+     ],
+     "translation": [
+      10,
+      0,
+      -10
+     ],
+     "scale": [
+      1.25,
+      1.25,
+      1.25
+     ]
+    },
+    "gui": {
+     "rotation": [
+      15,
+      -25,
+      -5
+     ],
+     "translation": [
+      2,
+      3,
+      0
+     ],
+     "scale": [
+      0.65,
+      0.65,
+      0.65
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      -4.5,
+      4.5,
+      -5
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "on_shelf": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      11,
+      18.5,
+      8.7
+     ],
+     "scale": [
+      1.4,
+      1.4,
+      1.4
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      2,
+      4,
+      2
+     ],
+     "scale": [
+      0.25,
+      0.25,
+      0.25
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/shield",
+    "thirdperson_lefthand": "item/shield",
+    "firstperson_righthand": "item/shield",
+    "firstperson_lefthand": "item/shield",
+    "gui": "item/shield",
+    "fixed": "item/shield",
+    "on_shelf": "item/shield",
+    "ground": "item/shield"
+   }
+  },
+  {
+   "id": "item/shield_blocking",
+   "parent": null,
+   "chain": [
+    "item/shield_blocking"
+   ],
+   "textures": {
+    "particle": "block/dark_oak_planks"
+   },
+   "layers": [],
+   "generator": null,
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      45,
+      155,
+      0
+     ],
+     "translation": [
+      -3.49,
+      11,
+      -2
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      45,
+      155,
+      0
+     ],
+     "translation": [
+      11.51,
+      7,
+      2.5
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      180,
+      -5
+     ],
+     "translation": [
+      -15,
+      3.25,
+      -11
+     ],
+     "scale": [
+      1.25,
+      1.25,
+      1.25
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      180,
+      -5
+     ],
+     "translation": [
+      5,
+      5,
+      -11
+     ],
+     "scale": [
+      1.25,
+      1.25,
+      1.25
+     ]
+    },
+    "gui": {
+     "rotation": [
+      15,
+      -25,
+      -5
+     ],
+     "translation": [
+      2,
+      3,
+      0
+     ],
+     "scale": [
+      0.65,
+      0.65,
+      0.65
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/shield_blocking",
+    "thirdperson_lefthand": "item/shield_blocking",
+    "firstperson_righthand": "item/shield_blocking",
+    "firstperson_lefthand": "item/shield_blocking",
+    "gui": "item/shield_blocking"
+   }
   }
  ]
 }

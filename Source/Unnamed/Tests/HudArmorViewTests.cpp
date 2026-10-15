@@ -59,6 +59,8 @@ namespace
         FFoundationInventory Inventory;
         Inventory.Hotbar.SetNum(FFoundationInventory::HotbarSlots);
         Inventory.Armor.SetNum(FFoundationInventory::ArmorSlots);
+        // The full inventory (foundation.Inventory.Full 1): the armor slots exist.
+        Inventory.bFull = true;
         return Inventory;
     }
 
@@ -170,6 +172,10 @@ bool FHudArmorCameraOverlayTest::RunTest(const FString&)
     TestTrue(TEXT("nothing worn: none"), Overlay(Inventory).IsNone());
     Inventory.Armor[3] = MakeStack(1, Lab.Pumpkin);
     TestEqual(TEXT("worn on the head: the pumpkin blur"), Overlay(Inventory), FName(TEXT("misc/pumpkinblur")));
+    // foundation.Inventory.Full 0: the armor slots are off, so the worn pumpkin shows nothing (Codex review 31, #2).
+    FFoundationInventory Lab0 = Inventory;
+    Lab0.bFull = false;
+    TestTrue(TEXT("the lab inventory: none"), Overlay(Lab0).IsNone());
     FFoundationInventory Elsewhere = MakeArmorInventory();
     Elsewhere.Armor[2] = MakeStack(2, Lab.Pumpkin);
     TestTrue(TEXT("in the chest slot: none"), Overlay(Elsewhere).IsNone());

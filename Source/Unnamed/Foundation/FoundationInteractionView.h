@@ -239,7 +239,9 @@ private:
     void DrawCracks(const FFoundationAuthority& Authority, const struct FFoundationInteraction& Interaction);
     void UpdateHeldItem(const FFoundationAuthority& Authority, AFoundationPawn* Pawn, bool bVisible, double DeltaTime);
     // Shows an item's first-person model on the held item component (nothing for None or an item without one).
-    void SetHeldItem(FName Id);
+    // bUsing: that hand is in use (the shield's raised pose). Hand picks the display context (FoundationHeldPose) and
+    // the component: the main-hand item or the mirrored offhand item.
+    void SetHeldItem(FName Id, bool bUsing = false, EFoundationHand Hand = EFoundationHand::Main);
     // The meshes that draw a block state (its mesh kind, or one per part of its model, each part's first alternative)
     // and the box they draw in mesh space: the held block and item entities.
     void GetStateMeshes(const FFoundationBlockRegistry& Registry, FFoundationBlockState State,
@@ -255,6 +257,11 @@ private:
     UMaterialInterface* GetItemMaterial(const class UFoundationItemAssets& Items, bool b32);
     // A new M_HeldItem instance on the 16 or 32 pixel sprite array (logged and null when either is missing).
     UMaterialInstanceDynamic* MakeItemMaterial(const class UFoundationItemAssets& Items, bool b32);
+    // A special model's box mesh (the shield), by texture and scale, built on first use; null for an unknown type.
+    UStaticMesh* GetSpecialMesh(const struct FFoundationItemModelView& View);
+    // Its entity texture on M_Mob (the mobs' cutout material, whose Skin parameter takes a plain texture), made on
+    // first use; null when the material or texture is missing.
+    UMaterialInterface* GetSpecialMaterial(const struct FFoundationItemModelView& View);
 
     TMap<FSectionKey, FSectionMesh> Sections;
     UPROPERTY(Transient)
@@ -295,6 +302,17 @@ private:
     TObjectPtr<UStaticMeshComponent> HeldItem;
     FName HeldItemId;
     FName HeldSprite;
+    // The held item is a special model (the shield) drawn for bHeldUsing: it redraws when the use flag flips.
+    bool bHeldSpecial = false;
+    bool bHeldUsing = false;
+    // The offhand item (an item only, mirrored; the same fields as the main hand's).
+    UPROPERTY(Transient)
+    TObjectPtr<USceneComponent> OffPivot;
+    UPROPERTY(Transient)
+    TObjectPtr<UStaticMeshComponent> OffItem;
+    FName OffItemId;
+    bool bOffSpecial = false;
+    bool bOffUsing = false;
     // foundation.Hand.Fit as last applied to the pivot and the held blocks (-1: not yet).
     int32 AppliedHandFit = -1;
     // foundation.Held.Glow as last set on ItemMaterials.
@@ -310,6 +328,8 @@ private:
     TMap<FName, TObjectPtr<UStaticMesh>> ItemMeshes;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UMaterialInstanceDynamic>> ItemMaterials;
+    UPROPERTY(Transient)
+    TMap<FName, TObjectPtr<UMaterialInstanceDynamic>> SpecialMaterials;
     UPROPERTY(Transient)
     TObjectPtr<UTextRenderComponent> PresetLabel;
     UPROPERTY(Transient)

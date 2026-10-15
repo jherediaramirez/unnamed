@@ -103,6 +103,57 @@ TArray<FFoundationItemQuad> FoundationItemMesh::BuildQuads(
     return Quads;
 }
 
+TArray<FFoundationItemBox> FoundationItemMesh::GetShieldBoxes()
+{
+    return {{FVector3f(-6, -11, -2), FVector3f(12, 22, 1), FIntPoint(0, 0)},
+        {FVector3f(-1, -3, -1), FVector3f(2, 6, 6), FIntPoint(26, 0)}};
+}
+
+TArray<FFoundationItemQuad> FoundationItemMesh::BuildBoxQuads(
+    TConstArrayView<FFoundationItemBox> Boxes, const FIntPoint& TextureSize, const FVector3f& Scale)
+{
+    TArray<FFoundationItemQuad> Quads;
+    if (TextureSize.X <= 0 || TextureSize.Y <= 0) return Quads;
+    const FIntVector Sign(Scale.X < 0 ? -1 : 1, Scale.Y < 0 ? -1 : 1, Scale.Z < 0 ? -1 : 1);
+    for (const FFoundationItemBox& Box : Boxes)
+    {
+        const FVector3f Lo = Box.Min, Hi = Box.Min + Box.Size;
+        const int32 U = Box.TextureOffset.X, V = Box.TextureOffset.Y;
+        const int32 W = FMath::RoundToInt(Box.Size.X), H = FMath::RoundToInt(Box.Size.Y),
+                    D = FMath::RoundToInt(Box.Size.Z);
+        // A face is a texture rectangle (origin, size in pixels) and where its pixel offsets (du, dv) land on the
+        // box. Each face reads unmirrored seen from outside after Scale's flips: the front (-Z) and bottom run u
+        // with +X, the back with -X; the left (-X) strip runs u with -Z, the right (+X) with +Z; the top's v runs
+        // from the back to the front, the bottom's from the front to the back.
+        auto AddFace = [&](const FIntVector& Normal, int32 FaceU, int32 FaceV, int32 SizeU, int32 SizeV, auto Map)
+        {
+            FVector3f Positions[4];
+            FVector2f UVs[4];
+            const FIntPoint Corners[4] = {{0, 0}, {SizeU, 0}, {SizeU, SizeV}, {0, SizeV}};
+            for (int32 Corner = 0; Corner < 4; ++Corner)
+            {
+                Positions[Corner] = Map(Corners[Corner].X, Corners[Corner].Y) * Scale;
+                UVs[Corner] = FVector2f(
+                    float(FaceU + Corners[Corner].X) / TextureSize.X, float(FaceV + Corners[Corner].Y) / TextureSize.Y);
+            }
+            AddQuad(Quads, Positions, UVs, FIntVector(Normal.X * Sign.X, Normal.Y * Sign.Y, Normal.Z * Sign.Z));
+        };
+        AddFace(FIntVector(0, -1, 0), U + D, V, W, D,
+            [&](int32 Du, int32 Dv) { return FVector3f(Lo.X + Du, Lo.Y, Hi.Z - Dv); });
+        AddFace(FIntVector(0, 1, 0), U + D + W, V, W, D,
+            [&](int32 Du, int32 Dv) { return FVector3f(Lo.X + Du, Hi.Y, Lo.Z + Dv); });
+        AddFace(FIntVector(-1, 0, 0), U, V + D, D, H,
+            [&](int32 Du, int32 Dv) { return FVector3f(Lo.X, Lo.Y + Dv, Hi.Z - Du); });
+        AddFace(FIntVector(0, 0, -1), U + D, V + D, W, H,
+            [&](int32 Du, int32 Dv) { return FVector3f(Lo.X + Du, Lo.Y + Dv, Lo.Z); });
+        AddFace(FIntVector(1, 0, 0), U + D + W, V + D, D, H,
+            [&](int32 Du, int32 Dv) { return FVector3f(Hi.X, Lo.Y + Dv, Lo.Z + Du); });
+        AddFace(FIntVector(0, 0, 1), U + 2 * D + W, V + D, W, H,
+            [&](int32 Du, int32 Dv) { return FVector3f(Hi.X - Du, Lo.Y + Dv, Hi.Z); });
+    }
+    return Quads;
+}
+
 FVector3f FoundationItemMesh::ToUnreal(const FVector3f& Pixels, double BlockCm)
 {
     const FVector3f Model = (Pixels - FVector3f(8)) / 16.f;

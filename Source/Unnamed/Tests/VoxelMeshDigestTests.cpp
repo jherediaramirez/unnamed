@@ -100,6 +100,9 @@ bool FVoxelMeshDigestTest::RunTest(const FString& Parameters)
             FVoxelDecorationOptions DecorationOptions;
             DecorationOptions.bPlants = bPlants;
             DecorationOptions.bTrees = bTrees;
+            // 26.3's decoration whatever voxel.Decoration.FireflyBushAsGrass says (survival B4a): the digest guards the
+            // mesher, not worldgen; the radius-8 hashes follow the switch.
+            DecorationOptions.bFireflyBushAsShortGrass = false;
             if (!TestTrue(TEXT("the terrain is valid"), Terrain->IsValid()) ||
                 !TestTrue(FString::Printf(TEXT("the decorator compiles (%s)"), *Error),
                     Decorator.Initialize(Graph, *Table, Terrain->GetBiomeSource()->GetTable(), Terrain->GetSeed(),

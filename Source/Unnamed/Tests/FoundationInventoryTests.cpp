@@ -567,6 +567,17 @@ bool FFoundationInventoryArmorTest::RunTest(const FString&)
     TestEqual(
         TEXT("wear: lab tool wear off wears nothing"), L.A.WearArmor(L.Player, 3, EFoundationPlayerMode::Survival), 0);
     TestEqual(TEXT("wear off: unchanged"), I.Armor[2].Damage, 195);
+    // Codex review 31 #4: a fire-resistant piece (netherite's damage_resistant #minecraft:is_fire) skips the fire part.
+    L.A.Options.bToolWear = true;
+    L.A.Rules.Items[Chest].bFireResistant = true;
+    L.A.WearArmor(L.Player, 4, EFoundationPlayerMode::Survival, 4);
+    TestEqual(TEXT("fire wear: a fire-resistant piece takes none"), I.Armor[2].Damage, 195);
+    L.A.WearArmor(L.Player, 5, EFoundationPlayerMode::Survival, 4);
+    TestEqual(TEXT("fire wear: only the rest"), I.Armor[2].Damage, 196);
+    L.A.Rules.Items[Chest].bFireResistant = false;
+    L.A.WearArmor(L.Player, 4, EFoundationPlayerMode::Survival, 4);
+    TestEqual(TEXT("fire wear: another piece takes it all"), I.Armor[2].Damage, 200);
+    L.A.Options.bToolWear = false;
 
     // R19 (survival2.r19.equip): in creative an empty slot gets a copy and the hand keeps the piece; an occupied one
     // swaps as in survival.

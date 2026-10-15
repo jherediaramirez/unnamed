@@ -231,7 +231,8 @@ void UHudPresenter::ApplyInventory(FHudSnapshot& S, const FFoundationInventory& 
     // The head slot's camera overlay (the pumpkin blur); only a piece made for the head, in the head slot, shows it.
     S.CameraOverlay = NAME_None;
     constexpr int32 HeadIndex = 3;
-    if (Inventory.Armor.IsValidIndex(HeadIndex) && !Inventory.Armor[HeadIndex].IsEmpty())
+    // With foundation.Inventory.Full 0 the armor slots are off, and so is their overlay (Codex review 31, finding 2).
+    if (Inventory.bFull && Inventory.Armor.IsValidIndex(HeadIndex) && !Inventory.Armor[HeadIndex].IsEmpty())
         if (const FFoundationItemDefinition& Worn = Rules.GetItem(Inventory.Armor[HeadIndex].Item);
             Worn.Equipment == EFoundationEquipmentSlot::Head)
             S.CameraOverlay = Worn.CameraOverlay;

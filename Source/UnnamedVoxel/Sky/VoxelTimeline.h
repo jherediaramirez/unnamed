@@ -137,4 +137,5 @@ namespace VoxelSky
     inline const TCHAR* const SunriseSunsetColor = TEXT("minecraft:visual/sunrise_sunset_color");
     inline const TCHAR* const MoonPhase = TEXT("minecraft:visual/moon_phase");
     inline const TCHAR* const SkyLightLevel = TEXT("minecraft:gameplay/sky_light_level");
+    inline const TCHAR* const MonstersBurn = TEXT("minecraft:gameplay/monsters_burn");
 }

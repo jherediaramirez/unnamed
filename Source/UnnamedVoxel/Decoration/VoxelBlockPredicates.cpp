@@ -234,6 +234,18 @@ bool FVoxelBlockPredicates::Compile(const FVoxelFeatureGraph& Graph, int32 Node,
     return true;
 }
 
+int32 FVoxelBlockPredicates::ReplaceState(uint16 From, uint16 To)
+{
+    int32 Swapped = 0;
+    for (FNode& Node : Nodes)
+        if (Node.Op == EOp::WouldSurvive && Node.Argument == From)
+        {
+            Node.Argument = To;
+            ++Swapped;
+        }
+    return Swapped;
+}
+
 bool FVoxelBlockPredicates::Test(int32 Root, const FVoxelDecorationContext& Context, FIntVector Position) const
 {
     const FNode& Node = Nodes.GetData()[Root];

@@ -171,12 +171,15 @@
    "copper_leggings",
    "copper_boots",
    "turtle_helmet"
+  ],
+  "shield": [
+   "shield"
   ]
  },
  "counts": {
-  "items": 143,
+  "items": 144,
   "registry_items": 1658,
-  "models": 150,
+  "models": 152,
   "textures": 154,
   "item_tags": 80,
   "block_tags": 16,
@@ -326,6 +329,7 @@
   "assets/minecraft/items/resin_brick.json",
   "assets/minecraft/items/resin_clump.json",
   "assets/minecraft/items/rotten_flesh.json",
+  "assets/minecraft/items/shield.json",
   "assets/minecraft/items/snowball.json",
   "assets/minecraft/items/spider_eye.json",
   "assets/minecraft/items/spruce_sapling.json",
@@ -476,6 +480,8 @@
   "assets/minecraft/models/item/resin_brick.json",
   "assets/minecraft/models/item/resin_clump.json",
   "assets/minecraft/models/item/rotten_flesh.json",
+  "assets/minecraft/models/item/shield.json",
+  "assets/minecraft/models/item/shield_blocking.json",
   "assets/minecraft/models/item/snowball.json",
   "assets/minecraft/models/item/spear_in_hand.json",
   "assets/minecraft/models/item/spider_eye.json",
@@ -509,6 +515,7 @@
   "assets/minecraft/textures/block/pale_oak_sapling.png",
   "assets/minecraft/textures/block/poplar_sapling.png",
   "assets/minecraft/textures/block/spruce_sapling.png",
+  "assets/minecraft/textures/entity/shield/shield_base_nopattern.png",
   "assets/minecraft/textures/item/amethyst_shard.png",
   "assets/minecraft/textures/item/apple.png",
   "assets/minecraft/textures/item/baked_potato.png",
@@ -2612,6 +2619,7 @@
   "reports/components/item/resin_brick.json",
   "reports/components/item/resin_clump.json",
   "reports/components/item/rotten_flesh.json",
+  "reports/components/item/shield.json",
   "reports/components/item/snowball.json",
   "reports/components/item/spider_eye.json",
   "reports/components/item/spruce_sapling.json",

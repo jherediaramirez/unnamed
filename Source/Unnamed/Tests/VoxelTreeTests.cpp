@@ -2752,8 +2752,6 @@ bool FVoxelTreeSaplingTest::RunTest(const FString& Parameters)
     return true;
 }
 
-#endif
-
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelTreeVinesTest, "Unnamed.Voxel.Trees.Vines",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -2821,3 +2819,5 @@ bool FVoxelTreeVinesTest::RunTest(const FString& Parameters)
     }
     return true;
 }
+
+#endif

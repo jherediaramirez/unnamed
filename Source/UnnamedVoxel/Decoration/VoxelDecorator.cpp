@@ -85,6 +85,7 @@ bool FVoxelDecorator::Initialize(const FVoxelFeatureGraph& Graph, const FVoxelBl
     TargetLists.Reset();
     FeaturesOfBiome.Reset();
     Skipped.Reset();
+    FireflyBushSwaps = 0;
     MissingBlocks.Reset();
     Plants.Reset();
     Placed.Reset();
@@ -152,6 +153,17 @@ bool FVoxelDecorator::Initialize(const FVoxelFeatureGraph& Graph, const FVoxelBl
             FeatureOfEntry.Add(Entry, Features.Num());
             Features.Add(MoveTemp(Feature));
         }
+    // firefly_bush is placed only by its three patches (feature/firefly_bush.json), so swapping the state in every
+    // provider and would_survive test swaps it there alone. The features' salts, and so their random streams, stay the
+    // same; a later feature may still see short grass (replaceable) where it saw a firefly bush.
+    if (Options.bPlants && Options.bFireflyBushAsShortGrass)
+    {
+        const int32 Firefly = InTable.MakeState(TEXT("firefly_bush"), {});
+        const int32 Grass = InTable.MakeState(TEXT("short_grass"), {});
+        if (Firefly != INDEX_NONE && Grass != INDEX_NONE)
+            FireflyBushSwaps = Providers.ReplaceState(uint16(Firefly), uint16(Grass)) +
+                Predicates.ReplaceState(uint16(Firefly), uint16(Grass));
+    }
 
     if (Options.Mutation == EVoxelDecorationMutation::SwappedOrder)
     {

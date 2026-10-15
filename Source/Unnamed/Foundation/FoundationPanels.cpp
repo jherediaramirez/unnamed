@@ -89,7 +89,7 @@ namespace
             {
                 if (WeakLab.IsValid()) WeakLab->SetFiniteSupply(!WeakLab->IsFiniteSupply());
             });
-        Button([] { return FString(TEXT("Reset lab: seed blocks, loadout, targets; back to spawn")); },
+        Button([] { return FString(TEXT("Reset lab: seed blocks, targets; back to spawn")); },
             [WeakLab]
             {
                 if (WeakLab.IsValid()) WeakLab->ResetLab();
@@ -227,6 +227,26 @@ namespace
             TEXT("Mob hit 4 (armor, difficulty)"),
             [](FFoundationVitals& V) { V.Hurt(EFoundationDamage::MobAttack, 4); }, TEXT("Damage 2 (bypasses armor)"),
             [](FFoundationVitals& V) { V.Hurt(EFoundationDamage::Generic, 2); });
+        // Survival step 19b: a mob hit of 4 from a block in front of the player, which a raised shield blocks; the
+        // second from an axe (disable_blocking_for_seconds 5), which also disables it.
+        auto FrontHit = [WeakPawn](float DisableSeconds)
+        {
+            return [WeakPawn, DisableSeconds](FFoundationVitals& V)
+            {
+                AFoundationPawn* Owner = WeakPawn.Get();
+                FFoundationAuthority* Authority = Owner ? Owner->GetAuthority() : nullptr;
+                const FFoundationPlayer* Player =
+                    Authority ? Authority->FindPlayer(Owner->Interaction.PlayerId) : nullptr;
+                if (!Player) return;
+                FFoundationAttack Attack;
+                Attack.Amount = 4;
+                Attack.SourceCm = Player->Facts.FeetCm + Player->Facts.Aim.GetSafeNormal2D() * 100;
+                Attack.DisableBlockingSeconds = DisableSeconds;
+                Authority->HurtPlayer(Owner->Interaction.PlayerId, V, Attack);
+            };
+        };
+        Actions(TEXT("Mob hit 4 from the front (a shield blocks)"), FrontHit(0), TEXT("Axe hit 4 from the front"),
+            FrontHit(5));
         Actions(
             TEXT("Heal 4"), [](FFoundationVitals& V) { V.Heal(4); }, TEXT("Eat cooked beef (8, 12.8)"),
             [](FFoundationVitals& V) { V.Eat(8, 12.8f); });
@@ -767,6 +787,8 @@ bool UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
             : Kind == EFoundationMenuKind::Smoker                        ? TEXT("smoker")
             : Kind == EFoundationMenuKind::BlastFurnace                  ? TEXT("blast furnace")
             : Kind == EFoundationMenuKind::Barrel                        ? TEXT("barrel")
+            : Kind == EFoundationMenuKind::Chest                         ? TEXT("chest")
+            : Kind == EFoundationMenuKind::LargeChest                    ? TEXT("large chest")
                                                                          : TEXT("survival inventory"));
     bInventoryOpen = true;
     return true;

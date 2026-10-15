@@ -159,9 +159,32 @@ void FoundationLoot::Roll(const FFoundationLootTable& Table, TConstArrayView<FFo
     {
         if (!TestAll(Table, Pool.Conditions, Predicates, Context, Random)) continue;
         for (int32 Roll = 0; Roll < Pool.Rolls; ++Roll)
-            for (const FFoundationLootCandidate& Candidate : Pool.Candidates)
+            for (int32 Index = 0; Index < Pool.Candidates.Num(); ++Index)
             {
-                if (!TestAll(Table, Candidate.Conditions, Predicates, Context, Random)) continue;
+                const FFoundationLootCandidate* Pick = &Pool.Candidates[Index];
+                if (Pick->Weight > 0)
+                {
+                    // A weighted choice: the passing candidates' weights, one draw over their total.
+                    TArray<const FFoundationLootCandidate*, TInlineAllocator<4>> Passing;
+                    int32 Total = 0;
+                    for (const FFoundationLootCandidate& Each : Pool.Candidates)
+                        if (TestAll(Table, Each.Conditions, Predicates, Context, Random))
+                        {
+                            Passing.Add(&Each);
+                            Total += FMath::Max(1, Each.Weight);
+                        }
+                    if (Total <= 0) break;
+                    int32 Draw = Random.RandHelper(Total);
+                    for (const FFoundationLootCandidate* Each : Passing)
+                        if ((Draw -= FMath::Max(1, Each->Weight)) < 0)
+                        {
+                            Pick = Each;
+                            break;
+                        }
+                }
+                else if (!TestAll(Table, Pick->Conditions, Predicates, Context, Random))
+                    continue;
+                const FFoundationLootCandidate& Candidate = *Pick;
                 int32 Item = Candidate.Item;
                 int32 Count = Modify(Table, Candidate.Modifiers, 1, Predicates, Context, Random, Item);
                 Count = Modify(Table, Pool.Modifiers, Count, Predicates, Context, Random, Item);

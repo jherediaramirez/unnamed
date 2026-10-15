@@ -932,7 +932,7 @@ namespace
             Item.PlacesBlock = TEXT("stone");
             Item.Icon = TEXT("block");
             Authority.Rules.Items.Add(Item);
-            Authority.Rules.Loadout[0] = TEXT("edit_stone");
+            Authority.Rules.Loadout = {TEXT("edit_stone"), TEXT("iron_pickaxe"), TEXT("iron_sword")};
             Authority.World.SetRegistry(FFoundationBlockRegistry::GetDefault());
             Authority.World.BoundsMin = FIntVector(-30000000, -30000000, VoxelConstants::MinZ);
             Authority.World.BoundsMax = FIntVector(30000000, 30000000, VoxelConstants::MaxZ);

@@ -14,6 +14,8 @@ struct FFoundationPlacementContext
     FVector ClickPointCm = FVector::ZeroVector;
     // The player's view in Minecraft degrees: yaw 0 looks south, 90 west; positive pitch looks down.
     double Yaw = 0, Pitch = 0;
+    // The player's secondary use (sneaking): a chest placed so stays single or joins the clicked chest (T1 18-chest).
+    bool bSecondaryUse = false;
     // Set by ResolveDestination: whether the clicked block itself is replaced, and the placement cell.
     bool bReplaceClicked = false;
     FIntVector Destination = FIntVector::ZeroValue;

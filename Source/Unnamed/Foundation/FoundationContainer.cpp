@@ -43,10 +43,13 @@ const FFoundationMenuLayout& FFoundationMenuLayout::Get(EFoundationMenuKind Kind
     // ACTION-PLAN.md Line 1 #4 and value-swaps.md "Barrel" (ChestMenu with 3 rows: container 0-26, main 27-53, hotbar
     // 54-62).
     static const FFoundationMenuLayout Barrel{63, INDEX_NONE, 0, 0, INDEX_NONE, 27, 54, INDEX_NONE, 0, 27};
-    return Kind == EFoundationMenuKind::Crafting ? Crafting
-        : IsFurnaceMenu(Kind)                    ? Furnace
-        : Kind == EFoundationMenuKind::Barrel    ? Barrel
-                                                 : Player;
+    // value-swaps.md "generic_54" (ChestMenu with 6 rows: container 0-53, main 54-80, hotbar 81-89).
+    static const FFoundationMenuLayout LargeChest{90, INDEX_NONE, 0, 0, INDEX_NONE, 54, 81, INDEX_NONE, 0, 54};
+    return Kind == EFoundationMenuKind::Crafting                                    ? Crafting
+        : IsFurnaceMenu(Kind)                                                       ? Furnace
+        : Kind == EFoundationMenuKind::Barrel || Kind == EFoundationMenuKind::Chest ? Barrel
+        : Kind == EFoundationMenuKind::LargeChest                                   ? LargeChest
+                                                                                    : Player;
 }
 
 int32 FFoundationMenuLayout::ToInventorySlot(int32 MenuSlot) const

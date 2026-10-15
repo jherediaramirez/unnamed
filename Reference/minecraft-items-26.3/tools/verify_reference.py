@@ -91,31 +91,35 @@ else:
 # 5. Counts and spot values (scout F's appendix A, and the break-time formula's worked cases).
 items = {i["id"]: i for i in load("items.json")["items"]}
 index = load("item_index.json")["items"]
-check(len(items) == 143 and sum(i["group"] == "tool" for i in items.values()) == 35 and
+check(len(items) == 144 and sum(i["group"] == "tool" for i in items.values()) == 35 and
       sum(i["group"] == "spear" for i in items.values()) == 7 and sum(i["group"] == "drop" for i in items.values()) == 23 and
       sum(i["group"] == "mob_drop" for i in items.values()) == 18 and
       sum(i["group"] == "cooking_output" for i in items.values()) == 10 and
-      sum(i["group"] == "armor" for i in items.values()) == 29,
-      "expected 143 items: 35 tools, 7 spears, 23 drop items, 18 mob drop items, 10 cooking outputs, 29 armor pieces")
+      sum(i["group"] == "armor" for i in items.values()) == 29 and
+      sum(i["group"] == "shield" for i in items.values()) == 1,
+      "expected 144 items: 35 tools, 7 spears, 23 drop items, 18 mob drop items, 10 cooking outputs, 29 armor pieces, "
+      "the shield")
 # APPEND_LAST: the drop items, then the mob drop items (survival T6 20a), and the models and textures only each group
 # uses, follow the earlier ones: 63 items, 70 models and 70 textures before loot step 2b; 86 items, 93 models and 93
 # textures before 20a; 104 items, 111 models and 111 textures before the cooking outputs (survival T1 8a2). Each group
 # is in APPEND_LAST order, not interleaved by protocol id. The armor pieces (survival T2 19a2) follow at 114-142, with
-# models 121-149 and textures 121-153 (the four leather overlays make 33).
+# models 121-149 and textures 121-153 (the four leather overlays make 33). The shield (survival T2 19b) follows at 143,
+# with models 150-151 and no texture layer.
 groups = [i["group"] for i in items.values()]
 model_ids = [m["id"] for m in load("models.json")["models"]]
 texture_names = [t["name"] for t in load("textures.json")["textures"]]
 first63, first86, first104 = list(items.values())[:63], list(items.values())[:86], list(items.values())[:104]
-first114 = list(items.values())[:114]
+first114, first143 = list(items.values())[:114], list(items.values())[:143]
 models_of = lambda group: {m["model"] for i in group for m in i["model"]["models"]}
 textures_of = lambda group: {t for i in group for t in i["textures"]}
 late_models, late_textures = model_ids[70:93], texture_names[70:93]
 mob_models, mob_textures = model_ids[93:111], texture_names[93:111]
 cooking_models, cooking_textures = model_ids[111:121], texture_names[111:121]
-armor_models, armor_textures = model_ids[121:], texture_names[121:]
+armor_models, armor_textures = model_ids[121:150], texture_names[121:]
+shield_models = model_ids[150:]
 check(groups[63:86] == ["drop"] * 23 and groups[86:104] == ["mob_drop"] * 18 and
-      groups[104:114] == ["cooking_output"] * 10 and groups[114:] == ["armor"] * 29 and
-      len(model_ids) == 150 and len(texture_names) == 154 and "armor" not in groups[:114] and
+      groups[104:114] == ["cooking_output"] * 10 and groups[114:143] == ["armor"] * 29 and groups[143:] == ["shield"] and
+      len(model_ids) == 152 and len(texture_names) == 154 and "armor" not in groups[:114] and
       len(mob_models) == len(mob_textures) == 18 and len(cooking_models) == len(cooking_textures) == 10 and
       "drop" not in groups[:63] and "mob_drop" not in groups[:86] and "cooking_output" not in groups[:104] and
       len(late_models) == 23 and len(late_textures) == 23 and
@@ -124,11 +128,14 @@ check(groups[63:86] == ["drop"] * 23 and groups[86:104] == ["mob_drop"] * 18 and
       set(mob_textures) == textures_of(first104) - textures_of(first86) and
       set(cooking_models) == models_of(first114) - models_of(first104) and
       set(cooking_textures) == textures_of(first114) - textures_of(first104) and
-      set(armor_models) == models_of(items.values()) - models_of(first114) and
-      set(armor_textures) == textures_of(items.values()) - textures_of(first114) and
+      set(armor_models) == models_of(first143) - models_of(first114) and
+      set(armor_textures) == textures_of(first143) - textures_of(first114) and
+      shield_models == ["item/shield", "item/shield_blocking"] and
+      set(shield_models) == models_of(items.values()) - models_of(first143) and
+      textures_of(items.values()) == textures_of(first143) and
       len(model_ids) == len(set(model_ids)) == len(models_of(items.values())) and
       len(texture_names) == len(set(texture_names)) == len(textures_of(items.values())),
-      "drop, mob drop, cooking output and armor items, models and textures are not appended last")
+      "drop, mob drop, cooking output, armor and shield items, models and textures are not appended last")
 # Armor spot values (the item components report; minecraft.wiki "Armor"): totals, equippable, the trim fallback only,
 # and leather's dye tint on layer 0.
 ARMOR = {"leather_helmet": (1, 0, 0, "head", "leather"), "chainmail_chestplate": (5, 0, 0, "chest", "chain"),
@@ -146,8 +153,25 @@ check(all(("tints" in m) == i["id"].startswith("leather_") for i in items.values
       items["leather_boots"]["model"]["models"][0]["tints"] == [{"type": "minecraft:dye", "default": -6265536}] and
       items["leather_boots"]["textures"] == ["item/leather_boots", "item/leather_boots_overlay"],
       "leather tint: layer 0 dye, default -6265536, only on the leather pieces")
-check(all(("armor" in i) == ("equippable" in i) == (i["group"] == "armor") for i in items.values()),
-      "armor and equippable fields only on the armor pieces")
+check(all(("armor" in i) == (i["group"] == "armor") and ("equippable" in i) == (i["group"] in ("armor", "shield")) and
+          ("special" in i) == ("blocks_attacks" in i) == (i["group"] == "shield") for i in items.values()),
+      "armor only on the armor pieces, equippable on them and the shield, special and blocks_attacks on the shield")
+# Shield spot values (its item components report; minecraft.wiki "Shield", "Data component format/blocks_attacks").
+shield = items["shield"]
+check(shield["max_damage"] == 336 and shield["max_stack"] == 1 and shield["attack"] is None and
+      shield["repair"]["items"] == "#minecraft:wooden_tool_materials" and
+      shield["equippable"]["slot"] == "offhand" and not shield["equippable"]["swappable"] and
+      shield["model"]["type"] == "condition" and [m["when"] for m in shield["model"]["models"]] ==
+      [{"property": "using_item", "is": [False]}, {"property": "using_item", "is": [True]}] and
+      shield["special"]["type"] == "shield" and shield["special"]["texture"] == "entity/shield/shield_base_nopattern" and
+      shield["special"]["transformation"]["scale"] == [1.0, -1.0, -1.0] and shield["textures"] == [] and
+      shield["blocks_attacks"] == {"block_delay_seconds": 0.25, "disable_cooldown_scale": 1.0,
+                                   "damage_reductions": [{"horizontal_blocking_angle": 90.0, "base": 0.0, "factor": 1.0}],
+                                   "item_damage": {"threshold": 3.0, "base": 1.0, "factor": 1.0},
+                                   "bypassed_by": "#minecraft:bypasses_shield",
+                                   "block_sound": "minecraft:item.shield.block",
+                                   "disabled_sound": "minecraft:item.shield.break"} and
+      (ROOT / "assets/minecraft/textures/entity/shield/shield_base_nopattern.png").is_file(), "shield spot values")
 check([items[i]["textures"] for i in build.TIER_A["drop"] if i.endswith("_sapling")] ==
       [[f"block/{i}"] for i in build.TIER_A["drop"] if i.endswith("_sapling")] and
       items["snowball"]["max_stack"] == 16 and items["flint"]["max_stack"] == 64, "drop item spot values")

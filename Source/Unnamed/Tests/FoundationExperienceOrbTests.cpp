@@ -442,6 +442,20 @@ bool FFoundationExperienceOrbMergeTest::RunTest(const FString&)
         TestTrue(At + TEXT("its age"), Orbs.Num() == 1 && Orbs[0].Age == Case.Get<3>());
     }
     {
+        // Codex review 31 #3: the reward compares the other orbs where they were when the XP was awarded. Old id 41
+        // at x 40 (inside the box) moving 50 cm this step (out of it): the new XP still goes into id 41.
+        FOrbLab L;
+        L.Put(FVector(0, 0, 0), 3, 1, true);
+        FFoundationExperienceOrb* Old = const_cast<FFoundationExperienceOrb*>(L.Find(L.Put(FVector(40, 0, 0), 3, 41)));
+        Old->Ticks = Old->Age = 5;
+        Old->VelocityCm = FVector(50, 0, 0);
+        L.NextStep();
+        const TArray<FFoundationExperienceOrb>& Orbs = L.A.GetExperienceOrbs();
+        TestTrue(TEXT("a neighbour moving out this step: merged into it"),
+            Orbs.Num() == 1 && Orbs[0].Id == 41 && Orbs[0].Count == 2);
+        TestTrue(TEXT("which moved on"), Orbs.Num() == 1 && Orbs[0].LocalCm.X > 75);
+    }
+    {
         // Only the reward's search rolls: a new orb S whose roll passes against id 1 (ids not 40 apart) takes it in
         // inside the 1 x 1 x 1 box (x 30), but at x 80 its own first-step scan needs the id rule and leaves it.
         FFoundationExperienceOrb Seeker, Other;

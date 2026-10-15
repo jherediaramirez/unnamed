@@ -346,7 +346,6 @@ bool FFoundationDeathScreenTest::RunTest(const FString& Parameters)
         Has(Chat, [](const FHudDraw& D) { return D.Sprite.IsNone() && D.Rect == FIntRect(2, 346, 638, 358); }));
     return true;
 }
-#endif
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationDeathArmorWearTest, "Unnamed.Foundation.Death.ArmorWear",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -396,3 +395,5 @@ bool FFoundationDeathArmorWearTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("at 526: dropped worn to 527"), Dropped && Dropped->Damage == 527);
     return true;
 }
+
+#endif

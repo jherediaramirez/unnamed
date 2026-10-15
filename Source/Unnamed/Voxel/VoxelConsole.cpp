@@ -39,7 +39,8 @@ TAutoConsoleVariable<int32> VoxelConsole::CVarFarCanopyLayer(TEXT("voxel.Far.Can
     TEXT("Far LOD: the far leaf canopies' layer, 0 cutout (as near leaves draw) or 1 opaque. A change remeshes every "
          "far column."));
 TAutoConsoleVariable<bool> VoxelConsole::CVarFarTrees(TEXT("voxel.Far.Trees"), true,
-    TEXT("Far LOD: retain trunks and every above-ground leaf tier (default 1). 0 keeps the original upper-canopy-only mesh. "
+    TEXT("Far LOD: retain trunks and every above-ground leaf tier (default 1). 0 keeps the original upper-canopy-only "
+         "mesh. "
          "A change remeshes far columns while their previous meshes stay visible."));
 TAutoConsoleVariable<bool> VoxelConsole::CVarFarInnerFirst(TEXT("voxel.Far.InnerFirst"), true,
     TEXT("Far LOD: a far mesh for a column within two columns of the view that shows nothing yet goes before full "
@@ -84,6 +85,13 @@ TAutoConsoleVariable<bool> VoxelConsole::CVarDecorationTrees(TEXT("voxel.Decorat
         "With plants: 1 runs the tree feature (phase 6, S9a: trunks, foliage, mangrove roots; S9b's decorators, fallen "
         "trees and huge mushrooms not yet) in streamed worlds and every bench; 0 skips trees, the control that "
         "reproduces S8's goldens and hashes. A change rebuilds the world."));
+TAutoConsoleVariable<bool> VoxelConsole::CVarDecorationFireflyBushAsGrass(TEXT("voxel.Decoration.FireflyBushAsGrass"),
+    true,
+    TEXT(
+        "With plants: 1 places short_grass where 26.3 places firefly_bush (its three patches; beyond vanilla, survival "
+        "B4a) in streamed worlds and every bench (not Mesher.Digest); 0 places firefly_bush, the control that "
+        "reproduces "
+        "the hashes from before B4a. A change rebuilds the world."));
 TAutoConsoleVariable<bool> VoxelConsole::CVarOreVeins(TEXT("voxel.OreVeins"), true,
     TEXT(
         "Ore veins (phase 6, S4): 1 runs 26.3's ore_vein rules in Generate (copper veins in granite from Z 0 to 49, "
@@ -207,6 +215,8 @@ namespace
         // And runs the plants as voxel.Decoration.Plants says (a caller may still turn them off).
         Placed.bPlants = Options.bPlants && VoxelConsole::CVarDecorationPlants.GetValueOnGameThread();
         Placed.bTrees = Options.bTrees && VoxelConsole::CVarDecorationTrees.GetValueOnGameThread();
+        // The switch alone decides (callers pass default options): the radius-8 hashes follow the game.
+        Placed.bFireflyBushAsShortGrass = VoxelConsole::CVarDecorationFireflyBushAsGrass.GetValueOnGameThread();
         if (!Decorator->Initialize(
                 Graph, Table, Terrain.GetBiomeSource()->GetTable(), Terrain.GetSeed(), Placed, &OutError))
             return nullptr;
