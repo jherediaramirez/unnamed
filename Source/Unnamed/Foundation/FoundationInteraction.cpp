@@ -387,6 +387,10 @@ void FFoundationInteraction::Attempt(
     const FFoundationResult Result = UsePipeline(Authority, Vitals);
     // Full hunger asks again only after the held repeat, whatever the cadence.
     if (Result.Reason == EFoundationReason::NotHungry) NextUseStep = Step + HeldRepeatSteps;
+    // A bucket's fill or pour (step 17) waits the held repeat too, so holding use does not fill and pour each step;
+    // so does a bucket refused for a full inventory, so holding does not send a refusal every step.
+    if (Result.bFilled || Result.bEmptied || Result.Reason == EFoundationReason::InventoryFull)
+        NextUseStep = Step + HeldRepeatSteps;
     if (Result.bPlaced)
     {
         OnPlaced(PressTime, NowSeconds);
@@ -426,13 +430,15 @@ FFoundationResult FFoundationInteraction::UsePipeline(FFoundationAuthority& Auth
             Result = UseTarget(Authority, Vitals, Hand);
             if (Result.Outcome != EFoundationOutcome::Pass) return Result;
         }
-        // Only a hand holding a consumable asks the authority, so other items send nothing new.
+        // Only a hand holding a consumable or a bucket (step 17) asks the authority, so other items send nothing new.
         const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId);
         const FFoundationItemInstance* Stack = Player ? &Player->Inventory.GetHand(Hand) : nullptr;
-        if (!bItemUse || !Stack || Stack->IsEmpty() || !Authority.Rules.GetItem(Stack->Item).GetConsumable().IsValid())
-            continue;
+        if (!bItemUse || !Stack || Stack->IsEmpty()) continue;
+        const FFoundationItemDefinition& Item = Authority.Rules.GetItem(Stack->Item);
+        if (!Item.GetConsumable().IsValid() && !FoundationBucket::IsBucket(Item.Id)) continue;
         Result = Send(Authority, Vitals, MakeCommand(Authority, EFoundationCommandType::UseItemStart, Hand));
-        if (Result.IsCommitted())
+        // A bucket's use is instant: only a use with a duration is held.
+        if (Result.IsCommitted() && Result.UseDuration > 0)
         {
             bUsingItem = true;
             UseHand = Hand;

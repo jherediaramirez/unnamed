@@ -1504,6 +1504,81 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         });
     AddCase(TEXT("strip capture off hold"), .2, [] {}, [SetItemUse] { SetItemUse(1); });
 
+    // 13e. Buckets (step 17, foundation.Items.Use 1): a right click with a water bucket on a stone's side pours a water
+    // source beside it (item.bucket.empty); the capture is that source. A right click with an empty bucket on it takes
+    // it back (item.bucket.fill). The control: the same pour with the switch at 0 leaves the cell empty.
+    const FIntVector BucketStone(-6, 8, 0), BucketCell(-7, 8, 0);
+    auto StartPour = [this, Authority, Look, Click, BucketStone, BucketCell]
+    {
+        ResetPlayer({-750, 850, 0});
+        FFoundationAuthority& A = Authority();
+        A.World.Set(BucketStone, A.World.FindBlock(TEXT("stone"))->GetDefaultState());
+        A.World.Set(BucketCell, {});
+        Pawn->Interaction.SetCreativeSlot(A, Pawn->Vitals, 0, TEXT("water_bucket"), 1);
+        PressKey(EKeys::One, true);
+        PressKey(EKeys::One, false);
+        Look(FoundationGrid::CellBox(BucketStone, A.World.OriginCm).GetCenter());
+        Click(EKeys::RightMouseButton);
+    };
+    auto CountSounds = [Lab](const TCHAR* Event)
+    {
+        int32 Count = 0;
+        const FFoundationBreakEffects* Effects = Lab->GetView()->GetBreakEffects();
+        for (const FoundationBreak::FSoundLogEntry& Entry :
+            Effects ? Effects->GetSoundLog() : TConstArrayView<FoundationBreak::FSoundLogEntry>())
+            Count += Entry.Event == Event;
+        return Count;
+    };
+    Prepare(TEXT("buckets"), true);
+    AddCase(
+        TEXT("bucket pour on"), .6,
+        [Lab, SetItemUse, StartPour]
+        {
+            SetItemUse(1);
+            if (FFoundationBreakEffects* Effects = Lab->GetView()->GetBreakEffects()) Effects->ClearSoundLog();
+            StartPour();
+        },
+        [this, BlockAt, Drawn, Capture, CountSounds, BucketCell]
+        {
+            Record(TEXT("a water bucket pours a source beside the stone"),
+                BlockAt(BucketCell) == TEXT("water[level=0]"), BlockAt(BucketCell));
+            const int32 Empties = CountSounds(TEXT("item.bucket.empty"));
+            Record(TEXT("pouring plays item.bucket.empty once"), Empties == 1, FString::Printf(TEXT("%d"), Empties));
+            Drawn(TEXT("the poured water is drawn"));
+            Capture(TEXT("buckets-on"));
+        });
+    AddCase(
+        TEXT("bucket fill"), .6,
+        [this, Authority, Look, Click, BucketCell]
+        {
+            FFoundationAuthority& A = Authority();
+            Pawn->Interaction.SetCreativeSlot(A, Pawn->Vitals, 0, TEXT("bucket"), 1);
+            Look(FoundationGrid::CellBox(BucketCell, A.World.OriginCm).GetCenter());
+            Click(EKeys::RightMouseButton);
+        },
+        [this, BlockAt, CountSounds, BucketCell]
+        {
+            Record(
+                TEXT("an empty bucket takes the source back"), BlockAt(BucketCell) == TEXT("air"), BlockAt(BucketCell));
+            const int32 Fills = CountSounds(TEXT("item.bucket.fill"));
+            Record(TEXT("filling plays item.bucket.fill once"), Fills == 1, FString::Printf(TEXT("%d"), Fills));
+        });
+    Prepare(TEXT("buckets control"), true);
+    AddCase(
+        TEXT("bucket pour off"), .6,
+        [SetItemUse, StartPour]
+        {
+            SetItemUse(0);
+            StartPour();
+        },
+        [this, BlockAt, Capture, BucketCell]
+        {
+            Record(
+                TEXT("the control (switch 0) pours nothing"), BlockAt(BucketCell) == TEXT("air"), BlockAt(BucketCell));
+            Capture(TEXT("buckets-off"));
+        });
+    AddCase(TEXT("bucket pour off hold"), .2, [] {}, [SetItemUse] { SetItemUse(1); });
+
     // 13b. Hands and items: pick block, drop (items S8b: throw, re-pickup, the stack, the switch-0 control), offhand
     // fallback, Toggle use, water.
     Prepare(TEXT("hands"), false);

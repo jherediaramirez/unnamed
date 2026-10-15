@@ -15,7 +15,7 @@ namespace
     TAutoConsoleVariable<int32> CVarItemUse(TEXT("foundation.Items.Use"), 1,
         TEXT(
             "1: hold use to eat food (step 10: apple, bread, cooked beef and the reference's other foods, 1.6 s each). "
-            "0: food passes, as before. Axe stripping and buckets (steps 14 and 17) will hang off this switch."));
+            "0: food passes, as before. Axe stripping (step 14) and buckets (step 17) hang off this switch."));
 
     // The movement solver's contact tolerance (FoundationSimulation.cpp): touching is contact, only
     // positive-volume overlap obstructs. No extra clearance margin.
@@ -578,7 +578,7 @@ void FFoundationAuthority::StepExperienceOrbs()
     }
 }
 
-FFoundationHit FFoundationAuthority::Resolve(const FFoundationPlayerFacts& Facts) const
+FFoundationHit FFoundationAuthority::Resolve(const FFoundationPlayerFacts& Facts, bool bFluidSources) const
 {
     TArray<FFoundationEntityShape, TInlineAllocator<4>> Shapes;
     for (const FFoundationTrainingTarget& Target : Targets)
@@ -588,6 +588,7 @@ FFoundationHit FFoundationAuthority::Resolve(const FFoundationPlayerFacts& Facts
     Ray.Direction = Facts.Aim;
     Ray.BlockReachCm = Rules.BlockReachCm;
     Ray.EntityReachCm = Rules.EntityReachCm;
+    Ray.bFluidSources = bFluidSources;
     return FoundationTargeting::Resolve(Ray, World, Statics, Shapes);
 }
 
@@ -1113,10 +1114,142 @@ bool FFoundationAuthority::StripOn(FFoundationPlayer& Player, const FFoundationC
     return true;
 }
 
+bool FFoundationAuthority::UseBucket(
+    FFoundationPlayer& Player, const FFoundationCommand& Command, EFoundationPlayerMode Mode, FFoundationResult& Result)
+{
+    static const FName BucketId(TEXT("bucket")), WaterBucketId(TEXT("water_bucket")), LavaBucketId(TEXT("lava_bucket"));
+    static const FName Waterlogged(TEXT("waterlogged")), True(TEXT("true")), False(TEXT("false"));
+    FFoundationInventory& Inventory = Player.Inventory;
+    const FFoundationItemInstance Stack = Inventory.GetHand(Command.Hand);
+    if (!Options.bItemUse || Stack.IsEmpty()) return false;
+    const FName Id = Rules.GetItem(Stack.Item).Id;
+    if (!FoundationBucket::IsBucket(Id)) return false;
+    const bool bEmpty = Id == BucketId, bWater = Id == WaterBucketId;
+    Result.Outcome = EFoundationOutcome::Pass;
+    // Adventure: a bucket changes no block (minecraft.wiki "Adventure mode"; provisional, the reports say nothing).
+    if (Mode == EFoundationPlayerMode::Adventure) return true;
+    // An empty bucket's ray stops at fluid sources; a full one's sees blocks only (minecraft.wiki "Bucket").
+    const FFoundationHit Hit = Resolve(Player.Facts, bEmpty);
+    if (Hit.Kind != EFoundationHitKind::Block || !Hit.bInRange) return true;
+    const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    // Creative keeps the used bucket (minecraft.wiki "Bucket"; provisional): a fill adds the filled bucket only when
+    // the inventory holds none, a pour changes nothing. Survival swaps a single bucket in place; from a stack, one
+    // goes and the new bucket is added, or dropped at the player when nothing takes it.
+    const bool bCreative = Mode == EFoundationPlayerMode::Creative;
+    const int32 HandSlot =
+        Command.Hand == EFoundationHand::Main ? Inventory.Selected : FFoundationInventory::OffhandSlot;
+    auto Swap = [&](int32 NewItem, const FIntVector& Cell)
+    {
+        const int32 MaxStack = Rules.GetItem(NewItem).MaxStack;
+        if (bCreative)
+        {
+            if (Stack.Item == NewItem) return;
+            for (int32 Slot = 0; Slot < FFoundationInventory::Slots; ++Slot)
+                if (const FFoundationItemInstance* Held = Inventory.GetSlot(Slot); Held && Held->Item == NewItem)
+                    return;
+            Inventory.Add(NewItem, 1, MaxStack);
+            return;
+        }
+        if (Stack.Count == 1)
+        {
+            Inventory.SetSlot(HandSlot, Inventory.MakeStack(NewItem, 1));
+            return;
+        }
+        Inventory.ConsumeOne(Command.Hand);
+        if (Inventory.Add(NewItem, 1, MaxStack) > 0) return;
+        const FIntVector Feet = FoundationGrid::CellAt(Player.Facts.FeetCm, World.OriginCm);
+        const FFoundationLootDrop Drop{NewItem, 1};
+        SpawnDrops(Feet, MakeArrayView(&Drop, 1), FoundationLoot::MakeSeed(Rules.LootSeed, Cell, BucketUses));
+    };
+    FFoundationEvent Event;
+    Event.Player = Player.Id;
+    Event.Step = Player.Facts.Step;
+    if (bEmpty)
+    {
+        // A water or lava source becomes air; a waterlogged block gives up its water.
+        const FFoundationBlockState Before = World.Get(Hit.Cell).State;
+        const FFoundationFluid Fluid = Registry.GetFluid(Before);
+        FFoundationBlockState After;
+        FName FilledId;
+        if (Registry.GetBlock(Before).IsFluid() && Fluid.bSource)
+            FilledId = Fluid.bLava ? LavaBucketId : WaterBucketId;
+        else if (Registry.GetValue(Before, Waterlogged) == True)
+        {
+            After = Registry.WithValue(Before, Waterlogged, False);
+            FilledId = WaterBucketId;
+        }
+        const int32 Filled = FilledId.IsNone() ? INDEX_NONE : Rules.FindItem(FilledId);
+        if (Filled == INDEX_NONE) return true;
+        // A stack's new bucket needs a slot, or the item entities to drop it; otherwise nothing changes.
+        if (!bCreative && Stack.Count > 1 && !Options.bItemEntities &&
+            Inventory.GetSpaceFor(Filled, Rules.GetItem(Filled).MaxStack) < 1)
+        {
+            Reject(Result, EFoundationReason::InventoryFull);
+            return true;
+        }
+        World.Set(Hit.Cell, After);
+        Swap(Filled, Hit.Cell);
+        ++BucketUses;
+        Result.Outcome = EFoundationOutcome::Committed;
+        Result.bFilled = true;
+        Result.Cell = Hit.Cell;
+        Result.State = After;
+        Event.Kind = EFoundationEventKind::Filled;
+        Event.Cell = Hit.Cell;
+        Event.State = After;
+        Event.Item = Filled;
+        Event.LocationCm = Player.Facts.FeetCm;
+        AddEvent(Event);
+        SettlePlants(Hit.Cell, Before, Player);
+        return true;
+    }
+    // Pouring: water fills a waterloggable block (the clicked one, else the one beside it); otherwise the source goes
+    // where a block would be placed (the clicked block when replaceable, else beside it) if that cell is air, a fluid
+    // or replaceable. A replaced plant goes without a drop (a known issue). Lava never waterlogs. Pouring into the same
+    // source empties the bucket and leaves the cell as it was.
+    const FFoundationBlockType* FluidBlock = Registry.FindBlock(bWater ? TEXT("water") : TEXT("lava"));
+    const int32 Emptied = Rules.FindItem(BucketId);
+    if (!FluidBlock || Emptied == INDEX_NONE) return true;
+    auto TakesWater = [&](FFoundationBlockState State)
+    { return bWater && Registry.GetValue(State, Waterlogged) == False; };
+    FIntVector Cell = Hit.Cell;
+    FFoundationBlockState Before = World.Get(Cell).State;
+    if (!TakesWater(Before))
+    {
+        if (!FoundationBlockPlacement::IsReplaceable(World, Before)) Cell += FoundationGrid::FaceOffset(Hit.Face);
+        if (!World.IsKnown(Cell)) return true;
+        Before = World.Get(Cell).State;
+    }
+    FFoundationBlockState After;
+    if (TakesWater(Before))
+        After = Registry.WithValue(Before, Waterlogged, True);
+    else if (Before.IsAir() || Registry.GetBlock(Before).IsFluid() ||
+        FoundationBlockPlacement::IsReplaceable(World, Before))
+        After = FluidBlock->GetDefaultState();
+    else
+        return true;
+    if (After != Before) World.Set(Cell, After);
+    const int32 Poured = Stack.Item;
+    if (!bCreative) Swap(Emptied, Cell);
+    ++BucketUses;
+    Result.Outcome = EFoundationOutcome::Committed;
+    Result.bEmptied = true;
+    Result.Cell = Cell;
+    Result.State = After;
+    Event.Kind = EFoundationEventKind::Emptied;
+    Event.Cell = Cell;
+    Event.State = After;
+    Event.Item = Poured;
+    AddEvent(Event);
+    if (After != Before) SettlePlants(Cell, Before, Player);
+    return true;
+}
+
 void FFoundationAuthority::UseItemStart(FFoundationPlayer& Player, const FFoundationCommand& Command,
     const FFoundationVitals& Vitals, FFoundationResult& Result)
 {
     if (!CheckHand(Player, Command, Result)) return;
+    if (UseBucket(Player, Command, Vitals.Mode, Result)) return;
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
     const FFoundationConsumable Food =
         Stack.IsEmpty() ? FFoundationConsumable{} : Rules.GetItem(Stack.Item).GetConsumable();
@@ -1801,6 +1934,22 @@ void FFoundationAuthority::SettleAfterFluid(const FIntVector& Cell, FFoundationB
         Event.Cell = Cell;
         Event.State = Before;
         ++Pops;
+        AddEvent(Event);
+    }
+    // Lava meeting water hardened the cell (step 17, foundation.Items.Use): block.lava.extinguish plays there.
+    const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    const FFoundationFluid Was = Registry.GetFluid(Before);
+    const FFoundationBlockState Now = World.Get(Cell).State;
+    const FName NowId = Registry.GetBlock(Now).Id;
+    if (Options.bItemUse && (Was.bWater || Was.bLava) &&
+        (NowId == TEXT("stone") || NowId == TEXT("obsidian") || NowId == TEXT("cobblestone") ||
+            NowId == TEXT("basalt")))
+    {
+        FFoundationEvent Event;
+        Event.Kind = EFoundationEventKind::Extinguished;
+        Event.Player = Nobody.Id;
+        Event.Cell = Cell;
+        Event.State = Now;
         AddEvent(Event);
     }
     SettlePlants(Cell, Before, Nobody);

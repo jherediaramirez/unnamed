@@ -56,6 +56,9 @@ struct FFoundationRay
     FVector Eye = FVector::ZeroVector;
     FVector Direction = FVector::ForwardVector;
     double BlockReachCm = 450, EntityReachCm = 300;
+    // An empty bucket's ray (step 17): fluid sources stop it too (water, lava and waterlogged cells; their fluid box,
+    // the cell to the surface), entered from outside or holding the eye.
+    bool bFluidSources = false;
 };
 
 // One shared query for targeting, previews and authority validation.

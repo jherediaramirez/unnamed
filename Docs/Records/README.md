@@ -4,6 +4,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 14, 2026
 
+- [Use step 17: buckets](2026-10-14-Use-Buckets.md): record, lane `feature/survival-use`. `foundation.Items.Use 1`: an empty bucket takes a water or lava source (or a waterlogged block's water), a full one pours a source or waterlogs; the bucket sounds and `block.lava.extinguish`; fluid delays already matched `extra.fluids` (no change).
 - [Use step 17 handoff: buckets](2026-10-14-Use-Handoff-Step17.md): the next step on lane `feature/survival-use` (base 8474c32 plus the 10b landing merge): scoop and pour water and lava sources, the bucket sounds through a silent hook, the fluid delays, lava extinguish.
 - [Use step 10b: eating polish](2026-10-14-Use-EatingPolish.md): record, lane `feature/survival-use`. `foundation.Items.Use 1`: the held item follows vanilla's eat transform (`foundation.Hand.EatMotion`, a closed form fitted to the value report's 33 matrices), crumbs (5 per effect step, 16 at the end), the report's effect-tick rule, the eat sound's 0.5-or-1 volume, switch 0 ends a running meal (`ItemUseOff`), and a plain axe passes in Adventure.
 - [Survival step 6 handoff: 2x2 crafting](2026-10-14-Inventory-Handoff-Step6.md): start here for T1's next step (lane `feature/survival-containers`): reading list, settled decisions (menu 0-4, throws stay T2's), code map, short prompt.
