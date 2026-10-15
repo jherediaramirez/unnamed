@@ -47,7 +47,7 @@ bool FMenuPreferenceContractTest::RunTest(const FString& Parameters)
     auto* Preferences = Service(TestPath(), false);
     auto State = ReadPreferences(Preferences->GetState());
     TestTrue(TEXT("Schema ready"), State->GetBoolField(TEXT("ready")));
-    TestEqual(TEXT("101 independently owned preferences"), State->GetObjectField(TEXT("settings"))->Values.Num(), 101);
+    TestEqual(TEXT("102 independently owned preferences"), State->GetObjectField(TEXT("settings"))->Values.Num(), 102);
     FString Json;
     FFileHelper::LoadFileToString(Json, *(FPaths::ProjectContentDir() / TEXT("Menu/Web/preferences-schema.menuprefs")));
     const auto Schema = ReadPreferences(Json);
@@ -189,7 +189,7 @@ bool FMenuPreferenceFailureTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Backup recovery succeeds"), Recovered->GetBoolField(TEXT("ok")));
     TestEqual(TEXT("Last good value recovered"),
         Recovered->GetObjectField(TEXT("settings"))->GetIntegerField(TEXT("fov")), 93);
-    TestEqual(TEXT("Missing fields receive defaults"), Recovered->GetObjectField(TEXT("settings"))->Values.Num(), 101);
+    TestEqual(TEXT("Missing fields receive defaults"), Recovered->GetObjectField(TEXT("settings"))->Values.Num(), 102);
     const FString Blocker = FPaths::GetPath(Path) / TEXT("regular-file");
     FFileHelper::SaveStringToFile(TEXT("block"), *Blocker);
     auto* Failed = Service(Blocker / TEXT("preferences.json"));

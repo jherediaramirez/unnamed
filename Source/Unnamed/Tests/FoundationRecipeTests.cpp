@@ -3,6 +3,7 @@
 #include "Foundation/FoundationContainer.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationRecipes.h"
+#include "FoundationShiftCraftCases.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
@@ -16,9 +17,15 @@ namespace
     // drops their blank edge rows and columns (7 shaped recipes have them). A new item or block import changes these.
     // Survival B1 (all 887 block items): C:\dev\sandbox\b1-blocks\scripts\recipe_counts.py recomputes these from the
     // reference (and the old 272/41/129 at 079fe3e).
-    constexpr int32 RecipeResolvedShaped = 515;
-    constexpr int32 RecipeResolvedShapeless = 56;
-    constexpr int32 RecipeFit2x2 = 164;
+    // Survival 20a (the 18 mob drops appended to the item reference): the same script gives 518/56/166 (515/56/164
+    // before). Survival T1 8a2 (the 10 cooking outputs appended): the same script gives 531/69/180
+    // (C:\dev\sandbox\inv8a2\recipe_counts.txt). T2 19a2 (the 29 armor pieces appended): 551 shaped, since the 20
+    // armor recipes of leather, iron, gold, diamond and copper resolve (recipes.json holds 21 armor recipes; the
+    // turtle helmet needs turtle_scute, which DA_Items lacks); all are 3 wide, so the 2x2 count and the shapeless count
+    // stay. T2 19b (the shield appended): 552 shaped, its one 3-wide shaped recipe (recipes.json "shield").
+    constexpr int32 RecipeResolvedShaped = 552;
+    constexpr int32 RecipeResolvedShapeless = 69;
+    constexpr int32 RecipeFit2x2 = 180;
 
     const FFoundationRules& RecipeRules()
     {
@@ -275,15 +282,17 @@ bool FFoundationRecipeShiftTest::RunTest(const FString&)
     TestTrue(TEXT("20 logs: 80 planks, 64 in hotbar 8 and 16 in hotbar 7"),
         L.Holds(L.Inv().Hotbar[8], TEXT("oak_planks"), 64) && L.Holds(L.Inv().Hotbar[7], TEXT("oak_planks"), 16) &&
             L.Inv().Craft[0].IsEmpty());
-    // No room for a whole result: nothing is crafted.
+    // Room for 3 of 4 planks: 3 go in and 1 is thrown (survival2.r23.crafting_rules; Unnamed.Foundation.Recipes.
+    // ShiftCraftFit). The throw is T2's, so with item entities off the click is refused and nothing changes.
     FFoundationInventory& Full = L.Inv();
     for (int32 Slot = 0; Slot < FFoundationInventory::OffhandSlot; ++Slot)
         if (Slot < FFoundationInventory::FirstArmor) Full.SetSlot(Slot, Full.MakeStack(L.Item(TEXT("dirt")), 64));
     Full.SetSlot(0, Full.MakeStack(L.Item(TEXT("oak_planks")), 61));
     Full.Craft[0] = Full.MakeStack(L.Item(TEXT("oak_log")), 2);
-    L.Click(Result, 0, EFoundationClickType::QuickMove);
-    TestTrue(TEXT("3 of room for 4 planks: no craft"),
-        L.Holds(L.Inv().Craft[0], TEXT("oak_log"), 2) && L.Holds(L.Inv().Hotbar[0], TEXT("oak_planks"), 61));
+    const FFoundationResult Partial = L.Click(Result, 0, EFoundationClickType::QuickMove);
+    TestTrue(TEXT("3 of room for 4 planks, item entities off: refused, no craft"),
+        Partial.Reason == EFoundationReason::DropDeferred && L.Holds(L.Inv().Craft[0], TEXT("oak_log"), 2) &&
+            L.Holds(L.Inv().Hotbar[0], TEXT("oak_planks"), 61));
     // A number key crafts into an empty hotbar slot only.
     L.Inv().SetSlot(4, {});
     L.Click(Result, 4, EFoundationClickType::Swap);
@@ -300,6 +309,24 @@ bool FFoundationRecipeShiftTest::RunTest(const FString&)
     L.Click(1, 0, EFoundationClickType::QuickMove);
     TestTrue(TEXT("shift on the grid moves to the inventory"),
         L.Inv().Craft[0].IsEmpty() && L.Holds(L.Inv().Main[0], TEXT("oak_log"), 1));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationRecipeShiftFitTest, "Unnamed.Foundation.Recipes.ShiftCraftFit", RecipeTestFlags)
+
+bool FFoundationRecipeShiftFitTest::RunTest(const FString&)
+{
+    // The inventory's 2x2 result against R23's five cases (FoundationShiftCraftCases.h).
+    FoundationShiftCraft::Run<FRecipeLab>(
+        *this, TEXT("2x2"),
+        [](FRecipeLab& L)
+        {
+            // The authority applies foundation.Inventory.Full on the first command; the main grid needs it now.
+            L.Inv().bFull = true;
+            return FFoundationContainerMenu::PlayerContainer;
+        },
+        [](FRecipeLab& L) -> FFoundationItemInstance& { return L.Inv().Craft[0]; });
     return true;
 }
 

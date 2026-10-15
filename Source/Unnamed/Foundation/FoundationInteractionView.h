@@ -10,6 +10,7 @@ class AFoundationPawn;
 struct FFoundationPreview;
 class FFoundationBreakEffects;
 class FFoundationExperienceOrbView;
+class FFoundationMobView;
 class FFoundationItemEntityView;
 class UInstancedStaticMeshComponent;
 class ULineBatchComponent;
@@ -146,10 +147,12 @@ public:
     FFoundationItemEntityView* GetItemEntityView() const { return ItemEntityView.Get(); }
     // The experience orbs' look (survival step 12; null before BeginPlay).
     FFoundationExperienceOrbView* GetExperienceOrbView() const { return ExperienceOrbView.Get(); }
+    FFoundationMobView* GetMobView() const { return MobView.Get(); }
 
 private:
     friend class FFoundationBreakEffects;
     friend class FFoundationExperienceOrbView;
+    friend class FFoundationMobView;
     friend class FFoundationItemEntityView;
     struct FSectionKey
     {
@@ -221,6 +224,10 @@ private:
     void HandleEvents(const FFoundationAuthority& Authority);
     // Lava and burning sounds (step 16) from the local pawn's fire counters.
     void PlayFireSounds(const AFoundationPawn* Pawn);
+    // The local player's footsteps (step 13a2): one PlayFootstep for each step the pawn counted since the last frame.
+    void PlayFootsteps(const FFoundationAuthority& Authority, const AFoundationPawn* Pawn);
+    // A lit furnace's, smoker's or blast furnace's sound near the local pawn (T1 step 8b, foundation.Furnace.Ambience).
+    void PlayFurnaceSounds(const FFoundationAuthority& Authority, const AFoundationPawn* Pawn, float DeltaTime);
     void AddFlash(const FBox& Box, FLinearColor Color, double Life, bool bCross = false);
     void Burst(const FVector& Center, FLinearColor Color, int32 Count, double Size, double Speed, uint32 Seed);
     void ShowNumber(const FVector& Location, const FString& Text, FColor Color);
@@ -232,7 +239,9 @@ private:
     void DrawCracks(const FFoundationAuthority& Authority, const struct FFoundationInteraction& Interaction);
     void UpdateHeldItem(const FFoundationAuthority& Authority, AFoundationPawn* Pawn, bool bVisible, double DeltaTime);
     // Shows an item's first-person model on the held item component (nothing for None or an item without one).
-    void SetHeldItem(FName Id);
+    // bUsing: that hand is in use (the shield's raised pose). Hand picks the display context (FoundationHeldPose) and
+    // the component: the main-hand item or the mirrored offhand item.
+    void SetHeldItem(FName Id, bool bUsing = false, EFoundationHand Hand = EFoundationHand::Main);
     // The meshes that draw a block state (its mesh kind, or one per part of its model, each part's first alternative)
     // and the box they draw in mesh space: the held block and item entities.
     void GetStateMeshes(const FFoundationBlockRegistry& Registry, FFoundationBlockState State,
@@ -241,10 +250,18 @@ private:
     UMaterialInterface* GetLayerMaterial(const FFoundationBlockType* Type) const;
     // A sprite's extruded mesh at HeldModelBlockCm per model block, built on first use; null without an opacity mask.
     UStaticMesh* GetItemMesh(const struct FFoundationItemTextureAsset& Texture);
+    // The held model's mesh: its first layer times the item's tint, and its second layer (when it has one, the same
+    // size) untinted over it; a plain one-layer model is GetItemMesh(Texture).
+    UStaticMesh* GetItemMesh(const struct FFoundationItemModelView& Model);
     // M_HeldItem with the 16 or 32 pixel sprite array, made on first use; null before CreateItemMaterials.py ran.
     UMaterialInterface* GetItemMaterial(const class UFoundationItemAssets& Items, bool b32);
     // A new M_HeldItem instance on the 16 or 32 pixel sprite array (logged and null when either is missing).
     UMaterialInstanceDynamic* MakeItemMaterial(const class UFoundationItemAssets& Items, bool b32);
+    // A special model's box mesh (the shield), by texture and scale, built on first use; null for an unknown type.
+    UStaticMesh* GetSpecialMesh(const struct FFoundationItemModelView& View);
+    // Its entity texture on M_Mob (the mobs' cutout material, whose Skin parameter takes a plain texture), made on
+    // first use; null when the material or texture is missing.
+    UMaterialInterface* GetSpecialMaterial(const struct FFoundationItemModelView& View);
 
     TMap<FSectionKey, FSectionMesh> Sections;
     UPROPERTY(Transient)
@@ -285,6 +302,17 @@ private:
     TObjectPtr<UStaticMeshComponent> HeldItem;
     FName HeldItemId;
     FName HeldSprite;
+    // The held item is a special model (the shield) drawn for bHeldUsing: it redraws when the use flag flips.
+    bool bHeldSpecial = false;
+    bool bHeldUsing = false;
+    // The offhand item (an item only, mirrored; the same fields as the main hand's).
+    UPROPERTY(Transient)
+    TObjectPtr<USceneComponent> OffPivot;
+    UPROPERTY(Transient)
+    TObjectPtr<UStaticMeshComponent> OffItem;
+    FName OffItemId;
+    bool bOffSpecial = false;
+    bool bOffUsing = false;
     // foundation.Hand.Fit as last applied to the pivot and the held blocks (-1: not yet).
     int32 AppliedHandFit = -1;
     // foundation.Held.Glow as last set on ItemMaterials.
@@ -300,6 +328,8 @@ private:
     TMap<FName, TObjectPtr<UStaticMesh>> ItemMeshes;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UMaterialInstanceDynamic>> ItemMaterials;
+    UPROPERTY(Transient)
+    TMap<FName, TObjectPtr<UMaterialInstanceDynamic>> SpecialMaterials;
     UPROPERTY(Transient)
     TObjectPtr<UTextRenderComponent> PresetLabel;
     UPROPERTY(Transient)
@@ -327,8 +357,13 @@ private:
     TWeakObjectPtr<AFoundationPawn> HeldOwner;
     // The fire counters last heard, and whose.
     TWeakObjectPtr<const AFoundationPawn> FireSoundOwner;
-    int32 HeardLavaHurts = 0, HeardBurnHurts = 0, HeardExtinguishes = 0;
+    int32 HeardLavaHurts = 0, HeardBurnHurts = 0, HeardExtinguishes = 0, HeardDamageEvents = 0, HeardDeaths = 0;
+    TWeakObjectPtr<const AFoundationPawn> FootstepOwner;
+    int32 HeardFootsteps = 0;
+    // Seconds not yet spent on the furnaces' 20 Hz display ticks.
+    float FurnaceSoundClock = 0;
     TSharedPtr<FFoundationBreakEffects> BreakEffects;
     TSharedPtr<FFoundationItemEntityView> ItemEntityView;
     TSharedPtr<FFoundationExperienceOrbView> ExperienceOrbView;
+    TSharedPtr<FFoundationMobView> MobView;
 };

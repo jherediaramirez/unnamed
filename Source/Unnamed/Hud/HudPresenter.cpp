@@ -5,6 +5,7 @@
 #include "Hud/HudView.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationController.h"
+#include "Foundation/FoundationDeath.h"
 #include "Foundation/FoundationHud.h"
 #include "Foundation/FoundationItemAssets.h"
 #include "Foundation/FoundationPanels.h"
@@ -15,6 +16,7 @@
 #include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
 #include "Dom/JsonValue.h"
+#include "Misc/PackageName.h"
 #include "Engine/GameInstance.h"
 #include "Engine/Texture2D.h"
 #include "Widgets/Input/SButton.h"
@@ -26,6 +28,10 @@
 #include "Styling/CoreStyle.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Text/STextBlock.h"
+
+static TAutoConsoleVariable<int32> CVarHurtScreenTint(TEXT("foundation.Hurt.ScreenTint"), 0,
+    TEXT("1: a full-screen 0xB2FF0000 tint while hurt or dead (a stand-in; vanilla tints only the hurt body). 0: "
+         "none."));
 
 TSharedRef<SWidget> UHudPresenter::CreateView()
 {
@@ -40,7 +46,9 @@ TSharedRef<SWidget> UHudPresenter::CreateView()
     TMap<FName, FSlateBrush> Brushes;
     for (const FHudSpriteAsset& Entry : Assets->Sprites)
     {
-        if (!Entry.Id.ToString().StartsWith(TEXT("gui/sprites/hud/")) && Entry.Id != TEXT("font/ascii")) continue;
+        if (!Entry.Id.ToString().StartsWith(TEXT("gui/sprites/hud/")) && Entry.Id != TEXT("font/ascii") &&
+            Entry.Id != TEXT("block/fire_1"))
+            continue;
         UTexture2D* Texture = Entry.Texture.LoadSynchronous();
         FIntPoint Size = Texture ? FIntPoint(Texture->GetSizeX(), Texture->GetSizeY()) : FIntPoint::ZeroValue;
 #if WITH_EDITORONLY_DATA
@@ -62,23 +70,65 @@ TSharedRef<SWidget> UHudPresenter::CreateView()
     // The items' GUI sprites (ImportItems.py, ItemRoot/Gui), by sprite id ("item/iron_pickaxe").
     if (const UFoundationItemAssets* Items = UFoundationItemAssets::LoadDefault())
         for (const FFoundationItemAsset& Item : Items->Items)
-        {
-            if (Item.Textures.IsEmpty() || Brushes.Contains(Item.Textures[0])) continue;
-            UTexture2D* Texture = Cast<UTexture2D>(
-                UUnnamedProjectSettings::GetItemAssetPath(TEXT("Gui/") + Item.Textures[0].ToString()).TryLoad());
-            if (!Texture)
+            // The first texture, and the second (the leather pieces' overlay layer).
+            for (int32 Layer = 0; Layer < FMath::Min(Item.Textures.Num(), 2); ++Layer)
             {
-                ++MissingTextures;
-                UE_LOG(LogUnnamedHud, Error, TEXT("Missing item sprite: %s"), *Item.Textures[0].ToString());
-                continue;
+                const FName Sprite = Item.Textures[Layer];
+                if (Brushes.Contains(Sprite)) continue;
+                UTexture2D* Texture = Cast<UTexture2D>(
+                    UUnnamedProjectSettings::GetItemAssetPath(TEXT("Gui/") + Sprite.ToString()).TryLoad());
+                if (!Texture)
+                {
+                    // Only the first layer is drawn for every item; a missing overlay just draws nothing.
+                    if (Layer > 0) continue;
+                    ++MissingTextures;
+                    UE_LOG(LogUnnamedHud, Error, TEXT("Missing item sprite: %s"), *Sprite.ToString());
+                    continue;
+                }
+                ItemSprites.Add(Texture);
+                FSlateBrush Brush;
+                Brush.SetResourceObject(Texture);
+                Brush.ImageSize = FVector2D(16, 16);
+                Brush.DrawAs = ESlateBrushDrawType::Image;
+                Brushes.Add(Sprite, Brush);
             }
-            ItemSprites.Add(Texture);
+    // The camera overlay of a worn head piece (ImportContainerGui.py, GuiRoot/Container/misc/pumpkinblur).
+    {
+        const FSoftObjectPath Path =
+            UUnnamedProjectSettings::GetGuiAssetPath(TEXT("Container/") + FString(TEXT("misc/pumpkinblur")));
+        UTexture2D* Texture =
+            FPackageName::DoesPackageExist(Path.GetLongPackageName()) ? Cast<UTexture2D>(Path.TryLoad()) : nullptr;
+        if (Texture)
+        {
+            CameraOverlays.Add(Texture);
             FSlateBrush Brush;
             Brush.SetResourceObject(Texture);
-            Brush.ImageSize = FVector2D(16, 16);
+            Brush.ImageSize = FVector2D(Texture->GetSizeX(), Texture->GetSizeY());
             Brush.DrawAs = ESlateBrushDrawType::Image;
-            Brushes.Add(Item.Textures[0], Brush);
+            Brushes.Add(TEXT("misc/pumpkinblur"), Brush);
         }
+        else
+            UE_LOG(LogUnnamedHud, Warning, TEXT("Missing GUI sprite misc/pumpkinblur; run ImportContainerGui.py"));
+    }
+    // The death screen's vanilla buttons (step 11a), from ImportContainerGui.py (GuiRoot/Container).
+    for (const TCHAR* Id : {TEXT("gui/sprites/widget/button"), TEXT("gui/sprites/widget/button_highlighted"),
+             TEXT("gui/sprites/widget/button_disabled")})
+    {
+        const FSoftObjectPath Path = UUnnamedProjectSettings::GetGuiAssetPath(FString(TEXT("Container/")) + Id);
+        UTexture2D* Texture =
+            FPackageName::DoesPackageExist(Path.GetLongPackageName()) ? Cast<UTexture2D>(Path.TryLoad()) : nullptr;
+        if (!Texture)
+        {
+            UE_LOG(LogUnnamedHud, Warning, TEXT("Missing GUI sprite %s; run ImportContainerGui.py"), Id);
+            continue;
+        }
+        Textures.Add(Texture);
+        FSlateBrush Brush;
+        Brush.SetResourceObject(Texture);
+        Brush.ImageSize = FVector2D(200, 20);
+        Brush.DrawAs = ESlateBrushDrawType::Image;
+        Brushes.Add(Id, Brush);
+    }
     View->SetBrushes(MoveTemp(Brushes));
     UE_LOG(LogUnnamedHud, Display,
         TEXT("HUD_READY registry=%d textures=%d missing=%d glyphs=%d item_sprites=%d; resources from player vitals, "
@@ -108,7 +158,8 @@ void UHudPresenter::ApplyVitals(FHudSnapshot& S, const FFoundationVitals& V, con
     S.Health = V.Health;
     S.MaxHealth = V.MaxHealth;
     S.Absorption = V.Absorption;
-    S.Armor = V.Armor;
+    // The armor attribute: the lab's base plus the worn pieces (survival step 19a).
+    S.Armor = V.GetArmor();
     S.Food = V.Food;
     S.Saturation = V.Saturation;
     S.Air = V.Air;
@@ -119,6 +170,15 @@ void UHudPresenter::ApplyVitals(FHudSnapshot& S, const FFoundationVitals& V, con
     S.AttackStrength = V.GetAttackStrength();
     S.AttackDelay = V.GetAttackDelay();
     S.bDamageCooldown = V.DamageCooldown > 0;
+    // Step 11b feel (foundation.Death.Screen 1): the red tint while hurtTime > 0 (DamageCooldown above 10) or dead, the
+    // fire overlay while burning outside Creative/Spectator.
+    const bool bFeel = FoundationDeath::IsScreenEnabled();
+    // The 0xB2FF0000 overlay [survival.r6.hud_rules] is vanilla's entity damage overlay, drawn on the hurt body; in
+    // first person without hands vanilla shows no red on screen. foundation.Hurt.ScreenTint 1 keeps the full-screen
+    // stand-in one switch away (a look call; default off = vanilla).
+    S.bDamageTint =
+        bFeel && CVarHurtScreenTint.GetValueOnGameThread() != 0 && (V.IsInHurtWindow() || V.DeathTicks >= 0);
+    S.bOnFire = bFeel && V.IsOnFire() && S.CanHurt();
     // The eye ray's nearest fixture: an entity in reach is the crosshair entity; the lab's entities are alive.
     // An interactive target in reach stands in for a block or entity with a menu (spectator crosshair).
     const bool bEntity = Target.Kind == EFoundationTargetKind::Entity && Target.bInRange;
@@ -144,6 +204,11 @@ void UHudPresenter::ApplyInventory(FHudSnapshot& S, const FFoundationInventory& 
             : !Item.Sprite.IsNone()           ? EHudItemIcon::Sprite
                                               : EHudItemIcon::Token;
         Out.Sprite = Out.Icon == EHudItemIcon::Sprite ? Item.Sprite : NAME_None;
+        if (Out.Icon == EHudItemIcon::Sprite)
+        {
+            Out.SpriteOverlay = Item.SpriteOverlay;
+            Out.SpriteTint = FLinearColor(Item.SpriteTint);
+        }
         Out.Tint = Item.IconColor;
         if (Out.Icon == EHudItemIcon::Block && Blocks && Blocks->FindBlock(Item.PlacesBlock))
         {
@@ -163,6 +228,14 @@ void UHudPresenter::ApplyInventory(FHudSnapshot& S, const FFoundationInventory& 
     S.OffhandView = View(Inventory.Offhand, S.OffhandCount);
     const FFoundationItemInstance& Held = Inventory.GetHand(EFoundationHand::Main);
     S.ItemName = Held.IsEmpty() ? FString() : Rules.GetItem(Held.Item).DisplayName;
+    // The head slot's camera overlay (the pumpkin blur); only a piece made for the head, in the head slot, shows it.
+    S.CameraOverlay = NAME_None;
+    constexpr int32 HeadIndex = 3;
+    // With foundation.Inventory.Full 0 the armor slots are off, and so is their overlay (Codex review 31, finding 2).
+    if (Inventory.bFull && Inventory.Armor.IsValidIndex(HeadIndex) && !Inventory.Armor[HeadIndex].IsEmpty())
+        if (const FFoundationItemDefinition& Worn = Rules.GetItem(Inventory.Armor[HeadIndex].Item);
+            Worn.Equipment == EFoundationEquipmentSlot::Head)
+            S.CameraOverlay = Worn.CameraOverlay;
 }
 
 void UHudPresenter::ResetPreview()
@@ -194,16 +267,35 @@ void UHudPresenter::Refresh(AFoundationController& Controller, double Now)
     // The chat (step 15): the HUD stays up under the open chat, which shows every message.
     const bool bChatOn = FoundationChat::AreCommandsEnabled();
     const bool bChatOpen = bChatOn && Controller.GetPanels()->IsTextOpen();
-    const bool bVisible = (bGameplay || bChatOpen) && !Controller.GetHud()->bHideHud;
-    const bool bVisibilityChanged = Snapshot.bVisible != bVisible;
+    // The death screen (step 11a): the HUD stays drawn under it, its buttons enable 20 ticks after death and the
+    // hovered one follows the cursor (GUI pixels from the controller). The HUD's tick stops outside gameplay, so a
+    // change here redraws by itself.
+    const AFoundationPawn* DeathPawn = Controller.GetFoundationPawn();
+    const bool bDeath = DeathPawn && DeathPawn->IsDeathScreenActive();
+    const bool bDeathEnabled = bDeath && FoundationDeath::AreButtonsEnabled(DeathPawn->GetDeathTicks());
+    const EHudDeathButton DeathHover = bDeath ? Controller.GetDeathHover() : EHudDeathButton::None;
+    const bool bDeathChanged = bDeath != Snapshot.bDeathScreen || bDeathEnabled != Snapshot.bDeathButtonsEnabled ||
+        DeathHover != Snapshot.DeathHover;
+    // F1 hides the HUD, but an open chat or the death screen (screens) still draws: the chat's input line takes the
+    // typing; only the chat draws then.
+    const bool bHideHud = Controller.GetHud()->bHideHud;
+    const bool bVisible = bChatOpen || bDeath || (bGameplay && !bHideHud);
+    const bool bVisibilityChanged = Snapshot.bVisible != bVisible || Snapshot.bHideHud != bHideHud;
     // The lines are rebuilt only when the chat changes, opens or closes, or a closed chat's line fades (per 1/20 s).
     const FFoundationChat& Chat = Controller.GetChat();
     const int64 ChatStep = bChatOn && bVisible && !bChatOpen && (Chat.HasRecent(Now) || !ChatLines.IsEmpty())
         ? FMath::FloorToInt64(Now * 20)
         : -1;
     const FString ChatInput = bChatOpen ? Controller.GetPanels()->GetTypedText() : FString();
+    // The caret [survival.r4.caret]: blinks 300 ms on / 300 ms off, counted from the chat opening (PROVISIONAL: vanilla
+    // may restart it on an edit; unconfirmed). The panels' caret index; a change of either redraws.
+    if (bChatOpen && !Snapshot.bChatOpen) ChatOpenedAt = Now;
+    const int32 CaretIndex = bChatOpen ? FMath::Clamp(Controller.GetPanels()->GetTypedCaret(), 0, ChatInput.Len()) : 0;
+    const bool bCaretVisible =
+        !bChatOpen || FMath::FloorToInt64((Now - ChatOpenedAt) * 1000 / HudDrawList::CaretBlinkMs) % 2 == 0;
     const bool bChatChanged = bChatOpen != Snapshot.bChatOpen || Chat.GetRevision() != ChatRevision ||
-        ChatStep != LastChatStep || !ChatInput.Equals(Snapshot.ChatInput, ESearchCase::CaseSensitive);
+        ChatStep != LastChatStep || !ChatInput.Equals(Snapshot.ChatInput, ESearchCase::CaseSensitive) ||
+        CaretIndex != Snapshot.CaretIndex || bCaretVisible != Snapshot.bCaretVisible;
     if (bChatChanged)
     {
         ChatLines.Reset();
@@ -211,7 +303,8 @@ void UHudPresenter::Refresh(AFoundationController& Controller, double Now)
         ChatRevision = Chat.GetRevision();
         LastChatStep = ChatStep;
     }
-    if (HudTick == LastSampleTick && Viewport == LastViewport && !bVisibilityChanged && !bChatChanged) return;
+    if (HudTick == LastSampleTick && Viewport == LastViewport && !bVisibilityChanged && !bChatChanged && !bDeathChanged)
+        return;
     LastSampleTick = HudTick;
     LastViewport = Viewport;
 
@@ -223,9 +316,20 @@ void UHudPresenter::Refresh(AFoundationController& Controller, double Now)
         Snapshot = FHudSnapshot{};
         ApplyVitals(Snapshot, Pawn->Vitals, Pawn->TraceTarget());
     }
-    Snapshot.bVisible = bVisible;
+    // The fire overlay and the screen tint are camera effects, not HUD: they still draw under F1 (Build gates the
+    // HUD itself on bHideHud).
+    Snapshot.bVisible = bVisible || (bGameplay && (Snapshot.bOnFire || Snapshot.bDamageTint));
+    Snapshot.bHideHud = bHideHud;
+    Snapshot.bDeathScreen = bDeath;
+    Snapshot.bDeathButtonsEnabled = bDeathEnabled;
+    Snapshot.DeathHover = DeathHover;
+    Snapshot.DeathMessage = bDeath ? DeathPawn->GetDeathMessage() : FString();
+    Snapshot.DeathScore = bDeath ? DeathPawn->GetDeathScore() : 0;
     Snapshot.Chat = ChatLines;
     Snapshot.ChatInput = ChatInput;
+    Snapshot.CaretIndex = CaretIndex;
+    Snapshot.bCaretVisible = bCaretVisible;
+    Snapshot.FireFrame = Snapshot.bOnFire ? int32(HudTick % HudDrawList::FireFrames) : 0;
     Snapshot.bChatOpen = bChatOpen;
     Snapshot.bFirstPerson = Pawn && Pawn->GetPerspective() == 0;
     const FFoundationAuthority* Authority = Pawn ? Pawn->GetAuthority() : nullptr;

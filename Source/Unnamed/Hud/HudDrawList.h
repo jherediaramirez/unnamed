@@ -28,6 +28,17 @@ namespace HudDrawList
     // Each message word-wrapped to ChatWidth, oldest row first; a row keeps its runs' colours.
     UNNAMED_API TArray<TArray<FHudChatRun>> WrapChat(
         const TArray<FHudChatLine>& Lines, const TArray<FHudGlyph>& Glyphs);
+    // The fire overlay's sprite (block/fire_1.png: 16 x 512, 32 frames of 16 x 16; its .mcmeta sets no frametime, so
+    // one frame per tick).
+    constexpr int32 FireFrames = 32;
+    // The caret's blink: 300 ms on, 300 ms off [survival.r4.caret].
+    constexpr int32 CaretBlinkMs = 300;
+    // The death screen's buttons (step 11a) in GUI pixels of a LogicalSize screen, one source for drawing and clicks
+    // [survival.r6.death_layout]: 200 x 20 at (width / 2 - 100, height / 4 + 72) (Respawn) and height / 4 + 96 (Title
+    // Screen); 640 x 360 gives (220, 162) and (220, 186). None: an empty rectangle.
+    UNNAMED_API FIntRect GetDeathButton(FIntPoint LogicalSize, EHudDeathButton Button);
+    // The button under Point (GUI pixels), as vanilla's isMouseOver: left/top edges inside, right/bottom outside.
+    UNNAMED_API EHudDeathButton HitDeathButton(FIntPoint LogicalSize, FIntPoint Point);
     UNNAMED_API TArray<FHudDraw> Build(const FHudSnapshot& Snapshot, const FHudPresentation& Presentation,
         const FHudLayout& Layout, int64 Tick, const TArray<FHudGlyph>& Glyphs);
 }

@@ -47,8 +47,11 @@ FString FFoundationChat::GetText(int32 Index) const
 
 float FFoundationChat::GetAlpha(double Age)
 {
-    const double Linear = FMath::Clamp((VisibleSeconds - Age) / FadeSeconds, 0., 1.);
-    return float(FMath::CeilToDouble(Linear * 20.) / 20.);
+    // [survival.r4.fade] t in whole ticks; 1 up to 180, then ((200 - t) / 20)^2 down to 0 at 200.
+    const double Ticks = FMath::FloorToDouble(Age * 20. + 1e-6);
+    if (Ticks <= FullTicks) return 1.f;
+    const double Fade = FMath::Clamp((VisibleTicks - Ticks) / (VisibleTicks - FullTicks), 0., 1.);
+    return float(Fade * Fade);
 }
 
 TArray<FHudChatLine> FFoundationChat::GetVisible(double Now, bool bOpen) const

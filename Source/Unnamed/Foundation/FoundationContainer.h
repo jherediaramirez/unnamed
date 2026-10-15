@@ -49,6 +49,11 @@ struct FFoundationContainerRules
     // foundation.Crafting: off, the crafting grid and its result are no slots (step 5b's menu); what a grid already
     // holds still comes back on close (Codex review 10, finding 1).
     bool bCrafting = true;
+    // A furnace's (T1 step 8a): what burns (its fuel slot takes these and the empty bucket) and what it cooks (a
+    // shift-click sends these to its input first). Unset, nothing.
+    TFunction<bool(int32 Item)> IsFuel;
+    TFunction<bool(int32 Item)> IsCookable;
+    int32 Bucket = INDEX_NONE;
 };
 
 // The menus a container screen can show (survival step 7: the crafting table).
@@ -57,8 +62,44 @@ enum class EFoundationMenuKind : uint8
     // The player's own menu (vanilla's InventoryMenu): result, 2x2, armor, main, hotbar, offhand.
     Inventory,
     // A crafting table's (vanilla's CraftingMenu): result, 3x3, main, hotbar; no armor or offhand.
-    Crafting
+    Crafting,
+    // A furnace's (vanilla's FurnaceMenu, T1 step 8a): input, fuel, result, main, hotbar.
+    Furnace,
+    // A smoker's and a blast furnace's (vanilla's SmokerMenu and BlastFurnaceMenu, T1 step 8b): the furnace's layout.
+    Smoker,
+    BlastFurnace,
+    // A barrel's (vanilla's ChestMenu with 3 rows, T1 step 9): its 27 slots, main, hotbar.
+    Barrel,
+    // A chest's (T1 step 18-chest): the barrel's layout; a double chest's (ChestMenu with 6 rows): its 54 slots, the
+    // type=right half's then the type=left half's, main, hotbar.
+    Chest,
+    LargeChest
 };
+
+// The furnace, smoker and blast furnace menus share one layout and one block entity kind.
+inline bool IsFurnaceMenu(EFoundationMenuKind Kind)
+{
+    return Kind == EFoundationMenuKind::Furnace || Kind == EFoundationMenuKind::Smoker ||
+        Kind == EFoundationMenuKind::BlastFurnace;
+}
+
+// The chest menus (T1 step 18-chest).
+inline bool IsChestMenu(EFoundationMenuKind Kind)
+{
+    return Kind == EFoundationMenuKind::Chest || Kind == EFoundationMenuKind::LargeChest;
+}
+
+// The menus whose block shows its viewers (an open barrel, a chest's sounds; T1 steps 9, 18-chest).
+inline bool HasViewers(EFoundationMenuKind Kind)
+{
+    return Kind == EFoundationMenuKind::Barrel || IsChestMenu(Kind);
+}
+
+// The menus whose container slots are a block entity's (the authority's store, T1 steps 8a, 9, 18-chest).
+inline bool UsesBlockEntity(EFoundationMenuKind Kind)
+{
+    return IsFurnaceMenu(Kind) || HasViewers(Kind);
+}
 
 // A menu's slot numbering: one row per kind (furnaces and the barrel add theirs). Every range is [First, Next);
 // INDEX_NONE marks a range the menu does not have.
@@ -72,7 +113,19 @@ struct FFoundationMenuLayout
     int32 FirstMain = INDEX_NONE;
     int32 FirstHotbar = INDEX_NONE;
     int32 Offhand = INDEX_NONE;
+    // A container's own slots (a furnace's input, fuel and result; the caller's Grid): [FirstContainer, + Container
+    // Slots). TakeOnly only gives (the furnace's result); FuelSlot takes only fuel or an empty bucket.
+    int32 FirstContainer = INDEX_NONE;
+    int32 ContainerSlots = 0;
+    int32 TakeOnly = INDEX_NONE;
+    int32 FuelSlot = INDEX_NONE;
 
+    // Slot 0 is a crafting result (the inventory and the crafting table).
+    bool HasCraftResult() const { return CraftWidth > 0; }
+    bool IsContainer(int32 Slot) const
+    {
+        return FirstContainer != INDEX_NONE && Slot >= FirstContainer && Slot < FirstContainer + ContainerSlots;
+    }
     int32 GetCraftEnd() const { return FirstCraft + CraftWidth * CraftHeight; }
     int32 GetMainEnd() const { return FirstHotbar; }
     int32 GetHotbarEnd() const { return FirstHotbar + FFoundationInventory::HotbarSlots; }
@@ -84,6 +137,14 @@ struct FFoundationMenuLayout
     bool IsMain(int32 Slot) const { return Slot >= FirstMain && Slot < GetMainEnd(); }
     bool IsHotbar(int32 Slot) const { return Slot >= FirstHotbar && Slot < GetHotbarEnd(); }
     bool IsOffhand(int32 Slot) const { return Offhand != INDEX_NONE && Slot == Offhand; }
+    // A slot's own cap before the item's stack size: an armor slot holds one item, as a furnace's fuel slot holds one
+    // empty bucket (bBucket: the stack is FuelBucketItem). The authority's GetSlotMax and the screen's drag preview
+    // share it (Codex review 22, finding 3).
+    static constexpr const TCHAR* FuelBucketItem = TEXT("bucket");
+    int32 GetSlotLimit(int32 Slot, bool bBucket) const
+    {
+        return IsArmor(Slot) || (FuelSlot != INDEX_NONE && Slot == FuelSlot && bBucket) ? 1 : 64;
+    }
     // A menu slot's Inventory number (0-40), or INDEX_NONE for the result, the grid or a slot the menu lacks.
     int32 ToInventorySlot(int32 MenuSlot) const;
     int32 ToMenuSlot(int32 InventorySlot) const;
@@ -98,7 +159,11 @@ struct FFoundationMenuLayout
 // hotbar, 45 the offhand. A moved whole stack keeps its identity (instance id); a split part is a new instance. The
 // result slot holds what the grid makes now (Rules.Craft); taking it crafts once, using one item of every grid slot.
 // A crafting table's menu (EFoundationMenuKind::Crafting, survival step 7) is 0 the result, 1-9 its 3x3 grid (the
-// caller's Grid, the screen's own), 10-36 the main grid, 37-45 the hotbar.
+// caller's Grid, the screen's own), 10-36 the main grid, 37-45 the hotbar. A furnace's (EFoundationMenuKind::Furnace,
+// T1 step 8a) is 0 the input, 1 the fuel, 2 the result (the caller's Grid: its block entity's slots), 3-29 the main
+// grid, 30-38 the hotbar; its result only gives, and nothing is crafted. A barrel's (EFoundationMenuKind::Barrel, T1
+// step 9) is 0-26 its block entity's slots, 27-53 the main grid, 54-62 the hotbar; a chest's (Chest, 18-chest) the
+// same. A double chest's (LargeChest) is 0-53 its two halves' slots, 54-80 the main grid, 81-89 the hotbar.
 class UNNAMED_API FFoundationContainerMenu
 {
 public:
@@ -117,7 +182,8 @@ public:
 
     // The player's menu over Inventory. bCreative allows CLONE and middle drags.
     FFoundationContainerMenu(FFoundationInventory& Inventory, const FFoundationContainerRules& Rules, bool bCreative);
-    // Another menu over Inventory; Grid is its crafting grid (CraftWidth x CraftHeight slots, the caller's).
+    // Another menu over Inventory; Grid is its crafting grid (CraftWidth x CraftHeight slots) or its container's slots
+    // (ContainerSlots), the caller's.
     FFoundationContainerMenu(FFoundationInventory& Inventory, const FFoundationContainerRules& Rules, bool bCreative,
         EFoundationMenuKind Kind, TArrayView<FFoundationItemInstance> Grid);
 

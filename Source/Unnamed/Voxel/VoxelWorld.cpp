@@ -20,6 +20,8 @@
 #include "Foundation/FoundationBlockTextureTable.h"
 #include "Foundation/FoundationGrid.h"
 #include "Random/VoxelRandom.h"
+#include "Sky/VoxelTimeline.h"
+#include "Voxel/VoxelSkyReference.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationPawn.h"
@@ -202,6 +204,8 @@ void AVoxelWorld::BuildLayout()
     bMineProbe = FParse::Param(FCommandLine::Get(), TEXT("VoxelMineProbe"));
     bShotGarden = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotGarden"));
     bShotCaves = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotCaves"));
+    bShotMobs = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotMobs"));
+    FParse::Value(FCommandLine::Get(), TEXT("VoxelShotMobsSteps="), ShotMobSteps);
     bShotDrops = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotDrops"));
     bShotVeins = FParse::Param(FCommandLine::Get(), TEXT("VoxelShotVeins"));
     FString VeinsAt;
@@ -264,7 +268,8 @@ void AVoxelWorld::BuildLayout()
             SunLight = Light;
     if (SunLight && SunLight->Mobility != EComponentMobility::Movable)
     {
-        UE_LOG(LogUnnamedVoxel, Warning, TEXT("Atmosphere: the map's sun can't move; voxel.Atmosphere.Cycle stays off"));
+        UE_LOG(
+            LogUnnamedVoxel, Warning, TEXT("Atmosphere: the map's sun can't move; voxel.Atmosphere.Cycle stays off"));
         SunLight = nullptr;
     }
     if (SunLight)
@@ -477,6 +482,7 @@ void AVoxelWorld::Regenerate(const FVoxelSeed& NewSeed)
 {
     Seed = NewSeed;
     Terrain = MakeTerrain();
+    Authority.MobSpawnSeed = Terrain->GetSeed();
     SpawnCell.Reset();
     bSpawned = false;
     UVoxelWorldSubsystem* Streaming = GetStreaming();
@@ -515,6 +521,35 @@ void AVoxelWorld::SetupAuthority()
     Authority.PlantSurvival = VoxelBlocks::GetPlantSurvival(Authority.World.GetRegistry());
     // Item entities collide with what the player does: the blocks, and ungenerated columns as solid.
     Authority.GatherCollision = [this](const FBox& Region, TArray<FBox>& Out) { this->GatherCollision(Region, Out); };
+    // Passive spawning (survival T6 20b2) reads the columns' biomes; a terrain without biomes spawns nothing.
+    Authority.GetBiomeId = [this](const FIntVector& Cell)
+    {
+        const FVoxelBiomeSource* Source = Terrain ? Terrain->GetBiomeSource() : nullptr;
+        const int32 Index = Source ? GetBiome(Cell) : INDEX_NONE;
+        return Source && Source->GetTable().Biomes.IsValidIndex(Index) ? FName(Source->GetTable().Biomes[Index].Name)
+                                                                       : FName();
+    };
+    // Monsters (survival T6 20c) read the day timeline's sky light level and monsters_burn at the world clock's
+    // time of day (the sky reference: Reference/minecraft-sky-26.3). Without the reference: 15 and no burning.
+    {
+        const FString Root = VoxelSkyReference::GetReferenceRoot();
+        TSharedRef<FVoxelTimeline> Day = MakeShared<FVoxelTimeline>();
+        FVector4f LevelBase(15.f);
+        FString Error;
+        if (VoxelSkyReference::ReadTimeline(Root, TEXT("minecraft:day"), *Day, Error) &&
+            VoxelSkyReference::ReadOverworldBase(Root, VoxelSky::SkyLightLevel, LevelBase, Error))
+            Authority.GetSkyFacts = [this, Day, LevelBase](float& OutLevel, bool& bOutBurn)
+            {
+                const double Ticks = Clock.GetTimeOfDay();
+                OutLevel = Day->Apply(VoxelSky::SkyLightLevel, Ticks, LevelBase).X;
+                bOutBurn = Day->Apply(VoxelSky::MonstersBurn, Ticks, FVector4f(0.f)).X > .5f;
+            };
+        else
+        {
+            Authority.GetSkyFacts = nullptr;
+            UE_LOG(LogUnnamedVoxel, Warning, TEXT("Monsters see no day: %s"), *Error);
+        }
+    }
     const FFoundationBlockRegistry& Registry = Authority.World.GetRegistry();
     ModelCollides.Init(false, Registry.GetStateLimit());
     TArray<FBox> Boxes;
@@ -1035,6 +1070,12 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
     const UVoxelWorldSubsystem* Streaming = GetStreaming();
     const FVoxelColumnPipeline* Pipeline = Streaming ? Streaming->GetPipeline() : nullptr;
     if (!Table || !Pipeline) return;
+    GatherColumns(Region, *Pipeline, *Table, ModelCollides, Authority.World, OriginCm, Out);
+}
+
+void AVoxelWorld::GatherColumns(const FBox& Region, const FVoxelColumnPipeline& Pipeline, const FVoxelBlockTable& Table,
+    TConstArrayView<bool> ModelCollides, const FFoundationBlockWorld& World, const FVector& OriginCm, TArray<FBox>& Out)
+{
     const FIntVector Low = FoundationGrid::CellAt(Region.Min, OriginCm);
     const FIntVector High = FoundationGrid::CellAt(Region.Max, OriginCm);
     const int32 LowZ = FMath::Max(Low.Z, VoxelConstants::MinZ), HighZ = FMath::Min(High.Z, VoxelConstants::MaxZ);
@@ -1049,7 +1090,7 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
         {
             const int32 LowX = FMath::Max(Low.X, ColumnX * Size), HighX = FMath::Min(High.X, ColumnX * Size + Size - 1);
             const int32 LowY = FMath::Max(Low.Y, ColumnY * Size), HighY = FMath::Min(High.Y, ColumnY * Size + Size - 1);
-            const FVoxelColumn* Column = Pipeline->FindColumn({ColumnX, ColumnY});
+            const FVoxelColumn* Column = Pipeline.FindColumn({ColumnX, ColumnY});
             if (!Column)
             {
                 // Not generated yet: solid, so nothing walks or falls into it.
@@ -1063,13 +1104,13 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
                     for (int32 X = LowX; X <= HighX; ++X)
                     {
                         const uint16 State = Column->GetState(X - ColumnX * Size, Y - ColumnY * Size, Z);
-                        const FVoxelStateInfo& Info = Table->Get(State);
+                        const FVoxelStateInfo& Info = Table.Get(State);
                         if (Info.Shape == EVoxelShape::Model)
                         {
                             // Model states collide with their facts boxes, moved where the facts move them (cactus,
                             // bamboo, lily pads, carpets); bSolid (blocks_motion) is for the heightmaps.
                             if (State < ModelCollides.Num() && ModelCollides.GetData()[State])
-                                Authority.World.GetCollisionBoxes({X, Y, Z}, FFoundationBlockState{State}, Out);
+                                World.GetCollisionBoxes({X, Y, Z}, FFoundationBlockState{State}, Out);
                             continue;
                         }
                         if (!Info.bSolid) continue;
@@ -1092,11 +1133,11 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
                     for (int32 X = LowX; X <= HighX; ++X)
                     {
                         const uint16 State = Column->GetState(X - ColumnX * Size, Y - ColumnY * Size, Z);
-                        if (Table->Get(State).Shape != EVoxelShape::Model || State >= ModelCollides.Num() ||
+                        if (Table.Get(State).Shape != EVoxelShape::Model || State >= ModelCollides.Num() ||
                             !ModelCollides.GetData()[State])
                             continue;
                         const int32 Before = Out.Num();
-                        Authority.World.GetCollisionBoxes({X, Y, Z}, FFoundationBlockState{State}, Out);
+                        World.GetCollisionBoxes({X, Y, Z}, FFoundationBlockState{State}, Out);
                         FoundationCollisionGather::KeepLeaving(Region, FoundationGrid::CellMin({X, Y, Z}, OriginCm).Z,
                             FoundationGrid::CellMin({X, Y, Z + 1}, OriginCm).Z, Out, Before);
                     }
@@ -1637,6 +1678,29 @@ void AVoxelWorld::FindVeinShots()
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *ShotVeinReport);
 }
 
+FString AVoxelWorld::DescribeMobs() const
+{
+    // The live mobs by type and the spawn counters (survival T6 20b2b's runtime evidence that packs spawn).
+    int32 ByType[int32(EFoundationMobType::Count)] = {};
+    int32 Live = 0;
+    for (const FFoundationMob& Mob : Authority.GetMobs())
+        if (Mob.IsAlive())
+        {
+            ++ByType[int32(Mob.Type)];
+            ++Live;
+        }
+    FString Types;
+    for (int32 Type = 0; Type < int32(EFoundationMobType::Count); ++Type)
+        if (ByType[Type] > 0)
+            Types += FString::Printf(TEXT("%s%s %d"), Types.IsEmpty() ? TEXT("") : TEXT(", "),
+                *FoundationMobs::GetKind(EFoundationMobType(Type)).Id.ToString(), ByType[Type]);
+    return FString::Printf(TEXT("  Mobs: live %d (%s); columns seen %d, packs %d, pack-spawned %d; steps %lld, cycles "
+                                "run %d, cycle-spawned %d; last cycle: %d columns, %d creatures, cap %d"),
+        Live, Types.IsEmpty() ? TEXT("none") : *Types, Authority.MobColumnsSeen, Authority.MobPacks,
+        Authority.MobsPackSpawned, Authority.GetMobCycleStep(), Authority.MobCycles, Authority.MobsCycleSpawned,
+        Authority.MobCycleEligible, Authority.MobCycleCount, Authority.MobCycleCap);
+}
+
 void AVoxelWorld::FindCaveShots()
 {
     bShotCavesSearched = true;
@@ -1908,6 +1972,37 @@ void AVoxelWorld::UpdateShots()
     if (bShotVeins && !bShotVeinsSearched) FindVeinShots();
     for (const TTuple<FString, FVector, FVector>& CaveView : ShotCaveViews)
         Shots.Add({*CaveView.Get<0>(), CaveView.Get<1>(), CaveView.Get<2>(), false, true});
+    // -VoxelShotMobs: once the other shots are done (the packs have had their time) and the authority has stepped
+    // ShotMobSteps times, the "mobs" shot onto the nearest live mob; with none, the shots finish here.
+    if (bShotMobs && !bShotMobsSearched && ShotIndex != INDEX_NONE && ShotIndex >= Shots.Num())
+    {
+        // Waits while the authority steps; gives up (searches now) when it stalls for 600 frames.
+        if (Authority.GetMobCycleStep() < ShotMobSteps)
+        {
+            ShotMobStall = Authority.GetMobCycleStep() == ShotMobLastStep ? ShotMobStall + 1 : 0;
+            ShotMobLastStep = Authority.GetMobCycleStep();
+            if (ShotMobStall < 600) return;
+            UE_LOG(LogUnnamedVoxel, Warning, TEXT("Mob shot: the authority stopped at step %lld of %d"),
+                ShotMobLastStep, ShotMobSteps);
+        }
+        FindMobShot();
+        if (!ShotMobView)
+        {
+            FinishShots();
+            return;
+        }
+    }
+    // The camera follows the mob while the shot settles (it strolls), keeping its offset.
+    if (ShotMobView)
+    {
+        for (const FFoundationMob& Mob : Authority.GetMobs())
+            if (Mob.Id == ShotMobId && Mob.IsAlive())
+            {
+                const FVector Target = Authority.World.OriginCm + Mob.LocalCm + FVector(0, 0, .6 * CellCm);
+                ShotMobView.Emplace(Target + ShotMobView->Key - ShotMobView->Value, Target);
+            }
+        Shots.Add({TEXT("mobs"), ShotMobView->Key, ShotMobView->Value, false, true});
+    }
 
     if (ShotIndex == INDEX_NONE)
     {
@@ -1925,6 +2020,9 @@ void AVoxelWorld::UpdateShots()
     if (ShotIndex >= Shots.Num()) return;
     const FShot& Shot = Shots[ShotIndex];
     const FString File = FPaths::Combine(ShotFolder, FString(Shot.Name) + TEXT(".png"));
+    if (ShotMobView && FCString::Strcmp(Shot.Name, TEXT("mobs")) == 0 && ShotFrames > 0 &&
+        ShotFrames < ShotSettleFrames - 10) // still for the last frames: no motion blur
+        ShotCamera->SetActorLocation(Shot.Location);
     if (ShotFrames == 0)
     {
         ShotCamera->SetActorLocation(Shot.Location);
@@ -1965,6 +2063,55 @@ void AVoxelWorld::UpdateShots()
     ++ShotIndex;
     ShotFrames = 0;
     if (ShotIndex < Shots.Num()) return;
+    // -VoxelShotMobs: searched with the shot list next frame (FindMobShot), which finishes when there is no mob.
+    if (bShotMobs && !bShotMobsSearched) return;
+    FinishShots();
+}
+
+void AVoxelWorld::FindMobShot()
+{
+    // The nearest live mob, seen from 5 blocks toward the player and 4 up.
+    bShotMobsSearched = true;
+    const APawn* Pawn = UGameplayStatics::GetPlayerPawn(this, 0);
+    const FVector Eye = Pawn ? Pawn->GetActorLocation() : OriginCm;
+    // A mob under open air (6 cells above its feet, and the camera's cell) so leaves do not hide it.
+    const FFoundationBlockWorld& MobWorld = Authority.World;
+    const auto IsAir = [&MobWorld](const FVector& Cm)
+    {
+        const FIntVector Cell = FoundationGrid::CellAt(Cm, MobWorld.OriginCm);
+        return MobWorld.IsKnown(Cell) && MobWorld.Get(Cell).State.IsAir();
+    };
+    const auto CameraFor = [&Eye, this](const FVector& Target)
+    {
+        return Target + (Eye - Target).GetSafeNormal2D(1e-4, FVector(1, 0, 0)) * 5 * CellCm + FVector(0, 0, 4 * CellCm);
+    };
+    const FFoundationMob* Nearest = nullptr;
+    double Best = FMath::Square(ShotMobRange * CellCm);
+    for (const FFoundationMob& Mob : Authority.GetMobs())
+    {
+        const FVector Feet = MobWorld.OriginCm + Mob.LocalCm;
+        const double Distance = FVector::DistSquared(Feet, Eye);
+        bool bOpen = Mob.IsAlive() && Distance < Best && IsAir(CameraFor(Feet));
+        for (int32 Up = 1; bOpen && Up <= 6; ++Up)
+            bOpen = IsAir(Feet + FVector(0, 0, (Up + .5) * CellCm));
+        if (!bOpen) continue;
+        Best = Distance;
+        Nearest = &Mob;
+    }
+    if (Nearest)
+    {
+        const FVector Target = MobWorld.OriginCm + Nearest->LocalCm + FVector(0, 0, .6 * CellCm);
+        ShotMobView.Emplace(CameraFor(Target), Target);
+        ShotMobId = Nearest->Id;
+    }
+    UE_LOG(LogUnnamedVoxel, Display, TEXT("Mob shot: %s"),
+        Nearest ? *FString::Printf(TEXT("%s at %.1f blocks"), *FoundationMobs::GetKind(Nearest->Type).Id.ToString(),
+                      FMath::Sqrt(Best) / CellCm)
+                : TEXT("no live mob under open air in range"));
+}
+
+void AVoxelWorld::FinishShots()
+{
     // The player has been standing at spawn for every shot: on the block collision, its feet rest on the surface.
     FString Player = TEXT("  Player: none");
     if (const AFoundationPawn* Pawn = Cast<AFoundationPawn>(UGameplayStatics::GetPlayerPawn(this, 0)))
@@ -1991,10 +2138,12 @@ void AVoxelWorld::UpdateShots()
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Gpu);
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *World);
     UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Player);
+    const FString Mobs = DescribeMobs();
+    UE_LOG(LogUnnamedVoxel, Display, TEXT("%s"), *Mobs);
     const FString Edits = (ShotEditReport.IsEmpty() ? FString() : ShotEditReport + TEXT("\n")) + ShotVeinReport +
         (MineProbeReport.IsEmpty() ? FString() : MineProbeReport + TEXT("\n"));
     FFileHelper::SaveStringToFile(GetBuildReport() + TEXT("\n") + Edits + Lighting + TEXT("\n") + Gpu + TEXT("\n") +
-            World + TEXT("\n") + Player + TEXT("\n"),
+            World + TEXT("\n") + Player + TEXT("\n") + Mobs + TEXT("\n"),
         *FPaths::Combine(ShotFolder, TEXT("build.txt")));
     FPlatformMisc::RequestExit(false, TEXT("VoxelShot"));
 }

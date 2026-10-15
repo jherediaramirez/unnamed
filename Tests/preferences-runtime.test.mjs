@@ -35,8 +35,8 @@ function fixture() {
   return {api:context.window.MenuPreferences,context,native,calls,notices,intervals,listeners,snapshot};
 }
 
-test('101 preference definitions exclude settings with other native owners',()=>{
-  assert.equal(Object.keys(schema.settings).length,101);
+test('102 preference definitions exclude settings with other native owners',()=>{
+  assert.equal(Object.keys(schema.settings).length,102);
   for(const id of ['fullscreen','framerateLimit','enableVsync','guiScale','menuBackgroundBlurriness','toggleSprint','toggleCrouch','preferredGraphicsBackend','soundDevice','rotateWithMinecart'])
     assert.equal(id in schema.settings,false,id);
   for(const preset of Object.values(schema.presets))for(const id of Object.keys(preset))assert.ok(id in schema.settings);

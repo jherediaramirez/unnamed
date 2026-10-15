@@ -728,6 +728,9 @@ bool FFoundationBlocksShapesTest::RunTest(const FString&)
         {
             const TSharedPtr<FJsonObject> Fact = StateValue->AsObject();
             const FFoundationBlockState State{uint16(Fact->GetNumberField(TEXT("id")))};
+            // Every state's light, full cubes too (survival B3a: a lit furnace 13, lit redstone ore 9).
+            if (Registry.GetLightEmission(State) != int32(Fact->GetNumberField(TEXT("light"))))
+                Fail(FString::Printf(TEXT("%s state %d light differs"), *Id, State.Id));
             if (Registry.GetShape(State) != EFoundationBlockShape::Model) continue;
             ++ModelStates;
             const FString Label = FString::Printf(TEXT("%s state %d"), *Id, State.Id);
@@ -737,8 +740,6 @@ bool FFoundationBlocksShapesTest::RunTest(const FString&)
             if (!BoxesMatch(Outline, Fact->GetArrayField(TEXT("outline")))) Fail(Label + TEXT(" outline boxes differ"));
             if (!BoxesMatch(Collision, Fact->GetArrayField(TEXT("collision"))))
                 Fail(Label + TEXT(" collision boxes differ"));
-            if (Registry.GetLightEmission(State) != int32(Fact->GetNumberField(TEXT("light"))))
-                Fail(Label + TEXT(" light differs"));
             if (Block->bReplaceable != Fact->GetBoolField(TEXT("replaceable")))
                 Fail(Label + TEXT(" replaceable differs"));
             const TSharedPtr<FJsonObject>* Fluid = nullptr;

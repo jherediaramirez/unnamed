@@ -8,8 +8,9 @@ namespace
         TEXT(
             "1: a survival break of an ore pays experience orbs (coal 0-2, lapis and quartz 2-5, redstone 1-5, diamond "
             "and emerald 3-7, nether gold 0-1) that fly to a player within 8 blocks and fill the XP bar (survival step "
-            "12). 0: no orbs spawn and the bar stays, as before. Orbs already in the world stay: they still fly to a "
-            "player and pay their points (as drops stay at foundation.Items.Entities 0)."));
+            "12). 0: no orbs spawn and the bar stays, as before. Orbs already in the world stay: they still move (out "
+            "of a block placed over them too), fly to a player and pay their points (as drops stay at "
+            "foundation.Items.Entities 0)."));
 
     struct FBlockExperience
     {
@@ -43,7 +44,7 @@ bool FoundationExperienceOrbs::CanMerge(const FFoundationExperienceOrb& Seeker, 
     if ((Seeker.Id - Other.Id) % MergeIdPeriod == 0) return true;
     // The roll is a pure function of the pair, so a replay merges the same orbs.
     return Seeker.bNew &&
-           FRandomStream(int32(HashCombine(GetTypeHash(Seeker.Id), GetTypeHash(Other.Id)))).FRand() < NewMergeChance;
+        FRandomStream(int32(HashCombine(GetTypeHash(Seeker.Id), GetTypeHash(Other.Id)))).FRand() < NewMergeChance;
 }
 
 float FoundationExperienceOrbs::GetLevelUpVolume(int32 LastLevel, int32 Level, int64 Step, int64 LastSoundStep)
@@ -51,7 +52,44 @@ float FoundationExperienceOrbs::GetLevelUpVolume(int32 LastLevel, int32 Level, i
     if (LastLevel < 0 || Level <= LastLevel || Level / 5 == LastLevel / 5) return 0;
     // A step before the last sound's (a reset authority) counts as never.
     if (LastSoundStep >= 0 && Step >= LastSoundStep && Step - LastSoundStep <= LevelUpGapTicks) return 0;
-    return LevelUpVolume * FMath::Min(float(Level / 5 * 5) / LevelUpFullLevel, 1.f);
+    // Level by level, as XP is added (provisional reading of survival.r5.rules; Codex review 14, finding 3): the first
+    // multiple of 5 reached plays, and the cooldown silences the rest of the same gain.
+    return LevelUpVolume * FMath::Min(float((LastLevel / 5 + 1) * 5) / LevelUpFullLevel, 1.f);
+}
+
+TArray<float> FoundationExperienceOrbs::GetLevelUpVolumes(TConstArrayView<FFoundationLevelGain> Gains, int32 Level,
+    int64 FrameStep, int32& LastLevel, int64& LastSoundStep, int32& LastSerial)
+{
+    TArray<float> Volumes;
+    const auto Judge = [&](int32 From, int32 To, int64 Step)
+    {
+        if (const float Volume = GetLevelUpVolume(From, To, Step, LastSoundStep); Volume > 0)
+        {
+            Volumes.Add(Volume);
+            LastSoundStep = Step;
+        }
+        LastLevel = To;
+    };
+    // Serials going back: a new pawn counts from 1 again (review 19a2).
+    if (!Gains.IsEmpty() && Gains.Last().Serial < LastSerial) LastSerial = 0;
+    // The first frame plays nothing, however many gains it holds.
+    if (LastLevel < 0)
+    {
+        for (const FFoundationLevelGain& Gain : Gains)
+            LastSerial = FMath::Max(LastSerial, Gain.Serial);
+        LastLevel = Level;
+        return Volumes;
+    }
+    for (const FFoundationLevelGain& Gain : Gains)
+        if (Gain.Serial > LastSerial)
+        {
+            LastSerial = Gain.Serial;
+            // A level the steps did not make before this gain (the lab panel's) is judged at the frame's step first.
+            if (Gain.From != LastLevel) Judge(LastLevel, Gain.From, FrameStep);
+            Judge(Gain.From, Gain.To, Gain.Step);
+        }
+    if (Level != LastLevel) Judge(LastLevel, Level, FrameStep);
+    return Volumes;
 }
 
 float FoundationExperienceOrbs::GetPickupPitch(float U, float V)
@@ -125,11 +163,13 @@ FBox FoundationExperienceOrbs::GetStepRegion(
 void FoundationExperienceOrbs::Move(
     FFoundationExperienceOrb& Orb, const FVector& OriginCm, const TArray<FBox>& Boxes, const FVector& PushCm)
 {
-    // The speed it would land at: this step's vertical velocity after gravity and the push (MoveBox zeroes it). Only
-    // an orb in the air bounces (one resting under a downward pull stays down).
+    // The speed it would land at: this step's pre-move vertical velocity, after gravity and the push (MoveBox zeroes
+    // it). R23 bounces any downward landing faster than the gravity, from the air or not.
     const double Landing = -(Orb.VelocityCm.Z - GravityCm + PushCm.Z);
-    const bool bWasInAir = !Orb.bOnGround;
+    // Inside a block an orb skips gravity (R23, survival2.r23.xp_rules); the push-out's draw is a pure function of the
+    // orb and its age.
     FoundationItemEntities::MoveBox(Orb.LocalCm, Orb.PreviousLocalCm, Orb.VelocityCm, Orb.bOnGround,
-        GetBox(OriginCm + Orb.LocalCm), Boxes, GravityCm, PushCm);
-    if (bWasInAir && Orb.bOnGround && Landing > BounceMinCm) Orb.VelocityCm.Z = Landing * BounceFactor;
+        GetBox(OriginCm + Orb.LocalCm), Boxes, GravityCm, PushCm,
+        FRandomStream(int32(HashCombine(GetTypeHash(Orb.Id), GetTypeHash(Orb.Age)))).GetFraction(), false);
+    if (Orb.bOnGround && Landing > BounceMinCm) Orb.VelocityCm.Z = Landing * BounceFactor;
 }

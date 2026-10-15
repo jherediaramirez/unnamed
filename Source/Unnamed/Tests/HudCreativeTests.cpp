@@ -41,7 +41,7 @@ bool FHudCreativeTabsTest::RunTest(const FString&)
     FHudCreativeModel Model;
     FFoundationRules Rules;
     if (!TestTrue(TEXT("block registry asset"), MakeModel(Model, Rules))) return false;
-    // Empty category tabs hide (shouldDisplay); hotbar, search and inventory always show. DA_Items's 86 items fill
+    // Empty category tabs hide (shouldDisplay); hotbar, search and inventory always show. DA_Items's 143 items fill
     // Tools & Utilities, Combat, Food & Drinks, Ingredients and Natural Blocks, so every tab shows here (spawn eggs:
     // the spawners).
     FHudCreativeModel Bare;
@@ -57,15 +57,23 @@ bool FHudCreativeTabsTest::RunTest(const FString&)
     {
         Model.SelectTab(FindTab(Model, TEXT("tools_and_utilities")));
         const TArray<FName>& Tools = Model.GetItems();
-        TestTrue(TEXT("tools: 28 tools and 3 buckets, wooden shovel first"),
-            Tools.Num() == 31 && Tools[0] == TEXT("wooden_shovel") && Tools[1] == TEXT("wooden_pickaxe") &&
+        TestTrue(TEXT("tools: 28 tools and 4 buckets (the milk bucket since survival 20a), wooden shovel first"),
+            Tools.Num() == 32 && Tools[0] == TEXT("wooden_shovel") && Tools[1] == TEXT("wooden_pickaxe") &&
                 Tools[4] == TEXT("stone_shovel"));
         Model.SelectTab(FindTab(Model, TEXT("combat")));
-        // 26.3's combat tab keeps the snowball (index 68) after TNT (66).
-        TestTrue(TEXT("combat: swords, spears, axes, TNT, then the snowball"),
-            Model.GetItems().Num() == 23 && Model.GetItems()[0] == TEXT("wooden_sword") &&
+        // 26.3's combat tab keeps the snowball (index 68) after TNT (66), then the egg (69, survival 20a). After the
+        // axes sits the shield (index 23, T2 19b), then the 29 armor pieces (T2 19a2): leather, copper, chainmail,
+        // iron, golden, diamond and netherite sets, then the turtle helmet (54 held items, 24 before 19a2;
+        // creative_tabs.json "combat" filtered to DA_Items and DA_Blocks).
+        TestTrue(TEXT("combat: swords, spears, axes, the shield, armor, TNT, the snowball, then the egg"),
+            Model.GetItems().Num() == 54 && Model.GetItems()[0] == TEXT("wooden_sword") &&
                 Model.GetItems()[3] == TEXT("iron_sword") && Model.GetItems()[7] == TEXT("wooden_spear") &&
-                Model.GetItems()[21] == TEXT("tnt") && Model.GetItems().Last() == TEXT("snowball"));
+                Model.GetItems()[20] == TEXT("netherite_axe") && Model.GetItems()[21] == TEXT("shield") &&
+                Model.GetItems()[22] == TEXT("leather_helmet") &&
+                Model.GetItems()[26] == TEXT("copper_helmet") && Model.GetItems()[30] == TEXT("chainmail_helmet") &&
+                Model.GetItems()[49] == TEXT("netherite_boots") && Model.GetItems()[50] == TEXT("turtle_helmet") &&
+                Model.GetItems()[51] == TEXT("tnt") && Model.GetItems()[52] == TEXT("snowball") &&
+                Model.GetItems().Last() == TEXT("egg"));
     }
     // 26.3 order within a tab, skipping items that do not exist here. With B1's families the whole oak family is here:
     // the first 13 of building_blocks' display list in Reference/minecraft-blocks-26.3/facts/creative_tabs.json.

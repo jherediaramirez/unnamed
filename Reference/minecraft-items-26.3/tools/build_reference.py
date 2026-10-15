@@ -66,16 +66,47 @@ TIER_A = {
              "dark_oak_sapling", "pale_oak_sapling", "poplar_sapling", "resin_clump", "amethyst_shard", "wheat_seeds",
              "flint", "snowball", "clay_ball", "book", "glowstone_dust", "cocoa_beans", "melon_slice", "gold_nugget",
              "prismarine_crystals", "sweet_berries", "glow_berries"],
+    # Survival T6 (mobs 20a): the items the vanilla mobs drop that no other group holds (arrow is another lane's).
+    "mob_drop": ["beef", "leather", "porkchop", "cooked_porkchop", "mutton", "cooked_mutton", "chicken",
+                 "cooked_chicken", "feather", "egg", "rotten_flesh", "bone", "gunpowder", "string", "spider_eye",
+                 "carrot", "potato", "milk_bucket"],
+    # Survival T1 (furnace 8a2): the cooking outputs whose inputs the game already has (logs, iron and copper tools,
+    # clay ball, netherrack, cactus, sea pickle, kelp, resin clump, potato) that no other group holds.
+    "cooking_output": ["charcoal", "iron_nugget", "copper_nugget", "brick", "nether_brick", "green_dye", "lime_dye",
+                       "dried_kelp", "resin_brick", "baked_potato"],
+    # Survival T2 (armor 19a2): the wearable armor pieces (not elytra, animal armor or trimmed variants).
+    "armor": [f"{m}_{p}" for m in ("leather", "chainmail", "iron", "golden", "diamond", "netherite", "copper")
+              for p in ("helmet", "chestplate", "leggings", "boots")] + ["turtle_helmet"],
+    # Survival T2 (shield 19b): the shield, whose definition is a using_item condition between two special models.
+    "shield": ["shield"],
 }
 # Groups added after the reference was first imported: their items, and the models and textures they bring, follow
-# the earlier ones (each part sorted as before), so no item, model or texture layer of an earlier build moves.
-APPEND_LAST = ["drop"]
+# the earlier ones (each part sorted as before), so no item, model or texture layer of an earlier build moves. The
+# groups follow each other in this list's order (not by protocol id), so a new group never interleaves with an old one.
+APPEND_LAST = ["drop", "mob_drop", "cooking_output", "armor", "shield"]
+
+
+def append_rank(group):
+    """0 for the first build's groups, else 1 + the group's place in APPEND_LAST."""
+    return APPEND_LAST.index(group) + 1 if group in APPEND_LAST else 0
 # Component defaults when a component omits the field (minecraft.wiki "Data component format").
 TOOL_DEFAULTS = {"default_mining_speed": 1.0, "damage_per_block": 1, "can_destroy_blocks_in_creative": True}
 WEAPON_DEFAULTS = {"item_damage_per_attack": 1, "disable_blocking_for_seconds": 0.0}
 # The player's base attack damage and attack speed; an item's base_attack_* modifiers add to them.
 BASE_ATTACK = {"attack_damage": 1.0, "attack_speed": 4.0}
 DEFINITION_ROOT = {"swap_animation_scale": 1.0, "hand_animation_on_swap": True}
+# The equippable component's defaults when it omits a field (minecraft.wiki "Data component format").
+EQUIPPABLE_DEFAULTS = {"equip_sound": "minecraft:item.armor.equip_generic", "asset_id": None, "swappable": True}
+# The blocks_attacks component's defaults when it omits a field (minecraft.wiki "Data component format/blocks_attacks").
+BLOCKS_ATTACKS_DEFAULTS = {"block_delay_seconds": 0.0, "disable_cooldown_scale": 1.0,
+                           "damage_reductions": [{"base": 0.0, "factor": 1.0, "horizontal_blocking_angle": 90.0}],
+                           "item_damage": {"threshold": 0.0, "base": 0.0, "factor": 1.5}, "bypassed_by": None,
+                           "block_sound": None, "disabled_sound": None}
+DAMAGE_REDUCTION_DEFAULTS = {"horizontal_blocking_angle": 90.0}
+# The shield's special model renders this entity texture (no pattern); the record names it and the build copies it.
+SHIELD_TEXTURE = "entity/shield/shield_base_nopattern"
+# The armor pieces' attribute modifiers, summed per attribute into the record's "armor" field.
+ARMOR_ATTRIBUTES = {"armor": "armor", "armor_toughness": "toughness", "knockback_resistance": "knockback_resistance"}
 # Attribute modifier operations in the order of their lang key suffix (attribute.modifier.plus.0 is add_value).
 OPERATIONS = ["add_value", "add_multiplied_base", "add_multiplied_total"]
 # tools/ItemFacts.java's output: written after the build, hashed but not derived.
@@ -160,25 +191,32 @@ class Tags:
         return self.resolve(bare(selector[1:])) if selector.startswith("#") else {bare(selector)}
 
 
-def model_refs(node, when=None):
-    """Every `model` leaf of an item model definition, with the display contexts it is selected for."""
+def model_refs(node, when=None, special=False):
+    """Every `model` leaf of an item model definition, with the display contexts it is selected for. With `special`
+    (the shield group only, so no earlier record or index entry changes), a `condition` selects on its property
+    (on_false first) and a `special` leaf yields its base model and the special model's type."""
     kind = bare(node.get("type", ""))
     if kind == "model":
         yield {"model": bare(node["model"]), "when": when, "tints": node.get("tints")}
     elif kind == "select":
         for case in node["cases"]:
             cases = case["when"] if isinstance(case["when"], list) else [case["when"]]
-            yield from model_refs(case["model"], {"property": bare(node["property"]), "is": cases})
+            yield from model_refs(case["model"], {"property": bare(node["property"]), "is": cases}, special)
         if "fallback" in node:
-            yield from model_refs(node["fallback"], {"property": bare(node["property"]), "is": "fallback"})
+            yield from model_refs(node["fallback"], {"property": bare(node["property"]), "is": "fallback"}, special)
+    elif special and kind == "condition":
+        for value, branch in ((False, "on_false"), (True, "on_true")):
+            yield from model_refs(node[branch], {"property": bare(node["property"]), "is": [value]}, special)
+    elif special and kind == "special":
+        yield {"model": bare(node["base"]), "when": when, "tints": None, "special": bare(node["model"]["type"])}
     else:
         for value in node.values():
             if isinstance(value, dict):
-                yield from model_refs(value, when)
+                yield from model_refs(value, when, special)
             elif isinstance(value, list):
                 for entry in value:
                     if isinstance(entry, dict):
-                        yield from model_refs(entry, when)
+                        yield from model_refs(entry, when, special)
 
 
 def model_chain(src, model):
@@ -254,6 +292,51 @@ def attack_totals(components):
     if len(modifiers) != 2:
         raise SystemExit(f"unexpected attribute modifiers: {modifiers}")
     return {"damage": totals["attack_damage"], "speed": totals["attack_speed"], "modifiers": modifiers}
+
+
+def armor_totals(components, slot):
+    """An armor piece's armor, toughness and knockback resistance: its add_value modifiers in its own slot, summed."""
+    modifiers = components.get("minecraft:attribute_modifiers", [])
+    totals = dict.fromkeys(ARMOR_ATTRIBUTES.values(), 0.0)
+    for m in modifiers:
+        attribute = bare(m["type"])
+        if attribute not in ARMOR_ATTRIBUTES or m["operation"] != "add_value" or m["slot"] != slot:
+            raise SystemExit(f"unexpected armor modifiers: {modifiers}")
+        totals[ARMOR_ATTRIBUTES[attribute]] = round(totals[ARMOR_ATTRIBUTES[attribute]] + m["amount"], 6)
+    return {**totals, "modifiers": modifiers}
+
+
+def equippable(components):
+    value = components.get("minecraft:equippable")
+    if value is None:
+        return None
+    return {"slot": value["slot"], **{k: value.get(k, v) for k, v in EQUIPPABLE_DEFAULTS.items()}}
+
+
+def blocks_attacks(components):
+    """The blocks_attacks component with every omitted field at its default; None without one."""
+    value = components.get("minecraft:blocks_attacks")
+    if value is None:
+        return None
+    out = {k: value.get(k, v) for k, v in BLOCKS_ATTACKS_DEFAULTS.items()}
+    out["damage_reductions"] = [{**DAMAGE_REDUCTION_DEFAULTS, **r} for r in out["damage_reductions"]]
+    out["item_damage"] = {**BLOCKS_ATTACKS_DEFAULTS["item_damage"], **value.get("item_damage", {})}
+    return out
+
+
+def trim_fallback(refs):
+    """An armor definition selects its model on the trim material: only the fallback (untrimmed) model is kept."""
+    if all(r["when"] and r["when"]["property"] == "trim_material" for r in refs):
+        return [r for r in refs if r["when"]["is"] == "fallback"]
+    return refs
+
+
+def model_entry(ref):
+    """A model case of the item record; "tints" (one per layer, data order) only when the definition has them."""
+    entry = {"model": ref["model"], "when": ref["when"]}
+    if ref["tints"]:
+        entry["tints"] = ref["tints"]
+    return entry
 
 
 def break_ticks(speed, hardness, drops):
@@ -668,7 +751,7 @@ def derive(src, block_ref=BLOCK_REF):
     imported = {b["id"] for b in block_manifest["blocks"] + block_manifest["fluids"]}
 
     group_of = {item: group for group, items in TIER_A.items() for item in items}
-    tier_a = sorted(group_of, key=lambda i: (group_of[i] in APPEND_LAST, protocol[i]))
+    tier_a = sorted(group_of, key=lambda i: (append_rank(group_of[i]), protocol[i]))
     copies, models, textures = set(), {}, {}
     items, tool_tags = [], set()
     for item in tier_a:
@@ -676,8 +759,10 @@ def derive(src, block_ref=BLOCK_REF):
         definition_name = f"{ASSETS}items/{item}.json"
         definition = src.jar_json(definition_name)
         copies.add(definition_name)
-        refs = list(model_refs(definition["model"]))
-        if bare(definition["model"]["type"]) not in ("model", "select") or not refs:
+        shield = group_of[item] == "shield"
+        refs = trim_fallback(list(model_refs(definition["model"], special=shield)))
+        kinds = ("model", "select") + (("condition",) if shield else ())
+        if bare(definition["model"]["type"]) not in kinds or not refs:
             raise SystemExit(f"{item}: Tier A definitions are a model or a display-context select")
         item_textures = []
         for ref in refs:
@@ -702,6 +787,21 @@ def derive(src, block_ref=BLOCK_REF):
             weapon = {k: weapon.get(k, v) for k, v in WEAPON_DEFAULTS.items()}
         repair = c.get("minecraft:repairable", {}).get("items")
         kind = next((k for k in TOOL_KINDS + ["spear"] if item.endswith("_" + k)), None)
+        equip = equippable(c)
+        # Armor pieces: their modifiers are armor attributes, not the attack ones; "armor" and "equippable" are only
+        # on the records that have them, so every earlier record stays byte-identical.
+        extra = {} if equip is None else {"equippable": equip}
+        if group_of[item] == "armor":
+            extra["armor"] = armor_totals(c, equip["slot"])
+        # The shield (19b): its special model (type, entity texture, the definition's transformation) and the
+        # blocks_attacks component; only its record has them.
+        if shield:
+            if {r.get("special") for r in refs} != {"shield"}:
+                raise SystemExit(f"{item}: expected the shield special model in every case")
+            extra["special"] = {"type": "shield", "texture": SHIELD_TEXTURE,
+                                "transformation": definition["model"].get("transformation")}
+            extra["blocks_attacks"] = blocks_attacks(c)
+            copies.add(f"{ASSETS}textures/{SHIELD_TEXTURE}.png")
         items.append({
             "id": item, "protocol_id": protocol[item], "group": group_of[item],
             "material": item[:-len(kind) - 1] if kind else None, "kind": kind,
@@ -709,24 +809,27 @@ def derive(src, block_ref=BLOCK_REF):
             "max_stack": c["minecraft:max_stack_size"], "max_damage": c.get("minecraft:max_damage"),
             "enchantability": c.get("minecraft:enchantable", {}).get("value"),
             "repair": None if repair is None else {"items": repair, "resolved": sorted(item_tags.members(repair))},
-            "attack": attack_totals(c), "tool": tool, "weapon": weapon,
+            "attack": None if group_of[item] == "armor" else attack_totals(c), "tool": tool, "weapon": weapon,
             "food": c.get("minecraft:food"), "consumable": c.get("minecraft:consumable"),
             "components": sorted(bare(k) for k in c),
             "item_tags": sorted(t for t in item_tags.all if item in item_tags.resolve(t)),
             "creative": [{"tab": bare(tab["id"]), "index": index} for tab in tabs
                          for index, entry in enumerate(tab["display"]) if entry == "minecraft:" + item],
             "model": {"definition": f"items/{item}.json", "type": bare(definition["model"]["type"]),
-                      "models": [{"model": r["model"], "when": r["when"]} for r in refs],
+                      "models": [model_entry(r) for r in refs],
                       **{k: definition.get(k, v) for k, v in DEFINITION_ROOT.items()}},
             "textures": item_textures,
+            **extra,
         })
-    if any(r["tints"] for item in items for r in model_refs(src.jar_json(f"{ASSETS}items/{item['id']}.json")["model"])):
-        raise SystemExit("Tier A has no tinted layers; add tint handling before importing tinted items")
+    # Tints: only the leather pieces' dye tint (a per-layer colour with a default) is handled.
+    if any(t is not None and bare(t.get("type", "")) != "dye" for item in items for m in item["model"]["models"]
+           for t in m.get("tints", [])):
+        raise SystemExit("only dye tints are handled; add tint handling before importing other tinted items")
     # The tooltip text the items' attribute modifiers need, verbatim from en_us.json: each slot's header ("When in
     # Main Hand:"), each attribute's name, and each operation's equals, plus and take forms.
     lang_keys = set()
     for item in items:
-        for modifier in (item["attack"] or {}).get("modifiers", []):
+        for modifier in (item["attack"] or item.get("armor") or {}).get("modifiers", []):
             operation = OPERATIONS.index(modifier["operation"])
             lang_keys |= {f"item.modifiers.{modifier['slot']}", f"attribute.name.{bare(modifier['type'])}"}
             lang_keys |= {f"attribute.modifier.{form}.{operation}" for form in ("equals", "plus", "take")}
@@ -823,13 +926,18 @@ def derive(src, block_ref=BLOCK_REF):
                   + " | ".join(text) + f" | {seconds(r['ticks'][s], r['drops'][s])} |")
 
     # Models and textures sorted by name, those first used by an APPEND_LAST group after the others.
-    early = [i for i in items if i["group"] not in APPEND_LAST]
-    early_models = {m["model"] for i in early for m in i["model"]["models"]}
-    early_textures = {t for i in early for t in i["textures"]}
-    textures_list = [textures[t] for t in sorted(textures, key=lambda t: (t not in early_textures, t))]
+    # A model or texture takes the rank of the first group (in build order) that uses it.
+    model_rank, texture_rank = {}, {}
+    for i in items:
+        rank = append_rank(i["group"])
+        for m in i["model"]["models"]:
+            model_rank[m["model"]] = min(rank, model_rank.get(m["model"], rank))
+        for t in i["textures"]:
+            texture_rank[t] = min(rank, texture_rank.get(t, rank))
+    textures_list = [textures[t] for t in sorted(textures, key=lambda t: (texture_rank[t], t))]
     generated = {
         "items.json": dumps({"minecraft_version": "26.3", "tier": "A", "items": items}),
-        "models.json": dumps({"models": [models[m] for m in sorted(models, key=lambda m: (m not in early_models, m))]}),
+        "models.json": dumps({"models": [models[m] for m in sorted(models, key=lambda m: (model_rank[m], m))]}),
         "textures.json": dumps({"textures": textures_list}),
         "tags.json": dumps(tags),
         "lang.json": dumps({"lang": "en_us", "keys": {key: lang[key] for key in sorted(lang_keys)}}),

@@ -217,12 +217,27 @@ bool FVoxelLightsTest::RunTest(const FString& Parameters)
         Row(TEXT("Table: crying_obsidian is a Cube at 10"),
             CryingInfo.Shape == EVoxelLightShape::Cube && CryingInfo.Level == 10);
         const uint16 LitOre = StateOf(TEXT("redstone_ore"), {FLightTestProperty(TEXT("lit"), TEXT("true"))});
-        // lit=true took effect: not the default (unlit) state. Its emission is not asserted: per-state light of full
-        // cubes is not imported, so it reads 0 today (26.3: 9).
-        Row(TEXT("Table: lit redstone_ore (not the default state) gets no light"),
-            LitOre && LitOre != StateOf(TEXT("redstone_ore")) && Lights.Get(LitOre).Level == 0);
-        AddInfo(FString::Printf(
-            TEXT("lit redstone_ore glows at %d in the voxel table (26.3: 9)"), BlockTable.Get(LitOre).LightEmission));
+        // lit=true took effect: not the default (unlit) state. It glows at 26.3's 9 (block_state_facts.json; full
+        // cubes' per-state light, survival B3a), below voxel.LightMinLevel, so it gets no light of its own.
+        Row(TEXT("Table: lit redstone_ore (not the default state) glows at 9 and gets no light"),
+            LitOre && LitOre != StateOf(TEXT("redstone_ore")) && BlockTable.Get(LitOre).LightEmission == 9 &&
+                BlockTable.Get(StateOf(TEXT("redstone_ore"))).LightEmission == 0 && Lights.Get(LitOre).Level == 0);
+        // Lit furnaces, smokers and blast furnaces, each facing: 13, as the facts give (states 6883-6889, 24111-24125);
+        // unlit, none.
+        int32 LitFurnaces = 0;
+        bool bUnlitDark = true;
+        for (const TCHAR* Block : {TEXT("furnace"), TEXT("smoker"), TEXT("blast_furnace")})
+            for (const TCHAR* Facing : {TEXT("north"), TEXT("south"), TEXT("west"), TEXT("east")})
+            {
+                const uint16 Lit = StateOf(
+                    Block, {FLightTestProperty(TEXT("facing"), Facing), FLightTestProperty(TEXT("lit"), TEXT("true"))});
+                const uint16 Unlit = StateOf(Block,
+                    {FLightTestProperty(TEXT("facing"), Facing), FLightTestProperty(TEXT("lit"), TEXT("false"))});
+                LitFurnaces += Lit && Lit != Unlit && BlockTable.Get(Lit).LightEmission == 13;
+                bUnlitDark &= Unlit && BlockTable.Get(Unlit).LightEmission == 0;
+            }
+        Row(TEXT("Table: the 12 lit furnace, smoker and blast furnace states glow at 13, the unlit ones not"),
+            LitFurnaces == 12 && bUnlitDark);
         // Sea pickles vary by state: waterlogged, 2 pickles are 9 and 3 are 12.
         const uint16 Pickles2 = StateOf(TEXT("sea_pickle"),
             {FLightTestProperty(TEXT("pickles"), TEXT("2")), FLightTestProperty(TEXT("waterlogged"), TEXT("true"))});

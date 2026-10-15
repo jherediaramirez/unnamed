@@ -7753,6 +7753,5143 @@
    "textures": [
     "item/glow_berries"
    ]
+  },
+  {
+   "id": "string",
+   "protocol_id": 1062,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "String",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "redstone_blocks",
+     "index": 23
+    },
+    {
+     "tab": "search",
+     "index": 1175
+    },
+    {
+     "tab": "ingredients",
+     "index": 24
+    }
+   ],
+   "model": {
+    "definition": "items/string.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/string",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/string"
+   ]
+  },
+  {
+   "id": "feather",
+   "protocol_id": 1063,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Feather",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1670
+    },
+    {
+     "tab": "ingredients",
+     "index": 25
+    }
+   ],
+   "model": {
+    "definition": "items/feather.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/feather",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/feather"
+   ]
+  },
+  {
+   "id": "gunpowder",
+   "protocol_id": 1064,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Gunpowder",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1718
+    },
+    {
+     "tab": "ingredients",
+     "index": 82
+    }
+   ],
+   "model": {
+    "definition": "items/gunpowder.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/gunpowder",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/gunpowder"
+   ]
+  },
+  {
+   "id": "porkchop",
+   "protocol_id": 1097,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Raw Porkchop",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 3,
+    "saturation": 1.8000001
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "piglin_food",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1471
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 17
+    }
+   ],
+   "model": {
+    "definition": "items/porkchop.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/porkchop",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/porkchop"
+   ]
+  },
+  {
+   "id": "cooked_porkchop",
+   "protocol_id": 1098,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Cooked Porkchop",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 8,
+    "saturation": 12.8
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "piglin_food",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1472
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 18
+    }
+   ],
+   "model": {
+    "definition": "items/cooked_porkchop.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/cooked_porkchop",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/cooked_porkchop"
+   ]
+  },
+  {
+   "id": "leather",
+   "protocol_id": 1133,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Leather",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "ignored_by_piglin_babies",
+    "repairs_leather_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1671
+    },
+    {
+     "tab": "ingredients",
+     "index": 30
+    }
+   ],
+   "model": {
+    "definition": "items/leather.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/leather",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/leather"
+   ]
+  },
+  {
+   "id": "milk_bucket",
+   "protocol_id": 1134,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Milk Bucket",
+   "max_stack": 1,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": {
+    "animation": "drink",
+    "has_consume_particles": false,
+    "on_consume_effects": [
+     {
+      "type": "minecraft:clear_all_effects"
+     }
+    ],
+    "sound": "minecraft:entity.generic.drink"
+   },
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects",
+    "use_remainder"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1236
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 39
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 50
+    }
+   ],
+   "model": {
+    "definition": "items/milk_bucket.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/milk_bucket",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/milk_bucket"
+   ]
+  },
+  {
+   "id": "egg",
+   "protocol_id": 1148,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Egg",
+   "max_stack": 16,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "chicken/variant",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "eggs"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1403
+    },
+    {
+     "tab": "combat",
+     "index": 69
+    },
+    {
+     "tab": "ingredients",
+     "index": 27
+    }
+   ],
+   "model": {
+    "definition": "items/egg.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/egg",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/egg"
+   ]
+  },
+  {
+   "id": "bone",
+   "protocol_id": 1216,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Bone",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1669
+    },
+    {
+     "tab": "ingredients",
+     "index": 22
+    }
+   ],
+   "model": {
+    "definition": "items/bone.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/bone",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/bone"
+   ]
+  },
+  {
+   "id": "beef",
+   "protocol_id": 1260,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Raw Beef",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 3,
+    "saturation": 1.8000001
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1469
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 15
+    }
+   ],
+   "model": {
+    "definition": "items/beef.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/beef",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/beef"
+   ]
+  },
+  {
+   "id": "chicken",
+   "protocol_id": 1262,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Raw Chicken",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 2,
+    "saturation": 1.2
+   },
+   "consumable": {
+    "on_consume_effects": [
+     {
+      "type": "minecraft:apply_effects",
+      "effects": [
+       {
+        "duration": 600,
+        "id": "minecraft:hunger",
+        "show_icon": true
+       }
+      ],
+      "probability": 0.3
+     }
+    ]
+   },
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1475
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 21
+    }
+   ],
+   "model": {
+    "definition": "items/chicken.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/chicken",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/chicken"
+   ]
+  },
+  {
+   "id": "cooked_chicken",
+   "protocol_id": 1263,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Cooked Chicken",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 6,
+    "saturation": 7.2000003
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1476
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 22
+    }
+   ],
+   "model": {
+    "definition": "items/cooked_chicken.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/cooked_chicken",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/cooked_chicken"
+   ]
+  },
+  {
+   "id": "rotten_flesh",
+   "protocol_id": 1264,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Rotten Flesh",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 4,
+    "saturation": 0.8
+   },
+   "consumable": {
+    "on_consume_effects": [
+     {
+      "type": "minecraft:apply_effects",
+      "effects": [
+       {
+        "duration": 600,
+        "id": "minecraft:hunger",
+        "show_icon": true
+       }
+      ],
+      "probability": 0.8
+     }
+    ]
+   },
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1489
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 35
+    }
+   ],
+   "model": {
+    "definition": "items/rotten_flesh.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/rotten_flesh",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/rotten_flesh"
+   ]
+  },
+  {
+   "id": "spider_eye",
+   "protocol_id": 1272,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Spider Eye",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 2,
+    "saturation": 3.2
+   },
+   "consumable": {
+    "on_consume_effects": [
+     {
+      "type": "minecraft:apply_effects",
+      "effects": [
+       {
+        "duration": 100,
+        "id": "minecraft:poison",
+        "show_icon": true
+       }
+      ]
+     }
+    ]
+   },
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "armadillo_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1490
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 36
+    },
+    {
+     "tab": "ingredients",
+     "index": 89
+    }
+   ],
+   "model": {
+    "definition": "items/spider_eye.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/spider_eye",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/spider_eye"
+   ]
+  },
+  {
+   "id": "carrot",
+   "protocol_id": 1378,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Carrot",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 3,
+    "saturation": 3.6000001
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects",
+    "villager_food"
+   ],
+   "item_tags": [
+    "horse_food",
+    "pig_food",
+    "rabbit_food",
+    "villager_picks_up",
+    "villager_plantable_seeds"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1461
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 7
+    }
+   ],
+   "model": {
+    "definition": "items/carrot.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/carrot",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/carrot"
+   ]
+  },
+  {
+   "id": "potato",
+   "protocol_id": 1379,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Potato",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 1,
+    "saturation": 0.6
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects",
+    "villager_food"
+   ],
+   "item_tags": [
+    "pig_food",
+    "villager_picks_up",
+    "villager_plantable_seeds"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1463
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 9
+    }
+   ],
+   "model": {
+    "definition": "items/potato.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/potato",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/potato"
+   ]
+  },
+  {
+   "id": "mutton",
+   "protocol_id": 1415,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Raw Mutton",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 2,
+    "saturation": 1.2
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1473
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 19
+    }
+   ],
+   "model": {
+    "definition": "items/mutton.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/mutton",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/mutton"
+   ]
+  },
+  {
+   "id": "cooked_mutton",
+   "protocol_id": 1416,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Cooked Mutton",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 6,
+    "saturation": 9.6
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1474
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 20
+    }
+   ],
+   "model": {
+    "definition": "items/cooked_mutton.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/cooked_mutton",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/cooked_mutton"
+   ]
+  },
+  {
+   "id": "charcoal",
+   "protocol_id": 1011,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Charcoal",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "cooking_fuel",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "coals",
+    "furnace_minecart_fuel"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1649
+    },
+    {
+     "tab": "ingredients",
+     "index": 1
+    }
+   ],
+   "model": {
+    "definition": "items/charcoal.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/charcoal",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/charcoal"
+   ]
+  },
+  {
+   "id": "brick",
+   "protocol_id": 1142,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Brick",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "decorated_pot_ingredients"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1710
+    },
+    {
+     "tab": "ingredients",
+     "index": 72
+    }
+   ],
+   "model": {
+    "definition": "items/brick.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/brick",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/brick"
+   ]
+  },
+  {
+   "id": "lime_dye",
+   "protocol_id": 1204,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Lime Dye",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "dye",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "cat_collar_dyes",
+    "dyes",
+    "loom_dyes",
+    "wolf_collar_dyes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1698
+    },
+    {
+     "tab": "ingredients",
+     "index": 60
+    }
+   ],
+   "model": {
+    "definition": "items/lime_dye.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/lime_dye",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/lime_dye"
+   ]
+  },
+  {
+   "id": "green_dye",
+   "protocol_id": 1212,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Green Dye",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "dye",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "cat_collar_dyes",
+    "dyes",
+    "loom_dyes",
+    "wolf_collar_dyes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1706
+    },
+    {
+     "tab": "ingredients",
+     "index": 68
+    }
+   ],
+   "model": {
+    "definition": "items/green_dye.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/green_dye",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/green_dye"
+   ]
+  },
+  {
+   "id": "dried_kelp",
+   "protocol_id": 1257,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Dried Kelp",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 1,
+    "saturation": 0.6
+   },
+   "consumable": {
+    "consume_seconds": 0.8
+   },
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1468
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 14
+    }
+   ],
+   "model": {
+    "definition": "items/dried_kelp.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/dried_kelp",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/dried_kelp"
+   ]
+  },
+  {
+   "id": "baked_potato",
+   "protocol_id": 1380,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Baked Potato",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 5,
+    "saturation": 6.0
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1464
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 10
+    }
+   ],
+   "model": {
+    "definition": "items/baked_potato.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/baked_potato",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/baked_potato"
+   ]
+  },
+  {
+   "id": "nether_brick",
+   "protocol_id": 1396,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Nether Brick",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1711
+    },
+    {
+     "tab": "ingredients",
+     "index": 73
+    }
+   ],
+   "model": {
+    "definition": "items/nether_brick.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/nether_brick",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/nether_brick"
+   ]
+  },
+  {
+   "id": "resin_brick",
+   "protocol_id": 1397,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Resin Brick",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "provides_trim_material",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "trim_materials"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1712
+    },
+    {
+     "tab": "ingredients",
+     "index": 74
+    }
+   ],
+   "model": {
+    "definition": "items/resin_brick.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/resin_brick",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/resin_brick"
+   ]
+  },
+  {
+   "id": "iron_nugget",
+   "protocol_id": 1456,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Iron Nugget",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "metal_nuggets"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1659
+    },
+    {
+     "tab": "ingredients",
+     "index": 12
+    }
+   ],
+   "model": {
+    "definition": "items/iron_nugget.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/iron_nugget",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/iron_nugget"
+   ]
+  },
+  {
+   "id": "copper_nugget",
+   "protocol_id": 1457,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Copper Nugget",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "metal_nuggets"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1658
+    },
+    {
+     "tab": "ingredients",
+     "index": 11
+    }
+   ],
+   "model": {
+    "definition": "items/copper_nugget.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/copper_nugget",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/copper_nugget"
+   ]
+  },
+  {
+   "id": "turtle_helmet",
+   "protocol_id": 1001,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Turtle Shell",
+   "max_stack": 1,
+   "max_damage": 275,
+   "enchantability": 9,
+   "repair": {
+    "items": "#minecraft:repairs_turtle_helmet",
+    "resolved": [
+     "turtle_scute"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/head_armor",
+    "enchantable/vanishing",
+    "head_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1388
+    },
+    {
+     "tab": "combat",
+     "index": 52
+    },
+    {
+     "tab": "ingredients",
+     "index": 94
+    }
+   ],
+   "model": {
+    "definition": "items/turtle_helmet.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/turtle_helmet",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/turtle_helmet"
+   ],
+   "equippable": {
+    "slot": "head",
+    "equip_sound": "minecraft:item.armor.equip_turtle",
+    "asset_id": "minecraft:turtle_scute",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 2.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 2.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     }
+    ]
+   }
+  },
+  {
+   "id": "leather_helmet",
+   "protocol_id": 1068,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Leather Cap",
+   "max_stack": 1,
+   "max_damage": 55,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:repairs_leather_armor",
+    "resolved": [
+     "leather"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "cauldron_can_remove_dye",
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/head_armor",
+    "enchantable/vanishing",
+    "freeze_immune_wearables",
+    "head_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1360
+    },
+    {
+     "tab": "combat",
+     "index": 24
+    }
+   ],
+   "model": {
+    "definition": "items/leather_helmet.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/leather_helmet",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      },
+      "tints": [
+       {
+        "type": "minecraft:dye",
+        "default": -6265536
+       }
+      ]
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/leather_helmet",
+    "item/leather_helmet_overlay"
+   ],
+   "equippable": {
+    "slot": "head",
+    "equip_sound": "minecraft:item.armor.equip_leather",
+    "asset_id": "minecraft:leather",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 1.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 1.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     }
+    ]
+   }
+  },
+  {
+   "id": "leather_chestplate",
+   "protocol_id": 1069,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Leather Tunic",
+   "max_stack": 1,
+   "max_damage": 80,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:repairs_leather_armor",
+    "resolved": [
+     "leather"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "cauldron_can_remove_dye",
+    "chest_armor",
+    "enchantable/armor",
+    "enchantable/chest_armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/vanishing",
+    "freeze_immune_wearables",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1361
+    },
+    {
+     "tab": "combat",
+     "index": 25
+    }
+   ],
+   "model": {
+    "definition": "items/leather_chestplate.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/leather_chestplate",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      },
+      "tints": [
+       {
+        "type": "minecraft:dye",
+        "default": -6265536
+       }
+      ]
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/leather_chestplate",
+    "item/leather_chestplate_overlay"
+   ],
+   "equippable": {
+    "slot": "chest",
+    "equip_sound": "minecraft:item.armor.equip_leather",
+    "asset_id": "minecraft:leather",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 3.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 3.0,
+      "id": "minecraft:armor.chestplate",
+      "operation": "add_value",
+      "slot": "chest"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.chestplate",
+      "operation": "add_value",
+      "slot": "chest"
+     }
+    ]
+   }
+  },
+  {
+   "id": "leather_leggings",
+   "protocol_id": 1070,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Leather Pants",
+   "max_stack": 1,
+   "max_damage": 75,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:repairs_leather_armor",
+    "resolved": [
+     "leather"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "cauldron_can_remove_dye",
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/leg_armor",
+    "enchantable/vanishing",
+    "freeze_immune_wearables",
+    "leg_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1362
+    },
+    {
+     "tab": "combat",
+     "index": 26
+    }
+   ],
+   "model": {
+    "definition": "items/leather_leggings.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/leather_leggings",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      },
+      "tints": [
+       {
+        "type": "minecraft:dye",
+        "default": -6265536
+       }
+      ]
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/leather_leggings",
+    "item/leather_leggings_overlay"
+   ],
+   "equippable": {
+    "slot": "legs",
+    "equip_sound": "minecraft:item.armor.equip_leather",
+    "asset_id": "minecraft:leather",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 2.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 2.0,
+      "id": "minecraft:armor.leggings",
+      "operation": "add_value",
+      "slot": "legs"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.leggings",
+      "operation": "add_value",
+      "slot": "legs"
+     }
+    ]
+   }
+  },
+  {
+   "id": "leather_boots",
+   "protocol_id": 1071,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Leather Boots",
+   "max_stack": 1,
+   "max_damage": 65,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:repairs_leather_armor",
+    "resolved": [
+     "leather"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "cauldron_can_remove_dye",
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/foot_armor",
+    "enchantable/vanishing",
+    "foot_armor",
+    "freeze_immune_wearables",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1363
+    },
+    {
+     "tab": "combat",
+     "index": 27
+    }
+   ],
+   "model": {
+    "definition": "items/leather_boots.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/leather_boots",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      },
+      "tints": [
+       {
+        "type": "minecraft:dye",
+        "default": -6265536
+       }
+      ]
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/leather_boots",
+    "item/leather_boots_overlay"
+   ],
+   "equippable": {
+    "slot": "feet",
+    "equip_sound": "minecraft:item.armor.equip_leather",
+    "asset_id": "minecraft:leather",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 1.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 1.0,
+      "id": "minecraft:armor.boots",
+      "operation": "add_value",
+      "slot": "feet"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.boots",
+      "operation": "add_value",
+      "slot": "feet"
+     }
+    ]
+   }
+  },
+  {
+   "id": "copper_helmet",
+   "protocol_id": 1072,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Copper Helmet",
+   "max_stack": 1,
+   "max_damage": 121,
+   "enchantability": 8,
+   "repair": {
+    "items": "#minecraft:repairs_copper_armor",
+    "resolved": [
+     "copper_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/head_armor",
+    "enchantable/vanishing",
+    "head_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1364
+    },
+    {
+     "tab": "combat",
+     "index": 28
+    }
+   ],
+   "model": {
+    "definition": "items/copper_helmet.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/copper_helmet",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/copper_helmet"
+   ],
+   "equippable": {
+    "slot": "head",
+    "equip_sound": "minecraft:item.armor.equip_copper",
+    "asset_id": "minecraft:copper",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 2.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 2.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     }
+    ]
+   }
+  },
+  {
+   "id": "copper_chestplate",
+   "protocol_id": 1073,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Copper Chestplate",
+   "max_stack": 1,
+   "max_damage": 176,
+   "enchantability": 8,
+   "repair": {
+    "items": "#minecraft:repairs_copper_armor",
+    "resolved": [
+     "copper_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "chest_armor",
+    "enchantable/armor",
+    "enchantable/chest_armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/vanishing",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1365
+    },
+    {
+     "tab": "combat",
+     "index": 29
+    }
+   ],
+   "model": {
+    "definition": "items/copper_chestplate.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/copper_chestplate",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/copper_chestplate"
+   ],
+   "equippable": {
+    "slot": "chest",
+    "equip_sound": "minecraft:item.armor.equip_copper",
+    "asset_id": "minecraft:copper",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 4.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 4.0,
+      "id": "minecraft:armor.chestplate",
+      "operation": "add_value",
+      "slot": "chest"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.chestplate",
+      "operation": "add_value",
+      "slot": "chest"
+     }
+    ]
+   }
+  },
+  {
+   "id": "copper_leggings",
+   "protocol_id": 1074,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Copper Leggings",
+   "max_stack": 1,
+   "max_damage": 165,
+   "enchantability": 8,
+   "repair": {
+    "items": "#minecraft:repairs_copper_armor",
+    "resolved": [
+     "copper_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/leg_armor",
+    "enchantable/vanishing",
+    "leg_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1366
+    },
+    {
+     "tab": "combat",
+     "index": 30
+    }
+   ],
+   "model": {
+    "definition": "items/copper_leggings.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/copper_leggings",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/copper_leggings"
+   ],
+   "equippable": {
+    "slot": "legs",
+    "equip_sound": "minecraft:item.armor.equip_copper",
+    "asset_id": "minecraft:copper",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 3.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 3.0,
+      "id": "minecraft:armor.leggings",
+      "operation": "add_value",
+      "slot": "legs"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.leggings",
+      "operation": "add_value",
+      "slot": "legs"
+     }
+    ]
+   }
+  },
+  {
+   "id": "copper_boots",
+   "protocol_id": 1075,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Copper Boots",
+   "max_stack": 1,
+   "max_damage": 143,
+   "enchantability": 8,
+   "repair": {
+    "items": "#minecraft:repairs_copper_armor",
+    "resolved": [
+     "copper_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/foot_armor",
+    "enchantable/vanishing",
+    "foot_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1367
+    },
+    {
+     "tab": "combat",
+     "index": 31
+    }
+   ],
+   "model": {
+    "definition": "items/copper_boots.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/copper_boots",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/copper_boots"
+   ],
+   "equippable": {
+    "slot": "feet",
+    "equip_sound": "minecraft:item.armor.equip_copper",
+    "asset_id": "minecraft:copper",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 1.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 1.0,
+      "id": "minecraft:armor.boots",
+      "operation": "add_value",
+      "slot": "feet"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.boots",
+      "operation": "add_value",
+      "slot": "feet"
+     }
+    ]
+   }
+  },
+  {
+   "id": "chainmail_helmet",
+   "protocol_id": 1076,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Chainmail Helmet",
+   "max_stack": 1,
+   "max_damage": 165,
+   "enchantability": 12,
+   "repair": {
+    "items": "#minecraft:repairs_chain_armor",
+    "resolved": [
+     "iron_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/head_armor",
+    "enchantable/vanishing",
+    "head_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1368
+    },
+    {
+     "tab": "combat",
+     "index": 32
+    }
+   ],
+   "model": {
+    "definition": "items/chainmail_helmet.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/chainmail_helmet",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/chainmail_helmet"
+   ],
+   "equippable": {
+    "slot": "head",
+    "equip_sound": "minecraft:item.armor.equip_chain",
+    "asset_id": "minecraft:chainmail",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 2.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 2.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     }
+    ]
+   }
+  },
+  {
+   "id": "chainmail_chestplate",
+   "protocol_id": 1077,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Chainmail Chestplate",
+   "max_stack": 1,
+   "max_damage": 240,
+   "enchantability": 12,
+   "repair": {
+    "items": "#minecraft:repairs_chain_armor",
+    "resolved": [
+     "iron_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "chest_armor",
+    "enchantable/armor",
+    "enchantable/chest_armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/vanishing",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1369
+    },
+    {
+     "tab": "combat",
+     "index": 33
+    }
+   ],
+   "model": {
+    "definition": "items/chainmail_chestplate.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/chainmail_chestplate",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/chainmail_chestplate"
+   ],
+   "equippable": {
+    "slot": "chest",
+    "equip_sound": "minecraft:item.armor.equip_chain",
+    "asset_id": "minecraft:chainmail",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 5.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 5.0,
+      "id": "minecraft:armor.chestplate",
+      "operation": "add_value",
+      "slot": "chest"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.chestplate",
+      "operation": "add_value",
+      "slot": "chest"
+     }
+    ]
+   }
+  },
+  {
+   "id": "chainmail_leggings",
+   "protocol_id": 1078,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Chainmail Leggings",
+   "max_stack": 1,
+   "max_damage": 225,
+   "enchantability": 12,
+   "repair": {
+    "items": "#minecraft:repairs_chain_armor",
+    "resolved": [
+     "iron_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/leg_armor",
+    "enchantable/vanishing",
+    "leg_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1370
+    },
+    {
+     "tab": "combat",
+     "index": 34
+    }
+   ],
+   "model": {
+    "definition": "items/chainmail_leggings.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/chainmail_leggings",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/chainmail_leggings"
+   ],
+   "equippable": {
+    "slot": "legs",
+    "equip_sound": "minecraft:item.armor.equip_chain",
+    "asset_id": "minecraft:chainmail",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 4.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 4.0,
+      "id": "minecraft:armor.leggings",
+      "operation": "add_value",
+      "slot": "legs"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.leggings",
+      "operation": "add_value",
+      "slot": "legs"
+     }
+    ]
+   }
+  },
+  {
+   "id": "chainmail_boots",
+   "protocol_id": 1079,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Chainmail Boots",
+   "max_stack": 1,
+   "max_damage": 195,
+   "enchantability": 12,
+   "repair": {
+    "items": "#minecraft:repairs_chain_armor",
+    "resolved": [
+     "iron_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/foot_armor",
+    "enchantable/vanishing",
+    "foot_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1371
+    },
+    {
+     "tab": "combat",
+     "index": 35
+    }
+   ],
+   "model": {
+    "definition": "items/chainmail_boots.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/chainmail_boots",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/chainmail_boots"
+   ],
+   "equippable": {
+    "slot": "feet",
+    "equip_sound": "minecraft:item.armor.equip_chain",
+    "asset_id": "minecraft:chainmail",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 1.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 1.0,
+      "id": "minecraft:armor.boots",
+      "operation": "add_value",
+      "slot": "feet"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.boots",
+      "operation": "add_value",
+      "slot": "feet"
+     }
+    ]
+   }
+  },
+  {
+   "id": "iron_helmet",
+   "protocol_id": 1080,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Iron Helmet",
+   "max_stack": 1,
+   "max_damage": 165,
+   "enchantability": 9,
+   "repair": {
+    "items": "#minecraft:repairs_iron_armor",
+    "resolved": [
+     "iron_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/head_armor",
+    "enchantable/vanishing",
+    "head_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1372
+    },
+    {
+     "tab": "combat",
+     "index": 36
+    }
+   ],
+   "model": {
+    "definition": "items/iron_helmet.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/iron_helmet",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/iron_helmet"
+   ],
+   "equippable": {
+    "slot": "head",
+    "equip_sound": "minecraft:item.armor.equip_iron",
+    "asset_id": "minecraft:iron",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 2.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 2.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     }
+    ]
+   }
+  },
+  {
+   "id": "iron_chestplate",
+   "protocol_id": 1081,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Iron Chestplate",
+   "max_stack": 1,
+   "max_damage": 240,
+   "enchantability": 9,
+   "repair": {
+    "items": "#minecraft:repairs_iron_armor",
+    "resolved": [
+     "iron_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "chest_armor",
+    "enchantable/armor",
+    "enchantable/chest_armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/vanishing",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1373
+    },
+    {
+     "tab": "combat",
+     "index": 37
+    }
+   ],
+   "model": {
+    "definition": "items/iron_chestplate.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/iron_chestplate",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/iron_chestplate"
+   ],
+   "equippable": {
+    "slot": "chest",
+    "equip_sound": "minecraft:item.armor.equip_iron",
+    "asset_id": "minecraft:iron",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 6.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 6.0,
+      "id": "minecraft:armor.chestplate",
+      "operation": "add_value",
+      "slot": "chest"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.chestplate",
+      "operation": "add_value",
+      "slot": "chest"
+     }
+    ]
+   }
+  },
+  {
+   "id": "iron_leggings",
+   "protocol_id": 1082,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Iron Leggings",
+   "max_stack": 1,
+   "max_damage": 225,
+   "enchantability": 9,
+   "repair": {
+    "items": "#minecraft:repairs_iron_armor",
+    "resolved": [
+     "iron_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/leg_armor",
+    "enchantable/vanishing",
+    "leg_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1374
+    },
+    {
+     "tab": "combat",
+     "index": 38
+    }
+   ],
+   "model": {
+    "definition": "items/iron_leggings.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/iron_leggings",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/iron_leggings"
+   ],
+   "equippable": {
+    "slot": "legs",
+    "equip_sound": "minecraft:item.armor.equip_iron",
+    "asset_id": "minecraft:iron",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 5.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 5.0,
+      "id": "minecraft:armor.leggings",
+      "operation": "add_value",
+      "slot": "legs"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.leggings",
+      "operation": "add_value",
+      "slot": "legs"
+     }
+    ]
+   }
+  },
+  {
+   "id": "iron_boots",
+   "protocol_id": 1083,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Iron Boots",
+   "max_stack": 1,
+   "max_damage": 195,
+   "enchantability": 9,
+   "repair": {
+    "items": "#minecraft:repairs_iron_armor",
+    "resolved": [
+     "iron_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/foot_armor",
+    "enchantable/vanishing",
+    "foot_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1375
+    },
+    {
+     "tab": "combat",
+     "index": 39
+    }
+   ],
+   "model": {
+    "definition": "items/iron_boots.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/iron_boots",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/iron_boots"
+   ],
+   "equippable": {
+    "slot": "feet",
+    "equip_sound": "minecraft:item.armor.equip_iron",
+    "asset_id": "minecraft:iron",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 2.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 2.0,
+      "id": "minecraft:armor.boots",
+      "operation": "add_value",
+      "slot": "feet"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.boots",
+      "operation": "add_value",
+      "slot": "feet"
+     }
+    ]
+   }
+  },
+  {
+   "id": "diamond_helmet",
+   "protocol_id": 1084,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Diamond Helmet",
+   "max_stack": 1,
+   "max_damage": 363,
+   "enchantability": 10,
+   "repair": {
+    "items": "#minecraft:repairs_diamond_armor",
+    "resolved": [
+     "diamond"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/head_armor",
+    "enchantable/vanishing",
+    "head_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1380
+    },
+    {
+     "tab": "combat",
+     "index": 44
+    }
+   ],
+   "model": {
+    "definition": "items/diamond_helmet.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/diamond_helmet",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/diamond_helmet"
+   ],
+   "equippable": {
+    "slot": "head",
+    "equip_sound": "minecraft:item.armor.equip_diamond",
+    "asset_id": "minecraft:diamond",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 3.0,
+    "toughness": 2.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 3.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 2.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     }
+    ]
+   }
+  },
+  {
+   "id": "diamond_chestplate",
+   "protocol_id": 1085,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Diamond Chestplate",
+   "max_stack": 1,
+   "max_damage": 528,
+   "enchantability": 10,
+   "repair": {
+    "items": "#minecraft:repairs_diamond_armor",
+    "resolved": [
+     "diamond"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "chest_armor",
+    "enchantable/armor",
+    "enchantable/chest_armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/vanishing",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1381
+    },
+    {
+     "tab": "combat",
+     "index": 45
+    }
+   ],
+   "model": {
+    "definition": "items/diamond_chestplate.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/diamond_chestplate",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/diamond_chestplate"
+   ],
+   "equippable": {
+    "slot": "chest",
+    "equip_sound": "minecraft:item.armor.equip_diamond",
+    "asset_id": "minecraft:diamond",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 8.0,
+    "toughness": 2.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 8.0,
+      "id": "minecraft:armor.chestplate",
+      "operation": "add_value",
+      "slot": "chest"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 2.0,
+      "id": "minecraft:armor.chestplate",
+      "operation": "add_value",
+      "slot": "chest"
+     }
+    ]
+   }
+  },
+  {
+   "id": "diamond_leggings",
+   "protocol_id": 1086,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Diamond Leggings",
+   "max_stack": 1,
+   "max_damage": 495,
+   "enchantability": 10,
+   "repair": {
+    "items": "#minecraft:repairs_diamond_armor",
+    "resolved": [
+     "diamond"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/leg_armor",
+    "enchantable/vanishing",
+    "leg_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1382
+    },
+    {
+     "tab": "combat",
+     "index": 46
+    }
+   ],
+   "model": {
+    "definition": "items/diamond_leggings.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/diamond_leggings",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/diamond_leggings"
+   ],
+   "equippable": {
+    "slot": "legs",
+    "equip_sound": "minecraft:item.armor.equip_diamond",
+    "asset_id": "minecraft:diamond",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 6.0,
+    "toughness": 2.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 6.0,
+      "id": "minecraft:armor.leggings",
+      "operation": "add_value",
+      "slot": "legs"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 2.0,
+      "id": "minecraft:armor.leggings",
+      "operation": "add_value",
+      "slot": "legs"
+     }
+    ]
+   }
+  },
+  {
+   "id": "diamond_boots",
+   "protocol_id": 1087,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Diamond Boots",
+   "max_stack": 1,
+   "max_damage": 429,
+   "enchantability": 10,
+   "repair": {
+    "items": "#minecraft:repairs_diamond_armor",
+    "resolved": [
+     "diamond"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/foot_armor",
+    "enchantable/vanishing",
+    "foot_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1383
+    },
+    {
+     "tab": "combat",
+     "index": 47
+    }
+   ],
+   "model": {
+    "definition": "items/diamond_boots.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/diamond_boots",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/diamond_boots"
+   ],
+   "equippable": {
+    "slot": "feet",
+    "equip_sound": "minecraft:item.armor.equip_diamond",
+    "asset_id": "minecraft:diamond",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 3.0,
+    "toughness": 2.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 3.0,
+      "id": "minecraft:armor.boots",
+      "operation": "add_value",
+      "slot": "feet"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 2.0,
+      "id": "minecraft:armor.boots",
+      "operation": "add_value",
+      "slot": "feet"
+     }
+    ]
+   }
+  },
+  {
+   "id": "golden_helmet",
+   "protocol_id": 1088,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Golden Helmet",
+   "max_stack": 1,
+   "max_damage": 77,
+   "enchantability": 25,
+   "repair": {
+    "items": "#minecraft:repairs_gold_armor",
+    "resolved": [
+     "gold_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/head_armor",
+    "enchantable/vanishing",
+    "head_armor",
+    "piglin_loved",
+    "piglin_safe_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1376
+    },
+    {
+     "tab": "combat",
+     "index": 40
+    }
+   ],
+   "model": {
+    "definition": "items/golden_helmet.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/golden_helmet",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/golden_helmet"
+   ],
+   "equippable": {
+    "slot": "head",
+    "equip_sound": "minecraft:item.armor.equip_gold",
+    "asset_id": "minecraft:gold",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 2.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 2.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     }
+    ]
+   }
+  },
+  {
+   "id": "golden_chestplate",
+   "protocol_id": 1089,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Golden Chestplate",
+   "max_stack": 1,
+   "max_damage": 112,
+   "enchantability": 25,
+   "repair": {
+    "items": "#minecraft:repairs_gold_armor",
+    "resolved": [
+     "gold_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "chest_armor",
+    "enchantable/armor",
+    "enchantable/chest_armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/vanishing",
+    "piglin_loved",
+    "piglin_safe_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1377
+    },
+    {
+     "tab": "combat",
+     "index": 41
+    }
+   ],
+   "model": {
+    "definition": "items/golden_chestplate.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/golden_chestplate",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/golden_chestplate"
+   ],
+   "equippable": {
+    "slot": "chest",
+    "equip_sound": "minecraft:item.armor.equip_gold",
+    "asset_id": "minecraft:gold",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 5.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 5.0,
+      "id": "minecraft:armor.chestplate",
+      "operation": "add_value",
+      "slot": "chest"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.chestplate",
+      "operation": "add_value",
+      "slot": "chest"
+     }
+    ]
+   }
+  },
+  {
+   "id": "golden_leggings",
+   "protocol_id": 1090,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Golden Leggings",
+   "max_stack": 1,
+   "max_damage": 105,
+   "enchantability": 25,
+   "repair": {
+    "items": "#minecraft:repairs_gold_armor",
+    "resolved": [
+     "gold_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/leg_armor",
+    "enchantable/vanishing",
+    "leg_armor",
+    "piglin_loved",
+    "piglin_safe_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1378
+    },
+    {
+     "tab": "combat",
+     "index": 42
+    }
+   ],
+   "model": {
+    "definition": "items/golden_leggings.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/golden_leggings",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/golden_leggings"
+   ],
+   "equippable": {
+    "slot": "legs",
+    "equip_sound": "minecraft:item.armor.equip_gold",
+    "asset_id": "minecraft:gold",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 3.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 3.0,
+      "id": "minecraft:armor.leggings",
+      "operation": "add_value",
+      "slot": "legs"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.leggings",
+      "operation": "add_value",
+      "slot": "legs"
+     }
+    ]
+   }
+  },
+  {
+   "id": "golden_boots",
+   "protocol_id": 1091,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Golden Boots",
+   "max_stack": 1,
+   "max_damage": 91,
+   "enchantability": 25,
+   "repair": {
+    "items": "#minecraft:repairs_gold_armor",
+    "resolved": [
+     "gold_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/foot_armor",
+    "enchantable/vanishing",
+    "foot_armor",
+    "piglin_loved",
+    "piglin_safe_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1379
+    },
+    {
+     "tab": "combat",
+     "index": 43
+    }
+   ],
+   "model": {
+    "definition": "items/golden_boots.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/golden_boots",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/golden_boots"
+   ],
+   "equippable": {
+    "slot": "feet",
+    "equip_sound": "minecraft:item.armor.equip_gold",
+    "asset_id": "minecraft:gold",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 1.0,
+    "toughness": 0.0,
+    "knockback_resistance": 0.0,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 1.0,
+      "id": "minecraft:armor.boots",
+      "operation": "add_value",
+      "slot": "feet"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 0.0,
+      "id": "minecraft:armor.boots",
+      "operation": "add_value",
+      "slot": "feet"
+     }
+    ]
+   }
+  },
+  {
+   "id": "netherite_helmet",
+   "protocol_id": 1092,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Netherite Helmet",
+   "max_stack": 1,
+   "max_damage": 407,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:repairs_netherite_armor",
+    "resolved": [
+     "netherite_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "damage_resistant",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/head_armor",
+    "enchantable/vanishing",
+    "head_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1384
+    },
+    {
+     "tab": "combat",
+     "index": 48
+    }
+   ],
+   "model": {
+    "definition": "items/netherite_helmet.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/netherite_helmet",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/netherite_helmet"
+   ],
+   "equippable": {
+    "slot": "head",
+    "equip_sound": "minecraft:item.armor.equip_netherite",
+    "asset_id": "minecraft:netherite",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 3.0,
+    "toughness": 3.0,
+    "knockback_resistance": 0.1,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 3.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 3.0,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     },
+     {
+      "type": "minecraft:knockback_resistance",
+      "amount": 0.10000000149011612,
+      "id": "minecraft:armor.helmet",
+      "operation": "add_value",
+      "slot": "head"
+     }
+    ]
+   }
+  },
+  {
+   "id": "netherite_chestplate",
+   "protocol_id": 1093,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Netherite Chestplate",
+   "max_stack": 1,
+   "max_damage": 592,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:repairs_netherite_armor",
+    "resolved": [
+     "netherite_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "damage_resistant",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "chest_armor",
+    "enchantable/armor",
+    "enchantable/chest_armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/vanishing",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1385
+    },
+    {
+     "tab": "combat",
+     "index": 49
+    }
+   ],
+   "model": {
+    "definition": "items/netherite_chestplate.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/netherite_chestplate",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/netherite_chestplate"
+   ],
+   "equippable": {
+    "slot": "chest",
+    "equip_sound": "minecraft:item.armor.equip_netherite",
+    "asset_id": "minecraft:netherite",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 8.0,
+    "toughness": 3.0,
+    "knockback_resistance": 0.1,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 8.0,
+      "id": "minecraft:armor.chestplate",
+      "operation": "add_value",
+      "slot": "chest"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 3.0,
+      "id": "minecraft:armor.chestplate",
+      "operation": "add_value",
+      "slot": "chest"
+     },
+     {
+      "type": "minecraft:knockback_resistance",
+      "amount": 0.10000000149011612,
+      "id": "minecraft:armor.chestplate",
+      "operation": "add_value",
+      "slot": "chest"
+     }
+    ]
+   }
+  },
+  {
+   "id": "netherite_leggings",
+   "protocol_id": 1094,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Netherite Leggings",
+   "max_stack": 1,
+   "max_damage": 555,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:repairs_netherite_armor",
+    "resolved": [
+     "netherite_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "damage_resistant",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/leg_armor",
+    "enchantable/vanishing",
+    "leg_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1386
+    },
+    {
+     "tab": "combat",
+     "index": 50
+    }
+   ],
+   "model": {
+    "definition": "items/netherite_leggings.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/netherite_leggings",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/netherite_leggings"
+   ],
+   "equippable": {
+    "slot": "legs",
+    "equip_sound": "minecraft:item.armor.equip_netherite",
+    "asset_id": "minecraft:netherite",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 6.0,
+    "toughness": 3.0,
+    "knockback_resistance": 0.1,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 6.0,
+      "id": "minecraft:armor.leggings",
+      "operation": "add_value",
+      "slot": "legs"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 3.0,
+      "id": "minecraft:armor.leggings",
+      "operation": "add_value",
+      "slot": "legs"
+     },
+     {
+      "type": "minecraft:knockback_resistance",
+      "amount": 0.10000000149011612,
+      "id": "minecraft:armor.leggings",
+      "operation": "add_value",
+      "slot": "legs"
+     }
+    ]
+   }
+  },
+  {
+   "id": "netherite_boots",
+   "protocol_id": 1095,
+   "group": "armor",
+   "material": null,
+   "kind": null,
+   "name": "Netherite Boots",
+   "max_stack": 1,
+   "max_damage": 481,
+   "enchantability": 15,
+   "repair": {
+    "items": "#minecraft:repairs_netherite_armor",
+    "resolved": [
+     "netherite_ingot"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "damage",
+    "damage_resistant",
+    "enchantable",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/armor",
+    "enchantable/durability",
+    "enchantable/equippable",
+    "enchantable/foot_armor",
+    "enchantable/vanishing",
+    "foot_armor",
+    "trimmable_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1387
+    },
+    {
+     "tab": "combat",
+     "index": 51
+    }
+   ],
+   "model": {
+    "definition": "items/netherite_boots.json",
+    "type": "select",
+    "models": [
+     {
+      "model": "item/netherite_boots",
+      "when": {
+       "property": "trim_material",
+       "is": "fallback"
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/netherite_boots"
+   ],
+   "equippable": {
+    "slot": "feet",
+    "equip_sound": "minecraft:item.armor.equip_netherite",
+    "asset_id": "minecraft:netherite",
+    "swappable": true
+   },
+   "armor": {
+    "armor": 3.0,
+    "toughness": 3.0,
+    "knockback_resistance": 0.1,
+    "modifiers": [
+     {
+      "type": "minecraft:armor",
+      "amount": 3.0,
+      "id": "minecraft:armor.boots",
+      "operation": "add_value",
+      "slot": "feet"
+     },
+     {
+      "type": "minecraft:armor_toughness",
+      "amount": 3.0,
+      "id": "minecraft:armor.boots",
+      "operation": "add_value",
+      "slot": "feet"
+     },
+     {
+      "type": "minecraft:knockback_resistance",
+      "amount": 0.10000000149011612,
+      "id": "minecraft:armor.boots",
+      "operation": "add_value",
+      "slot": "feet"
+     }
+    ]
+   }
+  },
+  {
+   "id": "shield",
+   "protocol_id": 1446,
+   "group": "shield",
+   "material": null,
+   "kind": null,
+   "name": "Shield",
+   "max_stack": 1,
+   "max_damage": 336,
+   "enchantability": null,
+   "repair": {
+    "items": "#minecraft:wooden_tool_materials",
+    "resolved": [
+     "acacia_planks",
+     "bamboo_planks",
+     "birch_planks",
+     "cherry_planks",
+     "crimson_planks",
+     "dark_oak_planks",
+     "jungle_planks",
+     "mangrove_planks",
+     "oak_planks",
+     "pale_oak_planks",
+     "poplar_planks",
+     "spruce_planks",
+     "warped_planks"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "banner_patterns",
+    "blocks_attacks",
+    "break_sound",
+    "damage",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/durability",
+    "enchantable/vanishing"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1359
+    },
+    {
+     "tab": "combat",
+     "index": 23
+    }
+   ],
+   "model": {
+    "definition": "items/shield.json",
+    "type": "condition",
+    "models": [
+     {
+      "model": "item/shield",
+      "when": {
+       "property": "using_item",
+       "is": [
+        false
+       ]
+      }
+     },
+     {
+      "model": "item/shield_blocking",
+      "when": {
+       "property": "using_item",
+       "is": [
+        true
+       ]
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [],
+   "equippable": {
+    "slot": "offhand",
+    "equip_sound": "minecraft:item.armor.equip_generic",
+    "asset_id": null,
+    "swappable": false
+   },
+   "special": {
+    "type": "shield",
+    "texture": "entity/shield/shield_base_nopattern",
+    "transformation": {
+     "left_rotation": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "right_rotation": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "scale": [
+      1.0,
+      -1.0,
+      -1.0
+     ],
+     "translation": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   "blocks_attacks": {
+    "block_delay_seconds": 0.25,
+    "disable_cooldown_scale": 1.0,
+    "damage_reductions": [
+     {
+      "horizontal_blocking_angle": 90.0,
+      "base": 0.0,
+      "factor": 1.0
+     }
+    ],
+    "item_damage": {
+     "threshold": 3.0,
+     "base": 1.0,
+     "factor": 1.0
+    },
+    "bypassed_by": "#minecraft:bypasses_shield",
+    "block_sound": "minecraft:item.shield.block",
+    "disabled_sound": "minecraft:item.shield.break"
+   }
   }
  ]
 }

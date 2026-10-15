@@ -26,9 +26,31 @@ FIntPoint FHudContainerModel::GetSlotPosition(int32 Slot)
 FIntPoint FHudContainerModel::GetSlotPosition(EFoundationMenuKind Kind, int32 Slot)
 {
     if (Kind == EFoundationMenuKind::Inventory) return GetSlotPosition(Slot);
-    // The crafting table: result 124,35; the 3x3 from 30,17; the main grid from 8,84; the hotbar at y 142.
+    // The crafting table: result 124,35; the 3x3 from 30,17. The furnace: input 56,17, fuel 56,53, result 116,35. Both:
+    // the main grid from 8,84; the hotbar at y 142.
     const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
-    if (Slot == FContainerModelMenu::ResultSlot) return {124, 35};
+    // The barrel, the chest and the double chest (ContainerScreen): rows of 9 from 8,18.
+    if (HasViewers(Kind))
+    {
+        const bool bLarge = Kind == EFoundationMenuKind::LargeChest;
+        if (Layout.IsContainer(Slot))
+            return {8 + (Slot - Layout.FirstContainer) % 9 * 18, 18 + (Slot - Layout.FirstContainer) / 9 * 18};
+        if (Layout.IsMain(Slot))
+            return {8 + (Slot - Layout.FirstMain) % 9 * 18,
+                (bLarge ? LargeChestPlayerY : BarrelPlayerY) + (Slot - Layout.FirstMain) / 9 * 18};
+        if (Layout.IsHotbar(Slot))
+            return {8 + (Slot - Layout.FirstHotbar) * 18, bLarge ? LargeChestHotbarY : BarrelHotbarY};
+        return {-1000, -1000};
+    }
+    if (Layout.IsContainer(Slot))
+    {
+        static const FIntPoint Furnace[] = {{56, 17}, {56, 53}, {116, 35}};
+        const int32 Index = Slot - Layout.FirstContainer;
+        // The smoker and blast furnace place them as the furnace does (value-swaps.md "SmokerScreen",
+        // "BlastFurnaceScreen").
+        return IsFurnaceMenu(Kind) && Index < UE_ARRAY_COUNT(Furnace) ? Furnace[Index] : FIntPoint(-1000, -1000);
+    }
+    if (Layout.HasCraftResult() && Slot == FContainerModelMenu::ResultSlot) return {124, 35};
     if (Layout.IsCraft(Slot))
         return {30 + (Slot - Layout.FirstCraft) % Layout.CraftWidth * 18,
             17 + (Slot - Layout.FirstCraft) / Layout.CraftWidth * 18};
@@ -41,7 +63,26 @@ FIntPoint FHudContainerModel::GetSlotPosition(EFoundationMenuKind Kind, int32 Sl
 FIntPoint FHudContainerModel::GetRecipeButton(EFoundationMenuKind Kind)
 {
     return Kind == EFoundationMenuKind::Crafting ? FIntPoint(CraftingRecipeButtonX, CraftingRecipeButtonY)
+        : IsFurnaceMenu(Kind)                    ? FIntPoint(FurnaceRecipeButtonX, FurnaceRecipeButtonY)
                                                  : FIntPoint(RecipeButtonX, RecipeButtonY);
+}
+
+int32 FHudContainerModel::GetFlameHeight(bool bLit, float LitFraction)
+{
+    return bLit && LitFraction > 0
+        ? FMath::Min(FMath::CeilToInt(FMath::Clamp(LitFraction, 0.f, 1.f) * 13) + 1, FlameSize)
+        : 0;
+}
+
+int32 FHudContainerModel::GetArrowWidth(float CookFraction)
+{
+    return FMath::CeilToInt(FMath::Clamp(CookFraction, 0.f, 1.f) * ArrowWidth);
+}
+
+int32 FHudContainerModel::GetResultSlot() const
+{
+    const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
+    return Layout.HasCraftResult() ? FContainerModelMenu::ResultSlot : Layout.TakeOnly;
 }
 
 bool FHudContainerModel::IsShown(int32 Slot) const
@@ -52,7 +93,8 @@ bool FHudContainerModel::IsShown(int32 Slot) const
 
 int32 FHudContainerModel::HitTest(FIntPoint Point) const
 {
-    if (Point.X < 0 || Point.Y < 0 || Point.X >= Width || Point.Y >= Height) return FContainerModelMenu::Outside;
+    if (Point.X < 0 || Point.Y < 0 || Point.X >= Width || Point.Y >= GetHeight(Kind))
+        return FContainerModelMenu::Outside;
     for (int32 Slot = 0; Slot < GetSlots(); ++Slot)
     {
         // A slot's hover area is its 16 x 16 item area and the pixel around it.
@@ -65,6 +107,7 @@ int32 FHudContainerModel::HitTest(FIntPoint Point) const
 
 bool FHudContainerModel::IsInRecipeButton(EFoundationMenuKind Kind, FIntPoint Point)
 {
+    if (!HasRecipeButton(Kind)) return false;
     const FIntPoint At = GetRecipeButton(Kind);
     return Point.X >= At.X && Point.X < At.X + RecipeButtonWidth && Point.Y >= At.Y &&
         Point.Y < At.Y + RecipeButtonHeight;
@@ -76,11 +119,23 @@ int32 FHudContainerModel::GetMaxStack(FName Item) const
     return Info ? FMath::Max(Info->MaxStack, 1) : 64;
 }
 
+int32 FHudContainerModel::GetSlotMax(int32 Slot, FName Item) const
+{
+    // The authority's limit (FFoundationContainerMenu::GetSlotMax): the slot's own cap, then the item's stack size.
+    const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
+    return FMath::Min(
+        Layout.GetSlotLimit(Slot, Item == FName(FFoundationMenuLayout::FuelBucketItem)), GetMaxStack(Item));
+}
+
 bool FHudContainerModel::CanDragTo(int32 Slot, const FHudContainerView& View) const
 {
     // Never the result slot (it only gives); the crafting grid takes a drag like any slot.
     const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
-    if (Slot < Layout.FirstCraft || Slot >= Layout.Slots || View.Carried.IsEmpty()) return false;
+    if (Slot < Layout.FirstCraft || Slot >= Layout.Slots || View.Carried.IsEmpty() || Slot == GetResultSlot())
+        return false;
+    // A furnace's fuel slot takes only fuel and the empty bucket.
+    if (Layout.FuelSlot != INDEX_NONE && Slot == Layout.FuelSlot && !FuelItems.Contains(View.Carried.Item))
+        return false;
     if (Layout.IsArmor(Slot))
     {
         // The armor slots, head to feet, take only their own slot's items.
@@ -92,7 +147,7 @@ bool FHudContainerModel::CanDragTo(int32 Slot, const FHudContainerView& View) co
     const FHudCreativeStack& Stack = View.Get(Slot);
     return Stack.IsEmpty() ||
         (Stack.Item == View.Carried.Item && Stack.Damage == View.Carried.Damage &&
-            Stack.Count < GetMaxStack(Stack.Item));
+            Stack.Count < GetSlotMax(Slot, Stack.Item));
 }
 
 TArray<FHudContainerClick> FHudContainerModel::MouseDown(
@@ -103,13 +158,18 @@ TArray<FHudContainerClick> FHudContainerModel::MouseDown(
     const int32 Slot = HitTest(Point);
     if (Slot == INDEX_NONE || !IsClickable(Slot)) return {};
     // The second left press on a slot: with a stack on the cursor it collects (PICKUP_ALL), after a shift-click it
-    // moves every stack like the one moved; either happens on the release. Never on the result slot: each click there
-    // crafts (provisional, vanilla play: spam-clicking an output crafts each time; the value report has no double-click
-    // row; Codex review 10, finding 4).
-    const bool bDouble = Button == 0 && Slot != FContainerModelMenu::Outside &&
-        Slot != FContainerModelMenu::ResultSlot && Slot == LastSlot && Time - LastTime < DoubleClickSeconds &&
+    // moves every stack like the one moved; either happens on the release. Never on the crafting result: each click
+    // there crafts (provisional, vanilla play: spam-clicking an output crafts each time; the value report has no
+    // double-click row; Codex review 10, finding 4). A furnace's output does not craft, so it collects (Codex review
+    // 22, finding 2). Both presses must be the left button: a right press then a left one is two clicks (Codex review
+    // 29, finding 1; vanilla's double-click needs the same button, survival2.r23.inventory_label).
+    const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
+    const bool bCraftResult = Layout.HasCraftResult() && Slot == FContainerModelMenu::ResultSlot;
+    const bool bDouble = Button == 0 && Button == LastButton && Slot != FContainerModelMenu::Outside && !bCraftResult &&
+        Slot == LastSlot && Time - LastTime < DoubleClickSeconds &&
         (bShift ? !LastQuickMoved.IsEmpty() : !View.Carried.IsEmpty());
     LastSlot = Slot;
+    LastButton = Button;
     LastTime = bDouble ? -1000 : Time;
     if (bDouble)
     {
@@ -159,11 +219,18 @@ TArray<FHudContainerClick> FHudContainerModel::MouseUp(FIntPoint Point, int32 Bu
         if (!bShiftDoubleClick)
             Clicks.Add({LastSlot, 0, EFoundationClickType::PickupAll});
         else
-            // Every slot past the crafting grid (the armor on, for the inventory; the main grid on, for a table).
-            for (int32 Slot = FFoundationMenuLayout::Get(Kind).GetCraftEnd(); Slot < GetSlots(); ++Slot)
-                if (HitTest(GetPosition(Slot)) == Slot && !View.Get(Slot).IsEmpty() &&
-                    View.Get(Slot).Item == LastQuickMoved.Item && View.Get(Slot).Damage == LastQuickMoved.Damage)
+        {
+            // Every slot past the crafting grid (the armor on, for the inventory; the main grid on, for a table), on
+            // the clicked slot's side only: a furnace's slots or the player's (minecraft.wiki, "from that inventory";
+            // Codex review 22, finding 1: else the logs a furnace input gave back route straight in again).
+            const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
+            const bool bContainerSide = Layout.IsContainer(LastSlot);
+            for (int32 Slot = FMath::Max(Layout.GetCraftEnd(), 0); Slot < GetSlots(); ++Slot)
+                if (Layout.IsContainer(Slot) == bContainerSide && HitTest(GetPosition(Slot)) == Slot &&
+                    !View.Get(Slot).IsEmpty() && View.Get(Slot).Item == LastQuickMoved.Item &&
+                    View.Get(Slot).Damage == LastQuickMoved.Damage)
                     Clicks.Add({Slot, 0, EFoundationClickType::QuickMove});
+        }
         return Clicks;
     }
     if (!IsDragging() || Button != DragButton) return Clicks;
@@ -214,7 +281,7 @@ void FHudContainerModel::ResetDrag()
 void FHudContainerModel::Reset()
 {
     ResetDrag();
-    LastSlot = INDEX_NONE;
+    LastSlot = LastButton = INDEX_NONE;
     bDoubleClick = bShiftDoubleClick = false;
     LastTime = -1000;
     LastQuickMoved = {};
@@ -232,7 +299,7 @@ void FHudContainerModel::GetDragPreview(
     {
         const FHudCreativeStack& Stack = View.Get(Slot);
         const int32 Existing = Stack.IsEmpty() ? 0 : Stack.Count;
-        const int32 Place = FMath::Min(Each + Existing, GetMaxStack(View.Carried.Item));
+        const int32 Place = FMath::Min(Each + Existing, GetSlotMax(Slot, View.Carried.Item));
         Remaining -= FMath::Max(Place - Existing, 0);
         Slots.Add(Slot, {View.Carried.Item, FMath::Max(Place, Existing), View.Carried.Damage});
     }

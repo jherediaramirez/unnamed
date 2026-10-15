@@ -37,6 +37,7 @@ namespace VoxelConsole
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarDecorationPlants;
     // With plants, the tree feature (phase 6, S9a); off is the control that reproduces S8's goldens and hashes.
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarDecorationTrees;
+    extern UNNAMED_API TAutoConsoleVariable<bool> CVarDecorationFireflyBushAsGrass;
     // Ore veins (phase 6, S4): on, Generate runs the ore_vein rules in streamed worlds and benches; off is the control
     // that gives the blocks from before S4. Read when a world starts; a change rebuilds it.
     extern UNNAMED_API TAutoConsoleVariable<bool> CVarOreVeins;

@@ -44,6 +44,13 @@ enum class EHudDataSource : uint8
     Preview,
     Authoritative
 };
+// The death screen's buttons (step 11a), for its hover and click.
+enum class EHudDeathButton : uint8
+{
+    None,
+    Respawn,
+    TitleScreen
+};
 // How a slot's item draws: a block item's 3D icon, an item's flat GUI sprite, or the original token placeholder
 // (an item with neither).
 enum class EHudItemIcon : uint8
@@ -59,8 +66,11 @@ struct FHudItemView
 {
     EHudItemIcon Icon = EHudItemIcon::Token;
     FLinearColor Tint = FLinearColor::White;
-    // The sprite's id ("item/iron_pickaxe"), drawn untinted at 16 x 16.
+    // The sprite's id ("item/iron_pickaxe"), drawn at 16 x 16 multiplied by SpriteTint, then SpriteOverlay (when set)
+    // over it untinted (the leather pieces).
     FName Sprite;
+    FName SpriteOverlay;
+    FLinearColor SpriteTint = FLinearColor::White;
     int32 Damage = 0, MaxDamage = 0;
     bool bInfinite = false;
     // The block a block item places, drawn as its 3D item model; animated textures repaint every tick.
@@ -74,7 +84,11 @@ struct FHudChatRun
 {
     FString Text;
     FLinearColor Color = FLinearColor::White;
-    bool operator==(const FHudChatRun& Other) const = default;
+    // Case-sensitive: FString's own == ignores case, which would skip a redraw after a case-only change.
+    bool operator==(const FHudChatRun& Other) const
+    {
+        return Text.Equals(Other.Text, ESearchCase::CaseSensitive) && Color == Other.Color;
+    }
 };
 
 // One chat message as the HUD draws it; Alpha is its fade (1 while the chat is open).
@@ -110,12 +124,50 @@ struct FHudSnapshot
     // The chat's messages, oldest first, and whether the chat is open (more rows show).
     TArray<FHudChatLine> Chat;
     bool bChatOpen = false;
-    // The open chat's typed line, drawn in vanilla's input bar.
+    // The open chat's typed line, drawn in vanilla's input bar, with the caret's character index and the blink phase
+    // [survival.r4.caret] (300 ms on, 300 ms off; the phase counts from the chat opening, provisional).
     FString ChatInput;
+    // The typed line's caret (a character index); -1 = at the end.
+    int32 CaretIndex = -1;
+    bool bCaretVisible = true;
+    // F1 (hide GUI): with the chat open only the chat draws; the death screen draws regardless.
+    bool bHideHud = false;
+    // The death screen (step 11a, foundation.Death.Screen 1), over the HUD: its buttons are enabled 20 ticks after
+    // death [survival.r6.death_screen]; the hovered button is highlighted when enabled.
+    bool bDeathScreen = false, bDeathButtonsEnabled = false;
+    int32 DeathScore = 0;
+    EHudDeathButton DeathHover = EHudDeathButton::None;
+    FString DeathMessage;
+    // Step 11b feel (foundation.Death.Screen 1): the red tint while hurtTime > 0 or dead, and the first-person fire
+    // overlay (fire_1's frame index) while burning outside Creative/Spectator.
+    bool bDamageTint = false, bOnFire = false;
+    int32 FireFrame = 0;
+    // The worn head piece's camera overlay texture ("misc/pumpkinblur"), drawn over the whole view in first person;
+    // None: nothing.
+    FName CameraOverlay;
 
     bool CanHurt() const { return Mode == EHudMode::Survival || Mode == EHudMode::Adventure; }
     bool HasExperience() const { return CanHurt(); }
-    bool operator==(const FHudSnapshot& Other) const = default;
+    // Every member but the FStrings, for operator==.
+    auto GetFields() const
+    {
+        return Tie(Resources, Items, Mode, Health, MaxHealth, Absorption, Armor, Food, Air, MaxAir, Level, Saturation,
+            Experience, AttackStrength, AttackDelay, bUnderwater, bHardcore, bPoison, bWither, bFrozen, bHunger,
+            bRegeneration, bDamageCooldown, bLivingTarget, bTargetAlive, bTargetInRange, bSpectatorTarget,
+            bDebugCrosshair3D, bFirstPerson, bVisible, bMainHandLeft, SelectedSlot, OffhandCount, Counts, ItemViews,
+            OffhandView, NotificationTime, AttackIndicator, Chat, bChatOpen, CaretIndex, bCaretVisible, bHideHud,
+            bDeathScreen, bDeathButtonsEnabled, DeathScore, DeathHover, bDamageTint, bOnFire, FireFrame, CameraOverlay);
+    }
+    // Hand-written because a defaulted == compares FStrings ignoring case (a case-only edit of the typed line would
+    // not redraw): the strings compare case-sensitively, everything else through GetFields. A new member must be
+    // added to GetFields (or, an FString, beside ItemName, ChatInput and DeathMessage) or changes to it skip the
+    // redraw.
+    bool operator==(const FHudSnapshot& Other) const
+    {
+        return GetFields() == Other.GetFields() && ItemName.Equals(Other.ItemName, ESearchCase::CaseSensitive) &&
+            ChatInput.Equals(Other.ChatInput, ESearchCase::CaseSensitive) &&
+            DeathMessage.Equals(Other.DeathMessage, ESearchCase::CaseSensitive);
+    }
 };
 
 struct FHudHealthGeometry

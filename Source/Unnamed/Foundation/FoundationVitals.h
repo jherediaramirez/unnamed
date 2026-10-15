@@ -60,12 +60,21 @@ struct UNNAMED_API FFoundationVitals
     static constexpr int32 LavaFireTicks = 300;
     static constexpr int32 BurnIntervalTicks = 20;
 
-    // Lab configuration, kept across respawn. Armor, toughness and attack speed stand in for equipment.
+    // Lab configuration, kept across respawn. Armor and toughness are the attributes' base values (0 for a player);
+    // the worn pieces add theirs (survival step 19a). Attack speed stands in for the held item's.
     EFoundationPlayerMode Mode = EFoundationPlayerMode::Survival;
     EFoundationDifficulty Difficulty = EFoundationDifficulty::Normal;
     bool bNaturalRegeneration = true;
     float MaxHealth = 20, ArmorToughness = 0, AttackSpeed = 4;
     int32 Armor = 0;
+    // The worn armor pieces' modifiers, set by the holder every step (FFoundationAuthority::GetWornArmor).
+    int32 WornArmor = 0;
+    float WornToughness = 0;
+    // Armor wear owed by the hurts since the holder last took it: each hurt armor applies to costs every worn piece
+    // max(1, floor(damage / 4)) (minecraft.wiki "Armor", Durability; provisional).
+    int32 PendingArmorWear = 0;
+    // The part of PendingArmorWear owed by #minecraft:is_fire damage (lava): fire-resistant pieces skip it.
+    int32 PendingFireArmorWear = 0;
 
     // Player state, restored by Respawn().
     float Health = 20, Absorption = 0, Saturation = 5, Exhaustion = 0, Progress = 0, LastHurt = 0;
@@ -83,12 +92,35 @@ struct UNNAMED_API FFoundationVitals
     int32 DamageEvents = 0, Deaths = 0;
     // Fire diagnostics the view plays sounds from: lava hits taken, burning hits taken, fires put out by water.
     int32 LavaHurts = 0, BurnHurts = 0, Extinguishes = 0;
-    FString LastDamage = TEXT("none"), DeathMessage;
+    // The last death (step 11a), kept across respawn: its message as vanilla's chat and death screen show it, the
+    // en_us.json key it came from, and the death screen's score (the experience points held at death).
+    FString LastDamage = TEXT("none"), DeathMessage, DeathKey;
+    int32 DeathScore = 0;
+
+    // A death message's en_us.json key and its 26.3 English template (%1$s the victim, %2$s the attacker).
+    struct FDeathText
+    {
+        const TCHAR* Key;
+        const TCHAR* Template;
+    };
+    // The name death messages give the local player until players have names.
+    static constexpr const TCHAR* PlayerName = TEXT("Player");
+    // A damage type's own death message, as the rules table holds it.
+    static FDeathText GetCauseText(EFoundationDamage Type);
+    // The message a death by Type shows: falls farther than 5 blocks use death.fell.accident.generic; mob and
+    // player attacks without an attacker name fall back to death.attack.generic.
+    static FDeathText GetDeathText(EFoundationDamage Type, double FallDistanceCm, const FString& Attacker = FString());
+    // Fills %1$s and %2$s (a plain string replace).
+    static FString FormatDeathMessage(const FDeathText& Text, const FString& Victim, const FString& Attacker);
 
     // One reference tick: timers, movement exhaustion and falls, air, then food.
     void Step(const FFoundationVitalsStep& Facts);
+    // Step's falls and fire alone (mobs, survival T6 20b2: no food, air or regeneration): landing damage (none when
+    // bFallImmune), water putting the fire out, burning and lava.
+    void StepHazards(const FFoundationVitalsStep& Facts, bool bFallImmune = false);
     // The whole hurt path: invulnerability, difficulty, damage cooldown, armor, absorption, exhaustion, death.
-    bool Hurt(EFoundationDamage Type, float Amount);
+    // Attacker names the mob or player behind a mob or player attack in the death message (survival T6 20c).
+    bool Hurt(EFoundationDamage Type, float Amount, const FString& Attacker = FString());
     void Heal(float Amount);
     void Eat(int32 Nutrition, float SaturationGain);
     // Player exhaustion: ignored while invulnerable, capped at 40.
@@ -128,6 +160,10 @@ struct UNNAMED_API FFoundationVitals
     // The same clock sampled PartialTicks ahead; an attack evaluates at 0.5.
     float GetAttackStrength(float PartialTicks) const;
     int32 GetExperienceForNextLevel() const;
+    // The armor and armor_toughness attributes: base plus the worn pieces, within the attributes' ranges (0-30 and
+    // 0-20; minecraft.wiki "Attribute").
+    int32 GetArmor() const { return FMath::Clamp(Armor + WornArmor, 0, 30); }
+    float GetArmorToughness() const { return FMath::Clamp(ArmorToughness + WornToughness, 0.f, 20.f); }
     FString Describe() const;
 
     static float GetDamageAfterArmor(float Damage, int32 ArmorPoints, float Toughness);

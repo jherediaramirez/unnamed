@@ -9,6 +9,125 @@
    "size": 415,
    "width": 64,
    "height": 64
+  },
+  {
+   "name": "entity/cow/cow_temperate.png",
+   "sha1": "300373b9a751509dc5472a0fc5796a0b929c75ef",
+   "size": 793,
+   "width": 64,
+   "height": 64
+  },
+  {
+   "name": "entity/cow/cow_cold.png",
+   "sha1": "bf63842d545b137d065802a26ee58ef3e93b35d8",
+   "size": 976,
+   "width": 64,
+   "height": 64
+  },
+  {
+   "name": "entity/cow/cow_warm.png",
+   "sha1": "a0ee023f98b1202c28540c5fa9c752394fbbf967",
+   "size": 691,
+   "width": 64,
+   "height": 64
+  },
+  {
+   "name": "entity/pig/pig_temperate.png",
+   "sha1": "e1020c127b9db75f9a53cf25bedbc8a3a406d250",
+   "size": 565,
+   "width": 64,
+   "height": 64
+  },
+  {
+   "name": "entity/pig/pig_cold.png",
+   "sha1": "6d804567df97ca8f163b19ecf0b245622e14b8ad",
+   "size": 656,
+   "width": 64,
+   "height": 64
+  },
+  {
+   "name": "entity/pig/pig_warm.png",
+   "sha1": "b9fcb96393b5df2b943eaabaf1a6b5f645fe4d07",
+   "size": 573,
+   "width": 64,
+   "height": 64
+  },
+  {
+   "name": "entity/sheep/sheep.png",
+   "sha1": "e7c4f9b5279e356724fd48fbbf1cba93b8e6cf26",
+   "size": 603,
+   "width": 64,
+   "height": 32
+  },
+  {
+   "name": "entity/sheep/sheep_wool.png",
+   "sha1": "0dc8efe62ffb5a76ee51517566b4d3772f01b996",
+   "size": 414,
+   "width": 64,
+   "height": 32
+  },
+  {
+   "name": "entity/sheep/sheep_wool_undercoat.png",
+   "sha1": "23cb0f3945b7e90acfff137ff686bf7a2537533b",
+   "size": 403,
+   "width": 64,
+   "height": 32
+  },
+  {
+   "name": "entity/chicken/chicken_temperate.png",
+   "sha1": "0a830137e1fa297cc3e3f93393461c5ff8cf5e9f",
+   "size": 366,
+   "width": 64,
+   "height": 32
+  },
+  {
+   "name": "entity/chicken/chicken_cold.png",
+   "sha1": "6fbdacddd7209a8e08b87b28bc1587041c6aa95a",
+   "size": 501,
+   "width": 64,
+   "height": 32
+  },
+  {
+   "name": "entity/chicken/chicken_warm.png",
+   "sha1": "db235e88a332da796d9571fb563745cabf703fde",
+   "size": 400,
+   "width": 64,
+   "height": 32
+  },
+  {
+   "name": "entity/zombie/zombie.png",
+   "sha1": "3d28d27b5388a7c2a296586649e98d068a795c2d",
+   "size": 700,
+   "width": 64,
+   "height": 64
+  },
+  {
+   "name": "entity/skeleton/skeleton.png",
+   "sha1": "70e4a0698bd83bf1370d1fe7e72c082448df1ff7",
+   "size": 477,
+   "width": 64,
+   "height": 32
+  },
+  {
+   "name": "entity/creeper/creeper.png",
+   "sha1": "97f4c6e40243dc37a44d269eeb3b8defc32e11ed",
+   "size": 2832,
+   "width": 64,
+   "height": 32
+  },
+  {
+   "name": "entity/spider/spider.png",
+   "sha1": "587ae86f6c714ec429301fcfea1b3c2a45fbaf54",
+   "size": 646,
+   "width": 64,
+   "height": 32
+  },
+  {
+   "name": "entity/spider/spider_eyes.png",
+   "sha1": "23f858135a1a0b8debff04eea3be9d1b280514ea",
+   "size": 130,
+   "width": 64,
+   "height": 32
   }
  ]
 }

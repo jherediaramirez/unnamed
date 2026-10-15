@@ -5,6 +5,7 @@
 #include "Foundation/FoundationPanels.h"
 #include "Menu/MenuBrowserHost.h"
 #include "Foundation/FoundationLab.h"
+#include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationPawn.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationController.h"
@@ -208,7 +209,9 @@ void UFoundationRuntimeProbe::BeginPlay()
     const bool bSwim = Suite == TEXT("swim");
     // And the player body in the third-person views, with the spring arm preview (FoundationBodyProbe.cpp).
     const bool bBody = Suite == TEXT("body");
-    if (!bMovement && !bInteraction && !bTour && !bViews && !bPause && !bSwim && !bBody)
+    // And the mobs' captures (survival T6 20a, FoundationMobsProbe.cpp).
+    const bool bMobs = Suite == TEXT("mobs");
+    if (!bMovement && !bInteraction && !bTour && !bViews && !bPause && !bSwim && !bBody && !bMobs)
     {
         // A case, so the probe still finishes and reports the failure.
         AddCase(
@@ -217,7 +220,32 @@ void UFoundationRuntimeProbe::BeginPlay()
             {
                 Record(TEXT("known -FoundationSuite"), false,
                     FString::Printf(
-                        TEXT("'%s' is not movement, interaction, tour, views, pause, swim, body or all"), *Suite));
+                        TEXT("'%s' is not movement, interaction, tour, views, pause, swim, body, mobs or all"),
+                        *Suite));
+            });
+    }
+    else
+    {
+        // Step 19b: a player starts with nothing, as in vanilla survival. The probes then give themselves the items the
+        // old starting loadout held through the authority's test hook (Rules.Loadout), so every later reset keeps them.
+        AddCase(
+            TEXT("starting items"), .1, [] {},
+            [this]
+            {
+                FFoundationAuthority* Authority = Pawn ? Pawn->GetAuthority() : nullptr;
+                const FFoundationPlayer* Player =
+                    Authority ? Authority->FindPlayer(Pawn->Interaction.PlayerId) : nullptr;
+                int32 Filled = 0;
+                for (int32 Slot = 0; Player && Slot < FFoundationInventory::Slots; ++Slot)
+                {
+                    const FFoundationItemInstance* Stack = Player->Inventory.GetSlot(Slot);
+                    Filled += Stack && !Stack->IsEmpty();
+                }
+                Record(TEXT("a player starts with an empty inventory"), Player && Filled == 0,
+                    FString::Printf(TEXT("%d filled slots"), Filled));
+                if (!Player) return;
+                Authority->Rules.Loadout = {TEXT("stone"), TEXT("iron_pickaxe"), TEXT("iron_sword")};
+                Authority->ResetInventory(Pawn->Interaction.PlayerId);
             });
     }
     if (bMovement) AddMovementCases();
@@ -227,7 +255,10 @@ void UFoundationRuntimeProbe::BeginPlay()
     if (bPause) AddPauseCases();
     if (bSwim) AddSwimCases();
     if (bBody) AddBodyCases();
+    if (bMobs) AddMobCases();
     if (bInteraction || bViews) AddCommandsCases();
+    if (bInteraction) AddDeathCases();
+    if (bInteraction) AddFootstepCases();
     if (Suite == TEXT("all") || bPause) AddPauseMenuCases();
     if (FParse::Param(FCommandLine::Get(), TEXT("HudCaptures"))) AddHudCases();
     TotalStarted = Started = FPlatformTime::Seconds();

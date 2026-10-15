@@ -17,8 +17,8 @@ param(
 # The shared check runner: one command instead of each session's own chain.
 #   & Scripts\RunChecks.ps1 -Profile quick|final|merge [-ExpectedHashes <file>] [-Flight smoke] [-Skip <steps>] [-KeepGoing] [-Allocator stomp|ansi] [-LaunchTimeoutMinutes 60]
 # Profiles:
-#   quick  build; TestVoxel; Mesher.Digest against the expected hashes; npm test; source-check.
-#   final  build -DisableAdaptiveUnity; the full native set (every declared Unnamed test must run; a run that leaves no report is
+#   quick  test guards; build; TestVoxel; Mesher.Digest against the expected hashes; npm test; source-check.
+#   final  test guards; build -DisableAdaptiveUnity; the full native set (every declared Unnamed test must run; a run that leaves no report is
 #          retried once, every crash is counted, and its UECC folders are kept in <Native folder>\Crashes); TestVoxel; the radius-8 hashes and Mesher.Digest against the expected
 #          hashes; the Playground runtime (all = the probe, interaction, tour; the fps is a figure, not a gate); create-world;
 #          npm test; source-check; the Reference verifiers.
@@ -192,6 +192,15 @@ if($Profile -eq 'merge'){
         if($unmerged.Count){Bad "$($unmerged.Count) unmerged index entries"}
         if($markers.Count){Bad "conflict markers: $(($markers | Select-Object -First 5) -join '; ')"}
     }
+}
+
+# Every native test inside WITH_DEV_AUTOMATION_TESTS (Scripts\CheckTestGuards.mjs; a test outside it breaks Shipping builds only).
+Step 'testguards' {
+    # Before the build (the run folder opens after it), so its log goes to the temp folder as the build's does.
+    $log=Join-Path ([IO.Path]::GetTempPath()) "RunChecks-test-guards-$([guid]::NewGuid()).log"
+    node (Join-Path $root 'Scripts\CheckTestGuards.mjs') *> $log; $code=$LASTEXITCODE
+    Say "   test guards: exit $code; $(Get-Content -LiteralPath $log | Select-Object -Last 1): $log"
+    if($code -ne 0){Bad "tests outside WITH_DEV_AUTOMATION_TESTS: $((Get-Content -LiteralPath $log | Select-Object -First 3) -join '; ')"}
 }
 
 Step 'build' {

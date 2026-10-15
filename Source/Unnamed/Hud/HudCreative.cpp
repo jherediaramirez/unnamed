@@ -10,6 +10,13 @@ namespace
     {
         return Point.X >= Origin.X && Point.Y >= Origin.Y && Point.X < Origin.X + Size.X && Point.Y < Origin.Y + Size.Y;
     }
+
+    // Beyond vanilla (survival B4a, Jesus via PM 4): firefly_bush stays a defined block and item, but no tab or search
+    // lists it (worldgen places short grass in its place: voxel.Decoration.FireflyBushAsGrass).
+    bool IsHiddenCreativeItem(FName Item)
+    {
+        return Item == TEXT("firefly_bush");
+    }
 }
 
 void FHudCreativeModel::Build(
@@ -30,7 +37,7 @@ void FHudCreativeModel::Build(
         Tab.bCanScroll = Asset.bCanScroll;
         Tab.Icon = Asset.Icon;
         for (const FName Item : Asset.Items)
-            if (Known.Contains(Item)) Tab.Items.AddUnique(Item);
+            if (Known.Contains(Item) && !IsHiddenCreativeItem(Item)) Tab.Items.AddUnique(Item);
         if (Tab.Type == TEXT("CATEGORY") && Tab.Items.IsEmpty()) continue;
         Tabs.Add(MoveTemp(Tab));
     }
@@ -484,6 +491,14 @@ FString HudTooltip::FormatAmount(double Value)
     return Text;
 }
 
+FColor HudTooltip::GetNameColor(FName Rarity)
+{
+    if (Rarity == TEXT("uncommon")) return Yellow;
+    if (Rarity == TEXT("rare")) return Aqua;
+    if (Rarity == TEXT("epic")) return LightPurple;
+    return White;
+}
+
 TArray<FHudTooltipLine> HudTooltip::GetModifierLines(
     TConstArrayView<FFoundationItemModifierAsset> Modifiers, const TMap<FString, FString>& Lang, bool bPlayer)
 {
@@ -522,9 +537,13 @@ TArray<FHudTooltipLine> HudTooltip::GetModifierLines(
                         Fill(Text(TEXT("attribute.modifier.equals.0")), FormatAmount(*Base + Modifier.Amount), Name),
                     DarkGreen});
             else if (Modifier.Amount != 0)
+                // Knockback resistance shows ten times its amount (minecraft.wiki "Attribute"; the reference's
+                // tooltips: the netherite pieces' 0.1 is "+1 Knockback Resistance").
                 Lines.Add({Fill(Text(Modifier.Amount > 0 ? TEXT("attribute.modifier.plus.0")
                                                          : TEXT("attribute.modifier.take.0")),
-                               FormatAmount(FMath::Abs(Modifier.Amount)), Name),
+                               FormatAmount(
+                                   FMath::Abs(Modifier.Amount) * (Attribute == TEXT("knockback_resistance") ? 10 : 1)),
+                               Name),
                     Modifier.Amount > 0 ? Blue : Red});
         }
     }

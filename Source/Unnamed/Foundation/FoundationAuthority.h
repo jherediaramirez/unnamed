@@ -4,10 +4,12 @@
 #include "Foundation/FoundationBlockPlacement.h"
 #include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationContainer.h"
+#include "Foundation/FoundationContainers.h"
 #include "Foundation/FoundationExperienceOrbs.h"
 #include "Foundation/FoundationItemEntities.h"
 #include "Foundation/FoundationItems.h"
 #include "Foundation/FoundationLoot.h"
+#include "Foundation/FoundationMobs.h"
 #include "Foundation/FoundationRecipes.h"
 #include "Foundation/FoundationTargeting.h"
 #include "Foundation/FoundationVitals.h"
@@ -197,6 +199,8 @@ struct FFoundationPlayerFacts
     // No ladders, mounts or effects yet; kept so the critical rule reads like the reference.
     bool bClimbing = false, bPassenger = false, bMobilityRestricted = false;
     bool bAlive = true;
+    // The game mode (survival T6 20c: monsters target Survival and Adventure players only).
+    EFoundationPlayerMode Mode = EFoundationPlayerMode::Survival;
     // Crouch intent: with something in hand it bypasses block interactions.
     bool bSecondaryUse = false;
     int64 Step = 0;
@@ -251,6 +255,25 @@ struct FFoundationLabOptions
     // the crafting table) runs it instead of placing. Off, right-click always places, as before. The pawn copies
     // foundation.Blocks.Use in before each step; tests set it themselves.
     bool bBlockUse = false;
+    // Mobs (survival T6 20a): mobs step and can be hit. Off, none spawn and Resolve sees training targets only. The
+    // pawn copies foundation.Mobs in before each step; tests set it themselves.
+    bool bMobs = false;
+    // Passive spawning (survival T6 20b2): with bMobs and GetBiomeId set, a column first seen loaded may spawn a
+    // creature pack. The pawn copies foundation.Mobs.Spawn in before each step.
+    bool bMobSpawn = false;
+    // Fire (step 16a): mobs take lava contact and burning damage, as the pawn does. The pawn copies foundation.Fire in.
+    bool bFire = false;
+    // Furnaces (T1 steps 8a, 8b; smokers and blast furnaces too): a right-click opens the block's menu, and every one
+    // in a loaded column ticks each step (fuel, cooking, cooling, its lit state), open or not. Off, as before 8a: no
+    // menu (the click passes on and places) and no ticks. The pawn copies foundation.Furnace in before each step.
+    bool bFurnace = false;
+    // Barrels (T1 step 9): a right-click opens the block's 27-slot menu and the block is open while viewed. Off, as
+    // before: no menu (the click passes on and places). The pawn copies foundation.Barrel in before each step.
+    bool bBarrel = false;
+    // Chests and trapped chests (T1 step 18-chest): a right-click opens the 27-slot menu (54 over a double chest) and
+    // plays the open and close sounds. Off, as before: no menu (the click passes on and places). The pawn copies
+    // foundation.Chest in before each step.
+    bool bChest = false;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -259,7 +282,8 @@ struct UNNAMED_API FFoundationRules
     TArray<FFoundationItemDefinition> Items;
     // The bare hand's melee and mining profile (an empty slot).
     FFoundationItemDefinition Hand;
-    // Hotbar contents from slot 1; None leaves a slot empty.
+    // Hotbar contents from slot 1 for a new player and a reset; None leaves a slot empty. Empty in the game: a player
+    // starts with nothing, as in vanilla survival (step 19b); only tests set it.
     TArray<FName> Loadout;
     double BlockReachCm = 450, EntityReachCm = 300;
     float EligibleDivisor = 30, IneligibleDivisor = 100;
@@ -291,6 +315,10 @@ struct UNNAMED_API FFoundationRules
     TMap<FName, FFoundationLootTable> LootTables;
     TArray<FFoundationLootPredicate> LootPredicates;
     uint64 LootSeed = 0;
+    // Entity loot (survival T6 20a): tables by entity id ("cow", "sheep/white"; BuildRules, from DA_Mobs).
+    TMap<FName, FFoundationLootTable> EntityLootTables;
+    // Creature spawning by biome id ("minecraft:plains"; survival T6 20b2, DA_Mobs).
+    TMap<FName, FFoundationBiomeSpawns> BiomeSpawns;
     // Crafting recipes (survival step 6; BuildRules, from DA_Recipes), resolved against Items.
     FFoundationRecipeBook Recipes;
 
@@ -347,7 +375,31 @@ enum class EFoundationEventKind : uint8
     Extinguished,
     // A block's use opened a container (survival step 7): Cell the block, EntityId the container id, Interaction the
     // block id.
-    ContainerOpened
+    ContainerOpened,
+    // A mob's sound (survival T6 20a): Interaction the sound event, LocationCm where (world cm), Amount the volume,
+    // EntityId the mob.
+    MobSound,
+    // A piece went into an armor slot (survival step 19a): Item the piece, LocationCm the player's feet (world cm).
+    Equipped,
+    // A block's hand use changed it (survival B3a: a door, trapdoor or gate opened or closed; B3b: a button or lever,
+    // and a button's release, with no player): Cell the used block, State its new state, Interaction the sound event
+    // (FoundationBlockFamilies::GetUseSound), Amount its play volume and Pitch its pitch (0: the view's 0.9 + 0.1U).
+    // A barrel's open state changed (T1 step 9): the same, with Amount the volume and LocationCm where it plays (world
+    // cm); with no LocationCm (zero) it plays at the cell's centre.
+    BlockUsed,
+    // A raised shield blocked a hit (survival step 19b): Item the shield, LocationCm the player's feet (world cm),
+    // Interaction its block sound, Amount the damage blocked.
+    Blocked,
+    // An axe hit disabled a raised shield (step 19b): Item the shield, LocationCm the feet, Interaction its disabled
+    // sound, Amount the cooldown in ticks.
+    BlockingDisabled
+};
+
+// What a scheduled block tick does (FFoundationAuthority::ScheduleBlockTick; survival B3b).
+enum class EFoundationBlockTick : uint8
+{
+    // A pressed button unpowers (FoundationBlockFamilies::ReleaseButton).
+    ButtonRelease,
 };
 
 // A committed (or rejected) outcome for presentation: effects fire once from these.
@@ -360,6 +412,8 @@ struct FFoundationEvent
     FFoundationBlockState State;
     int32 EntityId = 0;
     float Amount = 0;
+    // BlockUsed: the play pitch; 0 leaves it to the view (survival B3b).
+    float Pitch = 0;
     bool bCritical = false;
     // Hit events (items S7): the hit knocked the entity back; a sprint-knockback hit; a sweep's hit on a nearby entity.
     bool bKnockback = false, bSprintKnockback = false, bSweep = false;
@@ -382,6 +436,18 @@ struct FFoundationItemUse
     int32 Item = INDEX_NONE;
     int32 Ticks = 0, Duration = 0;
     int64 LastStep = -1;
+    // A blocks_attacks use (the shield, step 19b): raised, not eaten; no effects and no finish.
+    bool bBlocks = false;
+};
+
+// A hit with a source on a player (survival step 19b): where it came from (world cm, the block world's frame) and the
+// attacker's weapon's disable_blocking_for_seconds (the axes' 5). FFoundationAuthority::HurtPlayer judges blocking.
+struct FFoundationAttack
+{
+    EFoundationDamage Type = EFoundationDamage::MobAttack;
+    float Amount = 0;
+    FVector SourceCm = FVector::ZeroVector;
+    float DisableBlockingSeconds = 0;
 };
 
 namespace FoundationBucket
@@ -405,6 +471,8 @@ namespace FoundationItemUse
     constexpr double EffectsDelayFraction = .21875;
     constexpr int32 EffectsEveryTicks = 4;
     UNNAMED_API bool IsEffectTick(int32 Ticks, int32 Duration);
+    // A raised shield's use duration in ticks (step 19b; minecraft.wiki "Shield", provisional).
+    constexpr int32 BlockingUseTicks = 72000;
 }
 
 // A container menu open besides the player's own (survival step 7): vanilla's containerId, the menu, the block it
@@ -416,6 +484,8 @@ struct FFoundationOpenMenu
     FIntVector Cell = FIntVector::ZeroValue;
     FName Block;
     TArray<FFoundationItemInstance> Grid;
+    // A double chest's other half when it opened (T1 step 18-chest), so its viewers update when it no longer pairs.
+    TOptional<FIntVector> Partner;
 
     bool IsOpen() const { return ContainerId != 0; }
 };
@@ -427,6 +497,16 @@ namespace FoundationBlockUse
     UNNAMED_API bool IsOn();
 }
 
+// A mob's melee hit on a player (survival T6 20c), for the player's owner to apply to its vitals: the mob, its attack
+// damage (before difficulty), its name for the death message, and where it stood (world cm: the knockback's source).
+struct FFoundationMobHit
+{
+    int32 Mob = 0;
+    float Damage = 0;
+    FString Attacker;
+    FVector FromCm = FVector::ZeroVector;
+};
+
 struct FFoundationPlayer
 {
     int32 Id = 0;
@@ -435,13 +515,21 @@ struct FFoundationPlayer
     FFoundationInventory Inventory;
     FFoundationMining Mining;
     FFoundationItemUse Use;
+    // An axe hit's disable (step 19b): the blocks_attacks item and the step its cooldown ends; INDEX_NONE without one.
+    int32 BlockingDisabledItem = INDEX_NONE;
+    int64 BlockingDisabledUntilStep = 0;
     int64 LastPlacementStep = MIN_int64;
     // Experience orbs (step 12): steps until the next orb can be taken, and points taken but not yet claimed by the
     // player's vitals (TakeExperience).
     int32 ExperienceDelay = 0, PendingExperience = 0;
+    // Mob hits since its owner last took them (TakeMobHits).
+    TArray<FFoundationMobHit> MobHits;
     // The container open besides the inventory (survival step 7); its last id (vanilla counts 1-100, then wraps).
     FFoundationOpenMenu OpenMenu;
     int32 LastContainerId = 0;
+    // The respawn point (step 11a): the block cell whose bottom centre the player's feet return to; unset, the world's
+    // spawn. Not saved to world.json until player data is saved.
+    TOptional<FIntVector> RespawnCell;
     // Results by sequence for retransmissions; bounded, oldest evicted first.
     TMap<uint32, FFoundationResult> Results;
     TArray<uint32> ResultOrder;
@@ -462,6 +550,14 @@ public:
     // against (the lab's fixtures and the blocks; a generated world's ungenerated columns are solid). Unset, the block
     // world's own and the statics.
     TFunction<void(const FBox& Region, TArray<FBox>& Out)> GatherCollision;
+    // Passive spawning (survival T6 20b2), set by a generated world's owner: the biome id at a cell
+    // ("minecraft:plains", none when unknown) and the world seed packs are drawn from. Unset (the Playground): no
+    // passive spawning.
+    TFunction<FName(const FIntVector& Cell)> GetBiomeId;
+    uint64 MobSpawnSeed = 0;
+    // The day's sky facts (survival T6 20c), set by a generated world's owner from the sky reference's day timeline:
+    // gameplay/sky_light_level (0-15) and gameplay/monsters_burn now. Unset (the Playground): 15 and no burning.
+    TFunction<void(float& OutSkyLightLevel, bool& bOutMonstersBurn)> GetSkyFacts;
     FFoundationRules Rules;
     FFoundationLabOptions Options;
     TArray<FFoundationStatic> Statics;
@@ -483,23 +579,55 @@ public:
     // with this id when Options.bBlockUse is on, before an axe strips or the hand places. It runs for the main hand
     // only, and not when a crouching player holds something (the sneak bypass: that player places instead). Return
     // true when the use happened (fill Result: Committed, and any effects); false passes on to stripping and placing.
-    // The authority registers the crafting table; doors, buttons and levers (T5) register theirs the same way.
+    // The authority registers the crafting table and the furnace; doors, buttons and levers (T5) register theirs the
+    // same way. To consume a click without acting (a bed by day), return true with Outcome Rejected; false only passes.
+    // WouldUse, when given, answers the placement preview without side effects: false for a handler that would pass
+    // now (Codex review 12, finding 4); unset, a registered handler counts as using the click.
     using FBlockUse = TFunction<bool(FFoundationAuthority& Authority, FFoundationPlayer& Player,
         const FFoundationHit& Hit, FFoundationResult& Result)>;
-    void RegisterBlockUse(FName BlockId, FBlockUse Use);
-    // Whether the block in Cell has a use handler (previews show no placement for it).
+    using FBlockWouldUse = TFunction<bool(
+        const FFoundationAuthority& Authority, const FFoundationPlayer& Player, const FFoundationHit& Hit)>;
+    void RegisterBlockUse(FName BlockId, FBlockUse Use, FBlockWouldUse WouldUse = nullptr);
+    // Writes a block use's states (survival B3a, FoundationBlockFamilies::Use: both door halves at once), each cell
+    // settled as an edit (survival, the neighbour shapes), and adds a BlockUsed event with Sound at Volume and Pitch
+    // (0: the view's door pitch); Result is Committed and bInteracted, Cell the used block. A write to a cell nobody
+    // knows rejects it all (OutsideBounds), unwritten.
+    void CommitBlockUse(const FFoundationPlayer& Player, const FIntVector& Cell,
+        TConstArrayView<TPair<FIntVector, FFoundationBlockState>> Writes, FName Sound, FFoundationResult& Result,
+        float Volume = 1.f, float Pitch = 0.f);
+    // Survival B3b: a cell's scheduled tick (vanilla's scheduleTick). After Delay steps (Step), Kind runs at Cell if
+    // the cell still holds Expect; otherwise (broken, replaced, used again into another state, or unknown) it is
+    // dropped. A new tick replaces the cell's pending tick of the same kind. Reset drops them all; they are not saved
+    // (block edits are not saved yet). The button's release uses it; crops and saplings can add kinds.
+    void ScheduleBlockTick(
+        const FIntVector& Cell, FFoundationBlockState Expect, int32 Delay, EFoundationBlockTick Kind);
+    // Whether the block in Cell has a use handler.
     bool HasBlockUse(const FIntVector& Cell) const;
+    // Whether Player's use on Hit would be the block's (previews show no placement for it): a handler, and its
+    // WouldUse.
+    bool WouldUseBlock(const FFoundationPlayer& Player, const FFoundationHit& Hit) const;
     // Opens a container menu for Player at Cell (a block use calls it); Result carries the new id.
     void OpenContainer(FFoundationPlayer& Player, EFoundationMenuKind Kind, const FIntVector& Cell, FName Block,
         FFoundationResult& Result);
+    // Block entities by world cell (T1 step 8a: furnaces): they outlive column unloads; Reset clears them.
+    FFoundationBlockEntities BlockEntities;
+    // The generated cooking recipes and fuels, resolved against Rules.Items on first use.
+    const FFoundationCooking& GetCooking() const;
+    // An open container closes at this distance past the interaction range, from the player's eye to its block's box
+    // (Codex review 12, finding 1; survival2.r23.container_rule: the range plus 4 blocks, measured to the box).
+    double ContainerReachExtraCm = 400;
     void SetFacts(int32 Player, const FFoundationPlayerFacts& Facts);
 
     FFoundationResult Execute(int32 Player, const FFoundationCommand& Command, FFoundationVitals& Vitals);
     // One reference step of authority-owned state: the targets' damage cooldowns, then the item entities (their
-    // motion and pickup delays, then every live player's pickups).
+    // motion and pickup delays, then every live player's pickups), the orbs, the open containers' validity (a menu
+    // whose block is gone or out of reach closes) and the furnaces.
     void Step();
-    // A new session: old commands become stale, the seed blocks, loadouts and targets come back.
+    // A new session: old commands become stale, the seed blocks and targets come back, and the
+    // inventories restart from Rules.Loadout (empty in the game).
     void Reset();
+    // Restarts one player's inventory from Rules.Loadout: how tests and probes give themselves items (step 19b).
+    void ResetInventory(int32 PlayerId);
     int32 GetSessionId() const { return SessionId; }
     // Resets once the current command finishes (or at once outside a command).
     void RequestReset() { bResetRequested = true; }
@@ -540,8 +668,54 @@ public:
     // the block drop's spread seeded by RandomSeed; how many orbs. Ores call it on a break; a furnace (T1 step 8a)
     // calls it when its output is taken.
     int32 SpawnExperience(const FVector& LocalCm, int32 Total, int32 RandomSeed);
+    // /kill @e (step 11a): removes every item entity / experience orb, as a despawn does (the views drop what is no
+    // longer listed); how many.
+    int32 RemoveItemEntities();
+    int32 RemoveExperienceOrbs();
     // The points a player has taken since the last call (its owner adds them to its vitals after each step).
     int32 TakeExperience(int32 Player);
+    // The mob hits on a player since the last call (survival T6 20c; its owner hurts its vitals with each).
+    TArray<FFoundationMobHit> TakeMobHits(int32 Player);
+    // Armor (survival step 19a): the worn pieces' armor and toughness (each piece counts only in its own slot; none
+    // with foundation.Inventory.Full 0, which has no armor slots). Its owner sets them on its vitals every step.
+    void GetWornArmor(int32 Player, int32& OutArmor, float& OutToughness) const;
+    // The wear a player's hurts owe (FFoundationVitals::PendingArmorWear) on every worn piece that wears, with lab
+    // tool wear on and not in creative; a piece worn out breaks (a ToolBroke event). FireAmount is the part fire damage
+    // owes (FFoundationVitals::PendingFireArmorWear), which fire-resistant pieces skip. How many broke.
+    int32 WearArmor(int32 Player, int32 Amount, EFoundationPlayerMode Mode, int32 FireAmount = 0);
+    // Blocking (survival step 19b): whether the player holds a blocks_attacks item up past its delay (R18,
+    // survival2.r18.shield_delay: from the 5th use tick) and not disabled.
+    bool IsBlocking(int32 Player) const;
+    // A hit with a source on the player: a raised shield facing it blocks it (and wears, plays its sound, may be
+    // disabled by the attacker's weapon); the rest goes to Vitals.Hurt. False when nothing hurt the player (a full
+    // block takes no damage and opens no hurt window: provisional, SM-Player 19b Q3).
+    bool HurtPlayer(int32 Player, FFoundationVitals& Vitals, const FFoundationAttack& Attack);
+    // Mobs (survival T6 20a), oldest first; Reset clears them. SpawnMob adds one standing at a position (cm from the
+    // block world's origin) facing Yaw: its id, or 0 with Options.bMobs off.
+    const TArray<FFoundationMob>& GetMobs() const { return Mobs; }
+    int32 SpawnMob(EFoundationMobType Type, const FVector& LocalCm, float Yaw = 0);
+    FFoundationMob* FindMob(int32 Id);
+    // Survival T6 20b2b: the creature cycle (every CreatureCycleTicks steps), and one eligible column's group rounds
+    // (PlayerCells: the live players' feet, in cells); how many mobs the column spawned.
+    void RunCreatureCycle();
+    int32 SpawnCycleColumn(const FIntPoint& Column, TConstArrayView<FVector> PlayerCells, int64 Cycle);
+    // Removes every mob, without loot; how many.
+    int32 ClearMobs();
+    // A cell as the mobs' A* sees it (survival T6 20b): the top of the collision boxes that start in it, and whether it
+    // holds a fluid.
+    FFoundationPathCell GetPathCell(const FIntVector& Cell);
+
+    // Death (step 11a). The respawn point: beds (step B7) set it when slept in and clear it when the bed is gone; mobs
+    // (step 20c) read it. The pawn's Respawn puts the feet at the cell's bottom centre when set, else at the world's
+    // spawn. Session only: not saved to world.json until player data is saved.
+    void SetRespawnPoint(int32 PlayerId, const FIntVector& Cell);
+    void ClearRespawnPoint(int32 PlayerId);
+    TOptional<FIntVector> GetRespawnPoint(int32 PlayerId) const;
+    // Vanilla drops the inventory at the moment of death [survival.r6.death_items]: every non-empty stack of the 41
+    // slots, the carried stack and the 2x2 crafting grid becomes one item entity, then the inventory is empty.
+    // FeetLocalCm: the feet, cm from the block world's origin. Nothing drops with infinite supply. RandomSeed makes the
+    // throw deterministic.
+    void DropInventoryOnDeath(int32 PlayerId, const FVector& FeetLocalCm, int32 RandomSeed);
 
     const TArray<FFoundationEvent>& GetEvents() const { return Events; }
     int64 GetEventSerial() const { return EventSerial; }
@@ -549,17 +723,76 @@ public:
     // Diagnostics.
     int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
     int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsThrown = 0, ItemsMerged = 0, ItemsDespawned = 0, ItemsEaten = 0,
-          Strips = 0, BucketUses = 0;
+          Strips = 0, BucketUses = 0, AttacksBlocked = 0;
     int32 OrbsSpawned = 0, OrbsPickedUp = 0, OrbsMerged = 0, OrbsDespawned = 0;
+    int32 MobsSpawned = 0, MobsKilled = 0, MobPaths = 0, MobEggs = 0, MobGrazes = 0;
+    // Passive spawning: columns seen loaded, packs spawned, the mobs in them.
+    int32 MobColumnsSeen = 0, MobPacks = 0, MobsPackSpawned = 0;
+    // The creature cycle (20b2b): cycles run (under the cap), the mobs they spawned.
+    int32 MobCycles = 0, MobsCycleSpawned = 0;
+    // Survival T6 20c: melee hits monsters landed on players; sun ignitions.
+    int32 MobMeleeHits = 0, MobSunBurns = 0;
+    // The last cycle considered: its eligible columns, the creatures counted in them and the cap.
+    int32 MobCycleEligible = 0, MobCycleCount = 0, MobCycleCap = 0;
+    int64 GetMobCycleStep() const { return MobCycleStep; }
 
 private:
     FFoundationInventory MakeLoadout();
     // Block use handlers registered by block id (RegisterBlockUse); they override the built-in ones (the crafting
     // table, FindBlockUse).
-    TMap<FName, FBlockUse> BlockUses;
-    const FBlockUse* FindBlockUse(FName BlockId) const;
-    // The item facts container clicks read (max stack, equipment slot).
-    FFoundationContainerRules MakeContainerRules() const;
+    struct FBlockUseEntry
+    {
+        FBlockUse Use;
+        FBlockWouldUse WouldUse;
+    };
+    TMap<FName, FBlockUseEntry> BlockUses;
+    const FBlockUseEntry* FindBlockUse(FName BlockId) const;
+    // The open menu's container slots: the crafting table's grid, or its block entity's (a copy).
+    TArray<FFoundationItemInstance> GetMenuGrid(const FFoundationPlayer& Player) const;
+    // The cells whose block entities hold an open menu's container slots, in menu order: its own cell, or a double
+    // chest's type=right then type=left half. False when a double chest's halves are no longer paired.
+    bool GetMenuCells(const FFoundationOpenMenu& Open, TArray<FIntVector, TInlineAllocator<2>>& OutCells) const;
+    // Whether the player's open menu still has its block (and its block entity) at its cell, within reach.
+    bool IsMenuValid(const FFoundationPlayer& Player) const;
+    // Closes the open menu (ContainerClose): the cursor, the crafting grid, then the 2x2 back into the inventory, the
+    // rest thrown; with foundation.Items.Entities 0 and leftovers, refused (Result says why) and the menu stays.
+    void CloseMenu(FFoundationPlayer& Player, FFoundationResult& Result);
+    // Each step: an open menu that is no longer valid closes (Codex review 12, finding 1).
+    void StepOpenMenus();
+    // Each step: a block entity in a loaded cell whose block is gone is dropped; with Options.bFurnace the furnaces
+    // tick.
+    void StepFurnaces();
+    // ScheduleBlockTick's ticks, in schedule order; each step counts them down and runs the due ones.
+    struct FBlockTick
+    {
+        FIntVector Cell;
+        FFoundationBlockState Expect;
+        int32 Remaining = 0;
+        EFoundationBlockTick Kind = EFoundationBlockTick::ButtonRelease;
+    };
+    TArray<FBlockTick> BlockTicks;
+    void StepBlockTicks();
+    // A barrel's open state follows its viewers (T1 step 9; SURVIVAL-RUN2-FINDINGS R16,
+    // survival2.r16.animation_and_viewers): the first opens it and plays block.barrel.open, the last one leaving closes
+    // it and plays block.barrel.close, as a plain state change (no place event). Nothing for a cell that is no barrel
+    // (broken while viewed: vanilla's removed block entity plays nothing). A chest's goes to UpdateChestOpen.
+    void UpdateContainerOpen(const FIntVector& Cell);
+    // After a barrel or chest menu went away (closed, replaced, its player removed): its block's viewers, and a double
+    // chest's other half's.
+    void UpdateViewers(const FFoundationOpenMenu& Left);
+    // A chest's viewers (T1 step 18-chest; it has no open state): the count of the pair, kept on its halves' entities;
+    // the first viewer plays block.chest.open and the last one leaving block.chest.close, once per double chest.
+    void UpdateChestOpen(const FIntVector& Cell);
+    FFoundationFurnaceRules MakeFurnaceRules() const;
+    // Pays a furnace's stored XP as orbs at LocalCm (its output taken, or the furnace broken) and clears it.
+    void PayFurnaceExperience(FFoundationBlockEntity& Furnace, const FVector& LocalCm, int32 RandomSeed);
+    // A broken container's slots as item entities, each stack with its damage (provisional spread, the block drops').
+    void SpawnContents(const FIntVector& Cell, TConstArrayView<FFoundationItemInstance> Items, int32 RandomSeed);
+    mutable FFoundationCooking Cooking;
+    mutable int32 CookingItems = INDEX_NONE;
+    // The item facts container clicks read (max stack, equipment slot); Block, an open furnace's, picks what its
+    // shift-click counts as cookable.
+    FFoundationContainerRules MakeContainerRules(FName Block = NAME_None) const;
     // The placement context for a hit (statics must be anchors); false with a reason when nothing can be placed.
     bool MakePlacementContext(const FFoundationPlayer& Player, const FFoundationHit& Hit,
         const FFoundationBlockType& Placing, FFoundationPlacementContext& OutContext, bool& bOutAccepted,
@@ -587,6 +820,11 @@ private:
         FFoundationResult& Result);
     void UseItemStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
         FFoundationResult& Result);
+    // A swappable piece in the hand swaps with its armor slot (survival step 19a). False when the hand holds none.
+    bool UseEquip(FFoundationPlayer& Player, const FFoundationCommand& Command, EFoundationPlayerMode Mode,
+        FFoundationResult& Result);
+    // An Equipped event for each armor slot that now holds a different piece than Before.
+    void AddEquipEvents(const FFoundationPlayer& Player, TConstArrayView<FFoundationItemInstance> Before);
     void UseItemContinue(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationVitals& Vitals,
         FFoundationResult& Result);
     // Ends a use in progress (nothing consumed); true when one was active.
@@ -605,7 +843,10 @@ private:
     FFoundationBlockState TrimPlantFaces(const FIntVector& Cell, FFoundationBlockState State) const;
     // After an edit at Cell replaced Before: a double plant's two halves stay one unit, then the changed cells'
     // neighbours that no longer survive pop, one level deep (Jesus's answer 6), and a stack to its end (Q1).
-    void SettlePlants(const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player);
+    // bWriteUpperHalf: a placement's lower half writes its upper half; a block use's writes never do (Codex 28 #1: a
+    // lone lower door half would overwrite the block above it).
+    void SettlePlants(const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player,
+        bool bWriteUpperHalf = true);
     // A block's loot for Tool, rolled before it goes: its table, else "drops itself" (a double slab is two).
     void RollBlockDrops(const FIntVector& Cell, FFoundationBlockState State, const FFoundationItemDefinition& Tool,
         int32 RandomSeed, TArray<FFoundationLootDrop>& Out) const;
@@ -624,12 +865,54 @@ private:
     void MergeItemEntities();
     // Step 12: the orbs' motion toward the nearest player, despawn and merges, then every live player's pickups.
     void StepExperienceOrbs();
+    // Survival T6 20a: each mob's freeze test, AI, steering, motion and timers; a corpse at RemoveAtDeathTime drops
+    // its loot and experience and goes.
+    void StepMobs();
+    // The killing hit (a player's or a hazard's): the loot and experience drop now [survival2.r20.mob_death].
+    void DropMobLoot(const FFoundationMob& Mob);
+    // Survival T6 20b2: a mob's falls, lava and burning through its FFoundationVitals (the chicken takes no fall
+    // damage); the fluid its box touches.
+    void StepMobHazards(FFoundationMob& Mob);
+    bool IsMobInFluid(const FBox& WorldBody, bool bLava) const;
+    // Survival T6 20c: a monster's targeting and melee (ThinkHostile; a hit queues on its player), and the zombie's
+    // sun burn.
+    void StepMonster(FFoundationMob& Mob, TConstArrayView<FFoundationMobPlayer> Near);
+    void StepSunBurn(FFoundationMob& Mob);
+    // No collision box crosses the segment between two world points (vanilla's COLLIDER line of sight; GatherMobBoxes,
+    // so a generated world's ungenerated columns block it).
+    bool HasMobLineOfSight(const FVector& FromCm, const FVector& ToCm);
+    // No motion-blocking block (a collision box or a fluid) above the cell up to the world's top: the sky light proxy.
+    bool IsSkyVisible(const FIntVector& Cell);
+    // The world and static boxes in a region, as the mobs move against them.
+    void GatherMobBoxes(const FBox& Region, TArray<FBox>& Out);
+    // Survival T6 20b2: chunk-generation packs for the columns around the live players first seen loaded.
+    void StepMobSpawns();
+    // One column's chunk-generation roll and pack; how many mobs it spawned.
+    int32 SpawnPack(const FIntPoint& Column);
+    // A cell a passive mob of Type may stand in at the top of its column (X, Y): the feet cell above the top
+    // motion-blocking block, which must be a grass block, with room for the box; false when there is none.
+    bool FindPackCell(EFoundationMobType Type, int32 X, int32 Y, FIntVector& OutFeet);
+    void AddMobSound(const FFoundationMob& Mob, const TCHAR* Sound, float Volume);
+    // Survival T6 20b: a sheep standing in a plant it eats (IsSheepFood) or on a grass block; eating it (the plant
+    // goes, or the block turns to dirt).
+    bool CanGraze(const FFoundationMob& Mob) const;
+    bool IsSheepFood(const FIntVector& Cell) const;
+    void EatGrass(const FFoundationMob& Mob);
+    // GetPathCell's scratch boxes, kept between calls.
+    TArray<FBox> PathBoxes;
+    // The A* budget's first mob this step (rotates, so later mobs are not starved).
+    int32 PathStart = 0;
+    // Columns (SpawnColumnCells square) already seen loaded: each rolls its chunk-generation pack once per session.
+    TSet<FIntPoint> MobSpawnColumns;
+    // Steps since the last reset: the creature cycle runs when it is a multiple of CreatureCycleTicks.
+    int64 MobCycleStep = 0;
 
     TArray<FFoundationPlayer> Players;
     TArray<FFoundationEvent> Events;
     TArray<FFoundationItemEntity> ItemEntities;
     TArray<FFoundationExperienceOrb> ExperienceOrbs;
-    int32 NextItemEntityId = 1, NextOrbId = 1;
+    TArray<FFoundationMob> Mobs;
+    int32 NextItemEntityId = 1, NextOrbId = 1, NextMobId = FoundationMobs::FirstId;
     int64 EventSerial = 0;
     int32 SessionId = 1;
     int32 NextPlayerId = 1;

@@ -17,6 +17,8 @@
 #include "Engine/Engine.h"
 #include "Engine/GameViewportClient.h"
 #include "Framework/Application/SlateApplication.h"
+#include "Brushes/SlateNoResource.h"
+#include "Styling/CoreStyle.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SCheckBox.h"
 #include "Widgets/Input/SEditableTextBox.h"
@@ -87,7 +89,7 @@ namespace
             {
                 if (WeakLab.IsValid()) WeakLab->SetFiniteSupply(!WeakLab->IsFiniteSupply());
             });
-        Button([] { return FString(TEXT("Reset lab: seed blocks, loadout, targets; back to spawn")); },
+        Button([] { return FString(TEXT("Reset lab: seed blocks, targets; back to spawn")); },
             [WeakLab]
             {
                 if (WeakLab.IsValid()) WeakLab->ResetLab();
@@ -225,6 +227,26 @@ namespace
             TEXT("Mob hit 4 (armor, difficulty)"),
             [](FFoundationVitals& V) { V.Hurt(EFoundationDamage::MobAttack, 4); }, TEXT("Damage 2 (bypasses armor)"),
             [](FFoundationVitals& V) { V.Hurt(EFoundationDamage::Generic, 2); });
+        // Survival step 19b: a mob hit of 4 from a block in front of the player, which a raised shield blocks; the
+        // second from an axe (disable_blocking_for_seconds 5), which also disables it.
+        auto FrontHit = [WeakPawn](float DisableSeconds)
+        {
+            return [WeakPawn, DisableSeconds](FFoundationVitals& V)
+            {
+                AFoundationPawn* Owner = WeakPawn.Get();
+                FFoundationAuthority* Authority = Owner ? Owner->GetAuthority() : nullptr;
+                const FFoundationPlayer* Player =
+                    Authority ? Authority->FindPlayer(Owner->Interaction.PlayerId) : nullptr;
+                if (!Player) return;
+                FFoundationAttack Attack;
+                Attack.Amount = 4;
+                Attack.SourceCm = Player->Facts.FeetCm + Player->Facts.Aim.GetSafeNormal2D() * 100;
+                Attack.DisableBlockingSeconds = DisableSeconds;
+                Authority->HurtPlayer(Owner->Interaction.PlayerId, V, Attack);
+            };
+        };
+        Actions(TEXT("Mob hit 4 from the front (a shield blocks)"), FrontHit(0), TEXT("Axe hit 4 from the front"),
+            FrontHit(5));
         Actions(
             TEXT("Heal 4"), [](FFoundationVitals& V) { V.Heal(4); }, TEXT("Eat cooked beef (8, 12.8)"),
             [](FFoundationVitals& V) { V.Eat(8, 12.8f); });
@@ -304,7 +326,9 @@ void UFoundationPanels::Close()
         AFoundationPawn* Pawn = SurvivalPawn.Get();
         AFoundationLab* Lab = Pawn ? Pawn->GetLab() : nullptr;
         if (Lab && Lab->GetAuthority()) Pawn->Interaction.ContainerClose(*Lab->GetAuthority(), Pawn->Vitals);
+        if (Pawn) Pawn->SetScreenInput(false);
         SurvivalPawn.Reset();
+        SurvivalContainer = INDEX_NONE;
     }
     bOpen = bTextOpen = bInventoryOpen = false;
     TextBox.Reset();
@@ -409,13 +433,37 @@ void UFoundationPanels::OpenText(bool bCommand)
 {
     const TWeakObjectPtr<UFoundationPanels> WeakThis = this;
     TSharedPtr<SEditableTextBox> Edit;
+    const bool bChat = FoundationChat::AreCommandsEnabled();
+    // The chat's hidden box draws nothing of its own: no background brushes, so no focus outline (the 1 px blue
+    // line at the bar). Switch 0 keeps the default style.
+    static const FEditableTextBoxStyle ChatStyle =
+        FEditableTextBoxStyle(FCoreStyle::Get().GetWidgetStyle<FEditableTextBoxStyle>("NormalEditableTextBox"))
+            .SetBackgroundImageNormal(FSlateNoResource())
+            .SetBackgroundImageHovered(FSlateNoResource())
+            .SetBackgroundImageFocused(FSlateNoResource())
+            .SetBackgroundImageReadOnly(FSlateNoResource());
+    // The box, for the change handler (assigned below).
+    const TSharedRef<TWeakPtr<SEditableTextBox>> EditRef = MakeShared<TWeakPtr<SEditableTextBox>>();
     // clang-format off
     const TSharedRef<SVerticalBox> List = SNew(SVerticalBox);
     List->AddSlot().AutoHeight()[Label(TEXT("Local chat/command fixture — Enter records text, Escape cancels"))];
     List->AddSlot().AutoHeight().Padding(0, 10)
     [
         SAssignNew(Edit, SEditableTextBox).MinDesiredWidth(600)
+            .Style(bChat ? &ChatStyle : &FCoreStyle::Get().GetWidgetStyle<FEditableTextBoxStyle>("NormalEditableTextBox"))
             .Text(FText::FromString(bCommand ? TEXT("/") : TEXT("")))
+            // [survival.r4.open_fields] the chat line takes 256 characters (switch 1).
+            .OnTextChanged_Lambda([bChat, EditRef](const FText& Text)
+            {
+                const TSharedPtr<SEditableTextBox> Box = EditRef->Pin();
+                if (!bChat || !Box || Text.ToString().Len() <= 256) return;
+                Box->SetText(FText::FromString(Text.ToString().Left(256)));
+                Box->GoTo(ETextLocation::EndOfDocument);
+            })
+            .OnCursorMovedWithSelection_Lambda([WeakThis](const FTextLocation& Location, const FTextSelection&)
+            {
+                if (WeakThis.IsValid()) WeakThis->TypedCaret = Location.GetOffset();
+            })
             .OnTextCommitted_Lambda([WeakThis](const FText& Text, ETextCommit::Type Type)
             {
                 if (Type != ETextCommit::OnEnter || !WeakThis.IsValid()) return;
@@ -434,7 +482,9 @@ void UFoundationPanels::OpenText(bool bCommand)
             })
     ];
     // clang-format on
-    if (FoundationChat::AreCommandsEnabled())
+    *EditRef = Edit;
+    TypedCaret = INDEX_NONE;
+    if (bChat)
     {
         // Vanilla's input bar is the HUD's (FHudSnapshot::ChatInput); the box only takes the keys, unseen.
         List->RemoveSlot(Edit.ToSharedRef());
@@ -453,6 +503,12 @@ void UFoundationPanels::OpenText(bool bCommand)
 FString UFoundationPanels::GetTypedText() const
 {
     return bTextOpen && TextBox ? TextBox->GetText().ToString() : FString();
+}
+
+int32 UFoundationPanels::GetTypedCaret() const
+{
+    const int32 Length = GetTypedText().Len();
+    return TypedCaret == INDEX_NONE ? Length : FMath::Clamp(TypedCaret, 0, Length);
 }
 
 bool UFoundationPanels::IsTypingInInventory() const
@@ -527,10 +583,13 @@ namespace
             Entry.MaxStack = Item.MaxStack;
             Entry.MaxDamage = Item.MaxDurability;
             Entry.Equipment = Item.Equipment;
+            Entry.SpriteTint = FLinearColor(Item.SpriteTint);
             if (const FFoundationItemAsset* Asset = ItemAssets ? ItemAssets->FindItem(Item.Id) : nullptr)
             {
                 Entry.Details = HudTooltip::GetModifierLines(Asset->Modifiers, ItemAssets->Lang, true);
                 if (!Asset->Textures.IsEmpty()) Entry.Sprite = Asset->Textures[0].ToString();
+                if (!Item.SpriteOverlay.IsNone()) Entry.SpriteOverlay = Item.SpriteOverlay.ToString();
+                Entry.Rarity = Asset->Rarity;
             }
             if (const FFoundationBlockType* Block = Registry->FindBlock(Item.PlacesBlock))
                 for (const FGameplayTag& Tag : Block->Tags)
@@ -633,16 +692,25 @@ void UFoundationPanels::OpenSurvivalInventory(AFoundationLab& Lab)
     OpenContainerScreen(Lab, EFoundationMenuKind::Inventory, FFoundationContainerMenu::PlayerContainer);
 }
 
-void UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenuKind Kind, int32 ContainerId)
+bool UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenuKind Kind, int32 ContainerId)
 {
     if (bOpen) Close();
     AFoundationController* Controller = GetFoundationController();
     AFoundationPawn* Pawn = Controller->GetFoundationPawn();
-    if (!Pawn || !Lab.GetAuthority()) return;
+    if (!Pawn || !Lab.GetAuthority()) return false;
     FFoundationAuthority& Authority = *Lab.GetAuthority();
     const TWeakObjectPtr<AFoundationLab> WeakLab = &Lab;
     const TWeakObjectPtr<AFoundationPawn> WeakPawn = Pawn;
     const TWeakObjectPtr<UFoundationPanels> WeakThis = this;
+    // A furnace's fuel slot takes fuel and the empty bucket (FFoundationContainerMenu::MayPlace): the drag needs it.
+    TSet<FName> FuelItems;
+    if (IsFurnaceMenu(Kind))
+    {
+        const FFoundationCooking& Cooking = Authority.GetCooking();
+        for (int32 Item = 0; Item < Authority.Rules.Items.Num(); ++Item)
+            if (Cooking.IsFuel(Item) || Authority.Rules.Items[Item].Id == FName(TEXT("bucket")))
+                FuelItems.Add(Authority.Rules.Items[Item].Id);
+    }
     // clang-format off
     Survival = SNew(SHudContainerScreen)
         .Registry(Authority.World.GetRegistryRef())
@@ -650,6 +718,7 @@ void UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
         .RequestedGuiScale(MakeGuiScale(Controller))
         .Kind(Kind)
         .Items(MakeScreenItems(Authority))
+        .FuelItems(MoveTemp(FuelItems))
         .GetView([WeakLab, WeakPawn, ContainerId]
         {
             FHudContainerView View;
@@ -674,6 +743,14 @@ void UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
             for (int32 Slot = 0; Slot < Menu.Num(); ++Slot)
                 View.Slots[Slot] = Stack(&Menu[Slot]);
             View.Carried = Stack(&Player->Inventory.Carried);
+            // An open furnace's flame and arrow (T1 step 8a2): its fuel left and cooking progress.
+            if (Player->OpenMenu.ContainerId == ContainerId && IsFurnaceMenu(Player->OpenMenu.Kind))
+                if (const FFoundationBlockEntity* Furnace = A.BlockEntities.Find(Player->OpenMenu.Cell))
+                {
+                    View.bLit = Furnace->IsLit();
+                    View.LitFraction = float(Furnace->LitTime) / float(FMath::Max(Furnace->LitDuration, 1));
+                    View.CookFraction = Furnace->CookTotal > 0 ? float(Furnace->CookProgress) / Furnace->CookTotal : 0;
+                }
             return View;
         })
         .OnClick([WeakLab, WeakPawn, ContainerId](const FHudContainerClick& Click)
@@ -689,12 +766,15 @@ void UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
         });
     // clang-format on
     SurvivalPawn = Pawn;
+    SurvivalContainer = ContainerId;
     bOpen = true;
     // Opening ends what the player was doing (mining, eating), as the creative screen does.
     Controller->CancelActions();
     if (UUnnamedInputSubsystem* InputSubsystem = Controller->GetInputSubsystem())
         InputSubsystem->SetGameplayInputEnabled(false);
-    Pawn->SetSimulationEnabled(false);
+    // Java's survival screens do not pause the game: air, hunger, items, orbs and furnaces go on, the input zeroed
+    // (Codex review 12, finding 2). The creative screen still pauses (a known issue).
+    Pawn->SetScreenInput(true);
     Root = Survival;
     GEngine->GameViewport->AddViewportWidgetContent(Root.ToSharedRef(), 300);
     Controller->bShowMouseCursor = true;
@@ -702,9 +782,16 @@ void UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
     Mode.SetWidgetToFocus(Survival);
     Controller->SetInputMode(Mode);
     FSlateApplication::Get().SetKeyboardFocus(Survival);
-    Controller->GetHud()->LogEvent(
-        Kind == EFoundationMenuKind::Crafting ? TEXT("crafting table") : TEXT("survival inventory"));
+    Controller->GetHud()->LogEvent(Kind == EFoundationMenuKind::Crafting ? TEXT("crafting table")
+            : Kind == EFoundationMenuKind::Furnace                       ? TEXT("furnace")
+            : Kind == EFoundationMenuKind::Smoker                        ? TEXT("smoker")
+            : Kind == EFoundationMenuKind::BlastFurnace                  ? TEXT("blast furnace")
+            : Kind == EFoundationMenuKind::Barrel                        ? TEXT("barrel")
+            : Kind == EFoundationMenuKind::Chest                         ? TEXT("chest")
+            : Kind == EFoundationMenuKind::LargeChest                    ? TEXT("large chest")
+                                                                         : TEXT("survival inventory"));
     bInventoryOpen = true;
+    return true;
 }
 
 void UFoundationPanels::OpenInventory()

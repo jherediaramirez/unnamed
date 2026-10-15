@@ -54,12 +54,17 @@ private:
     // The items' GUI sprites, by DA_Items order.
     UPROPERTY(Transient)
     TArray<TObjectPtr<UTexture2D>> ItemSprites;
+    // The camera overlays of worn head pieces.
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UTexture2D>> CameraOverlays;
     TSharedPtr<SHudView> View;
     FHudSnapshot Snapshot;
     FHudSnapshot LastDrawSnapshot;
     FHudPresentation Presentation;
     FIntPoint LastViewport = FIntPoint::ZeroValue;
     int64 HudTick = 0;
+    // When the chat last opened (seconds): the caret's blink phase.
+    double ChatOpenedAt = 0;
     int64 LastSampleTick = -1;
     // The chat lines last taken from the controller's chat, its revision then and the fade step (-1 when no fade).
     TArray<FHudChatLine> ChatLines;

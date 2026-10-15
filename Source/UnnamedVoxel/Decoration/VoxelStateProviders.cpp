@@ -292,6 +292,24 @@ uint16 FVoxelStateProviders::Sample(
     return 0;
 }
 
+int32 FVoxelStateProviders::ReplaceState(uint16 From, uint16 To)
+{
+    int32 Swapped = 0;
+    for (FNode& Node : Nodes)
+        if ((Node.Op == EOp::Simple || Node.Op == EOp::NoiseThreshold) && Node.State == From)
+        {
+            Node.State = To;
+            ++Swapped;
+        }
+    for (uint16& State : States)
+        if (State == From)
+        {
+            State = To;
+            ++Swapped;
+        }
+    return Swapped;
+}
+
 void FVoxelStateProviders::GetStates(int32 Provider, TArray<uint16>& Out) const
 {
     const FNode& Node = Nodes[Provider];

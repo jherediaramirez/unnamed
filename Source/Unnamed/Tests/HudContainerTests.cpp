@@ -590,6 +590,8 @@ namespace
         TMap<FName, FKey> Bindings;
         FVector2D Corner = FVector2D(0, 0);
         TSharedPtr<SHudContainerScreen> Screen;
+        // A fixed press clock (Codex review 12, finding 7); unset, the platform's.
+        TOptional<double> Now;
 
         explicit FScreenWidget(FScreenLab& InLab) : L(InLab)
         {
@@ -601,7 +603,8 @@ namespace
                 .GetView([this] { return L.View(); })
                 .OnClick([this](const FHudContainerClick& Click) { Sent.Add(Click); L.Send(Click); })
                 .OnClose([this] { bClosed = true; })
-                .GetKey([this](FName Id) { return Bindings.FindRef(Id); });
+                .GetKey([this](FName Id) { return Bindings.FindRef(Id); })
+                .GetTime([this] { return Now.Get(FPlatformTime::Seconds()); });
             // clang-format on
         }
         FGeometry Geometry() const { return FGeometry::MakeRoot(FVector2D(1280, 720), FSlateLayoutTransform(Corner)); }
@@ -638,9 +641,11 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FHudContainerResultClicksTest::RunTest(const FString&)
 {
     // Codex review 10, finding 4: two quick left clicks on the result slot through the real widget craft twice (no
-    // double-click there; provisional, vanilla play). Two logs in the 2x2 end as 8 planks on the cursor.
+    // double-click there; provisional, vanilla play). Two logs in the 2x2 end as 8 planks on the cursor. Both presses
+    // at the same instant (review 12, finding 7): a double-click would have to be refused, not merely too slow.
     FScreenLab L;
     FScreenWidget W(L);
+    W.Now = 100.;
     FFoundationInventory& I = L.Inv();
     I.bFull = true;
     for (int32 Slot = 0; Slot < FFoundationInventory::OffhandSlot; ++Slot)
@@ -699,6 +704,279 @@ bool FHudContainerMouseBindingsTest::RunTest(const FString&)
         !W.Sent.ContainsByPredicate([](const FHudContainerClick& C) { return C.Type == EFoundationClickType::Swap; }) &&
             W.Sent.ContainsByPredicate([](const FHudContainerClick& C)
                 { return C.Type == EFoundationClickType::Pickup && C.Slot == ScreenMain(3); }));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHudContainerFurnaceTest, "Unnamed.Hud.Container.Furnace", ContainerScreenTestFlags)
+
+bool FHudContainerFurnaceTest::RunTest(const FString&)
+{
+    // T1 step 8a2: the furnace's screen (value-swaps.md "FurnaceScreen"; input 0, fuel 1, result 2, main 3-29, hotbar
+    // 30-38).
+    constexpr EFoundationMenuKind Furnace = EFoundationMenuKind::Furnace;
+    auto At = [Furnace](int32 Slot) { return FHudContainerModel::GetSlotPosition(Furnace, Slot); };
+    TestEqual(TEXT("input at 56,17"), At(0), FIntPoint(56, 17));
+    TestEqual(TEXT("fuel at 56,53"), At(1), FIntPoint(56, 53));
+    TestEqual(TEXT("result at 116,35"), At(2), FIntPoint(116, 35));
+    TestEqual(TEXT("first main slot at 8,84"), At(3), FIntPoint(8, 84));
+    TestEqual(TEXT("last main slot at 152,120"), At(29), FIntPoint(152, 120));
+    TestEqual(TEXT("first hotbar slot at 8,142"), At(30), FIntPoint(8, 142));
+    TestEqual(TEXT("recipe-book button at 20,34"), FHudContainerModel::GetRecipeButton(Furnace), FIntPoint(20, 34));
+    FHudContainerModel Model = MakeScreenModel();
+    Model.Kind = Furnace;
+    Model.Items.Add(TEXT("coal")).MaxStack = 64;
+    Model.FuelItems.Add(TEXT("coal"));
+    TestEqual(TEXT("39 slots"), Model.GetSlots(), 39);
+    for (const int32 Slot : {0, 1, 2, 3, 29, 30, 38})
+        TestEqual(
+            FString::Printf(TEXT("hit test finds slot %d"), Slot), Model.HitTest(At(Slot) + FIntPoint(8, 8)), Slot);
+
+    // A drag skips the result, and the fuel slot unless the stack is fuel.
+    FHudContainerView View;
+    View.Slots.SetNum(39);
+    for (const FName Item : {FName(TEXT("stone")), FName(TEXT("coal"))})
+    {
+        View.Carried = {Item, 10};
+        FHudContainerModel Drag = Model;
+        Drag.MouseDown(At(3) + FIntPoint(8, 8), 0, false, View, 0);
+        for (const int32 Slot : {0, 1, 2, 4})
+            Drag.MouseMove(At(Slot) + FIntPoint(8, 8), View);
+        const TArray<int32> Expected = Item == TEXT("coal") ? TArray<int32>{3, 0, 1, 4} : TArray<int32>{3, 0, 4};
+        ExpectSame(*this, *FString::Printf(TEXT("a drag of %s"), *Item.ToString()), Drag.GetDragSlots(), Expected);
+    }
+
+    // A double-click collects on the input and on the output, which does not craft (Codex review 22, finding 2), in
+    // all three kinds.
+    View.Carried = {TEXT("coal"), 1};
+    for (const EFoundationMenuKind Kind :
+        {EFoundationMenuKind::Furnace, EFoundationMenuKind::Smoker, EFoundationMenuKind::BlastFurnace})
+        for (const int32 Slot : {0, 2})
+        {
+            FHudContainerModel Clicks = Model;
+            Clicks.Kind = Kind;
+            const FIntPoint Point = At(Slot) + FIntPoint(8, 8);
+            Clicks.MouseDown(Point, 0, false, View, 0);
+            Clicks.MouseUp(Point, 0, View);
+            Clicks.MouseDown(Point, 0, false, View, .1);
+            const bool bPickAll = Clicks.MouseUp(Point, 0, View)
+                                      .ContainsByPredicate([](const FHudContainerClick& C)
+                                          { return C.Type == EFoundationClickType::PickupAll; });
+            TestTrue(FString::Printf(TEXT("kind %d: a double-click on slot %d collects"), int32(Kind), Slot), bPickAll);
+        }
+    // A right press then a left press on the output within 250 ms is two clicks, not a collect (Codex review 29,
+    // finding 1: vanilla's double-click needs the same button, survival2.r23.inventory_label).
+    {
+        FHudContainerModel Clicks = Model;
+        const FIntPoint Point = At(2) + FIntPoint(8, 8);
+        Clicks.MouseDown(Point, 1, false, View, 0);
+        Clicks.MouseUp(Point, 1, View);
+        Clicks.MouseDown(Point, 0, false, View, .1);
+        TestFalse(TEXT("right then left: no collect"),
+            Clicks.MouseUp(Point, 0, View)
+                .ContainsByPredicate(
+                    [](const FHudContainerClick& C) { return C.Type == EFoundationClickType::PickupAll; }));
+    }
+
+    // The crafting table's result still never starts a collect: each click there crafts.
+    {
+        FHudContainerModel Table = MakeScreenModel();
+        Table.Kind = EFoundationMenuKind::Crafting;
+        FHudContainerView Grid;
+        Grid.Slots.SetNum(Table.GetSlots());
+        Grid.Carried = {TEXT("coal"), 1};
+        const FIntPoint Point = FHudContainerModel::GetSlotPosition(EFoundationMenuKind::Crafting, 0) + FIntPoint(8, 8);
+        Table.MouseDown(Point, 0, false, Grid, 0);
+        Table.MouseUp(Point, 0, Grid);
+        Table.MouseDown(Point, 0, false, Grid, .1);
+        TestFalse(TEXT("crafting result: a double-click does not collect"),
+            Table.MouseUp(Point, 0, Grid)
+                .ContainsByPredicate(
+                    [](const FHudContainerClick& C) { return C.Type == EFoundationClickType::PickupAll; }));
+    }
+
+    // The drag preview holds the fuel slot to one empty bucket, as the authority does (Codex review 22, finding 3): 8
+    // buckets over the fuel slot and an empty inventory slot show 1 and 4, with 3 left on the cursor; a fuel slot
+    // already holding a bucket takes no drag.
+    for (const EFoundationMenuKind Kind :
+        {EFoundationMenuKind::Furnace, EFoundationMenuKind::Smoker, EFoundationMenuKind::BlastFurnace})
+    {
+        FHudContainerModel Buckets = Model;
+        Buckets.Kind = Kind;
+        Buckets.Items.Add(TEXT("bucket")).MaxStack = 16;
+        Buckets.FuelItems.Add(TEXT("bucket"));
+        FHudContainerView Empty;
+        Empty.Slots.SetNum(39);
+        Empty.Carried = {TEXT("bucket"), 8};
+        FHudContainerModel Drag = Buckets;
+        Drag.MouseDown(At(1) + FIntPoint(8, 8), 0, false, Empty, 0);
+        Drag.MouseMove(At(3) + FIntPoint(8, 8), Empty);
+        TMap<int32, FHudCreativeStack> Preview;
+        FHudCreativeStack Cursor;
+        Drag.GetDragPreview(Empty, Preview, Cursor);
+        TestTrue(FString::Printf(TEXT("kind %d: the preview shows 1 / 4 and 3 on the cursor"), int32(Kind)),
+            Preview.Contains(1) && Preview[1].Count == 1 && Preview.Contains(3) && Preview[3].Count == 4 &&
+                Cursor.Count == 3);
+        Empty.Slots[1] = {TEXT("bucket"), 1};
+        FHudContainerModel Held = Buckets;
+        Held.MouseDown(At(3) + FIntPoint(8, 8), 0, false, Empty, 0);
+        Held.MouseMove(At(1) + FIntPoint(8, 8), Empty);
+        ExpectSame(*this, *FString::Printf(TEXT("kind %d: a held bucket takes no drag"), int32(Kind)),
+            Held.GetDragSlots(), TArray<int32>{3});
+    }
+
+    // T1 step 8b: the smoker and blast furnace screens place every slot and the button as the furnace's
+    // (value-swaps.md "SmokerScreen", "BlastFurnaceScreen").
+    for (const EFoundationMenuKind Kind : {EFoundationMenuKind::Smoker, EFoundationMenuKind::BlastFurnace})
+    {
+        bool bSame = FHudContainerModel::GetRecipeButton(Kind) == FHudContainerModel::GetRecipeButton(Furnace);
+        for (int32 Slot = 0; Slot < 39; ++Slot)
+            bSame &= FHudContainerModel::GetSlotPosition(Kind, Slot) == At(Slot);
+        TestTrue(FString::Printf(TEXT("menu kind %d: the furnace's positions"), int32(Kind)), bSame);
+    }
+
+    // A shift-double-click moves like stacks from the clicked slot's side only (Codex review 22, finding 1; vanilla
+    // "from that inventory"): logs in the input and in the inventory, the input's shift-clicked out, and the release
+    // sends none of the inventory's back in. From the inventory side, the input's logs stay.
+    for (const EFoundationMenuKind Kind :
+        {EFoundationMenuKind::Furnace, EFoundationMenuKind::Smoker, EFoundationMenuKind::BlastFurnace})
+    {
+        FHudContainerModel Logs = Model;
+        Logs.Kind = Kind;
+        FHudContainerView Both;
+        Both.Slots.SetNum(39);
+        Both.Slots[0] = {TEXT("oak_log"), 8};
+        Both.Slots[3] = {TEXT("oak_log"), 8};
+        const FIntPoint Input = At(0) + FIntPoint(8, 8);
+        ExpectSame(*this, *FString::Printf(TEXT("kind %d: shift-click the input"), int32(Kind)),
+            Logs.MouseDown(Input, 0, true, Both, 0), FScreenClicks{{0, 0, EFoundationClickType::QuickMove}});
+        Logs.MouseUp(Input, 0, Both);
+        Both.Slots[0] = {};
+        Both.Slots[3] = {TEXT("oak_log"), 16};
+        Logs.MouseDown(Input, 0, true, Both, .1);
+        ExpectSame(*this, *FString::Printf(TEXT("kind %d: the release leaves the inventory's logs"), int32(Kind)),
+            Logs.MouseUp(Input, 0, Both), FScreenClicks());
+
+        FHudContainerModel Player = Model;
+        Player.Kind = Kind;
+        Both.Slots[0] = {TEXT("oak_log"), 8};
+        Both.Slots[3] = {TEXT("oak_log"), 8};
+        Both.Slots[4] = {TEXT("oak_log"), 8};
+        const FIntPoint Main = At(3) + FIntPoint(8, 8);
+        Player.MouseDown(Main, 0, true, Both, 1);
+        Player.MouseUp(Main, 0, Both);
+        Both.Slots[3] = {};
+        Player.MouseDown(Main, 0, true, Both, 1.1);
+        ExpectSame(*this, *FString::Printf(TEXT("kind %d: from the inventory, its logs only"), int32(Kind)),
+            Player.MouseUp(Main, 0, Both), FScreenClicks{{4, 0, EFoundationClickType::QuickMove}});
+    }
+
+    // The flame and arrow sizes (survival.r3.sprites): 0/25/50/75/100 % -> flame 0 (hidden)/5/8/11/14, arrow
+    // 0/6/12/18/24.
+    TestEqual(TEXT("unlit: no flame"), FHudContainerModel::GetFlameHeight(false, 1), 0);
+    const float Fractions[] = {0, .25f, .5f, .75f, 1};
+    const int32 Flames[] = {0, 5, 8, 11, 14}, Arrows[] = {0, 6, 12, 18, 24};
+    for (int32 Index = 0; Index < UE_ARRAY_COUNT(Fractions); ++Index)
+    {
+        TestEqual(FString::Printf(TEXT("flame at %.2f"), Fractions[Index]),
+            FHudContainerModel::GetFlameHeight(true, Fractions[Index]), Flames[Index]);
+        TestEqual(FString::Printf(TEXT("arrow at %.2f"), Fractions[Index]),
+            FHudContainerModel::GetArrowWidth(Fractions[Index]), Arrows[Index]);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHudContainerBarrelTest, "Unnamed.Hud.Container.Barrel", ContainerScreenTestFlags)
+
+bool FHudContainerBarrelTest::RunTest(const FString&)
+{
+    // T1 step 9: the barrel's screen (value-swaps.md "Barrel", inventory.layouts: 176 x 168, container 0-26 at 8 + 18c,
+    // y 18/36/54; main 27-53 at y 85/103/121; hotbar 54-62 at y 143).
+    constexpr EFoundationMenuKind Barrel = EFoundationMenuKind::Barrel;
+    auto At = [Barrel](int32 Slot) { return FHudContainerModel::GetSlotPosition(Barrel, Slot); };
+    TestEqual(TEXT("container 0 at 8,18"), At(0), FIntPoint(8, 18));
+    TestEqual(TEXT("container 8 at 152,18"), At(8), FIntPoint(152, 18));
+    TestEqual(TEXT("container 26 at 152,54"), At(26), FIntPoint(152, 54));
+    TestEqual(TEXT("first main slot at 8,85"), At(27), FIntPoint(8, 85));
+    TestEqual(TEXT("last main slot at 152,121"), At(53), FIntPoint(152, 121));
+    TestEqual(TEXT("first hotbar slot at 8,143"), At(54), FIntPoint(8, 143));
+    TestEqual(TEXT("last hotbar slot at 152,143"), At(62), FIntPoint(152, 143));
+    TestEqual(TEXT("168 high"), FHudContainerModel::GetHeight(Barrel), 168);
+    TestEqual(TEXT("the furnace stays 166 high"), FHudContainerModel::GetHeight(EFoundationMenuKind::Furnace), 166);
+    FHudContainerModel Model = MakeScreenModel();
+    Model.Kind = Barrel;
+    TestEqual(TEXT("63 slots"), Model.GetSlots(), 63);
+    for (const int32 Slot : {0, 13, 26, 27, 53, 54, 62})
+        TestEqual(
+            FString::Printf(TEXT("hit test finds slot %d"), Slot), Model.HitTest(At(Slot) + FIntPoint(8, 8)), Slot);
+    // The window's last row (y 167) is inside it; y 168 is outside.
+    TestEqual(TEXT("y 167 is in the window"), Model.HitTest({2, 167}), int32(INDEX_NONE));
+    TestEqual(TEXT("y 168 is outside"), Model.HitTest({2, 168}), int32(FScreenMenu::Outside));
+    // No recipe-book button (vanilla's ContainerScreen): the inventory's button area is plain window.
+    const FIntPoint Button = FHudContainerModel::GetRecipeButton(EFoundationMenuKind::Inventory) + FIntPoint(2, 2);
+    TestFalse(TEXT("no recipe-book button"), FHudContainerModel::IsInRecipeButton(Barrel, Button));
+    TestTrue(TEXT("the inventory keeps its button"),
+        FHudContainerModel::IsInRecipeButton(EFoundationMenuKind::Inventory, Button));
+    // Every container slot takes a drag (no result or fuel slot).
+    FHudContainerView View;
+    View.Slots.SetNum(Model.GetSlots());
+    View.Carried = {TEXT("dirt"), 64};
+    FHudContainerModel Drag = Model;
+    Drag.MouseDown(At(0) + FIntPoint(8, 8), 0, false, View, 0);
+    for (const int32 Slot : {1, 26, 27})
+        Drag.MouseMove(At(Slot) + FIntPoint(8, 8), View);
+    ExpectSame(
+        *this, TEXT("a drag over the barrel and the main grid"), Drag.GetDragSlots(), TArray<int32>{0, 1, 26, 27});
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHudContainerChestTest, "Unnamed.Hud.Container.Chest", ContainerScreenTestFlags)
+
+bool FHudContainerChestTest::RunTest(const FString&)
+{
+    // T1 step 18-chest: a single chest's screen is the barrel's (value-swaps.md l.47: 176 x 168; 8,18 / 8,85 / 8,143).
+    constexpr EFoundationMenuKind Chest = EFoundationMenuKind::Chest;
+    for (const int32 Slot : {0, 26, 27, 53, 54, 62})
+        TestEqual(FString::Printf(TEXT("slot %d as the barrel's"), Slot),
+            FHudContainerModel::GetSlotPosition(Chest, Slot),
+            FHudContainerModel::GetSlotPosition(EFoundationMenuKind::Barrel, Slot));
+    TestEqual(TEXT("168 high"), FHudContainerModel::GetHeight(Chest), 168);
+    TestFalse(TEXT("no recipe-book button"), FHudContainerModel::HasRecipeButton(Chest));
+    FHudContainerModel Model = MakeScreenModel();
+    Model.Kind = Chest;
+    TestEqual(TEXT("63 slots"), Model.GetSlots(), 63);
+    TestEqual(TEXT("y 167 is in the window"), Model.HitTest({2, 167}), int32(INDEX_NONE));
+    TestEqual(TEXT("y 168 is outside"), Model.HitTest({2, 168}), int32(FScreenMenu::Outside));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FHudContainerLargeChestTest, "Unnamed.Hud.Container.LargeChest", ContainerScreenTestFlags)
+
+bool FHudContainerLargeChestTest::RunTest(const FString&)
+{
+    // T1 step 18-chest: a double chest's screen (generic_54 with 6 rows; value-swaps.md l.48, inventory.layouts: 176 x
+    // 222, container 0-53 at 8 + 18c, y 18..108; main 54-80 at y 139/157/175; hotbar 81-89 at y 197).
+    constexpr EFoundationMenuKind Large = EFoundationMenuKind::LargeChest;
+    auto At = [Large](int32 Slot) { return FHudContainerModel::GetSlotPosition(Large, Slot); };
+    TestEqual(TEXT("container 0 at 8,18"), At(0), FIntPoint(8, 18));
+    TestEqual(TEXT("container 27 at 8,72"), At(27), FIntPoint(8, 72));
+    TestEqual(TEXT("container 53 at 152,108"), At(53), FIntPoint(152, 108));
+    TestEqual(TEXT("first main slot at 8,139"), At(54), FIntPoint(8, 139));
+    TestEqual(TEXT("last main slot at 152,175"), At(80), FIntPoint(152, 175));
+    TestEqual(TEXT("first hotbar slot at 8,197"), At(81), FIntPoint(8, 197));
+    TestEqual(TEXT("last hotbar slot at 152,197"), At(89), FIntPoint(152, 197));
+    TestEqual(TEXT("222 high"), FHudContainerModel::GetHeight(Large), 222);
+    TestEqual(TEXT("Inventory label at y 128 (imageHeight - 94)"), FHudContainerModel::LargeChestInventoryLabelY,
+        FHudContainerModel::GetHeight(Large) - 94);
+    TestFalse(TEXT("no recipe-book button"), FHudContainerModel::HasRecipeButton(Large));
+    FHudContainerModel Model = MakeScreenModel();
+    Model.Kind = Large;
+    TestEqual(TEXT("90 slots"), Model.GetSlots(), 90);
+    for (const int32 Slot : {0, 26, 27, 53, 54, 80, 81, 89})
+        TestEqual(
+            FString::Printf(TEXT("hit test finds slot %d"), Slot), Model.HitTest(At(Slot) + FIntPoint(8, 8)), Slot);
+    TestEqual(TEXT("y 221 is in the window"), Model.HitTest({2, 221}), int32(INDEX_NONE));
+    TestEqual(TEXT("y 222 is outside"), Model.HitTest({2, 222}), int32(FScreenMenu::Outside));
     return true;
 }
 #endif

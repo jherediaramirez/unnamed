@@ -600,4 +600,88 @@ bool FVoxelPlantReplayTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelPlantFireflyBushAsGrassTest, "Unnamed.Voxel.Plants.FireflyBushAsGrass",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelPlantFireflyBushAsGrassTest::RunTest(const FString& Parameters)
+{
+    // Beyond vanilla (survival B4a, Jesus via PM 4): with bFireflyBushAsShortGrass, seed 263's overworld places
+    // short_grass in every cell where 26.3's decoration places firefly_bush, and firefly_bush nowhere. Off, it places
+    // firefly_bush (the control).
+    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+    if (!PlantTestHasBlocks(*this, *Table)) return true;
+    FString Error;
+    FVoxelTerrainPreset Preset;
+    FVoxelBiomeTable Biomes;
+    FVoxelSurfaceInputs Surface;
+    FVoxelFeatureGraph Graph;
+    if (!TestTrue(FString::Printf(TEXT("the inputs read (%s)"), *Error),
+            VoxelTerrainFactory::ReadInputs(
+                VoxelWorldgen::GetReferenceRoot(), TEXT("overworld"), Preset, Biomes, Surface, Error) &&
+                VoxelWorldgen::ReadFeatures(VoxelWorldgen::GetReferenceRoot(), Graph, Error)))
+        return false;
+    const TSharedRef<FVoxelDensityTerrain> Terrain =
+        MakeShared<FVoxelDensityTerrain>(Preset, 263, *Table, FVoxelDensityTerrainSettings(), &Biomes, &Surface);
+    FVoxelDecorator Vanilla, Swapped;
+    FVoxelDecorationOptions SwapOptions;
+    SwapOptions.bFireflyBushAsShortGrass = true;
+    if (!TestTrue(FString::Printf(TEXT("the decorators compile (%s)"), *Error),
+            Terrain->IsValid() &&
+                Vanilla.Initialize(Graph, *Table, Terrain->GetBiomeSource()->GetTable(), Terrain->GetSeed(),
+                    FVoxelDecorationOptions(), &Error) &&
+                Swapped.Initialize(
+                    Graph, *Table, Terrain->GetBiomeSource()->GetTable(), Terrain->GetSeed(), SwapOptions, &Error)))
+        return false;
+    const uint16 Firefly = Table->FindState(TEXT("firefly_bush")), Grass = Table->FindState(TEXT("short_grass"));
+    TestEqual(TEXT("off: nothing swapped"), Vanilla.GetFireflyBushSwaps(), 0);
+    // At least the patches' simple_block provider and their would_survive test.
+    AddInfo(
+        FString::Printf(TEXT("on: %d provider states and would_survive tests swapped"), Swapped.GetFireflyBushSwaps()));
+    TestTrue(TEXT("on: the provider and the would_survive test swapped"), Swapped.GetFireflyBushSwaps() >= 2);
+    TMap<FIntPoint, TSharedRef<FVoxelColumn>> Snapshots;
+    TArray<uint16> Dense;
+    const auto Snapshot = [&](FIntPoint Column) -> const FVoxelColumn&
+    {
+        if (const TSharedRef<FVoxelColumn>* Found = Snapshots.Find(Column)) return **Found;
+        TSharedRef<FVoxelColumn> Made = MakeShared<FVoxelColumn>(Column);
+        Vanilla.GenerateSnapshot(*Terrain, Column, *Made, Dense);
+        return *Snapshots.Add(Column, Made);
+    };
+    // The cells each decorator writes a state to in a column's own bucket.
+    const auto Cells = [&](FVoxelDecorator& Decorator, FIntPoint Column, uint16 State)
+    {
+        const FVoxelColumn* Around[9];
+        for (int32 NY = -1; NY <= 1; ++NY)
+            for (int32 NX = -1; NX <= 1; ++NX)
+                Around[FVoxelWriteLog::GetBucket(NX, NY)] = &Snapshot(Column + FIntPoint(NX, NY));
+        FVoxelWriteLog Log;
+        Decorator.Decorate(Column, Around, Log);
+        TSet<int32> Out;
+        for (const FVoxelWrite& Write : Log.Buckets[FVoxelWriteLog::GetBucket(0, 0)].Writes)
+            if (Write.State == State) Out.Add(Write.GetDenseIndex());
+        return Out;
+    };
+    int32 Columns = 0, Bushes = 0, Missing = 0, Left = 0;
+    for (int32 Ring = 0; Ring <= 24 && Columns < 4; ++Ring)
+        for (int32 DY = -Ring; DY <= Ring && Columns < 4; ++DY)
+            for (int32 DX = -Ring; DX <= Ring && Columns < 4; ++DX)
+            {
+                if (FMath::Max(FMath::Abs(DX), FMath::Abs(DY)) != Ring) continue;
+                const FIntPoint Column(DX, DY);
+                const TSet<int32> Before = Cells(Vanilla, Column, Firefly);
+                if (Before.IsEmpty()) continue;
+                ++Columns;
+                Bushes += Before.Num();
+                const TSet<int32> After = Cells(Swapped, Column, Grass);
+                for (const int32 Cell : Before)
+                    Missing += !After.Contains(Cell);
+                Left += Cells(Swapped, Column, Firefly).Num();
+            }
+    AddInfo(FString::Printf(TEXT("%d firefly bushes in %d columns"), Bushes, Columns));
+    TestTrue(TEXT("off: firefly bushes generate (the control)"), Bushes > 0);
+    TestEqual(TEXT("on: short grass in every firefly bush's cell"), Missing, 0);
+    TestEqual(TEXT("on: no firefly bush anywhere"), Left, 0);
+    return true;
+}
+
 #endif

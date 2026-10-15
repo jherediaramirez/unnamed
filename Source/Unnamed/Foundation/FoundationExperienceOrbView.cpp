@@ -55,15 +55,16 @@ void FFoundationExperienceOrbView::Update(
         const int32 Level = Pawn->Vitals.Level;
         // Without the authority's player there is no step to time it by: no sound this frame.
         const FFoundationPlayer* Player = Authority.FindPlayer(Pawn->Interaction.PlayerId);
-        const int64 Step = Player ? Player->Facts.Step : 0;
-        if (const float Volume = Player ? GetLevelUpVolume(LastLevel, Level, Step, LastLevelUpStep) : 0.f; Volume > 0)
-        {
-            ++LevelUpSounds;
-            LastLevelUpStep = Step;
-            if (FFoundationBreakEffects* Effects = View.GetBreakEffects())
-                Effects->PlayEvent(TEXT("entity.player.levelup"), Pawn->GetActorLocation(), Volume, 1.f);
-        }
-        LastLevel = Level;
+        if (!Player)
+            LastLevel = Level;
+        else
+            for (const float Volume : GetLevelUpVolumes(
+                     Pawn->LevelGains, Level, Player->Facts.Step, LastLevel, LastLevelUpStep, LastGainSerial))
+            {
+                ++LevelUpSounds;
+                if (FFoundationBreakEffects* Effects = View.GetBreakEffects())
+                    Effects->PlayEvent(TEXT("entity.player.levelup"), Pawn->GetActorLocation(), Volume, 1.f);
+            }
     }
     const TArray<FFoundationExperienceOrb>& Orbs = Authority.GetExperienceOrbs();
     Drawn = 0;
@@ -94,7 +95,8 @@ void FFoundationExperienceOrbView::Update(
     {
         const FFoundationExperienceOrb& Orb = Orbs[Wanted[Slot].Value];
         const FVector At = Origin + FMath::Lerp(Orb.PreviousLocalCm, Orb.LocalCm, Alpha) + FVector(0, 0, QuadUpCm);
-        const FColor Color = GetColor(Orb.Age - 1 + Alpha);
+        // The pulse follows the steps run (the renderer's ageInTicks is the tickCount), which a merge never resets.
+        const FColor Color = GetColor(Orb.Ticks - 1 + Alpha);
         const float Values[DataFloats] = {float(GetIcon(Orb.Value)), float(Color.R), float(Color.B)};
         Data.Append(Values, DataFloats);
         Quads->SetCustomDataById(Ids[Slot], Values);

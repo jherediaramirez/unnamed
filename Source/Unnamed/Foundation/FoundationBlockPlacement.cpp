@@ -1,4 +1,5 @@
 #include "Foundation/FoundationBlockPlacement.h"
+#include "Foundation/FoundationBlockFamilies.h"
 #include "Foundation/FoundationCoordinates.h"
 #include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationTags.h"
@@ -147,6 +148,12 @@ FFoundationBlockState FoundationBlockPlacement::GetStateForPlacement(
     const FFoundationBlockWorld& World, const FFoundationBlockType& Block, const FFoundationPlacementContext& Context)
 {
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    // Stairs, fences, walls, panes, bars and gates (survival B2b), doors and trapdoors (B3a); their half is the slab's.
+    if (FoundationBlockFamilies::AreShapesEnabled() && FoundationBlockFamilies::UsesFamilyPlacement(Block))
+        return FoundationBlockFamilies::GetStateForPlacement(World, Block, Context,
+            Context.ClickedFace == EFoundationFace::Down ||
+                (Context.ClickedFace != EFoundationFace::Up &&
+                    GetClickHeight(World, Context, Context.Destination) > 0.5));
     // Plants and the other model blocks without a rule of their own (the torches have one) place by their properties.
     if (Block.Placement == EFoundationPlacementRule::Default &&
         Registry.GetShape(Block.GetDefaultState()) == EFoundationBlockShape::Model)

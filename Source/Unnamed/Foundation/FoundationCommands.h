@@ -22,6 +22,9 @@ struct FFoundationCommandContext
     TFunction<void(const FVector& FeetCm)> Teleport;
     // The world clock; none in the Playground, where /time reports vanilla's no-default-clock error.
     FVoxelWorldClock* Clock = nullptr;
+    // The opened saved world's "Allow Cheats" (Hardcore forces it off); the Playground and the dev world allow them.
+    // Off, every command answers as an unknown one, as vanilla hides commands above the player's permission level.
+    bool bCommands = true;
 };
 
 // The chat's slash commands, parsed as vanilla's (brigadier) and answered in vanilla's words from the 26.3

@@ -1,7 +1,10 @@
 """Import the survival inventory screen's art (survival step 5b) from Reference/minecraft-menu as standalone GUI
 textures under GuiRoot/Container (UUnnamedProjectSettings::GuiRoot): container/inventory.png, the empty armor and
-offhand slot silhouettes and the recipe-book button; and the crafting table's container/crafting_table.png (survival
-step 7). Same pixel settings as ImportBlocks.py's creative textures.
+offhand slot silhouettes and the recipe-book button; the crafting table's container/crafting_table.png (survival
+step 7); the furnace's container/furnace.png with its flame and arrow sprites (T1 step 8a2); the smoker's
+and blast furnace's backgrounds and sprites (T1 step 8b); the barrel's container/generic_54.png (T1 step 9); and the
+vanilla button sprites widget/button, button_highlighted and button_disabled (the death screen, survival step 11a). Same pixel
+settings as ImportBlocks.py's creative textures.
 
 Additive and idempotent: an existing texture is verified (its settings and the SHA-256 of the PNG it came from, kept
 in a metadata tag), never reimported. A changed source refuses; move the old texture away deliberately first.
@@ -24,7 +27,16 @@ TEXTURES = ROOT / "Reference/minecraft-menu/assets/minecraft/textures"
 SOURCES = ["gui/container/inventory"] + ["gui/sprites/container/slot/" + name for name in
                                          ("helmet", "chestplate", "leggings", "boots", "shield")] + \
           ["gui/sprites/recipe_book/button", "gui/sprites/recipe_book/button_highlighted",
-           "gui/container/crafting_table"]
+           "gui/container/crafting_table", "gui/container/furnace",
+           "gui/sprites/container/furnace/lit_progress", "gui/sprites/container/furnace/burn_progress"] + \
+          [part for name in ("smoker", "blast_furnace") for part in
+           ("gui/container/" + name, "gui/sprites/container/" + name + "/lit_progress",
+            "gui/sprites/container/" + name + "/burn_progress")] + \
+          ["gui/sprites/widget/" + name for name in ("button", "button_highlighted", "button_disabled")] + \
+          ["gui/container/generic_54"]
+# From the HUD reference's jar textures: the pumpkin's camera overlay (survival 19a2).
+HUD_TEXTURES = ROOT / "Reference/minecraft-hud-26.3/assets/minecraft/textures"
+HUD_SOURCES = ["misc/pumpkinblur"]
 TAG = "SourceSha256"
 assets = unreal.EditorAssetLibrary
 SETTINGS = dict(compression_settings=unreal.TextureCompressionSettings.TC_EDITOR_ICON,
@@ -40,8 +52,8 @@ def fail(message):
 def main():
     tools = unreal.AssetToolsHelpers.get_asset_tools()
     created = verified = 0
-    for relative in SOURCES:
-        png = TEXTURES / (relative + ".png")
+    for relative, root in [(path, TEXTURES) for path in SOURCES] + [(path, HUD_TEXTURES) for path in HUD_SOURCES]:
+        png = root / (relative + ".png")
         if not png.is_file():
             fail("missing reference texture: " + str(png))
         digest = hashlib.sha256(png.read_bytes()).hexdigest()

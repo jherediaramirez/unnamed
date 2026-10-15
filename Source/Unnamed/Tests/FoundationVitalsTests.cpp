@@ -519,4 +519,48 @@ bool FFoundationVitalsFireTest::RunTest(const FString&)
     TestTrue(TEXT("no lava, no fire"), Off.Health == 20.f && Off.FireTicks == 0 && Off.LavaHurts == 0);
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationVitalsArmorTest, "Unnamed.Foundation.Vitals.Armor",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationVitalsArmorTest::RunTest(const FString&)
+{
+    // Survival step 19a. armor.formula / armor.reduction_grid (the value report, "Armor formula"): spot values of
+    // divisor = 2 + toughness / 4, effective = min(max(armor - damage / divisor, armor x 0.2), 20),
+    // taken = damage x (1 - effective / 25).
+    TestTrue(TEXT("grid: armor 8, toughness 0, 10 damage -> 8.8"),
+        FMath::IsNearlyEqual(FFoundationVitals::GetDamageAfterArmor(10, 8, 0), 8.8f, 1e-5f));
+    TestTrue(TEXT("grid: armor 20, toughness 12, 20 damage -> 7.2"),
+        FMath::IsNearlyEqual(FFoundationVitals::GetDamageAfterArmor(20, 20, 12), 7.2f, 1e-5f));
+    TestTrue(TEXT("grid: armor 20, toughness 0, 1 damage -> 0.22"),
+        FMath::IsNearlyEqual(FFoundationVitals::GetDamageAfterArmor(1, 20, 0), .22f, 1e-5f));
+    // The worn pieces add to the lab's base (diamond chestplate: 8 and 2); the attributes stay within 0-30 and 0-20.
+    FFoundationVitals V = Quiet();
+    V.WornArmor = 8;
+    V.WornToughness = 2;
+    TestTrue(TEXT("worn: 8 and 2"), V.GetArmor() == 8 && V.GetArmorToughness() == 2.f);
+    TestTrue(TEXT("a player attack lands"), V.Hurt(EFoundationDamage::PlayerAttack, 10));
+    // divisor 2.5: max(8 - 4, 1.6) = 4, so 10 x (1 - 4 / 25) = 8.4.
+    TestTrue(TEXT("the worn armor reduces it to 8.4"), FMath::IsNearlyEqual(V.Health, 20.f - 8.4f, 1e-5f));
+    TestEqual(TEXT("10 damage owes 2 wear"), V.PendingArmorWear, 2);
+    V.Armor = 25;
+    V.ArmorToughness = 19;
+    TestTrue(TEXT("base + worn capped: 30 and 20"), V.GetArmor() == 30 && V.GetArmorToughness() == 20.f);
+    // A small hit still owes 1; damage armor does not apply to owes none.
+    FFoundationVitals Small = Quiet();
+    Small.Hurt(EFoundationDamage::PlayerAttack, 1);
+    TestEqual(TEXT("1 damage owes 1 wear"), Small.PendingArmorWear, 1);
+    FFoundationVitals Bypass = Quiet();
+    Bypass.Hurt(EFoundationDamage::Generic, 10);
+    TestEqual(TEXT("armor-bypassing damage owes none"), Bypass.PendingArmorWear, 0);
+    // Lava is #minecraft:is_fire: its wear is owed as fire wear too, which fire-resistant pieces skip (Codex 31 #4).
+    TestEqual(TEXT("a player attack owes no fire wear"), V.PendingFireArmorWear, 0);
+    FFoundationVitals Lava = Quiet();
+    Lava.Hurt(EFoundationDamage::Lava, 8);
+    TestTrue(TEXT("lava 8 owes 2 wear, all of it fire"), Lava.PendingArmorWear == 2 && Lava.PendingFireArmorWear == 2);
+    // Respawn keeps what is worn (the holder sets it again each step).
+    V.Respawn();
+    TestTrue(TEXT("respawn keeps the worn pieces"), V.WornArmor == 8 && V.WornToughness == 2.f);
+    return true;
+}
 #endif

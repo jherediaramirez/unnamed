@@ -230,7 +230,7 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             const FFoundationInventory& Inventory = Player()->Inventory;
             auto Id = [&A](const FFoundationItemInstance& Stack)
             { return Stack.IsEmpty() ? FName(TEXT("empty")) : A.Rules.GetItem(Stack.Item).Id; };
-            Record(TEXT("loadout"),
+            Record(TEXT("the probe's setup items (starting items case)"),
                 Id(Inventory.Hotbar[0]) == TEXT("stone") && Id(Inventory.Hotbar[1]) == TEXT("iron_pickaxe") &&
                     Id(Inventory.Hotbar[2]) == TEXT("iron_sword") && Inventory.Hotbar[3].IsEmpty(),
                 TEXT("slot 1 Stone, 2 iron pickaxe, 3 iron sword, 4-9 empty hand"));
@@ -1251,19 +1251,22 @@ void UFoundationRuntimeProbe::AddInteractionCases()
                 FString::Printf(
                     TEXT("hook calls %d, pickups %d"), View ? View->PickupSounds - Xp->Sounds : -1, Events));
             // Items fixes: the sound batch's entity.experience_orb.pickup resolves to a file and plays (the probes
-            // run with -nosound, so the log is the record); pickups before this case's log clear are not counted.
+            // run with -nosound, so the log is the record: a file whose wave is loaded); pickups before this case's log
+            // clear are not counted.
             const FFoundationBreakEffects* Effects = Lab->GetView()->GetBreakEffects();
-            int32 Logged = 0, WithFile = 0;
+            int32 Logged = 0, WithFile = 0, Loaded = 0;
             for (const FoundationBreak::FSoundLogEntry& Entry :
                 Effects ? Effects->GetSoundLog() : TConstArrayView<FoundationBreak::FSoundLogEntry>())
                 if (Entry.Event == FName(TEXT("entity.experience_orb.pickup")))
                 {
                     ++Logged;
                     WithFile += Entry.File.IsNone() ? 0 : 1;
+                    Loaded += Entry.bLoaded ? 1 : 0;
                 }
             Record(TEXT("the orb pickup sound resolves and plays"),
-                Logged > 0 && Logged == WithFile && Logged <= Events,
-                FString::Printf(TEXT("logged %d, with a file %d, pickups %d"), Logged, WithFile, Events));
+                Logged > 0 && Logged == WithFile && Logged == Loaded && Logged <= Events,
+                FString::Printf(
+                    TEXT("logged %d, with a file %d, loaded %d, pickups %d"), Logged, WithFile, Loaded, Events));
         });
     AddCase(
         TEXT("xp icons"), 1.,
@@ -1841,6 +1844,9 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         TEXT("respawned player"), 1.2, [] {},
         [this, Solid]
         {
+            // The death screen (step 11a, foundation.Death.Screen 1) waits for its Respawn button, enabled since
+            // tick 20.
+            if (Pawn->IsDeathScreenActive()) Pawn->RequestRespawn();
             Record(TEXT("respawn restores play; the press made while dead never acted"),
                 !Pawn->Vitals.IsDead() && !Solid({-5, 12, 0}), Pawn->Vitals.Describe());
         });
@@ -1865,8 +1871,16 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             Record(TEXT("placed before dying"), Solid({-5, 12, 0}), Pawn->Interaction.LastText);
             Pawn->Vitals.Hurt(EFoundationDamage::Kill, TNumericLimits<float>::Max());
         });
+    // The death screen (step 11a, foundation.Death.Screen 1) waits for its Respawn button, enabled since tick 20;
+    // without it the pawn has respawned by itself at tick 20.
     AddCase(
-        TEXT("respawn"), 1.3, [] {},
+        TEXT("respawn button"), 1.0, [] {},
+        [this]
+        {
+            if (Pawn->IsDeathScreenActive()) Pawn->RequestRespawn();
+        });
+    AddCase(
+        TEXT("respawn"), .3, [] {},
         [this, Click, Look]
         {
             Extra->SetNumberField(TEXT("respawn_movement_steps"), double(Pawn->Simulation.Steps));
