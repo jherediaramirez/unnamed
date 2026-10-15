@@ -168,7 +168,13 @@ FFoundationContainerRules FFoundationAuthority::MakeContainerRules() const
     { return Rules.Items.IsValidIndex(Item) ? Rules.Items[Item].Equipment : EFoundationEquipmentSlot::None; };
     if (Options.bCrafting)
         Out.Craft = [this](TConstArrayView<int32> Grid, int32 Width, int32 Height)
-        { return Rules.Recipes.Craft(Grid, Width, Height); };
+        {
+            // foundation.Blocks.Families 0: a B1 family block's item crafts nothing, as before B1.
+            const FFoundationRecipeResult Result = Rules.Recipes.Craft(Grid, Width, Height);
+            const bool bHidden = !Result.IsEmpty() && Rules.Items.IsValidIndex(Result.Item) &&
+                FoundationBlockFamilies::IsHidden(World.GetRegistry().FindBlock(Rules.Items[Result.Item].PlacesBlock));
+            return bHidden ? FFoundationRecipeResult() : Result;
+        };
     return Out;
 }
 

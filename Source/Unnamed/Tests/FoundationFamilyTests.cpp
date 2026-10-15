@@ -3,6 +3,7 @@
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlockAssets.h"
 #include "Foundation/FoundationBlockRegistry.h"
+#include "Foundation/FoundationContainer.h"
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationItemAssets.h"
@@ -346,6 +347,46 @@ bool FFoundationFamiliesBedIconsTest::RunTest(const FString& Parameters)
             AddError(FString::Printf(TEXT("%s: item icon model %d has no quads"), *Id.ToString(), Model));
     }
     TestEqual(TEXT("bed items whose icon model has quads"), Drawn, 16);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationFamiliesCraftTest, "Unnamed.Foundation.Blocks.Families.Craft", FamilyTestFlags)
+bool FFoundationFamiliesCraftTest::RunTest(const FString& Parameters)
+{
+    // A recipe whose result places a family block crafts only with the switch on; other recipes craft either way.
+    FFamiliesSwitch Switch;
+    if (!TestNotNull(TEXT("foundation.Blocks.Families exists"), Switch.Variable)) return false;
+    FFamilyLab L;
+    L.A.Options.bCrafting = true;
+    const int32 Planks = L.A.Rules.FindItem(TEXT("oak_planks")), Log = L.A.Rules.FindItem(TEXT("oak_log"));
+    const int32 Plate = L.A.Rules.FindItem(TEXT("oak_pressure_plate"));
+    const FFoundationBlockType* PlateBlock = L.A.World.GetRegistry().FindBlock(TEXT("oak_pressure_plate"));
+    if (!TestTrue(TEXT("items exist"), Planks != INDEX_NONE && Log != INDEX_NONE && Plate != INDEX_NONE) ||
+        !TestTrue(TEXT("oak_pressure_plate is a family block"), PlateBlock && PlateBlock->bAppendedFamily))
+        return false;
+    FFoundationInventory& I = L.A.FindPlayer(L.Player)->Inventory;
+    auto Result = [&L, &I](int32 First, int32 Second)
+    {
+        for (int32 Slot = 0; Slot < I.Craft.Num(); ++Slot)
+            I.Craft[Slot] = {};
+        I.Craft[0] = I.MakeStack(First, 1);
+        if (Second != INDEX_NONE) I.Craft[1] = I.MakeStack(Second, 1);
+        return L.A.GetPlayerMenu(*L.A.FindPlayer(L.Player))[FFoundationContainerMenu::ResultSlot];
+    };
+    for (const int32 Value : {1, 0})
+    {
+        Switch.Set(Value);
+        const FFoundationItemInstance Plated = Result(Planks, Planks);
+        if (Value)
+            TestTrue(TEXT("switch 1: two planks in a row make an oak pressure plate"),
+                !Plated.IsEmpty() && Plated.Item == Plate && Plated.Count == 1);
+        else
+            TestTrue(TEXT("switch 0: two planks in a row make nothing"), Plated.IsEmpty());
+        const FFoundationItemInstance Planked = Result(Log, INDEX_NONE);
+        TestTrue(FString::Printf(TEXT("switch %d: a log makes 4 oak planks"), Value),
+            !Planked.IsEmpty() && Planked.Item == Planks && Planked.Count == 4);
+    }
     return true;
 }
 #endif
