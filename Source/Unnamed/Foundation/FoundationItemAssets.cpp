@@ -51,7 +51,22 @@ FFoundationItemDefinition UFoundationItemAssets::MakeDefinition(const FFoundatio
     Item.DurabilityPerHit = Asset.DamagePerHit;
     Item.DisableBlockingSeconds = Asset.DisableBlockingSeconds;
     Item.Sprite = Asset.Textures.IsEmpty() ? NAME_None : Asset.Textures[0];
+    // A second layer (the leather pieces' overlay) draws over the first; the tint multiplies the first only.
+    Item.SpriteOverlay = Asset.Textures.Num() > 1 ? Asset.Textures[1] : NAME_None;
+    Item.SpriteTint = Asset.LayerTints.IsEmpty() ? FColor::White : Asset.LayerTints[0];
     Item.PlacesBlock = Asset.PlacesBlock;
+    static const TMap<FName, EFoundationEquipmentSlot> Slots = {{TEXT("head"), EFoundationEquipmentSlot::Head},
+        {TEXT("chest"), EFoundationEquipmentSlot::Chest}, {TEXT("legs"), EFoundationEquipmentSlot::Legs},
+        {TEXT("feet"), EFoundationEquipmentSlot::Feet}};
+    if (const EFoundationEquipmentSlot* Slot = Slots.Find(Asset.EquipmentSlot))
+    {
+        Item.Equipment = *Slot;
+        Item.bSwappable = Asset.bSwappable;
+        Item.EquipSound = Asset.EquipSound;
+        // Whole armor points (every 26.3 piece's are); the toughness keeps its fraction.
+        Item.Armor = FMath::RoundToInt(Asset.Armor);
+        Item.ArmorToughness = Asset.ArmorToughness;
+    }
     return Item;
 }
 
@@ -77,6 +92,13 @@ bool UFoundationItemAssets::FindModelView(FName Id, FName Context, FFoundationIt
     const FName Layer = View.Model->Layers[0];
     View.Texture =
         Textures.FindByPredicate([Layer](const FFoundationItemTextureAsset& Texture) { return Texture.Name == Layer; });
+    if (View.Model->Layers.Num() > 1)
+    {
+        const FName Second = View.Model->Layers[1];
+        View.Overlay = Textures.FindByPredicate(
+            [Second](const FFoundationItemTextureAsset& Texture) { return Texture.Name == Second; });
+    }
+    if (!Item->LayerTints.IsEmpty()) View.Tint = Item->LayerTints[0];
     View.Display = View.Model->Display.FindByPredicate(
         [Context](const FFoundationItemDisplayAsset& Display) { return Display.Context == Context; });
     return View.Texture != nullptr;
@@ -91,8 +113,8 @@ TArray<FFoundationItemDefinition> UFoundationItemAssets::MakeDefinitions() const
     return Definitions;
 }
 
-FName FoundationLootAssets::MakeTable(
-    const FFoundationLootTableAsset& Asset, int32 TableIndex, const FFoundationRules& Rules, FFoundationLootTable& Table)
+FName FoundationLootAssets::MakeTable(const FFoundationLootTableAsset& Asset, int32 TableIndex,
+    const FFoundationRules& Rules, FFoundationLootTable& Table)
 {
     Table.Index = TableIndex;
     // The first unknown item, predicate or kind skips the table.
@@ -114,9 +136,8 @@ FName FoundationLootAssets::MakeTable(
     static const TMap<FName, EFoundationLootCondition> ConditionTypes = {
         {TEXT("predicate"), EFoundationLootCondition::Predicate},
         {TEXT("survives_explosion"), EFoundationLootCondition::SurvivesExplosion},
-        {TEXT("match_block"), EFoundationLootCondition::MatchBlock},
-        {TEXT("any_of"), EFoundationLootCondition::AnyOf}, {TEXT("all_of"), EFoundationLootCondition::AllOf},
-        {TEXT("inverted"), EFoundationLootCondition::Inverted},
+        {TEXT("match_block"), EFoundationLootCondition::MatchBlock}, {TEXT("any_of"), EFoundationLootCondition::AnyOf},
+        {TEXT("all_of"), EFoundationLootCondition::AllOf}, {TEXT("inverted"), EFoundationLootCondition::Inverted},
         {TEXT("table_bonus"), EFoundationLootCondition::TableBonus},
         {TEXT("random_chance"), EFoundationLootCondition::RandomChance},
         {TEXT("match_tool"), EFoundationLootCondition::MatchTool},

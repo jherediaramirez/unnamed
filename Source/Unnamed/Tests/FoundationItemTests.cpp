@@ -31,7 +31,7 @@ namespace
     FString StringOr(const TSharedPtr<FJsonObject>& Object, const TCHAR* Field)
     {
         FString Value;
-        return Object->TryGetStringField(Field, Value) ? Value : FString();
+        return Object && Object->TryGetStringField(Field, Value) ? Value : FString();
     }
 
     double NumberOr(const TSharedPtr<FJsonObject>& Object, const TCHAR* Field, double Default)
@@ -95,13 +95,27 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
             TEXT("DA_Items and the item reference"), Assets && Reference && ModelsJson && TexturesJson && IndexJson))
         return false;
     const TArray<TSharedPtr<FJsonValue>>& Items = Reference->GetArrayField(TEXT("items"));
-    if (!TestEqual(TEXT("114 items"), Assets->Items.Num(), 114) ||
+    if (!TestEqual(TEXT("143 items"), Assets->Items.Num(), 143) ||
         !TestEqual(TEXT("as many as items.json"), Assets->Items.Num(), Items.Num()))
         return false;
     TestEqual(TEXT("reference digest"), Assets->SourceSha256.Len(), 64);
     FFoundationRules Rules;
     UFoundationInteractionSettings::Get().BuildRules(Rules);
     UGameplayTagsManager& TagManager = UGameplayTagsManager::Get();
+    // Survival 19a2: the definitions carry the armor (MakeDefinition): the diamond chestplate's slot, 8 armor, 2
+    // toughness and sound; the leather boots' dye default on the sprite and the overlay layer.
+    const int32 Chestplate = Rules.FindItem(TEXT("diamond_chestplate")), Boots = Rules.FindItem(TEXT("leather_boots"));
+    if (TestTrue(TEXT("armor definitions"), Chestplate != INDEX_NONE && Boots != INDEX_NONE))
+    {
+        const FFoundationItemDefinition& C = Rules.Items[Chestplate];
+        TestTrue(TEXT("diamond chestplate: chest, 8, 2, swappable, equip_diamond"),
+            C.Equipment == EFoundationEquipmentSlot::Chest && C.Armor == 8 && C.ArmorToughness == 2 && C.bSwappable &&
+                C.EquipSound == TEXT("item.armor.equip_diamond") && C.SpriteTint == FColor::White);
+        const FFoundationItemDefinition& B = Rules.Items[Boots];
+        TestTrue(TEXT("leather boots: feet, 1, the dye default and the overlay"),
+            B.Equipment == EFoundationEquipmentSlot::Feet && B.Armor == 1 && B.SpriteTint == FColor(160, 101, 64) &&
+                B.SpriteOverlay == TEXT("item/leather_boots_overlay"));
+    }
     for (int32 Index = 0; Index < Items.Num(); ++Index)
     {
         const TSharedPtr<FJsonObject> Json = Items[Index]->AsObject();
@@ -150,6 +164,23 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
             float(NumberOr(Weapon, TEXT("disable_blocking_for_seconds"), 0)));
         TestEqual(
             What + TEXT("enchantability"), Asset.Enchantability, int32(NumberOr(Json, TEXT("enchantability"), 0)));
+        // Armor (survival 19a2): the equippable and the summed armor attributes, only on the armor pieces.
+        const TSharedPtr<FJsonObject> Equippable = ObjectOr(Json, TEXT("equippable")),
+                                      Armor = ObjectOr(Json, TEXT("armor"));
+        TestEqual(What + TEXT("equipment slot"),
+            Asset.EquipmentSlot.IsNone() ? FString() : Asset.EquipmentSlot.ToString(),
+            StringOr(Equippable, TEXT("slot")));
+        bool bSwappable = true;
+        if (Equippable) Equippable->TryGetBoolField(TEXT("swappable"), bSwappable);
+        TestEqual(What + TEXT("swappable"), Asset.bSwappable, bSwappable);
+        TestEqual(What + TEXT("equip sound"),
+            Asset.EquipSound.IsNone() ? FString() : TEXT("minecraft:") + Asset.EquipSound.ToString(),
+            StringOr(Equippable, TEXT("equip_sound")));
+        TestEqual(What + TEXT("armor"), Asset.Armor, float(NumberOr(Armor, TEXT("armor"), 0)));
+        TestEqual(What + TEXT("toughness"), Asset.ArmorToughness, float(NumberOr(Armor, TEXT("toughness"), 0)));
+        TestEqual(What + TEXT("knockback resistance"), Asset.KnockbackResistance,
+            float(NumberOr(Armor, TEXT("knockback_resistance"), 0)));
+        TestEqual(What + TEXT("layer tints"), Asset.LayerTints.Num(), Id.StartsWith(TEXT("leather_")) ? 2 : 0);
         const TSharedPtr<FJsonObject> Repair = ObjectOr(Json, TEXT("repair"));
         TestEqual(What + TEXT("repair selector"), Asset.RepairSelector,
             Repair ? Repair->GetStringField(TEXT("items")) : FString());
@@ -186,9 +217,14 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
         TestEqual(What + TEXT("swap animation"), Asset.SwapAnimationScale,
             float(Model->GetNumberField(TEXT("swap_animation_scale"))));
         TestTrue(What + TEXT("textures"), Names(Asset.Textures) == Strings(Json, TEXT("textures")));
-        // The attribute modifiers verbatim, namespaces dropped (the tooltip's lines).
+        // The attribute modifiers verbatim, namespaces dropped (the tooltip's lines): the "attack" object's, else the
+        // "armor" object's (T2 19a2; ItemImportData.py does the same).
         const TArray<TSharedPtr<FJsonValue>>* Modifiers = nullptr;
-        if (!Attack || !Attack->TryGetArrayField(TEXT("modifiers"), Modifiers)) Modifiers = nullptr;
+        if (!Attack || !Attack->TryGetArrayField(TEXT("modifiers"), Modifiers))
+        {
+            Modifiers = nullptr;
+            if (Armor && !Armor->TryGetArrayField(TEXT("modifiers"), Modifiers)) Modifiers = nullptr;
+        }
         if (TestEqual(What + TEXT("modifiers"), Asset.Modifiers.Num(), Modifiers ? Modifiers->Num() : 0))
             for (int32 Entry = 0; Entry < Asset.Modifiers.Num(); ++Entry)
             {
@@ -300,7 +336,7 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
             TestEqual(TEXT("layer pixels of ") + Asset.Name.ToString(),
                 UFoundationBlockImport::HashLayer(Arrays[Array], Asset.Layer), Asset.RgbaSha256);
     }
-    TestTrue(TEXT("114 layers of 16 x 16 and 7 of 32 x 32"), Layers[0] == 114 && Layers[1] == 7);
+    TestTrue(TEXT("147 layers of 16 x 16 and 7 of 32 x 32"), Layers[0] == 147 && Layers[1] == 7);
     for (int32 Array = 0; Array < 2; ++Array)
         if (TestNotNull(Array ? TEXT("T_ItemTextures32") : TEXT("T_ItemTextures"), Arrays[Array]))
         {
@@ -317,7 +353,7 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
     // The tooltip's text, verbatim from en_us.json.
     const TSharedPtr<FJsonObject> LangJson = ReadItemReference(TEXT("lang.json"));
     const TSharedPtr<FJsonObject> Keys = LangJson ? ObjectOr(LangJson, TEXT("keys")) : nullptr;
-    if (TestNotNull(TEXT("lang.json"), Keys.Get()) && TestEqual(TEXT("6 lang keys"), Assets->Lang.Num(), 6))
+    if (TestNotNull(TEXT("lang.json"), Keys.Get()) && TestEqual(TEXT("13 lang keys"), Assets->Lang.Num(), 13))
         for (const TPair<FString, TSharedPtr<FJsonValue>>& Key : Keys->Values)
             TestEqual(TEXT("lang ") + Key.Key, Assets->Lang.FindRef(Key.Key), Key.Value->AsString());
     // Ids: no 26.3 item shares an id with a block item. Only the 9 saplings share a block's id: they are DA_Items items

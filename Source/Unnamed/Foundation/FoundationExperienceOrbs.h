@@ -16,11 +16,20 @@ struct FFoundationExperienceOrb
     FVector VelocityCm = FVector::ZeroVector;
     // Steps lived; does not count while frozen.
     int32 Age = 0;
+    // Steps run (the entity's tickCount, R23): like Age, but a merge never resets it; the merge scan's phase.
+    int32 Ticks = 0;
     bool bOnGround = false;
     // Spawned since the last step's merge scan (Codex review 8 #1: a new orb may merge whatever the ids).
     bool bNew = false;
     // Its column is not loaded: it neither steps nor is picked up nor drawn.
     bool bFrozen = false;
+};
+
+// An orb pickup that changed the level: from From to To at the reference step Step; Serial counts the gains up.
+struct FFoundationLevelGain
+{
+    int64 Step = 0;
+    int32 From = 0, To = 0, Serial = 0;
 };
 
 // The orbs' rules. Sourced from the value report (C:\dev\projects\value-holder\MINECRAFT-26.3-VALUES.md, section "XP";
@@ -37,8 +46,11 @@ namespace FoundationExperienceOrbs
     // not), accelerating by normalize(delta) x (1 - |delta| / 8)^2 x 0.1 blocks per tick toward the player's position
     // plus half its eye height.
     constexpr double FollowCm = 800, AttractionCm = 10;
-    // [xp.free_flight] the 20-tick scan is the merge scan.
+    // [xp.free_flight] the 20-tick scan is the merge scan; R23 (survival2.r23.xp_rules): it runs when the orb's
+    // tickCount % MergeTicks == 1 (its steps 1, 21, 41, ...). Newly awarded XP searches a RewardSearchCm cube around
+    // its position instead of the grown merge box.
     constexpr int32 MergeTicks = 20;
+    constexpr double RewardSearchCm = 100;
     // [xp.value_icons] the icons' lower thresholds (icon 0 from 1 point to icon 10 from 2477).
     constexpr int32 IconThresholds[] = {1, 3, 7, 17, 37, 73, 149, 307, 617, 1237, 2477};
     // [xp.value_icons, xp.value] the look: a 0.3-block billboard from a 16 x 16 tile of a 64 x 64 texture, moved up 0.1
@@ -56,10 +68,10 @@ namespace FoundationExperienceOrbs
     // step it spawned.
     constexpr int32 MergeIdPeriod = 40;
     constexpr double NewMergeChance = .025;
-    // Codex review 8 #2, provisional (minecraft.wiki "Experience orb", history 1.21.4: "bouncy when falling from a
-    // height"; no factor anywhere): landing faster than BounceMinCm per step, an orb leaves the ground at BounceFactor
-    // times its landing speed (the items' -0.5 ground bounce [items.physics] borrowed); slower, it stays down.
-    constexpr double BounceFactor = .5, BounceMinCm = 6;
+    // R23 (survival2.r23.xp_rules; replaced Codex review 8 #2's provisional 0.5 above 6 cm): a downward landing whose
+    // pre-move vertical speed is below -gravity (faster than BounceMinCm = GravityCm per step) leaves the ground at
+    // BounceFactor times that speed; slower (an orb resting on the floor lands at exactly the gravity), it stays down.
+    constexpr double BounceFactor = .4, BounceMinCm = GravityCm;
     // [survival.r5.rules] entity.player.levelup plays at volume LevelUpVolume x min(level / LevelUpFullLevel, 1), pitch
     // 1, on a positive level gain reaching a multiple of 5 (the level counted is the first multiple reached), and
     // only more than LevelUpGapTicks after the last one.
@@ -75,10 +87,13 @@ namespace FoundationExperienceOrbs
     // The level-up sound's volume when the level goes from LastLevel to Level at Step, the last one having played at
     // LastSoundStep (negative: never); 0 for no sound. A gain passing several levels plays the first multiple of 5.
     UNNAMED_API float GetLevelUpVolume(int32 LastLevel, int32 Level, int64 Step, int64 LastSoundStep);
-    // The step a level change is timed by: the reference step that made it (GainStep, when the stepped level GainLevel
-    // is the level now), else the frame's step (a change outside the steps, the lab panel's). Codex review 14,
-    // finding 2.
-    UNNAMED_API int64 GetLevelUpStep(int64 FrameStep, int32 Level, int32 GainLevel, int64 GainStep);
+    // The level-up sounds of a frame, in order (Codex review 14, finding 2; review 27, finding 2): each orb pickup that
+    // changed the level (Gains, From -> To at its reference Step, Serial counting up; those with Serial <= LastSerial
+    // were judged already) is judged at its own step, then a level the steps did not make (the lab panel's: Level
+    // differing from the last judged one) at FrameStep. LastLevel (-1 before the first frame: no sound), LastSoundStep
+    // and LastSerial carry over between frames. Returns the volumes to play.
+    UNNAMED_API TArray<float> GetLevelUpVolumes(TConstArrayView<FFoundationLevelGain> Gains, int32 Level,
+        int64 FrameStep, int32& LastLevel, int64& LastSoundStep, int32& LastSerial);
     // [survival.r5.rules] the pickup sound's pitch, 0.9 + 0.35 x (U - V) for two uniform draws in [0, 1).
     UNNAMED_API float GetPickupPitch(float U, float V);
     // The icon (0 to 10) for an orb's value.

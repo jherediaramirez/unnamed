@@ -154,6 +154,18 @@ struct FFoundationItemDefinition
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     FName Sprite;
 
+    // A second GUI layer drawn untinted over Sprite (the leather pieces' overlay), and the sRGB colour that
+    // multiplies Sprite and the held item's first layer (the leather dye's default; white: none). Survival 19a2.
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    FName SpriteOverlay;
+
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    FColor SpriteTint = FColor::White;
+
+    // 26.3's equippable camera_overlay, drawn over the whole view while worn ("misc/pumpkinblur": carved_pumpkin).
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    FName CameraOverlay;
+
     // Consumable capability (step 10, eating). Unset (0 ticks) here, the 26.3 reference's food for this Id applies
     // (FoundationConsumables::FindReference); tests author their own.
     FFoundationConsumable Consumable;

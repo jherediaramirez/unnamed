@@ -18,8 +18,11 @@ namespace
     // reference (and the old 272/41/129 at 079fe3e).
     // Survival 20a (the 18 mob drops appended to the item reference): the same script gives 518/56/166 (515/56/164
     // before). Survival T1 8a2 (the 10 cooking outputs appended): the same script gives 531/69/180
-    // (C:\dev\sandbox\inv8a2\recipe_counts.txt).
-    constexpr int32 RecipeResolvedShaped = 531;
+    // (C:\dev\sandbox\inv8a2\recipe_counts.txt). T2 19a2 (the 29 armor pieces appended): 551 shaped, since the 20
+    // armor recipes of leather, iron, gold, diamond and copper resolve (recipes.json holds 21 armor recipes; the
+    // turtle helmet needs turtle_scute, which DA_Items lacks); all are 3 wide, so the 2x2 count and the shapeless count
+    // stay.
+    constexpr int32 RecipeResolvedShaped = 551;
     constexpr int32 RecipeResolvedShapeless = 69;
     constexpr int32 RecipeFit2x2 = 180;
 

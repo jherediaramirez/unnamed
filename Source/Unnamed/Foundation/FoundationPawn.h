@@ -5,6 +5,7 @@
 #include "Foundation/FoundationActions.h"
 #include "Foundation/FoundationBody.h"
 #include "Foundation/FoundationDeath.h"
+#include "Foundation/FoundationExperienceOrbs.h"
 #include "Foundation/FoundationInteraction.h"
 #include "Foundation/FoundationSimulation.h"
 #include "Foundation/FoundationVitals.h"
@@ -31,10 +32,11 @@ public:
     FFoundationEligibility Eligibility;
     // Health, food, air, experience and attack recovery; stepped with the simulation.
     FFoundationVitals Vitals;
-    // The reference step whose orb pickup last changed the level, and the level it made (-1: none), so the level-up
-    // sound is timed by that step, not the frame's (Codex review 14, finding 2).
-    int64 LevelGainStep = -1;
-    int32 LevelGainLevel = -1;
+    // The latest orb pickups that changed the level (at most MaxLevelGains, oldest first), so each level-up sound is
+    // timed by its own step, not the frame's (Codex review 14, finding 2; review 27, finding 2).
+    TArray<FFoundationLevelGain> LevelGains;
+    int32 LevelGainSerial = 0;
+    static constexpr int32 MaxLevelGains = 16;
     // Place/mine/attack intent and timing, in a lab with an interaction authority (the Playground).
     FFoundationInteraction Interaction;
     FVector GetEyePosition() const;
@@ -112,6 +114,15 @@ private:
     // Once per death, at the moment it happens: the message in chat, and with foundation.Death.Screen 1 the
     // inventory and experience drops.
     void HandleDeath();
+
+public:
+    // HandleDeath's drops for Vitals' player at FeetLocalCm (a static for the tests): the killing step's armor wear
+    // first, while the pieces are still worn (Codex review 27, finding 1: vanilla damages the armor as the hit lands,
+    // so a last-durability piece breaks), then the inventory and, with foundation.Items.Xp, the experience orbs.
+    static void DropOnDeath(FFoundationAuthority& Authority, int32 PlayerId, FFoundationVitals& Vitals,
+        const FVector& FeetLocalCm, int32 Seed);
+
+private:
     // Vitals.Deaths as HandleDeath last saw it.
     int32 HandledDeaths = 0;
     // One reference step of interaction, after movement and vitals, so the step's pose and death apply.

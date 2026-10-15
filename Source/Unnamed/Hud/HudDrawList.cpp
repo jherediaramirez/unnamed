@@ -80,8 +80,10 @@ namespace
                 Pixels(Point, {{8, 8}, {6, 10}}, {2, 2}, FLinearColor(FColor(240, 200, 40)));
                 break;
             case EHudItemIcon::Sprite:
-                // The item's own 16 x 16 GUI sprite (ItemRoot/Gui), untinted.
-                Sprite(View->Sprite, Point, {16, 16});
+                // The item's own 16 x 16 GUI sprite (ItemRoot/Gui) times its tint, then its untinted overlay.
+                Draws.Add({View->Sprite, FIntRect(Point, Point + FIntPoint(16, 16)), FBox2f(FVector2f(0), FVector2f(1)),
+                    View->SpriteTint});
+                if (!View->SpriteOverlay.IsNone()) Sprite(View->SpriteOverlay, Point, {16, 16});
                 break;
             default:
                 // Original geometric token: a cyan outlined tile with a white notch. No Minecraft item identity.
@@ -261,6 +263,9 @@ TArray<FHudDraw> HudDrawList::Build(
     // The red damage tint, first so everything draws over it: overlay texel 0xB2FF0000 while hurtTime > 0 or dead
     // [survival.r6.hud_rules]. PROVISIONAL: the final framebuffer alpha was not measured (SF 10088). It is vanilla's
     // world/entity render effect, not HUD, so F1 does not hide it.
+    // The worn head piece's camera overlay (the pumpkin blur), under everything else: the texture over the whole view.
+    // Vanilla draws it in first person only, with the GUI, so F1 hides it.
+    if (bHud && S.bFirstPerson && !S.CameraOverlay.IsNone()) B.Sprite(S.CameraOverlay, {0, 0}, L.Size);
     if (S.bDamageTint) B.Rect({0, 0}, L.Size, FLinearColor(FColor(0xFF, 0x00, 0x00, 0xB2)));
     // The first-person fire overlay (PROVISIONAL placement, no measurement): two copies of the current fire_1 frame,
     // each half the screen width square, bottom aligned, shifted outward by 0.24 of their size, alpha 0.9, the right

@@ -563,10 +563,13 @@ namespace
             Entry.MaxStack = Item.MaxStack;
             Entry.MaxDamage = Item.MaxDurability;
             Entry.Equipment = Item.Equipment;
+            Entry.SpriteTint = FLinearColor(Item.SpriteTint);
             if (const FFoundationItemAsset* Asset = ItemAssets ? ItemAssets->FindItem(Item.Id) : nullptr)
             {
                 Entry.Details = HudTooltip::GetModifierLines(Asset->Modifiers, ItemAssets->Lang, true);
                 if (!Asset->Textures.IsEmpty()) Entry.Sprite = Asset->Textures[0].ToString();
+                if (!Item.SpriteOverlay.IsNone()) Entry.SpriteOverlay = Item.SpriteOverlay.ToString();
+                Entry.Rarity = Asset->Rarity;
             }
             if (const FFoundationBlockType* Block = Registry->FindBlock(Item.PlacesBlock))
                 for (const FGameplayTag& Tag : Block->Tags)

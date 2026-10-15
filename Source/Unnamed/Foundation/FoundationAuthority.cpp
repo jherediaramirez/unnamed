@@ -1071,6 +1071,7 @@ void FFoundationAuthority::StepExperienceOrbs()
         GatherEntityCollision(GetStepRegion(Orb, Origin, Push), GetBox(Origin + Orb.LocalCm), Boxes);
         Move(Orb, Origin, Boxes, Push);
         ++Orb.Age;
+        ++Orb.Ticks;
         const bool bDespawn = Orb.Age >= DespawnAge;
         OrbsDespawned += bDespawn ? 1 : 0;
         if (Orb.LocalCm.Z < VoidCm || bDespawn)
@@ -1078,38 +1079,47 @@ void FFoundationAuthority::StepExperienceOrbs()
         else
             ++Index;
     }
-    // Provisional (wiki): every MergeTicks of its age, and in the step it spawned, an orb takes in same-value orbs
-    // inside its merge box that CanMerge allows (Codex review 8 #1).
-    for (int32 Index = 0; Index < ExperienceOrbs.Num(); ++Index)
+    // SURVIVAL-RUN2-FINDINGS, R23 (survival2.r23.xp_rules, xp_merge): newly awarded XP (a new orb, in the step it
+    // spawned) searches a 1 x 1 x 1 block box around its position and goes into the orb it finds, which stays where it
+    // is with age 0; an orb's own scan (on its steps 1, 21, 41, ...: tickCount % 20 == 1) searches its box grown 0.5
+    // blocks and keeps the scanner, with the lower age. Both take only same-value orbs CanMerge allows (Codex review 8
+    // #1). Scan removes what merges and says whether the seeker itself went.
+    const auto Scan = [this, &Origin](int32& Index, bool bReward)
     {
-        const FFoundationExperienceOrb& Seeker = ExperienceOrbs[Index];
-        if (Seeker.bFrozen || (Seeker.Age % MergeTicks != 0 && !Seeker.bNew)) continue;
-        const FBox Reach = GetMergeBox(Origin + ExperienceOrbs[Index].LocalCm);
+        // The reward searches where the XP was awarded: a new orb's position before its first move (review 19a2).
+        const FVector SeekerCm =
+            Origin + (bReward ? ExperienceOrbs[Index].PreviousLocalCm : ExperienceOrbs[Index].LocalCm);
+        const FBox Reach = bReward ? FBox::BuildAABB(SeekerCm, FVector(RewardSearchCm * .5)) : GetMergeBox(SeekerCm);
         for (int32 Other = ExperienceOrbs.Num() - 1; Other >= 0; --Other)
         {
             const FFoundationExperienceOrb& Seeking = ExperienceOrbs[Index];
             const FFoundationExperienceOrb& Found = ExperienceOrbs[Other];
             if (Other == Index || Found.bFrozen || Found.Value != Seeking.Value ||
-                !Overlaps(Reach, GetBox(Origin + Found.LocalCm)) || !CanMerge(Seeking, Found))
+                !Overlaps(Reach, GetBox(Origin + Found.LocalCm)) ||
+                // Only the reward's search rolls; a scan needs ids a multiple of MergeIdPeriod apart.
+                !(bReward ? CanMerge(Seeking, Found) : (Seeking.Id - Found.Id) % MergeIdPeriod == 0))
                 continue;
-            // SURVIVAL-RUN2-FINDINGS, R23 (survival2.r23.xp_rules, xp_merge): newly awarded XP goes into the orb it
-            // finds, which stays where it is with age 0; an orb's own scan keeps the scanner, with the lower age (Codex
-            // review 14, finding 1: the new orb no longer takes in the older one). A seeker taken in ends its scan.
-            const bool bSeekerStays = !Seeking.bNew;
-            const int32 Gone = bSeekerStays ? Other : Index;
-            FFoundationExperienceOrb& Into = ExperienceOrbs[bSeekerStays ? Index : Other];
+            const int32 Gone = bReward ? Index : Other;
+            FFoundationExperienceOrb& Into = ExperienceOrbs[bReward ? Other : Index];
             Into.Count += ExperienceOrbs[Gone].Count;
-            Into.Age = bSeekerStays ? FMath::Min(Into.Age, ExperienceOrbs[Gone].Age) : 0;
+            Into.Age = bReward ? 0 : FMath::Min(Into.Age, ExperienceOrbs[Gone].Age);
             ++OrbsMerged;
             ExperienceOrbs.RemoveAt(Gone);
-            if (!bSeekerStays)
+            if (bReward)
             {
                 --Index;
-                break;
+                return true;
             }
             if (Other < Index) --Index;
         }
-    }
+        return false;
+    };
+    // The rewards' searches come first (vanilla's happens when the XP is awarded, before the orb ticks); a new orb
+    // that found none is an orb like any other and scans on its first step.
+    for (int32 Index = 0; Index < ExperienceOrbs.Num(); ++Index)
+        if (ExperienceOrbs[Index].bNew && !ExperienceOrbs[Index].bFrozen) Scan(Index, true);
+    for (int32 Index = 0; Index < ExperienceOrbs.Num(); ++Index)
+        if (!ExperienceOrbs[Index].bFrozen && ExperienceOrbs[Index].Ticks % MergeTicks == 1) Scan(Index, false);
     // A new orb has had its scan (a frozen one keeps the flag until it steps).
     for (FFoundationExperienceOrb& Orb : ExperienceOrbs)
         Orb.bNew &= Orb.bFrozen;

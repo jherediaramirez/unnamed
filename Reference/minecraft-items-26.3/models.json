@@ -14453,6 +14453,3088 @@
     "firstperson_righthand": "item/generated",
     "fixed": "item/generated"
    }
+  },
+  {
+   "id": "item/chainmail_boots",
+   "parent": "item/generated",
+   "chain": [
+    "item/chainmail_boots",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/chainmail_boots"
+   },
+   "layers": [
+    "item/chainmail_boots"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/chainmail_chestplate",
+   "parent": "item/generated",
+   "chain": [
+    "item/chainmail_chestplate",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/chainmail_chestplate"
+   },
+   "layers": [
+    "item/chainmail_chestplate"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/chainmail_helmet",
+   "parent": "item/generated",
+   "chain": [
+    "item/chainmail_helmet",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/chainmail_helmet"
+   },
+   "layers": [
+    "item/chainmail_helmet"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/chainmail_leggings",
+   "parent": "item/generated",
+   "chain": [
+    "item/chainmail_leggings",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/chainmail_leggings"
+   },
+   "layers": [
+    "item/chainmail_leggings"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/copper_boots",
+   "parent": "item/generated",
+   "chain": [
+    "item/copper_boots",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/copper_boots"
+   },
+   "layers": [
+    "item/copper_boots"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/copper_chestplate",
+   "parent": "item/generated",
+   "chain": [
+    "item/copper_chestplate",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/copper_chestplate"
+   },
+   "layers": [
+    "item/copper_chestplate"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/copper_helmet",
+   "parent": "item/generated",
+   "chain": [
+    "item/copper_helmet",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/copper_helmet"
+   },
+   "layers": [
+    "item/copper_helmet"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/copper_leggings",
+   "parent": "item/generated",
+   "chain": [
+    "item/copper_leggings",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/copper_leggings"
+   },
+   "layers": [
+    "item/copper_leggings"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/diamond_boots",
+   "parent": "item/generated",
+   "chain": [
+    "item/diamond_boots",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/diamond_boots"
+   },
+   "layers": [
+    "item/diamond_boots"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/diamond_chestplate",
+   "parent": "item/generated",
+   "chain": [
+    "item/diamond_chestplate",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/diamond_chestplate"
+   },
+   "layers": [
+    "item/diamond_chestplate"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/diamond_helmet",
+   "parent": "item/generated",
+   "chain": [
+    "item/diamond_helmet",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/diamond_helmet"
+   },
+   "layers": [
+    "item/diamond_helmet"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/diamond_leggings",
+   "parent": "item/generated",
+   "chain": [
+    "item/diamond_leggings",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/diamond_leggings"
+   },
+   "layers": [
+    "item/diamond_leggings"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/golden_boots",
+   "parent": "item/generated",
+   "chain": [
+    "item/golden_boots",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/golden_boots"
+   },
+   "layers": [
+    "item/golden_boots"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/golden_chestplate",
+   "parent": "item/generated",
+   "chain": [
+    "item/golden_chestplate",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/golden_chestplate"
+   },
+   "layers": [
+    "item/golden_chestplate"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/golden_helmet",
+   "parent": "item/generated",
+   "chain": [
+    "item/golden_helmet",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/golden_helmet"
+   },
+   "layers": [
+    "item/golden_helmet"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/golden_leggings",
+   "parent": "item/generated",
+   "chain": [
+    "item/golden_leggings",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/golden_leggings"
+   },
+   "layers": [
+    "item/golden_leggings"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/iron_boots",
+   "parent": "item/generated",
+   "chain": [
+    "item/iron_boots",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/iron_boots"
+   },
+   "layers": [
+    "item/iron_boots"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/iron_chestplate",
+   "parent": "item/generated",
+   "chain": [
+    "item/iron_chestplate",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/iron_chestplate"
+   },
+   "layers": [
+    "item/iron_chestplate"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/iron_helmet",
+   "parent": "item/generated",
+   "chain": [
+    "item/iron_helmet",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/iron_helmet"
+   },
+   "layers": [
+    "item/iron_helmet"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/iron_leggings",
+   "parent": "item/generated",
+   "chain": [
+    "item/iron_leggings",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/iron_leggings"
+   },
+   "layers": [
+    "item/iron_leggings"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/leather_boots",
+   "parent": "item/generated",
+   "chain": [
+    "item/leather_boots",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/leather_boots",
+    "layer1": "item/leather_boots_overlay"
+   },
+   "layers": [
+    "item/leather_boots",
+    "item/leather_boots_overlay"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/leather_chestplate",
+   "parent": "item/generated",
+   "chain": [
+    "item/leather_chestplate",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/leather_chestplate",
+    "layer1": "item/leather_chestplate_overlay"
+   },
+   "layers": [
+    "item/leather_chestplate",
+    "item/leather_chestplate_overlay"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/leather_helmet",
+   "parent": "item/generated",
+   "chain": [
+    "item/leather_helmet",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/leather_helmet",
+    "layer1": "item/leather_helmet_overlay"
+   },
+   "layers": [
+    "item/leather_helmet",
+    "item/leather_helmet_overlay"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/leather_leggings",
+   "parent": "item/generated",
+   "chain": [
+    "item/leather_leggings",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/leather_leggings",
+    "layer1": "item/leather_leggings_overlay"
+   },
+   "layers": [
+    "item/leather_leggings",
+    "item/leather_leggings_overlay"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/netherite_boots",
+   "parent": "item/generated",
+   "chain": [
+    "item/netherite_boots",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/netherite_boots"
+   },
+   "layers": [
+    "item/netherite_boots"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/netherite_chestplate",
+   "parent": "item/generated",
+   "chain": [
+    "item/netherite_chestplate",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/netherite_chestplate"
+   },
+   "layers": [
+    "item/netherite_chestplate"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/netherite_helmet",
+   "parent": "item/generated",
+   "chain": [
+    "item/netherite_helmet",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/netherite_helmet"
+   },
+   "layers": [
+    "item/netherite_helmet"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/netherite_leggings",
+   "parent": "item/generated",
+   "chain": [
+    "item/netherite_leggings",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/netherite_leggings"
+   },
+   "layers": [
+    "item/netherite_leggings"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/turtle_helmet",
+   "parent": "item/generated",
+   "chain": [
+    "item/turtle_helmet",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/turtle_helmet"
+   },
+   "layers": [
+    "item/turtle_helmet"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
   }
  ]
 }

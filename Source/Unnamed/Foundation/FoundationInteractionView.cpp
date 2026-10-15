@@ -1189,7 +1189,7 @@ void UFoundationInteractionView::SetHeldItem(FName Id)
     if (Items && Items->FindModelView(Id, TEXT("firstperson_righthand"), Model))
     {
         const FFoundationItemTextureAsset& Texture = *Model.Texture;
-        UStaticMesh* Cached = GetItemMesh(Texture);
+        UStaticMesh* Cached = GetItemMesh(Model);
         Material = Cached ? GetItemMaterial(*Items, Texture.Width == 32) : nullptr;
         if (Material)
         {
@@ -1241,6 +1241,35 @@ UStaticMesh* UFoundationInteractionView::GetItemMesh(const FFoundationItemTextur
     if (!Cached && FoundationItemMesh::ReadMask(Texture, Opaque))
         Cached = FoundationItemMesh::BuildMesh(this,
             FoundationItemMesh::BuildQuads(Texture.Width, Texture.Height, Opaque), Texture.Layer, HeldModelBlockCm);
+    return Cached;
+}
+
+UStaticMesh* UFoundationInteractionView::GetItemMesh(const FFoundationItemModelView& Model)
+{
+    const FFoundationItemTextureAsset& Texture = *Model.Texture;
+    const bool bOverlay =
+        Model.Overlay && Model.Overlay->Width == Texture.Width && Model.Overlay->Height == Texture.Height;
+    if (!bOverlay && Model.Tint == FColor::White) return GetItemMesh(Texture);
+    // Several layers and a tint make a mesh of their own, by the layers' names and the tint.
+    const FName Key(Texture.Name.ToString() + (bOverlay ? TEXT("+") + Model.Overlay->Name.ToString() : FString()) +
+        TEXT("#") + Model.Tint.ToHex());
+    TObjectPtr<UStaticMesh>& Cached = ItemMeshes.FindOrAdd(Key);
+    TArray<bool> Opaque;
+    if (!Cached && FoundationItemMesh::ReadMask(Texture, Opaque))
+    {
+        TArray<FFoundationItemMeshLayer, TInlineAllocator<2>> Layers;
+        FFoundationItemMeshLayer& Base = Layers.AddDefaulted_GetRef();
+        Base.Quads = FoundationItemMesh::BuildQuads(Texture.Width, Texture.Height, Opaque);
+        Base.Layer = Texture.Layer;
+        Base.Tint = Model.Tint;
+        if (bOverlay && FoundationItemMesh::ReadMask(*Model.Overlay, Opaque))
+        {
+            FFoundationItemMeshLayer& Top = Layers.AddDefaulted_GetRef();
+            Top.Quads = FoundationItemMesh::BuildQuads(Texture.Width, Texture.Height, Opaque, .001f);
+            Top.Layer = Model.Overlay->Layer;
+        }
+        Cached = FoundationItemMesh::BuildMesh(this, Layers, HeldModelBlockCm);
+    }
     return Cached;
 }
 
