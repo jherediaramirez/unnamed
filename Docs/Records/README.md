@@ -4,6 +4,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 15, 2026
 
+- [Handoff: survival step 19c, the bow and arrows](2026-10-15-Bow-Handoff-Step19c.md): the current T2 handoff (lane `feature/survival-entities`): what 19b changed against 19c's plan (`tracks/T2-plan-19c.md`): `HurtPlayer`/`FFoundationAttack`, 144 items, the test guard, `FoundationHeldPose::Get`.
 - [Survival step 19b: the shield, no starting items, Codex review 31](2026-10-15-Shield-19b.md): record, lane `feature/survival-entities`. The item reference's `shield` group (additions only, proven) and DA_Items (lock), blocking (R18's 5-tick delay, the 90-degree front, wear, the axe disable), the first-person box stand-in and the offhand mirror in one pose function; no starting loadout; the test guards (Codex 31 #1, a Shipping compile, `CheckTestGuards.mjs`), #2-#4.
 - [Handoff: survival step 19b, the shield](2026-10-15-Shield-Handoff-Step19b.md): the T2 handoff of step 19b (lane `feature/survival-entities`): the held leather tint look call (A-5) first, the shield item (DA_Items lock), blocking per R18, first-person held-item motion only.
 - [Survival step 19a2: the armor pieces' data](2026-10-15-Armor-19a2.md): record, lane `feature/survival-entities`. The item reference's `armor` group (29 pieces, additions only, proven) and `DA_Items` (DA_Items lock), the leather tint, the pumpkin blur, R23's orb bounce, scan phase and reward box, Codex review 27's two fixes.
