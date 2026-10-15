@@ -148,9 +148,8 @@ FFoundationBlockState FoundationBlockPlacement::GetStateForPlacement(
     const FFoundationBlockWorld& World, const FFoundationBlockType& Block, const FFoundationPlacementContext& Context)
 {
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
-    // Stairs, fences, walls, panes, bars and gates (survival B2b); their half is the slab's.
-    if (FoundationBlockFamilies::AreShapesEnabled() &&
-        FoundationBlockFamilies::GetFamily(Block) != EFoundationBlockFamily::None)
+    // Stairs, fences, walls, panes, bars and gates (survival B2b), doors and trapdoors (B3a); their half is the slab's.
+    if (FoundationBlockFamilies::AreShapesEnabled() && FoundationBlockFamilies::UsesFamilyPlacement(Block))
         return FoundationBlockFamilies::GetStateForPlacement(World, Block, Context,
             Context.ClickedFace == EFoundationFace::Down ||
                 (Context.ClickedFace != EFoundationFace::Up &&

@@ -55,7 +55,8 @@ void FFoundationExperienceOrbView::Update(
         const int32 Level = Pawn->Vitals.Level;
         // Without the authority's player there is no step to time it by: no sound this frame.
         const FFoundationPlayer* Player = Authority.FindPlayer(Pawn->Interaction.PlayerId);
-        const int64 Step = Player ? Player->Facts.Step : 0;
+        const int64 Step =
+            Player ? GetLevelUpStep(Player->Facts.Step, Level, Pawn->LevelGainLevel, Pawn->LevelGainStep) : 0;
         if (const float Volume = Player ? GetLevelUpVolume(LastLevel, Level, Step, LastLevelUpStep) : 0.f; Volume > 0)
         {
             ++LevelUpSounds;

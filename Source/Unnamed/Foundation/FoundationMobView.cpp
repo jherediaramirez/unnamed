@@ -325,11 +325,25 @@ void FFoundationMobView::Update(const FFoundationAuthority& Authority, const AFo
             Mobs.ContainsByPredicate([TypeIndex](const FFoundationMob& Mob) { return int32(Mob.Type) == TypeIndex; });
         if (!bAny && !Draw.bTried) continue;
         if (bAny && !Prepare(EFoundationMobType(TypeIndex))) continue;
-        int32 Slot = 0;
-        for (const FFoundationMob& Mob : Mobs)
+        // The nearest MaxMobs of the type within DrawCm fill the slots (Codex review 19 #2).
+        TArray<TPair<double, int32>, TInlineAllocator<MaxMobs>> Order;
+        for (int32 Index = 0; bOn && Index < Mobs.Num(); ++Index)
         {
-            if (!bOn || int32(Mob.Type) != TypeIndex || Mob.bFrozen || Slot >= MaxMobs) continue;
-            if (Pawn && FVector::DistSquared(Origin + Mob.LocalCm, Viewer) > DrawCm * DrawCm) continue;
+            const FFoundationMob& Mob = Mobs[Index];
+            if (int32(Mob.Type) != TypeIndex || Mob.bFrozen) continue;
+            const double Distance = Pawn ? FVector::DistSquared(Origin + Mob.LocalCm, Viewer) : 0;
+            if (Distance <= DrawCm * DrawCm) Order.Emplace(Distance, Index);
+        }
+        if (Order.Num() > MaxMobs)
+        {
+            Order.StableSort(
+                [](const TPair<double, int32>& A, const TPair<double, int32>& B) { return A.Key < B.Key; });
+            Order.SetNum(MaxMobs);
+        }
+        int32 Slot = 0;
+        for (const TPair<double, int32>& Entry : Order)
+        {
+            const FFoundationMob& Mob = Mobs[Entry.Value];
             const FTransform Root = MakeRootTransform(Mob, Origin, Alpha);
             // [hurt.overlay, mobs.hurt_overlay] red while hurt or dying.
             const float Overlay = Mob.HurtTime > 0 || Mob.DeathTime > 0 ? 1.f : 0.f;
@@ -371,8 +385,12 @@ void FFoundationMobView::OnSound(const FFoundationEvent& Event)
 {
     ++Sounds;
     if (FFoundationBreakEffects* Effects = View.GetBreakEffects())
+    {
+        // [survival.r5.play_calls] steps at pitch 1 (F 3582); ambient, hurt and death at a random pitch.
+        const bool bStep = Event.Interaction.ToString().EndsWith(TEXT(".step"));
         Effects->PlayEvent(Event.Interaction, Event.LocationCm, Event.Amount,
-            FoundationMobs::GetSoundPitch(FMath::FRand(), FMath::FRand()));
+            bStep ? FoundationMobs::StepPitch : FoundationMobs::GetSoundPitch(FMath::FRand(), FMath::FRand()));
+    }
 }
 
 FString FFoundationMobView::Describe() const

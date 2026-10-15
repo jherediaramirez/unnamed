@@ -264,7 +264,8 @@ void AVoxelWorld::BuildLayout()
             SunLight = Light;
     if (SunLight && SunLight->Mobility != EComponentMobility::Movable)
     {
-        UE_LOG(LogUnnamedVoxel, Warning, TEXT("Atmosphere: the map's sun can't move; voxel.Atmosphere.Cycle stays off"));
+        UE_LOG(
+            LogUnnamedVoxel, Warning, TEXT("Atmosphere: the map's sun can't move; voxel.Atmosphere.Cycle stays off"));
         SunLight = nullptr;
     }
     if (SunLight)
@@ -477,6 +478,7 @@ void AVoxelWorld::Regenerate(const FVoxelSeed& NewSeed)
 {
     Seed = NewSeed;
     Terrain = MakeTerrain();
+    Authority.MobSpawnSeed = Terrain->GetSeed();
     SpawnCell.Reset();
     bSpawned = false;
     UVoxelWorldSubsystem* Streaming = GetStreaming();
@@ -515,6 +517,14 @@ void AVoxelWorld::SetupAuthority()
     Authority.PlantSurvival = VoxelBlocks::GetPlantSurvival(Authority.World.GetRegistry());
     // Item entities collide with what the player does: the blocks, and ungenerated columns as solid.
     Authority.GatherCollision = [this](const FBox& Region, TArray<FBox>& Out) { this->GatherCollision(Region, Out); };
+    // Passive spawning (survival T6 20b2) reads the columns' biomes; a terrain without biomes spawns nothing.
+    Authority.GetBiomeId = [this](const FIntVector& Cell)
+    {
+        const FVoxelBiomeSource* Source = Terrain ? Terrain->GetBiomeSource() : nullptr;
+        const int32 Index = Source ? GetBiome(Cell) : INDEX_NONE;
+        return Source && Source->GetTable().Biomes.IsValidIndex(Index) ? FName(Source->GetTable().Biomes[Index].Name)
+                                                                       : FName();
+    };
     const FFoundationBlockRegistry& Registry = Authority.World.GetRegistry();
     ModelCollides.Init(false, Registry.GetStateLimit());
     TArray<FBox> Boxes;

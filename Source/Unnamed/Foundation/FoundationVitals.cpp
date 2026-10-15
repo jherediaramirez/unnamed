@@ -43,37 +43,18 @@ namespace
     }
 }
 
-void FFoundationVitals::Step(const FFoundationVitalsStep& Facts)
+void FFoundationVitals::StepHazards(const FFoundationVitalsStep& Facts, bool bFallImmune)
 {
-    // Attack recovery and age count every player tick, through the death animation too.
-    ++AttackTicker;
-    ++Age;
-    if (IsDead())
-    {
-        ++DeathTicks;
-        return;
-    }
-    if (DamageCooldown > 0) --DamageCooldown;
-    bEyesInWater = Facts.bEyesInWater;
-
-    // Movement statistics: water movement costs 0.01 per block, ground sprinting 0.1; walking is free.
-    const FVector& Moved = Facts.DisplacementCm;
-    if (Facts.bEyesInWater)
-        AddExhaustion(.01f * RoundCm(Moved.Size()) * .01f);
-    else if (Facts.bBodyInWater)
-        AddExhaustion(.01f * RoundCm(Moved.Size2D()) * .01f);
-    else if (Facts.bGrounded && Facts.bSprinting)
-        AddExhaustion(.1f * RoundCm(Moved.Size2D()) * .01f);
-    if (Facts.bJumped) AddExhaustion(Facts.bSprintJumped ? .2f : .05f);
-
     // Falls accumulate only downward movement outside water and land once.
+    const FVector& Moved = Facts.DisplacementCm;
     if (Facts.bBodyInWater)
         FallDistanceCm = 0;
     else if (Moved.Z < 0)
         FallDistanceCm -= Moved.Z;
     if (Facts.bGrounded)
     {
-        if (const int32 Damage = GetFallDamage(FallDistanceCm)) Hurt(EFoundationDamage::Fall, float(Damage));
+        if (const int32 Damage = bFallImmune ? 0 : GetFallDamage(FallDistanceCm))
+            Hurt(EFoundationDamage::Fall, float(Damage));
         FallDistanceCm = 0;
     }
     if (IsDead()) return;
@@ -97,6 +78,32 @@ void FFoundationVitals::Step(const FFoundationVitalsStep& Facts)
         FireTicks = FMath::Max(FireTicks, LavaFireTicks);
         if (Hurt(EFoundationDamage::Lava, 4.f)) ++LavaHurts;
     }
+}
+
+void FFoundationVitals::Step(const FFoundationVitalsStep& Facts)
+{
+    // Attack recovery and age count every player tick, through the death animation too.
+    ++AttackTicker;
+    ++Age;
+    if (IsDead())
+    {
+        ++DeathTicks;
+        return;
+    }
+    if (DamageCooldown > 0) --DamageCooldown;
+    bEyesInWater = Facts.bEyesInWater;
+
+    // Movement statistics: water movement costs 0.01 per block, ground sprinting 0.1; walking is free.
+    const FVector& Moved = Facts.DisplacementCm;
+    if (Facts.bEyesInWater)
+        AddExhaustion(.01f * RoundCm(Moved.Size()) * .01f);
+    else if (Facts.bBodyInWater)
+        AddExhaustion(.01f * RoundCm(Moved.Size2D()) * .01f);
+    else if (Facts.bGrounded && Facts.bSprinting)
+        AddExhaustion(.1f * RoundCm(Moved.Size2D()) * .01f);
+    if (Facts.bJumped) AddExhaustion(Facts.bSprintJumped ? .2f : .05f);
+
+    StepHazards(Facts);
     if (IsDead()) return;
 
     // Air: one per tick with eyes in water; drowning at -20 resets to zero. Invulnerable players
@@ -194,7 +201,11 @@ bool FFoundationVitals::Hurt(EFoundationDamage Type, float Amount)
     LastHurt = Damage;
 
     // Armor, then the absorption buffer; only damage reaching health costs exhaustion.
-    if (!Rule.bBypassesArmor) Dealt = GetDamageAfterArmor(Dealt, Armor, ArmorToughness);
+    if (!Rule.bBypassesArmor)
+    {
+        PendingArmorWear += FMath::Max(1, FMath::FloorToInt32(Dealt / 4.f));
+        Dealt = GetDamageAfterArmor(Dealt, GetArmor(), GetArmorToughness());
+    }
     const float Absorbed = FMath::Min(Dealt, Absorption);
     Absorption -= Absorbed;
     Dealt -= Absorbed;
@@ -312,6 +323,9 @@ void FFoundationVitals::Respawn()
     Fresh.ArmorToughness = ArmorToughness;
     Fresh.AttackSpeed = AttackSpeed;
     Fresh.Armor = Armor;
+    // The worn pieces stay worn until the holder sets them again (a kept inventory keeps them).
+    Fresh.WornArmor = WornArmor;
+    Fresh.WornToughness = WornToughness;
     Fresh.MainHandItem = MainHandItem;
     Fresh.DamageEvents = DamageEvents;
     Fresh.Deaths = Deaths;
@@ -374,8 +388,8 @@ FString FFoundationVitals::Describe() const
     return FString::Printf(TEXT("%s %s regen=%d | health %.2f/%.0f absorption %.1f armor %d/%.0f | food %d "
                                 "saturation %.2f exhaustion %.3f | air %d/%d eyes-water=%d | XP L%d %.3f (%d) | "
                                 "attack %.2f of %.1f ticks%s%s"),
-        Modes[int32(Mode)], Difficulties[int32(Difficulty)], bNaturalRegeneration, Health, MaxHealth, Absorption, Armor,
-        ArmorToughness, Food, Saturation, Exhaustion, Air, MaxAir, bEyesInWater, Level, Progress, TotalExperience,
-        GetAttackStrength(), GetAttackDelay(), IsOnFire() ? *FString::Printf(TEXT(" | fire %d"), FireTicks) : TEXT(""),
-        IsDead() ? TEXT(" | DEAD") : TEXT(""));
+        Modes[int32(Mode)], Difficulties[int32(Difficulty)], bNaturalRegeneration, Health, MaxHealth, Absorption,
+        GetArmor(), GetArmorToughness(), Food, Saturation, Exhaustion, Air, MaxAir, bEyesInWater, Level, Progress,
+        TotalExperience, GetAttackStrength(), GetAttackDelay(),
+        IsOnFire() ? *FString::Printf(TEXT(" | fire %d"), FireTicks) : TEXT(""), IsDead() ? TEXT(" | DEAD") : TEXT(""));
 }

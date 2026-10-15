@@ -213,6 +213,8 @@ namespace FoundationBreak
         FVector Location = FVector::ZeroVector;
         bool bHit = false;
         bool bPlace = false;
+        // Whether the file's wave is loaded, so it plays where there is an audio device (Codex review 11, finding 3).
+        bool bLoaded = false;
     };
 }
 

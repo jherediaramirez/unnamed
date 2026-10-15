@@ -233,6 +233,12 @@ def build(root):
                 "outline_moves_with_offset": offset.get("outline_moves", False),
                 "collision_moves_with_offset": offset.get("collision_moves", False),
                 "replaceable": replaceable.pop()}
+    def cube_light_fields(block, entry):
+        """Per-state light of a full-cube or slab block, from the facts, when a state's light differs from the block's
+        (a lit furnace, smoker, blast furnace, redstone ore or lamp); the others keep the block's one light."""
+        by_state = {s["id"]: s for s in facts_by_id[block["id"]]["states"]}
+        light = [by_state[s["id"]]["light"] for s in entry["states"]]
+        return {"state_light": light} if any(v != block.get("light_emission", 0) for v in light) else {}
     fluid_ids = {f["id"] for f in manifest["fluids"]}
     blocks = []
     for block in manifest["blocks"] + manifest["fluids"]:
@@ -263,7 +269,8 @@ def build(root):
             "item": item["id"] if item else None, "item_name": item["name"] if item else "",
             "item_wall_block": wall_blocks.get(bid) if item else None, "state_support": support_by_id[bid],
             "item_max_stack": item["max_stack"] if item else 64, "item_tint": color(item["gui_tint"] if item else None),
-            **icon_fields(item), **(model_fields(block, entry) if model else {}),
+            **icon_fields(item),
+            **(model_fields(block, entry) if model else ({} if water else cube_light_fields(block, entry))),
             # Survival B1's family blocks (the manifest's added: "survival-B1"), behind foundation.Blocks.Families.
             "appended_family": block.get("added") == "survival-B1",
         })

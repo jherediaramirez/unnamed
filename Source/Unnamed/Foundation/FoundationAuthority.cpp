@@ -273,7 +273,42 @@ const FFoundationAuthority::FBlockUseEntry* FFoundationAuthority::FindBlockUse(F
         {TEXT("smoker"), {FBlockUse(&UseFurnace), FBlockWouldUse(&WouldUseFurnace)}},
         {TEXT("blast_furnace"), {FBlockUse(&UseFurnace), FBlockWouldUse(&WouldUseFurnace)}}};
     if (const FBlockUseEntry* Use = BlockUses.Find(BlockId)) return Use;
-    return BuiltIn.Find(BlockId);
+    if (const FBlockUseEntry* Use = BuiltIn.Find(BlockId)) return Use;
+    // Doors, trapdoors and fence gates (survival B3a, foundation.Blocks.Interact), by family; iron has none.
+    static const FBlockUseEntry FamilyUse{FBlockUse(&FoundationBlockFamilies::Use), nullptr};
+    const FFoundationBlockType* Block = World.FindBlock(BlockId);
+    return FoundationBlockFamilies::IsInteractOn() && Block && FoundationBlockFamilies::IsUsable(*Block) ? &FamilyUse
+                                                                                                         : nullptr;
+}
+
+void FFoundationAuthority::CommitBlockUse(FFoundationPlayer& Player, const FIntVector& Cell,
+    TConstArrayView<TPair<FIntVector, FFoundationBlockState>> Writes, FName Sound, FFoundationResult& Result)
+{
+    if (!Algo::AllOf(
+            Writes, [this](const TPair<FIntVector, FFoundationBlockState>& Write) { return World.IsKnown(Write.Key); }))
+    {
+        Reject(Result, EFoundationReason::OutsideBounds);
+        return;
+    }
+    TArray<FFoundationBlockState, TInlineAllocator<2>> Before;
+    for (const TPair<FIntVector, FFoundationBlockState>& Write : Writes)
+        Before.Add(World.Get(Write.Key).State);
+    World.SetMany(Writes);
+    for (int32 Index = 0; Index < Writes.Num(); ++Index)
+        SettlePlants(Writes[Index].Key, Before[Index], Player);
+    Result.Outcome = EFoundationOutcome::Committed;
+    Result.bInteracted = true;
+    Result.Cell = Cell;
+    Result.State = World.Get(Cell).State;
+    Result.Interaction = Sound;
+    FFoundationEvent Event;
+    Event.Kind = EFoundationEventKind::BlockUsed;
+    Event.Player = Player.Id;
+    Event.Cell = Cell;
+    Event.State = Result.State;
+    Event.Interaction = Sound;
+    Event.Step = Player.Facts.Step;
+    AddEvent(Event);
 }
 
 bool FFoundationAuthority::HasBlockUse(const FIntVector& Cell) const
@@ -396,6 +431,8 @@ void FFoundationAuthority::Reset()
     ItemEntities.Empty();
     ExperienceOrbs.Empty();
     Mobs.Empty();
+    MobSpawnColumns.Empty();
+    PathStart = 0;
     FFoundationEvent Event;
     Event.Kind = EFoundationEventKind::Reset;
     AddEvent(Event);
@@ -410,6 +447,7 @@ void FFoundationAuthority::Step()
         if (Player.Use.bActive && Player.Facts.Step - Player.Use.LastStep > 1) CancelUse(Player);
     StepItemEntities();
     StepMobs();
+    StepMobSpawns();
     StepExperienceOrbs();
     StepOpenMenus();
     StepFurnaces();
@@ -464,11 +502,14 @@ void FFoundationAuthority::CloseMenu(FFoundationPlayer& Player, FFoundationResul
     // not leave thrown copies behind.
     bool bThrown = Algo::AllOf(Left, [this](const FFoundationItemInstance& Stack)
         { return Rules.Items.IsValidIndex(Stack.Item) && Stack.Count > 0; });
-    if (bThrown && !Left.IsEmpty() && Options.bItemEntities)
+    if (bThrown && !Left.IsEmpty() && Options.bItemEntities && Player.Facts.bAlive)
         for (const FFoundationItemInstance& Stack : Left)
             bThrown &= Throw(Player, Stack, Stack.Count);
-    if (!Left.IsEmpty() && !Options.bItemEntities)
-        Reject(Result, EFoundationReason::DropDeferred);
+    if (!Left.IsEmpty() && !Options.bItemEntities) Reject(Result, EFoundationReason::DropDeferred);
+    // A dead player throws nothing, as Drop's CheckHand refuses (Codex review 11, finding 2); the close is retried each
+    // step and goes through after the respawn.
+    else if (!Left.IsEmpty() && !Player.Facts.bAlive)
+        Reject(Result, EFoundationReason::Dead);
     else if (!bThrown)
         Reject(Result, EFoundationReason::NoSupply);
     else
@@ -824,6 +865,117 @@ int32 FFoundationAuthority::TakeExperience(int32 PlayerId)
     return Points;
 }
 
+namespace
+{
+    // FFoundationInventory::Armor's order, vanilla's slots 36-39: feet, legs, chest, head.
+    constexpr EFoundationEquipmentSlot ArmorOrder[] = {EFoundationEquipmentSlot::Feet, EFoundationEquipmentSlot::Legs,
+        EFoundationEquipmentSlot::Chest, EFoundationEquipmentSlot::Head};
+
+    int32 GetArmorIndex(EFoundationEquipmentSlot Slot)
+    {
+        for (int32 Index = 0; Index < UE_ARRAY_COUNT(ArmorOrder); ++Index)
+            if (ArmorOrder[Index] == Slot) return Index;
+        return INDEX_NONE;
+    }
+}
+
+void FFoundationAuthority::GetWornArmor(int32 PlayerId, int32& OutArmor, float& OutToughness) const
+{
+    OutArmor = 0;
+    OutToughness = 0;
+    const FFoundationPlayer* Player = FindPlayer(PlayerId);
+    if (!Player || !Options.bFullInventory) return;
+    const TArray<FFoundationItemInstance>& Armor = Player->Inventory.Armor;
+    for (int32 Index = 0; Index < FMath::Min(Armor.Num(), int32(UE_ARRAY_COUNT(ArmorOrder))); ++Index)
+        if (!Armor[Index].IsEmpty() && Rules.Items.IsValidIndex(Armor[Index].Item))
+        {
+            // An attribute modifier counts only in its own slot (a piece set elsewhere by a creative command adds
+            // none).
+            const FFoundationItemDefinition& Item = Rules.Items[Armor[Index].Item];
+            if (Item.Equipment != ArmorOrder[Index]) continue;
+            OutArmor += Item.Armor;
+            OutToughness += Item.ArmorToughness;
+        }
+}
+
+int32 FFoundationAuthority::WearArmor(int32 PlayerId, int32 Amount, EFoundationPlayerMode Mode)
+{
+    FFoundationPlayer* Player = FindPlayer(PlayerId);
+    if (!Player || Amount <= 0 || !Options.bToolWear || !Options.bFullInventory ||
+        Mode == EFoundationPlayerMode::Creative)
+        return 0;
+    int32 Broken = 0;
+    FFoundationInventory& Inventory = Player->Inventory;
+    for (int32 Index = 0; Index < FMath::Min(Inventory.Armor.Num(), int32(UE_ARRAY_COUNT(ArmorOrder))); ++Index)
+    {
+        FFoundationItemInstance Stack = Inventory.Armor[Index];
+        if (Stack.IsEmpty() || !Rules.Items.IsValidIndex(Stack.Item)) continue;
+        const FFoundationItemDefinition& Item = Rules.Items[Stack.Item];
+        if (Item.Equipment != ArmorOrder[Index] || Item.MaxDurability <= 0) continue;
+        Stack.Damage += Amount;
+        const bool bBroke = Stack.Damage >= Item.MaxDurability;
+        Inventory.SetSlot(FFoundationInventory::FirstArmor + Index, bBroke ? FFoundationItemInstance{} : Stack);
+        if (!bBroke) continue;
+        ++Broken;
+        FFoundationEvent Event;
+        Event.Kind = EFoundationEventKind::ToolBroke;
+        Event.Player = Player->Id;
+        Event.Item = Stack.Item;
+        Event.Step = Player->Facts.Step;
+        AddEvent(Event);
+    }
+    return Broken;
+}
+
+bool FFoundationAuthority::UseEquip(
+    FFoundationPlayer& Player, const FFoundationCommand& Command, EFoundationPlayerMode Mode, FFoundationResult& Result)
+{
+    // Vanilla's equippable swap (SURVIVAL-RUN2-FINDINGS, R19, survival2.r19.equip): the piece goes on and what was worn
+    // comes back to the hand; in creative an empty slot gets a copy and the hand keeps the piece.
+    const FFoundationItemInstance Held = Player.Inventory.GetHand(Command.Hand);
+    // A spectator wears nothing; one piece at a time, as the armor slots take (a lab stack of several does not go on).
+    if (Held.IsEmpty() || Held.Count != 1 || !Options.bFullInventory || !Options.bItemUse ||
+        Mode == EFoundationPlayerMode::Spectator)
+        return false;
+    const FFoundationItemDefinition& Item = Rules.GetItem(Held.Item);
+    const int32 Index = GetArmorIndex(Item.Equipment);
+    if (Index == INDEX_NONE || !Item.bSwappable || !Player.Inventory.Armor.IsValidIndex(Index)) return false;
+    const FFoundationItemInstance Worn = Player.Inventory.Armor[Index];
+    if (Mode == EFoundationPlayerMode::Creative && Worn.IsEmpty())
+    {
+        FFoundationItemInstance Copy = Player.Inventory.MakeStack(Held.Item, 1);
+        Copy.Damage = Held.Damage;
+        Player.Inventory.SetSlot(FFoundationInventory::FirstArmor + Index, Copy);
+        Result.Outcome = EFoundationOutcome::Committed;
+        return true;
+    }
+    Player.Inventory.SetSlot(
+        Command.Hand == EFoundationHand::Off ? FFoundationInventory::OffhandSlot : Player.Inventory.Selected, Worn);
+    Player.Inventory.SetSlot(FFoundationInventory::FirstArmor + Index, Held);
+    Result.Outcome = EFoundationOutcome::Committed;
+    return true;
+}
+
+void FFoundationAuthority::AddEquipEvents(
+    const FFoundationPlayer& Player, TConstArrayView<FFoundationItemInstance> Before)
+{
+    // Vanilla plays a piece's equip_sound when its slot takes a different item (survival.r5.play_calls: PLAYERS,
+    // volume 1, pitch 1); the view plays it from this event.
+    const TArray<FFoundationItemInstance>& Armor = Player.Inventory.Armor;
+    for (int32 Index = 0; Index < FMath::Min(Armor.Num(), Before.Num()); ++Index)
+    {
+        const FFoundationItemInstance& Now = Armor[Index];
+        if (Now.IsEmpty() || (!Before[Index].IsEmpty() && Before[Index].InstanceId == Now.InstanceId)) continue;
+        FFoundationEvent Event;
+        Event.Kind = EFoundationEventKind::Equipped;
+        Event.Player = Player.Id;
+        Event.Item = Now.Item;
+        Event.LocationCm = Player.Facts.FeetCm;
+        Event.Step = Player.Facts.Step;
+        AddEvent(Event);
+    }
+}
+
 void FFoundationAuthority::SetRespawnPoint(int32 PlayerId, const FIntVector& Cell)
 {
     if (FFoundationPlayer* Player = FindPlayer(PlayerId)) Player->RespawnCell = Cell;
@@ -937,15 +1089,26 @@ void FFoundationAuthority::StepExperienceOrbs()
         const FBox Reach = GetMergeBox(Origin + ExperienceOrbs[Index].LocalCm);
         for (int32 Other = ExperienceOrbs.Num() - 1; Other >= 0; --Other)
         {
-            FFoundationExperienceOrb& Into = ExperienceOrbs[Index];
-            const FFoundationExperienceOrb& From = ExperienceOrbs[Other];
-            if (Other == Index || From.bFrozen || From.Value != Into.Value ||
-                !Overlaps(Reach, GetBox(Origin + From.LocalCm)) || !CanMerge(Into, From))
+            const FFoundationExperienceOrb& Seeking = ExperienceOrbs[Index];
+            const FFoundationExperienceOrb& Found = ExperienceOrbs[Other];
+            if (Other == Index || Found.bFrozen || Found.Value != Seeking.Value ||
+                !Overlaps(Reach, GetBox(Origin + Found.LocalCm)) || !CanMerge(Seeking, Found))
                 continue;
-            Into.Count += From.Count;
-            Into.Age = FMath::Min(Into.Age, From.Age);
+            // SURVIVAL-RUN2-FINDINGS, R23 (survival2.r23.xp_rules, xp_merge): newly awarded XP goes into the orb it
+            // finds, which stays where it is with age 0; an orb's own scan keeps the scanner, with the lower age (Codex
+            // review 14, finding 1: the new orb no longer takes in the older one). A seeker taken in ends its scan.
+            const bool bSeekerStays = !Seeking.bNew;
+            const int32 Gone = bSeekerStays ? Other : Index;
+            FFoundationExperienceOrb& Into = ExperienceOrbs[bSeekerStays ? Index : Other];
+            Into.Count += ExperienceOrbs[Gone].Count;
+            Into.Age = bSeekerStays ? FMath::Min(Into.Age, ExperienceOrbs[Gone].Age) : 0;
             ++OrbsMerged;
-            ExperienceOrbs.RemoveAt(Other);
+            ExperienceOrbs.RemoveAt(Gone);
+            if (!bSeekerStays)
+            {
+                --Index;
+                break;
+            }
             if (Other < Index) --Index;
         }
     }
@@ -1100,7 +1263,7 @@ void FFoundationAuthority::StepMobs()
         if (const FFoundationPathCell* Known = PathCells.Find(Cell)) return *Known;
         return PathCells.Add(Cell, GetPathCell(Cell));
     };
-    int32 Paths = 0;
+    int32 Paths = 0, LastPlanned = PathStart;
     TArray<FBox> Boxes;
     for (int32 Index = 0; Index < Mobs.Num();)
     {
@@ -1127,22 +1290,25 @@ void FFoundationAuthority::StepMobs()
         if (Mob.HurtTime > 0) --Mob.HurtTime;
         if (!Mob.IsAlive() && ++Mob.DeathTime >= RemoveAtDeathTime)
         {
-            DropMobLoot(Mob);
             Mobs.RemoveAt(Index);
             continue;
         }
         Think(Mob, Origin, Near, Mob.Type == EFoundationMobType::Sheep && Mob.GrazeTicks == 0 && CanGraze(Mob));
         if (Mob.bEatNow) EatGrass(Mob);
-        if (Mob.bNeedPath && Paths < PathsPerStep)
+        // The budget goes first to the mobs after the one that planned last when it ran out (PathStart; 0: none
+        // waited), then, after the loop, to the others.
+        if (Mob.bNeedPath && Paths < PathsPerStep && Mob.Id > PathStart)
         {
             PlanPath(Mob, Query);
             ++Paths;
             ++MobPaths;
+            LastPlanned = Mob.Id;
         }
         bool bJump = false;
         const FVector2D Input = Steer(Mob, Origin, bJump);
         GatherEntityCollision(GetStepRegion(Mob, Origin), GetBox(Mob.Type, Origin + Mob.LocalCm), Boxes);
         Move(Mob, Origin, Boxes, Input, bJump);
+        StepMobHazards(Mob);
         Animate(Mob);
         if (Mob.IsAlive())
         {
@@ -1183,6 +1349,167 @@ void FFoundationAuthority::StepMobs()
         else
             ++Index;
     }
+    bool bWaiting = false;
+    for (FFoundationMob& Mob : Mobs)
+    {
+        if (!Mob.bNeedPath || Mob.bFrozen || !Mob.IsAlive()) continue;
+        if (Paths < PathsPerStep && Mob.Id <= PathStart)
+        {
+            PlanPath(Mob, Query);
+            ++Paths;
+            ++MobPaths;
+            LastPlanned = Mob.Id;
+        }
+        else
+            bWaiting = true;
+    }
+    PathStart = bWaiting ? LastPlanned : 0;
+}
+
+bool FFoundationAuthority::IsMobInFluid(const FBox& Body, bool bLava) const
+{
+    // As the generated world's GetFluid: a fluid's surface box (amount / 9 of the cell, full under the same fluid)
+    // overlapping the body shrunk a hair.
+    const FBox Inner = Body.ExpandBy(-.1);
+    const FIntVector Low = FoundationGrid::CellAt(Inner.Min, World.OriginCm),
+                     High = FoundationGrid::CellAt(Inner.Max, World.OriginCm);
+    const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    const double Block = UFoundationProfile::BlockCm;
+    for (int32 Z = Low.Z; Z <= High.Z; ++Z)
+        for (int32 Y = Low.Y; Y <= High.Y; ++Y)
+            for (int32 X = Low.X; X <= High.X; ++X)
+            {
+                const FIntVector Cell(X, Y, Z);
+                if (!World.IsKnown(Cell)) continue;
+                const FFoundationFluid Fluid = Registry.GetFluid(World.Get(Cell).State);
+                if (!(bLava ? Fluid.bLava : Fluid.bWater)) continue;
+                const FIntVector Up = Cell + FIntVector(0, 0, 1);
+                const FFoundationFluid Above =
+                    World.IsKnown(Up) ? Registry.GetFluid(World.Get(Up).State) : FFoundationFluid();
+                const bool bSameAbove = bLava ? Above.bLava : Above.bWater;
+                const FVector Bottom = World.OriginCm + FVector(Cell) * Block;
+                const FBox Surface(Bottom, Bottom + FVector(Block, Block, Fluid.GetHeight(bSameAbove) * Block));
+                if (Surface.Intersect(Inner)) return true;
+            }
+    return false;
+}
+
+void FFoundationAuthority::StepMobHazards(FFoundationMob& Mob)
+{
+    using namespace FoundationMobs;
+    if (!Mob.IsAlive()) return;
+    // [fall.damage_thresholds V:324, hurt.lava_contact V:289] the player's rules: landing damage past 3 blocks, lava
+    // 4 per tick (through the damage cooldown) and 15 s of fire, burning 1 every 20 ticks, water puts it out. Lava and
+    // fire only with Options.bFire (foundation.Fire), as the pawn. The chicken takes no fall damage (Codex T6 C).
+    const FBox Body = GetBox(Mob.Type, World.OriginCm + Mob.LocalCm);
+    FFoundationVitalsStep Facts;
+    Facts.DisplacementCm = Mob.LocalCm - Mob.PreviousLocalCm;
+    Facts.bGrounded = Mob.bOnGround;
+    Facts.bBodyInWater = IsMobInFluid(Body, false);
+    Facts.bBodyInLava = Options.bFire && IsMobInFluid(Body, true);
+    const float Before = Mob.Health.Health;
+    Mob.Health.StepHazards(Facts, Mob.Type == EFoundationMobType::Chicken);
+    if (Mob.Health.Health >= Before) return;
+    // Provisional: a hazard's hit shows the hurt overlay and plays the hurt or death sound like a player's, without
+    // knockback or panic.
+    Mob.HurtTime = HurtTicks;
+    AddMobSound(Mob, Mob.IsAlive() ? TEXT("hurt") : TEXT("death"), GetKind(Mob.Type).Volume);
+    if (!Mob.IsAlive()) DropMobLoot(Mob);
+}
+
+void FFoundationAuthority::StepMobSpawns()
+{
+    using namespace FoundationMobs;
+    if (!Options.bMobs || !Options.bMobSpawn || !GetBiomeId || Rules.BiomeSpawns.IsEmpty()) return;
+    for (const FFoundationPlayer& Player : Players)
+    {
+        if (!Player.bHasFacts) continue;
+        const FIntVector Feet = FoundationGrid::CellAt(Player.Facts.FeetCm, World.OriginCm);
+        const FIntPoint Center(FoundationGrid::FloorDivide(Feet.X, SpawnColumnCells),
+            FoundationGrid::FloorDivide(Feet.Y, SpawnColumnCells));
+        // Nearest rings first; at most SpawnColumnsPerStep new columns a step (the rest wait for the next).
+        int32 Rolled = 0;
+        for (int32 Ring = 0; Ring <= SpawnRingColumns && Rolled < SpawnColumnsPerStep; ++Ring)
+            for (int32 DY = -Ring; DY <= Ring && Rolled < SpawnColumnsPerStep; ++DY)
+                for (int32 DX = -Ring; DX <= Ring && Rolled < SpawnColumnsPerStep; ++DX)
+                {
+                    if (FMath::Max(FMath::Abs(DX), FMath::Abs(DY)) != Ring) continue;
+                    const FIntPoint Column = Center + FIntPoint(DX, DY);
+                    const FIntVector Corner(Column.X * SpawnColumnCells, Column.Y * SpawnColumnCells, 0);
+                    if (MobSpawnColumns.Contains(Column) || !World.GetStorage().IsLoaded(Corner)) continue;
+                    MobSpawnColumns.Add(Column);
+                    ++MobColumnsSeen;
+                    ++Rolled;
+                    SpawnPack(Column);
+                }
+    }
+}
+
+int32 FFoundationAuthority::SpawnPack(const FIntPoint& Column)
+{
+    using namespace FoundationMobs;
+    // Deterministic from the world seed and the column alone (never the order columns load in).
+    FRandomStream Random(FoundationLoot::MakeSeed(MobSpawnSeed ^ 0x6d6f6273, FIntVector(Column.X, Column.Y, 0), 20));
+    const int32 MinX = Column.X * SpawnColumnCells, MinY = Column.Y * SpawnColumnCells;
+    const int32 X = MinX + Random.RandHelper(SpawnColumnCells);
+    const int32 Y = MinY + Random.RandHelper(SpawnColumnCells);
+    const float Roll = Random.GetFraction();
+    // The biome above the top block of the pack's column.
+    FIntVector Top(X, Y, World.BoundsMax.Z);
+    while (Top.Z > World.BoundsMin.Z && World.IsKnown(Top) && World.Get(Top).State.IsAir())
+        --Top.Z;
+    const FFoundationBiomeSpawns* Biome = Rules.BiomeSpawns.Find(GetBiomeId(Top + FIntVector(0, 0, 1)));
+    if (!Biome || Roll >= Biome->Chance) return 0;
+    const FFoundationMobSpawn* Entry = PickSpawn(*Biome, Random);
+    if (!Entry) return 0;
+    const int32 Count = RollPackSize(*Entry, Random);
+    const double Block = UFoundationProfile::BlockCm;
+    int32 Spawned = 0;
+    for (int32 Member = 0; Member < Count; ++Member)
+    {
+        const int32 OffsetX = RollPackOffset(Random);
+        const int32 OffsetY = RollPackOffset(Random);
+        const float Yaw = Random.FRandRange(0, 360);
+        const int32 MemberX = FMath::Clamp(X + OffsetX, MinX, MinX + SpawnColumnCells - 1);
+        const int32 MemberY = FMath::Clamp(Y + OffsetY, MinY, MinY + SpawnColumnCells - 1);
+        FIntVector Feet;
+        if (!FindPackCell(Entry->Type, MemberX, MemberY, Feet)) continue;
+        if (SpawnMob(Entry->Type, FVector(Feet.X + .5, Feet.Y + .5, Feet.Z) * Block, Yaw)) ++Spawned;
+    }
+    if (Spawned > 0) ++MobPacks;
+    MobsPackSpawned += Spawned;
+    return Spawned;
+}
+
+bool FFoundationAuthority::FindPackCell(EFoundationMobType Type, int32 X, int32 Y, FIntVector& OutFeet)
+{
+    using namespace FoundationMobs;
+    // The top motion-blocking block: the highest with a collision box or a fluid (plants and air are skipped).
+    FIntVector Cell(X, Y, World.BoundsMax.Z);
+    for (; Cell.Z >= World.BoundsMin.Z; --Cell.Z)
+    {
+        if (!World.IsKnown(Cell)) return false;
+        if (World.Get(Cell).State.IsAir()) continue;
+        const FFoundationPathCell Path = GetPathCell(Cell);
+        if (Path.bAvoid || Path.Solid > 0) break;
+    }
+    if (Cell.Z < World.BoundsMin.Z || World.GetBlock(World.Get(Cell).State).Id != TEXT("grass_block")) return false;
+    // Above the motion-blocking top the sky light proxy is 15 (scout Q1 (a)).
+    if (SkyLightProxy < PassiveMinLight) return false;
+    OutFeet = Cell + FIntVector(0, 0, 1);
+    // Room for the box: no collision and no fluid in it (shrunk a hair off the floor).
+    const double Block = UFoundationProfile::BlockCm;
+    const FBox Body =
+        GetBox(Type, World.OriginCm + FVector(OutFeet.X + .5, OutFeet.Y + .5, OutFeet.Z) * Block).ExpandBy(-.1);
+    TArray<FBox>& Boxes = PathBoxes;
+    Boxes.Reset();
+    if (GatherCollision)
+        GatherCollision(Body, Boxes);
+    else
+        World.GatherCollision(Body, Boxes);
+    for (const FBox& Box : Boxes)
+        if (Box.Intersect(Body)) return false;
+    return !IsMobInFluid(Body, false) && !IsMobInFluid(Body, true);
 }
 
 void FFoundationAuthority::DropMobLoot(const FFoundationMob& Mob)
@@ -1193,12 +1520,14 @@ void FFoundationAuthority::DropMobLoot(const FFoundationMob& Mob)
     const FIntVector Cell(FoundationGrid::FloorToCell(Mob.LocalCm.X), FoundationGrid::FloorToCell(Mob.LocalCm.Y),
         FoundationGrid::FloorToCell(Mob.LocalCm.Z));
     FRandomStream Random(FoundationLoot::MakeSeed(~Rules.LootSeed, Cell, Mob.Id));
-    // [loot_table/entities/<id>.json] rolled with killed_by_player for a player kill; no enchantments and nothing on
-    // fire yet. Provisional: the drops leave the corpse's feet with the block drops' spread and speed.
+    // [loot_table/entities/<id>.json] rolled with killed_by_player for a player kill and is_on_fire while it burns
+    // (cooked meat); no enchantments yet. Provisional: the drops leave the corpse's feet with the block drops' spread
+    // and speed.
     if (const FFoundationLootTable* Table = Rules.EntityLootTables.Find(Kind.Id))
     {
         FFoundationLootContext Context{Rules.Hand};
         Context.bKilledByPlayer = Mob.bKilledByPlayer;
+        Context.bOnFire = Mob.Health.IsOnFire();
         TArray<FFoundationLootDrop> Drops;
         FoundationLoot::Roll(*Table, Rules.LootPredicates, Context, Random, Drops);
         for (const FFoundationLootDrop& Drop : Drops)
@@ -1458,6 +1787,7 @@ FFoundationResult FFoundationAuthority::Execute(
     if (Command.Sequence == 0 || Command.Sequence <= Player->HighestEvicted)
         return Reject(Result, EFoundationReason::ExpiredSequence);
     SetFullInventory(Player->Inventory, Options.bFullInventory);
+    const TArray<FFoundationItemInstance> ArmorBefore = Player->Inventory.Armor;
 
     switch (Command.Type)
     {
@@ -1568,6 +1898,9 @@ FFoundationResult FFoundationAuthority::Execute(
             Reject(Result, EFoundationReason::InvalidSlot);
         else if (!Click.Thrown.IsEmpty() && !Options.bItemEntities)
             Reject(Result, EFoundationReason::DropDeferred);
+        // A dead player throws nothing (Codex review 11, finding 2), as Drop's CheckHand refuses.
+        else if (!Click.Thrown.IsEmpty() && !Player->Facts.bAlive)
+            Reject(Result, EFoundationReason::Dead);
         else if (!Click.Thrown.IsEmpty() && !Throw(*Player, Click.Thrown, Click.Thrown.Count))
             Reject(Result, EFoundationReason::NoSupply);
         else
@@ -1623,6 +1956,8 @@ FFoundationResult FFoundationAuthority::Execute(
         break;
     }
     if (Result.Outcome == EFoundationOutcome::Rejected) ++Rejections;
+    // A spectator makes no equip sound (its clicks and uses move nothing).
+    if (Vitals.Mode != EFoundationPlayerMode::Spectator) AddEquipEvents(*Player, ArmorBefore);
     Result.WorldRevision = World.Revision;
     Remember(*Player, Result);
     if (Result.bInteracted && OnInteraction) OnInteraction(Result.Interaction);
@@ -1959,6 +2294,7 @@ void FFoundationAuthority::UseItemStart(FFoundationPlayer& Player, const FFounda
 {
     if (!CheckHand(Player, Command, Result)) return;
     if (UseBucket(Player, Command, Vitals.Mode, Result)) return;
+    if (UseEquip(Player, Command, Vitals.Mode, Result)) return;
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
     const FFoundationConsumable Food =
         Stack.IsEmpty() ? FFoundationConsumable{} : Rules.GetItem(Stack.Item).GetConsumable();
@@ -2346,6 +2682,10 @@ EFoundationReason FFoundationAuthority::CheckPlantPlacement(
         if (!FoundationBlockPlacement::IsReplaceable(World, World.Get(Upper).State))
             return EFoundationReason::DestinationOccupied;
     }
+    // A door's lower half needs a sturdy top below it (survival B3a); an unknown cell below refuses.
+    if (const EFoundationFamilySurvival Family = FoundationBlockFamilies::GetSurvival(World, Destination, Placed);
+        Family == EFoundationFamilySurvival::Fails || Family == EFoundationFamilySurvival::Unknown)
+        return EFoundationReason::CannotSurvive;
     if (!PlantSurvival) return EFoundationReason::None;
     // The placed state must survive where it goes, read as the cell is now (the water seagrass goes into), and a
     // double plant's upper half on its lower half. A rule that reads an unknown cell refuses.
@@ -2375,6 +2715,10 @@ bool FFoundationAuthority::CanPlantSurvive(const FIntVector& Cell, FFoundationBl
         FIntVector Support;
         return FoundationBlockPlacement::IsTorchSupported(World, State, Cell, &Support) || !World.IsKnown(Support);
     }
+    // Door halves (survival B3a): an unknown support keeps them.
+    if (const EFoundationFamilySurvival Family = FoundationBlockFamilies::GetSurvival(World, Cell, State);
+        Family != EFoundationFamilySurvival::NoRule)
+        return Family != EFoundationFamilySurvival::Fails;
     if (!PlantSurvival) return true;
     bool bUnknown = false;
     const bool bSurvives = PlantSurvival->Survives(State.Id, Cell.X, Cell.Y, Cell.Z,
@@ -2440,8 +2784,10 @@ void FFoundationAuthority::SettlePlants(
     {
         FIntVector Other;
         FFoundationBlockState Ignored;
+        // A half that still pairs with it (a door opened by hand, a double plant replaced by its own kind) keeps it.
         if (FoundationPlantRules::GetOtherHalf(World, At, Old, Other, Ignored) && World.IsKnown(Other) &&
-            FoundationPlantRules::IsOtherHalf(World.GetRegistry(), Old, World.Get(Other).State))
+            FoundationPlantRules::IsOtherHalf(World.GetRegistry(), Old, World.Get(Other).State) &&
+            !FoundationPlantRules::IsOtherHalf(World.GetRegistry(), World.Get(At).State, World.Get(Other).State))
             Pop(Other);
     };
     PopOtherHalf(Cell, Before);
@@ -2500,6 +2846,9 @@ void FFoundationAuthority::SettlePlants(
                 Visit(Next);
         }
     }
+    // The family shapes beside every other changed cell too: a written upper half, a pop (survival B3a).
+    for (int32 Index = 1; Index < Changed.Num(); ++Index)
+        FoundationBlockFamilies::UpdateNeighbourShapes(World, Changed[Index]);
 }
 
 void FFoundationAuthority::Attack(
@@ -2580,6 +2929,7 @@ void FFoundationAuthority::Attack(
         // sprint-knockback bonus waits for 20c. [survival.r5.play_calls] the hurt or the death sound.
         FoundationMobs::OnHurt(*Mob, World.OriginCm, Facts.FeetCm, bFreshHit, true, Player.Id);
         AddMobSound(*Mob, Result.bTargetDied ? TEXT("death") : TEXT("hurt"), FoundationMobs::GetKind(Mob->Type).Volume);
+        if (Result.bTargetDied) DropMobLoot(*Mob);
     }
     ++Hits;
     Vitals.AddExhaustion(Rules.HitExhaustion);

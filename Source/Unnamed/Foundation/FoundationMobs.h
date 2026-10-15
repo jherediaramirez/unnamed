@@ -54,6 +54,22 @@ struct FFoundationMobPlayer
     FName MainHand, Offhand;
 };
 
+// One creature spawn entry of a biome (survival T6 20b2; DA_Mobs from the worldgen reference's natural_mob_spawns):
+// a built, spawnable mob, its weight and its pack size bounds (inclusive).
+struct FFoundationMobSpawn
+{
+    EFoundationMobType Type = EFoundationMobType::Cow;
+    int32 Weight = 0, MinCount = 1, MaxCount = 1;
+};
+
+// A biome's creature spawning: creature_world_gen_spawn_probability and the entries of the mobs that are built (O9:
+// plains keeps sheep 12, pig 10, chicken 10, cow 8 of its six).
+struct FFoundationBiomeSpawns
+{
+    float Chance = .1f;
+    TArray<FFoundationMobSpawn> Creatures;
+};
+
 struct FFoundationMob
 {
     int32 Id = 0;
@@ -122,6 +138,8 @@ namespace FoundationMobs
     // foundation.Mobs: 1 (the default) mobs exist (foundation.Mobs.Summon, hits, drops); 0 none are spawned, stepped
     // or drawn and Resolve sees training targets only, as before.
     UNNAMED_API bool IsOn();
+    // foundation.Mobs.Spawn: 1 (the default) passive spawning in generated worlds; 0 mobs come only from Summon.
+    UNNAMED_API bool IsSpawnOn();
 
     UNNAMED_API const FFoundationMobKind& GetKind(EFoundationMobType Type);
     // The type of an entity id ("cow"); false for an unknown id.
@@ -144,12 +162,12 @@ namespace FoundationMobs
     constexpr int32 VoidDepthCells = 64;
 
     // [movement.knockback_resistance, extra.motion, future.combat] a player's hit: power 0.4 blocks per tick times
-    // (1 - resistance).
-    constexpr double KnockbackCm = 40;
+    // (1 - resistance); a grounded mob's vertical velocity after it is at most KnockbackUpCm (V:512;
+    // survival2.r20.mob_physics: 0.4 up from rest).
+    constexpr double KnockbackCm = 40, KnockbackUpCm = 40;
     // [hurt.cooldown] the hurt animation's length; [mobs.hurt_overlay] the red overlay while HurtTime or DeathTime > 0.
     constexpr int32 HurtTicks = 10;
-    // Provisional (no reference; Codex T6 section C): the corpse is removed and its loot and experience drop at
-    // DeathTime 20.
+    // [survival2.r20.mob_death] the loot and experience drop on the killing hit; the corpse is removed at DeathTime 20.
     constexpr int32 RemoveAtDeathTime = 20;
 
     // AI [survival.r10.ai_rules, survival.r10.ai_defaults]. The stroll goal starts when Random.RandHelper(StrollChance)
@@ -199,16 +217,36 @@ namespace FoundationMobs
     // interval anywhere): an ambient sound is tried every AmbientMinTicks plus a random 0-AmbientRandomTicks steps; a
     // step sound every StepSoundCm walked on the ground.
     constexpr float StepVolume = .15f;
+    // [survival.r5.play_calls] steps play at pitch 1 (F 3582); ambient, hurt and death at GetSoundPitch.
+    constexpr float StepPitch = 1;
     constexpr int32 AmbientMinTicks = 80, AmbientRandomTicks = 120;
     constexpr double StepSoundCm = 100;
+
+    // Passive spawning (survival T6 20b2). Chunk generation [minecraft.wiki "Mob spawning"; the biome's
+    // creature_world_gen_spawn_probability, data]: when a column is first seen loaded, one creature pack with the
+    // biome's chance. Columns are SpawnColumnCells square (a chunk). Provisional (Codex T6 section C): the pack's
+    // members are spread around a random column of the chunk by RandRange(0, PackSpreadCells) -
+    // RandRange(0, PackSpreadCells) on each axis and kept inside the chunk; each stands on the top motion-blocking
+    // block of its column, which must be a grass block, with room for its box and no fluid; the light there is the
+    // proxy (sky-exposed = 15, scout Q1 (a)), at least PassiveMinLight. SpawnRingColumns: the columns polled around
+    // each live player, nearest first, at most SpawnColumnsPerStep new ones per step (provisional).
+    constexpr int32 SpawnColumnCells = 16, PackSpreadCells = 5, PassiveMinLight = 9, SkyLightProxy = 15;
+    constexpr int32 SpawnRingColumns = 10, SpawnColumnsPerStep = 16;
+
+    // The entry a pack spawns: one draw over the entries' total weight (null when none).
+    UNNAMED_API const FFoundationMobSpawn* PickSpawn(const FFoundationBiomeSpawns& Biome, FRandomStream& Random);
+    // A pack's size: uniform over the entry's bounds.
+    UNNAMED_API int32 RollPackSize(const FFoundationMobSpawn& Entry, FRandomStream& Random);
+    // One axis of a member's offset from the pack's column (cells, -PackSpreadCells to PackSpreadCells).
+    UNNAMED_API int32 RollPackOffset(FRandomStream& Random);
 
     // The box of a mob standing at a world position (its bottom centre).
     UNNAMED_API FBox GetBox(EFoundationMobType Type, const FVector& WorldCm);
     // The world region one step's motion can touch, the step-up included.
     UNNAMED_API FBox GetStepRegion(const FFoundationMob& Mob, const FVector& OriginCm);
     // [extra.motion] a grounded mob's velocity after a hit pushing it along Away (horizontal, any length) with Power
-    // cm per step: half the old horizontal velocity plus the impulse; vertically min(Power, old / 2 + Power). An
-    // airborne mob keeps its vertical velocity.
+    // cm per step: half the old horizontal velocity plus the impulse; vertically min(KnockbackUpCm, old / 2 + Power).
+    // An airborne mob keeps its vertical velocity.
     UNNAMED_API void ApplyKnockback(FVector& VelocityCm, const FVector2D& Away, bool bGrounded, double PowerCm);
     // An accepted hit from an attacker at AttackerWorldCm: the hurt animation, knockback on a fresh hit, the panic
     // goal's trigger, and the killer when it died.
