@@ -967,4 +967,49 @@ bool FFoundationInteractEditsTest::RunTest(const FString& Parameters)
     }
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationInteractGrazingTest, "Unnamed.Foundation.Interact.Grazing", InteractTestFlags)
+bool FFoundationInteractGrazingTest::RunTest(const FString& Parameters)
+{
+    // A sheep grazing (T6 20b1, FFoundationAuthority::EatGrass) turns the grass block under it to dirt without the
+    // edit path's settling: a door and tall grass beside it keep both halves, nothing pops, and a fence beside it keeps
+    // its sides (B3a's paired-half guard and ring stay out of grazing).
+    FInteractLab Lab;
+    Lab.A.Options.bMobs = true;
+    const FIntVector Grass(0, 0, 0), DoorCell(1, 0, 1), TallGrass(-1, 0, 1), Fence(0, 1, 1);
+    for (const FIntVector& Ground : {Grass, DoorCell - FIntVector(0, 0, 1), TallGrass - FIntVector(0, 0, 1)})
+        Lab.A.World.Set(Ground, Lab.State(TEXT("grass_block[snowy=false]")));
+    const FString Lower(TEXT("oak_door[facing=north,half=lower,hinge=left,open=false,powered=false]"));
+    Lab.A.World.Set(DoorCell, Lab.State(Lower));
+    Lab.A.World.Set(DoorCell + FIntVector(0, 0, 1), Lab.State(Lower.Replace(TEXT("lower"), TEXT("upper"))));
+    Lab.A.World.Set(TallGrass, Lab.State(TEXT("tall_grass[half=lower]")));
+    Lab.A.World.Set(TallGrass + FIntVector(0, 0, 1), Lab.State(TEXT("tall_grass[half=upper]")));
+    Lab.A.World.Set(Fence, Lab.State(TEXT("oak_fence")));
+    const FString FenceBefore = Lab.At(Fence);
+    const int32 Id = Lab.A.SpawnMob(EFoundationMobType::Sheep, FVector(50, 50, 100));
+    auto Steps = [&Lab](int32 Count)
+    {
+        for (int32 Index = 0; Index < Count; ++Index)
+        {
+            FFoundationPlayerFacts Facts = Lab.P().Facts;
+            ++Facts.Step;
+            Lab.A.SetFacts(Lab.Player, Facts);
+            Lab.A.Step();
+        }
+    };
+    Steps(1);
+    if (!TestNotNull(TEXT("the sheep"), Lab.A.FindMob(Id))) return false;
+    Lab.A.FindMob(Id)->GrazeTicks = 40;
+    const int64 Serial = Lab.A.GetEventSerial();
+    Steps(36);
+    TestEqual(TEXT("the grass under the sheep is dirt"), Lab.At(Grass), FString(TEXT("dirt")));
+    TestEqual(TEXT("the door's lower half"), Lab.At(DoorCell), Lower);
+    TestTrue(TEXT("the door's upper half"), Lab.At(DoorCell + FIntVector(0, 0, 1)).Contains(TEXT("half=upper")));
+    TestTrue(TEXT("the tall grass's two halves"),
+        Lab.At(TallGrass) == TEXT("tall_grass[half=lower]") &&
+            Lab.At(TallGrass + FIntVector(0, 0, 1)) == TEXT("tall_grass[half=upper]"));
+    TestEqual(TEXT("the fence"), Lab.At(Fence), FenceBefore);
+    TestEqual(TEXT("pops"), Lab.CountEvents(EFoundationEventKind::Popped, Serial), 0);
+    return true;
+}
 #endif
