@@ -18,6 +18,10 @@ struct FHudContainerView
 {
     TArray<FHudCreativeStack> Slots;
     FHudCreativeStack Carried;
+    // A furnace's fuel left (litTime / litDuration) and cooking progress (cookingTimer / cookingTotalTime), 0-1.
+    bool bLit = false;
+    float LitFraction = 0;
+    float CookFraction = 0;
 
     const FHudCreativeStack& Get(int32 Slot) const;
 };
@@ -58,6 +62,26 @@ public:
     static constexpr int32 InventoryLabelY = 72;
     static constexpr int32 CraftingRecipeButtonX = 5;
     static constexpr int32 CraftingRecipeButtonY = 34;
+
+    // The furnace (T1 step 8a2, AbstractFurnaceScreen, textures/gui/container/furnace.png, the same 176 x 166): input
+    // 56,17, fuel 56,53, result 116,35 (value-swaps.md, "FurnaceScreen"). Its title centred at y 6 and the recipe-book
+    // button at leftPos + 20, 34 below topPos are provisional (minecraft.wiki screenshots, no capture yet).
+    static constexpr int32 FurnaceTitleY = 6;
+    static constexpr int32 FurnaceRecipeButtonX = 20;
+    static constexpr int32 FurnaceRecipeButtonY = 34;
+    // The flame and the arrow (value report survival.r3.sprites, SURVIVAL-FINDINGS F 3238-3256): the flame 14 wide at
+    // x 56 with its lower edge at y 50, hidden while unlit; the arrow at 79,34, 16 high.
+    static constexpr int32 FlameX = 56;
+    static constexpr int32 FlameBottom = 50;
+    static constexpr int32 FlameSize = 14;
+    static constexpr int32 ArrowX = 79;
+    static constexpr int32 ArrowY = 34;
+    static constexpr int32 ArrowWidth = 24;
+    static constexpr int32 ArrowHeight = 16;
+    // The flame's height: 0 unlit or at f 0, else ceil(f x 13) + 1 (5/8/11/14 at 25/50/75/100 %); the arrow's width
+    // ceil(f x 24) (6/12/18/24).
+    static int32 GetFlameHeight(bool bLit, float LitFraction);
+    static int32 GetArrowWidth(float CookFraction);
 
     // A menu slot's 16 x 16 item area (top-left), measured from inventory.png's slot frames; for the crafting table
     // the value report's slot positions (value-swaps.md, "Crafting table").
@@ -100,10 +124,14 @@ public:
 
     // The items' stack sizes and equipment slots (the drag only adds slots that can take the stack).
     FHudCreativeItems Items;
+    // The items a furnace's fuel slot takes (fuel and the empty bucket, FFoundationContainerMenu::MayPlace).
+    TSet<FName> FuelItems;
     bool bFullInventory = true;
     EFoundationMenuKind Kind = EFoundationMenuKind::Inventory;
 
 private:
+    // The slot that only gives (the crafting result, a furnace's result), or INDEX_NONE.
+    int32 GetResultSlot() const;
     int32 GetMaxStack(FName Item) const;
     // The menu's rules for a drag slot: the slot takes the item (armor by equipment) and is empty or holds the same
     // item with room.
