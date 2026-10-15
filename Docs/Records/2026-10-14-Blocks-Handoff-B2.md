@@ -27,6 +27,8 @@ Lane `feature/survival-blocks` (worktree `C:\dev\projects\Unnamed-blocks`). B1 (
 - B1's blocks place their default state; B2 adds `GetStateForPlacement` for stairs (facing, half, shape), fences, walls, panes and bars (connections), gates (facing), the one-ring neighbour pass `UpdateNeighbourShapes` beside `SettlePlants`, and both collision gatherers one cell lower (1.5-tall fences, walls, closed gates; the pitcher crop).
 - The oracle is a new FactsDump table of `BlockState.updateShape` answers (public API, the same `LevelReader` proxy), appended to the blocks reference through its tool.
 - With `foundation.Blocks.Families 0`, the 9 sapling items stay in the creative inventory (as before B1) and placing them is refused.
+- B3's dependency on T1 step 7 is met (`feature/survival` 896f2d3, merged into B1): the block-use hook is `FFoundationAuthority::RegisterBlockUse(BlockId, handler)`, documented in `Docs/Items.md` "The crafting table and block use".
+- With `foundation.Blocks.Families 0`, recipes whose result is a B1 block's item craft nothing (`MakeContainerRules`; the 2x2 grid and the crafting table share that path).
 - Loot of the B1 families waits for each family's session (`Reference/minecraft-items-26.3/tools/loot_later.txt`); remove an id from that file only by appending its table last.
 
 ## 4. Code map (B1)
