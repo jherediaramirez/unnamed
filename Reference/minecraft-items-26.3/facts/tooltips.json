@@ -104,6 +104,16 @@
   {"id": "carrot", "lines": [[["Carrot", "white"]]]},
   {"id": "potato", "lines": [[["Potato", "white"]]]},
   {"id": "mutton", "lines": [[["Raw Mutton", "white"]]]},
-  {"id": "cooked_mutton", "lines": [[["Cooked Mutton", "white"]]]}
+  {"id": "cooked_mutton", "lines": [[["Cooked Mutton", "white"]]]},
+  {"id": "charcoal", "lines": [[["Charcoal", "white"]]]},
+  {"id": "brick", "lines": [[["Brick", "white"]]]},
+  {"id": "lime_dye", "lines": [[["Lime Dye", "white"]]]},
+  {"id": "green_dye", "lines": [[["Green Dye", "white"]]]},
+  {"id": "dried_kelp", "lines": [[["Dried Kelp", "white"]]]},
+  {"id": "baked_potato", "lines": [[["Baked Potato", "white"]]]},
+  {"id": "nether_brick", "lines": [[["Nether Brick", "white"]]]},
+  {"id": "resin_brick", "lines": [[["Resin Brick", "white"]]]},
+  {"id": "iron_nugget", "lines": [[["Iron Nugget", "white"]]]},
+  {"id": "copper_nugget", "lines": [[["Copper Nugget", "white"]]]}
  ]
 }
