@@ -257,7 +257,9 @@ namespace
             const FIntVector World(ColumnOrigin.X + Cell.X, ColumnOrigin.Y + Cell.Y, BaseZ + Cell.Z);
             const FVector3f Base = FVector3f(float(Cell.X), float(Cell.Y), float(Cell.Z + BaseZ)) +
                 VoxelModels::GetOffset(Info, World.X, World.Y);
-            FVoxelMeshLayer& Layer = Out.Layers[int32(EVoxelLayer::Model)];
+            // The model section, or the translucent one for a translucent block's model (the panes).
+            FVoxelMeshLayer& Layer = Out.Layers[int32(
+                Info.Layer == EVoxelLayer::Translucent ? EVoxelLayer::Translucent : EVoxelLayer::Model)];
             // Every tinted quad of the cell takes the same colour: looked up once, on the first.
             TOptional<uint32> CellTint;
             const int32* Part = Table.GetModelParts(Info);

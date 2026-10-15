@@ -62,6 +62,16 @@ namespace FoundationBlockOffsets
     UNNAMED_API FVector GetOffset(const FFoundationBlockType& Block, const FIntVector& Cell);
 }
 
+// The collision gatherers' outer layers (foundation.Blocks.Shapes, survival B2): a few boxes leave their cell
+// vertically (fences, walls and closed gates reach y 1.5; the pitcher crop's lower half starts at -1/16), so a gather
+// also reads the cells just below and above the region and keeps only those boxes.
+namespace FoundationCollisionGather
+{
+    // Removes the boxes Out[First..] that stay within [CellBottom, CellTop] (cm) or do not overlap Region with volume,
+    // keeping the order of the rest. A region touching a box's face only gets nothing, as before.
+    UNNAMED_API void KeepLeaving(const FBox& Region, double CellBottom, double CellTop, TArray<FBox>& Out, int32 First);
+}
+
 // A cell's state and the world revision at which it last changed (0 = never changed).
 struct FFoundationCell
 {
