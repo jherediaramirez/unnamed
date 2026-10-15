@@ -17,6 +17,8 @@ struct FFoundationExperienceOrb
     // Steps lived; does not count while frozen.
     int32 Age = 0;
     bool bOnGround = false;
+    // Spawned since the last step's merge scan (Codex review 8 #1: a new orb may merge whatever the ids).
+    bool bNew = false;
     // Its column is not loaded: it neither steps nor is picked up nor drawn.
     bool bFrozen = false;
 };
@@ -26,7 +28,7 @@ struct FFoundationExperienceOrb
 namespace FoundationExperienceOrbs
 {
     // foundation.Items.Xp: 1 (the default) ores pay orbs that fly to the player and fill the XP bar; 0 no orbs spawn,
-    // as before (orbs already in the world stay until picked up).
+    // as before (orbs already in the world stay, fly and pay, as drops stay at foundation.Items.Entities 0).
     UNNAMED_API bool IsOn();
 
     // [xp.free_flight; catalog.entities] a 0.5 x 0.5 box, gravity 0.03 blocks per tick squared, air drag 0.98.
@@ -48,9 +50,32 @@ namespace FoundationExperienceOrbs
     // axis (its count adds), every MergeTicks of its own age.
     constexpr int32 DespawnAge = 6000, PickupEveryTicks = 2;
     constexpr double MergeGrowCm = 50;
+    // Codex review 8 #1 (the Chinese minecraft.wiki's "Experience orb", Merging; the English page and the report are silent): of two orbs in
+    // reach, the seeker takes in the other only when their ids differ by a multiple of MergeIdPeriod, or when the
+    // seeker spawned this step and a NewMergeChance roll passes. An orb also scans in the step it spawned.
+    constexpr int32 MergeIdPeriod = 40;
+    constexpr double NewMergeChance = .025;
+    // Codex review 8 #2, provisional (minecraft.wiki "Experience orb", history 1.21.4: "bouncy when falling from a
+    // height"; no factor anywhere): landing faster than BounceMinCm per step, an orb leaves the ground at BounceFactor
+    // times its landing speed (the items' -0.5 ground bounce [items.physics] borrowed); slower, it stays down.
+    constexpr double BounceFactor = .5, BounceMinCm = 6;
+    // [survival.r5.rules] entity.player.levelup plays at volume LevelUpVolume x min(level / LevelUpFullLevel, 1), pitch
+    // 1, on a positive level gain reaching a multiple of 5 (the level counted is the highest multiple reached), and only
+    // more than LevelUpGapTicks after the last one.
+    constexpr float LevelUpVolume = .75f;
+    constexpr int32 LevelUpFullLevel = 30, LevelUpGapTicks = 100;
+    // [survival.r5.play_calls] entity.experience_orb.pickup plays at volume 0.1; its pitch is GetPickupPitch's.
+    constexpr float PickupVolume = .1f;
     // Provisional (estimates, P3): a new orb takes the block drop's spawn spread and speed (FoundationItemEntities),
     // and one step runs gravity, the attraction, the move, then the drag (the item entities' ground friction included).
 
+    // Whether Seeker takes in Other (the caller checks the value and the reach).
+    UNNAMED_API bool CanMerge(const FFoundationExperienceOrb& Seeker, const FFoundationExperienceOrb& Other);
+    // The level-up sound's volume when the level goes from LastLevel to Level at Step, the last one having played at
+    // LastSoundStep (negative: never); 0 for no sound. A gain passing several levels counts the highest multiple of 5.
+    UNNAMED_API float GetLevelUpVolume(int32 LastLevel, int32 Level, int64 Step, int64 LastSoundStep);
+    // [survival.r5.rules] the pickup sound's pitch, 0.9 + 0.35 x (U - V) for two uniform draws in [0, 1).
+    UNNAMED_API float GetPickupPitch(float U, float V);
     // The icon (0 to 10) for an orb's value.
     UNNAMED_API int32 GetIcon(int32 Value);
     // Provisional (wiki): a total splits greedily into orbs, each the largest icon threshold not above what is left.

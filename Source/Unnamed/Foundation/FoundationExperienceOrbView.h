@@ -14,7 +14,8 @@ class UInstancedStaticMeshComponent;
 // of the player is a camera-facing 0.3-block quad of its icon from T_ExperienceOrb (M_ExperienceOrb, under EntityRoot),
 // tinted by the colour pulse and drawn between the last two reference steps (value report `xp.value`,
 // `xp.value_icons`); a frozen orb is hidden. The sound hooks: entity.experience_orb.pickup on a pickup, and
-// entity.player.levelup when the local player's level reaches a multiple of 5 (silent until the sound batch adds them).
+// entity.player.levelup by FoundationExperienceOrbs::GetLevelUpVolume's rule (the local player's level reaching a
+// multiple of 5, at most once per 100 steps).
 class FFoundationExperienceOrbView
 {
 public:
@@ -50,5 +51,7 @@ private:
     bool bTried = false;
     int32 Drawn = 0;
     int32 LastLevel = -1;
+    // The local player's step when the last level-up sound played (-1: none yet).
+    int64 LastLevelUpStep = -1;
     TArray<float> Data;
 };

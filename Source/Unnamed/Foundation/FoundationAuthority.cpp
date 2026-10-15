@@ -489,6 +489,7 @@ int32 FFoundationAuthority::SpawnExperience(const FVector& LocalCm, int32 Total,
     {
         FFoundationExperienceOrb& Orb = ExperienceOrbs.AddDefaulted_GetRef();
         Orb.Id = NextOrbId++;
+        Orb.bNew = true;
         Orb.Value = FoundationExperienceOrbs::GetSplitValue(Left);
         Left -= Orb.Value;
         Orb.LocalCm = Orb.PreviousLocalCm = Center +
@@ -561,17 +562,19 @@ void FFoundationAuthority::StepExperienceOrbs()
         else
             ++Index;
     }
-    // Provisional (wiki): every MergeTicks of its age, an orb takes in same-value orbs inside its merge box.
+    // Provisional (wiki): every MergeTicks of its age, and in the step it spawned, an orb takes in same-value orbs
+    // inside its merge box that CanMerge allows (Codex review 8 #1).
     for (int32 Index = 0; Index < ExperienceOrbs.Num(); ++Index)
     {
-        if (ExperienceOrbs[Index].bFrozen || ExperienceOrbs[Index].Age % MergeTicks != 0) continue;
+        const FFoundationExperienceOrb& Seeker = ExperienceOrbs[Index];
+        if (Seeker.bFrozen || (Seeker.Age % MergeTicks != 0 && !Seeker.bNew)) continue;
         const FBox Reach = GetMergeBox(Origin + ExperienceOrbs[Index].LocalCm);
         for (int32 Other = ExperienceOrbs.Num() - 1; Other >= 0; --Other)
         {
             FFoundationExperienceOrb& Into = ExperienceOrbs[Index];
             const FFoundationExperienceOrb& From = ExperienceOrbs[Other];
             if (Other == Index || From.bFrozen || From.Value != Into.Value ||
-                !Overlaps(Reach, GetBox(Origin + From.LocalCm)))
+                !Overlaps(Reach, GetBox(Origin + From.LocalCm)) || !CanMerge(Into, From))
                 continue;
             Into.Count += From.Count;
             Into.Age = FMath::Min(Into.Age, From.Age);
@@ -580,6 +583,9 @@ void FFoundationAuthority::StepExperienceOrbs()
             if (Other < Index) --Index;
         }
     }
+    // A new orb has had its scan (a frozen one keeps the flag until it steps).
+    for (FFoundationExperienceOrb& Orb : ExperienceOrbs)
+        Orb.bNew &= Orb.bFrozen;
     // A live player takes one orb (one point-value of its count) every PickupEveryTicks, oldest first.
     for (FFoundationPlayer& Player : Players)
     {
