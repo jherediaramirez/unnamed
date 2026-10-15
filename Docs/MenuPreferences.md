@@ -1,6 +1,6 @@
 # Menu preferences
 
-The menu now remembers 101 additional scalar preferences, the chosen language, ordered resource packs, multiplayer warning dismissal and the extra telemetry choice. These values are available to future native feature consumers without adding those features now. Existing video and Enhanced Input stores remain their own authorities.
+The menu now remembers 102 additional scalar preferences (101 from the reference plus Bass), the chosen language, ordered resource packs, multiplayer warning dismissal and the extra telemetry choice. These values are available to future native feature consumers without adding those features now. Existing video and Enhanced Input stores remain their own authorities.
 
 The original complete review and per-control inventory remain in [the plan](MenuPreferencePersistencePlan-2026-10-07.md) and [the inventory](MenuPreferenceInventory-2026-10-07.json). This implements the recommended first batch. Dormant bindings, real server favorites and durable world drafts remain separate batches.
 
@@ -8,7 +8,7 @@ The original complete review and per-control inventory remain in [the plan](Menu
 
 | Domain | Owner | Behavior |
 |---|---|---|
-| 101 ordinary settings | UMenuPreferences GameInstance subsystem | Validate, save on edit, and return accepted values to all copies of a control. |
+| 102 ordinary settings | UMenuPreferences GameInstance subsystem | Validate, save on edit, and return accepted values to all copies of a control. |
 | Language and resource packs | Same subsystem | Draft selection stays local until Done succeeds. Escape/Cancel discards it. Language translation and pack appearance remain pending. |
 | Warning dismissal / extra telemetry choice | Same subsystem | Save the checkbox value. Warning dismissal follows the existing menu route; no telemetry is collected or sent. |
 | Five functional video settings | Existing UMenuVideoSettings | Existing behavior and file remain authoritative. |
@@ -17,6 +17,8 @@ The original complete review and per-control inventory remain in [the plan](Menu
 | Worlds, servers, rules, experiments and generation drafts | Existing menu draft logic | Session-only samples; no real world or connection is created. |
 
 Saved-only scalar controls have a tooltip explaining that their feature effect is pending. FOV, sound levels, mouse sensitivity, chat, skin and other desired settings are readable through UMenuPreferences::FindPreference. A later adapter must decide when and how to apply them.
+
+Applied in game since survival step 13a2 (UMenuAudioSettings, a GameInstance subsystem that re-reads on every preference revision): Master Volume (`sound_master`) is the audio device's primary volume, and Bass (`sound_bass`, the one preference the reference lacks: beyond vanilla by Jesus's choice, 2026-10-15) is a low shelf on the master submix, value x 5 dB below 175 Hz with a -0.3 x gain makeup (MenuBassShelfPreset). Bass defaults to 1 (+5 dB) for every profile, saved ones without the key included; 0 removes the effect, which is vanilla's output. `menu.Audio.Bass 0` never attaches it. The other sound categories stay saved-only.
 
 Graphics presets commit their quality group together and leave functional menu blur alone. Manual quality changes mark the preset Custom. Loading restores each saved value directly, without replaying the preset. High Contrast and its pack membership commit together, including pack order. Disabling Friends List retains child choices.
 

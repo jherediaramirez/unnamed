@@ -1453,6 +1453,20 @@ void UFoundationInteractionView::PlayFireSounds(const AFoundationPawn* Pawn)
     }
 }
 
+void UFoundationInteractionView::PlayFootsteps(const FFoundationAuthority& Authority, const AFoundationPawn* Pawn)
+{
+    if (!Pawn) return;
+    // A new pawn starts from its own count.
+    if (FootstepOwner.Get() != Pawn)
+    {
+        FootstepOwner = Pawn;
+        HeardFootsteps = Pawn->FootstepCount;
+    }
+    const bool bStep = Pawn->FootstepCount != HeardFootsteps;
+    HeardFootsteps = Pawn->FootstepCount;
+    if (bStep && BreakEffects) BreakEffects->PlayFootstep(Authority, Pawn->LastFootstepFeet);
+}
+
 void UFoundationInteractionView::PlayFurnaceSounds(
     const FFoundationAuthority& Authority, const AFoundationPawn* Pawn, float DeltaTime)
 {
@@ -1502,6 +1516,7 @@ void UFoundationInteractionView::TickComponent(
     UpdateEffects(DeltaTime);
     AFoundationPawn* Pawn = GetLocalPawn();
     PlayFireSounds(Pawn);
+    PlayFootsteps(Authority, Pawn);
     PlayFurnaceSounds(Authority, Pawn, DeltaTime);
     const auto* Controller = Pawn ? Cast<AFoundationController>(Pawn->GetController()) : nullptr;
     // F1 hides the outline, preview and hand with the HUD; the menu hides them while paused.

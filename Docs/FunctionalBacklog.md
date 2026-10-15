@@ -239,7 +239,7 @@ The JSON registry is the per-control scope record. These effects remain pending 
 - `mainHand`: Main Hand: Left. Native UMenuPreferences persistence is implemented. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `skin..Scroll`: Scroll. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
 - `skin..Done`: Done. TBD. No existing Unreal gameplay, world, server, account, voxel renderer or telemetry service is assumed. Later checks and questions are in its registry entry.
-- `sound_master`: Master Volume. Native UMenuPreferences persistence is implemented. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
+- `sound_master`: Master Volume. Native UMenuPreferences persistence is implemented. Applied since survival step 13a2 as the audio device's primary volume (UMenuAudioSettings). Later checks and questions are in its registry entry.
 - `sound_music`: Music. Native UMenuPreferences persistence is implemented. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
 - `sound_record`: Jukebox/Note Blocks. Native UMenuPreferences persistence is implemented. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
 - `sound_weather`: Weather. Native UMenuPreferences persistence is implemented. Future Unreal audio mixer/device adapter; not bound in this phase. Later checks and questions are in its registry entry.
