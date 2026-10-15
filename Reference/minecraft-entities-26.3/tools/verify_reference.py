@@ -104,6 +104,15 @@ for layer in ("cow#main", "pig#main", "sheep#main", "sheep#wool", "sheep#wool_un
 cow_model = models.get("cow#main", {"parts": [], "cubes": []})
 check((len(cow_model["parts"]), len(cow_model["cubes"])) == (7, 10),
       f"cow model is not 7 parts / 10 cubes: {len(cow_model['parts'])} / {len(cow_model['cubes'])}")
+# Survival T2 19c: the arrow's layer comes last (EntityModelFacts' APPEND): the root and its three parts (back, cross_1,
+# cross_2), one cube each; its texture
+# is 32 x 32.
+arrow_model = models.get("arrow#main", {"parts": [], "cubes": []})
+check(list(models)[-1] == "arrow#main" and len(arrow_model["cubes"]) == 3 and
+      [p["path"] for p in arrow_model["parts"]] == ["", "back", "cross_1", "cross_2"],
+      f"arrow#main is not the last layer with 3 cubes: {list(models)[-1:]}, {len(arrow_model['cubes'])}")
+arrow_tex = by_name.get("entity/projectiles/arrow.png", {})
+check((arrow_tex.get("width"), arrow_tex.get("height")) == (32, 32), f"arrow.png is not 32 x 32: {arrow_tex}")
 for name in build.LOOT:
     try:
         json.loads((ROOT / build.LOOT_PREFIX / name).read_text(encoding="utf-8"))

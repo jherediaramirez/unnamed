@@ -93,7 +93,7 @@ const FFoundationItemAsset* UFoundationItemAssets::FindItem(FName Id) const
 }
 
 bool UFoundationItemAssets::FindModelView(
-    FName Id, FName Context, FFoundationItemModelView& View, bool bUsingItem) const
+    FName Id, FName Context, FFoundationItemModelView& View, bool bUsingItem, int32 UseTicks) const
 {
     View = {};
     const FFoundationItemAsset* Item = FindItem(Id);
@@ -101,12 +101,25 @@ bool UFoundationItemAssets::FindModelView(
     // A using_item case (the shield) matches only its own state.
     auto Using = [bUsingItem](const FFoundationItemModelCaseAsset& Candidate)
     { return Candidate.UsingItem < 0 || (Candidate.UsingItem == 1) == bUsingItem; };
+    // The first plain case that matches; among use_duration range cases (the bow), the highest threshold reached
+    // (float arithmetic, as the game's: 13 x 0.05 reaches 0.65). A definition mixing plain and range cases under the
+    // same using state would depend on the case order; 26.3's bow has none (its plain case is using_item false).
+    auto Pick = [Item, &Using, UseTicks](auto&& Match)
+    {
+        const FFoundationItemModelCaseAsset* Best = nullptr;
+        for (const FFoundationItemModelCaseAsset& Candidate : Item->Models)
+        {
+            if (!Using(Candidate) || !Match(Candidate)) continue;
+            if (Candidate.RangeScale <= 0) return &Candidate;
+            if (float(UseTicks) * Candidate.RangeScale >= Candidate.RangeThreshold &&
+                (!Best || Candidate.RangeThreshold > Best->RangeThreshold))
+                Best = &Candidate;
+        }
+        return Best;
+    };
     const FFoundationItemModelCaseAsset* Case =
-        Item->Models.FindByPredicate([Context, &Using](const FFoundationItemModelCaseAsset& Candidate)
-            { return Using(Candidate) && Candidate.Contexts.Contains(Context); });
-    if (!Case)
-        Case = Item->Models.FindByPredicate([&Using](const FFoundationItemModelCaseAsset& Candidate)
-            { return Using(Candidate) && Candidate.Contexts.IsEmpty(); });
+        Pick([Context](const FFoundationItemModelCaseAsset& Candidate) { return Candidate.Contexts.Contains(Context); });
+    if (!Case) Case = Pick([](const FFoundationItemModelCaseAsset& Candidate) { return Candidate.Contexts.IsEmpty(); });
     if (!Case) return false;
     View.Model =
         Models.FindByPredicate([Case](const FFoundationItemModelAsset& Model) { return Model.Name == Case->Model; });
