@@ -6,6 +6,8 @@
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationInteraction.h"
 #include "Foundation/FoundationInteractionSettings.h"
+#include "Engine/World.h"
+#include "Foundation/FoundationPawn.h"
 #include "HAL/IConsoleManager.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -681,6 +683,48 @@ bool FFoundationFurnaceExperienceTest::RunTest(const FString&)
     TestTrue(TEXT("10 x 0.1: always 1 (float, no roll)"), Min == 1 && Max == 1);
     Trials({{Iron, 1}, {Glass, 10}}, Min, Max, Mean);
     TestTrue(TEXT("per recipe, summed: 1 or 2"), Min == 1 && Max == 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationFurnaceAmbiencePauseTest, "Unnamed.Foundation.Furnace.AmbiencePause", FurnaceTestFlags)
+
+bool FFoundationFurnaceAmbiencePauseTest::RunTest(const FString&)
+{
+    // Codex review 25, finding 1: the ambience's clock rolls nothing while paused and starts over; running, it rolls
+    // one tick per 1/20 s, at most 4 a frame.
+    float Clock = .04f;
+    TestEqual(TEXT("paused: no roll"), FoundationFurnace::StepAmbienceClock(Clock, .5f, false), 0);
+    TestEqual(TEXT("paused: the clock starts over"), Clock, 0.f);
+    TestEqual(TEXT("running: 1 roll after 0.06 s"), FoundationFurnace::StepAmbienceClock(Clock, .06f, true), 1);
+    TestEqual(TEXT("running: 4 rolls at most"), FoundationFurnace::StepAmbienceClock(Clock, 1.f, true), 4);
+
+    // The gate is the pawn's simulation: the pause menu turns it off, a container screen keeps it on (only the input
+    // is zeroed), so the sounds go on under the screen.
+    // A bare world, never begun, rooted against a collection while the test holds it (no world context, so
+    // DestroyWorld(false)).
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (World) World->AddToRoot();
+    FActorSpawnParameters Parameters;
+    Parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    AFoundationPawn* Pawn = World ? World->SpawnActor<AFoundationPawn>(Parameters) : nullptr;
+    if (TestNotNull(TEXT("a pawn"), Pawn))
+    {
+        Pawn->SetScreenInput(true);
+        Clock = 0;
+        TestTrue(TEXT("container screen: the simulation runs"), Pawn->IsSimulationEnabled());
+        TestEqual(TEXT("container screen: rolls"),
+            FoundationFurnace::StepAmbienceClock(Clock, .06f, Pawn->IsSimulationEnabled()), 1);
+        Pawn->SetScreenInput(false);
+        Pawn->SetSimulationEnabled(false);
+        TestEqual(TEXT("pause menu: no roll"),
+            FoundationFurnace::StepAmbienceClock(Clock, .06f, Pawn->IsSimulationEnabled()), 0);
+    }
+    if (World)
+    {
+        World->RemoveFromRoot();
+        World->DestroyWorld(false);
+    }
     return true;
 }
 

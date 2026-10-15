@@ -561,8 +561,8 @@ public:
     FFoundationBlockEntities BlockEntities;
     // The generated cooking recipes and fuels, resolved against Rules.Items on first use.
     const FFoundationCooking& GetCooking() const;
-    // An open container closes past this distance from the player's eye to its block (Codex review 12, finding 1;
-    // provisional: minecraft.wiki, the interaction range plus 4 blocks).
+    // An open container closes at this distance past the interaction range, from the player's eye to its block's box
+    // (Codex review 12, finding 1; survival2.r23.container_rule: the range plus 4 blocks, measured to the box).
     double ContainerReachExtraCm = 400;
     void SetFacts(int32 Player, const FFoundationPlayerFacts& Facts);
 

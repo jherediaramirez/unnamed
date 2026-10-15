@@ -138,6 +138,20 @@ bool FoundationFurnace::IsAmbienceOn()
     return CVarFurnaceAmbience.GetValueOnAnyThread() != 0;
 }
 
+int32 FoundationFurnace::StepAmbienceClock(float& Clock, float DeltaTime, bool bRunning)
+{
+    constexpr float TicksPerSecond = 20;
+    if (!bRunning)
+    {
+        Clock = 0;
+        return 0;
+    }
+    Clock += DeltaTime;
+    const int32 Ticks = FMath::Min(FMath::FloorToInt32(Clock * TicksPerSecond), 4);
+    Clock = FMath::Min(Clock - Ticks / TicksPerSecond, 1 / TicksPerSecond);
+    return Ticks;
+}
+
 EFoundationCookingKind FoundationFurnace::GetCookingKind(FName Block)
 {
     static const FName Smoker(TEXT("smoker")), BlastFurnace(TEXT("blast_furnace"));

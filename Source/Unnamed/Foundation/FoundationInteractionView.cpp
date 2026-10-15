@@ -1338,11 +1338,9 @@ void UFoundationInteractionView::PlayFurnaceSounds(
     // A display callback plays its block's sound with chance 0.1, volume 1, pitch 1
     // (survival2.r15.exact_callback_chances, survival2.r15.sounds). Provisional (provisional-values.md, T1 8b1): the
     // callback's scheduling, one on 1 tick in 50 of a 20 Hz clock for each lit block within the sound's 16-block reach
-    // (vanilla's is client-spatial, R15), and the sound's place, the block's bottom centre.
-    constexpr float TicksPerSecond = 20, DisplayChance = 1.f / 50, SoundChance = 1.f / 10, ReachCm = 1600;
-    FurnaceSoundClock += DeltaTime;
-    const int32 Ticks = FMath::Min(FMath::FloorToInt32(FurnaceSoundClock * TicksPerSecond), 4);
-    FurnaceSoundClock = FMath::Min(FurnaceSoundClock - Ticks / TicksPerSecond, 1 / TicksPerSecond);
+    // (vanilla's is client-spatial, R15), and the sound's place, the block's bottom centre. Nothing rolls while paused.
+    constexpr float DisplayChance = 1.f / 50, SoundChance = 1.f / 10, ReachCm = 1600;
+    const int32 Ticks = FoundationFurnace::StepAmbienceClock(FurnaceSoundClock, DeltaTime, Pawn->IsSimulationEnabled());
     if (Ticks <= 0) return;
     const FVector Listener = Pawn->GetActorLocation();
     for (const auto& [Cell, Entity] : Authority.BlockEntities.GetAll())
