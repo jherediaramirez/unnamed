@@ -38,6 +38,17 @@ public:
     {
         return ShowcaseOrigin + FIntVector(Column * 2, Row * 3, 0);
     }
+    // A registry or state gallery cell. Both galleries keep the blocks before survival B1 where they always were;
+    // with foundation.Blocks.Families 1 each adds a tail from a fresh row: one cell per B1 family block, its default
+    // state.
+    struct FGalleryCell
+    {
+        FIntVector Cell;
+        FFoundationBlockState State;
+        bool bTail = false;
+    };
+    static void GetGalleryCells(
+        const FFoundationBlockRegistry& Registry, TArray<FGalleryCell>& OutRegistry, TArray<FGalleryCell>& OutStates);
     // Block world height in cells above the ground.
     static constexpr int32 BuildHeightCells = 64;
     virtual FFoundationTarget TraceTarget(

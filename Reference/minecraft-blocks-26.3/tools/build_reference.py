@@ -24,6 +24,7 @@ import csv
 import hashlib
 import importlib.util
 import io
+import itertools
 import json
 import os
 import shutil
@@ -43,7 +44,7 @@ ASSETS = "assets/minecraft/"
 # the pin is on the rest of the entries: SHA-1 of their canonical JSON (sorted keys, compact separators).
 ASSET_INDEX_SHA1 = "abfaa525f923f807df8b4e4d29c1b5e3a104adbe"
 ASSET_INDEX_NONLANG_SHA1 = "9ba09e4fc9e2245b7395eee4732096038d9f6e2d"
-PARTICLE_ONLY_TEXTURES = frozenset({"shelf_mushroom_particle"})  # particle textures outside textures.json, copied as plain files
+PARTICLE_ONLY_TEXTURES = frozenset({"shelf_mushroom_particle", "bamboo_fence_particle", "bamboo_fence_gate_particle"})  # particle textures outside textures.json, copied as plain files
 ASSET_DIR = Path(os.environ.get("APPDATA", "")) / "ModrinthApp/meta/assets"
 
 # 26.3 BlockColors.createDefault (javap of net.minecraft.client.color.block.BlockColors), limited to imported
@@ -62,6 +63,9 @@ TINT_SOURCES = {
     "large_fern": ("grass", None), "bush": ("grass", None), "sugar_cane": ("grass", None),
     "pink_petals": ("grass", None), "wildflowers": ("grass", None), "vine": ("foliage", None),
     "leaf_litter": ("dry_foliage", None), "lily_pad": ("constant", 0x208030),
+    # Blocks session B1, from minecraft.wiki "Tint": the stems by age (STEM_AGE_COLORS); the water cauldron's water. The
+    # lava and powder snow cauldrons register none, so their tintindex renders untinted.
+    "pumpkin_stem": ("stem_age", None), "melon_stem": ("stem_age", None), "water_cauldron": ("water", None),
 }
 TINT_INDICES = {"pink_petals": frozenset({1}), "wildflowers": frozenset({1})}
 
@@ -96,7 +100,154 @@ SPRITE_PARENTS = {"item/generated", "item/handheld"}
 # Blocks added after the first ordering was fixed, in the order they came (torch session T2). Their new textures and
 # baked models go after every earlier one, so no existing texture index, array layer or model index moves; blocks,
 # states, items and facts keep registry order. verify_reference.py asserts it. Later blocks join the end of the list.
-APPENDED_BLOCKS = ["torch", "wall_torch"]
+APPENDED_BLOCKS = ["torch", "wall_torch",
+                   # Blocks session B1 (survival track T5): the families, in family order, then the cauldrons and fire.
+                   *(f"{c}_wool_stairs" for c in (
+                       "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan",
+                       "purple", "blue", "brown", "green", "red", "black")),
+                   "oak_stairs", "cobblestone_stairs", "brick_stairs", "stone_brick_stairs", "mud_brick_stairs",
+                   "resin_brick_stairs", "nether_brick_stairs", "sandstone_stairs", "spruce_stairs", "birch_stairs",
+                   "jungle_stairs", "quartz_stairs", "acacia_stairs", "cherry_stairs", "dark_oak_stairs",
+                   "pale_oak_stairs", "mangrove_stairs", "poplar_stairs", "bamboo_stairs", "bamboo_mosaic_stairs",
+                   "prismarine_stairs", "prismarine_brick_stairs", "dark_prismarine_stairs", "red_sandstone_stairs",
+                   "purpur_stairs",
+                   *(f"{c}_concrete_stairs" for c in (
+                       "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan",
+                       "purple", "blue", "brown", "green", "red", "black")),
+                   "polished_granite_stairs", "smooth_red_sandstone_stairs", "mossy_stone_brick_stairs",
+                   "polished_diorite_stairs", "mossy_cobblestone_stairs", "end_stone_brick_stairs", "stone_stairs",
+                   "smooth_sandstone_stairs", "smooth_quartz_stairs", "granite_stairs", "andesite_stairs",
+                   "red_nether_brick_stairs", "polished_andesite_stairs", "diorite_stairs", "crimson_stairs",
+                   "warped_stairs", "blackstone_stairs", "polished_blackstone_brick_stairs", "polished_blackstone_stairs",
+                   "tuff_stairs", "polished_tuff_stairs", "tuff_brick_stairs", "sulfur_stairs", "polished_sulfur_stairs",
+                   "sulfur_brick_stairs", "cinnabar_stairs", "polished_cinnabar_stairs", "cinnabar_brick_stairs",
+                   "cut_copper_stairs", "exposed_cut_copper_stairs", "weathered_cut_copper_stairs",
+                   "oxidized_cut_copper_stairs", "waxed_cut_copper_stairs", "waxed_exposed_cut_copper_stairs",
+                   "waxed_weathered_cut_copper_stairs", "waxed_oxidized_cut_copper_stairs", "cobbled_deepslate_stairs",
+                   "polished_deepslate_stairs", "deepslate_tile_stairs", "deepslate_brick_stairs",
+                   "oak_fence", "nether_brick_fence", "spruce_fence", "birch_fence", "jungle_fence", "acacia_fence",
+                   "cherry_fence", "dark_oak_fence", "pale_oak_fence", "mangrove_fence", "poplar_fence", "bamboo_fence",
+                   "crimson_fence", "warped_fence",
+                   *(f"{w}_fence_gate" for w in (
+                       "oak", "spruce", "birch", "jungle", "acacia", "cherry", "dark_oak", "pale_oak", "mangrove",
+                       "poplar", "bamboo", "crimson", "warped")),
+                   "resin_brick_wall", "cobblestone_wall", "mossy_cobblestone_wall", "brick_wall", "prismarine_wall",
+                   "red_sandstone_wall", "mossy_stone_brick_wall", "granite_wall", "stone_brick_wall", "mud_brick_wall",
+                   "nether_brick_wall", "andesite_wall", "red_nether_brick_wall", "sandstone_wall",
+                   "end_stone_brick_wall", "diorite_wall", "blackstone_wall", "polished_blackstone_brick_wall",
+                   "polished_blackstone_wall", "tuff_wall", "polished_tuff_wall", "tuff_brick_wall", "sulfur_wall",
+                   "polished_sulfur_wall", "sulfur_brick_wall", "cinnabar_wall", "polished_cinnabar_wall",
+                   "cinnabar_brick_wall", "cobbled_deepslate_wall", "polished_deepslate_wall", "deepslate_tile_wall",
+                   "deepslate_brick_wall",
+                   "iron_bars", "copper_bars", "exposed_copper_bars", "weathered_copper_bars", "oxidized_copper_bars",
+                   "waxed_copper_bars", "waxed_exposed_copper_bars", "waxed_weathered_copper_bars",
+                   "waxed_oxidized_copper_bars", "glass_pane",
+                   *(f"{c}_stained_glass_pane" for c in (
+                       "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan",
+                       "purple", "blue", "brown", "green", "red", "black")),
+                   "oak_door", "iron_door", "spruce_door", "birch_door", "jungle_door", "acacia_door", "cherry_door",
+                   "dark_oak_door", "pale_oak_door", "mangrove_door", "poplar_door", "bamboo_door", "crimson_door",
+                   "warped_door", "copper_door", "exposed_copper_door", "weathered_copper_door", "oxidized_copper_door",
+                   "waxed_copper_door", "waxed_exposed_copper_door", "waxed_weathered_copper_door",
+                   "waxed_oxidized_copper_door",
+                   "oak_trapdoor", "spruce_trapdoor", "birch_trapdoor", "jungle_trapdoor", "acacia_trapdoor",
+                   "cherry_trapdoor", "dark_oak_trapdoor", "pale_oak_trapdoor", "mangrove_trapdoor", "poplar_trapdoor",
+                   "bamboo_trapdoor", "iron_trapdoor", "crimson_trapdoor", "warped_trapdoor", "copper_trapdoor",
+                   "exposed_copper_trapdoor", "weathered_copper_trapdoor", "oxidized_copper_trapdoor",
+                   "waxed_copper_trapdoor", "waxed_exposed_copper_trapdoor", "waxed_weathered_copper_trapdoor",
+                   "waxed_oxidized_copper_trapdoor",
+                   "stone_button", "oak_button", "spruce_button", "birch_button", "jungle_button", "acacia_button",
+                   "cherry_button", "dark_oak_button", "pale_oak_button", "mangrove_button", "poplar_button",
+                   "bamboo_button", "crimson_button", "warped_button", "polished_blackstone_button", "lever",
+                   "stone_pressure_plate", "oak_pressure_plate", "spruce_pressure_plate", "birch_pressure_plate",
+                   "jungle_pressure_plate", "acacia_pressure_plate", "cherry_pressure_plate", "dark_oak_pressure_plate",
+                   "pale_oak_pressure_plate", "mangrove_pressure_plate", "poplar_pressure_plate",
+                   "bamboo_pressure_plate", "light_weighted_pressure_plate", "heavy_weighted_pressure_plate",
+                   "crimson_pressure_plate", "warped_pressure_plate", "polished_blackstone_pressure_plate",
+                   "ladder", "weeping_vines", "weeping_vines_plant", "twisting_vines", "twisting_vines_plant",
+                   *(f"{c}_bed" for c in (
+                       "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan",
+                       "purple", "blue", "brown", "green", "red", "black")),
+                   "chest", "ender_chest", "trapped_chest", "farmland", "dirt_path",
+                   "wheat", "pumpkin_stem", "melon_stem", "carrots", "potatoes", "torchflower_crop", "pitcher_crop",
+                   "beetroots",
+                   *(f"{w}_sapling" for w in (
+                       "oak", "spruce", "birch", "jungle", "acacia", "cherry", "dark_oak", "pale_oak", "poplar")),
+                   "cauldron", "water_cauldron", "lava_cauldron", "powder_snow_cauldron", "fire", "soul_fire",
+                   "campfire", "soul_campfire"]
+# Blocks whose block item belongs to the items reference (its loot `drop` group): no item here, `vanilla_item` only,
+# so no item id is in both DA_Items and DA_Blocks.
+ITEMS_REFERENCE_ITEMS = frozenset(f"{w}_sapling" for w in (
+    "oak", "spruce", "birch", "jungle", "acacia", "cherry", "dark_oak", "pale_oak", "poplar"))
+# Stand-in models (blocks session B1, plan 2.3). The chests' blockstates name only a particle model (block-entity
+# rendered), so they draw one 14/16 box ([1,0,1]-[15,14,15], vanilla's footprint and height), front on north, turned by
+# `facing`; `type` left/right draws the same single box. Its faces are 16x16 tiles derived from the 64x64 entity sheet:
+# the sheet's opaque islands (pixel analysis, no code read) are the lid (rows 0-18) and base (rows 19-42) unwraps: a
+# 14x14 top/bottom pair above four 14-wide side strips (lid 5 rows, base 10). The front strip is the one at x 42-56 (the
+# latch shadow and the ender eye); the lid's outer top is the planked square, the base's bottom the square left of its
+# open top. The sheet is drawn upside down: each crop is flipped top to bottom (only then do the lid's and the base's
+# latch shadows meet). A side tile stacks the flipped lid strip over the flipped base strip minus its top row (sheet row
+# 42, which the lid overlaps), giving 14x14; every tile puts its 14x14 crop at (1,1) and repeats its edge pixels into the 1-pixel border, so the face UV
+# [1,1,15,15] shows exactly the crop. Written to stand_ins/ (derived pixels, not jar copies).
+STAND_IN_SHEETS = {"chest": "normal", "ender_chest": "ender", "trapped_chest": "trapped"}
+STAND_IN_FACES = ("down", "up", "north", "south", "west", "east")
+STAND_IN_CROPS = {  # face: crop rectangles [x0, y0, x1, y1] on the sheet, stacked top to bottom
+    "down": [[14, 19, 28, 33]], "up": [[28, 0, 42, 14]],
+    "north": [[42, 14, 56, 19], [42, 33, 56, 42]], "south": [[14, 14, 28, 19], [14, 33, 28, 42]],
+    "west": [[0, 14, 14, 19], [0, 33, 14, 42]], "east": [[28, 14, 42, 19], [28, 33, 42, 42]]}
+STAND_IN_ROTATION = {"north": 0, "east": 90, "south": 180, "west": 270}
+# Pumpkin and melon stems: the colour follows `age` (minecraft.wiki "Tint", stems: red age*32, green 255 - age*8,
+# blue age*4).
+STEM_AGE_COLORS = ["#%02X%02X%02X" % (age * 32, 255 - age * 8, age * 4) for age in range(8)]
+
+
+def stand_in_tile(name):
+    """chest_<kind>_<face> -> (block, face) for a stand-in tile name, else None."""
+    for block, kind in STAND_IN_SHEETS.items():
+        for face in STAND_IN_FACES:
+            if name == f"chest_{kind}_{face}":
+                return block, face
+    return None
+
+
+def stand_in_model(block):
+    return f"unnamed:stand_in/chest_{STAND_IN_SHEETS[block]}"
+
+
+def stand_in_models(models):
+    """Registers the stand-in box models (parent block/block: its gui display) in the Models reader."""
+    for block, kind in STAND_IN_SHEETS.items():
+        models.cache[stand_in_model(block)] = {
+            "parent": "minecraft:block/block",
+            "textures": {"particle": f"chest_{kind}_north", **{f: f"chest_{kind}_{f}" for f in STAND_IN_FACES}},
+            "elements": [{"from": [1, 0, 1], "to": [15, 14, 15],
+                          "faces": {f: {"uv": [1, 1, 15, 15], "texture": f"#{f}"} for f in STAND_IN_FACES}}]}
+
+
+def stand_in_blockstate(block):
+    return {"variants": {f"facing={f}": {"model": stand_in_model(block), "y": y} for f, y in STAND_IN_ROTATION.items()}}
+
+
+def stand_in_pixels(jar, block, face):
+    """The 16x16 tile of one stand-in face and its derivation record."""
+    entry = f"{ASSETS}textures/entity/chest/{STAND_IN_SHEETS[block]}.png"
+    sheet = Image.open(io.BytesIO(jar.read(entry))).convert("RGBA")
+    assert sheet.size == (64, 64), entry
+    crops = STAND_IN_CROPS[face]  # side faces: the lid strip, then the base strip without the row the lid overlaps
+    parts = [sheet.crop(tuple(c)).transpose(Image.Transpose.FLIP_TOP_BOTTOM) for c in crops]
+    inner = Image.new("RGBA", (14, 14))
+    y = 0
+    for part in parts:
+        inner.paste(part, (0, y))
+        y += part.height
+    assert y == 14 and set(inner.getchannel("A").get_flattened_data()) == {255}, (block, face)
+    tile = Image.new("RGBA", (16, 16))
+    for ty in range(16):
+        for tx in range(16):
+            tile.putpixel((tx, ty), inner.getpixel((min(max(tx - 1, 0), 13), min(max(ty - 1, 0), 13))))
+    return tile, {"jar_entry": entry, "crops": crops, "flip": "each crop top to bottom, stacked in list order",
+                  "placed_at": [1, 1],
+                  "padding": "edge pixels repeated into the 1-pixel border; the face UV is [1, 1, 15, 15]"}
 
 
 def default_uv(f, t, d):
@@ -340,6 +491,9 @@ def resolve_particles(jar, models, report, manifest):
         per_state = {}
         for state in states:
             variants, _ = variants_for(blockstate, state.get("properties", {}))
+            if not variants:  # a multipart state with no part (a wall with no post and no side): its first part's
+                first = blockstate["multipart"][0]["apply"]
+                variants = [first[0] if isinstance(first, list) else first]
             texture, _, _ = models.resolve(variants[0]["model"])
             per_state[state["id"]] = texture("#particle")
         default = per_state[next(s["id"] for s in states if s.get("default"))]
@@ -393,6 +547,7 @@ def main():
     sound_data = {name: asset_object(objects, f"minecraft/sounds/{name}.ogg")
                   for name in sound_files(json.loads(sounds_json), events)}
     models = Models(jar)
+    stand_in_models(models)
     particles, every_particle = resolve_particles(jar, models, report, manifest)
     block_pngs = {p.name[:-4] for p in (research / "textures/block").iterdir() if p.name.endswith(".png")}
     outside = {t for _, _, t in every_particle if t not in block_pngs}
@@ -414,7 +569,7 @@ def main():
     shutil.copyfile(research / "out/block_manifest.json", ROOT / "research/block_manifest.research.json")
     (ROOT / "facts").mkdir()
     for name in ("block_facts.csv", "creative_tabs.json", "block_state_facts.json", "block_support.json",
-                 "block_sounds.csv", "plant_survival.json"):
+                 "block_sounds.csv", "plant_survival.json", "family_survival.json", "block_use_sounds.csv"):
         shutil.copyfile(facts / name, ROOT / "facts" / name)
     (ROOT / "reports").mkdir()
     subset = {f"minecraft:{i}": report[f"minecraft:{i}"] for i in imported}
@@ -426,10 +581,18 @@ def main():
     by_manifest = {b["id"]: b for b in manifest["blocks"]}
     earlier = {t for b in manifest["blocks"] if b["id"] not in APPENDED_BLOCKS for t in b["all_textures"]}
     earlier |= {t for f in manifest["fluids"] for t in f["textures"].values()}
-    appended_textures = list(dict.fromkeys(t for bid in APPENDED_BLOCKS for t in by_manifest[bid]["all_textures"]
-                                           if t not in earlier))
+    # Every texture already present keeps its code: base blocks' and fluids' textures, and any research texture no
+    # appended block uses. Stand-in tiles take their block's place in the appended order.
+    def appended_uses(bid):
+        if bid in STAND_IN_SHEETS:
+            return [f"chest_{STAND_IN_SHEETS[bid]}_{f}" for f in STAND_IN_FACES]
+        return by_manifest[bid]["all_textures"]
+
+    appended_textures = list(dict.fromkeys(t for bid in APPENDED_BLOCKS for t in appended_uses(bid) if t not in earlier))
+    texture_order = [n[:-4] for n in names if n.endswith(".png") and n[:-4] not in appended_textures] + appended_textures
     names = [n for n in names if n.split(".")[0] not in appended_textures] + [
         n for t in appended_textures for n in (f"{t}.png", f"{t}.png.mcmeta") if n in names]
+    assert all(t in {n[:-4] for n in names} or stand_in_tile(t) for t in appended_textures)
     for name in names:
         entry = f"{ASSETS}textures/block/{name}"
         if (research / "textures/block" / name).read_bytes() != jar.read(entry):
@@ -471,12 +634,17 @@ def main():
         copy_jar(f"{ASSETS}models/{name}")
 
     # Textures: size, animation, alpha and the array layer plan. The flow textures (32x32 frames) get their own array.
+    # Stand-in tiles (derived pixels) under stand_ins/.
+    derived = {}
+    for t in appended_textures:
+        if stand_in_tile(t):
+            tile, derived[t] = stand_in_pixels(jar, *stand_in_tile(t))
+            (ROOT / "stand_ins").mkdir(exist_ok=True)
+            tile.save(ROOT / f"stand_ins/{t}.png", optimize=False)
     textures, layer, flow_layer = [], 0, 0
-    for name in names:
-        if not name.endswith(".png"):
-            continue
-        stem = name[:-4]
-        path = ROOT / f"{ASSETS}textures/block/{name}"
+    for stem in texture_order:
+        name = f"{stem}.png"
+        path = ROOT / (f"stand_ins/{name}" if stem in derived else f"{ASSETS}textures/block/{name}")
         img = Image.open(path)
         img.load()
         rgba = img.convert("RGBA")
@@ -504,6 +672,9 @@ def main():
                  "layer_rgba_sha256": [hashlib.sha256(f.tobytes()).hexdigest() for f in rgba_frames],
                  "alpha": alpha_class(rgba),
                  "mipmap_strategy": meta.get("texture", {}).get("mipmap_strategy", "auto")}
+        if stem in derived:
+            entry["file"] = f"stand_ins/{name}"
+            entry["derived_from"] = derived[stem]
         if "alpha_cutoff_bias" in meta.get("texture", {}):
             entry["alpha_cutoff_bias"] = meta["texture"]["alpha_cutoff_bias"]
         if anim is not None:
@@ -527,6 +698,9 @@ def main():
         if not source:
             return None
         kind, value = source
+        if kind == "stem_age":
+            return {"source": kind, "color": STEM_AGE_COLORS[0], "color_by_age": STEM_AGE_COLORS,
+                    "note": "per state: the colour of its age (default state: age 0)"}
         return {"source": kind, "color": argb_hex(value) if kind == "constant" else plains[kind],
                 "note": "plains biome default" if kind != "constant" else "fixed in BlockColors"}
 
@@ -543,12 +717,22 @@ def main():
             states = sorted(rep["states"], key=lambda s: s["id"])
             base = states[0]["id"]
             # Mojang enumerates states as a cartesian product, last property fastest, values in declared order.
-            for index, state in enumerate(states):
-                expect, rest = {}, index
-                for name, values in reversed(props):
-                    expect[name] = values[rest % len(values)]
-                    rest //= len(values)
-                assert state["id"] == base + index and expect == state.get("properties", {}), (bid, state)
+            def enumerated(order):
+                for index, state in enumerate(states):
+                    expect, rest = {}, index
+                    for name, values in reversed(order):
+                        expect[name] = values[rest % len(values)]
+                        rest //= len(values)
+                    if state["id"] != base + index or expect != state.get("properties", {}):
+                        return False
+                return True
+
+            # The report lists properties in another order than the enumeration for some blocks (chest, trapped
+            # chest: facing, type, waterlogged); `properties` then takes the enumeration's order. Only those two may;
+            # any other block must enumerate in the report's order.
+            if not enumerated(props):
+                assert bid in ("chest", "trapped_chest"), (bid, "states are not enumerated in the report's property order")
+                props = next(list(p) for p in itertools.permutations(props) if enumerated(p))
             entry = {"id": bid, "protocol_id": block["protocol_id"], "min_state_id": base,
                      "default_state_id": next(s["id"] for s in states if s.get("default")),
                      "properties": [[n, v] for n, v in props], "states": []}
@@ -560,7 +744,8 @@ def main():
                                             "fluid": {"source": level == 0, "falling": level >= 8, "amount": amount}})
                 entry["textures"] = block["textures"]
             elif bid in model_ids:
-                blockstate = json.loads(jar.read(f"{ASSETS}blockstates/{bid}.json"))
+                blockstate = stand_in_blockstate(bid) if bid in STAND_IN_SHEETS else json.loads(
+                    jar.read(f"{ASSETS}blockstates/{bid}.json"))
                 tints = TINT_INDICES.get(bid, frozenset({0})) if bid in TINT_SOURCES else frozenset()
                 for state in states:
                     parts = baker.bake_state(blockstate, state.get("properties", {}), tints)
@@ -650,8 +835,10 @@ def main():
             merged_blocks.append(merged)
             if fact["item"] and fact["item"].removeprefix("minecraft:") != bid:
                 assert bid in OTHER_ITEM_BLOCKS or bid in model_ids, (bid, fact["item"])
-            elif fact["item"]:
+            elif fact["item"] and bid not in ITEMS_REFERENCE_ITEMS:
                 definition = json.loads(jar.read(f"{ASSETS}items/{bid}.json"))["model"]
+                if bid in STAND_IN_SHEETS:  # vanilla's item is `special` (block-entity drawn): the baked stand-in box
+                    definition = {"model": stand_in_model(bid)}
                 tint = None
                 for source in definition.get("tints", []):
                     kind = source["type"].removeprefix("minecraft:")
@@ -661,7 +848,13 @@ def main():
                         "name": fact["item_name"], "max_stack": int(fact["item_max_stack"]),
                         "model": definition.get("model", "").removeprefix("minecraft:"), "gui_tint": tint,
                         "creative": creative.get(bid, [])}
-                if bid in model_ids:
+                if definition.get("type") == "minecraft:composite":  # the beds: head + foot, one icon of both
+                    assert bid in model_ids and tint is None and all(
+                        m["type"] == "minecraft:model" and not m.get("tints") for m in definition["models"]), bid
+                    index, gui = baker.bake_composite(
+                        [(m["model"].removeprefix("minecraft:"), m.get("transformation")) for m in definition["models"]])
+                    item["icon"] = {"model": index, "gui": gui}
+                elif bid in model_ids:
                     item["icon"] = item_icon(item["model"], tint)
                 items.append(item)
 

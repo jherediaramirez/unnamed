@@ -109,8 +109,8 @@ namespace ExperienceOrbTestsLocal
             return Total;
         }
 
-        // One resting orb of Value at a position (cm, the floor at z 0), its id.
-        int32 Put(const FVector& At, int32 Value)
+        // One resting orb of Value at a position (cm, the floor at z 0), its id (Id if given); not new unless bNew.
+        int32 Put(const FVector& At, int32 Value, int32 Id = 0, bool bNew = false)
         {
             const int32 Before = A.GetExperienceOrbs().Num();
             A.SpawnExperience(At + FVector(0, 0, 25), Value, 1);
@@ -118,6 +118,8 @@ namespace ExperienceOrbTestsLocal
             FFoundationExperienceOrb& Orb = const_cast<FFoundationExperienceOrb&>(A.GetExperienceOrbs().Last());
             Orb.LocalCm = Orb.PreviousLocalCm = At;
             Orb.VelocityCm = FVector::ZeroVector;
+            Orb.Id = Id > 0 ? Id : Orb.Id;
+            Orb.bNew = bNew;
             return Orb.Id;
         }
 
@@ -309,8 +311,8 @@ bool FFoundationExperienceOrbPickupTest::RunTest(const FString&)
     {
         // A merged orb (count 2) is taken one value at a time.
         FOrbLab L;
-        const int32 Id = L.Put(FVector(0, 0, 0), 3);
-        L.Put(FVector(30, 0, 0), 3);
+        const int32 Id = L.Put(FVector(0, 0, 0), 3, 1);
+        L.Put(FVector(30, 0, 0), 3, 41);
         L.Steps(20);
         const FFoundationExperienceOrb* Orb = L.Find(Id);
         TestTrue(TEXT("merged into a count of 2"), L.A.GetExperienceOrbs().Num() == 1 && Orb && Orb->Count == 2);
@@ -332,22 +334,92 @@ bool FFoundationExperienceOrbMergeTest::RunTest(const FString&)
 {
     using namespace ExperienceOrbTestsLocal;
     {
-        // Same value inside the box: merged on step 20 (xp.free_flight's 20-tick scan), not before.
+        // Same value inside the box, ids 40 apart: merged on step 20 (xp.free_flight's 20-tick scan), not before.
         FOrbLab L;
-        L.Put(FVector(0, 0, 0), 3);
-        L.Put(FVector(60, 0, 0), 3);
+        L.Put(FVector(0, 0, 0), 3, 1);
+        L.Put(FVector(60, 0, 0), 3, 41);
         L.Steps(19);
         TestEqual(TEXT("not before step 20"), L.A.GetExperienceOrbs().Num(), 2);
         L.NextStep();
         TestTrue(TEXT("merged on step 20"),
             L.A.GetExperienceOrbs().Num() == 1 && L.A.GetExperienceOrbs()[0].Count == 2 && L.A.OrbsMerged == 1);
     }
+    for (const TTuple<int32, bool>& Case : TArray<TTuple<int32, bool>>{{2, false}, {21, false}, {81, true}})
+    {
+        // Codex review 8 #1 (Chinese wiki, Merging): old orbs merge only when their ids differ by a multiple of 40.
+        FOrbLab L;
+        L.Put(FVector(0, 0, 0), 3, 1);
+        L.Put(FVector(30, 0, 0), 3, Case.Get<0>());
+        L.Steps(40);
+        TestEqual(*FString::Printf(TEXT("ids 1 and %d"), Case.Get<0>()), L.A.GetExperienceOrbs().Num(),
+            Case.Get<1>() ? 1 : 2);
+    }
+    {
+        // A new orb may merge whatever the ids, on a 2.5% roll: about 25 of 1,000 pairs, each the same every run.
+        int32 Merges = 0;
+        bool bStable = true;
+        FFoundationExperienceOrb Seeker, Other;
+        Seeker.bNew = true;
+        for (int32 Id = 2; Id < 1002; ++Id)
+        {
+            Seeker.Id = Id;
+            Other.Id = Id % 40 == 1 ? 1000000 : 1;
+            const bool bMerge = FoundationExperienceOrbs::CanMerge(Seeker, Other);
+            Merges += bMerge ? 1 : 0;
+            bStable &= bMerge == FoundationExperienceOrbs::CanMerge(Seeker, Other);
+        }
+        TestTrue(*FString::Printf(TEXT("new orb merges %d of 1000 (10 to 45)"), Merges), Merges >= 10 && Merges <= 45);
+        TestTrue(TEXT("the roll is a function of the pair"), bStable);
+        Seeker.bNew = false;
+        bool bNone = true;
+        for (int32 Id = 2; Id < 1002; ++Id)
+        {
+            Seeker.Id = Id;
+            Other.Id = Id % 40 == 1 ? 1000000 : 1;
+            bNone &= !FoundationExperienceOrbs::CanMerge(Seeker, Other);
+        }
+        TestTrue(TEXT("an old orb never rolls"), bNone);
+    }
+    {
+        // A new orb scans in the step it spawned: the pair (ids 1, 81) merges on step 1 when one is new.
+        FOrbLab L;
+        L.Put(FVector(0, 0, 0), 3, 1, true);
+        L.Put(FVector(30, 0, 0), 3, 81);
+        L.NextStep();
+        TestEqual(TEXT("new orb's first-step scan"), L.A.GetExperienceOrbs().Num(), 1);
+    }
+    {
+        // Through the roll: the first seeker id from 2 (against id 1, not 40 apart) whose roll passes. In reach on the
+        // first step it merges; out of reach then and moved in before the second, it does not (the flag has cleared).
+        FFoundationExperienceOrb Seeker, Other;
+        Seeker.bNew = true;
+        Other.Id = 1;
+        int32 Rolled = 0;
+        for (int32 Id = 2; Id < 2000 && Rolled == 0; ++Id)
+        {
+            Seeker.Id = Id;
+            Rolled = Id % 40 != 1 && FoundationExperienceOrbs::CanMerge(Seeker, Other) ? Id : 0;
+        }
+        if (!TestTrue(TEXT("a rolled pair exists"), Rolled > 0)) return false;
+        FOrbLab L;
+        L.Put(FVector(30, 0, 0), 3, 1);
+        L.Put(FVector(0, 0, 0), 3, Rolled, true);
+        L.NextStep();
+        TestEqual(TEXT("the roll merges a new orb"), L.A.GetExperienceOrbs().Num(), 1);
+        FOrbLab M;
+        const int32 Far = M.Put(FVector(600, 0, 0), 3, 1);
+        M.Put(FVector(0, 0, 0), 3, Rolled, true);
+        M.NextStep();
+        const_cast<FFoundationExperienceOrb*>(M.Find(Far))->LocalCm = FVector(30, 0, 0);
+        M.NextStep();
+        TestEqual(TEXT("no roll on the second step"), M.A.GetExperienceOrbs().Num(), 2);
+    }
     for (const TTuple<double, bool>& Case : TArray<TTuple<double, bool>>{{99., true}, {100., false}})
     {
         // The box (0.5 blocks) grown 0.5 on every axis: 99 cm apart merge, 100 (touching) do not.
         FOrbLab L;
-        L.Put(FVector(0, 0, 0), 3);
-        L.Put(FVector(Case.Get<0>(), 0, 0), 3);
+        L.Put(FVector(0, 0, 0), 3, 1);
+        L.Put(FVector(Case.Get<0>(), 0, 0), 3, 41);
         L.Steps(40);
         TestEqual(*FString::Printf(TEXT("%.0f cm apart"), Case.Get<0>()), L.A.GetExperienceOrbs().Num(),
             Case.Get<1>() ? 1 : 2);
@@ -355,8 +427,8 @@ bool FFoundationExperienceOrbMergeTest::RunTest(const FString&)
     {
         // Different values never merge.
         FOrbLab L;
-        L.Put(FVector(0, 0, 0), 3);
-        L.Put(FVector(30, 0, 0), 1);
+        L.Put(FVector(0, 0, 0), 3, 1);
+        L.Put(FVector(30, 0, 0), 1, 41);
         L.Steps(40);
         TestEqual(TEXT("different values"), L.A.GetExperienceOrbs().Num(), 2);
     }
@@ -386,6 +458,78 @@ bool FFoundationExperienceOrbDespawnTest::RunTest(const FString&)
     D.NextStep();
     TestFalse(TEXT("gone at 6,000"), D.Find(Id) != nullptr);
     TestEqual(TEXT("OrbsDespawned"), D.A.OrbsDespawned, 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationExperienceOrbBounceTest, "Unnamed.Foundation.Items.Xp.Bounce",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationExperienceOrbBounceTest::RunTest(const FString&)
+{
+    using namespace ExperienceOrbTestsLocal;
+    // Codex review 8 #2 (provisional factor 0.5, threshold 6 cm per step): an orb 1 cm over the floor moving down at
+    // 20 cm per step lands at 23 (gravity 3 added) and leaves at 11.5; one landing at 3 (from rest) stays down.
+    FOrbLab L;
+    const int32 Falling = L.Put(FVector(500, 500, 1), 1);
+    const int32 Resting = L.Put(FVector(-500, 500, 0), 1);
+    const_cast<FFoundationExperienceOrb*>(L.Find(Falling))->VelocityCm = FVector(0, 0, -20);
+    L.NextStep();
+    const FFoundationExperienceOrb* Orb = L.Find(Falling);
+    TestTrue(TEXT("bounced at half the landing speed"),
+        Orb && FMath::IsNearlyEqual(Orb->LocalCm.Z, 0., 1e-6) && FMath::IsNearlyEqual(Orb->VelocityCm.Z, 11.5, 1e-9));
+    L.NextStep();
+    Orb = L.Find(Falling);
+    TestTrue(TEXT("up the next step"), Orb && Orb->LocalCm.Z > 5);
+    const FFoundationExperienceOrb* Still = L.Find(Resting);
+    TestTrue(TEXT("a resting orb stays down"),
+        Still && FMath::IsNearlyEqual(Still->LocalCm.Z, 0., 1e-6) && Still->VelocityCm.Z == 0 && Still->bOnGround);
+    // The threshold's edge (one step of Move against the floor): landing at 5.9 stays down, at 6.1 leaves at 3.05; on
+    // the ground, a 10 cm downward pull does not bounce it.
+    const TArray<FBox> Floor = {FBox(FVector(-200, -200, -100), FVector(200, 200, 0))};
+    const auto Land = [&Floor](double Vz, bool bOnGround, double PushZ)
+    {
+        FFoundationExperienceOrb O;
+        O.LocalCm = O.PreviousLocalCm = FVector(0, 0, bOnGround ? 0 : 1);
+        O.VelocityCm = FVector(0, 0, Vz);
+        O.bOnGround = bOnGround;
+        FoundationExperienceOrbs::Move(O, FVector::ZeroVector, Floor, FVector(0, 0, PushZ));
+        return O;
+    };
+    const FFoundationExperienceOrb Below = Land(-2.9, false, 0), Above = Land(-3.1, false, 0);
+    TestTrue(TEXT("landing at 5.9 stays down"), Below.bOnGround && Below.VelocityCm.Z == 0);
+    TestTrue(TEXT("landing at 6.1 leaves at 3.05"), FMath::IsNearlyEqual(Above.VelocityCm.Z, 3.05, 1e-9));
+    const FFoundationExperienceOrb Pulled = Land(0, true, -10);
+    TestTrue(TEXT("resting under a pull stays down"), Pulled.bOnGround && Pulled.VelocityCm.Z == 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationExperienceOrbSoundsTest, "Unnamed.Foundation.Items.Xp.Sounds",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationExperienceOrbSoundsTest::RunTest(const FString&)
+{
+    using namespace FoundationExperienceOrbs;
+    // survival.r5.rules: level-up volume 0.75 x min(level / 30, 1) on a gain reaching a multiple of 5, more than 100
+    // ticks after the last one.
+    TestEqual(TEXT("level 5 plays at 0.125"), GetLevelUpVolume(4, 5, 1000, -1), .125f);
+    TestEqual(TEXT("passing 10 plays at 0.25"), GetLevelUpVolume(9, 12, 1000, -1), .25f);
+    TestEqual(TEXT("level 40 plays at 0.75"), GetLevelUpVolume(39, 40, 1000, -1), .75f);
+    TestEqual(TEXT("no multiple of 5"), GetLevelUpVolume(5, 6, 1000, -1), 0.f);
+    TestEqual(TEXT("no gain"), GetLevelUpVolume(10, 5, 1000, -1), 0.f);
+    TestEqual(TEXT("the first update"), GetLevelUpVolume(-1, 5, 1000, -1), 0.f);
+    TestEqual(TEXT("10 ticks after the last: none"), GetLevelUpVolume(9, 10, 1010, 1000), 0.f);
+    TestEqual(TEXT("100 ticks after: none"), GetLevelUpVolume(9, 10, 1100, 1000), 0.f);
+    TestEqual(TEXT("101 ticks after: plays"), GetLevelUpVolume(9, 10, 1101, 1000), .25f);
+    TestEqual(TEXT("a sound at step 0, 100 after: none"), GetLevelUpVolume(9, 10, 100, 0), 0.f);
+    TestEqual(TEXT("a sound at step 0, 101 after: plays"), GetLevelUpVolume(9, 10, 101, 0), .25f);
+    TestEqual(TEXT("a step before the last sound's (reset): plays"), GetLevelUpVolume(9, 10, 50, 1000), .25f);
+    // survival.r5.rules: pickup pitch 0.9 + 0.35 x (U - V).
+    TestEqual(TEXT("pitch at U = V"), GetPickupPitch(.3f, .3f), .9f);
+    TestTrue(TEXT("pitch at U = 1, V = 0"), FMath::IsNearlyEqual(GetPickupPitch(1, 0), 1.25f, 1e-6f));
+    TestTrue(TEXT("pitch at U = 0, V = 1"), FMath::IsNearlyEqual(GetPickupPitch(0, 1), .55f, 1e-6f));
+    TestTrue(TEXT("pitch at U = 0.5, V = 0.1"), FMath::IsNearlyEqual(GetPickupPitch(.5f, .1f), 1.04f, 1e-6f));
+    // survival.r5.play_calls: the pickup volume is 0.1.
+    TestEqual(TEXT("pickup volume"), PickupVolume, .1f);
     return true;
 }
 #endif

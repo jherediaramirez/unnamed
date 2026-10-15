@@ -62,7 +62,8 @@ if build.CLIENT_JAR.exists():
         check((ROOT / name).is_file() and (ROOT / name).read_bytes() == data, f"re-derived file differs: {name}")
         derived += 1
     expected = set(generated) | set(copies) | set(build.DUMPED) | {
-        build.REGISTRY, "README.md", "tools/build_reference.py", "tools/verify_reference.py", "tools/ItemFacts.java"}
+        build.REGISTRY, "README.md", "tools/build_reference.py", "tools/verify_reference.py", "tools/ItemFacts.java",
+        build.LOOT_LATER}
     check(expected == set(sums), f"files differ from the derivation: +{sorted(set(sums) - expected)[:5]} "
                                  f"-{sorted(expected - set(sums))[:5]}")
     for name in copies:
@@ -207,6 +208,15 @@ full = build.loot_blocks(src, json.loads((build.BLOCK_REF / "block_manifest.json
 check(list(tables) == full and full[:18] == build.LOOT_BLOCKS and len(full) == 602 and len(set(full)) == 602,
       "loot tables: the 18 ores, then every other imported block with a table, in order")
 check(list(loot)[-1] == "extensions" and isinstance(loot["extensions"], str), "loot extensions key last")
+# Held-back tables (tools/loot_later.txt): exactly the blocks reference's survival-B1 blocks, in its manifest order,
+# and none of them has a table yet.
+later_list = (ROOT / build.LOOT_LATER).read_text(encoding="utf-8").split()
+b1_blocks = [b["id"] for b in json.loads((build.BLOCK_REF / "block_manifest.json").read_text(encoding="utf-8"))["blocks"]
+             if b.get("added") == "survival-B1"]
+check(set(later_list) == set(b1_blocks) and len(later_list) == len(set(later_list)),
+      "loot_later.txt: not exactly the blocks manifest's survival-B1 blocks")
+check(later_list == b1_blocks, "loot_later.txt: not in the blocks manifest's order")
+check(not set(later_list) & set(tables), f"loot_later.txt: ids with a loot table: {sorted(set(later_list) & set(tables))[:5]}")
 candidates = sum(len(p["candidates"]) for t in loot["tables"] for p in t["pools"])
 check(manifest["loot"] == {"blocks": full, "tables": 602, "predicates": 2, "candidates": candidates,
                            "source": "client jar data/minecraft/loot_table/blocks and data/minecraft/predicate"} and

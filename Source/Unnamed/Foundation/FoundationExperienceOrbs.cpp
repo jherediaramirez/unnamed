@@ -8,7 +8,8 @@ namespace
         TEXT(
             "1: a survival break of an ore pays experience orbs (coal 0-2, lapis and quartz 2-5, redstone 1-5, diamond "
             "and emerald 3-7, nether gold 0-1) that fly to a player within 8 blocks and fill the XP bar (survival step "
-            "12). 0: no orbs spawn and the bar stays, as before. Orbs already in the world stay until picked up."));
+            "12). 0: no orbs spawn and the bar stays, as before. Orbs already in the world stay: they still fly to a "
+            "player and pay their points (as drops stay at foundation.Items.Entities 0)."));
 
     struct FBlockExperience
     {
@@ -35,6 +36,27 @@ namespace
 bool FoundationExperienceOrbs::IsOn()
 {
     return CVarExperienceOrbs.GetValueOnAnyThread() != 0;
+}
+
+bool FoundationExperienceOrbs::CanMerge(const FFoundationExperienceOrb& Seeker, const FFoundationExperienceOrb& Other)
+{
+    if ((Seeker.Id - Other.Id) % MergeIdPeriod == 0) return true;
+    // The roll is a pure function of the pair, so a replay merges the same orbs.
+    return Seeker.bNew &&
+           FRandomStream(int32(HashCombine(GetTypeHash(Seeker.Id), GetTypeHash(Other.Id)))).FRand() < NewMergeChance;
+}
+
+float FoundationExperienceOrbs::GetLevelUpVolume(int32 LastLevel, int32 Level, int64 Step, int64 LastSoundStep)
+{
+    if (LastLevel < 0 || Level <= LastLevel || Level / 5 == LastLevel / 5) return 0;
+    // A step before the last sound's (a reset authority) counts as never.
+    if (LastSoundStep >= 0 && Step >= LastSoundStep && Step - LastSoundStep <= LevelUpGapTicks) return 0;
+    return LevelUpVolume * FMath::Min(float(Level / 5 * 5) / LevelUpFullLevel, 1.f);
+}
+
+float FoundationExperienceOrbs::GetPickupPitch(float U, float V)
+{
+    return .9f + .35f * (U - V);
 }
 
 int32 FoundationExperienceOrbs::GetIcon(int32 Value)
@@ -103,6 +125,11 @@ FBox FoundationExperienceOrbs::GetStepRegion(
 void FoundationExperienceOrbs::Move(
     FFoundationExperienceOrb& Orb, const FVector& OriginCm, const TArray<FBox>& Boxes, const FVector& PushCm)
 {
+    // The speed it would land at: this step's vertical velocity after gravity and the push (MoveBox zeroes it). Only
+    // an orb in the air bounces (one resting under a downward pull stays down).
+    const double Landing = -(Orb.VelocityCm.Z - GravityCm + PushCm.Z);
+    const bool bWasInAir = !Orb.bOnGround;
     FoundationItemEntities::MoveBox(Orb.LocalCm, Orb.PreviousLocalCm, Orb.VelocityCm, Orb.bOnGround,
         GetBox(OriginCm + Orb.LocalCm), Boxes, GravityCm, PushCm);
+    if (bWasInAir && Orb.bOnGround && Landing > BounceMinCm) Orb.VelocityCm.Z = Landing * BounceFactor;
 }

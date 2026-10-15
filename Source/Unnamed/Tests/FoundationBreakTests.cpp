@@ -687,7 +687,8 @@ bool FFoundationBreakSoundsAssetTest::RunTest(const FString&)
             *this, TEXT("deepslate places with its break event"), Deepslate->PlaceEvent, Deepslate->BreakEvent);
     else
         AddError(TEXT("deepslate is not in DA_BreakAssets"));
-    // Every block: its own place event (550), its break event for want of files (66), or silent (water, lava's 2).
+    // Every block: its own place event (834), its break event for want of files (92), or silent (water, lava's 2):
+    // BreakImportData.py's dry run ("834 blocks play their own, 92 play their break event").
     int32 OwnPlace = 0, BreakPlace = 0, SilentPlace = 0;
     for (const FFoundationBreakBlock& Block : Assets->Blocks)
     {
@@ -696,8 +697,8 @@ bool FFoundationBreakSoundsAssetTest::RunTest(const FString&)
         BreakPlace += Place && Block.PlaceEvent == Block.BreakEvent;
         SilentPlace += Block.PlaceEvent == INDEX_NONE;
     }
-    BreakCheckInt(*this, TEXT("blocks with their own place event"), OwnPlace, 550);
-    BreakCheckInt(*this, TEXT("blocks placing with their break event"), BreakPlace, 66);
+    BreakCheckInt(*this, TEXT("blocks with their own place event"), OwnPlace, 834);
+    BreakCheckInt(*this, TEXT("blocks placing with their break event"), BreakPlace, 92);
     BreakCheckInt(*this, TEXT("silent places"), SilentPlace, 2);
     // Vanilla plays a sound on every place: on by default (Jesus, 2026-10-11); 0 keeps the old silence.
     const IConsoleVariable* PlaceSound = IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Place.Sound"));

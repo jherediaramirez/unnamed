@@ -14,7 +14,7 @@ namespace
         TEXT("red_shrub"), TEXT("sweet_berry_bush"), TEXT("pink_petals"), TEXT("wildflowers"), TEXT("tall_grass"),
         TEXT("large_fern"), TEXT("sunflower"), TEXT("lilac"), TEXT("rose_bush"), TEXT("peony"), TEXT("oak_sapling"),
         TEXT("spruce_sapling"), TEXT("birch_sapling"), TEXT("jungle_sapling"), TEXT("acacia_sapling"),
-        TEXT("dark_oak_sapling"), TEXT("cherry_sapling"), TEXT("pale_oak_sapling")};
+        TEXT("dark_oak_sapling"), TEXT("cherry_sapling"), TEXT("pale_oak_sapling"), TEXT("poplar_sapling")};
     const TCHAR* const DryVegetationBlocks[] = {TEXT("dead_bush"), TEXT("short_dry_grass"), TEXT("tall_dry_grass")};
     const TCHAR* const SturdyBelowBlocks[] = {TEXT("leaf_litter"), TEXT("sea_pickle")};
     const TCHAR* const CarpetBlocks[] = {TEXT("moss_carpet"), TEXT("pale_moss_carpet"), TEXT("white_carpet"),

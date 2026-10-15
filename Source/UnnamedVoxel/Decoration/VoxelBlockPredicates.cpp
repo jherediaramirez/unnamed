@@ -169,10 +169,11 @@ bool FVoxelBlockPredicates::Compile(const FVoxelFeatureGraph& Graph, int32 Node,
         const FVoxelFeatureValue* State = Graph.FindField(Node, TEXT("state"));
         Out.Op = EOp::WouldSurvive;
         Out.Argument = State ? ReadState(Graph, *State, *Table) : INDEX_NONE;
-        // Saplings are not in the block table (the block reference has none), yet every tree's placement asks whether
-        // one would survive. A sapling survives where vegetation does (minecraft.wiki, "Sapling": dirt-like blocks and
-        // farmland), so its would_survive tests the block below against supports_vegetation, as the plants' survival
-        // table does (S8).
+        // Every tree's placement asks whether a sapling would survive. With the saplings in the block table (survival
+        // B1, all nine in the plants' VegetationBlocks) that compiles to WouldSurvive above. A sapling the table lacks
+        // (an older block reference, or a new _sapling) falls back to what it is: a sapling survives where vegetation
+        // does (minecraft.wiki, "Sapling": dirt-like blocks and farmland), so its would_survive tests the block below
+        // against supports_vegetation, as the plants' survival table does (S8).
         const int32 StateNode = State ? Graph.GetNode(*State) : INDEX_NONE;
         const FVoxelFeatureValue* StateId = State && State->Type == EVoxelFeatureValueType::String ? State
             : StateNode != INDEX_NONE ? Graph.FindField(StateNode, TEXT("id"))

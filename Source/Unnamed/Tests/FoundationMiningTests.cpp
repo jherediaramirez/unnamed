@@ -217,7 +217,7 @@ bool FFoundationMiningTiersTest::RunTest(const FString&)
         return false;
     if (!TestEqual(TEXT("the hand and the 35 tools"), Tools.Num(), 36) ||
         !TestEqual(TEXT("the hand first"), Tools[0], FString(TEXT("hand"))) ||
-        !TestEqual(TEXT("618 imported blocks"), Rows.Num(), 618))
+        !TestEqual(TEXT("928 imported blocks (926 and the two fluids)"), Rows.Num(), 928))
         return false;
     FFoundationAuthority A;
     UFoundationInteractionSettings::Get().BuildRules(A.Rules);
@@ -314,20 +314,21 @@ bool FFoundationMiningTiersTest::RunTest(const FString&)
             }
         }
     }
-    TestEqual(TEXT("22,248 entries"), Entries, 22248);
+    TestEqual(TEXT("33,408 entries (928 blocks x 36)"), Entries, 33408);
     TestEqual(TEXT("block facts as the table"), FactErrors, 0);
     TestEqual(TEXT("steps as the table"), TickErrors, 0);
     TestEqual(TEXT("drops as the table"), DropErrors, 0);
     TestEqual(TEXT("the table as exact arithmetic"), ExactErrors, 0);
-    // Tallies of the hash-checked table: tripwires for a reference rebuild.
+    // Tallies of the hash-checked table's 928 imported rows (B1's families included): tripwires for a reference
+    // rebuild.
     TestEqual(TEXT("unbreakable entries (8 blocks x 36)"), Unbreakable, 288);
-    TestEqual(TEXT("instant entries"), Instant, 2672);
-    TestEqual(TEXT("progressive entries"), Progressive, 19288);
-    TestEqual(TEXT("their ticks"), TotalTicks, int64(3073507));
-    // Counted here from the data (exact arithmetic and the float hardness), pinned at items S5.
-    TestEqual(TEXT("whole-inverse entries"), WholeInverse, 17305);
-    TestEqual(TEXT("instant at d = 1 exactly"), ExactOne, 27);
-    TestEqual(TEXT("of which d is a hair under 1 in floats: instant within the tolerance"), HairInstant, 27);
+    TestEqual(TEXT("instant entries"), Instant, 3501);
+    TestEqual(TEXT("progressive entries"), Progressive, 29619);
+    TestEqual(TEXT("their ticks"), TotalTicks, int64(4116240));
+    // Counted here from the data (exact arithmetic and the float hardness), pinned at items S5, re-pinned with B1.
+    TestEqual(TEXT("whole-inverse entries"), WholeInverse, 26729);
+    TestEqual(TEXT("instant at d = 1 exactly"), ExactOne, 28);
+    TestEqual(TEXT("of which d is a hair under 1 in floats: instant within the tolerance"), HairInstant, 28);
     TestEqual(TEXT("no other instant entry has a float d under 1"), FloatUnder, HairInstant);
     const double Tolerance = A.Rules.CompletionTolerance;
     AddInfo(FString::Printf(TEXT("Whole-inverse entries: %d of %d progressive; worst |progress - 1| at their last step "

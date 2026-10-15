@@ -1,5 +1,6 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Core/RealtimeMeshBuilder.h"
+#include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationProfile.h"
 #include "MeshCardBuild.h"
@@ -994,7 +995,7 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
         AddError(TEXT("DA_Blocks is missing: run ImportBlocks.py"));
         return false;
     }
-    TestEqual(TEXT("baked models"), Table->GetModelCount(), 308);
+    TestEqual(TEXT("baked models (block_models.json's 4,867)"), Table->GetModelCount(), 4867);
     int32 Quads = 0, Wound = 0, Twins = 0, BadTwins = 0;
     for (int32 Model = 0; Model < Table->GetModelCount(); ++Model)
     {
@@ -1023,20 +1024,38 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
         }
         TestTrue(TEXT("mutation: a thin plane wound backwards is caught"), SameWay > 0);
     }
-    // 2,440 baked quads (S5's 2,410 and the torch's 30), less the 16 exact repeats the copy drops (flowerbed segments
-    // that list a plane twice), plus the 20 the torch's flame cut adds (4 sides in each of its 5 models; T3b).
-    TestEqual(TEXT("model quads"), Quads, 2444);
+    // 52,741 baked quads (block_models.json: 52,261 + the 16 bed item models' 30 each), less the 16 exact repeats the
+    // copy drops (flowerbed segments that list a plane twice), plus the 20 the torch's flame cut adds (4 sides in each
+    // of its 5 models; T3b).
+    TestEqual(TEXT("model quads"), Quads, 52745);
     TestEqual(TEXT("quads wound like the cube faces"), Wound, Quads);
     TestTrue(FString::Printf(TEXT("zero-thickness planes have both faces (%d pairs)"), Twins), Twins > 100);
-    TestEqual(TEXT("each pair faces opposite ways"), BadTwins, 0);
+    // The bars' side models (iron_bars and the four copper bars: models 3109-3110, 3119-3120, 3129-3130, 3139-3140,
+    // 3149-3150) keep vanilla's 0.001-pixel caps: a down face at y 0.001/16 over the element's own down face at 0,
+    // and an up face just under its top, closer than the pair check's 1e-4. Two pairs each, 20 in all, as in vanilla.
+    TestEqual(TEXT("each pair faces opposite ways (but the bars' 20 caps)"), BadTwins, 20);
 
-    int32 ModelStates = 0, BadParts = 0;
+    // A wall with no post and no sides (up=false, every side none) draws nothing in vanilla: an empty model.
+    const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();
+    auto IsBareWall = [&Registry](uint16 Id)
+    {
+        const FFoundationBlockState State{Id};
+        if (!Registry->GetBlock(State).Id.ToString().EndsWith(TEXT("_wall")) ||
+            Registry->GetValue(State, TEXT("up")) != TEXT("false"))
+            return false;
+        for (const TCHAR* Side : {TEXT("north"), TEXT("east"), TEXT("south"), TEXT("west")})
+            if (Registry->GetValue(State, Side) != TEXT("none")) return false;
+        return true;
+    };
+    int32 ModelStates = 0, BadParts = 0, BareWalls = 0;
     for (int32 State = 1; State < Table->GetStateCount(); ++State)
     {
         const FVoxelStateInfo& Info = Table->Get(uint16(State));
         if (Info.Shape != EVoxelShape::Model) continue;
         ++ModelStates;
-        BadParts += Info.Layer != EVoxelLayer::Model || Info.OpaqueFaces != 0 || Info.ModelPartCount == 0;
+        BadParts += Info.Layer != EVoxelLayer::Model || Info.OpaqueFaces != 0 ||
+            (Info.ModelPartCount == 0 && !IsBareWall(uint16(State)));
+        BareWalls += Info.ModelPartCount == 0 && IsBareWall(uint16(State));
         const int32* Part = Table->GetModelParts(Info);
         for (int32 Index = 0; Index < Info.ModelPartCount; ++Index)
         {
@@ -1047,7 +1066,9 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
             Part += Alternatives;
         }
     }
-    TestEqual(TEXT("model states (S5's 949 and the torch's 5)"), ModelStates, 954);
+    TestEqual(TEXT("model states (block_states.json's 25,082)"), ModelStates, 25082);
+    // block_manifest.json's 32 walls, each bare dry and bare waterlogged.
+    TestEqual(TEXT("bare wall states with no parts"), BareWalls, 64);
     TestEqual(TEXT("model states with bad parts, layer or covered faces"), BadParts, 0);
 
     auto Default = [&Table](const TCHAR* Block) -> const FVoxelStateInfo&
