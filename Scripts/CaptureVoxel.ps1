@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$MineProbe,[switch]$Garden,[switch]$Caves,[switch]$Drops,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[switch]$ClimateSpawn,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates,[switch]$TorchRoom,[switch]$TorchLook,[int]$TorchGlow=-1,[ValidateSet('breach','flood','scenes','ice')][string]$Fluids,[double[]]$Transition,[string]$StartCVars)
+param([string]$EngineRoot='C:\Program Files\Epic Games\UE_5.8',[string]$Seed,[int]$Width=1600,[int]$Height=900,[int]$TimeoutSeconds=900,[string]$ExecCmds,[string]$OutputDirectory,[string]$World,[string]$WorldsDir,[switch]$Flight,[double]$FlightSeconds,[switch]$Edits,[switch]$MineProbe,[switch]$Garden,[switch]$Caves,[switch]$Mobs,[int]$MobsSteps,[switch]$Drops,[switch]$Veins,[int[]]$VeinsAt,[int[]]$SpawnAt,[switch]$SpawnExact,[switch]$ClimateSpawn,[double[]]$View,[switch]$NoSurfaceRules,[switch]$Lights,[switch]$TorchGates,[switch]$TorchRoom,[switch]$TorchLook,[int]$TorchGlow=-1,[ValidateSet('breach','flood','scenes','ice')][string]$Fluids,[double[]]$Transition,[string]$StartCVars)
 # Renders the generated world offscreen (/Game/Maps/L_Generated) and saves AVoxelWorld's screenshots: overview,
 # closeup, ground, lumen-scene and section, plus build.txt with the first view's streaming timings. The rings stay on
 # the player's spawn, and the view's edge is meshed against air (voxel.Debug.EdgeWalls 1; -ExecCmds can turn it off),
@@ -74,6 +74,8 @@ if($Edits -and -not $Flight){$arguments+='-VoxelShotEdits'}
 if($MineProbe -and -not $Flight){$arguments+='-VoxelMineProbe'}
 if($Garden -and -not $Flight){$arguments+='-VoxelShotGarden'}
 if($Caves -and -not $Flight){$arguments+='-VoxelShotCaves'}
+# -Mobs (survival T6 20b2b): a "mobs" shot onto the live mob nearest the player (none when no mob is within 160 blocks); build.txt's Mobs line always counts them. -MobsSteps <n> waits for n authority steps first (a creature cycle every 400).
+if($Mobs -and -not $Flight){$arguments+='-VoxelShotMobs';if($MobsSteps){$arguments+="-VoxelShotMobsSteps=$MobsSteps"}}
 # -Drops (items S8a; with -Caves): a cobblestone and a coal drop fall to the floor 2.5 blocks before each cave view's camera, which looks down at them.
 if($Drops -and -not $Flight){$arguments+='-VoxelShotDrops'}
 # -Veins adds vein-copper and vein-iron, views onto the cut faces where each vein's ore and filler mix most; -VeinsAt

@@ -265,6 +265,9 @@ struct FFoundationLabOptions
     // in a loaded column ticks each step (fuel, cooking, cooling, its lit state), open or not. Off, as before 8a: no
     // menu (the click passes on and places) and no ticks. The pawn copies foundation.Furnace in before each step.
     bool bFurnace = false;
+    // Barrels (T1 step 9): a right-click opens the block's 27-slot menu and the block is open while viewed. Off, as
+    // before: no menu (the click passes on and places). The pawn copies foundation.Barrel in before each step.
+    bool bBarrel = false;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -374,6 +377,8 @@ enum class EFoundationEventKind : uint8
     // A block's hand use changed it (survival B3a: a door, trapdoor or gate opened or closed; B3b: a button or lever,
     // and a button's release, with no player): Cell the used block, State its new state, Interaction the sound event
     // (FoundationBlockFamilies::GetUseSound), Amount its play volume and Pitch its pitch (0: the view's 0.9 + 0.1U).
+    // A barrel's open state changed (T1 step 9): the same, with Amount the volume and LocationCm where it plays (world
+    // cm); with no LocationCm (zero) it plays at the cell's centre.
     BlockUsed
 };
 
@@ -630,6 +635,10 @@ public:
     const TArray<FFoundationMob>& GetMobs() const { return Mobs; }
     int32 SpawnMob(EFoundationMobType Type, const FVector& LocalCm, float Yaw = 0);
     FFoundationMob* FindMob(int32 Id);
+    // Survival T6 20b2b: the creature cycle (every CreatureCycleTicks steps), and one eligible column's group rounds
+    // (PlayerCells: the live players' feet, in cells); how many mobs the column spawned.
+    void RunCreatureCycle();
+    int32 SpawnCycleColumn(const FIntPoint& Column, TConstArrayView<FVector> PlayerCells, int64 Cycle);
     // Removes every mob, without loot; how many.
     int32 ClearMobs();
     // A cell as the mobs' A* sees it (survival T6 20b): the top of the collision boxes that start in it, and whether it
@@ -659,6 +668,11 @@ public:
     int32 MobsSpawned = 0, MobsKilled = 0, MobPaths = 0, MobEggs = 0, MobGrazes = 0;
     // Passive spawning: columns seen loaded, packs spawned, the mobs in them.
     int32 MobColumnsSeen = 0, MobPacks = 0, MobsPackSpawned = 0;
+    // The creature cycle (20b2b): cycles run (under the cap), the mobs they spawned.
+    int32 MobCycles = 0, MobsCycleSpawned = 0;
+    // The last cycle considered: its eligible columns, the creatures counted in them and the cap.
+    int32 MobCycleEligible = 0, MobCycleCount = 0, MobCycleCap = 0;
+    int64 GetMobCycleStep() const { return MobCycleStep; }
 
 private:
     FFoundationInventory MakeLoadout();
@@ -680,7 +694,8 @@ private:
     void CloseMenu(FFoundationPlayer& Player, FFoundationResult& Result);
     // Each step: an open menu that is no longer valid closes (Codex review 12, finding 1).
     void StepOpenMenus();
-    // Each step: a furnace entity in a loaded cell whose block is gone is dropped; with Options.bFurnace the rest tick.
+    // Each step: a block entity in a loaded cell whose block is gone is dropped; with Options.bFurnace the furnaces
+    // tick.
     void StepFurnaces();
     // ScheduleBlockTick's ticks, in schedule order; each step counts them down and runs the due ones.
     struct FBlockTick
@@ -692,6 +707,11 @@ private:
     };
     TArray<FBlockTick> BlockTicks;
     void StepBlockTicks();
+    // A barrel's open state follows its viewers (T1 step 9; SURVIVAL-RUN2-FINDINGS R16,
+    // survival2.r16.animation_and_viewers): the first opens it and plays block.barrel.open, the last one leaving closes
+    // it and plays block.barrel.close, as a plain state change (no place event). Nothing for a cell that is no barrel
+    // (broken while viewed: vanilla's removed block entity plays nothing).
+    void UpdateBarrelOpen(const FIntVector& Cell);
     FFoundationFurnaceRules MakeFurnaceRules() const;
     // Pays a furnace's stored XP as orbs at LocalCm (its output taken, or the furnace broken) and clears it.
     void PayFurnaceExperience(FFoundationBlockEntity& Furnace, const FVector& LocalCm, int32 RandomSeed);
@@ -791,9 +811,10 @@ private:
     // motion-blocking block, which must be a grass block, with room for the box; false when there is none.
     bool FindPackCell(EFoundationMobType Type, int32 X, int32 Y, FIntVector& OutFeet);
     void AddMobSound(const FFoundationMob& Mob, const TCHAR* Sound, float Volume);
-    // Survival T6 20b: a sheep standing in short grass or on a grass block; eating it (the grass goes, or the block
-    // turns to dirt).
+    // Survival T6 20b: a sheep standing in a plant it eats (IsSheepFood) or on a grass block; eating it (the plant
+    // goes, or the block turns to dirt).
     bool CanGraze(const FFoundationMob& Mob) const;
+    bool IsSheepFood(const FIntVector& Cell) const;
     void EatGrass(const FFoundationMob& Mob);
     // GetPathCell's scratch boxes, kept between calls.
     TArray<FBox> PathBoxes;
@@ -801,6 +822,8 @@ private:
     int32 PathStart = 0;
     // Columns (SpawnColumnCells square) already seen loaded: each rolls its chunk-generation pack once per session.
     TSet<FIntPoint> MobSpawnColumns;
+    // Steps since the last reset: the creature cycle runs when it is a multiple of CreatureCycleTicks.
+    int64 MobCycleStep = 0;
 
     TArray<FFoundationPlayer> Players;
     TArray<FFoundationEvent> Events;

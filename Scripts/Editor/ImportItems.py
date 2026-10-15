@@ -225,6 +225,7 @@ for item in data["items"]:
     values["creative"] = [struct(unreal.FoundationItemCreativeAsset, c) for c in item["creative"]]
     values["models"] = [struct(unreal.FoundationItemModelCaseAsset, case) for case in item["models"]]
     values["modifiers"] = [struct(unreal.FoundationItemModifierAsset, m) for m in item["modifiers"]]
+    values["layer_tints"] = [unreal.Color(r=r, g=g, b=b, a=a) for r, g, b, a in item["layer_tints"]]
     items.append(struct(unreal.FoundationItemAsset, values))
 models = []
 for model in data["models"]:

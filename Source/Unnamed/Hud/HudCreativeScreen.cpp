@@ -293,7 +293,7 @@ int32 SHudCreativeScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geome
         TArray<FHudTooltipLine> Lines;
         auto ForItem = [this, &Lines](FName Item)
         {
-            Lines.Add({Art.ItemName(Item), HudTooltip::White});
+            Lines.Add(Art.GetNameLine(Item));
             if (const FHudCreativeItem* Info = Art.Items.Find(Item)) Lines.Append(Info->Details);
         };
         if (Hover.Kind == EHudCreativeHit::Tab)

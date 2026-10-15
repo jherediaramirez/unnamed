@@ -54,6 +54,9 @@ private:
     // The items' GUI sprites, by DA_Items order.
     UPROPERTY(Transient)
     TArray<TObjectPtr<UTexture2D>> ItemSprites;
+    // The camera overlays of worn head pieces.
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UTexture2D>> CameraOverlays;
     TSharedPtr<SHudView> View;
     FHudSnapshot Snapshot;
     FHudSnapshot LastDrawSnapshot;

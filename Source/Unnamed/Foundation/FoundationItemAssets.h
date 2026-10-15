@@ -186,6 +186,36 @@ struct FFoundationItemAsset
     // The block it places (item id = block id), or None: the saplings once DA_Blocks holds them (survival B1).
     UPROPERTY(EditAnywhere, Category = "Item")
     FName PlacesBlock;
+
+    // 26.3's equippable (survival step 19a2): the slot ("head", "chest", "legs", "feet"; None: not worn), whether a
+    // right click swaps it on, and its equip sound ("item.armor.equip_iron"; the component's default when unset).
+    UPROPERTY(EditAnywhere, Category = "Item")
+    FName EquipmentSlot;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    bool bSwappable = true;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    FName EquipSound;
+
+    // The armor, armor_toughness and knockback_resistance modifiers it adds in its slot, summed.
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float Armor = 0;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float ArmorToughness = 0;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float KnockbackResistance = 0;
+
+    // One sRGB colour per texture layer that multiplies it (the leather pieces' dye default on layer 0, white on the
+    // overlay); empty when the model has no tints.
+    UPROPERTY(EditAnywhere, Category = "Item")
+    TArray<FColor> LayerTints;
+
+    // The rarity ("common", "uncommon", ...): the tooltip name's colour.
+    UPROPERTY(EditAnywhere, Category = "Item")
+    FName Rarity;
 };
 
 // One display context's transform, verbatim in Mojang model units (rotation degrees, translation pixels).
@@ -264,6 +294,10 @@ struct FFoundationItemModelView
 {
     const FFoundationItemModelAsset* Model = nullptr;
     const FFoundationItemTextureAsset* Texture = nullptr;
+    // The model's second layer (the leather pieces' overlay), drawn untinted over the first; null without one. Tint
+    // is the item's sRGB colour multiplying the first layer (white: none).
+    const FFoundationItemTextureAsset* Overlay = nullptr;
+    FColor Tint = FColor::White;
     // Null when the model has no transform for the context (DA_Items holds each model's transforms already resolved
     // through its parent chain): the identity transform.
     const FFoundationItemDisplayAsset* Display = nullptr;
@@ -522,6 +556,6 @@ namespace FoundationLootAssets
     // One table asset as the authority's table, items resolved against Rules.Items and predicates against
     // Rules.LootPredicates; returns the first unknown item, predicate or kind (None when the table is whole). DA_Items'
     // block tables (AddLoot) and DA_Mobs' entity tables share it.
-    UNNAMED_API FName MakeTable(
-        const FFoundationLootTableAsset& Asset, int32 TableIndex, const FFoundationRules& Rules, FFoundationLootTable& Table);
+    UNNAMED_API FName MakeTable(const FFoundationLootTableAsset& Asset, int32 TableIndex, const FFoundationRules& Rules,
+        FFoundationLootTable& Table);
 }

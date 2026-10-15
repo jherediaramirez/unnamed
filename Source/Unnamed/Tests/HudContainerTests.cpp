@@ -763,6 +763,19 @@ bool FHudContainerFurnaceTest::RunTest(const FString&)
                                           { return C.Type == EFoundationClickType::PickupAll; });
             TestTrue(FString::Printf(TEXT("kind %d: a double-click on slot %d collects"), int32(Kind), Slot), bPickAll);
         }
+    // A right press then a left press on the output within 250 ms is two clicks, not a collect (Codex review 29,
+    // finding 1: vanilla's double-click needs the same button, survival2.r23.inventory_label).
+    {
+        FHudContainerModel Clicks = Model;
+        const FIntPoint Point = At(2) + FIntPoint(8, 8);
+        Clicks.MouseDown(Point, 1, false, View, 0);
+        Clicks.MouseUp(Point, 1, View);
+        Clicks.MouseDown(Point, 0, false, View, .1);
+        TestFalse(TEXT("right then left: no collect"),
+            Clicks.MouseUp(Point, 0, View)
+                .ContainsByPredicate(
+                    [](const FHudContainerClick& C) { return C.Type == EFoundationClickType::PickupAll; }));
+    }
 
     // The crafting table's result still never starts a collect: each click there crafts.
     {
@@ -869,6 +882,50 @@ bool FHudContainerFurnaceTest::RunTest(const FString&)
         TestEqual(FString::Printf(TEXT("arrow at %.2f"), Fractions[Index]),
             FHudContainerModel::GetArrowWidth(Fractions[Index]), Arrows[Index]);
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHudContainerBarrelTest, "Unnamed.Hud.Container.Barrel", ContainerScreenTestFlags)
+
+bool FHudContainerBarrelTest::RunTest(const FString&)
+{
+    // T1 step 9: the barrel's screen (value-swaps.md "Barrel", inventory.layouts: 176 x 168, container 0-26 at 8 + 18c,
+    // y 18/36/54; main 27-53 at y 85/103/121; hotbar 54-62 at y 143).
+    constexpr EFoundationMenuKind Barrel = EFoundationMenuKind::Barrel;
+    auto At = [Barrel](int32 Slot) { return FHudContainerModel::GetSlotPosition(Barrel, Slot); };
+    TestEqual(TEXT("container 0 at 8,18"), At(0), FIntPoint(8, 18));
+    TestEqual(TEXT("container 8 at 152,18"), At(8), FIntPoint(152, 18));
+    TestEqual(TEXT("container 26 at 152,54"), At(26), FIntPoint(152, 54));
+    TestEqual(TEXT("first main slot at 8,85"), At(27), FIntPoint(8, 85));
+    TestEqual(TEXT("last main slot at 152,121"), At(53), FIntPoint(152, 121));
+    TestEqual(TEXT("first hotbar slot at 8,143"), At(54), FIntPoint(8, 143));
+    TestEqual(TEXT("last hotbar slot at 152,143"), At(62), FIntPoint(152, 143));
+    TestEqual(TEXT("168 high"), FHudContainerModel::GetHeight(Barrel), 168);
+    TestEqual(TEXT("the furnace stays 166 high"), FHudContainerModel::GetHeight(EFoundationMenuKind::Furnace), 166);
+    FHudContainerModel Model = MakeScreenModel();
+    Model.Kind = Barrel;
+    TestEqual(TEXT("63 slots"), Model.GetSlots(), 63);
+    for (const int32 Slot : {0, 13, 26, 27, 53, 54, 62})
+        TestEqual(
+            FString::Printf(TEXT("hit test finds slot %d"), Slot), Model.HitTest(At(Slot) + FIntPoint(8, 8)), Slot);
+    // The window's last row (y 167) is inside it; y 168 is outside.
+    TestEqual(TEXT("y 167 is in the window"), Model.HitTest({2, 167}), int32(INDEX_NONE));
+    TestEqual(TEXT("y 168 is outside"), Model.HitTest({2, 168}), int32(FScreenMenu::Outside));
+    // No recipe-book button (vanilla's ContainerScreen): the inventory's button area is plain window.
+    const FIntPoint Button = FHudContainerModel::GetRecipeButton(EFoundationMenuKind::Inventory) + FIntPoint(2, 2);
+    TestFalse(TEXT("no recipe-book button"), FHudContainerModel::IsInRecipeButton(Barrel, Button));
+    TestTrue(TEXT("the inventory keeps its button"),
+        FHudContainerModel::IsInRecipeButton(EFoundationMenuKind::Inventory, Button));
+    // Every container slot takes a drag (no result or fuel slot).
+    FHudContainerView View;
+    View.Slots.SetNum(Model.GetSlots());
+    View.Carried = {TEXT("dirt"), 64};
+    FHudContainerModel Drag = Model;
+    Drag.MouseDown(At(0) + FIntPoint(8, 8), 0, false, View, 0);
+    for (const int32 Slot : {1, 26, 27})
+        Drag.MouseMove(At(Slot) + FIntPoint(8, 8), View);
+    ExpectSame(
+        *this, TEXT("a drag over the barrel and the main grid"), Drag.GetDragSlots(), TArray<int32>{0, 1, 26, 27});
     return true;
 }
 #endif

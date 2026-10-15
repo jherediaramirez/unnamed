@@ -372,6 +372,23 @@ private:
     // -VoxelShotDrops (items S8a): a block drop and an item drop fall to the floor before each cave view's camera.
     bool bShotDrops = false;
     bool bShotCavesSearched = false;
+    // -VoxelShotMobs (survival T6 20b2b): a "mobs" shot onto the live mob nearest the player (within ShotMobRange
+    // blocks), searched once after the other shots; none when no mob is in range. build.txt always gets the mob counts
+    // (DescribeMobs).
+    bool bShotMobs = false;
+    bool bShotMobsSearched = false;
+    static constexpr double ShotMobRange = 160;
+    // -VoxelShotMobsSteps=<n>: the mobs shot waits until the authority has stepped n times (creature cycles run every
+    // 400).
+    int32 ShotMobSteps = 0;
+    int64 ShotMobLastStep = -1;
+    int32 ShotMobStall = 0;
+    TOptional<TPair<FVector, FVector>> ShotMobView;
+    int32 ShotMobId = 0;
+    FString DescribeMobs() const;
+    void FindMobShot();
+    // The shots' end: build.txt and the exit.
+    void FinishShots();
     TArray<TTuple<FString, FVector, FVector>> ShotCaveViews;
     void FindCaveShots();
     // -VoxelShotVeins: a view per ore vein type (vein-copper, vein-iron) onto one of the four cut faces (the edge
