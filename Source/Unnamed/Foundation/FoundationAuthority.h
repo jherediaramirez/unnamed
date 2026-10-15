@@ -9,6 +9,7 @@
 #include "Foundation/FoundationItemEntities.h"
 #include "Foundation/FoundationItems.h"
 #include "Foundation/FoundationLoot.h"
+#include "Foundation/FoundationMobs.h"
 #include "Foundation/FoundationRecipes.h"
 #include "Foundation/FoundationTargeting.h"
 #include "Foundation/FoundationVitals.h"
@@ -252,6 +253,9 @@ struct FFoundationLabOptions
     // the crafting table) runs it instead of placing. Off, right-click always places, as before. The pawn copies
     // foundation.Blocks.Use in before each step; tests set it themselves.
     bool bBlockUse = false;
+    // Mobs (survival T6 20a): mobs step and can be hit. Off, none spawn and Resolve sees training targets only. The
+    // pawn copies foundation.Mobs in before each step; tests set it themselves.
+    bool bMobs = false;
     // Furnaces (T1 step 8a): every furnace in a loaded column ticks each step (fuel, cooking, cooling), open or not.
     // Off, a furnace opens and holds items but never ticks. The pawn copies foundation.Furnace in before each step.
     bool bFurnace = false;
@@ -295,6 +299,8 @@ struct UNNAMED_API FFoundationRules
     TMap<FName, FFoundationLootTable> LootTables;
     TArray<FFoundationLootPredicate> LootPredicates;
     uint64 LootSeed = 0;
+    // Entity loot (survival T6 20a): tables by entity id ("cow", "sheep/white"; BuildRules, from DA_Mobs).
+    TMap<FName, FFoundationLootTable> EntityLootTables;
     // Crafting recipes (survival step 6; BuildRules, from DA_Recipes), resolved against Items.
     FFoundationRecipeBook Recipes;
 
@@ -351,7 +357,10 @@ enum class EFoundationEventKind : uint8
     Extinguished,
     // A block's use opened a container (survival step 7): Cell the block, EntityId the container id, Interaction the
     // block id.
-    ContainerOpened
+    ContainerOpened,
+    // A mob's sound (survival T6 20a): Interaction the sound event, LocationCm where (world cm), Amount the volume,
+    // EntityId the mob.
+    MobSound
 };
 
 // A committed (or rejected) outcome for presentation: effects fire once from these.
@@ -446,6 +455,9 @@ struct FFoundationPlayer
     // The container open besides the inventory (survival step 7); its last id (vanilla counts 1-100, then wraps).
     FFoundationOpenMenu OpenMenu;
     int32 LastContainerId = 0;
+    // The respawn point (step 11a): the block cell whose bottom centre the player's feet return to; unset, the world's
+    // spawn. Not saved to world.json until player data is saved.
+    TOptional<FIntVector> RespawnCell;
     // Results by sequence for retransmissions; bounded, oldest evicted first.
     TMap<uint32, FFoundationResult> Results;
     TArray<uint32> ResultOrder;
@@ -560,8 +572,31 @@ public:
     // the block drop's spread seeded by RandomSeed; how many orbs. Ores call it on a break; a furnace (T1 step 8a)
     // calls it when its output is taken.
     int32 SpawnExperience(const FVector& LocalCm, int32 Total, int32 RandomSeed);
+    // /kill @e (step 11a): removes every item entity / experience orb, as a despawn does (the views drop what is no
+    // longer listed); how many.
+    int32 RemoveItemEntities();
+    int32 RemoveExperienceOrbs();
     // The points a player has taken since the last call (its owner adds them to its vitals after each step).
     int32 TakeExperience(int32 Player);
+    // Mobs (survival T6 20a), oldest first; Reset clears them. SpawnMob adds one standing at a position (cm from the
+    // block world's origin) facing Yaw: its id, or 0 with Options.bMobs off.
+    const TArray<FFoundationMob>& GetMobs() const { return Mobs; }
+    int32 SpawnMob(EFoundationMobType Type, const FVector& LocalCm, float Yaw = 0);
+    FFoundationMob* FindMob(int32 Id);
+    // Removes every mob, without loot; how many.
+    int32 ClearMobs();
+
+    // Death (step 11a). The respawn point: beds (step B7) set it when slept in and clear it when the bed is gone; mobs
+    // (step 20c) read it. The pawn's Respawn puts the feet at the cell's bottom centre when set, else at the world's
+    // spawn. Session only: not saved to world.json until player data is saved.
+    void SetRespawnPoint(int32 PlayerId, const FIntVector& Cell);
+    void ClearRespawnPoint(int32 PlayerId);
+    TOptional<FIntVector> GetRespawnPoint(int32 PlayerId) const;
+    // Vanilla drops the inventory at the moment of death [survival.r6.death_items]: every non-empty stack of the 41
+    // slots, the carried stack and the 2x2 crafting grid becomes one item entity, then the inventory is empty.
+    // FeetLocalCm: the feet, cm from the block world's origin. Nothing drops with infinite supply. RandomSeed makes the
+    // throw deterministic.
+    void DropInventoryOnDeath(int32 PlayerId, const FVector& FeetLocalCm, int32 RandomSeed);
 
     const TArray<FFoundationEvent>& GetEvents() const { return Events; }
     int64 GetEventSerial() const { return EventSerial; }
@@ -571,6 +606,7 @@ public:
     int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsThrown = 0, ItemsMerged = 0, ItemsDespawned = 0, ItemsEaten = 0,
           Strips = 0, BucketUses = 0;
     int32 OrbsSpawned = 0, OrbsPickedUp = 0, OrbsMerged = 0, OrbsDespawned = 0;
+    int32 MobsSpawned = 0, MobsKilled = 0;
 
 private:
     FFoundationInventory MakeLoadout();
@@ -667,12 +703,18 @@ private:
     void MergeItemEntities();
     // Step 12: the orbs' motion toward the nearest player, despawn and merges, then every live player's pickups.
     void StepExperienceOrbs();
+    // Survival T6 20a: each mob's freeze test, AI, steering, motion and timers; a corpse at RemoveAtDeathTime drops
+    // its loot and experience and goes.
+    void StepMobs();
+    void DropMobLoot(const FFoundationMob& Mob);
+    void AddMobSound(const FFoundationMob& Mob, const TCHAR* Sound, float Volume);
 
     TArray<FFoundationPlayer> Players;
     TArray<FFoundationEvent> Events;
     TArray<FFoundationItemEntity> ItemEntities;
     TArray<FFoundationExperienceOrb> ExperienceOrbs;
-    int32 NextItemEntityId = 1, NextOrbId = 1;
+    TArray<FFoundationMob> Mobs;
+    int32 NextItemEntityId = 1, NextOrbId = 1, NextMobId = FoundationMobs::FirstId;
     int64 EventSerial = 0;
     int32 SessionId = 1;
     int32 NextPlayerId = 1;

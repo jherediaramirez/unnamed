@@ -2,6 +2,7 @@
 #include "Algo/AllOf.h"
 #include "Blocks/VoxelPlantSurvival.h"
 #include "Foundation/FoundationBlockFamilies.h"
+#include "Foundation/FoundationDeath.h"
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationSimulation.h"
@@ -377,6 +378,7 @@ void FFoundationAuthority::Reset()
     }
     ItemEntities.Empty();
     ExperienceOrbs.Empty();
+    Mobs.Empty();
     FFoundationEvent Event;
     Event.Kind = EFoundationEventKind::Reset;
     AddEvent(Event);
@@ -390,6 +392,7 @@ void FFoundationAuthority::Step()
     for (FFoundationPlayer& Player : Players)
         if (Player.Use.bActive && Player.Facts.Step - Player.Use.LastStep > 1) CancelUse(Player);
     StepItemEntities();
+    StepMobs();
     StepExperienceOrbs();
     StepOpenMenus();
     StepFurnaces();
@@ -744,6 +747,20 @@ void FFoundationAuthority::MergeItemEntities()
     }
 }
 
+int32 FFoundationAuthority::RemoveItemEntities()
+{
+    const int32 Count = ItemEntities.Num();
+    ItemEntities.Reset();
+    return Count;
+}
+
+int32 FFoundationAuthority::RemoveExperienceOrbs()
+{
+    const int32 Count = ExperienceOrbs.Num();
+    ExperienceOrbs.Reset();
+    return Count;
+}
+
 int32 FFoundationAuthority::SpawnExperience(const FVector& LocalCm, int32 Total, int32 RandomSeed)
 {
     using namespace FoundationItemEntities;
@@ -775,6 +792,59 @@ int32 FFoundationAuthority::TakeExperience(int32 PlayerId)
     const int32 Points = Player->PendingExperience;
     Player->PendingExperience = 0;
     return Points;
+}
+
+void FFoundationAuthority::SetRespawnPoint(int32 PlayerId, const FIntVector& Cell)
+{
+    if (FFoundationPlayer* Player = FindPlayer(PlayerId)) Player->RespawnCell = Cell;
+}
+
+void FFoundationAuthority::ClearRespawnPoint(int32 PlayerId)
+{
+    if (FFoundationPlayer* Player = FindPlayer(PlayerId)) Player->RespawnCell.Reset();
+}
+
+TOptional<FIntVector> FFoundationAuthority::GetRespawnPoint(int32 PlayerId) const
+{
+    const FFoundationPlayer* Player = FindPlayer(PlayerId);
+    return Player ? Player->RespawnCell : TOptional<FIntVector>();
+}
+
+void FFoundationAuthority::DropInventoryOnDeath(int32 PlayerId, const FVector& FeetLocalCm, int32 RandomSeed)
+{
+    using namespace FoundationDeath;
+    FFoundationPlayer* Player = FindPlayer(PlayerId);
+    // Without item entities (foundation.Items.Entities 0) nothing could despawn or be picked up: keep the inventory.
+    if (!Player || !Options.bItemEntities || Options.bInfiniteSupply || Player->Inventory.bInfiniteSupply) return;
+    FFoundationInventory& Inventory = Player->Inventory;
+    // Before the first facts the eye is the profile's standing height.
+    const double EyeCm = Player->bHasFacts ? Player->Facts.EyeCm.Z - Player->Facts.FeetCm.Z : DefaultEyeCm;
+    const FVector From = FeetLocalCm + FVector(0, 0, EyeCm - DropBelowEyeCm);
+    FRandomStream Random(RandomSeed);
+    const auto Drop = [&](FFoundationItemInstance& Stack)
+    {
+        if (Stack.IsEmpty()) return;
+        // [items.drop.random_scatter] f = 0.5 x U, angle = 2 pi x U; vanilla's x = -sin(angle) x f, z = cos(angle) x f
+        // on its horizontal plane, Unreal's X and Y here (Z up).
+        const double Speed = Random.FRand() * DropScatterCm, Angle = Random.FRand() * 2 * UE_DOUBLE_PI;
+        const FVector Velocity(-FMath::Sin(Angle) * Speed, FMath::Cos(Angle) * Speed, DropUpCm);
+        SpawnItem(Stack.Item, Stack.Count, From, Velocity, DropPickupDelay, Stack.Damage);
+        Stack = {};
+    };
+    for (FFoundationItemInstance& Stack : Inventory.Hotbar)
+        Drop(Stack);
+    for (FFoundationItemInstance& Stack : Inventory.Main)
+        Drop(Stack);
+    for (FFoundationItemInstance& Stack : Inventory.Armor)
+        Drop(Stack);
+    Drop(Inventory.Offhand);
+    Drop(Inventory.Carried);
+    for (FFoundationItemInstance& Stack : Inventory.Craft)
+        Drop(Stack);
+    // An open crafting table's grid drops too; closing the screen afterwards then finds it empty.
+    for (FFoundationItemInstance& Stack : Player->OpenMenu.Grid)
+        Drop(Stack);
+    ++Inventory.Revision;
 }
 
 void FFoundationAuthority::StepExperienceOrbs()
@@ -877,11 +947,168 @@ void FFoundationAuthority::StepExperienceOrbs()
     }
 }
 
+int32 FFoundationAuthority::SpawnMob(EFoundationMobType Type, const FVector& LocalCm, float Yaw)
+{
+    using namespace FoundationMobs;
+    if (!Options.bMobs || Type >= EFoundationMobType::Count) return 0;
+    const FFoundationMobKind& Kind = GetKind(Type);
+    FFoundationMob& Mob = Mobs.AddDefaulted_GetRef();
+    Mob.Id = NextMobId++;
+    Mob.Type = Type;
+    Mob.LocalCm = Mob.PreviousLocalCm = LocalCm;
+    Mob.Yaw = Mob.PreviousYaw = Mob.HeadYaw = Mob.PreviousHeadYaw = Yaw;
+    Mob.Health.MaxHealth = Mob.Health.Health = Kind.MaxHealth;
+    Mob.Health.Armor = FMath::RoundToInt32(Kind.Armor);
+    Mob.Health.ArmorToughness = Kind.Toughness;
+    Mob.Health.bNaturalRegeneration = false;
+    // Deterministic per mob: the rules' loot seed and the id.
+    Mob.Random.Initialize(int32(HashCombine(GetTypeHash(Mob.Id), GetTypeHash(Rules.LootSeed))));
+    Mob.AmbientTicks = AmbientMinTicks + Mob.Random.RandHelper(AmbientRandomTicks);
+    ++MobsSpawned;
+    return Mob.Id;
+}
+
+void FFoundationAuthority::AddMobSound(const FFoundationMob& Mob, const TCHAR* Sound, float Volume)
+{
+    FFoundationEvent Event;
+    Event.Kind = EFoundationEventKind::MobSound;
+    Event.EntityId = Mob.Id;
+    Event.Interaction =
+        FName(FString::Printf(TEXT("entity.%s.%s"), *FoundationMobs::GetKind(Mob.Type).Id.ToString(), Sound));
+    Event.LocationCm = World.OriginCm + Mob.LocalCm;
+    Event.Amount = Volume;
+    AddEvent(Event);
+}
+
+FFoundationMob* FFoundationAuthority::FindMob(int32 Id)
+{
+    return Mobs.FindByPredicate([Id](const FFoundationMob& Mob) { return Mob.Id == Id; });
+}
+
+int32 FFoundationAuthority::ClearMobs()
+{
+    const int32 Count = Mobs.Num();
+    Mobs.Empty();
+    return Count;
+}
+
+void FFoundationAuthority::StepMobs()
+{
+    using namespace FoundationMobs;
+    if (Mobs.IsEmpty() || !Options.bMobs) return;
+    const FVector& Origin = World.OriginCm;
+    const double VoidCm = double(World.BoundsMin.Z - VoidDepthCells) * UFoundationProfile::BlockCm;
+    TArray<FVector, TInlineAllocator<4>> Eyes;
+    for (const FFoundationPlayer& Player : Players)
+        if (Player.bHasFacts && Player.Facts.bAlive) Eyes.Add(Player.Facts.EyeCm);
+    TArray<FBox> Boxes;
+    for (int32 Index = 0; Index < Mobs.Num();)
+    {
+        FFoundationMob& Mob = Mobs[Index];
+        const FFoundationMobKind& Kind = GetKind(Mob.Type);
+        const FIntVector Cell(FoundationGrid::FloorToCell(Mob.LocalCm.X), FoundationGrid::FloorToCell(Mob.LocalCm.Y),
+            FoundationGrid::FloorToCell(Mob.LocalCm.Z));
+        // O16: on an unloaded column nothing runs, timers included.
+        Mob.bFrozen = !World.GetStorage().IsLoaded(Cell);
+        if (Mob.bFrozen)
+        {
+            Mob.PreviousLocalCm = Mob.LocalCm;
+            Mob.PreviousYaw = Mob.Yaw;
+            Mob.PreviousHeadYaw = Mob.HeadYaw;
+            Mob.PreviousHeadPitch = Mob.HeadPitch;
+            Mob.PreviousWalkPosition = Mob.WalkPosition;
+            Mob.PreviousWalkSpeed = Mob.WalkSpeed;
+            ++Index;
+            continue;
+        }
+        ++Mob.Age;
+        Mob.PreviousYaw = Mob.Yaw;
+        Mob.Health.StepDamageCooldown();
+        if (Mob.HurtTime > 0) --Mob.HurtTime;
+        if (!Mob.IsAlive() && ++Mob.DeathTime >= RemoveAtDeathTime)
+        {
+            DropMobLoot(Mob);
+            Mobs.RemoveAt(Index);
+            continue;
+        }
+        Think(Mob, Origin, Eyes);
+        bool bJump = false;
+        const FVector2D Input = Steer(Mob, Origin, bJump);
+        GatherEntityCollision(GetStepRegion(Mob, Origin), GetBox(Mob.Type, Origin + Mob.LocalCm), Boxes);
+        Move(Mob, Origin, Boxes, Input, bJump);
+        Animate(Mob);
+        if (Mob.IsAlive())
+        {
+            if (--Mob.AmbientTicks <= 0)
+            {
+                Mob.AmbientTicks = AmbientMinTicks + Mob.Random.RandHelper(AmbientRandomTicks);
+                AddMobSound(Mob, TEXT("ambient"), Kind.Volume);
+            }
+            if (Mob.bOnGround)
+            {
+                Mob.StepDistanceCm += FVector2D(Mob.LocalCm - Mob.PreviousLocalCm).Size();
+                if (Mob.StepDistanceCm >= StepSoundCm)
+                {
+                    Mob.StepDistanceCm -= StepSoundCm;
+                    AddMobSound(Mob, TEXT("step"), StepVolume);
+                }
+            }
+        }
+        if (Mob.LocalCm.Z < VoidCm)
+            Mobs.RemoveAt(Index);
+        else
+            ++Index;
+    }
+}
+
+void FFoundationAuthority::DropMobLoot(const FFoundationMob& Mob)
+{
+    using namespace FoundationItemEntities;
+    const FFoundationMobKind& Kind = FoundationMobs::GetKind(Mob.Type);
+    ++MobsKilled;
+    const FIntVector Cell(FoundationGrid::FloorToCell(Mob.LocalCm.X), FoundationGrid::FloorToCell(Mob.LocalCm.Y),
+        FoundationGrid::FloorToCell(Mob.LocalCm.Z));
+    FRandomStream Random(FoundationLoot::MakeSeed(~Rules.LootSeed, Cell, Mob.Id));
+    // [loot_table/entities/<id>.json] rolled with killed_by_player for a player kill; no enchantments and nothing on
+    // fire yet. Provisional: the drops leave the corpse's feet with the block drops' spread and speed.
+    if (const FFoundationLootTable* Table = Rules.EntityLootTables.Find(Kind.Id))
+    {
+        FFoundationLootContext Context{Rules.Hand};
+        Context.bKilledByPlayer = Mob.bKilledByPlayer;
+        TArray<FFoundationLootDrop> Drops;
+        FoundationLoot::Roll(*Table, Rules.LootPredicates, Context, Random, Drops);
+        for (const FFoundationLootDrop& Drop : Drops)
+        {
+            if (!Rules.Items.IsValidIndex(Drop.Item)) continue;
+            const int32 MaxStack = FMath::Max(1, Rules.Items[Drop.Item].MaxStack);
+            for (int32 Left = Drop.Count; Left > 0; Left -= MaxStack)
+            {
+                const FVector Velocity(Random.FRandRange(-SpawnSidewaysCm, SpawnSidewaysCm),
+                    Random.FRandRange(-SpawnSidewaysCm, SpawnSidewaysCm), SpawnUpCm);
+                SpawnItem(Drop.Item, FMath::Min(Left, MaxStack), Mob.LocalCm, Velocity, BlockDropPickupDelay);
+            }
+        }
+    }
+    // Provisional (wiki "Experience"): a player kill pays the kind's experience, when orbs are on.
+    if (Mob.bKilledByPlayer && Options.bExperienceOrbs && Kind.ExperienceMax > 0)
+    {
+        const int32 Points = Random.RandRange(Kind.ExperienceMin, Kind.ExperienceMax);
+        SpawnExperience(Mob.LocalCm + FVector(0, 0, Kind.HeightCm * .5), Points, int32(Random.GetUnsignedInt()));
+    }
+}
+
 FFoundationHit FFoundationAuthority::Resolve(const FFoundationPlayerFacts& Facts, bool bFluidSources) const
 {
     TArray<FFoundationEntityShape, TInlineAllocator<4>> Shapes;
     for (const FFoundationTrainingTarget& Target : Targets)
         Shapes.Add({Target.Id, Target.Box, Target.Label, true, !Target.Health.IsDead()});
+    // Mobs (survival T6 20a): a frozen one is not drawn and cannot be hit; a dying one still stops the aim (Attack
+    // refuses it).
+    if (Options.bMobs)
+        for (const FFoundationMob& Mob : Mobs)
+            if (!Mob.bFrozen)
+                Shapes.Add({Mob.Id, FoundationMobs::GetBox(Mob.Type, World.OriginCm + Mob.LocalCm),
+                    FoundationMobs::GetKind(Mob.Type).Id.ToString(), true, Mob.IsAlive()});
     FFoundationRay Ray;
     Ray.Eye = Facts.EyeCm;
     Ray.Direction = Facts.Aim;
@@ -2171,7 +2398,11 @@ void FFoundationAuthority::Attack(
         return;
     }
     FFoundationTrainingTarget* Target = FindTarget(Hit.EntityId);
-    if (!Target || Target->Health.IsDead())
+    // Mobs (survival T6 20a) take the same hit through their own health; sweeps stay with the training targets until
+    // 20c.
+    FFoundationMob* Mob = Target || !Options.bMobs ? nullptr : FindMob(Hit.EntityId);
+    FFoundationVitals* Health = Target ? &Target->Health : Mob ? &Mob->Health : nullptr;
+    if (!Health || Health->IsDead())
     {
         Reject(Result, EFoundationReason::TargetDead);
         return;
@@ -2188,33 +2419,43 @@ void FFoundationAuthority::Attack(
     const bool bSprintKnockback = bStrong && Facts.bSprinting;
     const bool bCritical = bStrong && Facts.FallDistanceCm > 0 && !Facts.bGrounded && !Facts.bClimbing &&
         !Facts.bBodyInWater && !Facts.bMobilityRestricted && !Facts.bPassenger && !Facts.bSprinting;
-    const bool bSweep = bStrong && !bCritical && !bSprintKnockback && Facts.bGrounded &&
+    const bool bSweep = Target && bStrong && !bCritical && !bSprintKnockback && Facts.bGrounded &&
         Facts.StepMovedCm <= Rules.SweepMaxMoveCm && Weapon.Tags.HasAny(Rules.SweepItemTags);
     if (bCritical) Damage *= Rules.CriticalMultiplier;
-    const float Before = Target->Health.Health;
+    const float Before = Health->Health;
     // A hit landing inside the target's hurt window knocks nothing back (wiki "Knockback").
-    const bool bFreshHit = !Target->Health.IsInHurtWindow();
-    const bool bAccepted = Target->Health.Hurt(EFoundationDamage::PlayerAttack, Damage);
+    const bool bFreshHit = !Health->IsInHurtWindow();
+    const bool bAccepted = Health->Hurt(EFoundationDamage::PlayerAttack, Damage);
     // Every issued attack restarts recovery, hit or not.
     Vitals.ResetAttackStrength();
     Result.Outcome = EFoundationOutcome::Committed;
     Result.bChargeReset = true;
-    Result.EntityId = Target->Id;
+    Result.EntityId = Hit.EntityId;
     Result.Strength = Strength;
     Result.Damage = Damage;
     Result.bCritical = bCritical;
-    Result.TargetHealth = Target->Health.Health;
+    Result.TargetHealth = Health->Health;
     if (!bAccepted)
     {
         Result.Reason = EFoundationReason::TargetCooldown;
         return;
     }
-    Result.DamageApplied = Before - Target->Health.Health;
-    Result.bTargetDied = Target->Health.IsDead();
+    Result.DamageApplied = Before - Health->Health;
+    Result.bTargetDied = Health->IsDead();
     Result.bKnockback = bFreshHit;
     Result.bSprintKnockback = bSprintKnockback;
-    ++Target->Hits;
-    Target->DamageTaken += Result.DamageApplied;
+    if (Target)
+    {
+        ++Target->Hits;
+        Target->DamageTaken += Result.DamageApplied;
+    }
+    if (Mob)
+    {
+        // [movement.knockback_resistance, extra.motion] the knockback pushes it away from the player's feet; the
+        // sprint-knockback bonus waits for 20c. [survival.r5.play_calls] the hurt or the death sound.
+        FoundationMobs::OnHurt(*Mob, World.OriginCm, Facts.FeetCm, bFreshHit, true, Player.Id);
+        AddMobSound(*Mob, Result.bTargetDied ? TEXT("death") : TEXT("hurt"), FoundationMobs::GetKind(Mob->Type).Volume);
+    }
     ++Hits;
     Vitals.AddExhaustion(Rules.HitExhaustion);
     // Accepted hits wear the weapon once, sweep or not, when tool wear is on; creative tools never wear (wiki
@@ -2228,7 +2469,7 @@ void FFoundationAuthority::Attack(
     FFoundationEvent Event;
     Event.Kind = EFoundationEventKind::Hit;
     Event.Player = Player.Id;
-    Event.EntityId = Target->Id;
+    Event.EntityId = Hit.EntityId;
     Event.Amount = Result.DamageApplied;
     Event.bCritical = bCritical;
     Event.bKnockback = Result.bKnockback;

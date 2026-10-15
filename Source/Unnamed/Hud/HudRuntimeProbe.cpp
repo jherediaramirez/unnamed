@@ -38,7 +38,7 @@ void UFoundationRuntimeProbe::AddHudCases()
                 const auto& S = Presenter->GetSnapshot();
                 Record(TEXT("HUD ") + Name,
                     Check() && Presenter->GetMissingTextures() == 0 && Presenter->GetLoadedTextureCount() == 85 &&
-                        Presenter->GetItemSpriteCount() == 86,
+                        Presenter->GetItemSpriteCount() == 104,
                     FString::Printf(
                         TEXT("viewport=%dx%d scale=%d slot=%d left=%d visible=%d draws=%d textures=%d item sprites=%d; "
                              "%s resources; application input"),

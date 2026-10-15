@@ -48,10 +48,14 @@ enum class EFoundationLootCondition : uint8
     RandomChance,
     // The tool is one of Items.
     MatchTool,
-    // An entity broke the block ("this"): the player.
+    // With no State, an entity broke the block ("this"): the player. Entity loot (survival T6 20a): Name the entity
+    // ("this", "killer", "direct_attacker") and State its predicate's facts, each of which must hold (FFoundationLootContext:
+    // "is_on_fire", "sheep/color", "sheared"); a fact nothing has yet (an attacker's enchantments, a killer's type) fails.
     EntityProperties,
     // The block at the broken cell plus Offset is Name and has every State value (the other half of a double plant).
     LocationCheck,
+    // Entity loot (survival T6 20a): a player killed the entity.
+    KilledByPlayer,
 };
 
 // One node of a table's conditions; trees refer to their terms by index into the table's Conditions.
@@ -83,6 +87,10 @@ enum class EFoundationLootModifier : uint8
     ExplosionDecay,
     // copy_components and copy_state: kept as data; stacks carry no components yet.
     Copy,
+    // Entity loot (survival T6 20a): the item becomes Item, its furnace result (furnace_smelt).
+    FurnaceSmelt,
+    // enchanted_count_increase (Looting): neutral, since no item carries enchantments yet.
+    EnchantedCountIncrease,
 };
 
 struct FFoundationLootModifier
@@ -95,6 +103,8 @@ struct FFoundationLootModifier
     EFoundationLootBonus Bonus = EFoundationLootBonus::None;
     FName BonusEnchantment;
     float BonusMultiplier = 0;
+    // FurnaceSmelt: the result, an index into FFoundationRules::Items.
+    int32 Item = INDEX_NONE;
 };
 
 struct FFoundationLootCandidate
@@ -138,6 +148,11 @@ struct FFoundationLootContext
     // The block and state at the broken cell plus an offset, as the world holds them when the roll happens; false
     // where it is unknown. Unset (a roll with no world), LocationCheck fails.
     TFunction<bool(const FIntVector& Offset, FName& Block, TArray<TPair<FName, FName>>& State)> GetBlockAt;
+    // Entity loot (survival T6 20a): a player killed it; the killed entity's own facts ("this").
+    bool bKilledByPlayer = false;
+    bool bOnFire = false;
+    FName SheepColor;
+    bool bSheared = false;
 };
 
 struct FFoundationLootDrop
