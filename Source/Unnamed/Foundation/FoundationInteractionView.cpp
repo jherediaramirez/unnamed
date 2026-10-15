@@ -10,6 +10,8 @@
 #include "Foundation/FoundationHud.h"
 #include "Foundation/FoundationItemAssets.h"
 #include "Foundation/FoundationItemMesh.h"
+#include "Foundation/FoundationMobAssets.h"
+#include "Engine/Texture2D.h"
 #include "Foundation/FoundationPlayground.h"
 #include "Foundation/FoundationPawn.h"
 #include "Foundation/FoundationProfile.h"
@@ -66,9 +68,8 @@ namespace
     // Docs/Records/2026-10-12-Feel-B.md). Only pivot / scale is fixed by the frames: scale 2 draws a model block as a
     // world block. A held block takes block/block.json's firstperson_righthand display (rotation 0 45 0, scale 0.4), as
     // sprite items take their models'.
-    const FVector HandFitPivot(71.9, 56.2, -52.2);
     constexpr double HandFitScale = 2;
-    const FVector HandRestPivot(42, 24, -24);
+    // (The pivots live in FoundationHeldPose::Get, FoundationItemMesh.h.)
 
     constexpr double InteractionViewBlockCm = UFoundationProfile::BlockCm;
     constexpr uint8 WaterLayer = 3;
@@ -787,6 +788,17 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
             if (const FName Sound = Authority.Rules.GetItem(Event.Item).EquipSound; BreakEffects && !Sound.IsNone())
                 BreakEffects->PlayEvent(Sound, Event.LocationCm, 1.f, 1.f);
             break;
+        case EFoundationEventKind::Blocked:
+            // The shield's block_sound at the player, volume 1 and pitch 0.8 + 0.4U (SURVIVAL-FINDINGS, R5,
+            // survival.r5.rules, F 3634-3637).
+            if (BreakEffects && !Event.Interaction.IsNone())
+                BreakEffects->PlayEvent(Event.Interaction, Event.LocationCm, 1.f, .8f + .4f * FMath::FRand());
+            break;
+        case EFoundationEventKind::BlockingDisabled:
+            // Its disabled_sound, volume 1 and pitch 0.8 + 0.4U like the block (provisional: no report has it).
+            if (BreakEffects && !Event.Interaction.IsNone())
+                BreakEffects->PlayEvent(Event.Interaction, Event.LocationCm, 1.f, .8f + .4f * FMath::FRand());
+            break;
         case EFoundationEventKind::ToolBroke:
             if (const AFoundationPawn* Pawn = GetLocalPawn())
                 Burst(Pawn->GetEyePosition() + Pawn->GetControlRotation().Vector() * 60, FLinearColor(.7f, .7f, .72f),
@@ -1036,7 +1048,22 @@ void UFoundationInteractionView::UpdateHeldItem(
         HeldItem->SetCastShadow(false);
         HeldItem->SetFirstPersonPrimitiveType(EFirstPersonPrimitiveType::FirstPerson);
         Owned.Add(HeldItem);
-        HeldItemId = HeldSprite = NAME_None;
+        HeldItemId = HeldSprite = OffItemId = NAME_None;
+        bHeldSpecial = bHeldUsing = bOffSpecial = bOffUsing = false;
+        // The offhand item: its own pivot on the camera (placed from FoundationHeldPose), an item only (a block in the
+        // offhand is not drawn: provisional, the held-block path is main-hand only).
+        OffPivot = NewObject<USceneComponent>(GetOwner());
+        OffPivot->SetupAttachment(Camera);
+        OffPivot->RegisterComponent();
+        Owned.Add(OffPivot);
+        OffItem = NewObject<UStaticMeshComponent>(GetOwner());
+        OffItem->SetMobility(EComponentMobility::Movable);
+        OffItem->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        OffItem->SetupAttachment(OffPivot);
+        OffItem->RegisterComponent();
+        OffItem->SetCastShadow(false);
+        OffItem->SetFirstPersonPrimitiveType(EFirstPersonPrimitiveType::FirstPerson);
+        Owned.Add(OffItem);
     }
     const FFoundationPlayer* Player = Authority.FindPlayer(Pawn->Interaction.PlayerId);
     const FFoundationItemInstance* Main = Player ? &Player->Inventory.GetHand(EFoundationHand::Main) : nullptr;
@@ -1075,7 +1102,13 @@ void UFoundationInteractionView::UpdateHeldItem(
     }
     // Any other item: its first-person model from DA_Items.
     const FName ItemId = InHand && Icon != TEXT("block") ? InHand->Id : NAME_None;
-    if (ItemId != HeldItemId) SetHeldItem(ItemId);
+    const bool bUsing = Pawn->Interaction.bUsingItem && Pawn->Interaction.UseHand == EFoundationHand::Main;
+    if (ItemId != HeldItemId || (bHeldSpecial && bUsing != bHeldUsing)) SetHeldItem(ItemId, bUsing);
+    const FFoundationItemInstance* Off = Player ? &Player->Inventory.GetHand(EFoundationHand::Off) : nullptr;
+    const FFoundationItemDefinition* InOff = Off && !Off->IsEmpty() ? &Authority.Rules.GetItem(Off->Item) : nullptr;
+    const FName OffId = InOff && InOff->Icon != TEXT("block") ? InOff->Id : NAME_None;
+    const bool bOffUse = Pawn->Interaction.bUsingItem && Pawn->Interaction.UseHand == EFoundationHand::Off;
+    if (OffId != OffItemId || (bOffSpecial && bOffUse != bOffUsing)) SetHeldItem(OffId, bOffUse, EFoundationHand::Off);
     // The glow: fixed (foundation.Held.Glow), or by the light at the eye (foundation.Held.Light 1, generated worlds).
     float Glow = CVarHeldGlow.GetValueOnGameThread(), LightGlow = 0;
     const AVoxelWorld* VoxelWorld = FoundationHeldLight::ReadMode() == 1 ? AVoxelWorld::Find(GetWorld()) : nullptr;
@@ -1121,6 +1154,8 @@ void UFoundationInteractionView::UpdateHeldItem(
     }
     HeldItem->SetVisibility(bShow && HeldItem->GetStaticMesh() != nullptr);
     HandPivot->SetVisibility(bShow, false);
+    OffItem->SetVisibility(bShow && OffItem->GetStaticMesh() != nullptr);
+    OffPivot->SetVisibility(bShow, false);
     // Swing: a cosmetic prediction on each press, continuous while mining. It decides nothing.
     if (Pawn->Interaction.PressSerial != LastPressSerial)
     {
@@ -1136,7 +1171,9 @@ void UFoundationInteractionView::UpdateHeldItem(
     if (BreakEffects) BreakEffects->GetSwing(Swing);
     // Eating: the main-hand item's motion replaces the swing while it shows. EatMotion 1 (step 10b): vanilla's eat
     // transform, at once; 0 (step 10): an ease toward the mouth in 0.1 s and a bob once per effect step (4 steps).
-    const bool bEating = Pawn->Interaction.bUsingItem && Pawn->Interaction.UseHand == EFoundationHand::Main;
+    // A raised shield (a special model, step 19b) is a use but not eating: it keeps its display switch only.
+    const bool bEating =
+        Pawn->Interaction.bUsingItem && Pawn->Interaction.UseHand == EFoundationHand::Main && !bHeldSpecial;
     const bool bEatMotion = FoundationHand::GetEatMotion() == 1;
     if (!bEating || Pawn->Interaction.UseTicks != EatTicks)
         EatTickAge = 0;
@@ -1154,11 +1191,14 @@ void UFoundationInteractionView::UpdateHeldItem(
     {
         AppliedHandFit = HandFit;
         HandPivot->SetRelativeScale3D(FVector(HandFit ? HandFitScale : 1.));
+        OffPivot->SetRelativeScale3D(FVector(HandFit ? HandFitScale : 1.));
         for (UInstancedStaticMeshComponent* Held : HeldBlocks)
             Held->SetRelativeTransform(HandFit ? FoundationHand::MakeHeldBlockDisplay()
                                                : FTransform(FRotator(10, 35, 0), FVector::ZeroVector, FVector(.11)));
     }
-    const FVector Pivot = HandFit ? HandFitPivot : HandRestPivot;
+    const FVector Pivot = FoundationHeldPose::Get(EFoundationHand::Main, HandFit != 0).Pivot;
+    // The offhand holds still at its mirrored pivot (no swing or eat motion).
+    OffPivot->SetRelativeLocation(FoundationHeldPose::Get(EFoundationHand::Off, HandFit != 0).Pivot);
     const int32 UseDuration = Pawn->Interaction.UseDuration;
     if (bEatMotion && bEating && UseDuration > 0)
     {
@@ -1177,16 +1217,37 @@ void UFoundationInteractionView::UpdateHeldItem(
         FRotator(-55 * Swing - 15 * EatBlend, -10 * Swing - 35 * EatBlend, 0));
 }
 
-void UFoundationInteractionView::SetHeldItem(FName Id)
+void UFoundationInteractionView::SetHeldItem(FName Id, bool bUsing, EFoundationHand Hand)
 {
-    HeldItemId = Id;
-    HeldSprite = NAME_None;
+    const bool bOff = Hand == EFoundationHand::Off;
+    const FName Context = FoundationHeldPose::Get(Hand, false).Context;
+    FName& ItemId = bOff ? OffItemId : HeldItemId;
+    FName DiscardSprite;
+    FName& Sprite = bOff ? DiscardSprite : HeldSprite;
+    bool& bSpecial = bOff ? bOffSpecial : bHeldSpecial;
+    bool& bSpecialUsing = bOff ? bOffUsing : bHeldUsing;
+    UStaticMeshComponent* Component = bOff ? OffItem.Get() : HeldItem.Get();
+    ItemId = Id;
+    Sprite = NAME_None;
+    bSpecial = bSpecialUsing = false;
     UStaticMesh* Mesh = nullptr;
     UMaterialInterface* Material = nullptr;
     FTransform Display;
     FFoundationItemModelView Model;
     const UFoundationItemAssets* Items = Id.IsNone() ? nullptr : UFoundationItemAssets::LoadDefault();
-    if (Items && Items->FindModelView(Id, TEXT("firstperson_righthand"), Model))
+    if (Items && Items->FindSpecialView(Id, Context, Model, bUsing))
+    {
+        // The shield: box geometry on its entity texture, in the raised pose while it is in use. Drawn in M_Mob, which
+        // is lit (the sprite items' M_HeldItem is not): provisional.
+        bSpecial = true;
+        bSpecialUsing = bUsing;
+        Mesh = GetSpecialMesh(Model);
+        Material = Mesh ? GetSpecialMaterial(Model) : nullptr;
+        if (Material && Model.Display)
+            Display = FoundationItemMesh::MakeDisplayTransform(*Model.Display, HeldModelBlockCm);
+        if (!Material) Mesh = nullptr;
+    }
+    else if (Items && Items->FindModelView(Id, Context, Model))
     {
         const FFoundationItemTextureAsset& Texture = *Model.Texture;
         UStaticMesh* Cached = GetItemMesh(Model);
@@ -1194,15 +1255,15 @@ void UFoundationInteractionView::SetHeldItem(FName Id)
         if (Material)
         {
             Mesh = Cached;
-            HeldSprite = Texture.Name;
+            Sprite = Texture.Name;
             if (Model.Display) Display = FoundationItemMesh::MakeDisplayTransform(*Model.Display, HeldModelBlockCm);
         }
     }
     // The mesh first, so the material override lands on its slot.
-    HeldItem->SetStaticMesh(Mesh);
+    Component->SetStaticMesh(Mesh);
     if (!Mesh) return;
-    HeldItem->SetMaterial(0, Material);
-    HeldItem->SetRelativeTransform(Display);
+    Component->SetMaterial(0, Material);
+    Component->SetRelativeTransform(Display);
 }
 
 void UFoundationInteractionView::GetStateMeshes(const FFoundationBlockRegistry& Registry, FFoundationBlockState State,
@@ -1270,6 +1331,40 @@ UStaticMesh* UFoundationInteractionView::GetItemMesh(const FFoundationItemModelV
         }
         Cached = FoundationItemMesh::BuildMesh(this, Layers, HeldModelBlockCm);
     }
+    return Cached;
+}
+
+UStaticMesh* UFoundationInteractionView::GetSpecialMesh(const FFoundationItemModelView& View)
+{
+    if (View.Special != TEXT("shield")) return nullptr;
+    const FName Key(TEXT("special/") + View.Special.ToString() + TEXT("#") + View.SpecialScale.ToString());
+    TObjectPtr<UStaticMesh>& Cached = ItemMeshes.FindOrAdd(Key);
+    if (!Cached)
+        Cached = FoundationItemMesh::BuildMesh(this,
+            FoundationItemMesh::BuildBoxQuads(
+                FoundationItemMesh::GetShieldBoxes(), FIntPoint(64, 64), FVector3f(View.SpecialScale)),
+            0, HeldModelBlockCm);
+    return Cached;
+}
+
+UMaterialInterface* UFoundationInteractionView::GetSpecialMaterial(const FFoundationItemModelView& View)
+{
+    TObjectPtr<UMaterialInstanceDynamic>& Cached = SpecialMaterials.FindOrAdd(View.SpecialTexture);
+    if (Cached) return Cached;
+    // "entity/shield/shield_base_nopattern" is imported as Gui/shield/shield_base_nopattern.
+    FString Name = View.SpecialTexture.ToString();
+    Name.RemoveFromStart(TEXT("entity/"));
+    const UFoundationMobAssets* Mobs = UFoundationMobAssets::LoadDefault();
+    UMaterialInterface* Base = Mobs ? Mobs->Material.LoadSynchronous() : nullptr;
+    UTexture2D* Texture = Cast<UTexture2D>(UUnnamedProjectSettings::GetItemAssetPath(TEXT("Gui/") + Name).TryLoad());
+    if (!Base || !Texture)
+    {
+        UE_LOG(
+            LogUnnamedFoundation, Warning, TEXT("The %s texture or M_Mob is missing: the shield is not drawn."), *Name);
+        return nullptr;
+    }
+    Cached = UMaterialInstanceDynamic::Create(Base, this);
+    Cached->SetTextureParameterValue(TEXT("Skin"), Texture);
     return Cached;
 }
 

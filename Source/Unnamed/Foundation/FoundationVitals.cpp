@@ -203,7 +203,10 @@ bool FFoundationVitals::Hurt(EFoundationDamage Type, float Amount)
     // Armor, then the absorption buffer; only damage reaching health costs exhaustion.
     if (!Rule.bBypassesArmor)
     {
-        PendingArmorWear += FMath::Max(1, FMath::FloorToInt32(Dealt / 4.f));
+        const int32 Wear = FMath::Max(1, FMath::FloorToInt32(Dealt / 4.f));
+        PendingArmorWear += Wear;
+        // #minecraft:is_fire holds lava and on_fire (26.3 data/minecraft/tags/damage_type/is_fire.json).
+        if (Type == EFoundationDamage::Lava || Type == EFoundationDamage::OnFire) PendingFireArmorWear += Wear;
         Dealt = GetDamageAfterArmor(Dealt, GetArmor(), GetArmorToughness());
     }
     const float Absorbed = FMath::Min(Dealt, Absorption);

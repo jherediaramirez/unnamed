@@ -50,7 +50,23 @@ FFoundationItemDefinition UFoundationItemAssets::MakeDefinition(const FFoundatio
     Item.DurabilityPerBlock = Asset.DamagePerBlock;
     Item.DurabilityPerHit = Asset.DamagePerHit;
     Item.DisableBlockingSeconds = Asset.DisableBlockingSeconds;
-    Item.Sprite = Asset.Textures.IsEmpty() ? NAME_None : Asset.Textures[0];
+    Item.Sprite = Asset.Textures.IsEmpty() ? Asset.GuiSprite : Asset.Textures[0];
+    if (Asset.bBlocksAttacks)
+    {
+        FFoundationBlocksAttacks& Blocks = Item.BlocksAttacks;
+        Blocks.bValid = true;
+        // Seconds to reference ticks, rounded (0.25 s: 5; the value report's "Shield raise delay").
+        Blocks.DelayTicks = FMath::RoundToInt32(Asset.BlockDelaySeconds * 20.f);
+        Blocks.DisableCooldownScale = Asset.DisableCooldownScale;
+        Blocks.AngleDegrees = Asset.BlockAngleDegrees;
+        Blocks.Base = Asset.BlockBase;
+        Blocks.Factor = Asset.BlockFactor;
+        Blocks.ItemDamageThreshold = Asset.ItemDamageThreshold;
+        Blocks.ItemDamageBase = Asset.ItemDamageBase;
+        Blocks.ItemDamageFactor = Asset.ItemDamageFactor;
+        Blocks.BlockSound = Asset.BlockSound;
+        Blocks.DisabledSound = Asset.DisabledSound;
+    }
     // A second layer (the leather pieces' overlay) draws over the first; the tint multiplies the first only.
     Item.SpriteOverlay = Asset.Textures.Num() > 1 ? Asset.Textures[1] : NAME_None;
     Item.SpriteTint = Asset.LayerTints.IsEmpty() ? FColor::White : Asset.LayerTints[0];
@@ -63,6 +79,7 @@ FFoundationItemDefinition UFoundationItemAssets::MakeDefinition(const FFoundatio
         Item.Equipment = *Slot;
         Item.bSwappable = Asset.bSwappable;
         Item.EquipSound = Asset.EquipSound;
+        Item.bFireResistant = Asset.DamageResistant == TEXT("is_fire");
         // Whole armor points (every 26.3 piece's are); the toughness keeps its fraction.
         Item.Armor = FMath::RoundToInt(Asset.Armor);
         Item.ArmorToughness = Asset.ArmorToughness;
@@ -75,19 +92,34 @@ const FFoundationItemAsset* UFoundationItemAssets::FindItem(FName Id) const
     return Items.FindByPredicate([Id](const FFoundationItemAsset& Item) { return Item.Id == Id; });
 }
 
-bool UFoundationItemAssets::FindModelView(FName Id, FName Context, FFoundationItemModelView& View) const
+bool UFoundationItemAssets::FindModelView(
+    FName Id, FName Context, FFoundationItemModelView& View, bool bUsingItem) const
 {
     View = {};
     const FFoundationItemAsset* Item = FindItem(Id);
     if (!Item) return false;
-    const FFoundationItemModelCaseAsset* Case = Item->Models.FindByPredicate(
-        [Context](const FFoundationItemModelCaseAsset& Candidate) { return Candidate.Contexts.Contains(Context); });
+    // A using_item case (the shield) matches only its own state.
+    auto Using = [bUsingItem](const FFoundationItemModelCaseAsset& Candidate)
+    { return Candidate.UsingItem < 0 || (Candidate.UsingItem == 1) == bUsingItem; };
+    const FFoundationItemModelCaseAsset* Case =
+        Item->Models.FindByPredicate([Context, &Using](const FFoundationItemModelCaseAsset& Candidate)
+            { return Using(Candidate) && Candidate.Contexts.Contains(Context); });
     if (!Case)
-        Case = Item->Models.FindByPredicate(
-            [](const FFoundationItemModelCaseAsset& Candidate) { return Candidate.Contexts.IsEmpty(); });
+        Case = Item->Models.FindByPredicate([&Using](const FFoundationItemModelCaseAsset& Candidate)
+            { return Using(Candidate) && Candidate.Contexts.IsEmpty(); });
     if (!Case) return false;
     View.Model =
         Models.FindByPredicate([Case](const FFoundationItemModelAsset& Model) { return Model.Name == Case->Model; });
+    // A special model (the shield) has no layers: FindSpecialView draws it.
+    if (View.Model && !Item->SpecialModel.IsNone())
+    {
+        View.Special = Item->SpecialModel;
+        View.SpecialTexture = Item->SpecialTexture;
+        View.SpecialScale = Item->SpecialScale;
+        View.Display = View.Model->Display.FindByPredicate(
+            [Context](const FFoundationItemDisplayAsset& Display) { return Display.Context == Context; });
+        return false;
+    }
     if (!View.Model || View.Model->Layers.IsEmpty()) return false;
     const FName Layer = View.Model->Layers[0];
     View.Texture =
@@ -102,6 +134,13 @@ bool UFoundationItemAssets::FindModelView(FName Id, FName Context, FFoundationIt
     View.Display = View.Model->Display.FindByPredicate(
         [Context](const FFoundationItemDisplayAsset& Display) { return Display.Context == Context; });
     return View.Texture != nullptr;
+}
+
+bool UFoundationItemAssets::FindSpecialView(
+    FName Id, FName Context, FFoundationItemModelView& View, bool bUsingItem) const
+{
+    FindModelView(Id, Context, View, bUsingItem);
+    return View.Model != nullptr && !View.Special.IsNone();
 }
 
 TArray<FFoundationItemDefinition> UFoundationItemAssets::MakeDefinitions() const

@@ -273,7 +273,8 @@ struct UNNAMED_API FFoundationRules
     TArray<FFoundationItemDefinition> Items;
     // The bare hand's melee and mining profile (an empty slot).
     FFoundationItemDefinition Hand;
-    // Hotbar contents from slot 1; None leaves a slot empty.
+    // Hotbar contents from slot 1 for a new player and a reset; None leaves a slot empty. Empty in the game: a player
+    // starts with nothing, as in vanilla survival (step 19b); only tests set it.
     TArray<FName> Loadout;
     double BlockReachCm = 450, EntityReachCm = 300;
     float EligibleDivisor = 30, IneligibleDivisor = 100;
@@ -373,7 +374,13 @@ enum class EFoundationEventKind : uint8
     Equipped,
     // A block's hand use changed it (survival B3a: a door, trapdoor or gate opened or closed): Cell the used block,
     // State its new state, Interaction the sound event (FoundationBlockFamilies::GetUseSound).
-    BlockUsed
+    BlockUsed,
+    // A raised shield blocked a hit (survival step 19b): Item the shield, LocationCm the player's feet (world cm),
+    // Interaction its block sound, Amount the damage blocked.
+    Blocked,
+    // An axe hit disabled a raised shield (step 19b): Item the shield, LocationCm the feet, Interaction its disabled
+    // sound, Amount the cooldown in ticks.
+    BlockingDisabled
 };
 
 // A committed (or rejected) outcome for presentation: effects fire once from these.
@@ -408,6 +415,18 @@ struct FFoundationItemUse
     int32 Item = INDEX_NONE;
     int32 Ticks = 0, Duration = 0;
     int64 LastStep = -1;
+    // A blocks_attacks use (the shield, step 19b): raised, not eaten; no effects and no finish.
+    bool bBlocks = false;
+};
+
+// A hit with a source on a player (survival step 19b): where it came from (world cm, the block world's frame) and the
+// attacker's weapon's disable_blocking_for_seconds (the axes' 5). FFoundationAuthority::HurtPlayer judges blocking.
+struct FFoundationAttack
+{
+    EFoundationDamage Type = EFoundationDamage::MobAttack;
+    float Amount = 0;
+    FVector SourceCm = FVector::ZeroVector;
+    float DisableBlockingSeconds = 0;
 };
 
 namespace FoundationBucket
@@ -431,6 +450,8 @@ namespace FoundationItemUse
     constexpr double EffectsDelayFraction = .21875;
     constexpr int32 EffectsEveryTicks = 4;
     UNNAMED_API bool IsEffectTick(int32 Ticks, int32 Duration);
+    // A raised shield's use duration in ticks (step 19b; minecraft.wiki "Shield", provisional).
+    constexpr int32 BlockingUseTicks = 72000;
 }
 
 // A container menu open besides the player's own (survival step 7): vanilla's containerId, the menu, the block it
@@ -461,6 +482,9 @@ struct FFoundationPlayer
     FFoundationInventory Inventory;
     FFoundationMining Mining;
     FFoundationItemUse Use;
+    // An axe hit's disable (step 19b): the blocks_attacks item and the step its cooldown ends; INDEX_NONE without one.
+    int32 BlockingDisabledItem = INDEX_NONE;
+    int64 BlockingDisabledUntilStep = 0;
     int64 LastPlacementStep = MIN_int64;
     // Experience orbs (step 12): steps until the next orb can be taken, and points taken but not yet claimed by the
     // player's vitals (TakeExperience).
@@ -553,8 +577,11 @@ public:
     // motion and pickup delays, then every live player's pickups), the orbs, the open containers' validity (a menu
     // whose block is gone or out of reach closes) and the furnaces.
     void Step();
-    // A new session: old commands become stale, the seed blocks, loadouts and targets come back.
+    // A new session: old commands become stale, the seed blocks and targets come back, and the
+    // inventories restart from Rules.Loadout (empty in the game).
     void Reset();
+    // Restarts one player's inventory from Rules.Loadout: how tests and probes give themselves items (step 19b).
+    void ResetInventory(int32 PlayerId);
     int32 GetSessionId() const { return SessionId; }
     // Resets once the current command finishes (or at once outside a command).
     void RequestReset() { bResetRequested = true; }
@@ -605,8 +632,16 @@ public:
     // with foundation.Inventory.Full 0, which has no armor slots). Its owner sets them on its vitals every step.
     void GetWornArmor(int32 Player, int32& OutArmor, float& OutToughness) const;
     // The wear a player's hurts owe (FFoundationVitals::PendingArmorWear) on every worn piece that wears, with lab
-    // tool wear on and not in creative; a piece worn out breaks (a ToolBroke event). How many broke.
-    int32 WearArmor(int32 Player, int32 Amount, EFoundationPlayerMode Mode);
+    // tool wear on and not in creative; a piece worn out breaks (a ToolBroke event). FireAmount is the part fire damage
+    // owes (FFoundationVitals::PendingFireArmorWear), which fire-resistant pieces skip. How many broke.
+    int32 WearArmor(int32 Player, int32 Amount, EFoundationPlayerMode Mode, int32 FireAmount = 0);
+    // Blocking (survival step 19b): whether the player holds a blocks_attacks item up past its delay (R18,
+    // survival2.r18.shield_delay: from the 5th use tick) and not disabled.
+    bool IsBlocking(int32 Player) const;
+    // A hit with a source on the player: a raised shield facing it blocks it (and wears, plays its sound, may be
+    // disabled by the attacker's weapon); the rest goes to Vitals.Hurt. False when nothing hurt the player (a full
+    // block takes no damage and opens no hurt window: provisional, SM-Player 19b Q3).
+    bool HurtPlayer(int32 Player, FFoundationVitals& Vitals, const FFoundationAttack& Attack);
     // Mobs (survival T6 20a), oldest first; Reset clears them. SpawnMob adds one standing at a position (cm from the
     // block world's origin) facing Yaw: its id, or 0 with Options.bMobs off.
     const TArray<FFoundationMob>& GetMobs() const { return Mobs; }
@@ -640,7 +675,7 @@ public:
     // Diagnostics.
     int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
     int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsThrown = 0, ItemsMerged = 0, ItemsDespawned = 0, ItemsEaten = 0,
-          Strips = 0, BucketUses = 0;
+          Strips = 0, BucketUses = 0, AttacksBlocked = 0;
     int32 OrbsSpawned = 0, OrbsPickedUp = 0, OrbsMerged = 0, OrbsDespawned = 0;
     int32 MobsSpawned = 0, MobsKilled = 0, MobPaths = 0, MobEggs = 0, MobGrazes = 0;
     // Passive spawning: columns seen loaded, packs spawned, the mobs in them.

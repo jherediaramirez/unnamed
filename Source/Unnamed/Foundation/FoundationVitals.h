@@ -73,6 +73,8 @@ struct UNNAMED_API FFoundationVitals
     // Armor wear owed by the hurts since the holder last took it: each hurt armor applies to costs every worn piece
     // max(1, floor(damage / 4)) (minecraft.wiki "Armor", Durability; provisional).
     int32 PendingArmorWear = 0;
+    // The part of PendingArmorWear owed by #minecraft:is_fire damage (lava): fire-resistant pieces skip it.
+    int32 PendingFireArmorWear = 0;
 
     // Player state, restored by Respawn().
     float Health = 20, Absorption = 0, Saturation = 5, Exhaustion = 0, Progress = 0, LastHurt = 0;

@@ -50,7 +50,6 @@ UFoundationInteractionSettings::UFoundationInteractionSettings()
     // from DA_Items; Blocks and Items only add project blocks and items. Retired ids, never reused: dummy_block,
     // dummy_block_item, practice_pickaxe, practice_sword.
     EmptyHand = MakeItem(TEXT("empty_hand"), TEXT(""), 1, 4, TEXT(""));
-    Loadout = {TEXT("stone"), TEXT("iron_pickaxe"), TEXT("iron_sword")};
 }
 
 const FFoundationPlacementPreset* UFoundationInteractionSettings::FindPreset(FName Name) const
@@ -85,7 +84,6 @@ void UFoundationInteractionSettings::BuildRules(FFoundationRules& Rules) const
     if (const UFoundationRecipeAssets* RecipeAssets = UFoundationRecipeAssets::LoadDefault())
         RecipeAssets->AddRecipes(Rules);
     Rules.Hand = EmptyHand;
-    Rules.Loadout = Loadout;
     Rules.BlockReachCm = Profile.BlockReachCm;
     Rules.EntityReachCm = Profile.EntityReachCm;
     Rules.AirborneMiningMultiplier = AirborneMiningMultiplier;

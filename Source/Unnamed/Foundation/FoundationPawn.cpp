@@ -393,8 +393,8 @@ void AFoundationPawn::DropOnDeath(
 {
     if (Vitals.PendingArmorWear > 0)
     {
-        Authority.WearArmor(PlayerId, Vitals.PendingArmorWear, Vitals.Mode);
-        Vitals.PendingArmorWear = 0;
+        Authority.WearArmor(PlayerId, Vitals.PendingArmorWear, Vitals.Mode, Vitals.PendingFireArmorWear);
+        Vitals.PendingArmorWear = Vitals.PendingFireArmorWear = 0;
     }
     Authority.DropInventoryOnDeath(PlayerId, FeetLocalCm, Seed);
     // Orbs follow foundation.Items.Xp as an ore's do; a spectator drops none. Provisional: they leave the feet with an
@@ -465,8 +465,8 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     // Armor (survival step 19a): the hurts since the last step wear the worn pieces, then what is worn now counts.
     if (Vitals.PendingArmorWear > 0)
     {
-        Authority.WearArmor(Interaction.PlayerId, Vitals.PendingArmorWear, Vitals.Mode);
-        Vitals.PendingArmorWear = 0;
+        Authority.WearArmor(Interaction.PlayerId, Vitals.PendingArmorWear, Vitals.Mode, Vitals.PendingFireArmorWear);
+        Vitals.PendingArmorWear = Vitals.PendingFireArmorWear = 0;
     }
     Authority.GetWornArmor(Interaction.PlayerId, Vitals.WornArmor, Vitals.WornToughness);
     Authority.Step();

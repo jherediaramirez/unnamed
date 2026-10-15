@@ -245,7 +245,8 @@ void AFoundationPlayground::BuildLayout()
                 FIntVector(7, 4, 0), FIntVector(12, 6, 0), FIntVector(-8, -7, 0)})
             Authority.Seed.Add({Cell, Stone->GetDefaultState()});
 
-    AddSign(TEXT("STARTER BLOCKS\nleft: mine (slot 2 pickaxe is fast)\nright: place"), {290, 50, 260}, 180);
+    AddSign(TEXT("STARTER BLOCKS\nleft: mine (a pickaxe is faster: /give @s iron_pickaxe)\nright: place"),
+        {290, 50, 260}, 180);
     AddSign(TEXT("PLACEMENT PRESET"), {-290, -150, 140}, 0);
     AddSign(TEXT("RESET LAB"), {-290, 50, 140}, 0);
     AddSign(TEXT("SUPPLY"), {-290, 250, 140}, 0);

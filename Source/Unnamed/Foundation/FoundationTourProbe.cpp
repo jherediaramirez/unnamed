@@ -1453,7 +1453,7 @@ void UFoundationRuntimeProbe::AddTourCases()
     };
     for (const TCHAR* Item : {TEXT("empty"), TEXT("iron_pickaxe"), TEXT("iron_sword"), TEXT("stick"), TEXT("apple"),
              TEXT("water_bucket"), TEXT("iron_spear"), TEXT("wooden_pickaxe"), TEXT("golden_pickaxe"),
-             TEXT("netherite_pickaxe"), TEXT("stone")})
+             TEXT("netherite_pickaxe"), TEXT("stone"), TEXT("leather_chestplate"), TEXT("iron_chestplate")})
     {
         AddCase(
             FString(TEXT("tour held ")) + Item, .5,
@@ -1490,7 +1490,8 @@ void UFoundationRuntimeProbe::AddTourCases()
         const TCHAR* Glow;
     };
     for (const FGlowShot& Pair : {FGlowShot{TEXT("iron_pickaxe"), TEXT("0")}, FGlowShot{TEXT("iron_sword"), TEXT("0")},
-             FGlowShot{TEXT("water_bucket"), TEXT("0")}, FGlowShot{TEXT("apple"), TEXT("0")}})
+             FGlowShot{TEXT("water_bucket"), TEXT("0")}, FGlowShot{TEXT("apple"), TEXT("0")},
+             FGlowShot{TEXT("leather_chestplate"), TEXT("0")}, FGlowShot{TEXT("iron_chestplate"), TEXT("0")}})
     {
         AddCase(
             FString::Printf(TEXT("tour held %s glow %s"), Pair.Item, Pair.Glow), .5,

@@ -85,8 +85,9 @@ bool FHudItemsDurabilityBarTest::RunTest(const FString&)
                     *Expected.Color.ToHex()));
         }
     }
-    // 31 max damage values since T2 19a2 added the armor pieces (7 and 4,261 before; facts/durability_bar.json).
-    TestEqual(TEXT("31 max damage values, 10,335 damage values"), Values, 10335);
+    // 32 max damage values since T2 19b added the shield's 336 (31 and 10,335 since T2 19a2's armor pieces, 7 and 4,261
+    // before; facts/durability_bar.json).
+    TestEqual(TEXT("32 max damage values, 10,672 damage values"), Values, 10672);
     TestEqual(TEXT("table mismatches"), Mismatches, 0);
     TestFalse(TEXT("an item that never wears has no bar"), HudModel::GetDurabilityBar(5, 0).bVisible);
     TestEqual(TEXT("damage past the max: no fill"), HudModel::GetDurabilityBar(300, 250).Width, 0);
@@ -198,9 +199,12 @@ bool FHudItemsIconsTest::RunTest(const FString&)
     const UFoundationItemAssets* Items = UFoundationItemAssets::LoadDefault();
     if (TestNotNull(TEXT("DA_Items"), Items))
         for (const FFoundationItemAsset& Item : Items->Items)
-            if (TestFalse(TEXT("sprites of ") + Item.Id.ToString(), Item.Textures.IsEmpty()))
-                TestNotNull(*(TEXT("GUI texture ") + Item.Textures[0].ToString()),
-                    UUnnamedProjectSettings::GetItemAssetPath(TEXT("Gui/") + Item.Textures[0].ToString()).TryLoad());
+        {
+            const FName Sprite = Item.Textures.IsEmpty() ? Item.GuiSprite : Item.Textures[0];
+            if (TestFalse(TEXT("sprite of ") + Item.Id.ToString(), Sprite.IsNone()))
+                TestNotNull(*(TEXT("GUI texture ") + Sprite.ToString()),
+                    UUnnamedProjectSettings::GetItemAssetPath(TEXT("Gui/") + Sprite.ToString()).TryLoad());
+        }
     return true;
 }
 
@@ -235,7 +239,7 @@ bool FHudItemsTooltipsTest::RunTest(const FString&)
             for (const FHudTooltipLine& Line : Got)
                 AddInfo(FString::Printf(TEXT("  got \"%s\" %s"), *Line.Text, *Line.Color.ToHex()));
     }
-    TestEqual(TEXT("143 tooltips"), Checked, 143);
+    TestEqual(TEXT("144 tooltips"), Checked, 144);
 
     // With a player (the game's case): the base modifiers add its base values, in dark green after a space.
     auto Lines = [Items](const TCHAR* Id)

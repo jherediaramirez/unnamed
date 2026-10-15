@@ -401,6 +401,11 @@ FFoundationInventory FFoundationAuthority::MakeLoadout()
     return Inventory;
 }
 
+void FFoundationAuthority::ResetInventory(int32 PlayerId)
+{
+    if (FFoundationPlayer* Player = FindPlayer(PlayerId)) Player->Inventory = MakeLoadout();
+}
+
 void FFoundationAuthority::Reset()
 {
     ++SessionId;
@@ -414,6 +419,8 @@ void FFoundationAuthority::Reset()
         Player.Inventory = MakeLoadout();
         Player.Mining = {};
         Player.Use = {};
+        Player.BlockingDisabledItem = INDEX_NONE;
+        Player.BlockingDisabledUntilStep = 0;
         Player.LastPlacementStep = MIN_int64;
         Player.Results.Empty();
         Player.ResultOrder.Empty();
@@ -899,7 +906,7 @@ void FFoundationAuthority::GetWornArmor(int32 PlayerId, int32& OutArmor, float& 
         }
 }
 
-int32 FFoundationAuthority::WearArmor(int32 PlayerId, int32 Amount, EFoundationPlayerMode Mode)
+int32 FFoundationAuthority::WearArmor(int32 PlayerId, int32 Amount, EFoundationPlayerMode Mode, int32 FireAmount)
 {
     FFoundationPlayer* Player = FindPlayer(PlayerId);
     if (!Player || Amount <= 0 || !Options.bToolWear || !Options.bFullInventory ||
@@ -912,8 +919,9 @@ int32 FFoundationAuthority::WearArmor(int32 PlayerId, int32 Amount, EFoundationP
         FFoundationItemInstance Stack = Inventory.Armor[Index];
         if (Stack.IsEmpty() || !Rules.Items.IsValidIndex(Stack.Item)) continue;
         const FFoundationItemDefinition& Item = Rules.Items[Stack.Item];
-        if (Item.Equipment != ArmorOrder[Index] || Item.MaxDurability <= 0) continue;
-        Stack.Damage += Amount;
+        const int32 Wear = Item.bFireResistant ? Amount - FMath::Clamp(FireAmount, 0, Amount) : Amount;
+        if (Item.Equipment != ArmorOrder[Index] || Item.MaxDurability <= 0 || Wear <= 0) continue;
+        Stack.Damage += Wear;
         const bool bBroke = Stack.Damage >= Item.MaxDurability;
         Inventory.SetSlot(FFoundationInventory::FirstArmor + Index, bBroke ? FFoundationItemInstance{} : Stack);
         if (!bBroke) continue;
@@ -1089,7 +1097,8 @@ void FFoundationAuthority::StepExperienceOrbs()
     // #1). Scan removes what merges and says whether the seeker itself went.
     const auto Scan = [this, &Origin](int32& Index, bool bReward)
     {
-        // The reward searches where the XP was awarded: a new orb's position before its first move (review 19a2).
+        // The reward searches at the moment the XP was awarded: the new orb's position and the other orbs' before this
+        // step's moves (review 19a2; Codex review 31, finding 3).
         const FVector SeekerCm =
             Origin + (bReward ? ExperienceOrbs[Index].PreviousLocalCm : ExperienceOrbs[Index].LocalCm);
         const FBox Reach = bReward ? FBox::BuildAABB(SeekerCm, FVector(RewardSearchCm * .5)) : GetMergeBox(SeekerCm);
@@ -1098,7 +1107,7 @@ void FFoundationAuthority::StepExperienceOrbs()
             const FFoundationExperienceOrb& Seeking = ExperienceOrbs[Index];
             const FFoundationExperienceOrb& Found = ExperienceOrbs[Other];
             if (Other == Index || Found.bFrozen || Found.Value != Seeking.Value ||
-                !Overlaps(Reach, GetBox(Origin + Found.LocalCm)) ||
+                !Overlaps(Reach, GetBox(Origin + (bReward ? Found.PreviousLocalCm : Found.LocalCm))) ||
                 // Only the reward's search rolls; a scan needs ids a multiple of MergeIdPeriod apart.
                 !(bReward ? CanMerge(Seeking, Found) : (Seeking.Id - Found.Id) % MergeIdPeriod == 0))
                 continue;
@@ -2446,6 +2455,28 @@ void FFoundationAuthority::UseItemStart(FFoundationPlayer& Player, const FFounda
     if (UseBucket(Player, Command, Vitals.Mode, Result)) return;
     if (UseEquip(Player, Command, Vitals.Mode, Result)) return;
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
+    // 26.3's blocks_attacks (the shield, survival step 19b): the use raises it until released; it blocks from its
+    // delay on (IsBlocking). Held up as long as the use lasts: 72000 ticks, the bow's and the shield's use duration
+    // (minecraft.wiki "Shield"; provisional). An axe-disabled shield passes to the next hand.
+    if (Options.bItemUse && !Stack.IsEmpty() && Rules.GetItem(Stack.Item).BlocksAttacks.bValid)
+    {
+        if (Player.BlockingDisabledItem == Stack.Item && Player.Facts.Step < Player.BlockingDisabledUntilStep)
+        {
+            Result.Outcome = EFoundationOutcome::Pass;
+            return;
+        }
+        CancelUse(Player);
+        Player.Use.bActive = Player.Use.bBlocks = true;
+        Player.Use.Hand = Command.Hand;
+        Player.Use.InstanceId = Stack.InstanceId;
+        Player.Use.Item = Stack.Item;
+        Player.Use.Ticks = 0;
+        Player.Use.Duration = FoundationItemUse::BlockingUseTicks;
+        Player.Use.LastStep = Player.Facts.Step;
+        Result.Outcome = EFoundationOutcome::Committed;
+        Result.UseDuration = Player.Use.Duration;
+        return;
+    }
     const FFoundationConsumable Food =
         Stack.IsEmpty() ? FFoundationConsumable{} : Rules.GetItem(Stack.Item).GetConsumable();
     // Without the switch or a consumable the use passes to the next hand, as before.
@@ -2513,6 +2544,8 @@ void FFoundationAuthority::UseItemContinue(
     Use.LastStep = Player.Facts.Step;
     Result.UseTicks = ++Use.Ticks;
     Result.Outcome = EFoundationOutcome::Committed;
+    // A raised shield only counts its ticks (IsBlocking reads them).
+    if (Use.bBlocks) return;
     FFoundationEvent Event;
     Event.Player = Player.Id;
     Event.Item = Use.Item;
@@ -2541,6 +2574,82 @@ void FFoundationAuthority::UseItemContinue(
     Event.Kind = EFoundationEventKind::Ate;
     Event.Amount = float(Food.Nutrition);
     AddEvent(Event);
+}
+
+bool FFoundationAuthority::IsBlocking(int32 PlayerId) const
+{
+    const FFoundationPlayer* Player = FindPlayer(PlayerId);
+    if (!Player || !Player->Use.bActive || !Player->Use.bBlocks || !Rules.Items.IsValidIndex(Player->Use.Item))
+        return false;
+    const FFoundationBlocksAttacks& Blocks = Rules.Items[Player->Use.Item].BlocksAttacks;
+    const bool bDisabled =
+        Player->BlockingDisabledItem == Player->Use.Item && Player->Facts.Step < Player->BlockingDisabledUntilStep;
+    return Blocks.bValid && Player->Use.Ticks >= Blocks.DelayTicks && !bDisabled;
+}
+
+bool FFoundationAuthority::HurtPlayer(int32 PlayerId, FFoundationVitals& Vitals, const FFoundationAttack& Attack)
+{
+    FFoundationPlayer* Player = FindPlayer(PlayerId);
+    // Only hits with a source can be blocked: a mob's or a player's attack. Every damage type in 26.3's
+    // #minecraft:bypasses_shield (data/minecraft/tags/damage_type/bypasses_shield.json: #bypasses_armor, cactus,
+    // campfire, in_fire, lava, ...) reaches the player some other way, without a source.
+    const bool bBlockable =
+        Attack.Type == EFoundationDamage::MobAttack || Attack.Type == EFoundationDamage::PlayerAttack;
+    if (!Player || !bBlockable || !IsBlocking(PlayerId) || Vitals.IsDead() || !(Attack.Amount > 0.f))
+        return Vitals.Hurt(Attack.Type, Attack.Amount);
+    // The default damage reduction's horizontal_blocking_angle (90): the angle between the look and the direction to
+    // the source, both horizontal (minecraft.wiki "Data component format/blocks_attacks"; the edge counts,
+    // provisional).
+    const FFoundationItemDefinition& Shield = Rules.Items[Player->Use.Item];
+    const FFoundationBlocksAttacks& Blocks = Shield.BlocksAttacks;
+    const FVector2D Look = FVector2D(Player->Facts.Aim).GetSafeNormal();
+    const FVector2D ToSource = FVector2D(Attack.SourceCm - Player->Facts.FeetCm).GetSafeNormal();
+    const double Angle = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(Look | ToSource, -1.0, 1.0)));
+    // Looking straight up or down, or a source at the feet, leaves no horizontal direction: not blocked (provisional).
+    if (Look.IsZero() || ToSource.IsZero() || Angle > Blocks.AngleDegrees + 1e-4)
+        return Vitals.Hurt(Attack.Type, Attack.Amount);
+    const float Blocked = FMath::Clamp(Blocks.Base + Blocks.Factor * Attack.Amount, 0.f, Attack.Amount);
+    ++AttacksBlocked;
+    FFoundationEvent Event;
+    Event.Player = Player->Id;
+    Event.Item = Player->Use.Item;
+    Event.LocationCm = Player->Facts.FeetCm;
+    Event.Step = Player->Facts.Step;
+    Event.Kind = EFoundationEventKind::Blocked;
+    Event.Interaction = Blocks.BlockSound;
+    Event.Amount = Blocked;
+    AddEvent(Event);
+    // item_damage: from the threshold on, base + factor x damage, floored (the shield's 1 + floor(damage) from 3;
+    // minecraft.wiki "Shield", provisional), under lab tool wear and not in creative.
+    if (Attack.Amount >= Blocks.ItemDamageThreshold && Options.bToolWear &&
+        Vitals.Mode != EFoundationPlayerMode::Creative && Shield.MaxDurability > 0)
+    {
+        const int32 Wear = FMath::FloorToInt32(Blocks.ItemDamageBase + Blocks.ItemDamageFactor * Attack.Amount);
+        if (Wear > 0 && Player->Inventory.Wear(Player->Use.Hand, Wear, Shield.MaxDurability))
+        {
+            FFoundationEvent Broke = Event;
+            Broke.Kind = EFoundationEventKind::ToolBroke;
+            Broke.Interaction = NAME_None;
+            AddEvent(Broke);
+            CancelUse(*Player);
+        }
+    }
+    // The attacker's weapon disables it: round(seconds x disable_cooldown_scale x 20) ticks (the value report's
+    // "Axe disable": the axes' 5 s, 100 ticks); the use ends and a new one passes until the cooldown is over.
+    if (Player->Use.bActive && Attack.DisableBlockingSeconds > 0.f && Blocks.DisableCooldownScale > 0.f)
+    {
+        const int32 Ticks = FMath::RoundToInt32(Attack.DisableBlockingSeconds * Blocks.DisableCooldownScale * 20.f);
+        Player->BlockingDisabledItem = Player->Use.Item;
+        Player->BlockingDisabledUntilStep = Player->Facts.Step + Ticks;
+        FFoundationEvent Disabled = Event;
+        Disabled.Kind = EFoundationEventKind::BlockingDisabled;
+        Disabled.Interaction = Blocks.DisabledSound;
+        Disabled.Amount = float(Ticks);
+        AddEvent(Disabled);
+        CancelUse(*Player);
+    }
+    const float Rest = Attack.Amount - Blocked;
+    return Rest > 0.f && Vitals.Hurt(Attack.Type, Rest);
 }
 
 bool FFoundationAuthority::CancelUse(FFoundationPlayer& Player)
