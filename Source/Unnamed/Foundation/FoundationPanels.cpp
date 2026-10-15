@@ -304,7 +304,9 @@ void UFoundationPanels::Close()
         AFoundationPawn* Pawn = SurvivalPawn.Get();
         AFoundationLab* Lab = Pawn ? Pawn->GetLab() : nullptr;
         if (Lab && Lab->GetAuthority()) Pawn->Interaction.ContainerClose(*Lab->GetAuthority(), Pawn->Vitals);
+        if (Pawn) Pawn->SetScreenInput(false);
         SurvivalPawn.Reset();
+        SurvivalContainer = INDEX_NONE;
     }
     bOpen = bTextOpen = bInventoryOpen = false;
     TextBox.Reset();
@@ -633,12 +635,14 @@ void UFoundationPanels::OpenSurvivalInventory(AFoundationLab& Lab)
     OpenContainerScreen(Lab, EFoundationMenuKind::Inventory, FFoundationContainerMenu::PlayerContainer);
 }
 
-void UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenuKind Kind, int32 ContainerId)
+bool UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenuKind Kind, int32 ContainerId)
 {
+    // The furnace's screen (its background, flame and arrow) is step 8a2's.
+    if (Kind == EFoundationMenuKind::Furnace) return false;
     if (bOpen) Close();
     AFoundationController* Controller = GetFoundationController();
     AFoundationPawn* Pawn = Controller->GetFoundationPawn();
-    if (!Pawn || !Lab.GetAuthority()) return;
+    if (!Pawn || !Lab.GetAuthority()) return false;
     FFoundationAuthority& Authority = *Lab.GetAuthority();
     const TWeakObjectPtr<AFoundationLab> WeakLab = &Lab;
     const TWeakObjectPtr<AFoundationPawn> WeakPawn = Pawn;
@@ -689,12 +693,15 @@ void UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
         });
     // clang-format on
     SurvivalPawn = Pawn;
+    SurvivalContainer = ContainerId;
     bOpen = true;
     // Opening ends what the player was doing (mining, eating), as the creative screen does.
     Controller->CancelActions();
     if (UUnnamedInputSubsystem* InputSubsystem = Controller->GetInputSubsystem())
         InputSubsystem->SetGameplayInputEnabled(false);
-    Pawn->SetSimulationEnabled(false);
+    // Java's survival screens do not pause the game: air, hunger, items, orbs and furnaces go on, the input zeroed
+    // (Codex review 12, finding 2). The creative screen still pauses (a known issue).
+    Pawn->SetScreenInput(true);
     Root = Survival;
     GEngine->GameViewport->AddViewportWidgetContent(Root.ToSharedRef(), 300);
     Controller->bShowMouseCursor = true;
@@ -705,6 +712,7 @@ void UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
     Controller->GetHud()->LogEvent(
         Kind == EFoundationMenuKind::Crafting ? TEXT("crafting table") : TEXT("survival inventory"));
     bInventoryOpen = true;
+    return true;
 }
 
 void UFoundationPanels::OpenInventory()

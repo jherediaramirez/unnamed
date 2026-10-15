@@ -268,7 +268,7 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
     - sturdy faces, until Q2's follow-up measures them: 20,931 answers (leaves, mud, soul sand, snow, powder snow and the model blocks as supports);
     - the mushrooms' light: 10,360 (the table reads no light; the dark probe agrees);
     - snow layers have no survival rule: 205,680 (main lane, with snow: generation places snow layers);
-    - S8's rules (main lane, small fixes; they move generation): pale moss carpet with `bottom=false` takes any floor instead of a `bottom=true` carpet (1,055,349); a lily pad pops on a water source held in a block, such as a waterlogged slab or leaves (1,521); an upper half stands on its own upper half (213); a mushroom stands on powder snow or a test instance block in the dark (4);
+    - S8's rules (main lane, small fixes; they move generation): pale moss carpet with `bottom=false` takes any floor instead of a `bottom=true` carpet (1,055,349); a lily pad popped on a water source held in a block, such as a waterlogged slab or leaves (1,521, now 0: since use step 16a, Codex review 13 #1, every waterlogged state holds water; matrix run `Tests/Evidence/2026-10-15/Native-20261015-020856`); an upper half stands on its own upper half (213); a mushroom stands on powder snow or a test instance block in the dark (4);
   - the mushrooms ignore light (S8);
   - a thick bamboo stalk's outline reaches 1/16 block into the next cell at its largest offsets, so a ray through that sliver alone misses it (targeting tests one cell at a time).
 - **Shelf mushroom:** its two textures are 32 x 32; the 16 x 16 block array holds their own vanilla mip 1 (S6 decides whether they need more).

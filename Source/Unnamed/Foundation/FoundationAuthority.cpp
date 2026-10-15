@@ -29,6 +29,16 @@ namespace
         return true;
     }
 
+    // A furnace (T1 step 8a) opens its menu over its block entity, made on first use.
+    bool UseFurnace(FFoundationAuthority& Authority, FFoundationPlayer& Player, const FFoundationHit& Hit,
+        FFoundationResult& Result)
+    {
+        Authority.OpenContainer(Player, EFoundationMenuKind::Furnace, Hit.Cell, TEXT("furnace"), Result);
+        if (Result.IsCommitted())
+            Authority.BlockEntities.FindOrAdd(Hit.Cell, EFoundationBlockEntityKind::Furnace, TEXT("furnace"));
+        return true;
+    }
+
     // The movement solver's contact tolerance (FoundationSimulation.cpp): touching is contact, only
     // positive-volume overlap obstructs. No extra clearance margin.
     constexpr double ContactCm = 1e-6;
@@ -184,6 +194,11 @@ FFoundationContainerRules FFoundationAuthority::MakeContainerRules() const
     Out.GetEquipment = [this](int32 Item)
     { return Rules.Items.IsValidIndex(Item) ? Rules.Items[Item].Equipment : EFoundationEquipmentSlot::None; };
     Out.bCrafting = Options.bCrafting;
+    // A furnace's fuel slot and shift-click routing (T1 step 8a).
+    Out.IsFuel = [this](int32 Item) { return GetCooking().IsFuel(Item); };
+    Out.IsCookable = [this](int32 Item)
+    { return GetCooking().Find(EFoundationCookingKind::Smelting, Item) != INDEX_NONE; };
+    Out.Bucket = Rules.FindItem(TEXT("bucket"));
     if (Options.bCrafting)
         Out.Craft = [this](TConstArrayView<int32> Grid, int32 Width, int32 Height)
         {
@@ -209,12 +224,19 @@ TArray<FFoundationItemInstance> FFoundationAuthority::GetPlayerMenu(const FFound
     return Slots;
 }
 
+TArray<FFoundationItemInstance> FFoundationAuthority::GetMenuGrid(const FFoundationPlayer& Player) const
+{
+    if (Player.OpenMenu.Kind != EFoundationMenuKind::Furnace) return Player.OpenMenu.Grid;
+    const FFoundationBlockEntity* Entity = BlockEntities.Find(Player.OpenMenu.Cell);
+    return Entity ? Entity->Items : TArray<FFoundationItemInstance>();
+}
+
 TArray<FFoundationItemInstance> FFoundationAuthority::GetOpenMenu(const FFoundationPlayer& Player) const
 {
     TArray<FFoundationItemInstance> Slots;
     if (!Player.OpenMenu.IsOpen()) return Slots;
     FFoundationInventory Copy = Player.Inventory;
-    TArray<FFoundationItemInstance> Grid = Player.OpenMenu.Grid;
+    TArray<FFoundationItemInstance> Grid = GetMenuGrid(Player);
     const FFoundationContainerRules ClickRules = MakeContainerRules();
     const FFoundationContainerMenu Menu(Copy, ClickRules, false, Player.OpenMenu.Kind, Grid);
     Slots.SetNum(Menu.GetLayout().Slots);
@@ -223,15 +245,16 @@ TArray<FFoundationItemInstance> FFoundationAuthority::GetOpenMenu(const FFoundat
     return Slots;
 }
 
-void FFoundationAuthority::RegisterBlockUse(FName BlockId, FBlockUse Use)
+void FFoundationAuthority::RegisterBlockUse(FName BlockId, FBlockUse Use, FBlockWouldUse WouldUse)
 {
-    BlockUses.Add(BlockId, MoveTemp(Use));
+    BlockUses.Add(BlockId, {MoveTemp(Use), MoveTemp(WouldUse)});
 }
 
-const FFoundationAuthority::FBlockUse* FFoundationAuthority::FindBlockUse(FName BlockId) const
+const FFoundationAuthority::FBlockUseEntry* FFoundationAuthority::FindBlockUse(FName BlockId) const
 {
-    static const TMap<FName, FBlockUse> BuiltIn{{TEXT("crafting_table"), FBlockUse(&UseCraftingTable)}};
-    if (const FBlockUse* Use = BlockUses.Find(BlockId)) return Use;
+    static const TMap<FName, FBlockUseEntry> BuiltIn{{TEXT("crafting_table"), {FBlockUse(&UseCraftingTable), nullptr}},
+        {TEXT("furnace"), {FBlockUse(&UseFurnace), nullptr}}};
+    if (const FBlockUseEntry* Use = BlockUses.Find(BlockId)) return Use;
     return BuiltIn.Find(BlockId);
 }
 
@@ -240,9 +263,46 @@ bool FFoundationAuthority::HasBlockUse(const FIntVector& Cell) const
     return World.IsKnown(Cell) && FindBlockUse(World.GetBlock(World.Get(Cell).State).Id) != nullptr;
 }
 
+bool FFoundationAuthority::WouldUseBlock(const FFoundationPlayer& Player, const FFoundationHit& Hit) const
+{
+    if (!World.IsKnown(Hit.Cell)) return false;
+    const FBlockUseEntry* Found = FindBlockUse(World.GetBlock(World.Get(Hit.Cell).State).Id);
+    return Found && (!Found->WouldUse || Found->WouldUse(*this, Player, Hit));
+}
+
+const FFoundationCooking& FFoundationAuthority::GetCooking() const
+{
+    // Resolved again when the item list changes (tests build their own rules).
+    if (!Cooking.IsBuilt() || CookingItems != Rules.Items.Num())
+    {
+        Cooking.Build([this](FName Item) { return Rules.FindItem(Item); });
+        CookingItems = Rules.Items.Num();
+    }
+    return Cooking;
+}
+
+FFoundationFurnaceRules FFoundationAuthority::MakeFurnaceRules() const
+{
+    FFoundationFurnaceRules Out;
+    Out.Cooking = &GetCooking();
+    Out.GetMaxStack = [this](int32 Item) { return Rules.Items.IsValidIndex(Item) ? Rules.Items[Item].MaxStack : 64; };
+    Out.Bucket = Rules.FindItem(TEXT("bucket"));
+    Out.WaterBucket = Rules.FindItem(TEXT("water_bucket"));
+    Out.LavaBucket = Rules.FindItem(TEXT("lava_bucket"));
+    Out.WetSponge = Rules.FindItem(TEXT("wet_sponge"));
+    return Out;
+}
+
 void FFoundationAuthority::OpenContainer(
     FFoundationPlayer& Player, EFoundationMenuKind Kind, const FIntVector& Cell, FName Block, FFoundationResult& Result)
 {
+    // A crafting grid a refused close left behind stays with its menu: another kind of menu cannot open over it.
+    if (Player.OpenMenu.IsOpen() && Player.OpenMenu.Kind != Kind &&
+        Player.OpenMenu.Grid.ContainsByPredicate([](const FFoundationItemInstance& Stack) { return !Stack.IsEmpty(); }))
+    {
+        Reject(Result, EFoundationReason::DropDeferred);
+        return;
+    }
     // vanilla's containerId counts 1-100 and wraps (minecraft.wiki "Java Edition protocol"); 0 is the inventory.
     Player.LastContainerId = Player.LastContainerId % 100 + 1;
     const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
@@ -308,6 +368,7 @@ void FFoundationAuthority::Reset()
         Player.ExperienceDelay = Player.PendingExperience = 0;
         Player.OpenMenu = {};
     }
+    BlockEntities.Clear();
     for (FFoundationTrainingTarget& Target : Targets)
     {
         Target.Health = MakeTargetHealth(Rules.TargetMaxHealth);
@@ -330,6 +391,125 @@ void FFoundationAuthority::Step()
         if (Player.Use.bActive && Player.Facts.Step - Player.Use.LastStep > 1) CancelUse(Player);
     StepItemEntities();
     StepExperienceOrbs();
+    StepOpenMenus();
+    StepFurnaces();
+}
+
+bool FFoundationAuthority::IsMenuValid(const FFoundationPlayer& Player) const
+{
+    const FFoundationOpenMenu& Open = Player.OpenMenu;
+    if (!Open.IsOpen() || !World.IsKnown(Open.Cell) || World.GetBlock(World.Get(Open.Cell).State).Id != Open.Block)
+        return false;
+    if (Open.Kind == EFoundationMenuKind::Furnace && !BlockEntities.Find(Open.Cell)) return false;
+    // Within the interaction range plus 4 blocks of the eye (vanilla's stillValid; provisional, minecraft.wiki).
+    if (!Player.bHasFacts) return true;
+    const double ReachCm = Rules.BlockReachCm + ContainerReachExtraCm;
+    return FoundationGrid::CellBox(Open.Cell, World.OriginCm).ComputeSquaredDistanceToPoint(Player.Facts.EyeCm) <
+        ReachCm * ReachCm;
+}
+
+void FFoundationAuthority::StepOpenMenus()
+{
+    for (FFoundationPlayer& Player : Players)
+        if (Player.OpenMenu.IsOpen() && !IsMenuValid(Player))
+        {
+            // As the player's own close (a refused one, foundation.Items.Entities 0 with leftovers, tries each step).
+            FFoundationResult Ignored;
+            CloseMenu(Player, Ignored);
+        }
+}
+
+void FFoundationAuthority::CloseMenu(FFoundationPlayer& Player, FFoundationResult& Result)
+{
+    // The cursor stack, then the open container's grid (the crafting table's 3x3 belongs to its screen, survival step
+    // 7; a furnace's slots stay in its block entity), then the 2x2's stacks in slot order (survival step 6), go back
+    // into the inventory; what does not fit goes as Q's throw (items fixes), or with foundation.Items.Entities 0 the
+    // close is refused and the container stays open. Each stack keeps its damage and identity
+    // (FFoundationInventory::Return).
+    FFoundationInventory Trial = Player.Inventory;
+    TArray<FFoundationItemInstance, TInlineAllocator<1 + 9 + FFoundationInventory::CraftSlots>> Returns{Trial.Carried};
+    Returns.Append(Player.OpenMenu.Grid);
+    Returns.Append(Trial.Craft);
+    Trial.Carried = {};
+    for (FFoundationItemInstance& Stack : Trial.Craft)
+        Stack = {};
+    Trial.QuickCraft = {};
+    TArray<FFoundationItemInstance, TInlineAllocator<1 + 9 + FFoundationInventory::CraftSlots>> Left;
+    for (const FFoundationItemInstance& Stack : Returns)
+        if (!Stack.IsEmpty())
+            if (FFoundationItemInstance Rest = Trial.Return(Stack, Rules.Items[Stack.Item].MaxStack); !Rest.IsEmpty())
+                Left.Add(Rest);
+    // Every leftover must be throwable before any is thrown: a refused close (retried each step by StepOpenMenus) must
+    // not leave thrown copies behind.
+    bool bThrown = Algo::AllOf(Left, [this](const FFoundationItemInstance& Stack)
+        { return Rules.Items.IsValidIndex(Stack.Item) && Stack.Count > 0; });
+    if (bThrown && !Left.IsEmpty() && Options.bItemEntities)
+        for (const FFoundationItemInstance& Stack : Left)
+            bThrown &= Throw(Player, Stack, Stack.Count);
+    if (!Left.IsEmpty() && !Options.bItemEntities)
+        Reject(Result, EFoundationReason::DropDeferred);
+    else if (!bThrown)
+        Reject(Result, EFoundationReason::NoSupply);
+    else
+    {
+        ++Trial.Revision;
+        Player.Inventory = MoveTemp(Trial);
+        Player.OpenMenu = {};
+        Result.Outcome = EFoundationOutcome::Committed;
+    }
+}
+
+void FFoundationAuthority::StepFurnaces()
+{
+    const FFoundationFurnaceRules FurnaceRules = MakeFurnaceRules();
+    TArray<FIntVector, TInlineAllocator<4>> Gone;
+    for (auto& [Cell, Entity] : BlockEntities.GetAll())
+    {
+        if (Entity.Kind != EFoundationBlockEntityKind::Furnace) continue;
+        // Only loaded columns tick (vanilla ticks loaded chunks only); the entity waits for its column.
+        if (!World.IsKnown(Cell)) continue;
+        // A furnace replaced without a break (a command, a reset of the cell) leaves nothing behind, with the switch on
+        // or off, so a furnace placed there later starts empty.
+        if (World.GetBlock(World.Get(Cell).State).Id != Entity.Block)
+        {
+            Gone.Add(Cell);
+            continue;
+        }
+        if (Options.bFurnace) FoundationFurnace::Tick(Entity, FurnaceRules, BlockEntities);
+    }
+    for (const FIntVector& Cell : Gone)
+        BlockEntities.Remove(Cell);
+}
+
+void FFoundationAuthority::PayFurnaceExperience(
+    FFoundationBlockEntity& Furnace, const FVector& LocalCm, int32 RandomSeed)
+{
+    if (Furnace.RecipesUsed.IsEmpty()) return;
+    // Step 12's switch: off, no orbs (the XP is spent all the same, as an ore's is).
+    if (Options.bExperienceOrbs)
+    {
+        FRandomStream Random(RandomSeed);
+        if (const int32 Total = FoundationFurnace::RollExperience(Furnace.RecipesUsed, GetCooking(), Random))
+            SpawnExperience(LocalCm, Total, Random.GetCurrentSeed());
+    }
+    Furnace.RecipesUsed.Empty();
+}
+
+void FFoundationAuthority::SpawnContents(
+    const FIntVector& Cell, TConstArrayView<FFoundationItemInstance> Items, int32 RandomSeed)
+{
+    using namespace FoundationItemEntities;
+    FRandomStream Random(RandomSeed);
+    const FVector Center = (FVector(Cell) + FVector(.5)) * UFoundationProfile::BlockCm - FVector(0, 0, BoxCm * .5);
+    for (const FFoundationItemInstance& Stack : Items)
+    {
+        if (Stack.IsEmpty() || !Rules.Items.IsValidIndex(Stack.Item)) continue;
+        const FVector Spread(Random.FRandRange(-SpawnSpreadCm, SpawnSpreadCm),
+            Random.FRandRange(-SpawnSpreadCm, SpawnSpreadCm), Random.FRandRange(-SpawnSpreadCm, SpawnSpreadCm));
+        const FVector Velocity(Random.FRandRange(-SpawnSidewaysCm, SpawnSidewaysCm),
+            Random.FRandRange(-SpawnSidewaysCm, SpawnSidewaysCm), SpawnUpCm);
+        SpawnItem(Stack.Item, Stack.Count, Center + Spread, Velocity, BlockDropPickupDelay, Stack.Damage);
+    }
 }
 
 int32 FFoundationAuthority::SpawnItem(
@@ -1014,16 +1194,20 @@ FFoundationResult FFoundationAuthority::Execute(
         FFoundationInventory Trial = Player->Inventory;
         const FFoundationContainerRules ClickRules = MakeContainerRules();
         const bool bCreative = Vitals.Mode == EFoundationPlayerMode::Creative;
-        // Container 0 is the player's own menu; the open container's id is its menu (survival step 7) while its
-        // block stands (a provisional stillValid: vanilla also closes it past the reach, minecraft.wiki "Crafting
-        // Table"); any other id is stale.
+        // Container 0 is the player's own menu; the open container's id is its menu (survival step 7) while it is
+        // valid (its block, within reach; Step closes it otherwise, Codex review 12 finding 1); any other id is stale.
         const FFoundationOpenMenu& Open = Player->OpenMenu;
         const bool bOpenMenu = Open.IsOpen() && Command.ContainerId == Open.ContainerId;
-        const bool bStillValid =
-            bOpenMenu && World.IsKnown(Open.Cell) && World.GetBlock(World.Get(Open.Cell).State).Id == Open.Block;
-        TArray<FFoundationItemInstance> TrialGrid = bOpenMenu ? Open.Grid : TArray<FFoundationItemInstance>();
+        const bool bStillValid = bOpenMenu && IsMenuValid(*Player);
+        const bool bFurnace = bOpenMenu && Open.Kind == EFoundationMenuKind::Furnace;
+        TArray<FFoundationItemInstance> TrialGrid =
+            bOpenMenu ? GetMenuGrid(*Player) : TArray<FFoundationItemInstance>();
+        const TArray<FFoundationItemInstance> GridBefore = TrialGrid;
         FFoundationClickResult Click{false};
-        if (Command.ContainerId == FFoundationContainerMenu::PlayerContainer)
+        // A spectator moves nothing (Codex review 12, finding 6).
+        if (Vitals.Mode == EFoundationPlayerMode::Spectator)
+            Click.bValid = false;
+        else if (Command.ContainerId == FFoundationContainerMenu::PlayerContainer)
             Click = FFoundationContainerMenu(Trial, ClickRules, bCreative)
                         .Click(Command.Slot, Command.Button, Command.ClickType);
         else if (bStillValid)
@@ -1038,50 +1222,36 @@ FFoundationResult FFoundationAuthority::Execute(
         else
         {
             Player->Inventory = MoveTemp(Trial);
-            if (bOpenMenu) Player->OpenMenu.Grid = MoveTemp(TrialGrid);
+            if (FFoundationBlockEntity* Furnace = bFurnace ? BlockEntities.Find(Open.Cell) : nullptr)
+            {
+                using Entity = FFoundationBlockEntity;
+                const FFoundationItemInstance &InputBefore = GridBefore[Entity::FurnaceInput],
+                                              &ResultBefore = GridBefore[Entity::FurnaceResult];
+                Furnace->Items = MoveTemp(TrialGrid);
+                // Another item put in the input starts over at its cook time (vanilla's setItem for slot 0); taking
+                // from the input or adding to the same item keeps the progress.
+                const FFoundationItemInstance& Input = Furnace->Items[Entity::FurnaceInput];
+                if (!Input.IsEmpty() && (InputBefore.IsEmpty() || Input.Item != InputBefore.Item))
+                    FoundationFurnace::OnInputChanged(*Furnace, GetCooking(), EFoundationCookingKind::Smelting);
+                // Taking any of the output pays the XP of everything cooked since (FurnaceResultSlot; the value
+                // report's fractional XP), as orbs at the player.
+                const FFoundationItemInstance& Output = Furnace->Items[Entity::FurnaceResult];
+                const bool bTaken = !ResultBefore.IsEmpty() &&
+                    (Output.IsEmpty() || Output.Item != ResultBefore.Item || Output.Count < ResultBefore.Count);
+                if (bTaken)
+                    PayFurnaceExperience(*Furnace, Player->Facts.FeetCm - World.OriginCm,
+                        int32(HashCombine(GetTypeHash(Open.Cell), GetTypeHash(Command.Sequence))));
+            }
+            else if (bOpenMenu)
+                Player->OpenMenu.Grid = MoveTemp(TrialGrid);
             Result.Outcome = EFoundationOutcome::Committed;
         }
         break;
     }
     case EFoundationCommandType::ContainerClose:
-    {
         CancelUse(*Player);
-        // The cursor stack, then the open container's grid (the crafting table's 3x3 belongs to its screen, survival
-        // step 7), then the 2x2's stacks in slot order (survival step 6), go back into the inventory; what does not fit
-        // goes as Q's throw (items fixes), or with foundation.Items.Entities 0 the close is refused and the container
-        // stays open. Each stack keeps its damage and identity (FFoundationInventory::Return).
-        FFoundationInventory Trial = Player->Inventory;
-        TArray<FFoundationItemInstance, TInlineAllocator<1 + 9 + FFoundationInventory::CraftSlots>> Returns{
-            Trial.Carried};
-        Returns.Append(Player->OpenMenu.Grid);
-        Returns.Append(Trial.Craft);
-        Trial.Carried = {};
-        for (FFoundationItemInstance& Stack : Trial.Craft)
-            Stack = {};
-        Trial.QuickCraft = {};
-        TArray<FFoundationItemInstance, TInlineAllocator<1 + 9 + FFoundationInventory::CraftSlots>> Left;
-        for (const FFoundationItemInstance& Stack : Returns)
-            if (!Stack.IsEmpty())
-                if (FFoundationItemInstance Rest = Trial.Return(Stack, Rules.Items[Stack.Item].MaxStack);
-                    !Rest.IsEmpty())
-                    Left.Add(Rest);
-        bool bThrown = true;
-        if (!Left.IsEmpty() && Options.bItemEntities)
-            for (const FFoundationItemInstance& Stack : Left)
-                bThrown &= Throw(*Player, Stack, Stack.Count);
-        if (!Left.IsEmpty() && !Options.bItemEntities)
-            Reject(Result, EFoundationReason::DropDeferred);
-        else if (!bThrown)
-            Reject(Result, EFoundationReason::NoSupply);
-        else
-        {
-            ++Trial.Revision;
-            Player->Inventory = MoveTemp(Trial);
-            Player->OpenMenu = {};
-            Result.Outcome = EFoundationOutcome::Committed;
-        }
+        CloseMenu(*Player, Result);
         break;
-    }
     case EFoundationCommandType::UseItemStart:
         UseItemStart(*Player, Command, Vitals, Result);
         break;
@@ -1156,13 +1326,19 @@ void FFoundationAuthority::UseOn(
         AddEvent(Event);
         return;
     }
+    // A spectator uses and places nothing (Codex review 12, finding 6; vanilla's spectators cannot edit the world).
+    if (Mode == EFoundationPlayerMode::Spectator)
+    {
+        Result.Outcome = EFoundationOutcome::Pass;
+        return;
+    }
     // 1b. A block's own use (survival step 7, foundation.Blocks.Use; RegisterBlockUse), on the same terms.
     if (!bBypass && Options.bBlockUse && Command.Hand == EFoundationHand::Main &&
         Hit.Kind == EFoundationHitKind::Block && World.IsKnown(Hit.Cell))
-        if (const FBlockUse* Found = FindBlockUse(World.GetBlock(World.Get(Hit.Cell).State).Id))
+        if (const FBlockUseEntry* Found = FindBlockUse(World.GetBlock(World.Get(Hit.Cell).State).Id))
         {
             // A copy: a handler may register another (the map may grow under it).
-            const FBlockUse Use = *Found;
+            const FBlockUse Use = Found->Use;
             if (Use(*this, Player, Hit, Result)) return;
         }
     // 2. The hand item's use on the block (foundation.Items.Use): an axe strips.
@@ -1371,32 +1547,45 @@ bool FFoundationAuthority::UseBucket(
         SettlePlants(Hit.Cell, Before, Player);
         return true;
     }
-    // Pouring: water fills a waterloggable block (the clicked one, else the one beside it); otherwise the source goes
-    // where a block would be placed (the clicked block when replaceable, else beside it) if that cell is air, a fluid
-    // or replaceable. A replaced plant goes without a drop (a known issue). Lava never waterlogs. Pouring into the same
-    // source empties the bucket and leaves the cell as it was.
+    // Pouring: water fills a waterloggable block (the clicked one, else the one beside it; never a double slab,
+    // minecraft.wiki "Slab"); otherwise the source goes where a block would be placed (the clicked block when
+    // replaceable, else beside it) if that cell is air, a fluid, replaceable or washed away by fluids (a torch). A
+    // replaced block pops its drop (minecraft.wiki "Water Bucket"), as item entities only. Lava never waterlogs.
+    // Pouring into the same source empties the bucket and leaves the cell as it was.
     const FFoundationBlockType* FluidBlock = Registry.FindBlock(bWater ? TEXT("water") : TEXT("lava"));
     const int32 Emptied = Rules.FindItem(BucketId);
     if (!FluidBlock || Emptied == INDEX_NONE) return true;
+    static const FName SlabType(TEXT("type")), Double(TEXT("double"));
     auto TakesWater = [&](FFoundationBlockState State)
-    { return bWater && Registry.GetValue(State, Waterlogged) == False; };
+    {
+        return bWater && Registry.GetValue(State, Waterlogged) == False && Registry.GetValue(State, SlabType) != Double;
+    };
+    const FGameplayTag WashedAway = FGameplayTag::RequestGameplayTag(TEXT("Block.WashedAwayByFluids"), false);
+    auto IsReplaced = [&](FFoundationBlockState State)
+    {
+        return FoundationBlockPlacement::IsReplaceable(World, State) ||
+            (WashedAway.IsValid() && Registry.GetBlock(State).Tags.HasTag(WashedAway));
+    };
     FIntVector Cell = Hit.Cell;
     FFoundationBlockState Before = World.Get(Cell).State;
     if (!TakesWater(Before))
     {
-        if (!FoundationBlockPlacement::IsReplaceable(World, Before)) Cell += FoundationGrid::FaceOffset(Hit.Face);
+        if (!IsReplaced(Before)) Cell += FoundationGrid::FaceOffset(Hit.Face);
         if (!World.IsKnown(Cell)) return true;
         Before = World.Get(Cell).State;
     }
     FFoundationBlockState After;
     if (TakesWater(Before))
         After = Registry.WithValue(Before, Waterlogged, True);
-    else if (Before.IsAir() || Registry.GetBlock(Before).IsFluid() ||
-        FoundationBlockPlacement::IsReplaceable(World, Before))
+    else if (Before.IsAir() || Registry.GetBlock(Before).IsFluid() || IsReplaced(Before))
         After = FluidBlock->GetDefaultState();
     else
         return true;
+    TArray<FFoundationLootDrop> Drops;
+    if (Options.bItemEntities && !Before.IsAir() && !Registry.GetBlock(Before).IsFluid() && !TakesWater(Before))
+        RollBlockDrops(Cell, Before, Rules.Hand, FoundationLoot::MakeSeed(Rules.LootSeed, Cell, BucketUses), Drops);
     if (After != Before) World.Set(Cell, After);
+    if (!Drops.IsEmpty()) SpawnDrops(Cell, Drops, FoundationLoot::MakeSeed(~Rules.LootSeed, Cell, BucketUses));
     const int32 Poured = Stack.Item;
     if (!bCreative) Swap(Emptied, Cell);
     ++BucketUses;
@@ -1660,6 +1849,38 @@ void FFoundationAuthority::MineContinue(FFoundationPlayer& Player, const FFounda
         Result.Outcome = EFoundationOutcome::Committed;
 }
 
+void FFoundationAuthority::RollBlockDrops(const FIntVector& Cell, FFoundationBlockState State,
+    const FFoundationItemDefinition& Tool, int32 RandomSeed, TArray<FFoundationLootDrop>& Out) const
+{
+    const FFoundationBlockType& Definition = World.GetBlock(State);
+    const FFoundationLootTable* Table = Rules.LootTables.Find(Definition.Id);
+    // foundation.Loot.AllBlocks 0: only items S5b's ore tables roll.
+    if (Table && Table->Index >= FoundationLoot::LegacyTables && CVarLootAllBlocks.GetValueOnAnyThread() == 0)
+        Table = nullptr;
+    if (Table)
+    {
+        FRandomStream Random(RandomSeed);
+        FFoundationLootContext Context{Tool, Definition.Id, World.GetRegistry().GetProperties(State)};
+        // Before the block goes: a double plant's other half is still in place (location_check).
+        Context.GetBlockAt = [this, &Cell](const FIntVector& Offset, FName& Block, TArray<TPair<FName, FName>>& Props)
+        {
+            if (!World.IsKnown(Cell + Offset)) return false;
+            const FFoundationBlockState At = World.Get(Cell + Offset).State;
+            Block = World.GetBlock(At).Id;
+            Props = World.GetRegistry().GetProperties(At);
+            return true;
+        };
+        FoundationLoot::Roll(*Table, Rules.LootPredicates, Context, Random, Out);
+    }
+    else if (const int32 Drop = Rules.FindItem(Definition.DropItem); Drop != INDEX_NONE)
+    {
+        // Provisional loot rule for blocks without a table, "drops itself": a double slab is two slabs.
+        const int32 DropCount =
+            Definition.DropCount * (World.GetRegistry().GetValue(State, TEXT("type")) == TEXT("double") ? 2 : 1);
+        if (DropCount > 0) Out.Add({Drop, DropCount});
+    }
+}
+
 bool FFoundationAuthority::BreakBlock(
     FFoundationPlayer& Player, const FIntVector& Cell, FFoundationResult& Result, bool bCreative)
 {
@@ -1671,41 +1892,22 @@ bool FFoundationAuthority::BreakBlock(
     // to the inventory (the lab's stand-in before items S8a); then, without room for all of it, the break is refused
     // and the block stays.
     TArray<FFoundationLootDrop> Drops;
+    // A refused break rolls the same drops again: the break count moves only when a block breaks.
     if (!Player.Inventory.bInfiniteSupply && bEligible)
-    {
-        const FFoundationLootTable* Table = Rules.LootTables.Find(Definition.Id);
-        // foundation.Loot.AllBlocks 0: only items S5b's ore tables roll.
-        if (Table && Table->Index >= FoundationLoot::LegacyTables && CVarLootAllBlocks.GetValueOnAnyThread() == 0)
-            Table = nullptr;
-        if (Table)
-        {
-            // A refused break rolls the same drops again: the break count moves only when a block breaks.
-            FRandomStream Random(FoundationLoot::MakeSeed(Rules.LootSeed, Cell, Breaks));
-            FFoundationLootContext Context{Tool, Definition.Id, World.GetRegistry().GetProperties(State)};
-            // Before the break: a double plant's other half is still in place (location_check).
-            Context.GetBlockAt = [this, &Cell](
-                                     const FIntVector& Offset, FName& Block, TArray<TPair<FName, FName>>& Props)
-            {
-                if (!World.IsKnown(Cell + Offset)) return false;
-                const FFoundationBlockState At = World.Get(Cell + Offset).State;
-                Block = World.GetBlock(At).Id;
-                Props = World.GetRegistry().GetProperties(At);
-                return true;
-            };
-            FoundationLoot::Roll(*Table, Rules.LootPredicates, Context, Random, Drops);
-        }
-        else if (const int32 Drop = Rules.FindItem(Definition.DropItem); Drop != INDEX_NONE)
-        {
-            // Provisional loot rule for blocks without a table, "drops itself": a double slab is two slabs.
-            const int32 DropCount =
-                Definition.DropCount * (World.GetRegistry().GetValue(State, TEXT("type")) == TEXT("double") ? 2 : 1);
-            if (DropCount > 0) Drops.Add({Drop, DropCount});
-        }
-    }
+        RollBlockDrops(Cell, State, Tool, FoundationLoot::MakeSeed(Rules.LootSeed, Cell, Breaks), Drops);
+    // A container's slots come out with it, in any mode (T1 step 8a; vanilla's Containers.dropContents).
+    FFoundationBlockEntity* Entity = BlockEntities.Find(Cell);
+    if (Entity && Entity->Block != Definition.Id) Entity = nullptr;
+    TArray<FFoundationItemInstance> Contents;
+    if (Entity)
+        for (const FFoundationItemInstance& Stack : Entity->Items)
+            if (!Stack.IsEmpty()) Contents.Add(Stack);
     FFoundationInventory Trial = Player.Inventory;
     if (!Options.bItemEntities &&
-        !Algo::AllOf(Drops, [&](const FFoundationLootDrop& Drop)
-            { return Trial.Add(Drop.Item, Drop.Count, Rules.Items[Drop.Item].MaxStack) == Drop.Count; }))
+        (!Algo::AllOf(Drops, [&](const FFoundationLootDrop& Drop)
+             { return Trial.Add(Drop.Item, Drop.Count, Rules.Items[Drop.Item].MaxStack) == Drop.Count; }) ||
+            !Algo::AllOf(Contents, [&](const FFoundationItemInstance& Stack)
+                { return Trial.Return(Stack, Rules.Items[Stack.Item].MaxStack).IsEmpty(); })))
     {
         Reject(Result, EFoundationReason::InventoryFull);
         FFoundationEvent Event;
@@ -1739,6 +1941,19 @@ bool FFoundationAuthority::BreakBlock(
     else
         for (const FFoundationLootDrop& Drop : Drops)
             Result.bItemReturned |= Player.Inventory.Add(Drop.Item, Drop.Count, Rules.Items[Drop.Item].MaxStack) > 0;
+    if (Entity)
+    {
+        // The slots, then the XP stored for what it cooked (provisional: minecraft.wiki "Furnace"), at the block.
+        if (Options.bItemEntities)
+            SpawnContents(Cell, Contents, int32(HashCombine(uint32(DropSeed), 0x1C0u)));
+        else
+            for (const FFoundationItemInstance& Stack : Contents)
+                Result.bItemReturned |=
+                    Player.Inventory.Return(Stack, Rules.Items[Stack.Item].MaxStack).Count < Stack.Count;
+        PayFurnaceExperience(*Entity, (FVector(Cell) + FVector(.5)) * UFoundationProfile::BlockCm,
+            int32(HashCombine(uint32(DropSeed), 0x58501u)));
+        BlockEntities.Remove(Cell);
+    }
     Result.Drops = MoveTemp(Drops);
     // Positive-hardness blocks wear the tool once, when tool wear is on; creative tools never wear.
     if (!bCreative && Options.bToolWear && Definition.Hardness > 0 && Tool.DurabilityPerBlock > 0 &&

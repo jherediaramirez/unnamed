@@ -43,9 +43,11 @@ namespace
         World.GetStorage().ForEachSolid(World.BoundsMin, World.BoundsMax,
             [&Registry, &Parts, &Count](const FIntVector&, const FFoundationCell& Value)
             {
-                if (Registry.GetShape(Value.State) != EFoundationBlockShape::Model)
+                const EFoundationBlockShape Shape = Registry.GetShape(Value.State);
+                if (Shape != EFoundationBlockShape::Model)
                 {
-                    ++Count;
+                    // A waterlogged slab, stair or leaves draws its water too (use step 16a, Codex review 13 #1).
+                    Count += 1 + (Shape != EFoundationBlockShape::Fluid && Registry.GetFluid(Value.State).Amount > 0);
                     return;
                 }
                 Registry.GetModelParts(Value.State, Parts);

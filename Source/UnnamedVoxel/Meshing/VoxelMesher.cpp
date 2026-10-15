@@ -706,6 +706,49 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
                     const int32 Neighbor = Index + Toward;
                     const bool bCovered = (Opaque[Neighbor] >> Back) & 1;
                     const FIntVector Cell(Coordinates[0], Coordinates[1], Coordinates[2]);
+                    // Water a state holds (or the fluid state itself), drawn around the state's own faces. Only the
+                    // cell's own fluid or model merges its top by key; a held fluid beside another shape draws it per
+                    // cell.
+                    auto EmitFluid = [&](uint16 FluidState, bool bKeyed)
+                    {
+                        const FVoxelStateInfo& Fluid = Table.Get(FluidState);
+                        if (bCovered || Table.Get(States[Neighbor]).HoldsFluid()) return;
+                        // Under more fluid the cell is full; otherwise its surface is at the amount's height.
+                        const bool bFluidAbove = Table.Get(States[Index + AxisStep[2]]).HoldsFluid();
+                        // A sloping surface draws its top and outward sides per cell, on the surface's corners; a top
+                        // that runs downhill takes the flow texture along it.
+                        VoxelFluidSurface::FSurface Surface;
+                        if (bSlopes && Face != int32(EVoxelFace::Down) &&
+                            MakeFluidSurface(FluidCells, Index, Options.SlopedTops, Options.bOpenCorners, Surface))
+                        {
+                            const uint32 FlowCode = Table.GetFlowCode(Fluid.Fluid);
+                            const bool bFlowTop =
+                                Axis == 2 && FlowCode && !Surface.Flow.IsNearlyZero(VoxelFluidSurface::FlatFlow);
+                            Emit.FluidFace(Fluid, Face, Cell, Surface,
+                                bFlowTop        ? FlowCode
+                                    : Axis == 2 ? Fluid.Faces[Face]
+                                                : GetFluidSideCode(Fluid, Face),
+                                bFlowTop);
+                            return;
+                        }
+                        if (Axis != 2 && GetFluidSideCode(Fluid, Face) != Fluid.Faces[Face])
+                        {
+                            // Flowing lava's flat sides, on the flow texture.
+                            const float Height = bFluidAbove ? 1.f : Fluid.GetFluidHeight();
+                            Emit.FluidFace(Fluid, Face, Cell, {{Height, Height, Height, Height}},
+                                GetFluidSideCode(Fluid, Face), false);
+                            return;
+                        }
+                        if (Axis == 2 && bKeyed)
+                        {
+                            // The top face only shows with no fluid above, so its height follows from the state.
+                            Keys[V * SectionSize + U] =
+                                MakeKey(FluidState, OpenCorners, FaceTints.Get(Fluid, Face, Cell));
+                            bAnyKey = true;
+                        }
+                        else
+                            Emit.CellFace(Fluid, Face, Cell, 0, bFluidAbove ? 1.f : Fluid.GetFluidHeight());
+                    };
                     switch (Info.Shape)
                     {
                     case EVoxelShape::Full:
@@ -744,52 +787,18 @@ void VoxelMesher::MeshSection(const FVoxelBlockTable& Table, const FVoxelPaddedS
                     }
                     case EVoxelShape::Fluid:
                     case EVoxelShape::Model:
-                    {
                         // A model state holding water draws that water around its quads, as the fluid state would.
-                        const uint16 FluidState = Info.Shape == EVoxelShape::Model ? Info.HeldFluid : State;
-                        if (!FluidState) break;
-                        const FVoxelStateInfo& Fluid = Table.Get(FluidState);
-                        if (bCovered || Table.Get(States[Neighbor]).HoldsFluid()) break;
-                        // Under more fluid the cell is full; otherwise its surface is at the amount's height.
-                        const bool bFluidAbove = Table.Get(States[Index + AxisStep[2]]).HoldsFluid();
-                        // A sloping surface draws its top and outward sides per cell, on the surface's corners; a top
-                        // that runs downhill takes the flow texture along it.
-                        VoxelFluidSurface::FSurface Surface;
-                        if (bSlopes && Face != int32(EVoxelFace::Down) &&
-                            MakeFluidSurface(FluidCells, Index, Options.SlopedTops, Options.bOpenCorners, Surface))
-                        {
-                            const uint32 FlowCode = Table.GetFlowCode(Fluid.Fluid);
-                            const bool bFlowTop =
-                                Axis == 2 && FlowCode && !Surface.Flow.IsNearlyZero(VoxelFluidSurface::FlatFlow);
-                            Emit.FluidFace(Fluid, Face, Cell, Surface,
-                                bFlowTop        ? FlowCode
-                                    : Axis == 2 ? Fluid.Faces[Face]
-                                                : GetFluidSideCode(Fluid, Face),
-                                bFlowTop);
-                            break;
-                        }
-                        if (Axis != 2 && GetFluidSideCode(Fluid, Face) != Fluid.Faces[Face])
-                        {
-                            // Flowing lava's flat sides, on the flow texture.
-                            const float Height = bFluidAbove ? 1.f : Fluid.GetFluidHeight();
-                            Emit.FluidFace(Fluid, Face, Cell, {{Height, Height, Height, Height}},
-                                GetFluidSideCode(Fluid, Face), false);
-                            break;
-                        }
-                        if (Axis == 2)
-                        {
-                            // The top face only shows with no fluid above, so its height follows from the state.
-                            Keys[V * SectionSize + U] =
-                                MakeKey(FluidState, OpenCorners, FaceTints.Get(Fluid, Face, Cell));
-                            bAnyKey = true;
-                        }
-                        else
-                            Emit.CellFace(Fluid, Face, Cell, 0, bFluidAbove ? 1.f : Fluid.GetFluidHeight());
+                        if (const uint16 FluidState = Info.Shape == EVoxelShape::Model ? Info.HeldFluid : State)
+                            EmitFluid(FluidState, true);
                         break;
-                    }
                     default:
                         break;
                     }
+                    // Any other shape holding water (a waterlogged slab) draws it too, except on faces it covers
+                    // itself.
+                    if (Info.HeldFluid && Info.Shape != EVoxelShape::Model && Info.Shape != EVoxelShape::Fluid &&
+                        !((Info.OpaqueFaces >> Face) & 1))
+                        EmitFluid(Info.HeldFluid, false);
                 }
             if (!bAnyKey) continue;
 
