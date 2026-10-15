@@ -24,6 +24,8 @@ namespace
         FVector Eye = FVector(50, 50, 150);
         FIntVector Aimed = FIntVector(2, 0, 1);
         FIntVector Beside = FIntVector(1, 0, 1);
+        // Crouching (the facts' secondary use).
+        bool bSneak = false;
 
         explicit FBucketLab(bool bItemUse = true)
         {
@@ -56,6 +58,7 @@ namespace
             Facts.EyeCm = Eye;
             Facts.Aim = (FoundationGrid::CellBox(Aimed, A.World.OriginCm).GetCenter() - Eye).GetSafeNormal();
             Facts.Step = ++StepIndex;
+            Facts.bSecondaryUse = bSneak;
             A.SetFacts(Player, Facts);
             A.Step();
         }
@@ -317,6 +320,44 @@ bool FFoundationItemsBucketModesTest::RunTest(const FString&)
         TestEqual(TEXT("held, it pours after the repeat"), Lab.HandItem(), FName(TEXT("bucket")));
         TestEqual(TEXT("the pour waits the held repeat"), Steps, Lab.I.HeldRepeatSteps);
         TestTrue(TEXT("the source is back"), Lab.IsSource(Lab.Aimed, false));
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationItemsBucketBlockUseTest, "Unnamed.Foundation.Items.BucketBlockUse", BucketTestFlags)
+
+bool FFoundationItemsBucketBlockUseTest::RunTest(const FString&)
+{
+    // A bucket and a block's own use (survival step 7, foundation.Blocks.Use): through the client, a water bucket
+    // aimed at a crafting table opens the table and keeps its water, as vanilla's block use comes first; crouching,
+    // the block use is skipped and the bucket pours beside the table.
+    for (const bool bSneak : {false, true})
+    {
+        FBucketLab Lab;
+        Lab.A.Options.bBlockUse = true;
+        Lab.bSneak = bSneak;
+        Lab.Give(0, TEXT("water_bucket"));
+        Lab.Put(Lab.Aimed, TEXT("crafting_table"));
+        Lab.NextStep();
+        Lab.I.Press(EFoundationInput::Use, 0);
+        Lab.NextStep();
+        Lab.I.BeginUpdate();
+        Lab.I.StepOnce(Lab.A, Lab.Vitals, true, 0);
+        Lab.I.Release(EFoundationInput::Use);
+        const bool bOpen = Lab.P().OpenMenu.IsOpen() && Lab.P().OpenMenu.Kind == EFoundationMenuKind::Crafting;
+        if (!bSneak)
+        {
+            TestTrue(TEXT("the table opens"), bOpen);
+            TestEqual(TEXT("the water bucket stays full"), Lab.HandItem(), FName(TEXT("water_bucket")));
+            TestTrue(TEXT("nothing poured"), Lab.A.World.Get(Lab.Beside).State.IsAir());
+        }
+        else
+        {
+            TestFalse(TEXT("crouching: the table stays closed"), bOpen);
+            TestTrue(TEXT("crouching: the bucket pours beside the table"), Lab.IsSource(Lab.Beside, false));
+            TestEqual(TEXT("crouching: an empty bucket"), Lab.HandItem(), FName(TEXT("bucket")));
+        }
     }
     return true;
 }
