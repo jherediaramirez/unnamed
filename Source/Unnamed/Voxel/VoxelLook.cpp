@@ -376,6 +376,7 @@ void AVoxelWorld::ApplyLook()
             FLinearColor(Targets.SkyLuminance, Targets.SkyLuminance, Targets.SkyLuminance));
     // UpdateEdgeFog applies it with the rest of the fog.
     EdgeFogColorScale = Targets.FogColorScale;
+    EdgeHazeTint = Night.HazeTint;
     if (UMaterialParameterCollectionInstance* Collection =
             LookCollection ? GetWorld()->GetParameterCollectionInstance(LookCollection) : nullptr)
     {

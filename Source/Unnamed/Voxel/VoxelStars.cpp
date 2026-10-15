@@ -11,9 +11,9 @@
 
 namespace
 {
-    TAutoConsoleVariable<bool> CVarAtmosphereStars(TEXT("voxel.Atmosphere.Stars"), false,
+    TAutoConsoleVariable<bool> CVarAtmosphereStars(TEXT("voxel.Atmosphere.Stars"), true,
         TEXT("1: deterministic square stars, fading with the existing environment's Night. Requires Cycle 1 and "
-             "Night 1. 0: no star field (default)."));
+             "Night 1 (default). 0: no star field."));
     TAutoConsoleVariable<float> CVarAtmosphereStarBrightness(TEXT("voxel.Atmosphere.StarBrightness"), .3f,
         TEXT("Square stars' exposure-compensated emissive brightness at full night, 0..2 (default 0.3)."));
 

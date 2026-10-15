@@ -257,6 +257,8 @@ private:
         double SeaOffsetCm = 0;
         // x the wall's own colour (voxel.Look.Sky).
         float ColorScale = 1;
+        // x the haze's sky-ambient colour through twilight (VoxelAtmosphere::FNight::HazeTint).
+        FLinearColor HazeTint = FLinearColor::White;
         bool operator==(const FEdgeFogState& Other) const = default;
     };
     FEdgeFogState EdgeFogState;
@@ -325,6 +327,7 @@ private:
     double SkyProbeMicros = 0;
     int32 SkyProbes = 0;
     float EdgeFogColorScale = 1;
+    FLinearColor EdgeHazeTint = FLinearColor::White;
     TSharedPtr<FVoxelFlight> Flight;
     TSharedPtr<FVoxelFluidSystem> Fluids;
     // -VoxelShotLights: the torch light probe, run before the shots.

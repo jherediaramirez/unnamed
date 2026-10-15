@@ -360,4 +360,23 @@ bool FVoxelTwilightSwitchesTest::RunTest(const FString& Parameters)
     }
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelAtmosphereDefaultsTest, "Unnamed.Voxel.Atmosphere.Defaults",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelAtmosphereDefaultsTest::RunTest(const FString& Parameters)
+{
+    // T7a: the day/night cycle, its night, the twilight bridge and the stars are on by default; 0 on any of them
+    // keeps the earlier behaviour (Cycle 0: the map's fixed daylight sun).
+    for (const TCHAR* Name : {TEXT("voxel.Atmosphere.Cycle"), TEXT("voxel.Atmosphere.Night"),
+             TEXT("voxel.Atmosphere.Twilight"), TEXT("voxel.Atmosphere.Stars")})
+    {
+        IConsoleVariable* Variable = IConsoleManager::Get().FindConsoleVariable(Name);
+        if (!TestNotNull(Name, Variable)) return false;
+        const FString Default = Variable->GetDefaultValue();
+        TestTrue(FString::Printf(TEXT("%s is on by default (%s)"), Name, *Default),
+            Default == TEXT("1") || Default == TEXT("true"));
+    }
+    return true;
+}
 #endif

@@ -916,6 +916,7 @@ void AVoxelWorld::UpdateEdgeFog()
         FEdgeFogState State;
         State.Drawn = Rings.GetDrawnRadius();
         State.ColorScale = EdgeFogColorScale;
+        State.HazeTint = EdgeHazeTint;
         State.bHaze =
             VoxelEdgeFog::UsesHaze(VoxelConsole::CVarFogHaze.GetValueOnGameThread(), Rings.ViewRadius, Rings.FarRadius);
         if (State.bHaze)
@@ -967,7 +968,7 @@ void AVoxelWorld::UpdateEdgeFog()
                 Layer.FogHeightFalloff = Haze.Falloff;
                 Layer.FogHeightOffset = float(State.SeaOffsetCm);
                 EdgeFog->SetSecondFogData(Layer);
-                EdgeFog->SetSkyAtmosphereAmbientContributionColorScale(Haze.Sky);
+                EdgeFog->SetSkyAtmosphereAmbientContributionColorScale(Haze.Sky * State.HazeTint);
                 EdgeFog->SetFogInscatteringColor(FLinearColor::Black);
                 EdgeFog->SetDirectionalInscatteringColor(FLinearColor::Black);
             }

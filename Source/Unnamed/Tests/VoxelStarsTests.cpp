@@ -152,6 +152,8 @@ bool FVoxelStarsComponentTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("unlit sky"), Base->GetShadingModels().HasShadingModel(MSM_Unlit));
     TestFalse(TEXT("terrain occludes stars through ordinary depth testing"), bool(Base->bDisableDepthTest));
     TestFalse(TEXT("stars are not extinguished by distant terrain fog"), bool(Base->bUseTranslucencyVertexFog));
+    TestEqual(TEXT("stars draw after motion blur, so fast turns never streak them"), Base->TranslucencyPass.GetValue(),
+        MTP_AfterMotionBlur);
     UMaterialInstanceDynamic* StarDynamic = Cast<UMaterialInstanceDynamic>(Material);
     if (!TestNotNull(TEXT("star dynamic material"), StarDynamic)) return false;
     TestTrue(TEXT("default tint preserves the existing stars"),

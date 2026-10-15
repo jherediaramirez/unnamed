@@ -6,11 +6,13 @@
 #include "VoxelLog.h"
 
 // The atmosphere (C:\dev\sandbox\atmosphere-review\plan.md): the environment snapshot and its dump; step 1's sun
-// following the clock behind voxel.Atmosphere.Cycle (off by default: the map's fixed daylight); step 5's night.
+// following the clock behind voxel.Atmosphere.Cycle (on by default since T7a; 0 is the map's fixed daylight); step 5's
+// night.
 namespace
 {
-    TAutoConsoleVariable<int32> CVarAtmosphereCycle(TEXT("voxel.Atmosphere.Cycle"), 0,
-        TEXT("Atmosphere: 1 the sun follows the world clock (26.3's orbit; its light fades out below the horizon); 0 "
+    TAutoConsoleVariable<int32> CVarAtmosphereCycle(TEXT("voxel.Atmosphere.Cycle"), 1,
+        TEXT("Atmosphere: 1 (default) the sun follows the world clock (26.3's orbit; its light fades out below the "
+             "horizon); 0 "
              "the map's fixed daylight sun, exactly as before."));
     TAutoConsoleVariable<int32> CVarAtmosphereNight(TEXT("voxel.Atmosphere.Night"), 1,
         TEXT(
@@ -24,12 +26,17 @@ namespace
         TEXT("Atmosphere: how many f-stops brighter views under open sky expose at full night (caves keep theirs)."));
     TAutoConsoleVariable<float> CVarAtmosphereNightSky(TEXT("voxel.Atmosphere.NightSky"), .25f,
         TEXT("Atmosphere: x the sky's and the haze's luminance at full night."));
-    TAutoConsoleVariable<int32> CVarAtmosphereTwilight(TEXT("voxel.Atmosphere.Twilight"), 0,
-        TEXT("Atmosphere, with Cycle 1 and Night 1: a temporary cool open-sky terrain floor and navy sky bridge."));
+    TAutoConsoleVariable<int32> CVarAtmosphereTwilight(TEXT("voxel.Atmosphere.Twilight"), 1,
+        TEXT("Atmosphere, with Cycle 1 and Night 1: 1 (default) a cool open-sky terrain floor and navy sky bridge "
+             "through dusk and dawn; 0 none."));
     TAutoConsoleVariable<float> CVarAtmosphereTwilightFloor(TEXT("voxel.Atmosphere.TwilightFloor"), 1.5f,
         TEXT("Atmosphere: maximum temporary terrain floor (0 to 8); caves keep their existing floor."));
     TAutoConsoleVariable<float> CVarAtmosphereTwilightSky(TEXT("voxel.Atmosphere.TwilightSky"), .2f,
         TEXT("Atmosphere: exposure-compensated navy backdrop through the light handover (0 to 1)."));
+
+    TAutoConsoleVariable<FString> CVarAtmosphereTwilightHaze(TEXT("voxel.Atmosphere.TwilightHaze"), TEXT("0.3 1 4"),
+        TEXT("Atmosphere, with Twilight 1: the haze's sky-ambient tint (linear R G B) at the twilight sky bridge's "
+             "peak, easing to none by day and at midnight; 1 1 1 none."));
 
     // The moon's light: cool and faint (linear).
     const FLinearColor MoonColor(.62f, .72f, 1.f);
@@ -49,10 +56,11 @@ namespace
                     const VoxelAtmosphere::FNight Night = VoxelAtmosphere::ReadNight(Environment);
                     Reply = VoxelEnvironment::Describe(Environment) +
                         FString::Printf(TEXT("\nCycle %d, night %d (applied night %.3f, %.2f stops, sky x%.2f); "
-                                             "twilight %d (floor %.3f, sky %.4f)"),
+                                             "twilight %d (floor %.3f, sky %.4f, haze tint %s)"),
                             CVarAtmosphereCycle.GetValueOnGameThread(), CVarAtmosphereNight.GetValueOnGameThread(),
                             Night.Night, Night.ExposureStops, Night.SkyScale,
-                            CVarAtmosphereTwilight.GetValueOnGameThread(), Night.TwilightFloor, Night.TwilightSky);
+                            CVarAtmosphereTwilight.GetValueOnGameThread(), Night.TwilightFloor, Night.TwilightSky,
+                            *Night.HazeTint.ToString());
                 }
                 TArray<FString> Lines;
                 Reply.ParseIntoArrayLines(Lines);
@@ -78,6 +86,15 @@ VoxelAtmosphere::FNight VoxelAtmosphere::ReadNight(const FVoxelEnvironment& Envi
         const float SkyBridge = FMath::RoundToFloat(TwilightSkyWeight(Environment) * 64.f) / 64.f;
         Out.TwilightFloor = Bridge * FMath::Clamp(CVarAtmosphereTwilightFloor.GetValueOnGameThread(), 0.f, 8.f);
         Out.TwilightSky = SkyBridge * FMath::Clamp(CVarAtmosphereTwilightSky.GetValueOnGameThread(), 0.f, 1.f);
+        TArray<FString> Parts;
+        CVarAtmosphereTwilightHaze.GetValueOnGameThread().ParseIntoArrayWS(Parts);
+        if (Parts.Num() == 3)
+        {
+            // Geometric ease (tint ^ bridge): darkening channels reach their small values smoothly.
+            const auto Channel = [&Parts, SkyBridge](int32 Index)
+            { return FMath::Pow(FMath::Clamp(FCString::Atof(*Parts[Index]), .001f, 8.f), SkyBridge); };
+            Out.HazeTint = FLinearColor(Channel(0), Channel(1), Channel(2));
+        }
     }
     Out.SkyScale = FMath::Max(0.f, CVarAtmosphereNightSky.GetValueOnGameThread());
     return Out;

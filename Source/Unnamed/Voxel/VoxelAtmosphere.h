@@ -22,6 +22,9 @@ namespace VoxelAtmosphere
         // open sky in ComposeNight; the navy backdrop is drawn behind terrain and translucent surfaces.
         float TwilightFloor = 0.f;
         float TwilightSky = 0.f;
+        // x the haze's sky-ambient colour through the twilight window (voxel.Atmosphere.TwilightHaze), so the fog
+        // floor below the horizon follows the navy sky instead of the sky's dark red ambient; white otherwise (T7a).
+        FLinearColor HazeTint = FLinearColor::White;
         // voxel.Atmosphere.NightSky: x the sky's and haze's luminance at full night.
         float SkyScale = 1.f;
 
