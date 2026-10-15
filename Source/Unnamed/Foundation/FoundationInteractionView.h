@@ -330,7 +330,7 @@ private:
     TWeakObjectPtr<AFoundationPawn> HeldOwner;
     // The fire counters last heard, and whose.
     TWeakObjectPtr<const AFoundationPawn> FireSoundOwner;
-    int32 HeardLavaHurts = 0, HeardBurnHurts = 0, HeardExtinguishes = 0;
+    int32 HeardLavaHurts = 0, HeardBurnHurts = 0, HeardExtinguishes = 0, HeardDamageEvents = 0, HeardDeaths = 0;
     TSharedPtr<FFoundationBreakEffects> BreakEffects;
     TSharedPtr<FFoundationItemEntityView> ItemEntityView;
     TSharedPtr<FFoundationExperienceOrbView> ExperienceOrbView;

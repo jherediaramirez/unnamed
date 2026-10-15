@@ -121,8 +121,12 @@ struct FHudSnapshot
     // The chat's messages, oldest first, and whether the chat is open (more rows show).
     TArray<FHudChatLine> Chat;
     bool bChatOpen = false;
-    // The open chat's typed line, drawn in vanilla's input bar.
+    // The open chat's typed line, drawn in vanilla's input bar, with the caret's character index and the blink phase
+    // [survival.r4.caret] (300 ms on, 300 ms off; the phase counts from the chat opening, provisional).
     FString ChatInput;
+    // The typed line's caret (a character index); -1 = at the end.
+    int32 CaretIndex = -1;
+    bool bCaretVisible = true;
     // F1 (hide GUI): with the chat open only the chat draws; the death screen draws regardless.
     bool bHideHud = false;
     // The death screen (step 11a, foundation.Death.Screen 1), over the HUD: its buttons are enabled 20 ticks after
@@ -131,6 +135,10 @@ struct FHudSnapshot
     int32 DeathScore = 0;
     EHudDeathButton DeathHover = EHudDeathButton::None;
     FString DeathMessage;
+    // Step 11b feel (foundation.Death.Screen 1): the red tint while hurtTime > 0 or dead, and the first-person fire
+    // overlay (fire_1's frame index) while burning outside Creative/Spectator.
+    bool bDamageTint = false, bOnFire = false;
+    int32 FireFrame = 0;
 
     bool CanHurt() const { return Mode == EHudMode::Survival || Mode == EHudMode::Adventure; }
     bool HasExperience() const { return CanHurt(); }
@@ -141,8 +149,8 @@ struct FHudSnapshot
             Experience, AttackStrength, AttackDelay, bUnderwater, bHardcore, bPoison, bWither, bFrozen, bHunger,
             bRegeneration, bDamageCooldown, bLivingTarget, bTargetAlive, bTargetInRange, bSpectatorTarget,
             bDebugCrosshair3D, bFirstPerson, bVisible, bMainHandLeft, SelectedSlot, OffhandCount, Counts, ItemViews,
-            OffhandView, NotificationTime, AttackIndicator, Chat, bChatOpen, bHideHud, bDeathScreen,
-            bDeathButtonsEnabled, DeathScore, DeathHover);
+            OffhandView, NotificationTime, AttackIndicator, Chat, bChatOpen, CaretIndex, bCaretVisible, bHideHud,
+            bDeathScreen, bDeathButtonsEnabled, DeathScore, DeathHover, bDamageTint, bOnFire, FireFrame);
     }
     // Hand-written because a defaulted == compares FStrings ignoring case (a case-only edit of the typed line would
     // not redraw): the strings compare case-sensitively, everything else through GetFields. A new member must be

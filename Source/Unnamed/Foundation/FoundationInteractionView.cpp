@@ -1278,24 +1278,39 @@ void UFoundationInteractionView::PlayFireSounds(const AFoundationPawn* Pawn)
         HeardLavaHurts = Vitals.LavaHurts;
         HeardBurnHurts = Vitals.BurnHurts;
         HeardExtinguishes = Vitals.Extinguishes;
+        HeardDamageEvents = Vitals.DamageEvents;
+        HeardDeaths = Vitals.Deaths;
     }
     // Wiki values (provisional): a fire hurt plays entity.player.hurt_on_fire at volume 1, pitch 1 +- 0.2; lava's
     // hit adds entity.generic.burn at 0.4, pitch 2 to 2.4; water putting it out plays entity.generic.extinguish_fire
     // at 0.7, pitch 1.6 to 2.4.
     const bool bLava = Vitals.LavaHurts != HeardLavaHurts, bBurn = Vitals.BurnHurts != HeardBurnHurts;
     const bool bOut = Vitals.Extinguishes != HeardExtinguishes;
+    const bool bHurt = Vitals.DamageEvents != HeardDamageEvents, bDied = Vitals.Deaths != HeardDeaths;
+    HeardDamageEvents = Vitals.DamageEvents;
+    HeardDeaths = Vitals.Deaths;
     HeardLavaHurts = Vitals.LavaHurts;
     HeardBurnHurts = Vitals.BurnHurts;
     HeardExtinguishes = Vitals.Extinguishes;
     if (!BreakEffects) return;
     const FVector At = Pawn->GetActorLocation();
-    if (bLava || bBurn)
+    // Under step 11b the killing hit plays entity.player.death only (below).
+    if ((bLava || bBurn) && !(bDied && FoundationDeath::IsScreenEnabled()))
         BreakEffects->PlayEvent(
             TEXT("entity.player.hurt_on_fire"), At, 1.f, (FMath::FRand() - FMath::FRand()) * .2f + 1.f);
     if (bLava) BreakEffects->PlayEvent(TEXT("entity.generic.burn"), At, .4f, 2.f + FMath::FRand() * .4f);
     if (bOut)
         BreakEffects->PlayEvent(
             TEXT("entity.generic.extinguish_fire"), At, .7f, 1.6f + (FMath::FRand() - FMath::FRand()) * .4f);
+    // Survival step 11b (foundation.Death.Screen 1) [survival.r5.play_calls]: a hit plays entity.player.hurt, a death
+    // entity.player.death instead (not both), at volume 1, pitch 1; a lava or fire hurt already played hurt_on_fire.
+    if (FoundationDeath::IsScreenEnabled())
+    {
+        if (bDied)
+            BreakEffects->PlayEvent(TEXT("entity.player.death"), At, 1.f, 1.f);
+        else if (bHurt && !bLava && !bBurn)
+            BreakEffects->PlayEvent(TEXT("entity.player.hurt"), At, 1.f, 1.f);
+    }
 }
 
 void UFoundationInteractionView::TickComponent(

@@ -6,6 +6,7 @@
 #include "Foundation/FoundationPanels.h"
 #include "Foundation/FoundationPawn.h"
 #include "Foundation/FoundationProfile.h"
+#include "Camera/CameraComponent.h"
 #include "Engine/GameViewportClient.h"
 #include "Framework/Application/SlateApplication.h"
 #include "HAL/IConsoleManager.h"
@@ -267,6 +268,162 @@ void UFoundationRuntimeProbe::AddDeathCases()
                 FString::Printf(TEXT("dead %d, %.1f cm from the spawn, gameplay %d"), Pawn->Vitals.IsDead(), Off,
                     Controller->IsGameplay()));
         });
+
+    // Step 11b: the hurt camera roll and red tint, the first-person fire overlay, and the chat bar's capture pair. Each
+    // case restores what it changed; captures are named like the death ones (-hurt-1.png, -fire-1.png, -chatbar-1.png).
+    auto FeelShot = [this](const TCHAR* Name)
+    {
+        FScreenshotRequest::RequestScreenshot(
+            FPaths::ChangeExtension(Output, TEXT("")) + TEXT("-") + Name + TEXT(".png"), true, false);
+    };
+    auto CameraRoll = [this]
+    {
+        const UCameraComponent* Camera = Pawn->GetCamera();
+        return Camera ? double(FRotator::NormalizeAxis(Camera->GetComponentRotation().Roll)) : 0.;
+    };
+    auto Snapshot = [this]() -> const FHudSnapshot& { return Controller->GetHud()->GetPresenter()->GetSnapshot(); };
+    // Survival in the dry open, full health, no fire, the switch set; returns the previous switch value.
+    auto FeelSetup = [this, SetSwitch, Spawn](int32 Value)
+    {
+        SetSwitch(Value);
+        Controller->GetPanels()->Close();
+        ResetPlayer(Spawn() + FVector(200, 0, 0));
+        Pawn->Vitals.Mode = EFoundationPlayerMode::Survival;
+        Pawn->Vitals.Health = 20.f;
+        Pawn->Vitals.FireTicks = 0;
+        Pawn->Vitals.DamageCooldown = 0;
+    };
+    auto SetChatSwitch = [](int32 Value)
+    {
+        if (IConsoleVariable* Switch = IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Chat.Commands")))
+            Switch->Set(Value, ECVF_SetByCode);
+    };
+    auto SavedChatSwitch = MakeShared<int32>(1);
+    auto HurtRoll = MakeShared<double>(0.);
+    auto bHurtTint = MakeShared<bool>(false);
+    auto bHurtApplied = MakeShared<bool>(false);
+
+    for (const int32 Value : {1, 0})
+    {
+        const FString Tag = FString::Printf(TEXT("hurt %d"), Value);
+        AddCase(
+            Tag + TEXT(": hit"), .1,
+            [this, Value, FeelSetup, bHurtApplied]
+            {
+                FeelSetup(Value);
+                *bHurtApplied = Pawn->Vitals.Hurt(EFoundationDamage::Generic, 2.f);
+            },
+            [this, Value, CameraRoll, Snapshot, bHurtApplied, HurtRoll, bHurtTint]
+            {
+                *HurtRoll = CameraRoll();
+                *bHurtTint = Snapshot().bDamageTint;
+                Record(FString::Printf(TEXT("hurt %d: after the hit"), Value),
+                    *bHurtApplied &&
+                        // No screen tint either way: foundation.Hurt.ScreenTint is 0 (vanilla) by default.
+                        (Value ? (FMath::Abs(*HurtRoll) > .5 && !*bHurtTint)
+                               : (FMath::IsNearlyZero(*HurtRoll, .01) && !*bHurtTint)),
+                    FString::Printf(TEXT("applied %d, roll %.2f deg, tint %d, cooldown %d"), *bHurtApplied, *HurtRoll,
+                        *bHurtTint, Pawn->Vitals.DamageCooldown));
+            });
+        // About two ticks after the hit (the screenshot shows the frame before its request's tick).
+        AddCase(
+            Tag + TEXT(": capture"), .15, [Value, FeelShot] { FeelShot(Value ? TEXT("hurt-1") : TEXT("hurt-0")); },
+            [] {});
+        AddCase(
+            Tag + TEXT(": settled"), .7, [] {},
+            [this, Value, CameraRoll, Snapshot]
+            {
+                const double Roll = CameraRoll();
+                Record(FString::Printf(TEXT("hurt %d: the roll and tint are gone after 10+ ticks"), Value),
+                    FMath::IsNearlyZero(Roll, .01) && !Snapshot().bDamageTint,
+                    FString::Printf(TEXT("roll %.3f deg, tint %d, cooldown %d"), Roll, Snapshot().bDamageTint,
+                        Pawn->Vitals.DamageCooldown));
+            });
+    }
+    for (const int32 Value : {1, 0})
+    {
+        AddCase(
+            FString::Printf(TEXT("fire %d: burning"), Value), .2,
+            [this, Value, FeelSetup]
+            {
+                FeelSetup(Value);
+                Pawn->Vitals.FireTicks = 100;
+            },
+            [this, Value, Snapshot]
+            {
+                const FHudSnapshot& S = Snapshot();
+                Record(FString::Printf(TEXT("fire %d: the fire overlay %s while burning"), Value,
+                           Value ? TEXT("shows") : TEXT("is off")),
+                    S.bOnFire == (Value == 1),
+                    FString::Printf(TEXT("fire ticks %d, on fire %d, first person %d"), Pawn->Vitals.FireTicks,
+                        S.bOnFire, S.bFirstPerson));
+            });
+        AddCase(
+            FString::Printf(TEXT("fire %d: capture"), Value), .3, [Value, FeelShot]
+            { FeelShot(Value ? TEXT("fire-1") : TEXT("fire-0")); }, [this] { Pawn->Vitals.FireTicks = 0; });
+        AddCase(
+            FString::Printf(TEXT("fire %d: out"), Value), .2, [] {},
+            [this, Value, Snapshot]
+            {
+                Record(FString::Printf(TEXT("fire %d: the overlay is gone once the fire is out"), Value),
+                    !Snapshot().bOnFire && Pawn->Vitals.FireTicks == 0,
+                    FString::Printf(TEXT("fire ticks %d, on fire %d"), Pawn->Vitals.FireTicks, Snapshot().bOnFire));
+            });
+    }
+    for (const int32 Value : {1, 0})
+    {
+        AddCase(
+            FString::Printf(TEXT("chatbar %d: type"), Value), .4,
+            [this, Value, SetChatSwitch, SavedChatSwitch, FeelSetup, FeelShot]
+            {
+                if (const IConsoleVariable* Switch =
+                        IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Chat.Commands")))
+                    if (Value == 1) *SavedChatSwitch = Switch->GetInt();
+                SetChatSwitch(Value);
+                FeelSetup(1);
+                Pawn->Vitals.Mode = EFoundationPlayerMode::Creative;
+                Controller->GetPanels()->OpenText(false);
+                if (FSlateApplication::IsInitialized())
+                    for (const TCHAR Char : FString(TEXT("hello world")))
+                        FSlateApplication::Get().ProcessKeyCharEvent(
+                            FCharacterEvent(Char, FModifierKeysState(), 0, false));
+            },
+            [this, Value, Snapshot]
+            {
+                const FHudSnapshot& S = Snapshot();
+                const FString Typed = Controller->GetPanels()->GetTypedText();
+                Record(FString::Printf(TEXT("chatbar %d: the typed text reached the box"), Value),
+                    Controller->GetPanels()->IsTextOpen() && Typed == TEXT("hello world") &&
+                        (Value == 0 || (S.bChatOpen && S.ChatInput == TEXT("hello world"))),
+                    FString::Printf(TEXT("open %d, typed '%s', hud open %d, hud input '%s', caret %d"),
+                        Controller->GetPanels()->IsTextOpen(), *Typed, S.bChatOpen, *S.ChatInput, S.CaretIndex));
+            });
+        // The capture follows the typing by a few frames: a screenshot shows the frame before its request's tick.
+        AddCase(
+            FString::Printf(TEXT("chatbar %d: capture"), Value), .3,
+            [Value, FeelShot] { FeelShot(Value ? TEXT("chatbar-1") : TEXT("chatbar-0")); }, [] {});
+        AddCase(
+            FString::Printf(TEXT("chatbar %d: close"), Value), .2,
+            [this, SetChatSwitch, SavedChatSwitch, Value]
+            {
+                Controller->GetPanels()->Close();
+                if (Value == 0) SetChatSwitch(*SavedChatSwitch);
+            },
+            [this, Value]
+            {
+                Record(FString::Printf(TEXT("chatbar %d: closed"), Value), !Controller->GetPanels()->IsTextOpen(),
+                    FString::Printf(TEXT("open %d"), Controller->GetPanels()->IsTextOpen()));
+            });
+    }
+    AddCase(
+        TEXT("feel: restore"), .2,
+        [this, Previous, SavedMode, FeelSetup]
+        {
+            FeelSetup(*Previous);
+            Pawn->Vitals.Mode = *SavedMode;
+            Controller->ClearChat();
+        },
+        [] {});
     AddCase(
         TEXT("death: restore"), .2,
         [this, SetSwitch, Player, Previous, SavedInventory, SavedMode, SavedOptions, bSavedHideHud]
