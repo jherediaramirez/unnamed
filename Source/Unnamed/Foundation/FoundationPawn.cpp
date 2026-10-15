@@ -390,6 +390,7 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.Options.bItemUse = FoundationItemUse::IsOn();
     Authority.Options.bExperienceOrbs = FoundationExperienceOrbs::IsOn();
     Authority.Options.bBlockUse = FoundationBlockUse::IsOn();
+    Authority.Options.bMobs = FoundationMobs::IsOn();
     Authority.Options.bFurnace = FoundationFurnace::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     Authority.Step();

@@ -1,8 +1,9 @@
 """Verify Reference/minecraft-entities-26.3: file hashes, re-derivation of textures.json from the copied textures, the
-client jar when present, and spot values.
+client jar when present (textures and loot tables), and spot values from the facts (mob attributes, model sizes).
 
 usage: uv run --no-project --python 3.13 --with pillow python -I Reference/minecraft-entities-26.3/tools/verify_reference.py
-Everything but step 3 needs only this folder; step 3 runs when the pinned client jar is present.
+Everything but step 3 needs only this folder; step 3 runs when the pinned client jar is present. facts/ is produced by
+tools/EntityModelFacts.java and tools/mob_probe.py; here it is only hashed and checked for shape and spot values.
 """
 import hashlib
 import importlib.util
@@ -39,7 +40,8 @@ for name, digest in sums.items():
     path = ROOT / name
     if path.is_file():
         check(hashlib.sha256(path.read_bytes()).hexdigest() == digest, f"hash mismatch: {name}")
-expected = set(build.GENERATED) | set(build.TOOLS) | {"README.md"} | {build.PREFIX + n for n in build.TEXTURES}
+expected = set(build.GENERATED) | set(build.TOOLS) | {"README.md"} | {build.PREFIX + n for n in build.TEXTURES} \
+    | {build.LOOT_PREFIX + n for n in build.LOOT} | {build.RECIPE_PREFIX + n for n in build.RECIPES} | set(build.FACTS)
 check(expected == set(sums), f"files differ from the build's list: +{sorted(set(sums) - expected)[:5]} "
                              f"-{sorted(expected - set(sums))[:5]}")
 
@@ -62,6 +64,14 @@ if build.CLIENT_JAR.is_file():
                 check(jar.read(build.PREFIX + name) == (ROOT / build.PREFIX / name).read_bytes(),
                       f"differs from the client jar: {name}")
                 jar_checked += 1
+            for name in build.LOOT:
+                check(jar.read(build.LOOT_PREFIX + name) == (ROOT / build.LOOT_PREFIX / name).read_bytes(),
+                      f"differs from the client jar: {name}")
+                jar_checked += 1
+            for name in build.RECIPES:
+                check(jar.read(build.RECIPE_PREFIX + name) == (ROOT / build.RECIPE_PREFIX / name).read_bytes(),
+                      f"differs from the client jar: {name}")
+                jar_checked += 1
     else:
         print("note: the client jar differs from the pin; jar comparisons skipped")
 else:
@@ -72,6 +82,39 @@ by_name = {t["name"]: t for t in data["textures"]}
 check([t["name"] for t in data["textures"]] == build.TEXTURES, "textures out of order or missing")
 orb = by_name.get("entity/experience/experience_orb.png", {})
 check((orb.get("width"), orb.get("height")) == (64, 64), f"experience_orb.png is not 64 x 64: {orb}")
+
+# Survival 20a: the sheep sheets are 64 x 32, the cow sheets 64 x 64; cow max health 10, speed 0.2; the cow model has 7 parts
+# (root, head, body, 4 legs) and 10 cubes; the attributes record the server jar pin.
+check(all(by_name[f"entity/sheep/{n}.png"]["height"] == 32 and by_name[f"entity/sheep/{n}.png"]["width"] == 64
+          for n in ("sheep", "sheep_wool", "sheep_wool_undercoat")), "sheep textures are not 64 x 32")
+check(all((by_name[f"entity/cow/cow_{n}.png"]["width"], by_name[f"entity/cow/cow_{n}.png"]["height"]) == (64, 64)
+          for n in ("temperate", "cold", "warm")), "cow textures are not 64 x 64")
+attrs = json.loads((ROOT / "facts/mob_attributes.json").read_text(encoding="utf-8"))
+check(attrs["source"]["server_jar_sha1"] == build.SERVER_SHA1, "mob_attributes.json: server jar pin differs")
+cow = attrs["mobs"]["cow"]
+check(cow["health"] == 10.0 and cow["attributes"]["max_health"] == 10.0, f"cow health is not 10: {cow}")
+check(abs(cow["attributes"]["movement_speed"] - 0.2) < 1e-6, f"cow movement_speed is not 0.2: {cow}")
+check(cow["attributes"]["attack_damage"] is None, "cow has an attack_damage")
+check(sorted(attrs["mobs"]) == sorted(["cow", "pig", "sheep", "chicken", "zombie", "skeleton", "creeper", "spider"]),
+      "mob_attributes.json: mobs differ")
+models = json.loads((ROOT / "facts/entity_models.json").read_text(encoding="utf-8"))
+for layer in ("cow#main", "pig#main", "sheep#main", "sheep#wool", "sheep#wool_undercoat", "chicken#main",
+              "zombie#main", "skeleton#main", "creeper#main", "spider#main"):
+    check(layer in models, f"entity_models.json: no {layer}")
+cow_model = models.get("cow#main", {"parts": [], "cubes": []})
+check((len(cow_model["parts"]), len(cow_model["cubes"])) == (7, 10),
+      f"cow model is not 7 parts / 10 cubes: {len(cow_model['parts'])} / {len(cow_model['cubes'])}")
+for name in build.LOOT:
+    try:
+        json.loads((ROOT / build.LOOT_PREFIX / name).read_text(encoding="utf-8"))
+    except ValueError as error:
+        errors.append(f"{name}: not JSON ({error})")
+check(sum(1 for n in build.LOOT if n.startswith("entities/sheep/")) == 16, "not 16 sheep colour loot tables")
+for name in build.RECIPES:
+    recipe = json.loads((ROOT / build.RECIPE_PREFIX / name).read_text(encoding="utf-8"))
+    meat = name.removeprefix("cooked_").removesuffix(".json")
+    check(recipe.get("type") == "minecraft:smelting" and recipe.get("ingredient") == f"minecraft:{meat}"
+          and recipe.get("result", {}).get("id") == f"minecraft:cooked_{meat}", f"{name}: not {meat}'s smelting")
 
 if errors:
     print("REFERENCE FAIL")

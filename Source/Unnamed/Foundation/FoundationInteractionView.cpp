@@ -1,5 +1,6 @@
 #include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationExperienceOrbView.h"
+#include "Foundation/FoundationMobView.h"
 #include "Foundation/FoundationItemEntityView.h"
 #include "Blocks/VoxelBlockTable.h"
 #include "Foundation/FoundationBlockMeshes.h"
@@ -232,6 +233,7 @@ void UFoundationInteractionView::BeginPlay()
     ItemEntityView = MakeShared<FFoundationItemEntityView>(*this);
     ExperienceOrbView = MakeShared<FFoundationExperienceOrbView>(*this);
     ExperienceOrbView->Prepare();
+    MobView = MakeShared<FFoundationMobView>(*this);
     RebuildBlocks(*Lab->GetAuthority());
 }
 
@@ -722,6 +724,9 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
             break;
         case EFoundationEventKind::ExperiencePickedUp:
             if (ExperienceOrbView) ExperienceOrbView->OnPickedUp(Event);
+            break;
+        case EFoundationEventKind::MobSound:
+            if (MobView) MobView->OnSound(Event);
             break;
         case EFoundationEventKind::Eating:
         case EFoundationEventKind::Ate:
@@ -1345,6 +1350,7 @@ void UFoundationInteractionView::TickComponent(
         Pawn ? FMath::Clamp(Pawn->Simulation.Accumulator / GetDefault<UFoundationProfile>()->TickSeconds, 0., 1.) : 1.;
     if (ItemEntityView) ItemEntityView->Update(Authority, Pawn, StepAlpha, DeltaTime);
     if (ExperienceOrbView) ExperienceOrbView->Update(Authority, Pawn, StepAlpha);
+    if (MobView) MobView->Update(Authority, Pawn, StepAlpha);
     if (BreakEffects) BreakEffects->EndFrame(Authority, DeltaTime);
     LastViewMs = (FPlatformTime::Seconds() - Start) * 1000.;
 }

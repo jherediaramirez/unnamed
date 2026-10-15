@@ -1,5 +1,13 @@
 {
  "item": {
+  "armadillo_food": {
+   "values": [
+    "minecraft:spider_eye"
+   ],
+   "resolved": [
+    "spider_eye"
+   ]
+  },
   "axes": {
    "values": [
     "minecraft:diamond_axe",
@@ -186,6 +194,18 @@
    ],
    "resolved": [
     "amethyst_shard"
+   ]
+  },
+  "eggs": {
+   "values": [
+    "minecraft:egg",
+    "minecraft:blue_egg",
+    "minecraft:brown_egg"
+   ],
+   "resolved": [
+    "blue_egg",
+    "brown_egg",
+    "egg"
    ]
   },
   "enchantable/durability": {
@@ -724,6 +744,14 @@
     "wheat"
    ]
   },
+  "ignored_by_piglin_babies": {
+   "values": [
+    "minecraft:leather"
+   ],
+   "resolved": [
+    "leather"
+   ]
+  },
   "iron_tool_materials": {
    "values": [
     "minecraft:iron_ingot"
@@ -818,6 +846,28 @@
     "wooden_pickaxe"
    ]
   },
+  "pig_food": {
+   "values": [
+    "minecraft:carrot",
+    "minecraft:potato",
+    "minecraft:beetroot"
+   ],
+   "resolved": [
+    "beetroot",
+    "carrot",
+    "potato"
+   ]
+  },
+  "piglin_food": {
+   "values": [
+    "minecraft:porkchop",
+    "minecraft:cooked_porkchop"
+   ],
+   "resolved": [
+    "cooked_porkchop",
+    "porkchop"
+   ]
+  },
   "piglin_loved": {
    "values": [
     "#minecraft:gold_ores",
@@ -888,6 +938,18 @@
     "golden_spear"
    ]
   },
+  "rabbit_food": {
+   "values": [
+    "minecraft:carrot",
+    "minecraft:golden_carrot",
+    "minecraft:dandelion"
+   ],
+   "resolved": [
+    "carrot",
+    "dandelion",
+    "golden_carrot"
+   ]
+  },
   "repairs_chain_armor": {
    "values": [
     "minecraft:iron_ingot"
@@ -926,6 +988,14 @@
    ],
    "resolved": [
     "iron_ingot"
+   ]
+  },
+  "repairs_leather_armor": {
+   "values": [
+    "minecraft:leather"
+   ],
+   "resolved": [
+    "leather"
    ]
   },
   "repairs_netherite_armor": {
