@@ -446,11 +446,14 @@ void FFoundationAuthority::CloseMenu(FFoundationPlayer& Player, FFoundationResul
     // not leave thrown copies behind.
     bool bThrown = Algo::AllOf(Left, [this](const FFoundationItemInstance& Stack)
         { return Rules.Items.IsValidIndex(Stack.Item) && Stack.Count > 0; });
-    if (bThrown && !Left.IsEmpty() && Options.bItemEntities)
+    if (bThrown && !Left.IsEmpty() && Options.bItemEntities && Player.Facts.bAlive)
         for (const FFoundationItemInstance& Stack : Left)
             bThrown &= Throw(Player, Stack, Stack.Count);
-    if (!Left.IsEmpty() && !Options.bItemEntities)
-        Reject(Result, EFoundationReason::DropDeferred);
+    if (!Left.IsEmpty() && !Options.bItemEntities) Reject(Result, EFoundationReason::DropDeferred);
+    // A dead player throws nothing, as Drop's CheckHand refuses (Codex review 11, finding 2); the close is retried each
+    // step and goes through after the respawn.
+    else if (!Left.IsEmpty() && !Player.Facts.bAlive)
+        Reject(Result, EFoundationReason::Dead);
     else if (!bThrown)
         Reject(Result, EFoundationReason::NoSupply);
     else
@@ -794,6 +797,117 @@ int32 FFoundationAuthority::TakeExperience(int32 PlayerId)
     return Points;
 }
 
+namespace
+{
+    // FFoundationInventory::Armor's order, vanilla's slots 36-39: feet, legs, chest, head.
+    constexpr EFoundationEquipmentSlot ArmorOrder[] = {EFoundationEquipmentSlot::Feet, EFoundationEquipmentSlot::Legs,
+        EFoundationEquipmentSlot::Chest, EFoundationEquipmentSlot::Head};
+
+    int32 GetArmorIndex(EFoundationEquipmentSlot Slot)
+    {
+        for (int32 Index = 0; Index < UE_ARRAY_COUNT(ArmorOrder); ++Index)
+            if (ArmorOrder[Index] == Slot) return Index;
+        return INDEX_NONE;
+    }
+}
+
+void FFoundationAuthority::GetWornArmor(int32 PlayerId, int32& OutArmor, float& OutToughness) const
+{
+    OutArmor = 0;
+    OutToughness = 0;
+    const FFoundationPlayer* Player = FindPlayer(PlayerId);
+    if (!Player || !Options.bFullInventory) return;
+    const TArray<FFoundationItemInstance>& Armor = Player->Inventory.Armor;
+    for (int32 Index = 0; Index < FMath::Min(Armor.Num(), int32(UE_ARRAY_COUNT(ArmorOrder))); ++Index)
+        if (!Armor[Index].IsEmpty() && Rules.Items.IsValidIndex(Armor[Index].Item))
+        {
+            // An attribute modifier counts only in its own slot (a piece set elsewhere by a creative command adds
+            // none).
+            const FFoundationItemDefinition& Item = Rules.Items[Armor[Index].Item];
+            if (Item.Equipment != ArmorOrder[Index]) continue;
+            OutArmor += Item.Armor;
+            OutToughness += Item.ArmorToughness;
+        }
+}
+
+int32 FFoundationAuthority::WearArmor(int32 PlayerId, int32 Amount, EFoundationPlayerMode Mode)
+{
+    FFoundationPlayer* Player = FindPlayer(PlayerId);
+    if (!Player || Amount <= 0 || !Options.bToolWear || !Options.bFullInventory ||
+        Mode == EFoundationPlayerMode::Creative)
+        return 0;
+    int32 Broken = 0;
+    FFoundationInventory& Inventory = Player->Inventory;
+    for (int32 Index = 0; Index < FMath::Min(Inventory.Armor.Num(), int32(UE_ARRAY_COUNT(ArmorOrder))); ++Index)
+    {
+        FFoundationItemInstance Stack = Inventory.Armor[Index];
+        if (Stack.IsEmpty() || !Rules.Items.IsValidIndex(Stack.Item)) continue;
+        const FFoundationItemDefinition& Item = Rules.Items[Stack.Item];
+        if (Item.Equipment != ArmorOrder[Index] || Item.MaxDurability <= 0) continue;
+        Stack.Damage += Amount;
+        const bool bBroke = Stack.Damage >= Item.MaxDurability;
+        Inventory.SetSlot(FFoundationInventory::FirstArmor + Index, bBroke ? FFoundationItemInstance{} : Stack);
+        if (!bBroke) continue;
+        ++Broken;
+        FFoundationEvent Event;
+        Event.Kind = EFoundationEventKind::ToolBroke;
+        Event.Player = Player->Id;
+        Event.Item = Stack.Item;
+        Event.Step = Player->Facts.Step;
+        AddEvent(Event);
+    }
+    return Broken;
+}
+
+bool FFoundationAuthority::UseEquip(
+    FFoundationPlayer& Player, const FFoundationCommand& Command, EFoundationPlayerMode Mode, FFoundationResult& Result)
+{
+    // Vanilla's equippable swap (SURVIVAL-RUN2-FINDINGS, R19, survival2.r19.equip): the piece goes on and what was worn
+    // comes back to the hand; in creative an empty slot gets a copy and the hand keeps the piece.
+    const FFoundationItemInstance Held = Player.Inventory.GetHand(Command.Hand);
+    // A spectator wears nothing; one piece at a time, as the armor slots take (a lab stack of several does not go on).
+    if (Held.IsEmpty() || Held.Count != 1 || !Options.bFullInventory || !Options.bItemUse ||
+        Mode == EFoundationPlayerMode::Spectator)
+        return false;
+    const FFoundationItemDefinition& Item = Rules.GetItem(Held.Item);
+    const int32 Index = GetArmorIndex(Item.Equipment);
+    if (Index == INDEX_NONE || !Item.bSwappable || !Player.Inventory.Armor.IsValidIndex(Index)) return false;
+    const FFoundationItemInstance Worn = Player.Inventory.Armor[Index];
+    if (Mode == EFoundationPlayerMode::Creative && Worn.IsEmpty())
+    {
+        FFoundationItemInstance Copy = Player.Inventory.MakeStack(Held.Item, 1);
+        Copy.Damage = Held.Damage;
+        Player.Inventory.SetSlot(FFoundationInventory::FirstArmor + Index, Copy);
+        Result.Outcome = EFoundationOutcome::Committed;
+        return true;
+    }
+    Player.Inventory.SetSlot(
+        Command.Hand == EFoundationHand::Off ? FFoundationInventory::OffhandSlot : Player.Inventory.Selected, Worn);
+    Player.Inventory.SetSlot(FFoundationInventory::FirstArmor + Index, Held);
+    Result.Outcome = EFoundationOutcome::Committed;
+    return true;
+}
+
+void FFoundationAuthority::AddEquipEvents(
+    const FFoundationPlayer& Player, TConstArrayView<FFoundationItemInstance> Before)
+{
+    // Vanilla plays a piece's equip_sound when its slot takes a different item (survival.r5.play_calls: PLAYERS,
+    // volume 1, pitch 1); the view plays it from this event.
+    const TArray<FFoundationItemInstance>& Armor = Player.Inventory.Armor;
+    for (int32 Index = 0; Index < FMath::Min(Armor.Num(), Before.Num()); ++Index)
+    {
+        const FFoundationItemInstance& Now = Armor[Index];
+        if (Now.IsEmpty() || (!Before[Index].IsEmpty() && Before[Index].InstanceId == Now.InstanceId)) continue;
+        FFoundationEvent Event;
+        Event.Kind = EFoundationEventKind::Equipped;
+        Event.Player = Player.Id;
+        Event.Item = Now.Item;
+        Event.LocationCm = Player.Facts.FeetCm;
+        Event.Step = Player.Facts.Step;
+        AddEvent(Event);
+    }
+}
+
 void FFoundationAuthority::SetRespawnPoint(int32 PlayerId, const FIntVector& Cell)
 {
     if (FFoundationPlayer* Player = FindPlayer(PlayerId)) Player->RespawnCell = Cell;
@@ -907,15 +1021,26 @@ void FFoundationAuthority::StepExperienceOrbs()
         const FBox Reach = GetMergeBox(Origin + ExperienceOrbs[Index].LocalCm);
         for (int32 Other = ExperienceOrbs.Num() - 1; Other >= 0; --Other)
         {
-            FFoundationExperienceOrb& Into = ExperienceOrbs[Index];
-            const FFoundationExperienceOrb& From = ExperienceOrbs[Other];
-            if (Other == Index || From.bFrozen || From.Value != Into.Value ||
-                !Overlaps(Reach, GetBox(Origin + From.LocalCm)) || !CanMerge(Into, From))
+            const FFoundationExperienceOrb& Seeking = ExperienceOrbs[Index];
+            const FFoundationExperienceOrb& Found = ExperienceOrbs[Other];
+            if (Other == Index || Found.bFrozen || Found.Value != Seeking.Value ||
+                !Overlaps(Reach, GetBox(Origin + Found.LocalCm)) || !CanMerge(Seeking, Found))
                 continue;
-            Into.Count += From.Count;
-            Into.Age = FMath::Min(Into.Age, From.Age);
+            // SURVIVAL-RUN2-FINDINGS, R23 (survival2.r23.xp_rules, xp_merge): newly awarded XP goes into the orb it
+            // finds, which stays where it is with age 0; an orb's own scan keeps the scanner, with the lower age (Codex
+            // review 14, finding 1: the new orb no longer takes in the older one). A seeker taken in ends its scan.
+            const bool bSeekerStays = !Seeking.bNew;
+            const int32 Gone = bSeekerStays ? Other : Index;
+            FFoundationExperienceOrb& Into = ExperienceOrbs[bSeekerStays ? Index : Other];
+            Into.Count += ExperienceOrbs[Gone].Count;
+            Into.Age = bSeekerStays ? FMath::Min(Into.Age, ExperienceOrbs[Gone].Age) : 0;
             ++OrbsMerged;
-            ExperienceOrbs.RemoveAt(Other);
+            ExperienceOrbs.RemoveAt(Gone);
+            if (!bSeekerStays)
+            {
+                --Index;
+                break;
+            }
             if (Other < Index) --Index;
         }
     }
@@ -1334,6 +1459,7 @@ FFoundationResult FFoundationAuthority::Execute(
     if (Command.Sequence == 0 || Command.Sequence <= Player->HighestEvicted)
         return Reject(Result, EFoundationReason::ExpiredSequence);
     SetFullInventory(Player->Inventory, Options.bFullInventory);
+    const TArray<FFoundationItemInstance> ArmorBefore = Player->Inventory.Armor;
 
     switch (Command.Type)
     {
@@ -1444,6 +1570,9 @@ FFoundationResult FFoundationAuthority::Execute(
             Reject(Result, EFoundationReason::InvalidSlot);
         else if (!Click.Thrown.IsEmpty() && !Options.bItemEntities)
             Reject(Result, EFoundationReason::DropDeferred);
+        // A dead player throws nothing (Codex review 11, finding 2), as Drop's CheckHand refuses.
+        else if (!Click.Thrown.IsEmpty() && !Player->Facts.bAlive)
+            Reject(Result, EFoundationReason::Dead);
         else if (!Click.Thrown.IsEmpty() && !Throw(*Player, Click.Thrown, Click.Thrown.Count))
             Reject(Result, EFoundationReason::NoSupply);
         else
@@ -1498,6 +1627,8 @@ FFoundationResult FFoundationAuthority::Execute(
         break;
     }
     if (Result.Outcome == EFoundationOutcome::Rejected) ++Rejections;
+    // A spectator makes no equip sound (its clicks and uses move nothing).
+    if (Vitals.Mode != EFoundationPlayerMode::Spectator) AddEquipEvents(*Player, ArmorBefore);
     Result.WorldRevision = World.Revision;
     Remember(*Player, Result);
     if (Result.bInteracted && OnInteraction) OnInteraction(Result.Interaction);
@@ -1834,6 +1965,7 @@ void FFoundationAuthority::UseItemStart(FFoundationPlayer& Player, const FFounda
 {
     if (!CheckHand(Player, Command, Result)) return;
     if (UseBucket(Player, Command, Vitals.Mode, Result)) return;
+    if (UseEquip(Player, Command, Vitals.Mode, Result)) return;
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
     const FFoundationConsumable Food =
         Stack.IsEmpty() ? FFoundationConsumable{} : Rules.GetItem(Stack.Item).GetConsumable();

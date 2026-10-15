@@ -1251,19 +1251,22 @@ void UFoundationRuntimeProbe::AddInteractionCases()
                 FString::Printf(
                     TEXT("hook calls %d, pickups %d"), View ? View->PickupSounds - Xp->Sounds : -1, Events));
             // Items fixes: the sound batch's entity.experience_orb.pickup resolves to a file and plays (the probes
-            // run with -nosound, so the log is the record); pickups before this case's log clear are not counted.
+            // run with -nosound, so the log is the record: a file whose wave is loaded); pickups before this case's log
+            // clear are not counted.
             const FFoundationBreakEffects* Effects = Lab->GetView()->GetBreakEffects();
-            int32 Logged = 0, WithFile = 0;
+            int32 Logged = 0, WithFile = 0, Loaded = 0;
             for (const FoundationBreak::FSoundLogEntry& Entry :
                 Effects ? Effects->GetSoundLog() : TConstArrayView<FoundationBreak::FSoundLogEntry>())
                 if (Entry.Event == FName(TEXT("entity.experience_orb.pickup")))
                 {
                     ++Logged;
                     WithFile += Entry.File.IsNone() ? 0 : 1;
+                    Loaded += Entry.bLoaded ? 1 : 0;
                 }
             Record(TEXT("the orb pickup sound resolves and plays"),
-                Logged > 0 && Logged == WithFile && Logged <= Events,
-                FString::Printf(TEXT("logged %d, with a file %d, pickups %d"), Logged, WithFile, Events));
+                Logged > 0 && Logged == WithFile && Logged == Loaded && Logged <= Events,
+                FString::Printf(
+                    TEXT("logged %d, with a file %d, loaded %d, pickups %d"), Logged, WithFile, Loaded, Events));
         });
     AddCase(
         TEXT("xp icons"), 1.,

@@ -74,6 +74,10 @@ bool FHudGeometryTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Three-row compression"), Rows.RowHeight, 9);
     TestEqual(TEXT("Armor follows player rows"), HudModel::GetLayout({640, 360}, 0, false).GetArmorY(Rows), 293);
     TestEqual(TEXT("Air does not follow player rows"), HudModel::GetLayout({640, 360}, 0, false).GetAirY(), 311);
+    // SURVIVAL-RUN2-FINDINGS, R19 (survival2.r19.armor_hud): with one row of hearts the armor row starts at (229, 311).
+    TestEqual(TEXT("R19: one row of hearts, armor at y 311"),
+        HudModel::GetLayout({640, 360}, 0, false).GetArmorY(HudModel::GetHealthGeometry(20, 20, 20, 0)), 311);
+    TestEqual(TEXT("R19: armor at x 229"), HudModel::GetLayout({640, 360}, 0, false).Center - 91, 229);
     TestEqual(TEXT("Row pitch floor"), HudModel::GetHealthGeometry(200, 200, 200, 0).RowHeight, 3);
     return true;
 }
@@ -365,6 +369,10 @@ bool FHudVitalsAdapterTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Player mode maps by name, not order"), S.Mode == EHudMode::Adventure);
     TestTrue(TEXT("Health values"), S.Health == 13.5 && S.MaxHealth == 24 && S.Absorption == 3);
     TestTrue(TEXT("Armor and food"), S.Armor == 7 && S.Food == 9 && S.Saturation == 0);
+    // Survival step 19a: the row shows the armor attribute, the base plus the worn pieces.
+    V.WornArmor = 5;
+    UHudPresenter::ApplyVitals(S, V, Target);
+    TestEqual(TEXT("Armor counts the worn pieces"), S.Armor, 12);
     TestTrue(TEXT("Air from eyes in water"), S.Air == 120 && S.MaxAir == 300 && S.bUnderwater);
     TestTrue(TEXT("Experience"), S.Level == 4 && S.Experience == .25);
     TestTrue(TEXT("Damage cooldown drives the health blink"), S.bDamageCooldown);

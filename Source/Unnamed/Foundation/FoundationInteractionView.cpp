@@ -775,6 +775,12 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
                 BreakEffects->PlayEvent(TEXT("block.lava.extinguish"), Cell.GetCenter(), .5f,
                     2.6f + (FMath::FRand() - FMath::FRand()) * .8f);
             break;
+        case EFoundationEventKind::Equipped:
+            // Armor (survival step 19a): the piece's equip_sound at the player, PLAYERS, volume 1 and pitch 1
+            // (SURVIVAL-FINDINGS, R5, survival.r5.play_calls, F 3616-3627). An event DA_Sounds lacks stays silent.
+            if (const FName Sound = Authority.Rules.GetItem(Event.Item).EquipSound; BreakEffects && !Sound.IsNone())
+                BreakEffects->PlayEvent(Sound, Event.LocationCm, 1.f, 1.f);
+            break;
         case EFoundationEventKind::ToolBroke:
             if (const AFoundationPawn* Pawn = GetLocalPawn())
                 Burst(Pawn->GetEyePosition() + Pawn->GetControlRotation().Vector() * 60, FLinearColor(.7f, .7f, .72f),

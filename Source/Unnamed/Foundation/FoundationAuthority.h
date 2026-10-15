@@ -360,7 +360,9 @@ enum class EFoundationEventKind : uint8
     ContainerOpened,
     // A mob's sound (survival T6 20a): Interaction the sound event, LocationCm where (world cm), Amount the volume,
     // EntityId the mob.
-    MobSound
+    MobSound,
+    // A piece went into an armor slot (survival step 19a): Item the piece, LocationCm the player's feet (world cm).
+    Equipped
 };
 
 // A committed (or rejected) outcome for presentation: effects fire once from these.
@@ -578,6 +580,12 @@ public:
     int32 RemoveExperienceOrbs();
     // The points a player has taken since the last call (its owner adds them to its vitals after each step).
     int32 TakeExperience(int32 Player);
+    // Armor (survival step 19a): the worn pieces' armor and toughness (each piece counts only in its own slot; none
+    // with foundation.Inventory.Full 0, which has no armor slots). Its owner sets them on its vitals every step.
+    void GetWornArmor(int32 Player, int32& OutArmor, float& OutToughness) const;
+    // The wear a player's hurts owe (FFoundationVitals::PendingArmorWear) on every worn piece that wears, with lab
+    // tool wear on and not in creative; a piece worn out breaks (a ToolBroke event). How many broke.
+    int32 WearArmor(int32 Player, int32 Amount, EFoundationPlayerMode Mode);
     // Mobs (survival T6 20a), oldest first; Reset clears them. SpawnMob adds one standing at a position (cm from the
     // block world's origin) facing Yaw: its id, or 0 with Options.bMobs off.
     const TArray<FFoundationMob>& GetMobs() const { return Mobs; }
@@ -666,6 +674,11 @@ private:
         FFoundationResult& Result);
     void UseItemStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
         FFoundationResult& Result);
+    // A swappable piece in the hand swaps with its armor slot (survival step 19a). False when the hand holds none.
+    bool UseEquip(FFoundationPlayer& Player, const FFoundationCommand& Command, EFoundationPlayerMode Mode,
+        FFoundationResult& Result);
+    // An Equipped event for each armor slot that now holds a different piece than Before.
+    void AddEquipEvents(const FFoundationPlayer& Player, TConstArrayView<FFoundationItemInstance> Before);
     void UseItemContinue(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationVitals& Vitals,
         FFoundationResult& Result);
     // Ends a use in progress (nothing consumed); true when one was active.

@@ -194,7 +194,11 @@ bool FFoundationVitals::Hurt(EFoundationDamage Type, float Amount)
     LastHurt = Damage;
 
     // Armor, then the absorption buffer; only damage reaching health costs exhaustion.
-    if (!Rule.bBypassesArmor) Dealt = GetDamageAfterArmor(Dealt, Armor, ArmorToughness);
+    if (!Rule.bBypassesArmor)
+    {
+        PendingArmorWear += FMath::Max(1, FMath::FloorToInt32(Dealt / 4.f));
+        Dealt = GetDamageAfterArmor(Dealt, GetArmor(), GetArmorToughness());
+    }
     const float Absorbed = FMath::Min(Dealt, Absorption);
     Absorption -= Absorbed;
     Dealt -= Absorbed;
@@ -312,6 +316,9 @@ void FFoundationVitals::Respawn()
     Fresh.ArmorToughness = ArmorToughness;
     Fresh.AttackSpeed = AttackSpeed;
     Fresh.Armor = Armor;
+    // The worn pieces stay worn until the holder sets them again (a kept inventory keeps them).
+    Fresh.WornArmor = WornArmor;
+    Fresh.WornToughness = WornToughness;
     Fresh.MainHandItem = MainHandItem;
     Fresh.DamageEvents = DamageEvents;
     Fresh.Deaths = Deaths;
@@ -374,8 +381,8 @@ FString FFoundationVitals::Describe() const
     return FString::Printf(TEXT("%s %s regen=%d | health %.2f/%.0f absorption %.1f armor %d/%.0f | food %d "
                                 "saturation %.2f exhaustion %.3f | air %d/%d eyes-water=%d | XP L%d %.3f (%d) | "
                                 "attack %.2f of %.1f ticks%s%s"),
-        Modes[int32(Mode)], Difficulties[int32(Difficulty)], bNaturalRegeneration, Health, MaxHealth, Absorption, Armor,
-        ArmorToughness, Food, Saturation, Exhaustion, Air, MaxAir, bEyesInWater, Level, Progress, TotalExperience,
-        GetAttackStrength(), GetAttackDelay(), IsOnFire() ? *FString::Printf(TEXT(" | fire %d"), FireTicks) : TEXT(""),
-        IsDead() ? TEXT(" | DEAD") : TEXT(""));
+        Modes[int32(Mode)], Difficulties[int32(Difficulty)], bNaturalRegeneration, Health, MaxHealth, Absorption,
+        GetArmor(), GetArmorToughness(), Food, Saturation, Exhaustion, Air, MaxAir, bEyesInWater, Level, Progress,
+        TotalExperience, GetAttackStrength(), GetAttackDelay(),
+        IsOnFire() ? *FString::Printf(TEXT(" | fire %d"), FireTicks) : TEXT(""), IsDead() ? TEXT(" | DEAD") : TEXT(""));
 }

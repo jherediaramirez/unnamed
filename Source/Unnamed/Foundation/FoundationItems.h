@@ -123,9 +123,24 @@ struct FFoundationItemDefinition
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     float DisableBlockingSeconds = 0;
 
-    // 26.3's equippable slot; None for every item today (armor arrives with survival step 19a).
+    // 26.3's equippable slot (survival step 19a): the armor pieces' (DA_Items, 19a2) and carved_pumpkin's head.
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     EFoundationEquipmentSlot Equipment = EFoundationEquipmentSlot::None;
+
+    // 26.3's equippable swappable: a right-click with it swaps it into its slot (false for carved_pumpkin).
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    bool bSwappable = true;
+
+    // 26.3's equippable equip_sound, played when it goes into its slot (None: silent).
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    FName EquipSound;
+
+    // Worn in its slot: the armor and armor_toughness attribute modifiers it adds (survival step 19a).
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    int32 Armor = 0;
+
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    float ArmorToughness = 0;
 
     // Presentation only: "block" draws the block's 3D icon in the HUD (IconColor tints its fallback cube) and the
     // block in hand; otherwise the HUD draws Sprite and the held view the item's DA_Items model (items S4).

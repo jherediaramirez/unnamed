@@ -31,6 +31,10 @@ public:
     FFoundationEligibility Eligibility;
     // Health, food, air, experience and attack recovery; stepped with the simulation.
     FFoundationVitals Vitals;
+    // The reference step whose orb pickup last changed the level, and the level it made (-1: none), so the level-up
+    // sound is timed by that step, not the frame's (Codex review 14, finding 2).
+    int64 LevelGainStep = -1;
+    int32 LevelGainLevel = -1;
     // Place/mine/attack intent and timing, in a lab with an interaction authority (the Playground).
     FFoundationInteraction Interaction;
     FVector GetEyePosition() const;

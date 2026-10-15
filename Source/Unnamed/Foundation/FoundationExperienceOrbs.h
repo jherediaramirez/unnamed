@@ -50,9 +50,10 @@ namespace FoundationExperienceOrbs
     // axis (its count adds), every MergeTicks of its own age.
     constexpr int32 DespawnAge = 6000, PickupEveryTicks = 2;
     constexpr double MergeGrowCm = 50;
-    // Codex review 8 #1 (the Chinese minecraft.wiki's "Experience orb", Merging; the English page and the report are silent): of two orbs in
-    // reach, the seeker takes in the other only when their ids differ by a multiple of MergeIdPeriod, or when the
-    // seeker spawned this step and a NewMergeChance roll passes. An orb also scans in the step it spawned.
+    // Codex review 8 #1 (the Chinese minecraft.wiki's "Experience orb", Merging; the English page and the report are
+    // silent): of two orbs in reach, the seeker takes in the other only when their ids differ by a multiple of
+    // MergeIdPeriod, or when the seeker spawned this step and a NewMergeChance roll passes. An orb also scans in the
+    // step it spawned.
     constexpr int32 MergeIdPeriod = 40;
     constexpr double NewMergeChance = .025;
     // Codex review 8 #2, provisional (minecraft.wiki "Experience orb", history 1.21.4: "bouncy when falling from a
@@ -60,8 +61,8 @@ namespace FoundationExperienceOrbs
     // times its landing speed (the items' -0.5 ground bounce [items.physics] borrowed); slower, it stays down.
     constexpr double BounceFactor = .5, BounceMinCm = 6;
     // [survival.r5.rules] entity.player.levelup plays at volume LevelUpVolume x min(level / LevelUpFullLevel, 1), pitch
-    // 1, on a positive level gain reaching a multiple of 5 (the level counted is the highest multiple reached), and only
-    // more than LevelUpGapTicks after the last one.
+    // 1, on a positive level gain reaching a multiple of 5 (the level counted is the first multiple reached), and
+    // only more than LevelUpGapTicks after the last one.
     constexpr float LevelUpVolume = .75f;
     constexpr int32 LevelUpFullLevel = 30, LevelUpGapTicks = 100;
     // [survival.r5.play_calls] entity.experience_orb.pickup plays at volume 0.1; its pitch is GetPickupPitch's.
@@ -72,8 +73,12 @@ namespace FoundationExperienceOrbs
     // Whether Seeker takes in Other (the caller checks the value and the reach).
     UNNAMED_API bool CanMerge(const FFoundationExperienceOrb& Seeker, const FFoundationExperienceOrb& Other);
     // The level-up sound's volume when the level goes from LastLevel to Level at Step, the last one having played at
-    // LastSoundStep (negative: never); 0 for no sound. A gain passing several levels counts the highest multiple of 5.
+    // LastSoundStep (negative: never); 0 for no sound. A gain passing several levels plays the first multiple of 5.
     UNNAMED_API float GetLevelUpVolume(int32 LastLevel, int32 Level, int64 Step, int64 LastSoundStep);
+    // The step a level change is timed by: the reference step that made it (GainStep, when the stepped level GainLevel
+    // is the level now), else the frame's step (a change outside the steps, the lab panel's). Codex review 14,
+    // finding 2.
+    UNNAMED_API int64 GetLevelUpStep(int64 FrameStep, int32 Level, int32 GainLevel, int64 GainStep);
     // [survival.r5.rules] the pickup sound's pitch, 0.9 + 0.35 x (U - V) for two uniform draws in [0, 1).
     UNNAMED_API float GetPickupPitch(float U, float V);
     // The icon (0 to 10) for an orb's value.
