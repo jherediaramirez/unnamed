@@ -396,6 +396,7 @@ void FFoundationAuthority::Reset()
     ExperienceOrbs.Empty();
     Mobs.Empty();
     MobSpawnColumns.Empty();
+    MobCycleStep = 0;
     PathStart = 0;
     FFoundationEvent Event;
     Event.Kind = EFoundationEventKind::Reset;
@@ -1053,20 +1054,29 @@ bool FFoundationAuthority::CanGraze(const FFoundationMob& Mob) const
 {
     const FIntVector Feet(FoundationGrid::FloorToCell(Mob.LocalCm.X), FoundationGrid::FloorToCell(Mob.LocalCm.Y),
         FoundationGrid::FloorToCell(Mob.LocalCm.Z + 1));
-    const auto Is = [this](const FIntVector& Cell, const TCHAR* Id)
-    { return World.IsKnown(Cell) && World.GetBlock(World.Get(Cell).State).Id == FName(Id); };
-    return Is(Feet, TEXT("short_grass")) || Is(Feet - FIntVector(0, 0, 1), TEXT("grass_block"));
+    return IsSheepFood(Feet) ||
+        (World.IsKnown(Feet - FIntVector(0, 0, 1)) &&
+            World.GetBlock(World.Get(Feet - FIntVector(0, 0, 1)).State).Id == TEXT("grass_block"));
+}
+
+bool FFoundationAuthority::IsSheepFood(const FIntVector& Cell) const
+{
+    // Codex review 23 #2: the block tag #minecraft:edible_for_sheep (short_grass, fern, short_dry_grass,
+    // tall_dry_grass; Reference/minecraft-blocks-26.3/research/block_tags.csv).
+    const FGameplayTag Edible = FGameplayTag::RequestGameplayTag(TEXT("Block.EdibleForSheep"), false);
+    return Edible.IsValid() && World.IsKnown(Cell) && World.GetBlock(World.Get(Cell).State).Tags.HasTag(Edible);
 }
 
 void FFoundationAuthority::EatGrass(const FFoundationMob& Mob)
 {
-    // [survival.r10.ai_defaults] EatBlockGoal with mobGriefing on (the default): short grass where it stands breaks
-    // without drops, else the grass block below turns to dirt. The break's particles and sound wait (a silent hook).
+    // [survival.r10.ai_defaults] EatBlockGoal with mobGriefing on (the default): a plant tagged edible_for_sheep where
+    // it stands breaks without drops, else the grass block below turns to dirt. The break's particles and sound wait
+    // (a silent hook).
     const FIntVector Feet(FoundationGrid::FloorToCell(Mob.LocalCm.X), FoundationGrid::FloorToCell(Mob.LocalCm.Y),
         FoundationGrid::FloorToCell(Mob.LocalCm.Z + 1));
     const FIntVector Below = Feet - FIntVector(0, 0, 1);
     const FFoundationBlockState Here = World.IsKnown(Feet) ? World.Get(Feet).State : FFoundationBlockState();
-    if (World.IsKnown(Feet) && World.GetBlock(Here).Id == TEXT("short_grass"))
+    if (IsSheepFood(Feet))
         World.Set(Feet, World.GetRegistry().GetRemainder(Here));
     else if (const FFoundationBlockType* Dirt = World.FindBlock(TEXT("dirt"));
         Dirt && World.IsKnown(Below) && World.GetBlock(World.Get(Below).State).Id == TEXT("grass_block"))
@@ -1258,7 +1268,9 @@ void FFoundationAuthority::StepMobHazards(FFoundationMob& Mob)
 void FFoundationAuthority::StepMobSpawns()
 {
     using namespace FoundationMobs;
+    ++MobCycleStep;
     if (!Options.bMobs || !Options.bMobSpawn || !GetBiomeId || Rules.BiomeSpawns.IsEmpty()) return;
+    if (MobCycleStep % CreatureCycleTicks == 0) RunCreatureCycle();
     for (const FFoundationPlayer& Player : Players)
     {
         if (!Player.bHasFacts) continue;
@@ -1316,6 +1328,134 @@ int32 FFoundationAuthority::SpawnPack(const FIntPoint& Column)
     }
     if (Spawned > 0) ++MobPacks;
     MobsPackSpawned += Spawned;
+    return Spawned;
+}
+
+void FFoundationAuthority::RunCreatureCycle()
+{
+    using namespace FoundationMobs;
+    const double Block = UFoundationProfile::BlockCm;
+    TArray<FVector, TInlineAllocator<4>> PlayerCells;
+    TArray<FIntPoint, TInlineAllocator<4>> Centers;
+    for (const FFoundationPlayer& Player : Players)
+        if (Player.bHasFacts)
+        {
+            PlayerCells.Add((Player.Facts.FeetCm - World.OriginCm) / Block);
+            const FIntVector Feet = FoundationGrid::CellAt(Player.Facts.FeetCm, World.OriginCm);
+            Centers.Emplace(FoundationGrid::FloorDivide(Feet.X, SpawnColumnCells),
+                FoundationGrid::FloorDivide(Feet.Y, SpawnColumnCells));
+        }
+    // The eligible columns: loaded, within SpawnRadiusColumns of a live player.
+    TArray<FIntPoint> Columns;
+    TSet<FIntPoint> Eligible;
+    for (const FIntPoint& Center : Centers)
+        for (int32 DY = -SpawnRadiusColumns; DY <= SpawnRadiusColumns; ++DY)
+            for (int32 DX = -SpawnRadiusColumns; DX <= SpawnRadiusColumns; ++DX)
+            {
+                const FIntPoint Column = Center + FIntPoint(DX, DY);
+                if (Eligible.Contains(Column) ||
+                    !World.GetStorage().IsLoaded(
+                        FIntVector(Column.X * SpawnColumnCells, Column.Y * SpawnColumnCells, 0)))
+                    continue;
+                Eligible.Add(Column);
+                Columns.Add(Column);
+            }
+    // The creatures counted: the global cap's over the eligible columns, each player's over its own square.
+    const auto ColumnOf = [](const FFoundationMob& Mob)
+    {
+        return FIntPoint(FoundationGrid::FloorDivide(FoundationGrid::FloorToCell(Mob.LocalCm.X), SpawnColumnCells),
+            FoundationGrid::FloorDivide(FoundationGrid::FloorToCell(Mob.LocalCm.Y), SpawnColumnCells));
+    };
+    const auto InSquare = [](const FIntPoint& A, const FIntPoint& B)
+    { return FMath::Max(FMath::Abs(A.X - B.X), FMath::Abs(A.Y - B.Y)) <= SpawnRadiusColumns; };
+    const int32 Cap = GetCreatureCap(Columns.Num());
+    int32 Count = 0;
+    TArray<int32, TInlineAllocator<4>> Local;
+    Local.Init(0, Centers.Num());
+    for (const FFoundationMob& Mob : Mobs)
+        if (Mob.IsAlive() && IsCreature(Mob.Type))
+        {
+            const FIntPoint Column = ColumnOf(Mob);
+            Count += Eligible.Contains(Column) ? 1 : 0;
+            for (int32 Index = 0; Index < Centers.Num(); ++Index)
+                Local[Index] += InSquare(Column, Centers[Index]) ? 1 : 0;
+        }
+    MobCycleEligible = Columns.Num();
+    MobCycleCount = Count;
+    MobCycleCap = Cap;
+    if (Count >= Cap) return;
+    ++MobCycles;
+    // The columns in a shuffled order, deterministic from the seed and the cycle.
+    const int64 Cycle = MobCycleStep / CreatureCycleTicks;
+    FRandomStream Order(FoundationLoot::MakeSeed(MobSpawnSeed ^ 0x6379636c, FIntVector(0, 0, int32(Cycle)), 21));
+    for (int32 Index = Columns.Num() - 1; Index > 0; --Index)
+        Columns.Swap(Index, Order.RandRange(0, Index));
+    for (const FIntPoint& Column : Columns)
+    {
+        if (Count >= Cap) break;
+        // A column spawns while a player whose square holds it is under its local cap.
+        bool bUnder = false;
+        for (int32 Index = 0; Index < Centers.Num() && !bUnder; ++Index)
+            bUnder = InSquare(Column, Centers[Index]) && Local[Index] < CreatureBaseCap;
+        if (!bUnder) continue;
+        const int32 Spawned = SpawnCycleColumn(Column, PlayerCells, Cycle);
+        Count += Spawned;
+        for (int32 Index = 0; Index < Centers.Num(); ++Index)
+            Local[Index] += InSquare(Column, Centers[Index]) ? Spawned : 0;
+    }
+}
+
+int32 FFoundationAuthority::SpawnCycleColumn(const FIntPoint& Column, TConstArrayView<FVector> PlayerCells, int64 Cycle)
+{
+    using namespace FoundationMobs;
+    // Deterministic from the world seed, the column and the cycle.
+    FRandomStream Random(
+        FoundationLoot::MakeSeed(MobSpawnSeed ^ 0x6379636c, FIntVector(Column.X, Column.Y, int32(Cycle)), 22));
+    const int32 StartX = Column.X * SpawnColumnCells + Random.RandHelper(SpawnColumnCells);
+    const int32 StartY = Column.Y * SpawnColumnCells + Random.RandHelper(SpawnColumnCells);
+    const double Block = UFoundationProfile::BlockCm;
+    int32 Spawned = 0;
+    for (int32 Round = 0; Round < GroupRounds; ++Round)
+    {
+        const FFoundationMobSpawn* Entry = nullptr;
+        int32 Group = 0, InGroup = 0;
+        const int32 Attempts = FMath::CeilToInt32(Random.GetFraction() * MaxRoundAttempts);
+        for (int32 Attempt = 0; Attempt < Attempts; ++Attempt)
+        {
+            const int32 X = StartX + RollPackOffset(Random);
+            const int32 Y = StartY + RollPackOffset(Random);
+            const float Yaw = Random.FRandRange(0, 360);
+            // Beyond MaxPlayerDistanceCells of every player across the ground: no column scan.
+            bool bInReach = false;
+            for (const FVector& Player : PlayerCells)
+                bInReach |= FVector2D(X + .5 - Player.X, Y + .5 - Player.Y).Size() <= MaxPlayerDistanceCells;
+            if (!bInReach) continue;
+            // The top block of the column: the distance test and the biome stand above it.
+            FIntVector Top(X, Y, World.BoundsMax.Z);
+            while (Top.Z > World.BoundsMin.Z && World.IsKnown(Top) && World.Get(Top).State.IsAir())
+                --Top.Z;
+            if (!World.IsKnown(Top) || World.Get(Top).State.IsAir()) continue;
+            const FVector At(X + .5, Y + .5, Top.Z + 1);
+            double Nearest = TNumericLimits<double>::Max();
+            for (const FVector& Player : PlayerCells)
+                Nearest = FMath::Min(Nearest, FVector::Dist(At, Player));
+            if (Nearest < MinPlayerDistanceCells || Nearest > MaxPlayerDistanceCells) continue;
+            // The round's species: by weight from the biome where it first finds a place.
+            if (!Entry)
+            {
+                const FFoundationBiomeSpawns* Biome = Rules.BiomeSpawns.Find(GetBiomeId(Top + FIntVector(0, 0, 1)));
+                Entry = Biome ? PickSpawn(*Biome, Random) : nullptr;
+                if (!Entry) break;
+                Group = RollPackSize(*Entry, Random);
+            }
+            FIntVector Feet;
+            if (!FindPackCell(Entry->Type, X, Y, Feet)) continue;
+            if (!SpawnMob(Entry->Type, FVector(Feet.X + .5, Feet.Y + .5, Feet.Z) * Block, Yaw)) continue;
+            ++MobsCycleSpawned;
+            if (++Spawned >= ClusterMax) return Spawned;
+            if (++InGroup >= Group) break;
+        }
+    }
     return Spawned;
 }
 
