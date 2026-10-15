@@ -265,6 +265,9 @@ struct FFoundationLabOptions
     // in a loaded column ticks each step (fuel, cooking, cooling, its lit state), open or not. Off, as before 8a: no
     // menu (the click passes on and places) and no ticks. The pawn copies foundation.Furnace in before each step.
     bool bFurnace = false;
+    // Barrels (T1 step 9): a right-click opens the block's 27-slot menu and the block is open while viewed. Off, as
+    // before: no menu (the click passes on and places). The pawn copies foundation.Barrel in before each step.
+    bool bBarrel = false;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -372,7 +375,9 @@ enum class EFoundationEventKind : uint8
     // A piece went into an armor slot (survival step 19a): Item the piece, LocationCm the player's feet (world cm).
     Equipped,
     // A block's hand use changed it (survival B3a: a door, trapdoor or gate opened or closed): Cell the used block,
-    // State its new state, Interaction the sound event (FoundationBlockFamilies::GetUseSound).
+    // State its new state, Interaction the sound event (FoundationBlockFamilies::GetUseSound). A barrel's open state
+    // changed (T1 step 9): the same, with Amount the volume and LocationCm where it plays (world cm); Amount 0 (a door)
+    // plays at the cell's centre at volume 1.
     BlockUsed
 };
 
@@ -662,8 +667,14 @@ private:
     void CloseMenu(FFoundationPlayer& Player, FFoundationResult& Result);
     // Each step: an open menu that is no longer valid closes (Codex review 12, finding 1).
     void StepOpenMenus();
-    // Each step: a furnace entity in a loaded cell whose block is gone is dropped; with Options.bFurnace the rest tick.
+    // Each step: a block entity in a loaded cell whose block is gone is dropped; with Options.bFurnace the furnaces
+    // tick.
     void StepFurnaces();
+    // A barrel's open state follows its viewers (T1 step 9; SURVIVAL-RUN2-FINDINGS R16,
+    // survival2.r16.animation_and_viewers): the first opens it and plays block.barrel.open, the last one leaving closes
+    // it and plays block.barrel.close, as a plain state change (no place event). Nothing for a cell that is no barrel
+    // (broken while viewed: vanilla's removed block entity plays nothing).
+    void UpdateBarrelOpen(const FIntVector& Cell);
     FFoundationFurnaceRules MakeFurnaceRules() const;
     // Pays a furnace's stored XP as orbs at LocalCm (its output taken, or the furnace broken) and clears it.
     void PayFurnaceExperience(FFoundationBlockEntity& Furnace, const FVector& LocalCm, int32 RandomSeed);

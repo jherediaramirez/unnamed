@@ -29,6 +29,15 @@ FIntPoint FHudContainerModel::GetSlotPosition(EFoundationMenuKind Kind, int32 Sl
     // The crafting table: result 124,35; the 3x3 from 30,17. The furnace: input 56,17, fuel 56,53, result 116,35. Both:
     // the main grid from 8,84; the hotbar at y 142.
     const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
+    if (Kind == EFoundationMenuKind::Barrel)
+    {
+        if (Layout.IsContainer(Slot))
+            return {8 + (Slot - Layout.FirstContainer) % 9 * 18, 18 + (Slot - Layout.FirstContainer) / 9 * 18};
+        if (Layout.IsMain(Slot))
+            return {8 + (Slot - Layout.FirstMain) % 9 * 18, BarrelPlayerY + (Slot - Layout.FirstMain) / 9 * 18};
+        if (Layout.IsHotbar(Slot)) return {8 + (Slot - Layout.FirstHotbar) * 18, BarrelHotbarY};
+        return {-1000, -1000};
+    }
     if (Layout.IsContainer(Slot))
     {
         static const FIntPoint Furnace[] = {{56, 17}, {56, 53}, {116, 35}};
@@ -80,7 +89,8 @@ bool FHudContainerModel::IsShown(int32 Slot) const
 
 int32 FHudContainerModel::HitTest(FIntPoint Point) const
 {
-    if (Point.X < 0 || Point.Y < 0 || Point.X >= Width || Point.Y >= Height) return FContainerModelMenu::Outside;
+    if (Point.X < 0 || Point.Y < 0 || Point.X >= Width || Point.Y >= GetHeight(Kind))
+        return FContainerModelMenu::Outside;
     for (int32 Slot = 0; Slot < GetSlots(); ++Slot)
     {
         // A slot's hover area is its 16 x 16 item area and the pixel around it.
@@ -93,6 +103,7 @@ int32 FHudContainerModel::HitTest(FIntPoint Point) const
 
 bool FHudContainerModel::IsInRecipeButton(EFoundationMenuKind Kind, FIntPoint Point)
 {
+    if (!HasRecipeButton(Kind)) return false;
     const FIntPoint At = GetRecipeButton(Kind);
     return Point.X >= At.X && Point.X < At.X + RecipeButtonWidth && Point.Y >= At.Y &&
         Point.Y < At.Y + RecipeButtonHeight;
@@ -146,12 +157,15 @@ TArray<FHudContainerClick> FHudContainerModel::MouseDown(
     // moves every stack like the one moved; either happens on the release. Never on the crafting result: each click
     // there crafts (provisional, vanilla play: spam-clicking an output crafts each time; the value report has no
     // double-click row; Codex review 10, finding 4). A furnace's output does not craft, so it collects (Codex review
-    // 22, finding 2).
+    // 22, finding 2). Both presses must be the left button: a right press then a left one is two clicks (Codex review
+    // 29, finding 1; vanilla's double-click needs the same button, survival2.r23.inventory_label).
     const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
     const bool bCraftResult = Layout.HasCraftResult() && Slot == FContainerModelMenu::ResultSlot;
-    const bool bDouble = Button == 0 && Slot != FContainerModelMenu::Outside && !bCraftResult && Slot == LastSlot &&
-        Time - LastTime < DoubleClickSeconds && (bShift ? !LastQuickMoved.IsEmpty() : !View.Carried.IsEmpty());
+    const bool bDouble = Button == 0 && Button == LastButton && Slot != FContainerModelMenu::Outside && !bCraftResult &&
+        Slot == LastSlot && Time - LastTime < DoubleClickSeconds &&
+        (bShift ? !LastQuickMoved.IsEmpty() : !View.Carried.IsEmpty());
     LastSlot = Slot;
+    LastButton = Button;
     LastTime = bDouble ? -1000 : Time;
     if (bDouble)
     {
@@ -263,7 +277,7 @@ void FHudContainerModel::ResetDrag()
 void FHudContainerModel::Reset()
 {
     ResetDrag();
-    LastSlot = INDEX_NONE;
+    LastSlot = LastButton = INDEX_NONE;
     bDoubleClick = bShiftDoubleClick = false;
     LastTime = -1000;
     LastQuickMoved = {};

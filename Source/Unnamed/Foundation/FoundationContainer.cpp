@@ -40,7 +40,13 @@ const FFoundationMenuLayout& FFoundationMenuLayout::Get(EFoundationMenuKind Kind
     static const FFoundationMenuLayout Crafting{46, 1, 3, 3, INDEX_NONE, 10, 37, INDEX_NONE};
     // value-swaps.md, "FurnaceScreen" (input 0, fuel 1, result 2; menu 3-29 main, 30-38 hotbar).
     static const FFoundationMenuLayout Furnace{39, INDEX_NONE, 0, 0, INDEX_NONE, 3, 30, INDEX_NONE, 0, 3, 2, 1};
-    return Kind == EFoundationMenuKind::Crafting ? Crafting : IsFurnaceMenu(Kind) ? Furnace : Player;
+    // ACTION-PLAN.md Line 1 #4 and value-swaps.md "Barrel" (ChestMenu with 3 rows: container 0-26, main 27-53, hotbar
+    // 54-62).
+    static const FFoundationMenuLayout Barrel{63, INDEX_NONE, 0, 0, INDEX_NONE, 27, 54, INDEX_NONE, 0, 27};
+    return Kind == EFoundationMenuKind::Crafting ? Crafting
+        : IsFurnaceMenu(Kind)                    ? Furnace
+        : Kind == EFoundationMenuKind::Barrel    ? Barrel
+                                                 : Player;
 }
 
 int32 FFoundationMenuLayout::ToInventorySlot(int32 MenuSlot) const
@@ -334,6 +340,17 @@ void FFoundationContainerMenu::QuickMove(int32 Slot)
     const EFoundationEquipmentSlot Equipment =
         Rules.GetEquipment ? Rules.GetEquipment(Stack.Item) : EFoundationEquipmentSlot::None;
     const int32 Main = Layout.FirstMain, Hotbar = Layout.FirstHotbar, End = Layout.GetHotbarEnd();
+    if (Layout.FirstContainer != INDEX_NONE && Layout.FuelSlot == INDEX_NONE)
+    {
+        // vanilla's ChestMenu routing (a barrel, T1 step 9): the container's slots go to the main grid and hotbar from
+        // the hotbar's last slot (hotbar 8..0, then main 35..9); the player's go into the container from its first
+        // slot, and what does not fit stays.
+        if (Layout.IsContainer(Slot))
+            MoveInto(Stack, Main, End, true);
+        else
+            MoveInto(Stack, Layout.FirstContainer, Layout.FirstContainer + Layout.ContainerSlots);
+        return;
+    }
     if (Layout.FirstContainer != INDEX_NONE)
     {
         // vanilla's furnace routing (survival.r3.shift_click): the result goes to the main grid and hotbar from the

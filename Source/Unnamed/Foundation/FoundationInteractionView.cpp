@@ -751,8 +751,10 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
         case EFoundationEventKind::BlockUsed:
             // A door, trapdoor or gate opened or closed (survival B3a): its set's event from the block, play volume 1
             // and pitch 0.9 + 0.1U (SURVIVAL-FINDINGS, R5, survival.r5.play_calls); the asset's volume applies on top.
+            // A barrel's open or close (T1 step 9) carries its own volume (0.5) and place (its facing face's centre).
             if (BreakEffects && !Event.Interaction.IsNone())
-                BreakEffects->PlayEvent(Event.Interaction, Cell.GetCenter(), 1.f, FMath::FRand() * .1f + .9f);
+                BreakEffects->PlayEvent(Event.Interaction, Event.Amount > 0 ? Event.LocationCm : Cell.GetCenter(),
+                    Event.Amount > 0 ? Event.Amount : 1.f, FMath::FRand() * .1f + .9f);
             break;
         case EFoundationEventKind::Stripped:
             // Axe stripping (step 14): item.axe.strip from the block, volume 1 and pitch 1 (provisional until a vanilla

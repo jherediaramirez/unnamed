@@ -2,8 +2,8 @@
 textures under GuiRoot/Container (UUnnamedProjectSettings::GuiRoot): container/inventory.png, the empty armor and
 offhand slot silhouettes and the recipe-book button; the crafting table's container/crafting_table.png (survival
 step 7); the furnace's container/furnace.png with its flame and arrow sprites (T1 step 8a2); the smoker's
-and blast furnace's backgrounds and sprites (T1 step 8b); and the vanilla button
-sprites widget/button, button_highlighted and button_disabled (the death screen, survival step 11a). Same pixel
+and blast furnace's backgrounds and sprites (T1 step 8b); the barrel's container/generic_54.png (T1 step 9); and the
+vanilla button sprites widget/button, button_highlighted and button_disabled (the death screen, survival step 11a). Same pixel
 settings as ImportBlocks.py's creative textures.
 
 Additive and idempotent: an existing texture is verified (its settings and the SHA-256 of the PNG it came from, kept
@@ -32,7 +32,8 @@ SOURCES = ["gui/container/inventory"] + ["gui/sprites/container/slot/" + name fo
           [part for name in ("smoker", "blast_furnace") for part in
            ("gui/container/" + name, "gui/sprites/container/" + name + "/lit_progress",
             "gui/sprites/container/" + name + "/burn_progress")] + \
-          ["gui/sprites/widget/" + name for name in ("button", "button_highlighted", "button_disabled")]
+          ["gui/sprites/widget/" + name for name in ("button", "button_highlighted", "button_disabled")] + \
+          ["gui/container/generic_54"]
 TAG = "SourceSha256"
 assets = unreal.EditorAssetLibrary
 SETTINGS = dict(compression_settings=unreal.TextureCompressionSettings.TC_EDITOR_ICON,

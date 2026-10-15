@@ -57,7 +57,9 @@ private:
 
 enum class EFoundationBlockEntityKind : uint8
 {
-    Furnace
+    Furnace,
+    // A barrel (T1 step 9): 27 slots, no ticks.
+    Barrel
 };
 
 // One block's entity: its kind, the block id it belongs to, its slots and (a furnace) its timers.
@@ -65,6 +67,12 @@ struct FFoundationBlockEntity
 {
     // A furnace's slots, as its menu numbers them.
     static constexpr int32 FurnaceInput = 0, FurnaceFuel = 1, FurnaceResult = 2, FurnaceSlots = 3;
+    // A barrel's slots (vanilla's ChestMenu with 3 rows).
+    static constexpr int32 BarrelSlots = 27;
+    static int32 GetSlots(EFoundationBlockEntityKind Kind)
+    {
+        return Kind == EFoundationBlockEntityKind::Barrel ? BarrelSlots : FurnaceSlots;
+    }
 
     EFoundationBlockEntityKind Kind = EFoundationBlockEntityKind::Furnace;
     FName Block;
@@ -151,4 +159,14 @@ namespace FoundationFurnace
     // chance (none for a whole total).
     UNNAMED_API int32 RollExperience(
         const TMap<int32, int32>& RecipesUsed, const FFoundationCooking& Cooking, FRandomStream& Random);
+}
+
+namespace FoundationBarrel
+{
+    // foundation.Barrel: 1 a barrel opens its menu (T1 step 9); 0 as before: no block use (a right-click places
+    // against it).
+    UNNAMED_API bool IsOn();
+    // The barrel's open and close sounds (value-swaps.md "Chest / barrel sounds", survival.r5.play_calls): volume 0.5,
+    // pitch 0.9 + 0.1U, the event's attenuation (16).
+    constexpr float SoundVolume = .5f;
 }

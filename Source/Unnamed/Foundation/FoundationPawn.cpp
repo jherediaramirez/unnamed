@@ -451,6 +451,7 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.Options.bMobSpawn = FoundationMobs::IsSpawnOn();
     Authority.Options.bFire = CVarFire.GetValueOnGameThread() != 0;
     Authority.Options.bFurnace = FoundationFurnace::IsOn();
+    Authority.Options.bBarrel = FoundationBarrel::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     // A level set outside the orb pickups (the lab panel, a reset) ends the last gain's timing (review 19a1).
     if (Vitals.Level != LevelGainLevel) LevelGainStep = LevelGainLevel = -1;

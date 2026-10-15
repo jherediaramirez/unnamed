@@ -39,3 +39,4 @@ The creative screen's existing textures from `Reference/minecraft-menu` (`gui/co
 | `/Game/Gui/Container/gui/container/blast_furnace` | `assets/minecraft/textures/gui/container/blast_furnace.png` | The blast furnace screen's background (`SHudContainerScreen`, `Kind` BlastFurnace) | T1 8b1 |
 | `/Game/Gui/Container/gui/sprites/container/blast_furnace/lit_progress` | `assets/minecraft/textures/gui/sprites/container/blast_furnace/lit_progress.png` | The blast furnace screen's flame (fuel left) | T1 8b1 |
 | `/Game/Gui/Container/gui/sprites/container/blast_furnace/burn_progress` | `assets/minecraft/textures/gui/sprites/container/blast_furnace/burn_progress.png` | The blast furnace screen's arrow (cooking progress) | T1 8b1 |
+| `/Game/Gui/Container/gui/container/generic_54` | `assets/minecraft/textures/gui/container/generic_54.png` | The barrel screen's background, its top 3 rows and player part (`SHudContainerScreen`, `Kind` Barrel; 18-chest will reuse it) | T1 9 |

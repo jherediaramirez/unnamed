@@ -53,6 +53,24 @@ namespace
         return true;
     }
 
+    // A barrel (T1 step 9) opens its menu over its block entity, made on first use; its open state follows the
+    // viewers (OpenContainer, UpdateBarrelOpen). foundation.Barrel 0: no use, so the click passes on.
+    bool WouldUseBarrel(const FFoundationAuthority& Authority, const FFoundationPlayer&, const FFoundationHit&)
+    {
+        return Authority.Options.bBarrel;
+    }
+
+    bool UseBarrel(FFoundationAuthority& Authority, FFoundationPlayer& Player, const FFoundationHit& Hit,
+        FFoundationResult& Result)
+    {
+        if (!Authority.Options.bBarrel) return false;
+        const FName Block = Authority.World.GetBlock(Authority.World.Get(Hit.Cell).State).Id;
+        Authority.OpenContainer(Player, EFoundationMenuKind::Barrel, Hit.Cell, Block, Result);
+        if (Result.IsCommitted())
+            Authority.BlockEntities.FindOrAdd(Hit.Cell, EFoundationBlockEntityKind::Barrel, Block);
+        return true;
+    }
+
     // The movement solver's contact tolerance (FoundationSimulation.cpp): touching is contact, only
     // positive-volume overlap obstructs. No extra clearance margin.
     constexpr double ContactCm = 1e-6;
@@ -167,7 +185,13 @@ int32 FFoundationAuthority::AddPlayer()
 
 void FFoundationAuthority::RemovePlayer(int32 Id)
 {
+    const FFoundationPlayer* Leaving = FindPlayer(Id);
+    const TOptional<FIntVector> Barrel =
+        Leaving && Leaving->OpenMenu.IsOpen() && Leaving->OpenMenu.Kind == EFoundationMenuKind::Barrel
+        ? TOptional<FIntVector>(Leaving->OpenMenu.Cell)
+        : NullOpt;
     Players.RemoveAll([Id](const FFoundationPlayer& Player) { return Player.Id == Id; });
+    if (Barrel) UpdateBarrelOpen(*Barrel);
 }
 
 FFoundationPlayer* FFoundationAuthority::FindPlayer(int32 Id)
@@ -242,7 +266,7 @@ TArray<FFoundationItemInstance> FFoundationAuthority::GetPlayerMenu(const FFound
 
 TArray<FFoundationItemInstance> FFoundationAuthority::GetMenuGrid(const FFoundationPlayer& Player) const
 {
-    if (!IsFurnaceMenu(Player.OpenMenu.Kind)) return Player.OpenMenu.Grid;
+    if (!UsesBlockEntity(Player.OpenMenu.Kind)) return Player.OpenMenu.Grid;
     const FFoundationBlockEntity* Entity = BlockEntities.Find(Player.OpenMenu.Cell);
     return Entity ? Entity->Items : TArray<FFoundationItemInstance>();
 }
@@ -271,7 +295,8 @@ const FFoundationAuthority::FBlockUseEntry* FFoundationAuthority::FindBlockUse(F
     static const TMap<FName, FBlockUseEntry> BuiltIn{{TEXT("crafting_table"), {FBlockUse(&UseCraftingTable), nullptr}},
         {TEXT("furnace"), {FBlockUse(&UseFurnace), FBlockWouldUse(&WouldUseFurnace)}},
         {TEXT("smoker"), {FBlockUse(&UseFurnace), FBlockWouldUse(&WouldUseFurnace)}},
-        {TEXT("blast_furnace"), {FBlockUse(&UseFurnace), FBlockWouldUse(&WouldUseFurnace)}}};
+        {TEXT("blast_furnace"), {FBlockUse(&UseFurnace), FBlockWouldUse(&WouldUseFurnace)}},
+        {TEXT("barrel"), {FBlockUse(&UseBarrel), FBlockWouldUse(&WouldUseBarrel)}}};
     if (const FBlockUseEntry* Use = BlockUses.Find(BlockId)) return Use;
     if (const FBlockUseEntry* Use = BuiltIn.Find(BlockId)) return Use;
     // Doors, trapdoors and fence gates (survival B3a, foundation.Blocks.Interact), by family; iron has none.
@@ -356,6 +381,11 @@ void FFoundationAuthority::OpenContainer(
         Reject(Result, EFoundationReason::DropDeferred);
         return;
     }
+    // A barrel this menu replaces loses its viewer (T1 step 9).
+    const TOptional<FIntVector> LeftBarrel =
+        Player.OpenMenu.IsOpen() && Player.OpenMenu.Kind == EFoundationMenuKind::Barrel
+        ? TOptional<FIntVector>(Player.OpenMenu.Cell)
+        : NullOpt;
     // vanilla's containerId counts 1-100 and wraps (minecraft.wiki "Java Edition protocol"); 0 is the inventory.
     Player.LastContainerId = Player.LastContainerId % 100 + 1;
     const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
@@ -381,6 +411,8 @@ void FFoundationAuthority::OpenContainer(
     Event.Interaction = Block;
     Event.Step = Player.Facts.Step;
     AddEvent(Event);
+    if (LeftBarrel && *LeftBarrel != Cell) UpdateBarrelOpen(*LeftBarrel);
+    if (Kind == EFoundationMenuKind::Barrel) UpdateBarrelOpen(Cell);
 }
 
 FFoundationInventory FFoundationAuthority::MakeLoadout()
@@ -458,7 +490,7 @@ bool FFoundationAuthority::IsMenuValid(const FFoundationPlayer& Player) const
     const FFoundationOpenMenu& Open = Player.OpenMenu;
     if (!Open.IsOpen() || !World.IsKnown(Open.Cell) || World.GetBlock(World.Get(Open.Cell).State).Id != Open.Block)
         return false;
-    if (IsFurnaceMenu(Open.Kind) && !BlockEntities.Find(Open.Cell)) return false;
+    if (UsesBlockEntity(Open.Kind) && !BlockEntities.Find(Open.Cell)) return false;
     // The squared distance from the eye to the block's box strictly below (interaction range + 4 blocks)^2: 8.5 blocks
     // at the normal 4.5 (vanilla's stillValid; survival2.r23.container_rule).
     if (!Player.bHasFacts) return true;
@@ -516,9 +548,45 @@ void FFoundationAuthority::CloseMenu(FFoundationPlayer& Player, FFoundationResul
     {
         ++Trial.Revision;
         Player.Inventory = MoveTemp(Trial);
+        const FFoundationOpenMenu Closed = MoveTemp(Player.OpenMenu);
         Player.OpenMenu = {};
         Result.Outcome = EFoundationOutcome::Committed;
+        if (Closed.IsOpen() && Closed.Kind == EFoundationMenuKind::Barrel) UpdateBarrelOpen(Closed.Cell);
     }
+}
+
+void FFoundationAuthority::UpdateBarrelOpen(const FIntVector& Cell)
+{
+    static const FName BarrelId(TEXT("barrel")), Open(TEXT("open")), Facing(TEXT("facing")), True(TEXT("true")),
+        False(TEXT("false"));
+    if (!World.IsKnown(Cell)) return;
+    const FFoundationBlockState State = World.Get(Cell).State;
+    if (World.GetBlock(State).Id != BarrelId) return;
+    const bool bViewed = Players.ContainsByPredicate(
+        [&Cell](const FFoundationPlayer& Player)
+        {
+            return Player.OpenMenu.IsOpen() && Player.OpenMenu.Kind == EFoundationMenuKind::Barrel &&
+                Player.OpenMenu.Cell == Cell;
+        });
+    const FFoundationBlockState Want = World.GetRegistry().WithValue(State, Open, bViewed ? True : False);
+    if (Want == State) return;
+    World.Set(Cell, Want);
+    // The sound plays from the centre of the face the barrel looks toward (R16's barrel rows: facing north, z .0 where
+    // the chest's is .5), volume 0.5, pitch 0.9 + 0.1U.
+    const FName FacingValue = World.GetRegistry().GetValue(State, Facing);
+    FVector Normal = FVector::ZeroVector;
+    for (int32 Face = 0; Face < 6; ++Face)
+        if (FacingValue == FoundationGrid::FaceName(EFoundationFace(Face)))
+            Normal = FoundationGrid::FaceNormal(EFoundationFace(Face));
+    FFoundationEvent Event;
+    Event.Kind = EFoundationEventKind::BlockUsed;
+    Event.Cell = Cell;
+    Event.State = Want;
+    Event.Interaction = bViewed ? FName(TEXT("block.barrel.open")) : FName(TEXT("block.barrel.close"));
+    Event.Amount = FoundationBarrel::SoundVolume;
+    Event.LocationCm =
+        FoundationGrid::CellBox(Cell, World.OriginCm).GetCenter() + Normal * (UFoundationProfile::BlockCm * .5);
+    AddEvent(Event);
 }
 
 void FFoundationAuthority::StepFurnaces()
@@ -528,17 +596,16 @@ void FFoundationAuthority::StepFurnaces()
     TArray<TPair<FIntVector, FFoundationBlockState>, TInlineAllocator<4>> Relit;
     for (auto& [Cell, Entity] : BlockEntities.GetAll())
     {
-        if (Entity.Kind != EFoundationBlockEntityKind::Furnace) continue;
         // Only loaded columns tick (vanilla ticks loaded chunks only); the entity waits for its column.
         if (!World.IsKnown(Cell)) continue;
-        // A furnace replaced without a break (a command, a reset of the cell) leaves nothing behind, with the switch on
-        // or off, so a furnace placed there later starts empty.
+        // A furnace or barrel replaced without a break (a command, a reset of the cell) leaves nothing behind, with the
+        // switch on or off, so one placed there later starts empty.
         if (World.GetBlock(World.Get(Cell).State).Id != Entity.Block)
         {
             Gone.Add(Cell);
             continue;
         }
-        if (!Options.bFurnace) continue;
+        if (Entity.Kind != EFoundationBlockEntityKind::Furnace || !Options.bFurnace) continue;
         FoundationFurnace::Tick(Entity, FurnaceRules, BlockEntities, FoundationFurnace::GetCookingKind(Entity.Block));
         // The block's lit state follows the fuel on the same tick (survival.r3.furnace_ticks: lit at tick 1, unlit at
         // fuel + 1; its light comes with the state). Same block id, so the entity stays; a plain state change, as an
@@ -1927,6 +1994,11 @@ FFoundationResult FFoundationAuthority::Execute(
                     PayFurnaceExperience(*Furnace, Player->Facts.FeetCm - World.OriginCm,
                         int32(HashCombine(GetTypeHash(Open.Cell), GetTypeHash(Command.Sequence))));
             }
+            else if (FFoundationBlockEntity* Barrel = bOpenMenu && Open.Kind == EFoundationMenuKind::Barrel
+                    ? BlockEntities.Find(Open.Cell)
+                    : nullptr)
+                // A barrel's 27 slots live in its block entity (T1 step 9).
+                Barrel->Items = MoveTemp(TrialGrid);
             else if (bOpenMenu)
                 Player->OpenMenu.Grid = MoveTemp(TrialGrid);
             Result.Outcome = EFoundationOutcome::Committed;
