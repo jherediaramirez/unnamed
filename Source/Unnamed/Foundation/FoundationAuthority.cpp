@@ -510,6 +510,8 @@ void FFoundationAuthority::Reset()
     BlockTicks.Empty();
     Mobs.Empty();
     MobSpawnColumns.Empty();
+    MobColumnTops.Empty();
+    MobEmitters.Empty();
     MobCycleStep = 0;
     PathStart = 0;
     FFoundationEvent Event;
@@ -1387,6 +1389,11 @@ void FFoundationAuthority::StepMobs()
     const FVector& Origin = World.OriginCm;
     const double VoidCm = double(World.BoundsMin.Z - VoidDepthCells) * UFoundationProfile::BlockCm;
     TArray<FFoundationMobPlayer, TInlineAllocator<4>> Near;
+    // [mobs.despawn] the nearest player of any state counts for despawning.
+    TArray<FVector, TInlineAllocator<4>> PlayerFeet;
+    for (const FFoundationPlayer& Player : Players)
+        if (Player.bHasFacts) PlayerFeet.Add(Player.Facts.FeetCm);
+    const bool bPeaceful = IsPeaceful();
     for (const FFoundationPlayer& Player : Players)
         if (Player.bHasFacts && Player.Facts.bAlive)
         {
@@ -1399,8 +1406,8 @@ void FFoundationAuthority::StepMobs()
                 ItemId(EFoundationHand::Main), ItemId(EFoundationHand::Off)});
             Seen.WidthCm = Player.Facts.WidthCm;
             Seen.HeightCm = Player.Facts.HeightCm;
-            Seen.bTargetable =
-                Player.Facts.Mode == EFoundationPlayerMode::Survival || Player.Facts.Mode == EFoundationPlayerMode::Adventure;
+            Seen.bTargetable = Player.Facts.Mode == EFoundationPlayerMode::Survival ||
+                Player.Facts.Mode == EFoundationPlayerMode::Adventure;
         }
     // Hits are taken by the player's owner after each step; ones nobody took are dropped.
     for (FFoundationPlayer& Player : Players)
@@ -1433,7 +1440,21 @@ void FFoundationAuthority::StepMobs()
             ++Index;
             continue;
         }
+        // Monsters go far from every player, idle beyond the near distance on a roll, and all of them on Peaceful.
+        if (IsMonster(Mob.Type) && Mob.IsAlive())
+        {
+            double Nearest = MAX_dbl;
+            for (const FVector& Feet : PlayerFeet)
+                Nearest = FMath::Min(Nearest, FVector::Dist(Feet, Origin + Mob.LocalCm));
+            if (bPeaceful || (!PlayerFeet.IsEmpty() && ShouldDespawn(Mob, Nearest)))
+            {
+                Mobs.RemoveAt(Index);
+                ++MobsDespawned;
+                continue;
+            }
+        }
         ++Mob.Age;
+        ++Mob.NoActionTicks;
         Mob.PreviousYaw = Mob.Yaw;
         Mob.Health.StepDamageCooldown();
         if (Mob.HurtTime > 0) --Mob.HurtTime;
@@ -1571,8 +1592,19 @@ void FFoundationAuthority::StepMobHazards(FFoundationMob& Mob)
 void FFoundationAuthority::StepMonster(FFoundationMob& Mob, TConstArrayView<FFoundationMobPlayer> Near)
 {
     using namespace FoundationMobs;
-    ThinkHostile(Mob, World.OriginCm, Near,
-        [this](const FVector& From, const FVector& To) { return HasMobLineOfSight(From, To); });
+    // The spider's targeting reads the light proxy's brightness at its eyes.
+    float Brightness = 0;
+    if (Mob.Type == EFoundationMobType::Spider)
+    {
+        const FVector Eye = Mob.LocalCm + FVector(0, 0, GetKind(Mob.Type).EyeCm);
+        Brightness =
+            GetBrightness(GetLightProxy(FIntVector(FoundationGrid::FloorToCell(Eye.X),
+                                            FoundationGrid::FloorToCell(Eye.Y), FoundationGrid::FloorToCell(Eye.Z)),
+                nullptr, nullptr, true));
+    }
+    ThinkHostile(
+        Mob, World.OriginCm, Near,
+        [this](const FVector& From, const FVector& To) { return HasMobLineOfSight(From, To); }, Brightness);
     if (!Mob.bAttackNow) return;
     // [mobs.base_attributes] the attack_damage attribute; the player's owner applies difficulty, armor and the
     // knockback (FFoundationVitals::Hurt).
@@ -1654,6 +1686,8 @@ bool FFoundationAuthority::HasMobLineOfSight(const FVector& FromCm, const FVecto
 
 bool FFoundationAuthority::IsSkyVisible(const FIntVector& Cell)
 {
+    // The storage's motion-blocking heightmap when it keeps one (20c2), else a scan up to the world's top.
+    if (const int32 Top = World.GetStorage().GetTopZ(Cell.X, Cell.Y, true); Top != MIN_int32) return Cell.Z > Top;
     for (FIntVector Above = Cell; Above.Z <= World.BoundsMax.Z; ++Above.Z)
     {
         if (!World.IsKnown(Above) || World.Get(Above).State.IsAir()) continue;
@@ -1669,6 +1703,15 @@ void FFoundationAuthority::StepMobSpawns()
     ++MobCycleStep;
     if (!Options.bMobs || !Options.bMobSpawn || !GetBiomeId || Rules.BiomeSpawns.IsEmpty()) return;
     if (MobCycleStep % CreatureCycleTicks == 0) RunCreatureCycle();
+    EmitterRebuilds = 0;
+    if (MobCycleStep % MonsterCycleTicks == 0 && !IsPeaceful())
+    {
+        const double Start = FPlatformTime::Seconds();
+        RunSpawnCycle(EFoundationMobCategory::Monster);
+        const double Ms = (FPlatformTime::Seconds() - Start) * 1000;
+        MonsterCycleMsTotal += Ms;
+        MonsterCycleMsMax = FMath::Max(MonsterCycleMsMax, Ms);
+    }
     for (const FFoundationPlayer& Player : Players)
     {
         if (!Player.bHasFacts) continue;
@@ -1731,7 +1774,20 @@ int32 FFoundationAuthority::SpawnPack(const FIntPoint& Column)
 
 void FFoundationAuthority::RunCreatureCycle()
 {
+    RunSpawnCycle(EFoundationMobCategory::Creature);
+}
+
+bool FFoundationAuthority::IsPeaceful() const
+{
+    for (const FFoundationPlayer& Player : Players)
+        if (Player.bHasFacts && Player.Facts.Difficulty == EFoundationDifficulty::Peaceful) return true;
+    return false;
+}
+
+void FFoundationAuthority::RunSpawnCycle(EFoundationMobCategory Category)
+{
     using namespace FoundationMobs;
+    const bool bMonster = Category == EFoundationMobCategory::Monster;
     const double Block = UFoundationProfile::BlockCm;
     TArray<FVector, TInlineAllocator<4>> PlayerCells;
     TArray<FIntPoint, TInlineAllocator<4>> Centers;
@@ -1758,7 +1814,8 @@ void FFoundationAuthority::RunCreatureCycle()
                 Eligible.Add(Column);
                 Columns.Add(Column);
             }
-    // The creatures counted: the global cap's over the eligible columns, each player's over its own square.
+    // The category's mobs counted (Codex 30 #1, #2): every live one not frozen (its column loaded) for the global
+    // cap, those in each player's square for its local cap.
     const auto ColumnOf = [](const FFoundationMob& Mob)
     {
         return FIntPoint(FoundationGrid::FloorDivide(FoundationGrid::FloorToCell(Mob.LocalCm.X), SpawnColumnCells),
@@ -1766,52 +1823,72 @@ void FFoundationAuthority::RunCreatureCycle()
     };
     const auto InSquare = [](const FIntPoint& A, const FIntPoint& B)
     { return FMath::Max(FMath::Abs(A.X - B.X), FMath::Abs(A.Y - B.Y)) <= SpawnRadiusColumns; };
-    const int32 Cap = GetCreatureCap(Columns.Num());
+    const int32 Cap = GetCategoryCap(Category, Columns.Num());
+    const int32 LocalCap = GetBaseCap(Category);
     int32 Count = 0;
     TArray<int32, TInlineAllocator<4>> Local;
     Local.Init(0, Centers.Num());
     for (const FFoundationMob& Mob : Mobs)
-        if (Mob.IsAlive() && IsCreature(Mob.Type))
+        if (Mob.IsAlive() && !Mob.bFrozen && GetCategory(Mob.Type) == Category)
         {
             const FIntPoint Column = ColumnOf(Mob);
-            Count += Eligible.Contains(Column) ? 1 : 0;
+            ++Count;
             for (int32 Index = 0; Index < Centers.Num(); ++Index)
                 Local[Index] += InSquare(Column, Centers[Index]) ? 1 : 0;
         }
-    MobCycleEligible = Columns.Num();
-    MobCycleCount = Count;
-    MobCycleCap = Cap;
+    (bMonster ? MonsterCycleCount : MobCycleCount) = Count;
+    (bMonster ? MonsterCycleCap : MobCycleCap) = Cap;
+    if (!bMonster) MobCycleEligible = Columns.Num();
     if (Count >= Cap) return;
-    ++MobCycles;
-    // The columns in a shuffled order, deterministic from the seed and the cycle.
-    const int64 Cycle = MobCycleStep / CreatureCycleTicks;
-    FRandomStream Order(FoundationLoot::MakeSeed(MobSpawnSeed ^ 0x6379636c, FIntVector(0, 0, int32(Cycle)), 21));
+    ++(bMonster ? MonsterCycles : MobCycles);
+    // The columns in a shuffled order, deterministic from the seed and the cycle. Monsters: one shuffle a pass, each
+    // step its next MonsterColumnsPerStep (provisional, cost).
+    const int64 Cycle = MobCycleStep / (bMonster ? MonsterCycleTicks : CreatureCycleTicks);
+    const uint32 Salt = bMonster ? 0x6d6f6e73 : 0x6379636c;
+    const int32 Passes = bMonster ? FMath::Max(1, FMath::DivideAndRoundUp(Columns.Num(), MonsterColumnsPerStep)) : 1;
+    FRandomStream Order(FoundationLoot::MakeSeed(MobSpawnSeed ^ Salt, FIntVector(0, 0, int32(Cycle / Passes)), 21));
     for (int32 Index = Columns.Num() - 1; Index > 0; --Index)
         Columns.Swap(Index, Order.RandRange(0, Index));
-    for (const FIntPoint& Column : Columns)
+    const int32 First = bMonster ? int32(Cycle % Passes) * MonsterColumnsPerStep : 0;
+    const int32 Last = bMonster ? FMath::Min(First + MonsterColumnsPerStep, Columns.Num()) : Columns.Num();
+    for (int32 Next = First; Next < Last; ++Next)
     {
+        const FIntPoint& Column = Columns[Next];
         if (Count >= Cap) break;
         // A column spawns while a player whose square holds it is under its local cap.
         bool bUnder = false;
         for (int32 Index = 0; Index < Centers.Num() && !bUnder; ++Index)
-            bUnder = InSquare(Column, Centers[Index]) && Local[Index] < CreatureBaseCap;
+            bUnder = InSquare(Column, Centers[Index]) && Local[Index] < LocalCap;
         if (!bUnder) continue;
-        const int32 Spawned = SpawnCycleColumn(Column, PlayerCells, Cycle);
+        const int32 Spawned = SpawnCycleColumn(Column, PlayerCells, Cycle, Category);
         Count += Spawned;
         for (int32 Index = 0; Index < Centers.Num(); ++Index)
             Local[Index] += InSquare(Column, Centers[Index]) ? Spawned : 0;
     }
 }
 
-int32 FFoundationAuthority::SpawnCycleColumn(const FIntPoint& Column, TConstArrayView<FVector> PlayerCells, int64 Cycle)
+int32 FFoundationAuthority::SpawnCycleColumn(
+    const FIntPoint& Column, TConstArrayView<FVector> PlayerCells, int64 Cycle, EFoundationMobCategory Category)
 {
     using namespace FoundationMobs;
+    const bool bMonster = Category == EFoundationMobCategory::Monster;
     // Deterministic from the world seed, the column and the cycle.
-    FRandomStream Random(
-        FoundationLoot::MakeSeed(MobSpawnSeed ^ 0x6379636c, FIntVector(Column.X, Column.Y, int32(Cycle)), 22));
+    FRandomStream Random(FoundationLoot::MakeSeed(
+        MobSpawnSeed ^ (bMonster ? 0x6d6f6e73 : 0x6379636c), FIntVector(Column.X, Column.Y, int32(Cycle)), 22));
     const int32 StartX = Column.X * SpawnColumnCells + Random.RandHelper(SpawnColumnCells);
     const int32 StartY = Column.Y * SpawnColumnCells + Random.RandHelper(SpawnColumnCells);
     const double Block = UFoundationProfile::BlockCm;
+    // Monsters: the round's height, from the world's bottom to one above the start column's top block; a full solid
+    // there ends the column.
+    int32 StartZ = 0;
+    if (bMonster)
+    {
+        const FMobColumnTops Tops = GetColumnTops(StartX, StartY);
+        if (Tops.NonAir < World.BoundsMin.Z) return 0;
+        StartZ = Random.RandRange(World.BoundsMin.Z, FMath::Min(Tops.NonAir + 1, World.BoundsMax.Z));
+        const FIntVector Start(StartX, StartY, StartZ);
+        if (!World.IsKnown(Start) || GetPathCell(Start).Solid >= 1) return 0;
+    }
     int32 Spawned = 0;
     for (int32 Round = 0; Round < GroupRounds; ++Round)
     {
@@ -1828,11 +1905,15 @@ int32 FFoundationAuthority::SpawnCycleColumn(const FIntPoint& Column, TConstArra
             for (const FVector& Player : PlayerCells)
                 bInReach |= FVector2D(X + .5 - Player.X, Y + .5 - Player.Y).Size() <= MaxPlayerDistanceCells;
             if (!bInReach) continue;
-            // The top block of the column: the distance test and the biome stand above it.
-            FIntVector Top(X, Y, World.BoundsMax.Z);
-            while (Top.Z > World.BoundsMin.Z && World.IsKnown(Top) && World.Get(Top).State.IsAir())
-                --Top.Z;
-            if (!World.IsKnown(Top) || World.Get(Top).State.IsAir()) continue;
+            // Creatures: the top block of the column; the distance test and the biome stand above it. Monsters: the
+            // round's height.
+            FIntVector Top(X, Y, bMonster ? StartZ - 1 : World.BoundsMax.Z);
+            if (!bMonster)
+            {
+                while (Top.Z > World.BoundsMin.Z && World.IsKnown(Top) && World.Get(Top).State.IsAir())
+                    --Top.Z;
+                if (!World.IsKnown(Top) || World.Get(Top).State.IsAir()) continue;
+            }
             const FVector At(X + .5, Y + .5, Top.Z + 1);
             double Nearest = TNumericLimits<double>::Max();
             for (const FVector& Player : PlayerCells)
@@ -1842,14 +1923,17 @@ int32 FFoundationAuthority::SpawnCycleColumn(const FIntPoint& Column, TConstArra
             if (!Entry)
             {
                 const FFoundationBiomeSpawns* Biome = Rules.BiomeSpawns.Find(GetBiomeId(Top + FIntVector(0, 0, 1)));
-                Entry = Biome ? PickSpawn(*Biome, Random) : nullptr;
+                Entry = Biome ? PickSpawn(bMonster ? Biome->Monsters : Biome->Creatures, Random) : nullptr;
                 if (!Entry) break;
                 Group = RollPackSize(*Entry, Random);
             }
-            FIntVector Feet;
-            if (!FindPackCell(Entry->Type, X, Y, Feet)) continue;
+            // A mob not built yet (SM 20c2): the round spawns nothing.
+            if (Entry->bBlank) break;
+            FIntVector Feet = Top + FIntVector(0, 0, 1);
+            if (bMonster ? !FindMonsterCell(Entry->Type, Feet, Random) : !FindPackCell(Entry->Type, X, Y, Feet))
+                continue;
             if (!SpawnMob(Entry->Type, FVector(Feet.X + .5, Feet.Y + .5, Feet.Z) * Block, Yaw)) continue;
-            ++MobsCycleSpawned;
+            ++(bMonster ? MonstersCycleSpawned : MobsCycleSpawned);
             if (++Spawned >= ClusterMax) return Spawned;
             if (++InGroup >= Group) break;
         }
@@ -1873,10 +1957,15 @@ bool FFoundationAuthority::FindPackCell(EFoundationMobType Type, int32 X, int32 
     // Above the motion-blocking top the sky light proxy is 15 (scout Q1 (a)).
     if (SkyLightProxy < PassiveMinLight) return false;
     OutFeet = Cell + FIntVector(0, 0, 1);
+    return HasMobRoom(Type, OutFeet);
+}
+
+bool FFoundationAuthority::HasMobRoom(EFoundationMobType Type, const FIntVector& Feet)
+{
+    using namespace FoundationMobs;
     // Room for the box: no collision and no fluid in it (shrunk a hair off the floor).
     const double Block = UFoundationProfile::BlockCm;
-    const FBox Body =
-        GetBox(Type, World.OriginCm + FVector(OutFeet.X + .5, OutFeet.Y + .5, OutFeet.Z) * Block).ExpandBy(-.1);
+    const FBox Body = GetBox(Type, World.OriginCm + FVector(Feet.X + .5, Feet.Y + .5, Feet.Z) * Block).ExpandBy(-.1);
     TArray<FBox>& Boxes = PathBoxes;
     Boxes.Reset();
     if (GatherCollision)
@@ -1886,6 +1975,132 @@ bool FFoundationAuthority::FindPackCell(EFoundationMobType Type, int32 X, int32 
     for (const FBox& Box : Boxes)
         if (Box.Intersect(Body)) return false;
     return !IsMobInFluid(Body, false) && !IsMobInFluid(Body, true);
+}
+
+bool FFoundationAuthority::FindMonsterCell(EFoundationMobType Type, const FIntVector& Feet, FRandomStream& Random)
+{
+    using namespace FoundationMobs;
+    const FIntVector Below = Feet - FIntVector(0, 0, 1);
+    if (!World.IsKnown(Feet) || !World.IsKnown(Below)) return false;
+    // The floor: a full block top, not leaves (provisional: vanilla's per-block spawn rule is code).
+    const FFoundationPathCell Floor = GetPathCell(Below);
+    if (Floor.bAvoid || !FMath::IsNearlyEqual(Floor.Solid, 1.f, 1e-3f)) return false;
+    static const FGameplayTag Leaves = FGameplayTag::RequestGameplayTag(TEXT("Block.Leaves"), false);
+    if (Leaves.IsValid() && World.GetBlock(World.Get(Below).State).Tags.HasTag(Leaves)) return false;
+    if (!HasMobRoom(Type, Feet)) return false;
+    // The sky draw first: the block light is the costly part.
+    const bool bSky = IsSkyVisible(Feet);
+    if (!RollSkyLight(Random, bSky ? FullSkyLight : 0)) return false;
+    const int32 BlockLight = GetBlockLightProxy(Feet, true);
+    if (BlockLight < 0) return false;
+    float SkyLevel = SkyLightProxy;
+    bool bBurns = false;
+    if (GetSkyFacts) GetSkyFacts(SkyLevel, bBurns);
+    return RollMonsterLight(Random, BlockLight, FMath::Max(bSky ? VoxelSky::OpenSkyLight(SkyLevel) : 0, BlockLight));
+}
+
+FFoundationAuthority::FMobColumnTops FFoundationAuthority::GetColumnTops(int32 X, int32 Y)
+{
+    using namespace FoundationMobs;
+    // The storage's heightmaps when it keeps them (the voxel world: no cache needed), else a cached scan down.
+    if (const int32 Surface = World.GetStorage().GetTopZ(X, Y, false); Surface != MIN_int32)
+    {
+        FMobColumnTops Tops;
+        Tops.NonAir = FMath::Clamp(Surface, World.BoundsMin.Z - 1, World.BoundsMax.Z);
+        Tops.Blocking = FMath::Clamp(World.GetStorage().GetTopZ(X, Y, true), World.BoundsMin.Z - 1, World.BoundsMax.Z);
+        return Tops;
+    }
+    FMobColumnTops& Tops = MobColumnTops.FindOrAdd(FIntPoint(X, Y));
+    if (Tops.Step >= 0 && MobCycleStep - Tops.Step < LightCacheTicks) return Tops;
+    Tops.Step = MobCycleStep;
+    Tops.NonAir = Tops.Blocking = World.BoundsMin.Z - 1;
+    for (FIntVector Cell(X, Y, World.BoundsMax.Z); Cell.Z >= World.BoundsMin.Z; --Cell.Z)
+    {
+        if (!World.IsKnown(Cell))
+        {
+            Tops.NonAir = Tops.Blocking = World.BoundsMin.Z - 1;
+            break;
+        }
+        if (World.Get(Cell).State.IsAir()) continue;
+        if (Tops.NonAir < World.BoundsMin.Z) Tops.NonAir = Cell.Z;
+        const FFoundationPathCell Path = GetPathCell(Cell);
+        if (Path.bAvoid || Path.Solid > 0)
+        {
+            Tops.Blocking = Cell.Z;
+            break;
+        }
+    }
+    return Tops;
+}
+
+const FFoundationAuthority::FMobEmitters* FFoundationAuthority::GetSectionEmitters(
+    const FIntVector& Section, bool bBudgeted)
+{
+    using namespace FoundationMobs;
+    if (FMobEmitters* Known = MobEmitters.Find(Section);
+        Known && Known->Step >= 0 && MobCycleStep - Known->Step < LightCacheTicks)
+        return Known;
+    if (bBudgeted && EmitterRebuilds >= EmitterRebuildsPerStep) return nullptr;
+    FMobEmitters& Entry = MobEmitters.FindOrAdd(Section);
+    Entry.Step = MobCycleStep;
+    Entry.Emitters.Reset();
+    const FIntVector Min = Section * SpawnColumnCells;
+    const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    // A section whose palette holds no emitting state has none (no scan, no budget).
+    if (!World.GetStorage().MayHold(
+            Min, [&Registry](FFoundationBlockState State) { return Registry.GetLightEmission(State) > 0; }))
+        return &Entry;
+    ++EmitterRebuilds;
+    World.GetStorage().ForEachSolid(Min, Min + FIntVector(SpawnColumnCells - 1),
+        [&Entry, &Registry](const FIntVector& Cell, const FFoundationCell& Value)
+        {
+            if (const int32 Level = Registry.GetLightEmission(Value.State); Level > 0)
+                Entry.Emitters.Emplace(Cell, Level);
+        });
+    return &Entry;
+}
+
+int32 FFoundationAuthority::GetBlockLightProxy(const FIntVector& Cell, bool bBudgeted)
+{
+    using namespace FoundationMobs;
+    // Bounded caches: dropped whole when they grow past a few loaded worlds' worth.
+    if (MobEmitters.Num() > 32768) MobEmitters.Empty();
+    if (MobColumnTops.Num() > 262144) MobColumnTops.Empty();
+    constexpr int32 Reach = FullSkyLight - 1;
+    const auto SectionOf = [](const FIntVector& At)
+    {
+        return FIntVector(FoundationGrid::FloorDivide(At.X, SpawnColumnCells),
+            FoundationGrid::FloorDivide(At.Y, SpawnColumnCells), FoundationGrid::FloorDivide(At.Z, SpawnColumnCells));
+    };
+    const FIntVector Low = SectionOf(Cell - FIntVector(Reach)), High = SectionOf(Cell + FIntVector(Reach));
+    int32 Best = 0;
+    for (int32 Z = Low.Z; Z <= High.Z; ++Z)
+        for (int32 Y = Low.Y; Y <= High.Y; ++Y)
+            for (int32 X = Low.X; X <= High.X; ++X)
+            {
+                const FMobEmitters* Section = GetSectionEmitters(FIntVector(X, Y, Z), bBudgeted);
+                if (!Section) return -1;
+                for (const TPair<FIntVector, int32>& Emitter : Section->Emitters)
+                {
+                    const FIntVector D = Emitter.Key - Cell;
+                    Best = FMath::Max(Best, Emitter.Value - (FMath::Abs(D.X) + FMath::Abs(D.Y) + FMath::Abs(D.Z)));
+                }
+            }
+    return Best;
+}
+
+int32 FFoundationAuthority::GetLightProxy(const FIntVector& Cell, int32* OutSky, int32* OutBlock, bool bBudgeted)
+{
+    using namespace FoundationMobs;
+    const bool bSky = IsSkyVisible(Cell);
+    float SkyLevel = SkyLightProxy;
+    bool bBurns = false;
+    if (GetSkyFacts) GetSkyFacts(SkyLevel, bBurns);
+    // Budgeted: a section left for a later step counts as no block light.
+    const int32 BlockLight = FMath::Max(0, GetBlockLightProxy(Cell, bBudgeted));
+    if (OutSky) *OutSky = bSky ? FullSkyLight : 0;
+    if (OutBlock) *OutBlock = BlockLight;
+    return FMath::Max(bSky ? VoxelSky::OpenSkyLight(SkyLevel) : 0, BlockLight);
 }
 
 void FFoundationAuthority::DropMobLoot(const FFoundationMob& Mob)

@@ -7,7 +7,7 @@
   [hurt.overlay]: the skin times OVERLAY_TINT (OVERLAY_MODE "multiply", the look call), or mixed toward red by
   OVERLAY_RED ("mix"); provisional.
 - DA_Mobs (UFoundationMobAssets): the models (parts and faces from facts/entity_models.json), the entity loot
-  tables flattened by MobImportData.py, and every biome's creature spawn list and chunk-generation chance (read from
+  tables flattened by MobImportData.py, and every biome's creature and monster spawn lists and chunk-generation chance (read from
   Reference/minecraft-worldgen-26.3, hash-checked, never written).
 
 The reference is hash-checked first. Every asset is rebuilt on each run (they are generated from the reference alone):
@@ -185,7 +185,8 @@ def loot_struct(table):
 def spawn_struct(biome):
     return struct(unreal.FoundationBiomeSpawnAsset, {
         "biome": biome["biome"], "chance": biome["chance"],
-        "creatures": [struct(unreal.FoundationMobSpawnAsset, c) for c in biome["creatures"]]})
+        "creatures": [struct(unreal.FoundationMobSpawnAsset, c) for c in biome["creatures"]],
+        "monsters": [struct(unreal.FoundationMobSpawnAsset, c) for c in biome["monsters"]]})
 
 
 def main():
@@ -221,9 +222,10 @@ def main():
     for mob, why in left_out.items():
         unreal.log_warning("MOB_IMPORT: entities/%s left out of DA_Mobs: %s" % (mob, why))
     unreal.log("MOB_IMPORT PASS: reference %s; %d models (%d faces), %d loot tables, %d left out; worldgen %s, %d "
-               "biome spawn lists (%d creature entries); M_Mob overlay %s, PS instr %d%s"
+               "biome spawn lists (%d creature, %d monster entries); M_Mob overlay %s, PS instr %d%s"
                % (digest[:12], len(models), sum(len(p["faces"]) for m in models for p in m["parts"]), len(tables),
-                  len(left_out), worldgen[:12], len(biomes), sum(len(b["creatures"]) for b in biomes), OVERLAY_MODE,
+                  len(left_out), worldgen[:12], len(biomes), sum(len(b["creatures"]) for b in biomes),
+                  sum(len(b["monsters"]) for b in biomes), OVERLAY_MODE,
                   stats.num_pixel_shader_instructions,
                   "" if compiled else " (graphs only; add -AllowCommandletRendering to compile)"))
 

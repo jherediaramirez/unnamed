@@ -75,5 +75,12 @@ void UFoundationMobAssets::AddSpawns(FFoundationRules& Rules) const
                 FoundationMobs::GetKind(Type).bSpawnable)
                 Out.Creatures.Add({Type, Entry.Weight, Entry.MinCount, FMath::Max(Entry.MinCount, Entry.MaxCount)});
         }
+        for (const FFoundationMobSpawnAsset& Entry : Biome.Monsters)
+        {
+            if (Entry.Weight <= 0) continue;
+            EFoundationMobType Type = EFoundationMobType::Zombie;
+            const bool bBuilt = FoundationMobs::FindType(Entry.Mob, Type) && FoundationMobs::GetKind(Type).bSpawnable;
+            Out.Monsters.Add({Type, Entry.Weight, Entry.MinCount, FMath::Max(Entry.MinCount, Entry.MaxCount), !bBuilt});
+        }
     }
 }

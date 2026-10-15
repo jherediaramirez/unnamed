@@ -200,9 +200,9 @@ bool FFoundationMobSpawnTest::RunTest(const FString&)
     for (int32 Type = 0; Type < int32(EFoundationMobType::Count); ++Type)
     {
         const FFoundationMobKind& Kind = FoundationMobs::GetKind(EFoundationMobType(Type));
-        // 20c: the zombie is summonable too.
+        // 20c: the zombie is summonable too; 20c2 the spider.
         TestEqual(*FString::Printf(TEXT("%s spawnable"), *Kind.Id.ToString()), Kind.bSpawnable,
-            Type < 4 || Type == int32(EFoundationMobType::Zombie));
+            Type < 4 || Type == int32(EFoundationMobType::Zombie) || Type == int32(EFoundationMobType::Spider));
         if (Type >= 4) continue;
         TestEqual(*FString::Printf(TEXT("%s box"), *Kind.Id.ToString()),
             FoundationMobs::GetBox(EFoundationMobType(Type), FVector::ZeroVector).GetSize(), Boxes[Type]);
@@ -978,6 +978,34 @@ bool FFoundationMobSpawnTableTest::RunTest(const FString&)
         ++Offsets[FoundationMobs::RollPackOffset(Random) + 5];
     TestTrue(TEXT("offsets reach -5 and 5"), Offsets[0] > 0 && Offsets[10] > 0);
     TestTrue(TEXT("0 the most common"), Offsets[5] > Offsets[4] && Offsets[5] > Offsets[6]);
+    // 20c2 [survival.r10.spawn_registry; plains.json natural_mob_spawns monster]: every entry kept in order, the
+    // unbuilt ones blank (SM decision): spider 100, zombie 90 of 515, packs of 4; the enderman 1-4.
+    const int32 MonsterWeights[] = {100, 90, 5, 5, 100, 100, 100, 10, 5};
+    if (TestEqual(TEXT("plains: nine monster entries"), Plains->Monsters.Num(), 9))
+    {
+        for (int32 Index = 0; Index < 9; ++Index)
+        {
+            const FFoundationMobSpawn& Entry = Plains->Monsters[Index];
+            TestEqual(*FString::Printf(TEXT("monster %d weight"), Index), Entry.Weight, MonsterWeights[Index]);
+            TestEqual(*FString::Printf(TEXT("monster %d blank"), Index), Entry.bBlank, Index >= 2);
+        }
+        TestTrue(TEXT("spider first, packs of 4"),
+            Plains->Monsters[0].Type == EFoundationMobType::Spider && Plains->Monsters[0].MinCount == 4 &&
+                Plains->Monsters[0].MaxCount == 4);
+        TestEqual(TEXT("zombie second"), Plains->Monsters[1].Type, EFoundationMobType::Zombie);
+        TestTrue(TEXT("enderman 1-4"), Plains->Monsters[7].MinCount == 1 && Plains->Monsters[7].MaxCount == 4);
+        int32 Spiders = 0, Zombies = 0, Blanks = 0;
+        for (int32 Draw = 0; Draw < Draws; ++Draw)
+            if (const FFoundationMobSpawn* Entry = FoundationMobs::PickSpawn(Plains->Monsters, Random))
+            {
+                Blanks += Entry->bBlank ? 1 : 0;
+                Spiders += !Entry->bBlank && Entry->Type == EFoundationMobType::Spider ? 1 : 0;
+                Zombies += !Entry->bBlank && Entry->Type == EFoundationMobType::Zombie ? 1 : 0;
+            }
+        TestEqual(TEXT("spider share 100 / 515"), double(Spiders) / Draws, 100 / 515., .01);
+        TestEqual(TEXT("zombie share 90 / 515"), double(Zombies) / Draws, 90 / 515., .01);
+        TestEqual(TEXT("blank share 325 / 515"), double(Blanks) / Draws, 325 / 515., .01);
+    }
     return true;
 }
 
@@ -1075,17 +1103,23 @@ bool FFoundationMobPacksTest::RunTest(const FString&)
         0);
     TestEqual(TEXT("stone: none"),
         Run(1, 1, [](FMobLab& Lab) { MakeGrassLab(Lab, 1, TEXT("stone")); })->A.GetMobs().Num(), 0);
-    TestEqual(TEXT("under a roof (no sky): none"),
-        Run(1, 1,
+    // 20c2: the dark under the roof spawns monsters; no creature pack.
+    const auto Creatures = [](const FMobLab& Lab)
+    {
+        int32 Count = 0;
+        for (const FFoundationMob& Mob : Lab.A.GetMobs())
+            Count += FoundationMobs::IsCreature(Mob.Type) ? 1 : 0;
+        return Count;
+    };
+    TestEqual(TEXT("under a roof (no sky): no creature"),
+        Creatures(*Run(1, 1,
             [](FMobLab& Lab)
             {
                 const FFoundationBlockType* Stone = Lab.A.World.FindBlock(TEXT("stone"));
                 for (int32 Y = Lab.A.World.BoundsMin.Y; Y <= Lab.A.World.BoundsMax.Y; ++Y)
                     for (int32 X = Lab.A.World.BoundsMin.X; X <= Lab.A.World.BoundsMax.X; ++X)
                         Lab.A.World.Set(FIntVector(X, Y, 5), Stone->GetDefaultState());
-            })
-            ->A.GetMobs()
-            .Num(),
+            })),
         0);
     return true;
 }
@@ -1334,8 +1368,9 @@ bool FFoundationMobZombieTest::RunTest(const FString&)
     TestEqual(TEXT("follow range"), Kind.FollowRangeCm, 3500.);
     TestEqual(TEXT("look distance"), Kind.LookCm, 800.);
     TestEqual(TEXT("name"), FString(Kind.Name), FString(TEXT("Zombie")));
-    TestTrue(TEXT("a monster"), FoundationMobs::IsMonster(EFoundationMobType::Zombie) &&
-            !FoundationMobs::IsMonster(EFoundationMobType::Cow) && !FoundationMobs::IsCreature(EFoundationMobType::Zombie));
+    TestTrue(TEXT("a monster"),
+        FoundationMobs::IsMonster(EFoundationMobType::Zombie) && !FoundationMobs::IsMonster(EFoundationMobType::Cow) &&
+            !FoundationMobs::IsCreature(EFoundationMobType::Zombie));
     FMobLab L;
     const FFoundationLootTable* Table = L.A.Rules.EntityLootTables.Find(TEXT("zombie"));
     if (!TestNotNull(TEXT("entities/zombie from DA_Mobs"), Table)) return false;
@@ -1600,6 +1635,483 @@ bool FFoundationMobPlayerHitTest::RunTest(const FString&)
     FVector Velocity = FVector::ZeroVector;
     FoundationMobs::ApplyKnockback(Velocity, FVector2D(-1, 0), true, FoundationMobs::KnockbackCm);
     TestEqual(TEXT("knocked 0.4 away and 0.4 up"), Velocity, FVector(-40, 0, 40));
+    return true;
+}
+namespace MobTestsLocal
+{
+    // The cycle lab under a stone roof at z 5 (cells MinCell..MaxCell, the whole lab by default): dark, no sky.
+    TUniquePtr<FMobLab> MakeDarkLab(
+        uint64 Seed, FIntPoint MinCell = FIntPoint(-96, -96), FIntPoint MaxCell = FIntPoint(95, 95))
+    {
+        TUniquePtr<FMobLab> L = MakeCycleLab(Seed);
+        const FFoundationBlockType* Stone = L->A.World.FindBlock(TEXT("stone"));
+        for (int32 Y = MinCell.Y; Y <= MaxCell.Y; ++Y)
+            for (int32 X = MinCell.X; X <= MaxCell.X; ++X)
+                L->A.World.Set(FIntVector(X, Y, 5), Stone->GetDefaultState());
+        return L;
+    }
+
+    // The day's sky as AVoxelWorld's hook reports it: gameplay/sky_light_level, no burning.
+    void SetSky(FMobLab& L, float Level)
+    {
+        L.A.GetSkyFacts = [Level](float& OutLevel, bool& bOutBurns)
+        {
+            OutLevel = Level;
+            bOutBurns = false;
+        };
+    }
+
+    int32 CountMonsters(const FMobLab& L)
+    {
+        int32 Count = 0;
+        for (const FFoundationMob& Mob : L.A.GetMobs())
+            Count += Mob.IsAlive() && FoundationMobs::IsMonster(Mob.Type) ? 1 : 0;
+        return Count;
+    }
+}
+
+// Survival T6 20c2, the spider's data and motion. value-swaps.md T6 [mobs.base_attributes, catalog.entities]: 16
+// health, 0.3, attack 2, 1.4 x 0.9 (eye 0.65); [survival.r10.death_roll] 180; [survival.r10.ai_defaults S 5447]
+// stroll 0.8; summonable. [survival.r10.model_motion F 5264-5299] its legs: at speed 0 the rest pose, the yaw swing at
+// speed 1 is 0.4 rad (rest 45 -> 67.917735 degrees), 0.2 at 0.5; the roll stays within the rest's 45. Mutations: yaw
+// amplitude 0.5; the leap's vertical 0.42.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobSpiderTest, "Unnamed.Foundation.Mobs.Spider",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobSpiderTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    using namespace FoundationMobs;
+    const FFoundationMobKind& Kind = GetKind(EFoundationMobType::Spider);
+    TestEqual(TEXT("health"), Kind.MaxHealth, 16.f);
+    TestEqual(TEXT("movement"), Kind.Speed, .3f);
+    TestEqual(TEXT("attack"), Kind.AttackDamage, 2.f);
+    TestEqual(TEXT("box"), GetBox(EFoundationMobType::Spider, FVector::ZeroVector).GetSize(), FVector(140, 140, 90));
+    TestEqual(TEXT("eye"), Kind.EyeCm, 65.);
+    TestEqual(TEXT("death roll"), Kind.DeathRollDegrees, 180.f);
+    TestEqual(TEXT("stroll 0.8"), Kind.StrollSpeed, .8f);
+    TestEqual(TEXT("the zombie strolls at 1"), GetKind(EFoundationMobType::Zombie).StrollSpeed, 1.f);
+    TestTrue(TEXT("summonable"), Kind.bSpawnable);
+    TestTrue(TEXT("the spider climbs, the zombie does not"),
+        CanClimb(EFoundationMobType::Spider) && !CanClimb(EFoundationMobType::Zombie));
+    float MaxYaw[4] = {}, MaxRoll[4] = {}, MinRoll[4] = {1, 1, 1, 1}, HalfYaw = 0, StillYaw = 0;
+    for (int32 Pair = 0; Pair < 4; ++Pair)
+        for (float Position = 0; Position < 20; Position += .01f)
+        {
+            const FVector2D Swing = GetSpiderLegSwing(Pair, Position, 1);
+            MaxYaw[Pair] = FMath::Max(MaxYaw[Pair], FMath::Abs(Swing.X));
+            MaxRoll[Pair] = FMath::Max(MaxRoll[Pair], Swing.Y);
+            MinRoll[Pair] = FMath::Min(MinRoll[Pair], Swing.Y);
+            HalfYaw = FMath::Max(HalfYaw, FMath::Abs(GetSpiderLegSwing(Pair, Position, .5f).X));
+            StillYaw = FMath::Max(StillYaw, GetSpiderLegSwing(Pair, Position, 0).GetAbsMax());
+        }
+    for (int32 Pair = 0; Pair < 4; ++Pair)
+    {
+        TestEqual(*FString::Printf(TEXT("pair %d yaw swing 0.4"), Pair), MaxYaw[Pair], .4f, 1e-3f);
+        TestTrue(*FString::Printf(TEXT("pair %d roll toward the rest, 0 to 0.4"), Pair),
+            MinRoll[Pair] >= 0 && MaxRoll[Pair] <= .4f + 1e-4f && MaxRoll[Pair] > .39f);
+    }
+    TestEqual(TEXT("yaw 0.2 at speed 0.5"), HalfYaw, .2f, 1e-3f);
+    TestEqual(TEXT("still at speed 0"), StillYaw, 0.f);
+    TestEqual(TEXT("hind leg: rest 45 + swing = 67.917735 degrees"), 45.f + FMath::RadiansToDegrees(MaxYaw[0]),
+        67.917735f, .05f);
+    // The legs' rest pose is the model data's: the hind and front legs at 45 degrees yaw and roll.
+    if (const UFoundationMobAssets* Assets = UFoundationMobAssets::LoadDefault())
+    {
+        const FFoundationMobModelAsset* Model = Assets->FindModel(TEXT("spider"));
+        const FFoundationMobPartAsset* Hind = Model
+            ? Model->Parts.FindByPredicate(
+                  [](const FFoundationMobPartAsset& Part) { return Part.Path == TEXT("right_hind_leg"); })
+            : nullptr;
+        TestTrue(TEXT("right hind leg rest (0, 45, -45) degrees"),
+            Hind && FMath::IsNearlyEqual(Hind->Rotation.Y, UE_PI / 4, 1e-4) &&
+                FMath::IsNearlyEqual(Hind->Rotation.Z, -UE_PI / 4, 1e-4));
+    }
+    else
+        AddError(TEXT("DA_Mobs missing (run ImportMobs.py)"));
+    // The leap [S 5423]: on the ground, the target 3 blocks away: 0.4 up, pushed 0.4 toward it; not at 1.5 or 5 blocks.
+    const auto Leaps = [](double Distance)
+    {
+        FFoundationMob Mob;
+        Mob.Type = EFoundationMobType::Spider;
+        Mob.Random.Initialize(5);
+        FFoundationMobPlayer Player;
+        Player.Id = 7;
+        Player.FeetCm = FVector(Distance, 0, 0);
+        Player.EyeCm = Player.FeetCm + FVector(0, 0, 162);
+        Mob.Target = 7;
+        for (int32 Step = 0; Step < 200; ++Step)
+        {
+            Mob.bOnGround = true;
+            Mob.VelocityCm = FVector::ZeroVector;
+            ThinkHostile(Mob, FVector::ZeroVector, {Player}, [](const FVector&, const FVector&) { return true; }, 0);
+            if (Mob.VelocityCm.Z != 0) return Mob.VelocityCm;
+        }
+        return FVector::ZeroVector;
+    };
+    TestEqual(TEXT("leap at 3 blocks: 0.4 toward and 0.4 up"), Leaps(300), FVector(40, 0, 40));
+    TestEqual(TEXT("no leap at 1.5 blocks"), Leaps(150), FVector::ZeroVector);
+    TestEqual(TEXT("no leap at 5 blocks"), Leaps(500), FVector::ZeroVector);
+    return true;
+}
+
+// The spider's targeting (Codex 02 C, provisional): it takes a target only below brightness 0.5 at its eyes (light 11
+// and below: brightness(11) < 0.5 <= brightness(12)); in the light it forgets one now and then, in the dark it keeps
+// it; SpiderAttackGoal follows an unseen target (a fresh path when the delay runs out), the zombie does not; both drop
+// it after 60 unseen steps. Mutations: light ignored; the spider follows only a seen target.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobSpiderTargetTest, "Unnamed.Foundation.Mobs.SpiderTarget",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobSpiderTargetTest::RunTest(const FString&)
+{
+    using namespace FoundationMobs;
+    TestTrue(TEXT("light 11 dark, 12 bright"), GetBrightness(11) < .5f && GetBrightness(12) >= .5f);
+    FFoundationMobPlayer Player;
+    Player.Id = 7;
+    Player.FeetCm = FVector(600, 0, 0);
+    Player.EyeCm = Player.FeetCm + FVector(0, 0, 162);
+    const auto Seen = [](const FVector&, const FVector&) { return true; };
+    const auto Unseen = [](const FVector&, const FVector&) { return false; };
+    const auto MakeMob = [](EFoundationMobType Type)
+    {
+        FFoundationMob Mob;
+        Mob.Type = Type;
+        Mob.Random.Initialize(11);
+        Mob.bOnGround = true;
+        return Mob;
+    };
+    const auto Acquires = [&](float Brightness)
+    {
+        FFoundationMob Mob = MakeMob(EFoundationMobType::Spider);
+        for (int32 Step = 0; Step < 400 && Mob.Target == 0; ++Step, ++Mob.Age)
+            ThinkHostile(Mob, FVector::ZeroVector, {Player}, Seen, Brightness);
+        return Mob.Target;
+    };
+    TestEqual(TEXT("dark (light 11): targets"), Acquires(GetBrightness(11)), 7);
+    TestEqual(TEXT("bright (light 12): never"), Acquires(GetBrightness(12)), 0);
+    const auto Keeps = [&](float Brightness)
+    {
+        FFoundationMob Mob = MakeMob(EFoundationMobType::Spider);
+        Mob.Target = 7;
+        int32 Step = 0;
+        for (; Step < 3000 && Mob.Target == 7; ++Step, ++Mob.Age)
+            ThinkHostile(Mob, FVector::ZeroVector, {Player}, Seen, Brightness);
+        return Step;
+    };
+    TestEqual(TEXT("dark: kept"), Keeps(0), 3000);
+    const int32 Forgot = Keeps(1);
+    TestTrue(*FString::Printf(TEXT("bright: forgotten (step %d)"), Forgot), Forgot < 3000);
+    const auto Repaths = [&](EFoundationMobType Type)
+    {
+        FFoundationMob Mob = MakeMob(Type);
+        Mob.Target = 7;
+        Mob.bMoving = true;
+        ThinkHostile(Mob, FVector::ZeroVector, {Player}, Unseen, 0);
+        return Mob.RepathTicks > 0;
+    };
+    TestTrue(TEXT("the spider plans toward an unseen target"), Repaths(EFoundationMobType::Spider));
+    TestFalse(TEXT("the zombie does not"), Repaths(EFoundationMobType::Zombie));
+    FFoundationMob Mob = MakeMob(EFoundationMobType::Spider);
+    Mob.Target = 7;
+    for (int32 Step = 0; Step < 60; ++Step, ++Mob.Age)
+        ThinkHostile(Mob, FVector::ZeroVector, {Player}, Unseen, 0);
+    TestEqual(TEXT("60 unseen steps kept"), Mob.Target, 7);
+    ThinkHostile(Mob, FVector::ZeroVector, {Player}, Unseen, 0);
+    TestEqual(TEXT("the 61st drops it"), Mob.Target, 0);
+    return true;
+}
+
+// Climbing (Codex 02 C, provisional): a spider walking into a 3-block wall goes up it and onto its top; a zombie stays
+// on the floor. Mutation: no climbing.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobSpiderClimbTest, "Unnamed.Foundation.Mobs.SpiderClimb",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobSpiderClimbTest::RunTest(const FString&)
+{
+    const TArray<FBox> Boxes = {
+        FBox(FVector(-2000, -2000, -100), FVector(2000, 2000, 0)), FBox(FVector(100, -500, 0), FVector(400, 500, 300))};
+    const auto Highest = [&Boxes](EFoundationMobType Type)
+    {
+        FFoundationMob Mob;
+        Mob.Type = Type;
+        Mob.LocalCm = FVector(100 - FoundationMobs::GetKind(Type).WidthCm / 2 - 5, 0, 0);
+        Mob.bOnGround = true;
+        double Top = 0;
+        for (int32 Step = 0; Step < 120; ++Step)
+        {
+            FoundationMobs::Move(Mob, FVector::ZeroVector, Boxes, FVector2D(1, 0), false);
+            Top = FMath::Max(Top, Mob.LocalCm.Z);
+        }
+        return TPair<double, double>(Top, Mob.LocalCm.X);
+    };
+    const TPair<double, double> Spider = Highest(EFoundationMobType::Spider);
+    TestTrue(*FString::Printf(TEXT("the spider climbs onto the wall (top %.1f, x %.1f)"), Spider.Key, Spider.Value),
+        Spider.Key >= 299 && Spider.Value > 100);
+    TestTrue(TEXT("the zombie stays below"), Highest(EFoundationMobType::Zombie).Key < 61);
+    return true;
+}
+
+// The light rule [mobs.spawn_light V:469-471]: the sky light above a random 0-31 fails, any block light fails, then
+// the light must be at most a random 0-7. Shares over 40000 rolls. And the light proxy: block light is the max over
+// emitters of emission minus the Manhattan distance (glowstone 15: 13 two cells away, 1 at fourteen, 0 at fifteen);
+// under a roof no sky; on the open ground the raw sky 15 and the day's open-sky light. Mutations: 0-6 instead of 0-7;
+// the block light test dropped; the distance as Chebyshev.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobSpawnLightTest, "Unnamed.Foundation.Mobs.SpawnLight",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobSpawnLightTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    using namespace FoundationMobs;
+    const auto Share = [](int32 Sky, int32 Block, int32 Light)
+    {
+        FRandomStream Random(20262);
+        constexpr int32 Rolls = 40000;
+        int32 Pass = 0;
+        for (int32 Roll = 0; Roll < Rolls; ++Roll)
+            Pass += RollSkyLight(Random, Sky) && RollMonsterLight(Random, Block, Light) ? 1 : 0;
+        return double(Pass) / Rolls;
+    };
+    TestEqual(TEXT("dark: always"), Share(0, 0, 0), 1.);
+    TestEqual(TEXT("block light 1: never"), Share(0, 1, 1), 0.);
+    TestEqual(TEXT("sky 15: 17 / 32"), Share(15, 0, 0), 17 / 32., .01);
+    TestEqual(TEXT("sky 31: 1 / 32"), Share(31, 0, 0), 1 / 32., .005);
+    TestEqual(TEXT("light 7: 1 / 8"), Share(0, 0, 7), 1 / 8., .01);
+    TestEqual(TEXT("light 4: 1 / 2"), Share(0, 0, 4), .5, .01);
+    TestEqual(TEXT("light 8: never"), Share(0, 0, 8), 0.);
+    TUniquePtr<FMobLab> L = MakeDarkLab(1, FIntPoint(-40, -40), FIntPoint(39, 39));
+    SetSky(*L, 4);
+    SetBlock(*L, FIntVector(0, 0, 3), TEXT("glowstone"));
+    TestEqual(TEXT("glowstone's cell 15"), L->A.GetBlockLightProxy(FIntVector(0, 0, 3)), 15);
+    TestEqual(TEXT("two cells away 13"), L->A.GetBlockLightProxy(FIntVector(0, 0, 1)), 13);
+    TestEqual(TEXT("Manhattan 12 away: 3"), L->A.GetBlockLightProxy(FIntVector(5, -5, 1)), 3);
+    TestEqual(TEXT("14 away: 1"), L->A.GetBlockLightProxy(FIntVector(0, 14, 3)), 1);
+    TestEqual(TEXT("15 away: 0"), L->A.GetBlockLightProxy(FIntVector(0, 15, 3)), 0);
+    TestEqual(TEXT("across a section edge: 7 away 8"), L->A.GetBlockLightProxy(FIntVector(-7, 0, 3)), 8);
+    int32 Sky = -1, Block = -1;
+    TestEqual(
+        TEXT("under the roof, far from the light: 0"), L->A.GetLightProxy(FIntVector(30, 30, 1), &Sky, &Block), 0);
+    TestTrue(TEXT("no sky there"), Sky == 0 && Block == 0);
+    TestEqual(
+        TEXT("open ground at night: the day's light 4"), L->A.GetLightProxy(FIntVector(60, 60, 1), &Sky, &Block), 4);
+    TestEqual(TEXT("raw sky 15"), Sky, 15);
+    return true;
+}
+
+// Survival T6 20c2, the monster cycle [survival.r10.spawn_caps F 5461-5470; survival2.r20 population runs]: the cap
+// floor(70 x eligible / 289); a cycle every step; a dark lab fills to the cap (a column's packs overshoot by at most
+// 3), zombies and spiders only, standing on the floor under the roof, each at least 24 blocks from the player; none
+// on a lit spot (a glowstone lights its surroundings); the open ground at noon spawns none, at night some; Peaceful
+// none. Logged: the cycle's ms per step in the worst case (under the cap, nothing spawnable). Mutations: the monster
+// cap 71; the full-solid start test dropped.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobMonsterCycleTest, "Unnamed.Foundation.Mobs.MonsterCycle",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobMonsterCycleTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    using namespace FoundationMobs;
+    const EFoundationMobCategory Monster = EFoundationMobCategory::Monster;
+    TestEqual(TEXT("cap over 289 columns"), GetCategoryCap(Monster, 289), 70);
+    TestEqual(TEXT("cap over 288"), GetCategoryCap(Monster, 288), 69);
+    TestEqual(TEXT("cap over 144"), GetCategoryCap(Monster, 144), 34);
+    TestEqual(TEXT("local cap 70"), GetBaseCap(Monster), 70);
+    TestEqual(TEXT("the creature cap unchanged"), GetCategoryCap(EFoundationMobCategory::Creature, 289), 10);
+    TUniquePtr<FMobLab> L = MakeDarkLab(1);
+    StepRecording(*L, 1);
+    TestEqual(TEXT("a monster cycle on the first step"), L->A.MonsterCycles, 1);
+    TestEqual(TEXT("cap 70"), L->A.MonsterCycleCap, 70);
+    StepRecording(*L, 199);
+    const int32 Count = CountMonsters(*L);
+    TestTrue(*FString::Printf(TEXT("filled to the cap 70 (overshoot under 4): %d"), Count), Count >= 70 && Count <= 73);
+    TestEqual(TEXT("none despawned yet"), L->A.MobsDespawned, 0);
+    TestEqual(TEXT("all from the cycle"), L->A.MonstersCycleSpawned, Count);
+    TestEqual(TEXT("no creature"), CountCreatures(*L), 0);
+    int32 Zombies = 0, Spiders = 0;
+    bool bFloor = true;
+    double Nearest = TNumericLimits<double>::Max();
+    for (const FFoundationMob& Mob : L->Spawned)
+    {
+        Zombies += Mob.Type == EFoundationMobType::Zombie ? 1 : 0;
+        Spiders += Mob.Type == EFoundationMobType::Spider ? 1 : 0;
+        bFloor &= FMath::IsNearlyEqual(Mob.LocalCm.Z, 100., 1.);
+        Nearest = FMath::Min(Nearest, FVector::Dist(Mob.LocalCm / 100, FVector(-2, 0, 1)));
+    }
+    AddInfo(FString::Printf(
+        TEXT("dark lab: %d zombies, %d spiders; %.3f ms worst cycle"), Zombies, Spiders, L->A.MonsterCycleMsMax));
+    TestTrue(TEXT("zombies and spiders only"), Zombies + Spiders == L->Spawned.Num() && Zombies > 0 && Spiders > 0);
+    TestTrue(TEXT("on the floor under the roof"), bFloor);
+    TestTrue(*FString::Printf(TEXT("at least 24 blocks away (nearest %.2f)"), Nearest), Nearest >= 24);
+    const int32 Cycles = L->A.MonsterCycles;
+    StepRecording(*L, 20);
+    TestEqual(TEXT("at the cap: no cycle runs"), L->A.MonsterCycles, Cycles);
+    {
+        // A glowstone in a 40 x 40 roofed patch, the rest open ground at noon: spawns only where its light is 0.
+        TUniquePtr<FMobLab> Lit = MakeDarkLab(2, FIntPoint(20, -20), FIntPoint(59, 19));
+        SetSky(*Lit, 15);
+        SetBlock(*Lit, FIntVector(40, 0, 3), TEXT("glowstone"));
+        StepRecording(*Lit, 399);
+        int32 Dark = 0, Bright = 0;
+        for (const FFoundationMob& Mob : Lit->Spawned)
+        {
+            if (!IsMonster(Mob.Type)) continue;
+            const FIntVector Feet(FoundationGrid::FloorToCell(Mob.LocalCm.X),
+                FoundationGrid::FloorToCell(Mob.LocalCm.Y), FoundationGrid::FloorToCell(Mob.LocalCm.Z));
+            (Lit->A.GetBlockLightProxy(Feet) > 0 ? Bright : Dark) += 1;
+        }
+        TestTrue(*FString::Printf(TEXT("spawns in the patch's dark corners (%d)"), Dark), Dark > 0);
+        TestEqual(TEXT("none where the glowstone lights"), Bright, 0);
+    }
+    {
+        // The open ground: at noon nothing (the worst case: every step a full cycle), at night some.
+        TUniquePtr<FMobLab> Day = MakeCycleLab(3);
+        SetSky(*Day, 15);
+        Day->Steps(400);
+        TestEqual(TEXT("noon: none"), CountMonsters(*Day), 0);
+        TestEqual(TEXT("noon: a cycle every step"), Day->A.MonsterCycles, 400);
+        AddInfo(FString::Printf(TEXT("worst case (lab, 289 columns, nothing spawnable): %.4f ms mean, %.4f ms worst"),
+            Day->A.MonsterCycleMsTotal / 400, Day->A.MonsterCycleMsMax));
+        TUniquePtr<FMobLab> Night = MakeCycleLab(3);
+        SetSky(*Night, 4);
+        Night->Steps(400);
+        TestTrue(*FString::Printf(TEXT("night: monsters on the open ground (%d)"), CountMonsters(*Night)),
+            CountMonsters(*Night) > 0);
+    }
+    {
+        // Every entry blank (mobs not built yet): a round that picks one spawns nothing.
+        TUniquePtr<FMobLab> Blank = MakeDarkLab(1);
+        if (FFoundationBiomeSpawns* Plains = Blank->A.Rules.BiomeSpawns.Find(TEXT("minecraft:plains")))
+            for (FFoundationMobSpawn& Entry : Plains->Monsters)
+                Entry.bBlank = true;
+        Blank->Steps(50);
+        TestEqual(TEXT("blank entries: none"), CountMonsters(*Blank), 0);
+    }
+    {
+        TUniquePtr<FMobLab> Calm = MakeDarkLab(1);
+        Calm->P().Facts.Difficulty = EFoundationDifficulty::Peaceful;
+        Calm->Steps(50);
+        TestEqual(TEXT("Peaceful: no monster cycle"), Calm->A.MonsterCycles, 0);
+        TestEqual(TEXT("Peaceful: no monster"), CountMonsters(*Calm), 0);
+    }
+    return true;
+}
+
+// The census (Codex 30 #1, #2): the global cap counts every loaded mob of the category, not only those in eligible
+// columns (cows beyond the player's 17 x 17 hold the creature cycle at the cap), and frozen mobs count for neither
+// cap (cows frozen in an unloaded column inside the player's square leave its local cap free). Mutations: count only
+// eligible columns; count frozen mobs locally.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobCensusTest, "Unnamed.Foundation.Mobs.Census",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobCensusTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    using namespace FoundationMobs;
+    {
+        TUniquePtr<FMobLab> L = MakeCycleLab(1);
+        L->Stand(FVector(-9000, 0, 0));
+        for (int32 Index = 0; Index < 10; ++Index)
+            L->A.SpawnMob(EFoundationMobType::Cow, FVector(7000, -500 + Index * 100, 100));
+        L->Steps(CreatureCycleTicks);
+        TestEqual(TEXT("the far cows are counted"), L->A.MobCycleCount, 10);
+        TestEqual(TEXT("at the cap: no creature cycle"), L->A.MobCycles, 0);
+    }
+    {
+        TUniquePtr<FMobLab> L = MakeUnique<FMobLab>();
+        TUniquePtr<FColumnStorage> Storage = MakeUnique<FColumnStorage>();
+        FColumnStorage* Columns = Storage.Get();
+        L->A.World.SetStorage(MoveTemp(Storage));
+        MakeGrassLab(*L, 1, TEXT("grass_block"), 96);
+        if (FFoundationBiomeSpawns* Plains = L->A.Rules.BiomeSpawns.Find(TEXT("minecraft:plains"))) Plains->Chance = 0;
+        for (int32 Index = 0; Index < 10; ++Index)
+            L->A.SpawnMob(EFoundationMobType::Cow, FVector(200 + Index * 100, 800, 100));
+        L->Steps(2);
+        Columns->Unloaded.Add(FIntPoint(0, 0));
+        L->Steps(CreatureCycleTicks - 2);
+        TestEqual(TEXT("frozen cows are not counted"), L->A.MobCycleCount, 0);
+        TestTrue(TEXT("the cycle spawns"), L->A.MobCycles == 1 && L->A.MobsCycleSpawned > 0);
+    }
+    return true;
+}
+
+// Despawn [mobs.despawn; survival.r10.spawning_rules S 5472]: beyond 128 blocks at once; within 32 the idle count
+// restarts and nothing goes; beyond 32 only after more than 600 idle steps, then 1 in 800 a step; a hit restarts the
+// count; in the lab a zombie 132 blocks away goes on the next step, a cow there stays; an idle zombie 62 blocks away
+// counts its steps and goes on a roll. Mutations: the far distance 129; idle 599; chance 1 in 400.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobDespawnTest, "Unnamed.Foundation.Mobs.Despawn",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobDespawnTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    using namespace FoundationMobs;
+    FFoundationMob Mob;
+    Mob.Type = EFoundationMobType::Zombie;
+    Mob.Random.Initialize(3);
+    TestTrue(TEXT("beyond 128 blocks"), ShouldDespawn(Mob, 12800.5));
+    TestFalse(TEXT("at 128 blocks"), ShouldDespawn(Mob, 12800));
+    Mob.NoActionTicks = 5000;
+    TestFalse(TEXT("within 32"), ShouldDespawn(Mob, 3200));
+    TestEqual(TEXT("within 32 the idle count restarts"), Mob.NoActionTicks, 0);
+    int32 Early = 0;
+    Mob.NoActionTicks = 600;
+    for (int32 Roll = 0; Roll < 20000; ++Roll)
+        Early += ShouldDespawn(Mob, 5000) ? 1 : 0;
+    TestEqual(TEXT("600 idle steps: never"), Early, 0);
+    Mob.NoActionTicks = 601;
+    int32 Gone = 0;
+    constexpr int32 Rolls = 400000;
+    for (int32 Roll = 0; Roll < Rolls; ++Roll)
+        Gone += ShouldDespawn(Mob, 5000) ? 1 : 0;
+    TestEqual(TEXT("past 600: 1 in 800"), double(Gone) / Rolls, 1 / 800., .0002);
+    Mob.NoActionTicks = 700;
+    OnHurt(Mob, FVector::ZeroVector, FVector(100, 0, 0), true, true, 1);
+    TestEqual(TEXT("a hit restarts the count"), Mob.NoActionTicks, 0);
+
+    FMobLab L;
+    L.P().Facts.Mode = EFoundationPlayerMode::Creative;
+    FFoundationStatic Ground;
+    Ground.Box = FBox(FVector(2000, -5000, -100), FVector(12000, 5000, 0));
+    Ground.Label = TEXT("ground");
+    Ground.bAnchor = true;
+    L.A.Statics.Add(Ground);
+    const int32 Far = L.A.SpawnMob(EFoundationMobType::Zombie, FVector(13000, 0, 0));
+    const int32 Cow = L.A.SpawnMob(EFoundationMobType::Cow, FVector(13000, 300, 0));
+    L.Steps(1);
+    TestNull(TEXT("the far zombie is gone"), L.A.FindMob(Far));
+    TestNotNull(TEXT("the far cow stays"), L.A.FindMob(Cow));
+    TestEqual(TEXT("one despawned"), L.A.MobsDespawned, 1);
+    const int32 Idle = L.A.SpawnMob(EFoundationMobType::Zombie, FVector(6000, 0, 0));
+    L.Steps(10);
+    TestEqual(TEXT("idle steps counted"), L.A.FindMob(Idle) ? L.A.FindMob(Idle)->NoActionTicks : -1, 10);
+    L.A.FindMob(Idle)->NoActionTicks = 601;
+    int32 Steps = 0;
+    for (; Steps < 20000 && L.A.FindMob(Idle); ++Steps)
+        L.Steps(1);
+    TestTrue(*FString::Printf(TEXT("gone on a roll (after %d steps)"), Steps), !L.A.FindMob(Idle));
+    TestEqual(TEXT("two despawned"), L.A.MobsDespawned, 2);
+    return true;
+}
+
+// Peaceful (minecraft.wiki "Difficulty"): every monster goes on the next step, creatures stay; nothing spawns.
+// Mutation: Peaceful ignored.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobPeacefulTest, "Unnamed.Foundation.Mobs.Peaceful",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobPeacefulTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    FMobLab L;
+    const int32 Zombie = L.A.SpawnMob(EFoundationMobType::Zombie, FVector(300, 0, 0));
+    const int32 Spider = L.A.SpawnMob(EFoundationMobType::Spider, FVector(300, 300, 0));
+    const int32 Cow = L.A.SpawnMob(EFoundationMobType::Cow, FVector(300, -300, 0));
+    L.Steps(2);
+    TestTrue(TEXT("on Normal they stay"), L.A.FindMob(Zombie) && L.A.FindMob(Spider));
+    L.P().Facts.Difficulty = EFoundationDifficulty::Peaceful;
+    L.Steps(1);
+    TestTrue(TEXT("Peaceful: the monsters go"), !L.A.FindMob(Zombie) && !L.A.FindMob(Spider));
+    TestNotNull(TEXT("the cow stays"), L.A.FindMob(Cow));
+    TestEqual(TEXT("counted as despawned"), L.A.MobsDespawned, 2);
     return true;
 }
 #endif

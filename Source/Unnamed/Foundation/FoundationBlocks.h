@@ -104,6 +104,15 @@ public:
     // Whether the cell's data is present: streamed storage loads around the player, and the world knows no cell
     // that is not loaded.
     virtual bool IsLoaded(const FIntVector& Cell) const { return true; }
+    // Survival T6 20c2 (the monster cycle): the highest non-air, or motion-blocking (a collision box or a fluid), cell
+    // at X, Y from heightmaps the storage keeps; MIN_int32 when it keeps none (the caller scans).
+    virtual int32 GetTopZ(int32 X, int32 Y, bool bMotionBlocking) const { return MIN_int32; }
+    // False only when no cell of the 16-cube section whose minimum corner is SectionMin can hold a state passing Test
+    // (its palette has none); true when the storage cannot tell.
+    virtual bool MayHold(const FIntVector& SectionMin, TFunctionRef<bool(FFoundationBlockState)> Test) const
+    {
+        return true;
+    }
     // Several cells at once (FFoundationBlockWorld::SetMany), each at most once; storage may write them together.
     virtual void SetMany(TConstArrayView<TPair<FIntVector, FFoundationCell>> Cells)
     {

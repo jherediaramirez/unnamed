@@ -326,6 +326,7 @@ FFoundationPlayerFacts AFoundationPawn::MakeInteractionFacts() const
     Facts.bEyesInWater = bEyesInWater;
     Facts.bAlive = !Vitals.IsDead();
     Facts.Mode = Vitals.Mode;
+    Facts.Difficulty = Vitals.Difficulty;
     Facts.bSecondaryUse = LastIntent.bCrouch;
     Facts.Step = ReferenceSteps;
     return Facts;

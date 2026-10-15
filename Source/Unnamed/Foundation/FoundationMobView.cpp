@@ -223,6 +223,21 @@ FVector FFoundationMobView::GetPartAnimation(
     if (OutOffsetPixels) *OutOffsetPixels = FVector::ZeroVector;
     const float Position = FMath::Lerp(Mob.PreviousWalkPosition, Mob.WalkPosition, float(Alpha));
     const float Speed = FMath::Min(1.f, FMath::Lerp(Mob.PreviousWalkSpeed, Mob.WalkSpeed, float(Alpha)));
+    // The spider's eight legs swing in yaw and roll about their rest pose (the model data's), each pair on its phase.
+    if (Mob.Type == EFoundationMobType::Spider)
+    {
+        static const FName SpiderLegs[][2] = {{TEXT("right_hind_leg"), TEXT("left_hind_leg")},
+            {TEXT("right_middle_hind_leg"), TEXT("left_middle_hind_leg")},
+            {TEXT("right_middle_front_leg"), TEXT("left_middle_front_leg")},
+            {TEXT("right_front_leg"), TEXT("left_front_leg")}};
+        for (int32 Pair = 0; Pair < UE_ARRAY_COUNT(SpiderLegs); ++Pair)
+            for (int32 Side = 0; Side < 2; ++Side)
+                if (Part == SpiderLegs[Pair][Side])
+                {
+                    const FVector2D Swing = GetSpiderLegSwing(Pair, Position, Speed) * (Side == 0 ? 1.f : -1.f);
+                    return FVector(0, Swing.X, Swing.Y);
+                }
+    }
     for (int32 Leg = 0; Leg < UE_ARRAY_COUNT(Legs); ++Leg)
         if (Part == Legs[Leg]) return FVector(GetLegPitch(Leg, Position, Speed), 0, 0);
     for (int32 Leg = 0; Leg < UE_ARRAY_COUNT(BipedLegs); ++Leg)

@@ -201,6 +201,8 @@ struct FFoundationPlayerFacts
     bool bAlive = true;
     // The game mode (survival T6 20c: monsters target Survival and Adventure players only).
     EFoundationPlayerMode Mode = EFoundationPlayerMode::Survival;
+    // The world's difficulty (survival T6 20c2: Peaceful removes monsters and spawns none).
+    EFoundationDifficulty Difficulty = EFoundationDifficulty::Normal;
     // Crouch intent: with something in hand it bypasses block interactions.
     bool bSecondaryUse = false;
     int64 Step = 0;
@@ -692,7 +694,18 @@ public:
     // Survival T6 20b2b: the creature cycle (every CreatureCycleTicks steps), and one eligible column's group rounds
     // (PlayerCells: the live players' feet, in cells); how many mobs the column spawned.
     void RunCreatureCycle();
-    int32 SpawnCycleColumn(const FIntPoint& Column, TConstArrayView<FVector> PlayerCells, int64 Cycle);
+    int32 SpawnCycleColumn(const FIntPoint& Column, TConstArrayView<FVector> PlayerCells, int64 Cycle,
+        EFoundationMobCategory Category = EFoundationMobCategory::Creature);
+    // Survival T6 20c2: a category's cycle (the monsters' runs every MonsterCycleTicks steps).
+    void RunSpawnCycle(EFoundationMobCategory Category);
+    // The settled light proxy at a cell (provisional-values.md, T6 20c2): block light, the max over emitters within
+    // 15 of their emission minus the Manhattan distance (no occlusion); the light, the open-sky light of the day where
+    // the sky is visible (above the column's top motion-blocking block) or the block light if higher; OutSky: the
+    // raw sky light (15 or 0).
+    // bBudgeted (the spawn cycle): -1 when a stale section's list waits for a later step's rebuild budget.
+    int32 GetBlockLightProxy(const FIntVector& Cell, bool bBudgeted = false);
+    int32 GetLightProxy(
+        const FIntVector& Cell, int32* OutSky = nullptr, int32* OutBlock = nullptr, bool bBudgeted = false);
     // Removes every mob, without loot; how many.
     int32 ClearMobs();
     // A cell as the mobs' A* sees it (survival T6 20b): the top of the collision boxes that start in it, and whether it
@@ -728,6 +741,10 @@ public:
     int32 MobMeleeHits = 0, MobSunBurns = 0;
     // The last cycle considered: its eligible columns, the creatures counted in them and the cap.
     int32 MobCycleEligible = 0, MobCycleCount = 0, MobCycleCap = 0;
+    // Survival T6 20c2: the monster cycle's runs (under the cap) and spawns, its last census and cap; monsters
+    // despawned (distance, idle roll or Peaceful); the monster cycle's wall time, total and worst (ms).
+    int32 MonsterCycles = 0, MonstersCycleSpawned = 0, MonsterCycleCount = 0, MonsterCycleCap = 0, MobsDespawned = 0;
+    double MonsterCycleMsTotal = 0, MonsterCycleMsMax = 0;
     int64 GetMobCycleStep() const { return MobCycleStep; }
 
 private:
@@ -877,6 +894,32 @@ private:
     // A cell a passive mob of Type may stand in at the top of its column (X, Y): the feet cell above the top
     // motion-blocking block, which must be a grass block, with room for the box; false when there is none.
     bool FindPackCell(EFoundationMobType Type, int32 X, int32 Y, FIntVector& OutFeet);
+    // Survival T6 20c2: a monster's feet at Feet: a full block top below (not leaves), room for the box, no fluid,
+    // and the light rule (RollMonsterLight's draws from Random).
+    bool FindMonsterCell(EFoundationMobType Type, const FIntVector& Feet, FRandomStream& Random);
+    // No collision box and no fluid in the box of a mob of Type standing at Feet (shrunk a hair off the floor).
+    bool HasMobRoom(EFoundationMobType Type, const FIntVector& Feet);
+    // Any player reports Peaceful.
+    bool IsPeaceful() const;
+    // A cell column's top non-air and top motion-blocking heights (below BoundsMin.Z: none, or not loaded), reused for
+    // LightCacheTicks steps.
+    struct FMobColumnTops
+    {
+        int32 NonAir = 0, Blocking = 0;
+        int64 Step = -1;
+    };
+    FMobColumnTops GetColumnTops(int32 X, int32 Y);
+    // A 16-cube section's light emitters (cell, emission), reused for LightCacheTicks steps.
+    struct FMobEmitters
+    {
+        TArray<TPair<FIntVector, int32>> Emitters;
+        int64 Step = -1;
+    };
+    // Null when bBudgeted and the list is stale with this step's rebuilds spent.
+    const FMobEmitters* GetSectionEmitters(const FIntVector& Section, bool bBudgeted);
+    int32 EmitterRebuilds = 0;
+    TMap<FIntPoint, FMobColumnTops> MobColumnTops;
+    TMap<FIntVector, FMobEmitters> MobEmitters;
     void AddMobSound(const FFoundationMob& Mob, const TCHAR* Sound, float Volume);
     // Survival T6 20b: a sheep standing in a plant it eats (IsSheepFood) or on a grass block; eating it (the plant
     // goes, or the block turns to dirt).

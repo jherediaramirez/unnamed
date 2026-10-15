@@ -98,6 +98,9 @@ struct FFoundationBiomeSpawnAsset
     float Chance = .1f;
     UPROPERTY(EditAnywhere, Category = "Mobs")
     TArray<FFoundationMobSpawnAsset> Creatures;
+    // Survival T6 20c2: the monster category's entries, every entity kept.
+    UPROPERTY(EditAnywhere, Category = "Mobs")
+    TArray<FFoundationMobSpawnAsset> Monsters;
 };
 
 // DA_Mobs (survival T6 20a), written by Scripts/Editor/ImportMobs.py from Reference/minecraft-entities-26.3: the eight
@@ -137,6 +140,7 @@ public:
     void FindLayers(FName Id, TArray<const FFoundationMobModelAsset*>& Out) const;
     // Replaces Rules.EntityLootTables with these, items resolved against Rules.Items; how many were skipped.
     int32 AddLoot(FFoundationRules& Rules) const;
-    // Replaces Rules.BiomeSpawns with BiomeSpawns, keeping only the mobs that are built and spawnable.
+    // Replaces Rules.BiomeSpawns with BiomeSpawns: creatures only the mobs that are built and spawnable; monsters every
+    // entry, the others blank.
     void AddSpawns(FFoundationRules& Rules) const;
 };
