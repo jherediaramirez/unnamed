@@ -737,6 +737,28 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
             // capture).
             if (BreakEffects) BreakEffects->PlayEvent(TEXT("item.axe.strip"), Cell.GetCenter(), 1.f, 1.f);
             break;
+        case EFoundationEventKind::Filled:
+        case EFoundationEventKind::Emptied:
+            // Buckets (step 17): item.bucket.fill / fill_lava at the player (PLAYERS), item.bucket.empty / empty_lava
+            // at the poured cell (BLOCKS), all volume 1 and pitch 1 (SURVIVAL-FINDINGS, R5, survival.r5.play_calls).
+            if (BreakEffects)
+            {
+                const bool bLava = Authority.Rules.GetItem(Event.Item).Id == TEXT("lava_bucket");
+                if (Event.Kind == EFoundationEventKind::Filled)
+                    BreakEffects->PlayEvent(
+                        bLava ? TEXT("item.bucket.fill_lava") : TEXT("item.bucket.fill"), Event.LocationCm, 1.f, 1.f);
+                else
+                    BreakEffects->PlayEvent(
+                        bLava ? TEXT("item.bucket.empty_lava") : TEXT("item.bucket.empty"), Cell.GetCenter(), 1.f, 1.f);
+            }
+            break;
+        case EFoundationEventKind::Extinguished:
+            // Lava meeting water (step 17): block.lava.extinguish at volume 0.5 and pitch 2.6 + 0.8 (U - V)
+            // (minecraft.wiki "Lava", Sounds; provisional, neither report has it).
+            if (BreakEffects)
+                BreakEffects->PlayEvent(TEXT("block.lava.extinguish"), Cell.GetCenter(), .5f,
+                    2.6f + (FMath::FRand() - FMath::FRand()) * .8f);
+            break;
         case EFoundationEventKind::ToolBroke:
             if (const AFoundationPawn* Pawn = GetLocalPawn())
                 Burst(Pawn->GetEyePosition() + Pawn->GetControlRotation().Vector() * 60, FLinearColor(.7f, .7f, .72f),

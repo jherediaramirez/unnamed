@@ -49,16 +49,19 @@ void FFoundationExperienceOrbView::Update(
     const FFoundationAuthority& Authority, const AFoundationPawn* Pawn, double Alpha)
 {
     using namespace FoundationExperienceOrbs;
-    // The level-up hook: the local player's level reaching or passing a multiple of 5 (provisional, wiki
-    // "Experience").
+    // The level-up hook [survival.r5.rules], timed by the authority's steps for the local player.
     if (Pawn)
     {
         const int32 Level = Pawn->Vitals.Level;
-        if (LastLevel >= 0 && Level > LastLevel && Level / 5 > LastLevel / 5)
+        // Without the authority's player there is no step to time it by: no sound this frame.
+        const FFoundationPlayer* Player = Authority.FindPlayer(Pawn->Interaction.PlayerId);
+        const int64 Step = Player ? Player->Facts.Step : 0;
+        if (const float Volume = Player ? GetLevelUpVolume(LastLevel, Level, Step, LastLevelUpStep) : 0.f; Volume > 0)
         {
             ++LevelUpSounds;
+            LastLevelUpStep = Step;
             if (FFoundationBreakEffects* Effects = View.GetBreakEffects())
-                Effects->PlayEvent(TEXT("entity.player.levelup"), Pawn->GetActorLocation(), .75f, 1.f);
+                Effects->PlayEvent(TEXT("entity.player.levelup"), Pawn->GetActorLocation(), Volume, 1.f);
         }
         LastLevel = Level;
     }
@@ -106,10 +109,12 @@ void FFoundationExperienceOrbView::Update(
 
 void FFoundationExperienceOrbView::OnPickedUp(const FFoundationEvent& Event)
 {
-    // Provisional volume and pitch (the item pickup's call shape; the sound batch brings the event).
+    // [survival.r5.play_calls, survival.r5.rules] volume 0.1, pitch 0.9 + 0.35 x (U - V).
+    using namespace FoundationExperienceOrbs;
     ++PickupSounds;
     if (FFoundationBreakEffects* Effects = View.GetBreakEffects())
-        Effects->PlayEvent(TEXT("entity.experience_orb.pickup"), Event.LocationCm, .1f, FMath::FRandRange(.55f, 1.25f));
+        Effects->PlayEvent(TEXT("entity.experience_orb.pickup"), Event.LocationCm, PickupVolume,
+            GetPickupPitch(FMath::FRand(), FMath::FRand()));
 }
 
 FString FFoundationExperienceOrbView::Describe() const

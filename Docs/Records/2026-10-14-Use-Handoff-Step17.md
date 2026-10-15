@@ -1,6 +1,6 @@
 # Use lane handoff: step 17, buckets
 
-From step 10b (eating polish, commit `8474c32` on `feature/survival-use`, worktree `C:\dev\projects\Unnamed-use`). Survival program track T3. **Base: `8474c32` plus the 10b landing merge of `feature/survival` (38399ad or later; merge hash: _to be added_).** Don't edit the lane until that merge has landed. After 17 comes step 16 (survival fixes). The sub-manager is "SM-Player" (session `session_01AQoPHG1guSaFSFHz6Pqd8N`); reports go there.
+From step 10b (eating polish, commit `8474c32` on `feature/survival-use`, worktree `C:\dev\projects\Unnamed-use`). Survival program track T3. **Base: `8474c32` plus the 10b landing merge of `feature/survival` (merge `045169bd`).** Don't edit the lane until that merge has landed. After 17 comes step 16 (survival fixes). The sub-manager is "SM-Player" (session `session_01AQoPHG1guSaFSFHz6Pqd8N`); reports go there.
 
 ## Short prompt
 

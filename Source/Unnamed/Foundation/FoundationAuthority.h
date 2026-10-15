@@ -171,6 +171,9 @@ struct FFoundationResult
     bool bAte = false;
     // An axe stripped the block at Cell (step 14); State is the stripped state.
     bool bStripped = false;
+    // A bucket (step 17) took the source at Cell (bFilled) or poured one there (bEmptied); State is the cell's new
+    // state.
+    bool bFilled = false, bEmptied = false;
     // What a survival break returned to the inventory (items S5b): one entry per stack rolled.
     TArray<FFoundationLootDrop> Drops;
     FName Interaction;
@@ -336,6 +339,12 @@ enum class EFoundationEventKind : uint8
     // A player took an experience orb (step 12): EntityId the orb, Count its points, LocationCm where it stood (world
     // cm), bWholeStack whether that was its last (the orb is gone).
     ExperiencePickedUp,
+    // A bucket (step 17) took a source (Filled: Item the filled bucket, LocationCm the player's feet) or poured one
+    // (Emptied: Item the poured bucket); Cell the fluid's cell, State its new state.
+    Filled,
+    Emptied,
+    // Lava met water and hardened (step 17): Cell, State the block it became (stone, obsidian, cobblestone, basalt).
+    Extinguished,
     // A block's use opened a container (survival step 7): Cell the block, EntityId the container id, Interaction the
     // block id.
     ContainerOpened
@@ -374,6 +383,15 @@ struct FFoundationItemUse
     int32 Ticks = 0, Duration = 0;
     int64 LastStep = -1;
 };
+
+namespace FoundationBucket
+{
+    // The buckets step 17 uses (empty, water, lava); milk and the mob buckets wait for mobs.
+    inline bool IsBucket(FName Id)
+    {
+        return Id == TEXT("bucket") || Id == TEXT("water_bucket") || Id == TEXT("lava_bucket");
+    }
+}
 
 namespace FoundationItemUse
 {
@@ -494,7 +512,7 @@ public:
     void SettleAfterFluid(const FIntVector& Cell, FFoundationBlockState Before, bool bWashedAway);
 
     // Shared queries: the same code serves previews, caller claims and validation.
-    FFoundationHit Resolve(const FFoundationPlayerFacts& Facts) const;
+    FFoundationHit Resolve(const FFoundationPlayerFacts& Facts, bool bFluidSources = false) const;
     // Where a placement would go without knowing the item: the clicked block when replaceable, else beside it.
     bool GetDestination(const FFoundationHit& Hit, FIntVector& OutDestination, EFoundationReason& OutReason) const;
     // The same for the item in a hand, as vanilla's BlockPlaceContext: a matching single slab is completed in
@@ -531,7 +549,7 @@ public:
     // Diagnostics.
     int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
     int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsThrown = 0, ItemsMerged = 0, ItemsDespawned = 0, ItemsEaten = 0,
-          Strips = 0;
+          Strips = 0, BucketUses = 0;
     int32 OrbsSpawned = 0, OrbsPickedUp = 0, OrbsMerged = 0, OrbsDespawned = 0;
 
 private:
@@ -562,6 +580,10 @@ private:
     void Attack(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationVitals& Vitals,
         FFoundationResult& Result);
     void Whiff(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationVitals& Vitals,
+        FFoundationResult& Result);
+    // A bucket in the hand (step 17): fills from or pours a fluid source as an instant use. False when the hand holds
+    // no bucket or the switch is off; otherwise Result says what happened (a pass included).
+    bool UseBucket(FFoundationPlayer& Player, const FFoundationCommand& Command, EFoundationPlayerMode Mode,
         FFoundationResult& Result);
     void UseItemStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
         FFoundationResult& Result);
