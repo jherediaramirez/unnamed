@@ -786,6 +786,7 @@ bool UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
             : Kind == EFoundationMenuKind::Furnace                       ? TEXT("furnace")
             : Kind == EFoundationMenuKind::Smoker                        ? TEXT("smoker")
             : Kind == EFoundationMenuKind::BlastFurnace                  ? TEXT("blast furnace")
+            : Kind == EFoundationMenuKind::Barrel                        ? TEXT("barrel")
                                                                          : TEXT("survival inventory"));
     bInventoryOpen = true;
     return true;

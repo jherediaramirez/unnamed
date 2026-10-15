@@ -190,10 +190,11 @@ namespace FoundationInteractTests
         const TCHAR* Second;
     };
 
-    // SURVIVAL-FINDINGS-26.3.md F 5071-5135 (survival.r9.switches): the 57 door, trapdoor and gate rows (the lever's
-    // is B3b's), copied verbatim: Before, First use, Upper half after first use (doors), Second use. The probe player
-    // looked south.
+    // SURVIVAL-FINDINGS-26.3.md F 5071-5135 (survival.r9.switches): the 58 lever, door, trapdoor and gate rows, copied
+    // verbatim: Before, First use, Upper half after first use (doors), Second use. The probe player looked south.
     const FSwitchRow SwitchRows[] = {
+        {TEXT("lever[face=floor,facing=north,powered=false]"), TEXT("lever[face=floor,facing=north,powered=true]"),
+            TEXT("—"), TEXT("lever[face=floor,facing=north,powered=false]")},
         {TEXT("oak_door[facing=north,half=lower,hinge=left,open=false,powered=false]"),
             TEXT("oak_door[facing=north,half=lower,hinge=left,open=true,powered=false]"),
             TEXT("oak_door[facing=north,half=upper,hinge=left,open=true,powered=false]"),
@@ -405,7 +406,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FFoundationInteractFamiliesTest::RunTest(const FString& Parameters)
 {
     const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();
-    int32 Doors = 0, Trapdoors = 0, Gates = 0;
+    int32 Doors = 0, Trapdoors = 0, Gates = 0, Buttons = 0, Levers = 0;
     TArray<FString> NotUsable;
     for (int32 Index = 0; Index < Registry->GetBlockCount(); ++Index)
     {
@@ -414,12 +415,17 @@ bool FFoundationInteractFamiliesTest::RunTest(const FString& Parameters)
         Doors += Family == EFoundationBlockFamily::Door;
         Trapdoors += Family == EFoundationBlockFamily::Trapdoor;
         Gates += Family == EFoundationBlockFamily::FenceGate;
+        Buttons += Family == EFoundationBlockFamily::Button;
+        Levers += Family == EFoundationBlockFamily::Lever;
         const bool bOpenable = Family == EFoundationBlockFamily::Door || Family == EFoundationBlockFamily::Trapdoor ||
-            Family == EFoundationBlockFamily::FenceGate;
+            Family == EFoundationBlockFamily::FenceGate || Family == EFoundationBlockFamily::Button ||
+            Family == EFoundationBlockFamily::Lever;
         if (bOpenable && !FoundationBlockFamilies::IsUsable(Block)) NotUsable.Add(Block.Id.ToString());
         if (!bOpenable && FoundationBlockFamilies::IsUsable(Block))
-            AddError(Block.Id.ToString() + TEXT(" is usable but not a door, trapdoor or gate"));
+            AddError(Block.Id.ToString() + TEXT(" is usable but not a door, trapdoor, gate, button or lever"));
     }
+    TestEqual(TEXT("buttons (#minecraft:buttons)"), Buttons, 15);
+    TestEqual(TEXT("levers"), Levers, 1);
     TestEqual(TEXT("doors (#minecraft:doors)"), Doors, 22);
     TestEqual(TEXT("trapdoors (#minecraft:trapdoors)"), Trapdoors, 22);
     TestEqual(TEXT("fence gates"), Gates, 13);
@@ -439,7 +445,8 @@ bool FFoundationInteractFamiliesTest::RunTest(const FString& Parameters)
         TArray<FString> Cells;
         Line.ParseIntoArray(Cells, TEXT(","), false);
         if (Cells.Num() < 5 ||
-            (Cells[1] != TEXT("door") && Cells[1] != TEXT("trapdoor") && Cells[1] != TEXT("fence_gate")))
+            (Cells[1] != TEXT("door") && Cells[1] != TEXT("trapdoor") && Cells[1] != TEXT("fence_gate") &&
+                Cells[1] != TEXT("button") && Cells[1] != TEXT("lever")))
             continue;
         ++Rows;
         const FFoundationBlockType* Block = Registry->FindBlock(FName(Cells[0]));
@@ -450,11 +457,13 @@ bool FFoundationInteractFamiliesTest::RunTest(const FString& Parameters)
         }
         const FName Open = FoundationBlockFamilies::GetUseSound(*Block, true);
         const FName Close = FoundationBlockFamilies::GetUseSound(*Block, false);
-        if (Open != FName(Cells[3]) || Close != FName(Cells[4]))
+        // A button's and the lever's columns are click_on and click_off.
+        const int32 Column = Cells[1] == TEXT("button") || Cells[1] == TEXT("lever") ? 5 : 3;
+        if (!Cells.IsValidIndex(Column + 1) || Open != FName(Cells[Column]) || Close != FName(Cells[Column + 1]))
             AddError(FString::Printf(TEXT("%s: %s / %s, want %s / %s"), *Cells[0], *Open.ToString(), *Close.ToString(),
-                *Cells[3], *Cells[4]));
+                *Cells[Column], *Cells[Column + 1]));
     }
-    TestEqual(TEXT("csv rows checked (22 doors, 22 trapdoors, 13 gates)"), Rows, 57);
+    TestEqual(TEXT("csv rows checked (22 doors, 22 trapdoors, 13 gates, 15 buttons, the lever)"), Rows, 73);
     return true;
 }
 
@@ -464,8 +473,8 @@ bool FFoundationInteractSwitchesTest::RunTest(const FString& Parameters)
 {
     // Every row: put Before (a door's two halves), use it once with an empty hand looking south, then again. Both door
     // halves have changed when Execute returns, with no step between (survival.r9.switches, F 5051).
-    TestEqual(TEXT("rows"), int32(UE_ARRAY_COUNT(SwitchRows)), 57);
-    // One row per door, trapdoor and gate block.
+    TestEqual(TEXT("rows"), int32(UE_ARRAY_COUNT(SwitchRows)), 58);
+    // One row per lever, door, trapdoor and gate block.
     TSet<FString> RowBlocks, FamilyBlocks;
     for (const FSwitchRow& Row : SwitchRows)
         RowBlocks.Add(FString(Row.Before).Left(FString(Row.Before).Find(TEXT("["))));
@@ -474,11 +483,11 @@ bool FFoundationInteractSwitchesTest::RunTest(const FString& Parameters)
     {
         const EFoundationBlockFamily Family = FoundationBlockFamilies::GetFamily(Registry->GetBlockAt(Index));
         if (Family == EFoundationBlockFamily::Door || Family == EFoundationBlockFamily::Trapdoor ||
-            Family == EFoundationBlockFamily::FenceGate)
+            Family == EFoundationBlockFamily::FenceGate || Family == EFoundationBlockFamily::Lever)
             FamilyBlocks.Add(Registry->GetBlockAt(Index).Id.ToString());
     }
-    TestTrue(TEXT("the rows name every door, trapdoor and gate once"),
-        RowBlocks.Num() == 57 && RowBlocks.Difference(FamilyBlocks).IsEmpty() &&
+    TestTrue(TEXT("the rows name the lever and every door, trapdoor and gate once"),
+        RowBlocks.Num() == 58 && RowBlocks.Difference(FamilyBlocks).IsEmpty() &&
             FamilyBlocks.Difference(RowBlocks).IsEmpty());
     FInteractLab Lab;
     const FIntVector Cell(0, 0, 1), Upper(0, 0, 2);
@@ -1010,6 +1019,504 @@ bool FFoundationInteractGrazingTest::RunTest(const FString& Parameters)
             Lab.At(TallGrass + FIntVector(0, 0, 1)) == TEXT("tall_grass[half=upper]"));
     TestEqual(TEXT("the fence"), Lab.At(Fence), FenceBefore);
     TestEqual(TEXT("pops"), Lab.CountEvents(EFoundationEventKind::Popped, Serial), 0);
+    return true;
+}
+
+namespace FoundationInteractTests
+{
+    // F 5053-5069 (survival.r9.buttons): each button's first unpowered tick after a press at tick 0.
+    const TPair<const TCHAR*, int32> ButtonTicks[] = {{TEXT("stone_button"), 20}, {TEXT("oak_button"), 30},
+        {TEXT("spruce_button"), 30}, {TEXT("birch_button"), 30}, {TEXT("jungle_button"), 30},
+        {TEXT("acacia_button"), 30}, {TEXT("cherry_button"), 30}, {TEXT("dark_oak_button"), 30},
+        {TEXT("pale_oak_button"), 30}, {TEXT("mangrove_button"), 30}, {TEXT("poplar_button"), 30},
+        {TEXT("bamboo_button"), 30}, {TEXT("crimson_button"), 30}, {TEXT("warped_button"), 30},
+        {TEXT("polished_blackstone_button"), 20}};
+
+    bool IsPowered(const FInteractLab& Lab, const FIntVector& Cell)
+    {
+        return Lab.R().GetValue(Lab.A.World.Get(Cell).State, TEXT("powered")) == TEXT("true");
+    }
+
+    // A face by its name (FoundationGrid::FaceName); None for an unknown one.
+    EFoundationFace SwitchFaceByName(const FString& Name)
+    {
+        for (int32 Face = 0; Face < 6; ++Face)
+            if (Name == FoundationGrid::FaceName(EFoundationFace(Face))) return EFoundationFace(Face);
+        return EFoundationFace::None;
+    }
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationInteractButtonsTest, "Unnamed.Foundation.Interact.Buttons", InteractTestFlags)
+bool FFoundationInteractButtonsTest::RunTest(const FString& Parameters)
+{
+    // Every button: pressed with an empty hand at tick 0 (a floor button), powered through the tick before its
+    // duration, released at it with click_off and no player (F 5053-5069).
+    TestEqual(TEXT("button rows"), int32(UE_ARRAY_COUNT(ButtonTicks)), 15);
+    const FIntVector Cell(0, 0, 1);
+    int32 Wrong = 0;
+    for (const auto& [Id, Ticks] : ButtonTicks)
+    {
+        FInteractLab Lab;
+        const FFoundationBlockType* Block = Lab.R().FindBlock(Id);
+        if (!TestNotNull(Id, Block)) continue;
+        TestEqual(FString(Id) + TEXT(" GetButtonTicks"), FoundationBlockFamilies::GetButtonTicks(*Block), Ticks);
+        Lab.A.World.Set(Cell, Lab.State(FString(Id) + TEXT("[face=floor,facing=north,powered=false]")));
+        const FFoundationResult Pressed = Lab.UseBlock(Cell);
+        const FFoundationEvent* On = Lab.LastEvent(EFoundationEventKind::BlockUsed);
+        const FName OnSound = FoundationBlockFamilies::GetUseSound(*Block, true);
+        if (!Pressed.bInteracted || !IsPowered(Lab, Cell) || !On || On->Interaction != OnSound || On->Amount != 1.f ||
+            On->Pitch != 1.f)
+        {
+            ++Wrong;
+            AddError(FString(Id) + TEXT(": the press"));
+        }
+        const int64 Serial = Lab.A.GetEventSerial();
+        int32 Released = -1;
+        for (int32 Tick = 1; Tick <= 40 && Released < 0; ++Tick)
+        {
+            Lab.A.Step();
+            if (!IsPowered(Lab, Cell)) Released = Tick;
+        }
+        const FFoundationEvent* Off = Lab.LastEvent(EFoundationEventKind::BlockUsed);
+        if (Released != Ticks || Lab.CountEvents(EFoundationEventKind::BlockUsed, Serial) != 1 || !Off ||
+            Off->Interaction != FoundationBlockFamilies::GetUseSound(*Block, false) || Off->Player != 0 ||
+            Off->Cell != Cell)
+        {
+            ++Wrong;
+            AddError(FString::Printf(TEXT("%s: released at %d, want %d"), Id, Released, Ticks));
+        }
+    }
+    TestEqual(TEXT("button mismatches"), Wrong, 0);
+
+    // The probe's part C (Tests/Probes/switch-placement-26.3.json): a wall button or lever on stone's north face, used
+    // at the listed ticks (after that many steps), powered after each tick against the probe's.
+    const TSharedPtr<FJsonObject> Probe = LoadProjectJson(TEXT("Tests/Probes/switch-placement-26.3.json"));
+    if (!TestTrue(TEXT("switch-placement-26.3.json loads"), Probe.IsValid())) return false;
+    int32 Runs = 0;
+    Wrong = 0;
+    for (const TSharedPtr<FJsonValue>& Value :
+        Probe->GetObjectField(TEXT("parts"))->GetObjectField(TEXT("C"))->GetArrayField(TEXT("runs")))
+    {
+        const TSharedPtr<FJsonObject> Run = Value->AsObject();
+        FInteractLab Lab;
+        const FIntVector Stone(0, 0, 1), Switch(0, -1, 1);
+        Lab.A.World.Set(Stone, Lab.State(TEXT("stone")));
+        Lab.A.World.Set(Switch, Lab.State(Run->GetStringField(TEXT("placed")).Replace(TEXT("minecraft:"), TEXT(""))));
+        TArray<int32> Uses;
+        for (const TSharedPtr<FJsonValue>& Use : Run->GetArrayField(TEXT("sched")))
+            Uses.Add(int32(Use->AsNumber()));
+        FString Got, Want;
+        for (const TSharedPtr<FJsonValue>& Powered : Run->GetArrayField(TEXT("ticks")))
+            Want += FString::FromInt(int32(Powered->AsNumber()));
+        TestEqual(TEXT("ticks 0-40 per run"), Want.Len(), 41);
+        for (int32 Tick = 0; Tick < Want.Len(); ++Tick)
+        {
+            if (Tick > 0) Lab.A.Step();
+            for (const int32 Use : Uses)
+                if (Use == Tick && !Lab.UseBlock(Switch).bInteracted) AddError(TEXT("a use not taken"));
+            Got += IsPowered(Lab, Switch) ? TEXT("1") : TEXT("0");
+        }
+        ++Runs;
+        if (Got != Want && ++Wrong)
+            AddError(FString::Printf(TEXT("%s uses %s: %s, want %s"), *Run->GetStringField(TEXT("block")),
+                *FString::JoinBy(Uses, TEXT(","), [](int32 Use) { return FString::FromInt(Use); }), *Got, *Want));
+    }
+    TestEqual(TEXT("part C runs"), Runs, 15);
+    TestEqual(TEXT("part C mismatches"), Wrong, 0);
+
+    // A pressed button's use takes the click and changes nothing, with no event.
+    {
+        FInteractLab Lab;
+        Lab.A.World.Set(Cell, Lab.State(TEXT("stone_button[face=floor,facing=north,powered=true]")));
+        const int64 Serial = Lab.A.GetEventSerial();
+        const FFoundationResult Again = Lab.UseBlock(Cell);
+        TestTrue(TEXT("a pressed button: consumed, unchanged, no event"),
+            Again.bInteracted && IsPowered(Lab, Cell) && Lab.CountEvents(EFoundationEventKind::BlockUsed, Serial) == 0);
+    }
+    // Broken at tick 5 and a fresh released button put back at tick 6: the old release drops (no click_off).
+    {
+        FInteractLab Lab;
+        Lab.A.World.Set(Cell, Lab.State(TEXT("stone_button[face=floor,facing=north,powered=false]")));
+        Lab.UseBlock(Cell);
+        for (int32 Tick = 1; Tick <= 5; ++Tick)
+            Lab.A.Step();
+        Lab.Break(Cell);
+        TestTrue(TEXT("the pressed button broke"), Lab.A.World.Get(Cell).State.IsAir());
+        Lab.A.Step();
+        Lab.A.World.Set(Cell, Lab.State(TEXT("stone_button[face=floor,facing=north,powered=false]")));
+        const int64 Serial = Lab.A.GetEventSerial();
+        for (int32 Tick = 7; Tick <= 40; ++Tick)
+            Lab.A.Step();
+        TestTrue(TEXT("the new button: untouched, no stray click_off"),
+            Lab.At(Cell) == TEXT("stone_button[face=floor,facing=north,powered=false]") &&
+                Lab.CountEvents(EFoundationEventKind::BlockUsed, Serial) == 0);
+    }
+    // Broken at tick 5, a fresh button put back and pressed at tick 10: its own press releases it, at tick 30, not
+    // the old press at 20.
+    {
+        FInteractLab Lab;
+        const FString Released = TEXT("stone_button[face=floor,facing=north,powered=false]");
+        Lab.A.World.Set(Cell, Lab.State(Released));
+        Lab.UseBlock(Cell);
+        for (int32 Tick = 1; Tick <= 5; ++Tick)
+            Lab.A.Step();
+        Lab.Break(Cell);
+        Lab.A.World.Set(Cell, Lab.State(Released));
+        int32 Off = -1;
+        for (int32 Tick = 6; Tick <= 40 && Off < 0; ++Tick)
+        {
+            Lab.A.Step();
+            if (Tick == 10) Lab.UseBlock(Cell);
+            if (Tick > 10 && !IsPowered(Lab, Cell)) Off = Tick;
+        }
+        TestEqual(TEXT("a replaced button pressed at 10 releases at 30"), Off, 30);
+    }
+    // Reset drops every pending release.
+    {
+        FInteractLab Lab;
+        const FString Pressed = TEXT("oak_button[face=floor,facing=north,powered=true]");
+        Lab.A.World.Set(Cell, Lab.State(TEXT("oak_button[face=floor,facing=north,powered=false]")));
+        Lab.UseBlock(Cell);
+        Lab.A.Reset();
+        Lab.A.World.Set(Cell, Lab.State(Pressed));
+        for (int32 Tick = 1; Tick <= 40; ++Tick)
+            Lab.A.Step();
+        TestEqual(TEXT("after Reset no release runs"), Lab.At(Cell), Pressed);
+    }
+    // The lever: volume 0.3, pitch 0.6 on and 0.5 off (F 3561-3567), block.lever.click; no timer.
+    {
+        FInteractLab Lab;
+        Lab.A.World.Set(Cell, Lab.State(TEXT("lever[face=floor,facing=north,powered=false]")));
+        Lab.UseBlock(Cell);
+        const FFoundationEvent* On = Lab.LastEvent(EFoundationEventKind::BlockUsed);
+        TestTrue(TEXT("lever on: block.lever.click at 0.3, pitch 0.6"),
+            On && On->Interaction == FName(TEXT("block.lever.click")) && On->Amount == .3f && On->Pitch == .6f);
+        for (int32 Tick = 1; Tick <= 40; ++Tick)
+            Lab.A.Step();
+        TestTrue(TEXT("the lever stays on"), IsPowered(Lab, Cell));
+        Lab.UseBlock(Cell);
+        const FFoundationEvent* Off = Lab.LastEvent(EFoundationEventKind::BlockUsed);
+        TestTrue(TEXT("lever off: block.lever.click at 0.3, pitch 0.5"),
+            !IsPowered(Lab, Cell) && Off && Off->Interaction == FName(TEXT("block.lever.click")) &&
+                Off->Amount == .3f && Off->Pitch == .5f);
+    }
+    // Doors keep the view's pitch rule: volume 1, Pitch 0.
+    {
+        FInteractLab Lab;
+        Lab.A.World.Set(Cell, Lab.State(TEXT("oak_door[facing=north,half=lower,hinge=left,open=false,powered=false]")));
+        Lab.A.World.Set(Cell + FIntVector(0, 0, 1),
+            Lab.State(TEXT("oak_door[facing=north,half=upper,hinge=left,open=false,powered=false]")));
+        Lab.UseBlock(Cell);
+        const FFoundationEvent* Used = Lab.LastEvent(EFoundationEventKind::BlockUsed);
+        TestTrue(TEXT("a door's event: volume 1, pitch 0 (the view's 0.9 + 0.1U)"),
+            Used && Used->Amount == 1.f && Used->Pitch == 0.f);
+    }
+    // foundation.Blocks.Interact 0: no use, and the default state when placed.
+    {
+        FInteractCVarScope Off(TEXT("foundation.Blocks.Interact"), 0);
+        FInteractLab Lab;
+        Lab.A.World.Set(Cell, Lab.State(TEXT("stone_button[face=floor,facing=north,powered=false]")));
+        Lab.UseBlock(Cell);
+        TestFalse(TEXT("switch 0: the button is not pressed"), IsPowered(Lab, Cell));
+        Lab.A.World.Set(Cell, FFoundationBlockState());
+        Lab.PlaceAt(FIntVector(0, 0, 0), EFoundationFace::Up, FVector(.5), TEXT("lever"), FVector(0, -230, 160));
+        TestEqual(TEXT("switch 0: the lever places in its default state"), Lab.At(Cell),
+            Lab.R().ToString(Lab.R().FindBlock(TEXT("lever"))->GetDefaultState()));
+    }
+    // A wall button pops with its support mined.
+    {
+        FInteractLab Lab;
+        const FIntVector Stone(0, 0, 1), Button(0, -1, 1);
+        Lab.PlaceAt(FIntVector(0, 0, 0), EFoundationFace::Up, FVector(.5), TEXT("stone"), FVector(0, -230, 160));
+        Lab.PlaceAt(Stone, EFoundationFace::North, FVector(.5), TEXT("oak_button"), FVector(0, -230, 40));
+        TestEqual(TEXT("a wall button on the placed stone"), Lab.At(Button),
+            FString(TEXT("oak_button[face=wall,facing=north,powered=false]")));
+        const int64 Serial = Lab.A.GetEventSerial();
+        Lab.Break(Stone);
+        TestTrue(TEXT("its support mined: the button popped"),
+            Lab.A.World.Get(Button).State.IsAir() && Lab.CountEvents(EFoundationEventKind::Popped, Serial) == 1);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationInteractSwitchSurvivalTest, "Unnamed.Foundation.Interact.SwitchSurvival", InteractTestFlags)
+bool FFoundationInteractSwitchSurvivalTest::RunTest(const FString& Parameters)
+{
+    // Every button and lever state against family_survival.json: S at P, X at one neighbour, air elsewhere, for every
+    // candidate X and all six probes (only the side it hangs on has candidates).
+    const TSharedPtr<FJsonObject> Facts =
+        LoadProjectJson(TEXT("Reference/minecraft-blocks-26.3/facts/family_survival.json"));
+    if (!TestTrue(TEXT("family_survival.json loads"), Facts.IsValid())) return false;
+    const TArray<TSharedPtr<FJsonValue>>& Signatures = Facts->GetArrayField(TEXT("signatures"));
+    const TSharedPtr<FJsonObject> Subjects = Facts->GetObjectField(TEXT("subjects"));
+    FInteractLab Lab;
+    FFoundationBlockWorld& World = Lab.A.World;
+    const FFoundationBlockRegistry& Registry = Lab.R();
+    const FIntVector Cell(0, 0, 5);
+    // Per probe, the subject states and the candidate sets they want there.
+    struct FSubject
+    {
+        FFoundationBlockState State;
+        TSharedPtr<FJsonObject> Want;
+    };
+    TArray<FSubject> ByProbe[6];
+    int32 Blocks = 0, States = 0;
+    for (int32 Index = 0; Index < Registry.GetBlockCount(); ++Index)
+    {
+        const FFoundationBlockType& Block = Registry.GetBlockAt(Index);
+        const EFoundationBlockFamily Family = FoundationBlockFamilies::GetFamily(Block);
+        if (Family != EFoundationBlockFamily::Button && Family != EFoundationBlockFamily::Lever) continue;
+        ++Blocks;
+        const TArray<TSharedPtr<FJsonValue>>* Rows = nullptr;
+        if (!TestTrue(
+                Block.Id.ToString() + TEXT(" in the facts"), Subjects->TryGetArrayField(Block.Id.ToString(), Rows)))
+            continue;
+        for (int32 Local = 0; Local < Block.StateCount; ++Local)
+        {
+            if (!Rows->IsValidIndex(Local) || (*Rows)[Local]->Type != EJson::Array)
+            {
+                AddError(Block.Id.ToString() + TEXT(": no rule-bearing row"));
+                continue;
+            }
+            ++States;
+            const TArray<TSharedPtr<FJsonValue>>& Probes = (*Rows)[Local]->AsArray();
+            for (int32 Probe = 0; Probe < 6; ++Probe)
+                ByProbe[Probe].Add({FFoundationBlockState{uint16(Block.MinStateId + Local)},
+                    Signatures[int32(Probes[Probe]->AsNumber())]->AsObject()});
+        }
+    }
+    TestEqual(TEXT("buttons and the lever"), Blocks, 16);
+    TestEqual(TEXT("their states"), States, 384);
+    int32 Checked = 0, Wrong = 0;
+    for (int32 X = 0; X < Registry.GetStateLimit(); ++X)
+    {
+        const FFoundationBlockState Candidate{uint16(X)};
+        if (X != 0 && !Registry.IsKnown(Candidate)) continue;
+        const FFoundationBlockType& Block = Registry.GetBlock(Candidate);
+        const FString Key = X == 0 ? FString(TEXT("air")) : Block.Id.ToString();
+        for (int32 Probe = 0; Probe < 6; ++Probe)
+        {
+            const FIntVector At = Cell + FoundationGrid::FaceOffset(EFoundationFace(Probe));
+            World.Set(At, Candidate);
+            for (const FSubject& Subject : ByProbe[Probe])
+            {
+                bool bWant = false;
+                if (const TSharedPtr<FJsonValue> Entry = Subject.Want->TryGetField(Key))
+                {
+                    if (Entry->Type == EJson::String)
+                        bWant = true;
+                    else
+                        for (const TSharedPtr<FJsonValue>& Local : Entry->AsArray())
+                            bWant |= int32(Local->AsNumber()) == X - Block.MinStateId;
+                }
+                const bool bGot = FoundationBlockFamilies::GetSurvival(World, Cell, Subject.State) ==
+                    EFoundationFamilySurvival::Survives;
+                ++Checked;
+                if (bGot != bWant && ++Wrong <= 20)
+                    AddError(FString::Printf(TEXT("%s with %s at %s: %d, want %d"), *Registry.ToString(Subject.State),
+                        *Registry.ToString(Candidate), FoundationGrid::FaceName(EFoundationFace(Probe)), int32(bGot),
+                        int32(bWant)));
+            }
+            World.Set(At, FFoundationBlockState());
+        }
+    }
+    AddInfo(FString::Printf(TEXT("%d switch-with-candidate cases checked"), Checked));
+    TestEqual(TEXT("mismatches against family_survival.json"), Wrong, 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationInteractSwitchPlacementTest, "Unnamed.Foundation.Interact.SwitchPlacement", InteractTestFlags)
+bool FFoundationInteractSwitchPlacementTest::RunTest(const FString& Parameters)
+{
+    // The probe's parts A and B (Tests/Probes/switch-placement-26.3.json, ItemStack.useOn in 26.3): the placed state,
+    // or none (our state fails its survival, so the authority refuses it). Minecraft x, y, z are our X, Z, Y.
+    const TSharedPtr<FJsonObject> Probe = LoadProjectJson(TEXT("Tests/Probes/switch-placement-26.3.json"));
+    if (!TestTrue(TEXT("switch-placement-26.3.json loads"), Probe.IsValid())) return false;
+    TestEqual(TEXT("the probe's anomalies"), Probe->GetArrayField(TEXT("anomalies")).Num(), 0);
+    FInteractLab Lab;
+    FFoundationBlockWorld& World = Lab.A.World;
+    const FIntVector P(0, 0, 5);
+    auto Clear = [&World, &P]
+    {
+        for (int32 Z = -2; Z <= 2; ++Z)
+            for (int32 X = -2; X <= 2; ++X)
+                for (int32 Y = -2; Y <= 2; ++Y)
+                    World.Set(P + FIntVector(X, Y, Z), FFoundationBlockState());
+    };
+    const TSharedPtr<FJsonObject> Parts = Probe->GetObjectField(TEXT("parts"));
+    int32 Cases[2] = {}, Wrong = 0;
+    for (int32 Part = 0; Part < 2; ++Part)
+        for (const TSharedPtr<FJsonValue>& Value : Parts->GetArrayField(Part == 0 ? TEXT("A") : TEXT("B")))
+        {
+            const TArray<TSharedPtr<FJsonValue>>& Row = Value->AsArray();
+            Clear();
+            const FString Block = Row[0]->AsString();
+            FFoundationPlacementContext Context;
+            FString Want;
+            if (Part == 0)
+            {
+                // [block, yaw, pitch, clicked face of stone at P, state at P + face]
+                World.Set(P, Lab.State(TEXT("stone")));
+                Context.ClickedCell = P;
+                Context.ClickedFace = SwitchFaceByName(Row[3]->AsString());
+                Context.Destination = P + FoundationGrid::FaceOffset(Context.ClickedFace);
+                Context.Yaw = Row[1]->AsNumber();
+                Context.Pitch = Row[2]->AsNumber();
+                Want = Row[4]->Type == EJson::Null ? FString() : Row[4]->AsString();
+            }
+            else
+            {
+                // [block, clicked block at D + d, d, stone cells at D + s joined by +, yaw, pitch, state at D]
+                const EFoundationFace D = SwitchFaceByName(Row[2]->AsString());
+                // The probe names the slab by its type only.
+                const FString Clicked =
+                    Row[1]->AsString().Replace(TEXT("[type=bottom]"), TEXT("[type=bottom,waterlogged=false]"));
+                World.Set(P + FoundationGrid::FaceOffset(D), Lab.State(Clicked));
+                FString Stones;
+                Row[3]->TryGetString(Stones);
+                TArray<FString> Names;
+                Stones.ParseIntoArray(Names, TEXT("+"));
+                for (const FString& Name : Names)
+                    World.Set(P + FoundationGrid::FaceOffset(SwitchFaceByName(Name)), Lab.State(TEXT("stone")));
+                Context.ClickedCell = P + FoundationGrid::FaceOffset(D);
+                Context.ClickedFace = FoundationBlockPlacement::GetOpposite(D);
+                Context.Destination = P;
+                Context.Yaw = Row[4]->AsNumber();
+                Context.Pitch = Row[5]->AsNumber();
+                Want = Row[6]->Type == EJson::Null ? FString() : Row[6]->AsString();
+            }
+            if (Context.ClickedFace == EFoundationFace::None) AddError(TEXT("an unknown face in the probe"));
+            Want.ReplaceInline(TEXT("minecraft:"), TEXT(""));
+            const FFoundationBlockState Got =
+                FoundationBlockFamilies::GetStateForPlacement(World, *Lab.R().FindBlock(FName(Block)), Context, false);
+            const bool bPlaced = FoundationBlockFamilies::GetSurvival(World, Context.Destination, Got) ==
+                EFoundationFamilySurvival::Survives;
+            const FString GotText = bPlaced ? Lab.R().ToString(Got) : FString();
+            ++Cases[Part];
+            if (GotText != Want && ++Wrong <= 20)
+                AddError(FString::Printf(TEXT("part %s: %s: %s, want %s"), Part == 0 ? TEXT("A") : TEXT("B"),
+                    *FString::JoinBy(Row, TEXT(" "), [](const TSharedPtr<FJsonValue>& Cell)
+                        { return Cell->Type == EJson::Null ? FString(TEXT("-")) : Cell->AsString(); }),
+                    *GotText, *Want));
+        }
+    TestEqual(TEXT("part A cases"), Cases[0], 270);
+    TestEqual(TEXT("part B cases"), Cases[1], 7650);
+    TestEqual(TEXT("mismatches"), Wrong, 0);
+    // Through the authority: a lever clicked on stone's top faces the look; a button on a fence (no sturdy face) with
+    // nothing else around is refused.
+    FInteractLab Through;
+    Through.PlaceAt(FIntVector(0, 0, 0), EFoundationFace::Up, FVector(.5), TEXT("lever"), FVector(0, -230, 160));
+    TestEqual(TEXT("a lever placed looking south"), Through.At(FIntVector(0, 0, 1)),
+        FString(TEXT("lever[face=floor,facing=south,powered=false]")));
+    Through.A.World.Set(FIntVector(3, 0, 3), Through.State(TEXT("oak_fence")));
+    const FFoundationResult Refused = Through.PlaceAt(
+        FIntVector(3, 0, 3), EFoundationFace::North, FVector(.5), TEXT("stone_button"), FVector(0, -230, 0));
+    TestTrue(TEXT("a button on a fence's side, nothing else to hang on: refused"),
+        !Refused.IsCommitted() && Through.A.World.Get(FIntVector(3, -1, 3)).State.IsAir());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationInteractR13Test, "Unnamed.Foundation.Interact.R13", InteractTestFlags)
+bool FFoundationInteractR13Test::RunTest(const FString& Parameters)
+{
+    // Jesus's lab, SURVIVAL-RUN2-FINDINGS-26.3.md R13 (survival2.r13.shapes, survival2.r13.connections), through
+    // Scripts/MakeR13Oracles.py: every door, trapdoor, gate, button and lever state's collision and outline boxes, in
+    // order, and every connection row through the family rules (the subject's default state with stone below and the
+    // neighbour at its side, air elsewhere, settled as at placement).
+    const TSharedPtr<FJsonObject> Oracles = LoadProjectJson(TEXT("Source/Unnamed/Tests/BlockR13Oracles.json"));
+    if (!TestTrue(TEXT("BlockR13Oracles.json loads"), Oracles.IsValid())) return false;
+    const TSharedRef<const FFoundationBlockRegistry> Default = FFoundationBlockRegistry::GetDefault();
+    const FFoundationBlockRegistry& Registry = *Default;
+    TArray<FFoundationBlockState> States;
+    int32 Unknown = 0;
+    for (const TSharedPtr<FJsonValue>& Name : Oracles->GetArrayField(TEXT("states")))
+    {
+        FFoundationBlockState State;
+        if (!Registry.Parse(Name->AsString(), State) && ++Unknown <= 5)
+            AddError(TEXT("unknown state ") + Name->AsString());
+        States.Add(State);
+    }
+    TestEqual(TEXT("R13 states we do not have"), Unknown, 0);
+    // A box id's boxes in our axes and block units (the dictionary is Minecraft pixels: x, y, z).
+    const TSharedPtr<FJsonObject> Dictionary = Oracles->GetObjectField(TEXT("boxes"));
+    auto Matches = [&Dictionary](const TArray<FBox>& Got, int32 Id)
+    {
+        const TArray<TSharedPtr<FJsonValue>>& Want = Dictionary->GetArrayField(FString::FromInt(Id));
+        if (Got.Num() != Want.Num()) return false;
+        for (int32 Index = 0; Index < Got.Num(); ++Index)
+        {
+            const TArray<TSharedPtr<FJsonValue>>& Box = Want[Index]->AsArray();
+            const FVector Min(Box[0]->AsNumber(), Box[2]->AsNumber(), Box[1]->AsNumber());
+            const FVector Max(Box[3]->AsNumber(), Box[5]->AsNumber(), Box[4]->AsNumber());
+            if (!Got[Index].Min.Equals(Min / 16, 1e-5) || !Got[Index].Max.Equals(Max / 16, 1e-5)) return false;
+        }
+        return true;
+    };
+    int32 Shapes = 0, Wrong = 0;
+    for (const TSharedPtr<FJsonValue>& Value : Oracles->GetArrayField(TEXT("shapes")))
+    {
+        const TArray<TSharedPtr<FJsonValue>>& Row = Value->AsArray();
+        const FFoundationBlockState State = States[int32(Row[0]->AsNumber())];
+        TArray<FBox> Collision, Outline;
+        Registry.GetCollisionBoxes(State, Collision);
+        Registry.GetOutlineBoxes(State, Outline);
+        ++Shapes;
+        if ((!Matches(Collision, int32(Row[1]->AsNumber())) || !Matches(Outline, int32(Row[2]->AsNumber()))) &&
+            ++Wrong <= 20)
+            AddError(Registry.ToString(State) + TEXT(": boxes differ from R13"));
+    }
+    TestEqual(TEXT("shape rows (1408 doors, 1408 trapdoors, 416 gates, 360 buttons, 24 levers)"), Shapes, 3616);
+    TestEqual(TEXT("shape mismatches"), Wrong, 0);
+    const FIntVector Cell(0, 0, 0);
+    const EFoundationFace Sides[] = {
+        EFoundationFace::North, EFoundationFace::East, EFoundationFace::South, EFoundationFace::West};
+    FFoundationBlockState Stone;
+    Registry.Parse(TEXT("stone"), Stone);
+    int32 Connections = 0, Gates = 0;
+    Wrong = 0;
+    for (const TSharedPtr<FJsonValue>& Value : Oracles->GetArrayField(TEXT("connections")))
+    {
+        const TArray<TSharedPtr<FJsonValue>>& Row = Value->AsArray();
+        const FFoundationBlockState Subject = States[int32(Row[0]->AsNumber())];
+        const FFoundationBlockState Neighbour = States[int32(Row[1]->AsNumber())];
+        const FIntVector Side = FoundationGrid::FaceOffset(Sides[int32(Row[2]->AsNumber())]);
+        const FFoundationBlockState Want = States[int32(Row[3]->AsNumber())];
+        const FFoundationBlockState Got =
+            FoundationBlockFamilies::SettleShape(Registry, Subject, Cell, [&](const FIntVector& At)
+                { return At == Side                ? Neighbour
+                      : At == FIntVector(0, 0, -1) ? Stone
+                                                   : FFoundationBlockState(); });
+        ++Connections;
+        Gates += FoundationBlockFamilies::GetFamily(Registry.GetBlock(Neighbour)) == EFoundationBlockFamily::FenceGate;
+        if (Got != Want && ++Wrong <= 20)
+            AddError(FString::Printf(TEXT("%s beside %s (%s): %s, want %s"), *Registry.ToString(Subject),
+                *Registry.ToString(Neighbour), FoundationGrid::FaceName(Sides[int32(Row[2]->AsNumber())]),
+                *Registry.ToString(Got), *Registry.ToString(Want)));
+    }
+    TestEqual(TEXT("connection rows"), Connections, 8352);
+    TestEqual(TEXT("connection rows with a gate"), Gates, 2304);
+    TestEqual(TEXT("connection mismatches"), Wrong, 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationInteractLoneHalfTest, "Unnamed.Foundation.Interact.LoneHalf", InteractTestFlags)
+bool FFoundationInteractLoneHalfTest::RunTest(const FString& Parameters)
+{
+    // Codex 28 #1: a lone lower door half (a world saved before B3a, a fixture) under a solid block. Its use opens it
+    // alone and leaves the block above (the use writes no upper half).
+    FInteractLab Lab;
+    const FIntVector Cell(0, 0, 1), Above(0, 0, 2);
+    Lab.A.World.Set(Cell, Lab.State(TEXT("oak_door[facing=north,half=lower,hinge=left,open=false,powered=false]")));
+    Lab.A.World.Set(Above, Lab.State(TEXT("diamond_block")));
+    const int64 Serial = Lab.A.GetEventSerial();
+    const FFoundationResult Used = Lab.UseBlock(Cell);
+    TestTrue(TEXT("the lone half opened"), Used.bInteracted && Lab.At(Cell).Contains(TEXT("open=true")));
+    TestEqual(TEXT("the block above stays"), Lab.At(Above), FString(TEXT("diamond_block")));
+    TestEqual(TEXT("nothing popped"), Lab.CountEvents(EFoundationEventKind::Popped, Serial), 0);
     return true;
 }
 #endif

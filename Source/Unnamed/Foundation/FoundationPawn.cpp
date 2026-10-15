@@ -461,6 +461,7 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.Options.bMobSpawn = FoundationMobs::IsSpawnOn();
     Authority.Options.bFire = CVarFire.GetValueOnGameThread() != 0;
     Authority.Options.bFurnace = FoundationFurnace::IsOn();
+    Authority.Options.bBarrel = FoundationBarrel::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     // Armor (survival step 19a): the hurts since the last step wear the worn pieces, then what is worn now counts.
     if (Vitals.PendingArmorWear > 0)

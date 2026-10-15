@@ -1974,6 +1974,104 @@ void UFoundationRuntimeProbe::AddTourCases()
             [] {});
     }
 
+    // n2. The barrel (T1 step 9): a barrel in a known air cell, opened as its use does, with a few stacks in its 27
+    // slots; the shot shows generic_54's 3 rows over the player's, and the block turns open while viewed. The block,
+    // its entity and the inventory are put back after.
+    {
+        const TSharedRef<TOptional<TPair<FIntVector, FFoundationBlockState>>> SavedBarrel =
+            MakeShared<TOptional<TPair<FIntVector, FFoundationBlockState>>>();
+        AddCase(
+            TEXT("tour barrel"), .8,
+            [this, Lab, Authority, SavedInventory, SavedBarrel]
+            {
+                ResetPlayer({0, 0, 0});
+                FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
+                if (!Player) return;
+                *SavedInventory = Player->Inventory;
+                SavedBarrel->Reset();
+                FFoundationBlockWorld& World = Authority().World;
+                const FVector Back = -FRotator(0, Controller->GetControlRotation().Yaw, 0).Vector();
+                const FVector Side = FVector::CrossProduct(FVector::UpVector, Back);
+                const FVector Feet = Pawn->GetActorLocation() + FVector(0, 0, 50);
+                TOptional<FIntVector> BarrelCell;
+                for (const FVector& Offset : {Back * 150, Back * 250, Side * 150, Side * -150})
+                    if (const FIntVector Cell = FoundationGrid::CellAt(Feet + Offset, World.OriginCm);
+                        !BarrelCell && World.IsKnown(Cell) && World.GetBlock(World.Get(Cell).State).Id == TEXT("air"))
+                        BarrelCell = Cell;
+                const FFoundationBlockType* Barrel = World.FindBlock(TEXT("barrel"));
+                // A failed setup leaves no screen, so the check below records it.
+                if (!Barrel || !BarrelCell) return;
+                const FFoundationBlockState Before = World.Get(*BarrelCell).State;
+                World.Set(*BarrelCell, Barrel->GetDefaultState());
+                FFoundationResult Opened;
+                Authority().OpenContainer(*Player, EFoundationMenuKind::Barrel, *BarrelCell, TEXT("barrel"), Opened);
+                if (!Opened.IsCommitted())
+                {
+                    World.Set(*BarrelCell, Before);
+                    return;
+                }
+                SavedBarrel->Emplace(*BarrelCell, Before);
+                FFoundationBlockEntities& Store = Authority().BlockEntities;
+                FFoundationBlockEntity& Entity =
+                    Store.FindOrAdd(*BarrelCell, EFoundationBlockEntityKind::Barrel, TEXT("barrel"));
+                const struct
+                {
+                    int32 Slot;
+                    const TCHAR* Item;
+                    int32 Count;
+                } Contents[] = {{0, TEXT("oak_log"), 12}, {4, TEXT("cobblestone"), 64}, {13, TEXT("coal"), 7},
+                    {26, TEXT("iron_ingot"), 3}};
+                for (const auto& [Slot, Id, Count] : Contents)
+                    if (const int32 Item = Authority().Rules.FindItem(Id); Item != INDEX_NONE)
+                        Entity.Items[Slot] = Store.MakeStack(Item, Count);
+                ++Player->Inventory.Revision;
+                Controller->GetPanels()->OpenContainerScreen(*Lab, EFoundationMenuKind::Barrel, Opened.OpenedContainer);
+                if (TSharedPtr<SHudContainerScreen> Screen = Controller->GetPanels()->GetSurvivalScreen())
+                {
+                    Screen->GetModel().Reset();
+                    Screen->SetMouse(
+                        FHudContainerModel::GetSlotPosition(EFoundationMenuKind::Barrel, 0) + FIntPoint(8, 8));
+                }
+                CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
+            },
+            [this, Authority, SavedBarrel]
+            {
+                const TSharedPtr<SHudContainerScreen> Screen = Controller->GetPanels()->GetSurvivalScreen();
+                const FFoundationBlockWorld& World = Authority().World;
+                const bool bOpenState = SavedBarrel->IsSet() && World.IsKnown(SavedBarrel->GetValue().Key) &&
+                    World.GetRegistry().GetValue(World.Get(SavedBarrel->GetValue().Key).State, TEXT("open")) ==
+                        FName(TEXT("true"));
+                Record(TEXT("tour barrel open"), SavedBarrel->IsSet() && Screen.IsValid() && Screen->HasArt(),
+                    TEXT("a barrel placed in a known air cell opens its screen with its imported background "
+                         "(generic_54.png)"));
+                Record(TEXT("tour barrel: open state"), bOpenState,
+                    TEXT("the viewed barrel's block is open=true (R16, survival2.r16.animation_and_viewers)"));
+                FScreenshotRequest::RequestScreenshot(
+                    FPaths::ChangeExtension(Output, TEXT("")) + TEXT("-tour-24j-barrel.png"), true, false);
+            });
+        AddCase(TEXT("tour flush 24j-barrel"), .4, [] {}, [] {});
+        AddCase(
+            TEXT("tour barrel close"), .3,
+            [this, Authority, SavedInventory, SavedBarrel]
+            {
+                Controller->GetPanels()->Close();
+                // Only a block this case placed is put back, with the inventory it saved.
+                if (!SavedBarrel->IsSet()) return;
+                Authority().BlockEntities.Remove(SavedBarrel->GetValue().Key);
+                if (Authority().World.IsKnown(SavedBarrel->GetValue().Key))
+                    Authority().World.Set(SavedBarrel->GetValue().Key, SavedBarrel->GetValue().Value);
+                SavedBarrel->Reset();
+                if (FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId))
+                {
+                    const int32 Revision = Player->Inventory.Revision;
+                    Player->OpenMenu = {};
+                    Player->Inventory = *SavedInventory;
+                    Player->Inventory.Revision = Revision + 1;
+                }
+            },
+            [] {});
+    }
+
     // o. The lit furnace block (T1 step 8b): a furnace in front of the player, burning coal, turns lit=true on its next
     // tick (survival.r3.furnace_ticks) and shows furnace_front_on toward the camera. Its light 13 waits for the
     // per-state light of full cubes (SM-Blocks), so the shot shows the face, not the glow. Put back after.
