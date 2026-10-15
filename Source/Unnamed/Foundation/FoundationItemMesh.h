@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Foundation/FoundationActions.h"
 
 struct FFoundationItemDisplayAsset;
 struct FFoundationItemTextureAsset;
@@ -27,10 +28,29 @@ struct FFoundationItemMeshLayer
     FColor Tint = FColor::White;
 };
 
+// One box of an entity-style model (the shield), in the entity's own pixels about its origin: Min corner and Size, and
+// the offset of its Minecraft "box UV" unwrapping in the entity texture.
+struct FFoundationItemBox
+{
+    FVector3f Min;
+    FVector3f Size;
+    FIntPoint TextureOffset;
+};
+
 struct FMeshDescription;
 
 namespace FoundationItemMesh
 {
+    // The shield's stand-in geometry: the plate (12 x 22 x 1, texture offset 0, 0) and the handle (2 x 6 x 6, offset
+    // 26, 0). PROVISIONAL: sizes and offsets were read from the texture's opaque layout and the placement (plate z -2
+    // to -1, handle z -1 to 5, both centred on x and y) is a guess, until the real model is read.
+    TArray<FFoundationItemBox> GetShieldBoxes();
+    // Six quads per box. Entity space is Y down and the front faces -Z; Scale (the item definition's transformation
+    // scale, (1, -1, -1) for the shield) is applied to the geometry about the entity origin, then the quads are in the
+    // item-model space ToUnreal takes (origin at model pixel 0, as vanilla draws a special model). UVs are the box
+    // UV's pixels over TextureSize, (0, 0) at the top left.
+    TArray<FFoundationItemQuad> BuildBoxQuads(
+        TConstArrayView<FFoundationItemBox> Boxes, const FIntPoint& TextureSize, const FVector3f& Scale);
     // The opacity mask as one flag per pixel, rows from the top; false when a row is missing, too short or not hex.
     bool ReadMask(const FFoundationItemTextureAsset& Texture, TArray<bool>& Opaque);
     // A front and a back quad of the whole sprite one model pixel apart (the cutout material discards transparent
@@ -54,4 +74,25 @@ namespace FoundationItemMesh
     UStaticMesh* BuildMesh(UObject* Outer, TConstArrayView<FFoundationItemMeshLayer> Layers, double BlockCm);
     // The mesh description BuildMesh builds from.
     void FillMeshDescription(FMeshDescription& Mesh, TConstArrayView<FFoundationItemMeshLayer> Layers, double BlockCm);
+}
+
+// Where each hand holds its item in first person: the ONE place a later first-person body rig replaces. The item's
+// display context, and the pivot (cm, view space) the item hangs from; the offhand mirrors the main hand across the
+// view's centre (Y negated). The main hand's pivot is the fitted one (foundation.Hand.Fit; HandFit) or the old rest.
+namespace FoundationHeldPose
+{
+    struct FPose
+    {
+        FName Context;
+        FVector Pivot;
+        // +1 main, -1 offhand: the sign of the pivot's Y (the right-hand side is +Y).
+        double Mirror;
+    };
+
+    inline FPose Get(EFoundationHand Hand, bool bFit)
+    {
+        const FVector Main = bFit ? FVector(71.9, 56.2, -52.2) : FVector(42, 24, -24);
+        if (Hand == EFoundationHand::Off) return {TEXT("firstperson_lefthand"), FVector(Main.X, -Main.Y, Main.Z), -1.};
+        return {TEXT("firstperson_righthand"), Main, 1.};
+    }
 }

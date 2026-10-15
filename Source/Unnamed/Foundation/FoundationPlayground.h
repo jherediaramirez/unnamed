@@ -61,7 +61,7 @@ public:
     const FFoundationAuthority& GetAuthorityState() const { return Authority; }
     UFoundationInteractionView* GetView() const { return View; }
 
-    // Explicit lab reset: a new session (pending and old commands end), the seed blocks, fresh loadouts
+    // Explicit lab reset: a new session (pending and old commands end), the seed blocks, empty inventories
     // and revived targets. The player returns to spawn.
     void ResetLab();
     // The finite verification fixture (64 blocks, tool wear) or the default infinite lab; resets the lab.

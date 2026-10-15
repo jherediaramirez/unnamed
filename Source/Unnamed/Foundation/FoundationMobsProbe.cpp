@@ -294,6 +294,55 @@ void UFoundationRuntimeProbe::AddMobCases()
             Shot(TEXT("11-sheep-grazes"));
         });
     Flush();
+    // 20c1: a zombie 1.3 blocks east of a survival player (in reach: the Playground's collision gives A* no path on its
+    // floor, a known issue) hits it (3 a hit on Normal, every 20 steps) through the pawn's vitals, and knocks it back
+    // west.
+    auto Zombie = MakeShared<int32>(0);
+    auto Before = MakeShared<TPair<EFoundationPlayerMode, EFoundationDifficulty>>();
+    AddCase(
+        TEXT("mobs: a zombie attacks"), 2.5,
+        [this, SetMobs, Authority, Zombie, Before, LookAt]
+        {
+            SetMobs(1);
+            *Before = {Pawn->Vitals.Mode, Pawn->Vitals.Difficulty};
+            Pawn->Vitals.Mode = EFoundationPlayerMode::Survival;
+            Pawn->Vitals.Difficulty = EFoundationDifficulty::Normal;
+            ResetPlayer(Spot);
+            FFoundationAuthority* A = Authority();
+            if (!A) return;
+            A->ClearMobs();
+            A->Options.bMobs = true;
+            *Zombie = A->SpawnMob(EFoundationMobType::Zombie, Spot + FVector(130, 0, 0) - A->World.OriginCm, 180);
+            LookAt(Spot + FVector(130, 0, 150));
+        },
+        [this, Shot, Authority, Zombie]
+        {
+            const FFoundationAuthority* A = Authority();
+            const FFoundationMob* Mob = A ? const_cast<FFoundationAuthority*>(A)->FindMob(*Zombie) : nullptr;
+            Record(TEXT("mobs: the zombie targets the player"), Mob && Mob->Target == Pawn->Interaction.PlayerId,
+                Mob ? FString::Printf(TEXT("target %d at %s (player %s), moving %d, path %d/%d, cooldown %d"), Mob->Target,
+                          *(A->World.OriginCm + Mob->LocalCm).ToCompactString(), *Pawn->GetActorLocation().ToCompactString(),
+                          Mob->bMoving, Mob->PathIndex, Mob->Path.Num(), Mob->AttackCooldown)
+                    : TEXT("no zombie"));
+            Record(TEXT("mobs: its hits hurt the player 3 each"),
+                A && A->MobMeleeHits >= 1 && Pawn->Vitals.Health < 20.f &&
+                    Pawn->Vitals.LastDamage.Contains(TEXT(" 3 -> 3 to health")),
+                FString::Printf(TEXT("hits %d, health %.1f, %s"), A ? A->MobMeleeHits : -1, Pawn->Vitals.Health,
+                    *Pawn->Vitals.LastDamage));
+            Record(TEXT("mobs: knocked back west"), Pawn->GetActorLocation().X < Spot.X - 30,
+                FString::Printf(TEXT("x %.0f from %.0f"), Pawn->GetActorLocation().X, Spot.X));
+            Shot(TEXT("12-zombie-attacks"));
+        });
+    Flush();
+    AddCase(
+        TEXT("mobs: zombie restore"), .2, [] {},
+        [this, Authority, Before]
+        {
+            if (FFoundationAuthority* A = Authority()) A->ClearMobs();
+            Pawn->Vitals.Mode = Before->Key;
+            Pawn->Vitals.Difficulty = Before->Value;
+            ResetPlayer(Spot);
+        });
     // The control pair: the same cow with foundation.Mobs 1, then 0.
     AddCase(
         TEXT("mobs: control on"), .8,

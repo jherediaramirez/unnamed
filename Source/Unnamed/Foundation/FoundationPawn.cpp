@@ -327,6 +327,7 @@ FFoundationPlayerFacts AFoundationPawn::MakeInteractionFacts() const
     Facts.bEyesInWater = bEyesInWater;
     Facts.bClimbing = Simulation.bClimbing;
     Facts.bAlive = !Vitals.IsDead();
+    Facts.Mode = Vitals.Mode;
     Facts.bSecondaryUse = LastIntent.bCrouch;
     Facts.Step = ReferenceSteps;
     return Facts;
@@ -395,8 +396,8 @@ void AFoundationPawn::DropOnDeath(
 {
     if (Vitals.PendingArmorWear > 0)
     {
-        Authority.WearArmor(PlayerId, Vitals.PendingArmorWear, Vitals.Mode);
-        Vitals.PendingArmorWear = 0;
+        Authority.WearArmor(PlayerId, Vitals.PendingArmorWear, Vitals.Mode, Vitals.PendingFireArmorWear);
+        Vitals.PendingArmorWear = Vitals.PendingFireArmorWear = 0;
     }
     Authority.DropInventoryOnDeath(PlayerId, FeetLocalCm, Seed);
     // Orbs follow foundation.Items.Xp as an ore's do; a spectator drops none. Provisional: they leave the feet with an
@@ -469,8 +470,8 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     // Armor (survival step 19a): the hurts since the last step wear the worn pieces, then what is worn now counts.
     if (Vitals.PendingArmorWear > 0)
     {
-        Authority.WearArmor(Interaction.PlayerId, Vitals.PendingArmorWear, Vitals.Mode);
-        Vitals.PendingArmorWear = 0;
+        Authority.WearArmor(Interaction.PlayerId, Vitals.PendingArmorWear, Vitals.Mode, Vitals.PendingFireArmorWear);
+        Vitals.PendingArmorWear = Vitals.PendingFireArmorWear = 0;
     }
     Authority.GetWornArmor(Interaction.PlayerId, Vitals.WornArmor, Vitals.WornToughness);
     Authority.Step();
@@ -485,6 +486,18 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
             if (LevelGains.Num() == MaxLevelGains) LevelGains.RemoveAt(0);
             LevelGains.Add({Player->Facts.Step, Before, Vitals.Level, ++LevelGainSerial});
         }
+    }
+    // Survival T6 20c: the monsters' melee hits this step, through the whole hurt path with the attacker's name; a
+    // fresh hit (not inside the damage cooldown's first half) knocks the player back from the mob [extra.motion,
+    // movement.knockback_resistance: power 0.4, the player's resistance 0].
+    for (const FFoundationMobHit& Hit : Authority.TakeMobHits(Interaction.PlayerId))
+    {
+        const bool bFresh = !Vitals.IsInHurtWindow();
+        if (!Vitals.Hurt(EFoundationDamage::MobAttack, Hit.Damage, Hit.Attacker) || !bFresh) continue;
+        FVector2D Away(Simulation.Feet - Hit.FromCm);
+        if (Away.IsNearlyZero()) Away = FVector2D(1, 0);
+        FoundationMobs::ApplyKnockback(
+            Simulation.VelocityPerTick, Away, Simulation.bGrounded, FoundationMobs::KnockbackCm);
     }
     Interaction.StepOnce(Authority, Vitals, bLatestStep, NowSeconds);
     // A block's use opened a container (survival step 7): its screen opens; without a screen to show it, it closes.

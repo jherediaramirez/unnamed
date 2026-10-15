@@ -2,6 +2,8 @@
 #include "HAL/IConsoleManager.h"
 #include "Misc/AutomationTest.h"
 
+#if WITH_DEV_AUTOMATION_TESTS
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationScreenMessagesTest, "Unnamed.Foundation.ScreenMessages",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FFoundationScreenMessagesTest::RunTest(const FString& Parameters)
@@ -28,3 +30,5 @@ bool FFoundationScreenMessagesTest::RunTest(const FString& Parameters)
         FoundationScreenMessages::IsProbeRun(TEXT("Unnamed.uproject /Game/Maps/L_Generated?VoxelWorld=abc -game")));
     return true;
 }
+
+#endif

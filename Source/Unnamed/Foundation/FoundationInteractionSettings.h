@@ -51,10 +51,6 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Definitions")
     FFoundationItemDefinition EmptyHand;
 
-    // Hotbar contents from slot 1 after every lab reset.
-    UPROPERTY(Config, EditAnywhere, Category = "Lab")
-    TArray<FName> Loadout;
-
     // The lab default: infinite placement supply and no tool wear.
     UPROPERTY(Config, EditAnywhere, Category = "Lab")
     bool bInfiniteSupplyDefault = true;
