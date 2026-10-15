@@ -109,6 +109,7 @@ void UVoxelWorldSubsystem::Start(AVoxelWorld& InOwner, TSharedRef<const FVoxelBl
     bFreezeLast = VoxelConsole::CVarDecorationFreezeLast.GetValueOnGameThread();
     bPlants = VoxelConsole::CVarDecorationPlants.GetValueOnGameThread();
     bTrees = VoxelConsole::CVarDecorationTrees.GetValueOnGameThread();
+    bFireflyBushAsGrass = VoxelConsole::CVarDecorationFireflyBushAsGrass.GetValueOnGameThread();
     // The terrain read voxel.OreVeins when it was made (VoxelTerrainFactory), this frame.
     bOreVeins = VoxelConsole::CVarOreVeins.GetValueOnGameThread();
     UE_LOG(LogUnnamedVoxel, Display, TEXT("voxel.OreVeins: %s"), bOreVeins ? TEXT("on") : TEXT("off"));
@@ -120,14 +121,17 @@ void UVoxelWorldSubsystem::Start(AVoxelWorld& InOwner, TSharedRef<const FVoxelBl
         Options.bFreezeLast = bFreezeLast;
         Options.bPlants = bPlants;
         Options.bTrees = bTrees;
+        Options.bFireflyBushAsShortGrass = bFireflyBushAsGrass;
         FString Error;
         if (Decorator->Initialize(*Terrain->GetFeatures(), *Table, Terrain->GetBiomeSource()->GetTable(),
                 Terrain->GetSeed(), Options, &Error))
         {
             Settings.Decorator = Decorator;
-            UE_LOG(LogUnnamedVoxel, Display, TEXT("voxel.Decoration: %s; freeze pass %s; plants %s; trees %s"),
+            UE_LOG(LogUnnamedVoxel, Display,
+                TEXT("voxel.Decoration: %s; freeze pass %s; plants %s; trees %s; firefly bush %s"),
                 *Decorator->Describe(), bFreezeLast ? TEXT("at Finalize") : TEXT("inside the snapshot (S2's order)"),
-                bPlants ? TEXT("on") : TEXT("off"), bPlants && bTrees ? TEXT("on") : TEXT("off"));
+                bPlants ? TEXT("on") : TEXT("off"), bPlants && bTrees ? TEXT("on") : TEXT("off"),
+                bFireflyBushAsGrass ? TEXT("as short grass") : TEXT("on"));
         }
         else
             UE_LOG(LogUnnamedVoxel, Warning, TEXT("voxel.Decoration: no decoration for this terrain (%s)"), *Error);
@@ -215,6 +219,7 @@ void UVoxelWorldSubsystem::Tick(float DeltaTime)
             VoxelConsole::CVarDecorationFreezeLast.GetValueOnGameThread() != bFreezeLast ||
             VoxelConsole::CVarDecorationPlants.GetValueOnGameThread() != bPlants ||
             VoxelConsole::CVarDecorationTrees.GetValueOnGameThread() != bTrees ||
+            VoxelConsole::CVarDecorationFireflyBushAsGrass.GetValueOnGameThread() != bFireflyBushAsGrass ||
             VoxelConsole::CVarOreVeins.GetValueOnGameThread() != bOreVeins) &&
         Owner.IsValid())
     {

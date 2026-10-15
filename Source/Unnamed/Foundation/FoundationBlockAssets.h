@@ -224,6 +224,11 @@ struct FFoundationBlockAsset
     UPROPERTY(EditAnywhere, Category = "Block")
     bool bCollisionMovesWithOffset = false;
 
+    // The block draws no block mesh (26.3's ENTITYBLOCK_ANIMATED render shape: the chests, survival B4a); its
+    // outline, collision, break particles and item icon stay. The manifest's template "chests".
+    UPROPERTY(EditAnywhere, Category = "Block")
+    bool bDrawsNoMesh = false;
+
     // The item icon of a model block: a flat sprite (an IconAtlas tile, tinted by ItemTint) or a baked model drawn
     // with its gui display transform (degrees, sixteenths, scale); -1 when unused. Other items draw their cube.
     UPROPERTY(EditAnywhere, Category = "Block")

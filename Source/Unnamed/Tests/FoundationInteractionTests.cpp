@@ -1915,4 +1915,129 @@ bool FFoundationInteractionWaterRemainsTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("the popped seagrass leaves its water"), Text(L, Above), FString(TEXT("water[level=0]")));
     return true;
 }
+// Survival B4a: a pop drops what an empty hand breaking that block alone drops (RollBlockDrops with Rules.Hand), as
+// item entities (Options.bItemEntities). R12's block_drops and break_totals measure only stone and coal ore, so each
+// oracle here is the block's own hand break: its 26.3 loot table, or "drops itself" without one.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBlocksPopDropsTest, "Unnamed.Foundation.Blocks.PopDrops",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationBlocksPopDropsTest::RunTest(const FString& Parameters)
+{
+    FLab L;
+    if (!TestTrue(TEXT("plant survival rules built"), L.A.PlantSurvival.IsValid())) return false;
+    L.A.Options.bItemEntities = true;
+    const FFoundationBlockRegistry& Registry = L.A.World.GetRegistry();
+    auto Put = [&L, &Registry](FIntVector Cell, const TCHAR* Text)
+    {
+        FFoundationBlockState State;
+        ensureMsgf(Registry.Parse(Text, State), TEXT("parse %s"), Text);
+        L.A.World.Set(Cell, State);
+    };
+    // Item entities of one item, summed.
+    auto Dropped = [&L](const TCHAR* Id)
+    {
+        const int32 Item = L.A.Rules.FindItem(Id);
+        int32 Count = 0;
+        for (const FFoundationItemEntity& Entity : L.A.GetItemEntities())
+            Count += Entity.Item == Item ? Entity.Count : 0;
+        return Count;
+    };
+    // Mines the dirt at Support from (-150, 50, 0) (the west face of (0, 0, 1)), then counts what popped.
+    const FIntVector Support(0, 0, 1), Up(0, 0, 1);
+    auto MineSupport = [&]()
+    {
+        L.A.RemoveItemEntities();
+        L.NextStep();
+        L.Stand({-150, 50, 0}, FVector(200, 0, -12));
+        const int32 PopsBefore = L.A.Pops;
+        const bool bMined = MineSteps(L) > 0 && !L.Solid(Support);
+        return bMined ? L.A.Pops - PopsBefore : -1;
+    };
+    L.Hold(3);
+    // Sugar cane, 3 tall: 3 pops, 3 sugar_cane (its table: one each).
+    Put(Support, TEXT("dirt"));
+    Put(Support + FIntVector(0, 1, 0), TEXT("water"));
+    for (int32 Z = 1; Z <= 3; ++Z)
+        Put(Support + Up * Z, TEXT("sugar_cane"));
+    TestEqual(TEXT("cane: 3 pops"), MineSupport(), 3);
+    TestEqual(TEXT("cane: 3 sugar_cane"), Dropped(TEXT("sugar_cane")), 3);
+    L.A.World.Set(Support + FIntVector(0, 1, 0), {});
+    // A cactus with its flower: 2 cactus and the flower.
+    Put(Support, TEXT("sand"));
+    Put(Support + Up, TEXT("cactus"));
+    Put(Support + Up * 2, TEXT("cactus"));
+    Put(Support + Up * 3, TEXT("cactus_flower"));
+    TestEqual(TEXT("cactus: 3 pops"), MineSupport(), 3);
+    TestTrue(TEXT("cactus: 2 cactus and 1 cactus_flower"),
+        Dropped(TEXT("cactus")) == 2 && Dropped(TEXT("cactus_flower")) == 1);
+    // A door (no 26.3 table here: it drops itself) drops once, not once per half: its other half does not roll.
+    TestNull(TEXT("oak_door has no loot table (the no-roll branch)"), L.A.Rules.LootTables.Find(TEXT("oak_door")));
+    Put(Support, TEXT("dirt"));
+    Put(Support + Up, TEXT("oak_door[half=lower]"));
+    Put(Support + Up * 2, TEXT("oak_door[half=upper]"));
+    TestEqual(TEXT("door: both halves pop"), MineSupport(), 2);
+    TestEqual(TEXT("door: one oak_door"), Dropped(TEXT("oak_door")), 1);
+    // A sunflower (its table drops from the lower half alone) drops once.
+    Put(Support, TEXT("dirt"));
+    Put(Support + Up, TEXT("sunflower[half=lower]"));
+    Put(Support + Up * 2, TEXT("sunflower[half=upper]"));
+    TestEqual(TEXT("sunflower: both halves pop"), MineSupport(), 2);
+    TestEqual(TEXT("sunflower: one sunflower"), Dropped(TEXT("sunflower")), 1);
+    // Its upper half mined (the lab's infinite supply rolls no break drops): the lower half pops and drops it, both
+    // halves rolling under a table.
+    Put(Support, TEXT("dirt"));
+    Put(Support + Up, TEXT("sunflower[half=lower]"));
+    Put(Support + Up * 2, TEXT("sunflower[half=upper]"));
+    L.A.RemoveItemEntities();
+    L.NextStep();
+    // This aim meets the west face of (0, 0, 3).
+    L.Stand({-150, 50, 0}, FVector(200, 0, 188));
+    // Hardness 0: it breaks on the first command (MineSteps 0).
+    TestTrue(TEXT("the sunflower's upper half mined"), MineSteps(L) >= 0 && !L.Solid(Support + Up * 2));
+    TestTrue(TEXT("sunflower, upper half mined: the lower half pops with one sunflower"),
+        !L.Solid(Support + Up) && Dropped(TEXT("sunflower")) == 1);
+    // A torch.
+    Put(Support, TEXT("dirt"));
+    Put(Support + Up, TEXT("torch"));
+    TestEqual(TEXT("torch: pops"), MineSupport(), 1);
+    TestEqual(TEXT("torch: one torch"), Dropped(TEXT("torch")), 1);
+    // Bamboo, 4 tall: 4 bamboo.
+    Put(Support, TEXT("dirt"));
+    for (int32 Z = 1; Z <= 4; ++Z)
+        Put(Support + Up * Z, TEXT("bamboo"));
+    TestEqual(TEXT("bamboo: 4 pops"), MineSupport(), 4);
+    TestEqual(TEXT("bamboo: 4 bamboo"), Dropped(TEXT("bamboo")), 4);
+    // A vine's table needs shears; the pop rolls with the empty hand, so nothing. (Shears are not imported yet, so
+    // a roll with the held tool is not told apart here: B4a's record, known issues.)
+    const FIntVector Hanger(0, 0, 2);
+    Put(Hanger, TEXT("dirt"));
+    Put(Hanger + FIntVector(0, 1, 0), TEXT("vine[north=true]"));
+    Put(Hanger + FIntVector(0, 1, -1), TEXT("vine[north=true]"));
+    L.A.RemoveItemEntities();
+    L.NextStep();
+    L.Stand({-150, 50, 0}, FVector(200, 0, 88));
+    int32 PopsBefore = L.A.Pops;
+    TestTrue(TEXT("the vines' block mined"), MineSteps(L) > 0 && !L.Solid(Hanger));
+    TestTrue(TEXT("vines: 2 pops, no vine dropped (an empty hand has no shears)"),
+        L.A.Pops == PopsBefore + 2 && Dropped(TEXT("vine")) == 0);
+    // Washed away: water takes a cane's cell; the cane drops (SettleAfterFluid, SM-Blocks' Q1).
+    FFoundationBlockState Cane;
+    Registry.Parse(TEXT("sugar_cane"), Cane);
+    const FIntVector Washed(6, 6, 1);
+    Put(Washed, TEXT("water"));
+    L.A.RemoveItemEntities();
+    PopsBefore = L.A.Pops;
+    L.A.SettleAfterFluid(Washed, Cane, true);
+    TestTrue(
+        TEXT("washed away: one pop, one sugar_cane"), L.A.Pops == PopsBefore + 1 && Dropped(TEXT("sugar_cane")) == 1);
+    // Without item entities the pops stay silent, as before B4a.
+    L.A.Options.bItemEntities = false;
+    Put(Support, TEXT("dirt"));
+    Put(Support + FIntVector(0, 1, 0), TEXT("water"));
+    for (int32 Z = 1; Z <= 3; ++Z)
+        Put(Support + Up * Z, TEXT("sugar_cane"));
+    TestEqual(TEXT("bItemEntities off: 3 pops"), MineSupport(), 3);
+    TestEqual(TEXT("bItemEntities off: no item entities"), L.A.GetItemEntities().Num(), 0);
+    return true;
+}
 #endif

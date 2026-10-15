@@ -260,6 +260,7 @@ TSharedRef<FFoundationBlockRegistry> FFoundationBlockRegistry::Build(const UFoun
             Block.OffsetMinVertical = Source.OffsetMinVertical;
             Block.bOutlineMovesWithOffset = Source.bOutlineMovesWithOffset;
             Block.bCollisionMovesWithOffset = Source.bCollisionMovesWithOffset;
+            Block.bDrawsNoMesh = Source.bDrawsNoMesh;
             Block.bAppendedFamily = Source.bAppendedFamily;
             NextProtocol = FMath::Max(NextProtocol, Source.ProtocolId + 1);
             NextState = FMath::Max(NextState, Source.MinStateId + States);

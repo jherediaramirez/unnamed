@@ -1048,7 +1048,9 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
             if (Registry->GetValue(State, Side) != TEXT("none")) return false;
         return true;
     };
-    int32 ModelStates = 0, BadParts = 0, BareWalls = 0;
+    // The chests draw no block mesh (bDrawsNoMesh, survival B4a): a model state with no parts.
+    auto IsNoMesh = [&Registry](uint16 Id) { return Registry->GetBlock(FFoundationBlockState{Id}).bDrawsNoMesh; };
+    int32 ModelStates = 0, BadParts = 0, BareWalls = 0, NoMesh = 0;
     for (int32 State = 1; State < Table->GetStateCount(); ++State)
     {
         const FVoxelStateInfo& Info = Table->Get(uint16(State));
@@ -1058,8 +1060,11 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
         const bool bTranslucent =
             Registry->GetBlock(FFoundationBlockState{uint16(State)}).Layer == EFoundationRenderLayer::Translucent;
         BadParts += Info.Layer != (bTranslucent ? EVoxelLayer::Translucent : EVoxelLayer::Model) ||
-            Info.OpaqueFaces != 0 || (Info.ModelPartCount == 0 && !IsBareWall(uint16(State)));
+            Info.OpaqueFaces != 0 ||
+            (Info.ModelPartCount == 0 && !IsBareWall(uint16(State)) && !IsNoMesh(uint16(State))) ||
+            (Info.ModelPartCount != 0 && IsNoMesh(uint16(State)));
         BareWalls += Info.ModelPartCount == 0 && IsBareWall(uint16(State));
+        NoMesh += Info.ModelPartCount == 0 && IsNoMesh(uint16(State));
         const int32* Part = Table->GetModelParts(Info);
         for (int32 Index = 0; Index < Info.ModelPartCount; ++Index)
         {
@@ -1073,6 +1078,21 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("model states (block_states.json's 25,082)"), ModelStates, 25082);
     // block_manifest.json's 32 walls, each bare dry and bare waterlogged.
     TestEqual(TEXT("bare wall states with no parts"), BareWalls, 64);
+    // block_states.json: chest 24, trapped_chest 24, ender_chest 8.
+    TestEqual(TEXT("chest states with no parts (they draw no block mesh)"), NoMesh, 56);
+    // Each keeps its 14/16 outline and collision box (the registry's box table, not its quads).
+    for (const TCHAR* Chest : {TEXT("chest"), TEXT("trapped_chest"), TEXT("ender_chest")})
+    {
+        FFoundationBlockState State;
+        Registry->Parse(Chest, State);
+        TArray<FBox> Outline, Collision;
+        Registry->GetOutlineBoxes(State, Outline);
+        Registry->GetCollisionBoxes(State, Collision);
+        const FBox Expected(FVector(1 / 16., 1 / 16., 0), FVector(15 / 16., 15 / 16., 14 / 16.));
+        TestTrue(FString::Printf(TEXT("%s: the 14/16 outline and collision box stay"), Chest),
+            Outline.Num() == 1 && Collision.Num() == 1 && Outline[0].Equals(Expected, 1e-6) &&
+                Collision[0].Equals(Expected, 1e-6));
+    }
     TestEqual(TEXT("model states with bad parts, layer or covered faces"), BadParts, 0);
 
     auto Default = [&Table](const TCHAR* Block) -> const FVoxelStateInfo&

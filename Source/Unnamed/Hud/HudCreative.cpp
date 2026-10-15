@@ -10,6 +10,13 @@ namespace
     {
         return Point.X >= Origin.X && Point.Y >= Origin.Y && Point.X < Origin.X + Size.X && Point.Y < Origin.Y + Size.Y;
     }
+
+    // Beyond vanilla (survival B4a, Jesus via PM 4): firefly_bush stays a defined block and item, but no tab or search
+    // lists it (worldgen places short grass in its place: voxel.Decoration.FireflyBushAsGrass).
+    bool IsHiddenCreativeItem(FName Item)
+    {
+        return Item == TEXT("firefly_bush");
+    }
 }
 
 void FHudCreativeModel::Build(
@@ -30,7 +37,7 @@ void FHudCreativeModel::Build(
         Tab.bCanScroll = Asset.bCanScroll;
         Tab.Icon = Asset.Icon;
         for (const FName Item : Asset.Items)
-            if (Known.Contains(Item)) Tab.Items.AddUnique(Item);
+            if (Known.Contains(Item) && !IsHiddenCreativeItem(Item)) Tab.Items.AddUnique(Item);
         if (Tab.Type == TEXT("CATEGORY") && Tab.Items.IsEmpty()) continue;
         Tabs.Add(MoveTemp(Tab));
     }

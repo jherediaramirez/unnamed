@@ -273,6 +273,8 @@ def build(root):
             **(model_fields(block, entry) if model else ({} if water else cube_light_fields(block, entry))),
             # Survival B1's family blocks (the manifest's added: "survival-B1"), behind foundation.Blocks.Families.
             "appended_family": block.get("added") == "survival-B1",
+            # 26.3 draws the chests as block entities (ENTITYBLOCK_ANIMATED): no block mesh (survival B4a).
+            "draws_no_mesh": block.get("template") == "chests",
         })
     creative = []
     meta = {t["id"]: t for t in items["creative_tabs"]}
