@@ -764,6 +764,15 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
             // capture).
             if (BreakEffects) BreakEffects->PlayEvent(TEXT("item.axe.strip"), Cell.GetCenter(), 1.f, 1.f);
             break;
+        case EFoundationEventKind::Tilled:
+        case EFoundationEventKind::Flattened:
+            // Hoe tilling and shovel flattening (survival B5): item.hoe.till / item.shovel.flatten from the block,
+            // volume 1 and pitch 1 (SURVIVAL-FINDINGS sound table: BLOCKS, 1, 1).
+            if (BreakEffects)
+                BreakEffects->PlayEvent(
+                    Event.Kind == EFoundationEventKind::Tilled ? TEXT("item.hoe.till") : TEXT("item.shovel.flatten"),
+                    Cell.GetCenter(), 1.f, 1.f);
+            break;
         case EFoundationEventKind::Filled:
         case EFoundationEventKind::Emptied:
             // Buckets (step 17): item.bucket.fill / fill_lava at the player (PLAYERS), item.bucket.empty / empty_lava

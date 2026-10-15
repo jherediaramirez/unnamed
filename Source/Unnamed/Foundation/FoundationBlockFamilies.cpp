@@ -274,6 +274,55 @@ namespace
         TEXT("1: the player climbs ladders, vines and the other #minecraft:climbable blocks (survival B4b). 0: no "
              "climbing; movement as before B4b."));
 
+    TAutoConsoleVariable<int32> CVarBlocksFarmland(TEXT("foundation.Blocks.Farmland"), 1,
+        TEXT("1: hoes till and shovels flatten (with foundation.Items.Use), and farmland and dirt paths turn to dirt "
+             "under a block they do not survive (survival B5). 0: neither, as before B5."));
+
+    // B5: the blocks that turn to dirt under a block they do not survive (FarmBlock, DirtPathBlock).
+    bool IsTurnedToDirt(FName Id)
+    {
+        return Id == TEXT("farmland") || Id == TEXT("dirt_path");
+    }
+
+    // B5: what farmland and a dirt path survive above them: family_survival.json's "up" set for both (signature 19,
+    // every state of these 133 blocks; the other five probes pass every candidate). .Interact.FarmlandSurvival
+    // compares it with the facts file.
+    bool DoesKeepFarmland(FName Id)
+    {
+        static const TSet<FName> Kept = {TEXT("air"), TEXT("oak_sapling"), TEXT("spruce_sapling"),
+            TEXT("birch_sapling"), TEXT("jungle_sapling"), TEXT("acacia_sapling"), TEXT("cherry_sapling"),
+            TEXT("dark_oak_sapling"), TEXT("pale_oak_sapling"), TEXT("mangrove_propagule"), TEXT("poplar_sapling"),
+            TEXT("water"), TEXT("lava"), TEXT("short_grass"), TEXT("fern"), TEXT("dead_bush"), TEXT("bush"),
+            TEXT("red_shrub"), TEXT("short_dry_grass"), TEXT("tall_dry_grass"), TEXT("seagrass"), TEXT("tall_seagrass"),
+            TEXT("dandelion"), TEXT("poppy"), TEXT("blue_orchid"), TEXT("allium"), TEXT("azure_bluet"),
+            TEXT("red_tulip"), TEXT("orange_tulip"), TEXT("white_tulip"), TEXT("pink_tulip"), TEXT("oxeye_daisy"),
+            TEXT("cornflower"), TEXT("lily_of_the_valley"), TEXT("brown_mushroom"), TEXT("red_mushroom"), TEXT("torch"),
+            TEXT("wall_torch"), TEXT("fire"), TEXT("soul_fire"), TEXT("wheat"), TEXT("ladder"), TEXT("lever"),
+            TEXT("stone_button"), TEXT("snow"), TEXT("cactus_flower"), TEXT("sugar_cane"), TEXT("pumpkin_stem"),
+            TEXT("melon_stem"), TEXT("vine"), TEXT("glow_lichen"), TEXT("oak_fence_gate"), TEXT("lily_pad"),
+            TEXT("cocoa"), TEXT("shelf_mushroom"), TEXT("carrots"), TEXT("potatoes"), TEXT("oak_button"),
+            TEXT("spruce_button"), TEXT("birch_button"), TEXT("jungle_button"), TEXT("acacia_button"),
+            TEXT("cherry_button"), TEXT("dark_oak_button"), TEXT("pale_oak_button"), TEXT("mangrove_button"),
+            TEXT("poplar_button"), TEXT("bamboo_button"), TEXT("sunflower"), TEXT("lilac"), TEXT("rose_bush"),
+            TEXT("peony"), TEXT("tall_grass"), TEXT("large_fern"), TEXT("spruce_fence_gate"), TEXT("birch_fence_gate"),
+            TEXT("jungle_fence_gate"), TEXT("acacia_fence_gate"), TEXT("cherry_fence_gate"),
+            TEXT("dark_oak_fence_gate"), TEXT("pale_oak_fence_gate"), TEXT("mangrove_fence_gate"),
+            TEXT("poplar_fence_gate"), TEXT("bamboo_fence_gate"), TEXT("torchflower_crop"), TEXT("pitcher_crop"),
+            TEXT("beetroots"), TEXT("kelp"), TEXT("kelp_plant"), TEXT("tube_coral"), TEXT("brain_coral"),
+            TEXT("bubble_coral"), TEXT("fire_coral"), TEXT("horn_coral"), TEXT("tube_coral_fan"),
+            TEXT("brain_coral_fan"), TEXT("bubble_coral_fan"), TEXT("fire_coral_fan"), TEXT("horn_coral_fan"),
+            TEXT("tube_coral_wall_fan"), TEXT("brain_coral_wall_fan"), TEXT("bubble_coral_wall_fan"),
+            TEXT("fire_coral_wall_fan"), TEXT("horn_coral_wall_fan"), TEXT("sea_pickle"), TEXT("sweet_berry_bush"),
+            TEXT("weeping_vines"), TEXT("weeping_vines_plant"), TEXT("twisting_vines"), TEXT("twisting_vines_plant"),
+            TEXT("crimson_fence_gate"), TEXT("warped_fence_gate"), TEXT("crimson_button"), TEXT("warped_button"),
+            TEXT("polished_blackstone_button"), TEXT("powder_snow"), TEXT("cave_vines"), TEXT("cave_vines_plant"),
+            TEXT("spore_blossom"), TEXT("azalea"), TEXT("flowering_azalea"), TEXT("moss_carpet"), TEXT("pink_petals"),
+            TEXT("wildflowers"), TEXT("leaf_litter"), TEXT("big_dripleaf"), TEXT("big_dripleaf_stem"),
+            TEXT("small_dripleaf"), TEXT("hanging_roots"), TEXT("pale_moss_carpet"), TEXT("pale_hanging_moss"),
+            TEXT("closed_eyeblossom"), TEXT("firefly_bush")};
+        return Kept.Contains(Id);
+    }
+
     // B4b's growing vines: the vine's head id and the side its support is on.
     bool GetVineSupport(FName Id, FName& OutHead, EFoundationFace& OutToward)
     {
@@ -452,6 +501,10 @@ FFoundationBlockState FoundationBlockFamilies::GetStateForPlacement(const FFound
     if (FoundationChests::IsChest(Block.Id)) return FoundationChests::GetStateForPlacement(World, Block, Context);
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
     FFoundationBlockState State = Block.GetDefaultState();
+    // Farmland or a dirt path under a block it does not survive places dirt (B5; FarmBlock and DirtPathBlock).
+    if (FFoundationBlockState Dirt; GetTurnedState(Registry, State, Dirt) &&
+        GetSurvival(World, Context.Destination, State) == EFoundationFamilySurvival::Fails)
+        return Dirt;
     const EFoundationBlockFamily Family = GetFamily(Block);
     if (Family == EFoundationBlockFamily::None) return State;
     const EFoundationFace Look = FoundationBlockPlacement::GetHorizontalLook(Context.Yaw);
@@ -561,6 +614,7 @@ bool FoundationBlockFamilies::IsInteractOn()
 bool FoundationBlockFamilies::UsesFamilyPlacement(const FFoundationBlockType& Block)
 {
     if (FoundationChests::IsChest(Block.Id)) return FoundationChests::IsOn();
+    if (IsTurnedToDirt(Block.Id)) return IsFarmlandOn();
     const EFoundationBlockFamily Family = GetFamily(Block);
     if (Family == EFoundationBlockFamily::Door || Family == EFoundationBlockFamily::Trapdoor ||
         Family == EFoundationBlockFamily::Button || Family == EFoundationBlockFamily::Lever ||
@@ -705,6 +759,14 @@ EFoundationFamilySurvival FoundationBlockFamilies::GetSurvival(
 {
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
     const EFoundationBlockFamily Family = GetStateFamily(Registry, State);
+    // Farmland and dirt paths (B5): what is above them (DoesKeepFarmland).
+    if (IsFarmlandOn() && IsTurnedToDirt(Registry.GetBlock(State).Id))
+    {
+        const FIntVector Above = Cell + FIntVector(0, 0, 1);
+        if (!World.IsKnown(Above)) return EFoundationFamilySurvival::Unknown;
+        return DoesKeepFarmland(Registry.GetBlock(World.Get(Above).State).Id) ? EFoundationFamilySurvival::Survives
+                                                                              : EFoundationFamilySurvival::Fails;
+    }
     // Twisting and weeping vines (B4b): their own vine or a sturdy face on the side they grow from.
     FName VineHead;
     EFoundationFace VineToward = EFoundationFace::None;
@@ -744,6 +806,21 @@ EFoundationFamilySurvival FoundationBlockFamilies::GetSurvival(
         ? Registry.GetBlock(State).Contains(Support)
         : IsFaceSturdy(Registry, Support, EFoundationFace::Up);
     return bSurvives ? EFoundationFamilySurvival::Survives : EFoundationFamilySurvival::Fails;
+}
+
+bool FoundationBlockFamilies::IsFarmlandOn()
+{
+    return CVarBlocksFarmland.GetValueOnAnyThread() != 0;
+}
+
+bool FoundationBlockFamilies::GetTurnedState(
+    const FFoundationBlockRegistry& Registry, FFoundationBlockState State, FFoundationBlockState& OutState)
+{
+    if (!IsFarmlandOn() || !IsTurnedToDirt(Registry.GetBlock(State).Id)) return false;
+    const FFoundationBlockType* Dirt = Registry.FindBlock(TEXT("dirt"));
+    if (!Dirt) return false;
+    OutState = Dirt->GetDefaultState();
+    return true;
 }
 
 bool FoundationBlockFamilies::IsClimbOn()

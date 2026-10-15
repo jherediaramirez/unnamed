@@ -282,6 +282,34 @@ Survival B4b (track T5). First person only: no arm, pose or body animation; the 
   hit rule (`FFoundationPlayerFacts::bClimbing`). Provisional (`provisional-values.md`): the ascent, the feet cell, the
   trapdoor rule, sneaking while moving.
 
+## Farmland, dirt paths, the hoe and the shovel (B5)
+
+Survival B5 (track T5), behind `foundation.Blocks.Farmland` (default 1; 0: as before B5). First person only: the tool
+moves only as an item.
+
+- **Tilling and flattening** (`FFoundationAuthority::TillOn`, step 2 of `UseOn` right after the axe's `StripOn`; also
+  behind `foundation.Items.Use`): a hoe (`Item.Hoes`) or a shovel (`Item.Shovels`) used on a block of its table
+  (`FoundationTilling.h`) swaps it for the table's block in its default state, for one point of wear (none in
+  creative or with tool wear off; the last point breaks the tool). Adventure passes, as with the axe. Hoe: dirt, grass
+  block and dirt path till to farmland (moisture 0), coarse dirt to dirt; rooted dirt turns to dirt and drops one
+  hanging roots item entity out of the clicked face. Shovel: grass block, dirt, coarse dirt, mycelium, podzol and rooted
+  dirt flatten to a dirt path. Every row but rooted dirt's hoe row needs the top or a side face and air above.
+  Source: minecraft.wiki "Hoe", "Shovel", "Dirt Path" and "Rooted Dirt" (fetched 2026-10-15; the pages show no
+  revision date). The face rule for the hoe and rooted dirt's any-face rule are provisional (`provisional-values.md`).
+  Events `Tilled` and `Flattened` (Cell, State, Item); the view plays `item.hoe.till` or `item.shovel.flatten` from the
+  block at volume 1, pitch 1 (SURVIVAL-FINDINGS' sound table). A till settles the neighbours (`SettlePlants`).
+- **Turning to dirt** (`FoundationBlockFamilies::GetSurvival`, before the `foundation.Blocks.Interact` gate): farmland
+  and a dirt path survive only under the 133 blocks of `facts/family_survival.json`'s "up" set (signature 19: air,
+  water, lava, plants, crops, torches, buttons, the lever, the ladder, fence gates, snow layers, carpets of moss and
+  the like); the other five probes pass every candidate (signature 18). A settle that finds one failing writes dirt
+  (`GetTurnedState`) instead of popping it: no drop, no `Popped` event. Placing farmland or a dirt path under a block it
+  does not survive places dirt (`GetStateForPlacement`, while `foundation.Blocks.Shapes` is on).
+- **Not in B5:** moisture, hydration, drying out and crop growth (random ticks, B6: `moisture` is state data only, so
+  farmland never dries and fresh farmland never reverts yet); trampling (parked: no landing hook in the authority, and
+  a trampled block must lift the player 1/16 block, which is the movement owner's; `provisional-values.md` has the
+  design note); farmland and dirt paths still drop themselves when mined (their loot tables are held back in the items
+  reference, B8).
+
 ## Placement
 
 `FoundationBlockPlacement` ports `BlockPlaceContext` and each family's `getStateForPlacement`: clicked face, `Direction.orderedByNearest` (with Minecraft's sine table) and `fromYRot`. Every placement goes through `FFoundationAuthority`.
@@ -434,4 +462,11 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
     `Unnamed.Foundation.Climb.Movement` (rise, jump, sneak hold, descent and horizontal clamps, switch 0), `.Fall`
     (both fall accumulators on a 9-block ladder; the control drop hurts), `.Unchanged` (`bOnClimbable` false: the same
     trajectory, bit for bit), `.Blocks` (the climbable cells and the trapdoor rule).
+  - B5: `Unnamed.Foundation.Interact.FarmlandSurvival` (farmland's 8 states and the dirt path against every candidate
+    of `family_survival.json`, 1.5 million cases); `Unnamed.Foundation.Items.TillReference` (the tables' blocks, the 7 hoes
+    and 7 shovels of the tags, `hanging_roots`, both sounds in `DA_Sounds`), `.Till` (every hoe and shovel x 9 blocks x 6
+    faces x 4 blocks above x 3 modes against the wiki's rows: 9,072 cases, wear and events), `.TillRules` (rooted dirt's
+    hanging roots, wear off, the breaking last point, the three switches), `.TillRevert` (stone placed on farmland and a
+    path turns them to dirt with no pop or drop, a fence gate keeps farmland, farmland placed under stone places dirt,
+    switch 0).
 - **Runtime:** `TestFoundationRuntime.ps1 -Suite tour` shots 09-23 cover the gallery and the creative screen (17p and 17q: the plant row). The interaction suite covers stone placement and mining and the hotbar block icon, and checks the drawn cells and the exact instance count (one per part, plus held water) against the world. Its plants group (S7) places a dandelion on grass and mines the grass (the dandelion pops), refuses a dandelion on stone, and places and mines tall grass (both halves go).

@@ -84,6 +84,7 @@ namespace FoundationBlockFamilies
     // the floor state, which the authority's survival check refuses.
     // B4b: a ladder takes the first side look where it survives, facing away from that wall, waterlogged in a water
     // source; a ladder clicked on its own front face places nothing (Tests/Probes/ladder-placement-26.3.json).
+    // B5: farmland or a dirt path that would not survive there places dirt.
     UNNAMED_API FFoundationBlockState GetStateForPlacement(const FFoundationBlockWorld& World,
         const FFoundationBlockType& Block, const FFoundationPlacementContext& Context, bool bTopHalf);
     // After Cell changed: each family block among its 4 horizontal neighbours, and a wall below it, takes one
@@ -118,9 +119,20 @@ namespace FoundationBlockFamilies
     // A door half's survival at Cell (family_survival.json): the lower half needs a sturdy top below it, the upper half
     // the same door below; a button, lever or ladder the sturdy face of the block it hangs on. Other blocks: NoRule.
     // Nothing while IsInteractOn is off, apart from the B4b vines: twisting vines need below them, weeping vines above
-    // them, the same vine (head or body) or a sturdy face toward them (family_survival.json signatures 88 and 89).
+    // them, the same vine (head or body) or a sturdy face toward them (family_survival.json signatures 88 and 89), and
+    // the B5 farmland and dirt path (IsFarmlandOn).
     UNNAMED_API EFoundationFamilySurvival GetSurvival(
         const FFoundationBlockWorld& World, const FIntVector& Cell, FFoundationBlockState State);
+
+    // Survival B5, behind foundation.Blocks.Farmland (default 1): hoes till and shovels flatten
+    // (FFoundationAuthority::TillOn, also behind foundation.Items.Use); farmland and dirt paths survive only under the
+    // blocks of family_survival.json's "up" set (GetSurvival, before the Interact gate), place as dirt under any other
+    // (GetStateForPlacement), and a settle turns them to dirt (GetTurnedState) instead of popping them.
+    UNNAMED_API bool IsFarmlandOn();
+    // The state a failing State becomes in place of a pop: dirt for farmland and a dirt path while IsFarmlandOn.
+    // False for every other block.
+    UNNAMED_API bool GetTurnedState(
+        const FFoundationBlockRegistry& Registry, FFoundationBlockState State, FFoundationBlockState& OutState);
 
     // Survival B4b, behind foundation.Blocks.Climb (default 1): the player climbs in a climbable block.
     UNNAMED_API bool IsClimbOn();

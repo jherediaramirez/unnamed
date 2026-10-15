@@ -9,6 +9,7 @@
 #include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationSimulation.h"
 #include "Foundation/FoundationStripping.h"
+#include "Foundation/FoundationTilling.h"
 #include "HAL/IConsoleManager.h"
 #include "Sky/VoxelTimeline.h"
 
@@ -2542,6 +2543,7 @@ void FFoundationAuthority::UseOn(
         }
     // 2. The hand item's use on the block (foundation.Items.Use): an axe strips.
     if (StripOn(Player, Command, Hit, Result, Mode)) return;
+    if (TillOn(Player, Command, Hit, Result, Mode)) return;
     // 3. The hand item's place capability; without one the use passes to the next hand. A hidden B1 family block
     // (foundation.Blocks.Families 0) counts as none, as before B1 (a sapling in hand passes to the offhand).
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
@@ -2654,6 +2656,76 @@ bool FFoundationAuthority::StripOn(FFoundationPlayer& Player, const FFoundationC
         Event.Kind = EFoundationEventKind::ToolBroke;
         AddEvent(Event);
     }
+    return true;
+}
+
+bool FFoundationAuthority::TillOn(FFoundationPlayer& Player, const FFoundationCommand& Command,
+    const FFoundationHit& Hit, FFoundationResult& Result, EFoundationPlayerMode Mode)
+{
+    const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
+    // Adventure passes, as the axe does (StripOn).
+    if (!Options.bItemUse || !FoundationBlockFamilies::IsFarmlandOn() || Mode == EFoundationPlayerMode::Adventure ||
+        Stack.IsEmpty() || Hit.Kind != EFoundationHitKind::Block || !World.IsKnown(Hit.Cell))
+        return false;
+    const int32 ToolItem = Stack.Item;
+    const FFoundationItemDefinition& Tool = Rules.GetItem(ToolItem);
+    const FGameplayTag HoesTag = FoundationTilling::GetHoesTag();
+    const FGameplayTag ShovelsTag = FoundationTilling::GetShovelsTag();
+    const bool bHoe = HoesTag.IsValid() && Tool.Tags.HasTagExact(HoesTag);
+    if (!bHoe && !(ShovelsTag.IsValid() && Tool.Tags.HasTagExact(ShovelsTag))) return false;
+    const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    const FFoundationBlockState Before = World.Get(Hit.Cell).State;
+    const FoundationTilling::FConversion* Row = FoundationTilling::Find(
+        bHoe ? FoundationTilling::GetHoeTable() : FoundationTilling::GetShovelTable(), Registry.GetBlock(Before).Id);
+    if (!Row) return false;
+    // The top or a side, with air above (wiki "Hoe", "Dirt Path"); rooted dirt's hoe row has neither rule.
+    if (!Row->bAnyFace)
+    {
+        const FIntVector Above = Hit.Cell + FIntVector(0, 0, 1);
+        if (Hit.Face == EFoundationFace::Down || !World.IsKnown(Above) || !World.Get(Above).State.IsAir()) return false;
+    }
+    const FFoundationBlockType* Target = Registry.FindBlock(Row->To);
+    if (!Target || FoundationBlockFamilies::IsHidden(Target)) return false;
+    const FFoundationBlockState After = Target->GetDefaultState();
+    World.Set(Hit.Cell, After);
+    ++Tills;
+    Result.Outcome = EFoundationOutcome::Committed;
+    (bHoe ? Result.bTilled : Result.bFlattened) = true;
+    Result.Cell = Hit.Cell;
+    Result.State = After;
+    // One point of wear (WearPerUse), when tool wear is on; creative tools never wear.
+    if (Mode != EFoundationPlayerMode::Creative && Options.bToolWear && Tool.MaxDurability > 0)
+    {
+        Result.bToolWorn = true;
+        Result.bToolBroke = Player.Inventory.Wear(Command.Hand, FoundationTilling::WearPerUse, Tool.MaxDurability);
+    }
+    FFoundationEvent Event;
+    Event.Kind = bHoe ? EFoundationEventKind::Tilled : EFoundationEventKind::Flattened;
+    Event.Player = Player.Id;
+    Event.Cell = Hit.Cell;
+    Event.State = After;
+    Event.Item = ToolItem;
+    Event.Step = Player.Facts.Step;
+    AddEvent(Event);
+    if (Result.bToolBroke)
+    {
+        Event.Kind = EFoundationEventKind::ToolBroke;
+        AddEvent(Event);
+    }
+    // Rooted dirt's hanging roots come out of the clicked face (wiki "Rooted Dirt"), as an item entity.
+    const int32 DropItem = Row->Drop.IsNone() ? INDEX_NONE : Rules.FindItem(Row->Drop);
+    if (Options.bItemEntities && DropItem != INDEX_NONE)
+    {
+        FFoundationLootDrop Drop;
+        Drop.Item = DropItem;
+        Drop.Count = 1;
+        const FIntVector Out = Hit.Face == EFoundationFace::None ? Hit.Cell + FIntVector(0, 0, 1)
+                                                                 : Hit.Cell + FoundationGrid::FaceOffset(Hit.Face);
+        SpawnDrops(Out, {Drop}, FoundationLoot::MakeSeed(~Rules.LootSeed, Hit.Cell, Tills));
+    }
+    // Farmland and a path support less than dirt did (block_support.json: no torch on any face), so the neighbours
+    // settle.
+    SettlePlants(Hit.Cell, Before, Player);
     return true;
 }
 
@@ -3435,6 +3507,13 @@ void FFoundationAuthority::SettlePlants(
             return true;
         }
         if (CanPlantSurvive(At, State)) return false;
+        // Farmland and a dirt path turn to dirt instead (survival B5): no drop and no Popped event.
+        if (FFoundationBlockState Turned; FoundationBlockFamilies::GetTurnedState(World.GetRegistry(), State, Turned))
+        {
+            World.Set(At, Turned);
+            Changed.Add(At);
+            return true;
+        }
         Pop(At);
         PopOtherHalf(At, State);
         return true;
