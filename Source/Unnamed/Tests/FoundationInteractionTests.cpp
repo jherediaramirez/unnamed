@@ -2020,6 +2020,40 @@ bool FFoundationBlocksPopDropsTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("the vines' block mined"), MineSteps(L) > 0 && !L.Solid(Hanger));
     TestTrue(TEXT("vines: 2 pops, no vine dropped (an empty hand has no shears)"),
         L.A.Pops == PopsBefore + 2 && Dropped(TEXT("vine")) == 0);
+    // Survival B4b: twisting vines (growing up) and weeping vines (hanging down) settle as stacks. Their tables drop
+    // with a chance without shears, so only the pops and the item are pinned.
+    auto OnlyItem = [&L](const TCHAR* Id, int32 Most)
+    {
+        const int32 Item = L.A.Rules.FindItem(Id);
+        if (Item == INDEX_NONE) return false;
+        int32 Count = 0;
+        for (const FFoundationItemEntity& Entity : L.A.GetItemEntities())
+        {
+            if (Entity.Item != Item) return false;
+            Count += Entity.Count;
+        }
+        return Count <= Most;
+    };
+    Put(Hanger, TEXT("air"));
+    Put(Support, TEXT("dirt"));
+    Put(Support + Up, TEXT("twisting_vines_plant"));
+    Put(Support + Up * 2, TEXT("twisting_vines_plant"));
+    Put(Support + Up * 3, TEXT("twisting_vines[age=0]"));
+    TestEqual(TEXT("twisting vines: 3 pops"), MineSupport(), 3);
+    TestTrue(TEXT("twisting vines: nothing but twisting_vines, at most 3"), OnlyItem(TEXT("twisting_vines"), 3));
+    const FIntVector Ceiling(0, 0, 3);
+    Put(Support, TEXT("air"));
+    Put(Ceiling, TEXT("dirt"));
+    Put(Ceiling - Up, TEXT("weeping_vines_plant"));
+    Put(Ceiling - Up * 2, TEXT("weeping_vines[age=0]"));
+    L.A.RemoveItemEntities();
+    L.NextStep();
+    // This aim meets the west face of (0, 0, 3).
+    L.Stand({-150, 50, 0}, FVector(200, 0, 188));
+    PopsBefore = L.A.Pops;
+    TestTrue(TEXT("the weeping vines' ceiling mined"), MineSteps(L) > 0 && !L.Solid(Ceiling));
+    TestEqual(TEXT("weeping vines: 2 pops"), L.A.Pops - PopsBefore, 2);
+    TestTrue(TEXT("weeping vines: nothing but weeping_vines, at most 2"), OnlyItem(TEXT("weeping_vines"), 2));
     // Washed away: water takes a cane's cell; the cane drops (SettleAfterFluid, SM-Blocks' Q1).
     FFoundationBlockState Cane;
     Registry.Parse(TEXT("sugar_cane"), Cane);
