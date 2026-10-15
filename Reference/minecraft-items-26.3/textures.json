@@ -3330,6 +3330,296 @@
     "0070",
     "0000"
    ]
+  },
+  {
+   "name": "item/baked_potato",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "86733249e16a46d804270ce27b88f60270513e70e65336a3e59fa1fd5a12e275",
+   "rgba_sha256": "d8c86617bbca80e6e06b5724ca9f0fe59b70b7f2cc38da2c8eb6c9aff856dfd8",
+   "alpha": "cutout",
+   "opaque_pixels": 118,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "01f0",
+    "07f8",
+    "0ffc",
+    "1ffc",
+    "1ffe",
+    "3ffe",
+    "3ffe",
+    "3ffe",
+    "3ffc",
+    "1ff8",
+    "0fe0",
+    "0780",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/brick",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "e99b08880e41cc4e0de8f29b3f9332b7e498aefe67dc540e06ec77990c2b1fee",
+   "rgba_sha256": "111b4c3932670f08646433088ceff9d444d3200d60eb485e0195a9955188b84c",
+   "alpha": "cutout",
+   "opaque_pixels": 135,
+   "mask": [
+    "0000",
+    "0000",
+    "0030",
+    "01f8",
+    "0ffc",
+    "7ffe",
+    "ffff",
+    "ffff",
+    "ffff",
+    "ffff",
+    "fffe",
+    "7ff8",
+    "3fc0",
+    "1e00",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/charcoal",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "add27cf65866f5c0a6f2c5751182033bc7a59d0ea9ea5dfd7909d5d87443b1c8",
+   "rgba_sha256": "8287cc016551b5003f5faad2b82ab56c634682b73a99966209ba8f8f35e27f9f",
+   "alpha": "cutout",
+   "opaque_pixels": 139,
+   "mask": [
+    "0000",
+    "01c0",
+    "07e0",
+    "0ff0",
+    "1ff8",
+    "1ffc",
+    "1ffe",
+    "3ffe",
+    "3ffe",
+    "3ffe",
+    "3ffe",
+    "3ffe",
+    "1ffc",
+    "0ff8",
+    "0780",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/copper_nugget",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "e8df01be2948ff96884980d06211303ba058bc7e668a0b19a7d69dc6789c219c",
+   "rgba_sha256": "cb6b888458e9a7250ea2c34a55921ca380c5499f3a23f2f44aa1abd042ad9ebb",
+   "alpha": "cutout",
+   "opaque_pixels": 33,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "0000",
+    "0000",
+    "00c0",
+    "01e0",
+    "03e0",
+    "07e0",
+    "0fe0",
+    "0fc0",
+    "0700",
+    "0000",
+    "0000",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/dried_kelp",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "1c55c9ce599ad41b9682bb220ea7e025778eb76eb2ef0f74e2acccdc9b7d6729",
+   "rgba_sha256": "579880ff28260cde6393fdc774742e77abef47eee9e840cee12944160233c6a0",
+   "alpha": "cutout",
+   "opaque_pixels": 150,
+   "mask": [
+    "0000",
+    "0180",
+    "03e4",
+    "07fe",
+    "0fff",
+    "1fff",
+    "3fff",
+    "7fff",
+    "fffe",
+    "fffc",
+    "fff8",
+    "bff0",
+    "7fe0",
+    "3fc0",
+    "0f80",
+    "0300"
+   ]
+  },
+  {
+   "name": "item/green_dye",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "620a9b8b507a29447abad02c13107770f4b626399a741d80de11ffbe9158c889",
+   "rgba_sha256": "e02b078923850313fa511c718cee202bbdb273c26950dfb684a4494c2c09ab65",
+   "alpha": "cutout",
+   "opaque_pixels": 148,
+   "mask": [
+    "0000",
+    "0c00",
+    "1e00",
+    "3f00",
+    "7fc0",
+    "7fe0",
+    "3ff0",
+    "3ff8",
+    "7ffc",
+    "7ffc",
+    "7ffe",
+    "ffff",
+    "ffff",
+    "3ffc",
+    "0ff0",
+    "03c0"
+   ]
+  },
+  {
+   "name": "item/iron_nugget",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "b652969782255d294f42b09fabb2bd4066e9366b86615e9e886bd603750d83a3",
+   "rgba_sha256": "b5f5fe3eff5b8d102bb65e9d8e42830a6087cb8f46572124388f240f48d9d352",
+   "alpha": "cutout",
+   "opaque_pixels": 34,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "0000",
+    "0000",
+    "0300",
+    "07e0",
+    "0ff0",
+    "0ff0",
+    "0fe0",
+    "0700",
+    "0000",
+    "0000",
+    "0000",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/lime_dye",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "078eba60abd1550ddcaa0b94bd1f17974f3dd39d8374acccdb1875e00beec949",
+   "rgba_sha256": "b16ca9ef8f9b6b9d222bda7db6938f767590db0ef2b738353dd54c6cd4873f1c",
+   "alpha": "cutout",
+   "opaque_pixels": 131,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "03c0",
+    "07e0",
+    "0fe0",
+    "1ff0",
+    "1ff8",
+    "3ffc",
+    "7ffc",
+    "7ffe",
+    "ffff",
+    "ffff",
+    "3ffc",
+    "0ff0",
+    "03c0"
+   ]
+  },
+  {
+   "name": "item/nether_brick",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "ff509e5985967a99b8ef92d528ae5fdbae96e7c4d2fdb094d76f153d5cd01c6d",
+   "rgba_sha256": "b05065e21ede05a4fc4fce9d185ca57dfb1a5875b7efdab306af03362e87a578",
+   "alpha": "cutout",
+   "opaque_pixels": 135,
+   "mask": [
+    "0000",
+    "0000",
+    "0030",
+    "01f8",
+    "0ffc",
+    "7ffe",
+    "ffff",
+    "ffff",
+    "ffff",
+    "ffff",
+    "fffe",
+    "7ff8",
+    "3fc0",
+    "1e00",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/resin_brick",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "e7d73d5495b3357a0efd5971c932ac5f9e9aa369339190b8b14c6cac9ddbff3c",
+   "rgba_sha256": "3e064a9483daf3479a9e425e1afb4aaac1a13c20087fff3aebfaaf9afe8480be",
+   "alpha": "cutout",
+   "opaque_pixels": 135,
+   "mask": [
+    "0000",
+    "0000",
+    "0030",
+    "01f8",
+    "0ffc",
+    "7ffe",
+    "ffff",
+    "ffff",
+    "ffff",
+    "ffff",
+    "fffe",
+    "7ff8",
+    "3fc0",
+    "1e00",
+    "0000",
+    "0000"
+   ]
   }
  ]
 }

@@ -664,6 +664,11 @@ bool FFoundationMobPathCellsTest::RunTest(const FString&)
     TestTrue(
         TEXT("a fence reaches 1.5"), L.A.GetPathCell(SetBlock(L, FIntVector(8, 5, 0), TEXT("oak_fence"))).Solid > 1.4f);
     TestEqual(TEXT("above a fence is free"), L.A.GetPathCell(FIntVector(8, 5, 1)).Solid, 0.f);
+    // [survival.r10.ai_defaults] FENCE: nothing stands on a fence (its box is 1.5 tall since T5 B2b).
+    double Feet = 0;
+    TestFalse(TEXT("no stand on a fence"),
+        FoundationMobPath::GetStand(
+            [&L](const FIntVector& Cell) { return L.A.GetPathCell(Cell); }, FIntVector(8, 5, 1), .9, Feet));
     TestTrue(TEXT("water is avoided"), L.A.GetPathCell(SetBlock(L, FIntVector(9, 5, 0), TEXT("water"))).bAvoid);
     // A stone wall three high across x = 3, y -4..4; the pig at x 0.5 and the player behind it at x 7.5.
     for (int32 Y = -4; Y <= 4; ++Y)

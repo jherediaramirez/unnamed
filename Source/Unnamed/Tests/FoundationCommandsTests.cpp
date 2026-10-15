@@ -28,6 +28,8 @@ namespace CommandsTestsLocal
         FVector Feet = FoundationCoordinates::ToUnreal(FVector(10.5, 64, -3.5));
         int32 Teleports = 0;
         bool bClock = true;
+        // The world's "Allow Cheats".
+        bool bCommands = true;
 
         FCommandLab()
         {
@@ -52,6 +54,7 @@ namespace CommandsTestsLocal
                 ++Teleports;
             };
             Context.Clock = bClock ? &Clock : nullptr;
+            Context.bCommands = bCommands;
             return FoundationCommands::Run(Line, Context);
         }
 
@@ -158,7 +161,14 @@ bool FFoundationCommandsParseTest::RunTest(const FString& Parameters)
     Expect(TEXT("/time set 5x"), TEXT("Invalid unit\n...ime set 5x<--[HERE]"));
     Expect(TEXT("/tp . . ."), TEXT("Invalid double '.'\ntp . . .<--[HERE]"));
     Expect(TEXT("/time set -"), TEXT("Invalid float '-'\ntime set -<--[HERE]"));
-    Expect(TEXT("/time add -5"), TEXT("The tick count must not be less than 0: found -5\ntime add -5<--[HERE]"));
+    Expect(TEXT("/time set -5"), TEXT("The tick count must not be less than 0: found -5\ntime set -5<--[HERE]"));
+    Expect(TEXT("/time add -2147483649"),
+        TEXT("The tick count must not be less than -2147483648: found -2147483649\ntime add -2147483649<--[HERE]"));
+    // /tp's destination is one entity: @a and @e may be more.
+    Expect(TEXT("/tp @e"),
+        TEXT("Only one entity is allowed, but the provided selector allows more than one\ntp @e<--[HERE]"));
+    Expect(TEXT("/tp @s @a"),
+        TEXT("Only one entity is allowed, but the provided selector allows more than one\ntp @s @a<--[HERE]"));
     // Execution errors: one red line, no context.
     Expect(TEXT("/kill Steve"), TEXT("No entity was found"));
     Expect(TEXT("/give Steve apple"), TEXT("No player was found"));
@@ -204,6 +214,26 @@ bool FFoundationCommandsGameModeTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("spectator refused"), Lab.Run(TEXT("/gamemode spectator")),
         FString(TEXT("Spectator Mode isn't available in this build")));
     TestEqual(TEXT("still creative"), Lab.Vitals.Mode, EFoundationPlayerMode::Creative);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationCommandsCheatsOffTest, "Unnamed.Foundation.Commands.CheatsOff",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FFoundationCommandsCheatsOffTest::RunTest(const FString& Parameters)
+{
+    // A world without "Allow Cheats" (Hardcore included): every command answers as an unknown one and changes nothing.
+    FCommandLab Lab;
+    Lab.bCommands = false;
+    const bool bCreativeInventory = Lab.A.Options.bCreativeInventory;
+    TestEqual(TEXT("gamemode refused"), Lab.Run(TEXT("/gamemode creative")),
+        FString(UnknownCommand) + TEXT("\ngamemode creative<--[HERE]"));
+    TestEqual(TEXT("mode unchanged"), Lab.Vitals.Mode, EFoundationPlayerMode::Survival);
+    TestEqual(TEXT("creative rules unchanged"), Lab.A.Options.bCreativeInventory, bCreativeInventory);
+    TestEqual(TEXT("kill refused"), Lab.Run(TEXT("/kill")), FString(UnknownCommand) + TEXT("\nkill<--[HERE]"));
+    TestFalse(TEXT("alive"), Lab.Vitals.IsDead());
+    TestEqual(TEXT("time refused"), Lab.Run(TEXT("/time set night")),
+        FString(UnknownCommand) + TEXT("\ntime set night<--[HERE]"));
+    TestEqual(TEXT("clock unchanged"), Lab.Clock.GetDayClock().TotalTicks, int64(0));
     return true;
 }
 
@@ -282,6 +312,17 @@ bool FFoundationCommandsTimeTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("markers are lower case"), Lab.Run(TEXT("/time set MINECRAFT:night")),
         FString(TEXT("Time marker MINECRAFT:night does not exist for clock minecraft:overworld")));
     TestEqual(TEXT("unchanged"), Lab.Clock.GetDayClock().TotalTicks, int64(1000));
+    // add takes negative times (26.3's minimum is -2147483648); the total stops at 0.
+    TestEqual(TEXT("add -1"), Lab.Run(TEXT("/time add -1")), FString(TEXT("Set minecraft:overworld to 999 tick(s)")));
+    TestEqual(TEXT("add -1d"), Lab.Run(TEXT("/time add -1d")), FString(TEXT("Set minecraft:overworld to 0 tick(s)")));
+    // Pausing a paused clock, or resuming a running one, is an error.
+    TestEqual(TEXT("resume running"), Lab.Run(TEXT("/time resume")),
+        FString(TEXT("Clock minecraft:overworld is already running")));
+    TestEqual(TEXT("pause"), Lab.Run(TEXT("/time pause")), FString(TEXT("Paused clock minecraft:overworld")));
+    TestEqual(TEXT("pause paused"), Lab.Run(TEXT("/time pause")),
+        FString(TEXT("Clock minecraft:overworld is already paused")));
+    TestTrue(TEXT("still paused"), Lab.Clock.GetDayClock().bPaused);
+    TestEqual(TEXT("resume"), Lab.Run(TEXT("/time resume")), FString(TEXT("Resumed clock minecraft:overworld")));
     Lab.bClock = false;
     TestEqual(TEXT("no clock (the Playground)"), Lab.Run(TEXT("/time set day")),
         FString(TEXT("There is no default clock in dimension minecraft:overworld")));
@@ -299,6 +340,19 @@ bool FFoundationCommandsKillTest::RunTest(const FString& Parameters)
     Creative.Run(TEXT("/gamemode creative"));
     TestEqual(TEXT("kill in creative"), Creative.Run(TEXT("/kill @s")), FString(TEXT("Killed Player")));
     TestTrue(TEXT("through creative's invulnerability"), Creative.Vitals.IsDead());
+    // @e kills every entity: the player and the item entities and experience orbs (commands.kill.success.multiple).
+    FCommandLab Entities;
+    const int32 Stone = Entities.A.Rules.FindItem(TEXT("stone"));
+    Entities.A.SpawnItem(Stone, 1, FVector(50, 50, 300), FVector::ZeroVector, 10);
+    Entities.A.SpawnItem(Stone, 2, FVector(250, 50, 300), FVector::ZeroVector, 10);
+    TestEqual(TEXT("two item entities"), Entities.A.GetItemEntities().Num(), 2);
+    TestEqual(TEXT("kill @e"), Entities.Run(TEXT("/kill @e")), FString(TEXT("Killed 3 entities")));
+    TestTrue(TEXT("@e: the player is dead"), Entities.Vitals.IsDead());
+    TestEqual(TEXT("@e: no item entities left"), Entities.A.GetItemEntities().Num(), 0);
+    TestEqual(TEXT("@e: no orbs left"), Entities.A.GetExperienceOrbs().Num(), 0);
+    // Only the player: one entity, by name.
+    FCommandLab Alone;
+    TestEqual(TEXT("kill @e alone"), Alone.Run(TEXT("/kill @e")), FString(TEXT("Killed Player")));
     return true;
 }
 
@@ -345,11 +399,18 @@ bool FFoundationChatTest::RunTest(const FString& Parameters)
     }
     FHudSnapshot S;
     const FHudLayout Layout = HudModel::GetLayout({640, 360}, 0, false);
-    const TArray<FHudDraw> Plain = HudDrawList::Build(S, FHudPresentation{}, Layout, 0, Glyphs);
+    // The closed chat's rectangle: its ten rows above the bottom offset, the bands' full width.
+    const FIntRect ChatRect(0,
+        360 - HudDrawList::ChatBottomOffset - HudDrawList::ChatClosedRows * HudDrawList::ChatLineHeight,
+        HudDrawList::ChatWidth + 8, 360 - HudDrawList::ChatBottomOffset);
+    auto DrawsInChat = [&ChatRect](const TArray<FHudDraw>& Draws)
+    { return Draws.ContainsByPredicate([&ChatRect](const FHudDraw& Draw) { return Draw.Rect.Intersect(ChatRect); }); };
     S.Chat = {};
-    TestEqual(TEXT("empty chat: no draws"), HudDrawList::Build(S, FHudPresentation{}, Layout, 0, Glyphs), Plain);
+    const TArray<FHudDraw> Plain = HudDrawList::Build(S, FHudPresentation{}, Layout, 0, Glyphs);
+    TestFalse(TEXT("empty chat: no draws in the chat's rectangle"), DrawsInChat(Plain));
     S.Chat = {{{{TEXT("<Player> hi"), FoundationChat::White()}}, .5f}};
     const TArray<FHudDraw> WithChat = HudDrawList::Build(S, FHudPresentation{}, Layout, 0, Glyphs);
+    TestTrue(TEXT("a message draws in the chat's rectangle"), DrawsInChat(WithChat));
     // The band, then 10 glyphs with their shadows.
     TestEqual(TEXT("band and glyphs"), WithChat.Num() - Plain.Num(), 1 + 2 * 10);
     const FHudDraw* Band =
@@ -390,6 +451,24 @@ bool FFoundationChatTest::RunTest(const FString& Parameters)
         {{{{TEXT("ab"), FoundationChat::Gray()}, {TEXT("cd"), FoundationChat::Red()}}, 1.f}}, Glyphs);
     if (TestEqual(TEXT("one row"), Rows.Num(), 1) && TestEqual(TEXT("two runs"), Rows[0].Num(), 2))
         TestEqual(TEXT("colours kept"), Rows[0][1].Color, FoundationChat::Red());
+
+    // The snapshot's == (the presenter's redraw guard) sees a change of letter case in its strings.
+    FHudSnapshot A, B;
+    A.ChatInput = TEXT("/time");
+    B.ChatInput = TEXT("/TIME");
+    TestFalse(TEXT("typed line: case counts"), A == B);
+    B.ChatInput = A.ChatInput;
+    TestTrue(TEXT("equal snapshots"), A == B);
+    A.Chat = {{{{TEXT("hi"), FoundationChat::White()}}, 1.f}};
+    B.Chat = {{{{TEXT("HI"), FoundationChat::White()}}, 1.f}};
+    TestFalse(TEXT("chat text: case counts"), A == B);
+    B.Chat = A.Chat;
+    A.ItemName = TEXT("Apple");
+    B.ItemName = TEXT("apple");
+    TestFalse(TEXT("item name: case counts"), A == B);
+    B.ItemName = A.ItemName;
+    B.Level = 1;
+    TestFalse(TEXT("other members still compared"), A == B);
     return true;
 }
 #endif

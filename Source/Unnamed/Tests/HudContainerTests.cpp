@@ -706,4 +706,72 @@ bool FHudContainerMouseBindingsTest::RunTest(const FString&)
                 { return C.Type == EFoundationClickType::Pickup && C.Slot == ScreenMain(3); }));
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHudContainerFurnaceTest, "Unnamed.Hud.Container.Furnace", ContainerScreenTestFlags)
+
+bool FHudContainerFurnaceTest::RunTest(const FString&)
+{
+    // T1 step 8a2: the furnace's screen (value-swaps.md "FurnaceScreen"; input 0, fuel 1, result 2, main 3-29, hotbar
+    // 30-38).
+    constexpr EFoundationMenuKind Furnace = EFoundationMenuKind::Furnace;
+    auto At = [Furnace](int32 Slot) { return FHudContainerModel::GetSlotPosition(Furnace, Slot); };
+    TestEqual(TEXT("input at 56,17"), At(0), FIntPoint(56, 17));
+    TestEqual(TEXT("fuel at 56,53"), At(1), FIntPoint(56, 53));
+    TestEqual(TEXT("result at 116,35"), At(2), FIntPoint(116, 35));
+    TestEqual(TEXT("first main slot at 8,84"), At(3), FIntPoint(8, 84));
+    TestEqual(TEXT("last main slot at 152,120"), At(29), FIntPoint(152, 120));
+    TestEqual(TEXT("first hotbar slot at 8,142"), At(30), FIntPoint(8, 142));
+    TestEqual(TEXT("recipe-book button at 20,34"), FHudContainerModel::GetRecipeButton(Furnace), FIntPoint(20, 34));
+    FHudContainerModel Model = MakeScreenModel();
+    Model.Kind = Furnace;
+    Model.Items.Add(TEXT("coal")).MaxStack = 64;
+    Model.FuelItems.Add(TEXT("coal"));
+    TestEqual(TEXT("39 slots"), Model.GetSlots(), 39);
+    for (const int32 Slot : {0, 1, 2, 3, 29, 30, 38})
+        TestEqual(
+            FString::Printf(TEXT("hit test finds slot %d"), Slot), Model.HitTest(At(Slot) + FIntPoint(8, 8)), Slot);
+
+    // A drag skips the result, and the fuel slot unless the stack is fuel.
+    FHudContainerView View;
+    View.Slots.SetNum(39);
+    for (const FName Item : {FName(TEXT("stone")), FName(TEXT("coal"))})
+    {
+        View.Carried = {Item, 10};
+        FHudContainerModel Drag = Model;
+        Drag.MouseDown(At(3) + FIntPoint(8, 8), 0, false, View, 0);
+        for (const int32 Slot : {0, 1, 2, 4})
+            Drag.MouseMove(At(Slot) + FIntPoint(8, 8), View);
+        const TArray<int32> Expected = Item == TEXT("coal") ? TArray<int32>{3, 0, 1, 4} : TArray<int32>{3, 0, 4};
+        ExpectSame(*this, *FString::Printf(TEXT("a drag of %s"), *Item.ToString()), Drag.GetDragSlots(), Expected);
+    }
+
+    // A double-click collects on the input, never on the result (each click there takes).
+    View.Carried = {TEXT("coal"), 1};
+    for (const int32 Slot : {0, 2})
+    {
+        FHudContainerModel Clicks = Model;
+        const FIntPoint Point = At(Slot) + FIntPoint(8, 8);
+        Clicks.MouseDown(Point, 0, false, View, 0);
+        Clicks.MouseUp(Point, 0, View);
+        Clicks.MouseDown(Point, 0, false, View, .1);
+        const bool bPickAll = Clicks.MouseUp(Point, 0, View)
+                                  .ContainsByPredicate([](const FHudContainerClick& C)
+                                      { return C.Type == EFoundationClickType::PickupAll; });
+        TestEqual(FString::Printf(TEXT("double-click on slot %d collects"), Slot), bPickAll, Slot == 0);
+    }
+
+    // The flame and arrow sizes (survival.r3.sprites): 0/25/50/75/100 % -> flame 0 (hidden)/5/8/11/14, arrow
+    // 0/6/12/18/24.
+    TestEqual(TEXT("unlit: no flame"), FHudContainerModel::GetFlameHeight(false, 1), 0);
+    const float Fractions[] = {0, .25f, .5f, .75f, 1};
+    const int32 Flames[] = {0, 5, 8, 11, 14}, Arrows[] = {0, 6, 12, 18, 24};
+    for (int32 Index = 0; Index < UE_ARRAY_COUNT(Fractions); ++Index)
+    {
+        TestEqual(FString::Printf(TEXT("flame at %.2f"), Fractions[Index]),
+            FHudContainerModel::GetFlameHeight(true, Fractions[Index]), Flames[Index]);
+        TestEqual(FString::Printf(TEXT("arrow at %.2f"), Fractions[Index]),
+            FHudContainerModel::GetArrowWidth(Fractions[Index]), Arrows[Index]);
+    }
+    return true;
+}
 #endif

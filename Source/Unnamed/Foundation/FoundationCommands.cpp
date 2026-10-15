@@ -19,6 +19,8 @@ namespace
         {TEXT("argument.entity.selector.missing"), TEXT("Missing selector type")},
         {TEXT("argument.entity.notfound.entity"), TEXT("No entity was found")},
         {TEXT("argument.entity.notfound.player"), TEXT("No player was found")},
+        {TEXT("argument.entity.toomany"),
+            TEXT("Only one entity is allowed, but the provided selector allows more than one")},
         {TEXT("argument.player.entities"),
             TEXT("Only players may be affected by this command, but the provided selector includes entities")},
         {TEXT("argument.gamemode.invalid"), TEXT("Unknown game mode: %s")},
@@ -48,7 +50,11 @@ namespace
         {TEXT("commands.teleport.invalidPosition"), TEXT("Invalid position for teleport")},
         {TEXT("commands.time.no_default_clock"), TEXT("There is no default clock in dimension %s")},
         {TEXT("commands.time.no_time_marker_found"), TEXT("Time marker %s does not exist for clock %s")},
+        {TEXT("commands.time.set.absolute"), TEXT("Set %s to %s tick(s)")},
+        {TEXT("commands.time.pause.already_paused"), TEXT("Clock %s is already paused")},
+        {TEXT("commands.time.pause.already_running"), TEXT("Clock %s is already running")},
         {TEXT("commands.kill.success.single"), TEXT("Killed %s")},
+        {TEXT("commands.kill.success.multiple"), TEXT("Killed %s entities")},
         {TEXT("chat.type.text"), TEXT("<%s> %s")},
     };
 
@@ -183,7 +189,7 @@ namespace
         FString Name;
     };
 
-    bool ReadTarget(FReader& Reader, bool bPlayersOnly, FTargetArg& Out, FCommandError& Error)
+    bool ReadTarget(FReader& Reader, bool bPlayersOnly, FTargetArg& Out, FCommandError& Error, bool bSingle = false)
     {
         Out = FTargetArg{};
         const int32 Start = Reader.Cursor;
@@ -209,6 +215,13 @@ namespace
             {
                 Reader.Cursor = Start;
                 Error = {FoundationCommands::Format(TEXT("argument.player.entities")), Start};
+                return false;
+            }
+            // A single-entity argument ("amount": "single"): @a and @e may match more than one (limit=1 isn't parsed).
+            if (bSingle && (Type == 'a' || Type == 'e'))
+            {
+                Reader.Cursor = Start;
+                Error = {FoundationCommands::Format(TEXT("argument.entity.toomany")), Start};
                 return false;
             }
             // Selector options ([type=...]) are out of step 15's scope: the bracket is trailing data.
@@ -302,8 +315,9 @@ namespace
         return Reader.EndArgument(Error);
     }
 
-    // TimeArgument: a non-negative number with an optional unit, t (1), s (20) or d (24,000), in whole ticks.
-    bool ReadTime(FReader& Reader, int64& OutTicks, FCommandError& Error)
+    // TimeArgument: a number with an optional unit, t (1), s (20) or d (24,000), in whole ticks, at least Minimum
+    // (26.3: 0 for /time set, -2147483648 for /time add).
+    bool ReadTime(FReader& Reader, int32 Minimum, int64& OutTicks, FCommandError& Error)
     {
         const int32 Start = Reader.Cursor;
         const FString Number = Reader.ReadWhile(FReader::IsNumber);
@@ -329,11 +343,11 @@ namespace
             return false;
         }
         const double Ticks = FMath::RoundToDouble(FCString::Atod(*Number) * Scale);
-        if (Ticks < 0)
+        if (Ticks < Minimum)
         {
             Reader.Cursor = Start;
-            Error = {FoundationCommands::Format(
-                         TEXT("argument.time.tick_count_too_low"), {TEXT("0"), FString::Printf(TEXT("%.0f"), Ticks)}),
+            Error = {FoundationCommands::Format(TEXT("argument.time.tick_count_too_low"),
+                         {FString::FromInt(Minimum), FString::Printf(TEXT("%.0f"), Ticks)}),
                 Start};
             return false;
         }
@@ -489,14 +503,17 @@ namespace
         }
         else
         {
-            if (!ReadTarget(Reader, false, Destination, Error)) return false;
+            // tp <destination> takes one entity; tp <targets> <location|destination> any number of targets.
+            const int32 First = Reader.Cursor;
+            if (!ReadTarget(Reader, false, Destination, Error, !Reader.Input.Mid(First).Contains(TEXT(" "))))
+                return false;
             if (Reader.HasMore())
             {
-                // tp <targets> <location|destination>
                 Target = Destination;
                 ++Reader.Cursor;
                 bLocation = LooksLikeCoordinates(Reader);
-                if (bLocation ? !ReadPosition(Reader, Position, Error) : !ReadTarget(Reader, false, Destination, Error))
+                if (bLocation ? !ReadPosition(Reader, Position, Error)
+                              : !ReadTarget(Reader, false, Destination, Error, true))
                     return false;
             }
         }
@@ -543,14 +560,15 @@ namespace
         if (!Reader.Next(Error)) return false;
         const FString Verb = Reader.ReadUntilSpace();
         TArray<FString> Args{Verb};
-        if (Verb.Equals(TEXT("set"), ESearchCase::CaseSensitive) ||
-            Verb.Equals(TEXT("add"), ESearchCase::CaseSensitive))
+        const bool bAdd = Verb.Equals(TEXT("add"), ESearchCase::CaseSensitive);
+        const bool bPause = Verb.Equals(TEXT("pause"), ESearchCase::CaseSensitive);
+        int64 Ticks = 0;
+        if (Verb.Equals(TEXT("set"), ESearchCase::CaseSensitive) || bAdd)
         {
             if (!Reader.Next(Error)) return false;
             const int32 Start = Reader.Cursor;
             int32 Marker = 0;
             const FString Word = Reader.ReadUntilSpace();
-            int64 Ticks = 0;
             if (Verb.Equals(TEXT("set"), ESearchCase::CaseSensitive) && !Word.IsEmpty() && !FReader::IsNumber(Word[0]))
             {
                 // A time marker (day, noon, night, midnight, minecraft: optional).
@@ -570,7 +588,7 @@ namespace
             else
             {
                 Reader.Cursor = Start;
-                if (!ReadTime(Reader, Ticks, Error)) return false;
+                if (!ReadTime(Reader, bAdd ? MIN_int32 : 0, Ticks, Error)) return false;
                 Args.Add(FString::Printf(TEXT("%lld"), Ticks));
             }
         }
@@ -588,8 +606,7 @@ namespace
             }
             Args.Add(What);
         }
-        else if (!Verb.Equals(TEXT("pause"), ESearchCase::CaseSensitive) &&
-            !Verb.Equals(TEXT("resume"), ESearchCase::CaseSensitive))
+        else if (!bPause && !Verb.Equals(TEXT("resume"), ESearchCase::CaseSensitive))
         {
             Error = Incorrect(VerbEnd);
             return false;
@@ -602,6 +619,24 @@ namespace
         if (!Context.Clock)
         {
             Error = {FoundationCommands::Format(TEXT("commands.time.no_default_clock"), {TEXT("minecraft:overworld")})};
+            return false;
+        }
+        const TCHAR* const ClockId = TEXT("minecraft:overworld");
+        if (bAdd)
+        {
+            // Here, not in the clock's own /time words, which (as voxel.Time) take no negative time.
+            Context.Clock->AddTicks(Ticks);
+            Say(Out,
+                FoundationCommands::Format(TEXT("commands.time.set.absolute"),
+                    {ClockId, FString::Printf(TEXT("%lld"), Context.Clock->GetDayClock().TotalTicks)}));
+            return true;
+        }
+        // Pausing a paused clock (or resuming a running one) is vanilla's error.
+        if (Args.Num() == 1 && Context.Clock->GetDayClock().bPaused == bPause)
+        {
+            Error = {FoundationCommands::Format(
+                bPause ? TEXT("commands.time.pause.already_paused") : TEXT("commands.time.pause.already_running"),
+                {ClockId})};
             return false;
         }
         FString Reply;
@@ -631,7 +666,14 @@ namespace
         if (!Resolve(Target, Context, false, Error)) return false;
         // Entity.kill: generic_kill damage of Float.MAX_VALUE, through creative's invulnerability.
         Context.Vitals->Hurt(EFoundationDamage::Kill, TNumericLimits<float>::Max());
-        Say(Out, FoundationCommands::Format(TEXT("commands.kill.success.single"), {Context.PlayerName}));
+        // @e also kills every other entity: the item entities and experience orbs (step 11a, Codex 3 #2).
+        int32 Killed = 1;
+        if (Target.Selector == 'e' && Context.Authority)
+            Killed += Context.Authority->RemoveItemEntities() + Context.Authority->RemoveExperienceOrbs();
+        Say(Out,
+            Killed == 1
+                ? FoundationCommands::Format(TEXT("commands.kill.success.single"), {Context.PlayerName})
+                : FoundationCommands::Format(TEXT("commands.kill.success.multiple"), {FString::FromInt(Killed)}));
         return true;
     }
 
@@ -692,7 +734,10 @@ TArray<TArray<FHudChatRun>> FoundationCommands::Run(const FString& Line, FFounda
     FCommandError Error;
     const FString Name = Reader.ReadUntilSpace();
     bool bDone = false;
-    if (!Context.Vitals)
+    // Without cheats every command needs a higher permission level: vanilla parses none of them.
+    if (!Context.bCommands)
+        Error = Unknown(0);
+    else if (!Context.Vitals)
         Error = {TEXT("No player to run commands for")};
     else if (Name.Equals(TEXT("gamemode"), ESearchCase::CaseSensitive))
         bDone = RunGameMode(Reader, Context, Out, Error);

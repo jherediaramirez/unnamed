@@ -455,6 +455,9 @@ struct FFoundationPlayer
     // The container open besides the inventory (survival step 7); its last id (vanilla counts 1-100, then wraps).
     FFoundationOpenMenu OpenMenu;
     int32 LastContainerId = 0;
+    // The respawn point (step 11a): the block cell whose bottom centre the player's feet return to; unset, the world's
+    // spawn. Not saved to world.json until player data is saved.
+    TOptional<FIntVector> RespawnCell;
     // Results by sequence for retransmissions; bounded, oldest evicted first.
     TMap<uint32, FFoundationResult> Results;
     TArray<uint32> ResultOrder;
@@ -569,6 +572,10 @@ public:
     // the block drop's spread seeded by RandomSeed; how many orbs. Ores call it on a break; a furnace (T1 step 8a)
     // calls it when its output is taken.
     int32 SpawnExperience(const FVector& LocalCm, int32 Total, int32 RandomSeed);
+    // /kill @e (step 11a): removes every item entity / experience orb, as a despawn does (the views drop what is no
+    // longer listed); how many.
+    int32 RemoveItemEntities();
+    int32 RemoveExperienceOrbs();
     // The points a player has taken since the last call (its owner adds them to its vitals after each step).
     int32 TakeExperience(int32 Player);
     // Mobs (survival T6 20a), oldest first; Reset clears them. SpawnMob adds one standing at a position (cm from the
@@ -581,6 +588,18 @@ public:
     // A cell as the mobs' A* sees it (survival T6 20b): the top of the collision boxes that start in it, and whether it
     // holds a fluid.
     FFoundationPathCell GetPathCell(const FIntVector& Cell);
+
+    // Death (step 11a). The respawn point: beds (step B7) set it when slept in and clear it when the bed is gone; mobs
+    // (step 20c) read it. The pawn's Respawn puts the feet at the cell's bottom centre when set, else at the world's
+    // spawn. Session only: not saved to world.json until player data is saved.
+    void SetRespawnPoint(int32 PlayerId, const FIntVector& Cell);
+    void ClearRespawnPoint(int32 PlayerId);
+    TOptional<FIntVector> GetRespawnPoint(int32 PlayerId) const;
+    // Vanilla drops the inventory at the moment of death [survival.r6.death_items]: every non-empty stack of the 41
+    // slots, the carried stack and the 2x2 crafting grid becomes one item entity, then the inventory is empty.
+    // FeetLocalCm: the feet, cm from the block world's origin. Nothing drops with infinite supply. RandomSeed makes the
+    // throw deterministic.
+    void DropInventoryOnDeath(int32 PlayerId, const FVector& FeetLocalCm, int32 RandomSeed);
 
     const TArray<FFoundationEvent>& GetEvents() const { return Events; }
     int64 GetEventSerial() const { return EventSerial; }

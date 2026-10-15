@@ -118,6 +118,42 @@ Survival B2a (track T5) prepares B2b's connections and stair shapes and widens c
 - **Hidden saplings pass:** with `foundation.Blocks.Families 0`, a sapling in the main hand passes the use on to the
   offhand, as before B1.
 
+## Shapes and connections (B2b)
+
+Survival B2b (track T5): stairs, fences, walls, panes, bars and fence gates take their shapes from their neighbours,
+when placed and when a neighbour changes. Logic in `FoundationBlockFamilies.h/.cpp`, under `foundation.Blocks.Shapes`
+(0: B1's default-state placement and no neighbour pass).
+
+- **Families** (`FoundationBlockFamilies::GetFamily`, `EFoundationBlockFamily`): `#minecraft:stairs`, `fences`,
+  `walls`, `fence_gates`, and panes and bars (exactly `north`, `east`, `south`, `west`, `waterlogged`, without the fence
+  tag). Exactly the oracle's 182 subjects by class (`Shapes.Families`). No asset enum and no DA_Blocks change.
+- **Sturdy faces** (`GetSturdyFaces`, public for B3's buttons and doors): a face whose collision boxes, clipped to the
+  cell, cover it whole. Leaves and powder snow have none.
+- **Connections:** fences join sturdy faces, fences of their kind (wooden with wooden, nether brick with its own) and
+  gates whose bar points at them; walls join sturdy faces, walls, panes, bars and those gates; panes and bars join
+  sturdy faces, each other and walls. The pumpkins, the jack o'lantern and the melon never join. A wall side is tall
+  when the underside of the block above covers a 2-pixel strip from that edge past the centre, else low; the post shows
+  under a post-override block or a wall with its post, at an end, a corner or alone, and otherwise only when the block
+  above covers the centre while no two opposite sides are tall (minecraft.wiki, Wall).
+- **Stairs:** a perpendicular same-half stair in front turns the stair into an outer corner, one behind into an inner
+  corner, unless the side it turns toward holds a stair of the same facing and half (VALUES "Stair corners").
+- **Gates:** `in_wall` when a wall stands on either side across the facing (VALUES "Fence gates").
+- **Placement** (`FoundationBlockFamilies::GetStateForPlacement`, from `FoundationBlockPlacement::GetStateForPlacement`):
+  stairs face the player's horizontal look, the half by the slab rule; gates face the look (VALUES
+  `blocks.fence_gate_placement`); `waterlogged` in a water source; then the shape settles from the six neighbours as
+  the oracle settles a case.
+- **Neighbour pass** (`UpdateNeighbourShapes`, one line in `FFoundationAuthority::SettlePlants`, which every edit path
+  goes through): each family block among the 4 horizontal neighbours of the edited cell, and a wall below it, takes one
+  `updateShape` toward it. One ring, no cascade, unknown neighbours skipped (cells a rule reads beyond them, such as a
+  wall's above, read as air); it runs with `Options.bPlantRules` off too. It rings the edited cell only: cells
+  `SettlePlants` pops or writes afterwards (a popped plant, an upper half) get no ring of their own. No family block
+  reads those today; B3's door halves will.
+  World generation and the Playground gallery write states directly and never run it.
+- **Oracle:** the tests compare every row of `facts/shape_updates.json`: 1,199,226 single-neighbour rows, 141,960
+  cross-family rows, the 32 wall-up rows, the stair singles (16 outer and 16 inner bottom corners) and 512 pairs, and the
+  72 gates-in-wall rows.
+- **Voxel gather:** `AVoxelWorld::GatherColumns` is `GatherCollision`'s part over the streamed columns, callable with any
+  pipeline (`Unnamed.Voxel.World.ShapesGather`).
 ## Placement
 
 `FoundationBlockPlacement` ports `BlockPlaceContext` and each family's `getStateForPlacement`: clicked face, `Direction.orderedByNearest` (with Minecraft's sine table) and `fromYRot`. Every placement goes through `FFoundationAuthority`.
@@ -133,6 +169,7 @@ Survival B2a (track T5) prepares B2b's connections and stair shapes and widens c
 | `Leaves` | leaves | `persistent=true`, `distance` from neighbouring logs and leaves |
 | `Snowy` | grass block, podzol, mycelium | `snowy` when a `#snow` block is above |
 | `WallAttached` | wall torch | `facing` away from its wall, which the torch item picks by look (below) |
+| families (B2b) | stairs, fences, walls, panes, bars, fence gates | facing, half, connections and shape (above, "Shapes and connections (B2b)") |
 
 **The torch** (torch sessions T2 and T3). The `torch` item (`PlacesWallBlock`, from the reference's standing-and-wall items) places `torch` or `wall_torch`, where a support holds it: `FFoundationBlockRegistry::GetTorchSupport` gives each state's faces from `facts/block_support.json`, which `FactsDump.java` measures with the torch's own `canSurvive` (leaves and powder snow hold none, every other full cube all five, an upside-down slab a floor torch, a bottom slab nothing).
 - **Placement by look** (`FoundationBlockPlacement::GetTorchState`), as measured black-box in 26.3 by probe P3 (`Tests/Probes/torch-placement-26.3.json`, 64,896 clicks): the directions nearest the look (`GetNearestLooks`), with the direction into the clicked block first unless the click replaces it (short grass). Up is skipped, down gives the floor torch if the cell below holds one, and a side gives the wall torch against the first side, in that order, that holds one; the first hit wins, and nothing holding places nothing (`CannotSurvive`). So a side or top click on a block that holds a torch always places on it, an underside click places by look, and a click on short grass chooses by look, not by the clicked face. The preview and the placement share the rule.
@@ -256,4 +293,5 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
   - `.Models`: every baked quad and every model state's parts against the reference, with spot checks.
   - `.ModelMeshes`: the Playground's model meshes: 2,440 baked quads, 2,444 drawn (two triangles each: 16 exact repeats dropped, 20 added by the torch's flame cut), full-precision UVs, and every vertex's position, texture UV, shade face and own code.
   - `Unnamed.Hud.Creative.Tabs`, `.Clicks` and `.Authority`.
+  - `Unnamed.Foundation.Shapes.*` (B2b): `.Families`, `.SingleNeighbour`, `.CrossFamily`, `.WallUp`, `.Stairs`, `.GatesInWall` against every row of `shape_updates.json`; `.Placement` (facing, half, corners, connections, `in_wall`, switch 0); `.Neighbours` (placing and mining through the authority, one ring, a wall under a new block, switch 0). `Unnamed.Voxel.World.ShapesGather`: the voxel gather's outer layers on a streamed column.
 - **Runtime:** `TestFoundationRuntime.ps1 -Suite tour` shots 09-23 cover the gallery and the creative screen (17p and 17q: the plant row). The interaction suite covers stone placement and mining and the hotbar block icon, and checks the drawn cells and the exact instance count (one per part, plus held water) against the world. Its plants group (S7) places a dandelion on grass and mines the grass (the dandelion pops), refuses a dandelion on stone, and places and mines tall grass (both halves go).

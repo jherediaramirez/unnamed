@@ -95,7 +95,7 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
             TEXT("DA_Items and the item reference"), Assets && Reference && ModelsJson && TexturesJson && IndexJson))
         return false;
     const TArray<TSharedPtr<FJsonValue>>& Items = Reference->GetArrayField(TEXT("items"));
-    if (!TestEqual(TEXT("104 items"), Assets->Items.Num(), 104) ||
+    if (!TestEqual(TEXT("114 items"), Assets->Items.Num(), 114) ||
         !TestEqual(TEXT("as many as items.json"), Assets->Items.Num(), Items.Num()))
         return false;
     TestEqual(TEXT("reference digest"), Assets->SourceSha256.Len(), 64);
@@ -300,7 +300,7 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
             TestEqual(TEXT("layer pixels of ") + Asset.Name.ToString(),
                 UFoundationBlockImport::HashLayer(Arrays[Array], Asset.Layer), Asset.RgbaSha256);
     }
-    TestTrue(TEXT("104 layers of 16 x 16 and 7 of 32 x 32"), Layers[0] == 104 && Layers[1] == 7);
+    TestTrue(TEXT("114 layers of 16 x 16 and 7 of 32 x 32"), Layers[0] == 114 && Layers[1] == 7);
     for (int32 Array = 0; Array < 2; ++Array)
         if (TestNotNull(Array ? TEXT("T_ItemTextures32") : TEXT("T_ItemTextures"), Arrays[Array]))
         {

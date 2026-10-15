@@ -90,6 +90,8 @@ private:
     void AddMobCases();
     // The chat commands (step 15), in the interaction and views suites (FoundationCommandsProbe.cpp).
     void AddCommandsCases();
+    // The death screen (step 11a) and its switch-0 control, in the interaction suite (FoundationDeathProbe.cpp).
+    void AddDeathCases();
     // The pause menu's life in the world's foundation.Pause.Menu mode, in the all and pause suites
     // (FoundationPauseProbe.cpp).
     void AddPauseMenuCases();
