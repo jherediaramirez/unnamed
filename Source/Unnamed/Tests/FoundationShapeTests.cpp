@@ -256,8 +256,10 @@ bool FFoundationShapesFamiliesTest::RunTest(const FString& Parameters)
         const FFoundationBlockType& Block = Registry->GetBlockAt(Index);
         const EFoundationBlockFamily* Expected = Want.Find(Block.Id);
         EFoundationBlockFamily Got = FoundationBlockFamilies::GetFamily(Block);
-        // B3a's doors and trapdoors are not shape-oracle subjects (Unnamed.Foundation.Interact.Families checks them).
-        if (Got == EFoundationBlockFamily::Door || Got == EFoundationBlockFamily::Trapdoor)
+        // B3a's doors and trapdoors and B3b's buttons and lever are not shape-oracle subjects
+        // (Unnamed.Foundation.Interact.Families checks them).
+        if (Got == EFoundationBlockFamily::Door || Got == EFoundationBlockFamily::Trapdoor ||
+            Got == EFoundationBlockFamily::Button || Got == EFoundationBlockFamily::Lever)
             Got = EFoundationBlockFamily::None;
         if (Got != (Expected ? *Expected : EFoundationBlockFamily::None))
         {

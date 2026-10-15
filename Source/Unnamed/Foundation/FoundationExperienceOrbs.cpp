@@ -57,9 +57,39 @@ float FoundationExperienceOrbs::GetLevelUpVolume(int32 LastLevel, int32 Level, i
     return LevelUpVolume * FMath::Min(float((LastLevel / 5 + 1) * 5) / LevelUpFullLevel, 1.f);
 }
 
-int64 FoundationExperienceOrbs::GetLevelUpStep(int64 FrameStep, int32 Level, int32 GainLevel, int64 GainStep)
+TArray<float> FoundationExperienceOrbs::GetLevelUpVolumes(TConstArrayView<FFoundationLevelGain> Gains, int32 Level,
+    int64 FrameStep, int32& LastLevel, int64& LastSoundStep, int32& LastSerial)
 {
-    return GainStep >= 0 && GainLevel == Level ? GainStep : FrameStep;
+    TArray<float> Volumes;
+    const auto Judge = [&](int32 From, int32 To, int64 Step)
+    {
+        if (const float Volume = GetLevelUpVolume(From, To, Step, LastSoundStep); Volume > 0)
+        {
+            Volumes.Add(Volume);
+            LastSoundStep = Step;
+        }
+        LastLevel = To;
+    };
+    // Serials going back: a new pawn counts from 1 again (review 19a2).
+    if (!Gains.IsEmpty() && Gains.Last().Serial < LastSerial) LastSerial = 0;
+    // The first frame plays nothing, however many gains it holds.
+    if (LastLevel < 0)
+    {
+        for (const FFoundationLevelGain& Gain : Gains)
+            LastSerial = FMath::Max(LastSerial, Gain.Serial);
+        LastLevel = Level;
+        return Volumes;
+    }
+    for (const FFoundationLevelGain& Gain : Gains)
+        if (Gain.Serial > LastSerial)
+        {
+            LastSerial = Gain.Serial;
+            // A level the steps did not make before this gain (the lab panel's) is judged at the frame's step first.
+            if (Gain.From != LastLevel) Judge(LastLevel, Gain.From, FrameStep);
+            Judge(Gain.From, Gain.To, Gain.Step);
+        }
+    if (Level != LastLevel) Judge(LastLevel, Level, FrameStep);
+    return Volumes;
 }
 
 float FoundationExperienceOrbs::GetPickupPitch(float U, float V)
@@ -133,14 +163,13 @@ FBox FoundationExperienceOrbs::GetStepRegion(
 void FoundationExperienceOrbs::Move(
     FFoundationExperienceOrb& Orb, const FVector& OriginCm, const TArray<FBox>& Boxes, const FVector& PushCm)
 {
-    // The speed it would land at: this step's vertical velocity after gravity and the push (MoveBox zeroes it). Only
-    // an orb in the air bounces (one resting under a downward pull stays down).
+    // The speed it would land at: this step's pre-move vertical velocity, after gravity and the push (MoveBox zeroes
+    // it). R23 bounces any downward landing faster than the gravity, from the air or not.
     const double Landing = -(Orb.VelocityCm.Z - GravityCm + PushCm.Z);
-    const bool bWasInAir = !Orb.bOnGround;
     // Inside a block an orb skips gravity (R23, survival2.r23.xp_rules); the push-out's draw is a pure function of the
     // orb and its age.
     FoundationItemEntities::MoveBox(Orb.LocalCm, Orb.PreviousLocalCm, Orb.VelocityCm, Orb.bOnGround,
         GetBox(OriginCm + Orb.LocalCm), Boxes, GravityCm, PushCm,
         FRandomStream(int32(HashCombine(GetTypeHash(Orb.Id), GetTypeHash(Orb.Age)))).GetFraction(), false);
-    if (bWasInAir && Orb.bOnGround && Landing > BounceMinCm) Orb.VelocityCm.Z = Landing * BounceFactor;
+    if (Orb.bOnGround && Landing > BounceMinCm) Orb.VelocityCm.Z = Landing * BounceFactor;
 }

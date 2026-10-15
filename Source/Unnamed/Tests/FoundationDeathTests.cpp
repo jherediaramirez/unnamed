@@ -4,6 +4,7 @@
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationDeath.h"
 #include "Foundation/FoundationInteractionSettings.h"
+#include "Foundation/FoundationPawn.h"
 #include "Foundation/FoundationVitals.h"
 #include "Hud/HudDrawList.h"
 #include "Misc/FileHelper.h"
@@ -345,4 +346,54 @@ bool FFoundationDeathScreenTest::RunTest(const FString& Parameters)
         Has(Chat, [](const FHudDraw& D) { return D.Sprite.IsNone() && D.Rect == FIntRect(2, 346, 638, 358); }));
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationDeathArmorWearTest, "Unnamed.Foundation.Death.ArmorWear",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FFoundationDeathArmorWearTest::RunTest(const FString& Parameters)
+{
+    // Codex review 27, finding 1: the killing hit wears the armor before the drops, so a chestplate at 527 of 528
+    // breaks on a lethal 4-point hit (wear max(1, floor(4 / 4)) = 1) instead of dropping intact.
+    FDeathLab L;
+    L.A.Options.bToolWear = true;
+    FFoundationItemDefinition Piece;
+    Piece.Id = TEXT("lab_chestplate");
+    Piece.MaxStack = 1;
+    Piece.Equipment = EFoundationEquipmentSlot::Chest;
+    Piece.Armor = 8;
+    Piece.MaxDurability = 528;
+    L.A.Rules.Items.Add(Piece);
+    const int32 Chest = L.A.Rules.Items.Num() - 1;
+    FFoundationInventory& Inventory = L.P().Inventory;
+    Inventory.bFull = true;
+    Inventory.Armor[2] = Inventory.MakeStack(Chest, 1);
+    Inventory.Armor[2].Damage = 527;
+    FFoundationVitals Vitals;
+    Vitals.WornArmor = 8;
+    Vitals.Health = 1;
+    TestTrue(TEXT("the hit kills"), Vitals.Hurt(EFoundationDamage::MobAttack, 4) && Vitals.IsDead());
+    TestEqual(TEXT("the hit owes 1 wear"), Vitals.PendingArmorWear, 1);
+    AFoundationPawn::DropOnDeath(L.A, L.Player, Vitals, FVector(100, 200, 0), 1234);
+    TestEqual(TEXT("the wear is spent"), Vitals.PendingArmorWear, 0);
+    TestTrue(TEXT("the chestplate broke, not dropped"),
+        Inventory.Armor[2].IsEmpty() &&
+            !L.A.GetItemEntities().ContainsByPredicate(
+                [Chest](const FFoundationItemEntity& E) { return E.Item == Chest; }));
+    // With one more point left (526) the piece survives the wear and drops at 527.
+    FDeathLab Spare;
+    Spare.A.Options.bToolWear = true;
+    Spare.A.Rules.Items.Add(Piece);
+    FFoundationInventory& SpareInventory = Spare.P().Inventory;
+    SpareInventory.bFull = true;
+    const int32 SpareChest = Spare.A.Rules.Items.Num() - 1;
+    SpareInventory.Armor[2] = SpareInventory.MakeStack(SpareChest, 1);
+    SpareInventory.Armor[2].Damage = 526;
+    FFoundationVitals SpareVitals;
+    SpareVitals.PendingArmorWear = 1;
+    AFoundationPawn::DropOnDeath(Spare.A, Spare.Player, SpareVitals, FVector(100, 200, 0), 1234);
+    const FFoundationItemEntity* Dropped = Spare.A.GetItemEntities().FindByPredicate(
+        [SpareChest](const FFoundationItemEntity& E) { return E.Item == SpareChest; });
+    TestTrue(TEXT("at 526: dropped worn to 527"), Dropped && Dropped->Damage == 527);
+    return true;
+}
+
 #endif

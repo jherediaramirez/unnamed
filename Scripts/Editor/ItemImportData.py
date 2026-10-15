@@ -15,6 +15,10 @@ from BlockImportData import pascal, tag_name as block_tag_name  # noqa: E402
 REFERENCE = "Reference/minecraft-items-26.3"
 ASSETS = "assets/minecraft/textures/"
 TAGS_INI = "Config/Tags/MinecraftItemTags.ini"
+# The item components report the reference copies (the rarity: the tooltip name's colour).
+COMPONENT_REPORT = "reports/components/item"
+# GUI stand-ins for items 26.3 draws as a special model (Scripts/Editor/CreateShieldSprite.py; Docs/StandIns.md).
+STAND_IN_SPRITES = {"shield": "Art/StandIns/item/shield.png"}
 # Declared natively in Source/Unnamed/Foundation/FoundationTags.cpp; no vanilla item tag may map onto them.
 NATIVE_TAGS = {"Item.Block"}
 # Survival B1: a sapling item places the sapling block of the same id once the blocks reference holds that block.
@@ -85,8 +89,51 @@ def modifier(m):
             "amount": float(m["amount"]), "operation": m["operation"], "slot": m["slot"]}
 
 
+def argb(value):
+    """A tint's packed ARGB int (the dye's default -6265536) as [r, g, b, a] bytes, sRGB like the sprites."""
+    value &= 0xFFFFFFFF
+    return [(value >> 16) & 255, (value >> 8) & 255, value & 255, value >> 24]
+
+
+def layer_tints(case, layers):
+    """One colour per layer: the case's tint (a dye's default), white where it has none; empty when untinted."""
+    tints = case.get("tints") or []
+    if not tints:
+        return []
+    return [argb(tints[i]["default"]) if i < len(tints) and tints[i] else [255, 255, 255, 255]
+            for i in range(len(layers))]
+
+
 def vector(values):
     return [float(v) for v in values]
+
+
+def shield_fields(item):
+    """The special model and blocks_attacks of the shield (survival step 19b); defaults for every other item."""
+    special, blocks = item.get("special"), item.get("blocks_attacks")
+    out = {"gui_sprite": "item/" + item["id"] if item["id"] in STAND_IN_SPRITES else "",
+           "special_model": special["type"] if special else "",
+           "special_texture": special["texture"] if special else "",
+           "special_scale": vector(special["transformation"]["scale"]) if special else vector([1, 1, 1]),
+           "blocks_attacks": blocks is not None}
+    if special:
+        transform = special["transformation"]
+        assert transform["translation"] == [0.0, 0.0, 0.0] and transform["left_rotation"] == [0.0, 0.0, 0.0, 1.0] and \
+            transform["right_rotation"] == [0.0, 0.0, 0.0, 1.0], f"{item['id']}: only a scale transformation is handled"
+    if blocks:
+        reductions = blocks["damage_reductions"]
+        assert len(reductions) == 1 and "type" not in reductions[0], f"{item['id']}: one all-damage reduction only"
+        out.update({"block_delay_seconds": float(blocks["block_delay_seconds"]),
+                    "disable_cooldown_scale": float(blocks["disable_cooldown_scale"]),
+                    "block_angle_degrees": float(reductions[0]["horizontal_blocking_angle"]),
+                    "block_base": float(reductions[0]["base"]), "block_factor": float(reductions[0]["factor"]),
+                    "item_damage_threshold": float(blocks["item_damage"]["threshold"]),
+                    "item_damage_base": float(blocks["item_damage"]["base"]),
+                    "item_damage_factor": float(blocks["item_damage"]["factor"]),
+                    "bypassed_by": (blocks["bypassed_by"] or "").removeprefix("#minecraft:"),
+                    "block_sound": (blocks["block_sound"] or "").removeprefix("minecraft:"),
+                    "disabled_sound": (blocks["disabled_sound"] or "").removeprefix("minecraft:")})
+    return out
 
 
 def build(root):
@@ -97,8 +144,12 @@ def build(root):
     for item in items["items"]:
         tool, weapon, attack, repair = item["tool"], item["weapon"], item["attack"], item["repair"]
         gui = item["model"]["models"][0]["model"]
-        # The GUI sprite: item/<id>, or the block texture a sapling's item model uses (block/<id>).
-        assert gui == "item/" + item["id"] and item["textures"][0] in ("item/" + item["id"], "block/" + item["id"]), \
+        special = item.get("special")
+        # The GUI sprite: item/<id>, or the block texture a sapling's item model uses (block/<id>); a special model
+        # (the shield) has no layers and takes its stand-in sprite.
+        assert gui == "item/" + item["id"] and (
+            item["textures"][0] in ("item/" + item["id"], "block/" + item["id"]) if not special else
+            not item["textures"] and item["id"] in STAND_IN_SPRITES), \
             f"{item['id']}: the GUI sprite is not item/<id> or block/<id>"
         rules = []
         for rule in (tool or {}).get("rules", []):
@@ -106,12 +157,22 @@ def build(root):
                           "speed": float(rule.get("speed", 0.0)),
                           "states_correct_for_drops": "correct_for_drops" in rule,
                           "correct_for_drops": bool(rule.get("correct_for_drops", False))})
+        armor, equip = item.get("armor"), item.get("equippable")
+        components = json.loads((ref / COMPONENT_REPORT / (item["id"] + ".json")).read_text(encoding="utf-8"))[
+            "components"]
+        rarity = components.get("minecraft:rarity", "common")
+        # damage_resistant (Codex review 31 #4): the damage type tag the item resists, in entity form and worn.
+        resistant = components.get("minecraft:damage_resistant", {}).get("types", "")
+        assert resistant in ("", "#minecraft:is_fire"), f"{item['id']}: damage_resistant {resistant} is not handled"
         cases = []
         for case in item["model"]["models"]:
             when = case["when"]
-            contexts = [] if when is None or when["is"] == "fallback" else \
+            # A using_item condition (the shield) selects on the use, not on the display context.
+            using = when is not None and when["property"] == "using_item"
+            contexts = [] if when is None or using or when["is"] == "fallback" else \
                 ([when["is"]] if isinstance(when["is"], str) else list(when["is"]))
-            cases.append({"model": case["model"], "contexts": contexts})
+            cases.append({"model": case["model"], "contexts": contexts,
+                          "using_item": (1 if when["is"] == [True] else 0) if using else -1})
         out_items.append({
             "id": item["id"], "display_name": item["name"], "protocol_id": item["protocol_id"],
             "group": item["group"] or "", "material": item["material"] or "", "kind": item["kind"] or "",
@@ -119,7 +180,7 @@ def build(root):
             # No attribute modifiers: the player's own base attack damage 1 and attack speed 4.
             "attack_damage": float(attack["damage"]) if attack else 1.0,
             "attacks_per_second": float(attack["speed"]) if attack else 4.0,
-            "modifiers": [modifier(m) for m in (attack or {}).get("modifiers", [])],
+            "modifiers": [modifier(m) for m in (attack or armor or {}).get("modifiers", [])],
             "tool": tool is not None,
             "default_mining_speed": float(tool["default_mining_speed"]) if tool else 1.0,
             "rules": rules,
@@ -138,6 +199,17 @@ def build(root):
             "hand_animation_on_swap": bool(item["model"]["hand_animation_on_swap"]),
             "textures": list(item["textures"]),
             "places_block": item["id"] if item["id"] in SAPLINGS and item["id"] in block_ids else "",
+            # Armor (survival step 19a2): the equippable component and the summed armor attributes.
+            "equipment_slot": equip["slot"] if equip else "",
+            "swappable": bool(equip["swappable"]) if equip else True,
+            "equip_sound": equip["equip_sound"].removeprefix("minecraft:") if equip else "",
+            "armor": float(armor["armor"]) if armor else 0.0,
+            "armor_toughness": float(armor["toughness"]) if armor else 0.0,
+            "knockback_resistance": float(armor["knockback_resistance"]) if armor else 0.0,
+            "layer_tints": layer_tints(item["model"]["models"][0], item["textures"]),
+            "rarity": rarity,
+            "damage_resistant": resistant.removeprefix("#minecraft:"),
+            **shield_fields(item),
         })
     out_models = []
     for model in models["models"]:
@@ -162,6 +234,10 @@ def build(root):
     # (the saplings' block/<id>_sapling).
     sprite_pngs = sorted((ref / "assets/minecraft/textures/item").glob("*.png")) + sorted(
         ref / ASSETS / (t["name"] + ".png") for t in textures["textures"] if t["name"].startswith("block/"))
+    # Then the GUI stand-ins (Gui/item/<id>) and the special models' entity textures (Gui/<folder>/<name>, e.g.
+    # Gui/shield/shield_base_nopattern), after every earlier sprite.
+    sprite_pngs += [Path(root) / STAND_IN_SPRITES[i["id"]] for i in items["items"] if i["id"] in STAND_IN_SPRITES]
+    sprite_pngs += [ref / ASSETS / (i["special"]["texture"] + ".png") for i in items["items"] if i.get("special")]
     loot = json.loads((ref / "loot_tables.json").read_text(encoding="utf-8"))
     return {"source_sha256": source_sha256(root), "items": out_items, "models": out_models,
             "textures": out_textures, "sprite_pngs": sprite_pngs, "tags_ini": tags_ini(root),

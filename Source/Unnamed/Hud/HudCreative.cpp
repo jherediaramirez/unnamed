@@ -484,6 +484,14 @@ FString HudTooltip::FormatAmount(double Value)
     return Text;
 }
 
+FColor HudTooltip::GetNameColor(FName Rarity)
+{
+    if (Rarity == TEXT("uncommon")) return Yellow;
+    if (Rarity == TEXT("rare")) return Aqua;
+    if (Rarity == TEXT("epic")) return LightPurple;
+    return White;
+}
+
 TArray<FHudTooltipLine> HudTooltip::GetModifierLines(
     TConstArrayView<FFoundationItemModifierAsset> Modifiers, const TMap<FString, FString>& Lang, bool bPlayer)
 {
@@ -522,9 +530,13 @@ TArray<FHudTooltipLine> HudTooltip::GetModifierLines(
                         Fill(Text(TEXT("attribute.modifier.equals.0")), FormatAmount(*Base + Modifier.Amount), Name),
                     DarkGreen});
             else if (Modifier.Amount != 0)
+                // Knockback resistance shows ten times its amount (minecraft.wiki "Attribute"; the reference's
+                // tooltips: the netherite pieces' 0.1 is "+1 Knockback Resistance").
                 Lines.Add({Fill(Text(Modifier.Amount > 0 ? TEXT("attribute.modifier.plus.0")
                                                          : TEXT("attribute.modifier.take.0")),
-                               FormatAmount(FMath::Abs(Modifier.Amount)), Name),
+                               FormatAmount(
+                                   FMath::Abs(Modifier.Amount) * (Attribute == TEXT("knockback_resistance") ? 10 : 1)),
+                               Name),
                     Modifier.Amount > 0 ? Blue : Red});
         }
     }

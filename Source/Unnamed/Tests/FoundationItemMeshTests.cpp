@@ -1,4 +1,5 @@
 #include "Misc/AutomationTest.h"
+#include "MeshDescription.h"
 #include "Algo/Count.h"
 #include "Foundation/FoundationItemAssets.h"
 #include "Foundation/FoundationItemMesh.h"
@@ -287,18 +288,23 @@ bool FFoundationItemsMeshTest::RunTest(const FString&)
         Good += bGood;
         Shared += Corners;
     }
-    TestEqual(TEXT("121 sprites extrude to closed meshes"), Good, 121);
-    AddInfo(FString::Printf(TEXT("depth edges shared at diagonal corners across the 121 sprites: %d"), Shared));
+    // 154 since T2 19a2 appended the armor pieces' sprites (121 before; textures.json holds 154).
+    TestEqual(TEXT("154 sprites extrude to closed meshes"), Good, 154);
+    AddInfo(FString::Printf(TEXT("depth edges shared at diagonal corners across the 154 sprites: %d"), Shared));
 
     int32 Resolved = 0;
     for (const FFoundationItemAsset& Item : Assets->Items)
     {
         FFoundationItemModelView View;
+        // A special model (the shield) is checked by Unnamed.Foundation.Items.ShieldMesh.
+        if (Assets->FindSpecialView(Item.Id, TEXT("firstperson_righthand"), View)) continue;
         const bool bResolved = Assets->FindModelView(Item.Id, TEXT("firstperson_righthand"), View) && View.Display;
         if (!bResolved) AddError(TEXT("no first-person model for ") + Item.Id.ToString());
         Resolved += bResolved;
     }
-    TestEqual(TEXT("114 items have a first-person model and transform"), Resolved, 114);
+    // 143 since T2 19a2 appended the 29 armor pieces (114 before); items.json holds 144: the shield (T2 19b) draws its
+    // special model (FindSpecialView), not a layered one.
+    TestEqual(TEXT("143 items have a first-person model and transform"), Resolved, 143);
     FFoundationItemModelView Pickaxe, Spear, SpearGui;
     TestTrue(TEXT("iron pickaxe: its own model and sprite, item/generated's first person (handheld inherits it)"),
         Assets->FindModelView(TEXT("iron_pickaxe"), TEXT("firstperson_righthand"), Pickaxe) &&
@@ -322,6 +328,93 @@ bool FFoundationItemsMeshTest::RunTest(const FString&)
     TestTrue(TEXT("M_HeldItem exists (CreateItemMaterials.py)"),
         FPackageName::DoesPackageExist(
             UUnnamedProjectSettings::GetItemAssetPath(TEXT("M_HeldItem")).GetLongPackageName()));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationItemsShieldMeshTest, "Unnamed.Foundation.Items.ShieldMesh", ItemMeshTestFlags)
+
+bool FFoundationItemsShieldMeshTest::RunTest(const FString& Parameters)
+{
+    using namespace FoundationItemMesh;
+    const TArray<FFoundationItemBox> Boxes = GetShieldBoxes();
+    if (!TestEqual(TEXT("two boxes: the plate and the handle"), Boxes.Num(), 2)) return false;
+    TestTrue(TEXT("plate 12 x 22 x 1 at texture offset 0, 0"),
+        Boxes[0].Size == FVector3f(12, 22, 1) && Boxes[0].TextureOffset == FIntPoint(0, 0));
+    TestTrue(TEXT("handle 2 x 6 x 6 at texture offset 26, 0"),
+        Boxes[1].Size == FVector3f(2, 6, 6) && Boxes[1].TextureOffset == FIntPoint(26, 0));
+
+    // Unscaled, a quad's normal names its face. Box UV, per face (pixels): u, v, width, height, in the order top,
+    // bottom, left (-X), front (-Z), right (+X), back (+Z).
+    struct FRect
+    {
+        FIntVector Normal;
+        int32 U, V, W, H;
+    };
+    const FRect Expected[12] = {// The plate, w 12, h 22, d 1 at (0, 0).
+        {FIntVector(0, -1, 0), 1, 0, 12, 1}, {FIntVector(0, 1, 0), 13, 0, 12, 1}, {FIntVector(-1, 0, 0), 0, 1, 1, 22},
+        {FIntVector(0, 0, -1), 1, 1, 12, 22}, {FIntVector(1, 0, 0), 13, 1, 1, 22}, {FIntVector(0, 0, 1), 14, 1, 12, 22},
+        // The handle, w 2, h 6, d 6 at (26, 0).
+        {FIntVector(0, -1, 0), 32, 0, 2, 6}, {FIntVector(0, 1, 0), 34, 0, 2, 6}, {FIntVector(-1, 0, 0), 26, 6, 6, 6},
+        {FIntVector(0, 0, -1), 32, 6, 2, 6}, {FIntVector(1, 0, 0), 34, 6, 6, 6}, {FIntVector(0, 0, 1), 40, 6, 2, 6}};
+    const TArray<FFoundationItemQuad> Plain = BuildBoxQuads(Boxes, FIntPoint(64, 64), FVector3f(1, 1, 1));
+    if (!TestEqual(TEXT("12 faces"), Plain.Num(), 12)) return false;
+    for (int32 Index = 0; Index < 12; ++Index)
+    {
+        FVector2f Lo(1e9f), Hi(-1e9f);
+        for (const FVector2f& UV : Plain[Index].UVs)
+        {
+            Lo = FVector2f(FMath::Min(Lo.X, UV.X), FMath::Min(Lo.Y, UV.Y));
+            Hi = FVector2f(FMath::Max(Hi.X, UV.X), FMath::Max(Hi.Y, UV.Y));
+        }
+        const FRect& Want = Expected[Index];
+        TestTrue(FString::Printf(
+                     TEXT("face %d: normal and UV rectangle %d,%d %dx%d"), Index, Want.U, Want.V, Want.W, Want.H),
+            Plain[Index].Normal == Want.Normal && Lo.Equals(FVector2f(Want.U / 64.f, Want.V / 64.f), 1e-6f) &&
+                Hi.Equals(FVector2f((Want.U + Want.W) / 64.f, (Want.V + Want.H) / 64.f), 1e-6f));
+    }
+
+    // Scaled by the shield's (1, -1, -1): closed (each directed edge is run back the other way once) and wound.
+    const TArray<FFoundationItemQuad> Scaled = BuildBoxQuads(Boxes, FIntPoint(64, 64), FVector3f(1, -1, -1));
+    TMap<TPair<FIntVector, FIntVector>, int32> Edges;
+    for (const FFoundationItemQuad& Quad : Scaled)
+        for (int32 Corner = 0; Corner < 4; ++Corner)
+            Edges.FindOrAdd({Key(Quad.Positions[Corner]), Key(Quad.Positions[(Corner + 1) % 4])})++;
+    bool bClosed = true;
+    for (const TPair<TPair<FIntVector, FIntVector>, int32>& Edge : Edges)
+    {
+        const int32* Back = Edges.Find({Edge.Key.Value, Edge.Key.Key});
+        bClosed &= Back && *Back == Edge.Value && Edge.Value == 1;
+    }
+    TestTrue(TEXT("scaled: closed"), bClosed);
+    TestTrue(TEXT("scaled: consistently wound"), IsWound(Scaled));
+    TestTrue(TEXT("unscaled: consistently wound"), IsWound(Plain));
+    TestEqual(TEXT("scaled: the front (-Z) faces +Z"), Scaled[3].Normal, FIntVector(0, 0, 1));
+
+    FMeshDescription Description;
+    FFoundationItemMeshLayer Layer;
+    Layer.Quads = Scaled;
+    FillMeshDescription(Description, MakeArrayView(&Layer, 1), 50);
+    TestEqual(TEXT("24 triangles"), Description.Triangles().Num(), 24);
+
+    // The shield's views from DA_Items.
+    const UFoundationItemAssets* Assets = UFoundationItemAssets::LoadDefault();
+    if (!TestNotNull(TEXT("DA_Items"), Assets)) return false;
+    FFoundationItemModelView Idle, Raised, Pickaxe;
+    const bool bIdle = Assets->FindSpecialView(TEXT("shield"), TEXT("firstperson_righthand"), Idle, false);
+    const bool bRaised = Assets->FindSpecialView(TEXT("shield"), TEXT("firstperson_righthand"), Raised, true);
+    TestTrue(TEXT("shield idle: item/shield, rotation (0, 180, 5), translation (-10, 1.75, -10), scale 1.25"),
+        bIdle && Idle.Model && Idle.Model->Name == TEXT("item/shield") && Idle.Display &&
+            Idle.Display->Rotation.Equals(FVector(0, 180, 5)) &&
+            Idle.Display->Translation.Equals(FVector(-10, 1.75, -10)) && Idle.Display->Scale.Equals(FVector(1.25)) &&
+            Idle.Special == TEXT("shield") && Idle.SpecialScale.Equals(FVector(1, -1, -1)));
+    TestTrue(
+        TEXT("shield in use: item/shield_blocking, rotation (0, 180, -5), translation (-15, 3.25, -11), scale 1.25"),
+        bRaised && Raised.Model && Raised.Model->Name == TEXT("item/shield_blocking") && Raised.Display &&
+            Raised.Display->Rotation.Equals(FVector(0, 180, -5)) &&
+            Raised.Display->Translation.Equals(FVector(-15, 3.25, -11)) && Raised.Display->Scale.Equals(FVector(1.25)));
+    TestFalse(TEXT("an iron pickaxe is no special model"),
+        Assets->FindSpecialView(TEXT("iron_pickaxe"), TEXT("firstperson_righthand"), Pickaxe, false));
     return true;
 }
 #endif

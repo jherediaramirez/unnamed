@@ -67,7 +67,9 @@ enum class EFoundationMenuKind : uint8
     Furnace,
     // A smoker's and a blast furnace's (vanilla's SmokerMenu and BlastFurnaceMenu, T1 step 8b): the furnace's layout.
     Smoker,
-    BlastFurnace
+    BlastFurnace,
+    // A barrel's (vanilla's ChestMenu with 3 rows, T1 step 9): its 27 slots, main, hotbar.
+    Barrel
 };
 
 // The furnace, smoker and blast furnace menus share one layout and one block entity kind.
@@ -75,6 +77,12 @@ inline bool IsFurnaceMenu(EFoundationMenuKind Kind)
 {
     return Kind == EFoundationMenuKind::Furnace || Kind == EFoundationMenuKind::Smoker ||
         Kind == EFoundationMenuKind::BlastFurnace;
+}
+
+// The menus whose container slots are a block entity's (the authority's store, T1 steps 8a, 9).
+inline bool UsesBlockEntity(EFoundationMenuKind Kind)
+{
+    return IsFurnaceMenu(Kind) || Kind == EFoundationMenuKind::Barrel;
 }
 
 // A menu's slot numbering: one row per kind (furnaces and the barrel add theirs). Every range is [First, Next);
@@ -137,7 +145,8 @@ struct FFoundationMenuLayout
 // A crafting table's menu (EFoundationMenuKind::Crafting, survival step 7) is 0 the result, 1-9 its 3x3 grid (the
 // caller's Grid, the screen's own), 10-36 the main grid, 37-45 the hotbar. A furnace's (EFoundationMenuKind::Furnace,
 // T1 step 8a) is 0 the input, 1 the fuel, 2 the result (the caller's Grid: its block entity's slots), 3-29 the main
-// grid, 30-38 the hotbar; its result only gives, and nothing is crafted.
+// grid, 30-38 the hotbar; its result only gives, and nothing is crafted. A barrel's (EFoundationMenuKind::Barrel, T1
+// step 9) is 0-26 its block entity's slots, 27-53 the main grid, 54-62 the hotbar.
 class UNNAMED_API FFoundationContainerMenu
 {
 public:

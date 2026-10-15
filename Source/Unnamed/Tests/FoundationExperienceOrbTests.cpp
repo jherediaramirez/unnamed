@@ -334,14 +334,24 @@ bool FFoundationExperienceOrbMergeTest::RunTest(const FString&)
 {
     using namespace ExperienceOrbTestsLocal;
     {
-        // Same value inside the box, ids 40 apart: merged on step 20 (xp.free_flight's 20-tick scan), not before.
+        // Same value inside the box, ids 40 apart: the scan runs at tickCount % 20 == 1 (R23, survival2.r23.xp_rules),
+        // so two fresh orbs merge on their first step.
         FOrbLab L;
         L.Put(FVector(0, 0, 0), 3, 1);
         L.Put(FVector(60, 0, 0), 3, 41);
-        L.Steps(19);
-        TestEqual(TEXT("not before step 20"), L.A.GetExperienceOrbs().Num(), 2);
         L.NextStep();
-        TestTrue(TEXT("merged on step 20"),
+        TestTrue(TEXT("fresh orbs: merged on step 1"),
+            L.A.GetExperienceOrbs().Num() == 1 && L.A.GetExperienceOrbs()[0].Count == 2 && L.A.OrbsMerged == 1);
+    }
+    {
+        // Past their first step (tickCount 1), the next scan is at tickCount 21: 20 steps later, not before.
+        FOrbLab L;
+        for (const int32 Id : {L.Put(FVector(0, 0, 0), 3, 1), L.Put(FVector(60, 0, 0), 3, 41)})
+            const_cast<FFoundationExperienceOrb*>(L.Find(Id))->Ticks = 1;
+        L.Steps(19);
+        TestEqual(TEXT("not at tickCount 2 to 20"), L.A.GetExperienceOrbs().Num(), 2);
+        L.NextStep();
+        TestTrue(TEXT("merged at tickCount 21"),
             L.A.GetExperienceOrbs().Num() == 1 && L.A.GetExperienceOrbs()[0].Count == 2 && L.A.OrbsMerged == 1);
     }
     for (const TTuple<int32, bool>& Case : TArray<TTuple<int32, bool>>{{2, false}, {21, false}, {81, true}})
@@ -403,7 +413,7 @@ bool FFoundationExperienceOrbMergeTest::RunTest(const FString&)
     }
     {
         // An old orb's own scan keeps the scanner (R23, survival2.r23.xp_merge: the caller stays, the other goes):
-        // id 41, listed first, scans first on step 20 and takes in id 1, staying where it was.
+        // id 41, listed first, scans first on step 1 (tickCount 1) and takes in id 1, staying where it was.
         FOrbLab L;
         L.Put(FVector(30, 0, 0), 3, 41);
         L.Put(FVector(0, 0, 0), 3, 1);
@@ -411,6 +421,62 @@ bool FFoundationExperienceOrbMergeTest::RunTest(const FString&)
         const TArray<FFoundationExperienceOrb>& Orbs = L.A.GetExperienceOrbs();
         TestTrue(TEXT("scan: id 41 stays, count 2"), Orbs.Num() == 1 && Orbs[0].Id == 41 && Orbs[0].Count == 2);
         TestTrue(TEXT("scan: where id 41 was"), Orbs.Num() == 1 && FMath::Abs(Orbs[0].LocalCm.X - 30) < 5);
+    }
+    for (const TTuple<double, int32, double, int32>& Case :
+        TArray<TTuple<double, int32, double, int32>>{{30, 41, 30, 0}, {80, 1, 0, 1}})
+    {
+        // R23 (survival2.r23.xp_rules): newly awarded XP searches a 1 x 1 x 1 box around its position. New id 1 at
+        // x 0 and old id 41 (past its scan, tickCount 5): at x 30 (inside the box) the new XP goes into id 41, age 0;
+        // at x 80 (outside it, inside the merge box grown 0.5) the new orb's own first-step scan keeps id 1.
+        FOrbLab L;
+        L.Put(FVector(0, 0, 0), 3, 1, true);
+        FFoundationExperienceOrb* Old =
+            const_cast<FFoundationExperienceOrb*>(L.Find(L.Put(FVector(Case.Get<0>(), 0, 0), 3, 41)));
+        Old->Ticks = Old->Age = 5;
+        L.NextStep();
+        const TArray<FFoundationExperienceOrb>& Orbs = L.A.GetExperienceOrbs();
+        const FString At = FString::Printf(TEXT("old orb at x %g: "), Case.Get<0>());
+        TestTrue(At + TEXT("one orb, the expected id"),
+            Orbs.Num() == 1 && Orbs[0].Id == Case.Get<1>() && Orbs[0].Count == 2);
+        TestTrue(At + TEXT("where it was"), Orbs.Num() == 1 && FMath::Abs(Orbs[0].LocalCm.X - Case.Get<2>()) < 5);
+        TestTrue(At + TEXT("its age"), Orbs.Num() == 1 && Orbs[0].Age == Case.Get<3>());
+    }
+    {
+        // Codex review 31 #3: the reward compares the other orbs where they were when the XP was awarded. Old id 41
+        // at x 40 (inside the box) moving 50 cm this step (out of it): the new XP still goes into id 41.
+        FOrbLab L;
+        L.Put(FVector(0, 0, 0), 3, 1, true);
+        FFoundationExperienceOrb* Old = const_cast<FFoundationExperienceOrb*>(L.Find(L.Put(FVector(40, 0, 0), 3, 41)));
+        Old->Ticks = Old->Age = 5;
+        Old->VelocityCm = FVector(50, 0, 0);
+        L.NextStep();
+        const TArray<FFoundationExperienceOrb>& Orbs = L.A.GetExperienceOrbs();
+        TestTrue(TEXT("a neighbour moving out this step: merged into it"),
+            Orbs.Num() == 1 && Orbs[0].Id == 41 && Orbs[0].Count == 2);
+        TestTrue(TEXT("which moved on"), Orbs.Num() == 1 && Orbs[0].LocalCm.X > 75);
+    }
+    {
+        // Only the reward's search rolls: a new orb S whose roll passes against id 1 (ids not 40 apart) takes it in
+        // inside the 1 x 1 x 1 box (x 30), but at x 80 its own first-step scan needs the id rule and leaves it.
+        FFoundationExperienceOrb Seeker, Other;
+        Seeker.bNew = true;
+        Other.Id = 1;
+        for (Seeker.Id = 2; Seeker.Id < 10000; ++Seeker.Id)
+            if ((Seeker.Id - 1) % FoundationExperienceOrbs::MergeIdPeriod != 0 &&
+                FoundationExperienceOrbs::CanMerge(Seeker, Other))
+                break;
+        if (!TestTrue(TEXT("a rolling seeker id exists"), Seeker.Id < 10000)) return false;
+        for (const double X : {30., 80.})
+        {
+            FOrbLab L;
+            L.Put(FVector(0, 0, 0), 3, Seeker.Id, true);
+            FFoundationExperienceOrb* Old =
+                const_cast<FFoundationExperienceOrb*>(L.Find(L.Put(FVector(X, 0, 0), 3, 1)));
+            Old->Ticks = Old->Age = 5;
+            L.NextStep();
+            TestEqual(*FString::Printf(TEXT("rolling new orb %d, old orb at x %g"), Seeker.Id, X),
+                L.A.GetExperienceOrbs().Num(), X < 50 ? 1 : 2);
+        }
     }
     {
         // Through the roll: the first seeker id from 2 (against id 1, not 40 apart) whose roll passes. In reach on the
@@ -491,24 +557,25 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationExperienceOrbBounceTest, "Unnamed.Fo
 bool FFoundationExperienceOrbBounceTest::RunTest(const FString&)
 {
     using namespace ExperienceOrbTestsLocal;
-    // Codex review 8 #2 (provisional factor 0.5, threshold 6 cm per step): an orb 1 cm over the floor moving down at
-    // 20 cm per step lands at 23 (gravity 3 added) and leaves at 11.5; one landing at 3 (from rest) stays down.
+    // R23 (survival2.r23.xp_rules): a downward landing whose pre-move speed is below -gravity bounces at 0.4 of it.
+    // An orb 1 cm over the floor moving down at 20 cm per step lands at 23 (gravity 3 added) and leaves at 9.2; one
+    // landing at 3 (from rest: exactly the gravity) stays down.
     FOrbLab L;
     const int32 Falling = L.Put(FVector(500, 500, 1), 1);
     const int32 Resting = L.Put(FVector(-500, 500, 0), 1);
     const_cast<FFoundationExperienceOrb*>(L.Find(Falling))->VelocityCm = FVector(0, 0, -20);
     L.NextStep();
     const FFoundationExperienceOrb* Orb = L.Find(Falling);
-    TestTrue(TEXT("bounced at half the landing speed"),
-        Orb && FMath::IsNearlyEqual(Orb->LocalCm.Z, 0., 1e-6) && FMath::IsNearlyEqual(Orb->VelocityCm.Z, 11.5, 1e-9));
+    TestTrue(TEXT("bounced at 0.4 of the landing speed"),
+        Orb && FMath::IsNearlyEqual(Orb->LocalCm.Z, 0., 1e-6) && FMath::IsNearlyEqual(Orb->VelocityCm.Z, 9.2, 1e-9));
     L.NextStep();
     Orb = L.Find(Falling);
     TestTrue(TEXT("up the next step"), Orb && Orb->LocalCm.Z > 5);
     const FFoundationExperienceOrb* Still = L.Find(Resting);
     TestTrue(TEXT("a resting orb stays down"),
         Still && FMath::IsNearlyEqual(Still->LocalCm.Z, 0., 1e-6) && Still->VelocityCm.Z == 0 && Still->bOnGround);
-    // The threshold's edge (one step of Move against the floor): landing at 5.9 stays down, at 6.1 leaves at 3.05; on
-    // the ground, a 10 cm downward pull does not bounce it.
+    // The threshold's edge (one step of Move against the floor): landing at 3 stays down, at 3.1 leaves at 1.24; on
+    // the ground, a 10 cm downward pull lands it at 13, which bounces too (R23 asks only the pre-move speed).
     const TArray<FBox> Floor = {FBox(FVector(-200, -200, -100), FVector(200, 200, 0))};
     const auto Land = [&Floor](double Vz, bool bOnGround, double PushZ)
     {
@@ -519,11 +586,12 @@ bool FFoundationExperienceOrbBounceTest::RunTest(const FString&)
         FoundationExperienceOrbs::Move(O, FVector::ZeroVector, Floor, FVector(0, 0, PushZ));
         return O;
     };
-    const FFoundationExperienceOrb Below = Land(-2.9, false, 0), Above = Land(-3.1, false, 0);
-    TestTrue(TEXT("landing at 5.9 stays down"), Below.bOnGround && Below.VelocityCm.Z == 0);
-    TestTrue(TEXT("landing at 6.1 leaves at 3.05"), FMath::IsNearlyEqual(Above.VelocityCm.Z, 3.05, 1e-9));
+    const FFoundationExperienceOrb Below = Land(0, false, 0), Above = Land(-.1, false, 0);
+    TestTrue(TEXT("landing at 3 stays down"), Below.bOnGround && Below.VelocityCm.Z == 0);
+    TestTrue(TEXT("landing at 3.1 leaves at 1.24"), FMath::IsNearlyEqual(Above.VelocityCm.Z, 1.24, 1e-9));
     const FFoundationExperienceOrb Pulled = Land(0, true, -10);
-    TestTrue(TEXT("resting under a pull stays down"), Pulled.bOnGround && Pulled.VelocityCm.Z == 0);
+    TestTrue(
+        TEXT("on the ground under a 10 cm pull: leaves at 5.2"), FMath::IsNearlyEqual(Pulled.VelocityCm.Z, 5.2, 1e-9));
     return true;
 }
 
@@ -548,13 +616,45 @@ bool FFoundationExperienceOrbSoundsTest::RunTest(const FString&)
     TestEqual(TEXT("a sound at step 0, 100 after: none"), GetLevelUpVolume(9, 10, 100, 0), 0.f);
     TestEqual(TEXT("a sound at step 0, 101 after: plays"), GetLevelUpVolume(9, 10, 101, 0), .25f);
     TestEqual(TEXT("a step before the last sound's (reset): plays"), GetLevelUpVolume(9, 10, 50, 1000), .25f);
-    // Codex review 14, finding 2: a gain at step 1100 seen in a frame at 1101 is timed at 1100 (100 after a sound at
-    // 1000: none); a level the steps did not make (the lab panel) is timed by the frame.
-    TestEqual(TEXT("timed by the gain's step"), GetLevelUpStep(1101, 10, 10, 1100), int64(1100));
-    TestEqual(
-        TEXT("so 100 after the last: none"), GetLevelUpVolume(9, 10, GetLevelUpStep(1101, 10, 10, 1100), 1000), 0.f);
-    TestEqual(TEXT("another level: the frame's step"), GetLevelUpStep(1101, 11, 10, 1100), int64(1101));
-    TestEqual(TEXT("no gain yet: the frame's step"), GetLevelUpStep(1101, 10, -1, -1), int64(1101));
+    // Codex review 14, finding 2, and review 27, finding 2: each gain is judged at its own step. A frame at 1102 with
+    // 9 -> 10 at 1100 (100 after a sound at 1000: none) and 10 -> 11 at 1102 (no multiple of 5) plays nothing; the
+    // whole change 9 -> 11 judged at 1102 would have played.
+    {
+        int32 LastLevel = 9, LastSerial = 0;
+        int64 LastSound = 1000;
+        const TArray<FFoundationLevelGain> Gains = {{1100, 9, 10, 1}, {1102, 10, 11, 2}};
+        TestEqual(TEXT("two gains in a frame: none"),
+            GetLevelUpVolumes(Gains, 11, 1102, LastLevel, LastSound, LastSerial).Num(), 0);
+        TestTrue(TEXT("two gains: judged, at level 11"), LastLevel == 11 && LastSerial == 2 && LastSound == 1000);
+        TestEqual(TEXT("the whole change at the frame's step would play"), GetLevelUpVolume(9, 11, 1102, 1000), .25f);
+        TestEqual(TEXT("the same gains again: nothing new"),
+            GetLevelUpVolumes(Gains, 11, 1103, LastLevel, LastSound, LastSerial).Num(), 0);
+    }
+    {
+        // 9 -> 10 at 1101 plays (101 after 1000) and times the next: 14 -> 15 at 1150 does not; a lab-panel level
+        // (no gain) is judged at the frame's step; before the first frame nothing plays.
+        int32 LastLevel = 9, LastSerial = 0;
+        int64 LastSound = 1000;
+        const TArray<float> Played =
+            GetLevelUpVolumes({{1101, 9, 10, 1}, {1150, 14, 15, 2}}, 15, 1150, LastLevel, LastSound, LastSerial);
+        TestTrue(TEXT("one sound, at 0.25, timed 1101"), Played == TArray<float>{.25f} && LastSound == 1101);
+        LastLevel = 19;
+        const TArray<float> Panel = GetLevelUpVolumes({}, 20, 1300, LastLevel, LastSound, LastSerial);
+        TestTrue(TEXT("the lab panel's 19 -> 20 at the frame's step: 0.5"),
+            Panel.Num() == 1 && FMath::IsNearlyEqual(Panel[0], .5f, 1e-6f) && LastSound == 1300);
+        int32 First = -1, Serial = 0;
+        int64 None = -1;
+        TestEqual(TEXT("the first frame: none"),
+            GetLevelUpVolumes({{5, 4, 5, 1}, {9, 9, 10, 2}}, 10, 9, First, None, Serial).Num(), 0);
+        TestTrue(TEXT("the first frame: at level 10, both gains seen"), First == 10 && Serial == 2);
+        // Review 19a2: a lab-panel level before a gain in the same frame is judged too (14 -> 15 at the frame's step,
+        // then 15 -> 16 at the gain's); a new pawn's serials start again from 1.
+        int32 PanelLevel = 14, PanelSerial = 7;
+        int64 PanelSound = -1;
+        const TArray<float> Both = GetLevelUpVolumes({{50, 15, 16, 1}}, 16, 60, PanelLevel, PanelSound, PanelSerial);
+        TestTrue(TEXT("panel 14 -> 15 played at the frame's step, the gain judged"),
+            Both.Num() == 1 && PanelSound == 60 && PanelLevel == 16 && PanelSerial == 1);
+    }
     // survival.r5.rules: pickup pitch 0.9 + 0.35 x (U - V).
     TestEqual(TEXT("pitch at U = V"), GetPickupPitch(.3f, .3f), .9f);
     TestTrue(TEXT("pitch at U = 1, V = 0"), FMath::IsNearlyEqual(GetPickupPitch(1, 0), 1.25f, 1e-6f));

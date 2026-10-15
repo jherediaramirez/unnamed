@@ -39,6 +39,24 @@ class UNNAMED_API FHudContainerModel
 public:
     static constexpr int32 Width = 176;
     static constexpr int32 Height = 166;
+    // The barrel (T1 step 9, ContainerScreen over a 3-row ChestMenu, textures/gui/container/generic_54.png): 176 x 168,
+    // its slots from 8,18, the main grid from 8,85, the hotbar at y 143 (value-swaps.md "Barrel", inventory.layouts);
+    // its title "Barrel" at 8,6 and "Inventory" at 8,74 (ContainerScreen: imageHeight - 94); no recipe-book button.
+    static constexpr int32 BarrelHeight = 168;
+    static constexpr int32 BarrelPlayerY = 85;
+    static constexpr int32 BarrelHotbarY = 143;
+    static constexpr int32 BarrelInventoryLabelY = 74;
+    // generic_54.png: the top (the title and 3 rows, 71 high) and its player part (96 high from y 126).
+    static constexpr int32 BarrelTopHeight = 71;
+    static constexpr int32 BarrelPlayerTextureY = 126;
+    static constexpr int32 BarrelPlayerHeight = 96;
+    // The screen's height: the barrel's 168, else 166.
+    static int32 GetHeight(EFoundationMenuKind Kind)
+    {
+        return Kind == EFoundationMenuKind::Barrel ? BarrelHeight : Height;
+    }
+    // Whether the screen has the recipe-book button (vanilla's ContainerScreen has none).
+    static bool HasRecipeButton(EFoundationMenuKind Kind) { return Kind != EFoundationMenuKind::Barrel; }
     // The "Crafting" label (vanilla's titleLabelX/Y; provisional, minecraft.wiki screenshots, no capture yet).
     static constexpr int32 TitleX = 97;
     static constexpr int32 TitleY = 8;
@@ -145,6 +163,8 @@ private:
     bool bDoubleClick = false;
     bool bShiftDoubleClick = false;
     int32 LastSlot = INDEX_NONE;
+    // The last press's button: a double-click is two presses of the same one (Codex review 29, finding 1).
+    int32 LastButton = INDEX_NONE;
     double LastTime = -1000;
     // The stack (item and damage) of the last shift-click, for a shift double-click; a plain press forgets it.
     FHudCreativeStack LastQuickMoved;

@@ -55,7 +55,7 @@ namespace ItemEntityTestsLocal
             Item.PlacesBlock = TEXT("lab_block");
             Item.Icon = TEXT("block");
             A.Rules.Items.Add(Item);
-            A.Rules.Loadout[0] = TEXT("lab_block");
+            A.Rules.Loadout = {TEXT("lab_block"), TEXT("iron_pickaxe"), TEXT("iron_sword")};
             A.World.SetRegistry(MakeLabRegistry());
             A.PlantSurvival = VoxelBlocks::GetPlantSurvival(A.World.GetRegistry());
             A.World.BoundsMin = FIntVector(-20, -20, 0);

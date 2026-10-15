@@ -1453,7 +1453,7 @@ void UFoundationRuntimeProbe::AddTourCases()
     };
     for (const TCHAR* Item : {TEXT("empty"), TEXT("iron_pickaxe"), TEXT("iron_sword"), TEXT("stick"), TEXT("apple"),
              TEXT("water_bucket"), TEXT("iron_spear"), TEXT("wooden_pickaxe"), TEXT("golden_pickaxe"),
-             TEXT("netherite_pickaxe"), TEXT("stone")})
+             TEXT("netherite_pickaxe"), TEXT("stone"), TEXT("leather_chestplate"), TEXT("iron_chestplate")})
     {
         AddCase(
             FString(TEXT("tour held ")) + Item, .5,
@@ -1490,7 +1490,8 @@ void UFoundationRuntimeProbe::AddTourCases()
         const TCHAR* Glow;
     };
     for (const FGlowShot& Pair : {FGlowShot{TEXT("iron_pickaxe"), TEXT("0")}, FGlowShot{TEXT("iron_sword"), TEXT("0")},
-             FGlowShot{TEXT("water_bucket"), TEXT("0")}, FGlowShot{TEXT("apple"), TEXT("0")}})
+             FGlowShot{TEXT("water_bucket"), TEXT("0")}, FGlowShot{TEXT("apple"), TEXT("0")},
+             FGlowShot{TEXT("leather_chestplate"), TEXT("0")}, FGlowShot{TEXT("iron_chestplate"), TEXT("0")}})
     {
         AddCase(
             FString::Printf(TEXT("tour held %s glow %s"), Pair.Item, Pair.Glow), .5,
@@ -1962,6 +1963,104 @@ void UFoundationRuntimeProbe::AddTourCases()
                 if (Authority().World.IsKnown(SavedFurnace->GetValue().Key))
                     Authority().World.Set(SavedFurnace->GetValue().Key, SavedFurnace->GetValue().Value);
                 SavedFurnace->Reset();
+                if (FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId))
+                {
+                    const int32 Revision = Player->Inventory.Revision;
+                    Player->OpenMenu = {};
+                    Player->Inventory = *SavedInventory;
+                    Player->Inventory.Revision = Revision + 1;
+                }
+            },
+            [] {});
+    }
+
+    // n2. The barrel (T1 step 9): a barrel in a known air cell, opened as its use does, with a few stacks in its 27
+    // slots; the shot shows generic_54's 3 rows over the player's, and the block turns open while viewed. The block,
+    // its entity and the inventory are put back after.
+    {
+        const TSharedRef<TOptional<TPair<FIntVector, FFoundationBlockState>>> SavedBarrel =
+            MakeShared<TOptional<TPair<FIntVector, FFoundationBlockState>>>();
+        AddCase(
+            TEXT("tour barrel"), .8,
+            [this, Lab, Authority, SavedInventory, SavedBarrel]
+            {
+                ResetPlayer({0, 0, 0});
+                FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
+                if (!Player) return;
+                *SavedInventory = Player->Inventory;
+                SavedBarrel->Reset();
+                FFoundationBlockWorld& World = Authority().World;
+                const FVector Back = -FRotator(0, Controller->GetControlRotation().Yaw, 0).Vector();
+                const FVector Side = FVector::CrossProduct(FVector::UpVector, Back);
+                const FVector Feet = Pawn->GetActorLocation() + FVector(0, 0, 50);
+                TOptional<FIntVector> BarrelCell;
+                for (const FVector& Offset : {Back * 150, Back * 250, Side * 150, Side * -150})
+                    if (const FIntVector Cell = FoundationGrid::CellAt(Feet + Offset, World.OriginCm);
+                        !BarrelCell && World.IsKnown(Cell) && World.GetBlock(World.Get(Cell).State).Id == TEXT("air"))
+                        BarrelCell = Cell;
+                const FFoundationBlockType* Barrel = World.FindBlock(TEXT("barrel"));
+                // A failed setup leaves no screen, so the check below records it.
+                if (!Barrel || !BarrelCell) return;
+                const FFoundationBlockState Before = World.Get(*BarrelCell).State;
+                World.Set(*BarrelCell, Barrel->GetDefaultState());
+                FFoundationResult Opened;
+                Authority().OpenContainer(*Player, EFoundationMenuKind::Barrel, *BarrelCell, TEXT("barrel"), Opened);
+                if (!Opened.IsCommitted())
+                {
+                    World.Set(*BarrelCell, Before);
+                    return;
+                }
+                SavedBarrel->Emplace(*BarrelCell, Before);
+                FFoundationBlockEntities& Store = Authority().BlockEntities;
+                FFoundationBlockEntity& Entity =
+                    Store.FindOrAdd(*BarrelCell, EFoundationBlockEntityKind::Barrel, TEXT("barrel"));
+                const struct
+                {
+                    int32 Slot;
+                    const TCHAR* Item;
+                    int32 Count;
+                } Contents[] = {{0, TEXT("oak_log"), 12}, {4, TEXT("cobblestone"), 64}, {13, TEXT("coal"), 7},
+                    {26, TEXT("iron_ingot"), 3}};
+                for (const auto& [Slot, Id, Count] : Contents)
+                    if (const int32 Item = Authority().Rules.FindItem(Id); Item != INDEX_NONE)
+                        Entity.Items[Slot] = Store.MakeStack(Item, Count);
+                ++Player->Inventory.Revision;
+                Controller->GetPanels()->OpenContainerScreen(*Lab, EFoundationMenuKind::Barrel, Opened.OpenedContainer);
+                if (TSharedPtr<SHudContainerScreen> Screen = Controller->GetPanels()->GetSurvivalScreen())
+                {
+                    Screen->GetModel().Reset();
+                    Screen->SetMouse(
+                        FHudContainerModel::GetSlotPosition(EFoundationMenuKind::Barrel, 0) + FIntPoint(8, 8));
+                }
+                CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
+            },
+            [this, Authority, SavedBarrel]
+            {
+                const TSharedPtr<SHudContainerScreen> Screen = Controller->GetPanels()->GetSurvivalScreen();
+                const FFoundationBlockWorld& World = Authority().World;
+                const bool bOpenState = SavedBarrel->IsSet() && World.IsKnown(SavedBarrel->GetValue().Key) &&
+                    World.GetRegistry().GetValue(World.Get(SavedBarrel->GetValue().Key).State, TEXT("open")) ==
+                        FName(TEXT("true"));
+                Record(TEXT("tour barrel open"), SavedBarrel->IsSet() && Screen.IsValid() && Screen->HasArt(),
+                    TEXT("a barrel placed in a known air cell opens its screen with its imported background "
+                         "(generic_54.png)"));
+                Record(TEXT("tour barrel: open state"), bOpenState,
+                    TEXT("the viewed barrel's block is open=true (R16, survival2.r16.animation_and_viewers)"));
+                FScreenshotRequest::RequestScreenshot(
+                    FPaths::ChangeExtension(Output, TEXT("")) + TEXT("-tour-24j-barrel.png"), true, false);
+            });
+        AddCase(TEXT("tour flush 24j-barrel"), .4, [] {}, [] {});
+        AddCase(
+            TEXT("tour barrel close"), .3,
+            [this, Authority, SavedInventory, SavedBarrel]
+            {
+                Controller->GetPanels()->Close();
+                // Only a block this case placed is put back, with the inventory it saved.
+                if (!SavedBarrel->IsSet()) return;
+                Authority().BlockEntities.Remove(SavedBarrel->GetValue().Key);
+                if (Authority().World.IsKnown(SavedBarrel->GetValue().Key))
+                    Authority().World.Set(SavedBarrel->GetValue().Key, SavedBarrel->GetValue().Value);
+                SavedBarrel->Reset();
                 if (FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId))
                 {
                     const int32 Revision = Player->Inventory.Revision;

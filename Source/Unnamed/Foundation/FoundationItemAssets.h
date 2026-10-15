@@ -60,6 +60,10 @@ struct FFoundationItemModelCaseAsset
     // Empty: every context (a plain model) or the select's fallback.
     UPROPERTY(EditAnywhere, Category = "Item")
     TArray<FName> Contexts;
+
+    // A using_item condition's case (the shield, step 19b): 1 while the item is in use, 0 when not; -1 for any.
+    UPROPERTY(EditAnywhere, Category = "Item")
+    int32 UsingItem = -1;
 };
 
 // One attribute modifier, verbatim from the item's attribute_modifiers ("attack_damage", "base_attack_damage",
@@ -186,6 +190,96 @@ struct FFoundationItemAsset
     // The block it places (item id = block id), or None: the saplings once DA_Blocks holds them (survival B1).
     UPROPERTY(EditAnywhere, Category = "Item")
     FName PlacesBlock;
+
+    // 26.3's equippable (survival step 19a2): the slot ("head", "chest", "legs", "feet"; None: not worn), whether a
+    // right click swaps it on, and its equip sound ("item.armor.equip_iron"; the component's default when unset).
+    UPROPERTY(EditAnywhere, Category = "Item")
+    FName EquipmentSlot;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    bool bSwappable = true;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    FName EquipSound;
+
+    // The armor, armor_toughness and knockback_resistance modifiers it adds in its slot, summed.
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float Armor = 0;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float ArmorToughness = 0;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float KnockbackResistance = 0;
+
+    // One sRGB colour per texture layer that multiplies it (the leather pieces' dye default on layer 0, white on the
+    // overlay); empty when the model has no tints.
+    UPROPERTY(EditAnywhere, Category = "Item")
+    TArray<FColor> LayerTints;
+
+    // The rarity ("common", "uncommon", ...): the tooltip name's colour.
+    UPROPERTY(EditAnywhere, Category = "Item")
+    FName Rarity;
+
+    // 26.3's damage_resistant: the damage type tag it resists ("is_fire": the netherite items), or None. Worn, it takes
+    // no wear from those damage types (Java Edition 24w37a).
+    UPROPERTY(EditAnywhere, Category = "Item")
+    FName DamageResistant;
+
+    // A GUI sprite when the model has no layers (the shield's stand-in, "item/shield"; Docs/StandIns.md), else None.
+    UPROPERTY(EditAnywhere, Category = "Item")
+    FName GuiSprite;
+
+    // A special model (26.3 minecraft:special; the shield, step 19b): its type ("shield"), the entity texture it
+    // draws (its sprite under ItemRoot/Gui, "entity/shield/shield_base_nopattern"), and the definition's
+    // transformation scale ([1, -1, -1]). None without one.
+    UPROPERTY(EditAnywhere, Category = "Item")
+    FName SpecialModel;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    FName SpecialTexture;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    FVector SpecialScale = FVector::OneVector;
+
+    // 26.3's blocks_attacks (the shield): the raise delay, the disable cooldown scale, its one damage reduction (the
+    // horizontal angle, base, factor), the item damage (threshold, base, factor), the bypass damage type tag and the
+    // block and disabled sounds.
+    UPROPERTY(EditAnywhere, Category = "Item")
+    bool bBlocksAttacks = false;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float BlockDelaySeconds = 0;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float DisableCooldownScale = 1;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float BlockAngleDegrees = 90;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float BlockBase = 0;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float BlockFactor = 1;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float ItemDamageThreshold = 0;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float ItemDamageBase = 0;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float ItemDamageFactor = 1.5f;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    FName BypassedBy;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    FName BlockSound;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    FName DisabledSound;
 };
 
 // One display context's transform, verbatim in Mojang model units (rotation degrees, translation pixels).
@@ -264,9 +358,17 @@ struct FFoundationItemModelView
 {
     const FFoundationItemModelAsset* Model = nullptr;
     const FFoundationItemTextureAsset* Texture = nullptr;
+    // The model's second layer (the leather pieces' overlay), drawn untinted over the first; null without one. Tint
+    // is the item's sRGB colour multiplying the first layer (white: none).
+    const FFoundationItemTextureAsset* Overlay = nullptr;
+    FColor Tint = FColor::White;
     // Null when the model has no transform for the context (DA_Items holds each model's transforms already resolved
     // through its parent chain): the identity transform.
     const FFoundationItemDisplayAsset* Display = nullptr;
+    // A special model (the shield): its type and entity texture (a sprite name under ItemRoot/Gui) and the
+    // definition's scale; Texture is then null and Model is the case's base model (its display transforms only).
+    FName Special, SpecialTexture;
+    FVector SpecialScale = FVector::OneVector;
 };
 
 // A named tool predicate a loot table's conditions use (loot_tables.json's "predicates"; items S5b).
@@ -518,7 +620,11 @@ public:
     const FFoundationItemAsset* FindItem(FName Id) const;
     // The item's model in a display context ("firstperson_righthand"): a select's case that lists the context, else
     // its fallback (the case with no contexts). False when the item, its model or the model's first layer is missing.
-    bool FindModelView(FName Id, FName Context, FFoundationItemModelView& View) const;
+    // bUsingItem picks a using_item condition's case (the shield's raised model).
+    bool FindModelView(FName Id, FName Context, FFoundationItemModelView& View, bool bUsingItem = false) const;
+    // A special model's view (the shield, step 19b): the case's base model (its display transforms), the special type,
+    // its entity texture and scale. False for every other item (FindModelView draws those).
+    bool FindSpecialView(FName Id, FName Context, FFoundationItemModelView& View, bool bUsingItem = false) const;
 };
 
 namespace FoundationLootAssets
@@ -526,6 +632,6 @@ namespace FoundationLootAssets
     // One table asset as the authority's table, items resolved against Rules.Items and predicates against
     // Rules.LootPredicates; returns the first unknown item, predicate or kind (None when the table is whole). DA_Items'
     // block tables (AddLoot) and DA_Mobs' entity tables share it.
-    UNNAMED_API FName MakeTable(
-        const FFoundationLootTableAsset& Asset, int32 TableIndex, const FFoundationRules& Rules, FFoundationLootTable& Table);
+    UNNAMED_API FName MakeTable(const FFoundationLootTableAsset& Asset, int32 TableIndex, const FFoundationRules& Rules,
+        FFoundationLootTable& Table);
 }

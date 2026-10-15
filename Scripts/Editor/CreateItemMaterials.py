@@ -85,7 +85,22 @@ def build(sprites):
         link(custom, "", expr, "")
         return expr
 
-    rgb = mask("rgb", 0)
+    # The sprite colour times the mesh's vertex colour: white for a plain item, the dye on a tinted layer (a leather
+    # piece's first layer; its overlay layer stays white). Survival 19a2.
+    sprite_rgb = mask("rgb", 0)
+    vertex = node(unreal.MaterialExpressionVertexColor, -150, -120)
+    rgb = node(unreal.MaterialExpressionMultiply, 50, 0)
+    link(sprite_rgb, "", rgb, "A")
+    vertex_rgb = node(unreal.MaterialExpressionComponentMask, -50, -120)
+    for channel in "rgba":
+        vertex_rgb.set_editor_property(channel, channel in "rgb")
+    link(vertex, "", vertex_rgb, "")
+    # The mesh build stores vertex colours as sRGB bytes and the shader reads them raw: decode (gamma 2.2) so the dye
+    # multiplies the linear sprite as vanilla's sRGB multiply does (review 19a2).
+    decode = node(unreal.MaterialExpressionPower, -50, -200)
+    decode.set_editor_property("const_exponent", 2.2)
+    link(vertex_rgb, "", decode, "Base")
+    link(decode, "", rgb, "B")
     lib.connect_material_property(rgb, "", unreal.MaterialProperty.MP_BASE_COLOR)
     lib.connect_material_property(mask("a", 120), "", unreal.MaterialProperty.MP_OPACITY_MASK)
     # Matte, as the block materials.

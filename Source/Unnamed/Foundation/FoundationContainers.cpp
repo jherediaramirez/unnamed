@@ -9,6 +9,9 @@ namespace
              "places against them) and no ticks."));
     TAutoConsoleVariable<int32> CVarFurnaceAmbience(TEXT("foundation.Furnace.Ambience"), 1,
         TEXT("1: a lit furnace, smoker or blast furnace plays its sound (T1 step 8b; rates provisional). 0: silent."));
+    TAutoConsoleVariable<int32> CVarBarrel(TEXT("foundation.Barrel"), 1,
+        TEXT("1: a barrel opens its 27-slot menu and shows its open state while viewed (T1 step 9). 0: as before: no "
+             "menu (a right-click places against it)."));
 
     struct FFurnaceFuelRow
     {
@@ -107,7 +110,7 @@ FFoundationBlockEntity& FFoundationBlockEntities::FindOrAdd(
     FFoundationBlockEntity& Entity = Entities.Add(Cell);
     Entity.Kind = Kind;
     Entity.Block = Block;
-    Entity.Items.SetNum(FFoundationBlockEntity::FurnaceSlots);
+    Entity.Items.SetNum(FFoundationBlockEntity::GetSlots(Kind));
     return Entity;
 }
 
@@ -131,6 +134,11 @@ FFoundationItemInstance FFoundationBlockEntities::MakeStack(int32 Item, int32 Co
 bool FoundationFurnace::IsOn()
 {
     return CVarFurnaceTick.GetValueOnAnyThread() != 0;
+}
+
+bool FoundationBarrel::IsOn()
+{
+    return CVarBarrel.GetValueOnAnyThread() != 0;
 }
 
 bool FoundationFurnace::IsAmbienceOn()

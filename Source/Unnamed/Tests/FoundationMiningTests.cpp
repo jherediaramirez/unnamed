@@ -437,7 +437,8 @@ bool FFoundationMiningCreativeTest::RunTest(const FString&)
         TestEqual(Asset.Id.ToString() + TEXT(": breaks in creative unless a sword or a spear"), bBreaks,
             !Item.Tags.HasTagExact(Swords) && !Item.Tags.HasTagExact(Spears));
     }
-    TestEqual(TEXT("the flag copied for all 114"), Copied, 114);
+    // 144 since T2 19b appended the shield (114 before T2 19a2's 29 armor pieces).
+    TestEqual(TEXT("the flag copied for all 144"), Copied, 144);
     TestEqual(TEXT("7 swords and 7 spears break nothing in creative"), NoBreak, 14);
 
     // The control: in survival an iron pickaxe takes stone in 8 steps, returns its loot (cobblestone; loot step 2a) and
@@ -614,6 +615,8 @@ bool FFoundationMiningWearTest::RunTest(const FString&)
         const TSharedPtr<FJsonObject>* Tool = nullptr;
         const TSharedPtr<FJsonObject>* Weapon = nullptr;
         const bool bTool = Item->TryGetObjectField(TEXT("tool"), Tool);
+        // Armor (T2 19a2) has durability but no tool or weapon component: using it wears nothing, so it is not here.
+        if (!bTool && !Item->HasTypedField<EJson::Object>(TEXT("weapon"))) continue;
         const int32 PerBlock = bTool ? int32((*Tool)->GetNumberField(TEXT("damage_per_block"))) : 0;
         const int32 PerHit = Item->TryGetObjectField(TEXT("weapon"), Weapon)
             ? int32((*Weapon)->GetNumberField(TEXT("item_damage_per_attack")))
