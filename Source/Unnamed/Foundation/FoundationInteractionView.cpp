@@ -1298,6 +1298,39 @@ void UFoundationInteractionView::PlayFireSounds(const AFoundationPawn* Pawn)
             TEXT("entity.generic.extinguish_fire"), At, .7f, 1.6f + (FMath::FRand() - FMath::FRand()) * .4f);
 }
 
+void UFoundationInteractionView::PlayFurnaceSounds(
+    const FFoundationAuthority& Authority, const AFoundationPawn* Pawn, float DeltaTime)
+{
+    if (!BreakEffects || !Pawn || !FoundationFurnace::IsAmbienceOn())
+    {
+        FurnaceSoundClock = 0;
+        return;
+    }
+    // A display callback plays its block's sound with chance 0.1, volume 1, pitch 1
+    // (survival2.r15.exact_callback_chances, survival2.r15.sounds). Provisional (provisional-values.md, T1 8b1): the
+    // callback's scheduling, one on 1 tick in 50 of a 20 Hz clock for each lit block within the sound's 16-block reach
+    // (vanilla's is client-spatial, R15), and the sound's place, the block's bottom centre.
+    constexpr float TicksPerSecond = 20, DisplayChance = 1.f / 50, SoundChance = 1.f / 10, ReachCm = 1600;
+    FurnaceSoundClock += DeltaTime;
+    const int32 Ticks = FMath::Min(FMath::FloorToInt32(FurnaceSoundClock * TicksPerSecond), 4);
+    FurnaceSoundClock = FMath::Min(FurnaceSoundClock - Ticks / TicksPerSecond, 1 / TicksPerSecond);
+    if (Ticks <= 0) return;
+    const FVector Listener = Pawn->GetActorLocation();
+    for (const auto& [Cell, Entity] : Authority.BlockEntities.GetAll())
+    {
+        if (Entity.Kind != EFoundationBlockEntityKind::Furnace || !Entity.IsLit()) continue;
+        const FBox Box = FoundationGrid::CellBox(Cell, Authority.World.OriginCm);
+        const FVector At(Box.GetCenter().X, Box.GetCenter().Y, Box.Min.Z);
+        if (FVector::DistSquared(At, Listener) > ReachCm * ReachCm) continue;
+        const EFoundationCookingKind Cooking = FoundationFurnace::GetCookingKind(Entity.Block);
+        const TCHAR* Event = Cooking == EFoundationCookingKind::Smoking ? TEXT("block.smoker.smoke")
+            : Cooking == EFoundationCookingKind::Blasting               ? TEXT("block.blastfurnace.fire_crackle")
+                                                                        : TEXT("block.furnace.fire_crackle");
+        for (int32 Tick = 0; Tick < Ticks; ++Tick)
+            if (FMath::FRand() < DisplayChance * SoundChance) BreakEffects->PlayEvent(Event, At, 1.f, 1.f);
+    }
+}
+
 void UFoundationInteractionView::TickComponent(
     float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
@@ -1316,6 +1349,7 @@ void UFoundationInteractionView::TickComponent(
     UpdateEffects(DeltaTime);
     AFoundationPawn* Pawn = GetLocalPawn();
     PlayFireSounds(Pawn);
+    PlayFurnaceSounds(Authority, Pawn, DeltaTime);
     const auto* Controller = Pawn ? Cast<AFoundationController>(Pawn->GetController()) : nullptr;
     // F1 hides the outline, preview and hand with the HUD; the menu hides them while paused.
     const bool bVisible = Controller && Controller->IsGameplay() && !Controller->GetHud()->bHideHud;

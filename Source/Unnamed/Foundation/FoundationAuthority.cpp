@@ -30,13 +30,26 @@ namespace
         return true;
     }
 
-    // A furnace (T1 step 8a) opens its menu over its block entity, made on first use.
+    // A furnace, smoker or blast furnace (T1 steps 8a, 8b) opens its menu over its block entity, made on first use.
+    // foundation.Furnace 0: no use, so the click passes on (a held block places against it), as before 8a (Codex
+    // review 18, finding 1).
+    bool WouldUseFurnace(const FFoundationAuthority& Authority, const FFoundationPlayer&, const FFoundationHit&)
+    {
+        return Authority.Options.bFurnace;
+    }
+
     bool UseFurnace(FFoundationAuthority& Authority, FFoundationPlayer& Player, const FFoundationHit& Hit,
         FFoundationResult& Result)
     {
-        Authority.OpenContainer(Player, EFoundationMenuKind::Furnace, Hit.Cell, TEXT("furnace"), Result);
+        if (!Authority.Options.bFurnace) return false;
+        const FName Block = Authority.World.GetBlock(Authority.World.Get(Hit.Cell).State).Id;
+        const EFoundationCookingKind Cooking = FoundationFurnace::GetCookingKind(Block);
+        const EFoundationMenuKind Kind = Cooking == EFoundationCookingKind::Smoking ? EFoundationMenuKind::Smoker
+            : Cooking == EFoundationCookingKind::Blasting                           ? EFoundationMenuKind::BlastFurnace
+                                                                                    : EFoundationMenuKind::Furnace;
+        Authority.OpenContainer(Player, Kind, Hit.Cell, Block, Result);
         if (Result.IsCommitted())
-            Authority.BlockEntities.FindOrAdd(Hit.Cell, EFoundationBlockEntityKind::Furnace, TEXT("furnace"));
+            Authority.BlockEntities.FindOrAdd(Hit.Cell, EFoundationBlockEntityKind::Furnace, Block);
         return true;
     }
 
@@ -188,17 +201,18 @@ const FFoundationItemDefinition& FFoundationAuthority::GetHandItem(
     return Stack.IsEmpty() ? Rules.Hand : Rules.GetItem(Stack.Item);
 }
 
-FFoundationContainerRules FFoundationAuthority::MakeContainerRules() const
+FFoundationContainerRules FFoundationAuthority::MakeContainerRules(FName Block) const
 {
     FFoundationContainerRules Out;
     Out.GetMaxStack = [this](int32 Item) { return Rules.Items.IsValidIndex(Item) ? Rules.Items[Item].MaxStack : 64; };
     Out.GetEquipment = [this](int32 Item)
     { return Rules.Items.IsValidIndex(Item) ? Rules.Items[Item].Equipment : EFoundationEquipmentSlot::None; };
     Out.bCrafting = Options.bCrafting;
-    // A furnace's fuel slot and shift-click routing (T1 step 8a).
+    // A furnace's fuel slot and shift-click routing (T1 step 8a), by what the open block cooks (8b,
+    // survival.r3.shift_click: an oak log goes to a furnace's input, to a smoker's or blast furnace's fuel).
     Out.IsFuel = [this](int32 Item) { return GetCooking().IsFuel(Item); };
-    Out.IsCookable = [this](int32 Item)
-    { return GetCooking().Find(EFoundationCookingKind::Smelting, Item) != INDEX_NONE; };
+    Out.IsCookable = [this, Cooking = FoundationFurnace::GetCookingKind(Block)](int32 Item)
+    { return GetCooking().Find(Cooking, Item) != INDEX_NONE; };
     Out.Bucket = Rules.FindItem(TEXT("bucket"));
     if (Options.bCrafting)
         Out.Craft = [this](TConstArrayView<int32> Grid, int32 Width, int32 Height)
@@ -227,7 +241,7 @@ TArray<FFoundationItemInstance> FFoundationAuthority::GetPlayerMenu(const FFound
 
 TArray<FFoundationItemInstance> FFoundationAuthority::GetMenuGrid(const FFoundationPlayer& Player) const
 {
-    if (Player.OpenMenu.Kind != EFoundationMenuKind::Furnace) return Player.OpenMenu.Grid;
+    if (!IsFurnaceMenu(Player.OpenMenu.Kind)) return Player.OpenMenu.Grid;
     const FFoundationBlockEntity* Entity = BlockEntities.Find(Player.OpenMenu.Cell);
     return Entity ? Entity->Items : TArray<FFoundationItemInstance>();
 }
@@ -238,7 +252,7 @@ TArray<FFoundationItemInstance> FFoundationAuthority::GetOpenMenu(const FFoundat
     if (!Player.OpenMenu.IsOpen()) return Slots;
     FFoundationInventory Copy = Player.Inventory;
     TArray<FFoundationItemInstance> Grid = GetMenuGrid(Player);
-    const FFoundationContainerRules ClickRules = MakeContainerRules();
+    const FFoundationContainerRules ClickRules = MakeContainerRules(Player.OpenMenu.Block);
     const FFoundationContainerMenu Menu(Copy, ClickRules, false, Player.OpenMenu.Kind, Grid);
     Slots.SetNum(Menu.GetLayout().Slots);
     for (int32 Slot = 0; Slot < Slots.Num(); ++Slot)
@@ -254,7 +268,9 @@ void FFoundationAuthority::RegisterBlockUse(FName BlockId, FBlockUse Use, FBlock
 const FFoundationAuthority::FBlockUseEntry* FFoundationAuthority::FindBlockUse(FName BlockId) const
 {
     static const TMap<FName, FBlockUseEntry> BuiltIn{{TEXT("crafting_table"), {FBlockUse(&UseCraftingTable), nullptr}},
-        {TEXT("furnace"), {FBlockUse(&UseFurnace), nullptr}}};
+        {TEXT("furnace"), {FBlockUse(&UseFurnace), FBlockWouldUse(&WouldUseFurnace)}},
+        {TEXT("smoker"), {FBlockUse(&UseFurnace), FBlockWouldUse(&WouldUseFurnace)}},
+        {TEXT("blast_furnace"), {FBlockUse(&UseFurnace), FBlockWouldUse(&WouldUseFurnace)}}};
     if (const FBlockUseEntry* Use = BlockUses.Find(BlockId)) return Use;
     return BuiltIn.Find(BlockId);
 }
@@ -403,7 +419,7 @@ bool FFoundationAuthority::IsMenuValid(const FFoundationPlayer& Player) const
     const FFoundationOpenMenu& Open = Player.OpenMenu;
     if (!Open.IsOpen() || !World.IsKnown(Open.Cell) || World.GetBlock(World.Get(Open.Cell).State).Id != Open.Block)
         return false;
-    if (Open.Kind == EFoundationMenuKind::Furnace && !BlockEntities.Find(Open.Cell)) return false;
+    if (IsFurnaceMenu(Open.Kind) && !BlockEntities.Find(Open.Cell)) return false;
     // Within the interaction range plus 4 blocks of the eye (vanilla's stillValid; provisional, minecraft.wiki).
     if (!Player.bHasFacts) return true;
     const double ReachCm = Rules.BlockReachCm + ContainerReachExtraCm;
@@ -466,6 +482,7 @@ void FFoundationAuthority::StepFurnaces()
 {
     const FFoundationFurnaceRules FurnaceRules = MakeFurnaceRules();
     TArray<FIntVector, TInlineAllocator<4>> Gone;
+    TArray<TPair<FIntVector, FFoundationBlockState>, TInlineAllocator<4>> Relit;
     for (auto& [Cell, Entity] : BlockEntities.GetAll())
     {
         if (Entity.Kind != EFoundationBlockEntityKind::Furnace) continue;
@@ -478,10 +495,21 @@ void FFoundationAuthority::StepFurnaces()
             Gone.Add(Cell);
             continue;
         }
-        if (Options.bFurnace) FoundationFurnace::Tick(Entity, FurnaceRules, BlockEntities);
+        if (!Options.bFurnace) continue;
+        FoundationFurnace::Tick(Entity, FurnaceRules, BlockEntities, FoundationFurnace::GetCookingKind(Entity.Block));
+        // The block's lit state follows the fuel on the same tick (survival.r3.furnace_ticks: lit at tick 1, unlit at
+        // fuel + 1; its light comes with the state). Same block id, so the entity stays; a plain state change, as an
+        // axe's strip is, with no place event. Written after the loop, so no world hook runs mid-iteration. Switched
+        // off mid-burn, a block keeps its last lit state, as its entity keeps its timers.
+        const FFoundationBlockState State = World.Get(Cell).State;
+        static const FName Lit(TEXT("lit")), True(TEXT("true")), False(TEXT("false"));
+        const FFoundationBlockState Want = World.GetRegistry().WithValue(State, Lit, Entity.IsLit() ? True : False);
+        if (Want != State) Relit.Add({Cell, Want});
     }
     for (const FIntVector& Cell : Gone)
         BlockEntities.Remove(Cell);
+    for (const TPair<FIntVector, FFoundationBlockState>& Change : Relit)
+        World.Set(Change.Key, Change.Value);
 }
 
 void FFoundationAuthority::PayFurnaceExperience(
@@ -1419,14 +1447,14 @@ FFoundationResult FFoundationAuthority::Execute(
         // The click runs on a copy. What it throws (a click outside the window, Q over a slot) goes as Q's throw (items
         // fixes); with foundation.Items.Entities 0 such a click is refused and nothing changes.
         FFoundationInventory Trial = Player->Inventory;
-        const FFoundationContainerRules ClickRules = MakeContainerRules();
         const bool bCreative = Vitals.Mode == EFoundationPlayerMode::Creative;
         // Container 0 is the player's own menu; the open container's id is its menu (survival step 7) while it is
         // valid (its block, within reach; Step closes it otherwise, Codex review 12 finding 1); any other id is stale.
         const FFoundationOpenMenu& Open = Player->OpenMenu;
         const bool bOpenMenu = Open.IsOpen() && Command.ContainerId == Open.ContainerId;
+        const FFoundationContainerRules ClickRules = MakeContainerRules(bOpenMenu ? Open.Block : NAME_None);
         const bool bStillValid = bOpenMenu && IsMenuValid(*Player);
-        const bool bFurnace = bOpenMenu && Open.Kind == EFoundationMenuKind::Furnace;
+        const bool bFurnace = bOpenMenu && IsFurnaceMenu(Open.Kind);
         TArray<FFoundationItemInstance> TrialGrid =
             bOpenMenu ? GetMenuGrid(*Player) : TArray<FFoundationItemInstance>();
         const TArray<FFoundationItemInstance> GridBefore = TrialGrid;
@@ -1459,7 +1487,8 @@ FFoundationResult FFoundationAuthority::Execute(
                 // from the input or adding to the same item keeps the progress.
                 const FFoundationItemInstance& Input = Furnace->Items[Entity::FurnaceInput];
                 if (!Input.IsEmpty() && (InputBefore.IsEmpty() || Input.Item != InputBefore.Item))
-                    FoundationFurnace::OnInputChanged(*Furnace, GetCooking(), EFoundationCookingKind::Smelting);
+                    FoundationFurnace::OnInputChanged(
+                        *Furnace, GetCooking(), FoundationFurnace::GetCookingKind(Furnace->Block));
                 // Taking any of the output pays the XP of everything cooked since (FurnaceResultSlot; the value
                 // report's fractional XP), as orbs at the player.
                 const FFoundationItemInstance& Output = Furnace->Items[Entity::FurnaceResult];

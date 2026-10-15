@@ -37,8 +37,9 @@ class UNNAMED_API FFoundationCooking
 public:
     void Build(TFunctionRef<int32(FName Item)> FindItem);
     bool IsBuilt() const { return bBuilt; }
-    // A furnace's burn ticks for an item (survival.r3.fuels); 0 for no fuel.
-    int32 GetBurnTicks(int32 Item) const;
+    // A block's burn ticks for an item (survival.r3.fuels: the furnace's for Smelting; the smoker's for Smoking and the
+    // blast furnace's for Blasting, already halved by their speed 2); 0 for no fuel.
+    int32 GetBurnTicks(int32 Item, EFoundationCookingKind Kind = EFoundationCookingKind::Smelting) const;
     bool IsFuel(int32 Item) const { return GetBurnTicks(Item) > 0; }
     // The recipe of Kind that takes Item, or INDEX_NONE.
     int32 Find(EFoundationCookingKind Kind, int32 Item) const;
@@ -49,7 +50,8 @@ public:
 private:
     bool bBuilt = false;
     TArray<FFoundationCookingRecipe> Recipes;
-    TMap<int32, int32> Fuels;
+    // Item -> burn ticks in the furnace, the smoker and the blast furnace (X, Y, Z).
+    TMap<int32, FIntVector> Fuels;
     TMap<TPair<uint8, int32>, int32> ByIngredient;
 };
 
@@ -112,9 +114,23 @@ private:
 
 namespace FoundationFurnace
 {
-    // foundation.Furnace: 1 furnaces in loaded columns tick (fuel, cooking, cooling); 0 a furnace opens and holds
-    // items but never ticks.
+    // foundation.Furnace: 1 furnaces, smokers and blast furnaces open their menus and, in loaded columns, tick (fuel,
+    // cooking, cooling, the lit state); 0 as before T1 step 8a: no block use (a right-click places against them) and
+    // no ticks.
     UNNAMED_API bool IsOn();
+    // foundation.Furnace.Ambience: 1 a lit furnace, smoker or blast furnace plays its sound (T1 step 8b); 0 silent.
+    UNNAMED_API bool IsAmbienceOn();
+
+    // What a block cooks: the smoker Smoking, the blast furnace Blasting, anything else (the furnace) Smelting.
+    UNNAMED_API EFoundationCookingKind GetCookingKind(FName Block);
+    // The cooking speed (survival.r3.fuels, survival.r3.recipes): 2 for the smoker and blast furnace, 1 for the
+    // furnace. It halves their recipes' loaded cook times (200 -> 100); their fuel ticks come halved from the data.
+    constexpr int32 GetSpeed(EFoundationCookingKind Kind)
+    {
+        return Kind == EFoundationCookingKind::Smoking || Kind == EFoundationCookingKind::Blasting ? 2 : 1;
+    }
+    // A recipe's cook time in Kind's block (the default 200 without one), divided by the block's speed.
+    UNNAMED_API int32 GetCookTotal(const FFoundationCookingRecipe* Recipe, EFoundationCookingKind Kind);
 
     // One furnace tick (the value report's survival.r3.furnace_ticks): a lit furnace spends a fuel tick; an unlit one
     // with input it can cook and fuel lights (fuel ticks, the item used up, a lava bucket leaving its bucket); a lit

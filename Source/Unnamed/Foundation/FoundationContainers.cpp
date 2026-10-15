@@ -4,8 +4,11 @@
 namespace
 {
     TAutoConsoleVariable<int32> CVarFurnaceTick(TEXT("foundation.Furnace"), 1,
-        TEXT("1: furnaces in loaded columns burn fuel and smelt, whether or not their screen is open (T1 step 8a). 0: "
-             "a furnace opens and holds items but never ticks."));
+        TEXT("1: furnaces, smokers and blast furnaces open their menus and, in loaded columns, burn fuel, cook and "
+             "light up, whether or not their screen is open (T1 steps 8a, 8b). 0: as before 8a: no menu (a right-click "
+             "places against them) and no ticks."));
+    TAutoConsoleVariable<int32> CVarFurnaceAmbience(TEXT("foundation.Furnace.Ambience"), 1,
+        TEXT("1: a lit furnace, smoker or blast furnace plays its sound (T1 step 8b; rates provisional). 0: silent."));
 
     struct FFurnaceFuelRow
     {
@@ -53,7 +56,8 @@ void FFoundationCooking::Build(TFunctionRef<int32(FName Item)> FindItem)
     Fuels.Reset();
     ByIngredient.Reset();
     for (const FFurnaceFuelRow& Row : FurnaceFuelRows)
-        if (const int32 Item = FindItem(Row.Item); Item != INDEX_NONE) Fuels.Add(Item, Row.FurnaceTicks);
+        if (const int32 Item = FindItem(Row.Item); Item != INDEX_NONE)
+            Fuels.Add(Item, FIntVector(Row.FurnaceTicks, Row.SmokerTicks, Row.BlastTicks));
     for (const FFurnaceCookingRow& Row : FurnaceCookingRows)
     {
         FFoundationCookingRecipe Recipe;
@@ -75,10 +79,13 @@ void FFoundationCooking::Build(TFunctionRef<int32(FName Item)> FindItem)
     bBuilt = true;
 }
 
-int32 FFoundationCooking::GetBurnTicks(int32 Item) const
+int32 FFoundationCooking::GetBurnTicks(int32 Item, EFoundationCookingKind Kind) const
 {
-    const int32* Ticks = Fuels.Find(Item);
-    return Ticks ? *Ticks : 0;
+    const FIntVector* Ticks = Fuels.Find(Item);
+    if (!Ticks) return 0;
+    return Kind == EFoundationCookingKind::Smoking ? Ticks->Y
+        : Kind == EFoundationCookingKind::Blasting ? Ticks->Z
+                                                   : Ticks->X;
 }
 
 int32 FFoundationCooking::Find(EFoundationCookingKind Kind, int32 Item) const
@@ -126,6 +133,24 @@ bool FoundationFurnace::IsOn()
     return CVarFurnaceTick.GetValueOnAnyThread() != 0;
 }
 
+bool FoundationFurnace::IsAmbienceOn()
+{
+    return CVarFurnaceAmbience.GetValueOnAnyThread() != 0;
+}
+
+EFoundationCookingKind FoundationFurnace::GetCookingKind(FName Block)
+{
+    static const FName Smoker(TEXT("smoker")), BlastFurnace(TEXT("blast_furnace"));
+    return Block == Smoker      ? EFoundationCookingKind::Smoking
+        : Block == BlastFurnace ? EFoundationCookingKind::Blasting
+                                : EFoundationCookingKind::Smelting;
+}
+
+int32 FoundationFurnace::GetCookTotal(const FFoundationCookingRecipe* Recipe, EFoundationCookingKind Kind)
+{
+    return (Recipe ? Recipe->CookTicks : 200) / GetSpeed(Kind);
+}
+
 bool FoundationFurnace::Tick(FFoundationBlockEntity& Furnace, const FFoundationFurnaceRules& Rules,
     FFoundationBlockEntities& Store, EFoundationCookingKind Kind)
 {
@@ -154,7 +179,7 @@ bool FoundationFurnace::Tick(FFoundationBlockEntity& Furnace, const FFoundationF
         // together).
         if (!Furnace.IsLit() && CanBurn())
         {
-            Furnace.LitTime = Furnace.LitDuration = Fuel.IsEmpty() ? 0 : Cooking.GetBurnTicks(Fuel.Item);
+            Furnace.LitTime = Furnace.LitDuration = Fuel.IsEmpty() ? 0 : Cooking.GetBurnTicks(Fuel.Item, Kind);
             if (Furnace.IsLit())
             {
                 bChanged = true;
@@ -167,8 +192,9 @@ bool FoundationFurnace::Tick(FFoundationBlockEntity& Furnace, const FFoundationF
         }
         if (Furnace.IsLit() && CanBurn())
         {
-            if (Furnace.CookTotal <= 0) Furnace.CookTotal = Recipe->CookTicks;
-            // The first output on the cook total's tick (survival.r3.furnace_ticks: 200 for a furnace).
+            if (Furnace.CookTotal <= 0) Furnace.CookTotal = GetCookTotal(Recipe, Kind);
+            // The first output on the cook total's tick (survival.r3.furnace_ticks: 200 for a furnace, 100 for the
+            // smoker and blast furnace).
             if (++Furnace.CookProgress >= Furnace.CookTotal)
             {
                 Furnace.CookProgress = 0;
@@ -185,10 +211,9 @@ bool FoundationFurnace::Tick(FFoundationBlockEntity& Furnace, const FFoundationF
                 }
                 ShrinkFurnaceSlot(Input);
                 ++Furnace.RecipesUsed.FindOrAdd(RecipeIndex);
-                // The next item's cook time (the default 200 with nothing left to cook).
-                const FFoundationCookingRecipe* Next =
-                    Cooking.Get(Input.IsEmpty() ? INDEX_NONE : Cooking.Find(Kind, Input.Item));
-                Furnace.CookTotal = Next ? Next->CookTicks : 200;
+                // The next item's cook time (the default with nothing left to cook).
+                Furnace.CookTotal =
+                    GetCookTotal(Cooking.Get(Input.IsEmpty() ? INDEX_NONE : Cooking.Find(Kind, Input.Item)), Kind);
             }
             bChanged = true;
         }
@@ -212,7 +237,7 @@ void FoundationFurnace::OnInputChanged(
 {
     const FFoundationItemInstance& Input = Furnace.Items[FFoundationBlockEntity::FurnaceInput];
     const FFoundationCookingRecipe* Recipe = Cooking.Get(Input.IsEmpty() ? INDEX_NONE : Cooking.Find(Kind, Input.Item));
-    Furnace.CookTotal = Recipe ? Recipe->CookTicks : 200;
+    Furnace.CookTotal = GetCookTotal(Recipe, Kind);
     Furnace.CookProgress = 0;
 }
 

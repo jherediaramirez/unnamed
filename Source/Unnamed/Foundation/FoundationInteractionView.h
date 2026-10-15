@@ -224,6 +224,8 @@ private:
     void HandleEvents(const FFoundationAuthority& Authority);
     // Lava and burning sounds (step 16) from the local pawn's fire counters.
     void PlayFireSounds(const AFoundationPawn* Pawn);
+    // A lit furnace's, smoker's or blast furnace's sound near the local pawn (T1 step 8b, foundation.Furnace.Ambience).
+    void PlayFurnaceSounds(const FFoundationAuthority& Authority, const AFoundationPawn* Pawn, float DeltaTime);
     void AddFlash(const FBox& Box, FLinearColor Color, double Life, bool bCross = false);
     void Burst(const FVector& Center, FLinearColor Color, int32 Count, double Size, double Speed, uint32 Seed);
     void ShowNumber(const FVector& Location, const FString& Text, FColor Color);
@@ -331,6 +333,8 @@ private:
     // The fire counters last heard, and whose.
     TWeakObjectPtr<const AFoundationPawn> FireSoundOwner;
     int32 HeardLavaHurts = 0, HeardBurnHurts = 0, HeardExtinguishes = 0;
+    // Seconds not yet spent on the furnaces' 20 Hz display ticks.
+    float FurnaceSoundClock = 0;
     TSharedPtr<FFoundationBreakEffects> BreakEffects;
     TSharedPtr<FFoundationItemEntityView> ItemEntityView;
     TSharedPtr<FFoundationExperienceOrbView> ExperienceOrbView;
