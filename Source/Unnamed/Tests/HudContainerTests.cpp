@@ -760,6 +760,52 @@ bool FHudContainerFurnaceTest::RunTest(const FString&)
         TestEqual(FString::Printf(TEXT("double-click on slot %d collects"), Slot), bPickAll, Slot == 0);
     }
 
+    // T1 step 8b: the smoker and blast furnace screens place every slot and the button as the furnace's
+    // (value-swaps.md "SmokerScreen", "BlastFurnaceScreen").
+    for (const EFoundationMenuKind Kind : {EFoundationMenuKind::Smoker, EFoundationMenuKind::BlastFurnace})
+    {
+        bool bSame = FHudContainerModel::GetRecipeButton(Kind) == FHudContainerModel::GetRecipeButton(Furnace);
+        for (int32 Slot = 0; Slot < 39; ++Slot)
+            bSame &= FHudContainerModel::GetSlotPosition(Kind, Slot) == At(Slot);
+        TestTrue(FString::Printf(TEXT("menu kind %d: the furnace's positions"), int32(Kind)), bSame);
+    }
+
+    // A shift-double-click moves like stacks from the clicked slot's side only (Codex review 22, finding 1; vanilla
+    // "from that inventory"): logs in the input and in the inventory, the input's shift-clicked out, and the release
+    // sends none of the inventory's back in. From the inventory side, the input's logs stay.
+    for (const EFoundationMenuKind Kind :
+        {EFoundationMenuKind::Furnace, EFoundationMenuKind::Smoker, EFoundationMenuKind::BlastFurnace})
+    {
+        FHudContainerModel Logs = Model;
+        Logs.Kind = Kind;
+        FHudContainerView Both;
+        Both.Slots.SetNum(39);
+        Both.Slots[0] = {TEXT("oak_log"), 8};
+        Both.Slots[3] = {TEXT("oak_log"), 8};
+        const FIntPoint Input = At(0) + FIntPoint(8, 8);
+        ExpectSame(*this, *FString::Printf(TEXT("kind %d: shift-click the input"), int32(Kind)),
+            Logs.MouseDown(Input, 0, true, Both, 0), FScreenClicks{{0, 0, EFoundationClickType::QuickMove}});
+        Logs.MouseUp(Input, 0, Both);
+        Both.Slots[0] = {};
+        Both.Slots[3] = {TEXT("oak_log"), 16};
+        Logs.MouseDown(Input, 0, true, Both, .1);
+        ExpectSame(*this, *FString::Printf(TEXT("kind %d: the release leaves the inventory's logs"), int32(Kind)),
+            Logs.MouseUp(Input, 0, Both), FScreenClicks());
+
+        FHudContainerModel Player = Model;
+        Player.Kind = Kind;
+        Both.Slots[0] = {TEXT("oak_log"), 8};
+        Both.Slots[3] = {TEXT("oak_log"), 8};
+        Both.Slots[4] = {TEXT("oak_log"), 8};
+        const FIntPoint Main = At(3) + FIntPoint(8, 8);
+        Player.MouseDown(Main, 0, true, Both, 1);
+        Player.MouseUp(Main, 0, Both);
+        Both.Slots[3] = {};
+        Player.MouseDown(Main, 0, true, Both, 1.1);
+        ExpectSame(*this, *FString::Printf(TEXT("kind %d: from the inventory, its logs only"), int32(Kind)),
+            Player.MouseUp(Main, 0, Both), FScreenClicks{{4, 0, EFoundationClickType::QuickMove}});
+    }
+
     // The flame and arrow sizes (survival.r3.sprites): 0/25/50/75/100 % -> flame 0 (hidden)/5/8/11/14, arrow
     // 0/6/12/18/24.
     TestEqual(TEXT("unlit: no flame"), FHudContainerModel::GetFlameHeight(false, 1), 0);

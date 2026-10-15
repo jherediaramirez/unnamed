@@ -10,6 +10,9 @@ namespace
         TEXT("1: mobs exist (survival T6 20a): foundation.Mobs.Summon cow spawns one that wanders, panics when hit, is "
              "knocked back and dies into its loot and experience. 0: no mobs are spawned, stepped or drawn, and only "
              "training targets can be hit, as before."));
+    TAutoConsoleVariable<int32> CVarMobSpawn(TEXT("foundation.Mobs.Spawn"), 1,
+        TEXT("1: passive spawning in generated worlds (survival T6 20b2): a column first seen loaded may spawn a pack "
+             "of farm animals with its biome's chance. 0: mobs come only from foundation.Mobs.Summon."));
 
     // [mobs.base_attributes, catalog.entities; value-swaps.md T6] health, movement attribute, armor, toughness,
     // knockback resistance, width x height (eye); [survival.r10.ai_defaults] the panic and tempt modifiers;
@@ -105,6 +108,11 @@ bool FoundationMobs::IsOn()
     return CVarMobs.GetValueOnAnyThread() != 0;
 }
 
+bool FoundationMobs::IsSpawnOn()
+{
+    return CVarMobSpawn.GetValueOnAnyThread() != 0;
+}
+
 const FFoundationMobKind& FoundationMobs::GetKind(EFoundationMobType Type)
 {
     return MobKinds[FMath::Clamp(int32(Type), 0, int32(EFoundationMobType::Count) - 1)];
@@ -144,7 +152,31 @@ void FoundationMobs::ApplyKnockback(FVector& VelocityCm, const FVector2D& Away, 
     const FVector2D Unit = Away.GetSafeNormal();
     VelocityCm.X = VelocityCm.X * .5 + Unit.X * PowerCm;
     VelocityCm.Y = VelocityCm.Y * .5 + Unit.Y * PowerCm;
-    if (bGrounded) VelocityCm.Z = FMath::Min(PowerCm, VelocityCm.Z * .5 + PowerCm);
+    if (bGrounded) VelocityCm.Z = FMath::Min(KnockbackUpCm, VelocityCm.Z * .5 + PowerCm);
+}
+
+const FFoundationMobSpawn* FoundationMobs::PickSpawn(const FFoundationBiomeSpawns& Biome, FRandomStream& Random)
+{
+    int32 Total = 0;
+    for (const FFoundationMobSpawn& Entry : Biome.Creatures)
+        Total += FMath::Max(0, Entry.Weight);
+    if (Total <= 0) return nullptr;
+    int32 Draw = Random.RandHelper(Total);
+    for (const FFoundationMobSpawn& Entry : Biome.Creatures)
+        if ((Draw -= FMath::Max(0, Entry.Weight)) < 0) return &Entry;
+    return nullptr;
+}
+
+int32 FoundationMobs::RollPackSize(const FFoundationMobSpawn& Entry, FRandomStream& Random)
+{
+    return Random.RandRange(Entry.MinCount, FMath::Max(Entry.MinCount, Entry.MaxCount));
+}
+
+int32 FoundationMobs::RollPackOffset(FRandomStream& Random)
+{
+    // One draw per statement: argument order is unspecified.
+    const int32 Plus = Random.RandRange(0, PackSpreadCells);
+    return Plus - Random.RandRange(0, PackSpreadCells);
 }
 
 void FoundationMobs::OnHurt(FFoundationMob& Mob, const FVector& OriginCm, const FVector& AttackerWorldCm,

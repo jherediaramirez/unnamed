@@ -9,9 +9,26 @@ namespace
     const FLinearColor ContainerTitleColor = FLinearColor(FColor(0x40, 0x40, 0x40));
     const TCHAR* ContainerBackground = TEXT("gui/container/inventory");
     const TCHAR* CraftingBackground = TEXT("gui/container/crafting_table");
-    const TCHAR* FurnaceBackground = TEXT("gui/container/furnace");
-    const TCHAR* FurnaceFlame = TEXT("gui/sprites/container/furnace/lit_progress");
-    const TCHAR* FurnaceArrow = TEXT("gui/sprites/container/furnace/burn_progress");
+    // The furnace's, the smoker's and the blast furnace's own background, flame, arrow and title (T1 steps 8a2, 8b;
+    // the same geometry, survival.r3.sprites).
+    struct FFurnaceArt
+    {
+        const TCHAR *Background, *Flame, *Arrow, *Title;
+    };
+    const FFurnaceArt& GetFurnaceArt(EFoundationMenuKind Kind)
+    {
+        static const FFurnaceArt Furnace{TEXT("gui/container/furnace"),
+            TEXT("gui/sprites/container/furnace/lit_progress"), TEXT("gui/sprites/container/furnace/burn_progress"),
+            TEXT("Furnace")};
+        static const FFurnaceArt Smoker{TEXT("gui/container/smoker"), TEXT("gui/sprites/container/smoker/lit_progress"),
+            TEXT("gui/sprites/container/smoker/burn_progress"), TEXT("Smoker")};
+        static const FFurnaceArt BlastFurnace{TEXT("gui/container/blast_furnace"),
+            TEXT("gui/sprites/container/blast_furnace/lit_progress"),
+            TEXT("gui/sprites/container/blast_furnace/burn_progress"), TEXT("Blast Furnace")};
+        return Kind == EFoundationMenuKind::Smoker      ? Smoker
+            : Kind == EFoundationMenuKind::BlastFurnace ? BlastFurnace
+                                                        : Furnace;
+    }
     const TCHAR* ContainerRecipeButton = TEXT("gui/sprites/recipe_book/button");
     const TCHAR* ContainerRecipeButtonHot = TEXT("gui/sprites/recipe_book/button_highlighted");
     const TCHAR* ContainerHighlightBack = TEXT("gui/sprites/container/slot_highlight_back");
@@ -55,8 +72,8 @@ void SHudContainerScreen::Construct(const FArguments& Arguments)
     // the HUD's font and tooltip sprites.
     for (const TCHAR* Id : {GetBackground(), ContainerRecipeButton, ContainerRecipeButtonHot})
         Art.LoadContainerGui(Id);
-    if (Model.Kind == EFoundationMenuKind::Furnace)
-        for (const TCHAR* Id : {FurnaceFlame, FurnaceArrow})
+    if (IsFurnaceMenu(Model.Kind))
+        for (const TCHAR* Id : {GetFurnaceArt(Model.Kind).Flame, GetFurnaceArt(Model.Kind).Arrow})
             Art.LoadContainerGui(Id);
     for (int32 Slot = FContainerScreenMenu::FirstArmor; Slot < FContainerScreenMenu::PlayerMenuSlots; ++Slot)
         if (const TCHAR* Id = GetContainerSilhouette(Slot)) Art.LoadContainerGui(Id);
@@ -222,7 +239,7 @@ bool SHudContainerScreen::PressBound(const FGeometry& Geometry, const FKey& Key,
 const TCHAR* SHudContainerScreen::GetBackground() const
 {
     return Model.Kind == EFoundationMenuKind::Crafting ? CraftingBackground
-        : Model.Kind == EFoundationMenuKind::Furnace   ? FurnaceBackground
+        : IsFurnaceMenu(Model.Kind)                    ? GetFurnaceArt(Model.Kind).Background
                                                        : ContainerBackground;
 }
 
@@ -248,7 +265,8 @@ int32 SHudContainerScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geom
     // The recipe-book button (inert until the recipe book exists) and the labels: the inventory screen's "Crafting"
     // over its 2x2; the crafting table's title and "Inventory" over the player's rows; the furnace's title centred.
     const bool bCrafting = Model.Kind == EFoundationMenuKind::Crafting;
-    const bool bFurnace = Model.Kind == EFoundationMenuKind::Furnace;
+    const bool bFurnace = IsFurnaceMenu(Model.Kind);
+    const FFurnaceArt& Furnace = GetFurnaceArt(Model.Kind);
     Paint.Box(Art.Find(FHudContainerModel::IsInRecipeButton(Model.Kind, Mouse) ? ContainerRecipeButtonHot
                                                                                : ContainerRecipeButton),
         O + FHudContainerModel::GetRecipeButton(Model.Kind),
@@ -264,7 +282,7 @@ int32 SHudContainerScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geom
     }
     else if (bFurnace)
     {
-        const FString Title = TEXT("Furnace");
+        const FString Title = Furnace.Title;
         Paint.Text(Title,
             O + FIntPoint((FHudContainerModel::Width - Paint.Measure(Title)) / 2, FHudContainerModel::FurnaceTitleY),
             ContainerTitleColor, false);
@@ -282,13 +300,13 @@ int32 SHudContainerScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geom
         // AbstractFurnaceScreen: the flame's lower part grows up from its lower edge, the arrow's left part rightward.
         const int32 Flame = FHudContainerModel::GetFlameHeight(View.bLit, View.LitFraction);
         if (Flame > 0)
-            Paint.Box(Art.Find(FurnaceFlame),
+            Paint.Box(Art.Find(Furnace.Flame),
                 O + FIntPoint(FHudContainerModel::FlameX, FHudContainerModel::FlameBottom - Flame),
                 {FHudContainerModel::FlameSize, Flame},
                 FBox2f(FVector2f(0, 1 - float(Flame) / FHudContainerModel::FlameSize), FVector2f(1)));
         const int32 Arrow = FHudContainerModel::GetArrowWidth(View.CookFraction);
         if (Arrow > 0)
-            Paint.Box(Art.Find(FurnaceArrow), O + FIntPoint(FHudContainerModel::ArrowX, FHudContainerModel::ArrowY),
+            Paint.Box(Art.Find(Furnace.Arrow), O + FIntPoint(FHudContainerModel::ArrowX, FHudContainerModel::ArrowY),
                 {Arrow, FHudContainerModel::ArrowHeight},
                 FBox2f(FVector2f(0), FVector2f(float(Arrow) / FHudContainerModel::ArrowWidth, 1)));
     }

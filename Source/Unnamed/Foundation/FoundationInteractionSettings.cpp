@@ -72,7 +72,13 @@ void UFoundationInteractionSettings::BuildRules(FFoundationRules& Rules) const
     if (ItemAssets) ItemAssets->AddLoot(Rules);
     // Entity loot (survival T6 20a), from DA_Mobs, resolved the same way.
     Rules.EntityLootTables.Reset();
-    if (const UFoundationMobAssets* MobAssets = UFoundationMobAssets::LoadDefault()) MobAssets->AddLoot(Rules);
+    // Biome creature spawning (survival T6 20b2), from DA_Mobs.
+    Rules.BiomeSpawns.Reset();
+    if (const UFoundationMobAssets* MobAssets = UFoundationMobAssets::LoadDefault())
+    {
+        MobAssets->AddLoot(Rules);
+        MobAssets->AddSpawns(Rules);
+    }
     // Crafting recipes (survival step 6), resolved against every item above; those naming an item that does not exist
     // yet wait for it.
     Rules.Recipes.Recipes.Reset();
@@ -147,6 +153,15 @@ void UFoundationInteractionSettings::AddBlockItems(
         Item.PlacesBlock = Block.Id;
         Item.PlacesWallBlock = Block.ItemWallBlock;
         Item.IconColor = Block.Color;
+        // 26.3's data gives one block item an equippable: carved_pumpkin, head, not swappable, no equip_sound (so
+        // the component's default, item.armor.equip_generic; minecraft.wiki "Data component format"). Set here by id
+        // until DA_Blocks carries equippables (survival step 19a; Codex review 5a, finding 2).
+        if (Id == TEXT("carved_pumpkin"))
+        {
+            Item.Equipment = EFoundationEquipmentSlot::Head;
+            Item.bSwappable = false;
+            Item.EquipSound = TEXT("item.armor.equip_generic");
+        }
         Items.Add(Item);
     }
 }

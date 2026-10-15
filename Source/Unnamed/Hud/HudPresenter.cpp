@@ -29,6 +29,10 @@
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Text/STextBlock.h"
 
+static TAutoConsoleVariable<int32> CVarHurtScreenTint(TEXT("foundation.Hurt.ScreenTint"), 0,
+    TEXT("1: a full-screen 0xB2FF0000 tint while hurt or dead (a stand-in; vanilla tints only the hurt body). 0: "
+         "none."));
+
 TSharedRef<SWidget> UHudPresenter::CreateView()
 {
     Assets = LoadObject<UHudAssets>(nullptr, *UUnnamedProjectSettings::GetHudRegistryPath());
@@ -42,7 +46,9 @@ TSharedRef<SWidget> UHudPresenter::CreateView()
     TMap<FName, FSlateBrush> Brushes;
     for (const FHudSpriteAsset& Entry : Assets->Sprites)
     {
-        if (!Entry.Id.ToString().StartsWith(TEXT("gui/sprites/hud/")) && Entry.Id != TEXT("font/ascii")) continue;
+        if (!Entry.Id.ToString().StartsWith(TEXT("gui/sprites/hud/")) && Entry.Id != TEXT("font/ascii") &&
+            Entry.Id != TEXT("block/fire_1"))
+            continue;
         UTexture2D* Texture = Entry.Texture.LoadSynchronous();
         FIntPoint Size = Texture ? FIntPoint(Texture->GetSizeX(), Texture->GetSizeY()) : FIntPoint::ZeroValue;
 #if WITH_EDITORONLY_DATA
@@ -129,7 +135,8 @@ void UHudPresenter::ApplyVitals(FHudSnapshot& S, const FFoundationVitals& V, con
     S.Health = V.Health;
     S.MaxHealth = V.MaxHealth;
     S.Absorption = V.Absorption;
-    S.Armor = V.Armor;
+    // The armor attribute: the lab's base plus the worn pieces (survival step 19a).
+    S.Armor = V.GetArmor();
     S.Food = V.Food;
     S.Saturation = V.Saturation;
     S.Air = V.Air;
@@ -140,6 +147,15 @@ void UHudPresenter::ApplyVitals(FHudSnapshot& S, const FFoundationVitals& V, con
     S.AttackStrength = V.GetAttackStrength();
     S.AttackDelay = V.GetAttackDelay();
     S.bDamageCooldown = V.DamageCooldown > 0;
+    // Step 11b feel (foundation.Death.Screen 1): the red tint while hurtTime > 0 (DamageCooldown above 10) or dead, the
+    // fire overlay while burning outside Creative/Spectator.
+    const bool bFeel = FoundationDeath::IsScreenEnabled();
+    // The 0xB2FF0000 overlay [survival.r6.hud_rules] is vanilla's entity damage overlay, drawn on the hurt body; in
+    // first person without hands vanilla shows no red on screen. foundation.Hurt.ScreenTint 1 keeps the full-screen
+    // stand-in one switch away (a look call; default off = vanilla).
+    S.bDamageTint =
+        bFeel && CVarHurtScreenTint.GetValueOnGameThread() != 0 && (V.IsInHurtWindow() || V.DeathTicks >= 0);
+    S.bOnFire = bFeel && V.IsOnFire() && S.CanHurt();
     // The eye ray's nearest fixture: an entity in reach is the crosshair entity; the lab's entities are alive.
     // An interactive target in reach stands in for a block or entity with a menu (spectator crosshair).
     const bool bEntity = Target.Kind == EFoundationTargetKind::Entity && Target.bInRange;
@@ -235,8 +251,15 @@ void UHudPresenter::Refresh(AFoundationController& Controller, double Now)
         ? FMath::FloorToInt64(Now * 20)
         : -1;
     const FString ChatInput = bChatOpen ? Controller.GetPanels()->GetTypedText() : FString();
+    // The caret [survival.r4.caret]: blinks 300 ms on / 300 ms off, counted from the chat opening (PROVISIONAL: vanilla
+    // may restart it on an edit; unconfirmed). The panels' caret index; a change of either redraws.
+    if (bChatOpen && !Snapshot.bChatOpen) ChatOpenedAt = Now;
+    const int32 CaretIndex = bChatOpen ? FMath::Clamp(Controller.GetPanels()->GetTypedCaret(), 0, ChatInput.Len()) : 0;
+    const bool bCaretVisible =
+        !bChatOpen || FMath::FloorToInt64((Now - ChatOpenedAt) * 1000 / HudDrawList::CaretBlinkMs) % 2 == 0;
     const bool bChatChanged = bChatOpen != Snapshot.bChatOpen || Chat.GetRevision() != ChatRevision ||
-        ChatStep != LastChatStep || !ChatInput.Equals(Snapshot.ChatInput, ESearchCase::CaseSensitive);
+        ChatStep != LastChatStep || !ChatInput.Equals(Snapshot.ChatInput, ESearchCase::CaseSensitive) ||
+        CaretIndex != Snapshot.CaretIndex || bCaretVisible != Snapshot.bCaretVisible;
     if (bChatChanged)
     {
         ChatLines.Reset();
@@ -257,7 +280,9 @@ void UHudPresenter::Refresh(AFoundationController& Controller, double Now)
         Snapshot = FHudSnapshot{};
         ApplyVitals(Snapshot, Pawn->Vitals, Pawn->TraceTarget());
     }
-    Snapshot.bVisible = bVisible;
+    // The fire overlay and the screen tint are camera effects, not HUD: they still draw under F1 (Build gates the
+    // HUD itself on bHideHud).
+    Snapshot.bVisible = bVisible || (bGameplay && (Snapshot.bOnFire || Snapshot.bDamageTint));
     Snapshot.bHideHud = bHideHud;
     Snapshot.bDeathScreen = bDeath;
     Snapshot.bDeathButtonsEnabled = bDeathEnabled;
@@ -266,6 +291,9 @@ void UHudPresenter::Refresh(AFoundationController& Controller, double Now)
     Snapshot.DeathScore = bDeath ? DeathPawn->GetDeathScore() : 0;
     Snapshot.Chat = ChatLines;
     Snapshot.ChatInput = ChatInput;
+    Snapshot.CaretIndex = CaretIndex;
+    Snapshot.bCaretVisible = bCaretVisible;
+    Snapshot.FireFrame = Snapshot.bOnFire ? int32(HudTick % HudDrawList::FireFrames) : 0;
     Snapshot.bChatOpen = bChatOpen;
     Snapshot.bFirstPerson = Pawn && Pawn->GetPerspective() == 0;
     const FFoundationAuthority* Authority = Pawn ? Pawn->GetAuthority() : nullptr;

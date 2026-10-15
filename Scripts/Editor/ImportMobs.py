@@ -4,9 +4,11 @@
   uncompressed, nearest, one mip.
 - M_Mob: the mobs' cutout material. Its Skin parameter takes the texture (FFoundationMobView makes one instance per
   mob layer); texels below alpha 0.1 are cut, as the entity cutout does; per-instance custom data 0 is the red overlay
-  [hurt.overlay]: the colour mixed toward red by OverlayRed (provisional, until the look call).
-- DA_Mobs (UFoundationMobAssets): the models (parts and faces from facts/entity_models.json) and the entity loot
-  tables flattened by MobImportData.py.
+  [hurt.overlay]: the skin times OVERLAY_TINT (OVERLAY_MODE "multiply", the look call), or mixed toward red by
+  OVERLAY_RED ("mix"); provisional.
+- DA_Mobs (UFoundationMobAssets): the models (parts and faces from facts/entity_models.json), the entity loot
+  tables flattened by MobImportData.py, and every biome's creature spawn list and chunk-generation chance (read from
+  Reference/minecraft-worldgen-26.3, hash-checked, never written).
 
 The reference is hash-checked first. Every asset is rebuilt on each run (they are generated from the reference alone):
 
@@ -27,7 +29,11 @@ lib = unreal.MaterialEditingLibrary
 assets = unreal.EditorAssetLibrary
 MATERIAL = ProjectPaths.entity_asset("M_Mob")
 REGISTRY = ProjectPaths.entity_asset("DA_Mobs")
-# Provisional (value report `hurt.overlay`: a red overlay, its blend not a universal tint): the overlay's share.
+# Provisional (value report `hurt.overlay`: a red overlay, its blend not a universal tint). "multiply" (the SM's look
+# call, 2026-10-15): the hurt texture is the skin times OVERLAY_TINT; "mix": the skin mixed toward red by OVERLAY_RED
+# (20a-20b1).
+OVERLAY_MODE = "multiply"
+OVERLAY_TINT = (1.0, 0.55, 0.55)
 OVERLAY_RED = 0.3
 
 
@@ -105,15 +111,24 @@ def build_material(default_texture):
     skin.set_editor_property("texture", default_texture)
     overlay = node(unreal.MaterialExpressionPerInstanceCustomData, -800, 300)
     overlay.set_editor_property("data_index", 0)
-    share = node(unreal.MaterialExpressionMultiply, -500, 300)
-    share.set_editor_property("const_b", OVERLAY_RED)
-    link(overlay, share, "A")
-    red = node(unreal.MaterialExpressionConstant3Vector, -500, 150)
-    red.set_editor_property("constant", unreal.LinearColor(1, 0, 0, 1))
     mix = node(unreal.MaterialExpressionLinearInterpolate, -250, 0)
     link(skin, mix, "A", "RGB")
-    link(red, mix, "B")
-    link(share, mix, "Alpha")
+    if OVERLAY_MODE == "multiply":
+        tint = node(unreal.MaterialExpressionConstant3Vector, -650, 150)
+        tint.set_editor_property("constant", unreal.LinearColor(*OVERLAY_TINT, 1))
+        hurt = node(unreal.MaterialExpressionMultiply, -500, 150)
+        link(skin, hurt, "A", "RGB")
+        link(tint, hurt, "B")
+        link(hurt, mix, "B")
+        link(overlay, mix, "Alpha")
+    else:
+        share = node(unreal.MaterialExpressionMultiply, -500, 300)
+        share.set_editor_property("const_b", OVERLAY_RED)
+        link(overlay, share, "A")
+        red = node(unreal.MaterialExpressionConstant3Vector, -500, 150)
+        red.set_editor_property("constant", unreal.LinearColor(1, 0, 0, 1))
+        link(red, mix, "B")
+        link(share, mix, "Alpha")
     prop(mix, unreal.MaterialProperty.MP_BASE_COLOR)
     prop(skin, unreal.MaterialProperty.MP_OPACITY_MASK, "A")
     for value, material_property, y in ((1.0, unreal.MaterialProperty.MP_ROUGHNESS, 450),
@@ -167,12 +182,19 @@ def loot_struct(table):
         "conditions": [struct(unreal.FoundationLootConditionAsset, n) for n in table["conditions"]]})
 
 
+def spawn_struct(biome):
+    return struct(unreal.FoundationBiomeSpawnAsset, {
+        "biome": biome["biome"], "chance": biome["chance"],
+        "creatures": [struct(unreal.FoundationMobSpawnAsset, c) for c in biome["creatures"]]})
+
+
 def main():
     digest = Data.verify_hashes()
     models = Data.models()
     textures = {m["layer"]: import_texture(m["texture_asset"], m["texture"], m["texture_size"]) for m in models}
     material = build_material(textures["cow#main"])
     tables, left_out = Data.loot_tables()
+    biomes, worldgen = Data.biome_spawns()
     if assets.does_asset_exist(REGISTRY):
         registry = assets.load_asset(REGISTRY)
     else:
@@ -187,6 +209,8 @@ def main():
     registry.set_editor_property("models", [model_struct(m, textures[m["layer"]]) for m in models])
     registry.set_editor_property("material", material)
     registry.set_editor_property("loot_tables", [loot_struct(t) for t in tables])
+    registry.set_editor_property("worldgen_sha256", worldgen)
+    registry.set_editor_property("biome_spawns", [spawn_struct(b) for b in biomes])
     if not assets.save_loaded_asset(registry, False):
         fail("could not save " + REGISTRY)
     cmdline = unreal.SystemLibrary.get_command_line()
@@ -196,9 +220,11 @@ def main():
         fail("M_Mob: the shader did not compile (see ShaderCompilers errors above)")
     for mob, why in left_out.items():
         unreal.log_warning("MOB_IMPORT: entities/%s left out of DA_Mobs: %s" % (mob, why))
-    unreal.log("MOB_IMPORT PASS: reference %s; %d models (%d faces), %d loot tables, %d left out; M_Mob PS instr %d%s"
+    unreal.log("MOB_IMPORT PASS: reference %s; %d models (%d faces), %d loot tables, %d left out; worldgen %s, %d "
+               "biome spawn lists (%d creature entries); M_Mob overlay %s, PS instr %d%s"
                % (digest[:12], len(models), sum(len(p["faces"]) for m in models for p in m["parts"]), len(tables),
-                  len(left_out), stats.num_pixel_shader_instructions,
+                  len(left_out), worldgen[:12], len(biomes), sum(len(b["creatures"]) for b in biomes), OVERLAY_MODE,
+                  stats.num_pixel_shader_instructions,
                   "" if compiled else " (graphs only; add -AllowCommandletRendering to compile)"))
 
 

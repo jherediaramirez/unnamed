@@ -389,6 +389,30 @@ bool FFoundationExperienceOrbMergeTest::RunTest(const FString&)
         TestEqual(TEXT("new orb's first-step scan"), L.A.GetExperienceOrbs().Num(), 1);
     }
     {
+        // Codex review 14, finding 1 (R23, survival2.r23.xp_rules): a new orb (id 81, the seeker) finding an old one
+        // (id 1) goes into it, so the merged orb is id 1 where id 1 was, its age reset to 0.
+        FOrbLab L;
+        L.Put(FVector(0, 0, 0), 3, 1);
+        L.Put(FVector(30, 0, 0), 3, 81, true);
+        const_cast<FFoundationExperienceOrb&>(L.A.GetExperienceOrbs()[0]).Age = 7;
+        L.NextStep();
+        const TArray<FFoundationExperienceOrb>& Orbs = L.A.GetExperienceOrbs();
+        TestTrue(TEXT("lower id: one orb, id 1, count 2"), Orbs.Num() == 1 && Orbs[0].Id == 1 && Orbs[0].Count == 2);
+        TestTrue(TEXT("lower id: where id 1 was"), Orbs.Num() == 1 && FMath::Abs(Orbs[0].LocalCm.X) < 5);
+        TestTrue(TEXT("lower id: age 0"), Orbs.Num() == 1 && Orbs[0].Age == 0);
+    }
+    {
+        // An old orb's own scan keeps the scanner (R23, survival2.r23.xp_merge: the caller stays, the other goes):
+        // id 41, listed first, scans first on step 20 and takes in id 1, staying where it was.
+        FOrbLab L;
+        L.Put(FVector(30, 0, 0), 3, 41);
+        L.Put(FVector(0, 0, 0), 3, 1);
+        L.Steps(20);
+        const TArray<FFoundationExperienceOrb>& Orbs = L.A.GetExperienceOrbs();
+        TestTrue(TEXT("scan: id 41 stays, count 2"), Orbs.Num() == 1 && Orbs[0].Id == 41 && Orbs[0].Count == 2);
+        TestTrue(TEXT("scan: where id 41 was"), Orbs.Num() == 1 && FMath::Abs(Orbs[0].LocalCm.X - 30) < 5);
+    }
+    {
         // Through the roll: the first seeker id from 2 (against id 1, not 40 apart) whose roll passes. In reach on the
         // first step it merges; out of reach then and moved in before the second, it does not (the flag has cleared).
         FFoundationExperienceOrb Seeker, Other;
@@ -514,6 +538,7 @@ bool FFoundationExperienceOrbSoundsTest::RunTest(const FString&)
     TestEqual(TEXT("level 5 plays at 0.125"), GetLevelUpVolume(4, 5, 1000, -1), .125f);
     TestEqual(TEXT("passing 10 plays at 0.25"), GetLevelUpVolume(9, 12, 1000, -1), .25f);
     TestEqual(TEXT("level 40 plays at 0.75"), GetLevelUpVolume(39, 40, 1000, -1), .75f);
+    TestEqual(TEXT("4 to 15 in one gain: the first multiple (5) at 0.125"), GetLevelUpVolume(4, 15, 1000, -1), .125f);
     TestEqual(TEXT("no multiple of 5"), GetLevelUpVolume(5, 6, 1000, -1), 0.f);
     TestEqual(TEXT("no gain"), GetLevelUpVolume(10, 5, 1000, -1), 0.f);
     TestEqual(TEXT("the first update"), GetLevelUpVolume(-1, 5, 1000, -1), 0.f);
@@ -523,6 +548,13 @@ bool FFoundationExperienceOrbSoundsTest::RunTest(const FString&)
     TestEqual(TEXT("a sound at step 0, 100 after: none"), GetLevelUpVolume(9, 10, 100, 0), 0.f);
     TestEqual(TEXT("a sound at step 0, 101 after: plays"), GetLevelUpVolume(9, 10, 101, 0), .25f);
     TestEqual(TEXT("a step before the last sound's (reset): plays"), GetLevelUpVolume(9, 10, 50, 1000), .25f);
+    // Codex review 14, finding 2: a gain at step 1100 seen in a frame at 1101 is timed at 1100 (100 after a sound at
+    // 1000: none); a level the steps did not make (the lab panel) is timed by the frame.
+    TestEqual(TEXT("timed by the gain's step"), GetLevelUpStep(1101, 10, 10, 1100), int64(1100));
+    TestEqual(
+        TEXT("so 100 after the last: none"), GetLevelUpVolume(9, 10, GetLevelUpStep(1101, 10, 10, 1100), 1000), 0.f);
+    TestEqual(TEXT("another level: the frame's step"), GetLevelUpStep(1101, 11, 10, 1100), int64(1101));
+    TestEqual(TEXT("no gain yet: the frame's step"), GetLevelUpStep(1101, 10, -1, -1), int64(1101));
     // survival.r5.rules: pickup pitch 0.9 + 0.35 x (U - V).
     TestEqual(TEXT("pitch at U = V"), GetPickupPitch(.3f, .3f), .9f);
     TestTrue(TEXT("pitch at U = 1, V = 0"), FMath::IsNearlyEqual(GetPickupPitch(1, 0), 1.25f, 1e-6f));
