@@ -196,7 +196,7 @@ struct FFoundationPlayerFacts
     // Horizontal distance moved over the last reference step (the sweep's movement rule).
     double StepMovedCm = 0;
     bool bGrounded = true, bSprinting = false, bBodyInWater = false, bEyesInWater = false;
-    // No ladders, mounts or effects yet; kept so the critical rule reads like the reference.
+    // Climbing since B4b; no mounts or effects yet, kept so the critical rule reads like the reference.
     bool bClimbing = false, bPassenger = false, bMobilityRestricted = false;
     bool bAlive = true;
     // The game mode (survival T6 20c: monsters target Survival and Adventure players only).

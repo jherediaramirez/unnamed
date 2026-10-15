@@ -45,9 +45,9 @@ namespace
 
 void FFoundationVitals::StepHazards(const FFoundationVitalsStep& Facts, bool bFallImmune)
 {
-    // Falls accumulate only downward movement outside water and land once.
+    // Falls accumulate only downward movement outside water and climbing, and land once.
     const FVector& Moved = Facts.DisplacementCm;
-    if (Facts.bBodyInWater)
+    if (Facts.bBodyInWater || Facts.bClimbing)
         FallDistanceCm = 0;
     else if (Moved.Z < 0)
         FallDistanceCm -= Moved.Z;

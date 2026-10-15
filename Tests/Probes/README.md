@@ -65,3 +65,16 @@ half's state. The record is `Docs/Records/2026-10-15-Blocks-B3a.md`.
 
 The native tests `Unnamed.Foundation.Interact.SwitchPlacement` (parts A and B) and `.Buttons` (part C) read it. The
 record is `Docs/Records/2026-10-15-Blocks-B3b.md`.
+
+## Ladder placement (survival B4b)
+
+- `LadderPlacementProbe.java`: `SwitchPlacementProbe.java`'s parts A and B for `ladder` (90 and 2,550 cases), plus
+  part D: stone at P, a ladder facing north on its north face, stone around the cell north of that ladder, and a
+  ladder clicked on each face of the ladder on the same look grid (90 cases).
+- `ladder-placement-26.3.json`: the measured cases; its header documents the rows. SHA-256
+  `A8740D362970040C81E4BAE943DD2A6EF3E69B37DD8E047D3F653B8F13FCDB51` (two runs byte-identical).
+- `run-ladder-placement-probe.ps1`: compiles and runs the probe (default work folder
+  `C:\dev\sandbox\b4b-blocks\probe\work`) and writes the JSON next to the script (about 30 s).
+
+The native test `Unnamed.Foundation.Interact.LadderPlacement` reads it. The record is
+`Docs/Records/2026-10-15-Blocks-B4b.md`.

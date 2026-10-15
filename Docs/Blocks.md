@@ -255,6 +255,33 @@ Survival B4a (track T5), from Jesus's play bugs.
 - **Chests keep drawing their block mesh:** T1's chest no-mesh ask is deferred with the lid animation (feature
   freeze, after QC).
 
+## Ladders, climbing and vines (B4b)
+
+Survival B4b (track T5). First person only: no arm, pose or body animation; the camera rides the feet.
+
+- **Twisting and weeping vines** (`GetSurvival`, before the `foundation.Blocks.Interact` gate): twisting vines and
+  their body need below them, weeping vines and theirs above them, the same vine (head or body) or a sturdy face toward
+  them (`facts/family_survival.json` signatures 89 and 88: stone and glass hold, leaves and fences do not). They settle
+  as stacks (`FoundationPlantRules::GetStack`), so a broken support pops the whole column and B4a's pop drops apply
+  (their tables drop with a chance without shears).
+- **Ladder** (family `Ladder`, id `ladder`, behind `foundation.Blocks.Interact`): placement takes the first side look
+  of the click (`GetClickLooks`: the direction into the clicked block, then the nearest looks; up and down are
+  skipped) where the ladder survives, facing away from that wall, waterlogged in a water source; nothing survives, or
+  a ladder clicked on its own front face: no placement (`CannotSurvive`). Measured by the headless probe
+  `Tests/Probes/ladder-placement-26.3.json` (parts A, B and D: 2,730 `useOn` placements). Survival: the face of the
+  block behind it sturdy (signatures 10-13); losing it pops the ladder.
+- **Climbing** (`foundation.Blocks.Climb`, default 1; 0: movement as before B4b). The pawn sets
+  `FFoundationEligibility::bOnClimbable` each step from `FoundationBlockFamilies::IsClimbable` at the cell holding the
+  feet: a `#minecraft:climbable` block (`Block.Climbable`: ladder, vine, twisting and weeping vines, cave vines and
+  their bodies; 26.3's tag also lists scaffolding, which is not imported), or an open trapdoor over a ladder facing the
+  same way (minecraft.wiki "Trapdoor"). Out of fluids and flight, `FFoundationSimulation::Step` then clamps each
+  horizontal axis to 0.15 blocks a tick and the descent to 0.15 (sneaking holds it at 0), and pushing into a wall or
+  jumping sets 0.2 blocks a tick up before gravity and drag (an ascent of 0.1176 blocks a tick). VALUES "Ladder speed"
+  (`movement.ladder_clamp` measured; `movement.ladder`'s 0.2 source-inspected). Climbing zeroes the fall distance in
+  the simulation and in `FFoundationVitals::StepHazards` (`FFoundationVitalsStep::bClimbing`), and feeds the critical
+  hit rule (`FFoundationPlayerFacts::bClimbing`). Provisional (`provisional-values.md`): the ascent, the feet cell, the
+  trapdoor rule, sneaking while moving.
+
 ## Placement
 
 `FoundationBlockPlacement` ports `BlockPlaceContext` and each family's `getStateForPlacement`: clicked face, `Direction.orderedByNearest` (with Minecraft's sine table) and `fromYRot`. Every placement goes through `FFoundationAuthority`.
@@ -400,4 +427,11 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
   - `Unnamed.Foundation.Shapes.*` (B2b): `.Families`, `.SingleNeighbour`, `.CrossFamily`, `.WallUp`, `.Stairs`, `.GatesInWall` against every row of `shape_updates.json`; `.Placement` (facing, half, corners, connections, `in_wall`, switch 0); `.Neighbours` (placing and mining through the authority, one ring, a wall under a new block, switch 0). `Unnamed.Voxel.World.ShapesGather`: the voxel gather's outer layers on a streamed column.
   - `Unnamed.Foundation.Interact.*` (B3a): `.Families` (tags, the iron exceptions, every csv sound), `.Switches` (the 57 rows of F 5071-5135, both halves in one command), `.Gates` (re-facing, collision), `.Placement` (facing, hinge samples, refusals, trapdoor half and facing, switch 0), `.Hand` (sneak, off hand, iron passes, the preview), `.Survival` (the rows and every candidate of `family_survival.json`), `.Hinge` (every probe case), `.Edits` (one item from either half, the ring, tall grass replaced).
   - `Unnamed.Foundation.Interact.*` (B3b): `.Switches` gains the lever row (58 rows); `.Families` 15 buttons, the lever and their csv sounds; `.Buttons` (all 15 durations and the release event, the probe's part C runs, a pressed button's use, a broken button's dropped release, a replaced button released by its own press, `Reset`, the lever's volume and pitch, a door's pitch 0, switch 0, a popped wall button); `.SwitchSurvival` (every button and lever state against every candidate of `family_survival.json`); `.SwitchPlacement` (the probe's parts A and B, a lever and a refusal through the authority); `.R13` (R13's boxes for every door, trapdoor, gate, button and lever state, and its 8,352 connection rows, from `Source/Unnamed/Tests/BlockR13Oracles.json`, written by `Scripts/MakeR13Oracles.py`); `.LoneHalf` (Codex 28 #1).
+  - B4b: `Unnamed.Foundation.Interact.ClimbSurvival` (the ladder and the four vine blocks, 62 states, against every
+    candidate of `family_survival.json`), `.LadderPlacement` (the probe's parts A, B and D; a ladder placed, refused and
+    popped through the authority), `.R13` gains the 8 ladder states (R13's vines list some boxes in another order, so
+    they stay out), `.Families` the ladder; `Unnamed.Foundation.Blocks.PopDrops` twisting and weeping columns;
+    `Unnamed.Foundation.Climb.Movement` (rise, jump, sneak hold, descent and horizontal clamps, switch 0), `.Fall`
+    (both fall accumulators on a 9-block ladder; the control drop hurts), `.Unchanged` (`bOnClimbable` false: the same
+    trajectory, bit for bit), `.Blocks` (the climbable cells and the trapdoor rule).
 - **Runtime:** `TestFoundationRuntime.ps1 -Suite tour` shots 09-23 cover the gallery and the creative screen (17p and 17q: the plant row). The interaction suite covers stone placement and mining and the hotbar block icon, and checks the drawn cells and the exact instance count (one per part, plus held water) against the world. Its plants group (S7) places a dandelion on grass and mines the grass (the dandelion pops), refuses a dandelion on stone, and places and mines tall grass (both halves go).
