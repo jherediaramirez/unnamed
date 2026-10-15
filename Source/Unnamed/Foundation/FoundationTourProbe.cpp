@@ -1665,6 +1665,32 @@ void UFoundationRuntimeProbe::AddTourCases()
             for (int32 Slot = First + 1; Slot <= First + 3; ++Slot)
                 Screen.Move(FHudContainerModel::GetSlotPosition(Slot) + FIntPoint(8, 8));
         });
+    // Survival step 6: an oak log in the crafting grid makes 4 oak planks in the result slot, hovered for its tooltip.
+    Survival(TEXT("24c-survival-crafting"),
+        [Authority](SHudContainerScreen& Screen, FFoundationInventory& Inventory)
+        {
+            const int32 Log = Authority().Rules.FindItem(TEXT("oak_log"));
+            Screen.GetModel().Reset();
+            Inventory.Carried = {};
+            if (Log != INDEX_NONE && Inventory.Craft.IsValidIndex(1)) Inventory.Craft[1] = Inventory.MakeStack(Log, 3);
+            ++Inventory.Revision;
+            Screen.SetMouse(
+                FHudContainerModel::GetSlotPosition(FFoundationContainerMenu::ResultSlot) + FIntPoint(8, 8));
+        });
+    AddCase(
+        TEXT("tour survival crafting result"), .1, [] {},
+        [this, Authority]
+        {
+            const FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
+            const int32 Planks = Authority().Rules.FindItem(TEXT("oak_planks"));
+            const FFoundationItemInstance Result = Player
+                ? Authority().GetPlayerMenu(*Player)[FFoundationContainerMenu::ResultSlot]
+                : FFoundationItemInstance();
+            Record(TEXT("tour survival crafting: the result"),
+                !Result.IsEmpty() && Result.Item == Planks && Result.Count == 4,
+                FString::Printf(TEXT("an oak log in the grid shows 4 oak planks in the result (item %d, count %d)"),
+                    Result.Item, Result.Count));
+        });
     AddCase(
         TEXT("tour survival close"), .3,
         [this, Authority, SavedInventory]
@@ -1677,6 +1703,73 @@ void UFoundationRuntimeProbe::AddTourCases()
             if (FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId))
             {
                 const int32 Revision = Player->Inventory.Revision;
+                Player->Inventory = *SavedInventory;
+                Player->Inventory.Revision = Revision + 1;
+            }
+        },
+        [] {});
+
+    // l. The crafting table's screen (survival step 7). The Playground has no crafting table, so the probe opens the
+    // menu as the table's block use does (FFoundationAuthority::OpenContainer), then lays the wooden pickaxe's pattern
+    // into the 3x3 and hovers the result for its tooltip. Closing returns the grid; the inventory is put back after.
+    AddCase(
+        TEXT("tour crafting table"), .8,
+        [this, Lab, Authority, SavedInventory]
+        {
+            ResetPlayer({0, 0, 0});
+            FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
+            if (!Player) return;
+            *SavedInventory = Player->Inventory;
+            FFoundationResult Opened;
+            Authority().OpenContainer(
+                *Player, EFoundationMenuKind::Crafting, FIntVector::ZeroValue, TEXT("crafting_table"), Opened);
+            const TCHAR* Pattern[] = {TEXT("oak_planks"), TEXT("oak_planks"), TEXT("oak_planks"), nullptr,
+                TEXT("stick"), nullptr, nullptr, TEXT("stick"), nullptr};
+            for (int32 Index = 0; Index < 9 && Player->OpenMenu.Grid.IsValidIndex(Index); ++Index)
+                if (const int32 Item = Pattern[Index] ? Authority().Rules.FindItem(Pattern[Index]) : INDEX_NONE;
+                    Item != INDEX_NONE)
+                    Player->OpenMenu.Grid[Index] = Player->Inventory.MakeStack(Item, 1);
+            if (const int32 Stone = Authority().Rules.FindItem(TEXT("cobblestone")); Stone != INDEX_NONE)
+                Player->Inventory.SetSlot(9, Player->Inventory.MakeStack(Stone, 41));
+            ++Player->Inventory.Revision;
+            Controller->GetPanels()->OpenContainerScreen(*Lab, EFoundationMenuKind::Crafting, Opened.OpenedContainer);
+            if (TSharedPtr<SHudContainerScreen> Screen = Controller->GetPanels()->GetSurvivalScreen())
+            {
+                Screen->GetModel().Reset();
+                Screen->SetMouse(FHudContainerModel::GetSlotPosition(
+                                     EFoundationMenuKind::Crafting, FFoundationContainerMenu::ResultSlot) +
+                    FIntPoint(8, 8));
+            }
+            CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
+        },
+        [this, Authority]
+        {
+            const TSharedPtr<SHudContainerScreen> Screen = Controller->GetPanels()->GetSurvivalScreen();
+            const FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
+            const int32 Pickaxe = Authority().Rules.FindItem(TEXT("wooden_pickaxe"));
+            const TArray<FFoundationItemInstance> Menu =
+                Player ? Authority().GetOpenMenu(*Player) : TArray<FFoundationItemInstance>();
+            Record(TEXT("tour crafting table open"), Screen.IsValid() && Screen->HasArt(),
+                TEXT("the crafting table's screen opens with its imported art (crafting_table.png)"));
+            Record(TEXT("tour crafting table: the result"),
+                Menu.Num() == 46 && Menu[0].Item == Pickaxe && Menu[0].Count == 1,
+                TEXT("the 3x3 wooden pickaxe pattern shows a wooden pickaxe in the result"));
+            FScreenshotRequest::RequestScreenshot(
+                FPaths::ChangeExtension(Output, TEXT("")) + TEXT("-tour-24d-crafting-table.png"), true, false);
+        });
+    AddCase(TEXT("tour flush 24d-crafting-table"), .4, [] {}, [] {});
+    AddCase(
+        TEXT("tour crafting table close"), .3,
+        [this, Authority, SavedInventory]
+        {
+            Controller->GetPanels()->Close();
+            if (FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId))
+            {
+                const bool bClosed = !Player->OpenMenu.IsOpen();
+                Record(TEXT("tour crafting table: close returns the grid"), bClosed,
+                    TEXT("closing the screen closes the menu (its grid back in the inventory)"));
+                const int32 Revision = Player->Inventory.Revision;
+                Player->OpenMenu = {};
                 Player->Inventory = *SavedInventory;
                 Player->Inventory.Revision = Revision + 1;
             }

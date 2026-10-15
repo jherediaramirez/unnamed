@@ -3,7 +3,9 @@
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationContainer.h"
 #include "Foundation/FoundationInteractionSettings.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Hud/HudContainer.h"
+#include "Hud/HudContainerScreen.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
@@ -115,9 +117,9 @@ namespace
                     ? FHudCreativeStack()
                     : FHudCreativeStack{A.Rules.GetItem(Item->Item).Id, Item->Count, Item->Damage};
             };
+            const TArray<FFoundationItemInstance> Menu = A.GetPlayerMenu(*A.FindPlayer(Player));
             for (int32 Slot = 0; Slot < FScreenMenu::PlayerMenuSlots; ++Slot)
-                if (const int32 Index = FScreenMenu::ToInventorySlot(Slot); Index != INDEX_NONE)
-                    Result.Slots[Slot] = Stack(Inv().GetSlot(Index));
+                Result.Slots[Slot] = Stack(&Menu[Slot]);
             Result.Carried = Stack(&Inv().Carried);
             return Result;
         }
@@ -207,10 +209,15 @@ bool FHudContainerClicksTest::RunTest(const FString&)
     ExpectSame(*this, TEXT("shift"), Model.MouseDown(ScreenSlotPoint(40), 0, true, Empty, 20),
         FScreenClicks{{40, 0, EFoundationClickType::QuickMove}});
     Model.MouseUp(ScreenSlotPoint(40), 0, Empty);
-    // Middle clicks clone only in creative; the crafting slots wait for step 6; the frame and the button do nothing.
+    // Middle clicks clone only in creative; the crafting grid and its result click like any slot (survival step 6);
+    // the frame and the button do nothing.
     ExpectSame(*this, TEXT("middle"), Model.MouseDown(Main0, 2, false, Empty, 30), FScreenClicks());
-    ExpectSame(*this, TEXT("crafting slot"), Model.MouseDown(ScreenSlotPoint(1), 0, false, Empty, 40), FScreenClicks());
-    ExpectSame(*this, TEXT("result slot"), Model.MouseDown(ScreenSlotPoint(0), 0, false, Empty, 50), FScreenClicks());
+    ExpectSame(*this, TEXT("crafting slot"), Model.MouseDown(ScreenSlotPoint(1), 0, false, Empty, 40),
+        FScreenClicks{{1, 0, EFoundationClickType::Pickup}});
+    Model.MouseUp(ScreenSlotPoint(1), 0, Empty);
+    ExpectSame(*this, TEXT("result slot"), Model.MouseDown(ScreenSlotPoint(0), 0, false, Empty, 50),
+        FScreenClicks{{0, 0, EFoundationClickType::Pickup}});
+    Model.MouseUp(ScreenSlotPoint(0), 0, Empty);
     ExpectSame(*this, TEXT("recipe-book button"), Model.MouseDown({110, 65}, 0, false, Empty, 60), FScreenClicks());
     // Outside the window: the cursor stack would be thrown (left all, right one); nothing without one.
     ExpectSame(*this, TEXT("outside, empty cursor"), Model.MouseDown({-5, 10}, 0, false, Empty, 70), FScreenClicks());
@@ -244,10 +251,18 @@ bool FHudContainerDragTest::RunTest(const FString&)
     // A press with a stack starts a drag; slots join as the mouse crosses them, once each, when they can take it.
     ExpectSame(*this, TEXT("the press sends nothing"),
         Model.MouseDown(ScreenSlotPoint(ScreenMain(0)), 0, false, View, 0), FScreenClicks());
-    for (const int32 Slot : {ScreenMain(1), ScreenMain(1), ScreenMain(3), ScreenMain(4), 5, 1, ScreenMain(2)})
+    {
+        // The crafting grid takes a drag; its result never does.
+        FHudContainerModel Grid = MakeScreenModel();
+        Grid.MouseDown(ScreenSlotPoint(1), 0, false, View, 0);
+        for (const int32 Slot : {0, 2, 4})
+            Grid.MouseMove(ScreenSlotPoint(Slot), View);
+        ExpectSame(*this, TEXT("a drag over the grid skips the result"), Grid.GetDragSlots(), TArray<int32>{1, 2, 4});
+    }
+    for (const int32 Slot : {ScreenMain(1), ScreenMain(1), ScreenMain(3), ScreenMain(4), 5, 0, ScreenMain(2)})
         Model.MouseMove(ScreenSlotPoint(Slot), View);
     Model.MouseMove({-10, -10}, View);
-    ExpectSame(*this, TEXT("dragged slots: not another item, a full stack, armor for stone, crafting or outside"),
+    ExpectSame(*this, TEXT("dragged slots: not another item, a full stack, armor for stone, the result or outside"),
         Model.GetDragSlots(), TArray<int32>{ScreenMain(0), ScreenMain(1), ScreenMain(2)});
     // The preview: 10 over three slots is 3 each, one left on the cursor.
     TMap<int32, FHudCreativeStack> Preview;
@@ -462,6 +477,228 @@ bool FHudContainerAuthorityTest::RunTest(const FString&)
         L.A.Execute(L.Player, L.MakeCommand(EFoundationCommandType::ContainerClose), L.Vitals);
         TestFalse(TEXT("a container close ends the use"), L.A.FindPlayer(L.Player)->Use.bActive);
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHudContainerInputTest, "Unnamed.Hud.Container.Input", ContainerScreenTestFlags)
+
+bool FHudContainerInputTest::RunTest(const FString&)
+{
+    // The screen's own input path (Codex 5b findings 1-3): Slate's mouse and key events on the real widget, at GUI
+    // scale 2 on a 1280 x 720 frame (the menu at 232,97), its clicks sent to the authority.
+    FScreenLab L;
+    FScreenClicks Sent;
+    bool bClosed = false;
+    TMap<FName, FKey> Bindings = {{TEXT("key.inventory"), EKeys::I}, {TEXT("key.hotbar.1"), EKeys::Z},
+        {TEXT("key.swapOffhand"), EKeys::G}, {TEXT("key.drop"), EKeys::X}};
+    // clang-format off
+    const TSharedRef<SHudContainerScreen> Screen = SNew(SHudContainerScreen)
+        .Registry(L.A.World.GetRegistryRef())
+        .Items(L.Model.Items)
+        .RequestedGuiScale(2)
+        .GetView([&L] { return L.View(); })
+        .OnClick([&L, &Sent](const FHudContainerClick& Click) { Sent.Add(Click); L.Send(Click); })
+        .OnClose([&bClosed] { bClosed = true; })
+        .GetKey([&Bindings](FName Id) { return Bindings.FindRef(Id); });
+    // clang-format on
+    // Window-local GUI pixels to Slate's screen space, under a root geometry placed at Corner.
+    FVector2D Corner(0, 0);
+    auto Geometry = [&Corner] { return FGeometry::MakeRoot(FVector2D(1280, 720), FSlateLayoutTransform(Corner)); };
+    auto At = [&Corner](int32 Slot) { return Corner + FVector2D((FIntPoint(232, 97) + ScreenSlotPoint(Slot)) * 2); };
+    auto Mouse = [](FVector2D Position, FKey Button, bool bDown)
+    {
+        TSet<FKey> Pressed;
+        if (bDown) Pressed.Add(Button);
+        return FPointerEvent(0, Position, Position, Pressed, Button, 0, FModifierKeysState());
+    };
+    // A press and its release; a release that lets the capture go gets Slate's capture loss, as the application sends.
+    auto Click = [&](int32 Slot, FKey Button)
+    {
+        Screen->OnMouseButtonDown(Geometry(), Mouse(At(Slot), Button, true));
+        const FReply Reply = Screen->OnMouseButtonUp(Geometry(), Mouse(At(Slot), Button, false));
+        if (Reply.ShouldReleaseMouse()) Screen->OnMouseCaptureLost(FCaptureLostEvent(0, 0));
+    };
+    FFoundationInventory& I = L.Inv();
+    // The full inventory, as the authority sets it on the next command.
+    I.bFull = true;
+    const int32 Stone = L.A.Rules.FindItem(TEXT("stone")), Dirt = L.A.Rules.FindItem(TEXT("dirt"));
+    for (int32 Slot = 0; Slot < FFoundationInventory::OffhandSlot; ++Slot)
+        I.SetSlot(Slot, {});
+
+    // Finding 1: a double-click survives the capture the first release lets go. Take 5 stone, then double-click the
+    // same slot: the release collects the 3 elsewhere.
+    I.SetSlot(9, I.MakeStack(Stone, 5));
+    I.SetSlot(10, I.MakeStack(Stone, 3));
+    Click(ScreenMain(0), EKeys::LeftMouseButton);
+    Click(ScreenMain(0), EKeys::LeftMouseButton);
+    TestTrue(TEXT("a double-click through Slate collects"),
+        Sent.ContainsByPredicate(
+            [](const FHudContainerClick& C) { return C.Type == EFoundationClickType::PickupAll; }) &&
+            I.Carried.Count == 8 && I.Main[1].IsEmpty());
+
+    // Finding 2: carrying stone, press on dirt, drag to an empty slot: the one collected slot is clicked.
+    I.SetSlot(11, I.MakeStack(Dirt, 1));
+    Sent.Reset();
+    Screen->OnMouseButtonDown(Geometry(), Mouse(At(ScreenMain(2)), EKeys::LeftMouseButton, true));
+    Screen->OnMouseMove(Geometry(), Mouse(At(ScreenMain(3)), EKeys::Invalid, false));
+    if (Screen->OnMouseButtonUp(Geometry(), Mouse(At(ScreenMain(3)), EKeys::LeftMouseButton, false))
+            .ShouldReleaseMouse())
+        Screen->OnMouseCaptureLost(FCaptureLostEvent(0, 0));
+    TestTrue(TEXT("a one-slot drag places in the slot it covered, not the pressed dirt"),
+        I.Main[3].Item == Stone && I.Main[3].Count == 8 && I.Main[2].Item == Dirt && I.Carried.IsEmpty());
+
+    // Finding 3: keys are the player's bindings. Keys hit-test the live cursor, so the root geometry is placed to put
+    // the cursor over the slot (the real pointer is never moved).
+    if (!FSlateApplication::IsInitialized())
+    {
+        // The editor always has one; without it finding 3 would go unchecked.
+        AddError(TEXT("no Slate application: the key cases cannot run"));
+        return false;
+    }
+    auto KeyOver = [&](int32 Slot, FKey Key)
+    {
+        Corner = FSlateApplication::Get().GetCursorPos() - FVector2D((FIntPoint(232, 97) + ScreenSlotPoint(Slot)) * 2);
+        Sent.Reset();
+        Screen->OnKeyDown(Geometry(), FKeyEvent(Key, FModifierKeysState(), 0, false, 0, 0));
+    };
+    KeyOver(ScreenMain(3), EKeys::One);
+    TestTrue(TEXT("1 is not the hotbar key when Z is"), Sent.IsEmpty());
+    KeyOver(ScreenMain(3), EKeys::Z);
+    TestTrue(TEXT("Z swaps with hotbar slot 1"),
+        Sent.Num() == 1 && Sent[0].Type == EFoundationClickType::Swap && Sent[0].Button == 0 && I.Hotbar[0].Count == 8);
+    KeyOver(FScreenMenu::FirstHotbar, EKeys::G);
+    TestTrue(TEXT("G swaps with the offhand"), Sent.Num() == 1 && Sent[0].Button == FFoundationInventory::OffhandSlot);
+    KeyOver(FScreenMenu::OffhandSlot, EKeys::Q);
+    TestTrue(TEXT("Q is not the drop key when X is"), Sent.IsEmpty());
+    KeyOver(FScreenMenu::OffhandSlot, EKeys::X);
+    TestTrue(TEXT("X throws"), Sent.Num() == 1 && Sent[0].Type == EFoundationClickType::Throw);
+    KeyOver(FScreenMenu::OffhandSlot, EKeys::E);
+    TestFalse(TEXT("E does not close when the inventory key is I"), bClosed);
+    KeyOver(FScreenMenu::OffhandSlot, EKeys::I);
+    TestTrue(TEXT("I closes"), bClosed);
+    return true;
+}
+namespace
+{
+    // The real widget over a FScreenLab, at GUI scale 2 on a 1280 x 720 frame (the menu at 232,97), as the input test
+    // builds it; Corner places the root geometry.
+    struct FScreenWidget
+    {
+        FScreenLab& L;
+        FScreenClicks Sent;
+        bool bClosed = false;
+        TMap<FName, FKey> Bindings;
+        FVector2D Corner = FVector2D(0, 0);
+        TSharedPtr<SHudContainerScreen> Screen;
+
+        explicit FScreenWidget(FScreenLab& InLab) : L(InLab)
+        {
+            // clang-format off
+            Screen = SNew(SHudContainerScreen)
+                .Registry(L.A.World.GetRegistryRef())
+                .Items(L.Model.Items)
+                .RequestedGuiScale(2)
+                .GetView([this] { return L.View(); })
+                .OnClick([this](const FHudContainerClick& Click) { Sent.Add(Click); L.Send(Click); })
+                .OnClose([this] { bClosed = true; })
+                .GetKey([this](FName Id) { return Bindings.FindRef(Id); });
+            // clang-format on
+        }
+        FGeometry Geometry() const { return FGeometry::MakeRoot(FVector2D(1280, 720), FSlateLayoutTransform(Corner)); }
+        FVector2D At(int32 Slot) const { return Corner + FVector2D((FIntPoint(232, 97) + ScreenSlotPoint(Slot)) * 2); }
+        static FPointerEvent Mouse(FVector2D Position, FKey Button, bool bDown)
+        {
+            TSet<FKey> Pressed;
+            if (bDown) Pressed.Add(Button);
+            return FPointerEvent(0, Position, Position, Pressed, Button, 0, FModifierKeysState());
+        }
+        // A press and its release; a release that lets the capture go gets Slate's capture loss.
+        void Click(int32 Slot, FKey Button)
+        {
+            Screen->OnMouseButtonDown(Geometry(), Mouse(At(Slot), Button, true));
+            const FReply Reply = Screen->OnMouseButtonUp(Geometry(), Mouse(At(Slot), Button, false));
+            if (Reply.ShouldReleaseMouse()) Screen->OnMouseCaptureLost(FCaptureLostEvent(0, 0));
+        }
+        // A mouse button pressed with the live cursor over Slot (the root geometry moves; the pointer never does).
+        FReply ButtonOver(int32 Slot, FKey Button)
+        {
+            Corner =
+                FSlateApplication::Get().GetCursorPos() - FVector2D((FIntPoint(232, 97) + ScreenSlotPoint(Slot)) * 2);
+            Sent.Reset();
+            const FReply Reply = Screen->OnMouseButtonDown(Geometry(), Mouse(At(Slot), Button, true));
+            Screen->OnMouseButtonUp(Geometry(), Mouse(At(Slot), Button, false));
+            return Reply;
+        }
+    };
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FHudContainerResultClicksTest, "Unnamed.Hud.Container.ResultClicks", ContainerScreenTestFlags)
+
+bool FHudContainerResultClicksTest::RunTest(const FString&)
+{
+    // Codex review 10, finding 4: two quick left clicks on the result slot through the real widget craft twice (no
+    // double-click there; provisional, vanilla play). Two logs in the 2x2 end as 8 planks on the cursor.
+    FScreenLab L;
+    FScreenWidget W(L);
+    FFoundationInventory& I = L.Inv();
+    I.bFull = true;
+    for (int32 Slot = 0; Slot < FFoundationInventory::OffhandSlot; ++Slot)
+        I.SetSlot(Slot, {});
+    I.Craft[0] = I.MakeStack(L.A.Rules.FindItem(TEXT("oak_log")), 2);
+    W.Click(FScreenMenu::ResultSlot, EKeys::LeftMouseButton);
+    W.Click(FScreenMenu::ResultSlot, EKeys::LeftMouseButton);
+    const int32 Planks = L.A.Rules.FindItem(TEXT("oak_planks"));
+    TestTrue(TEXT("8 planks on the cursor"), I.Carried.Item == Planks && I.Carried.Count == 8);
+    TestTrue(TEXT("both logs used"), I.Craft[0].IsEmpty());
+    TestFalse(TEXT("no pick-all sent"),
+        W.Sent.ContainsByPredicate(
+            [](const FHudContainerClick& C) { return C.Type == EFoundationClickType::PickupAll; }));
+    // Elsewhere the double-click still collects (step 5b): Unnamed.Hud.Container.Input, finding 1.
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FHudContainerMouseBindingsTest, "Unnamed.Hud.Container.MouseBindings", ContainerScreenTestFlags)
+
+bool FHudContainerMouseBindingsTest::RunTest(const FString&)
+{
+    // Codex review 10, finding 2: a thumb button bound to a screen action acts as a key would.
+    if (!FSlateApplication::IsInitialized())
+    {
+        AddError(TEXT("no Slate application: the cursor-placed cases cannot run"));
+        return false;
+    }
+    FScreenLab L;
+    FScreenWidget W(L);
+    W.Bindings = {{TEXT("key.inventory"), EKeys::E}, {TEXT("key.hotbar.1"), EKeys::ThumbMouseButton},
+        {TEXT("key.swapOffhand"), EKeys::F}, {TEXT("key.drop"), EKeys::ThumbMouseButton2}};
+    FFoundationInventory& I = L.Inv();
+    I.bFull = true;
+    for (int32 Slot = 0; Slot < FFoundationInventory::OffhandSlot; ++Slot)
+        I.SetSlot(Slot, {});
+    const int32 Stone = L.A.Rules.FindItem(TEXT("stone"));
+    I.SetSlot(9, I.MakeStack(Stone, 5));
+    const FReply Swap = W.ButtonOver(ScreenMain(0), EKeys::ThumbMouseButton);
+    TestTrue(TEXT("thumb 1 swaps with hotbar slot 1"),
+        Swap.IsEventHandled() && W.Sent.Num() == 1 && W.Sent[0].Type == EFoundationClickType::Swap &&
+            W.Sent[0].Button == 0 && I.Hotbar[0].Count == 5);
+    W.ButtonOver(FScreenMenu::FirstHotbar, EKeys::ThumbMouseButton2);
+    TestTrue(TEXT("thumb 2 throws"), W.Sent.Num() == 1 && W.Sent[0].Type == EFoundationClickType::Throw);
+    // An unbound thumb button does nothing and is not handled; the inventory key bound to it closes.
+    W.Bindings.Add(TEXT("key.drop"), EKeys::Q);
+    const FReply Unbound = W.ButtonOver(FScreenMenu::FirstHotbar, EKeys::ThumbMouseButton2);
+    TestTrue(TEXT("unbound thumb: nothing"), !Unbound.IsEventHandled() && W.Sent.IsEmpty());
+    W.Bindings.Add(TEXT("key.inventory"), EKeys::ThumbMouseButton2);
+    W.ButtonOver(FScreenMenu::FirstHotbar, EKeys::ThumbMouseButton2);
+    TestTrue(TEXT("thumb bound to the inventory closes"), W.bClosed);
+    // Left, right and middle stay clicks.
+    W.Bindings.Add(TEXT("key.hotbar.1"), EKeys::LeftMouseButton);
+    W.ButtonOver(ScreenMain(3), EKeys::LeftMouseButton);
+    TestTrue(TEXT("left is a click, never a binding"),
+        !W.Sent.ContainsByPredicate([](const FHudContainerClick& C) { return C.Type == EFoundationClickType::Swap; }) &&
+            W.Sent.ContainsByPredicate([](const FHudContainerClick& C)
+                { return C.Type == EFoundationClickType::Pickup && C.Slot == ScreenMain(3); }));
     return true;
 }
 #endif

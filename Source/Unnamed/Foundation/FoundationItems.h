@@ -210,6 +210,10 @@ struct UNNAMED_API FFoundationInventory
     // The stack on the cursor while a container is open (vanilla's carried item), and a drag over its slots.
     FFoundationItemInstance Carried;
     FFoundationQuickCraft QuickCraft;
+    // The 2x2 crafting grid (survival step 6), row-major. Its stacks belong to the open screen, as vanilla's crafting
+    // slots belong to its menu: closing returns them (ContainerClose). They are not Inventory slots (GetSlot).
+    static constexpr int32 CraftSlots = 4;
+    TArray<FFoundationItemInstance> Craft;
     int32 Selected = 0;
     bool bInfiniteSupply = false;
     // The full inventory (36 + 4 + offhand); the authority sets it from FFoundationLabOptions::bFullInventory.
@@ -232,7 +236,7 @@ struct UNNAMED_API FFoundationInventory
     // Count that could be added (merge into same-item stacks, selected/offhand first, then free slots: the hotbar, then
     // the main grid with bFull).
     int32 GetSpaceFor(int32 Item, int32 MaxStack) const;
-    // Adds up to Count in vanilla's order (minecraft.wiki "Inventory", provisional until probe P3): the selected
+    // Adds up to Count in vanilla's order (value report, inventory.pickup_order): the selected
     // stack, the offhand, then the hotbar and the main grid merge; then the first empty slot, hotbar before main.
     // Returns how many fit. bTouchStacks false leaves the merged stacks' own revisions (their item
     // refs) as they are and bumps only the inventory's: an item entity's pickup changes a count, and a break in

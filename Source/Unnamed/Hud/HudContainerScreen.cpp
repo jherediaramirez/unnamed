@@ -8,6 +8,7 @@ namespace
     using FContainerScreenMenu = FFoundationContainerMenu;
     const FLinearColor ContainerTitleColor = FLinearColor(FColor(0x40, 0x40, 0x40));
     const TCHAR* ContainerBackground = TEXT("gui/container/inventory");
+    const TCHAR* CraftingBackground = TEXT("gui/container/crafting_table");
     const TCHAR* ContainerRecipeButton = TEXT("gui/sprites/recipe_book/button");
     const TCHAR* ContainerRecipeButtonHot = TEXT("gui/sprites/recipe_book/button_highlighted");
     const TCHAR* ContainerHighlightBack = TEXT("gui/sprites/container/slot_highlight_back");
@@ -40,12 +41,14 @@ void SHudContainerScreen::Construct(const FArguments& Arguments)
     GetView = Arguments._GetView;
     OnClick = Arguments._OnClick;
     OnClose = Arguments._OnClose;
+    GetKey = Arguments._GetKey;
     Model.Items = Arguments._Items;
+    Model.Kind = Arguments._Kind;
     Model.bFullInventory = FoundationInventory::IsFull();
     Art.Init(Arguments._Registry, Arguments._HudAssets, Arguments._Items);
     // The screen's own art (ImportContainerGui.py), the shared slot highlight (ImportBlocks.py), item sprites and
     // the HUD's font and tooltip sprites.
-    for (const TCHAR* Id : {ContainerBackground, ContainerRecipeButton, ContainerRecipeButtonHot})
+    for (const TCHAR* Id : {GetBackground(), ContainerRecipeButton, ContainerRecipeButtonHot})
         Art.LoadContainerGui(Id);
     for (int32 Slot = FContainerScreenMenu::FirstArmor; Slot < FContainerScreenMenu::PlayerMenuSlots; ++Slot)
         if (const TCHAR* Id = GetContainerSilhouette(Slot)) Art.LoadContainerGui(Id);
@@ -79,7 +82,7 @@ FIntPoint SHudContainerScreen::ToGui(const FGeometry& Geometry, FVector2D Screen
 FHudContainerView SHudContainerScreen::GetCurrentView() const
 {
     FHudContainerView View = GetView ? GetView() : FHudContainerView();
-    View.Slots.SetNum(FContainerScreenMenu::PlayerMenuSlots);
+    View.Slots.SetNum(Model.GetSlots());
     return View;
 }
 
@@ -121,7 +124,12 @@ void SHudContainerScreen::Release(FIntPoint Point, int32 Button)
 FReply SHudContainerScreen::OnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event)
 {
     const int32 Button = GetButton(Event);
-    if (Button < 0) return FReply::Unhandled();
+    // Another mouse button (a thumb button) acts as the binding it is set to, as a key does (Codex review 10,
+    // finding 2).
+    if (Button < 0)
+        return PressBound(Geometry, Event.GetEffectingButton(), Event.IsControlDown()) ? FReply::Handled()
+                                                                                       : FReply::Unhandled();
+    bReleasingCapture = false;
     Press(ToGui(Geometry, Event.GetScreenSpacePosition()), Button, Event.IsShiftDown(), FPlatformTime::Seconds());
     return FReply::Handled().CaptureMouse(SharedThis(this));
 }
@@ -136,8 +144,11 @@ FReply SHudContainerScreen::OnMouseButtonUp(const FGeometry& Geometry, const FPo
 {
     const int32 Button = GetButton(Event);
     if (Button >= 0) Release(ToGui(Geometry, Event.GetScreenSpacePosition()), Button);
-    // The capture lasts while any button is down (a right tap during a left drag keeps it).
-    return Event.GetPressedButtons().IsEmpty() ? FReply::Handled().ReleaseMouseCapture() : FReply::Handled();
+    // The capture lasts while any button is down (a right tap during a left drag keeps it). Letting it go makes Slate
+    // report a capture loss, which must not forget the click a double-click needs (Codex 5b finding 1).
+    if (!Event.GetPressedButtons().IsEmpty()) return FReply::Handled();
+    bReleasingCapture = true;
+    return FReply::Handled().ReleaseMouseCapture();
 }
 
 FReply SHudContainerScreen::OnMouseMove(const FGeometry& Geometry, const FPointerEvent& Event)
@@ -148,30 +159,65 @@ FReply SHudContainerScreen::OnMouseMove(const FGeometry& Geometry, const FPointe
 
 void SHudContainerScreen::OnMouseCaptureLost(const FCaptureLostEvent& Event)
 {
-    // A drag or a double-click whose release will never come (focus lost, alt-tab) ends without a click.
-    Model.Reset();
+    // Our own release: only a drag (already ended by the release) is forgotten. Otherwise a drag or a double-click
+    // whose release will never come (focus lost, alt-tab) ends without a click.
+    if (bReleasingCapture)
+        Model.ResetDrag();
+    else
+        Model.Reset();
+    bReleasingCapture = false;
 }
 
 FReply SHudContainerScreen::OnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
 {
-    const FKey Key = Event.GetKey();
-    if (Key == EKeys::Escape || Key == EKeys::E)
+    PressBound(Geometry, Event.GetKey(), Event.IsControlDown());
+    return FReply::Handled();
+}
+
+bool SHudContainerScreen::PressBound(const FGeometry& Geometry, const FKey& Key, bool bControl)
+{
+    // Escape, or the player's inventory key, closes; the hotbar, offhand and drop keys are the player's bindings
+    // (Codex 5b finding 3).
+    if (Key == EKeys::Escape || Key == GetBoundKey(TEXT("key.inventory"), EKeys::E))
     {
         Model.Reset();
         if (OnClose) OnClose();
-        return FReply::Handled();
+        return true;
     }
     Model.bFullInventory = FoundationInventory::IsFull();
     // Keys act on the slot under the cursor now, also before the mouse has moved over the open screen.
     Mouse = ToGui(Geometry, FSlateApplication::Get().GetCursorPos());
     static const FKey Numbers[] = {EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four, EKeys::Five, EKeys::Six,
         EKeys::Seven, EKeys::Eight, EKeys::Nine};
+    bool bBound = false;
     for (int32 Number = 0; Number < 9; ++Number)
-        if (Key == Numbers[Number]) Send(Model.PressSwap(Mouse, Number, GetCurrentView()));
-    // F swaps with the offhand (Inventory number 40), Q throws.
-    if (Key == EKeys::F) Send(Model.PressSwap(Mouse, FFoundationInventory::OffhandSlot, GetCurrentView()));
-    if (Key == EKeys::Q) Send(Model.PressDrop(Mouse, Event.IsControlDown(), GetCurrentView()));
-    return FReply::Handled();
+        if (Key == GetBoundKey(*FString::Printf(TEXT("key.hotbar.%d"), Number + 1), Numbers[Number]))
+        {
+            bBound = true;
+            Send(Model.PressSwap(Mouse, Number, GetCurrentView()));
+        }
+    // The offhand key swaps with the offhand (Inventory number 40), the drop key throws.
+    if (Key == GetBoundKey(TEXT("key.swapOffhand"), EKeys::F))
+    {
+        bBound = true;
+        Send(Model.PressSwap(Mouse, FFoundationInventory::OffhandSlot, GetCurrentView()));
+    }
+    if (Key == GetBoundKey(TEXT("key.drop"), EKeys::Q))
+    {
+        bBound = true;
+        Send(Model.PressDrop(Mouse, bControl, GetCurrentView()));
+    }
+    return bBound;
+}
+
+const TCHAR* SHudContainerScreen::GetBackground() const
+{
+    return Model.Kind == EFoundationMenuKind::Crafting ? CraftingBackground : ContainerBackground;
+}
+
+FKey SHudContainerScreen::GetBoundKey(const TCHAR* Id, const FKey& Default) const
+{
+    return GetKey ? GetKey(FName(Id)) : Default;
 }
 
 int32 SHudContainerScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geometry, const FSlateRect& CullingRect,
@@ -186,27 +232,38 @@ int32 SHudContainerScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geom
     const FVector2f Pixels = FVector2f(Geometry.GetLocalSize()) / Frame.Units;
     Paint.Box(&Art.Solid, {0, 0}, FIntPoint(int32(Pixels.X) + 1, int32(Pixels.Y) + 1), Whole,
         FLinearColor(.0627f, .0627f, .0627f, .784f));
-    Paint.Box(Art.Find(ContainerBackground), O, {FHudContainerModel::Width, FHudContainerModel::Height},
+    Paint.Box(Art.Find(GetBackground()), O, {FHudContainerModel::Width, FHudContainerModel::Height},
         FBox2f(FVector2f(0), FVector2f(FHudContainerModel::Width / 256.f, FHudContainerModel::Height / 256.f)));
-    // The recipe-book button (inert until the recipe book exists) and the crafting label.
-    Paint.Box(Art.Find(FHudContainerModel::IsInRecipeButton(Mouse) ? ContainerRecipeButtonHot : ContainerRecipeButton),
-        O + FIntPoint(FHudContainerModel::RecipeButtonX, FHudContainerModel::RecipeButtonY),
+    // The recipe-book button (inert until the recipe book exists) and the labels: the inventory screen's "Crafting"
+    // over its 2x2; the crafting table's title and "Inventory" over the player's rows.
+    const bool bCrafting = Model.Kind == EFoundationMenuKind::Crafting;
+    Paint.Box(Art.Find(FHudContainerModel::IsInRecipeButton(Model.Kind, Mouse) ? ContainerRecipeButtonHot
+                                                                               : ContainerRecipeButton),
+        O + FHudContainerModel::GetRecipeButton(Model.Kind),
         {FHudContainerModel::RecipeButtonWidth, FHudContainerModel::RecipeButtonHeight});
-    Paint.Text(TEXT("Crafting"), O + FIntPoint(FHudContainerModel::TitleX, FHudContainerModel::TitleY),
-        ContainerTitleColor, false);
+    if (bCrafting)
+    {
+        Paint.Text(TEXT("Crafting"),
+            O + FIntPoint(FHudContainerModel::CraftingTitleX, FHudContainerModel::CraftingTitleY), ContainerTitleColor,
+            false);
+        Paint.Text(TEXT("Inventory"),
+            O + FIntPoint(FHudContainerModel::InventoryLabelX, FHudContainerModel::InventoryLabelY),
+            ContainerTitleColor, false);
+    }
+    else
+        Paint.Text(TEXT("Crafting"), O + FIntPoint(FHudContainerModel::TitleX, FHudContainerModel::TitleY),
+            ContainerTitleColor, false);
 
     const FHudContainerView View = GetCurrentView();
     TMap<int32, FHudCreativeStack> Preview;
     FHudCreativeStack Carried;
     Model.GetDragPreview(View, Preview, Carried);
     const int32 Hover = Model.HitTest(Mouse);
-    const bool bFull = Model.bFullInventory;
-    for (int32 Slot = 0; Slot < FContainerScreenMenu::PlayerMenuSlots; ++Slot)
+    for (int32 Slot = 0; Slot < Model.GetSlots(); ++Slot)
     {
-        const FIntPoint At = O + FHudContainerModel::GetSlotPosition(Slot);
+        const FIntPoint At = O + Model.GetPosition(Slot);
         // Without the full inventory the main and armor slots stay empty, as the creative screen's survival tab.
-        const bool bShown =
-            bFull || Slot < FContainerScreenMenu::FirstArmor || Slot >= FContainerScreenMenu::FirstHotbar;
+        const bool bShown = Model.IsShown(Slot);
         const FHudCreativeStack* Shown = Preview.Find(Slot);
         const FHudCreativeStack Stack = Shown ? *Shown : bShown ? View.Get(Slot) : FHudCreativeStack();
         // The hovered slot and the slots a drag covers get the 1.21.6+ highlight behind and in front of the item.
@@ -214,7 +271,8 @@ int32 SHudContainerScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geom
         if (bHighlight) Paint.Box(Art.Find(ContainerHighlightBack), At - FIntPoint(4, 4), {24, 24});
         if (Stack.IsEmpty())
         {
-            if (const TCHAR* Silhouette = GetContainerSilhouette(Slot)) Paint.Box(Art.Find(Silhouette), At, {16, 16});
+            if (const TCHAR* Silhouette = bCrafting ? nullptr : GetContainerSilhouette(Slot))
+                Paint.Box(Art.Find(Silhouette), At, {16, 16});
         }
         else
             Paint.Stack(Stack, At);

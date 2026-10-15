@@ -215,9 +215,11 @@ bool FFoundationInventoryPickupTest::RunTest(const FString&)
     TestTrue(TEXT("left takes all"), HoldsStack(I.Carried, InvStone, 32) && I.Main[0].IsEmpty());
     I.SetSlot(10, I.MakeStack(InvDirt, 3));
     Menu.Click(MainMenuSlot(1), 0, EFoundationClickType::Pickup);
-    Menu.Click(MainMenuSlot(1), 0, EFoundationClickType::Pickup);
+    // Checked after the first click, so a no-op cannot pass (Codex 5a finding 5).
     TestTrue(
-        TEXT("left on another item swaps"), HoldsStack(I.Main[1], InvDirt, 3) && HoldsStack(I.Carried, InvStone, 32));
+        TEXT("left on another item swaps"), HoldsStack(I.Main[1], InvStone, 32) && HoldsStack(I.Carried, InvDirt, 3));
+    Menu.Click(MainMenuSlot(1), 0, EFoundationClickType::Pickup);
+    TestTrue(TEXT("and swaps back"), HoldsStack(I.Main[1], InvDirt, 3) && HoldsStack(I.Carried, InvStone, 32));
     // Armor slots take only their own slot's items, one at a time.
     FFoundationClickResult R = Menu.Click(HeadMenuSlot, 0, EFoundationClickType::Pickup);
     TestTrue(TEXT("stone refused by the head slot"), !R.bChanged && I.Armor[3].IsEmpty());
@@ -230,8 +232,9 @@ bool FFoundationInventoryPickupTest::RunTest(const FString&)
     TestTrue(TEXT("right outside throws one"), HoldsStack(R.Thrown, InvDirt, 1) && HoldsStack(I.Carried, InvDirt, 4));
     R = Menu.Click(FFoundationContainerMenu::Outside, 0, EFoundationClickType::Pickup);
     TestTrue(TEXT("left outside throws the stack"), HoldsStack(R.Thrown, InvDirt, 4) && I.Carried.IsEmpty());
-    TestFalse(TEXT("menu slot 0 (the crafting result) waits for step 6"),
-        Menu.Click(0, 0, EFoundationClickType::Pickup).bValid);
+    // Menu slot 0 is the crafting result (survival step 6): a slot, empty without a recipe, which never takes.
+    R = Menu.Click(FFoundationContainerMenu::ResultSlot, 0, EFoundationClickType::Pickup);
+    TestTrue(TEXT("menu slot 0 (the crafting result) is a slot"), R.bValid && !R.bChanged);
     return true;
 }
 
@@ -308,10 +311,13 @@ bool FFoundationInventoryQuickCraftTest::RunTest(const FString&)
     TestTrue(TEXT("no more slots than items"),
         HoldsStack(I.Main[5], InvDirt, 1) && HoldsStack(I.Main[6], InvStone, 1) && HoldsStack(I.Main[7], InvStone, 1) &&
             I.Carried.IsEmpty());
-    // Middle: creative only, a full stack in each, the cursor kept.
-    I.Carried = I.MakeStack(InvStone, 1);
+    // Middle: creative only, a full stack in each, and the cursor ends empty (value report, survival.r7.creative: a
+    // cursor of 64 stone over 3 empty slots; survival changes nothing and keeps the 64).
+    I.Carried = I.MakeStack(InvStone, 64);
     Drag(2, {MainMenuSlot(8), MainMenuSlot(9)});
-    TestTrue(TEXT("no middle drag in survival"), I.Main[8].IsEmpty() && HoldsStack(I.Carried, InvStone, 1));
+    TestTrue(TEXT("no middle drag in survival"),
+        I.Main[8].IsEmpty() && I.Main[9].IsEmpty() && HoldsStack(I.Carried, InvStone, 64));
+    I.Carried = I.MakeStack(InvStone, 1);
     FFoundationContainerMenu Creative(I, Rules, true);
     Creative.Click(FFoundationContainerMenu::Outside, FFoundationContainerMenu::QuickCraftButton(0, 2),
         EFoundationClickType::QuickCraft);
@@ -319,9 +325,9 @@ bool FFoundationInventoryQuickCraftTest::RunTest(const FString&)
     Creative.Click(MainMenuSlot(9), FFoundationContainerMenu::QuickCraftButton(1, 2), EFoundationClickType::QuickCraft);
     Creative.Click(FFoundationContainerMenu::Outside, FFoundationContainerMenu::QuickCraftButton(2, 2),
         EFoundationClickType::QuickCraft);
-    TestTrue(TEXT("creative middle drag: full stacks"),
-        HoldsStack(I.Main[8], InvStone, 64) && HoldsStack(I.Main[9], InvStone, 64) &&
-            HoldsStack(I.Carried, InvStone, 1));
+    TestTrue(TEXT("creative middle drag: full stacks, the cursor empty"),
+        HoldsStack(I.Main[8], InvStone, 64) && HoldsStack(I.Main[9], InvStone, 64) && I.Carried.IsEmpty());
+    I.Carried = I.MakeStack(InvStone, 1);
     // One slot is a plain click; another click type ends a drag and does nothing else.
     I.Carried.Count = 6;
     Drag(0, {MainMenuSlot(10)});
@@ -376,10 +382,21 @@ bool FFoundationInventoryAuthorityTest::RunTest(const FString&)
         L.Click(MainMenuSlot(4), 1, EFoundationClickType::Pickup).IsCommitted() && HoldsStack(I.Main[4], StoneItem, 1));
     TestEqual(TEXT("only the player's container exists"),
         L.Click(MainMenuSlot(4), 0, EFoundationClickType::Pickup, 1).Reason, EFoundationReason::InvalidSlot);
-    // A throw waits for survival step 4: refused, nothing changes.
+    // With foundation.Items.Entities 0 a throw is refused and nothing changes.
+    L.A.Options.bItemEntities = false;
     const FFoundationResult Thrown = L.Click(FFoundationContainerMenu::Outside, 0, EFoundationClickType::Pickup);
     TestTrue(TEXT("throw deferred, the cursor kept"),
         Thrown.Reason == EFoundationReason::DropDeferred && HoldsStack(I.Carried, StoneItem, 9));
+    // At 1 (items fixes) a right click outside throws one as Q's throw does: delay 40, the cursor keeps the rest.
+    L.A.Options.bItemEntities = true;
+    TestTrue(TEXT("switch 1: a right click outside throws one"),
+        L.Click(FFoundationContainerMenu::Outside, 1, EFoundationClickType::Pickup).IsCommitted() &&
+            HoldsStack(I.Carried, StoneItem, 8) && L.A.GetItemEntities().Num() == 1 &&
+            L.A.GetItemEntities()[0].Item == StoneItem && L.A.GetItemEntities()[0].Count == 1 &&
+            L.A.GetItemEntities()[0].PickupDelay == 40 && L.A.ItemsThrown == 1);
+    // Back to 0 for the cases below, which were written for it.
+    I.Carried.Count = 9;
+    L.A.Options.bItemEntities = false;
     // Closing puts the cursor stack back.
     TestTrue(TEXT("close returns the cursor, merging as a pickup does"),
         L.Close().IsCommitted() && I.Carried.IsEmpty() && HoldsStack(I.Main[4], StoneItem, 10) &&
@@ -392,11 +409,19 @@ bool FFoundationInventoryAuthorityTest::RunTest(const FString&)
     TestTrue(TEXT("close keeps a worn tool's damage and identity"),
         L.Close().IsCommitted() && I.Carried.IsEmpty() && I.Hotbar[0].Item == Pickaxe && I.Hotbar[0].Damage == 100 &&
             I.Hotbar[0].InstanceId == PickaxeId);
-    // A cursor that does not fit would be thrown: refused, the cursor kept.
+    // A cursor that does not fit is thrown; with foundation.Items.Entities 0 the close is refused, the cursor kept.
     for (int32 Slot = 0; Slot < 36; ++Slot)
         I.SetSlot(Slot, I.MakeStack(Pickaxe, 1));
     I.Carried = I.MakeStack(StoneItem, 3);
     TestEqual(TEXT("close with no room is deferred"), L.Close().Reason, EFoundationReason::DropDeferred);
+    TestTrue(TEXT("switch 0: the cursor kept, nothing thrown"),
+        HoldsStack(I.Carried, StoneItem, 3) && L.A.GetItemEntities().Num() == 1);
+    L.A.Options.bItemEntities = true;
+    TestTrue(TEXT("switch 1: close with no room throws the cursor stack"),
+        L.Close().IsCommitted() && I.Carried.IsEmpty() && L.A.GetItemEntities().Num() == 2 &&
+            L.A.GetItemEntities()[1].Item == StoneItem && L.A.GetItemEntities()[1].Count == 3 &&
+            L.A.GetItemEntities()[1].PickupDelay == 40 && L.A.ItemsThrown == 2);
+    L.A.Options.bItemEntities = false;
     // The switch at 0: the main and armor slots are not there; the hotbar and offhand still click.
     L.A.Options.bFullInventory = false;
     I.Carried = {};

@@ -23,25 +23,51 @@ FIntPoint FHudContainerModel::GetSlotPosition(int32 Slot)
     return {77, 62};
 }
 
+FIntPoint FHudContainerModel::GetSlotPosition(EFoundationMenuKind Kind, int32 Slot)
+{
+    if (Kind == EFoundationMenuKind::Inventory) return GetSlotPosition(Slot);
+    // The crafting table: result 124,35; the 3x3 from 30,17; the main grid from 8,84; the hotbar at y 142.
+    const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
+    if (Slot == FContainerModelMenu::ResultSlot) return {124, 35};
+    if (Layout.IsCraft(Slot))
+        return {30 + (Slot - Layout.FirstCraft) % Layout.CraftWidth * 18,
+            17 + (Slot - Layout.FirstCraft) / Layout.CraftWidth * 18};
+    if (Layout.IsMain(Slot)) return {8 + (Slot - Layout.FirstMain) % 9 * 18, 84 + (Slot - Layout.FirstMain) / 9 * 18};
+    if (Layout.IsHotbar(Slot)) return {8 + (Slot - Layout.FirstHotbar) * 18, 142};
+    // Not a slot: far outside the window, so nothing hits it.
+    return {-1000, -1000};
+}
+
+FIntPoint FHudContainerModel::GetRecipeButton(EFoundationMenuKind Kind)
+{
+    return Kind == EFoundationMenuKind::Crafting ? FIntPoint(CraftingRecipeButtonX, CraftingRecipeButtonY)
+                                                 : FIntPoint(RecipeButtonX, RecipeButtonY);
+}
+
+bool FHudContainerModel::IsShown(int32 Slot) const
+{
+    const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
+    return Slot >= 0 && Slot < Layout.Slots && (bFullInventory || (!Layout.IsMain(Slot) && !Layout.IsArmor(Slot)));
+}
+
 int32 FHudContainerModel::HitTest(FIntPoint Point) const
 {
     if (Point.X < 0 || Point.Y < 0 || Point.X >= Width || Point.Y >= Height) return FContainerModelMenu::Outside;
-    for (int32 Slot = 0; Slot < FContainerModelMenu::PlayerMenuSlots; ++Slot)
+    for (int32 Slot = 0; Slot < GetSlots(); ++Slot)
     {
         // A slot's hover area is its 16 x 16 item area and the pixel around it.
-        const FIntPoint At = GetSlotPosition(Slot);
+        const FIntPoint At = GetPosition(Slot);
         if (Point.X >= At.X - 1 && Point.X < At.X + 17 && Point.Y >= At.Y - 1 && Point.Y < At.Y + 17)
-            return bFullInventory || Slot < FContainerModelMenu::FirstArmor || Slot >= FContainerModelMenu::FirstHotbar
-                ? Slot
-                : INDEX_NONE;
+            return IsShown(Slot) ? Slot : INDEX_NONE;
     }
     return INDEX_NONE;
 }
 
-bool FHudContainerModel::IsInRecipeButton(FIntPoint Point)
+bool FHudContainerModel::IsInRecipeButton(EFoundationMenuKind Kind, FIntPoint Point)
 {
-    return Point.X >= RecipeButtonX && Point.X < RecipeButtonX + RecipeButtonWidth && Point.Y >= RecipeButtonY &&
-        Point.Y < RecipeButtonY + RecipeButtonHeight;
+    const FIntPoint At = GetRecipeButton(Kind);
+    return Point.X >= At.X && Point.X < At.X + RecipeButtonWidth && Point.Y >= At.Y &&
+        Point.Y < At.Y + RecipeButtonHeight;
 }
 
 int32 FHudContainerModel::GetMaxStack(FName Item) const
@@ -52,16 +78,16 @@ int32 FHudContainerModel::GetMaxStack(FName Item) const
 
 bool FHudContainerModel::CanDragTo(int32 Slot, const FHudContainerView& View) const
 {
-    if (Slot < FContainerModelMenu::FirstArmor || Slot >= FContainerModelMenu::PlayerMenuSlots ||
-        View.Carried.IsEmpty())
-        return false;
-    if (Slot < FContainerModelMenu::FirstMain)
+    // Never the result slot (it only gives); the crafting grid takes a drag like any slot.
+    const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
+    if (Slot < Layout.FirstCraft || Slot >= Layout.Slots || View.Carried.IsEmpty()) return false;
+    if (Layout.IsArmor(Slot))
     {
         // The armor slots, head to feet, take only their own slot's items.
         static const EFoundationEquipmentSlot Order[] = {EFoundationEquipmentSlot::Head,
             EFoundationEquipmentSlot::Chest, EFoundationEquipmentSlot::Legs, EFoundationEquipmentSlot::Feet};
         const FHudCreativeItem* Info = Items.Find(View.Carried.Item);
-        if (!Info || Info->Equipment != Order[Slot - FContainerModelMenu::FirstArmor]) return false;
+        if (!Info || Info->Equipment != Order[Slot - Layout.FirstArmor]) return false;
     }
     const FHudCreativeStack& Stack = View.Get(Slot);
     return Stack.IsEmpty() ||
@@ -77,9 +103,12 @@ TArray<FHudContainerClick> FHudContainerModel::MouseDown(
     const int32 Slot = HitTest(Point);
     if (Slot == INDEX_NONE || !IsClickable(Slot)) return {};
     // The second left press on a slot: with a stack on the cursor it collects (PICKUP_ALL), after a shift-click it
-    // moves every stack like the one moved; either happens on the release.
-    const bool bDouble = Button == 0 && Slot != FContainerModelMenu::Outside && Slot == LastSlot &&
-        Time - LastTime < DoubleClickSeconds && (bShift ? !LastQuickMoved.IsEmpty() : !View.Carried.IsEmpty());
+    // moves every stack like the one moved; either happens on the release. Never on the result slot: each click there
+    // crafts (provisional, vanilla play: spam-clicking an output crafts each time; the value report has no double-click
+    // row; Codex review 10, finding 4).
+    const bool bDouble = Button == 0 && Slot != FContainerModelMenu::Outside &&
+        Slot != FContainerModelMenu::ResultSlot && Slot == LastSlot && Time - LastTime < DoubleClickSeconds &&
+        (bShift ? !LastQuickMoved.IsEmpty() : !View.Carried.IsEmpty());
     LastSlot = Slot;
     LastTime = bDouble ? -1000 : Time;
     if (bDouble)
@@ -130,8 +159,9 @@ TArray<FHudContainerClick> FHudContainerModel::MouseUp(FIntPoint Point, int32 Bu
         if (!bShiftDoubleClick)
             Clicks.Add({LastSlot, 0, EFoundationClickType::PickupAll});
         else
-            for (int32 Slot = FContainerModelMenu::FirstArmor; Slot < FContainerModelMenu::PlayerMenuSlots; ++Slot)
-                if (HitTest(GetSlotPosition(Slot)) == Slot && !View.Get(Slot).IsEmpty() &&
+            // Every slot past the crafting grid (the armor on, for the inventory; the main grid on, for a table).
+            for (int32 Slot = FFoundationMenuLayout::Get(Kind).GetCraftEnd(); Slot < GetSlots(); ++Slot)
+                if (HitTest(GetPosition(Slot)) == Slot && !View.Get(Slot).IsEmpty() &&
                     View.Get(Slot).Item == LastQuickMoved.Item && View.Get(Slot).Damage == LastQuickMoved.Damage)
                     Clicks.Add({Slot, 0, EFoundationClickType::QuickMove});
         return Clicks;
@@ -147,7 +177,9 @@ TArray<FHudContainerClick> FHudContainerModel::MouseUp(FIntPoint Point, int32 Bu
             EFoundationClickType::QuickCraft});
     }
     else
-        Clicks.Add({PressSlot, DragButton, EFoundationClickType::Pickup});
+        // One collected slot is a plain click there (vanilla turns a one-slot QUICK_CRAFT into a PICKUP of it); with
+        // none, the press slot (Codex 5b finding 2).
+        Clicks.Add({DragSlots.Num() == 1 ? DragSlots[0] : PressSlot, DragButton, EFoundationClickType::Pickup});
     DragButton = PressSlot = INDEX_NONE;
     DragSlots.Reset();
     return Clicks;
@@ -173,10 +205,16 @@ TArray<FHudContainerClick> FHudContainerModel::PressDrop(
     return {{Slot, bControl ? 1 : 0, EFoundationClickType::Throw}};
 }
 
+void FHudContainerModel::ResetDrag()
+{
+    DragButton = PressSlot = INDEX_NONE;
+    DragSlots.Reset();
+}
+
 void FHudContainerModel::Reset()
 {
-    DragButton = PressSlot = LastSlot = INDEX_NONE;
-    DragSlots.Reset();
+    ResetDrag();
+    LastSlot = INDEX_NONE;
     bDoubleClick = bShiftDoubleClick = false;
     LastTime = -1000;
     LastQuickMoved = {};
