@@ -578,6 +578,9 @@ public:
     FFoundationMob* FindMob(int32 Id);
     // Removes every mob, without loot; how many.
     int32 ClearMobs();
+    // A cell as the mobs' A* sees it (survival T6 20b): the top of the collision boxes that start in it, and whether it
+    // holds a fluid.
+    FFoundationPathCell GetPathCell(const FIntVector& Cell);
 
     const TArray<FFoundationEvent>& GetEvents() const { return Events; }
     int64 GetEventSerial() const { return EventSerial; }
@@ -587,7 +590,7 @@ public:
     int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsThrown = 0, ItemsMerged = 0, ItemsDespawned = 0, ItemsEaten = 0,
           Strips = 0, BucketUses = 0;
     int32 OrbsSpawned = 0, OrbsPickedUp = 0, OrbsMerged = 0, OrbsDespawned = 0;
-    int32 MobsSpawned = 0, MobsKilled = 0;
+    int32 MobsSpawned = 0, MobsKilled = 0, MobPaths = 0, MobEggs = 0, MobGrazes = 0;
 
 private:
     FFoundationInventory MakeLoadout();
@@ -689,6 +692,12 @@ private:
     void StepMobs();
     void DropMobLoot(const FFoundationMob& Mob);
     void AddMobSound(const FFoundationMob& Mob, const TCHAR* Sound, float Volume);
+    // Survival T6 20b: a sheep standing in short grass or on a grass block; eating it (the grass goes, or the block
+    // turns to dirt).
+    bool CanGraze(const FFoundationMob& Mob) const;
+    void EatGrass(const FFoundationMob& Mob);
+    // GetPathCell's scratch boxes, kept between calls.
+    TArray<FBox> PathBoxes;
 
     TArray<FFoundationPlayer> Players;
     TArray<FFoundationEvent> Events;

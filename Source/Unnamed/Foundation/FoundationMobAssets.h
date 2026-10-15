@@ -95,7 +95,9 @@ public:
 
     // DA_Mobs under EntityRoot, loaded once; null before ImportMobs.py has run.
     static const UFoundationMobAssets* LoadDefault();
+    // A mob's main layer (the first model with its id); FindLayers adds the layers drawn over it (the sheep's wool).
     const FFoundationMobModelAsset* FindModel(FName Id) const;
+    void FindLayers(FName Id, TArray<const FFoundationMobModelAsset*>& Out) const;
     // Replaces Rules.EntityLootTables with these, items resolved against Rules.Items; how many were skipped.
     int32 AddLoot(FFoundationRules& Rules) const;
 };

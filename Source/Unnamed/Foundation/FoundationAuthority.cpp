@@ -895,6 +895,7 @@ int32 FFoundationAuthority::SpawnMob(EFoundationMobType Type, const FVector& Loc
     // Deterministic per mob: the rules' loot seed and the id.
     Mob.Random.Initialize(int32(HashCombine(GetTypeHash(Mob.Id), GetTypeHash(Rules.LootSeed))));
     Mob.AmbientTicks = AmbientMinTicks + Mob.Random.RandHelper(AmbientRandomTicks);
+    if (Type == EFoundationMobType::Chicken) Mob.EggTicks = EggMinTicks + Mob.Random.RandHelper(EggRandomTicks);
     ++MobsSpawned;
     return Mob.Id;
 }
@@ -923,15 +924,84 @@ int32 FFoundationAuthority::ClearMobs()
     return Count;
 }
 
+FFoundationPathCell FFoundationAuthority::GetPathCell(const FIntVector& Cell)
+{
+    // A cell the block world does not know (outside the bounds, a column not loaded) has the collision the mobs move
+    // against there (a fixture, or an ungenerated column's solid) and no fluid.
+    FFoundationPathCell Out;
+    Out.bAvoid = World.IsKnown(Cell) && World.GetBlock(World.Get(Cell).State).IsFluid();
+    // The boxes that start in the cell (a fence's reaches up into the next one); the pitcher crop's starts 1/16 below.
+    const double Block = UFoundationProfile::BlockCm;
+    const FVector Bottom = World.OriginCm + FVector(Cell) * Block;
+    const FBox Region(Bottom + FVector(1), Bottom + FVector(Block - 1));
+    TArray<FBox>& Boxes = PathBoxes;
+    Boxes.Reset();
+    if (GatherCollision)
+        GatherCollision(Region, Boxes);
+    else
+    {
+        World.GatherCollision(Region, Boxes);
+        for (const FFoundationStatic& Static : Statics)
+            if (Static.Box.Intersect(Region)) Boxes.Add(Static.Box);
+    }
+    for (const FBox& Box : Boxes)
+        if (Box.Min.Z >= Bottom.Z - Block / 8) Out.Solid = FMath::Max(Out.Solid, float((Box.Max.Z - Bottom.Z) / Block));
+    return Out;
+}
+
+bool FFoundationAuthority::CanGraze(const FFoundationMob& Mob) const
+{
+    const FIntVector Feet(FoundationGrid::FloorToCell(Mob.LocalCm.X), FoundationGrid::FloorToCell(Mob.LocalCm.Y),
+        FoundationGrid::FloorToCell(Mob.LocalCm.Z + 1));
+    const auto Is = [this](const FIntVector& Cell, const TCHAR* Id)
+    { return World.IsKnown(Cell) && World.GetBlock(World.Get(Cell).State).Id == FName(Id); };
+    return Is(Feet, TEXT("short_grass")) || Is(Feet - FIntVector(0, 0, 1), TEXT("grass_block"));
+}
+
+void FFoundationAuthority::EatGrass(const FFoundationMob& Mob)
+{
+    // [survival.r10.ai_defaults] EatBlockGoal with mobGriefing on (the default): short grass where it stands breaks
+    // without drops, else the grass block below turns to dirt. The break's particles and sound wait (a silent hook).
+    const FIntVector Feet(FoundationGrid::FloorToCell(Mob.LocalCm.X), FoundationGrid::FloorToCell(Mob.LocalCm.Y),
+        FoundationGrid::FloorToCell(Mob.LocalCm.Z + 1));
+    const FIntVector Below = Feet - FIntVector(0, 0, 1);
+    const FFoundationBlockState Here = World.IsKnown(Feet) ? World.Get(Feet).State : FFoundationBlockState();
+    if (World.IsKnown(Feet) && World.GetBlock(Here).Id == TEXT("short_grass"))
+        World.Set(Feet, World.GetRegistry().GetRemainder(Here));
+    else if (const FFoundationBlockType* Dirt = World.FindBlock(TEXT("dirt"));
+        Dirt && World.IsKnown(Below) && World.GetBlock(World.Get(Below).State).Id == TEXT("grass_block"))
+        World.Set(Below, Dirt->GetDefaultState());
+    else
+        return;
+    ++MobGrazes;
+}
+
 void FFoundationAuthority::StepMobs()
 {
     using namespace FoundationMobs;
     if (Mobs.IsEmpty() || !Options.bMobs) return;
     const FVector& Origin = World.OriginCm;
     const double VoidCm = double(World.BoundsMin.Z - VoidDepthCells) * UFoundationProfile::BlockCm;
-    TArray<FVector, TInlineAllocator<4>> Eyes;
+    TArray<FFoundationMobPlayer, TInlineAllocator<4>> Near;
     for (const FFoundationPlayer& Player : Players)
-        if (Player.bHasFacts && Player.Facts.bAlive) Eyes.Add(Player.Facts.EyeCm);
+        if (Player.bHasFacts && Player.Facts.bAlive)
+        {
+            const auto ItemId = [this, &Player](EFoundationHand Hand)
+            {
+                const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Hand);
+                return Stack.IsEmpty() || !Rules.Items.IsValidIndex(Stack.Item) ? FName() : Rules.Items[Stack.Item].Id;
+            };
+            Near.Add({Player.Id, Player.Facts.EyeCm, Player.Facts.FeetCm, ItemId(EFoundationHand::Main),
+                ItemId(EFoundationHand::Off)});
+        }
+    // The cells A* reads this step, shared by its searches (at most PathsPerStep).
+    TMap<FIntVector, FFoundationPathCell> PathCells;
+    const auto Query = [this, &PathCells](const FIntVector& Cell)
+    {
+        if (const FFoundationPathCell* Known = PathCells.Find(Cell)) return *Known;
+        return PathCells.Add(Cell, GetPathCell(Cell));
+    };
+    int32 Paths = 0;
     TArray<FBox> Boxes;
     for (int32 Index = 0; Index < Mobs.Num();)
     {
@@ -962,7 +1032,14 @@ void FFoundationAuthority::StepMobs()
             Mobs.RemoveAt(Index);
             continue;
         }
-        Think(Mob, Origin, Eyes);
+        Think(Mob, Origin, Near, Mob.Type == EFoundationMobType::Sheep && Mob.GrazeTicks == 0 && CanGraze(Mob));
+        if (Mob.bEatNow) EatGrass(Mob);
+        if (Mob.bNeedPath && Paths < PathsPerStep)
+        {
+            PlanPath(Mob, Query);
+            ++Paths;
+            ++MobPaths;
+        }
         bool bJump = false;
         const FVector2D Input = Steer(Mob, Origin, bJump);
         GatherEntityCollision(GetStepRegion(Mob, Origin), GetBox(Mob.Type, Origin + Mob.LocalCm), Boxes);
@@ -974,6 +1051,23 @@ void FFoundationAuthority::StepMobs()
             {
                 Mob.AmbientTicks = AmbientMinTicks + Mob.Random.RandHelper(AmbientRandomTicks);
                 AddMobSound(Mob, TEXT("ambient"), Kind.Volume);
+            }
+            // [survival.r10.idle_and_sun] a living adult chicken lays an egg when its countdown runs out. Provisional:
+            // the egg leaves its feet like a mob drop.
+            if (Mob.Type == EFoundationMobType::Chicken && --Mob.EggTicks <= 0)
+            {
+                Mob.EggTicks = EggMinTicks + Mob.Random.RandHelper(EggRandomTicks);
+                if (const int32 Egg = Rules.FindItem(TEXT("egg")); Egg != INDEX_NONE)
+                {
+                    // One draw per statement: argument order is unspecified.
+                    const double Side = FoundationItemEntities::SpawnSidewaysCm;
+                    const double X = Mob.Random.FRandRange(-Side, Side);
+                    const double Y = Mob.Random.FRandRange(-Side, Side);
+                    const FVector Velocity(X, Y, FoundationItemEntities::SpawnUpCm);
+                    SpawnItem(Egg, 1, Mob.LocalCm, Velocity, FoundationItemEntities::BlockDropPickupDelay);
+                    AddMobSound(Mob, TEXT("egg"), Kind.Volume);
+                    ++MobEggs;
+                }
             }
             if (Mob.bOnGround)
             {

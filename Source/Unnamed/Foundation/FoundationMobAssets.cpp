@@ -28,6 +28,12 @@ const FFoundationMobModelAsset* UFoundationMobAssets::FindModel(FName Id) const
     return Models.FindByPredicate([Id](const FFoundationMobModelAsset& Model) { return Model.Id == Id; });
 }
 
+void UFoundationMobAssets::FindLayers(FName Id, TArray<const FFoundationMobModelAsset*>& Out) const
+{
+    for (const FFoundationMobModelAsset& Model : Models)
+        if (Model.Id == Id) Out.Add(&Model);
+}
+
 int32 UFoundationMobAssets::AddLoot(FFoundationRules& Rules) const
 {
     Rules.EntityLootTables.Reset();
@@ -38,8 +44,15 @@ int32 UFoundationMobAssets::AddLoot(FFoundationRules& Rules) const
         if (const FName Missing = FoundationLootAssets::MakeTable(LootTables[Index], Index, Rules, Table);
             !Missing.IsNone())
         {
-            UE_LOG(LogUnnamedFoundation, Warning, TEXT("The loot table entities/%s is skipped: %s is not defined"),
-                *LootTables[Index].Block.ToString(), *Missing.ToString());
+            // Once per process at Warning (every lab load rebuilds the rules; the skeleton's arrow waits for T2 19c).
+            static TSet<FName> Warned;
+            bool bAlreadyWarned = false;
+            Warned.Add(LootTables[Index].Block, &bAlreadyWarned);
+            if (!bAlreadyWarned)
+            {
+                UE_LOG(LogUnnamedFoundation, Warning, TEXT("The loot table entities/%s is skipped: %s is not defined"),
+                    *LootTables[Index].Block.ToString(), *Missing.ToString());
+            }
             ++Skipped;
             continue;
         }
