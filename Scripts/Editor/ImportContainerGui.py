@@ -1,7 +1,8 @@
 """Import the survival inventory screen's art (survival step 5b) from Reference/minecraft-menu as standalone GUI
 textures under GuiRoot/Container (UUnnamedProjectSettings::GuiRoot): container/inventory.png, the empty armor and
-offhand slot silhouettes and the recipe-book button; and the crafting table's container/crafting_table.png (survival
-step 7). Same pixel settings as ImportBlocks.py's creative textures.
+offhand slot silhouettes and the recipe-book button; the crafting table's container/crafting_table.png (survival
+step 7); and the vanilla button sprites widget/button, button_highlighted and button_disabled (the death screen,
+survival step 11a). Same pixel settings as ImportBlocks.py's creative textures.
 
 Additive and idempotent: an existing texture is verified (its settings and the SHA-256 of the PNG it came from, kept
 in a metadata tag), never reimported. A changed source refuses; move the old texture away deliberately first.
@@ -24,7 +25,8 @@ TEXTURES = ROOT / "Reference/minecraft-menu/assets/minecraft/textures"
 SOURCES = ["gui/container/inventory"] + ["gui/sprites/container/slot/" + name for name in
                                          ("helmet", "chestplate", "leggings", "boots", "shield")] + \
           ["gui/sprites/recipe_book/button", "gui/sprites/recipe_book/button_highlighted",
-           "gui/container/crafting_table"]
+           "gui/container/crafting_table"] + \
+          ["gui/sprites/widget/" + name for name in ("button", "button_highlighted", "button_disabled")]
 TAG = "SourceSha256"
 assets = unreal.EditorAssetLibrary
 SETTINGS = dict(compression_settings=unreal.TextureCompressionSettings.TC_EDITOR_ICON,

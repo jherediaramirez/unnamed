@@ -83,7 +83,26 @@ struct UNNAMED_API FFoundationVitals
     int32 DamageEvents = 0, Deaths = 0;
     // Fire diagnostics the view plays sounds from: lava hits taken, burning hits taken, fires put out by water.
     int32 LavaHurts = 0, BurnHurts = 0, Extinguishes = 0;
-    FString LastDamage = TEXT("none"), DeathMessage;
+    // The last death (step 11a), kept across respawn: its message as vanilla's chat and death screen show it, the
+    // en_us.json key it came from, and the death screen's score (the experience points held at death).
+    FString LastDamage = TEXT("none"), DeathMessage, DeathKey;
+    int32 DeathScore = 0;
+
+    // A death message's en_us.json key and its 26.3 English template (%1$s the victim, %2$s the attacker).
+    struct FDeathText
+    {
+        const TCHAR* Key;
+        const TCHAR* Template;
+    };
+    // The name death messages give the local player until players have names.
+    static constexpr const TCHAR* PlayerName = TEXT("Player");
+    // A damage type's own death message, as the rules table holds it.
+    static FDeathText GetCauseText(EFoundationDamage Type);
+    // The message a death by Type shows: falls farther than 5 blocks use death.fell.accident.generic; mob and
+    // player attacks without an attacker name fall back to death.attack.generic.
+    static FDeathText GetDeathText(EFoundationDamage Type, double FallDistanceCm, const FString& Attacker = FString());
+    // Fills %1$s and %2$s (a plain string replace).
+    static FString FormatDeathMessage(const FDeathText& Text, const FString& Victim, const FString& Attacker);
 
     // One reference tick: timers, movement exhaustion and falls, air, then food.
     void Step(const FFoundationVitalsStep& Facts);

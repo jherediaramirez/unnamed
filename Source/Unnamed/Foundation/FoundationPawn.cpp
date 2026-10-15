@@ -1,6 +1,7 @@
 #include "Foundation/FoundationPawn.h"
 #include "Foundation/FoundationBodyAnimInstance.h"
 #include "Foundation/FoundationController.h"
+#include "Foundation/FoundationExperienceOrbs.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationLab.h"
 #include "Foundation/FoundationPanels.h"
@@ -53,6 +54,12 @@ namespace
     TAutoConsoleVariable<int32> CVarSpringArm(TEXT("foundation.View.SpringArm"), 0,
         TEXT("Third-person preview: 1 turns F5's back view into an over-the-shoulder spring arm (325 cm arm, 55 cm "
              "right, 30 cm up, smoothed, pulled in by the world's blocks); 0 vanilla's back view."),
+        ECVF_Default);
+    TAutoConsoleVariable<int32> CVarDeathScreen(TEXT("foundation.Death.Screen"), 1,
+        TEXT("Death (step 11a): 1 death holds the death screen until its Respawn button (enabled 20 ticks after "
+             "death), drops every stack and min(7 x level, 100) experience as orbs, and respawns at the respawn point "
+             "when set; 0 respawns 20 ticks after death with nothing dropped, as before. The death message goes to "
+             "chat either way."),
         ECVF_Default);
 
     // The spring arm preview's shape and smoothing (foundation.View.SpringArm).
@@ -320,11 +327,59 @@ void AFoundationPawn::ApplyWorldOffset(const FVector& Offset, bool bWorldShift)
 
 void AFoundationPawn::Respawn()
 {
+    // A death not handled yet (a respawn in the same step) still drops and reaches the chat first.
+    HandleDeath();
     Vitals.Respawn();
     const UFoundationProfile& Profile = *GetDefault<UFoundationProfile>();
-    Simulation.Reset(Lab.IsValid() ? Lab->GetSafeSpawn(Profile) : FVector::ZeroVector, Profile);
+    FVector Feet = Lab.IsValid() ? Lab->GetSafeSpawn(Profile) : FVector::ZeroVector;
+    // The respawn point (beds, step B7): the feet at the cell's bottom centre, from the block world's cm to world cm.
+    if (const FFoundationAuthority* Authority = GetAuthority())
+        if (const TOptional<FIntVector> Cell = Authority->GetRespawnPoint(Interaction.PlayerId))
+            Feet = (FVector(*Cell) + FVector(.5, .5, 0)) * UFoundationProfile::BlockCm + Authority->World.OriginCm;
+    Simulation.Reset(Feet, Profile);
     SetActorLocation(Simulation.Feet);
     ResetBody();
+}
+
+bool FoundationDeath::IsScreenEnabled()
+{
+    return CVarDeathScreen.GetValueOnAnyThread() != 0;
+}
+
+bool AFoundationPawn::IsDeathScreenActive() const
+{
+    return FoundationDeath::IsScreenEnabled() && Vitals.IsDead();
+}
+
+bool AFoundationPawn::RequestRespawn()
+{
+    // [survival.r6.death_screen] the buttons enable at the screen's tick 20.
+    if (!IsDeathScreenActive() || Vitals.DeathTicks < FFoundationVitals::RespawnTicks) return false;
+    Respawn();
+    return true;
+}
+
+void AFoundationPawn::HandleDeath()
+{
+    if (Vitals.Deaths == HandledDeaths) return;
+    const bool bDied = Vitals.Deaths > HandledDeaths && Vitals.IsDead();
+    HandledDeaths = Vitals.Deaths;
+    if (!bDied) return;
+    // Vanilla prints the death message to chat.
+    if (AFoundationController* FoundationController = Cast<AFoundationController>(GetController()))
+        FoundationController->AddChatText(Vitals.DeathMessage);
+    FFoundationAuthority* Authority = GetAuthority();
+    if (!FoundationDeath::IsScreenEnabled() || !Authority) return;
+    // Drops leave at the moment of death, not at the respawn [survival.r6.death_items, survival.r6.death_xp].
+    const FVector FeetLocalCm = Simulation.Feet - Authority->World.OriginCm;
+    const int32 Seed = int32(HashCombine(GetTypeHash(Interaction.PlayerId), GetTypeHash(Vitals.Deaths)));
+    Authority->DropInventoryOnDeath(Interaction.PlayerId, FeetLocalCm, Seed);
+    // Orbs follow foundation.Items.Xp as an ore's do; a spectator drops none. Provisional: they leave the feet with an
+    // ore drop's spread and speed.
+    if (Authority->Options.bExperienceOrbs && Vitals.Mode != EFoundationPlayerMode::Spectator)
+        if (const int32 Points = FoundationDeath::GetExperienceDrop(Vitals.Level))
+            Authority->SpawnExperience(
+                FeetLocalCm + FVector(0, 0, FoundationExperienceOrbs::BoxCm * .5), Points, Seed ^ 0x5850);
 }
 
 void AFoundationPawn::StepVitals(const UFoundationProfile& Profile)
@@ -343,7 +398,9 @@ void AFoundationPawn::StepVitals(const UFoundationProfile& Profile)
         bSwim ? Lab->GetFluid(GetEyePosition()) == EFoundationFluid::Water : Lab->IsInWater(GetEyePosition());
     Facts.bBodyInLava = bSwim && CVarFire.GetValueOnGameThread() != 0 && Lab->GetFluid(Body) == EFoundationFluid::Lava;
     Vitals.Step(Facts);
-    if (Vitals.ShouldRespawn()) Respawn();
+    HandleDeath();
+    // With the death screen the player waits for its Respawn button (RequestRespawn); DeathTicks keeps counting.
+    if (!FoundationDeath::IsScreenEnabled() && Vitals.ShouldRespawn()) Respawn();
 }
 
 void AFoundationPawn::SyncInteraction(FFoundationAuthority& Authority)
@@ -535,6 +592,8 @@ void AFoundationPawn::Tick(float DeltaSeconds)
                 const double InteractionStart = FPlatformTime::Seconds();
                 StepInteraction(*Authority, Index == Due - 1, Now);
                 InteractionSeconds += FPlatformTime::Seconds() - InteractionStart;
+                // A death the step's interaction caused.
+                HandleDeath();
             }
         }
         SetActorLocation(Simulation.Feet);
