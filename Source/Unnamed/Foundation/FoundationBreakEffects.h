@@ -191,6 +191,38 @@ namespace FoundationBreak
     constexpr double CrumbSizeCm = HitSizeCm / 2, CrumbForwardBlocks = .8, CrumbNearCm = 40;
     FParticleSpawn SpawnCrumb(const FVector& EyeCm, const FRotator& View, FRandomStream& Random, int32 LifeMode = 0);
 
+    // A lit furnace's, smoker's or blast furnace's display callback (T1 step 8b2b; survival2.r15.particles,
+    // survival2.r15.exact_callback_chances), in R15's block units: the furnace one smoke and one flame, the smoker and
+    // the blast furnace one smoke each. The furnace and blast furnace spawn on the front, the cell's centre + facing x
+    // 0.52, lateral U[-0.3, 0.3) along the face and y U[0, 6/16) (the blast furnace 9/16); the smoker at (0.5, 1.1,
+    // 0.5). The velocity is uniform per axis within R15's constructed bounds (blocks per tick, in world axes, as
+    // measured), the life uniform in whole ticks (smoke 8-39, flame 12-43). Provisional (provisional-values.md, T1
+    // 8b2b): the uniform shapes and the quad sizes.
+    enum class EFurnaceBlock : uint8
+    {
+        Furnace,
+        Smoker,
+        BlastFurnace
+    };
+    enum class EFurnaceParticle : uint8
+    {
+        Smoke,
+        Flame
+    };
+    struct FFurnaceParticleSpawn
+    {
+        EFurnaceParticle Kind = EFurnaceParticle::Smoke;
+        FParticleSpawn Spawn;
+    };
+    constexpr double FurnaceSmokeSizeCm = 12, FurnaceFlameSizeCm = 8;
+    void SpawnFurnaceParticles(EFurnaceBlock Block, const FBox& CellBox, EFoundationFace Facing, FRandomStream& Random,
+        TArray<FFurnaceParticleSpawn>& Out);
+    // A particle's layer in T_FurnaceParticles at Age of Life: the smoke steps through layers 0-7
+    // (particles/smoke.json's order, generic_7 to generic_0) in 8 equal parts of its life (provisional); the flame is
+    // layer 8.
+    constexpr int32 FurnaceSmokeFrames = 8, FurnaceFlameLayer = 8;
+    int32 GetFurnaceParticleLayer(EFurnaceParticle Kind, double Age, double Life);
+
     // One particle's flight for DeltaTime: gravity, and with collision it lands on a solid box and lies there.
     // Solid returns the collision boxes (world centimetres) of the cell holding a point. With bSupport a resting
     // particle checks the point just under it every step and falls again once no box holds it (its block was broken).
@@ -202,6 +234,11 @@ namespace FoundationBreak
     };
     void StepParticle(FParticleState& Particle, double DeltaTime, bool bCollision,
         TFunctionRef<void(const FVector& Point, TArray<FBox>& OutBoxes)> Solid, bool bSupport = false);
+    // The flight after the spawn (provisional, T1 8b2b): no gravity and no collision; the velocity keeps
+    // FurnaceDragPerTick of itself each tick and the smoke gains FurnaceSmokeRisePerTick blocks per tick upward each
+    // tick.
+    constexpr double FurnaceDragPerTick = .96, FurnaceSmokeRisePerTick = .001;
+    void StepFurnaceParticle(FParticleState& Particle, EFurnaceParticle Kind, double DeltaTime);
 
     // What a sound would play, for tests and probes (the probes run with -nosound).
     struct FSoundLogEntry
@@ -255,6 +292,10 @@ public:
     // Eating crumbs (FoundationBreak::SpawnCrumb): Count particles of Item's sprite (T_ItemTextures) from the eye,
     // turned with View. False when they cannot draw (no M_BreakParticle, item sprites or 16 x 16 sprite for Item).
     bool SpawnCrumbs(FName Item, const FVector& EyeCm, const FRotator& View, int32 Count);
+    // A lit furnace's display callback (FoundationBreak::SpawnFurnaceParticles): its smoke and flame in a pool of their
+    // own, drawn with M_FurnaceParticle (T_FurnaceParticles, ImportFurnaceParticles.py). False when they cannot draw
+    // (no M_FurnaceParticle).
+    bool SpawnFurnaceParticles(FoundationBreak::EFurnaceBlock Block, const FBox& CellBox, EFoundationFace Facing);
     // The held item's swing (0-1, today's pose curve sin(phase x pi)) from the swing clock, when Swing is on; false
     // keeps the view's own swing.
     bool GetSwing(double& OutSwing) const;
@@ -269,6 +310,9 @@ public:
     // Eating crumbs alive now, and spawned since the effects began.
     int32 GetLiveCrumbCount() const;
     int32 GetCrumbsSpawned() const { return CrumbsSpawned; }
+    // Furnace smoke and flames alive now, and spawned since the effects began.
+    int32 GetLiveFurnaceParticleCount() const;
+    int32 GetFurnaceParticlesSpawned() const { return FurnaceParticlesSpawned; }
     // Live particles inside Box (the probe's count of the ones left on a broken block's top face).
     int32 CountLiveParticles(const FBox& Box) const;
     bool IsCrackVisible() const { return bCrackVisible; }
@@ -322,6 +366,7 @@ private:
     void HideCracks();
     void DrawOutlineStrips();
     void UpdateParticles(const FFoundationAuthority& Authority, double DeltaTime);
+    void UpdateFurnaceParticles(double DeltaTime);
     void UpdatePops(double DeltaTime);
 
     UFoundationInteractionView& View;
@@ -386,6 +431,17 @@ private:
     TMap<FName, int32> CrumbLayers;
     // Its own stream, so crumbs never shift the chips' draws.
     FRandomStream CrumbRandom;
+    // Furnace smoke and flames: M_FurnaceParticle (loaded on the first spawn), a pool of their own with each particle's
+    // kind and drawn layer (the custom data is written when the layer changes), and their own stream.
+    static constexpr int32 MaxFurnaceParticles = 512;
+    UInstancedStaticMeshComponent* FurnaceMesh = nullptr;
+    TArray<FParticle> FurnaceParticles;
+    TArray<FoundationBreak::EFurnaceParticle> FurnaceKinds;
+    TArray<int32> FurnaceLayers;
+    TArray<FPrimitiveInstanceId> FurnaceIds;
+    int32 NextFurnaceParticle = 0, FurnaceParticlesSpawned = 0;
+    bool bTriedFurnaceMaterial = false, bFurnaceMaterial = false;
+    FRandomStream FurnaceRandom;
 
     // Pops: two slots, each with as many parts as the held block's pool.
     static constexpr int32 PopSlots = 2;

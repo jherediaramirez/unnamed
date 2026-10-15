@@ -224,8 +224,9 @@ private:
     void HandleEvents(const FFoundationAuthority& Authority);
     // Lava and burning sounds (step 16) from the local pawn's fire counters.
     void PlayFireSounds(const AFoundationPawn* Pawn);
-    // A lit furnace's, smoker's or blast furnace's sound near the local pawn (T1 step 8b, foundation.Furnace.Ambience).
-    void PlayFurnaceSounds(const FFoundationAuthority& Authority, const AFoundationPawn* Pawn, float DeltaTime);
+    // A lit furnace's, smoker's or blast furnace's sound, smoke and flame near the local pawn (T1 steps 8b and 8b2b,
+    // foundation.Furnace.Ambience): one display callback drives both.
+    void PlayFurnaceAmbience(const FFoundationAuthority& Authority, const AFoundationPawn* Pawn, float DeltaTime);
     void AddFlash(const FBox& Box, FLinearColor Color, double Life, bool bCross = false);
     void Burst(const FVector& Center, FLinearColor Color, int32 Count, double Size, double Speed, uint32 Seed);
     void ShowNumber(const FVector& Location, const FString& Text, FColor Color);

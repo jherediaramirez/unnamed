@@ -421,6 +421,79 @@ namespace FoundationBreak
         return Spawn;
     }
 
+    void SpawnFurnaceParticles(EFurnaceBlock Block, const FBox& CellBox, EFoundationFace Facing, FRandomStream& Random,
+        TArray<FFurnaceParticleSpawn>& Out)
+    {
+        // R15's constructed velocity bounds (blocks per tick, R15's x, y, z: Unreal's X, Z, Y) and lives (ticks).
+        struct FBounds
+        {
+            double Min[3], Max[3];
+            int32 LifeMin, LifeMax;
+        };
+        static constexpr FBounds FurnaceSmoke = {{-0.016648441813071783, -0.006498183732635731, -0.016205374329359614},
+            {0.016078244336677032, 0.02552693557872951, 0.016100393702104396}, 8, 39};
+        static constexpr FBounds FurnaceFlame = {
+            {-0.001590048134315185, -0.0007306004704901707, -0.0017042530239760349},
+            {0.001675544493461396, 0.0025944586811569147, 0.0016457570363519638}, 12, 43};
+        static constexpr FBounds BlastSmoke = {{-0.016229974088278174, -0.006668580475772605, -0.01709410356186065},
+            {0.015865230962249056, 0.02577922275389481, 0.01614790345860682}, 8, 39};
+        static constexpr FBounds SmokerSmoke = {{-0.01698576348466761, -0.006212481158443666, -0.016955601084038267},
+            {0.01629296290080078, 0.02575841174141764, 0.016299815327071025}, 8, 39};
+        constexpr double BlockCm = 100, PerTickCm = BlockCm / StepSeconds;
+        FVector Offset(.5, .5, 0);
+        if (Block == EFurnaceBlock::Smoker)
+            Offset.Z = 1.1;
+        else
+        {
+            // The front: the centre plus 0.52 along the facing, the lateral scatter along the face.
+            const FVector Front = FoundationGrid::FaceNormal(Facing);
+            const FVector Lateral(FMath::Abs(Front.Y), FMath::Abs(Front.X), 0);
+            Offset += Front * .52 + Lateral * (Random.FRand() * .6 - .3);
+            Offset.Z = Random.FRand() * (Block == EFurnaceBlock::BlastFurnace ? 9. / 16 : 6. / 16);
+        }
+        const FVector Location = CellBox.Min + Offset * BlockCm;
+        auto Add = [&Out, &Random, &Location](EFurnaceParticle Kind, const FBounds& Bounds, double Size)
+        {
+            FFurnaceParticleSpawn& New = Out.AddDefaulted_GetRef();
+            New.Kind = Kind;
+            New.Spawn.Location = Location;
+            double Velocity[3];
+            for (int32 Axis = 0; Axis < 3; ++Axis)
+                Velocity[Axis] = Bounds.Min[Axis] + Random.FRand() * (Bounds.Max[Axis] - Bounds.Min[Axis]);
+            New.Spawn.Velocity = FVector(Velocity[0], Velocity[2], Velocity[1]) * PerTickCm;
+            New.Spawn.Life = Random.RandRange(Bounds.LifeMin, Bounds.LifeMax) * StepSeconds;
+            New.Spawn.Size = Size;
+        };
+        switch (Block)
+        {
+        case EFurnaceBlock::Furnace:
+            Add(EFurnaceParticle::Smoke, FurnaceSmoke, FurnaceSmokeSizeCm);
+            Add(EFurnaceParticle::Flame, FurnaceFlame, FurnaceFlameSizeCm);
+            break;
+        case EFurnaceBlock::Smoker:
+            Add(EFurnaceParticle::Smoke, SmokerSmoke, FurnaceSmokeSizeCm);
+            break;
+        case EFurnaceBlock::BlastFurnace:
+            Add(EFurnaceParticle::Smoke, BlastSmoke, FurnaceSmokeSizeCm);
+            break;
+        }
+    }
+
+    void StepFurnaceParticle(FParticleState& Particle, EFurnaceParticle Kind, double DeltaTime)
+    {
+        const double Ticks = DeltaTime / StepSeconds;
+        Particle.Velocity *= FMath::Pow(FurnaceDragPerTick, Ticks);
+        if (Kind == EFurnaceParticle::Smoke) Particle.Velocity.Z += FurnaceSmokeRisePerTick * 100 / StepSeconds * Ticks;
+        Particle.Location += Particle.Velocity * DeltaTime;
+    }
+
+    int32 GetFurnaceParticleLayer(EFurnaceParticle Kind, double Age, double Life)
+    {
+        if (Kind == EFurnaceParticle::Flame) return FurnaceFlameLayer;
+        const double Fraction = Life > 0 ? Age / Life : 0;
+        return FMath::Clamp(FMath::FloorToInt32(Fraction * FurnaceSmokeFrames), 0, FurnaceSmokeFrames - 1);
+    }
+
     FVector SprayPush(const FVector& FaceNormal, const FVector& AwayFromCamera)
     {
         return FaceNormal * 150 + AwayFromCamera.GetSafeNormal() * 50;
@@ -484,6 +557,7 @@ namespace
     constexpr int32 BreakEffectsSeed = 0x0B5EA4;
     constexpr int32 SoundEventsSeed = 0x50E7E5;
     constexpr int32 CrumbsSeed = 0xC2B5;
+    constexpr int32 FurnaceParticlesSeed = 0xF0E5;
     // The crack overlay sits just outside what it cracks, scaled about the drawn box's centre.
     constexpr double CrackInflate = 1.002;
     // As today's outline: 0.3 cm past the box, each edge drawn as four strips so each keeps its own depth's width.
@@ -540,6 +614,7 @@ void FFoundationBreakEffects::Initialize(const FFoundationAuthority& Authority)
     Random.Initialize(BreakEffectsSeed);
     EventRandom.Initialize(SoundEventsSeed);
     CrumbRandom.Initialize(CrumbsSeed);
+    FurnaceRandom.Initialize(FurnaceParticlesSeed);
     AActor* Owner = View.GetOwner();
     if (!Owner || !Owner->GetRootComponent()) return;
     UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
@@ -608,6 +683,15 @@ void FFoundationBreakEffects::Initialize(const FFoundationAuthority& Authority)
     Hidden.Init(FTransform(FQuat::Identity, FVector::ZeroVector, FVector::ZeroVector), MaxCrumbs);
     CrumbIds = CrumbMesh->AddInstancesById(Hidden, false, false);
     Crumbs.SetNum(MaxCrumbs);
+    FurnaceMesh = NewObject<UInstancedStaticMeshComponent>(Owner);
+    FurnaceMesh->SetNumCustomDataFloats(3);
+    RegisterBreakComponent(*FurnaceMesh, *Owner, PlaneMesh, 0);
+    View.Owned.Add(FurnaceMesh);
+    Hidden.Init(FTransform(FQuat::Identity, FVector::ZeroVector, FVector::ZeroVector), MaxFurnaceParticles);
+    FurnaceIds = FurnaceMesh->AddInstancesById(Hidden, false, false);
+    FurnaceParticles.SetNum(MaxFurnaceParticles);
+    FurnaceKinds.Init(FoundationBreak::EFurnaceParticle::Smoke, MaxFurnaceParticles);
+    FurnaceLayers.Init(INDEX_NONE, MaxFurnaceParticles);
 
     // Pops draw with the block materials, so they need the view's block assets.
     if (!View.BlockMeshes.IsValidIndex(FoundationBlockMeshes::Cube) || View.LayerMaterials.IsEmpty()) return;
@@ -1173,6 +1257,37 @@ bool FFoundationBreakEffects::SpawnCrumbs(FName Item, const FVector& EyeCm, cons
     return true;
 }
 
+bool FFoundationBreakEffects::SpawnFurnaceParticles(
+    FoundationBreak::EFurnaceBlock Block, const FBox& CellBox, EFoundationFace Facing)
+{
+    if (!FurnaceMesh) return false;
+    if (!bTriedFurnaceMaterial)
+    {
+        bTriedFurnaceMaterial = true;
+        if (UMaterialInterface* Material = LoadBreakAsset<UMaterialInterface>(TEXT("M_FurnaceParticle")))
+        {
+            FurnaceMesh->SetMaterial(0, Material);
+            bFurnaceMaterial = true;
+        }
+    }
+    if (!bFurnaceMaterial) return false;
+    TArray<FoundationBreak::FFurnaceParticleSpawn> Out;
+    FoundationBreak::SpawnFurnaceParticles(Block, CellBox, Facing, FurnaceRandom, Out);
+    for (const FoundationBreak::FFurnaceParticleSpawn& New : Out)
+    {
+        const int32 Index = NextFurnaceParticle;
+        // CD0 the layer, CD1 the patch (none: the whole texture), CD2 1 for a full-bright flame (0: the lit grey
+        // smoke).
+        const float Layer = float(FoundationBreak::GetFurnaceParticleLayer(New.Kind, 0, New.Spawn.Life));
+        SpawnInto(*FurnaceMesh, FurnaceParticles, FurnaceIds, NextFurnaceParticle, New.Spawn, Layer,
+            New.Kind == FoundationBreak::EFurnaceParticle::Flame ? 1.f : 0.f);
+        FurnaceKinds[Index] = New.Kind;
+        FurnaceLayers[Index] = int32(Layer);
+    }
+    FurnaceParticlesSpawned += Out.Num();
+    return true;
+}
+
 void FFoundationBreakEffects::SpawnInto(UInstancedStaticMeshComponent& Mesh, TArray<FParticle>& Pool,
     TConstArrayView<FPrimitiveInstanceId> Ids, int32& Next, const FoundationBreak::FParticleSpawn& New, float Layer,
     float Tint)
@@ -1360,6 +1475,41 @@ void FFoundationBreakEffects::UpdateParticles(const FFoundationAuthority& Author
 {
     UpdatePool(ParticleMesh, Particles, ParticleIds, Authority, DeltaTime);
     UpdatePool(CrumbMesh, Crumbs, CrumbIds, Authority, DeltaTime, FoundationBreak::CrumbNearCm);
+    UpdateFurnaceParticles(DeltaTime);
+}
+
+void FFoundationBreakEffects::UpdateFurnaceParticles(double DeltaTime)
+{
+    if (!FurnaceMesh || !FurnaceMesh->GetVisibleFlag()) return;
+    const FQuat Facing = FRotationMatrix::MakeFromZ(-CameraForward).ToQuat();
+    int32 Live = 0;
+    for (int32 Index = 0; Index < FurnaceParticles.Num(); ++Index)
+    {
+        FParticle& Particle = FurnaceParticles[Index];
+        if (!Particle.bLive) continue;
+        Particle.Age += DeltaTime;
+        if (Particle.Age >= Particle.Life)
+        {
+            Particle.bLive = false;
+            FurnaceMesh->UpdateInstanceTransformById(
+                FurnaceIds[Index], FTransform(FQuat::Identity, Particle.State.Location, FVector::ZeroVector), true);
+            continue;
+        }
+        FoundationBreak::StepFurnaceParticle(Particle.State, FurnaceKinds[Index], DeltaTime);
+        if (const int32 Layer =
+                FoundationBreak::GetFurnaceParticleLayer(FurnaceKinds[Index], Particle.Age, Particle.Life);
+            Layer != FurnaceLayers[Index])
+        {
+            FurnaceLayers[Index] = Layer;
+            const float Data[3] = {
+                float(Layer), 0, FurnaceKinds[Index] == FoundationBreak::EFurnaceParticle::Flame ? 1.f : 0.f};
+            FurnaceMesh->SetCustomDataById(FurnaceIds[Index], Data);
+        }
+        FurnaceMesh->UpdateInstanceTransformById(FurnaceIds[Index],
+            FTransform(Facing, Particle.State.Location, FVector(Particle.Size / BreakEffectsBlockCm)), true);
+        ++Live;
+    }
+    if (Live == 0) FurnaceMesh->SetVisibility(false);
 }
 
 void FFoundationBreakEffects::UpdatePool(UInstancedStaticMeshComponent* Mesh, TArray<FParticle>& Pool,
@@ -1435,6 +1585,14 @@ int32 FFoundationBreakEffects::GetLiveCrumbCount() const
 {
     int32 Count = 0;
     for (const FParticle& Particle : Crumbs)
+        Count += Particle.bLive ? 1 : 0;
+    return Count;
+}
+
+int32 FFoundationBreakEffects::GetLiveFurnaceParticleCount() const
+{
+    int32 Count = 0;
+    for (const FParticle& Particle : FurnaceParticles)
         Count += Particle.bLive ? 1 : 0;
     return Count;
 }
