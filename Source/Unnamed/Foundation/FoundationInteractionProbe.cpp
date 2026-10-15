@@ -1248,6 +1248,20 @@ void UFoundationRuntimeProbe::AddInteractionCases()
                 View && View->PickupSounds - Xp->Sounds == Events && Events > 0,
                 FString::Printf(
                     TEXT("hook calls %d, pickups %d"), View ? View->PickupSounds - Xp->Sounds : -1, Events));
+            // Items fixes: the sound batch's entity.experience_orb.pickup resolves to a file and plays (the probes
+            // run with -nosound, so the log is the record); pickups before this case's log clear are not counted.
+            const FFoundationBreakEffects* Effects = Lab->GetView()->GetBreakEffects();
+            int32 Logged = 0, WithFile = 0;
+            for (const FoundationBreak::FSoundLogEntry& Entry :
+                Effects ? Effects->GetSoundLog() : TConstArrayView<FoundationBreak::FSoundLogEntry>())
+                if (Entry.Event == FName(TEXT("entity.experience_orb.pickup")))
+                {
+                    ++Logged;
+                    WithFile += Entry.File.IsNone() ? 0 : 1;
+                }
+            Record(TEXT("the orb pickup sound resolves and plays"),
+                Logged > 0 && Logged == WithFile && Logged <= Events,
+                FString::Printf(TEXT("logged %d, with a file %d, pickups %d"), Logged, WithFile, Events));
         });
     AddCase(
         TEXT("xp icons"), 1.,
@@ -1596,6 +1610,19 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         TEXT("throw capture on"), .3, [Look, ThrowLook] { Look(*ThrowLook); },
         [Capture] { Capture(TEXT("throws-on")); });
     AddCase(TEXT("throw capture on hold"), .2, [] {}, [] {});
+    // Items fixes (Codex review 4, #4): with the switch at 0 the stack already in the world draws one copy.
+    AddCase(
+        TEXT("copies off"), .3, [SetItemEntities] { SetItemEntities(0); },
+        [this, Lab, Thrown, SetItemEntities]
+        {
+            const FFoundationItemEntity* Stack = Thrown(0);
+            const FFoundationItemEntityView* View = Lab->GetView()->GetItemEntityView();
+            const int32 Copies = View && Stack ? View->GetDrawnCopies(Stack->Id) : 0;
+            Record(TEXT("a stack of 64 draws one copy without item entities"),
+                Stack && Stack->Count == 64 && Copies == 1,
+                FString::Printf(TEXT("stack %d, copies %d"), Stack ? Stack->Count : 0, Copies));
+            SetItemEntities(1);
+        });
     Prepare(TEXT("hands control"), false);
     AddCase(
         TEXT("throw capture off"), .6,

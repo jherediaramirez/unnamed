@@ -57,7 +57,8 @@ void FFoundationItemEntityView::Update(
             Visual.Item = INDEX_NONE;
             continue;
         }
-        if (const int32 Copies = FoundationItemEntities::GetCopies(Entity.Count); Copies != Visual.Copies)
+        // Items fixes (Codex review 4, #4): one copy with foundation.Items.Entities 0, as before items S8b.
+        if (const int32 Copies = Authority.Options.bItemEntities ? GetCopies(Entity.Count) : 1; Copies != Visual.Copies)
             SetCopies(Visual, Copies);
         // Drawn between the last two steps; the look's clock runs with them.
         const double Age = Entity.Age - 1 + Alpha;

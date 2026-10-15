@@ -390,7 +390,30 @@ bool FFoundationCraftingTableMenuTest::RunTest(const FString&)
         TestTrue(TEXT("player menu still works"),
             L.Click(FFoundationContainerMenu::PlayerContainer, 36, 0, EFoundationClickType::Pickup).IsCommitted());
     }
-    // A close whose grid does not fit is refused (the throw is T2's); the grid stays with the open menu.
+    // A close whose 3x3 does not fit throws the leftovers as Q does (items fixes), as for the 2x2: the stick and the
+    // cursor's apple become item entities and the menu closes.
+    {
+        FTableLab L;
+        L.A.Options.bItemEntities = true;
+        L.Open();
+        for (int32 Slot = 0; Slot < FFoundationInventory::FirstArmor; ++Slot)
+            L.Inv().SetSlot(Slot, L.Inv().MakeStack(L.Item(TEXT("cobblestone")), 64));
+        L.Lay({TEXT("stick")});
+        L.Inv().Carried = L.Inv().MakeStack(L.Item(TEXT("apple")), 2);
+        const int32 Before = L.A.GetItemEntities().Num();
+        TestTrue(TEXT("full, entities on: close commits"), L.Close().IsCommitted());
+        TestFalse(TEXT("full, entities on: menu closed"), L.P().OpenMenu.IsOpen());
+        TestTrue(TEXT("full, entities on: cursor emptied"), L.Inv().Carried.IsEmpty());
+        TestEqual(TEXT("full, entities on: two stacks thrown"), L.A.GetItemEntities().Num(), Before + 2);
+        bool bStick = false, bApple = false;
+        for (const FFoundationItemEntity& Entity : L.A.GetItemEntities())
+        {
+            bStick |= Entity.Item == L.Item(TEXT("stick")) && Entity.Count == 1;
+            bApple |= Entity.Item == L.Item(TEXT("apple")) && Entity.Count == 2;
+        }
+        TestTrue(TEXT("full, entities on: the stick and the apples thrown"), bStick && bApple);
+    }
+    // With foundation.Items.Entities 0 such a close is refused; the grid stays with the open menu.
     {
         FTableLab L;
         L.Open();
