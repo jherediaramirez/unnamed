@@ -1035,6 +1035,12 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
     const UVoxelWorldSubsystem* Streaming = GetStreaming();
     const FVoxelColumnPipeline* Pipeline = Streaming ? Streaming->GetPipeline() : nullptr;
     if (!Table || !Pipeline) return;
+    GatherColumns(Region, *Pipeline, *Table, ModelCollides, Authority.World, OriginCm, Out);
+}
+
+void AVoxelWorld::GatherColumns(const FBox& Region, const FVoxelColumnPipeline& Pipeline, const FVoxelBlockTable& Table,
+    TConstArrayView<bool> ModelCollides, const FFoundationBlockWorld& World, const FVector& OriginCm, TArray<FBox>& Out)
+{
     const FIntVector Low = FoundationGrid::CellAt(Region.Min, OriginCm);
     const FIntVector High = FoundationGrid::CellAt(Region.Max, OriginCm);
     const int32 LowZ = FMath::Max(Low.Z, VoxelConstants::MinZ), HighZ = FMath::Min(High.Z, VoxelConstants::MaxZ);
@@ -1049,7 +1055,7 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
         {
             const int32 LowX = FMath::Max(Low.X, ColumnX * Size), HighX = FMath::Min(High.X, ColumnX * Size + Size - 1);
             const int32 LowY = FMath::Max(Low.Y, ColumnY * Size), HighY = FMath::Min(High.Y, ColumnY * Size + Size - 1);
-            const FVoxelColumn* Column = Pipeline->FindColumn({ColumnX, ColumnY});
+            const FVoxelColumn* Column = Pipeline.FindColumn({ColumnX, ColumnY});
             if (!Column)
             {
                 // Not generated yet: solid, so nothing walks or falls into it.
@@ -1063,13 +1069,13 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
                     for (int32 X = LowX; X <= HighX; ++X)
                     {
                         const uint16 State = Column->GetState(X - ColumnX * Size, Y - ColumnY * Size, Z);
-                        const FVoxelStateInfo& Info = Table->Get(State);
+                        const FVoxelStateInfo& Info = Table.Get(State);
                         if (Info.Shape == EVoxelShape::Model)
                         {
                             // Model states collide with their facts boxes, moved where the facts move them (cactus,
                             // bamboo, lily pads, carpets); bSolid (blocks_motion) is for the heightmaps.
                             if (State < ModelCollides.Num() && ModelCollides.GetData()[State])
-                                Authority.World.GetCollisionBoxes({X, Y, Z}, FFoundationBlockState{State}, Out);
+                                World.GetCollisionBoxes({X, Y, Z}, FFoundationBlockState{State}, Out);
                             continue;
                         }
                         if (!Info.bSolid) continue;
@@ -1092,11 +1098,11 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
                     for (int32 X = LowX; X <= HighX; ++X)
                     {
                         const uint16 State = Column->GetState(X - ColumnX * Size, Y - ColumnY * Size, Z);
-                        if (Table->Get(State).Shape != EVoxelShape::Model || State >= ModelCollides.Num() ||
+                        if (Table.Get(State).Shape != EVoxelShape::Model || State >= ModelCollides.Num() ||
                             !ModelCollides.GetData()[State])
                             continue;
                         const int32 Before = Out.Num();
-                        Authority.World.GetCollisionBoxes({X, Y, Z}, FFoundationBlockState{State}, Out);
+                        World.GetCollisionBoxes({X, Y, Z}, FFoundationBlockState{State}, Out);
                         FoundationCollisionGather::KeepLeaving(Region, FoundationGrid::CellMin({X, Y, Z}, OriginCm).Z,
                             FoundationGrid::CellMin({X, Y, Z + 1}, OriginCm).Z, Out, Before);
                     }

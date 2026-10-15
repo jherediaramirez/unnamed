@@ -1,6 +1,8 @@
 #include "Foundation/FoundationAuthority.h"
 #include "Algo/AllOf.h"
 #include "Blocks/VoxelPlantSurvival.h"
+#include "Foundation/FoundationBlockFamilies.h"
+#include "Foundation/FoundationDeath.h"
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationSimulation.h"
@@ -745,6 +747,20 @@ void FFoundationAuthority::MergeItemEntities()
     }
 }
 
+int32 FFoundationAuthority::RemoveItemEntities()
+{
+    const int32 Count = ItemEntities.Num();
+    ItemEntities.Reset();
+    return Count;
+}
+
+int32 FFoundationAuthority::RemoveExperienceOrbs()
+{
+    const int32 Count = ExperienceOrbs.Num();
+    ExperienceOrbs.Reset();
+    return Count;
+}
+
 int32 FFoundationAuthority::SpawnExperience(const FVector& LocalCm, int32 Total, int32 RandomSeed)
 {
     using namespace FoundationItemEntities;
@@ -776,6 +792,59 @@ int32 FFoundationAuthority::TakeExperience(int32 PlayerId)
     const int32 Points = Player->PendingExperience;
     Player->PendingExperience = 0;
     return Points;
+}
+
+void FFoundationAuthority::SetRespawnPoint(int32 PlayerId, const FIntVector& Cell)
+{
+    if (FFoundationPlayer* Player = FindPlayer(PlayerId)) Player->RespawnCell = Cell;
+}
+
+void FFoundationAuthority::ClearRespawnPoint(int32 PlayerId)
+{
+    if (FFoundationPlayer* Player = FindPlayer(PlayerId)) Player->RespawnCell.Reset();
+}
+
+TOptional<FIntVector> FFoundationAuthority::GetRespawnPoint(int32 PlayerId) const
+{
+    const FFoundationPlayer* Player = FindPlayer(PlayerId);
+    return Player ? Player->RespawnCell : TOptional<FIntVector>();
+}
+
+void FFoundationAuthority::DropInventoryOnDeath(int32 PlayerId, const FVector& FeetLocalCm, int32 RandomSeed)
+{
+    using namespace FoundationDeath;
+    FFoundationPlayer* Player = FindPlayer(PlayerId);
+    // Without item entities (foundation.Items.Entities 0) nothing could despawn or be picked up: keep the inventory.
+    if (!Player || !Options.bItemEntities || Options.bInfiniteSupply || Player->Inventory.bInfiniteSupply) return;
+    FFoundationInventory& Inventory = Player->Inventory;
+    // Before the first facts the eye is the profile's standing height.
+    const double EyeCm = Player->bHasFacts ? Player->Facts.EyeCm.Z - Player->Facts.FeetCm.Z : DefaultEyeCm;
+    const FVector From = FeetLocalCm + FVector(0, 0, EyeCm - DropBelowEyeCm);
+    FRandomStream Random(RandomSeed);
+    const auto Drop = [&](FFoundationItemInstance& Stack)
+    {
+        if (Stack.IsEmpty()) return;
+        // [items.drop.random_scatter] f = 0.5 x U, angle = 2 pi x U; vanilla's x = -sin(angle) x f, z = cos(angle) x f
+        // on its horizontal plane, Unreal's X and Y here (Z up).
+        const double Speed = Random.FRand() * DropScatterCm, Angle = Random.FRand() * 2 * UE_DOUBLE_PI;
+        const FVector Velocity(-FMath::Sin(Angle) * Speed, FMath::Cos(Angle) * Speed, DropUpCm);
+        SpawnItem(Stack.Item, Stack.Count, From, Velocity, DropPickupDelay, Stack.Damage);
+        Stack = {};
+    };
+    for (FFoundationItemInstance& Stack : Inventory.Hotbar)
+        Drop(Stack);
+    for (FFoundationItemInstance& Stack : Inventory.Main)
+        Drop(Stack);
+    for (FFoundationItemInstance& Stack : Inventory.Armor)
+        Drop(Stack);
+    Drop(Inventory.Offhand);
+    Drop(Inventory.Carried);
+    for (FFoundationItemInstance& Stack : Inventory.Craft)
+        Drop(Stack);
+    // An open crafting table's grid drops too; closing the screen afterwards then finds it empty.
+    for (FFoundationItemInstance& Stack : Player->OpenMenu.Grid)
+        Drop(Stack);
+    ++Inventory.Revision;
 }
 
 void FFoundationAuthority::StepExperienceOrbs()
@@ -2223,6 +2292,8 @@ FFoundationBlockState FFoundationAuthority::TrimPlantFaces(const FIntVector& Cel
 void FFoundationAuthority::SettlePlants(
     const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player)
 {
+    // Stairs, fences, walls, panes and gates beside the edit (survival B2b, foundation.Blocks.Shapes).
+    FoundationBlockFamilies::UpdateNeighbourShapes(World, Cell);
     if (!Options.bPlantRules) return;
     // Pops drop nothing until item entities exist (scout H, Q4).
     TArray<FIntVector, TInlineAllocator<8>> Changed = {Cell};

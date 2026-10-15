@@ -27,7 +27,8 @@ namespace
         {
             Draws.Add({NAME_None, FIntRect(Point, Point + Size), FBox2f(FVector2f(0), FVector2f(1)), Color});
         }
-        void Text(const FString& Text, FIntPoint Point, FLinearColor Color, bool bShadow = true)
+        // Scale: vanilla's pose scale (the death screen's title draws at 2), glyphs, advances and shadow offset alike.
+        void Text(const FString& Text, FIntPoint Point, FLinearColor Color, bool bShadow = true, int32 Scale = 1)
         {
             if (bShadow)
             {
@@ -36,17 +37,17 @@ namespace
                 const FColor Encoded = Color.ToFColorSRGB();
                 FLinearColor Shadow(FColor(Encoded.R / 4, Encoded.G / 4, Encoded.B / 4));
                 Shadow.A = Color.A;
-                this->Text(Text, Point + FIntPoint(1, 1), Shadow, false);
+                this->Text(Text, Point + FIntPoint(Scale, Scale), Shadow, false, Scale);
             }
             for (TCHAR Character : Text)
                 if (const FHudGlyph* Glyph = FindGlyph(Glyphs, Character))
                 {
                     if (Glyph->InkWidth > 0)
-                        Draws.Add({TEXT("font/ascii"), FIntRect(Point, Point + FIntPoint(8, 8)),
+                        Draws.Add({TEXT("font/ascii"), FIntRect(Point, Point + FIntPoint(8, 8) * Scale),
                             FBox2f(
                                 FVector2f(Glyph->Origin) / 128.f, FVector2f(Glyph->Origin + FIntPoint(8, 8)) / 128.f),
                             Color});
-                    Point.X += Glyph->Advance;
+                    Point.X += Glyph->Advance * Scale;
                 }
         }
         void Pixels(FIntPoint Point, std::initializer_list<FIntPoint> Cells, FIntPoint Size, FLinearColor Color)
@@ -179,12 +180,86 @@ TArray<TArray<FHudChatRun>> HudDrawList::WrapChat(const TArray<FHudChatLine>& Li
     return Rows;
 }
 
+FIntRect HudDrawList::GetDeathButton(FIntPoint LogicalSize, EHudDeathButton Button)
+{
+    if (Button == EHudDeathButton::None) return FIntRect();
+    const FIntPoint Min(LogicalSize.X / 2 - 100, LogicalSize.Y / 4 + (Button == EHudDeathButton::Respawn ? 72 : 96));
+    return FIntRect(Min, Min + FIntPoint(200, 20));
+}
+
+EHudDeathButton HudDrawList::HitDeathButton(FIntPoint LogicalSize, FIntPoint Point)
+{
+    for (const EHudDeathButton Button : {EHudDeathButton::Respawn, EHudDeathButton::TitleScreen})
+    {
+        const FIntRect Rect = GetDeathButton(LogicalSize, Button);
+        if (Point.X >= Rect.Min.X && Point.Y >= Rect.Min.Y && Point.X < Rect.Max.X && Point.Y < Rect.Max.Y)
+            return Button;
+    }
+    return EHudDeathButton::None;
+}
+
+namespace
+{
+    // The death screen (step 11a) over the HUD, in GUI pixels of Size [survival.r6.death_layout,
+    // survival.r6.death_screen]; strings are en_us.json's.
+    void DeathScreen(FBuilder& B, const FHudSnapshot& S, FIntPoint Size)
+    {
+        // fillGradient: a constant vertical gradient, top 0x60500000 to bottom 0xA0803030 (ARGB), no fade-in. The draw
+        // list has one colour per draw, so it is 1 GUI px bands, each the vertex colours interpolated in their
+        // encoded bytes at the band's centre.
+        const FColor Top(0x50, 0x00, 0x00, 0x60), Bottom(0x80, 0x30, 0x30, 0xA0);
+        for (int32 Y = 0; Y < Size.Y; ++Y)
+        {
+            const float Alpha = (Y + .5f) / Size.Y;
+            auto Mix = [Alpha](uint8 From, uint8 To)
+            { return uint8(FMath::RoundToInt(FMath::Lerp(float(From), float(To), Alpha))); };
+            B.Rect({0, Y}, {Size.X, 1},
+                FLinearColor(
+                    FColor(Mix(Top.R, Bottom.R), Mix(Top.G, Bottom.G), Mix(Top.B, Bottom.B), Mix(Top.A, Bottom.A))));
+        }
+        // Vanilla buttons: the widget sprite (200 x 20, so its nine-slice draws unstretched), highlighted under the
+        // cursor while enabled, disabled before tick 20; the label centred, white or 0xA0A0A0 when disabled, 6 px down
+        // (provisional: AbstractButton's centred string, (height - 9) / 2 + 1).
+        for (const EHudDeathButton Button : {EHudDeathButton::Respawn, EHudDeathButton::TitleScreen})
+        {
+            const FIntRect Rect = HudDrawList::GetDeathButton(Size, Button);
+            B.Sprite(FName(!S.bDeathButtonsEnabled    ? TEXT("gui/sprites/widget/button_disabled")
+                             : S.DeathHover == Button ? TEXT("gui/sprites/widget/button_highlighted")
+                                                      : TEXT("gui/sprites/widget/button")),
+                Rect.Min, Rect.Size());
+            // deathScreen.respawn, deathScreen.titleScreen.
+            const FString Label = Button == EHudDeathButton::Respawn ? TEXT("Respawn") : TEXT("Title Screen");
+            B.Text(Label,
+                {Rect.Min.X + Rect.Width() / 2 - HudDrawList::MeasureText(Label, B.Glyphs) / 2, Rect.Min.Y + 6},
+                S.bDeathButtonsEnabled ? FLinearColor::White : FLinearColor(FColor(0xA0, 0xA0, 0xA0)));
+        }
+        // deathScreen.title at scale 2, centred on width / 2 with its top at y 60 (vanilla: width / 2 / 2, 30 in the
+        // scaled pose). Hardcore's "Game Over!" (deathScreen.title.hardcore) and its Spectate World button are a known
+        // issue: there is no hardcore world yet.
+        const FString Title = TEXT("You Died!");
+        B.Text(Title, {2 * (Size.X / 2 / 2 - HudDrawList::MeasureText(Title, B.Glyphs) / 2), 60}, FLinearColor::White,
+            true, 2);
+        // The cause (the death message) centred at y 85; the score at y 100: deathScreen.score.value "Score: %s" with
+        // the number in yellow (ChatFormatting.YELLOW 0xFFFF55).
+        if (!S.DeathMessage.IsEmpty())
+            B.Text(S.DeathMessage, {Size.X / 2 - HudDrawList::MeasureText(S.DeathMessage, B.Glyphs) / 2, 85},
+                FLinearColor::White);
+        const FString Label = TEXT("Score: "), Score = FString::FromInt(S.DeathScore);
+        const int32 Left = Size.X / 2 - HudDrawList::MeasureText(Label + Score, B.Glyphs) / 2;
+        B.Text(Label, {Left, 100}, FLinearColor::White);
+        B.Text(Score, {Left + HudDrawList::MeasureText(Label, B.Glyphs), 100}, FLinearColor(FColor(0xFF, 0xFF, 0x55)));
+    }
+}
+
 TArray<FHudDraw> HudDrawList::Build(
     const FHudSnapshot& S, const FHudPresentation& P, const FHudLayout& L, int64 Tick, const TArray<FHudGlyph>& Glyphs)
 {
     FBuilder B{{}, Glyphs, Tick};
     if (!S.bVisible) return B.Draws;
-    if (HudModel::IsCrosshairVisible(S))
+    // F1 hides the HUD; the open chat and the death screen (screens) still draw.
+    const bool bHud = !S.bHideHud;
+    // The death screen hides the crosshair; the rest of the HUD stays under it.
+    if (bHud && !S.bDeathScreen && HudModel::IsCrosshairVisible(S))
     {
         B.Hud(TEXT("crosshair"), L.Crosshair.Min, L.Crosshair.Size());
         if (S.AttackIndicator == EHudAttack::Crosshair)
@@ -199,7 +274,7 @@ TArray<FHudDraw> HudDrawList::Build(
             }
         }
     }
-    if (S.Mode != EHudMode::Spectator && S.Items != EHudDataSource::Unsupported)
+    if (bHud && S.Mode != EHudMode::Spectator && S.Items != EHudDataSource::Unsupported)
     {
         B.Hud(TEXT("hotbar"), L.Hotbar.Min, L.Hotbar.Size());
         B.Hud(TEXT("hotbar_selection"), L.Selection.Min, L.Selection.Size());
@@ -217,7 +292,7 @@ TArray<FHudDraw> HudDrawList::Build(
                 HudModel::GetAttackHeight(S.AttackStrength), true);
         }
     }
-    if (S.CanHurt() && S.Resources != EHudDataSource::Unsupported)
+    if (bHud && S.CanHurt() && S.Resources != EHudDataSource::Unsupported)
     {
         const int32 Current = FMath::CeilToInt(S.Health), Absorption = FMath::CeilToInt(S.Absorption);
         const FHudHealthGeometry Health =
@@ -289,7 +364,7 @@ TArray<FHudDraw> HudDrawList::Build(
             }
         }
     }
-    if (S.Mode != EHudMode::Spectator && !S.ItemName.IsEmpty() && P.GetNameAlpha(Tick) > 0)
+    if (bHud && S.Mode != EHudMode::Spectator && !S.ItemName.IsEmpty() && P.GetNameAlpha(Tick) > 0)
         B.Text(S.ItemName, {(L.Size.X - MeasureText(S.ItemName, Glyphs)) / 2, L.Size.Y - (S.CanHurt() ? 59 : 45)},
             FLinearColor(1, 1, 1, P.GetNameAlpha(Tick)));
     // The chat (step 15), bottom-left: the newest rows that fit, each on a black band at half its opacity.
@@ -301,7 +376,9 @@ TArray<FHudDraw> HudDrawList::Build(
         while (RowAlpha.Num() < Rows.Num())
             RowAlpha.Add(Line.Alpha);
     }
-    const int32 Shown = FMath::Min(Rows.Num(), S.bChatOpen ? HudDrawList::ChatOpenRows : HudDrawList::ChatClosedRows);
+    const int32 Shown = bHud || S.bChatOpen
+        ? FMath::Min(Rows.Num(), S.bChatOpen ? HudDrawList::ChatOpenRows : HudDrawList::ChatClosedRows)
+        : 0;
     for (int32 Index = 0; Index < Shown; ++Index)
     {
         const int32 Row = Rows.Num() - 1 - Index;
@@ -328,10 +405,13 @@ TArray<FHudDraw> HudDrawList::Build(
     }
     // Fixture data is always labelled: the whole cluster, or only the token hotbar beside real vitals.
     // The open chat's input bar takes their place.
-    if (S.bChatOpen) return MoveTemp(B.Draws);
-    if (S.Resources == EHudDataSource::Preview)
-        B.Text(TEXT("PREVIEW"), {4, L.Size.Y - 12}, FLinearColor(FColor(255, 223, 138)));
-    else if (S.Items == EHudDataSource::Preview)
-        B.Text(TEXT("PREVIEW ITEMS"), {4, L.Size.Y - 12}, FLinearColor(FColor(255, 223, 138)));
+    if (bHud && !S.bChatOpen)
+    {
+        if (S.Resources == EHudDataSource::Preview)
+            B.Text(TEXT("PREVIEW"), {4, L.Size.Y - 12}, FLinearColor(FColor(255, 223, 138)));
+        else if (S.Items == EHudDataSource::Preview)
+            B.Text(TEXT("PREVIEW ITEMS"), {4, L.Size.Y - 12}, FLinearColor(FColor(255, 223, 138)));
+    }
+    if (S.bDeathScreen) DeathScreen(B, S, L.Size);
     return MoveTemp(B.Draws);
 }

@@ -29,6 +29,7 @@ class USkyAtmosphereComponent;
 class UDirectionalLightComponent;
 struct FVoxelEnvironment;
 class FVoxelBlockTable;
+class FVoxelColumnPipeline;
 class IVoxelTerrain;
 class UFoundationBlockTextureTable;
 class UFoundationInteractionView;
@@ -72,6 +73,11 @@ public:
     virtual void Tick(float DeltaSeconds) override;
     // Block boxes from the streamed columns. A column not generated yet is solid, so nothing walks or falls into it.
     virtual void GatherCollision(const FBox& Region, TArray<FBox>& Out) const override;
+    // GatherCollision's part over the streamed columns, for any pipeline (Unnamed.Voxel.World.ShapesGather calls it
+    // without a world). ModelCollides: per state id, a model state with collision boxes.
+    static void GatherColumns(const FBox& Region, const FVoxelColumnPipeline& Pipeline, const FVoxelBlockTable& Table,
+        TConstArrayView<bool> ModelCollides, const FFoundationBlockWorld& World, const FVector& OriginCm,
+        TArray<FBox>& Out);
     virtual FFoundationTarget TraceTarget(
         FVector Eye, FVector Direction, const UFoundationProfile& Profile) const override;
     // From the blocks: a fluid cell holds water up to its surface (FluidAmount / 9 of the cell), or to its top when

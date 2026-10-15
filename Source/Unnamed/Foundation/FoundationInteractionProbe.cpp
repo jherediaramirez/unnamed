@@ -1841,6 +1841,9 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         TEXT("respawned player"), 1.2, [] {},
         [this, Solid]
         {
+            // The death screen (step 11a, foundation.Death.Screen 1) waits for its Respawn button, enabled since
+            // tick 20.
+            if (Pawn->IsDeathScreenActive()) Pawn->RequestRespawn();
             Record(TEXT("respawn restores play; the press made while dead never acted"),
                 !Pawn->Vitals.IsDead() && !Solid({-5, 12, 0}), Pawn->Vitals.Describe());
         });
@@ -1865,8 +1868,16 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             Record(TEXT("placed before dying"), Solid({-5, 12, 0}), Pawn->Interaction.LastText);
             Pawn->Vitals.Hurt(EFoundationDamage::Kill, TNumericLimits<float>::Max());
         });
+    // The death screen (step 11a, foundation.Death.Screen 1) waits for its Respawn button, enabled since tick 20;
+    // without it the pawn has respawned by itself at tick 20.
     AddCase(
-        TEXT("respawn"), 1.3, [] {},
+        TEXT("respawn button"), 1.0, [] {},
+        [this]
+        {
+            if (Pawn->IsDeathScreenActive()) Pawn->RequestRespawn();
+        });
+    AddCase(
+        TEXT("respawn"), .3, [] {},
         [this, Click, Look]
         {
             Extra->SetNumberField(TEXT("respawn_movement_steps"), double(Pawn->Simulation.Steps));
