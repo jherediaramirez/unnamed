@@ -325,6 +325,7 @@ FFoundationPlayerFacts AFoundationPawn::MakeInteractionFacts() const
     Facts.bBodyInWater = bBodyInWater;
     Facts.bEyesInWater = bEyesInWater;
     Facts.bAlive = !Vitals.IsDead();
+    Facts.Mode = Vitals.Mode;
     Facts.bSecondaryUse = LastIntent.bCrouch;
     Facts.Step = ReferenceSteps;
     return Facts;
@@ -482,6 +483,18 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
             if (LevelGains.Num() == MaxLevelGains) LevelGains.RemoveAt(0);
             LevelGains.Add({Player->Facts.Step, Before, Vitals.Level, ++LevelGainSerial});
         }
+    }
+    // Survival T6 20c: the monsters' melee hits this step, through the whole hurt path with the attacker's name; a
+    // fresh hit (not inside the damage cooldown's first half) knocks the player back from the mob [extra.motion,
+    // movement.knockback_resistance: power 0.4, the player's resistance 0].
+    for (const FFoundationMobHit& Hit : Authority.TakeMobHits(Interaction.PlayerId))
+    {
+        const bool bFresh = !Vitals.IsInHurtWindow();
+        if (!Vitals.Hurt(EFoundationDamage::MobAttack, Hit.Damage, Hit.Attacker) || !bFresh) continue;
+        FVector2D Away(Simulation.Feet - Hit.FromCm);
+        if (Away.IsNearlyZero()) Away = FVector2D(1, 0);
+        FoundationMobs::ApplyKnockback(
+            Simulation.VelocityPerTick, Away, Simulation.bGrounded, FoundationMobs::KnockbackCm);
     }
     Interaction.StepOnce(Authority, Vitals, bLatestStep, NowSeconds);
     // A block's use opened a container (survival step 7): its screen opens; without a screen to show it, it closes.

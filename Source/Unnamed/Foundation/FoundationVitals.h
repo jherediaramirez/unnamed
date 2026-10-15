@@ -119,7 +119,8 @@ struct UNNAMED_API FFoundationVitals
     // bFallImmune), water putting the fire out, burning and lava.
     void StepHazards(const FFoundationVitalsStep& Facts, bool bFallImmune = false);
     // The whole hurt path: invulnerability, difficulty, damage cooldown, armor, absorption, exhaustion, death.
-    bool Hurt(EFoundationDamage Type, float Amount);
+    // Attacker names the mob or player behind a mob or player attack in the death message (survival T6 20c).
+    bool Hurt(EFoundationDamage Type, float Amount, const FString& Attacker = FString());
     void Heal(float Amount);
     void Eat(int32 Nutrition, float SaturationGain);
     // Player exhaustion: ignored while invulnerable, capped at 40.

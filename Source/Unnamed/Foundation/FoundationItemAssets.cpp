@@ -258,6 +258,7 @@ FName FoundationLootAssets::MakeTable(const FFoundationLootTableAsset& Asset, in
         {
             FFoundationLootCandidate& Candidate = Pool.Candidates.AddDefaulted_GetRef();
             Candidate.Item = Rules.FindItem(CandidateAsset.Item);
+            Candidate.Weight = CandidateAsset.Weight;
             if (Candidate.Item == INDEX_NONE && Missing.IsNone()) Missing = CandidateAsset.Item;
             // Predicate names become nodes after the asset's, then the condition objects follow them.
             for (const FName Condition : CandidateAsset.Conditions)

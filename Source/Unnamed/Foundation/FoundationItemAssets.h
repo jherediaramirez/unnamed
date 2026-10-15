@@ -521,6 +521,10 @@ struct FFoundationLootCandidateAsset
     // Loot step 2a: when any, the candidate's ordered modifiers, in place of the count, bonus and decay above.
     UPROPERTY(EditAnywhere, Category = "Loot")
     TArray<FFoundationLootModifierAsset> Modifiers;
+
+    // Survival T6 20c: above 0, the pool is a weighted choice among its passing candidates (FFoundationLootCandidate).
+    UPROPERTY(EditAnywhere, Category = "Loot")
+    int32 Weight = 0;
 };
 
 USTRUCT()
